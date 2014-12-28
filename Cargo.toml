@@ -1,0 +1,5 @@
+[package]
+
+name = "rust-wkt"
+version = "0.0.1"
+authors = ["Corey Farwell <coreyf@rwell.org>"]
