@@ -10,10 +10,12 @@ pub fn tokenize(input: &str) -> Tokenizer {
     Tokenizer {text: String::from_str(input)}
 }
 
-/*
-fn is_whitespace(char) -> bool {
+fn is_whitespace(c: char) -> bool {
+    match c {
+        '\n' | '\r' | '\t' | ' ' => true,
+        _                        => false,
+    }
 }
-*/
 
 struct Tokenizer {
     text: String
@@ -32,7 +34,7 @@ impl Iterator<Token> for Tokenizer {
             '(' => Some(Token::ParenOpen),
             ')' => Some(Token::ParenClose),
             ',' => Some(Token::Comma),
-            '\n' | '\r' | '\t' | ' ' => self.next(),
+            c if is_whitespace(c) => self.next(),
             c if c.is_numeric() => {
                 let x: f64 = from_str(c.to_string().as_slice()).unwrap();
                 Some(Token::Number(x))
@@ -66,7 +68,7 @@ impl Tokenizer {
                 self.text.insert(0, next_char);
                 "".to_string()
             }
-            '\n' | '\r' | '\t' | ' ' => "".to_string(),
+            c if is_whitespace(c) => "".to_string(),
             _ => next_char.to_string() + self.finish_word().as_slice(),
         }
     }
