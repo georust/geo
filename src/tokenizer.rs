@@ -134,3 +134,30 @@ fn test_tokenizer_2numbers() {
     }
     assert!(tokens.next().is_none());
 }
+
+#[test]
+fn test_tokenizer_point() {
+    let test_str = "POINT (10 -20)";
+    let mut tokens = tokenize(test_str);
+    match tokens.next().unwrap() {
+        Token::Word(n) => assert_eq!(n, "POINT"),
+        _ => panic!("fail")
+    }
+    match tokens.next().unwrap() {
+        Token::ParenOpen => (),
+        _ => panic!("fail")
+    }
+    match tokens.next().unwrap() {
+        Token::Number(n) => assert_eq!(n.to_string(), "10"),
+        _ => panic!("fail")
+    }
+    match tokens.next().unwrap() {
+        Token::Number(n) => assert_eq!(n.to_string(), "-20"),
+        _ => panic!("fail")
+    }
+    match tokens.next().unwrap() {
+        Token::ParenClose => (),
+        _ => panic!("fail")
+    }
+    assert!(tokens.next().is_none());
+}
