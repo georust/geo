@@ -21,7 +21,7 @@ fn is_whitespace(c: char) -> bool {
 fn is_numberlike(c: char) -> bool {
     match c {
         c if c.is_numeric() => true,
-        '.' | '-'           => true,
+        '.' | '-' | '+'     => true,
         _                   => false,
     }
 }
@@ -45,7 +45,8 @@ impl Iterator<Token> for Tokenizer {
             ',' => Some(Token::Comma),
             c if is_whitespace(c) => self.next(),
             c if is_numberlike(c) => {
-                let number = c.to_string() + self.read_until_whitespace().as_slice();
+                let mut number = c.to_string() + self.read_until_whitespace().as_slice();
+                number = number.trim_left_chars('+').to_string();
                 match number.parse::<f64>() {
                     Some(parsed_num) => Some(Token::Number(parsed_num)),
                     None => panic!("Could not parse number: {}", number),
@@ -115,6 +116,15 @@ fn test_tokenizer_2words() {
 #[test]
 fn test_tokenizer_1number() {
     let test_str = "4.2";
+    let tokens: Vec<Token> = tokenize(test_str).collect();
+    assert_eq!(tokens, vec![
+        Token::Number(4.2),
+    ]);
+}
+
+#[test]
+fn test_tokenizer_1number_plus() {
+    let test_str = "+4.2";
     let tokens: Vec<Token> = tokenize(test_str).collect();
     assert_eq!(tokens, vec![
         Token::Number(4.2),
