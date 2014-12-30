@@ -45,7 +45,7 @@ impl Iterator<Token> for Tokenizer {
             c if is_whitespace(c) => self.next(),
             c if is_numberlike(c) => {
                 let number = c.to_string() + self.read_until_whitespace().as_slice();
-                let x: f64 = from_str(number.as_slice()).unwrap();
+                let x: f64 = number.parse().unwrap();
                 Some(Token::Number(x))
             }
             c => {
