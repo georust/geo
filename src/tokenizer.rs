@@ -17,6 +17,14 @@ fn is_whitespace(c: char) -> bool {
     }
 }
 
+fn is_numberlike(c: char) -> bool {
+    match c {
+        c if c.is_numeric() => true,
+        '.' | '-'           => true,
+        _                   => false,
+    }
+}
+
 struct Tokenizer {
     text: String
 }
@@ -35,12 +43,13 @@ impl Iterator<Token> for Tokenizer {
             ')' => Some(Token::ParenClose),
             ',' => Some(Token::Comma),
             c if is_whitespace(c) => self.next(),
-            c if c.is_numeric() => {
-                let x: f64 = from_str(c.to_string().as_slice()).unwrap();
+            c if is_numberlike(c) => {
+                let number = c.to_string() + self.read_until_whitespace().as_slice();
+                let x: f64 = from_str(number.as_slice()).unwrap();
                 Some(Token::Number(x))
             }
             c => {
-                let word = c.to_string() + self.finish_word().as_slice();
+                let word = c.to_string() + self.read_until_whitespace().as_slice();
                 Some(Token::Word(word))
             }
         }
@@ -56,7 +65,7 @@ impl Tokenizer {
         }
     }
 
-    fn finish_word(&mut self) -> String {
+    fn read_until_whitespace(&mut self) -> String {
         let popped_char = self.pop_char();
         if popped_char.is_none() {
             return "".to_string()
@@ -69,7 +78,7 @@ impl Tokenizer {
                 "".to_string()
             }
             c if is_whitespace(c) => "".to_string(),
-            _ => next_char.to_string() + self.finish_word().as_slice(),
+            _ => next_char.to_string() + self.read_until_whitespace().as_slice(),
         }
     }
 
@@ -100,6 +109,32 @@ fn test_tokenizer_2words() {
     }
     match tokens.next().unwrap() {
         Token::Word(n) => assert_eq!(n, "world".to_string()),
+        _ => panic!("fail")
+    }
+    assert!(tokens.next().is_none());
+}
+
+#[test]
+fn test_tokenizer_1number() {
+    let test_str = "4.2";
+    let mut tokens = tokenize(test_str);
+    match tokens.next().unwrap() {
+        Token::Number(n) => assert_eq!(n.to_string(), "4.2"),
+        _ => panic!("fail")
+    }
+    assert!(tokens.next().is_none());
+}
+
+#[test]
+fn test_tokenizer_2numbers() {
+    let test_str = ".38 -2";
+    let mut tokens = tokenize(test_str);
+    match tokens.next().unwrap() {
+        Token::Number(n) => assert_eq!(n.to_string(), "0.38"),
+        _ => panic!("fail")
+    }
+    match tokens.next().unwrap() {
+        Token::Number(n) => assert_eq!(n.to_string(), "-2"),
         _ => panic!("fail")
     }
     assert!(tokens.next().is_none());
