@@ -1,3 +1,4 @@
+#[deriving(PartialEq, Show)]
 pub enum Token {
     Comma,
     Number(f64),
@@ -86,85 +87,57 @@ impl Tokenizer {
 #[test]
 fn test_tokenizer_empty() {
     let test_str = "";
-    let mut tokens = tokenize(test_str);
-    assert!(tokens.next().is_none());
+    let tokens: Vec<Token> = tokenize(test_str).collect();
+    assert_eq!(tokens, vec![]);
 }
 
 #[test]
 fn test_tokenizer_1word() {
     let test_str = "hello";
-    let mut tokens = tokenize(test_str);
-    match tokens.next().unwrap() {
-        Token::Word(n) => assert_eq!(n, "hello"),
-        _ => panic!("fail")
-    }
-    assert!(tokens.next().is_none());
+    let tokens: Vec<Token> = tokenize(test_str).collect();
+    assert_eq!(tokens, vec![
+        Token::Word("hello".to_string()),
+    ]);
 }
 
 #[test]
 fn test_tokenizer_2words() {
     let test_str = "hello world";
-    let mut tokens = tokenize(test_str);
-    match tokens.next().unwrap() {
-        Token::Word(n) => assert_eq!(n, "hello"),
-        _ => panic!("fail")
-    }
-    match tokens.next().unwrap() {
-        Token::Word(n) => assert_eq!(n, "world"),
-        _ => panic!("fail")
-    }
-    assert!(tokens.next().is_none());
+    let tokens: Vec<Token> = tokenize(test_str).collect();
+    assert_eq!(tokens, vec![
+        Token::Word("hello".to_string()),
+        Token::Word("world".to_string()),
+    ]);
 }
 
 #[test]
 fn test_tokenizer_1number() {
     let test_str = "4.2";
-    let mut tokens = tokenize(test_str);
-    match tokens.next().unwrap() {
-        Token::Number(n) => assert_eq!(n.to_string(), "4.2"),
-        _ => panic!("fail")
-    }
-    assert!(tokens.next().is_none());
+    let tokens: Vec<Token> = tokenize(test_str).collect();
+    assert_eq!(tokens, vec![
+        Token::Number(4.2),
+    ]);
 }
 
 #[test]
 fn test_tokenizer_2numbers() {
-    let test_str = ".38 -2";
-    let mut tokens = tokenize(test_str);
-    match tokens.next().unwrap() {
-        Token::Number(n) => assert_eq!(n.to_string(), "0.38"),
-        _ => panic!("fail")
-    }
-    match tokens.next().unwrap() {
-        Token::Number(n) => assert_eq!(n.to_string(), "-2"),
-        _ => panic!("fail")
-    }
-    assert!(tokens.next().is_none());
+    let test_str = ".4 -2";
+    let tokens: Vec<Token> = tokenize(test_str).collect();
+    assert_eq!(tokens, vec![
+        Token::Number(0.4),
+        Token::Number(-2.0),
+    ]);
 }
 
 #[test]
 fn test_tokenizer_point() {
     let test_str = "POINT (10 -20)";
-    let mut tokens = tokenize(test_str);
-    match tokens.next().unwrap() {
-        Token::Word(n) => assert_eq!(n, "POINT"),
-        _ => panic!("fail")
-    }
-    match tokens.next().unwrap() {
-        Token::ParenOpen => (),
-        _ => panic!("fail")
-    }
-    match tokens.next().unwrap() {
-        Token::Number(n) => assert_eq!(n.to_string(), "10"),
-        _ => panic!("fail")
-    }
-    match tokens.next().unwrap() {
-        Token::Number(n) => assert_eq!(n.to_string(), "-20"),
-        _ => panic!("fail")
-    }
-    match tokens.next().unwrap() {
-        Token::ParenClose => (),
-        _ => panic!("fail")
-    }
-    assert!(tokens.next().is_none());
+    let tokens: Vec<Token> = tokenize(test_str).collect();
+    assert_eq!(tokens, vec![
+        Token::Word("POINT".to_string()),
+        Token::ParenOpen,
+        Token::Number(10.0),
+        Token::Number(-20.0),
+        Token::ParenClose,
+    ]);
 }
