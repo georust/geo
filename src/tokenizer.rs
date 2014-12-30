@@ -80,10 +80,27 @@ impl Tokenizer {
 }
 
 #[test]
-fn test_tokenizer() {
+fn test_tokenizer_1word() {
     let test_str = "hello";
-    match tokenize(test_str).next().unwrap() {
-        Token::Word(n) => assert_eq!(n, test_str.to_string()),
+    let mut tokens = tokenize(test_str);
+    match tokens.next().unwrap() {
+        Token::Word(n) => assert_eq!(n, "hello".to_string()),
         _ => panic!("fail")
     }
+    assert!(tokens.next().is_none());
+}
+
+#[test]
+fn test_tokenizer_2words() {
+    let test_str = "hello world";
+    let mut tokens = tokenize(test_str);
+    match tokens.next().unwrap() {
+        Token::Word(n) => assert_eq!(n, "hello".to_string()),
+        _ => panic!("fail")
+    }
+    match tokens.next().unwrap() {
+        Token::Word(n) => assert_eq!(n, "world".to_string()),
+        _ => panic!("fail")
+    }
+    assert!(tokens.next().is_none());
 }
