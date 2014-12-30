@@ -81,11 +81,6 @@ impl Tokenizer {
             _ => next_char.to_string() + self.read_until_whitespace().as_slice(),
         }
     }
-
-    /*
-    fn finish_number(&mut self) -> String {
-    }
-    */
 }
 
 #[test]
