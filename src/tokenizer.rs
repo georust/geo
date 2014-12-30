@@ -84,6 +84,13 @@ impl Tokenizer {
 }
 
 #[test]
+fn test_tokenizer_empty() {
+    let test_str = "";
+    let mut tokens = tokenize(test_str);
+    assert!(tokens.next().is_none());
+}
+
+#[test]
 fn test_tokenizer_1word() {
     let test_str = "hello";
     let mut tokens = tokenize(test_str);
