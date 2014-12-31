@@ -49,13 +49,13 @@ impl Wkt {
 
     fn from_reader(reader: &mut Reader) -> Self {
         match reader.read_to_string() {
-            Ok(string) => Wkt::from_string(string),
+            Ok(string) => Wkt::from_str(string.as_slice()),
             Err(err) => panic!(err),
         }
     }
 
-    fn from_string(string: String) -> Self {
-        let ref mut tokens = tokenizer::tokenize(string.as_slice());
+    fn from_str(wkt_str: &str) -> Self {
+        let ref mut tokens = tokenizer::tokenize(wkt_str);
         Wkt::from_tokens(tokens)
     }
 
@@ -84,7 +84,7 @@ impl Wkt {
 
 #[test]
 fn basic_point() {
-    let mut wkt = Wkt::from_string("POINT (10 -20)".to_string());
+    let mut wkt = Wkt::from_str("POINT (10 -20)");
     assert_eq!(1, wkt.items.len());
     let point = wkt.items.pop().unwrap();
     assert_eq!(10.0, point.x);
