@@ -26,7 +26,7 @@ fn is_numberlike(c: char) -> bool {
     }
 }
 
-struct Tokenizer {
+pub struct Tokenizer {
     text: String
 }
 
