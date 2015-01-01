@@ -12,24 +12,24 @@ pub struct Point {
 }
 
 impl Point {
-    fn from_tokens(tokens: &mut Tokenizer) -> Self {
+    fn from_tokens(tokens: &mut Tokenizer) ->  Result<Self, &'static str> {
         match tokens.next() {
             Some(Token::ParenOpen) => (),
-            _ => panic!("FIXME"),
+            _ => return Err("FIXME"),
         };
         let x = match tokens.next() {
             Some(Token::Number(n)) => n,
-            _ => panic!("FIXME"),
+            _ => return Err("FIXME"),
         };
         let y = match tokens.next() {
             Some(Token::Number(n)) => n,
-            _ => panic!("FIXME"),
+            _ => return Err("FIXME"),
         };
         match tokens.next() {
             Some(Token::ParenClose) => (),
-            _ => panic!("FIXME"),
+            _ => return Err("FIXME"),
         };
-        Point {x: x, y: y, z: None, m: None}
+        Ok(Point {x: x, y: y, z: None, m: None})
     }
 }
 
@@ -47,36 +47,41 @@ impl Wkt {
         self.items.push(point);
     }
 
-    fn from_reader(reader: &mut Reader) -> Self {
+    fn from_reader(reader: &mut Reader) -> Result<Self, &'static str> {
         match reader.read_to_string() {
             Ok(string) => Wkt::from_str(string.as_slice()),
-            Err(err) => panic!(err),
+            Err(err) => Err(err.desc),
         }
     }
 
-    fn from_str(wkt_str: &str) -> Self {
-        let ref mut tokens = tokenizer::tokenize(wkt_str);
+    fn from_str(wkt_str: &str) -> Result<Self, &'static str> {
+        let tokens = tokenizer::tokenize(wkt_str);
         Wkt::from_tokens(tokens)
     }
 
-    fn from_tokens(tokens: &mut Tokenizer) -> Self {
+    fn from_tokens(mut tokens: Tokenizer) -> Result<Self, &'static str> {
         let mut wkt = Wkt::new();
         match tokens.next() {
             Some(Token::Word(word)) => {
                 if !word.is_ascii() {
-                    panic!("Encountered non-ascii word");
+                    return Err("Encountered non-ascii word");
                 }
                 let uppercased = word.to_ascii_uppercase();
                 match uppercased.as_slice() {
                     "POINT" => {
-                        wkt.add_point(Point::from_tokens(tokens));
-                        wkt
+                        match Point::from_tokens(&mut tokens) {
+                            Ok(point) => {
+                                wkt.add_point(point);
+                                Ok(wkt)
+                            }
+                            Err(s) => Err(s),
+                        }
                     },
-                    _ => wkt,
+                    _ => Ok(wkt),
                 }
             },
             // None
-            _ => panic!("Invalid WKT format"),
+            _ => Err("Invalid WKT format"),
         }
     }
 }
@@ -84,7 +89,7 @@ impl Wkt {
 
 #[test]
 fn basic_point() {
-    let mut wkt = Wkt::from_str("POINT (10 -20)");
+    let mut wkt = Wkt::from_str("POINT (10 -20)").ok().unwrap();
     assert_eq!(1, wkt.items.len());
     let point = wkt.items.pop().unwrap();
     assert_eq!(10.0, point.x);
