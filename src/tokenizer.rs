@@ -65,7 +65,7 @@ impl Tokenizer {
         if self.text.is_empty() {
             None
         } else {
-            self.text.remove(0)
+            Some(self.text.remove(0))
         }
     }
 
