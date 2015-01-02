@@ -1,3 +1,5 @@
+use std::iter::Peekable;
+
 use tokenizer::{Token, Tokenizer};
 
 
@@ -9,7 +11,7 @@ pub struct Coord {
 }
 
 impl Coord {
-    pub fn from_tokens(tokens: &mut Tokenizer) ->  Result<Self, &'static str> {
+    pub fn from_tokens(tokens: &mut Peekable<Token, Tokenizer>) ->  Result<Self, &'static str> {
         let x = match tokens.next() {
             Some(Token::Number(n)) => n,
             _ => return Err("Expected a number for the X coordinate"),

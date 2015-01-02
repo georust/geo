@@ -1,3 +1,5 @@
+use std::iter::Peekable;
+
 use tokenizer::{Token, Tokenizer};
 use types::coord::Coord;
 
@@ -7,7 +9,7 @@ pub struct Point {
 }
 
 impl Point {
-    pub fn from_tokens(tokens: &mut Tokenizer) ->  Result<Self, &'static str> {
+    pub fn from_tokens(tokens: &mut Peekable<Token, Tokenizer>) ->  Result<Self, &'static str> {
         match tokens.next() {
             Some(Token::ParenOpen) => (),
             _ => return Err("Missing open parenthesis for POINT"),

@@ -32,9 +32,10 @@ impl Wkt {
         Wkt::from_tokens(tokens)
     }
 
-    fn from_tokens(mut tokens: Tokenizer) -> Result<Self, &'static str> {
+    fn from_tokens(tokens: Tokenizer) -> Result<Self, &'static str> {
         let mut wkt = Wkt::new();
-        match tokens.next() {
+        let mut peek_tokens = tokens.peekable();
+        match peek_tokens.next() {
             Some(Token::Word(word)) => {
                 if !word.is_ascii() {
                     return Err("Encountered non-ascii word");
@@ -42,7 +43,7 @@ impl Wkt {
                 let uppercased = word.to_ascii_uppercase();
                 match uppercased.as_slice() {
                     "POINT" => {
-                        match Point::from_tokens(&mut tokens) {
+                        match Point::from_tokens(&mut peek_tokens) {
                             Ok(point) => {
                                 wkt.add_point(point);
                                 Ok(wkt)
