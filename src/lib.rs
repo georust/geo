@@ -80,10 +80,17 @@ impl Wkt {
                     _ => Ok(wkt),
                 }
             },
-            // None
+            None => Ok(wkt),
             _ => Err("Invalid WKT format"),
         }
     }
+}
+
+
+#[test]
+fn empty_string() {
+    let mut wkt = Wkt::from_str("").ok().unwrap();
+    assert_eq!(0, wkt.items.len());
 }
 
 
