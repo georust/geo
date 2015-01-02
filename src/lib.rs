@@ -45,13 +45,19 @@ impl Wkt {
                     "POINT" => Point::from_tokens,
                     _ => return Err("Invalid type encountered"),
                 };
+                match peek_tokens.next() {
+                    Some(Token::ParenOpen) => (),
+                    _ => return Err("Missing open parenthesis for type"),
+                };
                 match constructor(&mut peek_tokens) {
-                    Ok(point) => {
-                        wkt.add_point(point);
-                        Ok(wkt)
-                    }
-                    Err(s) => Err(s),
+                    Ok(point) => wkt.add_point(point),
+                    Err(s) => return Err(s),
                 }
+                match peek_tokens.next() {
+                    Some(Token::ParenClose) => (),
+                    _ => return Err("Missing closing parenthesis for type"),
+                };
+                Ok(wkt)
             },
             None => Ok(wkt),
             _ => Err("Invalid WKT format"),

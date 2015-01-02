@@ -12,10 +12,6 @@ impl LineString {
     pub fn from_tokens(tokens: &mut Peekable<Token, Tokenizer>) ->  Result<Self, &'static str> {
         let mut coords = Vec::new();
 
-        match tokens.next() {
-            Some(Token::ParenOpen) => (),
-            _ => return Err("Missing open parenthesis for LINESTRING"),
-        };
         coords.push(match Coord::from_tokens(tokens) {
             Ok(c) => c,
             Err(s) => return Err(s),
@@ -30,10 +26,6 @@ impl LineString {
             });
         }
 
-        match tokens.next() {
-            Some(Token::ParenClose) => (),
-            _ => return Err("Missing closing parenthesis for LINESTRING"),
-        };
         Ok(LineString {coords: coords})
     }
 }
