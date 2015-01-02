@@ -12,11 +12,11 @@ impl Coord {
     pub fn from_tokens(tokens: &mut Tokenizer) ->  Result<Self, &'static str> {
         let x = match tokens.next() {
             Some(Token::Number(n)) => n,
-            _ => return Err("FIXME"),
+            _ => return Err("Expected a number for the X coordinate"),
         };
         let y = match tokens.next() {
             Some(Token::Number(n)) => n,
-            _ => return Err("FIXME"),
+            _ => return Err("Expected a number for the Y coordinate"),
         };
         Ok(Coord {x: x, y: y, z: None, m: None})
     }
