@@ -46,7 +46,7 @@ impl Iterator<Token> for Tokenizer {
             c if is_whitespace(c) => self.next(),
             c if is_numberlike(c) => {
                 let mut number = c.to_string() + self.read_until_whitespace().as_slice();
-                number = number.trim_left_chars('+').to_string();
+                number = number.trim_left_matches('+').to_string();
                 match number.parse::<f64>() {
                     Some(parsed_num) => Some(Token::Number(parsed_num)),
                     None => panic!("Could not parse number: {}", number),
