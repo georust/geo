@@ -4,19 +4,15 @@ use tokenizer::{Token, Tokenizer};
 mod tokenizer;
 
 
-pub struct Point {
+pub struct Coord {
     x: f64,
     y: f64,
     z: Option<f64>,
     m: Option<f64>,
 }
 
-impl Point {
+impl Coord {
     fn from_tokens(tokens: &mut Tokenizer) ->  Result<Self, &'static str> {
-        match tokens.next() {
-            Some(Token::ParenOpen) => (),
-            _ => return Err("FIXME"),
-        };
         let x = match tokens.next() {
             Some(Token::Number(n)) => n,
             _ => return Err("FIXME"),
@@ -25,11 +21,30 @@ impl Point {
             Some(Token::Number(n)) => n,
             _ => return Err("FIXME"),
         };
+        Ok(Coord {x: x, y: y, z: None, m: None})
+    }
+}
+
+
+pub struct Point {
+    coord: Coord
+}
+
+impl Point {
+    fn from_tokens(tokens: &mut Tokenizer) ->  Result<Self, &'static str> {
+        match tokens.next() {
+            Some(Token::ParenOpen) => (),
+            _ => return Err("FIXME"),
+        };
+        let coord = match Coord::from_tokens(tokens) {
+            Ok(c) => c,
+            Err(s) => return Err(s),
+        };
         match tokens.next() {
             Some(Token::ParenClose) => (),
             _ => return Err("FIXME"),
         };
-        Ok(Point {x: x, y: y, z: None, m: None})
+        Ok(Point {coord: coord})
     }
 }
 
@@ -99,10 +114,10 @@ fn basic_point() {
     let mut wkt = Wkt::from_str("POINT (10 -20)").ok().unwrap();
     assert_eq!(1, wkt.items.len());
     let point = wkt.items.pop().unwrap();
-    assert_eq!(10.0, point.x);
-    assert_eq!(-20.0, point.y);
-    assert_eq!(None, point.z);
-    assert_eq!(None, point.m);
+    assert_eq!(10.0, point.coord.x);
+    assert_eq!(-20.0, point.coord.y);
+    assert_eq!(None, point.coord.z);
+    assert_eq!(None, point.coord.m);
 }
 
 
