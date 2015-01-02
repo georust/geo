@@ -34,8 +34,8 @@ impl Wkt {
 
     fn from_tokens(tokens: Tokenizer) -> Result<Self, &'static str> {
         let mut wkt = Wkt::new();
-        let mut peek_tokens = tokens.peekable();
-        match peek_tokens.next() {
+        let mut tokens = tokens.peekable();
+        match tokens.next() {
             Some(Token::Word(word)) => {
                 if !word.is_ascii() {
                     return Err("Encountered non-ascii word");
@@ -45,15 +45,15 @@ impl Wkt {
                     "POINT" => Point::from_tokens,
                     _ => return Err("Invalid type encountered"),
                 };
-                match peek_tokens.next() {
+                match tokens.next() {
                     Some(Token::ParenOpen) => (),
                     _ => return Err("Missing open parenthesis for type"),
                 };
-                match constructor(&mut peek_tokens) {
+                match constructor(&mut tokens) {
                     Ok(point) => wkt.add_point(point),
                     Err(s) => return Err(s),
                 }
-                match peek_tokens.next() {
+                match tokens.next() {
                     Some(Token::ParenClose) => (),
                     _ => return Err("Missing closing parenthesis for type"),
                 };
