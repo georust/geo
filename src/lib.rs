@@ -1,52 +1,10 @@
 use std::ascii::AsciiExt;
+
 use tokenizer::{Token, Tokenizer};
+use types::point::Point;
 
 mod tokenizer;
-
-
-pub struct Coord {
-    x: f64,
-    y: f64,
-    z: Option<f64>,
-    m: Option<f64>,
-}
-
-impl Coord {
-    fn from_tokens(tokens: &mut Tokenizer) ->  Result<Self, &'static str> {
-        let x = match tokens.next() {
-            Some(Token::Number(n)) => n,
-            _ => return Err("FIXME"),
-        };
-        let y = match tokens.next() {
-            Some(Token::Number(n)) => n,
-            _ => return Err("FIXME"),
-        };
-        Ok(Coord {x: x, y: y, z: None, m: None})
-    }
-}
-
-
-pub struct Point {
-    coord: Coord
-}
-
-impl Point {
-    fn from_tokens(tokens: &mut Tokenizer) ->  Result<Self, &'static str> {
-        match tokens.next() {
-            Some(Token::ParenOpen) => (),
-            _ => return Err("FIXME"),
-        };
-        let coord = match Coord::from_tokens(tokens) {
-            Ok(c) => c,
-            Err(s) => return Err(s),
-        };
-        match tokens.next() {
-            Some(Token::ParenClose) => (),
-            _ => return Err("FIXME"),
-        };
-        Ok(Point {coord: coord})
-    }
-}
+mod types;
 
 
 pub struct Wkt {
