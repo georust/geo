@@ -41,17 +41,16 @@ impl Wkt {
                     return Err("Encountered non-ascii word");
                 }
                 let uppercased = word.to_ascii_uppercase();
-                match uppercased.as_slice() {
-                    "POINT" => {
-                        match Point::from_tokens(&mut peek_tokens) {
-                            Ok(point) => {
-                                wkt.add_point(point);
-                                Ok(wkt)
-                            }
-                            Err(s) => Err(s),
-                        }
-                    },
-                    _ => Ok(wkt),
+                let constructor = match uppercased.as_slice() {
+                    "POINT" => Point::from_tokens,
+                    _ => return Err("Invalid type encountered"),
+                };
+                match constructor(&mut peek_tokens) {
+                    Ok(point) => {
+                        wkt.add_point(point);
+                        Ok(wkt)
+                    }
+                    Err(s) => Err(s),
                 }
             },
             None => Ok(wkt),
