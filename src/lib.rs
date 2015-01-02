@@ -62,7 +62,7 @@ impl Wkt {
 
 #[test]
 fn empty_string() {
-    let mut wkt = Wkt::from_str("").ok().unwrap();
+    let wkt = Wkt::from_str("").ok().unwrap();
     assert_eq!(0, wkt.items.len());
 }
 
