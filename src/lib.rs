@@ -104,3 +104,12 @@ fn basic_point() {
     assert_eq!(None, point.z);
     assert_eq!(None, point.m);
 }
+
+
+#[test]
+fn invalid_points() {
+    Wkt::from_str("POINT ()").err().unwrap();
+    Wkt::from_str("POINT (10)").err().unwrap();
+    Wkt::from_str("POINT 10").err().unwrap();
+    Wkt::from_str("POINT (10 -20 40)").err().unwrap();
+}
