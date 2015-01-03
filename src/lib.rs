@@ -1,14 +1,32 @@
 use std::ascii::AsciiExt;
+use std::iter::Peekable;
 
 use tokenizer::{Token, Tokenizer};
+use types::linestring::LineString;
 use types::point::Point;
 
 mod tokenizer;
 mod types;
 
 
+pub enum WktItem {
+    Point(Point),
+    LineString(LineString),
+}
+
+impl WktItem {
+    fn from_word_and_tokens(word: &str, tokens: &mut Peekable<Token, Tokenizer>)-> Result<Self, &'static str> {
+        match word {
+            "POINT" => Point::from_tokens(tokens).map(|x| x.as_item()),
+            "LINESTRING" => LineString::from_tokens(tokens).map(|x| x.as_item()),
+            _ => Err("Invalid type encountered"),
+        }
+    }
+}
+
+
 pub struct Wkt {
-    items: Vec<Point>
+    items: Vec<WktItem>
 }
 
 impl Wkt {
@@ -16,8 +34,8 @@ impl Wkt {
         Wkt {items: vec![]}
     }
 
-    fn add_point(&mut self, point: Point) {
-        self.items.push(point);
+    fn add_item(&mut self, item: WktItem) {
+        self.items.push(item);
     }
 
     fn from_reader(reader: &mut Reader) -> Result<Self, &'static str> {
@@ -41,16 +59,12 @@ impl Wkt {
                     return Err("Encountered non-ascii word");
                 }
                 let uppercased = word.to_ascii_uppercase();
-                let constructor = match uppercased.as_slice() {
-                    "POINT" => Point::from_tokens,
-                    _ => return Err("Invalid type encountered"),
-                };
                 match tokens.next() {
                     Some(Token::ParenOpen) => (),
                     _ => return Err("Missing open parenthesis for type"),
                 };
-                match constructor(&mut tokens) {
-                    Ok(point) => wkt.add_point(point),
+                match WktItem::from_word_and_tokens(uppercased.as_slice(), &mut tokens) {
+                    Ok(item) => wkt.add_item(item),
                     Err(s) => return Err(s),
                 }
                 match tokens.next() {
@@ -77,11 +91,36 @@ fn empty_string() {
 fn basic_point() {
     let mut wkt = Wkt::from_str("POINT (10 -20)").ok().unwrap();
     assert_eq!(1, wkt.items.len());
-    let point = wkt.items.pop().unwrap();
+    let point = match wkt.items.pop().unwrap() {
+        WktItem::Point(point) => point,
+        _ => unreachable!(),
+    };
     assert_eq!(10.0, point.coord.x);
     assert_eq!(-20.0, point.coord.y);
     assert_eq!(None, point.coord.z);
     assert_eq!(None, point.coord.m);
+}
+
+
+#[test]
+fn basic_linestring() {
+    let mut wkt = Wkt::from_str("LINESTRING (10 -20, -0 -0.5)").ok().unwrap();
+    assert_eq!(1, wkt.items.len());
+    let linestring = match wkt.items.pop().unwrap() {
+        WktItem::LineString(linestring) => linestring,
+        _ => unreachable!(),
+    };
+    assert_eq!(2, linestring.coords.len());
+
+    assert_eq!(10.0, linestring.coords[0].x);
+    assert_eq!(-20.0, linestring.coords[0].y);
+    assert_eq!(None, linestring.coords[0].z);
+    assert_eq!(None, linestring.coords[0].m);
+
+    assert_eq!(0.0, linestring.coords[1].x);
+    assert_eq!(-0.5, linestring.coords[1].y);
+    assert_eq!(None, linestring.coords[1].z);
+    assert_eq!(None, linestring.coords[1].m);
 }
 
 

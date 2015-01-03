@@ -2,6 +2,7 @@ use std::iter::Peekable;
 
 use tokenizer::{Token, Tokenizer};
 use types::coord::Coord;
+use WktItem;
 
 
 pub struct LineString {
@@ -9,7 +10,7 @@ pub struct LineString {
 }
 
 impl LineString {
-    pub fn from_tokens(tokens: &mut Peekable<Token, Tokenizer>) ->  Result<Self, &'static str> {
+    pub fn from_tokens(tokens: &mut Peekable<Token, Tokenizer>) -> Result<Self, &'static str> {
         let mut coords = Vec::new();
 
         coords.push(match Coord::from_tokens(tokens) {
@@ -27,5 +28,9 @@ impl LineString {
         }
 
         Ok(LineString {coords: coords})
+    }
+
+    pub fn as_item(self) -> WktItem {
+        WktItem::LineString(self)
     }
 }
