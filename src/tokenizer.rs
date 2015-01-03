@@ -36,7 +36,7 @@ pub struct Tokens {
 
 impl Iterator<Token> for Tokens {
     fn next(&mut self) -> Option<Token> {
-        let next_char = match self.pop_char() {
+        let next_char = match self.pop_front() {
             Some(c) => c,
             None => return None,
         };
@@ -64,16 +64,15 @@ impl Iterator<Token> for Tokens {
 }
 
 impl Tokens {
-    fn pop_char(&mut self) -> Option<char> {
-        if self.text.is_empty() {
-            None
-        } else {
-            Some(self.text.remove(0))
+    fn pop_front(&mut self) -> Option<char> {
+        match self.text.is_empty() {
+            true => None,
+            false => Some(self.text.remove(0))
         }
     }
 
     fn read_until_whitespace(&mut self) -> String {
-        let popped_char = self.pop_char();
+        let popped_char = self.pop_front();
         if popped_char.is_none() {
             return "".to_string()
         }
