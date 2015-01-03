@@ -1,3 +1,5 @@
+use std::iter::Peekable;
+
 #[deriving(PartialEq, Show)]
 pub enum Token {
     Comma,
@@ -7,8 +9,8 @@ pub enum Token {
     Word(String),
 }
 
-pub fn tokenize(input: &str) -> Tokenizer {
-    Tokenizer {text: String::from_str(input)}
+pub fn tokenize(input: &str) -> Tokens {
+    Tokens {text: String::from_str(input)}
 }
 
 fn is_whitespace(c: char) -> bool {
@@ -26,11 +28,13 @@ fn is_numberlike(c: char) -> bool {
     }
 }
 
-pub struct Tokenizer {
+pub type PeekableTokens = Peekable<Token, Tokens>;
+
+pub struct Tokens {
     text: String
 }
 
-impl Iterator<Token> for Tokenizer {
+impl Iterator<Token> for Tokens {
     fn next(&mut self) -> Option<Token> {
         let popped_char = self.pop_char();
         if popped_char.is_none() {
@@ -60,7 +64,7 @@ impl Iterator<Token> for Tokenizer {
     }
 }
 
-impl Tokenizer {
+impl Tokens {
     fn pop_char(&mut self) -> Option<char> {
         if self.text.is_empty() {
             None

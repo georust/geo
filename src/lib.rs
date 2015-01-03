@@ -1,7 +1,6 @@
 use std::ascii::AsciiExt;
-use std::iter::Peekable;
 
-use tokenizer::{Token, Tokenizer};
+use tokenizer::{PeekableTokens, Token, Tokens};
 use types::linestring::LineString;
 use types::point::Point;
 
@@ -15,7 +14,7 @@ pub enum WktItem {
 }
 
 impl WktItem {
-    fn from_word_and_tokens(word: &str, tokens: &mut Peekable<Token, Tokenizer>)-> Result<Self, &'static str> {
+    fn from_word_and_tokens(word: &str, tokens: &mut PeekableTokens)-> Result<Self, &'static str> {
         match word {
             "POINT" => Point::from_tokens(tokens).map(|x| x.as_item()),
             "LINESTRING" => LineString::from_tokens(tokens).map(|x| x.as_item()),
@@ -50,7 +49,7 @@ impl Wkt {
         Wkt::from_tokens(tokens)
     }
 
-    fn from_tokens(tokens: Tokenizer) -> Result<Self, &'static str> {
+    fn from_tokens(tokens: Tokens) -> Result<Self, &'static str> {
         let mut wkt = Wkt::new();
         let mut tokens = tokens.peekable();
         let word = match tokens.next() {
