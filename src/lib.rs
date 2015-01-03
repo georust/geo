@@ -53,29 +53,29 @@ impl Wkt {
     fn from_tokens(tokens: Tokenizer) -> Result<Self, &'static str> {
         let mut wkt = Wkt::new();
         let mut tokens = tokens.peekable();
-        match tokens.next() {
+        let word = match tokens.next() {
             Some(Token::Word(word)) => {
                 if !word.is_ascii() {
                     return Err("Encountered non-ascii word");
                 }
-                let uppercased = word.to_ascii_uppercase();
-                match tokens.next() {
-                    Some(Token::ParenOpen) => (),
-                    _ => return Err("Missing open parenthesis for type"),
-                };
-                match WktItem::from_word_and_tokens(uppercased.as_slice(), &mut tokens) {
-                    Ok(item) => wkt.add_item(item),
-                    Err(s) => return Err(s),
-                }
-                match tokens.next() {
-                    Some(Token::ParenClose) => (),
-                    _ => return Err("Missing closing parenthesis for type"),
-                };
-                Ok(wkt)
+                word.to_ascii_uppercase()
             },
-            None => Ok(wkt),
-            _ => Err("Invalid WKT format"),
+            None => return Ok(wkt),
+            _ => return Err("Invalid WKT format"),
+        };
+        match tokens.next() {
+            Some(Token::ParenOpen) => (),
+            _ => return Err("Missing open parenthesis for type"),
+        };
+        match WktItem::from_word_and_tokens(word.as_slice(), &mut tokens) {
+            Ok(item) => wkt.add_item(item),
+            Err(s) => return Err(s),
         }
+        match tokens.next() {
+            Some(Token::ParenClose) => (),
+            _ => return Err("Missing closing parenthesis for type"),
+        };
+        Ok(wkt)
     }
 }
 
