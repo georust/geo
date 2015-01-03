@@ -8,6 +8,10 @@ pub struct LineString {
 }
 
 impl LineString {
+    pub fn new() -> Self {
+        LineString {coords: Vec::new()}
+    }
+
     pub fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let mut coords = Vec::new();
 

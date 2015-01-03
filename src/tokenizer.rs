@@ -9,10 +9,6 @@ pub enum Token {
     Word(String),
 }
 
-pub fn tokenize(input: &str) -> Tokens {
-    Tokens {text: String::from_str(input)}
-}
-
 fn is_whitespace(c: char) -> bool {
     match c {
         '\n' | '\r' | '\t' | ' ' => true,
@@ -32,6 +28,12 @@ pub type PeekableTokens = Peekable<Token, Tokens>;
 
 pub struct Tokens {
     text: String
+}
+
+impl Tokens {
+    pub fn from_str(input: &str) -> Self {
+        Tokens {text: String::from_str(input)}
+    }
 }
 
 impl Iterator<Token> for Tokens {
@@ -92,14 +94,14 @@ impl Tokens {
 #[test]
 fn test_tokenizer_empty() {
     let test_str = "";
-    let tokens: Vec<Token> = tokenize(test_str).collect();
+    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![]);
 }
 
 #[test]
 fn test_tokenizer_1word() {
     let test_str = "hello";
-    let tokens: Vec<Token> = tokenize(test_str).collect();
+    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![
         Token::Word("hello".to_string()),
     ]);
@@ -108,7 +110,7 @@ fn test_tokenizer_1word() {
 #[test]
 fn test_tokenizer_2words() {
     let test_str = "hello world";
-    let tokens: Vec<Token> = tokenize(test_str).collect();
+    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![
         Token::Word("hello".to_string()),
         Token::Word("world".to_string()),
@@ -118,7 +120,7 @@ fn test_tokenizer_2words() {
 #[test]
 fn test_tokenizer_1number() {
     let test_str = "4.2";
-    let tokens: Vec<Token> = tokenize(test_str).collect();
+    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![
         Token::Number(4.2),
     ]);
@@ -127,7 +129,7 @@ fn test_tokenizer_1number() {
 #[test]
 fn test_tokenizer_1number_plus() {
     let test_str = "+4.2";
-    let tokens: Vec<Token> = tokenize(test_str).collect();
+    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![
         Token::Number(4.2),
     ]);
@@ -136,7 +138,7 @@ fn test_tokenizer_1number_plus() {
 #[test]
 fn test_tokenizer_2numbers() {
     let test_str = ".4 -2";
-    let tokens: Vec<Token> = tokenize(test_str).collect();
+    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![
         Token::Number(0.4),
         Token::Number(-2.0),
@@ -146,7 +148,7 @@ fn test_tokenizer_2numbers() {
 #[test]
 fn test_tokenizer_point() {
     let test_str = "POINT (10 -20)";
-    let tokens: Vec<Token> = tokenize(test_str).collect();
+    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![
         Token::Word("POINT".to_string()),
         Token::ParenOpen,

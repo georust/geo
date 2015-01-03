@@ -45,7 +45,7 @@ impl Wkt {
     }
 
     fn from_str(wkt_str: &str) -> Result<Self, &'static str> {
-        let tokens = tokenizer::tokenize(wkt_str);
+        let tokens = Tokens::from_str(wkt_str);
         Wkt::from_tokens(tokens)
     }
 
