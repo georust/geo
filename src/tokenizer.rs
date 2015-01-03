@@ -36,11 +36,10 @@ pub struct Tokens {
 
 impl Iterator<Token> for Tokens {
     fn next(&mut self) -> Option<Token> {
-        let popped_char = self.pop_char();
-        if popped_char.is_none() {
-            return None
-        }
-        let next_char = popped_char.unwrap();
+        let next_char = match self.pop_char() {
+            Some(c) => c,
+            None => return None,
+        };
 
         match next_char {
             '\0' => None,
