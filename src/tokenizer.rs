@@ -1,6 +1,6 @@
 use std::iter::Peekable;
 
-#[deriving(PartialEq, Show)]
+#[derive(PartialEq, Show)]
 pub enum Token {
     Comma,
     Number(f64),
@@ -36,7 +36,9 @@ impl Tokens {
     }
 }
 
-impl Iterator<Token> for Tokens {
+impl Iterator for Tokens {
+    type Item = Token;
+
     fn next(&mut self) -> Option<Token> {
         let next_char = match self.pop_front() {
             Some(c) => c,
