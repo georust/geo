@@ -74,11 +74,10 @@ impl Tokens {
     }
 
     fn read_until_whitespace(&mut self) -> String {
-        let popped_char = self.pop_front();
-        if popped_char.is_none() {
-            return "".to_string()
-        }
-        let next_char = popped_char.unwrap();
+        let next_char = match self.pop_front() {
+            Some(c) => c,
+            None => return "".to_string(),
+        };
 
         match next_char {
             '\0' | '(' | ')' | ',' => {
