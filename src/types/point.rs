@@ -1,4 +1,5 @@
 use tokenizer::{PeekableTokens, Token};
+use types::FromTokens;
 use types::coord::Coord;
 use WktItem;
 
@@ -8,15 +9,17 @@ pub struct Point {
 }
 
 impl Point {
-    pub fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
+    pub fn as_item(self) -> WktItem {
+        WktItem::Point(self)
+    }
+}
+
+impl FromTokens for Point {
+    fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let coord = match Coord::from_tokens(tokens) {
             Ok(c) => c,
             Err(s) => return Err(s),
         };
         Ok(Point {coord: coord})
-    }
-
-    pub fn as_item(self) -> WktItem {
-        WktItem::Point(self)
     }
 }

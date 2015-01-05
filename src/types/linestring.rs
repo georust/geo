@@ -1,4 +1,5 @@
 use tokenizer::{PeekableTokens, Token};
+use types::FromTokens;
 use types::coord::Coord;
 use WktItem;
 
@@ -12,7 +13,13 @@ impl LineString {
         LineString {coords: Vec::new()}
     }
 
-    pub fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
+    pub fn as_item(self) -> WktItem {
+        WktItem::LineString(self)
+    }
+}
+
+impl FromTokens for LineString {
+    fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let mut coords = Vec::new();
 
         coords.push(match Coord::from_tokens(tokens) {
@@ -30,9 +37,5 @@ impl LineString {
         }
 
         Ok(LineString {coords: coords})
-    }
-
-    pub fn as_item(self) -> WktItem {
-        WktItem::LineString(self)
     }
 }

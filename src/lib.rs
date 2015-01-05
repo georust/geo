@@ -3,6 +3,7 @@
 use std::ascii::AsciiExt;
 
 use tokenizer::{PeekableTokens, Token, Tokens};
+use types::FromTokens;
 use types::linestring::LineString;
 use types::point::Point;
 
@@ -18,8 +19,14 @@ pub enum WktItem {
 impl WktItem {
     fn from_word_and_tokens(word: &str, tokens: &mut PeekableTokens)-> Result<Self, &'static str> {
         match word {
-            "POINT" => Point::from_tokens(tokens).map(|x| x.as_item()),
-            "LINESTRING" => LineString::from_tokens(tokens).map(|x| x.as_item()),
+            "POINT" => {
+                let x: Result<Point, &'static str> = FromTokens::from_tokens(tokens);
+                x.map(|y| y.as_item())
+            },
+            "LINESTRING" => {
+                let x: Result<LineString, &'static str> = FromTokens::from_tokens(tokens);
+                x.map(|y| y.as_item())
+            },
             _ => Err("Invalid type encountered"),
         }
     }
