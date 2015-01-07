@@ -20,11 +20,11 @@ impl WktItem {
     fn from_word_and_tokens(word: &str, tokens: &mut PeekableTokens)-> Result<Self, &'static str> {
         match word {
             "POINT" => {
-                let x: Result<Point, &'static str> = FromTokens::from_tokens(tokens);
+                let x: Result<Point, _> = FromTokens::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             "LINESTRING" => {
-                let x: Result<LineString, &'static str> = FromTokens::from_tokens(tokens);
+                let x: Result<LineString, _> = FromTokens::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             _ => Err("Invalid type encountered"),
@@ -71,18 +71,10 @@ impl Wkt {
             None => return Ok(wkt),
             _ => return Err("Invalid WKT format"),
         };
-        match tokens.next() {
-            Some(Token::ParenOpen) => (),
-            _ => return Err("Missing open parenthesis for type"),
-        };
         match WktItem::from_word_and_tokens(word.as_slice(), &mut tokens) {
             Ok(item) => wkt.add_item(item),
             Err(s) => return Err(s),
         }
-        match tokens.next() {
-            Some(Token::ParenClose) => (),
-            _ => return Err("Missing closing parenthesis for type"),
-        };
         Ok(wkt)
     }
 }
