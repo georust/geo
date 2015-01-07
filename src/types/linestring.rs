@@ -9,10 +9,6 @@ pub struct LineString {
 }
 
 impl LineString {
-    pub fn new() -> Self {
-        LineString {coords: Vec::new()}
-    }
-
     pub fn as_item(self) -> WktItem {
         WktItem::LineString(self)
     }
