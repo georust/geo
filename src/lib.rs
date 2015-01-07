@@ -46,13 +46,6 @@ impl Wkt {
         self.items.push(item);
     }
 
-    fn from_reader(reader: &mut Reader) -> Result<Self, &'static str> {
-        match reader.read_to_string() {
-            Ok(string) => Wkt::from_str(string.as_slice()),
-            Err(err) => Err(err.desc),
-        }
-    }
-
     fn from_str(wkt_str: &str) -> Result<Self, &'static str> {
         let tokens = Tokens::from_str(wkt_str);
         Wkt::from_tokens(tokens)
