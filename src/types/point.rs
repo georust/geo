@@ -1,4 +1,4 @@
-use tokenizer::{PeekableTokens, Token};
+use tokenizer::PeekableTokens;
 use types::FromTokens;
 use types::coord::Coord;
 use WktItem;
