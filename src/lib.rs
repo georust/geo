@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![feature(associated_types)]
-
 use std::ascii::AsciiExt;
 
 use tokenizer::{PeekableTokens, Token, Tokens};
