@@ -18,6 +18,7 @@ use tokenizer::{PeekableTokens, Token, Tokens};
 use types::FromTokens;
 use types::linestring::LineString;
 use types::point::Point;
+use types::polygon::Polygon;
 
 mod tokenizer;
 mod types;
@@ -26,6 +27,7 @@ mod types;
 pub enum WktItem {
     Point(Point),
     LineString(LineString),
+    Polygon(Polygon),
 }
 
 impl WktItem {
@@ -37,6 +39,10 @@ impl WktItem {
             },
             "LINESTRING" => {
                 let x: Result<LineString, _> = FromTokens::from_tokens_with_parens(tokens);
+                x.map(|y| y.as_item())
+            },
+            "POLYGON" => {
+                let x: Result<Polygon, _> = FromTokens::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             _ => Err("Invalid type encountered"),
@@ -128,6 +134,17 @@ mod tests {
         assert_eq!(-0.5, linestring.coords[1].y);
         assert_eq!(None, linestring.coords[1].z);
         assert_eq!(None, linestring.coords[1].m);
+    }
+
+    #[test]
+    fn basic_polygon() {
+        let mut wkt = Wkt::from_str("POLYGON ((8 4, 4 0, 0 4, 8 4), (7 3, 4 1, 1 4, 7 3))").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let linestring = match wkt.items.pop().unwrap() {
+            WktItem::Polygon(linestring) => linestring,
+            _ => unreachable!(),
+        };
+        assert_eq!(2, linestring.lines.len());
     }
 
     #[test]
