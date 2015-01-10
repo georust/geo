@@ -118,6 +118,20 @@ mod tests {
     }
 
     #[test]
+    fn basic_point_whitespace() {
+        let mut wkt = Wkt::from_str(" \n\t\rPOINT \n\t\r( \n\r\t10 \n\t\r-20 \n\t\r) \n\t\r").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let point = match wkt.items.pop().unwrap() {
+            WktItem::Point(point) => point,
+            _ => unreachable!(),
+        };
+        assert_eq!(10.0, point.coord.x);
+        assert_eq!(-20.0, point.coord.y);
+        assert_eq!(None, point.coord.z);
+        assert_eq!(None, point.coord.m);
+    }
+
+    #[test]
     fn basic_linestring() {
         let mut wkt = Wkt::from_str("LINESTRING (10 -20, -0 -0.5)").ok().unwrap();
         assert_eq!(1, wkt.items.len());
