@@ -21,6 +21,7 @@ use types::FromTokens;
 use types::linestring::LineString;
 use types::point::Point;
 use types::polygon::Polygon;
+use types::multipoint::MultiPoint;
 
 mod tokenizer;
 mod types;
@@ -30,6 +31,7 @@ pub enum WktItem {
     Point(Point),
     LineString(LineString),
     Polygon(Polygon),
+    MultiPoint(MultiPoint),
 }
 
 impl WktItem {
@@ -45,6 +47,10 @@ impl WktItem {
             },
             "POLYGON" => {
                 let x: Result<Polygon, _> = FromTokens::from_tokens_with_parens(tokens);
+                x.map(|y| y.as_item())
+            },
+            "MULTIPOINT" => {
+                let x: Result<MultiPoint, _> = FromTokens::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             _ => Err("Invalid type encountered"),
@@ -161,6 +167,17 @@ mod tests {
             _ => unreachable!(),
         };
         assert_eq!(2, linestring.lines.len());
+    }
+
+    #[test]
+    fn basic_multipoint() {
+        let mut wkt = Wkt::from_str("MULTIPOINT ((8 4), (4 0))").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let multipoint = match wkt.items.pop().unwrap() {
+            WktItem::MultiPoint(multipoint) => multipoint,
+            _ => unreachable!(),
+        };
+        assert_eq!(2, multipoint.points.len());
     }
 
     #[test]
