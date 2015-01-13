@@ -18,6 +18,7 @@ pub mod coord;
 pub mod point;
 pub mod polygon;
 pub mod linestring;
+pub mod multipoint;
 
 
 pub trait FromTokens: Sized {
