@@ -30,22 +30,7 @@ impl LineString {
 
 impl FromTokens for LineString {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let mut coords = Vec::new();
-
-        coords.push(match Coord::from_tokens(tokens) {
-            Ok(c) => c,
-            Err(s) => return Err(s),
-        });
-
-        while let Some(&Token::Comma) = tokens.peek() {
-            tokens.next();  // throw away comma
-
-            coords.push(match Coord::from_tokens(tokens) {
-                Ok(c) => c,
-                Err(s) => return Err(s),
-            });
-        }
-
-        Ok(LineString {coords: coords})
+        let result: Result<Vec<Coord>, _> = FromTokens::comma_many(FromTokens::from_tokens, tokens);
+        result.map(|vec| LineString {coords: vec})
     }
 }

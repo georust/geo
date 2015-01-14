@@ -30,26 +30,7 @@ impl MultiPoint {
 
 impl FromTokens for MultiPoint {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let mut points = Vec::new();
-
-        let x: Result<Point, _> = FromTokens::from_tokens_with_parens(tokens);
-
-        points.push(match x {
-            Ok(p) => p,
-            Err(s) => return Err(s),
-        });
-
-        while let Some(&Token::Comma) = tokens.peek() {
-            tokens.next();  // throw away comma
-
-            let x: Result<Point, _> = FromTokens::from_tokens_with_parens(tokens);
-
-            points.push(match x {
-                Ok(p) => p,
-                Err(s) => return Err(s),
-            });
-        }
-
-        Ok(MultiPoint {points: points})
+        let result: Result<Vec<Point>, _> = FromTokens::comma_many(FromTokens::from_tokens_with_parens, tokens);
+        result.map(|vec| MultiPoint {points: vec})
     }
 }

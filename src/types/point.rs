@@ -30,10 +30,7 @@ impl Point {
 
 impl FromTokens for Point {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let coord = match Coord::from_tokens(tokens) {
-            Ok(c) => c,
-            Err(s) => return Err(s),
-        };
-        Ok(Point {coord: coord})
+        let result: Result<Coord, _> = FromTokens::from_tokens(tokens);
+        result.map(|coord| Point {coord: coord})
     }
 }
