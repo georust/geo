@@ -30,26 +30,7 @@ impl Polygon {
 
 impl FromTokens for Polygon {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let mut lines = Vec::new();
-
-        let x: Result<LineString, _> = FromTokens::from_tokens_with_parens(tokens);
-
-        lines.push(match x {
-            Ok(l) => l,
-            Err(s) => return Err(s),
-        });
-
-        while let Some(&Token::Comma) = tokens.peek() {
-            tokens.next();  // throw away comma
-
-            let x: Result<LineString, _> = FromTokens::from_tokens_with_parens(tokens);
-
-            lines.push(match x {
-                Ok(c) => c,
-                Err(s) => return Err(s),
-            });
-        }
-
-        Ok(Polygon { lines: lines })
+        let result: Result<Vec<LineString>, _> = FromTokens::comma_many(FromTokens::from_tokens_with_parens, tokens);
+        result.map(|vec| Polygon {lines: vec})
     }
 }

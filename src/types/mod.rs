@@ -36,4 +36,25 @@ pub trait FromTokens: Sized {
         };
         result
     }
+
+    fn comma_many<F>(f: F, tokens: &mut PeekableTokens) -> Result<Vec<Self>, &'static str>
+            where F: Fn(&mut PeekableTokens) -> Result<Self, &'static str> {
+        let mut items = Vec::new();
+
+        match f(tokens) {
+            Ok(i) => items.push(i),
+            Err(s) => return Err(s),
+        };
+
+        while let Some(&Token::Comma) = tokens.peek() {
+            tokens.next();  // throw away comma
+
+            match f(tokens) {
+                Ok(i) => items.push(i),
+                Err(s) => return Err(s),
+            };
+        }
+
+        Ok(items)
+    }
 }

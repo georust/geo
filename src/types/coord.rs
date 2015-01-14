@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use tokenizer::{PeekableTokens, Token};
+use types::FromTokens;
 
 
 pub struct Coord {
@@ -22,8 +23,8 @@ pub struct Coord {
     pub m: Option<f64>,
 }
 
-impl Coord {
-    pub fn from_tokens(tokens: &mut PeekableTokens) ->  Result<Self, &'static str> {
+impl FromTokens for Coord {
+    fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let x = match tokens.next() {
             Some(Token::Number(n)) => n,
             _ => return Err("Expected a number for the X coordinate"),
