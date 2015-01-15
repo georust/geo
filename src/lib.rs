@@ -22,6 +22,8 @@ use types::linestring::LineString;
 use types::point::Point;
 use types::polygon::Polygon;
 use types::multipoint::MultiPoint;
+use types::multilinestring::MultiLineString;
+use types::multipolygon::MultiPolygon;
 
 mod tokenizer;
 mod types;
@@ -32,6 +34,8 @@ pub enum WktItem {
     LineString(LineString),
     Polygon(Polygon),
     MultiPoint(MultiPoint),
+    MultiLineString(MultiLineString),
+    MultiPolygon(MultiPolygon),
 }
 
 impl WktItem {
@@ -51,6 +55,14 @@ impl WktItem {
             },
             "MULTIPOINT" => {
                 let x: Result<MultiPoint, _> = FromTokens::from_tokens_with_parens(tokens);
+                x.map(|y| y.as_item())
+            },
+            "MULTILINESTRING" => {
+                let x: Result<MultiLineString, _> = FromTokens::from_tokens_with_parens(tokens);
+                x.map(|y| y.as_item())
+            },
+            "MULTIPOLYGON" => {
+                let x: Result<MultiPolygon, _> = FromTokens::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             _ => Err("Invalid type encountered"),
@@ -178,6 +190,28 @@ mod tests {
             _ => unreachable!(),
         };
         assert_eq!(2, multipoint.points.len());
+    }
+
+    #[test]
+    fn basic_multilinestring() {
+        let mut wkt = Wkt::from_str("MULTILINESTRING ((8 4, -3 0), (4 0, 6 -10))").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let multilinestring = match wkt.items.pop().unwrap() {
+            WktItem::MultiLineString(multilinestring) => multilinestring,
+            _ => unreachable!(),
+        };
+        assert_eq!(2, multilinestring.lines.len());
+    }
+
+    #[test]
+    fn basic_multipolygon() {
+        let mut wkt = Wkt::from_str("MULTIPOLYGON (((8 4)), ((4 0)))").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let multipolygon = match wkt.items.pop().unwrap() {
+            WktItem::MultiPolygon(multipolygon) => multipolygon,
+            _ => unreachable!(),
+        };
+        assert_eq!(2, multipolygon.polygons.len());
     }
 
     #[test]
