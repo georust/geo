@@ -2,7 +2,7 @@
 
 name = "wkt"
 description = "Rust read/write support for well-known text (WKT)"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Corey Farwell <coreyf@rwell.org>"]
 license = "Apache-2.0"
 repository = "https://github.com/georust/rust-wkt"
