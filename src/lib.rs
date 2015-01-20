@@ -18,6 +18,7 @@ use std::ascii::AsciiExt;
 
 use tokenizer::{PeekableTokens, Token, Tokens};
 use types::FromTokens;
+use types::geometrycollection::GeometryCollection;
 use types::linestring::LineString;
 use types::point::Point;
 use types::polygon::Polygon;
@@ -36,6 +37,7 @@ pub enum WktItem {
     MultiPoint(MultiPoint),
     MultiLineString(MultiLineString),
     MultiPolygon(MultiPolygon),
+    GeometryCollection(GeometryCollection),
 }
 
 impl WktItem {
@@ -63,6 +65,10 @@ impl WktItem {
             },
             "MULTIPOLYGON" => {
                 let x = <MultiPolygon as FromTokens>::from_tokens_with_parens(tokens);
+                x.map(|y| y.as_item())
+            },
+            "GEOMETRYCOLLECTION" => {
+                let x = <GeometryCollection as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             _ => Err("Invalid type encountered"),
@@ -212,6 +218,17 @@ mod tests {
             _ => unreachable!(),
         };
         assert_eq!(2, multipolygon.polygons.len());
+    }
+
+    #[test]
+    fn basic_geometrycollection() {
+        let mut wkt = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4)))").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let geometrycollection = match wkt.items.pop().unwrap() {
+            WktItem::GeometryCollection(geometrycollection) => geometrycollection,
+            _ => unreachable!(),
+        };
+        assert_eq!(1, geometrycollection.items.len());
     }
 
     #[test]
