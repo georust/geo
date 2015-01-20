@@ -30,7 +30,7 @@ impl LineString {
 
 impl FromTokens for LineString {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result: Result<Vec<Coord>, _> = FromTokens::comma_many(FromTokens::from_tokens, tokens);
+        let result = FromTokens::comma_many(<Coord as FromTokens>::from_tokens, tokens);
         result.map(|vec| LineString {coords: vec})
     }
 }

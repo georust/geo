@@ -42,27 +42,27 @@ impl WktItem {
     fn from_word_and_tokens(word: &str, tokens: &mut PeekableTokens)-> Result<Self, &'static str> {
         match word {
             "POINT" => {
-                let x: Result<Point, _> = FromTokens::from_tokens_with_parens(tokens);
+                let x = <Point as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             "LINESTRING" => {
-                let x: Result<LineString, _> = FromTokens::from_tokens_with_parens(tokens);
+                let x = <LineString as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             "POLYGON" => {
-                let x: Result<Polygon, _> = FromTokens::from_tokens_with_parens(tokens);
+                let x = <Polygon as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             "MULTIPOINT" => {
-                let x: Result<MultiPoint, _> = FromTokens::from_tokens_with_parens(tokens);
+                let x = <MultiPoint as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             "MULTILINESTRING" => {
-                let x: Result<MultiLineString, _> = FromTokens::from_tokens_with_parens(tokens);
+                let x = <MultiLineString as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             "MULTIPOLYGON" => {
-                let x: Result<MultiPolygon, _> = FromTokens::from_tokens_with_parens(tokens);
+                let x = <MultiPolygon as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             _ => Err("Invalid type encountered"),

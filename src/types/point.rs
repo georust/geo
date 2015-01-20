@@ -30,7 +30,7 @@ impl Point {
 
 impl FromTokens for Point {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result: Result<Coord, _> = FromTokens::from_tokens(tokens);
+        let result = <Coord as FromTokens>::from_tokens(tokens);
         result.map(|coord| Point {coord: coord})
     }
 }

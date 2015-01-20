@@ -30,7 +30,7 @@ impl MultiLineString {
 
 impl FromTokens for MultiLineString {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result: Result<Vec<LineString>, _> = FromTokens::comma_many(FromTokens::from_tokens_with_parens, tokens);
+        let result = FromTokens::comma_many(<LineString as FromTokens>::from_tokens_with_parens, tokens);
         result.map(|vec| MultiLineString {lines: vec})
     }
 }
