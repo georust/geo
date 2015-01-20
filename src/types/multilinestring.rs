@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use tokenizer::{PeekableTokens, Token};
+use tokenizer::PeekableTokens;
 use types::FromTokens;
 use types::linestring::LineString;
 use WktItem;
