@@ -15,6 +15,7 @@
 use tokenizer::{PeekableTokens, Token};
 
 pub mod coord;
+pub mod geometrycollection;
 pub mod point;
 pub mod polygon;
 pub mod linestring;

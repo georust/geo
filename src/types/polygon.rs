@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use tokenizer::{PeekableTokens, Token};
+use tokenizer::PeekableTokens;
 use types::FromTokens;
 use types::linestring::LineString;
 use WktItem;
@@ -30,7 +30,7 @@ impl Polygon {
 
 impl FromTokens for Polygon {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result: Result<Vec<LineString>, _> = FromTokens::comma_many(FromTokens::from_tokens_with_parens, tokens);
+        let result = FromTokens::comma_many(<LineString as FromTokens>::from_tokens_with_parens, tokens);
         result.map(|vec| Polygon {lines: vec})
     }
 }

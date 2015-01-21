@@ -18,6 +18,7 @@ use std::ascii::AsciiExt;
 
 use tokenizer::{PeekableTokens, Token, Tokens};
 use types::FromTokens;
+use types::geometrycollection::GeometryCollection;
 use types::linestring::LineString;
 use types::point::Point;
 use types::polygon::Polygon;
@@ -36,33 +37,38 @@ pub enum WktItem {
     MultiPoint(MultiPoint),
     MultiLineString(MultiLineString),
     MultiPolygon(MultiPolygon),
+    GeometryCollection(GeometryCollection),
 }
 
 impl WktItem {
     fn from_word_and_tokens(word: &str, tokens: &mut PeekableTokens)-> Result<Self, &'static str> {
         match word {
             "POINT" => {
-                let x: Result<Point, _> = FromTokens::from_tokens_with_parens(tokens);
+                let x = <Point as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             "LINESTRING" => {
-                let x: Result<LineString, _> = FromTokens::from_tokens_with_parens(tokens);
+                let x = <LineString as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             "POLYGON" => {
-                let x: Result<Polygon, _> = FromTokens::from_tokens_with_parens(tokens);
+                let x = <Polygon as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             "MULTIPOINT" => {
-                let x: Result<MultiPoint, _> = FromTokens::from_tokens_with_parens(tokens);
+                let x = <MultiPoint as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             "MULTILINESTRING" => {
-                let x: Result<MultiLineString, _> = FromTokens::from_tokens_with_parens(tokens);
+                let x = <MultiLineString as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             "MULTIPOLYGON" => {
-                let x: Result<MultiPolygon, _> = FromTokens::from_tokens_with_parens(tokens);
+                let x = <MultiPolygon as FromTokens>::from_tokens_with_parens(tokens);
+                x.map(|y| y.as_item())
+            },
+            "GEOMETRYCOLLECTION" => {
+                let x = <GeometryCollection as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             },
             _ => Err("Invalid type encountered"),
@@ -212,6 +218,17 @@ mod tests {
             _ => unreachable!(),
         };
         assert_eq!(2, multipolygon.polygons.len());
+    }
+
+    #[test]
+    fn basic_geometrycollection() {
+        let mut wkt = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4)))").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let geometrycollection = match wkt.items.pop().unwrap() {
+            WktItem::GeometryCollection(geometrycollection) => geometrycollection,
+            _ => unreachable!(),
+        };
+        assert_eq!(1, geometrycollection.items.len());
     }
 
     #[test]

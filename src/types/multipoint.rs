@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use tokenizer::{PeekableTokens, Token};
+use tokenizer::PeekableTokens;
 use types::FromTokens;
 use types::point::Point;
 use WktItem;
@@ -30,7 +30,7 @@ impl MultiPoint {
 
 impl FromTokens for MultiPoint {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result: Result<Vec<Point>, _> = FromTokens::comma_many(FromTokens::from_tokens_with_parens, tokens);
+        let result = FromTokens::comma_many(<Point as FromTokens>::from_tokens_with_parens, tokens);
         result.map(|vec| MultiPoint {points: vec})
     }
 }
