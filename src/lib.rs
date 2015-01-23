@@ -120,11 +120,31 @@ impl Wkt {
 #[cfg(test)]
 mod tests {
     use super::{Wkt, WktItem};
+    use super::types::multipolygon::MultiPolygon;
+    use super::types::point::Point;
 
     #[test]
     fn empty_string() {
         let wkt = Wkt::from_str("").ok().unwrap();
         assert_eq!(0, wkt.items.len());
+    }
+
+    #[test]
+    fn empty_items() {
+        let mut wkt = Wkt::from_str("POINT EMPTY").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        match wkt.items.pop().unwrap() {
+            WktItem::Point(Point { coord: None }) => (),
+            _ => unreachable!(),
+        };
+
+        let mut wkt = Wkt::from_str("MULTIPOLYGON EMPTY").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        match wkt.items.pop().unwrap() {
+            WktItem::MultiPolygon(MultiPolygon { polygons }) =>
+                assert_eq!(polygons.len(), 0),
+            _ => unreachable!(),
+        };
     }
 
     #[test]
@@ -135,10 +155,11 @@ mod tests {
             WktItem::Point(point) => point,
             _ => unreachable!(),
         };
-        assert_eq!(10.0, point.coord.x);
-        assert_eq!(-20.0, point.coord.y);
-        assert_eq!(None, point.coord.z);
-        assert_eq!(None, point.coord.m);
+        let coord = point.coord.unwrap();
+        assert_eq!(10.0, coord.x);
+        assert_eq!(-20.0, coord.y);
+        assert_eq!(None, coord.z);
+        assert_eq!(None, coord.m);
     }
 
     #[test]
@@ -149,10 +170,11 @@ mod tests {
             WktItem::Point(point) => point,
             _ => unreachable!(),
         };
-        assert_eq!(10.0, point.coord.x);
-        assert_eq!(-20.0, point.coord.y);
-        assert_eq!(None, point.coord.z);
-        assert_eq!(None, point.coord.m);
+        let coord = point.coord.unwrap();
+        assert_eq!(10.0, coord.x);
+        assert_eq!(-20.0, coord.y);
+        assert_eq!(None, coord.z);
+        assert_eq!(None, coord.m);
     }
 
     #[test]

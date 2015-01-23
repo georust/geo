@@ -18,8 +18,9 @@ use types::coord::Coord;
 use WktItem;
 
 
+#[derive(Default)]
 pub struct Point {
-    pub coord: Coord
+    pub coord: Option<Coord>
 }
 
 impl Point {
@@ -31,6 +32,6 @@ impl Point {
 impl FromTokens for Point {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let result = <Coord as FromTokens>::from_tokens(tokens);
-        result.map(|coord| Point {coord: coord})
+        result.map(|coord| Point {coord: Some(coord)})
     }
 }

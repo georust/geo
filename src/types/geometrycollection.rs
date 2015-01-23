@@ -16,6 +16,7 @@ use tokenizer::{PeekableTokens, Token};
 use types::FromTokens;
 use WktItem;
 
+#[derive(Default)]
 pub struct GeometryCollection {
     pub items: Vec<WktItem>
 }

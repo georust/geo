@@ -18,6 +18,7 @@ use types::point::Point;
 use WktItem;
 
 
+#[derive(Default)]
 pub struct MultiPoint {
     pub points: Vec<Point>
 }

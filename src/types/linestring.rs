@@ -18,6 +18,7 @@ use types::coord::Coord;
 use WktItem;
 
 
+#[derive(Default)]
 pub struct LineString {
     pub coords: Vec<Coord>
 }

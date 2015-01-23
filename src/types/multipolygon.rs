@@ -18,6 +18,7 @@ use types::polygon::Polygon;
 use WktItem;
 
 
+#[derive(Default)]
 pub struct MultiPolygon {
     pub polygons: Vec<Polygon>
 }
