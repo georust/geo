@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::ascii::AsciiExt;
+use std::default::Default;
+
 use tokenizer::{PeekableTokens, Token};
 
 pub mod coord;
@@ -24,12 +27,14 @@ pub mod multilinestring;
 pub mod multipolygon;
 
 
-pub trait FromTokens: Sized {
+pub trait FromTokens: Sized+Default {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str>;
 
     fn from_tokens_with_parens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         match tokens.next() {
             Some(Token::ParenOpen) => (),
+            Some(Token::Word(ref s)) if s.to_ascii_uppercase() == "EMPTY" =>
+                return Ok(Default::default()),
             _ => return Err("Missing open parenthesis for type"),
         };
         let result = FromTokens::from_tokens(tokens);

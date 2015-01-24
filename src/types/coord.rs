@@ -16,6 +16,7 @@ use tokenizer::{PeekableTokens, Token};
 use types::FromTokens;
 
 
+#[derive(Default)]
 pub struct Coord {
     pub x: f64,
     pub y: f64,

@@ -18,6 +18,7 @@ use types::linestring::LineString;
 use WktItem;
 
 
+#[derive(Default)]
 pub struct MultiLineString {
     pub lines: Vec<LineString>
 }
