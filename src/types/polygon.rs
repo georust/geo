@@ -15,7 +15,7 @@
 use tokenizer::PeekableTokens;
 use types::FromTokens;
 use types::linestring::LineString;
-use WktItem;
+use Geometry;
 
 
 #[derive(Default)]
@@ -24,8 +24,8 @@ pub struct Polygon {
 }
 
 impl Polygon {
-    pub fn as_item(self) -> WktItem {
-        WktItem::Polygon(self)
+    pub fn as_item(self) -> Geometry {
+        Geometry::Polygon(self)
     }
 }
 
@@ -39,14 +39,14 @@ impl FromTokens for Polygon {
 
 #[cfg(test)]
 mod tests {
-    use {Wkt, WktItem};
+    use {Wkt, Geometry};
 
     #[test]
     fn basic_polygon() {
         let mut wkt = Wkt::from_str("POLYGON ((8 4, 4 0, 0 4, 8 4), (7 3, 4 1, 1 4, 7 3))").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         let linestring = match wkt.items.pop().unwrap() {
-            WktItem::Polygon(linestring) => linestring,
+            Geometry::Polygon(linestring) => linestring,
             _ => unreachable!(),
         };
         assert_eq!(2, linestring.lines.len());

@@ -15,7 +15,7 @@
 use tokenizer::PeekableTokens;
 use types::FromTokens;
 use types::coord::Coord;
-use WktItem;
+use Geometry;
 
 
 #[derive(Default)]
@@ -24,8 +24,8 @@ pub struct LineString {
 }
 
 impl LineString {
-    pub fn as_item(self) -> WktItem {
-        WktItem::LineString(self)
+    pub fn as_item(self) -> Geometry {
+        Geometry::LineString(self)
     }
 }
 
@@ -39,14 +39,14 @@ impl FromTokens for LineString {
 
 #[cfg(test)]
 mod tests {
-    use {Wkt, WktItem};
+    use {Wkt, Geometry};
 
     #[test]
     fn basic_linestring() {
         let mut wkt = Wkt::from_str("LINESTRING (10 -20, -0 -0.5)").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         let linestring = match wkt.items.pop().unwrap() {
-            WktItem::LineString(linestring) => linestring,
+            Geometry::LineString(linestring) => linestring,
             _ => unreachable!(),
         };
         assert_eq!(2, linestring.coords.len());

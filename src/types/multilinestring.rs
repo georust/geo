@@ -15,7 +15,7 @@
 use tokenizer::PeekableTokens;
 use types::FromTokens;
 use types::linestring::LineString;
-use WktItem;
+use Geometry;
 
 
 #[derive(Default)]
@@ -24,8 +24,8 @@ pub struct MultiLineString {
 }
 
 impl MultiLineString {
-    pub fn as_item(self) -> WktItem {
-        WktItem::MultiLineString(self)
+    pub fn as_item(self) -> Geometry {
+        Geometry::MultiLineString(self)
     }
 }
 
@@ -39,14 +39,14 @@ impl FromTokens for MultiLineString {
 
 #[cfg(test)]
 mod tests {
-    use {Wkt, WktItem};
+    use {Wkt, Geometry};
 
     #[test]
     fn basic_multilinestring() {
         let mut wkt = Wkt::from_str("MULTILINESTRING ((8 4, -3 0), (4 0, 6 -10))").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         let multilinestring = match wkt.items.pop().unwrap() {
-            WktItem::MultiLineString(multilinestring) => multilinestring,
+            Geometry::MultiLineString(multilinestring) => multilinestring,
             _ => unreachable!(),
         };
         assert_eq!(2, multilinestring.lines.len());
