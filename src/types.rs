@@ -50,3 +50,22 @@ pub enum Geometry {
     MultiPolygon(MultiPolygon),
     GeometryCollection(GeometryCollection)
 }
+
+#[cfg(test)]
+mod test {
+    use ::types::*;
+
+    #[test]
+    fn type_test() {
+        let c = Coordinate {
+            x: 40.02f64,
+            y: 116.34
+        };
+
+        let p = Point {
+            coordinate: c
+        };
+        assert_eq!(c.x, p.coordinate.x);
+        assert_eq!(c.y, p.coordinate.y);
+    }
+}
