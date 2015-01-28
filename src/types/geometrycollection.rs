@@ -14,16 +14,16 @@
 
 use tokenizer::{PeekableTokens, Token};
 use types::FromTokens;
-use WktItem;
+use Geometry;
 
 #[derive(Default)]
 pub struct GeometryCollection {
-    pub items: Vec<WktItem>
+    pub items: Vec<Geometry>
 }
 
 impl GeometryCollection {
-    pub fn as_item(self) -> WktItem {
-        WktItem::GeometryCollection(self)
+    pub fn as_item(self) -> Geometry {
+        Geometry::GeometryCollection(self)
     }
 }
 
@@ -36,7 +36,7 @@ impl FromTokens for GeometryCollection {
             _ => return Err("Expected a word in GEOMETRYCOLLECTION")
         };
 
-        match WktItem::from_word_and_tokens(&*word, tokens) {
+        match Geometry::from_word_and_tokens(&*word, tokens) {
             Ok(item) => items.push(item),
             Err(s) => return Err(s),
         };
@@ -49,7 +49,7 @@ impl FromTokens for GeometryCollection {
                 _ => return Err("Expected a word in GEOMETRYCOLLECTION")
             };
 
-            match WktItem::from_word_and_tokens(&*word, tokens) {
+            match Geometry::from_word_and_tokens(&*word, tokens) {
                 Ok(item) => items.push(item),
                 Err(s) => return Err(s),
             };
@@ -63,14 +63,14 @@ impl FromTokens for GeometryCollection {
 
 #[cfg(test)]
 mod tests {
-    use {Wkt, WktItem};
+    use {Wkt, Geometry};
 
     #[test]
     fn basic_geometrycollection() {
         let mut wkt = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4)))").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         let geometrycollection = match wkt.items.pop().unwrap() {
-            WktItem::GeometryCollection(geometrycollection) => geometrycollection,
+            Geometry::GeometryCollection(geometrycollection) => geometrycollection,
             _ => unreachable!(),
         };
         assert_eq!(1, geometrycollection.items.len());

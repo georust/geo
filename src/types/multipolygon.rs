@@ -15,7 +15,7 @@
 use tokenizer::PeekableTokens;
 use types::FromTokens;
 use types::polygon::Polygon;
-use WktItem;
+use Geometry;
 
 
 #[derive(Default)]
@@ -24,8 +24,8 @@ pub struct MultiPolygon {
 }
 
 impl MultiPolygon {
-    pub fn as_item(self) -> WktItem {
-        WktItem::MultiPolygon(self)
+    pub fn as_item(self) -> Geometry {
+        Geometry::MultiPolygon(self)
     }
 }
 
@@ -39,14 +39,14 @@ impl FromTokens for MultiPolygon {
 
 #[cfg(test)]
 mod tests {
-    use {Wkt, WktItem};
+    use {Wkt, Geometry};
 
     #[test]
     fn basic_multipolygon() {
         let mut wkt = Wkt::from_str("MULTIPOLYGON (((8 4)), ((4 0)))").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         let multipolygon = match wkt.items.pop().unwrap() {
-            WktItem::MultiPolygon(multipolygon) => multipolygon,
+            Geometry::MultiPolygon(multipolygon) => multipolygon,
             _ => unreachable!(),
         };
         assert_eq!(2, multipolygon.polygons.len());

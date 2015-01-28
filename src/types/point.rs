@@ -15,7 +15,7 @@
 use tokenizer::PeekableTokens;
 use types::FromTokens;
 use types::coord::Coord;
-use WktItem;
+use Geometry;
 
 
 #[derive(Default)]
@@ -24,8 +24,8 @@ pub struct Point {
 }
 
 impl Point {
-    pub fn as_item(self) -> WktItem {
-        WktItem::Point(self)
+    pub fn as_item(self) -> Geometry {
+        Geometry::Point(self)
     }
 }
 
@@ -39,14 +39,14 @@ impl FromTokens for Point {
 
 #[cfg(test)]
 mod tests {
-    use {Wkt, WktItem};
+    use {Wkt, Geometry};
 
     #[test]
     fn basic_point() {
         let mut wkt = Wkt::from_str("POINT (10 -20)").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         let coord = match wkt.items.pop().unwrap() {
-            WktItem::Point(point) => point.coord.unwrap(),
+            Geometry::Point(point) => point.coord.unwrap(),
             _ => unreachable!(),
         };
         assert_eq!(10.0, coord.x);
@@ -60,7 +60,7 @@ mod tests {
         let mut wkt = Wkt::from_str(" \n\t\rPOINT \n\t\r( \n\r\t10 \n\t\r-20 \n\t\r) \n\t\r").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         let coord = match wkt.items.pop().unwrap() {
-            WktItem::Point(point) => point.coord.unwrap(),
+            Geometry::Point(point) => point.coord.unwrap(),
             _ => unreachable!(),
         };
         assert_eq!(10.0, coord.x);

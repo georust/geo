@@ -30,7 +30,7 @@ mod tokenizer;
 mod types;
 
 
-pub enum WktItem {
+pub enum Geometry {
     Point(Point),
     LineString(LineString),
     Polygon(Polygon),
@@ -40,7 +40,7 @@ pub enum WktItem {
     GeometryCollection(GeometryCollection),
 }
 
-impl WktItem {
+impl Geometry {
     fn from_word_and_tokens(word: &str, tokens: &mut PeekableTokens)-> Result<Self, &'static str> {
         match word {
             "POINT" => {
@@ -78,7 +78,7 @@ impl WktItem {
 
 
 pub struct Wkt {
-    items: Vec<WktItem>
+    items: Vec<Geometry>
 }
 
 impl Wkt {
@@ -86,7 +86,7 @@ impl Wkt {
         Wkt {items: vec![]}
     }
 
-    fn add_item(&mut self, item: WktItem) {
+    fn add_item(&mut self, item: Geometry) {
         self.items.push(item);
     }
 
@@ -108,7 +108,7 @@ impl Wkt {
             None => return Ok(wkt),
             _ => return Err("Invalid WKT format"),
         };
-        match WktItem::from_word_and_tokens(word.as_slice(), &mut tokens) {
+        match Geometry::from_word_and_tokens(word.as_slice(), &mut tokens) {
             Ok(item) => wkt.add_item(item),
             Err(s) => return Err(s),
         }
@@ -119,7 +119,7 @@ impl Wkt {
 
 #[cfg(test)]
 mod tests {
-    use super::{Wkt, WktItem};
+    use super::{Wkt, Geometry};
     use super::types::multipolygon::MultiPolygon;
     use super::types::point::Point;
 
@@ -134,14 +134,14 @@ mod tests {
         let mut wkt = Wkt::from_str("POINT EMPTY").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         match wkt.items.pop().unwrap() {
-            WktItem::Point(Point { coord: None }) => (),
+            Geometry::Point(Point { coord: None }) => (),
             _ => unreachable!(),
         };
 
         let mut wkt = Wkt::from_str("MULTIPOLYGON EMPTY").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         match wkt.items.pop().unwrap() {
-            WktItem::MultiPolygon(MultiPolygon { polygons }) =>
+            Geometry::MultiPolygon(MultiPolygon { polygons }) =>
                 assert_eq!(polygons.len(), 0),
             _ => unreachable!(),
         };
