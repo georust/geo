@@ -1,4 +1,3 @@
-
 #[derive(PartialEq, Clone)]
 pub struct Coordinate {
     pub x: f64,
@@ -22,7 +21,7 @@ pub struct LineString {
 
 #[derive(PartialEq, Clone)]
 pub struct MultiLineString {
-    pub line_strings: Vec<Polygon>
+    pub line_strings: Vec<LineString>
 }
 
 #[derive(PartialEq, Clone)]
