@@ -35,3 +35,30 @@ impl FromTokens for LineString {
         result.map(|vec| LineString {coords: vec})
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use {Wkt, WktItem};
+
+    #[test]
+    fn basic_linestring() {
+        let mut wkt = Wkt::from_str("LINESTRING (10 -20, -0 -0.5)").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let linestring = match wkt.items.pop().unwrap() {
+            WktItem::LineString(linestring) => linestring,
+            _ => unreachable!(),
+        };
+        assert_eq!(2, linestring.coords.len());
+
+        assert_eq!(10.0, linestring.coords[0].x);
+        assert_eq!(-20.0, linestring.coords[0].y);
+        assert_eq!(None, linestring.coords[0].z);
+        assert_eq!(None, linestring.coords[0].m);
+
+        assert_eq!(0.0, linestring.coords[1].x);
+        assert_eq!(-0.5, linestring.coords[1].y);
+        assert_eq!(None, linestring.coords[1].z);
+        assert_eq!(None, linestring.coords[1].m);
+    }
+}

@@ -35,3 +35,20 @@ impl FromTokens for MultiPolygon {
         result.map(|vec| MultiPolygon {polygons: vec})
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use {Wkt, WktItem};
+
+    #[test]
+    fn basic_multipolygon() {
+        let mut wkt = Wkt::from_str("MULTIPOLYGON (((8 4)), ((4 0)))").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let multipolygon = match wkt.items.pop().unwrap() {
+            WktItem::MultiPolygon(multipolygon) => multipolygon,
+            _ => unreachable!(),
+        };
+        assert_eq!(2, multipolygon.polygons.len());
+    }
+}

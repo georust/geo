@@ -35,3 +35,19 @@ impl FromTokens for MultiPoint {
         result.map(|vec| MultiPoint {points: vec})
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use {Wkt, WktItem};
+
+    #[test]
+    fn basic_multipoint() {
+        let mut wkt = Wkt::from_str("MULTIPOINT ((8 4), (4 0))").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let multipoint = match wkt.items.pop().unwrap() {
+            WktItem::MultiPoint(multipoint) => multipoint,
+            _ => unreachable!(),
+        };
+        assert_eq!(2, multipoint.points.len());
+    }
+}

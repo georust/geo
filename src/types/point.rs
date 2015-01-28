@@ -35,3 +35,45 @@ impl FromTokens for Point {
         result.map(|coord| Point {coord: Some(coord)})
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use {Wkt, WktItem};
+
+    #[test]
+    fn basic_point() {
+        let mut wkt = Wkt::from_str("POINT (10 -20)").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let coord = match wkt.items.pop().unwrap() {
+            WktItem::Point(point) => point.coord.unwrap(),
+            _ => unreachable!(),
+        };
+        assert_eq!(10.0, coord.x);
+        assert_eq!(-20.0, coord.y);
+        assert_eq!(None, coord.z);
+        assert_eq!(None, coord.m);
+    }
+
+    #[test]
+    fn basic_point_whitespace() {
+        let mut wkt = Wkt::from_str(" \n\t\rPOINT \n\t\r( \n\r\t10 \n\t\r-20 \n\t\r) \n\t\r").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let coord = match wkt.items.pop().unwrap() {
+            WktItem::Point(point) => point.coord.unwrap(),
+            _ => unreachable!(),
+        };
+        assert_eq!(10.0, coord.x);
+        assert_eq!(-20.0, coord.y);
+        assert_eq!(None, coord.z);
+        assert_eq!(None, coord.m);
+    }
+
+    #[test]
+    fn invalid_points() {
+        Wkt::from_str("POINT ()").err().unwrap();
+        Wkt::from_str("POINT (10)").err().unwrap();
+        Wkt::from_str("POINT 10").err().unwrap();
+        Wkt::from_str("POINT (10 -20 40)").err().unwrap();
+    }
+}
