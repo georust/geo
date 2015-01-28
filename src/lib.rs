@@ -18,13 +18,14 @@ use std::ascii::AsciiExt;
 
 use tokenizer::{PeekableTokens, Token, Tokens};
 use types::FromTokens;
-use types::geometrycollection::GeometryCollection;
-use types::linestring::LineString;
-use types::point::Point;
-use types::polygon::Polygon;
-use types::multipoint::MultiPoint;
-use types::multilinestring::MultiLineString;
-use types::multipolygon::MultiPolygon;
+pub use types::coord::Coord;
+pub use types::geometrycollection::GeometryCollection;
+pub use types::linestring::LineString;
+pub use types::point::Point;
+pub use types::polygon::Polygon;
+pub use types::multipoint::MultiPoint;
+pub use types::multilinestring::MultiLineString;
+pub use types::multipolygon::MultiPolygon;
 
 mod tokenizer;
 mod types;
