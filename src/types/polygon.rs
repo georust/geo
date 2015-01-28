@@ -19,9 +19,7 @@ use Geometry;
 
 
 #[derive(Default)]
-pub struct Polygon {
-    pub lines: Vec<LineString>
-}
+pub struct Polygon(pub Vec<LineString>);
 
 impl Polygon {
     pub fn as_item(self) -> Geometry {
@@ -32,7 +30,7 @@ impl Polygon {
 impl FromTokens for Polygon {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let result = FromTokens::comma_many(<LineString as FromTokens>::from_tokens_with_parens, tokens);
-        result.map(|vec| Polygon {lines: vec})
+        result.map(|vec| Polygon(vec))
     }
 }
 
@@ -40,15 +38,16 @@ impl FromTokens for Polygon {
 #[cfg(test)]
 mod tests {
     use {Wkt, Geometry};
+    use super::Polygon;
 
     #[test]
     fn basic_polygon() {
         let mut wkt = Wkt::from_str("POLYGON ((8 4, 4 0, 0 4, 8 4), (7 3, 4 1, 1 4, 7 3))").ok().unwrap();
         assert_eq!(1, wkt.items.len());
-        let linestring = match wkt.items.pop().unwrap() {
-            Geometry::Polygon(linestring) => linestring,
+        let lines = match wkt.items.pop().unwrap() {
+            Geometry::Polygon(Polygon(lines)) => lines,
             _ => unreachable!(),
         };
-        assert_eq!(2, linestring.lines.len());
+        assert_eq!(2, lines.len());
     }
 }

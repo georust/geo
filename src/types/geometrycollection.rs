@@ -17,9 +17,7 @@ use types::FromTokens;
 use Geometry;
 
 #[derive(Default)]
-pub struct GeometryCollection {
-    pub items: Vec<Geometry>
-}
+pub struct GeometryCollection(pub Vec<Geometry>);
 
 impl GeometryCollection {
     pub fn as_item(self) -> Geometry {
@@ -55,7 +53,7 @@ impl FromTokens for GeometryCollection {
             };
         }
 
-        Ok(GeometryCollection {items: items})
+        Ok(GeometryCollection(items))
     }
 }
 
@@ -64,15 +62,16 @@ impl FromTokens for GeometryCollection {
 #[cfg(test)]
 mod tests {
     use {Wkt, Geometry};
+    use super::GeometryCollection;
 
     #[test]
     fn basic_geometrycollection() {
         let mut wkt = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4)))").ok().unwrap();
         assert_eq!(1, wkt.items.len());
-        let geometrycollection = match wkt.items.pop().unwrap() {
-            Geometry::GeometryCollection(geometrycollection) => geometrycollection,
+        let items = match wkt.items.pop().unwrap() {
+            Geometry::GeometryCollection(GeometryCollection(items)) => items,
             _ => unreachable!(),
         };
-        assert_eq!(1, geometrycollection.items.len());
+        assert_eq!(1, items.len());
     }
 }
