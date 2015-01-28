@@ -19,9 +19,7 @@ use Geometry;
 
 
 #[derive(Default)]
-pub struct Point {
-    pub coord: Option<Coord>
-}
+pub struct Point(pub Option<Coord>);
 
 impl Point {
     pub fn as_item(self) -> Geometry {
@@ -32,7 +30,7 @@ impl Point {
 impl FromTokens for Point {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let result = <Coord as FromTokens>::from_tokens(tokens);
-        result.map(|coord| Point {coord: Some(coord)})
+        result.map(|coord| Point(Some(coord)))
     }
 }
 
@@ -40,13 +38,14 @@ impl FromTokens for Point {
 #[cfg(test)]
 mod tests {
     use {Wkt, Geometry};
+    use super::Point;
 
     #[test]
     fn basic_point() {
         let mut wkt = Wkt::from_str("POINT (10 -20)").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         let coord = match wkt.items.pop().unwrap() {
-            Geometry::Point(point) => point.coord.unwrap(),
+            Geometry::Point(Point(Some(coord))) => coord,
             _ => unreachable!(),
         };
         assert_eq!(10.0, coord.x);
@@ -60,7 +59,7 @@ mod tests {
         let mut wkt = Wkt::from_str(" \n\t\rPOINT \n\t\r( \n\r\t10 \n\t\r-20 \n\t\r) \n\t\r").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         let coord = match wkt.items.pop().unwrap() {
-            Geometry::Point(point) => point.coord.unwrap(),
+            Geometry::Point(Point(Some(coord))) => coord,
             _ => unreachable!(),
         };
         assert_eq!(10.0, coord.x);

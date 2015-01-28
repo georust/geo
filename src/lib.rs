@@ -134,14 +134,14 @@ mod tests {
         let mut wkt = Wkt::from_str("POINT EMPTY").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         match wkt.items.pop().unwrap() {
-            Geometry::Point(Point { coord: None }) => (),
+            Geometry::Point(Point(None)) => (),
             _ => unreachable!(),
         };
 
         let mut wkt = Wkt::from_str("MULTIPOLYGON EMPTY").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         match wkt.items.pop().unwrap() {
-            Geometry::MultiPolygon(MultiPolygon { polygons }) =>
+            Geometry::MultiPolygon(MultiPolygon(polygons)) =>
                 assert_eq!(polygons.len(), 0),
             _ => unreachable!(),
         };

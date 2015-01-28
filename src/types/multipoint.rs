@@ -19,9 +19,7 @@ use Geometry;
 
 
 #[derive(Default)]
-pub struct MultiPoint {
-    pub points: Vec<Point>
-}
+pub struct MultiPoint(pub Vec<Point>);
 
 impl MultiPoint {
     pub fn as_item(self) -> Geometry {
@@ -32,22 +30,23 @@ impl MultiPoint {
 impl FromTokens for MultiPoint {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let result = FromTokens::comma_many(<Point as FromTokens>::from_tokens_with_parens, tokens);
-        result.map(|vec| MultiPoint {points: vec})
+        result.map(|vec| MultiPoint(vec))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use {Wkt, Geometry};
+    use super::MultiPoint;
 
     #[test]
     fn basic_multipoint() {
         let mut wkt = Wkt::from_str("MULTIPOINT ((8 4), (4 0))").ok().unwrap();
         assert_eq!(1, wkt.items.len());
-        let multipoint = match wkt.items.pop().unwrap() {
-            Geometry::MultiPoint(multipoint) => multipoint,
+        let points = match wkt.items.pop().unwrap() {
+            Geometry::MultiPoint(MultiPoint(points)) => points,
             _ => unreachable!(),
         };
-        assert_eq!(2, multipoint.points.len());
+        assert_eq!(2, points.len());
     }
 }

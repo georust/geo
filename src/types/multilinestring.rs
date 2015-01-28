@@ -19,9 +19,7 @@ use Geometry;
 
 
 #[derive(Default)]
-pub struct MultiLineString {
-    pub lines: Vec<LineString>
-}
+pub struct MultiLineString(pub Vec<LineString>);
 
 impl MultiLineString {
     pub fn as_item(self) -> Geometry {
@@ -32,7 +30,7 @@ impl MultiLineString {
 impl FromTokens for MultiLineString {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let result = FromTokens::comma_many(<LineString as FromTokens>::from_tokens_with_parens, tokens);
-        result.map(|vec| MultiLineString {lines: vec})
+        result.map(|vec| MultiLineString(vec))
     }
 }
 
@@ -40,15 +38,16 @@ impl FromTokens for MultiLineString {
 #[cfg(test)]
 mod tests {
     use {Wkt, Geometry};
+    use super::MultiLineString;
 
     #[test]
     fn basic_multilinestring() {
         let mut wkt = Wkt::from_str("MULTILINESTRING ((8 4, -3 0), (4 0, 6 -10))").ok().unwrap();
         assert_eq!(1, wkt.items.len());
-        let multilinestring = match wkt.items.pop().unwrap() {
-            Geometry::MultiLineString(multilinestring) => multilinestring,
+        let lines = match wkt.items.pop().unwrap() {
+            Geometry::MultiLineString(MultiLineString(lines)) => lines,
             _ => unreachable!(),
         };
-        assert_eq!(2, multilinestring.lines.len());
+        assert_eq!(2, lines.len());
     }
 }

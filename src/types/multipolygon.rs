@@ -19,9 +19,7 @@ use Geometry;
 
 
 #[derive(Default)]
-pub struct MultiPolygon {
-    pub polygons: Vec<Polygon>
-}
+pub struct MultiPolygon(pub Vec<Polygon>);
 
 impl MultiPolygon {
     pub fn as_item(self) -> Geometry {
@@ -32,7 +30,7 @@ impl MultiPolygon {
 impl FromTokens for MultiPolygon {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let result = FromTokens::comma_many(<Polygon as FromTokens>::from_tokens_with_parens, tokens);
-        result.map(|vec| MultiPolygon {polygons: vec})
+        result.map(|vec| MultiPolygon(vec))
     }
 }
 
@@ -40,15 +38,16 @@ impl FromTokens for MultiPolygon {
 #[cfg(test)]
 mod tests {
     use {Wkt, Geometry};
+    use super::MultiPolygon;
 
     #[test]
     fn basic_multipolygon() {
         let mut wkt = Wkt::from_str("MULTIPOLYGON (((8 4)), ((4 0)))").ok().unwrap();
         assert_eq!(1, wkt.items.len());
-        let multipolygon = match wkt.items.pop().unwrap() {
-            Geometry::MultiPolygon(multipolygon) => multipolygon,
+        let polygons = match wkt.items.pop().unwrap() {
+            Geometry::MultiPolygon(MultiPolygon(polygons)) => polygons,
             _ => unreachable!(),
         };
-        assert_eq!(2, multipolygon.polygons.len());
+        assert_eq!(2, polygons.len());
     }
 }
