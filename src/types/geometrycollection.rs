@@ -58,3 +58,21 @@ impl FromTokens for GeometryCollection {
         Ok(GeometryCollection {items: items})
     }
 }
+
+
+
+#[cfg(test)]
+mod tests {
+    use {Wkt, WktItem};
+
+    #[test]
+    fn basic_geometrycollection() {
+        let mut wkt = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4)))").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let geometrycollection = match wkt.items.pop().unwrap() {
+            WktItem::GeometryCollection(geometrycollection) => geometrycollection,
+            _ => unreachable!(),
+        };
+        assert_eq!(1, geometrycollection.items.len());
+    }
+}

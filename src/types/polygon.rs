@@ -35,3 +35,20 @@ impl FromTokens for Polygon {
         result.map(|vec| Polygon {lines: vec})
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use {Wkt, WktItem};
+
+    #[test]
+    fn basic_polygon() {
+        let mut wkt = Wkt::from_str("POLYGON ((8 4, 4 0, 0 4, 8 4), (7 3, 4 1, 1 4, 7 3))").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let linestring = match wkt.items.pop().unwrap() {
+            WktItem::Polygon(linestring) => linestring,
+            _ => unreachable!(),
+        };
+        assert_eq!(2, linestring.lines.len());
+    }
+}
