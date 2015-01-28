@@ -1,10 +1,10 @@
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Copy)]
 pub struct Coordinate {
     pub x: f64,
     pub y: f64,
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Copy)]
 pub struct Point {
     pub coordinate: Coordinate
 }
