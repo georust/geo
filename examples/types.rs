@@ -8,9 +8,8 @@ fn main() {
         y: 116.34
     };
 
-    let p = Point {
-        coordinate: c
-    };
+    let p = Point(c);
 
-    println!("Point at ({}, {})", p.coordinate.x, p.coordinate.y);
+    let Point(coord) = p;
+    println!("Point at ({}, {})", coord.x, coord.y);
 }

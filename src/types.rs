@@ -1,44 +1,29 @@
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Show)]
 pub struct Coordinate {
     pub x: f64,
     pub y: f64,
 }
 
 #[derive(PartialEq, Clone, Copy)]
-pub struct Point {
-    pub coordinate: Coordinate
-}
+pub struct Point(pub Coordinate);
 
 #[derive(PartialEq, Clone)]
-pub struct MultiPoint {
-    pub points: Vec<Point>
-}
+pub struct MultiPoint(pub Vec<Point>);
 
 #[derive(PartialEq, Clone)]
-pub struct LineString {
-    pub points: Vec<Point>
-}
+pub struct LineString(pub Vec<Point>);
 
 #[derive(PartialEq, Clone)]
-pub struct MultiLineString {
-    pub line_strings: Vec<LineString>
-}
+pub struct MultiLineString(pub Vec<LineString>);
 
 #[derive(PartialEq, Clone)]
-pub struct Polygon {
-    pub exteror_ring: LineString,
-    pub interior_ring: Vec<LineString>
-}
+pub struct Polygon(pub LineString, pub Vec<LineString>);
 
 #[derive(PartialEq, Clone)]
-pub struct MultiPolygon {
-    pub polygons: Vec<Polygon>
-}
+pub struct MultiPolygon(pub Vec<Polygon>);
 
 #[derive(PartialEq, Clone)]
-pub struct GeometryCollection {
-    pub geometries: Vec<Geometry>
-}
+pub struct GeometryCollection(pub Vec<Geometry>);
 
 #[derive(PartialEq, Clone)]
 pub enum Geometry {
@@ -62,10 +47,11 @@ mod test {
             y: 116.34
         };
 
-        let p = Point {
-            coordinate: c
-        };
-        assert_eq!(c.x, p.coordinate.x);
-        assert_eq!(c.y, p.coordinate.y);
+        let p = Point(c);
+
+        let Point(c2) = p;
+        assert_eq!(c, c2);
+        assert_eq!(c.x, c2.x);
+        assert_eq!(c.y, c2.y);
     }
 }
