@@ -17,17 +17,26 @@ use std::default::Default;
 
 use tokenizer::{PeekableTokens, Token};
 
-pub mod coord;
-pub mod geometrycollection;
-pub mod point;
-pub mod polygon;
-pub mod linestring;
-pub mod multipoint;
-pub mod multilinestring;
-pub mod multipolygon;
+pub use self::coord::Coord;
+pub use self::geometrycollection::GeometryCollection;
+pub use self::linestring::LineString;
+pub use self::point::Point;
+pub use self::polygon::Polygon;
+pub use self::multipoint::MultiPoint;
+pub use self::multilinestring::MultiLineString;
+pub use self::multipolygon::MultiPolygon;
+
+mod coord;
+mod geometrycollection;
+mod point;
+mod polygon;
+mod linestring;
+mod multipoint;
+mod multilinestring;
+mod multipolygon;
 
 
-pub trait FromTokens: Sized+Default {
+trait FromTokens: Sized+Default {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str>;
 
     fn from_tokens_with_parens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {

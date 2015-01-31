@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use tokenizer::{PeekableTokens, Token};
-use types::FromTokens;
+use FromTokens;
 use Geometry;
 
 #[derive(Default)]

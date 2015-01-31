@@ -15,20 +15,20 @@
 #![allow(unstable)]
 
 use std::ascii::AsciiExt;
+use std::default::Default;
 
 use tokenizer::{PeekableTokens, Token, Tokens};
-use types::FromTokens;
-pub use types::coord::Coord;
-pub use types::geometrycollection::GeometryCollection;
-pub use types::linestring::LineString;
-pub use types::point::Point;
-pub use types::polygon::Polygon;
-pub use types::multipoint::MultiPoint;
-pub use types::multilinestring::MultiLineString;
-pub use types::multipolygon::MultiPolygon;
+use types::Coord;
+use types::GeometryCollection;
+use types::LineString;
+use types::Point;
+use types::Polygon;
+use types::MultiPoint;
+use types::MultiLineString;
+use types::MultiPolygon;
 
 mod tokenizer;
-mod types;
+pub mod types;
 
 
 pub enum Geometry {
@@ -76,10 +76,8 @@ impl Geometry {
         }
     }
 }
-
-
 pub struct Wkt {
-    items: Vec<Geometry>
+    pub items: Vec<Geometry>
 }
 
 impl Wkt {
@@ -118,11 +116,51 @@ impl Wkt {
 }
 
 
+trait FromTokens: Sized+Default {
+    fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str>;
+
+    fn from_tokens_with_parens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
+        match tokens.next() {
+            Some(Token::ParenOpen) => (),
+            Some(Token::Word(ref s)) if s.to_ascii_uppercase() == "EMPTY" =>
+                return Ok(Default::default()),
+            _ => return Err("Missing open parenthesis for type"),
+        };
+        let result = FromTokens::from_tokens(tokens);
+        match tokens.next() {
+            Some(Token::ParenClose) => (),
+            _ => return Err("Missing closing parenthesis for type"),
+        };
+        result
+    }
+
+    fn comma_many<F>(f: F, tokens: &mut PeekableTokens) -> Result<Vec<Self>, &'static str>
+            where F: Fn(&mut PeekableTokens) -> Result<Self, &'static str> {
+        let mut items = Vec::new();
+
+        match f(tokens) {
+            Ok(i) => items.push(i),
+            Err(s) => return Err(s),
+        };
+
+        while let Some(&Token::Comma) = tokens.peek() {
+            tokens.next();  // throw away comma
+
+            match f(tokens) {
+                Ok(i) => items.push(i),
+                Err(s) => return Err(s),
+            };
+        }
+
+        Ok(items)
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
-    use super::{Wkt, Geometry};
-    use super::types::multipolygon::MultiPolygon;
-    use super::types::point::Point;
+    use {Wkt, Geometry};
+    use types::{MultiPolygon, Point};
 
     #[test]
     fn empty_string() {

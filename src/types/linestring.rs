@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use tokenizer::PeekableTokens;
-use types::FromTokens;
+use FromTokens;
 use types::coord::Coord;
 use Geometry;
 
