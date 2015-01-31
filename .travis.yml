@@ -4,6 +4,6 @@ env:
     - secure: Ys5OhmpBC78RbiPr0bzpYeTv1k1huSp8OsiN1lRlHN4liLPFD3N870tMyFY4ZXfaF8ePpVGtaVDxWrxRPaRVeWHgmROiZLFTSSdOjSrTLvLSM30tC4f7FiPuE+um/GNWX4xlpaCNjJG0wOoKSB/WgM4DgNcqptsp76gKINXbRtw=
 script:
   - cargo build
-  - rustdoc src/lib.rs
+  - cargo doc
 after_script:
   - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
