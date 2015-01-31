@@ -1,5 +1,3 @@
-mod point;
+pub use types::*;
 
-#[test]
-fn it_works() {
-}
+mod types;
