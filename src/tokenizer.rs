@@ -14,7 +14,7 @@
 
 use std::iter::Peekable;
 
-#[derive(PartialEq, Show)]
+#[derive(PartialEq, Debug)]
 pub enum Token {
     Comma,
     Number(f64),
