@@ -18,7 +18,6 @@ use std::ascii::AsciiExt;
 use std::default::Default;
 
 use tokenizer::{PeekableTokens, Token, Tokens};
-use types::Coord;
 use types::GeometryCollection;
 use types::LineString;
 use types::Point;
@@ -28,7 +27,10 @@ use types::MultiLineString;
 use types::MultiPolygon;
 
 mod tokenizer;
+mod towkt;
 pub mod types;
+
+pub use towkt::ToWkt;
 
 
 pub enum Geometry {
