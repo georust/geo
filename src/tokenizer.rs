@@ -66,7 +66,7 @@ impl Iterator for Tokens {
             ',' => Some(Token::Comma),
             c if is_whitespace(c) => self.next(),
             c if is_numberlike(c) => {
-                let mut number = c.to_string() + self.read_until_whitespace().as_slice();
+                let mut number = c.to_string() + &self.read_until_whitespace();
                 number = number.trim_left_matches('+').to_string();
                 match number.parse::<f64>() {
                     Some(parsed_num) => Some(Token::Number(parsed_num)),
@@ -74,7 +74,7 @@ impl Iterator for Tokens {
                 }
             }
             c => {
-                let word = c.to_string() + self.read_until_whitespace().as_slice();
+                let word = c.to_string() + &self.read_until_whitespace();
                 Some(Token::Word(word))
             }
         }
@@ -101,7 +101,7 @@ impl Tokens {
                 "".to_string()
             }
             c if is_whitespace(c) => "".to_string(),
-            _ => next_char.to_string() + self.read_until_whitespace().as_slice(),
+            _ => next_char.to_string() + &self.read_until_whitespace(),
         }
     }
 }
