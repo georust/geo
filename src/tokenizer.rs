@@ -69,8 +69,8 @@ impl Iterator for Tokens {
                 let mut number = c.to_string() + &self.read_until_whitespace();
                 number = number.trim_left_matches('+').to_string();
                 match number.parse::<f64>() {
-                    Some(parsed_num) => Some(Token::Number(parsed_num)),
-                    None => panic!("Could not parse number: {}", number),
+                    Ok(parsed_num) => Some(Token::Number(parsed_num)),
+                    Err(e) => panic!("Could not parse number: {}", e),
                 }
             }
             c => {
