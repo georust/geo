@@ -53,7 +53,7 @@ impl Tokens {
 impl Iterator for Tokens {
     type Item = Token;
 
-    fn next(&mut self) -> Option<Token> {
+    fn next(&mut self) -> Option<Token> {  // TODO: should this return Result?
         let next_char = match self.pop_front() {
             Some(c) => c,
             None => return None,
