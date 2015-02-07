@@ -38,7 +38,7 @@ fn is_numberlike(c: char) -> bool {
     }
 }
 
-pub type PeekableTokens = Peekable<Token, Tokens>;
+pub type PeekableTokens = Peekable<Tokens>;
 
 pub struct Tokens {
     text: String
