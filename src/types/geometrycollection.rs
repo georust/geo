@@ -34,10 +34,8 @@ impl FromTokens for GeometryCollection {
             _ => return Err("Expected a word in GEOMETRYCOLLECTION")
         };
 
-        match Geometry::from_word_and_tokens(&*word, tokens) {
-            Ok(item) => items.push(item),
-            Err(s) => return Err(s),
-        };
+        let item = try!(Geometry::from_word_and_tokens(&*word, tokens));
+        items.push(item);
 
         while let Some(&Token::Comma) = tokens.peek() {
             tokens.next();  // throw away comma
@@ -47,10 +45,8 @@ impl FromTokens for GeometryCollection {
                 _ => return Err("Expected a word in GEOMETRYCOLLECTION")
             };
 
-            match Geometry::from_word_and_tokens(&*word, tokens) {
-                Ok(item) => items.push(item),
-                Err(s) => return Err(s),
-            };
+            let item = try!(Geometry::from_word_and_tokens(&*word, tokens));
+            items.push(item);
         }
 
         Ok(GeometryCollection(items))

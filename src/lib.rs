@@ -140,18 +140,14 @@ trait FromTokens: Sized+Default {
             where F: Fn(&mut PeekableTokens) -> Result<Self, &'static str> {
         let mut items = Vec::new();
 
-        match f(tokens) {
-            Ok(i) => items.push(i),
-            Err(s) => return Err(s),
-        };
+        let item = try!(f(tokens));
+        items.push(item);
 
         while let Some(&Token::Comma) = tokens.peek() {
             tokens.next();  // throw away comma
 
-            match f(tokens) {
-                Ok(i) => items.push(i),
-                Err(s) => return Err(s),
-            };
+            let item = try!(f(tokens));
+            items.push(item);
         }
 
         Ok(items)
