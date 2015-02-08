@@ -109,7 +109,7 @@ impl Wkt {
             None => return Ok(wkt),
             _ => return Err("Invalid WKT format"),
         };
-        match Geometry::from_word_and_tokens(word.as_slice(), &mut tokens) {
+        match Geometry::from_word_and_tokens(&word, &mut tokens) {
             Ok(item) => wkt.add_item(item),
             Err(s) => return Err(s),
         }
