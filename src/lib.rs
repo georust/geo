@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![feature(collections,core,std_misc)]
+#![feature(collections,std_misc)]
 
 use std::ascii::AsciiExt;
 use std::default::Default;
