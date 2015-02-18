@@ -34,7 +34,7 @@ fn g_point_to_w_point(g_point: &geo::Point) -> Point {
 
 fn g_points_to_w_coords(g_points: &Vec<geo::Point>) -> Vec<Coord> {
     let mut w_points = vec![];
-    for g_point in g_points.iter() {
+    for g_point in g_points {
         w_points.push(g_point_to_w_coord(g_point));
     }
     w_points
@@ -55,7 +55,7 @@ fn g_points_to_w_line(g_points: &Vec<geo::Point>) -> LineString {
 
 fn g_lines_to_w_lines(g_lines: &Vec<geo::LineString>) -> Vec<LineString> {
     let mut w_lines = vec![];
-    for g_line in g_lines.iter() {
+    for g_line in g_lines {
         let &geo::LineString(ref g_points) = g_line;
         w_lines.push(g_points_to_w_line(g_points));
     }
@@ -96,7 +96,7 @@ fn g_mline_to_w_mline(g_mline: &geo::MultiLineString) -> MultiLineString {
 
 fn g_polygons_to_w_polygons(g_polygons: &Vec<geo::Polygon>) -> Vec<Polygon> {
     let mut w_polygons = vec![];
-    for g_polygon in g_polygons.iter() {
+    for g_polygon in g_polygons {
         w_polygons.push(g_polygon_to_w_polygon(g_polygon));
     }
     w_polygons
@@ -113,7 +113,7 @@ fn g_mpolygon_to_w_mpolygon(g_mpolygon: &geo::MultiPolygon) -> MultiPolygon {
 fn g_geocol_to_w_geocol(g_geocol: &geo::GeometryCollection) -> GeometryCollection {
     let &geo::GeometryCollection(ref g_geoms) = g_geocol;
     let mut w_geoms = vec![];
-    for g_geom in g_geoms.iter() {
+    for g_geom in g_geoms {
         let w_geom = g_geom_to_w_geom(g_geom);
         w_geoms.push(w_geom);
     }
