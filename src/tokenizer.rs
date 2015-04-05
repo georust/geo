@@ -46,7 +46,7 @@ pub struct Tokens {
 
 impl Tokens {
     pub fn from_str(input: &str) -> Self {
-        Tokens {text: String::from_str(input)}
+        Tokens {text: input.to_string()}
     }
 }
 

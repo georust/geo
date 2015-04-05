@@ -82,7 +82,7 @@ fn g_polygon_to_w_polygon(g_polygon: &geo::Polygon) -> Polygon {
 fn g_mpoint_to_w_mpoint(g_mpoint: &geo::MultiPoint) -> MultiPoint {
     let &geo::MultiPoint(ref g_points) = g_mpoint;
     let w_coords = g_points_to_w_coords(g_points);
-    let w_points = w_coords.map_in_place(|c| Point(Some(c)));
+    let w_points = w_coords.into_iter().map(|c| Point(Some(c))).collect();
     MultiPoint(w_points)
 }
 
