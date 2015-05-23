@@ -1,6 +1,7 @@
 # rust-geo
 
 [![Build Status](https://travis-ci.org/georust/rust-geo.svg?branch=master)](https://travis-ci.org/georust/rust-geo)
+[![geo on Crates.io](https://meritbadge.herokuapp.com/geo)](https://crates.io/crates/geo)
 
 [Documentation](https://georust.github.io/rust-geo/)
 
