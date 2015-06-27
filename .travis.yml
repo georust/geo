@@ -1,3 +1,5 @@
 language: rust
-script:
-  - cargo build
+rust:
+  - nightly
+  - beta
+  - stable
