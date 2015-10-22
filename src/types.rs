@@ -8,16 +8,29 @@ pub struct Coordinate {
 pub struct Point(pub Coordinate);
 
 impl Point {
+    /// Creates a new point.
+    ///
+    /// ```
+    /// use geo::Point;
+    ///
+    /// let p = Point::new(1.234, 2.345);
+    ///
+    /// assert_eq!(p.x(), 1.234);
+    /// assert_eq!(p.y(), 2.345);
+    /// ```
+    pub fn new(x: f64, y: f64) -> Point {
+        Point(Coordinate {
+            x: x,
+            y: y,
+        })
+    }
+
     /// Returns the x/horizontal component of the point.
     ///
     /// ```
-    /// use geo::Coordinate;
     /// use geo::Point;
     ///
-    /// let p = Point(Coordinate{
-    ///     x: 1.234,
-    ///     y: 2.345,
-    /// });
+    /// let p = Point::new(1.234, 2.345);
     ///
     /// assert_eq!(p.x(), 1.234);
     /// ```
@@ -28,13 +41,9 @@ impl Point {
     /// Returns the y/vertical component of the point.
     ///
     /// ```
-    /// use geo::Coordinate;
     /// use geo::Point;
     ///
-    /// let p = Point(Coordinate{
-    ///     x: 1.234,
-    ///     y: 2.345,
-    /// });
+    /// let p = Point::new(1.234, 2.345);
     ///
     /// assert_eq!(p.y(), 2.345);
     /// ```
@@ -45,13 +54,9 @@ impl Point {
     /// Returns the longitude/horizontal component of the point.
     ///
     /// ```
-    /// use geo::Coordinate;
     /// use geo::Point;
     ///
-    /// let p = Point(Coordinate{
-    ///     x: 1.234,
-    ///     y: 2.345,
-    /// });
+    /// let p = Point::new(1.234, 2.345);
     ///
     /// assert_eq!(p.lng(), 1.234);
     /// ```
@@ -62,13 +67,9 @@ impl Point {
     /// Returns the latitude/vertical component of the point.
     ///
     /// ```
-    /// use geo::Coordinate;
     /// use geo::Point;
     ///
-    /// let p = Point(Coordinate{
-    ///     x: 1.234,
-    ///     y: 2.345,
-    /// });
+    /// let p = Point::new(1.234, 2.345);
     ///
     /// assert_eq!(p.lat(), 2.345);
     /// ```
