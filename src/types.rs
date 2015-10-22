@@ -38,6 +38,21 @@ impl Point {
         self.0.x
     }
 
+    /// Sets the x/horizontal component of the point.
+    ///
+    /// ```
+    /// use geo::Point;
+    ///
+    /// let mut p = Point::new(1.234, 2.345);
+    /// p.set_x(9.876);
+    ///
+    /// assert_eq!(p.x(), 9.876);
+    /// ```
+    pub fn set_x(&mut self, x: f64) -> &mut Point {
+        self.0.x = x;
+        self
+    }
+
     /// Returns the y/vertical component of the point.
     ///
     /// ```
@@ -49,6 +64,21 @@ impl Point {
     /// ```
     pub fn y(&self) -> f64 {
         self.0.y
+    }
+
+    /// Sets the y/vertical component of the point.
+    ///
+    /// ```
+    /// use geo::Point;
+    ///
+    /// let mut p = Point::new(1.234, 2.345);
+    /// p.set_y(9.876);
+    ///
+    /// assert_eq!(p.y(), 9.876);
+    /// ```
+    pub fn set_y(&mut self, y: f64) -> &mut Point {
+        self.0.y = y;
+        self
     }
 
     /// Returns the longitude/horizontal component of the point.
@@ -64,6 +94,20 @@ impl Point {
         self.x()
     }
 
+    /// Sets the longitude/horizontal component of the point.
+    ///
+    /// ```
+    /// use geo::Point;
+    ///
+    /// let mut p = Point::new(1.234, 2.345);
+    /// p.set_lng(9.876);
+    ///
+    /// assert_eq!(p.lng(), 9.876);
+    /// ```
+    pub fn set_lng(&mut self, lng: f64) -> &mut Point {
+        self.set_x(lng)
+    }
+
     /// Returns the latitude/vertical component of the point.
     ///
     /// ```
@@ -75,6 +119,20 @@ impl Point {
     /// ```
     pub fn lat(&self) -> f64 {
         self.y()
+    }
+
+    /// Sets the latitude/vertical component of the point.
+    ///
+    /// ```
+    /// use geo::Point;
+    ///
+    /// let mut p = Point::new(1.234, 2.345);
+    /// p.set_lat(9.876);
+    ///
+    /// assert_eq!(p.lat(), 9.876);
+    /// ```
+    pub fn set_lat(&mut self, lat: f64) -> &mut Point {
+        self.set_y(lat)
     }
 }
 
