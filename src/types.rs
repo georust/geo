@@ -138,6 +138,21 @@ impl Point {
     pub fn set_lat(&mut self, lat: f64) -> &mut Point {
         self.set_y(lat)
     }
+
+    /// Returns the dot product of the two points:
+    /// `dot = x1 * x2 + y1 * y2`
+    ///
+    /// ```
+    /// use geo::Point;
+    ///
+    /// let p = Point::new(1.5, 0.5);
+    /// let dot = p.dot(&Point::new(2.0, 4.5));
+    ///
+    /// assert_eq!(dot, 5.25);
+    /// ```
+    pub fn dot(&self, point: &Point) -> f64 {
+        self.x() * point.x() + self.y() * point.y()
+    }
 }
 
 impl Neg for Point {
