@@ -3,10 +3,7 @@ use std::ops::Neg;
 use std::ops::Sub;
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Point {
-    x: f64,
-    y: f64,
-}
+pub struct Point(f64, f64);
 
 impl Point {
     /// Creates a new point.
@@ -20,10 +17,7 @@ impl Point {
     /// assert_eq!(p.y(), 2.345);
     /// ```
     pub fn new(x: f64, y: f64) -> Point {
-        Point {
-            x: x,
-            y: y,
-        }
+        Point(x, y)
     }
 
     /// Returns the x/horizontal component of the point.
@@ -36,7 +30,7 @@ impl Point {
     /// assert_eq!(p.x(), 1.234);
     /// ```
     pub fn x(&self) -> f64 {
-        self.x
+        self.0
     }
 
     /// Sets the x/horizontal component of the point.
@@ -50,7 +44,7 @@ impl Point {
     /// assert_eq!(p.x(), 9.876);
     /// ```
     pub fn set_x(&mut self, x: f64) -> &mut Point {
-        self.x = x;
+        self.0 = x;
         self
     }
 
@@ -64,7 +58,7 @@ impl Point {
     /// assert_eq!(p.y(), 2.345);
     /// ```
     pub fn y(&self) -> f64 {
-        self.y
+        self.1
     }
 
     /// Sets the y/vertical component of the point.
@@ -78,7 +72,7 @@ impl Point {
     /// assert_eq!(p.y(), 9.876);
     /// ```
     pub fn set_y(&mut self, y: f64) -> &mut Point {
-        self.y = y;
+        self.1 = y;
         self
     }
 
