@@ -3,13 +3,6 @@ extern crate geo;
 use geo::*;
 
 fn main() {
-    let c = Coordinate {
-        x: 40.02f64,
-        y: 116.34
-    };
-
-    let p = Point(c);
-
-    let Point(coord) = p;
-    println!("Point at ({}, {})", coord.x, coord.y);
+    let p = Point::new(40.02, 116.34);
+    println!("Point at ({}, {})", p.x(), p.y());
 }
