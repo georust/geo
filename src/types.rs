@@ -1,3 +1,7 @@
+use std::ops::Add;
+use std::ops::Neg;
+use std::ops::Sub;
+
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Coordinate {
     pub x: f64,
@@ -133,6 +137,60 @@ impl Point {
     /// ```
     pub fn set_lat(&mut self, lat: f64) -> &mut Point {
         self.set_y(lat)
+    }
+}
+
+impl Neg for Point {
+    type Output = Point;
+
+    /// Add a point to the given point.
+    ///
+    /// ```
+    /// use geo::Point;
+    ///
+    /// let p = -Point::new(-1.25, 2.5);
+    ///
+    /// assert_eq!(p.x(), 1.25);
+    /// assert_eq!(p.y(), -2.5);
+    /// ```
+    fn neg(self) -> Point {
+        Point::new(-self.x(), -self.y())
+    }
+}
+
+impl Add for Point {
+    type Output = Point;
+
+    /// Add a point to the given point.
+    ///
+    /// ```
+    /// use geo::Point;
+    ///
+    /// let p = Point::new(1.25, 2.5) + Point::new(1.5, 2.5);
+    ///
+    /// assert_eq!(p.x(), 2.75);
+    /// assert_eq!(p.y(), 5.0);
+    /// ```
+    fn add(self, _rhs: Point) -> Point {
+        Point::new(self.x() + _rhs.x(), self.y() + _rhs.y())
+    }
+}
+
+impl Sub for Point {
+    type Output = Point;
+
+    /// Subtract a point from the given point.
+    ///
+    /// ```
+    /// use geo::Point;
+    ///
+    /// let p = Point::new(1.25, 3.0) - Point::new(1.5, 2.5);
+    ///
+    /// assert_eq!(p.x(), -0.25);
+    /// assert_eq!(p.y(), 0.5);
+    /// ```
+    fn sub(self, _rhs: Point) -> Point {
+        Point::new(self.x() - _rhs.x(), self.y() - _rhs.y())
     }
 }
 
