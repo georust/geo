@@ -7,6 +7,76 @@ pub struct Coordinate {
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Point(pub Coordinate);
 
+impl Point {
+    /// Returns the x/horizontal component of the point.
+    ///
+    /// ```
+    /// use geo::Coordinate;
+    /// use geo::Point;
+    ///
+    /// let p = Point(Coordinate{
+    ///     x: 1.234,
+    ///     y: 2.345,
+    /// });
+    ///
+    /// assert_eq!(p.x(), 1.234);
+    /// ```
+    pub fn x(&self) -> f64 {
+        self.0.x
+    }
+
+    /// Returns the y/vertical component of the point.
+    ///
+    /// ```
+    /// use geo::Coordinate;
+    /// use geo::Point;
+    ///
+    /// let p = Point(Coordinate{
+    ///     x: 1.234,
+    ///     y: 2.345,
+    /// });
+    ///
+    /// assert_eq!(p.y(), 2.345);
+    /// ```
+    pub fn y(&self) -> f64 {
+        self.0.y
+    }
+
+    /// Returns the longitude/horizontal component of the point.
+    ///
+    /// ```
+    /// use geo::Coordinate;
+    /// use geo::Point;
+    ///
+    /// let p = Point(Coordinate{
+    ///     x: 1.234,
+    ///     y: 2.345,
+    /// });
+    ///
+    /// assert_eq!(p.lng(), 1.234);
+    /// ```
+    pub fn lng(&self) -> f64 {
+        self.x()
+    }
+
+    /// Returns the latitude/vertical component of the point.
+    ///
+    /// ```
+    /// use geo::Coordinate;
+    /// use geo::Point;
+    ///
+    /// let p = Point(Coordinate{
+    ///     x: 1.234,
+    ///     y: 2.345,
+    /// });
+    ///
+    /// assert_eq!(p.lat(), 2.345);
+    /// ```
+    pub fn lat(&self) -> f64 {
+        self.y()
+    }
+}
+
 #[derive(PartialEq, Clone, Debug)]
 pub struct MultiPoint(pub Vec<Point>);
 
