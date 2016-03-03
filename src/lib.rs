@@ -25,9 +25,13 @@ use types::MultiLineString;
 use types::MultiPolygon;
 
 mod tokenizer;
+
+#[cfg(feature = "geo")]
 mod towkt;
+
 pub mod types;
 
+#[cfg(feature = "geo")]
 pub use towkt::ToWkt;
 
 
