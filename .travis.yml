@@ -1,5 +1,8 @@
 language: rust
-rust:
-  - nightly
-  - beta
-  - stable
+matrix:
+  include:
+    - env: FEATURES=""
+    - env: FEATURES="geo"
+script:
+  - cargo build --verbose --no-default-features --features "$FEATURES"
+  - cargo test --verbose --no-default-features --features "$FEATURES"
