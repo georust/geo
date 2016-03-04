@@ -158,7 +158,7 @@ impl Point {
 impl Neg for Point {
     type Output = Point;
 
-    /// Add a point to the given point.
+    /// Returns a point with the x and y compontents negated.
     ///
     /// ```
     /// use geo::Point;
