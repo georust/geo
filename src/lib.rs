@@ -85,15 +85,15 @@ pub struct Wkt {
 }
 
 impl Wkt {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Wkt {items: vec![]}
     }
 
-    fn add_item(&mut self, item: Geometry) {
+    pub fn add_item(&mut self, item: Geometry) {
         self.items.push(item);
     }
 
-    fn from_str(wkt_str: &str) -> Result<Self, &'static str> {
+    pub fn from_str(wkt_str: &str) -> Result<Self, &'static str> {
         let tokens = Tokens::from_str(wkt_str);
         Wkt::from_tokens(tokens)
     }
