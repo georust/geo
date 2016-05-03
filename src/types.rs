@@ -186,8 +186,8 @@ impl Add for Point {
     /// assert_eq!(p.x(), 2.75);
     /// assert_eq!(p.y(), 5.0);
     /// ```
-    fn add(self, _rhs: Point) -> Point {
-        Point::new(self.x() + _rhs.x(), self.y() + _rhs.y())
+    fn add(self, rhs: Point) -> Point {
+        Point::new(self.x() + rhs.x(), self.y() + rhs.y())
     }
 }
 
@@ -204,8 +204,8 @@ impl Sub for Point {
     /// assert_eq!(p.x(), -0.25);
     /// assert_eq!(p.y(), 0.5);
     /// ```
-    fn sub(self, _rhs: Point) -> Point {
-        Point::new(self.x() - _rhs.x(), self.y() - _rhs.y())
+    fn sub(self, rhs: Point) -> Point {
+        Point::new(self.x() - rhs.x(), self.y() - rhs.y())
     }
 }
 
