@@ -1,6 +1,9 @@
 pub use ::Geometry;
 
+use std::ops::Neg;
+use num::Num;
 
-pub trait ToGeo {
-    fn to_geo(&self) -> Geometry;
+pub trait ToGeo<T: Num + Neg<Output = T> + Copy>
+{
+    fn to_geo(&self) -> Geometry<T>;
 }
