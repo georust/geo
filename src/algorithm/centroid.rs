@@ -1,5 +1,5 @@
 
-pub use types::{Coordinate, Point, LineString, Polygon};
+use types::{Coordinate, Point, LineString, Polygon};
 
 /// Calculation of the centroid.
 
