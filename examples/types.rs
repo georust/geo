@@ -1,6 +1,6 @@
 extern crate geo;
 
-use geo::*;
+use geo::{Point, Coordinate};
 
 fn main() {
     let c = Coordinate {

@@ -153,6 +153,19 @@ impl Point {
     pub fn dot(&self, point: &Point) -> f64 {
         self.x() * point.x() + self.y() * point.y()
     }
+    /// Returns the distance between two points:
+    ///
+    /// ```
+    /// use geo::Point;
+    ///
+    /// let p = Point::new(-72.1235, 42.3521);
+    /// let dist = p.distance_to(&Point::new(-72.1260, 42.45));
+    ///
+    /// assert!(dist < 1e-1)
+    /// ```
+    pub fn distance_to(&self, point: &Point) -> f64 {
+        ((self.x() - point.x()).powi(2) + (self.y() - point.y()).powi(2)).sqrt()
+    }
 }
 
 impl Neg for Point {
@@ -255,5 +268,9 @@ mod test {
         assert_eq!(c, c2);
         assert_eq!(c.x, c2.x);
         assert_eq!(c.y, c2.y);
+    }
+    #[test]
+    fn distance_to_test() {
+        assert_eq!(Point::new(0., 0.).distance_to(&Point::new(1., 0.)), 1.);
     }
 }
