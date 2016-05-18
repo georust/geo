@@ -2,7 +2,7 @@ use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
 
-use num::Num;
+use num::{Num, ToPrimitive};
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Coordinate<T>
@@ -16,7 +16,7 @@ pub struct Coordinate<T>
 pub struct Point<T> (pub Coordinate<T>) where T: Num + Copy;
 
 impl<T> Point<T>
-    where T: Num + Copy
+    where T: Num + Copy + ToPrimitive
 {
     /// Creates a new point.
     ///
@@ -169,13 +169,15 @@ impl<T> Point<T>
     ///
     /// assert!(dist < 1e-1)
     /// ```
-    pub fn distance_to(&self, point: &Point) -> f64 {
-        ((self.x() - point.x()).powi(2) + (self.y() - point.y()).powi(2)).sqrt()
+    pub fn distance_to(&self, point: &Point<T>) -> f64 {
+        let dx : f64 = self.x().to_f64().unwrap() - point.x().to_f64().unwrap();
+        let dy : f64 = self.y().to_f64().unwrap() - point.y().to_f64().unwrap();
+        (dx * dx + dy * dy).sqrt()
     }
 }
 
 impl<T> Neg for Point<T>
-    where T: Num + Neg<Output = T> + Copy
+    where T: Num + Neg<Output = T> + Copy + ToPrimitive
 {
     type Output = Point<T>;
 
@@ -195,7 +197,7 @@ impl<T> Neg for Point<T>
 }
 
 impl<T> Add for Point<T>
-    where T: Num + Copy
+    where T: Num + Copy + ToPrimitive
 {
     type Output = Point<T>;
 
@@ -215,7 +217,7 @@ impl<T> Add for Point<T>
 }
 
 impl<T> Sub for Point<T>
-    where T: Num + Copy
+    where T: Num + Copy + ToPrimitive
 {
     type Output = Point<T>;
 
