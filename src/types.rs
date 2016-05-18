@@ -6,17 +6,17 @@ use num::Num;
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Coordinate<T>
-    where T: Num + Neg<Output = T> + Copy
+    where T: Num + Copy
 {
     pub x: T,
     pub y: T,
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Point<T> (pub Coordinate<T>) where T: Num + Neg<Output = T> + Copy;
+pub struct Point<T> (pub Coordinate<T>) where T: Num + Copy;
 
 impl<T> Point<T>
-    where T: Num + Neg<Output = T> + Copy
+    where T: Num + Copy
 {
     /// Creates a new point.
     ///
@@ -182,7 +182,7 @@ impl<T> Neg for Point<T>
 }
 
 impl<T> Add for Point<T>
-    where T: Num + Neg<Output = T> + Copy
+    where T: Num + Copy
 {
     type Output = Point<T>;
 
@@ -202,7 +202,7 @@ impl<T> Add for Point<T>
 }
 
 impl<T> Sub for Point<T>
-    where T: Num + Neg<Output = T> + Copy
+    where T: Num + Copy
 {
     type Output = Point<T>;
 
@@ -222,26 +222,26 @@ impl<T> Sub for Point<T>
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Num + Neg<Output = T> + Copy;
+pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Num + Copy;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct LineString<T>(pub Vec<Point<T>>) where T: Num + Neg<Output = T> + Copy;
+pub struct LineString<T>(pub Vec<Point<T>>) where T: Num + Copy;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Num + Neg<Output = T> + Copy;
+pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Num + Copy;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct Polygon<T>(pub LineString<T>, pub Vec<LineString<T>>) where T: Num + Neg<Output = T> + Copy;
+pub struct Polygon<T>(pub LineString<T>, pub Vec<LineString<T>>) where T: Num + Copy;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Num + Neg<Output = T> + Copy;
+pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Num + Copy;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Num + Neg<Output = T> + Copy;
+pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Num + Copy;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Geometry<T>
-    where T: Num + Neg<Output = T> + Copy
+    where T: Num + Copy
 {
     Point(Point<T>),
     LineString(LineString<T>),
