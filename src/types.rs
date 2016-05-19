@@ -2,21 +2,21 @@ use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
 
-use num::{Num, ToPrimitive};
+use num::{Float, ToPrimitive};
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Coordinate<T>
-    where T: Num + Copy
+    where T: Float
 {
     pub x: T,
     pub y: T,
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Point<T> (pub Coordinate<T>) where T: Num + Copy;
+pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
 impl<T> Point<T>
-    where T: Num + Copy + ToPrimitive
+    where T: Float + ToPrimitive
 {
     /// Creates a new point.
     ///
@@ -169,15 +169,14 @@ impl<T> Point<T>
     ///
     /// assert!(dist < 1e-1)
     /// ```
-    pub fn distance_to(&self, point: &Point<T>) -> f64 {
-        let dx : f64 = self.x().to_f64().unwrap() - point.x().to_f64().unwrap();
-        let dy : f64 = self.y().to_f64().unwrap() - point.y().to_f64().unwrap();
-        (dx * dx + dy * dy).sqrt()
+    pub fn distance_to(&self, point: &Point<T>) -> T {
+        let (dx, dy) = (self.x() - point.x(), self.y() - point.y());
+        Float::sqrt(dx * dx + dy * dy)
     }
 }
 
 impl<T> Neg for Point<T>
-    where T: Num + Neg<Output = T> + Copy + ToPrimitive
+    where T: Float + Neg<Output = T> + ToPrimitive
 {
     type Output = Point<T>;
 
@@ -197,7 +196,7 @@ impl<T> Neg for Point<T>
 }
 
 impl<T> Add for Point<T>
-    where T: Num + Copy + ToPrimitive
+    where T: Float + ToPrimitive
 {
     type Output = Point<T>;
 
@@ -217,7 +216,7 @@ impl<T> Add for Point<T>
 }
 
 impl<T> Sub for Point<T>
-    where T: Num + Copy + ToPrimitive
+    where T: Float + ToPrimitive
 {
     type Output = Point<T>;
 
@@ -237,26 +236,26 @@ impl<T> Sub for Point<T>
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Num + Copy;
+pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct LineString<T>(pub Vec<Point<T>>) where T: Num + Copy;
+pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Num + Copy;
+pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct Polygon<T>(pub LineString<T>, pub Vec<LineString<T>>) where T: Num + Copy;
+pub struct Polygon<T>(pub LineString<T>, pub Vec<LineString<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Num + Copy;
+pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Num + Copy;
+pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Geometry<T>
-    where T: Num + Copy
+    where T: Float
 {
     Point(Point<T>),
     LineString(LineString<T>),

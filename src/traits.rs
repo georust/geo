@@ -1,8 +1,8 @@
 pub use ::Geometry;
 
-use num::Num;
+use num::Float;
 
-pub trait ToGeo<T: Num + Copy>
+pub trait ToGeo<T: Float>
 {
     fn to_geo(&self) -> Geometry<T>;
 }

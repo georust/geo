@@ -1,10 +1,10 @@
-use num::{Num, ToPrimitive};
+use num::{Float, ToPrimitive};
 
 use types::{Point, LineString, Polygon};
 
 /// Calculation of the centroid.
 
-pub trait Centroid<T: Num + Copy> {
+pub trait Centroid<T: Float> {
     /// Calculation the centroid, see: https://en.wikipedia.org/wiki/Centroid
     ///
     /// ```
@@ -22,48 +22,45 @@ pub trait Centroid<T: Num + Copy> {
     fn centroid(&self) -> Option<Point<T>>;
 }
 
-impl<T> Centroid<f64> for LineString<T>
-    where T: Num + Copy + ToPrimitive
+impl<T> Centroid<T> for LineString<T>
+    where T: Float + ToPrimitive
 {
     ///
     /// Centroid on a LineString is the mean of the middle of the segment
     /// weighted by the length of the segments.
     ///
-    fn centroid(&self) -> Option<Point<f64>> {
+    fn centroid(&self) -> Option<Point<T>> {
         let vect = &self.0;
         if vect.is_empty() {
             return None;
         }
         if vect.len() == 1 {
-            Some(Point::new(vect[0].x().to_f64().unwrap(),
-                            vect[0].y().to_f64().unwrap()))
+            Some(Point::new(vect[0].x(),
+                            vect[0].y()))
         } else {
-            let mut sum_x : f64 = 0.;
-            let mut sum_y : f64 = 0.;
-            let mut total_length : f64 = 0.;
+            let mut sum_x = T::zero();
+            let mut sum_y = T::zero();
+            let mut total_length = T::zero();
             for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-                let segment_len : f64 = p1.distance_to(&p2);
-                let x1 : f64 = p1.x().to_f64().unwrap();
-                let x2 : f64 = p2.x().to_f64().unwrap();
-                let y1 : f64 = p1.y().to_f64().unwrap();
-                let y2 : f64 = p2.y().to_f64().unwrap();
-                total_length += segment_len;
-                sum_x += segment_len * ((x1 + x2) / 2.);
-                sum_y += segment_len * ((y1 + y2) / 2.);
+                let segment_len = p1.distance_to(&p2);
+                let (x1, y1, x2, y2) = (p1.x(), p1.y(), p2.x(), p2.y());
+                total_length = total_length + segment_len;
+                sum_x = sum_x + segment_len * ((x1 + x2) / 2.);
+                sum_y = sum_y + segment_len * ((y1 + y2) / 2.);
             }
             Some(Point::new(sum_x / total_length, sum_y / total_length))
         }
     }
 }
 
-impl<T> Centroid<f64> for Polygon<T>
-    where T: Num + Copy + ToPrimitive
+impl<T> Centroid<T> for Polygon<T>
+    where T: Float + ToPrimitive
 {
     ///
     /// Centroid on a Polygon.
     /// See: https://en.wikipedia.org/wiki/Centroid
     ///
-    fn centroid(&self) -> Option<Point<f64>> {
+    fn centroid(&self) -> Option<Point<T>> {
         // TODO: consideration of inner polygons;
         let linestring = &self.0;
         let vect = &linestring.0;
@@ -71,22 +68,19 @@ impl<T> Centroid<f64> for Polygon<T>
             return None;
         }
         if vect.len() == 1 {
-            Some(Point::new(vect[0].x().to_f64().unwrap(), vect[0].y().to_f64().unwrap()))
+            Some(Point::new(vect[0].x(), vect[0].y()))
         } else {
-            let mut area : f64 = 0.;
-            let mut sum_x : f64 = 0.;
-            let mut sum_y : f64 = 0.;
+            let mut area = T::zero();
+            let mut sum_x = T::zero();
+            let mut sum_y = T::zero();
             for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-                let x1 : f64 = p1.x().to_f64().unwrap();
-                let x2 : f64 = p2.x().to_f64().unwrap();
-                let y1 : f64 = p1.y().to_f64().unwrap();
-                let y2 : f64 = p2.y().to_f64().unwrap();
-                let tmp : f64 = x1 * y2 - x2 * y1;
-                area += tmp;
-                sum_x += (x1 + x2) * tmp;
-                sum_y += (y2 + y1) * tmp;
+                let (x1, y1, x2, y2) = (p1.x(), p1.y(), p2.x(), p2.y());
+                let tmp = x1 * y2 - x2 * y1;
+                area = area + tmp;
+                sum_x = sum_x + (x1 + x2) * tmp;
+                sum_y = sum_y + (y2 + y1) * tmp;
             }
-            area /= 2.;
+            area = area / 2.;
             Some(Point::new(sum_x / (6. * area), (sum_y / (6. * area))))
         }
     }
