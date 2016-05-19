@@ -45,8 +45,8 @@ impl<T> Centroid<T> for LineString<T>
                 let segment_len = p1.distance_to(&p2);
                 let (x1, y1, x2, y2) = (p1.x(), p1.y(), p2.x(), p2.y());
                 total_length = total_length + segment_len;
-                sum_x = sum_x + segment_len * ((x1 + x2) / 2.);
-                sum_y = sum_y + segment_len * ((y1 + y2) / 2.);
+                sum_x = sum_x + segment_len * ((x1 + x2) / (T::one() + T::one()));
+                sum_y = sum_y + segment_len * ((y1 + y2) / (T::one() + T::one()));
             }
             Some(Point::new(sum_x / total_length, sum_y / total_length))
         }
@@ -80,8 +80,9 @@ impl<T> Centroid<T> for Polygon<T>
                 sum_x = sum_x + (x1 + x2) * tmp;
                 sum_y = sum_y + (y2 + y1) * tmp;
             }
-            area = area / 2.;
-            Some(Point::new(sum_x / (6. * area), (sum_y / (6. * area))))
+            area = area / (T::one() + T::one());
+            let six = T::one() + T::one() + T::one() + T::one() + T::one() + T::one();
+            Some(Point::new(sum_x / (six * area), (sum_y / (six * area))))
         }
     }
 }
