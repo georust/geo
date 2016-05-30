@@ -2,6 +2,8 @@ use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
 
+pub static COORD_PRECISION: f64 = 1e-1; // 0.1m
+
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Coordinate {
     pub x: f64,
@@ -23,10 +25,7 @@ impl Point {
     /// assert_eq!(p.y(), 2.345);
     /// ```
     pub fn new(x: f64, y: f64) -> Point {
-        Point(Coordinate {
-            x: x,
-            y: y,
-        })
+        Point(Coordinate { x: x, y: y })
     }
 
     /// Returns the x/horizontal component of the point.
@@ -153,19 +152,6 @@ impl Point {
     pub fn dot(&self, point: &Point) -> f64 {
         self.x() * point.x() + self.y() * point.y()
     }
-    /// Returns the distance between two points:
-    ///
-    /// ```
-    /// use geo::Point;
-    ///
-    /// let p = Point::new(-72.1235, 42.3521);
-    /// let dist = p.distance_to(&Point::new(-72.1260, 42.45));
-    ///
-    /// assert!(dist < 1e-1)
-    /// ```
-    pub fn distance_to(&self, point: &Point) -> f64 {
-        ((self.x() - point.x()).powi(2) + (self.y() - point.y()).powi(2)).sqrt()
-    }
 }
 
 impl Neg for Point {
@@ -248,7 +234,7 @@ pub enum Geometry {
     MultiPoint(MultiPoint),
     MultiLineString(MultiLineString),
     MultiPolygon(MultiPolygon),
-    GeometryCollection(GeometryCollection)
+    GeometryCollection(GeometryCollection),
 }
 
 #[cfg(test)]
@@ -259,7 +245,7 @@ mod test {
     fn type_test() {
         let c = Coordinate {
             x: 40.02f64,
-            y: 116.34
+            y: 116.34,
         };
 
         let p = Point(c);
@@ -268,9 +254,5 @@ mod test {
         assert_eq!(c, c2);
         assert_eq!(c.x, c2.x);
         assert_eq!(c.y, c2.y);
-    }
-    #[test]
-    fn distance_to_test() {
-        assert_eq!(Point::new(0., 0.).distance_to(&Point::new(1., 0.)), 1.);
     }
 }
