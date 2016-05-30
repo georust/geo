@@ -85,23 +85,17 @@ impl Centroid for MultiPolygon {
         let mut total_area = 0.;
         let vect = &self.0;
         if vect.is_empty() {
-            None
-        } else {
-            for poly in &self.0 {
-                let centroid_poly = poly.centroid();
-                let tmp = poly.area();
-                total_area += poly.area();
-                sum_x += match centroid_poly {
-                    Some(p) => tmp * p.lng(),
-                    None => 0.,
-                };
-                sum_y += match centroid_poly {
-                    Some(p) => tmp * p.lat(),
-                    None => 0.,
-                };
-            }
-            Some(Point::new(sum_x / total_area, sum_y / total_area))
+            return None;
         }
+        for poly in &self.0 {
+            let tmp = poly.area();
+            total_area += poly.area();
+            if let Some(p) = poly.centroid(){
+            	sum_x += tmp * p.lng();
+            	sum_y += tmp * p.lat();
+            }
+        }
+        Some(Point::new(sum_x / total_area, sum_y / total_area))
     }
 }
 
@@ -121,9 +115,7 @@ mod test {
     #[test]
     fn linestring_one_point_test() {
         let p = Point::new(40.02f64, 116.34);
-        let mut vect = Vec::new();
-        vect.push(p);
-        let linestring = LineString(vect);
+        let linestring = LineString(vec![p]);
         let centroid = linestring.centroid();
         assert_eq!(centroid, Some(p));
     }
@@ -167,23 +159,18 @@ mod test {
     #[test]
     fn multipolygon_one_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let mut v = Vec::new();
         let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
         let poly = Polygon(linestring, Vec::new());
-        v.push(poly);
-        assert_eq!(MultiPolygon(v).centroid(), Some(p(1., 1.)));
+        assert_eq!(MultiPolygon(vec![poly]).centroid(), Some(p(1., 1.)));
     }
     #[test]
     fn multipolygon_two_polygons_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let mut v = Vec::new();
         let linestring = LineString(vec![p(2., 1.), p(5., 1.), p(5., 3.), p(2., 3.), p(2., 1.)]);
-        let poly = Polygon(linestring, Vec::new());
-        v.push(poly);
+        let poly1 = Polygon(linestring, Vec::new());
         let linestring = LineString(vec![p(7., 1.), p(8., 1.), p(8., 2.), p(7., 2.), p(7., 1.)]);
-        let poly = Polygon(linestring, Vec::new());
-        v.push(poly);
-        assert!(MultiPolygon(v)
+        let poly2 = Polygon(linestring, Vec::new());
+        assert!(MultiPolygon(vec![poly1, poly2])
                     .centroid()
                     .unwrap()
                     .distance(&p(4.07142857142857, 1.92857142857143)) <

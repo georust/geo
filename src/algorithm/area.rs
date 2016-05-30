@@ -24,13 +24,12 @@ impl Area for Polygon {
         let linestring = &self.0;
         if linestring.0.is_empty() || linestring.0.len() == 1 {
             return 0.;
-        } else {
-            let mut tmp = 0.;
-            for (p1, p2) in linestring.0.iter().zip(linestring.0[1..].iter()) {
-                tmp += p1.lng() * p2.lat() - p2.lng() * p1.lat();
-            }
-            return tmp / 2.;
         }
+        let mut tmp = 0.;
+        for (p1, p2) in linestring.0.iter().zip(linestring.0[1..].iter()) {
+            tmp += p1.lng() * p2.lat() - p2.lng() * p1.lat();
+        }
+        tmp / 2.
     }
 }
 
@@ -53,9 +52,8 @@ mod test {
     #[test]
     fn area_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let v = Vec::new();
         let linestring = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
-        let poly = Polygon(linestring, v);
+        let poly = Polygon(linestring, Vec::new());
         assert_eq!(poly.area(), 30.);
     }
 }
