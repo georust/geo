@@ -74,8 +74,8 @@ enum PositionPoint {
 
 fn get_position(p: &Point, linestring: &LineString) -> PositionPoint {
     // See: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-    // 	 http://geospatialpython.com/search
-    // 		?updated-min=2011-01-01T00:00:00-06:00&updated-max=2012-01-01T00:00:00-06:00&max-results=19
+    //      http://geospatialpython.com/search
+    //         ?updated-min=2011-01-01T00:00:00-06:00&updated-max=2012-01-01T00:00:00-06:00&max-results=19
     // Return the position of the point relative to a linestring
 
     let vect = &linestring.0;
@@ -132,9 +132,9 @@ impl Contains<LineString> for Polygon {
     fn contains(&self, linestring: &LineString) -> bool {
         // All points of LineString must be in the polygon ?
         if linestring.0.iter().all(|point| self.contains(point)) {
-        	!self.intersects(linestring)
+            !self.intersects(linestring)
         } else {
-        	false
+            false
         }
     }
 }

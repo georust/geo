@@ -22,8 +22,7 @@ pub trait Intersects<RHS = Self> {
 }
 
 impl Intersects<LineString> for LineString {
-    // See: https://github.com/brandonxiang/
-    // 		geojson-python-utils/blob/33b4c00c6cf27921fb296052d0c0341bd6ca1af2/geojson_utils.py
+    // See: https://github.com/brandonxiang/geojson-python-utils/blob/33b4c00c6cf27921fb296052d0c0341bd6ca1af2/geojson_utils.py
     fn intersects(&self, linestring: &LineString) -> bool {
         let vect0 = &self.0;
         let vect1 = &linestring.0;

@@ -91,8 +91,8 @@ impl Centroid for MultiPolygon {
             let tmp = poly.area();
             total_area += poly.area();
             if let Some(p) = poly.centroid(){
-            	sum_x += tmp * p.lng();
-            	sum_y += tmp * p.lat();
+                sum_x += tmp * p.lng();
+                sum_y += tmp * p.lat();
             }
         }
         Some(Point::new(sum_x / total_area, sum_y / total_area))
