@@ -94,6 +94,12 @@ mod test {
         let linestring = LineString(vec![p(3., 2.), p(7., 6.)]);
         assert!(linestring.intersects(&LineString(vec![p(3., 4.), p(8., 4.)])));
     }
+    #[test]
+    fn parallel_linestrings_test() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let linestring = LineString(vec![p(3., 2.), p(7., 6.)]);
+        assert!(!linestring.intersects(&LineString(vec![p(3., 1.), p(7., 5.)])));
+    }
     /// Tests: intersection LineString and Polygon
     #[test]
     fn linstring_in_polygon_test() {
