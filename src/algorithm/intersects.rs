@@ -54,16 +54,12 @@ impl Intersects<LineString> for LineString {
 
 impl Intersects<LineString> for Polygon {
     fn intersects(&self, linstring: &LineString) -> bool {
-        if self.0.intersects(linstring) {
+        // line intersects inner or outer polygon edge
+        if self.0.intersects(linstring) || self.1.iter().any(|inner| inner.intersects(linstring)) {
             return true;
         } else {
-            if self.1.is_empty() {
-                return true;
-            } else {
-                !self.1.iter().any(|ls| {
-                    linstring.0.iter().all(|point| Polygon(ls.clone(), Vec::new()).contains(point))
-                })
-            }
+            // or if it's contained in the polygon
+            return linstring.0.iter().any(|point| self.contains(point))
         }
     }
 }
