@@ -217,6 +217,7 @@ mod test {
                                                p(0.0, 1.5),
                                                p(0.0, 0.0)]);
         let poly = Polygon(linestring, vec![inner_linestring]);
+        assert!(poly.contains(&p(0.25, 0.25)));
         assert!(!poly.contains(&p(1., 1.)));
         assert!(!poly.contains(&p(1.5, 1.5)));
         assert!(!poly.contains(&p(1.5, 1.)));
