@@ -29,18 +29,18 @@ impl Intersects<LineString> for LineString {
         if vect0.is_empty() || vect1.is_empty() {
             return false;
         }
-        for (p01, p02) in vect0.iter().zip(vect0[1..].iter()) {
-            for (p11, p12) in vect1.iter().zip(vect1[1..].iter()) {
-                let u_b = (p02.lat() - p11.lat()) * (p02.lng() - p01.lng()) -
-                          (p12.lng() - p11.lng()) * (p02.lat() - p01.lat());
+        for (a1, a2) in vect0.iter().zip(vect0[1..].iter()) {
+            for (b1, b2) in vect1.iter().zip(vect1[1..].iter()) {
+                let u_b = (a2.y() - b1.y()) * (a2.x() - a1.x()) -
+                          (b2.x() - b1.x()) * (a2.y() - a1.y());
                 if u_b == 0. {
                     // The point is on boundary
                     return true;
                 }
-                let ua_t = (p12.lng() - p11.lng()) * (p01.lat() - p11.lat()) -
-                           (p02.lat() - p11.lat()) * (p01.lng() - p11.lng());
-                let ub_t = (p02.lng() - p01.lng()) * (p01.lat() - p11.lat()) -
-                           (p02.lat() - p01.lat()) * (p01.lng() - p11.lng());
+                let ua_t = (b2.x() - b1.x()) * (a1.y() - b1.y()) -
+                           (a2.y() - b1.y()) * (a1.x() - b1.x());
+                let ub_t = (a2.x() - a1.x()) * (a1.y() - b1.y()) -
+                           (a2.y() - a1.y()) * (a1.x() - b1.x());
                 let u_a = ua_t / u_b;
                 let u_b = ub_t / u_b;
                 if (0. <= u_a) && (u_a <= 1.) && (0. <= u_b) && (u_b <= 1.) {
