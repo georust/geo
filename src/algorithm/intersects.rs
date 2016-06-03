@@ -54,8 +54,8 @@ impl Intersects<LineString> for LineString {
 
 impl Intersects<LineString> for Polygon {
     fn intersects(&self, linstring: &LineString) -> bool {
-        if !self.0.intersects(linstring) {
-            return false;
+        if self.0.intersects(linstring) {
+            return true;
         } else {
             if self.1.is_empty() {
                 return true;
