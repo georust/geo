@@ -20,7 +20,7 @@ pub trait Contains<RHS = Self> {
     /// //Point in Point
     /// assert!(p(2., 0.).contains(&p(2., 0.)));
     ///
-    /// //Point in Linstring
+    /// //Point in Linestring
     /// assert!(linestring.contains(&p(2., 0.)));
     ///
     /// //Point in Polygon
@@ -44,7 +44,7 @@ impl Contains<Point> for LineString {
         if vect.is_empty() {
             return false;
         }
-        // LinString with one point equal p
+        // LineString with one point equal p
         if vect.len() == 1 {
             return vect[0].contains(p);
         }
@@ -83,7 +83,7 @@ fn get_position(p: &Point, linestring: &LineString) -> PositionPoint {
     if vect.is_empty() {
         return PositionPoint::Outside;
     }
-    // Point is on linstring
+    // Point is on linestring
     if linestring.contains(p) {
         return PositionPoint::OnBoundary;
     }
@@ -260,7 +260,7 @@ mod test {
     }
     /// Tests: LineString in Polygon
     #[test]
-    fn linstring_in_polygon_with_linestring_is_boundary_test() {
+    fn linestring_in_polygon_with_linestring_is_boundary_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
         let poly = Polygon(linestring.clone(), Vec::new());
@@ -270,7 +270,7 @@ mod test {
         assert!(!poly.contains(&LineString(vec![p(0., 2.), p(0., 0.)])));
     }
     #[test]
-    fn linstring_outside_polygon_test() {
+    fn linestring_outside_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
         let poly = Polygon(linestring, Vec::new());
@@ -278,7 +278,7 @@ mod test {
         assert!(!poly.contains(&LineString(vec![p(3., 0.), p(5., 2.)])));
     }
     #[test]
-    fn linstring_in_inner_polygon_test() {
+    fn linestring_in_inner_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
 
         let poly = Polygon(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
