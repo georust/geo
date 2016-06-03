@@ -31,14 +31,14 @@ impl Intersects<LineString> for LineString {
         }
         for (a1, a2) in vect0.iter().zip(vect0[1..].iter()) {
             for (b1, b2) in vect1.iter().zip(vect1[1..].iter()) {
-                let u_b = (a2.y() - b1.y()) * (a2.x() - a1.x()) -
+                let u_b = (b2.y() - b1.y()) * (a2.x() - a1.x()) -
                           (b2.x() - b1.x()) * (a2.y() - a1.y());
                 if u_b == 0. {
                     // The point is on boundary
-                    return true;
+                    continue;
                 }
                 let ua_t = (b2.x() - b1.x()) * (a1.y() - b1.y()) -
-                           (a2.y() - b1.y()) * (a1.x() - b1.x());
+                           (b2.y() - b1.y()) * (a1.x() - b1.x());
                 let ub_t = (a2.x() - a1.x()) * (a1.y() - b1.y()) -
                            (a2.y() - a1.y()) * (a1.x() - b1.x());
                 let u_a = ua_t / u_b;
