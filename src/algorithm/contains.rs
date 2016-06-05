@@ -20,7 +20,7 @@ pub trait Contains<RHS = Self> {
     /// //Point in Point
     /// assert!(p(2., 0.).contains(&p(2., 0.)));
     ///
-    /// //Point in Linstring
+    /// //Point in Linestring
     /// assert!(linestring.contains(&p(2., 0.)));
     ///
     /// //Point in Polygon
@@ -44,7 +44,7 @@ impl Contains<Point> for LineString {
         if vect.is_empty() {
             return false;
         }
-        // LinString with one point equal p
+        // LineString with one point equal p
         if vect.len() == 1 {
             return vect[0].contains(p);
         }
@@ -74,8 +74,8 @@ enum PositionPoint {
 
 fn get_position(p: &Point, linestring: &LineString) -> PositionPoint {
     // See: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-    // 	 http://geospatialpython.com/search
-    // 		?updated-min=2011-01-01T00:00:00-06:00&updated-max=2012-01-01T00:00:00-06:00&max-results=19
+    //      http://geospatialpython.com/search
+    //         ?updated-min=2011-01-01T00:00:00-06:00&updated-max=2012-01-01T00:00:00-06:00&max-results=19
     // Return the position of the point relative to a linestring
 
     let vect = &linestring.0;
@@ -83,7 +83,7 @@ fn get_position(p: &Point, linestring: &LineString) -> PositionPoint {
     if vect.is_empty() {
         return PositionPoint::Outside;
     }
-    // Point is on linstring
+    // Point is on linestring
     if linestring.contains(p) {
         return PositionPoint::OnBoundary;
     }
@@ -132,9 +132,9 @@ impl Contains<LineString> for Polygon {
     fn contains(&self, linestring: &LineString) -> bool {
         // All points of LineString must be in the polygon ?
         if linestring.0.iter().all(|point| self.contains(point)) {
-        	!self.intersects(linestring)
+            !self.intersects(linestring)
         } else {
-        	false
+            false
         }
     }
 }
@@ -217,6 +217,7 @@ mod test {
                                                p(0.0, 1.5),
                                                p(0.0, 0.0)]);
         let poly = Polygon(linestring, vec![inner_linestring]);
+        assert!(poly.contains(&p(0.25, 0.25)));
         assert!(!poly.contains(&p(1., 1.)));
         assert!(!poly.contains(&p(1.5, 1.5)));
         assert!(!poly.contains(&p(1.5, 1.)));
@@ -259,7 +260,7 @@ mod test {
     }
     /// Tests: LineString in Polygon
     #[test]
-    fn linstring_in_polygon_with_linestring_is_boundary_test() {
+    fn linestring_in_polygon_with_linestring_is_boundary_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
         let poly = Polygon(linestring.clone(), Vec::new());
@@ -269,7 +270,7 @@ mod test {
         assert!(!poly.contains(&LineString(vec![p(0., 2.), p(0., 0.)])));
     }
     #[test]
-    fn linstring_outside_polygon_test() {
+    fn linestring_outside_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
         let poly = Polygon(linestring, Vec::new());
@@ -277,7 +278,7 @@ mod test {
         assert!(!poly.contains(&LineString(vec![p(3., 0.), p(5., 2.)])));
     }
     #[test]
-    fn linstring_in_inner_polygon_test() {
+    fn linestring_in_inner_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
 
         let poly = Polygon(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
