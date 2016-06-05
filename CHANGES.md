@@ -1,5 +1,9 @@
 # Changes
 
+## 0.1.1
+
+* [`Intersects` trait bugfixes](https://github.com/georust/rust-geo/pull/34)
+
 ## 0.1.0
 
 * [Add `Area` trait](https://github.com/georust/rust-geo/pull/31)
