@@ -34,7 +34,6 @@ impl Intersects<LineString> for LineString {
                 let u_b = (b2.y() - b1.y()) * (a2.x() - a1.x()) -
                           (b2.x() - b1.x()) * (a2.y() - a1.y());
                 if u_b == 0. {
-                    // The point is on boundary
                     continue;
                 }
                 let ua_t = (b2.x() - b1.x()) * (a1.y() - b1.y()) -
