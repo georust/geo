@@ -5,7 +5,6 @@ use algorithm::area::Area;
 use algorithm::distance::Distance;
 
 /// Calculation of the centroid.
-
 pub trait Centroid<T: Float> {
     /// Calculation the centroid, see: https://en.wikipedia.org/wiki/Centroid
     ///
@@ -118,28 +117,24 @@ mod test {
     /// Tests: Centroid of LineString
     #[test]
     fn empty_linestring_test() {
-        let vec : Vec<Point<f64>> = Vec::new();
-        let linestring : LineString<f64> = LineString(vec);
+        let vec = Vec::<Point<f64>>::new();
+        let linestring = LineString(vec);
         let centroid = linestring.centroid();
         assert!(centroid.is_none());
     }
     #[test]
     fn linestring_one_point_test() {
         let p = Point::new(40.02f64, 116.34);
-//<<<<<<< HEAD
-        let mut vect : Vec<Point<f64>> = Vec::new();
+        let mut vect = Vec::<Point<f64>>::new();
         vect.push(p);
-        let linestring : LineString<f64> = LineString(vect);
-//=======
-//        let linestring = LineString(vec![p]);
-//>>>>>>> faa0840be34d10713206e403c8956ca17a0a26b4
+        let linestring = LineString(vect);
         let centroid = linestring.centroid();
         assert_eq!(centroid, Some(p));
     }
     #[test]
     fn linestring_test() {
         let p = |x| Point(Coordinate { x: x, y: 1. });
-        let linestring : LineString<f64> = LineString(vec![p(1.), p(7.), p(8.), p(9.), p(10.), p(11.)]);
+        let linestring = LineString(vec![p(1.), p(7.), p(8.), p(9.), p(10.), p(11.)]);
         assert_eq!(linestring.centroid(),
                    Some(Point(Coordinate { x: 6., y: 1. })));
     }
@@ -148,7 +143,7 @@ mod test {
     fn empty_polygon_test() {
         let v1 = Vec::new();
         let v2 = Vec::new();
-        let linestring : LineString<f64> = LineString(v1);
+        let linestring = LineString::<f64>(v1);
         let poly = Polygon(linestring, v2);
         assert!(poly.centroid().is_none());
     }
