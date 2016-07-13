@@ -1,10 +1,9 @@
-use num::{Float, ToPrimitive};
+use num::Float;
 use types::Polygon;
 
 /// Calculation of the area.
 
-pub trait Area<RHS = Self>
-    where T: Float + ToPrimitive
+pub trait Area<T> where T: Float
 {
     /// Area of polygon.
     /// See: https://en.wikipedia.org/wiki/Polygon
@@ -22,7 +21,7 @@ pub trait Area<RHS = Self>
 }
 
 impl<T> Area<T> for Polygon<T>
-    where T: Float + ToPrimitive
+    where T: Float
 {
     fn area(&self) -> T {
         // TODO: consideration of inner polygons;
@@ -32,7 +31,7 @@ impl<T> Area<T> for Polygon<T>
         }
         let mut tmp = T::zero();
         for (p1, p2) in linestring.0.iter().zip(linestring.0[1..].iter()) {
-            tmp += p1.lng() * p2.lat() - p2.lng() * p1.lat();
+            tmp = tmp + (p1.lng() * p2.lat() - p2.lng() * p1.lat());
         }
         tmp / (T::one() + T::one())
     }
@@ -45,7 +44,7 @@ mod test {
     // Area of the polygon
     #[test]
     fn area_empty_polygon_test() {
-        let poly = Polygon(LineString(Vec::new()), Vec::new());
+        let poly = Polygon::<f64>(LineString(Vec::new()), Vec::new());
         assert_eq!(poly.area(), 0.);
     }
 

@@ -3,7 +3,7 @@ use types::Point;
 
 /// Returns the distance between two geometries.
 
-pub trait Distance<RHS = Self>
+pub trait Distance<T, Rhs = Self>
 {
     /// Returns the distance between two points:
     ///
@@ -15,16 +15,17 @@ pub trait Distance<RHS = Self>
     /// let dist = p.distance(&Point::new(-72.1260, 42.45));
     /// assert!(dist < COORD_PRECISION)
     /// ```
-    fn distance<T>(&self, rhs: &RHS) -> T;
+    fn distance(&self, rhs: &Rhs) -> T;
 }
 
-impl<T> Distance<Point<T>> for Point<T>
+impl<T> Distance<T, Point<T>> for Point<T>
     where T: Float
 {
-    fn distance(&self, p: &Point<T>) -> T{
+    fn distance(&self, p: &Point<T>) -> T {
         let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
-        (dx * dx + dy * dy)**(T::one()/(T::one() + T::one()))
-        //((self.x() - p.x()).powi(2) + (self.y() - p.y()).powi(2)).sqrt()
+        // (dx * dx + dy * dy)**(T::one()/(T::one() + T::one()))
+        // ((self.x() - p.x()).powi(2) + (self.y() - p.y()).powi(2)).sqrt()
+        (dx * dx + dy * dy).sqrt() // FIXME is it correct ??? (euclidian dist)
     }
 }
 

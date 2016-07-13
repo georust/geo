@@ -1,4 +1,4 @@
-use num::{Float, ToPrimitive};
+use num::{Float, FromPrimitive};
 
 use types::{Point, LineString, Polygon, MultiPolygon};
 use algorithm::area::Area;
@@ -25,7 +25,7 @@ pub trait Centroid<T: Float> {
 }
 
 impl<T> Centroid<T> for LineString<T>
-    where T: Float + ToPrimitive
+    where T: Float
 {
     ///
     /// Centroid on a LineString is the mean of the middle of the segment
@@ -56,40 +56,38 @@ impl<T> Centroid<T> for LineString<T>
 }
 
 impl<T> Centroid<T> for Polygon<T>
-    where T: Float + ToPrimitive
+    where T: Float + FromPrimitive
 {
     ///
     /// Centroid on a Polygon.
     /// See: https://en.wikipedia.org/wiki/Centroid
     ///
     fn centroid(&self) -> Option<Point<T>> {
-        // TODO: consideration of inner polygons;
+         // TODO: consideration of inner polygons;
         let linestring = &self.0;
         let vect = &linestring.0;
         if vect.is_empty() {
             return None;
         }
         if vect.len() == 1 {
-            Some(Point::new(vect[0].x(), vect[0].y()))
+            Some(Point::new(vect[0].lng(), vect[0].lat()))
         } else {
-            let mut area = &self.area();
+            let area = self.area();
             let mut sum_x = T::zero();
             let mut sum_y = T::zero();
             for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-                let (x1, y1, x2, y2) = (p1.x(), p1.y(), p2.x(), p2.y());
-                let tmp = x1 * y2 - x2 * y1;
-                sum_x = sum_x + (x1 + x2) * tmp;
-                sum_y = sum_y + (y2 + y1) * tmp;
+                let tmp = p1.lng() * p2.lat() - p2.lng() * p1.lat();
+                sum_x = sum_x + ((p2.lng() + p1.lng()) * tmp);
+                sum_y = sum_y + ((p2.lat() + p1.lat()) * tmp);
             }
-            area = area / (T::one() + T::one());
-            let six = T::one() + T::one() + T::one() + T::one() + T::one() + T::one();
-            Some(Point::new(sum_x / (six * area), (sum_y / (six * area))))
+            let six = T::from_i32(6).unwrap();
+            Some(Point::new(sum_x / (six * area), sum_y / (six * area)))
         }
     }
 }
 
 impl<T> Centroid<T> for MultiPolygon<T>
-    where T: Float + ToPrimitive
+    where T: Float + FromPrimitive
 {
     // See: https://fotino.me/calculating-centroids/
     fn centroid(&self) -> Option<Point<T>> {
@@ -103,7 +101,7 @@ impl<T> Centroid<T> for MultiPolygon<T>
         for poly in &self.0 {
             let tmp = poly.area();
             total_area = total_area + poly.area();
-            if let Some(p) = poly.centroid(){
+            if let Some(p) = poly.centroid() {
                 sum_x = sum_x + tmp * p.lng();
                 sum_y = sum_y + tmp * p.lat();
             }
@@ -173,7 +171,7 @@ mod test {
     /// Tests: Centroid of MultiPolygon
     #[test]
     fn empty_multipolygon_polygon_test() {
-        assert!(MultiPolygon(Vec::new()).centroid().is_none());
+        assert!(MultiPolygon::<f64>(Vec::new()).centroid().is_none());
     }
     #[test]
     fn multipolygon_one_polygon_test() {
@@ -189,10 +187,7 @@ mod test {
         let poly1 = Polygon(linestring, Vec::new());
         let linestring = LineString(vec![p(7., 1.), p(8., 1.), p(8., 2.), p(7., 2.), p(7., 1.)]);
         let poly2 = Polygon(linestring, Vec::new());
-        assert!(MultiPolygon(vec![poly1, poly2])
-                    .centroid()
-                    .unwrap()
-                    .distance(&p(4.07142857142857, 1.92857142857143)) <
-                COORD_PRECISION);
+        let dist = MultiPolygon(vec![poly1, poly2]).centroid().unwrap().distance(&p(4.07142857142857, 1.92857142857143));
+        assert!(dist < COORD_PRECISION);
     }
 }

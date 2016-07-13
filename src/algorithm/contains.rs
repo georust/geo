@@ -6,7 +6,7 @@ use algorithm::distance::Distance;
 
 ///  Checks if the geometry A is completely inside the B geometry.
 
-pub trait Contains<RHS = Self> {
+pub trait Contains<Rhs = Self> {
     ///  Checks if the geometry A is completely inside the B geometry.
     ///
     /// ```
@@ -29,14 +29,14 @@ pub trait Contains<RHS = Self> {
     ///
     /// ```
     ///
-    fn contains(&self, rhs: &RHS) -> bool;
+    fn contains(&self, rhs: &Rhs) -> bool;
 }
 
 impl<T> Contains<Point<T>> for Point<T>
-    where T: Float
+    where T: Float + ToPrimitive
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        self.distance(p) < COORD_PRECISION
+        self.distance(p).to_f64().unwrap() < COORD_PRECISION // FIXME is it correct ?
     }
 }
 
@@ -95,7 +95,7 @@ fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
         return PositionPoint::OnBoundary;
     }
 
-    let mut xints = 0.;
+    let mut xints = T::zero();
     let mut crossings = 0;
     for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
         if p.lat() > p1.lat().min(p2.lat()) {
