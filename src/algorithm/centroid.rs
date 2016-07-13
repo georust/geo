@@ -69,15 +69,15 @@ impl<T> Centroid<T> for Polygon<T>
             return None;
         }
         if vect.len() == 1 {
-            Some(Point::new(vect[0].lng(), vect[0].lat()))
+            Some(Point::new(vect[0].x(), vect[0].y()))
         } else {
             let area = self.area();
             let mut sum_x = T::zero();
             let mut sum_y = T::zero();
             for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-                let tmp = p1.lng() * p2.lat() - p2.lng() * p1.lat();
-                sum_x = sum_x + ((p2.lng() + p1.lng()) * tmp);
-                sum_y = sum_y + ((p2.lat() + p1.lat()) * tmp);
+                let tmp = p1.x() * p2.y() - p2.x() * p1.y();
+                sum_x = sum_x + ((p2.x() + p1.x()) * tmp);
+                sum_y = sum_y + ((p2.y() + p1.y()) * tmp);
             }
             let six = T::from_i32(6).unwrap();
             Some(Point::new(sum_x / (six * area), sum_y / (six * area)))
@@ -101,8 +101,8 @@ impl<T> Centroid<T> for MultiPolygon<T>
             let tmp = poly.area();
             total_area = total_area + poly.area();
             if let Some(p) = poly.centroid() {
-                sum_x = sum_x + tmp * p.lng();
-                sum_y = sum_y + tmp * p.lat();
+                sum_x = sum_x + tmp * p.x();
+                sum_y = sum_y + tmp * p.y();
             }
         }
         Some(Point::new(sum_x / total_area, sum_y / total_area))

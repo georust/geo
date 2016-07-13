@@ -58,12 +58,12 @@ impl<T> Contains<Point<T>> for LineString<T>
             return true;
         }
         for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-            if ((p1.lat() == p2.lat()) && (p1.lat() == p.lat()) &&
-                (p.lng() > p1.lng().min(p2.lng())) &&
-                (p.lng() < p1.lng().max(p2.lng()))) ||
-               ((p1.lng() == p2.lng()) && (p1.lng() == p.lng()) &&
-                (p.lat() > p1.lat().min(p2.lat())) &&
-                (p.lat() < p1.lat().max(p2.lat()))) {
+            if ((p1.y() == p2.y()) && (p1.y() == p.y()) &&
+                (p.x() > p1.x().min(p2.x())) &&
+                (p.x() < p1.x().max(p2.x()))) ||
+               ((p1.x() == p2.x()) && (p1.x() == p.x()) &&
+                (p.y() > p1.y().min(p2.y())) &&
+                (p.y() < p1.y().max(p2.y()))) {
                 return true;
             }
         }
@@ -98,14 +98,14 @@ fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
     let mut xints = T::zero();
     let mut crossings = 0;
     for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-        if p.lat() > p1.lat().min(p2.lat()) {
-            if p.lat() <= p1.lat().max(p2.lat()) {
-                if p.lng() <= p1.lng().max(p2.lng()) {
-                    if p1.lat() != p2.lat() {
-                        xints = (p.lat() - p1.lat()) * (p2.lng() - p1.lng()) /
-                                (p2.lat() - p1.lat()) + p1.lng();
+        if p.y() > p1.y().min(p2.y()) {
+            if p.y() <= p1.y().max(p2.y()) {
+                if p.x() <= p1.x().max(p2.x()) {
+                    if p1.y() != p2.y() {
+                        xints = (p.y() - p1.y()) * (p2.x() - p1.x()) /
+                                (p2.y() - p1.y()) + p1.x();
                     }
-                    if (p1.lng() == p2.lng()) || (p.lng() <= xints) {
+                    if (p1.x() == p2.x()) || (p.x() <= xints) {
                         crossings += 1;
                     }
                 }
