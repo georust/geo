@@ -1,6 +1,8 @@
 use num::{Float, ToPrimitive};
 
-use types::{Point, LineString, Polygon};
+use types::{Point, LineString, Polygon, MultiPolygon};
+use algorithm::area::Area;
+use algorithm::distance::Distance;
 
 /// Calculation of the centroid.
 
@@ -42,7 +44,7 @@ impl<T> Centroid<T> for LineString<T>
             let mut sum_y = T::zero();
             let mut total_length = T::zero();
             for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-                let segment_len = p1.distance_to(&p2);
+                let segment_len = p1.distance(&p2);
                 let (x1, y1, x2, y2) = (p1.x(), p1.y(), p2.x(), p2.y());
                 total_length = total_length + segment_len;
                 sum_x = sum_x + segment_len * ((x1 + x2) / (T::one() + T::one()));
@@ -70,13 +72,12 @@ impl<T> Centroid<T> for Polygon<T>
         if vect.len() == 1 {
             Some(Point::new(vect[0].x(), vect[0].y()))
         } else {
-            let mut area = T::zero();
+            let mut area = &self.area();
             let mut sum_x = T::zero();
             let mut sum_y = T::zero();
             for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
                 let (x1, y1, x2, y2) = (p1.x(), p1.y(), p2.x(), p2.y());
                 let tmp = x1 * y2 - x2 * y1;
-                area = area + tmp;
                 sum_x = sum_x + (x1 + x2) * tmp;
                 sum_y = sum_y + (y2 + y1) * tmp;
             }
@@ -87,10 +88,36 @@ impl<T> Centroid<T> for Polygon<T>
     }
 }
 
+impl<T> Centroid<T> for MultiPolygon<T>
+    where T: Float + ToPrimitive
+{
+    // See: https://fotino.me/calculating-centroids/
+    fn centroid(&self) -> Option<Point<T>> {
+        let mut sum_x = T::zero();
+        let mut sum_y = T::zero();
+        let mut total_area = T::zero();
+        let vect = &self.0;
+        if vect.is_empty() {
+            return None;
+        }
+        for poly in &self.0 {
+            let tmp = poly.area();
+            total_area = total_area + poly.area();
+            if let Some(p) = poly.centroid(){
+                sum_x = sum_x + tmp * p.lng();
+                sum_y = sum_y + tmp * p.lat();
+            }
+        }
+        Some(Point::new(sum_x / total_area, sum_y / total_area))
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use types::{Coordinate, Point, LineString, Polygon};
+    use types::{COORD_PRECISION, Coordinate, Point, LineString, Polygon, MultiPolygon};
     use algorithm::centroid::Centroid;
+    use algorithm::distance::Distance;
+    /// Tests: Centroid of LineString
     #[test]
     fn empty_linestring_test() {
         let vec : Vec<Point<f64>> = Vec::new();
@@ -101,9 +128,13 @@ mod test {
     #[test]
     fn linestring_one_point_test() {
         let p = Point::new(40.02f64, 116.34);
+//<<<<<<< HEAD
         let mut vect : Vec<Point<f64>> = Vec::new();
         vect.push(p);
         let linestring : LineString<f64> = LineString(vect);
+//=======
+//        let linestring = LineString(vec![p]);
+//>>>>>>> faa0840be34d10713206e403c8956ca17a0a26b4
         let centroid = linestring.centroid();
         assert_eq!(centroid, Some(p));
     }
@@ -114,6 +145,7 @@ mod test {
         assert_eq!(linestring.centroid(),
                    Some(Point(Coordinate { x: 6., y: 1. })));
     }
+    /// Tests: Centroid of Polygon
     #[test]
     fn empty_polygon_test() {
         let v1 = Vec::new();
@@ -137,5 +169,30 @@ mod test {
         let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
         let poly = Polygon(linestring, v);
         assert_eq!(poly.centroid(), Some(p(1., 1.)));
+    }
+    /// Tests: Centroid of MultiPolygon
+    #[test]
+    fn empty_multipolygon_polygon_test() {
+        assert!(MultiPolygon(Vec::new()).centroid().is_none());
+    }
+    #[test]
+    fn multipolygon_one_polygon_test() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
+        let poly = Polygon(linestring, Vec::new());
+        assert_eq!(MultiPolygon(vec![poly]).centroid(), Some(p(1., 1.)));
+    }
+    #[test]
+    fn multipolygon_two_polygons_test() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let linestring = LineString(vec![p(2., 1.), p(5., 1.), p(5., 3.), p(2., 3.), p(2., 1.)]);
+        let poly1 = Polygon(linestring, Vec::new());
+        let linestring = LineString(vec![p(7., 1.), p(8., 1.), p(8., 2.), p(7., 2.), p(7., 1.)]);
+        let poly2 = Polygon(linestring, Vec::new());
+        assert!(MultiPolygon(vec![poly1, poly2])
+                    .centroid()
+                    .unwrap()
+                    .distance(&p(4.07142857142857, 1.92857142857143)) <
+                COORD_PRECISION);
     }
 }
