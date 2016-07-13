@@ -4,7 +4,7 @@ use algorithm::contains::Contains;
 
 /// Checks if the geometry A intersects the geometry B.
 
-pub trait Intersects<RHS = Self> {
+pub trait Intersects<Rhs = Self> {
     /// Checks if the geometry A intersects the geometry B.
     ///
     /// ```
@@ -19,7 +19,7 @@ pub trait Intersects<RHS = Self> {
     ///
     /// ```
     ///
-    fn intersects(&self, rhs: &RHS) -> bool;
+    fn intersects(&self, rhs: &Rhs) -> bool;
 }
 
 impl<T> Intersects<LineString<T>> for LineString<T>
@@ -36,7 +36,7 @@ impl<T> Intersects<LineString<T>> for LineString<T>
             for (b1, b2) in vect1.iter().zip(vect1[1..].iter()) {
                 let u_b = (b2.y() - b1.y()) * (a2.x() - a1.x()) -
                           (b2.x() - b1.x()) * (a2.y() - a1.y());
-                if u_b == 0. {
+                if u_b == T::zero() {
                     continue;
                 }
                 let ua_t = (b2.x() - b1.x()) * (a1.y() - b1.y()) -
@@ -45,7 +45,7 @@ impl<T> Intersects<LineString<T>> for LineString<T>
                            (a2.y() - a1.y()) * (a1.x() - b1.x());
                 let u_a = ua_t / u_b;
                 let u_b = ub_t / u_b;
-                if (0. <= u_a) && (u_a <= 1.) && (0. <= u_b) && (u_b <= 1.) {
+                if (T::zero() <= u_a) && (u_a <= T::one()) && (T::zero() <= u_b) && (u_b <= T::one()) {
                     return true;
                 }
             }
@@ -86,7 +86,7 @@ mod test {
     }
     #[test]
     fn empty_all_linestring_test() {
-        assert!(!LineString(Vec::new()).intersects(&LineString(Vec::new())));
+        assert!(!LineString::<f64>(Vec::new()).intersects(&LineString(Vec::new())));
     }
     #[test]
     fn intersect_linestring_test() {
