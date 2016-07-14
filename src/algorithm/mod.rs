@@ -8,3 +8,5 @@ pub mod intersects;
 pub mod area;
 /// Returns the distance between two geometries.
 pub mod distance;
+/// Returns the Bbox of a geometry.
+pub mod boundingbox;

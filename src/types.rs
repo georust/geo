@@ -16,6 +16,16 @@ pub struct Coordinate<T>
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
+pub struct Bbox<T>
+    where T: Float
+{
+    pub xmin: T,
+    pub xmax: T,
+    pub ymin: T,
+    pub ymax: T,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
 impl<T> Point<T>
