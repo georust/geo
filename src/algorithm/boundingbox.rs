@@ -1,6 +1,6 @@
 use num::{Float};
 
-use types::{Bbox, LineString};
+use types::{Bbox, LineString, Polygon};
 
 /// Calculation of the bounding box of a geometry.
 
@@ -67,10 +67,22 @@ impl<T> BoundingBox<T> for LineString<T>
     }
 }
 
+impl<T> BoundingBox<T> for Polygon<T>
+    where T: Float
+{
+    ///
+    /// Return the BoundingBox for a Polygon
+    ///
+    fn bbox(&self) -> Option<Bbox<T>> {
+        let line = &self.0;
+        get_bbox(&line)
+    }
+}
+
 
 #[cfg(test)]
 mod test {
-    use types::{Point, LineString, Bbox};
+    use types::{Bbox, Coordinate, Point, LineString, Polygon};
     use algorithm::boundingbox::BoundingBox;
 
     #[test]
@@ -97,5 +109,13 @@ mod test {
                                                            Point::new(-4., 4.)]);
         let bbox : Bbox<f64> = Bbox{xmin: -4., ymax: 4., xmax: 2., ymin: -3.};
         assert_eq!(bbox, linestring.bbox().unwrap());
+    }
+    #[test]
+    fn polygon_test(){
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let linestring = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
+        let line_bbox = linestring.bbox().unwrap();
+        let poly = Polygon(linestring, Vec::new());
+        assert_eq!(line_bbox, poly.bbox().unwrap());
     }
 }
