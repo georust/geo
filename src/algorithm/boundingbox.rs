@@ -1,6 +1,6 @@
 use num::{Float};
 
-use types::{Bbox, LineString, Polygon};
+use types::{Bbox, Point, LineString, Polygon};
 
 /// Calculation of the bounding box of a geometry.
 
@@ -25,10 +25,9 @@ pub trait BoundingBox<T: Float> {
     fn bbox(&self) -> Option<Bbox<T>>;
 }
 
-fn get_bbox<T>(line: &LineString<T>) -> Option<Bbox<T>>
+fn get_bbox<T>(vect: &Vec<Point<T>>) -> Option<Bbox<T>>
     where T: Float
 {
-    let vect = &line.0;
     if vect.is_empty() {
         return None;
     }
@@ -63,7 +62,7 @@ impl<T> BoundingBox<T> for LineString<T>
     /// Return the BoundingBox for a LineString
     ///
     fn bbox(&self) -> Option<Bbox<T>> {
-        get_bbox(&self)
+        get_bbox(&self.0)
     }
 }
 
@@ -75,7 +74,7 @@ impl<T> BoundingBox<T> for Polygon<T>
     ///
     fn bbox(&self) -> Option<Bbox<T>> {
         let line = &self.0;
-        get_bbox(&line)
+        get_bbox(&line.0)
     }
 }
 
