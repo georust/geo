@@ -231,6 +231,36 @@ impl<T> Sub for Point<T>
     }
 }
 
+impl<T> Add for Bbox<T>
+    where T: Float + ToPrimitive
+{
+    type Output = Bbox<T>;
+
+    /// Add a boundingox to the given boundingbox.
+    ///
+    /// ```
+    /// use geo::Bbox;
+    ///
+    /// let bbox0 = Bbox{xmin: 0.,  xmax: 10000., ymin: 10., ymax: 100.};
+    /// let bbox1 = Bbox{xmin: 100., xmax: 1000.,  ymin: 100.,  ymax: 1000.};
+    /// let bbox = bbox0 + bbox1;
+    ///
+    /// assert_eq!(0., bbox.xmin);
+    /// assert_eq!(10000., bbox.xmax);
+    /// assert_eq!(10., bbox.ymin);
+    /// assert_eq!(1000., bbox.ymax);
+    /// ```
+    fn add(self, rhs: Bbox<T>) -> Bbox<T> {
+        Bbox{
+            xmin: if self.xmin <= rhs.xmin {self.xmin} else {rhs.xmin},
+            xmax: if self.xmax >= rhs.xmax {self.xmax} else {rhs.xmax},
+            ymin: if self.ymin <= rhs.ymin {self.ymin} else {rhs.ymin},
+            ymax: if self.ymax >= rhs.ymax {self.ymax} else {rhs.ymax},
+        }
+    }
+}
+
+
 #[derive(PartialEq, Clone, Debug)]
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
