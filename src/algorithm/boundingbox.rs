@@ -1,6 +1,6 @@
 use num::{Float};
 
-use types::{Bbox, Point, LineString, Polygon};
+use types::{Bbox, Point, MultiPoint, LineString, Polygon};
 
 /// Calculation of the bounding box of a geometry.
 
@@ -55,6 +55,17 @@ fn get_bbox<T>(vect: &Vec<Point<T>>) -> Option<Bbox<T>>
     }
 }
 
+impl<T> BoundingBox<T> for MultiPoint<T>
+    where T: Float
+{
+    ///
+    /// Return the BoundingBox for a MultiPoint
+    ///
+    fn bbox(&self) -> Option<Bbox<T>> {
+        get_bbox(&self.0)
+    }
+}
+
 impl<T> BoundingBox<T> for LineString<T>
     where T: Float
 {
@@ -79,9 +90,11 @@ impl<T> BoundingBox<T> for Polygon<T>
 }
 
 
+
+
 #[cfg(test)]
 mod test {
-    use types::{Bbox, Coordinate, Point, LineString, Polygon};
+    use types::{Bbox, Coordinate, Point, MultiPoint, LineString, Polygon};
     use algorithm::boundingbox::BoundingBox;
 
     #[test]
@@ -108,6 +121,15 @@ mod test {
                                                            Point::new(-4., 4.)]);
         let bbox : Bbox<f64> = Bbox{xmin: -4., ymax: 4., xmax: 2., ymin: -3.};
         assert_eq!(bbox, linestring.bbox().unwrap());
+    }
+    #[test]
+    fn multipoint_test() {
+        let multipoint : MultiPoint<f64> = MultiPoint(vec![Point::new(1., 1.),
+                                                           Point::new(2., -2.),
+                                                           Point::new(-3., -3.),
+                                                           Point::new(-4., 4.)]);
+        let bbox : Bbox<f64> = Bbox{xmin: -4., ymax: 4., xmax: 2., ymin: -3.};
+        assert_eq!(bbox, multipoint.bbox().unwrap());
     }
     #[test]
     fn polygon_test(){
