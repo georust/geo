@@ -99,36 +99,36 @@ mod test {
 
     #[test]
     fn empty_linestring_test() {
-        let vec : Vec<Point<f64>> = Vec::new();
-        let linestring : LineString<f64> = LineString(vec);
+        let vect = Vec::<Point<f64>>::new();
+        let linestring = LineString(vect);
         let bbox = linestring.bbox();
         assert!(bbox.is_none());
     }
     #[test]
     fn linestring_one_point_test() {
         let p = Point::new(40.02f64, 116.34);
-        let mut vect : Vec<Point<f64>> = Vec::new();
+        let mut vect = Vec::<Point<f64>>::new();
         vect.push(p);
-        let linestring : LineString<f64> = LineString(vect);
+        let linestring = LineString(vect);
         let bbox = Bbox{xmin: 40.02f64, ymax: 116.34, xmax: 40.02, ymin: 116.34};
         assert_eq!(bbox, linestring.bbox().unwrap());
     }
     #[test]
     fn linestring_test() {
-        let linestring : LineString<f64> = LineString(vec![Point::new(1., 1.),
-                                                           Point::new(2., -2.),
-                                                           Point::new(-3., -3.),
-                                                           Point::new(-4., 4.)]);
-        let bbox : Bbox<f64> = Bbox{xmin: -4., ymax: 4., xmax: 2., ymin: -3.};
+        let linestring = LineString(vec![Point::new(1., 1.),
+                                         Point::new(2., -2.),
+                                         Point::new(-3., -3.),
+                                         Point::new(-4., 4.)]);
+        let bbox = Bbox{xmin: -4., ymax: 4., xmax: 2., ymin: -3.};
         assert_eq!(bbox, linestring.bbox().unwrap());
     }
     #[test]
     fn multipoint_test() {
-        let multipoint : MultiPoint<f64> = MultiPoint(vec![Point::new(1., 1.),
-                                                           Point::new(2., -2.),
-                                                           Point::new(-3., -3.),
-                                                           Point::new(-4., 4.)]);
-        let bbox : Bbox<f64> = Bbox{xmin: -4., ymax: 4., xmax: 2., ymin: -3.};
+        let multipoint = MultiPoint(vec![Point::new(1., 1.),
+                                         Point::new(2., -2.),
+                                         Point::new(-3., -3.),
+                                         Point::new(-4., 4.)]);
+        let bbox = Bbox{xmin: -4., ymax: 4., xmax: 2., ymin: -3.};
         assert_eq!(bbox, multipoint.bbox().unwrap());
     }
     #[test]
