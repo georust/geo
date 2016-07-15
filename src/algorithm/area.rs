@@ -1,5 +1,5 @@
 use num::Float;
-use types::Polygon;
+use types::{Polygon, Bbox};
 
 /// Calculation of the area.
 
@@ -37,9 +37,17 @@ impl<T> Area<T> for Polygon<T>
     }
 }
 
+impl<T> Area<T> for Bbox<T>
+    where T: Float
+{
+    fn area(&self) -> T {
+        (self.xmax - self.xmin) * (self.ymax - self.ymin)
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use types::{Coordinate, Point, LineString, Polygon};
+    use types::{Coordinate, Point, LineString, Polygon, Bbox};
     use algorithm::area::Area;
     // Area of the polygon
     #[test]
@@ -59,5 +67,10 @@ mod test {
         let linestring = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
         let poly = Polygon(linestring, Vec::new());
         assert_eq!(poly.area(), 30.);
+    }
+    #[test]
+    fn bbox_test() {
+        let bbox = Bbox {xmin: 10., xmax: 20., ymin: 30., ymax: 40.};
+        assert_eq!(100., bbox.area());
     }
 }
