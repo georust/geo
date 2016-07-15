@@ -1,6 +1,6 @@
 use num::{Float};
 
-use types::{Bbox, Point, MultiPoint, LineString, Polygon};
+use types::{Bbox, Point, MultiPoint, LineString, MultiLineString, Polygon};
 
 /// Calculation of the bounding box of a geometry.
 
@@ -77,6 +77,34 @@ impl<T> BoundingBox<T> for LineString<T>
     }
 }
 
+impl<T> BoundingBox<T> for MultiLineString<T>
+    where T: Float
+{
+    ///
+    /// Return the BoundingBox for a MultiLineString
+    ///
+    fn bbox(&self) -> Option<Bbox<T>> {
+        let vect = &self.0;
+        if vect.is_empty() {
+            return None;
+        }
+        if vect.len() == 1 {
+            return vect[0].bbox()
+        } else {
+            let mut bbox = vect[0].bbox().unwrap();
+            for geo in vect[1..].iter() {
+                let gopt = geo.bbox();
+                if gopt.is_some() {
+                    bbox += gopt.unwrap();
+                }
+            }
+            Some(bbox)
+            // vect[1..].iter()
+            //          .fold(bbox, |bbfinal, (geo0, geo1)| bbfinal + geo0.bbox().unwrap() + geo1.bbox().unwrap());
+        }
+    }
+}
+
 impl<T> BoundingBox<T> for Polygon<T>
     where T: Float
 {
@@ -94,7 +122,7 @@ impl<T> BoundingBox<T> for Polygon<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Bbox, Coordinate, Point, MultiPoint, LineString, Polygon};
+    use types::{Bbox, Coordinate, Point, MultiPoint, LineString, MultiLineString, Polygon};
     use algorithm::boundingbox::BoundingBox;
 
     #[test]
@@ -115,19 +143,25 @@ mod test {
     }
     #[test]
     fn linestring_test() {
-        let linestring = LineString(vec![Point::new(1., 1.),
-                                         Point::new(2., -2.),
-                                         Point::new(-3., -3.),
-                                         Point::new(-4., 4.)]);
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let linestring = LineString(vec![p(1., 1.), p(2., -2.), p(-3., -3.), p(-4., 4.)]);
         let bbox = Bbox{xmin: -4., ymax: 4., xmax: 2., ymin: -3.};
         assert_eq!(bbox, linestring.bbox().unwrap());
     }
     #[test]
+    fn multilinestring_test() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let multiline = MultiLineString(vec![LineString(vec![p(1., 1.), p(-40., 1.)]),
+                                             LineString(vec![p(1., 1.), p(50., 1.)]),
+                                             LineString(vec![p(1., 1.), p(1., -60.)]),
+                                             LineString(vec![p(1., 1.), p(1., 70.)])]);
+        let bbox = Bbox{xmin: -40., ymax: 70., xmax: 50., ymin: -60.};
+        assert_eq!(bbox, multiline.bbox().unwrap());
+    }
+    #[test]
     fn multipoint_test() {
-        let multipoint = MultiPoint(vec![Point::new(1., 1.),
-                                         Point::new(2., -2.),
-                                         Point::new(-3., -3.),
-                                         Point::new(-4., 4.)]);
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let multipoint = MultiPoint(vec![p(1., 1.), p(2., -2.), p(-3., -3.), p(-4., 4.)]);
         let bbox = Bbox{xmin: -4., ymax: 4., xmax: 2., ymin: -3.};
         assert_eq!(bbox, multipoint.bbox().unwrap());
     }
