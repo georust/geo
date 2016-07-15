@@ -1,6 +1,6 @@
 use num::{Float, FromPrimitive};
 
-use types::{Point, LineString, Polygon, MultiPolygon};
+use types::{Point, LineString, Polygon, MultiPolygon, Bbox};
 use algorithm::area::Area;
 use algorithm::distance::Distance;
 
@@ -109,9 +109,21 @@ impl<T> Centroid<T> for MultiPolygon<T>
     }
 }
 
+impl<T> Centroid<T> for Bbox<T>
+    where T: Float
+{
+    ///
+    /// Centroid on a Bbox.
+    ///
+    fn centroid(&self) -> Option<Point<T>> {
+        let two = T::one() + T::one();
+        Some(Point::new((self.xmax + self.xmin)/two, (self.ymax + self.ymin)/two))
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use types::{COORD_PRECISION, Coordinate, Point, LineString, Polygon, MultiPolygon};
+    use types::{COORD_PRECISION, Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
     use algorithm::centroid::Centroid;
     use algorithm::distance::Distance;
     /// Tests: Centroid of LineString
@@ -184,5 +196,11 @@ mod test {
         let poly2 = Polygon(linestring, Vec::new());
         let dist = MultiPolygon(vec![poly1, poly2]).centroid().unwrap().distance(&p(4.07142857142857, 1.92857142857143));
         assert!(dist < COORD_PRECISION);
+    }
+    #[test]
+    fn bbox_test() {
+        let bbox = Bbox{ xmax: 4., xmin: 0., ymax: 100., ymin: 50.};
+        let point = Point(Coordinate { x: 2., y: 75. });
+        assert_eq!(point, bbox.centroid().unwrap());
     }
 }
