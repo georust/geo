@@ -1,4 +1,5 @@
 use std::ops::Add;
+use std::ops::AddAssign;
 use std::ops::Neg;
 use std::ops::Sub;
 
@@ -257,6 +258,31 @@ impl<T> Add for Bbox<T>
             ymin: if self.ymin <= rhs.ymin {self.ymin} else {rhs.ymin},
             ymax: if self.ymax >= rhs.ymax {self.ymax} else {rhs.ymax},
         }
+    }
+}
+
+impl<T> AddAssign for Bbox<T>
+    where T: Float + ToPrimitive
+{
+    /// Add a boundingox to the given boundingbox.
+    ///
+    /// ```
+    /// use geo::Bbox;
+    ///
+    /// let mut bbox0 = Bbox{xmin: 0.,  xmax: 10000., ymin: 10., ymax: 100.};
+    /// let bbox1 = Bbox{xmin: 100., xmax: 1000.,  ymin: 100.,  ymax: 1000.};
+    /// bbox0 += bbox1;
+    ///
+    /// assert_eq!(0., bbox0.xmin);
+    /// assert_eq!(10000., bbox0.xmax);
+    /// assert_eq!(10., bbox0.ymin);
+    /// assert_eq!(1000., bbox0.ymax);
+    /// ```
+    fn add_assign(&mut self, rhs: Bbox<T>){
+        self.xmin = if self.xmin <= rhs.xmin {self.xmin} else {rhs.xmin};
+        self.xmax = if self.xmax >= rhs.xmax {self.xmax} else {rhs.xmax};
+        self.ymin = if self.ymin <= rhs.ymin {self.ymin} else {rhs.ymin};
+        self.ymax = if self.ymax >= rhs.ymax {self.ymax} else {rhs.ymax};
     }
 }
 
