@@ -1,6 +1,6 @@
 use num::{Float};
 
-use types::{Bbox, Point, MultiPoint, LineString, MultiLineString, Polygon};
+use types::{Bbox, Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 
 /// Calculation of the bounding box of a geometry.
 
@@ -99,8 +99,6 @@ impl<T> BoundingBox<T> for MultiLineString<T>
                 }
             }
             Some(bbox)
-            // vect[1..].iter()
-            //          .fold(bbox, |bbfinal, (geo0, geo1)| bbfinal + geo0.bbox().unwrap() + geo1.bbox().unwrap());
         }
     }
 }
@@ -117,12 +115,37 @@ impl<T> BoundingBox<T> for Polygon<T>
     }
 }
 
+impl<T> BoundingBox<T> for MultiPolygon<T>
+    where T: Float
+{
+    ///
+    /// Return the BoundingBox for a MultiLineString
+    ///
+    fn bbox(&self) -> Option<Bbox<T>> {
+        let vect = &self.0;
+        if vect.is_empty() {
+            return None;
+        }
+        if vect.len() == 1 {
+            return vect[0].bbox()
+        } else {
+            let mut bbox = vect[0].bbox().unwrap();
+            for geo in vect[1..].iter() {
+                let gopt = geo.bbox();
+                if gopt.is_some() {
+                    bbox += gopt.unwrap();
+                }
+            }
+            Some(bbox)
+        }
+    }
+}
 
 
 
 #[cfg(test)]
 mod test {
-    use types::{Bbox, Coordinate, Point, MultiPoint, LineString, MultiLineString, Polygon};
+    use types::{Bbox, Coordinate, Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
     use algorithm::boundingbox::BoundingBox;
 
     #[test]
@@ -172,5 +195,15 @@ mod test {
         let line_bbox = linestring.bbox().unwrap();
         let poly = Polygon(linestring, Vec::new());
         assert_eq!(line_bbox, poly.bbox().unwrap());
+    }
+    #[test]
+    fn multipolygon_test(){
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let mpoly = MultiPolygon(vec![Polygon(LineString(vec![p(0., 0.), p(50., 0.), p(0., -70.), p(0., 0.)]), Vec::new()),
+                                      Polygon(LineString(vec![p(0., 0.), p(5., 0.), p(0., 80.), p(0., 0.)]), Vec::new()),
+                                      Polygon(LineString(vec![p(0., 0.), p(-60., 0.), p(0., 6.), p(0., 0.)]), Vec::new()),
+                                      ]);
+        let bbox = Bbox{xmin: -60., ymax: 80., xmax: 50., ymin: -70.};
+        assert_eq!(bbox, mpoly.bbox().unwrap());
     }
 }
