@@ -1,6 +1,6 @@
 use num::{Float, ToPrimitive};
 
-use types::{COORD_PRECISION, Point, LineString, Polygon, MultiPolygon};
+use types::{COORD_PRECISION, Point, LineString, Polygon, MultiPolygon, Bbox};
 use algorithm::intersects::Intersects;
 use algorithm::distance::Distance;
 
@@ -152,10 +152,19 @@ impl<T> Contains<LineString<T>> for Polygon<T>
     }
 }
 
+impl<T> Contains<Bbox<T>> for Bbox<T>
+    where T: Float
+{
+    fn contains(&self, bbox: &Bbox<T>) -> bool {
+        // All points of LineString must be in the polygon ?
+        self.xmin <= bbox.xmin && self.xmax >= bbox.xmax && self.ymin <= bbox.ymin && self.ymax >= bbox.ymax
+    }
+}
+
 
 #[cfg(test)]
 mod test {
-    use types::{Coordinate, Point, LineString, Polygon, MultiPolygon};
+    use types::{Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
     use algorithm::contains::Contains;
     /// Tests: Point in LineString
     #[test]
@@ -300,5 +309,12 @@ mod test {
         assert!(!poly.contains(&LineString(vec![p(2., 2.), p(3., 3.)])));
         assert!(!poly.contains(&LineString(vec![p(2., 2.), p(2., 5.)])));
         assert!(!poly.contains(&LineString(vec![p(3., 0.5), p(3., 5.)])));
+    }
+    #[test]
+    fn bbox_in_inner_bbox_test() {
+        let bbox_xl = Bbox { xmin: -100., xmax: 100., ymin: -200., ymax: 200.};
+        let bbox_sm = Bbox { xmin: -10., xmax: 10., ymin: -20., ymax: 20.};
+        assert_eq!(true, bbox_xl.contains(&bbox_sm));
+        assert_eq!(false, bbox_sm.contains(&bbox_xl));
     }
 }
