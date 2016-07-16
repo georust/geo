@@ -1,5 +1,5 @@
 use num::Float;
-use types::{LineString, Polygon};
+use types::{LineString, Polygon, Bbox};
 use algorithm::contains::Contains;
 
 /// Checks if the geometry A intersects the geometry B.
@@ -67,9 +67,23 @@ impl<T> Intersects<LineString<T>> for Polygon<T>
         }
     }
 }
+
+impl<T> Intersects<Bbox<T>> for Bbox<T>
+    where T: Float
+{
+    fn intersects(&self, bbox: &Bbox<T>) -> bool {
+        // line intersects inner or outer polygon edge
+        if bbox.contains(&self) {
+            return false
+        } else {
+            (self.xmin >= bbox.xmin && self.xmin <= bbox.xmax || self.xmax >= bbox.xmin && self.xmax <= bbox.xmax) &&
+            (self.ymin >= bbox.ymin && self.ymin <= bbox.ymax || self.ymax >= bbox.ymin && self.ymax <= bbox.ymax)
+        }
+    }
+}
 #[cfg(test)]
 mod test {
-    use types::{Coordinate, Point, LineString, Polygon};
+    use types::{Coordinate, Point, LineString, Polygon, Bbox};
     use algorithm::intersects::Intersects;
     /// Tests: intersection LineString and LineString
     #[test]
@@ -185,5 +199,15 @@ mod test {
         assert!(poly.intersects(&LineString(vec![p(11., 2.5), p(11., 7.)])));
         assert!(poly.intersects(&LineString(vec![p(4., 7.), p(6., 7.)])));
         assert!(poly.intersects(&LineString(vec![p(8., 1.), p(8., 9.)])));
+    }
+    #[test]
+    fn bbox_test() {
+        let bbox_xl = Bbox { xmin: -100., xmax: 100., ymin: -200., ymax: 200.};
+        let bbox_sm = Bbox { xmin: -10., xmax: 10., ymin: -20., ymax: 20.};
+        let bbox_s2 = Bbox { xmin: 0., xmax: 20., ymin: 0., ymax: 30.};
+        assert_eq!(false, bbox_xl.intersects(&bbox_sm));
+        assert_eq!(false, bbox_sm.intersects(&bbox_xl));
+        assert_eq!(true, bbox_sm.intersects(&bbox_s2));
+        assert_eq!(true, bbox_s2.intersects(&bbox_sm));
     }
 }
