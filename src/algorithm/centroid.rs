@@ -62,7 +62,7 @@ impl<T> Centroid<T> for Polygon<T>
     /// See: https://en.wikipedia.org/wiki/Centroid
     ///
     fn centroid(&self) -> Option<Point<T>> {
-         // TODO: consideration of inner polygons;
+        // TODO: consideration of inner polygons;
         let linestring = &self.0;
         let vect = &linestring.0;
         if vect.is_empty() {
