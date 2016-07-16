@@ -36,7 +36,7 @@ impl<T> Contains<Point<T>> for Point<T>
     where T: Float + ToPrimitive
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        self.distance(p).to_f64().unwrap() < COORD_PRECISION // FIXME is it correct ?
+        self.distance(p).to_f64().unwrap() < COORD_PRECISION
     }
 }
 
