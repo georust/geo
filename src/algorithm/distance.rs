@@ -23,7 +23,7 @@ impl<T> Distance<T, Point<T>> for Point<T>
 {
     fn distance(&self, p: &Point<T>) -> T {
         let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
-        (dx * dx + dy * dy).sqrt() // FIXME is it correct ??? (euclidian dist)
+        (dx * dx + dy * dy).sqrt()
     }
 }
 
