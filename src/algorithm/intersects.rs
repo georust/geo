@@ -1,9 +1,10 @@
+use num::Float;
 use types::{LineString, Polygon};
 use algorithm::contains::Contains;
 
 /// Checks if the geometry A intersects the geometry B.
 
-pub trait Intersects<RHS = Self> {
+pub trait Intersects<Rhs = Self> {
     /// Checks if the geometry A intersects the geometry B.
     ///
     /// ```
@@ -18,12 +19,14 @@ pub trait Intersects<RHS = Self> {
     ///
     /// ```
     ///
-    fn intersects(&self, rhs: &RHS) -> bool;
+    fn intersects(&self, rhs: &Rhs) -> bool;
 }
 
-impl Intersects<LineString> for LineString {
+impl<T> Intersects<LineString<T>> for LineString<T>
+    where T: Float
+{
     // See: https://github.com/brandonxiang/geojson-python-utils/blob/33b4c00c6cf27921fb296052d0c0341bd6ca1af2/geojson_utils.py
-    fn intersects(&self, linestring: &LineString) -> bool {
+    fn intersects(&self, linestring: &LineString<T>) -> bool {
         let vect0 = &self.0;
         let vect1 = &linestring.0;
         if vect0.is_empty() || vect1.is_empty() {
@@ -33,7 +36,7 @@ impl Intersects<LineString> for LineString {
             for (b1, b2) in vect1.iter().zip(vect1[1..].iter()) {
                 let u_b = (b2.y() - b1.y()) * (a2.x() - a1.x()) -
                           (b2.x() - b1.x()) * (a2.y() - a1.y());
-                if u_b == 0. {
+                if u_b == T::zero() {
                     continue;
                 }
                 let ua_t = (b2.x() - b1.x()) * (a1.y() - b1.y()) -
@@ -42,7 +45,7 @@ impl Intersects<LineString> for LineString {
                            (a2.y() - a1.y()) * (a1.x() - b1.x());
                 let u_a = ua_t / u_b;
                 let u_b = ub_t / u_b;
-                if (0. <= u_a) && (u_a <= 1.) && (0. <= u_b) && (u_b <= 1.) {
+                if (T::zero() <= u_a) && (u_a <= T::one()) && (T::zero() <= u_b) && (u_b <= T::one()) {
                     return true;
                 }
             }
@@ -51,8 +54,10 @@ impl Intersects<LineString> for LineString {
     }
 }
 
-impl Intersects<LineString> for Polygon {
-    fn intersects(&self, linestring: &LineString) -> bool {
+impl<T> Intersects<LineString<T>> for Polygon<T>
+    where T: Float
+{
+    fn intersects(&self, linestring: &LineString<T>) -> bool {
         // line intersects inner or outer polygon edge
         if self.0.intersects(linestring) || self.1.iter().any(|inner| inner.intersects(linestring)) {
             return true;
@@ -81,7 +86,7 @@ mod test {
     }
     #[test]
     fn empty_all_linestring_test() {
-        assert!(!LineString(Vec::new()).intersects(&LineString(Vec::new())));
+        assert!(!LineString::<f64>(Vec::new()).intersects(&LineString(Vec::new())));
     }
     #[test]
     fn intersect_linestring_test() {

@@ -7,3 +7,6 @@ authors = ["Corey Farwell <coreyf@rwell.org>"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/georust/rust-geo"
 documentation = "https://georust.github.io/rust-geo/"
+
+[dependencies]
+num = "0.1"

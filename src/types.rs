@@ -2,18 +2,25 @@ use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
 
+use num::{Float, ToPrimitive};
+
 pub static COORD_PRECISION: f64 = 1e-1; // 0.1m
 
+
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Coordinate {
-    pub x: f64,
-    pub y: f64,
+pub struct Coordinate<T>
+    where T: Float
+{
+    pub x: T,
+    pub y: T,
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Point(pub Coordinate);
+pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
-impl Point {
+impl<T> Point<T>
+    where T: Float + ToPrimitive
+{
     /// Creates a new point.
     ///
     /// ```
@@ -24,7 +31,7 @@ impl Point {
     /// assert_eq!(p.x(), 1.234);
     /// assert_eq!(p.y(), 2.345);
     /// ```
-    pub fn new(x: f64, y: f64) -> Point {
+    pub fn new(x: T, y: T) -> Point<T> {
         Point(Coordinate { x: x, y: y })
     }
 
@@ -37,7 +44,7 @@ impl Point {
     ///
     /// assert_eq!(p.x(), 1.234);
     /// ```
-    pub fn x(&self) -> f64 {
+    pub fn x(&self) -> T {
         self.0.x
     }
 
@@ -51,7 +58,7 @@ impl Point {
     ///
     /// assert_eq!(p.x(), 9.876);
     /// ```
-    pub fn set_x(&mut self, x: f64) -> &mut Point {
+    pub fn set_x(&mut self, x: T) -> &mut Point<T> {
         self.0.x = x;
         self
     }
@@ -65,7 +72,7 @@ impl Point {
     ///
     /// assert_eq!(p.y(), 2.345);
     /// ```
-    pub fn y(&self) -> f64 {
+    pub fn y(&self) -> T {
         self.0.y
     }
 
@@ -79,7 +86,7 @@ impl Point {
     ///
     /// assert_eq!(p.y(), 9.876);
     /// ```
-    pub fn set_y(&mut self, y: f64) -> &mut Point {
+    pub fn set_y(&mut self, y: T) -> &mut Point<T> {
         self.0.y = y;
         self
     }
@@ -93,7 +100,7 @@ impl Point {
     ///
     /// assert_eq!(p.lng(), 1.234);
     /// ```
-    pub fn lng(&self) -> f64 {
+    pub fn lng(&self) -> T {
         self.x()
     }
 
@@ -107,7 +114,7 @@ impl Point {
     ///
     /// assert_eq!(p.lng(), 9.876);
     /// ```
-    pub fn set_lng(&mut self, lng: f64) -> &mut Point {
+    pub fn set_lng(&mut self, lng: T) -> &mut Point<T> {
         self.set_x(lng)
     }
 
@@ -120,7 +127,7 @@ impl Point {
     ///
     /// assert_eq!(p.lat(), 2.345);
     /// ```
-    pub fn lat(&self) -> f64 {
+    pub fn lat(&self) -> T {
         self.y()
     }
 
@@ -134,7 +141,7 @@ impl Point {
     ///
     /// assert_eq!(p.lat(), 9.876);
     /// ```
-    pub fn set_lat(&mut self, lat: f64) -> &mut Point {
+    pub fn set_lat(&mut self, lat: T) -> &mut Point<T> {
         self.set_y(lat)
     }
 
@@ -149,13 +156,15 @@ impl Point {
     ///
     /// assert_eq!(dot, 5.25);
     /// ```
-    pub fn dot(&self, point: &Point) -> f64 {
+    pub fn dot(&self, point: &Point<T>) -> T {
         self.x() * point.x() + self.y() * point.y()
     }
 }
 
-impl Neg for Point {
-    type Output = Point;
+impl<T> Neg for Point<T>
+    where T: Float + Neg<Output = T> + ToPrimitive
+{
+    type Output = Point<T>;
 
     /// Returns a point with the x and y components negated.
     ///
@@ -167,13 +176,15 @@ impl Neg for Point {
     /// assert_eq!(p.x(), 1.25);
     /// assert_eq!(p.y(), -2.5);
     /// ```
-    fn neg(self) -> Point {
+    fn neg(self) -> Point<T> {
         Point::new(-self.x(), -self.y())
     }
 }
 
-impl Add for Point {
-    type Output = Point;
+impl<T> Add for Point<T>
+    where T: Float + ToPrimitive
+{
+    type Output = Point<T>;
 
     /// Add a point to the given point.
     ///
@@ -185,13 +196,15 @@ impl Add for Point {
     /// assert_eq!(p.x(), 2.75);
     /// assert_eq!(p.y(), 5.0);
     /// ```
-    fn add(self, rhs: Point) -> Point {
+    fn add(self, rhs: Point<T>) -> Point<T> {
         Point::new(self.x() + rhs.x(), self.y() + rhs.y())
     }
 }
 
-impl Sub for Point {
-    type Output = Point;
+impl<T> Sub for Point<T>
+    where T: Float + ToPrimitive
+{
+    type Output = Point<T>;
 
     /// Subtract a point from the given point.
     ///
@@ -203,38 +216,40 @@ impl Sub for Point {
     /// assert_eq!(p.x(), -0.25);
     /// assert_eq!(p.y(), 0.5);
     /// ```
-    fn sub(self, rhs: Point) -> Point {
+    fn sub(self, rhs: Point<T>) -> Point<T> {
         Point::new(self.x() - rhs.x(), self.y() - rhs.y())
     }
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPoint(pub Vec<Point>);
+pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct LineString(pub Vec<Point>);
+pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiLineString(pub Vec<LineString>);
+pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct Polygon(pub LineString, pub Vec<LineString>);
+pub struct Polygon<T>(pub LineString<T>, pub Vec<LineString<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPolygon(pub Vec<Polygon>);
+pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct GeometryCollection(pub Vec<Geometry>);
+pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub enum Geometry {
-    Point(Point),
-    LineString(LineString),
-    Polygon(Polygon),
-    MultiPoint(MultiPoint),
-    MultiLineString(MultiLineString),
-    MultiPolygon(MultiPolygon),
-    GeometryCollection(GeometryCollection),
+pub enum Geometry<T>
+    where T: Float
+{
+    Point(Point<T>),
+    LineString(LineString<T>),
+    Polygon(Polygon<T>),
+    MultiPoint(MultiPoint<T>),
+    MultiLineString(MultiLineString<T>),
+    MultiPolygon(MultiPolygon<T>),
+    GeometryCollection(GeometryCollection<T>)
 }
 
 #[cfg(test)]

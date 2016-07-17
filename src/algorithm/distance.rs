@@ -1,8 +1,10 @@
+use num::Float;
 use types::Point;
 
 /// Returns the distance between two geometries.
 
-pub trait Distance<RHS = Self> {
+pub trait Distance<T, Rhs = Self>
+{
     /// Returns the distance between two points:
     ///
     /// ```
@@ -13,12 +15,15 @@ pub trait Distance<RHS = Self> {
     /// let dist = p.distance(&Point::new(-72.1260, 42.45));
     /// assert!(dist < COORD_PRECISION)
     /// ```
-    fn distance(&self, rhs: &RHS) -> f64;
+    fn distance(&self, rhs: &Rhs) -> T;
 }
 
-impl Distance<Point> for Point {
-    fn distance(&self, p: &Point) -> f64 {
-        ((self.x() - p.x()).powi(2) + (self.y() - p.y()).powi(2)).sqrt()
+impl<T> Distance<T, Point<T>> for Point<T>
+    where T: Float
+{
+    fn distance(&self, p: &Point<T>) -> T {
+        let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
+        (dx * dx + dy * dy).sqrt() // FIXME is it correct ??? (euclidian dist)
     }
 }
 
@@ -28,7 +33,7 @@ mod test {
     use algorithm::distance::Distance;
     #[test]
     fn distance1_test() {
-        assert_eq!(Point::new(0., 0.).distance(&Point::new(1., 0.)), 1.);
+        assert_eq!(Point::<f64>::new(0., 0.).distance(&Point::<f64>::new(1., 0.)), 1.);
     }
     #[test]
     fn distance2_test() {

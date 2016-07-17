@@ -1,3 +1,4 @@
+use num::{Float, ToPrimitive};
 
 use types::{COORD_PRECISION, Point, LineString, Polygon, MultiPolygon};
 use algorithm::intersects::Intersects;
@@ -5,7 +6,7 @@ use algorithm::distance::Distance;
 
 ///  Checks if the geometry A is completely inside the B geometry.
 
-pub trait Contains<RHS = Self> {
+pub trait Contains<Rhs = Self> {
     ///  Checks if the geometry A is completely inside the B geometry.
     ///
     /// ```
@@ -28,17 +29,21 @@ pub trait Contains<RHS = Self> {
     ///
     /// ```
     ///
-    fn contains(&self, rhs: &RHS) -> bool;
+    fn contains(&self, rhs: &Rhs) -> bool;
 }
 
-impl Contains<Point> for Point {
-    fn contains(&self, p: &Point) -> bool {
-        self.distance(p) < COORD_PRECISION
+impl<T> Contains<Point<T>> for Point<T>
+    where T: Float + ToPrimitive
+{
+    fn contains(&self, p: &Point<T>) -> bool {
+        self.distance(p).to_f64().unwrap() < COORD_PRECISION
     }
 }
 
-impl Contains<Point> for LineString {
-    fn contains(&self, p: &Point) -> bool {
+impl<T> Contains<Point<T>> for LineString<T>
+    where T: Float
+{
+    fn contains(&self, p: &Point<T>) -> bool {
         let vect = &self.0;
         // LineString without points
         if vect.is_empty() {
@@ -53,12 +58,12 @@ impl Contains<Point> for LineString {
             return true;
         }
         for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-            if ((p1.lat() == p2.lat()) && (p1.lat() == p.lat()) &&
-                (p.lng() > p1.lng().min(p2.lng())) &&
-                (p.lng() < p1.lng().max(p2.lng()))) ||
-               ((p1.lng() == p2.lng()) && (p1.lng() == p.lng()) &&
-                (p.lat() > p1.lat().min(p2.lat())) &&
-                (p.lat() < p1.lat().max(p2.lat()))) {
+            if ((p1.y() == p2.y()) && (p1.y() == p.y()) &&
+                (p.x() > p1.x().min(p2.x())) &&
+                (p.x() < p1.x().max(p2.x()))) ||
+               ((p1.x() == p2.x()) && (p1.x() == p.x()) &&
+                (p.y() > p1.y().min(p2.y())) &&
+                (p.y() < p1.y().max(p2.y()))) {
                 return true;
             }
         }
@@ -72,7 +77,9 @@ enum PositionPoint {
     Outside,
 }
 
-fn get_position(p: &Point, linestring: &LineString) -> PositionPoint {
+fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
+    where T: Float
+{
     // See: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
     //      http://geospatialpython.com/search
     //         ?updated-min=2011-01-01T00:00:00-06:00&updated-max=2012-01-01T00:00:00-06:00&max-results=19
@@ -88,17 +95,17 @@ fn get_position(p: &Point, linestring: &LineString) -> PositionPoint {
         return PositionPoint::OnBoundary;
     }
 
-    let mut xints = 0.;
+    let mut xints = T::zero();
     let mut crossings = 0;
     for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-        if p.lat() > p1.lat().min(p2.lat()) {
-            if p.lat() <= p1.lat().max(p2.lat()) {
-                if p.lng() <= p1.lng().max(p2.lng()) {
-                    if p1.lat() != p2.lat() {
-                        xints = (p.lat() - p1.lat()) * (p2.lng() - p1.lng()) /
-                                (p2.lat() - p1.lat()) + p1.lng();
+        if p.y() > p1.y().min(p2.y()) {
+            if p.y() <= p1.y().max(p2.y()) {
+                if p.x() <= p1.x().max(p2.x()) {
+                    if p1.y() != p2.y() {
+                        xints = (p.y() - p1.y()) * (p2.x() - p1.x()) /
+                                (p2.y() - p1.y()) + p1.x();
                     }
-                    if (p1.lng() == p2.lng()) || (p.lng() <= xints) {
+                    if (p1.x() == p2.x()) || (p.x() <= xints) {
                         crossings += 1;
                     }
                 }
@@ -112,8 +119,10 @@ fn get_position(p: &Point, linestring: &LineString) -> PositionPoint {
     }
 }
 
-impl Contains<Point> for Polygon {
-    fn contains(&self, p: &Point) -> bool {
+impl<T> Contains<Point<T>> for Polygon<T>
+    where T: Float
+{
+    fn contains(&self, p: &Point<T>) -> bool {
         match get_position(p, &self.0) {
             PositionPoint::OnBoundary => false,
             PositionPoint::Outside => false,
@@ -122,14 +131,18 @@ impl Contains<Point> for Polygon {
     }
 }
 
-impl Contains<Point> for MultiPolygon {
-    fn contains(&self, p: &Point) -> bool {
+impl<T> Contains<Point<T>> for MultiPolygon<T>
+    where T: Float
+{
+    fn contains(&self, p: &Point<T>) -> bool {
         self.0.iter().any(|poly| poly.contains(p))
     }
 }
 
-impl Contains<LineString> for Polygon {
-    fn contains(&self, linestring: &LineString) -> bool {
+impl<T> Contains<LineString<T>> for Polygon<T>
+    where T: Float
+{
+    fn contains(&self, linestring: &LineString<T>) -> bool {
         // All points of LineString must be in the polygon ?
         if linestring.0.iter().all(|point| self.contains(point)) {
             !self.intersects(linestring)
