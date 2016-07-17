@@ -4,8 +4,7 @@ use std::ops::Sub;
 
 use num::{Float, ToPrimitive};
 
-pub static COORD_PRECISION: f64 = 1e-1; // 0.1m
-
+pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Coordinate<T>
