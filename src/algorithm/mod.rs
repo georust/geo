@@ -6,5 +6,7 @@ pub mod contains;
 pub mod intersects;
 /// Returns the area of the surface of geometry
 pub mod area;
+/// Returns the length of a line.
+pub mod length;
 /// Returns the distance between two geometries.
 pub mod distance;
