@@ -1,5 +1,10 @@
 # Changes
 
+## 0.2.0
+
+* [Data structures and traits are now generic (previously all were `f64`)](https://github.com/georust/rust-geo/pull/30)
+* [`geo::COORD_PRECISION` is now `f32` (previously was `f64`)](https://github.com/georust/rust-geo/pull/40)
+
 ## 0.1.1
 
 * [`Intersects` trait bugfixes](https://github.com/georust/rust-geo/pull/34)
