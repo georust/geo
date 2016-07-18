@@ -1,4 +1,4 @@
-use num::{Float};
+use num::Float;
 
 use types::{Bbox, Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 
@@ -25,35 +25,31 @@ pub trait BoundingBox<T: Float> {
     fn bbox(&self) -> Option<Bbox<T>>;
 }
 
+
+fn get_min_max<T>(p: T, min: T, max: T) -> (T, T)
+    where T: Float
+{
+    if p > max {(min, p)} else if p < min {(p, max)} else {(min, max)}
+}
+
 fn get_bbox<T>(vect: &Vec<Point<T>>) -> Option<Bbox<T>>
     where T: Float
 {
     if vect.is_empty() {
         return None;
-    }
-    if vect.len() == 1 {
-        return Some(Bbox{xmin: vect[0].x(), ymax: vect[0].y(),
-                         xmax: vect[0].x(), ymin: vect[0].y()})
     } else {
-        let (mut xmax, mut xmin) = (T::neg_infinity(), T::infinity());
-        let (mut ymax, mut ymin) = (T::neg_infinity(), T::infinity());
-        for pnt in vect.iter() {
+        let mut xrange = (vect[0].x(), vect[0].x());
+        let mut yrange = (vect[0].y(), vect[0].y());
+        for pnt in vect[1..].iter() {
             let (px, py) = (pnt.x(), pnt.y());
-            if px > xmax {
-                xmax = px;
-            } else if px < xmin {
-                xmin = px;
-            }
-            if py > ymax {
-                ymax = py;
-            } else if py < ymin {
-                ymin = py;
-            }
+            xrange = get_min_max(px, xrange.0, xrange.1);
+            yrange = get_min_max(py, yrange.0, yrange.1);
         }
-        Some(Bbox{xmin: xmin, ymax: ymax,
-                  xmax: xmax, ymin: ymin})
+        Some(Bbox{xmin: xrange.0, xmax: xrange.1,
+                  ymin: yrange.0, ymax: yrange.1})
     }
 }
+
 
 impl<T> BoundingBox<T> for MultiPoint<T>
     where T: Float
@@ -119,7 +115,7 @@ impl<T> BoundingBox<T> for MultiPolygon<T>
     where T: Float
 {
     ///
-    /// Return the BoundingBox for a MultiLineString
+    /// Return the BoundingBox for a MultiPolygon
     ///
     fn bbox(&self) -> Option<Bbox<T>> {
         let vect = &self.0;
