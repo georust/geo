@@ -37,17 +37,16 @@ fn get_bbox<T>(vect: &Vec<Point<T>>) -> Option<Bbox<T>>
 {
     if vect.is_empty() {
         return None;
-    } else {
-        let mut xrange = (vect[0].x(), vect[0].x());
-        let mut yrange = (vect[0].y(), vect[0].y());
-        for pnt in vect[1..].iter() {
-            let (px, py) = (pnt.x(), pnt.y());
-            xrange = get_min_max(px, xrange.0, xrange.1);
-            yrange = get_min_max(py, yrange.0, yrange.1);
-        }
-        Some(Bbox{xmin: xrange.0, xmax: xrange.1,
-                  ymin: yrange.0, ymax: yrange.1})
     }
+    let mut xrange = (vect[0].x(), vect[0].x());
+    let mut yrange = (vect[0].y(), vect[0].y());
+    for pnt in vect[1..].iter() {
+        let (px, py) = (pnt.x(), pnt.y());
+        xrange = get_min_max(px, xrange.0, xrange.1);
+        yrange = get_min_max(py, yrange.0, yrange.1);
+    }
+    Some(Bbox{xmin: xrange.0, xmax: xrange.1,
+              ymin: yrange.0, ymax: yrange.1})
 }
 
 
