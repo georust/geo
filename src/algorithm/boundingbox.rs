@@ -8,7 +8,7 @@ pub trait BoundingBox<T: Float> {
     /// Return a Bounding Box of a geometry
     ///
     /// ```
-    /// use geo::{Point, LineString, Coordinate};
+    /// use geo::{Point, LineString};
     /// use geo::algorithm::boundingbox::BoundingBox;
     ///
     /// let mut vec = Vec::new();
@@ -18,8 +18,10 @@ pub trait BoundingBox<T: Float> {
     /// let linestring = LineString(vec);
     /// let bbox = linestring.bbox().unwrap();
     ///
-    /// println!("Bbox top left coordinates: {}, {}", bbox.xmin, bbox.ymax);
-    /// println!("Bbox bottom right coordinates: {}, {}", bbox.xmax, bbox.ymin);
+    /// assert_eq!(40.02f64, bbox.xmin);
+    /// assert_eq!(42.02f64, bbox.xmax);
+    /// assert_eq!(116.34, bbox.ymin);
+    /// assert_eq!(118.34, bbox.ymax);
     /// ```
     ///
     fn bbox(&self) -> Option<Bbox<T>>;
