@@ -34,21 +34,23 @@ fn get_min_max<T>(p: T, min: T, max: T) -> (T, T)
     if p > max {(min, p)} else if p < min {(p, max)} else {(min, max)}
 }
 
-fn get_bbox<T>(vect: &Vec<Point<T>>) -> Option<Bbox<T>>
-    where T: Float
+fn get_bbox<'a, I, T>(collection: I) -> Option<Bbox<T>>
+    where T: 'a + Float,
+          I: 'a + IntoIterator<Item = &'a Point<T>>
 {
-    if vect.is_empty() {
-        return None;
+    let mut iter  = collection.into_iter();
+    if let Some(pnt) = iter.next() {
+        let mut xrange = (pnt.x(), pnt.x());
+        let mut yrange = (pnt.y(), pnt.y());
+        for pnt in iter {
+            let (px, py) = (pnt.x(), pnt.y());
+            xrange = get_min_max(px, xrange.0, xrange.1);
+            yrange = get_min_max(py, yrange.0, yrange.1);
+        }
+        return Some(Bbox{xmin: xrange.0, xmax: xrange.1,
+                         ymin: yrange.0, ymax: yrange.1})
     }
-    let mut xrange = (vect[0].x(), vect[0].x());
-    let mut yrange = (vect[0].y(), vect[0].y());
-    for pnt in vect[1..].iter() {
-        let (px, py) = (pnt.x(), pnt.y());
-        xrange = get_min_max(px, xrange.0, xrange.1);
-        yrange = get_min_max(py, yrange.0, yrange.1);
-    }
-    Some(Bbox{xmin: xrange.0, xmax: xrange.1,
-              ymin: yrange.0, ymax: yrange.1})
+    None
 }
 
 
@@ -97,6 +99,7 @@ impl<T> BoundingBox<T> for MultiLineString<T>
             }
             Some(bbox)
         }
+        // get_bbox(&self.0.iter().flat_map(|line| line.0.iter()))
     }
 }
 
