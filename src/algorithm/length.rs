@@ -26,9 +26,6 @@ pub trait Length<T, RHS = Self> {
 impl<T> Length<T> for LineString<T>
     where T: Float
 {
-    ///
-    /// Length of a LineString.
-    ///
     fn length(&self) -> T {
         let vect = &self.0;
         if vect.is_empty() || vect.len() == 1 {
@@ -43,9 +40,6 @@ impl<T> Length<T> for LineString<T>
 impl<T> Length<T> for MultiLineString<T>
     where T: Float
 {
-    ///
-    /// Length of a MultiLineString.
-    ///
     fn length(&self) -> T {
         self.0.iter().fold(T::zero(), |total, line| total + line.length())
     }
