@@ -83,23 +83,7 @@ impl<T> BoundingBox<T> for MultiLineString<T>
     /// Return the BoundingBox for a MultiLineString
     ///
     fn bbox(&self) -> Option<Bbox<T>> {
-        let vect = &self.0;
-        if vect.is_empty() {
-            return None;
-        }
-        if vect.len() == 1 {
-            return vect[0].bbox()
-        } else {
-            let mut bbox = vect[0].bbox().unwrap();
-            for geo in vect[1..].iter() {
-                let gopt = geo.bbox();
-                if gopt.is_some() {
-                    bbox += gopt.unwrap();
-                }
-            }
-            Some(bbox)
-        }
-        // get_bbox(&self.0.iter().flat_map(|line| line.0.iter()))
+        get_bbox(self.0.iter().flat_map(|line| line.0.iter()))
     }
 }
 
@@ -122,22 +106,7 @@ impl<T> BoundingBox<T> for MultiPolygon<T>
     /// Return the BoundingBox for a MultiPolygon
     ///
     fn bbox(&self) -> Option<Bbox<T>> {
-        let vect = &self.0;
-        if vect.is_empty() {
-            return None;
-        }
-        if vect.len() == 1 {
-            return vect[0].bbox()
-        } else {
-            let mut bbox = vect[0].bbox().unwrap();
-            for geo in vect[1..].iter() {
-                let gopt = geo.bbox();
-                if gopt.is_some() {
-                    bbox += gopt.unwrap();
-                }
-            }
-            Some(bbox)
-        }
+        get_bbox(self.0.iter().flat_map(|poly| (poly.0).0.iter()))
     }
 }
 
