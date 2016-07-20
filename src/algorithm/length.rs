@@ -27,13 +27,8 @@ impl<T> Length<T> for LineString<T>
     where T: Float
 {
     fn length(&self) -> T {
-        let vect = &self.0;
-        if vect.is_empty() || vect.len() == 1 {
-            return T::zero();
-        } else {
-            let ipoints = vect.windows(2).into_iter();
-            ipoints.fold(T::zero(), |total_length, p| total_length + p[0].distance(&p[1]))
-        }
+        self.0.windows(2).into_iter()
+              .fold(T::zero(), |total_length, p| total_length + p[0].distance(&p[1]))
     }
 }
 
