@@ -31,8 +31,8 @@ impl<T> Length<T> for LineString<T>
         if vect.is_empty() || vect.len() == 1 {
             return T::zero();
         } else {
-            let ipoints = vect.iter().zip(vect[1..].iter());
-            ipoints.fold(T::zero(), |total_length, (p1, p2)| total_length + p1.distance(&p2))
+            let ipoints = vect.windows(2).into_iter();
+            ipoints.fold(T::zero(), |total_length, p| total_length + p[0].distance(&p[1]))
         }
     }
 }
