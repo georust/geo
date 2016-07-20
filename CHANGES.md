@@ -1,5 +1,10 @@
 # Changes
 
+## 0.2.1
+
+* [Modify area for Polygon to consider also the isles](https://github.com/georust/rust-geo/pull/43)
+* [Add area trait to MultiPolygon](https://github.com/georust/rust-geo/pull/43)
+
 ## 0.2.0
 
 * [Data structures and traits are now generic (previously all were `f64`)](https://github.com/georust/rust-geo/pull/30)
