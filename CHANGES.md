@@ -1,5 +1,9 @@
 # Changes
 
+## 0.2.2
+
+* [Add the Length trait and implement Length for LineString and MultiLineString](https://github.com/georust/rust-geo/pull/44)
+
 ## 0.2.1
 
 * [Modify area for Polygon to consider also the isles](https://github.com/georust/rust-geo/pull/43)
