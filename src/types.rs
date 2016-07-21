@@ -5,11 +5,13 @@ use std::ops::Sub;
 
 use num::{Float, ToPrimitive};
 
+pub use traits::ToGeo;
+
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Coordinate<T>
-    where T: Float
+    where T: Float + ToRadians
 {
     pub x: T,
     pub y: T,
@@ -17,7 +19,7 @@ pub struct Coordinate<T>
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Bbox<T>
-    where T: Float
+    where T: Float + ToRadians
 {
     pub xmin: T,
     pub xmax: T,
@@ -26,10 +28,10 @@ pub struct Bbox<T>
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Point<T> (pub Coordinate<T>) where T: Float;
+pub struct Point<T> (pub Coordinate<T>) where T: Float + ToRadians;
 
 impl<T> Point<T>
-    where T: Float + ToPrimitive
+    where T: Float + ToPrimitive + ToRadians
 {
     /// Creates a new point.
     ///
@@ -172,7 +174,7 @@ impl<T> Point<T>
 }
 
 impl<T> Neg for Point<T>
-    where T: Float + Neg<Output = T> + ToPrimitive
+    where T: Float + Neg<Output = T> + ToPrimitive + ToRadians
 {
     type Output = Point<T>;
 
@@ -192,7 +194,7 @@ impl<T> Neg for Point<T>
 }
 
 impl<T> Add for Point<T>
-    where T: Float + ToPrimitive
+    where T: Float + ToPrimitive + ToRadians
 {
     type Output = Point<T>;
 
@@ -212,7 +214,7 @@ impl<T> Add for Point<T>
 }
 
 impl<T> Sub for Point<T>
-    where T: Float + ToPrimitive
+    where T: Float + ToPrimitive + ToRadians
 {
     type Output = Point<T>;
 
@@ -232,7 +234,7 @@ impl<T> Sub for Point<T>
 }
 
 impl<T> Add for Bbox<T>
-    where T: Float + ToPrimitive
+    where T: Float + ToPrimitive + ToRadians
 {
     type Output = Bbox<T>;
 
@@ -261,7 +263,7 @@ impl<T> Add for Bbox<T>
 }
 
 impl<T> AddAssign for Bbox<T>
-    where T: Float + ToPrimitive
+    where T: Float + ToPrimitive + ToRadians
 {
     /// Add a boundingox to the given boundingbox.
     ///
@@ -287,26 +289,26 @@ impl<T> AddAssign for Bbox<T>
 
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
+pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float + ToRadians;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
+pub struct LineString<T>(pub Vec<Point<T>>) where T: Float + ToRadians;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
+pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float + ToRadians;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct Polygon<T>(pub LineString<T>, pub Vec<LineString<T>>) where T: Float;
+pub struct Polygon<T>(pub LineString<T>, pub Vec<LineString<T>>) where T: Float + ToRadians;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
+pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float + ToRadians;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float;
+pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float + ToRadians;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Geometry<T>
-    where T: Float
+    where T: Float + ToRadians
 {
     Point(Point<T>),
     LineString(LineString<T>),
