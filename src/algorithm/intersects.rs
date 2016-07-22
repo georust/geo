@@ -32,8 +32,8 @@ impl<T> Intersects<LineString<T>> for LineString<T>
         if vect0.is_empty() || vect1.is_empty() {
             return false;
         }
-        for a in vect0.windows(2).into_iter() {
-            for b in vect1.windows(2).into_iter() {
+        for a in vect0.windows(2) {
+            for b in vect1.windows(2) {
                 let u_b = (b[1].y() - b[0].y()) * (a[1].x() - a[0].x()) -
                           (b[1].x() - b[0].x()) * (a[1].y() - a[0].y());
                 if u_b == T::zero() {

@@ -57,7 +57,7 @@ impl<T> Contains<Point<T>> for LineString<T>
         if vect.contains(p) {
             return true;
         }
-        for ps in vect.windows(2).into_iter() {
+        for ps in vect.windows(2) {
             if ((ps[0].y() == ps[1].y()) && (ps[0].y() == p.y()) &&
                 (p.x() > ps[0].x().min(ps[1].x())) &&
                 (p.x() < ps[0].x().max(ps[1].x()))) ||
@@ -97,7 +97,7 @@ fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
 
     let mut xints = T::zero();
     let mut crossings = 0;
-    for ps in vect.windows(2).into_iter() {
+    for ps in vect.windows(2) {
         if p.y() > ps[0].y().min(ps[1].y()) {
             if p.y() <= ps[0].y().max(ps[1].y()) {
                 if p.x() <= ps[0].x().max(ps[1].x()) {

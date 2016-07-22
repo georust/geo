@@ -42,7 +42,7 @@ impl<T> Centroid<T> for LineString<T>
             let mut sum_x = T::zero();
             let mut sum_y = T::zero();
             let mut total_length = T::zero();
-            for ps in vect.windows(2).into_iter() {
+            for ps in vect.windows(2) {
                 let segment_len = ps[0].distance(&ps[1]);
                 let (x1, y1, x2, y2) = (ps[0].x(), ps[0].y(), ps[1].x(), ps[1].y());
                 total_length = total_length + segment_len;
@@ -74,7 +74,7 @@ impl<T> Centroid<T> for Polygon<T>
             let area = self.area();
             let mut sum_x = T::zero();
             let mut sum_y = T::zero();
-            for ps in vect.windows(2).into_iter() {
+            for ps in vect.windows(2) {
                 let tmp = ps[0].x() * ps[1].y() - ps[1].x() * ps[0].y();
                 sum_x = sum_x + ((ps[1].x() + ps[0].x()) * tmp);
                 sum_y = sum_y + ((ps[1].y() + ps[0].y()) * tmp);
