@@ -57,13 +57,13 @@ impl<T> Contains<Point<T>> for LineString<T>
         if vect.contains(p) {
             return true;
         }
-        for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-            if ((p1.y() == p2.y()) && (p1.y() == p.y()) &&
-                (p.x() > p1.x().min(p2.x())) &&
-                (p.x() < p1.x().max(p2.x()))) ||
-               ((p1.x() == p2.x()) && (p1.x() == p.x()) &&
-                (p.y() > p1.y().min(p2.y())) &&
-                (p.y() < p1.y().max(p2.y()))) {
+        for ps in vect.windows(2).into_iter() {
+            if ((ps[0].y() == ps[1].y()) && (ps[0].y() == p.y()) &&
+                (p.x() > ps[0].x().min(ps[1].x())) &&
+                (p.x() < ps[0].x().max(ps[1].x()))) ||
+               ((ps[0].x() == ps[1].x()) && (ps[0].x() == p.x()) &&
+                (p.y() > ps[0].y().min(ps[1].y())) &&
+                (p.y() < ps[0].y().max(ps[1].y()))) {
                 return true;
             }
         }
@@ -97,15 +97,15 @@ fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
 
     let mut xints = T::zero();
     let mut crossings = 0;
-    for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-        if p.y() > p1.y().min(p2.y()) {
-            if p.y() <= p1.y().max(p2.y()) {
-                if p.x() <= p1.x().max(p2.x()) {
-                    if p1.y() != p2.y() {
-                        xints = (p.y() - p1.y()) * (p2.x() - p1.x()) /
-                                (p2.y() - p1.y()) + p1.x();
+    for ps in vect.windows(2).into_iter() {
+        if p.y() > ps[0].y().min(ps[1].y()) {
+            if p.y() <= ps[0].y().max(ps[1].y()) {
+                if p.x() <= ps[0].x().max(ps[1].x()) {
+                    if ps[0].y() != ps[1].y() {
+                        xints = (p.y() - ps[0].y()) * (ps[1].x() - ps[0].x()) /
+                                (ps[1].y() - ps[0].y()) + ps[0].x();
                     }
-                    if (p1.x() == p2.x()) || (p.x() <= xints) {
+                    if (ps[0].x() == ps[1].x()) || (p.x() <= xints) {
                         crossings += 1;
                     }
                 }
