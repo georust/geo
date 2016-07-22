@@ -1,5 +1,9 @@
 # Changes
 
+## 0.2.3
+
+* [Add type Bbox and trait BoundingBox](https://github.com/georust/rust-geo/pull/41)
+
 ## 0.2.2
 
 * [Add the Length trait and implement Length for LineString and MultiLineString](https://github.com/georust/rust-geo/pull/44)
