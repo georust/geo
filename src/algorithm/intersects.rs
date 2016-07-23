@@ -32,17 +32,17 @@ impl<T> Intersects<LineString<T>> for LineString<T>
         if vect0.is_empty() || vect1.is_empty() {
             return false;
         }
-        for (a1, a2) in vect0.iter().zip(vect0[1..].iter()) {
-            for (b1, b2) in vect1.iter().zip(vect1[1..].iter()) {
-                let u_b = (b2.y() - b1.y()) * (a2.x() - a1.x()) -
-                          (b2.x() - b1.x()) * (a2.y() - a1.y());
+        for a in vect0.windows(2) {
+            for b in vect1.windows(2) {
+                let u_b = (b[1].y() - b[0].y()) * (a[1].x() - a[0].x()) -
+                          (b[1].x() - b[0].x()) * (a[1].y() - a[0].y());
                 if u_b == T::zero() {
                     continue;
                 }
-                let ua_t = (b2.x() - b1.x()) * (a1.y() - b1.y()) -
-                           (b2.y() - b1.y()) * (a1.x() - b1.x());
-                let ub_t = (a2.x() - a1.x()) * (a1.y() - b1.y()) -
-                           (a2.y() - a1.y()) * (a1.x() - b1.x());
+                let ua_t = (b[1].x() - b[0].x()) * (a[0].y() - b[0].y()) -
+                           (b[1].y() - b[0].y()) * (a[0].x() - b[0].x());
+                let ub_t = (a[1].x() - a[0].x()) * (a[0].y() - b[0].y()) -
+                           (a[1].y() - a[0].y()) * (a[0].x() - b[0].x());
                 let u_a = ua_t / u_b;
                 let u_b = ub_t / u_b;
                 if (T::zero() <= u_a) && (u_a <= T::one()) && (T::zero() <= u_b) && (u_b <= T::one()) {

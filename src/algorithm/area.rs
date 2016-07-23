@@ -25,8 +25,8 @@ fn get_linestring_area<T>(linestring: &LineString<T>) -> T where T: Float {
         return T::zero();
     }
     let mut tmp = T::zero();
-    for (p1, p2) in linestring.0.iter().zip(linestring.0[1..].iter()) {
-        tmp = tmp + (p1.x() * p2.y() - p2.x() * p1.y());
+    for ps in linestring.0.windows(2) {
+        tmp = tmp + (ps[0].x() * ps[1].y() - ps[1].x() * ps[0].y());
     }
     tmp / (T::one() + T::one())
 }

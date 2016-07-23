@@ -42,9 +42,9 @@ impl<T> Centroid<T> for LineString<T>
             let mut sum_x = T::zero();
             let mut sum_y = T::zero();
             let mut total_length = T::zero();
-            for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-                let segment_len = p1.distance(&p2);
-                let (x1, y1, x2, y2) = (p1.x(), p1.y(), p2.x(), p2.y());
+            for ps in vect.windows(2) {
+                let segment_len = ps[0].distance(&ps[1]);
+                let (x1, y1, x2, y2) = (ps[0].x(), ps[0].y(), ps[1].x(), ps[1].y());
                 total_length = total_length + segment_len;
                 sum_x = sum_x + segment_len * ((x1 + x2) / (T::one() + T::one()));
                 sum_y = sum_y + segment_len * ((y1 + y2) / (T::one() + T::one()));
@@ -74,10 +74,10 @@ impl<T> Centroid<T> for Polygon<T>
             let area = self.area();
             let mut sum_x = T::zero();
             let mut sum_y = T::zero();
-            for (p1, p2) in vect.iter().zip(vect[1..].iter()) {
-                let tmp = p1.x() * p2.y() - p2.x() * p1.y();
-                sum_x = sum_x + ((p2.x() + p1.x()) * tmp);
-                sum_y = sum_y + ((p2.y() + p1.y()) * tmp);
+            for ps in vect.windows(2) {
+                let tmp = ps[0].x() * ps[1].y() - ps[1].x() * ps[0].y();
+                sum_x = sum_x + ((ps[1].x() + ps[0].x()) * tmp);
+                sum_y = sum_y + ((ps[1].y() + ps[0].y()) * tmp);
             }
             let six = T::from_i32(6).unwrap();
             Some(Point::new(sum_x / (six * area), sum_y / (six * area)))
