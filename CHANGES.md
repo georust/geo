@@ -1,5 +1,9 @@
 # Changes
 
+## 0.2.4
+
+* [Performance improvements when iterating over pairs of coordinates](https://github.com/georust/rust-geo/pull/50)
+
 ## 0.2.3
 
 * [Add type Bbox and trait BoundingBox](https://github.com/georust/rust-geo/pull/41)
