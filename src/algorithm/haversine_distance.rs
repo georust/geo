@@ -9,7 +9,7 @@ pub trait HaversineDistance<T, Rhs = Self>
     ///
     /// ```
     /// use geo::{COORD_PRECISION, Point};
-    /// use geo::algorithm::distance::Distance;
+    /// use geo::algorithm::haversine_distance::HaversineDistance;
     ///
     /// let p = Point::new(-72.1235, 42.3521);
     /// let dist = p.haversine_distance(&Point::new(-72.1260, 42.45));
