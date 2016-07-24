@@ -1,5 +1,5 @@
 use num::Float;
-use types::{LineString, Polygon, Bbox, ToRadians};
+use types::{LineString, Polygon, Bbox};
 use algorithm::contains::Contains;
 
 /// Checks if the geometry A intersects the geometry B.

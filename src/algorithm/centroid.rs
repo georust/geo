@@ -24,7 +24,7 @@ pub trait Centroid<T: Float> {
 }
 
 impl<T> Centroid<T> for LineString<T>
-    where T: Float
+    where T: Float + FromPrimitive
 {
     ///
     /// Centroid on a LineString is the mean of the middle of the segment
