@@ -13,7 +13,7 @@ pub trait HaversineDistance<T, Rhs = Self>
     ///
     /// let p = Point::new(-72.1235, 42.3521);
     /// let dist = p.haversine_distance(&Point::new(-72.1260, 42.45));
-    /// assert_eq!(dist, 10900.115612674515)
+    /// assert_eq!(dist as i32, 10900)
     /// ```
     fn haversine_distance(&self, rhs: &Rhs) -> T;
 }
