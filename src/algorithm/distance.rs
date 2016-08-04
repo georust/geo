@@ -1,5 +1,5 @@
 use num::Float;
-use types::Point;
+use types::{Point};
 
 /// Returns the distance between two geometries.
 
@@ -29,8 +29,8 @@ impl<T> Distance<T, Point<T>> for Point<T>
 
 #[cfg(test)]
 mod test {
-    use types::Point;
-    use algorithm::distance::Distance;
+    use types::{Point};
+    use algorithm::distance::{Distance};
     #[test]
     fn distance1_test() {
         assert_eq!(Point::<f64>::new(0., 0.).distance(&Point::<f64>::new(1., 0.)), 1.);
