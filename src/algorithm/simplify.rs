@@ -30,7 +30,7 @@ fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
 
     for (i, _) in points.iter().enumerate().take(points.len() - 1).skip(1) {
         distance = point_line_distance(&points[i],
-                                       &*points.first().unwrap(),
+                                       &points[0],
                                        &*points.last().unwrap());
         if distance > dmax {
             index = i;
