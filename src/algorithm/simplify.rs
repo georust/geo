@@ -21,6 +21,9 @@ fn point_line_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) ->
 fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     where T: Float
 {
+    if points.is_empty() {
+        return points.to_vec();
+    }
     let mut dmax = T::zero();
     let mut index: usize = 0;
     let mut distance: T;
@@ -102,6 +105,13 @@ mod test {
         compare.push(Point::new(5.0, 4.0));
         compare.push(Point::new(11.0, 5.5));
         compare.push(Point::new(27.8, 0.1));
+        let simplified = rdp(&vec, &1.0);
+        assert_eq!(simplified, compare);
+    }
+    #[test]
+    fn rdp_test_empty_linestring() {
+        let mut vec = Vec::new();
+        let mut compare = Vec::new();
         let simplified = rdp(&vec, &1.0);
         assert_eq!(simplified, compare);
     }
