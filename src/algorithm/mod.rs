@@ -12,5 +12,5 @@ pub mod length;
 pub mod distance;
 /// Returns the Bbox of a geometry.
 pub mod boundingbox;
-/// Simplifies a LineString.
+/// Simplifies a `LineString`.
 pub mod simplify;

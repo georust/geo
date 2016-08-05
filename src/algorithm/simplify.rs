@@ -4,21 +4,21 @@ use algorithm::distance::Distance;
 
 // perpendicular distance from a point to a line
 fn point_line_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
-    where T: Float 
+    where T: Float
 {
     if start == end {
-        return point.distance(&start)
+        point.distance(start)
     } else {
         let numerator = ((end.x() - start.x()) * (start.y() - point.y()) -
-                 (start.x() - point.x()) * (end.y() - start.y()))
+                         (start.x() - point.x()) * (end.y() - start.y()))
             .abs();
-            let denominator = start.distance(&end);
+        let denominator = start.distance(end);
         numerator / denominator
     }
 }
 
 // Ramer–Douglas-Peucker line simplification algorithm
-fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>> 
+fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     where T: Float
 {
     let mut dmax = T::zero();
@@ -44,8 +44,7 @@ fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     }
 }
 
-pub trait Simplify<T, Epsilon = T>
-{
+pub trait Simplify<T, Epsilon = T> {
     /// Returns the simplified representation of a LineString, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
     ///
     /// ```
@@ -68,16 +67,14 @@ pub trait Simplify<T, Epsilon = T>
     /// let simplified = linestring.simplify(&1.0);
     /// assert_eq!(simplified, ls_compare)
     /// ```
-    fn simplify(&self, epsilon: &T) -> Self
-    where T: Float;
+    fn simplify(&self, epsilon: &T) -> Self where T: Float;
 }
 
 impl<T> Simplify<T> for LineString<T>
     where T: Float
 {
     fn simplify(&self, epsilon: &T) -> LineString<T> {
-        // let vec = self.0;
-        LineString(rdp(&self.0, &epsilon))
+        LineString(rdp(&self.0, epsilon))
     }
 }
 
