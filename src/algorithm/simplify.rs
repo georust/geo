@@ -115,4 +115,15 @@ mod test {
         let simplified = rdp(&vec, &1.0);
         assert_eq!(simplified, compare);
     }
+    #[test]
+    fn rdp_test_two_point_linestring() {
+        let mut vec = Vec::new();
+        vec.push(Point::new(0.0, 0.0));
+        vec.push(Point::new(27.8, 0.1));
+        let mut compare = Vec::new();
+        compare.push(Point::new(0.0, 0.0));
+        compare.push(Point::new(27.8, 0.1));
+        let simplified = rdp(&vec, &1.0);
+        assert_eq!(simplified, compare);
+    }
 }
