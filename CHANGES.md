@@ -1,5 +1,9 @@
 # Changes
 
+## 0.2.5
+
+* [Implement LineString simplification](https://github.com/georust/rust-geo/pull/55)
+
 ## 0.2.4
 
 * [Performance improvements when iterating over pairs of coordinates](https://github.com/georust/rust-geo/pull/50)
