@@ -366,10 +366,19 @@ mod test {
     #[test]
     #[should_panic]
     // You can't construct a LineString with one point
-    fn linestring_constructor_test() {
+    fn invalid_linestring_constructor_test() {
         let mut v = vec![];
         let p = Point::new(1.0, 2.0);
         v.push(p);
+        let ls = LineString::new(v).unwrap();
+    }
+    #[test]
+    fn linestring_constructor_test() {
+        let mut v = vec![];
+        let p1 = Point::new(1.0, 2.0);
+        let p2 = Point::new(3.0, 4.0);
+        v.push(p1);
+        v.push(p2);
         let ls = LineString::new(v).unwrap();
     }
     #[test]
