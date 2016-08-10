@@ -343,10 +343,35 @@ pub enum Geometry<T>
     GeometryCollection(GeometryCollection<T>)
 }
 
+// Empty LineStrings should be allowed, 1-element LineStrings should not
+impl<T> LineString<T>
+    where T: Float
+{
+    pub fn new(v: Vec<Point<T>>) -> Result<LineString<T>, String> {
+        Self::_new(v)
+    }
+
+    fn _new(v: Vec<Point<T>>) -> Result<LineString<T>, String> {
+        match v.len() {
+            1 => Err("A LineString must have at least two Points".to_string()),
+            _ => Ok(LineString(v)),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use ::types::*;
 
+    #[test]
+    #[should_panic]
+    // You can't construct a LineString with one point
+    fn linestring_constructor_test() {
+        let mut v = vec![];
+        let p = Point::new(1.0, 2.0);
+        v.push(p);
+        let ls = LineString::new(v).unwrap();
+    }
     #[test]
     fn type_test() {
         let c = Coordinate {
