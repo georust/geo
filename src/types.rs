@@ -343,6 +343,26 @@ pub enum Geometry<T>
     GeometryCollection(GeometryCollection<T>)
 }
 
+impl<T> From<Vec<[T; 2]>> for LineString<T>
+    where T: Float
+{
+    fn from(v: Vec<[T; 2]>) -> Self
+    where T: Float
+    {
+        LineString::new(v.iter().map(|e| { Point::new(e[0], e[1]) }).collect()).unwrap()
+    }
+}
+
+impl<T> From<Vec<(T, T)>> for LineString<T>
+    where T: Float
+{
+    fn from(v: Vec<(T, T)>) -> Self 
+    where T: Float
+    {
+        LineString::new(v.iter().map(|e| { Point::new(e.0, e.1) }).collect()).unwrap()
+    }
+}
+
 // Empty LineStrings should be allowed, 1-element LineStrings should not
 impl<T> LineString<T>
     where T: Float
@@ -380,6 +400,24 @@ mod test {
         v.push(p1);
         v.push(p2);
         let ls = LineString::new(v).unwrap();
+    }
+    #[test]
+    fn into_test() {
+        let v1 = vec![(1.0, 2.0), (3.0, 4.0)];
+        let ls1 = LineString::from(v1);
+        let v2 = vec![[1.0, 2.0], [3.0, 4.0]];
+        let ls2 = LineString::from(v2);
+        let v3 = vec![(1.0, 2.0), (3.0, 4.0)];
+        let ls3: LineString<_> = v3.into();
+        let v4 = vec![[1.0, 2.0], [3.0, 4.0]];
+        let ls4: LineString<_> = v4.into();
+    }
+    #[test]
+    #[should_panic]
+    // 1-element LineStrings aren't allowed
+    fn into_test_bad() {
+        let v4 = vec![[1.0, 2.0]];
+        let ls4: LineString<_> = v4.into();
     }
     #[test]
     fn type_test() {
