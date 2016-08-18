@@ -101,6 +101,31 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
     }
 }
 
+// Minimum distance from a Point to a LineString
+impl<T> Distance<T, LineString<T>> for Point<T>
+    where T: Float
+{
+    fn distance(&self, linestring: &LineString<T>) -> T {
+        // No need to continue if the point is on the LineString
+        if linestring.contains(self) { return T::zero() }
+        // minimum priority queue
+        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
+        // get points vector
+        let points = &linestring.0;
+        for chunk in points.chunks(2) {
+            let dist = match chunk.len() {
+                2 => line_segment_distance(self, chunk.first().unwrap(), chunk.last().unwrap()),
+                _ => {
+                    // final point in a LineString with an odd number of segments
+                    line_segment_distance(&self, chunk.first().unwrap(), chunk.first().unwrap())
+                }
+            };
+            dist_queue.push(Mindist { distance: dist });
+        }
+        dist_queue.pop().unwrap().distance
+    }
+}
+
 #[cfg(test)]
 mod test {
     use types::{Point, LineString, Polygon};
@@ -192,6 +217,46 @@ mod test {
         // A Random point inside the octagon
         let p = Point::new(5.0, 1.0);
         let dist = p.distance(&poly);
+        assert_eq!(dist, 0.0);
+    }
+    #[test]
+    // Point to LineString
+    fn point_linestring_distance_test() {
+        // like an octagon, but missing the lowest horizontal segment
+        let points = vec![
+            (5., 1.),
+            (4., 2.),
+            (4., 3.),
+            (5., 4.),
+            (6., 4.),
+            (7., 3.),
+            (7., 2.),
+            (6., 1.),
+        ];
+        let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
+        // A Random point "inside" the LineString
+        let p = Point::new(5.5, 2.1);
+        let dist = p.distance(&ls);
+        assert_eq!(dist, 1.1313708498984758);
+    }
+    #[test]
+    // Point to LineString, point lies on the LineString
+    fn point_linestring_contains_test() {
+        // like an octagon, but missing the lowest horizontal segment
+        let points = vec![
+            (5., 1.),
+            (4., 2.),
+            (4., 3.),
+            (5., 4.),
+            (6., 4.),
+            (7., 3.),
+            (7., 2.),
+            (6., 1.),
+        ];
+        let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
+        // A point which lies on the LineString
+        let p = Point::new(5.0, 4.0);
+        let dist = p.distance(&ls);
         assert_eq!(dist, 0.0);
     }
     #[test]
