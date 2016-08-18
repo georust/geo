@@ -11,12 +11,49 @@ pub trait Distance<T, Rhs = Self> {
     /// Returns the distance between two geometries:
     ///
     /// ```
-    /// use geo::{COORD_PRECISION, Point};
+    /// use geo::{COORD_PRECISION, Point, LineString, Polygon};
     /// use geo::algorithm::distance::Distance;
     ///
+    /// // Point to Point example
     /// let p = Point::new(-72.1235, 42.3521);
     /// let dist = p.distance(&Point::new(-72.1260, 42.45));
-    /// assert!(dist < COORD_PRECISION)
+    /// assert!(dist < COORD_PRECISION);
+    ///
+    /// // Point to Polygon example
+    /// let points = vec![
+    ///     (5., 1.),
+    ///     (4., 2.),
+    ///     (4., 3.),
+    ///     (5., 4.),
+    ///     (6., 4.),
+    ///     (7., 3.),
+    ///     (7., 2.),
+    ///     (6., 1.),
+    ///     (5., 1.)
+    /// ];
+    /// let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
+    /// let poly = Polygon(ls, vec![]);
+    /// // A Random point outside the polygon
+    /// let p = Point::new(2.5, 0.5);
+    /// let dist = p.distance(&poly);
+    /// assert_eq!(dist, 2.1213203435596424);
+    ///
+    /// // Point to LineString example
+    /// let points = vec![
+    ///     (5., 1.),
+    ///     (4., 2.),
+    ///     (4., 3.),
+    ///     (5., 4.),
+    ///     (6., 4.),
+    ///     (7., 3.),
+    ///     (7., 2.),
+    ///     (6., 1.),
+    /// ];
+    /// let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
+    /// // A Random point outside the LineString
+    /// let p = Point::new(5.5, 2.1);
+    /// let dist = p.distance(&ls);
+    /// assert_eq!(dist, 1.1313708498984758);
     /// ```
     fn distance(&self, rhs: &Rhs) -> T;
 }
