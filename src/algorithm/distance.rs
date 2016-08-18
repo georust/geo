@@ -1,11 +1,13 @@
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
 use num::{Float, ToPrimitive};
-use types::{Point, LineString};
+use types::{Point, LineString, Polygon};
+use algorithm::contains::Contains;
 use num::pow::pow;
 
 /// Returns the distance between two geometries.
 
-pub trait Distance<T, Rhs = Self>
-{
+pub trait Distance<T, Rhs = Self> {
     /// Returns the distance between two geometries:
     ///
     /// ```
@@ -35,7 +37,7 @@ fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) 
     where T: Float + ToPrimitive
 {
     let dist_squared = pow(start.distance(end), 2);
-    // Implies that start == end 
+    // Implies that start == end
     if dist_squared == T::zero() {
         return pow(point.distance(start), 2);
     }
@@ -49,9 +51,59 @@ fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) 
     point.distance(&projected)
 }
 
+#[derive(PartialEq, Debug)]
+struct Mindist<T>
+    where T: Float
+{
+    distance: T,
+}
+// These impls give us a min-heap when used with BinaryHeap
+impl<T> Ord for Mindist<T>
+    where T: Float
+{
+    fn cmp(&self, other: &Mindist<T>) -> Ordering {
+        other.distance.partial_cmp(&self.distance).unwrap()
+    }
+}
+impl<T> PartialOrd for Mindist<T>
+    where T: Float
+{
+    fn partial_cmp(&self, other: &Mindist<T>) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl<T> Eq for Mindist<T> where T: Float {}
+
+// Minimum distance from a Point to a Polygon
+impl<T> Distance<T, Polygon<T>> for Point<T>
+    where T: Float
+{
+    fn distance(&self, polygon: &Polygon<T>) -> T {
+        // No need to continue if the point is fully inside
+        if polygon.contains(self) { return T::zero() }
+        // minimum priority queue
+        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
+        // get exterior ring
+        let exterior = &polygon.0;
+        // exterior ring as a LineString
+        let ext_ring = &exterior.0;
+        for chunk in ext_ring.chunks(2) {
+            let dist = match chunk.len() {
+                2 => line_segment_distance(self, chunk.first().unwrap(), chunk.last().unwrap()),
+                _ => {
+                    // final point in an odd-numbered exterior ring
+                    line_segment_distance(&self, chunk.first().unwrap(), chunk.first().unwrap())
+                }
+            };
+            dist_queue.push(Mindist { distance: dist });
+        }
+        dist_queue.pop().unwrap().distance
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use types::{Point};
+    use types::{Point, LineString, Polygon};
     use algorithm::distance::{Distance, line_segment_distance};
     #[test]
     fn line_segment_distance_test() {
@@ -75,6 +127,72 @@ mod test {
         // Point is on the line
         let zero_dist = line_segment_distance(&p1, &p1, &p2);
         assert_eq!(zero_dist, 0.0);
+    }
+    #[test]
+    // Point to Polygon, outside point
+    fn point_polygon_distance_outside_test() {
+        // an octagon
+        let points = vec![
+            (5., 1.),
+            (4., 2.),
+            (4., 3.),
+            (5., 4.),
+            (6., 4.),
+            (7., 3.),
+            (7., 2.),
+            (6., 1.),
+            (5., 1.)
+        ];
+        let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
+        let poly = Polygon(ls, vec![]);
+        // A Random point outside the octagon
+        let p = Point::new(2.5, 0.5);
+        let dist = p.distance(&poly);
+        assert_eq!(dist, 2.1213203435596424);
+    }
+    #[test]
+    // Point to Polygon, inside point
+    fn point_polygon_distance_inside_test() {
+        // an octagon
+        let points = vec![
+            (5., 1.),
+            (4., 2.),
+            (4., 3.),
+            (5., 4.),
+            (6., 4.),
+            (7., 3.),
+            (7., 2.),
+            (6., 1.),
+            (5., 1.)
+        ];
+        let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
+        let poly = Polygon(ls, vec![]);
+        // A Random point inside the octagon
+        let p = Point::new(5.5, 2.1);
+        let dist = p.distance(&poly);
+        assert_eq!(dist, 0.0);
+    }
+    #[test]
+    // Point to Polygon, on boundary
+    fn point_polygon_distance_boundary_test() {
+        // an octagon
+        let points = vec![
+            (5., 1.),
+            (4., 2.),
+            (4., 3.),
+            (5., 4.),
+            (6., 4.),
+            (7., 3.),
+            (7., 2.),
+            (6., 1.),
+            (5., 1.)
+        ];
+        let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
+        let poly = Polygon(ls, vec![]);
+        // A Random point inside the octagon
+        let p = Point::new(5.0, 1.0);
+        let dist = p.distance(&poly);
+        assert_eq!(dist, 0.0);
     }
     #[test]
     fn distance1_test() {
