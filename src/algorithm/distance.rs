@@ -117,7 +117,9 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
 {
     fn distance(&self, polygon: &Polygon<T>) -> T {
         // No need to continue if the point is fully inside
-        if polygon.contains(self) { return T::zero() }
+        if polygon.contains(self) {
+            return T::zero();
+        }
         // minimum priority queue
         let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
         // get exterior ring
@@ -125,13 +127,7 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
         // exterior ring as a LineString
         let ext_ring = &exterior.0;
         for chunk in ext_ring.chunks(2) {
-            let dist = match chunk.len() {
-                2 => line_segment_distance(self, chunk.first().unwrap(), chunk.last().unwrap()),
-                _ => {
-                    // final point in an odd-numbered exterior ring
-                    line_segment_distance(&self, chunk.first().unwrap(), chunk.first().unwrap())
-                }
-            };
+            let dist = line_segment_distance(self, &chunk[0], &chunk.last().unwrap_or(&chunk[0]));
             dist_queue.push(Mindist { distance: dist });
         }
         dist_queue.pop().unwrap().distance
@@ -144,19 +140,15 @@ impl<T> Distance<T, LineString<T>> for Point<T>
 {
     fn distance(&self, linestring: &LineString<T>) -> T {
         // No need to continue if the point is on the LineString
-        if linestring.contains(self) { return T::zero() }
+        if linestring.contains(self) {
+            return T::zero();
+        }
         // minimum priority queue
         let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
         // get points vector
         let points = &linestring.0;
         for chunk in points.chunks(2) {
-            let dist = match chunk.len() {
-                2 => line_segment_distance(self, chunk.first().unwrap(), chunk.last().unwrap()),
-                _ => {
-                    // final point in a LineString with an odd number of segments
-                    line_segment_distance(&self, chunk.first().unwrap(), chunk.first().unwrap())
-                }
-            };
+            let dist = line_segment_distance(self, &chunk[0], &chunk.last().unwrap_or(&chunk[0]));
             dist_queue.push(Mindist { distance: dist });
         }
         dist_queue.pop().unwrap().distance
@@ -194,17 +186,8 @@ mod test {
     // Point to Polygon, outside point
     fn point_polygon_distance_outside_test() {
         // an octagon
-        let points = vec![
-            (5., 1.),
-            (4., 2.),
-            (4., 3.),
-            (5., 4.),
-            (6., 4.),
-            (7., 3.),
-            (7., 2.),
-            (6., 1.),
-            (5., 1.)
-        ];
+        let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
+                          (6., 1.), (5., 1.)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let poly = Polygon(ls, vec![]);
         // A Random point outside the octagon
@@ -216,17 +199,8 @@ mod test {
     // Point to Polygon, inside point
     fn point_polygon_distance_inside_test() {
         // an octagon
-        let points = vec![
-            (5., 1.),
-            (4., 2.),
-            (4., 3.),
-            (5., 4.),
-            (6., 4.),
-            (7., 3.),
-            (7., 2.),
-            (6., 1.),
-            (5., 1.)
-        ];
+        let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
+                          (6., 1.), (5., 1.)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let poly = Polygon(ls, vec![]);
         // A Random point inside the octagon
@@ -238,17 +212,8 @@ mod test {
     // Point to Polygon, on boundary
     fn point_polygon_distance_boundary_test() {
         // an octagon
-        let points = vec![
-            (5., 1.),
-            (4., 2.),
-            (4., 3.),
-            (5., 4.),
-            (6., 4.),
-            (7., 3.),
-            (7., 2.),
-            (6., 1.),
-            (5., 1.)
-        ];
+        let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
+                          (6., 1.), (5., 1.)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let poly = Polygon(ls, vec![]);
         // A Random point inside the octagon
@@ -298,7 +263,8 @@ mod test {
     }
     #[test]
     fn distance1_test() {
-        assert_eq!(Point::<f64>::new(0., 0.).distance(&Point::<f64>::new(1., 0.)), 1.);
+        assert_eq!(Point::<f64>::new(0., 0.).distance(&Point::<f64>::new(1., 0.)),
+                   1.);
     }
     #[test]
     fn distance2_test() {
