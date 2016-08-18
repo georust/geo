@@ -182,7 +182,7 @@ mod test {
         let dist3 = line_segment_distance(&o3, &p1, &p2);
         let dist4 = line_segment_distance(&o4, &p1, &p2);
         // Results agree with Shapely
-        assert_eq!(dist, 2.048590078926335);
+        assert_eq!(dist, 2.0485900789263356);
         assert_eq!(dist2, 1.118033988749895);
         assert_eq!(dist3, 1.4142135623730951);
         assert_eq!(dist4, 1.5811388300841898);
