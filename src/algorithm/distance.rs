@@ -216,7 +216,7 @@ mod test {
                           (6., 1.), (5., 1.)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let poly = Polygon(ls, vec![]);
-        // A Random point inside the octagon
+        // A point on the octagon
         let p = Point::new(5.0, 1.0);
         let dist = p.distance(&poly);
         assert_eq!(dist, 0.0);
