@@ -131,6 +131,12 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
         }
         // minimum priority queue
         let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
+        // we've got interior rings
+        if polygon.1.len() > 0 {
+            for ring in &polygon.1 {
+                dist_queue.push(Mindist { distance: self.distance(ring) })
+            }
+        }
         for chunk in ext_ring.chunks(2) {
             let dist = line_segment_distance(self, &chunk[0], &chunk.last().unwrap_or(&chunk[0]));
             dist_queue.push(Mindist { distance: dist });
@@ -237,6 +243,36 @@ mod test {
         let p = Point::new(2.5, 0.5);
         let dist = p.distance(&poly);
         assert_eq!(dist, 0.0);
+    }
+    #[test]
+    // Point to Polygon with an interior ring
+    fn point_polygon_interior_cutout_test() {
+        // an octagon
+        let ext_points = vec![
+            (4., 1.),
+            (5., 2.),
+            (5., 3.),
+            (4., 4.),
+            (3., 4.),
+            (2., 3.),
+            (2., 2.),
+            (3., 1.),
+            (4., 1.),
+        ];
+        // cut out a triangle inside octagon
+        let int_points = vec![
+            (3.5, 3.5),
+            (4.4, 1.5),
+            (2.6, 1.5),
+            (3.5, 3.5)
+        ];
+        let ls_ext = LineString(ext_points.iter().map(|e| Point::new(e.0, e.1)).collect());
+        let ls_int = LineString(int_points.iter().map(|e| Point::new(e.0, e.1)).collect());
+        let poly = Polygon(ls_ext, vec![ls_int]);
+        // A point inside the cutout triangle
+        let p = Point::new(3.5, 2.5);
+        let dist = p.distance(&poly);
+        assert_eq!(dist, 0.41036467732879767);
     }
     #[test]
     // Point to LineString
