@@ -280,6 +280,7 @@ mod test {
         // A point inside the cutout triangle
         let p = Point::new(3.5, 2.5);
         let dist = p.distance(&poly);
+                      // 0.41036467732879783 <-- Shapely
         assert_eq!(dist, 0.41036467732879767);
     }
     #[test]
@@ -321,6 +322,21 @@ mod test {
         let p = Point::new(5.0, 4.0);
         let dist = p.distance(&ls);
         assert_eq!(dist, 0.0);
+    }
+    #[test]
+    // Point to LineString, closed triangle
+    fn point_linestring_triangle_test() {
+        let points = vec![
+            (3.5, 3.5),
+            (4.4, 2.0),
+            (2.6, 2.0),
+            (3.5, 3.5)
+        ];
+        let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
+        let p = Point::new(3.5, 2.5);
+        let dist = p.distance(&ls);
+                      // 0.5 <-- Shapely
+        assert_eq!(dist, 0.5144957554275267);
     }
     #[test]
     // Point to LineString, empty LineString
