@@ -11,7 +11,7 @@ pub trait Distance<T, Rhs = Self> {
     /// Returns the distance between two geometries
     ///
     /// If a `Point` is contained by a `Polygon`, the distance is `0.0`  
-    /// If a `Point` lies on a `Polygon`'s exterior ring, the distance is `0.0`  
+    /// If a `Point` lies on a `Polygon`'s exterior or interior rings, the distance is `0.0`  
     /// If a `Point` lies on a `LineString`, the distance is `0.0`  
     /// The distance between a `Point` and an empty `LineString` is `0.0`  
     ///
