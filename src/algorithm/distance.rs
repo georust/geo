@@ -88,7 +88,7 @@ fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) 
 {
     let dist_squared = pow(start.distance(end), 2);
     // Implies that start == end
-    if dist_squared == T::zero() {
+    if dist_squared.is_zero() {
         return pow(point.distance(start), 2);
     }
     // Consider the line extending the segment, parameterized as start + t (end - start)
@@ -134,16 +134,14 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
         // exterior ring as a LineString
         let ext_ring = &exterior.0;
         // No need to continue if the polygon contains the point, or is zero-length
-        if polygon.contains(self) || ext_ring.len() == 0 {
+        if polygon.contains(self) || ext_ring.is_empty() {
             return T::zero();
         }
         // minimum priority queue
         let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
         // we've got interior rings
-        if polygon.1.len() > 0 {
-            for ring in &polygon.1 {
-                dist_queue.push(Mindist { distance: self.distance(ring) })
-            }
+        for ring in &polygon.1 {
+            dist_queue.push(Mindist { distance: self.distance(ring) })
         }
         for chunk in ext_ring.chunks(2) {
             let dist = line_segment_distance(self, &chunk[0], &chunk.last().unwrap_or(&chunk[0]));
