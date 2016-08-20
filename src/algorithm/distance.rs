@@ -143,8 +143,8 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
         for ring in &polygon.1 {
             dist_queue.push(Mindist { distance: self.distance(ring) })
         }
-        for chunk in ext_ring.chunks(2) {
-            let dist = line_segment_distance(self, &chunk[0], &chunk.last().unwrap_or(&chunk[0]));
+        for chunk in ext_ring.windows(2) {
+            let dist = line_segment_distance(self, &chunk[0], &chunk.last().unwrap());
             dist_queue.push(Mindist { distance: dist });
         }
         dist_queue.pop().unwrap().distance
@@ -164,8 +164,8 @@ impl<T> Distance<T, LineString<T>> for Point<T>
         let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
         // get points vector
         let points = &linestring.0;
-        for chunk in points.chunks(2) {
-            let dist = line_segment_distance(self, &chunk[0], &chunk.last().unwrap_or(&chunk[0]));
+        for chunk in points.windows(2) {
+            let dist = line_segment_distance(self, &chunk[0], &chunk.last().unwrap());
             dist_queue.push(Mindist { distance: dist });
         }
         dist_queue.pop().unwrap().distance
@@ -333,8 +333,7 @@ mod test {
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let p = Point::new(3.5, 2.5);
         let dist = p.distance(&ls);
-                      // 0.5 <-- Shapely
-        assert_eq!(dist, 0.5144957554275263);
+        assert_eq!(dist, 0.5);
     }
     #[test]
     // Point to LineString, empty LineString
