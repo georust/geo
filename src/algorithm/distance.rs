@@ -334,7 +334,7 @@ mod test {
         let p = Point::new(3.5, 2.5);
         let dist = p.distance(&ls);
                       // 0.5 <-- Shapely
-        assert_eq!(dist, 0.5144957554275267);
+        assert_eq!(dist, 0.5144957554275263);
     }
     #[test]
     // Point to LineString, empty LineString
