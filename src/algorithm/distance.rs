@@ -94,7 +94,7 @@ fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) 
     // Consider the line extending the segment, parameterized as start + t (end - start)
     // We find the projection of the point onto the line
     // This falls where t = [(point - start) . (end - start)] / |end - start|^2, where . is the dot product
-    // We clamp t from [0.0, 1.0] to handle points outside the segment start, end
+    // We constrain t to a 0, 1 interval to handle points outside the segment start, end
     let t = T::zero().max(T::one().min((*point - *start).dot(&(*end - *start)) / dist_squared));
     let projected = Point::new(start.x() + t * (end.x() - start.x()),
                                start.y() + t * (end.y() - start.y()));
