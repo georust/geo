@@ -144,7 +144,7 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
             dist_queue.push(Mindist { distance: self.distance(ring) })
         }
         for chunk in ext_ring.windows(2) {
-            let dist = line_segment_distance(self, &chunk[0], &chunk.last().unwrap());
+            let dist = line_segment_distance(self, &chunk[0], &chunk[1]);
             dist_queue.push(Mindist { distance: dist });
         }
         dist_queue.pop().unwrap().distance
@@ -165,7 +165,7 @@ impl<T> Distance<T, LineString<T>> for Point<T>
         // get points vector
         let points = &linestring.0;
         for chunk in points.windows(2) {
-            let dist = line_segment_distance(self, &chunk[0], &chunk.last().unwrap());
+            let dist = line_segment_distance(self, &chunk[0], &chunk[1]);
             dist_queue.push(Mindist { distance: dist });
         }
         dist_queue.pop().unwrap().distance
