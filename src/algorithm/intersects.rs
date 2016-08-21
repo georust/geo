@@ -54,6 +54,7 @@ impl<T> Intersects<LineString<T>> for LineString<T>
     }
 }
 
+
 impl<T> Intersects<LineString<T>> for Polygon<T>
     where T: Float
 {
