@@ -1,5 +1,9 @@
 # Changes
 
+## 0.2.6
+
+* [Add Point to Polygon and Point to LineString distance methods](https://github.com/georust/rust-geo/pull/61)
+
 ## 0.2.5
 
 * [Implement LineString simplification](https://github.com/georust/rust-geo/pull/55)
