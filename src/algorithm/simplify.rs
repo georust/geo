@@ -81,8 +81,9 @@ impl<T> Simplify<T> for LineString<T>
     }
 }
 
+#[cfg(test)]
 mod test {
-    use types::{Point, LineString};
+    use types::{Point};
     use super::{point_line_distance, rdp};
     #[test]
     fn perpdistance_test() {
@@ -110,8 +111,8 @@ mod test {
     }
     #[test]
     fn rdp_test_empty_linestring() {
-        let mut vec = Vec::new();
-        let mut compare = Vec::new();
+        let vec = Vec::new();
+        let compare = Vec::new();
         let simplified = rdp(&vec, &1.0);
         assert_eq!(simplified, compare);
     }
