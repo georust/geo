@@ -30,79 +30,79 @@ where T: Float + FromPrimitive + ToPrimitive
         let a = T::from_i32(6378137).unwrap();
         let b = T::from_f64(6356752.3142).unwrap();
         let f = T::one() / T::from_f64(298.257223563).unwrap();
-        let L = (lon2 - lon1).to_radians();
-        let U1 = ((T::one() - f) * lat1.to_radians().tan()).atan();
-        let U2 = ((T::one() - f) * lat2.to_radians().tan()).atan();
-        let sinU1 = U1.sin();
-        let cosU1 = U1.cos();
-        let sinU2 = U2.sin();
-        let cosU2 = U2.cos();
-        let iterLimit = 100;
-        let mut cosSqAlpha = T::zero();
-        let mut cosSigma = T::zero();
-        let mut cos2SigmaM = T::zero();
-        let mut sinSigma = T::zero();
-        let mut sigma = T::zero();
-        let mut lambda = L;
+        let l = (lon2 - lon1).to_radians();
+        let u1 = ((T::one() - f) * lat1.to_radians().tan()).atan();
+        let u2 = ((T::one() - f) * lat2.to_radians().tan()).atan();
+        let sin_u1 = u1.sin();
+        let cos_u1 = u1.cos();
+        let sin_u2 = u2.sin();
+        let cos_u2 = u2.cos();
+        let iter_limit = 100;
+        let mut cos_sq_alpha;
+        let mut cos_sigma;
+        let mut cos_2_sigma_m;
+        let mut sin_sigma;
+        let mut sigma;
+        let mut lambda = l;
 
         loop {
-            let sinLambda = lambda.sin();
-            let cosLambda = lambda.cos();
-            sinSigma = ((cosU2 * sinLambda) *
-                            (cosU2 * sinLambda) +
-                            (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda) *
-                            (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda)).sqrt();
+            let sin_lambda = lambda.sin();
+            let cos_lambda = lambda.cos();
+            sin_sigma = ((cos_u2 * sin_lambda) *
+                            (cos_u2 * sin_lambda) +
+                            (cos_u1 * sin_u2 - sin_u1 * cos_u2 * cos_lambda) *
+                            (cos_u1 * sin_u2 - sin_u1 * cos_u2 * cos_lambda)).sqrt();
 
-            if T::zero() == sinSigma {
+            if T::zero() == sin_sigma {
                 return T::zero(); // co-incident points
             }
 
-            cosSigma = sinU1 * sinU2 + cosU1 * cosU2 * cosLambda;
-            sigma = sinSigma.atan2(cosSigma);
-            let sinAlpha = cosU1 * cosU2 * sinLambda / sinSigma;
-            cosSqAlpha = T::one() - sinAlpha * sinAlpha;
-            cos2SigmaM = cosSigma - T::from_i32(2).unwrap() * sinU1 * sinU2 / cosSqAlpha;
+            cos_sigma = sin_u1 * sin_u2 + cos_u1 * cos_u2 * cos_lambda;
+            sigma = sin_sigma.atan2(cos_sigma);
+            let sin_alpha = cos_u1 * cos_u2 * sin_lambda / sin_sigma;
+            cos_sq_alpha = T::one() - sin_alpha * sin_alpha;
+            cos_2_sigma_m = cos_sigma - T::from_i32(2).unwrap() * sin_u1 * sin_u2 / cos_sq_alpha;
             let sixteen = T::from_i32(16).unwrap();
             let four = T::from_i32(4).unwrap();
             let three = T::from_i32(3).unwrap();
-            let C = f / sixteen *
-                cosSqAlpha *
-                (four + f * (four - three * cosSqAlpha));
+            let c = f / sixteen *
+                cos_sq_alpha *
+                (four + f * (four - three * cos_sq_alpha));
 
-            if cos2SigmaM.is_nan() {
-                cos2SigmaM = T::zero(); // equatorial line: cosSqAlpha = 0 (§6)
+            if cos_2_sigma_m.is_nan() {
+                cos_2_sigma_m = T::zero(); // equatorial line: cos_sq_alpha = 0 (§6)
             }
 
-            let lambdaP = lambda;
-            lambda = L + (T::one() - C) * f * sinAlpha * (sigma + C * sinSigma * (cos2SigmaM + C * cosSigma * (T::from_i32(-1).unwrap() + T::from_i32(2).unwrap() * cos2SigmaM * cos2SigmaM)));
-            if (lambda - lambdaP).abs() > T::from_f64(1e-12).unwrap() && --iterLimit > 0 {
+            let lambda_p = lambda;
+            lambda = l + (T::one() - c) * f * sin_alpha * (sigma + c * sin_sigma * (cos_2_sigma_m + c * cos_sigma * (T::from_i32(-1).unwrap() + T::from_i32(2).unwrap() * cos_2_sigma_m * cos_2_sigma_m)));
+            if (lambda - lambda_p).abs() > T::from_f64(1e-12).unwrap() && --iter_limit > 0 {
                 break
             }
         }
 
-        let uSq = cosSqAlpha * (a * a - b * b) / (b * b);
-        let A = T::one() + uSq / T::from_i32(16384).unwrap() * 
+        let u_sq = cos_sq_alpha * (a * a - b * b) / (b * b);
+        let a = T::one() + u_sq / T::from_i32(16384).unwrap() * 
             (T::from_i32(4096).unwrap() +
-             uSq * (T::from_i32(-768).unwrap() +
-                    uSq * (T::from_i32(320).unwrap() - 
-                           T::from_i32(175).unwrap() * uSq)));
-        let B = uSq / T::from_i32(1024).unwrap() *
+             u_sq * (T::from_i32(-768).unwrap() +
+                    u_sq * (T::from_i32(320).unwrap() - 
+                           T::from_i32(175).unwrap() * u_sq)));
+        let b = u_sq / T::from_i32(1024).unwrap() *
             (T::from_i32(256).unwrap() +
-             uSq * (T::from_i32(-128).unwrap() +
-                    uSq * (T::from_i32(74).unwrap() -
-                           T::from_i32(47).unwrap() * uSq)));
-        let deltaSigma = B * sinSigma *
-            (cos2SigmaM + B / T::from_i32(4).unwrap() *
-             (cosSigma * (T::from_i32(-1).unwrap() +
+             u_sq * (T::from_i32(-128).unwrap() +
+                    u_sq * (T::from_i32(74).unwrap() -
+                           T::from_i32(47).unwrap() * u_sq)));
+        let delta_sigma = b * sin_sigma *
+            (cos_2_sigma_m + b / T::from_i32(4).unwrap() *
+             (cos_sigma * (T::from_i32(-1).unwrap() +
                           T::from_i32(2).unwrap() * 
-                          cos2SigmaM * cos2SigmaM) - B /
-              T::from_i32(6).unwrap() * cos2SigmaM *
+                          cos_2_sigma_m * cos_2_sigma_m) - b /
+              T::from_i32(6).unwrap() * cos_2_sigma_m *
               (T::from_i32(-3).unwrap() +
-               T::from_i32(4).unwrap() * sinSigma * sinSigma) *
+               T::from_i32(4).unwrap() * sin_sigma * sin_sigma) *
               (T::from_i32(-3).unwrap() +
                T::from_i32(4).unwrap() *
-               cos2SigmaM * cos2SigmaM)));
-        b * A * (sigma - deltaSigma)
+               cos_2_sigma_m * cos_2_sigma_m)));
+        b * a * (sigma - delta_sigma)
     }
 }
 

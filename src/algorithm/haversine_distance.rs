@@ -31,7 +31,7 @@ impl<T> HaversineDistance<T, Point<T>> for Point<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Point};
+    use types::{Point,COORD_PRECISION};
     use algorithm::haversine_distance::{HaversineDistance};
     #[test]
     fn distance1_test() {
@@ -39,7 +39,6 @@ mod test {
     }
     #[test]
     fn distance2_test() {
-        // Point::new(-72.1235, 42.3521).distance(&Point::new(72.1260, 70.612)) = 146.99163308930207
         let dist = Point::new(-72.1235, 42.3521).haversine_distance(&Point::new(72.1260, 70.612));
         assert_eq!(dist, 6378137_f64);
     }
