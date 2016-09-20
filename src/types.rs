@@ -390,7 +390,7 @@ mod test {
         let mut v = vec![];
         let p = Point::new(1.0, 2.0);
         v.push(p);
-        let ls = LineString::new(v).unwrap();
+        let _ = LineString::new(v).unwrap();
     }
     #[test]
     fn linestring_constructor_test() {
@@ -399,25 +399,25 @@ mod test {
         let p2 = Point::new(3.0, 4.0);
         v.push(p1);
         v.push(p2);
-        let ls = LineString::new(v).unwrap();
+        let _ = LineString::new(v).unwrap();
     }
     #[test]
     fn into_test() {
         let v1 = vec![(1.0, 2.0), (3.0, 4.0)];
-        let ls1 = LineString::from(v1);
+        let _ = LineString::from(v1);
         let v2 = vec![[1.0, 2.0], [3.0, 4.0]];
-        let ls2 = LineString::from(v2);
+        let _ = LineString::from(v2);
         let v3 = vec![(1.0, 2.0), (3.0, 4.0)];
-        let ls3: LineString<_> = v3.into();
+        let _: LineString<_> = v3.into();
         let v4 = vec![[1.0, 2.0], [3.0, 4.0]];
-        let ls4: LineString<_> = v4.into();
+        let _: LineString<_> = v4.into();
     }
     #[test]
     #[should_panic]
     // 1-element LineStrings aren't allowed
     fn into_test_bad() {
         let v4 = vec![[1.0, 2.0]];
-        let ls4: LineString<_> = v4.into();
+        let _: LineString<_> = v4.into();
     }
     #[test]
     fn type_test() {
