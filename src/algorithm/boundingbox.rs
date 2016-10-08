@@ -94,7 +94,7 @@ impl<T> BoundingBox<T> for Polygon<T>
     /// Return the BoundingBox for a Polygon
     ///
     fn bbox(&self) -> Option<Bbox<T>> {
-        let line = &self.0;
+        let line = &self.exterior;
         get_bbox(&line.0)
     }
 }
@@ -106,7 +106,7 @@ impl<T> BoundingBox<T> for MultiPolygon<T>
     /// Return the BoundingBox for a MultiPolygon
     ///
     fn bbox(&self) -> Option<Bbox<T>> {
-        get_bbox(self.0.iter().flat_map(|poly| (poly.0).0.iter()))
+        get_bbox(self.0.iter().flat_map(|poly| (poly.exterior).0.iter()))
     }
 }
 
@@ -162,15 +162,15 @@ mod test {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
         let line_bbox = linestring.bbox().unwrap();
-        let poly = Polygon(linestring, Vec::new());
+        let poly = Polygon::new(linestring, Vec::new());
         assert_eq!(line_bbox, poly.bbox().unwrap());
     }
     #[test]
     fn multipolygon_test(){
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let mpoly = MultiPolygon(vec![Polygon(LineString(vec![p(0., 0.), p(50., 0.), p(0., -70.), p(0., 0.)]), Vec::new()),
-                                      Polygon(LineString(vec![p(0., 0.), p(5., 0.), p(0., 80.), p(0., 0.)]), Vec::new()),
-                                      Polygon(LineString(vec![p(0., 0.), p(-60., 0.), p(0., 6.), p(0., 0.)]), Vec::new()),
+        let mpoly = MultiPolygon(vec![Polygon::new(LineString(vec![p(0., 0.), p(50., 0.), p(0., -70.), p(0., 0.)]), Vec::new()),
+                                      Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(0., 80.), p(0., 0.)]), Vec::new()),
+                                      Polygon::new(LineString(vec![p(0., 0.), p(-60., 0.), p(0., 6.), p(0., 0.)]), Vec::new()),
                                       ]);
         let bbox = Bbox{xmin: -60., ymax: 80., xmax: 50., ymin: -70.};
         assert_eq!(bbox, mpoly.bbox().unwrap());

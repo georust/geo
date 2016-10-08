@@ -37,7 +37,7 @@ pub trait Distance<T, Rhs = Self> {
     ///     (5., 1.)
     /// ];
     /// let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
-    /// let poly = Polygon(ls, vec![]);
+    /// let poly = Polygon::new(ls, vec![]);
     /// // A Random point outside the polygon
     /// let p = Point::new(2.5, 0.5);
     /// let dist = p.distance(&poly);
@@ -130,7 +130,7 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
 {
     fn distance(&self, polygon: &Polygon<T>) -> T {
         // get exterior ring
-        let exterior = &polygon.0;
+        let exterior = &polygon.exterior;
         // exterior ring as a LineString
         let ext_ring = &exterior.0;
         // No need to continue if the polygon contains the point, or is zero-length
@@ -140,7 +140,7 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
         // minimum priority queue
         let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
         // we've got interior rings
-        for ring in &polygon.1 {
+        for ring in &polygon.interiors {
             dist_queue.push(Mindist { distance: self.distance(ring) })
         }
         for chunk in ext_ring.windows(2) {
@@ -206,7 +206,7 @@ mod test {
         let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
                           (6., 1.), (5., 1.)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
-        let poly = Polygon(ls, vec![]);
+        let poly = Polygon::new(ls, vec![]);
         // A Random point outside the octagon
         let p = Point::new(2.5, 0.5);
         let dist = p.distance(&poly);
@@ -219,7 +219,7 @@ mod test {
         let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
                           (6., 1.), (5., 1.)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
-        let poly = Polygon(ls, vec![]);
+        let poly = Polygon::new(ls, vec![]);
         // A Random point inside the octagon
         let p = Point::new(5.5, 2.1);
         let dist = p.distance(&poly);
@@ -232,7 +232,7 @@ mod test {
         let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
                           (6., 1.), (5., 1.)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
-        let poly = Polygon(ls, vec![]);
+        let poly = Polygon::new(ls, vec![]);
         // A point on the octagon
         let p = Point::new(5.0, 1.0);
         let dist = p.distance(&poly);
@@ -244,7 +244,7 @@ mod test {
         // an empty Polygon
         let points = vec![];
         let ls = LineString(points);
-        let poly = Polygon(ls, vec![]);
+        let poly = Polygon::new(ls, vec![]);
         // A point on the octagon
         let p = Point::new(2.5, 0.5);
         let dist = p.distance(&poly);
@@ -274,7 +274,7 @@ mod test {
         ];
         let ls_ext = LineString(ext_points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let ls_int = LineString(int_points.iter().map(|e| Point::new(e.0, e.1)).collect());
-        let poly = Polygon(ls_ext, vec![ls_int]);
+        let poly = Polygon::new(ls_ext, vec![ls_int]);
         // A point inside the cutout triangle
         let p = Point::new(3.5, 2.5);
         let dist = p.distance(&poly);
