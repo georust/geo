@@ -309,11 +309,12 @@ impl<T> Polygon<T>
     /// Creates a new polygon.
     ///
     /// ```
-    /// use geo::Polygon;
+    /// use geo::{Point, LineString, Polygon};
     ///
     /// let exterior = LineString(vec![Point::new(0., 0.), Point::new(1., 1.),
     ///                                Point::new(1., 0.), Point::new(0., 0.)]);
-    /// let interiors = vec![];
+    /// let interiors = vec![LineString(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9),
+    ///                                      Point::new(0.9, 0.1), Point::new(0.1, 0.1)])];
     /// let p = Polygon::new(exterior.clone(), interiors.clone());
     /// assert_eq!(p.exterior, exterior);
     /// assert_eq!(p.interiors, interiors);
@@ -365,7 +366,8 @@ mod test {
     fn polygon_new_test() {
         let exterior = LineString(vec![Point::new(0., 0.), Point::new(1., 1.),
                                        Point::new(1., 0.), Point::new(0., 0.)]);
-        let interiors = vec![];
+        let interiors = vec![LineString(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9),
+                                             Point::new(0.9, 0.1), Point::new(0.1, 0.1)])];
         let p = Polygon::new(exterior.clone(), interiors.clone());
 
         assert_eq!(p.exterior, exterior);
