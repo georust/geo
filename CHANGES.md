@@ -1,5 +1,9 @@
 # Changes
 
+## 0.2.7
+
+* [Implement `Intersects<Polygon<T>> for Polygon`](https://github.com/georust/rust-geo/issues/69)
+
 ## 0.2.6
 
 * [Add Point to Polygon and Point to LineString distance methods](https://github.com/georust/rust-geo/pull/61)
