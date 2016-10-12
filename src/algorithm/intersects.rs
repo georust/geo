@@ -1,5 +1,5 @@
 use num::Float;
-use types::{LineString, Polygon, Bbox};
+use types::{LineString, Polygon, Bbox, Point};
 use algorithm::contains::Contains;
 
 /// Checks if the geometry A intersects the geometry B.
@@ -79,6 +79,28 @@ impl<T> Intersects<Bbox<T>> for Bbox<T>
             (self.xmin >= bbox.xmin && self.xmin <= bbox.xmax || self.xmax >= bbox.xmin && self.xmax <= bbox.xmax) &&
             (self.ymin >= bbox.ymin && self.ymin <= bbox.ymax || self.ymax >= bbox.ymin && self.ymax <= bbox.ymax)
         }
+    }
+}
+
+impl<T> Intersects<Bbox<T>> for Polygon<T>
+    where T: Float
+{
+    fn intersects(&self, bbox: &Bbox<T>) -> bool {
+        let p = Polygon(LineString(vec![Point::new(bbox.xmin, bbox.ymin),
+                                        Point::new(bbox.xmin, bbox.ymax),
+                                        Point::new(bbox.xmax, bbox.ymax),
+                                        Point::new(bbox.xmax, bbox.ymin),
+                                        Point::new(bbox.xmin, bbox.ymin)]),
+                        vec![]);
+        self.intersects(&p)
+    }
+}
+
+impl<T> Intersects<Polygon<T>> for Bbox<T>
+    where T: Float
+{
+    fn intersects(&self, polygon: &Polygon<T>) -> bool {
+        polygon.intersects(self)
     }
 }
 
@@ -256,6 +278,30 @@ mod test {
 
         assert!(p1.intersects(&p2));
         assert!(p2.intersects(&p1));
+    }
+    #[test]
+    fn polygon_intersects_bbox_test() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let p1 = Polygon(LineString(vec![p(1., 3.), p(4., 3.), p(4., 6.), p(1., 6.), p(1., 3.)]),
+                                    Vec::new());
+        let b1 = Bbox { xmin: 2.0, xmax: 5.0, ymin: 4.0, ymax: 7.0 };
+        let p2 = Polygon(LineString(vec![p(0., 0.), p(0., 4.), p(3., 4.), p(3., 0.), p(0., 0.)]),
+                         vec![LineString(vec![p(1., 1.), p(1., 3.), p(2., 3.), p(2., 1.), p(1., 1.)])]);
+        let b2 = Bbox { xmin: 1.2, xmax: 1.8, ymin: 1.2, ymax: 2.0 };
+        let b3 = Bbox { xmin: 1.4, xmax: 1.6, ymin: 3.5, ymax: 4.5 };
+        // overlaps
+        assert!(p1.intersects(&b1));
+        // overlaps with hole
+        assert!(p2.intersects(&b1));
+        // completely contained in the hole
+        assert!(!p2.intersects(&b2));
+        // completely contained in the polygon
+        assert!(p1.intersects(&b3));
+        // conversely,
+        assert!(b1.intersects(&p1));
+        assert!(b1.intersects(&p2));
+        assert!(!b2.intersects(&p2));
+        assert!(b3.intersects(&p1));
     }
     #[test]
     fn bbox_test() {
