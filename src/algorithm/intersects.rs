@@ -82,6 +82,14 @@ impl<T> Intersects<Bbox<T>> for Bbox<T>
     }
 }
 
+impl<T> Intersects<Polygon<T>> for Bbox<T>
+    where T: Float
+{
+    fn intersects(&self, polygon: &Polygon<T>) -> bool {
+        polygon.intersects(self)
+    }
+}
+
 impl<T> Intersects<Bbox<T>> for Polygon<T>
     where T: Float
 {
@@ -93,14 +101,6 @@ impl<T> Intersects<Bbox<T>> for Polygon<T>
                                         Point::new(bbox.xmin, bbox.ymin)]),
                         vec![]);
         self.intersects(&p)
-    }
-}
-
-impl<T> Intersects<Polygon<T>> for Bbox<T>
-    where T: Float
-{
-    fn intersects(&self, polygon: &Polygon<T>) -> bool {
-        polygon.intersects(self)
     }
 }
 
