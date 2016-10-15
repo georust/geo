@@ -281,27 +281,45 @@ mod test {
     }
     #[test]
     fn polygon_intersects_bbox_test() {
+        // Polygon poly =
+        //
+        // (0,8)               (12,8)
+        //  ┌──────────────────────┐
+        //  │         (7,7) (11,7) │
+        //  │             ┌──────┐ │
+        //  │             │      │ │
+        //  │             │(hole)│ │
+        //  │             │      │ │
+        //  │             │      │ │
+        //  │             └──────┘ │
+        //  │         (7,4) (11,4) │
+        //  │                      │
+        //  │                      │
+        //  │                      │
+        //  │                      │
+        //  │                      │
+        //  └──────────────────────┘
+        // (0,0)               (12,0)
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let p1 = Polygon(LineString(vec![p(1., 3.), p(4., 3.), p(4., 6.), p(1., 6.), p(1., 3.)]),
-                                    Vec::new());
-        let b1 = Bbox { xmin: 2.0, xmax: 5.0, ymin: 4.0, ymax: 7.0 };
-        let p2 = Polygon(LineString(vec![p(0., 0.), p(0., 4.), p(3., 4.), p(3., 0.), p(0., 0.)]),
-                         vec![LineString(vec![p(1., 1.), p(1., 3.), p(2., 3.), p(2., 1.), p(1., 1.)])]);
-        let b2 = Bbox { xmin: 1.2, xmax: 1.8, ymin: 1.2, ymax: 2.0 };
-        let b3 = Bbox { xmin: 1.4, xmax: 1.6, ymin: 3.5, ymax: 4.5 };
+        let poly  = Polygon(LineString(vec![p(0., 0.), p(12., 0.), p(12., 8.), p(0., 8.), p(0., 0.)]),
+                            vec![LineString(vec![p(7., 4.), p(11., 4.), p(11., 7.), p(7., 7.), p(7., 4.)])]);
+        let b1 = Bbox { xmin: 11.0, xmax: 13.0, ymin: 1.0, ymax: 2.0 };
+        let b2 = Bbox { xmin: 2.0, xmax: 8.0, ymin: 2.0, ymax: 5.0 };
+        let b3 = Bbox { xmin: 8.0, xmax: 10.0, ymin: 5.0, ymax: 6.0 };
+        let b4 = Bbox { xmin: 1.0, xmax: 3.0, ymin: 1.0, ymax: 3.0 };
         // overlaps
-        assert!(p1.intersects(&b1));
-        // overlaps with hole
-        assert!(p2.intersects(&b1));
+        assert!(poly.intersects(&b1));
+        // contained in exterior, overlaps with hole
+        assert!(poly.intersects(&b2));
         // completely contained in the hole
-        assert!(!p2.intersects(&b2));
+        assert!(!poly.intersects(&b3));
         // completely contained in the polygon
-        assert!(p1.intersects(&b3));
+        assert!(poly.intersects(&b4));
         // conversely,
-        assert!(b1.intersects(&p1));
-        assert!(b1.intersects(&p2));
-        assert!(!b2.intersects(&p2));
-        assert!(b3.intersects(&p1));
+        assert!(b1.intersects(&poly));
+        assert!(b2.intersects(&poly));
+        assert!(!b3.intersects(&poly));
+        assert!(b4.intersects(&poly));
     }
     #[test]
     fn bbox_test() {
