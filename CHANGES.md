@@ -1,5 +1,9 @@
 # Changes
 
+## 0.2.8
+
+* [Implement `Intersects<Bbox<T>> for Polygon`](https://github.com/georust/rust-geo/pull/76)
+
 ## 0.2.7
 
 * [Implement `Intersects<Polygon<T>> for Polygon`](https://github.com/georust/rust-geo/issues/69)
