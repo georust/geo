@@ -296,7 +296,33 @@ pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct Polygon<T>(pub LineString<T>, pub Vec<LineString<T>>) where T: Float;
+pub struct Polygon<T>
+    where T: Float
+{
+    pub exterior: LineString<T>,
+    pub interiors: Vec<LineString<T>>
+}
+
+impl<T> Polygon<T>
+    where T: Float
+{
+    /// Creates a new polygon.
+    ///
+    /// ```
+    /// use geo::{Point, LineString, Polygon};
+    ///
+    /// let exterior = LineString(vec![Point::new(0., 0.), Point::new(1., 1.),
+    ///                                Point::new(1., 0.), Point::new(0., 0.)]);
+    /// let interiors = vec![LineString(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9),
+    ///                                      Point::new(0.9, 0.1), Point::new(0.1, 0.1)])];
+    /// let p = Polygon::new(exterior.clone(), interiors.clone());
+    /// assert_eq!(p.exterior, exterior);
+    /// assert_eq!(p.interiors, interiors);
+    /// ```
+    pub fn new(exterior: LineString<T>, interiors: Vec<LineString<T>>) -> Polygon<T> {
+        Polygon { exterior: exterior, interiors: interiors }
+    }
+}
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
@@ -334,5 +360,17 @@ mod test {
         assert_eq!(c, c2);
         assert_eq!(c.x, c2.x);
         assert_eq!(c.y, c2.y);
+    }
+
+    #[test]
+    fn polygon_new_test() {
+        let exterior = LineString(vec![Point::new(0., 0.), Point::new(1., 1.),
+                                       Point::new(1., 0.), Point::new(0., 0.)]);
+        let interiors = vec![LineString(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9),
+                                             Point::new(0.9, 0.1), Point::new(0.1, 0.1)])];
+        let p = Polygon::new(exterior.clone(), interiors.clone());
+
+        assert_eq!(p.exterior, exterior);
+        assert_eq!(p.interiors, interiors);
     }
 }
