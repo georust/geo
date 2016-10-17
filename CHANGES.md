@@ -1,5 +1,9 @@
 # Changes
 
+## 0.3.0
+
+* [Add named fields for the `Polygon` structure](https://github.com/georust/rust-geo/pull/68)
+
 ## 0.2.8
 
 * [Implement `Intersects<Bbox<T>> for Polygon`](https://github.com/georust/rust-geo/pull/76)
