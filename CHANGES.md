@@ -1,5 +1,9 @@
 # Changes
 
+## 0.3.1
+
+* [Within Epsilon matcher](https://github.com/georust/rust-geo/pull/82)
+
 ## 0.3.0
 
 * [Add named fields for the `Polygon` structure](https://github.com/georust/rust-geo/pull/68)
