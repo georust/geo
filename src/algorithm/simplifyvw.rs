@@ -72,7 +72,7 @@ pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     // of 3 points and form triangles from them
     for (i, win) in orig.windows(3).enumerate() {
         pq.push(VScore {
-            area: area(win[0], win[1], win[2]),
+            area: area(win.first().unwrap(), &win[1], win.last().unwrap()),
             current: i + 1,
             left: i,
             right: i + 2,
@@ -116,8 +116,6 @@ pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
             let new_current = Point::new(orig[current_point as usize].x(),
                                          orig[current_point as usize].y());
             let new_right = Point::new(orig[bi as usize].x(), orig[bi as usize].y());
-
-
             // Store re-calculated triangle in priority queue
             // If its calculated area is less than that of the last point to be
             // eliminated, use the latter's area instead.
@@ -125,7 +123,7 @@ pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
             // without eliminating previously eliminated points)
             // (Visvalingam and Whyatt 2013, p47)
             pq.push(VScore {
-                area: previous_area.max(area(new_left, new_current, new_right)),
+                area: previous_area.max(area(&new_left, &new_current, &new_right)),
                 current: current_point as usize,
                 left: ai as usize,
                 right: bi as usize,
@@ -140,7 +138,7 @@ pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
 }
 
 // Area of a triangle given three vertices
-fn area<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>) -> T
+fn area<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> T
     where T: Float
 {
     ((p1.x() - p3.x()) * (p2.y() - p3.y()) - (p2.x() - p3.x()) * (p1.y() - p3.y())).abs() /
