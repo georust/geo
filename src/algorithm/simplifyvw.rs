@@ -133,11 +133,10 @@ pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
         }
     }
     // Filter out the points that have been deleted, returning remaining points
-    let simplified: Vec<Point<T>> = orig.iter()
+    orig.iter()
         .zip(adjacent.iter())
         .filter_map(|(tup, adj)| { if *adj != (0, 0) { Some(*tup) } else { None } })
-        .collect();
-    simplified
+        .collect::<Vec<Point<T>>>()
 }
 
 // Area of a triangle given three vertices
