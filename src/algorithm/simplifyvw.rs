@@ -197,6 +197,16 @@ mod test {
         assert_eq!(simplified, correct_ls);
     }
     #[test]
+    fn visvalingam_test_long() {
+        // simplify a longer LineString
+        let points = include!("../vw_orig.rs");
+        let points_ls: Vec<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
+        let correct = include!("../vw_simplified.rs");
+        let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e[0], e[1])).collect();
+        let simplified = visvalingam(&points_ls, &0.0005);
+        assert_eq!(simplified, correct_ls);
+    }
+    #[test]
     fn visvalingam_test_empty_linestring() {
         let vec = Vec::new();
         let compare = Vec::new();
