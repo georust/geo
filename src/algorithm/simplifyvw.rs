@@ -37,6 +37,15 @@ impl<T> Eq for VScore<T> where T: Float {}
 /// Simplify a line using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
 ///
 /// epsilon is the minimum triangle area
+// The paper states that:
+// If [the new triangle's] calculated area is less than that of the last point to be
+// eliminated, use the latter's area instead.
+// (This ensures that the current point cannot be eliminated
+// without eliminating previously eliminated points)
+// (Visvalingam and Whyatt 2013, p47)
+// However, this does *not* apply if you're using a user-defined epsilon;
+// It's OK to remove triangles with areas below the epsilon,
+// then recalculate the new triangle area and push it onto the heap
 pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     where T: Float
 {
@@ -46,8 +55,6 @@ pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     }
 
     let max = orig.len();
-    // used to store the area of the previously eliminated point for comparison
-    let mut previous_area;
 
     // Adjacent retained points. Simulating the points in a
     // linked list with indices into `orig`. Big number (larger than or equal to
@@ -86,12 +93,12 @@ pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
             None => break,
             // This triangle's area is above epsilon, so skip it
             Some(ref x) if x.area > *epsilon => continue,
-            //  This triangle's area is below epsilon, so use it to recalculate
+            //  This triangle's area is below epsilon: eliminate the associated point
             Some(s) => s,
         };
         let (left, right) = adjacent[smallest.current];
         // A point in this triangle has been removed since this VScore
-        // was created, so just skip it
+        // was created, so skip it
         if left as i32 != smallest.left as i32 || right as i32 != smallest.right as i32 {
             continue;
         }
@@ -102,10 +109,8 @@ pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
         adjacent[left as usize] = (ll, right);
         adjacent[right as usize] = (left, rr);
         adjacent[smallest.current as usize] = (0, 0);
-        // store its area for comparison with the next triangle to be eliminated
-        previous_area = smallest.area;
 
-        // Now recompute the triangles, using left and right adjacent points
+        // Now recompute the triangle area, using left and right adjacent points
         let choices = [(ll, left, right), (left, right, rr)];
         for &(ai, current_point, bi) in &choices {
             if ai as usize >= max || bi as usize >= max {
@@ -116,14 +121,8 @@ pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
             let new_current = Point::new(orig[current_point as usize].x(),
                                          orig[current_point as usize].y());
             let new_right = Point::new(orig[bi as usize].x(), orig[bi as usize].y());
-            // Store re-calculated triangle in priority queue
-            // If its calculated area is less than that of the last point to be
-            // eliminated, use the latter's area instead.
-            // (This ensures that the current point cannot be eliminated
-            // without eliminating previously eliminated points)
-            // (Visvalingam and Whyatt 2013, p47)
             pq.push(VScore {
-                area: previous_area.max(area(&new_left, &new_current, &new_right)),
+                area: area(&new_left, &new_current, &new_right),
                 current: current_point as usize,
                 left: ai as usize,
                 right: bi as usize,
