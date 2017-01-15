@@ -87,11 +87,15 @@ mod test {
         let poly = Polygon::new(linestring, Vec::new());
         assert!(within_epsilon(poly.area(), 30., Float::epsilon()));
     }
+
+    /*
     #[test]
     fn bbox_test() {
         let bbox = Bbox {xmin: 10., xmax: 20., ymin: 30., ymax: 40.};
         assert!(within_epsilon(bbox.area(), 100., Float::epsilon()));
     }
+    */
+
     #[test]
     fn area_polygon_inner_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
