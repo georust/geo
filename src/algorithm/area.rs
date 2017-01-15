@@ -53,9 +53,8 @@ pub fn polygon<'a, G, T>(polygon: &'a G) -> T
 mod test {
     use num_traits::Float;
     use types::{Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
-    use algorithm::area::Area;
     use test_helpers::within_epsilon;
-    use ::{PolygonTrait, LineStringTrait, PointTrait};
+    use ::PolygonTrait;
     // Area of the polygon
     #[test]
     fn area_empty_polygon_test() {
