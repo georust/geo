@@ -7,7 +7,9 @@ pub trait ToGeo<T: Float>
     fn to_geo(&self) -> Geometry<T>;
 }
 
-pub trait Point {
+// FIXME: find good names for these traits, don't use XyzTrait naming scheme
+
+pub trait PointTrait {
     fn x(&self) -> f64;
     fn y(&self) -> f64;
     fn opt_z(&self) -> Option<f64> {
@@ -18,36 +20,36 @@ pub trait Point {
     }
 }
 
-pub trait LineString<'a> {
-    type ItemType: 'a + Point;
+pub trait LineStringTrait<'a> {
+    type ItemType: 'a + PointTrait;
     type Iter: Iterator<Item=&'a Self::ItemType>;
 
     fn points(&'a self) -> Self::Iter;
 }
 
-pub trait Polygon<'a> {
-    type ItemType: 'a + LineString<'a>;
+pub trait PolygonTrait<'a> {
+    type ItemType: 'a + LineStringTrait<'a>;
     type Iter: Iterator<Item=&'a Self::ItemType>;
 
     fn rings(&'a self) -> Self::Iter;
 }
 
-pub trait MultiPoint<'a> {
-    type ItemType: 'a + Point;
+pub trait MultiPointTrait<'a> {
+    type ItemType: 'a + PointTrait;
     type Iter: Iterator<Item=&'a Self::ItemType>;
 
     fn points(&'a self) -> Self::Iter;
 }
 
-pub trait MultiLineString<'a> {
-    type ItemType: 'a + LineString<'a>;
+pub trait MultiLineStringTrait<'a> {
+    type ItemType: 'a + LineStringTrait<'a>;
     type Iter: Iterator<Item=&'a Self::ItemType>;
 
     fn lines(&'a self) -> Self::Iter;
 }
 
-pub trait MultiPolygon<'a> {
-    type ItemType: 'a + Polygon<'a>;
+pub trait MultiPolygonTrait<'a> {
+    type ItemType: 'a + PolygonTrait<'a>;
     type Iter: Iterator<Item=&'a Self::ItemType>;
 
     fn polygons(&'a self) -> Self::Iter;

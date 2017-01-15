@@ -1,6 +1,6 @@
 extern crate num_traits;
 
-pub use traits::ToGeo;
+pub use traits::*;
 pub use types::*;
 pub use algorithm::*;
 
