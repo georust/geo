@@ -12,12 +12,6 @@ pub trait ToGeo<T: Float>
 pub trait PointTrait<T: Float> {
     fn x(&self) -> T;
     fn y(&self) -> T;
-    fn opt_z(&self) -> Option<f64> {
-        None
-    }
-    fn opt_m(&self) -> Option<f64> {
-        None
-    }
 }
 
 pub trait LineStringTrait<'a, T: Float> {
