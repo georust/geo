@@ -37,30 +37,17 @@ fn get_linestring_area<'a, T, G>(linestring: &'a G) -> T
     tmp / (T::one() + T::one())
 }
 
-impl<'a, T, G> Area<'a, T> for G
-    where G: 'a + PolygonTrait<'a, T>,
-          T: 'a + Float,
+pub fn polygon<'a, G, T>(polygon: &'a G) -> T
+    where T: 'a + Float,
+          G: 'a + PolygonTrait<'a, T> + ?Sized
 {
-    fn area(&'a self) -> T {
-        let mut rings = self.rings();
-        let outer_ring = rings.next().expect("no outer ring in polygon");
-        let outer_ring_area = get_linestring_area(outer_ring);
-        rings.fold(outer_ring_area, |acc, inner_ring| {
-            acc - get_linestring_area(inner_ring)
-        })
-    }
+    let mut rings = polygon.rings();
+    let outer_ring = rings.next().expect("no outer ring in polygon");
+    let outer_ring_area = get_linestring_area(outer_ring);
+    rings.fold(outer_ring_area, |acc, inner_ring| {
+        acc - get_linestring_area(inner_ring)
+    })
 }
-
-/*
-impl<T, G> Area<T> for G
-    where G: MultiPolygonTrait<T>,
-          T: Float,
-{
-    fn area(&self) -> T {
-        self.polygons().map(|n| n.area()).sum()
-    }
-}
-*/
 
 #[cfg(test)]
 mod test {

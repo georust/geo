@@ -1,7 +1,7 @@
 use num_traits::{Float, FromPrimitive};
 
 use types::{Point, LineString, Polygon, MultiPolygon, Bbox};
-use algorithm::area::Area;
+use traits::PolygonTrait;
 use algorithm::distance::Distance;
 
 /// Calculation of the centroid.
