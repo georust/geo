@@ -1,25 +1,6 @@
 use num_traits::Float;
 use ::{MultiPolygonTrait, PolygonTrait, LineStringTrait, PointTrait};
 
-/// Calculation of the area.
-
-pub trait Area<'a, T> where T: Float
-{
-    /// Area of polygon.
-    /// See: https://en.wikipedia.org/wiki/Polygon
-    ///
-    /// ```
-    /// use geo::{Coordinate, Point, LineString, Polygon};
-    /// use geo::algorithm::area::Area;
-    /// let p = |x, y| Point(Coordinate { x: x, y: y });
-    /// let v = Vec::new();
-    /// let linestring = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
-    /// let poly = Polygon::new(linestring, v);
-    /// assert_eq!(poly.area(), 30.);
-    /// ```
-    fn area(&'a self) -> T;
-}
-
 fn get_linestring_area<'a, T, G>(linestring: &'a G) -> T
     where T: 'a + Float,
           G: 'a + LineStringTrait<'a, T>
