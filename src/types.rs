@@ -25,27 +25,6 @@ pub struct Bbox<T>
     pub ymax: T,
 }
 
-impl<T: Float> Bbox<T> {
-    fn to_line_string(&self) -> LineString<T> {
-        LineString(vec![
-            Point(Coordinate { x: self.xmin, y: self.ymax }),
-            Point(Coordinate { x: self.xmax, y: self.ymax }),
-            Point(Coordinate { x: self.xmax, y: self.ymin }),
-            Point(Coordinate { x: self.xmin, y: self.ymin }),
-        ])
-    }
-}
-
-impl<T: Float> ::PolygonTrait<T> for Bbox<T> {
-    type ItemType = LineString<T>;
-    type Iter = ::std::iter::Once<LineString<T>>;
-
-    fn rings(&self) -> Self::Iter {
-        // TODO: no clones please!
-        ::std::iter::once(self.to_line_string())
-    }
-}
-
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
@@ -320,39 +299,36 @@ impl<T> AddAssign for Bbox<T>
 #[derive(PartialEq, Clone, Debug)]
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
-impl<T: Float> ::MultiPointTrait<T> for MultiPoint<T> {
+impl<'a, T: 'a + Float> ::MultiPointTrait<'a, T> for MultiPoint<T> {
     type ItemType = Point<T>;
-    type Iter = ::std::vec::IntoIter<Point<T>>;
+    type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
 
-    fn points(&self) -> Self::Iter {
-        // TODO: no clones please!
-        self.0.iter().map(|n| n.clone()).collect::<Vec<_>>().into_iter()
+    fn points(&'a self) -> Self::Iter {
+        Box::new(self.0.iter())
     }
 }
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
-impl<T: Float> ::LineStringTrait<T> for LineString<T> {
+impl<'a, T: 'a + Float> ::LineStringTrait<'a, T> for LineString<T> {
     type ItemType = Point<T>;
-    type Iter = ::std::vec::IntoIter<Point<T>>;
+    type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
 
-    fn points(&self) -> Self::Iter {
-        // TODO: no clones please!
-        self.0.iter().map(|n| n.clone()).collect::<Vec<_>>().into_iter()
+    fn points(&'a self) -> Self::Iter {
+        Box::new(self.0.iter())
     }
 }
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
 
-impl<T: Float> ::MultiLineStringTrait<T> for MultiLineString<T> {
+impl<'a, T: 'a + Float> ::MultiLineStringTrait<'a, T> for MultiLineString<T> {
     type ItemType = LineString<T>;
-    type Iter = ::std::vec::IntoIter<LineString<T>>;
+    type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
 
-    fn lines(&self) -> Self::Iter {
-        // TODO: no clones please!
-        self.0.iter().map(|n| n.clone()).collect::<Vec<_>>().into_iter()
+    fn lines(&'a self) -> Self::Iter {
+        Box::new(self.0.iter())
     }
 }
 
@@ -385,28 +361,26 @@ impl<T> Polygon<T>
     }
 }
 
-impl<T: Float> ::PolygonTrait<T> for Polygon<T> {
+impl<'a, T: 'a + Float> ::PolygonTrait<'a, T> for Polygon<T> {
     type ItemType = LineString<T>;
-    type Iter = ::std::vec::IntoIter<LineString<T>>;
+    type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
 
-    fn rings(&self) -> Self::Iter {
-        // TODO: no clones please!
-        let mut rings = vec![self.exterior.clone()];
-        rings.extend(self.interiors.clone().into_iter());
-        rings.into_iter()
+    fn rings(&'a self) -> Self::Iter {
+        let iter = ::std::iter::once(&self.exterior)
+            .chain(self.interiors.iter());
+        Box::new(iter)
     }
 }
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
 
-impl<T: Float> ::MultiPolygonTrait<T> for MultiPolygon<T> {
+impl<'a, T: 'a + Float> ::MultiPolygonTrait<'a, T> for MultiPolygon<T> {
     type ItemType = Polygon<T>;
-    type Iter = ::std::vec::IntoIter<Polygon<T>>;
+    type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
 
-    fn polygons(&self) -> Self::Iter {
-        // TODO: no clones please!
-        self.0.iter().map(|n| n.clone()).collect::<Vec<_>>().into_iter()
+    fn polygons(&'a self) -> Self::Iter {
+        Box::new(self.0.iter())
     }
 }
 

@@ -14,37 +14,37 @@ pub trait PointTrait<T: Float> {
     fn y(&self) -> T;
 }
 
-pub trait LineStringTrait<T: Float> {
-    type ItemType: PointTrait<T>;
-    type Iter: Iterator<Item=Self::ItemType>;
+pub trait LineStringTrait<'a, T: Float> {
+    type ItemType: 'a + PointTrait<T>;
+    type Iter: Iterator<Item=&'a Self::ItemType>;
 
-    fn points(&self) -> Self::Iter;
+    fn points(&'a self) -> Self::Iter;
 }
 
-pub trait PolygonTrait<T: Float> {
-    type ItemType: LineStringTrait<T>;
-    type Iter: Iterator<Item=Self::ItemType>;
+pub trait PolygonTrait<'a, T: Float> {
+    type ItemType: 'a + LineStringTrait<'a, T>;
+    type Iter: 'a + Iterator<Item=&'a Self::ItemType>;
 
-    fn rings(&self) -> Self::Iter;
+    fn rings(&'a self) -> Self::Iter;
 }
 
-pub trait MultiPointTrait<T: Float> {
-    type ItemType: PointTrait<T>;
-    type Iter: Iterator<Item=Self::ItemType>;
+pub trait MultiPointTrait<'a, T: Float> {
+    type ItemType: 'a + PointTrait<T>;
+    type Iter: Iterator<Item=&'a Self::ItemType>;
 
-    fn points(&self) -> Self::Iter;
+    fn points(&'a self) -> Self::Iter;
 }
 
-pub trait MultiLineStringTrait<T: Float> {
-    type ItemType: LineStringTrait<T>;
-    type Iter: Iterator<Item=Self::ItemType>;
+pub trait MultiLineStringTrait<'a, T: Float> {
+    type ItemType: 'a + LineStringTrait<'a, T>;
+    type Iter: Iterator<Item=&'a Self::ItemType>;
 
-    fn lines(&self) -> Self::Iter;
+    fn lines(&'a self) -> Self::Iter;
 }
 
-pub trait MultiPolygonTrait<T: Float> {
-    type ItemType: PolygonTrait<T>;
-    type Iter: Iterator<Item=Self::ItemType>;
+pub trait MultiPolygonTrait<'a, T: Float> {
+    type ItemType: 'a + PolygonTrait<'a, T>;
+    type Iter: Iterator<Item=&'a Self::ItemType>;
 
-    fn polygons(&self) -> Self::Iter;
+    fn polygons(&'a self) -> Self::Iter;
 }

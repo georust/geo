@@ -3,7 +3,7 @@ use ::{MultiPolygonTrait, PolygonTrait, LineStringTrait, PointTrait};
 
 /// Calculation of the area.
 
-pub trait Area<T> where T: Float
+pub trait Area<'a, T> where T: Float
 {
     /// Area of polygon.
     /// See: https://en.wikipedia.org/wiki/Polygon
@@ -17,11 +17,12 @@ pub trait Area<T> where T: Float
     /// let poly = Polygon::new(linestring, v);
     /// assert_eq!(poly.area(), 30.);
     /// ```
-    fn area(&self) -> T;
+    fn area(&'a self) -> T;
 }
 
-fn get_linestring_area<T, G>(linestring: &G) -> T
-    where T: Float, G: LineStringTrait<T>
+fn get_linestring_area<'a, T, G>(linestring: &'a G) -> T
+    where T: 'a + Float,
+          G: 'a + LineStringTrait<'a, T>
 {
     let mut points = linestring.points();
     let mut p1 = match points.next() {
@@ -36,16 +37,16 @@ fn get_linestring_area<T, G>(linestring: &G) -> T
     tmp / (T::one() + T::one())
 }
 
-impl<T, G> Area<T> for G
-    where G: PolygonTrait<T>,
-          T: Float,
+impl<'a, T, G> Area<'a, T> for G
+    where G: 'a + PolygonTrait<'a, T>,
+          T: 'a + Float,
 {
-    fn area(&self) -> T {
+    fn area(&'a self) -> T {
         let mut rings = self.rings();
         let outer_ring = rings.next().expect("no outer ring in polygon");
-        let outer_ring_area = get_linestring_area(&outer_ring);
-        rings.fold(outer_ring_area, |acc, ring| {
-            acc - get_linestring_area(&ring)
+        let outer_ring_area = get_linestring_area(outer_ring);
+        rings.fold(outer_ring_area, |acc, inner_ring| {
+            acc - get_linestring_area(inner_ring)
         })
     }
 }
