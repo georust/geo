@@ -1,5 +1,6 @@
 use num_traits::Float;
 use types::{LineString, Polygon, MultiPolygon, Bbox};
+use ::PolygonTrait;
 
 /// Calculation of the area.
 
@@ -54,6 +55,15 @@ impl<T> Area<T> for Bbox<T>
 {
     fn area(&self) -> T {
         (self.xmax - self.xmin) * (self.ymax - self.ymin)
+    }
+}
+
+impl<'a, T, G> Area<T> for G
+    where G: PolygonTrait<'a>,
+          T: Float,
+{
+    fn area(&self) -> T {
+        unimplemented!()
     }
 }
 
