@@ -25,6 +25,27 @@ pub struct Bbox<T>
     pub ymax: T,
 }
 
+impl<T: Float> Bbox<T> {
+    fn to_line_string(&self) -> LineString<T> {
+        LineString(vec![
+            Point(Coordinate { x: self.xmin, y: self.ymax }),
+            Point(Coordinate { x: self.xmax, y: self.ymax }),
+            Point(Coordinate { x: self.xmax, y: self.ymin }),
+            Point(Coordinate { x: self.xmin, y: self.ymin }),
+        ])
+    }
+}
+
+impl<T: Float> ::PolygonTrait<T> for Bbox<T> {
+    type ItemType = LineString<T>;
+    type Iter = ::std::iter::Once<LineString<T>>;
+
+    fn rings(&self) -> Self::Iter {
+        // TODO: no clones please!
+        ::std::iter::once(self.to_line_string())
+    }
+}
+
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
@@ -231,6 +252,16 @@ impl<T> Sub for Point<T>
     }
 }
 
+impl<T: Float> ::PointTrait<T> for Point<T> {
+    fn x(&self) -> T {
+        self.x()
+    }
+
+    fn y(&self) -> T {
+        self.y()
+    }
+}
+
 impl<T> Add for Bbox<T>
     where T: Float + ToPrimitive
 {
@@ -289,11 +320,41 @@ impl<T> AddAssign for Bbox<T>
 #[derive(PartialEq, Clone, Debug)]
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
+impl<T: Float> ::MultiPointTrait<T> for MultiPoint<T> {
+    type ItemType = Point<T>;
+    type Iter = ::std::vec::IntoIter<Point<T>>;
+
+    fn points(&self) -> Self::Iter {
+        // TODO: no clones please!
+        self.0.iter().map(|n| n.clone()).collect::<Vec<_>>().into_iter()
+    }
+}
+
 #[derive(PartialEq, Clone, Debug)]
 pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
+impl<T: Float> ::LineStringTrait<T> for LineString<T> {
+    type ItemType = Point<T>;
+    type Iter = ::std::vec::IntoIter<Point<T>>;
+
+    fn points(&self) -> Self::Iter {
+        // TODO: no clones please!
+        self.0.iter().map(|n| n.clone()).collect::<Vec<_>>().into_iter()
+    }
+}
+
 #[derive(PartialEq, Clone, Debug)]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
+
+impl<T: Float> ::MultiLineStringTrait<T> for MultiLineString<T> {
+    type ItemType = LineString<T>;
+    type Iter = ::std::vec::IntoIter<LineString<T>>;
+
+    fn lines(&self) -> Self::Iter {
+        // TODO: no clones please!
+        self.0.iter().map(|n| n.clone()).collect::<Vec<_>>().into_iter()
+    }
+}
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Polygon<T>
@@ -324,8 +385,29 @@ impl<T> Polygon<T>
     }
 }
 
+impl<T: Float> ::PolygonTrait<T> for Polygon<T> {
+    type ItemType = LineString<T>;
+    type Iter = ::std::iter::Once<LineString<T>>;
+
+    fn rings(&self) -> Self::Iter {
+        // TODO: no clones please!
+        // TODO: add in interiors
+        ::std::iter::once(self.exterior.clone())
+    }
+}
+
 #[derive(PartialEq, Clone, Debug)]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
+
+impl<T: Float> ::MultiPolygonTrait<T> for MultiPolygon<T> {
+    type ItemType = Polygon<T>;
+    type Iter = ::std::vec::IntoIter<Polygon<T>>;
+
+    fn polygons(&self) -> Self::Iter {
+        // TODO: no clones please!
+        self.0.iter().map(|n| n.clone()).collect::<Vec<_>>().into_iter()
+    }
+}
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float;
