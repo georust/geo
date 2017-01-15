@@ -387,12 +387,13 @@ impl<T> Polygon<T>
 
 impl<T: Float> ::PolygonTrait<T> for Polygon<T> {
     type ItemType = LineString<T>;
-    type Iter = ::std::iter::Once<LineString<T>>;
+    type Iter = ::std::vec::IntoIter<LineString<T>>;
 
     fn rings(&self) -> Self::Iter {
         // TODO: no clones please!
-        // TODO: add in interiors
-        ::std::iter::once(self.exterior.clone())
+        let mut rings = vec![self.exterior.clone()];
+        rings.extend(self.interiors.clone().into_iter());
+        rings.into_iter()
     }
 }
 
