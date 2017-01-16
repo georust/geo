@@ -61,4 +61,8 @@ pub trait MultiPolygonTrait<'a, T>
     type Iter: Iterator<Item=&'a Self::ItemType>;
 
     fn polygons(&'a self) -> Self::Iter;
+
+    fn area(&'a self) -> T {
+        ::algorithm::area::multi_polygon(self)
+    }
 }

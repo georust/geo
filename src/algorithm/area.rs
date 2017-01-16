@@ -30,13 +30,20 @@ pub fn polygon<'a, G, T>(polygon: &'a G) -> T
     })
 }
 
+pub fn multi_polygon<'a, G, T>(multi_polygon: &'a G) -> T
+    where T: 'a + Float,
+          G: 'a + MultiPolygonTrait<'a, T> + ?Sized
+{
+    multi_polygon.polygons().map(polygon).fold(T::zero(), |acc, n| acc + n)
+}
+
 #[cfg(test)]
 mod test {
     use num_traits::Float;
-    use types::{Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
+    use types::{Coordinate, Point, LineString, Polygon, MultiPolygon};
     use test_helpers::within_epsilon;
-    use ::PolygonTrait;
-    // Area of the polygon
+    use ::{PolygonTrait, MultiPolygonTrait};
+
     #[test]
     fn area_empty_polygon_test() {
         let poly = Polygon::<f64>::new(LineString(Vec::new()), Vec::new());
@@ -56,14 +63,6 @@ mod test {
         assert!(within_epsilon(poly.area(), 30., Float::epsilon()));
     }
 
-    /*
-    #[test]
-    fn bbox_test() {
-        let bbox = Bbox {xmin: 10., xmax: 20., ymin: 30., ymax: 40.};
-        assert!(within_epsilon(bbox.area(), 100., Float::epsilon()));
-    }
-    */
-
     #[test]
     fn area_polygon_inner_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
@@ -74,7 +73,6 @@ mod test {
         assert!(within_epsilon(poly.area(), 98., Float::epsilon()));
     }
 
-    /*
     #[test]
     fn area_multipolygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
@@ -91,5 +89,4 @@ mod test {
         assert_eq!(mpoly.area(), 102.);
         assert!(within_epsilon(mpoly.area(), 102., Float::epsilon()));
     }
-    */
 }
