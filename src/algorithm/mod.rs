@@ -12,5 +12,7 @@ pub mod length;
 pub mod distance;
 /// Returns the Bbox of a geometry.
 pub mod boundingbox;
-/// Simplifies a `LineString`.
+/// Simplifies a `LineString` using the Ramer-Douglas-Peucker algorithm.
 pub mod simplify;
+/// Simplifies a `LineString` using the Visvalingam-Whyatt algorithm.
+pub mod simplifyvw;
