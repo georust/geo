@@ -1,5 +1,9 @@
 # Changes
 
+## 0.3.2
+
+* [Add Visvalingam-Whyatt line-simplification algorithm](https://github.com/georust/rust-geo/pull/84)
+
 ## 0.3.1
 
 * [Within Epsilon matcher](https://github.com/georust/rust-geo/pull/82)
