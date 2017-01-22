@@ -86,7 +86,7 @@ pub fn point<'a, G, T>(p1: &'a G, p2: &'a G) -> T
 // falls on the line past one end or the other of the segment. In that case the
 // distance to the segment will be the distance to the nearer end
 fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
-    where T: Float + ToPrimitive + ::num::FromPrimitive
+    where T: Float + ToPrimitive + ::num_traits::FromPrimitive
 {
     let dist_squared = pow(start.distance_to_point(end), 2);
     // Implies that start == end
@@ -105,30 +105,30 @@ fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) 
 
 #[derive(PartialEq, Debug)]
 struct Mindist<T>
-    where T: Float + ::num::FromPrimitive
+    where T: Float + ::num_traits::FromPrimitive
 {
     distance: T,
 }
 // These impls give us a min-heap when used with BinaryHeap
 impl<T> Ord for Mindist<T>
-    where T: Float + ::num::FromPrimitive
+    where T: Float + ::num_traits::FromPrimitive
 {
     fn cmp(&self, other: &Mindist<T>) -> Ordering {
         other.distance.partial_cmp(&self.distance).unwrap()
     }
 }
 impl<T> PartialOrd for Mindist<T>
-    where T: Float + ::num::FromPrimitive
+    where T: Float + ::num_traits::FromPrimitive
 {
     fn partial_cmp(&self, other: &Mindist<T>) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
-impl<T> Eq for Mindist<T> where T: Float + ::num::FromPrimitive {}
+impl<T> Eq for Mindist<T> where T: Float + ::num_traits::FromPrimitive {}
 
 // Minimum distance from a Point to a Polygon
 impl<T> Distance<T, Polygon<T>> for Point<T>
-    where T: Float + ::num::FromPrimitive
+    where T: Float + ::num_traits::FromPrimitive
 {
     fn distance(&self, polygon: &Polygon<T>) -> T {
         // get exterior ring
@@ -155,7 +155,7 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
 
 // Minimum distance from a Point to a LineString
 impl<T> Distance<T, LineString<T>> for Point<T>
-    where T: Float + ::num::FromPrimitive
+    where T: Float + ::num_traits::FromPrimitive
 {
     fn distance(&self, linestring: &LineString<T>) -> T {
         // No need to continue if the point is on the LineString, or it's empty

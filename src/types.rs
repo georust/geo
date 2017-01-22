@@ -4,11 +4,7 @@ use std::ops::AddAssign;
 use std::ops::Neg;
 use std::ops::Sub;
 
-<<<<<<< HEAD
-use num_traits::{Float, ToPrimitive};
-=======
-use num::{Float, ToPrimitive, FromPrimitive};
->>>>>>> implement centroid for polygon
+use num_traits::{Float, ToPrimitive, FromPrimitive};
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 

@@ -26,7 +26,7 @@ pub trait Length<T, RHS = Self> {
 }
 
 pub fn line_string<'a, G, T>(line_string: &'a G) -> T 
-    where T: 'a + Float + ::num::FromPrimitive,
+    where T: 'a + Float + ::num_traits::FromPrimitive,
           G: 'a + LineStringTrait<'a, T> + ?Sized
 {
     // FIXME: don't collect
@@ -36,7 +36,7 @@ pub fn line_string<'a, G, T>(line_string: &'a G) -> T
 }
 
 impl<T> Length<T> for MultiLineString<T>
-    where T: Float + ::num::FromPrimitive
+    where T: Float + ::num_traits::FromPrimitive
 {
     fn length(&self) -> T {
         self.0.iter().fold(T::zero(), |total, line| total + line.length())

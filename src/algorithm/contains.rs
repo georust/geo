@@ -33,7 +33,7 @@ pub trait Contains<Rhs = Self> {
 }
 
 impl<T> Contains<Point<T>> for Point<T>
-    where T: Float + ToPrimitive + ::num::FromPrimitive
+    where T: Float + ToPrimitive + ::num_traits::FromPrimitive
 {
     fn contains(&self, p: &Point<T>) -> bool {
         self.distance_to_point(p).to_f32().unwrap() < COORD_PRECISION
@@ -41,7 +41,7 @@ impl<T> Contains<Point<T>> for Point<T>
 }
 
 impl<T> Contains<Point<T>> for LineString<T>
-    where T: Float + ::num::FromPrimitive
+    where T: Float + ::num_traits::FromPrimitive
 {
     fn contains(&self, p: &Point<T>) -> bool {
         let vect = &self.0;
@@ -78,7 +78,7 @@ enum PositionPoint {
 }
 
 fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
-    where T: Float + ::num::FromPrimitive
+    where T: Float + ::num_traits::FromPrimitive
 {
     // See: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
     //      http://geospatialpython.com/search
@@ -120,7 +120,7 @@ fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
 }
 
 impl<T> Contains<Point<T>> for Polygon<T>
-    where T: Float + ::num::FromPrimitive
+    where T: Float + ::num_traits::FromPrimitive
 {
     fn contains(&self, p: &Point<T>) -> bool {
         match get_position(p, &self.exterior) {
@@ -132,7 +132,7 @@ impl<T> Contains<Point<T>> for Polygon<T>
 }
 
 impl<T> Contains<Point<T>> for MultiPolygon<T>
-    where T: Float + ::num::FromPrimitive
+    where T: Float + ::num_traits::FromPrimitive
 {
     fn contains(&self, p: &Point<T>) -> bool {
         self.0.iter().any(|poly| poly.contains(p))
@@ -140,7 +140,7 @@ impl<T> Contains<Point<T>> for MultiPolygon<T>
 }
 
 impl<T> Contains<LineString<T>> for Polygon<T>
-    where T: Float + ::num::FromPrimitive
+    where T: Float + ::num_traits::FromPrimitive
 {
     fn contains(&self, linestring: &LineString<T>) -> bool {
         // All points of LineString must be in the polygon ?
@@ -153,7 +153,7 @@ impl<T> Contains<LineString<T>> for Polygon<T>
 }
 
 impl<T> Contains<Bbox<T>> for Bbox<T>
-    where T: Float + ::num::FromPrimitive
+    where T: Float + ::num_traits::FromPrimitive
 {
     fn contains(&self, bbox: &Bbox<T>) -> bool {
         // All points of LineString must be in the polygon ?

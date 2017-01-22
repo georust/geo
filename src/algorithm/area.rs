@@ -2,7 +2,7 @@ use num_traits::{Float, FromPrimitive};
 use ::{MultiPolygonTrait, PolygonTrait, LineStringTrait, PointTrait};
 
 fn get_linestring_area<'a, T, G>(linestring: &'a G) -> T
-    where T: 'a + Float + ::num::FromPrimitive,
+    where T: 'a + Float + ::num_traits::FromPrimitive,
           G: 'a + LineStringTrait<'a, T>
 {
     let mut points = linestring.points();
@@ -32,7 +32,7 @@ pub fn polygon<'a, G, T>(polygon: &'a G) -> T
 }
 
 pub fn multi_polygon<'a, G, T>(multi_polygon: &'a G) -> T
-    where T: 'a + Float + ::num::FromPrimitive,
+    where T: 'a + Float + ::num_traits::FromPrimitive,
           G: 'a + MultiPolygonTrait<'a, T> + ?Sized
 {
     multi_polygon.polygons().map(polygon).fold(T::zero(), |acc, n| acc + n)
