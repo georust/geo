@@ -74,6 +74,11 @@ pub trait MultiLineStringTrait<'a, T>
     type Iter: Iterator<Item=&'a Self::ItemType>;
 
     fn lines(&'a self) -> Self::Iter;
+
+    // FIXME: decide if this should be called 'len'
+    fn length(&'a self) -> T {
+        ::algorithm::length::multi_line_string(self)
+    }
 }
 
 pub trait MultiPolygonTrait<'a, T>
