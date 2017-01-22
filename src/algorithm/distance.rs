@@ -66,7 +66,7 @@ pub trait Distance<T, Rhs = Self> {
     fn distance(&self, rhs: &Rhs) -> T;
 }
 
-pub fn point<'a, G, T>(p1: &'a G, p2: &'a G) -> T 
+pub fn point_to_point<'a, G, T>(p1: &'a G, p2: &'a G) -> T
     where T: 'a + Float + FromPrimitive,
           G: 'a + PointTrait<T> + ?Sized
 {

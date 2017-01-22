@@ -15,7 +15,7 @@ pub trait PointTrait<T: Float + FromPrimitive> {
     fn y(&self) -> T;
 
     fn distance_to_point(&self, other: &Self) -> T {
-        ::algorithm::distance::point(self, other)
+        ::algorithm::distance::point_to_point(self, other)
     }
 }
 
