@@ -10,9 +10,13 @@ pub trait ToGeo<T: Float + FromPrimitive>
 // FIXME: find good names for these traits, don't use XyzTrait naming scheme
 // FIXME: remove FromPrimitive trait
 
-pub trait PointTrait<T: Float> {
+pub trait PointTrait<T: Float + FromPrimitive> {
     fn x(&self) -> T;
     fn y(&self) -> T;
+
+    fn distance_to_point(&self, other: &Self) -> T {
+        ::algorithm::distance::point(self, other)
+    }
 }
 
 pub trait LineStringTrait<'a, T>
@@ -22,6 +26,13 @@ pub trait LineStringTrait<'a, T>
     type Iter: Iterator<Item=&'a Self::ItemType>;
 
     fn points(&'a self) -> Self::Iter;
+
+    /// Centroid on a LineString is the mean of the middle of the segment
+    /// weighted by the length of the segments.
+    fn centroid(&'a self) -> Option<::Point<T>> {
+        unimplemented!()
+        //::algorithm::centroid::line_string(self)
+    }
 }
 
 pub trait PolygonTrait<'a, T>

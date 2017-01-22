@@ -3,6 +3,7 @@ use num_traits::{Float, ToPrimitive};
 use types::{COORD_PRECISION, Point, LineString, Polygon, MultiPolygon, Bbox};
 use algorithm::intersects::Intersects;
 use algorithm::distance::Distance;
+use traits::PointTrait;
 
 ///  Checks if the geometry A is completely inside the B geometry.
 
@@ -36,7 +37,7 @@ impl<T> Contains<Point<T>> for Point<T>
     where T: Float + ToPrimitive + ::num::FromPrimitive
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        self.distance(p).to_f32().unwrap() < COORD_PRECISION
+        self.distance_to_point(p).to_f32().unwrap() < COORD_PRECISION
     }
 }
 

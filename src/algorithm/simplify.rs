@@ -1,18 +1,19 @@
 use num_traits::Float;
 use types::{Point, LineString};
 use algorithm::distance::Distance;
+use traits::PointTrait;
 
 // perpendicular distance from a point to a line
 fn point_line_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
     where T: Float + ::num::FromPrimitive
 {
     if start == end {
-        point.distance(start)
+        point.distance_to_point(start)
     } else {
         let numerator = ((end.x() - start.x()) * (start.y() - point.y()) -
                          (start.x() - point.x()) * (end.y() - start.y()))
             .abs();
-        let denominator = start.distance(end);
+        let denominator = start.distance_to_point(end);
         numerator / denominator
     }
 }

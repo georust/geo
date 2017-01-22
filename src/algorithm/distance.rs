@@ -1,7 +1,8 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use num_traits::{Float, ToPrimitive};
+use num_traits::{Float, ToPrimitive, FromPrimitive};
 use types::{Point, LineString, Polygon};
+use traits::PointTrait;
 use algorithm::contains::Contains;
 use num_traits::pow::pow;
 
@@ -63,13 +64,12 @@ pub trait Distance<T, Rhs = Self> {
     fn distance(&self, rhs: &Rhs) -> T;
 }
 
-impl<T> Distance<T, Point<T>> for Point<T>
-    where T: Float + ::num::FromPrimitive
+pub fn point<'a, G, T>(p1: &'a G, p2: &'a G) -> T 
+    where T: 'a + Float + FromPrimitive,
+          G: 'a + PointTrait<T> + ?Sized
 {
-    fn distance(&self, p: &Point<T>) -> T {
-        let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
-        dx.hypot(dy)
-    }
+    let (dx, dy) = (p1.x() - p2.x(), p1.y() - p2.y());
+    dx.hypot(dy)
 }
 
 // Return minimum distance between a Point and a Line segment
@@ -86,10 +86,10 @@ impl<T> Distance<T, Point<T>> for Point<T>
 fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
     where T: Float + ToPrimitive + ::num::FromPrimitive
 {
-    let dist_squared = pow(start.distance(end), 2);
+    let dist_squared = pow(start.distance_to_point(end), 2);
     // Implies that start == end
     if dist_squared.is_zero() {
-        return pow(point.distance(start), 2);
+        return pow(point.distance_to_point(start), 2);
     }
     // Consider the line extending the segment, parameterized as start + t (end - start)
     // We find the projection of the point onto the line
@@ -98,7 +98,7 @@ fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) 
     let t = T::zero().max(T::one().min((*point - *start).dot(&(*end - *start)) / dist_squared));
     let projected = Point::new(start.x() + t * (end.x() - start.x()),
                                start.y() + t * (end.y() - start.y()));
-    point.distance(&projected)
+    point.distance_to_point(&projected)
 }
 
 #[derive(PartialEq, Debug)]
@@ -177,6 +177,7 @@ mod test {
     use types::{Point, LineString, Polygon};
     use algorithm::distance::{Distance, line_segment_distance};
     use test_helpers::within_epsilon;
+    use traits::PointTrait;
 
     #[test]
     fn line_segment_distance_test() {
@@ -348,13 +349,13 @@ mod test {
     }
     #[test]
     fn distance1_test() {
-        assert_eq!(Point::<f64>::new(0., 0.).distance(&Point::<f64>::new(1., 0.)),
+        assert_eq!(Point::<f64>::new(0., 0.).distance_to_point(&Point::<f64>::new(1., 0.)),
                    1.);
     }
     #[test]
     fn distance2_test() {
         // Point::new(-72.1235, 42.3521).distance(&Point::new(72.1260, 70.612)) = 146.99163308930207
-        let dist = Point::new(-72.1235, 42.3521).distance(&Point::new(72.1260, 70.612));
+        let dist = Point::new(-72.1235, 42.3521).distance_to_point(&Point::new(72.1260, 70.612));
         assert!(dist < 147. && dist > 146.);
     }
 }

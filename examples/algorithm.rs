@@ -1,7 +1,6 @@
 extern crate geo;
 
-use geo::{Point, LineString, Coordinate};
-use geo::algorithm::centroid::Centroid;
+use geo::{Point, LineString, Coordinate, LineStringTrait};
 
 fn main() {    
     let mut vec = Vec::new();

@@ -23,36 +23,34 @@ pub trait Centroid<T: Float + FromPrimitive> {
     fn centroid(&self) -> Option<Point<T>>;
 }
 
-impl<T> Centroid<T> for LineString<T>
-    where T: Float + ::num::FromPrimitive
+/*
+pub fn line_string<'a, G, T>(line_string: &'a G) -> Option<Point<T>> 
+    where T: 'a + Float + FromPrimitive,
+          G: 'a + LineStringTrait<'a, T> + ?Sized
 {
-    ///
-    /// Centroid on a LineString is the mean of the middle of the segment
-    /// weighted by the length of the segments.
-    ///
-    fn centroid(&self) -> Option<Point<T>> {
-        let vect = &self.0;
-        if vect.is_empty() {
-            return None;
+    // TODO: remove `collect`
+    let vect = line_string.points().collect::<Vec<_>>();
+    if vect.is_empty() {
+        return None;
+    }
+    if vect.len() == 1 {
+        Some(Point::new(vect[0].x(),
+                        vect[0].y()))
+    } else {
+        let mut sum_x = T::zero();
+        let mut sum_y = T::zero();
+        let mut total_length = T::zero();
+        for ps in vect.windows(2) {
+            let segment_len = ps[0].distance(&ps[1]);
+            let (x1, y1, x2, y2) = (ps[0].x(), ps[0].y(), ps[1].x(), ps[1].y());
+            total_length = total_length + segment_len;
+            sum_x = sum_x + segment_len * ((x1 + x2) / (T::one() + T::one()));
+            sum_y = sum_y + segment_len * ((y1 + y2) / (T::one() + T::one()));
         }
-        if vect.len() == 1 {
-            Some(Point::new(vect[0].x(),
-                            vect[0].y()))
-        } else {
-            let mut sum_x = T::zero();
-            let mut sum_y = T::zero();
-            let mut total_length = T::zero();
-            for ps in vect.windows(2) {
-                let segment_len = ps[0].distance(&ps[1]);
-                let (x1, y1, x2, y2) = (ps[0].x(), ps[0].y(), ps[1].x(), ps[1].y());
-                total_length = total_length + segment_len;
-                sum_x = sum_x + segment_len * ((x1 + x2) / (T::one() + T::one()));
-                sum_y = sum_y + segment_len * ((y1 + y2) / (T::one() + T::one()));
-            }
-            Some(Point::new(sum_x / total_length, sum_y / total_length))
-        }
+        Some(Point::new(sum_x / total_length, sum_y / total_length))
     }
 }
+*/
 
 pub fn polygon<'a, G, T>(polygon: &'a G) -> Option<Point<T>> 
     where T: 'a + Float + FromPrimitive,
@@ -108,7 +106,7 @@ pub fn multi_polygon<'a, G, T>(multi_polygon: &'a G) -> Option<Point<T>>
 #[cfg(test)]
 mod test {
     use types::{COORD_PRECISION, Coordinate, Point, LineString, Polygon, MultiPolygon};
-    use traits::{PolygonTrait, MultiPolygonTrait};
+    use traits::{PolygonTrait, MultiPolygonTrait, LineStringTrait, PointTrait};
     use algorithm::centroid::Centroid;
     use algorithm::distance::Distance;
     /// Tests: Centroid of LineString
@@ -179,7 +177,7 @@ mod test {
         let poly1 = Polygon::new(linestring, Vec::new());
         let linestring = LineString(vec![p(7., 1.), p(8., 1.), p(8., 2.), p(7., 2.), p(7., 1.)]);
         let poly2 = Polygon::new(linestring, Vec::new());
-        let dist = MultiPolygon(vec![poly1, poly2]).centroid().unwrap().distance(&p(4.07142857142857, 1.92857142857143));
+        let dist = MultiPolygon(vec![poly1, poly2]).centroid().unwrap().distance_to_point(&p(4.07142857142857, 1.92857142857143));
         assert!(dist < COORD_PRECISION);
     }
 }

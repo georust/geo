@@ -2,6 +2,7 @@ use num_traits::Float;
 
 use types::{LineString, MultiLineString};
 use algorithm::distance::Distance;
+use traits::PointTrait;
 
 /// Calculation of the length
 
@@ -28,7 +29,7 @@ impl<T> Length<T> for LineString<T>
 {
     fn length(&self) -> T {
         self.0.windows(2)
-              .fold(T::zero(), |total_length, p| total_length + p[0].distance(&p[1]))
+              .fold(T::zero(), |total_length, p| total_length + p[0].distance_to_point(&p[1]))
     }
 }
 
