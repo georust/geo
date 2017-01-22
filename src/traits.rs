@@ -15,7 +15,7 @@ pub trait PointTrait<T: Float + FromPrimitive>: Sized {
     fn y(&self) -> T;
 
     // TODO: keep this?
-    fn has_same_coordinates_as_point<P: PointTrait<T>>(&self, other: &P) -> bool {
+    fn eq_coordinates<P: PointTrait<T>>(&self, other: &P) -> bool {
         self.x() == other.x() && self.y() == other.y()
     }
 

@@ -60,7 +60,7 @@ pub fn line_string_contains_point<'a, L, P, T>(line_string: &'a L, point: &'a P)
     }
     // check if point is a vertex
     for p in &vect {
-        if p.has_same_coordinates_as_point(point) {
+        if p.eq_coordinates(point) {
             return true;
         }
     }
