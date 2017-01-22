@@ -1,7 +1,7 @@
 use num_traits::{Float, FromPrimitive};
 
-use types::{Point, LineString, MultiPolygon, Bbox};
-use traits::{PolygonTrait, LineStringTrait, PointTrait};
+use types::{Point, LineString, Bbox};
+use traits::{PolygonTrait, LineStringTrait, PointTrait, MultiPolygonTrait};
 use algorithm::distance::Distance;
 
 /// Calculation of the centroid.
@@ -81,28 +81,28 @@ pub fn polygon<'a, G, T>(polygon: &'a G) -> Option<Point<T>>
     }
 }
 
-impl<T> Centroid<T> for MultiPolygon<T>
-    where T: Float + FromPrimitive
+pub fn multi_polygon<'a, G, T>(multi_polygon: &'a G) -> Option<Point<T>> 
+    where T: 'a + Float + FromPrimitive,
+          G: 'a + MultiPolygonTrait<'a, T> + ?Sized
 {
     // See: https://fotino.me/calculating-centroids/
-    fn centroid(&self) -> Option<Point<T>> {
-        let mut sum_x = T::zero();
-        let mut sum_y = T::zero();
-        let mut total_area = T::zero();
-        let vect = &self.0;
-        if vect.is_empty() {
-            return None;
-        }
-        for poly in &self.0 {
-            let tmp = poly.area();
-            total_area = total_area + poly.area();
-            if let Some(p) = poly.centroid() {
-                sum_x = sum_x + tmp * p.x();
-                sum_y = sum_y + tmp * p.y();
-            }
-        }
-        Some(Point::new(sum_x / total_area, sum_y / total_area))
+    let mut sum_x = T::zero();
+    let mut sum_y = T::zero();
+    let mut total_area = T::zero();
+    // TODO: remove `collect`
+    let vect = multi_polygon.polygons().collect::<Vec<_>>();
+    if vect.is_empty() {
+        return None;
     }
+    for poly in vect {
+        let tmp = poly.area();
+        total_area = total_area + poly.area();
+        if let Some(p) = poly.centroid() {
+            sum_x = sum_x + tmp * p.x();
+            sum_y = sum_y + tmp * p.y();
+        }
+    }
+    Some(Point::new(sum_x / total_area, sum_y / total_area))
 }
 
 impl<T> Centroid<T> for Bbox<T>
@@ -120,7 +120,7 @@ impl<T> Centroid<T> for Bbox<T>
 #[cfg(test)]
 mod test {
     use types::{COORD_PRECISION, Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
-    use traits::PolygonTrait;
+    use traits::{PolygonTrait, MultiPolygonTrait};
     use algorithm::centroid::Centroid;
     use algorithm::distance::Distance;
     /// Tests: Centroid of LineString

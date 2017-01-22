@@ -72,4 +72,8 @@ pub trait MultiPolygonTrait<'a, T>
     fn area(&'a self) -> T {
         ::algorithm::area::multi_polygon(self)
     }
+
+    fn centroid(&'a self) -> Option<::Point<T>> {
+        ::algorithm::centroid::multi_polygon(self)
+    }
 }
