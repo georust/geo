@@ -1,8 +1,7 @@
 use num_traits::{Float, FromPrimitive};
 
-use types::{Point, LineString};
+use types::Point;
 use traits::{PolygonTrait, LineStringTrait, PointTrait, MultiPolygonTrait};
-use algorithm::distance::Distance;
 
 pub fn line_string<'a, G, T>(line_string: &'a G) -> Option<Point<T>> 
     where T: 'a + Float + FromPrimitive,
@@ -86,8 +85,6 @@ pub fn multi_polygon<'a, G, T>(multi_polygon: &'a G) -> Option<Point<T>>
 mod test {
     use types::{COORD_PRECISION, Coordinate, Point, LineString, Polygon, MultiPolygon};
     use traits::{PolygonTrait, MultiPolygonTrait, LineStringTrait, PointTrait};
-    use algorithm::centroid::Centroid;
-    use algorithm::distance::Distance;
     /// Tests: Centroid of LineString
     #[test]
     fn empty_linestring_test() {

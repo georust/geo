@@ -2,7 +2,6 @@ use num_traits::{Float, ToPrimitive};
 
 use types::{COORD_PRECISION, Point, LineString, Polygon, MultiPolygon, Bbox};
 use algorithm::intersects::Intersects;
-use algorithm::distance::Distance;
 use traits::PointTrait;
 
 ///  Checks if the geometry A is completely inside the B geometry.

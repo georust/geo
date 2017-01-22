@@ -1,6 +1,5 @@
 use num_traits::Float;
 use types::{Point, LineString};
-use algorithm::distance::Distance;
 use traits::PointTrait;
 
 // perpendicular distance from a point to a line

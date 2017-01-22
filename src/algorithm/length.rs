@@ -1,7 +1,6 @@
 use num_traits::Float;
 
 use types::{LineString, MultiLineString};
-use algorithm::distance::Distance;
 use traits::PointTrait;
 
 /// Calculation of the length
