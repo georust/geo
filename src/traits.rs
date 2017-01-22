@@ -27,6 +27,11 @@ pub trait LineStringTrait<'a, T>
 
     fn points(&'a self) -> Self::Iter;
 
+    // FIXME: decide if this should be called 'len'
+    fn length(&'a self) -> T {
+        ::algorithm::length::line_string(self)
+    }
+
     /// Centroid on a LineString is the mean of the middle of the segment
     /// weighted by the length of the segments.
     fn centroid(&'a self) -> Option<::Point<T>> {

@@ -1,7 +1,7 @@
 use num_traits::Float;
 
-use types::{LineString, MultiLineString};
-use traits::PointTrait;
+use types::{MultiLineString};
+use traits::{PointTrait, LineStringTrait};
 
 /// Calculation of the length
 
@@ -9,6 +9,7 @@ pub trait Length<T, RHS = Self> {
     /// Calculation the length of a Line
     ///
     /// ```
+    /// /*
     /// use geo::{Point, LineString, Coordinate};
     /// use geo::algorithm::length::Length;
     ///
@@ -18,18 +19,20 @@ pub trait Length<T, RHS = Self> {
     /// let linestring = LineString(vec);
     ///
     /// println!("Length {}", linestring.length());
+    /// */
     /// ```
     ///
     fn length(&self) -> T;
 }
 
-impl<T> Length<T> for LineString<T>
-    where T: Float + ::num::FromPrimitive
+pub fn line_string<'a, G, T>(line_string: &'a G) -> T 
+    where T: 'a + Float + ::num::FromPrimitive,
+          G: 'a + LineStringTrait<'a, T> + ?Sized
 {
-    fn length(&self) -> T {
-        self.0.windows(2)
-              .fold(T::zero(), |total_length, p| total_length + p[0].distance_to_point(&p[1]))
-    }
+    // FIXME: don't collect
+    let v = line_string.points().collect::<Vec<_>>();
+    v.windows(2)
+     .fold(T::zero(), |total_length, p| total_length + p[0].distance_to_point(&p[1]))
 }
 
 impl<T> Length<T> for MultiLineString<T>
@@ -44,6 +47,7 @@ impl<T> Length<T> for MultiLineString<T>
 mod test {
     use types::{Coordinate, Point, LineString, MultiLineString};
     use algorithm::length::Length;
+    use traits::{LineStringTrait};
 
     #[test]
     fn empty_linestring_test() {
