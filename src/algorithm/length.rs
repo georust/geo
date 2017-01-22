@@ -9,7 +9,7 @@ pub fn line_string<'a, G, T>(line_string: &'a G) -> T
     // FIXME: don't collect
     let v = line_string.points().collect::<Vec<_>>();
     v.windows(2)
-     .fold(T::zero(), |total_length, p| total_length + p[0].distance_to_point(&p[1]))
+     .fold(T::zero(), |total_length, p| total_length + p[0].distance_to_point(p[1]))
 }
 
 pub fn multi_line_string<'a, G, T>(multi_line_string: &'a G) -> T 

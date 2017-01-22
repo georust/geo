@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::{Float, ToPrimitive, FromPrimitive};
 use types::{Point, LineString, Polygon};
-use traits::PointTrait;
+use traits::{PointTrait, LineStringTrait};
 use algorithm::contains::Contains;
 use num_traits::pow::pow;
 
@@ -66,11 +66,12 @@ pub trait Distance<T, Rhs = Self> {
     fn distance(&self, rhs: &Rhs) -> T;
 }
 
-pub fn point_to_point<'a, G, T>(p1: &'a G, p2: &'a G) -> T
+pub fn point_to_point<'a, P1, P2, T>(point1: &'a P1, point2: &'a P2) -> T
     where T: 'a + Float + FromPrimitive,
-          G: 'a + PointTrait<T> + ?Sized
+          P1: 'a + PointTrait<T> + ?Sized,
+          P2: 'a + PointTrait<T> + ?Sized,
 {
-    let (dx, dy) = (p1.x() - p2.x(), p1.y() - p2.y());
+    let (dx, dy) = (point1.x() - point2.x(), point1.y() - point2.y());
     dx.hypot(dy)
 }
 
@@ -159,7 +160,7 @@ impl<T> Distance<T, LineString<T>> for Point<T>
 {
     fn distance(&self, linestring: &LineString<T>) -> T {
         // No need to continue if the point is on the LineString, or it's empty
-        if linestring.contains(self) || linestring.0.len() == 0 {
+        if linestring.contains_point(self) || linestring.0.len() == 0 {
             return T::zero();
         }
         // minimum priority queue

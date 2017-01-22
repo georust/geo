@@ -10,12 +10,21 @@ pub trait ToGeo<T: Float + FromPrimitive>
 // FIXME: find good names for these traits, don't use XyzTrait naming scheme
 // FIXME: remove FromPrimitive trait
 
-pub trait PointTrait<T: Float + FromPrimitive> {
+pub trait PointTrait<T: Float + FromPrimitive>: Sized {
     fn x(&self) -> T;
     fn y(&self) -> T;
 
-    fn distance_to_point(&self, other: &Self) -> T {
+    // TODO: keep this?
+    fn has_same_coordinates_as_point<P: PointTrait<T>>(&self, other: &P) -> bool {
+        self.x() == other.x() && self.y() == other.y()
+    }
+
+    fn distance_to_point<P: PointTrait<T>>(&self, other: &P) -> T {
         ::algorithm::distance::point_to_point(self, other)
+    }
+
+    fn contains_point<P: PointTrait<T>>(&self, other: &P) -> bool {
+        ::algorithm::contains::point_contains_point(self, other)
     }
 }
 
@@ -36,6 +45,10 @@ pub trait LineStringTrait<'a, T>
     /// weighted by the length of the segments.
     fn centroid(&'a self) -> Option<::Point<T>> {
         ::algorithm::centroid::line_string(self)
+    }
+
+    fn contains_point<P: PointTrait<T>>(&'a self, other: &'a P) -> bool {
+        ::algorithm::contains::line_string_contains_point(self, other)
     }
 }
 

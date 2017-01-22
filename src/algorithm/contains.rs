@@ -1,8 +1,8 @@
-use num_traits::{Float, ToPrimitive};
+use num_traits::{Float, FromPrimitive};
 
 use types::{COORD_PRECISION, Point, LineString, Polygon, MultiPolygon, Bbox};
 use algorithm::intersects::Intersects;
-use traits::PointTrait;
+use traits::{PointTrait, LineStringTrait};
 
 ///  Checks if the geometry A is completely inside the B geometry.
 
@@ -10,6 +10,7 @@ pub trait Contains<Rhs = Self> {
     ///  Checks if the geometry A is completely inside the B geometry.
     ///
     /// ```
+    /// /*
     /// use geo::{Coordinate, Point, LineString, Polygon};
     /// use geo::algorithm::contains::Contains;
     ///
@@ -26,50 +27,57 @@ pub trait Contains<Rhs = Self> {
     ///
     /// //Point in Polygon
     /// assert!(poly.contains(&p(1., 1.)));
+    /// */
     ///
     /// ```
     ///
     fn contains(&self, rhs: &Rhs) -> bool;
 }
 
-impl<T> Contains<Point<T>> for Point<T>
-    where T: Float + ToPrimitive + ::num_traits::FromPrimitive
+pub fn point_contains_point<'a, P1, P2, T>(point1: &'a P1, point2: &'a P2) -> bool
+    where T: 'a + Float + FromPrimitive,
+          P1: 'a + PointTrait<T> + ?Sized,
+          P2: 'a + PointTrait<T> + ?Sized,
 {
-    fn contains(&self, p: &Point<T>) -> bool {
-        self.distance_to_point(p).to_f32().unwrap() < COORD_PRECISION
-    }
+    point1.distance_to_point(point2).to_f32().unwrap() < COORD_PRECISION
 }
 
-impl<T> Contains<Point<T>> for LineString<T>
-    where T: Float + ::num_traits::FromPrimitive
+pub fn line_string_contains_point<'a, L, P, T>(line_string: &'a L, point: &'a P) -> bool
+    where T: 'a + Float + FromPrimitive,
+          L: 'a + LineStringTrait<'a, T> + ?Sized,
+          P: 'a + PointTrait<T> + ?Sized,
 {
-    fn contains(&self, p: &Point<T>) -> bool {
-        let vect = &self.0;
-        // LineString without points
-        if vect.is_empty() {
-            return false;
-        }
-        // LineString with one point equal p
-        if vect.len() == 1 {
-            return vect[0].contains(p);
-        }
-        // check if point is a vertex
-        if vect.contains(p) {
+    // FIXME: remove collect
+    let vect = line_string.points().collect::<Vec<_>>();
+
+    // LineString without points
+    if vect.is_empty() {
+        return false;
+    }
+    // LineString with one point equal p
+    if vect.len() == 1 {
+        return vect[0].contains_point(point);
+    }
+    // check if point is a vertex
+    for p in &vect {
+        if p.has_same_coordinates_as_point(point) {
             return true;
         }
-        for ps in vect.windows(2) {
-            if ((ps[0].y() == ps[1].y()) && (ps[0].y() == p.y()) &&
-                (p.x() > ps[0].x().min(ps[1].x())) &&
-                (p.x() < ps[0].x().max(ps[1].x()))) ||
-               ((ps[0].x() == ps[1].x()) && (ps[0].x() == p.x()) &&
-                (p.y() > ps[0].y().min(ps[1].y())) &&
-                (p.y() < ps[0].y().max(ps[1].y()))) {
-                return true;
-            }
-        }
-        false
     }
+
+    for ps in vect.windows(2) {
+        if ((ps[0].y() == ps[1].y()) && (ps[0].y() == point.y()) &&
+            (point.x() > ps[0].x().min(ps[1].x())) &&
+            (point.x() < ps[0].x().max(ps[1].x()))) ||
+           ((ps[0].x() == ps[1].x()) && (ps[0].x() == point.x()) &&
+            (point.y() > ps[0].y().min(ps[1].y())) &&
+            (point.y() < ps[0].y().max(ps[1].y()))) {
+            return true;
+        }
+    }
+    false
 }
+
 #[derive(PartialEq, Clone, Debug)]
 enum PositionPoint {
     OnBoundary,
@@ -91,7 +99,7 @@ fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
         return PositionPoint::Outside;
     }
     // Point is on linestring
-    if linestring.contains(p) {
+    if linestring.contains_point(p) {
         return PositionPoint::OnBoundary;
     }
 
@@ -166,23 +174,24 @@ impl<T> Contains<Bbox<T>> for Bbox<T>
 mod test {
     use types::{Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
     use algorithm::contains::Contains;
+    use traits::LineStringTrait;
     /// Tests: Point in LineString
     #[test]
     fn empty_linestring_test() {
         let linestring = LineString(Vec::new());
-        assert!(!linestring.contains(&Point::new(2., 1.)));
+        assert!(!linestring.contains_point(&Point::new(2., 1.)));
     }
     #[test]
     fn linestring_point_is_vertex_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.)]);
-        assert!(linestring.contains(&p(2., 2.)));
+        assert!(linestring.contains_point(&p(2., 2.)));
     }
     #[test]
     fn linestring_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.)]);
-        assert!(linestring.contains(&p(1., 0.)));
+        assert!(linestring.contains_point(&p(1., 0.)));
     }
     /// Tests: Point in Polygon
     #[test]

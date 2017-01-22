@@ -20,7 +20,7 @@ pub fn line_string<'a, G, T>(line_string: &'a G) -> Option<Point<T>>
         let mut sum_y = T::zero();
         let mut total_length = T::zero();
         for ps in vect.windows(2) {
-            let segment_len = ps[0].distance_to_point(&ps[1]);
+            let segment_len = ps[0].distance_to_point(ps[1]);
             let (x1, y1, x2, y2) = (ps[0].x(), ps[0].y(), ps[1].x(), ps[1].y());
             total_length = total_length + segment_len;
             sum_x = sum_x + segment_len * ((x1 + x2) / (T::one() + T::one()));
