@@ -4,27 +4,6 @@ use types::{Point, LineString};
 use traits::{PolygonTrait, LineStringTrait, PointTrait, MultiPolygonTrait};
 use algorithm::distance::Distance;
 
-/// Calculation of the centroid.
-pub trait Centroid<T: Float + FromPrimitive> {
-    /// Calculation the centroid, see: https://en.wikipedia.org/wiki/Centroid
-    ///
-    /// ```
-    /// /*
-    /// use geo::{Point, LineString, Coordinate};
-    /// use geo::algorithm::centroid::Centroid;
-    ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(40.02f64, 116.34));
-    /// vec.push(Point::new(40.02f64, 116.34));
-    /// let linestring = LineString(vec);
-    ///
-    /// println!("Centroid {:?}", linestring.centroid());
-    /// */
-    /// ```
-    ///
-    fn centroid(&self) -> Option<Point<T>>;
-}
-
 pub fn line_string<'a, G, T>(line_string: &'a G) -> Option<Point<T>> 
     where T: 'a + Float + FromPrimitive,
           G: 'a + LineStringTrait<'a, T> + ?Sized
