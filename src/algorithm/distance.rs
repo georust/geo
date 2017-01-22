@@ -64,7 +64,7 @@ pub trait Distance<T, Rhs = Self> {
 }
 
 impl<T> Distance<T, Point<T>> for Point<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     fn distance(&self, p: &Point<T>) -> T {
         let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
@@ -84,7 +84,7 @@ impl<T> Distance<T, Point<T>> for Point<T>
 // falls on the line past one end or the other of the segment. In that case the
 // distance to the segment will be the distance to the nearer end
 fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
-    where T: Float + ToPrimitive
+    where T: Float + ToPrimitive + ::num::FromPrimitive
 {
     let dist_squared = pow(start.distance(end), 2);
     // Implies that start == end
@@ -103,30 +103,30 @@ fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) 
 
 #[derive(PartialEq, Debug)]
 struct Mindist<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     distance: T,
 }
 // These impls give us a min-heap when used with BinaryHeap
 impl<T> Ord for Mindist<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     fn cmp(&self, other: &Mindist<T>) -> Ordering {
         other.distance.partial_cmp(&self.distance).unwrap()
     }
 }
 impl<T> PartialOrd for Mindist<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     fn partial_cmp(&self, other: &Mindist<T>) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
-impl<T> Eq for Mindist<T> where T: Float {}
+impl<T> Eq for Mindist<T> where T: Float + ::num::FromPrimitive {}
 
 // Minimum distance from a Point to a Polygon
 impl<T> Distance<T, Polygon<T>> for Point<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     fn distance(&self, polygon: &Polygon<T>) -> T {
         // get exterior ring
@@ -153,7 +153,7 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
 
 // Minimum distance from a Point to a LineString
 impl<T> Distance<T, LineString<T>> for Point<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     fn distance(&self, linestring: &LineString<T>) -> T {
         // No need to continue if the point is on the LineString, or it's empty

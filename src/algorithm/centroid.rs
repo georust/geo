@@ -1,11 +1,11 @@
 use num_traits::{Float, FromPrimitive};
 
-use types::{Point, LineString, Polygon, MultiPolygon, Bbox};
-use traits::PolygonTrait;
+use types::{Point, LineString, MultiPolygon, Bbox};
+use traits::{PolygonTrait, LineStringTrait, PointTrait};
 use algorithm::distance::Distance;
 
 /// Calculation of the centroid.
-pub trait Centroid<T: Float> {
+pub trait Centroid<T: Float + FromPrimitive> {
     /// Calculation the centroid, see: https://en.wikipedia.org/wiki/Centroid
     ///
     /// ```
@@ -24,7 +24,7 @@ pub trait Centroid<T: Float> {
 }
 
 impl<T> Centroid<T> for LineString<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     ///
     /// Centroid on a LineString is the mean of the middle of the segment
@@ -54,34 +54,30 @@ impl<T> Centroid<T> for LineString<T>
     }
 }
 
-impl<T> Centroid<T> for Polygon<T>
-    where T: Float + FromPrimitive
+pub fn polygon<'a, G, T>(polygon: &'a G) -> Option<Point<T>> 
+    where T: 'a + Float + FromPrimitive,
+          G: 'a + PolygonTrait<'a, T> + ?Sized
 {
-    ///
-    /// Centroid on a Polygon.
-    /// See: https://en.wikipedia.org/wiki/Centroid
-    ///
-    fn centroid(&self) -> Option<Point<T>> {
-        // TODO: consideration of inner polygons;
-        let linestring = &self.exterior;
-        let vect = &linestring.0;
-        if vect.is_empty() {
-            return None;
+    // TODO: consideration of inner polygons;
+    let mut rings = polygon.rings();
+    // TODO: remove `collect`
+    let vect = rings.next().expect("no outer ring").points().collect::<Vec<_>>();
+    if vect.is_empty() {
+        return None;
+    }
+    if vect.len() == 1 {
+        Some(Point::new(vect[0].x(), vect[0].y()))
+    } else {
+        let area = polygon.area();
+        let mut sum_x = T::zero();
+        let mut sum_y = T::zero();
+        for ps in vect.windows(2) {
+            let tmp = ps[0].x() * ps[1].y() - ps[1].x() * ps[0].y();
+            sum_x = sum_x + ((ps[1].x() + ps[0].x()) * tmp);
+            sum_y = sum_y + ((ps[1].y() + ps[0].y()) * tmp);
         }
-        if vect.len() == 1 {
-            Some(Point::new(vect[0].x(), vect[0].y()))
-        } else {
-            let area = self.area();
-            let mut sum_x = T::zero();
-            let mut sum_y = T::zero();
-            for ps in vect.windows(2) {
-                let tmp = ps[0].x() * ps[1].y() - ps[1].x() * ps[0].y();
-                sum_x = sum_x + ((ps[1].x() + ps[0].x()) * tmp);
-                sum_y = sum_y + ((ps[1].y() + ps[0].y()) * tmp);
-            }
-            let six = T::from_i32(6).unwrap();
-            Some(Point::new(sum_x / (six * area), sum_y / (six * area)))
-        }
+        let six = T::from_i32(6).unwrap();
+        Some(Point::new(sum_x / (six * area), sum_y / (six * area)))
     }
 }
 
@@ -110,7 +106,7 @@ impl<T> Centroid<T> for MultiPolygon<T>
 }
 
 impl<T> Centroid<T> for Bbox<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     ///
     /// Centroid on a Bbox.
@@ -124,6 +120,7 @@ impl<T> Centroid<T> for Bbox<T>
 #[cfg(test)]
 mod test {
     use types::{COORD_PRECISION, Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
+    use traits::PolygonTrait;
     use algorithm::centroid::Centroid;
     use algorithm::distance::Distance;
     /// Tests: Centroid of LineString

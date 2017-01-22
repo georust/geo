@@ -4,7 +4,7 @@ use types::{Bbox, Point, MultiPoint, LineString, MultiLineString, Polygon, Multi
 
 /// Calculation of the bounding box of a geometry.
 
-pub trait BoundingBox<T: Float> {
+pub trait BoundingBox<T: Float + ::num::FromPrimitive> {
     /// Return a Bounding Box of a geometry
     ///
     /// ```
@@ -29,13 +29,13 @@ pub trait BoundingBox<T: Float> {
 
 
 fn get_min_max<T>(p: T, min: T, max: T) -> (T, T)
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     if p > max {(min, p)} else if p < min {(p, max)} else {(min, max)}
 }
 
 fn get_bbox<'a, I, T>(collection: I) -> Option<Bbox<T>>
-    where T: 'a + Float,
+    where T: 'a + Float + ::num::FromPrimitive,
           I: 'a + IntoIterator<Item = &'a Point<T>>
 {
     let mut iter  = collection.into_iter();
@@ -55,7 +55,7 @@ fn get_bbox<'a, I, T>(collection: I) -> Option<Bbox<T>>
 
 
 impl<T> BoundingBox<T> for MultiPoint<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     ///
     /// Return the BoundingBox for a MultiPoint
@@ -66,7 +66,7 @@ impl<T> BoundingBox<T> for MultiPoint<T>
 }
 
 impl<T> BoundingBox<T> for LineString<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     ///
     /// Return the BoundingBox for a LineString
@@ -77,7 +77,7 @@ impl<T> BoundingBox<T> for LineString<T>
 }
 
 impl<T> BoundingBox<T> for MultiLineString<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     ///
     /// Return the BoundingBox for a MultiLineString
@@ -88,7 +88,7 @@ impl<T> BoundingBox<T> for MultiLineString<T>
 }
 
 impl<T> BoundingBox<T> for Polygon<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     ///
     /// Return the BoundingBox for a Polygon
@@ -100,7 +100,7 @@ impl<T> BoundingBox<T> for Polygon<T>
 }
 
 impl<T> BoundingBox<T> for MultiPolygon<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     ///
     /// Return the BoundingBox for a MultiPolygon

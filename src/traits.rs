@@ -1,13 +1,14 @@
 pub use ::Geometry;
 
-use num_traits::Float;
+use num_traits::{Float, FromPrimitive};
 
-pub trait ToGeo<T: Float>
+pub trait ToGeo<T: Float + FromPrimitive>
 {
     fn to_geo(&self) -> Geometry<T>;
 }
 
 // FIXME: find good names for these traits, don't use XyzTrait naming scheme
+// FIXME: remove FromPrimitive trait
 
 pub trait PointTrait<T: Float> {
     fn x(&self) -> T;
@@ -15,7 +16,7 @@ pub trait PointTrait<T: Float> {
 }
 
 pub trait LineStringTrait<'a, T>
-    where T: 'a + Float
+    where T: 'a + Float + FromPrimitive
 {
     type ItemType: 'a + PointTrait<T>;
     type Iter: Iterator<Item=&'a Self::ItemType>;
@@ -24,7 +25,7 @@ pub trait LineStringTrait<'a, T>
 }
 
 pub trait PolygonTrait<'a, T>
-    where T: 'a + Float,
+    where T: 'a + Float + FromPrimitive,
 {
     type ItemType: 'a + LineStringTrait<'a, T>;
     type Iter: 'a + Iterator<Item=&'a Self::ItemType>;
@@ -34,10 +35,16 @@ pub trait PolygonTrait<'a, T>
     fn area(&'a self) -> T {
         ::algorithm::area::polygon(self)
     }
+
+    /// Centroid on a Polygon.
+    /// See: https://en.wikipedia.org/wiki/Centroid
+    fn centroid(&'a self) -> Option<::Point<T>> {
+        ::algorithm::centroid::polygon(self)
+    }
 }
 
 pub trait MultiPointTrait<'a, T>
-    where T: 'a + Float,
+    where T: 'a + Float + FromPrimitive,
 {
     type ItemType: 'a + PointTrait<T>;
     type Iter: Iterator<Item=&'a Self::ItemType>;
@@ -46,7 +53,7 @@ pub trait MultiPointTrait<'a, T>
 }
 
 pub trait MultiLineStringTrait<'a, T>
-    where T: 'a + Float,
+    where T: 'a + Float + FromPrimitive,
 {
     type ItemType: 'a + LineStringTrait<'a, T>;
     type Iter: Iterator<Item=&'a Self::ItemType>;
@@ -55,7 +62,7 @@ pub trait MultiLineStringTrait<'a, T>
 }
 
 pub trait MultiPolygonTrait<'a, T>
-    where T: 'a + Float,
+    where T: 'a + Float + FromPrimitive,
 {
     type ItemType: 'a + PolygonTrait<'a, T>;
     type Iter: Iterator<Item=&'a Self::ItemType>;

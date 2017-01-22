@@ -23,7 +23,7 @@ pub trait Intersects<Rhs = Self> {
 }
 
 impl<T> Intersects<LineString<T>> for LineString<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     // See: https://github.com/brandonxiang/geojson-python-utils/blob/33b4c00c6cf27921fb296052d0c0341bd6ca1af2/geojson_utils.py
     fn intersects(&self, linestring: &LineString<T>) -> bool {
@@ -55,7 +55,7 @@ impl<T> Intersects<LineString<T>> for LineString<T>
 }
 
 impl<T> Intersects<LineString<T>> for Polygon<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     fn intersects(&self, linestring: &LineString<T>) -> bool {
         // line intersects inner or outer polygon edge
@@ -69,7 +69,7 @@ impl<T> Intersects<LineString<T>> for Polygon<T>
 }
 
 impl<T> Intersects<Bbox<T>> for Bbox<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     fn intersects(&self, bbox: &Bbox<T>) -> bool {
         // line intersects inner or outer polygon edge
@@ -83,7 +83,7 @@ impl<T> Intersects<Bbox<T>> for Bbox<T>
 }
 
 impl<T> Intersects<Polygon<T>> for Bbox<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     fn intersects(&self, polygon: &Polygon<T>) -> bool {
         polygon.intersects(self)
@@ -91,7 +91,7 @@ impl<T> Intersects<Polygon<T>> for Bbox<T>
 }
 
 impl<T> Intersects<Bbox<T>> for Polygon<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     fn intersects(&self, bbox: &Bbox<T>) -> bool {
         let p = Polygon::new(LineString(vec![Point::new(bbox.xmin, bbox.ymin),
@@ -105,7 +105,7 @@ impl<T> Intersects<Bbox<T>> for Polygon<T>
 }
 
 impl<T> Intersects<Polygon<T>> for Polygon<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     fn intersects(&self, polygon: &Polygon<T>) -> bool {
         // self intersects (or contains) any line in polygon

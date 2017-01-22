@@ -24,7 +24,7 @@ pub trait Length<T, RHS = Self> {
 }
 
 impl<T> Length<T> for LineString<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     fn length(&self) -> T {
         self.0.windows(2)
@@ -33,7 +33,7 @@ impl<T> Length<T> for LineString<T>
 }
 
 impl<T> Length<T> for MultiLineString<T>
-    where T: Float
+    where T: Float + ::num::FromPrimitive
 {
     fn length(&self) -> T {
         self.0.iter().fold(T::zero(), |total, line| total + line.length())

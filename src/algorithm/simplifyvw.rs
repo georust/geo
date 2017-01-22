@@ -1,13 +1,13 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use num_traits::Float;
+use num_traits::{Float, FromPrimitive};
 use types::{Point, LineString};
 
 // A helper struct for `visvalingam`, defined out here because
 // #[deriving] doesn't work inside functions.
 #[derive(PartialEq, Debug)]
 struct VScore<T>
-    where T: Float
+    where T: Float + FromPrimitive
 {
     area: T,
     current: usize,
@@ -17,7 +17,7 @@ struct VScore<T>
 
 // These impls give us a min-heap
 impl<T> Ord for VScore<T>
-    where T: Float
+    where T: Float + FromPrimitive
 {
     fn cmp(&self, other: &VScore<T>) -> Ordering {
         other.area.partial_cmp(&self.area).unwrap()
@@ -25,14 +25,14 @@ impl<T> Ord for VScore<T>
 }
 
 impl<T> PartialOrd for VScore<T>
-    where T: Float
+    where T: Float + FromPrimitive
 {
     fn partial_cmp(&self, other: &VScore<T>) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<T> Eq for VScore<T> where T: Float {}
+impl<T> Eq for VScore<T> where T: Float + FromPrimitive {}
 
 /// Simplify a line using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
 ///
@@ -47,7 +47,7 @@ impl<T> Eq for VScore<T> where T: Float {}
 // It's OK to remove triangles with areas below the epsilon,
 // then recalculate the new triangle area and push it onto the heap
 pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
-    where T: Float
+    where T: Float + FromPrimitive
 {
     // No need to continue without at least three points
     if orig.len() < 3 || orig.is_empty() {
@@ -138,7 +138,7 @@ pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
 
 // Area of a triangle given three vertices
 fn area<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> T
-    where T: Float
+    where T: Float + FromPrimitive
 {
     ((p1.x() - p3.x()) * (p2.y() - p3.y()) - (p2.x() - p3.x()) * (p1.y() - p3.y())).abs() /
     (T::one() + T::one())
@@ -168,11 +168,11 @@ pub trait SimplifyVW<T, Epsilon = T> {
     /// let simplified = linestring.simplifyvw(&30.0);
     /// assert_eq!(simplified, ls_compare)
     /// ```
-    fn simplifyvw(&self, epsilon: &T) -> Self where T: Float;
+    fn simplifyvw(&self, epsilon: &T) -> Self where T: Float + FromPrimitive;
 }
 
 impl<T> SimplifyVW<T> for LineString<T>
-    where T: Float
+    where T: Float + FromPrimitive
 {
     fn simplifyvw(&self, epsilon: &T) -> LineString<T> {
         LineString(visvalingam(&self.0, epsilon))
