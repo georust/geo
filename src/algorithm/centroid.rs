@@ -9,6 +9,7 @@ pub trait Centroid<T: Float + FromPrimitive> {
     /// Calculation the centroid, see: https://en.wikipedia.org/wiki/Centroid
     ///
     /// ```
+    /// /*
     /// use geo::{Point, LineString, Coordinate};
     /// use geo::algorithm::centroid::Centroid;
     ///
@@ -18,12 +19,12 @@ pub trait Centroid<T: Float + FromPrimitive> {
     /// let linestring = LineString(vec);
     ///
     /// println!("Centroid {:?}", linestring.centroid());
+    /// */
     /// ```
     ///
     fn centroid(&self) -> Option<Point<T>>;
 }
 
-/*
 pub fn line_string<'a, G, T>(line_string: &'a G) -> Option<Point<T>> 
     where T: 'a + Float + FromPrimitive,
           G: 'a + LineStringTrait<'a, T> + ?Sized
@@ -41,7 +42,7 @@ pub fn line_string<'a, G, T>(line_string: &'a G) -> Option<Point<T>>
         let mut sum_y = T::zero();
         let mut total_length = T::zero();
         for ps in vect.windows(2) {
-            let segment_len = ps[0].distance(&ps[1]);
+            let segment_len = ps[0].distance_to_point(&ps[1]);
             let (x1, y1, x2, y2) = (ps[0].x(), ps[0].y(), ps[1].x(), ps[1].y());
             total_length = total_length + segment_len;
             sum_x = sum_x + segment_len * ((x1 + x2) / (T::one() + T::one()));
@@ -50,7 +51,6 @@ pub fn line_string<'a, G, T>(line_string: &'a G) -> Option<Point<T>>
         Some(Point::new(sum_x / total_length, sum_y / total_length))
     }
 }
-*/
 
 pub fn polygon<'a, G, T>(polygon: &'a G) -> Option<Point<T>> 
     where T: 'a + Float + FromPrimitive,

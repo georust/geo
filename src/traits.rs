@@ -30,8 +30,7 @@ pub trait LineStringTrait<'a, T>
     /// Centroid on a LineString is the mean of the middle of the segment
     /// weighted by the length of the segments.
     fn centroid(&'a self) -> Option<::Point<T>> {
-        unimplemented!()
-        //::algorithm::centroid::line_string(self)
+        ::algorithm::centroid::line_string(self)
     }
 }
 

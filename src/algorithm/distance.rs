@@ -17,6 +17,7 @@ pub trait Distance<T, Rhs = Self> {
     /// The distance between a `Point` and an empty `LineString` is `0.0`  
     ///
     /// ```
+    /// /*
     /// use geo::{COORD_PRECISION, Point, LineString, Polygon};
     /// use geo::algorithm::distance::Distance;
     ///
@@ -60,6 +61,7 @@ pub trait Distance<T, Rhs = Self> {
     /// let p = Point::new(5.5, 2.1);
     /// let dist = p.distance(&ls);
     /// assert_eq!(dist, 1.1313708498984758);
+    /// */
     /// ```
     fn distance(&self, rhs: &Rhs) -> T;
 }
