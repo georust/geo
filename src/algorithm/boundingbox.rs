@@ -1,4 +1,4 @@
-use num::Float;
+use num_traits::Float;
 
 use types::{Bbox, Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 

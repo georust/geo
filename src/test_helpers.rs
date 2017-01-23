@@ -1,4 +1,4 @@
-use num::Float;
+use num_traits::Float;
 
 pub fn within_epsilon<F: Float>(x: F, y: F, epsilon: F) -> bool {
     let a = x.abs();

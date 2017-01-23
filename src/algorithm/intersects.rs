@@ -1,4 +1,4 @@
-use num::Float;
+use num_traits::Float;
 use types::{LineString, Polygon, Bbox, Point};
 use algorithm::contains::Contains;
 

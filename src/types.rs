@@ -3,7 +3,7 @@ use std::ops::AddAssign;
 use std::ops::Neg;
 use std::ops::Sub;
 
-use num::{Float, ToPrimitive};
+use num_traits::{Float, ToPrimitive};
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 

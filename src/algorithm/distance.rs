@@ -1,9 +1,9 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use num::{Float, ToPrimitive};
+use num_traits::{Float, ToPrimitive};
 use types::{Point, LineString, Polygon};
 use algorithm::contains::Contains;
-use num::pow::pow;
+use num_traits::pow::pow;
 
 /// Returns the distance between two geometries.
 

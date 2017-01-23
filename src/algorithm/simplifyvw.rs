@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use num::Float;
+use num_traits::Float;
 use types::{Point, LineString};
 
 // A helper struct for `visvalingam`, defined out here because
