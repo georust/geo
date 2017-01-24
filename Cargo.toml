@@ -10,4 +10,4 @@ documentation = "https://georust.github.io/rust-geo/"
 keywords = ["gis", "geo", "geography", "geospatial"]
 
 [dependencies]
-num = "0.1"
+num-traits = "0.1"

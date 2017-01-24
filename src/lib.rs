@@ -1,4 +1,4 @@
-extern crate num;
+extern crate num_traits;
 
 pub use traits::ToGeo;
 pub use types::*;

@@ -1,4 +1,4 @@
-use num::Float;
+use num_traits::Float;
 use types::{LineString, Polygon, MultiPolygon, Bbox};
 
 /// Calculation of the area.
@@ -59,7 +59,7 @@ impl<T> Area<T> for Bbox<T>
 
 #[cfg(test)]
 mod test {
-    use num::Float;
+    use num_traits::Float;
     use types::{Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
     use algorithm::area::Area;
     use test_helpers::within_epsilon;

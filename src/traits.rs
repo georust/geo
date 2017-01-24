@@ -1,6 +1,6 @@
 pub use ::Geometry;
 
-use num::Float;
+use num_traits::Float;
 
 pub trait ToGeo<T: Float>
 {
