@@ -3,36 +3,6 @@ use num_traits::{Float, FromPrimitive};
 use types::COORD_PRECISION;
 use traits::{PointTrait, LineStringTrait, PolygonTrait, MultiPolygonTrait};
 
-///  Checks if the geometry A is completely inside the B geometry.
-
-trait Contains<Rhs = Self> {
-    ///  Checks if the geometry A is completely inside the B geometry.
-    ///
-    /// ```
-    /// /*
-    /// use geo::{Coordinate, Point, LineString, Polygon};
-    /// use geo::algorithm::contains::Contains;
-    ///
-    /// let p = |x, y| Point(Coordinate { x: x, y: y });
-    /// let v = Vec::new();
-    /// let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
-    /// let poly = Polygon::new(linestring.clone(), v);
-    ///
-    /// //Point in Point
-    /// assert!(p(2., 0.).contains(&p(2., 0.)));
-    ///
-    /// //Point in Linestring
-    /// assert!(linestring.contains(&p(2., 0.)));
-    ///
-    /// //Point in Polygon
-    /// assert!(poly.contains(&p(1., 1.)));
-    /// */
-    ///
-    /// ```
-    ///
-    fn contains(&self, rhs: &Rhs) -> bool;
-}
-
 pub fn point_contains_point<'a, P1, P2, T>(point1: &'a P1, point2: &'a P2) -> bool
     where T: 'a + Float + FromPrimitive,
           P1: 'a + PointTrait<T> + ?Sized,
