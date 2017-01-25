@@ -2,8 +2,7 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::{Float, ToPrimitive, FromPrimitive};
 use types::{Point, LineString, Polygon};
-use traits::{PointTrait, LineStringTrait};
-use algorithm::contains::Contains;
+use traits::{PointTrait, LineStringTrait, PolygonTrait};
 use num_traits::pow::pow;
 
 /// Returns the distance between two geometries.
@@ -137,7 +136,7 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
         // exterior ring as a LineString
         let ext_ring = &exterior.0;
         // No need to continue if the polygon contains the point, or is zero-length
-        if polygon.contains(self) || ext_ring.is_empty() {
+        if polygon.contains_point(self) || ext_ring.is_empty() {
             return T::zero();
         }
         // minimum priority queue

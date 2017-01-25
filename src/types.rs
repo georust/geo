@@ -26,6 +26,25 @@ pub struct Bbox<T>
     pub ymax: T,
 }
 
+// TODO: complete this:
+/*
+impl<'a, T: 'a + Float + FromPrimitive> ::PolygonTrait<'a, T> for Bbox<T> {
+    type ItemType = LineString<T>;
+    type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
+
+    fn rings(&'a self) -> Self::Iter {
+        let line_string = ::LineString(vec![
+           Point(Coordinate { x: self.xmin, y: self.ymax }),
+           Point(Coordinate { x: self.xmax, y: self.ymax }),
+           Point(Coordinate { x: self.xmax, y: self.ymin }),
+           Point(Coordinate { x: self.xmin, y: self.ymin }),
+        ]);
+        let iter = ::std::iter::once(line_string);
+        Box::new(iter)
+    }
+}
+*/
+
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Point<T> (pub Coordinate<T>) where T: Float + FromPrimitive;
 

@@ -50,6 +50,10 @@ pub trait LineStringTrait<'a, T>
     fn contains_point<P: PointTrait<T>>(&'a self, other: &'a P) -> bool {
         ::algorithm::contains::line_string_contains_point(self, other)
     }
+
+    fn intersects_line_string<L: LineStringTrait<'a, T>>(&'a self, line_string: &'a L) -> bool {
+        ::algorithm::intersects::line_string_intersects_line_string(self, line_string)
+    }
 }
 
 pub trait PolygonTrait<'a, T>
@@ -68,6 +72,18 @@ pub trait PolygonTrait<'a, T>
     /// See: https://en.wikipedia.org/wiki/Centroid
     fn centroid(&'a self) -> Option<::Point<T>> {
         ::algorithm::centroid::polygon(self)
+    }
+
+    fn contains_point<P: PointTrait<T>>(&'a self, point: &'a P) -> bool {
+        ::algorithm::contains::polygon_contains_point(self, point)
+    }
+
+    fn contains_line_string<L: LineStringTrait<'a, T>>(&'a self, line_string: &'a L) -> bool {
+        ::algorithm::contains::polygon_contains_line_string(self, line_string)
+    }
+
+    fn intersects_line_string<L: LineStringTrait<'a, T>>(&'a self, line_string: &'a L) -> bool {
+        ::algorithm::intersects::polygon_intersects_line_string(self, line_string)
     }
 }
 
@@ -108,5 +124,9 @@ pub trait MultiPolygonTrait<'a, T>
 
     fn centroid(&'a self) -> Option<::Point<T>> {
         ::algorithm::centroid::multi_polygon(self)
+    }
+
+    fn contains_point<P: PointTrait<T>>(&'a self, point: &'a P) -> bool {
+        ::algorithm::contains::multi_polygon_contains_point(self, point)
     }
 }
