@@ -85,6 +85,10 @@ pub trait PolygonTrait<'a, T>
     fn intersects_line_string<L: LineStringTrait<'a, T>>(&'a self, line_string: &'a L) -> bool {
         ::algorithm::intersects::polygon_intersects_line_string(self, line_string)
     }
+
+    fn intersects_polygon<P: PolygonTrait<'a, T>>(&'a self, polygon: &'a P) -> bool {
+        ::algorithm::intersects::polygon_intersects_polygon(self, polygon)
+    }
 }
 
 pub trait MultiPointTrait<'a, T>
