@@ -9,7 +9,7 @@ pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Coordinate<T>
-    where T: Float 
+    where T: Float
 {
     pub x: T,
     pub y: T,
@@ -17,7 +17,7 @@ pub struct Coordinate<T>
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Bbox<T>
-    where T: Float 
+    where T: Float
 {
     pub xmin: T,
     pub xmax: T,
@@ -44,11 +44,25 @@ impl<'a, T: 'a + Float > ::PolygonTrait<'a, T> for Bbox<T> {
 }
 */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Point<T> (pub Coordinate<T>) where T: Float ;
+pub struct Point<T>(pub Coordinate<T>) where T: Float;
 
 impl<T> Point<T>
-    where T: Float + ToPrimitive 
+    where T: Float + ToPrimitive
 {
     /// Creates a new point.
     ///
@@ -191,7 +205,7 @@ impl<T> Point<T>
 }
 
 impl<T> Neg for Point<T>
-    where T: Float + Neg<Output = T> + ToPrimitive 
+    where T: Float + Neg<Output = T> + ToPrimitive
 {
     type Output = Point<T>;
 
@@ -211,7 +225,7 @@ impl<T> Neg for Point<T>
 }
 
 impl<T> Add for Point<T>
-    where T: Float + ToPrimitive 
+    where T: Float + ToPrimitive
 {
     type Output = Point<T>;
 
@@ -231,7 +245,7 @@ impl<T> Add for Point<T>
 }
 
 impl<T> Sub for Point<T>
-    where T: Float + ToPrimitive 
+    where T: Float + ToPrimitive
 {
     type Output = Point<T>;
 
@@ -250,7 +264,7 @@ impl<T> Sub for Point<T>
     }
 }
 
-impl<T: Float > ::PointTrait<T> for Point<T> {
+impl<T: Float> ::PointTrait<T> for Point<T> {
     fn x(&self) -> T {
         self.x()
     }
@@ -261,7 +275,7 @@ impl<T: Float > ::PointTrait<T> for Point<T> {
 }
 
 impl<T> Add for Bbox<T>
-    where T: Float + ToPrimitive 
+    where T: Float + ToPrimitive
 {
     type Output = Bbox<T>;
 
@@ -280,17 +294,33 @@ impl<T> Add for Bbox<T>
     /// assert_eq!(1000., bbox.ymax);
     /// ```
     fn add(self, rhs: Bbox<T>) -> Bbox<T> {
-        Bbox{
-            xmin: if self.xmin <= rhs.xmin {self.xmin} else {rhs.xmin},
-            xmax: if self.xmax >= rhs.xmax {self.xmax} else {rhs.xmax},
-            ymin: if self.ymin <= rhs.ymin {self.ymin} else {rhs.ymin},
-            ymax: if self.ymax >= rhs.ymax {self.ymax} else {rhs.ymax},
+        Bbox {
+            xmin: if self.xmin <= rhs.xmin {
+                self.xmin
+            } else {
+                rhs.xmin
+            },
+            xmax: if self.xmax >= rhs.xmax {
+                self.xmax
+            } else {
+                rhs.xmax
+            },
+            ymin: if self.ymin <= rhs.ymin {
+                self.ymin
+            } else {
+                rhs.ymin
+            },
+            ymax: if self.ymax >= rhs.ymax {
+                self.ymax
+            } else {
+                rhs.ymax
+            },
         }
     }
 }
 
 impl<T> AddAssign for Bbox<T>
-    where T: Float + ToPrimitive 
+    where T: Float + ToPrimitive
 {
     /// Add a boundingox to the given boundingbox.
     ///
@@ -306,21 +336,37 @@ impl<T> AddAssign for Bbox<T>
     /// assert_eq!(10., bbox0.ymin);
     /// assert_eq!(1000., bbox0.ymax);
     /// ```
-    fn add_assign(&mut self, rhs: Bbox<T>){
-        self.xmin = if self.xmin <= rhs.xmin {self.xmin} else {rhs.xmin};
-        self.xmax = if self.xmax >= rhs.xmax {self.xmax} else {rhs.xmax};
-        self.ymin = if self.ymin <= rhs.ymin {self.ymin} else {rhs.ymin};
-        self.ymax = if self.ymax >= rhs.ymax {self.ymax} else {rhs.ymax};
+    fn add_assign(&mut self, rhs: Bbox<T>) {
+        self.xmin = if self.xmin <= rhs.xmin {
+            self.xmin
+        } else {
+            rhs.xmin
+        };
+        self.xmax = if self.xmax >= rhs.xmax {
+            self.xmax
+        } else {
+            rhs.xmax
+        };
+        self.ymin = if self.ymin <= rhs.ymin {
+            self.ymin
+        } else {
+            rhs.ymin
+        };
+        self.ymax = if self.ymax >= rhs.ymax {
+            self.ymax
+        } else {
+            rhs.ymax
+        };
     }
 }
 
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float ;
+pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
-impl<'a, T: 'a + Float > ::MultiPointTrait<'a, T> for MultiPoint<T> {
+impl<'a, T: 'a + Float> ::MultiPointTrait<'a, T> for MultiPoint<T> {
     type ItemType = Point<T>;
-    type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
+    type Iter = Box<Iterator<Item = &'a Self::ItemType> + 'a>;
 
     fn points(&'a self) -> Self::Iter {
         Box::new(self.0.iter())
@@ -328,11 +374,11 @@ impl<'a, T: 'a + Float > ::MultiPointTrait<'a, T> for MultiPoint<T> {
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct LineString<T>(pub Vec<Point<T>>) where T: Float ;
+pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
-impl<'a, T: 'a + Float > ::LineStringTrait<'a, T> for LineString<T> {
+impl<'a, T: 'a + Float> ::LineStringTrait<'a, T> for LineString<T> {
     type ItemType = Point<T>;
-    type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
+    type Iter = Box<Iterator<Item = &'a Self::ItemType> + 'a>;
 
     fn points(&'a self) -> Self::Iter {
         Box::new(self.0.iter())
@@ -340,11 +386,11 @@ impl<'a, T: 'a + Float > ::LineStringTrait<'a, T> for LineString<T> {
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float ;
+pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
 
-impl<'a, T: 'a + Float > ::MultiLineStringTrait<'a, T> for MultiLineString<T> {
+impl<'a, T: 'a + Float> ::MultiLineStringTrait<'a, T> for MultiLineString<T> {
     type ItemType = LineString<T>;
-    type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
+    type Iter = Box<Iterator<Item = &'a Self::ItemType> + 'a>;
 
     fn lines(&'a self) -> Self::Iter {
         Box::new(self.0.iter())
@@ -353,14 +399,14 @@ impl<'a, T: 'a + Float > ::MultiLineStringTrait<'a, T> for MultiLineString<T> {
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Polygon<T>
-    where T: Float 
+    where T: Float
 {
     pub exterior: LineString<T>,
-    pub interiors: Vec<LineString<T>>
+    pub interiors: Vec<LineString<T>>,
 }
 
 impl<T> Polygon<T>
-    where T: Float 
+    where T: Float
 {
     /// Creates a new polygon.
     ///
@@ -376,27 +422,29 @@ impl<T> Polygon<T>
     /// assert_eq!(p.interiors, interiors);
     /// ```
     pub fn new(exterior: LineString<T>, interiors: Vec<LineString<T>>) -> Polygon<T> {
-        Polygon { exterior: exterior, interiors: interiors }
+        Polygon {
+            exterior: exterior,
+            interiors: interiors,
+        }
     }
 }
 
-impl<'a, T: 'a + Float > ::PolygonTrait<'a, T> for Polygon<T> {
+impl<'a, T: 'a + Float> ::PolygonTrait<'a, T> for Polygon<T> {
     type ItemType = LineString<T>;
-    type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
+    type Iter = Box<Iterator<Item = &'a Self::ItemType> + 'a>;
 
     fn rings(&'a self) -> Self::Iter {
-        let iter = ::std::iter::once(&self.exterior)
-            .chain(self.interiors.iter());
+        let iter = ::std::iter::once(&self.exterior).chain(self.interiors.iter());
         Box::new(iter)
     }
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float ;
+pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
 
-impl<'a, T: 'a + Float > ::MultiPolygonTrait<'a, T> for MultiPolygon<T> {
+impl<'a, T: 'a + Float> ::MultiPolygonTrait<'a, T> for MultiPolygon<T> {
     type ItemType = Polygon<T>;
-    type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
+    type Iter = Box<Iterator<Item = &'a Self::ItemType> + 'a>;
 
     fn polygons(&'a self) -> Self::Iter {
         Box::new(self.0.iter())
@@ -404,11 +452,11 @@ impl<'a, T: 'a + Float > ::MultiPolygonTrait<'a, T> for MultiPolygon<T> {
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float ;
+pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Geometry<T>
-    where T: Float 
+    where T: Float
 {
     Point(Point<T>),
     LineString(LineString<T>),
@@ -416,7 +464,7 @@ pub enum Geometry<T>
     MultiPoint(MultiPoint<T>),
     MultiLineString(MultiLineString<T>),
     MultiPolygon(MultiPolygon<T>),
-    GeometryCollection(GeometryCollection<T>)
+    GeometryCollection(GeometryCollection<T>),
 }
 
 #[cfg(test)]
@@ -440,10 +488,14 @@ mod test {
 
     #[test]
     fn polygon_new_test() {
-        let exterior = LineString(vec![Point::new(0., 0.), Point::new(1., 1.),
-                                       Point::new(1., 0.), Point::new(0., 0.)]);
-        let interiors = vec![LineString(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9),
-                                             Point::new(0.9, 0.1), Point::new(0.1, 0.1)])];
+        let exterior = LineString(vec![Point::new(0., 0.),
+                                       Point::new(1., 1.),
+                                       Point::new(1., 0.),
+                                       Point::new(0., 0.)]);
+        let interiors = vec![LineString(vec![Point::new(0.1, 0.1),
+                                             Point::new(0.9, 0.9),
+                                             Point::new(0.9, 0.1),
+                                             Point::new(0.1, 0.1)])];
         let p = Polygon::new(exterior.clone(), interiors.clone());
 
         assert_eq!(p.exterior, exterior);

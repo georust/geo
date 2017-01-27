@@ -1,8 +1,8 @@
 use num_traits::Float;
-use ::{MultiPolygonTrait, PolygonTrait, LineStringTrait, PointTrait};
+use {MultiPolygonTrait, PolygonTrait, LineStringTrait, PointTrait};
 
 fn get_linestring_area<'a, T, G>(linestring: &'a G) -> T
-    where T: 'a + Float ,
+    where T: 'a + Float,
           G: 'a + LineStringTrait<'a, T>
 {
     let mut points = linestring.points();
@@ -19,19 +19,18 @@ fn get_linestring_area<'a, T, G>(linestring: &'a G) -> T
 }
 
 pub fn polygon<'a, G, T>(polygon: &'a G) -> T
-    where T: 'a + Float ,
+    where T: 'a + Float,
           G: 'a + PolygonTrait<'a, T> + ?Sized
 {
     let mut rings = polygon.rings();
     let outer_ring = rings.next().expect("no outer ring in polygon");
     let outer_ring_area = get_linestring_area(outer_ring);
-    rings.fold(outer_ring_area, |acc, inner_ring| {
-        acc - get_linestring_area(inner_ring)
-    })
+    rings.fold(outer_ring_area,
+               |acc, inner_ring| acc - get_linestring_area(inner_ring))
 }
 
 pub fn multi_polygon<'a, G, T>(multi_polygon: &'a G) -> T
-    where T: 'a + Float ,
+    where T: 'a + Float,
           G: 'a + MultiPolygonTrait<'a, T> + ?Sized
 {
     multi_polygon.polygons().map(polygon).fold(T::zero(), |acc, n| acc + n)
@@ -42,7 +41,7 @@ mod test {
     use num_traits::Float;
     use types::{Coordinate, Point, LineString, Polygon, MultiPolygon};
     use test_helpers::within_epsilon;
-    use ::{PolygonTrait, MultiPolygonTrait};
+    use {PolygonTrait, MultiPolygonTrait};
 
     #[test]
     fn area_empty_polygon_test() {
@@ -76,7 +75,10 @@ mod test {
     #[test]
     fn area_multipolygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let poly0 = Polygon::new(LineString(vec![p(0., 0.), p(10., 0.), p(10., 10.), p(0., 10.),
+        let poly0 = Polygon::new(LineString(vec![p(0., 0.),
+                                                 p(10., 0.),
+                                                 p(10., 10.),
+                                                 p(0., 10.),
                                                  p(0., 0.)]),
                                  Vec::new());
         let poly1 = Polygon::new(LineString(vec![p(1., 1.), p(2., 1.), p(2., 2.), p(1., 2.),

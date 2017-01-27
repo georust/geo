@@ -4,17 +4,17 @@ use types::COORD_PRECISION;
 use traits::{PointTrait, LineStringTrait, PolygonTrait, MultiPolygonTrait};
 
 pub fn point_contains_point<'a, P1, P2, T>(point1: &'a P1, point2: &'a P2) -> bool
-    where T: 'a + Float ,
+    where T: 'a + Float,
           P1: 'a + PointTrait<T> + ?Sized,
-          P2: 'a + PointTrait<T> + ?Sized,
+          P2: 'a + PointTrait<T> + ?Sized
 {
     point1.distance_to_point(point2).to_f32().unwrap() < COORD_PRECISION
 }
 
 pub fn line_string_contains_point<'a, L, P, T>(line_string: &'a L, point: &'a P) -> bool
-    where T: 'a + Float ,
+    where T: 'a + Float,
           L: 'a + LineStringTrait<'a, T> + ?Sized,
-          P: 'a + PointTrait<T> + ?Sized,
+          P: 'a + PointTrait<T> + ?Sized
 {
     // FIXME: remove collect
     let vect = line_string.points().collect::<Vec<_>>();
@@ -55,13 +55,14 @@ enum PositionPoint {
 }
 
 fn get_position<'a, P, L, T>(point: &'a P, line_string: &'a L) -> PositionPoint
-    where T: 'a + Float ,
+    where T: 'a + Float,
           P: 'a + PointTrait<T> + ?Sized,
-          L: 'a + LineStringTrait<'a, T> + ?Sized,
+          L: 'a + LineStringTrait<'a, T> + ?Sized
 {
     // See: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
     //      http://geospatialpython.com/search
-    //         ?updated-min=2011-01-01T00:00:00-06:00&updated-max=2012-01-01T00:00:00-06:00&max-results=19
+    //         ?updated-min=2011-01-01T00:00:00-06:00
+    //         &updated-max=2012-01-01T00:00:00-06:00&max-results=19
     // Return the position of the point relative to a linestring
 
     // TODO: remove `collect` call here
@@ -101,9 +102,9 @@ fn get_position<'a, P, L, T>(point: &'a P, line_string: &'a L) -> PositionPoint
 }
 
 pub fn polygon_contains_point<'a, P1, P2, T>(polygon: &'a P1, point: &'a P2) -> bool
-    where T: 'a + Float ,
+    where T: 'a + Float,
           P1: 'a + PolygonTrait<'a, T> + ?Sized,
-          P2: 'a + PointTrait<T> + ?Sized,
+          P2: 'a + PointTrait<T> + ?Sized
 {
     let mut rings = polygon.rings();
     let exterior_ring = rings.next().expect("expected outer ring");
@@ -115,17 +116,17 @@ pub fn polygon_contains_point<'a, P1, P2, T>(polygon: &'a P1, point: &'a P2) -> 
 }
 
 pub fn multi_polygon_contains_point<'a, M, P, T>(multi_polygon: &'a M, point: &'a P) -> bool
-    where T: 'a + Float ,
+    where T: 'a + Float,
           M: 'a + MultiPolygonTrait<'a, T> + ?Sized,
-          P: 'a + PointTrait<T> + ?Sized,
+          P: 'a + PointTrait<T> + ?Sized
 {
     multi_polygon.polygons().any(|poly| poly.contains_point(point))
 }
 
 pub fn polygon_contains_line_string<'a, P, L, T>(polygon: &'a P, line_string: &'a L) -> bool
-    where T: 'a + Float ,
+    where T: 'a + Float,
           P: 'a + PolygonTrait<'a, T> + ?Sized,
-          L: 'a + LineStringTrait<'a, T> + Sized,
+          L: 'a + LineStringTrait<'a, T> + Sized
 {
     // All points of LineString must be in the polygon ?
     if line_string.points().all(|point| polygon.contains_point(point)) {
@@ -137,11 +138,12 @@ pub fn polygon_contains_line_string<'a, P, L, T>(polygon: &'a P, line_string: &'
 
 /*
 impl<T> Contains<Bbox<T>> for Bbox<T>
-    where T: Float 
+    where T: Float
 {
     fn contains(&self, bbox: &Bbox<T>) -> bool {
         // All points of LineString must be in the polygon ?
-        self.xmin <= bbox.xmin && self.xmax >= bbox.xmax && self.ymin <= bbox.ymin && self.ymax >= bbox.ymax
+        self.xmin <= bbox.xmin && self.xmax >= bbox.xmax
+            && self.ymin <= bbox.ymin && self.ymax >= bbox.ymax
     }
 }
 */
@@ -218,11 +220,8 @@ mod test {
     fn point_polygon_with_inner_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
-        let inner_linestring = LineString(vec![p(0.5, 0.5),
-                                               p(1.5, 0.5),
-                                               p(1.5, 1.5),
-                                               p(0.0, 1.5),
-                                               p(0.0, 0.0)]);
+        let inner_linestring =
+            LineString(vec![p(0.5, 0.5), p(1.5, 0.5), p(1.5, 1.5), p(0.0, 1.5), p(0.0, 0.0)]);
         let poly = Polygon::new(linestring, vec![inner_linestring]);
         assert!(poly.contains_point(&p(0.25, 0.25)));
         assert!(!poly.contains_point(&p(1., 1.)));
@@ -238,9 +237,11 @@ mod test {
     #[test]
     fn empty_multipolygon_two_polygons_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let poly1 = Polygon::new(LineString(vec![p(0., 0.), p(1., 0.), p(1., 1.), p(0., 1.), p(0., 0.)]),
+        let poly1 = Polygon::new(LineString(vec![p(0., 0.), p(1., 0.), p(1., 1.), p(0., 1.),
+                                                 p(0., 0.)]),
                                  Vec::new());
-        let poly2 = Polygon::new(LineString(vec![p(2., 0.), p(3., 0.), p(3., 1.), p(2., 1.), p(2., 0.)]),
+        let poly2 = Polygon::new(LineString(vec![p(2., 0.), p(3., 0.), p(3., 1.), p(2., 1.),
+                                                 p(2., 0.)]),
                                  Vec::new());
         let multipoly = MultiPolygon(vec![poly1, poly2]);
         assert!(multipoly.contains_point(&Point::new(0.5, 0.5)));
@@ -250,9 +251,11 @@ mod test {
     #[test]
     fn empty_multipolygon_two_polygons_and_inner_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let poly1 = Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
-                                 vec![LineString(vec![p(1., 1.), p(4., 1.), p(4., 4.), p(1., 1.)])]);
-        let poly2 = Polygon::new(LineString(vec![p(9., 0.), p(14., 0.), p(14., 4.), p(9., 4.), p(9., 0.)]),
+        let poly1 =
+            Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
+                         vec![LineString(vec![p(1., 1.), p(4., 1.), p(4., 4.), p(1., 1.)])]);
+        let poly2 = Polygon::new(LineString(vec![p(9., 0.), p(14., 0.), p(14., 4.), p(9., 4.),
+                                                 p(9., 0.)]),
                                  Vec::new());
 
         let multipoly = MultiPolygon(vec![poly1, poly2]);
@@ -284,8 +287,10 @@ mod test {
     fn linestring_in_inner_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
 
-        let poly = Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
-                                vec![LineString(vec![p(1., 1.), p(4., 1.), p(4., 4.), p(1., 4.), p(1., 1.)])]);
+        let poly = Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.),
+                                                p(0., 0.)]),
+                                vec![LineString(vec![p(1., 1.), p(4., 1.), p(4., 4.),
+                                                     p(1., 4.), p(1., 1.)])]);
         assert!(!poly.contains_line_string(&LineString(vec![p(2., 2.), p(3., 3.)])));
         assert!(!poly.contains_line_string(&LineString(vec![p(2., 2.), p(2., 5.)])));
         assert!(!poly.contains_line_string(&LineString(vec![p(3., 0.5), p(3., 5.)])));

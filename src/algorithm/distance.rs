@@ -6,9 +6,9 @@ use traits::{PointTrait, LineStringTrait, PolygonTrait};
 use num_traits::pow::pow;
 
 pub fn point_to_point<'a, P1, P2, T>(point1: &'a P1, point2: &'a P2) -> T
-    where T: 'a + Float ,
+    where T: 'a + Float,
           P1: 'a + PointTrait<T> + ?Sized,
-          P2: 'a + PointTrait<T> + ?Sized,
+          P2: 'a + PointTrait<T> + ?Sized
 {
     let (dx, dy) = (point1.x() - point2.x(), point1.y() - point2.y());
     dx.hypot(dy)
@@ -26,10 +26,10 @@ pub fn point_to_point<'a, P1, P2, T>(point1: &'a P1, point2: &'a P2) -> T
 // falls on the line past one end or the other of the segment. In that case the
 // distance to the segment will be the distance to the nearer end
 pub fn line_segment_distance<'a, P1, P2, P3, T>(point: &'a P1, start: &'a P2, end: &'a P3) -> T
-    where T: 'a + Float ,
+    where T: 'a + Float,
           P1: 'a + PointTrait<T> + ?Sized,
           P2: 'a + PointTrait<T> + ?Sized,
-          P3: 'a + PointTrait<T> + ?Sized,
+          P3: 'a + PointTrait<T> + ?Sized
 {
     let dist_squared = pow(start.distance_to_point(end), 2);
     // Implies that start == end
@@ -38,8 +38,9 @@ pub fn line_segment_distance<'a, P1, P2, P3, T>(point: &'a P1, start: &'a P2, en
     }
     // Consider the line extending the segment, parameterized as start + t (end - start)
     // We find the projection of the point onto the line
-    // This falls where t = [(point - start) . (end - start)] / |end - start|^2, where . is the dot product
-    // We constrain t to a 0, 1 interval to handle points outside the segment start, end
+    // This falls where t = [(point - start) . (end - start)] / |end - start|^2, where . is the
+    // dot product We constrain t to a 0, 1 interval to handle points outside the segment start,
+    // end
     let t = T::zero().max(T::one().min(point.sub(start).dot(&end.sub(start)) / dist_squared));
     let projected = Point::new(start.x() + t * (end.x() - start.x()),
                                start.y() + t * (end.y() - start.y()));
@@ -48,32 +49,32 @@ pub fn line_segment_distance<'a, P1, P2, P3, T>(point: &'a P1, start: &'a P2, en
 
 #[derive(PartialEq, Debug)]
 struct Mindist<T>
-    where T: Float 
+    where T: Float
 {
     distance: T,
 }
 // These impls give us a min-heap when used with BinaryHeap
 impl<T> Ord for Mindist<T>
-    where T: Float 
+    where T: Float
 {
     fn cmp(&self, other: &Mindist<T>) -> Ordering {
         other.distance.partial_cmp(&self.distance).unwrap()
     }
 }
 impl<T> PartialOrd for Mindist<T>
-    where T: Float 
+    where T: Float
 {
     fn partial_cmp(&self, other: &Mindist<T>) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
-impl<T> Eq for Mindist<T> where T: Float  {}
+impl<T> Eq for Mindist<T> where T: Float {}
 
 // Minimum distance from a Point to a Polygon
 pub fn polygon_to_point<'a, P1, P2, T>(polygon: &'a P1, point: &'a P2) -> T
-    where T: 'a + Float ,
+    where T: 'a + Float,
           P1: 'a + PolygonTrait<'a, T> + ?Sized,
-          P2: 'a + PointTrait<T> + ?Sized,
+          P2: 'a + PointTrait<T> + ?Sized
 {
     // get exterior ring
     // exterior ring as a LineString
@@ -100,9 +101,9 @@ pub fn polygon_to_point<'a, P1, P2, T>(polygon: &'a P1, point: &'a P2) -> T
 
 // Minimum distance from a Point to a LineString
 pub fn line_string_to_point<'a, L, P, T>(line_string: &'a L, point: &'a P) -> T
-    where T: 'a + Float ,
+    where T: 'a + Float,
           L: 'a + LineStringTrait<'a, T> + ?Sized,
-          P: 'a + PointTrait<T> + ?Sized,
+          P: 'a + PointTrait<T> + ?Sized
 {
     // No need to continue if the point is on the LineString, or it's empty
     if line_string.contains_point(point) || line_string.points().next().is_none() {
@@ -123,7 +124,7 @@ pub fn line_string_to_point<'a, L, P, T>(line_string: &'a L, point: &'a P) -> T
 #[cfg(test)]
 mod test {
     use types::{Point, LineString, Polygon};
-    use algorithm::distance::{line_segment_distance};
+    use algorithm::distance::line_segment_distance;
     use test_helpers::within_epsilon;
     use traits::PointTrait;
 
@@ -205,47 +206,25 @@ mod test {
     // Point to Polygon with an interior ring
     fn point_polygon_interior_cutout_test() {
         // an octagon
-        let ext_points = vec![
-            (4., 1.),
-            (5., 2.),
-            (5., 3.),
-            (4., 4.),
-            (3., 4.),
-            (2., 3.),
-            (2., 2.),
-            (3., 1.),
-            (4., 1.),
-        ];
+        let ext_points = vec![(4., 1.), (5., 2.), (5., 3.), (4., 4.), (3., 4.), (2., 3.),
+                              (2., 2.), (3., 1.), (4., 1.)];
         // cut out a triangle inside octagon
-        let int_points = vec![
-            (3.5, 3.5),
-            (4.4, 1.5),
-            (2.6, 1.5),
-            (3.5, 3.5)
-        ];
+        let int_points = vec![(3.5, 3.5), (4.4, 1.5), (2.6, 1.5), (3.5, 3.5)];
         let ls_ext = LineString(ext_points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let ls_int = LineString(int_points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let poly = Polygon::new(ls_ext, vec![ls_int]);
         // A point inside the cutout triangle
         let p = Point::new(3.5, 2.5);
         let dist = p.distance_to_polygon(&poly);
-                      // 0.41036467732879783 <-- Shapely
+        // 0.41036467732879783 <-- Shapely
         assert!(within_epsilon(dist, 0.41036467732879767, 1.0e-15));
     }
     #[test]
     // Point to LineString
     fn point_linestring_distance_test() {
         // like an octagon, but missing the lowest horizontal segment
-        let points = vec![
-            (5., 1.),
-            (4., 2.),
-            (4., 3.),
-            (5., 4.),
-            (6., 4.),
-            (7., 3.),
-            (7., 2.),
-            (6., 1.),
-        ];
+        let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
+                          (6., 1.)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         // A Random point "inside" the LineString
         let p = Point::new(5.5, 2.1);
@@ -256,16 +235,8 @@ mod test {
     // Point to LineString, point lies on the LineString
     fn point_linestring_contains_test() {
         // like an octagon, but missing the lowest horizontal segment
-        let points = vec![
-            (5., 1.),
-            (4., 2.),
-            (4., 3.),
-            (5., 4.),
-            (6., 4.),
-            (7., 3.),
-            (7., 2.),
-            (6., 1.),
-        ];
+        let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
+                          (6., 1.)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         // A point which lies on the LineString
         let p = Point::new(5.0, 4.0);
@@ -275,12 +246,7 @@ mod test {
     #[test]
     // Point to LineString, closed triangle
     fn point_linestring_triangle_test() {
-        let points = vec![
-            (3.5, 3.5),
-            (4.4, 2.0),
-            (2.6, 2.0),
-            (3.5, 3.5)
-        ];
+        let points = vec![(3.5, 3.5), (4.4, 2.0), (2.6, 2.0), (3.5, 3.5)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let p = Point::new(3.5, 2.5);
         let dist = p.distance_to_line_string(&ls);

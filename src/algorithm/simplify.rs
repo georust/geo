@@ -4,7 +4,7 @@ use traits::PointTrait;
 
 // perpendicular distance from a point to a line
 fn point_line_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
-    where T: Float 
+    where T: Float
 {
     if start == end {
         point.distance_to_point(start)
@@ -19,7 +19,7 @@ fn point_line_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) ->
 
 // Ramer–Douglas-Peucker line simplification algorithm
 fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
-    where T: Float 
+    where T: Float
 {
     if points.is_empty() {
         return points.to_vec();
@@ -29,9 +29,7 @@ fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     let mut distance: T;
 
     for (i, _) in points.iter().enumerate().take(points.len() - 1).skip(1) {
-        distance = point_line_distance(&points[i],
-                                       &points[0],
-                                       &*points.last().unwrap());
+        distance = point_line_distance(&points[i], &points[0], &*points.last().unwrap());
         if distance > dmax {
             index = i;
             dmax = distance;
@@ -48,7 +46,10 @@ fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
 }
 
 pub trait Simplify<T, Epsilon = T> {
-    /// Returns the simplified representation of a LineString, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
+    /// Returns the simplified representation of a LineString, using the
+    /// [Ramer–Douglas–Peucker]
+    /// (https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm)
+    /// algorithm
     ///
     /// ```
     /// use geo::{Point, LineString};
@@ -70,11 +71,11 @@ pub trait Simplify<T, Epsilon = T> {
     /// let simplified = linestring.simplify(&1.0);
     /// assert_eq!(simplified, ls_compare)
     /// ```
-    fn simplify(&self, epsilon: &T) -> Self where T: Float ;
+    fn simplify(&self, epsilon: &T) -> Self where T: Float;
 }
 
 impl<T> Simplify<T> for LineString<T>
-    where T: Float 
+    where T: Float
 {
     fn simplify(&self, epsilon: &T) -> LineString<T> {
         LineString(rdp(&self.0, epsilon))
@@ -83,7 +84,7 @@ impl<T> Simplify<T> for LineString<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Point};
+    use types::Point;
     use super::{point_line_distance, rdp};
     use test_helpers::within_epsilon;
 

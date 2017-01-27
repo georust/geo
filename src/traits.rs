@@ -1,15 +1,14 @@
-pub use ::Geometry;
+pub use Geometry;
 
 use num_traits::Float;
 
-pub trait ToGeo<T: Float>
-{
+pub trait ToGeo<T: Float> {
     fn to_geo(&self) -> Geometry<T>;
 }
 
 // FIXME: find good names for these traits, don't use XyzTrait naming scheme
 
-pub trait PointTrait<T: Float >: Sized {
+pub trait PointTrait<T: Float>: Sized {
     fn x(&self) -> T;
     fn y(&self) -> T;
 
@@ -31,14 +30,16 @@ pub trait PointTrait<T: Float >: Sized {
     }
 
     // TODO: remove N
-    fn distance_to_line_string<'a, N: 'a + Float , L: LineStringTrait<'a, N>>(&'a self, line_string: &'a L) -> N
+    fn distance_to_line_string<'a, N: 'a + Float, L: LineStringTrait<'a, N>>(&'a self,
+                                                                             line_string: &'a L)
+                                                                             -> N
         where Self: PointTrait<N>
     {
         ::algorithm::distance::line_string_to_point(line_string, self)
     }
 
     // TODO: remove N
-    fn distance_to_polygon<'a, N: 'a + Float , P: PolygonTrait<'a, N>>(&'a self, polygon: &'a P) -> N 
+    fn distance_to_polygon<'a, N: 'a + Float, P: PolygonTrait<'a, N>>(&'a self, polygon: &'a P) -> N
         where Self: PointTrait<N>
     {
         ::algorithm::distance::polygon_to_point(polygon, self)
@@ -50,10 +51,10 @@ pub trait PointTrait<T: Float >: Sized {
 }
 
 pub trait LineStringTrait<'a, T>
-    where T: 'a + Float 
+    where T: 'a + Float
 {
     type ItemType: 'a + PointTrait<T>;
-    type Iter: Iterator<Item=&'a Self::ItemType>;
+    type Iter: Iterator<Item = &'a Self::ItemType>;
 
     fn points(&'a self) -> Self::Iter;
 
@@ -76,7 +77,9 @@ pub trait LineStringTrait<'a, T>
         ::algorithm::distance::line_string_to_point(self, point)
     }
 
-    fn intersects_line_string<L: ?Sized + LineStringTrait<'a, T>>(&'a self, line_string: &'a L) -> bool {
+    fn intersects_line_string<L: ?Sized + LineStringTrait<'a, T>>(&'a self,
+                                                                  line_string: &'a L)
+                                                                  -> bool {
         ::algorithm::intersects::line_string_intersects_line_string(self, line_string)
     }
 
@@ -86,10 +89,10 @@ pub trait LineStringTrait<'a, T>
 }
 
 pub trait PolygonTrait<'a, T>
-    where T: 'a + Float ,
+    where T: 'a + Float
 {
     type ItemType: 'a + LineStringTrait<'a, T>;
-    type Iter: 'a + Iterator<Item=&'a Self::ItemType>;
+    type Iter: 'a + Iterator<Item = &'a Self::ItemType>;
 
     fn rings(&'a self) -> Self::Iter;
 
@@ -125,19 +128,19 @@ pub trait PolygonTrait<'a, T>
 }
 
 pub trait MultiPointTrait<'a, T>
-    where T: 'a + Float ,
+    where T: 'a + Float
 {
     type ItemType: 'a + PointTrait<T>;
-    type Iter: Iterator<Item=&'a Self::ItemType>;
+    type Iter: Iterator<Item = &'a Self::ItemType>;
 
     fn points(&'a self) -> Self::Iter;
 }
 
 pub trait MultiLineStringTrait<'a, T>
-    where T: 'a + Float ,
+    where T: 'a + Float
 {
     type ItemType: 'a + LineStringTrait<'a, T>;
-    type Iter: Iterator<Item=&'a Self::ItemType>;
+    type Iter: Iterator<Item = &'a Self::ItemType>;
 
     fn lines(&'a self) -> Self::Iter;
 
@@ -148,10 +151,10 @@ pub trait MultiLineStringTrait<'a, T>
 }
 
 pub trait MultiPolygonTrait<'a, T>
-    where T: 'a + Float ,
+    where T: 'a + Float
 {
     type ItemType: 'a + PolygonTrait<'a, T>;
-    type Iter: Iterator<Item=&'a Self::ItemType>;
+    type Iter: Iterator<Item = &'a Self::ItemType>;
 
     fn polygons(&'a self) -> Self::Iter;
 
