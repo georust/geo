@@ -1,18 +1,18 @@
 use num_traits::Float;
 use types::{Point, LineString};
-use algorithm::distance::Distance;
+use traits::PointTrait;
 
 // perpendicular distance from a point to a line
 fn point_line_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
     where T: Float
 {
     if start == end {
-        point.distance(start)
+        point.distance_to_point(start)
     } else {
         let numerator = ((end.x() - start.x()) * (start.y() - point.y()) -
                          (start.x() - point.x()) * (end.y() - start.y()))
             .abs();
-        let denominator = start.distance(end);
+        let denominator = start.distance_to_point(end);
         numerator / denominator
     }
 }
@@ -29,9 +29,7 @@ fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     let mut distance: T;
 
     for (i, _) in points.iter().enumerate().take(points.len() - 1).skip(1) {
-        distance = point_line_distance(&points[i],
-                                       &points[0],
-                                       &*points.last().unwrap());
+        distance = point_line_distance(&points[i], &points[0], &*points.last().unwrap());
         if distance > dmax {
             index = i;
             dmax = distance;
@@ -48,7 +46,10 @@ fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
 }
 
 pub trait Simplify<T, Epsilon = T> {
-    /// Returns the simplified representation of a LineString, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
+    /// Returns the simplified representation of a LineString, using the
+    /// [Ramer–Douglas–Peucker]
+    /// (https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm)
+    /// algorithm
     ///
     /// ```
     /// use geo::{Point, LineString};
@@ -83,7 +84,7 @@ impl<T> Simplify<T> for LineString<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Point};
+    use types::Point;
     use super::{point_line_distance, rdp};
     use test_helpers::within_epsilon;
 

@@ -5,10 +5,7 @@ pub fn within_epsilon<F: Float>(x: F, y: F, epsilon: F) -> bool {
     let b = y.abs();
     let delta = (a - b).abs();
 
-    if a.is_infinite() ||
-        a.is_nan() ||
-        b.is_infinite() ||
-        b.is_nan() {
+    if a.is_infinite() || a.is_nan() || b.is_infinite() || b.is_nan() {
         false
     } else if a == b {
         true

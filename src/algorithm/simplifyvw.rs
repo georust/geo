@@ -34,7 +34,8 @@ impl<T> PartialOrd for VScore<T>
 
 impl<T> Eq for VScore<T> where T: Float {}
 
-/// Simplify a line using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
+/// Simplify a line using the
+/// [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
 ///
 /// epsilon is the minimum triangle area
 // The paper states that:
@@ -60,12 +61,10 @@ pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     // linked list with indices into `orig`. Big number (larger than or equal to
     // `max`) means no next element, and (0, 0) means deleted element.
     let mut adjacent: Vec<(_)> = (0..orig.len())
-        .map(|i| {
-            if i == 0 {
-                (-1_i32, 1_i32)
-            } else {
-                ((i - 1) as i32, (i + 1) as i32)
-            }
+        .map(|i| if i == 0 {
+            (-1_i32, 1_i32)
+        } else {
+            ((i - 1) as i32, (i + 1) as i32)
         })
         .collect();
 
@@ -132,7 +131,7 @@ pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     // Filter out the points that have been deleted, returning remaining points
     orig.iter()
         .zip(adjacent.iter())
-        .filter_map(|(tup, adj)| { if *adj != (0, 0) { Some(*tup) } else { None } })
+        .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(*tup) } else { None })
         .collect::<Vec<Point<T>>>()
 }
 
@@ -145,9 +144,11 @@ fn area<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> T
 }
 
 pub trait SimplifyVW<T, Epsilon = T> {
-    /// Returns the simplified representation of a LineString, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm  
-    /// 
-    /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation 
+    /// Returns the simplified representation of a LineString, using the
+    /// [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263)
+    /// algorithm
+    ///
+    /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation
     ///
     /// ```
     /// use geo::{Point, LineString};

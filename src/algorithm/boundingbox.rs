@@ -31,14 +31,20 @@ pub trait BoundingBox<T: Float> {
 fn get_min_max<T>(p: T, min: T, max: T) -> (T, T)
     where T: Float
 {
-    if p > max {(min, p)} else if p < min {(p, max)} else {(min, max)}
+    if p > max {
+        (min, p)
+    } else if p < min {
+        (p, max)
+    } else {
+        (min, max)
+    }
 }
 
 fn get_bbox<'a, I, T>(collection: I) -> Option<Bbox<T>>
     where T: 'a + Float,
           I: 'a + IntoIterator<Item = &'a Point<T>>
 {
-    let mut iter  = collection.into_iter();
+    let mut iter = collection.into_iter();
     if let Some(pnt) = iter.next() {
         let mut xrange = (pnt.x(), pnt.x());
         let mut yrange = (pnt.y(), pnt.y());
@@ -47,8 +53,12 @@ fn get_bbox<'a, I, T>(collection: I) -> Option<Bbox<T>>
             xrange = get_min_max(px, xrange.0, xrange.1);
             yrange = get_min_max(py, yrange.0, yrange.1);
         }
-        return Some(Bbox{xmin: xrange.0, xmax: xrange.1,
-                         ymin: yrange.0, ymax: yrange.1})
+        return Some(Bbox {
+            xmin: xrange.0,
+            xmax: xrange.1,
+            ymin: yrange.0,
+            ymax: yrange.1,
+        });
     }
     None
 }
@@ -114,7 +124,8 @@ impl<T> BoundingBox<T> for MultiPolygon<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Bbox, Coordinate, Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
+    use types::{Bbox, Coordinate, Point, MultiPoint, LineString, MultiLineString, Polygon,
+                MultiPolygon};
     use algorithm::boundingbox::BoundingBox;
 
     #[test]
@@ -130,14 +141,24 @@ mod test {
         let mut vect = Vec::<Point<f64>>::new();
         vect.push(p);
         let linestring = LineString(vect);
-        let bbox = Bbox{xmin: 40.02f64, ymax: 116.34, xmax: 40.02, ymin: 116.34};
+        let bbox = Bbox {
+            xmin: 40.02f64,
+            ymax: 116.34,
+            xmax: 40.02,
+            ymin: 116.34,
+        };
         assert_eq!(bbox, linestring.bbox().unwrap());
     }
     #[test]
     fn linestring_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring = LineString(vec![p(1., 1.), p(2., -2.), p(-3., -3.), p(-4., 4.)]);
-        let bbox = Bbox{xmin: -4., ymax: 4., xmax: 2., ymin: -3.};
+        let bbox = Bbox {
+            xmin: -4.,
+            ymax: 4.,
+            xmax: 2.,
+            ymin: -3.,
+        };
         assert_eq!(bbox, linestring.bbox().unwrap());
     }
     #[test]
@@ -147,18 +168,28 @@ mod test {
                                              LineString(vec![p(1., 1.), p(50., 1.)]),
                                              LineString(vec![p(1., 1.), p(1., -60.)]),
                                              LineString(vec![p(1., 1.), p(1., 70.)])]);
-        let bbox = Bbox{xmin: -40., ymax: 70., xmax: 50., ymin: -60.};
+        let bbox = Bbox {
+            xmin: -40.,
+            ymax: 70.,
+            xmax: 50.,
+            ymin: -60.,
+        };
         assert_eq!(bbox, multiline.bbox().unwrap());
     }
     #[test]
     fn multipoint_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let multipoint = MultiPoint(vec![p(1., 1.), p(2., -2.), p(-3., -3.), p(-4., 4.)]);
-        let bbox = Bbox{xmin: -4., ymax: 4., xmax: 2., ymin: -3.};
+        let bbox = Bbox {
+            xmin: -4.,
+            ymax: 4.,
+            xmax: 2.,
+            ymin: -3.,
+        };
         assert_eq!(bbox, multipoint.bbox().unwrap());
     }
     #[test]
-    fn polygon_test(){
+    fn polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
         let line_bbox = linestring.bbox().unwrap();
@@ -166,13 +197,27 @@ mod test {
         assert_eq!(line_bbox, poly.bbox().unwrap());
     }
     #[test]
-    fn multipolygon_test(){
+    fn multipolygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let mpoly = MultiPolygon(vec![Polygon::new(LineString(vec![p(0., 0.), p(50., 0.), p(0., -70.), p(0., 0.)]), Vec::new()),
-                                      Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(0., 80.), p(0., 0.)]), Vec::new()),
-                                      Polygon::new(LineString(vec![p(0., 0.), p(-60., 0.), p(0., 6.), p(0., 0.)]), Vec::new()),
-                                      ]);
-        let bbox = Bbox{xmin: -60., ymax: 80., xmax: 50., ymin: -70.};
+        let mpoly = MultiPolygon(vec![Polygon::new(LineString(vec![p(0., 0.),
+                                                                   p(50., 0.),
+                                                                   p(0., -70.),
+                                                                   p(0., 0.)]),
+                                                   Vec::new()),
+                                      Polygon::new(LineString(vec![p(0., 0.), p(5., 0.),
+                                                                   p(0., 80.), p(0., 0.)]),
+                                                   Vec::new()),
+                                      Polygon::new(LineString(vec![p(0., 0.),
+                                                                   p(-60., 0.),
+                                                                   p(0., 6.),
+                                                                   p(0., 0.)]),
+                                                   Vec::new())]);
+        let bbox = Bbox {
+            xmin: -60.,
+            ymax: 80.,
+            xmax: 50.,
+            ymin: -70.,
+        };
         assert_eq!(bbox, mpoly.bbox().unwrap());
     }
 }
