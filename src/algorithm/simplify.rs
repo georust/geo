@@ -4,7 +4,7 @@ use traits::PointTrait;
 
 // perpendicular distance from a point to a line
 fn point_line_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
-    where T: Float + ::num_traits::FromPrimitive
+    where T: Float 
 {
     if start == end {
         point.distance_to_point(start)
@@ -19,7 +19,7 @@ fn point_line_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) ->
 
 // Ramer–Douglas-Peucker line simplification algorithm
 fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
-    where T: Float + ::num_traits::FromPrimitive
+    where T: Float 
 {
     if points.is_empty() {
         return points.to_vec();
@@ -70,11 +70,11 @@ pub trait Simplify<T, Epsilon = T> {
     /// let simplified = linestring.simplify(&1.0);
     /// assert_eq!(simplified, ls_compare)
     /// ```
-    fn simplify(&self, epsilon: &T) -> Self where T: Float + ::num_traits::FromPrimitive;
+    fn simplify(&self, epsilon: &T) -> Self where T: Float ;
 }
 
 impl<T> Simplify<T> for LineString<T>
-    where T: Float + ::num_traits::FromPrimitive
+    where T: Float 
 {
     fn simplify(&self, epsilon: &T) -> LineString<T> {
         LineString(rdp(&self.0, epsilon))

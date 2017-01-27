@@ -2,7 +2,7 @@ use num_traits::Float;
 use traits::{LineStringTrait, PolygonTrait, PointTrait};
 
 pub fn line_string_intersects_line_string<'a, L1, L2, T>(line_string1: &'a L1, line_string2: &'a L2) -> bool
-    where T: 'a + Float + ::num_traits::FromPrimitive,
+    where T: 'a + Float ,
           L1: 'a + LineStringTrait<'a, T> + ?Sized,
           L2: 'a + LineStringTrait<'a, T> + ?Sized,
 {
@@ -35,7 +35,7 @@ pub fn line_string_intersects_line_string<'a, L1, L2, T>(line_string1: &'a L1, l
 }
 
 pub fn polygon_intersects_line_string<'a, P, L, T>(polygon: &'a P, line_string: &'a L) -> bool
-    where T: 'a + Float + ::num_traits::FromPrimitive,
+    where T: 'a + Float ,
           P: 'a + PolygonTrait<'a, T> + ?Sized,
           L: 'a + LineStringTrait<'a, T> + ?Sized,
 {
@@ -53,7 +53,7 @@ pub fn polygon_intersects_line_string<'a, P, L, T>(polygon: &'a P, line_string: 
 
 /*
 impl<T> Intersects<Bbox<T>> for Bbox<T>
-    where T: Float + ::num_traits::FromPrimitive
+    where T: Float 
 {
     fn intersects(&self, bbox: &Bbox<T>) -> bool {
         // line intersects inner or outer polygon edge
@@ -67,7 +67,7 @@ impl<T> Intersects<Bbox<T>> for Bbox<T>
 }
 
 impl<T> Intersects<Polygon<T>> for Bbox<T>
-    where T: Float + ::num_traits::FromPrimitive
+    where T: Float 
 {
     fn intersects(&self, polygon: &Polygon<T>) -> bool {
         polygon.intersects(self)
@@ -75,7 +75,7 @@ impl<T> Intersects<Polygon<T>> for Bbox<T>
 }
 
 impl<T> Intersects<Bbox<T>> for Polygon<T>
-    where T: Float + ::num_traits::FromPrimitive
+    where T: Float 
 {
     fn intersects(&self, bbox: &Bbox<T>) -> bool {
         let p = Polygon::new(LineString(vec![Point::new(bbox.xmin, bbox.ymin),
@@ -90,7 +90,7 @@ impl<T> Intersects<Bbox<T>> for Polygon<T>
 */
 
 pub fn polygon_intersects_polygon<'a, P1, P2, T>(polygon1: &'a P1, polygon2: &'a P2) -> bool
-    where T: 'a + Float + ::num_traits::FromPrimitive,
+    where T: 'a + Float ,
           P1: 'a + PolygonTrait<'a, T> + ?Sized,
           P2: 'a + PolygonTrait<'a, T> + ?Sized,
 {

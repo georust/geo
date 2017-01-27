@@ -1,10 +1,10 @@
-use num_traits::{Float, FromPrimitive};
+use num_traits::Float;
 
 use types::COORD_PRECISION;
 use traits::{PointTrait, LineStringTrait, PolygonTrait, MultiPolygonTrait};
 
 pub fn point_contains_point<'a, P1, P2, T>(point1: &'a P1, point2: &'a P2) -> bool
-    where T: 'a + Float + FromPrimitive,
+    where T: 'a + Float ,
           P1: 'a + PointTrait<T> + ?Sized,
           P2: 'a + PointTrait<T> + ?Sized,
 {
@@ -12,7 +12,7 @@ pub fn point_contains_point<'a, P1, P2, T>(point1: &'a P1, point2: &'a P2) -> bo
 }
 
 pub fn line_string_contains_point<'a, L, P, T>(line_string: &'a L, point: &'a P) -> bool
-    where T: 'a + Float + FromPrimitive,
+    where T: 'a + Float ,
           L: 'a + LineStringTrait<'a, T> + ?Sized,
           P: 'a + PointTrait<T> + ?Sized,
 {
@@ -55,7 +55,7 @@ enum PositionPoint {
 }
 
 fn get_position<'a, P, L, T>(point: &'a P, line_string: &'a L) -> PositionPoint
-    where T: 'a + Float + FromPrimitive,
+    where T: 'a + Float ,
           P: 'a + PointTrait<T> + ?Sized,
           L: 'a + LineStringTrait<'a, T> + ?Sized,
 {
@@ -101,7 +101,7 @@ fn get_position<'a, P, L, T>(point: &'a P, line_string: &'a L) -> PositionPoint
 }
 
 pub fn polygon_contains_point<'a, P1, P2, T>(polygon: &'a P1, point: &'a P2) -> bool
-    where T: 'a + Float + FromPrimitive,
+    where T: 'a + Float ,
           P1: 'a + PolygonTrait<'a, T> + ?Sized,
           P2: 'a + PointTrait<T> + ?Sized,
 {
@@ -115,7 +115,7 @@ pub fn polygon_contains_point<'a, P1, P2, T>(polygon: &'a P1, point: &'a P2) -> 
 }
 
 pub fn multi_polygon_contains_point<'a, M, P, T>(multi_polygon: &'a M, point: &'a P) -> bool
-    where T: 'a + Float + ::num_traits::FromPrimitive,
+    where T: 'a + Float ,
           M: 'a + MultiPolygonTrait<'a, T> + ?Sized,
           P: 'a + PointTrait<T> + ?Sized,
 {
@@ -123,7 +123,7 @@ pub fn multi_polygon_contains_point<'a, M, P, T>(multi_polygon: &'a M, point: &'
 }
 
 pub fn polygon_contains_line_string<'a, P, L, T>(polygon: &'a P, line_string: &'a L) -> bool
-    where T: 'a + Float + ::num_traits::FromPrimitive,
+    where T: 'a + Float ,
           P: 'a + PolygonTrait<'a, T> + ?Sized,
           L: 'a + LineStringTrait<'a, T> + Sized,
 {
@@ -137,7 +137,7 @@ pub fn polygon_contains_line_string<'a, P, L, T>(polygon: &'a P, line_string: &'
 
 /*
 impl<T> Contains<Bbox<T>> for Bbox<T>
-    where T: Float + ::num_traits::FromPrimitive
+    where T: Float 
 {
     fn contains(&self, bbox: &Bbox<T>) -> bool {
         // All points of LineString must be in the polygon ?

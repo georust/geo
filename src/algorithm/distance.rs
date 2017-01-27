@@ -1,12 +1,12 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use num_traits::{Float, FromPrimitive};
+use num_traits::Float;
 use types::Point;
 use traits::{PointTrait, LineStringTrait, PolygonTrait};
 use num_traits::pow::pow;
 
 pub fn point_to_point<'a, P1, P2, T>(point1: &'a P1, point2: &'a P2) -> T
-    where T: 'a + Float + FromPrimitive,
+    where T: 'a + Float ,
           P1: 'a + PointTrait<T> + ?Sized,
           P2: 'a + PointTrait<T> + ?Sized,
 {
@@ -26,7 +26,7 @@ pub fn point_to_point<'a, P1, P2, T>(point1: &'a P1, point2: &'a P2) -> T
 // falls on the line past one end or the other of the segment. In that case the
 // distance to the segment will be the distance to the nearer end
 pub fn line_segment_distance<'a, P1, P2, P3, T>(point: &'a P1, start: &'a P2, end: &'a P3) -> T
-    where T: 'a + Float + FromPrimitive,
+    where T: 'a + Float ,
           P1: 'a + PointTrait<T> + ?Sized,
           P2: 'a + PointTrait<T> + ?Sized,
           P3: 'a + PointTrait<T> + ?Sized,
@@ -48,30 +48,30 @@ pub fn line_segment_distance<'a, P1, P2, P3, T>(point: &'a P1, start: &'a P2, en
 
 #[derive(PartialEq, Debug)]
 struct Mindist<T>
-    where T: Float + ::num_traits::FromPrimitive
+    where T: Float 
 {
     distance: T,
 }
 // These impls give us a min-heap when used with BinaryHeap
 impl<T> Ord for Mindist<T>
-    where T: Float + ::num_traits::FromPrimitive
+    where T: Float 
 {
     fn cmp(&self, other: &Mindist<T>) -> Ordering {
         other.distance.partial_cmp(&self.distance).unwrap()
     }
 }
 impl<T> PartialOrd for Mindist<T>
-    where T: Float + ::num_traits::FromPrimitive
+    where T: Float 
 {
     fn partial_cmp(&self, other: &Mindist<T>) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
-impl<T> Eq for Mindist<T> where T: Float + ::num_traits::FromPrimitive {}
+impl<T> Eq for Mindist<T> where T: Float  {}
 
 // Minimum distance from a Point to a Polygon
 pub fn polygon_to_point<'a, P1, P2, T>(polygon: &'a P1, point: &'a P2) -> T
-    where T: 'a + Float + FromPrimitive,
+    where T: 'a + Float ,
           P1: 'a + PolygonTrait<'a, T> + ?Sized,
           P2: 'a + PointTrait<T> + ?Sized,
 {
@@ -100,7 +100,7 @@ pub fn polygon_to_point<'a, P1, P2, T>(polygon: &'a P1, point: &'a P2) -> T
 
 // Minimum distance from a Point to a LineString
 pub fn line_string_to_point<'a, L, P, T>(line_string: &'a L, point: &'a P) -> T
-    where T: 'a + Float + FromPrimitive,
+    where T: 'a + Float ,
           L: 'a + LineStringTrait<'a, T> + ?Sized,
           P: 'a + PointTrait<T> + ?Sized,
 {

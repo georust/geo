@@ -1,16 +1,15 @@
-// FIXME: remove FromPrimitive
 use std::ops::Add;
 use std::ops::AddAssign;
 use std::ops::Neg;
 use std::ops::Sub;
 
-use num_traits::{Float, ToPrimitive, FromPrimitive};
+use num_traits::{Float, ToPrimitive};
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Coordinate<T>
-    where T: Float + FromPrimitive
+    where T: Float 
 {
     pub x: T,
     pub y: T,
@@ -18,7 +17,7 @@ pub struct Coordinate<T>
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Bbox<T>
-    where T: Float + FromPrimitive
+    where T: Float 
 {
     pub xmin: T,
     pub xmax: T,
@@ -28,7 +27,7 @@ pub struct Bbox<T>
 
 // TODO: complete this:
 /*
-impl<'a, T: 'a + Float + FromPrimitive> ::PolygonTrait<'a, T> for Bbox<T> {
+impl<'a, T: 'a + Float > ::PolygonTrait<'a, T> for Bbox<T> {
     type ItemType = LineString<T>;
     type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
 
@@ -46,10 +45,10 @@ impl<'a, T: 'a + Float + FromPrimitive> ::PolygonTrait<'a, T> for Bbox<T> {
 */
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Point<T> (pub Coordinate<T>) where T: Float + FromPrimitive;
+pub struct Point<T> (pub Coordinate<T>) where T: Float ;
 
 impl<T> Point<T>
-    where T: Float + ToPrimitive + FromPrimitive
+    where T: Float + ToPrimitive 
 {
     /// Creates a new point.
     ///
@@ -192,7 +191,7 @@ impl<T> Point<T>
 }
 
 impl<T> Neg for Point<T>
-    where T: Float + Neg<Output = T> + ToPrimitive + FromPrimitive
+    where T: Float + Neg<Output = T> + ToPrimitive 
 {
     type Output = Point<T>;
 
@@ -212,7 +211,7 @@ impl<T> Neg for Point<T>
 }
 
 impl<T> Add for Point<T>
-    where T: Float + ToPrimitive + FromPrimitive
+    where T: Float + ToPrimitive 
 {
     type Output = Point<T>;
 
@@ -232,7 +231,7 @@ impl<T> Add for Point<T>
 }
 
 impl<T> Sub for Point<T>
-    where T: Float + ToPrimitive + FromPrimitive
+    where T: Float + ToPrimitive 
 {
     type Output = Point<T>;
 
@@ -251,7 +250,7 @@ impl<T> Sub for Point<T>
     }
 }
 
-impl<T: Float + FromPrimitive> ::PointTrait<T> for Point<T> {
+impl<T: Float > ::PointTrait<T> for Point<T> {
     fn x(&self) -> T {
         self.x()
     }
@@ -262,7 +261,7 @@ impl<T: Float + FromPrimitive> ::PointTrait<T> for Point<T> {
 }
 
 impl<T> Add for Bbox<T>
-    where T: Float + ToPrimitive + FromPrimitive
+    where T: Float + ToPrimitive 
 {
     type Output = Bbox<T>;
 
@@ -291,7 +290,7 @@ impl<T> Add for Bbox<T>
 }
 
 impl<T> AddAssign for Bbox<T>
-    where T: Float + ToPrimitive + FromPrimitive
+    where T: Float + ToPrimitive 
 {
     /// Add a boundingox to the given boundingbox.
     ///
@@ -317,9 +316,9 @@ impl<T> AddAssign for Bbox<T>
 
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float + FromPrimitive;
+pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float ;
 
-impl<'a, T: 'a + Float + FromPrimitive> ::MultiPointTrait<'a, T> for MultiPoint<T> {
+impl<'a, T: 'a + Float > ::MultiPointTrait<'a, T> for MultiPoint<T> {
     type ItemType = Point<T>;
     type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
 
@@ -329,9 +328,9 @@ impl<'a, T: 'a + Float + FromPrimitive> ::MultiPointTrait<'a, T> for MultiPoint<
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct LineString<T>(pub Vec<Point<T>>) where T: Float + FromPrimitive;
+pub struct LineString<T>(pub Vec<Point<T>>) where T: Float ;
 
-impl<'a, T: 'a + Float + FromPrimitive> ::LineStringTrait<'a, T> for LineString<T> {
+impl<'a, T: 'a + Float > ::LineStringTrait<'a, T> for LineString<T> {
     type ItemType = Point<T>;
     type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
 
@@ -341,9 +340,9 @@ impl<'a, T: 'a + Float + FromPrimitive> ::LineStringTrait<'a, T> for LineString<
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float + FromPrimitive;
+pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float ;
 
-impl<'a, T: 'a + Float + FromPrimitive> ::MultiLineStringTrait<'a, T> for MultiLineString<T> {
+impl<'a, T: 'a + Float > ::MultiLineStringTrait<'a, T> for MultiLineString<T> {
     type ItemType = LineString<T>;
     type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
 
@@ -354,14 +353,14 @@ impl<'a, T: 'a + Float + FromPrimitive> ::MultiLineStringTrait<'a, T> for MultiL
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Polygon<T>
-    where T: Float + FromPrimitive
+    where T: Float 
 {
     pub exterior: LineString<T>,
     pub interiors: Vec<LineString<T>>
 }
 
 impl<T> Polygon<T>
-    where T: Float + FromPrimitive
+    where T: Float 
 {
     /// Creates a new polygon.
     ///
@@ -381,7 +380,7 @@ impl<T> Polygon<T>
     }
 }
 
-impl<'a, T: 'a + Float + FromPrimitive> ::PolygonTrait<'a, T> for Polygon<T> {
+impl<'a, T: 'a + Float > ::PolygonTrait<'a, T> for Polygon<T> {
     type ItemType = LineString<T>;
     type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
 
@@ -393,9 +392,9 @@ impl<'a, T: 'a + Float + FromPrimitive> ::PolygonTrait<'a, T> for Polygon<T> {
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float + FromPrimitive;
+pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float ;
 
-impl<'a, T: 'a + Float + FromPrimitive> ::MultiPolygonTrait<'a, T> for MultiPolygon<T> {
+impl<'a, T: 'a + Float > ::MultiPolygonTrait<'a, T> for MultiPolygon<T> {
     type ItemType = Polygon<T>;
     type Iter = Box<Iterator<Item=&'a Self::ItemType> + 'a>;
 
@@ -405,11 +404,11 @@ impl<'a, T: 'a + Float + FromPrimitive> ::MultiPolygonTrait<'a, T> for MultiPoly
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float + FromPrimitive;
+pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float ;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Geometry<T>
-    where T: Float + FromPrimitive
+    where T: Float 
 {
     Point(Point<T>),
     LineString(LineString<T>),

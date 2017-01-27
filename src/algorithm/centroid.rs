@@ -1,10 +1,10 @@
-use num_traits::{Float, FromPrimitive};
+use num_traits::Float;
 
 use types::Point;
 use traits::{PolygonTrait, LineStringTrait, PointTrait, MultiPolygonTrait};
 
 pub fn line_string<'a, G, T>(line_string: &'a G) -> Option<Point<T>> 
-    where T: 'a + Float + FromPrimitive,
+    where T: 'a + Float ,
           G: 'a + LineStringTrait<'a, T> + ?Sized
 {
     // TODO: remove `collect`
@@ -31,7 +31,7 @@ pub fn line_string<'a, G, T>(line_string: &'a G) -> Option<Point<T>>
 }
 
 pub fn polygon<'a, G, T>(polygon: &'a G) -> Option<Point<T>> 
-    where T: 'a + Float + FromPrimitive,
+    where T: 'a + Float ,
           G: 'a + PolygonTrait<'a, T> + ?Sized
 {
     // TODO: consideration of inner polygons;
@@ -52,13 +52,14 @@ pub fn polygon<'a, G, T>(polygon: &'a G) -> Option<Point<T>>
             sum_x = sum_x + ((ps[1].x() + ps[0].x()) * tmp);
             sum_y = sum_y + ((ps[1].y() + ps[0].y()) * tmp);
         }
-        let six = T::from_i32(6).unwrap();
+        let six = T::one() + T::one() + T::one() +
+                  T::one() + T::one() + T::one();
         Some(Point::new(sum_x / (six * area), sum_y / (six * area)))
     }
 }
 
 pub fn multi_polygon<'a, G, T>(multi_polygon: &'a G) -> Option<Point<T>> 
-    where T: 'a + Float + FromPrimitive,
+    where T: 'a + Float ,
           G: 'a + MultiPolygonTrait<'a, T> + ?Sized
 {
     // See: https://fotino.me/calculating-centroids/

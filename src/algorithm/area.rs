@@ -1,8 +1,8 @@
-use num_traits::{Float, FromPrimitive};
+use num_traits::Float;
 use ::{MultiPolygonTrait, PolygonTrait, LineStringTrait, PointTrait};
 
 fn get_linestring_area<'a, T, G>(linestring: &'a G) -> T
-    where T: 'a + Float + ::num_traits::FromPrimitive,
+    where T: 'a + Float ,
           G: 'a + LineStringTrait<'a, T>
 {
     let mut points = linestring.points();
@@ -18,9 +18,8 @@ fn get_linestring_area<'a, T, G>(linestring: &'a G) -> T
     tmp / (T::one() + T::one())
 }
 
-// FIXME: remove FromPrimitive
 pub fn polygon<'a, G, T>(polygon: &'a G) -> T
-    where T: 'a + Float + FromPrimitive,
+    where T: 'a + Float ,
           G: 'a + PolygonTrait<'a, T> + ?Sized
 {
     let mut rings = polygon.rings();
@@ -32,7 +31,7 @@ pub fn polygon<'a, G, T>(polygon: &'a G) -> T
 }
 
 pub fn multi_polygon<'a, G, T>(multi_polygon: &'a G) -> T
-    where T: 'a + Float + ::num_traits::FromPrimitive,
+    where T: 'a + Float ,
           G: 'a + MultiPolygonTrait<'a, T> + ?Sized
 {
     multi_polygon.polygons().map(polygon).fold(T::zero(), |acc, n| acc + n)

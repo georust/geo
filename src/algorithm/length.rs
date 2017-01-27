@@ -3,7 +3,7 @@ use num_traits::Float;
 use traits::{PointTrait, LineStringTrait, MultiLineStringTrait};
 
 pub fn line_string<'a, G, T>(line_string: &'a G) -> T 
-    where T: 'a + Float + ::num_traits::FromPrimitive,
+    where T: 'a + Float ,
           G: 'a + LineStringTrait<'a, T> + ?Sized
 {
     // FIXME: don't collect
@@ -13,7 +13,7 @@ pub fn line_string<'a, G, T>(line_string: &'a G) -> T
 }
 
 pub fn multi_line_string<'a, G, T>(multi_line_string: &'a G) -> T 
-    where T: 'a + Float + ::num_traits::FromPrimitive,
+    where T: 'a + Float ,
           G: 'a + MultiLineStringTrait<'a, T> + ?Sized
 {
     multi_line_string.lines().fold(T::zero(), |total, line| total + line.length())
