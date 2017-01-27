@@ -37,7 +37,7 @@ pub fn line_string_intersects_line_string<'a, L1, L2, T>(line_string1: &'a L1, l
 pub fn polygon_intersects_line_string<'a, P, L, T>(polygon: &'a P, line_string: &'a L) -> bool
     where T: 'a + Float + ::num_traits::FromPrimitive,
           P: 'a + PolygonTrait<'a, T> + ?Sized,
-          L: 'a + LineStringTrait<'a, T> + Sized,
+          L: 'a + LineStringTrait<'a, T> + ?Sized,
 {
     let mut rings = polygon.rings();
     let exterior_ring = rings.next().expect("no outer ring");

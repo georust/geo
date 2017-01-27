@@ -15,12 +15,34 @@ pub trait PointTrait<T: Float + FromPrimitive>: Sized {
     fn y(&self) -> T;
 
     // TODO: keep this?
+    fn sub<P: PointTrait<T>>(&self, other: &P) -> ::Point<T> {
+        ::Point(::Coordinate {
+            x: self.x() - other.x(),
+            y: self.y() - other.y(),
+        })
+    }
+
+    // TODO: keep this?
     fn eq_coordinates<P: PointTrait<T>>(&self, other: &P) -> bool {
         self.x() == other.x() && self.y() == other.y()
     }
 
     fn distance_to_point<P: PointTrait<T>>(&self, other: &P) -> T {
         ::algorithm::distance::point_to_point(self, other)
+    }
+
+    // TODO: remove N
+    fn distance_to_line_string<'a, N: 'a + Float + FromPrimitive, L: LineStringTrait<'a, N>>(&'a self, line_string: &'a L) -> N
+        where Self: PointTrait<N>
+    {
+        ::algorithm::distance::line_string_to_point(line_string, self)
+    }
+
+    // TODO: remove N
+    fn distance_to_polygon<'a, N: 'a + Float + FromPrimitive, P: PolygonTrait<'a, N>>(&'a self, polygon: &'a P) -> N 
+        where Self: PointTrait<N>
+    {
+        ::algorithm::distance::polygon_to_point(polygon, self)
     }
 
     fn contains_point<P: PointTrait<T>>(&self, other: &P) -> bool {
@@ -51,7 +73,11 @@ pub trait LineStringTrait<'a, T>
         ::algorithm::contains::line_string_contains_point(self, other)
     }
 
-    fn intersects_line_string<L: LineStringTrait<'a, T>>(&'a self, line_string: &'a L) -> bool {
+    fn distance_to_point<P: PointTrait<T>>(&'a self, point: &'a P) -> T {
+        ::algorithm::distance::line_string_to_point(self, point)
+    }
+
+    fn intersects_line_string<L: ?Sized + LineStringTrait<'a, T>>(&'a self, line_string: &'a L) -> bool {
         ::algorithm::intersects::line_string_intersects_line_string(self, line_string)
     }
 
@@ -84,6 +110,10 @@ pub trait PolygonTrait<'a, T>
 
     fn contains_line_string<L: LineStringTrait<'a, T>>(&'a self, line_string: &'a L) -> bool {
         ::algorithm::contains::polygon_contains_line_string(self, line_string)
+    }
+
+    fn distance_to_point<P: PointTrait<T>>(&'a self, point: &'a P) -> T {
+        ::algorithm::distance::polygon_to_point(self, point)
     }
 
     fn intersects_line_string<L: LineStringTrait<'a, T>>(&'a self, line_string: &'a L) -> bool {
