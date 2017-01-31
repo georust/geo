@@ -34,6 +34,11 @@ impl FromTokens for Coord {
             Some(Token::Number(n)) => n,
             _ => return Err("Expected a number for the Y coordinate"),
         };
-        Ok(Coord {x: x, y: y, z: None, m: None})
+        Ok(Coord {
+            x: x,
+            y: y,
+            z: None,
+            m: None,
+        })
     }
 }

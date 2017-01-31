@@ -36,14 +36,15 @@ mod multilinestring;
 mod multipolygon;
 
 
-trait FromTokens: Sized+Default {
+trait FromTokens: Sized + Default {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str>;
 
     fn from_tokens_with_parens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         match tokens.next() {
             Some(Token::ParenOpen) => (),
-            Some(Token::Word(ref s)) if s.to_ascii_uppercase() == "EMPTY" =>
-                return Ok(Default::default()),
+            Some(Token::Word(ref s)) if s.to_ascii_uppercase() == "EMPTY" => {
+                return Ok(Default::default())
+            }
             _ => return Err("Missing open parenthesis for type"),
         };
         let result = FromTokens::from_tokens(tokens);
@@ -55,7 +56,8 @@ trait FromTokens: Sized+Default {
     }
 
     fn comma_many<F>(f: F, tokens: &mut PeekableTokens) -> Result<Vec<Self>, &'static str>
-            where F: Fn(&mut PeekableTokens) -> Result<Self, &'static str> {
+        where F: Fn(&mut PeekableTokens) -> Result<Self, &'static str>
+    {
         let mut items = Vec::new();
 
         match f(tokens) {
@@ -64,7 +66,7 @@ trait FromTokens: Sized+Default {
         };
 
         while let Some(&Token::Comma) = tokens.peek() {
-            tokens.next();  // throw away comma
+            tokens.next(); // throw away comma
 
             match f(tokens) {
                 Ok(i) => items.push(i),

@@ -29,7 +29,8 @@ impl MultiPolygon {
 
 impl FromTokens for MultiPolygon {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result = FromTokens::comma_many(<Polygon as FromTokens>::from_tokens_with_parens, tokens);
+        let result = FromTokens::comma_many(
+            <Polygon as FromTokens>::from_tokens_with_parens, tokens);
         result.map(|vec| MultiPolygon(vec))
     }
 }

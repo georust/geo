@@ -31,18 +31,18 @@ impl FromTokens for GeometryCollection {
 
         let word = match tokens.next() {
             Some(Token::Word(w)) => w,
-            _ => return Err("Expected a word in GEOMETRYCOLLECTION")
+            _ => return Err("Expected a word in GEOMETRYCOLLECTION"),
         };
 
         let item = try!(Geometry::from_word_and_tokens(&*word, tokens));
         items.push(item);
 
         while let Some(&Token::Comma) = tokens.peek() {
-            tokens.next();  // throw away comma
+            tokens.next(); // throw away comma
 
             let word = match tokens.next() {
                 Some(Token::Word(w)) => w,
-                _ => return Err("Expected a word in GEOMETRYCOLLECTION")
+                _ => return Err("Expected a word in GEOMETRYCOLLECTION"),
             };
 
             let item = try!(Geometry::from_word_and_tokens(&*word, tokens));

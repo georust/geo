@@ -21,8 +21,13 @@ pub trait ToWkt {
 
 fn g_point_to_w_coord(g_point: &geo::Point) -> Coord {
     let geo::Point(coord) = *g_point;
-    let geo::Coordinate{x, y} = coord;
-    Coord{x: x, y: y, z: None, m: None}
+    let geo::Coordinate { x, y } = coord;
+    Coord {
+        x: x,
+        y: y,
+        z: None,
+        m: None,
+    }
 }
 
 
@@ -123,26 +128,23 @@ fn g_geocol_to_w_geocol(g_geocol: &geo::GeometryCollection) -> GeometryCollectio
 
 fn g_geom_to_w_geom(g_geom: &geo::Geometry) -> Geometry {
     match g_geom {
-        &geo::Geometry::Point(ref g_point) =>
-            g_point_to_w_point(g_point).as_item(),
+        &geo::Geometry::Point(ref g_point) => g_point_to_w_point(g_point).as_item(),
 
-        &geo::Geometry::LineString(ref g_line) =>
-            g_line_to_w_line(g_line).as_item(),
+        &geo::Geometry::LineString(ref g_line) => g_line_to_w_line(g_line).as_item(),
 
-        &geo::Geometry::Polygon(ref g_polygon) =>
-            g_polygon_to_w_polygon(g_polygon).as_item(),
+        &geo::Geometry::Polygon(ref g_polygon) => g_polygon_to_w_polygon(g_polygon).as_item(),
 
-        &geo::Geometry::MultiPoint(ref g_mpoint) =>
-            g_mpoint_to_w_mpoint(g_mpoint).as_item(),
+        &geo::Geometry::MultiPoint(ref g_mpoint) => g_mpoint_to_w_mpoint(g_mpoint).as_item(),
 
-        &geo::Geometry::MultiLineString(ref g_mline) =>
-            g_mline_to_w_mline(g_mline).as_item(),
+        &geo::Geometry::MultiLineString(ref g_mline) => g_mline_to_w_mline(g_mline).as_item(),
 
-        &geo::Geometry::MultiPolygon(ref g_mpolygon) =>
-            g_mpolygon_to_w_mpolygon(g_mpolygon).as_item(),
+        &geo::Geometry::MultiPolygon(ref g_mpolygon) => {
+            g_mpolygon_to_w_mpolygon(g_mpolygon).as_item()
+        }
 
-        &geo::Geometry::GeometryCollection(ref g_geocol) =>
-            g_geocol_to_w_geocol(g_geocol).as_item(),
+        &geo::Geometry::GeometryCollection(ref g_geocol) => {
+            g_geocol_to_w_geocol(g_geocol).as_item()
+        }
     }
 }
 
@@ -150,6 +152,6 @@ fn g_geom_to_w_geom(g_geom: &geo::Geometry) -> Geometry {
 impl ToWkt for geo::Geometry {
     fn to_wkt(&self) -> Wkt {
         let w_geom = g_geom_to_w_geom(&self);
-        Wkt{items: vec![w_geom]}
+        Wkt { items: vec![w_geom] }
     }
 }
