@@ -13,6 +13,7 @@ impl<T> PartialOrd for Point<T>
     }
 }
 
+// Needed for BTreeSet
 impl<T> Ord for Point<T>
     where T: Float
 {
