@@ -58,7 +58,7 @@ impl<T> Polygon<T>
 // Adapted from http://codereview.stackexchange.com/a/141752/2630
 // The algorithm is from Heineman, G.T., Pollice, G., Selkow, S., 2008.
 // "Algorithms in a Nutshell". O’Reilly Media, Inc., pp261–8
-pub fn convex_hull<T>(points: &BTreeSet<Point<T>>) -> Vec<Point<T>>
+fn convex_hull<T>(points: &BTreeSet<Point<T>>) -> Vec<Point<T>>
     where T: Float
 {
     // You must have at least 3 points to construct a hull
@@ -109,12 +109,12 @@ pub fn convex_hull<T>(points: &BTreeSet<Point<T>>) -> Vec<Point<T>>
     hull.into_iter().collect::<Vec<Point<T>>>()
 }
 
-pub trait Convexhull<T> {
+pub trait ConvexHull<T> {
     /// Returns the convex hull of a Polygon
     ///
     /// ```
     /// use geo::{Point, LineString, Polygon};
-    /// use geo::convexhull::Convexhull;
+    /// use geo::convexhull::ConvexHull;
     /// // an L shape
     /// let coords = vec![(0.0, 0.0), (4.0, 0.0), (4.0, 1.0), (1.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0)];
     /// let ls = LineString(coords.iter().map(|e| Point::new(e.0, e.1)).collect());
@@ -124,16 +124,16 @@ pub trait Convexhull<T> {
     /// let hull_coords = vec![(0.0, 0.0), (4.0, 0.0), (4.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0)];
     /// let correct_hull = LineString(hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect());
     ///
-    /// let res = poly.convexhull();
+    /// let res = poly.convex_hull();
     /// assert_eq!(res.exterior, correct_hull);
     /// ```
-    fn convexhull(&self) -> Self where T: Float;
+    fn convex_hull(&self) -> Self where T: Float;
 }
 
-impl<T> Convexhull<T> for Polygon<T>
+impl<T> ConvexHull<T> for Polygon<T>
     where T: Float
 {
-    fn convexhull(&self) -> Polygon<T> {
+    fn convex_hull(&self) -> Polygon<T> {
         let bts = self.exterior.0.clone().into_iter().collect::<BTreeSet<Point<T>>>();
         Polygon::new(LineString(convex_hull(&bts)), vec![])
     }
