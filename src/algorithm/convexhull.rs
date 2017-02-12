@@ -30,7 +30,7 @@ impl<T> Point<T>
         if self == other {
             T::zero()
         } else {
-            (other.y() - self.y()).atan2((other.x() - self.x()))
+            (other.y() - self.y()).atan2(other.x() - self.x())
         }
     }
 }
@@ -76,7 +76,7 @@ pub fn convex_hull<T>(points: &BTreeSet<Point<T>>) -> Vec<Point<T>>
     // Check all permutations of 4 points:
     // is the fourth point contained in the triangle
     for p_i in points {
-        let minus_i = minus_one(&p_i);
+        let minus_i = minus_one(p_i);
         for p_j in minus_i {
             let minus_j = minus_one(&p_j);
             for p_k in minus_j {
@@ -99,12 +99,12 @@ pub fn convex_hull<T>(points: &BTreeSet<Point<T>>) -> Vec<Point<T>>
     // Sort by the angle with the first point
     // when that's equal, sort by distance to head
     hull.sort_by(|a, b| {
-        let angle_a = head.angle(&a);
-        let angle_b = head.angle(&b);
+        let angle_a = head.angle(a);
+        let angle_b = head.angle(b);
         angle_a.partial_cmp(&angle_b).unwrap()
     });
     // we need to close the Polygon
-    let final_element = hull[0].clone();
+    let final_element = *hull.first().unwrap();
     hull.push(final_element);
     hull.into_iter().collect::<Vec<Point<T>>>()
 }
