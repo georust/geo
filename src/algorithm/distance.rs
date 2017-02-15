@@ -353,8 +353,7 @@ mod test {
     }
     #[test]
     fn distance2_test() {
-        // Point::new(-72.1235, 42.3521).distance(&Point::new(72.1260, 70.612)) = 146.99163308930207
         let dist = Point::new(-72.1235, 42.3521).distance(&Point::new(72.1260, 70.612));
-        assert!(dist < 147. && dist > 146.);
+        assert!(within_epsilon(dist, 146.99163308930207, 1.0e-10));
     }
 }
