@@ -59,33 +59,32 @@ impl<T> Area<T> for Bbox<T>
 
 #[cfg(test)]
 mod test {
-    use num_traits::Float;
     use types::{Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
     use algorithm::area::Area;
-    use test_helpers::within_epsilon;
+
     // Area of the polygon
     #[test]
     fn area_empty_polygon_test() {
         let poly = Polygon::<f64>::new(LineString(Vec::new()), Vec::new());
-        assert!(within_epsilon(poly.area(), 0., Float::epsilon()));
+        assert_relative_eq!(poly.area(), 0.);
     }
 
     #[test]
     fn area_one_point_polygon_test() {
         let poly = Polygon::new(LineString(vec![Point::new(1., 0.)]), Vec::new());
-        assert!(within_epsilon(poly.area(), 0., Float::epsilon()));
+        assert_relative_eq!(poly.area(), 0.);
     }
     #[test]
     fn area_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(within_epsilon(poly.area(), 30., Float::epsilon()));
+        assert_relative_eq!(poly.area(), 30.);
     }
     #[test]
     fn bbox_test() {
         let bbox = Bbox {xmin: 10., xmax: 20., ymin: 30., ymax: 40.};
-        assert!(within_epsilon(bbox.area(), 100., Float::epsilon()));
+        assert_relative_eq!(bbox.area(), 100.);
     }
     #[test]
     fn area_polygon_inner_test() {
@@ -94,7 +93,7 @@ mod test {
         let inner0 = LineString(vec![p(1., 1.), p(2., 1.), p(2., 2.), p(1., 2.), p(1., 1.)]);
         let inner1 = LineString(vec![p(5., 5.), p(6., 5.), p(6., 6.), p(5., 6.), p(5., 5.)]);
         let poly = Polygon::new(outer, vec![inner0, inner1]);
-        assert!(within_epsilon(poly.area(), 98., Float::epsilon()));
+        assert_relative_eq!(poly.area(), 98.);
     }
     #[test]
     fn area_multipolygon_test() {
@@ -110,6 +109,6 @@ mod test {
                                  Vec::new());
         let mpoly = MultiPolygon(vec![poly0, poly1, poly2]);
         assert_eq!(mpoly.area(), 102.);
-        assert!(within_epsilon(mpoly.area(), 102., Float::epsilon()));
+        assert_relative_eq!(mpoly.area(), 102.);
     }
 }

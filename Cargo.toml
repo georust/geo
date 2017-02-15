@@ -11,3 +11,6 @@ keywords = ["gis", "geo", "geography", "geospatial"]
 
 [dependencies]
 num-traits = "0.1"
+
+[dev-dependencies]
+approx = "0.1.1"
