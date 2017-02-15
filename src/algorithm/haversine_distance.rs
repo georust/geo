@@ -8,12 +8,17 @@ pub trait HaversineDistance<T, Rhs = Self>
     /// Returns the distance between two points:
     ///
     /// ```
+    /// # extern crate geo;
+    /// # #[macro_use] extern crate approx;
+    /// #
     /// use geo::Point;
     /// use geo::algorithm::haversine_distance::HaversineDistance;
     ///
+    /// # fn main() {
     /// let p = Point::new(-72.1235, 42.3521);
     /// let dist = p.haversine_distance(&Point::new(-72.1260, 42.45));
-    /// assert_eq!(dist, 10900.115612674515)
+    /// assert_relative_eq!(dist, 10900.115612674515, epsilon = 1.0e-6)
+    /// # }
     /// ```
     fn haversine_distance(&self, rhs: &Rhs) -> T;
 }
@@ -36,11 +41,15 @@ mod test {
 
     #[test]
     fn distance1_test() {
-        assert_eq!(Point::<f64>::new(0., 0.).haversine_distance(&Point::<f64>::new(1., 0.)), 111319.49079326246_f64);
+        let a = Point::<f64>::new(0., 0.);
+        let b = Point::<f64>::new(1., 0.);
+        assert_relative_eq!(a.haversine_distance(&b), 111319.49079326246_f64, epsilon = 1.0e-6);
     }
+
     #[test]
     fn distance2_test() {
-        let dist = Point::new(-72.1235, 42.3521).haversine_distance(&Point::new(72.1260, 70.612));
-        assert_eq!(dist, 6378137_f64);
+        let a = Point::new(-72.1235, 42.3521);
+        let b = Point::new(72.1260, 70.612);
+        assert_relative_eq!(a.haversine_distance(&b), 6378137_f64, epsilon = 1.0e-6);
     }
 }
