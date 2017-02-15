@@ -26,10 +26,13 @@ pub trait HaversineDistance<T, Rhs = Self>
 impl<T> HaversineDistance<T, Point<T>> for Point<T>
     where T: Float + FromPrimitive
 {
-    fn haversine_distance(&self, p: &Point<T>) -> T {
-        let a = (self.y().to_radians().sin() * p.y().to_radians().sin()) +
-            (self.y().to_radians().cos() * p.y().to_radians().cos()) *
-            (p.x() - self.x()).to_radians().cos();
+    fn haversine_distance(&self, rhs: &Point<T>) -> T {
+        let (lhs_sin, lhs_cos) = self.y().to_radians().sin_cos();
+        let (rhs_sin, rhs_cos) = rhs.y().to_radians().sin_cos();
+        let delta_lng = rhs.lng() - self.lng();
+
+        let a = (lhs_sin * rhs_sin) + (lhs_cos * rhs_cos) * delta_lng.to_radians().cos();
+
         T::from_i32(6378137).unwrap() * a.acos().min(T::one())
     }
 }
