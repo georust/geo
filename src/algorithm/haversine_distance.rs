@@ -1,5 +1,5 @@
 use num_traits::{Float, FromPrimitive};
-use types::{Point};
+use types::Point;
 
 /// Returns the distance between two geometries.
 
@@ -37,7 +37,7 @@ impl<T> HaversineDistance<T, Point<T>> for Point<T>
 #[cfg(test)]
 mod test {
     use types::Point;
-    use algorithm::haversine_distance::{HaversineDistance};
+    use algorithm::haversine_distance::HaversineDistance;
 
     #[test]
     fn distance1_test() {
