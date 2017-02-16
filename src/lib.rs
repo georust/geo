@@ -10,4 +10,5 @@ mod types;
 pub mod algorithm;
 
 #[cfg(test)]
-mod test_helpers;
+#[macro_use]
+extern crate approx;

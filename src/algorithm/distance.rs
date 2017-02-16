@@ -176,7 +176,6 @@ impl<T> Distance<T, LineString<T>> for Point<T>
 mod test {
     use types::{Point, LineString, Polygon};
     use algorithm::distance::{Distance, line_segment_distance};
-    use test_helpers::within_epsilon;
 
     #[test]
     fn line_segment_distance_test() {
@@ -193,13 +192,13 @@ mod test {
         let dist3 = line_segment_distance(&o3, &p1, &p2);
         let dist4 = line_segment_distance(&o4, &p1, &p2);
         // Results agree with Shapely
-        assert!(within_epsilon(dist, 2.0485900789263356, 1.0e-15));
-        assert!(within_epsilon(dist2, 1.118033988749895, 1.0e-15));
-        assert!(within_epsilon(dist3, 1.4142135623730951, 1.0e-15));
-        assert!(within_epsilon(dist4, 1.5811388300841898, 1.0e-15));
+        assert_relative_eq!(dist, 2.0485900789263356);
+        assert_relative_eq!(dist2, 1.118033988749895);
+        assert_relative_eq!(dist3, 1.4142135623730951);
+        assert_relative_eq!(dist4, 1.5811388300841898);
         // Point is on the line
         let zero_dist = line_segment_distance(&p1, &p1, &p2);
-        assert!(within_epsilon(zero_dist, 0.0, 1.0e-15));
+        assert_relative_eq!(zero_dist, 0.0);
     }
     #[test]
     // Point to Polygon, outside point
@@ -212,7 +211,7 @@ mod test {
         // A Random point outside the octagon
         let p = Point::new(2.5, 0.5);
         let dist = p.distance(&poly);
-        assert!(within_epsilon(dist, 2.1213203435596424, 1.0e-15));
+        assert_relative_eq!(dist, 2.1213203435596424);
     }
     #[test]
     // Point to Polygon, inside point
@@ -225,7 +224,7 @@ mod test {
         // A Random point inside the octagon
         let p = Point::new(5.5, 2.1);
         let dist = p.distance(&poly);
-        assert!(within_epsilon(dist, 0.0, 1.0e-15));
+        assert_relative_eq!(dist, 0.0);
     }
     #[test]
     // Point to Polygon, on boundary
@@ -238,7 +237,7 @@ mod test {
         // A point on the octagon
         let p = Point::new(5.0, 1.0);
         let dist = p.distance(&poly);
-        assert!(within_epsilon(dist, 0.0, 1.0e-15));
+        assert_relative_eq!(dist, 0.0);
     }
     #[test]
     // Point to Polygon, empty Polygon
@@ -250,7 +249,7 @@ mod test {
         // A point on the octagon
         let p = Point::new(2.5, 0.5);
         let dist = p.distance(&poly);
-        assert!(within_epsilon(dist, 0.0, 1.0e-15));
+        assert_relative_eq!(dist, 0.0);
     }
     #[test]
     // Point to Polygon with an interior ring
@@ -281,7 +280,7 @@ mod test {
         let p = Point::new(3.5, 2.5);
         let dist = p.distance(&poly);
                       // 0.41036467732879783 <-- Shapely
-        assert!(within_epsilon(dist, 0.41036467732879767, 1.0e-15));
+        assert_relative_eq!(dist, 0.41036467732879767);
     }
     #[test]
     // Point to LineString
@@ -301,7 +300,7 @@ mod test {
         // A Random point "inside" the LineString
         let p = Point::new(5.5, 2.1);
         let dist = p.distance(&ls);
-        assert!(within_epsilon(dist, 1.1313708498984758, 1.0e-15));
+        assert_relative_eq!(dist, 1.1313708498984758);
     }
     #[test]
     // Point to LineString, point lies on the LineString
@@ -321,7 +320,7 @@ mod test {
         // A point which lies on the LineString
         let p = Point::new(5.0, 4.0);
         let dist = p.distance(&ls);
-        assert!(within_epsilon(dist, 0.0, 1.0e-15));
+        assert_relative_eq!(dist, 0.0);
     }
     #[test]
     // Point to LineString, closed triangle
@@ -335,7 +334,7 @@ mod test {
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let p = Point::new(3.5, 2.5);
         let dist = p.distance(&ls);
-        assert!(within_epsilon(dist, 0.5, 1.0e-15));
+        assert_relative_eq!(dist, 0.5);
     }
     #[test]
     // Point to LineString, empty LineString
@@ -344,7 +343,7 @@ mod test {
         let ls = LineString(points);
         let p = Point::new(5.0, 4.0);
         let dist = p.distance(&ls);
-        assert!(within_epsilon(dist, 0.0, 1.0e-15));
+        assert_relative_eq!(dist, 0.0);
     }
     #[test]
     fn distance1_test() {
@@ -353,8 +352,7 @@ mod test {
     }
     #[test]
     fn distance2_test() {
-        // Point::new(-72.1235, 42.3521).distance(&Point::new(72.1260, 70.612)) = 146.99163308930207
         let dist = Point::new(-72.1235, 42.3521).distance(&Point::new(72.1260, 70.612));
-        assert!(dist < 147. && dist > 146.);
+        assert_relative_eq!(dist, 146.99163308930207);
     }
 }

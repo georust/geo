@@ -85,7 +85,6 @@ impl<T> Simplify<T> for LineString<T>
 mod test {
     use types::{Point};
     use super::{point_line_distance, rdp};
-    use test_helpers::within_epsilon;
 
     #[test]
     fn perpdistance_test() {
@@ -93,7 +92,7 @@ mod test {
         let end = Point::new(3.0, 4.0);
         let p = Point::new(1.0, 1.0);
         let dist = point_line_distance(&p, &start, &end);
-        assert!(within_epsilon(dist, 0.7071067811865475, 1.0e-15));
+        assert_relative_eq!(dist, 0.7071067811865475);
     }
     #[test]
     fn rdp_test() {
