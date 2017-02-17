@@ -41,8 +41,8 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
         return points.to_vec();
     }
     let mut hull: Vec<Point<T>> = vec![];
-    let mut min_point = <usize>::min_value();
-    let mut max_point = <usize>::min_value();
+    let mut min_x_idx = <usize>::min_value();
+    let mut max_x_idx = <usize>::min_value();
     let mut min_x = Float::max_value();
     let mut max_x = Float::min_value();
     let to_retain: BTreeSet<usize> = (0..points.len() - 1).collect();
@@ -50,18 +50,18 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
     for (idx, point) in points.iter().enumerate() {
         if point.x() < min_x {
             min_x = point.x();
-            min_point = idx;
+            min_x_idx = idx;
         }
         if point.x() > max_x {
             max_x = point.x();
-            max_point = idx;
+            max_x_idx = idx;
         }
     }
-    to_remove.insert(min_point);
-    to_remove.insert(max_point);
+    to_remove.insert(min_x_idx);
+    to_remove.insert(max_x_idx);
 
-    let p_a = points[min_point];
-    let p_b = points[max_point];
+    let p_a = points[min_x_idx];
+    let p_b = points[max_x_idx];
     // min x and max x points are always part of the hull
     hull.push(p_a);
     hull.push(p_b);
@@ -86,6 +86,7 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
     hull
 }
 
+// recursively calculate the convex hull of a subset of points
 fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, set: &mut Vec<Point<T>>, hull: &mut Vec<Point<T>>)
     where T: Float
 {
@@ -98,12 +99,12 @@ fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, set: &mut Vec<Point<T>>, hull: &m
         set.remove(0);
         return;
     }
-    let mut dist = Float::min_value();
+    let mut furthest_distance = Float::min_value();
     let mut furthest_idx = <usize>::min_value();
     for (idx, point) in set.iter().enumerate() {
         let current_distance = pseudo_distance(p_a, p_b, point);
-        if current_distance > dist {
-            dist = current_distance;
+        if current_distance > furthest_distance {
+            furthest_distance = current_distance;
             furthest_idx = idx
         }
     }
