@@ -40,13 +40,13 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
     if points.len() < 4 {
         return points.to_vec();
     }
-    let mut hull: Vec<Point<T>> = vec![];
-    let mut min_x_idx = <usize>::min_value();
-    let mut max_x_idx = <usize>::min_value();
+    let mut hull = vec![];
+    let mut min_x_idx = 0;
+    let mut max_x_idx = 0;
     let mut min_x = Float::max_value();
     let mut max_x = Float::min_value();
-    let to_retain: BTreeSet<usize> = (0..points.len() - 1).collect();
-    let mut to_remove: BTreeSet<usize> = BTreeSet::new();
+    let to_retain: BTreeSet<_> = (0..points.len() - 1).collect();
+    let mut to_remove: BTreeSet<_> = BTreeSet::new();
     for (idx, point) in points.iter().enumerate() {
         if point.x() < min_x {
             min_x = point.x();
@@ -65,8 +65,8 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
     // min x and max x points are always part of the hull
     hull.push(p_a);
     hull.push(p_b);
-    let mut left_set: Vec<Point<T>> = vec![];
-    let mut right_set: Vec<Point<T>> = vec![];
+    let mut left_set = vec![];
+    let mut right_set = vec![];
     // divide remaining points into left and right
     // this is a bit hairy
     for point in &to_retain.difference(&to_remove)
