@@ -203,9 +203,9 @@ mod test {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
         let poly1 = Polygon::new(linestring, Vec::new());
-        let linestring = LineString(vec![p(0., 0.), p(0., 2.), p(2., 2.), p(2., 0.), p(0., 0.)]);
+        let linestring = LineString(vec![p(0., 0.), p(-2., 0.), p(-2., 2.), p(0., 2.), p(0., 0.)]);
         let poly2 = Polygon::new(linestring, Vec::new());
-        assert_eq!(MultiPolygon(vec![poly1, poly2]).centroid(), Some(p(1., 1.)));
+        assert_eq!(MultiPolygon(vec![poly1, poly2]).centroid(), Some(p(0., 1.)));
     }
     #[test]
     fn bbox_test() {
