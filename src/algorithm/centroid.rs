@@ -98,11 +98,12 @@ impl<T> Centroid<T> for MultiPolygon<T>
             return None;
         }
         for poly in &self.0 {
-            let tmp = poly.area();
-            total_area = total_area + poly.area();
+            // the area is signed
+            let area = poly.area().abs();
+            total_area = total_area + area;
             if let Some(p) = poly.centroid() {
-                sum_x = sum_x + tmp * p.x();
-                sum_y = sum_y + tmp * p.y();
+                sum_x = sum_x + area * p.x();
+                sum_y = sum_y + area * p.y();
             }
         }
         Some(Point::new(sum_x / total_area, sum_y / total_area))
@@ -196,6 +197,15 @@ mod test {
         let poly2 = Polygon::new(linestring, Vec::new());
         let dist = MultiPolygon(vec![poly1, poly2]).centroid().unwrap().distance(&p(4.07142857142857, 1.92857142857143));
         assert!(dist < COORD_PRECISION);
+    }
+    #[test]
+    fn multipolygon_two_polygons_of_opposite_clockwise_test() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
+        let poly1 = Polygon::new(linestring, Vec::new());
+        let linestring = LineString(vec![p(0., 0.), p(0., 2.), p(2., 2.), p(2., 0.), p(0., 0.)]);
+        let poly2 = Polygon::new(linestring, Vec::new());
+        assert_eq!(MultiPolygon(vec![poly1, poly2]).centroid(), Some(p(1., 1.)));
     }
     #[test]
     fn bbox_test() {
