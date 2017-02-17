@@ -36,6 +36,10 @@ fn pseudo_distance<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
 fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
     where T: Float
 {
+    // can't build a hull from fewer than four points
+    if points.len() < 4 {
+        return points.to_vec();
+    }
     let mut hull: Vec<Point<T>> = vec![];
     let mut min_point = <usize>::min_value();
     let mut max_point = <usize>::min_value();
@@ -130,7 +134,7 @@ pub trait ConvexHull<T> {
     /// Returns the convex hull of a Polygon
     ///
     /// This implementation uses the QuickHull algorithm,
-    /// based on [Barber, C. Bradford; Dobkin, David P.; Huhdanpaa, Hannu (1 December 1996)](https://dx.doi.org/10.1145%2F235815.235821)  
+    /// based on [Barber, C. Bradford; Dobkin, David P.; Huhdanpaa, Hannu (1 December 1996)](https://dx.doi.org/10.1145%2F235815.235821)
     /// Original paper here: http://www.cs.princeton.edu/~dpd/Papers/BarberDobkinHuhdanpaa.pdf
     ///
     /// ```
