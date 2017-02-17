@@ -69,13 +69,12 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
     let mut right_set = vec![];
     // divide remaining points into left and right
     // this is a bit hairy
-    for point in &to_retain.difference(&to_remove)
-        .map(|&idx| points[idx])
-        .collect::<Vec<Point<T>>>() {
-        if !point_location(&p_a, &p_b, point) {
-            left_set.push(*point);
+    for point in to_retain.difference(&to_remove)
+        .map(|&idx| points[idx]) {
+        if !point_location(&p_a, &p_b, &point) {
+            left_set.push(point);
         } else {
-            right_set.push(*point);
+            right_set.push(point);
         }
     }
     hull_set(&p_a, &p_b, &mut right_set, &mut hull);
