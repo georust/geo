@@ -10,6 +10,10 @@ pub mod area;
 pub mod length;
 /// Returns the distance between two geometries.
 pub mod distance;
+/// Returns the distance between two geometries.
+pub mod haversine_distance;
+/// Returns the distance between two geometries.
+pub mod vincenty_distance;
 /// Returns the Bbox of a geometry.
 pub mod boundingbox;
 /// Simplifies a `LineString` using the Ramer-Douglas-Peucker algorithm.
