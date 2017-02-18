@@ -1,5 +1,11 @@
 # Changes
 
+## 0.4.0
+
+* [Implement Haversine algorithm](https://github.com/georust/rust-geo/pull/90)
+* [fix when multipolygon composed of two polygons of opposite clockwise](https://github.com/georust/rust-geo/commits/master)
+* [Migrate from 'num' to 'num_traits' crate](https://github.com/georust/rust-geo/pull/86)
+
 ## 0.3.2
 
 * [Add Visvalingam-Whyatt line-simplification algorithm](https://github.com/georust/rust-geo/pull/84)
