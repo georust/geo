@@ -142,7 +142,7 @@ pub trait ConvexHull<T> {
     /// let poly = Polygon::new(ls, vec![]);
     ///
     /// // The correct convex hull coordinates
-    /// let hull_coords = vec![(0.0, 0.0), (0.0, 4.0), (1.0, 4.0), (4.0, 1.0), (4.0, 0.0), (0.0, 0.0)];
+    /// let hull_coords = vec![(0.0, 0.0), (0.0, 0.0), (0.0, 4.0), (1.0, 4.0), (4.0, 1.0), (4.0, 0.0), (0.0, 0.0)];
     /// let correct_hull = LineString(hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect());
     ///
     /// let res = poly.convex_hull();
