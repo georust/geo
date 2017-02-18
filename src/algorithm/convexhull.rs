@@ -1,6 +1,5 @@
 use num_traits::Float;
 use types::{Point, Polygon, LineString};
-use std::collections::BTreeSet;
 
 // Determine whether a point lies on one side of a line segment, or the other.
 // The cross product v x w of two vectors v and w is a vector whose length is
@@ -45,8 +44,6 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
     let mut max_x_idx = 0;
     let mut min_x = Float::max_value();
     let mut max_x = Float::min_value();
-    let to_retain: BTreeSet<_> = (0..points.len() - 1).collect();
-    let mut to_remove: BTreeSet<_> = BTreeSet::new();
     for (idx, point) in points.iter().enumerate() {
         if point.x() < min_x {
             min_x = point.x();
@@ -57,9 +54,6 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
             max_x_idx = idx;
         }
     }
-    to_remove.insert(min_x_idx);
-    to_remove.insert(max_x_idx);
-
     let p_a = points[min_x_idx];
     let p_b = points[max_x_idx];
     // min x and max x points are always part of the hull
@@ -68,9 +62,11 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
     let mut left_set = vec![];
     let mut right_set = vec![];
     // divide remaining points into left and right
-    // this is a bit hairy
-    for point in to_retain.difference(&to_remove)
-        .map(|&idx| points[idx]) {
+    let points_iter = points.iter()
+        .enumerate()
+        .filter(|&(idx, _)| ![min_x_idx, max_x_idx].contains(&idx))
+        .map(|(_, p)| *p);
+    for point in points_iter {
         if !point_location(&p_a, &p_b, &point) {
             left_set.push(point);
         } else {
@@ -178,6 +174,7 @@ mod test {
                      Point::new(0.0, 4.0),
                      Point::new(0.0, 0.0)];
         let correct = vec![Point::new(0.0, 0.0),
+                           Point::new(0.0, 0.0),
                            Point::new(0.0, 4.0),
                            Point::new(1.0, 4.0),
                            Point::new(4.0, 1.0),
@@ -191,6 +188,15 @@ mod test {
         let coords = include!("test_fixtures/poly1.rs");
         let v = coords.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
         let correct = include!("test_fixtures/poly1_hull.rs");
+        let v_correct = correct.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
+        let res = quick_hull(&v);
+        assert_eq!(res, v_correct);
+    }
+    #[test]
+    fn quick_hull_test_complex_2() {
+        let coords = include!("test_fixtures/poly2.rs");
+        let v = coords.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
+        let correct = include!("test_fixtures/poly2_hull.rs");
         let v_correct = correct.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
         let res = quick_hull(&v);
         assert_eq!(res, v_correct);
