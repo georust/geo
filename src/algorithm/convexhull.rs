@@ -148,7 +148,7 @@ pub trait ConvexHull<T> {
     /// let res = poly.convex_hull();
     /// assert_eq!(res.exterior, correct_hull);
     /// ```
-    fn convex_hull(&self) -> Self where T: Float;
+    fn convex_hull(&self) -> Polygon<T> where T: Float;
 }
 
 impl<T> ConvexHull<T> for Polygon<T>
