@@ -8,17 +8,13 @@ use num_traits::{Float, ToPrimitive};
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Coordinate<T>
-    where T: Float
-{
+pub struct Coordinate<T> {
     pub x: T,
     pub y: T,
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Bbox<T>
-    where T: Float
-{
+pub struct Bbox<T> {
     pub xmin: T,
     pub xmax: T,
     pub ymin: T,
@@ -26,7 +22,7 @@ pub struct Bbox<T>
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Point<T> (pub Coordinate<T>) where T: Float;
+pub struct Point<T> (pub Coordinate<T>);
 
 impl<T> Point<T>
     where T: Float + ToPrimitive
@@ -287,18 +283,16 @@ impl<T> AddAssign for Bbox<T>
 
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
+pub struct MultiPoint<T>(pub Vec<Point<T>>);
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
+pub struct LineString<T>(pub Vec<Point<T>>);
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
+pub struct MultiLineString<T>(pub Vec<LineString<T>>);
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct Polygon<T>
-    where T: Float
-{
+pub struct Polygon<T> {
     pub exterior: LineString<T>,
     pub interiors: Vec<LineString<T>>
 }
@@ -325,15 +319,13 @@ impl<T> Polygon<T>
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
+pub struct MultiPolygon<T>(pub Vec<Polygon<T>>);
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float;
+pub struct GeometryCollection<T>(pub Vec<Geometry<T>>);
 
 #[derive(PartialEq, Clone, Debug)]
-pub enum Geometry<T>
-    where T: Float
-{
+pub enum Geometry<T> {
     Point(Point<T>),
     LineString(LineString<T>),
     Polygon(Polygon<T>),
