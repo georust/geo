@@ -1,5 +1,39 @@
 use num_traits::Float;
 use types::{Point, Polygon, LineString};
+use std::mem;
+
+fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
+    let tmp = mem::replace(slice, &mut []);
+    tmp.swap(0, idx);
+    let (h, t) = tmp.split_first_mut().unwrap();
+    *slice = t;
+    h
+}
+fn swap_remove_to_last<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
+    let tmp = mem::replace(slice, &mut []);
+    let len = tmp.len();
+    tmp.swap(len - 1, idx);
+    let (h, t) = tmp.split_last_mut().unwrap();
+    *slice = t;
+    h
+}
+// slice[..result] have pred(e) == true, slice[result..] have pred(e) == false
+fn partition<T, F: FnMut(&T) -> bool>(mut slice: &mut [T], mut pred: F) -> usize {
+    let mut i = 0;
+    loop {
+        let test = match slice.first() {
+            Some(e) => pred(e),
+            None => break,
+        };
+        if test {
+            swap_remove_to_first(&mut slice, 0);
+            i += 1;
+        } else {
+            swap_remove_to_last(&mut slice, 0);
+        }
+    }
+    i
+}
 
 // Determine whether a point lies on one side of a line segment, or the other.
 // The cross product v x w of two vectors v and w is a vector whose length is
@@ -14,11 +48,15 @@ use types::{Point, Polygon, LineString};
 // we can compute the cross product AB x AC and check its sign:
 // If it's negative, it will be on the "right" side of AB
 // (when standing on A and looking towards B). If positive, it will be on the left side
+fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
+    where T: Float
+{
+    (p_b.x() - p_a.x()) * (p_c.y() - p_a.y()) - (p_b.y() - p_a.y()) * (p_c.x() - p_a.x())
+}
 fn point_location<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> bool
     where T: Float
 {
-    (p_b.x() - p_a.x()) * (p_c.y() - p_a.y()) - (p_b.y() - p_a.y()) * (p_c.x() - p_a.x()) >
-    T::zero()
+    cross_prod(p_a, p_b, p_c) > T::zero()
 }
 
 // Fast distance between line segment (p_a, p_b), and point p_c
@@ -32,7 +70,7 @@ fn pseudo_distance<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
 }
 
 // Adapted from http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
-fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
+fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
     where T: Float
 {
     // can't build a hull from fewer than four points
@@ -40,41 +78,25 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
         return points.to_vec();
     }
     let mut hull = vec![];
-    let mut min_x_idx = 0;
-    let mut max_x_idx = 0;
-    let mut min_x = Float::max_value();
-    let mut max_x = Float::min_value();
-    for (idx, point) in points.iter().enumerate() {
-        if point.x() < min_x {
-            min_x = point.x();
-            min_x_idx = idx;
+    let mut min = swap_remove_to_first(&mut points, 0);
+    let mut max = swap_remove_to_first(&mut points, 0);
+    if min.x() > max.x() {
+        mem::swap(min, max);
+    }
+    for point in points.iter_mut() {
+        if point.x() < min.x() {
+            mem::swap(point, min);
         }
-        if point.x() > max_x {
-            max_x = point.x();
-            max_x_idx = idx;
+        if point.x() > max.x() {
+            mem::swap(point, max);
         }
     }
-    let p_a = points[min_x_idx];
-    let p_b = points[max_x_idx];
-    // min x and max x points are always part of the hull
-    hull.push(p_a);
-    hull.push(p_b);
-    let mut left_set = vec![];
-    let mut right_set = vec![];
-    // divide remaining points into left and right
-    let points_iter = points.iter()
-        .enumerate()
-        .filter(|&(idx, _)| ![min_x_idx, max_x_idx].contains(&idx))
-        .map(|(_, p)| *p);
-    for point in points_iter {
-        if !point_location(&p_a, &p_b, &point) {
-            left_set.push(point);
-        } else {
-            right_set.push(point);
-        }
-    }
-    hull_set(&p_a, &p_b, &mut right_set, &mut hull);
-    hull_set(&p_b, &p_a, &mut left_set, &mut hull);
+    let last = partition(&mut points, |p| point_location(max, min, p));
+    hull_set(max, min, &mut points[..last], &mut hull);
+    hull.push(*min);
+    let last = partition(&mut points, |p| point_location(min, max, p));
+    hull_set(min, max, &mut points[..last], &mut hull);
+    hull.push(*max);
     // close the polygon
     let final_element = *hull.first().unwrap();
     hull.push(final_element);
@@ -82,20 +104,18 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
 }
 
 // recursively calculate the convex hull of a subset of points
-fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, set: &mut Vec<Point<T>>, hull: &mut Vec<Point<T>>)
+fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, mut set: &mut [Point<T>], hull: &mut Vec<Point<T>>)
     where T: Float
 {
-    let insert_position = hull.iter().position(|r| r == p_b).unwrap();
     if set.is_empty() {
         return;
     }
     if set.len() == 1 {
-        hull.insert(insert_position, set[0]);
-        set.remove(0);
+        hull.push(set[0]);
         return;
     }
     let mut furthest_distance = Float::min_value();
-    let mut furthest_idx = <usize>::min_value();
+    let mut furthest_idx = 0;
     for (idx, point) in set.iter().enumerate() {
         let current_distance = pseudo_distance(p_a, p_b, point);
         if current_distance > furthest_distance {
@@ -104,26 +124,16 @@ fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, set: &mut Vec<Point<T>>, hull: &m
         }
     }
     // move Point at furthest_point from set into hull
-    let furthest_point = set[furthest_idx];
-    hull.insert(insert_position, set[furthest_idx]);
-    set.remove(furthest_idx);
-    // Determine points to the left of A, furthest_point
-    let mut left_ap: Vec<Point<T>> = vec![];
-    let mut left_pb: Vec<Point<T>> = vec![];
-    for point in set.iter() {
-        if point_location(p_a, &furthest_point, point) {
-            left_ap.push(*point);
-        }
-    }
-    // Determine points to the left of furthest_point, B
-    for point in set.iter() {
-        if point_location(&furthest_point, p_b, point) {
-            left_pb.push(*point);
-        }
-    }
-    // recur
-    hull_set(p_a, &furthest_point, &mut left_ap, hull);
-    hull_set(&furthest_point, p_b, &mut left_pb, hull);
+    let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
+
+    // points over AP
+    let last = partition(set, |p| point_location(p_a, &furthest_point, p));
+    hull_set(p_a, &furthest_point, &mut set[..last], hull);
+    hull.push(*furthest_point);
+
+    // points over PB
+    let last = partition(set, |p| point_location(&furthest_point, p_b, p));
+    hull_set(&furthest_point, p_b, &mut set[..last], hull);
 }
 
 pub trait ConvexHull<T> {
@@ -142,7 +152,7 @@ pub trait ConvexHull<T> {
     /// let poly = Polygon::new(ls, vec![]);
     ///
     /// // The correct convex hull coordinates
-    /// let hull_coords = vec![(0.0, 0.0), (0.0, 0.0), (0.0, 4.0), (1.0, 4.0), (4.0, 1.0), (4.0, 0.0), (0.0, 0.0)];
+    /// let hull_coords = vec![(0.0, 0.0), (0.0, 4.0), (1.0, 4.0), (4.0, 1.0), (4.0, 0.0), (0.0, 0.0)];
     /// let correct_hull = LineString(hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect());
     ///
     /// let res = poly.convex_hull();
@@ -155,7 +165,7 @@ impl<T> ConvexHull<T> for Polygon<T>
     where T: Float
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString(quick_hull(&self.exterior.0)), vec![])
+        Polygon::new(LineString(quick_hull(&mut self.exterior.0.clone())), vec![])
     }
 }
 
@@ -165,40 +175,58 @@ mod test {
     use super::*;
 
     #[test]
-    fn quick_hull_test() {
-        let v = vec![Point::new(0.0, 0.0),
-                     Point::new(4.0, 0.0),
-                     Point::new(4.0, 1.0),
-                     Point::new(1.0, 1.0),
-                     Point::new(1.0, 4.0),
-                     Point::new(0.0, 4.0),
-                     Point::new(0.0, 0.0)];
+    fn quick_hull_test1() {
+        let mut v = vec![Point::new(0.0, 0.0),
+                         Point::new(4.0, 0.0),
+                         Point::new(4.0, 1.0),
+                         Point::new(1.0, 1.0),
+                         Point::new(1.0, 4.0),
+                         Point::new(0.0, 4.0),
+                         Point::new(0.0, 0.0)];
         let correct = vec![Point::new(0.0, 0.0),
-                           Point::new(0.0, 0.0),
                            Point::new(0.0, 4.0),
                            Point::new(1.0, 4.0),
                            Point::new(4.0, 1.0),
                            Point::new(4.0, 0.0),
                            Point::new(0.0, 0.0)];
-        let res = quick_hull(&v);
+        let res = quick_hull(&mut v);
+        assert_eq!(res, correct);
+    }
+    #[test]
+    fn quick_hull_test2() {
+        let mut v = vec![Point::new(0.0, 10.0),
+                         Point::new(1.0, 1.0),
+                         Point::new(10.0, 0.0),
+                         Point::new(1.0, -1.0),
+                         Point::new(0.0, -10.0),
+                         Point::new(-1.0, -1.0),
+                         Point::new(-10.0, 0.0),
+                         Point::new(-1.0, 1.0),
+                         Point::new(0.0, 10.0)];
+        let correct = vec![Point::new(0.0, -10.0),
+                           Point::new(-10.0, 0.0),
+                           Point::new(0.0, 10.0),
+                           Point::new(10.0, 0.0),
+                           Point::new(0.0, -10.0)];
+        let res = quick_hull(&mut v);
         assert_eq!(res, correct);
     }
     #[test]
     fn quick_hull_test_complex() {
         let coords = include!("test_fixtures/poly1.rs");
-        let v = coords.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
+        let mut v: Vec<_> = coords.iter().map(|e| Point::new(e.0, e.1)).collect();
         let correct = include!("test_fixtures/poly1_hull.rs");
-        let v_correct = correct.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
-        let res = quick_hull(&v);
+        let v_correct: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let res = quick_hull(&mut v);
         assert_eq!(res, v_correct);
     }
     #[test]
     fn quick_hull_test_complex_2() {
         let coords = include!("test_fixtures/poly2.rs");
-        let v = coords.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
+        let mut v: Vec<_> = coords.iter().map(|e| Point::new(e.0, e.1)).collect();
         let correct = include!("test_fixtures/poly2_hull.rs");
-        let v_correct = correct.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
-        let res = quick_hull(&v);
+        let v_correct: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let res = quick_hull(&mut v);
         assert_eq!(res, v_correct);
     }
 }
