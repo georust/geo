@@ -1,5 +1,39 @@
 use num_traits::Float;
 use types::{Point, Polygon, LineString};
+use std::mem;
+
+fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
+    let tmp = mem::replace(slice, &mut []);
+    tmp.swap(0, idx);
+    let (h, t) = tmp.split_first_mut().unwrap();
+    *slice = t;
+    h
+}
+fn swap_remove_to_last<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
+    let tmp = mem::replace(slice, &mut []);
+    let len = tmp.len();
+    tmp.swap(len - 1, idx);
+    let (h, t) = tmp.split_last_mut().unwrap();
+    *slice = t;
+    h
+}
+// slice[..result] have pred(e) == true, slice[result..] have pred(e) == false
+fn partition<T, F: FnMut(&T) -> bool>(mut slice: &mut [T], mut pred: F) -> usize {
+    let mut i = 0;
+    loop {
+        let test = match slice.first() {
+            Some(e) => pred(e),
+            None => break,
+        };
+        if test {
+            swap_remove_to_first(&mut slice, 0);
+            i += 1;
+        } else {
+            swap_remove_to_last(&mut slice, 0);
+        }
+    }
+    i
+}
 
 // Determine whether a point lies on one side of a line segment, or the other.
 // The cross product v x w of two vectors v and w is a vector whose length is
@@ -87,7 +121,7 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
 }
 
 // recursively calculate the convex hull of a subset of points
-fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, set: &mut Vec<Point<T>>, hull: &mut Vec<Point<T>>)
+fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, mut set: &mut [Point<T>], hull: &mut Vec<Point<T>>)
     where T: Float
 {
     if set.is_empty() {
@@ -98,7 +132,7 @@ fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, set: &mut Vec<Point<T>>, hull: &m
         return;
     }
     let mut furthest_distance = Float::min_value();
-    let mut furthest_idx = <usize>::min_value();
+    let mut furthest_idx = 0;
     for (idx, point) in set.iter().enumerate() {
         let current_distance = pseudo_distance(p_a, p_b, point);
         if current_distance > furthest_distance {
@@ -107,26 +141,16 @@ fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, set: &mut Vec<Point<T>>, hull: &m
         }
     }
     // move Point at furthest_point from set into hull
-    let furthest_point = set[furthest_idx];
-    set.remove(furthest_idx);
-    // Determine points to the left of A, furthest_point
-    let mut left_ap: Vec<Point<T>> = vec![];
-    let mut left_pb: Vec<Point<T>> = vec![];
-    for point in set.iter() {
-        if point_location(p_a, &furthest_point, point) {
-            left_ap.push(*point);
-        }
-    }
-    // Determine points to the left of furthest_point, B
-    for point in set.iter() {
-        if point_location(&furthest_point, p_b, point) {
-            left_pb.push(*point);
-        }
-    }
-    // recur
-    hull_set(p_a, &furthest_point, &mut left_ap, hull);
-    hull.push(furthest_point);
-    hull_set(&furthest_point, p_b, &mut left_pb, hull);
+    let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
+
+    // points over AP
+    let last = partition(set, |p| point_location(p_a, &furthest_point, p));
+    hull_set(p_a, &furthest_point, &mut set[..last], hull);
+    hull.push(*furthest_point);
+
+    // points over PB
+    let last = partition(set, |p| point_location(&furthest_point, p_b, p));
+    hull_set(&furthest_point, p_b, &mut set[..last], hull);
 }
 
 pub trait ConvexHull<T> {
