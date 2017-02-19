@@ -14,11 +14,15 @@ use types::{Point, Polygon, LineString};
 // we can compute the cross product AB x AC and check its sign:
 // If it's negative, it will be on the "right" side of AB
 // (when standing on A and looking towards B). If positive, it will be on the left side
+fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
+    where T: Float
+{
+    (p_b.x() - p_a.x()) * (p_c.y() - p_a.y()) - (p_b.y() - p_a.y()) * (p_c.x() - p_a.x())
+}
 fn point_location<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> bool
     where T: Float
 {
-    (p_b.x() - p_a.x()) * (p_c.y() - p_a.y()) - (p_b.y() - p_a.y()) * (p_c.x() - p_a.x()) >
-    T::zero()
+    cross_prod(p_a, p_b, p_c) > T::zero()
 }
 
 // Fast distance between line segment (p_a, p_b), and point p_c
@@ -67,9 +71,10 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
         .filter(|&(idx, _)| ![min_x_idx, max_x_idx].contains(&idx))
         .map(|(_, p)| *p);
     for point in points_iter {
-        if !point_location(&p_a, &p_b, &point) {
+        let prod = cross_prod(&p_a, &p_b, &point);
+        if prod < T::zero() {
             left_set.push(point);
-        } else {
+        } else if prod > T::zero() {
             right_set.push(point);
         }
     }
@@ -142,7 +147,7 @@ pub trait ConvexHull<T> {
     /// let poly = Polygon::new(ls, vec![]);
     ///
     /// // The correct convex hull coordinates
-    /// let hull_coords = vec![(0.0, 0.0), (0.0, 0.0), (0.0, 4.0), (1.0, 4.0), (4.0, 1.0), (4.0, 0.0), (0.0, 0.0)];
+    /// let hull_coords = vec![(0.0, 0.0), (0.0, 4.0), (1.0, 4.0), (4.0, 1.0), (4.0, 0.0), (0.0, 0.0)];
     /// let correct_hull = LineString(hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect());
     ///
     /// let res = poly.convex_hull();
@@ -174,7 +179,6 @@ mod test {
                      Point::new(0.0, 4.0),
                      Point::new(0.0, 0.0)];
         let correct = vec![Point::new(0.0, 0.0),
-                           Point::new(0.0, 0.0),
                            Point::new(0.0, 4.0),
                            Point::new(1.0, 4.0),
                            Point::new(4.0, 1.0),
