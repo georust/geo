@@ -61,8 +61,6 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
     let p_a = points[min_x_idx];
     let p_b = points[max_x_idx];
     // min x and max x points are always part of the hull
-    hull.push(p_a);
-    hull.push(p_b);
     let mut left_set = vec![];
     let mut right_set = vec![];
     // divide remaining points into left and right
@@ -78,8 +76,10 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
             right_set.push(point);
         }
     }
-    hull_set(&p_a, &p_b, &mut right_set, &mut hull);
     hull_set(&p_b, &p_a, &mut left_set, &mut hull);
+    hull.push(p_a);
+    hull_set(&p_a, &p_b, &mut right_set, &mut hull);
+    hull.push(p_b);
     // close the polygon
     let final_element = *hull.first().unwrap();
     hull.push(final_element);
@@ -90,13 +90,11 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
 fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, set: &mut Vec<Point<T>>, hull: &mut Vec<Point<T>>)
     where T: Float
 {
-    let insert_position = hull.iter().position(|r| r == p_b).unwrap();
     if set.is_empty() {
         return;
     }
     if set.len() == 1 {
-        hull.insert(insert_position, set[0]);
-        set.remove(0);
+        hull.push(set[0]);
         return;
     }
     let mut furthest_distance = Float::min_value();
@@ -110,7 +108,6 @@ fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, set: &mut Vec<Point<T>>, hull: &m
     }
     // move Point at furthest_point from set into hull
     let furthest_point = set[furthest_idx];
-    hull.insert(insert_position, set[furthest_idx]);
     set.remove(furthest_idx);
     // Determine points to the left of A, furthest_point
     let mut left_ap: Vec<Point<T>> = vec![];
@@ -128,6 +125,7 @@ fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, set: &mut Vec<Point<T>>, hull: &m
     }
     // recur
     hull_set(p_a, &furthest_point, &mut left_ap, hull);
+    hull.push(furthest_point);
     hull_set(&furthest_point, p_b, &mut left_pb, hull);
 }
 
@@ -170,7 +168,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn quick_hull_test() {
+    fn quick_hull_test1() {
         let v = vec![Point::new(0.0, 0.0),
                      Point::new(4.0, 0.0),
                      Point::new(4.0, 1.0),
