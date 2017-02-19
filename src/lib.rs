@@ -1,3 +1,4 @@
+extern crate cgmath;
 extern crate num_traits;
 
 pub use traits::ToGeo;
