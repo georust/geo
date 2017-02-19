@@ -29,7 +29,7 @@ impl<T> HaversineDistance<T, Point<T>> for Point<T>
     fn haversine_distance(&self, rhs: &Point<T>) -> T {
         let (lhs_sin, lhs_cos) = self.y().to_radians().sin_cos();
         let (rhs_sin, rhs_cos) = rhs.y().to_radians().sin_cos();
-        let delta_lng = rhs.lng() - self.lng();
+        let delta_lng = rhs.x() - self.x();
 
         let a = (lhs_sin * rhs_sin) + (lhs_cos * rhs_cos) * delta_lng.to_radians().cos();
 

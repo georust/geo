@@ -3,6 +3,7 @@ use std::ops::AddAssign;
 use std::ops::Neg;
 use std::ops::Sub;
 
+use cgmath::Angle;
 use num_traits::{Float, ToPrimitive};
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
@@ -24,9 +25,7 @@ pub struct Bbox<T> {
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Point<T> (pub Coordinate<T>);
 
-impl<T> Point<T>
-    where T: Float + ToPrimitive
-{
+impl<T> Point<T> {
     /// Creates a new point.
     ///
     /// ```
@@ -40,7 +39,11 @@ impl<T> Point<T>
     pub fn new(x: T, y: T) -> Point<T> {
         Point(Coordinate { x: x, y: y })
     }
+}
 
+impl<T> Point<T>
+    where T: Float + ToPrimitive
+{
     /// Returns the x/horizontal component of the point.
     ///
     /// ```
@@ -97,60 +100,6 @@ impl<T> Point<T>
         self
     }
 
-    /// Returns the longitude/horizontal component of the point.
-    ///
-    /// ```
-    /// use geo::Point;
-    ///
-    /// let p = Point::new(1.234, 2.345);
-    ///
-    /// assert_eq!(p.lng(), 1.234);
-    /// ```
-    pub fn lng(&self) -> T {
-        self.x()
-    }
-
-    /// Sets the longitude/horizontal component of the point.
-    ///
-    /// ```
-    /// use geo::Point;
-    ///
-    /// let mut p = Point::new(1.234, 2.345);
-    /// p.set_lng(9.876);
-    ///
-    /// assert_eq!(p.lng(), 9.876);
-    /// ```
-    pub fn set_lng(&mut self, lng: T) -> &mut Point<T> {
-        self.set_x(lng)
-    }
-
-    /// Returns the latitude/vertical component of the point.
-    ///
-    /// ```
-    /// use geo::Point;
-    ///
-    /// let p = Point::new(1.234, 2.345);
-    ///
-    /// assert_eq!(p.lat(), 2.345);
-    /// ```
-    pub fn lat(&self) -> T {
-        self.y()
-    }
-
-    /// Sets the latitude/vertical component of the point.
-    ///
-    /// ```
-    /// use geo::Point;
-    ///
-    /// let mut p = Point::new(1.234, 2.345);
-    /// p.set_lat(9.876);
-    ///
-    /// assert_eq!(p.lat(), 9.876);
-    /// ```
-    pub fn set_lat(&mut self, lat: T) -> &mut Point<T> {
-        self.set_y(lat)
-    }
-
     /// Returns the dot product of the two points:
     /// `dot = x1 * x2 + y1 * y2`
     ///
@@ -164,6 +113,90 @@ impl<T> Point<T>
     /// ```
     pub fn dot(&self, point: &Point<T>) -> T {
         self.x() * point.x() + self.y() * point.y()
+    }
+}
+
+impl<T> Point<T>
+    where T: Angle
+{
+    /// Returns the longitude/horizontal component of the point.
+    ///
+    /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
+    /// use geo::Point;
+    /// use cgmath::Deg;
+    ///
+    /// # fn main() {
+    /// let p = Point::new(Deg(1.234), Deg(2.345));
+    ///
+    /// assert_eq!(p.lng(), Deg(1.234));
+    /// # }
+    /// ```
+    pub fn lng(&self) -> T {
+        self.0.x
+    }
+
+    /// Sets the longitude/horizontal component of the point.
+    ///
+    /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
+    /// use geo::Point;
+    /// use cgmath::Deg;
+    ///
+    /// # fn main() {
+    /// let mut p = Point::new(Deg(1.234), Deg(2.345));
+    /// p.set_lng(Deg(9.876));
+    ///
+    /// assert_eq!(p.lng(), Deg(9.876));
+    /// # }
+    /// ```
+    pub fn set_lng(&mut self, lng: T) -> &mut Point<T> {
+        self.0.x = lng;
+        self
+    }
+
+    /// Returns the latitude/vertical component of the point.
+    ///
+    /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
+    /// use geo::Point;
+    /// use cgmath::Deg;
+    ///
+    /// # fn main() {
+    /// let p = Point::new(Deg(1.234), Deg(2.345));
+    ///
+    /// assert_eq!(p.lat(), Deg(2.345));
+    /// # }
+    /// ```
+    pub fn lat(&self) -> T {
+        self.0.y
+    }
+
+    /// Sets the latitude/vertical component of the point.
+    ///
+    /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
+    /// use geo::Point;
+    /// use cgmath::Deg;
+    ///
+    /// # fn main() {
+    /// let mut p = Point::new(Deg(1.234), Deg(2.345));
+    /// p.set_lat(Deg(9.876));
+    ///
+    /// assert_eq!(p.lat(), Deg(9.876));
+    /// # }
+    /// ```
+    pub fn set_lat(&mut self, lat: T) -> &mut Point<T> {
+        self.0.y = lat;
+        self
     }
 }
 
