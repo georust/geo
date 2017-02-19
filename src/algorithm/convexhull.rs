@@ -188,6 +188,25 @@ mod test {
         assert_eq!(res, correct);
     }
     #[test]
+    fn quick_hull_test2() {
+        let v = vec![Point::new(0.0, 10.0),
+                     Point::new(1.0, 1.0),
+                     Point::new(10.0, 0.0),
+                     Point::new(1.0, -1.0),
+                     Point::new(0.0, -10.0),
+                     Point::new(-1.0, -1.0),
+                     Point::new(-10.0, 0.0),
+                     Point::new(-1.0, 1.0),
+                     Point::new(0.0, 10.0)];
+        let correct = vec![Point::new(0.0, -10.0),
+                           Point::new(-10.0, 0.0),
+                           Point::new(0.0, 10.0),
+                           Point::new(10.0, 0.0),
+                           Point::new(0.0, -10.0)];
+        let res = quick_hull(&v);
+        assert_eq!(res, correct);
+    }
+    #[test]
     fn quick_hull_test_complex() {
         let coords = include!("test_fixtures/poly1.rs");
         let v = coords.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
