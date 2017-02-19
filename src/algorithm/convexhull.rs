@@ -70,7 +70,7 @@ fn pseudo_distance<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
 }
 
 // Adapted from http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
-fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
+fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
     where T: Float
 {
     // can't build a hull from fewer than four points
@@ -78,42 +78,25 @@ fn quick_hull<T>(points: &[Point<T>]) -> Vec<Point<T>>
         return points.to_vec();
     }
     let mut hull = vec![];
-    let mut min_x_idx = 0;
-    let mut max_x_idx = 0;
-    let mut min_x = Float::max_value();
-    let mut max_x = Float::min_value();
-    for (idx, point) in points.iter().enumerate() {
-        if point.x() < min_x {
-            min_x = point.x();
-            min_x_idx = idx;
+    let mut min = swap_remove_to_first(&mut points, 0);
+    let mut max = swap_remove_to_first(&mut points, 0);
+    if min.x() > max.x() {
+        mem::swap(min, max);
+    }
+    for point in points.iter_mut() {
+        if point.x() < min.x() {
+            mem::swap(point, min);
         }
-        if point.x() > max_x {
-            max_x = point.x();
-            max_x_idx = idx;
+        if point.x() > max.x() {
+            mem::swap(point, max);
         }
     }
-    let p_a = points[min_x_idx];
-    let p_b = points[max_x_idx];
-    // min x and max x points are always part of the hull
-    let mut left_set = vec![];
-    let mut right_set = vec![];
-    // divide remaining points into left and right
-    let points_iter = points.iter()
-        .enumerate()
-        .filter(|&(idx, _)| ![min_x_idx, max_x_idx].contains(&idx))
-        .map(|(_, p)| *p);
-    for point in points_iter {
-        let prod = cross_prod(&p_a, &p_b, &point);
-        if prod < T::zero() {
-            left_set.push(point);
-        } else if prod > T::zero() {
-            right_set.push(point);
-        }
-    }
-    hull_set(&p_b, &p_a, &mut left_set, &mut hull);
-    hull.push(p_a);
-    hull_set(&p_a, &p_b, &mut right_set, &mut hull);
-    hull.push(p_b);
+    let last = partition(&mut points, |p| point_location(max, min, p));
+    hull_set(max, min, &mut points[..last], &mut hull);
+    hull.push(*min);
+    let last = partition(&mut points, |p| point_location(min, max, p));
+    hull_set(min, max, &mut points[..last], &mut hull);
+    hull.push(*max);
     // close the polygon
     let final_element = *hull.first().unwrap();
     hull.push(final_element);
@@ -182,7 +165,7 @@ impl<T> ConvexHull<T> for Polygon<T>
     where T: Float
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString(quick_hull(&self.exterior.0)), vec![])
+        Polygon::new(LineString(quick_hull(&mut self.exterior.0.clone())), vec![])
     }
 }
 
@@ -193,57 +176,57 @@ mod test {
 
     #[test]
     fn quick_hull_test1() {
-        let v = vec![Point::new(0.0, 0.0),
-                     Point::new(4.0, 0.0),
-                     Point::new(4.0, 1.0),
-                     Point::new(1.0, 1.0),
-                     Point::new(1.0, 4.0),
-                     Point::new(0.0, 4.0),
-                     Point::new(0.0, 0.0)];
+        let mut v = vec![Point::new(0.0, 0.0),
+                         Point::new(4.0, 0.0),
+                         Point::new(4.0, 1.0),
+                         Point::new(1.0, 1.0),
+                         Point::new(1.0, 4.0),
+                         Point::new(0.0, 4.0),
+                         Point::new(0.0, 0.0)];
         let correct = vec![Point::new(0.0, 0.0),
                            Point::new(0.0, 4.0),
                            Point::new(1.0, 4.0),
                            Point::new(4.0, 1.0),
                            Point::new(4.0, 0.0),
                            Point::new(0.0, 0.0)];
-        let res = quick_hull(&v);
+        let res = quick_hull(&mut v);
         assert_eq!(res, correct);
     }
     #[test]
     fn quick_hull_test2() {
-        let v = vec![Point::new(0.0, 10.0),
-                     Point::new(1.0, 1.0),
-                     Point::new(10.0, 0.0),
-                     Point::new(1.0, -1.0),
-                     Point::new(0.0, -10.0),
-                     Point::new(-1.0, -1.0),
-                     Point::new(-10.0, 0.0),
-                     Point::new(-1.0, 1.0),
-                     Point::new(0.0, 10.0)];
+        let mut v = vec![Point::new(0.0, 10.0),
+                         Point::new(1.0, 1.0),
+                         Point::new(10.0, 0.0),
+                         Point::new(1.0, -1.0),
+                         Point::new(0.0, -10.0),
+                         Point::new(-1.0, -1.0),
+                         Point::new(-10.0, 0.0),
+                         Point::new(-1.0, 1.0),
+                         Point::new(0.0, 10.0)];
         let correct = vec![Point::new(0.0, -10.0),
                            Point::new(-10.0, 0.0),
                            Point::new(0.0, 10.0),
                            Point::new(10.0, 0.0),
                            Point::new(0.0, -10.0)];
-        let res = quick_hull(&v);
+        let res = quick_hull(&mut v);
         assert_eq!(res, correct);
     }
     #[test]
     fn quick_hull_test_complex() {
         let coords = include!("test_fixtures/poly1.rs");
-        let v = coords.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
+        let mut v: Vec<_> = coords.iter().map(|e| Point::new(e.0, e.1)).collect();
         let correct = include!("test_fixtures/poly1_hull.rs");
-        let v_correct = correct.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
-        let res = quick_hull(&v);
+        let v_correct: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let res = quick_hull(&mut v);
         assert_eq!(res, v_correct);
     }
     #[test]
     fn quick_hull_test_complex_2() {
         let coords = include!("test_fixtures/poly2.rs");
-        let v = coords.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
+        let mut v: Vec<_> = coords.iter().map(|e| Point::new(e.0, e.1)).collect();
         let correct = include!("test_fixtures/poly2_hull.rs");
-        let v_correct = correct.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<Point<_>>>();
-        let res = quick_hull(&v);
+        let v_correct: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let res = quick_hull(&mut v);
         assert_eq!(res, v_correct);
     }
 }
