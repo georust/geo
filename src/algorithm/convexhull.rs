@@ -1,5 +1,5 @@
 use num_traits::Float;
-use types::{Point, Polygon, LineString};
+use types::{Point, Polygon, MultiPolygon, LineString, MultiPoint, MultiLineString};
 use std::mem;
 
 fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
@@ -166,6 +166,44 @@ impl<T> ConvexHull<T> for Polygon<T>
 {
     fn convex_hull(&self) -> Polygon<T> {
         Polygon::new(LineString(quick_hull(&mut self.exterior.0.clone())), vec![])
+    }
+}
+
+impl<T> ConvexHull<T> for MultiPolygon<T>
+    where T: Float
+{
+    fn convex_hull(&self) -> Polygon<T> {
+        let mut aggregated: Vec<Point<T>> = self.0.iter()
+            .flat_map(|elem| elem.exterior.0.clone())
+            .collect();
+        Polygon::new(LineString(quick_hull(&mut aggregated)), vec![])
+    }
+}
+
+impl<T> ConvexHull<T> for LineString<T>
+    where T: Float
+{
+    fn convex_hull(&self) -> Polygon<T> {
+        Polygon::new(LineString(quick_hull(&mut self.0.clone())), vec![])
+    }
+}
+
+impl<T> ConvexHull<T> for MultiLineString<T>
+    where T: Float
+{
+    fn convex_hull(&self) -> Polygon<T> {
+        let mut aggregated: Vec<Point<T>> = self.0.iter()
+            .flat_map(|elem| elem.0.clone())
+            .collect();
+        Polygon::new(LineString(quick_hull(&mut aggregated)), vec![])
+    }
+}
+
+impl<T> ConvexHull<T> for MultiPoint<T>
+    where T: Float
+{
+    fn convex_hull(&self) -> Polygon<T> {
+        Polygon::new(LineString(quick_hull(&mut self.0.clone())), vec![])
     }
 }
 
