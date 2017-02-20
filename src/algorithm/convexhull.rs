@@ -267,4 +267,78 @@ mod test {
         let res = quick_hull(&mut v);
         assert_eq!(res, v_correct);
     }
+    #[test]
+    fn quick_hull_multipoint_test() {
+        let v = vec![Point::new(0.0, 10.0),
+                         Point::new(1.0, 1.0),
+                         Point::new(10.0, 0.0),
+                         Point::new(1.0, -1.0),
+                         Point::new(0.0, -10.0),
+                         Point::new(-1.0, -1.0),
+                         Point::new(-10.0, 0.0),
+                         Point::new(-1.0, 1.0),
+                         Point::new(0.0, 10.0)];
+        let mp = MultiPoint(v);
+        let correct = vec![Point::new(0.0, -10.0),
+                           Point::new(-10.0, 0.0),
+                           Point::new(0.0, 10.0),
+                           Point::new(10.0, 0.0),
+                           Point::new(0.0, -10.0)];
+        let res = mp.convex_hull();
+        assert_eq!(res.exterior.0, correct);
+    }
+    #[test]
+    fn quick_hull_linestring_test() {
+        let v = vec![
+            Point::new(0.0, 10.0),
+            Point::new(1.0, 1.0),
+            Point::new(10.0, 0.0),
+            Point::new(1.0, -1.0),
+            Point::new(0.0, -10.0),
+            Point::new(-1.0, -1.0),
+            Point::new(-10.0, 0.0),
+            Point::new(-1.0, 1.0),
+            Point::new(0.0, 10.0)];
+        let mp = LineString(v);
+        let correct = vec![
+            Point::new(0.0, -10.0),
+            Point::new(-10.0, 0.0),
+            Point::new(0.0, 10.0),
+            Point::new(10.0, 0.0),
+            Point::new(0.0, -10.0)];
+        let res = mp.convex_hull();
+        assert_eq!(res.exterior.0, correct);
+    }
+    #[test]
+    fn quick_hull_multilinestring_test() {
+        let v1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0)]);
+        let v2 = LineString(vec![Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(3.0, 1.0)]);
+        let mls = MultiLineString(vec![v1, v2]);
+        let correct = vec![
+            Point::new(2.0, 0.0),
+            Point::new(0.0, 0.0),
+            Point::new(1.0, 10.0),
+            Point::new(3.0, 1.0),
+            Point::new(2.0, 0.0)];
+        let res = mls.convex_hull();
+        println!("{:?}", res.exterior.0);
+        assert_eq!(res.exterior.0, correct);
+    }
+    #[test]
+    fn quick_hull_multipolygon_test() {
+        let ls1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(0.0, 0.0)]);
+        let ls2 = LineString(vec![Point::new(3.0, 0.0), Point::new(4.0, 10.0), Point::new(5.0, 0.0), Point::new(3.0, 0.0)]);
+        let p1 = Polygon::new(ls1, vec![]);
+        let p2 = Polygon::new(ls2, vec![]);
+        let mp = MultiPolygon(vec![p1, p2]);
+        let correct = vec![
+            Point::new(0.0, 0.0),
+            Point::new(1.0, 10.0),
+            Point::new(4.0, 10.0),
+            Point::new(5.0, 0.0),
+            Point::new(0.0, 0.0)
+        ];
+        let res = mp.convex_hull();
+        assert_eq!(res.exterior.0, correct);
+    }
 }
