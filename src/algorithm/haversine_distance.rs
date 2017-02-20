@@ -4,8 +4,11 @@ use types::Point;
 
 /// Returns the distance between two geometries.
 
-pub trait HaversineDistance<T, Rhs = Self>
+pub trait HaversineDistance<RHS = Self>
 {
+    /// The resulting type after applying the Haversine algorithm
+    type Output;
+
     /// Returns the distance between two points:
     ///
     /// ```
@@ -23,20 +26,22 @@ pub trait HaversineDistance<T, Rhs = Self>
     /// assert_relative_eq!(dist, 10900.115612674515, epsilon = 1.0e-6)
     /// # }
     /// ```
-    fn haversine_distance(&self, rhs: &Rhs) -> T;
+    fn haversine_distance(&self, rhs: &RHS) -> Self::Output;
 }
 
-impl<T> HaversineDistance<T::Unitless, Point<T>> for Point<T>
+impl<T> HaversineDistance for Point<T>
     where T: Angle
 {
-    fn haversine_distance(&self, rhs: &Point<T>) -> T::Unitless {
+    type Output = T::Unitless;
+
+    fn haversine_distance(&self, rhs: &Point<T>) -> Self::Output {
         let (lhs_sin, lhs_cos) = self.lat().sin_cos();
         let (rhs_sin, rhs_cos) = rhs.lat().sin_cos();
         let delta_lng = rhs.lng() - self.lng();
 
         let a = (lhs_sin * rhs_sin) + (lhs_cos * rhs_cos) * delta_lng.cos();
 
-        cast::<u32, T::Unitless>(6378137).unwrap() * a.acos().min(T::Unitless::one())
+        cast::<u32, Self::Output>(6378137).unwrap() * a.acos().min(Self::Output::one())
     }
 }
 
