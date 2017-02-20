@@ -201,11 +201,11 @@ impl<T> Point<T>
 }
 
 impl<T> Neg for Point<T>
-    where T: Float + Neg<Output = T> + ToPrimitive
+    where T: Neg
 {
-    type Output = Point<T>;
+    type Output = Point<T::Output>;
 
-    /// Returns a point with the x and y components negated.
+    /// Returns a point with the x and y components negated:
     ///
     /// ```
     /// use geo::Point;
@@ -215,15 +215,32 @@ impl<T> Neg for Point<T>
     /// assert_eq!(p.x(), 1.25);
     /// assert_eq!(p.y(), -2.5);
     /// ```
-    fn neg(self) -> Point<T> {
-        Point::new(-self.x(), -self.y())
+    ///
+    /// or using angles:
+    ///
+    /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
+    /// use geo::Point;
+    /// use cgmath::Deg;
+    ///
+    /// # fn main() {
+    /// let p = -Point::new(Deg(1.234), Deg(-2.345));
+    ///
+    /// assert_eq!(p.lng(), Deg(-1.234));
+    /// assert_eq!(p.lat(), Deg(2.345));
+    /// # }
+    /// ```
+    fn neg(self) -> Self::Output {
+        Point::new(-self.0.x, -self.0.y)
     }
 }
 
 impl<T> Add for Point<T>
-    where T: Float + ToPrimitive
+    where T: Add
 {
-    type Output = Point<T>;
+    type Output = Point<T::Output>;
 
     /// Add a point to the given point.
     ///
@@ -235,15 +252,32 @@ impl<T> Add for Point<T>
     /// assert_eq!(p.x(), 2.75);
     /// assert_eq!(p.y(), 5.0);
     /// ```
-    fn add(self, rhs: Point<T>) -> Point<T> {
-        Point::new(self.x() + rhs.x(), self.y() + rhs.y())
+    ///
+    /// or using angles:
+    ///
+    /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
+    /// use geo::Point;
+    /// use cgmath::Deg;
+    ///
+    /// # fn main() {
+    /// let p = Point::new(Deg(1.25), Deg(2.5)) + Point::new(Deg(1.5), Deg(2.5));
+    ///
+    /// assert_eq!(p.lng(), Deg(2.75));
+    /// assert_eq!(p.lat(), Deg(5.0));
+    /// # }
+    /// ```
+    fn add(self, rhs: Point<T>) -> Self::Output {
+        Point::new(self.0.x + rhs.0.x, self.0.y + rhs.0.y)
     }
 }
 
 impl<T> Sub for Point<T>
-    where T: Float + ToPrimitive
+    where T: Sub
 {
-    type Output = Point<T>;
+    type Output = Point<T::Output>;
 
     /// Subtract a point from the given point.
     ///
@@ -255,8 +289,26 @@ impl<T> Sub for Point<T>
     /// assert_eq!(p.x(), -0.25);
     /// assert_eq!(p.y(), 0.5);
     /// ```
-    fn sub(self, rhs: Point<T>) -> Point<T> {
-        Point::new(self.x() - rhs.x(), self.y() - rhs.y())
+    ///
+    /// or using angles:
+    ///
+    /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
+    /// use geo::Point;
+    /// use cgmath::Deg;
+    ///
+    /// # fn main() {
+    /// let p = Point::new(Deg(1.25), Deg(3.0)) - Point::new(Deg(1.5), Deg(2.5));
+    ///
+    /// assert_eq!(p.lng(), Deg(-0.25));
+    /// assert_eq!(p.lat(), Deg(0.5));
+    /// # }
+    /// ```
+    /// ```
+    fn sub(self, rhs: Point<T>) -> Self::Output {
+        Point::new(self.0.x - rhs.0.x, self.0.y - rhs.0.y)
     }
 }
 
