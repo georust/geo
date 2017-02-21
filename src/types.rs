@@ -42,7 +42,7 @@ impl<T> Point<T> {
 }
 
 impl<T> Point<T>
-    where T: Float + ToPrimitive
+    where T: Copy
 {
     /// Returns the x/horizontal component of the point.
     ///
@@ -99,7 +99,11 @@ impl<T> Point<T>
         self.0.y = y;
         self
     }
+}
 
+impl<T> Point<T>
+    where T: Float + ToPrimitive
+{
     /// Returns the dot product of the two points:
     /// `dot = x1 * x2 + y1 * y2`
     ///
@@ -201,7 +205,7 @@ impl<T> Point<T>
 }
 
 impl<T> Neg for Point<T>
-    where T: Neg
+    where T: Neg + Copy
 {
     type Output = Point<T::Output>;
 
@@ -233,12 +237,12 @@ impl<T> Neg for Point<T>
     /// # }
     /// ```
     fn neg(self) -> Self::Output {
-        Point::new(-self.0.x, -self.0.y)
+        Point::new(-self.x(), -self.y())
     }
 }
 
 impl<T> Add for Point<T>
-    where T: Add
+    where T: Add + Copy
 {
     type Output = Point<T::Output>;
 
@@ -270,12 +274,12 @@ impl<T> Add for Point<T>
     /// # }
     /// ```
     fn add(self, rhs: Point<T>) -> Self::Output {
-        Point::new(self.0.x + rhs.0.x, self.0.y + rhs.0.y)
+        Point::new(self.x() + rhs.x(), self.y() + rhs.y())
     }
 }
 
 impl<T> Sub for Point<T>
-    where T: Sub
+    where T: Sub + Copy
 {
     type Output = Point<T::Output>;
 
@@ -308,7 +312,7 @@ impl<T> Sub for Point<T>
     /// ```
     /// ```
     fn sub(self, rhs: Point<T>) -> Self::Output {
-        Point::new(self.0.x - rhs.0.x, self.0.y - rhs.0.y)
+        Point::new(self.x() - rhs.x(), self.y() - rhs.y())
     }
 }
 
