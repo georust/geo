@@ -120,7 +120,7 @@ impl<T> Point<T>
     /// # }
     /// ```
     pub fn lng(&self) -> T {
-        self.0.x
+        self.x()
     }
 
     /// Sets the longitude/horizontal component of the point.
@@ -140,8 +140,7 @@ impl<T> Point<T>
     /// # }
     /// ```
     pub fn set_lng(&mut self, lng: T) -> &mut Point<T> {
-        self.0.x = lng;
-        self
+        self.set_x(lng)
     }
 
     /// Returns the latitude/vertical component of the point.
@@ -160,7 +159,7 @@ impl<T> Point<T>
     /// # }
     /// ```
     pub fn lat(&self) -> T {
-        self.0.y
+        self.y()
     }
 
     /// Sets the latitude/vertical component of the point.
@@ -180,8 +179,7 @@ impl<T> Point<T>
     /// # }
     /// ```
     pub fn set_lat(&mut self, lat: T) -> &mut Point<T> {
-        self.0.y = lat;
-        self
+        self.set_y(lat)
     }
 }
 
