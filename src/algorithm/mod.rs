@@ -18,3 +18,5 @@ pub mod boundingbox;
 pub mod simplify;
 /// Simplifies a `LineString` using the Visvalingam-Whyatt algorithm.
 pub mod simplifyvw;
+/// Calculates the convex hull of a `Polygon`
+pub mod convexhull;
