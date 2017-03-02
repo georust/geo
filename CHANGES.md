@@ -1,5 +1,9 @@
 # Changes
 
+## 0.4.1
+
+* [Implement convex hull algorithm](https://github.com/georust/rust-geo/pull/89)
+
 ## 0.4.0
 
 * [Implement Haversine algorithm](https://github.com/georust/rust-geo/pull/90)
