@@ -3,22 +3,19 @@ use std::ops::AddAssign;
 use std::ops::Neg;
 use std::ops::Sub;
 
+use cgmath::Angle;
 use num_traits::{Float, ToPrimitive};
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Coordinate<T>
-    where T: Float
-{
+pub struct Coordinate<T> {
     pub x: T,
     pub y: T,
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Bbox<T>
-    where T: Float
-{
+pub struct Bbox<T> {
     pub xmin: T,
     pub xmax: T,
     pub ymin: T,
@@ -26,11 +23,9 @@ pub struct Bbox<T>
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Point<T> (pub Coordinate<T>) where T: Float;
+pub struct Point<T> (pub Coordinate<T>);
 
-impl<T> Point<T>
-    where T: Float + ToPrimitive
-{
+impl<T> Point<T> {
     /// Creates a new point.
     ///
     /// ```
@@ -44,7 +39,11 @@ impl<T> Point<T>
     pub fn new(x: T, y: T) -> Point<T> {
         Point(Coordinate { x: x, y: y })
     }
+}
 
+impl<T> Point<T>
+    where T: Copy
+{
     /// Returns the x/horizontal component of the point.
     ///
     /// ```
@@ -100,15 +99,25 @@ impl<T> Point<T>
         self.0.y = y;
         self
     }
+}
 
+impl<T> Point<T>
+    where T: Angle
+{
     /// Returns the longitude/horizontal component of the point.
     ///
     /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
     /// use geo::Point;
+    /// use cgmath::Deg;
     ///
-    /// let p = Point::new(1.234, 2.345);
+    /// # fn main() {
+    /// let p = Point::new(Deg(1.234), Deg(2.345));
     ///
-    /// assert_eq!(p.lng(), 1.234);
+    /// assert_eq!(p.lng(), Deg(1.234));
+    /// # }
     /// ```
     pub fn lng(&self) -> T {
         self.x()
@@ -117,12 +126,18 @@ impl<T> Point<T>
     /// Sets the longitude/horizontal component of the point.
     ///
     /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
     /// use geo::Point;
+    /// use cgmath::Deg;
     ///
-    /// let mut p = Point::new(1.234, 2.345);
-    /// p.set_lng(9.876);
+    /// # fn main() {
+    /// let mut p = Point::new(Deg(1.234), Deg(2.345));
+    /// p.set_lng(Deg(9.876));
     ///
-    /// assert_eq!(p.lng(), 9.876);
+    /// assert_eq!(p.lng(), Deg(9.876));
+    /// # }
     /// ```
     pub fn set_lng(&mut self, lng: T) -> &mut Point<T> {
         self.set_x(lng)
@@ -131,11 +146,17 @@ impl<T> Point<T>
     /// Returns the latitude/vertical component of the point.
     ///
     /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
     /// use geo::Point;
+    /// use cgmath::Deg;
     ///
-    /// let p = Point::new(1.234, 2.345);
+    /// # fn main() {
+    /// let p = Point::new(Deg(1.234), Deg(2.345));
     ///
-    /// assert_eq!(p.lat(), 2.345);
+    /// assert_eq!(p.lat(), Deg(2.345));
+    /// # }
     /// ```
     pub fn lat(&self) -> T {
         self.y()
@@ -144,17 +165,27 @@ impl<T> Point<T>
     /// Sets the latitude/vertical component of the point.
     ///
     /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
     /// use geo::Point;
+    /// use cgmath::Deg;
     ///
-    /// let mut p = Point::new(1.234, 2.345);
-    /// p.set_lat(9.876);
+    /// # fn main() {
+    /// let mut p = Point::new(Deg(1.234), Deg(2.345));
+    /// p.set_lat(Deg(9.876));
     ///
-    /// assert_eq!(p.lat(), 9.876);
+    /// assert_eq!(p.lat(), Deg(9.876));
+    /// # }
     /// ```
     pub fn set_lat(&mut self, lat: T) -> &mut Point<T> {
         self.set_y(lat)
     }
+}
 
+impl<T> Point<T>
+    where T: Float + ToPrimitive
+{
     /// Returns the dot product of the two points:
     /// `dot = x1 * x2 + y1 * y2`
     ///
@@ -172,11 +203,11 @@ impl<T> Point<T>
 }
 
 impl<T> Neg for Point<T>
-    where T: Float + Neg<Output = T> + ToPrimitive
+    where T: Neg + Copy
 {
-    type Output = Point<T>;
+    type Output = Point<T::Output>;
 
-    /// Returns a point with the x and y components negated.
+    /// Returns a point with the x and y components negated:
     ///
     /// ```
     /// use geo::Point;
@@ -186,15 +217,32 @@ impl<T> Neg for Point<T>
     /// assert_eq!(p.x(), 1.25);
     /// assert_eq!(p.y(), -2.5);
     /// ```
-    fn neg(self) -> Point<T> {
+    ///
+    /// or using angles:
+    ///
+    /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
+    /// use geo::Point;
+    /// use cgmath::Deg;
+    ///
+    /// # fn main() {
+    /// let p = -Point::new(Deg(1.234), Deg(-2.345));
+    ///
+    /// assert_eq!(p.lng(), Deg(-1.234));
+    /// assert_eq!(p.lat(), Deg(2.345));
+    /// # }
+    /// ```
+    fn neg(self) -> Self::Output {
         Point::new(-self.x(), -self.y())
     }
 }
 
 impl<T> Add for Point<T>
-    where T: Float + ToPrimitive
+    where T: Add + Copy
 {
-    type Output = Point<T>;
+    type Output = Point<T::Output>;
 
     /// Add a point to the given point.
     ///
@@ -206,15 +254,32 @@ impl<T> Add for Point<T>
     /// assert_eq!(p.x(), 2.75);
     /// assert_eq!(p.y(), 5.0);
     /// ```
-    fn add(self, rhs: Point<T>) -> Point<T> {
+    ///
+    /// or using angles:
+    ///
+    /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
+    /// use geo::Point;
+    /// use cgmath::Deg;
+    ///
+    /// # fn main() {
+    /// let p = Point::new(Deg(1.25), Deg(2.5)) + Point::new(Deg(1.5), Deg(2.5));
+    ///
+    /// assert_eq!(p.lng(), Deg(2.75));
+    /// assert_eq!(p.lat(), Deg(5.0));
+    /// # }
+    /// ```
+    fn add(self, rhs: Point<T>) -> Self::Output {
         Point::new(self.x() + rhs.x(), self.y() + rhs.y())
     }
 }
 
 impl<T> Sub for Point<T>
-    where T: Float + ToPrimitive
+    where T: Sub + Copy
 {
-    type Output = Point<T>;
+    type Output = Point<T::Output>;
 
     /// Subtract a point from the given point.
     ///
@@ -226,7 +291,25 @@ impl<T> Sub for Point<T>
     /// assert_eq!(p.x(), -0.25);
     /// assert_eq!(p.y(), 0.5);
     /// ```
-    fn sub(self, rhs: Point<T>) -> Point<T> {
+    ///
+    /// or using angles:
+    ///
+    /// ```
+    /// # extern crate geo;
+    /// # extern crate cgmath;
+    /// #
+    /// use geo::Point;
+    /// use cgmath::Deg;
+    ///
+    /// # fn main() {
+    /// let p = Point::new(Deg(1.25), Deg(3.0)) - Point::new(Deg(1.5), Deg(2.5));
+    ///
+    /// assert_eq!(p.lng(), Deg(-0.25));
+    /// assert_eq!(p.lat(), Deg(0.5));
+    /// # }
+    /// ```
+    /// ```
+    fn sub(self, rhs: Point<T>) -> Self::Output {
         Point::new(self.x() - rhs.x(), self.y() - rhs.y())
     }
 }
@@ -287,18 +370,16 @@ impl<T> AddAssign for Bbox<T>
 
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
+pub struct MultiPoint<T>(pub Vec<Point<T>>);
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
+pub struct LineString<T>(pub Vec<Point<T>>);
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
+pub struct MultiLineString<T>(pub Vec<LineString<T>>);
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct Polygon<T>
-    where T: Float
-{
+pub struct Polygon<T> {
     pub exterior: LineString<T>,
     pub interiors: Vec<LineString<T>>
 }
@@ -325,15 +406,13 @@ impl<T> Polygon<T>
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
+pub struct MultiPolygon<T>(pub Vec<Polygon<T>>);
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float;
+pub struct GeometryCollection<T>(pub Vec<Geometry<T>>);
 
 #[derive(PartialEq, Clone, Debug)]
-pub enum Geometry<T>
-    where T: Float
-{
+pub enum Geometry<T> {
     Point(Point<T>),
     LineString(LineString<T>),
     Polygon(Polygon<T>),
