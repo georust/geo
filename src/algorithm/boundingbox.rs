@@ -5,7 +5,7 @@ use types::{Bbox, Point, MultiPoint, LineString, MultiLineString, Polygon, Multi
 /// Calculation of the bounding box of a geometry.
 
 pub trait BoundingBox<T: Float> {
-    /// Return a Bounding Box of a geometry
+    /// Return the Bounding Box of a geometry
     ///
     /// ```
     /// use geo::{Point, LineString};

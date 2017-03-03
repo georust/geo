@@ -34,9 +34,9 @@ impl<T> PartialOrd for VScore<T>
 
 impl<T> Eq for VScore<T> where T: Float {}
 
-/// Simplify a line using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
-///
-/// epsilon is the minimum triangle area
+// Simplify a line using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
+//
+// epsilon is the minimum triangle area
 // The paper states that:
 // If [the new triangle's] calculated area is less than that of the last point to be
 // eliminated, use the latter's area instead.
@@ -46,7 +46,7 @@ impl<T> Eq for VScore<T> where T: Float {}
 // However, this does *not* apply if you're using a user-defined epsilon;
 // It's OK to remove triangles with areas below the epsilon,
 // then recalculate the new triangle area and push it onto the heap
-pub fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
+fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     where T: Float
 {
     // No need to continue without at least three points
@@ -145,9 +145,9 @@ fn area<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> T
 }
 
 pub trait SimplifyVW<T, Epsilon = T> {
-    /// Returns the simplified representation of a LineString, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm  
-    /// 
-    /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation 
+    /// Returns the simplified representation of a LineString, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
+    ///
+    /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation
     ///
     /// ```
     /// use geo::{Point, LineString};

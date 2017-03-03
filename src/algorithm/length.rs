@@ -6,7 +6,7 @@ use algorithm::distance::Distance;
 /// Calculation of the length
 
 pub trait Length<T, RHS = Self> {
-    /// Calculation the length of a Line
+    /// Calculation of the length of a Line
     ///
     /// ```
     /// use geo::{Point, LineString, Coordinate};

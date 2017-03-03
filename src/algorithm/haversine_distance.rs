@@ -1,11 +1,11 @@
 use num_traits::{Float, FromPrimitive};
 use types::Point;
 
-/// Returns the distance between two geometries.
+/// Returns the Haversine distance between two geometries.
 
 pub trait HaversineDistance<T, Rhs = Self>
 {
-    /// Returns the distance between two points:
+    /// Returns the Haversine distance between two points:
     ///
     /// ```
     /// # extern crate geo;
