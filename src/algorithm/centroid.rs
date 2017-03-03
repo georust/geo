@@ -6,7 +6,7 @@ use algorithm::distance::Distance;
 
 /// Calculation of the centroid.
 pub trait Centroid<T: Float> {
-    /// Calculation the centroid, see: https://en.wikipedia.org/wiki/Centroid
+    /// Calculation of the centroid, see: https://en.wikipedia.org/wiki/Centroid
     ///
     /// ```
     /// use geo::{Point, LineString, Coordinate};
@@ -27,7 +27,7 @@ impl<T> Centroid<T> for LineString<T>
     where T: Float
 {
     ///
-    /// Centroid on a LineString is the mean of the middle of the segment
+    /// The Centroid of a LineString is the mean of the middle of the segment
     /// weighted by the length of the segments.
     ///
     fn centroid(&self) -> Option<Point<T>> {
@@ -114,7 +114,7 @@ impl<T> Centroid<T> for Bbox<T>
     where T: Float
 {
     ///
-    /// Centroid on a Bbox.
+    /// Calculate the Centroid of a Bbox.
     ///
     fn centroid(&self) -> Option<Point<T>> {
         let two = T::one() + T::one();
