@@ -236,7 +236,7 @@ impl<T> Add for Bbox<T>
 {
     type Output = Bbox<T>;
 
-    /// Add a boundingox to the given boundingbox.
+    /// Add a BoundingBox to the given BoundingBox.
     ///
     /// ```
     /// use geo::Bbox;
@@ -263,7 +263,7 @@ impl<T> Add for Bbox<T>
 impl<T> AddAssign for Bbox<T>
     where T: Float + ToPrimitive
 {
-    /// Add a boundingox to the given boundingbox.
+    /// Add a BoundingBox to the given BoundingBox.
     ///
     /// ```
     /// use geo::Bbox;
