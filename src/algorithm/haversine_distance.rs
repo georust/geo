@@ -1,4 +1,3 @@
-// pub const EARTH_RADIUS: T = 6371.0;
 use num_traits::{Float, FromPrimitive};
 use types::Point;
 
