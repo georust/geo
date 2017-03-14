@@ -32,9 +32,9 @@ impl<T> HaversineDistance<T, Point<T>> for Point<T>
         let theta2 = rhs.y().to_radians();
         let delta_theta = (rhs.y() - self.y()).to_radians();
         let delta_lambda = (rhs.x() - self.x()).to_radians();
-        let a = (delta_theta / two).sin().powf(two) +
-                theta1.cos() * theta2.cos() * (delta_lambda / two).sin().powf(two);
-        let c = two * a.sqrt().atan2((T::one() - a).sqrt());
+        let a = (delta_theta / two).sin().powi(2) +
+                theta1.cos() * theta2.cos() * (delta_lambda / two).sin().powi(2);
+        let c = two * a.sqrt().asin();
         // WGS84 equatorial radius is 6378137.0
         T::from(6371000.0).unwrap() * c
     }
