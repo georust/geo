@@ -1,5 +1,9 @@
 # Changes
 
+## 0.4.2
+
+* [Fix Haversine distance implementation bug](https://github.com/georust/rust-geo/pull/101)
+
 ## 0.4.1
 
 * [Implement convex hull algorithm](https://github.com/georust/rust-geo/pull/89)
