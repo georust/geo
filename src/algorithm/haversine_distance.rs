@@ -17,7 +17,7 @@ pub trait HaversineDistance<T, Rhs = Self> {
     /// # fn main() {
     /// let p = Point::new(-72.1235, 42.3521);
     /// let dist = p.haversine_distance(&Point::new(-72.1260, 42.45));
-    /// assert_relative_eq!(dist, 10900.115612674515, epsilon = 1.0e-6)
+    /// assert_relative_eq!(dist, 10887.91861391182, epsilon = 1.0e-6)
     /// # }
     /// ```
     fn haversine_distance(&self, rhs: &Rhs) -> T;
@@ -47,9 +47,18 @@ mod test {
 
     #[test]
     fn distance3_test() {
+        // this input comes from issue #100
         let a = Point::<f64>::new(-77.036585, 38.897448);
         let b = Point::<f64>::new(-77.009080, 38.889825);
         assert_relative_eq!(a.haversine_distance(&b), 2526.820014113592_f64, epsilon = 1.0e-6);
+    }
+
+    #[test]
+    fn distance3_test_f32() {
+        // this input comes from issue #100
+        let a = Point::<f32>::new(-77.036585, 38.897448);
+        let b = Point::<f32>::new(-77.009080, 38.889825);
+        assert_relative_eq!(a.haversine_distance(&b), 2526.8318_f32, epsilon = 1.0e-6);
     }
 
     #[test]
@@ -57,7 +66,7 @@ mod test {
         let a = Point::<f64>::new(0., 0.);
         let b = Point::<f64>::new(1., 0.);
         assert_relative_eq!(a.haversine_distance(&b),
-                            111319.49079326246_f64,
+                            111194.92664455874_f64,
                             epsilon = 1.0e-6);
     }
 
@@ -65,6 +74,6 @@ mod test {
     fn distance2_test() {
         let a = Point::new(-72.1235, 42.3521);
         let b = Point::new(72.1260, 70.612);
-        assert_relative_eq!(a.haversine_distance(&b), 6378137_f64, epsilon = 1.0e-6);
+        assert_relative_eq!(a.haversine_distance(&b), 7130570.458772508_f64, epsilon = 1.0e-6);
     }
 }
