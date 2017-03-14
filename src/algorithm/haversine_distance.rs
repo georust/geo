@@ -47,9 +47,9 @@ mod test {
 
     #[test]
     fn distance3_test() {
-        let a = Point::<f64>::new(38.897448, -77.036585);
-        let b = Point::<f64>::new(38.889825, -77.009080);
-        assert_relative_eq!(a.haversine_distance(&b), 25270.0_f64, epsilon = 1.0e-6);
+        let a = Point::<f64>::new(-77.036585, 38.897448);
+        let b = Point::<f64>::new(-77.009080, 38.889825);
+        assert_relative_eq!(a.haversine_distance(&b), 2526.820014113592_f64, epsilon = 1.0e-6);
     }
 
     #[test]
