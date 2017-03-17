@@ -75,6 +75,7 @@ impl<T> Distance<T, Point<T>> for Point<T>
 impl<T> Distance<T, MultiPoint<T>> for Point<T>
     where T: Float
 {
+    /// Minimum distance from a Point to a MultiPoint
     fn distance(&self, points: &MultiPoint<T>) -> T {
         let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
         for p in &points.0 {
@@ -167,7 +168,8 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
 // Minimum distance from a Point to a MultiPolygon
 impl<T> Distance<T, MultiPolygon<T>> for Point<T>
     where T: Float
-{
+{   
+    /// Minimum distance from a Point to a MultiPolygon
     fn distance(&self, mpolygon: &MultiPolygon<T>) -> T {
         let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
         for poly in &mpolygon.0 {
@@ -180,7 +182,8 @@ impl<T> Distance<T, MultiPolygon<T>> for Point<T>
 // Minimum distance from a Point to a MultiLineString
 impl<T> Distance<T, MultiLineString<T>> for Point<T>
     where T: Float
-{
+{   
+    /// Minimum distance from a Point to a MultiLineString
     fn distance(&self, mls: &MultiLineString<T>) -> T {
         let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
         for ls in &mls.0 {
