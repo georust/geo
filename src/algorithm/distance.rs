@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::{Float, ToPrimitive};
-use types::{Point, LineString, Polygon};
+use types::{Point, LineString, Polygon, MultiPolygon};
 use algorithm::contains::Contains;
 use num_traits::pow::pow;
 
@@ -151,6 +151,19 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
     }
 }
 
+// Minimum distance from a Point to a MultiPolygon
+impl<T> Distance<T, MultiPolygon<T>> for Point<T>
+    where T: Float
+{
+    fn distance(&self, mpolygon: &MultiPolygon<T>) -> T {
+        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
+        for poly in &mpolygon.0 {
+            dist_queue.push(Mindist { distance: self.distance(poly) });
+        }
+        dist_queue.pop().unwrap().distance
+    }
+}
+
 // Minimum distance from a Point to a LineString
 impl<T> Distance<T, LineString<T>> for Point<T>
     where T: Float
@@ -174,7 +187,7 @@ impl<T> Distance<T, LineString<T>> for Point<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Point, LineString, Polygon};
+    use types::{Point, LineString, Polygon, MultiPolygon};
     use algorithm::distance::{Distance, line_segment_distance};
 
     #[test]
@@ -281,6 +294,16 @@ mod test {
         let dist = p.distance(&poly);
                       // 0.41036467732879783 <-- Shapely
         assert_relative_eq!(dist, 0.41036467732879767);
+    }
+    #[test]
+    fn point_distance_multipolygon_test() {
+        let ls1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(0.0, 0.0)]);
+        let ls2 = LineString(vec![Point::new(3.0, 0.0), Point::new(4.0, 10.0), Point::new(5.0, 0.0), Point::new(3.0, 0.0)]);
+        let p1 = Polygon::new(ls1, vec![]);
+        let p2 = Polygon::new(ls2, vec![]);
+        let mp = MultiPolygon(vec![p1, p2]);
+        let p = Point::new(50.0, 50.0);
+        assert_relative_eq!(p.distance(&mp), 60.959002616512684);
     }
     #[test]
     // Point to LineString
