@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::{Float, ToPrimitive};
-use types::{Point, LineString, MultiLineString, Polygon, MultiPolygon};
+use types::{Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 use algorithm::contains::Contains;
 use num_traits::pow::pow;
 
@@ -69,6 +69,19 @@ impl<T> Distance<T, Point<T>> for Point<T>
     fn distance(&self, p: &Point<T>) -> T {
         let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
         dx.hypot(dy)
+    }
+}
+
+impl<T> Distance<T, MultiPoint<T>> for Point<T>
+    where T: Float
+{
+    fn distance(&self, points: &MultiPoint<T>) -> T {
+        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
+        for p in &points.0 {
+            let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
+            dist_queue.push( Mindist { distance: dx.hypot(dy) })
+        }
+        dist_queue.pop().unwrap().distance
     }
 }
 
@@ -200,7 +213,7 @@ impl<T> Distance<T, LineString<T>> for Point<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Point, LineString, MultiLineString, Polygon, MultiPolygon};
+    use types::{Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
     use algorithm::distance::{Distance, line_segment_distance};
 
     #[test]
@@ -398,5 +411,20 @@ mod test {
     fn distance2_test() {
         let dist = Point::new(-72.1235, 42.3521).distance(&Point::new(72.1260, 70.612));
         assert_relative_eq!(dist, 146.99163308930207);
+    }
+    #[test]
+    fn distance_multipoint_test() {
+        let v = vec![Point::new(0.0, 10.0),
+                         Point::new(1.0, 1.0),
+                         Point::new(10.0, 0.0),
+                         Point::new(1.0, -1.0),
+                         Point::new(0.0, -10.0),
+                         Point::new(-1.0, -1.0),
+                         Point::new(-10.0, 0.0),
+                         Point::new(-1.0, 1.0),
+                         Point::new(0.0, 10.0)];
+        let mp = MultiPoint(v);
+        let p = Point::new(50.0, 50.0);
+        assert_eq!(p.distance(&mp), 64.03124237432849)
     }
 }
