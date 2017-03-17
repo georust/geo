@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::{Float, ToPrimitive};
-use types::{Point, LineString, Polygon, MultiPolygon};
+use types::{Point, LineString, MultiLineString, Polygon, MultiPolygon};
 use algorithm::contains::Contains;
 use num_traits::pow::pow;
 
@@ -164,6 +164,19 @@ impl<T> Distance<T, MultiPolygon<T>> for Point<T>
     }
 }
 
+// Minimum distance from a Point to a MultiLineString
+impl<T> Distance<T, MultiLineString<T>> for Point<T>
+    where T: Float
+{
+    fn distance(&self, mls: &MultiLineString<T>) -> T {
+        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
+        for ls in &mls.0 {
+            dist_queue.push(Mindist { distance: self.distance(ls) });
+        }
+        dist_queue.pop().unwrap().distance
+    }
+}
+
 // Minimum distance from a Point to a LineString
 impl<T> Distance<T, LineString<T>> for Point<T>
     where T: Float
@@ -187,7 +200,7 @@ impl<T> Distance<T, LineString<T>> for Point<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Point, LineString, Polygon, MultiPolygon};
+    use types::{Point, LineString, MultiLineString, Polygon, MultiPolygon};
     use algorithm::distance::{Distance, line_segment_distance};
 
     #[test]
@@ -367,6 +380,14 @@ mod test {
         let p = Point::new(5.0, 4.0);
         let dist = p.distance(&ls);
         assert_relative_eq!(dist, 0.0);
+    }
+    #[test]
+    fn distance_multilinestring_test() {
+        let v1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0)]);
+        let v2 = LineString(vec![Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(3.0, 1.0)]);
+        let mls = MultiLineString(vec![v1, v2]);
+        let p = Point::new(50.0, 50.0);
+        assert_relative_eq!(p.distance(&mls), 63.25345840347388);
     }
     #[test]
     fn distance1_test() {
