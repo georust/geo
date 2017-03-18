@@ -1,5 +1,10 @@
 # Changes
 
+## 0.4.3
+
+* [Implement Point to multipart geometry distance methods](https://github.com/georust/rust-geo/pull/104)
+* [Fixture cleanup](https://github.com/georust/rust-geo/pull/105)
+
 ## 0.4.2
 
 * [Fix Haversine distance implementation bug](https://github.com/georust/rust-geo/pull/101)
