@@ -321,7 +321,6 @@ mod test {
             Point::new(3.0, 1.0),
             Point::new(2.0, 0.0)];
         let res = mls.convex_hull();
-        println!("{:?}", res.exterior.0);
         assert_eq!(res.exterior.0, correct);
     }
     #[test]
