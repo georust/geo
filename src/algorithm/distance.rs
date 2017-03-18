@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::{Float, ToPrimitive};
-use types::{Point, LineString, Polygon};
+use types::{Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 use algorithm::contains::Contains;
 use num_traits::pow::pow;
 
@@ -69,6 +69,20 @@ impl<T> Distance<T, Point<T>> for Point<T>
     fn distance(&self, p: &Point<T>) -> T {
         let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
         dx.hypot(dy)
+    }
+}
+
+impl<T> Distance<T, MultiPoint<T>> for Point<T>
+    where T: Float
+{
+    /// Minimum distance from a Point to a MultiPoint
+    fn distance(&self, points: &MultiPoint<T>) -> T {
+        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
+        for p in &points.0 {
+            let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
+            dist_queue.push( Mindist { distance: dx.hypot(dy) })
+        }
+        dist_queue.pop().unwrap().distance
     }
 }
 
@@ -151,6 +165,34 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
     }
 }
 
+// Minimum distance from a Point to a MultiPolygon
+impl<T> Distance<T, MultiPolygon<T>> for Point<T>
+    where T: Float
+{
+    /// Minimum distance from a Point to a MultiPolygon
+    fn distance(&self, mpolygon: &MultiPolygon<T>) -> T {
+        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
+        for poly in &mpolygon.0 {
+            dist_queue.push(Mindist { distance: self.distance(poly) });
+        }
+        dist_queue.pop().unwrap().distance
+    }
+}
+
+// Minimum distance from a Point to a MultiLineString
+impl<T> Distance<T, MultiLineString<T>> for Point<T>
+    where T: Float
+{
+    /// Minimum distance from a Point to a MultiLineString
+    fn distance(&self, mls: &MultiLineString<T>) -> T {
+        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
+        for ls in &mls.0 {
+            dist_queue.push(Mindist { distance: self.distance(ls) });
+        }
+        dist_queue.pop().unwrap().distance
+    }
+}
+
 // Minimum distance from a Point to a LineString
 impl<T> Distance<T, LineString<T>> for Point<T>
     where T: Float
@@ -174,7 +216,7 @@ impl<T> Distance<T, LineString<T>> for Point<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Point, LineString, Polygon};
+    use types::{Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
     use algorithm::distance::{Distance, line_segment_distance};
 
     #[test]
@@ -283,6 +325,16 @@ mod test {
         assert_relative_eq!(dist, 0.41036467732879767);
     }
     #[test]
+    fn point_distance_multipolygon_test() {
+        let ls1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(0.0, 0.0)]);
+        let ls2 = LineString(vec![Point::new(3.0, 0.0), Point::new(4.0, 10.0), Point::new(5.0, 0.0), Point::new(3.0, 0.0)]);
+        let p1 = Polygon::new(ls1, vec![]);
+        let p2 = Polygon::new(ls2, vec![]);
+        let mp = MultiPolygon(vec![p1, p2]);
+        let p = Point::new(50.0, 50.0);
+        assert_relative_eq!(p.distance(&mp), 60.959002616512684);
+    }
+    #[test]
     // Point to LineString
     fn point_linestring_distance_test() {
         // like an octagon, but missing the lowest horizontal segment
@@ -346,6 +398,14 @@ mod test {
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
+    fn distance_multilinestring_test() {
+        let v1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0)]);
+        let v2 = LineString(vec![Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(3.0, 1.0)]);
+        let mls = MultiLineString(vec![v1, v2]);
+        let p = Point::new(50.0, 50.0);
+        assert_relative_eq!(p.distance(&mls), 63.25345840347388);
+    }
+    #[test]
     fn distance1_test() {
         assert_eq!(Point::<f64>::new(0., 0.).distance(&Point::<f64>::new(1., 0.)),
                    1.);
@@ -354,5 +414,20 @@ mod test {
     fn distance2_test() {
         let dist = Point::new(-72.1235, 42.3521).distance(&Point::new(72.1260, 70.612));
         assert_relative_eq!(dist, 146.99163308930207);
+    }
+    #[test]
+    fn distance_multipoint_test() {
+        let v = vec![Point::new(0.0, 10.0),
+                         Point::new(1.0, 1.0),
+                         Point::new(10.0, 0.0),
+                         Point::new(1.0, -1.0),
+                         Point::new(0.0, -10.0),
+                         Point::new(-1.0, -1.0),
+                         Point::new(-10.0, 0.0),
+                         Point::new(-1.0, 1.0),
+                         Point::new(0.0, 10.0)];
+        let mp = MultiPoint(v);
+        let p = Point::new(50.0, 50.0);
+        assert_eq!(p.distance(&mp), 64.03124237432849)
     }
 }
