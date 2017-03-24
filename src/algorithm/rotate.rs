@@ -23,6 +23,7 @@ fn rotation_matrix<T>(angle: T, origin: &Point<T>, points: &[Point<T>]) -> Vec<P
 
 pub trait Rotate<T> {
     /// Rotate a Geometry around a given origin by an angle, in degrees
+    /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
     ///
     /// ```
     /// use geo::{Point, LineString};
