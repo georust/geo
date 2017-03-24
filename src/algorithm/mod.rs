@@ -22,3 +22,5 @@ pub mod simplifyvw;
 pub mod convexhull;
 /// Orients a Polygon's exterior and interior rings
 pub mod orient;
+/// calculate Polygon extremes
+pub mod extremes;
