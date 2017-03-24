@@ -48,7 +48,7 @@ impl<T> Rotate<T> for Point<T>
     where T: Float
 {
     /// Rotate the Point about the origin by the given number of degrees
-    fn rotate(&self, angle: T, origin: &Point<T>) -> Point<T> {
+    fn rotate(&self, angle: T, origin: &Point<T>) -> Self {
         rotation_matrix(angle, origin, &[*self])[0]
     }
 }
@@ -57,7 +57,7 @@ impl<T> Rotate<T> for LineString<T>
     where T: Float
 {
     /// Rotate the LineString about the origin by the given number of degrees
-    fn rotate(&self, angle: T, origin: &Point<T>) -> LineString<T> {
+    fn rotate(&self, angle: T, origin: &Point<T>) -> Self {
         LineString(rotation_matrix(angle, origin, &self.0))
     }
 }
@@ -66,7 +66,7 @@ impl<T> Rotate<T> for Polygon<T>
     where T: Float
 {
     /// Rotate the Polygon about the origin by the given number of degrees
-    fn rotate(&self, angle: T, origin: &Point<T>) -> Polygon<T> {
+    fn rotate(&self, angle: T, origin: &Point<T>) -> Self {
         Polygon::new(LineString(rotation_matrix(angle, origin, &self.exterior.0)),
                      self.interiors
                          .iter()
