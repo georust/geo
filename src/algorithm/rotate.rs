@@ -1,5 +1,5 @@
 use num_traits::Float;
-use types::{Point, Polygon, MultiPolygon, LineString, MultiPoint, MultiLineString};
+use types::{Point, Polygon, LineString};
 
 // rotate a slice of points "angle" degrees about an origin
 // origin can be an arbitrary point, pass &Point::new(0., 0.)
@@ -44,9 +44,19 @@ pub trait Rotate<T> {
     fn rotate(&self, angle: T, origin: &Point<T>) -> Self where T: Float;
 }
 
+impl<T> Rotate<T> for Point<T>
+    where T: Float
+{
+    /// Rotate the Point about the origin by the given number of degrees
+    fn rotate(&self, angle: T, origin: &Point<T>) -> Point<T> {
+        rotation_matrix(angle, origin, &[*self])[0]
+    }
+}
+
 impl<T> Rotate<T> for LineString<T>
     where T: Float
 {
+    /// Rotate the LineString about the origin by the given number of degrees
     fn rotate(&self, angle: T, origin: &Point<T>) -> LineString<T> {
         LineString(rotation_matrix(angle, origin, &self.0))
     }
@@ -55,6 +65,7 @@ impl<T> Rotate<T> for LineString<T>
 impl<T> Rotate<T> for Polygon<T>
     where T: Float
 {
+    /// Rotate the Polygon about the origin by the given number of degrees
     fn rotate(&self, angle: T, origin: &Point<T>) -> Polygon<T> {
         Polygon::new(LineString(rotation_matrix(angle, origin, &self.exterior.0)),
                      self.interiors
@@ -69,7 +80,13 @@ mod test {
     use types::{Point, LineString, Polygon};
     use super::*;
     #[test]
-    // results agree with Shapely / GEOS
+    fn test_rotate_point() {
+        let p = Point::new(1.0, 5.0);
+        let rotated = p.rotate(30.0, &Point::new(0.0, 0.0));
+        // results agree with Shapely / GEOS
+        assert_eq!(rotated, Point::new(-1.6339745962155607, 4.830127018922194));
+    }
+    #[test]
     fn test_rotate_linestring() {
         let mut vec = Vec::new();
         vec.push(Point::new(0.0, 0.0));
@@ -82,14 +99,14 @@ mod test {
         correct.push(Point::new(5.0, 5.0));
         correct.push(Point::new(12.071067811865476, 5.0));
         let correct_ls = LineString(correct);
+        // results agree with Shapely / GEOS
         assert_eq!(rotated, correct_ls);
     }
     #[test]
-    // results agree with Shapely / GEOS
     fn test_rotate_polygon() {
         let points_raw = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.),
                               (7., 2.), (6., 1.), (5., 1.)];
-        let mut points = points_raw.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>();
+        let points = points_raw.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>();
         let interior = vec![(5., 1.3), (5.5, 2.0), (6.0, 1.3), (5., 1.3)];
         let interior_points = interior.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString(points), vec![LineString(interior_points)]);
@@ -111,6 +128,7 @@ mod test {
             LineString(correct_outside.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>()),
             vec![LineString(correct_inside.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>())]
         );
+        // results agree with Shapely / GEOS
         assert_eq!(rotated, correct);
     }
 }
