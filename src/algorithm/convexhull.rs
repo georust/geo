@@ -250,6 +250,16 @@ mod test {
         assert_eq!(res, correct);
     }
     #[test]
+    // test whether output is ccw if input is ccw
+    fn quick_hull_test_ccw() {
+        let initial = vec![(1.0, 0.0), (2.0, 1.0), (1.75, 1.1), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
+        let mut v: Vec<_> = initial.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let correct = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
+        let v_correct: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let res = quick_hull(&mut v);
+        assert_eq!(res, v_correct);
+    }
+    #[test]
     fn quick_hull_test_complex() {
         let coords = include!("test_fixtures/poly1.rs");
         let mut v: Vec<_> = coords.iter().map(|e| Point::new(e.0, e.1)).collect();
