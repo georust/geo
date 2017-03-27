@@ -150,7 +150,7 @@ pub trait ConvexHull<T> {
     /// let poly = Polygon::new(ls, vec![]);
     ///
     /// // The correct convex hull coordinates
-    /// let hull_coords = vec![(0.0, 0.0), (0.0, 4.0), (1.0, 4.0), (4.0, 1.0), (4.0, 0.0), (0.0, 0.0)];
+    /// let hull_coords = vec![(4.0, 0.0), (4.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0), (4.0, 0.0)];
     /// let correct_hull = LineString(hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect());
     ///
     /// let res = poly.convex_hull();
@@ -219,12 +219,12 @@ mod test {
                          Point::new(1.0, 4.0),
                          Point::new(0.0, 4.0),
                          Point::new(0.0, 0.0)];
-        let correct = vec![Point::new(0.0, 0.0),
-                           Point::new(0.0, 4.0),
-                           Point::new(1.0, 4.0),
+        let correct = vec![Point::new(4.0, 0.0),
                            Point::new(4.0, 1.0),
-                           Point::new(4.0, 0.0),
-                           Point::new(0.0, 0.0)];
+                           Point::new(1.0, 4.0),
+                           Point::new(0.0, 4.0),
+                           Point::new(0.0, 0.0),
+                           Point::new(4.0, 0.0)];
         let res = quick_hull(&mut v);
         assert_eq!(res, correct);
     }
@@ -240,9 +240,9 @@ mod test {
                          Point::new(-1.0, 1.0),
                          Point::new(0.0, 10.0)];
         let correct = vec![Point::new(0.0, -10.0),
-                           Point::new(-10.0, 0.0),
-                           Point::new(0.0, 10.0),
                            Point::new(10.0, 0.0),
+                           Point::new(0.0, 10.0),
+                           Point::new(-10.0, 0.0),
                            Point::new(0.0, -10.0)];
         let res = quick_hull(&mut v);
         assert_eq!(res, correct);
@@ -299,9 +299,9 @@ mod test {
                          Point::new(0.0, 10.0)];
         let mp = MultiPoint(v);
         let correct = vec![Point::new(0.0, -10.0),
-                           Point::new(-10.0, 0.0),
-                           Point::new(0.0, 10.0),
                            Point::new(10.0, 0.0),
+                           Point::new(0.0, 10.0),
+                           Point::new(-10.0, 0.0),
                            Point::new(0.0, -10.0)];
         let res = mp.convex_hull();
         assert_eq!(res.exterior.0, correct);
@@ -321,9 +321,9 @@ mod test {
         let mp = LineString(v);
         let correct = vec![
             Point::new(0.0, -10.0),
-            Point::new(-10.0, 0.0),
-            Point::new(0.0, 10.0),
             Point::new(10.0, 0.0),
+            Point::new(0.0, 10.0),
+            Point::new(-10.0, 0.0),
             Point::new(0.0, -10.0)];
         let res = mp.convex_hull();
         assert_eq!(res.exterior.0, correct);
@@ -335,9 +335,9 @@ mod test {
         let mls = MultiLineString(vec![v1, v2]);
         let correct = vec![
             Point::new(2.0, 0.0),
-            Point::new(0.0, 0.0),
-            Point::new(1.0, 10.0),
             Point::new(3.0, 1.0),
+            Point::new(1.0, 10.0),
+            Point::new(0.0, 0.0),
             Point::new(2.0, 0.0)];
         let res = mls.convex_hull();
         assert_eq!(res.exterior.0, correct);
@@ -350,11 +350,11 @@ mod test {
         let p2 = Polygon::new(ls2, vec![]);
         let mp = MultiPolygon(vec![p1, p2]);
         let correct = vec![
-            Point::new(0.0, 0.0),
-            Point::new(1.0, 10.0),
-            Point::new(4.0, 10.0),
             Point::new(5.0, 0.0),
-            Point::new(0.0, 0.0)
+            Point::new(4.0, 10.0),
+            Point::new(1.0, 10.0),
+            Point::new(0.0, 0.0),
+            Point::new(5.0, 0.0)
         ];
         let res = mp.convex_hull();
         assert_eq!(res.exterior.0, correct);
