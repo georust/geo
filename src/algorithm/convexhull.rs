@@ -93,10 +93,10 @@ fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
     }
     let last = partition(&mut points, |p| point_location(max, min, p));
     hull_set(max, min, &mut points[..last], &mut hull);
-    hull.push(*min);
+    hull.push(*max);
     let last = partition(&mut points, |p| point_location(min, max, p));
     hull_set(min, max, &mut points[..last], &mut hull);
-    hull.push(*max);
+    hull.push(*min);
     // close the polygon
     let final_element = *hull.first().unwrap();
     hull.push(final_element);
@@ -125,15 +125,13 @@ fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, mut set: &mut [Point<T>], hull: &
     }
     // move Point at furthest_point from set into hull
     let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
-
-    // points over AP
-    let last = partition(set, |p| point_location(p_a, &furthest_point, p));
-    hull_set(p_a, &furthest_point, &mut set[..last], hull);
-    hull.push(*furthest_point);
-
     // points over PB
     let last = partition(set, |p| point_location(&furthest_point, p_b, p));
     hull_set(&furthest_point, p_b, &mut set[..last], hull);
+    hull.push(*furthest_point);
+    // points over AP
+    let last = partition(set, |p| point_location(p_a, &furthest_point, p));
+    hull_set(p_a, &furthest_point, &mut set[..last], hull);
 }
 
 pub trait ConvexHull<T> {
@@ -265,7 +263,7 @@ mod test {
         // initial input begins at min y, is oriented ccw
         let initial = vec![(0., 0.), (2., 0.), (2.5, 1.75), (2.3, 1.7), (1.75, 2.5), (1.3, 2.), (0., 2.), (0., 0.)];
         let mut v: Vec<_> = initial.iter().map(|e| Point::new(e.0, e.1)).collect();
-        let correct = vec![(0.0, 0.0), (0.0, 2.0), (1.75, 2.5), (2.5, 1.75), (2.0, 0.0), (0.0, 0.0)];
+        let correct = vec![(2.0, 0.0), (2.5, 1.75), (1.75, 2.5), (0.0, 2.0), (0.0, 0.0), (2.0, 0.0)];
         let v_correct: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
         let res = quick_hull(&mut v);
         assert_eq!(res, v_correct);
