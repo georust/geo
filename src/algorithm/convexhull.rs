@@ -250,11 +250,22 @@ mod test {
         assert_eq!(res, correct);
     }
     #[test]
-    // test whether output is ccw if input is ccw
+    // test whether output is ccw
     fn quick_hull_test_ccw() {
         let initial = vec![(1.0, 0.0), (2.0, 1.0), (1.75, 1.1), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
         let mut v: Vec<_> = initial.iter().map(|e| Point::new(e.0, e.1)).collect();
         let correct = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
+        let v_correct: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let res = quick_hull(&mut v);
+        assert_eq!(res, v_correct);
+    }
+    #[test]
+    // test that output isn't rotated
+    fn quick_hull_test_ccw_maintain() {
+        // initial input begins at min y, is oriented ccw
+        let initial = vec![(0., 0.), (2., 0.), (2.5, 1.75), (2.3, 1.7), (1.75, 2.5), (1.3, 2.), (0., 2.), (0., 0.)];
+        let mut v: Vec<_> = initial.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let correct = vec![(0.0, 0.0), (0.0, 2.0), (1.75, 2.5), (2.5, 1.75), (2.0, 0.0), (0.0, 0.0)];
         let v_correct: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
         let res = quick_hull(&mut v);
         assert_eq!(res, v_correct);
