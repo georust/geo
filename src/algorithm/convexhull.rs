@@ -135,7 +135,7 @@ fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, mut set: &mut [Point<T>], hull: &
 }
 
 pub trait ConvexHull<T> {
-    /// Returns the convex hull of a Polygon
+    /// Returns the convex hull of a Polygon. The hull is always oriented counter-clockwise.
     ///
     /// This implementation uses the QuickHull algorithm,
     /// based on [Barber, C. Bradford; Dobkin, David P.; Huhdanpaa, Hannu (1 December 1996)](https://dx.doi.org/10.1145%2F235815.235821)
