@@ -24,7 +24,9 @@ pub trait Centroid<T: Float> {
 }
 
 // Calculation of simple (no interior holes) Polygon area
-fn simple_polygon_area<T>(linestring: &LineString<T>) -> T where T: Float {
+fn simple_polygon_area<T>(linestring: &LineString<T>) -> T
+    where T: Float
+{
     if linestring.0.is_empty() || linestring.0.len() == 1 {
         return T::zero();
     }
@@ -232,9 +234,15 @@ mod test {
                                   Point::new(5.5, 2.0),
                                   Point::new(6.0, 1.3),
                                   Point::new(5.0, 1.3)]);
-        let p1 = Polygon::new(ls1, vec![ls2]);
+
+        let ls3 = LineString(vec![Point::new(5., 2.3),
+                                  Point::new(5.5, 3.0),
+                                  Point::new(6., 2.3),
+                                  Point::new(5., 2.3)]);
+
+        let p1 = Polygon::new(ls1, vec![ls2, ls3]);
         let centroid = p1.centroid().unwrap();
-        assert_eq!(centroid, Point::new(5.5, 2.550877192982456));
+        assert_eq!(centroid, Point::new(5.5, 2.5518518518518514));
     }
     /// Tests: Centroid of MultiPolygon
     #[test]
