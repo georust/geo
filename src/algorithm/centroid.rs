@@ -116,11 +116,10 @@ impl<T> Centroid<T> for Polygon<T>
                              })
                         .fold((T::zero(), T::zero(), T::zero()),
                               |accum, val| (accum.0 + val.0, accum.1 + val.1, accum.2 + val.2));
-                let centroid_x = ((external_centroid.x() * external_area) - totals_x) /
-                                 (external_area - internal_area);
-                let centroid_y = ((external_centroid.y() * external_area) - totals_y) /
-                                 (external_area - internal_area);
-                return Some(Point::new(centroid_x, centroid_y));
+                return Some(Point::new(((external_centroid.x() * external_area) - totals_x) /
+                                       (external_area - internal_area),
+                                       ((external_centroid.y() * external_area) - totals_y) /
+                                       (external_area - internal_area)));
             }
             Some(external_centroid)
         }
