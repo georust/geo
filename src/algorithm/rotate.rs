@@ -25,8 +25,6 @@ fn rotation_matrix<T>(angle: T, origin: &Point<T>, points: &[Point<T>]) -> Vec<P
 pub trait Rotate<T> {
     /// Rotate a Geometry around its centroid by an angle, in degrees
     /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
-    /// 
-    /// Polygons to be rotated must be simple, i.e. without holes
     ///
     /// ```
     /// use geo::{Point, LineString};
@@ -115,7 +113,6 @@ mod test {
                               (7., 2.), (6., 1.), (5., 1.)];
         let points = points_raw.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString(points), vec![]);
-        println!("Centroid: {:?}", poly1.centroid().unwrap());
         let rotated = poly1.rotate(-15.0);
         let correct_outside = vec![(4.628808519201685, 1.1805207831176578),
                                    (3.921701738015137, 2.405265654509247),
