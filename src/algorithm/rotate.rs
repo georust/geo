@@ -12,7 +12,8 @@ fn rotation_matrix<T>(angle: T, origin: &Point<T>, points: &[Point<T>]) -> Vec<P
     let sin_theta = angle.to_radians().sin();
     let x0 = origin.x();
     let y0 = origin.y();
-    points.iter()
+    points
+        .iter()
         .map(|point| {
                  let x = point.x() - x0;
                  let y = point.y() - y0;
@@ -111,7 +112,10 @@ mod test {
     fn test_rotate_polygon() {
         let points_raw = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.),
                               (7., 2.), (6., 1.), (5., 1.)];
-        let points = points_raw.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>();
+        let points = points_raw
+            .iter()
+            .map(|e| Point::new(e.0, e.1))
+            .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString(points), vec![]);
         let rotated = poly1.rotate(-15.0);
         let correct_outside = vec![(4.628808519201685, 1.1805207831176578),
@@ -123,7 +127,14 @@ mod test {
                                    (6.819479216882343, 1.6288085192016848),
                                    (5.594734345490753, 0.9217017380151371),
                                    (4.628808519201685, 1.1805207831176578)];
-        let correct = Polygon::new(LineString(correct_outside.iter()
+        let correct = Polygon::new(LineString(correct_outside
+                                                  .iter()
+                                                  .map(|e| Point::new(e.0, e.1))
+                                                  .collect::<Vec<_>>()),
+                                   vec![]);
+        // results agree with Shapely / GEOS
+        assert_eq!(rotated, correct);
+    }
                                                   .map(|e| Point::new(e.0, e.1))
                                                   .collect::<Vec<_>>()),
                                    vec![]);
