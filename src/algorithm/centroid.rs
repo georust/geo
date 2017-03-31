@@ -6,7 +6,7 @@ use algorithm::distance::Distance;
 
 /// Calculation of the centroid.
 pub trait Centroid<T: Float> {
-    /// Calculation of the centroid, see: https://en.wikipedia.org/wiki/Centroid
+    /// See: https://en.wikipedia.org/wiki/Centroid
     ///
     /// ```
     /// use geo::{Point, LineString};
@@ -85,14 +85,15 @@ impl<T> Centroid<T> for LineString<T>
 impl<T> Centroid<T> for Polygon<T>
     where T: Float + FromPrimitive
 {
-    // Centroid of a Polygon.
-    // See: https://en.wikipedia.org/wiki/Centroid
+    // Calculate the centroid of a Polygon.
     // We distinguish between a simple polygon, which has no interior holes,
     // and a complex polygon, which has one or more interior holes.
     // A complex polygon's centroid is the weighted average of its
     // exterior shell centroid and the centroids of the interior ring(s),
-    // which are treated as *polygons* for the purposes of this calculation.
+    // which are both considered as as * simple polygons* for the purposes of
+    // this calculation.
     // See here for a formula: http://math.stackexchange.com/a/623849
+    // See here for detail on alternative methods: See: https://fotino.me/calculating-centroids/
     fn centroid(&self) -> Option<Point<T>> {
         let linestring = &self.exterior;
         let vect = &linestring.0;
@@ -129,7 +130,6 @@ impl<T> Centroid<T> for Polygon<T>
 impl<T> Centroid<T> for MultiPolygon<T>
     where T: Float + FromPrimitive
 {
-    // See: https://fotino.me/calculating-centroids/
     fn centroid(&self) -> Option<Point<T>> {
         let mut sum_x = T::zero();
         let mut sum_y = T::zero();
@@ -154,9 +154,6 @@ impl<T> Centroid<T> for MultiPolygon<T>
 impl<T> Centroid<T> for Bbox<T>
     where T: Float
 {
-    ///
-    /// Calculate the Centroid of a Bbox.
-    ///
     fn centroid(&self) -> Option<Point<T>> {
         let two = T::one() + T::one();
         Some(Point::new((self.xmax + self.xmin) / two, (self.ymax + self.ymin) / two))
@@ -168,7 +165,7 @@ mod test {
     use types::{COORD_PRECISION, Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
     use algorithm::centroid::Centroid;
     use algorithm::distance::Distance;
-    /// Tests: Centroid of LineString
+    // Tests: Centroid of LineString
     #[test]
     fn empty_linestring_test() {
         let vec = Vec::<Point<f64>>::new();
@@ -192,7 +189,7 @@ mod test {
         assert_eq!(linestring.centroid(),
                    Some(Point(Coordinate { x: 6., y: 1. })));
     }
-    /// Tests: Centroid of Polygon
+    // Tests: Centroid of Polygon
     #[test]
     fn empty_polygon_test() {
         let v1 = Vec::new();
@@ -243,7 +240,7 @@ mod test {
         let centroid = p1.centroid().unwrap();
         assert_eq!(centroid, Point::new(5.5, 2.5518518518518514));
     }
-    /// Tests: Centroid of MultiPolygon
+    // Tests: Centroid of MultiPolygon
     #[test]
     fn empty_multipolygon_polygon_test() {
         assert!(MultiPolygon::<f64>(Vec::new()).centroid().is_none());
