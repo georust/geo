@@ -135,6 +135,42 @@ mod test {
         // results agree with Shapely / GEOS
         assert_eq!(rotated, correct);
     }
+    #[test]
+    fn test_rotate_polygon_holes() {
+        let ls1 = LineString(vec![Point::new(5.0, 1.0),
+                                  Point::new(4.0, 2.0),
+                                  Point::new(4.0, 3.0),
+                                  Point::new(5.0, 4.0),
+                                  Point::new(6.0, 4.0),
+                                  Point::new(7.0, 3.0),
+                                  Point::new(7.0, 2.0),
+                                  Point::new(6.0, 1.0),
+                                  Point::new(5.0, 1.0)]);
+
+        let ls2 = LineString(vec![Point::new(5.0, 1.3),
+                                  Point::new(5.5, 2.0),
+                                  Point::new(6.0, 1.3),
+                                  Point::new(5.0, 1.3)]);
+
+        let ls3 = LineString(vec![Point::new(5., 2.3),
+                                  Point::new(5.5, 3.0),
+                                  Point::new(6., 2.3),
+                                  Point::new(5., 2.3)]);
+
+        let poly1 = Polygon::new(ls1, vec![ls2, ls3]);
+        let rotated = poly1.rotate(-15.0);
+        let correct_outside = vec![(4.6288085192016855, 1.1805207831176578),
+                                   (3.921701738015137, 2.405265654509247),
+                                   (4.180520783117659, 3.3711914807983154),
+                                   (5.405265654509247, 4.0782982619848624),
+                                   (6.371191480798316, 3.819479216882342),
+                                   (7.0782982619848624, 2.594734345490753),
+                                   (6.819479216882343, 1.6288085192016848),
+                                   (5.594734345490753, 0.9217017380151372),
+                                   (4.6288085192016855, 1.1805207831176578)];
+
+        let correct = Polygon::new(LineString(correct_outside
+                                                  .iter()
                                                   .map(|e| Point::new(e.0, e.1))
                                                   .collect::<Vec<_>>()),
                                    vec![]);
