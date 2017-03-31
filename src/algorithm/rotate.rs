@@ -83,7 +83,6 @@ impl<T> Rotate<T> for Polygon<T>
 #[cfg(test)]
 mod test {
     use types::{Point, LineString, Polygon};
-    use algorithm::centroid::Centroid;
     use super::*;
     #[test]
     fn test_rotate_point() {
