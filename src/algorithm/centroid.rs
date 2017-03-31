@@ -9,15 +9,15 @@ pub trait Centroid<T: Float> {
     /// Calculation of the centroid, see: https://en.wikipedia.org/wiki/Centroid
     ///
     /// ```
-    /// use geo::{Point, LineString, Coordinate};
+    /// use geo::{Point, LineString};
     /// use geo::algorithm::centroid::Centroid;
     ///
     /// let mut vec = Vec::new();
     /// vec.push(Point::new(40.02f64, 116.34));
-    /// vec.push(Point::new(40.02f64, 116.34));
+    /// vec.push(Point::new(40.02f64, 118.23));
     /// let linestring = LineString(vec);
     ///
-    /// println!("Centroid {:?}", linestring.centroid());
+    /// assert_eq!(linestring.centroid().unwrap(), Point::new(40.02, 117.285));
     /// ```
     ///
     fn centroid(&self) -> Option<Point<T>>;
