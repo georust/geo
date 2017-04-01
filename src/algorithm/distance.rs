@@ -66,6 +66,7 @@ pub trait Distance<T, Rhs = Self> {
 impl<T> Distance<T, Point<T>> for Point<T>
     where T: Float
 {
+    /// Minimum distance between two Points
     fn distance(&self, p: &Point<T>) -> T {
         let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
         dx.hypot(dy)
@@ -83,6 +84,15 @@ impl<T> Distance<T, MultiPoint<T>> for Point<T>
             dist_queue.push( Mindist { distance: dx.hypot(dy) })
         }
         dist_queue.pop().unwrap().distance
+    }
+}
+
+impl<T> Distance<T, Point<T>> for MultiPoint<T>
+    where T: Float
+{
+    /// Minimum distance from a MultiPoint to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        point.distance(self)
     }
 }
 
@@ -138,10 +148,10 @@ impl<T> PartialOrd for Mindist<T>
 }
 impl<T> Eq for Mindist<T> where T: Float {}
 
-// Minimum distance from a Point to a Polygon
 impl<T> Distance<T, Polygon<T>> for Point<T>
     where T: Float
 {
+    /// Minimum distance from a Point to a Polygon
     fn distance(&self, polygon: &Polygon<T>) -> T {
         // get exterior ring
         let exterior = &polygon.exterior;
@@ -165,7 +175,15 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
     }
 }
 
-// Minimum distance from a Point to a MultiPolygon
+impl<T> Distance<T, Point<T>> for Polygon<T>
+    where T: Float
+{
+    /// Minimum distance from a Polygon to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        point.distance(self)
+    }
+}
+
 impl<T> Distance<T, MultiPolygon<T>> for Point<T>
     where T: Float
 {
@@ -179,7 +197,15 @@ impl<T> Distance<T, MultiPolygon<T>> for Point<T>
     }
 }
 
-// Minimum distance from a Point to a MultiLineString
+impl<T> Distance<T, Point<T>> for MultiPolygon<T>
+    where T: Float
+{
+    /// Minimum distance from a MultiPolygon to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        point.distance(self)
+    }
+}
+
 impl<T> Distance<T, MultiLineString<T>> for Point<T>
     where T: Float
 {
@@ -193,10 +219,19 @@ impl<T> Distance<T, MultiLineString<T>> for Point<T>
     }
 }
 
-// Minimum distance from a Point to a LineString
+impl<T> Distance<T, Point<T>> for MultiLineString<T>
+    where T: Float
+{
+    /// Minimum distance from a MultiLineString to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        point.distance(self)
+    }
+}
+
 impl<T> Distance<T, LineString<T>> for Point<T>
     where T: Float
 {
+    /// Minimum distance from a Point to a LineString
     fn distance(&self, linestring: &LineString<T>) -> T {
         // No need to continue if the point is on the LineString, or it's empty
         if linestring.contains(self) || linestring.0.len() == 0 {
@@ -211,6 +246,15 @@ impl<T> Distance<T, LineString<T>> for Point<T>
             dist_queue.push(Mindist { distance: dist });
         }
         dist_queue.pop().unwrap().distance
+    }
+}
+
+impl<T> Distance<T, Point<T>> for LineString<T>
+    where T: Float
+{
+    /// Minimum distance from a LineString to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        point.distance(self)
     }
 }
 
