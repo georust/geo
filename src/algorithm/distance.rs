@@ -63,39 +63,6 @@ pub trait Distance<T, Rhs = Self> {
     fn distance(&self, rhs: &Rhs) -> T;
 }
 
-impl<T> Distance<T, Point<T>> for Point<T>
-    where T: Float
-{
-    /// Minimum distance between two Points
-    fn distance(&self, p: &Point<T>) -> T {
-        let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
-        dx.hypot(dy)
-    }
-}
-
-impl<T> Distance<T, MultiPoint<T>> for Point<T>
-    where T: Float
-{
-    /// Minimum distance from a Point to a MultiPoint
-    fn distance(&self, points: &MultiPoint<T>) -> T {
-        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
-        for p in &points.0 {
-            let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
-            dist_queue.push( Mindist { distance: dx.hypot(dy) })
-        }
-        dist_queue.pop().unwrap().distance
-    }
-}
-
-impl<T> Distance<T, Point<T>> for MultiPoint<T>
-    where T: Float
-{
-    /// Minimum distance from a MultiPoint to a Point
-    fn distance(&self, point: &Point<T>) -> T {
-        point.distance(self)
-    }
-}
-
 // Return minimum distance between a Point and a Line segment
 // This is a helper for Point-to-LineString and Point-to-Polygon distance
 // adapted from http://stackoverflow.com/a/1501725/416626. Quoting the author:
@@ -131,6 +98,7 @@ struct Mindist<T>
 {
     distance: T,
 }
+
 // These impls give us a min-heap when used with BinaryHeap
 impl<T> Ord for Mindist<T>
     where T: Float
@@ -146,7 +114,41 @@ impl<T> PartialOrd for Mindist<T>
         Some(self.cmp(other))
     }
 }
+
 impl<T> Eq for Mindist<T> where T: Float {}
+
+impl<T> Distance<T, Point<T>> for Point<T>
+    where T: Float
+{
+    /// Minimum distance between two Points
+    fn distance(&self, p: &Point<T>) -> T {
+        let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
+        dx.hypot(dy)
+    }
+}
+
+impl<T> Distance<T, MultiPoint<T>> for Point<T>
+    where T: Float
+{
+    /// Minimum distance from a Point to a MultiPoint
+    fn distance(&self, points: &MultiPoint<T>) -> T {
+        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
+        for p in &points.0 {
+            let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
+            dist_queue.push( Mindist { distance: dx.hypot(dy) })
+        }
+        dist_queue.pop().unwrap().distance
+    }
+}
+
+impl<T> Distance<T, Point<T>> for MultiPoint<T>
+    where T: Float
+{
+    /// Minimum distance from a MultiPoint to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        point.distance(self)
+    }
+}
 
 impl<T> Distance<T, Polygon<T>> for Point<T>
     where T: Float
