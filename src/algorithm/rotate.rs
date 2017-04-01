@@ -47,28 +47,71 @@ pub trait Rotate<T> {
     fn rotate(&self, angle: T) -> Self where T: Float;
 }
 
+pub trait RotatePoint<T> {
+    /// Rotate a Geometry around an arbitrary point by an angle, in degrees
+    /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
+    ///
+    /// ```
+    /// use geo::{Point, LineString};
+    /// use geo::algorithm::rotate::{RotatePoint};
+    ///
+    /// let mut vec = Vec::new();
+    /// vec.push(Point::new(0.0, 0.0));
+    /// vec.push(Point::new(5.0, 5.0));
+    /// vec.push(Point::new(10.0, 10.0));
+    /// let linestring = LineString(vec);
+    /// let rotated = linestring.rotate_point(-45.0, &Point::new(10.0, 0.0));
+    /// let mut correct = Vec::new();
+    /// correct.push(Point::new(2.9289321881345245, 7.071067811865475));
+    /// correct.push(Point::new(6.464466094067262, 3.5355339059327373));
+    /// correct.push(Point::new(10.0, 0.0));
+    /// let correct_ls = LineString(correct);
+    /// assert_eq!(rotated, correct_ls);
+    /// ```
+    fn rotate_point(&self, angle: T, point: &Point<T>) -> Self where T: Float;
+}
+
 impl<T> Rotate<T> for Point<T>
     where T: Float
 {
-    /// Rotate the Point about the origin by the given number of degrees
+    /// Rotate the Point about itself by the given number of degrees
+    /// This operation leaves the point coordinates unchanged
     fn rotate(&self, angle: T) -> Self {
         rotation_matrix(angle, &self.centroid().unwrap(), &[*self])[0]
+    }
+}
+
+impl<T> RotatePoint<T> for Point<T>
+    where T: Float
+{
+    /// Rotate the Point about another point by the given number of degrees
+    fn rotate_point(&self, angle: T, point: &Point<T>) -> Self {
+        rotation_matrix(angle, point, &[*self])[0]
     }
 }
 
 impl<T> Rotate<T> for LineString<T>
     where T: Float
 {
-    /// Rotate the LineString about the origin by the given number of degrees
+    /// Rotate the LineString about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
         LineString(rotation_matrix(angle, &self.centroid().unwrap(), &self.0))
+    }
+}
+
+impl<T> RotatePoint<T> for LineString<T>
+    where T: Float
+{
+    /// Rotate the LineString about a point by the given number of degrees
+    fn rotate_point(&self, angle: T, point: &Point<T>) -> Self {
+        LineString(rotation_matrix(angle, point, &self.0))
     }
 }
 
 impl<T> Rotate<T> for Polygon<T>
     where T: Float + FromPrimitive
 {
-    /// Rotate the Polygon about the origin by the given number of degrees
+    /// Rotate the Polygon about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
         Polygon::new(LineString(rotation_matrix(angle,
                                                 &self.centroid().unwrap(),
@@ -76,6 +119,21 @@ impl<T> Rotate<T> for Polygon<T>
                      self.interiors
                          .iter()
                          .map(|ring| ring.rotate(angle))
+                         .collect())
+    }
+}
+
+impl<T> RotatePoint<T> for Polygon<T>
+    where T: Float + FromPrimitive
+{
+    /// Rotate the Polygon about a given point by the given number of degrees
+    fn rotate_point(&self, angle: T, point: &Point<T>) -> Self {
+        Polygon::new(LineString(rotation_matrix(angle,
+                                                point,
+                                                &self.exterior.0)),
+                     self.interiors
+                         .iter()
+                         .map(|ring| ring.rotate_point(angle, point))
                          .collect())
     }
 }
@@ -175,5 +233,11 @@ mod test {
                                    vec![]);
         // results agree with Shapely / GEOS
         assert_eq!(rotated, correct);
+    }
+    #[test]
+    fn test_rotate_point_arbitrary() {
+        let p = Point::new(5.0, 10.0);
+        let rotated = p.rotate_point(-45., &Point::new(10., 34.));
+        assert_eq!(rotated, Point::new(-10.506096654409877, 20.564971157455595));
     }
 }
