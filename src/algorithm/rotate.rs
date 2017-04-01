@@ -128,9 +128,7 @@ impl<T> RotatePoint<T> for Polygon<T>
 {
     /// Rotate the Polygon about a given point by the given number of degrees
     fn rotate_point(&self, angle: T, point: &Point<T>) -> Self {
-        Polygon::new(LineString(rotation_matrix(angle,
-                                                point,
-                                                &self.exterior.0)),
+        Polygon::new(LineString(rotation_matrix(angle, point, &self.exterior.0)),
                      self.interiors
                          .iter()
                          .map(|ring| ring.rotate_point(angle, point))
