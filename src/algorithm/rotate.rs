@@ -25,6 +25,7 @@ fn rotation_matrix<T>(angle: T, origin: &Point<T>, points: &[Point<T>]) -> Vec<P
 
 pub trait Rotate<T> {
     /// Rotate a Geometry around its centroid by an angle, in degrees
+    ///
     /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
     ///
     /// ```
@@ -48,7 +49,8 @@ pub trait Rotate<T> {
 }
 
 pub trait RotatePoint<T> {
-    /// Rotate a Geometry around an arbitrary point by an angle, in degrees
+    /// Rotate a Geometry around an arbitrary point by an angle, given in degrees
+    ///
     /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
     ///
     /// ```
