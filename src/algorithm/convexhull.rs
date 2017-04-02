@@ -93,10 +93,10 @@ fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
     }
     let last = partition(&mut points, |p| point_location(max, min, p));
     hull_set(max, min, &mut points[..last], &mut hull);
-    hull.push(*min);
+    hull.push(*max);
     let last = partition(&mut points, |p| point_location(min, max, p));
     hull_set(min, max, &mut points[..last], &mut hull);
-    hull.push(*max);
+    hull.push(*min);
     // close the polygon
     let final_element = *hull.first().unwrap();
     hull.push(final_element);
@@ -125,19 +125,17 @@ fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, mut set: &mut [Point<T>], hull: &
     }
     // move Point at furthest_point from set into hull
     let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
-
-    // points over AP
-    let last = partition(set, |p| point_location(p_a, &furthest_point, p));
-    hull_set(p_a, &furthest_point, &mut set[..last], hull);
-    hull.push(*furthest_point);
-
     // points over PB
     let last = partition(set, |p| point_location(&furthest_point, p_b, p));
     hull_set(&furthest_point, p_b, &mut set[..last], hull);
+    hull.push(*furthest_point);
+    // points over AP
+    let last = partition(set, |p| point_location(p_a, &furthest_point, p));
+    hull_set(p_a, &furthest_point, &mut set[..last], hull);
 }
 
 pub trait ConvexHull<T> {
-    /// Returns the convex hull of a Polygon
+    /// Returns the convex hull of a Polygon. The hull is always oriented counter-clockwise.
     ///
     /// This implementation uses the QuickHull algorithm,
     /// based on [Barber, C. Bradford; Dobkin, David P.; Huhdanpaa, Hannu (1 December 1996)](https://dx.doi.org/10.1145%2F235815.235821)
@@ -152,7 +150,7 @@ pub trait ConvexHull<T> {
     /// let poly = Polygon::new(ls, vec![]);
     ///
     /// // The correct convex hull coordinates
-    /// let hull_coords = vec![(0.0, 0.0), (0.0, 4.0), (1.0, 4.0), (4.0, 1.0), (4.0, 0.0), (0.0, 0.0)];
+    /// let hull_coords = vec![(4.0, 0.0), (4.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0), (4.0, 0.0)];
     /// let correct_hull = LineString(hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect());
     ///
     /// let res = poly.convex_hull();
@@ -221,12 +219,12 @@ mod test {
                          Point::new(1.0, 4.0),
                          Point::new(0.0, 4.0),
                          Point::new(0.0, 0.0)];
-        let correct = vec![Point::new(0.0, 0.0),
-                           Point::new(0.0, 4.0),
-                           Point::new(1.0, 4.0),
+        let correct = vec![Point::new(4.0, 0.0),
                            Point::new(4.0, 1.0),
-                           Point::new(4.0, 0.0),
-                           Point::new(0.0, 0.0)];
+                           Point::new(1.0, 4.0),
+                           Point::new(0.0, 4.0),
+                           Point::new(0.0, 0.0),
+                           Point::new(4.0, 0.0)];
         let res = quick_hull(&mut v);
         assert_eq!(res, correct);
     }
@@ -242,12 +240,33 @@ mod test {
                          Point::new(-1.0, 1.0),
                          Point::new(0.0, 10.0)];
         let correct = vec![Point::new(0.0, -10.0),
-                           Point::new(-10.0, 0.0),
-                           Point::new(0.0, 10.0),
                            Point::new(10.0, 0.0),
+                           Point::new(0.0, 10.0),
+                           Point::new(-10.0, 0.0),
                            Point::new(0.0, -10.0)];
         let res = quick_hull(&mut v);
         assert_eq!(res, correct);
+    }
+    #[test]
+    // test whether output is ccw
+    fn quick_hull_test_ccw() {
+        let initial = vec![(1.0, 0.0), (2.0, 1.0), (1.75, 1.1), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
+        let mut v: Vec<_> = initial.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let correct = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
+        let v_correct: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let res = quick_hull(&mut v);
+        assert_eq!(res, v_correct);
+    }
+    #[test]
+    // test that output isn't rotated
+    fn quick_hull_test_ccw_maintain() {
+        // initial input begins at min y, is oriented ccw
+        let initial = vec![(0., 0.), (2., 0.), (2.5, 1.75), (2.3, 1.7), (1.75, 2.5), (1.3, 2.), (0., 2.), (0., 0.)];
+        let mut v: Vec<_> = initial.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let correct = vec![(2.0, 0.0), (2.5, 1.75), (1.75, 2.5), (0.0, 2.0), (0.0, 0.0), (2.0, 0.0)];
+        let v_correct: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let res = quick_hull(&mut v);
+        assert_eq!(res, v_correct);
     }
     #[test]
     fn quick_hull_test_complex() {
@@ -280,9 +299,9 @@ mod test {
                          Point::new(0.0, 10.0)];
         let mp = MultiPoint(v);
         let correct = vec![Point::new(0.0, -10.0),
-                           Point::new(-10.0, 0.0),
-                           Point::new(0.0, 10.0),
                            Point::new(10.0, 0.0),
+                           Point::new(0.0, 10.0),
+                           Point::new(-10.0, 0.0),
                            Point::new(0.0, -10.0)];
         let res = mp.convex_hull();
         assert_eq!(res.exterior.0, correct);
@@ -302,9 +321,9 @@ mod test {
         let mp = LineString(v);
         let correct = vec![
             Point::new(0.0, -10.0),
-            Point::new(-10.0, 0.0),
-            Point::new(0.0, 10.0),
             Point::new(10.0, 0.0),
+            Point::new(0.0, 10.0),
+            Point::new(-10.0, 0.0),
             Point::new(0.0, -10.0)];
         let res = mp.convex_hull();
         assert_eq!(res.exterior.0, correct);
@@ -316,9 +335,9 @@ mod test {
         let mls = MultiLineString(vec![v1, v2]);
         let correct = vec![
             Point::new(2.0, 0.0),
-            Point::new(0.0, 0.0),
-            Point::new(1.0, 10.0),
             Point::new(3.0, 1.0),
+            Point::new(1.0, 10.0),
+            Point::new(0.0, 0.0),
             Point::new(2.0, 0.0)];
         let res = mls.convex_hull();
         assert_eq!(res.exterior.0, correct);
@@ -331,11 +350,11 @@ mod test {
         let p2 = Polygon::new(ls2, vec![]);
         let mp = MultiPolygon(vec![p1, p2]);
         let correct = vec![
-            Point::new(0.0, 0.0),
-            Point::new(1.0, 10.0),
-            Point::new(4.0, 10.0),
             Point::new(5.0, 0.0),
-            Point::new(0.0, 0.0)
+            Point::new(4.0, 10.0),
+            Point::new(1.0, 10.0),
+            Point::new(0.0, 0.0),
+            Point::new(5.0, 0.0)
         ];
         let res = mp.convex_hull();
         assert_eq!(res.exterior.0, correct);
