@@ -10,10 +10,13 @@ use num_traits::pow::pow;
 pub trait Distance<T, Rhs = Self> {
     /// Returns the distance between two geometries
     ///
-    /// If a `Point` is contained by a `Polygon`, the distance is `0.0`  
-    /// If a `Point` lies on a `Polygon`'s exterior or interior rings, the distance is `0.0`  
-    /// If a `Point` lies on a `LineString`, the distance is `0.0`  
-    /// The distance between a `Point` and an empty `LineString` is `0.0`  
+    /// If a `Point` is contained by a `Polygon`, the distance is `0.0`
+    ///
+    /// If a `Point` lies on a `Polygon`'s exterior or interior rings, the distance is `0.0`
+    ///
+    /// If a `Point` lies on a `LineString`, the distance is `0.0`
+    ///
+    /// The distance between a `Point` and an empty `LineString` is `0.0`
     ///
     /// ```
     /// use geo::{COORD_PRECISION, Point, LineString, Polygon};
@@ -63,29 +66,6 @@ pub trait Distance<T, Rhs = Self> {
     fn distance(&self, rhs: &Rhs) -> T;
 }
 
-impl<T> Distance<T, Point<T>> for Point<T>
-    where T: Float
-{
-    fn distance(&self, p: &Point<T>) -> T {
-        let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
-        dx.hypot(dy)
-    }
-}
-
-impl<T> Distance<T, MultiPoint<T>> for Point<T>
-    where T: Float
-{
-    /// Minimum distance from a Point to a MultiPoint
-    fn distance(&self, points: &MultiPoint<T>) -> T {
-        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
-        for p in &points.0 {
-            let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
-            dist_queue.push( Mindist { distance: dx.hypot(dy) })
-        }
-        dist_queue.pop().unwrap().distance
-    }
-}
-
 // Return minimum distance between a Point and a Line segment
 // This is a helper for Point-to-LineString and Point-to-Polygon distance
 // adapted from http://stackoverflow.com/a/1501725/416626. Quoting the author:
@@ -121,6 +101,7 @@ struct Mindist<T>
 {
     distance: T,
 }
+
 // These impls give us a min-heap when used with BinaryHeap
 impl<T> Ord for Mindist<T>
     where T: Float
@@ -136,12 +117,46 @@ impl<T> PartialOrd for Mindist<T>
         Some(self.cmp(other))
     }
 }
+
 impl<T> Eq for Mindist<T> where T: Float {}
 
-// Minimum distance from a Point to a Polygon
+impl<T> Distance<T, Point<T>> for Point<T>
+    where T: Float
+{
+    /// Minimum distance between two Points
+    fn distance(&self, p: &Point<T>) -> T {
+        let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
+        dx.hypot(dy)
+    }
+}
+
+impl<T> Distance<T, MultiPoint<T>> for Point<T>
+    where T: Float
+{
+    /// Minimum distance from a Point to a MultiPoint
+    fn distance(&self, points: &MultiPoint<T>) -> T {
+        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
+        for p in &points.0 {
+            let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
+            dist_queue.push(Mindist { distance: dx.hypot(dy) })
+        }
+        dist_queue.pop().unwrap().distance
+    }
+}
+
+impl<T> Distance<T, Point<T>> for MultiPoint<T>
+    where T: Float
+{
+    /// Minimum distance from a MultiPoint to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        point.distance(self)
+    }
+}
+
 impl<T> Distance<T, Polygon<T>> for Point<T>
     where T: Float
 {
+    /// Minimum distance from a Point to a Polygon
     fn distance(&self, polygon: &Polygon<T>) -> T {
         // get exterior ring
         let exterior = &polygon.exterior;
@@ -165,7 +180,15 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
     }
 }
 
-// Minimum distance from a Point to a MultiPolygon
+impl<T> Distance<T, Point<T>> for Polygon<T>
+    where T: Float
+{
+    /// Minimum distance from a Polygon to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        point.distance(self)
+    }
+}
+
 impl<T> Distance<T, MultiPolygon<T>> for Point<T>
     where T: Float
 {
@@ -179,7 +202,15 @@ impl<T> Distance<T, MultiPolygon<T>> for Point<T>
     }
 }
 
-// Minimum distance from a Point to a MultiLineString
+impl<T> Distance<T, Point<T>> for MultiPolygon<T>
+    where T: Float
+{
+    /// Minimum distance from a MultiPolygon to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        point.distance(self)
+    }
+}
+
 impl<T> Distance<T, MultiLineString<T>> for Point<T>
     where T: Float
 {
@@ -193,13 +224,22 @@ impl<T> Distance<T, MultiLineString<T>> for Point<T>
     }
 }
 
-// Minimum distance from a Point to a LineString
+impl<T> Distance<T, Point<T>> for MultiLineString<T>
+    where T: Float
+{
+    /// Minimum distance from a MultiLineString to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        point.distance(self)
+    }
+}
+
 impl<T> Distance<T, LineString<T>> for Point<T>
     where T: Float
 {
+    /// Minimum distance from a Point to a LineString
     fn distance(&self, linestring: &LineString<T>) -> T {
         // No need to continue if the point is on the LineString, or it's empty
-        if linestring.contains(self) || linestring.0.len() == 0 {
+        if linestring.contains(self) || linestring.0.is_empty() {
             return T::zero();
         }
         // minimum priority queue
@@ -211,6 +251,15 @@ impl<T> Distance<T, LineString<T>> for Point<T>
             dist_queue.push(Mindist { distance: dist });
         }
         dist_queue.pop().unwrap().distance
+    }
+}
+
+impl<T> Distance<T, Point<T>> for LineString<T>
+    where T: Float
+{
+    /// Minimum distance from a LineString to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        point.distance(self)
     }
 }
 
@@ -297,37 +346,35 @@ mod test {
     // Point to Polygon with an interior ring
     fn point_polygon_interior_cutout_test() {
         // an octagon
-        let ext_points = vec![
-            (4., 1.),
-            (5., 2.),
-            (5., 3.),
-            (4., 4.),
-            (3., 4.),
-            (2., 3.),
-            (2., 2.),
-            (3., 1.),
-            (4., 1.),
-        ];
+        let ext_points = vec![(4., 1.), (5., 2.), (5., 3.), (4., 4.), (3., 4.), (2., 3.),
+                              (2., 2.), (3., 1.), (4., 1.)];
         // cut out a triangle inside octagon
-        let int_points = vec![
-            (3.5, 3.5),
-            (4.4, 1.5),
-            (2.6, 1.5),
-            (3.5, 3.5)
-        ];
-        let ls_ext = LineString(ext_points.iter().map(|e| Point::new(e.0, e.1)).collect());
-        let ls_int = LineString(int_points.iter().map(|e| Point::new(e.0, e.1)).collect());
+        let int_points = vec![(3.5, 3.5), (4.4, 1.5), (2.6, 1.5), (3.5, 3.5)];
+        let ls_ext = LineString(ext_points
+                                    .iter()
+                                    .map(|e| Point::new(e.0, e.1))
+                                    .collect());
+        let ls_int = LineString(int_points
+                                    .iter()
+                                    .map(|e| Point::new(e.0, e.1))
+                                    .collect());
         let poly = Polygon::new(ls_ext, vec![ls_int]);
         // A point inside the cutout triangle
         let p = Point::new(3.5, 2.5);
         let dist = p.distance(&poly);
-                      // 0.41036467732879783 <-- Shapely
+        // 0.41036467732879783 <-- Shapely
         assert_relative_eq!(dist, 0.41036467732879767);
     }
     #[test]
     fn point_distance_multipolygon_test() {
-        let ls1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(0.0, 0.0)]);
-        let ls2 = LineString(vec![Point::new(3.0, 0.0), Point::new(4.0, 10.0), Point::new(5.0, 0.0), Point::new(3.0, 0.0)]);
+        let ls1 = LineString(vec![Point::new(0.0, 0.0),
+                                  Point::new(1.0, 10.0),
+                                  Point::new(2.0, 0.0),
+                                  Point::new(0.0, 0.0)]);
+        let ls2 = LineString(vec![Point::new(3.0, 0.0),
+                                  Point::new(4.0, 10.0),
+                                  Point::new(5.0, 0.0),
+                                  Point::new(3.0, 0.0)]);
         let p1 = Polygon::new(ls1, vec![]);
         let p2 = Polygon::new(ls2, vec![]);
         let mp = MultiPolygon(vec![p1, p2]);
@@ -338,16 +385,8 @@ mod test {
     // Point to LineString
     fn point_linestring_distance_test() {
         // like an octagon, but missing the lowest horizontal segment
-        let points = vec![
-            (5., 1.),
-            (4., 2.),
-            (4., 3.),
-            (5., 4.),
-            (6., 4.),
-            (7., 3.),
-            (7., 2.),
-            (6., 1.),
-        ];
+        let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
+                          (6., 1.)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         // A Random point "inside" the LineString
         let p = Point::new(5.5, 2.1);
@@ -358,16 +397,8 @@ mod test {
     // Point to LineString, point lies on the LineString
     fn point_linestring_contains_test() {
         // like an octagon, but missing the lowest horizontal segment
-        let points = vec![
-            (5., 1.),
-            (4., 2.),
-            (4., 3.),
-            (5., 4.),
-            (6., 4.),
-            (7., 3.),
-            (7., 2.),
-            (6., 1.),
-        ];
+        let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
+                          (6., 1.)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         // A point which lies on the LineString
         let p = Point::new(5.0, 4.0);
@@ -377,12 +408,7 @@ mod test {
     #[test]
     // Point to LineString, closed triangle
     fn point_linestring_triangle_test() {
-        let points = vec![
-            (3.5, 3.5),
-            (4.4, 2.0),
-            (2.6, 2.0),
-            (3.5, 3.5)
-        ];
+        let points = vec![(3.5, 3.5), (4.4, 2.0), (2.6, 2.0), (3.5, 3.5)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let p = Point::new(3.5, 2.5);
         let dist = p.distance(&ls);
@@ -400,7 +426,8 @@ mod test {
     #[test]
     fn distance_multilinestring_test() {
         let v1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0)]);
-        let v2 = LineString(vec![Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(3.0, 1.0)]);
+        let v2 =
+            LineString(vec![Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(3.0, 1.0)]);
         let mls = MultiLineString(vec![v1, v2]);
         let p = Point::new(50.0, 50.0);
         assert_relative_eq!(p.distance(&mls), 63.25345840347388);
@@ -418,14 +445,14 @@ mod test {
     #[test]
     fn distance_multipoint_test() {
         let v = vec![Point::new(0.0, 10.0),
-                         Point::new(1.0, 1.0),
-                         Point::new(10.0, 0.0),
-                         Point::new(1.0, -1.0),
-                         Point::new(0.0, -10.0),
-                         Point::new(-1.0, -1.0),
-                         Point::new(-10.0, 0.0),
-                         Point::new(-1.0, 1.0),
-                         Point::new(0.0, 10.0)];
+                     Point::new(1.0, 1.0),
+                     Point::new(10.0, 0.0),
+                     Point::new(1.0, -1.0),
+                     Point::new(0.0, -10.0),
+                     Point::new(-1.0, -1.0),
+                     Point::new(-10.0, 0.0),
+                     Point::new(-1.0, 1.0),
+                     Point::new(0.0, 10.0)];
         let mp = MultiPoint(v);
         let p = Point::new(50.0, 50.0);
         assert_eq!(p.distance(&mp), 64.03124237432849)
