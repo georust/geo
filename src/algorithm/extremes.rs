@@ -47,9 +47,9 @@ fn find_extremes<T, F>(func: F, polygon: &Polygon<T>, convex: bool, oriented: bo
     //     let mut poly = polygon.convex_hull();
     //     let processed = true;
     // }
-    // if !oriented and processed {
+    // if !oriented && processed {
     //    poly = poly.orient()
-    // } else if !oriented and !processed {
+    // } else if !oriented && !processed {
     //     poly = polygon.orient();
     // } else {
     //    poly = polygon;
@@ -80,97 +80,6 @@ fn polymax_naive<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<Point<T>, ()>
         }
     }
     return Ok(vertices[max]);
-}
-
-// ported from a c++ implementation at
-// http://geomalgorithms.com/a14-_extreme_pts.html#polyMax_2D()
-// original copyright notice:
-// Copyright 2002 softSurfer, 2012-2013 Dan Sunday
-// This code may be freely used, distributed and modified for any
-// purpose providing that this copyright notice is included with it.
-// SoftSurfer makes no warranty for this code, and cannot be held
-// liable for any real or imagined damage resulting from its use.
-// Users of this code must verify correctness for their application.
-
-// Original implementation:
-// Joseph O'Rourke, Computational Geometry in C (2nd Edition),
-// Sect 7.9 "Extreme Point of Convex Polygon" (1998)
-
-// find a convex, counter-clockwise oriented polygon's maximum vertex in a specified direction
-// u: a direction vector. We're using a point to represent this, which is a hack tbh
-// this should run in O(log n) time.
-// This implementation can't calculate minimum x
-// see Section 5.1 at http://codeforces.com/blog/entry/48868 for a discussion
-fn polymax<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<Point<T>, ()>
-    where T: Float
-{
-    let vertices = &poly.exterior.0;
-    let n = vertices.len();
-    // these are used to divide the vertices slice
-    // start chain = [0, n] with vertices[n] = vertices[0]
-    let mut start: usize = 0;
-    let mut end: usize = n;
-    let mut mid: usize;
-
-    // edge vectors at vertices[a] and vertices[c]
-    let mut vec_c: Point<T>;
-    let vec_a = vertices[1] - vertices[0];
-    // test for "up" direction of vec_a
-    let mut up_a = up(u, &vec_a);
-
-    // test if vertices[0] is a local maximum
-    if !up_a && !above(u, &vertices[n - 1], &vertices[0]) {
-        return Ok(vertices[0]);
-    }
-    loop {
-        mid = (start + end) / 2;
-        vec_c = vertices[mid + 1] - vertices[mid];
-        let up_c = up(u, &vec_c);
-        if !up_c && !above(u, &vertices[mid - 1], &vertices[mid]) {
-            // vertices[mid] is a local maximum, thus it is a maximum
-            return Ok(vertices[mid]);
-        }
-        // no max yet, so continue with the binary search
-        // pick one of the two subchains [start, mid]  or [mid, end]
-        if up_a {
-            // vec_a points up
-            if !up_c {
-                // vec_c points down
-                end = mid; // select [start, mid]
-            } else {
-                // vec_c points up
-                if above(u, &vertices[start], &vertices[mid]) {
-                    // vertices[start] is above vertices[mid]
-                    end = mid; // select [start, mid]
-                } else {
-                    // vertices[start] is below vertices[mid]
-                    start = mid; // select [mid, end]
-                    up_a = up_c;
-                }
-            }
-        } else {
-            // vec_a points down
-            if up_c {
-                // vec_c points up
-                start = mid; // select [mid, end]
-                up_a = up_c;
-            } else {
-                // vec_c points down
-                if below(u, &vertices[start], &vertices[mid]) {
-                    // vertices[start] is below vertices[mid]
-                    end = mid; // select [start, mid]
-                } else {
-                    // vertices[start] is above vertices[mid]
-                    start = mid; // select [mid, end]
-                    up_a = up_c;
-                }
-            }
-        }
-        // something went really badly wrong
-        if end <= start + 1 {
-            return Err(());
-        }
-    }
 }
 
 pub trait ExtremePoints<T: Float> {
@@ -225,21 +134,6 @@ mod test {
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString(points), vec![]);
         let min_x = polymax_naive(&Point::new(-1., 0.), &poly1).unwrap();
-        let correct = Point::new(0., 1.);
-        assert_eq!(min_x, correct);
-    }
-    #[test]
-    #[should_panic]
-    // this test should panic, because the algorithm can't find minimum x
-    fn test_polygon_extreme_x_fast() {
-        // a diamond shape
-        let points_raw = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
-        let points = points_raw
-            .iter()
-            .map(|e| Point::new(e.0, e.1))
-            .collect::<Vec<_>>();
-        let poly1 = Polygon::new(LineString(points), vec![]);
-        let min_x = polymax(&Point::new(-1., 0.), &poly1).unwrap();
         let correct = Point::new(0., 1.);
         assert_eq!(min_x, correct);
     }
