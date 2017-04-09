@@ -42,7 +42,7 @@ struct Polydist<'a, T>
     vertical: bool,
 }
 
-// wrap-around next vertex
+// Wrap-around next vertex
 impl<T> Polygon<T>
     where T: Float + Debug
 {
@@ -54,7 +54,7 @@ impl<T> Polygon<T>
     }
 }
 
-// wrap-around previous-vertex
+// Wrap-around previous-vertex
 impl<T> Polygon<T>
     where T: Float + Debug
 {
@@ -452,7 +452,8 @@ fn nextpoints<T>(state: &mut Polydist<T>)
         if state.p1.x() == state.p1next.x() {
             // Vertical case
             state.vertical = true;
-            state.slope = T::zero(); // just to have a value
+            // 0 is a placeholder value
+            state.slope = T::zero();
         } else {
             state.vertical = false;
             if state.p1.x() > state.p1next.x() {
@@ -475,7 +476,7 @@ fn nextpoints<T>(state: &mut Polydist<T>)
             }
         }
     }
-    // a start value's been set, and both polygon indices are in their initial
+    // A start value's been set, and both polygon indices are in their initial
     // positions -- we're finished, so return the minimum distance
     if state.p1 == state.ymin1 && state.q2 == state.ymax2 && !state.start.is_none() {
         state.finished = true;
