@@ -487,9 +487,9 @@ fn nextpoints<T>(state: &mut Polydist<T>)
 
 // compute the minimum distance between entities
 // three variations are possible (iid 1, 2, or 3):
-// - vertex-vertex-distance
-// - vertex-edge distance
-// - edge-edge distance
+// - vertex-edge-distance
+// - edge-edge distance, overlapping edges
+// - edge-edge distance, non-overlapping edges
 fn computemin<T>(state: &mut Polydist<T>)
     where T: Float + Debug
 {
@@ -499,6 +499,7 @@ fn computemin<T>(state: &mut Polydist<T>)
     let u2;
     match state.iid {
         1 => {
+            // one line of support coincides with a vertex, the other with an edge
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
                 state.dist = newdist;
@@ -523,8 +524,9 @@ fn computemin<T>(state: &mut Polydist<T>)
                     state.dist = newdist;
                 }
             }
-        },
+        }
         2 => {
+            // both lines of support coincide with edges, and the edges overlap
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
                 state.dist = newdist;
@@ -549,8 +551,9 @@ fn computemin<T>(state: &mut Polydist<T>)
                     state.dist = newdist;
                 }
             }
-        },
+        }
         3 => {
+            // both lines of support coincide with edges, but they don't overlap
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
                 state.dist = newdist;
@@ -592,8 +595,8 @@ fn computemin<T>(state: &mut Polydist<T>)
                     state.dist = newdist;
                 }
             }
-        },
-        _ => unreachable!()
+        }
+        _ => unreachable!(),
     }
 }
 
