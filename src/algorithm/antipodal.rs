@@ -494,103 +494,106 @@ fn computemin<T>(state: &mut Polydist<T>)
     where T: Float + Debug
 {
     let mut newdist;
-    let mut u;
+    let u;
     let u1;
     let u2;
-    if state.iid == 1 {
-        newdist = state.p1.distance(&state.q2);
-        if newdist <= state.dist {
-            state.dist = newdist;
-        }
-        if !state.vertical {
-            if state.slope != T::zero() {
-                u = unitvector(&(-T::one() / state.slope),
-                               state.poly2,
-                               &state.q2,
-                               &state.q2_idx);
-            } else {
-                u = Point::new(state.q2.x(), state.q2.y() + T::from(100).unwrap());
-            }
-        } else {
-            u = unitvector(&T::zero(), state.poly2, &state.q2, &state.q2_idx);
-        }
-        let line_1 = leftturn(&u, &state.q2, &state.p1);
-        let line_2 = leftturn(&u, &state.q2, &state.p1prev);
-        if line_1 != line_2 && line_1 != -1 && line_2 != -1 {
-            newdist = state.q2.vertex_line_distance(&state.p1prev, &state.p1);
+    match state.iid {
+        1 => {
+            newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
                 state.dist = newdist;
             }
-        }
-    }
-    if state.iid == 2 {
-        newdist = state.p1.distance(&state.q2);
-        if newdist <= state.dist {
-            state.dist = newdist;
-        }
-        if !state.vertical {
-            if state.slope != T::zero() {
-                u = unitvector(&(-T::one() / state.slope),
-                               state.poly1,
-                               &state.p1,
-                               &state.p1_idx);
+            if !state.vertical {
+                if state.slope != T::zero() {
+                    u = unitvector(&(-T::one() / state.slope),
+                                   state.poly2,
+                                   &state.q2,
+                                   &state.q2_idx);
+                } else {
+                    u = Point::new(state.q2.x(), state.q2.y() + T::from(100).unwrap());
+                }
             } else {
-                u = Point::new(state.p1.x(), state.p1.y() + T::from(100).unwrap());
+                u = unitvector(&T::zero(), state.poly2, &state.q2, &state.q2_idx);
             }
-        } else {
-            u = unitvector(&T::zero(), state.poly1, &state.p1, &state.p1_idx);
-        }
-        let line_1 = leftturn(&u, &state.p1, &state.q2);
-        let line_2 = leftturn(&u, &state.p1, &state.q2prev);
-        if line_1 != line_2 && line_1 != -1 && line_2 != -1 {
-            newdist = state.p1.vertex_line_distance(&state.q2prev, &state.q2);
+            let line_1 = leftturn(&u, &state.q2, &state.p1);
+            let line_2 = leftturn(&u, &state.q2, &state.p1prev);
+            if line_1 != line_2 && line_1 != -1 && line_2 != -1 {
+                newdist = state.q2.vertex_line_distance(&state.p1prev, &state.p1);
+                if newdist <= state.dist {
+                    state.dist = newdist;
+                }
+            }
+        },
+        2 => {
+            newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
                 state.dist = newdist;
             }
-        }
-    }
-    if state.iid == 3 {
-        newdist = state.p1.distance(&state.q2);
-        if newdist <= state.dist {
-            state.dist = newdist;
-        }
-        newdist = state.p1.distance(&state.q2prev);
-        if newdist <= state.dist {
-            state.dist = newdist;
-        }
-        newdist = state.p1prev.distance(&state.q2);
-        if newdist <= state.dist {
-            state.dist = newdist;
-        }
-        if !state.vertical {
-            if state.slope != T::zero() {
-                u1 = unitvector(&(-T::one() / state.slope),
-                                state.poly1,
-                                &state.p1prev,
-                                &state.p1_idx);
-                u2 = unitvector(&(-T::one() / state.slope),
-                                state.poly1,
-                                &state.p1,
-                                &state.p1_idx);
+            if !state.vertical {
+                if state.slope != T::zero() {
+                    u = unitvector(&(-T::one() / state.slope),
+                                   state.poly1,
+                                   &state.p1,
+                                   &state.p1_idx);
+                } else {
+                    u = Point::new(state.p1.x(), state.p1.y() + T::from(100).unwrap());
+                }
             } else {
-                u1 = Point::new(state.p1prev.x(), state.p1prev.y() + T::from(100).unwrap());
-                u2 = Point::new(state.p1.x(), state.p1.y() + T::from(100).unwrap());
+                u = unitvector(&T::zero(), state.poly1, &state.p1, &state.p1_idx);
             }
-        } else {
-            u1 = unitvector(&T::zero(), state.poly1, &state.p1prev, &state.p1_idx);
-            u2 = unitvector(&T::zero(), state.poly1, &state.p1, &state.p1_idx);
-        }
-        let line_1a = leftturn(&u1, &state.p1prev, &state.q2prev);
-        let line_1b = leftturn(&u1, &state.p1prev, &state.q2);
-        let line_2a = leftturn(&u2, &state.p1, &state.q2prev);
-        let line_2b = leftturn(&u2, &state.p1, &state.q2);
-        if line_1a != line_1b && line_1a != -1 && line_1b != -1 ||
-           line_2a != line_2b && line_2a != -1 && line_2b != -2 {
-            newdist = state.p1.vertex_line_distance(&state.q2prev, &state.q2);
+            let line_1 = leftturn(&u, &state.p1, &state.q2);
+            let line_2 = leftturn(&u, &state.p1, &state.q2prev);
+            if line_1 != line_2 && line_1 != -1 && line_2 != -1 {
+                newdist = state.p1.vertex_line_distance(&state.q2prev, &state.q2);
+                if newdist <= state.dist {
+                    state.dist = newdist;
+                }
+            }
+        },
+        3 => {
+            newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
                 state.dist = newdist;
             }
-        }
+            newdist = state.p1.distance(&state.q2prev);
+            if newdist <= state.dist {
+                state.dist = newdist;
+            }
+            newdist = state.p1prev.distance(&state.q2);
+            if newdist <= state.dist {
+                state.dist = newdist;
+            }
+            if !state.vertical {
+                if state.slope != T::zero() {
+                    u1 = unitvector(&(-T::one() / state.slope),
+                                    state.poly1,
+                                    &state.p1prev,
+                                    &state.p1_idx);
+                    u2 = unitvector(&(-T::one() / state.slope),
+                                    state.poly1,
+                                    &state.p1,
+                                    &state.p1_idx);
+                } else {
+                    u1 = Point::new(state.p1prev.x(), state.p1prev.y() + T::from(100).unwrap());
+                    u2 = Point::new(state.p1.x(), state.p1.y() + T::from(100).unwrap());
+                }
+            } else {
+                u1 = unitvector(&T::zero(), state.poly1, &state.p1prev, &state.p1_idx);
+                u2 = unitvector(&T::zero(), state.poly1, &state.p1, &state.p1_idx);
+            }
+            let line_1a = leftturn(&u1, &state.p1prev, &state.q2prev);
+            let line_1b = leftturn(&u1, &state.p1prev, &state.q2);
+            let line_2a = leftturn(&u2, &state.p1, &state.q2prev);
+            let line_2b = leftturn(&u2, &state.p1, &state.q2);
+            if line_1a != line_1b && line_1a != -1 && line_1b != -1 ||
+               line_2a != line_2b && line_2a != -1 && line_2b != -2 {
+                newdist = state.p1.vertex_line_distance(&state.q2prev, &state.q2);
+                if newdist <= state.dist {
+                    state.dist = newdist;
+                }
+            }
+        },
+        _ => unreachable!()
     }
 }
 
