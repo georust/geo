@@ -49,8 +49,7 @@ impl<T> Polygon<T>
     fn next_vertex(&self, current_vertex: &usize) -> usize
         where T: Float + Debug
     {
-        let polysize = self.exterior.0.len() - 1;
-        (current_vertex + 1) % polysize
+        (current_vertex + 1) % (self.exterior.0.len() - 1)
     }
 }
 
@@ -61,8 +60,7 @@ impl<T> Polygon<T>
     fn previous_vertex(&self, current_vertex: &usize) -> usize
         where T: Float + Debug
     {
-        let polysize = self.exterior.0.len() - 1;
-        (current_vertex + polysize - 1) % polysize
+        (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
     }
 }
 
