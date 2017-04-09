@@ -91,7 +91,7 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
     let pprev = poly.exterior.0[poly.previous_vertex(idx)];
     let slprev;
     let slnext;
-    // If the slope isn't 0, things are complicated
+    // Slope isn't 0, things are complicated
     if *slope != T::zero() {
         cos = cossq.sqrt();
         sin = sinsq.sqrt();
@@ -204,7 +204,7 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
             sin = -sin;
         }
     } else {
-    //slope is 0, and everything's fairly simple
+    // Slope is 0, things are fairly simple
         sin = T::zero();
         if pnext.x() > p.x() {
             cos = T::one();
