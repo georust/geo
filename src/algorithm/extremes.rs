@@ -37,9 +37,9 @@ fn below<T>(u: &Point<T>, vi: &Point<T>, vj: &Point<T>) -> bool
 }
 
 // wrapper for extreme-finding function
-fn find_extremes<T, F>(func: F, polygon: &Polygon<T>, convex: bool, oriented: bool) -> Extremes<T>
+fn find_extremes<T, F>(func: F, polygon: &Polygon<T>, convex: bool, oriented: bool) -> Extremes
     where T: Float,
-          F: Fn(&Point<T>, &Polygon<T>) -> Result<Point<T>, ()>
+          F: Fn(&Point<T>, &Polygon<T>) -> Result<usize, ()>
 {
     // TODO: we can't use this until Orient lands
     // let mut processed = false;
@@ -61,14 +61,14 @@ fn find_extremes<T, F>(func: F, polygon: &Polygon<T>, convex: bool, oriented: bo
     directions
         .iter()
         .map(|p| func(&p, &polygon).unwrap())
-        .collect::<Vec<Point<T>>>()
+        .collect::<Vec<usize>>()
         .into()
 }
 
 // find a convex, counter-clockwise oriented polygon's maximum vertex in a specified direction
 // u: a direction vector. We're using a point to represent this, which is a hack tbh
 // this is O(n), because polymax() can't yet calculate minimum x
-fn polymax_naive<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<Point<T>, ()>
+fn polymax_naive<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()>
     where T: Float
 {
     let vertices = &poly.exterior.0;
@@ -79,11 +79,11 @@ fn polymax_naive<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<Point<T>, ()>
             max = i;
         }
     }
-    return Ok(vertices[max]);
+    return Ok(max);
 }
 
 pub trait ExtremePoints<T: Float> {
-    /// Find the extreme `x` and `y` points of a Polygon
+    /// Find the extreme `x` and `y` indices of a Polygon
     ///
     /// The polygon must be convex and properly oriented; if you're unsure whether
     /// the polygon has these properties:
@@ -104,18 +104,18 @@ pub trait ExtremePoints<T: Float> {
     /// let poly = Polygon::new(LineString(points), vec![]);
     /// // Polygon is both convex and oriented counter-clockwise
     /// let extremes = poly.extreme_points(true, true);
-    /// assert_eq!(extremes.ymin, Point::new(1.0, 0.0));
-    /// assert_eq!(extremes.xmax, Point::new(2.0, 1.0));
-    /// assert_eq!(extremes.ymax, Point::new(1.0, 2.0));
-    /// assert_eq!(extremes.xmin, Point::new(0.0, 1.0));
+    /// assert_eq!(extremes.ymin, 0);
+    /// assert_eq!(extremes.xmax, 1);
+    /// assert_eq!(extremes.ymax, 2);
+    /// assert_eq!(extremes.xmin, 3);
     /// ```
-    fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes<T>;
+    fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes;
 }
 
 impl<T> ExtremePoints<T> for Polygon<T>
     where T: Float
 {
-    fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes<T> {
+    fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes {
         find_extremes(polymax_naive, self, convex, oriented)
     }
 }
@@ -134,7 +134,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString(points), vec![]);
         let min_x = polymax_naive(&Point::new(-1., 0.), &poly1).unwrap();
-        let correct = Point::new(0., 1.);
+        let correct = 3_usize;
         assert_eq!(min_x, correct);
     }
     #[test]
@@ -149,10 +149,10 @@ mod test {
         let poly1 = Polygon::new(LineString(points), vec![]);
         let extremes = find_extremes(polymax_naive, &poly1, true, true);
         let correct = Extremes {
-            ymin: Point::new(1.0, 0.0),
-            xmax: Point::new(2.0, 1.0),
-            ymax: Point::new(1.0, 2.0),
-            xmin: Point::new(0.0, 1.0),
+            ymin: 0,
+            xmax: 1,
+            ymax: 3,
+            xmin: 4,
         };
         assert_eq!(extremes, correct);
     }

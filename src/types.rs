@@ -25,22 +25,18 @@ pub struct Bbox<T>
     pub ymax: T,
 }
 
-/// Returns the extreme points (minimum `y`, maximum `x`, maximum `y`, minimum `x`)
+/// Returns the extreme vertex indices (minimum `y`, maximum `x`, maximum `y`, minimum `x`)
 /// of a `Polygon` or `MultiPolygon`.
 #[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Extremes<T>
-    where T: Float
-{
-    pub ymin: Point<T>,
-    pub xmax: Point<T>,
-    pub ymax: Point<T>,
-    pub xmin: Point<T>,
+pub struct Extremes {
+    pub ymin: usize,
+    pub xmax: usize,
+    pub ymax: usize,
+    pub xmin: usize,
 }
 
-impl<T> From<Vec<Point<T>>> for Extremes<T>
-    where T: Float
-{
-    fn from(original: Vec<Point<T>>) -> Extremes<T> {
+impl From<Vec<usize>> for Extremes {
+    fn from(original: Vec<usize>) -> Extremes {
         Extremes {
             ymin: original[0],
             xmax: original[1],
