@@ -102,138 +102,105 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
                         if clockwise && *slope <= slprev || !clockwise && *slope >= slprev {
                             cos = -cos;
                             sin = -sin;
-                        }
-                    } else {
-                        //slope < 0
-                        if clockwise {
+                        } else if clockwise {
                             cos = -cos;
                         } else {
                             sin = -sin;
                         }
                     }
-                } else {
-                    if pprev.y() <= p.y() && pnext.y() <= p.y() {
-                        if *slope > T::zero() {
-                            if !clockwise {
-                                cos = -cos;
-                                sin = -sin;
-                            }
-                        } else {
-                            slprev = (pprev.y() - p.y()) / (pprev.x() - p.x());
-                            slnext = (pnext.y() - p.y()) / (pnext.x() - p.x());
-                            if clockwise {
-                                if *slope <= slprev {
-                                    cos = -cos;
-                                } else {
-                                    sin = -sin;
-                                }
-                            } else {
-                                if *slope <= slnext {
-                                    sin = -sin;
-                                } else {
-                                    cos = -cos;
-                                }
-                            }
+                } else if pprev.y() <= p.y() && pnext.y() <= p.y() {
+                    if *slope > T::zero() {
+                        if !clockwise {
+                            cos = -cos;
+                            sin = -sin;
                         }
                     } else {
-                        if *slope > T::zero() {
-                            if !clockwise {
-                                cos = -cos;
-                                sin = -sin;
-                            }
-                        } else {
-                            if clockwise {
+                        slprev = (pprev.y() - p.y()) / (pprev.x() - p.x());
+                        slnext = (pnext.y() - p.y()) / (pnext.x() - p.x());
+                        if clockwise {
+                            if *slope <= slprev {
                                 cos = -cos;
                             } else {
                                 sin = -sin;
                             }
+                        } else if *slope <= slnext {
+                            sin = -sin;
+                        } else {
+                            cos = -cos;
                         }
                     }
+                } else if *slope > T::zero() {
+                    if !clockwise {
+                        cos = -cos;
+                        sin = -sin;
+                    }
+                } else if clockwise {
+                    cos = -cos;
+                } else {
+                    sin = -sin;
+                }
+            } else if *slope < T::zero() {
+                sin = -sin;
+            }
+        } else if pnext.x() < p.x() {
+            if pprev.x() < p.x() {
+                if pprev.y() >= p.y() && pnext.y() >= p.y() {
+                    if *slope > T::zero() {
+                        if clockwise {
+                            cos = -cos;
+                            sin = -sin;
+                        }
+                    } else {
+                        slprev = (p.y() - pprev.y()) / (p.x() - pprev.x());
+                        slnext = (p.y() - pnext.y()) / (p.x() - pnext.x());
+                        if clockwise {
+                            if *slope <= slprev {
+                                sin = -sin;
+                            } else {
+                                cos = -cos;
+                            }
+                        } else if *slope <= slnext {
+                            cos = -cos;
+                        } else {
+                            sin = -sin;
+                        }
+                    }
+                } else if pprev.y() <= p.y() && pnext.y() <= p.y() {
+                    if *slope > T::zero() {
+                        slnext = (p.y() - pnext.y()) / (p.x() - pnext.x());
+                        if *slope >= slnext {
+                            cos = -cos;
+                            sin = -sin;
+                        }
+                    } else if clockwise {
+                        sin = -sin;
+                    } else {
+                        cos = -cos;
+                    }
+                } else if *slope > T::zero() {
+                    if clockwise {
+                        cos = -cos;
+                        sin = -sin;
+                    }
+                } else if clockwise {
+                    sin = -sin;
+                } else {
+                    cos = -cos;
                 }
             } else {
-                //pprev.x() <= p.x()
-                if *slope < T::zero() {
+                //pprev.x() >= p.x()
+                cos = -cos;
+                if *slope > T::zero() {
                     sin = -sin;
                 }
             }
-        } else {
-            //pnext.x() <= p.x()
-            if pnext.x() < p.x() {
-                if pprev.x() < p.x() {
-                    if pprev.y() >= p.y() && pnext.y() >= p.y() {
-                        if *slope > T::zero() {
-                            if clockwise {
-                                cos = -cos;
-                                sin = -sin;
-                            }
-                        } else {
-                            slprev = (p.y() - pprev.y()) / (p.x() - pprev.x());
-                            slnext = (p.y() - pnext.y()) / (p.x() - pnext.x());
-                            if clockwise {
-                                if *slope <= slprev {
-                                    sin = -sin;
-                                } else {
-                                    cos = -cos;
-                                }
-                            } else {
-                                if *slope <= slnext {
-                                    cos = -cos;
-                                } else {
-                                    sin = -sin;
-                                }
-                            }
-                        }
-                    } else {
-                        if pprev.y() <= p.y() && pnext.y() <= p.y() {
-                            if *slope > T::zero() {
-                                slnext = (p.y() - pnext.y()) / (p.x() - pnext.x());
-                                if clockwise && *slope >= slnext || !clockwise && *slope >= slnext {
-                                    cos = -cos;
-                                    sin = -sin;
-                                }
-                            } else {
-                                if clockwise {
-                                    sin = -sin;
-                                } else {
-                                    cos = -cos;
-                                }
-                            }
-                        } else {
-                            if *slope > T::zero() {
-                                if clockwise {
-                                    cos = -cos;
-                                    sin = -sin;
-                                }
-                            } else {
-                                if clockwise {
-                                    sin = -sin;
-                                } else {
-                                    cos = -cos;
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    //pprev.x() >= p.x()
-                    cos = -cos;
-                    if *slope > T::zero() {
-                        sin = -sin;
-                    }
-                }
-            } else {
-                //pnext.x() = p.x()
-                if pprev.x() > p.x() {
-                    cos = -cos;
-                    if *slope > T::zero() {
-                        sin = -sin;
-                    }
-                } else {
-                    //pprev.x() < p.x() (can't be equal)
-                    if *slope < T::zero() {
-                        sin = -sin;
-                    }
-                }
+        } else if pprev.x() > p.x() {
+            cos = -cos;
+            if *slope > T::zero() {
+                sin = -sin;
             }
+        } else if *slope < T::zero() {
+            sin = -sin;
         }
     } else {
         //slope is 0
@@ -251,7 +218,7 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
         }
     }
     Point::new(p.x() + T::from(100).unwrap() * cos,
-                         p.y() + T::from(100).unwrap() * sin)
+               p.y() + T::from(100).unwrap() * sin)
 }
 
 // Perpendicular unit vector of a vertex and a unit vector
@@ -311,12 +278,11 @@ fn unitpvector<T>(p: &Point<T>, u: &Point<T>) -> Point<T>
         } else if slope > T::zero() {
             cos = -cos;
         }
-        let res = Point::new(p.x() + hundred * cos, p.y() + hundred * sin);
-        res
+        Point::new(p.x() + hundred * cos, p.y() + hundred * sin)
     }
 }
 
-// Angle between a vertex and an edge 
+// Angle between a vertex and an edge
 fn vertexlineangle<T>(poly: &Polygon<T>, p: &Point<T>, m: &mut T, vert: bool, idx: &usize) -> T
     where T: Float + FloatConst + Debug
 {
