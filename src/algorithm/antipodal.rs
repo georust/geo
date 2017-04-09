@@ -16,7 +16,7 @@ struct Polydist<'a, T>
     poly1: &'a Polygon<T>,
     poly2: &'a Polygon<T>,
     dist: T,
-    pid: i32,
+    pid: i8,
     main: Option<Point<T>>,
     ymin1: Point<T>,
     p1_idx: usize,
@@ -31,7 +31,7 @@ struct Polydist<'a, T>
     q1prev: Point<T>,
     p2prev: Point<T>,
     q2prev: Point<T>,
-    iid: i32,
+    iid: i8,
     ap1: T,
     aq2: T,
     start: Option<bool>,
@@ -264,7 +264,7 @@ fn unitpvector<T>(p: &Point<T>, u: &Point<T>) -> Point<T>
         }
         Point::new(upx, upy)
     } else {
-        // not special case
+        // Not a special case
         sperp = -T::one() / slope;
         let tansq = sperp * sperp;
         let cossq = T::one() / (T::one() + tansq);
