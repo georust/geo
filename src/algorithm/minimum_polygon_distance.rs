@@ -577,7 +577,7 @@ fn computemin<T>(state: &mut Polydist<T>)
             // both lines of support coincide with edges, but they don't overlap
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
-                // New minimum distance is between p1 and q2 
+                // New minimum distance is between p1 and q2
                 state.dist = newdist;
             }
             newdist = state.p1.distance(&state.q2prev);
