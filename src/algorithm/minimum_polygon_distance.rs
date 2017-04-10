@@ -31,7 +31,7 @@ struct Polydist<'a, T>
     q1prev: Point<T>,
     p2prev: Point<T>,
     q2prev: Point<T>,
-    iid: i8,
+    alignment: i8,
     ap1: T,
     aq2: T,
     start: Option<bool>,
@@ -423,7 +423,7 @@ fn nextpoints<T>(state: &mut Polydist<T>)
     where T: Float + FloatConst + Debug
 {
     // always reset IID
-    state.iid = 0;
+    state.alignment = 0;
     state.main = None;
     state.pid = 0;
     state.ip1 = false;
@@ -450,7 +450,7 @@ fn nextpoints<T>(state: &mut Polydist<T>)
         state.p1_idx = p1next;
         state.main = Some(state.p1next);
         state.pid = 1;
-        state.iid += 1;
+        state.alignment += 1;
     }
     if (state.aq2 - minangle).abs() < T::from(0.002).unwrap() {
         state.iq2 = true;
@@ -461,7 +461,7 @@ fn nextpoints<T>(state: &mut Polydist<T>)
             state.main = Some(state.q2next);
             state.pid = 2;
         }
-        state.iid += 2;
+        state.alignment += 2;
     }
     if state.ip1 {
         if state.p1.x() == state.p1next.x() {
@@ -503,7 +503,7 @@ fn nextpoints<T>(state: &mut Polydist<T>)
 }
 
 // compute the minimum distance between entities (edges or vertices)
-// three variations for the locations of lines of support are possible (iid 1, 2, or 3):
+// three variations for the locations of lines of support are possible (alignment 1, 2, or 3):
 // - aligned with one vertex and one edge
 // - aligned with two edges, which overlap
 // - aligned with two edges, which don't overlap
@@ -514,7 +514,7 @@ fn computemin<T>(state: &mut Polydist<T>)
     let u;
     let u1;
     let u2;
-    match state.iid {
+    match state.alignment {
         1 => {
             // one line of support coincides with a vertex, the other with an edge
             newdist = state.p1.distance(&state.q2);
@@ -656,7 +656,7 @@ fn min_poly_dist<T>(poly1: &mut Polygon<T>, poly2: &mut Polygon<T>) -> T
         q1prev: Point::new(T::zero(), T::zero()),
         p2prev: Point::new(T::zero(), T::zero()),
         q2prev: Point::new(T::zero(), T::zero()),
-        iid: 0,
+        alignment: 0,
         ap1: T::zero(),
         aq2: T::zero(),
         start: None,
