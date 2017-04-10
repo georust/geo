@@ -78,15 +78,20 @@ impl<T> Point<T>
 fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Point<T>
     where T: Float + Debug
 {
-    let clockwise = true;
     let tansq = *slope * *slope;
     let cossq = T::one() / (T::one() + tansq);
     let sinsq = T::one() - cossq;
-    // maybe need to be float
+    // may need to be float
     let mut cos = T::zero();
     let mut sin;
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
     let pprev = poly.exterior.0[poly.previous_vertex(idx)];
+    let mut clockwise;
+    if cross_prod(&pprev, p, &pnext) < T::zero() {
+        clockwise = true;
+    } else {
+        clockwise = false;
+    }
     let slprev;
     let slnext;
     // Slope isn't 0, things are complicated
@@ -290,7 +295,12 @@ fn vertexlineangle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vert: bool, idx: &
     let pprev = poly.exterior.0[poly.previous_vertex(idx)];
     let mut slope = T::zero();
     let mut vertical = vert;
-    let clockwise = true;
+    let mut clockwise;
+    if cross_prod(&pprev, p, &pnext) < T::zero() {
+        clockwise = true;
+    } else {
+        clockwise = false;
+    }
     let punit;
     if !vertical {
         slope = *m;
@@ -385,6 +395,13 @@ fn triangle_area<T>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> T
     (T::from(0.5).unwrap() *
      (a.x() * b.y() - a.y() * b.x() + a.y() * c.x() - a.x() * c.y() + b.x() * c.y() -
       c.x() * b.y()))
+}
+
+// positive implies counter-clockwise, negative implies clockwise
+pub fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
+    where T: Float
+{
+    (p_b.x() - p_a.x()) * (p_c.y() - p_a.y()) - (p_b.y() - p_a.y()) * (p_c.x() - p_a.x())
 }
 
 // I mean sure
@@ -604,8 +621,8 @@ fn min_poly_dist<T>(poly1: &mut Polygon<T>, poly2: &mut Polygon<T>) -> T
     where T: Float + FloatConst + Debug
 {
     // convex hulls are always anti-clockwise.
-    poly1.exterior.0.reverse();
-    poly2.exterior.0.reverse();
+    // poly1.exterior.0.reverse();
+    // poly2.exterior.0.reverse();
     // get poly1 ymin
     let ymin1 = Point::new(T::from(112.0).unwrap(), T::from(202.0).unwrap());
     // get poly2 ymax
@@ -619,9 +636,9 @@ fn min_poly_dist<T>(poly1: &mut Polygon<T>, poly2: &mut Polygon<T>) -> T
         ymin1: ymin1,
         ymax2: ymax2,
         // initial polygon 1 min y idx
-        p1_idx: 7 as usize,
+        p1_idx: 1 as usize,
         // initial polygon 2 max y idx
-        q2_idx: 2 as usize,
+        q2_idx: 5 as usize,
         p1: ymin1,
         q2: ymax2,
         p1next: Point::new(T::zero(), T::zero()),
