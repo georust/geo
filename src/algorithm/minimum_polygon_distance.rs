@@ -519,6 +519,7 @@ fn computemin<T>(state: &mut Polydist<T>)
             // one line of support coincides with a vertex, the other with an edge
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
+                // New minimum distance is between p1 and q2
                 state.dist = newdist;
             }
             if !state.vertical {
@@ -538,6 +539,7 @@ fn computemin<T>(state: &mut Polydist<T>)
             if line_1 != line_2 && line_1 != -1 && line_2 != -1 {
                 newdist = state.q2.vertex_line_distance(&state.p1prev, &state.p1);
                 if newdist <= state.dist {
+                    // New minimum distance is between edge (p1prev, p1) and q2
                     state.dist = newdist;
                 }
             }
@@ -546,6 +548,7 @@ fn computemin<T>(state: &mut Polydist<T>)
             // both lines of support coincide with edges, and the edges overlap
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
+                // New minimum distance is between p1 and q2
                 state.dist = newdist;
             }
             if !state.vertical {
@@ -565,6 +568,7 @@ fn computemin<T>(state: &mut Polydist<T>)
             if line_1 != line_2 && line_1 != -1 && line_2 != -1 {
                 newdist = state.p1.vertex_line_distance(&state.q2prev, &state.q2);
                 if newdist <= state.dist {
+                    // New minimum distance is between edge (q2prev, q2) and p1
                     state.dist = newdist;
                 }
             }
@@ -573,14 +577,17 @@ fn computemin<T>(state: &mut Polydist<T>)
             // both lines of support coincide with edges, but they don't overlap
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
+                // New minimum distance is between p1 and q2 
                 state.dist = newdist;
             }
             newdist = state.p1.distance(&state.q2prev);
             if newdist <= state.dist {
+                // New minimum distance is between p1 and q2prev
                 state.dist = newdist;
             }
             newdist = state.p1prev.distance(&state.q2);
             if newdist <= state.dist {
+                // New minimum distance is between p1prev and q2
                 state.dist = newdist;
             }
             if !state.vertical {
@@ -609,6 +616,7 @@ fn computemin<T>(state: &mut Polydist<T>)
                line_2a != line_2b && line_2a != -1 && line_2b != -2 {
                 newdist = state.p1.vertex_line_distance(&state.q2prev, &state.q2);
                 if newdist <= state.dist {
+                    // New minimum distance is between edge (p1prev, p1) and q2prev
                     state.dist = newdist;
                 }
             }
