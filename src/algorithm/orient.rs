@@ -24,17 +24,17 @@ pub trait Orient<T> {
     /// let oriented_int = vec![(1.0, 0.5), (0.5, 1.0), (1.0, 1.5), (1.5, 1.0), (1.0, 0.5)];
     /// let oriented_int_ls = LineString(oriented_int.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>());
     /// // build corrected Polygon
-    /// let oriented = poly.orient(&Direction::Default);
+    /// let oriented = poly.orient(Direction::Default);
     /// assert_eq!(oriented.exterior.0, oriented_ext_ls.0);
     /// assert_eq!(oriented.interiors[0].0, oriented_int_ls.0);
     /// ```
-    fn orient(&self, orientation: &Direction) -> Self;
+    fn orient(&self, orientation: Direction) -> Self;
 }
 
 impl<T> Orient<T> for Polygon<T>
     where T: Float
 {
-    fn orient(&self, direction: &Direction) -> Polygon<T> {
+    fn orient(&self, direction: Direction) -> Polygon<T> {
         orient(self, direction)
     }
 }
@@ -42,7 +42,7 @@ impl<T> Orient<T> for Polygon<T>
 impl<T> Orient<T> for MultiPolygon<T>
     where T: Float
 {
-    fn orient(&self, direction: &Direction) -> MultiPolygon<T> {
+    fn orient(&self, direction: Direction) -> MultiPolygon<T> {
         MultiPolygon(self.0
                          .iter()
                          .map(|poly| poly.orient(direction))
@@ -53,9 +53,11 @@ impl<T> Orient<T> for MultiPolygon<T>
 /// By default, a properly-oriented Polygon has its outer ring oriented counter-clockwise,
 /// and its inner ring(s) oriented clockwise. Selecting `Reversed` will result in a Polygon
 /// with a clockwise-oriented exterior ring, and counter-clockwise interior ring(s)
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum Direction {
+    /// exterior ring is oriented counter-clockwise, interior rings are oriented clockwise
     Default,
+    /// exterior ring is oriented clockwise, interior rings are oriented counter-clockwise
     Reversed,
 }
 
@@ -76,10 +78,10 @@ fn signed_ring_area<T>(linestring: &LineString<T>) -> T
 // orient a Polygon according to convention
 // by default, the exterior ring will be oriented ccw
 // and the interior ring(s) will be oriented clockwise
-fn orient<T>(poly: &Polygon<T>, direction: &Direction) -> Polygon<T>
+fn orient<T>(poly: &Polygon<T>, direction: Direction) -> Polygon<T>
     where T: Float
 {
-    let sign = match *direction {
+    let sign = match direction {
         Direction::Default => T::one(),
         Direction::Reversed => -T::one(),
     };
@@ -132,7 +134,7 @@ mod test {
                                              .map(|e| Point::new(e.0, e.1))
                                              .collect::<Vec<_>>());
         // build corrected Polygon
-        let oriented = orient(&poly1, &Direction::Default);
+        let oriented = orient(&poly1, Direction::Default);
         assert_eq!(oriented.exterior.0, oriented_ext_ls.0);
         assert_eq!(oriented.interiors[0].0, oriented_int_ls.0);
     }
