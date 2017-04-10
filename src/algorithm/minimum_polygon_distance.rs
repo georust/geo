@@ -86,7 +86,7 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
     let mut sin;
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
     let pprev = poly.exterior.0[poly.previous_vertex(idx)];
-    let mut clockwise;
+    let clockwise;
     if cross_prod(&pprev, p, &pnext) < T::zero() {
         clockwise = true;
     } else {
@@ -295,7 +295,7 @@ fn vertexlineangle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vert: bool, idx: &
     let pprev = poly.exterior.0[poly.previous_vertex(idx)];
     let mut slope = T::zero();
     let mut vertical = vert;
-    let mut clockwise;
+    let clockwise;
     if cross_prod(&pprev, p, &pnext) < T::zero() {
         clockwise = true;
     } else {
