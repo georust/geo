@@ -1,6 +1,7 @@
 use num_traits::Float;
 use types::{Point, LineString, Polygon};
 use algorithm::convexhull::ConvexHull;
+use algorithm::orient::{Orient, Direction};
 use types::Extremes;
 
 // Useful direction vectors:
@@ -41,32 +42,37 @@ fn find_extremes<T, F>(func: F, polygon: &Polygon<T>, convex: bool, oriented: bo
     where T: Float,
           F: Fn(&Point<T>, &Polygon<T>) -> Result<usize, ()>
 {
-    // TODO: we can't use this until Orient lands
-    // let mut processed = false;
-    // if !convex {
-    //     let mut poly = polygon.convex_hull();
-    //     let processed = true;
-    // }
-    // if !oriented && processed {
-    //    poly = poly.orient()
-    // } else if !oriented && !processed {
-    //     poly = polygon.orient();
-    // } else {
-    //    poly = polygon;
-    // }
     let directions = vec![Point::new(T::zero(), -T::one()),
                           Point::new(T::one(), T::zero()),
                           Point::new(T::zero(), T::one()),
                           Point::new(-T::one(), T::zero())];
-    directions
-        .iter()
-        .map(|p| func(&p, &polygon).unwrap())
-        .collect::<Vec<usize>>()
-        .into()
+    match (convex, oriented) {
+        (false, _) => {
+            directions
+                .iter()
+                .map(|p| func(&p, &polygon.convex_hull()).unwrap())
+                .collect::<Vec<usize>>()
+                .into()
+        }
+        (true, false) => {
+            directions
+                .iter()
+                .map(|p| func(&p, &polygon.orient(Direction::Default)).unwrap())
+                .collect::<Vec<usize>>()
+                .into()
+        }
+        _ => {
+            directions
+                .iter()
+                .map(|p| func(&p, &polygon).unwrap())
+                .collect::<Vec<usize>>()
+                .into()
+        }
+    }
 }
 
 // find a convex, counter-clockwise oriented polygon's maximum vertex in a specified direction
-// u: a direction vector. We're using a point to represent this, which is a hack tbh
+// u: a direction vector. We're using a point to represent this, which is a hack but works fine
 // this is O(n), because polymax() can't yet calculate minimum x
 fn polymax_naive<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()>
     where T: Float
@@ -139,15 +145,42 @@ mod test {
     }
     #[test]
     fn test_polygon_extreme_wrapper() {
-        // a diamond shape with a bump on the top-right edge
-        let points_raw =
-            vec![(1.0, 0.0), (2.0, 1.0), (1.75, 1.75), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
+        // non-convex, with a bump on the top-right edge
+        let points_raw = vec![(1.0, 0.0),
+                              (1.3, 1.),
+                              (2.0, 1.0),
+                              (1.75, 1.75),
+                              (1.0, 2.0),
+                              (0.0, 1.0),
+                              (1.0, 0.0)];
         let points = points_raw
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString(points), vec![]);
-        let extremes = find_extremes(polymax_naive, &poly1, true, true);
+        let extremes = find_extremes(polymax_naive, &poly1, false, false);
+        let correct = Extremes {
+            ymin: 0,
+            xmax: 1,
+            ymax: 3,
+            xmin: 4,
+        };
+        assert_eq!(extremes, correct);
+    }
+    #[test]
+    fn test_polygon_extreme_wrapper_convex() {
+        // convex, with a bump on the top-right edge
+        let mut points_raw =
+            vec![(1.0, 0.0), (2.0, 1.0), (1.75, 1.75), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
+        // orient the vector clockwise
+        points_raw.reverse();
+        let points = points_raw
+            .iter()
+            .map(|e| Point::new(e.0, e.1))
+            .collect::<Vec<_>>();
+        let poly1 = Polygon::new(LineString(points), vec![]);
+        // specify convexity, wrong orientation
+        let extremes = find_extremes(polymax_naive, &poly1, true, false);
         let correct = Extremes {
             ymin: 0,
             xmax: 1,
