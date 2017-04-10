@@ -1,5 +1,5 @@
 use num_traits::Float;
-use types::{Point, LineString, Polygon};
+use types::{Point, LineString, Polygon, MultiPoint, MultiPolygon};
 use algorithm::convexhull::ConvexHull;
 use algorithm::orient::{Orient, Direction};
 use types::Extremes;
@@ -73,7 +73,7 @@ fn find_extremes<T, F>(func: F, polygon: &Polygon<T>, convex: bool, oriented: bo
 
 // find a convex, counter-clockwise oriented polygon's maximum vertex in a specified direction
 // u: a direction vector. We're using a point to represent this, which is a hack but works fine
-// this is O(n), because polymax() can't yet calculate minimum x
+// this is O(n) if the polygon is convex. 
 fn polymax_naive<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()>
     where T: Float
 {
@@ -123,6 +123,24 @@ impl<T> ExtremePoints<T> for Polygon<T>
 {
     fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes {
         find_extremes(polymax_naive, self, convex, oriented)
+    }
+}
+
+impl<T> ExtremePoints<T> for MultiPolygon<T>
+    where T: Float
+{
+    fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes {
+        // we can disregard the input because convex-hull processing always orients
+        find_extremes(polymax_naive, &self.convex_hull(), true, true)
+    }
+}
+
+impl<T> ExtremePoints<T> for MultiPoint<T>
+    where T: Float
+{
+    fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes {
+        // we can disregard the input because convex-hull processing always orients
+        find_extremes(polymax_naive, &self.convex_hull(), true, true)
     }
 }
 
