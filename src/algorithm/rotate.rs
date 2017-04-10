@@ -115,12 +115,15 @@ impl<T> Rotate<T> for Polygon<T>
 {
     /// Rotate the Polygon about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
-        Polygon::new(LineString(rotation_matrix(angle,
-                                                &self.centroid().unwrap(),
-                                                &self.exterior.0)),
+        // if a polygon has holes, use the centroid of its outer shell as the rotation origin
+        let centroid = match self.interiors.is_empty() {
+            false => self.exterior.centroid().unwrap(),
+            true => self.centroid().unwrap(),
+        };
+        Polygon::new(LineString(rotation_matrix(angle, &centroid, &self.exterior.0)),
                      self.interiors
                          .iter()
-                         .map(|ring| ring.rotate(angle))
+                         .map(|ring| LineString(rotation_matrix(angle, &centroid, &ring.0)))
                          .collect())
     }
 }
@@ -216,23 +219,28 @@ mod test {
 
         let poly1 = Polygon::new(ls1, vec![ls2, ls3]);
         let rotated = poly1.rotate(-15.0);
-        let correct_outside = vec![(4.6288085192016855, 1.1805207831176578),
-                                   (3.921701738015137, 2.405265654509247),
-                                   (4.180520783117659, 3.3711914807983154),
-                                   (5.405265654509247, 4.0782982619848624),
-                                   (6.371191480798316, 3.819479216882342),
+        let correct_outside = vec![(4.628808519201685, 1.180520783117658),
+                                   (3.921701738015137, 2.4052656545092472),
+                                   (4.180520783117657, 3.3711914807983154),
+                                   (5.405265654509247, 4.078298261984863),
+                                   (6.371191480798315, 3.8194792168823426),
                                    (7.0782982619848624, 2.594734345490753),
-                                   (6.819479216882343, 1.6288085192016848),
-                                   (5.594734345490753, 0.9217017380151372),
-                                   (4.6288085192016855, 1.1805207831176578)];
-
-        let correct = Polygon::new(LineString(correct_outside
-                                                  .iter()
-                                                  .map(|e| Point::new(e.0, e.1))
-                                                  .collect::<Vec<_>>()),
-                                   vec![]);
-        // results agree with Shapely / GEOS
-        assert_eq!(rotated, correct);
+                                   (6.819479216882343, 1.628808519201685),
+                                   (5.594734345490753, 0.9217017380151373),
+                                   (4.628808519201685, 1.180520783117658)]
+                .iter()
+                .map(|e| Point::new(e.0, e.1))
+                .collect::<Vec<_>>();
+        let correct_inside = vec![(4.706454232732441, 1.4702985310043786),
+                                  (5.37059047744874, 2.017037086855466),
+                                  (5.672380059021509, 1.2114794859018578),
+                                  (4.706454232732441, 1.4702985310043786)]
+                .iter()
+                .map(|e| Point::new(e.0, e.1))
+                .collect::<Vec<_>>();
+        // println!("INSIDE {:?}", rotated.interiors[0].0);
+        assert_eq!(rotated.exterior.0, correct_outside);
+        assert_eq!(rotated.interiors[0].0, correct_inside);
     }
     #[test]
     fn test_rotate_point_arbitrary() {
