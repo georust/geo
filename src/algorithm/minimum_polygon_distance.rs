@@ -502,11 +502,11 @@ fn nextpoints<T>(state: &mut Polydist<T>)
     }
 }
 
-// compute the minimum distance between entities
-// three variations are possible (iid 1, 2, or 3):
-// - vertex-edge-distance
-// - edge-edge distance, overlapping edges
-// - edge-edge distance, non-overlapping edges
+// compute the minimum distance between entities (edges or vertices)
+// three variations for the locations of lines of support are possible (iid 1, 2, or 3):
+// - aligned with one vertex and one edge
+// - aligned with two edges, which overlap
+// - aligned with two edges, which don't overlap
 fn computemin<T>(state: &mut Polydist<T>)
     where T: Float + Debug
 {
