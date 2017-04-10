@@ -20,7 +20,7 @@ pub mod simplify;
 pub mod simplifyvw;
 /// Calculates the convex hull of a geometry.
 pub mod convexhull;
-/// Orients a Polygon's exterior and interior rings
+/// Orients a Polygon's exterior and interior rings.
 pub mod orient;
-/// calculate Polygon extremes
+/// Returns the extreme indices of a `Polygon`, `MultiPolygon`, or `MultiPoint`. 
 pub mod extremes;

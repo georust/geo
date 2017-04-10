@@ -25,8 +25,6 @@ pub struct Bbox<T>
     pub ymax: T,
 }
 
-/// Returns the extreme vertex indices (minimum `y`, maximum `x`, maximum `y`, minimum `x`)
-/// of a `Polygon` or `MultiPolygon`.
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Extremes {
     pub ymin: usize,
