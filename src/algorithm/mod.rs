@@ -28,3 +28,5 @@ pub mod orient;
 pub mod extremes;
 /// Rotates a geometry around either its centroid or a point by an angle, given in degrees.
 pub mod rotate;
+/// Translates a geometry along the given offsets.
+pub mod translate;
