@@ -468,7 +468,7 @@ fn nextpoints<T>(state: &mut Polydist<T>)
     }
     if state.ip1 {
         if state.p1.x() == state.p1next.x() {
-            // Vertical case
+            // The P line of support is vertical
             state.vertical = true;
             // 0 is a placeholder value
             state.slope = T::zero();
@@ -482,7 +482,7 @@ fn nextpoints<T>(state: &mut Polydist<T>)
         }
     } else if state.iq2 {
         if state.q2.x() == state.q2next.x() {
-            // Vertical case
+            // The Q line of support is vertical
             state.vertical = true;
             state.slope = T::zero();
         } else {
