@@ -65,8 +65,8 @@ pub trait RotatePoint<T> {
     /// let rotated = linestring.rotate_point(-45.0, &Point::new(10.0, 0.0));
     /// let mut correct = Vec::new();
     /// correct.push(Point::new(2.9289321881345245, 7.071067811865475));
-    /// correct.push(Point::new(6.464466094067262, 3.5355339059327373));
-    /// correct.push(Point::new(10.0, 0.0));
+    /// correct.push(Point::new(10.0, 7.0710678118654755));
+    /// correct.push(Point::new(17.071067811865476, 7.0710678118654755));
     /// let correct_ls = LineString(correct);
     /// assert_eq!(rotated, correct_ls);
     /// ```
