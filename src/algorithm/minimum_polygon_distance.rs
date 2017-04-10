@@ -397,7 +397,7 @@ fn triangle_area<T>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> T
       c.x() * b.y()))
 }
 
-// positive implies counter-clockwise, negative implies clockwise
+// positive implies a -> b -> c is counter-clockwise, negative implies clockwise
 pub fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
     where T: Float
 {
