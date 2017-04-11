@@ -299,7 +299,7 @@ fn unitpvector<T>(p: &Point<T>, u: &Point<T>) -> Point<T>
 }
 
 // Angle between a vertex and an edge
-fn vertexlineangle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vertical: bool, idx: &usize) -> T
+fn vertex_line_angle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vertical: bool, idx: &usize) -> T
     where T: Float + FloatConst + Debug
 {
     let hundred = T::from(100).unwrap();
@@ -435,12 +435,12 @@ fn nextpoints<T>(state: &mut Polydist<T>)
     state.pid = 0;
     state.ip1 = false;
     state.iq2 = false;
-    state.ap1 = vertexlineangle(state.poly1,
+    state.ap1 = vertex_line_angle(state.poly1,
                                 &state.p1,
                                 &state.slope,
                                 state.vertical,
                                 &state.p1_idx);
-    state.aq2 = vertexlineangle(state.poly2,
+    state.aq2 = vertex_line_angle(state.poly2,
                                 &state.q2,
                                 &state.slope,
                                 state.vertical,
