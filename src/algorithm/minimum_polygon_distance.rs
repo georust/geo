@@ -89,7 +89,6 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
     let tansq = *slope * *slope;
     let cossq = T::one() / (T::one() + tansq);
     let sinsq = T::one() - cossq;
-    // may need to be float
     let mut cos = T::zero();
     let mut sin;
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
