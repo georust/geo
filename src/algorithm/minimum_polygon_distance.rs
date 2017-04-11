@@ -299,14 +299,12 @@ fn unitpvector<T>(p: &Point<T>, u: &Point<T>) -> Point<T>
 }
 
 // Angle between a vertex and an edge
-fn vertexlineangle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vert: bool, idx: &usize) -> T
+fn vertexlineangle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vertical: bool, idx: &usize) -> T
     where T: Float + FloatConst + Debug
 {
     let hundred = T::from(100).unwrap();
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
     let pprev = poly.exterior.0[poly.previous_vertex(idx)];
-    let mut slope = T::zero();
-    let mut vertical = vert;
     let clockwise;
     if cross_prod(&pprev, p, &pnext) < T::zero() {
         clockwise = true;
@@ -315,51 +313,48 @@ fn vertexlineangle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vert: bool, idx: &
     }
     let punit;
     if !vertical {
-        slope = *m;
+        punit = unitvector(m, poly, p, idx);
     } else {
-        vertical = true;
-    }
-    if !vertical {
-        punit = unitvector(&slope, poly, p, idx);
-        // this branch can set punit = None, which is a logic error at best
-        // triarea requires punit to have a value, but I don't think this pattern
-        // is irrefutable sooo I've fixed it for now with 0, 0
-        // which is still (almost certainly) wrong, but satisfies the compiler
-    } else if clockwise {
-        if p.x() > pprev.x() {
-            punit = Point::new(p.x(), p.y() - hundred);
-        } else if p.x() < pprev.x() {
-            punit = Point::new(p.x(), p.y() + hundred);
-        } else if p.x() == pprev.x() {
-            if p.y() > pprev.y() {
-                punit = Point::new(p.x(), p.y() + hundred);
-            } else if p.y() < pprev.y() {
-                punit = Point::new(p.x(), p.y() - hundred);
-            } else {
-                // punit = None;
-                punit = Point::new(T::zero(), T::zero());
+        match clockwise {
+            true => {
+                if p.x() > pprev.x() {
+                    punit = Point::new(p.x(), p.y() - hundred);
+                } else if p.x() == pprev.x() {
+                    if p.y() > pprev.y() {
+                        punit = Point::new(p.x(), p.y() + hundred);
+                    } else if p.y() < pprev.y() {
+                        punit = Point::new(p.x(), p.y() - hundred);
+                    } else {
+                        // implies that the x values are equal, and the y values are equal
+                        // this is impossible, but we can't use a match statement because
+                        // Float doesn't implement cmp
+                        panic!("Polygon is clockwise, and both x and y values are equal.");
+                    }
+                } else {
+                    // implies p.x() < pprev.x()
+                    punit = Point::new(p.x(), p.y() + hundred);
+                }
             }
-        } else {
-            // punit = None;
-            punit = Point::new(T::zero(), T::zero());
+            false => {
+                if p.x() > pprev.x() {
+                    punit = Point::new(p.x(), p.y() + hundred);
+                } else if p.x() == pprev.x() {
+                    if p.y() > pprev.y() {
+                        punit = Point::new(p.x(), p.y() + hundred);
+                    } else if p.y() < pprev.y() {
+                        punit = Point::new(p.x(), p.y() - hundred);
+                    } else {
+                        // implies that the x values are equal, and the y values are equal
+                        // this is impossible, but we can't use a match statement because
+                        // Float doesn't implement cmp
+                        panic!("Polygon is counter-clockwise, and both x and y values are equal.");
+                    }
+                } else {
+                    // implies p.x() < pprev.x()
+                    punit = Point::new(p.x(), p.y() - hundred);
+                }
+            }
         }
-        // so like, not clockwise
-    } else if p.x() > pprev.x() {
-        punit = Point::new(p.x(), p.y() + hundred);
-    } else if p.x() < pprev.x() {
-        punit = Point::new(p.x(), p.y() - hundred);
-    } else if p.x() == pprev.x() {
-        if p.y() > pprev.y() {
-            punit = Point::new(p.x(), p.y() + hundred);
-        } else if p.y() < pprev.y() {
-            punit = Point::new(p.x(), p.y() - hundred);
-        } else {
-            // punit = None;
-            punit = Point::new(T::zero(), T::zero());
-        }
-    } else {
-        // punit = None;
-        punit = Point::new(T::zero(), T::zero());
     }
     let triarea = triangle_area(p, &punit, &pnext);
     let edgelen = p.distance(&pnext);
