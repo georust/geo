@@ -315,13 +315,12 @@ fn vertex_line_angle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vertical: bool, 
                 } else if p.x() == pprev.x() {
                     if p.y() > pprev.y() {
                         punit = Point::new(p.x(), p.y() + hundred);
-                    } else if p.y() < pprev.y() {
-                        punit = Point::new(p.x(), p.y() - hundred);
                     } else {
-                        // implies that the x values are equal, and the y values are equal
-                        // this is impossible, but we can't use a match statement because
-                        // Float doesn't implement cmp
-                        unreachable!();
+                        // implies p.y() < pprev.y()
+                        // it's safe not to explicitly cover p.y() == pprev.y() because that
+                        // implies that the x values are equal, and the y values are equal,
+                        // and this is impossible
+                        punit = Point::new(p.x(), p.y() - hundred);
                     }
                 } else {
                     // implies p.x() < pprev.x()
@@ -334,13 +333,12 @@ fn vertex_line_angle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vertical: bool, 
                 } else if p.x() == pprev.x() {
                     if p.y() > pprev.y() {
                         punit = Point::new(p.x(), p.y() + hundred);
-                    } else if p.y() < pprev.y() {
-                        punit = Point::new(p.x(), p.y() - hundred);
                     } else {
-                        // implies that the x values are equal, and the y values are equal
-                        // this is impossible, but we can't use a match statement because
-                        // Float doesn't implement cmp
-                        unreachable!();
+                        // implies p.y() < pprev.y()
+                        // it's safe not to explicitly cover p.y() == pprev.y() because that
+                        // implies that the x values are equal, and the y values are equal,
+                        // and this is impossible
+                        punit = Point::new(p.x(), p.y() - hundred);
                     }
                 } else {
                     // implies p.x() < pprev.x()
