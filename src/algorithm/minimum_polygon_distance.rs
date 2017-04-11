@@ -445,6 +445,8 @@ fn nextpoints<T>(state: &mut Polydist<T>)
     // iff ip is true, it's vertex-edge
     // iff iq2 is true, it's edge-edge, and the edges overlap
     // if ip1 and iq2 are both true, it's edge-edge, non-overlapping
+    // overlap is defined by the possibility of drawing an orthogonal line
+    // between the two edges at any points other than their vertices
     if (state.ap1 - minangle).abs() < T::from(0.002).unwrap() {
         state.ip1 = true;
         let p1next = state.poly1.next_vertex(&state.p1_idx);
