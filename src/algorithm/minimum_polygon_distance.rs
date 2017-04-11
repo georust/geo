@@ -16,8 +16,8 @@ enum Aligned {
 
 #[derive(Debug)]
 enum Overlap {
-    Overlapping,
-    NonOverlapping,
+    Yes,
+    No,
 }
 
 // distance-finding state
@@ -460,8 +460,8 @@ fn nextpoints<T>(state: &mut Polydist<T>)
         state.q2next = state.poly2.exterior.0[q2next];
         state.q2_idx = q2next;
         state.alignment = match state.alignment {
-            Some(_) => Some(Aligned::EdgeEdge(Overlap::Overlapping)),
-            None => Some(Aligned::EdgeEdge(Overlap::NonOverlapping)),
+            Some(_) => Some(Aligned::EdgeEdge(Overlap::Yes)),
+            None => Some(Aligned::EdgeEdge(Overlap::No)),
         }
     }
     if state.ip1 {
@@ -555,7 +555,7 @@ fn computemin<T>(state: &mut Polydist<T>)
                 }
             }
         }
-        Some(Aligned::EdgeEdge(Overlap::Overlapping)) => {
+        Some(Aligned::EdgeEdge(Overlap::Yes)) => {
             // both lines of support coincide with edges, and the edges overlap
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
@@ -584,7 +584,7 @@ fn computemin<T>(state: &mut Polydist<T>)
                 }
             }
         }
-        Some(Aligned::EdgeEdge(Overlap::NonOverlapping)) => {
+        Some(Aligned::EdgeEdge(Overlap::No)) => {
             // both lines of support coincide with edges, but they don't overlap
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
