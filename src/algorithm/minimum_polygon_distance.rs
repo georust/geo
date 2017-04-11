@@ -557,8 +557,6 @@ fn computemin<T>(state: &mut Polydist<T>)
             }
         }
         Some(Aligned::EdgeEdge(Overlap::Overlapping)) => {
-            println!("Overlap! {:?}",
-                     (state.p1, state.p1prev, state.q2, state.q2prev));
             // both lines of support coincide with edges, and the edges overlap
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
@@ -657,6 +655,7 @@ fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
         p1_idx: poly1_extremes.ymin,
         // initial polygon 2 max y idx
         q2_idx: poly2_extremes.ymax,
+        // set p1 and q2 to p1ymin and p2ymax initially
         p1: ymin1,
         q2: ymax2,
         p1next: Point::new(T::zero(), T::zero()),
