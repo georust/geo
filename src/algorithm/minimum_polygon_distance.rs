@@ -96,12 +96,11 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
     let mut sin;
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
     let pprev = poly.exterior.0[poly.previous_vertex(idx)];
-    let clockwise;
-    if cross_prod(&pprev, p, &pnext) < T::zero() {
-        clockwise = true;
+    let clockwise = if cross_prod(&pprev, p, &pnext) < T::zero() {
+        true
     } else {
-        clockwise = false;
-    }
+        false
+    };
     let slprev;
     let slnext;
     // Slope isn't 0, things are complicated
@@ -303,12 +302,11 @@ fn vertex_line_angle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vertical: bool, 
     let hundred = T::from(100).unwrap();
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
     let pprev = poly.exterior.0[poly.previous_vertex(idx)];
-    let clockwise;
-    if cross_prod(&pprev, p, &pnext) < T::zero() {
-        clockwise = true;
+    let clockwise = if cross_prod(&pprev, p, &pnext) < T::zero() {
+        true
     } else {
-        clockwise = false;
-    }
+        false
+    };
     let punit;
     if !vertical {
         punit = unitvector(m, poly, p, idx);
