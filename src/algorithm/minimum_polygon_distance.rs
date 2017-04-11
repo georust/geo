@@ -724,4 +724,12 @@ mod test {
         let dist = min_poly_dist(&mut poly1.convex_hull(), &mut poly2.convex_hull());
         assert_eq!(dist, 21.0);
     }
+    #[test]
+    fn test_vertex_line_distance() {
+        let p = Point::new(0., 0.);
+        let q = Point::new(3.8, 5.7);
+        let r = Point::new(22.5, 10.);
+        let dist = p.vertex_line_distance(&q, &r);
+        assert_eq!(dist, 6.850547423381579);
+    }
 }
