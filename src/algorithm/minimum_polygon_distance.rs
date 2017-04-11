@@ -28,8 +28,6 @@ struct Polydist<'a, T>
     poly1: &'a Polygon<T>,
     poly2: &'a Polygon<T>,
     dist: T,
-    pid: i8,
-    main: Option<Point<T>>,
     ymin1: Point<T>,
     p1_idx: usize,
     ymax2: Point<T>,
@@ -431,8 +429,6 @@ fn nextpoints<T>(state: &mut Polydist<T>)
 {
     // always reset IID
     state.alignment = None;
-    state.main = None;
-    state.pid = 0;
     state.ip1 = false;
     state.iq2 = false;
     state.ap1 = vertex_line_angle(state.poly1,
@@ -458,8 +454,6 @@ fn nextpoints<T>(state: &mut Polydist<T>)
         let p1next = state.poly1.next_vertex(&state.p1_idx);
         state.p1next = state.poly1.exterior.0[p1next];
         state.p1_idx = p1next;
-        state.main = Some(state.p1next);
-        state.pid = 1;
         state.alignment = Some(Aligned::VertexEdge);
     }
     if (state.aq2 - minangle).abs() < T::from(0.002).unwrap() {
@@ -467,10 +461,6 @@ fn nextpoints<T>(state: &mut Polydist<T>)
         let q2next = state.poly2.next_vertex(&state.q2_idx);
         state.q2next = state.poly2.exterior.0[q2next];
         state.q2_idx = q2next;
-        if state.main.is_none() {
-            state.main = Some(state.q2next);
-            state.pid = 2;
-        }
         state.alignment = match state.alignment {
             Some(_) => Some(Aligned::EdgeEdge(Overlap::Overlapping)),
             None => Some(Aligned::EdgeEdge(Overlap::NonOverlapping)),
@@ -654,8 +644,6 @@ fn min_poly_dist<T>(poly1: &mut Polygon<T>, poly2: &mut Polygon<T>) -> T
         poly1: poly1,
         poly2: poly2,
         dist: T::infinity(),
-        pid: 0,
-        main: None,
         ymin1: ymin1,
         ymax2: ymax2,
         // initial polygon 1 min y idx
