@@ -432,15 +432,15 @@ fn nextpoints<T>(state: &mut Polydist<T>)
     state.ip1 = false;
     state.iq2 = false;
     state.ap1 = vertex_line_angle(state.poly1,
-                                &state.p1,
-                                &state.slope,
-                                state.vertical,
-                                &state.p1_idx);
+                                  &state.p1,
+                                  &state.slope,
+                                  state.vertical,
+                                  &state.p1_idx);
     state.aq2 = vertex_line_angle(state.poly2,
-                                &state.q2,
-                                &state.slope,
-                                state.vertical,
-                                &state.q2_idx);
+                                  &state.q2,
+                                  &state.slope,
+                                  state.vertical,
+                                  &state.q2_idx);
     let minangle = state.ap1.min(state.aq2);
     state.p1prev = state.p1;
     state.p1next = state.p1prev;
@@ -467,30 +467,40 @@ fn nextpoints<T>(state: &mut Polydist<T>)
         }
     }
     if state.ip1 {
-        if state.p1.x() == state.p1next.x() {
+        match state.p1.x() == state.p1next.x() {
             // The P line of support is vertical
-            state.vertical = true;
-            // 0 is a placeholder value
-            state.slope = T::zero();
-        } else {
-            state.vertical = false;
-            if state.p1.x() > state.p1next.x() {
-                state.slope = (state.p1.y() - state.p1next.y()) / (state.p1.x() - state.p1next.x());
-            } else {
-                state.slope = (state.p1next.y() - state.p1.y()) / (state.p1next.x() - state.p1.x());
+            true => {
+                state.vertical = true;
+                state.slope = T::zero();
+            }
+            false => {
+                state.vertical = false;
+                if state.p1.x() > state.p1next.x() {
+                    state.slope = (state.p1.y() - state.p1next.y()) /
+                                  (state.p1.x() - state.p1next.x());
+                } else {
+                    state.slope = (state.p1next.y() - state.p1.y()) /
+                                  (state.p1next.x() - state.p1.x());
+                }
             }
         }
-    } else if state.iq2 {
-        if state.q2.x() == state.q2next.x() {
-            // The Q line of support is vertical
-            state.vertical = true;
-            state.slope = T::zero();
-        } else {
-            state.vertical = false;
-            if state.q2.x() > state.q2next.x() {
-                state.slope = (state.q2.y() - state.q2next.y()) / (state.q2.x() - state.q2next.x());
-            } else {
-                state.slope = (state.q2next.y() - state.q2.y()) / (state.q2next.x() - state.q2.x());
+    }
+    if state.iq2 {
+        match state.q2.x() == state.q2next.x() {
+            true => {
+                // The Q line of support is vertical
+                state.vertical = true;
+                state.slope = T::zero();
+            }
+            false => {
+                state.vertical = false;
+                if state.q2.x() > state.q2next.x() {
+                    state.slope = (state.q2.y() - state.q2next.y()) /
+                                  (state.q2.x() - state.q2next.x());
+                } else {
+                    state.slope = (state.q2next.y() - state.q2.y()) /
+                                  (state.q2next.x() - state.q2.x());
+                }
             }
         }
     }
