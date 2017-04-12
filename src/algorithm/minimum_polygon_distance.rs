@@ -98,8 +98,8 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
     } else {
         false
     };
-    let slprev;
-    let slnext;
+    let slope_prev;
+    let slope_next;
     // Slope isn't 0, things are complicated
     if *slope != T::zero() {
         cos = cossq.sqrt();
@@ -108,8 +108,8 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
             if pprev.x() > p.x() {
                 if pprev.y() >= p.y() && pnext.y() >= p.y() {
                     if *slope > T::zero() {
-                        slprev = (pprev.y() - p.y()) / (pprev.x() - p.x());
-                        if clockwise && *slope <= slprev || !clockwise && *slope >= slprev {
+                        slope_prev = (pprev.y() - p.y()) / (pprev.x() - p.x());
+                        if clockwise && *slope <= slope_prev || !clockwise && *slope >= slope_prev {
                             cos = -cos;
                             sin = -sin;
                         } else if clockwise {
@@ -125,15 +125,15 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
                             sin = -sin;
                         }
                     } else {
-                        slprev = (pprev.y() - p.y()) / (pprev.x() - p.x());
-                        slnext = (pnext.y() - p.y()) / (pnext.x() - p.x());
+                        slope_prev = (pprev.y() - p.y()) / (pprev.x() - p.x());
+                        slope_next = (pnext.y() - p.y()) / (pnext.x() - p.x());
                         if clockwise {
-                            if *slope <= slprev {
+                            if *slope <= slope_prev {
                                 cos = -cos;
                             } else {
                                 sin = -sin;
                             }
-                        } else if *slope <= slnext {
+                        } else if *slope <= slope_next {
                             sin = -sin;
                         } else {
                             cos = -cos;
@@ -161,15 +161,15 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
                             sin = -sin;
                         }
                     } else {
-                        slprev = (p.y() - pprev.y()) / (p.x() - pprev.x());
-                        slnext = (p.y() - pnext.y()) / (p.x() - pnext.x());
+                        slope_prev = (p.y() - pprev.y()) / (p.x() - pprev.x());
+                        slope_next = (p.y() - pnext.y()) / (p.x() - pnext.x());
                         if clockwise {
-                            if *slope <= slprev {
+                            if *slope <= slope_prev {
                                 sin = -sin;
                             } else {
                                 cos = -cos;
                             }
-                        } else if *slope <= slnext {
+                        } else if *slope <= slope_next {
                             cos = -cos;
                         } else {
                             sin = -sin;
@@ -177,8 +177,8 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
                     }
                 } else if pprev.y() <= p.y() && pnext.y() <= p.y() {
                     if *slope > T::zero() {
-                        slnext = (p.y() - pnext.y()) / (p.x() - pnext.x());
-                        if *slope >= slnext {
+                        slope_next = (p.y() - pnext.y()) / (p.x() - pnext.x());
+                        if *slope >= slope_next {
                             cos = -cos;
                             sin = -sin;
                         }
@@ -420,7 +420,6 @@ fn leftturn<T>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> i8
 fn nextpoints<T>(state: &mut Polydist<T>)
     where T: Float + FloatConst + Debug
 {
-    // always reset IID
     state.alignment = None;
     state.ip1 = false;
     state.iq2 = false;
@@ -633,9 +632,11 @@ fn computemin<T>(state: &mut Polydist<T>)
     }
 }
 
+// calculate the minimum distance between two disjoint convex polygons
 fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
     where T: Float + FloatConst + Debug
 {
+    // TODO: check for intersection and containment
     let poly1_extremes = poly1.extreme_points(true, true);
     let poly2_extremes = poly2.extreme_points(true, true);
     let ymin1 = poly1.exterior.0[poly1_extremes.ymin];
