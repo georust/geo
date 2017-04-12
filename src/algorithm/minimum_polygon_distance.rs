@@ -86,7 +86,7 @@ impl<T> Point<T>
 fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Point<T>
     where T: Float + Debug
 {
-    let tansq = *slope * *slope;
+    let tansq = slope.powi(2);
     let cossq = T::one() / (T::one() + tansq);
     let sinsq = T::one() - cossq;
     let mut cos = T::zero();
