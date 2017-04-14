@@ -109,19 +109,19 @@ pub trait ExtremePoints<T: Float> {
     /// let points = points_raw.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>();
     /// let poly = Polygon::new(LineString(points), vec![]);
     /// // Polygon is both convex and oriented counter-clockwise
-    /// let extremes = poly.extreme_points(true, true);
+    /// let extremes = poly.extreme_indices(true, true);
     /// assert_eq!(extremes.ymin, 0);
     /// assert_eq!(extremes.xmax, 1);
     /// assert_eq!(extremes.ymax, 2);
     /// assert_eq!(extremes.xmin, 3);
     /// ```
-    fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes;
+    fn extreme_indices(&self, convex: bool, oriented: bool) -> Extremes;
 }
 
 impl<T> ExtremePoints<T> for Polygon<T>
     where T: Float
 {
-    fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes {
+    fn extreme_indices(&self, convex: bool, oriented: bool) -> Extremes {
         find_extremes(polymax_naive, self, convex, oriented)
     }
 }
@@ -129,7 +129,7 @@ impl<T> ExtremePoints<T> for Polygon<T>
 impl<T> ExtremePoints<T> for MultiPolygon<T>
     where T: Float
 {
-    fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes {
+    fn extreme_indices(&self, convex: bool, oriented: bool) -> Extremes {
         // we can disregard the input because convex-hull processing always orients
         find_extremes(polymax_naive, &self.convex_hull(), true, true)
     }
@@ -138,7 +138,7 @@ impl<T> ExtremePoints<T> for MultiPolygon<T>
 impl<T> ExtremePoints<T> for MultiPoint<T>
     where T: Float
 {
-    fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes {
+    fn extreme_indices(&self, convex: bool, oriented: bool) -> Extremes {
         // we can disregard the input because convex-hull processing always orients
         find_extremes(polymax_naive, &self.convex_hull(), true, true)
     }
