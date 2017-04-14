@@ -88,7 +88,7 @@ fn polymax_naive<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()>
     return Ok(max);
 }
 
-pub trait ExtremePoints<T: Float> {
+pub trait ExtremeIndices<T: Float> {
     /// Find the extreme `x` and `y` indices of a Polygon
     ///
     /// The polygon must be convex and properly oriented; if you're unsure whether
@@ -103,7 +103,7 @@ pub trait ExtremePoints<T: Float> {
     ///
     /// ```
     /// use geo::{Point, LineString, Polygon};
-    /// use geo::extremes::ExtremePoints;
+    /// use geo::extremes::ExtremeIndices;
     /// // a diamond shape
     /// let points_raw = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
     /// let points = points_raw.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>();
@@ -118,7 +118,7 @@ pub trait ExtremePoints<T: Float> {
     fn extreme_indices(&self, convex: bool, oriented: bool) -> Extremes;
 }
 
-impl<T> ExtremePoints<T> for Polygon<T>
+impl<T> ExtremeIndices<T> for Polygon<T>
     where T: Float
 {
     fn extreme_indices(&self, convex: bool, oriented: bool) -> Extremes {
@@ -126,7 +126,7 @@ impl<T> ExtremePoints<T> for Polygon<T>
     }
 }
 
-impl<T> ExtremePoints<T> for MultiPolygon<T>
+impl<T> ExtremeIndices<T> for MultiPolygon<T>
     where T: Float
 {
     fn extreme_indices(&self, convex: bool, oriented: bool) -> Extremes {
@@ -135,7 +135,7 @@ impl<T> ExtremePoints<T> for MultiPolygon<T>
     }
 }
 
-impl<T> ExtremePoints<T> for MultiPoint<T>
+impl<T> ExtremeIndices<T> for MultiPoint<T>
     where T: Float
 {
     fn extreme_indices(&self, convex: bool, oriented: bool) -> Extremes {
