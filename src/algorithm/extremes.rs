@@ -73,7 +73,6 @@ fn find_extremes<T, F>(func: F, polygon: &Polygon<T>, convex: bool, oriented: bo
 
 // find a convex, counter-clockwise oriented polygon's maximum vertex in a specified direction
 // u: a direction vector. We're using a point to represent this, which is a hack but works fine
-// this is O(n) if the polygon is convex. 
 fn polymax_naive<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()>
     where T: Float
 {
