@@ -160,6 +160,14 @@ impl<T> Centroid<T> for Bbox<T>
     }
 }
 
+impl<T> Centroid<T> for Point<T>
+    where T: Float
+{
+    fn centroid(&self) -> Option<Point<T>> {
+        Some(Point::new(self.x(), self.y()))
+    }
+}
+
 #[cfg(test)]
 mod test {
     use types::{COORD_PRECISION, Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
