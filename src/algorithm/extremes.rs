@@ -38,7 +38,7 @@ fn below<T>(u: &Point<T>, vi: &Point<T>, vj: &Point<T>) -> bool
 }
 
 // wrapper for extreme-finding function
-fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>, convex: bool, oriented: bool) -> Extremes
+fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Extremes
     where T: Float,
           F: Fn(&Point<T>, &Polygon<T>) -> Result<usize, ()>
 {
@@ -46,29 +46,11 @@ fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>, convex: bool, orien
                           Point::new(T::one(), T::zero()),
                           Point::new(T::zero(), T::one()),
                           Point::new(-T::one(), T::zero())];
-    match (convex, oriented) {
-        (false, _) => {
-            directions
-                .iter()
-                .map(|p| func(&p, &polygon.convex_hull()).unwrap())
-                .collect::<Vec<usize>>()
-                .into()
-        }
-        (true, false) => {
-            directions
-                .iter()
-                .map(|p| func(&p, &polygon.orient(Direction::Default)).unwrap())
-                .collect::<Vec<usize>>()
-                .into()
-        }
-        _ => {
-            directions
-                .iter()
-                .map(|p| func(&p, &polygon).unwrap())
-                .collect::<Vec<usize>>()
-                .into()
-        }
-    }
+    directions
+        .iter()
+        .map(|p| func(&p, &polygon).unwrap())
+        .collect::<Vec<usize>>()
+        .into()
 }
 
 // find a convex, counter-clockwise oriented polygon's maximum vertex in a specified direction
@@ -88,17 +70,9 @@ fn polymax_naive_indices<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()
 }
 
 pub trait ExtremeIndices<T: Float> {
-    /// Find the extreme `x` and `y` indices of a Polygon
+    /// Find the extreme `x` and `y` indices of a convex Polygon
     ///
-    /// The polygon must be convex and properly oriented; if you're unsure whether
-    /// the polygon has these properties:
-    ///
-    /// - If you aren't sure whether the polygon is convex, choose `convex=false, oriented=false`
-    /// - If the polygon is convex but oriented clockwise, choose `convex=true, oriented=false`
-    ///
-    /// Convex-hull processing is `O(n log(n))` on average
-    /// and is thus an upper bound on point-finding, which is otherwise `O(n)` for a `Polygon`.
-    /// For a `MultiPolygon`, its convex hull must always be calculated first.
+    /// The polygon **must be convex and properly (ccw) oriented**.
     ///
     /// ```
     /// use geo::{Point, LineString, Polygon};
@@ -108,38 +82,36 @@ pub trait ExtremeIndices<T: Float> {
     /// let points = points_raw.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>();
     /// let poly = Polygon::new(LineString(points), vec![]);
     /// // Polygon is both convex and oriented counter-clockwise
-    /// let extremes = poly.extreme_indices(true, true);
+    /// let extremes = poly.extreme_indices();
     /// assert_eq!(extremes.ymin, 0);
     /// assert_eq!(extremes.xmax, 1);
     /// assert_eq!(extremes.ymax, 2);
     /// assert_eq!(extremes.xmin, 3);
     /// ```
-    fn extreme_indices(&self, convex: bool, oriented: bool) -> Extremes;
+    fn extreme_indices(&self) -> Extremes;
 }
 
 impl<T> ExtremeIndices<T> for Polygon<T>
     where T: Float
 {
-    fn extreme_indices(&self, convex: bool, oriented: bool) -> Extremes {
-        find_extreme_indices(polymax_naive_indices, self, convex, oriented)
+    fn extreme_indices(&self) -> Extremes {
+        find_extreme_indices(polymax_naive_indices, self)
     }
 }
 
 impl<T> ExtremeIndices<T> for MultiPolygon<T>
     where T: Float
 {
-    fn extreme_indices(&self, convex: bool, oriented: bool) -> Extremes {
-        // we can disregard the input because convex-hull processing always orients
-        find_extreme_indices(polymax_naive_indices, &self.convex_hull(), true, true)
+    fn extreme_indices(&self) -> Extremes {
+        find_extreme_indices(polymax_naive_indices, &self.convex_hull())
     }
 }
 
 impl<T> ExtremeIndices<T> for MultiPoint<T>
     where T: Float
 {
-    fn extreme_indices(&self, convex: bool, oriented: bool) -> Extremes {
-        // we can disregard the input because convex-hull processing always orients
-        find_extreme_indices(polymax_naive_indices, &self.convex_hull(), true, true)
+    fn extreme_indices(&self) -> Extremes {
+        find_extreme_indices(polymax_naive_indices, &self.convex_hull())
     }
 }
 
@@ -175,7 +147,7 @@ mod test {
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString(points), vec![]);
-        let extremes = find_extreme_indices(polymax_naive_indices, &poly1, false, false);
+        let extremes = find_extreme_indices(polymax_naive_indices, &poly1.convex_hull());
         let correct = Extremes {
             ymin: 0,
             xmax: 1,
@@ -189,15 +161,12 @@ mod test {
         // convex, with a bump on the top-right edge
         let mut points_raw =
             vec![(1.0, 0.0), (2.0, 1.0), (1.75, 1.75), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
-        // orient the vector clockwise
-        points_raw.reverse();
         let points = points_raw
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString(points), vec![]);
-        // specify convexity, wrong orientation
-        let extremes = find_extreme_indices(polymax_naive_indices, &poly1, true, false);
+        let extremes = find_extreme_indices(polymax_naive_indices, &poly1.convex_hull());
         let correct = Extremes {
             ymin: 0,
             xmax: 1,
