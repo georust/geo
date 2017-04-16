@@ -2,7 +2,7 @@ use num_traits::Float;
 use types::{Point, LineString, Polygon, MultiPoint, MultiPolygon};
 use algorithm::convexhull::ConvexHull;
 use algorithm::orient::{Orient, Direction};
-use types::Extremes;
+use types::{Extremes, ExtremePoint};
 
 // Useful direction vectors:
 // 1., 0. = largest x
@@ -42,6 +42,7 @@ fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Extremes
     where T: Float,
           F: Fn(&Point<T>, &Polygon<T>) -> Result<usize, ()>
 {
+    // TODO: test for non-convexity, and return a Result<Extremes, NonConvexError>
     let directions = vec![Point::new(T::zero(), -T::one()),
                           Point::new(T::one(), T::zero()),
                           Point::new(T::zero(), T::one()),
@@ -115,6 +116,44 @@ impl<T> ExtremeIndices<T> for MultiPoint<T>
     }
 }
 
+pub trait ExtremePoints<T: Float> {
+    /// Find the extreme `x` and `y` points of a Geometry
+    ///
+    /// This trait is available to any struct implementing both `ConvexHull` amd `ExtremeIndices`
+    ///
+    /// ```
+    /// use geo::{Point, LineString, Polygon};
+    /// use geo::extremes::ExtremePoints;
+    /// let points_raw = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
+    /// let points = points_raw
+    ///     .iter()
+    ///     .map(|e| Point::new(e.0, e.1))
+    ///     .collect::<Vec<_>>();
+    /// let poly1 = Polygon::new(LineString(points), vec![]);
+    /// let extremes = poly1.extreme_points();
+    /// let correct = Point::new(0.0, 1.0);
+    /// assert_eq!(extremes.xmin, correct);
+    /// ```
+    fn extreme_points(&self) -> ExtremePoint<T>;
+}
+
+impl<T, G> ExtremePoints<T> for G
+    where T: Float,
+          G: ConvexHull<T> + ExtremeIndices<T>
+{
+    // Any Geometry implementing `ConvexHull` and `ExtremeIndices` gets this automatically
+    fn extreme_points(&self) -> ExtremePoint<T> {
+        let ch = self.convex_hull();
+        let indices = ch.extreme_indices();
+        ExtremePoint {
+            ymin: ch.exterior.0[indices.ymin],
+            xmax: ch.exterior.0[indices.xmax],
+            ymax: ch.exterior.0[indices.ymax],
+            xmin: ch.exterior.0[indices.xmin],
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use types::Point;
@@ -174,5 +213,18 @@ mod test {
             xmin: 4,
         };
         assert_eq!(extremes, correct);
+    }
+    #[test]
+    fn test_polygon_extreme_point_x() {
+        // a diamond shape
+        let points_raw = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
+        let points = points_raw
+            .iter()
+            .map(|e| Point::new(e.0, e.1))
+            .collect::<Vec<_>>();
+        let poly1 = Polygon::new(LineString(points), vec![]);
+        let extremes = poly1.extreme_points();
+        let correct = Point::new(0.0, 1.0);
+        assert_eq!(extremes.xmin, correct);
     }
 }

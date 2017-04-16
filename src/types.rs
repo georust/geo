@@ -45,6 +45,16 @@ impl From<Vec<usize>> for Extremes {
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
+pub struct ExtremePoint<T>
+    where T: Float
+ {
+    pub ymin: Point<T>,
+    pub xmax: Point<T>,
+    pub ymax: Point<T>,
+    pub xmin: Point<T>,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
 impl<T> Point<T>
