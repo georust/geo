@@ -4,6 +4,7 @@ use num_traits::float::FloatConst;
 use algorithm::contains::Contains;
 use algorithm::extremes::ExtremeIndices;
 use algorithm::intersects::Intersects;
+use algorithm::convexhull::ConvexHull;
 use num_traits::pow::pow;
 
 /// Returns the distance between two geometries.
@@ -260,7 +261,11 @@ impl<T> Distance<T, Polygon<T>> for Polygon<T>
     where T: Float + FloatConst + Signed
 {
     fn distance(&self, poly2: &Polygon<T>) -> T {
-        min_poly_dist(self, poly2)
+        if self.intersects(poly2) {
+            return T::zero();
+        }
+        // TODO: check for containment
+        min_poly_dist(&self.convex_hull(), &poly2.convex_hull())
     }
 }
 
@@ -268,15 +273,10 @@ impl<T> Distance<T, Polygon<T>> for Polygon<T>
 fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
     where T: Float + FloatConst + Signed
 {
-    // TODO: check for containment
-    if poly1.intersects(poly2) {
-        return T::zero();
-    }
     let poly1_extremes = poly1.extreme_indices().unwrap();
     let poly2_extremes = poly2.extreme_indices().unwrap();
     let ymin1 = poly1.exterior.0[poly1_extremes.ymin];
     let ymax2 = poly2.exterior.0[poly2_extremes.ymax];
-
     // TODO: check whether the convex hulls intersect.
     // This means we'll have to use the Delaunay method from
     // http://www-cgrl.cs.mcgill.ca/~godfried/publications/mindist.pdf
