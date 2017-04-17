@@ -232,24 +232,6 @@ where
     }
 }
 
-impl<T> ExtremePoints<T> for MultiPolygon<T>
-    where T: Float
-{
-    fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes {
-        // we can disregard the input because convex-hull processing always orients
-        find_extremes(polymax_naive, &self.convex_hull(), true, true)
-    }
-}
-
-impl<T> ExtremePoints<T> for MultiPoint<T>
-    where T: Float
-{
-    fn extreme_points(&self, convex: bool, oriented: bool) -> Extremes {
-        // we can disregard the input because convex-hull processing always orients
-        find_extremes(polymax_naive, &self.convex_hull(), true, true)
-    }
-}
-
 #[cfg(test)]
 mod test {
 

@@ -1,12 +1,12 @@
 // Pirzadeh, H. (1999) Computational geometry with the rotating calipers., pp30 – 32
 // Available from: http://digitool.library.mcgill.ca/R/-?func=dbin-jump-full&object_id=21623&silo_library=GEN01
 // http://web.archive.org/web/20150330010154/http://cgm.cs.mcgill.ca/%7Eorm/rotcal.html
-use num_traits::Float;
+use num_traits::{Float, Signed};
 use num_traits::float::FloatConst;
 use types::{Point, LineString, Polygon};
 use std::fmt::Debug;
 use algorithm::distance::Distance;
-use algorithm::extremes::ExtremePoints;
+use algorithm::extremes::ExtremeIndices;
 
 #[derive(Debug)]
 enum Aligned {
@@ -65,7 +65,7 @@ impl<T> Polygon<T>
 impl<T> Polygon<T>
     where T: Float + Debug
 {
-    fn previous_vertex(&self, current_vertex: &usize) -> usize
+    fn prev_vertex(&self, current_vertex: &usize) -> usize
         where T: Float + Debug
     {
         (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
@@ -92,7 +92,7 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
     let mut cos = T::zero();
     let mut sin;
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
-    let pprev = poly.exterior.0[poly.previous_vertex(idx)];
+    let pprev = poly.exterior.0[poly.prev_vertex(idx)];
     let clockwise = if cross_prod(&pprev, p, &pnext) < T::zero() {
         true
     } else {
@@ -298,7 +298,7 @@ fn vertex_line_angle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vertical: bool, 
 {
     let hundred = T::from(100).unwrap();
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
-    let pprev = poly.exterior.0[poly.previous_vertex(idx)];
+    let pprev = poly.exterior.0[poly.prev_vertex(idx)];
     let clockwise = if cross_prod(&pprev, p, &pnext) < T::zero() {
         true
     } else {
@@ -634,11 +634,11 @@ fn computemin<T>(state: &mut Polydist<T>)
 
 // calculate the minimum distance between two disjoint convex polygons
 fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
-    where T: Float + FloatConst + Debug
+    where T: Float + FloatConst + Debug + Signed
 {
     // TODO: check for intersection and containment
-    let poly1_extremes = poly1.extreme_points(true, true);
-    let poly2_extremes = poly2.extreme_points(true, true);
+    let poly1_extremes = poly1.extreme_indices().unwrap();
+    let poly2_extremes = poly2.extreme_indices().unwrap();
     let ymin1 = poly1.exterior.0[poly1_extremes.ymin];
     let ymax2 = poly2.exterior.0[poly2_extremes.ymax];
 
