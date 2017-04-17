@@ -58,7 +58,7 @@ impl<T> Polygon<T>
 }
 
 // positive implies a -> b -> c is counter-clockwise, negative implies clockwise
-pub fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
+fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
     where T: Float
 {
     (p_b.x() - p_a.x()) * (p_c.y() - p_a.y()) - (p_b.y() - p_a.y()) * (p_c.x() - p_a.x())
