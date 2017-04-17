@@ -26,6 +26,35 @@ pub struct Bbox<T>
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
+pub struct Extremes {
+    pub ymin: usize,
+    pub xmax: usize,
+    pub ymax: usize,
+    pub xmin: usize,
+}
+
+impl From<Vec<usize>> for Extremes {
+    fn from(original: Vec<usize>) -> Extremes {
+        Extremes {
+            ymin: original[0],
+            xmax: original[1],
+            ymax: original[2],
+            xmin: original[3],
+        }
+    }
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub struct ExtremePoint<T>
+    where T: Float
+ {
+    pub ymin: Point<T>,
+    pub xmax: Point<T>,
+    pub ymax: Point<T>,
+    pub xmin: Point<T>,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
 impl<T> Point<T>
