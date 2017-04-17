@@ -82,15 +82,15 @@ fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes,
         .iter()
         .enumerate()
         .map(|(idx, _)| {
-            // get previous and previous - 1 index offsets
             let prev_1 = polygon.previous_vertex(&idx);
             let prev_2 = polygon.previous_vertex(&prev_1);
-            // now make sure they're all positive or all negative, which implies convexity
             cross_prod(&polygon.exterior.0[prev_2],
                        &polygon.exterior.0[prev_1],
                        &polygon.exterior.0[idx])
         })
+        // accumulate and check cross-product result signs in a single pass
         // positive implies ccw convexity, negative implies cw convexity
+        // anything else implies non-convexity
         .fold(ListSign::Empty, |acc, n| {
             match (acc, n.is_positive()) {
                 (ListSign::Empty, true) | (ListSign::Positive, true) => ListSign::Positive,
@@ -106,10 +106,10 @@ fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes,
                           Point::new(T::zero(), T::one()),
                           Point::new(-T::one(), T::zero())];
     Ok(directions
-        .iter()
-        .map(|p| func(&p, &polygon).unwrap())
-        .collect::<Vec<usize>>()
-        .into())
+           .iter()
+           .map(|p| func(&p, &polygon).unwrap())
+           .collect::<Vec<usize>>()
+           .into())
 }
 
 // find a convex, counter-clockwise oriented polygon's maximum vertex in a specified direction
