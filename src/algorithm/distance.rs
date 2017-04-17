@@ -521,18 +521,83 @@ mod test {
         assert_eq!(p.distance(&mp), 64.03124237432849)
     }
     #[test]
-    fn distance_line_test() {
-        let line0 = Line::new(Point::new(0., 0.), Point::new(5., 0.));
-        let p0 = Point::new(2., 3.);
-        let p1 = Point::new(3., 0.);
-        let p2 = Point::new(6., 0.);
-        assert_eq!(line0.distance(&p0), 3.);
-        assert_eq!(p0.distance(&line0), 3.);
+    // test edge-vertex minimum distance
+    fn test_minimum_polygon_distance() {
+        let points_raw = vec![(126., 232.),
+                              (126., 212.),
+                              (112., 202.),
+                              (97., 204.),
+                              (87., 215.),
+                              (87., 232.),
+                              (100., 246.),
+                              (118., 247.)];
+        let points = points_raw
+            .iter()
+            .map(|e| Point::new(e.0, e.1))
+            .collect::<Vec<_>>();
+        let poly1 = Polygon::new(LineString(points), vec![]);
 
-        assert_eq!(line0.distance(&p1), 0.);
-        assert_eq!(p1.distance(&line0), 0.);
+        let points_raw_2 = vec![(188., 231.),
+                                (189., 207.),
+                                (174., 196.),
+                                (164., 196.),
+                                (147., 220.),
+                                (158., 242.),
+                                (177., 242.)];
+        let points2 = points_raw_2
+            .iter()
+            .map(|e| Point::new(e.0, e.1))
+            .collect::<Vec<_>>();
+        let poly2 = Polygon::new(LineString(points2), vec![]);
+        let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
+        assert_eq!(dist, 21.0);
+    }
+    #[test]
+    // test vertex-vertex minimum distance
+    fn test_minimum_polygon_distance_2() {
+        let points_raw = vec![(118., 200.), (153., 179.), (106., 155.), (88., 190.), (118., 200.)];
+        let points = points_raw
+            .iter()
+            .map(|e| Point::new(e.0, e.1))
+            .collect::<Vec<_>>();
+        let poly1 = Polygon::new(LineString(points), vec![]);
 
-        assert_eq!(line0.distance(&p2), 1.);
-        assert_eq!(p2.distance(&line0), 1.);
+        let points_raw_2 =
+            vec![(242., 186.), (260., 146.), (182., 175.), (216., 193.), (242., 186.)];
+        let points2 = points_raw_2
+            .iter()
+            .map(|e| Point::new(e.0, e.1))
+            .collect::<Vec<_>>();
+        let poly2 = Polygon::new(LineString(points2), vec![]);
+        let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
+        assert_eq!(dist, 29.274562336608895);
+    }
+    #[test]
+    // test edge-edge minimum distance
+    fn test_minimum_polygon_distance_3() {
+        let points_raw = vec![(182., 182.), (182., 168.), (138., 160.), (136., 193.), (182., 182.)];
+        let points = points_raw
+            .iter()
+            .map(|e| Point::new(e.0, e.1))
+            .collect::<Vec<_>>();
+        let poly1 = Polygon::new(LineString(points), vec![]);
+
+        let points_raw_2 =
+            vec![(232., 196.), (234., 150.), (194., 165.), (194., 191.), (232., 196.)];
+        let points2 = points_raw_2
+            .iter()
+            .map(|e| Point::new(e.0, e.1))
+            .collect::<Vec<_>>();
+        let poly2 = Polygon::new(LineString(points2), vec![]);
+        let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
+        assert_eq!(dist, 12.0);
+    }
+    #[test]
+    fn test_vertex_line_distance() {
+        let p = Point::new(0., 0.);
+        let q = Point::new(3.8, 5.7);
+        let r = Point::new(22.5, 10.);
+        let dist = p.vertex_line_distance(&q, &r);
+        assert_eq!(dist, 6.850547423381579);
     }
 }
