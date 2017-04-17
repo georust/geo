@@ -2,6 +2,9 @@ use num_traits::{Float, ToPrimitive};
 use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 use num_traits::float::FloatConst;
 use algorithm::contains::Contains;
+use algorithm::extremes::ExtremeIndices;
+use algorithm::intersects::Intersects;
+use num_traits::pow::pow;
 
 /// Returns the distance between two geometries.
 
@@ -254,7 +257,7 @@ where
         line.distance(self)
 // Polygon Distance
 impl<T> Distance<T, Polygon<T>> for Polygon<T>
-    where T: Float + FloatConst + Debug + Signed
+    where T: Float + FloatConst + Signed
 {
     fn distance(&self, poly2: &Polygon<T>) -> T {
         min_poly_dist(self, poly2)
@@ -263,7 +266,7 @@ impl<T> Distance<T, Polygon<T>> for Polygon<T>
 
 // calculate the minimum distance between two disjoint convex polygons
 fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
-    where T: Float + FloatConst + Debug + Signed
+    where T: Float + FloatConst + Signed
 {
     // TODO: check for containment
     if poly1.intersects(poly2) {
@@ -356,10 +359,10 @@ struct Polydist<'a, T>
 
 // Wrap-around next vertex
 impl<T> Polygon<T>
-    where T: Float + Debug
+    where T: Float
 {
     fn next_vertex(&self, current_vertex: &usize) -> usize
-        where T: Float + Debug
+        where T: Float
     {
         (current_vertex + 1) % (self.exterior.0.len() - 1)
     }
@@ -367,10 +370,10 @@ impl<T> Polygon<T>
 
 // Wrap-around previous-vertex
 impl<T> Polygon<T>
-    where T: Float + Debug
+    where T: Float
 {
     fn prev_vertex(&self, current_vertex: &usize) -> usize
-        where T: Float + Debug
+        where T: Float
     {
         (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
     }
@@ -390,7 +393,7 @@ impl<T> Point<T>
 // much of the following code is ported from Java, copyright 1999 Hormoz Pirzadeh, available at:
 // http://web.archive.org/web/20150330010154/http://cgm.cs.mcgill.ca/%7Eorm/rotcal.html
 fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Point<T>
-    where T: Float + Debug
+    where T: Float
 {
     let tansq = slope.powi(2);
     let cossq = T::one() / (T::one() + tansq);
@@ -539,7 +542,7 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
 
 // Perpendicular unit vector of a vertex and a unit vector
 fn unitpvector<T>(p: &Point<T>, u: &Point<T>) -> Point<T>
-    where T: Float + Debug
+    where T: Float
 {
     let hundred = T::from(100).unwrap();
     let vertical;
@@ -600,7 +603,7 @@ fn unitpvector<T>(p: &Point<T>, u: &Point<T>) -> Point<T>
 
 // Angle between a vertex and an edge
 fn vertex_line_angle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vertical: bool, idx: &usize) -> T
-    where T: Float + FloatConst + Debug
+    where T: Float + FloatConst
 {
     let hundred = T::from(100).unwrap();
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
@@ -724,7 +727,7 @@ fn leftturn<T>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> i8
 
 // Calculate next set of caliper points
 fn nextpoints<T>(state: &mut Polydist<T>)
-    where T: Float + FloatConst + Debug
+    where T: Float + FloatConst
 {
     state.alignment = None;
     state.ip1 = false;
@@ -821,7 +824,7 @@ fn nextpoints<T>(state: &mut Polydist<T>)
 // - aligned with two edges, which overlap
 // - aligned with two edges, which don't overlap
 fn computemin<T>(state: &mut Polydist<T>)
-    where T: Float + Debug
+    where T: Float
 {
     let mut newdist;
     let u;
