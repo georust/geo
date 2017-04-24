@@ -747,9 +747,9 @@ fn nextpoints<T>(state: &mut Polydist<T>)
     state.p1next = state.p1prev;
     state.q2prev = state.q2;
     state.q2next = state.q2prev;
-    // iff ip is true, it's vertex-edge
-    // iff iq2 is true, it's edge-edge, and the edges overlap
-    // if ip1 and iq2 are both true, it's edge-edge, non-overlapping
+    // iff (ap1 - minangle) is within epsilon, it's vertex-edge
+    // iff (aq2 - minangle) is within epsilon, it's edge-edge and the edges overlap
+    // if both are within epsilon, it's edge-edge, non-overlapping
     // overlap is defined by the possibility of drawing an orthogonal line
     // between the two edges at any points other than their vertices
     if (state.ap1 - minangle).abs() < T::from(0.002).unwrap() {
@@ -765,8 +765,8 @@ fn nextpoints<T>(state: &mut Polydist<T>)
         state.q2next = state.poly2.exterior.0[q2next];
         state.q2_idx = q2next;
         state.alignment = match state.alignment {
-            Some(_) => Some(Aligned::EdgeEdge(Overlap::Yes)),
-            None => Some(Aligned::EdgeEdge(Overlap::No)),
+            None => Some(Aligned::EdgeEdge(Overlap::Yes)),
+            Some(_) => Some(Aligned::EdgeEdge(Overlap::No)),
         }
     }
     if state.ip1 {
@@ -819,10 +819,6 @@ fn nextpoints<T>(state: &mut Polydist<T>)
 }
 
 // compute the minimum distance between entities (edges or vertices)
-// three variations for the locations of lines of support are possible (alignment 1, 2, or 3):
-// - aligned with one vertex and one edge
-// - aligned with two edges, which overlap
-// - aligned with two edges, which don't overlap
 fn computemin<T>(state: &mut Polydist<T>)
     where T: Float
 {
