@@ -744,9 +744,18 @@ fn nextpoints<T>(state: &mut Polydist<T>)
     state.q2next = state.q2prev;
     // iff (ap1 - minangle) is less than epsilon, alignment is edge-vertex (P-Q)
     // iff (aq2 - minangle) is less than epsilon, alignment is edge-vertex (Q-P)
-    // if both are within epsilon, alignment is edge-edge, and we need to check for overlap
-    // overlap is defined by the possibility of drawing an orthogonal line
-    // between the two edges at any points other than their vertices
+    // if both are within epsilon, alignment is edge-edge, and additional cases must be considered
+    // in each of the above, we also have to check for overlap:
+    // 
+    // assume the calipers are rotated θ degrees around pi and qj, and that
+    // we have hit vertex q` and edge [p`, p^]
+    // check whether there exists a line segment [p, p*] which is orthogonal to [qj, q`]
+    // compute the intersection of lines [pi, p*] and [qj, q`]
+    // if this intersection q† exists, and ≠ qj or q`, compute the distance
+    // between pi and q†, and compare it to the current minimum.
+    // If the calipers intersect with edges on both polygons (implying the edges are parallel),
+    // intersections must be computed between both segments, and if one is
+    // found, the [pi, p`] - [qj, q`] edge-edge orthogonal distance is found and compared. 
     // see Pirzadeh (1999), p31
     if (state.ap1 - minangle).abs() < T::from(0.002).unwrap() {
         state.ip1 = true;
@@ -844,6 +853,7 @@ fn computemin<T>(state: &mut Polydist<T>)
             let line_1 = leftturn(&u, &state.q2, &state.p1);
             let line_2 = leftturn(&u, &state.q2, &state.p1prev);
             if line_1 != line_2 && line_1 != -1 && line_2 != -1 {
+                // an orthogonal intersection exists
                 newdist = state.q2.vertex_line_distance(&state.p1prev, &state.p1);
                 if newdist <= state.dist {
                     // New minimum distance is between edge (p1prev, p1) and q2
@@ -868,6 +878,7 @@ fn computemin<T>(state: &mut Polydist<T>)
             let line_1 = leftturn(&u, &state.p1, &state.q2);
             let line_2 = leftturn(&u, &state.p1, &state.q2prev);
             if line_1 != line_2 && line_1 != -1 && line_2 != -1 {
+                // an orthogonal intersection exists
                 newdist = state.p1.vertex_line_distance(&state.q2prev, &state.q2);
                 if newdist <= state.dist {
                     // New minimum distance is between edge (q2prev, q2) and p1
@@ -912,6 +923,7 @@ fn computemin<T>(state: &mut Polydist<T>)
             let line_2b = leftturn(&u2, &state.p1, &state.q2);
             if line_1a != line_1b && line_1a != -1 && line_1b != -1 ||
                line_2a != line_2b && line_2a != -1 && line_2b != -2 {
+                // an orthogonal intersection exists
                 newdist = state.p1.vertex_line_distance(&state.q2prev, &state.q2);
                 if newdist <= state.dist {
                     // New minimum distance is between edge (p1prev, p1) and q2prev
