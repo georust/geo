@@ -317,14 +317,9 @@ fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
 
 #[derive(Debug)]
 enum Aligned {
-    VertexEdge,
-    EdgeEdge(Overlap),
-}
-
-#[derive(Debug)]
-enum Overlap {
-    Yes,
-    No,
+    EdgeVertexP,
+    EdgeVertexQ,
+    EdgeEdge,
 }
 
 // distance-finding state
@@ -747,17 +742,18 @@ fn nextpoints<T>(state: &mut Polydist<T>)
     state.p1next = state.p1prev;
     state.q2prev = state.q2;
     state.q2next = state.q2prev;
-    // iff (ap1 - minangle) is within epsilon, it's vertex-edge
-    // iff (aq2 - minangle) is within epsilon, it's edge-edge and the edges overlap
-    // if both are within epsilon, it's edge-edge, non-overlapping
+    // iff (ap1 - minangle) is less than epsilon, alignment is edge-vertex (P-Q)
+    // iff (aq2 - minangle) is less than epsilon, alignment is edge-vertex (Q-P)
+    // if both are within epsilon, alignment is edge-edge, and we need to check for overlap
     // overlap is defined by the possibility of drawing an orthogonal line
     // between the two edges at any points other than their vertices
+    // see Pirzadeh (1999), p31
     if (state.ap1 - minangle).abs() < T::from(0.002).unwrap() {
         state.ip1 = true;
         let p1next = state.poly1.next_vertex(&state.p1_idx);
         state.p1next = state.poly1.exterior.0[p1next];
         state.p1_idx = p1next;
-        state.alignment = Some(Aligned::VertexEdge);
+        state.alignment = Some(Aligned::EdgeVertexP);
     }
     if (state.aq2 - minangle).abs() < T::from(0.002).unwrap() {
         state.iq2 = true;
@@ -765,8 +761,8 @@ fn nextpoints<T>(state: &mut Polydist<T>)
         state.q2next = state.poly2.exterior.0[q2next];
         state.q2_idx = q2next;
         state.alignment = match state.alignment {
-            None => Some(Aligned::EdgeEdge(Overlap::Yes)),
-            Some(_) => Some(Aligned::EdgeEdge(Overlap::No)),
+            None => Some(Aligned::EdgeVertexQ),
+            Some(_) => Some(Aligned::EdgeEdge),
         }
     }
     if state.ip1 {
@@ -827,8 +823,8 @@ fn computemin<T>(state: &mut Polydist<T>)
     let u1;
     let u2;
     match state.alignment {
-        Some(Aligned::VertexEdge) => {
-            // one line of support coincides with a vertex, the other with an edge
+        Some(Aligned::EdgeVertexP) => {
+            // one line of support coincides with a vertex on Q, the other with an edge on P
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
                 // New minimum distance is between p1 and q2
@@ -856,8 +852,8 @@ fn computemin<T>(state: &mut Polydist<T>)
                 }
             }
         }
-        Some(Aligned::EdgeEdge(Overlap::Yes)) => {
-            // both lines of support coincide with edges, and the edges overlap
+        Some(Aligned::EdgeVertexQ) => {
+            // one line of support coincides with a vertex on P, the other with an edge on Q
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
                 // New minimum distance is between p1 and q2
@@ -885,8 +881,9 @@ fn computemin<T>(state: &mut Polydist<T>)
                 }
             }
         }
-        Some(Aligned::EdgeEdge(Overlap::No)) => {
-            // both lines of support coincide with edges, but they don't overlap
+        Some(Aligned::EdgeEdge) => {
+            // both lines of support coincide with edges (i.e. they're parallel)
+            // we need to check for overlap
             newdist = state.p1.distance(&state.q2);
             if newdist <= state.dist {
                 // New minimum distance is between p1 and q2
