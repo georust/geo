@@ -818,18 +818,17 @@ fn nextpoints<T>(state: &mut Polydist<T>)
 fn computemin<T>(state: &mut Polydist<T>)
     where T: Float
 {
-    let mut newdist;
     let u;
     let u1;
     let u2;
+    let mut newdist = state.p1.distance(&state.q2);
+    if newdist <= state.dist {
+        // New minimum distance is between p1 and q2
+        state.dist = newdist;
+    }
     match state.alignment {
         Some(Aligned::EdgeVertexP) => {
             // one line of support coincides with a vertex on Q, the other with an edge on P
-            newdist = state.p1.distance(&state.q2);
-            if newdist <= state.dist {
-                // New minimum distance is between p1 and q2
-                state.dist = newdist;
-            }
             if !state.vertical {
                 if state.slope != T::zero() {
                     u = unitvector(&(-T::one() / state.slope),
@@ -854,11 +853,6 @@ fn computemin<T>(state: &mut Polydist<T>)
         }
         Some(Aligned::EdgeVertexQ) => {
             // one line of support coincides with a vertex on P, the other with an edge on Q
-            newdist = state.p1.distance(&state.q2);
-            if newdist <= state.dist {
-                // New minimum distance is between p1 and q2
-                state.dist = newdist;
-            }
             if !state.vertical {
                 if state.slope != T::zero() {
                     u = unitvector(&(-T::one() / state.slope),
@@ -884,11 +878,6 @@ fn computemin<T>(state: &mut Polydist<T>)
         Some(Aligned::EdgeEdge) => {
             // both lines of support coincide with edges (i.e. they're parallel)
             // we need to check for overlap
-            newdist = state.p1.distance(&state.q2);
-            if newdist <= state.dist {
-                // New minimum distance is between p1 and q2
-                state.dist = newdist;
-            }
             newdist = state.p1.distance(&state.q2prev);
             if newdist <= state.dist {
                 // New minimum distance is between p1 and q2prev
