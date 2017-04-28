@@ -11,6 +11,14 @@ use types::{Extremes, ExtremePoint};
 
 // various tests for vector orientation relative to a direction vector u
 
+// Not currently used, but maybe useful in the future
+#[allow(dead_code)]
+fn up<T>(u: &Point<T>, v: &Point<T>) -> bool
+    where T: Float
+{
+    u.dot(v) > T::zero()
+}
+
 fn direction_sign<T>(u: &Point<T>, vi: &Point<T>, vj: &Point<T>) -> T
     where T: Float
 {
