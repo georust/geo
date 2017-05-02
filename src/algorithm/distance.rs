@@ -744,8 +744,9 @@ fn nextpoints<T>(state: &mut Polydist<T>)
     state.q2next = state.q2prev;
     // iff (ap1 - minangle) is less than epsilon, alignment is edge-vertex (P-Q)
     // iff (aq2 - minangle) is less than epsilon, alignment is edge-vertex (Q-P)
-    // if both are within epsilon, alignment is edge-edge, and additional cases must be considered
-    // in each of the above, we also have to check for overlap:
+    // if both are within epsilon, alignment is edge-edge
+    // in each of the above, we also have to check for overlap, and in the case of
+    // edge-edge alignment, additional cases must be considered.
     // 
     // assume the calipers are rotated θ degrees around pi and qj, and that
     // we have hit vertex q` and edge [p`, p^]
@@ -888,7 +889,6 @@ fn computemin<T>(state: &mut Polydist<T>)
         }
         Some(Aligned::EdgeEdge) => {
             // both lines of support coincide with edges (i.e. they're parallel)
-            // we need to check for overlap
             newdist = state.p1.distance(&state.q2prev);
             if newdist <= state.dist {
                 // New minimum distance is between p1 and q2prev
