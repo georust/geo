@@ -2,14 +2,14 @@ use num_traits::Float;
 use types::{LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use std::mem;
 
-pub fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
+fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
     let tmp = mem::replace(slice, &mut []);
     tmp.swap(0, idx);
     let (h, t) = tmp.split_first_mut().unwrap();
     *slice = t;
     h
 }
-pub fn swap_remove_to_last<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
+fn swap_remove_to_last<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
     let tmp = mem::replace(slice, &mut []);
     let len = tmp.len();
     tmp.swap(len - 1, idx);
@@ -18,7 +18,7 @@ pub fn swap_remove_to_last<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mu
     h
 }
 // slice[..result] have pred(e) == true, slice[result..] have pred(e) == false
-pub fn partition<T, F: FnMut(&T) -> bool>(mut slice: &mut [T], mut pred: F) -> usize {
+fn partition<T, F: FnMut(&T) -> bool>(mut slice: &mut [T], mut pred: F) -> usize {
     let mut i = 0;
     loop {
         let test = match slice.first() {
@@ -48,12 +48,12 @@ pub fn partition<T, F: FnMut(&T) -> bool>(mut slice: &mut [T], mut pred: F) -> u
 // we can compute the cross product AB x AC and check its sign:
 // If it's negative, it will be on the "right" side of AB
 // (when standing on A and looking towards B). If positive, it will be on the left side
-pub fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
+fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
     where T: Float
 {
     (p_b.x() - p_a.x()) * (p_c.y() - p_a.y()) - (p_b.y() - p_a.y()) * (p_c.x() - p_a.x())
 }
-pub fn point_location<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> bool
+fn point_location<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> bool
     where T: Float
 {
     cross_prod(p_a, p_b, p_c) > T::zero()

@@ -308,8 +308,6 @@ mod test {
         // convex, with a bump on the top-right edge
         let points_raw =
             vec![(1.0, 0.0), (2.0, 1.0), (1.75, 1.75), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
-        // orient the vector clockwise
-        points_raw.reverse();
         let points = points_raw
             .iter()
             .map(|e| Point::new(e.0, e.1))
