@@ -7,7 +7,7 @@ use num_traits::{Float, ToPrimitive};
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Coordinate<T>
     where T: Float
 {
@@ -15,7 +15,7 @@ pub struct Coordinate<T>
     pub y: T,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Bbox<T>
     where T: Float
 {
@@ -54,7 +54,7 @@ pub struct ExtremePoint<T>
     pub xmin: Point<T>,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
 impl<T> Point<T>
@@ -318,13 +318,13 @@ impl<T> AddAssign for Bbox<T>
 #[derive(PartialEq, Clone, Debug)]
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Polygon<T>
     where T: Float
 {
