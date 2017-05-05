@@ -73,7 +73,7 @@ impl<T> Intersects<Bbox<T>> for Bbox<T>
 {
     fn intersects(&self, bbox: &Bbox<T>) -> bool {
         // line intersects inner or outer polygon edge
-        if bbox.contains(&self) {
+        if bbox.contains(self) {
             return false
         } else {
             (self.xmin >= bbox.xmin && self.xmin <= bbox.xmax || self.xmax >= bbox.xmin && self.xmax <= bbox.xmax) &&

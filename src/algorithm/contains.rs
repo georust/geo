@@ -152,6 +152,15 @@ impl<T> Contains<LineString<T>> for Polygon<T>
     }
 }
 
+
+impl<T> Contains<Point<T>> for Bbox<T>
+    where T: Float
+{
+    fn contains(&self, p: &Point<T>) -> bool {
+        p.x() >= self.xmin && p.x() <= self.xmax && p.y() >= self.ymin && p.y() <= self.ymax
+    }
+}
+
 impl<T> Contains<Bbox<T>> for Bbox<T>
     where T: Float
 {
@@ -166,6 +175,7 @@ impl<T> Contains<Bbox<T>> for Bbox<T>
 mod test {
     use types::{Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
     use algorithm::contains::Contains;
+        #[test]
     /// Tests: Point in LineString
     #[test]
     fn empty_linestring_test() {
