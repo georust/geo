@@ -1,5 +1,15 @@
 # Changes
 
+## 0.4.4
+
+* [Quickhull orientation fix](https://github.com/georust/rust-geo/pull/110)
+* [Implement distance traits for more geometries](https://github.com/georust/rust-geo/pull/113)
+* [Correctly calculate centroid for complex polygons](https://github.com/georust/rust-geo/pull/112)
+* [Add `Orient` trait for polygon](https://github.com/georust/rust-geo/pull/108)
+* [Add geometry rotation](https://github.com/georust/rust-geo/pull/107)
+* [Add extreme point-finding](https://github.com/georust/rust-geo/pull/114)
+* [Add contains point impl for bbox](https://github.com/georust/rust-geo/commit/3e00ef94c3d69e6d0b1caab86224469ced9444e6)
+
 ## 0.4.3
 
 * [Implement Point to multipart geometry distance methods](https://github.com/georust/rust-geo/pull/104)
