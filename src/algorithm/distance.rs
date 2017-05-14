@@ -542,7 +542,6 @@ fn unitpvector<T>(p: &Point<T>, u: &Point<T>) -> Point<T>
     let hundred = T::from(100).unwrap();
     let vertical;
     let mut slope;
-    let sperp;
     slope = T::zero();
     if p.x() == u.x() {
         vertical = true;
@@ -578,7 +577,7 @@ fn unitpvector<T>(p: &Point<T>, u: &Point<T>) -> Point<T>
         Point::new(upx, upy)
     } else {
         // Not a special case
-        sperp = -T::one() / slope;
+        let sperp = -T::one() / slope;
         let tansq = sperp * sperp;
         let cossq = T::one() / (T::one() + tansq);
         let sinsq = T::one() - cossq;
