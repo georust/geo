@@ -1,6 +1,7 @@
 use num_traits::{Float, ToPrimitive};
 
-use types::{COORD_PRECISION, Point, LineString, Polygon, MultiPolygon, Bbox};
+use types::{COORD_PRECISION, Point, Line, LineString, Polygon, MultiPolygon, Bbox};
+use algorithm::boundingbox::BoundingBox;
 use algorithm::intersects::Intersects;
 use algorithm::distance::Distance;
 
@@ -70,6 +71,29 @@ impl<T> Contains<Point<T>> for LineString<T>
         false
     }
 }
+
+impl<T> Contains<Point<T>> for Line<T>
+    where T: Float
+{
+    fn contains(&self, p: &Point<T>) -> bool {
+        // if the point is not in the bounding box, it's not on the line
+        if !self.bbox().map_or(false, |b| b.contains(p)) {
+            return false;
+        }
+        let (a, b) = self.0;
+        // handle the special case where the line is vertical
+        if a.x() == b.x() {
+            return (p.x() - a.x()).to_f32().unwrap() <= COORD_PRECISION;
+        }
+        // solve a linear equation
+        let slope = (a.y() - b.y()) / (a.x() - b.x());
+        let intercept = a.y() - slope * a.x();
+        (p.y() - (slope * p.x() + intercept)).abs()
+                                             .to_f32()
+                                             .unwrap() <= COORD_PRECISION
+    }
+}
+
 #[derive(PartialEq, Clone, Debug)]
 enum PositionPoint {
     OnBoundary,
@@ -173,7 +197,7 @@ impl<T> Contains<Bbox<T>> for Bbox<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
+    use types::{Coordinate, Point, Line, LineString, Polygon, MultiPolygon, Bbox};
     use algorithm::contains::Contains;
     /// Tests: Point in LineString
     #[test]
@@ -320,5 +344,22 @@ mod test {
         let bbox_sm = Bbox { xmin: -10., xmax: 10., ymin: -20., ymax: 20.};
         assert_eq!(true, bbox_xl.contains(&bbox_sm));
         assert_eq!(false, bbox_sm.contains(&bbox_xl));
+    }
+    #[test]
+    fn point_in_line_test() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let p0 = p(2., 4.);
+        // vertical line
+        let line1 = Line((p(2., 0.), p(2., 5.)));
+        // point on line, but outside line segment
+        let line2 = Line((p(0., 6.), p(1.5, 4.5)));
+        // point on line
+        let line3 = Line((p(0., 6.), p(3., 3.)));
+        // point within precision of line
+        let line4 = Line((p(0., 6.00001), p(3., 3.0001)));
+        assert!(line1.contains(&p0));
+        assert!(!line2.contains(&p0));
+        assert!(line3.contains(&p0));
+        assert!(line4.contains(&p0));
     }
 }
