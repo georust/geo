@@ -319,6 +319,9 @@ impl<T> AddAssign for Bbox<T>
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
+pub struct Line<T>(pub (Point<T>, Point<T>)) where T: Float;
+
+#[derive(PartialEq, Clone, Debug)]
 pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
