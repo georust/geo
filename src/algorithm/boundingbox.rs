@@ -1,6 +1,6 @@
 use num_traits::Float;
 
-use types::{Bbox, Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
+use types::{Bbox, Point, MultiPoint, Line, LineString, MultiLineString, Polygon, MultiPolygon};
 
 /// Calculation of the bounding box of a geometry.
 
@@ -65,6 +65,18 @@ impl<T> BoundingBox<T> for MultiPoint<T>
     }
 }
 
+impl<T> BoundingBox<T> for Line<T>
+    where T: Float
+{
+    fn bbox(&self) -> Option<Bbox<T>> {
+        let (a, b) = self.0;
+        let (xmin, xmax) = if a.x() <= b.x() {(a.x(), b.x())} else {(b.x(), a.x())};
+        let (ymin, ymax) = if a.y() <= b.y() {(a.y(), b.y())} else {(b.y(), a.y())};
+        Some(Bbox {xmin: xmin, xmax: xmax,
+                   ymin: ymin, ymax: ymax})
+    }
+}
+
 impl<T> BoundingBox<T> for LineString<T>
     where T: Float
 {
@@ -114,7 +126,7 @@ impl<T> BoundingBox<T> for MultiPolygon<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Bbox, Coordinate, Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
+    use types::{Bbox, Coordinate, Point, MultiPoint, Line, LineString, MultiLineString, Polygon, MultiPolygon};
     use algorithm::boundingbox::BoundingBox;
 
     #[test]
@@ -174,5 +186,15 @@ mod test {
                                       ]);
         let bbox = Bbox{xmin: -60., ymax: 80., xmax: 50., ymin: -70.};
         assert_eq!(bbox, mpoly.bbox().unwrap());
+    }
+    #[test]
+    fn line_test() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let line1 = Line((p(0., 1.), p(2., 3.)));
+        let line2 = Line((p(2., 3.), p(0., 1.)));
+        assert_eq!(line1.bbox().unwrap(),
+                   Bbox {xmin: 0., xmax: 2., ymin: 1., ymax: 3.});
+        assert_eq!(line2.bbox().unwrap(),
+                   Bbox {xmin: 0., xmax: 2., ymin: 1., ymax: 3.});
     }
 }
