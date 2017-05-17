@@ -1,6 +1,6 @@
 use num_traits::{Float, FromPrimitive};
 
-use types::{Point, LineString, Polygon, MultiPolygon, Bbox};
+use types::{Point, Line, LineString, Polygon, MultiPolygon, Bbox};
 use algorithm::area::Area;
 use algorithm::distance::Distance;
 
@@ -52,6 +52,18 @@ fn simple_polygon_centroid<T>(poly_ext: &LineString<T>) -> Option<Point<T>>
     }
     let six = T::from_i32(6).unwrap();
     Some(Point::new(sum_x / (six * area), sum_y / (six * area)))
+}
+
+impl<T> Centroid<T> for Line<T>
+    where T: Float
+{
+    fn centroid(&self) -> Option<Point<T>> {
+        let (a, b) = self.0;
+        let two = T::one() + T::one();
+        let x = (a.x() + b.x()) / two;
+        let y = (a.y() + b.y()) / two;
+        Some(Point::new(x, y))
+    }
 }
 
 impl<T> Centroid<T> for LineString<T>
@@ -170,7 +182,7 @@ impl<T> Centroid<T> for Point<T>
 
 #[cfg(test)]
 mod test {
-    use types::{COORD_PRECISION, Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
+    use types::{COORD_PRECISION, Coordinate, Point, Line, LineString, Polygon, MultiPolygon, Bbox};
     use algorithm::centroid::Centroid;
     use algorithm::distance::Distance;
     // Tests: Centroid of LineString
@@ -292,5 +304,11 @@ mod test {
         };
         let point = Point(Coordinate { x: 2., y: 75. });
         assert_eq!(point, bbox.centroid().unwrap());
+    }
+    #[test]
+    fn line_test() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let line1 = Line((p(0., 1.), p(1., 3.)));
+        assert_eq!(line1.centroid(), Some(p(0.5, 2.)));
     }
 }
