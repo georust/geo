@@ -69,7 +69,8 @@ impl<T> BoundingBox<T> for Line<T>
     where T: Float
 {
     fn bbox(&self) -> Option<Bbox<T>> {
-        let (a, b) = self.0;
+        let a = self.start;
+        let b = self.end;
         let (xmin, xmax) = if a.x() <= b.x() {(a.x(), b.x())} else {(b.x(), a.x())};
         let (ymin, ymax) = if a.y() <= b.y() {(a.y(), b.y())} else {(b.y(), a.y())};
         Some(Bbox {xmin: xmin, xmax: xmax,
@@ -190,8 +191,8 @@ mod test {
     #[test]
     fn line_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let line1 = Line((p(0., 1.), p(2., 3.)));
-        let line2 = Line((p(2., 3.), p(0., 1.)));
+        let line1 = Line::new(p(0., 1.), p(2., 3.));
+        let line2 = Line::new(p(2., 3.), p(0., 1.));
         assert_eq!(line1.bbox().unwrap(),
                    Bbox {xmin: 0., xmax: 2., ymin: 1., ymax: 3.});
         assert_eq!(line2.bbox().unwrap(),

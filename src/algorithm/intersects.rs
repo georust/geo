@@ -1,5 +1,6 @@
 use num_traits::Float;
-use types::{LineString, Polygon, Bbox, Point};
+use types::{COORD_PRECISION, Line, LineString, Polygon, Bbox, Point};
+use algorithm::boundingbox::BoundingBox;
 use algorithm::contains::Contains;
 
 /// Checks if the geometry A intersects the geometry B.
@@ -20,6 +21,33 @@ pub trait Intersects<Rhs = Self> {
     /// ```
     ///
     fn intersects(&self, rhs: &Rhs) -> bool;
+}
+
+impl<T> Intersects<Point<T>> for Line<T>
+    where T: Float
+{
+    fn intersects(&self, p: &Point<T>) -> bool {
+        // if the point is not in the bounding box, it's not on the line
+        if !self.bbox().map_or(false, |b| b.contains(p)) {
+            println!("NOT IN BBOX");
+            return false;
+        }
+        match self.slope() {
+            None => p.x() - self.start.x(),
+            Some(m) => {
+                p.y() - ((m * (p.x() - self.start.x()) + self.start.y()))
+            }
+        }.abs().to_f32().unwrap() <= COORD_PRECISION
+    }
+}
+
+impl<T> Intersects<Line<T>> for Line<T> 
+    where T: Float
+{
+    fn intersects(&self, line: &Line<T>) -> bool {
+        false
+
+    }
 }
 
 impl<T> Intersects<LineString<T>> for LineString<T>

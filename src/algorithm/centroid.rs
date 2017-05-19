@@ -58,7 +58,7 @@ impl<T> Centroid<T> for Line<T>
     where T: Float
 {
     fn centroid(&self) -> Option<Point<T>> {
-        let (a, b) = self.0;
+        let (a, b) = (self.start, self.end);
         let two = T::one() + T::one();
         let x = (a.x() + b.x()) / two;
         let y = (a.y() + b.y()) / two;
@@ -308,7 +308,7 @@ mod test {
     #[test]
     fn line_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let line1 = Line((p(0., 1.), p(1., 3.)));
+        let line1 = Line::new(p(0., 1.), p(1., 3.));
         assert_eq!(line1.centroid(), Some(p(0.5, 2.)));
     }
 }

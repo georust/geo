@@ -121,7 +121,7 @@ mod test {
     #[test]
     fn area_line_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let line1 = Line((p(0.0, 0.0), p(1.0, 1.0)));
+        let line1 = Line::new(p(0.0, 0.0), p(1.0, 1.0));
         assert_eq!(line1.area(), 0.);
     }
 }

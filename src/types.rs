@@ -319,7 +319,50 @@ impl<T> AddAssign for Bbox<T>
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct Line<T>(pub (Point<T>, Point<T>)) where T: Float;
+pub struct Line<T>
+    where T: Float
+{
+    pub start: Point<T>,
+    pub end: Point<T>
+}
+
+impl<T> Line<T>
+    where T: Float
+{
+    /// Creates a new line segment.
+    ///
+    /// ```
+    /// use geo::{Point, Line};
+    ///
+    /// let line = Line::new(Point::new(0., 0.), Point::new(1., 2.));
+    ///
+    /// assert_eq!(line.start, Point::new(0., 0.));
+    /// assert_eq!(line.end, Point::new(1., 2.));
+    /// ```
+    pub fn new(start: Point<T>, end: Point<T>) -> Line<T> {
+        Line {start: start, end: end}
+    }
+
+    /// Compute the slope of the line segment.
+    ///
+    /// ```
+    /// use geo::{Point, Line}
+    ///
+    /// let line = Line::new(Point::new(0., 0.), Point::new(1., 2.));
+    /// let vline = Line::new(Point::new(0., 0.), Point::new(0., 3.));
+    ///
+    /// assert_eq!(line.slope(), Some(2.));
+    /// assert_eq!(vline.slope(), None);
+    /// ```
+    pub fn slope(&self) -> Option<T> {
+        if self.start.x() == self.end.x() {
+            None // Vertical lines do not have slope
+        } else {
+            Some((self.start.y() - self.end.y()) /
+                 (self.start.x() - self.end.x()))
+        }
+    }
+}
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
