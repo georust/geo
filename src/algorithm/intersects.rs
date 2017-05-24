@@ -23,17 +23,6 @@ pub trait Intersects<Rhs = Self> {
     fn intersects(&self, rhs: &Rhs) -> bool;
 }
 
-/// Compute the slope of the line segment.
-///
-/// ```
-/// use geo::{Point, Line}
-///
-/// let line = Line::new(Point::new(0., 0.), Point::new(1., 2.));
-/// let vline = Line::new(Point::new(0., 0.), Point::new(0., 3.));
-///
-/// assert_eq!(slope(&line), Some(2.));
-/// assert_eq!(slope(&vline), None);
-/// ```
 fn slope<T: Float>(line: &Line<T>) -> Option<T> {
     if line.start.x() == line.end.x() {
         None // Vertical lines do not have slope
@@ -235,7 +224,14 @@ impl<T> Intersects<Polygon<T>> for Polygon<T>
 #[cfg(test)]
 mod test {
     use types::{Coordinate, Point, Line, LineString, Polygon, Bbox};
-    use algorithm::intersects::Intersects;
+    use algorithm::intersects::{Intersects, slope};
+    #[test]
+    fn slope_test() {
+        let line = Line::new(Point::new(0., 0.), Point::new(1., 2.));
+        let vline = Line::new(Point::new(0., 0.), Point::new(0., 3.));
+        assert_eq!(slope(&line), Some(2.));
+        assert_eq!(slope(&vline), None);
+    }
     /// Tests: intersection LineString and LineString
     #[test]
     fn empty_linestring1_test() {

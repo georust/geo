@@ -84,8 +84,7 @@ impl<T> Contains<Line<T>> for Line<T>
     where T: Float
 {
     fn contains(&self, line: &Line<T>) -> bool {
-        let (a, b) = (line.start, line.end);
-        self.contains(&a) & self.contains(&b)
+        self.contains(&line.start) & self.contains(&line.end)
     }
 }
 
@@ -94,6 +93,40 @@ impl<T> Contains<LineString<T>> for Line<T>
 {
     fn contains(&self, linestring: &LineString<T>) -> bool {
         linestring.0.iter().all(|pt| self.contains(pt))
+    }
+}
+
+impl<T> Contains<Line<T>> for LineString<T>
+    where T: Float
+{
+    fn contains(&self, line: &Line<T>) -> bool {
+        let (p0, p1) = (line.start, line.end);
+        let mut look_for: Option<Point<T>> = None;
+        for l in self.0.windows(2) {
+            let segment = Line::new(l[0], l[1]);
+            if look_for.is_none() {
+                // If segment contains an endpoint of line, we mark the other endpoint as the
+                // one we are looking for.
+                if segment.contains(&p0) {
+                    look_for = Some(p1);
+                } else if segment.contains(&p1) {
+                    look_for = Some(p0);
+                }
+            }
+            if let Some(p) = look_for {
+                // If we are looking for an endpoint, we need to either find it, or show that we
+                // should continue to look for it
+                if segment.contains(&p) {
+                    // If the segment contains the endpoint we are looking for we are done
+                    return true;
+                } else if !line.contains(&segment.end) {
+                    // If not, and the end of the segment is not on the line, we should stop
+                    // looking 
+                    look_for = None
+                }
+            }
+        }
+        return false;
     }
 }
 
@@ -170,7 +203,13 @@ impl<T> Contains<Line<T>> for Polygon<T>
     where T: Float
 {
     fn contains(&self, line: &Line<T>) -> bool {
-        false
+        // both endpoints are contained in the polygon and the line
+        // does NOT intersect the exterior or any of the interior boundaries
+        println!("contains end?: {}", self.contains(&line.end));
+        self.contains(&line.start) &&
+            self.contains(&line.end) &&
+            !self.exterior.intersects(line) &&
+            !self.interiors.iter().any(|inner| inner.intersects(line))
     }
 }
 
@@ -405,11 +444,29 @@ mod test {
     fn line_in_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let line = Line::new(p(0., 1.), p(3., 4.));
-        let linestring0 = LineString(vec![p(0., 0.), p(5., 0.), p(5., 5.), p(0., 5.), p(0., 0.)]);
+        let linestring0 = LineString(vec![p(-1., 0.), p(5., 0.), p(5., 5.), p(0., 5.), p(-1., 0.)]);
         let poly0 = Polygon::new(linestring0, Vec::new());
-        let linestring1 = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
+        let linestring1 = LineString(vec![p(0., 0.), p(0., 2.), p(2., 2.), p(2., 0.), p(0., 0.)]);
         let poly1 = Polygon::new(linestring1, Vec::new());
         assert!(poly0.contains(&line));
         assert!(!poly1.contains(&line));
+    }
+    #[test]
+    fn line_in_linestring_test() {
+        let line0 = Line::new(Point::new(1., 1.), Point::new(2., 2.));
+        // line0 is completely contained in the second segment
+        let linestring0 = LineString(vec![Point::new(0., 0.5), Point::new(0.5, 0.5),
+                                          Point::new(3., 3.)]);
+        // line0 is contained in the last three segments
+        let linestring1 = LineString(vec![Point::new(0., 0.5), Point::new(0.5, 0.5),
+                                          Point::new(1.2, 1.2), Point::new(1.5, 1.5),
+                                          Point::new(3., 3.)]);
+        // line0 endpoints are contained in the linestring, but the fourth point is off the line
+        let linestring2 = LineString(vec![Point::new(0., 0.5), Point::new(0.5, 0.5),
+                                          Point::new(1.2, 1.2), Point::new(1.5, 0.),
+                                          Point::new(2., 2.), Point::new(3., 3.)]);
+        assert!(linestring0.contains(&line0));
+        assert!(linestring1.contains(&line0));
+        assert!(!linestring2.contains(&line0));
     }
 }
