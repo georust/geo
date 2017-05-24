@@ -32,17 +32,14 @@ impl<T> Intersects<Point<T>> for Line<T>
         let ty = if dy == T::zero() {None} else {Some((p.y() - self.start.y()) / dy)};
         match (tx, ty) {
             (None, None) => { // Degenerate line
-                println!("degenerate");
                 *p == self.start
             },
             (Some(t), None) => { // Horizontal line
-                println!("horizontal");
                 p.y() == self.start.y() &&
                     T::zero() <= t &&
                     t <= T::one()
             },
             (None, Some(t)) => { // Vertical line
-                println!("vertical");
                 p.x() == self.start.x() &&
                     T::zero() <= t &&
                     t <= T::one()
@@ -84,14 +81,14 @@ impl<T> Intersects<Line<T>> for Line<T>
         let d = a1*b2 - a2*b1;
         if d == T::zero() {
             // lines are parallel
-            // return true iff line and self are co-linear
-            self.start.intersects(&line) | self.end.intersects(&line) |
-            line.start.intersects(&self) | line.end.intersects(&self)
+            // return true iff at least one endpoint intersects the other line
+            self.start.intersects(&line) || self.end.intersects(&line) ||
+            line.start.intersects(&self) || line.end.intersects(&self)
         } else {
             let s = (c1*b2 - c2*b1) / d;
             let t = (a1*c2 - a2*c1) / d;
-            (T::zero() <= s) & (s <= T::one()) &
-                (T::zero() <= t) & (t <= T::one())
+            (T::zero() <= s) && (s <= T::one()) &&
+                (T::zero() <= t) && (t <= T::one())
         }
     }
 }

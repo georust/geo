@@ -109,7 +109,6 @@ impl<T> RotatePoint<T> for Line<T>
         let pts = vec![self.start, self.end];
         let rotated = rotation_matrix(angle, point, &pts);
         Line::new(rotated[0], rotated[1])
-
     }
 }
 
