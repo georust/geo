@@ -1,6 +1,5 @@
 use num_traits::Float;
-use types::{COORD_PRECISION, Line, LineString, Polygon, Bbox, Point};
-use algorithm::boundingbox::BoundingBox;
+use types::{Line, LineString, Polygon, Bbox, Point};
 use algorithm::contains::Contains;
 
 /// Checks if the geometry A intersects the geometry B.

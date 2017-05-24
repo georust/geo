@@ -1,7 +1,6 @@
 use num_traits::{Float, ToPrimitive};
 
 use types::{COORD_PRECISION, Point, Line, LineString, Polygon, MultiPolygon, Bbox};
-use algorithm::boundingbox::BoundingBox;
 use algorithm::intersects::Intersects;
 use algorithm::distance::Distance;
 
