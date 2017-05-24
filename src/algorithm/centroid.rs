@@ -58,10 +58,9 @@ impl<T> Centroid<T> for Line<T>
     where T: Float
 {
     fn centroid(&self) -> Option<Point<T>> {
-        let (a, b) = (self.start, self.end);
         let two = T::one() + T::one();
-        let x = (a.x() + b.x()) / two;
-        let y = (a.y() + b.y()) / two;
+        let x = (self.start.x() + self.end.x()) / two;
+        let y = (self.start.y() + self.end.y()) / two;
         Some(Point::new(x, y))
     }
 }

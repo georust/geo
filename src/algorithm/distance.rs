@@ -266,7 +266,7 @@ impl<T> Distance<T, Point<T>> for LineString<T>
 impl<T> Distance<T, Point<T>> for Line<T>
     where T: Float
 {
-    /// Minimum distance from a Lined to a Point
+    /// Minimum distance from a Line to a Point
     fn distance(&self, point: &Point<T>) -> T {
         line_segment_distance(point, &self.start, &self.end)
     }
