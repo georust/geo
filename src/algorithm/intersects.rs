@@ -518,7 +518,6 @@ mod test {
         assert!(!line0.intersects(&poly1));
         assert!(!poly1.intersects(&line0));
 
-        println!("line0 intersects poly2");
         assert!(!line0.intersects(&poly2));
         assert!(!poly2.intersects(&line0));
     }

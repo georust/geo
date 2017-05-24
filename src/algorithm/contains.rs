@@ -204,7 +204,6 @@ impl<T> Contains<Line<T>> for Polygon<T>
     fn contains(&self, line: &Line<T>) -> bool {
         // both endpoints are contained in the polygon and the line
         // does NOT intersect the exterior or any of the interior boundaries
-        println!("contains end?: {}", self.contains(&line.end));
         self.contains(&line.start) &&
             self.contains(&line.end) &&
             !self.exterior.intersects(line) &&
@@ -224,7 +223,6 @@ impl<T> Contains<LineString<T>> for Polygon<T>
         }
     }
 }
-
 
 impl<T> Contains<Point<T>> for Bbox<T>
     where T: Float
