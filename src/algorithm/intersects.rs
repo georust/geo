@@ -22,29 +22,37 @@ pub trait Intersects<Rhs = Self> {
     fn intersects(&self, rhs: &Rhs) -> bool;
 }
 
-fn slope<T: Float>(line: &Line<T>) -> Option<T> {
-    if line.start.x() == line.end.x() {
-        None // Vertical lines do not have slope
-    } else {
-        Some((line.start.y() - line.end.y()) /
-             (line.start.x() - line.end.x()))
-    }
-}
-
 impl<T> Intersects<Point<T>> for Line<T>
     where T: Float
 {
     fn intersects(&self, p: &Point<T>) -> bool {
-        let (ymin, ymax) = if self.start.y() < self.end.y() {
-                (self.start.y(), self.end.y())
-             } else {
-                (self.end.y(), self.start.y())
-         };
-        (p.y() >= ymin) & (p.y() <= ymax) &
-            match slope(self) {
-                None => p.x() == self.start.x(),
-                Some(m) => p.y() == m * (p.x() - self.start.x()) + self.start.y()
+        let dx = self.end.x() - self.start.x();
+        let dy = self.end.y() - self.start.y();
+        let tx = if dx == T::zero() {None} else {Some((p.x() - self.start.x()) / dx)};
+        let ty = if dy == T::zero() {None} else {Some((p.y() - self.start.y()) / dy)};
+        match (tx, ty) {
+            (None, None) => { // Degenerate line
+                println!("degenerate");
+                *p == self.start
+            },
+            (Some(t), None) => { // Horizontal line
+                println!("horizontal");
+                p.y() == self.start.y() &&
+                    T::zero() <= t &&
+                    t <= T::one()
+            },
+            (None, Some(t)) => { // Vertical line
+                println!("vertical");
+                p.x() == self.start.x() &&
+                    T::zero() <= t &&
+                    t <= T::one()
+            },
+            (Some(t_x), Some(t_y)) => { // All other lines
+                t_x.abs_sub(t_y) <= T::epsilon()  &&
+                    T::zero() <= t_x &&
+                    t_x <= T::one()
             }
+        }
     }
 }
 
@@ -223,14 +231,7 @@ impl<T> Intersects<Polygon<T>> for Polygon<T>
 #[cfg(test)]
 mod test {
     use types::{Coordinate, Point, Line, LineString, Polygon, Bbox};
-    use algorithm::intersects::{Intersects, slope};
-    #[test]
-    fn slope_test() {
-        let line = Line::new(Point::new(0., 0.), Point::new(1., 2.));
-        let vline = Line::new(Point::new(0., 0.), Point::new(0., 3.));
-        assert_eq!(slope(&line), Some(2.));
-        assert_eq!(slope(&vline), None);
-    }
+    use algorithm::intersects::Intersects;
     /// Tests: intersection LineString and LineString
     #[test]
     fn empty_linestring1_test() {
