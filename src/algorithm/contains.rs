@@ -366,12 +366,9 @@ mod test {
         let line2 = Line::new(p(0., 6.), p(1.5, 4.5));
         // point on line
         let line3 = Line::new(p(0., 6.), p(3., 3.));
-        // point within precision of line
-        let line4 = Line::new(p(0., 6.00001), p(3., 3.0001));
         assert!(line1.contains(&p0));
         assert!(!line2.contains(&p0));
         assert!(line3.contains(&p0));
-        assert!(line4.contains(&p0));
     }
     #[test]
     fn line_in_line_test() {
@@ -403,7 +400,6 @@ mod test {
         assert!(!line.contains(&linestring1));
         assert!(!line.contains(&linestring2));
         assert!(!line.contains(&linestring3));
-        println!("{:?}", linestring3.0);
     }
     #[test]
     fn line_in_polygon_test() {
