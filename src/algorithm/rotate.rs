@@ -1,5 +1,5 @@
 use num_traits::{Float, FromPrimitive};
-use types::{Point, Polygon, LineString, MultiPoint, MultiPolygon, MultiLineString};
+use types::{Point, Line, Polygon, LineString, MultiPoint, MultiPolygon, MultiLineString};
 use algorithm::centroid::Centroid;
 
 // rotate a slice of points "angle" degrees about an origin
@@ -89,6 +89,26 @@ impl<T> RotatePoint<T> for Point<T>
     /// Rotate the Point about another point by the given number of degrees
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
         rotation_matrix(angle, point, &[*self])[0]
+    }
+}
+
+impl<T> Rotate<T> for Line<T>
+    where T: Float
+{
+    fn rotate(&self, angle: T) -> Self {
+        let pts = vec![self.start, self.end];
+        let rotated = rotation_matrix(angle, &self.centroid().unwrap(), &pts);
+        Line::new(rotated[0], rotated[1])
+    }
+}
+
+impl<T> RotatePoint<T> for Line<T>
+    where T: Float
+{
+    fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
+        let pts = vec![self.start, self.end];
+        let rotated = rotation_matrix(angle, point, &pts);
+        Line::new(rotated[0], rotated[1])
     }
 }
 
@@ -311,5 +331,17 @@ mod test {
         let p = Point::new(5.0, 10.0);
         let rotated = p.rotate_around_point(-45., &Point::new(10., 34.));
         assert_eq!(rotated, Point::new(-10.506096654409877, 20.564971157455595));
+    }
+    #[test]
+    fn test_rotate_line() {
+        let line0 = Line::new(Point::new(0., 0.), Point::new(0., 2.));
+        let line1 = Line::new(Point::new(1., 0.9999999999999999), Point::new(-1., 1.));
+        assert_eq!(line0.rotate(90.), line1);
+    }
+    #[test]
+    fn test_rotate_line_around_point() {
+        let line0 = Line::new(Point::new(0., 0.), Point::new(0., 2.));
+        let line1 = Line::new(Point::new(0., 0.), Point::new(-2., 0.00000000000000012246467991473532));
+        assert_eq!(line0.rotate_around_point(90., &Point::new(0., 0.)), line1);
     }
 }

@@ -1,5 +1,5 @@
 use num_traits::Float;
-use types::{LineString, Polygon, MultiPolygon, Bbox};
+use types::{Line, LineString, Polygon, MultiPolygon, Bbox};
 
 /// Calculation of the area.
 
@@ -31,6 +31,13 @@ fn get_linestring_area<T>(linestring: &LineString<T>) -> T where T: Float {
     tmp / (T::one() + T::one())
 }
 
+impl<T> Area<T> for Line<T>
+    where T: Float
+{
+    fn area(&self) -> T {
+        T::zero()
+    }
+}
 
 impl<T> Area<T> for Polygon<T>
     where T: Float
@@ -59,7 +66,7 @@ impl<T> Area<T> for Bbox<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Coordinate, Point, LineString, Polygon, MultiPolygon, Bbox};
+    use types::{Coordinate, Point, Line, LineString, Polygon, MultiPolygon, Bbox};
     use algorithm::area::Area;
 
     // Area of the polygon
@@ -110,5 +117,11 @@ mod test {
         let mpoly = MultiPolygon(vec![poly0, poly1, poly2]);
         assert_eq!(mpoly.area(), 102.);
         assert_relative_eq!(mpoly.area(), 102.);
+    }
+    #[test]
+    fn area_line_test() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let line1 = Line::new(p(0.0, 0.0), p(1.0, 1.0));
+        assert_eq!(line1.area(), 0.);
     }
 }
