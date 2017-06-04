@@ -1,5 +1,9 @@
 # Changes
 
+## 0.4.5
+
+* [Add `Line` type (representing a line segment)](https://github.com/georust/rust-geo/pull/118)
+
 ## 0.4.4
 
 * [Quickhull orientation fix](https://github.com/georust/rust-geo/pull/110)
