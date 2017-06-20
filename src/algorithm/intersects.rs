@@ -45,7 +45,7 @@ impl<T> Intersects<Point<T>> for Line<T>
                     t <= T::one()
             },
             (Some(t_x), Some(t_y)) => { // All other lines
-                t_x.abs_sub(t_y) <= T::epsilon()  &&
+                (t_x - t_y).abs() <= T::epsilon()  &&
                     T::zero() <= t_x &&
                     t_x <= T::one()
             }
@@ -442,6 +442,7 @@ mod test {
     #[test]
     fn point_intersects_line_test() {
         let p0 = Point::new(2., 4.);
+        let p1 = Point::new(0., 0.);
         // vertical line
         let line1 = Line::new(Point::new(2., 0.), Point::new(2., 5.));
         // point on line, but outside line segment
@@ -454,6 +455,7 @@ mod test {
         assert!(!p0.intersects(&line2));
         assert!(line3.intersects(&p0));
         assert!(p0.intersects(&line3));
+        assert!(!p1.intersects(&line3));
     }
     #[test]
     fn line_intersects_line_test() {
