@@ -45,7 +45,7 @@ impl<T> Intersects<Point<T>> for Line<T>
                     t <= T::one()
             },
             (Some(t_x), Some(t_y)) => { // All other lines
-                t_x.abs_sub(t_y) <= T::epsilon()  &&
+                (t_x - t_y).abs() <= T::epsilon()  &&
                     T::zero() <= t_x &&
                     t_x <= T::one()
             }
@@ -448,12 +448,28 @@ mod test {
         let line2 = Line::new(Point::new(0., 6.), Point::new(1.5, 4.5));
         // point on line
         let line3 = Line::new(Point::new(0., 6.), Point::new(3., 3.));
+        // point above line with positive slope
+        let line4 = Line::new(Point::new(1., 2.), Point::new(5., 3.));
+        // point below line with positive slope
+        let line5 = Line::new(Point::new(1., 5.), Point::new(5., 6.));
+        // point above line with negative slope
+        let line6 = Line::new(Point::new(1., 2.), Point::new(5., -3.));
+        // point below line with negative slope
+        let line7 = Line::new(Point::new(1., 6.), Point::new(5., 5.));
         assert!(line1.intersects(&p0));
         assert!(p0.intersects(&line1));
         assert!(!line2.intersects(&p0));
         assert!(!p0.intersects(&line2));
         assert!(line3.intersects(&p0));
         assert!(p0.intersects(&line3));
+        assert!(!line4.intersects(&p0));
+        assert!(!p0.intersects(&line4));
+        assert!(!line5.intersects(&p0));
+        assert!(!p0.intersects(&line5));
+        assert!(!line6.intersects(&p0));
+        assert!(!p0.intersects(&line6));
+        assert!(!line7.intersects(&p0));
+        assert!(!p0.intersects(&line7));
     }
     #[test]
     fn line_intersects_line_test() {
