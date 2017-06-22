@@ -1,4 +1,6 @@
+extern crate core;
 extern crate num_traits;
+extern crate float_ord;
 
 pub use traits::ToGeo;
 pub use types::*;
