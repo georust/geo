@@ -318,7 +318,7 @@ impl<T> AddAssign for Bbox<T>
 #[derive(PartialEq, Clone, Debug)]
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Line<T>
     where T: Float
 {
@@ -341,6 +341,15 @@ impl<T> Line<T>
     /// ```
     pub fn new(start: Point<T>, end: Point<T>) -> Line<T> {
         Line {start: start, end: end}
+    }
+}
+
+impl<T> PartialEq for Line<T>
+    where T: Float
+{
+    fn eq(&self, other: &Self) -> bool {
+        (self.start == other.start && self.end == other.end) ||
+            (self.start == other.end && self.end == other.start)
     }
 }
 
@@ -427,5 +436,17 @@ mod test {
 
         assert_eq!(p.exterior, exterior);
         assert_eq!(p.interiors, interiors);
+    }
+
+    #[test]
+    fn test_line_equality() {
+        let l0 = Line::new(Point::new(0., 0.), Point::new(1., 2.));
+        let l1 = Line::new(Point::new(0., 0.), Point::new(1., 2.));
+        let l2 = Line::new(Point::new(1., 2.), Point::new(0., 0.));
+        let l3 = Line::new(Point::new(0., 0.), Point::new(4., 5.));
+
+        assert_eq!(l0, l1);
+        assert_eq!(l0, l2);
+        assert_ne!(l0, l3);
     }
 }
