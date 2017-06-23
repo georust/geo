@@ -4,6 +4,10 @@ pub mod centroid;
 pub mod contains;
 /// Checks if the geometry A intersects the geometry B.
 pub mod intersects;
+/// Construct the intersections of geometries.
+pub mod intersection;
+/// Implements total ordering on points
+pub mod point_ord;
 /// Returns the area of the surface of a geometry.
 pub mod area;
 /// Returns the length of a line.
