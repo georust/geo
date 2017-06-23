@@ -116,42 +116,72 @@ mod test {
 
     #[test]
     fn test_line_line_intersection(){
-        let degenerate_line = Line::new(Point::new(0., 0.), Point::new(0., 0.));
-        let l0 = Line::new(Point::new(0., 0.), Point::new(8., 6.));
-        let l1 = Line::new(Point::new(0., 6.), Point::new(8., 0.));
-        let l2 = Line::new(Point::new(8., 0.), Point::new(8., 10.));
-        let l3 = Line::new(Point::new(0., 0.), Point::new(4., 3.));
-        let l4 = Line::new(Point::new(-2., -1.5), Point::new(2., 1.5));
-        assert_eq!(l0.intersection(&degenerate_line),
-                   Some(LineIntersection::Point(Point::new(0., 0.))));
-        assert_eq!(l0.intersection(&l0), Some(LineIntersection::Line(l0.clone())));
-        assert_eq!(l0.intersection(&l1), Some(LineIntersection::Point(Point::new(4., 3.))));
-        assert_eq!(l0.intersection(&l2), Some(LineIntersection::Point(Point::new(8., 6.))));
-        assert_eq!(l0.intersection(&l3), Some(LineIntersection::Line(l3.clone())));
-        assert_eq!(l0.intersection(&l4),
-                   Some(LineIntersection::Line(Line::new(Point::new(0., 0.), Point::new(2., 1.5)))));
+        // degenerate lines
+        let l0 = Line::new(Point::new(0., 0.), Point::new(0., 0.));
+        let l1 = Line::new(Point::new(4., 3.), Point::new(4., 3.));
+        // co-linear lines (along y = (4/3)x)
+        let l2 = Line::new(Point::new(0., 0.), Point::new(8., 6.));
+        let l3 = Line::new(Point::new(12., 9.), Point::new(8., 6.));
+        let l4 = Line::new(Point::new(2., 1.5), Point::new(4., 3.));
+        let l5 = Line::new(Point::new(4., 3.), Point::new(12., 9.));
+        // parallel to l2-l5
+        let l6 = Line::new(Point::new(12., 6.), Point::new(8., 3.));
+        // perpendicular to l2-l6
+        let l7 = Line::new(Point::new(0., 6.), Point::new(8., 0.));
 
-        assert_eq!(l1.intersection(&degenerate_line), None);
-        assert_eq!(l1.intersection(&l0), Some(LineIntersection::Point(Point::new(4., 3.))));
-        assert_eq!(l1.intersection(&l1), Some(LineIntersection::Line(l1.clone())));
-        assert_eq!(l1.intersection(&l2), Some(LineIntersection::Point(Point::new(8., 0.))));
-        assert_eq!(l1.intersection(&l3), Some(LineIntersection::Point(Point::new(4., 3.))));
-        assert_eq!(l1.intersection(&l4), None);
+        // degenerate intersection
+        assert_eq!(l0.intersection(&l0),
+                   Some(LineIntersection::Point(l0.start)));
 
-        assert_eq!(l2.intersection(&degenerate_line), None);
-        assert_eq!(l2.intersection(&l0), Some(LineIntersection::Point(Point::new(8., 6.))));
-        assert_eq!(l2.intersection(&l1), Some(LineIntersection::Point(Point::new(8., 0.))));
-        assert_eq!(l2.intersection(&l2), Some(LineIntersection::Line(l2.clone())));
-        assert_eq!(l2.intersection(&l3), None);
-        assert_eq!(l2.intersection(&l4), None);
+        assert_eq!(l0.intersection(&l1), None);
+        assert_eq!(l1.intersection(&l0), None);
 
-        assert_eq!(l3.intersection(&degenerate_line),
-                   Some(LineIntersection::Point(Point::new(0., 0.))));
-        assert_eq!(l3.intersection(&l0), Some(LineIntersection::Line(l3.clone())));
-        assert_eq!(l3.intersection(&l1), Some(LineIntersection::Point(Point::new(4., 3.))));
-        assert_eq!(l3.intersection(&l2), None);
-        assert_eq!(l3.intersection(&l3), Some(LineIntersection::Line(l3.clone())));
-        assert_eq!(l3.intersection(&l4),
-                   Some(LineIntersection::Line(Line::new(Point::new(0., 0.), Point::new(2., 1.5)))));
+        assert_eq!(l0.intersection(&l2),
+                   Some(LineIntersection::Point(l0.start)));
+        assert_eq!(l2.intersection(&l0),
+                   Some(LineIntersection::Point(l0.start)));
+
+        assert_eq!(l0.intersection(&l6), None);
+        assert_eq!(l6.intersection(&l0), None);
+
+        assert_eq!(l1.intersection(&l2),
+                   Some(LineIntersection::Point(l1.start.clone())));
+        assert_eq!(l2.intersection(&l1),
+                   Some(LineIntersection::Point(l1.start.clone())));
+
+        // co-linear intersection
+        assert_eq!(l2.intersection(&l2),
+                   Some(LineIntersection::Line(l2.clone())));
+
+        assert_eq!(l2.intersection(&l3),
+                   Some(LineIntersection::Point(Point::new(8., 6.))));
+        assert_eq!(l3.intersection(&l2),
+                   Some(LineIntersection::Point(Point::new(8., 6.))));
+
+        assert_eq!(l2.intersection(&l4),
+                   Some(LineIntersection::Line(l4.clone())));
+        assert_eq!(l4.intersection(&l2),
+                   Some(LineIntersection::Line(l4.clone())));
+
+        assert_eq!(l2.intersection(&l5),
+                   Some(LineIntersection::Line(Line::new(Point::new(4., 3.), Point::new(8., 6.)))));
+        assert_eq!(l5.intersection(&l2),
+                   Some(LineIntersection::Line(Line::new(Point::new(4., 3.), Point::new(8., 6.)))));
+
+        assert_eq!(l3.intersection(&l4), None);
+        assert_eq!(l4.intersection(&l3), None);
+
+        // parallel intersection
+        assert_eq!(l2.intersection(&l6), None);
+        assert_eq!(l6.intersection(&l2), None);
+
+        // interior intersection
+        assert_eq!(l2.intersection(&l7),
+                   Some(LineIntersection::Point(Point::new(4., 3.))));
+        assert_eq!(l7.intersection(&l2),
+                   Some(LineIntersection::Point(Point::new(4., 3.))));
+
+        assert_eq!(l7.intersection(&l6), None);
+        assert_eq!(l6.intersection(&l7), None);
     }
 }
