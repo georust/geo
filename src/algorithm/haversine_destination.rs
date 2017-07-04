@@ -3,29 +3,24 @@ use types::Point;
 
 /// Returns a new Point using the distance to the existing Point and a bearing for the direction
 
-pub trait Destination<T: Float> {
+pub trait HaversineDestination<T: Float> {
     /// Returns a new Point using distance to the existing Point and a bearing for the direction
     ///
     /// ```
-    /// # extern crate geo;
-    /// # #[macro_use] extern crate approx;
-    /// #
     /// use geo::Point;
-    /// use geo::algorithm::destination::Destination;
+    /// use geo::algorithm::haversine_destination::HaversineDestination;
     ///
-    /// # fn main() {
     /// let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
-    /// let p_2 = p_1.destination(45., 10000.);
+    /// let p_2 = p_1.haversine_destination(45., 10000.);
     /// assert_eq!(p_2, Point::<f64>::new(9.274410083250379, 48.84033282787534))
-    /// # }
     /// ```
-    fn destination(&self, bearing: T, distance: T) -> Point<T>;
+    fn haversine_destination(&self, bearing: T, distance: T) -> Point<T>;
 }
 
-impl<T> Destination<T> for Point<T>
+impl<T> HaversineDestination<T> for Point<T>
     where T: Float + FromPrimitive
 {
-    fn destination(&self, bearing: T, distance: T) -> Point<T> {
+    fn haversine_destination(&self, bearing: T, distance: T) -> Point<T> {
         let center_lng = self.x().to_radians();
         let center_lat = self.y().to_radians();
         let bearing_rad = bearing.to_radians();
@@ -47,14 +42,14 @@ impl<T> Destination<T> for Point<T>
 }
 
 #[cfg(test)]
-mod destination {
+mod test {
     use super::*;
     use algorithm::haversine_distance::HaversineDistance;
 
     #[test]
     fn returns_a_new_point() {
         let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
-        let p_2 = p_1.destination(45., 10000.);
+        let p_2 = p_1.haversine_destination(45., 10000.);
         assert_eq!(p_2, Point::<f64>::new(9.274410083250379, 48.84033282787534));
         let distance = p_1.haversine_distance(&p_2);
         assert_relative_eq!(distance, 10000., epsilon = 1.0e-6)

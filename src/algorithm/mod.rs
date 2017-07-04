@@ -11,7 +11,7 @@ pub mod length;
 /// Returns the Euclidean distance between two geometries.
 pub mod distance;
 /// Returns a new Point using distance and bearing.
-pub mod destination;
+pub mod haversine_destination;
 /// Returns the Haversine distance between two geometries.
 pub mod haversine_distance;
 /// Returns the Bbox of a geometry.
