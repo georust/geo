@@ -344,7 +344,7 @@ impl<T> Line<T>
     }
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
