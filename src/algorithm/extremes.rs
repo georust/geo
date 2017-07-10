@@ -1,7 +1,6 @@
 use num_traits::{Float, Signed};
-use types::{Point, LineString, Polygon, MultiPoint, MultiPolygon};
+use types::{Point, Polygon, MultiPoint, MultiPolygon};
 use algorithm::convexhull::ConvexHull;
-use algorithm::orient::{Orient, Direction};
 use types::{Extremes, ExtremePoint};
 
 // Useful direction vectors, aligned with x and y axes:
@@ -11,6 +10,9 @@ use types::{Extremes, ExtremePoint};
 // -1, 0. = smallest x
 
 // various tests for vector orientation relative to a direction vector u
+
+// Not currently used, but maybe useful in the future
+#[allow(dead_code)]
 fn up<T>(u: &Point<T>, v: &Point<T>) -> bool
     where T: Float
 {
@@ -31,6 +33,8 @@ fn above<T>(u: &Point<T>, vi: &Point<T>, vj: &Point<T>) -> bool
 }
 
 // true if Vi is below Vj
+// Not currently used, but maybe useful in the future
+#[allow(dead_code)]
 fn below<T>(u: &Point<T>, vi: &Point<T>, vj: &Point<T>) -> bool
     where T: Float
 {
@@ -215,7 +219,8 @@ impl<T, G> ExtremePoints<T> for G
 
 #[cfg(test)]
 mod test {
-    use types::Point;
+
+    use types::{Point, LineString};
     use super::*;
     #[test]
     fn test_polygon_extreme_x() {
@@ -282,7 +287,7 @@ mod test {
     #[test]
     fn test_polygon_extreme_wrapper_convex() {
         // convex, with a bump on the top-right edge
-        let mut points_raw =
+        let points_raw =
             vec![(1.0, 0.0), (2.0, 1.0), (1.75, 1.75), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
         let points = points_raw
             .iter()

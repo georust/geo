@@ -319,6 +319,32 @@ impl<T> AddAssign for Bbox<T>
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
+pub struct Line<T>
+    where T: Float
+{
+    pub start: Point<T>,
+    pub end: Point<T>
+}
+
+impl<T> Line<T>
+    where T: Float
+{
+    /// Creates a new line segment.
+    ///
+    /// ```
+    /// use geo::{Point, Line};
+    ///
+    /// let line = Line::new(Point::new(0., 0.), Point::new(1., 2.));
+    ///
+    /// assert_eq!(line.start, Point::new(0., 0.));
+    /// assert_eq!(line.end, Point::new(1., 2.));
+    /// ```
+    pub fn new(start: Point<T>, end: Point<T>) -> Line<T> {
+        Line {start: start, end: end}
+    }
+}
+
+#[derive(PartialEq, Clone, Debug)]
 pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]

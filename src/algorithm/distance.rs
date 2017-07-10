@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::{Float, ToPrimitive};
-use types::{Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
+use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 use algorithm::contains::Contains;
 use num_traits::pow::pow;
 
@@ -263,9 +263,26 @@ impl<T> Distance<T, Point<T>> for LineString<T>
     }
 }
 
+impl<T> Distance<T, Point<T>> for Line<T>
+    where T: Float
+{
+    /// Minimum distance from a Line to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        line_segment_distance(point, &self.start, &self.end)
+    }
+}
+impl<T> Distance<T, Line<T>> for Point<T>
+    where T: Float
+{
+    /// Minimum distance from a Line to a Point
+    fn distance(&self, line: &Line<T>) -> T {
+        line.distance(self)
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use types::{Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
+    use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
     use algorithm::distance::{Distance, line_segment_distance};
 
     #[test]
@@ -456,5 +473,20 @@ mod test {
         let mp = MultiPoint(v);
         let p = Point::new(50.0, 50.0);
         assert_eq!(p.distance(&mp), 64.03124237432849)
+    }
+    #[test]
+    fn distance_line_test() {
+        let line0 = Line::new(Point::new(0., 0.), Point::new(5., 0.));
+        let p0 = Point::new(2., 3.);
+        let p1 = Point::new(3., 0.);
+        let p2 = Point::new(6., 0.);
+        assert_eq!(line0.distance(&p0), 3.);
+        assert_eq!(p0.distance(&line0), 3.);
+
+        assert_eq!(line0.distance(&p1), 0.);
+        assert_eq!(p1.distance(&line0), 0.);
+
+        assert_eq!(line0.distance(&p2), 1.);
+        assert_eq!(p2.distance(&line0), 1.);
     }
 }
