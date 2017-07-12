@@ -7,7 +7,7 @@ use num_traits::{Float, ToPrimitive};
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Coordinate<T>
     where T: Float
 {
@@ -15,7 +15,7 @@ pub struct Coordinate<T>
     pub y: T,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Bbox<T>
     where T: Float
 {
@@ -25,7 +25,7 @@ pub struct Bbox<T>
     pub ymax: T,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Extremes {
     pub ymin: usize,
     pub xmax: usize,
@@ -44,7 +44,7 @@ impl From<Vec<usize>> for Extremes {
     }
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct ExtremePoint<T>
     where T: Float
  {
@@ -54,7 +54,7 @@ pub struct ExtremePoint<T>
     pub xmin: Point<T>,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
 impl<T> Point<T>
@@ -315,10 +315,10 @@ impl<T> AddAssign for Bbox<T>
 }
 
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Line<T>
     where T: Float
 {
@@ -344,13 +344,13 @@ impl<T> Line<T>
     }
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Polygon<T>
     where T: Float
 {
@@ -379,7 +379,7 @@ impl<T> Polygon<T>
     }
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug)]
