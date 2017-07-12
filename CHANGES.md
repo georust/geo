@@ -1,5 +1,9 @@
 # Changes
 
+## 0.4.7
+
+* [Serializing/deserializing via serde](https://github.com/georust/rust-geo/pull/125)
+
 ## 0.4.6
 
 * [Fix incorrect usage of `abs_sub`](https://github.com/georust/rust-geo/pull/120)
