@@ -10,6 +10,8 @@ pub mod area;
 pub mod length;
 /// Returns the Euclidean distance between two geometries.
 pub mod distance;
+/// Returns a new Point using distance and bearing.
+pub mod haversine_destination;
 /// Returns the Haversine distance between two geometries.
 pub mod haversine_distance;
 /// Returns the Bbox of a geometry.
@@ -22,7 +24,7 @@ pub mod simplifyvw;
 pub mod convexhull;
 /// Orients a Polygon's exterior and interior rings.
 pub mod orient;
-/// Returns the extreme indices of a `Polygon`, `MultiPolygon`, or `MultiPoint`. 
+/// Returns the extreme indices of a `Polygon`, `MultiPolygon`, or `MultiPoint`.
 pub mod extremes;
 /// Rotates a geometry around either its centroid or a point by an angle, given in degrees.
 pub mod rotate;
