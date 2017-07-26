@@ -398,10 +398,82 @@ pub enum Geometry<T>
     GeometryCollection(GeometryCollection<T>)
 }
 
+impl<T> From<Vec<[T; 2]>> for LineString<T>
+    where T: Float
+{
+    fn from(v: Vec<[T; 2]>) -> Self
+    where T: Float
+    {
+        LineString::new(v.iter().map(|e| { Point::new(e[0], e[1]) }).collect()).unwrap()
+    }
+}
+
+impl<T> From<Vec<(T, T)>> for LineString<T>
+    where T: Float
+{
+    fn from(v: Vec<(T, T)>) -> Self 
+    where T: Float
+    {
+        LineString::new(v.iter().map(|e| { Point::new(e.0, e.1) }).collect()).unwrap()
+    }
+}
+
+// Empty LineStrings should be allowed, 1-element LineStrings should not
+impl<T> LineString<T>
+    where T: Float
+{
+    pub fn new(v: Vec<Point<T>>) -> Result<LineString<T>, String> {
+        Self::_new(v)
+    }
+
+    fn _new(v: Vec<Point<T>>) -> Result<LineString<T>, String> {
+        match v.len() {
+            1 => Err("A LineString must have at least two Points".to_string()),
+            _ => Ok(LineString(v)),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use ::types::*;
 
+    #[test]
+    #[should_panic]
+    // You can't construct a LineString with one point
+    fn invalid_linestring_constructor_test() {
+        let mut v = vec![];
+        let p = Point::new(1.0, 2.0);
+        v.push(p);
+        let _ = LineString::new(v).unwrap();
+    }
+    #[test]
+    fn linestring_constructor_test() {
+        let mut v = vec![];
+        let p1 = Point::new(1.0, 2.0);
+        let p2 = Point::new(3.0, 4.0);
+        v.push(p1);
+        v.push(p2);
+        let _ = LineString::new(v).unwrap();
+    }
+    #[test]
+    fn into_test() {
+        let v1 = vec![(1.0, 2.0), (3.0, 4.0)];
+        let _ = LineString::from(v1);
+        let v2 = vec![[1.0, 2.0], [3.0, 4.0]];
+        let _ = LineString::from(v2);
+        let v3 = vec![(1.0, 2.0), (3.0, 4.0)];
+        let _: LineString<_> = v3.into();
+        let v4 = vec![[1.0, 2.0], [3.0, 4.0]];
+        let _: LineString<_> = v4.into();
+    }
+    #[test]
+    #[should_panic]
+    // 1-element LineStrings aren't allowed
+    fn into_test_bad() {
+        let v4 = vec![[1.0, 2.0]];
+        let _: LineString<_> = v4.into();
+    }
     #[test]
     fn type_test() {
         let c = Coordinate {

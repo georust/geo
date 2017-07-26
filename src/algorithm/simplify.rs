@@ -29,9 +29,7 @@ fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     let mut distance: T;
 
     for (i, _) in points.iter().enumerate().take(points.len() - 1).skip(1) {
-        distance = point_line_distance(&points[i],
-                                       &points[0],
-                                       &*points.last().unwrap());
+        distance = point_line_distance(&points[i], &points[0], &*points.last().unwrap());
         if distance > dmax {
             index = i;
             dmax = distance;
@@ -66,7 +64,7 @@ pub trait Simplify<T, Epsilon = T> {
     /// compare.push(Point::new(5.0, 4.0));
     /// compare.push(Point::new(11.0, 5.5));
     /// compare.push(Point::new(27.8, 0.1));
-    /// let ls_compare = LineString(compare);
+    /// let ls_compare = LineString::new(compare).unwrap();
     /// let simplified = linestring.simplify(&1.0);
     /// assert_eq!(simplified, ls_compare)
     /// ```
@@ -77,7 +75,8 @@ impl<T> Simplify<T> for LineString<T>
     where T: Float
 {
     fn simplify(&self, epsilon: &T) -> LineString<T> {
-        LineString(rdp(&self.0, epsilon))
+        // OK to use unwrap(), since rdp can't return an invalid LineString
+        LineString::new(rdp(&self.0, epsilon)).unwrap()
     }
 }
 
