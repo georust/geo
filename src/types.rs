@@ -57,6 +57,8 @@ pub struct ExtremePoint<T>
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
+impl<T: Float> From<Coordinate<T>> for Point<T> { fn from(x: Coordinate<T>) -> Point<T> { Point(x) } }
+
 impl<T> Point<T>
     where T: Float + ToPrimitive
 {
