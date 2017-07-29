@@ -320,6 +320,8 @@ impl<T> AddAssign for Bbox<T>
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
+impl<T: Float> From<Point<T>> for MultiPoint<T> { fn from(x: Point<T>) -> MultiPoint<T> { MultiPoint(vec![x]) } }
+
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Line<T>
     where T: Float
@@ -351,6 +353,8 @@ pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
+
+impl<T: Float> From<LineString<T>> for MultiLineString<T> { fn from(x: LineString<T>) -> MultiLineString<T> { MultiLineString(vec![x]) } }
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Polygon<T>
@@ -384,8 +388,12 @@ impl<T> Polygon<T>
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
 
+impl<T: Float> From<Polygon<T>> for MultiPolygon<T> { fn from(x: Polygon<T>) -> MultiPolygon<T> { MultiPolygon(vec![x]) } }
+
 #[derive(PartialEq, Clone, Debug)]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float;
+
+impl<T: Float> From<Geometry<T>> for GeometryCollection<T> { fn from(x: Geometry<T>) -> GeometryCollection<T> { GeometryCollection(vec![x]) } }
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Geometry<T>
