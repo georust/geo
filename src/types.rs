@@ -57,6 +57,8 @@ pub struct ExtremePoint<T>
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
+impl<T: Float> From<Coordinate<T>> for Point<T> { fn from(x: Coordinate<T>) -> Point<T> { Point(x) } }
+
 impl<T> Point<T>
     where T: Float + ToPrimitive
 {
@@ -318,6 +320,8 @@ impl<T> AddAssign for Bbox<T>
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
+impl<T: Float> From<Point<T>> for MultiPoint<T> { fn from(x: Point<T>) -> MultiPoint<T> { MultiPoint(vec![x]) } }
+
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Line<T>
     where T: Float
@@ -349,6 +353,8 @@ pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
+
+impl<T: Float> From<LineString<T>> for MultiLineString<T> { fn from(x: LineString<T>) -> MultiLineString<T> { MultiLineString(vec![x]) } }
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Polygon<T>
@@ -382,8 +388,12 @@ impl<T> Polygon<T>
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
 
+impl<T: Float> From<Polygon<T>> for MultiPolygon<T> { fn from(x: Polygon<T>) -> MultiPolygon<T> { MultiPolygon(vec![x]) } }
+
 #[derive(PartialEq, Clone, Debug)]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float;
+
+impl<T: Float> From<Geometry<T>> for GeometryCollection<T> { fn from(x: Geometry<T>) -> GeometryCollection<T> { GeometryCollection(vec![x]) } }
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Geometry<T>
@@ -397,6 +407,14 @@ pub enum Geometry<T>
     MultiPolygon(MultiPolygon<T>),
     GeometryCollection(GeometryCollection<T>)
 }
+
+impl<T: Float> From<Point<T>> for Geometry<T> { fn from(x: Point<T>) -> Geometry<T> { Geometry::Point(x) } }
+impl<T: Float> From<LineString<T>> for Geometry<T> { fn from(x: LineString<T>) -> Geometry<T> { Geometry::LineString(x) } }
+impl<T: Float> From<Polygon<T>> for Geometry<T> { fn from(x: Polygon<T>) -> Geometry<T> { Geometry::Polygon(x) } }
+impl<T: Float> From<MultiPoint<T>> for Geometry<T> { fn from(x: MultiPoint<T>) -> Geometry<T> { Geometry::MultiPoint(x) } }
+impl<T: Float> From<MultiLineString<T>> for Geometry<T> { fn from(x: MultiLineString<T>) -> Geometry<T> { Geometry::MultiLineString(x) } }
+impl<T: Float> From<MultiPolygon<T>> for Geometry<T> { fn from(x: MultiPolygon<T>) -> Geometry<T> { Geometry::MultiPolygon(x) } }
+impl<T: Float> From<GeometryCollection<T>> for Geometry<T> { fn from(x: GeometryCollection<T>) -> Geometry<T> { Geometry::GeometryCollection(x) } }
 
 #[cfg(test)]
 mod test {
