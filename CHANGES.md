@@ -1,5 +1,9 @@
 # Changes
 
+## 0.4.9
+
+* [Add `Into` trait implementations.](https://github.com/georust/rust-geo/pull/129)
+
 ## 0.4.8
 
 * [Add `HaversineDestination` algorithm trait](https://github.com/georust/rust-geo/pull/124)
