@@ -15,6 +15,12 @@ pub struct Coordinate<T>
     pub y: T,
 }
 
+impl<T: Float> From<(T, T)> for Coordinate<T> {
+    fn from(coords: (T, T)) -> Self {
+        Coordinate{ x: coords.0, y: coords.1 }
+    }
+}
+
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Bbox<T>
     where T: Float
