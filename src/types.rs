@@ -59,6 +59,12 @@ pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
 impl<T: Float> From<Coordinate<T>> for Point<T> { fn from(x: Coordinate<T>) -> Point<T> { Point(x) } }
 
+impl<T: Float> From<(T, T)> for Point<T> {
+    fn from(coords: (T, T)) -> Point<T> {
+        Point::new(coords.0, coords.1)
+    }
+}
+
 impl<T> Point<T>
     where T: Float + ToPrimitive
 {
@@ -433,6 +439,11 @@ mod test {
         assert_eq!(c, c2);
         assert_eq!(c.x, c2.x);
         assert_eq!(c.y, c2.y);
+
+        let p: Point<f32> = (0f32, 1f32).into();
+        assert_eq!(p.x(), 0.);
+        assert_eq!(p.y(), 1.);
+
     }
 
     #[test]
