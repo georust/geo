@@ -62,6 +62,16 @@ pub struct ExtremePoint<T>
     pub xmin: Point<T>,
 }
 
+/// A single Point in 2D space.
+///
+/// Points can be created using the `new(x, y)` constructor, or from a `Coordinate` or pair of points.
+///
+/// ```
+/// use geo::{Point, Coordinate};
+/// let p1: Point<f64> = (0., 1.).into();
+/// let c = Coordinate{ x: 10., y: 20.};
+/// let p2: Point<f64> = c.into();
+/// ```
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
@@ -335,6 +345,17 @@ impl<T> AddAssign for Bbox<T>
 }
 
 
+/// A collection of [`Point`s](struct.Point.html).
+///
+/// Iterating over a `MultiPoint` yields the `Point`s inside.
+///
+/// ```
+/// use geo::{MultiPoint, Point};
+/// let points: MultiPoint<_> = vec![(0., 0.), (1., 2.)].into();
+/// for point in points {
+///     println!("Point x = {}, y = {}", point.x(), point.y());
+/// }
+/// ```
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
@@ -397,6 +418,40 @@ impl<T> Line<T>
     }
 }
 
+/// A LineString, which is an ordered collection of [`Point`s](struct.Point.html).
+///
+/// Create a LineString by calling it directly:
+///
+/// ```
+/// use geo::{LineString, Point};
+/// let line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
+/// ```
+///
+/// Converting a `Vec` of `Point`-like things:
+///
+/// ```
+/// # use geo::{LineString, Point};
+/// let line: LineString<f32> = vec![(0., 0.), (10., 0.)].into();
+/// ```
+///
+/// Or `collect`ing from a Point iterator
+///
+/// ```
+/// # use geo::{LineString, Point};
+/// let mut points = vec![Point::new(0., 0.), Point::new(10., 0.)];
+/// let line: LineString<f32> = points.into_iter().collect();
+/// ```
+///
+/// You can iterate over the points in the `LineString`
+///
+/// ```
+/// use geo::{LineString, Point};
+/// let line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
+/// for point in line {
+///     println!("Point x = {}, y = {}", point.x(), point.y());
+/// }
+/// ```
+///
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
@@ -424,6 +479,11 @@ impl<T: Float> IntoIterator for LineString<T> {
     }
 }
 
+/// A collection of [`LineString`s](struct.LineString.html).
+///
+/// Can be created from a `Vec` of `LineString`s, or from an Iterator which yields LineStrings.
+///
+/// Iterating over this objects, yields the component LineStrings.
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
 
@@ -448,6 +508,9 @@ impl<T: Float> IntoIterator for MultiLineString<T> {
     }
 }
 
+/// A 2D polygon area.
+///
+/// It has one exterior ring, and zero or more interior rings.
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Polygon<T>
     where T: Float
@@ -477,6 +540,11 @@ impl<T> Polygon<T>
     }
 }
 
+/// A collection of [`Polygon`s](struct.Polygon.html).
+///
+/// Can be created from a `Vec` of `Polygon`s, or `collect`ed from an Iterator which yields `Polygon`s.
+///
+/// Iterating over this objects, yields the component Polygons.
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
 
@@ -501,6 +569,11 @@ impl<T: Float> IntoIterator for MultiPolygon<T> {
     }
 }
 
+/// A collection of [`Geometry`s](enum.Geometry.html).
+///
+/// Can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
+///
+/// Iterating over this objects, yields the component Geometries.
 #[derive(PartialEq, Clone, Debug)]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float;
 
@@ -525,6 +598,10 @@ impl<T: Float> IntoIterator for GeometryCollection<T> {
     }
 }
 
+/// An enum representing any possible geomtry type.
+///
+/// All types can be converted to a `Geometry` using the `.into()` (as part of the
+/// `std::convert::Into` pattern).
 #[derive(PartialEq, Clone, Debug)]
 pub enum Geometry<T>
     where T: Float
