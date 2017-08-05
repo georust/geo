@@ -30,3 +30,5 @@ pub mod extremes;
 pub mod rotate;
 /// Translates a geometry along the given offsets.
 pub mod translate;
+
+pub mod shoelace_formula;
