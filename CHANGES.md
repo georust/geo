@@ -1,5 +1,9 @@
 # Changes
 
+## 0.4.10
+
+* [Add `Translation` trait.](https://github.com/georust/rust-geo/pull/128)
+
 ## 0.4.9
 
 * [Add `Into` trait implementations.](https://github.com/georust/rust-geo/pull/129)
