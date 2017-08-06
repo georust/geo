@@ -2,6 +2,9 @@ use std::ops::Add;
 use std::ops::AddAssign;
 use std::ops::Neg;
 use std::ops::Sub;
+use std::cmp::Ordering;
+
+use algorithm::orient::{signed_ring_area, WindingOrder};
 
 use std::iter::{Iterator, FromIterator};
 
@@ -479,6 +482,102 @@ impl<T: Float> IntoIterator for LineString<T> {
     }
 }
 
+impl<T: Float> LineString<T> {
+
+    /// Returns the winding order of this line. None if there is no valid winding order
+    pub fn winding_order(&self) -> Option<WindingOrder> {
+        match signed_ring_area(self).partial_cmp(&T::zero()) {
+            None => None,
+            Some(Ordering::Equal) => None,
+            Some(Ordering::Less) => Some(WindingOrder::Clockwise),
+            Some(Ordering::Greater) => Some(WindingOrder::CounterClockwise),
+        }
+    }
+
+    /// True iff this line is wound clockwise, false if it's counter-clockwise or there's no valid
+    /// winding order
+    pub fn is_cw(&self) -> bool {
+        self.winding_order() == Some(WindingOrder::Clockwise)
+    }
+
+    /// True iff this line is wound counter-clockwise, false if it's clockwise or there's no valid
+    /// winding order
+    pub fn is_ccw(&self) -> bool {
+        self.winding_order() == Some(WindingOrder::CounterClockwise)
+    }
+
+    /// Iterate over the points in a clockwise order
+    ///
+    /// The Linestring isn't changed, and the points are returned either in order, or in reverse
+    /// order, so that the resultant order makes it appear clockwise.
+    ///
+    /// If there is no valid winding order, what points there are, are returned in the order they
+    /// are stored.
+    pub fn points_clockwise<'a>(&'a self) -> Box<Iterator<Item=&'a Point<T>> + 'a> {
+        match self.winding_order() {
+            Some(WindingOrder::Clockwise) => Box::new(self.0.iter()),
+            Some(WindingOrder::CounterClockwise) => Box::new(self.0.iter().rev()),
+            None => Box::new(self.0.iter()),
+        }
+    }
+
+    /// Iterate over the points in a counter-clockwise order
+    ///
+    /// The Linestring isn't changed, and the points are returned either in order, or in reverse
+    /// order, so that the resultant order makes it appear counter-clockwise
+    ///
+    /// If there is no valid winding order, what points there are, are returned in the order they
+    /// are stored.
+    pub fn points_counterclockwise<'a>(&'a self) -> Box<Iterator<Item=&'a Point<T>> + 'a> {
+        match self.winding_order() {
+            Some(WindingOrder::Clockwise) => Box::new(self.0.iter().rev()),
+            Some(WindingOrder::CounterClockwise) => Box::new(self.0.iter()),
+            None => Box::new(self.0.iter()),
+        }
+    }
+
+    /// Return a clone of this linestring, but in the specified winding order
+    pub fn clone_to_winding_order(&self, winding_order: WindingOrder) -> Self {
+        let mut new = self.clone();
+        new.make_winding_order(winding_order);
+        new
+    }
+
+    /// Change the winding order so that it is in this winding order
+    pub fn make_winding_order(&mut self, winding_order: WindingOrder) {
+        match winding_order {
+            WindingOrder::Clockwise => self.make_clockwise_winding(),
+            WindingOrder::CounterClockwise => self.make_counterclockwise_winding(),
+        }
+    }
+
+    /// Change this line's points so they are in clockwise winding order
+    ///
+    /// If there is no valid winding order, the line isn't changed.
+    pub fn make_clockwise_winding(&mut self) {
+        match self.winding_order() {
+            Some(WindingOrder::Clockwise) => {},
+            Some(WindingOrder::CounterClockwise) => {
+                self.0.reverse();
+            },
+            None => {},
+        }
+    }
+
+    /// Change this line's points so they are in counterclockwise winding order
+    ///
+    /// If there is no valid winding order, the line isn't changed.
+    pub fn make_counterclockwise_winding(&mut self) {
+        match self.winding_order() {
+            Some(WindingOrder::Clockwise) => {
+                self.0.reverse();
+            },
+            Some(WindingOrder::CounterClockwise) => {},
+            None => {},
+        }
+    }
+}
+
 /// A collection of [`LineString`s](struct.LineString.html).
 ///
 /// Can be created from a `Vec` of `LineString`s, or from an Iterator which yields LineStrings.
@@ -656,6 +755,70 @@ mod test {
 
         assert_eq!(p.exterior, exterior);
         assert_eq!(p.interiors, interiors);
+        }
+
+    #[test]
+    fn winding_order() {
+        // 3 points forming a triangle
+        let a = Point::new(0., 0.);
+        let b = Point::new(2., 0.);
+        let c = Point::new(1., 2.);
+
+        // That triangle, but in clockwise ordering
+        let cw_line = LineString(vec![a, c, b, a].clone());
+        // That triangle, but in counterclockwise ordering
+        let ccw_line = LineString(vec![a, b, c, a].clone());
+
+        assert_eq!(cw_line.winding_order(), Some(WindingOrder::Clockwise));
+        assert_eq!(cw_line.is_cw(), true);
+        assert_eq!(cw_line.is_ccw(), false);
+        assert_eq!(ccw_line.winding_order(), Some(WindingOrder::CounterClockwise));
+        assert_eq!(ccw_line.is_cw(), false);
+        assert_eq!(ccw_line.is_ccw(), true);
+
+        let cw_points1: Vec<_> = cw_line.points_clockwise().cloned().collect();
+        assert_eq!(cw_points1.len(), 4);
+        assert_eq!(cw_points1[0], a);
+        assert_eq!(cw_points1[1], c);
+        assert_eq!(cw_points1[2], b);
+        assert_eq!(cw_points1[3], a);
+
+        let ccw_points1: Vec<_> = cw_line.points_counterclockwise().cloned().collect();
+        assert_eq!(ccw_points1.len(), 4);
+        assert_eq!(ccw_points1[0], a);
+        assert_eq!(ccw_points1[1], b);
+        assert_eq!(ccw_points1[2], c);
+        assert_eq!(ccw_points1[3], a);
+
+        assert_ne!(cw_points1, ccw_points1);
+
+        let cw_points2: Vec<_> = ccw_line.points_clockwise().cloned().collect();
+        let ccw_points2: Vec<_> = ccw_line.points_counterclockwise().cloned().collect();
+
+        // cw_line and ccw_line are wound differently, but the ordered winding iterator should have
+        // make them similar
+        assert_eq!(cw_points2, cw_points2);
+        assert_eq!(ccw_points2, ccw_points2);
+
+        // test make_clockwise_winding
+        let mut new_line1 = ccw_line.clone();
+        new_line1.make_clockwise_winding();
+        assert_eq!(new_line1.winding_order(), Some(WindingOrder::Clockwise));
+        assert_eq!(new_line1, cw_line);
+        assert_ne!(new_line1, ccw_line);
+
+        // test make_counterclockwise_winding
+        let mut new_line2 = cw_line.clone();
+        new_line2.make_counterclockwise_winding();
+        assert_eq!(new_line2.winding_order(), Some(WindingOrder::CounterClockwise));
+        assert_ne!(new_line2, cw_line);
+        assert_eq!(new_line2, ccw_line);
+
+        // There isn't always a valid winding order, here are cases where it's no valid
+        assert_eq!(LineString::<f32>(vec![]).winding_order(), None);
+        assert_eq!(LineString(vec![Point::new(0., 0.)]).winding_order(), None);
+        assert_eq!(LineString(vec![Point::new(0., 0.), Point::new(1., 0.)]).winding_order(), None);
+
     }
 
     #[test]

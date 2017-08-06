@@ -29,6 +29,20 @@ pub trait Orient<T> {
     /// assert_eq!(oriented.interiors[0].0, oriented_int_ls.0);
     /// ```
     fn orient(&self, orientation: Direction) -> Self;
+
+    /// Orient a Polygon according to default orientation
+    fn orient_default(&self) -> Self
+        where Self: Sized
+    {
+        self.orient(Direction::Default)
+    }
+
+    /// Orient a Polygon, but reversed from the default
+    fn orient_reversed(&self) -> Self
+        where Self: Sized
+    {
+        self.orient(Direction::Reversed)
+    }
 }
 
 impl<T> Orient<T> for Polygon<T>
@@ -61,8 +75,14 @@ pub enum Direction {
     Reversed,
 }
 
+#[derive(PartialEq, Copy, Clone, Debug)]
+pub enum WindingOrder {
+    Clockwise,
+    CounterClockwise,
+}
+
 // the signed area of a linear ring
-fn signed_ring_area<T>(linestring: &LineString<T>) -> T
+pub fn signed_ring_area<T>(linestring: &LineString<T>) -> T
     where T: Float
 {
     if linestring.0.is_empty() || linestring.0.len() == 1 {
@@ -81,25 +101,18 @@ fn signed_ring_area<T>(linestring: &LineString<T>) -> T
 fn orient<T>(poly: &Polygon<T>, direction: Direction) -> Polygon<T>
     where T: Float
 {
-    let sign = match direction {
-        Direction::Default => T::one(),
-        Direction::Reversed => -T::one(),
-    };
-    let mut rings = vec![];
-    // process interiors first, so push and pop work
-    for ring in &poly.interiors {
-        if signed_ring_area(&ring) / sign <= T::zero() {
-            rings.push(LineString(ring.0.iter().cloned().collect()));
-        } else {
-            rings.push(LineString(ring.0.iter().rev().cloned().collect()));
-        }
-    }
-    if signed_ring_area(&poly.exterior) / sign >= T::zero() {
-        rings.push(LineString(poly.exterior.0.iter().cloned().collect()));
-    } else {
-        rings.push(LineString(poly.exterior.0.iter().rev().cloned().collect()));
-    }
-    Polygon::new(rings.pop().unwrap(), rings)
+    let interiors = poly.interiors.iter().map(|l| l.clone_to_winding_order(
+        match direction {
+            Direction::Default => WindingOrder::Clockwise,
+            Direction::Reversed => WindingOrder::CounterClockwise,
+        })).collect();
+
+    let ext_ring = poly.exterior.clone_to_winding_order(match direction {
+        Direction::Default => WindingOrder::CounterClockwise,
+        Direction::Reversed => WindingOrder::Clockwise,
+    });
+
+    Polygon::new(ext_ring, interiors)
 }
 
 #[cfg(test)]
@@ -120,7 +133,7 @@ mod test {
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
-        let poly1 = Polygon::new(LineString(points_ext), vec![LineString(points_int)]);
+        let poly1 = Polygon::new(LineString(points_ext.clone()), vec![LineString(points_int.clone())]);
         // a diamond shape, oriented counter-clockwise outside,
         let oriented_ext = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
         let oriented_ext_ls = LineString(oriented_ext
@@ -137,5 +150,15 @@ mod test {
         let oriented = orient(&poly1, Direction::Default);
         assert_eq!(oriented.exterior.0, oriented_ext_ls.0);
         assert_eq!(oriented.interiors[0].0, oriented_int_ls.0);
+
+
+        let poly2 = Polygon::new(LineString(points_ext.clone()), vec![LineString(points_int.clone())]);
+        // It is already in reverse orientation.
+        let poly2_reversed = poly2.orient_reversed();
+        assert_eq!(poly2, poly2_reversed);
+
+        let poly2_default = poly2.orient_default();
+        assert_eq!(poly2_default.exterior, LineString(vec![Point::new(1., 0.), Point::new(2., 1.), Point::new(1., 2.), Point::new(0., 1.), Point::new(1., 0.)]));
+
     }
 }
