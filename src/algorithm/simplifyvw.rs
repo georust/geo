@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::Float;
-use types::{Point, LineString};
+use types::{Point, LineString, MultiLineString};
 
 // A helper struct for `visvalingam`, defined out here because
 // #[deriving] doesn't work inside functions.
@@ -179,10 +179,18 @@ impl<T> SimplifyVW<T> for LineString<T>
     }
 }
 
+impl<T> SimplifyVW<T> for MultiLineString<T>
+    where T: Float
+{
+    fn simplifyvw(&self, epsilon: &T) -> MultiLineString<T> {
+        MultiLineString(self.0.iter().map(|l| l.simplifyvw(epsilon)).collect())
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use types::Point;
-    use super::visvalingam;
+    use types::{Point, LineString, MultiLineString};
+    use super::{visvalingam, SimplifyVW};
 
     #[test]
     fn visvalingam_test() {
@@ -223,5 +231,20 @@ mod test {
         compare.push(Point::new(27.8, 0.1));
         let simplified = visvalingam(&vec, &1.0);
         assert_eq!(simplified, compare);
+    }
+
+    #[test]
+    fn multilinestring() {
+        // this is the PostGIS example
+        let points = vec![(5.0, 2.0), (3.0, 8.0), (6.0, 20.0), (7.0, 25.0), (10.0, 10.0)];
+        let points_ls: Vec<_> = points.iter().map(|e| Point::new(e.0, e.1)).collect();
+
+        let correct = vec![(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
+        let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
+
+        let mline = MultiLineString(vec![LineString(points_ls)]);
+        assert_eq!(mline.simplifyvw(&30.),
+            MultiLineString(vec![LineString(correct_ls)])
+        );
     }
 }

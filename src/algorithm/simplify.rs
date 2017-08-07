@@ -1,5 +1,5 @@
 use num_traits::Float;
-use types::{Point, LineString};
+use types::{Point, LineString, MultiLineString};
 use algorithm::distance::Distance;
 
 // perpendicular distance from a point to a line
@@ -81,10 +81,18 @@ impl<T> Simplify<T> for LineString<T>
     }
 }
 
+impl<T> Simplify<T> for MultiLineString<T>
+    where T: Float
+{
+    fn simplify(&self, epsilon: &T) -> MultiLineString<T> {
+        MultiLineString(self.0.iter().map(|l| l.simplify(epsilon)).collect())
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use types::{Point};
-    use super::{point_line_distance, rdp};
+    use types::{Point, LineString, MultiLineString};
+    use super::{point_line_distance, rdp, Simplify};
 
     #[test]
     fn perpdistance_test() {
@@ -127,5 +135,25 @@ mod test {
         compare.push(Point::new(27.8, 0.1));
         let simplified = rdp(&vec, &1.0);
         assert_eq!(simplified, compare);
+    }
+
+    #[test]
+    fn multilinestring() {
+        let mline = MultiLineString(vec![LineString(vec![
+            Point::new(0.0, 0.0),
+            Point::new(5.0, 4.0),
+            Point::new(11.0, 5.5),
+            Point::new(17.3, 3.2),
+            Point::new(27.8, 0.1),
+        ])]);
+
+        let mline2 = mline.simplify(&1.0);
+
+        assert_eq!(mline2, MultiLineString(vec![LineString(vec![
+            Point::new(0.0, 0.0),
+            Point::new(5.0, 4.0),
+            Point::new(11.0, 5.5),
+            Point::new(27.8, 0.1),
+        ])]));
     }
 }
