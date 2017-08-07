@@ -47,8 +47,16 @@ fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     }
 }
 
+/// Simplifies a geometry.
+///
+/// The [Ramer–Douglas–Peucker
+/// algorithm](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) simplifes a
+/// linestring. Polygons are simplified by running the RDP algorithm on all their constituent
+/// rings. This may result in invalid Polygons, and has no guarantee of preserving topology.
+///
+/// Multi* objects are simplified by simplifing all their constituent geometries individually.
 pub trait Simplify<T, Epsilon = T> {
-    /// Returns the simplified representation of a LineString, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
+    /// Returns the simplified representation of a geometry, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
     ///
     /// ```
     /// use geo::{Point, LineString};

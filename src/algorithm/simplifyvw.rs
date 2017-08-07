@@ -144,8 +144,13 @@ fn area<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> T
     (T::one() + T::one())
 }
 
+/// Simplifies a geometry.
+///
+/// Polygons are simplified by running the algorithm on all their constituent rings.  This may
+/// result in invalid Polygons, and has no guarantee of perserving topology.  Multi* objects are
+/// simplified by simplifyng all their constituent geometries individually.
 pub trait SimplifyVW<T, Epsilon = T> {
-    /// Returns the simplified representation of a LineString, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
+    /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
     ///
     /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation
     ///
