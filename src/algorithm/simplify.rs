@@ -1,5 +1,5 @@
 use num_traits::Float;
-use types::{Point, LineString, Polygon, MultiLineString};
+use types::{Point, LineString, Polygon, MultiLineString, MultiPolygon};
 use algorithm::distance::Distance;
 
 // perpendicular distance from a point to a line
@@ -97,9 +97,17 @@ impl<T> Simplify<T> for Polygon<T>
     }
 }
 
+impl<T> Simplify<T> for MultiPolygon<T>
+    where T: Float
+{
+    fn simplify(&self, epsilon: &T) -> MultiPolygon<T> {
+        MultiPolygon(self.0.iter().map(|p| p.simplify(epsilon)).collect())
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use types::{Point, LineString, Polygon, MultiLineString};
+    use types::{Point, LineString, Polygon, MultiLineString, MultiPolygon};
     use super::{point_line_distance, rdp, Simplify};
 
     #[test]
@@ -185,6 +193,30 @@ mod test {
             Point::new(10., 0.),
             Point::new(0., 0.),
               ]), vec![])
+        );
+    }
+
+
+    #[test]
+    fn multipolygon() {
+        let mpoly = MultiPolygon(vec![Polygon::new(LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 10.),
+            Point::new(5., 11.),
+            Point::new(10., 10.),
+            Point::new(10., 0.),
+            Point::new(0., 0.),
+        ]), vec![])]);
+
+        let mpoly2 = mpoly.simplify(&2.);
+
+        assert_eq!(mpoly2, MultiPolygon(vec![Polygon::new(LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 10.),
+            Point::new(10., 10.),
+            Point::new(10., 0.),
+            Point::new(0., 0.),
+              ]), vec![])])
         );
     }
 }

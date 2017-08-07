@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::Float;
-use types::{Point, LineString, Polygon, MultiLineString};
+use types::{Point, LineString, Polygon, MultiLineString, MultiPolygon};
 
 // A helper struct for `visvalingam`, defined out here because
 // #[deriving] doesn't work inside functions.
@@ -195,9 +195,18 @@ impl<T> SimplifyVW<T> for Polygon<T>
     }
 }
 
+
+impl<T> SimplifyVW<T> for MultiPolygon<T>
+    where T: Float
+{
+    fn simplifyvw(&self, epsilon: &T) -> MultiPolygon<T> {
+        MultiPolygon(self.0.iter().map(|p| p.simplifyvw(epsilon)).collect())
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use types::{Point, LineString, Polygon, MultiLineString};
+    use types::{Point, LineString, Polygon, MultiLineString, MultiPolygon};
     use super::{visvalingam, SimplifyVW};
 
     #[test]
@@ -276,6 +285,29 @@ mod test {
             Point::new(10., 0.),
             Point::new(0., 0.),
               ]), vec![])
+        );
+    }
+
+    #[test]
+    fn multipolygon() {
+        let mpoly = MultiPolygon(vec![Polygon::new(LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 10.),
+            Point::new(5., 11.),
+            Point::new(10., 10.),
+            Point::new(10., 0.),
+            Point::new(0., 0.),
+        ]), vec![])]);
+
+        let mpoly2 = mpoly.simplifyvw(&10.);
+
+        assert_eq!(mpoly2, MultiPolygon(vec![Polygon::new(LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 10.),
+            Point::new(10., 10.),
+            Point::new(10., 0.),
+            Point::new(0., 0.),
+              ]), vec![])])
         );
     }
 }
