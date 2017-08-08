@@ -1,5 +1,9 @@
 # Changes
 
+## 0.4.11
+
+* [Add `From`, `IntoIterator`, `Into` impls; add doc comments](https://github.com/georust/rust-geo/pull/131)
+
 ## 0.4.10
 
 * [Add `Translation` trait.](https://github.com/georust/rust-geo/pull/128)
