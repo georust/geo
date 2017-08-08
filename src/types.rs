@@ -3,6 +3,8 @@ use std::ops::AddAssign;
 use std::ops::Neg;
 use std::ops::Sub;
 
+use std::iter::{Iterator, FromIterator};
+
 use num_traits::{Float, ToPrimitive};
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
@@ -13,6 +15,12 @@ pub struct Coordinate<T>
 {
     pub x: T,
     pub y: T,
+}
+
+impl<T: Float> From<(T, T)> for Coordinate<T> {
+    fn from(coords: (T, T)) -> Self {
+        Coordinate{ x: coords.0, y: coords.1 }
+    }
 }
 
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
@@ -54,10 +62,30 @@ pub struct ExtremePoint<T>
     pub xmin: Point<T>,
 }
 
+/// A single Point in 2D space.
+///
+/// Points can be created using the `new(x, y)` constructor, or from a `Coordinate` or pair of points.
+///
+/// ```
+/// use geo::{Point, Coordinate};
+/// let p1: Point<f64> = (0., 1.).into();
+/// let c = Coordinate{ x: 10., y: 20.};
+/// let p2: Point<f64> = c.into();
+/// ```
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Point<T> (pub Coordinate<T>) where T: Float;
 
-impl<T: Float> From<Coordinate<T>> for Point<T> { fn from(x: Coordinate<T>) -> Point<T> { Point(x) } }
+impl<T: Float> From<Coordinate<T>> for Point<T> {
+    fn from(x: Coordinate<T>) -> Point<T> {
+        Point(x)
+    }
+}
+
+impl<T: Float> From<(T, T)> for Point<T> {
+    fn from(coords: (T, T)) -> Point<T> {
+        Point::new(coords.0, coords.1)
+    }
+}
 
 impl<T> Point<T>
     where T: Float + ToPrimitive
@@ -317,10 +345,52 @@ impl<T> AddAssign for Bbox<T>
 }
 
 
+/// A collection of [`Point`s](struct.Point.html).
+///
+/// Iterating over a `MultiPoint` yields the `Point`s inside.
+///
+/// ```
+/// use geo::{MultiPoint, Point};
+/// let points: MultiPoint<_> = vec![(0., 0.), (1., 2.)].into();
+/// for point in points {
+///     println!("Point x = {}, y = {}", point.x(), point.y());
+/// }
+/// ```
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPoint<T>(pub Vec<Point<T>>) where T: Float;
 
-impl<T: Float> From<Point<T>> for MultiPoint<T> { fn from(x: Point<T>) -> MultiPoint<T> { MultiPoint(vec![x]) } }
+impl<T: Float, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
+    /// Convert a single `Point` (or something which can be converted to a `Point`) into a
+    /// one-member `MultiPoint`
+    fn from(x: IP) -> MultiPoint<T> {
+        MultiPoint(vec![x.into()])
+    }
+}
+
+impl<T: Float, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
+    /// Convert a `Vec` of `Points` (or `Vec` of things which can be converted to a `Point`) into a
+    /// `MultiPoint`.
+    fn from(v: Vec<IP>) -> MultiPoint<T> {
+        MultiPoint(v.into_iter().map(|p| p.into()).collect())
+    }
+}
+
+impl<T: Float, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
+    /// Collect the results of a `Point` iterator into a `MultiPoint`
+    fn from_iter<I: IntoIterator<Item=IP>>(iter: I) -> Self {
+        MultiPoint(iter.into_iter().map(|p| p.into()).collect())
+    }
+}
+
+/// Iterate over the `Point`s in this `MultiPoint`.
+impl<T: Float> IntoIterator for MultiPoint<T> {
+    type Item = Point<T>;
+    type IntoIter = ::std::vec::IntoIter<Point<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
 
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Line<T>
@@ -348,14 +418,99 @@ impl<T> Line<T>
     }
 }
 
+/// A LineString, which is an ordered collection of [`Point`s](struct.Point.html).
+///
+/// Create a LineString by calling it directly:
+///
+/// ```
+/// use geo::{LineString, Point};
+/// let line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
+/// ```
+///
+/// Converting a `Vec` of `Point`-like things:
+///
+/// ```
+/// # use geo::{LineString, Point};
+/// let line: LineString<f32> = vec![(0., 0.), (10., 0.)].into();
+/// ```
+///
+/// Or `collect`ing from a Point iterator
+///
+/// ```
+/// # use geo::{LineString, Point};
+/// let mut points = vec![Point::new(0., 0.), Point::new(10., 0.)];
+/// let line: LineString<f32> = points.into_iter().collect();
+/// ```
+///
+/// You can iterate over the points in the `LineString`
+///
+/// ```
+/// use geo::{LineString, Point};
+/// let line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
+/// for point in line {
+///     println!("Point x = {}, y = {}", point.x(), point.y());
+/// }
+/// ```
+///
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
 
+/// Turn a `Vec` of `Point`-ish objects into a `LineString`.
+impl<T: Float, IP: Into<Point<T>>> From<Vec<IP>> for LineString<T> {
+    fn from(v: Vec<IP>) -> Self {
+        LineString(v.into_iter().map(|p| p.into()).collect())
+    }
+}
+
+/// Turn a `Point`-ish iterator into a `LineString`.
+impl<T: Float, IP: Into<Point<T>>> FromIterator<IP> for LineString<T> {
+    fn from_iter<I: IntoIterator<Item=IP>>(iter: I) -> Self {
+        LineString(iter.into_iter().map(|p| p.into()).collect())
+    }
+}
+
+/// Iterate over all the [Point](struct.Point.html)s in this linestring
+impl<T: Float> IntoIterator for LineString<T> {
+    type Item = Point<T>;
+    type IntoIter = ::std::vec::IntoIter<Point<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+/// A collection of [`LineString`s](struct.LineString.html).
+///
+/// Can be created from a `Vec` of `LineString`s, or from an Iterator which yields LineStrings.
+///
+/// Iterating over this objects, yields the component LineStrings.
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
 
-impl<T: Float> From<LineString<T>> for MultiLineString<T> { fn from(x: LineString<T>) -> MultiLineString<T> { MultiLineString(vec![x]) } }
+impl<T: Float, ILS: Into<LineString<T>>> From<ILS> for MultiLineString<T> {
+    fn from(ls: ILS) -> Self {
+        MultiLineString(vec![ls.into()])
+    }
+}
 
+impl<T: Float, ILS: Into<LineString<T>>> FromIterator<ILS> for MultiLineString<T> {
+    fn from_iter<I: IntoIterator<Item=ILS>>(iter: I) -> Self {
+        MultiLineString(iter.into_iter().map(|ls| ls.into()).collect())
+    }
+}
+
+impl<T: Float> IntoIterator for MultiLineString<T> {
+    type Item = LineString<T>;
+    type IntoIter = ::std::vec::IntoIter<LineString<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+/// A 2D polygon area.
+///
+/// It has one exterior ring, and zero or more interior rings.
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Polygon<T>
     where T: Float
@@ -385,16 +540,68 @@ impl<T> Polygon<T>
     }
 }
 
+/// A collection of [`Polygon`s](struct.Polygon.html).
+///
+/// Can be created from a `Vec` of `Polygon`s, or `collect`ed from an Iterator which yields `Polygon`s.
+///
+/// Iterating over this objects, yields the component Polygons.
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>) where T: Float;
 
-impl<T: Float> From<Polygon<T>> for MultiPolygon<T> { fn from(x: Polygon<T>) -> MultiPolygon<T> { MultiPolygon(vec![x]) } }
+impl<T: Float, IP: Into<Polygon<T>>> From<IP> for MultiPolygon<T> {
+    fn from(x: IP) -> Self {
+        MultiPolygon(vec![x.into()])
+    }
+}
 
+impl<T: Float, IP: Into<Polygon<T>>> FromIterator<IP> for MultiPolygon<T> {
+    fn from_iter<I: IntoIterator<Item=IP>>(iter: I) -> Self {
+        MultiPolygon(iter.into_iter().map(|p| p.into()).collect())
+    }
+}
+
+impl<T: Float> IntoIterator for MultiPolygon<T> {
+    type Item = Polygon<T>;
+    type IntoIter = ::std::vec::IntoIter<Polygon<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+/// A collection of [`Geometry`s](enum.Geometry.html).
+///
+/// Can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
+///
+/// Iterating over this objects, yields the component Geometries.
 #[derive(PartialEq, Clone, Debug)]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>) where T: Float;
 
-impl<T: Float> From<Geometry<T>> for GeometryCollection<T> { fn from(x: Geometry<T>) -> GeometryCollection<T> { GeometryCollection(vec![x]) } }
+impl<T: Float, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
+    fn from(x: IG) -> Self {
+        GeometryCollection(vec![x.into()])
+    }
+}
 
+impl<T: Float, IG: Into<Geometry<T>>> FromIterator<IG> for GeometryCollection<T> {
+    fn from_iter<I: IntoIterator<Item=IG>>(iter: I) -> Self {
+        GeometryCollection(iter.into_iter().map(|g| g.into()).collect())
+    }
+}
+
+impl<T: Float> IntoIterator for GeometryCollection<T> {
+    type Item = Geometry<T>;
+    type IntoIter = ::std::vec::IntoIter<Geometry<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+/// An enum representing any possible geomtry type.
+///
+/// All types can be converted to a `Geometry` using the `.into()` (as part of the
+/// `std::convert::Into` pattern).
 #[derive(PartialEq, Clone, Debug)]
 pub enum Geometry<T>
     where T: Float
@@ -414,7 +621,6 @@ impl<T: Float> From<Polygon<T>> for Geometry<T> { fn from(x: Polygon<T>) -> Geom
 impl<T: Float> From<MultiPoint<T>> for Geometry<T> { fn from(x: MultiPoint<T>) -> Geometry<T> { Geometry::MultiPoint(x) } }
 impl<T: Float> From<MultiLineString<T>> for Geometry<T> { fn from(x: MultiLineString<T>) -> Geometry<T> { Geometry::MultiLineString(x) } }
 impl<T: Float> From<MultiPolygon<T>> for Geometry<T> { fn from(x: MultiPolygon<T>) -> Geometry<T> { Geometry::MultiPolygon(x) } }
-impl<T: Float> From<GeometryCollection<T>> for Geometry<T> { fn from(x: GeometryCollection<T>) -> Geometry<T> { Geometry::GeometryCollection(x) } }
 
 #[cfg(test)]
 mod test {
@@ -433,6 +639,11 @@ mod test {
         assert_eq!(c, c2);
         assert_eq!(c.x, c2.x);
         assert_eq!(c.y, c2.y);
+
+        let p: Point<f32> = (0f32, 1f32).into();
+        assert_eq!(p.x(), 0.);
+        assert_eq!(p.y(), 1.);
+
     }
 
     #[test]
@@ -445,5 +656,14 @@ mod test {
 
         assert_eq!(p.exterior, exterior);
         assert_eq!(p.interiors, interiors);
+    }
+
+    #[test]
+    fn iters() {
+        let _: MultiPoint<_> = vec![(0., 0.), (1., 2.)].into();
+        let _: MultiPoint<_> = vec![(0., 0.), (1., 2.)].into_iter().collect();
+
+        let _: LineString<_> = vec![(0., 0.), (1., 2.)].into();
+        let _: LineString<_> = vec![(0., 0.), (1., 2.)].into_iter().collect();
     }
 }
