@@ -3,9 +3,13 @@ use std::ops::AddAssign;
 use std::ops::Neg;
 use std::ops::Sub;
 
+use std::fmt::Debug;
+
 use std::iter::{Iterator, FromIterator};
 
 use num_traits::{Float, ToPrimitive};
+use spade::SpadeNum;
+use spade::PointN;
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
@@ -287,6 +291,34 @@ impl<T> Sub for Point<T>
     /// ```
     fn sub(self, rhs: Point<T>) -> Point<T> {
         Point::new(self.x() - rhs.x(), self.y() - rhs.y())
+    }
+}
+
+// These are required for Spade RTree
+impl<T> PointN for Point<T>
+    where T: Float + SpadeNum + Debug
+{
+    type Scalar = T;
+
+    fn dimensions() -> usize {
+        2
+    }
+    fn from_value(value: Self::Scalar) -> Self {
+        Point::new(value, value)
+    }
+    fn nth(&self, index: usize) -> &Self::Scalar {
+        match index {
+            0 => &self.0.x,
+            1 => &self.0.y,
+            _ => unreachable!()
+        }
+    }
+    fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
+        match index {
+            0 => &mut self.0.x,
+            1 => &mut self.0.y,
+            _ => unreachable!()
+        }
     }
 }
 

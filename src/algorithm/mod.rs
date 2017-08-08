@@ -18,7 +18,7 @@ pub mod haversine_distance;
 pub mod boundingbox;
 /// Simplifies geometries using the Ramer-Douglas-Peucker algorithm.
 pub mod simplify;
-/// Simplifies geometries using the Visvalingam-Whyatt algorithm.
+/// Simplifies geometries using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
 pub mod simplifyvw;
 /// Calculates the convex hull of a geometry.
 pub mod convexhull;
