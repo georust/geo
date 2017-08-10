@@ -67,15 +67,7 @@ pub trait Distance<T, Rhs = Self> {
 
 // Return minimum distance between a Point and a Line segment
 // This is a helper for Point-to-LineString and Point-to-Polygon distance
-// adapted from http://stackoverflow.com/a/1501725/416626. Quoting the author:
-//
-// The projection of point p onto a line is the point on the line closest to p.
-// (and a perpendicular to the line at the projection will pass through p).
-// The number t is how far along the line segment from start to end that the projection falls:
-// If t is 0, the projection falls right on start; if it's 1, it falls on end; if it's 0.5,
-// then it's halfway between. If t is less than 0 or greater than 1, it
-// falls on the line past one end or the other of the segment. In that case the
-// distance to the segment will be the distance to the nearer end
+// adapted from https://github.com/OSGeo/geos/blob/master/src/algorithm/CGAlgorithms.cpp#L191
 fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
 where
     T: Float + ToPrimitive,
