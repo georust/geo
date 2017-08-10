@@ -75,17 +75,19 @@ where
     if start == end {
         return point.distance(start);
     }
-    let r = ((point.x() - start.x()) * (end.x() - start.x()) + (point.y() - start.y()) * (end.y() - start.y())) /
-        ((end.x() - start.x()) * (end.x() - start.x()) + (end.y() - start.y()) * (end.y() - start.y()));
-    if r <= T::zero() {
+    let dx = end.x() - start.x();
+    let dy = end.y() - start.y();
+    let r = ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) /
+        (dx.powi(2) + dy.powi(2));
+   if r <= T::zero() {
         return point.distance(start);
     }
     if r >= T::one() {
         return point.distance(end);
     }
-    let s = ((start.y() - point.y()) * (end.x() - start.x()) - (start.x() - point.x()) * (end.y() - start.y())) /
-        ((end.x() - start.x()) * (end.x() - start.x()) + (end.y() - start.y()) * (end.y() - start.y()));
-    s.abs() * (((end.x() - start.x()) * (end.x() - start.x()) + (end.y() - start.y()) * (end.y() - start.y()))).sqrt()
+    let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) /
+        (dx * dx + dy * dy);
+    s.abs() * ((dx * dx + dy * dy)).sqrt()
 }
 
 #[derive(PartialEq, Debug)]
@@ -277,7 +279,6 @@ impl<T> Distance<T, Line<T>> for Point<T>
 mod test {
     use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
     use algorithm::distance::{Distance, line_segment_distance};
-    use algorithm::contains::Contains;
 
     #[test]
     fn line_segment_distance_test() {
