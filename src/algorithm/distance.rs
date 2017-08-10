@@ -3,7 +3,6 @@ use std::collections::BinaryHeap;
 use num_traits::{Float, ToPrimitive};
 use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 use algorithm::contains::Contains;
-use num_traits::pow::pow;
 
 /// Returns the distance between two geometries.
 
@@ -61,7 +60,7 @@ pub trait Distance<T, Rhs = Self> {
     /// // A Random point outside the LineString
     /// let p = Point::new(5.5, 2.1);
     /// let dist = p.distance(&ls);
-    /// assert_eq!(dist, 1.1313708498984758);
+    /// assert_eq!(dist, 1.1313708498984762);
     /// ```
     fn distance(&self, rhs: &Rhs) -> T;
 }
@@ -80,19 +79,14 @@ pub trait Distance<T, Rhs = Self> {
 fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
     where T: Float + ToPrimitive
 {
-    let dist_squared = pow(start.distance(end), 2);
-    // Implies that start == end
-    if dist_squared.is_zero() {
-        return pow(point.distance(start), 2);
-    }
-    // Consider the line extending the segment, parameterized as start + t (end - start)
-    // We find the projection of the point onto the line
-    // This falls where t = [(point - start) . (end - start)] / |end - start|^2, where . is the dot product
-    // We constrain t to a 0, 1 interval to handle points outside the segment start, end
-    let t = T::zero().max(T::one().min((*point - *start).dot(&(*end - *start)) / dist_squared));
-    let projected = Point::new(start.x() + t * (end.x() - start.x()),
-                               start.y() + t * (end.y() - start.y()));
-    point.distance(&projected)
+    if start == end { return point.distance(start); }
+    let r = ((point. x()-start. x())*(end. x()-start. x())+(point.y()-start.y())*(end.y()-start.y()))/
+             ((end. x()-start. x())*(end. x()-start. x())+(end.y()-start.y())*(end.y()-start.y()));
+    if r <= T::zero() { return point.distance(start); }
+    if r >= T::one() { return point.distance(end); }
+    let s=((start.y()-point.y())*(end. x()-start. x())-(start. x()-point. x())*(end.y()-start.y()))/
+             ((end. x()-start. x())*(end. x()-start. x())+(end.y()-start.y())*(end.y()-start.y()));
+    s.abs() * (((end. x()-start. x())*(end. x()-start. x())+(end.y()-start.y())*(end.y()-start.y()))).sqrt()
 }
 
 #[derive(PartialEq, Debug)]
@@ -284,6 +278,7 @@ impl<T> Distance<T, Line<T>> for Point<T>
 mod test {
     use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
     use algorithm::distance::{Distance, line_segment_distance};
+    use algorithm::contains::Contains;
 
     #[test]
     fn line_segment_distance_test() {
@@ -348,6 +343,20 @@ mod test {
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
+    // Point to Polygon, on boundary
+    fn flibble() {
+        let exterior = LineString(vec![
+                                  Point::new(0., 0.),
+                                  Point::new(0., 0.0004),
+                                  Point::new(0.0004, 0.0004),
+                                  Point::new(0.0004, 0.),
+                                  Point::new(0., 0.)]);
+
+        let poly = Polygon::new(exterior.clone(), vec![]);
+        let bugged_point = Point::new(0.0001, 0.);
+        assert_eq!(poly.distance(&bugged_point), 0.);
+    }
+    #[test]
     // Point to Polygon, empty Polygon
     fn point_polygon_empty_test() {
         // an empty Polygon
@@ -408,7 +417,7 @@ mod test {
         // A Random point "inside" the LineString
         let p = Point::new(5.5, 2.1);
         let dist = p.distance(&ls);
-        assert_relative_eq!(dist, 1.1313708498984758);
+        assert_relative_eq!(dist, 1.1313708498984762);
     }
     #[test]
     // Point to LineString, point lies on the LineString
