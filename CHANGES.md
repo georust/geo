@@ -1,5 +1,10 @@
 # Changes
 
+## 0.4.12
+
+* [Improve robustness when calculating distance from a point to a
+line-segment](https://github.com/georust/rust-geo/pull/139)
+
 ## 0.4.11
 
 * [Add `From`, `IntoIterator`, `Into` impls; add doc comments](https://github.com/georust/rust-geo/pull/131)
