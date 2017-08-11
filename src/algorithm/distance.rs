@@ -3,7 +3,6 @@ use std::collections::BinaryHeap;
 use num_traits::{Float, ToPrimitive};
 use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 use algorithm::contains::Contains;
-use num_traits::pow::pow;
 
 /// Returns the distance between two geometries.
 
@@ -61,38 +60,34 @@ pub trait Distance<T, Rhs = Self> {
     /// // A Random point outside the LineString
     /// let p = Point::new(5.5, 2.1);
     /// let dist = p.distance(&ls);
-    /// assert_eq!(dist, 1.1313708498984758);
+    /// assert_eq!(dist, 1.1313708498984762);
     /// ```
     fn distance(&self, rhs: &Rhs) -> T;
 }
 
 // Return minimum distance between a Point and a Line segment
 // This is a helper for Point-to-LineString and Point-to-Polygon distance
-// adapted from http://stackoverflow.com/a/1501725/416626. Quoting the author:
-//
-// The projection of point p onto a line is the point on the line closest to p.
-// (and a perpendicular to the line at the projection will pass through p).
-// The number t is how far along the line segment from start to end that the projection falls:
-// If t is 0, the projection falls right on start; if it's 1, it falls on end; if it's 0.5,
-// then it's halfway between. If t is less than 0 or greater than 1, it
-// falls on the line past one end or the other of the segment. In that case the
-// distance to the segment will be the distance to the nearer end
+// adapted from https://github.com/OSGeo/geos/blob/master/src/algorithm/CGAlgorithms.cpp#L191
 fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
-    where T: Float + ToPrimitive
+where
+    T: Float + ToPrimitive,
 {
-    let dist_squared = pow(start.distance(end), 2);
-    // Implies that start == end
-    if dist_squared.is_zero() {
-        return pow(point.distance(start), 2);
+    if start == end {
+        return point.distance(start);
     }
-    // Consider the line extending the segment, parameterized as start + t (end - start)
-    // We find the projection of the point onto the line
-    // This falls where t = [(point - start) . (end - start)] / |end - start|^2, where . is the dot product
-    // We constrain t to a 0, 1 interval to handle points outside the segment start, end
-    let t = T::zero().max(T::one().min((*point - *start).dot(&(*end - *start)) / dist_squared));
-    let projected = Point::new(start.x() + t * (end.x() - start.x()),
-                               start.y() + t * (end.y() - start.y()));
-    point.distance(&projected)
+    let dx = end.x() - start.x();
+    let dy = end.y() - start.y();
+    let r = ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) /
+        (dx.powi(2) + dy.powi(2));
+   if r <= T::zero() {
+        return point.distance(start);
+    }
+    if r >= T::one() {
+        return point.distance(end);
+    }
+    let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) /
+        (dx * dx + dy * dy);
+    s.abs() * ((dx * dx + dy * dy)).sqrt()
 }
 
 #[derive(PartialEq, Debug)]
@@ -312,8 +307,17 @@ mod test {
     // Point to Polygon, outside point
     fn point_polygon_distance_outside_test() {
         // an octagon
-        let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
-                          (6., 1.), (5., 1.)];
+        let points = vec![
+            (5., 1.),
+            (4., 2.),
+            (4., 3.),
+            (5., 4.),
+            (6., 4.),
+            (7., 3.),
+            (7., 2.),
+            (6., 1.),
+            (5., 1.),
+        ];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let poly = Polygon::new(ls, vec![]);
         // A Random point outside the octagon
@@ -325,8 +329,17 @@ mod test {
     // Point to Polygon, inside point
     fn point_polygon_distance_inside_test() {
         // an octagon
-        let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
-                          (6., 1.), (5., 1.)];
+        let points = vec![
+            (5., 1.),
+            (4., 2.),
+            (4., 3.),
+            (5., 4.),
+            (6., 4.),
+            (7., 3.),
+            (7., 2.),
+            (6., 1.),
+            (5., 1.),
+        ];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let poly = Polygon::new(ls, vec![]);
         // A Random point inside the octagon
@@ -338,14 +351,38 @@ mod test {
     // Point to Polygon, on boundary
     fn point_polygon_distance_boundary_test() {
         // an octagon
-        let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
-                          (6., 1.), (5., 1.)];
+        let points = vec![
+            (5., 1.),
+            (4., 2.),
+            (4., 3.),
+            (5., 4.),
+            (6., 4.),
+            (7., 3.),
+            (7., 2.),
+            (6., 1.),
+            (5., 1.),
+        ];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let poly = Polygon::new(ls, vec![]);
         // A point on the octagon
         let p = Point::new(5.0, 1.0);
         let dist = p.distance(&poly);
         assert_relative_eq!(dist, 0.0);
+    }
+    #[test]
+    // Point to Polygon, on boundary
+    fn flibble() {
+        let exterior = LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 0.0004),
+            Point::new(0.0004, 0.0004),
+            Point::new(0.0004, 0.),
+            Point::new(0., 0.),
+        ]);
+
+        let poly = Polygon::new(exterior.clone(), vec![]);
+        let bugged_point = Point::new(0.0001, 0.);
+        assert_eq!(poly.distance(&bugged_point), 0.);
     }
     #[test]
     // Point to Polygon, empty Polygon
@@ -363,18 +400,21 @@ mod test {
     // Point to Polygon with an interior ring
     fn point_polygon_interior_cutout_test() {
         // an octagon
-        let ext_points = vec![(4., 1.), (5., 2.), (5., 3.), (4., 4.), (3., 4.), (2., 3.),
-                              (2., 2.), (3., 1.), (4., 1.)];
+        let ext_points = vec![
+            (4., 1.),
+            (5., 2.),
+            (5., 3.),
+            (4., 4.),
+            (3., 4.),
+            (2., 3.),
+            (2., 2.),
+            (3., 1.),
+            (4., 1.),
+        ];
         // cut out a triangle inside octagon
         let int_points = vec![(3.5, 3.5), (4.4, 1.5), (2.6, 1.5), (3.5, 3.5)];
-        let ls_ext = LineString(ext_points
-                                    .iter()
-                                    .map(|e| Point::new(e.0, e.1))
-                                    .collect());
-        let ls_int = LineString(int_points
-                                    .iter()
-                                    .map(|e| Point::new(e.0, e.1))
-                                    .collect());
+        let ls_ext = LineString(ext_points.iter().map(|e| Point::new(e.0, e.1)).collect());
+        let ls_int = LineString(int_points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let poly = Polygon::new(ls_ext, vec![ls_int]);
         // A point inside the cutout triangle
         let p = Point::new(3.5, 2.5);
@@ -384,14 +424,18 @@ mod test {
     }
     #[test]
     fn point_distance_multipolygon_test() {
-        let ls1 = LineString(vec![Point::new(0.0, 0.0),
-                                  Point::new(1.0, 10.0),
-                                  Point::new(2.0, 0.0),
-                                  Point::new(0.0, 0.0)]);
-        let ls2 = LineString(vec![Point::new(3.0, 0.0),
-                                  Point::new(4.0, 10.0),
-                                  Point::new(5.0, 0.0),
-                                  Point::new(3.0, 0.0)]);
+        let ls1 = LineString(vec![
+            Point::new(0.0, 0.0),
+            Point::new(1.0, 10.0),
+            Point::new(2.0, 0.0),
+            Point::new(0.0, 0.0),
+        ]);
+        let ls2 = LineString(vec![
+            Point::new(3.0, 0.0),
+            Point::new(4.0, 10.0),
+            Point::new(5.0, 0.0),
+            Point::new(3.0, 0.0),
+        ]);
         let p1 = Polygon::new(ls1, vec![]);
         let p2 = Polygon::new(ls2, vec![]);
         let mp = MultiPolygon(vec![p1, p2]);
@@ -402,20 +446,36 @@ mod test {
     // Point to LineString
     fn point_linestring_distance_test() {
         // like an octagon, but missing the lowest horizontal segment
-        let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
-                          (6., 1.)];
+        let points = vec![
+            (5., 1.),
+            (4., 2.),
+            (4., 3.),
+            (5., 4.),
+            (6., 4.),
+            (7., 3.),
+            (7., 2.),
+            (6., 1.),
+        ];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         // A Random point "inside" the LineString
         let p = Point::new(5.5, 2.1);
         let dist = p.distance(&ls);
-        assert_relative_eq!(dist, 1.1313708498984758);
+        assert_relative_eq!(dist, 1.1313708498984762);
     }
     #[test]
     // Point to LineString, point lies on the LineString
     fn point_linestring_contains_test() {
         // like an octagon, but missing the lowest horizontal segment
-        let points = vec![(5., 1.), (4., 2.), (4., 3.), (5., 4.), (6., 4.), (7., 3.), (7., 2.),
-                          (6., 1.)];
+        let points = vec![
+            (5., 1.),
+            (4., 2.),
+            (4., 3.),
+            (5., 4.),
+            (6., 4.),
+            (7., 3.),
+            (7., 2.),
+            (6., 1.),
+        ];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         // A point which lies on the LineString
         let p = Point::new(5.0, 4.0);
@@ -443,16 +503,21 @@ mod test {
     #[test]
     fn distance_multilinestring_test() {
         let v1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0)]);
-        let v2 =
-            LineString(vec![Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(3.0, 1.0)]);
+        let v2 = LineString(vec![
+            Point::new(1.0, 10.0),
+            Point::new(2.0, 0.0),
+            Point::new(3.0, 1.0),
+        ]);
         let mls = MultiLineString(vec![v1, v2]);
         let p = Point::new(50.0, 50.0);
         assert_relative_eq!(p.distance(&mls), 63.25345840347388);
     }
     #[test]
     fn distance1_test() {
-        assert_eq!(Point::<f64>::new(0., 0.).distance(&Point::<f64>::new(1., 0.)),
-                   1.);
+        assert_eq!(
+            Point::<f64>::new(0., 0.).distance(&Point::<f64>::new(1., 0.)),
+            1.
+        );
     }
     #[test]
     fn distance2_test() {
@@ -461,15 +526,17 @@ mod test {
     }
     #[test]
     fn distance_multipoint_test() {
-        let v = vec![Point::new(0.0, 10.0),
-                     Point::new(1.0, 1.0),
-                     Point::new(10.0, 0.0),
-                     Point::new(1.0, -1.0),
-                     Point::new(0.0, -10.0),
-                     Point::new(-1.0, -1.0),
-                     Point::new(-10.0, 0.0),
-                     Point::new(-1.0, 1.0),
-                     Point::new(0.0, 10.0)];
+        let v = vec![
+            Point::new(0.0, 10.0),
+            Point::new(1.0, 1.0),
+            Point::new(10.0, 0.0),
+            Point::new(1.0, -1.0),
+            Point::new(0.0, -10.0),
+            Point::new(-1.0, -1.0),
+            Point::new(-10.0, 0.0),
+            Point::new(-1.0, 1.0),
+            Point::new(0.0, 10.0),
+        ];
         let mp = MultiPoint(v);
         let p = Point::new(50.0, 50.0);
         assert_eq!(p.distance(&mp), 64.03124237432849)
