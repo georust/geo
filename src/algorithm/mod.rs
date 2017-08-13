@@ -30,3 +30,5 @@ pub mod extremes;
 pub mod rotate;
 /// Translates a geometry along the given offsets.
 pub mod translate;
+/// Apply a function to all coordinates
+pub mod map_coords;
