@@ -1,5 +1,10 @@
 # Changes
 
+## 0.4.13
+
+* [Implement Simplification traits for more types](https://github.com/georust/rust-geo/pull/135)
+* [Add a MapCoords trait](https://github.com/georust/rust-geo/pull/136)
+
 ## 0.4.12
 
 * [Improve robustness when calculating distance from a point to a
