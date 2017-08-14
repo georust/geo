@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::Float;
-use types::{Point, LineString};
+use types::{Point, LineString, Polygon, MultiLineString, MultiPolygon};
 
 // A helper struct for `visvalingam`, defined out here because
 // #[deriving] doesn't work inside functions.
@@ -144,8 +144,13 @@ fn area<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> T
     (T::one() + T::one())
 }
 
+/// Simplifies a geometry.
+///
+/// Polygons are simplified by running the algorithm on all their constituent rings.  This may
+/// result in invalid Polygons, and has no guarantee of perserving topology.  Multi* objects are
+/// simplified by simplifyng all their constituent geometries individually.
 pub trait SimplifyVW<T, Epsilon = T> {
-    /// Returns the simplified representation of a LineString, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
+    /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
     ///
     /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation
     ///
@@ -179,10 +184,35 @@ impl<T> SimplifyVW<T> for LineString<T>
     }
 }
 
+impl<T> SimplifyVW<T> for MultiLineString<T>
+    where T: Float
+{
+    fn simplifyvw(&self, epsilon: &T) -> MultiLineString<T> {
+        MultiLineString(self.0.iter().map(|l| l.simplifyvw(epsilon)).collect())
+    }
+}
+
+impl<T> SimplifyVW<T> for Polygon<T>
+    where T: Float
+{
+    fn simplifyvw(&self, epsilon: &T) -> Polygon<T> {
+        Polygon::new(self.exterior.simplifyvw(epsilon), self.interiors.iter().map(|l| l.simplifyvw(epsilon)).collect())
+    }
+}
+
+
+impl<T> SimplifyVW<T> for MultiPolygon<T>
+    where T: Float
+{
+    fn simplifyvw(&self, epsilon: &T) -> MultiPolygon<T> {
+        MultiPolygon(self.0.iter().map(|p| p.simplifyvw(epsilon)).collect())
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use types::Point;
-    use super::visvalingam;
+    use types::{Point, LineString, Polygon, MultiLineString, MultiPolygon};
+    use super::{visvalingam, SimplifyVW};
 
     #[test]
     fn visvalingam_test() {
@@ -223,5 +253,66 @@ mod test {
         compare.push(Point::new(27.8, 0.1));
         let simplified = visvalingam(&vec, &1.0);
         assert_eq!(simplified, compare);
+    }
+
+    #[test]
+    fn multilinestring() {
+        // this is the PostGIS example
+        let points = vec![(5.0, 2.0), (3.0, 8.0), (6.0, 20.0), (7.0, 25.0), (10.0, 10.0)];
+        let points_ls: Vec<_> = points.iter().map(|e| Point::new(e.0, e.1)).collect();
+
+        let correct = vec![(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
+        let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
+
+        let mline = MultiLineString(vec![LineString(points_ls)]);
+        assert_eq!(mline.simplifyvw(&30.),
+            MultiLineString(vec![LineString(correct_ls)])
+        );
+    }
+
+    #[test]
+    fn polygon() {
+        let poly = Polygon::new(LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 10.),
+            Point::new(5., 11.),
+            Point::new(10., 10.),
+            Point::new(10., 0.),
+            Point::new(0., 0.),
+        ]), vec![]);
+
+        let poly2 = poly.simplifyvw(&10.);
+
+        assert_eq!(poly2, Polygon::new(LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 10.),
+            Point::new(10., 10.),
+            Point::new(10., 0.),
+            Point::new(0., 0.),
+              ]), vec![])
+        );
+    }
+
+    #[test]
+    fn multipolygon() {
+        let mpoly = MultiPolygon(vec![Polygon::new(LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 10.),
+            Point::new(5., 11.),
+            Point::new(10., 10.),
+            Point::new(10., 0.),
+            Point::new(0., 0.),
+        ]), vec![])]);
+
+        let mpoly2 = mpoly.simplifyvw(&10.);
+
+        assert_eq!(mpoly2, MultiPolygon(vec![Polygon::new(LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 10.),
+            Point::new(10., 10.),
+            Point::new(10., 0.),
+            Point::new(0., 0.),
+              ]), vec![])])
+        );
     }
 }

@@ -16,9 +16,9 @@ pub mod haversine_destination;
 pub mod haversine_distance;
 /// Returns the Bbox of a geometry.
 pub mod boundingbox;
-/// Simplifies a `LineString` using the Ramer-Douglas-Peucker algorithm.
+/// Simplifies geometries using the Ramer-Douglas-Peucker algorithm.
 pub mod simplify;
-/// Simplifies a `LineString` using the Visvalingam-Whyatt algorithm.
+/// Simplifies geometries using the Visvalingam-Whyatt algorithm.
 pub mod simplifyvw;
 /// Calculates the convex hull of a geometry.
 pub mod convexhull;

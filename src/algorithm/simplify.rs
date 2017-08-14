@@ -1,5 +1,5 @@
 use num_traits::Float;
-use types::{Point, LineString};
+use types::{Point, LineString, Polygon, MultiLineString, MultiPolygon};
 use algorithm::distance::Distance;
 
 // perpendicular distance from a point to a line
@@ -47,8 +47,16 @@ fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
     }
 }
 
+/// Simplifies a geometry.
+///
+/// The [Ramer–Douglas–Peucker
+/// algorithm](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) simplifes a
+/// linestring. Polygons are simplified by running the RDP algorithm on all their constituent
+/// rings. This may result in invalid Polygons, and has no guarantee of preserving topology.
+///
+/// Multi* objects are simplified by simplifing all their constituent geometries individually.
 pub trait Simplify<T, Epsilon = T> {
-    /// Returns the simplified representation of a LineString, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
+    /// Returns the simplified representation of a geometry, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
     ///
     /// ```
     /// use geo::{Point, LineString};
@@ -81,10 +89,34 @@ impl<T> Simplify<T> for LineString<T>
     }
 }
 
+impl<T> Simplify<T> for MultiLineString<T>
+    where T: Float
+{
+    fn simplify(&self, epsilon: &T) -> MultiLineString<T> {
+        MultiLineString(self.0.iter().map(|l| l.simplify(epsilon)).collect())
+    }
+}
+
+impl<T> Simplify<T> for Polygon<T>
+    where T: Float
+{
+    fn simplify(&self, epsilon: &T) -> Polygon<T> {
+        Polygon::new(self.exterior.simplify(epsilon), self.interiors.iter().map(|l| l.simplify(epsilon)).collect())
+    }
+}
+
+impl<T> Simplify<T> for MultiPolygon<T>
+    where T: Float
+{
+    fn simplify(&self, epsilon: &T) -> MultiPolygon<T> {
+        MultiPolygon(self.0.iter().map(|p| p.simplify(epsilon)).collect())
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use types::{Point};
-    use super::{point_line_distance, rdp};
+    use types::{Point, LineString, Polygon, MultiLineString, MultiPolygon};
+    use super::{point_line_distance, rdp, Simplify};
 
     #[test]
     fn perpdistance_test() {
@@ -127,5 +159,72 @@ mod test {
         compare.push(Point::new(27.8, 0.1));
         let simplified = rdp(&vec, &1.0);
         assert_eq!(simplified, compare);
+    }
+
+    #[test]
+    fn multilinestring() {
+        let mline = MultiLineString(vec![LineString(vec![
+            Point::new(0.0, 0.0),
+            Point::new(5.0, 4.0),
+            Point::new(11.0, 5.5),
+            Point::new(17.3, 3.2),
+            Point::new(27.8, 0.1),
+        ])]);
+
+        let mline2 = mline.simplify(&1.0);
+
+        assert_eq!(mline2, MultiLineString(vec![LineString(vec![
+            Point::new(0.0, 0.0),
+            Point::new(5.0, 4.0),
+            Point::new(11.0, 5.5),
+            Point::new(27.8, 0.1),
+        ])]));
+    }
+
+    #[test]
+    fn polygon() {
+        let poly = Polygon::new(LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 10.),
+            Point::new(5., 11.),
+            Point::new(10., 10.),
+            Point::new(10., 0.),
+            Point::new(0., 0.),
+        ]), vec![]);
+
+        let poly2 = poly.simplify(&2.);
+
+        assert_eq!(poly2, Polygon::new(LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 10.),
+            Point::new(10., 10.),
+            Point::new(10., 0.),
+            Point::new(0., 0.),
+              ]), vec![])
+        );
+    }
+
+
+    #[test]
+    fn multipolygon() {
+        let mpoly = MultiPolygon(vec![Polygon::new(LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 10.),
+            Point::new(5., 11.),
+            Point::new(10., 10.),
+            Point::new(10., 0.),
+            Point::new(0., 0.),
+        ]), vec![])]);
+
+        let mpoly2 = mpoly.simplify(&2.);
+
+        assert_eq!(mpoly2, MultiPolygon(vec![Polygon::new(LineString(vec![
+            Point::new(0., 0.),
+            Point::new(0., 10.),
+            Point::new(10., 10.),
+            Point::new(10., 0.),
+            Point::new(0., 0.),
+              ]), vec![])])
+        );
     }
 }
