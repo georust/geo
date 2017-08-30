@@ -1,19 +1,5 @@
 use num_traits::{Float, FromPrimitive};
-use types::{Point, Polygon, LineString, Line, MultiPoint, MultiPolygon, MultiLineString};
-
-// translate a slice of points by the given offsets
-fn translation_matrix<T>(x_offset: T, y_offset: T, points: &[Point<T>]) -> Vec<Point<T>>
-    where T: Float
-{
-    points
-        .iter()
-        .map(|point| {
-                 let new_x = point.x() + x_offset;
-                 let new_y = point.y() + y_offset;
-                 Point::new(new_x, new_y)
-             })
-        .collect::<Vec<_>>()
-}
+use algorithm::map_coords::MapCoords;
 
 pub trait Translate<T> {
     /// Translate a Geometry along its axes by the given offsets
@@ -39,67 +25,12 @@ pub trait Translate<T> {
     fn translate(&self, xoff: T, yoff: T) -> Self where T: Float;
 }
 
-impl<T> Translate<T> for Point<T>
-    where T: Float
-{
-    /// Translate the Point by the given offsets
-    fn translate(&self, xoff: T, yoff: T) -> Self {
-        Point::new(self.x() + xoff, self.y() + yoff)
-    }
-}
-
-impl<T> Translate<T> for LineString<T>
-    where T: Float
-{
-    /// Translate the LineString by the given offsets
-    fn translate(&self, xoff: T, yoff: T) -> Self {
-        LineString(translation_matrix(xoff, yoff, &self.0))
-    }
-}
-
-impl<T> Translate<T> for Polygon<T>
-    where T: Float + FromPrimitive
-{
-    /// Translate the Polygon by the given offsets
-    fn translate(&self, xoff: T, yoff: T) -> Self {
-        Polygon::new(LineString(translation_matrix(xoff, yoff, &self.exterior.0)),
-                     self.interiors
-                         .iter()
-                         .map(|ring| LineString(translation_matrix(xoff, yoff, &ring.0)))
-                         .collect())
-    }
-}
-
-impl<T> Translate<T> for Line<T>
-    where T: Float
+impl<T, G> Translate<T> for G
+    where T: Float + FromPrimitive,
+        G: MapCoords<T, T, Output=G>
 {
     fn translate(&self, xoff: T, yoff: T) -> Self {
-        let translated = translation_matrix(xoff, yoff, &vec![self.start, self.end]);
-        Line::new(translated[0], translated[1])
-    }
-}
-
-impl<T> Translate<T> for MultiPolygon<T>
-    where T: Float + FromPrimitive
-{
-    fn translate(&self, xoff: T, yoff: T) -> Self {
-        MultiPolygon(self.0.iter().map(|poly| poly.translate(xoff, yoff)).collect())
-    }
-}
-
-impl<T> Translate<T> for MultiLineString<T>
-    where T: Float + FromPrimitive
-{
-    fn translate(&self, xoff: T, yoff: T) -> Self {
-        MultiLineString(self.0.iter().map(|ls| ls.translate(xoff, yoff)).collect())
-    }
-}
-
-impl<T> Translate<T> for MultiPoint<T>
-    where T: Float + FromPrimitive
-{
-    fn translate(&self, xoff: T, yoff: T) -> Self {
-        MultiPoint(self.0.iter().map(|p| p.translate(xoff, yoff)).collect())
+        self.map_coords(&|&(x, y)| (x + xoff, y + yoff))
     }
 }
 
