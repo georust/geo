@@ -21,9 +21,6 @@ pub trait Area<T> where T: Float
 }
 
 fn get_linestring_area<T>(linestring: &LineString<T>) -> T where T: Float {
-    if linestring.0.is_empty() || linestring.0.len() == 1 {
-        return T::zero();
-    }
     let mut tmp = T::zero();
     for line in linestring.lines() {
         tmp = tmp + (line.start.x() * line.end.y() - line.end.x() * line.start.y());

@@ -167,7 +167,7 @@ impl<T> Intersects<LineString<T>> for Polygon<T>
             return true;
         } else {
             // or if it's contained in the polygon
-            return linestring.0.iter().any(|point| self.contains(point))
+            return linestring.points().iter().any(|point| self.contains(point))
         }
     }
 }
@@ -198,12 +198,13 @@ impl<T> Intersects<Bbox<T>> for Polygon<T>
     where T: Float
 {
     fn intersects(&self, bbox: &Bbox<T>) -> bool {
-        let p = Polygon::new(LineString(vec![Point::new(bbox.xmin, bbox.ymin),
-                                             Point::new(bbox.xmin, bbox.ymax),
-                                             Point::new(bbox.xmax, bbox.ymax),
-                                             Point::new(bbox.xmax, bbox.ymin),
-                                             Point::new(bbox.xmin, bbox.ymin)]),
-                             vec![]);
+        let p = Polygon::new(unsafe { LineString::new_unchecked(
+            vec![Point::new(bbox.xmin, bbox.ymin),
+                 Point::new(bbox.xmin, bbox.ymax),
+                 Point::new(bbox.xmax, bbox.ymax),
+                 Point::new(bbox.xmax, bbox.ymin),
+                 Point::new(bbox.xmin, bbox.ymin)]
+        )}, vec![]);
         self.intersects(&p)
     }
 }

@@ -29,9 +29,6 @@ pub trait Centroid<T: Float> {
 fn simple_polygon_area<T>(linestring: &LineString<T>) -> T
     where T: Float
 {
-    if linestring.0.is_empty() || linestring.0.len() == 1 {
-        return T::zero();
-    }
     let mut tmp = T::zero();
     for line in linestring.lines() {
         tmp = tmp + (line.start.x() * line.end.y() - line.end.x() * line.start.y());
@@ -94,6 +91,7 @@ impl<T> Centroid<T> for LineString<T>
             }
             Some(Point::new(sum_x / total_length, sum_y / total_length))
         }
+        Some(Point::new(sum_x / total_length, sum_y / total_length))
     }
 }
 
@@ -141,6 +139,7 @@ impl<T> Centroid<T> for Polygon<T>
             }
             Some(external_centroid)
         }
+        Some(external_centroid)
     }
 }
 

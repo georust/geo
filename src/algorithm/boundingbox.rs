@@ -120,7 +120,7 @@ impl<T> BoundingBox<T> for Polygon<T>
     ///
     fn bbox(&self) -> Self::Output {
         let line = &self.exterior;
-        get_bbox(&line.0)
+        get_bbox(line.points())
     }
 }
 

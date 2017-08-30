@@ -485,7 +485,32 @@ impl<T> Line<T>
 /// ```
 ///
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
-pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
+pub struct LineString<T>(Vec<Point<T>>) where T: Float;
+
+impl<T: Float> LineString<T> {
+    pub fn new(points: Vec<Point<T>>) -> Result<Self, ()> {
+        if points.len() > 1 {
+            Ok(LineString(points))
+        } else {
+            Err(())
+        }
+    }
+
+    /// Only use this if you know _for certain_ that `point` has at least two elements.
+    pub unsafe fn new_unchecked(points: Vec<Point<T>>) -> Self {
+        debug_assert!(points.len() > 1);
+        LineString(points)
+    }
+
+    pub fn points(&self) -> &[Point<T>] {
+        &self.0
+    }
+
+    // FIXME: this can cause the linestring to become invalid
+    pub fn points_mut(&mut self) -> &mut [Point<T>] {
+        &mut self.0
+    }
+}
 
 impl<T: Float> LineString<T> {
     /// Return an `Line` iterator that yields one `Line` for each line segment

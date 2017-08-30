@@ -70,12 +70,12 @@ fn pseudo_distance<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
 }
 
 // Adapted from http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
-fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
+fn quick_hull<T>(mut points: &mut [Point<T>]) -> Polygon<T>
     where T: Float
 {
     // can't build a hull from fewer than four points
     if points.len() < 4 {
-        return points.to_vec();
+        return Polygon::new(LineString::new(points.to_vec()).expect("did not supply enough points"), vec![]);
     }
     let mut hull = vec![];
     let min = swap_remove_to_first(&mut points, 0);
@@ -100,7 +100,9 @@ fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
     // close the polygon
     let final_element = *hull.first().unwrap();
     hull.push(final_element);
-    hull
+    // we add `hull` at least three points to `hull`, which makes it valid
+    let linestring = unsafe { LineString::new_unchecked(hull) };
+    Polygon::new(linestring, vec![])
 }
 
 // recursively calculate the convex hull of a subset of points
@@ -163,7 +165,7 @@ impl<T> ConvexHull<T> for Polygon<T>
     where T: Float
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString(quick_hull(&mut self.exterior.0.clone())), vec![])
+        quick_hull(&mut self.exterior.points().to_owned())
     }
 }
 
@@ -172,9 +174,9 @@ impl<T> ConvexHull<T> for MultiPolygon<T>
 {
     fn convex_hull(&self) -> Polygon<T> {
         let mut aggregated: Vec<Point<T>> = self.0.iter()
-            .flat_map(|elem| elem.exterior.0.iter().cloned())
+            .flat_map(|elem| elem.exterior.points().iter().cloned())
             .collect();
-        Polygon::new(LineString(quick_hull(&mut aggregated)), vec![])
+        quick_hull(&mut aggregated)
     }
 }
 
@@ -182,7 +184,7 @@ impl<T> ConvexHull<T> for LineString<T>
     where T: Float
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString(quick_hull(&mut self.0.clone())), vec![])
+        quick_hull(&mut self.points().to_owned())
     }
 }
 
@@ -191,9 +193,9 @@ impl<T> ConvexHull<T> for MultiLineString<T>
 {
     fn convex_hull(&self) -> Polygon<T> {
         let mut aggregated: Vec<Point<T>> = self.0.iter()
-            .flat_map(|elem| elem.0.iter().cloned())
+            .flat_map(|elem| elem.points().iter().cloned())
             .collect();
-        Polygon::new(LineString(quick_hull(&mut aggregated)), vec![])
+        quick_hull(&mut aggregated)
     }
 }
 
@@ -201,7 +203,7 @@ impl<T> ConvexHull<T> for MultiPoint<T>
     where T: Float
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString(quick_hull(&mut self.0.clone())), vec![])
+        quick_hull(&mut self.0.clone())
     }
 }
 

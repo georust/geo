@@ -57,7 +57,7 @@ impl<T> Polygon<T>
     fn previous_vertex(&self, current_vertex: &usize) -> usize
         where T: Float
     {
-        (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
+        (current_vertex + (self.exterior.points().len() - 1) - 1) % (self.exterior.points().len() - 1)
     }
 }
 
@@ -82,15 +82,15 @@ fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes,
     // see: http://stackoverflow.com/a/1881201/416626
     let convex = polygon
         .exterior
-        .0
+        .points()
         .iter()
         .enumerate()
         .map(|(idx, _)| {
             let prev_1 = polygon.previous_vertex(&idx);
             let prev_2 = polygon.previous_vertex(&prev_1);
-            cross_prod(&polygon.exterior.0[prev_2],
-                       &polygon.exterior.0[prev_1],
-                       &polygon.exterior.0[idx])
+            cross_prod(&polygon.exterior.points()[prev_2],
+                       &polygon.exterior.points()[prev_1],
+                       &polygon.exterior.points()[idx])
         })
         // accumulate and check cross-product result signs in a single pass
         // positive implies ccw convexity, negative implies cw convexity
@@ -121,7 +121,7 @@ fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes,
 fn polymax_naive_indices<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()>
     where T: Float
 {
-    let vertices = &poly.exterior.0;
+    let vertices = &poly.exterior.points();
     let mut max: usize = 0;
     for (i, _) in vertices.iter().enumerate() {
         // if vertices[i] is above prior vertices[max]
@@ -209,10 +209,10 @@ impl<T, G> ExtremePoints<T> for G
         // safe to unwrap, since we're guaranteeing the polygon's convexity
         let indices = ch.extreme_indices().unwrap();
         ExtremePoint {
-            ymin: ch.exterior.0[indices.ymin],
-            xmax: ch.exterior.0[indices.xmax],
-            ymax: ch.exterior.0[indices.ymax],
-            xmin: ch.exterior.0[indices.xmin],
+            ymin: ch.exterior.points()[indices.ymin],
+            xmax: ch.exterior.points()[indices.xmax],
+            ymax: ch.exterior.points()[indices.ymax],
+            xmin: ch.exterior.points()[indices.xmin],
         }
     }
 }

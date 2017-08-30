@@ -90,7 +90,7 @@ impl<T> Contains<LineString<T>> for Line<T>
     where T: Float
 {
     fn contains(&self, linestring: &LineString<T>) -> bool {
-        linestring.0.iter().all(|pt| self.contains(pt))
+        linestring.points().iter().all(|pt| self.contains(pt))
     }
 }
 

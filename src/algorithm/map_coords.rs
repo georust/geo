@@ -58,7 +58,9 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for LineString<T> {
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
     {
-        LineString(self.0.iter().map(|p| p.map_coords(func)).collect())
+        unsafe {
+            LineString::new_unchecked(self.points().iter().map(|p| p.map_coords(func)).collect())
+        }
     }
 }
 

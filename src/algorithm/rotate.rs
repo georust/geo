@@ -130,7 +130,16 @@ where
 {
     /// Rotate the LineString about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
-        LineString(rotation_matrix(angle, &self.centroid().unwrap(), &self.0))
+        unsafe { LineString::new_unchecked(rotation_matrix(angle, &self.centroid().unwrap(), &self.points())) }
+    }
+}
+
+impl<T> RotatePoint<T> for LineString<T>
+    where T: Float
+{
+    /// Rotate the LineString about a point by the given number of degrees
+    fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
+        unsafe { LineString::new_unchecked(rotation_matrix(angle, point, &self.points())) }
     }
 }
 

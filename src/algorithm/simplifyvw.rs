@@ -554,7 +554,7 @@ where
     T: Float,
 {
     fn simplifyvw(&self, epsilon: &T) -> LineString<T> {
-        LineString(visvalingam(&self.0, epsilon))
+        LineString::new(visvalingam(&self.points(), epsilon)).expect("simplify returned invalid linestring")
     }
 }
 

@@ -85,7 +85,8 @@ impl<T> Simplify<T> for LineString<T>
     where T: Float
 {
     fn simplify(&self, epsilon: &T) -> LineString<T> {
-        LineString(rdp(&self.0, epsilon))
+        LineString::new(rdp(&self.points(), epsilon))
+            .expect("simplify operation resulted in invalid linestring")
     }
 }
 
