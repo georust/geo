@@ -1,5 +1,9 @@
 # Changes
 
+## 0.5.0
+
+* [Reimplement `Translate` trait using `MapCoords`](https://github.com/georust/rust-geo/pull/145)
+
 ## 0.4.13
 
 * [Implement Simplification traits for more types](https://github.com/georust/rust-geo/pull/135)
