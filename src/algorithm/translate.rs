@@ -1,4 +1,4 @@
-use num_traits::{Float, FromPrimitive};
+use num_traits::Float;
 use algorithm::map_coords::MapCoords;
 
 pub trait Translate<T> {
@@ -26,7 +26,7 @@ pub trait Translate<T> {
 }
 
 impl<T, G> Translate<T> for G
-    where T: Float + FromPrimitive,
+    where T: Float,
         G: MapCoords<T, T, Output=G>
 {
     fn translate(&self, xoff: T, yoff: T) -> Self {
