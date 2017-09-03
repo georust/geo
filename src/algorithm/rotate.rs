@@ -87,7 +87,7 @@ impl<T> RotatePoint<T> for Point<T>
 {
     /// Rotate the Point about another point by the given number of degrees
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        rotation_matrix(angle, point, *self)
+        rotation_matrix(angle, point, self)
     }
 }
 
