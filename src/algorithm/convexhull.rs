@@ -78,8 +78,8 @@ fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
         return points.to_vec();
     }
     let mut hull = vec![];
-    let mut min = swap_remove_to_first(&mut points, 0);
-    let mut max = swap_remove_to_first(&mut points, 0);
+    let min = swap_remove_to_first(&mut points, 0);
+    let max = swap_remove_to_first(&mut points, 0);
     if min.x() > max.x() {
         mem::swap(min, max);
     }
