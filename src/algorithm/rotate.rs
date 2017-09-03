@@ -1,26 +1,25 @@
 use num_traits::{Float, FromPrimitive};
 use types::{Point, Line, Polygon, LineString, MultiPoint, MultiPolygon, MultiLineString};
 use algorithm::centroid::Centroid;
+use algorithm::map_coords::MapCoords;
 
 // rotate a slice of points "angle" degrees about an origin
 // origin can be an arbitrary point, pass &Point::new(0., 0.)
 // for the actual origin
-fn rotation_matrix<T>(angle: T, origin: &Point<T>, points: &[Point<T>]) -> Vec<Point<T>>
-    where T: Float
+fn rotation_matrix<T, P>(angle: T, origin: &Point<T>, points: P) -> P::Output
+    where T: Float,
+        P: MapCoords<T, T>,
 {
     let cos_theta = angle.to_radians().cos();
     let sin_theta = angle.to_radians().sin();
     let x0 = origin.x();
     let y0 = origin.y();
-    points
-        .iter()
-        .map(|point| {
-                 let x = point.x() - x0;
-                 let y = point.y() - y0;
-                 Point::new(x * cos_theta - y * sin_theta + x0,
-                            x * sin_theta + y * cos_theta + y0)
-             })
-        .collect::<Vec<_>>()
+    points.map_coords(&|&(x, y)| {
+        let x = x - x0;
+        let y = y - y0;
+        (x * cos_theta - y * sin_theta + x0,
+         x * sin_theta + y * cos_theta + y0)
+    })
 }
 
 pub trait Rotate<T> {
@@ -79,7 +78,7 @@ impl<T> Rotate<T> for Point<T>
     /// Rotate the Point about itself by the given number of degrees
     /// This operation leaves the point coordinates unchanged
     fn rotate(&self, angle: T) -> Self {
-        rotation_matrix(angle, &self.centroid().unwrap(), &[*self])[0]
+        self.rotate_around_point(angle, &self.centroid().unwrap())
     }
 }
 
@@ -88,7 +87,7 @@ impl<T> RotatePoint<T> for Point<T>
 {
     /// Rotate the Point about another point by the given number of degrees
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        rotation_matrix(angle, point, &[*self])[0]
+        rotation_matrix(angle, point, self.to_owned())
     }
 }
 
@@ -96,9 +95,7 @@ impl<T> Rotate<T> for Line<T>
     where T: Float
 {
     fn rotate(&self, angle: T) -> Self {
-        let pts = vec![self.start, self.end];
-        let rotated = rotation_matrix(angle, &self.centroid().unwrap(), &pts);
-        Line::new(rotated[0], rotated[1])
+        self.rotate_around_point(angle, &self.centroid().unwrap())
     }
 }
 
@@ -106,9 +103,7 @@ impl<T> RotatePoint<T> for Line<T>
     where T: Float
 {
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        let pts = vec![self.start, self.end];
-        let rotated = rotation_matrix(angle, point, &pts);
-        Line::new(rotated[0], rotated[1])
+        rotation_matrix(angle, &point, self.to_owned())
     }
 }
 
@@ -117,7 +112,7 @@ impl<T> Rotate<T> for LineString<T>
 {
     /// Rotate the LineString about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
-        LineString(rotation_matrix(angle, &self.centroid().unwrap(), &self.0))
+        self.rotate_around_point(angle, &self.centroid().unwrap())
     }
 }
 
@@ -126,7 +121,7 @@ impl<T> RotatePoint<T> for LineString<T>
 {
     /// Rotate the LineString about a point by the given number of degrees
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        LineString(rotation_matrix(angle, point, &self.0))
+        rotation_matrix(angle, point, self.to_owned())
     }
 }
 
@@ -140,10 +135,10 @@ impl<T> Rotate<T> for Polygon<T>
             false => self.exterior.centroid().unwrap(),
             true => self.centroid().unwrap(),
         };
-        Polygon::new(LineString(rotation_matrix(angle, &centroid, &self.exterior.0)),
+        Polygon::new(rotation_matrix(angle, &centroid, self.exterior.to_owned()),
                      self.interiors
                          .iter()
-                         .map(|ring| LineString(rotation_matrix(angle, &centroid, &ring.0)))
+                         .map(|ring| rotation_matrix(angle, &centroid, ring.to_owned()))
                          .collect())
     }
 }
@@ -153,7 +148,7 @@ impl<T> RotatePoint<T> for Polygon<T>
 {
     /// Rotate the Polygon about a given point by the given number of degrees
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        Polygon::new(LineString(rotation_matrix(angle, point, &self.exterior.0)),
+        Polygon::new(rotation_matrix(angle, point, self.exterior.to_owned()),
                      self.interiors
                          .iter()
                          .map(|ring| ring.rotate_around_point(angle, point))
