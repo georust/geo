@@ -85,7 +85,7 @@ impl<T, G> Rotate<T> for G
 
 #[cfg(test)]
 mod test {
-    use types::{Point, LineString, Polygon, Line};
+    use types::{Point, LineString, Polygon, Line, Coordinate};
     use super::*;
     #[test]
     fn test_rotate_around_point() {
@@ -161,26 +161,23 @@ mod test {
 
         let poly1 = Polygon::new(ls1, vec![ls2, ls3]);
         let rotated = poly1.rotate(-15.0);
-        let correct_outside = vec![(4.628808519201685, 1.180520783117658),
-                                   (3.921701738015137, 2.4052656545092472),
-                                   (4.180520783117657, 3.3711914807983154),
-                                   (5.405265654509247, 4.078298261984863),
-                                   (6.371191480798315, 3.8194792168823426),
-                                   (7.0782982619848624, 2.594734345490753),
-                                   (6.819479216882343, 1.628808519201685),
-                                   (5.594734345490753, 0.9217017380151373),
-                                   (4.628808519201685, 1.180520783117658)]
-                .iter()
-                .map(|e| Point::new(e.0, e.1))
-                .collect::<Vec<_>>();
-        let correct_inside = vec![(4.706454232732441, 1.4702985310043786),
-                                  (5.37059047744874, 2.017037086855466),
-                                  (5.672380059021509, 1.2114794859018578),
-                                  (4.706454232732441, 1.4702985310043786)]
-                .iter()
-                .map(|e| Point::new(e.0, e.1))
-                .collect::<Vec<_>>();
-        // println!("INSIDE {:?}", rotated.interiors[0].0);
+        let correct_outside = [
+            Point(Coordinate { x: 4.615388272418591, y: 1.1822875921248914 }),
+            Point(Coordinate { x: 3.9082814912320436, y: 2.4070324635164804 }),
+            Point(Coordinate { x: 4.167100536334564, y: 3.372958289805549 }),
+            Point(Coordinate { x: 5.391845407726153, y: 4.080065070992096 }),
+            Point(Coordinate { x: 6.357771234015222, y: 3.8212460258895753 }),
+            Point(Coordinate { x: 7.064878015201769, y: 2.5965011544979864 }),
+            Point(Coordinate { x: 6.806058970099249, y: 1.6305753282089182 }),
+            Point(Coordinate { x: 5.58131409870766, y: 0.9234685470223707 }),
+            Point(Coordinate { x: 4.615388272418591, y: 1.1822875921248914 })
+        ];
+        let correct_inside = [
+            Point(Coordinate { x: 4.693033985949348, y: 1.472065340011612 }),
+            Point(Coordinate { x: 5.357170230665646, y: 2.0188038958626993 }),
+            Point(Coordinate { x: 5.6589598122384155, y: 1.2132462949090912 }),
+            Point(Coordinate { x: 4.693033985949348, y: 1.472065340011612 })
+        ];
         assert_eq!(rotated.exterior.0, correct_outside);
         assert_eq!(rotated.interiors[0].0, correct_inside);
     }
