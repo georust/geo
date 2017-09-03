@@ -39,30 +39,12 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for Point<T> {
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
     {
-        (&self).map_coords(func)
-    }
-}
-
-impl<'a, T: Float, NT: Float> MapCoords<T, NT> for &'a Point<T> {
-    type Output = Point<NT>;
-
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
-    {
         let new_point = func(&(self.0.x, self.0.y));
         Point::new(new_point.0, new_point.1)
     }
 }
 
 impl<T: Float, NT: Float> MapCoords<T, NT> for Line<T> {
-    type Output = Line<NT>;
-
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
-    {
-        (&self).map_coords(func)
-    }
-}
-
-impl<'a, T: Float, NT: Float> MapCoords<T, NT> for &'a Line<T> {
     type Output = Line<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
@@ -76,29 +58,11 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for LineString<T> {
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
     {
-        (&self).map_coords(func)
-    }
-}
-
-impl<'a, T: Float, NT: Float> MapCoords<T, NT> for &'a LineString<T> {
-    type Output = LineString<NT>;
-
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
-    {
         LineString(self.0.iter().map(|p| p.map_coords(func)).collect())
     }
 }
 
 impl<T: Float, NT: Float> MapCoords<T, NT> for Polygon<T> {
-    type Output = Polygon<NT>;
-
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
-    {
-        (&self).map_coords(func)
-    }
-}
-
-impl<'a, T: Float, NT: Float> MapCoords<T, NT> for &'a Polygon<T> {
     type Output = Polygon<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
@@ -112,15 +76,6 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for MultiPoint<T> {
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
     {
-        (&self).map_coords(func)
-    }
-}
-
-impl<'a, T: Float, NT: Float> MapCoords<T, NT> for &'a MultiPoint<T> {
-    type Output = MultiPoint<NT>;
-
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
-    {
         MultiPoint(self.0.iter().map(|p| p.map_coords(func)).collect())
     }
 }
@@ -130,29 +85,11 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for MultiLineString<T> {
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
     {
-        (&self).map_coords(func)
-    }
-}
-
-impl<'a, T: Float, NT: Float> MapCoords<T, NT> for &'a MultiLineString<T> {
-    type Output = MultiLineString<NT>;
-
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
-    {
         MultiLineString(self.0.iter().map(|l| l.map_coords(func)).collect())
     }
 }
 
 impl<T: Float, NT: Float> MapCoords<T, NT> for MultiPolygon<T> {
-    type Output = MultiPolygon<NT>;
-
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
-    {
-        (&self).map_coords(func)
-    }
-}
-
-impl<'a, T: Float, NT: Float> MapCoords<T, NT> for &'a MultiPolygon<T> {
     type Output = MultiPolygon<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
