@@ -144,11 +144,7 @@ impl<T> RotatePoint<T> for Polygon<T>
 {
     /// Rotate the Polygon about a given point by the given number of degrees
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        Polygon::new(rotation_matrix(angle, point, self.exterior.to_owned()),
-                     self.interiors
-                         .iter()
-                         .map(|ring| ring.rotate_around_point(angle, point))
-                         .collect())
+        rotation_matrix(angle, point, self)
     }
 }
 
@@ -157,19 +153,7 @@ impl<T> RotatePoint<T> for MultiPolygon<T>
 {
     /// Rotate the contained Polygons about a given point by the given number of degrees
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        MultiPolygon(self.0
-                         .iter()
-                         .map(|poly| poly.rotate_around_point(angle, point))
-                         .collect())
-    }
-}
-
-impl<T> Rotate<T> for MultiPolygon<T>
-    where T: Float + FromPrimitive
-{
-    /// Rotate the contained Polygons about their centroids by the given number of degrees
-    fn rotate(&self, angle: T) -> Self {
-        MultiPolygon(self.0.iter().map(|poly| poly.rotate(angle)).collect())
+        rotation_matrix(angle, point, self)
     }
 }
 
@@ -178,19 +162,7 @@ impl<T> RotatePoint<T> for MultiLineString<T>
 {
     /// Rotate the contained LineStrings about a given point by the given number of degrees
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        MultiLineString(self.0
-                         .iter()
-                         .map(|ls| ls.rotate_around_point(angle, point))
-                         .collect())
-    }
-}
-
-impl<T> Rotate<T> for MultiLineString<T>
-    where T: Float + FromPrimitive
-{
-    /// Rotate the contained LineStrings about their centroids by the given number of degrees
-    fn rotate(&self, angle: T) -> Self {
-        MultiLineString(self.0.iter().map(|ls| ls.rotate(angle)).collect())
+        rotation_matrix(angle, point, self)
     }
 }
 
@@ -200,19 +172,7 @@ impl<T> RotatePoint<T> for MultiPoint<T>
     /// Rotate the contained Points about a given point by the given number of degrees
     /// This operation leaves the point coordinates unchanged
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        MultiPoint(self.0
-                         .iter()
-                         .map(|p| p.rotate_around_point(angle, point))
-                         .collect())
-    }
-}
-
-impl<T> Rotate<T> for MultiPoint<T>
-    where T: Float + FromPrimitive
-{
-    /// Rotate the contained Points about their centroids by the given number of degrees
-    fn rotate(&self, angle: T) -> Self {
-        MultiPoint(self.0.iter().map(|p| p.rotate(angle)).collect())
+        rotation_matrix(angle, point, self)
     }
 }
 
