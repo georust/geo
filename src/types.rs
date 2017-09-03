@@ -392,7 +392,7 @@ impl<T: Float> IntoIterator for MultiPoint<T> {
     }
 }
 
-#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Line<T>
     where T: Float
 {
