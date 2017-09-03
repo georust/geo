@@ -1,27 +1,11 @@
-use num_traits::{Float, FromPrimitive};
-use types::{Point, Line, Polygon, LineString, MultiPoint, MultiPolygon, MultiLineString};
+use num_traits::Float;
+use types::Point;
 use algorithm::centroid::Centroid;
 use algorithm::map_coords::MapCoords;
 
 // rotate a slice of points "angle" degrees about an origin
 // origin can be an arbitrary point, pass &Point::new(0., 0.)
 // for the actual origin
-fn rotation_matrix<T, P>(angle: T, origin: &Point<T>, points: &P) -> P::Output
-    where T: Float,
-        P: MapCoords<T, T>,
-{
-    let cos_theta = angle.to_radians().cos();
-    let sin_theta = angle.to_radians().sin();
-    let x0 = origin.x();
-    let y0 = origin.y();
-    points.map_coords(&|&(x, y)| {
-        let x = x - x0;
-        let y = y - y0;
-        (x * cos_theta - y * sin_theta + x0,
-         x * sin_theta + y * cos_theta + y0)
-    })
-}
-
 pub trait Rotate<T> {
     /// Rotate a Geometry around its centroid by an angle, in degrees
     ///
@@ -77,54 +61,31 @@ impl<T, G> RotatePoint<T> for G
         G: MapCoords<T, T, Output=G>,
 {
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        rotation_matrix(angle, point, self)
+        let cos_theta = angle.to_radians().cos();
+        let sin_theta = angle.to_radians().sin();
+        let x0 = point.x();
+        let y0 = point.y();
+        self.map_coords(&|&(x, y)| {
+            let x = x - x0;
+            let y = y - y0;
+            (x * cos_theta - y * sin_theta + x0,
+            x * sin_theta + y * cos_theta + y0)
+        })
     }
 }
 
-impl<T> Rotate<T> for Point<T>
-    where T: Float
+impl<T, G> Rotate<T> for G
+    where T: Float,
+        G: MapCoords<T, T, Output=G> + Centroid<T>,
 {
-    /// Rotate the Point about itself by the given number of degrees
-    /// This operation leaves the point coordinates unchanged
     fn rotate(&self, angle: T) -> Self {
         self.rotate_around_point(angle, &self.centroid().unwrap())
-    }
-}
-
-impl<T> Rotate<T> for Line<T>
-    where T: Float
-{
-    fn rotate(&self, angle: T) -> Self {
-        self.rotate_around_point(angle, &self.centroid().unwrap())
-    }
-}
-
-impl<T> Rotate<T> for LineString<T>
-    where T: Float
-{
-    /// Rotate the LineString about its centroid by the given number of degrees
-    fn rotate(&self, angle: T) -> Self {
-        self.rotate_around_point(angle, &self.centroid().unwrap())
-    }
-}
-
-impl<T> Rotate<T> for Polygon<T>
-    where T: Float + FromPrimitive
-{
-    /// Rotate the Polygon about its centroid by the given number of degrees
-    fn rotate(&self, angle: T) -> Self {
-        // if a polygon has holes, use the centroid of its outer shell as the rotation origin
-        let centroid = match self.interiors.is_empty() {
-            false => self.exterior.centroid().unwrap(),
-            true => self.centroid().unwrap(),
-        };
-        self.rotate_around_point(angle, &centroid)
     }
 }
 
 #[cfg(test)]
 mod test {
-    use types::{Point, LineString, Polygon};
+    use types::{Point, LineString, Polygon, Line};
     use super::*;
     #[test]
     fn test_rotate_around_point() {
