@@ -53,6 +53,15 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for Line<T> {
     }
 }
 
+impl<'a, T: Float, NT: Float> MapCoords<T, NT> for &'a Line<T> {
+    type Output = Line<NT>;
+
+    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
+    {
+        Line::new(self.start.map_coords(func), self.end.map_coords(func))
+    }
+}
+
 impl<T: Float, NT: Float> MapCoords<T, NT> for LineString<T> {
     type Output = LineString<NT>;
 
@@ -62,7 +71,25 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for LineString<T> {
     }
 }
 
+impl<'a, T: Float, NT: Float> MapCoords<T, NT> for &'a LineString<T> {
+    type Output = LineString<NT>;
+
+    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
+    {
+        LineString(self.0.iter().map(|p| p.map_coords(func)).collect())
+    }
+}
+
 impl<T: Float, NT: Float> MapCoords<T, NT> for Polygon<T> {
+    type Output = Polygon<NT>;
+
+    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
+    {
+        Polygon::new(self.exterior.map_coords(func), self.interiors.iter().map(|l| l.map_coords(func)).collect())
+    }
+}
+
+impl<'a, T: Float, NT: Float> MapCoords<T, NT> for &'a Polygon<T> {
     type Output = Polygon<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output

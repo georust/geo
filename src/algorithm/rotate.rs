@@ -87,7 +87,7 @@ impl<T> RotatePoint<T> for Point<T>
 {
     /// Rotate the Point about another point by the given number of degrees
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        rotation_matrix(angle, point, self.to_owned())
+        rotation_matrix(angle, point, *self)
     }
 }
 
@@ -103,7 +103,7 @@ impl<T> RotatePoint<T> for Line<T>
     where T: Float
 {
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        rotation_matrix(angle, &point, self.to_owned())
+        rotation_matrix(angle, &point, self)
     }
 }
 
@@ -121,7 +121,7 @@ impl<T> RotatePoint<T> for LineString<T>
 {
     /// Rotate the LineString about a point by the given number of degrees
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        rotation_matrix(angle, point, self.to_owned())
+        rotation_matrix(angle, point, self)
     }
 }
 
@@ -135,11 +135,7 @@ impl<T> Rotate<T> for Polygon<T>
             false => self.exterior.centroid().unwrap(),
             true => self.centroid().unwrap(),
         };
-        Polygon::new(rotation_matrix(angle, &centroid, self.exterior.to_owned()),
-                     self.interiors
-                         .iter()
-                         .map(|ring| rotation_matrix(angle, &centroid, ring.to_owned()))
-                         .collect())
+        self.rotate_around_point(angle, &centroid)
     }
 }
 
