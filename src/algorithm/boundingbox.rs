@@ -5,6 +5,8 @@ use types::{Bbox, Point, MultiPoint, Line, LineString, MultiLineString, Polygon,
 /// Calculation of the bounding box of a geometry.
 
 pub trait BoundingBox<T: Float> {
+    type Output;
+
     /// Return the Bounding Box of a geometry
     ///
     /// ```
@@ -24,7 +26,7 @@ pub trait BoundingBox<T: Float> {
     /// assert_eq!(118.34, bbox.ymax);
     /// ```
     ///
-    fn bbox(&self) -> Option<Bbox<T>>;
+    fn bbox(&self) -> Self::Output;
 }
 
 
@@ -57,10 +59,12 @@ fn get_bbox<'a, I, T>(collection: I) -> Option<Bbox<T>>
 impl<T> BoundingBox<T> for MultiPoint<T>
     where T: Float
 {
+    type Output = Option<Bbox<T>>;
+
     ///
     /// Return the BoundingBox for a MultiPoint
     ///
-    fn bbox(&self) -> Option<Bbox<T>> {
+    fn bbox(&self) -> Self::Output {
         get_bbox(&self.0)
     }
 }
@@ -68,23 +72,27 @@ impl<T> BoundingBox<T> for MultiPoint<T>
 impl<T> BoundingBox<T> for Line<T>
     where T: Float
 {
-    fn bbox(&self) -> Option<Bbox<T>> {
+    type Output = Bbox<T>;
+
+    fn bbox(&self) -> Self::Output {
         let a = self.start;
         let b = self.end;
         let (xmin, xmax) = if a.x() <= b.x() {(a.x(), b.x())} else {(b.x(), a.x())};
         let (ymin, ymax) = if a.y() <= b.y() {(a.y(), b.y())} else {(b.y(), a.y())};
-        Some(Bbox {xmin: xmin, xmax: xmax,
-                   ymin: ymin, ymax: ymax})
+        Bbox {xmin: xmin, xmax: xmax,
+              ymin: ymin, ymax: ymax}
     }
 }
 
 impl<T> BoundingBox<T> for LineString<T>
     where T: Float
 {
+    type Output = Option<Bbox<T>>;
+
     ///
     /// Return the BoundingBox for a LineString
     ///
-    fn bbox(&self) -> Option<Bbox<T>> {
+    fn bbox(&self) -> Self::Output {
         get_bbox(&self.0)
     }
 }
@@ -92,10 +100,12 @@ impl<T> BoundingBox<T> for LineString<T>
 impl<T> BoundingBox<T> for MultiLineString<T>
     where T: Float
 {
+    type Output = Option<Bbox<T>>;
+
     ///
     /// Return the BoundingBox for a MultiLineString
     ///
-    fn bbox(&self) -> Option<Bbox<T>> {
+    fn bbox(&self) -> Self::Output {
         get_bbox(self.0.iter().flat_map(|line| line.0.iter()))
     }
 }
@@ -103,10 +113,12 @@ impl<T> BoundingBox<T> for MultiLineString<T>
 impl<T> BoundingBox<T> for Polygon<T>
     where T: Float
 {
+    type Output = Option<Bbox<T>>;
+
     ///
     /// Return the BoundingBox for a Polygon
     ///
-    fn bbox(&self) -> Option<Bbox<T>> {
+    fn bbox(&self) -> Self::Output {
         let line = &self.exterior;
         get_bbox(&line.0)
     }
@@ -115,10 +127,12 @@ impl<T> BoundingBox<T> for Polygon<T>
 impl<T> BoundingBox<T> for MultiPolygon<T>
     where T: Float
 {
+    type Output = Option<Bbox<T>>;
+
     ///
     /// Return the BoundingBox for a MultiPolygon
     ///
-    fn bbox(&self) -> Option<Bbox<T>> {
+    fn bbox(&self) -> Self::Output {
         get_bbox(self.0.iter().flat_map(|poly| (poly.exterior).0.iter()))
     }
 }
@@ -193,9 +207,7 @@ mod test {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let line1 = Line::new(p(0., 1.), p(2., 3.));
         let line2 = Line::new(p(2., 3.), p(0., 1.));
-        assert_eq!(line1.bbox().unwrap(),
-                   Bbox {xmin: 0., xmax: 2., ymin: 1., ymax: 3.});
-        assert_eq!(line2.bbox().unwrap(),
-                   Bbox {xmin: 0., xmax: 2., ymin: 1., ymax: 3.});
+        assert_eq!(line1.bbox(), Bbox {xmin: 0., xmax: 2., ymin: 1., ymax: 3.});
+        assert_eq!(line2.bbox(), Bbox {xmin: 0., xmax: 2., ymin: 1., ymax: 3.});
     }
 }
