@@ -109,7 +109,7 @@ where
     /// Rotate the Point about itself by the given number of degrees
     /// This operation leaves the point coordinates unchanged
     fn rotate(&self, angle: T) -> Self {
-        rotation_matrix(angle, &self.centroid().unwrap(), &[*self])[0]
+        rotation_matrix(angle, &self.centroid(), &[*self])[0]
     }
 }
 
@@ -119,7 +119,7 @@ where
 {
     fn rotate(&self, angle: T) -> Self {
         let pts = vec![self.start, self.end];
-        let rotated = rotation_matrix(angle, &self.centroid().unwrap(), &pts);
+        let rotated = rotation_matrix(angle, &self.centroid(), &pts);
         Line::new(rotated[0], rotated[1])
     }
 }
