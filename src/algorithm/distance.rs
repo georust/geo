@@ -1374,6 +1374,21 @@ mod test {
         assert_eq!(dist2, 12.0);
     }
     #[test]
+    // A polygon inside another polygon's ring; they're disjoint in the DE-9IM sense:
+    // FF2FF1212
+    fn polygon_in_ring_test() {
+        let shell = include!("test_fixtures/shell.rs");
+        let shell_ls: LineString<f64> = shell.into();
+        let ring = include!("test_fixtures/ring.rs");
+        let ring_ls: LineString<f64> = ring.into();
+        let poly_in_ring = include!("test_fixtures/poly_in_ring.rs");
+        let poly_in_ring_ls: LineString<f64> = poly_in_ring.into();
+        // inside is "inside" outside's shell, but they are disjoint
+        let outside = Polygon::new(shell_ls, vec![ring_ls]);
+        let inside = Polygon::new(poly_in_ring_ls, vec![]);
+        assert_eq!(outside.distance(&inside), 5.992772737231033);
+    }
+    #[test]
     fn test_vertex_line_distance() {
         let p = Point::new(0., 0.);
         let q = Point::new(3.8, 5.7);
