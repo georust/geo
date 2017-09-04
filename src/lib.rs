@@ -1,6 +1,5 @@
 #[macro_use]
 extern crate serde_derive;
-extern crate serde;
 extern crate num_traits;
 extern crate spade;
 
