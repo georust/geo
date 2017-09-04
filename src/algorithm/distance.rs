@@ -1383,7 +1383,7 @@ mod test {
         let ring_ls: LineString<f64> = ring.into();
         let poly_in_ring = include!("test_fixtures/poly_in_ring.rs");
         let poly_in_ring_ls: LineString<f64> = poly_in_ring.into();
-        // inside is "inside" outside's shell, but they are disjoint
+        // inside is "inside" outside's ring, but they are disjoint
         let outside = Polygon::new(shell_ls, vec![ring_ls]);
         let inside = Polygon::new(poly_in_ring_ls, vec![]);
         assert_eq!(outside.distance(&inside), 5.992772737231033);
