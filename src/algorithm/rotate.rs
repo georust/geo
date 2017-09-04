@@ -1,28 +1,11 @@
-use num_traits::{Float, FromPrimitive};
-use types::{Point, Line, Polygon, LineString, MultiPoint, MultiPolygon, MultiLineString};
+use num_traits::Float;
+use types::Point;
 use algorithm::centroid::Centroid;
+use algorithm::map_coords::MapCoords;
 
 // rotate a slice of points "angle" degrees about an origin
 // origin can be an arbitrary point, pass &Point::new(0., 0.)
 // for the actual origin
-fn rotation_matrix<T>(angle: T, origin: &Point<T>, points: &[Point<T>]) -> Vec<Point<T>>
-    where T: Float
-{
-    let cos_theta = angle.to_radians().cos();
-    let sin_theta = angle.to_radians().sin();
-    let x0 = origin.x();
-    let y0 = origin.y();
-    points
-        .iter()
-        .map(|point| {
-                 let x = point.x() - x0;
-                 let y = point.y() - y0;
-                 Point::new(x * cos_theta - y * sin_theta + x0,
-                            x * sin_theta + y * cos_theta + y0)
-             })
-        .collect::<Vec<_>>()
-}
-
 pub trait Rotate<T> {
     /// Rotate a Geometry around its centroid by an angle, in degrees
     ///
@@ -73,161 +56,36 @@ pub trait RotatePoint<T> {
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self where T: Float;
 }
 
-impl<T> Rotate<T> for Point<T>
-    where T: Float
-{
-    /// Rotate the Point about itself by the given number of degrees
-    /// This operation leaves the point coordinates unchanged
-    fn rotate(&self, angle: T) -> Self {
-        rotation_matrix(angle, &self.centroid().unwrap(), &[*self])[0]
-    }
-}
-
-impl<T> RotatePoint<T> for Point<T>
-    where T: Float
-{
-    /// Rotate the Point about another point by the given number of degrees
-    fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        rotation_matrix(angle, point, &[*self])[0]
-    }
-}
-
-impl<T> Rotate<T> for Line<T>
-    where T: Float
-{
-    fn rotate(&self, angle: T) -> Self {
-        let pts = vec![self.start, self.end];
-        let rotated = rotation_matrix(angle, &self.centroid().unwrap(), &pts);
-        Line::new(rotated[0], rotated[1])
-    }
-}
-
-impl<T> RotatePoint<T> for Line<T>
-    where T: Float
+impl<T, G> RotatePoint<T> for G
+    where T: Float,
+        G: MapCoords<T, T, Output=G>,
 {
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        let pts = vec![self.start, self.end];
-        let rotated = rotation_matrix(angle, point, &pts);
-        Line::new(rotated[0], rotated[1])
+        let cos_theta = angle.to_radians().cos();
+        let sin_theta = angle.to_radians().sin();
+        let x0 = point.x();
+        let y0 = point.y();
+        self.map_coords(&|&(x, y)| {
+            let x = x - x0;
+            let y = y - y0;
+            (x * cos_theta - y * sin_theta + x0,
+            x * sin_theta + y * cos_theta + y0)
+        })
     }
 }
 
-impl<T> Rotate<T> for LineString<T>
-    where T: Float
+impl<T, G> Rotate<T> for G
+    where T: Float,
+        G: MapCoords<T, T, Output=G> + Centroid<T>,
 {
-    /// Rotate the LineString about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
-        LineString(rotation_matrix(angle, &self.centroid().unwrap(), &self.0))
-    }
-}
-
-impl<T> RotatePoint<T> for LineString<T>
-    where T: Float
-{
-    /// Rotate the LineString about a point by the given number of degrees
-    fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        LineString(rotation_matrix(angle, point, &self.0))
-    }
-}
-
-impl<T> Rotate<T> for Polygon<T>
-    where T: Float + FromPrimitive
-{
-    /// Rotate the Polygon about its centroid by the given number of degrees
-    fn rotate(&self, angle: T) -> Self {
-        // if a polygon has holes, use the centroid of its outer shell as the rotation origin
-        let centroid = match self.interiors.is_empty() {
-            false => self.exterior.centroid().unwrap(),
-            true => self.centroid().unwrap(),
-        };
-        Polygon::new(LineString(rotation_matrix(angle, &centroid, &self.exterior.0)),
-                     self.interiors
-                         .iter()
-                         .map(|ring| LineString(rotation_matrix(angle, &centroid, &ring.0)))
-                         .collect())
-    }
-}
-
-impl<T> RotatePoint<T> for Polygon<T>
-    where T: Float + FromPrimitive
-{
-    /// Rotate the Polygon about a given point by the given number of degrees
-    fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        Polygon::new(LineString(rotation_matrix(angle, point, &self.exterior.0)),
-                     self.interiors
-                         .iter()
-                         .map(|ring| ring.rotate_around_point(angle, point))
-                         .collect())
-    }
-}
-
-impl<T> RotatePoint<T> for MultiPolygon<T>
-    where T: Float + FromPrimitive
-{
-    /// Rotate the contained Polygons about a given point by the given number of degrees
-    fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        MultiPolygon(self.0
-                         .iter()
-                         .map(|poly| poly.rotate_around_point(angle, point))
-                         .collect())
-    }
-}
-
-impl<T> Rotate<T> for MultiPolygon<T>
-    where T: Float + FromPrimitive
-{
-    /// Rotate the contained Polygons about their centroids by the given number of degrees
-    fn rotate(&self, angle: T) -> Self {
-        MultiPolygon(self.0.iter().map(|poly| poly.rotate(angle)).collect())
-    }
-}
-
-impl<T> RotatePoint<T> for MultiLineString<T>
-    where T: Float + FromPrimitive
-{
-    /// Rotate the contained LineStrings about a given point by the given number of degrees
-    fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        MultiLineString(self.0
-                         .iter()
-                         .map(|ls| ls.rotate_around_point(angle, point))
-                         .collect())
-    }
-}
-
-impl<T> Rotate<T> for MultiLineString<T>
-    where T: Float + FromPrimitive
-{
-    /// Rotate the contained LineStrings about their centroids by the given number of degrees
-    fn rotate(&self, angle: T) -> Self {
-        MultiLineString(self.0.iter().map(|ls| ls.rotate(angle)).collect())
-    }
-}
-
-impl<T> RotatePoint<T> for MultiPoint<T>
-    where T: Float + FromPrimitive
-{
-    /// Rotate the contained Points about a given point by the given number of degrees
-    /// This operation leaves the point coordinates unchanged
-    fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        MultiPoint(self.0
-                         .iter()
-                         .map(|p| p.rotate_around_point(angle, point))
-                         .collect())
-    }
-}
-
-impl<T> Rotate<T> for MultiPoint<T>
-    where T: Float + FromPrimitive
-{
-    /// Rotate the contained Points about their centroids by the given number of degrees
-    fn rotate(&self, angle: T) -> Self {
-        MultiPoint(self.0.iter().map(|p| p.rotate(angle)).collect())
+        self.rotate_around_point(angle, &self.centroid().unwrap())
     }
 }
 
 #[cfg(test)]
 mod test {
-    use types::{Point, LineString, Polygon};
+    use types::{Point, LineString, Polygon, Line, Coordinate};
     use super::*;
     #[test]
     fn test_rotate_around_point() {
@@ -303,26 +161,23 @@ mod test {
 
         let poly1 = Polygon::new(ls1, vec![ls2, ls3]);
         let rotated = poly1.rotate(-15.0);
-        let correct_outside = vec![(4.628808519201685, 1.180520783117658),
-                                   (3.921701738015137, 2.4052656545092472),
-                                   (4.180520783117657, 3.3711914807983154),
-                                   (5.405265654509247, 4.078298261984863),
-                                   (6.371191480798315, 3.8194792168823426),
-                                   (7.0782982619848624, 2.594734345490753),
-                                   (6.819479216882343, 1.628808519201685),
-                                   (5.594734345490753, 0.9217017380151373),
-                                   (4.628808519201685, 1.180520783117658)]
-                .iter()
-                .map(|e| Point::new(e.0, e.1))
-                .collect::<Vec<_>>();
-        let correct_inside = vec![(4.706454232732441, 1.4702985310043786),
-                                  (5.37059047744874, 2.017037086855466),
-                                  (5.672380059021509, 1.2114794859018578),
-                                  (4.706454232732441, 1.4702985310043786)]
-                .iter()
-                .map(|e| Point::new(e.0, e.1))
-                .collect::<Vec<_>>();
-        // println!("INSIDE {:?}", rotated.interiors[0].0);
+        let correct_outside = [
+            Point(Coordinate { x: 4.615388272418591, y: 1.1822875921248914 }),
+            Point(Coordinate { x: 3.9082814912320436, y: 2.4070324635164804 }),
+            Point(Coordinate { x: 4.167100536334564, y: 3.372958289805549 }),
+            Point(Coordinate { x: 5.391845407726153, y: 4.080065070992096 }),
+            Point(Coordinate { x: 6.357771234015222, y: 3.8212460258895753 }),
+            Point(Coordinate { x: 7.064878015201769, y: 2.5965011544979864 }),
+            Point(Coordinate { x: 6.806058970099249, y: 1.6305753282089182 }),
+            Point(Coordinate { x: 5.58131409870766, y: 0.9234685470223707 }),
+            Point(Coordinate { x: 4.615388272418591, y: 1.1822875921248914 })
+        ];
+        let correct_inside = [
+            Point(Coordinate { x: 4.693033985949348, y: 1.472065340011612 }),
+            Point(Coordinate { x: 5.357170230665646, y: 2.0188038958626993 }),
+            Point(Coordinate { x: 5.6589598122384155, y: 1.2132462949090912 }),
+            Point(Coordinate { x: 4.693033985949348, y: 1.472065340011612 })
+        ];
         assert_eq!(rotated.exterior.0, correct_outside);
         assert_eq!(rotated.interiors[0].0, correct_inside);
     }
