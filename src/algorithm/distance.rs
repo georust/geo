@@ -5,7 +5,10 @@ use algorithm::contains::Contains;
 use algorithm::extremes::ExtremeIndices;
 use algorithm::intersects::Intersects;
 use algorithm::convexhull::ConvexHull;
-use num_traits::pow::pow;
+
+use spade::SpadeFloat;
+use spade::primitives::SimpleEdge;
+use spade::rtree::RTree;
 
 /// Returns the distance between two geometries.
 
@@ -258,20 +261,62 @@ where
         line.distance(self)
 // Polygon Distance
 impl<T> Distance<T, Polygon<T>> for Polygon<T>
-    where T: Float + FloatConst + Signed
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
 {
     fn distance(&self, poly2: &Polygon<T>) -> T {
         if self.intersects(poly2) {
             return T::zero();
         }
         // TODO: check for containment
-        min_poly_dist(&self.convex_hull(), &poly2.convex_hull())
+        let chull_p = self.convex_hull();
+        let chull_q = poly2.convex_hull();
+        if chull_p.intersects(&chull_q) {
+            // fall back to R* nearest neighbour method
+            nearest_neighbour_polygon_distance(&self, &poly2)
+        } else {
+            min_poly_dist(&chull_p, &chull_q)
+        }
     }
+}
+
+// uses an R* tree and nearest-neighbour lookups to calculate minimum polygon distances
+// This is pretty slow and memory-inefficient but certainly better than quadratic time
+fn nearest_neighbour_polygon_distance<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    let mut tree_a: RTree<SimpleEdge<_>> = RTree::new();
+    let mut tree_b: RTree<SimpleEdge<_>> = RTree::new();
+    let mut mindist_a: T = Float::max_value(); // max float
+    let mut mindist_b: T = Float::max_value(); // max float
+    // Populate R* tree with exterior line segments
+    for win in poly1.exterior.0.windows(2) {
+        tree_a.insert(SimpleEdge::new(win[0], win[1]));
+    }
+    for point in &poly2.exterior.0 {
+        // get the nearest neighbour from the tree
+        let nearest = tree_a.nearest_neighbor(point).unwrap();
+        // calculate distance from point to line
+        // compare to current minimum, updating if necessary
+        mindist_a = mindist_a.min(Line::new(nearest.from, nearest.to).distance(point));
+    }
+    // now repeat the process, swapping the polygons
+    for win in poly2.exterior.0.windows(2) {
+        tree_b.insert(SimpleEdge::new(win[0], win[1]));
+    }
+    for point in &poly1.exterior.0 {
+        let nearest = tree_b.nearest_neighbor(point).unwrap();
+        mindist_b = mindist_b.min(Line::new(nearest.from, nearest.to).distance(point));
+    }
+    // return smallest distance
+    mindist_a.min(mindist_b)
 }
 
 // calculate the minimum distance between two disjoint convex polygons
 fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
-    where T: Float + FloatConst + Signed
+where
+    T: Float + FloatConst + Signed,
 {
     let poly1_extremes = poly1.extreme_indices().unwrap();
     let poly2_extremes = poly2.extreme_indices().unwrap();
@@ -325,8 +370,9 @@ enum Aligned {
 // distance-finding state
 #[derive(Debug)]
 struct Polydist<'a, T>
-    where T: Float,
-          T: 'a
+where
+    T: Float,
+    T: 'a,
 {
     poly1: &'a Polygon<T>,
     poly2: &'a Polygon<T>,
@@ -354,10 +400,12 @@ struct Polydist<'a, T>
 
 // Wrap-around next vertex
 impl<T> Polygon<T>
-    where T: Float
+where
+    T: Float,
 {
     fn next_vertex(&self, current_vertex: &usize) -> usize
-        where T: Float
+    where
+        T: Float,
     {
         (current_vertex + 1) % (self.exterior.0.len() - 1)
     }
@@ -365,10 +413,12 @@ impl<T> Polygon<T>
 
 // Wrap-around previous-vertex
 impl<T> Polygon<T>
-    where T: Float
+where
+    T: Float,
 {
     fn prev_vertex(&self, current_vertex: &usize) -> usize
-        where T: Float
+    where
+        T: Float,
     {
         (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
     }
@@ -376,10 +426,12 @@ impl<T> Polygon<T>
 
 // Minimum distance between a vertex and an imaginary line drawn from p to q
 impl<T> Point<T>
-    where T: Float
+where
+    T: Float,
 {
     fn vertex_line_distance(&self, p: &Point<T>, q: &Point<T>) -> T
-        where T: Float
+    where
+        T: Float,
     {
         self.distance(&LineString(vec![*p, *q]))
     }
@@ -388,7 +440,8 @@ impl<T> Point<T>
 // much of the following code is ported from Java, copyright 1999 Hormoz Pirzadeh, available at:
 // http://web.archive.org/web/20150330010154/http://cgm.cs.mcgill.ca/%7Eorm/rotcal.html
 fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Point<T>
-    where T: Float
+where
+    T: Float,
 {
     let tansq = slope.powi(2);
     let cossq = T::one() / (T::one() + tansq);
@@ -531,13 +584,16 @@ fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Poi
             }
         }
     }
-    Point::new(p.x() + T::from(100).unwrap() * cos,
-               p.y() + T::from(100).unwrap() * sin)
+    Point::new(
+        p.x() + T::from(100).unwrap() * cos,
+        p.y() + T::from(100).unwrap() * sin,
+    )
 }
 
 // Perpendicular unit vector of a vertex and a unit vector
 fn unitpvector<T>(p: &Point<T>, u: &Point<T>) -> Point<T>
-    where T: Float
+where
+    T: Float,
 {
     let hundred = T::from(100).unwrap();
     let vertical;
@@ -597,7 +653,8 @@ fn unitpvector<T>(p: &Point<T>, u: &Point<T>) -> Point<T>
 
 // Angle between a vertex and an edge
 fn vertex_line_angle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vertical: bool, idx: &usize) -> T
-    where T: Float + FloatConst
+where
+    T: Float + FloatConst,
 {
     let hundred = T::from(100).unwrap();
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
@@ -691,23 +748,24 @@ fn vertex_line_angle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vertical: bool, 
 
 // self-explanatory
 fn triangle_area<T>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> T
-    where T: Float
+where
+    T: Float,
 {
-    (T::from(0.5).unwrap() *
-     (a.x() * b.y() - a.y() * b.x() + a.y() * c.x() - a.x() * c.y() + b.x() * c.y() -
-      c.x() * b.y()))
+    (T::from(0.5).unwrap() * (a.x() * b.y() - a.y() * b.x() + a.y() * c.x() - a.x() * c.y() + b.x() * c.y() - c.x() * b.y()))
 }
 
 // positive implies a -> b -> c is counter-clockwise, negative implies clockwise
 pub fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
-    where T: Float
+where
+    T: Float,
 {
     (p_b.x() - p_a.x()) * (p_c.y() - p_a.y()) - (p_b.y() - p_a.y()) * (p_c.x() - p_a.x())
 }
 
 // Does abc turn left?
 fn leftturn<T>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> i8
-    where T: Float
+where
+    T: Float,
 {
     let narea = triangle_area(a, b, c);
     if narea > T::zero() {
@@ -721,21 +779,26 @@ fn leftturn<T>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> i8
 
 // Calculate next set of caliper points
 fn nextpoints<T>(state: &mut Polydist<T>)
-    where T: Float + FloatConst
+where
+    T: Float + FloatConst,
 {
     state.alignment = None;
     state.ip1 = false;
     state.iq2 = false;
-    state.ap1 = vertex_line_angle(state.poly1,
-                                  &state.p1,
-                                  &state.slope,
-                                  state.vertical,
-                                  &state.p1_idx);
-    state.aq2 = vertex_line_angle(state.poly2,
-                                  &state.q2,
-                                  &state.slope,
-                                  state.vertical,
-                                  &state.q2_idx);
+    state.ap1 = vertex_line_angle(
+        state.poly1,
+        &state.p1,
+        &state.slope,
+        state.vertical,
+        &state.p1_idx,
+    );
+    state.aq2 = vertex_line_angle(
+        state.poly2,
+        &state.q2,
+        &state.slope,
+        state.vertical,
+        &state.q2_idx,
+    );
     let minangle = state.ap1.min(state.aq2);
     state.p1prev = state.p1;
     state.p1next = state.p1prev;
@@ -746,7 +809,7 @@ fn nextpoints<T>(state: &mut Polydist<T>)
     // if both are within epsilon, alignment is edge-edge
     // in each of the above, we also have to check for overlap, and in the case of
     // edge-edge alignment, additional cases must be considered.
-    // 
+    //
     // assume the calipers are rotated θ degrees around pi and qj, and that
     // we have hit vertex q` and edge [p`, p^]
     // check whether there exists a line segment [p, p*] which is orthogonal to [qj, q`]
@@ -755,7 +818,7 @@ fn nextpoints<T>(state: &mut Polydist<T>)
     // between pi and q†, and compare it to the current minimum.
     // If the calipers intersect with edges on both polygons (implying the edges are parallel),
     // intersections must be computed between both segments, and if one is
-    // found, the [pi, p`] - [qj, q`] edge-edge orthogonal distance is found and compared. 
+    // found, the [pi, p`] - [qj, q`] edge-edge orthogonal distance is found and compared.
     // see Pirzadeh (1999), p31
     if (state.ap1 - minangle).abs() < T::from(0.002).unwrap() {
         state.ip1 = true;
@@ -784,11 +847,9 @@ fn nextpoints<T>(state: &mut Polydist<T>)
             false => {
                 state.vertical = false;
                 if state.p1.x() > state.p1next.x() {
-                    state.slope = (state.p1.y() - state.p1next.y()) /
-                                  (state.p1.x() - state.p1next.x());
+                    state.slope = (state.p1.y() - state.p1next.y()) / (state.p1.x() - state.p1next.x());
                 } else {
-                    state.slope = (state.p1next.y() - state.p1.y()) /
-                                  (state.p1next.x() - state.p1.x());
+                    state.slope = (state.p1next.y() - state.p1.y()) / (state.p1next.x() - state.p1.x());
                 }
             }
         }
@@ -803,11 +864,9 @@ fn nextpoints<T>(state: &mut Polydist<T>)
             false => {
                 state.vertical = false;
                 if state.q2.x() > state.q2next.x() {
-                    state.slope = (state.q2.y() - state.q2next.y()) /
-                                  (state.q2.x() - state.q2next.x());
+                    state.slope = (state.q2.y() - state.q2next.y()) / (state.q2.x() - state.q2next.x());
                 } else {
-                    state.slope = (state.q2next.y() - state.q2.y()) /
-                                  (state.q2next.x() - state.q2.x());
+                    state.slope = (state.q2next.y() - state.q2.y()) / (state.q2next.x() - state.q2.x());
                 }
             }
         }
@@ -825,7 +884,8 @@ fn nextpoints<T>(state: &mut Polydist<T>)
 
 // compute the minimum distance between entities (edges or vertices)
 fn computemin<T>(state: &mut Polydist<T>)
-    where T: Float
+where
+    T: Float,
 {
     let u;
     let u1;
@@ -840,10 +900,12 @@ fn computemin<T>(state: &mut Polydist<T>)
             // one line of support coincides with a vertex on Q, the other with an edge on P
             if !state.vertical {
                 if state.slope != T::zero() {
-                    u = unitvector(&(-T::one() / state.slope),
-                                   state.poly2,
-                                   &state.q2,
-                                   &state.q2_idx);
+                    u = unitvector(
+                        &(-T::one() / state.slope),
+                        state.poly2,
+                        &state.q2,
+                        &state.q2_idx,
+                    );
                 } else {
                     u = Point::new(state.q2.x(), state.q2.y() + T::from(100).unwrap());
                 }
@@ -865,10 +927,12 @@ fn computemin<T>(state: &mut Polydist<T>)
             // one line of support coincides with a vertex on P, the other with an edge on Q
             if !state.vertical {
                 if state.slope != T::zero() {
-                    u = unitvector(&(-T::one() / state.slope),
-                                   state.poly1,
-                                   &state.p1,
-                                   &state.p1_idx);
+                    u = unitvector(
+                        &(-T::one() / state.slope),
+                        state.poly1,
+                        &state.p1,
+                        &state.p1_idx,
+                    );
                 } else {
                     u = Point::new(state.p1.x(), state.p1.y() + T::from(100).unwrap());
                 }
@@ -900,14 +964,18 @@ fn computemin<T>(state: &mut Polydist<T>)
             }
             if !state.vertical {
                 if state.slope != T::zero() {
-                    u1 = unitvector(&(-T::one() / state.slope),
-                                    state.poly1,
-                                    &state.p1prev,
-                                    &state.p1_idx);
-                    u2 = unitvector(&(-T::one() / state.slope),
-                                    state.poly1,
-                                    &state.p1,
-                                    &state.p1_idx);
+                    u1 = unitvector(
+                        &(-T::one() / state.slope),
+                        state.poly1,
+                        &state.p1prev,
+                        &state.p1_idx,
+                    );
+                    u2 = unitvector(
+                        &(-T::one() / state.slope),
+                        state.poly1,
+                        &state.p1,
+                        &state.p1_idx,
+                    );
                 } else {
                     u1 = Point::new(state.p1prev.x(), state.p1prev.y() + T::from(100).unwrap());
                     u2 = Point::new(state.p1.x(), state.p1.y() + T::from(100).unwrap());
@@ -920,8 +988,7 @@ fn computemin<T>(state: &mut Polydist<T>)
             let line_1b = leftturn(&u1, &state.p1prev, &state.q2);
             let line_2a = leftturn(&u2, &state.p1, &state.q2prev);
             let line_2b = leftturn(&u2, &state.p1, &state.q2);
-            if line_1a != line_1b && line_1a != -1 && line_1b != -1 ||
-               line_2a != line_2b && line_2a != -1 && line_2b != -2 {
+            if line_1a != line_1b && line_1a != -1 && line_1b != -1 || line_2a != line_2b && line_2a != -1 && line_2b != -2 {
                 // an orthogonal intersection exists
                 newdist = state.p1.vertex_line_distance(&state.q2prev, &state.q2);
                 if newdist <= state.dist {
@@ -936,8 +1003,8 @@ fn computemin<T>(state: &mut Polydist<T>)
 
 #[cfg(test)]
 mod test {
-    use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
-    use algorithm::distance::{Distance, line_segment_distance};
+    use types::{Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
+    use algorithm::distance::{Distance, line_segment_distance, nearest_neighbour_polygon_distance};
     use algorithm::convexhull::ConvexHull;
     use super::*;
 
@@ -1205,74 +1272,106 @@ mod test {
     #[test]
     // test edge-vertex minimum distance
     fn test_minimum_polygon_distance() {
-        let points_raw = vec![(126., 232.),
-                              (126., 212.),
-                              (112., 202.),
-                              (97., 204.),
-                              (87., 215.),
-                              (87., 232.),
-                              (100., 246.),
-                              (118., 247.)];
+        let points_raw = vec![
+            (126., 232.),
+            (126., 212.),
+            (112., 202.),
+            (97., 204.),
+            (87., 215.),
+            (87., 232.),
+            (100., 246.),
+            (118., 247.),
+        ];
         let points = points_raw
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString(points), vec![]);
 
-        let points_raw_2 = vec![(188., 231.),
-                                (189., 207.),
-                                (174., 196.),
-                                (164., 196.),
-                                (147., 220.),
-                                (158., 242.),
-                                (177., 242.)];
+        let points_raw_2 = vec![
+            (188., 231.),
+            (189., 207.),
+            (174., 196.),
+            (164., 196.),
+            (147., 220.),
+            (158., 242.),
+            (177., 242.),
+        ];
         let points2 = points_raw_2
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString(points2), vec![]);
         let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
+        let dist2 = nearest_neighbour_polygon_distance(&poly1, &poly2);
         assert_eq!(dist, 21.0);
+        assert_eq!(dist2, 21.0);
     }
     #[test]
     // test vertex-vertex minimum distance
     fn test_minimum_polygon_distance_2() {
-        let points_raw = vec![(118., 200.), (153., 179.), (106., 155.), (88., 190.), (118., 200.)];
+        let points_raw = vec![
+            (118., 200.),
+            (153., 179.),
+            (106., 155.),
+            (88., 190.),
+            (118., 200.),
+        ];
         let points = points_raw
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString(points), vec![]);
 
-        let points_raw_2 =
-            vec![(242., 186.), (260., 146.), (182., 175.), (216., 193.), (242., 186.)];
+        let points_raw_2 = vec![
+            (242., 186.),
+            (260., 146.),
+            (182., 175.),
+            (216., 193.),
+            (242., 186.),
+        ];
         let points2 = points_raw_2
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString(points2), vec![]);
         let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
+        let dist2 = nearest_neighbour_polygon_distance(&poly1, &poly2);
         assert_eq!(dist, 29.274562336608895);
+        assert_eq!(dist2, 29.274562336608895);
     }
     #[test]
     // test edge-edge minimum distance
     fn test_minimum_polygon_distance_3() {
-        let points_raw = vec![(182., 182.), (182., 168.), (138., 160.), (136., 193.), (182., 182.)];
+        let points_raw = vec![
+            (182., 182.),
+            (182., 168.),
+            (138., 160.),
+            (136., 193.),
+            (182., 182.),
+        ];
         let points = points_raw
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString(points), vec![]);
 
-        let points_raw_2 =
-            vec![(232., 196.), (234., 150.), (194., 165.), (194., 191.), (232., 196.)];
+        let points_raw_2 = vec![
+            (232., 196.),
+            (234., 150.),
+            (194., 165.),
+            (194., 191.),
+            (232., 196.),
+        ];
         let points2 = points_raw_2
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString(points2), vec![]);
         let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
+        let dist2 = nearest_neighbour_polygon_distance(&poly1, &poly2);
         assert_eq!(dist, 12.0);
+        assert_eq!(dist2, 12.0);
     }
     #[test]
     fn test_vertex_line_distance() {
