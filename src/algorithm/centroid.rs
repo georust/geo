@@ -6,6 +6,8 @@ use algorithm::distance::Distance;
 
 /// Calculation of the centroid.
 pub trait Centroid<T: Float> {
+    type Output;
+
     /// See: https://en.wikipedia.org/wiki/Centroid
     ///
     /// ```
@@ -20,7 +22,7 @@ pub trait Centroid<T: Float> {
     /// assert_eq!(linestring.centroid().unwrap(), Point::new(40.02, 117.285));
     /// ```
     ///
-    fn centroid(&self) -> Option<Point<T>>;
+    fn centroid(&self) -> Self::Output;
 }
 
 // Calculation of simple (no interior holes) Polygon area
@@ -57,20 +59,24 @@ fn simple_polygon_centroid<T>(poly_ext: &LineString<T>) -> Option<Point<T>>
 impl<T> Centroid<T> for Line<T>
     where T: Float
 {
-    fn centroid(&self) -> Option<Point<T>> {
+    type Output = Point<T>;
+
+    fn centroid(&self) -> Self::Output {
         let two = T::one() + T::one();
         let x = (self.start.x() + self.end.x()) / two;
         let y = (self.start.y() + self.end.y()) / two;
-        Some(Point::new(x, y))
+        Point::new(x, y)
     }
 }
 
 impl<T> Centroid<T> for LineString<T>
     where T: Float
 {
+    type Output = Option<Point<T>>;
+
     // The Centroid of a LineString is the mean of the middle of the segment
     // weighted by the length of the segments.
-    fn centroid(&self) -> Option<Point<T>> {
+    fn centroid(&self) -> Self::Output {
         let vect = &self.0;
         if vect.is_empty() {
             return None;
@@ -96,6 +102,8 @@ impl<T> Centroid<T> for LineString<T>
 impl<T> Centroid<T> for Polygon<T>
     where T: Float + FromPrimitive
 {
+    type Output = Option<Point<T>>;
+
     // Calculate the centroid of a Polygon.
     // We distinguish between a simple polygon, which has no interior holes,
     // and a complex polygon, which has one or more interior holes.
@@ -105,7 +113,7 @@ impl<T> Centroid<T> for Polygon<T>
     // this calculation.
     // See here for a formula: http://math.stackexchange.com/a/623849
     // See here for detail on alternative methods: https://fotino.me/calculating-centroids/
-    fn centroid(&self) -> Option<Point<T>> {
+    fn centroid(&self) -> Self::Output {
         let linestring = &self.exterior;
         let vect = &linestring.0;
         if vect.is_empty() {
@@ -141,7 +149,9 @@ impl<T> Centroid<T> for Polygon<T>
 impl<T> Centroid<T> for MultiPolygon<T>
     where T: Float + FromPrimitive
 {
-    fn centroid(&self) -> Option<Point<T>> {
+    type Output = Option<Point<T>>;
+
+    fn centroid(&self) -> Self::Output {
         let mut sum_x = T::zero();
         let mut sum_y = T::zero();
         let mut total_area = T::zero();
@@ -165,17 +175,21 @@ impl<T> Centroid<T> for MultiPolygon<T>
 impl<T> Centroid<T> for Bbox<T>
     where T: Float
 {
-    fn centroid(&self) -> Option<Point<T>> {
+    type Output = Point<T>;
+
+    fn centroid(&self) -> Self::Output {
         let two = T::one() + T::one();
-        Some(Point::new((self.xmax + self.xmin) / two, (self.ymax + self.ymin) / two))
+        Point::new((self.xmax + self.xmin) / two, (self.ymax + self.ymin) / two)
     }
 }
 
 impl<T> Centroid<T> for Point<T>
     where T: Float
 {
-    fn centroid(&self) -> Option<Point<T>> {
-        Some(Point::new(self.x(), self.y()))
+    type Output = Point<T>;
+
+    fn centroid(&self) -> Self::Output {
+        Point::new(self.x(), self.y())
     }
 }
 
@@ -302,12 +316,12 @@ mod test {
             ymin: 50.,
         };
         let point = Point(Coordinate { x: 2., y: 75. });
-        assert_eq!(point, bbox.centroid().unwrap());
+        assert_eq!(point, bbox.centroid());
     }
     #[test]
     fn line_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let line1 = Line::new(p(0., 1.), p(1., 3.));
-        assert_eq!(line1.centroid(), Some(p(0.5, 2.)));
+        assert_eq!(line1.centroid(), p(0.5, 2.));
     }
 }
