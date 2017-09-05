@@ -1381,6 +1381,15 @@ mod test {
         assert_eq!(outside.distance(&inside), 5.992772737231033);
     }
     #[test]
+    // two ring LineStrings; one encloses the other but they neither touch nor intersect
+    fn linestring_distance_test() {
+        let ring = include!("test_fixtures/ring.rs");
+        let ring_ls: LineString<f64> = ring.into();
+        let in_ring = include!("test_fixtures/poly_in_ring.rs");
+        let in_ring_ls: LineString<f64> = in_ring.into();
+        assert_eq!(ring_ls.distance(&in_ring_ls), 5.992772737231033);
+    }
+    #[test]
     fn test_vertex_line_distance() {
         let p = Point::new(0., 0.);
         let q = Point::new(3.8, 5.7);
