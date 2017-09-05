@@ -433,7 +433,7 @@ where
     where
         T: Float,
     {
-        self.distance(&LineString(vec![*p, *q]))
+        self.distance(&Line::new(*p, *q))
     }
 }
 
