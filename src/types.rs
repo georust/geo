@@ -66,6 +66,24 @@ impl From<Vec<usize>> for Extremes {
 
 /// A container for the coordinates of the minimum and maximum points of a [`Geometry`](enum.Geometry.html)
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
+impl<T> From<Bbox<T>> for Polygon<T>
+where
+    T: Float,
+{
+    fn from(bbox: Bbox<T>) -> Polygon<T> {
+        Polygon::new(
+            LineString(vec![
+                Point::new(bbox.xmin, bbox.ymin),
+                Point::new(bbox.xmax, bbox.ymin),
+                Point::new(bbox.xmax, bbox.ymax),
+                Point::new(bbox.xmin, bbox.ymax),
+                Point::new(bbox.xmin, bbox.ymin),
+            ]),
+            vec![],
+        )
+    }
+}
+
 pub struct ExtremePoint<T>
 where
     T: Float,
@@ -764,42 +782,6 @@ where
     MultiLineString(MultiLineString<T>),
     MultiPolygon(MultiPolygon<T>),
     GeometryCollection(GeometryCollection<T>),
-}
-
-/// The result of trying to find the closest spot on an object to a point.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum Closest<F: Float> {
-    /// The point actually intersects with the object.
-    Intersection(Point<F>),
-    /// There is exactly one place on this object which is closest to the point.
-    SinglePoint(Point<F>),
-    /// There are two or more (possibly infinite or undefined) possible points.
-    Indeterminate,
-}
-
-impl<F: Float> Closest<F> {
-    /// Compare two `Closest`s relative to `p` and return a copy of the best
-    /// one.
-    pub fn best_of_two(&self, other: &Self, p: &Point<F>) -> Self {
-        use algorithm::distance::Distance;
-
-        let left = match *self {
-            Closest::Indeterminate => return *other,
-            Closest::Intersection(_) => return *self,
-            Closest::SinglePoint(l) => l,
-        };
-        let right = match *other {
-            Closest::Indeterminate => return *self,
-            Closest::Intersection(_) => return *other,
-            Closest::SinglePoint(r) => r,
-        };
-
-        if left.distance(p) <= right.distance(p) {
-            *self
-        } else {
-            *other
-        }
-    }
 }
 
 impl<T: Float> From<Point<T>> for Geometry<T> {
