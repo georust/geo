@@ -1,5 +1,14 @@
 # Changes
 
+## 0.6.0
+
+* [Remove unnecessary trait bound on `Translate`](https://github.com/georust/rust-geo/pull/148)
+* [Topology preserving Visvalingam-Whyatt algorithm](https://github.com/georust/rust-geo/pull/143)
+* [Implement `Copy` for `Line`](https://github.com/georust/rust-geo/pull/150)
+* [Rewrite `RotatePoint` impls to be generic](https://github.com/georust/rust-geo/pull/153)
+* [Add associated return type for `BoundingBox`](https://github.com/georust/rust-geo/pull/156)
+* [Add associated return type for `Centroid`](https://github.com/georust/rust-geo/pull/154)
+
 ## 0.5.0
 
 * [Reimplement `Translate` trait using `MapCoords`](https://github.com/georust/rust-geo/pull/145)
