@@ -73,11 +73,11 @@ where
     fn from(bbox: Bbox<T>) -> Polygon<T> {
         Polygon::new(
             LineString(vec![
-                Point::new(bbox.xmin, bbox.ymin),
                 Point::new(bbox.xmax, bbox.ymin),
                 Point::new(bbox.xmax, bbox.ymax),
                 Point::new(bbox.xmin, bbox.ymax),
                 Point::new(bbox.xmin, bbox.ymin),
+                Point::new(bbox.xmax, bbox.ymin),
             ]),
             vec![],
         )
