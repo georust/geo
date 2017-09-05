@@ -186,6 +186,14 @@ where
     }
 }
 
+impl<T> Intersects<Polygon<T>> for LineString<T>
+    where T: Float
+{
+    fn intersects(&self, polygon: &Polygon<T>) -> bool {
+        polygon.intersects(self)
+    }
+}
+
 impl<T> Intersects<Bbox<T>> for Bbox<T>
 where
     T: Float,
