@@ -273,16 +273,16 @@ where
         let chull_q = poly2.convex_hull();
         if chull_p.intersects(&chull_q) {
             // fall back to R* nearest neighbour method
-            nearest_neighbour_polygon_distance(&self, &poly2)
+            nearest_neighbour_distance(&self.exterior, &poly2.exterior)
         } else {
             min_poly_dist(&chull_p, &chull_q)
         }
     }
 }
 
-// uses an R* tree and nearest-neighbour lookups to calculate minimum polygon distances
+// uses an R* tree and nearest-neighbour lookups to calculate minimum distances
 // This is pretty slow and memory-inefficient but certainly better than quadratic time
-fn nearest_neighbour_polygon_distance<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
+fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -> T
 where
     T: Float + FloatConst + Signed + SpadeFloat,
 {
@@ -291,10 +291,10 @@ where
     let mut mindist_a: T = Float::max_value(); // max float
     let mut mindist_b: T = Float::max_value(); // max float
     // Populate R* tree with exterior line segments
-    for win in poly1.exterior.0.windows(2) {
+    for win in geom1.0.windows(2) {
         tree_a.insert(SimpleEdge::new(win[0], win[1]));
     }
-    for point in &poly2.exterior.0 {
+    for point in &geom2.0 {
         // get the nearest neighbour from the tree
         let nearest = tree_a.nearest_neighbor(point).unwrap();
         // calculate distance from point to line
@@ -302,10 +302,10 @@ where
         mindist_a = mindist_a.min(Line::new(nearest.from, nearest.to).distance(point));
     }
     // now repeat the process, swapping the polygons
-    for win in poly2.exterior.0.windows(2) {
+    for win in geom2.0.windows(2) {
         tree_b.insert(SimpleEdge::new(win[0], win[1]));
     }
-    for point in &poly1.exterior.0 {
+    for point in &geom1.0 {
         let nearest = tree_b.nearest_neighbor(point).unwrap();
         mindist_b = mindist_b.min(Line::new(nearest.from, nearest.to).distance(point));
     }
@@ -996,7 +996,7 @@ where
 #[cfg(test)]
 mod test {
     use types::{Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
-    use algorithm::distance::{Distance, line_segment_distance, nearest_neighbour_polygon_distance};
+    use algorithm::distance::{Distance, line_segment_distance, nearest_neighbour_distance};
     use algorithm::convexhull::ConvexHull;
     use super::*;
 
@@ -1295,7 +1295,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString(points2), vec![]);
         let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
-        let dist2 = nearest_neighbour_polygon_distance(&poly1, &poly2);
+        let dist2 = nearest_neighbour_distance(&poly1.exterior, &poly2.exterior);
         assert_eq!(dist, 21.0);
         assert_eq!(dist2, 21.0);
     }
@@ -1328,7 +1328,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString(points2), vec![]);
         let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
-        let dist2 = nearest_neighbour_polygon_distance(&poly1, &poly2);
+        let dist2 = nearest_neighbour_distance(&poly1.exterior, &poly2.exterior);
         assert_eq!(dist, 29.274562336608895);
         assert_eq!(dist2, 29.274562336608895);
     }
@@ -1361,7 +1361,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString(points2), vec![]);
         let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
-        let dist2 = nearest_neighbour_polygon_distance(&poly1, &poly2);
+        let dist2 = nearest_neighbour_distance(&poly1.exterior, &poly2.exterior);
         assert_eq!(dist, 12.0);
         assert_eq!(dist2, 12.0);
     }
