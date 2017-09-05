@@ -7,6 +7,3 @@ rust:
 matrix:
   allow_failures:
     - rust: nightly
-
-after_success:
-  - if [ "$TRAVIS_PULL_REQUEST" == "false" -a "$TRAVIS_BRANCH" == "master" ]; then .travis/deploy.sh; fi
