@@ -450,11 +450,7 @@ where
     let mut sin;
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
     let pprev = poly.exterior.0[poly.prev_vertex(idx)];
-    let clockwise = if cross_prod(&pprev, p, &pnext) < T::zero() {
-        true
-    } else {
-        false
-    };
+    let clockwise = cross_prod(&pprev, p, &pnext) < T::zero();
     let slope_prev;
     let slope_next;
     // Slope isn't 0, things are complicated
@@ -659,11 +655,7 @@ where
     let hundred = T::from(100).unwrap();
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
     let pprev = poly.exterior.0[poly.prev_vertex(idx)];
-    let clockwise = if cross_prod(&pprev, p, &pnext) < T::zero() {
-        true
-    } else {
-        false
-    };
+    let clockwise = cross_prod(&pprev, p, &pnext) < T::zero();
     let punit;
     if !vertical {
         punit = unitvector(m, poly, p, idx);
