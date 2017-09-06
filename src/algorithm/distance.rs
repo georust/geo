@@ -4,7 +4,6 @@ use num_traits::float::FloatConst;
 use algorithm::contains::Contains;
 use algorithm::extremes::ExtremeIndices;
 use algorithm::intersects::Intersects;
-use algorithm::convexhull::ConvexHull;
 
 use spade::SpadeFloat;
 use spade::primitives::SimpleEdge;
@@ -268,14 +267,26 @@ where
         if self.intersects(poly2) {
             return T::zero();
         }
-        // TODO: check for containment
-        let chull_p = self.convex_hull();
-        let chull_q = poly2.convex_hull();
-        if chull_p.intersects(&chull_q) {
+        // Containment check
+        if Polygon::new(self.exterior.clone(), vec![]).contains(&poly2.exterior) {
+            // check each ring distance, returning the minimum
+            let mut mindist: T = Float::max_value();
+            for ring in &self.interiors {
+                mindist = mindist.min(nearest_neighbour_distance(&poly2.exterior, &ring))
+            }
+            return mindist;
+        } else if Polygon::new(self.exterior.clone(), vec![]).contains(&self.exterior) {
+            let mut mindist: T = Float::max_value();
+            for ring in &poly2.interiors {
+                mindist = mindist.min(nearest_neighbour_distance(&self.exterior, &ring))
+            }
+            return mindist;
+        }
+        if !(self.convex() && !poly2.convex()) {
             // fall back to R* nearest neighbour method
             nearest_neighbour_distance(&self.exterior, &poly2.exterior)
         } else {
-            min_poly_dist(&chull_p, &chull_q)
+            min_poly_dist(&self, &poly2)
         }
     }
 }
@@ -288,9 +299,9 @@ where
 {
     let mut tree_a: RTree<SimpleEdge<_>> = RTree::new();
     let mut tree_b: RTree<SimpleEdge<_>> = RTree::new();
-    let mut mindist_a: T = Float::max_value(); // max float
-    let mut mindist_b: T = Float::max_value(); // max float
-    // Populate R* tree with exterior line segments
+    let mut mindist_a: T = Float::max_value();
+    let mut mindist_b: T = Float::max_value();
+    // Populate R* tree with line segments
     for win in geom1.0.windows(2) {
         tree_a.insert(SimpleEdge::new(win[0], win[1]));
     }
@@ -301,7 +312,7 @@ where
         // compare to current minimum, updating if necessary
         mindist_a = mindist_a.min(Line::new(nearest.from, nearest.to).distance(point));
     }
-    // now repeat the process, swapping the polygons
+    // now repeat the process, swapping the LineStrings
     for win in geom2.0.windows(2) {
         tree_b.insert(SimpleEdge::new(win[0], win[1]));
     }
@@ -313,7 +324,7 @@ where
     mindist_a.min(mindist_b)
 }
 
-// calculate the minimum distance between two disjoint convex polygons
+// calculate the minimum distance between two disjoint and linearly separable convex polygons
 fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
 where
     T: Float + FloatConst + Signed,
@@ -322,9 +333,6 @@ where
     let poly2_extremes = poly2.extreme_indices().unwrap();
     let ymin1 = poly1.exterior.0[poly1_extremes.ymin];
     let ymax2 = poly2.exterior.0[poly2_extremes.ymax];
-    // TODO: check whether the convex hulls intersect.
-    // This means we'll have to use the Delaunay method from
-    // http://www-cgrl.cs.mcgill.ca/~godfried/publications/mindist.pdf
 
     let mut state = Polydist {
         poly1: poly1,
@@ -398,24 +406,55 @@ where
     vertical: bool,
 }
 
-// Wrap-around next vertex
+// used to check the sign of a vec of floats
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum ListSign {
+    Empty,
+    Positive,
+    Negative,
+    Mixed,
+}
+
 impl<T> Polygon<T>
 where
-    T: Float,
+    T: Float + Signed,
 {
+    // Is this polygon convex?
+    fn convex(&self) -> bool {
+        let convex = self
+            .exterior
+            .0
+            .iter()
+            .enumerate()
+            .map(|(idx, _)| {
+                let prev_1 = self.prev_vertex(&idx);
+                let prev_2 = self.prev_vertex(&prev_1);
+                cross_prod(&self.exterior.0[prev_2],
+                           &self.exterior.0[prev_1],
+                           &self.exterior.0[idx])
+            })
+            // accumulate and check cross-product result signs in a single pass
+            // positive implies ccw convexity, negative implies cw convexity
+            // anything else implies non-convexity
+            .fold(ListSign::Empty, |acc, n| {
+                match (acc, n.is_positive()) {
+                    (ListSign::Empty, true) | (ListSign::Positive, true) => ListSign::Positive,
+                    (ListSign::Empty, false) | (ListSign::Negative, false) => ListSign::Negative,
+                    _ => ListSign::Mixed
+                }
+            });
+        match convex {
+            ListSign::Mixed => false,
+            _ => true,
+        }
+    }
+    // Wrap-around next and previous Polygon indices
     fn next_vertex(&self, current_vertex: &usize) -> usize
     where
         T: Float,
     {
         (current_vertex + 1) % (self.exterior.0.len() - 1)
     }
-}
-
-// Wrap-around previous-vertex
-impl<T> Polygon<T>
-where
-    T: Float,
-{
     fn prev_vertex(&self, current_vertex: &usize) -> usize
     where
         T: Float,
@@ -423,6 +462,7 @@ where
         (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
     }
 }
+
 
 // Minimum distance between a vertex and an imaginary line drawn from p to q
 impl<T> Point<T>
@@ -441,7 +481,7 @@ where
 // http://web.archive.org/web/20150330010154/http://cgm.cs.mcgill.ca/%7Eorm/rotcal.html
 fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: &Point<T>, idx: &usize) -> Point<T>
 where
-    T: Float,
+    T: Float + Signed,
 {
     let tansq = slope.powi(2);
     let cossq = T::one() / (T::one() + tansq);
@@ -650,7 +690,7 @@ where
 // Angle between a vertex and an edge
 fn vertex_line_angle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vertical: bool, idx: &usize) -> T
 where
-    T: Float + FloatConst,
+    T: Float + FloatConst + Signed,
 {
     let hundred = T::from(100).unwrap();
     let pnext = poly.exterior.0[poly.next_vertex(idx)];
@@ -772,7 +812,7 @@ where
 // Calculate next set of caliper points
 fn nextpoints<T>(state: &mut Polydist<T>)
 where
-    T: Float + FloatConst,
+    T: Float + FloatConst + Signed,
 {
     state.alignment = None;
     state.ip1 = false;
@@ -877,7 +917,7 @@ where
 // compute the minimum distance between entities (edges or vertices)
 fn computemin<T>(state: &mut Polydist<T>)
 where
-    T: Float,
+    T: Float + Signed,
 {
     let u;
     let u1;
@@ -1366,9 +1406,26 @@ mod test {
         assert_eq!(dist2, 12.0);
     }
     #[test]
+    fn large_polygon_distance() {
+        let points = include!("test_fixtures/norway_main.rs");
+        let points_ls: Vec<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
+        let ls = LineString(points_ls);
+        let poly1 = Polygon::new(ls, vec![]);
+        let vec2 = vec![
+            (4.921875, 66.33750501996518),
+            (3.69140625, 65.21989393613207),
+            (6.15234375, 65.07213008560697),
+            (4.921875, 66.33750501996518),
+        ];
+        let poly2 = Polygon::new(vec2.into(), vec![]);
+        let distance = poly1.distance(&poly2);
+        // GEOS says 2.2864896295566055
+        assert_eq!(distance, 2.2864896295566055);
+    }
+    #[test]
     // A polygon inside another polygon's ring; they're disjoint in the DE-9IM sense:
     // FF2FF1212
-    fn polygon_in_ring_test() {
+    fn phi() {
         let shell = include!("test_fixtures/shell.rs");
         let shell_ls: LineString<f64> = shell.into();
         let ring = include!("test_fixtures/ring.rs");
@@ -1379,6 +1436,15 @@ mod test {
         let outside = Polygon::new(shell_ls, vec![ring_ls]);
         let inside = Polygon::new(poly_in_ring_ls, vec![]);
         assert_eq!(outside.distance(&inside), 5.992772737231033);
+    }
+    #[test]
+    // does shell contain in_ring_ls?
+    fn theta() {
+        let shell = include!("test_fixtures/shell.rs");
+        let shell_ls = Polygon::new(shell.into(), vec![]);
+        let in_ring = include!("test_fixtures/poly_in_ring.rs");
+        let in_ring_ls: LineString<f64> = in_ring.into();
+        assert_eq!(shell_ls.contains(&in_ring_ls), true)
     }
     #[test]
     // two ring LineStrings; one encloses the other but they neither touch nor intersect
