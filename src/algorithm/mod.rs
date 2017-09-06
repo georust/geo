@@ -32,5 +32,5 @@ pub mod rotate;
 pub mod translate;
 /// Apply a function to all coordinates
 pub mod map_coords;
-/// Determine the closest point between two objects.
-pub mod closest_point;
+/// Helper functions for the "fast path" variant of the Polygon-Polygon distance method
+pub(crate) mod polygon_distance_fast_path;
