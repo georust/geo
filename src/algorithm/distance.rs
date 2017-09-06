@@ -263,6 +263,9 @@ impl<T> Distance<T, Polygon<T>> for Polygon<T>
 where
     T: Float + FloatConst + Signed + SpadeFloat,
 {
+    /// This implementation has a "fast path" in cases where both input polygons are convex:
+    /// it switches to an implementation of the "rotating calipers" method described in [Pirzadeh (1999), pp24—30](http://digitool.library.mcgill.ca/R/?func=dbin-jump-full&object_id=21623&local_base=GEN01-MCG02),
+    ///  which is approximately an order of magnitude faster than the standard method.
     fn distance(&self, poly2: &Polygon<T>) -> T {
         if self.intersects(poly2) {
             return T::zero();
