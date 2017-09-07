@@ -208,6 +208,18 @@ impl<T> Contains<Line<T>> for Polygon<T>
     }
 }
 
+impl<T> Contains<Polygon<T>> for Polygon<T>
+where
+    T: Float,
+{
+    fn contains(&self, poly: &Polygon<T>) -> bool {
+        // decompose poly's exterior ring into Lines, and check each for containment
+        poly.exterior.0.windows(2).all(|line| {
+            self.contains(&Line::new(line[0], line[1]))
+        })
+    }
+}
+
 impl<T> Contains<LineString<T>> for Polygon<T>
     where T: Float
 {
@@ -243,6 +255,20 @@ impl<T> Contains<Bbox<T>> for Bbox<T>
 mod test {
     use types::{Coordinate, Point, Line, LineString, Polygon, MultiPolygon, Bbox};
     use algorithm::contains::Contains;
+    #[test]
+    // V doesn't contain rect because two of its edges intersect with V's exterior boundary
+    fn polygon_does_not_contain_polygon() {
+        let v = Polygon::new(vec![(150., 350.), (100., 350.), (210., 160.), (290., 350.), (250., 350.), (200., 250.), (150., 350.)].into(), vec![]);
+        let rect = Polygon::new(vec![(250., 310.), (150., 310.), (150., 280.), (250., 280.), (250., 310.)].into(), vec![]);
+        assert_eq!(!v.contains(&rect), true);
+    }
+    #[test]
+    // V contains rect because all its vertices are contained, and none of its edges intersect with V's boundaries
+    fn polygon_contains_polygon() {
+        let v = Polygon::new(vec![(150., 350.), (100., 350.), (210., 160.), (290., 350.), (250., 350.), (200., 250.), (150., 350.)].into(), vec![]);
+        let rect = Polygon::new(vec![(185., 237.), (220., 237.), (220., 220.), (185., 220.), (185., 237.)].into(), vec![]);
+        assert_eq!(v.contains(&rect), true);
+    }
     /// Tests: Point in LineString
     #[test]
     fn empty_linestring_test() {
