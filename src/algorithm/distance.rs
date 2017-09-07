@@ -2,7 +2,7 @@ use num_traits::{Float, ToPrimitive};
 use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 use num_traits::float::FloatConst;
 use algorithm::contains::Contains;
-use algorithm::intersects::Intersects;
+use algorithm::intersects::{Intersects};
 use algorithm::polygon_distance_fast_path::*;
 
 use spade::SpadeFloat;
@@ -257,8 +257,89 @@ where
 {
     /// Minimum distance from a Line to a Point
     fn distance(&self, line: &Line<T>) -> T {
-        line.distance(self)
-// Polygon Distance
+        line_segment_distance(&self, &line.start, &line.end)
+    }
+}
+
+impl<T> Distance<T, Point<T>> for Line<T>
+where
+    T: Float,
+{
+    /// Minimum distance from a Line to a Point
+    fn distance(&self, point: &Point<T>) -> T {
+        point.distance(self)
+    }
+}
+
+// LineString distance
+impl<T> Distance<T, LineString<T>> for LineString<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn distance(&self, other: &LineString<T>) -> T {
+        if self.intersects(other) {
+            return T::zero();
+        } else {
+            nearest_neighbour_distance(self, other)
+        }
+    }
+}
+
+// LineString to Polygon
+impl<T> Distance<T, Polygon<T>> for LineString<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn distance(&self, other: &Polygon<T>) -> T {
+        if self.intersects(other) || other.contains(self) {
+            return T::zero();
+        } else {
+            // still a possibility that the LineString's inside an interior ring
+            if !other.interiors.is_empty() && other.ring_contains_point(&self.0[0]) {
+                // check each ring distance, returning the minimum
+                let mut mindist: T = Float::max_value();
+                for ring in &other.interiors {
+                    mindist = mindist.min(nearest_neighbour_distance(self, &ring))
+                }
+                mindist
+            } else {
+                nearest_neighbour_distance(self, &other.exterior)
+            }
+        }
+    }
+}
+
+// Polygon to LineString distance
+impl<T> Distance<T, LineString<T>> for Polygon<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn distance(&self, other: &LineString<T>) -> T {
+        other.distance(self)
+    }
+}
+
+// Line to Polygon distance
+impl<T> Distance<T, Polygon<T>> for Line<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn distance(&self, other: &Polygon<T>) -> T {
+        self.start.distance(other).min(self.end.distance(other))
+    }
+}
+
+// Polygon to Line distance
+impl<T> Distance<T, Line<T>> for Polygon<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn distance(&self, other: &Line<T>) -> T {
+        other.distance(self)
+    }
+}
+
+// Polygon to Polygon distance
 impl<T> Distance<T, Polygon<T>> for Polygon<T>
 where
     T: Float + FloatConst + Signed + SpadeFloat,
@@ -271,15 +352,14 @@ where
             return T::zero();
         }
         // Containment check
-        // TODO it would be great to avoid these clones
-        if Polygon::new(self.exterior.clone(), vec![]).contains(&poly2.exterior) {
+        if !self.interiors.is_empty() && self.ring_contains_point(&poly2.exterior.0[0]) {
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
             for ring in &self.interiors {
                 mindist = mindist.min(nearest_neighbour_distance(&poly2.exterior, &ring))
             }
             return mindist;
-        } else if Polygon::new(self.exterior.clone(), vec![]).contains(&self.exterior) {
+        } else if !poly2.interiors.is_empty() && poly2.ring_contains_point(&self.exterior.0[0]) {
             let mut mindist: T = Float::max_value();
             for ring in &poly2.interiors {
                 mindist = mindist.min(nearest_neighbour_distance(&self.exterior, &ring))

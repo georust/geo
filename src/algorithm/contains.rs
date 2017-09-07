@@ -135,15 +135,14 @@ where
 }
 
 #[derive(PartialEq, Clone, Debug)]
-enum PositionPoint {
+pub(crate) enum PositionPoint {
     OnBoundary,
     Inside,
     Outside,
 }
 
-fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
-where
-    T: Float,
+pub(crate) fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
+    where T: Float
 {
     // See: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
     //      http://geospatialpython.com/search

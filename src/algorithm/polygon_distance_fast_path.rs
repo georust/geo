@@ -1,8 +1,9 @@
 use num_traits::{Float, Signed};
 use num_traits::float::FloatConst;
 use types::{Point, Polygon};
-use algorithm::distance::Distance;
+use algorithm::distance::{Distance};
 use algorithm::extremes::ExtremeIndices;
+use algorithm::contains::{PositionPoint, get_position};
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance
 // They use the rotating calipers method to speed up calculations.
@@ -144,6 +145,17 @@ where
         T: Float,
     {
         (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
+    }
+    // This method handles a corner case in which a candidate polygon
+    // is disjoint because it's contained in the inner ring
+    // we work around this by checking that Polygons with inner rings don't
+    // contain a point from the candidate Polygon's outer shell in their simple representations
+    pub(crate) fn ring_contains_point(&self, p: &Point<T>) -> bool {
+        match get_position(p, &self.exterior) {
+            PositionPoint::Inside => true,
+            PositionPoint::OnBoundary => false,
+            PositionPoint::Outside => false
+        }
     }
 }
 
