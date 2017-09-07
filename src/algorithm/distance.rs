@@ -271,6 +271,7 @@ where
             return T::zero();
         }
         // Containment check
+        // TODO it would be great to avoid these clones
         if Polygon::new(self.exterior.clone(), vec![]).contains(&poly2.exterior) {
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
