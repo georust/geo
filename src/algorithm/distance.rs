@@ -343,11 +343,31 @@ where
 
 #[cfg(test)]
 mod test {
-    use types::{Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
+    use types::{Coordinate, Point, MultiPoint, Line, LineString, MultiLineString, Polygon, MultiPolygon};
     use algorithm::distance::{Distance, line_segment_distance, nearest_neighbour_distance};
     use algorithm::convexhull::ConvexHull;
     use super::*;
 
+    // LineString-Polygon
+    // Polygon-LineString
+    // Polygon-Line
+    // Line-Polygon
+    // Line and LineString are contained inside Polygon inner ring, and thus disjoint
+    #[test]
+    fn beta() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+
+        let poly = Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
+                                vec![LineString(vec![p(1., 1.), p(4., 1.), p(4., 4.), p(1., 4.), p(1., 1.)])]);
+        let ls = LineString(vec![p(3., 1.5), p(3., 3.)]);
+        let ln = Line::new(p(3., 1.5), p(3., 3.));
+        // LineString-Polygon and vice-versa
+        assert_eq!(poly.distance(&ls), 0.5);
+        assert_eq!(ls.distance(&poly), 0.5);
+        // Line-Polygon and vice-versa
+        assert_eq!(poly.distance(&ln), 0.5);
+        assert_eq!(ln.distance(&poly), 0.5);
+    }
     #[test]
     fn line_segment_distance_test() {
         let o1 = Point::new(8.0, 0.0);
