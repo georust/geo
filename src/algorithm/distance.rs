@@ -354,7 +354,7 @@ mod test {
     // Line-Polygon
     // Line and LineString are contained inside Polygon inner ring, and thus disjoint
     #[test]
-    fn beta() {
+    fn linestring_polygon_line_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
 
         let poly = Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
