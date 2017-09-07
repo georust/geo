@@ -745,15 +745,6 @@ mod test {
         assert_eq!(outside.distance(&inside), 5.992772737231033);
     }
     #[test]
-    // does shell contain in_ring_ls?
-    fn theta() {
-        let shell = include!("test_fixtures/shell.rs");
-        let shell_ls = Polygon::new(shell.into(), vec![]);
-        let in_ring = include!("test_fixtures/poly_in_ring.rs");
-        let in_ring_ls: LineString<f64> = in_ring.into();
-        assert_eq!(shell_ls.contains(&in_ring_ls), true)
-    }
-    #[test]
     // two ring LineStrings; one encloses the other but they neither touch nor intersect
     fn linestring_distance_test() {
         let ring = include!("test_fixtures/ring.rs");
