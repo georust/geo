@@ -3,7 +3,6 @@ use num_traits::float::FloatConst;
 use types::{Point, Polygon};
 use algorithm::distance::{Distance};
 use algorithm::extremes::ExtremeIndices;
-use algorithm::contains::{PositionPoint, get_position};
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance
 // They use the rotating calipers method to speed up calculations.
@@ -89,74 +88,6 @@ where
     iq2: bool,
     slope: T,
     vertical: bool,
-}
-
-// used to check the sign of a vec of floats
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum ListSign {
-    Empty,
-    Positive,
-    Negative,
-    Mixed,
-}
-
-impl<T> Polygon<T>
-where
-    T: Float + Signed,
-{
-    // Is this polygon convex?
-    pub(crate) fn convex(&self) -> bool {
-        let convex = self
-            .exterior
-            .0
-            .iter()
-            .enumerate()
-            .map(|(idx, _)| {
-                let prev_1 = self.prev_vertex(&idx);
-                let prev_2 = self.prev_vertex(&prev_1);
-                cross_prod(&self.exterior.0[prev_2],
-                           &self.exterior.0[prev_1],
-                           &self.exterior.0[idx])
-            })
-            // accumulate and check cross-product result signs in a single pass
-            // positive implies ccw convexity, negative implies cw convexity
-            // anything else implies non-convexity
-            .fold(ListSign::Empty, |acc, n| {
-                match (acc, n.is_positive()) {
-                    (ListSign::Empty, true) | (ListSign::Positive, true) => ListSign::Positive,
-                    (ListSign::Empty, false) | (ListSign::Negative, false) => ListSign::Negative,
-                    _ => ListSign::Mixed
-                }
-            });
-        match convex {
-            ListSign::Mixed => false,
-            _ => true,
-        }
-    }
-    // Wrap-around next and previous Polygon indices
-    fn next_vertex(&self, current_vertex: &usize) -> usize
-    where
-        T: Float,
-    {
-        (current_vertex + 1) % (self.exterior.0.len() - 1)
-    }
-    fn prev_vertex(&self, current_vertex: &usize) -> usize
-    where
-        T: Float,
-    {
-        (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
-    }
-    // This method handles a corner case in which a candidate polygon
-    // is disjoint because it's contained in the inner ring
-    // we work around this by checking that Polygons with inner rings don't
-    // contain a point from the candidate Polygon's outer shell in their simple representations
-    pub(crate) fn ring_contains_point(&self, p: &Point<T>) -> bool {
-        match get_position(p, &self.exterior) {
-            PositionPoint::Inside => true,
-            PositionPoint::OnBoundary => false,
-            PositionPoint::Outside => false
-        }
-    }
 }
 
 // much of the following code is ported from Java, copyright 1999 Hormoz Pirzadeh, available at:
@@ -469,7 +400,7 @@ where
 }
 
 // positive implies a -> b -> c is counter-clockwise, negative implies clockwise
-fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
+pub(crate) fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
 where
     T: Float,
 {
