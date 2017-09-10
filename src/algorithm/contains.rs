@@ -214,9 +214,7 @@ where
 {
     fn contains(&self, poly: &Polygon<T>) -> bool {
         // decompose poly's exterior ring into Lines, and check each for containment
-        poly.exterior.0.windows(2).all(|line| {
-            self.contains(&Line::new(line[0], line[1]))
-        })
+        poly.exterior.lines().all(|line| self.contains(&line))
     }
 }
 
