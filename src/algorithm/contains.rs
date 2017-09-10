@@ -147,7 +147,7 @@ fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
         return PositionPoint::Outside;
     }
     // Point is on linestring
-    if linestring.0.contains(p) {
+    if linestring.contains(p) {
         return PositionPoint::OnBoundary;
     }
 
