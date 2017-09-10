@@ -268,6 +268,8 @@ mod test {
         let v = Polygon::new(vec![(150., 350.), (100., 350.), (210., 160.), (290., 350.), (250., 350.), (200., 250.), (150., 350.)].into(), vec![]);
         let rect = Polygon::new(vec![(185., 237.), (220., 237.), (220., 220.), (185., 220.), (185., 237.)].into(), vec![]);
         assert_eq!(v.contains(&rect), true);
+    }
+    #[test]
     // LineString is fully contained
     fn linestring_fully_contained_in_polygon() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
