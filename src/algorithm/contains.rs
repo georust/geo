@@ -44,26 +44,25 @@ impl<T> Contains<Point<T>> for LineString<T>
     where T: Float
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        let vect = &self.0;
         // LineString without points
-        if vect.is_empty() {
+        if self.0.is_empty() {
             return false;
         }
         // LineString with one point equal p
-        if vect.len() == 1 {
-            return vect[0].contains(p);
+        if self.0.len() == 1 {
+            return self.0[0].contains(p);
         }
         // check if point is a vertex
-        if vect.contains(p) {
+        if self.0.contains(p) {
             return true;
         }
-        for ps in vect.windows(2) {
-            if ((ps[0].y() == ps[1].y()) && (ps[0].y() == p.y()) &&
-                (p.x() > ps[0].x().min(ps[1].x())) &&
-                (p.x() < ps[0].x().max(ps[1].x()))) ||
-               ((ps[0].x() == ps[1].x()) && (ps[0].x() == p.x()) &&
-                (p.y() > ps[0].y().min(ps[1].y())) &&
-                (p.y() < ps[0].y().max(ps[1].y()))) {
+        for line in self.lines() {
+            if ((line.start.y() == line.end.y()) && (line.start.y() == p.y()) &&
+                (p.x() > line.start.x().min(line.end.x())) &&
+                (p.x() < line.start.x().max(line.end.x()))) ||
+               ((line.start.x() == line.end.x()) && (line.start.x() == p.x()) &&
+                (p.y() > line.start.y().min(line.end.y())) &&
+                (p.y() < line.start.y().max(line.end.y()))) {
                 return true;
             }
         }
@@ -101,8 +100,7 @@ impl<T> Contains<Line<T>> for LineString<T>
     fn contains(&self, line: &Line<T>) -> bool {
         let (p0, p1) = (line.start, line.end);
         let mut look_for: Option<Point<T>> = None;
-        for l in self.0.windows(2) {
-            let segment = Line::new(l[0], l[1]);
+        for segment in self.lines() {
             if look_for.is_none() {
                 // If segment contains an endpoint of line, we mark the other endpoint as the
                 // one we are looking for.
@@ -144,27 +142,26 @@ fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
     //         ?updated-min=2011-01-01T00:00:00-06:00&updated-max=2012-01-01T00:00:00-06:00&max-results=19
     // Return the position of the point relative to a linestring
 
-    let vect = &linestring.0;
     // LineString without points
-    if vect.is_empty() {
+    if linestring.0.is_empty() {
         return PositionPoint::Outside;
     }
     // Point is on linestring
-    if linestring.contains(p) {
+    if linestring.0.contains(p) {
         return PositionPoint::OnBoundary;
     }
 
     let mut xints = T::zero();
     let mut crossings = 0;
-    for ps in vect.windows(2) {
-        if p.y() > ps[0].y().min(ps[1].y()) {
-            if p.y() <= ps[0].y().max(ps[1].y()) {
-                if p.x() <= ps[0].x().max(ps[1].x()) {
-                    if ps[0].y() != ps[1].y() {
-                        xints = (p.y() - ps[0].y()) * (ps[1].x() - ps[0].x()) /
-                                (ps[1].y() - ps[0].y()) + ps[0].x();
+    for line in linestring.lines() {
+        if p.y() > line.start.y().min(line.end.y()) {
+            if p.y() <= line.start.y().max(line.end.y()) {
+                if p.x() <= line.start.x().max(line.end.x()) {
+                    if line.start.y() != line.end.y() {
+                        xints = (p.y() - line.start.y()) * (line.end.x() - line.start.x()) /
+                                (line.end.y() - line.start.y()) + line.start.x();
                     }
-                    if (ps[0].x() == ps[1].x()) || (p.x() <= xints) {
+                    if (line.start.x() == line.end.x()) || (p.x() <= xints) {
                         crossings += 1;
                     }
                 }

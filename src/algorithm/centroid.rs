@@ -2,7 +2,7 @@ use num_traits::{Float, FromPrimitive};
 
 use types::{Point, Line, LineString, Polygon, MultiPolygon, Bbox};
 use algorithm::area::Area;
-use algorithm::distance::Distance;
+use algorithm::length::Length;
 
 /// Calculation of the centroid.
 pub trait Centroid<T: Float> {
@@ -33,8 +33,8 @@ fn simple_polygon_area<T>(linestring: &LineString<T>) -> T
         return T::zero();
     }
     let mut tmp = T::zero();
-    for ps in linestring.0.windows(2) {
-        tmp = tmp + (ps[0].x() * ps[1].y() - ps[1].x() * ps[0].y());
+    for line in linestring.lines() {
+        tmp = tmp + (line.start.x() * line.end.y() - line.end.x() * line.start.y());
     }
     tmp / (T::one() + T::one())
 }
@@ -43,14 +43,13 @@ fn simple_polygon_area<T>(linestring: &LineString<T>) -> T
 fn simple_polygon_centroid<T>(poly_ext: &LineString<T>) -> Option<Point<T>>
     where T: Float + FromPrimitive
 {
-    let vect = &poly_ext.0;
     let area = simple_polygon_area(poly_ext);
     let mut sum_x = T::zero();
     let mut sum_y = T::zero();
-    for ps in vect.windows(2) {
-        let tmp = ps[0].x() * ps[1].y() - ps[1].x() * ps[0].y();
-        sum_x = sum_x + ((ps[1].x() + ps[0].x()) * tmp);
-        sum_y = sum_y + ((ps[1].y() + ps[0].y()) * tmp);
+    for line in poly_ext.lines() {
+        let tmp = line.start.x() * line.end.y() - line.end.x() * line.start.y();
+        sum_x = sum_x + ((line.end.x() + line.start.x()) * tmp);
+        sum_y = sum_y + ((line.end.y() + line.start.y()) * tmp);
     }
     let six = T::from_i32(6).unwrap();
     Some(Point::new(sum_x / (six * area), sum_y / (six * area)))
@@ -77,19 +76,18 @@ impl<T> Centroid<T> for LineString<T>
     // The Centroid of a LineString is the mean of the middle of the segment
     // weighted by the length of the segments.
     fn centroid(&self) -> Self::Output {
-        let vect = &self.0;
-        if vect.is_empty() {
+        if self.0.is_empty() {
             return None;
         }
-        if vect.len() == 1 {
-            Some(Point::new(vect[0].x(), vect[0].y()))
+        if self.0.len() == 1 {
+            Some(self.0[0].clone())
         } else {
             let mut sum_x = T::zero();
             let mut sum_y = T::zero();
             let mut total_length = T::zero();
-            for ps in vect.windows(2) {
-                let segment_len = ps[0].distance(&ps[1]);
-                let (x1, y1, x2, y2) = (ps[0].x(), ps[0].y(), ps[1].x(), ps[1].y());
+            for line in self.lines() {
+                let segment_len = line.length();
+                let (x1, y1, x2, y2) = (line.start.x(), line.start.y(), line.end.x(), line.end.y());
                 total_length = total_length + segment_len;
                 sum_x = sum_x + segment_len * ((x1 + x2) / (T::one() + T::one()));
                 sum_y = sum_y + segment_len * ((y1 + y2) / (T::one() + T::one()));

@@ -155,10 +155,8 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
     fn distance(&self, polygon: &Polygon<T>) -> T {
         // get exterior ring
         let exterior = &polygon.exterior;
-        // exterior ring as a LineString
-        let ext_ring = &exterior.0;
         // No need to continue if the polygon contains the point, or is zero-length
-        if polygon.contains(self) || ext_ring.is_empty() {
+        if polygon.contains(self) || exterior.0.is_empty() {
             return T::zero();
         }
         // minimum priority queue
@@ -167,8 +165,8 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
         for ring in &polygon.interiors {
             dist_queue.push(Mindist { distance: self.distance(ring) })
         }
-        for chunk in ext_ring.windows(2) {
-            let dist = line_segment_distance(self, &chunk[0], &chunk[1]);
+        for line in exterior.lines() {
+            let dist = line_segment_distance(self, &line.start, &line.end);
             dist_queue.push(Mindist { distance: dist });
         }
         dist_queue.pop().unwrap().distance
@@ -240,9 +238,8 @@ impl<T> Distance<T, LineString<T>> for Point<T>
         // minimum priority queue
         let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
         // get points vector
-        let points = &linestring.0;
-        for chunk in points.windows(2) {
-            let dist = line_segment_distance(self, &chunk[0], &chunk[1]);
+        for line in linestring.lines() {
+            let dist = line_segment_distance(self, &line.start, &line.end);
             dist_queue.push(Mindist { distance: dist });
         }
         dist_queue.pop().unwrap().distance
