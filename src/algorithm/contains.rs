@@ -222,9 +222,11 @@ impl<T> Contains<LineString<T>> for Polygon<T>
     where T: Float
 {
     fn contains(&self, linestring: &LineString<T>) -> bool {
-        // All points of LineString must be in the polygon ?
+        // All LineString points must be inside the Polygon
         if linestring.0.iter().all(|point| self.contains(point)) {
-            !self.intersects(linestring)
+            // The Polygon interior is allowed to intersect with the LineString
+            // but the Polygon's rings are not
+            !self.interiors.iter().any(|ring| ring.intersects(linestring))
         } else {
             false
         }
@@ -266,6 +268,14 @@ mod test {
         let v = Polygon::new(vec![(150., 350.), (100., 350.), (210., 160.), (290., 350.), (250., 350.), (200., 250.), (150., 350.)].into(), vec![]);
         let rect = Polygon::new(vec![(185., 237.), (220., 237.), (220., 220.), (185., 220.), (185., 237.)].into(), vec![]);
         assert_eq!(v.contains(&rect), true);
+    }
+    #[test]
+    // LineString is fully contained
+    fn linestring_fully_contained_in_polygon() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let poly = Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]), vec![]);
+        let ls = LineString(vec![Point::new(3.0, 0.5), Point::new(3.0, 3.5)]);
+        assert_eq!(poly.contains(&ls), true);
     }
     /// Tests: Point in LineString
     #[test]
