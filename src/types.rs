@@ -5,7 +5,7 @@ use std::ops::Sub;
 
 use std::fmt::Debug;
 
-use std::iter::{Iterator, FromIterator};
+use std::iter::{self, Iterator, FromIterator};
 
 use num_traits::{Float, ToPrimitive};
 use spade::SpadeNum;
@@ -511,7 +511,9 @@ impl<T: Float> LineString<T> {
     /// assert!(lines.next().is_none());
     /// ```
     pub fn lines<'a>(&'a self) -> Box<Iterator<Item = Line<T>> + 'a> {
-        assert!(self.0.len() > 1);
+        if self.0.len() < 2 {
+            return Box::new(iter::empty());
+        }
         Box::new(self.0.windows(2).map(|w| unsafe {
             // As long as the LineString has at least two points, we shouldn't
             // need to do bounds checking here.
