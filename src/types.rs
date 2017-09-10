@@ -5,7 +5,7 @@ use std::ops::Sub;
 
 use std::fmt::Debug;
 
-use std::iter::{Iterator, FromIterator};
+use std::iter::{self, Iterator, FromIterator};
 
 use num_traits::{Float, ToPrimitive};
 use spade::SpadeNum;
@@ -486,6 +486,41 @@ impl<T> Line<T>
 ///
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
+
+impl<T: Float> LineString<T> {
+    /// Return an `Line` iterator that yields one `Line` for each line segment
+    /// in the `LineString`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::{Line, LineString, Point};
+    ///
+    /// let mut points = vec![(0., 0.), (5., 0.), (7., 9.)];
+    /// let linestring: LineString<f32> = points.into_iter().collect();
+    ///
+    /// let mut lines = linestring.lines();
+    /// assert_eq!(
+    ///     Some(Line::new(Point::new(0., 0.), Point::new(5., 0.))),
+    ///     lines.next()
+    /// );
+    /// assert_eq!(
+    ///     Some(Line::new(Point::new(5., 0.), Point::new(7., 9.))),
+    ///     lines.next()
+    /// );
+    /// assert!(lines.next().is_none());
+    /// ```
+    pub fn lines<'a>(&'a self) -> Box<Iterator<Item = Line<T>> + 'a> {
+        if self.0.len() < 2 {
+            return Box::new(iter::empty());
+        }
+        Box::new(self.0.windows(2).map(|w| unsafe {
+            // As long as the LineString has at least two points, we shouldn't
+            // need to do bounds checking here.
+            Line::new(*w.get_unchecked(0), *w.get_unchecked(1))
+        }))
+    }
+}
 
 /// Turn a `Vec` of `Point`-ish objects into a `LineString`.
 impl<T: Float, IP: Into<Point<T>>> From<Vec<IP>> for LineString<T> {

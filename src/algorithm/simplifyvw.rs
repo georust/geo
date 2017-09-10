@@ -188,26 +188,26 @@ where
 // Wrap the actual function so the R* Tree can be shared.
 // this ensures that shell and rings have access to all segments, so
 // intersections between outer and inner rings are detected
-fn vwp_wrapper<T>(geomtype: &GeomSettings, exterior: &[Point<T>], interiors: Option<&[LineString<T>]>, epsilon: &T) -> Vec<Vec<Point<T>>>
+fn vwp_wrapper<T>(geomtype: &GeomSettings, exterior: &LineString<T>, interiors: Option<&[LineString<T>]>, epsilon: &T) -> Vec<Vec<Point<T>>>
 where
     T: Float + SpadeFloat,
 {
     let mut rings = vec![];
     let mut tree: RTree<SimpleEdge<_>> = RTree::new();
     // Populate R* tree with exterior line segments
-    for win in exterior.windows(2) {
-        tree.insert(SimpleEdge::new(win[0], win[1]));
+    for line in exterior.lines() {
+        tree.insert(SimpleEdge::new(line.start, line.end));
     }
     // and with interior segments, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
-            for win in ring.0.windows(2) {
-                tree.insert(SimpleEdge::new(win[0], win[1]));
+            for line in ring.lines() {
+                tree.insert(SimpleEdge::new(line.start, line.end));
             }
         }
     }
     // Simplify shell
-    rings.push(visvalingam_preserve(geomtype, exterior, epsilon, &mut tree));
+    rings.push(visvalingam_preserve(geomtype, &exterior.0, epsilon, &mut tree));
     // Simplify interior rings, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
@@ -499,7 +499,7 @@ where
             min_points: 4,
             geomtype: GeomType::Line,
         };
-        let mut simplified = vwp_wrapper(&gt, &self.0, None, epsilon);
+        let mut simplified = vwp_wrapper(&gt, &self, None, epsilon);
         LineString(simplified.pop().unwrap())
     }
 }
@@ -528,7 +528,7 @@ where
             min_points: 6,
             geomtype: GeomType::Ring,
         };
-        let mut simplified = vwp_wrapper(&gt, &self.exterior.0, Some(&self.interiors), epsilon);
+        let mut simplified = vwp_wrapper(&gt, &self.exterior, Some(&self.interiors), epsilon);
         let exterior = LineString(simplified.remove(0));
         let interiors = simplified.into_iter().map(LineString).collect();
         Polygon::new(exterior, interiors)
@@ -655,7 +655,7 @@ mod test {
             min_points: 4,
             geomtype: GeomType::Line,
         };
-        let simplified = vwp_wrapper(&gt, &points_ls, None, &668.6);
+        let simplified = vwp_wrapper(&gt, &points_ls.into(), None, &668.6);
         // this is the correct, non-intersecting LineString
         let correct = vec![
             (10., 60.),
@@ -734,7 +734,7 @@ mod test {
             min_points: 4,
             geomtype: GeomType::Line,
         };
-        let simplified = vwp_wrapper(&gt, &points_ls, None, &0.0005);
+        let simplified = vwp_wrapper(&gt, &points_ls.into(), None, &0.0005);
         assert_eq!(simplified[0].len(), 3276);
     }
     #[test]

@@ -69,8 +69,8 @@ fn signed_ring_area<T>(linestring: &LineString<T>) -> T
         return T::zero();
     }
     let mut tmp = T::zero();
-    for ps in linestring.0.windows(2) {
-        tmp = tmp + (ps[0].x() * ps[1].y() - ps[1].x() * ps[0].y());
+    for line in linestring.lines() {
+        tmp = tmp + (line.start.x() * line.end.y() - line.end.x() * line.start.y());
     }
     tmp / (T::one() + T::one())
 }

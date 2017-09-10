@@ -35,8 +35,9 @@ impl<T> Length<T> for LineString<T>
     where T: Float
 {
     fn length(&self) -> T {
-        self.0.windows(2)
-              .fold(T::zero(), |total_length, p| total_length + p[0].distance(&p[1]))
+        self.lines()
+            .map(|line| line.length())
+            .fold(T::zero(), |total_length, length| total_length + length)
     }
 }
 
