@@ -1,5 +1,11 @@
 # Changes
 
+## 0.6.1
+
+* [Add a `lines` iterator method on `LineString`](https://github.com/georust/rust-geo/pull/160)
+* [Implement `Contains<Polygon>` for `Polygon`](https://github.com/georust/rust-geo/pull/159)
+* [Correctly check for LineString containment in Polygon](https://github.com/georust/rust-geo/pull/158)
+
 ## 0.6.0
 
 * [Remove unnecessary trait bound on `Translate`](https://github.com/georust/rust-geo/pull/148)
