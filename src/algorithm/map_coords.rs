@@ -64,7 +64,7 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for Point<T> {
 
 impl<T: Float> MapCoordsInplace<T> for Point<T> {
 
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) 
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
     {
         let new_point = func(&(self.0.x, self.0.y));
         self.0.x = new_point.0;
@@ -229,9 +229,8 @@ impl<T: Float> MapCoordsInplace<T> for GeometryCollection<T> {
 
 
 
+#[cfg(test)]
 mod test {
-    #[allow(unused_imports)]
-
     use super::*;
 
     #[test]
