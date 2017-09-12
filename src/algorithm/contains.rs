@@ -44,16 +44,8 @@ impl<T> Contains<Point<T>> for LineString<T>
     where T: Float
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        // LineString without points
-        if self.0.is_empty() {
-            return false;
-        }
-        // LineString with one point equal p
-        if self.0.len() == 1 {
-            return self.0[0].contains(p);
-        }
         // check if point is a vertex
-        if self.0.contains(p) {
+        if self.points().contains(p) {
             return true;
         }
         for line in self.lines() {
@@ -142,10 +134,6 @@ fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
     //         ?updated-min=2011-01-01T00:00:00-06:00&updated-max=2012-01-01T00:00:00-06:00&max-results=19
     // Return the position of the point relative to a linestring
 
-    // LineString without points
-    if linestring.0.is_empty() {
-        return PositionPoint::Outside;
-    }
     // Point is on linestring
     if linestring.contains(p) {
         return PositionPoint::OnBoundary;
@@ -223,7 +211,7 @@ impl<T> Contains<LineString<T>> for Polygon<T>
 {
     fn contains(&self, linestring: &LineString<T>) -> bool {
         // All LineString points must be inside the Polygon
-        if linestring.0.iter().all(|point| self.contains(point)) {
+        if linestring.points().iter().all(|point| self.contains(point)) {
             // The Polygon interior is allowed to intersect with the LineString
             // but the Polygon's rings are not
             !self.interiors.iter().any(|ring| ring.intersects(linestring))

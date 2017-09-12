@@ -156,7 +156,7 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
         // get exterior ring
         let exterior = &polygon.exterior;
         // No need to continue if the polygon contains the point, or is zero-length
-        if polygon.contains(self) || exterior.0.is_empty() {
+        if polygon.contains(self) {
             return T::zero();
         }
         // minimum priority queue

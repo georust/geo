@@ -207,11 +207,11 @@ where
         }
     }
     // Simplify shell
-    rings.push(visvalingam_preserve(geomtype, &exterior.0, epsilon, &mut tree));
+    rings.push(visvalingam_preserve(geomtype, exterior.points(), epsilon, &mut tree));
     // Simplify interior rings, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
-            rings.push(visvalingam_preserve(geomtype, &ring.0, epsilon, &mut tree))
+            rings.push(visvalingam_preserve(geomtype, ring.points(), epsilon, &mut tree))
         }
     }
     rings
@@ -370,11 +370,11 @@ where
     let point_a = orig[triangle.left];
     let point_b = orig[triangle.current];
     let point_c = orig[triangle.right];
-    let bbox = LineString(vec![
+    let bbox = unsafe { LineString::new_unchecked(vec![
         orig[triangle.left],
         orig[triangle.current],
         orig[triangle.right],
-    ]).bbox()
+    ]) }.bbox()
         .unwrap();
     let br = Point::new(bbox.xmin, bbox.ymin);
     let tl = Point::new(bbox.xmax, bbox.ymax);
@@ -500,7 +500,8 @@ where
             geomtype: GeomType::Line,
         };
         let mut simplified = vwp_wrapper(&gt, &self, None, epsilon);
-        LineString(simplified.pop().unwrap())
+        // can this be unchecked?
+        LineString::new(simplified.pop().unwrap()).unwrap()
     }
 }
 
@@ -529,8 +530,9 @@ where
             geomtype: GeomType::Ring,
         };
         let mut simplified = vwp_wrapper(&gt, &self.exterior, Some(&self.interiors), epsilon);
-        let exterior = LineString(simplified.remove(0));
-        let interiors = simplified.into_iter().map(LineString).collect();
+        // todo: can these be unchecked?
+        let exterior = LineString::new(simplified.remove(0)).unwrap();
+        let interiors = simplified.into_iter().map(|l| LineString::new(l).unwrap()).collect();
         Polygon::new(exterior, interiors)
     }
 }

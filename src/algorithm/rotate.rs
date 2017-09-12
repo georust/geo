@@ -134,15 +134,6 @@ where
     }
 }
 
-impl<T> RotatePoint<T> for LineString<T>
-    where T: Float
-{
-    /// Rotate the LineString about a point by the given number of degrees
-    fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        unsafe { LineString::new_unchecked(rotation_matrix(angle, point, &self.points())) }
-    }
-}
-
 impl<T> Rotate<T> for Polygon<T>
 where
     T: Float + FromPrimitive,
@@ -155,11 +146,13 @@ where
             true => self.centroid().unwrap(),
         };
         Polygon::new(
-            LineString(rotation_matrix(angle, &centroid, &self.exterior.0)),
+            // TODO: can this be unchecked
+            LineString::new(rotation_matrix(angle, &centroid, self.exterior.points())).unwrap(),
             self.interiors
                 .iter()
                 .map(|ring| {
-                    LineString(rotation_matrix(angle, &centroid, &ring.0))
+                    // TODO: can this be unchecked
+                    LineString::new(rotation_matrix(angle, &centroid, ring.points())).unwrap()
                 })
                 .collect(),
         )

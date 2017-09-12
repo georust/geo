@@ -93,7 +93,8 @@ impl<T> BoundingBox<T> for LineString<T>
     /// Return the BoundingBox for a LineString
     ///
     fn bbox(&self) -> Self::Output {
-        get_bbox(&self.0)
+        // TODO this should return a Bbox
+        get_bbox(self.points())
     }
 }
 
@@ -106,7 +107,7 @@ impl<T> BoundingBox<T> for MultiLineString<T>
     /// Return the BoundingBox for a MultiLineString
     ///
     fn bbox(&self) -> Self::Output {
-        get_bbox(self.0.iter().flat_map(|line| line.0.iter()))
+        get_bbox(self.0.iter().flat_map(|line| line.points().iter()))
     }
 }
 
@@ -133,7 +134,7 @@ impl<T> BoundingBox<T> for MultiPolygon<T>
     /// Return the BoundingBox for a MultiPolygon
     ///
     fn bbox(&self) -> Self::Output {
-        get_bbox(self.0.iter().flat_map(|poly| (poly.exterior).0.iter()))
+        get_bbox(self.0.iter().flat_map(|poly| poly.exterior.points().iter()))
     }
 }
 
