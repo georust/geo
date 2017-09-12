@@ -5,7 +5,7 @@ use std::ops::Sub;
 
 use std::fmt::Debug;
 
-use std::iter::{self, Iterator, FromIterator};
+use std::iter::{Iterator, FromIterator};
 
 use num_traits::{Float, ToPrimitive};
 use spade::SpadeNum;
@@ -504,6 +504,10 @@ impl<T: Float> LineString<T> {
 
     pub fn points(&self) -> &[Point<T>] {
         &self.0
+    }
+
+    pub unsafe fn points_mut(&mut self) -> &mut [Point<T>] {
+        &mut self.0
     }
 }
 

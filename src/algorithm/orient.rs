@@ -87,13 +87,13 @@ fn orient<T>(poly: &Polygon<T>, direction: Direction) -> Polygon<T>
     for ring in &poly.interiors {
         let mut ring = ring.clone();
         if signed_ring_area(&ring) / sign >= T::zero() {
-            ring.points_mut().reverse();
+            unsafe { ring.points_mut().reverse(); }
         }
         rings.push(ring);
     }
     let mut ring = poly.exterior.clone();
     if signed_ring_area(&ring) / sign >= T::zero() {
-        ring.points_mut().reverse();
+        unsafe { ring.points_mut().reverse(); }
     }
     rings.push(ring);
     Polygon::new(rings.pop().unwrap(), rings)
