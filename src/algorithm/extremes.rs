@@ -208,11 +208,14 @@ impl<T, G> ExtremePoints<T> for G
         let ch = self.convex_hull();
         // safe to unwrap, since we're guaranteeing the polygon's convexity
         let indices = ch.extreme_indices().unwrap();
-        ExtremePoint {
-            ymin: ch.exterior.points()[indices.ymin],
-            xmax: ch.exterior.points()[indices.xmax],
-            ymax: ch.exterior.points()[indices.ymax],
-            xmin: ch.exterior.points()[indices.xmin],
+        // unsafe: indices should all be valid, no bounds checking required
+        unsafe {
+            ExtremePoint {
+                ymin: *ch.exterior.points().get_unchecked(indices.ymin),
+                xmax: *ch.exterior.points().get_unchecked(indices.xmax),
+                ymax: *ch.exterior.points().get_unchecked(indices.ymax),
+                xmin: *ch.exterior.points().get_unchecked(indices.xmin),
+            }
         }
     }
 }

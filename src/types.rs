@@ -505,11 +505,6 @@ impl<T: Float> LineString<T> {
     pub fn points(&self) -> &[Point<T>] {
         &self.0
     }
-
-    // FIXME: this can cause the linestring to become invalid
-    pub fn points_mut(&mut self) -> &mut [Point<T>] {
-        &mut self.0
-    }
 }
 
 impl<T: Float> LineString<T> {
@@ -544,20 +539,6 @@ impl<T: Float> LineString<T> {
             // need to do bounds checking here.
             Line::new(*w.get_unchecked(0), *w.get_unchecked(1))
         }))
-    }
-}
-
-/// Turn a `Vec` of `Point`-ish objects into a `LineString`.
-impl<T: Float, IP: Into<Point<T>>> From<Vec<IP>> for LineString<T> {
-    fn from(v: Vec<IP>) -> Self {
-        LineString(v.into_iter().map(|p| p.into()).collect())
-    }
-}
-
-/// Turn a `Point`-ish iterator into a `LineString`.
-impl<T: Float, IP: Into<Point<T>>> FromIterator<IP> for LineString<T> {
-    fn from_iter<I: IntoIterator<Item=IP>>(iter: I) -> Self {
-        LineString(iter.into_iter().map(|p| p.into()).collect())
     }
 }
 

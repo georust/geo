@@ -370,11 +370,14 @@ where
     let point_a = orig[triangle.left];
     let point_b = orig[triangle.current];
     let point_c = orig[triangle.right];
-    let bbox = unsafe { LineString::new_unchecked(vec![
-        orig[triangle.left],
-        orig[triangle.current],
-        orig[triangle.right],
-    ]) }.bbox()
+    let bbox = unsafe {
+        // unsafe: 
+        LineString::new_unchecked(vec![
+            orig[triangle.left],
+            orig[triangle.current],
+            orig[triangle.right],
+        ])
+    }.bbox()
         .unwrap();
     let br = Point::new(bbox.xmin, bbox.ymin);
     let tl = Point::new(bbox.xmax, bbox.ymax);
