@@ -17,7 +17,7 @@ pub trait BoundingBox<T: Float> {
     /// vec.push(Point::new(40.02f64, 116.34));
     /// vec.push(Point::new(42.02f64, 116.34));
     /// vec.push(Point::new(42.02f64, 118.34));
-    /// let linestring = LineString(vec);
+    /// let linestring = LineString::new(vec).unwrap();
     /// let bbox = linestring.bbox().unwrap();
     ///
     /// assert_eq!(40.02f64, bbox.xmin);
@@ -148,7 +148,7 @@ mod test {
     #[test]
     fn empty_linestring_test() {
         let vect = Vec::<Point<f64>>::new();
-        let linestring = LineString(vect);
+        let linestring = LineString::new(vect).unwrap();
         let bbox = linestring.bbox();
         assert!(bbox.is_none());
     }
@@ -157,24 +157,24 @@ mod test {
         let p = Point::new(40.02f64, 116.34);
         let mut vect = Vec::<Point<f64>>::new();
         vect.push(p);
-        let linestring = LineString(vect);
+        let linestring = LineString::new(vect).unwrap();
         let bbox = Bbox{xmin: 40.02f64, ymax: 116.34, xmax: 40.02, ymin: 116.34};
         assert_eq!(bbox, linestring.bbox().unwrap());
     }
     #[test]
     fn linestring_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let linestring = LineString(vec![p(1., 1.), p(2., -2.), p(-3., -3.), p(-4., 4.)]);
+        let linestring = LineString::new(vec![p(1., 1.), p(2., -2.), p(-3., -3.), p(-4., 4.)]).unwrap();
         let bbox = Bbox{xmin: -4., ymax: 4., xmax: 2., ymin: -3.};
         assert_eq!(bbox, linestring.bbox().unwrap());
     }
     #[test]
     fn multilinestring_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let multiline = MultiLineString(vec![LineString(vec![p(1., 1.), p(-40., 1.)]),
-                                             LineString(vec![p(1., 1.), p(50., 1.)]),
-                                             LineString(vec![p(1., 1.), p(1., -60.)]),
-                                             LineString(vec![p(1., 1.), p(1., 70.)])]);
+        let multiline = MultiLineString::new(vec![LineString::new(vec![p(1., 1.), p(-40., 1.)]).unwrap(),
+                                             LineString::new(vec![p(1., 1.), p(50., 1.)]).unwrap(),
+                                             LineString::new(vec![p(1., 1.), p(1., -60.)]).unwrap(),
+                                             LineString::new(vec![p(1., 1.), p(1., 70.)])]).unwrap();
         let bbox = Bbox{xmin: -40., ymax: 70., xmax: 50., ymin: -60.};
         assert_eq!(bbox, multiline.bbox().unwrap());
     }
@@ -188,7 +188,7 @@ mod test {
     #[test]
     fn polygon_test(){
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let linestring = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
+        let linestring = LineString::new(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]).unwrap();
         let line_bbox = linestring.bbox().unwrap();
         let poly = Polygon::new(linestring, Vec::new());
         assert_eq!(line_bbox, poly.bbox().unwrap());
@@ -196,9 +196,9 @@ mod test {
     #[test]
     fn multipolygon_test(){
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let mpoly = MultiPolygon(vec![Polygon::new(LineString(vec![p(0., 0.), p(50., 0.), p(0., -70.), p(0., 0.)]), Vec::new()),
-                                      Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(0., 80.), p(0., 0.)]), Vec::new()),
-                                      Polygon::new(LineString(vec![p(0., 0.), p(-60., 0.), p(0., 6.), p(0., 0.)]), Vec::new()),
+        let mpoly = MultiPolygon(vec![Polygon::new(LineString::new(vec![p(0., 0.), p(50., 0.), p(0., -70.), p(0., 0.)]), Vec::new()).unwrap(),
+                                      Polygon::new(LineString::new(vec![p(0., 0.), p(5., 0.), p(0., 80.), p(0., 0.)]), Vec::new()).unwrap(),
+                                      Polygon::new(LineString::new(vec![p(0., 0.), p(-60., 0.), p(0., 6.), p(0., 0.)]), Vec::new()).unwrap(),
                                       ]);
         let bbox = Bbox{xmin: -60., ymax: 80., xmax: 50., ymin: -70.};
         assert_eq!(bbox, mpoly.bbox().unwrap());

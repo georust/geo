@@ -148,12 +148,12 @@ pub trait ConvexHull<T> {
     /// use geo::convexhull::ConvexHull;
     /// // an L shape
     /// let coords = vec![(0.0, 0.0), (4.0, 0.0), (4.0, 1.0), (1.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0)];
-    /// let ls = LineString(coords.iter().map(|e| Point::new(e.0, e.1)).collect());
+    /// let ls = LineString::new(coords.iter().map(|e| Point::new(e.0, e.1)).collect()).unwrap();
     /// let poly = Polygon::new(ls, vec![]);
     ///
     /// // The correct convex hull coordinates
     /// let hull_coords = vec![(4.0, 0.0), (4.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0), (4.0, 0.0)];
-    /// let correct_hull = LineString(hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect());
+    /// let correct_hull = LineString::new(hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect()).unwrap();
     ///
     /// let res = poly.convex_hull();
     /// assert_eq!(res.exterior, correct_hull);
@@ -320,7 +320,7 @@ mod test {
             Point::new(-10.0, 0.0),
             Point::new(-1.0, 1.0),
             Point::new(0.0, 10.0)];
-        let mp = LineString(v);
+        let mp = LineString::new(v).unwrap();
         let correct = vec![
             Point::new(0.0, -10.0),
             Point::new(10.0, 0.0),
@@ -332,9 +332,9 @@ mod test {
     }
     #[test]
     fn quick_hull_multilinestring_test() {
-        let v1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0)]);
-        let v2 = LineString(vec![Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(3.0, 1.0)]);
-        let mls = MultiLineString(vec![v1, v2]);
+        let v1 = LineString::new(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0)]).unwrap();
+        let v2 = LineString::new(vec![Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(3.0, 1.0)]).unwrap();
+        let mls = MultiLineString::new(vec![v1, v2]).unwrap();
         let correct = vec![
             Point::new(2.0, 0.0),
             Point::new(3.0, 1.0),
@@ -346,8 +346,8 @@ mod test {
     }
     #[test]
     fn quick_hull_multipolygon_test() {
-        let ls1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(0.0, 0.0)]);
-        let ls2 = LineString(vec![Point::new(3.0, 0.0), Point::new(4.0, 10.0), Point::new(5.0, 0.0), Point::new(3.0, 0.0)]);
+        let ls1 = LineString::new(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(0.0, 0.0)]).unwrap();
+        let ls2 = LineString::new(vec![Point::new(3.0, 0.0), Point::new(4.0, 10.0), Point::new(5.0, 0.0), Point::new(3.0, 0.0)]).unwrap();
         let p1 = Polygon::new(ls1, vec![]);
         let p2 = Polygon::new(ls2, vec![]);
         let mp = MultiPolygon(vec![p1, p2]);

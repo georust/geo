@@ -12,10 +12,10 @@ pub trait Intersects<Rhs = Self> {
     /// use geo::algorithm::intersects::Intersects;
     ///
     /// let p = |x, y| Point(Coordinate { x: x, y: y });
-    /// let linestring = LineString(vec![p(3., 2.), p(7., 6.)]);
+    /// let linestring = LineString::new(vec![p(3., 2.), p(7., 6.)]).unwrap();
     ///
-    /// assert!(linestring.intersects(&LineString(vec![p(3., 4.), p(8., 4.)])));
-    /// assert!(!linestring.intersects(&LineString(vec![p(9., 2.), p(11., 5.)])));
+    /// assert!(linestring.intersects(&LineString::new(vec![p(3., 4.), p(8., 4.)]))).unwrap();
+    /// assert!(!linestring.intersects(&LineString::new(vec![p(9., 2.), p(11., 5.)]))).unwrap();
     ///
     /// ```
     ///
@@ -226,79 +226,79 @@ mod test {
     #[test]
     fn empty_linestring1_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let linestring = LineString(vec![p(3., 2.), p(7., 6.)]);
-        assert!(!LineString(Vec::new()).intersects(&linestring));
+        let linestring = LineString::new(vec![p(3., 2.), p(7., 6.)]).unwrap();
+        assert!(!LineString::new(Vec::new()).intersects(&linestring)).unwrap();
     }
     #[test]
     fn empty_linestring2_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let linestring = LineString(vec![p(3., 2.), p(7., 6.)]);
-        assert!(!linestring.intersects(&LineString(Vec::new())));
+        let linestring = LineString::new(vec![p(3., 2.), p(7., 6.)]).unwrap();
+        assert!(!linestring.intersects(&LineString::new(Vec::new()))).unwrap();
     }
     #[test]
     fn empty_all_linestring_test() {
-        assert!(!LineString::<f64>(Vec::new()).intersects(&LineString(Vec::new())));
+        assert!(!LineString::<f64>::new(Vec::new()).unwrap().intersects(&LineString::new(Vec::new()))).unwrap();
     }
     #[test]
     fn intersect_linestring_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let linestring = LineString(vec![p(3., 2.), p(7., 6.)]);
-        assert!(linestring.intersects(&LineString(vec![p(3., 4.), p(8., 4.)])));
+        let linestring = LineString::new(vec![p(3., 2.), p(7., 6.)]).unwrap();
+        assert!(linestring.intersects(&LineString::new(vec![p(3., 4.), p(8., 4.)]))).unwrap();
     }
     #[test]
     fn parallel_linestrings_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let linestring = LineString(vec![p(3., 2.), p(7., 6.)]);
-        assert!(!linestring.intersects(&LineString(vec![p(3., 1.), p(7., 5.)])));
+        let linestring = LineString::new(vec![p(3., 2.), p(7., 6.)]).unwrap();
+        assert!(!linestring.intersects(&LineString::new(vec![p(3., 1.), p(7., 5.)]))).unwrap();
     }
     /// Tests: intersection LineString and Polygon
     #[test]
     fn linestring_in_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let linestring = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
+        let linestring = LineString::new(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]).unwrap();
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(poly.intersects(&LineString(vec![p(2., 2.), p(3., 3.)])));
+        assert!(poly.intersects(&LineString::new(vec![p(2., 2.), p(3., 3.)]))).unwrap();
     }
     #[test]
     fn linestring_on_boundary_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let poly = Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
+        let poly = Polygon::new(LineString::new(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]).unwrap(),
                                 Vec::new());
-        assert!(poly.intersects(&LineString(vec![p(0., 0.), p(5., 0.)])));
-        assert!(poly.intersects(&LineString(vec![p(5., 0.), p(5., 6.)])));
-        assert!(poly.intersects(&LineString(vec![p(5., 6.), p(0., 6.)])));
-        assert!(poly.intersects(&LineString(vec![p(0., 6.), p(0., 0.)])));
+        assert!(poly.intersects(&LineString::new(vec![p(0., 0.), p(5., 0.)]))).unwrap();
+        assert!(poly.intersects(&LineString::new(vec![p(5., 0.), p(5., 6.)]))).unwrap();
+        assert!(poly.intersects(&LineString::new(vec![p(5., 6.), p(0., 6.)]))).unwrap();
+        assert!(poly.intersects(&LineString::new(vec![p(0., 6.), p(0., 0.)]))).unwrap();
     }
     #[test]
     fn intersect_linestring_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let poly = Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
+        let poly = Polygon::new(LineString::new(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]).unwrap(),
                                 Vec::new());
-        assert!(poly.intersects(&LineString(vec![p(2., 2.), p(6., 6.)])));
+        assert!(poly.intersects(&LineString::new(vec![p(2., 2.), p(6., 6.)]))).unwrap();
     }
     #[test]
     fn linestring_outside_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let poly = Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
+        let poly = Polygon::new(LineString::new(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]).unwrap(),
                                 Vec::new());
-        assert!(!poly.intersects(&LineString(vec![p(7., 2.), p(9., 4.)])));
+        assert!(!poly.intersects(&LineString::new(vec![p(7., 2.), p(9., 4.)]))).unwrap();
     }
     #[test]
     fn linestring_in_inner_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let e = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
-        let v = vec![LineString(vec![p(1., 1.), p(4., 1.), p(4., 4.), p(1., 4.), p(1., 1.)])];
+        let e = LineString::new(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]).unwrap();
+        let v = vec![LineString::new(vec![p(1., 1.), p(4., 1.), p(4., 4.), p(1., 4.), p(1., 1.)]).unwrap()];
         let poly = Polygon::new(e, v);
-        assert!(!poly.intersects(&LineString(vec![p(2., 2.), p(3., 3.)])));
-        assert!(poly.intersects(&LineString(vec![p(2., 2.), p(4., 4.)])));
+        assert!(!poly.intersects(&LineString::new(vec![p(2., 2.), p(3., 3.)]))).unwrap();
+        assert!(poly.intersects(&LineString::new(vec![p(2., 2.), p(4., 4.)]))).unwrap();
     }
     #[test]
     fn linestring_traverse_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let e = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
-        let v = vec![LineString(vec![p(1., 1.), p(4., 1.), p(4., 4.), p(1., 4.), p(1., 1.)])];
+        let e = LineString::new(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]).unwrap();
+        let v = vec![LineString::new(vec![p(1., 1.), p(4., 1.), p(4., 4.), p(1., 4.), p(1., 1.)]).unwrap()];
         let poly = Polygon::new(e, v);
-        assert!(poly.intersects(&LineString(vec![p(2., 0.5), p(2., 5.)])));
+        assert!(poly.intersects(&LineString::new(vec![p(2., 0.5), p(2., 5.)]))).unwrap();
     }
     #[test]
     fn linestring_in_inner_with_2_inner_polygon_test() {
@@ -327,21 +327,21 @@ mod test {
         //
         let p = |x, y| Point(Coordinate { x: x, y: y });
 
-        let e = LineString(vec![p(2., 2.), p(14., 2.), p(14., 8.), p(2., 8.), p(2., 2.)]);
-        let v = vec![LineString(vec![p(4., 3.), p(7., 3.), p(7., 6.), p(4., 6.), p(4., 3.)]),
-                     LineString(vec![p(9., 3.), p(12., 3.), p(12., 6.), p(9., 6.), p(9., 3.)])];
+        let e = LineString::new(vec![p(2., 2.), p(14., 2.), p(14., 8.), p(2., 8.), p(2., 2.)]).unwrap();
+        let v = vec![LineString::new(vec![p(4., 3.), p(7., 3.), p(7., 6.), p(4., 6.), p(4., 3.)]).unwrap(),
+                     LineString::new(vec![p(9., 3.), p(12., 3.), p(12., 6.), p(9., 6.), p(9., 3.)]).unwrap()];
         let poly = Polygon::new(e, v);
-        assert!(!poly.intersects(&LineString(vec![p(5., 4.), p(6., 5.)])));
-        assert!(poly.intersects(&LineString(vec![p(11., 2.5), p(11., 7.)])));
-        assert!(poly.intersects(&LineString(vec![p(4., 7.), p(6., 7.)])));
-        assert!(poly.intersects(&LineString(vec![p(8., 1.), p(8., 9.)])));
+        assert!(!poly.intersects(&LineString::new(vec![p(5., 4.), p(6., 5.)]))).unwrap();
+        assert!(poly.intersects(&LineString::new(vec![p(11., 2.5), p(11., 7.)]))).unwrap();
+        assert!(poly.intersects(&LineString::new(vec![p(4., 7.), p(6., 7.)]))).unwrap();
+        assert!(poly.intersects(&LineString::new(vec![p(8., 1.), p(8., 9.)]))).unwrap();
     }
     #[test]
     fn polygons_do_not_intersect() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let p1 = Polygon::new(LineString(vec![p(1., 3.), p(3., 3.), p(3., 5.), p(1., 5.), p(1., 3.)]),
+        let p1 = Polygon::new(LineString::new(vec![p(1., 3.), p(3., 3.), p(3., 5.), p(1., 5.), p(1., 3.)]).unwrap(),
                                     Vec::new());
-        let p2 = Polygon::new(LineString(vec![p(10., 30.), p(30., 30.), p(30., 50.), p(10., 50.), p(10., 30.)]),
+        let p2 = Polygon::new(LineString::new(vec![p(10., 30.), p(30., 30.), p(30., 50.), p(10., 50.), p(10., 30.)]).unwrap(),
                                     Vec::new());
 
         assert!(!p1.intersects(&p2));
@@ -350,9 +350,9 @@ mod test {
     #[test]
     fn polygons_overlap() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let p1 = Polygon::new(LineString(vec![p(1., 3.), p(3., 3.), p(3., 5.), p(1., 5.), p(1., 3.)]),
+        let p1 = Polygon::new(LineString::new(vec![p(1., 3.), p(3., 3.), p(3., 5.), p(1., 5.), p(1., 3.)]).unwrap(),
                                     Vec::new());
-        let p2 = Polygon::new(LineString(vec![p(2., 3.), p(4., 3.), p(4., 7.), p(2., 7.), p(2., 3.)]),
+        let p2 = Polygon::new(LineString::new(vec![p(2., 3.), p(4., 3.), p(4., 7.), p(2., 7.), p(2., 3.)]).unwrap(),
                                     Vec::new());
 
         assert!(p1.intersects(&p2));
@@ -361,9 +361,9 @@ mod test {
     #[test]
     fn polygon_contained() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let p1 = Polygon::new(LineString(vec![p(1., 3.), p(4., 3.), p(4., 6.), p(1., 6.), p(1., 3.)]),
+        let p1 = Polygon::new(LineString::new(vec![p(1., 3.), p(4., 3.), p(4., 6.), p(1., 6.), p(1., 3.)]).unwrap(),
                                     Vec::new());
-        let p2 = Polygon::new(LineString(vec![p(2., 4.), p(3., 4.), p(3., 5.), p(2., 5.), p(2., 4.)]),
+        let p2 = Polygon::new(LineString::new(vec![p(2., 4.), p(3., 4.), p(3., 5.), p(2., 5.), p(2., 4.)]).unwrap(),
                                     Vec::new());
 
         assert!(p1.intersects(&p2));
@@ -372,9 +372,9 @@ mod test {
     #[test]
     fn polygons_conincident() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let p1 = Polygon::new(LineString(vec![p(1., 3.), p(4., 3.), p(4., 6.), p(1., 6.), p(1., 3.)]),
+        let p1 = Polygon::new(LineString::new(vec![p(1., 3.), p(4., 3.), p(4., 6.), p(1., 6.), p(1., 3.)]).unwrap(),
                                     Vec::new());
-        let p2 = Polygon::new(LineString(vec![p(1., 3.), p(4., 3.), p(4., 6.), p(1., 6.), p(1., 3.)]),
+        let p2 = Polygon::new(LineString::new(vec![p(1., 3.), p(4., 3.), p(4., 6.), p(1., 6.), p(1., 3.)]).unwrap(),
                                     Vec::new());
 
         assert!(p1.intersects(&p2));
@@ -402,8 +402,8 @@ mod test {
         //  └──────────────────────┘
         // (0,0)               (12,0)
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let poly  = Polygon::new(LineString(vec![p(0., 0.), p(12., 0.), p(12., 8.), p(0., 8.), p(0., 0.)]),
-                                 vec![LineString(vec![p(7., 4.), p(11., 4.), p(11., 7.), p(7., 7.), p(7., 4.)])]);
+        let poly  = Polygon::new(LineString::new(vec![p(0., 0.), p(12., 0.), p(12., 8.), p(0., 8.), p(0., 0.)]).unwrap(),
+                                 vec![LineString::new(vec![p(7., 4.), p(11., 4.), p(11., 7.), p(7., 7.), p(7., 4.)])]).unwrap();
         let b1 = Bbox { xmin: 11.0, xmax: 13.0, ymin: 1.0, ymax: 2.0 };
         let b2 = Bbox { xmin: 2.0, xmax: 8.0, ymin: 2.0, ymax: 5.0 };
         let b3 = Bbox { xmin: 8.0, xmax: 10.0, ymin: 5.0, ymax: 6.0 };
@@ -488,12 +488,12 @@ mod test {
     #[test]
     fn line_intersects_linestring_test() {
         let line0 = Line::new(Point::new(0., 0.), Point::new(3., 4.));
-        let linestring0 = LineString(
+        let linestring0 = LineString::new(
             vec![Point::new(0., 1.), Point::new(1., 0.), Point::new(2., 0.)]
-        );
-        let linestring1 = LineString(
+        ).unwrap();
+        let linestring1 = LineString::new(
             vec![Point::new(0.5, 0.2), Point::new(1., 0.), Point::new(2., 0.)]
-        );
+        ).unwrap();
         assert!(line0.intersects(&linestring0));
         assert!(!line0.intersects(&linestring1));
         assert!(linestring0.intersects(&line0));
@@ -503,20 +503,20 @@ mod test {
     fn line_intersects_polygon_test() {
         let line0 = Line::new(Point::new(0.5, 0.5), Point::new(2., 1.));
         let poly0 = Polygon::new(
-            LineString(vec![Point::new(0.,0.), Point::new(1., 2.),
+            LineString::new(vec![Point::new(0.,0.), Point::new(1., 2.).unwrap(),
                             Point::new(1., 0.), Point::new(0., 0.)]),
             vec![]
         );
         let poly1 = Polygon::new(
-            LineString(vec![Point::new(1., -1.), Point::new(2., -1.),
+            LineString::new(vec![Point::new(1., -1.), Point::new(2., -1.).unwrap(),
                             Point::new(2., -2.), Point::new(1., -1.)]),
             vec![]
         );
         // line contained in the hole
         let poly2 = Polygon::new(
-            LineString(vec![Point::new(-1., -1.), Point::new(-1., 10.),
+            LineString::new(vec![Point::new(-1., -1.), Point::new(-1., 10.).unwrap(),
                             Point::new(10., -1.), Point::new(-1., -1.)]),
-            vec![LineString(vec![Point::new(0., 0.), Point::new(3., 4.),
+            vec![LineString::new(vec![Point::new(0., 0.), Point::new(3., 4.).unwrap(),
                                  Point::new(3., 0.), Point::new(0., 0.)])]
         );
         assert!(line0.intersects(&poly0));

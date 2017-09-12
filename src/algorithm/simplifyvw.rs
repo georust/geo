@@ -424,12 +424,12 @@ pub trait SimplifyVW<T, Epsilon = T> {
     /// vec.push(Point::new(6.0, 20.0));
     /// vec.push(Point::new(7.0, 25.0));
     /// vec.push(Point::new(10.0, 10.0));
-    /// let linestring = LineString(vec);
+    /// let linestring = LineString::new(vec).unwrap();
     /// let mut compare = Vec::new();
     /// compare.push(Point::new(5.0, 2.0));
     /// compare.push(Point::new(7.0, 25.0));
     /// compare.push(Point::new(10.0, 10.0));
-    /// let ls_compare = LineString(compare);
+    /// let ls_compare = LineString::new(compare).unwrap();
     /// let simplified = linestring.simplifyvw(&30.0);
     /// assert_eq!(simplified, ls_compare)
     /// ```
@@ -475,7 +475,7 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     /// vec.push(Point::new(117., 48.));
     /// vec.push(Point::new(300., 40.));
     /// vec.push(Point::new(301., 10.));
-    /// let linestring = LineString(vec);
+    /// let linestring = LineString::new(vec).unwrap();
     /// let mut compare = Vec::new();
     /// compare.push(Point::new(10., 60.));
     /// compare.push(Point::new(126., 31.));
@@ -483,7 +483,7 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     /// compare.push(Point::new(117., 48.));
     /// compare.push(Point::new(300., 40.));
     /// compare.push(Point::new(301., 10.));
-    /// let ls_compare = LineString(compare);
+    /// let ls_compare = LineString::new(compare).unwrap();
     /// let simplified = linestring.simplifyvw_preserve(&668.6);
     /// assert_eq!(simplified, ls_compare)
     /// ```
@@ -680,14 +680,14 @@ mod test {
         // with the inner ring, which would also trigger removal of outer[1],
         // leaving the geometry below min_points. It is thus retained.
         // Inner should also be reduced, but has points == initial_min for the Polygon type
-        let outer = LineString(vec![
+        let outer = LineString::new(vec![
             Point::new(-54.4921875, 21.289374355860424),
             Point::new(-33.5, 56.9449741808516),
             Point::new(-22.5, 44.08758502824516),
             Point::new(-19.5, 23.241346102386135),
             Point::new(-54.4921875, 21.289374355860424),
         ]);
-        let inner = LineString(vec![
+        let inner = LineString::new(vec![
             Point::new(-24.451171875, 35.266685523707665),
             Point::new(-29.513671875, 47.32027765985069),
             Point::new(-22.869140625, 43.80817468459856),
@@ -704,21 +704,21 @@ mod test {
         // with the inner ring, which would also trigger removal of outer[1],
         // leaving the geometry below min_points. It is thus retained.
         // Inner should be reduced to four points by removing inner[2]
-        let outer = LineString(vec![
+        let outer = LineString::new(vec![
             Point::new(-54.4921875, 21.289374355860424),
             Point::new(-33.5, 56.9449741808516),
             Point::new(-22.5, 44.08758502824516),
             Point::new(-19.5, 23.241346102386135),
             Point::new(-54.4921875, 21.289374355860424),
-        ]);
-        let inner = LineString(vec![
+        ]).unwrap();
+        let inner = LineString::new(vec![
             Point::new(-24.451171875, 35.266685523707665),
             Point::new(-40.0, 45.),
             Point::new(-29.513671875, 47.32027765985069),
             Point::new(-22.869140625, 43.80817468459856),
             Point::new(-24.451171875, 35.266685523707665),
-        ]);
-        let correct_inner = LineString(vec![
+        ]).unwrap();
+        let correct_inner = LineString::new(vec![
             Point::new(-24.451171875, 35.266685523707665),
             Point::new(-40.0, 45.0),
             Point::new(-22.869140625, 43.80817468459856),
@@ -759,8 +759,8 @@ mod test {
         let points_ls: Vec<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
         let correct = include!("test_fixtures/vw_simplified.rs");
         let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e[0], e[1])).collect();
-        let simplified = LineString(points_ls).simplifyvw_preserve(&0.0005);
-        assert_eq!(simplified, LineString(correct_ls));
+        let simplified = LineString::new(points_ls).simplifyvw_preserve(&0.0005).unwrap();
+        assert_eq!(simplified, LineString::new(correct_ls)).unwrap();
     }
     #[test]
     fn visvalingam_test_empty_linestring() {
@@ -796,24 +796,24 @@ mod test {
         let correct = vec![(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
         let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
 
-        let mline = MultiLineString(vec![LineString(points_ls)]);
+        let mline = MultiLineString::new(vec![LineString::new(points_ls).unwrap()]).unwrap();
         assert_eq!(
             mline.simplifyvw(&30.),
-            MultiLineString(vec![LineString(correct_ls)])
+            MultiLineString::new(vec![LineString::new(correct_ls).unwrap()]).unwrap()
         );
     }
 
     #[test]
     fn polygon() {
         let poly = Polygon::new(
-            LineString(vec![
+            LineString::new(vec![
                 Point::new(0., 0.),
                 Point::new(0., 10.),
                 Point::new(5., 11.),
                 Point::new(10., 10.),
                 Point::new(10., 0.),
                 Point::new(0., 0.),
-            ]),
+            ]).unwrap(),
             vec![],
         );
 
@@ -822,13 +822,13 @@ mod test {
         assert_eq!(
             poly2,
             Polygon::new(
-                LineString(vec![
+                LineString::new(vec![
                     Point::new(0., 0.),
                     Point::new(0., 10.),
                     Point::new(10., 10.),
                     Point::new(10., 0.),
                     Point::new(0., 0.),
-                ]),
+                ]).unwrap(),
                 vec![],
             )
         );
@@ -838,14 +838,14 @@ mod test {
     fn multipolygon() {
         let mpoly = MultiPolygon(vec![
             Polygon::new(
-                LineString(vec![
+                LineString::new(vec![
                     Point::new(0., 0.),
                     Point::new(0., 10.),
                     Point::new(5., 11.),
                     Point::new(10., 10.),
                     Point::new(10., 0.),
                     Point::new(0., 0.),
-                ]),
+                ]).unwrap(),
                 vec![]
             ),
         ]);
@@ -856,13 +856,13 @@ mod test {
             mpoly2,
             MultiPolygon(vec![
                 Polygon::new(
-                    LineString(vec![
+                    LineString::new(vec![
                         Point::new(0., 0.),
                         Point::new(0., 10.),
                         Point::new(10., 10.),
                         Point::new(10., 0.),
                         Point::new(0., 0.),
-                    ]),
+                    ]).unwrap(),
                     vec![]
                 ),
             ])

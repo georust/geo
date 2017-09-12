@@ -456,7 +456,7 @@ impl<T> Line<T>
 ///
 /// ```
 /// use geo::{LineString, Point};
-/// let line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
+/// let line = LineString::new(vec![Point::new(0., 0.), Point::new(10., 0.)]).unwrap();
 /// ```
 ///
 /// Converting a `Vec` of `Point`-like things:
@@ -478,7 +478,7 @@ impl<T> Line<T>
 ///
 /// ```
 /// use geo::{LineString, Point};
-/// let line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
+/// let line = LineString::new(vec![Point::new(0., 0.), Point::new(10., 0.)]).unwrap();
 /// for point in line {
 ///     println!("Point x = {}, y = {}", point.x(), point.y());
 /// }
@@ -499,7 +499,7 @@ impl<T: Float> LineString<T> {
     /// Only use this if you know _for certain_ that `point` has at least two elements.
     pub unsafe fn new_unchecked(points: Vec<Point<T>>) -> Self {
         debug_assert!(points.len() > 1);
-        LineString(points)
+        LineString::new(points).unwrap()
     }
 
     pub fn points(&self) -> &[Point<T>] {
@@ -601,9 +601,9 @@ impl<T> Polygon<T>
     /// ```
     /// use geo::{Point, LineString, Polygon};
     ///
-    /// let exterior = LineString(vec![Point::new(0., 0.), Point::new(1., 1.),
+    /// let exterior = LineString::new(vec![Point::new(0., 0.), Point::new(1., 1.).unwrap(),
     ///                                Point::new(1., 0.), Point::new(0., 0.)]);
-    /// let interiors = vec![LineString(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9),
+    /// let interiors = vec![LineString::new(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9).unwrap(),
     ///                                      Point::new(0.9, 0.1), Point::new(0.1, 0.1)])];
     /// let p = Polygon::new(exterior.clone(), interiors.clone());
     /// assert_eq!(p.exterior, exterior);
@@ -722,9 +722,9 @@ mod test {
 
     #[test]
     fn polygon_new_test() {
-        let exterior = LineString(vec![Point::new(0., 0.), Point::new(1., 1.),
+        let exterior = LineString::new(vec![Point::new(0., 0.), Point::new(1., 1.).unwrap(),
                                        Point::new(1., 0.), Point::new(0., 0.)]);
-        let interiors = vec![LineString(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9),
+        let interiors = vec![LineString::new(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9).unwrap(),
                                              Point::new(0.9, 0.1), Point::new(0.1, 0.1)])];
         let p = Polygon::new(exterior.clone(), interiors.clone());
 

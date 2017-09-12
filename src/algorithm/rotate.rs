@@ -40,13 +40,13 @@ pub trait Rotate<T> {
     /// vec.push(Point::new(0.0, 0.0));
     /// vec.push(Point::new(5.0, 5.0));
     /// vec.push(Point::new(10.0, 10.0));
-    /// let linestring = LineString(vec);
+    /// let linestring = LineString::new(vec).unwrap();
     /// let rotated = linestring.rotate(-45.0);
     /// let mut correct = Vec::new();
     /// correct.push(Point::new(-2.0710678118654755, 5.0));
     /// correct.push(Point::new(5.0, 5.0));
     /// correct.push(Point::new(12.071067811865476, 5.0));
-    /// let correct_ls = LineString(correct);
+    /// let correct_ls = LineString::new(correct).unwrap();
     /// assert_eq!(rotated, correct_ls);
     /// ```
     fn rotate(&self, angle: T) -> Self
@@ -67,13 +67,13 @@ pub trait RotatePoint<T> {
     /// vec.push(Point::new(0.0, 0.0));
     /// vec.push(Point::new(5.0, 5.0));
     /// vec.push(Point::new(10.0, 10.0));
-    /// let linestring = LineString(vec);
+    /// let linestring = LineString::new(vec).unwrap();
     /// let rotated = linestring.rotate_around_point(-45.0, &Point::new(10.0, 0.0));
     /// let mut correct = Vec::new();
     /// correct.push(Point::new(2.9289321881345245, 7.071067811865475));
     /// correct.push(Point::new(10.0, 7.0710678118654755));
     /// correct.push(Point::new(17.071067811865476, 7.0710678118654755));
-    /// let correct_ls = LineString(correct);
+    /// let correct_ls = LineString::new(correct).unwrap();
     /// assert_eq!(rotated, correct_ls);
     /// ```
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self
@@ -206,13 +206,13 @@ mod test {
         vec.push(Point::new(0.0, 0.0));
         vec.push(Point::new(5.0, 5.0));
         vec.push(Point::new(10.0, 10.0));
-        let linestring = LineString(vec);
+        let linestring = LineString::new(vec).unwrap();
         let rotated = linestring.rotate(-45.0);
         let mut correct = Vec::new();
         correct.push(Point::new(-2.0710678118654755, 5.0));
         correct.push(Point::new(5.0, 5.0));
         correct.push(Point::new(12.071067811865476, 5.0));
-        let correct_ls = LineString(correct);
+        let correct_ls = LineString::new(correct).unwrap();
         // results agree with Shapely / GEOS
         assert_eq!(rotated, correct_ls);
     }
@@ -233,7 +233,7 @@ mod test {
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
-        let poly1 = Polygon::new(LineString(points), vec![]);
+        let poly1 = Polygon::new(LineString::new(points), vec![]).unwrap();
         let rotated = poly1.rotate(-15.0);
         let correct_outside = vec![
             (4.628808519201685, 1.1805207831176578),
@@ -247,12 +247,12 @@ mod test {
             (4.628808519201685, 1.1805207831176578),
         ];
         let correct = Polygon::new(
-            LineString(
+            LineString::new(
                 correct_outside
                     .iter()
                     .map(|e| Point::new(e.0, e.1))
                     .collect::<Vec<_>>(),
-            ),
+            ).unwrap(),
             vec![],
         );
         // results agree with Shapely / GEOS
@@ -260,7 +260,7 @@ mod test {
     }
     #[test]
     fn test_rotate_polygon_holes() {
-        let ls1 = LineString(vec![
+        let ls1 = LineString::new(vec![
             Point::new(5.0, 1.0),
             Point::new(4.0, 2.0),
             Point::new(4.0, 3.0),
@@ -270,21 +270,21 @@ mod test {
             Point::new(7.0, 2.0),
             Point::new(6.0, 1.0),
             Point::new(5.0, 1.0),
-        ]);
+        ]).unwrap();
 
-        let ls2 = LineString(vec![
+        let ls2 = LineString::new(vec![
             Point::new(5.0, 1.3),
             Point::new(5.5, 2.0),
             Point::new(6.0, 1.3),
             Point::new(5.0, 1.3),
-        ]);
+        ]).unwrap();
 
-        let ls3 = LineString(vec![
+        let ls3 = LineString::new(vec![
             Point::new(5., 2.3),
             Point::new(5.5, 3.0),
             Point::new(6., 2.3),
             Point::new(5., 2.3),
-        ]);
+        ]).unwrap();
 
         let poly1 = Polygon::new(ls1, vec![ls2, ls3]);
         let rotated = poly1.rotate(-15.0);

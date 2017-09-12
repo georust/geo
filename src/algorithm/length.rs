@@ -15,7 +15,7 @@ pub trait Length<T, RHS = Self> {
     /// let mut vec = Vec::new();
     /// vec.push(Point::new(40.02f64, 116.34));
     /// vec.push(Point::new(42.02f64, 116.34));
-    /// let linestring = LineString(vec);
+    /// let linestring = LineString::new(vec).unwrap();
     ///
     /// println!("Length {}", linestring.length());
     /// ```
@@ -56,25 +56,25 @@ mod test {
 
     #[test]
     fn empty_linestring_test() {
-        let linestring = LineString::<f64>(Vec::new());
+        let linestring = LineString::<f64>::new(Vec::new()).unwrap();
         assert_eq!(0.0_f64, linestring.length());
     }
     #[test]
     fn linestring_one_point_test() {
-        let linestring = LineString(vec![Point::new(0., 0.)]);
+        let linestring = LineString::new(vec![Point::new(0., 0.)]).unwrap();
         assert_eq!(0.0_f64, linestring.length());
     }
     #[test]
     fn linestring_test() {
         let p = |x| Point(Coordinate { x: x, y: 1. });
-        let linestring = LineString(vec![p(1.), p(7.), p(8.), p(9.), p(10.), p(11.)]);
+        let linestring = LineString::new(vec![p(1.), p(7.), p(8.), p(9.), p(10.), p(11.)]).unwrap();
         assert_eq!(10.0_f64, linestring.length());
     }
     #[test]
     fn multilinestring_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let mline = MultiLineString(vec![LineString(vec![p(1., 0.), p(7., 0.), p(8., 0.), p(9., 0.), p(10., 0.), p(11., 0.)]),
-                                         LineString(vec![p(0., 0.), p(0., 5.)])]);
+        let mline = MultiLineString(vec![LineString::new(vec![p(1., 0.), p(7., 0.), p(8., 0.), p(9., 0.), p(10., 0.), p(11., 0.)]).unwrap(),
+                                         LineString::new(vec![p(0., 0.), p(0., 5.)])]).unwrap();
         assert_eq!(15.0_f64, mline.length());
     }
     #[test]

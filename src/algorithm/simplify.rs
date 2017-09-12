@@ -68,13 +68,13 @@ pub trait Simplify<T, Epsilon = T> {
     /// vec.push(Point::new(11.0, 5.5));
     /// vec.push(Point::new(17.3, 3.2));
     /// vec.push(Point::new(27.8, 0.1));
-    /// let linestring = LineString(vec);
+    /// let linestring = LineString::new(vec).unwrap();
     /// let mut compare = Vec::new();
     /// compare.push(Point::new(0.0, 0.0));
     /// compare.push(Point::new(5.0, 4.0));
     /// compare.push(Point::new(11.0, 5.5));
     /// compare.push(Point::new(27.8, 0.1));
-    /// let ls_compare = LineString(compare);
+    /// let ls_compare = LineString::new(compare).unwrap();
     /// let simplified = linestring.simplify(&1.0);
     /// assert_eq!(simplified, ls_compare)
     /// ```
@@ -164,68 +164,68 @@ mod test {
 
     #[test]
     fn multilinestring() {
-        let mline = MultiLineString(vec![LineString(vec![
+        let mline = MultiLineString(vec![LineString::new(vec![
             Point::new(0.0, 0.0),
             Point::new(5.0, 4.0),
             Point::new(11.0, 5.5),
             Point::new(17.3, 3.2),
             Point::new(27.8, 0.1),
-        ])]);
+        ]).unwrap()]);
 
         let mline2 = mline.simplify(&1.0);
 
-        assert_eq!(mline2, MultiLineString(vec![LineString(vec![
+        assert_eq!(mline2, MultiLineString(vec![LineString::new(vec![
             Point::new(0.0, 0.0),
             Point::new(5.0, 4.0),
             Point::new(11.0, 5.5),
             Point::new(27.8, 0.1),
-        ])]));
+        ]).unwrap()]));
     }
 
     #[test]
     fn polygon() {
-        let poly = Polygon::new(LineString(vec![
+        let poly = Polygon::new(LineString::new(vec![
             Point::new(0., 0.),
             Point::new(0., 10.),
             Point::new(5., 11.),
             Point::new(10., 10.),
             Point::new(10., 0.),
             Point::new(0., 0.),
-        ]), vec![]);
+        ]).unwrap(), vec![]);
 
         let poly2 = poly.simplify(&2.);
 
-        assert_eq!(poly2, Polygon::new(LineString(vec![
+        assert_eq!(poly2, Polygon::new(LineString::new(vec![
             Point::new(0., 0.),
             Point::new(0., 10.),
             Point::new(10., 10.),
             Point::new(10., 0.),
             Point::new(0., 0.),
-              ]), vec![])
+              ]).unwrap(), vec![])
         );
     }
 
 
     #[test]
     fn multipolygon() {
-        let mpoly = MultiPolygon(vec![Polygon::new(LineString(vec![
+        let mpoly = MultiPolygon(vec![Polygon::new(LineString::new(vec![
             Point::new(0., 0.),
             Point::new(0., 10.),
             Point::new(5., 11.),
             Point::new(10., 10.),
             Point::new(10., 0.),
             Point::new(0., 0.),
-        ]), vec![])]);
+        ]).unwrap(), vec![])]);
 
         let mpoly2 = mpoly.simplify(&2.);
 
-        assert_eq!(mpoly2, MultiPolygon(vec![Polygon::new(LineString(vec![
+        assert_eq!(mpoly2, MultiPolygon(vec![Polygon::new(LineString::new(vec![
             Point::new(0., 0.),
             Point::new(0., 10.),
             Point::new(10., 10.),
             Point::new(10., 0.),
             Point::new(0., 0.),
-              ]), vec![])])
+              ]).unwrap(), vec![])])
         );
     }
 }
