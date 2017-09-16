@@ -1,5 +1,9 @@
 # Changes
 
+## 0.6.2
+
+* [Add a prelude: `use geo::prelude::*`](https://github.com/georust/rust-geo/pull/162)
+
 ## 0.6.1
 
 * [Add a `lines` iterator method on `LineString`](https://github.com/georust/rust-geo/pull/160)
