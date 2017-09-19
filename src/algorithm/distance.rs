@@ -85,7 +85,7 @@ where
     }
     let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) /
         (dx * dx + dy * dy);
-    s.abs() * ((dx * dx + dy * dy)).sqrt()
+    s.abs() * (dx * dx + dy * dy).sqrt()
 }
 
 impl<T> Distance<T, Point<T>> for Point<T>
