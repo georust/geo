@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
 use num_traits::{Float, ToPrimitive};
 use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 use algorithm::contains::Contains;
@@ -90,31 +88,6 @@ where
     s.abs() * ((dx * dx + dy * dy)).sqrt()
 }
 
-#[derive(PartialEq, Debug)]
-struct Mindist<T>
-    where T: Float
-{
-    distance: T,
-}
-
-// These impls give us a min-heap when used with BinaryHeap
-impl<T> Ord for Mindist<T>
-    where T: Float
-{
-    fn cmp(&self, other: &Mindist<T>) -> Ordering {
-        other.distance.partial_cmp(&self.distance).unwrap()
-    }
-}
-impl<T> PartialOrd for Mindist<T>
-    where T: Float
-{
-    fn partial_cmp(&self, other: &Mindist<T>) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl<T> Eq for Mindist<T> where T: Float {}
-
 impl<T> Distance<T, Point<T>> for Point<T>
     where T: Float
 {
@@ -130,12 +103,14 @@ impl<T> Distance<T, MultiPoint<T>> for Point<T>
 {
     /// Minimum distance from a Point to a MultiPoint
     fn distance(&self, points: &MultiPoint<T>) -> T {
-        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
-        for p in &points.0 {
-            let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
-            dist_queue.push(Mindist { distance: dx.hypot(dy) })
-        }
-        dist_queue.pop().unwrap().distance
+        points
+            .0
+            .iter()
+            .map(|p| {
+                let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
+                dx.hypot(dy)
+            })
+            .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
 
@@ -159,17 +134,16 @@ impl<T> Distance<T, Polygon<T>> for Point<T>
         if polygon.contains(self) || exterior.0.is_empty() {
             return T::zero();
         }
-        // minimum priority queue
-        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
-        // we've got interior rings
-        for ring in &polygon.interiors {
-            dist_queue.push(Mindist { distance: self.distance(ring) })
-        }
-        for line in exterior.lines() {
-            let dist = line_segment_distance(self, &line.start, &line.end);
-            dist_queue.push(Mindist { distance: dist });
-        }
-        dist_queue.pop().unwrap().distance
+        let ring_dist = polygon
+            .interiors
+            .iter()
+            .map(|ring| self.distance(ring))
+            .fold(T::max_value(), |accum, val| accum.min(val));
+        let shell_dist = exterior
+            .lines()
+            .map(|line| line_segment_distance(self, &line.start, &line.end))
+            .fold(T::max_value(), |accum, val| accum.min(val));
+        ring_dist.min(shell_dist)
     }
 }
 
@@ -187,11 +161,12 @@ impl<T> Distance<T, MultiPolygon<T>> for Point<T>
 {
     /// Minimum distance from a Point to a MultiPolygon
     fn distance(&self, mpolygon: &MultiPolygon<T>) -> T {
-        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
-        for poly in &mpolygon.0 {
-            dist_queue.push(Mindist { distance: self.distance(poly) });
-        }
-        dist_queue.pop().unwrap().distance
+        mpolygon.0.iter().map(|p| self.distance(p)).fold(
+            T::max_value(),
+            |accum, val| {
+                accum.min(val)
+            },
+        )
     }
 }
 
@@ -209,11 +184,12 @@ impl<T> Distance<T, MultiLineString<T>> for Point<T>
 {
     /// Minimum distance from a Point to a MultiLineString
     fn distance(&self, mls: &MultiLineString<T>) -> T {
-        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
-        for ls in &mls.0 {
-            dist_queue.push(Mindist { distance: self.distance(ls) });
-        }
-        dist_queue.pop().unwrap().distance
+        mls.0.iter().map(|ls| self.distance(ls)).fold(
+            T::max_value(),
+            |accum, val| {
+                accum.min(val)
+            },
+        )
     }
 }
 
@@ -235,14 +211,10 @@ impl<T> Distance<T, LineString<T>> for Point<T>
         if linestring.contains(self) || linestring.0.is_empty() {
             return T::zero();
         }
-        // minimum priority queue
-        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
-        // get points vector
-        for line in linestring.lines() {
-            let dist = line_segment_distance(self, &line.start, &line.end);
-            dist_queue.push(Mindist { distance: dist });
-        }
-        dist_queue.pop().unwrap().distance
+        linestring
+            .lines()
+            .map(|line| line_segment_distance(self, &line.start, &line.end))
+            .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
 
