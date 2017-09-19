@@ -1,7 +1,7 @@
-use num_traits::{Float, ToPrimitive};
+use num_traits::{Float, Signed, ToPrimitive};
 use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 use num_traits::float::FloatConst;
-use algorithm::contains::Contains;
+use algorithm::contains::{Contains, PositionPoint, get_position};
 use algorithm::intersects::{Intersects};
 use algorithm::polygon_distance_fast_path::*;
 
@@ -258,16 +258,6 @@ where
     /// Minimum distance from a Line to a Point
     fn distance(&self, line: &Line<T>) -> T {
         line_segment_distance(&self, &line.start, &line.end)
-    }
-}
-
-impl<T> Distance<T, Point<T>> for Line<T>
-where
-    T: Float,
-{
-    /// Minimum distance from a Line to a Point
-    fn distance(&self, point: &Point<T>) -> T {
-        point.distance(self)
     }
 }
 
