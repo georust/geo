@@ -70,12 +70,12 @@ fn pseudo_distance<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
 }
 
 // Adapted from http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
-fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
+fn quick_hull<T>(mut points: &mut [Point<T>]) -> Polygon<T>
     where T: Float
 {
     // can't build a hull from fewer than four points
     if points.len() < 4 {
-        return points.to_vec();
+        return Polygon::new(LineString::new(points.to_vec()).expect("did not supply enough points"), vec![]);
     }
     let mut hull = vec![];
     let min = swap_remove_to_first(&mut points, 0);
@@ -100,7 +100,9 @@ fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
     // close the polygon
     let final_element = *hull.first().unwrap();
     hull.push(final_element);
-    hull
+    // we add `hull` at least three points to `hull`, which makes it valid
+    let linestring = unsafe { LineString::new_unchecked(hull) };
+    Polygon::new(linestring, vec![])
 }
 
 // recursively calculate the convex hull of a subset of points
@@ -146,12 +148,12 @@ pub trait ConvexHull<T> {
     /// use geo::convexhull::ConvexHull;
     /// // an L shape
     /// let coords = vec![(0.0, 0.0), (4.0, 0.0), (4.0, 1.0), (1.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0)];
-    /// let ls = LineString(coords.iter().map(|e| Point::new(e.0, e.1)).collect());
+    /// let ls = LineString::new(coords.iter().map(|e| Point::new(e.0, e.1)).collect()).unwrap();
     /// let poly = Polygon::new(ls, vec![]);
     ///
     /// // The correct convex hull coordinates
     /// let hull_coords = vec![(4.0, 0.0), (4.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0), (4.0, 0.0)];
-    /// let correct_hull = LineString(hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect());
+    /// let correct_hull = LineString::new(hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect()).unwrap();
     ///
     /// let res = poly.convex_hull();
     /// assert_eq!(res.exterior, correct_hull);
@@ -163,7 +165,7 @@ impl<T> ConvexHull<T> for Polygon<T>
     where T: Float
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString(quick_hull(&mut self.exterior.0.clone())), vec![])
+        quick_hull(&mut self.exterior.points().to_owned())
     }
 }
 
@@ -172,9 +174,9 @@ impl<T> ConvexHull<T> for MultiPolygon<T>
 {
     fn convex_hull(&self) -> Polygon<T> {
         let mut aggregated: Vec<Point<T>> = self.0.iter()
-            .flat_map(|elem| elem.exterior.0.iter().cloned())
+            .flat_map(|elem| elem.exterior.points().iter().cloned())
             .collect();
-        Polygon::new(LineString(quick_hull(&mut aggregated)), vec![])
+        quick_hull(&mut aggregated)
     }
 }
 
@@ -182,7 +184,7 @@ impl<T> ConvexHull<T> for LineString<T>
     where T: Float
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString(quick_hull(&mut self.0.clone())), vec![])
+        quick_hull(&mut self.points().to_owned())
     }
 }
 
@@ -191,9 +193,9 @@ impl<T> ConvexHull<T> for MultiLineString<T>
 {
     fn convex_hull(&self) -> Polygon<T> {
         let mut aggregated: Vec<Point<T>> = self.0.iter()
-            .flat_map(|elem| elem.0.iter().cloned())
+            .flat_map(|elem| elem.points().iter().cloned())
             .collect();
-        Polygon::new(LineString(quick_hull(&mut aggregated)), vec![])
+        quick_hull(&mut aggregated)
     }
 }
 
@@ -201,7 +203,7 @@ impl<T> ConvexHull<T> for MultiPoint<T>
     where T: Float
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString(quick_hull(&mut self.0.clone())), vec![])
+        quick_hull(&mut self.0.clone())
     }
 }
 
@@ -318,7 +320,7 @@ mod test {
             Point::new(-10.0, 0.0),
             Point::new(-1.0, 1.0),
             Point::new(0.0, 10.0)];
-        let mp = LineString(v);
+        let mp = LineString::new(v).unwrap();
         let correct = vec![
             Point::new(0.0, -10.0),
             Point::new(10.0, 0.0),
@@ -330,9 +332,9 @@ mod test {
     }
     #[test]
     fn quick_hull_multilinestring_test() {
-        let v1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0)]);
-        let v2 = LineString(vec![Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(3.0, 1.0)]);
-        let mls = MultiLineString(vec![v1, v2]);
+        let v1 = LineString::new(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0)]).unwrap();
+        let v2 = LineString::new(vec![Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(3.0, 1.0)]).unwrap();
+        let mls = MultiLineString::new(vec![v1, v2]).unwrap();
         let correct = vec![
             Point::new(2.0, 0.0),
             Point::new(3.0, 1.0),
@@ -344,8 +346,8 @@ mod test {
     }
     #[test]
     fn quick_hull_multipolygon_test() {
-        let ls1 = LineString(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(0.0, 0.0)]);
-        let ls2 = LineString(vec![Point::new(3.0, 0.0), Point::new(4.0, 10.0), Point::new(5.0, 0.0), Point::new(3.0, 0.0)]);
+        let ls1 = LineString::new(vec![Point::new(0.0, 0.0), Point::new(1.0, 10.0), Point::new(2.0, 0.0), Point::new(0.0, 0.0)]).unwrap();
+        let ls2 = LineString::new(vec![Point::new(3.0, 0.0), Point::new(4.0, 10.0), Point::new(5.0, 0.0), Point::new(3.0, 0.0)]).unwrap();
         let p1 = Polygon::new(ls1, vec![]);
         let p2 = Polygon::new(ls2, vec![]);
         let mp = MultiPolygon(vec![p1, p2]);

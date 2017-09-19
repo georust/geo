@@ -13,13 +13,13 @@ pub trait Translate<T> {
     /// vec.push(Point::new(0.0, 0.0));
     /// vec.push(Point::new(5.0, 5.0));
     /// vec.push(Point::new(10.0, 10.0));
-    /// let linestring = LineString(vec);
+    /// let linestring = LineString::new(vec).unwrap();
     /// let translated = linestring.translate(1.5, 3.5);
     /// let mut correct = Vec::new();
     /// correct.push(Point::new(1.5, 3.5));
     /// correct.push(Point::new(6.5, 8.5));
     /// correct.push(Point::new(11.5, 13.5));
-    /// let correct_ls = LineString(correct);
+    /// let correct_ls = LineString::new(correct).unwrap();
     /// assert_eq!(translated, correct_ls);
     /// ```
     fn translate(&self, xoff: T, yoff: T) -> Self where T: Float;
@@ -50,13 +50,13 @@ mod test {
         vec.push(Point::new(0.0, 0.0));
         vec.push(Point::new(5.0, 1.0));
         vec.push(Point::new(10.0, 0.0));
-        let linestring = LineString(vec);
+        let linestring = LineString::new(vec).unwrap();
         let translated = linestring.translate(17.0, 18.0);
         let mut correct = Vec::new();
         correct.push(Point::new(17.0, 18.0));
         correct.push(Point::new(22.0, 19.0));
         correct.push(Point::new(27., 18.));
-        let correct_ls = LineString(correct);
+        let correct_ls = LineString::new(correct).unwrap();
         assert_eq!(translated, correct_ls);
     }
     #[test]
@@ -67,7 +67,7 @@ mod test {
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
-        let poly1 = Polygon::new(LineString(points), vec![]);
+        let poly1 = Polygon::new(LineString::new(points), vec![]).unwrap();
         let translated = poly1.translate(17.0, 18.0);
         let correct_outside = vec![(22.0, 19.0),
                                  (21.0, 20.0),
@@ -78,17 +78,17 @@ mod test {
                                  (24.0, 20.0),
                                  (23.0, 19.0),
                                  (22.0, 19.0)];
-        let correct = Polygon::new(LineString(correct_outside
+        let correct = Polygon::new(LineString::new(correct_outside
                                                   .iter()
                                                   .map(|e| Point::new(e.0, e.1))
-                                                  .collect::<Vec<_>>()),
+                                                  .collect::<Vec<_>>()).unwrap(),
                                    vec![]);
         // results agree with Shapely / GEOS
         assert_eq!(translated, correct);
     }
     #[test]
     fn test_rotate_polygon_holes() {
-        let ls1 = LineString(vec![Point::new(5.0, 1.0),
+        let ls1 = LineString::new(vec![Point::new(5.0, 1.0).unwrap(),
                                   Point::new(4.0, 2.0),
                                   Point::new(4.0, 3.0),
                                   Point::new(5.0, 4.0),
@@ -98,7 +98,7 @@ mod test {
                                   Point::new(6.0, 1.0),
                                   Point::new(5.0, 1.0)]);
 
-        let ls2 = LineString(vec![Point::new(5.0, 1.3),
+        let ls2 = LineString::new(vec![Point::new(5.0, 1.3).unwrap(),
                                   Point::new(5.5, 2.0),
                                   Point::new(6.0, 1.3),
                                   Point::new(5.0, 1.3)]);

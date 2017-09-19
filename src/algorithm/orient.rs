@@ -65,9 +65,6 @@ pub enum Direction {
 fn signed_ring_area<T>(linestring: &LineString<T>) -> T
     where T: Float
 {
-    if linestring.0.is_empty() || linestring.0.len() == 1 {
-        return T::zero();
-    }
     let mut tmp = T::zero();
     for line in linestring.lines() {
         tmp = tmp + (line.start.x() * line.end.y() - line.end.x() * line.start.y());
@@ -88,17 +85,17 @@ fn orient<T>(poly: &Polygon<T>, direction: Direction) -> Polygon<T>
     let mut rings = vec![];
     // process interiors first, so push and pop work
     for ring in &poly.interiors {
-        if signed_ring_area(&ring) / sign <= T::zero() {
-            rings.push(LineString(ring.0.iter().cloned().collect()));
-        } else {
-            rings.push(LineString(ring.0.iter().rev().cloned().collect()));
+        let mut ring = ring.clone();
+        if signed_ring_area(&ring) / sign >= T::zero() {
+            unsafe { ring.points_mut().reverse(); }
         }
+        rings.push(ring);
     }
-    if signed_ring_area(&poly.exterior) / sign >= T::zero() {
-        rings.push(LineString(poly.exterior.0.iter().cloned().collect()));
-    } else {
-        rings.push(LineString(poly.exterior.0.iter().rev().cloned().collect()));
+    let mut ring = poly.exterior.clone();
+    if signed_ring_area(&ring) / sign >= T::zero() {
+        unsafe { ring.points_mut().reverse(); }
     }
+    rings.push(ring);
     Polygon::new(rings.pop().unwrap(), rings)
 }
 
@@ -120,19 +117,19 @@ mod test {
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
-        let poly1 = Polygon::new(LineString(points_ext), vec![LineString(points_int)]);
+        let poly1 = Polygon::new(LineString::new(points_ext).unwrap(), vec![LineString::new(points_int).unwrap()]);
         // a diamond shape, oriented counter-clockwise outside,
         let oriented_ext = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
-        let oriented_ext_ls = LineString(oriented_ext
+        let oriented_ext_ls = LineString::new(oriented_ext
                                              .iter()
                                              .map(|e| Point::new(e.0, e.1))
-                                             .collect::<Vec<_>>());
+                                             .collect::<Vec<_>>()).unwrap();
         // clockwise interior
         let oriented_int_raw = vec![(1.0, 0.5), (0.5, 1.0), (1.0, 1.5), (1.5, 1.0), (1.0, 0.5)];
-        let oriented_int_ls = LineString(oriented_int_raw
+        let oriented_int_ls = LineString::new(oriented_int_raw
                                              .iter()
                                              .map(|e| Point::new(e.0, e.1))
-                                             .collect::<Vec<_>>());
+                                             .collect::<Vec<_>>()).unwrap();
         // build corrected Polygon
         let oriented = orient(&poly1, Direction::Default);
         assert_eq!(oriented.exterior.0, oriented_ext_ls.0);

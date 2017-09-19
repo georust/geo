@@ -57,7 +57,7 @@ impl<T> Polygon<T>
     fn previous_vertex(&self, current_vertex: &usize) -> usize
         where T: Float
     {
-        (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
+        (current_vertex + (self.exterior.points().len() - 1) - 1) % (self.exterior.points().len() - 1)
     }
 }
 
@@ -82,15 +82,15 @@ fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes,
     // see: http://stackoverflow.com/a/1881201/416626
     let convex = polygon
         .exterior
-        .0
+        .points()
         .iter()
         .enumerate()
         .map(|(idx, _)| {
             let prev_1 = polygon.previous_vertex(&idx);
             let prev_2 = polygon.previous_vertex(&prev_1);
-            cross_prod(&polygon.exterior.0[prev_2],
-                       &polygon.exterior.0[prev_1],
-                       &polygon.exterior.0[idx])
+            cross_prod(&polygon.exterior.points()[prev_2],
+                       &polygon.exterior.points()[prev_1],
+                       &polygon.exterior.points()[idx])
         })
         // accumulate and check cross-product result signs in a single pass
         // positive implies ccw convexity, negative implies cw convexity
@@ -121,7 +121,7 @@ fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes,
 fn polymax_naive_indices<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()>
     where T: Float
 {
-    let vertices = &poly.exterior.0;
+    let vertices = &poly.exterior.points();
     let mut max: usize = 0;
     for (i, _) in vertices.iter().enumerate() {
         // if vertices[i] is above prior vertices[max]
@@ -143,7 +143,7 @@ pub trait ExtremeIndices<T: Float + Signed> {
     /// // a diamond shape
     /// let points_raw = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
     /// let points = points_raw.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>();
-    /// let poly = Polygon::new(LineString(points), vec![]);
+    /// let poly = Polygon::new(LineString::new(points), vec![]).unwrap();
     /// // Polygon is both convex and oriented counter-clockwise
     /// let extremes = poly.extreme_indices().unwrap();
     /// assert_eq!(extremes.ymin, 0);
@@ -191,7 +191,7 @@ pub trait ExtremePoints<T: Float> {
     ///     .iter()
     ///     .map(|e| Point::new(e.0, e.1))
     ///     .collect::<Vec<_>>();
-    /// let poly1 = Polygon::new(LineString(points), vec![]);
+    /// let poly1 = Polygon::new(LineString::new(points), vec![]).unwrap();
     /// let extremes = poly1.extreme_points();
     /// let correct = Point::new(0.0, 1.0);
     /// assert_eq!(extremes.xmin, correct);
@@ -208,11 +208,14 @@ impl<T, G> ExtremePoints<T> for G
         let ch = self.convex_hull();
         // safe to unwrap, since we're guaranteeing the polygon's convexity
         let indices = ch.extreme_indices().unwrap();
-        ExtremePoint {
-            ymin: ch.exterior.0[indices.ymin],
-            xmax: ch.exterior.0[indices.xmax],
-            ymax: ch.exterior.0[indices.ymax],
-            xmin: ch.exterior.0[indices.xmin],
+        // unsafe: indices should all be valid, no bounds checking required
+        unsafe {
+            ExtremePoint {
+                ymin: *ch.exterior.points().get_unchecked(indices.ymin),
+                xmax: *ch.exterior.points().get_unchecked(indices.xmax),
+                ymax: *ch.exterior.points().get_unchecked(indices.ymax),
+                xmin: *ch.exterior.points().get_unchecked(indices.xmin),
+            }
         }
     }
 }
@@ -230,7 +233,7 @@ mod test {
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
-        let poly1 = Polygon::new(LineString(points), vec![]);
+        let poly1 = Polygon::new(LineString::new(points), vec![]).unwrap();
         let min_x = polymax_naive_indices(&Point::new(-1., 0.), &poly1).unwrap();
         let correct = 3_usize;
         assert_eq!(min_x, correct);
@@ -250,7 +253,7 @@ mod test {
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
-        let poly1 = Polygon::new(LineString(points), vec![]);
+        let poly1 = Polygon::new(LineString::new(points), vec![]).unwrap();
         let extremes = find_extreme_indices(polymax_naive_indices, &poly1).unwrap();
         let correct = Extremes {
             ymin: 0,
@@ -274,7 +277,7 @@ mod test {
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
-        let poly1 = Polygon::new(LineString(points), vec![]);
+        let poly1 = Polygon::new(LineString::new(points), vec![]).unwrap();
         let extremes = find_extreme_indices(polymax_naive_indices, &poly1.convex_hull()).unwrap();
         let correct = Extremes {
             ymin: 0,
@@ -293,7 +296,7 @@ mod test {
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
-        let poly1 = Polygon::new(LineString(points), vec![]);
+        let poly1 = Polygon::new(LineString::new(points), vec![]).unwrap();
         let extremes = find_extreme_indices(polymax_naive_indices, &poly1.convex_hull()).unwrap();
         let correct = Extremes {
             ymin: 0,
@@ -311,7 +314,7 @@ mod test {
             .iter()
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
-        let poly1 = Polygon::new(LineString(points), vec![]);
+        let poly1 = Polygon::new(LineString::new(points), vec![]).unwrap();
         let extremes = poly1.extreme_points();
         let correct = Point::new(0.0, 1.0);
         assert_eq!(extremes.xmin, correct);

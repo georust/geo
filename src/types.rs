@@ -5,7 +5,7 @@ use std::ops::Sub;
 
 use std::fmt::Debug;
 
-use std::iter::{self, Iterator, FromIterator};
+use std::iter::{Iterator, FromIterator};
 
 use num_traits::{Float, ToPrimitive};
 use spade::SpadeNum;
@@ -456,7 +456,7 @@ impl<T> Line<T>
 ///
 /// ```
 /// use geo::{LineString, Point};
-/// let line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
+/// let line = LineString::new(vec![Point::new(0., 0.), Point::new(10., 0.)]).unwrap();
 /// ```
 ///
 /// Converting a `Vec` of `Point`-like things:
@@ -478,14 +478,38 @@ impl<T> Line<T>
 ///
 /// ```
 /// use geo::{LineString, Point};
-/// let line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
+/// let line = LineString::new(vec![Point::new(0., 0.), Point::new(10., 0.)]).unwrap();
 /// for point in line {
 ///     println!("Point x = {}, y = {}", point.x(), point.y());
 /// }
 /// ```
 ///
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
-pub struct LineString<T>(pub Vec<Point<T>>) where T: Float;
+pub struct LineString<T>(Vec<Point<T>>) where T: Float;
+
+impl<T: Float> LineString<T> {
+    pub fn new(points: Vec<Point<T>>) -> Result<Self, ()> {
+        if points.len() > 1 {
+            Ok(LineString(points))
+        } else {
+            Err(())
+        }
+    }
+
+    /// Only use this if you know _for certain_ that `point` has at least two elements.
+    pub unsafe fn new_unchecked(points: Vec<Point<T>>) -> Self {
+        debug_assert!(points.len() > 1);
+        LineString::new(points).unwrap()
+    }
+
+    pub fn points(&self) -> &[Point<T>] {
+        &self.0
+    }
+
+    pub unsafe fn points_mut(&mut self) -> &mut [Point<T>] {
+        &mut self.0
+    }
+}
 
 impl<T: Float> LineString<T> {
     /// Return an `Line` iterator that yields one `Line` for each line segment
@@ -511,28 +535,11 @@ impl<T: Float> LineString<T> {
     /// assert!(lines.next().is_none());
     /// ```
     pub fn lines<'a>(&'a self) -> Box<Iterator<Item = Line<T>> + 'a> {
-        if self.0.len() < 2 {
-            return Box::new(iter::empty());
-        }
         Box::new(self.0.windows(2).map(|w| unsafe {
             // As long as the LineString has at least two points, we shouldn't
             // need to do bounds checking here.
             Line::new(*w.get_unchecked(0), *w.get_unchecked(1))
         }))
-    }
-}
-
-/// Turn a `Vec` of `Point`-ish objects into a `LineString`.
-impl<T: Float, IP: Into<Point<T>>> From<Vec<IP>> for LineString<T> {
-    fn from(v: Vec<IP>) -> Self {
-        LineString(v.into_iter().map(|p| p.into()).collect())
-    }
-}
-
-/// Turn a `Point`-ish iterator into a `LineString`.
-impl<T: Float, IP: Into<Point<T>>> FromIterator<IP> for LineString<T> {
-    fn from_iter<I: IntoIterator<Item=IP>>(iter: I) -> Self {
-        LineString(iter.into_iter().map(|p| p.into()).collect())
     }
 }
 
@@ -594,9 +601,9 @@ impl<T> Polygon<T>
     /// ```
     /// use geo::{Point, LineString, Polygon};
     ///
-    /// let exterior = LineString(vec![Point::new(0., 0.), Point::new(1., 1.),
+    /// let exterior = LineString::new(vec![Point::new(0., 0.), Point::new(1., 1.).unwrap(),
     ///                                Point::new(1., 0.), Point::new(0., 0.)]);
-    /// let interiors = vec![LineString(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9),
+    /// let interiors = vec![LineString::new(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9).unwrap(),
     ///                                      Point::new(0.9, 0.1), Point::new(0.1, 0.1)])];
     /// let p = Polygon::new(exterior.clone(), interiors.clone());
     /// assert_eq!(p.exterior, exterior);
@@ -715,9 +722,9 @@ mod test {
 
     #[test]
     fn polygon_new_test() {
-        let exterior = LineString(vec![Point::new(0., 0.), Point::new(1., 1.),
+        let exterior = LineString::new(vec![Point::new(0., 0.), Point::new(1., 1.).unwrap(),
                                        Point::new(1., 0.), Point::new(0., 0.)]);
-        let interiors = vec![LineString(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9),
+        let interiors = vec![LineString::new(vec![Point::new(0.1, 0.1), Point::new(0.9, 0.9).unwrap(),
                                              Point::new(0.9, 0.1), Point::new(0.1, 0.1)])];
         let p = Polygon::new(exterior.clone(), interiors.clone());
 
