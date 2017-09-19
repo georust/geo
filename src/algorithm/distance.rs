@@ -75,21 +75,20 @@ where
     }
     let dx = end.x() - start.x();
     let dy = end.y() - start.y();
-    let r = ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) /
-        (dx.powi(2) + dy.powi(2));
-   if r <= T::zero() {
+    let r = ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
+    if r <= T::zero() {
         return point.distance(start);
     }
     if r >= T::one() {
         return point.distance(end);
     }
-    let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) /
-        (dx * dx + dy * dy);
+    let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) / (dx * dx + dy * dy);
     s.abs() * (dx * dx + dy * dy).sqrt()
 }
 
 impl<T> Distance<T, Point<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance between two Points
     fn distance(&self, p: &Point<T>) -> T {
@@ -99,7 +98,8 @@ impl<T> Distance<T, Point<T>> for Point<T>
 }
 
 impl<T> Distance<T, MultiPoint<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Point to a MultiPoint
     fn distance(&self, points: &MultiPoint<T>) -> T {
@@ -115,7 +115,8 @@ impl<T> Distance<T, MultiPoint<T>> for Point<T>
 }
 
 impl<T> Distance<T, Point<T>> for MultiPoint<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a MultiPoint to a Point
     fn distance(&self, point: &Point<T>) -> T {
@@ -151,7 +152,8 @@ where
 }
 
 impl<T> Distance<T, Point<T>> for Polygon<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Polygon to a Point
     fn distance(&self, point: &Point<T>) -> T {
@@ -160,7 +162,8 @@ impl<T> Distance<T, Point<T>> for Polygon<T>
 }
 
 impl<T> Distance<T, MultiPolygon<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Point to a MultiPolygon
     fn distance(&self, mpolygon: &MultiPolygon<T>) -> T {
@@ -174,7 +177,8 @@ impl<T> Distance<T, MultiPolygon<T>> for Point<T>
 }
 
 impl<T> Distance<T, Point<T>> for MultiPolygon<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a MultiPolygon to a Point
     fn distance(&self, point: &Point<T>) -> T {
@@ -183,7 +187,8 @@ impl<T> Distance<T, Point<T>> for MultiPolygon<T>
 }
 
 impl<T> Distance<T, MultiLineString<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Point to a MultiLineString
     fn distance(&self, mls: &MultiLineString<T>) -> T {
@@ -197,7 +202,8 @@ impl<T> Distance<T, MultiLineString<T>> for Point<T>
 }
 
 impl<T> Distance<T, Point<T>> for MultiLineString<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a MultiLineString to a Point
     fn distance(&self, point: &Point<T>) -> T {
@@ -206,7 +212,8 @@ impl<T> Distance<T, Point<T>> for MultiLineString<T>
 }
 
 impl<T> Distance<T, LineString<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Point to a LineString
     fn distance(&self, linestring: &LineString<T>) -> T {
@@ -222,7 +229,8 @@ impl<T> Distance<T, LineString<T>> for Point<T>
 }
 
 impl<T> Distance<T, Point<T>> for LineString<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a LineString to a Point
     fn distance(&self, point: &Point<T>) -> T {
@@ -231,7 +239,8 @@ impl<T> Distance<T, Point<T>> for LineString<T>
 }
 
 impl<T> Distance<T, Point<T>> for Line<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Line to a Point
     fn distance(&self, point: &Point<T>) -> T {
@@ -239,7 +248,8 @@ impl<T> Distance<T, Point<T>> for Line<T>
     }
 }
 impl<T> Distance<T, Line<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Line to a Point
     fn distance(&self, line: &Line<T>) -> T {
