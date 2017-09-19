@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
 use num_traits::{Float, ToPrimitive};
 use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
 use algorithm::contains::Contains;
@@ -77,46 +75,20 @@ where
     }
     let dx = end.x() - start.x();
     let dy = end.y() - start.y();
-    let r = ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) /
-        (dx.powi(2) + dy.powi(2));
-   if r <= T::zero() {
+    let r = ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
+    if r <= T::zero() {
         return point.distance(start);
     }
     if r >= T::one() {
         return point.distance(end);
     }
-    let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) /
-        (dx * dx + dy * dy);
-    s.abs() * ((dx * dx + dy * dy)).sqrt()
+    let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) / (dx * dx + dy * dy);
+    s.abs() * (dx * dx + dy * dy).sqrt()
 }
-
-#[derive(PartialEq, Debug)]
-struct Mindist<T>
-    where T: Float
-{
-    distance: T,
-}
-
-// These impls give us a min-heap when used with BinaryHeap
-impl<T> Ord for Mindist<T>
-    where T: Float
-{
-    fn cmp(&self, other: &Mindist<T>) -> Ordering {
-        other.distance.partial_cmp(&self.distance).unwrap()
-    }
-}
-impl<T> PartialOrd for Mindist<T>
-    where T: Float
-{
-    fn partial_cmp(&self, other: &Mindist<T>) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl<T> Eq for Mindist<T> where T: Float {}
 
 impl<T> Distance<T, Point<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance between two Points
     fn distance(&self, p: &Point<T>) -> T {
@@ -126,21 +98,25 @@ impl<T> Distance<T, Point<T>> for Point<T>
 }
 
 impl<T> Distance<T, MultiPoint<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Point to a MultiPoint
     fn distance(&self, points: &MultiPoint<T>) -> T {
-        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
-        for p in &points.0 {
-            let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
-            dist_queue.push(Mindist { distance: dx.hypot(dy) })
-        }
-        dist_queue.pop().unwrap().distance
+        points
+            .0
+            .iter()
+            .map(|p| {
+                let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
+                dx.hypot(dy)
+            })
+            .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
 
 impl<T> Distance<T, Point<T>> for MultiPoint<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a MultiPoint to a Point
     fn distance(&self, point: &Point<T>) -> T {
@@ -149,32 +125,35 @@ impl<T> Distance<T, Point<T>> for MultiPoint<T>
 }
 
 impl<T> Distance<T, Polygon<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Point to a Polygon
     fn distance(&self, polygon: &Polygon<T>) -> T {
-        // get exterior ring
-        let exterior = &polygon.exterior;
         // No need to continue if the polygon contains the point, or is zero-length
-        if polygon.contains(self) || exterior.0.is_empty() {
+        if polygon.contains(self) || polygon.exterior.0.is_empty() {
             return T::zero();
         }
-        // minimum priority queue
-        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
-        // we've got interior rings
-        for ring in &polygon.interiors {
-            dist_queue.push(Mindist { distance: self.distance(ring) })
-        }
-        for line in exterior.lines() {
-            let dist = line_segment_distance(self, &line.start, &line.end);
-            dist_queue.push(Mindist { distance: dist });
-        }
-        dist_queue.pop().unwrap().distance
+        // fold the minimum interior ring distance if any, followed by the exterior
+        // shell distance, returning the minimum of the two distances
+        polygon
+            .interiors
+            .iter()
+            .map(|ring| self.distance(ring))
+            .fold(T::max_value(), |accum, val| accum.min(val))
+            .min(
+                polygon
+                    .exterior
+                    .lines()
+                    .map(|line| line_segment_distance(self, &line.start, &line.end))
+                    .fold(T::max_value(), |accum, val| accum.min(val)),
+            )
     }
 }
 
 impl<T> Distance<T, Point<T>> for Polygon<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Polygon to a Point
     fn distance(&self, point: &Point<T>) -> T {
@@ -183,20 +162,23 @@ impl<T> Distance<T, Point<T>> for Polygon<T>
 }
 
 impl<T> Distance<T, MultiPolygon<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Point to a MultiPolygon
     fn distance(&self, mpolygon: &MultiPolygon<T>) -> T {
-        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
-        for poly in &mpolygon.0 {
-            dist_queue.push(Mindist { distance: self.distance(poly) });
-        }
-        dist_queue.pop().unwrap().distance
+        mpolygon.0.iter().map(|p| self.distance(p)).fold(
+            T::max_value(),
+            |accum, val| {
+                accum.min(val)
+            },
+        )
     }
 }
 
 impl<T> Distance<T, Point<T>> for MultiPolygon<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a MultiPolygon to a Point
     fn distance(&self, point: &Point<T>) -> T {
@@ -205,20 +187,23 @@ impl<T> Distance<T, Point<T>> for MultiPolygon<T>
 }
 
 impl<T> Distance<T, MultiLineString<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Point to a MultiLineString
     fn distance(&self, mls: &MultiLineString<T>) -> T {
-        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
-        for ls in &mls.0 {
-            dist_queue.push(Mindist { distance: self.distance(ls) });
-        }
-        dist_queue.pop().unwrap().distance
+        mls.0.iter().map(|ls| self.distance(ls)).fold(
+            T::max_value(),
+            |accum, val| {
+                accum.min(val)
+            },
+        )
     }
 }
 
 impl<T> Distance<T, Point<T>> for MultiLineString<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a MultiLineString to a Point
     fn distance(&self, point: &Point<T>) -> T {
@@ -227,7 +212,8 @@ impl<T> Distance<T, Point<T>> for MultiLineString<T>
 }
 
 impl<T> Distance<T, LineString<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Point to a LineString
     fn distance(&self, linestring: &LineString<T>) -> T {
@@ -235,19 +221,16 @@ impl<T> Distance<T, LineString<T>> for Point<T>
         if linestring.contains(self) || linestring.0.is_empty() {
             return T::zero();
         }
-        // minimum priority queue
-        let mut dist_queue: BinaryHeap<Mindist<T>> = BinaryHeap::new();
-        // get points vector
-        for line in linestring.lines() {
-            let dist = line_segment_distance(self, &line.start, &line.end);
-            dist_queue.push(Mindist { distance: dist });
-        }
-        dist_queue.pop().unwrap().distance
+        linestring
+            .lines()
+            .map(|line| line_segment_distance(self, &line.start, &line.end))
+            .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
 
 impl<T> Distance<T, Point<T>> for LineString<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a LineString to a Point
     fn distance(&self, point: &Point<T>) -> T {
@@ -256,7 +239,8 @@ impl<T> Distance<T, Point<T>> for LineString<T>
 }
 
 impl<T> Distance<T, Point<T>> for Line<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Line to a Point
     fn distance(&self, point: &Point<T>) -> T {
@@ -264,7 +248,8 @@ impl<T> Distance<T, Point<T>> for Line<T>
     }
 }
 impl<T> Distance<T, Line<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Line to a Point
     fn distance(&self, line: &Line<T>) -> T {
