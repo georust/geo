@@ -124,26 +124,29 @@ impl<T> Distance<T, Point<T>> for MultiPoint<T>
 }
 
 impl<T> Distance<T, Polygon<T>> for Point<T>
-    where T: Float
+where
+    T: Float,
 {
     /// Minimum distance from a Point to a Polygon
     fn distance(&self, polygon: &Polygon<T>) -> T {
-        // get exterior ring
-        let exterior = &polygon.exterior;
         // No need to continue if the polygon contains the point, or is zero-length
-        if polygon.contains(self) || exterior.0.is_empty() {
+        if polygon.contains(self) || polygon.exterior.0.is_empty() {
             return T::zero();
         }
-        let ring_dist = polygon
+        // fold the minimum interior ring distance if any, followed by the exterior
+        // shell distance, returning the minimum of the two distances
+        polygon
             .interiors
             .iter()
             .map(|ring| self.distance(ring))
-            .fold(T::max_value(), |accum, val| accum.min(val));
-        let shell_dist = exterior
-            .lines()
-            .map(|line| line_segment_distance(self, &line.start, &line.end))
-            .fold(T::max_value(), |accum, val| accum.min(val));
-        ring_dist.min(shell_dist)
+            .fold(T::max_value(), |accum, val| accum.min(val))
+            .min(
+                polygon
+                    .exterior
+                    .lines()
+                    .map(|line| line_segment_distance(self, &line.start, &line.end))
+                    .fold(T::max_value(), |accum, val| accum.min(val)),
+            )
     }
 }
 
