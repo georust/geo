@@ -24,6 +24,7 @@ pub mod prelude {
     pub use algorithm::centroid::Centroid;
     pub use algorithm::contains::Contains;
     pub use algorithm::convexhull::ConvexHull;
+    pub use algorithm::coords_iter::CoordsIter;
     pub use algorithm::distance::Distance;
     pub use algorithm::extremes::ExtremePoints;
     pub use algorithm::haversine_destination::HaversineDestination;
