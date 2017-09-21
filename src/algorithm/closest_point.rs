@@ -1,30 +1,6 @@
 use num_traits::Float;
 use prelude::*;
-use {Line, LineString, Point, Polygon};
-
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum Closest<F: Float> {
-    Intersection(Point<F>),
-    SinglePoint(Point<F>),
-    Indeterminate,
-}
-
-impl<F: Float> Closest<F> {
-    fn best_of_two(&self, other: &Self, p: &Point<F>) -> Self {
-        let left = match *self {
-            Closest::Indeterminate => return *other,
-            Closest::Intersection(_) => return *self,
-            Closest::SinglePoint(l) => l,
-        };
-        let right = match *other {
-            Closest::Indeterminate => return *self,
-            Closest::Intersection(_) => return *other,
-            Closest::SinglePoint(r) => r,
-        };
-
-        unimplemented!()
-    }
-}
+use {Closest, Line, LineString, Point, Polygon};
 
 /// Find the closest point between two objects, where the other object is
 /// assumed to be a `Point` by default.
@@ -120,26 +96,14 @@ where
     I: IntoIterator<Item = C>,
     C: ClosestPoint<F>,
 {
-    let mut single_points = Vec::new();
+    let mut best = Closest::Indeterminate;
 
     for line_segment in iter {
-        let closest = line_segment.closest_point(p);
-        match closest {
-            Closest::Intersection(_) => return closest,
-            Closest::SinglePoint(close) => single_points.push(close),
-            _ => {},
-        }
+        let got = line_segment.closest_point(p);
+        best = got.best_of_two(&best, p);
     }
 
-    single_points
-        .into_iter()
-        .min_by(|l, r| {
-            l.distance(p)
-                .partial_cmp(&r.distance(p))
-                .expect("Should never get NaN")
-        })
-        .map(|closest_point| Closest::SinglePoint(closest_point))
-        .unwrap_or(Closest::Indeterminate)
+    best
 }
 
 impl<F: Float> ClosestPoint<F> for LineString<F> {
@@ -150,30 +114,10 @@ impl<F: Float> ClosestPoint<F> for LineString<F> {
 
 impl<F: Float> ClosestPoint<F> for Polygon<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        let closest_of_interior = closest_of(self.interiors.iter(), p);
-        if let Closest::Intersection(_) = closest_of_interior {
-            return closest_of_interior;
-        }
+        let interior = closest_of(self.interiors.iter(), p);
+        let exterior = self.exterior.closest_point(p);
 
-        let initial_guess = self.exterior.closest_point(p);
-
-        let interior = match closest_of_interior {
-            Closest::Indeterminate => return initial_guess,
-            Closest::SinglePoint(interior) => interior,
-            Closest::Intersection(_) => unreachable!(),
-        };
-
-        let exterior = match initial_guess {
-            Closest::Intersection(_) => return initial_guess,
-            Closest::SinglePoint(exterior) => exterior,
-            Closest::Indeterminate => unreachable!(),
-        };
-
-        if exterior.distance(p) <= interior.distance(p) {
-            initial_guess
-        } else {
-            closest_of_interior
-        }
+        exterior.best_of_two(&interior, p)
     }
 }
 
@@ -181,7 +125,6 @@ impl<F: Float> ClosestPoint<F> for Polygon<F> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use algorithm::orient::Direction;
 
     /// Create a test which checks that we get `$should_be` when trying to find
     /// the closest distance between `$p` and the line `(0, 0) -> (100, 100)`.
@@ -230,8 +173,9 @@ mod tests {
         collect_points(&points)
     }
 
+    /// A bunch of "random" points.
     fn random_looking_points() -> Vec<Point<f32>> {
-        let mut points = vec![
+        let points = vec![
             (0.0, 0.0),
             (100.0, 100.0),
             (1000.0, 1000.0),
@@ -243,6 +187,8 @@ mod tests {
         collect_points(&points)
     }
 
+    /// Throw a bunch of random points at two `ClosestPoint` implementations
+    /// and make sure they give identical results.
     fn fuzz_two_impls<A, B>(left: A, right: B)
     where
         A: ClosestPoint<f32>,

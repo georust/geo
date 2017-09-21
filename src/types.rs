@@ -11,8 +11,6 @@ use num_traits::{Float, ToPrimitive};
 use spade::SpadeNum;
 use spade::PointN;
 
-// re-export `Closest` for convenience.
-pub use algorithm::closest_point::Closest;
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
@@ -688,6 +686,42 @@ pub enum Geometry<T>
     MultiLineString(MultiLineString<T>),
     MultiPolygon(MultiPolygon<T>),
     GeometryCollection(GeometryCollection<T>)
+}
+
+/// The result of trying to find the closest spot on an object to a point.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum Closest<F: Float> {
+    /// The point actually intersects with the object.
+    Intersection(Point<F>),
+    /// There is exactly one place on this object which is closest to the point.
+    SinglePoint(Point<F>),
+    /// There are two or more (possibly infinite or undefined) possible points.
+    Indeterminate,
+}
+
+impl<F: Float> Closest<F> {
+    /// Compare two `Closest`s relative to `p` and return a copy of the best
+    /// one.
+    pub fn best_of_two(&self, other: &Self, p: &Point<F>) -> Self {
+        use algorithm::distance::Distance;
+
+        let left = match *self {
+            Closest::Indeterminate => return *other,
+            Closest::Intersection(_) => return *self,
+            Closest::SinglePoint(l) => l,
+        };
+        let right = match *other {
+            Closest::Indeterminate => return *self,
+            Closest::Intersection(_) => return *other,
+            Closest::SinglePoint(r) => r,
+        };
+
+        if left.distance(p) <= right.distance(p) {
+            *self
+        } else {
+            *other
+        }
+    }
 }
 
 impl<T: Float> From<Point<T>> for Geometry<T> { fn from(x: Point<T>) -> Geometry<T> { Geometry::Point(x) } }
