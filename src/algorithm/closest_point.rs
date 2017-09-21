@@ -1,6 +1,7 @@
+use std::iter;
 use num_traits::Float;
 use prelude::*;
-use {Closest, Line, LineString, Point, Polygon};
+use {Closest, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 /// Find the closest point between two objects, where the other object is
 /// assumed to be a `Point` by default.
@@ -13,8 +14,8 @@ use {Closest, Line, LineString, Point, Polygon};
 /// closest to `(0, 100)` will be the origin.
 ///
 /// ```rust
-/// # use geo::algorithm::closest_point::{Closest, ClosestPoint};
-/// # use geo::{Point, Line};
+/// # use geo::algorithm::closest_point::ClosestPoint;
+/// # use geo::{Point, Line, Closest};
 /// let p: Point<f32> = Point::new(0.0, 100.0);
 /// let horizontal_line: Line<f32> = Line::new(Point::new(-50.0, 0.0), Point::new(50.0, 0.0));
 ///
@@ -114,10 +115,26 @@ impl<F: Float> ClosestPoint<F> for LineString<F> {
 
 impl<F: Float> ClosestPoint<F> for Polygon<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        let interior = closest_of(self.interiors.iter(), p);
-        let exterior = self.exterior.closest_point(p);
+        let prospectives = self.interiors.iter().chain(iter::once(&self.exterior));
+        closest_of(prospectives, p)
+    }
+}
 
-        exterior.best_of_two(&interior, p)
+impl<F: Float> ClosestPoint<F> for MultiPolygon<F> {
+    fn closest_point(&self, p: &Point<F>) -> Closest<F> {
+        closest_of(self.0.iter(), p)
+    }
+}
+
+impl<F: Float> ClosestPoint<F> for MultiPoint<F> {
+    fn closest_point(&self, p: &Point<F>) -> Closest<F> {
+        closest_of(self.0.iter(), p)
+    }
+}
+
+impl<F: Float> ClosestPoint<F> for MultiLineString<F> {
+    fn closest_point(&self, p: &Point<F>) -> Closest<F> {
+        closest_of(self.0.iter(), p)
     }
 }
 
