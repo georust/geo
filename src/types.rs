@@ -235,6 +235,11 @@ impl<T> Point<T>
     pub fn dot(&self, point: &Point<T>) -> T {
         self.x() * point.x() + self.y() * point.y()
     }
+
+    /// Convert this `Point` into a tuple of its `x` and `y` coordinates.
+    pub(crate) fn coords(&self) -> (T, T) {
+        (self.x(), self.y())
+    }
 }
 
 impl<T> Neg for Point<T>
