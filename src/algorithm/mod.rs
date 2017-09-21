@@ -32,3 +32,5 @@ pub mod rotate;
 pub mod translate;
 /// Apply a function to all coordinates
 pub mod map_coords;
+/// Determine the closest point between two objects.
+pub mod closest_point;

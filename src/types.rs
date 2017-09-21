@@ -11,6 +11,9 @@ use num_traits::{Float, ToPrimitive};
 use spade::SpadeNum;
 use spade::PointN;
 
+// re-export `Closest` for convenience.
+pub use algorithm::closest_point::Closest;
+
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
