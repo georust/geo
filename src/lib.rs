@@ -1,6 +1,6 @@
+extern crate num_traits;
 #[macro_use]
 extern crate serde_derive;
-extern crate num_traits;
 extern crate spade;
 
 pub use traits::ToGeo;
@@ -36,6 +36,5 @@ pub mod prelude {
     pub use algorithm::simplify::Simplify;
     pub use algorithm::simplifyvw::SimplifyVW;
     pub use algorithm::translate::Translate;
-
-
+    pub use algorithm::closest_point::ClosestPoint;
 }
