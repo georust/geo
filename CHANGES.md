@@ -1,5 +1,9 @@
 # Changes
 
+## 0.6.3
+
+* [Initial implementation of a `ClosestPoint` algorithm](https://github.com/georust/rust-geo/pull/167)
+
 ## 0.6.2
 
 * [Add a prelude: `use geo::prelude::*`](https://github.com/georust/rust-geo/pull/162)
