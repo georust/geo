@@ -6,12 +6,12 @@
 # rust-geo
 ## Geospatial Primitives, Algorithms, and Utilities
 
-The `geo` crate provides a number of geospatial primitive types such as `Point`, `LineString` and `Polyon`, and provides algorithms and operations such as:
+The `geo` crate provides a number of geospatial primitive types such as `Point`, `LineString`, and `Polyon`, and provides algorithms and operations such as:
 - Area and centroid calculation
-- Simplification and Convex Hull operations
+- Simplification and convex hull operations
 - Euclidean and Haversine distance measurement
 - Intersection checks
-- Affine transforms such as rotation and translation
+- Affine transforms such as rotation and translation.
 
 While this crate is pre-`1.0` and should be considered neither stable nor feature-complete, it is actively maintained and provides an extensive suite of types and algorithms for geospatial or more general 2D applications.
 
