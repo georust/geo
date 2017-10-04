@@ -29,7 +29,7 @@ impl<T: Float> From<(T, T)> for Coordinate<T> {
     }
 }
 
-/// A container for the bounding box of a [`Geometry`s](enum.Geometry.html)
+/// A container for the bounding box of a [`Geometry`](enum.Geometry.html)
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Bbox<T>
     where T: Float
@@ -40,7 +40,7 @@ pub struct Bbox<T>
     pub ymax: T,
 }
 
-/// A container for indices of the minimum and maximum points of a [`Geometry`s](enum.Geometry.html)
+/// A container for indices of the minimum and maximum points of a [`Geometry`](enum.Geometry.html)
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Extremes {
     pub ymin: usize,
@@ -647,7 +647,7 @@ impl<T: Float> IntoIterator for MultiPolygon<T> {
     }
 }
 
-/// A collection of [`Geometry`s](enum.Geometry.html)
+/// A collection of [`Geometry`](enum.Geometry.html) types
 ///
 /// Can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
 ///
