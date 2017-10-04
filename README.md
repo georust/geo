@@ -1,7 +1,7 @@
+[![rust-geo](https://avatars1.githubusercontent.com/u/10320338?v=4&s=50)](https://github.com/georust)
+
 [![Build Status](https://travis-ci.org/georust/rust-geo.svg?branch=master)](https://travis-ci.org/georust/rust-geo)
 [![geo on Crates.io](https://meritbadge.herokuapp.com/geo)](https://crates.io/crates/geo)
-
-[![rust-geo](https://avatars1.githubusercontent.com/u/10320338?v=4&s=100)]()
 
 # rust-geo
 ## Geospatial Primitives, Algorithms, and Utilities
