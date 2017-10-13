@@ -1,5 +1,4 @@
 [package]
-
 name = "geo"
 description = "Geospatial primitives and algorithms"
 version = "0.6.3"
@@ -7,7 +6,11 @@ authors = ["Corey Farwell <coreyf@rwell.org>"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/georust/rust-geo"
 documentation = "https://docs.rs/geo/"
+readme = "README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
+
+[badges]
+travis-ci = { repository = "georust/rust-geo" }
 
 [dependencies]
 num-traits = "0.1"
