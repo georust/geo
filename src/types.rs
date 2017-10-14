@@ -14,6 +14,7 @@ use spade::PointN;
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
+/// A primitive type which holds `x` and `y` position information
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Coordinate<T>
     where T: Float
@@ -28,6 +29,7 @@ impl<T: Float> From<(T, T)> for Coordinate<T> {
     }
 }
 
+/// A container for the bounding box of a [`Geometry`](enum.Geometry.html)
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Bbox<T>
     where T: Float
@@ -38,6 +40,7 @@ pub struct Bbox<T>
     pub ymax: T,
 }
 
+/// A container for indices of the minimum and maximum points of a [`Geometry`](enum.Geometry.html)
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Extremes {
     pub ymin: usize,
@@ -57,6 +60,7 @@ impl From<Vec<usize>> for Extremes {
     }
 }
 
+/// A container for the coordinates of the minimum and maximum points of a [`Geometry`](enum.Geometry.html)
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct ExtremePoint<T>
     where T: Float
@@ -67,7 +71,7 @@ pub struct ExtremePoint<T>
     pub xmin: Point<T>,
 }
 
-/// A single Point in 2D space.
+/// A single location in 2D space, defined by a single (currently &reals;<sup>2</sup>) [`Coordinate`](enum.Coordinate.html)
 ///
 /// Points can be created using the `new(x, y)` constructor, or from a `Coordinate` or pair of points.
 ///
@@ -383,7 +387,7 @@ impl<T> AddAssign for Bbox<T>
 }
 
 
-/// A collection of [`Point`s](struct.Point.html).
+/// A collection of [`Point`s](struct.Point.html)
 ///
 /// Iterating over a `MultiPoint` yields the `Point`s inside.
 ///
@@ -430,6 +434,7 @@ impl<T: Float> IntoIterator for MultiPoint<T> {
     }
 }
 
+/// A line segment made up of exactly two [`Point`s](struct.Point.html)
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Line<T>
     where T: Float
@@ -456,7 +461,7 @@ impl<T> Line<T>
     }
 }
 
-/// A LineString, which is an ordered collection of [`Point`s](struct.Point.html).
+/// An ordered collection of two or more [`Point`s](struct.Point.html), representing a path between locations
 ///
 /// Create a LineString by calling it directly:
 ///
@@ -552,7 +557,7 @@ impl<T: Float> IntoIterator for LineString<T> {
     }
 }
 
-/// A collection of [`LineString`s](struct.LineString.html).
+/// A collection of [`LineString`s](struct.LineString.html)
 ///
 /// Can be created from a `Vec` of `LineString`s, or from an Iterator which yields LineStrings.
 ///
@@ -581,9 +586,9 @@ impl<T: Float> IntoIterator for MultiLineString<T> {
     }
 }
 
-/// A 2D polygon area.
+/// A representation of an area. Its outer boundary is represented by a [`LineString`](struct.LineString.html) that is both closed and simple
 ///
-/// It has one exterior ring, and zero or more interior rings.
+/// It has one exterior *ring* or *shell*, and zero or more interior rings, representing holes.
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Polygon<T>
     where T: Float
@@ -613,7 +618,7 @@ impl<T> Polygon<T>
     }
 }
 
-/// A collection of [`Polygon`s](struct.Polygon.html).
+/// A collection of [`Polygon`s](struct.Polygon.html)
 ///
 /// Can be created from a `Vec` of `Polygon`s, or `collect`ed from an Iterator which yields `Polygon`s.
 ///
@@ -642,7 +647,7 @@ impl<T: Float> IntoIterator for MultiPolygon<T> {
     }
 }
 
-/// A collection of [`Geometry`s](enum.Geometry.html).
+/// A collection of [`Geometry`](enum.Geometry.html) types
 ///
 /// Can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
 ///
@@ -671,7 +676,7 @@ impl<T: Float> IntoIterator for GeometryCollection<T> {
     }
 }
 
-/// An enum representing any possible geomtry type.
+/// An enum representing any possible geometry type.
 ///
 /// All types can be converted to a `Geometry` using the `.into()` (as part of the
 /// `std::convert::Into` pattern).
