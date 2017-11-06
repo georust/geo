@@ -60,7 +60,6 @@ impl From<Vec<usize>> for Extremes {
 }
 
 /// A container for the coordinates of the minimum and maximum points of a [`Geometry`](enum.Geometry.html)
-#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 impl<T> From<Bbox<T>> for Polygon<T>
 where
     T: Float,
