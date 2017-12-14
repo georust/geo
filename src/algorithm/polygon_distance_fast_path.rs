@@ -8,7 +8,8 @@ use algorithm::extremes::ExtremeIndices;
 // They use the rotating calipers method to speed up calculations.
 // Tests for these functions are in the Distance module
 
-// calculate the minimum distance between two disjoint and linearly separable convex polygons
+/// Calculate the minimum distance between two disjoint and linearly separable convex polygons
+/// using the rotating calipers method
 pub(crate) fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
 where
     T: Float + FloatConst + Signed,
@@ -239,7 +240,7 @@ where
     )
 }
 
-// Perpendicular unit vector of a vertex and a unit vector
+/// Perpendicular unit vector of a vertex and a unit vector
 fn unitpvector<T>(p: &Point<T>, u: &Point<T>) -> Point<T>
 where
     T: Float,
@@ -300,7 +301,7 @@ where
     }
 }
 
-// Angle between a vertex and an edge
+/// Angle between a vertex and an edge
 fn vertex_line_angle<T>(poly: &Polygon<T>, p: &Point<T>, m: &T, vertical: bool, idx: &usize) -> T
 where
     T: Float + FloatConst + Signed,
@@ -399,7 +400,7 @@ where
     (T::from(0.5).unwrap() * (a.x() * b.y() - a.y() * b.x() + a.y() * c.x() - a.x() * c.y() + b.x() * c.y() - c.x() * b.y()))
 }
 
-// positive implies a -> b -> c is counter-clockwise, negative implies clockwise
+/// positive implies a -> b -> c is counter-clockwise, negative implies clockwise
 pub(crate) fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
 where
     T: Float,
@@ -407,7 +408,7 @@ where
     (p_b.x() - p_a.x()) * (p_c.y() - p_a.y()) - (p_b.y() - p_a.y()) * (p_c.x() - p_a.x())
 }
 
-// Does abc turn left?
+/// Does abc turn left?
 fn leftturn<T>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> i8
 where
     T: Float,
@@ -422,7 +423,7 @@ where
     }
 }
 
-// Calculate next set of caliper points
+/// Calculate next set of caliper points
 fn nextpoints<T>(state: &mut Polydist<T>)
 where
     T: Float + FloatConst + Signed,
@@ -527,7 +528,7 @@ where
     }
 }
 
-// compute the minimum distance between entities (edges or vertices)
+/// compute the minimum distance between entities (edges or vertices)
 fn computemin<T>(state: &mut Polydist<T>)
 where
     T: Float + Signed,

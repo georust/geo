@@ -403,7 +403,7 @@ impl<T> Polygon<T>
     {
         (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
     }
-    // Is this polygon convex?
+    /// Is this polygon convex?
     fn convex(&self) -> bool {
         let convex = self
             .exterior
@@ -432,10 +432,10 @@ impl<T> Polygon<T>
             _ => true,
         }
     }
-    // This method handles a corner case in which a candidate polygon
-    // is disjoint because it's contained in the inner ring
-    // we work around this by checking that Polygons with inner rings don't
-    // contain a point from the candidate Polygon's outer shell in their simple representations
+    /// This method handles a corner case in which a candidate polygon
+    /// is disjoint because it's contained in the inner ring
+    /// we work around this by checking that Polygons with inner rings don't
+    /// contain a point from the candidate Polygon's outer shell in their simple representations
     pub(crate) fn ring_contains_point(&self, p: &Point<T>) -> bool {
         match get_position(p, &self.exterior) {
             PositionPoint::Inside => true,
@@ -445,8 +445,8 @@ impl<T> Polygon<T>
     }
 }
 
-// uses an R* tree and nearest-neighbour lookups to calculate minimum distances
-// This is pretty slow and memory-inefficient but certainly better than quadratic time
+/// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
+/// This is pretty slow and memory-inefficient but certainly better than quadratic time
 fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -> T
 where
     T: Float + FloatConst + Signed + SpadeFloat,
