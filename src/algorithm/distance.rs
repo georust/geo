@@ -451,24 +451,20 @@ fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -
 where
     T: Float + FloatConst + Signed + SpadeFloat,
 {
-    let mut tree_a: RTree<SimpleEdge<_>> = RTree::new();
-    let mut tree_b: RTree<SimpleEdge<_>> = RTree::new();
+    let tree_a: RTree<SimpleEdge<_>> = RTree::bulk_load(
+        geom1.lines().map(|line| SimpleEdge::new(line.start, line.end)).collect()
+        );
+    let tree_b: RTree<SimpleEdge<_>> = RTree::bulk_load(
+        geom2.lines().map(|line| SimpleEdge::new(line.start, line.end)).collect()
+        );
     let mut mindist_a: T = Float::max_value();
     let mut mindist_b: T = Float::max_value();
-    // Populate R* tree with line segments
-    for win in geom1.0.windows(2) {
-        tree_a.insert(SimpleEdge::new(win[0], win[1]));
-    }
     for point in &geom2.0 {
         // get the nearest neighbour from the tree
         let nearest = tree_a.nearest_neighbor(point).unwrap();
         // calculate distance from point to line
         // compare to current minimum, updating if necessary
         mindist_a = mindist_a.min(Line::new(nearest.from, nearest.to).distance(point));
-    }
-    // now repeat the process, swapping the LineStrings
-    for win in geom2.0.windows(2) {
-        tree_b.insert(SimpleEdge::new(win[0], win[1]));
     }
     for point in &geom1.0 {
         let nearest = tree_b.nearest_neighbor(point).unwrap();
