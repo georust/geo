@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::Float;
-use types::{Point, LineString, Polygon, MultiLineString, MultiPolygon};
+use types::{LineString, MultiLineString, MultiPolygon, Point, Polygon};
 use algorithm::boundingbox::BoundingBox;
 
 use spade::SpadeFloat;
@@ -61,7 +61,7 @@ where
 }
 
 // Geometries that can be simplified using the topology-preserving variant
-#[derive(Debug, Clone,  Copy)]
+#[derive(Debug, Clone, Copy)]
 enum GeomType {
     Line,
     Ring,
@@ -78,7 +78,7 @@ struct GeomSettings {
     geomtype: GeomType,
 }
 
-// Simplify a line using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
+/// Simplify a line using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
 //
 // epsilon is the minimum triangle area
 // The paper states that:
@@ -107,10 +107,12 @@ where
     // linked list with indices into `orig`. Big number (larger than or equal to
     // `max`) means no next element, and (0, 0) means deleted element.
     let mut adjacent: Vec<(_)> = (0..orig.len())
-        .map(|i| if i == 0 {
-            (-1_i32, 1_i32)
-        } else {
-            ((i - 1) as i32, (i + 1) as i32)
+        .map(|i| {
+            if i == 0 {
+                (-1_i32, 1_i32)
+            } else {
+                ((i - 1) as i32, (i + 1) as i32)
+            }
         })
         .collect();
 
@@ -185,7 +187,7 @@ where
         .collect::<Vec<Point<T>>>()
 }
 
-// Wrap the actual function so the R* Tree can be shared.
+/// Wrap the actual VW function so the R* Tree can be shared.
 // this ensures that shell and rings have access to all segments, so
 // intersections between outer and inner rings are detected
 fn vwp_wrapper<T>(geomtype: &GeomSettings, exterior: &LineString<T>, interiors: Option<&[LineString<T>]>, epsilon: &T) -> Vec<Vec<Point<T>>>
@@ -193,11 +195,12 @@ where
     T: Float + SpadeFloat,
 {
     let mut rings = vec![];
-    let mut tree: RTree<SimpleEdge<_>> = RTree::new();
     // Populate R* tree with exterior line segments
-    for line in exterior.lines() {
-        tree.insert(SimpleEdge::new(line.start, line.end));
-    }
+    let ls = exterior
+        .lines()
+        .map(|line| SimpleEdge::new(line.start, line.end))
+        .collect();
+    let mut tree: RTree<SimpleEdge<_>> = RTree::bulk_load(ls);
     // and with interior segments, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
@@ -207,7 +210,12 @@ where
         }
     }
     // Simplify shell
-    rings.push(visvalingam_preserve(geomtype, &exterior.0, epsilon, &mut tree));
+    rings.push(visvalingam_preserve(
+        geomtype,
+        &exterior.0,
+        epsilon,
+        &mut tree,
+    ));
     // Simplify interior rings, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
@@ -217,7 +225,7 @@ where
     rings
 }
 
-// Visvalingam with self-intersection detection to preserve topologies
+/// Visvalingam-Whyatt with self-intersection detection to preserve topologies
 // this is a port of the technique at https://www.jasondavies.com/simplify/
 fn visvalingam_preserve<T>(geomtype: &GeomSettings, orig: &[Point<T>], epsilon: &T, tree: &mut RTree<SimpleEdge<Point<T>>>) -> Vec<Point<T>>
 where
@@ -232,10 +240,12 @@ where
     // linked list with indices into `orig`. Big number (larger than or equal to
     // `max`) means no next element, and (0, 0) means deleted element.
     let mut adjacent: Vec<(_)> = (0..orig.len())
-        .map(|i| if i == 0 {
-            (-1_i32, 1_i32)
-        } else {
-            ((i - 1) as i32, (i + 1) as i32)
+        .map(|i| {
+            if i == 0 {
+                (-1_i32, 1_i32)
+            } else {
+                ((i - 1) as i32, (i + 1) as i32)
+            }
         })
         .collect();
     // Store all the triangles in a minimum priority queue, based on their area.
@@ -582,7 +592,6 @@ where
     }
 }
 
-
 impl<T> SimplifyVW<T> for MultiPolygon<T>
 where
     T: Float,
@@ -594,8 +603,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use types::{Point, LineString, Polygon, MultiLineString, MultiPolygon};
-    use super::{visvalingam, vwp_wrapper, cartesian_intersect, GeomSettings, GeomType, SimplifyVW, SimplifyVWPreserve};
+    use types::{LineString, MultiLineString, MultiPolygon, Point, Polygon};
+    use super::{cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, GeomType, SimplifyVW, SimplifyVWPreserve};
 
     #[test]
     fn visvalingam_test() {
@@ -841,7 +850,7 @@ mod test {
                     Point::new(10., 0.),
                     Point::new(0., 0.),
                 ]),
-                vec![]
+                vec![],
             ),
         ]);
 
@@ -858,7 +867,7 @@ mod test {
                         Point::new(10., 0.),
                         Point::new(0., 0.),
                     ]),
-                    vec![]
+                    vec![],
                 ),
             ])
         );

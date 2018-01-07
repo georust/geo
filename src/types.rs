@@ -9,7 +9,7 @@ use std::iter::{self, Iterator, FromIterator};
 
 use num_traits::{Float, ToPrimitive};
 use spade::SpadeNum;
-use spade::PointN;
+use spade::{PointN, TwoDimensional};
 
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
@@ -331,6 +331,9 @@ impl<T> PointN for Point<T>
         }
     }
 }
+
+impl<T> TwoDimensional for Point<T>
+where T: Float + SpadeNum + Debug {}
 
 impl<T> Add for Bbox<T>
     where T: Float + ToPrimitive
