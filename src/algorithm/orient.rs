@@ -1,5 +1,5 @@
 use num_traits::Float;
-use types::{LineString, Polygon, MultiPolygon};
+use types::{LineString, MultiPolygon, Polygon};
 
 pub trait Orient<T> {
     /// Orients a Polygon's exterior and interior rings according to convention
@@ -32,7 +32,8 @@ pub trait Orient<T> {
 }
 
 impl<T> Orient<T> for Polygon<T>
-    where T: Float
+where
+    T: Float,
 {
     fn orient(&self, direction: Direction) -> Polygon<T> {
         orient(self, direction)
@@ -40,13 +41,11 @@ impl<T> Orient<T> for Polygon<T>
 }
 
 impl<T> Orient<T> for MultiPolygon<T>
-    where T: Float
+where
+    T: Float,
 {
     fn orient(&self, direction: Direction) -> MultiPolygon<T> {
-        MultiPolygon(self.0
-                         .iter()
-                         .map(|poly| poly.orient(direction))
-                         .collect())
+        MultiPolygon(self.0.iter().map(|poly| poly.orient(direction)).collect())
     }
 }
 
@@ -63,7 +62,8 @@ pub enum Direction {
 
 // the signed area of a linear ring
 fn signed_ring_area<T>(linestring: &LineString<T>) -> T
-    where T: Float
+where
+    T: Float,
 {
     if linestring.0.is_empty() || linestring.0.len() == 1 {
         return T::zero();
@@ -79,7 +79,8 @@ fn signed_ring_area<T>(linestring: &LineString<T>) -> T
 // by default, the exterior ring will be oriented ccw
 // and the interior ring(s) will be oriented clockwise
 fn orient<T>(poly: &Polygon<T>, direction: Direction) -> Polygon<T>
-    where T: Float
+where
+    T: Float,
 {
     let sign = match direction {
         Direction::Default => T::one(),
@@ -104,7 +105,7 @@ fn orient<T>(poly: &Polygon<T>, direction: Direction) -> Polygon<T>
 
 #[cfg(test)]
 mod test {
-    use types::{Polygon, LineString, Point};
+    use types::{LineString, Point, Polygon};
     use super::*;
     #[test]
     fn test_polygon_orientation() {
@@ -123,16 +124,20 @@ mod test {
         let poly1 = Polygon::new(LineString(points_ext), vec![LineString(points_int)]);
         // a diamond shape, oriented counter-clockwise outside,
         let oriented_ext = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
-        let oriented_ext_ls = LineString(oriented_ext
-                                             .iter()
-                                             .map(|e| Point::new(e.0, e.1))
-                                             .collect::<Vec<_>>());
+        let oriented_ext_ls = LineString(
+            oriented_ext
+                .iter()
+                .map(|e| Point::new(e.0, e.1))
+                .collect::<Vec<_>>(),
+        );
         // clockwise interior
         let oriented_int_raw = vec![(1.0, 0.5), (0.5, 1.0), (1.0, 1.5), (1.5, 1.0), (1.0, 0.5)];
-        let oriented_int_ls = LineString(oriented_int_raw
-                                             .iter()
-                                             .map(|e| Point::new(e.0, e.1))
-                                             .collect::<Vec<_>>());
+        let oriented_int_ls = LineString(
+            oriented_int_raw
+                .iter()
+                .map(|e| Point::new(e.0, e.1))
+                .collect::<Vec<_>>(),
+        );
         // build corrected Polygon
         let oriented = orient(&poly1, Direction::Default);
         assert_eq!(oriented.exterior.0, oriented_ext_ls.0);

@@ -18,7 +18,8 @@ pub trait HaversineDestination<T: Float> {
 }
 
 impl<T> HaversineDestination<T> for Point<T>
-    where T: Float + FromPrimitive
+where
+    T: Float + FromPrimitive,
 {
     fn haversine_destination(&self, bearing: T, distance: T) -> Point<T> {
         let center_lng = self.x().to_radians();
@@ -28,13 +29,8 @@ impl<T> HaversineDestination<T> for Point<T>
         // WGS84 equatorial radius is 6378137.0
         let rad = distance / T::from(6371000.0).unwrap();
 
-        let lat = {
-                center_lat.sin() * rad.cos() + center_lat.cos() * rad.sin() * bearing_rad.cos()
-            }
-            .asin();
-        let lng = {
-                bearing_rad.sin() * rad.sin() * center_lat.cos()
-            }
+        let lat = { center_lat.sin() * rad.cos() + center_lat.cos() * rad.sin() * bearing_rad.cos() }.asin();
+        let lng = { bearing_rad.sin() * rad.sin() * center_lat.cos() }
             .atan2(rad.cos() - center_lat.sin() * lat.sin()) + center_lng;
 
         Point::new(lng.to_degrees(), lat.to_degrees())
@@ -60,10 +56,7 @@ mod test {
     fn direct_and_indirect_destinations_are_close() {
         let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
         let p_2 = p_1.haversine_destination(45., 10000.);
-        let square_edge = {
-                pow(10000., 2) / 2.
-            }
-            .sqrt();
+        let square_edge = { pow(10000., 2) / 2. }.sqrt();
         let p_3 = p_1.haversine_destination(0., square_edge);
         let p_4 = p_3.haversine_destination(90., square_edge);
         assert_relative_eq!(p_4.x(), p_2.x(), epsilon = 1.0e-6);

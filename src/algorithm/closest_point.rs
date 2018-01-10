@@ -47,7 +47,6 @@ impl<F: Float> ClosestPoint<F> for Point<F> {
     }
 }
 
-
 impl<F: Float> ClosestPoint<F> for Line<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         let line_length = self.length();
@@ -138,7 +137,6 @@ impl<F: Float> ClosestPoint<F> for MultiLineString<F> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -167,7 +165,6 @@ mod tests {
     closest!(intersects: mid_point, (50.0, 50.0));
     closest!(in_line_far_away, (1000.0, 1000.0) => Closest::SinglePoint(Point::new(100.0, 100.0)));
     closest!(perpendicular_from_50_50, (0.0, 100.0) => Closest::SinglePoint(Point::new(50.0, 50.0)));
-
 
     fn collect_points<F, P, C>(points: &[P]) -> C
     where
@@ -279,7 +276,10 @@ mod tests {
     fn polygon_without_rings_and_point_outside_is_same_as_linestring() {
         let poly = holy_polygon();
         let p = Point::new(1000.0, 12345.6789);
-        assert!(!poly.exterior.contains(&p), "`p` should be outside the polygon!");
+        assert!(
+            !poly.exterior.contains(&p),
+            "`p` should be outside the polygon!"
+        );
 
         let poly_closest = poly.closest_point(&p);
         let exterior_closest = poly.exterior.closest_point(&p);
