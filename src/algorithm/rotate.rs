@@ -141,9 +141,10 @@ where
     /// Rotate the Polygon about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
         // if a polygon has holes, use the centroid of its outer shell as the rotation origin
-        let centroid = match self.interiors.is_empty() {
-            false => self.exterior.centroid().unwrap(),
-            true => self.centroid().unwrap(),
+        let centroid = if self.interiors.is_empty() {
+            self.centroid().unwrap()
+        } else {
+            self.exterior.centroid().unwrap()
         };
         Polygon::new(
             LineString(rotation_matrix(angle, &centroid, &self.exterior.0)),

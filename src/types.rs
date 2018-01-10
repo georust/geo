@@ -466,7 +466,7 @@ impl<T> Line<T>
 
 /// An ordered collection of two or more [`Point`s](struct.Point.html), representing a path between locations
 ///
-/// Create a LineString by calling it directly:
+/// Create a `LineString` by calling it directly:
 ///
 /// ```
 /// use geo::{LineString, Point};
@@ -562,9 +562,9 @@ impl<T: Float> IntoIterator for LineString<T> {
 
 /// A collection of [`LineString`s](struct.LineString.html)
 ///
-/// Can be created from a `Vec` of `LineString`s, or from an Iterator which yields LineStrings.
+/// Can be created from a `Vec` of `LineString`s, or from an Iterator which yields `LineString`s.
 ///
-/// Iterating over this objects, yields the component LineStrings.
+/// Iterating over this objects, yields the component `LineString`s.
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>) where T: Float;
 

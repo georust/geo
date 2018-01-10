@@ -82,8 +82,8 @@ impl<T> Intersects<Line<T>> for Line<T>
         if d == T::zero() {
             // lines are parallel
             // return true iff at least one endpoint intersects the other line
-            self.start.intersects(&line) || self.end.intersects(&line) ||
-            line.start.intersects(&self) || line.end.intersects(&self)
+            self.start.intersects(line) || self.end.intersects(line) ||
+            line.start.intersects(self) || line.end.intersects(self)
         } else {
             let s = (c1*b2 - c2*b1) / d;
             let t = (a1*c2 - a2*c1) / d;
@@ -164,10 +164,10 @@ impl<T> Intersects<LineString<T>> for Polygon<T>
     fn intersects(&self, linestring: &LineString<T>) -> bool {
         // line intersects inner or outer polygon edge
         if self.exterior.intersects(linestring) || self.interiors.iter().any(|inner| inner.intersects(linestring)) {
-            return true;
+            true
         } else {
             // or if it's contained in the polygon
-            return linestring.0.iter().any(|point| self.contains(point))
+            linestring.0.iter().any(|point| self.contains(point))
         }
     }
 }
@@ -178,7 +178,7 @@ impl<T> Intersects<Bbox<T>> for Bbox<T>
     fn intersects(&self, bbox: &Bbox<T>) -> bool {
         // line intersects inner or outer polygon edge
         if bbox.contains(self) {
-            return false
+            false
         } else {
             (self.xmin >= bbox.xmin && self.xmin <= bbox.xmax || self.xmax >= bbox.xmin && self.xmax <= bbox.xmax) &&
             (self.ymin >= bbox.ymin && self.ymin <= bbox.ymax || self.ymax >= bbox.ymin && self.ymax <= bbox.ymax)

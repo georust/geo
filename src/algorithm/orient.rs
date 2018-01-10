@@ -88,14 +88,14 @@ fn orient<T>(poly: &Polygon<T>, direction: Direction) -> Polygon<T>
     let mut rings = vec![];
     // process interiors first, so push and pop work
     for ring in &poly.interiors {
-        if signed_ring_area(&ring) / sign <= T::zero() {
-            rings.push(LineString(ring.0.iter().cloned().collect()));
+        if signed_ring_area(ring) / sign <= T::zero() {
+            rings.push(LineString(ring.0.to_vec()));
         } else {
             rings.push(LineString(ring.0.iter().rev().cloned().collect()));
         }
     }
     if signed_ring_area(&poly.exterior) / sign >= T::zero() {
-        rings.push(LineString(poly.exterior.0.iter().cloned().collect()));
+        rings.push(LineString(poly.exterior.0.to_vec()));
     } else {
         rings.push(LineString(poly.exterior.0.iter().rev().cloned().collect()));
     }

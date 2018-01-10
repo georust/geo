@@ -123,7 +123,7 @@ impl<T> Contains<Line<T>> for LineString<T>
                 }
             }
         }
-        return false;
+        false
     }
 }
 
@@ -154,17 +154,13 @@ fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
     let mut xints = T::zero();
     let mut crossings = 0;
     for line in linestring.lines() {
-        if p.y() > line.start.y().min(line.end.y()) {
-            if p.y() <= line.start.y().max(line.end.y()) {
-                if p.x() <= line.start.x().max(line.end.x()) {
-                    if line.start.y() != line.end.y() {
-                        xints = (p.y() - line.start.y()) * (line.end.x() - line.start.x()) /
-                                (line.end.y() - line.start.y()) + line.start.x();
-                    }
-                    if (line.start.x() == line.end.x()) || (p.x() <= xints) {
-                        crossings += 1;
-                    }
-                }
+        if p.y() > line.start.y().min(line.end.y()) && p.y() <= line.start.y().max(line.end.y()) && p.x() <= line.start.x().max(line.end.x()) {
+            if line.start.y() != line.end.y() {
+                xints = (p.y() - line.start.y()) * (line.end.x() - line.start.x()) /
+                (line.end.y() - line.start.y()) + line.start.x();
+            }
+            if (line.start.x() == line.end.x()) || (p.x() <= xints) {
+                crossings += 1;
             }
         }
     }
@@ -180,8 +176,7 @@ impl<T> Contains<Point<T>> for Polygon<T>
 {
     fn contains(&self, p: &Point<T>) -> bool {
         match get_position(p, &self.exterior) {
-            PositionPoint::OnBoundary => false,
-            PositionPoint::Outside => false,
+            PositionPoint::OnBoundary | PositionPoint::Outside => false,
             _ => self.interiors.iter().all(|ls| get_position(p, ls) == PositionPoint::Outside),
         }
     }

@@ -395,8 +395,6 @@ where
         let cb = c.to;
         if ca != point_a && ca != point_c && cb != point_a && cb != point_c && cartesian_intersect(&ca, &cb, &point_a, &point_c) {
             true
-        } else if ca != point_a && ca != point_b && cb != point_a && cb != point_b && cartesian_intersect(&ca, &cb, &point_a, &point_b) {
-            true
         } else {
             ca != point_b && ca != point_c && cb != point_b && cb != point_c && cartesian_intersect(&ca, &cb, &point_b, &point_c)
         }
@@ -509,7 +507,7 @@ where
             min_points: 4,
             geomtype: GeomType::Line,
         };
-        let mut simplified = vwp_wrapper(&gt, &self, None, epsilon);
+        let mut simplified = vwp_wrapper(&gt, self, None, epsilon);
         LineString(simplified.pop().unwrap())
     }
 }

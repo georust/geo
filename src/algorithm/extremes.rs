@@ -111,7 +111,7 @@ fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes,
                           Point::new(-T::one(), T::zero())];
     Ok(directions
            .iter()
-           .map(|p| func(&p, &polygon).unwrap())
+           .map(|p| func(p, polygon).unwrap())
            .collect::<Vec<usize>>()
            .into())
 }
@@ -129,7 +129,7 @@ fn polymax_naive_indices<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()
             max = i;
         }
     }
-    return Ok(max);
+    Ok(max)
 }
 
 pub trait ExtremeIndices<T: Float + Signed> {

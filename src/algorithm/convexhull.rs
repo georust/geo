@@ -126,12 +126,12 @@ fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, mut set: &mut [Point<T>], hull: &
     // move Point at furthest_point from set into hull
     let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
     // points over PB
-    let last = partition(set, |p| point_location(&furthest_point, p_b, p));
-    hull_set(&furthest_point, p_b, &mut set[..last], hull);
+    let last = partition(set, |p| point_location(furthest_point, p_b, p));
+    hull_set(furthest_point, p_b, &mut set[..last], hull);
     hull.push(*furthest_point);
     // points over AP
-    let last = partition(set, |p| point_location(p_a, &furthest_point, p));
-    hull_set(p_a, &furthest_point, &mut set[..last], hull);
+    let last = partition(set, |p| point_location(p_a, furthest_point, p));
+    hull_set(p_a, furthest_point, &mut set[..last], hull);
 }
 
 pub trait ConvexHull<T> {

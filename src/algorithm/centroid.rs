@@ -80,7 +80,7 @@ impl<T> Centroid<T> for LineString<T>
             return None;
         }
         if self.0.len() == 1 {
-            Some(self.0[0].clone())
+            Some(self.0[0])
         } else {
             let mut sum_x = T::zero();
             let mut sum_y = T::zero();
