@@ -689,7 +689,7 @@ where
 ///
 /// Can be created from a `Vec` of `Polygon`s, or `collect`ed from an Iterator which yields `Polygon`s.
 ///
-/// Iterating over this objects, yields the component Polygons.
+/// Iterating over this object yields the component Polygons.
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>)
 where
