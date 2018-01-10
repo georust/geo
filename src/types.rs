@@ -749,7 +749,7 @@ impl<T: Float> IntoIterator for GeometryCollection<T> {
 
 /// An enum representing any possible geometry type.
 ///
-/// All types can be converted to a `Geometry` using the `.into()` (as part of the
+/// All `Geo` types can be converted to a `Geometry` member using `.into()` (as part of the
 /// `std::convert::Into` pattern).
 #[derive(PartialEq, Clone, Debug)]
 pub enum Geometry<T>
@@ -757,6 +757,7 @@ where
     T: Float,
 {
     Point(Point<T>),
+    Line(Line<T>),
     LineString(LineString<T>),
     Polygon(Polygon<T>),
     MultiPoint(MultiPoint<T>),

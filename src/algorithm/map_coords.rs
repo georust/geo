@@ -101,6 +101,7 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for Geometry<T> {
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         match *self {
             Geometry::Point(ref x) => Geometry::Point(x.map_coords(func)),
+            Geometry::Line(ref x) => Geometry::Line(x.map_coords(func)),
             Geometry::LineString(ref x) => Geometry::LineString(x.map_coords(func)),
             Geometry::Polygon(ref x) => Geometry::Polygon(x.map_coords(func)),
             Geometry::MultiPoint(ref x) => Geometry::MultiPoint(x.map_coords(func)),
