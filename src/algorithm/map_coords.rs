@@ -18,7 +18,7 @@ pub trait MapCoords<T, NT> {
     /// assert_eq!(p2, Point::new(1010., 40.));
     /// ```
     ///
-    /// You can conver the coordinate type this way as well
+    /// You can also change the coordinate precision in this way:
     ///
     /// ```
     /// # use geo::Point;
