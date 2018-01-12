@@ -1,7 +1,7 @@
 use num_traits::{Float, Signed};
 use num_traits::float::FloatConst;
 use types::{Point, Polygon};
-use algorithm::distance::{Distance};
+use algorithm::distance::Distance;
 use algorithm::extremes::ExtremeIndices;
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance
@@ -397,7 +397,8 @@ fn triangle_area<T>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> T
 where
     T: Float,
 {
-    (T::from(0.5).unwrap() * (a.x() * b.y() - a.y() * b.x() + a.y() * c.x() - a.x() * c.y() + b.x() * c.y() - c.x() * b.y()))
+    (T::from(0.5).unwrap()
+        * (a.x() * b.y() - a.y() * b.x() + a.y() * c.x() - a.x() * c.y() + b.x() * c.y() - c.x() * b.y()))
 }
 
 /// positive implies a -> b -> c is counter-clockwise, negative implies clockwise
@@ -634,7 +635,9 @@ where
             let line_1b = leftturn(&u1, &state.p1prev, &state.q2);
             let line_2a = leftturn(&u2, &state.p1, &state.q2prev);
             let line_2b = leftturn(&u2, &state.p1, &state.q2);
-            if line_1a != line_1b && line_1a != -1 && line_1b != -1 || line_2a != line_2b && line_2a != -1 && line_2b != -2 {
+            if line_1a != line_1b && line_1a != -1 && line_1b != -1
+                || line_2a != line_2b && line_2a != -1 && line_2b != -2
+            {
                 // an orthogonal intersection exists
                 newdist = state.p1.vertex_line_distance(&state.q2prev, &state.q2);
                 if newdist <= state.dist {

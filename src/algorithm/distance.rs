@@ -1,8 +1,8 @@
 use num_traits::{Float, Signed, ToPrimitive};
-use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
+use types::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use num_traits::float::FloatConst;
-use algorithm::contains::{Contains, PositionPoint, get_position};
-use algorithm::intersects::{Intersects};
+use algorithm::contains::{get_position, Contains, PositionPoint};
+use algorithm::intersects::Intersects;
 use algorithm::polygon_distance_fast_path::*;
 
 use spade::SpadeFloat;
@@ -257,7 +257,7 @@ where
 {
     /// Minimum distance from a Line to a Point
     fn distance(&self, line: &Line<T>) -> T {
-        line_segment_distance(&self, &line.start, &line.end)
+        line_segment_distance(self, &line.start, &line.end)
     }
 }
 
@@ -268,7 +268,7 @@ where
 {
     fn distance(&self, other: &LineString<T>) -> T {
         if self.intersects(other) {
-            return T::zero();
+            T::zero()
         } else {
             nearest_neighbour_distance(self, other)
         }
@@ -282,14 +282,14 @@ where
 {
     fn distance(&self, other: &Polygon<T>) -> T {
         if self.intersects(other) || other.contains(self) {
-            return T::zero();
+            T::zero()
         } else {
             // still a possibility that the LineString's inside an interior ring
             if !other.interiors.is_empty() && other.ring_contains_point(&self.0[0]) {
                 // check each ring distance, returning the minimum
                 let mut mindist: T = Float::max_value();
                 for ring in &other.interiors {
-                    mindist = mindist.min(nearest_neighbour_distance(self, &ring))
+                    mindist = mindist.min(nearest_neighbour_distance(self, ring))
                 }
                 mindist
             } else {
@@ -346,13 +346,13 @@ where
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
             for ring in &self.interiors {
-                mindist = mindist.min(nearest_neighbour_distance(&poly2.exterior, &ring))
+                mindist = mindist.min(nearest_neighbour_distance(&poly2.exterior, ring))
             }
             return mindist;
         } else if !poly2.interiors.is_empty() && poly2.ring_contains_point(&self.exterior.0[0]) {
             let mut mindist: T = Float::max_value();
             for ring in &poly2.interiors {
-                mindist = mindist.min(nearest_neighbour_distance(&self.exterior, &ring))
+                mindist = mindist.min(nearest_neighbour_distance(&self.exterior, ring))
             }
             return mindist;
         }
@@ -360,7 +360,7 @@ where
             // fall back to R* nearest neighbour method
             nearest_neighbour_distance(&self.exterior, &poly2.exterior)
         } else {
-            min_poly_dist(&self, &poly2)
+            min_poly_dist(self, poly2)
         }
     }
 }
@@ -388,7 +388,8 @@ enum ListSign {
 }
 
 impl<T> Polygon<T>
-    where T: Float + Signed,
+where
+    T: Float + Signed,
 {
     // Wrap-around next and previous Polygon indices
     pub(crate) fn next_vertex(&self, current_vertex: &usize) -> usize
@@ -439,8 +440,7 @@ impl<T> Polygon<T>
     pub(crate) fn ring_contains_point(&self, p: &Point<T>) -> bool {
         match get_position(p, &self.exterior) {
             PositionPoint::Inside => true,
-            PositionPoint::OnBoundary => false,
-            PositionPoint::Outside => false
+            PositionPoint::OnBoundary | PositionPoint::Outside => false
         }
     }
 }
@@ -452,11 +452,17 @@ where
     T: Float + FloatConst + Signed + SpadeFloat,
 {
     let tree_a: RTree<SimpleEdge<_>> = RTree::bulk_load(
-        geom1.lines().map(|line| SimpleEdge::new(line.start, line.end)).collect()
-        );
+        geom1
+            .lines()
+            .map(|line| SimpleEdge::new(line.start, line.end))
+            .collect(),
+    );
     let tree_b: RTree<SimpleEdge<_>> = RTree::bulk_load(
-        geom2.lines().map(|line| SimpleEdge::new(line.start, line.end)).collect()
-        );
+        geom2
+            .lines()
+            .map(|line| SimpleEdge::new(line.start, line.end))
+            .collect(),
+    );
     let mut mindist_a: T = Float::max_value();
     let mut mindist_b: T = Float::max_value();
     for point in &geom2.0 {
@@ -476,8 +482,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use types::{Coordinate, Point, MultiPoint, Line, LineString, MultiLineString, Polygon, MultiPolygon};
-    use algorithm::distance::{Distance, line_segment_distance, nearest_neighbour_distance};
+    use types::{Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+    use algorithm::distance::{line_segment_distance, nearest_neighbour_distance, Distance};
     use algorithm::convexhull::ConvexHull;
     use super::*;
 
@@ -490,8 +496,12 @@ mod test {
     fn linestring_polygon_line_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
 
-        let poly = Polygon::new(LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
-                                vec![LineString(vec![p(1., 1.), p(4., 1.), p(4., 4.), p(1., 4.), p(1., 1.)])]);
+        let poly = Polygon::new(
+            LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
+            vec![
+                LineString(vec![p(1., 1.), p(4., 1.), p(4., 4.), p(1., 4.), p(1., 1.)]),
+            ],
+        );
         let ls = LineString(vec![p(3., 1.5), p(3., 3.)]);
         let ln = Line::new(p(3., 1.5), p(3., 3.));
         // LineString-Polygon and vice-versa
