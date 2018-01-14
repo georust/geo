@@ -1,5 +1,5 @@
 use num_traits::{Float, FromPrimitive};
-use types::{Point, Line, Polygon, LineString, MultiPoint, MultiPolygon, MultiLineString};
+use types::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use algorithm::centroid::Centroid;
 use algorithm::map_coords::MapCoords;
 
@@ -141,17 +141,16 @@ where
     /// Rotate the Polygon about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
         // if a polygon has holes, use the centroid of its outer shell as the rotation origin
-        let centroid = match self.interiors.is_empty() {
-            false => self.exterior.centroid().unwrap(),
-            true => self.centroid().unwrap(),
+        let centroid = if self.interiors.is_empty() {
+            self.centroid().unwrap()
+        } else {
+            self.exterior.centroid().unwrap()
         };
         Polygon::new(
             LineString(rotation_matrix(angle, &centroid, &self.exterior.0)),
             self.interiors
                 .iter()
-                .map(|ring| {
-                    LineString(rotation_matrix(angle, &centroid, &ring.0))
-                })
+                .map(|ring| LineString(rotation_matrix(angle, &centroid, &ring.0)))
                 .collect(),
         )
     }
@@ -189,7 +188,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use types::{Point, LineString, Polygon};
+    use types::{LineString, Point, Polygon};
     use super::*;
     #[test]
     fn test_rotate_around_point() {

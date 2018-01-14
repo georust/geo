@@ -1,7 +1,7 @@
 use num_traits::{Float, Signed};
-use types::{Point, Polygon, MultiPoint, MultiPolygon};
+use types::{MultiPoint, MultiPolygon, Point, Polygon};
 use algorithm::convexhull::ConvexHull;
-use types::{Extremes, ExtremePoint};
+use types::{ExtremePoint, Extremes};
 
 // Useful direction vectors, aligned with x and y axes:
 // 1., 0. = largest x
@@ -14,20 +14,23 @@ use types::{Extremes, ExtremePoint};
 // Not currently used, but maybe useful in the future
 #[allow(dead_code)]
 fn up<T>(u: &Point<T>, v: &Point<T>) -> bool
-    where T: Float
+where
+    T: Float,
 {
     u.dot(v) > T::zero()
 }
 
 fn direction_sign<T>(u: &Point<T>, vi: &Point<T>, vj: &Point<T>) -> T
-    where T: Float
+where
+    T: Float,
 {
     u.dot(&(*vi - *vj))
 }
 
 // true if Vi is above Vj
 fn above<T>(u: &Point<T>, vi: &Point<T>, vj: &Point<T>) -> bool
-    where T: Float
+where
+    T: Float,
 {
     direction_sign(u, vi, vj) > T::zero()
 }
@@ -36,7 +39,8 @@ fn above<T>(u: &Point<T>, vi: &Point<T>, vj: &Point<T>) -> bool
 // Not currently used, but maybe useful in the future
 #[allow(dead_code)]
 fn below<T>(u: &Point<T>, vi: &Point<T>, vj: &Point<T>) -> bool
-    where T: Float
+where
+    T: Float,
 {
     direction_sign(u, vi, vj) < T::zero()
 }
@@ -52,10 +56,12 @@ enum ListSign {
 
 // Wrap-around previous-vertex
 impl<T> Polygon<T>
-    where T: Float
+where
+    T: Float,
 {
     fn previous_vertex(&self, current_vertex: &usize) -> usize
-        where T: Float
+    where
+        T: Float,
     {
         (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
     }
@@ -63,15 +69,17 @@ impl<T> Polygon<T>
 
 // positive implies a -> b -> c is counter-clockwise, negative implies clockwise
 fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
-    where T: Float
+where
+    T: Float,
 {
     (p_b.x() - p_a.x()) * (p_c.y() - p_a.y()) - (p_b.y() - p_a.y()) * (p_c.x() - p_a.x())
 }
 
 // wrapper for extreme-finding function
 fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes, ()>
-    where T: Float + Signed,
-          F: Fn(&Point<T>, &Polygon<T>) -> Result<usize, ()>
+where
+    T: Float + Signed,
+    F: Fn(&Point<T>, &Polygon<T>) -> Result<usize, ()>,
 {
     // For each consecutive pair of edges of the polygon (each triplet of points),
     // compute the z-component of the cross product of the vectors defined by the
@@ -105,21 +113,24 @@ fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes,
     if convex == ListSign::Mixed {
         return Err(());
     }
-    let directions = vec![Point::new(T::zero(), -T::one()),
-                          Point::new(T::one(), T::zero()),
-                          Point::new(T::zero(), T::one()),
-                          Point::new(-T::one(), T::zero())];
+    let directions = vec![
+        Point::new(T::zero(), -T::one()),
+        Point::new(T::one(), T::zero()),
+        Point::new(T::zero(), T::one()),
+        Point::new(-T::one(), T::zero()),
+    ];
     Ok(directions
-           .iter()
-           .map(|p| func(&p, &polygon).unwrap())
-           .collect::<Vec<usize>>()
-           .into())
+        .iter()
+        .map(|p| func(p, polygon).unwrap())
+        .collect::<Vec<usize>>()
+        .into())
 }
 
 // find a convex, counter-clockwise oriented polygon's maximum vertex in a specified direction
 // u: a direction vector. We're using a point to represent this, which is a hack but works fine
 fn polymax_naive_indices<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()>
-    where T: Float
+where
+    T: Float,
 {
     let vertices = &poly.exterior.0;
     let mut max: usize = 0;
@@ -129,7 +140,7 @@ fn polymax_naive_indices<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()
             max = i;
         }
     }
-    return Ok(max);
+    Ok(max)
 }
 
 pub trait ExtremeIndices<T: Float + Signed> {
@@ -155,7 +166,8 @@ pub trait ExtremeIndices<T: Float + Signed> {
 }
 
 impl<T> ExtremeIndices<T> for Polygon<T>
-    where T: Float + Signed
+where
+    T: Float + Signed,
 {
     fn extreme_indices(&self) -> Result<Extremes, ()> {
         find_extreme_indices(polymax_naive_indices, self)
@@ -163,7 +175,8 @@ impl<T> ExtremeIndices<T> for Polygon<T>
 }
 
 impl<T> ExtremeIndices<T> for MultiPolygon<T>
-    where T: Float + Signed
+where
+    T: Float + Signed,
 {
     fn extreme_indices(&self) -> Result<Extremes, ()> {
         find_extreme_indices(polymax_naive_indices, &self.convex_hull())
@@ -171,7 +184,8 @@ impl<T> ExtremeIndices<T> for MultiPolygon<T>
 }
 
 impl<T> ExtremeIndices<T> for MultiPoint<T>
-    where T: Float + Signed
+where
+    T: Float + Signed,
 {
     fn extreme_indices(&self) -> Result<Extremes, ()> {
         find_extreme_indices(polymax_naive_indices, &self.convex_hull())
@@ -200,8 +214,9 @@ pub trait ExtremePoints<T: Float> {
 }
 
 impl<T, G> ExtremePoints<T> for G
-    where T: Float + Signed,
-          G: ConvexHull<T> + ExtremeIndices<T>
+where
+    T: Float + Signed,
+    G: ConvexHull<T> + ExtremeIndices<T>,
 {
     // Any Geometry implementing `ConvexHull` and `ExtremeIndices` gets this automatically
     fn extreme_points(&self) -> ExtremePoint<T> {
@@ -220,7 +235,7 @@ impl<T, G> ExtremePoints<T> for G
 #[cfg(test)]
 mod test {
 
-    use types::{Point, LineString};
+    use types::{LineString, Point};
     use super::*;
     #[test]
     fn test_polygon_extreme_x() {
@@ -239,13 +254,15 @@ mod test {
     #[should_panic]
     fn test_extreme_indices_bad_polygon() {
         // non-convex, with a bump on the top-right edge
-        let points_raw = vec![(1.0, 0.0),
-                              (1.3, 1.),
-                              (2.0, 1.0),
-                              (1.75, 1.75),
-                              (1.0, 2.0),
-                              (0.0, 1.0),
-                              (1.0, 0.0)];
+        let points_raw = vec![
+            (1.0, 0.0),
+            (1.3, 1.),
+            (2.0, 1.0),
+            (1.75, 1.75),
+            (1.0, 2.0),
+            (0.0, 1.0),
+            (1.0, 0.0),
+        ];
         let points = points_raw
             .iter()
             .map(|e| Point::new(e.0, e.1))
@@ -263,13 +280,15 @@ mod test {
     #[test]
     fn test_extreme_indices_good_polygon() {
         // non-convex, with a bump on the top-right edge
-        let points_raw = vec![(1.0, 0.0),
-                              (1.3, 1.),
-                              (2.0, 1.0),
-                              (1.75, 1.75),
-                              (1.0, 2.0),
-                              (0.0, 1.0),
-                              (1.0, 0.0)];
+        let points_raw = vec![
+            (1.0, 0.0),
+            (1.3, 1.),
+            (2.0, 1.0),
+            (1.75, 1.75),
+            (1.0, 2.0),
+            (0.0, 1.0),
+            (1.0, 0.0),
+        ];
         let points = points_raw
             .iter()
             .map(|e| Point::new(e.0, e.1))
@@ -287,8 +306,14 @@ mod test {
     #[test]
     fn test_polygon_extreme_wrapper_convex() {
         // convex, with a bump on the top-right edge
-        let points_raw =
-            vec![(1.0, 0.0), (2.0, 1.0), (1.75, 1.75), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
+        let points_raw = vec![
+            (1.0, 0.0),
+            (2.0, 1.0),
+            (1.75, 1.75),
+            (1.0, 2.0),
+            (0.0, 1.0),
+            (1.0, 0.0),
+        ];
         let points = points_raw
             .iter()
             .map(|e| Point::new(e.0, e.1))

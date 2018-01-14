@@ -1,5 +1,5 @@
 use num_traits::{Float, ToPrimitive};
-use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
+use types::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use algorithm::contains::Contains;
 
 /// Returns the distance between two geometries.
@@ -167,12 +167,11 @@ where
 {
     /// Minimum distance from a Point to a MultiPolygon
     fn distance(&self, mpolygon: &MultiPolygon<T>) -> T {
-        mpolygon.0.iter().map(|p| self.distance(p)).fold(
-            T::max_value(),
-            |accum, val| {
-                accum.min(val)
-            },
-        )
+        mpolygon
+            .0
+            .iter()
+            .map(|p| self.distance(p))
+            .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
 
@@ -192,12 +191,10 @@ where
 {
     /// Minimum distance from a Point to a MultiLineString
     fn distance(&self, mls: &MultiLineString<T>) -> T {
-        mls.0.iter().map(|ls| self.distance(ls)).fold(
-            T::max_value(),
-            |accum, val| {
-                accum.min(val)
-            },
-        )
+        mls.0
+            .iter()
+            .map(|ls| self.distance(ls))
+            .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
 
@@ -259,8 +256,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use types::{Point, Line, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon};
-    use algorithm::distance::{Distance, line_segment_distance};
+    use types::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+    use algorithm::distance::{line_segment_distance, Distance};
 
     #[test]
     fn line_segment_distance_test() {

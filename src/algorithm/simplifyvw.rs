@@ -190,7 +190,12 @@ where
 /// Wrap the actual VW function so the R* Tree can be shared.
 // this ensures that shell and rings have access to all segments, so
 // intersections between outer and inner rings are detected
-fn vwp_wrapper<T>(geomtype: &GeomSettings, exterior: &LineString<T>, interiors: Option<&[LineString<T>]>, epsilon: &T) -> Vec<Vec<Point<T>>>
+fn vwp_wrapper<T>(
+    geomtype: &GeomSettings,
+    exterior: &LineString<T>,
+    interiors: Option<&[LineString<T>]>,
+    epsilon: &T,
+) -> Vec<Vec<Point<T>>>
 where
     T: Float + SpadeFloat,
 {
@@ -227,7 +232,12 @@ where
 
 /// Visvalingam-Whyatt with self-intersection detection to preserve topologies
 // this is a port of the technique at https://www.jasondavies.com/simplify/
-fn visvalingam_preserve<T>(geomtype: &GeomSettings, orig: &[Point<T>], epsilon: &T, tree: &mut RTree<SimpleEdge<Point<T>>>) -> Vec<Point<T>>
+fn visvalingam_preserve<T>(
+    geomtype: &GeomSettings,
+    orig: &[Point<T>],
+    epsilon: &T,
+    tree: &mut RTree<SimpleEdge<Point<T>>>,
+) -> Vec<Point<T>>
 where
     T: Float + SpadeFloat,
 {
@@ -393,12 +403,13 @@ where
         // triangle start point, end point
         let ca = c.from;
         let cb = c.to;
-        if ca != point_a && ca != point_c && cb != point_a && cb != point_c && cartesian_intersect(&ca, &cb, &point_a, &point_c) {
-            true
-        } else if ca != point_a && ca != point_b && cb != point_a && cb != point_b && cartesian_intersect(&ca, &cb, &point_a, &point_b) {
+        if ca != point_a && ca != point_c && cb != point_a && cb != point_c
+            && cartesian_intersect(&ca, &cb, &point_a, &point_c)
+        {
             true
         } else {
-            ca != point_b && ca != point_c && cb != point_b && cb != point_c && cartesian_intersect(&ca, &cb, &point_b, &point_c)
+            ca != point_b && ca != point_c && cb != point_b && cb != point_c
+                && cartesian_intersect(&ca, &cb, &point_b, &point_c)
         }
     })
 }
@@ -408,7 +419,8 @@ fn area<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> T
 where
     T: Float,
 {
-    ((p1.x() - p3.x()) * (p2.y() - p3.y()) - (p2.x() - p3.x()) * (p1.y() - p3.y())).abs() / (T::one() + T::one()).abs()
+    ((p1.x() - p3.x()) * (p2.y() - p3.y()) - (p2.x() - p3.x()) * (p1.y() - p3.y())).abs()
+        / (T::one() + T::one()).abs()
 }
 
 /// Simplifies a geometry.
@@ -509,7 +521,7 @@ where
             min_points: 4,
             geomtype: GeomType::Line,
         };
-        let mut simplified = vwp_wrapper(&gt, &self, None, epsilon);
+        let mut simplified = vwp_wrapper(&gt, self, None, epsilon);
         LineString(simplified.pop().unwrap())
     }
 }
@@ -604,7 +616,8 @@ where
 #[cfg(test)]
 mod test {
     use types::{LineString, MultiLineString, MultiPolygon, Point, Polygon};
-    use super::{cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, GeomType, SimplifyVW, SimplifyVWPreserve};
+    use super::{cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, GeomType, SimplifyVW,
+                SimplifyVWPreserve};
 
     #[test]
     fn visvalingam_test() {
