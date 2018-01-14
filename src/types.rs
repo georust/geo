@@ -1,3 +1,5 @@
+use std::error;
+use std::fmt;
 use std::ops::Add;
 use std::ops::AddAssign;
 use std::ops::Neg;
@@ -559,6 +561,146 @@ where
     T: Float;
 
 impl<T: Float> LineString<T> {
+    /// Create a new `LineString` from a `Point`s vector.
+    ///
+    /// # Errors
+    ///
+    /// This function returns an `Err` if `points` has fewer than two `Point`s.
+    ///
+    /// # Examples
+    ///
+    /// Creating a `LineString`:
+    ///
+    /// ```
+    /// use geo::{LineString, Point};
+    ///
+    /// let points = vec![Point::new(6., 14.), Point::new(2., -10.)];
+    /// assert!(LineString::new(points).is_ok());
+    /// ```
+    ///
+    /// Attempting to create a `LineString` with fewer than two `Point`s
+    /// results in an error:
+    ///
+    /// ```
+    /// use geo::{LineString, Point};
+    ///
+    /// let points = vec![Point::new(6., 14.)];
+    /// assert!(LineString::new(points).is_err());
+    /// ```
+    pub fn new(points: Vec<Point<T>>) -> Result<Self, LineStringError<T>> {
+        if points.len() > 1 {
+            Ok(LineString(points))
+        } else {
+            Err(LineStringError(points))
+        }
+    }
+
+    /// Create a new `LineString` from a `Point`s vector. Only use this
+    /// function if you know _for certain_ that `points` has at least two
+    /// `Point`s.
+    ///
+    /// # Safety
+    ///
+    /// This function is `unsafe` because (soon) some `LineString` internals
+    /// ignore bounds checking when indexing as a performance improvement.
+    ///
+    /// # Examples
+    ///
+    /// Creating a `LineString`:
+    ///
+    /// ```
+    /// use geo::{LineString, Point};
+    ///
+    /// let points = vec![Point::new(6., 14.), Point::new(2., -10.)];
+    /// let line_string = unsafe { LineString::new_unchecked(points) };
+    /// ```
+    pub unsafe fn new_unchecked(points: Vec<Point<T>>) -> Self {
+        debug_assert!(points.len() > 1);
+        LineString(points)
+    }
+
+    /// Retrieve a slice of this `LineString`’s underlying `Point`s.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::{LineString, Point};
+    ///
+    /// let points = vec![Point::new(6., 14.), Point::new(2., -10.)];
+    /// let line_string = LineString::new(points).unwrap();
+    ///
+    /// assert_eq!(line_string.points(), &[
+    ///     Point::new(6., 14.),
+    ///     Point::new(2., -10.),
+    /// ]);
+    /// ```
+    pub fn points(&self) -> &[Point<T>] {
+        &self.0
+    }
+
+    /// Retrieve a mutable slice of this `LineString`’s underlying `Point`s.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::{LineString, Point};
+    ///
+    /// let points = vec![Point::new(6., 14.), Point::new(2., -10.)];
+    /// let mut line_string = LineString::new(points).unwrap();
+    ///
+    /// for point in line_string.points_mut() {
+    ///     point.0.y *= 2.;
+    /// }
+    ///
+    /// assert_eq!(line_string.points(), &[
+    ///     Point::new(6., 28.),
+    ///     Point::new(2., -20.),
+    /// ]);
+    /// ```
+    pub fn points_mut(&mut self) -> &mut [Point<T>] {
+        &mut self.0
+    }
+
+    /// Determine if this `LineString` is ‘closed’, such that the first and last
+    /// `Point`s are equivalent.
+    ///
+    /// # Examples
+    ///
+    /// A `LineString` that is closed:
+    ///
+    /// ```
+    /// use geo::{LineString, Point};
+    ///
+    /// let points = vec![
+    ///     Point::new(1., 5.),
+    ///     Point::new(2., -10.),
+    ///     Point::new(-4., 5.),
+    ///     Point::new(1., 5.),
+    /// ];
+    /// let line_string = LineString::new(points).unwrap();
+    /// assert!(line_string.is_closed());
+    /// ```
+    ///
+    /// A `LineString` that is not closed:
+    ///
+    /// ```
+    /// use geo::{LineString, Point};
+    ///
+    /// let points = vec![
+    ///     Point::new(1., 5.),
+    ///     Point::new(2., -10.),
+    ///     Point::new(-4., 5.),
+    /// ];
+    /// let line_string = LineString::new(points).unwrap();
+    /// assert!(!line_string.is_closed());
+    /// ```
+    pub fn is_closed(&self) -> bool {
+        assert!(self.0.len() > 1);
+        unsafe {
+            self.0.get_unchecked(0) == self.0.get_unchecked(self.0.len() - 1)
+        }
+    }
+
     /// Return an `Line` iterator that yields one `Line` for each line segment
     /// in the `LineString`.
     ///
@@ -590,6 +732,62 @@ impl<T: Float> LineString<T> {
             // need to do bounds checking here.
             Line::new(*w.get_unchecked(0), *w.get_unchecked(1))
         }))
+    }
+}
+
+/// An error returned from `LineString::new` to indicate that not enough
+/// `Point`s were supplied to the function.
+///
+/// # Examples
+///
+/// ```
+/// use geo::{LineString, LineStringError, Point};
+///
+/// let points = vec![Point::new(6., 14.)];
+/// let _: LineStringError<_> = LineString::new(points).unwrap_err();
+/// ```
+#[derive(Debug)]
+pub struct LineStringError<T>(Vec<Point<T>>) where T: Float;
+
+impl<T: Float> LineStringError<T> {
+    /// Consumes this error, returning the underlying vector of `Points` which
+    /// generated the error in the first place.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::{LineString, LineStringError, Point};
+    ///
+    /// let points = vec![Point::new(6., 14.)];
+    /// let line_string_error = LineString::new(points).unwrap_err();
+    ///
+    /// assert_eq!(line_string_error.into_vec(), vec![
+    ///     Point::new(6., 14.)
+    /// ]);
+    /// ```
+    pub fn into_vec(self) -> Vec<Point<T>> {
+        self.0
+    }
+}
+
+impl<T: Float + Debug> error::Error for LineStringError<T> {
+    fn description(&self) -> &str {
+        "Not enough points (fewer than two) were used to create a LineString."
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        None
+    }
+}
+
+impl<T: Float> fmt::Display for LineStringError<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "A LineString requires at least two Points, but only {} were \
+            supplied.",
+            self.0.len()
+        )
     }
 }
 
