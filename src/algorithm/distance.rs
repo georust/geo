@@ -440,7 +440,7 @@ where
     pub(crate) fn ring_contains_point(&self, p: &Point<T>) -> bool {
         match get_position(p, &self.exterior) {
             PositionPoint::Inside => true,
-            PositionPoint::OnBoundary | PositionPoint::Outside => false
+            PositionPoint::OnBoundary | PositionPoint::Outside => false,
         }
     }
 }

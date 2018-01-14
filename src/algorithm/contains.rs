@@ -59,12 +59,8 @@ where
             return true;
         }
         for line in self.lines() {
-            if ((line.start.y() == line.end.y()) && (line.start.y() == p.y())
-                && (p.x() > line.start.x().min(line.end.x()))
-                && (p.x() < line.start.x().max(line.end.x())))
-                || ((line.start.x() == line.end.x()) && (line.start.x() == p.x())
-                    && (p.y() > line.start.y().min(line.end.y()))
-                    && (p.y() < line.start.y().max(line.end.y())))
+            if ((line.start.y() == line.end.y()) && (line.start.y() == p.y()) && (p.x() > line.start.x().min(line.end.x())) && (p.x() < line.start.x().max(line.end.x())))
+                || ((line.start.x() == line.end.x()) && (line.start.x() == p.x()) && (p.y() > line.start.y().min(line.end.y())) && (p.y() < line.start.y().max(line.end.y())))
             {
                 return true;
             }
@@ -142,7 +138,8 @@ pub(crate) enum PositionPoint {
 }
 
 pub(crate) fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
-    where T: Float
+where
+    T: Float,
 {
     // See: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
     //      http://geospatialpython.com/search
@@ -161,12 +158,9 @@ pub(crate) fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> Posit
     let mut xints = T::zero();
     let mut crossings = 0;
     for line in linestring.lines() {
-        if p.y() > line.start.y().min(line.end.y()) && p.y() <= line.start.y().max(line.end.y())
-            && p.x() <= line.start.x().max(line.end.x())
-        {
+        if p.y() > line.start.y().min(line.end.y()) && p.y() <= line.start.y().max(line.end.y()) && p.x() <= line.start.x().max(line.end.x()) {
             if line.start.y() != line.end.y() {
-                xints = (p.y() - line.start.y()) * (line.end.x() - line.start.x())
-                    / (line.end.y() - line.start.y()) + line.start.x();
+                xints = (p.y() - line.start.y()) * (line.end.x() - line.start.x()) / (line.end.y() - line.start.y()) + line.start.x();
             }
             if (line.start.x() == line.end.x()) || (p.x() <= xints) {
                 crossings += 1;
@@ -210,8 +204,7 @@ where
     fn contains(&self, line: &Line<T>) -> bool {
         // both endpoints are contained in the polygon and the line
         // does NOT intersect the exterior or any of the interior boundaries
-        self.contains(&line.start) && self.contains(&line.end) && !self.exterior.intersects(line)
-            && !self.interiors.iter().any(|inner| inner.intersects(line))
+        self.contains(&line.start) && self.contains(&line.end) && !self.exterior.intersects(line) && !self.interiors.iter().any(|inner| inner.intersects(line))
     }
 }
 

@@ -49,12 +49,14 @@ fn partition<T, F: FnMut(&T) -> bool>(mut slice: &mut [T], mut pred: F) -> usize
 // If it's negative, it will be on the "right" side of AB
 // (when standing on A and looking towards B). If positive, it will be on the left side
 fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
-    where T: Float
+where
+    T: Float,
 {
     (p_b.x() - p_a.x()) * (p_c.y() - p_a.y()) - (p_b.y() - p_a.y()) * (p_c.x() - p_a.x())
 }
 fn point_location<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> bool
-    where T: Float
+where
+    T: Float,
 {
     cross_prod(p_a, p_b, p_c) > T::zero()
 }

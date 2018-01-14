@@ -89,8 +89,7 @@ where
         if d == T::zero() {
             // lines are parallel
             // return true iff at least one endpoint intersects the other line
-            self.start.intersects(line) || self.end.intersects(line) || line.start.intersects(self)
-                || line.end.intersects(self)
+            self.start.intersects(line) || self.end.intersects(line) || line.start.intersects(self) || line.end.intersects(self)
         } else {
             let s = (c1 * b2 - c2 * b1) / d;
             let t = (a1 * c2 - a2 * c1) / d;
@@ -122,8 +121,7 @@ where
     T: Float,
 {
     fn intersects(&self, p: &Polygon<T>) -> bool {
-        p.exterior.intersects(self) || p.interiors.iter().any(|inner| inner.intersects(self))
-            || p.contains(&self.start) || p.contains(&self.end)
+        p.exterior.intersects(self) || p.interiors.iter().any(|inner| inner.intersects(self)) || p.contains(&self.start) || p.contains(&self.end)
     }
 }
 
@@ -147,15 +145,12 @@ where
         }
         for a in self.lines() {
             for b in linestring.lines() {
-                let u_b = (b.end.y() - b.start.y()) * (a.end.x() - a.start.x())
-                    - (b.end.x() - b.start.x()) * (a.end.y() - a.start.y());
+                let u_b = (b.end.y() - b.start.y()) * (a.end.x() - a.start.x()) - (b.end.x() - b.start.x()) * (a.end.y() - a.start.y());
                 if u_b == T::zero() {
                     continue;
                 }
-                let ua_t = (b.end.x() - b.start.x()) * (a.start.y() - b.start.y())
-                    - (b.end.y() - b.start.y()) * (a.start.x() - b.start.x());
-                let ub_t = (a.end.x() - a.start.x()) * (a.start.y() - b.start.y())
-                    - (a.end.y() - a.start.y()) * (a.start.x() - b.start.x());
+                let ua_t = (b.end.x() - b.start.x()) * (a.start.y() - b.start.y()) - (b.end.y() - b.start.y()) * (a.start.x() - b.start.x());
+                let ub_t = (a.end.x() - a.start.x()) * (a.start.y() - b.start.y()) - (a.end.y() - a.start.y()) * (a.start.x() - b.start.x());
                 let u_a = ua_t / u_b;
                 let u_b = ub_t / u_b;
                 if (T::zero() <= u_a) && (u_a <= T::one()) && (T::zero() <= u_b) && (u_b <= T::one()) {
@@ -187,7 +182,8 @@ where
 }
 
 impl<T> Intersects<Polygon<T>> for LineString<T>
-    where T: Float
+where
+    T: Float,
 {
     fn intersects(&self, polygon: &Polygon<T>) -> bool {
         polygon.intersects(self)
@@ -203,10 +199,8 @@ where
         if bbox.contains(self) {
             false
         } else {
-            (self.xmin >= bbox.xmin && self.xmin <= bbox.xmax
-                || self.xmax >= bbox.xmin && self.xmax <= bbox.xmax)
-                && (self.ymin >= bbox.ymin && self.ymin <= bbox.ymax
-                    || self.ymax >= bbox.ymin && self.ymax <= bbox.ymax)
+            (self.xmin >= bbox.xmin && self.xmin <= bbox.xmax || self.xmax >= bbox.xmin && self.xmax <= bbox.xmax)
+                && (self.ymin >= bbox.ymin && self.ymin <= bbox.ymax || self.ymax >= bbox.ymin && self.ymax <= bbox.ymax)
         }
     }
 }
