@@ -2,6 +2,10 @@ extern crate num_traits;
 #[macro_use]
 extern crate serde_derive;
 extern crate spade;
+#[cfg(feature = "postgis-integration")]
+extern crate postgis;
+#[cfg(feature = "geojson-integration")]
+extern crate geojson;
 
 pub use traits::ToGeo;
 pub use types::*;
