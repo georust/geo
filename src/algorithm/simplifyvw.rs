@@ -1,11 +1,10 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::Float;
-use types::{LineString, MultiLineString, MultiPolygon, Point, Polygon};
+use types::{LineString, Line, MultiLineString, MultiPolygon, Point, Polygon};
 use algorithm::boundingbox::BoundingBox;
 
 use spade::SpadeFloat;
-use spade::primitives::SimpleEdge;
 use spade::BoundingRect;
 use spade::rtree::RTree;
 
@@ -201,16 +200,16 @@ where
 {
     let mut rings = vec![];
     // Populate R* tree with exterior line segments
-    let ls = exterior
-        .lines()
-        .map(|line| SimpleEdge::new(line.start, line.end))
-        .collect();
-    let mut tree: RTree<SimpleEdge<_>> = RTree::bulk_load(ls);
+    // let ls = exterior
+    //     .lines()
+    //     .map(|line| SimpleEdge::new(line.start, line.end))
+    //     .collect();
+    let mut tree: RTree<Line<_>> = RTree::bulk_load(exterior.lines().collect());
     // and with interior segments, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
             for line in ring.lines() {
-                tree.insert(SimpleEdge::new(line.start, line.end));
+                tree.insert(line);
             }
         }
     }
@@ -236,7 +235,7 @@ fn visvalingam_preserve<T>(
     geomtype: &GeomSettings,
     orig: &[Point<T>],
     epsilon: &T,
-    tree: &mut RTree<SimpleEdge<Point<T>>>,
+    tree: &mut RTree<Line<T>>,
 ) -> Vec<Point<T>>
 where
     T: Float + SpadeFloat,
@@ -347,11 +346,11 @@ where
                 intersector: false,
             };
             // add re-computed line segments to the tree
-            tree.insert(SimpleEdge::new(
+            tree.insert(Line::new(
                 orig[ai as usize],
                 orig[current_point as usize],
             ));
-            tree.insert(SimpleEdge::new(
+            tree.insert(Line::new(
                 orig[current_point as usize],
                 orig[bi as usize],
             ));
@@ -383,7 +382,7 @@ where
 }
 
 // check whether a triangle's edges intersect with any other edges of the LineString
-fn tree_intersect<T>(tree: &RTree<SimpleEdge<Point<T>>>, triangle: &VScore<T>, orig: &[Point<T>]) -> bool
+fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T>, orig: &[Point<T>]) -> bool
 where
     T: Float + SpadeFloat,
 {
@@ -401,8 +400,8 @@ where
     let candidates = tree.lookup_in_rectangle(&BoundingRect::from_corners(&br, &tl));
     candidates.iter().any(|c| {
         // triangle start point, end point
-        let ca = c.from;
-        let cb = c.to;
+        let ca = c.start;
+        let cb = c.end;
         if ca != point_a && ca != point_c && cb != point_a && cb != point_c
             && cartesian_intersect(&ca, &cb, &point_a, &point_c)
         {
