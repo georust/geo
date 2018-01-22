@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::Float;
-use types::{LineString, Line, MultiLineString, MultiPolygon, Point, Polygon};
+use types::{Line, LineString, MultiLineString, MultiPolygon, Point, Polygon};
 use algorithm::boundingbox::BoundingBox;
 
 use spade::SpadeFloat;
@@ -200,10 +200,6 @@ where
 {
     let mut rings = vec![];
     // Populate R* tree with exterior line segments
-    // let ls = exterior
-    //     .lines()
-    //     .map(|line| SimpleEdge::new(line.start, line.end))
-    //     .collect();
     let mut tree: RTree<Line<_>> = RTree::bulk_load(exterior.lines().collect());
     // and with interior segments, if any
     if let Some(interior_rings) = interiors {
@@ -346,14 +342,8 @@ where
                 intersector: false,
             };
             // add re-computed line segments to the tree
-            tree.insert(Line::new(
-                orig[ai as usize],
-                orig[current_point as usize],
-            ));
-            tree.insert(Line::new(
-                orig[current_point as usize],
-                orig[bi as usize],
-            ));
+            tree.insert(Line::new(orig[ai as usize], orig[current_point as usize]));
+            tree.insert(Line::new(orig[current_point as usize], orig[bi as usize]));
             // push re-computed triangle onto heap
             pq.push(new_triangle);
         }
