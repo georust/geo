@@ -8,7 +8,7 @@ use spade::SpadeFloat;
 use spade::BoundingRect;
 use spade::rtree::RTree;
 
-// Store triangle information
+/// Store triangle information
 // current is the candidate point for removal
 #[derive(Debug)]
 struct VScore<T>
@@ -59,12 +59,14 @@ where
     }
 }
 
-// Geometries that can be simplified using the topology-preserving variant
+/// Geometries that can be simplified using the topology-preserving variant
 #[derive(Debug, Clone, Copy)]
 enum GeomType {
     Line,
     Ring,
 }
+
+/// Settings for Ring and Line geometries
 // initial min: if we ever have fewer than these, stop immediately
 // min_points: if we detect a self-intersection before point removal, and we only
 // have min_points left, stop: since a self-intersection causes removal of the spatially previous
@@ -226,7 +228,7 @@ where
 }
 
 /// Visvalingam-Whyatt with self-intersection detection to preserve topologies
-// this is a port of the technique at https://www.jasondavies.com/simplify/
+/// this is a port of the technique at https://www.jasondavies.com/simplify/
 fn visvalingam_preserve<T>(
     geomtype: &GeomSettings,
     orig: &[Point<T>],
@@ -355,7 +357,7 @@ where
         .collect::<Vec<Point<T>>>()
 }
 
-// is p1 -> p2 -> p3 wound counterclockwise?
+/// is p1 -> p2 -> p3 wound counterclockwise?
 fn ccw<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> bool
 where
     T: Float,
@@ -363,7 +365,7 @@ where
     (p3.y() - p1.y()) * (p2.x() - p1.x()) > (p2.y() - p1.y()) * (p3.x() - p1.x())
 }
 
-// checks whether line segments with p1-p4 as their start and endpoints touch or cross
+/// checks whether line segments with p1-p4 as their start and endpoints touch or cross
 fn cartesian_intersect<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>, p4: &Point<T>) -> bool
 where
     T: Float,
@@ -371,7 +373,7 @@ where
     (ccw(p1, p3, p4) ^ ccw(p2, p3, p4)) & (ccw(p1, p2, p3) ^ ccw(p1, p2, p4))
 }
 
-// check whether a triangle's edges intersect with any other edges of the LineString
+/// check whether a triangle's edges intersect with any other edges of the LineString
 fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T>, orig: &[Point<T>]) -> bool
 where
     T: Float + SpadeFloat,
@@ -403,7 +405,7 @@ where
     })
 }
 
-// Area of a triangle given three vertices
+/// Area of a triangle given three vertices
 fn area<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> T
 where
     T: Float,
