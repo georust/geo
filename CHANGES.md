@@ -1,5 +1,11 @@
 # Changes
 
+## 0.7.0
+
+* [Add `Line` to the `Geometry` `enum`](https://github.com/georust/rust-geo/pull/179)
+* [Use new bulk-load method for initial R* Tree population](https://github.com/georust/rust-geo/pull/178)
+* [Add PostGIS and GeoJSON integration/conversions](https://github.com/georust/rust-geo/pull/180)
+
 ## 0.6.3
 
 * [Initial implementation of a `ClosestPoint` algorithm](https://github.com/georust/rust-geo/pull/167)
