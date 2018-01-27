@@ -40,3 +40,5 @@ pub mod from_postgis;
 /// Converts geometry into PostGIS types.
 #[cfg(feature = "postgis-integration")]
 pub mod to_postgis;
+/// Returns the Haversine length of a line.
+pub mod haversine_length;
