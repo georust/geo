@@ -39,4 +39,9 @@ pub mod prelude {
     pub use algorithm::simplifyvw::SimplifyVW;
     pub use algorithm::translate::Translate;
     pub use algorithm::closest_point::ClosestPoint;
+    pub use algorithm::haversine_length::HaversineLength;
+    #[cfg(feature = "postgis-integration")]
+    pub use algorithm::from_postgis::FromPostgis;
+    #[cfg(feature = "postgis-integration")]
+    pub use algorithm::to_postgis::ToPostgis;
 }
