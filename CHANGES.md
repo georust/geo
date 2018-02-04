@@ -1,5 +1,9 @@
 # Changes
 
+## 0.7.1
+
+* [Add Haversine length algorithm](https://github.com/georust/rust-geo/pull/183)
+
 ## 0.7.0
 
 * [Add `Line` to the `Geometry` `enum`](https://github.com/georust/rust-geo/pull/179)
