@@ -1,40 +1,44 @@
 use num_traits::Float;
-use algorithm::map_coords::MapCoords;
+use algorithm::map_coords::{MapCoords, MapCoordsInplace};
 
 pub trait Translate<T> {
-  /// Translate a Geometry along its axes by the given offsets
-  ///
-  ///
-  /// ```
-  /// use geo::{Point, LineString};
-  /// use geo::algorithm::translate::{Translate};
-  ///
-  /// let mut vec = Vec::new();
-  /// vec.push(Point::new(0.0, 0.0));
-  /// vec.push(Point::new(5.0, 5.0));
-  /// vec.push(Point::new(10.0, 10.0));
-  /// let linestring = LineString(vec);
-  /// let translated = linestring.translate(1.5, 3.5);
-  /// let mut correct = Vec::new();
-  /// correct.push(Point::new(1.5, 3.5));
-  /// correct.push(Point::new(6.5, 8.5));
-  /// correct.push(Point::new(11.5, 13.5));
-  /// let correct_ls = LineString(correct);
-  /// assert_eq!(translated, correct_ls);
-  /// ```
-  fn translate(&self, xoff: T, yoff: T) -> Self
-  where
-    T: Float;
+    /// Translate a Geometry along its axes by the given offsets
+    ///
+    ///
+    /// ```
+    /// use geo::{Point, LineString};
+    /// use geo::algorithm::translate::{Translate};
+    ///
+    /// let mut vec = Vec::new();
+    /// vec.push(Point::new(0.0, 0.0));
+    /// vec.push(Point::new(5.0, 5.0));
+    /// vec.push(Point::new(10.0, 10.0));
+    /// let linestring = LineString(vec);
+    /// let translated = linestring.translate(1.5, 3.5);
+    /// let mut correct = Vec::new();
+    /// correct.push(Point::new(1.5, 3.5));
+    /// correct.push(Point::new(6.5, 8.5));
+    /// correct.push(Point::new(11.5, 13.5));
+    /// let correct_ls = LineString(correct);
+    /// assert_eq!(translated, correct_ls);
+    /// ```
+    fn translate(&self, xoff: T, yoff: T) -> Self where T: Float;
+
+    /// Translate a Geometry along its axes, but in place.
+    fn translate_inplace(&mut self, xoff: T, yoff: T) where T: Float;
 }
 
 impl<T, G> Translate<T> for G
-where
-  T: Float,
-  G: MapCoords<T, T, Output = G>,
+    where T: Float,
+        G: MapCoords<T, T, Output=G>+MapCoordsInplace<T>
 {
-  fn translate(&self, xoff: T, yoff: T) -> Self {
-    self.map_coords(&|&(x, y)| (x + xoff, y + yoff))
-  }
+    fn translate(&self, xoff: T, yoff: T) -> Self {
+        self.map_coords(&|&(x, y)| (x + xoff, y + yoff))
+    }
+
+    fn translate_inplace(&mut self, xoff: T, yoff: T) {
+        self.map_coords_inplace(&|&(x, y)| (x + xoff, y + yoff))
+    }
 }
 
 #[cfg(test)]

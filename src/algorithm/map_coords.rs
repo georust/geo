@@ -18,7 +18,7 @@ pub trait MapCoords<T, NT> {
     /// assert_eq!(p2, Point::new(1010., 40.));
     /// ```
     ///
-    /// You can also change the coordinate precision in this way:
+    /// You can convert the coordinate type this way as well
     ///
     /// ```
     /// # use geo::Point;
@@ -30,9 +30,27 @@ pub trait MapCoords<T, NT> {
     /// assert_eq!(p2, Point::new(10.0f64, 20.0f64));
     /// ```
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
-    where
-        T: Float,
-        NT: Float;
+        where T: Float, NT: Float;
+
+
+
+}
+
+/// Map all the coordinates in an object in place
+pub trait MapCoordsInplace<T> {
+    /// Apply a function to all the coordinates in a geometric object, in place
+    ///
+    /// ```
+    /// use geo::Point;
+    /// use geo::algorithm::map_coords::MapCoordsInplace;
+    ///
+    /// let mut p = Point::new(10., 20.);
+    /// p.map_coords_inplace(&|&(x, y)| (x+1000., y*2.));
+    ///
+    /// assert_eq!(p, Point::new(1010., 40.));
+    /// ```
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+        where T: Float;
 }
 
 impl<T: Float, NT: Float> MapCoords<T, NT> for Point<T> {
@@ -44,6 +62,16 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for Point<T> {
     }
 }
 
+impl<T: Float> MapCoordsInplace<T> for Point<T> {
+
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        let new_point = func(&(self.0.x, self.0.y));
+        self.0.x = new_point.0;
+        self.0.y = new_point.1;
+    }
+}
+
 impl<T: Float, NT: Float> MapCoords<T, NT> for Line<T> {
     type Output = Line<NT>;
 
@@ -52,11 +80,28 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for Line<T> {
     }
 }
 
+impl<T: Float> MapCoordsInplace<T> for Line<T> {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        self.start.map_coords_inplace(func);
+        self.end.map_coords_inplace(func);
+    }
+}
+
 impl<T: Float, NT: Float> MapCoords<T, NT> for LineString<T> {
     type Output = LineString<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         LineString(self.0.iter().map(|p| p.map_coords(func)).collect())
+    }
+}
+
+impl<T: Float> MapCoordsInplace<T> for LineString<T> {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        for p in self.0.iter_mut() {
+            p.map_coords_inplace(func);
+        }
     }
 }
 
@@ -71,11 +116,30 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for Polygon<T> {
     }
 }
 
+impl<T: Float> MapCoordsInplace<T> for Polygon<T> {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        self.exterior.map_coords_inplace(func);
+        for p in self.interiors.iter_mut() {
+            p.map_coords_inplace(func);
+        }
+    }
+}
+
 impl<T: Float, NT: Float> MapCoords<T, NT> for MultiPoint<T> {
     type Output = MultiPoint<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         MultiPoint(self.0.iter().map(|p| p.map_coords(func)).collect())
+    }
+}
+
+impl<T: Float> MapCoordsInplace<T> for MultiPoint<T> {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        for p in self.0.iter_mut() {
+            p.map_coords_inplace(func);
+        }
     }
 }
 
@@ -87,11 +151,29 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for MultiLineString<T> {
     }
 }
 
+impl<T: Float> MapCoordsInplace<T> for MultiLineString<T> {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        for p in self.0.iter_mut() {
+            p.map_coords_inplace(func);
+        }
+    }
+}
+
 impl<T: Float, NT: Float> MapCoords<T, NT> for MultiPolygon<T> {
     type Output = MultiPolygon<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         MultiPolygon(self.0.iter().map(|p| p.map_coords(func)).collect())
+    }
+}
+
+impl<T: Float> MapCoordsInplace<T> for MultiPolygon<T> {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        for p in self.0.iter_mut() {
+            p.map_coords_inplace(func);
+        }
     }
 }
 
@@ -112,6 +194,22 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for Geometry<T> {
     }
 }
 
+impl<T: Float> MapCoordsInplace<T> for Geometry<T> {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        match *self {
+            Geometry::Point(ref mut x) => x.map_coords_inplace(func),
+            Geometry::Line(ref mut x) => x.map_coords_inplace(func),
+            Geometry::LineString(ref mut x) => x.map_coords_inplace(func),
+            Geometry::Polygon(ref mut x) => x.map_coords_inplace(func),
+            Geometry::MultiPoint(ref mut x) => x.map_coords_inplace(func),
+            Geometry::MultiLineString(ref mut x) => x.map_coords_inplace(func),
+            Geometry::MultiPolygon(ref mut x) => x.map_coords_inplace(func),
+            Geometry::GeometryCollection(ref mut x) => x.map_coords_inplace(func),
+        }
+    }
+}
+
 impl<T: Float, NT: Float> MapCoords<T, NT> for GeometryCollection<T> {
     type Output = GeometryCollection<NT>;
 
@@ -120,9 +218,19 @@ impl<T: Float, NT: Float> MapCoords<T, NT> for GeometryCollection<T> {
     }
 }
 
-mod test {
-    #[allow(unused_imports)]
+impl<T: Float> MapCoordsInplace<T> for GeometryCollection<T> {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        for p in self.0.iter_mut() {
+            p.map_coords_inplace(func);
+        }
+    }
+}
 
+
+
+#[cfg(test)]
+mod test {
     use super::*;
 
     #[test]
@@ -131,6 +239,14 @@ mod test {
         let new_p = p.map_coords(&|&(x, y)| (x + 10., y + 100.));
         assert_eq!(new_p.x(), 20.);
         assert_eq!(new_p.y(), 110.);
+    }
+
+    #[test]
+    fn point_inplace() {
+        let mut p2 = Point::new(10f32, 10f32);
+        p2.map_coords_inplace(&|&(x, y)| (x+10., y+100.));
+        assert_eq!(p2.x(), 20.);
+        assert_eq!(p2.y(), 110.);
     }
 
     #[test]
