@@ -42,3 +42,5 @@ pub mod from_postgis;
 pub mod to_postgis;
 /// Returns the Haversine length of a line.
 pub mod haversine_length;
+/// Calculate, and work with, the winding order of Linestrings
+pub mod winding_order;

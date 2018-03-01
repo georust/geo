@@ -1,5 +1,7 @@
 use num_traits::Float;
-use types::{LineString, MultiPolygon, Polygon};
+use types::{MultiPolygon, Polygon};
+
+use algorithm::winding_order::{Winding, WindingOrder};
 
 pub trait Orient<T> {
     /// Orients a Polygon's exterior and interior rings according to convention
@@ -60,21 +62,6 @@ pub enum Direction {
     Reversed,
 }
 
-// the signed area of a linear ring
-fn signed_ring_area<T>(linestring: &LineString<T>) -> T
-where
-    T: Float,
-{
-    if linestring.0.is_empty() || linestring.0.len() == 1 {
-        return T::zero();
-    }
-    let mut tmp = T::zero();
-    for line in linestring.lines() {
-        tmp = tmp + (line.start.x() * line.end.y() - line.end.x() * line.start.y());
-    }
-    tmp / (T::one() + T::one())
-}
-
 // orient a Polygon according to convention
 // by default, the exterior ring will be oriented ccw
 // and the interior ring(s) will be oriented clockwise
@@ -82,25 +69,18 @@ fn orient<T>(poly: &Polygon<T>, direction: Direction) -> Polygon<T>
 where
     T: Float,
 {
-    let sign = match direction {
-        Direction::Default => T::one(),
-        Direction::Reversed => -T::one(),
-    };
-    let mut rings = vec![];
-    // process interiors first, so push and pop work
-    for ring in &poly.interiors {
-        if signed_ring_area(ring) / sign <= T::zero() {
-            rings.push(LineString(ring.0.to_vec()));
-        } else {
-            rings.push(LineString(ring.0.iter().rev().cloned().collect()));
-        }
-    }
-    if signed_ring_area(&poly.exterior) / sign >= T::zero() {
-        rings.push(LineString(poly.exterior.0.to_vec()));
-    } else {
-        rings.push(LineString(poly.exterior.0.iter().rev().cloned().collect()));
-    }
-    Polygon::new(rings.pop().unwrap(), rings)
+    let interiors = poly.interiors.iter().map(|l| l.clone_to_winding_order(
+            match direction {
+                Direction::Default => WindingOrder::Clockwise,
+                Direction::Reversed => WindingOrder::CounterClockwise,
+            })).collect();
+
+    let ext_ring = poly.exterior.clone_to_winding_order(match direction {
+        Direction::Default => WindingOrder::CounterClockwise,
+        Direction::Reversed => WindingOrder::Clockwise,
+    });
+
+    Polygon::new(ext_ring, interiors)
 }
 
 #[cfg(test)]

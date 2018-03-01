@@ -1,6 +1,8 @@
 use num_traits::Float;
 use types::{Bbox, Line, LineString, MultiPolygon, Polygon};
 
+use algorithm::winding_order::twice_signed_ring_area;
+
 /// Calculation of the area.
 
 pub trait Area<T>
@@ -22,18 +24,8 @@ where
     fn area(&self) -> T;
 }
 
-fn get_linestring_area<T>(linestring: &LineString<T>) -> T
-where
-    T: Float,
-{
-    if linestring.0.is_empty() || linestring.0.len() == 1 {
-        return T::zero();
-    }
-    let mut tmp = T::zero();
-    for line in linestring.lines() {
-        tmp = tmp + (line.start.x() * line.end.y() - line.end.x() * line.start.y());
-    }
-    tmp / (T::one() + T::one())
+fn get_linestring_area<T>(linestring: &LineString<T>) -> T where T: Float {
+    twice_signed_ring_area(linestring) / (T::one() + T::one())
 }
 
 impl<T> Area<T> for Line<T>
