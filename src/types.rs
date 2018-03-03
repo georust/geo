@@ -7,9 +7,17 @@ use std::fmt::Debug;
 
 use std::iter::{self, FromIterator, Iterator};
 
-use num_traits::{Float, ToPrimitive};
 use spade::SpadeNum;
 use spade::{PointN, TwoDimensional};
+use num_traits::{Float, Num, NumCast, ToPrimitive};
+
+/// The type of an x or y value of a point/coordinate.
+///
+/// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this. Many algorithms only
+/// make sense for Float types (like area, or length calculations).
+pub trait CoordinateType: Num + Copy + NumCast + PartialOrd {}
+// Little bit of a hack to make to make this work
+impl<T: Num + Copy + NumCast + PartialOrd> CoordinateType for T {}
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
@@ -17,13 +25,13 @@ pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Coordinate<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     pub x: T,
     pub y: T,
 }
 
-impl<T: Float> From<(T, T)> for Coordinate<T> {
+impl<T: CoordinateType> From<(T, T)> for Coordinate<T> {
     fn from(coords: (T, T)) -> Self {
         Coordinate {
             x: coords.0,
@@ -36,7 +44,7 @@ impl<T: Float> From<(T, T)> for Coordinate<T> {
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Bbox<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     pub xmin: T,
     pub xmax: T,
@@ -68,7 +76,7 @@ impl From<Vec<usize>> for Extremes {
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct ExtremePoint<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     pub ymin: Point<T>,
     pub xmax: Point<T>,
@@ -76,7 +84,7 @@ where
     pub xmin: Point<T>,
 }
 
-/// A single location in 2D space, defined by a single (currently &reals;<sup>2</sup>) [`Coordinate`](enum.Coordinate.html)
+/// A single Point in 2D space.
 ///
 /// Points can be created using the `new(x, y)` constructor, or from a `Coordinate` or pair of points.
 ///
@@ -89,15 +97,15 @@ where
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Point<T>(pub Coordinate<T>)
 where
-    T: Float;
+    T: CoordinateType;
 
-impl<T: Float> From<Coordinate<T>> for Point<T> {
+impl<T: CoordinateType> From<Coordinate<T>> for Point<T> {
     fn from(x: Coordinate<T>) -> Point<T> {
         Point(x)
     }
 }
 
-impl<T: Float> From<(T, T)> for Point<T> {
+impl<T: CoordinateType> From<(T, T)> for Point<T> {
     fn from(coords: (T, T)) -> Point<T> {
         Point::new(coords.0, coords.1)
     }
@@ -105,7 +113,7 @@ impl<T: Float> From<(T, T)> for Point<T> {
 
 impl<T> Point<T>
 where
-    T: Float + ToPrimitive,
+    T: CoordinateType + ToPrimitive,
 {
     /// Creates a new point.
     ///
@@ -254,7 +262,7 @@ where
 
 impl<T> Neg for Point<T>
 where
-    T: Float + Neg<Output = T> + ToPrimitive,
+    T: CoordinateType + Neg<Output = T> + ToPrimitive,
 {
     type Output = Point<T>;
 
@@ -275,7 +283,7 @@ where
 
 impl<T> Add for Point<T>
 where
-    T: Float + ToPrimitive,
+    T: CoordinateType + ToPrimitive,
 {
     type Output = Point<T>;
 
@@ -296,7 +304,7 @@ where
 
 impl<T> Sub for Point<T>
 where
-    T: Float + ToPrimitive,
+    T: CoordinateType + ToPrimitive,
 {
     type Output = Point<T>;
 
@@ -352,7 +360,7 @@ where
 
 impl<T> Add for Bbox<T>
 where
-    T: Float + ToPrimitive,
+    T: CoordinateType + ToPrimitive,
 {
     type Output = Bbox<T>;
 
@@ -398,7 +406,7 @@ where
 
 impl<T> AddAssign for Bbox<T>
 where
-    T: Float + ToPrimitive,
+    T: CoordinateType + ToPrimitive,
 {
     /// Add a BoundingBox to the given BoundingBox.
     ///
@@ -452,9 +460,9 @@ where
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPoint<T>(pub Vec<Point<T>>)
 where
-    T: Float;
+    T: CoordinateType;
 
-impl<T: Float, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
+impl<T: CoordinateType, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
     /// Convert a single `Point` (or something which can be converted to a `Point`) into a
     /// one-member `MultiPoint`
     fn from(x: IP) -> MultiPoint<T> {
@@ -462,7 +470,7 @@ impl<T: Float, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
     }
 }
 
-impl<T: Float, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
+impl<T: CoordinateType, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
     /// Convert a `Vec` of `Points` (or `Vec` of things which can be converted to a `Point`) into a
     /// `MultiPoint`.
     fn from(v: Vec<IP>) -> MultiPoint<T> {
@@ -470,7 +478,7 @@ impl<T: Float, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
     }
 }
 
-impl<T: Float, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
+impl<T: CoordinateType, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
     /// Collect the results of a `Point` iterator into a `MultiPoint`
     fn from_iter<I: IntoIterator<Item = IP>>(iter: I) -> Self {
         MultiPoint(iter.into_iter().map(|p| p.into()).collect())
@@ -478,7 +486,7 @@ impl<T: Float, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
 }
 
 /// Iterate over the `Point`s in this `MultiPoint`.
-impl<T: Float> IntoIterator for MultiPoint<T> {
+impl<T: CoordinateType> IntoIterator for MultiPoint<T> {
     type Item = Point<T>;
     type IntoIter = ::std::vec::IntoIter<Point<T>>;
 
@@ -491,7 +499,7 @@ impl<T: Float> IntoIterator for MultiPoint<T> {
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Line<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     pub start: Point<T>,
     pub end: Point<T>,
@@ -499,7 +507,7 @@ where
 
 impl<T> Line<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     /// Creates a new line segment.
     ///
@@ -556,9 +564,9 @@ where
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct LineString<T>(pub Vec<Point<T>>)
 where
-    T: Float;
+    T: CoordinateType;
 
-impl<T: Float> LineString<T> {
+impl<T: CoordinateType> LineString<T> {
     /// Return an `Line` iterator that yields one `Line` for each line segment
     /// in the `LineString`.
     ///
@@ -594,21 +602,21 @@ impl<T: Float> LineString<T> {
 }
 
 /// Turn a `Vec` of `Point`-ish objects into a `LineString`.
-impl<T: Float, IP: Into<Point<T>>> From<Vec<IP>> for LineString<T> {
+impl<T: CoordinateType, IP: Into<Point<T>>> From<Vec<IP>> for LineString<T> {
     fn from(v: Vec<IP>) -> Self {
         LineString(v.into_iter().map(|p| p.into()).collect())
     }
 }
 
 /// Turn a `Point`-ish iterator into a `LineString`.
-impl<T: Float, IP: Into<Point<T>>> FromIterator<IP> for LineString<T> {
+impl<T: CoordinateType, IP: Into<Point<T>>> FromIterator<IP> for LineString<T> {
     fn from_iter<I: IntoIterator<Item = IP>>(iter: I) -> Self {
         LineString(iter.into_iter().map(|p| p.into()).collect())
     }
 }
 
 /// Iterate over all the [Point](struct.Point.html)s in this linestring
-impl<T: Float> IntoIterator for LineString<T> {
+impl<T: CoordinateType> IntoIterator for LineString<T> {
     type Item = Point<T>;
     type IntoIter = ::std::vec::IntoIter<Point<T>>;
 
@@ -625,21 +633,21 @@ impl<T: Float> IntoIterator for LineString<T> {
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>)
 where
-    T: Float;
+    T: CoordinateType;
 
-impl<T: Float, ILS: Into<LineString<T>>> From<ILS> for MultiLineString<T> {
+impl<T: CoordinateType, ILS: Into<LineString<T>>> From<ILS> for MultiLineString<T> {
     fn from(ls: ILS) -> Self {
         MultiLineString(vec![ls.into()])
     }
 }
 
-impl<T: Float, ILS: Into<LineString<T>>> FromIterator<ILS> for MultiLineString<T> {
+impl<T: CoordinateType, ILS: Into<LineString<T>>> FromIterator<ILS> for MultiLineString<T> {
     fn from_iter<I: IntoIterator<Item = ILS>>(iter: I) -> Self {
         MultiLineString(iter.into_iter().map(|ls| ls.into()).collect())
     }
 }
 
-impl<T: Float> IntoIterator for MultiLineString<T> {
+impl<T: CoordinateType> IntoIterator for MultiLineString<T> {
     type Item = LineString<T>;
     type IntoIter = ::std::vec::IntoIter<LineString<T>>;
 
@@ -654,7 +662,7 @@ impl<T: Float> IntoIterator for MultiLineString<T> {
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Polygon<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     pub exterior: LineString<T>,
     pub interiors: Vec<LineString<T>>,
@@ -662,7 +670,7 @@ where
 
 impl<T> Polygon<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     /// Creates a new polygon.
     ///
@@ -693,21 +701,21 @@ where
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>)
 where
-    T: Float;
+    T: CoordinateType;
 
-impl<T: Float, IP: Into<Polygon<T>>> From<IP> for MultiPolygon<T> {
+impl<T: CoordinateType, IP: Into<Polygon<T>>> From<IP> for MultiPolygon<T> {
     fn from(x: IP) -> Self {
         MultiPolygon(vec![x.into()])
     }
 }
 
-impl<T: Float, IP: Into<Polygon<T>>> FromIterator<IP> for MultiPolygon<T> {
+impl<T: CoordinateType, IP: Into<Polygon<T>>> FromIterator<IP> for MultiPolygon<T> {
     fn from_iter<I: IntoIterator<Item = IP>>(iter: I) -> Self {
         MultiPolygon(iter.into_iter().map(|p| p.into()).collect())
     }
 }
 
-impl<T: Float> IntoIterator for MultiPolygon<T> {
+impl<T: CoordinateType> IntoIterator for MultiPolygon<T> {
     type Item = Polygon<T>;
     type IntoIter = ::std::vec::IntoIter<Polygon<T>>;
 
@@ -724,21 +732,21 @@ impl<T: Float> IntoIterator for MultiPolygon<T> {
 #[derive(PartialEq, Clone, Debug)]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
-    T: Float;
+    T: CoordinateType;
 
-impl<T: Float, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
+impl<T: CoordinateType, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
     fn from(x: IG) -> Self {
         GeometryCollection(vec![x.into()])
     }
 }
 
-impl<T: Float, IG: Into<Geometry<T>>> FromIterator<IG> for GeometryCollection<T> {
+impl<T: CoordinateType, IG: Into<Geometry<T>>> FromIterator<IG> for GeometryCollection<T> {
     fn from_iter<I: IntoIterator<Item = IG>>(iter: I) -> Self {
         GeometryCollection(iter.into_iter().map(|g| g.into()).collect())
     }
 }
 
-impl<T: Float> IntoIterator for GeometryCollection<T> {
+impl<T: CoordinateType> IntoIterator for GeometryCollection<T> {
     type Item = Geometry<T>;
     type IntoIter = ::std::vec::IntoIter<Geometry<T>>;
 
@@ -754,7 +762,7 @@ impl<T: Float> IntoIterator for GeometryCollection<T> {
 #[derive(PartialEq, Clone, Debug)]
 pub enum Geometry<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     Point(Point<T>),
     Line(Line<T>),
@@ -802,39 +810,38 @@ impl<F: Float> Closest<F> {
     }
 }
 
-impl<T: Float> From<Point<T>> for Geometry<T> {
+impl<T: CoordinateType> From<Point<T>> for Geometry<T> {
     fn from(x: Point<T>) -> Geometry<T> {
         Geometry::Point(x)
     }
 }
-impl<T: Float> From<LineString<T>> for Geometry<T> {
+impl<T: CoordinateType> From<LineString<T>> for Geometry<T> {
     fn from(x: LineString<T>) -> Geometry<T> {
         Geometry::LineString(x)
     }
 }
-impl<T: Float> From<Polygon<T>> for Geometry<T> {
+impl<T: CoordinateType> From<Polygon<T>> for Geometry<T> {
     fn from(x: Polygon<T>) -> Geometry<T> {
         Geometry::Polygon(x)
     }
 }
-impl<T: Float> From<MultiPoint<T>> for Geometry<T> {
+impl<T: CoordinateType> From<MultiPoint<T>> for Geometry<T> {
     fn from(x: MultiPoint<T>) -> Geometry<T> {
         Geometry::MultiPoint(x)
     }
 }
-impl<T: Float> From<MultiLineString<T>> for Geometry<T> {
+impl<T: CoordinateType> From<MultiLineString<T>> for Geometry<T> {
     fn from(x: MultiLineString<T>) -> Geometry<T> {
         Geometry::MultiLineString(x)
     }
 }
-impl<T: Float> From<MultiPolygon<T>> for Geometry<T> {
+impl<T: CoordinateType> From<MultiPolygon<T>> for Geometry<T> {
     fn from(x: MultiPolygon<T>) -> Geometry<T> {
         Geometry::MultiPolygon(x)
     }
 }
 
-impl<T: Float> Geometry<T> {
-
+impl<T: CoordinateType> Geometry<T> {
     /// If this Geometry is a Point, then return that, else None.
     ///
     /// ```
@@ -967,5 +974,14 @@ mod test {
 
         let _: LineString<_> = vec![(0., 0.), (1., 2.)].into();
         let _: LineString<_> = vec![(0., 0.), (1., 2.)].into_iter().collect();
+    }
+
+    #[test]
+    fn test_coordinate_types() {
+        let p: Point<u8> = Point::new(0, 0);
+        assert_eq!(p.x(), 0u8);
+
+        let p: Point<i64> = Point::new(1_000_000, 0);
+        assert_eq!(p.x(), 1_000_000i64);
     }
 }
