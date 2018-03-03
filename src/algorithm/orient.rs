@@ -1,5 +1,4 @@
-use num_traits::Float;
-use types::{MultiPolygon, Polygon};
+use types::{CoordinateType, MultiPolygon, Polygon};
 
 use algorithm::winding_order::{Winding, WindingOrder};
 
@@ -35,7 +34,7 @@ pub trait Orient<T> {
 
 impl<T> Orient<T> for Polygon<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     fn orient(&self, direction: Direction) -> Polygon<T> {
         orient(self, direction)
@@ -44,7 +43,7 @@ where
 
 impl<T> Orient<T> for MultiPolygon<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     fn orient(&self, direction: Direction) -> MultiPolygon<T> {
         MultiPolygon(self.0.iter().map(|poly| poly.orient(direction)).collect())
@@ -67,7 +66,7 @@ pub enum Direction {
 // and the interior ring(s) will be oriented clockwise
 fn orient<T>(poly: &Polygon<T>, direction: Direction) -> Polygon<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     let interiors = poly.interiors.iter().map(|l| l.clone_to_winding_order(
             match direction {
