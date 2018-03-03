@@ -1,6 +1,6 @@
 use num_traits::{Float, ToPrimitive};
 
-use types::{Bbox, Line, LineString, MultiPolygon, Point, Polygon, COORD_PRECISION};
+use types::{COORD_PRECISION, CoordinateType, Point, Line, LineString, Polygon, MultiPolygon, Bbox};
 use algorithm::intersects::Intersects;
 use algorithm::distance::Distance;
 
@@ -246,7 +246,7 @@ where
 
 impl<T> Contains<Point<T>> for Bbox<T>
 where
-    T: Float,
+    T: CoordinateType
 {
     fn contains(&self, p: &Point<T>) -> bool {
         p.x() >= self.xmin && p.x() <= self.xmax && p.y() >= self.ymin && p.y() <= self.ymax
@@ -255,7 +255,7 @@ where
 
 impl<T> Contains<Bbox<T>> for Bbox<T>
 where
-    T: Float,
+    T: CoordinateType
 {
     fn contains(&self, bbox: &Bbox<T>) -> bool {
         // All points of LineString must be in the polygon ?
@@ -599,5 +599,16 @@ mod test {
         assert!(linestring0.contains(&line0));
         assert!(linestring1.contains(&line0));
         assert!(!linestring2.contains(&line0));
+    }
+
+    #[test]
+    fn integer_bboxs() {
+        let p: Point<i32> = Point::new(10, 20);
+        let bbox: Bbox<i32> = Bbox{ xmin: 0, ymin:0, xmax: 100, ymax: 100 };
+        assert!(bbox.contains(&p));
+        assert!(!bbox.contains(&Point::new(-10, -10)));
+
+        let smaller_bbox: Bbox<i32> = Bbox{ xmin: 10, ymin: 10, xmax: 20, ymax: 20 };
+        assert!(bbox.contains(&smaller_bbox));
     }
 }
