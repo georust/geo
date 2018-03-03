@@ -1,10 +1,8 @@
-use num_traits::Float;
-
-use types::{Bbox, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use types::{CoordinateType, Bbox, Point, MultiPoint, Line, LineString, MultiLineString, Polygon, MultiPolygon};
 
 /// Calculation of the bounding box of a geometry.
 
-pub trait BoundingBox<T: Float> {
+pub trait BoundingBox<T: CoordinateType> {
     type Output;
 
     /// Return the Bounding Box of a geometry
@@ -31,7 +29,7 @@ pub trait BoundingBox<T: Float> {
 
 fn get_min_max<T>(p: T, min: T, max: T) -> (T, T)
 where
-    T: Float,
+    T: CoordinateType,
 {
     if p > max {
         (min, p)
@@ -44,8 +42,8 @@ where
 
 fn get_bbox<'a, I, T>(collection: I) -> Option<Bbox<T>>
 where
-    T: 'a + Float,
-    I: 'a + IntoIterator<Item = &'a Point<T>>,
+    T: 'a + CoordinateType,
+    I: 'a + IntoIterator<Item = &'a Point<T>>
 {
     let mut iter = collection.into_iter();
     if let Some(pnt) = iter.next() {
@@ -68,7 +66,7 @@ where
 
 impl<T> BoundingBox<T> for MultiPoint<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     type Output = Option<Bbox<T>>;
 
@@ -82,7 +80,7 @@ where
 
 impl<T> BoundingBox<T> for Line<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     type Output = Bbox<T>;
 
@@ -110,7 +108,7 @@ where
 
 impl<T> BoundingBox<T> for LineString<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     type Output = Option<Bbox<T>>;
 
@@ -124,7 +122,7 @@ where
 
 impl<T> BoundingBox<T> for MultiLineString<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     type Output = Option<Bbox<T>>;
 
@@ -138,7 +136,7 @@ where
 
 impl<T> BoundingBox<T> for Polygon<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     type Output = Option<Bbox<T>>;
 
@@ -153,7 +151,7 @@ where
 
 impl<T> BoundingBox<T> for MultiPolygon<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     type Output = Option<Bbox<T>>;
 
