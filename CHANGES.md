@@ -1,5 +1,12 @@
 # Changes
 
+## 0.7.2
+
+* [Easy methods to convert a Geometry to the underlying type](https://github.com/georust/rust-geo/pull/184)
+* [Map coords inplace](https://github.com/georust/rust-geo/pull/170)
+* [Added bearing trait]https://github.com/georust/rust-geo/pull/186)
+* [Winding/Orientation for LineStrings](https://github.com/georust/rust-geo/pull/169)
+
 ## 0.7.1
 
 * [Add Haversine length algorithm](https://github.com/georust/rust-geo/pull/183)
