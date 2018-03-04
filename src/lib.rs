@@ -22,6 +22,7 @@ extern crate approx;
 /// crate. Typically imported with `use geo::prelude::*`.
 pub mod prelude {
     pub use algorithm::area::Area;
+    pub use algorithm::bearing::Bearing;
     pub use algorithm::boundingbox::BoundingBox;
     pub use algorithm::centroid::Centroid;
     pub use algorithm::contains::Contains;

@@ -6,6 +6,8 @@ pub mod contains;
 pub mod intersects;
 /// Returns the area of the surface of a geometry.
 pub mod area;
+/// Returns the bearing to another Point in degrees.
+pub mod bearing;
 /// Returns the length of a line.
 pub mod length;
 /// Returns the Euclidean distance between two geometries.
