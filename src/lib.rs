@@ -2,6 +2,7 @@ extern crate num_traits;
 #[macro_use]
 extern crate serde_derive;
 extern crate spade;
+extern crate proj;
 #[cfg(feature = "postgis-integration")]
 extern crate postgis;
 
