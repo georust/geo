@@ -1,4 +1,4 @@
-use num_traits::Float;
+use types::CoordinateType;
 use algorithm::map_coords::{MapCoords, MapCoordsInplace};
 
 pub trait Translate<T> {
@@ -22,14 +22,14 @@ pub trait Translate<T> {
     /// let correct_ls = LineString(correct);
     /// assert_eq!(translated, correct_ls);
     /// ```
-    fn translate(&self, xoff: T, yoff: T) -> Self where T: Float;
+    fn translate(&self, xoff: T, yoff: T) -> Self where T: CoordinateType;
 
     /// Translate a Geometry along its axes, but in place.
-    fn translate_inplace(&mut self, xoff: T, yoff: T) where T: Float;
+    fn translate_inplace(&mut self, xoff: T, yoff: T) where T: CoordinateType;
 }
 
 impl<T, G> Translate<T> for G
-    where T: Float,
+    where T: CoordinateType,
         G: MapCoords<T, T, Output=G>+MapCoordsInplace<T>
 {
     fn translate(&self, xoff: T, yoff: T) -> Self {

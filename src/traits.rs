@@ -1,7 +1,8 @@
 pub use Geometry;
 
-use num_traits::Float;
+use types::CoordinateType;
 
-pub trait ToGeo<T: Float> {
+pub trait ToGeo<T: CoordinateType>
+{
     fn to_geo(&self) -> Geometry<T>;
 }

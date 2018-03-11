@@ -1,7 +1,6 @@
-use num_traits::Float;
-use types::{LineString, Point};
+use types::{CoordinateType, LineString, Point};
 
-pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T where T: Float {
+pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T where T: CoordinateType {
     if linestring.0.is_empty() || linestring.0.len() == 1 {
         return T::zero();
     }
@@ -22,7 +21,7 @@ pub enum WindingOrder {
 
 
 /// Calculate, and work with, the winding order
-pub trait Winding<T> where T: Float
+pub trait Winding<T> where T: CoordinateType
 {
     /// Return the winding order of this object
     fn winding_order(&self) -> Option<WindingOrder>;
@@ -74,7 +73,7 @@ pub trait Winding<T> where T: Float
 
 
 impl<T> Winding<T> for LineString<T>
-    where T: Float
+    where T: CoordinateType
 {
 
     /// Returns the winding order of this line
