@@ -67,13 +67,6 @@ where
     }
 }
 
-// positive implies a -> b -> c is counter-clockwise, negative implies clockwise
-fn cross_prod<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
-where
-    T: Float,
-{
-    (p_b.x() - p_a.x()) * (p_c.y() - p_a.y()) - (p_b.y() - p_a.y()) * (p_c.x() - p_a.x())
-}
 
 // wrapper for extreme-finding function
 fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes, ()>
@@ -96,9 +89,10 @@ where
         .map(|(idx, _)| {
             let prev_1 = polygon.previous_vertex(&idx);
             let prev_2 = polygon.previous_vertex(&prev_1);
-            cross_prod(&polygon.exterior.0[prev_2],
-                       &polygon.exterior.0[prev_1],
-                       &polygon.exterior.0[idx])
+            polygon.exterior.0[prev_2].cross_prod(
+                &polygon.exterior.0[prev_1],
+                &polygon.exterior.0[idx]
+            )
         })
         // accumulate and check cross-product result signs in a single pass
         // positive implies ccw convexity, negative implies cw convexity
