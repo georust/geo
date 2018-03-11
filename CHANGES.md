@@ -1,5 +1,9 @@
 # Changes
 
+## 0.7.3
+
+* [Allow coordinates to be more types (not just `Float`s)](https://github.com/georust/rust-geo/pull/187)
+
 ## 0.7.2
 
 * [Easy methods to convert a Geometry to the underlying type](https://github.com/georust/rust-geo/pull/184)
