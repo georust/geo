@@ -23,6 +23,7 @@ proj = { version = "0.3", optional = true }
 [features]
 default = []
 postgis-integration = ["postgis"]
+reprojection = ["proj"]
 
 [dev-dependencies]
 approx = "0.1.1"

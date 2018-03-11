@@ -46,6 +46,6 @@ pub mod to_postgis;
 pub mod haversine_length;
 /// Calculate, and work with, the winding order of Linestrings
 pub mod winding_order;
-/// Apply a projection transformation to a Geometry
+/// Apply a coordinate projection transformation to a Geometry using `rust-proj`
 #[cfg(feature = "reprojection")]
 pub mod reproject;
