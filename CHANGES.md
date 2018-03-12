@@ -1,5 +1,9 @@
 # Changes
 
+## 0.7.4
+
+* [`cross_prod` method added to `Point`](https://github.com/georust/rust-geo/pull/189)
+
 ## 0.7.3
 
 * [Allow coordinates to be more types (not just `Float`s)](https://github.com/georust/rust-geo/pull/187)
