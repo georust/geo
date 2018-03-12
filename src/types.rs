@@ -254,7 +254,12 @@ where
         self.x() * point.x() + self.y() * point.y()
     }
 
-    /// Returns the cross product of 3 points
+    /// Returns the cross product of 3 points. A positive value implies
+    /// `self` → `point_b` → `point_c` is counter-clockwise, negative implies
+    /// clockwise.
+    /// 
+    /// # Examples
+    ///
     /// ```
     /// use geo::Point;
     /// 
@@ -266,12 +271,12 @@ where
     /// 
     /// assert_eq!(cross, 2.0)
     /// ```
-    /// A positive value implies self → point_b → point_c is counter-clockwise, negative implies clockwise.
     pub fn cross_prod(&self, point_b: &Point<T>, point_c: &Point<T>) -> T
     where
         T: Float,
     {
-        (point_b.x() - self.x()) * (point_c.y() - self.y()) - (point_b.y() - self.y()) * (point_c.x() - self.x())
+        (point_b.x() - self.x()) * (point_c.y() - self.y()) -
+            (point_b.y() - self.y()) * (point_c.x() - self.x())
     }
     
     /// Convert this `Point` into a tuple of its `x` and `y` coordinates.
