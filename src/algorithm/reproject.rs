@@ -6,7 +6,8 @@ use proj::Proj;
 
 /// Reproject the coordinates of a `Geometry` using `rust-proj`
 pub trait Reproject<T> {
-    /// Projects (or inverse-projects) the coordinates using 
+    /// Projects (or inverse-projects) the coordinates using the specified
+    /// source and destination projections
     fn reproject(&self, source_proj: &Proj, dest_proj: &Proj) -> Self
     where
         T: Float;
