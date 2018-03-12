@@ -266,6 +266,7 @@ where
     /// 
     /// assert_eq!(cross, 2.0)
     /// ```
+    /// A positive value implies self → point_b → point_c is counter-clockwise, negative implies clockwise.
     pub fn cross_prod(&self, point_b: &Point<T>, point_c: &Point<T>) -> T
     where
         T: Float,
