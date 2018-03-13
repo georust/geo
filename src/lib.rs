@@ -2,6 +2,8 @@ extern crate num_traits;
 #[macro_use]
 extern crate serde_derive;
 extern crate spade;
+#[cfg(feature = "reprojection")]
+extern crate proj;
 #[cfg(feature = "postgis-integration")]
 extern crate postgis;
 
@@ -45,4 +47,6 @@ pub mod prelude {
     pub use algorithm::from_postgis::FromPostgis;
     #[cfg(feature = "postgis-integration")]
     pub use algorithm::to_postgis::ToPostgis;
+    #[cfg(feature = "reprojection")]
+    pub use algorithm::reproject::Reproject;
 }
