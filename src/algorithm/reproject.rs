@@ -1,16 +1,16 @@
 use num_traits::Float;
-use types::Point;
+use types::{CoordinateType, Point};
 use algorithm::map_coords::MapCoords;
 
 use proj::Proj;
 
-/// Reproject the coordinates of a `Geometry` using `rust-proj`
+/// Project or transform the coordinates of a `Geometry` using `rust-proj`
 pub trait Reproject<T> {
     /// Projects (or inverse-projects) the coordinates using the specified
     /// source and destination projections
     fn reproject(&self, source_proj: &Proj, dest_proj: &Proj) -> Self
     where
-        T: Float;
+        T: CoordinateType;
 }
 
 impl<T, G> Reproject<T> for G
