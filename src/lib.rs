@@ -8,7 +8,6 @@ extern crate postgis;
 extern crate proj_sys;
 #[cfg(feature = "proj")]
 extern crate libc;
-#[cfg(feature = "proj")]
 #[macro_use]
 extern crate failure;
 
