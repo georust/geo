@@ -4,6 +4,7 @@ extern crate serde_derive;
 extern crate spade;
 #[cfg(feature = "postgis-integration")]
 extern crate postgis;
+extern crate failure;
 
 pub use traits::ToGeo;
 pub use types::*;
