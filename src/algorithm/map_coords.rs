@@ -520,7 +520,6 @@ impl<T: CoordinateType> MapCoordsInplaceFallible<T> for GeometryCollection<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    // use Failure::format_err;
 
     #[test]
     fn point() {
