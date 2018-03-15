@@ -758,4 +758,43 @@ mod test {
                 .is_ok()
         );
     }
+    #[test]
+    fn test_fallible() {
+        // this should produce an error
+        let bad_ls: LineString<_> = vec![
+            Point::new(1.0, 1.0),
+            Point::new(2.0, 2.0),
+            Point::new(3.0, 3.0),
+        ].into();
+        // this should be fine
+        let good_ls: LineString<_> = vec![
+            Point::new(1.0, 1.0),
+            Point::new(2.1, 2.0),
+            Point::new(3.0, 3.0),
+        ].into();
+        let bad = bad_ls.map_coords_fallible(&|&(x, y)| {
+            if x != 2.0 {
+                Ok((x * 2., y + 100.))
+            } else {
+                Err(format_err!("Ugh"))
+            }
+        });
+        assert!(bad.is_err());
+        let good = good_ls.map_coords_fallible(&|&(x, y)| {
+            if x != 2.0 {
+                Ok((x * 2., y + 100.))
+            } else {
+                Err(format_err!("Ugh"))
+            }
+        });
+        assert!(good.is_ok());
+        assert_eq!(
+            good.unwrap(),
+            vec![
+                Point::new(2., 101.),
+                Point::new(4.2, 102.),
+                Point::new(6.0, 103.),
+            ].into()
+        );
+    }
 }
