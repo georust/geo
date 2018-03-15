@@ -26,7 +26,7 @@ use proj_sys::proj_errno;
 use libc::{c_char, c_double, c_int};
 use std::ffi::CString;
 use types::{CoordinateType, Point};
-use algorithm::map_coords::MapCoordsFallible;
+use algorithm::map_coords::{MapCoordsFallible, MapCoordsInplaceFallible};
 use std::ffi::CStr;
 use std::str;
 use failure::Error;
@@ -296,6 +296,15 @@ where
             Ok((reprojected.x(), reprojected.y()))
         })
     }
+}
+
+pub trait ConvertInplace<T> {
+    /// Convert or transform the geometry's coordinates in-place using the specified
+    /// PROJ operation
+    fn convert_inplace(&mut self, proj: &Proj) -> Result<(), Error>
+    where
+        T: CoordinateType,
+        Self: Sized;
 }
 
 #[cfg(test)]
