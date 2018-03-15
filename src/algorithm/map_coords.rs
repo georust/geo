@@ -78,6 +78,8 @@ pub trait MapCoordsInplace<T> {
 }
 
 /// Map a fallible function over the coordinates in a geometry, mutating them
+/// **NOTE**: If the result is `Err`, at least one of the coordinate transformation
+/// operations was unsuccessful, and the geometry is now in an inconsistent state.
 pub trait MapCoordsInplaceFallible<T> {
     /// Map a fallible function over the coordinates in a geometry, mutating them
     ///
@@ -518,6 +520,7 @@ impl<T: CoordinateType> MapCoordsInplaceFallible<T> for GeometryCollection<T> {
 #[cfg(test)]
 mod test {
     use super::*;
+    // use Failure::format_err;
 
     #[test]
     fn point() {
@@ -723,4 +726,37 @@ mod test {
         assert_eq!(p2.y(), 2f32);
     }
 
+    #[test]
+    fn test_fallible_inplace() {
+        // this should produce an error
+        let mut bad_ls: LineString<_> = vec![
+            Point::new(1.0, 1.0),
+            Point::new(2.0, 2.0),
+            Point::new(3.0, 3.0),
+        ].into();
+        // this should be fine
+        let mut good_ls: LineString<_> = vec![
+            Point::new(1.0, 1.0),
+            Point::new(2.1, 2.0),
+            Point::new(3.0, 3.0),
+        ].into();
+        assert!(
+            bad_ls
+                .map_coords_inplace_fallible(&|&(x, y)| if x != 2.0 {
+                    Ok((x * 2., y + 100.))
+                } else {
+                    Err(format_err!("Ugh"))
+                })
+                .is_err()
+        );
+        assert!(
+            good_ls
+                .map_coords_inplace_fallible(&|&(x, y)| if x != 2.0 {
+                    Ok((x * 2., y + 100.))
+                } else {
+                    Err(format_err!("Ugh"))
+                })
+                .is_ok()
+        );
+    }
 }
