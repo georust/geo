@@ -6,10 +6,11 @@ use std::ops::Sub;
 use std::fmt::Debug;
 
 use std::iter::{self, FromIterator, Iterator};
-
+use algorithm::boundingbox::BoundingBox;
+use algorithm::distance::Distance;
 use spade::SpadeNum;
-use spade::{PointN, TwoDimensional};
 use num_traits::{Float, Num, NumCast, ToPrimitive};
+use spade::{BoundingRect, PointN, SpatialObject, TwoDimensional};
 
 /// The type of an x or y value of a point/coordinate.
 ///
@@ -552,6 +553,30 @@ where
     }
 }
 
+impl<T> SpatialObject for Line<T>
+where
+    T: Float + SpadeNum + Debug,
+{
+    type Point = Point<T>;
+
+    fn mbr(&self) -> BoundingRect<Self::Point> {
+        let bbox = self.bbox();
+        BoundingRect::from_corners(
+            &Point::new(bbox.xmin, bbox.ymin),
+            &Point::new(bbox.xmax, bbox.ymax),
+        )
+    }
+
+    fn distance2(&self, point: &Self::Point) -> <Self::Point as PointN>::Scalar {
+        let d = self.distance(point);
+        if d == T::zero() {
+            d
+        } else {
+            d.powi(2)
+        }
+    }
+}
+
 /// An ordered collection of two or more [`Point`s](struct.Point.html), representing a path between locations
 ///
 /// Create a `LineString` by calling it directly:
@@ -940,6 +965,7 @@ impl<T: CoordinateType> Geometry<T> {
 
 #[cfg(test)]
 mod test {
+    use spade::primitives::SimpleEdge;
     use types::*;
 
     #[test]
@@ -1008,5 +1034,18 @@ mod test {
 
         let p: Point<i64> = Point::new(1_000_000, 0);
         assert_eq!(p.x(), 1_000_000i64);
+    }
+
+    #[test]
+    /// ensure Line's SpatialObject impl is correct
+    fn line_test() {
+        let se = SimpleEdge::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
+        let l = Line::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
+        assert_eq!(se.mbr(), l.mbr());
+        // difference in 15th decimal place
+        assert_relative_eq!(
+            se.distance2(&Point::new(4.0, 10.0)),
+            l.distance2(&Point::new(4.0, 10.0))
+        );
     }
 }

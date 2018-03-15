@@ -1,15 +1,14 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use num_traits::Float;
-use types::{LineString, MultiLineString, MultiPolygon, Point, Polygon};
+use types::{Line, LineString, MultiLineString, MultiPolygon, Point, Polygon};
 use algorithm::boundingbox::BoundingBox;
 
 use spade::SpadeFloat;
-use spade::primitives::SimpleEdge;
 use spade::BoundingRect;
 use spade::rtree::RTree;
 
-// Store triangle information
+/// Store triangle information
 // current is the candidate point for removal
 #[derive(Debug)]
 struct VScore<T>
@@ -60,12 +59,14 @@ where
     }
 }
 
-// Geometries that can be simplified using the topology-preserving variant
+/// Geometries that can be simplified using the topology-preserving variant
 #[derive(Debug, Clone, Copy)]
 enum GeomType {
     Line,
     Ring,
 }
+
+/// Settings for Ring and Line geometries
 // initial min: if we ever have fewer than these, stop immediately
 // min_points: if we detect a self-intersection before point removal, and we only
 // have min_points left, stop: since a self-intersection causes removal of the spatially previous
@@ -201,16 +202,12 @@ where
 {
     let mut rings = vec![];
     // Populate R* tree with exterior line segments
-    let ls = exterior
-        .lines()
-        .map(|line| SimpleEdge::new(line.start, line.end))
-        .collect();
-    let mut tree: RTree<SimpleEdge<_>> = RTree::bulk_load(ls);
+    let mut tree: RTree<Line<_>> = RTree::bulk_load(exterior.lines().collect());
     // and with interior segments, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
             for line in ring.lines() {
-                tree.insert(SimpleEdge::new(line.start, line.end));
+                tree.insert(line);
             }
         }
     }
@@ -231,12 +228,12 @@ where
 }
 
 /// Visvalingam-Whyatt with self-intersection detection to preserve topologies
-// this is a port of the technique at https://www.jasondavies.com/simplify/
+/// this is a port of the technique at https://www.jasondavies.com/simplify/
 fn visvalingam_preserve<T>(
     geomtype: &GeomSettings,
     orig: &[Point<T>],
     epsilon: &T,
-    tree: &mut RTree<SimpleEdge<Point<T>>>,
+    tree: &mut RTree<Line<T>>,
 ) -> Vec<Point<T>>
 where
     T: Float + SpadeFloat,
@@ -347,14 +344,8 @@ where
                 intersector: false,
             };
             // add re-computed line segments to the tree
-            tree.insert(SimpleEdge::new(
-                orig[ai as usize],
-                orig[current_point as usize],
-            ));
-            tree.insert(SimpleEdge::new(
-                orig[current_point as usize],
-                orig[bi as usize],
-            ));
+            tree.insert(Line::new(orig[ai as usize], orig[current_point as usize]));
+            tree.insert(Line::new(orig[current_point as usize], orig[bi as usize]));
             // push re-computed triangle onto heap
             pq.push(new_triangle);
         }
@@ -366,7 +357,7 @@ where
         .collect::<Vec<Point<T>>>()
 }
 
-// is p1 -> p2 -> p3 wound counterclockwise?
+/// is p1 -> p2 -> p3 wound counterclockwise?
 fn ccw<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> bool
 where
     T: Float,
@@ -374,7 +365,7 @@ where
     (p3.y() - p1.y()) * (p2.x() - p1.x()) > (p2.y() - p1.y()) * (p3.x() - p1.x())
 }
 
-// checks whether line segments with p1-p4 as their start and endpoints touch or cross
+/// checks whether line segments with p1-p4 as their start and endpoints touch or cross
 fn cartesian_intersect<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>, p4: &Point<T>) -> bool
 where
     T: Float,
@@ -382,8 +373,8 @@ where
     (ccw(p1, p3, p4) ^ ccw(p2, p3, p4)) & (ccw(p1, p2, p3) ^ ccw(p1, p2, p4))
 }
 
-// check whether a triangle's edges intersect with any other edges of the LineString
-fn tree_intersect<T>(tree: &RTree<SimpleEdge<Point<T>>>, triangle: &VScore<T>, orig: &[Point<T>]) -> bool
+/// check whether a triangle's edges intersect with any other edges of the LineString
+fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T>, orig: &[Point<T>]) -> bool
 where
     T: Float + SpadeFloat,
 {
@@ -401,8 +392,8 @@ where
     let candidates = tree.lookup_in_rectangle(&BoundingRect::from_corners(&br, &tl));
     candidates.iter().any(|c| {
         // triangle start point, end point
-        let ca = c.from;
-        let cb = c.to;
+        let ca = c.start;
+        let cb = c.end;
         if ca != point_a && ca != point_c && cb != point_a && cb != point_c
             && cartesian_intersect(&ca, &cb, &point_a, &point_c)
         {
@@ -414,7 +405,7 @@ where
     })
 }
 
-// Area of a triangle given three vertices
+/// Area of a triangle given three vertices
 fn area<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> T
 where
     T: Float,
