@@ -8,9 +8,7 @@ use std::fmt::Debug;
 use std::iter::{self, FromIterator, Iterator};
 use algorithm::boundingbox::BoundingBox;
 use algorithm::distance::Distance;
-use num_traits::{Float, ToPrimitive};
 use spade::SpadeNum;
-use spade::{PointN, TwoDimensional};
 use num_traits::{Float, Num, NumCast, ToPrimitive};
 use spade::{BoundingRect, PointN, SpatialObject, TwoDimensional};
 
