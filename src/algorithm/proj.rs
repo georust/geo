@@ -20,7 +20,7 @@
 //! conversions according to the standard, they are treated as
 //! separate entities in PROJ.
 //!
-//! The `Project` and `Convert` traits are available to any `Geometry` implementing `MapCoords`.
+//! The `Project` and `Convert` traits are available to any `Geometry` implementing `MapCoordsFallible`.
 use std::marker::Sized;
 use proj_sys::proj_errno;
 use libc::{c_char, c_double, c_int};
