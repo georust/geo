@@ -51,6 +51,6 @@ pub mod prelude {
     pub use algorithm::from_postgis::FromPostgis;
     #[cfg(feature = "postgis-integration")]
     pub use algorithm::to_postgis::ToPostgis;
-    #[cfg(feature = "projection")]
-    pub use algorithm::projection::{Proj};
+    #[cfg(feature = "proj")]
+    pub use algorithm::proj::{Proj};
 }
