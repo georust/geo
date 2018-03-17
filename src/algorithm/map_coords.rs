@@ -727,6 +727,13 @@ mod test {
 
     #[test]
     fn test_fallible_inplace() {
+        let f = |x: f64, y: f64| {
+            if x != 2.0 {
+                Ok((x * 2., y + 100.))
+            } else {
+                Err(format_err!("Ugh"))
+            }
+        };
         // this should produce an error
         let mut bad_ls: LineString<_> = vec![
             Point::new(1.0, 1.0),
@@ -741,25 +748,24 @@ mod test {
         ].into();
         assert!(
             bad_ls
-                .map_coords_inplace_fallible(&|&(x, y)| if x != 2.0 {
-                    Ok((x * 2., y + 100.))
-                } else {
-                    Err(format_err!("Ugh"))
-                })
+                .map_coords_inplace_fallible(&|&(x, y)| f(x, y))
                 .is_err()
         );
         assert!(
             good_ls
-                .map_coords_inplace_fallible(&|&(x, y)| if x != 2.0 {
-                    Ok((x * 2., y + 100.))
-                } else {
-                    Err(format_err!("Ugh"))
-                })
+                .map_coords_inplace_fallible(&|&(x, y)| f(x, y))
                 .is_ok()
         );
     }
     #[test]
     fn test_fallible() {
+        let f = |x: f64, y: f64| {
+            if x != 2.0 {
+                Ok((x * 2., y + 100.))
+            } else {
+                Err(format_err!("Ugh"))
+            }
+        };
         // this should produce an error
         let bad_ls: LineString<_> = vec![
             Point::new(1.0, 1.0),
@@ -772,21 +778,9 @@ mod test {
             Point::new(2.1, 2.0),
             Point::new(3.0, 3.0),
         ].into();
-        let bad = bad_ls.map_coords_fallible(&|&(x, y)| {
-            if x != 2.0 {
-                Ok((x * 2., y + 100.))
-            } else {
-                Err(format_err!("Ugh"))
-            }
-        });
+        let bad = bad_ls.map_coords_fallible(&|&(x, y)| f(x, y));
         assert!(bad.is_err());
-        let good = good_ls.map_coords_fallible(&|&(x, y)| {
-            if x != 2.0 {
-                Ok((x * 2., y + 100.))
-            } else {
-                Err(format_err!("Ugh"))
-            }
-        });
+        let good = good_ls.map_coords_fallible(&|&(x, y)| f(x, y));
         assert!(good.is_ok());
         assert_eq!(
             good.unwrap(),
