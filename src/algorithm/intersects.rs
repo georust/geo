@@ -181,7 +181,7 @@ where
             true
         } else {
             // or if it's contained in the polygon
-            linestring.0.iter().any(|point| self.contains(point))
+            linestring.iter().any(|point| self.contains(point))
         }
     }
 }

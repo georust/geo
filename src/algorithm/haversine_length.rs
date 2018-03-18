@@ -45,6 +45,6 @@ impl<T> HaversineLength<T> for MultiLineString<T>
     where T: Float + FromPrimitive
 {
     fn haversine_length(&self) -> T {
-        self.0.iter().fold(T::zero(), |total, line| total + line.haversine_length())
+        self.iter().fold(T::zero(), |total, line| total + line.haversine_length())
     }
 }

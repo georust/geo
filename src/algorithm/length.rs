@@ -48,11 +48,8 @@ where
     T: Float,
 {
     fn length(&self) -> T {
-        self.0
-            .iter()
-            .fold(T::zero(), |total, line| {
-                total + line.length()
-            })
+        self.iter()
+            .fold(T::zero(), |total, line| total + line.length())
     }
 }
 

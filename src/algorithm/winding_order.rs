@@ -98,8 +98,8 @@ impl<T> Winding<T> for LineString<T>
     /// order, so that the resultant order makes it appear clockwise
     fn points_cw<'a>(&'a self) -> Box<Iterator<Item=&'a Point<T>> + 'a> {
         match self.winding_order() {
-            Some(WindingOrder::CounterClockwise) => Box::new(self.0.iter().rev()),
-            _ => Box::new(self.0.iter()),
+            Some(WindingOrder::CounterClockwise) => Box::new(self.iter().rev()),
+            _ => Box::new(self.iter()),
         }
     }
 
@@ -109,8 +109,8 @@ impl<T> Winding<T> for LineString<T>
     /// order, so that the resultant order makes it appear counter-clockwise
     fn points_ccw<'a>(&'a self) -> Box<Iterator<Item=&'a Point<T>> + 'a> {
         match self.winding_order() {
-            Some(WindingOrder::Clockwise) => Box::new(self.0.iter().rev()),
-            _ => Box::new(self.0.iter()),
+            Some(WindingOrder::Clockwise) => Box::new(self.iter().rev()),
+            _ => Box::new(self.iter()),
         }
     }
 
@@ -118,7 +118,7 @@ impl<T> Winding<T> for LineString<T>
     fn make_cw_winding(&mut self) {
         match self.winding_order() {
             Some(WindingOrder::CounterClockwise) => {
-                self.0.reverse();
+                self.reverse();
             },
             _ => {},
         }
@@ -128,7 +128,7 @@ impl<T> Winding<T> for LineString<T>
     fn make_ccw_winding(&mut self) {
         match self.winding_order() {
             Some(WindingOrder::Clockwise) => {
-                self.0.reverse();
+                self.reverse();
             },
             _ => {}
         }

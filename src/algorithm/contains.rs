@@ -96,7 +96,7 @@ where
     T: Float,
 {
     fn contains(&self, linestring: &LineString<T>) -> bool {
-        linestring.0.iter().all(|pt| self.contains(pt))
+        linestring.iter().all(|pt| self.contains(pt))
     }
 }
 
@@ -200,7 +200,7 @@ where
     T: Float,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        self.0.iter().any(|poly| poly.contains(p))
+        self.iter().any(|poly| poly.contains(p))
     }
 }
 
@@ -232,7 +232,7 @@ where
 {
     fn contains(&self, linestring: &LineString<T>) -> bool {
         // All LineString points must be inside the Polygon
-        if linestring.0.iter().all(|point| self.contains(point)) {
+        if linestring.iter().all(|point| self.contains(point)) {
             // The Polygon interior is allowed to intersect with the LineString
             // but the Polygon's rings are not
             !self.interiors

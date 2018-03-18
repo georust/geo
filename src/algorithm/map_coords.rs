@@ -139,7 +139,7 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for LineString<T> {
     type Output = LineString<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
-        LineString(self.0.iter().map(|p| p.map_coords(func)).collect())
+        LineString(self.iter().map(|p| p.map_coords(func)).collect())
     }
 }
 
@@ -158,8 +158,9 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for LineString<T
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for LineString<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        for p in self.0.iter_mut() {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        for p in self.iter_mut() {
             p.map_coords_inplace(func);
         }
     }
@@ -206,7 +207,7 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiPoint<T> {
     type Output = MultiPoint<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
-        MultiPoint(self.0.iter().map(|p| p.map_coords(func)).collect())
+        MultiPoint(self.iter().map(|p| p.map_coords(func)).collect())
     }
 }
 
@@ -225,8 +226,9 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiPoint<T
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for MultiPoint<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        for p in self.0.iter_mut() {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        for p in self.iter_mut() {
             p.map_coords_inplace(func);
         }
     }
@@ -236,7 +238,7 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiLineString
     type Output = MultiLineString<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
-        MultiLineString(self.0.iter().map(|l| l.map_coords(func)).collect())
+        MultiLineString(self.iter().map(|l| l.map_coords(func)).collect())
     }
 }
 
@@ -255,8 +257,9 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiLineStr
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for MultiLineString<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        for p in self.0.iter_mut() {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        for p in self.iter_mut() {
             p.map_coords_inplace(func);
         }
     }
@@ -266,7 +269,7 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiPolygon<T>
     type Output = MultiPolygon<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
-        MultiPolygon(self.0.iter().map(|p| p.map_coords(func)).collect())
+        MultiPolygon(self.iter().map(|p| p.map_coords(func)).collect())
     }
 }
 
@@ -285,8 +288,9 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiPolygon
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for MultiPolygon<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        for p in self.0.iter_mut() {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        for p in self.iter_mut() {
             p.map_coords_inplace(func);
         }
     }
@@ -354,7 +358,7 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for GeometryCollect
     type Output = GeometryCollection<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
-        GeometryCollection(self.0.iter().map(|g| g.map_coords(func)).collect())
+        GeometryCollection(self.iter().map(|g| g.map_coords(func)).collect())
     }
 }
 
@@ -373,8 +377,9 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for GeometryColl
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for GeometryCollection<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        for p in self.0.iter_mut() {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    {
+        for p in self.iter_mut() {
             p.map_coords_inplace(func);
         }
     }

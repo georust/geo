@@ -104,7 +104,6 @@ where
     /// Minimum distance from a Point to a MultiPoint
     fn distance(&self, points: &MultiPoint<T>) -> T {
         points
-            .0
             .iter()
             .map(|p| {
                 let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
@@ -131,7 +130,7 @@ where
     /// Minimum distance from a Point to a Polygon
     fn distance(&self, polygon: &Polygon<T>) -> T {
         // No need to continue if the polygon contains the point, or is zero-length
-        if polygon.contains(self) || polygon.exterior.0.is_empty() {
+        if polygon.contains(self) || polygon.exterior.is_empty() {
             return T::zero();
         }
         // fold the minimum interior ring distance if any, followed by the exterior
@@ -168,7 +167,6 @@ where
     /// Minimum distance from a Point to a MultiPolygon
     fn distance(&self, mpolygon: &MultiPolygon<T>) -> T {
         mpolygon
-            .0
             .iter()
             .map(|p| self.distance(p))
             .fold(T::max_value(), |accum, val| accum.min(val))
@@ -191,8 +189,7 @@ where
 {
     /// Minimum distance from a Point to a MultiLineString
     fn distance(&self, mls: &MultiLineString<T>) -> T {
-        mls.0
-            .iter()
+        mls.iter()
             .map(|ls| self.distance(ls))
             .fold(T::max_value(), |accum, val| accum.min(val))
     }

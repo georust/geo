@@ -130,7 +130,7 @@ where
     /// Return the BoundingBox for a MultiLineString
     ///
     fn bbox(&self) -> Self::Output {
-        get_bbox(self.0.iter().flat_map(|line| line.0.iter()))
+        get_bbox(self.iter().flat_map(|line| line.iter()))
     }
 }
 
@@ -159,7 +159,7 @@ where
     /// Return the BoundingBox for a MultiPolygon
     ///
     fn bbox(&self) -> Self::Output {
-        get_bbox(self.0.iter().flat_map(|poly| (poly.exterior).0.iter()))
+        get_bbox(self.iter().flat_map(|poly| poly.exterior.iter()))
     }
 }
 

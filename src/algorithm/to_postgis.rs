@@ -43,7 +43,7 @@ macro_rules! to_postgis_impl {
     ($from:ident, $to:path, $name:ident, srid) => {
         impl ToPostgis<$to> for $from<f64> {
             fn to_postgis_with_srid(&self, srid: Option<i32>) -> $to {
-                let $name = self.0.iter()
+                let $name = self.iter()
                     .map(|x| x.to_postgis_with_srid(srid))
                     .collect();
                 $to { $name, srid }
@@ -53,7 +53,7 @@ macro_rules! to_postgis_impl {
     ($from:ident, $to:path, $name:ident) => {
         impl ToPostgis<$to> for $from<f64> {
             fn to_postgis_with_srid(&self, srid: Option<i32>) -> $to {
-                let $name = self.0.iter()
+                let $name = self.iter()
                     .map(|x| x.to_postgis_with_srid(srid))
                     .collect();
                 $to { $name }

@@ -24,7 +24,10 @@ where
     fn area(&self) -> T;
 }
 
-fn get_linestring_area<T>(linestring: &LineString<T>) -> T where T: Float {
+fn get_linestring_area<T>(linestring: &LineString<T>) -> T
+where
+    T: Float,
+{
     twice_signed_ring_area(linestring) / (T::one() + T::one())
 }
 
@@ -55,11 +58,8 @@ where
     T: Float,
 {
     fn area(&self) -> T {
-        self.0
-            .iter()
-            .fold(T::zero(), |total, next| {
-                total + next.area()
-            })
+        self.iter()
+            .fold(T::zero(), |total, next| total + next.area())
     }
 }
 

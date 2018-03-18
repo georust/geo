@@ -121,19 +121,19 @@ impl<F: Float> ClosestPoint<F> for Polygon<F> {
 
 impl<F: Float> ClosestPoint<F> for MultiPolygon<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        closest_of(self.0.iter(), p)
+        closest_of(self.iter(), p)
     }
 }
 
 impl<F: Float> ClosestPoint<F> for MultiPoint<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        closest_of(self.0.iter(), p)
+        closest_of(self.iter(), p)
     }
 }
 
 impl<F: Float> ClosestPoint<F> for MultiLineString<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        closest_of(self.0.iter(), p)
+        closest_of(self.iter(), p)
     }
 }
 

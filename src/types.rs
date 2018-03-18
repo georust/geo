@@ -6,6 +6,7 @@ use std::ops::Sub;
 use std::fmt::Debug;
 
 use std::iter::{self, FromIterator, Iterator};
+use std::ops::{Deref, DerefMut};
 use algorithm::boundingbox::BoundingBox;
 use algorithm::distance::Distance;
 use spade::SpadeNum;
@@ -521,6 +522,26 @@ impl<T: CoordinateType> IntoIterator for MultiPoint<T> {
     }
 }
 
+impl<T> Deref for MultiPoint<T>
+where
+    T: CoordinateType,
+{
+    type Target = [Point<T>];
+
+    fn deref<'a>(&'a self) -> &'a [Point<T>] {
+        self.0.as_slice()
+    }
+}
+
+impl<T> DerefMut for MultiPoint<T>
+where
+    T: CoordinateType,
+{
+    fn deref_mut<'a>(&'a mut self) -> &'a mut [Point<T>] {
+        self.0.as_mut_slice()
+    }
+}
+
 /// A line segment made up of exactly two [`Point`s](struct.Point.html)
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Line<T>
@@ -601,11 +622,13 @@ where
 /// let line: LineString<f32> = points.into_iter().collect();
 /// ```
 ///
-/// You can iterate over the points in the `LineString`
+/// You can iterate over the points in the `LineString`:
 ///
 /// ```
 /// use geo::{LineString, Point};
 /// let line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
+/// line.iter().for_each(|point| println!("Point x = {}, y = {}", point.x(), point.y()));
+///
 /// for point in line {
 ///     println!("Point x = {}, y = {}", point.x(), point.y());
 /// }
@@ -675,11 +698,32 @@ impl<T: CoordinateType> IntoIterator for LineString<T> {
     }
 }
 
+// This gives us `iter()`
+impl<T> Deref for LineString<T>
+where
+    T: CoordinateType,
+{
+    type Target = [Point<T>];
+
+    fn deref<'a>(&'a self) -> &'a [Point<T>] {
+        self.0.as_slice()
+    }
+}
+
+impl<T> DerefMut for LineString<T>
+where
+    T: CoordinateType,
+{
+    fn deref_mut<'a>(&'a mut self) -> &'a mut [Point<T>] {
+        self.0.as_mut_slice()
+    }
+}
+
 /// A collection of [`LineString`s](struct.LineString.html)
 ///
 /// Can be created from a `Vec` of `LineString`s, or from an Iterator which yields `LineString`s.
 ///
-/// Iterating over this objects, yields the component `LineString`s.
+/// Iterating over this object yields the component `LineString`s.
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>)
 where
@@ -703,6 +747,26 @@ impl<T: CoordinateType> IntoIterator for MultiLineString<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+impl<T> Deref for MultiLineString<T>
+where
+    T: CoordinateType,
+{
+    type Target = [LineString<T>];
+
+    fn deref<'a>(&'a self) -> &'a [LineString<T>] {
+        self.0.as_slice()
+    }
+}
+
+impl<T> DerefMut for MultiLineString<T>
+where
+    T: CoordinateType,
+{
+    fn deref_mut<'a>(&'a mut self) -> &'a mut [LineString<T>] {
+        self.0.as_mut_slice()
     }
 }
 
@@ -830,6 +894,26 @@ impl<T: CoordinateType> IntoIterator for MultiPolygon<T> {
     }
 }
 
+impl<T> Deref for MultiPolygon<T>
+where
+    T: CoordinateType,
+{
+    type Target = [Polygon<T>];
+
+    fn deref<'a>(&'a self) -> &'a [Polygon<T>] {
+        self.0.as_slice()
+    }
+}
+
+impl<T> DerefMut for MultiPolygon<T>
+where
+    T: CoordinateType,
+{
+    fn deref_mut<'a>(&'a mut self) -> &'a mut [Polygon<T>] {
+        self.0.as_mut_slice()
+    }
+}
+
 /// A collection of [`Geometry`](enum.Geometry.html) types
 ///
 /// Can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
@@ -878,6 +962,26 @@ where
     MultiLineString(MultiLineString<T>),
     MultiPolygon(MultiPolygon<T>),
     GeometryCollection(GeometryCollection<T>),
+}
+
+impl<T> Deref for GeometryCollection<T>
+where
+    T: CoordinateType,
+{
+    type Target = [Geometry<T>];
+
+    fn deref<'a>(&'a self) -> &'a [Geometry<T>] {
+        self.0.as_slice()
+    }
+}
+
+impl<T> DerefMut for GeometryCollection<T>
+where
+    T: CoordinateType,
+{
+    fn deref_mut<'a>(&'a mut self) -> &'a mut [Geometry<T>] {
+        self.0.as_mut_slice()
+    }
 }
 
 /// The result of trying to find the closest spot on an object to a point.
