@@ -298,15 +298,6 @@ where
     }
 }
 
-pub trait ConvertInplace<T> {
-    /// Convert or transform the geometry's coordinates in-place using the specified
-    /// PROJ operation
-    fn convert_inplace(&mut self, proj: &Proj) -> Result<(), Error>
-    where
-        T: CoordinateType,
-        Self: Sized;
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
