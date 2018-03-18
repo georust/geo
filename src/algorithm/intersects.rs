@@ -142,7 +142,7 @@ where
 {
     // See: https://github.com/brandonxiang/geojson-python-utils/blob/33b4c00c6cf27921fb296052d0c0341bd6ca1af2/geojson_utils.py
     fn intersects(&self, linestring: &LineString<T>) -> bool {
-        if self.0.is_empty() || linestring.0.is_empty() {
+        if self.is_empty() || linestring.is_empty() {
             return false;
         }
         for a in self.lines() {

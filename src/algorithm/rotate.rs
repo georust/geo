@@ -130,7 +130,7 @@ where
 {
     /// Rotate the LineString about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
-        LineString(rotation_matrix(angle, &self.centroid().unwrap(), &self.0))
+        LineString(rotation_matrix(angle, &self.centroid().unwrap(), &self))
     }
 }
 
@@ -147,10 +147,10 @@ where
             self.exterior.centroid().unwrap()
         };
         Polygon::new(
-            LineString(rotation_matrix(angle, &centroid, &self.exterior.0)),
+            LineString(rotation_matrix(angle, &centroid, &self.exterior)),
             self.interiors
                 .iter()
-                .map(|ring| LineString(rotation_matrix(angle, &centroid, &ring.0)))
+                .map(|ring| LineString(rotation_matrix(angle, &centroid, &ring)))
                 .collect(),
         )
     }

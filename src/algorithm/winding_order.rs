@@ -1,7 +1,7 @@
 use types::{CoordinateType, LineString, Point};
 
 pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T where T: CoordinateType {
-    if linestring.0.is_empty() || linestring.0.len() == 1 {
+    if linestring.is_empty() || linestring.len() == 1 {
         return T::zero();
     }
     let mut tmp = T::zero();

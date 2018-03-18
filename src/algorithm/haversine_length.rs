@@ -36,7 +36,7 @@ impl<T> HaversineLength<T> for LineString<T>
     where T: Float + FromPrimitive
 {
     fn haversine_length(&self) -> T {
-        self.0.windows(2)
+        self.windows(2)
               .fold(T::zero(), |total_length, p| total_length + p[0].haversine_distance(&p[1]))
     }
 }

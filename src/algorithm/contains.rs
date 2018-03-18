@@ -47,11 +47,11 @@ where
 {
     fn contains(&self, p: &Point<T>) -> bool {
         // LineString without points
-        if self.0.is_empty() {
+        if self.is_empty() {
             return false;
         }
         // LineString with one point equal p
-        if self.0.len() == 1 {
+        if self.len() == 1 {
             return self.0[0].contains(p);
         }
         // check if point is a vertex
@@ -151,7 +151,7 @@ where
     // Return the position of the point relative to a linestring
 
     // LineString without points
-    if linestring.0.is_empty() {
+    if linestring.is_empty() {
         return PositionPoint::Outside;
     }
     // Point is on linestring

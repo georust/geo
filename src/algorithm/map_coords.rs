@@ -150,7 +150,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for LineString<T
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
-        Ok(LineString(self.0
+        Ok(LineString(self
             .iter()
             .map(|p| p.try_map_coords(func))
             .collect::<Result<Vec<_>, Error>>()?))
@@ -218,7 +218,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiPoint<T
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
-        Ok(MultiPoint(self.0
+        Ok(MultiPoint(self
             .iter()
             .map(|p| p.try_map_coords(func))
             .collect::<Result<Vec<_>, Error>>()?))
@@ -249,7 +249,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiLineStr
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
-        Ok(MultiLineString(self.0
+        Ok(MultiLineString(self
             .iter()
             .map(|l| l.try_map_coords(func))
             .collect::<Result<Vec<_>, Error>>()?))
@@ -280,7 +280,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiPolygon
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
-        Ok(MultiPolygon(self.0
+        Ok(MultiPolygon(self
             .iter()
             .map(|p| p.try_map_coords(func))
             .collect::<Result<Vec<_>, Error>>()?))
@@ -369,7 +369,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for GeometryColl
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
-        Ok(GeometryCollection(self.0
+        Ok(GeometryCollection(self
             .iter()
             .map(|g| g.try_map_coords(func))
             .collect::<Result<Vec<_>, Error>>()?))

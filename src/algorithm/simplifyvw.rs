@@ -214,14 +214,14 @@ where
     // Simplify shell
     rings.push(visvalingam_preserve(
         geomtype,
-        &exterior.0,
+        &exterior,
         epsilon,
         &mut tree,
     ));
     // Simplify interior rings, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
-            rings.push(visvalingam_preserve(geomtype, &ring.0, epsilon, &mut tree))
+            rings.push(visvalingam_preserve(geomtype, &ring, epsilon, &mut tree))
         }
     }
     rings
@@ -523,8 +523,7 @@ where
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> MultiLineString<T> {
         MultiLineString(
-            self.0
-                .iter()
+            self.iter()
                 .map(|l| l.simplifyvw_preserve(epsilon))
                 .collect(),
         )
@@ -554,8 +553,7 @@ where
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> MultiPolygon<T> {
         MultiPolygon(
-            self.0
-                .iter()
+            self.iter()
                 .map(|p| p.simplifyvw_preserve(epsilon))
                 .collect(),
         )
@@ -567,7 +565,7 @@ where
     T: Float,
 {
     fn simplifyvw(&self, epsilon: &T) -> LineString<T> {
-        LineString(visvalingam(&self.0, epsilon))
+        LineString(visvalingam(&self, epsilon))
     }
 }
 
@@ -576,7 +574,7 @@ where
     T: Float,
 {
     fn simplifyvw(&self, epsilon: &T) -> MultiLineString<T> {
-        MultiLineString(self.0.iter().map(|l| l.simplifyvw(epsilon)).collect())
+        MultiLineString(self.iter().map(|l| l.simplifyvw(epsilon)).collect())
     }
 }
 
@@ -600,7 +598,7 @@ where
     T: Float,
 {
     fn simplifyvw(&self, epsilon: &T) -> MultiPolygon<T> {
-        MultiPolygon(self.0.iter().map(|p| p.simplifyvw(epsilon)).collect())
+        MultiPolygon(self.iter().map(|p| p.simplifyvw(epsilon)).collect())
     }
 }
 

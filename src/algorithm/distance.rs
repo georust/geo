@@ -212,7 +212,7 @@ where
     /// Minimum distance from a Point to a LineString
     fn distance(&self, linestring: &LineString<T>) -> T {
         // No need to continue if the point is on the LineString, or it's empty
-        if linestring.contains(self) || linestring.0.is_empty() {
+        if linestring.contains(self) || linestring.is_empty() {
             return T::zero();
         }
         linestring

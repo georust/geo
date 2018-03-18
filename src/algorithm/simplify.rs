@@ -88,7 +88,7 @@ where
     T: Float,
 {
     fn simplify(&self, epsilon: &T) -> LineString<T> {
-        LineString(rdp(&self.0, epsilon))
+        LineString(rdp(&self, epsilon))
     }
 }
 

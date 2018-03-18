@@ -74,7 +74,7 @@ where
     /// Return the BoundingBox for a MultiPoint
     ///
     fn bbox(&self) -> Self::Output {
-        get_bbox(&self.0)
+        get_bbox(self.iter())
     }
 }
 
@@ -116,7 +116,7 @@ where
     /// Return the BoundingBox for a LineString
     ///
     fn bbox(&self) -> Self::Output {
-        get_bbox(&self.0)
+        get_bbox(self.iter())
     }
 }
 
@@ -144,8 +144,7 @@ where
     /// Return the BoundingBox for a Polygon
     ///
     fn bbox(&self) -> Self::Output {
-        let line = &self.exterior;
-        get_bbox(&line.0)
+        get_bbox(self.exterior.iter())
     }
 }
 

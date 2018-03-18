@@ -169,7 +169,7 @@ where
     T: Float,
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString(quick_hull(&mut self.exterior.0.clone())), vec![])
+        Polygon::new(LineString(quick_hull(&mut self.exterior.clone())), vec![])
     }
 }
 
@@ -178,7 +178,7 @@ where
     T: Float,
 {
     fn convex_hull(&self) -> Polygon<T> {
-        let mut aggregated: Vec<Point<T>> = self.0
+        let mut aggregated: Vec<Point<T>> = self
             .iter()
             .flat_map(|elem| elem.exterior.iter().cloned())
             .collect();
@@ -191,7 +191,7 @@ where
     T: Float,
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString(quick_hull(&mut self.0.clone())), vec![])
+        Polygon::new(LineString(quick_hull(&mut self.clone())), vec![])
     }
 }
 
@@ -200,7 +200,7 @@ where
     T: Float,
 {
     fn convex_hull(&self) -> Polygon<T> {
-        let mut aggregated: Vec<Point<T>> = self.0
+        let mut aggregated: Vec<Point<T>> = self
             .iter()
             .flat_map(|elem| elem.iter().cloned())
             .collect();
@@ -213,7 +213,7 @@ where
     T: Float,
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString(quick_hull(&mut self.0.clone())), vec![])
+        Polygon::new(LineString(quick_hull(&mut self.clone())), vec![])
     }
 }
 

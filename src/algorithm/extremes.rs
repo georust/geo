@@ -73,7 +73,7 @@ fn polymax_naive_indices<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()
 where
     T: Float,
 {
-    let vertices = &poly.exterior.0;
+    let vertices = &poly.exterior;
     let mut max: usize = 0;
     for (i, _) in vertices.iter().enumerate() {
         // if vertices[i] is above prior vertices[max]
@@ -165,10 +165,10 @@ where
         // safe to unwrap, since we're guaranteeing the polygon's convexity
         let indices = ch.extreme_indices().unwrap();
         ExtremePoint {
-            ymin: ch.exterior.0[indices.ymin],
-            xmax: ch.exterior.0[indices.xmax],
-            ymax: ch.exterior.0[indices.ymax],
-            xmin: ch.exterior.0[indices.xmin],
+            ymin: ch.exterior[indices.ymin],
+            xmax: ch.exterior[indices.xmax],
+            ymax: ch.exterior[indices.ymax],
+            xmin: ch.exterior[indices.xmin],
         }
     }
 }

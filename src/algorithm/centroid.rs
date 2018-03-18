@@ -30,7 +30,7 @@ fn simple_polygon_area<T>(linestring: &LineString<T>) -> T
 where
     T: Float,
 {
-    if linestring.0.is_empty() || linestring.0.len() == 1 {
+    if linestring.is_empty() || linestring.len() == 1 {
         return T::zero();
     }
     let mut tmp = T::zero();
@@ -80,11 +80,11 @@ where
     // The Centroid of a LineString is the mean of the middle of the segment
     // weighted by the length of the segments.
     fn centroid(&self) -> Self::Output {
-        if self.0.is_empty() {
+        if self.is_empty() {
             return None;
         }
-        if self.0.len() == 1 {
-            Some(self.0[0])
+        if self.len() == 1 {
+            Some(self[0])
         } else {
             let mut sum_x = T::zero();
             let mut sum_y = T::zero();
@@ -118,7 +118,7 @@ where
     // See here for detail on alternative methods: https://fotino.me/calculating-centroids/
     fn centroid(&self) -> Self::Output {
         let linestring = &self.exterior;
-        let vect = &linestring.0;
+        let vect = &linestring;
         if vect.is_empty() {
             return None;
         }
@@ -159,11 +159,10 @@ where
         let mut sum_x = T::zero();
         let mut sum_y = T::zero();
         let mut total_area = T::zero();
-        let vect = &self.0;
-        if vect.is_empty() {
+        if self.is_empty() {
             return None;
         }
-        for poly in &self.0 {
+        for poly in self.iter() {
             // the area is signed
             let area = poly.area().abs();
             total_area = total_area + area;
