@@ -77,29 +77,6 @@ pub trait MapCoordsInplace<T> {
         T: CoordinateType;
 }
 
-/// Map a fallible function over the coordinates in a geometry, mutating them
-/// **NOTE**: If the result is `Err`, at least one of the coordinate transformation
-/// operations was unsuccessful, and the geometry is now in an inconsistent state.
-pub trait MapCoordsInplaceFallible<T> {
-    /// Map a fallible function over the coordinates in a geometry, mutating them
-    ///
-    /// ```
-    /// use geo::Point;
-    /// use geo::algorithm::map_coords::MapCoordsInplaceFallible;
-    ///
-    /// let mut p = Point::new(10., 20.);
-    /// p.map_coords_inplace_fallible(&|&(x, y)| Ok((x+1000., y*2.))).unwrap();
-    ///
-    /// assert_eq!(p, Point::new(1010., 40.));
-    /// ```
-    fn map_coords_inplace_fallible(
-        &mut self,
-        func: &Fn(&(T, T)) -> Result<(T, T), Error>,
-    ) -> Result<(), Error>
-    where
-        T: CoordinateType;
-}
-
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Point<T> {
     type Output = Point<NT>;
 
@@ -126,18 +103,6 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Point<T> {
         let new_point = func(&(self.0.x, self.0.y));
         self.0.x = new_point.0;
         self.0.y = new_point.1;
-    }
-}
-
-impl<T: CoordinateType> MapCoordsInplaceFallible<T> for Point<T> {
-    fn map_coords_inplace_fallible(
-        &mut self,
-        func: &Fn(&(T, T)) -> Result<(T, T), Error>,
-    ) -> Result<(), Error> {
-        let new_point = func(&(self.0.x, self.0.y))?;
-        self.0.x = new_point.0;
-        self.0.y = new_point.1;
-        Ok(())
     }
 }
 
@@ -170,17 +135,6 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Line<T> {
     }
 }
 
-impl<T: CoordinateType> MapCoordsInplaceFallible<T> for Line<T> {
-    fn map_coords_inplace_fallible(
-        &mut self,
-        func: &Fn(&(T, T)) -> Result<(T, T), Error>,
-    ) -> Result<(), Error> {
-        self.start.map_coords_inplace_fallible(func)?;
-        self.end.map_coords_inplace_fallible(func)?;
-        Ok(())
-    }
-}
-
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for LineString<T> {
     type Output = LineString<NT>;
 
@@ -208,18 +162,6 @@ impl<T: CoordinateType> MapCoordsInplace<T> for LineString<T> {
         for p in self.0.iter_mut() {
             p.map_coords_inplace(func);
         }
-    }
-}
-
-impl<T: CoordinateType> MapCoordsInplaceFallible<T> for LineString<T> {
-    fn map_coords_inplace_fallible(
-        &mut self,
-        func: &Fn(&(T, T)) -> Result<(T, T), Error>,
-    ) -> Result<(), Error> {
-        for p in self.0.iter_mut() {
-            p.map_coords_inplace_fallible(func)?;
-        }
-        Ok(())
     }
 }
 
@@ -260,19 +202,6 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Polygon<T> {
     }
 }
 
-impl<T: CoordinateType> MapCoordsInplaceFallible<T> for Polygon<T> {
-    fn map_coords_inplace_fallible(
-        &mut self,
-        func: &Fn(&(T, T)) -> Result<(T, T), Error>,
-    ) -> Result<(), Error> {
-        self.exterior.map_coords_inplace_fallible(func)?;
-        for p in self.interiors.iter_mut() {
-            p.map_coords_inplace_fallible(func)?;
-        }
-        Ok(())
-    }
-}
-
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiPoint<T> {
     type Output = MultiPoint<NT>;
 
@@ -300,18 +229,6 @@ impl<T: CoordinateType> MapCoordsInplace<T> for MultiPoint<T> {
         for p in self.0.iter_mut() {
             p.map_coords_inplace(func);
         }
-    }
-}
-
-impl<T: CoordinateType> MapCoordsInplaceFallible<T> for MultiPoint<T> {
-    fn map_coords_inplace_fallible(
-        &mut self,
-        func: &Fn(&(T, T)) -> Result<(T, T), Error>,
-    ) -> Result<(), Error> {
-        for p in self.0.iter_mut() {
-            p.map_coords_inplace_fallible(func)?;
-        }
-        Ok(())
     }
 }
 
@@ -345,18 +262,6 @@ impl<T: CoordinateType> MapCoordsInplace<T> for MultiLineString<T> {
     }
 }
 
-impl<T: CoordinateType> MapCoordsInplaceFallible<T> for MultiLineString<T> {
-    fn map_coords_inplace_fallible(
-        &mut self,
-        func: &Fn(&(T, T)) -> Result<(T, T), Error>,
-    ) -> Result<(), Error> {
-        for p in self.0.iter_mut() {
-            p.map_coords_inplace_fallible(func)?;
-        }
-        Ok(())
-    }
-}
-
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiPolygon<T> {
     type Output = MultiPolygon<NT>;
 
@@ -384,18 +289,6 @@ impl<T: CoordinateType> MapCoordsInplace<T> for MultiPolygon<T> {
         for p in self.0.iter_mut() {
             p.map_coords_inplace(func);
         }
-    }
-}
-
-impl<T: CoordinateType> MapCoordsInplaceFallible<T> for MultiPolygon<T> {
-    fn map_coords_inplace_fallible(
-        &mut self,
-        func: &Fn(&(T, T)) -> Result<(T, T), Error>,
-    ) -> Result<(), Error> {
-        for p in self.0.iter_mut() {
-            p.map_coords_inplace_fallible(func)?;
-        }
-        Ok(())
     }
 }
 
@@ -457,24 +350,6 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Geometry<T> {
     }
 }
 
-impl<T: CoordinateType> MapCoordsInplaceFallible<T> for Geometry<T> {
-    fn map_coords_inplace_fallible(
-        &mut self,
-        func: &Fn(&(T, T)) -> Result<(T, T), Error>,
-    ) -> Result<(), Error> {
-        match *self {
-            Geometry::Point(ref mut x) => x.map_coords_inplace_fallible(func),
-            Geometry::Line(ref mut x) => x.map_coords_inplace_fallible(func),
-            Geometry::LineString(ref mut x) => x.map_coords_inplace_fallible(func),
-            Geometry::Polygon(ref mut x) => x.map_coords_inplace_fallible(func),
-            Geometry::MultiPoint(ref mut x) => x.map_coords_inplace_fallible(func),
-            Geometry::MultiLineString(ref mut x) => x.map_coords_inplace_fallible(func),
-            Geometry::MultiPolygon(ref mut x) => x.map_coords_inplace_fallible(func),
-            Geometry::GeometryCollection(ref mut x) => x.map_coords_inplace_fallible(func),
-        }
-    }
-}
-
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for GeometryCollection<T> {
     type Output = GeometryCollection<NT>;
 
@@ -502,18 +377,6 @@ impl<T: CoordinateType> MapCoordsInplace<T> for GeometryCollection<T> {
         for p in self.0.iter_mut() {
             p.map_coords_inplace(func);
         }
-    }
-}
-
-impl<T: CoordinateType> MapCoordsInplaceFallible<T> for GeometryCollection<T> {
-    fn map_coords_inplace_fallible(
-        &mut self,
-        func: &Fn(&(T, T)) -> Result<(T, T), Error>,
-    ) -> Result<(), Error> {
-        for p in self.0.iter_mut() {
-            p.map_coords_inplace_fallible(func)?;
-        }
-        Ok(())
     }
 }
 
@@ -725,38 +588,6 @@ mod test {
         assert_eq!(p2.y(), 2f32);
     }
 
-    #[test]
-    fn test_fallible_inplace() {
-        let f = |x: f64, y: f64| {
-            if x != 2.0 {
-                Ok((x * 2., y + 100.))
-            } else {
-                Err(format_err!("Ugh"))
-            }
-        };
-        // this should produce an error
-        let mut bad_ls: LineString<_> = vec![
-            Point::new(1.0, 1.0),
-            Point::new(2.0, 2.0),
-            Point::new(3.0, 3.0),
-        ].into();
-        // this should be fine
-        let mut good_ls: LineString<_> = vec![
-            Point::new(1.0, 1.0),
-            Point::new(2.1, 2.0),
-            Point::new(3.0, 3.0),
-        ].into();
-        assert!(
-            bad_ls
-                .map_coords_inplace_fallible(&|&(x, y)| f(x, y))
-                .is_err()
-        );
-        assert!(
-            good_ls
-                .map_coords_inplace_fallible(&|&(x, y)| f(x, y))
-                .is_ok()
-        );
-    }
     #[test]
     fn test_fallible() {
         let f = |x: f64, y: f64| {
