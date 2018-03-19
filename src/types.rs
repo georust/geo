@@ -622,11 +622,12 @@ where
 /// let line: LineString<f32> = points.into_iter().collect();
 /// ```
 ///
-/// You can iterate over the points in the `LineString`:
+/// You can iterate over the points in the `LineString` using a `for` loop, `iter()`, or `iter_mut()`:
 ///
 /// ```
 /// use geo::{LineString, Point};
 /// let line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
+///
 /// line.iter().for_each(|point| println!("Point x = {}, y = {}", point.x(), point.y()));
 ///
 /// for point in line {
@@ -640,7 +641,7 @@ where
     T: CoordinateType;
 
 impl<T: CoordinateType> LineString<T> {
-    /// Return an `Line` iterator that yields one `Line` for each line segment
+    /// Return a `Line` iterator that yields one `Line` for each line segment
     /// in the `LineString`.
     ///
     /// # Examples
@@ -723,7 +724,7 @@ where
 ///
 /// Can be created from a `Vec` of `LineString`s, or from an Iterator which yields `LineString`s.
 ///
-/// Iterating over this object yields the component `LineString`s.
+/// Iterating over this object yields its component `LineString`s.
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>)
 where
@@ -867,7 +868,7 @@ where
 ///
 /// Can be created from a `Vec` of `Polygon`s, or `collect`ed from an Iterator which yields `Polygon`s.
 ///
-/// Iterating over this object yields the component Polygons.
+/// Iterating over this object yields its component Polygons.
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>)
 where
@@ -918,7 +919,7 @@ where
 ///
 /// Can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
 ///
-/// Iterating over this objects, yields the component Geometries.
+/// Iterating over this object yields its component Geometries.
 #[derive(PartialEq, Clone, Debug)]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
@@ -945,25 +946,6 @@ impl<T: CoordinateType> IntoIterator for GeometryCollection<T> {
     }
 }
 
-/// An enum representing any possible geometry type.
-///
-/// All `Geo` types can be converted to a `Geometry` member using `.into()` (as part of the
-/// `std::convert::Into` pattern).
-#[derive(PartialEq, Clone, Debug)]
-pub enum Geometry<T>
-where
-    T: CoordinateType,
-{
-    Point(Point<T>),
-    Line(Line<T>),
-    LineString(LineString<T>),
-    Polygon(Polygon<T>),
-    MultiPoint(MultiPoint<T>),
-    MultiLineString(MultiLineString<T>),
-    MultiPolygon(MultiPolygon<T>),
-    GeometryCollection(GeometryCollection<T>),
-}
-
 impl<T> Deref for GeometryCollection<T>
 where
     T: CoordinateType,
@@ -982,6 +964,25 @@ where
     fn deref_mut<'a>(&'a mut self) -> &'a mut [Geometry<T>] {
         self.0.as_mut_slice()
     }
+}
+
+/// An enum representing any possible geometry type.
+///
+/// All `Geo` types can be converted to a `Geometry` member using `.into()` (as part of the
+/// `std::convert::Into` pattern).
+#[derive(PartialEq, Clone, Debug)]
+pub enum Geometry<T>
+where
+    T: CoordinateType,
+{
+    Point(Point<T>),
+    Line(Line<T>),
+    LineString(LineString<T>),
+    Polygon(Polygon<T>),
+    MultiPoint(MultiPoint<T>),
+    MultiLineString(MultiLineString<T>),
+    MultiPolygon(MultiPolygon<T>),
+    GeometryCollection(GeometryCollection<T>),
 }
 
 /// The result of trying to find the closest spot on an object to a point.
