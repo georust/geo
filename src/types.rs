@@ -6,7 +6,7 @@ use std::ops::Sub;
 use std::fmt::Debug;
 
 use std::iter::{self, FromIterator, Iterator};
-use std::ops::{Deref, DerefMut};
+use std::ops::{Deref, DerefMut, Index, IndexMut};
 use algorithm::boundingbox::BoundingBox;
 use algorithm::distance::Distance;
 use spade::SpadeNum;
@@ -720,6 +720,26 @@ where
     }
 }
 
+impl<T> Index<usize> for LineString<T>
+where
+    T: CoordinateType,
+{
+    type Output = Point<T>;
+
+    fn index<'a>(&'a self, index: usize) -> &'a Point<T> {
+        &self.0[index]
+    }
+}
+
+impl<T> IndexMut<usize> for LineString<T>
+where
+    T: CoordinateType,
+{
+    fn index_mut<'a>(&'a mut self, index: usize) -> &'a mut Point<T> {
+        &mut self.0[index]
+    }
+}
+
 /// A collection of [`LineString`s](struct.LineString.html)
 ///
 /// Can be created from a `Vec` of `LineString`s, or from an Iterator which yields `LineString`s.
@@ -768,6 +788,26 @@ where
 {
     fn deref_mut<'a>(&'a mut self) -> &'a mut [LineString<T>] {
         self.0.as_mut_slice()
+    }
+}
+
+impl<T> Index<usize> for MultiLineString<T>
+where
+    T: CoordinateType,
+{
+    type Output = LineString<T>;
+
+    fn index<'a>(&'a self, index: usize) -> &'a LineString<T> {
+        &self.0[index]
+    }
+}
+
+impl<T> IndexMut<usize> for MultiLineString<T>
+where
+    T: CoordinateType,
+{
+    fn index_mut<'a>(&'a mut self, index: usize) -> &'a mut LineString<T> {
+        &mut self.0[index]
     }
 }
 
@@ -915,6 +955,26 @@ where
     }
 }
 
+impl<T> Index<usize> for MultiPolygon<T>
+where
+    T: CoordinateType,
+{
+    type Output = Polygon<T>;
+
+    fn index<'a>(&'a self, index: usize) -> &'a Polygon<T> {
+        &self.0[index]
+    }
+}
+
+impl<T> IndexMut<usize> for MultiPolygon<T>
+where
+    T: CoordinateType,
+{
+    fn index_mut<'a>(&'a mut self, index: usize) -> &'a mut Polygon<T> {
+        &mut self.0[index]
+    }
+}
+
 /// A collection of [`Geometry`](enum.Geometry.html) types
 ///
 /// Can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
@@ -963,6 +1023,26 @@ where
 {
     fn deref_mut<'a>(&'a mut self) -> &'a mut [Geometry<T>] {
         self.0.as_mut_slice()
+    }
+}
+
+impl<T> Index<usize> for GeometryCollection<T>
+where
+    T: CoordinateType,
+{
+    type Output = Geometry<T>;
+
+    fn index<'a>(&'a self, index: usize) -> &'a Geometry<T> {
+        &self.0[index]
+    }
+}
+
+impl<T> IndexMut<usize> for GeometryCollection<T>
+where
+    T: CoordinateType,
+{
+    fn index_mut<'a>(&'a mut self, index: usize) -> &'a mut Geometry<T> {
+        &mut self.0[index]
     }
 }
 
@@ -1208,5 +1288,10 @@ mod test {
             se.distance2(&Point::new(4.0, 10.0)),
             l.distance2(&Point::new(4.0, 10.0))
         );
+    }
+    #[test]
+    fn index_test() {
+        let ls = LineString::from(vec![Point::new(1.0, 1.0), Point::new(2.0, 2.0)]);
+        assert_eq!(ls[0], ls.0[0]);
     }
 }
