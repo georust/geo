@@ -542,6 +542,26 @@ where
     }
 }
 
+impl<T> Index<usize> for MultiPoint<T>
+where
+    T: CoordinateType,
+{
+    type Output = Point<T>;
+
+    fn index<'a>(&'a self, index: usize) -> &'a Point<T> {
+        &self.0[index]
+    }
+}
+
+impl<T> IndexMut<usize> for MultiPoint<T>
+where
+    T: CoordinateType,
+{
+    fn index_mut<'a>(&'a mut self, index: usize) -> &'a mut Point<T> {
+        &mut self.0[index]
+    }
+}
+
 /// A line segment made up of exactly two [`Point`s](struct.Point.html)
 #[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Line<T>
@@ -628,7 +648,7 @@ where
 /// use geo::{LineString, Point};
 /// let mut line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
 /// line.iter().for_each(|point| println!("Point x = {}, y = {}", point.x(), point.y()));
-/// 
+///
 /// for point in line {
 ///     println!("Point x = {}, y = {}", point.x(), point.y());
 /// }
