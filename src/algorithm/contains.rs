@@ -52,7 +52,7 @@ where
         }
         // LineString with one point equal p
         if self.len() == 1 {
-            return self.0[0].contains(p);
+            return self[0].contains(p);
         }
         // check if point is a vertex
         if self.0.contains(p) {
