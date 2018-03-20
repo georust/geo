@@ -626,13 +626,21 @@ where
 ///
 /// ```
 /// use geo::{LineString, Point};
-/// let line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
-///
+/// let mut line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
 /// line.iter().for_each(|point| println!("Point x = {}, y = {}", point.x(), point.y()));
-///
+/// 
 /// for point in line {
 ///     println!("Point x = {}, y = {}", point.x(), point.y());
 /// }
+/// ```
+/// You can also (mutably) index into its underlying `vec`:
+///
+/// ```
+/// use geo::{LineString, Point};
+/// let mut line = LineString(vec![Point::new(0., 0.), Point::new(10., 0.)]);
+/// assert_eq!(line[1], Point::new(10.0, 0.0));
+/// line[1] = Point::new(11.0, 1.0);
+/// assert_eq!(line[1], Point::new(11.0, 1.0));
 /// ```
 ///
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
