@@ -9,7 +9,7 @@ use std::iter::{self, FromIterator, Iterator};
 use algorithm::boundingbox::BoundingBox;
 use algorithm::distance::Distance;
 use spade::SpadeNum;
-use num_traits::{Float, Num, NumCast, ToPrimitive};
+use num_traits::{Float, Num, NumCast, Signed, ToPrimitive};
 use spade::{BoundingRect, PointN, SpatialObject, TwoDimensional};
 
 /// The type of an x or y value of a point/coordinate.
@@ -258,28 +258,28 @@ where
     /// Returns the cross product of 3 points. A positive value implies
     /// `self` → `point_b` → `point_c` is counter-clockwise, negative implies
     /// clockwise.
-    /// 
+    ///
     /// # Examples
     ///
     /// ```
     /// use geo::Point;
-    /// 
+    ///
     /// let p_a = Point::new(1.0, 2.0);
     /// let p_b = Point::new(3.0,5.0);
     /// let p_c = Point::new(7.0,12.0);
-    /// 
+    ///
     /// let cross = p_a.cross_prod(&p_b, &p_c);
-    /// 
+    ///
     /// assert_eq!(cross, 2.0)
     /// ```
     pub fn cross_prod(&self, point_b: &Point<T>, point_c: &Point<T>) -> T
     where
         T: Float,
     {
-        (point_b.x() - self.x()) * (point_c.y() - self.y()) -
-            (point_b.y() - self.y()) * (point_c.x() - self.x())
+        (point_b.x() - self.x()) * (point_c.y() - self.y())
+            - (point_b.y() - self.y()) * (point_c.x() - self.x())
     }
-    
+
     /// Convert this `Point` into a tuple of its `x` and `y` coordinates.
     pub(crate) fn coords(&self) -> (T, T) {
         (self.x(), self.y())
@@ -739,6 +739,66 @@ where
         Polygon {
             exterior: exterior,
             interiors: interiors,
+        }
+    }
+    /// Wrap-around previous-vertex
+    fn previous_vertex(&self, current_vertex: &usize) -> usize
+    where
+        T: Float,
+    {
+        (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
+    }
+}
+
+// used to check the sign of a vec of floats
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum ListSign {
+    Empty,
+    Positive,
+    Negative,
+    Mixed,
+}
+
+impl<T> Polygon<T>
+where
+    T: Float + Signed,
+{
+    /// Determine whether a Polygon is convex
+    // For each consecutive pair of edges of the polygon (each triplet of points),
+    // compute the z-component of the cross product of the vectors defined by the
+    // edges pointing towards the points in increasing order.
+    // Take the cross product of these vectors
+    // The polygon is convex if the z-components of the cross products are either
+    // all positive or all negative. Otherwise, the polygon is non-convex.
+    // see: http://stackoverflow.com/a/1881201/416626
+    pub fn convex(&self) -> bool {
+        let convex = self
+            .exterior
+            .0
+            .iter()
+            .enumerate()
+            .map(|(idx, _)| {
+                let prev_1 = self.previous_vertex(&idx);
+                let prev_2 = self.previous_vertex(&prev_1);
+                self.exterior.0[prev_2].cross_prod(
+                    &self.exterior.0[prev_1],
+                    &self.exterior.0[idx]
+                )
+            })
+            // accumulate and check cross-product result signs in a single pass
+            // positive implies ccw convexity, negative implies cw convexity
+            // anything else implies non-convexity
+            .fold(ListSign::Empty, |acc, n| {
+                match (acc, n.is_positive()) {
+                    (ListSign::Empty, true) | (ListSign::Positive, true) => ListSign::Positive,
+                    (ListSign::Empty, false) | (ListSign::Negative, false) => ListSign::Negative,
+                    _ => ListSign::Mixed
+                }
+            });
+        if convex == ListSign::Mixed {
+            false
+        } else {
+            true
         }
     }
 }
