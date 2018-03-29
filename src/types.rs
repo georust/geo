@@ -771,7 +771,7 @@ where
     // The polygon is convex if the z-components of the cross products are either
     // all positive or all negative. Otherwise, the polygon is non-convex.
     // see: http://stackoverflow.com/a/1881201/416626
-    pub fn convex(&self) -> bool {
+    pub fn is_convex(&self) -> bool {
         let convex = self
             .exterior
             .0
@@ -795,11 +795,7 @@ where
                     _ => ListSign::Mixed
                 }
             });
-        if convex == ListSign::Mixed {
-            false
-        } else {
-            true
-        }
+        convex != ListSign::Mixed
     }
 }
 

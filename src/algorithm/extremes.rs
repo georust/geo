@@ -51,7 +51,7 @@ where
     T: Float + Signed,
     F: Fn(&Point<T>, &Polygon<T>) -> Result<usize, ()>,
 {
-    if !polygon.convex() {
+    if !polygon.is_convex() {
         return Err(());
     }
     let directions = vec![
