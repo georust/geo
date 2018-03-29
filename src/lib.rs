@@ -6,6 +6,8 @@ extern crate spade;
 extern crate proj;
 #[cfg(feature = "postgis-integration")]
 extern crate postgis;
+#[macro_use]
+extern crate failure;
 
 pub use traits::ToGeo;
 pub use types::*;
