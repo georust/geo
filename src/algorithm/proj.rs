@@ -20,13 +20,13 @@
 //! conversions according to the standard, they are treated as
 //! separate entities in PROJ.
 //!
-//! The `Project` and `Convert` traits are available to any `Geometry` implementing `MapCoordsFallible`.
+//! The `Project` and `Convert` traits are available to any `Geometry` implementing `TryMapCoords`.
 use std::marker::Sized;
 use proj_sys::proj_errno;
 use libc::{c_char, c_double, c_int};
 use std::ffi::CString;
 use types::{CoordinateType, Point};
-use algorithm::map_coords::{MapCoordsFallible, MapCoordsInplaceFallible};
+use algorithm::map_coords::{TryMapCoords, MapCoordsInplaceFallible};
 use std::ffi::CStr;
 use std::str;
 use failure::Error;
@@ -238,10 +238,10 @@ pub trait Project<T> {
 impl<T, G> Project<T> for G
 where
     T: CoordinateType,
-    G: MapCoordsFallible<T, T, Output = G>,
+    G: TryMapCoords<T, T, Output = G>,
 {
     fn project(&self, proj: &Proj, inverse: bool) -> Result<Self, Error> {
-        self.map_coords_fallible(&|&(x, y)| {
+        self.try_map_coords(&|&(x, y)| {
             let converted = proj.project(Point::new(x, y), inverse)?;
             Ok((converted.x(), converted.y()))
         })
@@ -288,10 +288,10 @@ pub trait Convert<T> {
 impl<T, G> Convert<T> for G
 where
     T: CoordinateType,
-    G: MapCoordsFallible<T, T, Output = G>,
+    G: TryMapCoords<T, T, Output = G>,
 {
     fn convert(&self, proj: &Proj) -> Result<Self, Error> {
-        self.map_coords_fallible(&|&(x, y)| {
+        self.try_map_coords(&|&(x, y)| {
             let reprojected = proj.convert(Point::new(x, y))?;
             Ok((reprojected.x(), reprojected.y()))
         })

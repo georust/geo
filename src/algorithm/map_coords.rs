@@ -36,21 +36,21 @@ pub trait MapCoords<T, NT> {
 }
 
 /// Map a fallible function over all the coordinates in a geometry, returning a Result
-pub trait MapCoordsFallible<T, NT> {
+pub trait TryMapCoords<T, NT> {
     type Output;
 
     /// Map a fallible function over all the coordinates in a geometry, returning a Result
     ///
     /// ```
     /// use geo::Point;
-    /// use geo::algorithm::map_coords::MapCoordsFallible;
+    /// use geo::algorithm::map_coords::TryMapCoords;
     ///
     /// let p1 = Point::new(10., 20.);
-    /// let p2 = p1.map_coords_fallible(&|&(x, y)| Ok((x+1000., y*2.))).unwrap();
+    /// let p2 = p1.try_map_coords(&|&(x, y)| Ok((x+1000., y*2.))).unwrap();
     ///
     /// assert_eq!(p2, Point::new(1010., 40.));
     /// ```
-    fn map_coords_fallible(
+    fn try_map_coords(
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error>
@@ -86,10 +86,10 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Point<T> {
     }
 }
 
-impl<T: CoordinateType, NT: CoordinateType> MapCoordsFallible<T, NT> for Point<T> {
+impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Point<T> {
     type Output = Point<NT>;
 
-    fn map_coords_fallible(
+    fn try_map_coords(
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
@@ -114,16 +114,16 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Line<T> {
     }
 }
 
-impl<T: CoordinateType, NT: CoordinateType> MapCoordsFallible<T, NT> for Line<T> {
+impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Line<T> {
     type Output = Line<NT>;
 
-    fn map_coords_fallible(
+    fn try_map_coords(
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(Line::new(
-            self.start.map_coords_fallible(func)?,
-            self.end.map_coords_fallible(func)?,
+            self.start.try_map_coords(func)?,
+            self.end.try_map_coords(func)?,
         ))
     }
 }
@@ -143,16 +143,16 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for LineString<T> {
     }
 }
 
-impl<T: CoordinateType, NT: CoordinateType> MapCoordsFallible<T, NT> for LineString<T> {
+impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for LineString<T> {
     type Output = LineString<NT>;
 
-    fn map_coords_fallible(
+    fn try_map_coords(
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(LineString(self.0
             .iter()
-            .map(|p| p.map_coords_fallible(func))
+            .map(|p| p.try_map_coords(func))
             .collect::<Result<Vec<_>, Error>>()?))
     }
 }
@@ -176,18 +176,18 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Polygon<T> {
     }
 }
 
-impl<T: CoordinateType, NT: CoordinateType> MapCoordsFallible<T, NT> for Polygon<T> {
+impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Polygon<T> {
     type Output = Polygon<NT>;
 
-    fn map_coords_fallible(
+    fn try_map_coords(
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(Polygon::new(
-            self.exterior.map_coords_fallible(func)?,
+            self.exterior.try_map_coords(func)?,
             self.interiors
                 .iter()
-                .map(|l| l.map_coords_fallible(func))
+                .map(|l| l.try_map_coords(func))
                 .collect::<Result<Vec<_>, Error>>()?,
         ))
     }
@@ -210,16 +210,16 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiPoint<T> {
     }
 }
 
-impl<T: CoordinateType, NT: CoordinateType> MapCoordsFallible<T, NT> for MultiPoint<T> {
+impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiPoint<T> {
     type Output = MultiPoint<NT>;
 
-    fn map_coords_fallible(
+    fn try_map_coords(
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(MultiPoint(self.0
             .iter()
-            .map(|p| p.map_coords_fallible(func))
+            .map(|p| p.try_map_coords(func))
             .collect::<Result<Vec<_>, Error>>()?))
     }
 }
@@ -240,16 +240,16 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiLineString
     }
 }
 
-impl<T: CoordinateType, NT: CoordinateType> MapCoordsFallible<T, NT> for MultiLineString<T> {
+impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiLineString<T> {
     type Output = MultiLineString<NT>;
 
-    fn map_coords_fallible(
+    fn try_map_coords(
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(MultiLineString(self.0
             .iter()
-            .map(|l| l.map_coords_fallible(func))
+            .map(|l| l.try_map_coords(func))
             .collect::<Result<Vec<_>, Error>>()?))
     }
 }
@@ -270,16 +270,16 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiPolygon<T>
     }
 }
 
-impl<T: CoordinateType, NT: CoordinateType> MapCoordsFallible<T, NT> for MultiPolygon<T> {
+impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiPolygon<T> {
     type Output = MultiPolygon<NT>;
 
-    fn map_coords_fallible(
+    fn try_map_coords(
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(MultiPolygon(self.0
             .iter()
-            .map(|p| p.map_coords_fallible(func))
+            .map(|p| p.try_map_coords(func))
             .collect::<Result<Vec<_>, Error>>()?))
     }
 }
@@ -309,27 +309,27 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Geometry<T> {
     }
 }
 
-impl<T: CoordinateType, NT: CoordinateType> MapCoordsFallible<T, NT> for Geometry<T> {
+impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Geometry<T> {
     type Output = Geometry<NT>;
 
-    fn map_coords_fallible(
+    fn try_map_coords(
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         match *self {
-            Geometry::Point(ref x) => Ok(Geometry::Point(x.map_coords_fallible(func)?)),
-            Geometry::Line(ref x) => Ok(Geometry::Line(x.map_coords_fallible(func)?)),
-            Geometry::LineString(ref x) => Ok(Geometry::LineString(x.map_coords_fallible(func)?)),
-            Geometry::Polygon(ref x) => Ok(Geometry::Polygon(x.map_coords_fallible(func)?)),
-            Geometry::MultiPoint(ref x) => Ok(Geometry::MultiPoint(x.map_coords_fallible(func)?)),
+            Geometry::Point(ref x) => Ok(Geometry::Point(x.try_map_coords(func)?)),
+            Geometry::Line(ref x) => Ok(Geometry::Line(x.try_map_coords(func)?)),
+            Geometry::LineString(ref x) => Ok(Geometry::LineString(x.try_map_coords(func)?)),
+            Geometry::Polygon(ref x) => Ok(Geometry::Polygon(x.try_map_coords(func)?)),
+            Geometry::MultiPoint(ref x) => Ok(Geometry::MultiPoint(x.try_map_coords(func)?)),
             Geometry::MultiLineString(ref x) => {
-                Ok(Geometry::MultiLineString(x.map_coords_fallible(func)?))
+                Ok(Geometry::MultiLineString(x.try_map_coords(func)?))
             }
             Geometry::MultiPolygon(ref x) => {
-                Ok(Geometry::MultiPolygon(x.map_coords_fallible(func)?))
+                Ok(Geometry::MultiPolygon(x.try_map_coords(func)?))
             }
             Geometry::GeometryCollection(ref x) => {
-                Ok(Geometry::GeometryCollection(x.map_coords_fallible(func)?))
+                Ok(Geometry::GeometryCollection(x.try_map_coords(func)?))
             }
         }
     }
@@ -358,16 +358,16 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for GeometryCollect
     }
 }
 
-impl<T: CoordinateType, NT: CoordinateType> MapCoordsFallible<T, NT> for GeometryCollection<T> {
+impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for GeometryCollection<T> {
     type Output = GeometryCollection<NT>;
 
-    fn map_coords_fallible(
+    fn try_map_coords(
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(GeometryCollection(self.0
             .iter()
-            .map(|g| g.map_coords_fallible(func))
+            .map(|g| g.try_map_coords(func))
             .collect::<Result<Vec<_>, Error>>()?))
     }
 }
@@ -609,9 +609,9 @@ mod test {
             Point::new(2.1, 2.0),
             Point::new(3.0, 3.0),
         ].into();
-        let bad = bad_ls.map_coords_fallible(&|&(x, y)| f(x, y));
+        let bad = bad_ls.try_map_coords(&|&(x, y)| f(x, y));
         assert!(bad.is_err());
-        let good = good_ls.map_coords_fallible(&|&(x, y)| f(x, y));
+        let good = good_ls.try_map_coords(&|&(x, y)| f(x, y));
         assert!(good.is_ok());
         assert_eq!(
             good.unwrap(),
