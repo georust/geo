@@ -1,57 +1,57 @@
 use num_traits::Float;
 
 use types::{Line, LineString, MultiLineString};
-use algorithm::distance::Distance;
+use algorithm::euclidean_distance::EuclideanDistance;
 
 /// Calculation of the length
 
-pub trait Length<T, RHS = Self> {
+pub trait EuclideanLength<T, RHS = Self> {
     /// Calculation of the length of a Line
     ///
     /// ```
     /// use geo::{Point, LineString, Coordinate};
-    /// use geo::algorithm::length::Length;
+    /// use geo::algorithm::euclidean_length::EuclideanLength;
     ///
     /// let mut vec = Vec::new();
     /// vec.push(Point::new(40.02f64, 116.34));
     /// vec.push(Point::new(42.02f64, 116.34));
     /// let linestring = LineString(vec);
     ///
-    /// println!("Length {}", linestring.length());
+    /// println!("EuclideanLength {}", linestring.euclidean_length());
     /// ```
     ///
-    fn length(&self) -> T;
+    fn euclidean_length(&self) -> T;
 }
 
-impl<T> Length<T> for Line<T>
+impl<T> EuclideanLength<T> for Line<T>
 where
     T: Float,
 {
-    fn length(&self) -> T {
-        self.start.distance(&self.end)
+    fn euclidean_length(&self) -> T {
+        self.start.euclidean_distance(&self.end)
     }
 }
 
-impl<T> Length<T> for LineString<T>
+impl<T> EuclideanLength<T> for LineString<T>
 where
     T: Float,
 {
-    fn length(&self) -> T {
+    fn euclidean_length(&self) -> T {
         self.lines()
-            .map(|line| line.length())
+            .map(|line| line.euclidean_length())
             .fold(T::zero(), |total_length, length| total_length + length)
     }
 }
 
-impl<T> Length<T> for MultiLineString<T>
+impl<T> EuclideanLength<T> for MultiLineString<T>
 where
     T: Float,
 {
-    fn length(&self) -> T {
+    fn euclidean_length(&self) -> T {
         self.0
             .iter()
             .fold(T::zero(), |total, line| {
-                total + line.length()
+                total + line.euclidean_length()
             })
     }
 }
@@ -59,23 +59,23 @@ where
 #[cfg(test)]
 mod test {
     use types::{Coordinate, Line, LineString, MultiLineString, Point};
-    use algorithm::length::Length;
+    use algorithm::euclidean_length::EuclideanLength;
 
     #[test]
     fn empty_linestring_test() {
         let linestring = LineString::<f64>(Vec::new());
-        assert_eq!(0.0_f64, linestring.length());
+        assert_eq!(0.0_f64, linestring.euclidean_length());
     }
     #[test]
     fn linestring_one_point_test() {
         let linestring = LineString(vec![Point::new(0., 0.)]);
-        assert_eq!(0.0_f64, linestring.length());
+        assert_eq!(0.0_f64, linestring.euclidean_length());
     }
     #[test]
     fn linestring_test() {
         let p = |x| Point(Coordinate { x: x, y: 1. });
         let linestring = LineString(vec![p(1.), p(7.), p(8.), p(9.), p(10.), p(11.)]);
-        assert_eq!(10.0_f64, linestring.length());
+        assert_eq!(10.0_f64, linestring.euclidean_length());
     }
     #[test]
     fn multilinestring_test() {
@@ -91,13 +91,13 @@ mod test {
             ]),
             LineString(vec![p(0., 0.), p(0., 5.)]),
         ]);
-        assert_eq!(15.0_f64, mline.length());
+        assert_eq!(15.0_f64, mline.euclidean_length());
     }
     #[test]
     fn line_test() {
         let line0 = Line::new(Point::new(0., 0.), Point::new(0., 1.));
         let line1 = Line::new(Point::new(0., 0.), Point::new(3., 4.));
-        assert_eq!(line0.length(), 1.);
-        assert_eq!(line1.length(), 5.);
+        assert_eq!(line0.euclidean_length(), 1.);
+        assert_eq!(line1.euclidean_length(), 5.);
     }
 }

@@ -33,12 +33,12 @@ pub mod prelude {
     pub use algorithm::centroid::Centroid;
     pub use algorithm::contains::Contains;
     pub use algorithm::convexhull::ConvexHull;
-    pub use algorithm::distance::Distance;
+    pub use algorithm::euclidean_distance::EuclideanDistance;
+    pub use algorithm::euclidean_length::EuclideanLength;
     pub use algorithm::extremes::ExtremePoints;
     pub use algorithm::haversine_destination::HaversineDestination;
     pub use algorithm::haversine_distance::HaversineDistance;
     pub use algorithm::intersects::Intersects;
-    pub use algorithm::length::Length;
     pub use algorithm::map_coords::MapCoords;
     pub use algorithm::orient::Orient;
     pub use algorithm::rotate::{Rotate, RotatePoint};

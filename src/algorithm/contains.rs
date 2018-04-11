@@ -2,7 +2,7 @@ use num_traits::{Float, ToPrimitive};
 
 use types::{COORD_PRECISION, CoordinateType, Point, Line, LineString, Polygon, MultiPolygon, Bbox};
 use algorithm::intersects::Intersects;
-use algorithm::distance::Distance;
+use algorithm::euclidean_distance::EuclideanDistance;
 
 ///  Checks if the geometry A is completely inside the B geometry.
 
@@ -37,7 +37,7 @@ where
     T: Float + ToPrimitive,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        self.distance(p).to_f32().unwrap() < COORD_PRECISION
+        self.euclidean_distance(p).to_f32().unwrap() < COORD_PRECISION
     }
 }
 

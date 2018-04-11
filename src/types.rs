@@ -7,7 +7,7 @@ use std::fmt::Debug;
 
 use std::iter::{self, FromIterator, Iterator};
 use algorithm::boundingbox::BoundingBox;
-use algorithm::distance::Distance;
+use algorithm::euclidean_distance::EuclideanDistance;
 use spade::SpadeNum;
 use num_traits::{Float, Num, NumCast, Signed, ToPrimitive};
 use spade::{BoundingRect, PointN, SpatialObject, TwoDimensional};
@@ -568,7 +568,7 @@ where
     }
 
     fn distance2(&self, point: &Self::Point) -> <Self::Point as PointN>::Scalar {
-        let d = self.distance(point);
+        let d = self.euclidean_distance(point);
         if d == T::zero() {
             d
         } else {
@@ -648,6 +648,14 @@ impl<T: CoordinateType> LineString<T> {
             // need to do bounds checking here.
             Line::new(*w.get_unchecked(0), *w.get_unchecked(1))
         }))
+    }
+
+    pub fn points(&self) -> ::std::slice::Iter<Point<T>> {
+        self.0.iter()
+    }
+
+    pub fn points_mut(&mut self) -> ::std::slice::IterMut<Point<T>> {
+        self.0.iter_mut()
     }
 }
 
@@ -895,7 +903,7 @@ impl<F: Float> Closest<F> {
     /// Compare two `Closest`s relative to `p` and return a copy of the best
     /// one.
     pub fn best_of_two(&self, other: &Self, p: &Point<F>) -> Self {
-        use algorithm::distance::Distance;
+        use algorithm::euclidean_distance::EuclideanDistance;
 
         let left = match *self {
             Closest::Indeterminate => return *other,
@@ -908,7 +916,7 @@ impl<F: Float> Closest<F> {
             Closest::SinglePoint(r) => r,
         };
 
-        if left.distance(p) <= right.distance(p) {
+        if left.euclidean_distance(p) <= right.euclidean_distance(p) {
             *self
         } else {
             *other

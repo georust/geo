@@ -9,9 +9,9 @@ pub mod area;
 /// Returns the bearing to another Point in degrees.
 pub mod bearing;
 /// Returns the length of a line.
-pub mod length;
+pub mod euclidean_length;
 /// Returns the Euclidean distance between two geometries.
-pub mod distance;
+pub mod euclidean_distance;
 /// Returns a new Point using distance and bearing.
 pub mod haversine_destination;
 /// Returns the Haversine distance between two geometries.

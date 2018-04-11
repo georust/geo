@@ -4,7 +4,7 @@ use algorithm::contains::Contains;
 
 /// Returns the distance between two geometries.
 
-pub trait Distance<T, Rhs = Self> {
+pub trait EuclideanDistance<T, Rhs = Self> {
     /// Returns the distance between two geometries
     ///
     /// If a `Point` is contained by a `Polygon`, the distance is `0.0`
@@ -17,11 +17,11 @@ pub trait Distance<T, Rhs = Self> {
     ///
     /// ```
     /// use geo::{COORD_PRECISION, Point, LineString, Polygon};
-    /// use geo::algorithm::distance::Distance;
+    /// use geo::algorithm::euclidean_distance::EuclideanDistance;
     ///
     /// // Point to Point example
     /// let p = Point::new(-72.1235, 42.3521);
-    /// let dist = p.distance(&Point::new(-72.1260, 42.45));
+    /// let dist = p.euclidean_distance(&Point::new(-72.1260, 42.45));
     /// assert!(dist < COORD_PRECISION);
     ///
     /// // Point to Polygon example
@@ -40,7 +40,7 @@ pub trait Distance<T, Rhs = Self> {
     /// let poly = Polygon::new(ls, vec![]);
     /// // A Random point outside the polygon
     /// let p = Point::new(2.5, 0.5);
-    /// let dist = p.distance(&poly);
+    /// let dist = p.euclidean_distance(&poly);
     /// assert_eq!(dist, 2.1213203435596424);
     ///
     /// // Point to LineString example
@@ -57,10 +57,10 @@ pub trait Distance<T, Rhs = Self> {
     /// let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
     /// // A Random point outside the LineString
     /// let p = Point::new(5.5, 2.1);
-    /// let dist = p.distance(&ls);
+    /// let dist = p.euclidean_distance(&ls);
     /// assert_eq!(dist, 1.1313708498984762);
     /// ```
-    fn distance(&self, rhs: &Rhs) -> T;
+    fn euclidean_distance(&self, rhs: &Rhs) -> T;
 }
 
 // Return minimum distance between a Point and a Line segment
@@ -71,38 +71,38 @@ where
     T: Float + ToPrimitive,
 {
     if start == end {
-        return point.distance(start);
+        return point.euclidean_distance(start);
     }
     let dx = end.x() - start.x();
     let dy = end.y() - start.y();
     let r = ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
     if r <= T::zero() {
-        return point.distance(start);
+        return point.euclidean_distance(start);
     }
     if r >= T::one() {
-        return point.distance(end);
+        return point.euclidean_distance(end);
     }
     let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) / (dx * dx + dy * dy);
     s.abs() * (dx * dx + dy * dy).sqrt()
 }
 
-impl<T> Distance<T, Point<T>> for Point<T>
+impl<T> EuclideanDistance<T, Point<T>> for Point<T>
 where
     T: Float,
 {
     /// Minimum distance between two Points
-    fn distance(&self, p: &Point<T>) -> T {
+    fn euclidean_distance(&self, p: &Point<T>) -> T {
         let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
         dx.hypot(dy)
     }
 }
 
-impl<T> Distance<T, MultiPoint<T>> for Point<T>
+impl<T> EuclideanDistance<T, MultiPoint<T>> for Point<T>
 where
     T: Float,
 {
     /// Minimum distance from a Point to a MultiPoint
-    fn distance(&self, points: &MultiPoint<T>) -> T {
+    fn euclidean_distance(&self, points: &MultiPoint<T>) -> T {
         points
             .0
             .iter()
@@ -114,22 +114,22 @@ where
     }
 }
 
-impl<T> Distance<T, Point<T>> for MultiPoint<T>
+impl<T> EuclideanDistance<T, Point<T>> for MultiPoint<T>
 where
     T: Float,
 {
     /// Minimum distance from a MultiPoint to a Point
-    fn distance(&self, point: &Point<T>) -> T {
-        point.distance(self)
+    fn euclidean_distance(&self, point: &Point<T>) -> T {
+        point.euclidean_distance(self)
     }
 }
 
-impl<T> Distance<T, Polygon<T>> for Point<T>
+impl<T> EuclideanDistance<T, Polygon<T>> for Point<T>
 where
     T: Float,
 {
     /// Minimum distance from a Point to a Polygon
-    fn distance(&self, polygon: &Polygon<T>) -> T {
+    fn euclidean_distance(&self, polygon: &Polygon<T>) -> T {
         // No need to continue if the polygon contains the point, or is zero-length
         if polygon.contains(self) || polygon.exterior.0.is_empty() {
             return T::zero();
@@ -139,7 +139,7 @@ where
         polygon
             .interiors
             .iter()
-            .map(|ring| self.distance(ring))
+            .map(|ring| self.euclidean_distance(ring))
             .fold(T::max_value(), |accum, val| accum.min(val))
             .min(
                 polygon
@@ -151,69 +151,69 @@ where
     }
 }
 
-impl<T> Distance<T, Point<T>> for Polygon<T>
+impl<T> EuclideanDistance<T, Point<T>> for Polygon<T>
 where
     T: Float,
 {
     /// Minimum distance from a Polygon to a Point
-    fn distance(&self, point: &Point<T>) -> T {
-        point.distance(self)
+    fn euclidean_distance(&self, point: &Point<T>) -> T {
+        point.euclidean_distance(self)
     }
 }
 
-impl<T> Distance<T, MultiPolygon<T>> for Point<T>
+impl<T> EuclideanDistance<T, MultiPolygon<T>> for Point<T>
 where
     T: Float,
 {
     /// Minimum distance from a Point to a MultiPolygon
-    fn distance(&self, mpolygon: &MultiPolygon<T>) -> T {
+    fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
         mpolygon
             .0
             .iter()
-            .map(|p| self.distance(p))
+            .map(|p| self.euclidean_distance(p))
             .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
 
-impl<T> Distance<T, Point<T>> for MultiPolygon<T>
+impl<T> EuclideanDistance<T, Point<T>> for MultiPolygon<T>
 where
     T: Float,
 {
     /// Minimum distance from a MultiPolygon to a Point
-    fn distance(&self, point: &Point<T>) -> T {
-        point.distance(self)
+    fn euclidean_distance(&self, point: &Point<T>) -> T {
+        point.euclidean_distance(self)
     }
 }
 
-impl<T> Distance<T, MultiLineString<T>> for Point<T>
+impl<T> EuclideanDistance<T, MultiLineString<T>> for Point<T>
 where
     T: Float,
 {
     /// Minimum distance from a Point to a MultiLineString
-    fn distance(&self, mls: &MultiLineString<T>) -> T {
+    fn euclidean_distance(&self, mls: &MultiLineString<T>) -> T {
         mls.0
             .iter()
-            .map(|ls| self.distance(ls))
+            .map(|ls| self.euclidean_distance(ls))
             .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
 
-impl<T> Distance<T, Point<T>> for MultiLineString<T>
+impl<T> EuclideanDistance<T, Point<T>> for MultiLineString<T>
 where
     T: Float,
 {
     /// Minimum distance from a MultiLineString to a Point
-    fn distance(&self, point: &Point<T>) -> T {
-        point.distance(self)
+    fn euclidean_distance(&self, point: &Point<T>) -> T {
+        point.euclidean_distance(self)
     }
 }
 
-impl<T> Distance<T, LineString<T>> for Point<T>
+impl<T> EuclideanDistance<T, LineString<T>> for Point<T>
 where
     T: Float,
 {
     /// Minimum distance from a Point to a LineString
-    fn distance(&self, linestring: &LineString<T>) -> T {
+    fn euclidean_distance(&self, linestring: &LineString<T>) -> T {
         // No need to continue if the point is on the LineString, or it's empty
         if linestring.contains(self) || linestring.0.is_empty() {
             return T::zero();
@@ -225,39 +225,39 @@ where
     }
 }
 
-impl<T> Distance<T, Point<T>> for LineString<T>
+impl<T> EuclideanDistance<T, Point<T>> for LineString<T>
 where
     T: Float,
 {
     /// Minimum distance from a LineString to a Point
-    fn distance(&self, point: &Point<T>) -> T {
-        point.distance(self)
+    fn euclidean_distance(&self, point: &Point<T>) -> T {
+        point.euclidean_distance(self)
     }
 }
 
-impl<T> Distance<T, Point<T>> for Line<T>
+impl<T> EuclideanDistance<T, Point<T>> for Line<T>
 where
     T: Float,
 {
     /// Minimum distance from a Line to a Point
-    fn distance(&self, point: &Point<T>) -> T {
+    fn euclidean_distance(&self, point: &Point<T>) -> T {
         line_segment_distance(point, &self.start, &self.end)
     }
 }
-impl<T> Distance<T, Line<T>> for Point<T>
+impl<T> EuclideanDistance<T, Line<T>> for Point<T>
 where
     T: Float,
 {
-    /// Minimum distance from a Line to a Point
-    fn distance(&self, line: &Line<T>) -> T {
-        line.distance(self)
+    /// Minimum istance from a Line to a Point
+    fn euclidean_distance(&self, line: &Line<T>) -> T {
+        line.euclidean_distance(self)
     }
 }
 
 #[cfg(test)]
 mod test {
     use types::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
-    use algorithm::distance::{line_segment_distance, Distance};
+    use algorithm::euclidean_distance::{line_segment_distance, EuclideanDistance};
 
     #[test]
     fn line_segment_distance_test() {
@@ -301,7 +301,7 @@ mod test {
         let poly = Polygon::new(ls, vec![]);
         // A Random point outside the octagon
         let p = Point::new(2.5, 0.5);
-        let dist = p.distance(&poly);
+        let dist = p.euclidean_distance(&poly);
         assert_relative_eq!(dist, 2.1213203435596424);
     }
     #[test]
@@ -323,7 +323,7 @@ mod test {
         let poly = Polygon::new(ls, vec![]);
         // A Random point inside the octagon
         let p = Point::new(5.5, 2.1);
-        let dist = p.distance(&poly);
+        let dist = p.euclidean_distance(&poly);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
@@ -345,7 +345,7 @@ mod test {
         let poly = Polygon::new(ls, vec![]);
         // A point on the octagon
         let p = Point::new(5.0, 1.0);
-        let dist = p.distance(&poly);
+        let dist = p.euclidean_distance(&poly);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
@@ -361,7 +361,7 @@ mod test {
 
         let poly = Polygon::new(exterior.clone(), vec![]);
         let bugged_point = Point::new(0.0001, 0.);
-        assert_eq!(poly.distance(&bugged_point), 0.);
+        assert_eq!(poly.euclidean_distance(&bugged_point), 0.);
     }
     #[test]
     // Point to Polygon, empty Polygon
@@ -372,7 +372,7 @@ mod test {
         let poly = Polygon::new(ls, vec![]);
         // A point on the octagon
         let p = Point::new(2.5, 0.5);
-        let dist = p.distance(&poly);
+        let dist = p.euclidean_distance(&poly);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
@@ -397,7 +397,7 @@ mod test {
         let poly = Polygon::new(ls_ext, vec![ls_int]);
         // A point inside the cutout triangle
         let p = Point::new(3.5, 2.5);
-        let dist = p.distance(&poly);
+        let dist = p.euclidean_distance(&poly);
         // 0.41036467732879783 <-- Shapely
         assert_relative_eq!(dist, 0.41036467732879767);
     }
@@ -419,7 +419,7 @@ mod test {
         let p2 = Polygon::new(ls2, vec![]);
         let mp = MultiPolygon(vec![p1, p2]);
         let p = Point::new(50.0, 50.0);
-        assert_relative_eq!(p.distance(&mp), 60.959002616512684);
+        assert_relative_eq!(p.euclidean_distance(&mp), 60.959002616512684);
     }
     #[test]
     // Point to LineString
@@ -438,7 +438,7 @@ mod test {
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         // A Random point "inside" the LineString
         let p = Point::new(5.5, 2.1);
-        let dist = p.distance(&ls);
+        let dist = p.euclidean_distance(&ls);
         assert_relative_eq!(dist, 1.1313708498984762);
     }
     #[test]
@@ -458,7 +458,7 @@ mod test {
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         // A point which lies on the LineString
         let p = Point::new(5.0, 4.0);
-        let dist = p.distance(&ls);
+        let dist = p.euclidean_distance(&ls);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
@@ -467,7 +467,7 @@ mod test {
         let points = vec![(3.5, 3.5), (4.4, 2.0), (2.6, 2.0), (3.5, 3.5)];
         let ls = LineString(points.iter().map(|e| Point::new(e.0, e.1)).collect());
         let p = Point::new(3.5, 2.5);
-        let dist = p.distance(&ls);
+        let dist = p.euclidean_distance(&ls);
         assert_relative_eq!(dist, 0.5);
     }
     #[test]
@@ -476,7 +476,7 @@ mod test {
         let points = vec![];
         let ls = LineString(points);
         let p = Point::new(5.0, 4.0);
-        let dist = p.distance(&ls);
+        let dist = p.euclidean_distance(&ls);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
@@ -489,18 +489,18 @@ mod test {
         ]);
         let mls = MultiLineString(vec![v1, v2]);
         let p = Point::new(50.0, 50.0);
-        assert_relative_eq!(p.distance(&mls), 63.25345840347388);
+        assert_relative_eq!(p.euclidean_distance(&mls), 63.25345840347388);
     }
     #[test]
     fn distance1_test() {
         assert_eq!(
-            Point::<f64>::new(0., 0.).distance(&Point::<f64>::new(1., 0.)),
+            Point::<f64>::new(0., 0.).euclidean_distance(&Point::<f64>::new(1., 0.)),
             1.
         );
     }
     #[test]
     fn distance2_test() {
-        let dist = Point::new(-72.1235, 42.3521).distance(&Point::new(72.1260, 70.612));
+        let dist = Point::new(-72.1235, 42.3521).euclidean_distance(&Point::new(72.1260, 70.612));
         assert_relative_eq!(dist, 146.99163308930207);
     }
     #[test]
@@ -518,7 +518,7 @@ mod test {
         ];
         let mp = MultiPoint(v);
         let p = Point::new(50.0, 50.0);
-        assert_eq!(p.distance(&mp), 64.03124237432849)
+        assert_eq!(p.euclidean_distance(&mp), 64.03124237432849)
     }
     #[test]
     fn distance_line_test() {
@@ -526,13 +526,13 @@ mod test {
         let p0 = Point::new(2., 3.);
         let p1 = Point::new(3., 0.);
         let p2 = Point::new(6., 0.);
-        assert_eq!(line0.distance(&p0), 3.);
-        assert_eq!(p0.distance(&line0), 3.);
+        assert_eq!(line0.euclidean_distance(&p0), 3.);
+        assert_eq!(p0.euclidean_distance(&line0), 3.);
 
-        assert_eq!(line0.distance(&p1), 0.);
-        assert_eq!(p1.distance(&line0), 0.);
+        assert_eq!(line0.euclidean_distance(&p1), 0.);
+        assert_eq!(p1.euclidean_distance(&line0), 0.);
 
-        assert_eq!(line0.distance(&p2), 1.);
-        assert_eq!(p2.distance(&line0), 1.);
+        assert_eq!(line0.euclidean_distance(&p2), 1.);
+        assert_eq!(p2.euclidean_distance(&line0), 1.);
     }
 }

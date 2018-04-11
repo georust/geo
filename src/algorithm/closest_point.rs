@@ -49,7 +49,7 @@ impl<F: Float> ClosestPoint<F> for Point<F> {
 
 impl<F: Float> ClosestPoint<F> for Line<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        let line_length = self.length();
+        let line_length = self.euclidean_length();
         if line_length == F::zero() {
             // if we've got a zero length line, technically the entire line
             // is the closest point...
