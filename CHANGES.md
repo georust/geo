@@ -1,5 +1,21 @@
 # Changes
 
+## 0.8.0
+
+* Prefix Euclidean distance/length traits with 'Euclidean'.
+  * <https://github.com/georust/rust-geo/pull/200>
+* Bump num-traits: 0.1 → 0.2
+  * <https://github.com/georust/rust-geo/pull/188>
+* Implement `SpatialObject` for `Line` type
+  * <https://github.com/georust/rust-geo/pull/181>
+* Implement a `TryMapCoords` trait
+  * <https://github.com/georust/rust-geo/pull/191>
+  * <https://github.com/georust/rust-geo/pull/197>
+* Impl Polygon convexity function on the type
+  * <https://github.com/georust/rust-geo/pull/195>
+* Implement rust-proj as an optional feature within geo
+  * <https://github.com/georust/rust-geo/pull/192>
+
 ## 0.7.4
 
 * [`cross_prod` method added to `Point`](https://github.com/georust/rust-geo/pull/189)
