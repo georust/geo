@@ -1,6 +1,6 @@
 use num_traits::Float;
 use types::{LineString, MultiLineString, MultiPolygon, Point, Polygon};
-use algorithm::distance::Distance;
+use algorithm::euclidean_distance::EuclideanDistance;
 
 // perpendicular distance from a point to a line
 fn point_line_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
@@ -8,12 +8,12 @@ where
     T: Float,
 {
     if start == end {
-        point.distance(start)
+        point.euclidean_distance(start)
     } else {
         let numerator = ((end.x() - start.x()) * (start.y() - point.y())
             - (start.x() - point.x()) * (end.y() - start.y()))
             .abs();
-        let denominator = start.distance(end);
+        let denominator = start.euclidean_distance(end);
         numerator / denominator
     }
 }

@@ -2,7 +2,7 @@ use num_traits::{Float, FromPrimitive};
 
 use types::{Bbox, Line, LineString, MultiPolygon, Point, Polygon};
 use algorithm::area::Area;
-use algorithm::length::Length;
+use algorithm::euclidean_length::EuclideanLength;
 
 /// Calculation of the centroid.
 pub trait Centroid<T: Float> {
@@ -90,7 +90,7 @@ where
             let mut sum_y = T::zero();
             let mut total_length = T::zero();
             for line in self.lines() {
-                let segment_len = line.length();
+                let segment_len = line.euclidean_length();
                 let (x1, y1, x2, y2) = (line.start.x(), line.start.y(), line.end.x(), line.end.y());
                 total_length = total_length + segment_len;
                 sum_x = sum_x + segment_len * ((x1 + x2) / (T::one() + T::one()));
@@ -203,7 +203,7 @@ where
 mod test {
     use types::{Bbox, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, COORD_PRECISION};
     use algorithm::centroid::Centroid;
-    use algorithm::distance::Distance;
+    use algorithm::euclidean_distance::EuclideanDistance;
     // Tests: Centroid of LineString
     #[test]
     fn empty_linestring_test() {
@@ -309,7 +309,7 @@ mod test {
         let dist = MultiPolygon(vec![poly1, poly2])
             .centroid()
             .unwrap()
-            .distance(&p(4.07142857142857, 1.92857142857143));
+            .euclidean_distance(&p(4.07142857142857, 1.92857142857143));
         assert!(dist < COORD_PRECISION);
     }
     #[test]
