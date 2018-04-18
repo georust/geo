@@ -1,4 +1,8 @@
 # Changes
+## 0.8.1
+
+* Fix centroid calculation for degenerate polygons
+    * <https://github.com/georust/rust-geo/pull/203>
 
 ## 0.8.0
 
