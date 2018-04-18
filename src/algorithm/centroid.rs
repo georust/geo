@@ -46,6 +46,10 @@ where
     T: Float + FromPrimitive,
 {
     let area = simple_polygon_area(poly_ext);
+    if area == T::zero() {
+        // if the polygon is flat (area = 0), it is considered as a linestring
+        return poly_ext.centroid();
+    }
     let mut sum_x = T::zero();
     let mut sum_y = T::zero();
     for line in poly_ext.lines() {
@@ -125,16 +129,16 @@ where
         if vect.len() == 1 {
             Some(Point::new(vect[0].x(), vect[0].y()))
         } else {
-            let external_centroid = simple_polygon_centroid(&self.exterior).unwrap();
+            let external_centroid = simple_polygon_centroid(&self.exterior)?;
             if !self.interiors.is_empty() {
                 let external_area = simple_polygon_area(&self.exterior).abs();
                 // accumulate interior Polygons
                 let (totals_x, totals_y, internal_area) = self.interiors
                     .iter()
-                    .map(|ring| {
+                    .filter_map(|ring| {
                         let area = simple_polygon_area(ring).abs();
-                        let centroid = simple_polygon_centroid(ring).unwrap();
-                        ((centroid.x() * area), (centroid.y() * area), area)
+                        let centroid = simple_polygon_centroid(ring)?;
+                        Some((centroid.x() * area, centroid.y() * area, area))
                     })
                     .fold((T::zero(), T::zero(), T::zero()), |accum, val| {
                         (accum.0 + val.0, accum.1 + val.1, accum.2 + val.2)
@@ -286,6 +290,35 @@ mod test {
         let p1 = Polygon::new(ls1, vec![ls2, ls3]);
         let centroid = p1.centroid().unwrap();
         assert_eq!(centroid, Point::new(5.5, 2.5518518518518514));
+    }
+    #[test]
+    fn flat_polygon_test() {
+        let p = |x| Point(Coordinate { x: x, y: 1. });
+        let poly = Polygon::new(LineString(vec![p(0.), p(1.), p(0.)]), vec![]);
+        assert_eq!(
+            poly.centroid(),
+            Some(p(0.5))
+        );
+    }
+    #[test]
+    fn polygon_flat_interior_test() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let poly = Polygon::new(LineString(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]), 
+                    vec![LineString(vec![p(0., 0.), p(0., 1.), p(0., 0.)])]);
+        assert_eq!(
+            poly.centroid(),
+            Some(p(0.5, 0.5))
+        );
+    }
+    #[test]
+    fn empty_interior_polygon_test() {
+        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let poly = Polygon::new(LineString(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]), 
+                    vec![LineString(vec![])]);
+        assert_eq!(
+            poly.centroid(),
+            Some(p(0.5, 0.5))
+        );
     }
     // Tests: Centroid of MultiPolygon
     #[test]
