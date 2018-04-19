@@ -1,8 +1,14 @@
 # Changes
+
+## 0.8.2
+
+* Fix documentation generation on docs.rs
+  * https://github.com/georust/rust-geo/pull/202
+
 ## 0.8.1
 
 * Fix centroid calculation for degenerate polygons
-    * <https://github.com/georust/rust-geo/pull/203>
+  * <https://github.com/georust/rust-geo/pull/203>
 
 ## 0.8.0
 
