@@ -31,4 +31,4 @@ proj = ["proj-sys", "libc"]
 approx = "0.1.1"
 
 [package.metadata.docs.rs]
-all-features = true
+features = ["postgis"]
