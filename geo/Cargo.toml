@@ -21,7 +21,7 @@ failure = "0.1.1"
 postgis = { version = "0.5", optional = true }
 proj-sys = { version = "0.6.1", optional = true }
 libc = { version = "0.2.39", optional = true }
-geo-types = { path = "../geo-types/", features = ["serde", "spade"] }
+geo-types = { version = "0.1.0", features = ["serde", "spade"] }
 
 [features]
 default = []
