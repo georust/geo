@@ -7,7 +7,8 @@ use ::{CoordinateType, Point};
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
 /// A container for the bounding box of a [`Geometry`](enum.Geometry.html)
-#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Bbox<T>
 where
     T: CoordinateType,
@@ -19,7 +20,8 @@ where
 }
 
 /// A container for indices of the minimum and maximum points of a [`Geometry`](enum.Geometry.html)
-#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Extremes {
     pub ymin: usize,
     pub xmax: usize,
@@ -39,7 +41,8 @@ impl From<Vec<usize>> for Extremes {
 }
 
 /// A container for the coordinates of the minimum and maximum points of a [`Geometry`](enum.Geometry.html)
-#[derive(PartialEq, Clone, Copy, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub struct ExtremePoint<T>
 where
     T: CoordinateType,
@@ -139,7 +142,8 @@ where
 }
 
 /// The result of trying to find the closest spot on an object to a point.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Closest<F: Float> {
     /// The point actually intersects with the object.
     Intersection(Point<F>),

@@ -1,7 +1,8 @@
 extern crate geo_types;
 extern crate num_traits;
+#[cfg(feature = "use-serde")]
 #[macro_use]
-extern crate serde_derive;
+extern crate serde;
 extern crate spade;
 #[cfg(feature = "postgis-integration")]
 extern crate postgis;
