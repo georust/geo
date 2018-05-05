@@ -1,9 +1,23 @@
 language: rust
+
 cache: cargo
-rust:
-  - stable
-  - beta
-  - nightly
+
 matrix:
-  allow_failures:
-    - rust: nightly
+  include:
+    - env: GEO_TYPES_FEATURES=""
+    - env: GEO_TYPES_FEATURES="--features serde"
+    - env: GEO_TYPES_FEATURES="--features spade"
+    - env: GEO_FEATURES=""
+    - env: GEO_FEATURES="--features postgis-integration"
+    - env: GEO_FEATURES="--features proj"
+    - env: GEO_FEATURES="--features use-serde"
+
+before_install:
+  - sudo apt-get update
+  - wget https://github.com/OSGeo/proj.4/releases/download/5.0.0/proj-5.0.0.tar.gz
+  - tar -xzvf proj-5.0.0.tar.gz
+  - pushd proj-5.0.0 && ./configure --prefix=/usr && make && sudo make install && popd
+
+script:
+  - (cd geo-types && cargo build $GEO_TYPES_FEATURES && cargo test $GEO_TYPES_FEATURES)
+  - (cd geo && cargo build $GEO_FEATURES && cargo test $GEO_FEATURES)
