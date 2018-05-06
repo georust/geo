@@ -1,5 +1,12 @@
 # Changes
 
+## geo 0.9.0 (unreleased)
+
+* Make serde an optional dependency for `geo`, rename feature to `use-serde`
+  * <https://github.com/georust/rust-geo/pull/209>
+* Fix compilation errors when using the `proj` feature
+  * <https://github.com/georust/rust-geo/commit/0924f3179c95bfffb847562ee91675d7aa8454f5>
+
 ## geo 0.8.3
 
 * Reexport core types from `geo-types`
