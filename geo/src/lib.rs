@@ -10,6 +10,7 @@ extern crate postgis;
 extern crate proj_sys;
 #[cfg(feature = "proj")]
 extern crate libc;
+#[macro_use]
 extern crate failure;
 
 pub use traits::ToGeo;

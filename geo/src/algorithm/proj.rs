@@ -26,7 +26,7 @@ use proj_sys::proj_errno;
 use libc::{c_char, c_double, c_int};
 use std::ffi::CString;
 use ::{CoordinateType, Point};
-use algorithm::map_coords::{TryMapCoords, MapCoordsInplaceFallible};
+use algorithm::map_coords::TryMapCoords;
 use std::ffi::CStr;
 use std::str;
 use failure::Error;
