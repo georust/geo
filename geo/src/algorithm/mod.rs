@@ -51,3 +51,7 @@ pub mod winding_order;
 pub mod proj;
 /// Helper functions for the "fast path" variant of the Polygon-Polygon distance method
 pub(crate) mod polygon_distance_fast_path;
+
+pub mod vincenty_distance;
+
+pub mod vincenty_length;
