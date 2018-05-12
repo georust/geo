@@ -588,7 +588,7 @@ mod test {
         assert_eq!(p2.y(), 2f32);
     }
 
-    #[cfg(feature = "proj")]
+    #[cfg(feature = "use-proj")]
     #[test]
     fn test_fallible() {
         let f = |x: f64, y: f64| {

@@ -6,10 +6,8 @@ extern crate serde;
 extern crate spade;
 #[cfg(feature = "postgis-integration")]
 extern crate postgis;
-#[cfg(feature = "proj")]
-extern crate proj_sys;
-#[cfg(feature = "proj")]
-extern crate libc;
+#[cfg(feature = "use-proj")]
+extern crate proj;
 #[macro_use]
 extern crate failure;
 
@@ -57,6 +55,6 @@ pub mod prelude {
     pub use algorithm::from_postgis::FromPostgis;
     #[cfg(feature = "postgis-integration")]
     pub use algorithm::to_postgis::ToPostgis;
-    #[cfg(feature = "proj")]
-    pub use algorithm::proj::{Proj};
+    #[cfg(feature = "use-proj")]
+    pub use algorithm::proj::Proj;
 }
