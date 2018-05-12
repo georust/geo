@@ -1,6 +1,13 @@
-use num_traits::{Float, ToPrimitive};
-use ::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
-use algorithm::contains::Contains;
+use algorithm::contains::{get_position, Contains, PositionPoint};
+use algorithm::intersects::Intersects;
+use algorithm::polygon_distance_fast_path::*;
+use num_traits::float::FloatConst;
+use num_traits::{Float, Signed, ToPrimitive};
+use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+
+use spade::primitives::SimpleEdge;
+use spade::rtree::RTree;
+use spade::SpadeFloat;
 
 /// Returns the distance between two geometries.
 
@@ -63,8 +70,8 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     fn euclidean_distance(&self, rhs: &Rhs) -> T;
 }
 
-// Return minimum distance between a Point and a Line segment
-// This is a helper for Point-to-LineString and Point-to-Polygon distance
+/// Minimum distance between a Point and a Line segment
+/// This is a helper for Point-to-LineString and Point-to-Polygon distance
 // adapted from https://github.com/OSGeo/geos/blob/master/src/algorithm/CGAlgorithms.cpp#L191
 fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
 where
@@ -75,7 +82,8 @@ where
     }
     let dx = end.x() - start.x();
     let dy = end.y() - start.y();
-    let r = ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
+    let r =
+        ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
     if r <= T::zero() {
         return point.euclidean_distance(start);
     }
@@ -244,20 +252,176 @@ where
         line_segment_distance(point, &self.start, &self.end)
     }
 }
+
 impl<T> EuclideanDistance<T, Line<T>> for Point<T>
 where
     T: Float,
 {
-    /// Minimum istance from a Line to a Point
+    /// Minimum distance from a Line to a Point
     fn euclidean_distance(&self, line: &Line<T>) -> T {
         line.euclidean_distance(self)
     }
 }
 
+/// LineString-LineString distance
+impl<T> EuclideanDistance<T, LineString<T>> for LineString<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn euclidean_distance(&self, other: &LineString<T>) -> T {
+        if self.intersects(other) {
+            T::zero()
+        } else {
+            nearest_neighbour_distance(self, other)
+        }
+    }
+}
+
+/// This method handles a corner case in which a candidate polygon
+/// is disjoint because it's contained in the inner ring
+/// we work around this by checking that Polygons with inner rings don't
+/// contain a point from the candidate Polygon's outer shell in their simple representations
+fn ring_contains_point<T>(poly: &Polygon<T>, p: &Point<T>) -> bool
+where
+    T: Float,
+{
+    match get_position(p, &poly.exterior) {
+        PositionPoint::Inside => true,
+        PositionPoint::OnBoundary | PositionPoint::Outside => false,
+    }
+}
+
+/// LineString to Polygon
+impl<T> EuclideanDistance<T, Polygon<T>> for LineString<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn euclidean_distance(&self, other: &Polygon<T>) -> T {
+        if self.intersects(other) || other.contains(self) {
+            T::zero()
+        } else {
+            // still a possibility that the LineString's inside an interior ring
+            if !other.interiors.is_empty() && ring_contains_point(other, &self.0[0]) {
+                // check each ring distance, returning the minimum
+                let mut mindist: T = Float::max_value();
+                for ring in &other.interiors {
+                    mindist = mindist.min(nearest_neighbour_distance(self, ring))
+                }
+                mindist
+            } else {
+                nearest_neighbour_distance(self, &other.exterior)
+            }
+        }
+    }
+}
+
+/// Polygon to LineString distance
+impl<T> EuclideanDistance<T, LineString<T>> for Polygon<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn euclidean_distance(&self, other: &LineString<T>) -> T {
+        other.euclidean_distance(self)
+    }
+}
+
+// Line to Polygon distance
+impl<T> EuclideanDistance<T, Polygon<T>> for Line<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn euclidean_distance(&self, other: &Polygon<T>) -> T {
+        self.start
+            .euclidean_distance(other)
+            .min(self.end.euclidean_distance(other))
+    }
+}
+
+// Polygon to Line distance
+impl<T> EuclideanDistance<T, Line<T>> for Polygon<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn euclidean_distance(&self, other: &Line<T>) -> T {
+        other.euclidean_distance(self)
+    }
+}
+
+// Polygon to Polygon distance
+impl<T> EuclideanDistance<T, Polygon<T>> for Polygon<T>
+where
+    T: Float + FloatConst + SpadeFloat,
+{
+    /// This implementation has a "fast path" in cases where both input polygons are convex:
+    /// it switches to an implementation of the "rotating calipers" method described in [Pirzadeh (1999), pp24—30](http://digitool.library.mcgill.ca/R/?func=dbin-jump-full&object_id=21623&local_base=GEN01-MCG02),
+    ///  which is approximately an order of magnitude faster than the standard method.
+    fn euclidean_distance(&self, poly2: &Polygon<T>) -> T {
+        if self.intersects(poly2) {
+            return T::zero();
+        }
+        // Containment check
+        if !self.interiors.is_empty() && ring_contains_point(self, &poly2.exterior.0[0]) {
+            // check each ring distance, returning the minimum
+            let mut mindist: T = Float::max_value();
+            for ring in &self.interiors {
+                mindist = mindist.min(nearest_neighbour_distance(&poly2.exterior, ring))
+            }
+            return mindist;
+        } else if !poly2.interiors.is_empty() && ring_contains_point(poly2, &self.exterior.0[0]) {
+            let mut mindist: T = Float::max_value();
+            for ring in &poly2.interiors {
+                mindist = mindist.min(nearest_neighbour_distance(&self.exterior, ring))
+            }
+            return mindist;
+        }
+        if !(self.is_convex() && !poly2.is_convex()) {
+            // fall back to R* nearest neighbour method
+            nearest_neighbour_distance(&self.exterior, &poly2.exterior)
+        } else {
+            min_poly_dist(self, poly2)
+        }
+    }
+}
+
+/// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
+/// This is pretty slow and memory-inefficient but certainly better than quadratic time
+fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -> T
+where
+    T: Float + SpadeFloat,
+{
+    let tree_a: RTree<SimpleEdge<_>> = RTree::bulk_load(
+        geom1
+            .lines()
+            .map(|line| SimpleEdge::new(line.start, line.end))
+            .collect(),
+    );
+    let tree_b: RTree<SimpleEdge<_>> = RTree::bulk_load(
+        geom2
+            .lines()
+            .map(|line| SimpleEdge::new(line.start, line.end))
+            .collect(),
+    );
+    let mut mindist_a: T = Float::max_value();
+    let mut mindist_b: T = Float::max_value();
+    for point in &geom2.0 {
+        // get the nearest neighbour from the tree
+        let nearest = tree_a.nearest_neighbor(point).unwrap();
+        // calculate distance from point to line
+        // compare to current minimum, updating if necessary
+        mindist_a = mindist_a.min(Line::new(nearest.from, nearest.to).euclidean_distance(point));
+    }
+    for point in &geom1.0 {
+        let nearest = tree_b.nearest_neighbor(point).unwrap();
+        mindist_b = mindist_b.min(Line::new(nearest.from, nearest.to).euclidean_distance(point));
+    }
+    // return smallest distance
+    mindist_a.min(mindist_b)
+}
+
 #[cfg(test)]
 mod test {
-    use ::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
     use algorithm::euclidean_distance::{line_segment_distance, EuclideanDistance};
+    use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
     #[test]
     fn line_segment_distance_test() {

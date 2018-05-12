@@ -49,3 +49,5 @@ pub mod winding_order;
 /// Coordinate projections and transformations using [PROJ](http://proj4.org) v5.0.x
 #[cfg(feature = "use-proj")]
 pub mod proj;
+/// Helper functions for the "fast path" variant of the Polygon-Polygon distance method
+pub(crate) mod polygon_distance_fast_path;
