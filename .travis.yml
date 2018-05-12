@@ -9,7 +9,7 @@ matrix:
     - env: GEO_TYPES_FEATURES="--features spade"
     - env: GEO_FEATURES=""
     - env: GEO_FEATURES="--features postgis-integration"
-    - env: GEO_FEATURES="--features proj"
+    - env: GEO_FEATURES="--features use-proj"
     - env: GEO_FEATURES="--features use-serde"
 
 before_install:
