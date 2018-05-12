@@ -1,4 +1,6 @@
-use ::{CoordinateType, LineString, Point};
+use std::iter::Rev;
+use std::slice::Iter;
+use {CoordinateType, LineString, Point};
 
 pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T where T: CoordinateType {
     if linestring.0.is_empty() || linestring.0.len() == 1 {
@@ -12,13 +14,52 @@ pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T where T
     tmp
 }
 
+enum EitherIter<T, I1, I2>
+where
+    I1: Iterator<Item = T>,
+    I2: Iterator<Item = T>,
+{
+    A(I1),
+    B(I2),
+}
+
+impl<T, I1, I2> Iterator for EitherIter<T, I1, I2>
+where
+    I1: Iterator<Item = T>,
+    I2: Iterator<Item = T>,
+{
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            EitherIter::A(iter) => iter.next(),
+            EitherIter::B(iter) => iter.next(),
+        }
+    }
+}
+
+/// Iterates through a list of `Point`s
+pub struct Points<'a, T>(EitherIter<&'a Point<T>, Iter<'a, Point<T>>, Rev<Iter<'a, Point<T>>>>)
+where
+    T: CoordinateType + 'a;
+
+impl<'a, T> Iterator for Points<'a, T>
+where
+    T: CoordinateType,
+{
+    type Item = &'a Point<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+}
+
 /// How a linestring is wound, clockwise or counter-clockwise
 #[derive(PartialEq, Clone, Debug, Eq)]
 pub enum WindingOrder {
     Clockwise,
     CounterClockwise,
 }
-
 
 /// Calculate, and work with, the winding order
 pub trait Winding<T> where T: CoordinateType
@@ -40,13 +81,13 @@ pub trait Winding<T> where T: CoordinateType
     ///
     /// The object isn't changed, and the points are returned either in order, or in reverse
     /// order, so that the resultant order makes it appear clockwise
-    fn points_cw<'a>(&'a self) -> Box<Iterator<Item=&'a Point<T>> + 'a>;
+    fn points_cw<'a>(&'a self) -> Points<'a, T>;
 
     /// Iterate over the points in a counter-clockwise order
     ///
     /// The object isn't changed, and the points are returned either in order, or in reverse
     /// order, so that the resultant order makes it appear counter-clockwise
-    fn points_ccw<'a>(&'a self) -> Box<Iterator<Item=&'a Point<T>> + 'a>;
+    fn points_ccw<'a>(&'a self) -> Points<'a, T>;
 
     /// Change this objects's points so they are in clockwise winding order
     fn make_cw_winding(&mut self);
@@ -96,10 +137,10 @@ impl<T> Winding<T> for LineString<T>
     ///
     /// The Linestring isn't changed, and the points are returned either in order, or in reverse
     /// order, so that the resultant order makes it appear clockwise
-    fn points_cw<'a>(&'a self) -> Box<Iterator<Item=&'a Point<T>> + 'a> {
+    fn points_cw<'a>(&'a self) -> Points<'a, T> {
         match self.winding_order() {
-            Some(WindingOrder::CounterClockwise) => Box::new(self.0.iter().rev()),
-            _ => Box::new(self.0.iter()),
+            Some(WindingOrder::CounterClockwise) => Points(EitherIter::B(self.0.iter().rev())),
+            _ => Points(EitherIter::A(self.0.iter())),
         }
     }
 
@@ -107,10 +148,10 @@ impl<T> Winding<T> for LineString<T>
     ///
     /// The Linestring isn't changed, and the points are returned either in order, or in reverse
     /// order, so that the resultant order makes it appear counter-clockwise
-    fn points_ccw<'a>(&'a self) -> Box<Iterator<Item=&'a Point<T>> + 'a> {
+    fn points_ccw<'a>(&'a self) -> Points<'a, T> {
         match self.winding_order() {
-            Some(WindingOrder::Clockwise) => Box::new(self.0.iter().rev()),
-            _ => Box::new(self.0.iter()),
+            Some(WindingOrder::Clockwise) => Points(EitherIter::B(self.0.iter().rev())),
+            _ => Points(EitherIter::A(self.0.iter())),
         }
     }
 

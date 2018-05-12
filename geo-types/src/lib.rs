@@ -17,7 +17,7 @@ use std::ops::Neg;
 use std::ops::Sub;
 
 use num_traits::{Float, Num, NumCast, Signed, ToPrimitive};
-use std::iter::{self, FromIterator, Iterator};
+use std::iter::{FromIterator, Iterator};
 
 #[cfg(feature = "spade")]
 use spade::{BoundingRect, PointN, SpatialObject, TwoDimensional, SpadeNum};
@@ -518,15 +518,12 @@ impl<T: CoordinateType> LineString<T> {
     /// );
     /// assert!(lines.next().is_none());
     /// ```
-    pub fn lines<'a>(&'a self) -> Box<Iterator<Item = Line<T>> + 'a> {
-        if self.0.len() < 2 {
-            return Box::new(iter::empty());
-        }
-        Box::new(self.0.windows(2).map(|w| unsafe {
+    pub fn lines<'a>(&'a self) -> impl Iterator<Item = Line<T>> + 'a {
+        self.0.windows(2).map(|w| unsafe {
             // As long as the LineString has at least two points, we shouldn't
             // need to do bounds checking here.
             Line::new(*w.get_unchecked(0), *w.get_unchecked(1))
-        }))
+        })
     }
 
     pub fn points(&self) -> ::std::slice::Iter<Point<T>> {
