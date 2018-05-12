@@ -4,6 +4,8 @@
 
 * Make serde an optional dependency for `geo`, rename feature to `use-serde`
   * <https://github.com/georust/rust-geo/pull/209>
+* Use the `proj` crate, rename feature to `use-proj`
+  * <https://github.com/georust/rust-geo/pull/214>
 * Fix compilation errors when using the `proj` feature
   * <https://github.com/georust/rust-geo/commit/0924f3179c95bfffb847562ee91675d7aa8454f5>
 
