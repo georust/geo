@@ -670,3 +670,16 @@ where
         _ => unreachable!(),
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_vertex_line_distance() {
+        let p = Point::new(0., 0.);
+        let q = Point::new(3.8, 5.7);
+        let r = Point::new(22.5, 10.);
+        let dist = vertex_line_distance(&p, &q, &r);
+        assert_eq!(dist, 6.850547423381579);
+    }
+}
