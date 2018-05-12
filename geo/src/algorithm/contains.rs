@@ -1,8 +1,8 @@
 use num_traits::{Float, ToPrimitive};
 
-use ::{COORD_PRECISION, CoordinateType, Point, Line, LineString, Polygon, MultiPolygon, Bbox};
-use algorithm::intersects::Intersects;
 use algorithm::euclidean_distance::EuclideanDistance;
+use algorithm::intersects::Intersects;
+use {Bbox, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, COORD_PRECISION};
 
 ///  Checks if the geometry A is completely inside the B geometry.
 
@@ -135,13 +135,13 @@ where
 }
 
 #[derive(PartialEq, Clone, Debug)]
-enum PositionPoint {
+pub(crate) enum PositionPoint {
     OnBoundary,
     Inside,
     Outside,
 }
 
-fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
+pub(crate) fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
 where
     T: Float,
 {
@@ -246,7 +246,7 @@ where
 
 impl<T> Contains<Point<T>> for Bbox<T>
 where
-    T: CoordinateType
+    T: CoordinateType,
 {
     fn contains(&self, p: &Point<T>) -> bool {
         p.x() >= self.xmin && p.x() <= self.xmax && p.y() >= self.ymin && p.y() <= self.ymax
@@ -255,18 +255,19 @@ where
 
 impl<T> Contains<Bbox<T>> for Bbox<T>
 where
-    T: CoordinateType
+    T: CoordinateType,
 {
     fn contains(&self, bbox: &Bbox<T>) -> bool {
         // All points of LineString must be in the polygon ?
-        self.xmin <= bbox.xmin && self.xmax >= bbox.xmax && self.ymin <= bbox.ymin && self.ymax >= bbox.ymax
+        self.xmin <= bbox.xmin && self.xmax >= bbox.xmax && self.ymin <= bbox.ymin
+            && self.ymax >= bbox.ymax
     }
 }
 
 #[cfg(test)]
 mod test {
-    use ::{Bbox, Coordinate, Line, LineString, MultiPolygon, Point, Polygon};
     use algorithm::contains::Contains;
+    use {Bbox, Coordinate, Line, LineString, MultiPolygon, Point, Polygon};
     #[test]
     // V doesn't contain rect because two of its edges intersect with V's exterior boundary
     fn polygon_does_not_contain_polygon() {
@@ -483,9 +484,13 @@ mod test {
 
         let poly = Polygon::new(
             LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
-            vec![
-                LineString(vec![p(1., 1.), p(4., 1.), p(4., 4.), p(1., 4.), p(1., 1.)]),
-            ],
+            vec![LineString(vec![
+                p(1., 1.),
+                p(4., 1.),
+                p(4., 4.),
+                p(1., 4.),
+                p(1., 1.),
+            ])],
         );
         assert!(!poly.contains(&LineString(vec![p(2., 2.), p(3., 3.)])));
         assert!(!poly.contains(&LineString(vec![p(2., 2.), p(2., 5.)])));
@@ -604,11 +609,21 @@ mod test {
     #[test]
     fn integer_bboxs() {
         let p: Point<i32> = Point::new(10, 20);
-        let bbox: Bbox<i32> = Bbox{ xmin: 0, ymin:0, xmax: 100, ymax: 100 };
+        let bbox: Bbox<i32> = Bbox {
+            xmin: 0,
+            ymin: 0,
+            xmax: 100,
+            ymax: 100,
+        };
         assert!(bbox.contains(&p));
         assert!(!bbox.contains(&Point::new(-10, -10)));
 
-        let smaller_bbox: Bbox<i32> = Bbox{ xmin: 10, ymin: 10, xmax: 20, ymax: 20 };
+        let smaller_bbox: Bbox<i32> = Bbox {
+            xmin: 10,
+            ymin: 10,
+            xmax: 20,
+            ymax: 20,
+        };
         assert!(bbox.contains(&smaller_bbox));
     }
 }
