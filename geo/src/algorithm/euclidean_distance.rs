@@ -390,21 +390,17 @@ where
 {
     let tree_a: RTree<Line<_>> = RTree::bulk_load(geom1.lines().collect());
     let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect());
-    let mut mindist_a: T = Float::max_value();
-    let mut mindist_b: T = Float::max_value();
-    for point in geom2.points() {
-        // get the nearest neighbour from the tree
-        let nearest = tree_a.nearest_neighbor(point).unwrap();
-        // calculate distance from point to line
-        // compare to current minimum, updating if necessary
-        mindist_a = mindist_a.min(nearest.euclidean_distance(point));
-    }
-    for point in geom1.points() {
-        let nearest = tree_b.nearest_neighbor(point).unwrap();
-        mindist_b = mindist_b.min(nearest.euclidean_distance(point));
-    }
-    // return smallest distance
-    mindist_a.min(mindist_b)
+    // Return minimum distance between all geom a points and all geom b points
+    geom2
+        .points()
+        .fold(T::max_value(), |acc, point| {
+            let nearest = tree_a.nearest_neighbor(point).unwrap();
+            acc.min(nearest.euclidean_distance(point))
+        })
+        .min(geom1.points().fold(T::max_value(), |acc, point| {
+            let nearest = tree_b.nearest_neighbor(point).unwrap();
+            acc.min(nearest.euclidean_distance(point))
+        }))
 }
 
 #[cfg(test)]
