@@ -61,7 +61,7 @@ where
     v.euclidean_distance(&Line::new(*p, *q))
 }
 
-/// Wrap-around previous-vertex
+/// Wrap-around previous Polygon index
 fn prev_vertex<T>(poly: &Polygon<T>, current_vertex: &usize) -> usize
 where
     T: Float,
@@ -69,7 +69,7 @@ where
     (current_vertex + (poly.exterior.0.len() - 1) - 1) % (poly.exterior.0.len() - 1)
 }
 
-/// Wrap-around next and previous Polygon indices
+/// Wrap-around next Polygon index
 fn next_vertex<T>(poly: &Polygon<T>, current_vertex: &usize) -> usize
 where
     T: Float,
@@ -84,7 +84,7 @@ enum Aligned {
     EdgeEdge,
 }
 
-// distance-finding state
+/// Distance-finding state
 #[derive(Debug)]
 pub(crate) struct Polydist<'a, T>
 where
@@ -380,10 +380,7 @@ where
     let triarea = triangle_area(p, &punit, &pnext);
     let edgelen = p.euclidean_distance(&pnext);
     let mut sine = triarea / (T::from(0.5).unwrap() * T::from(100).unwrap() * edgelen);
-    if sine < -T::one() {
-        sine = T::one();
-    }
-    if sine > T::one() {
+    if sine < -T::one() || sine > T::one() {
         sine = T::one();
     }
     let angle;
