@@ -7,7 +7,7 @@ use algorithm::euclidean_distance::EuclideanDistance;
 ///  Checks if the geometry A is completely inside the B geometry.
 
 pub trait Contains<Rhs = Self> {
-    ///  Checks if the geometry A is completely inside the B geometry.
+    /// Checks if `rhs` is completely contained within `self`.
     ///
     /// ```
     /// use geo::{Coordinate, Point, LineString, Polygon};
