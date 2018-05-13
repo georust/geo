@@ -388,16 +388,8 @@ fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -
 where
     T: Float + SpadeFloat,
 {
-    let tree_a: RTree<Line<_>> = RTree::bulk_load(
-        geom1
-            .lines()
-            .collect(),
-    );
-    let tree_b: RTree<Line<_>> = RTree::bulk_load(
-        geom2
-            .lines()
-            .collect(),
-    );
+    let tree_a: RTree<Line<_>> = RTree::bulk_load(geom1.lines().collect());
+    let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect());
     let mut mindist_a: T = Float::max_value();
     let mut mindist_b: T = Float::max_value();
     for point in &geom2.0 {
