@@ -4,8 +4,7 @@ use algorithm::euclidean_distance::EuclideanDistance;
 use algorithm::intersects::Intersects;
 use {Bbox, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, COORD_PRECISION};
 
-///  Checks if the geometry A is completely inside the B geometry.
-
+///  Checks if the geometry A is completely inside the B geometry
 pub trait Contains<Rhs = Self> {
     ///  Checks if the geometry A is completely inside the B geometry.
     ///
@@ -134,6 +133,7 @@ where
     }
 }
 
+/// The position of a `Point` with respect to a `LineString`
 #[derive(PartialEq, Clone, Debug)]
 pub(crate) enum PositionPoint {
     OnBoundary,
@@ -141,6 +141,7 @@ pub(crate) enum PositionPoint {
     Outside,
 }
 
+/// Calculate the position of `Point` p relative to a linestring
 pub(crate) fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
 where
     T: Float,
@@ -148,7 +149,6 @@ where
     // See: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
     //      http://geospatialpython.com/search
     //         ?updated-min=2011-01-01T00:00:00-06:00&updated-max=2012-01-01T00:00:00-06:00&max-results=19
-    // Return the position of the point relative to a linestring
 
     // LineString without points
     if linestring.0.is_empty() {
