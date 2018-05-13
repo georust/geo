@@ -40,7 +40,7 @@ impl ToPostgis<ewkb::Polygon> for Polygon<f64> {
     }
 }
 macro_rules! to_postgis_impl {
-    ($from:ident, $to:path, $name:ident, srid) => {
+    ($from:ident, $to:path, $name:ident) => {
         impl ToPostgis<$to> for $from<f64> {
             fn to_postgis_with_srid(&self, srid: Option<i32>) -> $to {
                 let $name = self.0.iter()
@@ -50,22 +50,12 @@ macro_rules! to_postgis_impl {
             }
         }
     };
-    ($from:ident, $to:path, $name:ident) => {
-        impl ToPostgis<$to> for $from<f64> {
-            fn to_postgis_with_srid(&self, srid: Option<i32>) -> $to {
-                let $name = self.0.iter()
-                    .map(|x| x.to_postgis_with_srid(srid))
-                    .collect();
-                $to { $name }
-            }
-        }
-    };
 }
 to_postgis_impl!(GeometryCollection, ewkb::GeometryCollection, geometries);
-to_postgis_impl!(MultiPolygon, ewkb::MultiPolygon, polygons, srid);
-to_postgis_impl!(MultiLineString, ewkb::MultiLineString, lines, srid);
-to_postgis_impl!(MultiPoint, ewkb::MultiPoint, points, srid);
-to_postgis_impl!(LineString, ewkb::LineString, points, srid);
+to_postgis_impl!(MultiPolygon, ewkb::MultiPolygon, polygons);
+to_postgis_impl!(MultiLineString, ewkb::MultiLineString, lines);
+to_postgis_impl!(MultiPoint, ewkb::MultiPoint, points);
+to_postgis_impl!(LineString, ewkb::LineString, points);
 impl ToPostgis<ewkb::Geometry> for Geometry<f64> {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Geometry {
         match *self {
