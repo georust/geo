@@ -5,7 +5,6 @@ use num_traits::float::FloatConst;
 use num_traits::{Float, Signed, ToPrimitive};
 use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
-use spade::primitives::SimpleEdge;
 use spade::rtree::RTree;
 use spade::SpadeFloat;
 
@@ -389,16 +388,14 @@ fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -
 where
     T: Float + SpadeFloat,
 {
-    let tree_a: RTree<SimpleEdge<_>> = RTree::bulk_load(
+    let tree_a: RTree<Line<_>> = RTree::bulk_load(
         geom1
             .lines()
-            .map(|line| SimpleEdge::new(line.start, line.end))
             .collect(),
     );
-    let tree_b: RTree<SimpleEdge<_>> = RTree::bulk_load(
+    let tree_b: RTree<Line<_>> = RTree::bulk_load(
         geom2
             .lines()
-            .map(|line| SimpleEdge::new(line.start, line.end))
             .collect(),
     );
     let mut mindist_a: T = Float::max_value();
@@ -408,11 +405,11 @@ where
         let nearest = tree_a.nearest_neighbor(point).unwrap();
         // calculate distance from point to line
         // compare to current minimum, updating if necessary
-        mindist_a = mindist_a.min(Line::new(nearest.from, nearest.to).euclidean_distance(point));
+        mindist_a = mindist_a.min(nearest.euclidean_distance(point));
     }
     for point in &geom1.0 {
         let nearest = tree_b.nearest_neighbor(point).unwrap();
-        mindist_b = mindist_b.min(Line::new(nearest.from, nearest.to).euclidean_distance(point));
+        mindist_b = mindist_b.min(nearest.euclidean_distance(point));
     }
     // return smallest distance
     mindist_a.min(mindist_b)
