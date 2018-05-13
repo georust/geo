@@ -383,7 +383,7 @@ where
 }
 
 /// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
-/// This is pretty slow and memory-inefficient but certainly better than quadratic time
+// This is somewhat slow and memory-inefficient, but certainly better than quadratic time
 fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -> T
 where
     T: Float + SpadeFloat,
@@ -392,14 +392,14 @@ where
     let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect());
     let mut mindist_a: T = Float::max_value();
     let mut mindist_b: T = Float::max_value();
-    for point in &geom2.0 {
+    for point in geom2.points() {
         // get the nearest neighbour from the tree
         let nearest = tree_a.nearest_neighbor(point).unwrap();
         // calculate distance from point to line
         // compare to current minimum, updating if necessary
         mindist_a = mindist_a.min(nearest.euclidean_distance(point));
     }
-    for point in &geom1.0 {
+    for point in geom1.points() {
         let nearest = tree_b.nearest_neighbor(point).unwrap();
         mindist_b = mindist_b.min(nearest.euclidean_distance(point));
     }
