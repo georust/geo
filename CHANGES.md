@@ -10,6 +10,7 @@
   * <https://github.com/georust/rust-geo/pull/218>
 * Fix compilation errors when using the `proj` feature
   * <https://github.com/georust/rust-geo/commit/0924f3179c95bfffb847562ee91675d7aa8454f5>
+* Add `Polygon`-`Polygon` and `LineString`-`LineString` distance
 
 ## geo 0.8.3
 
