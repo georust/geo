@@ -270,23 +270,14 @@ where
     T: Float,
 {
     let hundred = T::from(100).unwrap();
-    let vertical;
-    let mut slope;
-    slope = T::zero();
-    if p.x() == u.x() {
-        vertical = true;
+    let vertical = p.x() == u.x();
+    let slope = if vertical || p.y() == u.y() {
+        T::zero()
+    } else if u.x() > p.x() {
+        (u.y() - p.y()) / (u.x() - p.x())
     } else {
-        vertical = false;
-    }
-    if !vertical {
-        if p.y() == u.y() {
-            slope = T::zero();
-        } else if u.x() > p.x() {
-            slope = (u.y() - p.y()) / (u.x() - p.x());
-        } else {
-            slope = (p.y() - u.y()) / (p.x() - u.x());
-        }
-    }
+        (p.y() - u.y()) / (p.x() - u.x())
+    };
     let upx;
     let upy;
     if vertical {
@@ -337,44 +328,39 @@ where
     let punit;
     if !vertical {
         punit = unitvector(m, poly, p, idx);
+    } else if clockwise {
+        if p.x() > pprev.x() {
+            punit = Point::new(p.x(), p.y() - hundred);
+        } else if p.x() == pprev.x() {
+            if p.y() > pprev.y() {
+                punit = Point::new(p.x(), p.y() + hundred);
+            } else {
+                // implies p.y() < pprev.y()
+                // it's safe not to explicitly cover p.y() == pprev.y() because that
+                // implies that the x values are equal, and the y values are equal,
+                // and this is impossible
+                punit = Point::new(p.x(), p.y() - hundred);
+            }
+        } else {
+            // implies p.x() < pprev.x()
+            punit = Point::new(p.x(), p.y() + hundred);
+        }
     } else {
-        match clockwise {
-            true => {
-                if p.x() > pprev.x() {
-                    punit = Point::new(p.x(), p.y() - hundred);
-                } else if p.x() == pprev.x() {
-                    if p.y() > pprev.y() {
-                        punit = Point::new(p.x(), p.y() + hundred);
-                    } else {
-                        // implies p.y() < pprev.y()
-                        // it's safe not to explicitly cover p.y() == pprev.y() because that
-                        // implies that the x values are equal, and the y values are equal,
-                        // and this is impossible
-                        punit = Point::new(p.x(), p.y() - hundred);
-                    }
-                } else {
-                    // implies p.x() < pprev.x()
-                    punit = Point::new(p.x(), p.y() + hundred);
-                }
+        if p.x() > pprev.x() {
+            punit = Point::new(p.x(), p.y() + hundred);
+        } else if p.x() == pprev.x() {
+            if p.y() > pprev.y() {
+                punit = Point::new(p.x(), p.y() + hundred);
+            } else {
+                // implies p.y() < pprev.y()
+                // it's safe not to explicitly cover p.y() == pprev.y() because that
+                // implies that the x values are equal, and the y values are equal,
+                // and this is impossible
+                punit = Point::new(p.x(), p.y() - hundred);
             }
-            false => {
-                if p.x() > pprev.x() {
-                    punit = Point::new(p.x(), p.y() + hundred);
-                } else if p.x() == pprev.x() {
-                    if p.y() > pprev.y() {
-                        punit = Point::new(p.x(), p.y() + hundred);
-                    } else {
-                        // implies p.y() < pprev.y()
-                        // it's safe not to explicitly cover p.y() == pprev.y() because that
-                        // implies that the x values are equal, and the y values are equal,
-                        // and this is impossible
-                        punit = Point::new(p.x(), p.y() - hundred);
-                    }
-                } else {
-                    // implies p.x() < pprev.x()
-                    punit = Point::new(p.x(), p.y() - hundred);
-                }
-            }
+        } else {
+            // implies p.x() < pprev.x()
+            punit = Point::new(p.x(), p.y() - hundred);
         }
     }
     let triarea = triangle_area(p, &punit, &pnext);
