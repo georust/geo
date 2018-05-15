@@ -13,10 +13,9 @@
 // limitations under the License.
 
 use tokenizer::PeekableTokens;
-use FromTokens;
 use types::coord::Coord;
+use FromTokens;
 use Geometry;
-
 
 #[derive(Default)]
 pub struct LineString(pub Vec<Coord>);
@@ -29,17 +28,15 @@ impl LineString {
 
 impl FromTokens for LineString {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result =
-            FromTokens::comma_many(<Coord as FromTokens>::from_tokens, tokens);
+        let result = FromTokens::comma_many(<Coord as FromTokens>::from_tokens, tokens);
         result.map(|vec| LineString(vec))
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use {Wkt, Geometry};
     use super::LineString;
+    use {Geometry, Wkt};
 
     #[test]
     fn basic_linestring() {

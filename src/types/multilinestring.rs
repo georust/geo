@@ -13,10 +13,9 @@
 // limitations under the License.
 
 use tokenizer::PeekableTokens;
-use FromTokens;
 use types::linestring::LineString;
+use FromTokens;
 use Geometry;
-
 
 #[derive(Default)]
 pub struct MultiLineString(pub Vec<LineString>);
@@ -29,21 +28,22 @@ impl MultiLineString {
 
 impl FromTokens for MultiLineString {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result = FromTokens::comma_many(
-            <LineString as FromTokens>::from_tokens_with_parens, tokens);
+        let result =
+            FromTokens::comma_many(<LineString as FromTokens>::from_tokens_with_parens, tokens);
         result.map(|vec| MultiLineString(vec))
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use {Wkt, Geometry};
     use super::MultiLineString;
+    use {Geometry, Wkt};
 
     #[test]
     fn basic_multilinestring() {
-        let mut wkt = Wkt::from_str("MULTILINESTRING ((8 4, -3 0), (4 0, 6 -10))").ok().unwrap();
+        let mut wkt = Wkt::from_str("MULTILINESTRING ((8 4, -3 0), (4 0, 6 -10))")
+            .ok()
+            .unwrap();
         assert_eq!(1, wkt.items.len());
         let lines = match wkt.items.pop().unwrap() {
             Geometry::MultiLineString(MultiLineString(lines)) => lines,

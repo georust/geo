@@ -13,10 +13,9 @@
 // limitations under the License.
 
 use tokenizer::PeekableTokens;
-use FromTokens;
 use types::point::Point;
+use FromTokens;
 use Geometry;
-
 
 #[derive(Default)]
 pub struct MultiPoint(pub Vec<Point>);
@@ -36,8 +35,8 @@ impl FromTokens for MultiPoint {
 
 #[cfg(test)]
 mod tests {
-    use {Wkt, Geometry};
     use super::MultiPoint;
+    use {Geometry, Wkt};
 
     #[test]
     fn basic_multipoint() {

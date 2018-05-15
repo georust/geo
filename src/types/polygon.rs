@@ -13,10 +13,9 @@
 // limitations under the License.
 
 use tokenizer::PeekableTokens;
-use FromTokens;
 use types::linestring::LineString;
+use FromTokens;
 use Geometry;
-
 
 #[derive(Default)]
 pub struct Polygon(pub Vec<LineString>);
@@ -29,22 +28,22 @@ impl Polygon {
 
 impl FromTokens for Polygon {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result = FromTokens::comma_many(
-            <LineString as FromTokens>::from_tokens_with_parens, tokens);
+        let result =
+            FromTokens::comma_many(<LineString as FromTokens>::from_tokens_with_parens, tokens);
         result.map(|vec| Polygon(vec))
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use {Wkt, Geometry};
     use super::Polygon;
+    use {Geometry, Wkt};
 
     #[test]
     fn basic_polygon() {
-        let mut wkt =
-            Wkt::from_str("POLYGON ((8 4, 4 0, 0 4, 8 4), (7 3, 4 1, 1 4, 7 3))").ok().unwrap();
+        let mut wkt = Wkt::from_str("POLYGON ((8 4, 4 0, 0 4, 8 4), (7 3, 4 1, 1 4, 7 3))")
+            .ok()
+            .unwrap();
         assert_eq!(1, wkt.items.len());
         let lines = match wkt.items.pop().unwrap() {
             Geometry::Polygon(Polygon(lines)) => lines,

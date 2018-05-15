@@ -13,10 +13,9 @@
 // limitations under the License.
 
 use tokenizer::PeekableTokens;
-use FromTokens;
 use types::polygon::Polygon;
+use FromTokens;
 use Geometry;
-
 
 #[derive(Default)]
 pub struct MultiPolygon(pub Vec<Polygon>);
@@ -29,21 +28,22 @@ impl MultiPolygon {
 
 impl FromTokens for MultiPolygon {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result = FromTokens::comma_many(
-            <Polygon as FromTokens>::from_tokens_with_parens, tokens);
+        let result =
+            FromTokens::comma_many(<Polygon as FromTokens>::from_tokens_with_parens, tokens);
         result.map(|vec| MultiPolygon(vec))
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use {Wkt, Geometry};
     use super::MultiPolygon;
+    use {Geometry, Wkt};
 
     #[test]
     fn basic_multipolygon() {
-        let mut wkt = Wkt::from_str("MULTIPOLYGON (((8 4)), ((4 0)))").ok().unwrap();
+        let mut wkt = Wkt::from_str("MULTIPOLYGON (((8 4)), ((4 0)))")
+            .ok()
+            .unwrap();
         assert_eq!(1, wkt.items.len());
         let polygons = match wkt.items.pop().unwrap() {
             Geometry::MultiPolygon(MultiPolygon(polygons)) => polygons,

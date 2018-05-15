@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::fmt;
 use tokenizer::PeekableTokens;
-use FromTokens;
 use types::coord::Coord;
+use FromTokens;
 use Geometry;
-
 
 #[derive(Default)]
 pub struct Point(pub Option<Coord>);
@@ -27,6 +27,12 @@ impl Point {
     }
 }
 
+impl fmt::Display for Point {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        f.write_str("POINT")
+    }
+}
+
 impl FromTokens for Point {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let result = <Coord as FromTokens>::from_tokens(tokens);
@@ -34,11 +40,10 @@ impl FromTokens for Point {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use {Wkt, Geometry};
     use super::Point;
+    use {Geometry, Wkt};
 
     #[test]
     fn basic_point() {
@@ -56,8 +61,9 @@ mod tests {
 
     #[test]
     fn basic_point_whitespace() {
-        let mut wkt =
-            Wkt::from_str(" \n\t\rPOINT \n\t\r( \n\r\t10 \n\t\r-20 \n\t\r) \n\t\r").ok().unwrap();
+        let mut wkt = Wkt::from_str(" \n\t\rPOINT \n\t\r( \n\r\t10 \n\t\r-20 \n\t\r) \n\t\r")
+            .ok()
+            .unwrap();
         assert_eq!(1, wkt.items.len());
         let coord = match wkt.items.pop().unwrap() {
             Geometry::Point(Point(Some(coord))) => coord,

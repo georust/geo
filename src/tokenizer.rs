@@ -46,7 +46,9 @@ pub struct Tokens {
 
 impl Tokens {
     pub fn from_str(input: &str) -> Self {
-        Tokens { text: input.to_string() }
+        Tokens {
+            text: input.to_string(),
+        }
     }
 }
 
@@ -125,8 +127,13 @@ fn test_tokenizer_1word() {
 fn test_tokenizer_2words() {
     let test_str = "hello world";
     let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
-    assert_eq!(tokens,
-               vec![Token::Word("hello".to_string()), Token::Word("world".to_string())]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Word("hello".to_string()),
+            Token::Word("world".to_string()),
+        ]
+    );
 }
 
 #[test]
@@ -154,10 +161,14 @@ fn test_tokenizer_2numbers() {
 fn test_tokenizer_point() {
     let test_str = "POINT (10 -20)";
     let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
-    assert_eq!(tokens,
-               vec![Token::Word("POINT".to_string()),
-                    Token::ParenOpen,
-                    Token::Number(10.0),
-                    Token::Number(-20.0),
-                    Token::ParenClose]);
+    assert_eq!(
+        tokens,
+        vec![
+            Token::Word("POINT".to_string()),
+            Token::ParenOpen,
+            Token::Number(10.0),
+            Token::Number(-20.0),
+            Token::ParenClose,
+        ]
+    );
 }

@@ -1,23 +1,21 @@
 extern crate geo;
 
-use Wkt;
-use Geometry;
 use types::Coord;
 use types::GeometryCollection;
 use types::LineString;
+use types::MultiLineString;
+use types::MultiPoint;
+use types::MultiPolygon;
 use types::Point;
 use types::Polygon;
-use types::MultiPoint;
-use types::MultiLineString;
-use types::MultiPolygon;
-
+use Geometry;
+use Wkt;
 
 /// A trait for converting values to WKT
 pub trait ToWkt {
     /// Converts the value of `self` to an instance of WKT
     fn to_wkt(&self) -> Wkt;
 }
-
 
 fn g_point_to_w_coord(g_point: &geo::Point) -> Coord {
     let geo::Point(coord) = *g_point;
@@ -30,12 +28,10 @@ fn g_point_to_w_coord(g_point: &geo::Point) -> Coord {
     }
 }
 
-
 fn g_point_to_w_point(g_point: &geo::Point) -> Point {
     let coord = g_point_to_w_coord(g_point);
     Point(Some(coord))
 }
-
 
 fn g_points_to_w_coords(g_points: &Vec<geo::Point>) -> Vec<Coord> {
     let mut w_points = vec![];
@@ -45,18 +41,15 @@ fn g_points_to_w_coords(g_points: &Vec<geo::Point>) -> Vec<Coord> {
     w_points
 }
 
-
 fn g_line_to_w_line(g_line: &geo::LineString) -> LineString {
     let &geo::LineString(ref g_points) = g_line;
     g_points_to_w_line(g_points)
 }
 
-
 fn g_points_to_w_line(g_points: &Vec<geo::Point>) -> LineString {
     let w_points = g_points_to_w_coords(g_points);
     LineString(w_points)
 }
-
 
 fn g_lines_to_w_lines(g_lines: &Vec<geo::LineString>) -> Vec<LineString> {
     let mut w_lines = vec![];
@@ -66,7 +59,6 @@ fn g_lines_to_w_lines(g_lines: &Vec<geo::LineString>) -> Vec<LineString> {
     }
     w_lines
 }
-
 
 fn g_polygon_to_w_polygon(g_polygon: &geo::Polygon) -> Polygon {
     let &geo::Polygon(ref outer_line, ref inner_lines) = g_polygon;
@@ -83,7 +75,6 @@ fn g_polygon_to_w_polygon(g_polygon: &geo::Polygon) -> Polygon {
     Polygon(poly_lines)
 }
 
-
 fn g_mpoint_to_w_mpoint(g_mpoint: &geo::MultiPoint) -> MultiPoint {
     let &geo::MultiPoint(ref g_points) = g_mpoint;
     let w_coords = g_points_to_w_coords(g_points);
@@ -91,13 +82,11 @@ fn g_mpoint_to_w_mpoint(g_mpoint: &geo::MultiPoint) -> MultiPoint {
     MultiPoint(w_points)
 }
 
-
 fn g_mline_to_w_mline(g_mline: &geo::MultiLineString) -> MultiLineString {
     let &geo::MultiLineString(ref g_lines) = g_mline;
     let w_lines = g_lines_to_w_lines(g_lines);
     MultiLineString(w_lines)
 }
-
 
 fn g_polygons_to_w_polygons(g_polygons: &Vec<geo::Polygon>) -> Vec<Polygon> {
     let mut w_polygons = vec![];
@@ -107,13 +96,11 @@ fn g_polygons_to_w_polygons(g_polygons: &Vec<geo::Polygon>) -> Vec<Polygon> {
     w_polygons
 }
 
-
 fn g_mpolygon_to_w_mpolygon(g_mpolygon: &geo::MultiPolygon) -> MultiPolygon {
     let &geo::MultiPolygon(ref g_polygons) = g_mpolygon;
     let w_polygons = g_polygons_to_w_polygons(g_polygons);
     MultiPolygon(w_polygons)
 }
-
 
 fn g_geocol_to_w_geocol(g_geocol: &geo::GeometryCollection) -> GeometryCollection {
     let &geo::GeometryCollection(ref g_geoms) = g_geocol;
@@ -124,7 +111,6 @@ fn g_geocol_to_w_geocol(g_geocol: &geo::GeometryCollection) -> GeometryCollectio
     }
     GeometryCollection(w_geoms)
 }
-
 
 fn g_geom_to_w_geom(g_geom: &geo::Geometry) -> Geometry {
     match g_geom {
@@ -148,10 +134,11 @@ fn g_geom_to_w_geom(g_geom: &geo::Geometry) -> Geometry {
     }
 }
 
-
 impl ToWkt for geo::Geometry {
     fn to_wkt(&self) -> Wkt {
         let w_geom = g_geom_to_w_geom(&self);
-        Wkt { items: vec![w_geom] }
+        Wkt {
+            items: vec![w_geom],
+        }
     }
 }

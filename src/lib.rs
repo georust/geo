@@ -18,11 +18,11 @@ use std::default::Default;
 use tokenizer::{PeekableTokens, Token, Tokens};
 use types::GeometryCollection;
 use types::LineString;
+use types::MultiLineString;
+use types::MultiPoint;
+use types::MultiPolygon;
 use types::Point;
 use types::Polygon;
-use types::MultiPoint;
-use types::MultiLineString;
-use types::MultiPolygon;
 
 mod tokenizer;
 
@@ -33,7 +33,6 @@ pub mod types;
 
 #[cfg(feature = "geo")]
 pub use towkt::ToWkt;
-
 
 pub enum Geometry {
     Point(Point),
@@ -119,7 +118,6 @@ impl Wkt {
     }
 }
 
-
 trait FromTokens: Sized + Default {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str>;
 
@@ -140,7 +138,8 @@ trait FromTokens: Sized + Default {
     }
 
     fn comma_many<F>(f: F, tokens: &mut PeekableTokens) -> Result<Vec<Self>, &'static str>
-        where F: Fn(&mut PeekableTokens) -> Result<Self, &'static str>
+    where
+        F: Fn(&mut PeekableTokens) -> Result<Self, &'static str>,
     {
         let mut items = Vec::new();
 
@@ -158,11 +157,10 @@ trait FromTokens: Sized + Default {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use {Wkt, Geometry};
     use types::{MultiPolygon, Point};
+    use {Geometry, Wkt};
 
     #[test]
     fn empty_string() {

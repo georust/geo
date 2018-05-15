@@ -20,21 +20,20 @@ use tokenizer::{PeekableTokens, Token};
 pub use self::coord::Coord;
 pub use self::geometrycollection::GeometryCollection;
 pub use self::linestring::LineString;
+pub use self::multilinestring::MultiLineString;
+pub use self::multipoint::MultiPoint;
+pub use self::multipolygon::MultiPolygon;
 pub use self::point::Point;
 pub use self::polygon::Polygon;
-pub use self::multipoint::MultiPoint;
-pub use self::multilinestring::MultiLineString;
-pub use self::multipolygon::MultiPolygon;
 
 mod coord;
 mod geometrycollection;
+mod linestring;
+mod multilinestring;
+mod multipoint;
+mod multipolygon;
 mod point;
 mod polygon;
-mod linestring;
-mod multipoint;
-mod multilinestring;
-mod multipolygon;
-
 
 trait FromTokens: Sized + Default {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str>;
@@ -56,7 +55,8 @@ trait FromTokens: Sized + Default {
     }
 
     fn comma_many<F>(f: F, tokens: &mut PeekableTokens) -> Result<Vec<Self>, &'static str>
-        where F: Fn(&mut PeekableTokens) -> Result<Self, &'static str>
+    where
+        F: Fn(&mut PeekableTokens) -> Result<Self, &'static str>,
     {
         let mut items = Vec::new();
 
