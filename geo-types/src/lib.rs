@@ -50,6 +50,15 @@ impl<T: CoordinateType> From<(T, T)> for Coordinate<T> {
     }
 }
 
+impl<T: CoordinateType> From<[T; 2]> for Coordinate<T> {
+    fn from(coords: [T; 2]) -> Self {
+        Coordinate {
+            x: coords[0],
+            y: coords[1],
+        }
+    }
+}
+
 /// A single Point in 2D space.
 ///
 /// Points can be created using the `new(x, y)` constructor, or from a `Coordinate` or pair of points.
@@ -75,6 +84,12 @@ impl<T: CoordinateType> From<Coordinate<T>> for Point<T> {
 impl<T: CoordinateType> From<(T, T)> for Point<T> {
     fn from(coords: (T, T)) -> Point<T> {
         Point::new(coords.0, coords.1)
+    }
+}
+
+impl<T: CoordinateType> From<[T; 2]> for Point<T> {
+    fn from(coords: [T; 2]) -> Point<T> {
+        Point::new(coords[0], coords[1])
     }
 }
 
@@ -471,6 +486,11 @@ where
 /// let line: LineString<f32> = vec![(0., 0.), (10., 0.)].into();
 /// ```
 ///
+/// ```
+/// # use geo_types::{LineString, Point};
+/// let line: LineString<f64> = vec![[0., 0.], [10., 0.]].into();
+/// ```
+///
 /// Or `collect`ing from a Point iterator
 ///
 /// ```
@@ -594,6 +614,15 @@ impl<T: CoordinateType> IntoIterator for MultiLineString<T> {
 /// A representation of an area. Its outer boundary is represented by a [`LineString`](struct.LineString.html) that is both closed and simple
 ///
 /// It has one exterior *ring* or *shell*, and zero or more interior rings, representing holes.
+///
+/// Polygons can be created from collections of `Point`-like objects, such as arrays or tuples:
+///
+/// ```
+/// use geo_types::{Point, LineString, Polygon};
+/// let poly1 = Polygon::new(vec![[0., 0.], [10., 0.]].into(), vec![]);
+/// let poly2 = Polygon::new(vec![(0., 0.), (10., 0.)].into(), vec![]);
+/// ```
+///
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Polygon<T>
