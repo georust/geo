@@ -578,7 +578,7 @@ mod test {
     }
 
     #[test]
-    fn line_distance_multipolygon_do_not_touch_test() {
+    fn line_distance_multipolygon_do_not_intersect_test() {
         // checks that the distance from the multipolygon
         // is equal to the distance from the closest polygon
         // taken in isolation, whatever that distance is
