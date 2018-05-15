@@ -2,7 +2,7 @@
 //        wouldn't have this duplication
 
 use num_traits::{Float, ToPrimitive};
-use ::{Point, Line, CoordinateType};
+use {CoordinateType, Line, Point};
 
 pub trait EuclideanDistance<T, Rhs = Self> {
     fn euclidean_distance(&self, rhs: &Rhs) -> T;
@@ -17,7 +17,8 @@ where
     }
     let dx = end.x() - start.x();
     let dy = end.y() - start.y();
-    let r = ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
+    let r =
+        ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
     if r <= T::zero() {
         return point.euclidean_distance(start);
     }
@@ -46,7 +47,6 @@ where
         line_segment_distance(point, &self.start, &self.end)
     }
 }
-
 
 pub trait BoundingBox<T: CoordinateType> {
     type Output;
