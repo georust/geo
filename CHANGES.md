@@ -12,6 +12,11 @@
   * <https://github.com/georust/rust-geo/commit/0924f3179c95bfffb847562ee91675d7aa8454f5>
 * Add `Polygon`-`Polygon` and `LineString`-`LineString` distance
 
+## geo-types 0.1.1
+
+* Allow LineString creation from vec of two-element CoordinateType array
+  * <https://github.com/georust/rust-geo/pull/223>
+
 ## geo 0.8.3
 
 * Reexport core types from `geo-types`
