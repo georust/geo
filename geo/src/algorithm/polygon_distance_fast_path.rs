@@ -20,11 +20,11 @@ where
     let ymax2 = poly2.exterior.0[poly2_extremes.ymax];
 
     let mut state = Polydist {
-        poly1: poly1,
-        poly2: poly2,
+        poly1,
+        poly2,
         dist: T::infinity(),
-        ymin1: ymin1,
-        ymax2: ymax2,
+        ymin1,
+        ymax2,
         // initial polygon 1 min y idx
         p1_idx: poly1_extremes.ymin,
         // initial polygon 2 max y idx
@@ -345,23 +345,21 @@ where
             // implies p.x() < pprev.x()
             punit = Point::new(p.x(), p.y() + hundred);
         }
-    } else {
-        if p.x() > pprev.x() {
+    } else if p.x() > pprev.x() {
+        punit = Point::new(p.x(), p.y() + hundred);
+    } else if p.x() == pprev.x() {
+        if p.y() > pprev.y() {
             punit = Point::new(p.x(), p.y() + hundred);
-        } else if p.x() == pprev.x() {
-            if p.y() > pprev.y() {
-                punit = Point::new(p.x(), p.y() + hundred);
-            } else {
-                // implies p.y() < pprev.y()
-                // it's safe not to explicitly cover p.y() == pprev.y() because that
-                // implies that the x values are equal, and the y values are equal,
-                // and this is impossible
-                punit = Point::new(p.x(), p.y() - hundred);
-            }
         } else {
-            // implies p.x() < pprev.x()
+            // implies p.y() < pprev.y()
+            // it's safe not to explicitly cover p.y() == pprev.y() because that
+            // implies that the x values are equal, and the y values are equal,
+            // and this is impossible
             punit = Point::new(p.x(), p.y() - hundred);
         }
+    } else {
+        // implies p.x() < pprev.x()
+        punit = Point::new(p.x(), p.y() - hundred);
     }
     let triarea = triangle_area(p, &punit, &pnext);
     let edgelen = p.euclidean_distance(&pnext);
@@ -524,7 +522,7 @@ where
     }
     // A start value's been set, and both polygon indices are in their initial
     // positions -- we're finished, so return the minimum distance
-    if state.p1 == state.ymin1 && state.q2 == state.ymax2 && !state.start.is_none() {
+    if state.p1 == state.ymin1 && state.q2 == state.ymax2 && state.start.is_some() {
         state.finished = true;
     } else {
         state.start = Some(false);

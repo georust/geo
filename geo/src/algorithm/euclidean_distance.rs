@@ -298,18 +298,15 @@ where
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if self.intersects(other) || other.contains(self) {
             T::zero()
-        } else {
-            // still a possibility that the LineString's inside an interior ring
-            if !other.interiors.is_empty() && ring_contains_point(other, &self.0[0]) {
-                // check each ring distance, returning the minimum
-                let mut mindist: T = Float::max_value();
-                for ring in &other.interiors {
-                    mindist = mindist.min(nearest_neighbour_distance(self, ring))
-                }
-                mindist
-            } else {
-                nearest_neighbour_distance(self, &other.exterior)
+        } else if !other.interiors.is_empty() && ring_contains_point(other, &self.0[0]) {
+            // check each ring distance, returning the minimum
+            let mut mindist: T = Float::max_value();
+            for ring in &other.interiors {
+                mindist = mindist.min(nearest_neighbour_distance(self, ring))
             }
+            mindist
+        } else {
+            nearest_neighbour_distance(self, &other.exterior)
         }
     }
 }
@@ -373,7 +370,7 @@ where
             }
             return mindist;
         }
-        if !(self.is_convex() && !poly2.is_convex()) {
+        if poly2.is_convex() || !self.is_convex() {
             // fall back to R* nearest neighbour method
             nearest_neighbour_distance(&self.exterior, &poly2.exterior)
         } else {
@@ -384,7 +381,7 @@ where
 
 /// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
 // This is somewhat slow and memory-inefficient, but certainly better than quadratic time
-fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -> T
+pub fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -> T
 where
     T: Float + SpadeFloat,
 {
