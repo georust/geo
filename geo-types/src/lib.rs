@@ -93,14 +93,12 @@ mod test {
             Point::new(1., 0.),
             Point::new(0., 0.),
         ]);
-        let interiors = vec![
-            LineString(vec![
-                Point::new(0.1, 0.1),
-                Point::new(0.9, 0.9),
-                Point::new(0.9, 0.1),
-                Point::new(0.1, 0.1),
-            ]),
-        ];
+        let interiors = vec![LineString(vec![
+            Point::new(0.1, 0.1),
+            Point::new(0.9, 0.9),
+            Point::new(0.9, 0.1),
+            Point::new(0.1, 0.1),
+        ])];
         let p = Polygon::new(exterior.clone(), interiors.clone());
 
         assert_eq!(p.exterior, exterior);

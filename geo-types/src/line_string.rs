@@ -1,5 +1,5 @@
-use {CoordinateType, Point, Line};
 use std::iter::FromIterator;
+use {CoordinateType, Line, Point};
 
 /// An ordered collection of two or more [`Point`s](struct.Point.html), representing a path between locations
 ///

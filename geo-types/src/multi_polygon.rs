@@ -1,5 +1,5 @@
-use {CoordinateType, Polygon};
 use std::iter::FromIterator;
+use {CoordinateType, Polygon};
 
 /// A collection of [`Polygon`s](struct.Polygon.html)
 ///

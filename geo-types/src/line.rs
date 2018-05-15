@@ -1,7 +1,7 @@
 use {CoordinateType, Point};
 
 #[cfg(feature = "spade")]
-use algorithms::{EuclideanDistance, BoundingBox};
+use algorithms::{BoundingBox, EuclideanDistance};
 
 /// A line segment made up of exactly two [`Point`s](struct.Point.html)
 #[derive(PartialEq, Clone, Copy, Debug)]

@@ -1,5 +1,5 @@
-use {CoordinateType, LineString};
 use num_traits::{Float, Signed};
+use {CoordinateType, LineString};
 
 /// A representation of an area. Its outer boundary is represented by a [`LineString`](struct.LineString.html) that is both closed and simple
 ///

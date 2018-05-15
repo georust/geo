@@ -1,5 +1,7 @@
-use {CoordinateType, Point, Line, LineString, Polygon, MultiPolygon,
-       MultiLineString, MultiPoint, GeometryCollection};
+use {
+    CoordinateType, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    MultiPolygon, Point, Polygon,
+};
 
 /// An enum representing any possible geometry type.
 ///

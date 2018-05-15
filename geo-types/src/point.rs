@@ -1,8 +1,8 @@
+use num_traits::{Float, ToPrimitive};
 use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
 use {Coordinate, CoordinateType};
-use num_traits::{Float, ToPrimitive};
 
 /// A single Point in 2D space.
 ///
