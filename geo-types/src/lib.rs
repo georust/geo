@@ -20,7 +20,7 @@ use num_traits::{Float, Num, NumCast, Signed, ToPrimitive};
 use std::iter::{FromIterator, Iterator};
 
 #[cfg(feature = "spade")]
-use spade::{BoundingRect, PointN, SpatialObject, TwoDimensional, SpadeNum};
+use spade::{BoundingRect, PointN, SpadeNum, SpatialObject, TwoDimensional};
 
 /// The type of an x or y value of a point/coordinate.
 ///
@@ -939,14 +939,12 @@ mod test {
             Point::new(1., 0.),
             Point::new(0., 0.),
         ]);
-        let interiors = vec![
-            LineString(vec![
-                Point::new(0.1, 0.1),
-                Point::new(0.9, 0.9),
-                Point::new(0.9, 0.1),
-                Point::new(0.1, 0.1),
-            ]),
-        ];
+        let interiors = vec![LineString(vec![
+            Point::new(0.1, 0.1),
+            Point::new(0.9, 0.9),
+            Point::new(0.9, 0.1),
+            Point::new(0.1, 0.1),
+        ])];
         let p = Polygon::new(exterior.clone(), interiors.clone());
 
         assert_eq!(p.exterior, exterior);
