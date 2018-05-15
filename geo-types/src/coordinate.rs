@@ -19,3 +19,12 @@ impl<T: CoordinateType> From<(T, T)> for Coordinate<T> {
         }
     }
 }
+
+impl<T: CoordinateType> From<[T; 2]> for Coordinate<T> {
+    fn from(coords: [T; 2]) -> Self {
+        Coordinate {
+            x: coords[0],
+            y: coords[1],
+        }
+    }
+}

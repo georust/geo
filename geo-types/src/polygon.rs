@@ -4,6 +4,14 @@ use {CoordinateType, LineString};
 /// A representation of an area. Its outer boundary is represented by a [`LineString`](struct.LineString.html) that is both closed and simple
 ///
 /// It has one exterior *ring* or *shell*, and zero or more interior rings, representing holes.
+///
+/// Polygons can be created from collections of `Point`-like objects, such as arrays or tuples:
+///
+/// ```
+/// use geo_types::{Point, LineString, Polygon};
+/// let poly1 = Polygon::new(vec![[0., 0.], [10., 0.]].into(), vec![]);
+/// let poly2 = Polygon::new(vec![(0., 0.), (10., 0.)].into(), vec![]);
+/// ```
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Polygon<T>

@@ -300,3 +300,9 @@ where
     T: ::num_traits::Float + ::spade::SpadeNum + ::std::fmt::Debug,
 {
 }
+
+impl<T: CoordinateType> From<[T; 2]> for Point<T> {
+    fn from(coords: [T; 2]) -> Point<T> {
+        Point::new(coords[0], coords[1])
+    }
+}

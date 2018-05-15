@@ -17,6 +17,11 @@ use {CoordinateType, Line, Point};
 /// let line: LineString<f32> = vec![(0., 0.), (10., 0.)].into();
 /// ```
 ///
+/// ```
+/// # use geo_types::{LineString, Point};
+/// let line: LineString<f64> = vec![[0., 0.], [10., 0.]].into();
+/// ```
+//
 /// Or `collect`ing from a Point iterator
 ///
 /// ```
