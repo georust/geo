@@ -1,6 +1,6 @@
 # Changes
 
-## geo 0.9.0 (unreleased)
+## geo 0.9.0
 
 * Make serde an optional dependency for `geo`, rename feature to `use-serde`
   * <https://github.com/georust/rust-geo/pull/209>
@@ -11,6 +11,11 @@
 * Fix compilation errors when using the `proj` feature
   * <https://github.com/georust/rust-geo/commit/0924f3179c95bfffb847562ee91675d7aa8454f5>
 * Add `Polygon`-`Polygon` and `LineString`-`LineString` distance
+  * <https://github.com/georust/rust-geo/pull/219>
+* Update postgis optional dependency to 0.6
+  * <https://github.com/georust/rust-geo/pull/215>
+* Clarify wording for Contains algorithm.
+  * <https://github.com/georust/rust-geo/pull/220>
 
 ## geo-types 0.1.1
 
