@@ -324,12 +324,29 @@ where
 // Line to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Line<T>
 where
-    T: Float + FloatConst + Signed + SpadeFloat,
+    T: Float + Signed + SpadeFloat,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
-        self.start
-            .euclidean_distance(other)
-            .min(self.end.euclidean_distance(other))
+        if other.contains(self) || self.intersects(other) {
+            return T::zero();
+        }
+        // point-line distance between each exterior polygon point and the line
+        let exterior_min = other.exterior.points().fold(T::max_value(), |acc, point| {
+            acc.min(self.euclidean_distance(point))
+        });
+        // point-line distance between each interior ring point and the line
+        // if there are no rings this just evaluates to max_float
+        let interior_min = other
+            .interiors
+            .iter()
+            .map(|ring| {
+                ring.points().fold(T::max_value(), |acc, point| {
+                    acc.min(self.euclidean_distance(point))
+                })
+            })
+            .fold(T::max_value(), |acc, ring_min| acc.min(ring_min));
+        // return smaller of the two values
+        exterior_min.min(interior_min)
     }
 }
 
@@ -827,5 +844,18 @@ mod test {
         let in_ring = include!("test_fixtures/poly_in_ring.rs");
         let in_ring_ls: LineString<f64> = in_ring.into();
         assert_eq!(ring_ls.euclidean_distance(&in_ring_ls), 5.992772737231033);
+    }
+    #[test]
+    // Line-Polygon test: closest point on Polygon is NOT nearest to a Line end-point
+    fn flibble() {
+        let line = Line::new(Point::new(0.0, 0.0), Point::new(0.0, 3.0));
+        let v = vec![
+            (5.0, 1.0),
+            (5.0, 2.0),
+            (0.25, 1.5),
+            (5.0, 1.0)
+        ];
+        let poly = Polygon::new(v.into(), vec![]);
+        assert_eq!(line.euclidean_distance(&poly), 0.25);
     }
 }
