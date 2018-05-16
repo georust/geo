@@ -59,7 +59,7 @@ where
             }
         }
 
-        let number_of_points = (total_distance / max_dist).ceil();
+        let number_of_points = (total_distance / max_dist).floor();
         let step             = T::one() / number_of_points;
 
         let mut current_step = T::zero();
