@@ -32,12 +32,12 @@ where
         let lon2 = other.x().to_radians();
 
         let k = (((lat1 - lat2).sin() / two).powi(2) +
-                lat1.cos() + lat2.cos() *
+                lat1.cos() * lat2.cos() *
                 ((lon1 - lon2).sin() / two).powi(2)).sqrt();
 
-        let d = two * k.sin();
+        let d = two * k.asin();
 
-        let a = (one - f).sin() * d / d.sin();
+        let a = ((one - f) * d).sin() / d.sin();
         let b = (f * d).sin() / d.sin();
 
         let x = a * lat1.cos() * lon1.cos() +
@@ -95,10 +95,10 @@ mod test {
 
     #[test]
     fn should_be_north_pole_test() {
-        let p1 = Point::<f64>::new(0.0, 0.0);
-        let p2 = Point::<f64>::new(0.0, 180.0);
+        let p1 = Point::<f64>::new(0.0,   10.0);
+        let p2 = Point::<f64>::new(180.0, 10.0);
         let i50  = p1.haversine_intermediate(&p2, 0.5);
-        let i50_should = Point::new(90.0, 0.0);
+        let i50_should = Point::new(90.0, 90.0);
         assert_relative_eq!(i50.x(), i50_should.x(), epsilon=1.0e-6);
         assert_relative_eq!(i50.y(), i50_should.y(), epsilon=1.0e-6);
     }
