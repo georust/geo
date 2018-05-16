@@ -60,9 +60,7 @@ where
         let y = a * lat1.cos() * lon1.sin() + b * lat2.cos() * lon2.sin();
         let z = a * lat1.sin() + b * lat2.sin();
 
-        let dxy = (x.powi(2) + y.powi(2)).sqrt();
-
-        let lat = z.atan2(dxy);
+        let lat = z.atan2(x.hypot(y));
         let lon = y.atan2(x);
 
         Point::new(lon.to_degrees(), lat.to_degrees())
