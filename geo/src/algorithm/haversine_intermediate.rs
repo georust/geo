@@ -32,7 +32,7 @@ pub trait HaversineIntermediate<T: Float> {
     /// ```
 
     fn haversine_intermediate(&self, other: &Point<T>, f: T) -> Point<T>;
-    fn haversine_intermediate_fill(&self, other: &Point<T>, max_dist: T) -> Vec<Point<T>>;
+    fn haversine_intermediate_fill(&self, other: &Point<T>, max_dist: T, include_ends: bool) -> Vec<Point<T>>;
 }
 
 impl<T> HaversineIntermediate<T> for Point<T>
@@ -45,21 +45,25 @@ where
         point
     }
 
-    fn haversine_intermediate_fill(&self, other: &Point<T>, max_dist: T) -> Vec<Point<T>> {
+    fn haversine_intermediate_fill(&self, other: &Point<T>, max_dist: T, include_ends: bool) -> Vec<Point<T>> {
         let params = get_params(&self, &other);
         let HaversineParams { d, .. } = params;
 
         let total_distance   = d * T::from(6371000.0).unwrap();
 
         if total_distance <= max_dist {
-            return vec![self.clone(), other.clone()];
+            if include_ends {
+                return vec![self.clone(), other.clone()];
+            } else {
+                return vec![];
+            }
         }
 
         let number_of_points = (total_distance / max_dist).ceil();
         let step             = T::one() / number_of_points;
 
         let mut current_step = T::zero();
-        let mut points = vec![self.clone()];
+        let mut points = if include_ends { vec![self.clone()] } else { vec![] };
 
         while current_step < T::one() {
             let point  = get_point(&params, current_step);
@@ -67,7 +71,10 @@ where
             current_step = current_step + step;
         }
 
-        points.push(other.clone());
+        if include_ends {
+            points.push(other.clone());
+        }
+
         points
     }
 }
