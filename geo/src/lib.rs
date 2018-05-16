@@ -40,6 +40,7 @@ pub mod prelude {
     pub use algorithm::euclidean_distance::EuclideanDistance;
     pub use algorithm::euclidean_length::EuclideanLength;
     pub use algorithm::extremes::ExtremePoints;
+    pub use algorithm::haversine_intermediate::HaversineIntermediate;
     pub use algorithm::haversine_destination::HaversineDestination;
     pub use algorithm::haversine_distance::HaversineDistance;
     pub use algorithm::intersects::Intersects;

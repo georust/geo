@@ -12,6 +12,8 @@ pub mod bearing;
 pub mod euclidean_length;
 /// Returns the Euclidean distance between two geometries.
 pub mod euclidean_distance;
+/// Returns a new Point along a great circle between two points.
+pub mod haversine_intermediate;
 /// Returns a new Point using distance and bearing.
 pub mod haversine_destination;
 /// Returns the Haversine distance between two geometries.
