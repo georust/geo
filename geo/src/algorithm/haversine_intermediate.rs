@@ -59,16 +59,16 @@ where
             }
         }
 
-        let number_of_points = (total_distance / max_dist).floor();
-        let step             = T::one() / number_of_points;
+        let number_of_points = (total_distance / max_dist).ceil();
+        let interval         = T::one() / number_of_points;
 
-        let mut current_step = T::zero();
+        let mut current_step = interval;
         let mut points = if include_ends { vec![self.clone()] } else { vec![] };
 
         while current_step < T::one() {
             let point  = get_point(&params, current_step);
             points.push(point);
-            current_step = current_step + step;
+            current_step = current_step + interval;
         }
 
         if include_ends {
@@ -183,6 +183,40 @@ mod test {
         let i50_should = Point::new(90.0, 90.0);
         assert_relative_eq!(i50.x(), i50_should.x(), epsilon=1.0e-6);
         assert_relative_eq!(i50.y(), i50_should.y(), epsilon=1.0e-6);
+    }
+
+    #[test]
+    fn should_be_start_end_test() {
+        let p1 = Point::<f64>::new(30.0, 40.0);
+        let p2 = Point::<f64>::new(40.0, 50.0);
+        let max_dist = 1500000.0; // meters
+        let include_ends = true;
+        let route = p1.haversine_intermediate_fill(&p2, max_dist, include_ends);
+        assert_eq!(route, vec![p1, p2]);
+    }
+
+    #[test]
+    fn should_add_i50_test() {
+        let p1 = Point::<f64>::new(30.0, 40.0);
+        let p2 = Point::<f64>::new(40.0, 50.0);
+        let max_dist = 1000000.0; // meters
+        let include_ends = true;
+        let i50 = p1.clone().haversine_intermediate(&p2, 0.5);
+        let route = p1.haversine_intermediate_fill(&p2, max_dist, include_ends);
+        assert_eq!(route, vec![p1, i50, p2]);
+    }
+
+    #[test]
+    fn should_add_i25_i50_i75_test() {
+        let p1 = Point::<f64>::new(30.0, 40.0);
+        let p2 = Point::<f64>::new(40.0, 50.0);
+        let max_dist = 400000.0; // meters
+        let include_ends = true;
+        let i25 = p1.clone().haversine_intermediate(&p2, 0.25);
+        let i50 = p1.clone().haversine_intermediate(&p2, 0.5);
+        let i75 = p1.clone().haversine_intermediate(&p2, 0.75);
+        let route = p1.haversine_intermediate_fill(&p2, max_dist, include_ends);
+        assert_eq!(route, vec![p1, i25, i50, i75, p2]);
     }
 }
 
