@@ -82,9 +82,15 @@ mod test {
         let i20  = p1.haversine_intermediate(&p2, 0.2);
         let i50  = p1.haversine_intermediate(&p2, 0.5);
         let i80  = p1.haversine_intermediate(&p2, 0.8);
-        assert_eq!(i20, Point::new(29.83519,  29.94841));
-        assert_eq!(i50, Point::new(65.87471,  37.72201));
-        assert_eq!(i80, Point::new(103.56036, 33.50518));
+        let i20_should = Point::new(29.83519,  29.94841);
+        let i50_should = Point::new(65.87471,  37.72201);
+        let i80_should = Point::new(103.56036, 33.50518);
+        assert_relative_eq!(i20.x(), i20_should.x(), epsilon=1.0e-6);
+        assert_relative_eq!(i20.y(), i20_should.y(), epsilon=1.0e-6);
+        assert_relative_eq!(i50.x(), i50_should.x(), epsilon=1.0e-6);
+        assert_relative_eq!(i50.y(), i50_should.y(), epsilon=1.0e-6);
+        assert_relative_eq!(i80.x(), i80_should.x(), epsilon=1.0e-6);
+        assert_relative_eq!(i80.y(), i80_should.y(), epsilon=1.0e-6);
     }
 
     #[test]
@@ -92,7 +98,9 @@ mod test {
         let p1 = Point::<f64>::new(0.0, 0.0);
         let p2 = Point::<f64>::new(0.0, 180.0);
         let i50  = p1.haversine_intermediate(&p2, 0.5);
-        assert_eq!(i50, Point::new(90.0, 0.0));
+        let i50_should = Point::new(90.0, 0.0);
+        assert_relative_eq!(i50.x(), i50_should.x(), epsilon=1.0e-6);
+        assert_relative_eq!(i50.y(), i50_should.y(), epsilon=1.0e-6);
     }
 }
 
