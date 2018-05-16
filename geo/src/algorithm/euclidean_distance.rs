@@ -321,6 +321,31 @@ where
     }
 }
 
+/// Line to MultiPolygon distance
+impl<T> EuclideanDistance<T, MultiPolygon<T>> for Line<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
+        mpolygon
+            .0
+            .iter()
+            .map(|p| self.euclidean_distance(p))
+            .fold(T::max_value(), |accum, val| accum.min(val))
+    }
+}
+
+/// MultiPolygon to Line distance
+impl<T> EuclideanDistance<T, Line<T>> for MultiPolygon<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn euclidean_distance(&self, other: &Line<T>) -> T {
+        other.euclidean_distance(self)
+    }
+}
+
+/// Line to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for Line<T>
 where
     T: Float + FloatConst + Signed + SpadeFloat,
@@ -581,6 +606,50 @@ mod test {
         // 0.41036467732879783 <-- Shapely
         assert_relative_eq!(dist, 0.41036467732879767);
     }
+
+    #[test]
+    fn line_distance_multipolygon_do_not_intersect_test() {
+        // checks that the distance from the multipolygon
+        // is equal to the distance from the closest polygon
+        // taken in isolation, whatever that distance is
+        let ls1 = LineString(vec![
+            Point::new(0.0,  0.0),
+            Point::new(10.0, 0.0),
+            Point::new(10.0, 10.0),
+            Point::new(5.0,  15.0),
+            Point::new(0.0,  10.0),
+            Point::new(0.0,  0.0),
+        ]);
+        let ls2 = LineString(vec![
+            Point::new(0.0,  30.0),
+            Point::new(0.0,  25.0),
+            Point::new(10.0, 25.0),
+            Point::new(10.0, 30.0),
+            Point::new(0.0,  30.0),
+        ]);
+        let ls3 = LineString(vec![
+            Point::new(15.0, 30.0),
+            Point::new(15.0, 25.0),
+            Point::new(20.0, 25.0),
+            Point::new(20.0, 30.0),
+            Point::new(15.0, 30.0),
+        ]);
+        let pol1 = Polygon::new(ls1, vec![]);
+        let pol2 = Polygon::new(ls2, vec![]);
+        let pol3 = Polygon::new(ls3, vec![]);
+        let mp   = MultiPolygon(vec![
+            pol1.clone(),
+            pol2.clone(),
+            pol3.clone(),
+        ]);
+        let pnt1 = Point::new(0.0,  15.0);
+        let pnt2 = Point::new(10.0, 20.0);
+        let ln   = Line::new(pnt1, pnt2);
+        let dist_mp_ln   = ln.euclidean_distance(&mp);
+        let dist_pol1_ln = ln.euclidean_distance(&pol1);
+        assert_relative_eq!(dist_mp_ln, dist_pol1_ln);
+    }
+
     #[test]
     fn point_distance_multipolygon_test() {
         let ls1 = LineString(vec![
