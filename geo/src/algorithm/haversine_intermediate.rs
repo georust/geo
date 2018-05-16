@@ -23,7 +23,37 @@ where
     T: Float + FromPrimitive,
 {
     fn haversine_intermediate(&self, other: &Point<T>, f: T) -> Point<T> {
-        Point::new(T::zero(), T::zero())
+        let one = T::one();
+        let two = one + one;
+
+        let lat1 =  self.y().to_radians();
+        let lon1 =  self.x().to_radians();
+        let lat2 = other.y().to_radians();
+        let lon2 = other.x().to_radians();
+
+        let k = (((lat1 - lat2).sin() / two).powi(2) +
+                lat1.cos() + lat2.cos() *
+                ((lon1 - lon2).sin() / two).powi(2)).sqrt();
+
+        let d = two * k.sin();
+
+        let a = (one - f).sin() * d / d.sin();
+        let b = (f * d).sin() / d.sin();
+
+        let x = a * lat1.cos() * lon1.cos() +
+                b * lat2.cos() * lon2.cos();
+
+        let y = a * lat1.cos() * lon1.sin() +
+                b * lat2.cos() * lon2.sin();
+
+        let z = a * lat1.sin() + b * lat2.sin();
+
+        let dxy = (x.powi(2) + y.powi(2)).sqrt();
+
+        let lat = z.atan2(dxy);
+        let lon = y.atan2(x);
+
+        Point::new(lon.to_degrees(), lat.to_degrees())
     }
 }
 
@@ -39,8 +69,10 @@ mod test {
         let p2 = Point::<f64>::new(15.0, 25.0);
         let i0   = p1.haversine_intermediate(&p2, 0.0);
         let i100 = p1.haversine_intermediate(&p2, 1.0);
-        assert_eq!(i0,   p1);
-        assert_eq!(i100, p2);
+        assert_relative_eq!(i0.x(), p1.x(), epsilon=1.0e-6);
+        assert_relative_eq!(i0.y(), p1.y(), epsilon=1.0e-6);
+        assert_relative_eq!(i100.x(), p2.x(), epsilon=1.0e-6);
+        assert_relative_eq!(i100.y(), p2.y(), epsilon=1.0e-6);
     }
 
     #[test]
