@@ -30,7 +30,9 @@ pub trait HaversineIntermediate<T: Float> {
     /// assert_relative_eq!(i80.y(), i80_should.y(), epsilon=0.2);
     /// # }
     /// ```
+
     fn haversine_intermediate(&self, other: &Point<T>, f: T) -> Point<T>;
+    fn haversine_intermediate_fill(&self, other: &Point<T>, max_dist: T) -> Vec<Point<T>>;
 }
 
 impl<T> HaversineIntermediate<T> for Point<T>
@@ -38,40 +40,103 @@ where
     T: Float + FromPrimitive,
 {
     fn haversine_intermediate(&self, other: &Point<T>, f: T) -> Point<T> {
-        let one = T::one();
-        let two = one + one;
+        let params = get_params(&self, &other);
+        let point  = get_point(&params, f);
+        point
+    }
 
-        let lat1 =  self.y().to_radians();
-        let lon1 =  self.x().to_radians();
-        let lat2 = other.y().to_radians();
-        let lon2 = other.x().to_radians();
+    fn haversine_intermediate_fill(&self, other: &Point<T>, max_dist: T) -> Vec<Point<T>> {
+        let params = get_params(&self, &other);
+        let HaversineParams { d, .. } = params;
 
-        let k = (
-            ((lat1 - lat2) / two).sin().powi(2) +
-            lat1.cos() * lat2.cos() * ((lon1 - lon2) / two).sin().powi(2)
-        ).sqrt();
+        let total_distance   = d * T::from(6371000.0).unwrap();
 
-        let d = two * k.asin();
+        if total_distance <= max_dist {
+            return vec![self.clone(), other.clone()];
+        }
 
-        let a = ((one - f) * d).sin() / d.sin();
-        let b = (f * d).sin() / d.sin();
+        let number_of_points = (total_distance / max_dist).ceil();
+        let step             = T::one() / number_of_points;
 
-        let x = a * lat1.cos() * lon1.cos() + b * lat2.cos() * lon2.cos();
-        let y = a * lat1.cos() * lon1.sin() + b * lat2.cos() * lon2.sin();
-        let z = a * lat1.sin() + b * lat2.sin();
+        let mut current_step = T::zero();
+        let mut points = vec![self.clone()];
 
-        let lat = z.atan2(x.hypot(y));
-        let lon = y.atan2(x);
+        while current_step < T::one() {
+            let point  = get_point(&params, current_step);
+            points.push(point);
+            current_step = current_step + step;
+        }
 
-        Point::new(lon.to_degrees(), lat.to_degrees())
+        points.push(other.clone());
+        points
     }
 }
+
+
+struct HaversineParams<T: Float + FromPrimitive> {
+    d: T, n: T, o: T, p: T, q: T, r: T, s: T,
+}
+
+
+fn get_point<T: Float + FromPrimitive>(params: &HaversineParams<T>, f: T) -> Point<T> {
+    let one = T::one();
+
+    let HaversineParams { d, n, o, p, q, r, s } = *params;
+
+    let a = ((one - f) * d).sin() / d.sin();
+    let b = (f * d).sin() / d.sin();
+
+    let x = a * n + b * o;
+    let y = a * p + b * q;
+    let z = a * r + b * s;
+
+    let lat = z.atan2(x.hypot(y));
+    let lon = y.atan2(x);
+
+    Point::new(lon.to_degrees(), lat.to_degrees())
+}
+
+
+fn get_params<T: Float + FromPrimitive>(p1: &Point<T>, p2: &Point<T>) -> HaversineParams<T> {
+    let one = T::one();
+    let two = one + one;
+
+    let lat1 = p1.y().to_radians();
+    let lon1 = p1.x().to_radians();
+    let lat2 = p2.y().to_radians();
+    let lon2 = p2.x().to_radians();
+
+    let lat1_cos = lat1.cos();
+    let lon1_cos = lon1.cos();
+    let lat2_cos = lat2.cos();
+    let lon2_cos = lon2.cos();
+    let lat1_sin = lat1.sin();
+    let lon1_sin = lon1.sin();
+    let lat2_sin = lat2.sin();
+    let lon2_sin = lon2.sin();
+
+    let m = lat1_cos * lat2_cos;
+
+    let n = lat1_cos * lon1_cos;
+    let o = lat2_cos * lon2_cos;
+    let p = lat1_cos * lon1_sin;
+    let q = lat2_cos * lon2_sin;
+
+    let k = (
+        ((lat1 - lat2) / two).sin().powi(2) +
+        m * ((lon1 - lon2) / two).sin().powi(2)
+    ).sqrt();
+
+    let d = two * k.asin();
+
+    HaversineParams { d, n, o, p, q, r: lat1_sin, s: lat2_sin }
+}
+
 
 #[cfg(test)]
 mod test {
     use super::*;
     use algorithm::haversine_intermediate::HaversineIntermediate;
-    use num_traits::pow;
 
     #[test]
     fn f_is_zero_or_one_test() {
