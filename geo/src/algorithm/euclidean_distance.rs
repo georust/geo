@@ -321,6 +321,21 @@ where
     }
 }
 
+impl<T> EuclideanDistance<T, Line<T>> for Line<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn euclidean_distance(&self, other: &Line<T>) -> T {
+        if self.intersects(other) || self.contains(other) {
+            return T::zero();
+        }
+        // minimum of two Point-Line distances
+        self.start
+            .euclidean_distance(other)
+            .min(self.end.euclidean_distance(other))
+    }
+}
+
 // Line to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Line<T>
 where
