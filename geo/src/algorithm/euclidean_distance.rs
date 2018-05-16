@@ -298,18 +298,15 @@ where
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if self.intersects(other) || other.contains(self) {
             T::zero()
-        } else {
-            // still a possibility that the LineString's inside an interior ring
-            if !other.interiors.is_empty() && ring_contains_point(other, &self.0[0]) {
-                // check each ring distance, returning the minimum
-                let mut mindist: T = Float::max_value();
-                for ring in &other.interiors {
-                    mindist = mindist.min(nearest_neighbour_distance(self, ring))
-                }
-                mindist
-            } else {
-                nearest_neighbour_distance(self, &other.exterior)
+        } else if !other.interiors.is_empty() && ring_contains_point(other, &self.0[0]) {
+            // check each ring distance, returning the minimum
+            let mut mindist: T = Float::max_value();
+            for ring in &other.interiors {
+                mindist = mindist.min(nearest_neighbour_distance(self, ring))
             }
+            mindist
+        } else {
+            nearest_neighbour_distance(self, &other.exterior)
         }
     }
 }
@@ -348,15 +345,48 @@ where
     }
 }
 
-// Line to Polygon distance
-impl<T> EuclideanDistance<T, Polygon<T>> for Line<T>
+/// Line to Line distance
+impl<T> EuclideanDistance<T, Line<T>> for Line<T>
 where
     T: Float + FloatConst + Signed + SpadeFloat,
 {
-    fn euclidean_distance(&self, other: &Polygon<T>) -> T {
+    fn euclidean_distance(&self, other: &Line<T>) -> T {
+        if self.intersects(other) || self.contains(other) {
+            return T::zero();
+        }
+        // minimum of two Point-Line distances
         self.start
             .euclidean_distance(other)
             .min(self.end.euclidean_distance(other))
+    }
+}
+
+// Line to Polygon distance
+impl<T> EuclideanDistance<T, Polygon<T>> for Line<T>
+where
+    T: Float + Signed + SpadeFloat + FloatConst,
+{
+    fn euclidean_distance(&self, other: &Polygon<T>) -> T {
+        if other.contains(self) || self.intersects(other) {
+            return T::zero();
+        }
+        // point-line distance between each exterior polygon point and the line
+        let exterior_min = other.exterior.points().fold(T::max_value(), |acc, point| {
+            acc.min(self.euclidean_distance(point))
+        });
+        // point-line distance between each interior ring point and the line
+        // if there are no rings this just evaluates to max_float
+        let interior_min = other
+            .interiors
+            .iter()
+            .map(|ring| {
+                ring.lines().fold(T::max_value(), |acc, line| {
+                    acc.min(self.euclidean_distance(&line))
+                })
+            })
+            .fold(T::max_value(), |acc, ring_min| acc.min(ring_min));
+        // return smaller of the two values
+        exterior_min.min(interior_min)
     }
 }
 
@@ -397,7 +427,7 @@ where
             }
             return mindist;
         }
-        if !(self.is_convex() && !poly2.is_convex()) {
+        if poly2.is_convex() || !self.is_convex() {
             // fall back to R* nearest neighbour method
             nearest_neighbour_distance(&self.exterior, &poly2.exterior)
         } else {
@@ -408,7 +438,7 @@ where
 
 /// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
 // This is somewhat slow and memory-inefficient, but certainly better than quadratic time
-fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -> T
+pub fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -> T
 where
     T: Float + SpadeFloat,
 {
@@ -898,5 +928,50 @@ mod test {
         let in_ring = include!("test_fixtures/poly_in_ring.rs");
         let in_ring_ls: LineString<f64> = in_ring.into();
         assert_eq!(ring_ls.euclidean_distance(&in_ring_ls), 5.992772737231033);
+    }
+    #[test]
+    // Line-Polygon test: closest point on Polygon is NOT nearest to a Line end-point
+    fn test_line_polygon_simple() {
+        let line = Line::new(Point::new(0.0, 0.0), Point::new(0.0, 3.0));
+        let v = vec![
+            (5.0, 1.0),
+            (5.0, 2.0),
+            (0.25, 1.5),
+            (5.0, 1.0)
+        ];
+        let poly = Polygon::new(v.into(), vec![]);
+        assert_eq!(line.euclidean_distance(&poly), 0.25);
+    }
+    #[test]
+    // Line-Polygon test: Line intersects Polygon
+    fn test_line_polygon_intersects() {
+        let line = Line::new(Point::new(0.5, 0.0), Point::new(0.0, 3.0));
+        let v = vec![
+            (5.0, 1.0),
+            (5.0, 2.0),
+            (0.25, 1.5),
+            (5.0, 1.0)
+        ];
+        let poly = Polygon::new(v.into(), vec![]);
+        assert_eq!(line.euclidean_distance(&poly), 0.0);
+    }
+    #[test]
+    // Line-Polygon test: Line contained by interior ring
+    fn test_line_polygon_inside_ring() {
+        let line = Line::new(Point::new(4.4, 1.5), Point::new(4.45, 1.5));
+        let v = vec![
+            (5.0, 1.0),
+            (5.0, 2.0),
+            (0.25, 1.0),
+            (5.0, 1.0)
+        ];
+        let v2 = vec![
+            (4.5, 1.2),
+            (4.5, 1.8),
+            (3.5, 1.2),
+            (4.5, 1.2)
+        ];
+        let poly = Polygon::new(v.into(), vec![v2.into()]);
+        assert_eq!(line.euclidean_distance(&poly), 0.04999999999999982);
     }
 }
