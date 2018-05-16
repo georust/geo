@@ -1,5 +1,10 @@
 # Changes
 
+## geo 0.9.1 (unreleased)
+
+* Fix Line-Polygon euclidean distance
+  * <https://github.com/georust/rust-geo/pull/226>
+
 ## geo 0.9.0
 
 * Make serde an optional dependency for `geo`, rename feature to `use-serde`
