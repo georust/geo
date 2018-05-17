@@ -113,14 +113,10 @@ fn get_params<T: Float + FromPrimitive>(p1: &Point<T>, p2: &Point<T>) -> Haversi
     let lat2 = p2.y().to_radians();
     let lon2 = p2.x().to_radians();
 
-    let lat1_cos = lat1.cos();
-    let lon1_cos = lon1.cos();
-    let lat2_cos = lat2.cos();
-    let lon2_cos = lon2.cos();
-    let lat1_sin = lat1.sin();
-    let lon1_sin = lon1.sin();
-    let lat2_sin = lat2.sin();
-    let lon2_sin = lon2.sin();
+    let (lat1_sin, lat1_cos) = lat1.sin_cos();
+    let (lat2_sin, lat2_cos) = lat2.sin_cos();
+    let (lon1_sin, lon1_cos) = lon1.sin_cos();
+    let (lon2_sin, lon2_cos) = lon2.sin_cos();
 
     let m = lat1_cos * lat2_cos;
 
@@ -219,4 +215,3 @@ mod test {
         assert_eq!(route, vec![p1, i25, i50, i75, p2]);
     }
 }
-
