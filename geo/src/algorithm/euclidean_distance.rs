@@ -290,6 +290,28 @@ where
     }
 }
 
+/// LineString to Line
+impl<T> EuclideanDistance<T, Line<T>> for LineString<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn euclidean_distance(&self, other: &Line<T>) -> T {
+        self.lines().fold(T::max_value(), |acc, line| {
+            acc.min(line.euclidean_distance(other))
+        })
+    }
+}
+
+/// Line to LineString
+impl<T> EuclideanDistance<T, LineString<T>> for Line<T>
+where
+    T: Float + FloatConst + Signed + SpadeFloat,
+{
+    fn euclidean_distance(&self, other: &LineString<T>) -> T {
+        other.euclidean_distance(self)
+    }
+}
+
 /// LineString to Polygon
 impl<T> EuclideanDistance<T, Polygon<T>> for LineString<T>
 where
@@ -933,12 +955,7 @@ mod test {
     // Line-Polygon test: closest point on Polygon is NOT nearest to a Line end-point
     fn test_line_polygon_simple() {
         let line = Line::new(Point::new(0.0, 0.0), Point::new(0.0, 3.0));
-        let v = vec![
-            (5.0, 1.0),
-            (5.0, 2.0),
-            (0.25, 1.5),
-            (5.0, 1.0)
-        ];
+        let v = vec![(5.0, 1.0), (5.0, 2.0), (0.25, 1.5), (5.0, 1.0)];
         let poly = Polygon::new(v.into(), vec![]);
         assert_eq!(line.euclidean_distance(&poly), 0.25);
     }
@@ -946,12 +963,7 @@ mod test {
     // Line-Polygon test: Line intersects Polygon
     fn test_line_polygon_intersects() {
         let line = Line::new(Point::new(0.5, 0.0), Point::new(0.0, 3.0));
-        let v = vec![
-            (5.0, 1.0),
-            (5.0, 2.0),
-            (0.25, 1.5),
-            (5.0, 1.0)
-        ];
+        let v = vec![(5.0, 1.0), (5.0, 2.0), (0.25, 1.5), (5.0, 1.0)];
         let poly = Polygon::new(v.into(), vec![]);
         assert_eq!(line.euclidean_distance(&poly), 0.0);
     }
@@ -959,19 +971,16 @@ mod test {
     // Line-Polygon test: Line contained by interior ring
     fn test_line_polygon_inside_ring() {
         let line = Line::new(Point::new(4.4, 1.5), Point::new(4.45, 1.5));
-        let v = vec![
-            (5.0, 1.0),
-            (5.0, 2.0),
-            (0.25, 1.0),
-            (5.0, 1.0)
-        ];
-        let v2 = vec![
-            (4.5, 1.2),
-            (4.5, 1.8),
-            (3.5, 1.2),
-            (4.5, 1.2)
-        ];
+        let v = vec![(5.0, 1.0), (5.0, 2.0), (0.25, 1.0), (5.0, 1.0)];
+        let v2 = vec![(4.5, 1.2), (4.5, 1.8), (3.5, 1.2), (4.5, 1.2)];
         let poly = Polygon::new(v.into(), vec![v2.into()]);
         assert_eq!(line.euclidean_distance(&poly), 0.04999999999999982);
+    }
+    #[test]
+    // LineString-Line test
+    fn test_linestring_line_distance() {
+        let line = Line::new(Point::new(0.0, 0.0), Point::new(0.0, 2.0));
+        let ls: LineString<_> = vec![(3.0, 0.0), (1.0, 1.0), (3.0, 2.0)].into();
+        assert_eq!(ls.euclidean_distance(&line), 1.0);
     }
 }
