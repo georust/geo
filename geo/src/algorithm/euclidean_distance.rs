@@ -302,7 +302,7 @@ where
     }
 }
 
-/// LineString to Line
+/// Line to LineString
 impl<T> EuclideanDistance<T, LineString<T>> for Line<T>
 where
     T: Float + FloatConst + Signed + SpadeFloat,
@@ -975,5 +975,12 @@ mod test {
         let v2 = vec![(4.5, 1.2), (4.5, 1.8), (3.5, 1.2), (4.5, 1.2)];
         let poly = Polygon::new(v.into(), vec![v2.into()]);
         assert_eq!(line.euclidean_distance(&poly), 0.04999999999999982);
+    }
+    #[test]
+    // LineString-Line test
+    fn test_linestring_line_distance() {
+        let line = Line::new(Point::new(0.0, 0.0), Point::new(0.0, 2.0));
+        let ls: LineString<_> = vec![(3.0, 0.0), (1.0, 1.0), (3.0, 2.0)].into();
+        assert_eq!(ls.euclidean_distance(&line), 1.0);
     }
 }
