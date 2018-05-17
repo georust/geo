@@ -4,6 +4,8 @@
 
 * Fix Line-Polygon euclidean distance
   * <https://github.com/georust/rust-geo/pull/226>
+* Add Line-LineString euclidean distance
+  * <https://github.com/georust/rust-geo/pull/232>
 
 ## geo 0.9.0
 
