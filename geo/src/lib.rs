@@ -8,7 +8,7 @@ extern crate spade;
 extern crate postgis;
 #[cfg(feature = "use-proj")]
 extern crate proj;
-#[macro_use]
+#[cfg_attr(all(test, feature = "use-proj"), macro_use)]
 extern crate failure;
 
 pub use traits::ToGeo;
