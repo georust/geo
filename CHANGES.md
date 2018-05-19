@@ -1,11 +1,16 @@
 # Changes
 
-## geo 0.9.1 (unreleased)
+## geo 0.9.1
 
 * Fix Line-Polygon euclidean distance
   * <https://github.com/georust/rust-geo/pull/226>
-* Add Line-LineString euclidean distance
+* Implement `EuclideanDistance` for `MultiPolygon` to `Line` and `Line` to `MultiPolygon`
+  * <https://github.com/georust/rust-geo/pull/227>
+* Add `Line`-`LineString` euclidean distance
   * <https://github.com/georust/rust-geo/pull/232>
+* Add `VincentyDistance` and `VincentyLength` algorithms
+  * <https://github.com/georust/rust-geo/pull/213>
+* Add `HaversineIntermediate` algorithm
 
 ## geo 0.9.0
 
