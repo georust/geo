@@ -6,9 +6,10 @@
 
 use num_traits::{Float, FromPrimitive};
 use Point;
+use std::{error, fmt};
 
 pub trait VincentyDistance<T, Rhs = Self> {
-    fn vincenty_distance(&self, rhs: &Rhs) -> T;
+    fn vincenty_distance(&self, rhs: &Rhs) -> Result<T, FailedToConvergeError>;
 }
 
 impl<T> VincentyDistance<T, Point<T>> for Point<T>
@@ -17,8 +18,7 @@ where
 {
     /// The units of the returned value is meters.
     #[allow(non_snake_case)]
-    fn vincenty_distance(&self, rhs: &Point<T>) -> T {
-        let t_0 = T::zero();
+    fn vincenty_distance(&self, rhs: &Point<T>) -> Result<T, FailedToConvergeError> {
         let t_1 = T::one();
         let t_2 = T::from(2).unwrap();
         let t_3 = T::from(3).unwrap();
@@ -72,7 +72,7 @@ where
                     * (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda))
                 .sqrt();
             if sinSigma.is_zero() {
-                return t_0;
+                return Err(FailedToConvergeError);
             }
             cosSigma = sinU1 * sinU2 + cosU1 * cosU2 * cosLambda;
             sigma = sinSigma.atan2(cosSigma);
@@ -98,7 +98,7 @@ where
         }
 
         if iterLimit == 0 {
-            return t_0;
+            return Err(FailedToConvergeError);
         }
 
         let uSq = cosSqAlpha * (a * a - b * b) / (b * b);
@@ -114,7 +114,22 @@ where
 
         let s = b * A * (sigma - deltaSigma);
 
-        return s;
+        Ok(s)
+    }
+}
+
+#[derive(Debug)]
+pub struct FailedToConvergeError;
+
+impl fmt::Display for FailedToConvergeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Vincenty algorithm failed to converge")
+    }
+}
+
+impl error::Error for FailedToConvergeError {
+    fn description(&self) -> &str {
+        "Vincenty algorithm failed to converge"
     }
 }
 
@@ -127,7 +142,7 @@ mod test {
         let a = Point::<f64>::new(17.072561, 48.154563);
         let b = Point::<f64>::new(17.072562, 48.154564);
         assert_relative_eq!(
-            a.vincenty_distance(&b),
+            a.vincenty_distance(&b).unwrap(),
             0.13378944117648012,
             epsilon = 1.0e-6
         );
@@ -138,7 +153,7 @@ mod test {
         let a = Point::<f64>::new(17.072561, 48.154563);
         let b = Point::<f64>::new(17.064064, 48.158800);
         assert_relative_eq!(
-            a.vincenty_distance(&b),
+            a.vincenty_distance(&b).unwrap(),
             788.4148295236967,
             epsilon = 1.0e-6
         );
@@ -149,7 +164,7 @@ mod test {
         let a = Point::<f64>::new(17.107558, 48.148636);
         let b = Point::<f64>::new(16.372477, 48.208810);
         assert_relative_eq!(
-            a.vincenty_distance(&b),
+            a.vincenty_distance(&b).unwrap(),
             55073.68246366003,
             epsilon = 1.0e-6
         );
