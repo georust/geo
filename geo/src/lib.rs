@@ -57,4 +57,6 @@ pub mod prelude {
     pub use algorithm::to_postgis::ToPostgis;
     #[cfg(feature = "use-proj")]
     pub use algorithm::proj::Proj;
+    pub use algorithm::vincenty_distance::VincentyDistance;
+    pub use algorithm::vincenty_length::VincentyLength;
 }
