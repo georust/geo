@@ -10,8 +10,7 @@ fn rotation_matrix<T>(angle: T, origin: &Point<T>, points: &[Point<T>]) -> Vec<P
 where
     T: Float,
 {
-    let cos_theta = angle.to_radians().cos();
-    let sin_theta = angle.to_radians().sin();
+    let (sin_theta, cos_theta) = angle.to_radians().sin_cos();
     let x0 = origin.x();
     let y0 = origin.y();
     points
@@ -87,8 +86,7 @@ where
     G: MapCoords<T, T, Output = G>,
 {
     fn rotate_around_point(&self, angle: T, point: &Point<T>) -> Self {
-        let cos_theta = angle.to_radians().cos();
-        let sin_theta = angle.to_radians().sin();
+        let (sin_theta, cos_theta) = angle.to_radians().sin_cos();
         let x0 = point.x();
         let y0 = point.y();
         self.map_coords(&|&(x, y)| {
