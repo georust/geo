@@ -50,10 +50,8 @@ where
         let U1 = ((t_1 - f) * self.lat().to_radians().tan()).atan();
         // Reduced latitude (latitude on the auxiliary sphere)
         let U2 = ((t_1 - f) * rhs.lat().to_radians().tan()).atan();
-        let sinU1 = U1.sin();
-        let cosU1 = U1.cos();
-        let sinU2 = U2.sin();
-        let cosU2 = U2.cos();
+        let (sinU1, cosU1) = U1.sin_cos();
+        let (sinU2, cosU2) = U2.sin_cos();
         let mut cosSqAlpha;
         let mut sinSigma;
         let mut cos2SigmaM;
@@ -65,8 +63,7 @@ where
         let mut iterLimit = 100;
 
         loop {
-            let sinLambda = lambda.sin();
-            let cosLambda = lambda.cos();
+            let (sinLambda, cosLambda) = lambda.sin_cos();
             sinSigma = ((cosU2 * sinLambda) * (cosU2 * sinLambda)
                 + (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda)
                     * (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda))
