@@ -61,6 +61,8 @@ where
 
     /// Add a BoundingBox to the given BoundingBox.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::Bbox;
     ///
@@ -104,6 +106,8 @@ where
     T: CoordinateType + ToPrimitive,
 {
     /// Add a BoundingBox to the given BoundingBox.
+    ///
+    /// # Examples
     ///
     /// ```
     /// use geo::Bbox;

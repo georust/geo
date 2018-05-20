@@ -9,6 +9,8 @@ use ::Point;
 pub trait Bearing<T: Float> {
     /// Returns the bearing to another Point in degrees, where North is 0° and East is 45°.
     ///
+    /// # Examples
+    ///
     /// ```
     /// # extern crate geo;
     /// # #[macro_use] extern crate approx;

@@ -3,6 +3,8 @@ use {CoordinateType, Line, Point};
 
 /// An ordered collection of two or more [`Point`s](struct.Point.html), representing a path between locations
 ///
+/// # Examples
+///
 /// Create a `LineString` by calling it directly:
 ///
 /// ```

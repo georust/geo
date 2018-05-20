@@ -89,6 +89,8 @@ pub trait ExtremeIndices<T: Float + Signed> {
     ///
     /// The polygon **must be convex and properly (ccw) oriented**.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Point, LineString, Polygon};
     /// use geo::extremes::ExtremeIndices;
@@ -137,6 +139,8 @@ pub trait ExtremePoints<T: Float> {
     /// Find the extreme `x` and `y` points of a Geometry
     ///
     /// This trait is available to any struct implementing both `ConvexHull` amd `ExtremeIndices`
+    ///
+    /// # Examples
     ///
     /// ```
     /// use geo::{Point, LineString, Polygon};

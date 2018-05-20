@@ -5,6 +5,8 @@ use {CoordinateType, LineString};
 ///
 /// It has one exterior *ring* or *shell*, and zero or more interior rings, representing holes.
 ///
+/// # Examples
+///
 /// Polygons can be created from collections of `Point`-like objects, such as arrays or tuples:
 ///
 /// ```
@@ -27,6 +29,8 @@ where
     T: CoordinateType,
 {
     /// Creates a new polygon.
+    ///
+    /// # Examples
     ///
     /// ```
     /// use geo_types::{Point, LineString, Polygon};

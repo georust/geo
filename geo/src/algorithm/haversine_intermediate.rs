@@ -6,6 +6,8 @@ use ::Point;
 pub trait HaversineIntermediate<T: Float> {
     /// Returns a new Point along a great circle route between two existing points.
     ///
+    /// # Examples
+    ///
     /// ```
     /// # extern crate geo;
     /// # #[macro_use] extern crate approx;

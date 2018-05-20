@@ -8,6 +8,8 @@ use {Bbox, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, COORD
 pub trait Contains<Rhs = Self> {
     /// Checks if `rhs` is completely contained within `self`.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Coordinate, Point, LineString, Polygon};
     /// use geo::algorithm::contains::Contains;

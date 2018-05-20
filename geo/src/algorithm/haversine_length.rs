@@ -9,6 +9,8 @@ use algorithm::haversine_distance::HaversineDistance;
 pub trait HaversineLength<T, RHS = Self> {
     /// Calculation of the length of a Line
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Point, LineString, Coordinate};
     /// use geo::algorithm::haversine_length::HaversineLength;

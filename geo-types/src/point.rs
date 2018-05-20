@@ -8,6 +8,8 @@ use {Coordinate, CoordinateType};
 ///
 /// Points can be created using the `new(x, y)` constructor, or from a `Coordinate` or pair of points.
 ///
+/// # Examples
+///
 /// ```
 /// use geo_types::{Point, Coordinate};
 /// let p1: Point<f64> = (0., 1.).into();
@@ -38,6 +40,8 @@ where
 {
     /// Creates a new point.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo_types::Point;
     ///
@@ -52,6 +56,8 @@ where
 
     /// Returns the x/horizontal component of the point.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo_types::Point;
     ///
@@ -64,6 +70,8 @@ where
     }
 
     /// Sets the x/horizontal component of the point.
+    ///
+    /// # Examples
     ///
     /// ```
     /// use geo_types::Point;
@@ -80,6 +88,8 @@ where
 
     /// Returns the y/vertical component of the point.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo_types::Point;
     ///
@@ -92,6 +102,8 @@ where
     }
 
     /// Sets the y/vertical component of the point.
+    ///
+    /// # Examples
     ///
     /// ```
     /// use geo_types::Point;
@@ -108,6 +120,8 @@ where
 
     /// Returns the longitude/horizontal component of the point.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo_types::Point;
     ///
@@ -120,6 +134,8 @@ where
     }
 
     /// Sets the longitude/horizontal component of the point.
+    ///
+    /// # Examples
     ///
     /// ```
     /// use geo_types::Point;
@@ -135,6 +151,8 @@ where
 
     /// Returns the latitude/vertical component of the point.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo_types::Point;
     ///
@@ -147,6 +165,8 @@ where
     }
 
     /// Sets the latitude/vertical component of the point.
+    ///
+    /// # Examples
     ///
     /// ```
     /// use geo_types::Point;
@@ -162,6 +182,8 @@ where
 
     /// Returns the dot product of the two points:
     /// `dot = x1 * x2 + y1 * y2`
+    ///
+    /// # Examples
     ///
     /// ```
     /// use geo_types::Point;
@@ -209,6 +231,8 @@ where
 
     /// Returns a point with the x and y components negated.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo_types::Point;
     ///
@@ -230,6 +254,8 @@ where
 
     /// Add a point to the given point.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo_types::Point;
     ///
@@ -250,6 +276,8 @@ where
     type Output = Point<T>;
 
     /// Subtract a point from the given point.
+    ///
+    /// # Examples
     ///
     /// ```
     /// use geo_types::Point;

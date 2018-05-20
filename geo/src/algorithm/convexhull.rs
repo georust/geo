@@ -144,6 +144,8 @@ pub trait ConvexHull<T> {
     /// based on [Barber, C. Bradford; Dobkin, David P.; Huhdanpaa, Hannu (1 December 1996)](https://dx.doi.org/10.1145%2F235815.235821)
     /// Original paper here: http://www.cs.princeton.edu/~dpd/Papers/BarberDobkinHuhdanpaa.pdf
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Point, LineString, Polygon};
     /// use geo::convexhull::ConvexHull;

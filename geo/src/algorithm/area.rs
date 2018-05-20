@@ -12,6 +12,8 @@ where
     /// Area of polygon.
     /// See: https://en.wikipedia.org/wiki/Polygon
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Coordinate, Point, LineString, Polygon};
     /// use geo::algorithm::area::Area;

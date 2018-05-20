@@ -58,6 +58,8 @@ where
 pub trait Simplify<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Point, LineString};
     /// use geo::algorithm::simplify::{Simplify};

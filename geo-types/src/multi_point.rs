@@ -3,6 +3,8 @@ use {CoordinateType, Point};
 
 /// A collection of [`Point`s](struct.Point.html)
 ///
+/// # Examples
+///
 /// Iterating over a `MultiPoint` yields the `Point`s inside.
 ///
 /// ```
