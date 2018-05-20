@@ -10,6 +10,8 @@ pub trait Centroid<T: Float> {
 
     /// See: https://en.wikipedia.org/wiki/Centroid
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Point, LineString};
     /// use geo::algorithm::centroid::Centroid;

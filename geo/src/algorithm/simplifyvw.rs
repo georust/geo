@@ -424,6 +424,8 @@ pub trait SimplifyVW<T, Epsilon = T> {
     ///
     /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Point, LineString};
     /// use geo::algorithm::simplifyvw::{SimplifyVW};
@@ -471,6 +473,8 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     /// points remaining (4 for a `LineString`, 6 for a `Polygon`), the point is retained and the
     /// simplification process ends. This is because there is no guarantee that removal of two points will remove
     /// the intersection, but removal of further points would leave too few points to form a valid geometry.
+    ///
+    /// # Examples
     ///
     /// ```
     /// use geo::{Point, LineString};

@@ -8,6 +8,8 @@ pub trait Orient<T> {
     /// By default, the exterior ring of a Polygon is oriented counter-clockwise, and any interior
     /// rings are oriented clockwise.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Point, LineString, Polygon};
     /// use geo::orient::{Orient, Direction};

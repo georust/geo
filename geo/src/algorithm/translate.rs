@@ -4,6 +4,7 @@ use algorithm::map_coords::{MapCoords, MapCoordsInplace};
 pub trait Translate<T> {
     /// Translate a Geometry along its axes by the given offsets
     ///
+    /// # Examples
     ///
     /// ```
     /// use geo::{Point, LineString};

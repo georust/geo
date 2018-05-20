@@ -20,6 +20,8 @@ where
 {
     /// Creates a new line segment.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo_types::{Point, Line};
     ///

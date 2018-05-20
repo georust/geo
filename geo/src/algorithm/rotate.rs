@@ -31,6 +31,8 @@ pub trait Rotate<T> {
     ///
     /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Point, LineString};
     /// use geo::algorithm::rotate::{Rotate};
@@ -57,6 +59,8 @@ pub trait RotatePoint<T> {
     /// Rotate a Geometry around an arbitrary point by an angle, given in degrees
     ///
     /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
+    ///
+    /// # Examples
     ///
     /// ```
     /// use geo::{Point, LineString};

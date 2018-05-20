@@ -7,6 +7,8 @@ pub trait BoundingBox<T: CoordinateType> {
 
     /// Return the Bounding Box of a geometry
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Point, LineString};
     /// use geo::algorithm::boundingbox::BoundingBox;

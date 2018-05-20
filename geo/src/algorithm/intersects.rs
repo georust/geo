@@ -7,6 +7,8 @@ use {Bbox, Line, LineString, Point, Polygon};
 pub trait Intersects<Rhs = Self> {
     /// Checks if the geometry A intersects the geometry B.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Coordinate, Point, LineString};
     /// use geo::algorithm::intersects::Intersects;

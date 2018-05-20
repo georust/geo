@@ -8,6 +8,8 @@ use algorithm::euclidean_distance::EuclideanDistance;
 pub trait EuclideanLength<T, RHS = Self> {
     /// Calculation of the length of a Line
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{Point, LineString, Coordinate};
     /// use geo::algorithm::euclidean_length::EuclideanLength;

@@ -6,6 +6,8 @@ use ::Point;
 pub trait HaversineDestination<T: Float> {
     /// Returns a new Point using distance to the existing Point and a bearing for the direction
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::Point;
     /// use geo::algorithm::haversine_destination::HaversineDestination;

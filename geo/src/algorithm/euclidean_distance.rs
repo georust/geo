@@ -21,6 +21,8 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     ///
     /// The distance between a `Point` and an empty `LineString` is `0.0`
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::{COORD_PRECISION, Point, LineString, Polygon};
     /// use geo::algorithm::euclidean_distance::EuclideanDistance;

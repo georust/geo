@@ -6,6 +6,8 @@ use ::Point;
 pub trait HaversineDistance<T, Rhs = Self> {
     /// Returns the Haversine distance between two points:
     ///
+    /// # Examples
+    ///
     /// ```
     /// # extern crate geo;
     /// # #[macro_use] extern crate approx;

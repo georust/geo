@@ -8,6 +8,8 @@ pub trait MapCoords<T, NT> {
 
     /// Apply a function to all the coordinates in a geometric object, returning a new object.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::Point;
     /// use geo::algorithm::map_coords::MapCoords;
@@ -41,6 +43,8 @@ pub trait TryMapCoords<T, NT> {
 
     /// Map a fallible function over all the coordinates in a geometry, returning a Result
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo::Point;
     /// use geo::algorithm::map_coords::TryMapCoords;
@@ -62,6 +66,8 @@ pub trait TryMapCoords<T, NT> {
 /// Map all the coordinates in an object in place
 pub trait MapCoordsInplace<T> {
     /// Apply a function to all the coordinates in a geometric object, in place
+    ///
+    /// # Examples
     ///
     /// ```
     /// use geo::Point;

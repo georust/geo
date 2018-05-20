@@ -56,6 +56,8 @@ impl<T: CoordinateType> From<MultiPolygon<T>> for Geometry<T> {
 impl<T: CoordinateType> Geometry<T> {
     /// If this Geometry is a Point, then return that, else None.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use geo_types::*;
     /// let g = Geometry::Point(Point::new(0., 0.));
