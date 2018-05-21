@@ -81,13 +81,13 @@ pub trait Winding<T> where T: CoordinateType
     ///
     /// The object isn't changed, and the points are returned either in order, or in reverse
     /// order, so that the resultant order makes it appear clockwise
-    fn points_cw<'a>(&'a self) -> Points<'a, T>;
+    fn points_cw(&self) -> Points<T>;
 
     /// Iterate over the points in a counter-clockwise order
     ///
     /// The object isn't changed, and the points are returned either in order, or in reverse
     /// order, so that the resultant order makes it appear counter-clockwise
-    fn points_ccw<'a>(&'a self) -> Points<'a, T>;
+    fn points_ccw(&self) -> Points<T>;
 
     /// Change this objects's points so they are in clockwise winding order
     fn make_cw_winding(&mut self);
@@ -137,7 +137,7 @@ impl<T> Winding<T> for LineString<T>
     ///
     /// The Linestring isn't changed, and the points are returned either in order, or in reverse
     /// order, so that the resultant order makes it appear clockwise
-    fn points_cw<'a>(&'a self) -> Points<'a, T> {
+    fn points_cw(&self) -> Points<T> {
         match self.winding_order() {
             Some(WindingOrder::CounterClockwise) => Points(EitherIter::B(self.0.iter().rev())),
             _ => Points(EitherIter::A(self.0.iter())),
@@ -148,7 +148,7 @@ impl<T> Winding<T> for LineString<T>
     ///
     /// The Linestring isn't changed, and the points are returned either in order, or in reverse
     /// order, so that the resultant order makes it appear counter-clockwise
-    fn points_ccw<'a>(&'a self) -> Points<'a, T> {
+    fn points_ccw(&self) -> Points<T> {
         match self.winding_order() {
             Some(WindingOrder::Clockwise) => Points(EitherIter::B(self.0.iter().rev())),
             _ => Points(EitherIter::A(self.0.iter())),
@@ -157,21 +157,15 @@ impl<T> Winding<T> for LineString<T>
 
     /// Change this line's points so they are in clockwise winding order
     fn make_cw_winding(&mut self) {
-        match self.winding_order() {
-            Some(WindingOrder::CounterClockwise) => {
-                self.0.reverse();
-            },
-            _ => {},
-        }
+        if let Some(WindingOrder::CounterClockwise) = self.winding_order() {
+            self.0.reverse();
+         }
     }
 
     /// Change this line's points so they are in counterclockwise winding order
     fn make_ccw_winding(&mut self) {
-        match self.winding_order() {
-            Some(WindingOrder::Clockwise) => {
-                self.0.reverse();
-            },
-            _ => {}
+        if let Some(WindingOrder::Clockwise) = self.winding_order() {
+            self.0.reverse();
         }
     }
 }

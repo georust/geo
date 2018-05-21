@@ -45,8 +45,8 @@ where
     /// ```
     pub fn new(exterior: LineString<T>, interiors: Vec<LineString<T>>) -> Polygon<T> {
         Polygon {
-            exterior: exterior,
-            interiors: interiors,
+            exterior,
+            interiors
         }
     }
     /// Wrap-around previous-vertex

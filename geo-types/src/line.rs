@@ -32,8 +32,8 @@ where
     /// ```
     pub fn new(start: Point<T>, end: Point<T>) -> Line<T> {
         Line {
-            start: start,
-            end: end,
+            start,
+            end
         }
     }
 }

@@ -165,7 +165,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for LineString<T
 
 impl<T: CoordinateType> MapCoordsInplace<T> for LineString<T> {
     fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        for p in self.0.iter_mut() {
+        for p in &mut self.0 {
             p.map_coords_inplace(func);
         }
     }
@@ -202,7 +202,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Polygon<T> {
 impl<T: CoordinateType> MapCoordsInplace<T> for Polygon<T> {
     fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
         self.exterior.map_coords_inplace(func);
-        for p in self.interiors.iter_mut() {
+        for p in &mut self.interiors {
             p.map_coords_inplace(func);
         }
     }
@@ -232,7 +232,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiPoint<T
 
 impl<T: CoordinateType> MapCoordsInplace<T> for MultiPoint<T> {
     fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        for p in self.0.iter_mut() {
+        for p in &mut self.0 {
             p.map_coords_inplace(func);
         }
     }
@@ -262,7 +262,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiLineStr
 
 impl<T: CoordinateType> MapCoordsInplace<T> for MultiLineString<T> {
     fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        for p in self.0.iter_mut() {
+        for p in &mut self.0 {
             p.map_coords_inplace(func);
         }
     }
@@ -292,7 +292,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiPolygon
 
 impl<T: CoordinateType> MapCoordsInplace<T> for MultiPolygon<T> {
     fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        for p in self.0.iter_mut() {
+        for p in &mut self.0 {
             p.map_coords_inplace(func);
         }
     }
@@ -380,7 +380,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for GeometryColl
 
 impl<T: CoordinateType> MapCoordsInplace<T> for GeometryCollection<T> {
     fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        for p in self.0.iter_mut() {
+        for p in &mut self.0 {
             p.map_coords_inplace(func);
         }
     }

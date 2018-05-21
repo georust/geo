@@ -51,7 +51,7 @@ where
     /// assert_eq!(p.y(), 2.345);
     /// ```
     pub fn new(x: T, y: T) -> Point<T> {
-        Point(Coordinate { x: x, y: y })
+        Point(Coordinate { x, y })
     }
 
     /// Returns the x/horizontal component of the point.

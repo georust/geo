@@ -74,10 +74,10 @@ where
             (b.y(), a.y())
         };
         Bbox {
-            xmin: xmin,
-            xmax: xmax,
-            ymin: ymin,
-            ymax: ymax,
+            xmin,
+            xmax,
+            ymin,
+            ymax,
         }
     }
 }
