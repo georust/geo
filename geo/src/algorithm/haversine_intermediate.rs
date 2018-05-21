@@ -43,8 +43,7 @@ where
 {
     fn haversine_intermediate(&self, other: &Point<T>, f: T) -> Point<T> {
         let params = get_params(&self, &other);
-        let point  = get_point(&params, f);
-        point
+        get_point(&params, f)
     }
 
     fn haversine_intermediate_fill(&self, other: &Point<T>, max_dist: T, include_ends: bool) -> Vec<Point<T>> {
@@ -55,7 +54,7 @@ where
 
         if total_distance <= max_dist {
             if include_ends {
-                return vec![self.clone(), other.clone()];
+                return vec![*self, *other];
             } else {
                 return vec![];
             }
@@ -65,7 +64,7 @@ where
         let interval         = T::one() / number_of_points;
 
         let mut current_step = interval;
-        let mut points = if include_ends { vec![self.clone()] } else { vec![] };
+        let mut points = if include_ends { vec![*self] } else { vec![] };
 
         while current_step < T::one() {
             let point  = get_point(&params, current_step);
