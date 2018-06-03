@@ -1,7 +1,6 @@
 use num_traits::Float;
 
 use ::{Line, LineString, MultiLineString};
-use algorithm::euclidean_distance::EuclideanDistance;
 
 /// Calculation of the length
 
@@ -30,7 +29,7 @@ where
     T: Float,
 {
     fn euclidean_length(&self) -> T {
-        self.start.euclidean_distance(&self.end)
+        self.dx().hypot(self.dy())
     }
 }
 

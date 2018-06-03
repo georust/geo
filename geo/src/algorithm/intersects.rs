@@ -29,17 +29,15 @@ where
     T: Float,
 {
     fn intersects(&self, p: &Point<T>) -> bool {
-        let dx = self.end.x() - self.start.x();
-        let dy = self.end.y() - self.start.y();
-        let tx = if dx == T::zero() {
+        let tx = if self.dx() == T::zero() {
             None
         } else {
-            Some((p.x() - self.start.x()) / dx)
+            Some((p.x() - self.start.x()) / self.dx())
         };
-        let ty = if dy == T::zero() {
+        let ty = if self.dy() == T::zero() {
             None
         } else {
-            Some((p.y() - self.start.y()) / dy)
+            Some((p.y() - self.start.y()) / self.dy())
         };
         match (tx, ty) {
             (None, None) => {
@@ -78,14 +76,12 @@ where
     fn intersects(&self, line: &Line<T>) -> bool {
         // Using Cramer's Rule:
         // https://en.wikipedia.org/wiki/Intersection_%28Euclidean_geometry%29#Two_line_segments
-        let (x1, y1, x2, y2) = (self.start.x(), self.start.y(), self.end.x(), self.end.y());
-        let (x3, y3, x4, y4) = (line.start.x(), line.start.y(), line.end.x(), line.end.y());
-        let a1 = x2 - x1;
-        let a2 = y2 - y1;
-        let b1 = x3 - x4; // == -(x4 - x3)
-        let b2 = y3 - y4; // == -(y4 - y3)
-        let c1 = x3 - x1;
-        let c2 = y3 - y1;
+        let a1 = self.dx();
+        let a2 = self.dy();
+        let b1 = -line.dx();
+        let b2 = -line.dy();
+        let c1 = line.start.x() - self.start.x();
+        let c2 = line.start.y() - self.start.y();
 
         let d = a1 * b2 - a2 * b1;
         if d == T::zero() {
@@ -149,15 +145,14 @@ where
         }
         for a in self.lines() {
             for b in linestring.lines() {
-                let u_b = (b.end.y() - b.start.y()) * (a.end.x() - a.start.x())
-                    - (b.end.x() - b.start.x()) * (a.end.y() - a.start.y());
+                let u_b = b.dy() * a.dx() - b.dx() * a.dy();
                 if u_b == T::zero() {
                     continue;
                 }
-                let ua_t = (b.end.x() - b.start.x()) * (a.start.y() - b.start.y())
-                    - (b.end.y() - b.start.y()) * (a.start.x() - b.start.x());
-                let ub_t = (a.end.x() - a.start.x()) * (a.start.y() - b.start.y())
-                    - (a.end.y() - a.start.y()) * (a.start.x() - b.start.x());
+                let ua_t = b.dx() * (a.start.y() - b.start.y())
+                    - b.dy() * (a.start.x() - b.start.x());
+                let ub_t = a.dx() * (a.start.y() - b.start.y())
+                    - a.dy() * (a.start.x() - b.start.x());
                 let u_a = ua_t / u_b;
                 let u_b = ub_t / u_b;
                 if (T::zero() <= u_a) && (u_a <= T::one()) && (T::zero() <= u_b)

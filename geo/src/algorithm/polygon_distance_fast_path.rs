@@ -139,7 +139,7 @@ where
             if pprev.x() > p.x() {
                 if pprev.y() >= p.y() && pnext.y() >= p.y() {
                     if *slope > T::zero() {
-                        slope_prev = (pprev.y() - p.y()) / (pprev.x() - p.x());
+                        slope_prev = Line::new(*p, pprev).slope();
                         if clockwise && *slope <= slope_prev || !clockwise && *slope >= slope_prev {
                             cos = -cos;
                             sin = -sin;
@@ -156,8 +156,8 @@ where
                             sin = -sin;
                         }
                     } else {
-                        slope_prev = (pprev.y() - p.y()) / (pprev.x() - p.x());
-                        slope_next = (pnext.y() - p.y()) / (pnext.x() - p.x());
+                        slope_prev = Line::new(*p, pprev).slope();
+                        slope_next = Line::new(*p, pnext).slope();
                         if clockwise {
                             if *slope <= slope_prev {
                                 cos = -cos;
@@ -192,8 +192,8 @@ where
                             sin = -sin;
                         }
                     } else {
-                        slope_prev = (p.y() - pprev.y()) / (p.x() - pprev.x());
-                        slope_next = (p.y() - pnext.y()) / (p.x() - pnext.x());
+                        slope_prev = Line::new(*p, pprev).slope();
+                        slope_next = Line::new(*p, pnext).slope();
                         if clockwise {
                             if *slope <= slope_prev {
                                 sin = -sin;
@@ -208,7 +208,7 @@ where
                     }
                 } else if pprev.y() <= p.y() && pnext.y() <= p.y() {
                     if *slope > T::zero() {
-                        slope_next = (p.y() - pnext.y()) / (p.x() - pnext.x());
+                        slope_next = Line::new(*p, pnext).slope();
                         if *slope >= slope_next {
                             cos = -cos;
                             sin = -sin;
@@ -274,9 +274,9 @@ where
     let slope = if vertical || p.y() == u.y() {
         T::zero()
     } else if u.x() > p.x() {
-        (u.y() - p.y()) / (u.x() - p.x())
+        Line::new(*p, *u).slope()
     } else {
-        (p.y() - u.y()) / (p.x() - u.x())
+        Line::new(*u, *p).slope()
     };
     let upx;
     let upy;
@@ -402,9 +402,9 @@ fn triangle_area<T>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> T
 where
     T: Float,
 {
-    (T::from(0.5).unwrap()
-        * (a.x() * b.y() - a.y() * b.x() + a.y() * c.x() - a.x() * c.y() + b.x() * c.y()
-            - c.x() * b.y()))
+      (Line::new(*a, *b).determinant() +
+         Line::new(*b, *c).determinant() +
+         Line::new(*c, *a).determinant()) / (T::one() + T::one())
 }
 
 /// Does abc turn left?
@@ -491,13 +491,11 @@ where
             }
             false => {
                 state.vertical = false;
-                if state.p1.x() > state.p1next.x() {
-                    state.slope =
-                        (state.p1.y() - state.p1next.y()) / (state.p1.x() - state.p1next.x());
+                state.slope = if state.p1.x() > state.p1next.x() {
+                    Line::new(state.p1next, state.p1).slope()
                 } else {
-                    state.slope =
-                        (state.p1next.y() - state.p1.y()) / (state.p1next.x() - state.p1.x());
-                }
+                    Line::new(state.p1, state.p1next).slope()
+                };
             }
         }
     }
@@ -510,13 +508,11 @@ where
             }
             false => {
                 state.vertical = false;
-                if state.q2.x() > state.q2next.x() {
-                    state.slope =
-                        (state.q2.y() - state.q2next.y()) / (state.q2.x() - state.q2next.x());
+                state.slope = if state.q2.x() > state.q2next.x() {
+                    Line::new(state.q2next, state.q2).slope()
                 } else {
-                    state.slope =
-                        (state.q2next.y() - state.q2.y()) / (state.q2next.x() - state.q2.x());
-                }
+                    Line::new(state.q2, state.q2next).slope()
+                };
             }
         }
     }

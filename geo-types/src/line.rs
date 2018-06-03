@@ -36,6 +36,53 @@ where
             end
         }
     }
+
+    /// Calculate the difference in ‘x’ components (Δx).
+    ///
+    /// Equivalent to:
+    ///
+    /// ```txt
+    /// line.end.x() - line.start.x()
+    /// ```
+    pub fn dx(&self) -> T {
+        self.end.x() - self.start.x()
+    }
+
+    /// Calculate the difference in ‘y’ components (Δy).
+    ///
+    /// Equivalent to:
+    ///
+    /// ```txt
+    /// line.end.y() - line.start.y()
+    /// ```
+    pub fn dy(&self) -> T {
+        self.end.y() - self.start.y()
+    }
+
+    /// Calculate the slope (Δy/Δx).
+    ///
+    /// Equivalent to:
+    ///
+    /// ```txt
+    /// line.dy() / line.dx()
+    /// ```
+    pub fn slope(&self) -> T {
+        self.dy() / self.dx()
+    }
+
+    /// Calculate the [determinant] of the line.
+    ///
+    /// Equivalent to:
+    ///
+    /// ```txt
+    /// line.start.x() * line.end.y() -
+    ///     line.start.y() * line.end.x()
+    /// ```
+    ///
+    /// [determinant]: https://en.wikipedia.org/wiki/Determinant
+    pub fn determinant(&self) -> T {
+        self.start.x() * self.end.y() - self.start.y() * self.end.x()
+    }
 }
 
 #[cfg(feature = "spade")]

@@ -37,7 +37,7 @@ where
     }
     let mut tmp = T::zero();
     for line in linestring.lines() {
-        tmp = tmp + (line.start.x() * line.end.y() - line.end.x() * line.start.y());
+        tmp = tmp + line.determinant();
     }
     tmp / (T::one() + T::one())
 }
@@ -55,7 +55,7 @@ where
     let mut sum_x = T::zero();
     let mut sum_y = T::zero();
     for line in poly_ext.lines() {
-        let tmp = line.start.x() * line.end.y() - line.end.x() * line.start.y();
+        let tmp = line.determinant();
         sum_x = sum_x + ((line.end.x() + line.start.x()) * tmp);
         sum_y = sum_y + ((line.end.y() + line.start.y()) * tmp);
     }
@@ -71,8 +71,8 @@ where
 
     fn centroid(&self) -> Self::Output {
         let two = T::one() + T::one();
-        let x = (self.start.x() + self.end.x()) / two;
-        let y = (self.start.y() + self.end.y()) / two;
+        let x = self.start.x() + self.dx() / two;
+        let y = self.start.y() + self.dy() / two;
         Point::new(x, y)
     }
 }
