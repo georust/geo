@@ -1,5 +1,5 @@
 use num_traits::{Float, FromPrimitive};
-use ::Point;
+use ::{Point, MEAN_EARTH_RADIUS};
 
 /// Returns a new Point along a great circle route between two existing points
 
@@ -50,7 +50,7 @@ where
         let params = get_params(&self, &other);
         let HaversineParams { d, .. } = params;
 
-        let total_distance   = d * T::from(6371000.0).unwrap();
+        let total_distance = d * T::from(MEAN_EARTH_RADIUS).unwrap();
 
         if total_distance <= max_dist {
             if include_ends {

@@ -1,5 +1,5 @@
 use num_traits::{Float, FromPrimitive};
-use ::Point;
+use ::{Point, MEAN_EARTH_RADIUS};
 
 /// Returns a new Point using the distance to the existing Point and a bearing for the direction
 
@@ -28,8 +28,7 @@ where
         let center_lat = self.y().to_radians();
         let bearing_rad = bearing.to_radians();
 
-        // WGS84 equatorial radius is 6378137.0
-        let rad = distance / T::from(6371000.0).unwrap();
+        let rad = distance / T::from(MEAN_EARTH_RADIUS).unwrap();
 
         let lat = { center_lat.sin() * rad.cos() + center_lat.cos() * rad.sin() * bearing_rad.cos() }.asin();
         let lng = { bearing_rad.sin() * rad.sin() * center_lat.cos() }
