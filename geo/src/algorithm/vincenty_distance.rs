@@ -5,7 +5,7 @@
 // - https://github.com/janantala/GPS-distance/blob/master/java/Distance.java
 
 use num_traits::{Float, FromPrimitive};
-use Point;
+use {Point, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS, EARTH_FLATTENING};
 use std::{error, fmt};
 
 pub trait VincentyDistance<T, Rhs = Self> {
@@ -36,14 +36,9 @@ where
         let t_4096 = T::from(4096).unwrap();
         let t_16384 = T::from(16384).unwrap();
 
-        // Length of semi-major axis of the ellipsoid a.k.a. radius of the
-        // equator in meters (WGS-84)
-        let a = T::from(6378137.0).unwrap();
-        // Length of semi-minor axis of the ellipsoid (radius at the poles,
-        // 6356752.314245 meters in WGS-84)
-        let b = T::from(6356752.314245).unwrap();
-        // Flattening of the ellipsoid (WGS-84). equivalent to: (a - b) / a
-        let f = T::from(298.257223563).unwrap().recip();
+        let a = T::from(EQUATORIAL_EARTH_RADIUS).unwrap();
+        let b = T::from(POLAR_EARTH_RADIUS).unwrap();
+        let f = T::from(EARTH_FLATTENING).unwrap();
         // Difference in longitude
         let L = (rhs.lng() - self.lng()).to_radians();
         // Reduced latitude (latitude on the auxiliary sphere)

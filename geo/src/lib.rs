@@ -28,6 +28,19 @@ pub mod algorithm;
 #[macro_use]
 extern crate approx;
 
+// Mean radius of Earth in meters
+const MEAN_EARTH_RADIUS: f64 = 6_371_000.0;
+
+// Radius of Earth at the equator in meters (derived from the WGS-84 ellipsoid)
+const EQUATORIAL_EARTH_RADIUS: f64 = 6_378_137.0;
+
+// Radius of Earth at the poles in meters (derived from the WGS-84 ellipsoid)
+const POLAR_EARTH_RADIUS: f64 = 6_356_752.314245;
+
+// Flattening of the WGS-84 ellipsoid - https://en.wikipedia.org/wiki/Flattening
+const EARTH_FLATTENING: f64 =
+    (EQUATORIAL_EARTH_RADIUS - POLAR_EARTH_RADIUS) / EQUATORIAL_EARTH_RADIUS;
+
 /// A prelude which re-exports the traits for manipulating objects in this
 /// crate. Typically imported with `use geo::prelude::*`.
 pub mod prelude {

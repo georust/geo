@@ -1,5 +1,5 @@
 use num_traits::{Float, FromPrimitive};
-use ::Point;
+use ::{Point, MEAN_EARTH_RADIUS};
 
 /// Returns the Haversine distance between two geometries.
 
@@ -37,8 +37,7 @@ where
         let a = (delta_theta / two).sin().powi(2)
             + theta1.cos() * theta2.cos() * (delta_lambda / two).sin().powi(2);
         let c = two * a.sqrt().asin();
-        // WGS84 equatorial radius is 6378137.0
-        T::from(6371000.0).unwrap() * c
+        T::from(MEAN_EARTH_RADIUS).unwrap() * c
     }
 }
 
