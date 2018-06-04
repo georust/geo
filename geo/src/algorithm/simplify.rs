@@ -110,15 +110,15 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::{point_line_distance, rdp, Simplify};
-    use {LineString, MultiLineString, MultiPolygon, Point, Polygon};
+    use super::*;
 
     #[test]
     fn perpdistance_test() {
         let start = Point::new(1.0, 2.0);
         let end = Point::new(3.0, 4.0);
         let p = Point::new(1.0, 1.0);
-        let dist = point_line_distance(&p, &start, &end);
+        // let dist = point_line_distance(&p, &start, &end);
+        let dist = p.euclidean_distance(&Line::new(start, end));
         assert_relative_eq!(dist, 0.7071067811865475);
     }
     #[test]
