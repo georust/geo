@@ -491,11 +491,7 @@ where
             }
             false => {
                 state.vertical = false;
-                state.slope = if state.p1.x() > state.p1next.x() {
-                    Line::new(state.p1next, state.p1).slope()
-                } else {
-                    Line::new(state.p1, state.p1next).slope()
-                };
+                state.slope = Line::new(state.p1next, state.p1).slope();
             }
         }
     }
