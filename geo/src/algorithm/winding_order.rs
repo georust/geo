@@ -8,7 +8,7 @@ pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T where T
     }
     let mut tmp = T::zero();
     for line in linestring.lines() {
-        tmp = tmp + (line.start.x() * line.end.y() - line.end.x() * line.start.y());
+        tmp = tmp + line.determinant();
     }
 
     tmp

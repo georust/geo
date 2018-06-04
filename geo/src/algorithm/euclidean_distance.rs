@@ -4,6 +4,7 @@ use algorithm::polygon_distance_fast_path::*;
 use num_traits::float::FloatConst;
 use num_traits::{Float, Signed, ToPrimitive};
 use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use algorithm::euclidean_length::EuclideanLength;
 
 use spade::rtree::RTree;
 use spade::SpadeFloat;
@@ -101,8 +102,7 @@ where
 {
     /// Minimum distance between two Points
     fn euclidean_distance(&self, p: &Point<T>) -> T {
-        let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
-        dx.hypot(dy)
+        Line::new(*self, *p).euclidean_length()
     }
 }
 
