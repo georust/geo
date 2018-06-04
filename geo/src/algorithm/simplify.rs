@@ -113,15 +113,6 @@ mod test {
     use super::*;
 
     #[test]
-    fn perpdistance_test() {
-        let start = Point::new(1.0, 2.0);
-        let end = Point::new(3.0, 4.0);
-        let p = Point::new(1.0, 1.0);
-        // let dist = point_line_distance(&p, &start, &end);
-        let dist = p.euclidean_distance(&Line::new(start, end));
-        assert_relative_eq!(dist, 0.7071067811865475);
-    }
-    #[test]
     fn rdp_test() {
         let mut vec = Vec::new();
         vec.push(Point::new(0.0, 0.0));
