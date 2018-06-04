@@ -115,10 +115,7 @@ where
         points
             .0
             .iter()
-            .map(|p| {
-                let (dx, dy) = (self.x() - p.x(), self.y() - p.y());
-                dx.hypot(dy)
-            })
+            .map(|p| self.euclidean_distance(p))
             .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }

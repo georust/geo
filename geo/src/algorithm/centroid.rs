@@ -97,10 +97,10 @@ where
             let mut total_length = T::zero();
             for line in self.lines() {
                 let segment_len = line.euclidean_length();
-                let (x1, y1, x2, y2) = (line.start.x(), line.start.y(), line.end.x(), line.end.y());
+                let line_center = line.centroid();
                 total_length = total_length + segment_len;
-                sum_x = sum_x + segment_len * ((x1 + x2) / (T::one() + T::one()));
-                sum_y = sum_y + segment_len * ((y1 + y2) / (T::one() + T::one()));
+                sum_x = sum_x + segment_len * line_center.x();
+                sum_y = sum_y + segment_len * line_center.y();
             }
             Some(Point::new(sum_x / total_length, sum_y / total_length))
         }
