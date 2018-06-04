@@ -1,5 +1,6 @@
 use num_traits::Float;
-use ::{LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use ::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use algorithm::euclidean_distance::EuclideanDistance;
 use std::mem;
 
 fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
@@ -55,21 +56,6 @@ where
     p_a.cross_prod(p_b, p_c) > T::zero()
 }
 
-// Fast distance between line segment (p_a, p_b), and point p_c
-fn pseudo_distance<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> T
-where
-    T: Float,
-{
-    let abx = p_b.x() - p_a.x();
-    let aby = p_b.y() - p_a.y();
-    let dist = abx * (p_a.y() - p_c.y()) - aby * (p_a.x() - p_c.x());
-    if dist < T::zero() {
-        -dist
-    } else {
-        dist
-    }
-}
-
 // Adapted from http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
 fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
 where
@@ -120,7 +106,8 @@ where
     let mut furthest_distance = Float::min_value();
     let mut furthest_idx = 0;
     for (idx, point) in set.iter().enumerate() {
-        let current_distance = pseudo_distance(p_a, p_b, point);
+        // let current_distance = pseudo_distance(p_a, p_b, point);
+        let current_distance = point.euclidean_distance(&Line::new(*p_a, *p_b));
         if current_distance > furthest_distance {
             furthest_distance = current_distance;
             furthest_idx = idx
