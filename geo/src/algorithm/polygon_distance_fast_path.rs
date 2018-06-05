@@ -273,10 +273,8 @@ where
     let vertical = p.x() == u.x();
     let slope = if vertical || p.y() == u.y() {
         T::zero()
-    } else if u.x() > p.x() {
-        Line::new(*p, *u).slope()
     } else {
-        Line::new(*u, *p).slope()
+        Line::new(*p, *u).slope()
     };
     let upx;
     let upy;
@@ -402,9 +400,9 @@ fn triangle_area<T>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> T
 where
     T: Float,
 {
-      (Line::new(*a, *b).determinant() +
-         Line::new(*b, *c).determinant() +
-         Line::new(*c, *a).determinant()) / (T::one() + T::one())
+    (Line::new(*a, *b).determinant()
+        + Line::new(*b, *c).determinant()
+        + Line::new(*c, *a).determinant()) / (T::one() + T::one())
 }
 
 /// Does abc turn left?
@@ -491,11 +489,7 @@ where
             }
             false => {
                 state.vertical = false;
-                state.slope = if state.p1.x() > state.p1next.x() {
-                    Line::new(state.p1next, state.p1).slope()
-                } else {
-                    Line::new(state.p1, state.p1next).slope()
-                };
+                state.slope = Line::new(state.p1next, state.p1).slope();
             }
         }
     }
@@ -508,11 +502,7 @@ where
             }
             false => {
                 state.vertical = false;
-                state.slope = if state.q2.x() > state.q2next.x() {
-                    Line::new(state.q2next, state.q2).slope()
-                } else {
-                    Line::new(state.q2, state.q2next).slope()
-                };
+                state.slope = Line::new(state.q2next, state.q2).slope();
             }
         }
     }
