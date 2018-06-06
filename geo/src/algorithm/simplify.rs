@@ -1,22 +1,6 @@
-use num_traits::Float;
-use ::{LineString, MultiLineString, MultiPolygon, Point, Polygon, Line};
 use algorithm::euclidean_distance::EuclideanDistance;
-
-// perpendicular distance from a point to a line
-fn point_line_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
-where
-    T: Float,
-{
-    if start == end {
-        point.euclidean_distance(start)
-    } else {
-        let numerator = ((end.x() - start.x()) * (start.y() - point.y())
-            - (start.x() - point.x()) * (end.y() - start.y()))
-            .abs();
-        let denominator = start.euclidean_distance(end);
-        numerator / denominator
-    }
-}
+use num_traits::Float;
+use {Line, LineString, MultiLineString, MultiPolygon, Point, Polygon};
 
 // Ramer–Douglas-Peucker line simplification algorithm
 fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
@@ -31,7 +15,7 @@ where
     let mut distance: T;
 
     for (i, _) in points.iter().enumerate().take(points.len() - 1).skip(1) {
-        distance = point_line_distance(&points[i], &points[0], &*points.last().unwrap());
+        distance = points[i].euclidean_distance(&Line::new(points[0], *points.last().unwrap()));
         if distance > dmax {
             index = i;
             dmax = distance;
@@ -126,17 +110,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use ::{LineString, MultiLineString, MultiPolygon, Point, Polygon};
-    use super::{point_line_distance, rdp, Simplify};
+    use super::*;
 
-    #[test]
-    fn perpdistance_test() {
-        let start = Point::new(1.0, 2.0);
-        let end = Point::new(3.0, 4.0);
-        let p = Point::new(1.0, 1.0);
-        let dist = point_line_distance(&p, &start, &end);
-        assert_relative_eq!(dist, 0.7071067811865475);
-    }
     #[test]
     fn rdp_test() {
         let mut vec = Vec::new();
@@ -174,28 +149,24 @@ mod test {
 
     #[test]
     fn multilinestring() {
-        let mline = MultiLineString(vec![
-            LineString(vec![
-                Point::new(0.0, 0.0),
-                Point::new(5.0, 4.0),
-                Point::new(11.0, 5.5),
-                Point::new(17.3, 3.2),
-                Point::new(27.8, 0.1),
-            ]),
-        ]);
+        let mline = MultiLineString(vec![LineString(vec![
+            Point::new(0.0, 0.0),
+            Point::new(5.0, 4.0),
+            Point::new(11.0, 5.5),
+            Point::new(17.3, 3.2),
+            Point::new(27.8, 0.1),
+        ])]);
 
         let mline2 = mline.simplify(&1.0);
 
         assert_eq!(
             mline2,
-            MultiLineString(vec![
-                LineString(vec![
-                    Point::new(0.0, 0.0),
-                    Point::new(5.0, 4.0),
-                    Point::new(11.0, 5.5),
-                    Point::new(27.8, 0.1),
-                ]),
-            ])
+            MultiLineString(vec![LineString(vec![
+                Point::new(0.0, 0.0),
+                Point::new(5.0, 4.0),
+                Point::new(11.0, 5.5),
+                Point::new(27.8, 0.1),
+            ])])
         );
     }
 
@@ -232,36 +203,32 @@ mod test {
 
     #[test]
     fn multipolygon() {
-        let mpoly = MultiPolygon(vec![
-            Polygon::new(
-                LineString(vec![
-                    Point::new(0., 0.),
-                    Point::new(0., 10.),
-                    Point::new(5., 11.),
-                    Point::new(10., 10.),
-                    Point::new(10., 0.),
-                    Point::new(0., 0.),
-                ]),
-                vec![],
-            ),
-        ]);
+        let mpoly = MultiPolygon(vec![Polygon::new(
+            LineString(vec![
+                Point::new(0., 0.),
+                Point::new(0., 10.),
+                Point::new(5., 11.),
+                Point::new(10., 10.),
+                Point::new(10., 0.),
+                Point::new(0., 0.),
+            ]),
+            vec![],
+        )]);
 
         let mpoly2 = mpoly.simplify(&2.);
 
         assert_eq!(
             mpoly2,
-            MultiPolygon(vec![
-                Polygon::new(
-                    LineString(vec![
-                        Point::new(0., 0.),
-                        Point::new(0., 10.),
-                        Point::new(10., 10.),
-                        Point::new(10., 0.),
-                        Point::new(0., 0.),
-                    ]),
-                    vec![],
-                ),
-            ])
+            MultiPolygon(vec![Polygon::new(
+                LineString(vec![
+                    Point::new(0., 0.),
+                    Point::new(0., 10.),
+                    Point::new(10., 10.),
+                    Point::new(10., 0.),
+                    Point::new(0., 0.),
+                ]),
+                vec![],
+            )])
         );
     }
 }
