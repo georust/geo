@@ -41,8 +41,16 @@ where
     ///
     /// Equivalent to:
     ///
-    /// ```txt
+    /// ```rust
+    /// # use geo_types::{Line, Coordinate, Point};
+    /// # let line = Line::new(
+    /// #     Point(Coordinate { x: 4., y: -12. }),
+    /// #     Point(Coordinate { x: 0., y: 9. }),
+    /// # );
+    /// # assert_eq!(
+    /// #     line.dx(),
     /// line.end.x() - line.start.x()
+    /// # );
     /// ```
     pub fn dx(&self) -> T {
         self.end.x() - self.start.x()
@@ -52,8 +60,16 @@ where
     ///
     /// Equivalent to:
     ///
-    /// ```txt
+    /// ```rust
+    /// # use geo_types::{Line, Coordinate, Point};
+    /// # let line = Line::new(
+    /// #     Point(Coordinate { x: 4., y: -12. }),
+    /// #     Point(Coordinate { x: 0., y: 9. }),
+    /// # );
+    /// # assert_eq!(
+    /// #     line.dy(),
     /// line.end.y() - line.start.y()
+    /// # );
     /// ```
     pub fn dy(&self) -> T {
         self.end.y() - self.start.y()
@@ -63,8 +79,28 @@ where
     ///
     /// Equivalent to:
     ///
-    /// ```txt
+    /// ```rust
+    /// # use geo_types::{Line, Coordinate, Point};
+    /// # let line = Line::new(
+    /// #     Point(Coordinate { x: 4., y: -12. }),
+    /// #     Point(Coordinate { x: 0., y: 9. }),
+    /// # );
+    /// # assert_eq!(
+    /// #     line.slope(),
     /// line.dy() / line.dx()
+    /// # );
+    /// ```
+    ///
+    /// Note that:
+    ///
+    /// ```rust
+    /// # use geo_types::{Line, Coordinate, Point};
+    /// # let a = Point(Coordinate { x: 4., y: -12. });
+    /// # let b = Point(Coordinate { x: 0., y: 9. });
+    /// # assert!(
+    /// Line::new(a, b).slope() ==
+    ///     Line::new(b, a).slope()
+    /// # );
     /// ```
     pub fn slope(&self) -> T {
         self.dy() / self.dx()
@@ -74,9 +110,29 @@ where
     ///
     /// Equivalent to:
     ///
-    /// ```txt
+    /// ```rust
+    /// # use geo_types::{Line, Coordinate, Point};
+    /// # let line = Line::new(
+    /// #     Point(Coordinate { x: 4., y: -12. }),
+    /// #     Point(Coordinate { x: 0., y: 9. }),
+    /// # );
+    /// # assert_eq!(
+    /// #     line.determinant(),
     /// line.start.x() * line.end.y() -
     ///     line.start.y() * line.end.x()
+    /// # );
+    /// ```
+    ///
+    /// Note that:
+    ///
+    /// ```rust
+    /// # use geo_types::{Line, Coordinate, Point};
+    /// # let a = Point(Coordinate { x: 4., y: -12. });
+    /// # let b = Point(Coordinate { x: 0., y: 9. });
+    /// # assert!(
+    /// Line::new(a, b).determinant() ==
+    ///     -Line::new(b, a).determinant()
+    /// # );
     /// ```
     ///
     /// [determinant]: https://en.wikipedia.org/wiki/Determinant
