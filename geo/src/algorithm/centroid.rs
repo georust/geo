@@ -1,8 +1,9 @@
 use num_traits::{Float, FromPrimitive};
+use std::iter::Sum;
 
-use ::{Bbox, Line, LineString, MultiPolygon, Point, Polygon};
 use algorithm::area::Area;
 use algorithm::euclidean_length::EuclideanLength;
+use {Bbox, Line, LineString, MultiPolygon, Point, Polygon};
 
 /// Calculation of the centroid.
 pub trait Centroid<T: Float> {
@@ -135,7 +136,8 @@ where
             if !self.interiors.is_empty() {
                 let external_area = simple_polygon_area(&self.exterior).abs();
                 // accumulate interior Polygons
-                let (totals_x, totals_y, internal_area) = self.interiors
+                let (totals_x, totals_y, internal_area) = self
+                    .interiors
                     .iter()
                     .filter_map(|ring| {
                         let area = simple_polygon_area(ring).abs();
@@ -146,8 +148,10 @@ where
                         (accum.0 + val.0, accum.1 + val.1, accum.2 + val.2)
                     });
                 return Some(Point::new(
-                    ((external_centroid.x() * external_area) - totals_x) / (external_area - internal_area),
-                    ((external_centroid.y() * external_area) - totals_y) / (external_area - internal_area),
+                    ((external_centroid.x() * external_area) - totals_x)
+                        / (external_area - internal_area),
+                    ((external_centroid.y() * external_area) - totals_y)
+                        / (external_area - internal_area),
                 ));
             }
             Some(external_centroid)
@@ -157,7 +161,7 @@ where
 
 impl<T> Centroid<T> for MultiPolygon<T>
 where
-    T: Float + FromPrimitive,
+    T: Float + FromPrimitive + Sum,
 {
     type Output = Option<Point<T>>;
 
@@ -207,9 +211,9 @@ where
 
 #[cfg(test)]
 mod test {
-    use ::{Bbox, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, COORD_PRECISION};
     use algorithm::centroid::Centroid;
     use algorithm::euclidean_distance::EuclideanDistance;
+    use {Bbox, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, COORD_PRECISION};
     // Tests: Centroid of LineString
     #[test]
     fn empty_linestring_test() {
@@ -297,30 +301,25 @@ mod test {
     fn flat_polygon_test() {
         let p = |x| Point(Coordinate { x: x, y: 1. });
         let poly = Polygon::new(LineString(vec![p(0.), p(1.), p(0.)]), vec![]);
-        assert_eq!(
-            poly.centroid(),
-            Some(p(0.5))
-        );
+        assert_eq!(poly.centroid(), Some(p(0.5)));
     }
     #[test]
     fn polygon_flat_interior_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let poly = Polygon::new(LineString(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]), 
-                    vec![LineString(vec![p(0., 0.), p(0., 1.), p(0., 0.)])]);
-        assert_eq!(
-            poly.centroid(),
-            Some(p(0.5, 0.5))
+        let poly = Polygon::new(
+            LineString(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
+            vec![LineString(vec![p(0., 0.), p(0., 1.), p(0., 0.)])],
         );
+        assert_eq!(poly.centroid(), Some(p(0.5, 0.5)));
     }
     #[test]
     fn empty_interior_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let poly = Polygon::new(LineString(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]), 
-                    vec![LineString(vec![])]);
-        assert_eq!(
-            poly.centroid(),
-            Some(p(0.5, 0.5))
+        let poly = Polygon::new(
+            LineString(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
+            vec![LineString(vec![])],
         );
+        assert_eq!(poly.centroid(), Some(p(0.5, 0.5)));
     }
     // Tests: Centroid of MultiPolygon
     #[test]

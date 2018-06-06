@@ -1,7 +1,8 @@
-use num_traits::{Float, FromPrimitive};
-use ::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use algorithm::centroid::Centroid;
 use algorithm::map_coords::MapCoords;
+use num_traits::{Float, FromPrimitive};
+use std::iter::Sum;
+use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 // rotate a slice of points "angle" degrees about an origin
 // origin can be an arbitrary point, pass &Point::new(0., 0.)
@@ -138,7 +139,7 @@ where
 
 impl<T> Rotate<T> for Polygon<T>
 where
-    T: Float + FromPrimitive,
+    T: Float + FromPrimitive + Sum,
 {
     /// Rotate the Polygon about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
@@ -160,7 +161,7 @@ where
 
 impl<T> Rotate<T> for MultiPolygon<T>
 where
-    T: Float + FromPrimitive,
+    T: Float + FromPrimitive + Sum,
 {
     /// Rotate the contained Polygons about their centroids by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
@@ -190,8 +191,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use ::{LineString, Point, Polygon};
     use super::*;
+    use {LineString, Point, Polygon};
     #[test]
     fn test_rotate_around_point() {
         let p = Point::new(1.0, 5.0);
