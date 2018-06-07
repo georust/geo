@@ -1,3 +1,4 @@
+use std::iter::Sum;
 use num_traits::Float;
 
 use ::{Line, LineString, MultiLineString};
@@ -35,18 +36,18 @@ where
 
 impl<T> EuclideanLength<T> for LineString<T>
 where
-    T: Float,
+    T: Float + Sum,
 {
     fn euclidean_length(&self) -> T {
         self.lines()
             .map(|line| line.euclidean_length())
-            .fold(T::zero(), |total_length, length| total_length + length)
+            .sum()
     }
 }
 
 impl<T> EuclideanLength<T> for MultiLineString<T>
 where
-    T: Float,
+    T: Float + Sum,
 {
     fn euclidean_length(&self) -> T {
         self.0
