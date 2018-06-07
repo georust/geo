@@ -1,5 +1,4 @@
 use num_traits::{Float, FromPrimitive};
-use std::iter::Sum;
 
 use algorithm::area::Area;
 use algorithm::euclidean_length::EuclideanLength;
@@ -161,7 +160,7 @@ where
 
 impl<T> Centroid<T> for MultiPolygon<T>
 where
-    T: Float + FromPrimitive + Sum,
+    T: Float + FromPrimitive,
 {
     type Output = Option<Point<T>>;
 
