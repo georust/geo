@@ -959,9 +959,8 @@ mod test {
     fn spade_test_2() {
         let poly = include!("test_fixtures/poly_in_ring.rs");
         let poly_ls: LineString<f64> = poly.into();
-        let poly_tree: RTree<Line<_>> = RTree::bulk_load(poly_ls.lines().collect());
-        for line in poly_tree.iter() {
-            let tree: RTree<Line<_>> = RTree::bulk_load(vec![line.clone()]);
+        for line in poly_ls.lines() {
+            let tree: RTree<Line<_>> = RTree::bulk_load(vec![line]);
             // returns None when tree is loaded with all line segments
             let _ = tree.nearest_neighbor(&Point::new(6.0001320971764285, -6.483226510722902)).unwrap();
         }
