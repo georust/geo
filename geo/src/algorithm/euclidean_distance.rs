@@ -948,23 +948,24 @@ mod test {
         let poly_ls: LineString<f64> = poly.into();
         let ring_ls: LineString<f64> = ring.into();
         let poly_tree: RTree<Line<_>> = RTree::bulk_load(poly_ls.lines().collect());
-        let ring_tree: RTree<Line<_>> = RTree::bulk_load(ring_ls.lines().collect());
-        for line in poly_tree.iter() {
-            println!("{:?}", line);
-        }
-        let dist = ring_ls
+        let _ = ring_ls
             .points()
             .fold(1000000., |acc, point| {
                 let nearest = poly_tree.nearest_neighbor(point).unwrap();
                 acc.min(nearest.euclidean_distance(point))
-            })
-            .min(poly_ls.points().fold(1000000., |acc, point| {
-                let nearest = ring_tree.nearest_neighbor(point).unwrap();
-                acc.min(nearest.euclidean_distance(point))
-            }));
-        assert_eq!(dist, 5.992772737231033);
+            });
     }
-
+    #[test]
+    fn spade_test_2() {
+        let poly = include!("test_fixtures/poly_in_ring.rs");
+        let poly_ls: LineString<f64> = poly.into();
+        let poly_tree: RTree<Line<_>> = RTree::bulk_load(poly_ls.lines().collect());
+        for line in poly_tree.iter() {
+            let tree: RTree<Line<_>> = RTree::bulk_load(vec![line.clone()]);
+            // returns None when tree is loaded with all line segments
+            let _ = tree.nearest_neighbor(&Point::new(6.0001320971764285, -6.483226510722902)).unwrap();
+        }
+    }
     #[test]
     // two ring LineStrings; one encloses the other but they neither touch nor intersect
     fn test_linestring_distance() {
