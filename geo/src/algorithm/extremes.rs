@@ -13,22 +13,22 @@ use ::{ExtremePoint, Extremes};
 
 // Not currently used, but maybe useful in the future
 #[allow(dead_code)]
-fn up<T>(u: &Point<T>, v: &Point<T>) -> bool
+fn up<T>(u: Point<T>, v: Point<T>) -> bool
 where
     T: Float,
 {
     u.dot(v) > T::zero()
 }
 
-fn direction_sign<T>(u: &Point<T>, vi: &Point<T>, vj: &Point<T>) -> T
+fn direction_sign<T>(u: Point<T>, vi: Point<T>, vj: Point<T>) -> T
 where
     T: Float,
 {
-    u.dot(&(*vi - *vj))
+    u.dot(vi - vj)
 }
 
 // true if Vi is above Vj
-fn above<T>(u: &Point<T>, vi: &Point<T>, vj: &Point<T>) -> bool
+fn above<T>(u: Point<T>, vi: Point<T>, vj: Point<T>) -> bool
 where
     T: Float,
 {
@@ -38,7 +38,7 @@ where
 // true if Vi is below Vj
 // Not currently used, but maybe useful in the future
 #[allow(dead_code)]
-fn below<T>(u: &Point<T>, vi: &Point<T>, vj: &Point<T>) -> bool
+fn below<T>(u: Point<T>, vi: Point<T>, vj: Point<T>) -> bool
 where
     T: Float,
 {
@@ -49,7 +49,7 @@ where
 fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes, ()>
 where
     T: Float + Signed,
-    F: Fn(&Point<T>, &Polygon<T>) -> Result<usize, ()>,
+    F: Fn(Point<T>, &Polygon<T>) -> Result<usize, ()>,
 {
     if !polygon.is_convex() {
         return Err(());
@@ -62,14 +62,14 @@ where
     ];
     Ok(directions
         .iter()
-        .map(|p| func(p, polygon).unwrap())
+        .map(|p| func(*p, polygon).unwrap())
         .collect::<Vec<usize>>()
         .into())
 }
 
 // find a convex, counter-clockwise oriented polygon's maximum vertex in a specified direction
 // u: a direction vector. We're using a point to represent this, which is a hack but works fine
-fn polymax_naive_indices<T>(u: &Point<T>, poly: &Polygon<T>) -> Result<usize, ()>
+fn polymax_naive_indices<T>(u: Point<T>, poly: &Polygon<T>) -> Result<usize, ()>
 where
     T: Float,
 {
@@ -77,7 +77,7 @@ where
     let mut max: usize = 0;
     for (i, _) in vertices.iter().enumerate() {
         // if vertices[i] is above prior vertices[max]
-        if above(u, &vertices[i], &vertices[max]) {
+        if above(u, vertices[i], vertices[max]) {
             max = i;
         }
     }
@@ -191,7 +191,7 @@ mod test {
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString(points), vec![]);
-        let min_x = polymax_naive_indices(&Point::new(-1., 0.), &poly1).unwrap();
+        let min_x = polymax_naive_indices(Point::new(-1., 0.), &poly1).unwrap();
         let correct = 3_usize;
         assert_eq!(min_x, correct);
     }

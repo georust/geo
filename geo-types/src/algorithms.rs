@@ -8,22 +8,22 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     fn euclidean_distance(&self, rhs: &Rhs) -> T;
 }
 
-fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
+fn line_segment_distance<T>(point: Point<T>, start: Point<T>, end: Point<T>) -> T
 where
     T: Float + ToPrimitive,
 {
     if start == end {
-        return point.euclidean_distance(start);
+        return point.euclidean_distance(&start);
     }
     let dx = end.x() - start.x();
     let dy = end.y() - start.y();
     let r =
         ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
     if r <= T::zero() {
-        return point.euclidean_distance(start);
+        return point.euclidean_distance(&start);
     }
     if r >= T::one() {
-        return point.euclidean_distance(end);
+        return point.euclidean_distance(&end);
     }
     let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) / (dx * dx + dy * dy);
     s.abs() * (dx * dx + dy * dy).sqrt()
@@ -44,7 +44,7 @@ where
     T: Float,
 {
     fn euclidean_distance(&self, point: &Point<T>) -> T {
-        line_segment_distance(point, &self.start, &self.end)
+        line_segment_distance(*point, self.start, self.end)
     }
 }
 

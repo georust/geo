@@ -144,7 +144,7 @@ pub(crate) enum PositionPoint {
 }
 
 /// Calculate the position of `Point` p relative to a linestring
-pub(crate) fn get_position<T>(p: &Point<T>, linestring: &LineString<T>) -> PositionPoint
+pub(crate) fn get_position<T>(p: Point<T>, linestring: &LineString<T>) -> PositionPoint
 where
     T: Float,
 {
@@ -157,7 +157,7 @@ where
         return PositionPoint::Outside;
     }
     // Point is on linestring
-    if linestring.contains(p) {
+    if linestring.contains(&p) {
         return PositionPoint::OnBoundary;
     }
 
@@ -188,11 +188,11 @@ where
     T: Float,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        match get_position(p, &self.exterior) {
+        match get_position(*p, &self.exterior) {
             PositionPoint::OnBoundary | PositionPoint::Outside => false,
             _ => self.interiors
                 .iter()
-                .all(|ls| get_position(p, ls) == PositionPoint::Outside),
+                .all(|ls| get_position(*p, ls) == PositionPoint::Outside),
         }
     }
 }

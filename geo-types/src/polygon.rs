@@ -89,8 +89,8 @@ where
                 let prev_1 = self.previous_vertex(&idx);
                 let prev_2 = self.previous_vertex(&prev_1);
                 self.exterior.0[prev_2].cross_prod(
-                    &self.exterior.0[prev_1],
-                    &self.exterior.0[idx]
+                    self.exterior.0[prev_1],
+                    self.exterior.0[idx]
                 )
             })
             // accumulate and check cross-product result signs in a single pass

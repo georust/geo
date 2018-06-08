@@ -49,7 +49,7 @@ fn partition<T, F: FnMut(&T) -> bool>(mut slice: &mut [T], mut pred: F) -> usize
 // we can compute the cross product AB x AC and check its sign:
 // If it's negative, it will be on the "right" side of AB
 // (when standing on A and looking towards B). If positive, it will be on the left side
-fn point_location<T>(p_a: &Point<T>, p_b: &Point<T>, p_c: &Point<T>) -> bool
+fn point_location<T>(p_a: Point<T>, p_b: Point<T>, p_c: Point<T>) -> bool
 where
     T: Float,
 {
@@ -79,11 +79,11 @@ where
             mem::swap(point, max);
         }
     }
-    let last = partition(&mut points, |p| point_location(max, min, p));
-    hull_set(max, min, &mut points[..last], &mut hull);
+    let last = partition(&mut points, |p| point_location(*max, *min, *p));
+    hull_set(*max, *min, &mut points[..last], &mut hull);
     hull.push(*max);
-    let last = partition(&mut points, |p| point_location(min, max, p));
-    hull_set(min, max, &mut points[..last], &mut hull);
+    let last = partition(&mut points, |p| point_location(*min, *max, *p));
+    hull_set(*min, *max, &mut points[..last], &mut hull);
     hull.push(*min);
     // close the polygon
     let final_element = *hull.first().unwrap();
@@ -92,7 +92,7 @@ where
 }
 
 // recursively calculate the convex hull of a subset of points
-fn hull_set<T>(p_a: &Point<T>, p_b: &Point<T>, mut set: &mut [Point<T>], hull: &mut Vec<Point<T>>)
+fn hull_set<T>(p_a: Point<T>, p_b: Point<T>, mut set: &mut [Point<T>], hull: &mut Vec<Point<T>>)
 where
     T: Float,
 {
@@ -107,7 +107,7 @@ where
     let mut furthest_idx = 0;
     for (idx, point) in set.iter().enumerate() {
         // let current_distance = pseudo_distance(p_a, p_b, point);
-        let current_distance = point.euclidean_distance(&Line::new(*p_a, *p_b));
+        let current_distance = point.euclidean_distance(&Line::new(p_a, p_b));
         if current_distance > furthest_distance {
             furthest_distance = current_distance;
             furthest_idx = idx
@@ -116,12 +116,12 @@ where
     // move Point at furthest_point from set into hull
     let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
     // points over PB
-    let last = partition(set, |p| point_location(furthest_point, p_b, p));
-    hull_set(furthest_point, p_b, &mut set[..last], hull);
+    let last = partition(set, |p| point_location(*furthest_point, p_b, *p));
+    hull_set(*furthest_point, p_b, &mut set[..last], hull);
     hull.push(*furthest_point);
     // points over AP
-    let last = partition(set, |p| point_location(p_a, furthest_point, p));
-    hull_set(p_a, furthest_point, &mut set[..last], hull);
+    let last = partition(set, |p| point_location(p_a, *furthest_point, *p));
+    hull_set(p_a, *furthest_point, &mut set[..last], hull);
 }
 
 pub trait ConvexHull<T> {

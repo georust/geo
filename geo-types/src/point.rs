@@ -129,7 +129,7 @@ where
     ///
     /// assert_eq!(p.lng(), 1.234);
     /// ```
-    pub fn lng(&self) -> T {
+    pub fn lng(self) -> T {
         self.x()
     }
 
@@ -160,7 +160,7 @@ where
     ///
     /// assert_eq!(p.lat(), 2.345);
     /// ```
-    pub fn lat(&self) -> T {
+    pub fn lat(self) -> T {
         self.y()
     }
 
@@ -189,11 +189,11 @@ where
     /// use geo_types::Point;
     ///
     /// let p = Point::new(1.5, 0.5);
-    /// let dot = p.dot(&Point::new(2.0, 4.5));
+    /// let dot = p.dot(Point::new(2.0, 4.5));
     ///
     /// assert_eq!(dot, 5.25);
     /// ```
-    pub fn dot(&self, point: &Point<T>) -> T {
+    pub fn dot(self, point: Point<T>) -> T {
         self.x() * point.x() + self.y() * point.y()
     }
 
@@ -210,11 +210,11 @@ where
     /// let p_b = Point::new(3.0,5.0);
     /// let p_c = Point::new(7.0,12.0);
     ///
-    /// let cross = p_a.cross_prod(&p_b, &p_c);
+    /// let cross = p_a.cross_prod(p_b, p_c);
     ///
     /// assert_eq!(cross, 2.0)
     /// ```
-    pub fn cross_prod(&self, point_b: &Point<T>, point_c: &Point<T>) -> T
+    pub fn cross_prod(self, point_b: Point<T>, point_c: Point<T>) -> T
     where
         T: Float,
     {

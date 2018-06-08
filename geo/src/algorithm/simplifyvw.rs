@@ -127,7 +127,7 @@ where
     // of 3 points and form triangles from them
     for (i, win) in orig.windows(3).enumerate() {
         pq.push(VScore {
-            area: area(win.first().unwrap(), &win[1], win.last().unwrap()),
+            area: area(*win.first().unwrap(), win[1], *win.last().unwrap()),
             current: i + 1,
             left: i,
             right: i + 2,
@@ -173,7 +173,7 @@ where
             );
             let new_right = Point::new(orig[bi as usize].x(), orig[bi as usize].y());
             pq.push(VScore {
-                area: area(&new_left, &new_current, &new_right),
+                area: area(new_left, new_current, new_right),
                 current: current_point as usize,
                 left: ai as usize,
                 right: bi as usize,
@@ -265,7 +265,7 @@ where
     // of 3 points and form triangles from them
     for (i, win) in orig.windows(3).enumerate() {
         let v = VScore {
-            area: area(&win[0], &win[1], &win[2]),
+            area: area(win[0], win[1], win[2]),
             current: i + 1,
             left: i,
             right: i + 2,
@@ -334,7 +334,7 @@ where
             let temp_area = if smallest.intersector && (current_point as usize) < smallest.current {
                 -*epsilon
             } else {
-                area(&new_left, &new_current, &new_right)
+                area(new_left, new_current, new_right)
             };
             let new_triangle = VScore {
                 area: temp_area,
@@ -358,7 +358,7 @@ where
 }
 
 /// is p1 -> p2 -> p3 wound counterclockwise?
-fn ccw<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> bool
+fn ccw<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>) -> bool
 where
     T: Float,
 {
@@ -366,7 +366,7 @@ where
 }
 
 /// checks whether line segments with p1-p4 as their start and endpoints touch or cross
-fn cartesian_intersect<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>, p4: &Point<T>) -> bool
+fn cartesian_intersect<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>, p4: Point<T>) -> bool
 where
     T: Float,
 {
@@ -395,18 +395,18 @@ where
         let ca = c.start;
         let cb = c.end;
         if ca != point_a && ca != point_c && cb != point_a && cb != point_c
-            && cartesian_intersect(&ca, &cb, &point_a, &point_c)
+            && cartesian_intersect(ca, cb, point_a, point_c)
         {
             true
         } else {
             ca != point_b && ca != point_c && cb != point_b && cb != point_c
-                && cartesian_intersect(&ca, &cb, &point_b, &point_c)
+                && cartesian_intersect(ca, cb, point_b, point_c)
         }
     })
 }
 
 /// Area of a triangle given three vertices
-fn area<T>(p1: &Point<T>, p2: &Point<T>, p3: &Point<T>) -> T
+fn area<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>) -> T
 where
     T: Float,
 {
@@ -640,13 +640,13 @@ mod test {
         let c = Point::new(3., 3.);
         let d = Point::new(1., 1.);
         // cw + ccw
-        assert_eq!(cartesian_intersect(&a, &b, &c, &d), true);
+        assert_eq!(cartesian_intersect(a, b, c, d), true);
         // ccw + ccw
-        assert_eq!(cartesian_intersect(&b, &a, &c, &d), true);
+        assert_eq!(cartesian_intersect(b, a, c, d), true);
         // cw + cw
-        assert_eq!(cartesian_intersect(&a, &b, &d, &c), true);
+        assert_eq!(cartesian_intersect(a, b, d, c), true);
         // ccw + cw
-        assert_eq!(cartesian_intersect(&b, &a, &d, &c), true);
+        assert_eq!(cartesian_intersect(b, a, d, c), true);
     }
     #[test]
     fn simple_vwp_test() {

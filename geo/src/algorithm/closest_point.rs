@@ -64,7 +64,7 @@ impl<F: Float> ClosestPoint<F> for Line<F> {
         let direction_vector = self.end - self.start;
         let to_p = *p - self.start;
 
-        let t = to_p.dot(&direction_vector) / direction_vector.dot(&direction_vector);
+        let t = to_p.dot(direction_vector) / direction_vector.dot(direction_vector);
 
         // check the cases where the closest point is "outside" the line
         if t < F::zero() {
@@ -91,7 +91,7 @@ impl<F: Float> ClosestPoint<F> for Line<F> {
 /// the `Closest::SinglePoint` which is closest to `p`.
 ///
 /// If the iterator is empty, we get `Closest::Indeterminate`.
-fn closest_of<C, F, I>(iter: I, p: &Point<F>) -> Closest<F>
+fn closest_of<C, F, I>(iter: I, p: Point<F>) -> Closest<F>
 where
     F: Float,
     I: IntoIterator<Item = C>,
@@ -100,7 +100,7 @@ where
     let mut best = Closest::Indeterminate;
 
     for line_segment in iter {
-        let got = line_segment.closest_point(p);
+        let got = line_segment.closest_point(&p);
         best = got.best_of_two(&best, p);
     }
 
@@ -109,32 +109,32 @@ where
 
 impl<F: Float> ClosestPoint<F> for LineString<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        closest_of(self.lines(), p)
+        closest_of(self.lines(), *p)
     }
 }
 
 impl<F: Float> ClosestPoint<F> for Polygon<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         let prospectives = self.interiors.iter().chain(iter::once(&self.exterior));
-        closest_of(prospectives, p)
+        closest_of(prospectives, *p)
     }
 }
 
 impl<F: Float> ClosestPoint<F> for MultiPolygon<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        closest_of(self.0.iter(), p)
+        closest_of(self.0.iter(), *p)
     }
 }
 
 impl<F: Float> ClosestPoint<F> for MultiPoint<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        closest_of(self.0.iter(), p)
+        closest_of(self.0.iter(), *p)
     }
 }
 
 impl<F: Float> ClosestPoint<F> for MultiLineString<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        closest_of(self.0.iter(), p)
+        closest_of(self.0.iter(), *p)
     }
 }
 
