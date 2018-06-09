@@ -948,21 +948,36 @@ mod test {
         let poly_ls: LineString<f64> = poly.into();
         let ring_ls: LineString<f64> = ring.into();
         let poly_tree: RTree<Line<_>> = RTree::bulk_load(poly_ls.lines().collect());
-        let _ = ring_ls
-            .points()
-            .fold(1000000., |acc, point| {
-                let nearest = poly_tree.nearest_neighbor(point).unwrap();
-                acc.min(nearest.euclidean_distance(point))
-            });
+        let _ = ring_ls.points().fold(1000000., |acc, point| {
+            let nearest = poly_tree.nearest_neighbor(point).unwrap();
+            acc.min(nearest.euclidean_distance(point))
+        });
     }
     #[test]
+    // querying a tree containing one line works
     fn spade_test_2() {
         let poly = include!("test_fixtures/poly_in_ring.rs");
         let poly_ls: LineString<f64> = poly.into();
         for line in poly_ls.lines() {
             let tree: RTree<Line<_>> = RTree::bulk_load(vec![line]);
-            // returns None when tree is loaded with all line segments
-            let _ = tree.nearest_neighbor(&Point::new(6.0001320971764285, -6.483226510722902)).unwrap();
+            let _ = tree
+                .nearest_neighbor(&Point::new(6.0001320971764285, -6.483226510722902))
+                .unwrap();
+        }
+    }
+    #[test]
+    // panics after line from point indices (9, 10) is inserted:
+    // (2.903179852490939, -1.3190313600882089), (2.6667106990588096, -1.4944088369076338)
+    fn spade_test_3() {
+        let poly = include!("test_fixtures/poly_in_ring.rs");
+        let poly_ls: LineString<f64> = poly.into();
+        let mut tree: RTree<Line<_>> = RTree::new();
+        for line in poly_ls.lines() {
+            println!("Inserting: {:?}", &line);
+            tree.insert(line);
+            let _ = tree
+                .nearest_neighbor(&Point::new(6.0001320971764285, -6.483226510722902))
+                .unwrap();
         }
     }
     #[test]
