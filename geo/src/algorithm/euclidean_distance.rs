@@ -1,10 +1,10 @@
 use algorithm::contains::{get_position, Contains, PositionPoint};
+use algorithm::euclidean_length::EuclideanLength;
 use algorithm::intersects::Intersects;
 use algorithm::polygon_distance_fast_path::*;
 use num_traits::float::FloatConst;
 use num_traits::{Float, Signed, ToPrimitive};
 use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
-use algorithm::euclidean_length::EuclideanLength;
 
 use spade::rtree::RTree;
 use spade::SpadeFloat;
@@ -469,6 +469,7 @@ where
     geom2
         .points()
         .fold(T::max_value(), |acc, point| {
+            println!("{:?}", point);
             let nearest = tree_a.nearest_neighbor(point).unwrap();
             acc.min(nearest.euclidean_distance(point))
         })
@@ -634,19 +635,19 @@ mod test {
         // is equal to the distance from the closest polygon
         // taken in isolation, whatever that distance is
         let ls1 = LineString(vec![
-            Point::new(0.0,  0.0),
+            Point::new(0.0, 0.0),
             Point::new(10.0, 0.0),
             Point::new(10.0, 10.0),
-            Point::new(5.0,  15.0),
-            Point::new(0.0,  10.0),
-            Point::new(0.0,  0.0),
+            Point::new(5.0, 15.0),
+            Point::new(0.0, 10.0),
+            Point::new(0.0, 0.0),
         ]);
         let ls2 = LineString(vec![
-            Point::new(0.0,  30.0),
-            Point::new(0.0,  25.0),
+            Point::new(0.0, 30.0),
+            Point::new(0.0, 25.0),
             Point::new(10.0, 25.0),
             Point::new(10.0, 30.0),
-            Point::new(0.0,  30.0),
+            Point::new(0.0, 30.0),
         ]);
         let ls3 = LineString(vec![
             Point::new(15.0, 30.0),
@@ -658,15 +659,11 @@ mod test {
         let pol1 = Polygon::new(ls1, vec![]);
         let pol2 = Polygon::new(ls2, vec![]);
         let pol3 = Polygon::new(ls3, vec![]);
-        let mp   = MultiPolygon(vec![
-            pol1.clone(),
-            pol2.clone(),
-            pol3.clone(),
-        ]);
-        let pnt1 = Point::new(0.0,  15.0);
+        let mp = MultiPolygon(vec![pol1.clone(), pol2.clone(), pol3.clone()]);
+        let pnt1 = Point::new(0.0, 15.0);
         let pnt2 = Point::new(10.0, 20.0);
-        let ln   = Line::new(pnt1, pnt2);
-        let dist_mp_ln   = ln.euclidean_distance(&mp);
+        let ln = Line::new(pnt1, pnt2);
+        let dist_mp_ln = ln.euclidean_distance(&mp);
         let dist_pol1_ln = ln.euclidean_distance(&pol1);
         assert_relative_eq!(dist_mp_ln, dist_pol1_ln);
     }
@@ -940,6 +937,48 @@ mod test {
         let outside = Polygon::new(shell_ls, vec![ring_ls]);
         let inside = Polygon::new(poly_in_ring_ls, vec![]);
         assert_eq!(outside.euclidean_distance(&inside), 5.992772737231033);
+    }
+
+    #[test]
+    // This reproduces the functionality of nearest_neighbour_distance
+    // So it should fail in the same way
+    fn spade_test() {
+        let poly = include!("test_fixtures/poly_in_ring.rs");
+        let ring = include!("test_fixtures/ring.rs");
+        let poly_ls: LineString<f64> = poly.into();
+        let ring_ls: LineString<f64> = ring.into();
+        let poly_tree: RTree<Line<_>> = RTree::bulk_load(poly_ls.lines().collect());
+        let _ = ring_ls.points().fold(1000000., |acc, point| {
+            let nearest = poly_tree.nearest_neighbor(point).unwrap();
+            acc.min(nearest.euclidean_distance(point))
+        });
+    }
+    #[test]
+    // querying a tree containing one line works
+    fn spade_test_2() {
+        let poly = include!("test_fixtures/poly_in_ring.rs");
+        let poly_ls: LineString<f64> = poly.into();
+        for line in poly_ls.lines() {
+            let tree: RTree<Line<_>> = RTree::bulk_load(vec![line]);
+            let _ = tree
+                .nearest_neighbor(&Point::new(6.0001320971764285, -6.483226510722902))
+                .unwrap();
+        }
+    }
+    #[test]
+    // panics after line from point indices (9, 10) is inserted:
+    // (2.903179852490939, -1.3190313600882089), (2.6667106990588096, -1.4944088369076338)
+    fn spade_test_3() {
+        let poly = include!("test_fixtures/poly_in_ring.rs");
+        let poly_ls: LineString<f64> = poly.into();
+        let mut tree: RTree<Line<_>> = RTree::new();
+        for line in poly_ls.lines() {
+            println!("Inserting: {:?}", &line);
+            tree.insert(line);
+            let _ = tree
+                .nearest_neighbor(&Point::new(6.0001320971764285, -6.483226510722902))
+                .unwrap();
+        }
     }
     #[test]
     // two ring LineStrings; one encloses the other but they neither touch nor intersect
