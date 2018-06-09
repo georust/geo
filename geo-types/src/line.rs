@@ -106,7 +106,7 @@ where
         self.dy() / self.dx()
     }
 
-    /// Calculate the [determinant] of the line.
+    /// Calculate the [determinant](https://en.wikipedia.org/wiki/Determinant) of the line.
     ///
     /// Equivalent to:
     ///
@@ -135,7 +135,6 @@ where
     /// # );
     /// ```
     ///
-    /// [determinant]: https://en.wikipedia.org/wiki/Determinant
     pub fn determinant(&self) -> T {
         self.start.x() * self.end.y() - self.start.y() * self.end.x()
     }

@@ -1,4 +1,5 @@
 use num_traits::{Float, FromPrimitive};
+use std::iter::Sum;
 
 use algorithm::area::Area;
 use algorithm::euclidean_length::EuclideanLength;
@@ -30,22 +31,18 @@ pub trait Centroid<T: Float> {
 // Calculation of simple (no interior holes) Polygon area
 fn simple_polygon_area<T>(linestring: &LineString<T>) -> T
 where
-    T: Float,
+    T: Float + Sum,
 {
     if linestring.0.is_empty() || linestring.0.len() == 1 {
         return T::zero();
     }
-    let mut tmp = T::zero();
-    for line in linestring.lines() {
-        tmp = tmp + line.determinant();
-    }
-    tmp / (T::one() + T::one())
+    linestring.lines().map(|line| line.determinant()).sum::<T>() / (T::one() + T::one())
 }
 
 // Calculation of a Polygon centroid without interior rings
 fn simple_polygon_centroid<T>(poly_ext: &LineString<T>) -> Option<Point<T>>
 where
-    T: Float + FromPrimitive,
+    T: Float + FromPrimitive + Sum,
 {
     let area = simple_polygon_area(poly_ext);
     if area == T::zero() {
@@ -109,7 +106,7 @@ where
 
 impl<T> Centroid<T> for Polygon<T>
 where
-    T: Float + FromPrimitive,
+    T: Float + FromPrimitive + Sum,
 {
     type Output = Option<Point<T>>;
 
@@ -160,7 +157,7 @@ where
 
 impl<T> Centroid<T> for MultiPolygon<T>
 where
-    T: Float + FromPrimitive,
+    T: Float + FromPrimitive + Sum,
 {
     type Output = Option<Point<T>>;
 
