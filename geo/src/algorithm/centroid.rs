@@ -49,13 +49,16 @@ where
         // if the polygon is flat (area = 0), it is considered as a linestring
         return poly_ext.centroid();
     }
-    let mut sum_x = T::zero();
-    let mut sum_y = T::zero();
-    for line in poly_ext.lines() {
-        let tmp = line.determinant();
-        sum_x = sum_x + ((line.end.x() + line.start.x()) * tmp);
-        sum_y = sum_y + ((line.end.y() + line.start.y()) * tmp);
-    }
+    let (sum_x, sum_y) = poly_ext.lines().fold(
+        (T::zero(), T::zero()),
+        |accum, line| {
+            let tmp = line.determinant();
+            (
+                accum.0 + ((line.end.x() + line.start.x()) * tmp),
+                accum.1 + ((line.end.y() + line.start.y()) * tmp),
+            )
+        },
+    );
     let six = T::from_i32(6).unwrap();
     Some(Point::new(sum_x / (six * area), sum_y / (six * area)))
 }
@@ -89,16 +92,18 @@ where
         if self.0.len() == 1 {
             Some(self.0[0])
         } else {
-            let mut sum_x = T::zero();
-            let mut sum_y = T::zero();
-            let mut total_length = T::zero();
-            for line in self.lines() {
-                let segment_len = line.euclidean_length();
-                let line_center = line.centroid();
-                total_length = total_length + segment_len;
-                sum_x = sum_x + segment_len * line_center.x();
-                sum_y = sum_y + segment_len * line_center.y();
-            }
+            let (sum_x, sum_y, total_length) = self.lines().fold(
+                (T::zero(), T::zero(), T::zero()),
+                |accum, line| {
+                    let segment_len = line.euclidean_length();
+                    let line_center = line.centroid();
+                    (
+                        accum.0 + segment_len * line_center.x(),
+                        accum.1 + segment_len * line_center.y(),
+                        accum.2 + segment_len,
+                    )
+                },
+            );
             Some(Point::new(sum_x / total_length, sum_y / total_length))
         }
     }
