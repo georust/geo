@@ -119,11 +119,11 @@ where
     type Output = Option<Point<T>>;
 
     // Calculate the centroid of a Polygon.
-    // We distinguish between a simple polygon, which has no interior holes,
-    // and a complex polygon, which has one or more interior holes.
+    // We distinguish between a simple polygon, which has no interior rings (holes),
+    // and a complex polygon, which has one or more interior rings.
     // A complex polygon's centroid is the weighted average of its
-    // exterior shell centroid and the centroids of the interior ring(s),
-    // which are both considered simple polygons for the purposes of
+    // exterior shell centroid and the centroids of the interior ring(s).
+    // Both the shell and the ring(s) are considered simple polygons for the purposes of
     // this calculation.
     // See here for a formula: http://math.stackexchange.com/a/623849
     // See here for detail on alternative methods: https://fotino.me/calculating-centroids/
