@@ -6,6 +6,11 @@ use algorithm::euclidean_length::EuclideanLength;
 use {Bbox, Line, LineString, MultiPolygon, Point, Polygon};
 
 /// Calculation of the centroid.
+/// The centroid is the arithmetic mean position of all points in the shape.
+/// Informally, it is the point at which a cutout of the shape could be perfectly
+/// balanced on the tip of a pin.
+/// The geometric centroid of a convex object always lies in the object.
+/// A non-convex object might have a centroid that _is outside the object itself_.
 pub trait Centroid<T: Float> {
     type Output;
 
