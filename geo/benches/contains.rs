@@ -18,7 +18,7 @@ fn point_in_polygon(b: &mut Bencher) {
     let polygon = Polygon::new(v.into(), vec![]);
     let in_candidate = Point::new(0.5, 0.1);
     b.iter(|| {
-        polygon.contains(&in_candidate);
+        test::black_box(polygon.contains(&in_candidate));
     });
 }
 
@@ -33,6 +33,6 @@ fn point_outside_polygon(b: &mut Bencher) {
     let polygon = Polygon::new(v.into(), vec![]);
     let out_candidate = Point::new(2.0, 2.0);
     b.iter(|| {
-        polygon.contains(&out_candidate);
+        test::black_box(polygon.contains(&out_candidate));
     });
 }

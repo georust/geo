@@ -45,7 +45,7 @@ fn polygon_distance_rtree(b: &mut Bencher) {
     ];
     let poly2 = Polygon::new(vec2.into(), vec![]).convex_hull();
     b.iter(|| {
-        poly1.euclidean_distance(&poly2);
+        test::black_box(poly1.euclidean_distance(&poly2));
     });
 }
 
@@ -86,6 +86,6 @@ fn polygon_distance_calipers(b: &mut Bencher) {
     ];
     let poly2 = Polygon::new(vec2.into(), vec![]).convex_hull();
     b.iter(|| {
-        poly1.euclidean_distance(&poly2);
+        test::black_box(poly1.euclidean_distance(&poly2));
     });
 }

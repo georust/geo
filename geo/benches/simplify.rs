@@ -12,7 +12,7 @@ fn simplify_vw_simple(b: &mut Bencher) {
     let points = include!("../src/algorithm/test_fixtures/norway_main.rs");
     let ls: LineString<_> = points.into();
     b.iter(|| {
-        ls.simplifyvw(&0.0005);
+        test::black_box(ls.simplifyvw(&0.0005));
     });
 }
 
@@ -21,6 +21,6 @@ fn simplify_vwp(b: &mut Bencher) {
     let points = include!("../src/algorithm/test_fixtures/norway_main.rs");
     let p = Polygon::new(points.into(), vec![]);
     b.iter(|| {
-        p.simplifyvw_preserve(&0.0005);
+        test::black_box(p.simplifyvw_preserve(&0.0005));
     });
 }

@@ -1,2 +1,6 @@
 [workspace]
 members = ["geo", "geo-types"]
+
+[profile.bench]
+lto = "fat"
+codegen-units = 1
