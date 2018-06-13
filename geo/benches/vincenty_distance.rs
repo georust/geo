@@ -13,7 +13,7 @@ fn bench_vincenty(bencher: &mut test::Bencher) {
     let b = geo::Point::<f64>::new(16.372477, 48.208810);
     bencher.iter(|| {
         for _ in 0..NITER {
-            test::black_box(a.vincenty_distance(&b));
+            test::black_box(a.vincenty_distance(&b).unwrap());
         }
     });
 }
