@@ -6,6 +6,11 @@ use algorithm::euclidean_length::EuclideanLength;
 use {Bbox, Line, LineString, MultiPolygon, Point, Polygon};
 
 /// Calculation of the centroid.
+/// The centroid is the arithmetic mean position of all points in the shape.
+/// Informally, it is the point at which a cutout of the shape could be perfectly
+/// balanced on the tip of a pin.
+/// The geometric centroid of a convex object always lies in the object.
+/// A non-convex object might have a centroid that _is outside the object itself_.
 pub trait Centroid<T: Float> {
     type Output;
 
@@ -49,13 +54,15 @@ where
         // if the polygon is flat (area = 0), it is considered as a linestring
         return poly_ext.centroid();
     }
-    let mut sum_x = T::zero();
-    let mut sum_y = T::zero();
-    for line in poly_ext.lines() {
-        let tmp = line.determinant();
-        sum_x = sum_x + ((line.end.x() + line.start.x()) * tmp);
-        sum_y = sum_y + ((line.end.y() + line.start.y()) * tmp);
-    }
+    let (sum_x, sum_y) = poly_ext
+        .lines()
+        .fold((T::zero(), T::zero()), |accum, line| {
+            let tmp = line.determinant();
+            (
+                accum.0 + ((line.end.x() + line.start.x()) * tmp),
+                accum.1 + ((line.end.y() + line.start.y()) * tmp),
+            )
+        });
     let six = T::from_i32(6).unwrap();
     Some(Point::new(sum_x / (six * area), sum_y / (six * area)))
 }
@@ -89,16 +96,17 @@ where
         if self.0.len() == 1 {
             Some(self.0[0])
         } else {
-            let mut sum_x = T::zero();
-            let mut sum_y = T::zero();
-            let mut total_length = T::zero();
-            for line in self.lines() {
-                let segment_len = line.euclidean_length();
-                let line_center = line.centroid();
-                total_length = total_length + segment_len;
-                sum_x = sum_x + segment_len * line_center.x();
-                sum_y = sum_y + segment_len * line_center.y();
-            }
+            let (sum_x, sum_y, total_length) =
+                self.lines()
+                    .fold((T::zero(), T::zero(), T::zero()), |accum, line| {
+                        let segment_len = line.euclidean_length();
+                        let line_center = line.centroid();
+                        (
+                            accum.0 + segment_len * line_center.x(),
+                            accum.1 + segment_len * line_center.y(),
+                            accum.2 + segment_len,
+                        )
+                    });
             Some(Point::new(sum_x / total_length, sum_y / total_length))
         }
     }
@@ -111,11 +119,11 @@ where
     type Output = Option<Point<T>>;
 
     // Calculate the centroid of a Polygon.
-    // We distinguish between a simple polygon, which has no interior holes,
-    // and a complex polygon, which has one or more interior holes.
+    // We distinguish between a simple polygon, which has no interior rings (holes),
+    // and a complex polygon, which has one or more interior rings.
     // A complex polygon's centroid is the weighted average of its
-    // exterior shell centroid and the centroids of the interior ring(s),
-    // which are both considered simple polygons for the purposes of
+    // exterior shell centroid and the centroids of the interior ring(s).
+    // Both the shell and the ring(s) are considered simple polygons for the purposes of
     // this calculation.
     // See here for a formula: http://math.stackexchange.com/a/623849
     // See here for detail on alternative methods: https://fotino.me/calculating-centroids/
