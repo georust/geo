@@ -8,6 +8,7 @@ repository = "https://github.com/georust/rust-geo"
 documentation = "https://docs.rs/geo/"
 readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
+autobenches = true
 
 [badges]
 travis-ci = { repository = "georust/rust-geo" }
@@ -29,6 +30,15 @@ use-serde = ["serde", "geo-types/serde"]
 
 [dev-dependencies]
 approx = "0.1.1"
+criterion = { version = "0.2" }
+
+[[bench]]
+name = "convex_hull"
+harness = false
+
+[[bench]]
+name = "vincenty_distance"
+harness = false
 
 [package.metadata.docs.rs]
 features = ["postgis"]
