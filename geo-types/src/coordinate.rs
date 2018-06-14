@@ -1,4 +1,4 @@
-use CoordinateType;
+use {CoordinateType, Point};
 
 /// A primitive type which holds `x` and `y` position information
 #[derive(PartialEq, Clone, Copy, Debug)]
@@ -26,5 +26,11 @@ impl<T: CoordinateType> From<[T; 2]> for Coordinate<T> {
             x: coords[0],
             y: coords[1],
         }
+    }
+}
+
+impl<T: CoordinateType> From<Point<T>> for Coordinate<T> {
+    fn from(point: Point<T>) -> Self {
+        point.0
     }
 }
