@@ -71,7 +71,7 @@ impl<T: CoordinateType> LineString<T> {
     /// );
     /// assert!(lines.next().is_none());
     /// ```
-    pub fn lines<'a>(&'a self) -> impl Iterator<Item = Line<T>> + 'a {
+    pub fn lines<'a>(&'a self) -> impl ExactSizeIterator + Iterator<Item = Line<T>> + 'a {
         self.0.windows(2).map(|w| unsafe {
             // As long as the LineString has at least two points, we shouldn't
             // need to do bounds checking here.
