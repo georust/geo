@@ -44,5 +44,9 @@ harness = false
 name = "euclidean_distance"
 harness = false
 
+[[bench]]
+name = "simplify"
+harness = false
+
 [package.metadata.docs.rs]
 features = ["postgis"]
