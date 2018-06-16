@@ -160,7 +160,7 @@ pub enum Closest<F: Float> {
 impl<F: Float> Closest<F> {
     /// Compare two `Closest`s relative to `p` and return a copy of the best
     /// one.
-    pub fn best_of_two(&self, other: &Self, p: &Point<F>) -> Self {
+    pub fn best_of_two(&self, other: &Self, p: Point<F>) -> Self {
         use algorithm::euclidean_distance::EuclideanDistance;
 
         let left = match *self {
@@ -174,7 +174,7 @@ impl<F: Float> Closest<F> {
             Closest::SinglePoint(r) => r,
         };
 
-        if left.euclidean_distance(p) <= right.euclidean_distance(p) {
+        if left.euclidean_distance(&p) <= right.euclidean_distance(&p) {
             *self
         } else {
             *other

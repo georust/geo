@@ -75,22 +75,22 @@ pub trait EuclideanDistance<T, Rhs = Self> {
 /// Minimum distance between a Point and a Line segment
 /// This is a helper for Point-to-LineString and Point-to-Polygon distance
 /// Adapted from https://github.com/OSGeo/geos/blob/master/src/algorithm/CGAlgorithms.cpp#L191
-fn line_segment_distance<T>(point: &Point<T>, start: &Point<T>, end: &Point<T>) -> T
+fn line_segment_distance<T>(point: Point<T>, start: Point<T>, end: Point<T>) -> T
 where
     T: Float + ToPrimitive,
 {
     if start == end {
-        return point.euclidean_distance(start);
+        return point.euclidean_distance(&start);
     }
     let dx = end.x() - start.x();
     let dy = end.y() - start.y();
     let r =
         ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
     if r <= T::zero() {
-        return point.euclidean_distance(start);
+        return point.euclidean_distance(&start);
     }
     if r >= T::one() {
-        return point.euclidean_distance(end);
+        return point.euclidean_distance(&end);
     }
     let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) / (dx * dx + dy * dy);
     s.abs() * dx.hypot(dy)
@@ -151,7 +151,7 @@ where
                 polygon
                     .exterior
                     .lines()
-                    .map(|line| line_segment_distance(self, &line.start, &line.end))
+                    .map(|line| line_segment_distance(*self, line.start, line.end))
                     .fold(T::max_value(), |accum, val| accum.min(val)),
             )
     }
@@ -226,7 +226,7 @@ where
         }
         linestring
             .lines()
-            .map(|line| line_segment_distance(self, &line.start, &line.end))
+            .map(|line| line_segment_distance(*self, line.start, line.end))
             .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
@@ -247,7 +247,7 @@ where
 {
     /// Minimum distance from a Line to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
-        line_segment_distance(point, &self.start, &self.end)
+        line_segment_distance(*point, self.start, self.end)
     }
 }
 
@@ -279,7 +279,7 @@ where
 /// is disjoint because it's contained in the inner ring
 /// we work around this by checking that Polygons with inner rings don't
 /// contain a point from the candidate Polygon's outer shell in their simple representations
-fn ring_contains_point<T>(poly: &Polygon<T>, p: &Point<T>) -> bool
+fn ring_contains_point<T>(poly: &Polygon<T>, p: Point<T>) -> bool
 where
     T: Float,
 {
@@ -319,7 +319,7 @@ where
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if self.intersects(other) || other.contains(self) {
             T::zero()
-        } else if !other.interiors.is_empty() && ring_contains_point(other, &self.0[0]) {
+        } else if !other.interiors.is_empty() && ring_contains_point(other, self.0[0]) {
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
             for ring in &other.interiors {
@@ -434,14 +434,14 @@ where
             return T::zero();
         }
         // Containment check
-        if !self.interiors.is_empty() && ring_contains_point(self, &poly2.exterior.0[0]) {
+        if !self.interiors.is_empty() && ring_contains_point(self, poly2.exterior.0[0]) {
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
             for ring in &self.interiors {
                 mindist = mindist.min(nearest_neighbour_distance(&poly2.exterior, ring))
             }
             return mindist;
-        } else if !poly2.interiors.is_empty() && ring_contains_point(poly2, &self.exterior.0[0]) {
+        } else if !poly2.interiors.is_empty() && ring_contains_point(poly2, self.exterior.0[0]) {
             let mut mindist: T = Float::max_value();
             for ring in &poly2.interiors {
                 mindist = mindist.min(nearest_neighbour_distance(&self.exterior, ring))
@@ -495,17 +495,17 @@ mod test {
         let p1 = Point::new(7.2, 2.0);
         let p2 = Point::new(6.0, 1.0);
 
-        let dist = line_segment_distance(&o1, &p1, &p2);
-        let dist2 = line_segment_distance(&o2, &p1, &p2);
-        let dist3 = line_segment_distance(&o3, &p1, &p2);
-        let dist4 = line_segment_distance(&o4, &p1, &p2);
+        let dist = line_segment_distance(o1, p1, p2);
+        let dist2 = line_segment_distance(o2, p1, p2);
+        let dist3 = line_segment_distance(o3, p1, p2);
+        let dist4 = line_segment_distance(o4, p1, p2);
         // Results agree with Shapely
         assert_relative_eq!(dist, 2.0485900789263356);
         assert_relative_eq!(dist2, 1.118033988749895);
         assert_relative_eq!(dist3, 1.4142135623730951);
         assert_relative_eq!(dist4, 1.5811388300841898);
         // Point is on the line
-        let zero_dist = line_segment_distance(&p1, &p1, &p2);
+        let zero_dist = line_segment_distance(p1, p1, p2);
         assert_relative_eq!(zero_dist, 0.0);
     }
     #[test]
