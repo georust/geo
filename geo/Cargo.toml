@@ -45,6 +45,10 @@ name = "euclidean_distance"
 harness = false
 
 [[bench]]
+name = "rotate"
+harness = false
+
+[[bench]]
 name = "simplify"
 harness = false
 
