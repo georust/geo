@@ -118,6 +118,22 @@ where
         self
     }
 
+    /// Returns a tuple that contains the x/horizontal & y/vertical component of the point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let mut p = Point::new(1.234, 2.345);
+    /// let (x, y) = p.x_y();
+    ///
+    /// assert_eq!(y, 2.345);
+    /// assert_eq!(x, 1.234);
+    /// ```
+    pub fn x_y(&self) -> (T, T) {
+        (self.0.x, self.0.y)
+    }
     /// Returns the longitude/horizontal component of the point.
     ///
     /// # Examples
@@ -163,7 +179,6 @@ where
     pub fn lat(self) -> T {
         self.y()
     }
-
     /// Sets the latitude/vertical component of the point.
     ///
     /// # Examples
