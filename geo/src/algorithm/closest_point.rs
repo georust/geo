@@ -243,7 +243,7 @@ mod tests {
     fn line_string_with_single_element_behaves_like_line() {
         let points = vec![(0.0, 0.0), (100.0, 100.0)];
         let line_string: LineString<f32> = collect_points(&points);
-        let line = Line::new(points[0].into(), points[1].into());
+        let line = Line::new(points[0], points[1]);
 
         fuzz_two_impls(line, line_string);
     }

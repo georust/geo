@@ -1,4 +1,4 @@
-use {CoordinateType, Point};
+use {Coordinate, CoordinateType, Point};
 
 #[cfg(feature = "spade")]
 use algorithms::{BoundingBox, EuclideanDistance};
@@ -23,17 +23,23 @@ where
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Point, Line};
+    /// use geo_types::{Coordinate, Line};
     ///
-    /// let line = Line::new(Point::new(0., 0.), Point::new(1., 2.));
+    /// let line = Line::new(
+    ///     Coordinate { x: 0., y: 0. },
+    ///     Coordinate { x: 1., y: 2. },
+    /// );
     ///
-    /// assert_eq!(line.start, Point::new(0., 0.));
-    /// assert_eq!(line.end, Point::new(1., 2.));
+    /// assert_eq!(line.start.0, Coordinate { x: 0., y: 0. });
+    /// assert_eq!(line.end.0, Coordinate { x: 1., y: 2. });
     /// ```
-    pub fn new(start: Point<T>, end: Point<T>) -> Line<T> {
+    pub fn new<C>(start: C, end: C) -> Line<T>
+    where
+        C: Into<Coordinate<T>>,
+    {
         Line {
-            start,
-            end
+            start: Point(start.into()),
+            end: Point(end.into()),
         }
     }
 
