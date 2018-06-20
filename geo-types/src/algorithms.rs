@@ -26,7 +26,7 @@ where
         return point.euclidean_distance(&end);
     }
     let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) / (dx * dx + dy * dy);
-    s.abs() * (dx * dx + dy * dy).sqrt()
+    s.abs() * dx.hypot(dy)
 }
 
 impl<T> EuclideanDistance<T, Point<T>> for Point<T>
