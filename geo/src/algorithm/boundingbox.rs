@@ -52,7 +52,7 @@ where
         let mut xrange = (pnt.x(), pnt.x());
         let mut yrange = (pnt.y(), pnt.y());
         for pnt in iter {
-            let (px, py) = (pnt.x(), pnt.y());
+            let (px, py) = pnt.x_y();
             xrange = get_min_max(px, xrange.0, xrange.1);
             yrange = get_min_max(py, yrange.0, yrange.1);
         }
