@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::fmt;
 use tokenizer::PeekableTokens;
 use types::point::Point;
 use FromTokens;
@@ -26,16 +27,35 @@ impl MultiPoint {
     }
 }
 
+impl fmt::Display for MultiPoint {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        if self.0.is_empty() {
+            f.write_str("MULTIPOINT EMPTY")
+        } else {
+            let strings = self
+                .0
+                .iter()
+                .filter_map(|p| p.0.as_ref())
+                .map(|c| format!("({} {})", c.x, c.y))
+                .collect::<Vec<_>>()
+                .join(",");
+
+            write!(f, "MULTIPOINT({})", strings)
+        }
+    }
+}
+
 impl FromTokens for MultiPoint {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let result = FromTokens::comma_many(<Point as FromTokens>::from_tokens_with_parens, tokens);
-        result.map(|vec| MultiPoint(vec))
+        result.map(MultiPoint)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::MultiPoint;
+    use super::{MultiPoint, Point};
+    use types::Coord;
     use {Geometry, Wkt};
 
     #[test]
@@ -47,5 +67,35 @@ mod tests {
             _ => unreachable!(),
         };
         assert_eq!(2, points.len());
+    }
+
+    #[test]
+    fn write_empty_multipoint() {
+        let multipoint = MultiPoint(vec![]);
+
+        assert_eq!("MULTIPOINT EMPTY", format!("{}", multipoint));
+    }
+
+    #[test]
+    fn write_multipoint() {
+        let multipoint = MultiPoint(vec![
+            Point(Some(Coord {
+                x: 10.1,
+                y: 20.2,
+                z: None,
+                m: None,
+            })),
+            Point(Some(Coord {
+                x: 30.3,
+                y: 40.4,
+                z: None,
+                m: None,
+            })),
+        ]);
+
+        assert_eq!(
+            "MULTIPOINT((10.1 20.2),(30.3 40.4))",
+            format!("{}", multipoint)
+        );
     }
 }

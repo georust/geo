@@ -29,7 +29,23 @@ impl Point {
 
 impl fmt::Display for Point {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        f.write_str("POINT")
+        match self.0 {
+            Some(ref coord) => {
+                let mut lrs = String::new();
+                if coord.z.is_some() {
+                    lrs += "Z";
+                }
+                if coord.m.is_some() {
+                    lrs += "M";
+                }
+                if !lrs.is_empty() {
+                    lrs = " ".to_string() + &lrs;
+                }
+
+                write!(f, "POINT{}({})", lrs, coord)
+            }
+            None => f.write_str("POINT EMPTY"),
+        }
     }
 }
 
@@ -42,7 +58,7 @@ impl FromTokens for Point {
 
 #[cfg(test)]
 mod tests {
-    use super::Point;
+    use super::{Coord, Point};
     use {Geometry, Wkt};
 
     #[test]
@@ -81,5 +97,63 @@ mod tests {
         Wkt::from_str("POINT (10)").err().unwrap();
         Wkt::from_str("POINT 10").err().unwrap();
         Wkt::from_str("POINT (10 -20 40)").err().unwrap();
+    }
+
+    #[test]
+    fn write_empty_point() {
+        let point = Point(None);
+
+        assert_eq!("POINT EMPTY", format!("{}", point));
+    }
+
+    #[test]
+    fn write_2d_point() {
+        let point = Point(Some(Coord {
+            x: 10.12345,
+            y: 20.67891,
+            z: None,
+            m: None,
+        }));
+
+        assert_eq!("POINT(10.12345 20.67891)", format!("{}", point));
+    }
+
+    #[test]
+    fn write_point_with_z_coord() {
+        let point = Point(Some(Coord {
+            x: 10.12345,
+            y: 20.67891,
+            z: Some(-32.56455),
+            m: None,
+        }));
+
+        assert_eq!("POINT Z(10.12345 20.67891 -32.56455)", format!("{}", point));
+    }
+
+    #[test]
+    fn write_point_with_m_coord() {
+        let point = Point(Some(Coord {
+            x: 10.12345,
+            y: 20.67891,
+            z: None,
+            m: Some(10.),
+        }));
+
+        assert_eq!("POINT M(10.12345 20.67891 10)", format!("{}", point));
+    }
+
+    #[test]
+    fn write_point_with_zm_coord() {
+        let point = Point(Some(Coord {
+            x: 10.12345,
+            y: 20.67891,
+            z: Some(-32.56455),
+            m: Some(10.),
+        }));
+
+        assert_eq!(
+            "POINT ZM(10.12345 20.67891 -32.56455 10)",
+            format!("{}", point)
+        );
     }
 }

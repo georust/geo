@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::fmt;
 use tokenizer::PeekableTokens;
 use types::coord::Coord;
 use FromTokens;
@@ -29,13 +30,30 @@ impl LineString {
 impl FromTokens for LineString {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let result = FromTokens::comma_many(<Coord as FromTokens>::from_tokens, tokens);
-        result.map(|vec| LineString(vec))
+        result.map(LineString)
+    }
+}
+
+impl fmt::Display for LineString {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        if self.0.is_empty() {
+            f.write_str("LINESTRING EMPTY")
+        } else {
+            let strings = self
+                .0
+                .iter()
+                .map(|c| format!("{}", c))
+                .collect::<Vec<_>>()
+                .join(",");
+
+            write!(f, "LINESTRING({})", strings)
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::LineString;
+    use super::{Coord, LineString};
     use {Geometry, Wkt};
 
     #[test]
@@ -57,5 +75,32 @@ mod tests {
         assert_eq!(-0.5, coords[1].y);
         assert_eq!(None, coords[1].z);
         assert_eq!(None, coords[1].m);
+    }
+
+    #[test]
+    fn write_empty_linestring() {
+        let linestring = LineString(vec![]);
+
+        assert_eq!("LINESTRING EMPTY", format!("{}", linestring));
+    }
+
+    #[test]
+    fn write_linestring() {
+        let linestring = LineString(vec![
+            Coord {
+                x: 10.1,
+                y: 20.2,
+                z: None,
+                m: None,
+            },
+            Coord {
+                x: 30.3,
+                y: 40.4,
+                z: None,
+                m: None,
+            },
+        ]);
+
+        assert_eq!("LINESTRING(10.1 20.2,30.3 40.4)", format!("{}", linestring));
     }
 }
