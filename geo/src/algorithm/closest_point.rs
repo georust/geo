@@ -61,22 +61,22 @@ impl<F: Float> ClosestPoint<F> for Line<F> {
         //
         // Line equation: P = start + t * (end - start)
 
-        let direction_vector = self.end - self.start;
-        let to_p = *p - self.start;
+        let direction_vector = Point(self.end) - Point(self.start);
+        let to_p = *p - Point(self.start);
 
         let t = to_p.dot(direction_vector) / direction_vector.dot(direction_vector);
 
         // check the cases where the closest point is "outside" the line
         if t < F::zero() {
-            return Closest::SinglePoint(self.start);
+            return Closest::SinglePoint(self.start.into());
         } else if t > F::one() {
-            return Closest::SinglePoint(self.end);
+            return Closest::SinglePoint(self.end.into());
         }
 
         let x = direction_vector.x();
         let y = direction_vector.y();
         let displacement = Point::new(t * x, t * y);
-        let c = self.start + displacement;
+        let c = Point(self.start) + displacement;
 
         if self.contains(p) {
             Closest::Intersection(c)
@@ -151,7 +151,7 @@ mod tests {
         ($name:ident, $p:expr => $should_be:expr) => {
             #[test]
             fn $name() {
-                let line: Line<f32> = Line::new(Point::new(0.0, 0.0), Point::new(100.0, 100.0));
+                let line: Line<f32> = Line::from([(0., 0.), (100.0, 100.0)]);
                 let p: Point<f32> = $p.into();
                 let should_be: Closest<f32> = $should_be;
 
@@ -167,39 +167,26 @@ mod tests {
     closest!(in_line_far_away, (1000.0, 1000.0) => Closest::SinglePoint(Point::new(100.0, 100.0)));
     closest!(perpendicular_from_50_50, (0.0, 100.0) => Closest::SinglePoint(Point::new(50.0, 50.0)));
 
-    fn collect_points<F, P, C>(points: &[P]) -> C
-    where
-        F: Float,
-        P: Into<Point<F>> + Clone,
-        C: ::std::iter::FromIterator<Point<F>>,
-    {
-        points.iter().map(|p| p.clone().into()).collect()
-    }
-
     fn a_square(width: f32) -> LineString<f32> {
-        let points = vec![
+        LineString::from(vec![
             (0.0, 0.0),
             (width, 0.0),
             (width, width),
             (0.0, width),
             (0.0, 0.0),
-        ];
-
-        collect_points(&points)
+        ])
     }
 
     /// A bunch of "random" points.
     fn random_looking_points() -> Vec<Point<f32>> {
-        let points = vec![
+        vec![
             (0.0, 0.0),
             (100.0, 100.0),
             (1000.0, 1000.0),
             (100.0, 0.0),
             (50.0, 50.0),
             (1234.567, -987.6543),
-        ];
-
-        collect_points(&points)
+        ].into_iter().map(Point::from).collect()
     }
 
     /// Throw a bunch of random points at two `ClosestPoint` implementations
@@ -231,7 +218,7 @@ mod tests {
 
     #[test]
     fn zero_length_line_is_indeterminate() {
-        let line: Line<f32> = Line::new(Point::new(0.0, 0.0), Point::new(0.0, 0.0));
+        let line: Line<f32> = Line::from([(0.0, 0.0), (0.0, 0.0)]);
         let p: Point<f32> = Point::new(100.0, 100.0);
         let should_be: Closest<f32> = Closest::Indeterminate;
 
@@ -242,7 +229,7 @@ mod tests {
     #[test]
     fn line_string_with_single_element_behaves_like_line() {
         let points = vec![(0.0, 0.0), (100.0, 100.0)];
-        let line_string: LineString<f32> = collect_points(&points);
+        let line_string =  LineString::<f32>::from(points.clone());
         let line = Line::new(points[0], points[1]);
 
         fuzz_two_impls(line, line_string);
@@ -292,9 +279,9 @@ mod tests {
     fn polygon_with_point_on_interior_ring() {
         let poly = holy_polygon();
         let p = poly.interiors[0].0[3];
-        let should_be = Closest::Intersection(p);
+        let should_be = Closest::Intersection(p.into());
 
-        let got = poly.closest_point(&p);
+        let got = poly.closest_point(&p.into());
 
         assert_eq!(got, should_be);
     }
@@ -303,9 +290,9 @@ mod tests {
     fn polygon_with_point_near_interior_ring() {
         let poly = holy_polygon();
         let random_ring_corner = poly.interiors[0].0[3];
-        let p = random_ring_corner.translate(-3.0, 3.0);
+        let p = Point(random_ring_corner).translate(-3.0, 3.0);
 
-        let should_be = Closest::SinglePoint(random_ring_corner);
+        let should_be = Closest::SinglePoint(random_ring_corner.into());
         println!("{:?} {:?}", p, random_ring_corner);
 
         let got = poly.closest_point(&p);

@@ -25,7 +25,7 @@ pub trait Centroid<T: Float> {
     /// let mut vec = Vec::new();
     /// vec.push(Point::new(40.02f64, 116.34));
     /// vec.push(Point::new(40.02f64, 118.23));
-    /// let linestring = LineString(vec);
+    /// let linestring = LineString::from(vec);
     ///
     /// assert_eq!(linestring.centroid().unwrap(), Point::new(40.02, 117.285));
     /// ```
@@ -59,8 +59,8 @@ where
         .fold((T::zero(), T::zero()), |accum, line| {
             let tmp = line.determinant();
             (
-                accum.0 + ((line.end.x() + line.start.x()) * tmp),
-                accum.1 + ((line.end.y() + line.start.y()) * tmp),
+                accum.0 + ((line.end.x + line.start.x) * tmp),
+                accum.1 + ((line.end.y + line.start.y) * tmp),
             )
         });
     let six = T::from_i32(6).unwrap();
@@ -75,8 +75,8 @@ where
 
     fn centroid(&self) -> Self::Output {
         let two = T::one() + T::one();
-        let x = self.start.x() + self.dx() / two;
-        let y = self.start.y() + self.dy() / two;
+        let x = self.start.x + self.dx() / two;
+        let y = self.start.y + self.dy() / two;
         Point::new(x, y)
     }
 }
@@ -94,7 +94,7 @@ where
             return None;
         }
         if self.0.len() == 1 {
-            Some(self.0[0])
+            Some(Point(self.0[0]))
         } else {
             let (sum_x, sum_y, total_length) =
                 self.lines()
@@ -134,7 +134,7 @@ where
             return None;
         }
         if vect.len() == 1 {
-            Some(Point::new(vect[0].x(), vect[0].y()))
+            Some(Point::new(vect[0].x, vect[0].y))
         } else {
             let external_centroid = simple_polygon_centroid(&self.exterior)?;
             if !self.interiors.is_empty() {
@@ -221,24 +221,27 @@ mod test {
     // Tests: Centroid of LineString
     #[test]
     fn empty_linestring_test() {
-        let vec = Vec::<Point<f64>>::new();
-        let linestring = LineString(vec);
+        let linestring: LineString<f32> = LineString(vec![]);
         let centroid = linestring.centroid();
         assert!(centroid.is_none());
     }
     #[test]
     fn linestring_one_point_test() {
-        let p = Point::new(40.02f64, 116.34);
-        let mut vect = Vec::<Point<f64>>::new();
-        vect.push(p);
-        let linestring = LineString(vect);
+        let coord = Coordinate { x: 40.02f64, y: 116.34 };
+        let linestring = LineString(vec![coord]);
         let centroid = linestring.centroid();
-        assert_eq!(centroid, Some(p));
+        assert_eq!(centroid, Some(Point(coord)));
     }
     #[test]
     fn linestring_test() {
-        let p = |x| Point(Coordinate { x: x, y: 1. });
-        let linestring = LineString(vec![p(1.), p(7.), p(8.), p(9.), p(10.), p(11.)]);
+        let linestring = LineString(vec![
+            Coordinate { x: 1., y: 1. },
+            Coordinate { x: 7., y: 1. },
+            Coordinate { x: 8., y: 1. },
+            Coordinate { x: 9., y: 1. },
+            Coordinate { x: 10., y: 1. },
+            Coordinate { x: 11., y: 1. },
+        ]);
         assert_eq!(
             linestring.centroid(),
             Some(Point(Coordinate { x: 6., y: 1. }))
@@ -257,44 +260,44 @@ mod test {
     fn polygon_one_point_test() {
         let p = Point(Coordinate { x: 2., y: 1. });
         let v = Vec::new();
-        let linestring = LineString(vec![p]);
+        let linestring = LineString(vec![p.0]);
         let poly = Polygon::new(linestring, v);
         assert_eq!(poly.centroid(), Some(p));
     }
     #[test]
     fn polygon_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let c = |x, y| Coordinate { x: x, y: y };
         let v = Vec::new();
-        let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
+        let linestring = LineString(vec![c(0., 0.), c(2., 0.), c(2., 2.), c(0., 2.), c(0., 0.)]);
         let poly = Polygon::new(linestring, v);
-        assert_eq!(poly.centroid(), Some(p(1., 1.)));
+        assert_eq!(poly.centroid(), Some(Point::new(1., 1.)));
     }
     #[test]
     fn polygon_hole_test() {
-        let ls1 = LineString(vec![
-            Point::new(5.0, 1.0),
-            Point::new(4.0, 2.0),
-            Point::new(4.0, 3.0),
-            Point::new(5.0, 4.0),
-            Point::new(6.0, 4.0),
-            Point::new(7.0, 3.0),
-            Point::new(7.0, 2.0),
-            Point::new(6.0, 1.0),
-            Point::new(5.0, 1.0),
+        let ls1 = LineString::from(vec![
+            (5.0, 1.0),
+            (4.0, 2.0),
+            (4.0, 3.0),
+            (5.0, 4.0),
+            (6.0, 4.0),
+            (7.0, 3.0),
+            (7.0, 2.0),
+            (6.0, 1.0),
+            (5.0, 1.0),
         ]);
 
-        let ls2 = LineString(vec![
-            Point::new(5.0, 1.3),
-            Point::new(5.5, 2.0),
-            Point::new(6.0, 1.3),
-            Point::new(5.0, 1.3),
+        let ls2 = LineString::from(vec![
+            (5.0, 1.3),
+            (5.5, 2.0),
+            (6.0, 1.3),
+            (5.0, 1.3),
         ]);
 
-        let ls3 = LineString(vec![
-            Point::new(5., 2.3),
-            Point::new(5.5, 3.0),
-            Point::new(6., 2.3),
-            Point::new(5., 2.3),
+        let ls3 = LineString::from(vec![
+            (5., 2.3),
+            (5.5, 3.0),
+            (6., 2.3),
+            (5., 2.3),
         ]);
 
         let p1 = Polygon::new(ls1, vec![ls2, ls3]);
@@ -304,15 +307,15 @@ mod test {
     #[test]
     fn flat_polygon_test() {
         let p = |x| Point(Coordinate { x: x, y: 1. });
-        let poly = Polygon::new(LineString(vec![p(0.), p(1.), p(0.)]), vec![]);
+        let poly = Polygon::new(LineString::from(vec![p(0.), p(1.), p(0.)]), vec![]);
         assert_eq!(poly.centroid(), Some(p(0.5)));
     }
     #[test]
     fn polygon_flat_interior_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let poly = Polygon::new(
-            LineString(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
-            vec![LineString(vec![p(0., 0.), p(0., 1.), p(0., 0.)])],
+            LineString::from(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
+            vec![LineString::from(vec![p(0., 0.), p(0., 1.), p(0., 0.)])],
         );
         assert_eq!(poly.centroid(), Some(p(0.5, 0.5)));
     }
@@ -320,7 +323,7 @@ mod test {
     fn empty_interior_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
         let poly = Polygon::new(
-            LineString(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
+            LineString::from(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
             vec![LineString(vec![])],
         );
         assert_eq!(poly.centroid(), Some(p(0.5, 0.5)));
@@ -333,16 +336,16 @@ mod test {
     #[test]
     fn multipolygon_one_polygon_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
+        let linestring = LineString::from(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
         assert_eq!(MultiPolygon(vec![poly]).centroid(), Some(p(1., 1.)));
     }
     #[test]
     fn multipolygon_two_polygons_test() {
         let p = |x, y| Point(Coordinate { x: x, y: y });
-        let linestring = LineString(vec![p(2., 1.), p(5., 1.), p(5., 3.), p(2., 3.), p(2., 1.)]);
+        let linestring = LineString::from(vec![p(2., 1.), p(5., 1.), p(5., 3.), p(2., 3.), p(2., 1.)]);
         let poly1 = Polygon::new(linestring, Vec::new());
-        let linestring = LineString(vec![p(7., 1.), p(8., 1.), p(8., 2.), p(7., 2.), p(7., 1.)]);
+        let linestring = LineString::from(vec![p(7., 1.), p(8., 1.), p(8., 2.), p(7., 2.), p(7., 1.)]);
         let poly2 = Polygon::new(linestring, Vec::new());
         let dist = MultiPolygon(vec![poly1, poly2])
             .centroid()
@@ -352,18 +355,17 @@ mod test {
     }
     #[test]
     fn multipolygon_two_polygons_of_opposite_clockwise_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
-        let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
+        let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
         let poly1 = Polygon::new(linestring, Vec::new());
-        let linestring = LineString(vec![
-            p(0., 0.),
-            p(-2., 0.),
-            p(-2., 2.),
-            p(0., 2.),
-            p(0., 0.),
+        let linestring = LineString::from(vec![
+            (0., 0.),
+            (-2., 0.),
+            (-2., 2.),
+            (0., 2.),
+            (0., 0.),
         ]);
         let poly2 = Polygon::new(linestring, Vec::new());
-        assert_eq!(MultiPolygon(vec![poly1, poly2]).centroid(), Some(p(0., 1.)));
+        assert_eq!(MultiPolygon(vec![poly1, poly2]).centroid(), Some(Point::new(0., 1.)));
     }
     #[test]
     fn bbox_test() {
@@ -378,8 +380,8 @@ mod test {
     }
     #[test]
     fn line_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
-        let line1 = Line::new(p(0., 1.), p(1., 3.));
-        assert_eq!(line1.centroid(), p(0.5, 2.));
+        let c = |x, y| Coordinate { x: x, y: y };
+        let line1 = Line::new(c(0., 1.), c(1., 3.));
+        assert_eq!(line1.centroid(), Point::new(0.5, 2.));
     }
 }

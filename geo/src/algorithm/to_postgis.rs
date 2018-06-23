@@ -1,4 +1,4 @@
-use ::{MultiPoint, Line, Point, LineString, MultiLineString, MultiPolygon, Polygon, Geometry, GeometryCollection};
+use ::{Coordinate, MultiPoint, Line, Point, LineString, MultiLineString, MultiPolygon, Polygon, Geometry, GeometryCollection};
 use postgis::ewkb;
 
 /// Converts geometry to a PostGIS type.
@@ -16,6 +16,12 @@ pub trait ToPostgis<T> {
     }
 }
 
+impl ToPostgis<ewkb::Point> for Coordinate<f64> {
+    fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Point {
+        ewkb::Point::new(self.x, self.y, srid)
+    }
+}
+
 impl ToPostgis<ewkb::Point> for Point<f64> {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Point {
         ewkb::Point::new(self.x(), self.y(), srid)
@@ -24,8 +30,8 @@ impl ToPostgis<ewkb::Point> for Point<f64> {
 impl ToPostgis<ewkb::LineString> for Line<f64> {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::LineString {
         let points = vec![
-            self.start.to_postgis_with_srid(srid),
-            self.end.to_postgis_with_srid(srid)
+            self.start_point().to_postgis_with_srid(srid),
+            self.end_point().to_postgis_with_srid(srid)
         ];
         ewkb::LineString { points, srid }
     }
@@ -34,7 +40,7 @@ impl ToPostgis<ewkb::Polygon> for Polygon<f64> {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Polygon {
         let rings = ::std::iter::once(&self.exterior)
             .chain(self.interiors.iter())
-            .map(|x| x.to_postgis_with_srid(srid))
+            .map(|x| (*x).to_postgis_with_srid(srid))
             .collect();
         ewkb::Polygon { rings, srid }
     }

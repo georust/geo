@@ -17,7 +17,7 @@ pub trait EuclideanLength<T, RHS = Self> {
     /// let mut vec = Vec::new();
     /// vec.push(Point::new(40.02f64, 116.34));
     /// vec.push(Point::new(42.02f64, 116.34));
-    /// let linestring = LineString(vec);
+    /// let linestring = LineString::from(vec);
     ///
     /// println!("EuclideanLength {}", linestring.euclidean_length());
     /// ```
@@ -60,7 +60,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use ::{Coordinate, Line, LineString, MultiLineString, Point};
+    use ::{Coordinate, Line, LineString, MultiLineString};
     use algorithm::euclidean_length::EuclideanLength;
 
     #[test]
@@ -70,35 +70,35 @@ mod test {
     }
     #[test]
     fn linestring_one_point_test() {
-        let linestring = LineString(vec![Point::new(0., 0.)]);
+        let linestring = LineString::from(vec![(0., 0.)]);
         assert_eq!(0.0_f64, linestring.euclidean_length());
     }
     #[test]
     fn linestring_test() {
-        let p = |x| Point(Coordinate { x: x, y: 1. });
-        let linestring = LineString(vec![p(1.), p(7.), p(8.), p(9.), p(10.), p(11.)]);
+        let linestring = LineString::from(vec![
+            (1., 1.), (7., 1.), (8., 1.), (9., 1.), (10., 1.), (11., 1.)
+        ]);
         assert_eq!(10.0_f64, linestring.euclidean_length());
     }
     #[test]
     fn multilinestring_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
         let mline = MultiLineString(vec![
-            LineString(vec![
-                p(1., 0.),
-                p(7., 0.),
-                p(8., 0.),
-                p(9., 0.),
-                p(10., 0.),
-                p(11., 0.),
+            LineString::from(vec![
+                (1., 0.),
+                (7., 0.),
+                (8., 0.),
+                (9., 0.),
+                (10., 0.),
+                (11., 0.),
             ]),
-            LineString(vec![p(0., 0.), p(0., 5.)]),
+            LineString::from(vec![(0., 0.), (0., 5.)]),
         ]);
         assert_eq!(15.0_f64, mline.euclidean_length());
     }
     #[test]
     fn line_test() {
-        let line0 = Line::new(Point::new(0., 0.), Point::new(0., 1.));
-        let line1 = Line::new(Point::new(0., 0.), Point::new(3., 4.));
+        let line0 = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 0., y: 1. });
+        let line1 = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 3., y: 4. });
         assert_eq!(line0.euclidean_length(), 1.);
         assert_eq!(line1.euclidean_length(), 5.);
     }

@@ -14,13 +14,13 @@ pub trait Translate<T> {
     /// vec.push(Point::new(0.0, 0.0));
     /// vec.push(Point::new(5.0, 5.0));
     /// vec.push(Point::new(10.0, 10.0));
-    /// let linestring = LineString(vec);
+    /// let linestring = LineString::from(vec);
     /// let translated = linestring.translate(1.5, 3.5);
     /// let mut correct = Vec::new();
     /// correct.push(Point::new(1.5, 3.5));
     /// correct.push(Point::new(6.5, 8.5));
     /// correct.push(Point::new(11.5, 13.5));
-    /// let correct_ls = LineString(correct);
+    /// let correct_ls = LineString::from(correct);
     /// assert_eq!(translated, correct_ls);
     /// ```
     fn translate(&self, xoff: T, yoff: T) -> Self where T: CoordinateType;
@@ -44,7 +44,7 @@ impl<T, G> Translate<T> for G
 
 #[cfg(test)]
 mod test {
-  use ::{LineString, Point, Polygon};
+  use ::{LineString, Point, Polygon, Coordinate};
   use super::*;
   #[test]
   fn test_translate_point() {
@@ -54,17 +54,17 @@ mod test {
   }
   #[test]
   fn test_translate_linestring() {
-    let mut vec = Vec::new();
-    vec.push(Point::new(0.0, 0.0));
-    vec.push(Point::new(5.0, 1.0));
-    vec.push(Point::new(10.0, 0.0));
-    let linestring = LineString(vec);
+    let linestring = LineString::from(vec![
+      (0.0, 0.0),
+      (5.0, 1.0),
+      (10.0, 0.0),
+    ]);
     let translated = linestring.translate(17.0, 18.0);
     let mut correct = Vec::new();
-    correct.push(Point::new(17.0, 18.0));
-    correct.push(Point::new(22.0, 19.0));
-    correct.push(Point::new(27., 18.));
-    let correct_ls = LineString(correct);
+    correct.push((17.0, 18.0));
+    correct.push((22.0, 19.0));
+    correct.push((27., 18.));
+    let correct_ls = LineString::from(correct);
     assert_eq!(translated, correct_ls);
   }
   #[test]
@@ -84,7 +84,7 @@ mod test {
       .iter()
       .map(|e| Point::new(e.0, e.1))
       .collect::<Vec<_>>();
-    let poly1 = Polygon::new(LineString(points), vec![]);
+    let poly1 = Polygon::new(LineString::from(points), vec![]);
     let translated = poly1.translate(17.0, 18.0);
     let correct_outside = vec![
       (22.0, 19.0),
@@ -101,7 +101,7 @@ mod test {
       LineString(
         correct_outside
           .iter()
-          .map(|e| Point::new(e.0, e.1))
+          .map(|e| Coordinate { x: e.0, y: e.1 })
           .collect::<Vec<_>>(),
       ),
       vec![],
@@ -111,44 +111,44 @@ mod test {
   }
   #[test]
   fn test_rotate_polygon_holes() {
-    let ls1 = LineString(vec![
-      Point::new(5.0, 1.0),
-      Point::new(4.0, 2.0),
-      Point::new(4.0, 3.0),
-      Point::new(5.0, 4.0),
-      Point::new(6.0, 4.0),
-      Point::new(7.0, 3.0),
-      Point::new(7.0, 2.0),
-      Point::new(6.0, 1.0),
-      Point::new(5.0, 1.0),
+    let ls1 = LineString::from(vec![
+      (5.0, 1.0),
+      (4.0, 2.0),
+      (4.0, 3.0),
+      (5.0, 4.0),
+      (6.0, 4.0),
+      (7.0, 3.0),
+      (7.0, 2.0),
+      (6.0, 1.0),
+      (5.0, 1.0),
     ]);
 
-    let ls2 = LineString(vec![
-      Point::new(5.0, 1.3),
-      Point::new(5.5, 2.0),
-      Point::new(6.0, 1.3),
-      Point::new(5.0, 1.3),
+    let ls2 = LineString::from(vec![
+      (5.0, 1.3),
+      (5.5, 2.0),
+      (6.0, 1.3),
+      (5.0, 1.3),
     ]);
 
     let poly1 = Polygon::new(ls1, vec![ls2]);
     let rotated = poly1.translate(17.0, 18.0);
     let correct_outside = vec![
-      (22.0, 19.0),
-      (21.0, 20.0),
-      (21.0, 21.0),
-      (22.0, 22.0),
-      (23.0, 22.0),
-      (24.0, 21.0),
-      (24.0, 20.0),
-      (23.0, 19.0),
-      (22.0, 19.0),
-    ].iter()
-      .map(|e| Point::new(e.0, e.1))
-      .collect::<Vec<_>>();
-    let correct_inside = vec![(22.0, 19.3), (22.5, 20.0), (23.0, 19.3), (22.0, 19.3)]
-      .iter()
-      .map(|e| Point::new(e.0, e.1))
-      .collect::<Vec<_>>();
+      Coordinate::from((22.0, 19.0)),
+      Coordinate::from((21.0, 20.0)),
+      Coordinate::from((21.0, 21.0)),
+      Coordinate::from((22.0, 22.0)),
+      Coordinate::from((23.0, 22.0)),
+      Coordinate::from((24.0, 21.0)),
+      Coordinate::from((24.0, 20.0)),
+      Coordinate::from((23.0, 19.0)),
+      Coordinate::from((22.0, 19.0)),
+    ];
+    let correct_inside = vec![
+      Coordinate::from((22.0, 19.3)),
+      Coordinate::from((22.5, 20.0)),
+      Coordinate::from((23.0, 19.3)),
+      Coordinate::from((22.0, 19.3)),
+    ];
     assert_eq!(rotated.exterior.0, correct_outside);
     assert_eq!(rotated.interiors[0].0, correct_inside);
   }

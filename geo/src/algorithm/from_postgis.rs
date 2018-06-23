@@ -18,10 +18,10 @@ impl<'a, T> FromPostgis<&'a T> for Point<f64> where T: postgis::Point {
 }
 impl<'a, T> FromPostgis<&'a T> for LineString<f64> where T: postgis::LineString<'a> {
     fn from_postgis(ls: &'a T) -> Self {
-        let ret = ls.points()
+        let ret: Vec<Point<f64>> = ls.points()
             .map(|x| Point::from_postgis(x))
             .collect();
-        LineString(ret)
+        LineString::from(ret)
     }
 }
 impl<'a, T> FromPostgis<&'a T> for Option<Polygon<f64>> where T: postgis::Polygon<'a> {

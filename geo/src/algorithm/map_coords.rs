@@ -116,7 +116,7 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Line<T> {
     type Output = Line<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
-        Line::new(self.start.map_coords(func), self.end.map_coords(func))
+        Line::new(self.start_point().map_coords(func).0, self.end_point().map_coords(func).0)
     }
 }
 
@@ -128,16 +128,21 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Line<T> {
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(Line::new(
-            self.start.try_map_coords(func)?,
-            self.end.try_map_coords(func)?,
+            self.start_point().try_map_coords(func)?.0,
+            self.end_point().try_map_coords(func)?.0,
         ))
     }
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for Line<T> {
     fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        self.start.map_coords_inplace(func);
-        self.end.map_coords_inplace(func);
+        let new_start = func(&(self.start.x, self.start.y));
+        self.start.x = new_start.0;
+        self.start.y = new_start.1;
+
+        let new_end = func(&(self.end.x, self.end.y));
+        self.end.x = new_end.0;
+        self.end.y = new_end.1;
     }
 }
 
@@ -145,7 +150,7 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for LineString<T> {
     type Output = LineString<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
-        LineString(self.0.iter().map(|p| p.map_coords(func)).collect())
+        LineString::from(self.points_iter().map(|p| p.map_coords(func)).collect::<Vec<_>>())
     }
 }
 
@@ -156,8 +161,8 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for LineString<T
         &self,
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
-        Ok(LineString(self.0
-            .iter()
+        Ok(LineString::from(self
+            .points_iter()
             .map(|p| p.try_map_coords(func))
             .collect::<Result<Vec<_>, Error>>()?))
     }
@@ -166,7 +171,9 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for LineString<T
 impl<T: CoordinateType> MapCoordsInplace<T> for LineString<T> {
     fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
         for p in &mut self.0 {
-            p.map_coords_inplace(func);
+            let new_coords = func(&(p.x, p.y));
+            p.x = new_coords.0;
+            p.y = new_coords.1;
         }
     }
 }
@@ -389,6 +396,7 @@ impl<T: CoordinateType> MapCoordsInplace<T> for GeometryCollection<T> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use ::Coordinate;
 
     #[test]
     fn point() {
@@ -408,53 +416,53 @@ mod test {
 
     #[test]
     fn line() {
-        let line = Line::new(Point::new(0., 0.), Point::new(1., 2.));
+        let line = Line::from([(0., 0.), (1., 2.)]);
         assert_eq!(
             line.map_coords(&|&(x, y)| (x * 2., y)),
-            Line::new(Point::new(0., 0.), Point::new(2., 2.))
+            Line::from([(0., 0.), (2., 2.)])
         );
     }
 
     #[test]
     fn linestring() {
-        let line1: LineString<f32> = LineString(vec![Point::new(0., 0.), Point::new(1., 2.)]);
+        let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
         let line2 = line1.map_coords(&|&(x, y)| (x + 10., y - 100.));
-        assert_eq!(line2.0[0], Point::new(10., -100.));
-        assert_eq!(line2.0[1], Point::new(11., -98.));
+        assert_eq!(line2.0[0], Coordinate::from((10., -100.)));
+        assert_eq!(line2.0[1], Coordinate::from((11., -98.)));
     }
 
     #[test]
     fn polygon() {
-        let exterior = LineString(vec![
-            Point::new(0., 0.),
-            Point::new(1., 1.),
-            Point::new(1., 0.),
-            Point::new(0., 0.),
+        let exterior = LineString::from(vec![
+            (0., 0.),
+            (1., 1.),
+            (1., 0.),
+            (0., 0.),
         ]);
         let interiors = vec![
-            LineString(vec![
-                Point::new(0.1, 0.1),
-                Point::new(0.9, 0.9),
-                Point::new(0.9, 0.1),
-                Point::new(0.1, 0.1),
+            LineString::from(vec![
+                (0.1, 0.1),
+                (0.9, 0.9),
+                (0.9, 0.1),
+                (0.1, 0.1),
             ]),
         ];
         let p = Polygon::new(exterior, interiors);
 
         let p2 = p.map_coords(&|&(x, y)| (x + 10., y - 100.));
 
-        let exterior2 = LineString(vec![
-            Point::new(10., -100.),
-            Point::new(11., -99.),
-            Point::new(11., -100.),
-            Point::new(10., -100.),
+        let exterior2 = LineString::from(vec![
+            (10., -100.),
+            (11., -99.),
+            (11., -100.),
+            (10., -100.),
         ]);
         let interiors2 = vec![
-            LineString(vec![
-                Point::new(10.1, -99.9),
-                Point::new(10.9, -99.1),
-                Point::new(10.9, -99.9),
-                Point::new(10.1, -99.9),
+            LineString::from(vec![
+                (10.1, -99.9),
+                (10.9, -99.1),
+                (10.9, -99.9),
+                (10.1, -99.9),
             ]),
         ];
         let expected_p2 = Polygon::new(exterior2, interiors2);
@@ -476,22 +484,22 @@ mod test {
 
     #[test]
     fn multilinestring() {
-        let line1: LineString<f32> = LineString(vec![Point::new(0., 0.), Point::new(1., 2.)]);
-        let line2: LineString<f32> = LineString(vec![
-            Point::new(-1., 0.),
-            Point::new(0., 0.),
-            Point::new(1., 2.),
+        let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
+        let line2: LineString<f32> = LineString::from(vec![
+            (-1., 0.),
+            (0., 0.),
+            (1., 2.),
         ]);
         let mline = MultiLineString(vec![line1, line2]);
         let mline2 = mline.map_coords(&|&(x, y)| (x + 10., y - 100.));
         assert_eq!(
             mline2,
             MultiLineString(vec![
-                LineString(vec![Point::new(10., -100.), Point::new(11., -98.)]),
-                LineString(vec![
-                    Point::new(9., -100.),
-                    Point::new(10., -100.),
-                    Point::new(11., -98.),
+                LineString::from(vec![(10., -100.), (11., -98.)]),
+                LineString::from(vec![
+                    (9., -100.),
+                    (10., -100.),
+                    (11., -98.),
                 ]),
             ])
         );
@@ -500,30 +508,30 @@ mod test {
     #[test]
     fn multipolygon() {
         let poly1 = Polygon::new(
-            LineString(vec![
-                Point::new(0., 0.),
-                Point::new(10., 0.),
-                Point::new(10., 10.),
-                Point::new(0., 10.),
-                Point::new(0., 0.),
+            LineString::from(vec![
+                (0., 0.),
+                (10., 0.),
+                (10., 10.),
+                (0., 10.),
+                (0., 0.),
             ]),
             vec![],
         );
         let poly2 = Polygon::new(
-            LineString(vec![
-                Point::new(11., 11.),
-                Point::new(20., 11.),
-                Point::new(20., 20.),
-                Point::new(11., 20.),
-                Point::new(11., 11.),
+            LineString::from(vec![
+                (11., 11.),
+                (20., 11.),
+                (20., 20.),
+                (11., 20.),
+                (11., 11.),
             ]),
             vec![
-                LineString(vec![
-                    Point::new(13., 13.),
-                    Point::new(13., 17.),
-                    Point::new(17., 17.),
-                    Point::new(17., 13.),
-                    Point::new(13., 13.),
+                LineString::from(vec![
+                    (13., 13.),
+                    (13., 17.),
+                    (17., 17.),
+                    (17., 13.),
+                    (13., 13.),
                 ]),
             ],
         );
@@ -534,12 +542,12 @@ mod test {
         assert_eq!(
             mp2.0[0],
             Polygon::new(
-                LineString(vec![
-                    Point::new(0., 100.),
-                    Point::new(20., 100.),
-                    Point::new(20., 110.),
-                    Point::new(0., 110.),
-                    Point::new(0., 100.),
+                LineString::from(vec![
+                    (0., 100.),
+                    (20., 100.),
+                    (20., 110.),
+                    (0., 110.),
+                    (0., 100.),
                 ]),
                 vec![]
             )
@@ -547,20 +555,20 @@ mod test {
         assert_eq!(
             mp2.0[1],
             Polygon::new(
-                LineString(vec![
-                    Point::new(22., 111.),
-                    Point::new(40., 111.),
-                    Point::new(40., 120.),
-                    Point::new(22., 120.),
-                    Point::new(22., 111.),
+                LineString::from(vec![
+                    (22., 111.),
+                    (40., 111.),
+                    (40., 120.),
+                    (22., 120.),
+                    (22., 111.),
                 ]),
                 vec![
-                    LineString(vec![
-                        Point::new(26., 113.),
-                        Point::new(26., 117.),
-                        Point::new(34., 117.),
-                        Point::new(34., 113.),
-                        Point::new(26., 113.),
+                    LineString::from(vec![
+                        (26., 113.),
+                        (26., 117.),
+                        (34., 117.),
+                        (34., 113.),
+                        (26., 113.),
                     ]),
                 ]
             )
@@ -570,7 +578,7 @@ mod test {
     #[test]
     fn geometrycollection() {
         let p1 = Geometry::Point(Point::new(10., 10.));
-        let line1 = Geometry::LineString(LineString(vec![Point::new(0., 0.), Point::new(1., 2.)]));
+        let line1 = Geometry::LineString(LineString::from(vec![(0., 0.), (1., 2.)]));
 
         let gc = GeometryCollection(vec![p1, line1]);
 
@@ -578,9 +586,9 @@ mod test {
             gc.map_coords(&|&(x, y)| (x + 10., y + 100.)),
             GeometryCollection(vec![
                 Geometry::Point(Point::new(20., 110.)),
-                Geometry::LineString(LineString(vec![
-                    Point::new(10., 100.),
-                    Point::new(11., 102.),
+                Geometry::LineString(LineString::from(vec![
+                    (10., 100.),
+                    (11., 102.),
                 ])),
             ])
         );

@@ -44,7 +44,8 @@ where
     T: Float,
 {
     fn euclidean_distance(&self, point: &Point<T>) -> T {
-        line_segment_distance(*point, self.start, self.end)
+        let (start, end) = self.points();
+        line_segment_distance(*point, start, end)
     }
 }
 
@@ -63,15 +64,15 @@ where
     fn bbox(&self) -> Self::Output {
         let a = self.start;
         let b = self.end;
-        let (xmin, xmax) = if a.x() <= b.x() {
-            (a.x(), b.x())
+        let (xmin, xmax) = if a.x <= b.x {
+            (a.x, b.x)
         } else {
-            (b.x(), a.x())
+            (b.x, a.x)
         };
-        let (ymin, ymax) = if a.y() <= b.y() {
-            (a.y(), b.y())
+        let (ymin, ymax) = if a.y <= b.y {
+            (a.y, b.y)
         } else {
-            (b.y(), a.y())
+            (b.y, a.y)
         };
         Bbox {
             xmin,
