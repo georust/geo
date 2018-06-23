@@ -32,7 +32,7 @@ pub use multi_point::MultiPoint;
 mod line;
 pub use line::Line;
 
-mod line_string;
+pub mod line_string;
 pub use line_string::LineString;
 
 mod multi_line_string;
@@ -88,16 +88,16 @@ mod test {
     #[test]
     fn polygon_new_test() {
         let exterior = LineString(vec![
-            Point::new(0., 0.),
-            Point::new(1., 1.),
-            Point::new(1., 0.),
-            Point::new(0., 0.),
+            Coordinate { x: 0., y: 0. },
+            Coordinate { x: 1., y: 1. },
+            Coordinate { x: 1., y: 0. },
+            Coordinate { x: 0., y: 0. },
         ]);
         let interiors = vec![LineString(vec![
-            Point::new(0.1, 0.1),
-            Point::new(0.9, 0.9),
-            Point::new(0.9, 0.1),
-            Point::new(0.1, 0.1),
+            Coordinate { x: 0.1, y: 0.1 },
+            Coordinate { x: 0.9, y: 0.9 },
+            Coordinate { x: 0.9, y: 0.1 },
+            Coordinate { x: 0.1, y: 0.1 },
         ])];
         let p = Polygon::new(exterior.clone(), interiors.clone());
 
@@ -129,7 +129,10 @@ mod test {
     fn line_test() {
         use spade::primitives::SimpleEdge;
         let se = SimpleEdge::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
-        let l = Line::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
+        let l = Line::new(
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 5., y: 5. },
+        );
         assert_eq!(se.mbr(), l.mbr());
         // difference in 15th decimal place
         assert_eq!(26.0, se.distance2(&Point::new(4.0, 10.0)));

@@ -19,7 +19,7 @@ where
     /// use geo::algorithm::area::Area;
     /// let p = |x, y| Point(Coordinate { x: x, y: y });
     /// let v = Vec::new();
-    /// let linestring = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
+    /// let linestring = LineString::from(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
     /// let poly = Polygon::new(linestring, v);
     /// assert_eq!(poly.area(), 30.);
     /// ```
@@ -76,7 +76,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use ::{Bbox, Coordinate, Line, LineString, MultiPolygon, Point, Polygon};
+    use ::{Bbox, Coordinate, Line, LineString, MultiPolygon, Polygon};
     use algorithm::area::Area;
 
     // Area of the polygon
@@ -88,13 +88,12 @@ mod test {
 
     #[test]
     fn area_one_point_polygon_test() {
-        let poly = Polygon::new(LineString(vec![Point::new(1., 0.)]), Vec::new());
+        let poly = Polygon::new(LineString::from(vec![(1., 0.)]), Vec::new());
         assert_relative_eq!(poly.area(), 0.);
     }
     #[test]
     fn area_polygon_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
-        let linestring = LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
+        let linestring = LineString::from(vec![(0., 0.), (5., 0.), (5., 6.), (0., 6.), (0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
         assert_relative_eq!(poly.area(), 30.);
     }
@@ -110,38 +109,36 @@ mod test {
     }
     #[test]
     fn area_polygon_inner_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
-        let outer = LineString(vec![
-            p(0., 0.),
-            p(10., 0.),
-            p(10., 10.),
-            p(0., 10.),
-            p(0., 0.),
+        let outer = LineString::from(vec![
+            (0., 0.),
+            (10., 0.),
+            (10., 10.),
+            (0., 10.),
+            (0., 0.),
         ]);
-        let inner0 = LineString(vec![p(1., 1.), p(2., 1.), p(2., 2.), p(1., 2.), p(1., 1.)]);
-        let inner1 = LineString(vec![p(5., 5.), p(6., 5.), p(6., 6.), p(5., 6.), p(5., 5.)]);
+        let inner0 = LineString::from(vec![(1., 1.), (2., 1.), (2., 2.), (1., 2.), (1., 1.)]);
+        let inner1 = LineString::from(vec![(5., 5.), (6., 5.), (6., 6.), (5., 6.), (5., 5.)]);
         let poly = Polygon::new(outer, vec![inner0, inner1]);
         assert_relative_eq!(poly.area(), 98.);
     }
     #[test]
     fn area_multipolygon_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
         let poly0 = Polygon::new(
-            LineString(vec![
-                p(0., 0.),
-                p(10., 0.),
-                p(10., 10.),
-                p(0., 10.),
-                p(0., 0.),
+            LineString::from(vec![
+                (0., 0.),
+                (10., 0.),
+                (10., 10.),
+                (0., 10.),
+                (0., 0.),
             ]),
             Vec::new(),
         );
         let poly1 = Polygon::new(
-            LineString(vec![p(1., 1.), p(2., 1.), p(2., 2.), p(1., 2.), p(1., 1.)]),
+            LineString::from(vec![(1., 1.), (2., 1.), (2., 2.), (1., 2.), (1., 1.)]),
             Vec::new(),
         );
         let poly2 = Polygon::new(
-            LineString(vec![p(5., 5.), p(6., 5.), p(6., 6.), p(5., 6.), p(5., 5.)]),
+            LineString::from(vec![(5., 5.), (6., 5.), (6., 6.), (5., 6.), (5., 5.)]),
             Vec::new(),
         );
         let mpoly = MultiPolygon(vec![poly0, poly1, poly2]);
@@ -150,8 +147,10 @@ mod test {
     }
     #[test]
     fn area_line_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
-        let line1 = Line::new(p(0.0, 0.0), p(1.0, 1.0));
+        let line1 = Line::new(
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 1.0, y: 1.0 },
+        );
         assert_eq!(line1.area(), 0.);
     }
 }

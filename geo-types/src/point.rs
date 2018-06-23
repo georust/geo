@@ -1,4 +1,4 @@
-use num_traits::{Float, ToPrimitive};
+use num_traits::ToPrimitive;
 use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
@@ -194,22 +194,27 @@ where
     pub fn set_lat(&mut self, lat: T) -> &mut Point<T> {
         self.set_y(lat)
     }
+}
 
+impl<T> Point<T>
+where
+    T: CoordinateType,
+{
     /// Returns the dot product of the two points:
     /// `dot = x1 * x2 + y1 * y2`
     ///
     /// # Examples
     ///
     /// ```
-    /// use geo_types::Point;
+    /// use geo_types::{Coordinate, Point};
     ///
-    /// let p = Point::new(1.5, 0.5);
-    /// let dot = p.dot(Point::new(2.0, 4.5));
+    /// let point = Point(Coordinate { x: 1.5, y: 0.5 });
+    /// let dot = point.dot(Point(Coordinate { x: 2.0, y: 4.5 }));
     ///
     /// assert_eq!(dot, 5.25);
     /// ```
-    pub fn dot(self, point: Point<T>) -> T {
-        self.x() * point.x() + self.y() * point.y()
+    pub fn dot(&self, other: Point<T>) -> T {
+        self.x() * other.x() + self.y() * other.y()
     }
 
     /// Returns the cross product of 3 points. A positive value implies
@@ -219,20 +224,17 @@ where
     /// # Examples
     ///
     /// ```
-    /// use geo_types::Point;
+    /// use geo_types::{Coordinate, Point};
     ///
-    /// let p_a = Point::new(1.0, 2.0);
-    /// let p_b = Point::new(3.0,5.0);
-    /// let p_c = Point::new(7.0,12.0);
+    /// let point_a = Point(Coordinate { x: 1., y: 2. });
+    /// let point_b = Point(Coordinate { x: 3., y: 5. });
+    /// let point_c = Point(Coordinate { x: 7., y: 12. });
     ///
-    /// let cross = p_a.cross_prod(p_b, p_c);
+    /// let cross = point_a.cross_prod(point_b, point_c);
     ///
     /// assert_eq!(cross, 2.0)
     /// ```
-    pub fn cross_prod(self, point_b: Point<T>, point_c: Point<T>) -> T
-    where
-        T: Float,
-    {
+    pub fn cross_prod(&self, point_b: Point<T>, point_c: Point<T>) -> T {
         (point_b.x() - self.x()) * (point_c.y() - self.y())
             - (point_b.y() - self.y()) * (point_c.x() - self.x())
     }

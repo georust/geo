@@ -1,6 +1,6 @@
 use std::iter::Rev;
-use std::slice::Iter;
 use {CoordinateType, LineString, Point};
+use geo_types::line_string::PointsIter;
 
 pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T where T: CoordinateType {
     if linestring.0.is_empty() || linestring.0.len() == 1 {
@@ -39,7 +39,7 @@ where
 }
 
 /// Iterates through a list of `Point`s
-pub struct Points<'a, T>(EitherIter<&'a Point<T>, Iter<'a, Point<T>>, Rev<Iter<'a, Point<T>>>>)
+pub struct Points<'a, T>(EitherIter<Point<T>, PointsIter<'a, T>, Rev<PointsIter<'a, T>>>)
 where
     T: CoordinateType + 'a;
 
@@ -47,7 +47,7 @@ impl<'a, T> Iterator for Points<'a, T>
 where
     T: CoordinateType,
 {
-    type Item = &'a Point<T>;
+    type Item = Point<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
@@ -139,8 +139,8 @@ impl<T> Winding<T> for LineString<T>
     /// order, so that the resultant order makes it appear clockwise
     fn points_cw(&self) -> Points<T> {
         match self.winding_order() {
-            Some(WindingOrder::CounterClockwise) => Points(EitherIter::B(self.0.iter().rev())),
-            _ => Points(EitherIter::A(self.0.iter())),
+            Some(WindingOrder::CounterClockwise) => Points(EitherIter::B(self.points_iter().rev())),
+            _ => Points(EitherIter::A(self.points_iter())),
         }
     }
 
@@ -150,8 +150,8 @@ impl<T> Winding<T> for LineString<T>
     /// order, so that the resultant order makes it appear counter-clockwise
     fn points_ccw(&self) -> Points<T> {
         match self.winding_order() {
-            Some(WindingOrder::Clockwise) => Points(EitherIter::B(self.0.iter().rev())),
-            _ => Points(EitherIter::A(self.0.iter())),
+            Some(WindingOrder::Clockwise) => Points(EitherIter::B(self.points_iter().rev())),
+            _ => Points(EitherIter::A(self.points_iter())),
         }
     }
 
@@ -182,9 +182,9 @@ mod test {
         let c = Point::new(1., 2.);
 
         // That triangle, but in clockwise ordering
-        let cw_line = LineString(vec![a, c, b, a].clone());
+        let cw_line = LineString::from(vec![a.0, c.0, b.0, a.0]);
         // That triangle, but in counterclockwise ordering
-        let ccw_line = LineString(vec![a, b, c, a].clone());
+        let ccw_line = LineString::from(vec![a.0, b.0, c.0, a.0]);
 
         assert_eq!(cw_line.winding_order(), Some(WindingOrder::Clockwise));
         assert_eq!(cw_line.is_cw(), true);
@@ -193,14 +193,14 @@ mod test {
         assert_eq!(ccw_line.is_cw(), false);
         assert_eq!(ccw_line.is_ccw(), true);
 
-        let cw_points1: Vec<_> = cw_line.points_cw().cloned().collect();
+        let cw_points1: Vec<_> = cw_line.points_cw().collect();
         assert_eq!(cw_points1.len(), 4);
         assert_eq!(cw_points1[0], a);
         assert_eq!(cw_points1[1], c);
         assert_eq!(cw_points1[2], b);
         assert_eq!(cw_points1[3], a);
 
-        let ccw_points1: Vec<_> = cw_line.points_ccw().cloned().collect();
+        let ccw_points1: Vec<_> = cw_line.points_ccw().collect();
         assert_eq!(ccw_points1.len(), 4);
         assert_eq!(ccw_points1[0], a);
         assert_eq!(ccw_points1[1], b);
@@ -209,8 +209,8 @@ mod test {
 
         assert_ne!(cw_points1, ccw_points1);
 
-        let cw_points2: Vec<_> = ccw_line.points_cw().cloned().collect();
-        let ccw_points2: Vec<_> = ccw_line.points_ccw().cloned().collect();
+        let cw_points2: Vec<_> = ccw_line.points_cw().collect();
+        let ccw_points2: Vec<_> = ccw_line.points_ccw().collect();
 
         // cw_line and ccw_line are wound differently, but the ordered winding iterator should have
         // make them similar

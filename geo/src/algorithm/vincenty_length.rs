@@ -12,7 +12,8 @@ impl<T> VincentyLength<T> for Line<T>
 {
     /// The units of the returned value is meters.
     fn vincenty_length(&self) -> Result<T, FailedToConvergeError> {
-        self.start.vincenty_distance(&self.end)
+        let (start, end) = self.points();
+        start.vincenty_distance(&end)
     }
 }
 
@@ -21,8 +22,8 @@ impl<T> VincentyLength<T> for LineString<T>
 {
     fn vincenty_length(&self) -> Result<T, FailedToConvergeError> {
         let mut length = T::zero();
-        for window in self.0.windows(2) {
-            length = length + window[0].vincenty_distance(&window[1])?;
+        for line in self.lines() {
+            length = length + line.vincenty_length()?;
         }
         Ok(length)
     }
