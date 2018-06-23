@@ -1,12 +1,12 @@
+use algorithm::boundingbox::BoundingBox;
+use num_traits::Float;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use num_traits::Float;
-use ::{Line, LineString, MultiLineString, MultiPolygon, Point, Polygon};
-use algorithm::boundingbox::BoundingBox;
+use {Line, LineString, MultiLineString, MultiPolygon, Point, Polygon};
 
-use spade::SpadeFloat;
-use spade::BoundingRect;
 use spade::rtree::RTree;
+use spade::BoundingRect;
+use spade::SpadeFloat;
 
 /// Store triangle information
 // current is the candidate point for removal
@@ -136,15 +136,12 @@ where
     }
     // While there are still points for which the associated triangle
     // has an area below the epsilon
-    loop {
-        let smallest = match pq.pop() {
-            // We've exhausted all the possible triangles, so leave the main loop
-            None => break,
-            // This triangle's area is above epsilon, so skip it
-            Some(ref x) if x.area > *epsilon => continue,
-            //  This triangle's area is below epsilon: eliminate the associated point
-            Some(s) => s,
-        };
+    while let Some(smallest) = pq.pop() {
+        // This triangle's area is above epsilon, so skip it
+        if smallest.area > *epsilon {
+            continue;
+        }
+        //  This triangle's area is below epsilon: eliminate the associated point
         let (left, right) = adjacent[smallest.current];
         // A point in this triangle has been removed since this VScore
         // was created, so skip it
@@ -221,7 +218,12 @@ where
     // Simplify interior rings, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
-            rings.push(visvalingam_preserve(geomtype, &ring.clone().into_points(), epsilon, &mut tree))
+            rings.push(visvalingam_preserve(
+                geomtype,
+                &ring.clone().into_points(),
+                epsilon,
+                &mut tree,
+            ))
         }
     }
     rings
@@ -275,15 +277,10 @@ where
     }
     // While there are still points for which the associated triangle
     // has an area below the epsilon
-    loop {
-        let mut smallest = match pq.pop() {
-            // We've exhausted all the possible triangles, so leave the main loop
-            None => break,
-            // This triangle's area is above epsilon, so skip it
-            Some(ref x) if x.area > *epsilon => continue,
-            //  This triangle's area is below epsilon: eliminate the associated point
-            Some(s) => s,
-        };
+    while let Some(mut smallest) = pq.pop() {
+        if smallest.area > *epsilon {
+            continue;
+        }
         if counter <= geomtype.initial_min {
             // we can't remove any more points no matter what
             break;
@@ -344,8 +341,14 @@ where
                 intersector: false,
             };
             // add re-computed line segments to the tree
-            tree.insert(Line::new(orig[ai as usize].0, orig[current_point as usize].0));
-            tree.insert(Line::new(orig[current_point as usize].0, orig[bi as usize].0));
+            tree.insert(Line::new(
+                orig[ai as usize].0,
+                orig[current_point as usize].0,
+            ));
+            tree.insert(Line::new(
+                orig[current_point as usize].0,
+                orig[bi as usize].0,
+            ));
             // push re-computed triangle onto heap
             pq.push(new_triangle);
         }
@@ -393,12 +396,18 @@ where
     candidates.iter().any(|c| {
         // triangle start point, end point
         let (ca, cb) = c.points();
-        if ca != point_a && ca != point_c && cb != point_a && cb != point_c
+        if ca != point_a
+            && ca != point_c
+            && cb != point_a
+            && cb != point_c
             && cartesian_intersect(ca, cb, point_a, point_c)
         {
             true
         } else {
-            ca != point_b && ca != point_c && cb != point_b && cb != point_c
+            ca != point_b
+                && ca != point_c
+                && cb != point_b
+                && cb != point_c
                 && cartesian_intersect(ca, cb, point_b, point_c)
         }
     })
@@ -609,9 +618,11 @@ where
 
 #[cfg(test)]
 mod test {
-    use ::{LineString, MultiLineString, MultiPolygon, Point, Polygon};
-    use super::{cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, GeomType, SimplifyVW,
-                SimplifyVWPreserve};
+    use super::{
+        cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, GeomType, SimplifyVW,
+        SimplifyVWPreserve,
+    };
+    use {LineString, MultiLineString, MultiPolygon, Point, Polygon};
 
     #[test]
     fn visvalingam_test() {
@@ -847,36 +858,26 @@ mod test {
 
     #[test]
     fn multipolygon() {
-        let mpoly = MultiPolygon(vec![
-            Polygon::new(
-                LineString::from(vec![
-                    (0., 0.),
-                    (0., 10.),
-                    (5., 11.),
-                    (10., 10.),
-                    (10., 0.),
-                    (0., 0.),
-                ]),
-                vec![],
-            ),
-        ]);
+        let mpoly = MultiPolygon(vec![Polygon::new(
+            LineString::from(vec![
+                (0., 0.),
+                (0., 10.),
+                (5., 11.),
+                (10., 10.),
+                (10., 0.),
+                (0., 0.),
+            ]),
+            vec![],
+        )]);
 
         let mpoly2 = mpoly.simplifyvw(&10.);
 
         assert_eq!(
             mpoly2,
-            MultiPolygon(vec![
-                Polygon::new(
-                    LineString::from(vec![
-                        (0., 0.),
-                        (0., 10.),
-                        (10., 10.),
-                        (10., 0.),
-                        (0., 0.),
-                    ]),
-                    vec![],
-                ),
-            ])
+            MultiPolygon(vec![Polygon::new(
+                LineString::from(vec![(0., 0.), (0., 10.), (10., 10.), (10., 0.), (0., 0.)]),
+                vec![],
+            )])
         );
     }
 }
