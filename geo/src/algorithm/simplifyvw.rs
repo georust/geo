@@ -382,7 +382,6 @@ where
     T: Float + SpadeFloat,
 {
     let point_a = orig[triangle.left];
-    let point_b = orig[triangle.current];
     let point_c = orig[triangle.right];
     let bbox = LineString::from(vec![
         orig[triangle.left],
@@ -396,20 +395,11 @@ where
     candidates.iter().any(|c| {
         // triangle start point, end point
         let (ca, cb) = c.points();
-        if ca != point_a
+        ca != point_a
             && ca != point_c
             && cb != point_a
             && cb != point_c
             && cartesian_intersect(ca, cb, point_a, point_c)
-        {
-            true
-        } else {
-            ca != point_b
-                && ca != point_c
-                && cb != point_b
-                && cb != point_c
-                && cartesian_intersect(ca, cb, point_b, point_c)
-        }
     })
 }
 
@@ -762,7 +752,7 @@ mod test {
             geomtype: GeomType::Line,
         };
         let simplified = vwp_wrapper(&gt, &points_ls.into(), None, &0.0005);
-        assert_eq!(simplified[0].len(), 3276);
+        assert_eq!(simplified[0].len(), 3277);
     }
     #[test]
     fn visvalingam_test_long() {
