@@ -1,6 +1,6 @@
-use num_traits::Float;
-use ::{LineString, MultiLineString, MultiPolygon, Point, Polygon, Line};
 use algorithm::euclidean_distance::EuclideanDistance;
+use num_traits::Float;
+use {Line, LineString, MultiLineString, MultiPolygon, Point, Polygon};
 
 // Ramer–Douglas-Peucker line simplification algorithm
 fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
@@ -74,9 +74,7 @@ where
     T: Float,
 {
     fn simplify(&self, epsilon: &T) -> LineString<T> {
-        LineString::from(
-            rdp(&self.clone().into_points(), epsilon)
-        )
+        LineString::from(rdp(&self.clone().into_points(), epsilon))
     }
 }
 
@@ -191,13 +189,7 @@ mod test {
         assert_eq!(
             poly2,
             Polygon::new(
-                LineString::from(vec![
-                    (0., 0.),
-                    (0., 10.),
-                    (10., 10.),
-                    (10., 0.),
-                    (0., 0.),
-                ]),
+                LineString::from(vec![(0., 0.), (0., 10.), (10., 10.), (10., 0.), (0., 0.)]),
                 vec![]
             )
         );
@@ -222,13 +214,7 @@ mod test {
         assert_eq!(
             mpoly2,
             MultiPolygon(vec![Polygon::new(
-                LineString::from(vec![
-                    (0., 0.),
-                    (0., 10.),
-                    (10., 10.),
-                    (10., 0.),
-                    (0., 0.),
-                ]),
+                LineString::from(vec![(0., 0.), (0., 10.), (10., 10.), (10., 0.), (0., 0.)]),
                 vec![],
             )])
         );

@@ -1,4 +1,7 @@
-use ::{CoordinateType, Coordinate, Bbox, MultiPoint, Line, LineString, MultiLineString, Polygon, MultiPolygon};
+use {
+    Bbox, Coordinate, CoordinateType, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
+    Polygon,
+};
 
 /// Calculation of the bounding box of a geometry.
 
@@ -45,7 +48,7 @@ where
 fn get_bbox<I, T>(collection: I) -> Option<Bbox<T>>
 where
     T: CoordinateType,
-    I: IntoIterator<Item = Coordinate<T>>
+    I: IntoIterator<Item = Coordinate<T>>,
 {
     let mut iter = collection.into_iter();
     if let Some(pnt) = iter.next() {
@@ -89,21 +92,13 @@ where
     fn bbox(&self) -> Self::Output {
         let a = self.start;
         let b = self.end;
-        let (xmin, xmax) = if a.x <= b.x {
-            (a.x, b.x)
-        } else {
-            (b.x, a.x)
-        };
-        let (ymin, ymax) = if a.y <= b.y {
-            (a.y, b.y)
-        } else {
-            (b.y, a.y)
-        };
+        let (xmin, xmax) = if a.x <= b.x { (a.x, b.x) } else { (b.x, a.x) };
+        let (ymin, ymax) = if a.y <= b.y { (a.y, b.y) } else { (b.y, a.y) };
         Bbox {
             xmin,
             xmax,
             ymin,
-            ymax
+            ymax,
         }
     }
 }
@@ -161,15 +156,21 @@ where
     /// Return the BoundingBox for a MultiPolygon
     ///
     fn bbox(&self) -> Self::Output {
-        get_bbox(self.0.iter().flat_map(|poly| (poly.exterior).0.iter().map(|c| *c)))
+        get_bbox(
+            self.0
+                .iter()
+                .flat_map(|poly| (poly.exterior).0.iter().map(|c| *c)),
+        )
     }
 }
 
 #[cfg(test)]
 mod test {
-    use ::{Bbox, Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
-                Polygon};
     use algorithm::boundingbox::BoundingBox;
+    use {
+        Bbox, Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
+        Polygon,
+    };
 
     #[test]
     fn empty_linestring_test() {
@@ -230,13 +231,7 @@ mod test {
     }
     #[test]
     fn polygon_test() {
-        let linestring = LineString::from(vec![
-            (0., 0.),
-            (5., 0.),
-            (5., 6.),
-            (0., 6.),
-            (0., 0.),
-        ]);
+        let linestring = LineString::from(vec![(0., 0.), (5., 0.), (5., 6.), (0., 6.), (0., 0.)]);
         let line_bbox = linestring.bbox().unwrap();
         let poly = Polygon::new(linestring, Vec::new());
         assert_eq!(line_bbox, poly.bbox().unwrap());
@@ -267,14 +262,8 @@ mod test {
     }
     #[test]
     fn line_test() {
-        let line1 = Line::new(
-            Coordinate { x: 0., y: 1. },
-            Coordinate { x: 2., y: 3. },
-        );
-        let line2 = Line::new(
-            Coordinate { x: 2., y: 3. },
-            Coordinate { x: 0., y: 1. },
-        );
+        let line1 = Line::new(Coordinate { x: 0., y: 1. }, Coordinate { x: 2., y: 3. });
+        let line2 = Line::new(Coordinate { x: 2., y: 3. }, Coordinate { x: 0., y: 1. });
         assert_eq!(
             line1.bbox(),
             Bbox {

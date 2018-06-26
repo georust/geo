@@ -1,7 +1,7 @@
-use std::iter::Sum;
 use num_traits::Float;
+use std::iter::Sum;
 
-use ::{Line, LineString, MultiLineString};
+use {Line, LineString, MultiLineString};
 
 /// Calculation of the length
 
@@ -39,9 +39,7 @@ where
     T: Float + Sum,
 {
     fn euclidean_length(&self) -> T {
-        self.lines()
-            .map(|line| line.euclidean_length())
-            .sum()
+        self.lines().map(|line| line.euclidean_length()).sum()
     }
 }
 
@@ -52,16 +50,14 @@ where
     fn euclidean_length(&self) -> T {
         self.0
             .iter()
-            .fold(T::zero(), |total, line| {
-                total + line.euclidean_length()
-            })
+            .fold(T::zero(), |total, line| total + line.euclidean_length())
     }
 }
 
 #[cfg(test)]
 mod test {
-    use ::{Coordinate, Line, LineString, MultiLineString};
     use algorithm::euclidean_length::EuclideanLength;
+    use {Coordinate, Line, LineString, MultiLineString};
 
     #[test]
     fn empty_linestring_test() {
@@ -76,7 +72,12 @@ mod test {
     #[test]
     fn linestring_test() {
         let linestring = LineString::from(vec![
-            (1., 1.), (7., 1.), (8., 1.), (9., 1.), (10., 1.), (11., 1.)
+            (1., 1.),
+            (7., 1.),
+            (8., 1.),
+            (9., 1.),
+            (10., 1.),
+            (11., 1.),
         ]);
         assert_eq!(10.0_f64, linestring.euclidean_length());
     }

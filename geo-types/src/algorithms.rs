@@ -64,16 +64,8 @@ where
     fn bbox(&self) -> Self::Output {
         let a = self.start;
         let b = self.end;
-        let (xmin, xmax) = if a.x <= b.x {
-            (a.x, b.x)
-        } else {
-            (b.x, a.x)
-        };
-        let (ymin, ymax) = if a.y <= b.y {
-            (a.y, b.y)
-        } else {
-            (b.y, a.y)
-        };
+        let (xmin, xmax) = if a.x <= b.x { (a.x, b.x) } else { (b.x, a.x) };
+        let (ymin, ymax) = if a.y <= b.y { (a.y, b.y) } else { (b.y, a.y) };
         Bbox {
             xmin,
             xmax,

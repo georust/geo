@@ -1,4 +1,4 @@
-use ::{CoordinateType, MultiPolygon, Polygon};
+use {CoordinateType, MultiPolygon, Polygon};
 
 use algorithm::winding_order::{Winding, WindingOrder};
 
@@ -70,11 +70,16 @@ fn orient<T>(poly: &Polygon<T>, direction: Direction) -> Polygon<T>
 where
     T: CoordinateType,
 {
-    let interiors = poly.interiors.iter().map(|l| l.clone_to_winding_order(
-            match direction {
+    let interiors = poly
+        .interiors
+        .iter()
+        .map(|l| {
+            l.clone_to_winding_order(match direction {
                 Direction::Default => WindingOrder::Clockwise,
                 Direction::Reversed => WindingOrder::CounterClockwise,
-            })).collect();
+            })
+        })
+        .collect();
 
     let ext_ring = poly.exterior.clone_to_winding_order(match direction {
         Direction::Default => WindingOrder::CounterClockwise,
@@ -86,15 +91,18 @@ where
 
 #[cfg(test)]
 mod test {
-    use ::{LineString, Polygon};
     use super::*;
+    use {LineString, Polygon};
     #[test]
     fn test_polygon_orientation() {
         // a diamond shape, oriented clockwise outside
         let points_ext = vec![(1.0, 0.0), (0.0, 1.0), (1.0, 2.0), (2.0, 1.0), (1.0, 0.0)];
         // counter-clockwise interior
         let points_int = vec![(1.0, 0.5), (1.5, 1.0), (1.0, 1.5), (0.5, 1.0), (1.0, 0.5)];
-        let poly1 = Polygon::new(LineString::from(points_ext), vec![LineString::from(points_int)]);
+        let poly1 = Polygon::new(
+            LineString::from(points_ext),
+            vec![LineString::from(points_int)],
+        );
         // a diamond shape, oriented counter-clockwise outside,
         let oriented_ext = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
         let oriented_ext_ls = LineString::from(oriented_ext);

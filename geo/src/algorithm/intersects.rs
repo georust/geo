@@ -89,8 +89,10 @@ where
             let (other_start, other_end) = line.points();
             // lines are parallel
             // return true iff at least one endpoint intersects the other line
-            self_start.intersects(line) || self_end.intersects(line) ||
-                other_start.intersects(self) || other_end.intersects(self)
+            self_start.intersects(line)
+                || self_end.intersects(line)
+                || other_start.intersects(self)
+                || other_end.intersects(self)
         } else {
             let s = (c1 * b2 - c2 * b1) / d;
             let t = (a1 * c2 - a2 * c1) / d;
@@ -122,10 +124,10 @@ where
     T: Float,
 {
     fn intersects(&self, p: &Polygon<T>) -> bool {
-        p.exterior.intersects(self) ||
-            p.interiors.iter().any(|inner| inner.intersects(self)) ||
-            p.contains(&self.start_point()) ||
-            p.contains(&self.end_point())
+        p.exterior.intersects(self)
+            || p.interiors.iter().any(|inner| inner.intersects(self))
+            || p.contains(&self.start_point())
+            || p.contains(&self.end_point())
     }
 }
 
@@ -153,13 +155,13 @@ where
                 if u_b == T::zero() {
                     continue;
                 }
-                let ua_t = b.dx() * (a.start.y - b.start.y)
-                    - b.dy() * (a.start.x - b.start.x);
-                let ub_t = a.dx() * (a.start.y - b.start.y)
-                    - a.dy() * (a.start.x - b.start.x);
+                let ua_t = b.dx() * (a.start.y - b.start.y) - b.dy() * (a.start.x - b.start.x);
+                let ub_t = a.dx() * (a.start.y - b.start.y) - a.dy() * (a.start.x - b.start.x);
                 let u_a = ua_t / u_b;
                 let u_b = ub_t / u_b;
-                if (T::zero() <= u_a) && (u_a <= T::one()) && (T::zero() <= u_b)
+                if (T::zero() <= u_a)
+                    && (u_a <= T::one())
+                    && (T::zero() <= u_b)
                     && (u_b <= T::one())
                 {
                     return true;
@@ -177,7 +179,8 @@ where
     fn intersects(&self, linestring: &LineString<T>) -> bool {
         // line intersects inner or outer polygon edge
         if self.exterior.intersects(linestring)
-            || self.interiors
+            || self
+                .interiors
                 .iter()
                 .any(|inner| inner.intersects(linestring))
         {
@@ -487,13 +490,7 @@ mod test {
         //  └──────────────────────┘
         // (0,0)               (12,0)
         let poly = Polygon::new(
-            LineString::from(vec![
-                (0., 0.),
-                (12., 0.),
-                (12., 8.),
-                (0., 8.),
-                (0., 0.),
-            ]),
+            LineString::from(vec![(0., 0.), (12., 0.), (12., 8.), (0., 8.), (0., 0.)]),
             vec![LineString::from(vec![
                 (7., 4.),
                 (11., 4.),
@@ -621,16 +618,8 @@ mod test {
     #[test]
     fn line_intersects_linestring_test() {
         let line0 = Line::from([(0., 0.), (3., 4.)]);
-        let linestring0 = LineString::from(vec![
-            (0., 1.),
-            (1., 0.),
-            (2., 0.),
-        ]);
-        let linestring1 = LineString::from(vec![
-            (0.5, 0.2),
-            (1., 0.),
-            (2., 0.),
-        ]);
+        let linestring0 = LineString::from(vec![(0., 1.), (1., 0.), (2., 0.)]);
+        let linestring1 = LineString::from(vec![(0.5, 0.2), (1., 0.), (2., 0.)]);
         assert!(line0.intersects(&linestring0));
         assert!(!line0.intersects(&linestring1));
         assert!(linestring0.intersects(&line0));
@@ -640,31 +629,16 @@ mod test {
     fn line_intersects_polygon_test() {
         let line0 = Line::from([(0.5, 0.5), (2., 1.)]);
         let poly0 = Polygon::new(
-            LineString::from(vec![
-                (0., 0.),
-                (1., 2.),
-                (1., 0.),
-                (0., 0.),
-            ]),
+            LineString::from(vec![(0., 0.), (1., 2.), (1., 0.), (0., 0.)]),
             vec![],
         );
         let poly1 = Polygon::new(
-            LineString::from(vec![
-                (1., -1.),
-                (2., -1.),
-                (2., -2.),
-                (1., -1.),
-            ]),
+            LineString::from(vec![(1., -1.), (2., -1.), (2., -2.), (1., -1.)]),
             vec![],
         );
         // line contained in the hole
         let poly2 = Polygon::new(
-            LineString::from(vec![
-                (-1., -1.),
-                (-1., 10.),
-                (10., -1.),
-                (-1., -1.),
-            ]),
+            LineString::from(vec![(-1., -1.), (-1., 10.), (10., -1.), (-1., -1.)]),
             vec![LineString::from(vec![
                 (0., 0.),
                 (3., 4.),

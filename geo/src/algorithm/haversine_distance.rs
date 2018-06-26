@@ -1,5 +1,5 @@
 use num_traits::{Float, FromPrimitive};
-use ::{Point, MEAN_EARTH_RADIUS};
+use {Point, MEAN_EARTH_RADIUS};
 
 /// Returns the Haversine distance between two geometries.
 
@@ -43,8 +43,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use ::Point;
     use algorithm::haversine_distance::HaversineDistance;
+    use Point;
 
     #[test]
     fn distance1_test() {

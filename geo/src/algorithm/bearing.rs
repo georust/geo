@@ -1,5 +1,5 @@
 use num_traits::{Float, FromPrimitive};
-use ::Point;
+use Point;
 
 /// Returns the bearing to another Point in degrees.
 ///
@@ -29,7 +29,8 @@ pub trait Bearing<T: Float> {
 }
 
 impl<T> Bearing<T> for Point<T>
-    where T: Float + FromPrimitive
+where
+    T: Float + FromPrimitive,
 {
     fn bearing(&self, point: Point<T>) -> T {
         let (lng_a, lat_a) = (self.x().to_radians(), self.y().to_radians());

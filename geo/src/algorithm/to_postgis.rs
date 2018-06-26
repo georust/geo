@@ -1,5 +1,8 @@
-use ::{Coordinate, MultiPoint, Line, Point, LineString, MultiLineString, MultiPolygon, Polygon, Geometry, GeometryCollection};
 use postgis::ewkb;
+use {
+    Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    MultiPolygon, Point, Polygon,
+};
 
 /// Converts geometry to a PostGIS type.
 ///
@@ -31,7 +34,7 @@ impl ToPostgis<ewkb::LineString> for Line<f64> {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::LineString {
         let points = vec![
             self.start_point().to_postgis_with_srid(srid),
-            self.end_point().to_postgis_with_srid(srid)
+            self.end_point().to_postgis_with_srid(srid),
         ];
         ewkb::LineString { points, srid }
     }
@@ -49,7 +52,9 @@ macro_rules! to_postgis_impl {
     ($from:ident, $to:path, $name:ident) => {
         impl ToPostgis<$to> for $from<f64> {
             fn to_postgis_with_srid(&self, srid: Option<i32>) -> $to {
-                let $name = self.0.iter()
+                let $name = self
+                    .0
+                    .iter()
                     .map(|x| x.to_postgis_with_srid(srid))
                     .collect();
                 $to { $name, srid }
@@ -67,12 +72,22 @@ impl ToPostgis<ewkb::Geometry> for Geometry<f64> {
         match *self {
             Geometry::Point(ref p) => ewkb::GeometryT::Point(p.to_postgis_with_srid(srid)),
             Geometry::Line(ref p) => ewkb::GeometryT::LineString(p.to_postgis_with_srid(srid)),
-            Geometry::LineString(ref p) => ewkb::GeometryT::LineString(p.to_postgis_with_srid(srid)),
+            Geometry::LineString(ref p) => {
+                ewkb::GeometryT::LineString(p.to_postgis_with_srid(srid))
+            }
             Geometry::Polygon(ref p) => ewkb::GeometryT::Polygon(p.to_postgis_with_srid(srid)),
-            Geometry::MultiPoint(ref p) => ewkb::GeometryT::MultiPoint(p.to_postgis_with_srid(srid)),
-            Geometry::MultiLineString(ref p) => ewkb::GeometryT::MultiLineString(p.to_postgis_with_srid(srid)),
-            Geometry::MultiPolygon(ref p) => ewkb::GeometryT::MultiPolygon(p.to_postgis_with_srid(srid)),
-            Geometry::GeometryCollection(ref p) => ewkb::GeometryT::GeometryCollection(p.to_postgis_with_srid(srid)),
+            Geometry::MultiPoint(ref p) => {
+                ewkb::GeometryT::MultiPoint(p.to_postgis_with_srid(srid))
+            }
+            Geometry::MultiLineString(ref p) => {
+                ewkb::GeometryT::MultiLineString(p.to_postgis_with_srid(srid))
+            }
+            Geometry::MultiPolygon(ref p) => {
+                ewkb::GeometryT::MultiPolygon(p.to_postgis_with_srid(srid))
+            }
+            Geometry::GeometryCollection(ref p) => {
+                ewkb::GeometryT::GeometryCollection(p.to_postgis_with_srid(srid))
+            }
         }
     }
 }

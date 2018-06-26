@@ -3,8 +3,8 @@ extern crate criterion;
 extern crate geo;
 
 use criterion::Criterion;
-use geo::{LineString, Polygon};
 use geo::prelude::*;
+use geo::{LineString, Polygon};
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("extremes f32", |bencher| {

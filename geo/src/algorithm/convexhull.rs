@@ -1,7 +1,7 @@
-use num_traits::Float;
-use ::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use algorithm::euclidean_distance::EuclideanDistance;
+use num_traits::Float;
 use std::mem;
+use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
     let tmp = mem::replace(slice, &mut []);
@@ -158,7 +158,10 @@ where
     T: Float,
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString::from(quick_hull(&mut self.exterior.clone().into_points())), vec![])
+        Polygon::new(
+            LineString::from(quick_hull(&mut self.exterior.clone().into_points())),
+            vec![],
+        )
     }
 }
 
@@ -167,7 +170,8 @@ where
     T: Float,
 {
     fn convex_hull(&self) -> Polygon<T> {
-        let mut aggregated: Vec<Point<T>> = self.0
+        let mut aggregated: Vec<Point<T>> = self
+            .0
             .iter()
             .flat_map(|elem| elem.exterior.0.iter().map(|c| Point(*c)))
             .collect();
@@ -180,7 +184,10 @@ where
     T: Float,
 {
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(LineString::from(quick_hull(&mut self.clone().into_points())), vec![])
+        Polygon::new(
+            LineString::from(quick_hull(&mut self.clone().into_points())),
+            vec![],
+        )
     }
 }
 
@@ -189,7 +196,8 @@ where
     T: Float,
 {
     fn convex_hull(&self) -> Polygon<T> {
-        let mut aggregated: Vec<Point<T>> = self.0
+        let mut aggregated: Vec<Point<T>> = self
+            .0
             .iter()
             .flat_map(|elem| elem.clone().into_points())
             .collect();
@@ -208,8 +216,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use ::{Point, Coordinate};
     use super::*;
+    use {Coordinate, Point};
 
     #[test]
     fn quick_hull_test1() {
@@ -369,11 +377,7 @@ mod test {
     #[test]
     fn quick_hull_multilinestring_test() {
         let v1 = LineString::from(vec![(0.0, 0.0), (1.0, 10.0)]);
-        let v2 = LineString::from(vec![
-            (1.0, 10.0),
-            (2.0, 0.0),
-            (3.0, 1.0),
-        ]);
+        let v2 = LineString::from(vec![(1.0, 10.0), (2.0, 0.0), (3.0, 1.0)]);
         let mls = MultiLineString(vec![v1, v2]);
         let correct = vec![
             Coordinate::from((2.0, 0.0)),
@@ -387,18 +391,8 @@ mod test {
     }
     #[test]
     fn quick_hull_multipolygon_test() {
-        let ls1 = LineString::from(vec![
-            (0.0, 0.0),
-            (1.0, 10.0),
-            (2.0, 0.0),
-            (0.0, 0.0),
-        ]);
-        let ls2 = LineString::from(vec![
-            (3.0, 0.0),
-            (4.0, 10.0),
-            (5.0, 0.0),
-            (3.0, 0.0),
-        ]);
+        let ls1 = LineString::from(vec![(0.0, 0.0), (1.0, 10.0), (2.0, 0.0), (0.0, 0.0)]);
+        let ls2 = LineString::from(vec![(3.0, 0.0), (4.0, 10.0), (5.0, 0.0), (3.0, 0.0)]);
         let p1 = Polygon::new(ls1, vec![]);
         let p2 = Polygon::new(ls2, vec![]);
         let mp = MultiPolygon(vec![p1, p2]);

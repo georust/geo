@@ -1,14 +1,15 @@
 use num_traits::{Float, FromPrimitive};
 
-use ::{Line, LineString, MultiLineString};
-use algorithm::vincenty_distance::{VincentyDistance, FailedToConvergeError};
+use algorithm::vincenty_distance::{FailedToConvergeError, VincentyDistance};
+use {Line, LineString, MultiLineString};
 
 pub trait VincentyLength<T, RHS = Self> {
     fn vincenty_length(&self) -> Result<T, FailedToConvergeError>;
 }
 
 impl<T> VincentyLength<T> for Line<T>
-    where T: Float + FromPrimitive
+where
+    T: Float + FromPrimitive,
 {
     /// The units of the returned value is meters.
     fn vincenty_length(&self) -> Result<T, FailedToConvergeError> {
@@ -18,7 +19,8 @@ impl<T> VincentyLength<T> for Line<T>
 }
 
 impl<T> VincentyLength<T> for LineString<T>
-    where T: Float + FromPrimitive
+where
+    T: Float + FromPrimitive,
 {
     fn vincenty_length(&self) -> Result<T, FailedToConvergeError> {
         let mut length = T::zero();
@@ -30,7 +32,8 @@ impl<T> VincentyLength<T> for LineString<T>
 }
 
 impl<T> VincentyLength<T> for MultiLineString<T>
-    where T: Float + FromPrimitive
+where
+    T: Float + FromPrimitive,
 {
     fn vincenty_length(&self) -> Result<T, FailedToConvergeError> {
         let mut length = T::zero();
