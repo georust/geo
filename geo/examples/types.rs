@@ -1,11 +1,11 @@
 extern crate geo;
 
-use geo::{Point, Coordinate};
+use geo::{Coordinate, Point};
 
 fn main() {
     let c = Coordinate {
         x: 40.02f64,
-        y: 116.34
+        y: 116.34,
     };
 
     let p = Point(c);

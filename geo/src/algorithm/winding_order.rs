@@ -1,8 +1,11 @@
+use geo_types::line_string::PointsIter;
 use std::iter::Rev;
 use {CoordinateType, LineString, Point};
-use geo_types::line_string::PointsIter;
 
-pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T where T: CoordinateType {
+pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
+where
+    T: CoordinateType,
+{
     if linestring.0.is_empty() || linestring.0.len() == 1 {
         return T::zero();
     }
@@ -62,7 +65,9 @@ pub enum WindingOrder {
 }
 
 /// Calculate, and work with, the winding order
-pub trait Winding<T> where T: CoordinateType
+pub trait Winding<T>
+where
+    T: CoordinateType,
 {
     /// Return the winding order of this object
     fn winding_order(&self) -> Option<WindingOrder>;
@@ -96,7 +101,10 @@ pub trait Winding<T> where T: CoordinateType
     fn make_ccw_winding(&mut self);
 
     /// Return a clone of this object, but in the specified winding order
-    fn clone_to_winding_order(&self, winding_order: WindingOrder) -> Self where Self: Sized+Clone {
+    fn clone_to_winding_order(&self, winding_order: WindingOrder) -> Self
+    where
+        Self: Sized + Clone,
+    {
         let mut new: Self = self.clone();
         new.make_winding_order(winding_order);
         new
@@ -109,14 +117,12 @@ pub trait Winding<T> where T: CoordinateType
             WindingOrder::CounterClockwise => self.make_ccw_winding(),
         }
     }
-
 }
 
-
 impl<T> Winding<T> for LineString<T>
-    where T: CoordinateType
+where
+    T: CoordinateType,
 {
-
     /// Returns the winding order of this line
     /// None if the winding order is undefined.
     fn winding_order(&self) -> Option<WindingOrder> {
@@ -159,7 +165,7 @@ impl<T> Winding<T> for LineString<T>
     fn make_cw_winding(&mut self) {
         if let Some(WindingOrder::CounterClockwise) = self.winding_order() {
             self.0.reverse();
-         }
+        }
     }
 
     /// Change this line's points so they are in counterclockwise winding order
@@ -189,7 +195,10 @@ mod test {
         assert_eq!(cw_line.winding_order(), Some(WindingOrder::Clockwise));
         assert_eq!(cw_line.is_cw(), true);
         assert_eq!(cw_line.is_ccw(), false);
-        assert_eq!(ccw_line.winding_order(), Some(WindingOrder::CounterClockwise));
+        assert_eq!(
+            ccw_line.winding_order(),
+            Some(WindingOrder::CounterClockwise)
+        );
         assert_eq!(ccw_line.is_cw(), false);
         assert_eq!(ccw_line.is_ccw(), true);
 
@@ -227,9 +236,11 @@ mod test {
         // test make_counterclockwise_winding
         let mut new_line2 = cw_line.clone();
         new_line2.make_ccw_winding();
-        assert_eq!(new_line2.winding_order(), Some(WindingOrder::CounterClockwise));
+        assert_eq!(
+            new_line2.winding_order(),
+            Some(WindingOrder::CounterClockwise)
+        );
         assert_ne!(new_line2, cw_line);
         assert_eq!(new_line2, ccw_line);
-
     }
 }

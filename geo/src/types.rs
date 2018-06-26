@@ -2,7 +2,7 @@ use std::ops::Add;
 use std::ops::AddAssign;
 
 use num_traits::{Float, ToPrimitive};
-use ::{CoordinateType, Point};
+use {CoordinateType, Point};
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 

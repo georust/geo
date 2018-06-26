@@ -45,11 +45,10 @@ impl<T: CoordinateType> From<Point<T>> for Coordinate<T> {
     }
 }
 
-impl<T>Coordinate<T>
+impl<T> Coordinate<T>
 where
     T: CoordinateType + ToPrimitive,
 {
-
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the coordinate.
     ///
     /// # Examples

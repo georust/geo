@@ -3,9 +3,9 @@ extern crate criterion;
 extern crate geo;
 
 use criterion::Criterion;
-use geo::LineString;
-use geo::simplifyvw::SimplifyVWPreserve;
 use geo::prelude::*;
+use geo::simplifyvw::SimplifyVWPreserve;
+use geo::LineString;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("simplify vw simple f32", |bencher| {

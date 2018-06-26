@@ -1,6 +1,6 @@
-use std::iter;
 use num_traits::Float;
 use prelude::*;
+use std::iter;
 use {Closest, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 /// Find the closest point between two objects, where the other object is
@@ -186,7 +186,9 @@ mod tests {
             (100.0, 0.0),
             (50.0, 50.0),
             (1234.567, -987.6543),
-        ].into_iter().map(Point::from).collect()
+        ].into_iter()
+            .map(Point::from)
+            .collect()
     }
 
     /// Throw a bunch of random points at two `ClosestPoint` implementations
@@ -205,13 +207,9 @@ mod tests {
             let got_from_right = right.closest_point(&p);
 
             assert_eq!(
-                got_from_left,
-                got_from_right,
+                got_from_left, got_from_right,
                 "{}: {:?} got {:?} and {:?}",
-                i,
-                p,
-                got_from_left,
-                got_from_right
+                i, p, got_from_left, got_from_right
             );
         }
     }
@@ -229,7 +227,7 @@ mod tests {
     #[test]
     fn line_string_with_single_element_behaves_like_line() {
         let points = vec![(0.0, 0.0), (100.0, 100.0)];
-        let line_string =  LineString::<f32>::from(points.clone());
+        let line_string = LineString::<f32>::from(points.clone());
         let line = Line::new(points[0], points[1]);
 
         fuzz_two_impls(line, line_string);

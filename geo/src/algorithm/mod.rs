@@ -51,9 +51,9 @@ pub mod simplifyvw;
 pub mod to_postgis;
 /// Translates a geometry along the given offsets.
 pub mod translate;
-/// Calculate and work with the winding order of Linestrings.
-pub mod winding_order;
 /// Calculate the Vincenty distance between Points.
 pub mod vincenty_distance;
 /// Calculate the Vincenty length of a LineString.
 pub mod vincenty_length;
+/// Calculate and work with the winding order of Linestrings.
+pub mod winding_order;

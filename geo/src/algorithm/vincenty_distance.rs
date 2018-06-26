@@ -5,8 +5,8 @@
 // - https://github.com/janantala/GPS-distance/blob/master/java/Distance.java
 
 use num_traits::{Float, FromPrimitive};
-use {Point, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS, EARTH_FLATTENING};
 use std::{error, fmt};
+use {Point, EARTH_FLATTENING, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS};
 
 pub trait VincentyDistance<T, Rhs = Self> {
     fn vincenty_distance(&self, rhs: &Rhs) -> Result<T, FailedToConvergeError>;
@@ -75,7 +75,8 @@ where
             lambdaP = lambda;
             lambda = L + (t_1 - C) * f * sinAlpha
                 * (sigma
-                    + C * sinSigma
+                    + C
+                        * sinSigma
                         * (cos2SigmaM + C * cosSigma * (-t_1 + t_2 * cos2SigmaM * cos2SigmaM)));
 
             if (lambda - lambdaP).abs() <= T::from(1e-12).unwrap() {
@@ -101,7 +102,9 @@ where
             * (cos2SigmaM
                 + B / t_4
                     * (cosSigma * (-t_1 + t_2 * cos2SigmaM * cos2SigmaM)
-                        - B / t_6 * cos2SigmaM * (-t_3 + t_4 * sinSigma * sinSigma)
+                        - B / t_6
+                            * cos2SigmaM
+                            * (-t_3 + t_4 * sinSigma * sinSigma)
                             * (-t_3 + t_4 * cos2SigmaM * cos2SigmaM)));
 
         let s = b * A * (sigma - deltaSigma);

@@ -1,8 +1,7 @@
-
 use num_traits::{Float, FromPrimitive};
 
-use ::{Line, LineString, MultiLineString};
 use algorithm::haversine_distance::HaversineDistance;
+use {Line, LineString, MultiLineString};
 
 /// Calculation of the length
 
@@ -27,7 +26,8 @@ pub trait HaversineLength<T, RHS = Self> {
 }
 
 impl<T> HaversineLength<T> for Line<T>
-    where T: Float + FromPrimitive
+where
+    T: Float + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
         let (start, end) = self.points();
@@ -36,18 +36,23 @@ impl<T> HaversineLength<T> for Line<T>
 }
 
 impl<T> HaversineLength<T> for LineString<T>
-    where T: Float + FromPrimitive
+where
+    T: Float + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
-        self.lines()
-            .fold(T::zero(), |total_length, line| total_length + line.haversine_length())
+        self.lines().fold(T::zero(), |total_length, line| {
+            total_length + line.haversine_length()
+        })
     }
 }
 
 impl<T> HaversineLength<T> for MultiLineString<T>
-    where T: Float + FromPrimitive
+where
+    T: Float + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
-        self.0.iter().fold(T::zero(), |total, line| total + line.haversine_length())
+        self.0
+            .iter()
+            .fold(T::zero(), |total, line| total + line.haversine_length())
     }
 }

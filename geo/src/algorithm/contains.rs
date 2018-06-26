@@ -60,10 +60,12 @@ where
             return true;
         }
         for line in self.lines() {
-            if ((line.start.y == line.end.y) && (line.start.y == p.y())
+            if ((line.start.y == line.end.y)
+                && (line.start.y == p.y())
                 && (p.x() > line.start.x.min(line.end.x))
                 && (p.x() < line.start.x.max(line.end.x)))
-                || ((line.start.x == line.end.x) && (line.start.x == p.x())
+                || ((line.start.x == line.end.x)
+                    && (line.start.x == p.x())
                     && (p.y() > line.start.y.min(line.end.y))
                     && (p.y() < line.start.y.max(line.end.y)))
             {
@@ -164,7 +166,8 @@ where
     let mut xints = T::zero();
     let mut crossings = 0;
     for line in linestring.lines() {
-        if p.y() > line.start.y.min(line.end.y) && p.y() <= line.start.y.max(line.end.y)
+        if p.y() > line.start.y.min(line.end.y)
+            && p.y() <= line.start.y.max(line.end.y)
             && p.x() <= line.start.x.max(line.end.x)
         {
             if line.start.y != line.end.y {
@@ -190,7 +193,8 @@ where
     fn contains(&self, p: &Point<T>) -> bool {
         match get_position(*p, &self.exterior) {
             PositionPoint::OnBoundary | PositionPoint::Outside => false,
-            _ => self.interiors
+            _ => self
+                .interiors
                 .iter()
                 .all(|ls| get_position(*p, ls) == PositionPoint::Outside),
         }
@@ -213,7 +217,9 @@ where
     fn contains(&self, line: &Line<T>) -> bool {
         // both endpoints are contained in the polygon and the line
         // does NOT intersect the exterior or any of the interior boundaries
-        self.contains(&line.start_point()) && self.contains(&line.end_point()) && !self.exterior.intersects(line)
+        self.contains(&line.start_point())
+            && self.contains(&line.end_point())
+            && !self.exterior.intersects(line)
             && !self.interiors.iter().any(|inner| inner.intersects(line))
     }
 }
@@ -237,7 +243,8 @@ where
         if linestring.points_iter().all(|point| self.contains(&point)) {
             // The Polygon interior is allowed to intersect with the LineString
             // but the Polygon's rings are not
-            !self.interiors
+            !self
+                .interiors
                 .iter()
                 .any(|ring| ring.intersects(linestring))
         } else {
@@ -261,7 +268,9 @@ where
 {
     fn contains(&self, bbox: &Bbox<T>) -> bool {
         // All points of LineString must be in the polygon ?
-        self.xmin <= bbox.xmin && self.xmax >= bbox.xmax && self.ymin <= bbox.ymin
+        self.xmin <= bbox.xmin
+            && self.xmax >= bbox.xmax
+            && self.ymin <= bbox.ymin
             && self.ymax >= bbox.ymax
     }
 }
@@ -440,16 +449,15 @@ mod test {
     fn empty_multipolygon_two_polygons_and_inner_test() {
         let poly1 = Polygon::new(
             LineString::from(vec![(0., 0.), (5., 0.), (5., 6.), (0., 6.), (0., 0.)]),
-            vec![LineString::from(vec![(1., 1.), (4., 1.), (4., 4.), (1., 1.)])],
+            vec![LineString::from(vec![
+                (1., 1.),
+                (4., 1.),
+                (4., 4.),
+                (1., 1.),
+            ])],
         );
         let poly2 = Polygon::new(
-            LineString::from(vec![
-                (9., 0.),
-                (14., 0.),
-                (14., 4.),
-                (9., 4.),
-                (9., 0.),
-            ]),
+            LineString::from(vec![(9., 0.), (14., 0.), (14., 4.), (9., 4.), (9., 0.)]),
             Vec::new(),
         );
 
@@ -574,11 +582,7 @@ mod test {
     fn line_in_linestring_test() {
         let line0 = Line::from([(1., 1.), (2., 2.)]);
         // line0 is completely contained in the second segment
-        let linestring0 = LineString::from(vec![
-            (0., 0.5),
-            (0.5, 0.5),
-            (3., 3.),
-        ]);
+        let linestring0 = LineString::from(vec![(0., 0.5), (0.5, 0.5), (3., 3.)]);
         // line0 is contained in the last three segments
         let linestring1 = LineString::from(vec![
             (0., 0.5),

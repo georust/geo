@@ -1,5 +1,5 @@
 use num_traits::Float;
-use ::{Bbox, Line, LineString, MultiPolygon, Polygon};
+use {Bbox, Line, LineString, MultiPolygon, Polygon};
 
 use algorithm::winding_order::twice_signed_ring_area;
 
@@ -26,7 +26,10 @@ where
     fn area(&self) -> T;
 }
 
-fn get_linestring_area<T>(linestring: &LineString<T>) -> T where T: Float {
+fn get_linestring_area<T>(linestring: &LineString<T>) -> T
+where
+    T: Float,
+{
     twice_signed_ring_area(linestring) / (T::one() + T::one())
 }
 
@@ -59,9 +62,7 @@ where
     fn area(&self) -> T {
         self.0
             .iter()
-            .fold(T::zero(), |total, next| {
-                total + next.area()
-            })
+            .fold(T::zero(), |total, next| total + next.area())
     }
 }
 
@@ -76,8 +77,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use ::{Bbox, Coordinate, Line, LineString, MultiPolygon, Polygon};
     use algorithm::area::Area;
+    use {Bbox, Coordinate, Line, LineString, MultiPolygon, Polygon};
 
     // Area of the polygon
     #[test]
@@ -109,13 +110,7 @@ mod test {
     }
     #[test]
     fn area_polygon_inner_test() {
-        let outer = LineString::from(vec![
-            (0., 0.),
-            (10., 0.),
-            (10., 10.),
-            (0., 10.),
-            (0., 0.),
-        ]);
+        let outer = LineString::from(vec![(0., 0.), (10., 0.), (10., 10.), (0., 10.), (0., 0.)]);
         let inner0 = LineString::from(vec![(1., 1.), (2., 1.), (2., 2.), (1., 2.), (1., 1.)]);
         let inner1 = LineString::from(vec![(5., 5.), (6., 5.), (6., 6.), (5., 6.), (5., 5.)]);
         let poly = Polygon::new(outer, vec![inner0, inner1]);
@@ -124,13 +119,7 @@ mod test {
     #[test]
     fn area_multipolygon_test() {
         let poly0 = Polygon::new(
-            LineString::from(vec![
-                (0., 0.),
-                (10., 0.),
-                (10., 10.),
-                (0., 10.),
-                (0., 0.),
-            ]),
+            LineString::from(vec![(0., 0.), (10., 0.), (10., 10.), (0., 10.), (0., 0.)]),
             Vec::new(),
         );
         let poly1 = Polygon::new(
@@ -147,10 +136,7 @@ mod test {
     }
     #[test]
     fn area_line_test() {
-        let line1 = Line::new(
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 1.0, y: 1.0 },
-        );
+        let line1 = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 1.0, y: 1.0 });
         assert_eq!(line1.area(), 0.);
     }
 }
