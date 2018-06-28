@@ -9,19 +9,27 @@ pub trait Area<T>
 where
     T: Float,
 {
-    /// Area of polygon.
-    /// See: https://en.wikipedia.org/wiki/Polygon
+    /// Signed area of a geometry.
     ///
     /// # Examples
     ///
     /// ```
     /// use geo::{Coordinate, Point, LineString, Polygon};
     /// use geo::algorithm::area::Area;
-    /// let p = |x, y| Point(Coordinate { x: x, y: y });
-    /// let v = Vec::new();
-    /// let linestring = LineString::from(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]);
-    /// let poly = Polygon::new(linestring, v);
-    /// assert_eq!(poly.area(), 30.);
+    ///
+    /// let mut polygon = Polygon::new(LineString::from(vec![
+    ///     (0., 0.),
+    ///     (5., 0.),
+    ///     (5., 6.),
+    ///     (0., 6.),
+    ///     (0., 0.)
+    /// ]), vec![]);
+    ///
+    /// assert_eq!(polygon.area(), 30.);
+    ///
+    /// polygon.exterior.0.reverse();
+    ///
+    /// assert_eq!(polygon.area(), -30.);
     /// ```
     fn area(&self) -> T;
 }
