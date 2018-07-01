@@ -1,8 +1,8 @@
-use algorithm::boundingbox::BoundingBox;
 use num_traits::Float;
+use prelude::*;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use {Line, LineString, MultiLineString, MultiPolygon, Point, Polygon};
+use {Coordinate, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Triangle};
 
 use spade::rtree::RTree;
 use spade::BoundingRect;
@@ -93,21 +93,21 @@ struct GeomSettings {
 // then recalculate the new triangle area and push it onto the heap
 // based on Huon Wilson's original implementation:
 // https://github.com/huonw/isrustfastyet/blob/25e7a68ff26673a8556b170d3c9af52e1c818288/mem/line_simplify.rs
-fn visvalingam<T>(orig: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
+fn visvalingam<T>(orig: &LineString<T>, epsilon: &T) -> Vec<Coordinate<T>>
 where
     T: Float,
 {
     // No need to continue without at least three points
-    if orig.len() < 3 || orig.is_empty() {
-        return orig.to_vec();
+    if orig.0.len() < 3 {
+        return orig.0.to_vec();
     }
 
-    let max = orig.len();
+    let max = orig.0.len();
 
     // Adjacent retained points. Simulating the points in a
     // linked list with indices into `orig`. Big number (larger than or equal to
     // `max`) means no next element, and (0, 0) means deleted element.
-    let mut adjacent: Vec<(_)> = (0..orig.len())
+    let mut adjacent: Vec<(_)> = (0..orig.0.len())
         .map(|i| {
             if i == 0 {
                 (-1_i32, 1_i32)
@@ -125,9 +125,9 @@ where
     let mut pq = BinaryHeap::new();
     // Compute the initial triangles, i.e. take all consecutive groups
     // of 3 points and form triangles from them
-    for (i, win) in orig.windows(3).enumerate() {
+    for (i, triangle) in orig.triangles().enumerate() {
         pq.push(VScore {
-            area: area(*win.first().unwrap(), win[1], *win.last().unwrap()),
+            area: triangle.area().abs(),
             current: i + 1,
             left: i,
             right: i + 2,
@@ -163,14 +163,13 @@ where
                 // Out of bounds, i.e. we're on one edge
                 continue;
             }
-            let new_left = Point::new(orig[ai as usize].x(), orig[ai as usize].y());
-            let new_current = Point::new(
-                orig[current_point as usize].x(),
-                orig[current_point as usize].y(),
-            );
-            let new_right = Point::new(orig[bi as usize].x(), orig[bi as usize].y());
+            let area = Triangle(
+                orig.0[ai as usize],
+                orig.0[current_point as usize],
+                orig.0[bi as usize],
+            ).area().abs();
             pq.push(VScore {
-                area: area(new_left, new_current, new_right),
+                area: area,
                 current: current_point as usize,
                 left: ai as usize,
                 right: bi as usize,
@@ -179,10 +178,11 @@ where
         }
     }
     // Filter out the points that have been deleted, returning remaining points
-    orig.iter()
+    orig.0
+        .iter()
         .zip(adjacent.iter())
         .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(*tup) } else { None })
-        .collect::<Vec<Point<T>>>()
+        .collect::<Vec<Coordinate<T>>>()
 }
 
 /// Wrap the actual VW function so the R* Tree can be shared.
@@ -193,7 +193,7 @@ fn vwp_wrapper<T>(
     exterior: &LineString<T>,
     interiors: Option<&[LineString<T>]>,
     epsilon: &T,
-) -> Vec<Vec<Point<T>>>
+) -> Vec<Vec<Coordinate<T>>>
 where
     T: Float + SpadeFloat,
 {
@@ -210,20 +210,12 @@ where
     }
     // Simplify shell
     rings.push(visvalingam_preserve(
-        geomtype,
-        &exterior.clone().into_points(),
-        epsilon,
-        &mut tree,
+        geomtype, &exterior, epsilon, &mut tree,
     ));
     // Simplify interior rings, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
-            rings.push(visvalingam_preserve(
-                geomtype,
-                &ring.clone().into_points(),
-                epsilon,
-                &mut tree,
-            ))
+            rings.push(visvalingam_preserve(geomtype, &ring, epsilon, &mut tree))
         }
     }
     rings
@@ -233,22 +225,22 @@ where
 /// this is a port of the technique at https://www.jasondavies.com/simplify/
 fn visvalingam_preserve<T>(
     geomtype: &GeomSettings,
-    orig: &[Point<T>],
+    orig: &LineString<T>,
     epsilon: &T,
     tree: &mut RTree<Line<T>>,
-) -> Vec<Point<T>>
+) -> Vec<Coordinate<T>>
 where
     T: Float + SpadeFloat,
 {
-    if orig.is_empty() || orig.len() < 3 {
-        return orig.to_vec();
+    if orig.0.len() < 3 {
+        return orig.0.to_vec();
     }
-    let max = orig.len();
-    let mut counter = orig.len();
+    let max = orig.0.len();
+    let mut counter = orig.0.len();
     // Adjacent retained points. Simulating the points in a
     // linked list with indices into `orig`. Big number (larger than or equal to
     // `max`) means no next element, and (0, 0) means deleted element.
-    let mut adjacent: Vec<(_)> = (0..orig.len())
+    let mut adjacent: Vec<(_)> = (0..orig.0.len())
         .map(|i| {
             if i == 0 {
                 (-1_i32, 1_i32)
@@ -265,9 +257,9 @@ where
     let mut pq = BinaryHeap::new();
     // Compute the initial triangles, i.e. take all consecutive groups
     // of 3 points and form triangles from them
-    for (i, win) in orig.windows(3).enumerate() {
+    for (i, triangle) in orig.triangles().enumerate() {
         let v = VScore {
-            area: area(win[0], win[1], win[2]),
+            area: triangle.area().abs(),
             current: i + 1,
             left: i,
             right: i + 2,
@@ -296,7 +288,7 @@ where
         // HOWEVER if we're within 2 points of the absolute minimum, we can't remove this point or the next
         // because we could then no longer form a valid geometry if removal of next also caused an intersection.
         // The simplification process is thus over.
-        smallest.intersector = tree_intersect(tree, &smallest, orig);
+        smallest.intersector = tree_intersect(tree, &smallest, &orig.0);
         if smallest.intersector && counter <= geomtype.min_points {
             break;
         }
@@ -307,8 +299,8 @@ where
         // remove stale segments from R* tree
         // we have to call this twice because only one segment is returned at a time
         // this should be OK because a point can only share at most two segments
-        tree.lookup_and_remove(&orig[smallest.right]);
-        tree.lookup_and_remove(&orig[smallest.left]);
+        tree.lookup_and_remove(&Point(orig.0[smallest.right]));
+        tree.lookup_and_remove(&Point(orig.0[smallest.left]));
         // Now recompute the adjacent triangle(s), using left and right adjacent points
         let (ll, _) = adjacent[left as usize];
         let (_, rr) = adjacent[right as usize];
@@ -320,18 +312,17 @@ where
                 // Out of bounds, i.e. we're on one edge
                 continue;
             }
-            let new_left = Point::new(orig[ai as usize].x(), orig[ai as usize].y());
-            let new_current = Point::new(
-                orig[current_point as usize].x(),
-                orig[current_point as usize].y(),
+            let new = Triangle(
+                orig.0[ai as usize],
+                orig.0[current_point as usize],
+                orig.0[bi as usize],
             );
-            let new_right = Point::new(orig[bi as usize].x(), orig[bi as usize].y());
             // The current point causes a self-intersection, and this point precedes it
             // we ensure it gets removed next by demoting its area to negative epsilon
             let temp_area = if smallest.intersector && (current_point as usize) < smallest.current {
                 -*epsilon
             } else {
-                area(new_left, new_current, new_right)
+                new.area().abs()
             };
             let new_triangle = VScore {
                 area: temp_area,
@@ -342,22 +333,23 @@ where
             };
             // add re-computed line segments to the tree
             tree.insert(Line::new(
-                orig[ai as usize].0,
-                orig[current_point as usize].0,
+                orig.0[ai as usize],
+                orig.0[current_point as usize],
             ));
             tree.insert(Line::new(
-                orig[current_point as usize].0,
-                orig[bi as usize].0,
+                orig.0[current_point as usize],
+                orig.0[bi as usize],
             ));
             // push re-computed triangle onto heap
             pq.push(new_triangle);
         }
     }
     // Filter out the points that have been deleted, returning remaining points
-    orig.iter()
+    orig.0
+        .iter()
         .zip(adjacent.iter())
         .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(*tup) } else { None })
-        .collect::<Vec<Point<T>>>()
+        .collect::<Vec<Coordinate<T>>>()
 }
 
 /// is p1 -> p2 -> p3 wound counterclockwise?
@@ -377,39 +369,29 @@ where
 }
 
 /// check whether a triangle's edges intersect with any other edges of the LineString
-fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T>, orig: &[Point<T>]) -> bool
+fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T>, orig: &[Coordinate<T>]) -> bool
 where
     T: Float + SpadeFloat,
 {
     let point_a = orig[triangle.left];
     let point_c = orig[triangle.right];
-    let bbox = LineString::from(vec![
+    let bbox = Triangle(
         orig[triangle.left],
         orig[triangle.current],
         orig[triangle.right],
-    ]).bbox()
-        .unwrap();
+    ).bbox();
     let br = Point::new(bbox.xmin, bbox.ymin);
     let tl = Point::new(bbox.xmax, bbox.ymax);
     let candidates = tree.lookup_in_rectangle(&BoundingRect::from_corners(&br, &tl));
     candidates.iter().any(|c| {
         // triangle start point, end point
         let (ca, cb) = c.points();
-        ca != point_a
-            && ca != point_c
-            && cb != point_a
-            && cb != point_c
-            && cartesian_intersect(ca, cb, point_a, point_c)
+        ca.0 != point_a
+            && ca.0 != point_c
+            && cb.0 != point_a
+            && cb.0 != point_c
+            && cartesian_intersect(ca, cb, Point(point_a), Point(point_c))
     })
-}
-
-/// Area of a triangle given three vertices
-fn area<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>) -> T
-where
-    T: Float,
-{
-    ((p1.x() - p3.x()) * (p2.y() - p3.y()) - (p2.x() - p3.x()) * (p1.y() - p3.y())).abs()
-        / (T::one() + T::one()).abs()
 }
 
 /// Simplifies a geometry.
@@ -569,7 +551,7 @@ where
     T: Float,
 {
     fn simplifyvw(&self, epsilon: &T) -> LineString<T> {
-        LineString::from(visvalingam(&self.clone().into_points(), epsilon))
+        LineString::from(visvalingam(self, epsilon))
     }
 }
 
@@ -612,7 +594,7 @@ mod test {
         cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, GeomType, SimplifyVW,
         SimplifyVWPreserve,
     };
-    use {LineString, MultiLineString, MultiPolygon, Point, Polygon};
+    use {Coordinate, LineString, MultiLineString, MultiPolygon, Point, Polygon};
 
     #[test]
     fn visvalingam_test() {
@@ -624,10 +606,13 @@ mod test {
             (7.0, 25.0),
             (10.0, 10.0),
         ];
-        let points_ls: Vec<_> = points.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let points_ls: LineString<_> = points.iter().map(|e| Point::new(e.0, e.1)).collect();
 
         let correct = vec![(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
-        let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let correct_ls: Vec<_> = correct
+            .iter()
+            .map(|e| Coordinate::from((e.0, e.1)))
+            .collect();
 
         let simplified = visvalingam(&points_ls, &30.);
         assert_eq!(simplified, correct_ls);
@@ -682,7 +667,10 @@ mod test {
             (300., 40.),
             (301., 10.),
         ];
-        let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
+        let correct_ls: Vec<_> = correct
+            .iter()
+            .map(|e| Coordinate::from((e.0, e.1)))
+            .collect();
         assert_eq!(simplified[0], correct_ls);
     }
     #[test]
@@ -758,9 +746,12 @@ mod test {
     fn visvalingam_test_long() {
         // simplify a longer LineString
         let points = include!("test_fixtures/vw_orig.rs");
-        let points_ls: Vec<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
+        let points_ls: LineString<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
         let correct = include!("test_fixtures/vw_simplified.rs");
-        let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e[0], e[1])).collect();
+        let correct_ls: Vec<_> = correct
+            .iter()
+            .map(|e| Coordinate::from((e[0], e[1])))
+            .collect();
         let simplified = visvalingam(&points_ls, &0.0005);
         assert_eq!(simplified, correct_ls);
     }
@@ -768,7 +759,7 @@ mod test {
     fn visvalingam_preserve_test_long() {
         // simplify a longer LineString using the preserve variant
         let points = include!("test_fixtures/vw_orig.rs");
-        let points_ls: Vec<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
+        let points_ls: LineString<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
         let correct = include!("test_fixtures/vw_simplified.rs");
         let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e[0], e[1])).collect();
         let simplified = LineString::from(points_ls).simplifyvw_preserve(&0.0005);
@@ -776,9 +767,9 @@ mod test {
     }
     #[test]
     fn visvalingam_test_empty_linestring() {
-        let vec = Vec::new();
+        let vec: Vec<[f32; 2]> = Vec::new();
         let compare = Vec::new();
-        let simplified = visvalingam(&vec, &1.0);
+        let simplified = visvalingam(&LineString::from(vec), &1.0);
         assert_eq!(simplified, compare);
     }
     #[test]
@@ -787,9 +778,9 @@ mod test {
         vec.push(Point::new(0.0, 0.0));
         vec.push(Point::new(27.8, 0.1));
         let mut compare = Vec::new();
-        compare.push(Point::new(0.0, 0.0));
-        compare.push(Point::new(27.8, 0.1));
-        let simplified = visvalingam(&vec, &1.0);
+        compare.push(Coordinate::from((0.0, 0.0)));
+        compare.push(Coordinate::from((27.8, 0.1)));
+        let simplified = visvalingam(&LineString::from(vec), &1.0);
         assert_eq!(simplified, compare);
     }
 

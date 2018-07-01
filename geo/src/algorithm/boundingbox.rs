@@ -1,6 +1,6 @@
 use {
     Bbox, Coordinate, CoordinateType, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
-    Polygon,
+    Polygon, Triangle,
 };
 
 /// Calculation of the bounding box of a geometry.
@@ -161,6 +161,17 @@ where
                 .iter()
                 .flat_map(|poly| (poly.exterior).0.iter().map(|c| *c)),
         )
+    }
+}
+
+impl<T> BoundingBox<T> for Triangle<T>
+where
+    T: CoordinateType,
+{
+    type Output = Bbox<T>;
+
+    fn bbox(&self) -> Self::Output {
+        get_bbox(self.to_array().into_iter().cloned()).unwrap()
     }
 }
 

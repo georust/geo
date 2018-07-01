@@ -1,8 +1,8 @@
-use algorithm::euclidean_distance::EuclideanDistance;
 use algorithm::extremes::ExtremeIndices;
 use num_traits::float::FloatConst;
 use num_traits::{Float, Signed};
-use {Line, Point, Polygon};
+use prelude::*;
+use {Line, Point, Polygon, Triangle};
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance
 // They use the rotating calipers method to speed up calculations.
@@ -359,7 +359,7 @@ where
         // implies p.x() < pprev.x()
         punit = Point::new(p.x(), p.y() - hundred);
     }
-    let triarea = triangle_area(p, punit, Point(pnext));
+    let triarea = Triangle::from([p, punit, Point(pnext)]).area();
     let edgelen = p.euclidean_distance(&Point(pnext));
     let mut sine = triarea / (T::from(0.5).unwrap() * T::from(100).unwrap() * edgelen);
     if sine < -T::one() || sine > T::one() {
@@ -395,22 +395,12 @@ where
     angle
 }
 
-// self-explanatory
-fn triangle_area<T>(a: Point<T>, b: Point<T>, c: Point<T>) -> T
-where
-    T: Float,
-{
-    (Line::new(a.0, b.0).determinant()
-        + Line::new(b.0, c.0).determinant()
-        + Line::new(c.0, a.0).determinant()) / (T::one() + T::one())
-}
-
 /// Does abc turn left?
 fn leftturn<T>(a: Point<T>, b: Point<T>, c: Point<T>) -> i8
 where
     T: Float,
 {
-    let narea = triangle_area(a, b, c);
+    let narea = Triangle::from([a, b, c]).area();
     if narea > T::zero() {
         1
     } else if narea < T::zero() {
