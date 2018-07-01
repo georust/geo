@@ -1,5 +1,5 @@
 use num_traits::Float;
-use {Bbox, Line, LineString, MultiPolygon, Polygon};
+use {Bbox, Line, LineString, MultiPolygon, Polygon, Triangle};
 
 use algorithm::winding_order::twice_signed_ring_area;
 
@@ -83,10 +83,21 @@ where
     }
 }
 
+impl<T> Area<T> for Triangle<T>
+where
+    T: Float,
+{
+    fn area(&self) -> T {
+        (Line::new(self.0, self.1).determinant()
+            + Line::new(self.1, self.2).determinant()
+            + Line::new(self.2, self.0).determinant()) / (T::one() + T::one())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use algorithm::area::Area;
-    use {Bbox, Coordinate, Line, LineString, MultiPolygon, Polygon};
+    use {Bbox, Coordinate, Line, LineString, MultiPolygon, Polygon, Triangle};
 
     // Area of the polygon
     #[test]
@@ -146,5 +157,22 @@ mod test {
     fn area_line_test() {
         let line1 = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 1.0, y: 1.0 });
         assert_eq!(line1.area(), 0.);
+    }
+
+    #[test]
+    fn area_triangle_test() {
+        let triangle = Triangle(
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 1.0, y: 0.0 },
+            Coordinate { x: 0.0, y: 1.0 },
+        );
+        assert_eq!(triangle.area(), 0.5);
+
+        let triangle = Triangle(
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 0.0, y: 1.0 },
+            Coordinate { x: 1.0, y: 0.0 },
+        );
+        assert_eq!(triangle.area(), -0.5);
     }
 }

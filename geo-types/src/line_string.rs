@@ -1,5 +1,5 @@
 use std::iter::FromIterator;
-use {Coordinate, CoordinateType, Line, Point};
+use {Coordinate, CoordinateType, Line, Point, Triangle};
 
 /// An ordered collection of two or more [`Coordinate`s](struct.Coordinate.html), representing a
 /// path between locations.
@@ -119,10 +119,22 @@ impl<T: CoordinateType> LineString<T> {
     /// assert!(lines.next().is_none());
     /// ```
     pub fn lines<'a>(&'a self) -> impl ExactSizeIterator + Iterator<Item = Line<T>> + 'a {
-        self.0.windows(2).map(|w| unsafe {
-            // As long as the LineString has at least two coordinates, we shouldn't
-            // need to do bounds checking here.
-            Line::new(*w.get_unchecked(0), *w.get_unchecked(1))
+        self.0.windows(2).map(|w| {
+            // slice::windows(N) is guaranteed to yield a slice with exactly N elements
+            unsafe { Line::new(*w.get_unchecked(0), *w.get_unchecked(1)) }
+        })
+    }
+
+    pub fn triangles<'a>(&'a self) -> impl ExactSizeIterator + Iterator<Item = Triangle<T>> + 'a {
+        self.0.windows(3).map(|w| {
+            // slice::windows(N) is guaranteed to yield a slice with exactly N elements
+            unsafe {
+                Triangle(
+                    *w.get_unchecked(0),
+                    *w.get_unchecked(1),
+                    *w.get_unchecked(2),
+                )
+            }
         })
     }
 }
