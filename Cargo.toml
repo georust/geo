@@ -7,7 +7,7 @@ license = "MIT/Apache-2.0"
 repository = "https://github.com/georust/rust-wkt"
 
 [dependencies]
-geo = {version = "0.0.4", optional = true}
+geo-types = {version = "0.1.1", optional = true}
 
 [features]
-default = ["geo"]
+default = ["geo-types"]

@@ -26,12 +26,12 @@ use types::Polygon;
 
 mod tokenizer;
 
-#[cfg(feature = "geo")]
+#[cfg(feature = "geo-types")]
 mod towkt;
 
 pub mod types;
 
-#[cfg(feature = "geo")]
+#[cfg(feature = "geo-types")]
 pub use towkt::ToWkt;
 
 pub enum Geometry {
