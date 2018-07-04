@@ -1,6 +1,7 @@
 use {Coordinate, CoordinateType};
 
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Triangle<T: CoordinateType>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);
 
 impl<T: CoordinateType> Triangle<T> {
