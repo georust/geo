@@ -1,6 +1,6 @@
 use algorithm::contains::Contains;
 use num_traits::Float;
-use {Bbox, Line, LineString, Point, Polygon};
+use {Line, LineString, Point, Polygon, Rect};
 
 /// Checks if the geometry A intersects the geometry B.
 
@@ -201,24 +201,24 @@ where
     }
 }
 
-impl<T> Intersects<Bbox<T>> for Bbox<T>
+impl<T> Intersects<Rect<T>> for Rect<T>
 where
     T: Float,
 {
-    fn intersects(&self, bbox: &Bbox<T>) -> bool {
+    fn intersects(&self, bounding_rect: &Rect<T>) -> bool {
         // line intersects inner or outer polygon edge
-        if bbox.contains(self) {
+        if bounding_rect.contains(self) {
             false
         } else {
-            (self.xmin >= bbox.xmin && self.xmin <= bbox.xmax
-                || self.xmax >= bbox.xmin && self.xmax <= bbox.xmax)
-                && (self.ymin >= bbox.ymin && self.ymin <= bbox.ymax
-                    || self.ymax >= bbox.ymin && self.ymax <= bbox.ymax)
+            (self.min.x >= bounding_rect.min.x && self.min.x <= bounding_rect.max.x
+                || self.max.x >= bounding_rect.min.x && self.max.x <= bounding_rect.max.x)
+                && (self.min.y >= bounding_rect.min.y && self.min.y <= bounding_rect.max.y
+                    || self.max.y >= bounding_rect.min.y && self.max.y <= bounding_rect.max.y)
         }
     }
 }
 
-impl<T> Intersects<Polygon<T>> for Bbox<T>
+impl<T> Intersects<Polygon<T>> for Rect<T>
 where
     T: Float,
 {
@@ -227,18 +227,18 @@ where
     }
 }
 
-impl<T> Intersects<Bbox<T>> for Polygon<T>
+impl<T> Intersects<Rect<T>> for Polygon<T>
 where
     T: Float,
 {
-    fn intersects(&self, bbox: &Bbox<T>) -> bool {
+    fn intersects(&self, bounding_rect: &Rect<T>) -> bool {
         let p = Polygon::new(
             LineString::from(vec![
-                (bbox.xmin, bbox.ymin),
-                (bbox.xmin, bbox.ymax),
-                (bbox.xmax, bbox.ymax),
-                (bbox.xmax, bbox.ymin),
-                (bbox.xmin, bbox.ymin),
+                (bounding_rect.min.x, bounding_rect.min.y),
+                (bounding_rect.min.x, bounding_rect.max.y),
+                (bounding_rect.max.x, bounding_rect.max.y),
+                (bounding_rect.max.x, bounding_rect.min.y),
+                (bounding_rect.min.x, bounding_rect.min.y),
             ]),
             vec![],
         );
@@ -262,7 +262,7 @@ where
 #[cfg(test)]
 mod test {
     use algorithm::intersects::Intersects;
-    use {Bbox, Coordinate, Line, LineString, Point, Polygon};
+    use {Coordinate, Line, LineString, Point, Polygon, Rect};
     /// Tests: intersection LineString and LineString
     #[test]
     fn empty_linestring1_test() {
@@ -469,7 +469,7 @@ mod test {
         assert!(p2.intersects(&p1));
     }
     #[test]
-    fn polygon_intersects_bbox_test() {
+    fn polygon_intersects_bounding_rect_test() {
         // Polygon poly =
         //
         // (0,8)               (12,8)
@@ -499,29 +499,21 @@ mod test {
                 (7., 4.),
             ])],
         );
-        let b1 = Bbox {
-            xmin: 11.0,
-            xmax: 13.0,
-            ymin: 1.0,
-            ymax: 2.0,
+        let b1 = Rect {
+            min: Coordinate { x: 11., y: 1. },
+            max: Coordinate { x: 13., y: 2. },
         };
-        let b2 = Bbox {
-            xmin: 2.0,
-            xmax: 8.0,
-            ymin: 2.0,
-            ymax: 5.0,
+        let b2 = Rect {
+            min: Coordinate { x: 2., y: 2. },
+            max: Coordinate { x: 8., y: 5. },
         };
-        let b3 = Bbox {
-            xmin: 8.0,
-            xmax: 10.0,
-            ymin: 5.0,
-            ymax: 6.0,
+        let b3 = Rect {
+            min: Coordinate { x: 8., y: 5. },
+            max: Coordinate { x: 10., y: 6. },
         };
-        let b4 = Bbox {
-            xmin: 1.0,
-            xmax: 3.0,
-            ymin: 1.0,
-            ymax: 3.0,
+        let b4 = Rect {
+            min: Coordinate { x: 1., y: 1. },
+            max: Coordinate { x: 3., y: 3. },
         };
         // overlaps
         assert!(poly.intersects(&b1));
@@ -538,29 +530,23 @@ mod test {
         assert!(b4.intersects(&poly));
     }
     #[test]
-    fn bbox_test() {
-        let bbox_xl = Bbox {
-            xmin: -100.,
-            xmax: 100.,
-            ymin: -200.,
-            ymax: 200.,
+    fn bounding_rect_test() {
+        let bounding_rect_xl = Rect {
+            min: Coordinate { x: -100., y: -200. },
+            max: Coordinate { x: 100., y: 200. },
         };
-        let bbox_sm = Bbox {
-            xmin: -10.,
-            xmax: 10.,
-            ymin: -20.,
-            ymax: 20.,
+        let bounding_rect_sm = Rect {
+            min: Coordinate { x: -10., y: -20. },
+            max: Coordinate { x: 10., y: 20. },
         };
-        let bbox_s2 = Bbox {
-            xmin: 0.,
-            xmax: 20.,
-            ymin: 0.,
-            ymax: 30.,
+        let bounding_rect_s2 = Rect {
+            min: Coordinate { x: 0., y: 0. },
+            max: Coordinate { x: 20., y: 30. },
         };
-        assert_eq!(false, bbox_xl.intersects(&bbox_sm));
-        assert_eq!(false, bbox_sm.intersects(&bbox_xl));
-        assert_eq!(true, bbox_sm.intersects(&bbox_s2));
-        assert_eq!(true, bbox_s2.intersects(&bbox_sm));
+        assert_eq!(false, bounding_rect_xl.intersects(&bounding_rect_sm));
+        assert_eq!(false, bounding_rect_sm.intersects(&bounding_rect_xl));
+        assert_eq!(true, bounding_rect_sm.intersects(&bounding_rect_s2));
+        assert_eq!(true, bounding_rect_s2.intersects(&bounding_rect_sm));
     }
     #[test]
     fn point_intersects_line_test() {

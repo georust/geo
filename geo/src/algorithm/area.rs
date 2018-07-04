@@ -1,5 +1,5 @@
 use num_traits::Float;
-use {Bbox, Line, LineString, MultiPolygon, Polygon, Triangle};
+use {Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
 
 use algorithm::winding_order::twice_signed_ring_area;
 
@@ -74,12 +74,12 @@ where
     }
 }
 
-impl<T> Area<T> for Bbox<T>
+impl<T> Area<T> for Rect<T>
 where
     T: Float,
 {
     fn area(&self) -> T {
-        (self.xmax - self.xmin) * (self.ymax - self.ymin)
+        (self.max.x - self.min.x) * (self.max.y - self.min.y)
     }
 }
 
@@ -97,7 +97,7 @@ where
 #[cfg(test)]
 mod test {
     use algorithm::area::Area;
-    use {Bbox, Coordinate, Line, LineString, MultiPolygon, Polygon, Triangle};
+    use {Coordinate, Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
 
     // Area of the polygon
     #[test]
@@ -118,14 +118,12 @@ mod test {
         assert_relative_eq!(poly.area(), 30.);
     }
     #[test]
-    fn bbox_test() {
-        let bbox = Bbox {
-            xmin: 10.,
-            xmax: 20.,
-            ymin: 30.,
-            ymax: 40.,
+    fn rectangle_test() {
+        let rect = Rect {
+            min: Coordinate { x: 10., y: 30. },
+            max: Coordinate { x: 20., y: 40. },
         };
-        assert_relative_eq!(bbox.area(), 100.);
+        assert_relative_eq!(rect.area(), 100.);
     }
     #[test]
     fn area_polygon_inner_test() {

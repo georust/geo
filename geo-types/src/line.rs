@@ -1,7 +1,7 @@
 use {Coordinate, CoordinateType, Point};
 
 #[cfg(feature = "spade")]
-use algorithms::{BoundingBox, EuclideanDistance};
+use algorithms::{BoundingRect, EuclideanDistance};
 
 /// A line segment made up of exactly two [`Point`s](struct.Point.html)
 #[derive(PartialEq, Clone, Copy, Debug)]
@@ -171,10 +171,10 @@ where
     type Point = Point<T>;
 
     fn mbr(&self) -> ::spade::BoundingRect<Self::Point> {
-        let bbox = self.bbox();
+        let bounding_rect = self.bounding_rect();
         ::spade::BoundingRect::from_corners(
-            &Point::new(bbox.xmin, bbox.ymin),
-            &Point::new(bbox.xmax, bbox.ymax),
+            &Point::new(bounding_rect.min.x, bounding_rect.min.y),
+            &Point::new(bounding_rect.max.x, bounding_rect.max.y),
         )
     }
 

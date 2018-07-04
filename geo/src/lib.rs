@@ -17,7 +17,7 @@ pub use types::*;
 
 pub use geo_types::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Triangle,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
 /// This module includes all the functions of geometric calculations
@@ -47,7 +47,7 @@ const EARTH_FLATTENING: f64 =
 pub mod prelude {
     pub use algorithm::area::Area;
     pub use algorithm::bearing::Bearing;
-    pub use algorithm::boundingbox::BoundingBox;
+    pub use algorithm::bounding_rect::BoundingRect;
     pub use algorithm::centroid::Centroid;
     pub use algorithm::closest_point::ClosestPoint;
     pub use algorithm::contains::Contains;

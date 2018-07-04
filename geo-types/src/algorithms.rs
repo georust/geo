@@ -2,7 +2,7 @@
 //        wouldn't have this duplication
 
 use num_traits::{Float, ToPrimitive};
-use {Coordinate, CoordinateType, Line, LineString, Point};
+use {Coordinate, CoordinateType, Line, LineString, Point, Rect};
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 
@@ -125,10 +125,10 @@ where
     }
 }
 
-pub trait BoundingBox<T: CoordinateType> {
+pub trait BoundingRect<T: CoordinateType> {
     type Output;
 
-    fn bbox(&self) -> Self::Output;
+    fn bounding_rect(&self) -> Self::Output;
 }
 
 fn get_min_max<T>(p: T, min: T, max: T) -> (T, T)
@@ -144,7 +144,7 @@ where
     }
 }
 
-fn get_bbox<I, T>(collection: I) -> Option<Bbox<T>>
+fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>
 where
     T: CoordinateType,
     I: IntoIterator<Item = Coordinate<T>>,
@@ -158,57 +158,48 @@ where
             xrange = get_min_max(px, xrange.0, xrange.1);
             yrange = get_min_max(py, yrange.0, yrange.1);
         }
-        return Some(Bbox {
-            xmin: xrange.0,
-            xmax: xrange.1,
-            ymin: yrange.0,
-            ymax: yrange.1,
+        return Some(Rect {
+            min: Coordinate {
+                x: xrange.0,
+                y: yrange.0,
+            },
+            max: Coordinate {
+                x: xrange.1,
+                y: yrange.1,
+            },
         });
     }
     None
 }
 
-impl<T> BoundingBox<T> for Line<T>
+impl<T> BoundingRect<T> for Line<T>
 where
     T: CoordinateType,
 {
-    type Output = Bbox<T>;
+    type Output = Rect<T>;
 
-    fn bbox(&self) -> Self::Output {
+    fn bounding_rect(&self) -> Self::Output {
         let a = self.start;
         let b = self.end;
         let (xmin, xmax) = if a.x <= b.x { (a.x, b.x) } else { (b.x, a.x) };
         let (ymin, ymax) = if a.y <= b.y { (a.y, b.y) } else { (b.y, a.y) };
-        Bbox {
-            xmin,
-            xmax,
-            ymin,
-            ymax,
+        Rect {
+            min: Coordinate { x: xmin, y: ymin },
+            max: Coordinate { x: xmax, y: ymax },
         }
     }
 }
 
-impl<T> BoundingBox<T> for LineString<T>
+impl<T> BoundingRect<T> for LineString<T>
 where
     T: CoordinateType,
 {
-    type Output = Option<Bbox<T>>;
+    type Output = Option<Rect<T>>;
 
     ///
-    /// Return the BoundingBox for a LineString
+    /// Return the bounding rectangle for a LineString
     ///
-    fn bbox(&self) -> Self::Output {
-        get_bbox(self.0.iter().cloned())
+    fn bounding_rect(&self) -> Self::Output {
+        get_bounding_rect(self.0.iter().cloned())
     }
-}
-
-#[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Bbox<T>
-where
-    T: CoordinateType,
-{
-    pub xmin: T,
-    pub xmax: T,
-    pub ymin: T,
-    pub ymax: T,
 }

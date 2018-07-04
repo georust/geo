@@ -3,7 +3,7 @@ use std::iter::Sum;
 
 use algorithm::area::Area;
 use algorithm::euclidean_length::EuclideanLength;
-use {Bbox, Line, LineString, MultiPolygon, Point, Polygon};
+use {Line, LineString, MultiPolygon, Point, Polygon, Rect};
 
 /// Calculation of the centroid.
 /// The centroid is the arithmetic mean position of all points in the shape.
@@ -190,7 +190,7 @@ where
     }
 }
 
-impl<T> Centroid<T> for Bbox<T>
+impl<T> Centroid<T> for Rect<T>
 where
     T: Float,
 {
@@ -198,7 +198,10 @@ where
 
     fn centroid(&self) -> Self::Output {
         let two = T::one() + T::one();
-        Point::new((self.xmax + self.xmin) / two, (self.ymax + self.ymin) / two)
+        Point::new(
+            (self.max.x + self.min.x) / two,
+            (self.max.y + self.min.y) / two,
+        )
     }
 }
 
@@ -217,7 +220,7 @@ where
 mod test {
     use algorithm::centroid::Centroid;
     use algorithm::euclidean_distance::EuclideanDistance;
-    use {Bbox, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, COORD_PRECISION};
+    use {Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, COORD_PRECISION};
     // Tests: Centroid of LineString
     #[test]
     fn empty_linestring_test() {
@@ -361,15 +364,13 @@ mod test {
         );
     }
     #[test]
-    fn bbox_test() {
-        let bbox = Bbox {
-            xmax: 4.,
-            xmin: 0.,
-            ymax: 100.,
-            ymin: 50.,
+    fn bounding_rect_test() {
+        let bounding_rect = Rect {
+            min: Coordinate { x: 0., y: 50. },
+            max: Coordinate { x: 4., y: 100. },
         };
         let point = Point(Coordinate { x: 2., y: 75. });
-        assert_eq!(point, bbox.centroid());
+        assert_eq!(point, bounding_rect.centroid());
     }
     #[test]
     fn line_test() {
