@@ -2,8 +2,8 @@
 pub mod area;
 /// Returns the bearing to another Point in degrees.
 pub mod bearing;
-/// Returns the Bbox of a geometry.
-pub mod boundingbox;
+/// Returns the bounding rectangle of a geometry.
+pub mod bounding_rect;
 /// Calculation of the centroid of a geometry.
 pub mod centroid;
 /// Determine the minimum distance between two objects.

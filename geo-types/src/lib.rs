@@ -53,6 +53,9 @@ pub use geometry_collection::GeometryCollection;
 mod triangle;
 pub use triangle::Triangle;
 
+mod rect;
+pub use rect::Rect;
+
 #[cfg(test)]
 mod test {
     use super::*;

@@ -2,7 +2,7 @@ use num_traits::{Float, ToPrimitive};
 
 use algorithm::euclidean_distance::EuclideanDistance;
 use algorithm::intersects::Intersects;
-use {Bbox, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, COORD_PRECISION};
+use {CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect, COORD_PRECISION};
 
 ///  Checks if the geometry A is completely inside the B geometry
 pub trait Contains<Rhs = Self> {
@@ -253,32 +253,32 @@ where
     }
 }
 
-impl<T> Contains<Point<T>> for Bbox<T>
+impl<T> Contains<Point<T>> for Rect<T>
 where
     T: CoordinateType,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        p.x() >= self.xmin && p.x() <= self.xmax && p.y() >= self.ymin && p.y() <= self.ymax
+        p.x() >= self.min.x && p.x() <= self.max.x && p.y() >= self.min.y && p.y() <= self.max.y
     }
 }
 
-impl<T> Contains<Bbox<T>> for Bbox<T>
+impl<T> Contains<Rect<T>> for Rect<T>
 where
     T: CoordinateType,
 {
-    fn contains(&self, bbox: &Bbox<T>) -> bool {
+    fn contains(&self, bounding_rect: &Rect<T>) -> bool {
         // All points of LineString must be in the polygon ?
-        self.xmin <= bbox.xmin
-            && self.xmax >= bbox.xmax
-            && self.ymin <= bbox.ymin
-            && self.ymax >= bbox.ymax
+        self.min.x <= bounding_rect.min.x
+            && self.max.x >= bounding_rect.max.x
+            && self.min.y <= bounding_rect.min.y
+            && self.max.y >= bounding_rect.max.y
     }
 }
 
 #[cfg(test)]
 mod test {
     use algorithm::contains::Contains;
-    use {Bbox, Coordinate, Line, LineString, MultiPolygon, Point, Polygon};
+    use {Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect};
     #[test]
     // V doesn't contain rect because two of its edges intersect with V's exterior boundary
     fn polygon_does_not_contain_polygon() {
@@ -501,21 +501,17 @@ mod test {
         assert!(!poly.contains(&LineString::from(vec![(3., 0.5), (3., 5.)])));
     }
     #[test]
-    fn bbox_in_inner_bbox_test() {
-        let bbox_xl = Bbox {
-            xmin: -100.,
-            xmax: 100.,
-            ymin: -200.,
-            ymax: 200.,
+    fn bounding_rect_in_inner_bounding_rect_test() {
+        let bounding_rect_xl = Rect {
+            min: Coordinate { x: -100., y: -200. },
+            max: Coordinate { x: 100., y: 200. },
         };
-        let bbox_sm = Bbox {
-            xmin: -10.,
-            xmax: 10.,
-            ymin: -20.,
-            ymax: 20.,
+        let bounding_rect_sm = Rect {
+            min: Coordinate { x: -10., y: -20. },
+            max: Coordinate { x: 10., y: 20. },
         };
-        assert_eq!(true, bbox_xl.contains(&bbox_sm));
-        assert_eq!(false, bbox_sm.contains(&bbox_xl));
+        assert_eq!(true, bounding_rect_xl.contains(&bounding_rect_sm));
+        assert_eq!(false, bounding_rect_sm.contains(&bounding_rect_xl));
     }
     #[test]
     fn point_in_line_test() {
@@ -606,23 +602,19 @@ mod test {
     }
 
     #[test]
-    fn integer_bboxs() {
+    fn integer_bounding_rects() {
         let p: Point<i32> = Point::new(10, 20);
-        let bbox: Bbox<i32> = Bbox {
-            xmin: 0,
-            ymin: 0,
-            xmax: 100,
-            ymax: 100,
+        let bounding_rect: Rect<i32> = Rect {
+            min: Coordinate { x: 0, y: 0 },
+            max: Coordinate { x: 100, y: 100 },
         };
-        assert!(bbox.contains(&p));
-        assert!(!bbox.contains(&Point::new(-10, -10)));
+        assert!(bounding_rect.contains(&p));
+        assert!(!bounding_rect.contains(&Point::new(-10, -10)));
 
-        let smaller_bbox: Bbox<i32> = Bbox {
-            xmin: 10,
-            ymin: 10,
-            xmax: 20,
-            ymax: 20,
+        let smaller_bounding_rect: Rect<i32> = Rect {
+            min: Coordinate { x: 10, y: 10 },
+            max: Coordinate { x: 20, y: 20 },
         };
-        assert!(bbox.contains(&smaller_bbox));
+        assert!(bounding_rect.contains(&smaller_bounding_rect));
     }
 }

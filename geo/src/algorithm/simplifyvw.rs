@@ -5,8 +5,7 @@ use std::collections::BinaryHeap;
 use {Coordinate, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Triangle};
 
 use spade::rtree::RTree;
-use spade::BoundingRect;
-use spade::SpadeFloat;
+use spade::{self, SpadeFloat};
 
 /// Store triangle information
 // current is the candidate point for removal
@@ -167,7 +166,8 @@ where
                 orig.0[ai as usize],
                 orig.0[current_point as usize],
                 orig.0[bi as usize],
-            ).area().abs();
+            ).area()
+                .abs();
             pq.push(VScore {
                 area: area,
                 current: current_point as usize,
@@ -375,14 +375,14 @@ where
 {
     let point_a = orig[triangle.left];
     let point_c = orig[triangle.right];
-    let bbox = Triangle(
+    let bounding_rect = Triangle(
         orig[triangle.left],
         orig[triangle.current],
         orig[triangle.right],
-    ).bbox();
-    let br = Point::new(bbox.xmin, bbox.ymin);
-    let tl = Point::new(bbox.xmax, bbox.ymax);
-    let candidates = tree.lookup_in_rectangle(&BoundingRect::from_corners(&br, &tl));
+    ).bounding_rect();
+    let br = Point::new(bounding_rect.min.x, bounding_rect.min.y);
+    let tl = Point::new(bounding_rect.max.x, bounding_rect.max.y);
+    let candidates = tree.lookup_in_rectangle(&spade::BoundingRect::from_corners(&br, &tl));
     candidates.iter().any(|c| {
         // triangle start point, end point
         let (ca, cb) = c.points();
