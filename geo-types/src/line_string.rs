@@ -1,6 +1,9 @@
 use std::iter::FromIterator;
 use {Coordinate, CoordinateType, Line, Point, Triangle};
 
+#[cfg(feature = "spade")]
+use algorithms::{BoundingBox, EuclideanDistance};
+
 /// An ordered collection of two or more [`Coordinate`s](struct.Coordinate.html), representing a
 /// path between locations.
 ///
@@ -160,5 +163,40 @@ impl<T: CoordinateType> IntoIterator for LineString<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+#[cfg(feature = "spade")]
+impl<T> ::spade::SpatialObject for LineString<T>
+where
+    T: ::num_traits::Float + ::spade::SpadeNum + ::std::fmt::Debug,
+{
+    type Point = Point<T>;
+
+    fn mbr(&self) -> ::spade::BoundingRect<Self::Point> {
+        let bbox = self.bbox();
+        match bbox {
+            None => {
+                ::spade::BoundingRect::from_corners(
+                    &Point::new(T::min_value(), T::min_value()),
+                    &Point::new(T::max_value(), T::max_value()),
+                )
+            },
+            Some(b) => {
+                ::spade::BoundingRect::from_corners(
+                    &Point::new(b.xmin, b.ymin),
+                    &Point::new(b.xmax, b.ymax),
+                )
+            },
+        }
+    }
+
+    fn distance2(&self, point: &Self::Point) -> <Self::Point as ::spade::PointN>::Scalar {
+        let d = self.euclidean_distance(point);
+        if d == T::zero() {
+            d
+        } else {
+            d.powi(2)
+        }
     }
 }
