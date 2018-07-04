@@ -1,9 +1,6 @@
 use std::iter::FromIterator;
 use {Coordinate, CoordinateType, Line, Point, Triangle};
 
-#[cfg(feature = "spade")]
-use algorithms::{BoundingRect, EuclideanDistance};
-
 /// An ordered collection of two or more [`Coordinate`s](struct.Coordinate.html), representing a
 /// path between locations.
 ///
@@ -174,7 +171,7 @@ where
     type Point = Point<T>;
 
     fn mbr(&self) -> ::spade::BoundingRect<Self::Point> {
-        let bounding_rect = self.bounding_rect();
+        let bounding_rect = ::private_utils::line_string_bounding_rect(self);
         match bounding_rect {
             None => ::spade::BoundingRect::from_corners(
                 &Point::new(T::min_value(), T::min_value()),
@@ -188,7 +185,7 @@ where
     }
 
     fn distance2(&self, point: &Self::Point) -> <Self::Point as ::spade::PointN>::Scalar {
-        let d = self.euclidean_distance(point);
+        let d = ::private_utils::point_line_string_euclidean_distance(*point, self);
         if d == T::zero() {
             d
         } else {

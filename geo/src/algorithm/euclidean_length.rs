@@ -30,7 +30,7 @@ where
     T: Float,
 {
     fn euclidean_length(&self) -> T {
-        self.dx().hypot(self.dy())
+        ::geo_types::private_utils::line_euclidean_length(*self)
     }
 }
 

@@ -1,7 +1,7 @@
 use num_traits::Float;
 use {CoordinateType, Point};
 
-pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
+pub use geo_types::private_utils::COORD_PRECISION;
 
 /// A container for indices of the minimum and maximum points of a [`Geometry`](enum.Geometry.html)
 #[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]

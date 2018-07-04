@@ -1,3 +1,4 @@
+use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 use {
     Coordinate, CoordinateType, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
     Polygon, Rect, Triangle,
@@ -29,47 +30,6 @@ pub trait BoundingRect<T: CoordinateType> {
     /// ```
     ///
     fn bounding_rect(&self) -> Self::Output;
-}
-
-fn get_min_max<T>(p: T, min: T, max: T) -> (T, T)
-where
-    T: CoordinateType,
-{
-    if p > max {
-        (min, p)
-    } else if p < min {
-        (p, max)
-    } else {
-        (min, max)
-    }
-}
-
-fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>
-where
-    T: CoordinateType,
-    I: IntoIterator<Item = Coordinate<T>>,
-{
-    let mut iter = collection.into_iter();
-    if let Some(pnt) = iter.next() {
-        let mut xrange = (pnt.x, pnt.x);
-        let mut yrange = (pnt.y, pnt.y);
-        for pnt in iter {
-            let (px, py) = pnt.x_y();
-            xrange = get_min_max(px, xrange.0, xrange.1);
-            yrange = get_min_max(py, yrange.0, yrange.1);
-        }
-        return Some(Rect {
-            min: Coordinate {
-                x: xrange.0,
-                y: yrange.0,
-            },
-            max: Coordinate {
-                x: xrange.1,
-                y: yrange.1,
-            },
-        });
-    }
-    None
 }
 
 impl<T> BoundingRect<T> for MultiPoint<T>
@@ -114,7 +74,7 @@ where
     /// Return the BoundingRect for a LineString
     ///
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.0.iter().cloned())
+        line_string_bounding_rect(self)
     }
 }
 
