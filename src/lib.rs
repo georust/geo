@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::ascii::AsciiExt;
 use std::default::Default;
 use std::fmt;
 
@@ -34,6 +33,9 @@ pub mod types;
 
 #[cfg(feature = "geo-types")]
 pub use towkt::ToWkt;
+
+#[cfg(feature = "geo-types")]
+pub mod conversion;
 
 pub enum Geometry {
     Point(Point),
