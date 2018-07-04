@@ -3,7 +3,7 @@ use algorithm::euclidean_length::EuclideanLength;
 use algorithm::intersects::Intersects;
 use algorithm::polygon_distance_fast_path::*;
 use num_traits::float::FloatConst;
-use num_traits::{Float, Signed, ToPrimitive};
+use num_traits::{Float, Signed};
 use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 use spade::rtree::RTree;
@@ -72,30 +72,6 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     fn euclidean_distance(&self, rhs: &Rhs) -> T;
 }
 
-/// Minimum distance between a Point and a Line segment
-/// This is a helper for Point-to-LineString and Point-to-Polygon distance
-/// Adapted from https://github.com/OSGeo/geos/blob/master/src/algorithm/CGAlgorithms.cpp#L191
-fn line_segment_distance<T>(point: Point<T>, start: Point<T>, end: Point<T>) -> T
-where
-    T: Float + ToPrimitive,
-{
-    if start == end {
-        return point.euclidean_distance(&start);
-    }
-    let dx = end.x() - start.x();
-    let dy = end.y() - start.y();
-    let r =
-        ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
-    if r <= T::zero() {
-        return point.euclidean_distance(&start);
-    }
-    if r >= T::one() {
-        return point.euclidean_distance(&end);
-    }
-    let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) / (dx * dx + dy * dy);
-    s.abs() * dx.hypot(dy)
-}
-
 impl<T> EuclideanDistance<T, Point<T>> for Point<T>
 where
     T: Float,
@@ -151,7 +127,13 @@ where
                 polygon
                     .exterior
                     .lines()
-                    .map(|line| line_segment_distance(*self, line.start_point(), line.end_point()))
+                    .map(|line| {
+                        ::geo_types::private_utils::line_segment_distance(
+                            *self,
+                            line.start_point(),
+                            line.end_point(),
+                        )
+                    })
                     .fold(T::max_value(), |accum, val| accum.min(val)),
             )
     }
@@ -220,14 +202,7 @@ where
 {
     /// Minimum distance from a Point to a LineString
     fn euclidean_distance(&self, linestring: &LineString<T>) -> T {
-        // No need to continue if the point is on the LineString, or it's empty
-        if linestring.contains(self) || linestring.0.is_empty() {
-            return T::zero();
-        }
-        linestring
-            .lines()
-            .map(|line| line_segment_distance(*self, line.start_point(), line.end_point()))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+        ::geo_types::private_utils::point_line_string_euclidean_distance(*self, linestring)
     }
 }
 
@@ -247,7 +222,7 @@ where
 {
     /// Minimum distance from a Line to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
-        line_segment_distance(*point, self.start_point(), self.end_point())
+        ::geo_types::private_utils::point_line_euclidean_distance(*point, *self)
     }
 }
 
@@ -487,7 +462,8 @@ where
 mod test {
     use super::*;
     use algorithm::convexhull::ConvexHull;
-    use algorithm::euclidean_distance::{line_segment_distance, EuclideanDistance};
+    use algorithm::euclidean_distance::EuclideanDistance;
+    use geo_types::private_utils::line_segment_distance;
     use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
     #[test]

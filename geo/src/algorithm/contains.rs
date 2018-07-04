@@ -1,8 +1,7 @@
 use num_traits::{Float, ToPrimitive};
 
-use algorithm::euclidean_distance::EuclideanDistance;
 use algorithm::intersects::Intersects;
-use {CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect, COORD_PRECISION};
+use {CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect};
 
 ///  Checks if the geometry A is completely inside the B geometry
 pub trait Contains<Rhs = Self> {
@@ -38,7 +37,7 @@ where
     T: Float + ToPrimitive,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        self.euclidean_distance(p).to_f32().unwrap() < COORD_PRECISION
+        ::geo_types::private_utils::point_contains_point(*self, *p)
     }
 }
 
@@ -47,32 +46,7 @@ where
     T: Float,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        // LineString without points
-        if self.0.is_empty() {
-            return false;
-        }
-        // LineString with one point equal p
-        if self.0.len() == 1 {
-            return Point(self.0[0]).contains(p);
-        }
-        // check if point is a vertex
-        if self.0.contains(&p.0) {
-            return true;
-        }
-        for line in self.lines() {
-            if ((line.start.y == line.end.y)
-                && (line.start.y == p.y())
-                && (p.x() > line.start.x.min(line.end.x))
-                && (p.x() < line.start.x.max(line.end.x)))
-                || ((line.start.x == line.end.x)
-                    && (line.start.x == p.x())
-                    && (p.y() > line.start.y.min(line.end.y))
-                    && (p.y() < line.start.y.max(line.end.y)))
-            {
-                return true;
-            }
-        }
-        false
+        ::geo_types::private_utils::line_string_contains_point(self, *p)
     }
 }
 

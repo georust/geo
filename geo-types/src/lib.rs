@@ -7,9 +7,6 @@ extern crate serde;
 #[cfg(feature = "spade")]
 extern crate spade;
 
-#[cfg(feature = "spade")]
-mod algorithms;
-
 use num_traits::{Num, NumCast};
 
 /// The type of an x or y value of a point/coordinate.
@@ -55,6 +52,9 @@ pub use triangle::Triangle;
 
 mod rect;
 pub use rect::Rect;
+
+#[doc(hidden)]
+pub mod private_utils;
 
 #[cfg(test)]
 mod test {
