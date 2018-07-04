@@ -1,7 +1,9 @@
 use num_traits::{Float, ToPrimitive};
 
 use algorithm::intersects::Intersects;
-use {CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect};
+use {
+    Coordinate, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle,
+};
 
 ///  Checks if the geometry A is completely inside the B geometry
 pub trait Contains<Rhs = Self> {
@@ -249,10 +251,31 @@ where
     }
 }
 
+impl<T> Contains<Point<T>> for Triangle<T>
+where
+    T: CoordinateType,
+{
+    fn contains(&self, point: &Point<T>) -> bool {
+        let sign_1 = sign(&point.0, &self.0, &self.1);
+        let sign_2 = sign(&point.0, &self.1, &self.2);
+        let sign_3 = sign(&point.0, &self.2, &self.0);
+
+        ((sign_1 == sign_2) && (sign_2 == sign_3))
+    }
+}
+
+fn sign<T>(point_1: &Coordinate<T>, point_2: &Coordinate<T>, point_3: &Coordinate<T>) -> bool
+where
+    T: CoordinateType,
+{
+    (point_1.x - point_3.x) * (point_2.y - point_3.y)
+        - (point_2.x - point_3.x) * (point_1.y - point_3.y) < T::zero()
+}
+
 #[cfg(test)]
 mod test {
     use algorithm::contains::Contains;
-    use {Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect};
+    use {Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
     #[test]
     // V doesn't contain rect because two of its edges intersect with V's exterior boundary
     fn polygon_does_not_contain_polygon() {
@@ -590,5 +613,47 @@ mod test {
             max: Coordinate { x: 20, y: 20 },
         };
         assert!(bounding_rect.contains(&smaller_bounding_rect));
+    }
+
+    #[test]
+    fn triangle_contains_point_on_edge() {
+        let t = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
+        let p = Point::new(1.0, 0.0);
+        assert!(t.contains(&p));
+    }
+
+    #[test]
+    fn triangle_contains_point_on_vertex() {
+        let t = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
+        let p = Point::new(2.0, 0.0);
+        assert!(t.contains(&p));
+    }
+
+    #[test]
+    fn triangle_contains_point_inside() {
+        let t = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
+        let p = Point::new(1.0, 0.5);
+        assert!(t.contains(&p));
+    }
+
+    #[test]
+    fn triangle_not_contains_point_above() {
+        let t = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
+        let p = Point::new(1.0, 1.5);
+        assert!(!t.contains(&p));
+    }
+
+    #[test]
+    fn triangle_not_contains_point_below() {
+        let t = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
+        let p = Point::new(-1.0, 0.5);
+        assert!(!t.contains(&p));
+    }
+
+    #[test]
+    fn triangle_contains_neg_point() {
+        let t = Triangle::from([(0.0, 0.0), (-2.0, 0.0), (-2.0, -2.0)]);
+        let p = Point::new(-1.0, -0.5);
+        assert!(t.contains(&p));
     }
 }

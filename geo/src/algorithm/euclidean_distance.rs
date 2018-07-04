@@ -4,7 +4,7 @@ use algorithm::intersects::Intersects;
 use algorithm::polygon_distance_fast_path::*;
 use num_traits::float::FloatConst;
 use num_traits::{Float, Signed};
-use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Triangle};
 
 use spade::rtree::RTree;
 use spade::SpadeFloat;
@@ -437,6 +437,22 @@ where
     }
 }
 
+impl<T> EuclideanDistance<T, Point<T>> for Triangle<T>
+where
+    T: Float,
+{
+    fn euclidean_distance(&self, point: &Point<T>) -> T {
+        if self.contains(point) {
+            return T::zero();
+        }
+
+        [(self.0, self.1), (self.1, self.2), (self.2, self.0)]
+            .into_iter()
+            .map(|edge| 
+                        ::geo_types::private_utils::line_segment_distance(*point, edge.0.into(), edge.1.into()))
+            .fold(T::max_value(), |accum, val| accum.min(val))
+    }
+}
 /// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
 // This is somewhat slow and memory-inefficient, but certainly better than quadratic time
 pub fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -> T
@@ -945,4 +961,37 @@ mod test {
         let ls: LineString<_> = vec![(3.0, 0.0), (1.0, 1.0), (3.0, 2.0)].into();
         assert_eq!(ls.euclidean_distance(&line), 1.0);
     }
+
+    #[test]
+    // Triangle-Point test: point on vertex
+    fn test_triangle_point_on_vertex_distance() {
+        let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
+        let point = Point::new(0.0, 0.0);
+        assert_eq!(triangle.euclidean_distance(&point), 0.0);
+    }
+
+    #[test]
+    // Triangle-Point test: point on edge
+    fn test_triangle_point_on_edge_distance() {
+        let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
+        let point = Point::new(1.5, 0.0);
+        assert_eq!(triangle.euclidean_distance(&point), 0.0);
+    }
+
+    #[test]
+    // Triangle-Point test
+    fn test_triangle_point_distance() {
+        let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
+        let point = Point::new(2.0, 3.0);
+        assert_eq!(triangle.euclidean_distance(&point), 1.0);
+    }
+
+    #[test]
+    // Triangle-Point test: point within triangle
+    fn test_triangle_point_inside_distance() {
+        let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
+        let point = Point::new(1.0, 0.5);
+        assert_eq!(triangle.euclidean_distance(&point), 0.0);
+    }
+
 }
