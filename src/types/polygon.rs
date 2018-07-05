@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::fmt;
 use tokenizer::PeekableTokens;
 use types::linestring::LineString;
 use FromTokens;
@@ -26,17 +27,41 @@ impl Polygon {
     }
 }
 
+impl fmt::Display for Polygon {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        if self.0.is_empty() {
+            f.write_str("POLYGON EMPTY")
+        } else {
+            let strings = self
+                .0
+                .iter()
+                .map(|l| {
+                    l.0
+                        .iter()
+                        .map(|c| format!("{} {}", c.x, c.y))
+                        .collect::<Vec<_>>()
+                        .join(",")
+                })
+                .collect::<Vec<_>>()
+                .join("),(");
+
+            write!(f, "POLYGON(({}))", strings)
+        }
+    }
+}
+
 impl FromTokens for Polygon {
     fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         let result =
             FromTokens::comma_many(<LineString as FromTokens>::from_tokens_with_parens, tokens);
-        result.map(|vec| Polygon(vec))
+        result.map(Polygon)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Polygon;
+    use super::{LineString, Polygon};
+    use types::Coord;
     use {Geometry, Wkt};
 
     #[test]
@@ -50,5 +75,75 @@ mod tests {
             _ => unreachable!(),
         };
         assert_eq!(2, lines.len());
+    }
+
+    #[test]
+    fn write_empty_polygon() {
+        let polygon = Polygon(vec![]);
+
+        assert_eq!("POLYGON EMPTY", format!("{}", polygon));
+    }
+
+    #[test]
+    fn write_polygon() {
+        let polygon = Polygon(vec![
+            LineString(vec![
+                Coord {
+                    x: 0.,
+                    y: 0.,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 20.,
+                    y: 40.,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 40.,
+                    y: 0.,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 0.,
+                    y: 0.,
+                    z: None,
+                    m: None,
+                },
+            ]),
+            LineString(vec![
+                Coord {
+                    x: 5.,
+                    y: 5.,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 20.,
+                    y: 30.,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 30.,
+                    y: 5.,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 5.,
+                    y: 5.,
+                    z: None,
+                    m: None,
+                },
+            ]),
+        ]);
+
+        assert_eq!(
+            "POLYGON((0 0,20 40,40 0,0 0),(5 5,20 30,30 5,5 5))",
+            format!("{}", polygon)
+        );
     }
 }

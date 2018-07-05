@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::fmt;
 use tokenizer::{PeekableTokens, Token};
 use FromTokens;
 use Geometry;
@@ -22,6 +23,23 @@ pub struct GeometryCollection(pub Vec<Geometry>);
 impl GeometryCollection {
     pub fn as_item(self) -> Geometry {
         Geometry::GeometryCollection(self)
+    }
+}
+
+impl fmt::Display for GeometryCollection {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        if self.0.is_empty() {
+            f.write_str("GEOMETRYCOLLECTION EMPTY")
+        } else {
+            let strings = self
+                .0
+                .iter()
+                .map(|geometry| format!("{}", geometry))
+                .collect::<Vec<_>>()
+                .join(",");
+
+            write!(f, "GEOMETRYCOLLECTION({})", strings)
+        }
     }
 }
 
@@ -56,6 +74,7 @@ impl FromTokens for GeometryCollection {
 #[cfg(test)]
 mod tests {
     use super::GeometryCollection;
+    use types::*;
     use {Geometry, Wkt};
 
     #[test]
@@ -69,5 +88,202 @@ mod tests {
             _ => unreachable!(),
         };
         assert_eq!(1, items.len());
+    }
+
+    #[test]
+    fn complex_geometrycollection() {
+        let mut wkt = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4),LINESTRING(4 6,7 10)))")
+            .ok()
+            .unwrap();
+        assert_eq!(1, wkt.items.len());
+        let items = match wkt.items.pop().unwrap() {
+            Geometry::GeometryCollection(GeometryCollection(items)) => items,
+            _ => unreachable!(),
+        };
+        assert_eq!(2, items.len());
+    }
+
+    #[test]
+    fn write_empty_geometry_collection() {
+        let geometry_collection = GeometryCollection(vec![]);
+
+        assert_eq!(
+            "GEOMETRYCOLLECTION EMPTY",
+            format!("{}", geometry_collection)
+        );
+    }
+
+    #[test]
+    fn write_geometry_collection() {
+        let point = Geometry::Point(Point(Some(Coord {
+            x: 10.,
+            y: 20.,
+            z: None,
+            m: None,
+        })));
+
+        let multipoint = Geometry::MultiPoint(MultiPoint(vec![
+            Point(Some(Coord {
+                x: 10.1,
+                y: 20.2,
+                z: None,
+                m: None,
+            })),
+            Point(Some(Coord {
+                x: 30.3,
+                y: 40.4,
+                z: None,
+                m: None,
+            })),
+        ]));
+
+        let linestring = Geometry::LineString(LineString(vec![
+            Coord {
+                x: 10.,
+                y: 20.,
+                z: None,
+                m: None,
+            },
+            Coord {
+                x: 30.,
+                y: 40.,
+                z: None,
+                m: None,
+            },
+        ]));
+
+        let polygon = Geometry::Polygon(Polygon(vec![LineString(vec![
+            Coord {
+                x: 0.,
+                y: 0.,
+                z: None,
+                m: None,
+            },
+            Coord {
+                x: 20.,
+                y: 40.,
+                z: None,
+                m: None,
+            },
+            Coord {
+                x: 40.,
+                y: 0.,
+                z: None,
+                m: None,
+            },
+            Coord {
+                x: 0.,
+                y: 0.,
+                z: None,
+                m: None,
+            },
+        ])]));
+
+        let multilinestring = Geometry::MultiLineString(MultiLineString(vec![
+            LineString(vec![
+                Coord {
+                    x: 10.1,
+                    y: 20.2,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 30.3,
+                    y: 40.4,
+                    z: None,
+                    m: None,
+                },
+            ]),
+            LineString(vec![
+                Coord {
+                    x: 50.5,
+                    y: 60.6,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 70.7,
+                    y: 80.8,
+                    z: None,
+                    m: None,
+                },
+            ]),
+        ]));
+
+        let multipolygon = Geometry::MultiPolygon(MultiPolygon(vec![
+            Polygon(vec![LineString(vec![
+                Coord {
+                    x: 0.,
+                    y: 0.,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 20.,
+                    y: 40.,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 40.,
+                    y: 0.,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 0.,
+                    y: 0.,
+                    z: None,
+                    m: None,
+                },
+            ])]),
+            Polygon(vec![LineString(vec![
+                Coord {
+                    x: 40.,
+                    y: 40.,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 20.,
+                    y: 45.,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 45.,
+                    y: 30.,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 40.,
+                    y: 40.,
+                    z: None,
+                    m: None,
+                },
+            ])]),
+        ]));
+
+        let geometrycollection = GeometryCollection(vec![
+            point,
+            multipoint,
+            linestring,
+            polygon,
+            multilinestring,
+            multipolygon,
+        ]);
+
+        assert_eq!(
+            "GEOMETRYCOLLECTION(\
+             POINT(10 20),\
+             MULTIPOINT((10.1 20.2),(30.3 40.4)),\
+             LINESTRING(10 20,30 40),\
+             POLYGON((0 0,20 40,40 0,0 0)),\
+             MULTILINESTRING((10.1 20.2,30.3 40.4),(50.5 60.6,70.7 80.8)),\
+             MULTIPOLYGON(((0 0,20 40,40 0,0 0)),((40 40,20 45,45 30,40 40)))\
+             )",
+            format!("{}", geometrycollection)
+        );
     }
 }
