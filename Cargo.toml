@@ -4,7 +4,7 @@ description = "Rust read/write support for well-known text (WKT)"
 version = "0.1.2"
 authors = ["Corey Farwell <coreyf@rwell.org>"]
 license = "MIT/Apache-2.0"
-repository = "https://github.com/georust/rust-wkt"
+repository = "https://github.com/georust/wkt"
 
 [dependencies]
 geo-types = {version = "0.1.1", optional = true}

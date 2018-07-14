@@ -1,7 +1,7 @@
 rust-wkt
 ========
 
-[![Build Status](https://travis-ci.org/georust/rust-wkt.svg?branch=master)](https://travis-ci.org/georust/rust-wkt)
+[![Build Status](https://travis-ci.org/georust/wkt.svg?branch=master)](https://travis-ci.org/georust/wkt)
 
 ## License
 
