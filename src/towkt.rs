@@ -73,7 +73,9 @@ fn g_polygon_to_w_polygon(g_polygon: &geo_types::Polygon<f64>) -> Polygon {
 
     // Outer
     let &geo_types::LineString(ref outer_points) = outer_line;
-    poly_lines.push(g_points_to_w_linestring(outer_points));
+    if !outer_points.is_empty() {
+        poly_lines.push(g_points_to_w_linestring(outer_points));
+    }
 
     // Inner
     let inner = g_lines_to_w_lines(inner_lines);
