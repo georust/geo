@@ -1,7 +1,9 @@
-rust-wkt
-========
+wkt
+===
 
 [![Build Status](https://travis-ci.org/georust/wkt.svg?branch=master)](https://travis-ci.org/georust/wkt)
+
+Rust read/write support for [well-known text (WKT)](https://en.wikipedia.org/wiki/Well-known_text).
 
 ## License
 
