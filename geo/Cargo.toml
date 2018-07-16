@@ -4,14 +4,14 @@ description = "Geospatial primitives and algorithms"
 version = "0.9.1"
 authors = ["Corey Farwell <coreyf@rwell.org>"]
 license = "MIT/Apache-2.0"
-repository = "https://github.com/georust/rust-geo"
+repository = "https://github.com/georust/geo"
 documentation = "https://docs.rs/geo/"
 readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
 autobenches = true
 
 [badges]
-travis-ci = { repository = "georust/rust-geo" }
+travis-ci = { repository = "georust/geo" }
 
 [dependencies]
 num-traits = "0.2"
