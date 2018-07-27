@@ -1,7 +1,7 @@
-# Contributing to Rust-Geo
-[contributing-to-rust]: #contributing-to-rust-geo
+# Contributing to `geo`
+[contributing-to-geo]: #contributing-to-geo
 
-Thank you for your interest in contributing to Rust-Geo! There are many ways to
+Thank you for your interest in contributing to `geo`! There are many ways to
 contribute, and we appreciate all of them. This document is a bit long, so here's links to the major sections:
 
 * [Feature Requests](#feature-requests)
@@ -11,12 +11,12 @@ contribute, and we appreciate all of them. This document is a bit long, so here'
 
 As a reminder, all contributors are expected to follow our [Code of Conduct][coc].
 
-[coc]: https://github.com/georust/rust-geo/blob/master/CODE_OF_CONDUCT.md
+[coc]: https://github.com/georust/geo/blob/master/CODE_OF_CONDUCT.md
 
 ## Feature Requests
 [feature-requests]: #feature-requests
 
-Rust-Geo aims to provide a broad suite of functionality. If you're in any doubt as to whether a feature can be included, simply open an issue and ask. It's a good idea to check open issues and pull requests first, in order to check whether a requested feature is already in progress.
+`geo` aims to provide a broad suite of functionality. If you're in any doubt as to whether a feature can be included, simply open an issue and ask. It's a good idea to check open issues and pull requests first, in order to check whether a requested feature is already in progress.
 
 ## Bug Reports
 [bug-reports]: #bug-reports
@@ -25,7 +25,7 @@ While bugs are unfortunate, they're a reality in software. We can't fix what we
 don't know about, so please report liberally. If you're not sure whether something is a bug or not, feel free to file a bug anyway.
 
 If you have the chance, before reporting a bug, please [search existing
-issues](https://github.com/georust/rust-geo/search?q=&type=Issues&utf8=✓),
+issues](https://github.com/georust/geo/search?q=&type=Issues&utf8=✓),
 as it's possible that someone else has already reported your error. This doesn't
 always work, and sometimes it's hard to know what to search for, so consider this
 extra credit. We won't mind if you accidentally file a duplicate report.
@@ -36,7 +36,7 @@ This can be the language or compiler feature used, the conditions that trigger t
 or part of the error message if there is any.
 
 Opening an issue is as easy as following [this
-link](https://github.com/georust/rust-geo/issues/new) and filling out the fields.
+link](https://github.com/georust/geo/issues/new) and filling out the fields.
 Here's a template that you can use to file a bug, though it's not necessary to
 use it exactly:
 
@@ -73,7 +73,7 @@ $ RUST_BACKTRACE=1 rustc ...
 ## Pull Requests
 [pull-requests]: #pull-requests
 
-Pull requests are the primary mechanism we use to change Rust-Geo. GitHub itself has some [great documentation][about-pull-requests] on using the Pull Request feature. We use the "fork and pull" model [described here][development-models], where contributors push changes to their personal fork and create pull requests to
+Pull requests are the primary mechanism we use to change Geo. GitHub itself has some [great documentation][about-pull-requests] on using the Pull Request feature. We use the "fork and pull" model [described here][development-models], where contributors push changes to their personal fork and create pull requests to
 bring those changes into the source repository.
 
 [about-pull-requests]: https://help.github.com/articles/about-pull-requests/
