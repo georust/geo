@@ -1,5 +1,5 @@
 use num_traits::{Float, Signed};
-use {CoordinateType, LineString, Point};
+use {CoordinateType, Point, Ring};
 
 /// A representation of an area. Its outer boundary is represented by a [`LineString`](struct.LineString.html) that is both closed and simple
 ///
@@ -20,8 +20,8 @@ pub struct Polygon<T>
 where
     T: CoordinateType,
 {
-    pub exterior: LineString<T>,
-    pub interiors: Vec<LineString<T>>,
+    pub exterior: Ring<T>,
+    pub interiors: Vec<Ring<T>>,
 }
 
 impl<T> Polygon<T>
@@ -51,7 +51,7 @@ where
     /// assert_eq!(p.exterior, exterior);
     /// assert_eq!(p.interiors, interiors);
     /// ```
-    pub fn new(exterior: LineString<T>, interiors: Vec<LineString<T>>) -> Polygon<T> {
+    pub fn new(exterior: Ring<T>, interiors: Vec<Ring<T>>) -> Polygon<T> {
         Polygon {
             exterior,
             interiors,
@@ -62,7 +62,7 @@ where
     where
         T: Float,
     {
-        (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
+        (current_vertex + (self.exterior.len() - 1) - 1) % (self.exterior.len() - 1)
     }
 }
 
@@ -90,15 +90,14 @@ where
     pub fn is_convex(&self) -> bool {
         let convex = self
             .exterior
-            .0
-            .iter()
+            .coordinates()
             .enumerate()
             .map(|(idx, _)| {
                 let prev_1 = self.previous_vertex(&idx);
                 let prev_2 = self.previous_vertex(&prev_1);
-                Point(self.exterior.0[prev_2]).cross_prod(
-                    Point(self.exterior.0[prev_1]),
-                    Point(self.exterior.0[idx])
+                Point(self.exterior[prev_2]).cross_prod(
+                    Point(self.exterior[prev_1]),
+                    Point(self.exterior[idx])
                 )
             })
             // accumulate and check cross-product result signs in a single pass

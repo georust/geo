@@ -53,6 +53,9 @@ pub use triangle::Triangle;
 mod rect;
 pub use rect::Rect;
 
+mod ring;
+pub use ring::Ring;
+
 #[doc(hidden)]
 pub mod private_utils;
 
@@ -93,18 +96,18 @@ mod test {
 
     #[test]
     fn polygon_new_test() {
-        let exterior = LineString(vec![
+        let exterior = Ring::from_coordinates(vec![
             Coordinate { x: 0., y: 0. },
             Coordinate { x: 1., y: 1. },
             Coordinate { x: 1., y: 0. },
             Coordinate { x: 0., y: 0. },
-        ]);
-        let interiors = vec![LineString(vec![
+        ]).unwrap();
+        let interiors = vec![Ring::from_coordinates(vec![
             Coordinate { x: 0.1, y: 0.1 },
             Coordinate { x: 0.9, y: 0.9 },
             Coordinate { x: 0.9, y: 0.1 },
             Coordinate { x: 0.1, y: 0.1 },
-        ])];
+        ]).unwrap()];
         let p = Polygon::new(exterior.clone(), interiors.clone());
 
         assert_eq!(p.exterior, exterior);
