@@ -1,4 +1,4 @@
-use {Coordinate, CoordinateType};
+use {Coordinate, CoordinateType, Line, Point};
 use std::ops::Index;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -31,8 +31,19 @@ impl<T: CoordinateType> Ring<T> {
         self.0.len()
     }
 
-    pub fn coordinates(&self) -> impl Iterator<Item = &Coordinate<T>> {
-        self.0.iter()
+    pub fn coordinates<'a>(&'a self) -> impl Iterator<Item = Coordinate<T>> + 'a {
+        self.0.iter().map(|c| *c)
+    }
+
+    pub fn lines<'a>(&'a self) -> impl ExactSizeIterator + Iterator<Item = Line<T>> + 'a {
+        self.0.windows(2).map(|w| {
+            // unsafe: slice::windows(N) is guaranteed to yield a slice with exactly N elements
+            unsafe { Line::new(*w.get_unchecked(0), *w.get_unchecked(1)) }
+        })
+    }
+
+    pub fn points_iter(&self) -> PointsIter<T> {
+        PointsIter(self.0.iter())
     }
 }
 
@@ -41,5 +52,21 @@ impl<T: CoordinateType> Index<usize> for Ring<T> {
 
     fn index(&self, idx: usize) -> &Self::Output {
         &self.0[idx]
+    }
+}
+
+pub struct PointsIter<'a, T: CoordinateType + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
+
+impl<'a, T: CoordinateType> Iterator for PointsIter<'a, T> {
+    type Item = Point<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|c| Point(*c))
+    }
+}
+
+impl<'a, T: CoordinateType> DoubleEndedIterator for PointsIter<'a, T> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.0.next_back().map(|c| Point(*c))
     }
 }

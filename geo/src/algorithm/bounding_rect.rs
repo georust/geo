@@ -102,8 +102,7 @@ where
     /// Return the BoundingRect for a Polygon
     ///
     fn bounding_rect(&self) -> Self::Output {
-        let line = &self.exterior;
-        get_bounding_rect(line.0.iter().cloned())
+        get_bounding_rect(self.exterior.coordinates())
     }
 }
 
@@ -120,7 +119,7 @@ where
         get_bounding_rect(
             self.0
                 .iter()
-                .flat_map(|poly| (poly.exterior).0.iter().map(|c| *c)),
+                .flat_map(|poly| poly.exterior.coordinates()),
         )
     }
 }

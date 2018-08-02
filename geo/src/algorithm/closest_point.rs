@@ -141,6 +141,7 @@ impl<F: Float> ClosestPoint<F> for MultiLineString<F> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ::{Ring, Coordinate};
 
     /// Create a test which checks that we get `$should_be` when trying to find
     /// the closest distance between `$p` and the line `(0, 0) -> (100, 100)`.
@@ -167,14 +168,14 @@ mod tests {
     closest!(in_line_far_away, (1000.0, 1000.0) => Closest::SinglePoint(Point::new(100.0, 100.0)));
     closest!(perpendicular_from_50_50, (0.0, 100.0) => Closest::SinglePoint(Point::new(50.0, 50.0)));
 
-    fn a_square(width: f32) -> LineString<f32> {
-        LineString::from(vec![
-            (0.0, 0.0),
-            (width, 0.0),
-            (width, width),
-            (0.0, width),
-            (0.0, 0.0),
-        ])
+    fn a_square(width: f32) -> Ring<f32> {
+        Ring::from_coordinates(vec![
+            Coordinate::from((0.0, 0.0)),
+            Coordinate::from((width, 0.0)),
+            Coordinate::from((width, width)),
+            Coordinate::from((0.0, width)),
+            Coordinate::from((0.0, 0.0)),
+        ]).unwrap()
     }
 
     /// A bunch of "random" points.
@@ -244,7 +245,7 @@ mod tests {
 
     #[test]
     fn simple_polygon_is_same_as_linestring() {
-        let square: LineString<f32> = a_square(100.0);
+        let square = a_square(100.0);
         let poly = Polygon::new(square.clone(), Vec::new());
 
         fuzz_two_impls(square, poly);
@@ -252,7 +253,7 @@ mod tests {
 
     /// A polygon with 2 holes in it.
     fn holy_polygon() -> Polygon<f32> {
-        let square: LineString<f32> = a_square(100.0);
+        let square = a_square(100.0);
         let ring_1 = a_square(20.0).translate(20.0, 10.0);
         let ring_2 = a_square(10.0).translate(70.0, 60.0);
         Polygon::new(square.clone(), vec![ring_1, ring_2])
@@ -276,7 +277,7 @@ mod tests {
     #[test]
     fn polygon_with_point_on_interior_ring() {
         let poly = holy_polygon();
-        let p = poly.interiors[0].0[3];
+        let p = poly.interiors[0][3];
         let should_be = Closest::Intersection(p.into());
 
         let got = poly.closest_point(&p.into());
@@ -287,7 +288,7 @@ mod tests {
     #[test]
     fn polygon_with_point_near_interior_ring() {
         let poly = holy_polygon();
-        let random_ring_corner = poly.interiors[0].0[3];
+        let random_ring_corner = poly.interiors[0][3];
         let p = Point(random_ring_corner).translate(-3.0, 3.0);
 
         let should_be = Closest::SinglePoint(random_ring_corner.into());

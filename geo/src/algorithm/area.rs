@@ -1,5 +1,6 @@
 use num_traits::Float;
-use {Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
+use {Line, LineString, MultiPolygon, Polygon, Rect, Triangle, Ring};
+use std::iter::Sum;
 
 use algorithm::winding_order::twice_signed_ring_area;
 
@@ -34,6 +35,15 @@ where
     fn area(&self) -> T;
 }
 
+impl<T> Area<T> for Ring<T>
+where
+    T: Float + Sum,
+{
+    fn area(&self) -> T {
+        self.lines().map(|l| l.determinant()).sum()
+    }
+}
+
 fn get_linestring_area<T>(linestring: &LineString<T>) -> T
 where
     T: Float,
@@ -52,25 +62,19 @@ where
 
 impl<T> Area<T> for Polygon<T>
 where
-    T: Float,
+    T: Float + Sum,
 {
     fn area(&self) -> T {
-        self.interiors
-            .iter()
-            .fold(get_linestring_area(&self.exterior), |total, next| {
-                total - get_linestring_area(next)
-            })
+        self.exterior.area() - self.interiors.iter().map(|i| i.area()).sum()
     }
 }
 
 impl<T> Area<T> for MultiPolygon<T>
 where
-    T: Float,
+    T: Float + Sum,
 {
     fn area(&self) -> T {
-        self.0
-            .iter()
-            .fold(T::zero(), |total, next| total + next.area())
+        self.0.iter().map(|p| p.area()).sum()
     }
 }
 

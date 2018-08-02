@@ -1,7 +1,7 @@
 use failure::Error;
 use {
     CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon,
+    MultiPolygon, Point, Polygon, Ring,
 };
 
 /// Map a function over all the coordinates in an object, returning a new one
@@ -178,6 +178,42 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for LineString<T
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for LineString<T> {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
+        for p in &mut self.0 {
+            let new_coords = func(&(p.x, p.y));
+            p.x = new_coords.0;
+            p.y = new_coords.1;
+        }
+    }
+}
+
+impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Ring<T> {
+    type Output = LineString<NT>;
+
+    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+        LineString::from(
+            self.points_iter()
+                .map(|p| p.map_coords(func))
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Ring<T> {
+    type Output = LineString<NT>;
+
+    fn try_map_coords(
+        &self,
+        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+    ) -> Result<Self::Output, Error> {
+        Ok(LineString::from(self
+            .points_iter()
+            .map(|p| p.try_map_coords(func))
+            .collect::<Result<Vec<_>, Error>>()?))
+    }
+}
+
+impl<T: CoordinateType> MapCoordsInplace<T> for Ring<T> {
     fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
         for p in &mut self.0 {
             let new_coords = func(&(p.x, p.y));

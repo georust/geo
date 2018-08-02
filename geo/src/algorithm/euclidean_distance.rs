@@ -113,7 +113,7 @@ where
     /// Minimum distance from a Point to a Polygon
     fn euclidean_distance(&self, polygon: &Polygon<T>) -> T {
         // No need to continue if the polygon contains the point, or is zero-length
-        if polygon.contains(self) || polygon.exterior.0.is_empty() {
+        if polygon.contains(self) {
             return T::zero();
         }
         // fold the minimum interior ring distance if any, followed by the exterior

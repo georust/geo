@@ -173,7 +173,7 @@ where
         let mut aggregated: Vec<Point<T>> = self
             .0
             .iter()
-            .flat_map(|elem| elem.exterior.0.iter().map(|c| Point(*c)))
+            .flat_map(|elem| elem.exterior.coordinates().map(|c| Point(c)))
             .collect();
         Polygon::new(LineString::from(quick_hull(&mut aggregated)), vec![])
     }

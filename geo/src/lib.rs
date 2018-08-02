@@ -17,7 +17,7 @@ pub use types::*;
 
 pub use geo_types::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle, Ring
 };
 
 /// This module includes all the functions of geometric calculations
