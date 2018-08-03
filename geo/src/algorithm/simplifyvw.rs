@@ -526,7 +526,7 @@ where
             geomtype: GeomType::Ring,
         };
         let mut simplified = vwp_wrapper(&gt, &self.exterior, Some(&self.interiors), epsilon);
-        let exterior = LineString::from(simplified.remove(0));
+        let exterior = Ring::from_coordinates(simplified.remove(0)).unwrap();
         let interiors = simplified.into_iter().map(LineString::from).collect();
         Polygon::new(exterior, interiors)
     }
@@ -594,7 +594,7 @@ mod test {
         cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, GeomType, SimplifyVW,
         SimplifyVWPreserve,
     };
-    use {Coordinate, LineString, MultiLineString, MultiPolygon, Point, Polygon};
+    use {Coordinate, LineString, MultiLineString, MultiPolygon, Point, Polygon, Ring};
 
     #[test]
     fn visvalingam_test() {
@@ -680,18 +680,18 @@ mod test {
         // with the inner ring, which would also trigger removal of outer[1],
         // leaving the geometry below min_points. It is thus retained.
         // Inner should also be reduced, but has points == initial_min for the Polygon type
-        let outer = LineString::from(vec![
-            (-54.4921875, 21.289374355860424),
-            (-33.5, 56.9449741808516),
-            (-22.5, 44.08758502824516),
-            (-19.5, 23.241346102386135),
-            (-54.4921875, 21.289374355860424),
+        let outer = Ring::from(vec![
+            (-54.4921875, 21.289374355860424).into(),
+            (-33.5, 56.9449741808516).into(),
+            (-22.5, 44.08758502824516).into(),
+            (-19.5, 23.241346102386135).into(),
+            (-54.4921875, 21.289374355860424).into(),
         ]);
-        let inner = LineString::from(vec![
-            (-24.451171875, 35.266685523707665),
-            (-29.513671875, 47.32027765985069),
-            (-22.869140625, 43.80817468459856),
-            (-24.451171875, 35.266685523707665),
+        let inner = Ring::from(vec![
+            (-24.451171875, 35.266685523707665).into(),
+            (-29.513671875, 47.32027765985069).into(),
+            (-22.869140625, 43.80817468459856).into(),
+            (-24.451171875, 35.266685523707665).into(),
         ]);
         let poly = Polygon::new(outer.clone(), vec![inner]);
         let simplified = poly.simplifyvw_preserve(&95.4);
@@ -704,20 +704,20 @@ mod test {
         // with the inner ring, which would also trigger removal of outer[1],
         // leaving the geometry below min_points. It is thus retained.
         // Inner should be reduced to four points by removing inner[2]
-        let outer = LineString::from(vec![
-            (-54.4921875, 21.289374355860424),
-            (-33.5, 56.9449741808516),
-            (-22.5, 44.08758502824516),
-            (-19.5, 23.241346102386135),
-            (-54.4921875, 21.289374355860424),
-        ]);
-        let inner = LineString::from(vec![
-            (-24.451171875, 35.266685523707665),
-            (-40.0, 45.),
-            (-29.513671875, 47.32027765985069),
-            (-22.869140625, 43.80817468459856),
-            (-24.451171875, 35.266685523707665),
-        ]);
+        let outer = Ring::from_coordinates(vec![
+            (-54.4921875, 21.289374355860424).into(),
+            (-33.5, 56.9449741808516).into(),
+            (-22.5, 44.08758502824516).into(),
+            (-19.5, 23.241346102386135).into(),
+            (-54.4921875, 21.289374355860424).into(),
+        ]).unwrap();
+        let inner = Ring::from_coordinates(vec![
+            (-24.451171875, 35.266685523707665).into(),
+            (-40.0, 45.).into(),
+            (-29.513671875, 47.32027765985069).into(),
+            (-22.869140625, 43.80817468459856).into(),
+            (-24.451171875, 35.266685523707665).into(),
+        ]).unwrap();
         let correct_inner = LineString::from(vec![
             (-24.451171875, 35.266685523707665),
             (-40.0, 45.0),
@@ -809,14 +809,14 @@ mod test {
     #[test]
     fn polygon() {
         let poly = Polygon::new(
-            LineString::from(vec![
-                (0., 0.),
-                (0., 10.),
-                (5., 11.),
-                (10., 10.),
-                (10., 0.),
-                (0., 0.),
-            ]),
+            Ring::from_coordinates(vec![
+                (0., 0.).into(),
+                (0., 10.).into(),
+                (5., 11.).into(),
+                (10., 10.).into(),
+                (10., 0.).into(),
+                (0., 0.).into(),
+            ]).unwrap(),
             vec![],
         );
 
@@ -825,13 +825,13 @@ mod test {
         assert_eq!(
             poly2,
             Polygon::new(
-                LineString::from(vec![
-                    Point::new(0., 0.),
-                    Point::new(0., 10.),
-                    Point::new(10., 10.),
-                    Point::new(10., 0.),
-                    Point::new(0., 0.),
-                ]),
+                Ring::from_coordinates(vec![
+                    Point::new(0., 0.).into(),
+                    Point::new(0., 10.).into(),
+                    Point::new(10., 10.).into(),
+                    Point::new(10., 0.).into(),
+                    Point::new(0., 0.).into(),
+                ]).unwrap(),
                 vec![],
             )
         );
@@ -840,14 +840,14 @@ mod test {
     #[test]
     fn multipolygon() {
         let mpoly = MultiPolygon(vec![Polygon::new(
-            LineString::from(vec![
-                (0., 0.),
-                (0., 10.),
-                (5., 11.),
-                (10., 10.),
-                (10., 0.),
-                (0., 0.),
-            ]),
+            Ring::from_coordinates(vec![
+                (0., 0.).into(),
+                (0., 10.).into(),
+                (5., 11.).into(),
+                (10., 10.).into(),
+                (10., 0.).into(),
+                (0., 0.).into(),
+            ]).unwrap(),
             vec![],
         )]);
 
@@ -856,7 +856,13 @@ mod test {
         assert_eq!(
             mpoly2,
             MultiPolygon(vec![Polygon::new(
-                LineString::from(vec![(0., 0.), (0., 10.), (10., 10.), (10., 0.), (0., 0.)]),
+                Ring::from_coordinates(vec![
+                    (0., 0.).into(),
+                    (0., 10.).into(),
+                    (10., 10.).into(),
+                    (10., 0.).into(),
+                    (0., 0.).into(),
+                ]).unwrap(),
                 vec![],
             )])
         );
