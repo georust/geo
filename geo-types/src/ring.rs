@@ -55,6 +55,12 @@ impl<T: CoordinateType> Index<usize> for Ring<T> {
     }
 }
 
+impl<T: CoordinateType> PartialEq<[Coordinate<T>]> for Ring<T> {
+    fn eq(&self, rhs: &[Coordinate<T>]) -> bool {
+        self.0 == rhs
+    }
+}
+
 pub struct PointsIter<'a, T: CoordinateType + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
 
 impl<'a, T: CoordinateType> Iterator for PointsIter<'a, T> {

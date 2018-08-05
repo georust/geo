@@ -275,30 +275,30 @@ where
 #[cfg(test)]
 mod test {
     use algorithm::contains::Contains;
-    use {Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
+    use {Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle, Ring};
     #[test]
     // V doesn't contain rect because two of its edges intersect with V's exterior boundary
     fn polygon_does_not_contain_polygon() {
         let v = Polygon::new(
-            vec![
-                (150., 350.),
-                (100., 350.),
-                (210., 160.),
-                (290., 350.),
-                (250., 350.),
-                (200., 250.),
-                (150., 350.),
-            ].into(),
+            Ring::from_coordinates(vec![
+                (150., 350.).into(),
+                (100., 350.).into(),
+                (210., 160.).into(),
+                (290., 350.).into(),
+                (250., 350.).into(),
+                (200., 250.).into(),
+                (150., 350.).into(),
+            ]).unwrap(),
             vec![],
         );
         let rect = Polygon::new(
-            vec![
-                (250., 310.),
-                (150., 310.),
-                (150., 280.),
-                (250., 280.),
-                (250., 310.),
-            ].into(),
+            Ring::from_coordinates(vec![
+                (250., 310.).into(),
+                (150., 310.).into(),
+                (150., 280.).into(),
+                (250., 280.).into(),
+                (250., 310.).into(),
+            ]).unwrap(),
             vec![],
         );
         assert_eq!(!v.contains(&rect), true);
@@ -307,15 +307,15 @@ mod test {
     // V contains rect because all its vertices are contained, and none of its edges intersect with V's boundaries
     fn polygon_contains_polygon() {
         let v = Polygon::new(
-            vec![
-                (150., 350.),
-                (100., 350.),
-                (210., 160.),
-                (290., 350.),
-                (250., 350.),
-                (200., 250.),
-                (150., 350.),
-            ].into(),
+            Ring::from_coordinates(vec![
+                (150., 350.).into(),
+                (100., 350.).into(),
+                (210., 160.).into(),
+                (290., 350.).into(),
+                (250., 350.).into(),
+                (200., 250.).into(),
+                (150., 350.).into(),
+            ]).unwrap(),
             vec![],
         );
         let rect = Polygon::new(

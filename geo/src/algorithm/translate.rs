@@ -145,7 +145,7 @@ mod test {
             Coordinate::from((23.0, 19.3)),
             Coordinate::from((22.0, 19.3)),
         ];
-        assert_eq!(rotated.exterior.0, correct_outside);
-        assert_eq!(rotated.interiors[0].0, correct_inside);
+        assert_eq!(rotated.exterior, correct_outside);
+        assert_eq!(rotated.interiors[0], correct_inside);
     }
 }
