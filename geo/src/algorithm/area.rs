@@ -34,7 +34,8 @@ where
     fn area(&self) -> T;
 }
 
-fn get_linestring_area<T>(linestring: &LineString<T>) -> T
+// Calculation of simple (no interior holes) Polygon area
+pub fn get_linestring_area<T>(linestring: &LineString<T>) -> T
 where
     T: Float,
 {

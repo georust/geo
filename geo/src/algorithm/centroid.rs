@@ -1,7 +1,7 @@
 use num_traits::{Float, FromPrimitive};
 use std::iter::Sum;
 
-use algorithm::area::Area;
+use algorithm::area::{Area, get_linestring_area};
 use algorithm::euclidean_length::EuclideanLength;
 use {Line, LineString, MultiPolygon, Point, Polygon, Rect};
 
@@ -33,23 +33,12 @@ pub trait Centroid<T: Float> {
     fn centroid(&self) -> Self::Output;
 }
 
-// Calculation of simple (no interior holes) Polygon area
-fn simple_polygon_area<T>(linestring: &LineString<T>) -> T
-where
-    T: Float + Sum,
-{
-    if linestring.0.is_empty() || linestring.0.len() == 1 {
-        return T::zero();
-    }
-    linestring.lines().map(|line| line.determinant()).sum::<T>() / (T::one() + T::one())
-}
-
 // Calculation of a Polygon centroid without interior rings
 fn simple_polygon_centroid<T>(poly_ext: &LineString<T>) -> Option<Point<T>>
 where
     T: Float + FromPrimitive + Sum,
 {
-    let area = simple_polygon_area(poly_ext);
+    let area = get_linestring_area(poly_ext);
     if area == T::zero() {
         // if the polygon is flat (area = 0), it is considered as a linestring
         return poly_ext.centroid();
@@ -138,13 +127,13 @@ where
         } else {
             let external_centroid = simple_polygon_centroid(&self.exterior)?;
             if !self.interiors.is_empty() {
-                let external_area = simple_polygon_area(&self.exterior).abs();
+                let external_area = get_linestring_area(&self.exterior).abs();
                 // accumulate interior Polygons
                 let (totals_x, totals_y, internal_area) = self
                     .interiors
                     .iter()
                     .filter_map(|ring| {
-                        let area = simple_polygon_area(ring).abs();
+                        let area = get_linestring_area(ring).abs();
                         let centroid = simple_polygon_centroid(ring)?;
                         Some((centroid.x() * area, centroid.y() * area, area))
                     })
