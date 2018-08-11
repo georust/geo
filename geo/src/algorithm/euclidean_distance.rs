@@ -480,7 +480,7 @@ mod test {
     use algorithm::convexhull::ConvexHull;
     use algorithm::euclidean_distance::EuclideanDistance;
     use geo_types::private_utils::line_segment_distance;
-    use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+    use {Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Ring};
 
     #[test]
     fn line_segment_distance_test() {
@@ -520,8 +520,8 @@ mod test {
             (6., 1.),
             (5., 1.),
         ];
-        let ls = LineString::from(points);
-        let poly = Polygon::new(ls, vec![]);
+        let ring = Ring::from_coordinates(points).unwrap();
+        let poly = Polygon::new(ring, vec![]);
         // A Random point outside the octagon
         let p = Point::new(2.5, 0.5);
         let dist = p.euclidean_distance(&poly);
@@ -542,8 +542,8 @@ mod test {
             (6., 1.),
             (5., 1.),
         ];
-        let ls = LineString::from(points);
-        let poly = Polygon::new(ls, vec![]);
+        let ring = Ring::from_coordinates(points).unwrap();
+        let poly = Polygon::new(ring, vec![]);
         // A Random point inside the octagon
         let p = Point::new(5.5, 2.1);
         let dist = p.euclidean_distance(&poly);
@@ -564,8 +564,8 @@ mod test {
             (6., 1.),
             (5., 1.),
         ];
-        let ls = LineString::from(points);
-        let poly = Polygon::new(ls, vec![]);
+        let ring = Ring::from_coordinates(points).unwrap();
+        let poly = Polygon::new(ring, vec![]);
         // A point on the octagon
         let p = Point::new(5.0, 1.0);
         let dist = p.euclidean_distance(&poly);
@@ -630,31 +630,31 @@ mod test {
         // checks that the distance from the multipolygon
         // is equal to the distance from the closest polygon
         // taken in isolation, whatever that distance is
-        let ls1 = LineString::from(vec![
-            (0.0, 0.0),
-            (10.0, 0.0),
-            (10.0, 10.0),
-            (5.0, 15.0),
-            (0.0, 10.0),
-            (0.0, 0.0),
-        ]);
-        let ls2 = LineString::from(vec![
-            (0.0, 30.0),
-            (0.0, 25.0),
-            (10.0, 25.0),
-            (10.0, 30.0),
-            (0.0, 30.0),
-        ]);
-        let ls3 = LineString::from(vec![
-            (15.0, 30.0),
-            (15.0, 25.0),
-            (20.0, 25.0),
-            (20.0, 30.0),
-            (15.0, 30.0),
-        ]);
-        let pol1 = Polygon::new(ls1, vec![]);
-        let pol2 = Polygon::new(ls2, vec![]);
-        let pol3 = Polygon::new(ls3, vec![]);
+        let ring1 = Ring::from_coordinates(vec![
+            Coordinate::new((0.0, 0.0)),
+            Coordinate::new((10.0, 0.0)),
+            Coordinate::new((10.0, 10.0)),
+            Coordinate::new((5.0, 15.0)),
+            Coordinate::new((0.0, 10.0)),
+            Coordinate::new((0.0, 0.0)),
+        ]).unwrap();
+        let ring2 = Ring::from_coordinates(vec![
+            Coordinate::new((0.0, 30.0)),
+            Coordinate::new((0.0, 25.0)),
+            Coordinate::new((10.0, 25.0)),
+            Coordinate::new((10.0, 30.0)),
+            Coordinate::new((0.0, 30.0)),
+        ]).unwrap();
+        let ring3 = Ring::from_coordinates(vec![
+            Coordinate::new((15.0, 30.0)),
+            Coordinate::new((15.0, 25.0)),
+            Coordinate::new((20.0, 25.0)),
+            Coordinate::new((20.0, 30.0)),
+            Coordinate::new((15.0, 30.0)),
+        ]).unwrap();
+        let pol1 = Polygon::new(ring1, vec![]);
+        let pol2 = Polygon::new(ring2, vec![]);
+        let pol3 = Polygon::new(ring3, vec![]);
         let mp = MultiPolygon(vec![pol1.clone(), pol2.clone(), pol3.clone()]);
         let pnt1 = Point::new(0.0, 15.0);
         let pnt2 = Point::new(10.0, 20.0);

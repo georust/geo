@@ -57,7 +57,7 @@ where
 }
 
 // Adapted from http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
-fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
+fn quick_hull<T>(mut points: &mut [Point<T>]) -> Ring<T>
 where
     T: Float,
 {
@@ -340,15 +340,15 @@ mod test {
             Point::new(0.0, 10.0),
         ];
         let mp = MultiPoint(v);
-        let correct = vec![
+        let correct = Ring::from_coordinates(vec![
             Coordinate::from((0.0, -10.0)),
             Coordinate::from((10.0, 0.0)),
             Coordinate::from((0.0, 10.0)),
             Coordinate::from((-10.0, 0.0)),
             Coordinate::from((0.0, -10.0)),
-        ];
+        ]).unwrap();
         let res = mp.convex_hull();
-        assert_eq!(res.exterior.0, correct);
+        assert_eq!(res.exterior, correct);
     }
     #[test]
     fn quick_hull_linestring_test() {
