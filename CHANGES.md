@@ -1,5 +1,27 @@
 # Changes
 
+## geo-types 0.2.0
+
+* Introduce `Line::{dx, dy, slope, determinant}` methods.
+  * <https://github.com/georust/geo/pull/246>
+* Remove unnecessary borrows in function params for `Copy` types.
+  * <https://github.com/georust/geo/pull/265>
+* Introduce `x_y` method on `Point` and `Coordinate`
+  * <https://github.com/georust/geo/pull/277>
+* Migrate `Line` aand `LineString` to be a series of `Coordinates` (not `Points`).
+  * <https://github.com/georust/geo/pull/244>
+* Introduce Triangle geometry type.
+  * <https://github.com/georust/geo/pull/285>
+* Rename bounding ‘box’ to ‘rect’; move structure to geo-types.
+  * <https://github.com/georust/geo/pull/295>
+
+## geo 0.10.0
+
+* Remove unnecessary borrows in function params for `Copy` types.
+  * <https://github.com/georust/geo/pull/265>
+* Rename bounding ‘box’ to ‘rect’; move structure to geo-types.
+  * <https://github.com/georust/geo/pull/295>
+
 ## geo 0.9.1
 
 * Fix Line-Polygon euclidean distance
