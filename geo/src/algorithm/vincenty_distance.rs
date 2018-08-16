@@ -73,11 +73,13 @@ where
             cos2SigmaM = cosSigma - t_2 * sinU1 * sinU2 / cosSqAlpha;
             let C = f / t_16 * cosSqAlpha * (t_4 + f * (t_4 - t_3 * cosSqAlpha));
             lambdaP = lambda;
-            lambda = L + (t_1 - C) * f * sinAlpha
-                * (sigma
-                    + C
-                        * sinSigma
-                        * (cos2SigmaM + C * cosSigma * (-t_1 + t_2 * cos2SigmaM * cos2SigmaM)));
+            lambda = L
+                + (t_1 - C)
+                    * f
+                    * sinAlpha
+                    * (sigma
+                        + C * sinSigma
+                            * (cos2SigmaM + C * cosSigma * (-t_1 + t_2 * cos2SigmaM * cos2SigmaM)));
 
             if (lambda - lambdaP).abs() <= T::from(1e-12).unwrap() {
                 break;
@@ -98,7 +100,8 @@ where
         let A = t_1 + uSq / t_16384 * (t_4096 + uSq * (-t_768 + uSq * (t_320 - t_175 * uSq)));
         let B = uSq / t_1024 * (t_256 + uSq * (-t_128 + uSq * (t_74 - t_47 * uSq)));
 
-        let deltaSigma = B * sinSigma
+        let deltaSigma = B
+            * sinSigma
             * (cos2SigmaM
                 + B / t_4
                     * (cosSigma * (-t_1 + t_2 * cos2SigmaM * cos2SigmaM)

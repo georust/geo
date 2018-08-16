@@ -40,11 +40,7 @@ where
     }
 }
 
-impl<T> Eq for VScore<T>
-where
-    T: Float,
-{
-}
+impl<T> Eq for VScore<T> where T: Float {}
 
 impl<T> PartialEq for VScore<T>
 where
@@ -113,8 +109,7 @@ where
             } else {
                 ((i - 1) as i32, (i + 1) as i32)
             }
-        })
-        .collect();
+        }).collect();
 
     // Store all the triangles in a minimum priority queue, based on their area.
     // Invalid triangles are *not* removed if / when points
@@ -167,7 +162,7 @@ where
                 orig.0[current_point as usize],
                 orig.0[bi as usize],
             ).area()
-                .abs();
+            .abs();
             pq.push(VScore {
                 area: area,
                 current: current_point as usize,
@@ -247,8 +242,7 @@ where
             } else {
                 ((i - 1) as i32, (i + 1) as i32)
             }
-        })
-        .collect();
+        }).collect();
     // Store all the triangles in a minimum priority queue, based on their area.
     // Invalid triangles are *not* removed if / when points
     // are removed; they're handled by skipping them as

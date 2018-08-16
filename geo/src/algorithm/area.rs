@@ -91,7 +91,8 @@ where
     fn area(&self) -> T {
         (Line::new(self.0, self.1).determinant()
             + Line::new(self.1, self.2).determinant()
-            + Line::new(self.2, self.0).determinant()) / (T::one() + T::one())
+            + Line::new(self.2, self.0).determinant())
+            / (T::one() + T::one())
     }
 }
 

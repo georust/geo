@@ -1,9 +1,7 @@
 use num_traits::{Float, ToPrimitive};
 
 use algorithm::intersects::Intersects;
-use {
-    Coordinate, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle,
-};
+use {Coordinate, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
 
 ///  Checks if the geometry A is completely inside the B geometry
 pub trait Contains<Rhs = Self> {
@@ -148,7 +146,8 @@ where
         {
             if line.start.y != line.end.y {
                 xints = (p.y() - line.start.y) * (line.end.x - line.start.x)
-                    / (line.end.y - line.start.y) + line.start.x;
+                    / (line.end.y - line.start.y)
+                    + line.start.x;
             }
             if (line.start.x == line.end.x) || (p.x() <= xints) {
                 crossings += 1;
@@ -269,7 +268,8 @@ where
     T: CoordinateType,
 {
     (point_1.x - point_3.x) * (point_2.y - point_3.y)
-        - (point_2.x - point_3.x) * (point_1.y - point_3.y) < T::zero()
+        - (point_2.x - point_3.x) * (point_1.y - point_3.y)
+        < T::zero()
 }
 
 #[cfg(test)]

@@ -187,8 +187,8 @@ mod tests {
             (50.0, 50.0),
             (1234.567, -987.6543),
         ].into_iter()
-            .map(Point::from)
-            .collect()
+        .map(Point::from)
+        .collect()
     }
 
     /// Throw a bunch of random points at two `ClosestPoint` implementations

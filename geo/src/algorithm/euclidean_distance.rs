@@ -133,8 +133,7 @@ where
                             line.start_point(),
                             line.end_point(),
                         )
-                    })
-                    .fold(T::max_value(), |accum, val| accum.min(val)),
+                    }).fold(T::max_value(), |accum, val| accum.min(val)),
             )
     }
 }
@@ -382,8 +381,7 @@ where
                 ring.lines().fold(T::max_value(), |acc, line| {
                     acc.min(self.euclidean_distance(&line))
                 })
-            })
-            .fold(T::max_value(), |acc, ring_min| acc.min(ring_min));
+            }).fold(T::max_value(), |acc, ring_min| acc.min(ring_min));
         // return smaller of the two values
         exterior_min.min(interior_min)
     }
@@ -448,9 +446,13 @@ where
 
         [(self.0, self.1), (self.1, self.2), (self.2, self.0)]
             .into_iter()
-            .map(|edge| 
-                        ::geo_types::private_utils::line_segment_distance(*point, edge.0.into(), edge.1.into()))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+            .map(|edge| {
+                ::geo_types::private_utils::line_segment_distance(
+                    *point,
+                    edge.0.into(),
+                    edge.1.into(),
+                )
+            }).fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
 /// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
@@ -467,8 +469,7 @@ where
         .fold(T::max_value(), |acc, point| {
             let nearest = tree_a.nearest_neighbor(&point).unwrap();
             acc.min(nearest.euclidean_distance(&point))
-        })
-        .min(geom1.points_iter().fold(T::max_value(), |acc, point| {
+        }).min(geom1.points_iter().fold(T::max_value(), |acc, point| {
             let nearest = tree_b.nearest_neighbor(&point).unwrap();
             acc.min(nearest.euclidean_distance(&point))
         }))

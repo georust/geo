@@ -1,7 +1,7 @@
 use num_traits::{Float, FromPrimitive};
 use std::iter::Sum;
 
-use algorithm::area::{Area, get_linestring_area};
+use algorithm::area::{get_linestring_area, Area};
 use algorithm::euclidean_length::EuclideanLength;
 use {Line, LineString, MultiPolygon, Point, Polygon, Rect};
 
@@ -136,8 +136,7 @@ where
                         let area = get_linestring_area(ring).abs();
                         let centroid = simple_polygon_centroid(ring)?;
                         Some((centroid.x() * area, centroid.y() * area, area))
-                    })
-                    .fold((T::zero(), T::zero(), T::zero()), |accum, val| {
+                    }).fold((T::zero(), T::zero(), T::zero()), |accum, val| {
                         (accum.0 + val.0, accum.1 + val.1, accum.2 + val.2)
                     });
                 return Some(Point::new(

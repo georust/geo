@@ -30,11 +30,12 @@ where
 
         let rad = distance / T::from(MEAN_EARTH_RADIUS).unwrap();
 
-        let lat = {
-            center_lat.sin() * rad.cos() + center_lat.cos() * rad.sin() * bearing_rad.cos()
-        }.asin();
+        let lat =
+            { center_lat.sin() * rad.cos() + center_lat.cos() * rad.sin() * bearing_rad.cos() }
+                .asin();
         let lng = { bearing_rad.sin() * rad.sin() * center_lat.cos() }
-            .atan2(rad.cos() - center_lat.sin() * lat.sin()) + center_lng;
+            .atan2(rad.cos() - center_lat.sin() * lat.sin())
+            + center_lng;
 
         Point::new(lng.to_degrees(), lat.to_degrees())
     }
