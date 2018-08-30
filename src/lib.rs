@@ -119,11 +119,12 @@ impl Wkt {
         let mut wkt = Wkt::new();
         let mut tokens = tokens.peekable();
         let word = match tokens.next() {
-            Some(Token::Word(word)) => {
+            Some(Token::Word(mut word)) => {
                 if !word.is_ascii() {
                     return Err("Encountered non-ascii word");
                 }
-                word.to_ascii_uppercase()
+                word.make_ascii_uppercase();
+                word
             }
             None => return Ok(wkt),
             _ => return Err("Invalid WKT format"),
