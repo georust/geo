@@ -5,8 +5,15 @@ extern crate wkt;
 use criterion::Criterion;
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {
-    c.bench_function("parse", |bencher| {
-        let s = include_str!("./terrang_coverage.wkt");
+    c.bench_function("parse small", |bencher| {
+        let s = include_str!("./small.wkt");
+        bencher.iter(|| {
+            let _ = wkt::Wkt::from_str(s).unwrap();
+        });
+    });
+
+    c.bench_function("parse big", |bencher| {
+        let s = include_str!("./big.wkt");
         bencher.iter(|| {
             let _ = wkt::Wkt::from_str(s).unwrap();
         });
