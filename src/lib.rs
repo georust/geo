@@ -143,7 +143,7 @@ trait FromTokens: Sized + Default {
     fn from_tokens_with_parens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         match tokens.next() {
             Some(Token::ParenOpen) => (),
-            Some(Token::Word(ref s)) if s.to_ascii_uppercase() == "EMPTY" => {
+            Some(Token::Word(ref s)) if s.eq_ignore_ascii_case("EMPTY") => {
                 return Ok(Default::default())
             }
             _ => return Err("Missing open parenthesis for type"),
