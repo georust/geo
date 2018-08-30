@@ -91,9 +91,10 @@ impl<'a> Tokens<'a> {
                 let _ = self.chars.next();
                 None
             }
-            _ => {
-                Some(self.chars.next().unwrap().to_string() + &self.read_until_whitespace().unwrap_or_default())
-            }
+            _ => Some(
+                self.chars.next().unwrap().to_string()
+                    + &self.read_until_whitespace().unwrap_or_default(),
+            ),
         }
     }
 }

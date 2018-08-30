@@ -36,13 +36,11 @@ impl fmt::Display for MultiLineString {
                 .0
                 .iter()
                 .map(|l| {
-                    l.0
-                        .iter()
+                    l.0.iter()
                         .map(|c| format!("{} {}", c.x, c.y))
                         .collect::<Vec<_>>()
                         .join(",")
-                })
-                .collect::<Vec<_>>()
+                }).collect::<Vec<_>>()
                 .join("),(");
 
             write!(f, "MULTILINESTRING(({}))", strings)

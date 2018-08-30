@@ -36,19 +36,15 @@ impl fmt::Display for MultiPolygon {
                 .0
                 .iter()
                 .map(|p| {
-                    p.0
-                        .iter()
+                    p.0.iter()
                         .map(|l| {
-                            l.0
-                                .iter()
+                            l.0.iter()
                                 .map(|c| format!("{} {}", c.x, c.y))
                                 .collect::<Vec<String>>()
                                 .join(",")
-                        })
-                        .collect::<Vec<String>>()
+                        }).collect::<Vec<String>>()
                         .join("),(")
-                })
-                .collect::<Vec<String>>()
+                }).collect::<Vec<String>>()
                 .join(")),((");
 
             write!(f, "MULTIPOLYGON((({})))", strings)
