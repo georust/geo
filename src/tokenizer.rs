@@ -58,10 +58,7 @@ impl<'a> Iterator for Tokens<'a> {
 
     fn next(&mut self) -> Option<Token> {
         // TODO: should this return Result?
-        let next_char = match self.chars.next() {
-            Some(c) => c,
-            None => return None,
-        };
+        let next_char = self.chars.next()?;
 
         match next_char {
             '\0' => None,
@@ -70,14 +67,14 @@ impl<'a> Iterator for Tokens<'a> {
             ',' => Some(Token::Comma),
             c if is_whitespace(c) => self.next(),
             c if is_numberlike(c) => {
-                let mut number = c.to_string() + &self.read_until_whitespace();
+                let mut number = c.to_string() + &self.read_until_whitespace().unwrap_or_default();
                 match number.trim_left_matches('+').parse::<f64>() {
                     Ok(parsed_num) => Some(Token::Number(parsed_num)),
                     Err(e) => panic!("Could not parse number: {}", e),
                 }
             }
             c => {
-                let word = c.to_string() + &self.read_until_whitespace();
+                let word = c.to_string() + &self.read_until_whitespace().unwrap_or_default();
                 Some(Token::Word(word))
             }
         }
@@ -85,22 +82,17 @@ impl<'a> Iterator for Tokens<'a> {
 }
 
 impl<'a> Tokens<'a> {
-    fn read_until_whitespace(&mut self) -> String {
-        let next_char = match self.chars.peek() {
-            Some(c) => *c,
-            None => return "".to_string(),
-        };
+    fn read_until_whitespace(&mut self) -> Option<String> {
+        let next_char = *self.chars.peek()?;
 
         match next_char {
-            '\0' | '(' | ')' | ',' => {
-                "".to_string()
-            }
+            '\0' | '(' | ')' | ',' => None,
             c if is_whitespace(c) => {
                 let _ = self.chars.next();
-                "".to_string()
+                None
             }
             _ => {
-                self.chars.next().unwrap().to_string() + &self.read_until_whitespace()
+                Some(self.chars.next().unwrap().to_string() + &self.read_until_whitespace().unwrap_or_default())
             }
         }
     }
