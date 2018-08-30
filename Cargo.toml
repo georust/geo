@@ -5,9 +5,17 @@ version = "0.1.2"
 authors = ["Corey Farwell <coreyf@rwell.org>"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/georust/wkt"
+autobenches = true
 
 [dependencies]
 geo-types = {version = "0.1.1", optional = true}
 
+[dev-dependencies]
+criterion = { version = "0.2" }
+
 [features]
 default = ["geo-types"]
+
+[[bench]]
+name = "parse"
+harness = false
