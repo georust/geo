@@ -70,8 +70,7 @@ impl Iterator for Tokens {
             c if is_whitespace(c) => self.next(),
             c if is_numberlike(c) => {
                 let mut number = c.to_string() + &self.read_until_whitespace();
-                number = number.trim_left_matches('+').to_string();
-                match number.parse::<f64>() {
+                match number.trim_left_matches('+').parse::<f64>() {
                     Ok(parsed_num) => Some(Token::Number(parsed_num)),
                     Err(e) => panic!("Could not parse number: {}", e),
                 }
