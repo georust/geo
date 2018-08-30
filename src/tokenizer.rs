@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use std::iter::Peekable;
+use std::str;
 
 #[derive(PartialEq, Debug)]
 pub enum Token {
@@ -38,26 +39,26 @@ fn is_numberlike(c: char) -> bool {
     }
 }
 
-pub type PeekableTokens = Peekable<Tokens>;
+pub type PeekableTokens<'a> = Peekable<Tokens<'a>>;
 
-pub struct Tokens {
-    text: String,
+pub struct Tokens<'a> {
+    chars: Peekable<str::Chars<'a>>,
 }
 
-impl Tokens {
-    pub fn from_str(input: &str) -> Self {
+impl<'a> Tokens<'a> {
+    pub fn from_str(input: &'a str) -> Self {
         Tokens {
-            text: input.to_string(),
+            chars: input.chars().peekable(),
         }
     }
 }
 
-impl Iterator for Tokens {
+impl<'a> Iterator for Tokens<'a> {
     type Item = Token;
 
     fn next(&mut self) -> Option<Token> {
         // TODO: should this return Result?
-        let next_char = match self.pop_front() {
+        let next_char = match self.chars.next() {
             Some(c) => c,
             None => return None,
         };
@@ -83,27 +84,24 @@ impl Iterator for Tokens {
     }
 }
 
-impl Tokens {
-    fn pop_front(&mut self) -> Option<char> {
-        match self.text.is_empty() {
-            true => None,
-            false => Some(self.text.remove(0)),
-        }
-    }
-
+impl<'a> Tokens<'a> {
     fn read_until_whitespace(&mut self) -> String {
-        let next_char = match self.pop_front() {
-            Some(c) => c,
+        let next_char = match self.chars.peek() {
+            Some(c) => *c,
             None => return "".to_string(),
         };
 
         match next_char {
             '\0' | '(' | ')' | ',' => {
-                self.text.insert(0, next_char);
                 "".to_string()
             }
-            c if is_whitespace(c) => "".to_string(),
-            _ => next_char.to_string() + &self.read_until_whitespace(),
+            c if is_whitespace(c) => {
+                let _ = self.chars.next();
+                "".to_string()
+            }
+            _ => {
+                self.chars.next().unwrap().to_string() + &self.read_until_whitespace()
+            }
         }
     }
 }
