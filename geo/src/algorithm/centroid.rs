@@ -209,6 +209,21 @@ mod test {
     use algorithm::centroid::Centroid;
     use algorithm::euclidean_distance::EuclideanDistance;
     use {Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, COORD_PRECISION};
+    use num_traits::Float;
+
+    /// small helper to create a coordinate
+    fn c<T: Float>(x: T, y: T) -> Coordinate<T> {
+        Coordinate {
+            x: x,
+            y:y,
+        }
+    }
+
+    /// small helper to create a point
+    fn p<T: Float>(x: T, y: T) -> Point<T> {
+        Point(c(x, y))
+    }
+
     // Tests: Centroid of LineString
     #[test]
     fn empty_linestring_test() {
@@ -258,9 +273,9 @@ mod test {
         let poly = Polygon::new(linestring, v);
         assert_eq!(poly.centroid(), Some(p));
     }
+
     #[test]
     fn polygon_test() {
-        let c = |x, y| Coordinate { x: x, y: y };
         let v = Vec::new();
         let linestring = LineString(vec![c(0., 0.), c(2., 0.), c(2., 2.), c(0., 2.), c(0., 0.)]);
         let poly = Polygon::new(linestring, v);
@@ -296,7 +311,6 @@ mod test {
     }
     #[test]
     fn polygon_flat_interior_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
         let poly = Polygon::new(
             LineString::from(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
             vec![LineString::from(vec![p(0., 0.), p(0., 1.), p(0., 0.)])],
@@ -305,7 +319,6 @@ mod test {
     }
     #[test]
     fn empty_interior_polygon_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
         let poly = Polygon::new(
             LineString::from(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
             vec![LineString(vec![])],
@@ -319,7 +332,6 @@ mod test {
     }
     #[test]
     fn multipolygon_one_polygon_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring =
             LineString::from(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
@@ -327,7 +339,6 @@ mod test {
     }
     #[test]
     fn multipolygon_two_polygons_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring =
             LineString::from(vec![p(2., 1.), p(5., 1.), p(5., 3.), p(2., 3.), p(2., 1.)]);
         let poly1 = Polygon::new(linestring, Vec::new());
@@ -362,7 +373,9 @@ mod test {
     }
     #[test]
     fn line_test() {
-        let c = |x, y| Coordinate { x: x, y: y };
+        let line1 = Line::new(c(0., 1.), c(1., 3.));
+        assert_eq!(line1.centroid(), Point::new(0.5, 2.));
+    }
         let line1 = Line::new(c(0., 1.), c(1., 3.));
         assert_eq!(line1.centroid(), Point::new(0.5, 2.));
     }
