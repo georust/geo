@@ -96,7 +96,12 @@ where
                             accum.2 + segment_len,
                         )
                     });
-            Some(Point::new(sum_x / total_length, sum_y / total_length))
+            if total_length == T::zero() {
+                // length == 0 means that all points were equal, we can just the first one
+                Some(Point(self.0[0]))
+            } else {
+                Some(Point::new(sum_x / total_length, sum_y / total_length))
+            }
         }
     }
 }
@@ -126,7 +131,9 @@ where
             Some(Point::new(vect[0].x, vect[0].y))
         } else {
             let external_centroid = simple_polygon_centroid(&self.exterior)?;
-            if !self.interiors.is_empty() {
+            if self.interiors.is_empty() {
+                Some(external_centroid)
+            } else {
                 let external_area = get_linestring_area(&self.exterior).abs();
                 // accumulate interior Polygons
                 let (totals_x, totals_y, internal_area) = self
@@ -139,14 +146,17 @@ where
                     }).fold((T::zero(), T::zero(), T::zero()), |accum, val| {
                         (accum.0 + val.0, accum.1 + val.1, accum.2 + val.2)
                     });
-                return Some(Point::new(
-                    ((external_centroid.x() * external_area) - totals_x)
-                        / (external_area - internal_area),
-                    ((external_centroid.y() * external_area) - totals_y)
-                        / (external_area - internal_area),
-                ));
+
+                let diff_area = external_area - internal_area;
+                if diff_area == T::zero() {
+                    Some(external_centroid)
+                } else {
+                    Some(Point::new(
+                        ((external_centroid.x() * external_area) - totals_x) / diff_area,
+                        ((external_centroid.y() * external_area) - totals_y) / diff_area,
+                    ))
+                }
             }
-            Some(external_centroid)
         }
     }
 }
@@ -158,9 +168,14 @@ where
     type Output = Option<Point<T>>;
 
     fn centroid(&self) -> Self::Output {
+        let mut sum_area_x = T::zero();
+        let mut sum_area_y = T::zero();
+        let mut sum_seg_x = T::zero();
+        let mut sum_seg_y = T::zero();
         let mut sum_x = T::zero();
         let mut sum_y = T::zero();
         let mut total_area = T::zero();
+        let mut total_length = T::zero();
         let vect = &self.0;
         if vect.is_empty() {
             return None;
@@ -170,11 +185,35 @@ where
             let area = poly.area().abs();
             total_area = total_area + area;
             if let Some(p) = poly.centroid() {
-                sum_x = sum_x + area * p.x();
-                sum_y = sum_y + area * p.y();
+                if area != T::zero() {
+                    sum_area_x = sum_area_x + area * p.x();
+                    sum_area_y = sum_area_y + area * p.y();
+                } else {
+                    // the polygon is 'flat', we consider it as a linestring
+                    let ls_len = poly.exterior.euclidean_length();
+                    if ls_len == T::zero() {
+                        sum_x = sum_x + p.x();
+                        sum_y = sum_y + p.x();
+                    } else {
+                        sum_seg_x = sum_seg_x + ls_len * p.x();
+                        sum_seg_y = sum_seg_y + ls_len * p.y();
+                        total_length = total_length + ls_len;
+                    }
+                }
             }
         }
-        Some(Point::new(sum_x / total_area, sum_y / total_area))
+        if total_area != T::zero() {
+            Some(Point::new(sum_area_x / total_area, sum_area_y / total_area))
+        } else if total_length != T::zero() {
+            Some(Point::new(
+                sum_seg_x / total_length,
+                sum_seg_y / total_length,
+            ))
+        } else {
+            let nb_points = T::from_usize(self.0.len()).unwrap();
+            // there was only "point" polygons, we do a simple centroid of all points
+            Some(Point::new(sum_x / nb_points, sum_y / nb_points))
+        }
     }
 }
 
@@ -208,7 +247,19 @@ where
 mod test {
     use algorithm::centroid::Centroid;
     use algorithm::euclidean_distance::EuclideanDistance;
+    use num_traits::Float;
     use {Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, COORD_PRECISION};
+
+    /// small helper to create a coordinate
+    fn c<T: Float>(x: T, y: T) -> Coordinate<T> {
+        Coordinate { x: x, y: y }
+    }
+
+    /// small helper to create a point
+    fn p<T: Float>(x: T, y: T) -> Point<T> {
+        Point(c(x, y))
+    }
+
     // Tests: Centroid of LineString
     #[test]
     fn empty_linestring_test() {
@@ -258,9 +309,9 @@ mod test {
         let poly = Polygon::new(linestring, v);
         assert_eq!(poly.centroid(), Some(p));
     }
+
     #[test]
     fn polygon_test() {
-        let c = |x, y| Coordinate { x: x, y: y };
         let v = Vec::new();
         let linestring = LineString(vec![c(0., 0.), c(2., 0.), c(2., 2.), c(0., 2.), c(0., 0.)]);
         let poly = Polygon::new(linestring, v);
@@ -290,13 +341,66 @@ mod test {
     }
     #[test]
     fn flat_polygon_test() {
-        let p = |x| Point(Coordinate { x: x, y: 1. });
-        let poly = Polygon::new(LineString::from(vec![p(0.), p(1.), p(0.)]), vec![]);
-        assert_eq!(poly.centroid(), Some(p(0.5)));
+        let poly = Polygon::new(
+            LineString::from(vec![p(0., 1.), p(1., 1.), p(0., 1.)]),
+            vec![],
+        );
+        assert_eq!(poly.centroid(), Some(p(0.5, 1.)));
+    }
+    #[test]
+    fn multi_poly_with_flat_polygon_test() {
+        let poly = Polygon::new(
+            LineString::from(vec![p(0., 0.), p(1., 0.), p(0., 0.)]),
+            vec![],
+        );
+        let multipoly = MultiPolygon(vec![poly]);
+        assert_eq!(multipoly.centroid(), Some(p(0.5, 0.)));
+    }
+    #[test]
+    fn multi_poly_with_multiple_flat_polygon_test() {
+        let p1 = Polygon::new(
+            LineString::from(vec![p(1., 1.), p(1., 3.), p(1., 1.)]),
+            vec![],
+        );
+        let p2 = Polygon::new(
+            LineString::from(vec![p(2., 2.), p(6., 2.), p(2., 2.)]),
+            vec![],
+        );
+        let multipoly = MultiPolygon(vec![p1, p2]);
+        assert_eq!(multipoly.centroid(), Some(p(3., 2.)));
+    }
+    #[test]
+    fn multi_poly_with_only_points_test() {
+        let p1 = Polygon::new(
+            LineString::from(vec![p(1., 1.), p(1., 1.), p(1., 1.)]),
+            vec![],
+        );
+        assert_eq!(p1.centroid(), Some(p(1., 1.)));
+        let p2 = Polygon::new(
+            LineString::from(vec![p(2., 2.), p(2., 2.), p(2., 2.)]),
+            vec![],
+        );
+        let multipoly = MultiPolygon(vec![p1, p2]);
+        assert_eq!(multipoly.centroid(), Some(p(1.5, 1.5)));
+    }
+    #[test]
+    fn multi_poly_with_one_ring_and_one_real_poly() {
+        // if the multipolygon is composed of a 'normal' polygon (with an area not null)
+        // and a ring (a polygon with a null area)
+        // the centroid of the multipolygon is the centroid of the 'normal' polygon
+        let normal = Polygon::new(
+            LineString::from(vec![p(1., 1.), p(1., 3.), p(3., 1.), p(1., 1.)]),
+            vec![],
+        );
+        let flat = Polygon::new(
+            LineString::from(vec![p(2., 2.), p(6., 2.), p(2., 2.)]),
+            vec![],
+        );
+        let multipoly = MultiPolygon(vec![normal.clone(), flat]);
+        assert_eq!(multipoly.centroid(), normal.centroid());
     }
     #[test]
     fn polygon_flat_interior_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
         let poly = Polygon::new(
             LineString::from(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
             vec![LineString::from(vec![p(0., 0.), p(0., 1.), p(0., 0.)])],
@@ -305,12 +409,27 @@ mod test {
     }
     #[test]
     fn empty_interior_polygon_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
         let poly = Polygon::new(
             LineString::from(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
             vec![LineString(vec![])],
         );
         assert_eq!(poly.centroid(), Some(p(0.5, 0.5)));
+    }
+    #[test]
+    fn polygon_ring_test() {
+        let square = LineString::from(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]);
+        let poly = Polygon::new(square.clone(), vec![square]);
+        assert_eq!(poly.centroid(), Some(p(0.5, 0.5)));
+    }
+    #[test]
+    fn polygon_cell_test() {
+        // test the centroid of polygon with a null area
+        // this one a polygon with 2 interior polygon that makes a partition of the exterior
+        let square = LineString::from(vec![p(0., 0.), p(0., 2.), p(2., 2.), p(2., 0.), p(0., 0.)]);
+        let bottom = LineString::from(vec![p(0., 0.), p(2., 0.), p(2., 1.), p(0., 1.), p(0., 0.)]);
+        let top = LineString::from(vec![p(0., 1.), p(2., 1.), p(2., 2.), p(0., 2.), p(0., 1.)]);
+        let poly = Polygon::new(square, vec![top, bottom]);
+        assert_eq!(poly.centroid(), Some(p(1., 1.)));
     }
     // Tests: Centroid of MultiPolygon
     #[test]
@@ -319,7 +438,6 @@ mod test {
     }
     #[test]
     fn multipolygon_one_polygon_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring =
             LineString::from(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
@@ -327,7 +445,6 @@ mod test {
     }
     #[test]
     fn multipolygon_two_polygons_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
         let linestring =
             LineString::from(vec![p(2., 1.), p(5., 1.), p(5., 3.), p(2., 3.), p(2., 1.)]);
         let poly1 = Polygon::new(linestring, Vec::new());
@@ -362,7 +479,6 @@ mod test {
     }
     #[test]
     fn line_test() {
-        let c = |x, y| Coordinate { x: x, y: y };
         let line1 = Line::new(c(0., 1.), c(1., 3.));
         assert_eq!(line1.centroid(), Point::new(0.5, 2.));
     }
