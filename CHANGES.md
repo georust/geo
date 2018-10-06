@@ -1,5 +1,10 @@
 # Changes
 
+## geo 0.10.1
+
+* Fix some edge case on centroid computation
+  * <https://github.com/georust/geo/pull/305>
+
 ## geo-types 0.2.0
 
 * Introduce `Line::{dx, dy, slope, determinant}` methods.
