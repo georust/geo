@@ -1,4 +1,4 @@
-use num_traits::ToPrimitive;
+use num_traits::{Float, ToPrimitive};
 use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
@@ -237,6 +237,47 @@ where
     pub fn cross_prod(&self, point_b: Point<T>, point_c: Point<T>) -> T {
         (point_b.x() - self.x()) * (point_c.y() - self.y())
             - (point_b.y() - self.y()) * (point_c.x() - self.x())
+    }
+}
+
+impl<T> Point<T>
+where
+    T: CoordinateType + Float,
+{
+    /// Converts the (x,y) components of Point to degrees
+    ///
+    /// # Example
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let p = Point::new(1.234, 2.345);
+    /// let (x,y) = p.to_degrees().x_y();
+    /// assert!(x.round(), 71);
+    /// assert!(y.round(), 134);
+    /// ```
+    pub fn to_degrees(&self) -> Point<T> {
+        let (x, y) = self.x_y();
+        let x = x.to_degrees();
+        let y = y.to_degrees();
+        Point::new(x, y)
+    }
+
+    /// Converts the (x,y) components of Point to radians
+    ///
+    /// # Example
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let p = Point::new(180.0, 341.5);
+    /// let (x,y) = p.to_radians().x_y();
+    /// assert!(x.round(), 3);
+    /// assert!(y.round(), 6);
+    /// ```
+    pub fn to_radians(&self) -> Point<T> {
+        let (x, y) = self.x_y();
+        let x = x.to_radians();
+        let y = y.to_radians();
+        Point::new(x, y)
     }
 }
 
