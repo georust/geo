@@ -251,9 +251,9 @@ where
     /// use geo_types::Point;
     ///
     /// let p = Point::new(1.234, 2.345);
-    /// let (x,y) = p.to_degrees().x_y();
-    /// assert!(x.round(), 71);
-    /// assert!(y.round(), 134);
+    /// let (x,y): (f32, f32) = p.to_degrees().x_y();
+    /// assert_eq!(x.round(), 71.0);
+    /// assert_eq!(y.round(), 134.0);
     /// ```
     pub fn to_degrees(&self) -> Point<T> {
         let (x, y) = self.x_y();
@@ -269,9 +269,9 @@ where
     /// use geo_types::Point;
     ///
     /// let p = Point::new(180.0, 341.5);
-    /// let (x,y) = p.to_radians().x_y();
-    /// assert!(x.round(), 3);
-    /// assert!(y.round(), 6);
+    /// let (x,y): (f32, f32) = p.to_radians().x_y();
+    /// assert_eq!(x.round(), 3.0);
+    /// assert_eq!(y.round(), 6.0);
     /// ```
     pub fn to_radians(&self) -> Point<T> {
         let (x, y) = self.x_y();
