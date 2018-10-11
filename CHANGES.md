@@ -1,5 +1,10 @@
 # Changes
 
+## geo 0.10.2
+
+* Add `to_degrees` and `to_radians` methods on `Point`s
+  * <https://github.com/georust/geo/pull/306>
+
 ## geo 0.10.1
 
 * Fix some edge case on centroid computation
