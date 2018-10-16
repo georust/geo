@@ -50,31 +50,31 @@ pub enum Geometry {
 impl Geometry {
     fn from_word_and_tokens(word: &str, tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
         match word {
-            "POINT" => {
+            w if w.eq_ignore_ascii_case("POINT") => {
                 let x = <Point as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             }
-            "LINESTRING" => {
+            w if w.eq_ignore_ascii_case("LINESTRING") => {
                 let x = <LineString as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             }
-            "POLYGON" => {
+            w if w.eq_ignore_ascii_case("POLYGON") => {
                 let x = <Polygon as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             }
-            "MULTIPOINT" => {
+            w if w.eq_ignore_ascii_case("MULTIPOINT") => {
                 let x = <MultiPoint as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             }
-            "MULTILINESTRING" => {
+            w if w.eq_ignore_ascii_case("MULTILINESTRING") => {
                 let x = <MultiLineString as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             }
-            "MULTIPOLYGON" => {
+            w if w.eq_ignore_ascii_case("MULTIPOLYGON") => {
                 let x = <MultiPolygon as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             }
-            "GEOMETRYCOLLECTION" => {
+            w if w.eq_ignore_ascii_case("GEOMETRYCOLLECTION") => {
                 let x = <GeometryCollection as FromTokens>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             }
@@ -123,7 +123,6 @@ impl Wkt {
                 if !word.is_ascii() {
                     return Err("Encountered non-ascii word");
                 }
-                word.make_ascii_uppercase();
                 word
             }
             None => return Ok(wkt),
@@ -200,6 +199,16 @@ mod tests {
         assert_eq!(1, wkt.items.len());
         match wkt.items.pop().unwrap() {
             Geometry::MultiPolygon(MultiPolygon(polygons)) => assert_eq!(polygons.len(), 0),
+            _ => unreachable!(),
+        };
+    }
+
+    #[test]
+    fn lowercase_point() {
+        let mut wkt = Wkt::from_str("point EMPTY").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        match wkt.items.pop().unwrap() {
+            Geometry::Point(Point(None)) => (),
             _ => unreachable!(),
         };
     }
