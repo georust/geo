@@ -9,6 +9,11 @@ readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
 description = "Geospatial primitive data types"
 
+[features]
+serde_derive = ["serde"]
+spade_ext = ["spade"]
+default = ["serde_derive", "spade_ext"]
+
 [dependencies]
 num-traits = "0.2"
 serde = { version = "1", optional = true, features = ["derive"] }
