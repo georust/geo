@@ -8,7 +8,37 @@ use num_traits::{Float, FromPrimitive};
 use std::{error, fmt};
 use {Point, EARTH_FLATTENING, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS};
 
+/// Determine the distance between two geometries using [Vincenty’s formulae].
+///
+/// [Vincenty’s formulae]: https://en.wikipedia.org/wiki/Vincenty%27s_formulae
 pub trait VincentyDistance<T, Rhs = Self> {
+    /// Determine the distance between two geometries using [Vincenty’s
+    /// formulae].
+    ///
+    /// # Units
+    ///
+    /// - return value: meters
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Point;
+    /// use geo::prelude::*;
+    ///
+    /// // New York City
+    /// let p1 = Point::<f64>::from((-74.006, 40.7128));
+    /// // London
+    /// let p2 = Point::<f64>::from((-0.1278, 51.5074));
+    ///
+    /// let distance = p1.vincenty_distance(&p2).unwrap();
+    ///
+    /// assert_eq!(
+    ///   5_585_234., // meters
+    ///   distance.round()
+    /// );
+    /// ```
+    ///
+    /// [Vincenty’s formulae]: https://en.wikipedia.org/wiki/Vincenty%27s_formulae
     fn vincenty_distance(&self, rhs: &Rhs) -> Result<T, FailedToConvergeError>;
 }
 
@@ -16,7 +46,6 @@ impl<T> VincentyDistance<T, Point<T>> for Point<T>
 where
     T: Float + FromPrimitive,
 {
-    /// The units of the returned value is meters.
     #[allow(non_snake_case)]
     fn vincenty_distance(&self, rhs: &Point<T>) -> Result<T, FailedToConvergeError> {
         let t_1 = T::one();
