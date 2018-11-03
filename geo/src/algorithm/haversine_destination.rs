@@ -6,6 +6,11 @@ use {Point, MEAN_EARTH_RADIUS};
 pub trait HaversineDestination<T: Float> {
     /// Returns a new Point using distance to the existing Point and a bearing for the direction
     ///
+    /// # Units
+    ///
+    /// - `bearing`: degrees
+    /// - `distance`: meters
+    ///
     /// # Examples
     ///
     /// ```

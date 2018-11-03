@@ -3,25 +3,38 @@ use num_traits::{Float, FromPrimitive};
 use algorithm::haversine_distance::HaversineDistance;
 use {Line, LineString, MultiLineString};
 
-/// Calculation of the length
-
+/// Determine the length of a geometry using the [haversine formula].
+///
+/// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
 pub trait HaversineLength<T, RHS = Self> {
-    /// Calculation of the length of a Line
+    /// Determine the length of a geometry using the [haversine formula].
+    ///
+    /// # Units
+    ///
+    /// - return value: meters
     ///
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString, Coordinate};
-    /// use geo::algorithm::haversine_length::HaversineLength;
+    /// use geo::LineString;
+    /// use geo::prelude::*;
     ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(40.02f64, 116.34));
-    /// vec.push(Point::new(42.02f64, 116.34));
-    /// let linestring = LineString::from(vec);
+    /// let linestring = LineString::<f64>::from(vec![
+    ///   // New York City
+    ///   (-74.006, 40.7128),
+    ///   // London
+    ///   (-0.1278, 51.5074),
+    /// ]);
     ///
-    /// println!("HaversineLength {}", linestring.haversine_length());
+    /// let length = linestring.haversine_length();
+    ///
+    /// assert_eq!(
+    ///   5_570_222., // meters
+    ///   length.round()
+    /// );
     /// ```
     ///
+    /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
     fn haversine_length(&self) -> T;
 }
 
