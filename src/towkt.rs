@@ -17,28 +17,31 @@ pub trait ToWkt {
     fn to_wkt(&self) -> Wkt;
 }
 
-fn g_point_to_w_coord(g_point: &geo_types::Point<f64>) -> Coord {
-    let geo_types::Point(coord) = *g_point;
-    let geo_types::Coordinate { x, y } = coord;
+fn g_point_to_w_coord(g_point: &geo_types::Coordinate<f64>) -> Coord {
     Coord {
-        x: x,
-        y: y,
+        x: g_point.x,
+        y: g_point.y,
         z: None,
         m: None,
     }
 }
 
 fn g_point_to_w_point(g_point: &geo_types::Point<f64>) -> Point {
-    let coord = g_point_to_w_coord(g_point);
+    let coord = g_point_to_w_coord(&g_point.0);
     Point(Some(coord))
 }
 
-fn g_points_to_w_coords(g_points: &[geo_types::Point<f64>]) -> Vec<Coord> {
-    let mut w_points = vec![];
-    for g_point in g_points {
-        w_points.push(g_point_to_w_coord(g_point));
-    }
-    w_points
+fn g_points_to_w_coords(g_points: &[geo_types::Coordinate<f64>]) -> Vec<Coord> {
+    g_points.iter().map(g_point_to_w_coord).collect()
+}
+
+fn g_points_to_w_points(g_points: &[geo_types::Point<f64>]) -> Vec<Point> {
+    g_points
+    .iter()
+    .map(|p|&p.0)
+    .map(g_point_to_w_coord)
+    .map(|c| Point(Some(c)))
+    .collect()
 }
 
 fn g_line_to_w_linestring(g_line: &geo_types::Line<f64>) -> LineString {
@@ -50,9 +53,9 @@ fn g_linestring_to_w_linestring(g_linestring: &geo_types::LineString<f64>) -> Li
     g_points_to_w_linestring(g_points)
 }
 
-fn g_points_to_w_linestring(g_points: &[geo_types::Point<f64>]) -> LineString {
-    let w_points = g_points_to_w_coords(g_points);
-    LineString(w_points)
+fn g_points_to_w_linestring(g_coords: &[geo_types::Coordinate<f64>]) -> LineString {
+    let w_coords = g_points_to_w_coords(g_coords);
+    LineString(w_coords)
 }
 
 fn g_lines_to_w_lines(g_lines: &[geo_types::LineString<f64>]) -> Vec<LineString> {
@@ -86,8 +89,7 @@ fn g_polygon_to_w_polygon(g_polygon: &geo_types::Polygon<f64>) -> Polygon {
 
 fn g_mpoint_to_w_mpoint(g_mpoint: &geo_types::MultiPoint<f64>) -> MultiPoint {
     let &geo_types::MultiPoint(ref g_points) = g_mpoint;
-    let w_coords = g_points_to_w_coords(g_points);
-    let w_points = w_coords.into_iter().map(|c| Point(Some(c))).collect();
+    let w_points = g_points_to_w_points(g_points);
     MultiPoint(w_points)
 }
 
