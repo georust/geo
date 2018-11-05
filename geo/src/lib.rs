@@ -20,6 +20,9 @@ pub use geo_types::{
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
+mod ring;
+pub(crate) use ring::Ring;
+
 /// This module includes all the functions of geometric calculations
 pub mod algorithm;
 mod traits;

@@ -1,7 +1,5 @@
 use num_traits::Float;
-use {Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
-
-use algorithm::winding_order::twice_signed_ring_area;
+use {Line, MultiPolygon, Polygon, Rect, Ring, Triangle};
 
 /// Calculation of the area.
 
@@ -34,14 +32,6 @@ where
     fn area(&self) -> T;
 }
 
-// Calculation of simple (no interior holes) Polygon area
-pub(crate) fn get_linestring_area<T>(linestring: &LineString<T>) -> T
-where
-    T: Float,
-{
-    twice_signed_ring_area(linestring) / (T::one() + T::one())
-}
-
 impl<T> Area<T> for Line<T>
 where
     T: Float,
@@ -58,9 +48,8 @@ where
     fn area(&self) -> T {
         self.interiors
             .iter()
-            .fold(get_linestring_area(&self.exterior), |total, next| {
-                total - get_linestring_area(next)
-            })
+            .map(|i| Ring::new(i.0).area())
+            .fold(Ring::new(self.exterior.0).area(), |total, i| total - i)
     }
 }
 
