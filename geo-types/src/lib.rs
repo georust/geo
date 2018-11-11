@@ -141,4 +141,11 @@ mod test {
         assert_eq!(26.0, se.distance2(&Point::new(4.0, 10.0)));
         assert_eq!(25.999999999999996, l.distance2(&Point::new(4.0, 10.0)));
     }
+
+    #[test]
+    fn test_rects() {
+        let r = Rect{ min: Coordinate{ x: -1., y: -1. }, max: Coordinate{ x: 1., y: 1.}};
+        let p: Polygon<_> = r.into();
+        assert_eq!(p, Polygon::new(vec![(-1., -1.), (1., -1.), (1., 1.), (-1., 1.), (-1., -1.)].into(), vec![]));
+    }
 }

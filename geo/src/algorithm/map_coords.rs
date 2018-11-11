@@ -1,7 +1,7 @@
 use failure::Error;
 use {
     CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon,
+    MultiPolygon, Point, Polygon, Rect, Coordinate
 };
 
 /// Map a function over all the coordinates in an object, returning a new one
@@ -406,6 +406,41 @@ impl<T: CoordinateType> MapCoordsInplace<T> for GeometryCollection<T> {
         for p in &mut self.0 {
             p.map_coords_inplace(func);
         }
+    }
+}
+
+
+impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Rect<T> {
+    type Output = Rect<NT>;
+
+    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+        let new_min = func(&(self.min.x, self.min.y));
+        let new_max = func(&(self.max.x, self.max.y));
+        Rect{ min: Coordinate{x: new_min.0, y: new_min.1}, max: Coordinate{ x: new_max.0, y: new_max.1 }}
+    }
+}
+
+impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Rect<T> {
+    type Output = Rect<NT>;
+
+    fn try_map_coords(
+        &self,
+        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+    ) -> Result<Self::Output, Error> {
+        let new_min = func(&(self.min.x, self.min.y))?;
+        let new_max = func(&(self.max.x, self.max.y))?;
+        Ok(Rect{ min: Coordinate{x: new_min.0, y: new_min.1}, max: Coordinate{ x: new_max.0, y: new_max.1 }})
+    }
+}
+
+impl<T: CoordinateType> MapCoordsInplace<T> for Rect<T> {
+    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
+        let new_min = func(&(self.min.x, self.min.y));
+        let new_max = func(&(self.max.x, self.max.y));
+        self.min.x = new_min.0;
+        self.min.y = new_min.1;
+        self.max.x = new_max.0;
+        self.max.y = new_max.1;
     }
 }
 
