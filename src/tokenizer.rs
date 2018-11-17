@@ -58,14 +58,18 @@ impl<'a> Iterator for Tokens<'a> {
 
     fn next(&mut self) -> Option<Token> {
         // TODO: should this return Result?
-        let next_char = self.chars.next()?;
+        let mut next_char = self.chars.next()?;
+
+        // Skip whitespace
+        while is_whitespace(next_char) {
+            next_char = self.chars.next()?
+        }
 
         match next_char {
             '\0' => None,
             '(' => Some(Token::ParenOpen),
             ')' => Some(Token::ParenClose),
             ',' => Some(Token::Comma),
-            c if is_whitespace(c) => self.next(),
             c if is_numberlike(c) => {
                 let mut number = c.to_string() + &self.read_until_whitespace().unwrap_or_default();
                 match number.trim_left_matches('+').parse::<f64>() {
@@ -83,18 +87,36 @@ impl<'a> Iterator for Tokens<'a> {
 
 impl<'a> Tokens<'a> {
     fn read_until_whitespace(&mut self) -> Option<String> {
-        let next_char = *self.chars.peek()?;
+        let mut result = String::new();
 
-        match next_char {
-            '\0' | '(' | ')' | ',' => None,
-            c if is_whitespace(c) => {
+        while let Some(&next_char) = self.chars.peek() {
+            let marker = match next_char {
+                '\0' | '(' | ')' | ',' => true,
+                _ => false,
+            };
+
+            // Consume non-markers
+            if !marker {
                 let _ = self.chars.next();
-                None
             }
-            _ => Some(
-                self.chars.next().unwrap().to_string()
-                    + &self.read_until_whitespace().unwrap_or_default(),
-            ),
+
+            let whitespace = is_whitespace(next_char);
+
+            // Append non-whitespace, non-marker characters
+            if !marker && !whitespace {
+                result.push(next_char);
+            }
+
+            // Stop reading when reached marker or whitespace
+            if marker || whitespace {
+                break;
+            }
+        }
+
+        if result.is_empty() {
+            None
+        } else {
+            Some(result)
         }
     }
 }
@@ -152,6 +174,24 @@ fn test_tokenizer_2numbers() {
     let test_str = ".4 -2";
     let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![Token::Number(0.4), Token::Number(-2.0)]);
+}
+
+#[test]
+fn test_no_stack_overflow() {
+    fn check(c: &str, count: usize, expected: usize) {
+        let test_str = c.repeat(count);
+        let tokens : Vec<Token>= Tokens::from_str(&test_str).collect();
+        assert_eq!(expected, tokens.len());
+    }
+
+    let count = 100_000;
+    check("+", count, 0);
+    check(" ", count, 0);
+    check("A", count, 1);
+    check("1", count, 1);
+    check("(", count, count);
+    check(")", count, count);
+    check(",", count, count);
 }
 
 #[test]
