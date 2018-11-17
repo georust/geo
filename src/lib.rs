@@ -212,4 +212,13 @@ mod tests {
             _ => unreachable!(),
         };
     }
+
+    #[test]
+    fn invalid_number() {
+        if let Err(msg) = Wkt::from_str("POINT (10 20.1A)") {
+            assert_eq!("Expected a number for the Y coordinate", msg);
+        } else {
+            panic!("Should not have parsed");
+        }
+    }
 }

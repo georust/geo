@@ -70,7 +70,7 @@ impl<'a> Iterator for Tokens<'a> {
                 let mut number = c.to_string() + &self.read_until_whitespace().unwrap_or_default();
                 match number.trim_left_matches('+').parse::<f64>() {
                     Ok(parsed_num) => Some(Token::Number(parsed_num)),
-                    Err(e) => panic!("Could not parse number: {}", e),
+                    Err(_) => None
                 }
             }
             c => {
@@ -138,6 +138,13 @@ fn test_tokenizer_1number_plus() {
     let test_str = "+4.2";
     let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![Token::Number(4.2)]);
+}
+
+#[test]
+fn test_tokenizer_invalid_number() {
+    let test_str = "4.2p";
+    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
+    assert_eq!(tokens, vec![]);
 }
 
 #[test]
