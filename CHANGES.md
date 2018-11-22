@@ -1,5 +1,10 @@
 # Changes
 
+## geo 0.2.1
+
+* Add `to_lines` method on a `Triangle`
+  * <https://github.com/georust/geo/pull/313>
+
 ## geo 0.10.2
 
 * Add `to_degrees` and `to_radians` methods on `Point`s
