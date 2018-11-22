@@ -20,7 +20,7 @@ spade = "1.5.1"
 failure = "0.1.2"
 postgis = { version = "0.6", optional = true }
 proj = { version = "0.5", optional = true }
-geo-types = { version = "0.2", features = ["spade"] }
+geo-types = { version = "0.2.1", features = ["spade"] }
 
 [features]
 default = []

@@ -89,9 +89,9 @@ where
     T: Float,
 {
     fn area(&self) -> T {
-        (Line::new(self.0, self.1).determinant()
-            + Line::new(self.1, self.2).determinant()
-            + Line::new(self.2, self.0).determinant())
+        self.to_lines()
+            .iter()
+            .fold(T::zero(), |total, line| total + line.determinant())
             / (T::one() + T::one())
     }
 }
