@@ -112,22 +112,23 @@ where
         }).collect();
 
     // Store all the triangles in a minimum priority queue, based on their area.
-    // Invalid triangles are *not* removed if / when points
-    // are removed; they're handled by skipping them as
-    // necessary in the main loop by checking the corresponding entry in
-    // adjacent for (0, 0) values
-    let mut pq = BinaryHeap::new();
-    // Compute the initial triangles, i.e. take all consecutive groups
-    // of 3 points and form triangles from them
-    for (i, triangle) in orig.triangles().enumerate() {
-        pq.push(VScore {
+    //
+    // Invalid triangles are *not* removed if / when points are removed; they're
+    // handled by skipping them as necessary in the main loop by checking the
+    // corresponding entry in adjacent for (0, 0) values
+
+    // Compute the initial triangles
+    let mut pq = orig
+        .triangles()
+        .enumerate()
+        .map(|(i, triangle)| VScore {
             area: triangle.area().abs(),
             current: i + 1,
             left: i,
             right: i + 2,
             intersector: false,
-        });
-    }
+        })
+        .collect::<BinaryHeap<VScore<T>>>();
     // While there are still points for which the associated triangle
     // has an area below the epsilon
     while let Some(smallest) = pq.pop() {
@@ -243,24 +244,26 @@ where
                 ((i - 1) as i32, (i + 1) as i32)
             }
         }).collect();
+
     // Store all the triangles in a minimum priority queue, based on their area.
-    // Invalid triangles are *not* removed if / when points
-    // are removed; they're handled by skipping them as
-    // necessary in the main loop by checking the corresponding entry in
-    // adjacent for (0, 0) values
-    let mut pq = BinaryHeap::new();
-    // Compute the initial triangles, i.e. take all consecutive groups
-    // of 3 points and form triangles from them
-    for (i, triangle) in orig.triangles().enumerate() {
-        let v = VScore {
+    //
+    // Invalid triangles are *not* removed if / when points are removed; they're
+    // handled by skipping them as necessary in the main loop by checking the
+    // corresponding entry in adjacent for (0, 0) values
+
+    // Compute the initial triangles
+    let mut pq = orig
+        .triangles()
+        .enumerate()
+        .map(|(i, triangle)| VScore {
             area: triangle.area().abs(),
             current: i + 1,
             left: i,
             right: i + 2,
             intersector: false,
-        };
-        pq.push(v);
-    }
+        })
+        .collect::<BinaryHeap<VScore<T>>>();
+
     // While there are still points for which the associated triangle
     // has an area below the epsilon
     while let Some(mut smallest) = pq.pop() {
