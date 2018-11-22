@@ -1,4 +1,4 @@
-use {Coordinate, CoordinateType};
+use {Coordinate, CoordinateType, Line};
 
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -7,6 +7,14 @@ pub struct Triangle<T: CoordinateType>(pub Coordinate<T>, pub Coordinate<T>, pub
 impl<T: CoordinateType> Triangle<T> {
     pub fn to_array(&self) -> [Coordinate<T>; 3] {
         [self.0, self.1, self.2]
+    }
+
+    pub fn to_lines(&self) -> [Line<T>; 3] {
+        [
+            Line::new(self.0, self.1),
+            Line::new(self.1, self.2),
+            Line::new(self.2, self.0),
+        ]
     }
 }
 
