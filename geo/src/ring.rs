@@ -20,8 +20,9 @@ where
         if coords.len() < 3 {
             panic!("Unable to create ring with {} coordinates", coords.len());
         }
-        if coords[0] != coords[coords.len()] {
-            coords.push(coords[0]);
+        if coords[0] != coords[coords.len() - 1] {
+            let last = coords[0].clone();
+            coords.push(last);
         }
         Ring(coords)
     }
@@ -44,6 +45,7 @@ where
     }
 }
 
+#[cfg(test)]
 mod test {
     use super::*;
     use Coordinate;

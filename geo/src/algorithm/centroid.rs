@@ -1,9 +1,9 @@
 use num_traits::{Float, FromPrimitive};
 use std::iter::Sum;
 
-use algorithm::area::{get_linestring_area, Area};
+use algorithm::area::Area;
 use algorithm::euclidean_length::EuclideanLength;
-use {Line, LineString, MultiPolygon, Point, Polygon, Rect};
+use {Line, LineString, MultiPolygon, Point, Polygon, Rect, Ring};
 
 /// Calculation of the centroid.
 /// The centroid is the arithmetic mean position of all points in the shape.
@@ -38,7 +38,7 @@ fn simple_polygon_centroid<T>(poly_ext: &LineString<T>) -> Option<Point<T>>
 where
     T: Float + FromPrimitive + Sum,
 {
-    let area = get_linestring_area(poly_ext);
+    let area = Ring::new(poly_ext.0.clone()).area();
     if area == T::zero() {
         // if the polygon is flat (area = 0), it is considered as a linestring
         return poly_ext.centroid();
@@ -134,13 +134,13 @@ where
             if self.interiors.is_empty() {
                 Some(external_centroid)
             } else {
-                let external_area = get_linestring_area(&self.exterior).abs();
+                let external_area = Ring::new(self.exterior.0.clone()).area().abs();
                 // accumulate interior Polygons
                 let (totals_x, totals_y, internal_area) = self
                     .interiors
                     .iter()
                     .filter_map(|ring| {
-                        let area = get_linestring_area(ring).abs();
+                        let area = Ring::new(ring.0.clone()).area().abs();
                         let centroid = simple_polygon_centroid(ring)?;
                         Some((centroid.x() * area, centroid.y() * area, area))
                     }).fold((T::zero(), T::zero(), T::zero()), |accum, val| {
@@ -408,6 +408,7 @@ mod test {
         assert_eq!(poly.centroid(), Some(p(0.5, 0.5)));
     }
     #[test]
+    #[should_panic]
     fn empty_interior_polygon_test() {
         let poly = Polygon::new(
             LineString::from(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),

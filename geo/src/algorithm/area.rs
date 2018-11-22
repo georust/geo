@@ -1,7 +1,5 @@
 use num_traits::Float;
-use {Line, LineString, MultiPolygon, Polygon, Rect, Ring, Triangle, CoordinateType};
-
-use algorithm::winding_order::twice_signed_ring_area;
+use {Line, MultiPolygon, Polygon, Rect, Ring, Triangle, CoordinateType};
 
 /// Calculation of the area.
 
@@ -50,8 +48,8 @@ where
     fn area(&self) -> T {
         self.interiors
             .iter()
-            .map(|i| Ring::new(i.0).area())
-            .fold(Ring::new(self.exterior.0).area(), |total, i| total - i)
+            .map(|i| Ring::new(i.0.clone()).area())
+            .fold(Ring::new(self.exterior.0.clone()).area(), |total, i| total - i)
     }
 }
 
@@ -94,12 +92,14 @@ mod test {
 
     // Area of the polygon
     #[test]
+    #[should_panic]
     fn area_empty_polygon_test() {
         let poly = Polygon::<f64>::new(LineString(Vec::new()), Vec::new());
         assert_relative_eq!(poly.area(), 0.);
     }
 
     #[test]
+    #[should_panic]
     fn area_one_point_polygon_test() {
         let poly = Polygon::new(LineString::from(vec![(1., 0.)]), Vec::new());
         assert_relative_eq!(poly.area(), 0.);
