@@ -10,7 +10,7 @@ use spade::{self, SpadeFloat};
 /// Store triangle information
 // current is the candidate point for removal
 #[derive(Debug)]
-struct VScore<T>
+struct VScore<T, I>
 where
     T: Float,
 {
@@ -18,35 +18,36 @@ where
     current: usize,
     right: usize,
     area: T,
-    intersector: bool,
+    // `visvalingam_preserve` uses `intersector`, `visvalingam` does not
+    intersector: I,
 }
 
 // These impls give us a min-heap
-impl<T> Ord for VScore<T>
+impl<T, I> Ord for VScore<T, I>
 where
     T: Float,
 {
-    fn cmp(&self, other: &VScore<T>) -> Ordering {
+    fn cmp(&self, other: &VScore<T, I>) -> Ordering {
         other.area.partial_cmp(&self.area).unwrap()
     }
 }
 
-impl<T> PartialOrd for VScore<T>
+impl<T, I> PartialOrd for VScore<T, I>
 where
     T: Float,
 {
-    fn partial_cmp(&self, other: &VScore<T>) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &VScore<T, I>) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<T> Eq for VScore<T> where T: Float {}
+impl<T, I> Eq for VScore<T, I> where T: Float {}
 
-impl<T> PartialEq for VScore<T>
+impl<T, I> PartialEq for VScore<T, I>
 where
     T: Float,
 {
-    fn eq(&self, other: &VScore<T>) -> bool
+    fn eq(&self, other: &VScore<T, I>) -> bool
     where
         T: Float,
     {
@@ -126,9 +127,9 @@ where
             current: i + 1,
             left: i,
             right: i + 2,
-            intersector: false,
+            intersector: (),
         })
-        .collect::<BinaryHeap<VScore<T>>>();
+        .collect::<BinaryHeap<VScore<T, ()>>>();
     // While there are still points for which the associated triangle
     // has an area below the epsilon
     while let Some(smallest) = pq.pop() {
@@ -169,7 +170,7 @@ where
                 current: current_point as usize,
                 left: ai as usize,
                 right: bi as usize,
-                intersector: false,
+                intersector: (),
             });
         }
     }
@@ -262,7 +263,7 @@ where
             right: i + 2,
             intersector: false,
         })
-        .collect::<BinaryHeap<VScore<T>>>();
+        .collect::<BinaryHeap<VScore<T, bool>>>();
 
     // While there are still points for which the associated triangle
     // has an area below the epsilon
@@ -366,7 +367,7 @@ where
 }
 
 /// check whether a triangle's edges intersect with any other edges of the LineString
-fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T>, orig: &[Coordinate<T>]) -> bool
+fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T, bool>, orig: &[Coordinate<T>]) -> bool
 where
     T: Float + SpadeFloat,
 {
