@@ -1,26 +1,37 @@
 use num_traits::{Float, FromPrimitive};
 use {Point, MEAN_EARTH_RADIUS};
 
-/// Returns the Haversine distance between two geometries.
-
+/// Determine the distance between two geometries using the [haversine formula].
+///
+/// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
 pub trait HaversineDistance<T, Rhs = Self> {
-    /// Returns the Haversine distance between two points:
+    /// Determine the distance between two geometries using the [haversine
+    /// formula].
+    ///
+    /// # Units
+    ///
+    /// - return value: meters
     ///
     /// # Examples
     ///
     /// ```
-    /// # extern crate geo;
-    /// # #[macro_use] extern crate approx;
-    /// #
     /// use geo::Point;
-    /// use geo::algorithm::haversine_distance::HaversineDistance;
+    /// use geo::prelude::*;
     ///
-    /// # fn main() {
-    /// let p = Point::new(-72.1235, 42.3521);
-    /// let dist = p.haversine_distance(&Point::new(-72.1260, 42.45));
-    /// assert_relative_eq!(dist, 10887.91861391182, epsilon = 1.0e-6)
-    /// # }
+    /// // New York City
+    /// let p1 = Point::<f64>::from((-74.006, 40.7128));
+    /// // London
+    /// let p2 = Point::<f64>::from((-0.1278, 51.5074));
+    ///
+    /// let distance = p1.haversine_distance(&p2);
+    ///
+    /// assert_eq!(
+    ///   5_570_222., // meters
+    ///   distance.round()
+    /// );
     /// ```
+    ///
+    /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
     fn haversine_distance(&self, rhs: &Rhs) -> T;
 }
 

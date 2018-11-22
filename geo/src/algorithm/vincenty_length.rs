@@ -3,7 +3,38 @@ use num_traits::{Float, FromPrimitive};
 use algorithm::vincenty_distance::{FailedToConvergeError, VincentyDistance};
 use {Line, LineString, MultiLineString};
 
+/// Determine the length of a geometries using [Vincenty’s formulae].
+///
+/// [Vincenty’s formulae]: https://en.wikipedia.org/wiki/Vincenty%27s_formulae
 pub trait VincentyLength<T, RHS = Self> {
+    /// Determine the length of a geometries using [Vincenty’s formulae].
+    ///
+    /// # Units
+    ///
+    /// - return value: meters
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::LineString;
+    /// use geo::prelude::*;
+    ///
+    /// let linestring = LineString::<f64>::from(vec![
+    ///   // New York City
+    ///   (-74.006, 40.7128),
+    ///   // London
+    ///   (-0.1278, 51.5074),
+    /// ]);
+    ///
+    /// let length = linestring.vincenty_length().unwrap();
+    ///
+    /// assert_eq!(
+    ///   5_585_234., // meters
+    ///   length.round()
+    /// );
+    /// ```
+    ///
+    /// [Vincenty’s formulae]: https://en.wikipedia.org/wiki/Vincenty%27s_formulae
     fn vincenty_length(&self) -> Result<T, FailedToConvergeError>;
 }
 

@@ -51,6 +51,10 @@ pub trait Rotate<T> {
     ///
     /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
     ///
+    /// # Units
+    ///
+    /// - `angle`: degrees
+    ///
     /// # Examples
     ///
     /// ```
@@ -79,6 +83,10 @@ pub trait RotatePoint<T> {
     /// Rotate a Geometry around an arbitrary point by an angle, given in degrees
     ///
     /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
+    ///
+    /// # Units
+    ///
+    /// - `angle`: degrees
     ///
     /// # Examples
     ///

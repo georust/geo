@@ -1,11 +1,13 @@
 use num_traits::Float;
-use {Line, MultiPolygon, Polygon, Rect, Ring, Triangle};
+use {Line, LineString, MultiPolygon, Polygon, Rect, Ring, Triangle, CoordinateType};
+
+use algorithm::winding_order::twice_signed_ring_area;
 
 /// Calculation of the area.
 
 pub trait Area<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     /// Signed area of a geometry.
     ///
@@ -34,7 +36,7 @@ where
 
 impl<T> Area<T> for Line<T>
 where
-    T: Float,
+    T: CoordinateType,
 {
     fn area(&self) -> T {
         T::zero()
@@ -66,7 +68,7 @@ where
 
 impl<T> Area<T> for Rect<T>
 where
-    T: Float,
+    T: CoordinateType
 {
     fn area(&self) -> T {
         (self.max.x - self.min.x) * (self.max.y - self.min.y)
@@ -110,11 +112,17 @@ mod test {
     }
     #[test]
     fn rectangle_test() {
-        let rect = Rect {
+        let rect1: Rect<f32> = Rect {
             min: Coordinate { x: 10., y: 30. },
             max: Coordinate { x: 20., y: 40. },
         };
-        assert_relative_eq!(rect.area(), 100.);
+        assert_relative_eq!(rect1.area(), 100.);
+
+        let rect2: Rect<i32> = Rect {
+            min: Coordinate { x: 10, y: 30 },
+            max: Coordinate { x: 20, y: 40 },
+        };
+        assert_eq!(rect2.area(), 100);
     }
     #[test]
     fn area_polygon_inner_test() {
