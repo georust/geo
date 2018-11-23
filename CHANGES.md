@@ -1,6 +1,13 @@
 # Changes
 
-## geo 0.2.1
+## geo-types 0.2.2
+
+* Fix misnamed `serde` feature flag.
+  * <https://github.com/georust/geo/pull/316>
+* Add `width` and `height` helpers on `Rect`.
+  * <https://github.com/georust/geo/pull/317>
+
+## geo-types 0.2.1
 
 * Add `to_lines` method on a `Triangle`
   * <https://github.com/georust/geo/pull/313>
