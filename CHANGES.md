@@ -1,5 +1,14 @@
 # Changes
 
+## geo 0.10.3
+
+* Add `MapCoords` for `Rect`s
+  * <https://github.com/georust/geo/commit/11e4b67ae5fa658bd556eea96ba6fd49f32921c4>
+* Rewrite vincenty/haversine docs; specify param/return units.
+  * <https://github.com/georust/geo/commit/6ca45c347c53c5f0fd41b90ff5d0ba67d1b2ec15>
+* `Area` can work on some non-`Float` geometries (e.g. `Rect<Integer>`)
+  * <https://github.com/georust/geo/commit/1efd87a9bf3f4140f252014b59ff174af8e014aa>
+
 ## geo-types 0.2.2
 
 * Fix misnamed `serde` feature flag.
