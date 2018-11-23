@@ -9,3 +9,13 @@ where
     pub min: Coordinate<T>,
     pub max: Coordinate<T>,
 }
+
+impl<T: CoordinateType> Rect<T> {
+    pub fn width(self) -> T {
+        self.max.x - self.min.x
+    }
+
+    pub fn height(self) -> T {
+        self.max.y - self.min.y
+    }
+}
