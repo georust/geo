@@ -1,4 +1,4 @@
-// To implement Spade’s traits in the geo-types crates, we need to access to a
+// To implement RStar’s traits in the geo-types crates, we need to access to a
 // few geospatial algorithms, which are included in this hidden module. This
 // hidden module is public so the geo crate can reuse these algorithms to
 // prevent duplication. These functions are _not_ meant for public consumption.

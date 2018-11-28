@@ -350,24 +350,27 @@ where
     }
 }
 
-#[cfg(feature = "spade")]
-// These are required for Spade RTree
-impl<T> ::spade::PointN for Point<T>
+#[cfg(feature = "rstar")]
+// These are required for rstar RTree
+impl<T> ::rstar::Point for Point<T>
 where
-    T: ::num_traits::Float + ::spade::SpadeNum + ::std::fmt::Debug,
+    T: ::num_traits::Float + ::rstar::RTreeNum,
 {
     type Scalar = T;
 
-    fn dimensions() -> usize {
-        2
+    const DIMENSIONS: usize = 2;
+
+    fn generate<F>(f: F) -> Self
+    where
+        F: Fn(usize) -> Self::Scalar,
+    {
+        Point::new(f(0), f(1))
     }
-    fn from_value(value: Self::Scalar) -> Self {
-        Point::new(value, value)
-    }
-    fn nth(&self, index: usize) -> &Self::Scalar {
+
+    fn nth(&self, index: usize) -> Self::Scalar {
         match index {
-            0 => &self.0.x,
-            1 => &self.0.y,
+            0 => self.0.x,
+            1 => self.0.y,
             _ => unreachable!(),
         }
     }
@@ -379,11 +382,6 @@ where
         }
     }
 }
-
-#[cfg(feature = "spade")]
-impl<T> ::spade::TwoDimensional for Point<T> where
-    T: ::num_traits::Float + ::spade::SpadeNum + ::std::fmt::Debug
-{}
 
 impl<T: CoordinateType> From<[T; 2]> for Point<T> {
     fn from(coords: [T; 2]) -> Point<T> {

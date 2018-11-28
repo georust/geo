@@ -9,7 +9,7 @@ extern crate failure;
 extern crate postgis;
 #[cfg(feature = "use-proj")]
 extern crate proj;
-extern crate spade;
+extern crate rstar;
 
 pub use algorithm::*;
 pub use traits::ToGeo;

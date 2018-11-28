@@ -3,11 +3,11 @@ use algorithm::euclidean_length::EuclideanLength;
 use algorithm::intersects::Intersects;
 use algorithm::polygon_distance_fast_path::*;
 use num_traits::float::FloatConst;
-use num_traits::{Float, Signed};
+use num_traits::{Float, Signed, Bounded};
 use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Triangle};
 
-use spade::rtree::RTree;
-use spade::SpadeFloat;
+use rstar::RTree;
+use rstar::RTreeNum;
 
 /// Returns the distance between two geometries.
 
@@ -238,7 +238,7 @@ where
 /// LineString-LineString distance
 impl<T> EuclideanDistance<T, LineString<T>> for LineString<T>
 where
-    T: Float + FloatConst + Signed + SpadeFloat,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         if self.intersects(other) {
@@ -266,10 +266,10 @@ where
 /// LineString to Line
 impl<T> EuclideanDistance<T, Line<T>> for LineString<T>
 where
-    T: Float + FloatConst + Signed + SpadeFloat,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
-        self.lines().fold(T::max_value(), |acc, line| {
+        self.lines().fold(Bounded::max_value(), |acc, line| {
             acc.min(line.euclidean_distance(other))
         })
     }
@@ -278,7 +278,7 @@ where
 /// Line to LineString
 impl<T> EuclideanDistance<T, LineString<T>> for Line<T>
 where
-    T: Float + FloatConst + Signed + SpadeFloat,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         other.euclidean_distance(self)
@@ -288,7 +288,7 @@ where
 /// LineString to Polygon
 impl<T> EuclideanDistance<T, Polygon<T>> for LineString<T>
 where
-    T: Float + FloatConst + Signed + SpadeFloat,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if self.intersects(other) || other.contains(self) {
@@ -309,7 +309,7 @@ where
 /// Polygon to LineString distance
 impl<T> EuclideanDistance<T, LineString<T>> for Polygon<T>
 where
-    T: Float + FloatConst + Signed + SpadeFloat,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         other.euclidean_distance(self)
@@ -319,21 +319,21 @@ where
 /// Line to MultiPolygon distance
 impl<T> EuclideanDistance<T, MultiPolygon<T>> for Line<T>
 where
-    T: Float + FloatConst + Signed + SpadeFloat,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
         mpolygon
             .0
             .iter()
             .map(|p| self.euclidean_distance(p))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+            .fold(Bounded::max_value(), |accum, val| accum.min(val))
     }
 }
 
 /// MultiPolygon to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for MultiPolygon<T>
 where
-    T: Float + FloatConst + Signed + SpadeFloat,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         other.euclidean_distance(self)
@@ -343,7 +343,7 @@ where
 /// Line to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for Line<T>
 where
-    T: Float + FloatConst + Signed + SpadeFloat,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         if self.intersects(other) || self.contains(other) {
@@ -359,7 +359,7 @@ where
 // Line to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Line<T>
 where
-    T: Float + Signed + SpadeFloat + FloatConst,
+    T: Float + Signed + RTreeNum + FloatConst,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if other.contains(self) || self.intersects(other) {
@@ -369,7 +369,7 @@ where
         let exterior_min = other
             .exterior
             .points_iter()
-            .fold(T::max_value(), |acc, point| {
+            .fold(<T as Bounded>::max_value(), |acc, point| {
                 acc.min(self.euclidean_distance(&point))
             });
         // point-line distance between each interior ring point and the line
@@ -378,10 +378,10 @@ where
             .interiors
             .iter()
             .map(|ring| {
-                ring.lines().fold(T::max_value(), |acc, line| {
+                ring.lines().fold(<T as Bounded>::max_value(), |acc, line| {
                     acc.min(self.euclidean_distance(&line))
                 })
-            }).fold(T::max_value(), |acc, ring_min| acc.min(ring_min));
+            }).fold(<T as Bounded>::max_value(), |acc, ring_min| acc.min(ring_min));
         // return smaller of the two values
         exterior_min.min(interior_min)
     }
@@ -390,7 +390,7 @@ where
 // Polygon to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for Polygon<T>
 where
-    T: Float + FloatConst + Signed + SpadeFloat,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         other.euclidean_distance(self)
@@ -400,7 +400,7 @@ where
 // Polygon to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Polygon<T>
 where
-    T: Float + FloatConst + SpadeFloat,
+    T: Float + FloatConst + RTreeNum,
 {
     /// This implementation has a "fast path" in cases where both input polygons are convex:
     /// it switches to an implementation of the "rotating calipers" method described in [Pirzadeh (1999), pp24—30](http://digitool.library.mcgill.ca/R/?func=dbin-jump-full&object_id=21623&local_base=GEN01-MCG02),
@@ -459,17 +459,17 @@ where
 // This is somewhat slow and memory-inefficient, but certainly better than quadratic time
 pub fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -> T
 where
-    T: Float + SpadeFloat,
+    T: Float + RTreeNum,
 {
-    let tree_a: RTree<Line<_>> = RTree::bulk_load(geom1.lines().collect());
-    let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect());
+    let tree_a: RTree<Line<_>> = RTree::bulk_load(&mut geom1.lines().collect::<Vec<_>>());
+    let tree_b: RTree<Line<_>> = RTree::bulk_load(&mut geom2.lines().collect::<Vec<_>>());
     // Return minimum distance between all geom a points and all geom b points
     geom2
         .points_iter()
-        .fold(T::max_value(), |acc, point| {
+        .fold(<T as Bounded>::max_value(), |acc, point| {
             let nearest = tree_a.nearest_neighbor(&point).unwrap();
             acc.min(nearest.euclidean_distance(&point))
-        }).min(geom1.points_iter().fold(T::max_value(), |acc, point| {
+        }).min(geom1.points_iter().fold(Bounded::max_value(), |acc, point| {
             let nearest = tree_b.nearest_neighbor(&point).unwrap();
             acc.min(nearest.euclidean_distance(&point))
         }))
