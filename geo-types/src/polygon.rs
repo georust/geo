@@ -96,29 +96,33 @@ where
             .map(|(idx, _)| {
                 let prev_1 = self.previous_vertex(&idx);
                 let prev_2 = self.previous_vertex(&prev_1);
-                Point(self.exterior.0[prev_2]).cross_prod(
-                    Point(self.exterior.0[prev_1]),
-                    Point(self.exterior.0[idx])
-                )
+                Point(self.exterior.0[prev_2])
+                    .cross_prod(Point(self.exterior.0[prev_1]), Point(self.exterior.0[idx]))
             })
             // accumulate and check cross-product result signs in a single pass
             // positive implies ccw convexity, negative implies cw convexity
             // anything else implies non-convexity
-            .fold(ListSign::Empty, |acc, n| {
-                match (acc, n.is_positive()) {
-                    (ListSign::Empty, true) | (ListSign::Positive, true) => ListSign::Positive,
-                    (ListSign::Empty, false) | (ListSign::Negative, false) => ListSign::Negative,
-                    _ => ListSign::Mixed
-                }
+            .fold(ListSign::Empty, |acc, n| match (acc, n.is_positive()) {
+                (ListSign::Empty, true) | (ListSign::Positive, true) => ListSign::Positive,
+                (ListSign::Empty, false) | (ListSign::Negative, false) => ListSign::Negative,
+                _ => ListSign::Mixed,
             });
         convex != ListSign::Mixed
     }
 }
 
-
-impl<T: CoordinateType> From<Rect<T>> for Polygon<T>
-{
+impl<T: CoordinateType> From<Rect<T>> for Polygon<T> {
     fn from(r: Rect<T>) -> Polygon<T> {
-        Polygon::new(vec![(r.min.x, r.min.y), (r.max.x, r.min.y), (r.max.x, r.max.y), (r.min.x, r.max.y), (r.min.x, r.min.y)].into(), Vec::new())
+        Polygon::new(
+            vec![
+                (r.min.x, r.min.y),
+                (r.max.x, r.min.y),
+                (r.max.x, r.max.y),
+                (r.min.x, r.max.y),
+                (r.min.x, r.min.y),
+            ]
+            .into(),
+            Vec::new(),
+        )
     }
 }

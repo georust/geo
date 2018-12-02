@@ -3,7 +3,7 @@ use algorithm::euclidean_length::EuclideanLength;
 use algorithm::intersects::Intersects;
 use algorithm::polygon_distance_fast_path::*;
 use num_traits::float::FloatConst;
-use num_traits::{Float, Signed, Bounded};
+use num_traits::{Bounded, Float, Signed};
 use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Triangle};
 
 use rstar::RTree;
@@ -133,7 +133,8 @@ where
                             line.start_point(),
                             line.end_point(),
                         )
-                    }).fold(T::max_value(), |accum, val| accum.min(val)),
+                    })
+                    .fold(T::max_value(), |accum, val| accum.min(val)),
             )
     }
 }
@@ -381,7 +382,10 @@ where
                 ring.lines().fold(<T as Bounded>::max_value(), |acc, line| {
                     acc.min(self.euclidean_distance(&line))
                 })
-            }).fold(<T as Bounded>::max_value(), |acc, ring_min| acc.min(ring_min));
+            })
+            .fold(<T as Bounded>::max_value(), |acc, ring_min| {
+                acc.min(ring_min)
+            });
         // return smaller of the two values
         exterior_min.min(interior_min)
     }
@@ -452,7 +456,8 @@ where
                     edge.0.into(),
                     edge.1.into(),
                 )
-            }).fold(T::max_value(), |accum, val| accum.min(val))
+            })
+            .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
 /// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
@@ -469,10 +474,15 @@ where
         .fold(<T as Bounded>::max_value(), |acc, point| {
             let nearest = tree_a.nearest_neighbor(&point).unwrap();
             acc.min(nearest.euclidean_distance(&point))
-        }).min(geom1.points_iter().fold(Bounded::max_value(), |acc, point| {
-            let nearest = tree_b.nearest_neighbor(&point).unwrap();
-            acc.min(nearest.euclidean_distance(&point))
-        }))
+        })
+        .min(
+            geom1
+                .points_iter()
+                .fold(Bounded::max_value(), |acc, point| {
+                    let nearest = tree_b.nearest_neighbor(&point).unwrap();
+                    acc.min(nearest.euclidean_distance(&point))
+                }),
+        )
 }
 
 #[cfg(test)]

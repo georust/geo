@@ -78,7 +78,8 @@ where
                 Direction::Default => WindingOrder::Clockwise,
                 Direction::Reversed => WindingOrder::CounterClockwise,
             })
-        }).collect();
+        })
+        .collect();
 
     let ext_ring = poly.exterior.clone_to_winding_order(match direction {
         Direction::Default => WindingOrder::CounterClockwise,

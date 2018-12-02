@@ -166,7 +166,7 @@ impl<T: CoordinateType> IntoIterator for LineString<T> {
 #[cfg(feature = "rstar")]
 impl<T> ::rstar::RTreeObject for LineString<T>
 where
-    T: ::num_traits::Float + ::rstar::RTreeNum
+    T: ::num_traits::Float + ::rstar::RTreeNum,
 {
     type Envelope = ::rstar::AABB<Point<T>>;
 
@@ -180,7 +180,8 @@ where
             ),
             Some(b) => ::rstar::AABB::from_corners(
                 Point::new(b.min.x, b.min.y),
-                Point::new(b.max.x, b.max.y))
+                Point::new(b.max.x, b.max.y),
+            ),
         }
     }
 }
@@ -188,7 +189,7 @@ where
 #[cfg(feature = "rstar")]
 impl<T> ::rstar::PointDistance for LineString<T>
 where
-    T: ::num_traits::Float + ::rstar::RTreeNum
+    T: ::num_traits::Float + ::rstar::RTreeNum,
 {
     fn distance_2(&self, point: &Point<T>) -> T {
         let d = ::private_utils::point_line_string_euclidean_distance(*point, self);

@@ -186,7 +186,8 @@ mod tests {
             (100.0, 0.0),
             (50.0, 50.0),
             (1234.567, -987.6543),
-        ].into_iter()
+        ]
+        .into_iter()
         .map(Point::from)
         .collect()
     }

@@ -1,5 +1,5 @@
 use num_traits::Float;
-use {Line, LineString, MultiPolygon, Polygon, Rect, Triangle, CoordinateType};
+use {CoordinateType, Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
 
 use algorithm::winding_order::twice_signed_ring_area;
 
@@ -77,7 +77,7 @@ where
 
 impl<T> Area<T> for Rect<T>
 where
-    T: CoordinateType
+    T: CoordinateType,
 {
     fn area(&self) -> T {
         (self.max.x - self.min.x) * (self.max.y - self.min.y)

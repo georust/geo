@@ -1,7 +1,7 @@
 use failure::Error;
 use {
-    CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon, Rect, Coordinate
+    Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect,
 };
 
 /// Map a function over all the coordinates in an object, returning a new one
@@ -409,14 +409,22 @@ impl<T: CoordinateType> MapCoordsInplace<T> for GeometryCollection<T> {
     }
 }
 
-
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Rect<T> {
     type Output = Rect<NT>;
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         let new_min = func(&(self.min.x, self.min.y));
         let new_max = func(&(self.max.x, self.max.y));
-        Rect{ min: Coordinate{x: new_min.0, y: new_min.1}, max: Coordinate{ x: new_max.0, y: new_max.1 }}
+        Rect {
+            min: Coordinate {
+                x: new_min.0,
+                y: new_min.1,
+            },
+            max: Coordinate {
+                x: new_max.0,
+                y: new_max.1,
+            },
+        }
     }
 }
 
@@ -429,7 +437,16 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Rect<T> {
     ) -> Result<Self::Output, Error> {
         let new_min = func(&(self.min.x, self.min.y))?;
         let new_max = func(&(self.max.x, self.max.y))?;
-        Ok(Rect{ min: Coordinate{x: new_min.0, y: new_min.1}, max: Coordinate{ x: new_max.0, y: new_max.1 }})
+        Ok(Rect {
+            min: Coordinate {
+                x: new_min.0,
+                y: new_min.1,
+            },
+            max: Coordinate {
+                x: new_max.0,
+                y: new_max.1,
+            },
+        })
     }
 }
 
@@ -634,13 +651,15 @@ mod test {
             Point::new(1.0, 1.0),
             Point::new(2.0, 2.0),
             Point::new(3.0, 3.0),
-        ].into();
+        ]
+        .into();
         // this should be fine
         let good_ls: LineString<_> = vec![
             Point::new(1.0, 1.0),
             Point::new(2.1, 2.0),
             Point::new(3.0, 3.0),
-        ].into();
+        ]
+        .into();
         let bad = bad_ls.try_map_coords(&|&(x, y)| f(x, y));
         assert!(bad.is_err());
         let good = good_ls.try_map_coords(&|&(x, y)| f(x, y));
@@ -651,7 +670,8 @@ mod test {
                 Point::new(2., 101.),
                 Point::new(4.2, 102.),
                 Point::new(6.0, 103.),
-            ].into()
+            ]
+            .into()
         );
     }
 }

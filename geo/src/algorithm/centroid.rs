@@ -143,7 +143,8 @@ where
                         let area = get_linestring_area(ring).abs();
                         let centroid = simple_polygon_centroid(ring)?;
                         Some((centroid.x() * area, centroid.y() * area, area))
-                    }).fold((T::zero(), T::zero(), T::zero()), |accum, val| {
+                    })
+                    .fold((T::zero(), T::zero(), T::zero()), |accum, val| {
                         (accum.0 + val.0, accum.1 + val.1, accum.2 + val.2)
                     });
 

@@ -131,7 +131,7 @@ mod test {
     /// ensure Line's SpatialObject impl is correct
     fn line_test() {
         use rstar::primitives::SimpleEdge;
-        use rstar::{RTreeObject, PointDistance};
+        use rstar::{PointDistance, RTreeObject};
 
         let se = SimpleEdge::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
         let l = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 5., y: 5. });
@@ -143,8 +143,17 @@ mod test {
 
     #[test]
     fn test_rects() {
-        let r = Rect{ min: Coordinate{ x: -1., y: -1. }, max: Coordinate{ x: 1., y: 1.}};
+        let r = Rect {
+            min: Coordinate { x: -1., y: -1. },
+            max: Coordinate { x: 1., y: 1. },
+        };
         let p: Polygon<_> = r.into();
-        assert_eq!(p, Polygon::new(vec![(-1., -1.), (1., -1.), (1., 1.), (-1., 1.), (-1., -1.)].into(), vec![]));
+        assert_eq!(
+            p,
+            Polygon::new(
+                vec![(-1., -1.), (1., -1.), (1., 1.), (-1., 1.), (-1., -1.)].into(),
+                vec![]
+            )
+        );
     }
 }

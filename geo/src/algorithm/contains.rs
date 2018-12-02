@@ -288,7 +288,8 @@ mod test {
                 (250., 350.),
                 (200., 250.),
                 (150., 350.),
-            ].into(),
+            ]
+            .into(),
             vec![],
         );
         let rect = Polygon::new(
@@ -298,7 +299,8 @@ mod test {
                 (150., 280.),
                 (250., 280.),
                 (250., 310.),
-            ].into(),
+            ]
+            .into(),
             vec![],
         );
         assert_eq!(!v.contains(&rect), true);
@@ -315,7 +317,8 @@ mod test {
                 (250., 350.),
                 (200., 250.),
                 (150., 350.),
-            ].into(),
+            ]
+            .into(),
             vec![],
         );
         let rect = Polygon::new(
@@ -325,7 +328,8 @@ mod test {
                 (220., 220.),
                 (185., 220.),
                 (185., 237.),
-            ].into(),
+            ]
+            .into(),
             vec![],
         );
         assert_eq!(v.contains(&rect), true);

@@ -178,10 +178,11 @@ where
 {
     fn intersects(&self, linestring: &LineString<T>) -> bool {
         // line intersects inner or outer polygon edge
-        if self.exterior.intersects(linestring) || self
-            .interiors
-            .iter()
-            .any(|inner| inner.intersects(linestring))
+        if self.exterior.intersects(linestring)
+            || self
+                .interiors
+                .iter()
+                .any(|inner| inner.intersects(linestring))
         {
             true
         } else {

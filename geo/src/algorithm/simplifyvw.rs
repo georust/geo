@@ -108,7 +108,8 @@ where
             } else {
                 ((i - 1) as i32, (i + 1) as i32)
             }
-        }).collect();
+        })
+        .collect();
 
     // Store all the triangles in a minimum priority queue, based on their area.
     // Invalid triangles are *not* removed if / when points
@@ -160,7 +161,8 @@ where
                 orig.0[ai as usize],
                 orig.0[current_point as usize],
                 orig.0[bi as usize],
-            ).area()
+            )
+            .area()
             .abs();
             pq.push(VScore {
                 area: area,
@@ -193,14 +195,18 @@ where
 {
     let mut rings = vec![];
     // Populate R* tree with exterior and interior samples, if any
-    let mut tree: RTree<Line<_>> = RTree::bulk_load(&mut exterior
+    let mut tree: RTree<Line<_>> = RTree::bulk_load(
+        &mut exterior
             .lines()
-            .chain(interiors
-                .iter()
-                .flat_map(|ring| *ring)
-                .flat_map(|line_string| line_string.lines()))
-            .collect::<Vec<_>>());
-    
+            .chain(
+                interiors
+                    .iter()
+                    .flat_map(|ring| *ring)
+                    .flat_map(|line_string| line_string.lines()),
+            )
+            .collect::<Vec<_>>(),
+    );
+
     // Simplify shell
     rings.push(visvalingam_preserve(
         geomtype, &exterior, epsilon, &mut tree,
@@ -241,7 +247,8 @@ where
             } else {
                 ((i - 1) as i32, (i + 1) as i32)
             }
-        }).collect();
+        })
+        .collect();
     // Store all the triangles in a minimum priority queue, based on their area.
     // Invalid triangles are *not* removed if / when points
     // are removed; they're handled by skipping them as
@@ -302,7 +309,6 @@ where
         // Restore continous line segment
         tree.insert(Line::new(left_point, right_point));
 
-
         // Now recompute the adjacent triangle(s), using left and right adjacent points
         let (ll, _) = adjacent[left as usize];
         let (_, rr) = adjacent[right as usize];
@@ -339,7 +345,8 @@ where
         }
     }
     // Filter out the points that have been deleted, returning remaining points
-    let result = orig.0
+    let result = orig
+        .0
         .iter()
         .zip(adjacent.iter())
         .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(*tup) } else { None })
@@ -374,19 +381,20 @@ where
         orig[triangle.left],
         orig[triangle.current],
         orig[triangle.right],
-    ).bounding_rect();
+    )
+    .bounding_rect();
     let br = Point::new(bounding_rect.min.x, bounding_rect.min.y);
     let tl = Point::new(bounding_rect.max.x, bounding_rect.max.y);
-    tree.locate_in_envelope_intersecting(
-        &rstar::AABB::from_corners(br, tl)).any(|c| {
-        // triangle start point, end point
-        let (ca, cb) = c.points();
-        ca.0 != point_a
-            && ca.0 != point_c
-            && cb.0 != point_a
-            && cb.0 != point_c
-            && cartesian_intersect(ca, cb, Point(point_a), Point(point_c))
-    })
+    tree.locate_in_envelope_intersecting(&rstar::AABB::from_corners(br, tl))
+        .any(|c| {
+            // triangle start point, end point
+            let (ca, cb) = c.points();
+            ca.0 != point_a
+                && ca.0 != point_c
+                && cb.0 != point_a
+                && cb.0 != point_c
+                && cartesian_intersect(ca, cb, Point(point_a), Point(point_c))
+        })
 }
 
 /// Simplifies a geometry.
