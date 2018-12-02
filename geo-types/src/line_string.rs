@@ -163,28 +163,34 @@ impl<T: CoordinateType> IntoIterator for LineString<T> {
     }
 }
 
-#[cfg(feature = "spade")]
-impl<T> ::spade::SpatialObject for LineString<T>
+#[cfg(feature = "rstar")]
+impl<T> ::rstar::RTreeObject for LineString<T>
 where
-    T: ::num_traits::Float + ::spade::SpadeNum + ::std::fmt::Debug,
+    T: ::num_traits::Float + ::rstar::RTreeNum
 {
-    type Point = Point<T>;
+    type Envelope = ::rstar::AABB<Point<T>>;
 
-    fn mbr(&self) -> ::spade::BoundingRect<Self::Point> {
+    fn envelope(&self) -> Self::Envelope {
+        use num_traits::Bounded;
         let bounding_rect = ::private_utils::line_string_bounding_rect(self);
         match bounding_rect {
-            None => ::spade::BoundingRect::from_corners(
-                &Point::new(T::min_value(), T::min_value()),
-                &Point::new(T::max_value(), T::max_value()),
+            None => ::rstar::AABB::from_corners(
+                Point::new(Bounded::min_value(), Bounded::min_value()),
+                Point::new(Bounded::max_value(), Bounded::max_value()),
             ),
-            Some(b) => ::spade::BoundingRect::from_corners(
-                &Point::new(b.min.x, b.min.y),
-                &Point::new(b.max.x, b.max.y),
-            ),
+            Some(b) => ::rstar::AABB::from_corners(
+                Point::new(b.min.x, b.min.y),
+                Point::new(b.max.x, b.max.y))
         }
     }
+}
 
-    fn distance2(&self, point: &Self::Point) -> <Self::Point as ::spade::PointN>::Scalar {
+#[cfg(feature = "rstar")]
+impl<T> ::rstar::PointDistance for LineString<T>
+where
+    T: ::num_traits::Float + ::rstar::RTreeNum
+{
+    fn distance_2(&self, point: &Point<T>) -> T {
         let d = ::private_utils::point_line_string_euclidean_distance(*point, self);
         if d == T::zero() {
             d

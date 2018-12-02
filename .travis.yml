@@ -6,7 +6,7 @@ matrix:
   include:
     - env: GEO_TYPES_FEATURES=""
     - env: GEO_TYPES_FEATURES="--features serde"
-    - env: GEO_TYPES_FEATURES="--features spade"
+    - env: GEO_TYPES_FEATURES="--features rstar"
     - env: GEO_FEATURES=""
     - env: GEO_FEATURES="--features postgis-integration"
     - env: GEO_FEATURES="--features use-proj"

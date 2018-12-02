@@ -160,27 +160,28 @@ impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {
     }
 }
 
-#[cfg(feature = "spade")]
-impl<T> ::spade::SpatialObject for Line<T>
+#[cfg(feature = "rstar")]
+impl<T> ::rstar::RTreeObject for Line<T>
 where
-    T: ::num_traits::Float + ::spade::SpadeNum + ::std::fmt::Debug,
+    T: ::num_traits::Float + ::rstar::RTreeNum
 {
-    type Point = Point<T>;
+    type Envelope = ::rstar::AABB<Point<T>>;
 
-    fn mbr(&self) -> ::spade::BoundingRect<Self::Point> {
+    fn envelope(&self) -> Self::Envelope {
         let bounding_rect = ::private_utils::line_bounding_rect(*self);
-        ::spade::BoundingRect::from_corners(
-            &Point::new(bounding_rect.min.x, bounding_rect.min.y),
-            &Point::new(bounding_rect.max.x, bounding_rect.max.y),
-        )
+        ::rstar::AABB::from_corners(
+            bounding_rect.min.into(),
+            bounding_rect.max.into())
     }
+}
 
-    fn distance2(&self, point: &Self::Point) -> <Self::Point as ::spade::PointN>::Scalar {
+#[cfg(feature = "rstar")]
+impl <T> ::rstar::PointDistance for Line<T> 
+where
+    T: ::num_traits::Float + ::rstar::RTreeNum 
+{
+    fn distance_2(&self, point: &Point<T>) -> T {
         let d = ::private_utils::point_line_euclidean_distance(*point, *self);
-        if d == T::zero() {
-            d
-        } else {
-            d.powi(2)
-        }
+        d.powi(2)        
     }
 }

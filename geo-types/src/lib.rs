@@ -4,8 +4,8 @@ extern crate num_traits;
 #[macro_use]
 extern crate serde;
 
-#[cfg(feature = "spade")]
-extern crate spade;
+#[cfg(feature = "rstar")]
+extern crate rstar;
 
 use num_traits::{Num, NumCast};
 
@@ -59,9 +59,6 @@ pub mod private_utils;
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[cfg(feature = "spade")]
-    use spade::SpatialObject;
 
     #[test]
     fn type_test() {
@@ -129,17 +126,19 @@ mod test {
         assert_eq!(p.x(), 1_000_000i64);
     }
 
-    #[cfg(feature = "spade")]
+    #[cfg(feature = "rstar")]
     #[test]
     /// ensure Line's SpatialObject impl is correct
     fn line_test() {
-        use spade::primitives::SimpleEdge;
+        use rstar::primitives::SimpleEdge;
+        use rstar::{RTreeObject, PointDistance};
+
         let se = SimpleEdge::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
         let l = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 5., y: 5. });
-        assert_eq!(se.mbr(), l.mbr());
+        assert_eq!(se.envelope(), l.envelope());
         // difference in 15th decimal place
-        assert_eq!(26.0, se.distance2(&Point::new(4.0, 10.0)));
-        assert_eq!(25.999999999999996, l.distance2(&Point::new(4.0, 10.0)));
+        assert_eq!(26.0, se.distance_2(&Point::new(4.0, 10.0)));
+        assert_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
     }
 
     #[test]

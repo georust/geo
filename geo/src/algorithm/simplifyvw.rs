@@ -4,8 +4,7 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use {Coordinate, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Triangle};
 
-use spade::rtree::RTree;
-use spade::{self, SpadeFloat};
+use rstar::{RTree, RTreeNum};
 
 /// Store triangle information
 // current is the candidate point for removal
@@ -190,19 +189,18 @@ fn vwp_wrapper<T>(
     epsilon: &T,
 ) -> Vec<Vec<Coordinate<T>>>
 where
-    T: Float + SpadeFloat,
+    T: Float + RTreeNum,
 {
     let mut rings = vec![];
-    // Populate R* tree with exterior line segments
-    let mut tree: RTree<Line<_>> = RTree::bulk_load(exterior.lines().collect());
-    // and with interior segments, if any
-    if let Some(interior_rings) = interiors {
-        for ring in interior_rings {
-            for line in ring.lines() {
-                tree.insert(line);
-            }
-        }
-    }
+    // Populate R* tree with exterior and interior samples, if any
+    let mut tree: RTree<Line<_>> = RTree::bulk_load(&mut exterior
+            .lines()
+            .chain(interiors
+                .iter()
+                .flat_map(|ring| *ring)
+                .flat_map(|line_string| line_string.lines()))
+            .collect::<Vec<_>>());
+    
     // Simplify shell
     rings.push(visvalingam_preserve(
         geomtype, &exterior, epsilon, &mut tree,
@@ -225,13 +223,14 @@ fn visvalingam_preserve<T>(
     tree: &mut RTree<Line<T>>,
 ) -> Vec<Coordinate<T>>
 where
-    T: Float + SpadeFloat,
+    T: Float + RTreeNum,
 {
     if orig.0.len() < 3 {
         return orig.0.to_vec();
     }
     let max = orig.0.len();
     let mut counter = orig.0.len();
+
     // Adjacent retained points. Simulating the points in a
     // linked list with indices into `orig`. Big number (larger than or equal to
     // `max`) means no next element, and (0, 0) means deleted element.
@@ -290,11 +289,20 @@ where
         // remove it from the simulated "linked list"
         adjacent[smallest.current as usize] = (0, 0);
         counter -= 1;
-        // remove stale segments from R* tree
-        // we have to call this twice because only one segment is returned at a time
-        // this should be OK because a point can only share at most two segments
-        tree.lookup_and_remove(&Point(orig.0[smallest.right]));
-        tree.lookup_and_remove(&Point(orig.0[smallest.left]));
+        // Remove stale segments from R* tree
+        let left_point = Point(orig.0[left as usize]);
+        let middle_point = Point(orig.0[smallest.current]);
+        let right_point = Point(orig.0[right as usize]);
+
+        let line_1 = Line::new(left_point, middle_point);
+        let line_2 = Line::new(middle_point, right_point);
+        assert!(tree.remove(&line_1).is_some());
+        assert!(tree.remove(&line_2).is_some());
+
+        // Restore continous line segment
+        tree.insert(Line::new(left_point, right_point));
+
+
         // Now recompute the adjacent triangle(s), using left and right adjacent points
         let (ll, _) = adjacent[left as usize];
         let (_, rr) = adjacent[right as usize];
@@ -325,25 +333,18 @@ where
                 right: bi as usize,
                 intersector: false,
             };
-            // add re-computed line segments to the tree
-            tree.insert(Line::new(
-                orig.0[ai as usize],
-                orig.0[current_point as usize],
-            ));
-            tree.insert(Line::new(
-                orig.0[current_point as usize],
-                orig.0[bi as usize],
-            ));
+
             // push re-computed triangle onto heap
             pq.push(new_triangle);
         }
     }
     // Filter out the points that have been deleted, returning remaining points
-    orig.0
+    let result = orig.0
         .iter()
         .zip(adjacent.iter())
         .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(*tup) } else { None })
-        .collect::<Vec<Coordinate<T>>>()
+        .collect::<Vec<Coordinate<T>>>();
+    result
 }
 
 /// is p1 -> p2 -> p3 wound counterclockwise?
@@ -365,7 +366,7 @@ where
 /// check whether a triangle's edges intersect with any other edges of the LineString
 fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T>, orig: &[Coordinate<T>]) -> bool
 where
-    T: Float + SpadeFloat,
+    T: Float + RTreeNum,
 {
     let point_a = orig[triangle.left];
     let point_c = orig[triangle.right];
@@ -376,8 +377,8 @@ where
     ).bounding_rect();
     let br = Point::new(bounding_rect.min.x, bounding_rect.min.y);
     let tl = Point::new(bounding_rect.max.x, bounding_rect.max.y);
-    let candidates = tree.lookup_in_rectangle(&spade::BoundingRect::from_corners(&br, &tl));
-    candidates.iter().any(|c| {
+    tree.locate_in_envelope_intersecting(
+        &rstar::AABB::from_corners(br, tl)).any(|c| {
         // triangle start point, end point
         let (ca, cb) = c.points();
         ca.0 != point_a
@@ -431,7 +432,7 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     ///
     /// See [here](https://www.jasondavies.com/simplify/) for a graphical explanation.
     ///
-    /// The topology-preserving algorithm uses an [R* tree](../../../spade/rtree/struct.RTree.html) to
+    /// The topology-preserving algorithm uses an [R* tree](../../../rstar/struct.RTree.html) to
     /// efficiently find candidate line segments which are tested for intersection with a given triangle.
     /// If intersections are found, the previous point (i.e. the left component of the current triangle)
     /// is also removed, altering the geometry and removing the intersection.
@@ -477,12 +478,12 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     /// ```
     fn simplifyvw_preserve(&self, epsilon: &T) -> Self
     where
-        T: Float + SpadeFloat;
+        T: Float + RTreeNum;
 }
 
 impl<T> SimplifyVWPreserve<T> for LineString<T>
 where
-    T: Float + SpadeFloat,
+    T: Float + RTreeNum,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> LineString<T> {
         let gt = GeomSettings {
@@ -497,7 +498,7 @@ where
 
 impl<T> SimplifyVWPreserve<T> for MultiLineString<T>
 where
-    T: Float + SpadeFloat,
+    T: Float + RTreeNum,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> MultiLineString<T> {
         MultiLineString(
@@ -511,7 +512,7 @@ where
 
 impl<T> SimplifyVWPreserve<T> for Polygon<T>
 where
-    T: Float + SpadeFloat,
+    T: Float + RTreeNum,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> Polygon<T> {
         let gt = GeomSettings {
@@ -528,7 +529,7 @@ where
 
 impl<T> SimplifyVWPreserve<T> for MultiPolygon<T>
 where
-    T: Float + SpadeFloat,
+    T: Float + RTreeNum,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> MultiPolygon<T> {
         MultiPolygon(
@@ -736,6 +737,7 @@ mod test {
         let simplified = vwp_wrapper(&gt, &points_ls.into(), None, &0.0005);
         assert_eq!(simplified[0].len(), 3277);
     }
+
     #[test]
     fn visvalingam_test_long() {
         // simplify a longer LineString
