@@ -1,4 +1,4 @@
-use num_traits::Float;
+use num_traits::{Num, Float, NumCast};
 use {CoordinateType, Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
 
 use algorithm::winding_order::twice_signed_ring_area;
@@ -8,6 +8,7 @@ use algorithm::winding_order::twice_signed_ring_area;
 pub trait Area<T, Output = T>
 where
     T: CoordinateType,
+    Output: Copy + Num + NumCast,
 {
     /// Signed area of a geometry.
     ///
@@ -25,11 +26,13 @@ where
     ///     (0., 0.)
     /// ]), vec![]);
     ///
-    /// assert_eq!(polygon.area(), 30.);
+    /// let area: f32 = polygon.area();
+    /// assert_eq!(area, 30.);
     ///
     /// polygon.exterior.0.reverse();
     ///
-    /// assert_eq!(polygon.area(), -30.);
+    /// let area: f32 = polygon.area();
+    /// assert_eq!(area, -30.);
     /// ```
     fn area(&self) -> Output;
 }
@@ -38,24 +41,25 @@ where
 pub(crate) fn get_linestring_area<T, Output>(linestring: &LineString<T>) -> Output
 where
     T: Float,
-    Output: num_traits::Num + num_traits::NumCast
+    Output: Copy + Num + NumCast,
 {
     twice_signed_ring_area::<T, Output>(linestring) / (Output::one() + Output::one())
 }
 
-impl<T> Area<T> for Line<T>
+impl<T, Output> Area<T, Output> for Line<T>
 where
     T: CoordinateType,
+    Output: Copy + Num + NumCast,
 {
-    fn area(&self) -> T {
-        T::zero()
+    fn area(&self) -> Output {
+        Output::zero()
     }
 }
 
 impl<T, Output> Area<T, Output> for Polygon<T>
 where
     T: Float,
-    Output: Copy + num_traits::Num + num_traits::NumCast + Float
+    Output: Copy + Num + NumCast,
 {
     fn area(&self) -> Output {
         self.interiors
@@ -66,35 +70,42 @@ where
     }
 }
 
-impl<T> Area<T> for MultiPolygon<T>
+impl<T, Output> Area<T, Output> for MultiPolygon<T>
 where
     T: Float,
+    Output: Copy + Num + NumCast,
 {
-    fn area(&self) -> T {
+    fn area(&self) -> Output {
         self.0
             .iter()
-            .fold(T::zero(), |total, next| total + next.area())
+            .fold(Output::zero(), |total, next| total + next.area())
     }
 }
 
-impl<T> Area<T> for Rect<T>
+impl<T, Output> Area<T, Output> for Rect<T>
 where
     T: CoordinateType,
+    Output: Copy + Num + NumCast,
 {
-    fn area(&self) -> T {
-        (self.max.x - self.min.x) * (self.max.y - self.min.y)
+    fn area(&self) -> Output {
+        let max_x = Output::from(self.max.x).unwrap();
+        let max_y = Output::from(self.max.y).unwrap();
+        let min_x = Output::from(self.min.x).unwrap();
+        let min_y = Output::from(self.min.y).unwrap();
+        (max_x - min_x) * (max_y - min_y)
     }
 }
 
-impl<T> Area<T> for Triangle<T>
+impl<T, Output> Area<T, Output> for Triangle<T>
 where
-    T: Float + ::num_traits::NumCast,
+    T: Float + NumCast,
+    Output: Copy + Num + NumCast,
 {
-    fn area(&self) -> T {
-        (Line::new(self.0, self.1).determinant::<T>()
-            + Line::new(self.1, self.2).determinant()
-            + Line::new(self.2, self.0).determinant())
-            / (T::one() + T::one())
+    fn area(&self) -> Output {
+        (Line::new(self.0, self.1).determinant::<Output>()
+            + Line::new(self.1, self.2).determinant::<Output>()
+            + Line::new(self.2, self.0).determinant::<Output>())
+            / (Output::one() + Output::one())
     }
 }
 
@@ -133,7 +144,7 @@ mod test {
             min: Coordinate { x: 10, y: 30 },
             max: Coordinate { x: 20, y: 40 },
         };
-        assert_eq!(rect2.area(), 100);
+        assert_eq!(Area::<i32, i32>::area(&rect2), 100);
     }
     #[test]
     fn area_polygon_inner_test() {
@@ -158,13 +169,13 @@ mod test {
             Vec::new(),
         );
         let mpoly = MultiPolygon(vec![poly0, poly1, poly2]);
-        assert_eq!(mpoly.area(), 102.);
+        assert_eq!(Area::<f32, f32>::area(&mpoly), 102.);
         assert_relative_eq!(mpoly.area(), 102.);
     }
     #[test]
     fn area_line_test() {
         let line1 = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 1.0, y: 1.0 });
-        assert_eq!(line1.area(), 0.);
+        assert_eq!(Area::<f32, f32>::area(&line1), 0.);
     }
 
     #[test]
@@ -174,13 +185,13 @@ mod test {
             Coordinate { x: 1.0, y: 0.0 },
             Coordinate { x: 0.0, y: 1.0 },
         );
-        assert_eq!(triangle.area(), 0.5);
+        assert_eq!(Area::<f32, f32>::area(&triangle), 0.5);
 
         let triangle = Triangle(
             Coordinate { x: 0.0, y: 0.0 },
             Coordinate { x: 0.0, y: 1.0 },
             Coordinate { x: 1.0, y: 0.0 },
         );
-        assert_eq!(triangle.area(), -0.5);
+        assert_eq!(Area::<f32, f32>::area(&triangle), -0.5);
     }
 }

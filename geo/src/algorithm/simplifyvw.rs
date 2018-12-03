@@ -121,7 +121,7 @@ where
     // of 3 points and form triangles from them
     for (i, triangle) in orig.triangles().enumerate() {
         pq.push(VScore {
-            area: triangle.area().abs(),
+            area: Area::<T, T>::area(&triangle).abs(),
             current: i + 1,
             left: i,
             right: i + 2,
@@ -157,13 +157,11 @@ where
                 // Out of bounds, i.e. we're on one edge
                 continue;
             }
-            let area = Triangle(
+            let area = Area::<T, T>::area(&Triangle(
                 orig.0[ai as usize],
                 orig.0[current_point as usize],
                 orig.0[bi as usize],
-            )
-            .area()
-            .abs();
+            )).abs();
             pq.push(VScore {
                 area: area,
                 current: current_point as usize,
@@ -259,7 +257,7 @@ where
     // of 3 points and form triangles from them
     for (i, triangle) in orig.triangles().enumerate() {
         let v = VScore {
-            area: triangle.area().abs(),
+            area: Area::<_, T>::area(&triangle).abs(),
             current: i + 1,
             left: i,
             right: i + 2,
@@ -330,7 +328,7 @@ where
             let temp_area = if smallest.intersector && (current_point as usize) < smallest.current {
                 -*epsilon
             } else {
-                new.area().abs()
+                Area::<T, T>::area(&new).abs()
             };
             let new_triangle = VScore {
                 area: temp_area,
