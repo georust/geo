@@ -33,6 +33,10 @@ approx = "0.1.1"
 criterion = { version = "0.2" }
 
 [[bench]]
+name = "area"
+harness = false
+
+[[bench]]
 name = "convex_hull"
 harness = false
 
