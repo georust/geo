@@ -134,13 +134,13 @@ where
             if self.interiors.is_empty() {
                 Some(external_centroid)
             } else {
-                let external_area = get_linestring_area(&self.exterior).abs();
+                let external_area = get_linestring_area::<T, T>(&self.exterior).abs();
                 // accumulate interior Polygons
                 let (totals_x, totals_y, internal_area) = self
                     .interiors
                     .iter()
                     .filter_map(|ring| {
-                        let area = get_linestring_area(ring).abs();
+                        let area = get_linestring_area::<T, T>(ring).abs();
                         let centroid = simple_polygon_centroid(ring)?;
                         Some((centroid.x() * area, centroid.y() * area, area))
                     })
@@ -183,7 +183,8 @@ where
         }
         for poly in &self.0 {
             // the area is signed
-            let area = poly.area().abs();
+            let area: T = poly.area();
+            let area = area.abs();
             total_area = total_area + area;
             if let Some(p) = poly.centroid() {
                 if area != T::zero() {

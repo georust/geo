@@ -2,14 +2,15 @@ use geo_types::line_string::PointsIter;
 use std::iter::Rev;
 use {CoordinateType, LineString, Point};
 
-pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
+pub(crate) fn twice_signed_ring_area<T, Output>(linestring: &LineString<T>) -> Output
 where
     T: CoordinateType,
+    Output: ::num_traits::Num + ::num_traits::NumCast,
 {
     if linestring.0.is_empty() || linestring.0.len() == 1 {
-        return T::zero();
+        return Output::zero();
     }
-    let mut tmp = T::zero();
+    let mut tmp = Output::zero();
     for line in linestring.lines() {
         tmp = tmp + line.determinant();
     }
@@ -126,7 +127,7 @@ where
     /// Returns the winding order of this line
     /// None if the winding order is undefined.
     fn winding_order(&self) -> Option<WindingOrder> {
-        let shoelace = twice_signed_ring_area(self);
+        let shoelace: T = twice_signed_ring_area(self);
         if shoelace < T::zero() {
             Some(WindingOrder::Clockwise)
         } else if shoelace > T::zero() {

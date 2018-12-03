@@ -5,10 +5,9 @@ use algorithm::winding_order::twice_signed_ring_area;
 
 /// Calculation of the area.
 
-pub trait Area<T, OutputType = T>
+pub trait Area<T, Output = T>
 where
     T: CoordinateType,
-    OutputType: CoordinateType,
 {
     /// Signed area of a geometry.
     ///
@@ -32,15 +31,16 @@ where
     ///
     /// assert_eq!(polygon.area(), -30.);
     /// ```
-    fn area(&self) -> OutputType;
+    fn area(&self) -> Output;
 }
 
 // Calculation of simple (no interior holes) Polygon area
-pub(crate) fn get_linestring_area<T>(linestring: &LineString<T>) -> T
+pub(crate) fn get_linestring_area<T, Output>(linestring: &LineString<T>) -> Output
 where
     T: Float,
+    Output: num_traits::Num + num_traits::NumCast
 {
-    twice_signed_ring_area(linestring) / (T::one() + T::one())
+    twice_signed_ring_area::<T, Output>(linestring) / (Output::one() + Output::one())
 }
 
 impl<T> Area<T> for Line<T>
@@ -52,11 +52,12 @@ where
     }
 }
 
-impl<T> Area<T> for Polygon<T>
+impl<T, Output> Area<T, Output> for Polygon<T>
 where
     T: Float,
+    Output: Copy + num_traits::Num + num_traits::NumCast + Float
 {
-    fn area(&self) -> T {
+    fn area(&self) -> Output {
         self.interiors
             .iter()
             .fold(get_linestring_area(&self.exterior), |total, next| {
