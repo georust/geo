@@ -1,5 +1,19 @@
 # Changes
 
+## geo 0.11.0
+
+* Replace the [spade](https://crates.io/crates/spade) crate with the [rstar](https://crates.io/crates/rstar) crate
+  * <https://github.com/georust/geo/pull/314>
+* Remove unnecessary algorithm trait bounds
+  * <https://github.com/georust/geo/pull/320/>
+
+## geo-types 0.3.0
+
+* Replace the [spade](https://crates.io/crates/spade) crate with the [rstar](https://crates.io/crates/rstar) crate
+  * <https://github.com/georust/geo/pull/314>
+* Remove unnecessary algorithm trait bounds
+  * <https://github.com/georust/geo/pull/320/>
+
 ## geo 0.10.3
 
 * Add `MapCoords` for `Rect`s
