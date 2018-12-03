@@ -5,9 +5,10 @@ use algorithm::winding_order::twice_signed_ring_area;
 
 /// Calculation of the area.
 
-pub trait Area<T>
+pub trait Area<T, OutputType = T>
 where
     T: CoordinateType,
+    OutputType: CoordinateType,
 {
     /// Signed area of a geometry.
     ///
@@ -31,7 +32,7 @@ where
     ///
     /// assert_eq!(polygon.area(), -30.);
     /// ```
-    fn area(&self) -> T;
+    fn area(&self) -> OutputType;
 }
 
 // Calculation of simple (no interior holes) Polygon area
@@ -86,10 +87,10 @@ where
 
 impl<T> Area<T> for Triangle<T>
 where
-    T: Float,
+    T: Float + ::num_traits::NumCast,
 {
     fn area(&self) -> T {
-        (Line::new(self.0, self.1).determinant()
+        (Line::new(self.0, self.1).determinant::<T>()
             + Line::new(self.1, self.2).determinant()
             + Line::new(self.2, self.0).determinant())
             / (T::one() + T::one())

@@ -1,3 +1,4 @@
+use num_traits::{Num, NumCast};
 use {Coordinate, CoordinateType, Point};
 
 /// A line segment made up of exactly two [`Point`s](struct.Point.html)
@@ -137,8 +138,12 @@ where
     ///     -Line::new(b, a).determinant()
     /// # );
     /// ```
-    pub fn determinant(&self) -> T {
-        self.start.x * self.end.y - self.start.y * self.end.x
+    pub fn determinant<Output: NumCast + Num>(&self) -> Output {
+        let start_x = Output::from(self.start.x).unwrap();
+        let start_y = Output::from(self.start.y).unwrap();
+        let end_x = Output::from(self.end.x).unwrap();
+        let end_y = Output::from(self.end.y).unwrap();
+        start_x * end_y - start_y * end_x
     }
 
     pub fn start_point(&self) -> Point<T> {
