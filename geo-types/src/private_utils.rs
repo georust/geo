@@ -3,7 +3,7 @@
 // hidden module is public so the geo crate can reuse these algorithms to
 // prevent duplication. These functions are _not_ meant for public consumption.
 
-use num_traits::{Float, ToPrimitive};
+use num_traits::Float;
 use {Coordinate, CoordinateType, Line, LineString, Point, Rect};
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
@@ -72,7 +72,7 @@ where
 
 pub fn line_segment_distance<T>(point: Point<T>, start: Point<T>, end: Point<T>) -> T
 where
-    T: Float + ToPrimitive,
+    T: Float,
 {
     if start == end {
         return line_euclidean_length(Line::new(point, start));
@@ -93,14 +93,14 @@ where
 
 pub fn line_euclidean_length<T>(line: Line<T>) -> T
 where
-    T: Float + ToPrimitive,
+    T: Float,
 {
     line.dx().hypot(line.dy())
 }
 
 pub fn point_line_string_euclidean_distance<T>(p: Point<T>, l: &LineString<T>) -> T
 where
-    T: Float + ToPrimitive,
+    T: Float,
 {
     // No need to continue if the point is on the LineString, or it's empty
     if line_string_contains_point(l, p) || l.0.is_empty() {
@@ -113,21 +113,21 @@ where
 
 pub fn point_line_euclidean_distance<T>(p: Point<T>, l: Line<T>) -> T
 where
-    T: Float + ToPrimitive,
+    T: Float,
 {
     line_segment_distance(p, l.start_point(), l.end_point())
 }
 
 pub fn point_contains_point<T>(p1: Point<T>, p2: Point<T>) -> bool
 where
-    T: Float + ToPrimitive,
+    T: Float,
 {
     line_euclidean_length(Line::new(p1, p2)).to_f32().unwrap() < COORD_PRECISION
 }
 
 pub fn line_string_contains_point<T>(line_string: &LineString<T>, point: Point<T>) -> bool
 where
-    T: Float + ToPrimitive,
+    T: Float,
 {
     // LineString without points
     if line_string.0.is_empty() {

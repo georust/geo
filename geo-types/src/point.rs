@@ -1,4 +1,4 @@
-use num_traits::{Float, ToPrimitive};
+use num_traits::Float;
 use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
@@ -36,7 +36,7 @@ impl<T: CoordinateType> From<(T, T)> for Point<T> {
 
 impl<T> Point<T>
 where
-    T: CoordinateType + ToPrimitive,
+    T: CoordinateType,
 {
     /// Creates a new point.
     ///
@@ -283,7 +283,7 @@ where
 
 impl<T> Neg for Point<T>
 where
-    T: CoordinateType + Neg<Output = T> + ToPrimitive,
+    T: CoordinateType + Neg<Output = T>,
 {
     type Output = Point<T>;
 
@@ -306,7 +306,7 @@ where
 
 impl<T> Add for Point<T>
 where
-    T: CoordinateType + ToPrimitive,
+    T: CoordinateType,
 {
     type Output = Point<T>;
 
@@ -329,7 +329,7 @@ where
 
 impl<T> Sub for Point<T>
 where
-    T: CoordinateType + ToPrimitive,
+    T: CoordinateType,
 {
     type Output = Point<T>;
 
