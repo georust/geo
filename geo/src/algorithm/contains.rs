@@ -1,4 +1,4 @@
-use num_traits::{Float, ToPrimitive};
+use num_traits::Float;
 
 use algorithm::intersects::Intersects;
 use {Coordinate, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
@@ -34,7 +34,7 @@ pub trait Contains<Rhs = Self> {
 
 impl<T> Contains<Point<T>> for Point<T>
 where
-    T: Float + ToPrimitive,
+    T: Float,
 {
     fn contains(&self, p: &Point<T>) -> bool {
         ::geo_types::private_utils::point_contains_point(*self, *p)

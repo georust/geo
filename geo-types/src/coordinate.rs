@@ -1,4 +1,3 @@
-use num_traits::ToPrimitive;
 use {CoordinateType, Point};
 
 /// A lightweight struct used to store coordinates on the 2-dimensional
@@ -47,7 +46,7 @@ impl<T: CoordinateType> From<Point<T>> for Coordinate<T> {
 
 impl<T> Coordinate<T>
 where
-    T: CoordinateType + ToPrimitive,
+    T: CoordinateType,
 {
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the coordinate.
     ///

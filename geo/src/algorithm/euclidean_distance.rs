@@ -239,7 +239,7 @@ where
 /// LineString-LineString distance
 impl<T> EuclideanDistance<T, LineString<T>> for LineString<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum,
+    T: Float + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         if self.intersects(other) {
