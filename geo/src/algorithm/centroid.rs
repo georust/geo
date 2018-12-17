@@ -3,7 +3,7 @@ use std::iter::Sum;
 
 use algorithm::area::{get_linestring_area, Area};
 use algorithm::euclidean_length::EuclideanLength;
-use {Line, LineString, MultiPolygon, Point, Polygon, Rect};
+use {Line, LineString, MultiPoint, MultiPolygon, Point, Polygon, Rect};
 
 /// Calculation of the centroid.
 /// The centroid is the arithmetic mean position of all points in the shape.
@@ -241,6 +241,40 @@ where
 
     fn centroid(&self) -> Self::Output {
         Point::new(self.x(), self.y())
+    }
+}
+
+///
+/// ```
+/// use geo::{MultiPoint, Point};
+/// use geo::algorithm::centroid::Centroid;
+///
+/// let empty: Vec<Point<f64>> = Vec::new();
+/// let empty_multi_points: MultiPoint<_> = empty.into();
+/// assert_eq!(empty_multi_points.centroid(), None);
+///
+/// let points: MultiPoint<_> = vec![(5., 1.), (1., 3.), (3., 2.)].into();
+/// assert_eq!(points.centroid(), Some(Point::new(3., 2.)));
+/// ```
+///
+impl<T> Centroid<T> for MultiPoint<T>
+where
+    T: Float,
+{
+    type Output = Option<Point<T>>;
+
+    fn centroid(&self) -> Self::Output {
+        if self.0.is_empty() {
+            return None;
+        }
+        let sum = self.0.iter().fold(
+            Point::new(T::zero(), T::zero()),
+            |a: Point<T>, b: &Point<T>| Point::new(a.x() + b.x(), a.y() + b.y()),
+        );
+        Some(Point::new(
+            sum.x() / T::from(self.0.len()).unwrap(),
+            sum.y() / T::from(self.0.len()).unwrap(),
+        ))
     }
 }
 
