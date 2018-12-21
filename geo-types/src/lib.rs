@@ -130,14 +130,14 @@ mod test {
     #[test]
     /// ensure Line's SpatialObject impl is correct
     fn line_test() {
-        use rstar::primitives::SimpleEdge;
+        use rstar::primitives::Line as RStarLine;
         use rstar::{PointDistance, RTreeObject};
 
-        let se = SimpleEdge::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
+        let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
         let l = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 5., y: 5. });
-        assert_eq!(se.envelope(), l.envelope());
+        assert_eq!(rl.envelope(), l.envelope());
         // difference in 15th decimal place
-        assert_eq!(26.0, se.distance_2(&Point::new(4.0, 10.0)));
+        assert_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
         assert_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
     }
 
