@@ -191,7 +191,7 @@ mod test {
     }
     #[test]
     fn multipoint_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let p = |x, y| Point(Coordinate { x, y });
         let multipoint = MultiPoint(vec![p(1., 1.), p(2., -2.), p(-3., -3.), p(-4., 4.)]);
         let bounding_rect = Rect {
             min: Coordinate { x: -4., y: -3. },
