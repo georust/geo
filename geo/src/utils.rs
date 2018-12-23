@@ -28,3 +28,28 @@ where
         data.swap(l, r);
     }
 }
+
+/// Enumeration that allows for two distinct iterator types that yield the same type.
+pub enum EitherIter<T, I1, I2>
+where
+    I1: Iterator<Item = T>,
+    I2: Iterator<Item = T>,
+{
+    A(I1),
+    B(I2),
+}
+
+impl<T, I1, I2> Iterator for EitherIter<T, I1, I2>
+where
+    I1: Iterator<Item = T>,
+    I2: Iterator<Item = T>,
+{
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            EitherIter::A(iter) => iter.next(),
+            EitherIter::B(iter) => iter.next(),
+        }
+    }
+}
