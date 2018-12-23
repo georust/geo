@@ -24,6 +24,7 @@ pub use geo_types::{
 pub mod algorithm;
 mod traits;
 mod types;
+mod utils;
 
 #[cfg(test)]
 #[macro_use]

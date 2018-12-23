@@ -1,6 +1,7 @@
 use algorithm::euclidean_distance::EuclideanDistance;
 use num_traits::Float;
 use std::mem;
+use utils::partition_slice;
 use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
@@ -9,31 +10,6 @@ fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T
     let (h, t) = tmp.split_first_mut().unwrap();
     *slice = t;
     h
-}
-fn swap_remove_to_last<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
-    let tmp = mem::replace(slice, &mut []);
-    let len = tmp.len();
-    tmp.swap(len - 1, idx);
-    let (h, t) = tmp.split_last_mut().unwrap();
-    *slice = t;
-    h
-}
-// slice[..result] have pred(e) == true, slice[result..] have pred(e) == false
-fn partition<T, F: FnMut(&T) -> bool>(mut slice: &mut [T], mut pred: F) -> usize {
-    let mut i = 0;
-    loop {
-        let test = match slice.first() {
-            Some(e) => pred(e),
-            None => break,
-        };
-        if test {
-            swap_remove_to_first(&mut slice, 0);
-            i += 1;
-        } else {
-            swap_remove_to_last(&mut slice, 0);
-        }
-    }
-    i
 }
 
 // Determine whether a point lies on one side of a line segment, or the other.
@@ -79,11 +55,13 @@ where
             mem::swap(point, max);
         }
     }
-    let last = partition(&mut points, |p| point_location(*max, *min, *p));
-    hull_set(*max, *min, &mut points[..last], &mut hull);
+    {
+        let (mut points, _) = partition_slice(&mut points, |p| point_location(*max, *min, *p));
+        hull_set(*max, *min, &mut points, &mut hull);
+    }
     hull.push(*max);
-    let last = partition(&mut points, |p| point_location(*min, *max, *p));
-    hull_set(*min, *max, &mut points[..last], &mut hull);
+    let (mut points, _) = partition_slice(&mut points, |p| point_location(*min, *max, *p));
+    hull_set(*min, *max, &mut points, &mut hull);
     hull.push(*min);
     // close the polygon
     let final_element = *hull.first().unwrap();
@@ -116,12 +94,16 @@ where
     // move Point at furthest_point from set into hull
     let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
     // points over PB
-    let last = partition(set, |p| point_location(*furthest_point, p_b, *p));
-    hull_set(*furthest_point, p_b, &mut set[..last], hull);
+    {
+        let (mut points, _) =
+            partition_slice(set, |p| point_location(*furthest_point, p_b, *p));
+        hull_set(*furthest_point, p_b, &mut points, hull);
+    }
     hull.push(*furthest_point);
     // points over AP
-    let last = partition(set, |p| point_location(p_a, *furthest_point, *p));
-    hull_set(p_a, *furthest_point, &mut set[..last], hull);
+    let (mut points, _) =
+        partition_slice(set, |p| point_location(p_a, *furthest_point, *p));
+    hull_set(p_a, *furthest_point, &mut points, hull);
 }
 
 pub trait ConvexHull<T> {
