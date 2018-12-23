@@ -132,7 +132,7 @@ where
     type Output = Rect<T>;
 
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.to_array().into_iter().cloned()).unwrap()
+        get_bounding_rect(self.to_array().iter().map(|n| *n)).unwrap()
     }
 }
 
