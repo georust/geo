@@ -88,7 +88,7 @@ where
     /// Return the BoundingRect for a MultiLineString
     ///
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.0.iter().flat_map(|line| line.0.iter().map(|c| *c)))
+        get_bounding_rect(self.0.iter().flat_map(|line| line.0.iter().cloned()))
     }
 }
 
@@ -120,7 +120,7 @@ where
         get_bounding_rect(
             self.0
                 .iter()
-                .flat_map(|poly| (poly.exterior).0.iter().map(|c| *c)),
+                .flat_map(|poly| (poly.exterior).0.iter().cloned()),
         )
     }
 }
@@ -132,7 +132,7 @@ where
     type Output = Rect<T>;
 
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.to_array().into_iter().cloned()).unwrap()
+        get_bounding_rect(self.to_array().iter().cloned()).unwrap()
     }
 }
 
@@ -191,7 +191,7 @@ mod test {
     }
     #[test]
     fn multipoint_test() {
-        let p = |x, y| Point(Coordinate { x: x, y: y });
+        let p = |x, y| Point(Coordinate { x, y });
         let multipoint = MultiPoint(vec![p(1., 1.), p(2., -2.), p(-3., -3.), p(-4., 4.)]);
         let bounding_rect = Rect {
             min: Coordinate { x: -4., y: -3. },

@@ -449,7 +449,7 @@ where
         }
 
         [(self.0, self.1), (self.1, self.2), (self.2, self.0)]
-            .into_iter()
+            .iter()
             .map(|edge| {
                 ::geo_types::private_utils::line_segment_distance(
                     *point,

@@ -22,7 +22,7 @@ where
         }
     }
     if dmax > *epsilon {
-        let mut intermediate = rdp(&points[..index + 1], &*epsilon);
+        let mut intermediate = rdp(&points[..=index], &*epsilon);
         intermediate.pop();
         intermediate.extend_from_slice(&rdp(&points[index..], &*epsilon));
         intermediate

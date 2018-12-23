@@ -345,13 +345,11 @@ where
         }
     }
     // Filter out the points that have been deleted, returning remaining points
-    let result = orig
-        .0
+    orig.0
         .iter()
         .zip(adjacent.iter())
         .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(*tup) } else { None })
-        .collect::<Vec<Coordinate<T>>>();
-    result
+        .collect()
 }
 
 /// is p1 -> p2 -> p3 wound counterclockwise?

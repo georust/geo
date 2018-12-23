@@ -37,7 +37,7 @@ const MEAN_EARTH_RADIUS: f64 = 6_371_000.0;
 const EQUATORIAL_EARTH_RADIUS: f64 = 6_378_137.0;
 
 // Radius of Earth at the poles in meters (derived from the WGS-84 ellipsoid)
-const POLAR_EARTH_RADIUS: f64 = 6_356_752.314245;
+const POLAR_EARTH_RADIUS: f64 = 6_356_752.314_245;
 
 // Flattening of the WGS-84 ellipsoid - https://en.wikipedia.org/wiki/Flattening
 const EARTH_FLATTENING: f64 =

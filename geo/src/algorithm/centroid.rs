@@ -287,7 +287,7 @@ mod test {
 
     /// small helper to create a coordinate
     fn c<T: Float>(x: T, y: T) -> Coordinate<T> {
-        Coordinate { x: x, y: y }
+        Coordinate { x, y }
     }
 
     /// small helper to create a point
