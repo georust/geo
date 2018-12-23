@@ -88,7 +88,7 @@ where
     /// Return the BoundingRect for a MultiLineString
     ///
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.0.iter().flat_map(|line| line.0.iter().map(|c| *c)))
+        get_bounding_rect(self.0.iter().flat_map(|line| line.0.iter().cloned()))
     }
 }
 
@@ -120,7 +120,7 @@ where
         get_bounding_rect(
             self.0
                 .iter()
-                .flat_map(|poly| (poly.exterior).0.iter().map(|c| *c)),
+                .flat_map(|poly| (poly.exterior).0.iter().cloned()),
         )
     }
 }
@@ -132,7 +132,7 @@ where
     type Output = Rect<T>;
 
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.to_array().iter().map(|n| *n)).unwrap()
+        get_bounding_rect(self.to_array().iter().cloned()).unwrap()
     }
 }
 
