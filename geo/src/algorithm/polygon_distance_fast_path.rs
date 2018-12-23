@@ -471,29 +471,23 @@ where
         }
     }
     if state.ip1 {
-        match state.p1.x() == state.p1next.x() {
+        if state.p1.x() == state.p1next.x() {
             // The P line of support is vertical
-            true => {
-                state.vertical = true;
-                state.slope = T::zero();
-            }
-            false => {
-                state.vertical = false;
-                state.slope = Line::new(state.p1next.0, state.p1.0).slope();
-            }
+            state.vertical = true;
+            state.slope = T::zero();
+        } else {
+            state.vertical = false;
+            state.slope = Line::new(state.p1next.0, state.p1.0).slope();
         }
     }
     if state.iq2 {
-        match state.q2.x() == state.q2next.x() {
-            true => {
-                // The Q line of support is vertical
-                state.vertical = true;
-                state.slope = T::zero();
-            }
-            false => {
-                state.vertical = false;
-                state.slope = Line::new(state.q2next.0, state.q2.0).slope();
-            }
+        if state.q2.x() == state.q2next.x() {
+            // The Q line of support is vertical
+            state.vertical = true;
+            state.slope = T::zero();
+        } else {
+            state.vertical = false;
+            state.slope = Line::new(state.q2next.0, state.q2.0).slope();
         }
     }
     // A start value's been set, and both polygon indices are in their initial
