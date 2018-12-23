@@ -32,7 +32,7 @@ where
     p_a.cross_prod(p_b, p_c) > T::zero()
 }
 
-// Adapted from http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
+// Adapted from https://web.archive.org/web/20180409175413/http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
 fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
 where
     T: Float,
