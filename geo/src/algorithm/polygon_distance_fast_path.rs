@@ -78,10 +78,10 @@ where
 }
 
 #[derive(Debug)]
-enum Aligned {
-    EdgeVertexP,
-    EdgeVertexQ,
-    EdgeEdge,
+enum AlignedEdge {
+    VertexP,
+    VertexQ,
+    Edge,
 }
 
 /// Distance-finding state
@@ -104,7 +104,7 @@ where
     q2next: Point<T>,
     p1prev: Point<T>,
     q2prev: Point<T>,
-    alignment: Option<Aligned>,
+    alignment: Option<AlignedEdge>,
     ap1: T,
     aq2: T,
     start: Option<bool>,
@@ -458,7 +458,7 @@ where
         let p1next = next_vertex(state.poly1, state.p1_idx);
         state.p1next = Point(state.poly1.exterior.0[p1next]);
         state.p1_idx = p1next;
-        state.alignment = Some(Aligned::EdgeVertexP);
+        state.alignment = Some(AlignedEdge::VertexP);
     }
     if (state.aq2 - minangle).abs() < T::from(0.002).unwrap() {
         state.iq2 = true;
@@ -466,8 +466,8 @@ where
         state.q2next = Point(state.poly2.exterior.0[q2next]);
         state.q2_idx = q2next;
         state.alignment = match state.alignment {
-            None => Some(Aligned::EdgeVertexQ),
-            Some(_) => Some(Aligned::EdgeEdge),
+            None => Some(AlignedEdge::VertexQ),
+            Some(_) => Some(AlignedEdge::Edge),
         }
     }
     if state.ip1 {
@@ -515,7 +515,7 @@ where
         state.dist = newdist;
     }
     match state.alignment {
-        Some(Aligned::EdgeVertexP) => {
+        Some(AlignedEdge::VertexP) => {
             // one line of support coincides with a vertex on Q, the other with an edge on P
             if !state.vertical {
                 if state.slope != T::zero() {
@@ -542,7 +542,7 @@ where
                 }
             }
         }
-        Some(Aligned::EdgeVertexQ) => {
+        Some(AlignedEdge::VertexQ) => {
             // one line of support coincides with a vertex on P, the other with an edge on Q
             if !state.vertical {
                 if state.slope != T::zero() {
@@ -569,7 +569,7 @@ where
                 }
             }
         }
-        Some(Aligned::EdgeEdge) => {
+        Some(AlignedEdge::Edge) => {
             // both lines of support coincide with edges (i.e. they're parallel)
             newdist = state.p1.euclidean_distance(&state.q2prev);
             if newdist <= state.dist {
