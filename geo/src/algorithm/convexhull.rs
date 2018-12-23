@@ -95,14 +95,12 @@ where
     let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
     // points over PB
     {
-        let (mut points, _) =
-            partition_slice(set, |p| point_location(*furthest_point, p_b, *p));
+        let (mut points, _) = partition_slice(set, |p| point_location(*furthest_point, p_b, *p));
         hull_set(*furthest_point, p_b, &mut points, hull);
     }
     hull.push(*furthest_point);
     // points over AP
-    let (mut points, _) =
-        partition_slice(set, |p| point_location(p_a, *furthest_point, *p));
+    let (mut points, _) = partition_slice(set, |p| point_location(p_a, *furthest_point, *p));
     hull_set(p_a, *furthest_point, &mut points, hull);
 }
 
