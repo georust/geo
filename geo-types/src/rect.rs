@@ -1,5 +1,6 @@
 use {Coordinate, CoordinateType};
 
+/// A bounded 2D quadrilateral whose area is defined by minimum and maximum `Coordinates`.
 #[derive(PartialEq, Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect<T>

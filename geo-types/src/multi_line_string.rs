@@ -1,7 +1,7 @@
 use std::iter::FromIterator;
 use {CoordinateType, LineString};
 
-/// A collection of [`LineString`s](struct.LineString.html)
+/// A collection of [`LineString`s](struct.LineString.html).
 ///
 /// Can be created from a `Vec` of `LineString`s, or from an Iterator which yields `LineString`s.
 ///

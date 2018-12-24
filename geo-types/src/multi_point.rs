@@ -1,7 +1,7 @@
 use std::iter::FromIterator;
 use {CoordinateType, Point};
 
-/// A collection of [`Point`s](struct.Point.html)
+/// A collection of [`Point`s](struct.Point.html).
 ///
 /// # Examples
 ///

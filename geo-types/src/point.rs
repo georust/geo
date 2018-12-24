@@ -4,7 +4,7 @@ use std::ops::Neg;
 use std::ops::Sub;
 use {Coordinate, CoordinateType};
 
-/// A single Point in 2D space.
+/// A single point in 2D space.
 ///
 /// Points can be created using the `new(x, y)` constructor, or from a `Coordinate` or pair of points.
 ///

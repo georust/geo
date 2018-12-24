@@ -1,59 +1,59 @@
-/// Returns the area of the surface of a geometry.
+/// Calculate the area of the surface of a `Geometry`.
 pub mod area;
-/// Returns the bearing to another Point in degrees.
+/// Calculate the bearing to another `Point`, in degrees.
 pub mod bearing;
-/// Returns the bounding rectangle of a geometry.
+/// Calculate the bounding rectangle of a `Geometry`.
 pub mod bounding_rect;
-/// Calculation of the centroid of a geometry.
+/// Calculate the centroid of a `Geometry`.
 pub mod centroid;
-/// Determine the minimum distance between two objects.
+/// Calculate the minimum distance between two `Geometries`.
 pub mod closest_point;
-/// Checks if the geometry A is completely inside the B geometry.
+/// Determine whether `Geometry` `A` is completely enclosed by `Geometry` `B`.
 pub mod contains;
-/// Calculates the convex hull of a geometry.
+/// Calculate the convex hull of a `Geometry`.
 pub mod convexhull;
-/// Returns the Euclidean distance between two geometries.
+/// Calculate the Euclidean distance between two `Geometries`.
 pub mod euclidean_distance;
-/// Returns the length of a line.
+/// Calculate the length of a planar line between two `Geometries`.
 pub mod euclidean_length;
-/// Returns the extreme indices of a `Polygon`, `MultiPolygon`, or `MultiPoint`.
+/// Calculate the extreme indices of a `Polygon`, `MultiPolygon`, or `MultiPoint`.
 pub mod extremes;
-/// Produces geometry from PostGIS.
+/// Produces a `Geometry` from PostGIS.
 #[cfg(feature = "postgis-integration")]
 pub mod from_postgis;
-/// Returns a new Point using distance and bearing.
+/// Calculate a new Point given a distance and a bearing.
 pub mod haversine_destination;
-/// Returns the Haversine distance between two geometries.
+/// Calculate the Haversine distance between two `Geometries`.
 pub mod haversine_distance;
-/// Returns a new Point along a great circle between two points.
+/// Calculate a new `Point` lying on a Great Circle arc between two `Point`s.
 pub mod haversine_intermediate;
-/// Returns the Haversine length of a line.
+/// Calculate the Haversine length of a Line.
 pub mod haversine_length;
-/// Checks if the geometry A intersects the geometry B.
+/// Determine whether `Geometry` `A` intersects `Geometry` `B`.
 pub mod intersects;
-/// Apply a function to all coordinates.
+/// Apply a function to all `Coordinates` of a `Geometry`.
 pub mod map_coords;
-/// Orients a Polygon's exterior and interior rings.
+/// Orient a `Polygon`'s exterior and interior rings.
 pub mod orient;
-/// Helper functions for the "fast path" variant of the Polygon-Polygon distance method.
+/// Helper functions for the "fast path" variant of the Polygon-Polygon Euclidean distance method.
 pub(crate) mod polygon_distance_fast_path;
 /// Coordinate projections and transformations using [PROJ](http://proj4.org) v5.0.x.
 #[cfg(feature = "use-proj")]
 pub mod proj;
-/// Rotate a geometry around either its centroid or a point by an angle given in degrees.
+/// Rotate a `Geometry` around either its centroid or a `Point` by an angle given in degrees.
 pub mod rotate;
-/// Simplifies geometries using the Ramer-Douglas-Peucker algorithm.
+/// Simplify `Geometries` using the Ramer-Douglas-Peucker algorithm.
 pub mod simplify;
-/// Simplifies geometries using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
+/// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
 pub mod simplifyvw;
-/// Converts geometries into PostGIS types.
+/// Convert `Geometries` into PostGIS types.
 #[cfg(feature = "postgis-integration")]
 pub mod to_postgis;
-/// Translates a geometry along the given offsets.
+/// Translate a `Geometry` along the given offsets.
 pub mod translate;
-/// Calculate the Vincenty distance between Points.
+/// Calculate the Vincenty distance between two `Point`s.
 pub mod vincenty_distance;
-/// Calculate the Vincenty length of a LineString.
+/// Calculate the Vincenty length of a `LineString`.
 pub mod vincenty_length;
-/// Calculate and work with the winding order of Linestrings.
+/// Calculate and work with the winding order of `Linestring`s.
 pub mod winding_order;

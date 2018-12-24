@@ -1,7 +1,7 @@
 use std::iter::FromIterator;
 use {CoordinateType, Geometry};
 
-/// A collection of [`Geometry`](enum.Geometry.html) types
+/// A collection of [`Geometry`](enum.Geometry.html) types.
 ///
 /// Can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
 ///

@@ -1,7 +1,9 @@
 use num_traits::{Float, Signed};
 use {CoordinateType, LineString, Point, Rect};
 
-/// A representation of an area. Its outer boundary is represented by a [`LineString`](struct.LineString.html) that is both closed and simple
+/// A bounded 2D area. Its outer boundary (_shell_) is represented by a [`LineString`](struct.LineString.html)
+/// that is both closed and simple (non-intersecting). It may contain 0 or more non-intersecting holes (_rings_), each represented by
+/// a closed simple `LineString`.
 ///
 /// It has one exterior *ring* or *shell*, and zero or more interior rings, representing holes.
 ///
