@@ -85,7 +85,7 @@ where
 }
 
 pub trait ExtremeIndices<T: Float + Signed> {
-    /// Find the extreme `x` and `y` indices of a convex Polygon
+    /// Find the extreme `x` and `y` _indices_ of a convex Polygon
     ///
     /// The polygon **must be convex and properly (ccw) oriented**.
     ///
@@ -136,7 +136,7 @@ where
 }
 
 pub trait ExtremePoints<T: Float> {
-    /// Find the extreme `x` and `y` points of a Geometry
+    /// Find the extreme `x` and `y` `Point`s of a Geometry
     ///
     /// This trait is available to any struct implementing both `ConvexHull` amd `ExtremeIndices`
     ///

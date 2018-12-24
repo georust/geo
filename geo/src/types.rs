@@ -3,7 +3,7 @@ use {CoordinateType, Point};
 
 pub use geo_types::private_utils::COORD_PRECISION;
 
-/// A container for indices of the minimum and maximum points of a [`Geometry`](enum.Geometry.html)
+/// A container for _indices_ of the minimum and maximum `Point`s of a [`Geometry`](enum.Geometry.html).
 #[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Extremes {
@@ -24,7 +24,7 @@ impl From<Vec<usize>> for Extremes {
     }
 }
 
-/// A container for the coordinates of the minimum and maximum points of a [`Geometry`](enum.Geometry.html)
+/// A container for the _coordinates_ of the minimum and maximum `Point`s of a [`Geometry`](enum.Geometry.html).
 #[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct ExtremePoint<T>

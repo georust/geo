@@ -1,6 +1,6 @@
 use {Coordinate, CoordinateType, Point};
 
-/// A line segment made up of exactly two [`Point`s](struct.Point.html)
+/// A line segment made up of exactly two [`Point`s](struct.Point.html).
 #[derive(PartialEq, Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T>

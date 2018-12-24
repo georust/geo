@@ -1,7 +1,7 @@
 use std::iter::FromIterator;
 use {CoordinateType, Polygon};
 
-/// A collection of [`Polygon`s](struct.Polygon.html)
+/// A collection of [`Polygon`s](struct.Polygon.html).
 ///
 /// Can be created from a `Vec` of `Polygon`s, or `collect`ed from an Iterator which yields `Polygon`s.
 ///
