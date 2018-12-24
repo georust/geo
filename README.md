@@ -12,9 +12,17 @@ The `geo` crate provides a number of geospatial primitive types such as `Point`,
 - Simplification and convex hull operations
 - Euclidean and Haversine distance measurement
 - Intersection checks
+- Transformation to and from PostGIS types
 - Affine transforms such as rotation and translation.
 
 Please refer to [the documentation](https://docs.rs/geo) for a complete list.
+
+The primitive types also provide the basis for other functionality in the `Geo` ecosystem, including:
+
+- [Coordinate transformation and projection](https://github.com/georust/proj)
+- Serialization to and from [GeoJSON](https://github.com/georust/geojson) and [WKT](https://github.com/georust/wkt)
+- [Geocoding](https://github.com/georust/geocoding)
+- [Working with GPS data](https://github.com/georust/gpx)
 
 ## Example
 
@@ -35,7 +43,7 @@ assert_eq!(hull.exterior, correct.into());
 
 ## Contributing
 
-Contributions are welcome! This crate is work in progress, and a great deal of work remains to be done. Have a look at the [issues](https://github.com/georust/geo/issues), and open a pull request if you'd like to add an algorithm or some functionality.
+Contributions are welcome! Have a look at the [issues](https://github.com/georust/geo/issues), and open a pull request if you'd like to add an algorithm or some functionality.
 
 ## License
 
