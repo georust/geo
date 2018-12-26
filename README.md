@@ -7,7 +7,7 @@
 
 ## Geospatial Primitives, Algorithms, and Utilities
 
-The `geo` crate provides a number of geospatial primitive types such as `Point`, `LineString`, and `Polygon`, and provides algorithms and operations such as:
+The `geo` crate provides geospatial primitive types such as `Point`, `LineString`, and `Polygon`, and provides algorithms and operations such as:
 - Area and centroid calculation
 - Simplification and convex hull operations
 - Euclidean and Haversine distance measurement
