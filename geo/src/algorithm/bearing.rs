@@ -7,7 +7,7 @@ use Point;
 /// (https://dtcenter.org/met/users/docs/write_ups/gc_simple.pdf)
 
 pub trait Bearing<T: Float> {
-    /// Returns the bearing to another Point in degrees, where North is 0° and East is 45°.
+    /// Returns the bearing to another Point in degrees, where North is 0° and East is 90°.
     ///
     /// # Examples
     ///
