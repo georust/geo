@@ -11,6 +11,30 @@ use {Line, LineString, MultiPoint, MultiPolygon, Point, Polygon, Rect};
 /// balanced on the tip of a pin.
 /// The geometric centroid of a convex object always lies in the object.
 /// A non-convex object might have a centroid that _is outside the object itself_.
+///
+/// # Examples
+///
+/// ```
+/// use geo::prelude::*;
+/// use geo::{LineString, Point, Polygon};
+///
+/// // rhombus shaped polygon
+/// let polygon = Polygon::new(
+///     LineString::from(vec![
+///        (-2., 1.),
+///        (1., 3.),
+///        (4., 1.),
+///        (1., -1.),
+///        (-2., 1.),
+///     ]),
+///     vec![],
+/// );
+///
+/// assert_eq!(
+///     Point::from((1., 1.)),
+///     polygon.centroid().unwrap(),
+/// );
+/// ```
 pub trait Centroid<T: Float> {
     type Output;
 
