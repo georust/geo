@@ -140,7 +140,7 @@ where
 mod test {
     use algorithm::bounding_rect::BoundingRect;
     use {
-        Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+        Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon,
         Rect,
     };
 
@@ -191,8 +191,7 @@ mod test {
     }
     #[test]
     fn multipoint_test() {
-        let p = |x, y| Point(Coordinate { x, y });
-        let multipoint = MultiPoint(vec![p(1., 1.), p(2., -2.), p(-3., -3.), p(-4., 4.)]);
+        let multipoint = MultiPoint::from(vec![(1., 1.), (2., -2.), (-3., -3.), (-4., 4.)]);
         let bounding_rect = Rect {
             min: Coordinate { x: -4., y: -3. },
             max: Coordinate { x: 2., y: 4. },

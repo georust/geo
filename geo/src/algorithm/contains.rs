@@ -13,19 +13,17 @@ pub trait Contains<Rhs = Self> {
     /// use geo::{Coordinate, Point, LineString, Polygon};
     /// use geo::algorithm::contains::Contains;
     ///
-    /// let p = |x, y| Point(Coordinate { x, y });
-    /// let v = Vec::new();
-    /// let linestring = LineString::from(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
-    /// let poly = Polygon::new(linestring.clone(), v);
+    /// let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
+    /// let poly = Polygon::new(linestring.clone(), vec![]);
     ///
     /// //Point in Point
-    /// assert!(p(2., 0.).contains(&p(2., 0.)));
+    /// assert!(Point::new(2., 0.).contains(&Point::new(2., 0.)));
     ///
     /// //Point in Linestring
-    /// assert!(linestring.contains(&p(2., 0.)));
+    /// assert!(linestring.contains(&Point::new(2., 0.)));
     ///
     /// //Point in Polygon
-    /// assert!(poly.contains(&p(1., 1.)));
+    /// assert!(poly.contains(&Point::new(1., 1.)));
     ///
     /// ```
     ///
@@ -337,9 +335,8 @@ mod test {
     #[test]
     // LineString is fully contained
     fn linestring_fully_contained_in_polygon() {
-        let p = |x, y| Coordinate { x, y };
         let poly = Polygon::new(
-            LineString(vec![p(0., 0.), p(5., 0.), p(5., 6.), p(0., 6.), p(0., 0.)]),
+            LineString::from(vec![(0., 0.), (5., 0.), (5., 6.), (0., 6.), (0., 0.)]),
             vec![],
         );
         let ls = LineString::from(vec![(3.0, 0.5), (3.0, 3.5)]);
@@ -353,15 +350,13 @@ mod test {
     }
     #[test]
     fn linestring_point_is_vertex_test() {
-        let p = |x, y| Coordinate { x, y };
-        let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.)]);
-        assert!(linestring.contains(&Point(p(2., 2.))));
+        let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.)]);
+        assert!(linestring.contains(&Point::new(2., 2.)));
     }
     #[test]
     fn linestring_test() {
-        let p = |x, y| Coordinate { x, y };
-        let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.)]);
-        assert!(linestring.contains(&Point(p(1., 0.))));
+        let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.)]);
+        assert!(linestring.contains(&Point::new(1., 0.)));
     }
     /// Tests: Point in Polygon
     #[test]
@@ -384,34 +379,30 @@ mod test {
     }
     #[test]
     fn polygon_with_point_on_boundary_test() {
-        let p = |x, y| Coordinate { x, y };
-        let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
+        let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(!poly.contains(&Point(p(1., 0.))));
-        assert!(!poly.contains(&Point(p(2., 1.))));
-        assert!(!poly.contains(&Point(p(1., 2.))));
-        assert!(!poly.contains(&Point(p(0., 1.))));
+        assert!(!poly.contains(&Point::new(1., 0.)));
+        assert!(!poly.contains(&Point::new(2., 1.)));
+        assert!(!poly.contains(&Point::new(1., 2.)));
+        assert!(!poly.contains(&Point::new(0., 1.)));
     }
     #[test]
     fn point_in_polygon_test() {
-        let p = |x, y| Coordinate { x, y };
-        let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
+        let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(poly.contains(&Point(p(1., 1.))));
+        assert!(poly.contains(&Point::new(1., 1.)));
     }
     #[test]
     fn point_out_polygon_test() {
-        let p = |x, y| Coordinate { x, y };
-        let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
+        let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(!poly.contains(&Point(p(2.1, 1.))));
-        assert!(!poly.contains(&Point(p(1., 2.1))));
-        assert!(!poly.contains(&Point(p(2.1, 2.1))));
+        assert!(!poly.contains(&Point::new(2.1, 1.)));
+        assert!(!poly.contains(&Point::new(1., 2.1)));
+        assert!(!poly.contains(&Point::new(2.1, 2.1)));
     }
     #[test]
     fn point_polygon_with_inner_test() {
-        let p = |x, y| Coordinate { x, y };
-        let linestring = LineString(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
+        let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
         let inner_linestring = LineString::from(vec![
             (0.5, 0.5),
             (1.5, 0.5),
@@ -420,10 +411,10 @@ mod test {
             (0.0, 0.0),
         ]);
         let poly = Polygon::new(linestring, vec![inner_linestring]);
-        assert!(poly.contains(&Point(p(0.25, 0.25))));
-        assert!(!poly.contains(&Point(p(1., 1.))));
-        assert!(!poly.contains(&Point(p(1.5, 1.5))));
-        assert!(!poly.contains(&Point(p(1.5, 1.))));
+        assert!(poly.contains(&Point::new(0.25, 0.25)));
+        assert!(!poly.contains(&Point::new(1., 1.)));
+        assert!(!poly.contains(&Point::new(1.5, 1.5)));
+        assert!(!poly.contains(&Point::new(1.5, 1.)));
     }
     /// Tests: Point in MultiPolygon
     #[test]
