@@ -373,22 +373,10 @@ mod test {
         //    (2,2)                                 |                                      (14,2)
         //                                        (8,1)
         //
-        let e = LineString::from(vec![
-            (2., 2.),
-            (14., 2.),
-            (14., 8.),
-            (2., 8.),
-            (2., 2.),
-        ]);
+        let e = LineString::from(vec![(2., 2.), (14., 2.), (14., 8.), (2., 8.), (2., 2.)]);
         let v = vec![
             LineString::from(vec![(4., 3.), (7., 3.), (7., 6.), (4., 6.), (4., 3.)]),
-            LineString::from(vec![
-                (9., 3.),
-                (12., 3.),
-                (12., 6.),
-                (9., 6.),
-                (9., 3.),
-            ]),
+            LineString::from(vec![(9., 3.), (12., 3.), (12., 6.), (9., 6.), (9., 3.)]),
         ];
         let poly = Polygon::new(e, v);
         assert!(!poly.intersects(&LineString::from(vec![(5., 4.), (6., 5.)])));

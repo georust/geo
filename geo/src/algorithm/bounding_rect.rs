@@ -139,10 +139,7 @@ where
 #[cfg(test)]
 mod test {
     use algorithm::bounding_rect::BoundingRect;
-    use {
-        Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon,
-        Rect,
-    };
+    use {Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon, Rect};
 
     #[test]
     fn empty_linestring_test() {
