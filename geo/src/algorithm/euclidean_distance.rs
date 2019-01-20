@@ -113,19 +113,19 @@ where
     /// Minimum distance from a Point to a Polygon
     fn euclidean_distance(&self, polygon: &Polygon<T>) -> T {
         // No need to continue if the polygon contains the point, or is zero-length
-        if polygon.contains(self) || polygon.exterior.0.is_empty() {
+        if polygon.contains(self) || polygon.exterior().0.is_empty() {
             return T::zero();
         }
         // fold the minimum interior ring distance if any, followed by the exterior
         // shell distance, returning the minimum of the two distances
         polygon
-            .interiors
+            .interiors()
             .iter()
             .map(|ring| self.euclidean_distance(ring))
             .fold(T::max_value(), |accum, val| accum.min(val))
             .min(
                 polygon
-                    .exterior
+                    .exterior()
                     .lines()
                     .map(|line| {
                         ::geo_types::private_utils::line_segment_distance(
@@ -258,7 +258,7 @@ fn ring_contains_point<T>(poly: &Polygon<T>, p: Point<T>) -> bool
 where
     T: Float,
 {
-    match get_position(p, &poly.exterior) {
+    match get_position(p, &poly.exterior()) {
         PositionPoint::Inside => true,
         PositionPoint::OnBoundary | PositionPoint::Outside => false,
     }
@@ -294,15 +294,15 @@ where
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if self.intersects(other) || other.contains(self) {
             T::zero()
-        } else if !other.interiors.is_empty() && ring_contains_point(other, Point(self.0[0])) {
+        } else if !other.interiors().is_empty() && ring_contains_point(other, Point(self.0[0])) {
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
-            for ring in &other.interiors {
+            for ring in other.interiors() {
                 mindist = mindist.min(nearest_neighbour_distance(self, ring))
             }
             mindist
         } else {
-            nearest_neighbour_distance(self, &other.exterior)
+            nearest_neighbour_distance(self, &other.exterior())
         }
     }
 }
@@ -368,7 +368,7 @@ where
         }
         // point-line distance between each exterior polygon point and the line
         let exterior_min = other
-            .exterior
+            .exterior()
             .points_iter()
             .fold(<T as Bounded>::max_value(), |acc, point| {
                 acc.min(self.euclidean_distance(&point))
@@ -376,7 +376,7 @@ where
         // point-line distance between each interior ring point and the line
         // if there are no rings this just evaluates to max_float
         let interior_min = other
-            .interiors
+            .interiors()
             .iter()
             .map(|ring| {
                 ring.lines().fold(<T as Bounded>::max_value(), |acc, line| {
@@ -414,25 +414,25 @@ where
             return T::zero();
         }
         // Containment check
-        if !self.interiors.is_empty() && ring_contains_point(self, Point(poly2.exterior.0[0])) {
+        if !self.interiors().is_empty() && ring_contains_point(self, Point(poly2.exterior().0[0])) {
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
-            for ring in &self.interiors {
-                mindist = mindist.min(nearest_neighbour_distance(&poly2.exterior, ring))
+            for ring in self.interiors() {
+                mindist = mindist.min(nearest_neighbour_distance(&poly2.exterior(), ring))
             }
             return mindist;
-        } else if !poly2.interiors.is_empty()
-            && ring_contains_point(poly2, Point(self.exterior.0[0]))
+        } else if !poly2.interiors().is_empty()
+            && ring_contains_point(poly2, Point(self.exterior().0[0]))
         {
             let mut mindist: T = Float::max_value();
-            for ring in &poly2.interiors {
-                mindist = mindist.min(nearest_neighbour_distance(&self.exterior, ring))
+            for ring in poly2.interiors() {
+                mindist = mindist.min(nearest_neighbour_distance(&self.exterior(), ring))
             }
             return mindist;
         }
         if poly2.is_convex() || !self.is_convex() {
             // fall back to R* nearest neighbour method
-            nearest_neighbour_distance(&self.exterior, &poly2.exterior)
+            nearest_neighbour_distance(&self.exterior(), &poly2.exterior())
         } else {
             min_poly_dist(self, poly2)
         }
@@ -829,7 +829,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString::from(points2), vec![]);
         let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
-        let dist2 = nearest_neighbour_distance(&poly1.exterior, &poly2.exterior);
+        let dist2 = nearest_neighbour_distance(&poly1.exterior(), &poly2.exterior());
         assert_eq!(dist, 21.0);
         assert_eq!(dist2, 21.0);
     }
@@ -862,7 +862,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString::from(points2), vec![]);
         let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
-        let dist2 = nearest_neighbour_distance(&poly1.exterior, &poly2.exterior);
+        let dist2 = nearest_neighbour_distance(&poly1.exterior(), &poly2.exterior());
         assert_eq!(dist, 29.274562336608895);
         assert_eq!(dist2, 29.274562336608895);
     }
@@ -895,7 +895,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString::from(points2), vec![]);
         let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
-        let dist2 = nearest_neighbour_distance(&poly1.exterior, &poly2.exterior);
+        let dist2 = nearest_neighbour_distance(&poly1.exterior(), &poly2.exterior());
         assert_eq!(dist, 12.0);
         assert_eq!(dist2, 12.0);
     }

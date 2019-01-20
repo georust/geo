@@ -137,6 +137,17 @@ impl<T: CoordinateType> LineString<T> {
             }
         })
     }
+
+    /// Close the `LineString`. Specifically, if the `LineString` has is at least one coordinate,
+    /// and the value of the first coordinate does not equal the value of the last coordinate, then
+    /// a new coordinate is added to the end with the value of the first coordinate.
+    pub(crate) fn close(&mut self) {
+        if let (Some(first), Some(last)) = (self.0.first().map(|n| *n), self.0.last().map(|n| *n)) {
+            if first != last {
+                self.0.push(first);
+            }
+        }
+    }
 }
 
 /// Turn a `Vec` of `Point`-ish objects into a `LineString`.

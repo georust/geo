@@ -1,64 +1,351 @@
 use num_traits::{Float, Signed};
 use {CoordinateType, LineString, Point, Rect};
 
-/// A bounded 2D area. Its outer boundary (_shell_) is represented by a [`LineString`](struct.LineString.html)
-/// that is both closed and simple (non-intersecting). It may contain 0 or more non-intersecting holes (_rings_), each represented by
-/// a closed simple `LineString`.
+/// A bounded two-dimensional area.
 ///
-/// It has one exterior *ring* or *shell*, and zero or more interior rings, representing holes.
+/// A `Polygon`’s outer boundary (_exterior ring_) is represented by a
+/// [`LineString`]. It may contain zero or more holes (_interior rings_), also
+/// represented by `LineString`s.
 ///
-/// # Examples
+/// The `Polygon` structure guarantees that all exterior and interior rings will
+/// be _closed_, such that the first and last `Coordinate` of each ring has
+/// the same value.
 ///
-/// Polygons can be created from collections of `Point`-like objects, such as arrays or tuples:
+/// # `LineString` closing operation
 ///
-/// ```
-/// use geo_types::{Point, LineString, Polygon};
-/// let poly1 = Polygon::new(vec![[0., 0.], [10., 0.]].into(), vec![]);
-/// let poly2 = Polygon::new(vec![(0., 0.), (10., 0.)].into(), vec![]);
-/// ```
+/// Some APIs on `Polygon` result in a closing operation on a `LineString`. The
+/// operation is as follows:
+///
+/// If a `LineString`’s first and last `Coordinate` have different values, a
+/// new `Coordinate` will be appended to the `LineString` with a value equal to
+/// the first `Coordinate`.
+///
+/// [`LineString`]: struct.LineString.html
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Polygon<T>
 where
     T: CoordinateType,
 {
-    pub exterior: LineString<T>,
-    pub interiors: Vec<LineString<T>>,
+    exterior: LineString<T>,
+    interiors: Vec<LineString<T>>,
 }
 
 impl<T> Polygon<T>
 where
     T: CoordinateType,
 {
-    /// Creates a new polygon.
+    /// Create a new `Polygon` with the provided exterior `LineString` ring and
+    /// interior `LineString` rings.
+    ///
+    /// Upon calling `new`, the exterior and interior `LineString` rings [will
+    /// be closed].
+    ///
+    /// [will be closed]: #linestring-closing-operation
+    ///
+    /// # Examples
+    ///
+    /// Creating a `Polygon` with no interior rings:
+    ///
+    /// ```
+    /// use geo_types::{LineString, Polygon};
+    ///
+    /// let polygon = Polygon::new(LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]), vec![]);
+    /// ```
+    ///
+    /// Creating a `Polygon` with an interior ring:
+    ///
+    /// ```
+    /// use geo_types::{LineString, Polygon};
+    ///
+    /// let polygon = Polygon::new(LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]), vec![
+    ///     LineString::from(vec![
+    ///         (0.1, 0.1),
+    ///         (0.9, 0.9),
+    ///         (0.9, 0.1),
+    ///         (0.1, 0.1),
+    ///     ])
+    /// ]);
+    /// ```
+    ///
+    /// If the first and last `Coordinate`s of the exterior or interior
+    /// `LineString`s no longer match, those `LineString`s [will be closed]:
+    ///
+    /// ```
+    /// use geo_types::{Coordinate, LineString, Polygon};
+    ///
+    /// let mut polygon = Polygon::new(LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    /// ]), vec![]);
+    ///
+    /// assert_eq!(polygon.exterior(), &LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]));
+    /// ```
+    pub fn new(mut exterior: LineString<T>, mut interiors: Vec<LineString<T>>) -> Polygon<T> {
+        exterior.close();
+        for interior in &mut interiors {
+            interior.close();
+        }
+        Polygon {
+            exterior,
+            interiors,
+        }
+    }
+
+    /// Consume the `Polygon`, returning the exterior `LineString` ring and
+    /// a vector of the interior `LineString` rings.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{LineString, Polygon};
+    ///
+    /// let mut polygon = Polygon::new(LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]), vec![
+    ///     LineString::from(vec![
+    ///         (0.1, 0.1),
+    ///         (0.9, 0.9),
+    ///         (0.9, 0.1),
+    ///         (0.1, 0.1),
+    ///     ])
+    /// ]);
+    ///
+    /// let (exterior, interiors) = polygon.into_inner();
+    ///
+    /// assert_eq!(exterior, LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]));
+    ///
+    /// assert_eq!(interiors, vec![LineString::from(vec![
+    ///     (0.1, 0.1),
+    ///     (0.9, 0.9),
+    ///     (0.9, 0.1),
+    ///     (0.1, 0.1),
+    /// ])]);
+    /// ```
+    pub fn into_inner(self) -> (LineString<T>, Vec<LineString<T>>) {
+        (self.exterior, self.interiors)
+    }
+
+    /// Return a reference to the exterior `LineString` ring.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{LineString, Polygon};
+    ///
+    /// let exterior = LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]);
+    ///
+    /// let polygon = Polygon::new(exterior.clone(), vec![]);
+    ///
+    /// assert_eq!(polygon.exterior(), &exterior);
+    /// ```
+    pub fn exterior(&self) -> &LineString<T> {
+        &self.exterior
+    }
+
+    /// Execute the provided closure `f`, which is provided with a mutable
+    /// reference to the exterior `LineString` ring.
+    ///
+    /// After the closure executes, the exterior `LineString` [will be closed].
     ///
     /// # Examples
     ///
     /// ```
     /// use geo_types::{Coordinate, LineString, Polygon};
     ///
-    /// let exterior = LineString(vec![
-    ///     Coordinate { x: 0., y: 0. },
-    ///     Coordinate { x: 1., y: 1. },
-    ///     Coordinate { x: 1., y: 0. },
-    ///     Coordinate { x: 0., y: 0. },
-    /// ]);
-    /// let interiors = vec![LineString(vec![
-    ///     Coordinate { x: 0.1, y: 0.1 },
-    ///     Coordinate { x: 0.9, y: 0.9 },
-    ///     Coordinate { x: 0.9, y: 0.1 },
-    ///     Coordinate { x: 0.1, y: 0.1 },
-    /// ])];
-    /// let p = Polygon::new(exterior.clone(), interiors.clone());
-    /// assert_eq!(p.exterior, exterior);
-    /// assert_eq!(p.interiors, interiors);
+    /// let mut polygon = Polygon::new(LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]), vec![]);
+    ///
+    /// polygon.exterior_mut(|exterior| {
+    ///     exterior.0[1] = Coordinate { x: 1., y: 2. };
+    /// });
+    ///
+    /// assert_eq!(polygon.exterior(), &LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 2.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]));
     /// ```
-    pub fn new(exterior: LineString<T>, interiors: Vec<LineString<T>>) -> Polygon<T> {
-        Polygon {
-            exterior,
-            interiors,
+    ///
+    /// If the first and last `Coordinate`s of the exterior `LineString` no
+    /// longer match, the `LineString` [will be closed]:
+    ///
+    /// ```
+    /// use geo_types::{Coordinate, LineString, Polygon};
+    ///
+    /// let mut polygon = Polygon::new(LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]), vec![]);
+    ///
+    /// polygon.exterior_mut(|exterior| {
+    ///     exterior.0[0] = Coordinate { x: 0., y: 1. };
+    /// });
+    ///
+    /// assert_eq!(polygon.exterior(), &LineString::from(vec![
+    ///     (0., 1.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    ///     (0., 1.),
+    /// ]));
+    /// ```
+    ///
+    /// [will be closed]: #linestring-closing-operation
+    pub fn exterior_mut<F>(&mut self, mut f: F)
+        where F: FnMut(&mut LineString<T>)
+    {
+        f(&mut self.exterior);
+        self.exterior.close();
+    }
+
+    /// Return a slice of the interior `LineString` rings.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{Coordinate, LineString, Polygon};
+    ///
+    /// let interiors = vec![LineString::from(vec![
+    ///     (0.1, 0.1),
+    ///     (0.9, 0.9),
+    ///     (0.9, 0.1),
+    ///     (0.1, 0.1),
+    /// ])];
+    ///
+    /// let polygon = Polygon::new(LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]), interiors.clone());
+    ///
+    /// assert_eq!(interiors, polygon.interiors());
+    /// ```
+    pub fn interiors(&self) -> &[LineString<T>] {
+        &self.interiors
+    }
+
+    /// Execute the provided closure `f`, which is provided with a mutable
+    /// reference to the interior `LineString` rings.
+    ///
+    /// After the closure executes, each of the interior `LineString`s [will be
+    /// closed].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{Coordinate, LineString, Polygon};
+    ///
+    /// let mut polygon = Polygon::new(LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]), vec![
+    ///     LineString::from(vec![
+    ///         (0.1, 0.1),
+    ///         (0.9, 0.9),
+    ///         (0.9, 0.1),
+    ///         (0.1, 0.1),
+    ///     ])
+    /// ]);
+    ///
+    /// polygon.interiors_mut(|interiors| {
+    ///     interiors[0].0[1] = Coordinate { x: 0.8, y: 0.8 };
+    /// });
+    ///
+    /// assert_eq!(polygon.interiors(), &[
+    ///     LineString::from(vec![
+    ///         (0.1, 0.1),
+    ///         (0.8, 0.8),
+    ///         (0.9, 0.1),
+    ///         (0.1, 0.1),
+    ///     ])
+    /// ]);
+    /// ```
+    ///
+    /// If the first and last `Coordinate`s of any interior `LineString` no
+    /// longer match, those `LineString`s [will be closed]:
+    ///
+    /// ```
+    /// use geo_types::{Coordinate, LineString, Polygon};
+    ///
+    /// let mut polygon = Polygon::new(LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]), vec![
+    ///     LineString::from(vec![
+    ///         (0.1, 0.1),
+    ///         (0.9, 0.9),
+    ///         (0.9, 0.1),
+    ///         (0.1, 0.1),
+    ///     ])
+    /// ]);
+    ///
+    /// polygon.interiors_mut(|interiors| {
+    ///     interiors[0].0[0] = Coordinate { x: 0.1, y: 0.2 };
+    /// });
+    ///
+    /// assert_eq!(polygon.interiors(), &[
+    ///     LineString::from(vec![
+    ///         (0.1, 0.2),
+    ///         (0.9, 0.9),
+    ///         (0.9, 0.1),
+    ///         (0.1, 0.1),
+    ///         (0.1, 0.2),
+    ///     ])
+    /// ]);
+    /// ```
+    ///
+    /// [will be closed]: #linestring-closing-operation
+    pub fn interiors_mut<F>(&mut self, mut f: F)
+        where F: FnMut(&mut [LineString<T>])
+    {
+        f(&mut self.interiors);
+        for mut interior in &mut self.interiors {
+            interior.close();
         }
     }
+
     /// Wrap-around previous-vertex
     fn previous_vertex(&self, current_vertex: &usize) -> usize
     where

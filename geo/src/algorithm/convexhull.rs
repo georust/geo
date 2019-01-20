@@ -126,7 +126,7 @@ pub trait ConvexHull<T> {
     /// let correct_hull: LineString<_> = hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect();
     ///
     /// let res = poly.convex_hull();
-    /// assert_eq!(res.exterior, correct_hull);
+    /// assert_eq!(res.exterior(), &correct_hull);
     /// ```
     fn convex_hull(&self) -> Polygon<T>
     where
@@ -139,7 +139,7 @@ where
 {
     fn convex_hull(&self) -> Polygon<T> {
         Polygon::new(
-            LineString::from(quick_hull(&mut self.exterior.clone().into_points())),
+            LineString::from(quick_hull(&mut self.exterior().clone().into_points())),
             vec![],
         )
     }
@@ -153,7 +153,7 @@ where
         let mut aggregated: Vec<Point<T>> = self
             .0
             .iter()
-            .flat_map(|elem| elem.exterior.0.iter().map(|c| Point(*c)))
+            .flat_map(|elem| elem.exterior().0.iter().map(|c| Point(*c)))
             .collect();
         Polygon::new(LineString::from(quick_hull(&mut aggregated)), vec![])
     }
@@ -328,7 +328,7 @@ mod test {
             Coordinate::from((0.0, -10.0)),
         ];
         let res = mp.convex_hull();
-        assert_eq!(res.exterior.0, correct);
+        assert_eq!(res.exterior().0, correct);
     }
     #[test]
     fn quick_hull_linestring_test() {
@@ -352,7 +352,7 @@ mod test {
             Coordinate::from((0.0, -10.0)),
         ];
         let res = mp.convex_hull();
-        assert_eq!(res.exterior.0, correct);
+        assert_eq!(res.exterior().0, correct);
     }
     #[test]
     fn quick_hull_multilinestring_test() {
@@ -367,7 +367,7 @@ mod test {
             Coordinate::from((2.0, 0.0)),
         ];
         let res = mls.convex_hull();
-        assert_eq!(res.exterior.0, correct);
+        assert_eq!(res.exterior().0, correct);
     }
     #[test]
     fn quick_hull_multipolygon_test() {
@@ -384,6 +384,6 @@ mod test {
             Coordinate::from((5.0, 0.0)),
         ];
         let res = mp.convex_hull();
-        assert_eq!(res.exterior.0, correct);
+        assert_eq!(res.exterior().0, correct);
     }
 }

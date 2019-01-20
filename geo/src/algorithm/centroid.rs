@@ -146,7 +146,7 @@ where
     // See here for a formula: http://math.stackexchange.com/a/623849
     // See here for detail on alternative methods: https://fotino.me/calculating-centroids/
     fn centroid(&self) -> Self::Output {
-        let linestring = &self.exterior;
+        let linestring = &self.exterior();
         let vect = &linestring.0;
         if vect.is_empty() {
             return None;
@@ -154,14 +154,14 @@ where
         if vect.len() == 1 {
             Some(Point::new(vect[0].x, vect[0].y))
         } else {
-            let external_centroid = simple_polygon_centroid(&self.exterior)?;
-            if self.interiors.is_empty() {
+            let external_centroid = simple_polygon_centroid(self.exterior())?;
+            if self.interiors().is_empty() {
                 Some(external_centroid)
             } else {
-                let external_area = get_linestring_area(&self.exterior).abs();
+                let external_area = get_linestring_area(self.exterior()).abs();
                 // accumulate interior Polygons
                 let (totals_x, totals_y, internal_area) = self
-                    .interiors
+                    .interiors()
                     .iter()
                     .filter_map(|ring| {
                         let area = get_linestring_area(ring).abs();
@@ -215,7 +215,7 @@ where
                     sum_area_y = sum_area_y + area * p.y();
                 } else {
                     // the polygon is 'flat', we consider it as a linestring
-                    let ls_len = poly.exterior.euclidean_length();
+                    let ls_len = poly.exterior().euclidean_length();
                     if ls_len == T::zero() {
                         sum_x = sum_x + p.x();
                         sum_y = sum_y + p.x();

@@ -41,8 +41,8 @@ impl ToPostgis<ewkb::LineString> for Line<f64> {
 }
 impl ToPostgis<ewkb::Polygon> for Polygon<f64> {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Polygon {
-        let rings = ::std::iter::once(&self.exterior)
-            .chain(self.interiors.iter())
+        let rings = ::std::iter::once(self.exterior())
+            .chain(self.interiors().iter())
             .map(|x| (*x).to_postgis_with_srid(srid))
             .collect();
         ewkb::Polygon { rings, srid }

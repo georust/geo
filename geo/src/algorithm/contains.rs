@@ -164,10 +164,10 @@ where
     T: Float,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        match get_position(*p, &self.exterior) {
+        match get_position(*p, &self.exterior()) {
             PositionPoint::OnBoundary | PositionPoint::Outside => false,
             _ => self
-                .interiors
+                .interiors()
                 .iter()
                 .all(|ls| get_position(*p, ls) == PositionPoint::Outside),
         }
@@ -192,8 +192,8 @@ where
         // does NOT intersect the exterior or any of the interior boundaries
         self.contains(&line.start_point())
             && self.contains(&line.end_point())
-            && !self.exterior.intersects(line)
-            && !self.interiors.iter().any(|inner| inner.intersects(line))
+            && !self.exterior().intersects(line)
+            && !self.interiors().iter().any(|inner| inner.intersects(line))
     }
 }
 
@@ -203,7 +203,7 @@ where
 {
     fn contains(&self, poly: &Polygon<T>) -> bool {
         // decompose poly's exterior ring into Lines, and check each for containment
-        poly.exterior.lines().all(|line| self.contains(&line))
+        poly.exterior().lines().all(|line| self.contains(&line))
     }
 }
 
@@ -217,7 +217,7 @@ where
             // The Polygon interior is allowed to intersect with the LineString
             // but the Polygon's rings are not
             !self
-                .interiors
+                .interiors()
                 .iter()
                 .any(|ring| ring.intersects(linestring))
         } else {
@@ -404,18 +404,19 @@ mod test {
     fn point_polygon_with_inner_test() {
         let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
         let inner_linestring = LineString::from(vec![
-            (0.5, 0.5),
-            (1.5, 0.5),
-            (1.5, 1.5),
-            (0.0, 1.5),
-            (0.0, 0.0),
+            [0.5, 0.5],
+            [1.5, 0.5],
+            [1.5, 1.5],
+            [0.0, 1.5],
+            [0.0, 0.0],
         ]);
         let poly = Polygon::new(linestring, vec![inner_linestring]);
-        assert!(poly.contains(&Point::new(0.25, 0.25)));
+        assert!(!poly.contains(&Point::new(0.25, 0.25)));
         assert!(!poly.contains(&Point::new(1., 1.)));
         assert!(!poly.contains(&Point::new(1.5, 1.5)));
         assert!(!poly.contains(&Point::new(1.5, 1.)));
     }
+
     /// Tests: Point in MultiPolygon
     #[test]
     fn empty_multipolygon_test() {

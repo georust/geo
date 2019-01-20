@@ -26,8 +26,8 @@ pub trait Orient<T> {
     /// let oriented_int_ls = LineString::from(oriented_int);
     /// // build corrected Polygon
     /// let oriented = poly.orient(Direction::Default);
-    /// assert_eq!(oriented.exterior.0, oriented_ext_ls.0);
-    /// assert_eq!(oriented.interiors[0].0, oriented_int_ls.0);
+    /// assert_eq!(oriented.exterior().0, oriented_ext_ls.0);
+    /// assert_eq!(oriented.interiors()[0].0, oriented_int_ls.0);
     /// ```
     fn orient(&self, orientation: Direction) -> Self;
 }
@@ -69,7 +69,7 @@ where
     T: CoordinateType,
 {
     let interiors = poly
-        .interiors
+        .interiors()
         .iter()
         .map(|l| {
             l.clone_to_winding_order(match direction {
@@ -79,7 +79,7 @@ where
         })
         .collect();
 
-    let ext_ring = poly.exterior.clone_to_winding_order(match direction {
+    let ext_ring = poly.exterior().clone_to_winding_order(match direction {
         Direction::Default => WindingOrder::CounterClockwise,
         Direction::Reversed => WindingOrder::Clockwise,
     });
@@ -109,7 +109,7 @@ mod test {
         let oriented_int_ls = LineString::from(oriented_int_raw);
         // build corrected Polygon
         let oriented = orient(&poly1, Direction::Default);
-        assert_eq!(oriented.exterior.0, oriented_ext_ls.0);
-        assert_eq!(oriented.interiors[0].0, oriented_int_ls.0);
+        assert_eq!(oriented.exterior().0, oriented_ext_ls.0);
+        assert_eq!(oriented.interiors()[0].0, oriented_int_ls.0);
     }
 }
