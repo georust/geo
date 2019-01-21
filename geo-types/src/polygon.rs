@@ -11,6 +11,16 @@ use {CoordinateType, LineString, Point, Rect};
 /// be _closed_, such that the first and last `Coordinate` of each ring has
 /// the same value.
 ///
+/// # Validity
+///
+/// Besides the closed `LineString` rings guarantee, the `Polygon` structure
+/// does not enforce validity at this time. For example, it is possible to
+/// construct a `Polygon` that has:
+///
+/// - fewer than 3 coordinates per `LineString` ring
+/// - interior rings that intersect other interior rings
+/// - interior rings that extend beyond the exterior ring
+///
 /// # `LineString` closing operation
 ///
 /// Some APIs on `Polygon` result in a closing operation on a `LineString`. The
