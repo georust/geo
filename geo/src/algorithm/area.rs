@@ -27,7 +27,9 @@ where
     ///
     /// assert_eq!(polygon.area(), 30.);
     ///
-    /// polygon.exterior.0.reverse();
+    /// polygon.exterior_mut(|line_string| {
+    ///     line_string.0.reverse();
+    /// });
     ///
     /// assert_eq!(polygon.area(), -30.);
     /// ```
@@ -56,9 +58,9 @@ where
     T: Float,
 {
     fn area(&self) -> T {
-        self.interiors
+        self.interiors()
             .iter()
-            .fold(get_linestring_area(&self.exterior), |total, next| {
+            .fold(get_linestring_area(self.exterior()), |total, next| {
                 total - get_linestring_area(next)
             })
     }

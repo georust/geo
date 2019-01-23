@@ -193,8 +193,11 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Polygon<T> {
 
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         Polygon::new(
-            self.exterior.map_coords(func),
-            self.interiors.iter().map(|l| l.map_coords(func)).collect(),
+            self.exterior().map_coords(func),
+            self.interiors()
+                .iter()
+                .map(|l| l.map_coords(func))
+                .collect(),
         )
     }
 }
@@ -207,8 +210,8 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Polygon<T> {
         func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(Polygon::new(
-            self.exterior.try_map_coords(func)?,
-            self.interiors
+            self.exterior().try_map_coords(func)?,
+            self.interiors()
                 .iter()
                 .map(|l| l.try_map_coords(func))
                 .collect::<Result<Vec<_>, Error>>()?,
@@ -218,10 +221,15 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Polygon<T> {
 
 impl<T: CoordinateType> MapCoordsInplace<T> for Polygon<T> {
     fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        self.exterior.map_coords_inplace(func);
-        for p in &mut self.interiors {
-            p.map_coords_inplace(func);
-        }
+        self.exterior_mut(|line_string| {
+            line_string.map_coords_inplace(func);
+        });
+
+        self.interiors_mut(|line_strings| {
+            for line_string in line_strings {
+                line_string.map_coords_inplace(func);
+            }
+        });
     }
 }
 

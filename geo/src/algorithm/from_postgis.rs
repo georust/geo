@@ -46,10 +46,7 @@ where
             return None;
         }
         let exterior = rings.remove(0);
-        Some(Polygon {
-            exterior,
-            interiors: rings,
-        })
+        Some(Polygon::new(exterior, rings))
     }
 }
 impl<'a, T> FromPostgis<&'a T> for MultiPoint<f64>

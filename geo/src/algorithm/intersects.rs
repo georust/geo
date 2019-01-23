@@ -123,8 +123,8 @@ where
     T: Float,
 {
     fn intersects(&self, p: &Polygon<T>) -> bool {
-        p.exterior.intersects(self)
-            || p.interiors.iter().any(|inner| inner.intersects(self))
+        p.exterior().intersects(self)
+            || p.interiors().iter().any(|inner| inner.intersects(self))
             || p.contains(&self.start_point())
             || p.contains(&self.end_point())
     }
@@ -177,9 +177,9 @@ where
 {
     fn intersects(&self, linestring: &LineString<T>) -> bool {
         // line intersects inner or outer polygon edge
-        if self.exterior.intersects(linestring)
+        if self.exterior().intersects(linestring)
             || self
-                .interiors
+                .interiors()
                 .iter()
                 .any(|inner| inner.intersects(linestring))
         {
@@ -251,10 +251,10 @@ where
 {
     fn intersects(&self, polygon: &Polygon<T>) -> bool {
         // self intersects (or contains) any line in polygon
-        self.intersects(&polygon.exterior) ||
-            polygon.interiors.iter().any(|inner_line_string| self.intersects(inner_line_string)) ||
+        self.intersects(polygon.exterior()) ||
+            polygon.interiors().iter().any(|inner_line_string| self.intersects(inner_line_string)) ||
             // self is contained inside polygon
-            polygon.intersects(&self.exterior)
+            polygon.intersects(self.exterior())
     }
 }
 

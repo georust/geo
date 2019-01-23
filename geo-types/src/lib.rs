@@ -104,8 +104,8 @@ mod test {
         ])];
         let p = Polygon::new(exterior.clone(), interiors.clone());
 
-        assert_eq!(p.exterior, exterior);
-        assert_eq!(p.interiors, interiors);
+        assert_eq!(p.exterior(), &exterior);
+        assert_eq!(p.interiors(), &interiors[..]);
     }
 
     #[test]

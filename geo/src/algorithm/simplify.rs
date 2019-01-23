@@ -93,8 +93,11 @@ where
 {
     fn simplify(&self, epsilon: &T) -> Polygon<T> {
         Polygon::new(
-            self.exterior.simplify(epsilon),
-            self.interiors.iter().map(|l| l.simplify(epsilon)).collect(),
+            self.exterior().simplify(epsilon),
+            self.interiors()
+                .iter()
+                .map(|l| l.simplify(epsilon))
+                .collect(),
         )
     }
 }

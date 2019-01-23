@@ -526,7 +526,7 @@ where
             min_points: 6,
             geomtype: GeomType::Ring,
         };
-        let mut simplified = vwp_wrapper(&gt, &self.exterior, Some(&self.interiors), epsilon);
+        let mut simplified = vwp_wrapper(&gt, self.exterior(), Some(self.interiors()), epsilon);
         let exterior = LineString::from(simplified.remove(0));
         let interiors = simplified.into_iter().map(LineString::from).collect();
         Polygon::new(exterior, interiors)
@@ -571,8 +571,8 @@ where
 {
     fn simplifyvw(&self, epsilon: &T) -> Polygon<T> {
         Polygon::new(
-            self.exterior.simplifyvw(epsilon),
-            self.interiors
+            self.exterior().simplifyvw(epsilon),
+            self.interiors()
                 .iter()
                 .map(|l| l.simplifyvw(epsilon))
                 .collect(),
@@ -696,7 +696,7 @@ mod test {
         ]);
         let poly = Polygon::new(outer.clone(), vec![inner]);
         let simplified = poly.simplifyvw_preserve(&95.4);
-        assert_eq!(simplified.exterior, outer);
+        assert_eq!(simplified.exterior(), &outer);
     }
     #[test]
     fn remove_inner_point_vwp_test() {
@@ -727,8 +727,8 @@ mod test {
         ]);
         let poly = Polygon::new(outer.clone(), vec![inner]);
         let simplified = poly.simplifyvw_preserve(&95.4);
-        assert_eq!(simplified.exterior, outer);
-        assert_eq!(simplified.interiors[0], correct_inner);
+        assert_eq!(simplified.exterior(), &outer);
+        assert_eq!(simplified.interiors()[0], correct_inner);
     }
     #[test]
     fn very_long_vwp_test() {

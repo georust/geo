@@ -165,14 +165,14 @@ where
     /// Rotate the Polygon about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
         // if a polygon has holes, use the centroid of its outer shell as the rotation origin
-        let centroid = if self.interiors.is_empty() {
+        let centroid = if self.interiors().is_empty() {
             self.centroid().unwrap()
         } else {
-            self.exterior.centroid().unwrap()
+            self.exterior().centroid().unwrap()
         };
         Polygon::new(
-            rotate_many(angle, centroid, self.exterior.points_iter()).collect(),
-            self.interiors
+            rotate_many(angle, centroid, self.exterior().points_iter()).collect(),
+            self.interiors()
                 .iter()
                 .map(|ring| rotate_many(angle, centroid, ring.points_iter()).collect())
                 .collect(),
@@ -309,8 +309,8 @@ mod test {
             Coordinate::from((5.672380059021509, 1.2114794859018578)),
             Coordinate::from((4.706454232732441, 1.4702985310043786)),
         ];
-        assert_eq!(rotated.exterior.0, correct_outside);
-        assert_eq!(rotated.interiors[0].0, correct_inside);
+        assert_eq!(rotated.exterior().0, correct_outside);
+        assert_eq!(rotated.interiors()[0].0, correct_inside);
     }
     #[test]
     fn test_rotate_around_point_arbitrary() {

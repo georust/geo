@@ -16,8 +16,8 @@ where
 {
     let poly1_extremes = poly1.extreme_indices().unwrap();
     let poly2_extremes = poly2.extreme_indices().unwrap();
-    let ymin1 = Point(poly1.exterior.0[poly1_extremes.ymin]);
-    let ymax2 = Point(poly2.exterior.0[poly2_extremes.ymax]);
+    let ymin1 = Point(poly1.exterior().0[poly1_extremes.ymin]);
+    let ymax2 = Point(poly2.exterior().0[poly2_extremes.ymax]);
 
     let mut state = Polydist {
         poly1,
@@ -66,7 +66,7 @@ fn prev_vertex<T>(poly: &Polygon<T>, current_vertex: usize) -> usize
 where
     T: Float,
 {
-    (current_vertex + (poly.exterior.0.len() - 1) - 1) % (poly.exterior.0.len() - 1)
+    (current_vertex + (poly.exterior().0.len() - 1) - 1) % (poly.exterior().0.len() - 1)
 }
 
 /// Wrap-around next Polygon index
@@ -74,7 +74,7 @@ fn next_vertex<T>(poly: &Polygon<T>, current_vertex: usize) -> usize
 where
     T: Float,
 {
-    (current_vertex + 1) % (poly.exterior.0.len() - 1)
+    (current_vertex + 1) % (poly.exterior().0.len() - 1)
 }
 
 #[derive(Debug)]
@@ -126,8 +126,8 @@ where
     let sinsq = T::one() - cossq;
     let mut cos = T::zero();
     let mut sin;
-    let pnext = poly.exterior.0[next_vertex(poly, idx)];
-    let pprev = poly.exterior.0[prev_vertex(poly, idx)];
+    let pnext = poly.exterior().0[next_vertex(poly, idx)];
+    let pprev = poly.exterior().0[prev_vertex(poly, idx)];
     let clockwise = Point(pprev).cross_prod(Point(p.0), Point(pnext)) < T::zero();
     let slope_prev;
     let slope_next;
@@ -320,8 +320,8 @@ where
     T: Float + FloatConst + Signed,
 {
     let hundred = T::from(100).unwrap();
-    let pnext = poly.exterior.0[next_vertex(poly, idx)];
-    let pprev = poly.exterior.0[prev_vertex(poly, idx)];
+    let pnext = poly.exterior().0[next_vertex(poly, idx)];
+    let pprev = poly.exterior().0[prev_vertex(poly, idx)];
     let clockwise = Point(pprev).cross_prod(Point(p.0), Point(pnext)) < T::zero();
     let punit;
     if !vertical {
@@ -456,14 +456,14 @@ where
     if (state.ap1 - minangle).abs() < T::from(0.002).unwrap() {
         state.ip1 = true;
         let p1next = next_vertex(state.poly1, state.p1_idx);
-        state.p1next = Point(state.poly1.exterior.0[p1next]);
+        state.p1next = Point(state.poly1.exterior().0[p1next]);
         state.p1_idx = p1next;
         state.alignment = Some(AlignedEdge::VertexP);
     }
     if (state.aq2 - minangle).abs() < T::from(0.002).unwrap() {
         state.iq2 = true;
         let q2next = next_vertex(state.poly2, state.q2_idx);
-        state.q2next = Point(state.poly2.exterior.0[q2next]);
+        state.q2next = Point(state.poly2.exterior().0[q2next]);
         state.q2_idx = q2next;
         state.alignment = match state.alignment {
             None => Some(AlignedEdge::VertexQ),
