@@ -1,11 +1,13 @@
 [package]
 name = "wkt"
 description = "Rust read/write support for well-known text (WKT)"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Corey Farwell <coreyf@rwell.org>", "Antoine Desbordes <antoine.desbordes@gmail.com>"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/georust/wkt"
 autobenches = true
+readme = "README.md"
+keywords = ["geo", "geospatial", "wkt"]
 
 [dependencies]
 geo-types = {version = "0.3", optional = true}
