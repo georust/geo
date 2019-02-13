@@ -29,12 +29,15 @@ impl<T: CoordinateType> GeometryCollection<T> {
 }
 
 
+/// Convert any Geometry (or anything that can be converted to a Geometry) into a
+/// GeometryCollection
 impl<T: CoordinateType, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
     fn from(x: IG) -> Self {
         GeometryCollection(vec![x.into()])
     }
 }
 
+/// Collect Geometries (or what can be converted to a Geometry) into a GeometryCollection
 impl<T: CoordinateType, IG: Into<Geometry<T>>> FromIterator<IG> for GeometryCollection<T> {
     fn from_iter<I: IntoIterator<Item = IG>>(iter: I) -> Self {
         GeometryCollection(iter.into_iter().map(|g| g.into()).collect())
