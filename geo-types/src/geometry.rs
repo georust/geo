@@ -27,6 +27,11 @@ impl<T: CoordinateType> From<Point<T>> for Geometry<T> {
         Geometry::Point(x)
     }
 }
+impl<T: CoordinateType> From<Line<T>> for Geometry<T> {
+    fn from(x: Line<T>) -> Geometry<T> {
+        Geometry::Line(x)
+    }
+}
 impl<T: CoordinateType> From<LineString<T>> for Geometry<T> {
     fn from(x: LineString<T>) -> Geometry<T> {
         Geometry::LineString(x)
