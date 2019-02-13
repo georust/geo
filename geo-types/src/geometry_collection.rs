@@ -11,6 +11,24 @@ pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
     T: CoordinateType;
 
+impl<T: CoordinateType> GeometryCollection<T> {
+    /// Return an empty GeometryCollection
+    pub fn empty() -> GeometryCollection<T> {
+        GeometryCollection(Vec::new())
+    }
+
+    /// Number of geometries in this GeometryCollection
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Is this GeometryCollection empty
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+
 impl<T: CoordinateType, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
     fn from(x: IG) -> Self {
         GeometryCollection(vec![x.into()])
