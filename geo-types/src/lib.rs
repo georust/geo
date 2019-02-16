@@ -84,7 +84,7 @@ mod test {
         let p: Point<f32> = Point::new(0., 0.);
         let p1 = p.clone();
         let g: Geometry<f32> = p.into();
-        let p2 = g.as_point().unwrap();
+        let p2 = g.into_point().unwrap();
         assert_eq!(p1, p2);
     }
 
