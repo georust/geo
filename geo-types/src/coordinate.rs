@@ -1,4 +1,4 @@
-use {CoordinateType, Point};
+use crate::{CoordinateType, Point};
 
 /// A lightweight struct used to store coordinates on the 2-dimensional
 /// Cartesian plane.

@@ -1,10 +1,10 @@
-use algorithm::contains::{get_position, Contains, PositionPoint};
-use algorithm::euclidean_length::EuclideanLength;
-use algorithm::intersects::Intersects;
-use algorithm::polygon_distance_fast_path::*;
+use crate::algorithm::contains::{get_position, Contains, PositionPoint};
+use crate::algorithm::euclidean_length::EuclideanLength;
+use crate::algorithm::intersects::Intersects;
+use crate::algorithm::polygon_distance_fast_path::*;
 use num_traits::float::FloatConst;
 use num_traits::{Bounded, Float, Signed};
-use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Triangle};
+use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Triangle};
 
 use rstar::RTree;
 use rstar::RTreeNum;
@@ -488,10 +488,10 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use algorithm::convexhull::ConvexHull;
-    use algorithm::euclidean_distance::EuclideanDistance;
+    use crate::algorithm::convexhull::ConvexHull;
+    use crate::algorithm::euclidean_distance::EuclideanDistance;
     use geo_types::private_utils::line_segment_distance;
-    use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+    use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
     #[test]
     fn line_segment_distance_test() {

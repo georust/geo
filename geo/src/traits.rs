@@ -1,6 +1,6 @@
-pub use Geometry;
+pub use crate::Geometry;
 
-use CoordinateType;
+use crate::CoordinateType;
 
 pub trait ToGeo<T: CoordinateType> {
     fn to_geo(&self) -> Geometry<T>;

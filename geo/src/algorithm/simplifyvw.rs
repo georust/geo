@@ -1,8 +1,8 @@
 use num_traits::Float;
-use prelude::*;
+use crate::prelude::*;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use {Coordinate, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Triangle};
+use crate::{Coordinate, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Triangle};
 
 use rstar::{RTree, RTreeNum};
 
@@ -595,7 +595,7 @@ mod test {
         cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, GeomType, SimplifyVW,
         SimplifyVWPreserve,
     };
-    use {Coordinate, LineString, MultiLineString, MultiPolygon, Point, Polygon};
+    use crate::{Coordinate, LineString, MultiLineString, MultiPolygon, Point, Polygon};
 
     #[test]
     fn visvalingam_test() {

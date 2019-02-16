@@ -1,5 +1,5 @@
 use std::iter::FromIterator;
-use {CoordinateType, Geometry};
+use crate::{CoordinateType, Geometry};
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
 ///

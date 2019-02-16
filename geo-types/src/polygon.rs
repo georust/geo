@@ -1,5 +1,5 @@
 use num_traits::{Float, Signed};
-use {CoordinateType, LineString, Point, Rect};
+use crate::{CoordinateType, LineString, Point, Rect};
 
 /// A bounded two-dimensional area.
 ///

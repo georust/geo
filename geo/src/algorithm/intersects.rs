@@ -1,6 +1,6 @@
-use algorithm::contains::Contains;
+use crate::algorithm::contains::Contains;
 use num_traits::Float;
-use {Line, LineString, Point, Polygon, Rect};
+use crate::{Line, LineString, Point, Polygon, Rect};
 
 /// Checks if the geometry A intersects the geometry B.
 
@@ -260,8 +260,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use algorithm::intersects::Intersects;
-    use {Coordinate, Line, LineString, Point, Polygon, Rect};
+    use crate::algorithm::intersects::Intersects;
+    use crate::{Coordinate, Line, LineString, Point, Polygon, Rect};
     /// Tests: intersection LineString and LineString
     #[test]
     fn empty_linestring1_test() {

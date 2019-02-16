@@ -4,7 +4,7 @@
 // prevent duplication. These functions are _not_ meant for public consumption.
 
 use num_traits::Float;
-use {Coordinate, CoordinateType, Line, LineString, Point, Rect};
+use crate::{Coordinate, CoordinateType, Line, LineString, Point, Rect};
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 

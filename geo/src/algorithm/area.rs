@@ -1,7 +1,7 @@
 use num_traits::Float;
-use {CoordinateType, Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
+use crate::{CoordinateType, Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
 
-use algorithm::winding_order::twice_signed_ring_area;
+use crate::algorithm::winding_order::twice_signed_ring_area;
 
 /// Calculation of the area.
 
@@ -100,8 +100,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use algorithm::area::Area;
-    use {Coordinate, Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
+    use crate::algorithm::area::Area;
+    use crate::{Coordinate, Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
 
     // Area of the polygon
     #[test]

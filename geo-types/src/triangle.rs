@@ -1,4 +1,4 @@
-use {Coordinate, CoordinateType, Line};
+use crate::{Coordinate, CoordinateType, Line};
 
 /// A bounded 2D area whose three vertices are defined by `Coordinate`s.
 #[derive(Copy, Clone, Debug)]

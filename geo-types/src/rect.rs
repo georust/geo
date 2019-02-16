@@ -1,4 +1,4 @@
-use {Coordinate, CoordinateType};
+use crate::{Coordinate, CoordinateType};
 
 /// A bounded 2D quadrilateral whose area is defined by minimum and maximum `Coordinates`.
 #[derive(PartialEq, Clone, Copy, Debug)]

@@ -1,7 +1,7 @@
 use num_traits::Float;
 
-use algorithm::intersects::Intersects;
-use {Coordinate, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
+use crate::algorithm::intersects::Intersects;
+use crate::{Coordinate, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
 
 ///  Checks if the geometry A is completely inside the B geometry
 pub trait Contains<Rhs = Self> {
@@ -272,8 +272,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use algorithm::contains::Contains;
-    use {Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
+    use crate::algorithm::contains::Contains;
+    use crate::{Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
     #[test]
     // V doesn't contain rect because two of its edges intersect with V's exterior boundary
     fn polygon_does_not_contain_polygon() {

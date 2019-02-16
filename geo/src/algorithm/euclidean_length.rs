@@ -1,7 +1,7 @@
 use num_traits::Float;
 use std::iter::Sum;
 
-use {Line, LineString, MultiLineString};
+use crate::{Line, LineString, MultiLineString};
 
 /// Calculation of the length
 
@@ -56,8 +56,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use algorithm::euclidean_length::EuclideanLength;
-    use {Coordinate, Line, LineString, MultiLineString};
+    use crate::algorithm::euclidean_length::EuclideanLength;
+    use crate::{Coordinate, Line, LineString, MultiLineString};
 
     #[test]
     fn empty_linestring_test() {

@@ -9,6 +9,7 @@ documentation = "https://docs.rs/geo/"
 readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
 autobenches = true
+edition = "2018"
 
 [badges]
 travis-ci = { repository = "georust/geo" }

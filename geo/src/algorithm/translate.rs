@@ -1,5 +1,5 @@
-use algorithm::map_coords::{MapCoords, MapCoordsInplace};
-use CoordinateType;
+use crate::algorithm::map_coords::{MapCoords, MapCoordsInplace};
+use crate::CoordinateType;
 
 pub trait Translate<T> {
     /// Translate a Geometry along its axes by the given offsets
@@ -50,7 +50,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use {Coordinate, LineString, Point, Polygon};
+    use crate::{Coordinate, LineString, Point, Polygon};
     #[test]
     fn test_translate_point() {
         let p = Point::new(1.0, 5.0);

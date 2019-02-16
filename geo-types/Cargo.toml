@@ -8,6 +8,7 @@ documentation = "https://docs.rs/geo-types/"
 readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
 description = "Geospatial primitive data types"
+edition = "2018"
 
 [dependencies]
 num-traits = "0.2"

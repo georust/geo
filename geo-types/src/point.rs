@@ -2,7 +2,7 @@ use num_traits::Float;
 use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
-use {Coordinate, CoordinateType};
+use crate::{Coordinate, CoordinateType};
 
 /// A single point in 2D space.
 ///

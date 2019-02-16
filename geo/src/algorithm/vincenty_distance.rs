@@ -6,7 +6,7 @@
 
 use num_traits::{Float, FromPrimitive};
 use std::{error, fmt};
-use {Point, EARTH_FLATTENING, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS};
+use crate::{Point, EARTH_FLATTENING, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS};
 
 /// Determine the distance between two geometries using [Vincenty’s formulae].
 ///
