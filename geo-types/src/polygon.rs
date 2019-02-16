@@ -357,7 +357,7 @@ where
     }
 
     /// Wrap-around previous-vertex
-    fn previous_vertex(&self, current_vertex: &usize) -> usize
+    fn previous_vertex(&self, current_vertex: usize) -> usize
     where
         T: Float,
     {
@@ -393,8 +393,8 @@ where
             .iter()
             .enumerate()
             .map(|(idx, _)| {
-                let prev_1 = self.previous_vertex(&idx);
-                let prev_2 = self.previous_vertex(&prev_1);
+                let prev_1 = self.previous_vertex(idx);
+                let prev_2 = self.previous_vertex(prev_1);
                 Point(self.exterior.0[prev_2])
                     .cross_prod(Point(self.exterior.0[prev_1]), Point(self.exterior.0[idx]))
             })
