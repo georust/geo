@@ -61,7 +61,7 @@ impl<T: CoordinateType> Geometry<T> {
     /// ```
     /// use geo_types::*;
     /// let g = Geometry::Point(Point::new(0., 0.));
-    /// let p2: Point<f32> = g.as_point().unwrap();
+    /// let p2: Point<f32> = g.into_point().unwrap();
     /// assert_eq!(p2, Point::new(0., 0.,));
     /// ```
     pub fn into_point(self) -> Option<Point<T>> {
