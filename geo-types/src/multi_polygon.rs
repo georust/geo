@@ -18,6 +18,13 @@ impl<T: CoordinateType, IP: Into<Polygon<T>>> From<IP> for MultiPolygon<T> {
     }
 }
 
+impl<T: CoordinateType, IP: Into<Polygon<T>>> From<Vec<IP>> for MultiPolygon<T> {
+    fn from(x: Vec<IP>) -> Self {
+        MultiPolygon(x.into_iter().map(|p| p.into()).collect())
+    }
+}
+
+
 impl<T: CoordinateType, IP: Into<Polygon<T>>> FromIterator<IP> for MultiPolygon<T> {
     fn from_iter<I: IntoIterator<Item = IP>>(iter: I) -> Self {
         MultiPolygon(iter.into_iter().map(|p| p.into()).collect())
