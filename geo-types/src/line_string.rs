@@ -1,4 +1,5 @@
 use std::iter::FromIterator;
+use std::ops::{Index, IndexMut};
 use {Coordinate, CoordinateType, Line, Point, Triangle};
 
 /// An ordered collection of two or more [`Coordinate`s](struct.Coordinate.html), representing a
@@ -173,6 +174,21 @@ impl<T: CoordinateType> IntoIterator for LineString<T> {
         self.0.into_iter()
     }
 }
+
+impl<T: CoordinateType> Index<usize> for LineString<T> {
+    type Output = Coordinate<T>;
+
+    fn index(&self, index: usize) -> &Coordinate<T> {
+        self.0.index(index)
+    }
+}
+
+impl<T: CoordinateType> IndexMut<usize> for LineString<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Coordinate<T> {
+        self.0.index_mut(index)
+    }
+}
+
 
 #[cfg(feature = "rstar")]
 impl<T> ::rstar::RTreeObject for LineString<T>
