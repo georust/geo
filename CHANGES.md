@@ -22,6 +22,10 @@
   * <https://github.com/georust/geo/pull/342>
 * Add `new`, `is_empty`, `len` functions on `GeometryCollection`
   * <https://github.com/georust/geo/pull/339>
+* Tweak `Geometry` method names slightly
+  * <https://github.com/georust/geo/pull/343>
+* Remove unnecessary references in function signatures
+  * <https://github.com/georust/geo/pull/344>
 
 ## geo 0.11.0
 
