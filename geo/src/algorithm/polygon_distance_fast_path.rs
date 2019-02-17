@@ -1,8 +1,8 @@
 use crate::algorithm::extremes::ExtremeIndices;
-use num_traits::float::FloatConst;
-use num_traits::{Float, Signed};
 use crate::prelude::*;
 use crate::{Line, Point, Polygon, Triangle};
+use num_traits::float::FloatConst;
+use num_traits::{Float, Signed};
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance
 // They use the rotating calipers method to speed up calculations.

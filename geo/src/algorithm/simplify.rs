@@ -1,6 +1,6 @@
 use crate::algorithm::euclidean_distance::EuclideanDistance;
-use num_traits::Float;
 use crate::{Line, LineString, MultiLineString, MultiPolygon, Point, Polygon};
+use num_traits::Float;
 
 // Ramer–Douglas-Peucker line simplification algorithm
 fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>

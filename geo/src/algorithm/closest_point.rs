@@ -1,7 +1,7 @@
-use num_traits::Float;
 use crate::prelude::*;
-use std::iter;
 use crate::{Closest, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use num_traits::Float;
+use std::iter;
 
 /// Find the closest point between two objects, where the other object is
 /// assumed to be a `Point` by default.

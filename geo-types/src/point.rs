@@ -1,8 +1,8 @@
+use crate::{Coordinate, CoordinateType};
 use num_traits::Float;
 use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
-use crate::{Coordinate, CoordinateType};
 
 /// A single point in 2D space.
 ///
@@ -360,10 +360,7 @@ where
 
     const DIMENSIONS: usize = 2;
 
-    fn generate(
-        generator: impl Fn(usize) -> Self::Scalar
-    ) -> Self
-    {
+    fn generate(generator: impl Fn(usize) -> Self::Scalar) -> Self {
         Point::new(generator(0), generator(1))
     }
 

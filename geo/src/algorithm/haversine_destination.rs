@@ -1,5 +1,5 @@
-use num_traits::{Float, FromPrimitive};
 use crate::{Point, MEAN_EARTH_RADIUS};
+use num_traits::{Float, FromPrimitive};
 
 /// Returns a new Point using the distance to the existing Point and a bearing for the direction
 

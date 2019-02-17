@@ -114,11 +114,11 @@ mod test {
         let _: MultiPoint<_> = vec![(0., 0.), (1., 2.)].into_iter().collect();
 
         let mut l1: LineString<_> = vec![(0., 0.), (1., 2.)].into();
-        assert_eq!(l1[1], Coordinate{ x: 1., y: 2. });   // index into linestring
+        assert_eq!(l1[1], Coordinate { x: 1., y: 2. }); // index into linestring
         let _: LineString<_> = vec![(0., 0.), (1., 2.)].into_iter().collect();
 
         // index mutably into a linestring
-        l1[0] = Coordinate{ x: 1., y: 1. };
+        l1[0] = Coordinate { x: 1., y: 1. };
         assert_eq!(l1, vec![(1., 1.), (1., 2.)].into());
     }
 

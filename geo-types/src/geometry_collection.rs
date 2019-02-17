@@ -1,5 +1,5 @@
-use std::iter::FromIterator;
 use crate::{CoordinateType, Geometry};
+use std::iter::FromIterator;
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
 ///
@@ -27,7 +27,6 @@ impl<T: CoordinateType> GeometryCollection<T> {
         self.0.is_empty()
     }
 }
-
 
 /// Convert any Geometry (or anything that can be converted to a Geometry) into a
 /// GeometryCollection

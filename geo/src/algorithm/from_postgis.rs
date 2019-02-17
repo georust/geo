@@ -1,9 +1,9 @@
-use postgis;
-use postgis::ewkb::{GeometryCollectionT, GeometryT};
 use crate::{
     Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
     Polygon,
 };
+use postgis;
+use postgis::ewkb::{GeometryCollectionT, GeometryT};
 
 /// Creates geometry from a PostGIS type.
 ///

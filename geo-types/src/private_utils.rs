@@ -3,8 +3,8 @@
 // hidden module is public so the geo crate can reuse these algorithms to
 // prevent duplication. These functions are _not_ meant for public consumption.
 
-use num_traits::Float;
 use crate::{Coordinate, CoordinateType, Line, LineString, Point, Rect};
+use num_traits::Float;
 
 pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
 

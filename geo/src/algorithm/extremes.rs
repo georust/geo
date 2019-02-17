@@ -1,7 +1,7 @@
 use crate::algorithm::convexhull::ConvexHull;
-use num_traits::{Float, Signed};
 use crate::{ExtremePoint, Extremes};
 use crate::{MultiPoint, MultiPolygon, Point, Polygon};
+use num_traits::{Float, Signed};
 
 // Useful direction vectors, aligned with x and y axes:
 // 1., 0. = largest x

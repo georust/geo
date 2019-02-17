@@ -1,5 +1,5 @@
-use num_traits::{Float, Signed};
 use crate::{CoordinateType, LineString, Point, Rect};
+use num_traits::{Float, Signed};
 
 /// A bounded two-dimensional area.
 ///
@@ -239,7 +239,8 @@ where
     ///
     /// [will be closed]: #linestring-closing-operation
     pub fn exterior_mut<F>(&mut self, mut f: F)
-        where F: FnMut(&mut LineString<T>)
+    where
+        F: FnMut(&mut LineString<T>),
     {
         f(&mut self.exterior);
         self.exterior.close();
@@ -348,7 +349,8 @@ where
     ///
     /// [will be closed]: #linestring-closing-operation
     pub fn interiors_mut<F>(&mut self, mut f: F)
-        where F: FnMut(&mut [LineString<T>])
+    where
+        F: FnMut(&mut [LineString<T>]),
     {
         f(&mut self.interiors);
         for interior in &mut self.interiors {

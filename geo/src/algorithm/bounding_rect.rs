@@ -1,8 +1,8 @@
-use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 use crate::{
     Coordinate, CoordinateType, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
     Polygon, Rect, Triangle,
 };
+use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 
 /// Calculation of the bounding rectangle of a geometry.
 pub trait BoundingRect<T: CoordinateType> {
@@ -139,7 +139,9 @@ where
 #[cfg(test)]
 mod test {
     use crate::algorithm::bounding_rect::BoundingRect;
-    use crate::{Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon, Rect};
+    use crate::{
+        Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon, Rect,
+    };
 
     #[test]
     fn empty_linestring_test() {

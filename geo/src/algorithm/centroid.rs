@@ -306,8 +306,10 @@ where
 mod test {
     use crate::algorithm::centroid::Centroid;
     use crate::algorithm::euclidean_distance::EuclideanDistance;
+    use crate::{
+        Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, COORD_PRECISION,
+    };
     use num_traits::Float;
-    use crate::{Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, COORD_PRECISION};
 
     /// small helper to create a coordinate
     fn c<T: Float>(x: T, y: T) -> Coordinate<T> {

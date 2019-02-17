@@ -1,7 +1,9 @@
 use num_traits::Float;
 
 use crate::algorithm::intersects::Intersects;
-use crate::{Coordinate, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
+use crate::{
+    Coordinate, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle,
+};
 
 ///  Checks if the geometry A is completely inside the B geometry
 pub trait Contains<Rhs = Self> {

@@ -1,6 +1,6 @@
+use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
-use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
 
 /// An ordered collection of two or more [`Coordinate`s](struct.Coordinate.html), representing a
 /// path between locations.
@@ -188,7 +188,6 @@ impl<T: CoordinateType> IndexMut<usize> for LineString<T> {
         self.0.index_mut(index)
     }
 }
-
 
 #[cfg(feature = "rstar")]
 impl<T> ::rstar::RTreeObject for LineString<T>

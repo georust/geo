@@ -1,5 +1,5 @@
-use std::iter::FromIterator;
 use crate::{CoordinateType, Polygon};
+use std::iter::FromIterator;
 
 /// A collection of [`Polygon`s](struct.Polygon.html).
 ///
@@ -23,7 +23,6 @@ impl<T: CoordinateType, IP: Into<Polygon<T>>> From<Vec<IP>> for MultiPolygon<T> 
         MultiPolygon(x.into_iter().map(|p| p.into()).collect())
     }
 }
-
 
 impl<T: CoordinateType, IP: Into<Polygon<T>>> FromIterator<IP> for MultiPolygon<T> {
     fn from_iter<I: IntoIterator<Item = IP>>(iter: I) -> Self {

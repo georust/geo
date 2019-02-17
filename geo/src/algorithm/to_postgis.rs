@@ -1,8 +1,8 @@
-use postgis::ewkb;
 use crate::{
     Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon,
 };
+use postgis::ewkb;
 
 /// Converts geometry to a PostGIS type.
 ///

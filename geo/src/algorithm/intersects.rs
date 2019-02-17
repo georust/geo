@@ -1,6 +1,6 @@
 use crate::algorithm::contains::Contains;
-use num_traits::Float;
 use crate::{Line, LineString, Point, Polygon, Rect};
+use num_traits::Float;
 
 /// Checks if the geometry A intersects the geometry B.
 

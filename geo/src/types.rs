@@ -1,5 +1,5 @@
-use num_traits::Float;
 use crate::{CoordinateType, Point};
+use num_traits::Float;
 
 pub use geo_types::private_utils::COORD_PRECISION;
 

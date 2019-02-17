@@ -1,5 +1,5 @@
-use num_traits::Float;
 use crate::Point;
+use num_traits::Float;
 
 /// Returns the bearing to another Point in degrees.
 ///

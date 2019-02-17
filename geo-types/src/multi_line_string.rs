@@ -1,5 +1,5 @@
-use std::iter::FromIterator;
 use crate::{CoordinateType, LineString};
+use std::iter::FromIterator;
 
 /// A collection of [`LineString`s](struct.LineString.html).
 ///

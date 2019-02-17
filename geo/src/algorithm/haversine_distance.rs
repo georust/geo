@@ -1,5 +1,5 @@
-use num_traits::{Float, FromPrimitive};
 use crate::{Point, MEAN_EARTH_RADIUS};
+use num_traits::{Float, FromPrimitive};
 
 /// Determine the distance between two geometries using the [haversine formula].
 ///

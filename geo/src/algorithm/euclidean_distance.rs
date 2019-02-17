@@ -2,9 +2,11 @@ use crate::algorithm::contains::{get_position, Contains, PositionPoint};
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::algorithm::intersects::Intersects;
 use crate::algorithm::polygon_distance_fast_path::*;
+use crate::{
+    Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Triangle,
+};
 use num_traits::float::FloatConst;
 use num_traits::{Bounded, Float, Signed};
-use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Triangle};
 
 use rstar::RTree;
 use rstar::RTreeNum;
@@ -490,8 +492,8 @@ mod test {
     use super::*;
     use crate::algorithm::convexhull::ConvexHull;
     use crate::algorithm::euclidean_distance::EuclideanDistance;
-    use geo_types::private_utils::line_segment_distance;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+    use geo_types::private_utils::line_segment_distance;
 
     #[test]
     fn line_segment_distance_test() {
