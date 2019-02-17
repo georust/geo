@@ -1,5 +1,5 @@
 use postgis::ewkb;
-use {
+use crate::{
     Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon,
 };
