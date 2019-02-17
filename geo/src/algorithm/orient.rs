@@ -1,6 +1,6 @@
-use {CoordinateType, MultiPolygon, Polygon};
+use crate::{CoordinateType, MultiPolygon, Polygon};
 
-use algorithm::winding_order::{Winding, WindingOrder};
+use crate::algorithm::winding_order::{Winding, WindingOrder};
 
 pub trait Orient<T> {
     /// Orients a Polygon's exterior and interior rings according to convention
@@ -90,7 +90,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use {LineString, Polygon};
+    use crate::{LineString, Polygon};
     #[test]
     fn test_polygon_orientation() {
         // a diamond shape, oriented clockwise outside

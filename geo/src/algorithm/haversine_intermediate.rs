@@ -1,5 +1,5 @@
 use num_traits::{Float, FromPrimitive};
-use {Point, MEAN_EARTH_RADIUS};
+use crate::{Point, MEAN_EARTH_RADIUS};
 
 /// Returns a new Point along a great circle route between two existing points
 
@@ -165,7 +165,7 @@ fn get_params<T: Float + FromPrimitive>(p1: &Point<T>, p2: &Point<T>) -> Haversi
 #[cfg(test)]
 mod test {
     use super::*;
-    use algorithm::haversine_intermediate::HaversineIntermediate;
+    use crate::algorithm::haversine_intermediate::HaversineIntermediate;
 
     #[test]
     fn f_is_zero_or_one_test() {

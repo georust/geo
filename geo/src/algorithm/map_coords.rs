@@ -1,5 +1,5 @@
 use failure::Error;
-use {
+use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect,
 };
@@ -472,7 +472,7 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Rect<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use Coordinate;
+    use crate::Coordinate;
 
     #[test]
     fn point() {

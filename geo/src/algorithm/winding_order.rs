@@ -1,7 +1,7 @@
 use geo_types::line_string::PointsIter;
 use std::iter::Rev;
-use utils::EitherIter;
-use {CoordinateType, LineString, Point};
+use crate::utils::EitherIter;
+use crate::{CoordinateType, LineString, Point};
 
 pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
 where

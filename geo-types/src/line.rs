@@ -1,4 +1,4 @@
-use {Coordinate, CoordinateType, Point};
+use crate::{Coordinate, CoordinateType, Point};
 
 /// A line segment made up of exactly two [`Point`s](struct.Point.html).
 #[derive(PartialEq, Clone, Copy, Debug)]
@@ -168,7 +168,7 @@ where
     type Envelope = ::rstar::AABB<Point<T>>;
 
     fn envelope(&self) -> Self::Envelope {
-        let bounding_rect = ::private_utils::line_bounding_rect(*self);
+        let bounding_rect = crate::private_utils::line_bounding_rect(*self);
         ::rstar::AABB::from_corners(bounding_rect.min.into(), bounding_rect.max.into())
     }
 }
@@ -179,7 +179,7 @@ where
     T: ::num_traits::Float + ::rstar::RTreeNum,
 {
     fn distance_2(&self, point: &Point<T>) -> T {
-        let d = ::private_utils::point_line_euclidean_distance(*point, *self);
+        let d = crate::private_utils::point_line_euclidean_distance(*point, *self);
         d.powi(2)
     }
 }

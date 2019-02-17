@@ -1,6 +1,6 @@
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
-use {Coordinate, CoordinateType, Line, Point, Triangle};
+use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
 
 /// An ordered collection of two or more [`Coordinate`s](struct.Coordinate.html), representing a
 /// path between locations.
@@ -199,7 +199,7 @@ where
 
     fn envelope(&self) -> Self::Envelope {
         use num_traits::Bounded;
-        let bounding_rect = ::private_utils::line_string_bounding_rect(self);
+        let bounding_rect = crate::private_utils::line_string_bounding_rect(self);
         match bounding_rect {
             None => ::rstar::AABB::from_corners(
                 Point::new(Bounded::min_value(), Bounded::min_value()),
@@ -219,7 +219,7 @@ where
     T: ::num_traits::Float + ::rstar::RTreeNum,
 {
     fn distance_2(&self, point: &Point<T>) -> T {
-        let d = ::private_utils::point_line_string_euclidean_distance(*point, self);
+        let d = crate::private_utils::point_line_string_euclidean_distance(*point, self);
         if d == T::zero() {
             d
         } else {

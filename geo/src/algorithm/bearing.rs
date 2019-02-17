@@ -1,5 +1,5 @@
 use num_traits::Float;
-use Point;
+use crate::Point;
 
 /// Returns the bearing to another Point in degrees.
 ///
@@ -46,8 +46,8 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use algorithm::bearing::Bearing;
-    use algorithm::haversine_destination::HaversineDestination;
+    use crate::algorithm::bearing::Bearing;
+    use crate::algorithm::haversine_destination::HaversineDestination;
 
     #[test]
     fn returns_the_proper_bearing_to_another_point() {

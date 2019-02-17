@@ -18,40 +18,40 @@ pub trait CoordinateType: Num + Copy + NumCast + PartialOrd {}
 impl<T: Num + Copy + NumCast + PartialOrd> CoordinateType for T {}
 
 mod coordinate;
-pub use coordinate::Coordinate;
+pub use crate::coordinate::Coordinate;
 
 mod point;
-pub use point::Point;
+pub use crate::point::Point;
 
 mod multi_point;
-pub use multi_point::MultiPoint;
+pub use crate::multi_point::MultiPoint;
 
 mod line;
-pub use line::Line;
+pub use crate::line::Line;
 
 pub mod line_string;
-pub use line_string::LineString;
+pub use crate::line_string::LineString;
 
 mod multi_line_string;
-pub use multi_line_string::MultiLineString;
+pub use crate::multi_line_string::MultiLineString;
 
 mod polygon;
-pub use polygon::Polygon;
+pub use crate::polygon::Polygon;
 
 mod multi_polygon;
-pub use multi_polygon::MultiPolygon;
+pub use crate::multi_polygon::MultiPolygon;
 
 mod geometry;
-pub use geometry::Geometry;
+pub use crate::geometry::Geometry;
 
 mod geometry_collection;
-pub use geometry_collection::GeometryCollection;
+pub use crate::geometry_collection::GeometryCollection;
 
 mod triangle;
-pub use triangle::Triangle;
+pub use crate::triangle::Triangle;
 
 mod rect;
-pub use rect::Rect;
+pub use crate::rect::Rect;
 
 #[doc(hidden)]
 pub mod private_utils;

@@ -1,9 +1,9 @@
 use num_traits::{Float, FromPrimitive};
 use std::iter::Sum;
 
-use algorithm::area::{get_linestring_area, Area};
-use algorithm::euclidean_length::EuclideanLength;
-use {Line, LineString, MultiPoint, MultiPolygon, Point, Polygon, Rect};
+use crate::algorithm::area::{get_linestring_area, Area};
+use crate::algorithm::euclidean_length::EuclideanLength;
+use crate::{Line, LineString, MultiPoint, MultiPolygon, Point, Polygon, Rect};
 
 /// Calculation of the centroid.
 /// The centroid is the arithmetic mean position of all points in the shape.
@@ -304,10 +304,10 @@ where
 
 #[cfg(test)]
 mod test {
-    use algorithm::centroid::Centroid;
-    use algorithm::euclidean_distance::EuclideanDistance;
+    use crate::algorithm::centroid::Centroid;
+    use crate::algorithm::euclidean_distance::EuclideanDistance;
     use num_traits::Float;
-    use {Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, COORD_PRECISION};
+    use crate::{Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, COORD_PRECISION};
 
     /// small helper to create a coordinate
     fn c<T: Float>(x: T, y: T) -> Coordinate<T> {

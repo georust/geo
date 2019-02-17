@@ -1,7 +1,7 @@
 use num_traits::{Float, FromPrimitive};
 
-use algorithm::vincenty_distance::{FailedToConvergeError, VincentyDistance};
-use {Line, LineString, MultiLineString};
+use crate::algorithm::vincenty_distance::{FailedToConvergeError, VincentyDistance};
+use crate::{Line, LineString, MultiLineString};
 
 /// Determine the length of a geometries using [Vincenty’s formulae].
 ///

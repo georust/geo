@@ -1,7 +1,7 @@
-use algorithm::convexhull::ConvexHull;
+use crate::algorithm::convexhull::ConvexHull;
 use num_traits::{Float, Signed};
-use {ExtremePoint, Extremes};
-use {MultiPoint, MultiPolygon, Point, Polygon};
+use crate::{ExtremePoint, Extremes};
+use crate::{MultiPoint, MultiPolygon, Point, Polygon};
 
 // Useful direction vectors, aligned with x and y axes:
 // 1., 0. = largest x
@@ -181,7 +181,7 @@ where
 mod test {
 
     use super::*;
-    use {LineString, Point};
+    use crate::{LineString, Point};
     #[test]
     fn test_polygon_extreme_x() {
         // a diamond shape

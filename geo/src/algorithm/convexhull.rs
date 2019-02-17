@@ -1,8 +1,8 @@
-use algorithm::euclidean_distance::EuclideanDistance;
+use crate::algorithm::euclidean_distance::EuclideanDistance;
 use num_traits::Float;
 use std::mem;
-use utils::partition_slice;
-use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use crate::utils::partition_slice;
+use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
     let tmp = mem::replace(slice, &mut []);
@@ -197,7 +197,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use {Coordinate, Point};
+    use crate::{Coordinate, Point};
 
     #[test]
     fn quick_hull_test1() {

@@ -1,5 +1,5 @@
 use num_traits::{Float, FromPrimitive};
-use {Point, MEAN_EARTH_RADIUS};
+use crate::{Point, MEAN_EARTH_RADIUS};
 
 /// Determine the distance between two geometries using the [haversine formula].
 ///
@@ -54,8 +54,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use algorithm::haversine_distance::HaversineDistance;
-    use Point;
+    use crate::algorithm::haversine_distance::HaversineDistance;
+    use crate::Point;
 
     #[test]
     fn distance1_test() {

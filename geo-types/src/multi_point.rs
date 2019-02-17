@@ -1,5 +1,5 @@
 use std::iter::FromIterator;
-use {CoordinateType, Point};
+use crate::{CoordinateType, Point};
 
 /// A collection of [`Point`s](struct.Point.html).
 ///

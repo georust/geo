@@ -1,5 +1,5 @@
 use num_traits::Float;
-use {CoordinateType, Point};
+use crate::{CoordinateType, Point};
 
 pub use geo_types::private_utils::COORD_PRECISION;
 
@@ -53,7 +53,7 @@ impl<F: Float> Closest<F> {
     /// Compare two `Closest`s relative to `p` and return a copy of the best
     /// one.
     pub fn best_of_two(&self, other: &Self, p: Point<F>) -> Self {
-        use algorithm::euclidean_distance::EuclideanDistance;
+        use crate::algorithm::euclidean_distance::EuclideanDistance;
 
         let left = match *self {
             Closest::Indeterminate => return *other,
