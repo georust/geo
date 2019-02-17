@@ -1,5 +1,13 @@
 # Changes
 
+## geo 0.12.0
+
+* Bump `geo-types` dependency to 0.4.0
+* Bump `rstar` and `proj` dependencies
+  * <https://github.com/georust/geo/pull/346>
+* Implement `Centroid` for `MultiPoint`
+  * <https://github.com/georust/geo/pull/322>
+
 ## geo-types 0.4.0
 
 * Rewrite `Polygon` structure to enforce closed `LineString` rings
