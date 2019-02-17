@@ -466,8 +466,8 @@ pub fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T
 where
     T: Float + RTreeNum,
 {
-    let tree_a: RTree<Line<_>> = RTree::bulk_load(&mut geom1.lines().collect::<Vec<_>>());
-    let tree_b: RTree<Line<_>> = RTree::bulk_load(&mut geom2.lines().collect::<Vec<_>>());
+    let tree_a: RTree<Line<_>> = RTree::bulk_load(geom1.lines().collect::<Vec<_>>());
+    let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect::<Vec<_>>());
     // Return minimum distance between all geom a points and all geom b points
     geom2
         .points_iter()

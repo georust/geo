@@ -196,7 +196,7 @@ where
     let mut rings = vec![];
     // Populate R* tree with exterior and interior samples, if any
     let mut tree: RTree<Line<_>> = RTree::bulk_load(
-        &mut exterior
+        exterior
             .lines()
             .chain(
                 interiors
