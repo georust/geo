@@ -1,5 +1,20 @@
 # Changes
 
+## geo-types 0.4.0
+
+* Rewrite `Polygon` structure to enforce closed `LineString` rings
+  * <https://github.com/georust/geo/pull/337>
+* Implement `Into<Geometry>` for `Line`
+  * <https://github.com/georust/geo/pull/340>
+* Implement `Index<usize>` for `LineString` to get the coordinate at that position
+  * <https://github.com/georust/geo/pull/341>
+* Bump `rstar` dependency
+  * <https://github.com/georust/geo/pull/346>
+* Ability to construct `MultiPolygon` from `Vec` of anything that implements `Into<Polygon>`
+  * <https://github.com/georust/geo/pull/342>
+* Add `new`, `is_empty`, `len` functions on `GeometryCollection`
+  * <https://github.com/georust/geo/pull/339>
+
 ## geo 0.11.0
 
 * Replace the [spade](https://crates.io/crates/spade) crate with the [rstar](https://crates.io/crates/rstar) crate
