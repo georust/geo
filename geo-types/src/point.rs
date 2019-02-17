@@ -360,11 +360,11 @@ where
 
     const DIMENSIONS: usize = 2;
 
-    fn generate<F>(f: F) -> Self
-    where
-        F: Fn(usize) -> Self::Scalar,
+    fn generate(
+        generator: impl Fn(usize) -> Self::Scalar
+    ) -> Self
     {
-        Point::new(f(0), f(1))
+        Point::new(generator(0), generator(1))
     }
 
     fn nth(&self, index: usize) -> Self::Scalar {

@@ -17,10 +17,10 @@ travis-ci = { repository = "georust/geo" }
 [dependencies]
 num-traits = "0.2"
 serde = { version = "1.0", optional = true, features = ["derive"] }
-rstar = { version = "0.1" }
+rstar = { version = "0.2" }
 failure = "0.1.2"
 postgis = { version = "0.6", optional = true }
-proj = { version = "0.5", optional = true }
+proj = { version = "0.7", optional = true }
 geo-types = { path = "../geo-types", features = ["rstar"] }
 
 [features]
@@ -30,7 +30,7 @@ use-proj = ["proj"]
 use-serde = ["serde", "geo-types/serde"]
 
 [dev-dependencies]
-approx = "0.1.1"
+approx = "0.3.0"
 criterion = { version = "0.2" }
 
 [[bench]]

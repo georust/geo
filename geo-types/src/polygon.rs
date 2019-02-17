@@ -351,7 +351,7 @@ where
         where F: FnMut(&mut [LineString<T>])
     {
         f(&mut self.interiors);
-        for mut interior in &mut self.interiors {
+        for interior in &mut self.interiors {
             interior.close();
         }
     }
