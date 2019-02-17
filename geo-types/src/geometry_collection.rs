@@ -13,7 +13,7 @@ where
 
 impl<T: CoordinateType> GeometryCollection<T> {
     /// Return an empty GeometryCollection
-    pub fn empty() -> GeometryCollection<T> {
+    pub fn new() -> GeometryCollection<T> {
         GeometryCollection(Vec::new())
     }
 
