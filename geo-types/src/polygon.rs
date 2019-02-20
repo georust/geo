@@ -358,6 +358,47 @@ where
         }
     }
 
+    /// Add to the interiors
+    /// The new `LineString` [will be closed]:
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{Coordinate, LineString, Polygon};
+    ///
+    /// let mut polygon = Polygon::new(LineString::from(vec![
+    ///     (0., 0.),
+    ///     (1., 1.),
+    ///     (1., 0.),
+    ///     (0., 0.),
+    /// ]), vec![]);
+    ///
+    /// assert_eq!(polygon.interiors().len(), 0);
+    ///
+    /// polygon.interiors_push(vec![
+    ///         (0.1, 0.1),
+    ///         (0.9, 0.9),
+    ///         (0.9, 0.1),
+    ///     ]);
+    ///
+    /// assert_eq!(polygon.interiors(), &[
+    ///     LineString::from(vec![
+    ///         (0.1, 0.1),
+    ///         (0.9, 0.9),
+    ///         (0.9, 0.1),
+    ///         (0.1, 0.1),
+    ///     ])
+    /// ]);
+    /// ```
+    ///
+    /// [will be closed]: #linestring-closing-operation
+    pub fn interiors_push(&mut self, new_interior: impl Into<LineString<T>>)
+    {
+        let mut new_interior = new_interior.into();
+        new_interior.close();
+        self.interiors.push(new_interior);
+    }
+
     /// Wrap-around previous-vertex
     fn previous_vertex(&self, current_vertex: usize) -> usize
     where
