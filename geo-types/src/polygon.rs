@@ -358,8 +358,9 @@ where
         }
     }
 
-    /// Add to the interiors
-    /// The new `LineString` [will be closed]:
+    /// Add an interior ring to the `Polygon`.
+    ///
+    /// The new `LineString` interior ring [will be closed]:
     ///
     /// # Examples
     ///
