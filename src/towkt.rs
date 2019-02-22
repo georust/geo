@@ -68,10 +68,8 @@ fn g_lines_to_w_lines(g_lines: &[geo_types::LineString<f64>]) -> Vec<LineString>
 }
 
 fn g_polygon_to_w_polygon(g_polygon: &geo_types::Polygon<f64>) -> Polygon {
-    let &geo_types::Polygon {
-        exterior: ref outer_line,
-        interiors: ref inner_lines,
-    } = g_polygon;
+    let outer_line = g_polygon.exterior();
+    let inner_lines = g_polygon.interiors();
     let mut poly_lines = vec![];
 
     // Outer
