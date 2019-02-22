@@ -1,5 +1,10 @@
 # Changes
 
+## geo-types 0.4.1
+
+* Add `Polygon::interiors_push` - Adds an interior ring to a `Polygon`
+  * <https://github.com/georust/geo/pull/347>
+
 ## geo 0.12.0
 
 * Bump `geo-types` dependency to 0.4.0
