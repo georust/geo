@@ -2,15 +2,14 @@ use crate::euclidean_distance::EuclideanDistance;
 use crate::{LineString, Point};
 use num_traits::{Float, FromPrimitive};
 
-/// Determine the similarity between two `LineStrings` using the [frechet distance].
+/// Determine the similarity between two `LineStrings` using the [Frechet distance].
 ///
-/// [frechet distance]: https://en.wikipedia.org/wiki/Fr%C3%A9chet_distance
+/// Based on [Computing Discrete Frechet Distance] by T. Eiter and H. Mannila.
+///
+/// [Frechet distance]: https://en.wikipedia.org/wiki/Fr%C3%A9chet_distance
+/// [Computing Discrete Frechet Distance]: http://www.kr.tuwien.ac.at/staff/eiter/et-archive/cdtr9464.pdf
 pub trait FrechetDistance<T, Rhs = Self> {
-    /// Determine the similarity between two `LineStrings` using the [frechet distance].
-    ///
-    /// # Units
-    ///
-    /// - return value: float
+    /// Determine the similarity between two `LineStrings` using the [Frechet distance].
     ///
     /// # Examples
     ///
@@ -26,7 +25,7 @@ pub trait FrechetDistance<T, Rhs = Self> {
     /// assert_eq!(2., distance);
     /// ```
     ///
-    /// [frechet distance]: https://en.wikipedia.org/wiki/Fr%C3%A9chet_distance
+    /// [Frechet distance]: https://en.wikipedia.org/wiki/Fr%C3%A9chet_distance
     fn frechet_distance(&self, rhs: &Rhs) -> T;
 }
 
@@ -35,44 +34,42 @@ where
     T: Float + FromPrimitive,
 {
     fn frechet_distance(&self, ls: &LineString<T>) -> T {
-        let points_a: Vec<Point<T>> = self.clone().into_points();
-        let points_b: Vec<Point<T>> = ls.clone().into_points();
-        if points_a.len() != 0 && points_b.len() != 0 {
+        if self.len() != 0 && ls.len() != 0 {
             let mut data = Data {
-                cache: vec![vec![T::nan(); points_b.len()]; points_a.len()],
-                points_a,
-                points_b,
+                cache: vec![vec![T::nan(); ls.len()]; self.len()],
+                ls_a: self,
+                ls_b: ls,
             };
-            data.c(data.points_a.len() - 1, data.points_b.len() - 1)
+            data.compute(self.len() - 1, ls.len() - 1)
         } else {
             T::zero()
         }
     }
 }
 
-struct Data<T>
+struct Data<'a, T>
 where
     T: Float + FromPrimitive,
 {
     cache: Vec<Vec<T>>,
-    points_a: Vec<Point<T>>,
-    points_b: Vec<Point<T>>,
+    ls_a: &'a LineString<T>,
+    ls_b: &'a LineString<T>,
 }
 
-impl<T> Data<T>
+impl<'a, T> Data<'a, T>
 where
     T: Float + FromPrimitive,
 {
-    fn c(&mut self, i: usize, j: usize) -> T {
+    fn compute(&mut self, i: usize, j: usize) -> T {
         if self.cache[i][j].is_nan() {
-            let eucl = self.points_a[i].euclidean_distance(&self.points_b[j]);
+            let eucl = Point::from(self.ls_a[i]).euclidean_distance(&Point::from(self.ls_b[j]));
             self.cache[i][j] = match (i, j) {
                 (0, 0) => eucl,
-                (_, 0) => self.c(i - 1, 0).max(eucl),
-                (0, _) => self.c(0, j - 1).max(eucl),
-                (_, _) => {
-                    ((self.c(i - 1, j).min(self.c(i - 1, j - 1))).min(self.c(i, j - 1))).max(eucl)
-                }
+                (_, 0) => self.compute(i - 1, 0).max(eucl),
+                (0, _) => self.compute(0, j - 1).max(eucl),
+                (_, _) => ((self.compute(i - 1, j).min(self.compute(i - 1, j - 1)))
+                    .min(self.compute(i, j - 1)))
+                .max(eucl),
             };
         }
         self.cache[i][j]
