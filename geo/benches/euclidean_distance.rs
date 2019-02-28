@@ -5,8 +5,6 @@ use geo::convexhull::ConvexHull;
 use geo::euclidean_distance::EuclideanDistance;
 use geo::Polygon;
 
-use criterion::Criterion;
-
 fn criterion_benchmark(c: &mut criterion::Criterion) {
     c.bench_function("Polygon Euclidean distance RTree f64", |bencher| {
         let points = include!("../src/algorithm/test_fixtures/norway_nonconvex_hull.rs");
