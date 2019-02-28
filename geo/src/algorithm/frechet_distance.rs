@@ -34,13 +34,13 @@ where
     T: Float + FromPrimitive,
 {
     fn frechet_distance(&self, ls: &LineString<T>) -> T {
-        if self.len() != 0 && ls.len() != 0 {
+        if self.nb_coords() != 0 && ls.nb_coords() != 0 {
             let mut data = Data {
-                cache: vec![vec![T::nan(); ls.len()]; self.len()],
+                cache: vec![vec![T::nan(); ls.nb_coords()]; self.nb_coords()],
                 ls_a: self,
                 ls_b: ls,
             };
-            data.compute(self.len() - 1, ls.len() - 1)
+            data.compute(self.nb_coords() - 1, ls.nb_coords() - 1)
         } else {
             T::zero()
         }
