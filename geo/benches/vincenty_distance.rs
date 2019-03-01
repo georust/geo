@@ -2,7 +2,6 @@
 extern crate criterion;
 extern crate geo;
 
-use criterion::Criterion;
 use geo::prelude::*;
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {
