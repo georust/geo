@@ -26,6 +26,9 @@ mod traits;
 mod types;
 mod utils;
 
+#[macro_use]
+mod macros;
+
 #[cfg(test)]
 #[macro_use]
 extern crate approx;

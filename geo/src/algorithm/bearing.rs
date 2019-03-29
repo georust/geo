@@ -45,19 +45,19 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use crate::algorithm::bearing::Bearing;
     use crate::algorithm::haversine_destination::HaversineDestination;
+    use crate::point;
 
     #[test]
     fn returns_the_proper_bearing_to_another_point() {
-        let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
+        let p_1 = point!(x: 9.177789688110352f64, y: 48.776781529534965);
         let p_2 = p_1.haversine_destination(45., 10000.);
         let b_1 = p_1.bearing(p_2);
         assert_relative_eq!(b_1, 45., epsilon = 1.0e-6);
 
-        let p_3 = Point::<f64>::new(9., 47.);
-        let p_4 = Point::<f64>::new(9., 48.);
+        let p_3 = point!(x: 9., y: 47.);
+        let p_4 = point!(x: 9., y: 48.);
         let b_2 = p_3.bearing(p_4);
         assert_relative_eq!(b_2, 0., epsilon = 1.0e-6);
     }

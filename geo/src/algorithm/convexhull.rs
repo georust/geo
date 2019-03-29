@@ -197,7 +197,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{Coordinate, Point};
+    use crate::{line_string, Coordinate, Point};
 
     #[test]
     fn quick_hull_test1() {
@@ -332,18 +332,17 @@ mod test {
     }
     #[test]
     fn quick_hull_linestring_test() {
-        let v = vec![
-            (0.0, 10.0),
-            (1.0, 1.0),
-            (10.0, 0.0),
-            (1.0, -1.0),
-            (0.0, -10.0),
-            (-1.0, -1.0),
-            (-10.0, 0.0),
-            (-1.0, 1.0),
-            (0.0, 10.0),
+        let mp = line_string![
+            (x: 0.0, y: 10.0),
+            (x: 1.0, y: 1.0),
+            (x: 10.0, y: 0.0),
+            (x: 1.0, y: -1.0),
+            (x: 0.0, y: -10.0),
+            (x: -1.0, y: -1.0),
+            (x: -10.0, y: 0.0),
+            (x: -1.0, y: 1.0),
+            (x: 0.0, y: 10.0)
         ];
-        let mp = LineString::from(v);
         let correct = vec![
             Coordinate::from((0.0, -10.0)),
             Coordinate::from((10.0, 0.0)),
@@ -356,8 +355,8 @@ mod test {
     }
     #[test]
     fn quick_hull_multilinestring_test() {
-        let v1 = LineString::from(vec![(0.0, 0.0), (1.0, 10.0)]);
-        let v2 = LineString::from(vec![(1.0, 10.0), (2.0, 0.0), (3.0, 1.0)]);
+        let v1 = line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0)];
+        let v2 = line_string![(x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 3.0, y: 1.0)];
         let mls = MultiLineString(vec![v1, v2]);
         let correct = vec![
             Coordinate::from((2.0, 0.0)),
@@ -371,8 +370,10 @@ mod test {
     }
     #[test]
     fn quick_hull_multipolygon_test() {
-        let ls1 = LineString::from(vec![(0.0, 0.0), (1.0, 10.0), (2.0, 0.0), (0.0, 0.0)]);
-        let ls2 = LineString::from(vec![(3.0, 0.0), (4.0, 10.0), (5.0, 0.0), (3.0, 0.0)]);
+        let ls1 =
+            line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 0.0, y: 0.0)];
+        let ls2 =
+            line_string![(x: 3.0, y: 0.0), (x: 4.0, y: 10.0), (x: 5.0, y: 0.0), (x: 3.0, y: 0.0)];
         let p1 = Polygon::new(ls1, vec![]);
         let p2 = Polygon::new(ls2, vec![]);
         let mp = MultiPolygon(vec![p1, p2]);

@@ -261,38 +261,48 @@ where
 #[cfg(test)]
 mod test {
     use crate::algorithm::intersects::Intersects;
-    use crate::{Coordinate, Line, LineString, Point, Polygon, Rect};
+    use crate::{line_string, polygon, Coordinate, Line, LineString, Point, Polygon, Rect};
+
     /// Tests: intersection LineString and LineString
     #[test]
     fn empty_linestring1_test() {
-        let linestring = LineString::from(vec![(3., 2.), (7., 6.)]);
-        assert!(!LineString(Vec::new()).intersects(&linestring));
+        let linestring = line_string![(x: 3., y: 2.), (x: 7., y: 6.)];
+        assert!(!line_string![].intersects(&linestring));
     }
     #[test]
     fn empty_linestring2_test() {
-        let linestring = LineString::from(vec![(3., 2.), (7., 6.)]);
+        let linestring = line_string![(x: 3., y: 2.), (x: 7., y: 6.)];
         assert!(!linestring.intersects(&LineString(Vec::new())));
     }
     #[test]
     fn empty_all_linestring_test() {
-        assert!(!LineString::<f64>(Vec::new()).intersects(&LineString(Vec::new())));
+        let empty: LineString<f64> = line_string![];
+        assert!(!empty.intersects(&empty));
     }
     #[test]
     fn intersect_linestring_test() {
-        let linestring = LineString::from(vec![(3., 2.), (7., 6.)]);
-        assert!(linestring.intersects(&LineString::from(vec![(3., 4.), (8., 4.)])));
+        let ls1 = line_string![(x: 3., y: 2.), (x: 7., y: 6.)];
+        let ls2 = line_string![(x: 3., y: 4.), (x: 8., y: 4.)];
+        assert!(ls1.intersects(&ls2));
     }
     #[test]
     fn parallel_linestrings_test() {
-        let linestring = LineString::from(vec![(3., 2.), (7., 6.)]);
-        assert!(!linestring.intersects(&LineString::from(vec![(3., 1.), (7., 5.)])));
+        let ls1 = line_string![(x: 3., y: 2.), (x: 7., y: 6.)];
+        let ls2 = line_string![(x: 3., y: 1.), (x: 7., y: 5.)];
+        assert!(!ls1.intersects(&ls2));
     }
     /// Tests: intersection LineString and Polygon
     #[test]
     fn linestring_in_polygon_test() {
-        let linestring = LineString::from(vec![(0., 0.), (5., 0.), (5., 6.), (0., 6.), (0., 0.)]);
-        let poly = Polygon::new(linestring, Vec::new());
-        assert!(poly.intersects(&LineString::from(vec![(2., 2.), (3., 3.)])));
+        let poly = polygon![
+            (x: 0., y: 0.),
+            (x: 5., y: 0.),
+            (x: 5., y: 6.),
+            (x: 0., y: 6.),
+            (x: 0., y: 0.),
+        ];
+        let ls = line_string![(x: 2., y: 2.), (x: 3., y: 3.)];
+        assert!(poly.intersects(&ls));
     }
     #[test]
     fn linestring_on_boundary_polygon_test() {
