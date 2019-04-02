@@ -159,9 +159,9 @@ impl<T: CoordinateType> LineString<T> {
     ///
     /// let mut coords = vec![(0., 0.), (5., 0.), (7., 9.)];
     /// let line_string: LineString<f32> = coords.into_iter().collect();
-    /// assert_eq!(3, line_string.nb_coords());
+    /// assert_eq!(3, line_string.num_coords());
     /// ```
-    pub fn nb_coords(&self) -> usize {
+    pub fn num_coords(&self) -> usize {
         self.0.len()
     }
 }
