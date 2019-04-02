@@ -149,6 +149,21 @@ impl<T: CoordinateType> LineString<T> {
             }
         }
     }
+
+    /// Return the number of coordinates in the `LineString`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::LineString;
+    ///
+    /// let mut coords = vec![(0., 0.), (5., 0.), (7., 9.)];
+    /// let line_string: LineString<f32> = coords.into_iter().collect();
+    /// assert_eq!(3, line_string.num_coords());
+    /// ```
+    pub fn num_coords(&self) -> usize {
+        self.0.len()
+    }
 }
 
 /// Turn a `Vec` of `Point`-ish objects into a `LineString`.

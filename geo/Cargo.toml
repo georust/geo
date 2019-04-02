@@ -61,5 +61,9 @@ harness = false
 name = "simplify"
 harness = false
 
+[[bench]]
+name = "frechet_distance"
+harness = false
+
 [package.metadata.docs.rs]
 features = ["postgis"]

@@ -18,6 +18,8 @@ pub mod euclidean_distance;
 pub mod euclidean_length;
 /// Calculate the extreme indices of a `Polygon`, `MultiPolygon`, or `MultiPoint`.
 pub mod extremes;
+/// Calculate the Frechet distance between two `LineStrings`.
+pub mod frechet_distance;
 /// Produces a `Geometry` from PostGIS.
 #[cfg(feature = "postgis-integration")]
 pub mod from_postgis;
