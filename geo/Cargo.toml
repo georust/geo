@@ -21,6 +21,9 @@ rstar = { version = "0.2" }
 failure = "0.1.2"
 postgis = { version = "0.6", optional = true }
 proj = { version = "0.7", optional = true }
+
+# Swap the next two lines when publishing
+# geo-types = { version = "0.4.2", features = ["rstar"] }
 geo-types = { path = "../geo-types", features = ["rstar"] }
 
 [features]
