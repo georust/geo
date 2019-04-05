@@ -1,5 +1,15 @@
 # Changes
 
+## geo 0.12.1
+
+* Add `FrechetDistance` algorithm
+  * <https://github.com/georust/geo/pull/348>
+
+## geo-types 0.4.2
+
+* Add `Polygon::num_coords`
+  * <https://github.com/georust/geo/pull/348>
+
 ## geo-types 0.4.1
 
 * Add `Polygon::interiors_push` - Adds an interior ring to a `Polygon`
