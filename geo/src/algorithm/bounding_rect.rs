@@ -139,20 +139,20 @@ where
 #[cfg(test)]
 mod test {
     use crate::algorithm::bounding_rect::BoundingRect;
+    use crate::line_string;
     use crate::{
         Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon, Rect,
     };
 
     #[test]
     fn empty_linestring_test() {
-        let linestring: LineString<f32> = LineString(vec![]);
+        let linestring: LineString<f32> = line_string![];
         let bounding_rect = linestring.bounding_rect();
         assert!(bounding_rect.is_none());
     }
     #[test]
     fn linestring_one_point_test() {
-        let vec = vec![(40.02f64, 116.34)];
-        let linestring = LineString::from(vec);
+        let linestring = line_string![(x: 40.02f64, y: 116.34)];
         let bounding_rect = Rect {
             min: Coordinate {
                 x: 40.02f64,
@@ -167,7 +167,12 @@ mod test {
     }
     #[test]
     fn linestring_test() {
-        let linestring = LineString::from(vec![(1., 1.), (2., -2.), (-3., -3.), (-4., 4.)]);
+        let linestring = line_string![
+            (x: 1., y: 1.),
+            (x: 2., y: -2.),
+            (x: -3., y: -3.),
+            (x: -4., y: 4.)
+        ];
         let bounding_rect = Rect {
             min: Coordinate { x: -4., y: -3. },
             max: Coordinate { x: 2., y: 4. },
@@ -177,10 +182,10 @@ mod test {
     #[test]
     fn multilinestring_test() {
         let multiline = MultiLineString(vec![
-            LineString::from(vec![(1., 1.), (-40., 1.)]),
-            LineString::from(vec![(1., 1.), (50., 1.)]),
-            LineString::from(vec![(1., 1.), (1., -60.)]),
-            LineString::from(vec![(1., 1.), (1., 70.)]),
+            line_string![(x: 1., y: 1.), (x: -40., y: 1.)],
+            line_string![(x: 1., y: 1.), (x: 50., y: 1.)],
+            line_string![(x: 1., y: 1.), (x: 1., y: -60.)],
+            line_string![(x: 1., y: 1.), (x: 1., y: 70.)],
         ]);
         let bounding_rect = Rect {
             min: Coordinate { x: -40., y: -60. },

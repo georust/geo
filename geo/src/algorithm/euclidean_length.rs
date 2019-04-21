@@ -57,42 +57,46 @@ where
 #[cfg(test)]
 mod test {
     use crate::algorithm::euclidean_length::EuclideanLength;
-    use crate::{Coordinate, Line, LineString, MultiLineString};
+    use crate::line_string;
+    use crate::{Coordinate, Line, MultiLineString};
 
     #[test]
     fn empty_linestring_test() {
-        let linestring = LineString::<f64>(Vec::new());
+        let linestring = line_string![];
         assert_eq!(0.0_f64, linestring.euclidean_length());
     }
     #[test]
     fn linestring_one_point_test() {
-        let linestring = LineString::from(vec![(0., 0.)]);
+        let linestring = line_string![(x: 0., y: 0.)];
         assert_eq!(0.0_f64, linestring.euclidean_length());
     }
     #[test]
     fn linestring_test() {
-        let linestring = LineString::from(vec![
-            (1., 1.),
-            (7., 1.),
-            (8., 1.),
-            (9., 1.),
-            (10., 1.),
-            (11., 1.),
-        ]);
+        let linestring = line_string![
+            (x: 1., y: 1.),
+            (x: 7., y: 1.),
+            (x: 8., y: 1.),
+            (x: 9., y: 1.),
+            (x: 10., y: 1.),
+            (x: 11., y: 1.)
+        ];
         assert_eq!(10.0_f64, linestring.euclidean_length());
     }
     #[test]
     fn multilinestring_test() {
         let mline = MultiLineString(vec![
-            LineString::from(vec![
-                (1., 0.),
-                (7., 0.),
-                (8., 0.),
-                (9., 0.),
-                (10., 0.),
-                (11., 0.),
-            ]),
-            LineString::from(vec![(0., 0.), (0., 5.)]),
+            line_string![
+                (x: 1., y: 0.),
+                (x: 7., y: 0.),
+                (x: 8., y: 0.),
+                (x: 9., y: 0.),
+                (x: 10., y: 0.),
+                (x: 11., y: 0.)
+            ],
+            line_string![
+                (x: 0., y: 0.),
+                (x: 0., y: 5.)
+            ],
         ]);
         assert_eq!(15.0_f64, mline.euclidean_length());
     }
