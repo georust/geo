@@ -472,7 +472,7 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Rect<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Coordinate;
+    use crate::{polygon, Coordinate};
 
     #[test]
     fn point() {
@@ -562,61 +562,65 @@ mod test {
 
     #[test]
     fn multipolygon() {
-        let poly1 = Polygon::new(
-            LineString::from(vec![(0., 0.), (10., 0.), (10., 10.), (0., 10.), (0., 0.)]),
-            vec![],
-        );
-        let poly2 = Polygon::new(
-            LineString::from(vec![
-                (11., 11.),
-                (20., 11.),
-                (20., 20.),
-                (11., 20.),
-                (11., 11.),
-            ]),
-            vec![LineString::from(vec![
-                (13., 13.),
-                (13., 17.),
-                (17., 17.),
-                (17., 13.),
-                (13., 13.),
-            ])],
-        );
+        let poly1 = polygon![
+            (x: 0., y: 0.),
+            (x: 10., y: 0.),
+            (x: 10., y: 10.),
+            (x: 0., y: 10.),
+            (x: 0., y: 0.),
+        ];
+        let poly2 = polygon![
+            exterior: [
+                (x: 11., y: 11.),
+                (x: 20., y: 11.),
+                (x: 20., y: 20.),
+                (x: 11., y: 20.),
+                (x: 11., y: 11.),
+            ],
+            interiors: [
+                [
+                    (x: 13., y: 13.),
+                    (x: 13., y: 17.),
+                    (x: 17., y: 17.),
+                    (x: 17., y: 13.),
+                    (x: 13., y: 13.),
+                ]
+            ],
+        ];
 
         let mp = MultiPolygon(vec![poly1, poly2]);
         let mp2 = mp.map_coords(&|&(x, y)| (x * 2., y + 100.));
         assert_eq!(mp2.0.len(), 2);
         assert_eq!(
             mp2.0[0],
-            Polygon::new(
-                LineString::from(vec![
-                    (0., 100.),
-                    (20., 100.),
-                    (20., 110.),
-                    (0., 110.),
-                    (0., 100.),
-                ]),
-                vec![]
-            )
+            polygon![
+                (x: 0., y: 100.),
+                (x: 20., y: 100.),
+                (x: 20., y: 110.),
+                (x: 0., y: 110.),
+                (x: 0., y: 100.),
+            ],
         );
         assert_eq!(
             mp2.0[1],
-            Polygon::new(
-                LineString::from(vec![
-                    (22., 111.),
-                    (40., 111.),
-                    (40., 120.),
-                    (22., 120.),
-                    (22., 111.),
-                ]),
-                vec![LineString::from(vec![
-                    (26., 113.),
-                    (26., 117.),
-                    (34., 117.),
-                    (34., 113.),
-                    (26., 113.),
-                ])]
-            )
+            polygon![
+                exterior: [
+                    (x: 22., y: 111.),
+                    (x: 40., y: 111.),
+                    (x: 40., y: 120.),
+                    (x: 22., y: 120.),
+                    (x: 22., y: 111.),
+                ],
+                interiors: [
+                    [
+                        (x: 26., y: 113.),
+                        (x: 26., y: 117.),
+                        (x: 34., y: 117.),
+                        (x: 34., y: 113.),
+                        (x: 26., y: 113.),
+                    ],
+                ],
+            ],
         );
     }
 

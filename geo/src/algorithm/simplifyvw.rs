@@ -598,7 +598,8 @@ mod test {
         SimplifyVWPreserve,
     };
     use crate::{
-        line_string, point, Coordinate, LineString, MultiLineString, MultiPolygon, Point, Polygon,
+        line_string, point, polygon, Coordinate, LineString, MultiLineString, MultiPolygon, Point,
+        Polygon,
     };
 
     #[test]
@@ -812,32 +813,26 @@ mod test {
 
     #[test]
     fn polygon() {
-        let poly = Polygon::new(
-            LineString::from(vec![
-                (0., 0.),
-                (0., 10.),
-                (5., 11.),
-                (10., 10.),
-                (10., 0.),
-                (0., 0.),
-            ]),
-            vec![],
-        );
+        let poly = polygon![
+            (x: 0., y: 0.),
+            (x: 0., y: 10.),
+            (x: 5., y: 11.),
+            (x: 10., y: 10.),
+            (x: 10., y: 0.),
+            (x: 0., y: 0.),
+        ];
 
         let poly2 = poly.simplifyvw(&10.);
 
         assert_eq!(
             poly2,
-            Polygon::new(
-                LineString::from(vec![
-                    Point::new(0., 0.),
-                    Point::new(0., 10.),
-                    Point::new(10., 10.),
-                    Point::new(10., 0.),
-                    Point::new(0., 0.),
-                ]),
-                vec![],
-            )
+            polygon![
+                (x: 0., y: 0.),
+                (x: 0., y: 10.),
+                (x: 10., y: 10.),
+                (x: 10., y: 0.),
+                (x: 0., y: 0.),
+            ],
         );
     }
 

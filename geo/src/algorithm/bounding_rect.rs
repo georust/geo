@@ -141,7 +141,8 @@ mod test {
     use crate::algorithm::bounding_rect::BoundingRect;
     use crate::line_string;
     use crate::{
-        Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon, Rect,
+        polygon, Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon,
+        Rect,
     };
 
     #[test]
@@ -204,7 +205,13 @@ mod test {
     }
     #[test]
     fn polygon_test() {
-        let linestring = LineString::from(vec![(0., 0.), (5., 0.), (5., 6.), (0., 6.), (0., 0.)]);
+        let linestring = line_string![
+            (x: 0., y: 0.),
+            (x: 5., y: 0.),
+            (x: 5., y: 6.),
+            (x: 0., y: 6.),
+            (x: 0., y: 0.),
+        ];
         let line_bounding_rect = linestring.bounding_rect().unwrap();
         let poly = Polygon::new(linestring, Vec::new());
         assert_eq!(line_bounding_rect, poly.bounding_rect().unwrap());
@@ -212,18 +219,9 @@ mod test {
     #[test]
     fn multipolygon_test() {
         let mpoly = MultiPolygon(vec![
-            Polygon::new(
-                LineString::from(vec![(0., 0.), (50., 0.), (0., -70.), (0., 0.)]),
-                Vec::new(),
-            ),
-            Polygon::new(
-                LineString::from(vec![(0., 0.), (5., 0.), (0., 80.), (0., 0.)]),
-                Vec::new(),
-            ),
-            Polygon::new(
-                LineString::from(vec![(0., 0.), (-60., 0.), (0., 6.), (0., 0.)]),
-                Vec::new(),
-            ),
+            polygon![(x: 0., y: 0.), (x: 50., y: 0.), (x: 0., y: -70.), (x: 0., y: 0.)],
+            polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 0., y: 80.), (x: 0., y: 0.)],
+            polygon![(x: 0., y: 0.), (x: -60., y: 0.), (x: 0., y: 6.), (x: 0., y: 0.)],
         ]);
         let bounding_rect = Rect {
             min: Coordinate { x: -60., y: -70. },

@@ -14,16 +14,16 @@ where
     /// # Examples
     ///
     /// ```
-    /// use geo::{Coordinate, Point, LineString, Polygon};
+    /// use geo::polygon;
     /// use geo::algorithm::area::Area;
     ///
-    /// let mut polygon = Polygon::new(LineString::from(vec![
-    ///     (0., 0.),
-    ///     (5., 0.),
-    ///     (5., 6.),
-    ///     (0., 6.),
-    ///     (0., 0.)
-    /// ]), vec![]);
+    /// let mut polygon = polygon![
+    ///     (x: 0., y: 0.),
+    ///     (x: 5., y: 0.),
+    ///     (x: 5., y: 6.),
+    ///     (x: 0., y: 6.),
+    ///     (x: 0., y: 0.),
+    /// ];
     ///
     /// assert_eq!(polygon.area(), 30.);
     ///
@@ -142,28 +142,31 @@ mod test {
     }
     #[test]
     fn area_polygon_inner_test() {
-        let outer = line_string![
-            (x: 0., y: 0.),
-            (x: 10., y: 0.),
-            (x: 10., y: 10.),
-            (x: 0., y: 10.),
-            (x: 0., y: 0.)
+        let poly = polygon![
+            exterior: [
+                (x: 0., y: 0.),
+                (x: 10., y: 0.),
+                (x: 10., y: 10.),
+                (x: 0., y: 10.),
+                (x: 0., y: 0.)
+            ],
+            interiors: [
+                [
+                    (x: 1., y: 1.),
+                    (x: 2., y: 1.),
+                    (x: 2., y: 2.),
+                    (x: 1., y: 2.),
+                    (x: 1., y: 1.),
+                ],
+                [
+                    (x: 5., y: 5.),
+                    (x: 6., y: 5.),
+                    (x: 6., y: 6.),
+                    (x: 5., y: 6.),
+                    (x: 5., y: 5.)
+                ],
+            ],
         ];
-        let inner0 = line_string![
-            (x: 1., y: 1.),
-            (x: 2., y: 1.),
-            (x: 2., y: 2.),
-            (x: 1., y: 2.),
-            (x: 1., y: 1.)
-        ];
-        let inner1 = line_string![
-            (x: 5., y: 5.),
-            (x: 6., y: 5.),
-            (x: 6., y: 6.),
-            (x: 5., y: 6.),
-            (x: 5., y: 5.)
-        ];
-        let poly = Polygon::new(outer, vec![inner0, inner1]);
         assert_relative_eq!(poly.area(), 98.);
     }
     #[test]
