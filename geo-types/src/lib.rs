@@ -53,6 +53,9 @@ pub use crate::triangle::Triangle;
 mod rect;
 pub use crate::rect::Rect;
 
+#[macro_use]
+mod macros;
+
 #[doc(hidden)]
 pub mod private_utils;
 

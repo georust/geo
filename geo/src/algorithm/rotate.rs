@@ -217,7 +217,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{line_string, point, polygon, Coordinate, LineString, Point, Polygon};
+    use crate::{line_string, point, polygon, Coordinate, Point};
 
     #[test]
     fn test_rotate_around_point() {
@@ -274,23 +274,33 @@ mod test {
     }
     #[test]
     fn test_rotate_polygon_holes() {
-        let ls1 = line_string![
-            (x: 5.0, y: 1.0),
-            (x: 4.0, y: 2.0),
-            (x: 4.0, y: 3.0),
-            (x: 5.0, y: 4.0),
-            (x: 6.0, y: 4.0),
-            (x: 7.0, y: 3.0),
-            (x: 7.0, y: 2.0),
-            (x: 6.0, y: 1.0),
-            (x: 5.0, y: 1.0)
+        let poly1 = polygon![
+            exterior: [
+                (x: 5.0, y: 1.0),
+                (x: 4.0, y: 2.0),
+                (x: 4.0, y: 3.0),
+                (x: 5.0, y: 4.0),
+                (x: 6.0, y: 4.0),
+                (x: 7.0, y: 3.0),
+                (x: 7.0, y: 2.0),
+                (x: 6.0, y: 1.0),
+                (x: 5.0, y: 1.0)
+            ],
+            interiors: [
+                [
+                    (x: 5.0, y: 1.3),
+                    (x: 5.5, y: 2.0),
+                    (x: 6.0, y: 1.3),
+                    (x: 5.0, y: 1.3),
+                ],
+                [
+                    (x: 5., y: 2.3),
+                    (x: 5.5, y: 3.0),
+                    (x: 6., y: 2.3),
+                    (x: 5., y: 2.3),
+                ],
+            ],
         ];
-
-        let ls2 = LineString::from(vec![(5.0, 1.3), (5.5, 2.0), (6.0, 1.3), (5.0, 1.3)]);
-
-        let ls3 = LineString::from(vec![(5., 2.3), (5.5, 3.0), (6., 2.3), (5., 2.3)]);
-
-        let poly1 = Polygon::new(ls1, vec![ls2, ls3]);
         let rotated = poly1.rotate(-15.0);
         let correct_outside = vec![
             Coordinate::from((4.628808519201685, 1.180520783117658)),

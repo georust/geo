@@ -114,16 +114,29 @@ pub trait ConvexHull<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString, Polygon};
+    /// use geo::{line_string, polygon};
     /// use geo::convexhull::ConvexHull;
+    ///
     /// // an L shape
-    /// let coords = vec![(0.0, 0.0), (4.0, 0.0), (4.0, 1.0), (1.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0)];
-    /// let ls: LineString<_> = coords.iter().map(|e| Point::new(e.0, e.1)).collect();
-    /// let poly = Polygon::new(ls, vec![]);
+    /// let poly = polygon![
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 4.0, y: 0.0),
+    ///     (x: 4.0, y: 1.0),
+    ///     (x: 1.0, y: 1.0),
+    ///     (x: 1.0, y: 4.0),
+    ///     (x: 0.0, y: 4.0),
+    ///     (x: 0.0, y: 0.0),
+    /// ];
     ///
     /// // The correct convex hull coordinates
-    /// let hull_coords = vec![(4.0, 0.0), (4.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0), (4.0, 0.0)];
-    /// let correct_hull: LineString<_> = hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect();
+    /// let correct_hull = line_string![
+    ///     (x: 4.0, y: 0.0),
+    ///     (x: 4.0, y: 1.0),
+    ///     (x: 1.0, y: 4.0),
+    ///     (x: 0.0, y: 4.0),
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 4.0, y: 0.0),
+    /// ];
     ///
     /// let res = poly.convex_hull();
     /// assert_eq!(res.exterior(), &correct_hull);
@@ -197,7 +210,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{line_string, Coordinate, Point};
+    use crate::{line_string, polygon, Coordinate, Point};
 
     #[test]
     fn quick_hull_test1() {
@@ -341,7 +354,7 @@ mod test {
             (x: -1.0, y: -1.0),
             (x: -10.0, y: 0.0),
             (x: -1.0, y: 1.0),
-            (x: 0.0, y: 10.0)
+            (x: 0.0, y: 10.0),
         ];
         let correct = vec![
             Coordinate::from((0.0, -10.0)),
@@ -370,12 +383,8 @@ mod test {
     }
     #[test]
     fn quick_hull_multipolygon_test() {
-        let ls1 =
-            line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 0.0, y: 0.0)];
-        let ls2 =
-            line_string![(x: 3.0, y: 0.0), (x: 4.0, y: 10.0), (x: 5.0, y: 0.0), (x: 3.0, y: 0.0)];
-        let p1 = Polygon::new(ls1, vec![]);
-        let p2 = Polygon::new(ls2, vec![]);
+        let p1 = polygon![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 0.0, y: 0.0)];
+        let p2 = polygon![(x: 3.0, y: 0.0), (x: 4.0, y: 10.0), (x: 5.0, y: 0.0), (x: 3.0, y: 0.0)];
         let mp = MultiPolygon(vec![p1, p2]);
         let correct = vec![
             Coordinate::from((5.0, 0.0)),
