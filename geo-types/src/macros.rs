@@ -9,11 +9,11 @@
 /// Creating a [`Point`], supplying x/y values:
 ///
 /// ```
-/// use geo::point;
+/// use geo_types::point;
 ///
 /// let p = point!(x: 181.2, y: 51.79);
 ///
-/// assert_eq!(p, geo::Point(geo::Coordinate {
+/// assert_eq!(p, geo_types::Point(geo_types::Coordinate {
 ///     x: 181.2,
 ///     y: 51.79,
 /// }));
@@ -38,7 +38,7 @@ macro_rules! point {
 /// Creating a [`LineString`], supplying x/y values:
 ///
 /// ```
-/// use geo::line_string;
+/// use geo_types::line_string;
 ///
 /// let ls = line_string![
 ///     (x: -21.95156, y: 64.1446),
@@ -47,7 +47,7 @@ macro_rules! point {
 ///     (x: -21.951445, y: 64.145508)
 /// ];
 ///
-/// assert_eq!(ls[1], geo::Coordinate {
+/// assert_eq!(ls[1], geo_types::Coordinate {
 ///     x: -21.951,
 ///     y: 64.14479
 /// });
@@ -56,16 +56,16 @@ macro_rules! point {
 /// Creating a [`LineString`], supplying [`Coordinate`]s:
 ///
 /// ```
-/// use geo::line_string;
+/// use geo_types::line_string;
 ///
-/// let coord1 = geo::Coordinate { x: -21.95156, y: 64.1446 };
-/// let coord2 = geo::Coordinate { x: -21.951, y: 64.14479 };
-/// let coord3 = geo::Coordinate { x: -21.95044, y: 64.14527 };
-/// let coord4 = geo::Coordinate { x: -21.951445, y: 64.145508 };
+/// let coord1 = geo_types::Coordinate { x: -21.95156, y: 64.1446 };
+/// let coord2 = geo_types::Coordinate { x: -21.951, y: 64.14479 };
+/// let coord3 = geo_types::Coordinate { x: -21.95044, y: 64.14527 };
+/// let coord4 = geo_types::Coordinate { x: -21.951445, y: 64.145508 };
 ///
 /// let ls = line_string![coord1, coord2, coord3, coord4];
 ///
-/// assert_eq!(ls[1], geo::Coordinate {
+/// assert_eq!(ls[1], geo_types::Coordinate {
 ///     x: -21.951,
 ///     y: 64.14479
 /// });
@@ -119,7 +119,7 @@ macro_rules! line_string {
 /// Creating a [`Polygon`] without interior rings, supplying x/y values:
 ///
 /// ```
-/// use geo::polygon;
+/// use geo_types::polygon;
 ///
 /// let poly = polygon![
 ///     (x: -111., y: 45.),
@@ -130,14 +130,14 @@ macro_rules! line_string {
 ///
 /// assert_eq!(
 ///     poly.exterior()[1],
-///     geo::Coordinate { x: -111., y: 41. },
+///     geo_types::Coordinate { x: -111., y: 41. },
 /// );
 /// ```
 ///
 /// Creating a [`Polygon`], supplying x/y values:
 ///
 /// ```
-/// use geo::polygon;
+/// use geo_types::polygon;
 ///
 /// let poly = polygon!(
 ///     exterior: [
@@ -158,7 +158,7 @@ macro_rules! line_string {
 ///
 /// assert_eq!(
 ///     poly.exterior()[1],
-///     geo::Coordinate { x: -111., y: 41. },
+///     geo_types::Coordinate { x: -111., y: 41. },
 /// );
 /// ```
 ///

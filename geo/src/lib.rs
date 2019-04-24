@@ -16,8 +16,8 @@ pub use crate::traits::ToGeo;
 pub use crate::types::*;
 
 pub use geo_types::{
-    Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+    line_string, point, polygon, Coordinate, CoordinateType, Geometry, GeometryCollection, Line,
+    LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
 /// This module includes all the functions of geometric calculations
@@ -25,9 +25,6 @@ pub mod algorithm;
 mod traits;
 mod types;
 mod utils;
-
-#[macro_use]
-mod macros;
 
 #[cfg(test)]
 #[macro_use]
