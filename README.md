@@ -27,31 +27,18 @@ The primitive types also provide the basis for other functionality in the `Geo` 
 ## Example
 
 ```rust
-use geo::{line_string, polygon};
+use geo::{Polygon, LineString};
 use geo::convexhull::ConvexHull;
 
 // An L shape
-let poly = polygon![
-    (x: 0.0, y: 0.0),
-    (x: 4.0, y: 0.0),
-    (x: 4.0, y: 1.0),
-    (x: 1.0, y: 1.0),
-    (x: 1.0, y: 4.0),
-    (x: 0.0, y: 4.0),
-    (x: 0.0, y: 0.0),
-];
+let coords = vec![(0.0, 0.0), (4.0, 0.0), (4.0, 1.0), (1.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0)];
+// conversions to geo types are provided from several kinds of coordinate sequences
+let poly = Polygon::new(coords.into(), vec![]);
 
-// Ccalculate the polygon's convex hull
+// uses the QuickHull algorithm to calculate the polygon's convex hull
 let hull = poly.convex_hull();
-
-assert_eq!(hull.exterior(), line_string![
-    (x: 0.0, y: 0.0),
-    (x: 0.0, y: 4.0),
-    (x: 1.0, y: 4.0),
-    (x: 4.0, y: 1.0),
-    (x: 4.0, y: 0.0),
-    (x: 0.0, y: 0.0),
-]);
+let correct = vec![(0.0, 0.0), (0.0, 4.0), (1.0, 4.0), (4.0, 1.0), (4.0, 0.0), (0.0, 0.0)]
+assert_eq!(hull.exterior, correct.into());
 ```
 
 ## Contributing
