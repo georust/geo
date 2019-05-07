@@ -23,10 +23,8 @@ where
     let b = line.end;
     let (xmin, xmax) = if a.x <= b.x { (a.x, b.x) } else { (b.x, a.x) };
     let (ymin, ymax) = if a.y <= b.y { (a.y, b.y) } else { (b.y, a.y) };
-    Rect {
-        min: Coordinate { x: xmin, y: ymin },
-        max: Coordinate { x: xmax, y: ymax },
-    }
+
+    Rect::new(Coordinate { x: xmin, y: ymin }, Coordinate { x: xmax, y: ymax })
 }
 
 pub fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>
@@ -43,16 +41,17 @@ where
             xrange = get_min_max(px, xrange.0, xrange.1);
             yrange = get_min_max(py, yrange.0, yrange.1);
         }
-        return Some(Rect {
-            min: Coordinate {
+
+        return Some(Rect::new(
+            Coordinate {
                 x: xrange.0,
                 y: yrange.0,
             },
-            max: Coordinate {
+            Coordinate {
                 x: xrange.1,
                 y: yrange.1,
             },
-        });
+        ));
     }
     None
 }
