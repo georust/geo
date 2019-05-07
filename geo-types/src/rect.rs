@@ -34,7 +34,7 @@ impl<T: CoordinateType> Rect<T> {
         let (min, max) = (min.into(), max.into());
 
         assert!(
-            min.x < max.x && min.y < max.y,
+            min.x <= max.x && min.y <= max.y,
             "Failed to create the Rectangle: the minimum x/y values must be smaller than the maximum x/y values"
         );
 
@@ -66,12 +66,6 @@ mod test {
     #[should_panic]
     fn rect_panic() {
         let _ = Rect::new((10, 20), (20, 10));
-    }
-
-    #[test]
-    #[should_panic]
-    fn line_panic() {
-        let _ = Rect::new((10, 20), (10, 20));
     }
 
     #[test]
