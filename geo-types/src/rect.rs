@@ -12,7 +12,13 @@ where
 }
 
 impl<T: CoordinateType> Rect<T> {
-    /// Creates a new rectangle.
+    /// Constructor to creates a new rectangle from coordinates, where `min` denotes to the
+    /// coordinates of the bottom-right corner, and `max` denotes to the coordinates of the
+    /// top-left corner
+    ///
+    /// # Panics
+    ///
+    /// Panics if `min`'s x/y coordinate is larger than that of the `max`'s.
     ///
     /// # Examples
     ///
@@ -35,7 +41,7 @@ impl<T: CoordinateType> Rect<T> {
 
         assert!(
             min.x <= max.x && min.y <= max.y,
-            "Failed to create the Rectangle: the minimum x/y values must be smaller than the maximum x/y values"
+            "Failed to create the Rect type: 'min' coordinate's x/y value must be smaller or equal to the 'max' x/y value"
         );
 
         Rect { min, max }
