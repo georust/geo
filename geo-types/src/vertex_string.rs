@@ -49,7 +49,7 @@ where
     vertices: Vec<GraphRelation>,
 
     // the closest vertex to self
-    closest_vertex: Option<(usize, f64)>,
+    closest_neighbor: Option<(usize, f64)>,
 }
 
 impl<T> Vertex<T>
@@ -60,20 +60,33 @@ where
         Vertex {
             coordinate,
             vertices: Vec::with_capacity(DEFAULT_SIZE),
-            closest_vertex: None,
+            closest_neighbor: None,
         }
     }
 
-    fn add_vertex(&mut self, index: usize, cost: f64) {
-        self.vertices.push(GraphRelation::new_with_cost(index, cost));
+    fn set_vertex(&mut self, index: usize, cost: f64, is_new: bool) {
+        if is_new {
+            self.vertices.push(GraphRelation::new_with_cost(index, cost));
+        } else {
+            for (i, v) in self.vertices.iter_mut().enumerate() {
+                if v.vertex_index == index {
+                    v.cost = cost;
+                    break;
+                }
 
-        let need_update = match self.closest_vertex {
+                // if last of the vertices won't match, we're trying to update a vertex not
+                // connected to this vertex, panic.
+                assert!(i < self.vertices.len() - 1, "trying to update a neighbor vertex not connected to the current one...");
+            }
+        }
+
+        let need_update = match self.closest_neighbor {
             Some((_, c)) => c > cost,
             None => true,
         };
 
         if need_update {
-            self.closest_vertex.replace((index, cost));
+            self.closest_neighbor.replace((index, cost));
         }
     }
 }
@@ -84,8 +97,8 @@ pub struct VertexString<T: CoordinateType>
 where
     T: Float + Eq + Hash
 {
-    index: HashMap<Coordinate<T>, usize>,
     vector: Vec<Vertex<T>>,
+    index: HashMap<Coordinate<T>, usize>,
     cost_calc_type: Cost<T>,
 }
 
@@ -115,17 +128,22 @@ where
             Cost::Haversine(function) => function,
         };
 
-        let lines = self.lines();
         //TODO: update...
+        self.edges()
+            .iter()
+            .for_each(|line| {
+
+            });
     }
 
-    pub fn lines(&self) -> Vec<Line<T>> {
+    pub fn edges(&self) -> Vec<Line<T>> {
         self.vector
             .iter()
             .flat_map(|v| {
                 let index = self.index.get(&v.coordinate).unwrap();
                 v.vertices.iter().filter_map(move |t| {
                     if &t.vertex_index > index {
+                        // make sure we won't create duplicate lines
                         return Some((index.to_owned(), t.vertex_index))
                     }
 
@@ -162,14 +180,14 @@ where
                 let end_index = VertexString::find_or_insert(line.end, &mut vector, &mut index);
 
                 // default to calculate vertices distance using the euclidean cost
-                let cost = private_utils::line_euclidean_length(line);
+                let cost = private_utils::line_euclidean_length(line).to_f64().unwrap_or(-1f64);
 
                 if let Some(v) = vector.get_mut(start_index) {
-                    v.add_vertex(end_index, cost.to_f64().unwrap_or(-1f64));
+                    v.set_vertex(end_index, cost, true);
                 }
 
                 if let Some(v) = vector.get_mut(end_index) {
-                    v.add_vertex(start_index, cost.to_f64().unwrap_or(-1f64));
+                    v.set_vertex(start_index, cost, true);
                 }
             });
 
