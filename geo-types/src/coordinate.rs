@@ -1,4 +1,5 @@
 use crate::{CoordinateType, Point};
+use std::fmt;
 
 /// A lightweight struct used to store coordinates on the 2-dimensional
 /// Cartesian plane.
@@ -7,7 +8,7 @@ use crate::{CoordinateType, Point};
 /// as an envelope, a precision model, and spatial reference system
 /// information), a `Coordinate` only contains ordinate values and accessor
 /// methods.
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coordinate<T>
 where
@@ -66,5 +67,14 @@ where
     /// ```
     pub fn x_y(&self) -> (T, T) {
         (self.x, self.y)
+    }
+}
+
+impl<T> fmt::Display for Coordinate<T>
+where
+    T: CoordinateType,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{},{}", self.x.to_f64().unwrap_or_default(), self.y.to_f64().unwrap_or_default())
     }
 }

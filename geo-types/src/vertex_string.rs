@@ -1,12 +1,13 @@
 use crate::{
-    CoordinateType, Coordinate, Line, LineString, MultiLineString, Point, private_utils,
+    CoordinateType, Coordinate, Line, LineString, MultiLineString, private_utils,
 };
 use std::collections::HashMap;
 use std::convert::From;
-use std::hash::Hash;
 use num_traits::Float;
 
+// Mean radius of Earth in meters
 const DEFAULT_SIZE: usize = 4;
+pub type CostFn<T> = fn(Coordinate<T>, Coordinate<T>) -> T;
 
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -14,20 +15,19 @@ pub enum Cost<T>
 where
     T: Float,
 {
-    Euclidean(fn(Coordinate<T>, Coordinate<T>) -> T),
-    Haversine(fn(Coordinate<T>, Coordinate<T>) -> T),
+    Euclidean,             // Use default euclidean distance for calculation
+    Haversine(CostFn<T>),  // Obtain provided Haversine cost function
+    Customize(CostFn<T>)   // Define customized cost function
 }
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct GraphRelation
-{
+pub struct GraphRelation {
     vertex_index: usize,
     cost: f64,
 }
 
-impl GraphRelation
-{
+impl GraphRelation {
     pub fn new_with_cost<T: Float>(index: usize, cost: T) -> Self {
         GraphRelation {
             vertex_index: index,
@@ -40,7 +40,7 @@ impl GraphRelation
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Vertex<T>
 where
-    T: Float + Eq + Hash
+    T: Float
 {
     // the node location
     coordinate: Coordinate<T>,
@@ -54,7 +54,7 @@ where
 
 impl<T> Vertex<T>
 where
-    T: Float + Eq + Hash
+    T: Float
 {
     pub fn new(coordinate: Coordinate<T>) -> Self {
         Vertex {
@@ -68,6 +68,7 @@ where
         if is_new {
             self.vertices.push(GraphRelation::new_with_cost(index, cost));
         } else {
+            let size = self.vertices.len();
             for (i, v) in self.vertices.iter_mut().enumerate() {
                 if v.vertex_index == index {
                     v.cost = cost;
@@ -76,7 +77,7 @@ where
 
                 // if last of the vertices won't match, we're trying to update a vertex not
                 // connected to this vertex, panic.
-                assert!(i < self.vertices.len() - 1, "trying to update a neighbor vertex not connected to the current one...");
+                assert!(i < size - 1, "trying to update a neighbor vertex not connected to the current one...");
             }
         }
 
@@ -91,20 +92,29 @@ where
     }
 }
 
+impl<T> PartialEq for  Vertex<T>
+where
+    T: Float
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.coordinate == other.coordinate
+    }
+}
+
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct VertexString<T: CoordinateType>
 where
-    T: Float + Eq + Hash
+    T: Float
 {
     vector: Vec<Vertex<T>>,
-    index: HashMap<Coordinate<T>, usize>,
+    index: HashMap<String, usize>,
     cost_calc_type: Cost<T>,
 }
 
 impl<T> VertexString<T>
 where
-    T: Float + Eq + Hash
+    T: Float
 {
     pub fn new<C>(src: C) -> Self
     where
@@ -123,16 +133,19 @@ where
     pub fn set_cost_calc_type(&mut self, calc_type: Cost<T>) {
         self.cost_calc_type = calc_type;
 
-        let cost_fn = match self.cost_calc_type {
-            Cost::Euclidean(function) => function,
-            Cost::Haversine(function) => function,
+        let cost_fn: CostFn<T> = match self.cost_calc_type {
+            Cost::Euclidean => |start: Coordinate<T>, end: Coordinate<T>| {
+                private_utils::line_euclidean_length(Line::new(start, end))
+            },
+            Cost::Haversine(cost_fn) => cost_fn,
+            Cost::Customize(cost_fn) => cost_fn,
         };
 
-        //TODO: update...
         self.edges()
             .iter()
             .for_each(|line| {
-
+                let cost = cost_fn(line.start, line.end).to_f64().unwrap_or(-1.);
+                self.update_edge(line.start, line.end, cost);
             });
     }
 
@@ -140,7 +153,7 @@ where
         self.vector
             .iter()
             .flat_map(|v| {
-                let index = self.index.get(&v.coordinate).unwrap();
+                let index = self.index.get(&v.coordinate.to_string()).unwrap();
                 v.vertices.iter().filter_map(move |t| {
                     if &t.vertex_index > index {
                         // make sure we won't create duplicate lines
@@ -154,6 +167,10 @@ where
                 Line::new(self.vector[res.0].coordinate, self.vector[res.1].coordinate)
             )
             .collect()
+    }
+
+    pub fn vertex_iter(&self) -> VertexIter<T> {
+        VertexIter(self.vector.iter())
     }
 
     fn build<C>(src: C, cap: Option<usize>) -> Self
@@ -208,40 +225,62 @@ where
         VertexString {
             vector,
             index,
-            cost_calc_type: Cost::Euclidean(|start, end| {
-                private_utils::line_euclidean_length(Line::new(start, end))
-            }),
+            cost_calc_type: Cost::Euclidean,
         }
     }
 
     fn find_or_insert(
-        coordinate: Coordinate<T>, vector: &mut Vec<Vertex<T>>, index: &mut HashMap<Coordinate<T>, usize>
+        coordinate: Coordinate<T>, vector: &mut Vec<Vertex<T>>, index: &mut HashMap<String, usize>
     ) -> usize {
-        if let Some(pos) = index.get(&coordinate) {
+        let key = coordinate.to_string();
+
+        if let Some(pos) = index.get(&key) {
             pos.to_owned()
         } else {
             let pos = vector.len();
-            index.insert(coordinate, pos);
+            index.insert(key, pos);
             vector.push(Vertex::new(coordinate));
             pos
         }
     }
+
+    fn update_edge(&mut self, start: Coordinate<T>, end: Coordinate<T>, cost: f64) {
+        let size = self.vector.len();
+        let (start_key, end_key) = (start.to_string(), end.to_string());
+
+        let start_index = match self.index.get(&start_key) {
+            Some(idx) if idx < &size => idx.to_owned(),
+            _ => return,
+        };
+
+        let end_index = match self.index.get(&end_key) {
+            Some(idx) if idx < &size => idx.to_owned(),
+            _ => return,
+        };
+
+        if let Some(v) = self.vector.get_mut(start_index) {
+            v.set_vertex(end_index, cost, false);
+        }
+
+        if let Some(v) = self.vector.get_mut(end_index) {
+            v.set_vertex(start_index, cost, false);
+        }
+    }
 }
 
-impl<T> Iterator for VertexString<T>
-where
-    T: Float + Eq + Hash
-{
-    type Item = Point<T>;
+pub struct VertexIter<'a, T: Float + 'a>(::std::slice::Iter<'a, Vertex<T>>);
+
+impl<'a, T: Float> Iterator for VertexIter<'a, T> {
+    type Item = &'a Vertex<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.vector.iter().map(|v| Point(v.coordinate)).next()
+        self.0.next()
     }
 }
 
 impl<T> From<Vec<Line<T>>> for VertexString<T>
 where
-    T: Float + Eq + Hash
+    T: Float
 {
     fn from(item: Vec<Line<T>>) -> Self {
         let size = item.len();
@@ -253,7 +292,7 @@ where
 
 impl<T: CoordinateType> From<LineString<T>> for VertexString<T>
 where
-    T: Float + Eq + Hash
+    T: Float
 {
     fn from(item: LineString<T>) -> Self {
         let size = item.0.len();
@@ -268,7 +307,7 @@ where
 
 impl<T: CoordinateType> From<Vec<LineString<T>>> for VertexString<T>
 where
-    T: Float + Eq + Hash
+    T: Float
 {
     fn from(item: Vec<LineString<T>>) -> Self {
         assert!(item.len() > 0 && item[0].0.len() > 0);
@@ -288,7 +327,7 @@ where
 
 impl<T: CoordinateType> From<MultiLineString<T>> for VertexString<T>
     where
-        T: Float + Eq + Hash
+        T: Float
 {
     fn from(item: MultiLineString<T>) -> Self {
         VertexString::from(item.0)
@@ -299,4 +338,67 @@ impl<T: CoordinateType> From<MultiLineString<T>> for VertexString<T>
 mod test {
     use super::*;
     use crate::{Line, VertexString};
+
+    #[test]
+    fn graph() {
+        let graph = VertexString::from(
+            vec![
+                Line::new(
+                    Coordinate { x: 10f64, y: 5f64 },
+                    Coordinate { x: 15f64, y: 10f64 }
+                ),
+                Line::new(
+                    Coordinate { x: 15f64, y: 10f64 },
+                    Coordinate { x: 20f64, y: 15f64 }
+                ),
+                Line::new(
+                    Coordinate { x: 20f64, y: 15f64 },
+                    Coordinate { x: 10f64, y: 5f64 }
+                ),
+            ]
+        );
+
+        let mut it = graph.vertex_iter();
+
+        assert_eq!(it.next().unwrap().coordinate, (10., 5.).into());
+        assert_eq!(it.next().unwrap().coordinate, (15., 10.).into());
+        assert_eq!(it.next().unwrap().coordinate, (20., 15.).into());
+        assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn edges() {
+        let graph = VertexString::from(
+            vec![
+                Line::new(
+                    Coordinate { x: 10f64, y: 5f64 },
+                    Coordinate { x: 15f64, y: 10f64 }
+                ),
+                Line::new(
+                    Coordinate { x: 15f64, y: 10f64 },
+                    Coordinate { x: 20f64, y: 15f64 }
+                ),
+                Line::new(
+                    Coordinate { x: 20f64, y: 15f64 },
+                    Coordinate { x: 10f64, y: 5f64 }
+                ),
+            ]
+        );
+
+        let edges = graph.edges();
+        assert_eq!(edges.len(), 3);
+
+        assert_eq!(edges[0], Line::new(
+            Coordinate { x: 10f64, y: 5f64 },
+            Coordinate { x: 15f64, y: 10f64 }
+        ));
+        assert_eq!(edges[1], Line::new(
+            Coordinate { x: 10f64, y: 5f64 },
+            Coordinate { x: 20f64, y: 15f64 }
+        ));
+        assert_eq!(edges[2], Line::new(
+            Coordinate { x: 15f64, y: 10f64 },
+            Coordinate { x: 20f64, y: 15f64 }
+        ));
+    }
 }
