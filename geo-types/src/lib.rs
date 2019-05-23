@@ -54,7 +54,7 @@ mod rect;
 pub use crate::rect::Rect;
 
 mod geo_map;
-pub use crate::geo_map::GeoMap;
+pub use crate::geo_map::VertexString;
 
 #[macro_use]
 mod macros;
