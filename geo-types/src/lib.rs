@@ -53,8 +53,8 @@ pub use crate::triangle::Triangle;
 mod rect;
 pub use crate::rect::Rect;
 
-mod geo_map;
-pub use crate::geo_map::VertexString;
+mod vertex_string;
+pub use crate::vertex_string::VertexString;
 
 #[macro_use]
 mod macros;
