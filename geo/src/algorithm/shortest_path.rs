@@ -8,14 +8,14 @@ pub trait CostCalc<T>
 where
     T: Float
 {
-    fn calc_edge_cost(&mut self, cost_type: Cost<T>);
+    fn update_edge_cost(&mut self, cost_type: Cost<T>);
 }
 
 impl<T> CostCalc<T> for VertexString<T>
 where
     T: Float + FromPrimitive,
 {
-    fn calc_edge_cost(&mut self, cost_type: Cost<T>) {
+    fn update_edge_cost(&mut self, cost_type: Cost<T>) {
         if self.get_cost_type() == &cost_type {
             // same cost type, no need to calc again
             return;
