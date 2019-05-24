@@ -54,7 +54,7 @@ mod rect;
 pub use crate::rect::Rect;
 
 mod vertex_string;
-pub use crate::vertex_string::VertexString;
+pub use crate::vertex_string::{GraphRelation, VertexString, Vertex, Cost, CostFn};
 
 #[macro_use]
 mod macros;

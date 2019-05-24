@@ -18,6 +18,7 @@ pub use crate::types::*;
 pub use geo_types::{
     line_string, point, polygon, Coordinate, CoordinateType, Geometry, GeometryCollection, Line,
     LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+    VertexString, Cost, CostFn,
 };
 
 /// This module includes all the functions of geometric calculations
@@ -76,4 +77,5 @@ pub mod prelude {
     pub use crate::algorithm::translate::Translate;
     pub use crate::algorithm::vincenty_distance::VincentyDistance;
     pub use crate::algorithm::vincenty_length::VincentyLength;
+    pub use crate::algorithm::shortest_path;
 }

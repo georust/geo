@@ -59,3 +59,5 @@ pub mod vincenty_distance;
 pub mod vincenty_length;
 /// Calculate and work with the winding order of `Linestring`s.
 pub mod winding_order;
+
+pub mod shortest_path;

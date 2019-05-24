@@ -1,23 +1,57 @@
 use crate::{
     CoordinateType, Coordinate, Line, LineString, MultiLineString, private_utils,
 };
+use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::convert::From;
+use std::fmt;
 use num_traits::Float;
 
 // Mean radius of Earth in meters
 const DEFAULT_SIZE: usize = 4;
-pub type CostFn<T> = fn(Coordinate<T>, Coordinate<T>) -> T;
 
-#[derive(PartialEq, Clone, Debug)]
+pub type CostFn<T> = fn(&Line<T>) -> T;
+
+#[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Cost<T>
 where
-    T: Float,
+    T: Float
 {
     Euclidean,             // Use default euclidean distance for calculation
-    Haversine(CostFn<T>),  // Obtain provided Haversine cost function
-    Customize(CostFn<T>)   // Define customized cost function
+    Haversine,             // Obtain provided Haversine cost function
+    Customize(CostFn<T>),  // Define customized cost function
+}
+
+impl<T> fmt::Debug for Cost<T>
+where
+    T: Float,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let name = match self {
+            Cost::Euclidean => "Euclidean",
+            Cost::Haversine => "Haversine",
+            Cost::Customize(_) => "Customized_Cost_Function",
+        };
+
+        write!(f, "{}", name)
+    }
+}
+
+impl<T> PartialEq for Cost<T>
+where
+    T: Float,
+{
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Cost::Euclidean, Cost::Euclidean) => true,
+            (Cost::Haversine, Cost::Haversine) => true,
+            (Cost::Customize(func_self), Cost::Customize(func_other)) => {
+                std::ptr::eq(func_self, func_other)
+            },
+            _ => false
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -130,23 +164,35 @@ where
         VertexString::build(src, Some(size))
     }
 
-    pub fn set_cost_calc_type(&mut self, calc_type: Cost<T>) {
-        self.cost_calc_type = calc_type;
+    pub fn set_edge_cost(&mut self, edge: &Line<T>, cost: f64) {
+        let (start_key, end_key) = (edge.start.to_string(), edge.end.to_string());
+        let size = self.vector.len();
 
-        let cost_fn: CostFn<T> = match self.cost_calc_type {
-            Cost::Euclidean => |start: Coordinate<T>, end: Coordinate<T>| {
-                private_utils::line_euclidean_length(Line::new(start, end))
-            },
-            Cost::Haversine(cost_fn) => cost_fn,
-            Cost::Customize(cost_fn) => cost_fn,
+        let start_index = match self.index.get(&start_key) {
+            Some(idx) if idx < &size => idx.to_owned(),
+            _ => return,
         };
 
-        self.edges()
-            .iter()
-            .for_each(|line| {
-                let cost = cost_fn(line.start, line.end).to_f64().unwrap_or(-1.);
-                self.update_edge(line.start, line.end, cost);
-            });
+        let end_index = match self.index.get(&end_key) {
+            Some(idx) if idx < &size => idx.to_owned(),
+            _ => return,
+        };
+
+        if let Some(v) = self.vector.get_mut(start_index) {
+            v.set_vertex(end_index, cost, false);
+        }
+
+        if let Some(v) = self.vector.get_mut(end_index) {
+            v.set_vertex(start_index, cost, false);
+        }
+    }
+
+    pub fn get_cost_type(&self) -> &Cost<T> {
+        &self.cost_calc_type
+    }
+
+    pub fn set_cost_type(&mut self, cost: Cost<T>) {
+        self.cost_calc_type = cost;
     }
 
     pub fn edges(&self) -> Vec<Line<T>> {
@@ -230,8 +276,11 @@ where
     }
 
     fn find_or_insert(
-        coordinate: Coordinate<T>, vector: &mut Vec<Vertex<T>>, index: &mut HashMap<String, usize>
-    ) -> usize {
+        coordinate: Coordinate<T>,
+        vector: &mut Vec<Vertex<T>>,
+        index: &mut HashMap<String, usize>
+    ) -> usize
+    {
         let key = coordinate.to_string();
 
         if let Some(pos) = index.get(&key) {
@@ -241,29 +290,6 @@ where
             index.insert(key, pos);
             vector.push(Vertex::new(coordinate));
             pos
-        }
-    }
-
-    fn update_edge(&mut self, start: Coordinate<T>, end: Coordinate<T>, cost: f64) {
-        let size = self.vector.len();
-        let (start_key, end_key) = (start.to_string(), end.to_string());
-
-        let start_index = match self.index.get(&start_key) {
-            Some(idx) if idx < &size => idx.to_owned(),
-            _ => return,
-        };
-
-        let end_index = match self.index.get(&end_key) {
-            Some(idx) if idx < &size => idx.to_owned(),
-            _ => return,
-        };
-
-        if let Some(v) = self.vector.get_mut(start_index) {
-            v.set_vertex(end_index, cost, false);
-        }
-
-        if let Some(v) = self.vector.get_mut(end_index) {
-            v.set_vertex(start_index, cost, false);
         }
     }
 }
