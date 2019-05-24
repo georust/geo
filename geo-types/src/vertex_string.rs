@@ -1,7 +1,7 @@
 use crate::{
     CoordinateType, Coordinate, Line, LineString, MultiLineString, private_utils,
 };
-use std::cmp::PartialEq;
+use std::cmp::{PartialEq};
 use std::collections::HashMap;
 use std::convert::From;
 use std::fmt;
@@ -57,14 +57,14 @@ where
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GraphRelation {
-    vertex_index: usize,
+    vertex_id: usize,
     cost: f64,
 }
 
 impl GraphRelation {
     pub fn new_with_cost<T: Float>(index: usize, cost: T) -> Self {
         GraphRelation {
-            vertex_index: index,
+            vertex_id: index,
             cost: cost.to_f64().unwrap_or(-1f64),
         }
     }
@@ -79,6 +79,9 @@ where
     // the node location
     coordinate: Coordinate<T>,
 
+    // the id of the vertex, actually the index in the store vector
+    id: usize,
+
     // vector of neighbor nodes that we can go to, stored in the form of (Destination, Distance)
     vertices: Vec<GraphRelation>,
 
@@ -90,12 +93,31 @@ impl<T> Vertex<T>
 where
     T: Float
 {
-    pub fn new(coordinate: Coordinate<T>) -> Self {
+    pub fn new(coordinate: Coordinate<T>, id: usize) -> Self {
         Vertex {
             coordinate,
+            id,
             vertices: Vec::with_capacity(DEFAULT_SIZE),
             closest_neighbor: None,
         }
+    }
+
+    pub fn get_id(&self) -> usize {
+        self.id
+    }
+
+    pub fn get_coordinate(&self) -> Coordinate<T> {
+        self.coordinate
+    }
+
+    pub fn edge_cost(&self, neighbor_id: usize) -> Option<f64> {
+        for v in self.vertices.iter() {
+            if v.vertex_id == neighbor_id {
+                return Some(v.cost);
+            }
+        }
+
+        None
     }
 
     fn set_vertex(&mut self, index: usize, cost: f64, is_new: bool) {
@@ -104,7 +126,7 @@ where
         } else {
             let size = self.vertices.len();
             for (i, v) in self.vertices.iter_mut().enumerate() {
-                if v.vertex_index == index {
+                if v.vertex_id == index {
                     v.cost = cost;
                     break;
                 }
@@ -165,15 +187,19 @@ where
     }
 
     pub fn set_edge_cost(&mut self, edge: &Line<T>, cost: f64) {
-        let (start_key, end_key) = (edge.start.to_string(), edge.end.to_string());
+        if edge.start == edge.end {
+            // don't bother updating the sole vertex
+            return;
+        }
+
         let size = self.vector.len();
 
-        let start_index = match self.index.get(&start_key) {
+        let start_index = match self.index.get(&edge.start.to_string()) {
             Some(idx) if idx < &size => idx.to_owned(),
             _ => return,
         };
 
-        let end_index = match self.index.get(&end_key) {
+        let end_index = match self.index.get(&edge.end.to_string()) {
             Some(idx) if idx < &size => idx.to_owned(),
             _ => return,
         };
@@ -185,6 +211,29 @@ where
         if let Some(v) = self.vector.get_mut(end_index) {
             v.set_vertex(start_index, cost, false);
         }
+    }
+
+    pub fn get_edge_cost(&self, edge: &Line<T>) -> Option<f64> {
+        self.index
+            .get(&edge.start.to_string())
+            .and_then(|start_id| {
+                self.index
+                    .get(&edge.end.to_string())
+                    .map(|end_id| (start_id, end_id))
+            })
+            .and_then(|edge_ids| {
+                self.vector
+                    .get(edge_ids.0.to_owned())
+                    .and_then(|v: &Vertex<T>| {
+                        for neighbors in v.vertices.iter() {
+                            if &neighbors.vertex_id == edge_ids.1 {
+                                return Some(neighbors.cost)
+                            }
+                        }
+
+                        None
+                    })
+            })
     }
 
     pub fn get_cost_type(&self) -> &Cost<T> {
@@ -201,9 +250,9 @@ where
             .flat_map(|v| {
                 let index = self.index.get(&v.coordinate.to_string()).unwrap();
                 v.vertices.iter().filter_map(move |t| {
-                    if &t.vertex_index > index {
+                    if &t.vertex_id > index {
                         // make sure we won't create duplicate lines
-                        return Some((index.to_owned(), t.vertex_index))
+                        return Some((index.to_owned(), t.vertex_id))
                     }
 
                     None
@@ -213,6 +262,18 @@ where
                 Line::new(self.vector[res.0].coordinate, self.vector[res.1].coordinate)
             )
             .collect()
+    }
+
+    pub fn vertex_neighbors_by_id(&self, id: usize) -> Option<&Vec<GraphRelation>> {
+        self.vector.get(id).and_then(|v| {
+            Some(&v.vertices)
+        })
+    }
+
+    pub fn vertex_neighbors(&self, coordinate: Coordinate<T>) -> Option<&Vec<GraphRelation>> {
+        self.index.get(&coordinate.to_string()).and_then(|id| {
+            self.vertex_neighbors_by_id(id.to_owned())
+        })
     }
 
     pub fn vertex_iter(&self) -> VertexIter<T> {
@@ -240,6 +301,10 @@ where
             .for_each(|line| {
                 // find or push
                 let start_index = VertexString::find_or_insert(line.start, &mut vector, &mut index);
+                if line.start == line.end {
+                    return;
+                }
+
                 let end_index = VertexString::find_or_insert(line.end, &mut vector, &mut index);
 
                 // default to calculate vertices distance using the euclidean cost
@@ -264,7 +329,7 @@ where
             .iter_mut()
             .for_each(|val| {
                 val.vertices.dedup_by(|a, b| {
-                    a.vertex_index == b.vertex_index
+                    a.vertex_id == b.vertex_id
                 });
             });
 
@@ -288,7 +353,7 @@ where
         } else {
             let pos = vector.len();
             index.insert(key, pos);
-            vector.push(Vertex::new(coordinate));
+            vector.push(Vertex::new(coordinate, pos));
             pos
         }
     }
@@ -386,9 +451,9 @@ mod test {
 
         let mut it = graph.vertex_iter();
 
-        assert_eq!(it.next().unwrap().coordinate, (10., 5.).into());
-        assert_eq!(it.next().unwrap().coordinate, (15., 10.).into());
-        assert_eq!(it.next().unwrap().coordinate, (20., 15.).into());
+        assert_eq!(it.next().unwrap().get_coordinate(), (10., 5.).into());
+        assert_eq!(it.next().unwrap().get_coordinate(), (15., 10.).into());
+        assert_eq!(it.next().unwrap().get_coordinate(), (20., 15.).into());
         assert_eq!(it.next(), None);
     }
 
