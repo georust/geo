@@ -1,5 +1,18 @@
 # Changes
 
+## geo 0.12.2
+
+* Introduce `point!`, `line_string!`, and `polygon!` macros.
+  * <https://github.com/georust/geo/pull/352>
+
+## geo-types 0.4.3
+
+* Introduce `point!`, `line_string!`, and `polygon!` macros.
+  * <https://github.com/georust/geo/pull/352>
+  * <https://github.com/georust/geo/pull/357>
+* Add `Rect` constructor that enforces `min.{x,y} < max.{x,y}`
+  * <https://github.com/georust/geo/pull/360>
+
 ## geo 0.12.1
 
 * Add `FrechetDistance` algorithm
