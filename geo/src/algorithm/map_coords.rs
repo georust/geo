@@ -423,16 +423,18 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Rect<T> {
     fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         let new_min = func(&(self.min.x, self.min.y));
         let new_max = func(&(self.max.x, self.max.y));
-        Rect {
-            min: Coordinate {
+
+        // using constructor to enforce soundness of the obtained coordinates
+        Rect::new(
+            Coordinate {
                 x: new_min.0,
                 y: new_min.1,
             },
-            max: Coordinate {
+            Coordinate {
                 x: new_max.0,
                 y: new_max.1,
             },
-        }
+        )
     }
 }
 
@@ -445,16 +447,17 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Rect<T> {
     ) -> Result<Self::Output, Error> {
         let new_min = func(&(self.min.x, self.min.y))?;
         let new_max = func(&(self.max.x, self.max.y))?;
-        Ok(Rect {
-            min: Coordinate {
+
+        Ok(Rect::new(
+            Coordinate {
                 x: new_min.0,
                 y: new_min.1,
             },
-            max: Coordinate {
+            Coordinate {
                 x: new_max.0,
                 y: new_max.1,
             },
-        })
+        ))
     }
 }
 
@@ -462,6 +465,11 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Rect<T> {
     fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
         let new_min = func(&(self.min.x, self.min.y));
         let new_max = func(&(self.max.x, self.max.y));
+
+        // make sure the min coordinates are always smaller than the max coordinates, otherwise
+        // we won't have a "regular" rectangle that many of the methods assumes.
+        assert!(new_min.0 < new_max.0 && new_min.1 < new_max.1);
+
         self.min.x = new_min.0;
         self.min.y = new_min.1;
         self.max.x = new_max.0;
@@ -488,6 +496,55 @@ mod test {
         p2.map_coords_inplace(&|&(x, y)| (x + 10., y + 100.));
         assert_eq!(p2.x(), 20.);
         assert_eq!(p2.y(), 110.);
+    }
+
+    #[test]
+    fn rect_inplace() {
+        let mut rect = Rect::new((10, 10), (20, 20));
+        rect.map_coords_inplace(&|&(x, y)| (x + 10, y + 20));
+        assert_eq!(rect.min, Coordinate { x: 20, y: 30 });
+        assert_eq!(rect.max, Coordinate { x: 30, y: 40 });
+    }
+
+    #[test]
+    #[should_panic]
+    fn rect_inplace_panic() {
+        let mut rect = Rect::new((10, 10), (20, 20));
+        rect.map_coords_inplace(&|&(x, y)| {
+            if x < 15 && y < 15 {
+                (x, y)
+            } else {
+                (x - 15, y - 15 )
+            }
+        });
+    }
+
+    #[test]
+    fn rect_map_coords() {
+        let rect = Rect::new((10, 10), (20, 20));
+        let another_rect = rect.map_coords(&|&(x, y)| (x + 10, y + 20));
+        assert_eq!(another_rect.min, Coordinate { x: 20, y: 30 });
+        assert_eq!(another_rect.max, Coordinate { x: 30, y: 40 });
+    }
+
+    #[test]
+    fn rect_try_map_coords() {
+        let rect = Rect::new((10, 10), (20, 20));
+        let result = rect.try_map_coords(&|&(x, y)| Ok((x + 10, y + 20)));
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    #[should_panic]
+    fn rect_try_map_coords_panic() {
+        let rect = Rect::new((10, 10), (20, 20));
+        let _ = rect.try_map_coords(&|&(x, y)| {
+            if x < 15 && y < 15 {
+                Ok((x, y))
+            } else {
+                Ok((x - 15, y - 15))
+            }
+        });
     }
 
     #[test]
