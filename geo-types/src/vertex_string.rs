@@ -7,20 +7,28 @@ use std::convert::From;
 use std::fmt;
 use num_traits::Float;
 
-// Mean radius of Earth in meters
+/// Container data structure's default capacity used in this mod
 const DEFAULT_SIZE: usize = 4;
 
+/// The cost function type, which is used to define the signature of the closure for calculating
+/// the evaluation cost of an edge in the `VertexString`.
 pub type CostFn<T> = fn(&Line<T>) -> T;
 
+///
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Cost<T>
 where
     T: Float
 {
-    Euclidean,             // Use default euclidean distance for calculation
-    Haversine,             // Obtain provided Haversine cost function
-    Customize(CostFn<T>),  // Define customized cost function
+    // Default algorithm to calculate edge cost
+    Euclidean,
+
+    // Calculate edge cost using Haversine algorithm
+    Haversine,
+
+    // Use customized cost function to calculate the edge cost
+    Customize(CostFn<T>),
 }
 
 impl<T> fmt::Debug for Cost<T>
@@ -54,10 +62,14 @@ where
     }
 }
 
+///
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GraphRelation {
+    // the neighbor vertex id
     vertex_id: usize,
+
+    // the cost of the edge connecting the vertex and this neighbor
     cost: f64,
 }
 
@@ -68,8 +80,17 @@ impl GraphRelation {
             cost: cost.to_f64().unwrap_or(-1f64),
         }
     }
+
+    pub fn neighbor_id(&self) -> usize {
+        self.vertex_id
+    }
+
+    pub fn edge_cost(&self) -> f64 {
+        self.cost
+    }
 }
 
+///
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Vertex<T>
@@ -79,7 +100,7 @@ where
     // the node location
     coordinate: Coordinate<T>,
 
-    // the id of the vertex, actually the index in the store vector
+    // the vertex id
     id: usize,
 
     // vector of neighbor nodes that we can go to, stored in the form of (Destination, Distance)
@@ -93,6 +114,10 @@ impl<T> Vertex<T>
 where
     T: Float
 {
+    /// Create a new vertex. Parameters:
+    /// - `coordinate`: the coordinate of the vertex
+    /// - `id`: the id of the vertex, which is also the index of the vertex in the VertexString's
+    ///         `vector` store.
     pub fn new(coordinate: Coordinate<T>, id: usize) -> Self {
         Vertex {
             coordinate,
@@ -102,14 +127,22 @@ where
         }
     }
 
+    /// Get the vertex id, which also serves as the vector index in the VertexString
     pub fn get_id(&self) -> usize {
         self.id
     }
 
+    /// Get the vertex coordinate
     pub fn get_coordinate(&self) -> Coordinate<T> {
         self.coordinate
     }
 
+    /// Get all the neighboring vertices to the self-vertex
+    pub fn get_neighbors(&self) -> &Vec<GraphRelation> {
+        &self.vertices
+    }
+
+    /// Get the edge cost to the neighbor vertex
     pub fn edge_cost(&self, neighbor_id: usize) -> Option<f64> {
         for v in self.vertices.iter() {
             if v.vertex_id == neighbor_id {
@@ -157,14 +190,20 @@ where
     }
 }
 
+///
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct VertexString<T: CoordinateType>
 where
     T: Float
 {
+    // The store of the vertices
     vector: Vec<Vertex<T>>,
+
+    // The index store that is used to help retrieve a vertex fast if only given the vertex coordinate
     index: HashMap<String, usize>,
+
+    // The type of algorithm used to determine the edge cost (i.e. the distance between two vertices)
     cost_calc_type: Cost<T>,
 }
 
@@ -172,6 +211,9 @@ impl<T> VertexString<T>
 where
     T: Float
 {
+    /// Create a `VertexString` from the iterator of the edges connecting the vertices. If a vertex
+    /// is not connected to any other vertices in the graph, then the start/end coordinate of the
+    /// edge (aka the `Line<T>` object) shall be identical.
     pub fn new<C>(src: C) -> Self
     where
         C: Iterator<Item = Line<T>>
@@ -179,6 +221,9 @@ where
         VertexString::build(src, None)
     }
 
+    /// Create a `VertexString` from the iterator of the edges connecting the vertices.
+    /// If the size of the vertex coordinates container is known, using this API will
+    /// help improve the overall performance.
     pub fn new_with_size<C>(src: C, size: usize) -> Self
     where
         C: Iterator<Item = Line<T>>
@@ -186,6 +231,37 @@ where
         VertexString::build(src, Some(size))
     }
 
+    /// Given an edge from the VertexString, return the ids of the start and
+    /// end vertices. If returned value is `None`, it means the vertex is not
+    /// in the defined VertexString.
+    pub fn vertex_id(&self, vertex: Coordinate<T>) -> Option<usize> {
+        self.index.get(&vertex.to_string()).map(|id| id.to_owned())
+    }
+
+    /// Check if a vertex is in the VertexString graph
+    pub fn contains(&self, vertex: Coordinate<T>) -> bool {
+        self.index.contains_key(&vertex.to_string())
+    }
+
+    /// Given the coordinate of the vertex, return the Vertex<T> struct. If it's not contained
+    /// in the VertexString graph, return `None`.
+    pub fn get_vertex(&self, vertex: Coordinate<T>) -> Option<&Vertex<T>> {
+        self.index
+            .get(&vertex.to_string())
+            .and_then(|id| {
+                self.get_vertex_by_id(id.to_owned())
+            })
+    }
+
+    /// Given the id of the vertex, return the Vertex<T> struct. If it's not contained
+    /// in the VertexString graph, return `None`.
+    pub fn get_vertex_by_id(&self, id: usize) -> Option<&Vertex<T>> {
+        self.vector.get(id)
+    }
+
+    /// Set the edge cost to an arbitrary value. This shouldn't be used by anyone outside of the
+    /// project-related crates.
+    #[doc(hidden)]
     pub fn set_edge_cost(&mut self, edge: &Line<T>, cost: f64) {
         if edge.start == edge.end {
             // don't bother updating the sole vertex
@@ -213,20 +289,22 @@ where
         }
     }
 
+    /// Get the edge cost. If the given edge does not exist (both vertices could be contained but
+    /// not connected), return `None`.
     pub fn get_edge_cost(&self, edge: &Line<T>) -> Option<f64> {
-        self.index
-            .get(&edge.start.to_string())
+        self.vertex_id(edge.start)
             .and_then(|start_id| {
-                self.index
-                    .get(&edge.end.to_string())
-                    .map(|end_id| (start_id, end_id))
+                self.vertex_id(edge.end)
+                    .map(|end_id| {
+                        (start_id, end_id)
+                    })
             })
             .and_then(|edge_ids| {
                 self.vector
                     .get(edge_ids.0.to_owned())
                     .and_then(|v: &Vertex<T>| {
                         for neighbors in v.vertices.iter() {
-                            if &neighbors.vertex_id == edge_ids.1 {
+                            if neighbors.vertex_id == edge_ids.1 {
                                 return Some(neighbors.cost)
                             }
                         }
@@ -236,19 +314,29 @@ where
             })
     }
 
+    /// Return the cost type, which is of type `Cost<T>`
     pub fn get_cost_type(&self) -> &Cost<T> {
         &self.cost_calc_type
     }
 
+    /// Set the algorithm used to calculate the edge cost. This shouldn't be used by anyone outside
+    /// of the project-related crates.
+    #[doc(hidden)]
     pub fn set_cost_type(&mut self, cost: Cost<T>) {
         self.cost_calc_type = cost;
     }
 
+    /// Collect all the edges that are present in the VertexString graph.
     pub fn edges(&self) -> Vec<Line<T>> {
         self.vector
             .iter()
             .flat_map(|v| {
-                let index = self.index.get(&v.coordinate.to_string()).unwrap();
+                let index =
+                    self.index
+                        .get(&v.coordinate.to_string())
+                        .expect("The vertex data is corrupted: the given coordinate does not match any of the vertices...");
+
+                // vertex connected to other vertices, create iterator for edge in indices
                 v.vertices.iter().filter_map(move |t| {
                     if &t.vertex_id > index {
                         // make sure we won't create duplicate lines
@@ -264,18 +352,21 @@ where
             .collect()
     }
 
+    /// Get all vertex neighbors that are connected to the queried one. Use vertex id as input.
     pub fn vertex_neighbors_by_id(&self, id: usize) -> Option<&Vec<GraphRelation>> {
         self.vector.get(id).and_then(|v| {
             Some(&v.vertices)
         })
     }
 
+    /// Get all vertex neighbors that are connected to the queried one. Use vertex coordinate as input.
     pub fn vertex_neighbors(&self, coordinate: Coordinate<T>) -> Option<&Vec<GraphRelation>> {
         self.index.get(&coordinate.to_string()).and_then(|id| {
             self.vertex_neighbors_by_id(id.to_owned())
         })
     }
 
+    /// Obtain an iterator that will let you iterate all the vertex from the VertexString
     pub fn vertex_iter(&self) -> VertexIter<T> {
         VertexIter(self.vector.iter())
     }
@@ -359,6 +450,7 @@ where
     }
 }
 
+// The iterator container, which can be crated from calling `vertex_iter()` on the VertexString struct
 pub struct VertexIter<'a, T: Float + 'a>(::std::slice::Iter<'a, Vertex<T>>);
 
 impl<'a, T: Float> Iterator for VertexIter<'a, T> {
@@ -431,30 +523,81 @@ mod test {
     use crate::{Line, VertexString};
 
     #[test]
-    fn graph() {
-        let graph = VertexString::from(
-            vec![
-                Line::new(
-                    Coordinate { x: 10f64, y: 5f64 },
-                    Coordinate { x: 15f64, y: 10f64 }
-                ),
-                Line::new(
-                    Coordinate { x: 15f64, y: 10f64 },
-                    Coordinate { x: 20f64, y: 15f64 }
-                ),
-                Line::new(
-                    Coordinate { x: 20f64, y: 15f64 },
-                    Coordinate { x: 10f64, y: 5f64 }
-                ),
-            ]
-        );
+    fn graph_from_line_vec() {
+        let vec: Vec<Line<f32>> = vec![
+            Line::from([(10., 5.), (15., 10.)]),
+            Line::from([(15., 10.), (20., 15.)]),
+            Line::from([(20., 15.), (10., 5.)]),
+        ];
 
+        let graph = VertexString::from(vec);
         let mut it = graph.vertex_iter();
 
         assert_eq!(it.next().unwrap().get_coordinate(), (10., 5.).into());
         assert_eq!(it.next().unwrap().get_coordinate(), (15., 10.).into());
         assert_eq!(it.next().unwrap().get_coordinate(), (20., 15.).into());
         assert_eq!(it.next(), None);
+    }
+
+    #[test]
+    fn graph_from_linestring() {
+        let line_string: LineString<f32> = vec![(0., 0.), (5., 0.), (7., 9.)].into_iter().collect();
+
+        let graph = VertexString::from(line_string);
+        let mut it = graph.vertex_iter();
+
+        assert_eq!(it.next().unwrap().get_coordinate(), (0., 0.).into());
+        assert_eq!(it.next().unwrap().get_coordinate(), (5., 0.).into());
+        assert_eq!(it.next().unwrap().get_coordinate(), (7., 9.).into());
+        assert_eq!(it.next(), None);
+
+        let neighbors = graph.vertex_neighbors((5.0, 0.).into());
+        assert!(neighbors.is_some());
+        assert_eq!(neighbors.unwrap().len(), 2);
+        assert_eq!(neighbors.unwrap()[0].vertex_id, 0);
+        assert_eq!(neighbors.unwrap()[1].vertex_id, 2);
+    }
+
+    #[test]
+    fn graph_from_linestring_vec() {
+        let line_string_one: LineString<f32> = vec![(0., 0.), (5., 0.), (7., 9.)].into_iter().collect();
+        let line_string_two: LineString<f32> = vec![(5., 0.), (8., 0.), (0., 0.)].into_iter().collect();
+
+        let graph = VertexString::from(vec![line_string_one, line_string_two]);
+        let mut it = graph.vertex_iter();
+
+        assert_eq!(it.next().unwrap().get_coordinate(), (0., 0.).into());
+        assert_eq!(it.next().unwrap().get_coordinate(), (5., 0.).into());
+        assert_eq!(it.next().unwrap().get_coordinate(), (7., 9.).into());
+        assert_eq!(it.next().unwrap().get_coordinate(), (8., 0.).into());
+        assert_eq!(it.next(), None);
+
+        let zero_vertex = graph.get_vertex((0., 0.).into());
+        assert!(zero_vertex.is_some());
+        assert_eq!(zero_vertex.unwrap().vertices.len(), 2);
+        assert_eq!(zero_vertex.unwrap().vertices[0].vertex_id, 1);
+        assert_eq!(zero_vertex.unwrap().vertices[1].vertex_id, 3);
+
+        let one_vertex = graph.get_vertex_by_id(1);
+        assert!(one_vertex.is_some());
+        assert_eq!(one_vertex.unwrap().coordinate, (5., 0.).into());
+
+        let three_vertex = graph.get_vertex_by_id(3);
+        assert!(three_vertex.is_some());
+        assert_eq!(three_vertex.unwrap().coordinate, (8., 0.).into());
+    }
+
+    #[test]
+    fn neighbors() {
+        let line_string: LineString<f32> = vec![(0., 0.), (5., 0.), (7., 9.)].into_iter().collect();
+        let graph = VertexString::from(line_string);
+
+        let neighbors = graph.vertex_neighbors((5.0, 0.).into());
+
+        assert!(neighbors.is_some());
+        assert_eq!(neighbors.unwrap().len(), 2);
+        assert_eq!(neighbors.unwrap()[0].vertex_id, 0);
+        assert_eq!(neighbors.unwrap()[1].vertex_id, 2);
     }
 
     #[test]
