@@ -14,7 +14,7 @@ const DEFAULT_SIZE: usize = 4;
 /// the evaluation cost of an edge in the `VertexString`.
 pub type CostFn<T> = fn(&Line<T>) -> T;
 
-///
+/// The type of the cost function used to calculate the edge cost
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Cost<T>
@@ -62,7 +62,9 @@ where
     }
 }
 
-///
+/// The struct representing the edge, aka graph relation between 2 neighboring and connected vertices.
+/// This struct is mostly used internally, though we're exposing APIs to retrieve fields in case
+/// applications would find them useful.
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GraphRelation {
@@ -74,6 +76,9 @@ pub struct GraphRelation {
 }
 
 impl GraphRelation {
+    /// Build a graph relationship between two neighboring vertices and connect them. The source
+    /// vertex is where the `GraphRelation` is added to, and the target vertex's id is saved into
+    /// the struct. The cost is calculated and passed in as the known value.
     pub fn new_with_cost<T: Float>(index: usize, cost: T) -> Self {
         GraphRelation {
             vertex_id: index,
@@ -81,16 +86,18 @@ impl GraphRelation {
         }
     }
 
+    /// Get the vertex id of the other end of the edge
     pub fn neighbor_id(&self) -> usize {
         self.vertex_id
     }
 
+    /// Get the cost of traveling this edge to the other end
     pub fn edge_cost(&self) -> f64 {
         self.cost
     }
 }
 
-///
+/// The struct representing the vertex in the `VertexString`.
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Vertex<T>
@@ -190,6 +197,35 @@ where
     }
 }
 
+/// An undirected graph data structure that can be used to build more complex geo concepts,
+/// e.g. a geo map. The struct contains a collection of connected or lone vertices, and each vertex
+/// has its own struct to express its relationship with neighboring connected vertices.
+///
+/// The `VertexString` can be built by default from a `Line` iterator or collection container. But
+/// it can also be converted from most common `Line`-based data structure, such as a vector of the `Line`s,
+/// a `LineString`, a vector of `LineString`s, or a `MultiLineString`.
+///
+/// # Examples
+///
+/// Create a `VertexString` from a vector of `Line`s, where each line represent an edge
+///
+/// ```
+/// use geo_types::{Line, VertexString};
+///
+/// let vec: Vec<Line<f32>> = vec![
+///     Line::from([(10., 5.), (15., 10.)]),
+///     Line::from([(15., 10.), (20., 15.)]),
+///     Line::from([(20., 15.), (10., 5.)]),
+/// ];
+///
+/// let graph = VertexString::from(vec);
+/// //let mut it = graph.vertex_iter();
+///
+/// assert_eq!(it.next().unwrap().get_coordinate(), (10., 5.).into());
+//  assert_eq!(it.next().unwrap().get_coordinate(), (15., 10.).into());
+/// assert_eq!(it.next().unwrap().get_coordinate(), (20., 15.).into());
+/// assert_eq!(it.next(), None);
+/// ```
 ///
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
