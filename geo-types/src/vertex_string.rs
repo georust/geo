@@ -307,12 +307,12 @@ where
         let size = self.vector.len();
 
         let start_index = match self.index.get(&edge.start.to_string()) {
-            Some(idx) if idx < &size => idx.to_owned(),
+            Some(idx) if *idx < size => idx.to_owned(),
             _ => return,
         };
 
         let end_index = match self.index.get(&edge.end.to_string()) {
-            Some(idx) if idx < &size => idx.to_owned(),
+            Some(idx) if *idx < size => idx.to_owned(),
             _ => return,
         };
 
@@ -374,7 +374,7 @@ where
 
                 // vertex connected to other vertices, create iterator for edge in indices
                 v.vertices.iter().filter_map(move |t| {
-                    if &t.vertex_id > index {
+                    if t.vertex_id > *index {
                         // make sure we won't create duplicate lines
                         return Some((index.to_owned(), t.vertex_id))
                     }
@@ -529,14 +529,14 @@ where
     T: Float
 {
     fn from(item: Vec<LineString<T>>) -> Self {
-        assert!(item.len() > 0 && item[0].0.len() > 0);
+        assert!(!item.is_empty() && !item[0].0.is_empty());
 
         let estimated_size =
             item.iter().fold(0, |acc, x| acc + x.0.len() -1);
 
         VertexString::new_with_size(
             item.iter().flat_map(|l| {
-                assert!(l.0.len() > 0);
+                assert!(!l.0.is_empty());
                 l.lines()
             }),
             estimated_size
