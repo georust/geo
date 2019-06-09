@@ -136,6 +136,17 @@ where
     }
 }
 
+impl<T> BoundingRect<T> for Rect<T>
+where
+    T: CoordinateType,
+{
+    type Output = Rect<T>;
+
+    fn bounding_rect(&self) -> Self::Output {
+        *self
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::algorithm::bounding_rect::BoundingRect;
