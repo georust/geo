@@ -59,7 +59,7 @@ impl<T: CoordinateType> Rect<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{Coordinate};
+    use crate::Coordinate;
 
     #[test]
     fn rect() {
