@@ -1,5 +1,5 @@
 [workspace]
-members = ["geo", "geo-types"]
+members = ["geo", "geo-winding-order", "geo-types"]
 
 [profile.bench]
 lto = "fat"

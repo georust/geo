@@ -26,6 +26,10 @@ proj = { version = "0.7", optional = true }
 # geo-types = { version = "0.4.2", features = ["rstar"] }
 geo-types = { path = "../geo-types", features = ["rstar"] }
 
+# Swap the next two lines when publishing
+# geo-winding-order = { version = "..." }
+geo-winding-order = { path = "../geo-winding-order" }
+
 [features]
 default = []
 postgis-integration = ["postgis"]

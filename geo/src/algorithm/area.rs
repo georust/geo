@@ -1,7 +1,7 @@
 use crate::{CoordinateType, Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
 use num_traits::Float;
 
-use crate::algorithm::winding_order::twice_signed_ring_area;
+use geo_winding_order::twice_signed_ring_area;
 
 /// Calculation of the area.
 

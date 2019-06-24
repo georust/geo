@@ -1,0 +1,11 @@
+[package]
+name = "geo-winding-order"
+version = "0.1.0"
+authors = ["Corey Farwell <coreyf@rwell.org>"]
+license = "MIT/Apache-2.0"
+repository = "https://github.com/georust/geo"
+documentation = "https://docs.rs/geo-winding-order/"
+edition = "2018"
+
+[dependencies]
+geo-types = { path = "../geo-types" }
