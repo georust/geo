@@ -209,7 +209,7 @@ where
 ///
 /// Create a `VertexString` from a vector of `Line`s, where each line represent an edge
 ///
-/// ```
+/// ```no_run
 /// use geo_types::{Line, VertexString};
 ///
 /// let vec: Vec<Line<f32>> = vec![
