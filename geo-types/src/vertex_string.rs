@@ -1,23 +1,25 @@
 use crate::{
     CoordinateType, Coordinate, Line, LineString, MultiLineString, private_utils,
 };
+
 use std::cmp::{PartialEq};
 use std::collections::HashMap;
 use std::convert::From;
 use std::fmt;
 use num_traits::Float;
 
+#[cfg(feature = "serde")]
+use serde::{Serialize, Serializer, Deserialize, Deserializer};
+
 /// Container data structure's default capacity used in this mod
 const DEFAULT_SIZE: usize = 4;
 
 /// The cost function type, which is used to define the signature of the closure for calculating
 /// the evaluation cost of an edge in the `VertexString`.
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub type CostFn<T> = fn(&Line<T>) -> T;
 
 /// The type of the cost function used to calculate the edge cost
 #[derive(Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Cost<T>
 where
     T: Float
@@ -30,6 +32,77 @@ where
 
     // Use customized cost function to calculate the edge cost
     Customize(CostFn<T>),
+}
+
+#[cfg(feature = "serde")]
+impl<T: Float> Serialize for Cost<T>
+where
+    T: Float
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+    {
+        match self {
+            Cost::Euclidean => serializer.serialize_str("euclidean"),
+            Cost::Haversine => serializer.serialize_str("haversine"),
+            Cost::Customize(_) => serializer.serialize_str("<customized cost function: implementation details omitted>"),
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T> Deserialize<'de> for Cost<T>
+where
+    T: Float
+{
+    fn deserialize<D>(deserializer: D) -> Result<Cost<T>, D::Error>
+        where
+            D: Deserializer<'de>,
+    {
+        use std::marker::PhantomData;
+        use serde::de::{self, Visitor, Unexpected};
+
+        struct CostVisitor<T> {
+            marker: PhantomData<T>,
+        };
+
+        impl<T> CostVisitor<T> {
+            fn new() -> Self {
+                CostVisitor {
+                    marker: PhantomData
+                }
+            }
+        }
+
+        impl<'de, TT> Visitor<'de> for CostVisitor<TT>
+        where
+            TT: Float
+        {
+            type Value = Cost<TT>;
+
+            // Format a message stating what data this Visitor expects to receive.
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("Deserialize custom cost function is not supported")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Cost<TT>, E>
+            where
+                E: de::Error,
+            {
+                match value {
+                    "euclidean" => Ok(Cost::Euclidean),
+                    "haversine" => Ok(Cost::Haversine),
+                    _ => Err(de::Error::invalid_type(
+                        Unexpected::Other("Unknown cost function type, or customized cost function which aren't supported for deserialize"),
+                        &self)
+                    ),
+                }
+            }
+        }
+
+        deserializer.deserialize_str(CostVisitor::new())
+    }
 }
 
 impl<T> fmt::Debug for Cost<T>
@@ -562,9 +635,9 @@ mod test {
     #[test]
     fn graph_from_line_vec() {
         let vec: Vec<Line<f32>> = vec![
-            Line::from([(10., 5.), (15., 10.)]),
-            Line::from([(15., 10.), (20., 15.)]),
-            Line::from([(20., 15.), (10., 5.)]),
+            Line::new((10., 5.).into(), (15., 10.).into()),
+            Line::new((15., 10.).into(), (20., 15.).into()),
+            Line::new((20., 15.).into(), (10., 5.).into()),
         ];
 
         let graph = VertexString::from(vec);
