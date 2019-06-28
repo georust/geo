@@ -12,6 +12,7 @@ const DEFAULT_SIZE: usize = 4;
 
 /// The cost function type, which is used to define the signature of the closure for calculating
 /// the evaluation cost of an edge in the `VertexString`.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub type CostFn<T> = fn(&Line<T>) -> T;
 
 /// The type of the cost function used to calculate the edge cost
