@@ -219,7 +219,7 @@ where
 /// ];
 ///
 /// let graph = VertexString::from(vec);
-/// //let mut it = graph.vertex_iter();
+/// let mut it = graph.vertex_iter();
 ///
 /// assert_eq!(it.next().unwrap().get_coordinate(), (10., 5.).into());
 //  assert_eq!(it.next().unwrap().get_coordinate(), (15., 10.).into());
