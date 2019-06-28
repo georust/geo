@@ -79,10 +79,10 @@ impl GraphRelation {
     /// Build a graph relationship between two neighboring vertices and connect them. The source
     /// vertex is where the `GraphRelation` is added to, and the target vertex's id is saved into
     /// the struct. The cost is calculated and passed in as the known value.
-    pub fn new_with_cost<T: Float>(index: usize, cost: T) -> Self {
+    pub fn with_cost(index: usize, cost: f64) -> Self {
         GraphRelation {
             vertex_id: index,
-            cost: cost.to_f64().unwrap_or(-1f64),
+            cost,
         }
     }
 
@@ -135,7 +135,7 @@ where
     }
 
     /// Get the vertex id, which also serves as the vector index in the VertexString
-    pub fn get_id(&self) -> usize {
+    pub fn id(&self) -> usize {
         self.id
     }
 
@@ -162,7 +162,7 @@ where
 
     fn set_vertex(&mut self, index: usize, cost: f64, is_new: bool) {
         if is_new {
-            self.vertices.push(GraphRelation::new_with_cost(index, cost));
+            self.vertices.push(GraphRelation::with_cost(index, cost));
         } else {
             let size = self.vertices.len();
             for (i, v) in self.vertices.iter_mut().enumerate() {
@@ -260,7 +260,7 @@ where
     /// Create a `VertexString` from the iterator of the edges connecting the vertices.
     /// If the size of the vertex coordinates container is known, using this API will
     /// help improve the overall performance.
-    pub fn new_with_size<C>(src: C, size: usize) -> Self
+    pub fn with_size<C>(src: C, size: usize) -> Self
     where
         C: Iterator<Item = Line<T>>
     {
@@ -505,7 +505,7 @@ where
         let size = item.len();
         assert!(size > 0);
 
-        VertexString::new_with_size(item.into_iter(), size)
+        VertexString::with_size(item.into_iter(), size)
     }
 }
 
@@ -517,7 +517,7 @@ where
         let size = item.0.len();
         assert!(size > 0);
 
-        VertexString::new_with_size(
+        VertexString::with_size(
             item.lines(),
             size - 1
         )
@@ -534,7 +534,7 @@ where
         let estimated_size =
             item.iter().fold(0, |acc, x| acc + x.0.len() -1);
 
-        VertexString::new_with_size(
+        VertexString::with_size(
             item.iter().flat_map(|l| {
                 assert!(!l.0.is_empty());
                 l.lines()
