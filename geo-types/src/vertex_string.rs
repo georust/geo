@@ -635,9 +635,9 @@ mod test {
     #[test]
     fn graph_from_line_vec() {
         let vec: Vec<Line<f32>> = vec![
-            Line::new((10., 5.).into(), (15., 10.).into()),
-            Line::new((15., 10.).into(), (20., 15.).into()),
-            Line::new((20., 15.).into(), (10., 5.).into()),
+            Line::from([(10., 5.), (15., 10.)]),
+            Line::from([(15., 10.), (20., 15.)]),
+            Line::from([(20., 15.), (10., 5.)]),
         ];
 
         let graph = VertexString::from(vec);
