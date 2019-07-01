@@ -82,7 +82,10 @@ where
             total = total + (p3.x.to_radians() - p1.x.to_radians()) * p2.y.to_radians().sin();
         }
 
-        total = total * T::from(EQUATORIAL_EARTH_RADIUS).unwrap() * T::from(EQUATORIAL_EARTH_RADIUS).unwrap() / T::from(-2).unwrap();
+        total = total
+            * T::from(EQUATORIAL_EARTH_RADIUS).unwrap()
+            * T::from(EQUATORIAL_EARTH_RADIUS).unwrap()
+            / T::from(-2).unwrap();
     }
     total
 }
