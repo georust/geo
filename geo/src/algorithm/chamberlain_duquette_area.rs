@@ -32,9 +32,11 @@ use num_traits::Float;
 ///     (x: 0.00388383, y: 51.501574),
 /// ];
 ///
+/// let area: f64 = p.chamberlain_duquette_area();
+///
 /// assert_eq!(
-///     78478.08613616147, // 78,478 meters²
-///     p.chamberlain_duquette_area(),
+///     78478., // 78,478 meters²
+///     area.round(),
 /// );
 /// ```
 pub trait ChamberlainDuquetteArea<T>
