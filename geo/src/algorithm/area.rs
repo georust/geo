@@ -3,13 +3,17 @@ use num_traits::Float;
 
 use crate::algorithm::winding_order::twice_signed_ring_area;
 
-/// Calculation of the area.
-
+/// Calculation of the planar area.
 pub trait Area<T>
 where
     T: CoordinateType,
 {
-    /// Signed area of a geometry.
+    /// Signed planar area of a geometry.
+    ///
+    /// Units: radians?
+    ///
+    /// Counter-clockwise: positive
+    /// Clockwise: negative
     ///
     /// # Examples
     ///
