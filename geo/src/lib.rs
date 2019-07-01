@@ -50,6 +50,7 @@ pub mod prelude {
     pub use crate::algorithm::bearing::Bearing;
     pub use crate::algorithm::bounding_rect::BoundingRect;
     pub use crate::algorithm::centroid::Centroid;
+    pub use crate::algorithm::chamberlain_duquette_area::ChamberlainDuquetteArea;
     pub use crate::algorithm::closest_point::ClosestPoint;
     pub use crate::algorithm::contains::Contains;
     pub use crate::algorithm::convexhull::ConvexHull;

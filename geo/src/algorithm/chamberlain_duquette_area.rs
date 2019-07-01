@@ -1,7 +1,43 @@
-use crate::{CoordinateType, EQUATORIAL_EARTH_RADIUS, Polygon, LineString};
+use crate::{CoordinateType, LineString, Polygon, EQUATORIAL_EARTH_RADIUS};
 use num_traits::Float;
 
-trait ChamberlainDuquetteArea<T>
+/// Signed approximate geodesic area of a geometry.
+///
+/// # Units
+///
+/// - return value: meters²
+///
+/// # References
+///
+/// * Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for Polygons on a Sphere",
+///
+///   JPL Publication 07-03, Jet Propulsion Laboratory, Pasadena, CA, June 2007 <https://trs.jpl.nasa.gov/handle/2014/41271>
+///
+/// # Examples
+///
+/// ```
+/// use geo::{polygon, prelude::*};
+///
+/// // The O2 in London
+/// let p = polygon![
+///     (x: 0.00388383, y: 51.501574)
+///     (x: 0.00538587, y: 51.502278),
+///     (x: 0.00553607, y: 51.503299),
+///     (x: 0.00467777, y: 51.504181),
+///     (x: 0.00327229, y: 51.504435),
+///     (x: 0.00187754, y: 51.504168),
+///     (x: 0.00087976, y: 51.503380),
+///     (x: 0.00107288, y: 51.502324),
+///     (x: 0.00185608, y: 51.501770),
+///     (x: 0.00388383, y: 51.501574),
+/// ];
+///
+/// assert_eq!(
+///     78478.08613629929, // 78,478 meters²
+///     p.chamberlain_duquette_area(),
+/// );
+/// ```
+pub trait ChamberlainDuquetteArea<T>
 where
     T: Float + CoordinateType,
 {
@@ -25,34 +61,40 @@ where
     let mut p1;
     let mut p2;
     let mut p3;
-    let mut lowerIndex;
-    let mut middleIndex;
-    let mut upperIndex;
+    let mut lower_index;
+    let mut middle_index;
+    let mut upper_index;
     let mut total = T::zero();
     let coordsLength = coords.0.len();
 
     if coordsLength > 2 {
         for i in 0..coordsLength {
-            if i == coordsLength - 2 { // i = N-2
-                lowerIndex = coordsLength - 2;
-                middleIndex = coordsLength - 1;
-                upperIndex = 0;
-            } else if i == coordsLength - 1 { // i = N-1
-                lowerIndex = coordsLength - 1;
-                middleIndex = 0;
+            if i == coordsLength - 2 {
+                // i = N-2
+                lower_index = coordsLength - 2;
+                middle_index = coordsLength - 1;
+                upper_index = 0;
+            } else if i == coordsLength - 1 {
+                // i = N-1
+                lower_index = coordsLength - 1;
+                middle_index = 0;
                 upperIndex = 1;
-            } else { // i = 0 to N-3
-                lowerIndex = i;
-                middleIndex = i + 1;
-                upperIndex = i + 2;
+            } else {
+                // i = 0 to N-3
+                lower_index = i;
+                middle_index = i + 1;
+                upper_index = i + 2;
             }
-            p1 = coords[lowerIndex];
-            p2 = coords[middleIndex];
-            p3 = coords[upperIndex];
+            p1 = coords[lower_index];
+            p2 = coords[middle_index];
+            p3 = coords[upper_index];
             total = total + (p3.x.to_radians() - p1.x.to_radians()) * p2.y.to_radians().sin();
         }
 
-        total = total * T::from(EQUATORIAL_EARTH_RADIUS).unwrap() * T::from(EQUATORIAL_EARTH_RADIUS).unwrap() / T::from(2).unwrap();
+        total = total
+            * T::from(EQUATORIAL_EARTH_RADIUS).unwrap()
+            * T::from(EQUATORIAL_EARTH_RADIUS).unwrap()
+            / T::from(-2).unwrap();
     }
     total
 }
@@ -63,7 +105,22 @@ mod test {
     use crate::polygon;
 
     #[test]
-    fn test_no_holes() {
+    fn test_negative() {
+        let polygon = polygon![
+            (x: 125., y: -15.),
+            (x: 144., y: -15.),
+            (x: 154., y: -27.),
+            (x: 148., y: -39.),
+            (x: 130., y: -33.),
+            (x: 117., y: -37.),
+            (x: 113., y: -22.),
+            (x: 125., y: -15.),
+        ];
+        assert_eq!(-7766240997209.013, polygon.chamberlain_duquette_area());
+    }
+
+    #[test]
+    fn test_positive() {
         let polygon = polygon![
             (x: 125., y: -15.),
             (x: 113., y: -22.),
@@ -74,6 +131,36 @@ mod test {
             (x: 144., y: -15.),
             (x: 125., y: -15.),
         ];
-        assert_eq!(-7766240997209.013, polygon.chamberlain_duquette_area());
+        assert_eq!(7766240997209.013, polygon.chamberlain_duquette_area());
+    }
+
+    #[test]
+    fn test_holes() {
+        let poly = polygon![
+            exterior: [
+                (x: 0., y: 0.),
+                (x: 10., y: 0.),
+                (x: 10., y: 10.),
+                (x: 0., y: 10.),
+                (x: 0., y: 0.)
+            ],
+            interiors: [
+                [
+                    (x: 1., y: 1.),
+                    (x: 2., y: 1.),
+                    (x: 2., y: 2.),
+                    (x: 1., y: 2.),
+                    (x: 1., y: 1.),
+                ],
+                [
+                    (x: 5., y: 5.),
+                    (x: 6., y: 5.),
+                    (x: 6., y: 6.),
+                    (x: 5., y: 6.),
+                    (x: 5., y: 5.)
+                ],
+            ],
+        ];
+        assert_eq!(1232921098571.2913, poly.chamberlain_duquette_area());
     }
 }

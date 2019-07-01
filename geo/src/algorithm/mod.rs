@@ -6,7 +6,7 @@ pub mod bearing;
 pub mod bounding_rect;
 /// Calculate the centroid of a `Geometry`.
 pub mod centroid;
-/// TODO
+/// Signed approximate geodesic area of a geometry.
 pub mod chamberlain_duquette_area;
 /// Calculate the minimum distance between two `Geometries`.
 pub mod closest_point;
