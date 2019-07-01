@@ -61,36 +61,24 @@ fn ring_area<T>(coords: &LineString<T>) -> T
 where
     T: Float + CoordinateType,
 {
-    let mut p1;
-    let mut p2;
-    let mut p3;
-    let mut lower_index;
-    let mut middle_index;
-    let mut upper_index;
     let mut total = T::zero();
     let coords_len = coords.0.len();
 
     if coords_len > 2 {
         for i in 0..coords_len {
-            if i == coords_len - 2 {
+            let (lower_index, middle_index, upper_index) = if i == coords_len - 2 {
                 // i = N-2
-                lower_index = coords_len - 2;
-                middle_index = coords_len - 1;
-                upper_index = 0;
+                (coords_len - 2, coords_len - 1, 0)
             } else if i == coords_len - 1 {
                 // i = N-1
-                lower_index = coords_len - 1;
-                middle_index = 0;
-                upper_index = 1;
+                (coords_len - 1, 0, upper_index)
             } else {
                 // i = 0 to N-3
-                lower_index = i;
-                middle_index = i + 1;
-                upper_index = i + 2;
-            }
-            p1 = coords[lower_index];
-            p2 = coords[middle_index];
-            p3 = coords[upper_index];
+                (i, i + 1, i + 2)
+            };
+            let p1 = coords[lower_index];
+            let p2 = coords[middle_index];
+            let p3 = coords[upper_index];
             total = total + (p3.x.to_radians() - p1.x.to_radians()) * p2.y.to_radians().sin();
         }
 
