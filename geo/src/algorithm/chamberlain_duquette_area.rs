@@ -20,7 +20,7 @@ use num_traits::Float;
 ///
 /// // The O2 in London
 /// let p = polygon![
-///     (x: 0.00388383, y: 51.501574)
+///     (x: 0.00388383, y: 51.501574),
 ///     (x: 0.00538587, y: 51.502278),
 ///     (x: 0.00553607, y: 51.503299),
 ///     (x: 0.00467777, y: 51.504181),
@@ -33,7 +33,7 @@ use num_traits::Float;
 /// ];
 ///
 /// assert_eq!(
-///     78478.08613629929, // 78,478 meters²
+///     78478.08613616147, // 78,478 meters²
 ///     p.chamberlain_duquette_area(),
 /// );
 /// ```
@@ -49,8 +49,11 @@ where
     T: Float + CoordinateType,
 {
     fn chamberlain_duquette_area(&self) -> T {
-        // TODO: holes
-        ring_area(self.exterior())
+        self.interiors()
+            .iter()
+            .fold(ring_area(self.exterior()), |total, next| {
+                total - ring_area(next)
+            })
     }
 }
 
@@ -65,20 +68,20 @@ where
     let mut middle_index;
     let mut upper_index;
     let mut total = T::zero();
-    let coordsLength = coords.0.len();
+    let coords_len = coords.0.len();
 
-    if coordsLength > 2 {
-        for i in 0..coordsLength {
-            if i == coordsLength - 2 {
+    if coords_len > 2 {
+        for i in 0..coords_len {
+            if i == coords_len - 2 {
                 // i = N-2
-                lower_index = coordsLength - 2;
-                middle_index = coordsLength - 1;
+                lower_index = coords_len - 2;
+                middle_index = coords_len - 1;
                 upper_index = 0;
-            } else if i == coordsLength - 1 {
+            } else if i == coords_len - 1 {
                 // i = N-1
-                lower_index = coordsLength - 1;
+                lower_index = coords_len - 1;
                 middle_index = 0;
-                upperIndex = 1;
+                upper_index = 1;
             } else {
                 // i = 0 to N-3
                 lower_index = i;
@@ -161,6 +164,6 @@ mod test {
                 ],
             ],
         ];
-        assert_eq!(1232921098571.2913, poly.chamberlain_duquette_area());
+        assert_eq!(1208198651182.4727, poly.chamberlain_duquette_area());
     }
 }
