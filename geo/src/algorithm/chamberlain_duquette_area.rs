@@ -71,7 +71,7 @@ where
                 (coords_len - 2, coords_len - 1, 0)
             } else if i == coords_len - 1 {
                 // i = N-1
-                (coords_len - 1, 0, upper_index)
+                (coords_len - 1, 0, 1)
             } else {
                 // i = 0 to N-3
                 (i, i + 1, i + 2)
@@ -82,10 +82,7 @@ where
             total = total + (p3.x.to_radians() - p1.x.to_radians()) * p2.y.to_radians().sin();
         }
 
-        total = total
-            * T::from(EQUATORIAL_EARTH_RADIUS).unwrap()
-            * T::from(EQUATORIAL_EARTH_RADIUS).unwrap()
-            / T::from(-2).unwrap();
+        total = total * T::from(EQUATORIAL_EARTH_RADIUS).unwrap() * T::from(EQUATORIAL_EARTH_RADIUS).unwrap() / T::from(-2).unwrap();
     }
     total
 }
