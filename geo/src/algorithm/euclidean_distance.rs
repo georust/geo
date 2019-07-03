@@ -798,6 +798,13 @@ mod test {
         assert_eq!(p2.euclidean_distance(&line0), 1.);
     }
     #[test]
+    fn distance_line_line_test() {
+        let line0 = Line::from([(0., 0.), (5., 0.)]);
+        let line1 = Line::from([(2., 1.), (7., 2.)]);
+        assert_eq!(line0.euclidean_distance(&line1), 1.);
+        assert_eq!(line1.euclidean_distance(&line0), 1.);
+    }
+    #[test]
     // test edge-vertex minimum distance
     fn test_minimum_polygon_distance() {
         let points_raw = vec![
