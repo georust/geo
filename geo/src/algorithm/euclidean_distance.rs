@@ -356,6 +356,8 @@ where
         self.start_point()
             .euclidean_distance(other)
             .min(self.end_point().euclidean_distance(other))
+            .min(other.start_point().euclidean_distance(self))
+            .min(other.end_point().euclidean_distance(self))
     }
 }
 
