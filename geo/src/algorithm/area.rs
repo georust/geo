@@ -3,36 +3,34 @@ use num_traits::Float;
 
 use crate::algorithm::winding_order::twice_signed_ring_area;
 
-/// Calculation of the area.
-
+/// Signed planar area of a geometry.
+///
+/// # Examples
+///
+/// ```
+/// use geo::polygon;
+/// use geo::algorithm::area::Area;
+///
+/// let mut polygon = polygon![
+///     (x: 0., y: 0.),
+///     (x: 5., y: 0.),
+///     (x: 5., y: 6.),
+///     (x: 0., y: 6.),
+///     (x: 0., y: 0.),
+/// ];
+///
+/// assert_eq!(polygon.area(), 30.);
+///
+/// polygon.exterior_mut(|line_string| {
+///     line_string.0.reverse();
+/// });
+///
+/// assert_eq!(polygon.area(), -30.);
+/// ```
 pub trait Area<T>
 where
     T: CoordinateType,
 {
-    /// Signed area of a geometry.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo::polygon;
-    /// use geo::algorithm::area::Area;
-    ///
-    /// let mut polygon = polygon![
-    ///     (x: 0., y: 0.),
-    ///     (x: 5., y: 0.),
-    ///     (x: 5., y: 6.),
-    ///     (x: 0., y: 6.),
-    ///     (x: 0., y: 0.),
-    /// ];
-    ///
-    /// assert_eq!(polygon.area(), 30.);
-    ///
-    /// polygon.exterior_mut(|line_string| {
-    ///     line_string.0.reverse();
-    /// });
-    ///
-    /// assert_eq!(polygon.area(), -30.);
-    /// ```
     fn area(&self) -> T;
 }
 
