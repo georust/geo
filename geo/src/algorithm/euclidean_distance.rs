@@ -352,10 +352,12 @@ where
         if self.intersects(other) || self.contains(other) {
             return T::zero();
         }
-        // minimum of two Point-Line distances
+        // minimum of all Point-Line distances
         self.start_point()
             .euclidean_distance(other)
             .min(self.end_point().euclidean_distance(other))
+            .min(other.start_point().euclidean_distance(self))
+            .min(other.end_point().euclidean_distance(self))
     }
 }
 
@@ -796,6 +798,13 @@ mod test {
 
         assert_eq!(line0.euclidean_distance(&p2), 1.);
         assert_eq!(p2.euclidean_distance(&line0), 1.);
+    }
+    #[test]
+    fn distance_line_line_test() {
+        let line0 = Line::from([(0., 0.), (5., 0.)]);
+        let line1 = Line::from([(2., 1.), (7., 2.)]);
+        assert_eq!(line0.euclidean_distance(&line1), 1.);
+        assert_eq!(line1.euclidean_distance(&line0), 1.);
     }
     #[test]
     // test edge-vertex minimum distance
