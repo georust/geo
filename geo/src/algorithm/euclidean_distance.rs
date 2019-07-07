@@ -352,7 +352,7 @@ where
         if self.intersects(other) || self.contains(other) {
             return T::zero();
         }
-        // minimum of two Point-Line distances
+        // minimum of all Point-Line distances
         self.start_point()
             .euclidean_distance(other)
             .min(self.end_point().euclidean_distance(other))
