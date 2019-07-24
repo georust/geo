@@ -80,7 +80,7 @@ where
     T: CoordinateType,
 {
     fn area(&self) -> T {
-        (self.max.x - self.min.x) * (self.max.y - self.min.y)
+        self.width() * self.height()
     }
 }
 
@@ -126,16 +126,16 @@ mod test {
     }
     #[test]
     fn rectangle_test() {
-        let rect1: Rect<f32> = Rect {
-            min: Coordinate { x: 10., y: 30. },
-            max: Coordinate { x: 20., y: 40. },
-        };
+        let rect1: Rect<f32> = Rect::new(
+            Coordinate { x: 10., y: 30. },
+            Coordinate { x: 20., y: 40. },
+        );
         assert_relative_eq!(rect1.area(), 100.);
 
-        let rect2: Rect<i32> = Rect {
-            min: Coordinate { x: 10, y: 30 },
-            max: Coordinate { x: 20, y: 40 },
-        };
+        let rect2: Rect<i32> = Rect::new(
+            Coordinate { x: 10, y: 30 },
+            Coordinate { x: 20, y: 40 },
+        );
         assert_eq!(rect2.area(), 100);
     }
     #[test]

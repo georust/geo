@@ -421,10 +421,9 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Rect<T> {
     type Output = Rect<NT>;
 
     fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
-        let new_min = func(&(self.min.x, self.min.y));
-        let new_max = func(&(self.max.x, self.max.y));
+        let new_min = func(&self.min().x_y());
+        let new_max = func(&self.max().x_y());
 
-        // using constructor to enforce soundness of the obtained coordinates
         Rect::new(
             Coordinate {
                 x: new_min.0,
@@ -445,8 +444,8 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Rect<T> {
         &self,
         func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
-        let new_min = func(&(self.min.x, self.min.y))?;
-        let new_max = func(&(self.max.x, self.max.y))?;
+        let new_min = func(&(self.min().x, self.min().y))?;
+        let new_max = func(&(self.max().x, self.max().y))?;
 
         Ok(Rect::new(
             Coordinate {
@@ -463,17 +462,12 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Rect<T> {
 
 impl<T: CoordinateType> MapCoordsInplace<T> for Rect<T> {
     fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T)) {
-        let new_min = func(&(self.min.x, self.min.y));
-        let new_max = func(&(self.max.x, self.max.y));
+        let new_min = func(&self.min().x_y());
+        let new_max = func(&self.max().x_y());
 
-        // make sure the min coordinates are always smaller than the max coordinates, otherwise
-        // we won't have a "regular" rectangle that many of the methods assumes.
-        assert!(new_min.0 < new_max.0 && new_min.1 < new_max.1);
+        let mut new_rect = Rect::new(new_min, new_max);
 
-        self.min.x = new_min.0;
-        self.min.y = new_min.1;
-        self.max.x = new_max.0;
-        self.max.y = new_max.1;
+        ::std::mem::swap(self, &mut new_rect);
     }
 }
 
@@ -502,8 +496,8 @@ mod test {
     fn rect_inplace() {
         let mut rect = Rect::new((10, 10), (20, 20));
         rect.map_coords_inplace(&|&(x, y)| (x + 10, y + 20));
-        assert_eq!(rect.min, Coordinate { x: 20, y: 30 });
-        assert_eq!(rect.max, Coordinate { x: 30, y: 40 });
+        assert_eq!(rect.min(), Coordinate { x: 20, y: 30 });
+        assert_eq!(rect.max(), Coordinate { x: 30, y: 40 });
     }
 
     #[test]
@@ -523,8 +517,8 @@ mod test {
     fn rect_map_coords() {
         let rect = Rect::new((10, 10), (20, 20));
         let another_rect = rect.map_coords(&|&(x, y)| (x + 10, y + 20));
-        assert_eq!(another_rect.min, Coordinate { x: 20, y: 30 });
-        assert_eq!(another_rect.max, Coordinate { x: 30, y: 40 });
+        assert_eq!(another_rect.min(), Coordinate { x: 20, y: 30 });
+        assert_eq!(another_rect.max(), Coordinate { x: 30, y: 40 });
     }
 
     #[test]

@@ -151,10 +151,10 @@ mod test {
 
     #[test]
     fn test_rects() {
-        let r = Rect {
-            min: Coordinate { x: -1., y: -1. },
-            max: Coordinate { x: 1., y: 1. },
-        };
+        let r = Rect::new(
+            Coordinate { x: -1., y: -1. },
+            Coordinate { x: 1., y: 1. },
+        );
         let p: Polygon<_> = r.into();
         assert_eq!(
             p,

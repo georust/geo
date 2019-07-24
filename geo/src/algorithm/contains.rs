@@ -233,7 +233,7 @@ where
     T: CoordinateType,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        p.x() >= self.min.x && p.x() <= self.max.x && p.y() >= self.min.y && p.y() <= self.max.y
+        p.x() >= self.min().x && p.x() <= self.max().x && p.y() >= self.min().y && p.y() <= self.max().y
     }
 }
 
@@ -243,10 +243,10 @@ where
 {
     fn contains(&self, bounding_rect: &Rect<T>) -> bool {
         // All points of LineString must be in the polygon ?
-        self.min.x <= bounding_rect.min.x
-            && self.max.x >= bounding_rect.max.x
-            && self.min.y <= bounding_rect.min.y
-            && self.max.y >= bounding_rect.max.y
+        self.min().x <= bounding_rect.min().x
+            && self.max().x >= bounding_rect.max().x
+            && self.min().y <= bounding_rect.min().y
+            && self.max().y >= bounding_rect.max().y
     }
 }
 
@@ -498,14 +498,14 @@ mod test {
     }
     #[test]
     fn bounding_rect_in_inner_bounding_rect_test() {
-        let bounding_rect_xl = Rect {
-            min: Coordinate { x: -100., y: -200. },
-            max: Coordinate { x: 100., y: 200. },
-        };
-        let bounding_rect_sm = Rect {
-            min: Coordinate { x: -10., y: -20. },
-            max: Coordinate { x: 10., y: 20. },
-        };
+        let bounding_rect_xl = Rect::new(
+            Coordinate { x: -100., y: -200. },
+            Coordinate { x: 100., y: 200. },
+        );
+        let bounding_rect_sm = Rect::new(
+            Coordinate { x: -10., y: -20. },
+            Coordinate { x: 10., y: 20. },
+        );
         assert_eq!(true, bounding_rect_xl.contains(&bounding_rect_sm));
         assert_eq!(false, bounding_rect_sm.contains(&bounding_rect_xl));
     }
@@ -594,17 +594,17 @@ mod test {
     #[test]
     fn integer_bounding_rects() {
         let p: Point<i32> = Point::new(10, 20);
-        let bounding_rect: Rect<i32> = Rect {
-            min: Coordinate { x: 0, y: 0 },
-            max: Coordinate { x: 100, y: 100 },
-        };
+        let bounding_rect: Rect<i32> = Rect::new(
+            Coordinate { x: 0, y: 0 },
+            Coordinate { x: 100, y: 100 },
+        );
         assert!(bounding_rect.contains(&p));
         assert!(!bounding_rect.contains(&Point::new(-10, -10)));
 
-        let smaller_bounding_rect: Rect<i32> = Rect {
-            min: Coordinate { x: 10, y: 10 },
-            max: Coordinate { x: 20, y: 20 },
-        };
+        let smaller_bounding_rect: Rect<i32> = Rect::new(
+            Coordinate { x: 10, y: 10 },
+            Coordinate { x: 20, y: 20 },
+        );
         assert!(bounding_rect.contains(&smaller_bounding_rect));
     }
 

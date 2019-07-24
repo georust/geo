@@ -383,8 +383,8 @@ where
         orig[triangle.right],
     )
     .bounding_rect();
-    let br = Point::new(bounding_rect.min.x, bounding_rect.min.y);
-    let tl = Point::new(bounding_rect.max.x, bounding_rect.max.y);
+    let br = Point::new(bounding_rect.min().x, bounding_rect.min().y);
+    let tl = Point::new(bounding_rect.max().x, bounding_rect.max().y);
     tree.locate_in_envelope_intersecting(&rstar::AABB::from_corners(br, tl))
         .any(|c| {
             // triangle start point, end point
