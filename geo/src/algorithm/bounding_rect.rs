@@ -23,10 +23,10 @@ pub trait BoundingRect<T: CoordinateType> {
     /// let linestring = LineString::from(vec);
     /// let bounding_rect = linestring.bounding_rect().unwrap();
     ///
-    /// assert_eq!(40.02f64, bounding_rect.min.x);
-    /// assert_eq!(42.02f64, bounding_rect.max.x);
-    /// assert_eq!(116.34, bounding_rect.min.y);
-    /// assert_eq!(118.34, bounding_rect.max.y);
+    /// assert_eq!(40.02f64, bounding_rect.min().x);
+    /// assert_eq!(42.02f64, bounding_rect.max().x);
+    /// assert_eq!(116.34, bounding_rect.min().y);
+    /// assert_eq!(118.34, bounding_rect.max().y);
     /// ```
     ///
     fn bounding_rect(&self) -> Self::Output;
@@ -57,10 +57,10 @@ where
         let b = self.end;
         let (xmin, xmax) = if a.x <= b.x { (a.x, b.x) } else { (b.x, a.x) };
         let (ymin, ymax) = if a.y <= b.y { (a.y, b.y) } else { (b.y, a.y) };
-        Rect {
-            min: Coordinate { x: xmin, y: ymin },
-            max: Coordinate { x: xmax, y: ymax },
-        }
+        Rect::new(
+            Coordinate { x: xmin, y: ymin },
+            Coordinate { x: xmax, y: ymax },
+        )
     }
 }
 
@@ -165,16 +165,16 @@ mod test {
     #[test]
     fn linestring_one_point_test() {
         let linestring = line_string![(x: 40.02f64, y: 116.34)];
-        let bounding_rect = Rect {
-            min: Coordinate {
+        let bounding_rect = Rect::new(
+            Coordinate {
                 x: 40.02f64,
                 y: 116.34,
             },
-            max: Coordinate {
+            Coordinate {
                 x: 40.02,
                 y: 116.34,
             },
-        };
+        );
         assert_eq!(bounding_rect, linestring.bounding_rect().unwrap());
     }
     #[test]
@@ -185,10 +185,10 @@ mod test {
             (x: -3., y: -3.),
             (x: -4., y: 4.)
         ];
-        let bounding_rect = Rect {
-            min: Coordinate { x: -4., y: -3. },
-            max: Coordinate { x: 2., y: 4. },
-        };
+        let bounding_rect = Rect::new(
+            Coordinate { x: -4., y: -3. },
+            Coordinate { x: 2., y: 4. },
+        );
         assert_eq!(bounding_rect, linestring.bounding_rect().unwrap());
     }
     #[test]
@@ -199,19 +199,19 @@ mod test {
             line_string![(x: 1., y: 1.), (x: 1., y: -60.)],
             line_string![(x: 1., y: 1.), (x: 1., y: 70.)],
         ]);
-        let bounding_rect = Rect {
-            min: Coordinate { x: -40., y: -60. },
-            max: Coordinate { x: 50., y: 70. },
-        };
+        let bounding_rect = Rect::new(
+            Coordinate { x: -40., y: -60. },
+            Coordinate { x: 50., y: 70. },
+        );
         assert_eq!(bounding_rect, multiline.bounding_rect().unwrap());
     }
     #[test]
     fn multipoint_test() {
         let multipoint = MultiPoint::from(vec![(1., 1.), (2., -2.), (-3., -3.), (-4., 4.)]);
-        let bounding_rect = Rect {
-            min: Coordinate { x: -4., y: -3. },
-            max: Coordinate { x: 2., y: 4. },
-        };
+        let bounding_rect = Rect::new(
+            Coordinate { x: -4., y: -3. },
+            Coordinate { x: 2., y: 4. },
+        );
         assert_eq!(bounding_rect, multipoint.bounding_rect().unwrap());
     }
     #[test]
@@ -234,10 +234,10 @@ mod test {
             polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 0., y: 80.), (x: 0., y: 0.)],
             polygon![(x: 0., y: 0.), (x: -60., y: 0.), (x: 0., y: 6.), (x: 0., y: 0.)],
         ]);
-        let bounding_rect = Rect {
-            min: Coordinate { x: -60., y: -70. },
-            max: Coordinate { x: 50., y: 80. },
-        };
+        let bounding_rect = Rect::new(
+            Coordinate { x: -60., y: -70. },
+            Coordinate { x: 50., y: 80. },
+        );
         assert_eq!(bounding_rect, mpoly.bounding_rect().unwrap());
     }
     #[test]
@@ -246,17 +246,17 @@ mod test {
         let line2 = Line::new(Coordinate { x: 2., y: 3. }, Coordinate { x: 0., y: 1. });
         assert_eq!(
             line1.bounding_rect(),
-            Rect {
-                min: Coordinate { x: 0., y: 1. },
-                max: Coordinate { x: 2., y: 3. },
-            }
+            Rect::new(
+                Coordinate { x: 0., y: 1. },
+                Coordinate { x: 2., y: 3. },
+            )
         );
         assert_eq!(
             line2.bounding_rect(),
-            Rect {
-                min: Coordinate { x: 0., y: 1. },
-                max: Coordinate { x: 2., y: 3. },
-            }
+            Rect::new(
+                Coordinate { x: 0., y: 1. },
+                Coordinate { x: 2., y: 3. },
+            )
         );
     }
 }

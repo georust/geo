@@ -220,8 +220,8 @@ where
                 Point::new(Bounded::max_value(), Bounded::max_value()),
             ),
             Some(b) => ::rstar::AABB::from_corners(
-                Point::new(b.min.x, b.min.y),
-                Point::new(b.max.x, b.max.y),
+                Point::new(b.min().x, b.min().y),
+                Point::new(b.max().x, b.max().y),
             ),
         }
     }
