@@ -30,8 +30,8 @@ impl<T: CoordinateType> Rect<T> {
     ///     Coordinate { x: 10., y: 20. },
     /// );
     ///
-    /// assert_eq!(rect.min, Coordinate { x: 0., y: 0. });
-    /// assert_eq!(rect.max, Coordinate { x: 10., y: 20. });
+    /// assert_eq!(rect.min(), Coordinate { x: 0., y: 0. });
+    /// assert_eq!(rect.max(), Coordinate { x: 10., y: 20. });
     /// ```
     pub fn new<C>(min: C, max: C) -> Rect<T>
     where
