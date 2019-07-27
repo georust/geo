@@ -751,7 +751,7 @@ mod test {
             geomtype: GeomType::Line,
         };
         let simplified = vwp_wrapper(&gt, &points_ls.into(), None, &0.0005);
-        assert_eq!(simplified[0].len(), 3277);
+        assert_eq!(simplified[0].len(), 3278);
     }
 
     #[test]
