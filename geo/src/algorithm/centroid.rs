@@ -1,7 +1,7 @@
 use num_traits::{Float, FromPrimitive};
 use std::iter::Sum;
 
-use crate::algorithm::area::{get_linestring_area, Area};
+use crate::algorithm::area::Area;
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::{Line, LineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Ring};
 
@@ -159,7 +159,6 @@ where
                 Some(external_centroid)
             } else {
                 let external_area = Ring::new(self.exterior.0).area().abs();
-                let external_area = get_linestring_area(self.exterior()).abs();
                 // accumulate interior Polygons
                 let (totals_x, totals_y, internal_area) = self
                     .interiors()

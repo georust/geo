@@ -1,6 +1,6 @@
 use num_traits::Float;
-use prelude::*;
-use {Coordinate, CoordinateType, Line};
+use crate::prelude::*;
+use crate::{Coordinate, CoordinateType, Line};
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Ring<T>(Vec<Coordinate<T>>)

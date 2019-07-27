@@ -1,7 +1,5 @@
-use crate::{CoordinateType, Line, LineString, MultiPolygon, Polygon, Rect, Ring, Triangle};
+use crate::{CoordinateType, Line, MultiPolygon, Polygon, Rect, Ring, Triangle};
 use num_traits::Float;
-
-use crate::algorithm::winding_order::twice_signed_ring_area;
 
 /// Signed planar area of a geometry.
 ///
@@ -50,14 +48,8 @@ where
     fn area(&self) -> T {
         self.interiors()
             .iter()
-<<<<<<< HEAD
             .map(|i| Ring::new(i.0.clone()).area())
-            .fold(Ring::new(self.exterior.0.clone()).area(), |total, i| total - i)
-=======
-            .fold(get_linestring_area(self.exterior()), |total, next| {
-                total - get_linestring_area(next)
-            })
->>>>>>> origin/master
+            .fold(Ring::new(self.exterior.0).area(), |total, i| total - i)
     }
 }
 
