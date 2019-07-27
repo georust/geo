@@ -251,8 +251,8 @@ where
     fn centroid(&self) -> Self::Output {
         let two = T::one() + T::one();
         Point::new(
-            (self.max.x + self.min.x) / two,
-            (self.max.y + self.min.y) / two,
+            (self.max().x + self.min().x) / two,
+            (self.max().y + self.min().y) / two,
         )
     }
 }
@@ -533,10 +533,10 @@ mod test {
     }
     #[test]
     fn bounding_rect_test() {
-        let bounding_rect = Rect {
-            min: Coordinate { x: 0., y: 50. },
-            max: Coordinate { x: 4., y: 100. },
-        };
+        let bounding_rect = Rect::new(
+            Coordinate { x: 0., y: 50. },
+            Coordinate { x: 4., y: 100. },
+        );
         let point = Point(Coordinate { x: 2., y: 75. });
         assert_eq!(point, bounding_rect.centroid());
     }

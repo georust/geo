@@ -457,11 +457,11 @@ impl<T: CoordinateType> From<Rect<T>> for Polygon<T> {
     fn from(r: Rect<T>) -> Polygon<T> {
         Polygon::new(
             vec![
-                (r.min.x, r.min.y),
-                (r.max.x, r.min.y),
-                (r.max.x, r.max.y),
-                (r.min.x, r.max.y),
-                (r.min.x, r.min.y),
+                (r.min().x, r.min().y),
+                (r.max().x, r.min().y),
+                (r.max().x, r.max().y),
+                (r.min().x, r.max().y),
+                (r.min().x, r.min().y),
             ]
             .into(),
             Vec::new(),

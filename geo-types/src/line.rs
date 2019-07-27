@@ -169,7 +169,7 @@ where
 
     fn envelope(&self) -> Self::Envelope {
         let bounding_rect = crate::private_utils::line_bounding_rect(*self);
-        ::rstar::AABB::from_corners(bounding_rect.min.into(), bounding_rect.max.into())
+        ::rstar::AABB::from_corners(bounding_rect.min().into(), bounding_rect.max().into())
     }
 }
 
