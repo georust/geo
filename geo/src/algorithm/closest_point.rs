@@ -1,7 +1,7 @@
+use crate::prelude::*;
+use crate::{Closest, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use num_traits::Float;
-use prelude::*;
 use std::iter;
-use {Closest, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 /// Find the closest point between two objects, where the other object is
 /// assumed to be a `Point` by default.
@@ -115,7 +115,7 @@ impl<F: Float> ClosestPoint<F> for LineString<F> {
 
 impl<F: Float> ClosestPoint<F> for Polygon<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        let prospectives = self.interiors.iter().chain(iter::once(&self.exterior));
+        let prospectives = self.interiors().iter().chain(iter::once(self.exterior()));
         closest_of(prospectives, *p)
     }
 }
@@ -186,7 +186,8 @@ mod tests {
             (100.0, 0.0),
             (50.0, 50.0),
             (1234.567, -987.6543),
-        ].into_iter()
+        ]
+        .into_iter()
         .map(Point::from)
         .collect()
     }
@@ -263,12 +264,12 @@ mod tests {
         let poly = holy_polygon();
         let p = Point::new(1000.0, 12345.6789);
         assert!(
-            !poly.exterior.contains(&p),
+            !poly.exterior().contains(&p),
             "`p` should be outside the polygon!"
         );
 
         let poly_closest = poly.closest_point(&p);
-        let exterior_closest = poly.exterior.closest_point(&p);
+        let exterior_closest = poly.exterior().closest_point(&p);
 
         assert_eq!(poly_closest, exterior_closest);
     }
@@ -276,7 +277,7 @@ mod tests {
     #[test]
     fn polygon_with_point_on_interior_ring() {
         let poly = holy_polygon();
-        let p = poly.interiors[0].0[3];
+        let p = poly.interiors()[0].0[3];
         let should_be = Closest::Intersection(p.into());
 
         let got = poly.closest_point(&p.into());
@@ -287,7 +288,7 @@ mod tests {
     #[test]
     fn polygon_with_point_near_interior_ring() {
         let poly = holy_polygon();
-        let random_ring_corner = poly.interiors[0].0[3];
+        let random_ring_corner = poly.interiors()[0].0[3];
         let p = Point(random_ring_corner).translate(-3.0, 3.0);
 
         let should_be = Closest::SinglePoint(random_ring_corner.into());

@@ -1,8 +1,8 @@
-use algorithm::centroid::Centroid;
-use algorithm::map_coords::MapCoords;
+use crate::algorithm::centroid::Centroid;
+use crate::algorithm::map_coords::MapCoords;
+use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use num_traits::{Float, FromPrimitive};
 use std::iter::Sum;
-use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 #[inline]
 fn rotate_inner<T>(x: T, y: T, x0: T, y0: T, sin_theta: T, cos_theta: T) -> Point<T>
@@ -91,21 +91,25 @@ pub trait RotatePoint<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString};
-    /// use geo::algorithm::rotate::{RotatePoint};
+    /// use geo::algorithm::rotate::RotatePoint;
+    /// use geo::{line_string, point};
     ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(0.0, 0.0));
-    /// vec.push(Point::new(5.0, 5.0));
-    /// vec.push(Point::new(10.0, 10.0));
-    /// let linestring = LineString::from(vec);
-    /// let rotated = linestring.rotate_around_point(-45.0, Point::new(10.0, 0.0));
-    /// let mut correct = Vec::new();
-    /// correct.push(Point::new(2.9289321881345245, 7.071067811865475));
-    /// correct.push(Point::new(10.0, 7.0710678118654755));
-    /// correct.push(Point::new(17.071067811865476, 7.0710678118654755));
-    /// let correct_ls = LineString::from(correct);
-    /// assert_eq!(rotated, correct_ls);
+    /// let ls = line_string![
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 5.0, y: 5.0),
+    ///     (x: 10.0, y: 10.0)
+    /// ];
+    ///
+    /// let rotated = ls.rotate_around_point(
+    ///     -45.0,
+    ///     point!(x: 10.0, y: 0.0),
+    /// );
+    ///
+    /// assert_eq!(rotated, line_string![
+    ///     (x: 2.9289321881345245, y: 7.071067811865475),
+    ///     (x: 10.0, y: 7.0710678118654755),
+    ///     (x: 17.071067811865476, y: 7.0710678118654755)
+    /// ]);
     /// ```
     fn rotate_around_point(&self, angle: T, point: Point<T>) -> Self
     where
@@ -165,14 +169,14 @@ where
     /// Rotate the Polygon about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
         // if a polygon has holes, use the centroid of its outer shell as the rotation origin
-        let centroid = if self.interiors.is_empty() {
+        let centroid = if self.interiors().is_empty() {
             self.centroid().unwrap()
         } else {
-            self.exterior.centroid().unwrap()
+            self.exterior().centroid().unwrap()
         };
         Polygon::new(
-            rotate_many(angle, centroid, self.exterior.points_iter()).collect(),
-            self.interiors
+            rotate_many(angle, centroid, self.exterior().points_iter()).collect(),
+            self.interiors()
                 .iter()
                 .map(|ring| rotate_many(angle, centroid, ring.points_iter()).collect())
                 .collect(),
@@ -213,84 +217,90 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use {Coordinate, LineString, Point, Polygon};
+    use crate::{line_string, point, polygon, Coordinate, Point};
+
     #[test]
     fn test_rotate_around_point() {
-        let p = Point::new(1.0, 5.0);
+        let p = point!(x: 1.0, y: 5.0);
         let rotated = p.rotate(30.0);
         // results agree with Shapely / GEOS
         assert_eq!(rotated, Point::new(1.0, 5.0));
     }
     #[test]
     fn test_rotate_linestring() {
-        let vec = vec![(0.0, 0.0), (5.0, 5.0), (10.0, 10.0)];
-        let linestring = LineString::from(vec);
+        let linestring = line_string![
+            (x: 0.0, y: 0.0),
+            (x: 5.0, y: 5.0),
+            (x: 10.0, y: 10.0)
+        ];
         let rotated = linestring.rotate(-45.0);
-        let mut correct = Vec::new();
-        correct.push(Point::new(-2.0710678118654755, 5.0));
-        correct.push(Point::new(5.0, 5.0));
-        correct.push(Point::new(12.071067811865476, 5.0));
-        let correct_ls = LineString::from(correct);
         // results agree with Shapely / GEOS
-        assert_eq!(rotated, correct_ls);
+        assert_eq!(
+            rotated,
+            line_string![
+                (x: -2.0710678118654755, y: 5.0),
+                (x: 5.0, y: 5.0),
+                (x: 12.071067811865476, y: 5.0)
+            ]
+        );
     }
     #[test]
     fn test_rotate_polygon() {
-        let coords = vec![
-            (5., 1.),
-            (4., 2.),
-            (4., 3.),
-            (5., 4.),
-            (6., 4.),
-            (7., 3.),
-            (7., 2.),
-            (6., 1.),
-            (5., 1.),
+        let poly1 = polygon![
+            (x: 5., y: 1.),
+            (x: 4., y: 2.),
+            (x: 4., y: 3.),
+            (x: 5., y: 4.),
+            (x: 6., y: 4.),
+            (x: 7., y: 3.),
+            (x: 7., y: 2.),
+            (x: 6., y: 1.),
+            (x: 5., y: 1.)
         ];
-        let poly1 = Polygon::new(LineString::from(coords), vec![]);
         let rotated = poly1.rotate(-15.0);
-        let correct_outside = vec![
-            (4.628808519201685, 1.1805207831176578),
-            (3.921701738015137, 2.405265654509247),
-            (4.180520783117657, 3.3711914807983154),
-            (5.405265654509247, 4.0782982619848624),
-            (6.371191480798315, 3.819479216882342),
-            (7.0782982619848624, 2.594734345490753),
-            (6.819479216882343, 1.6288085192016848),
-            (5.594734345490753, 0.9217017380151371),
-            (4.628808519201685, 1.1805207831176578),
+        let correct = polygon![
+            (x: 4.628808519201685, y: 1.1805207831176578),
+            (x: 3.921701738015137, y: 2.405265654509247),
+            (x: 4.180520783117657, y: 3.3711914807983154),
+            (x: 5.405265654509247, y: 4.0782982619848624),
+            (x: 6.371191480798315, y: 3.819479216882342),
+            (x: 7.0782982619848624, y: 2.594734345490753),
+            (x: 6.819479216882343, y: 1.6288085192016848),
+            (x: 5.594734345490753, y: 0.9217017380151371),
+            (x: 4.628808519201685, y: 1.1805207831176578)
         ];
-        let correct = Polygon::new(
-            LineString(
-                correct_outside
-                    .iter()
-                    .map(|e| Coordinate::from((e.0, e.1)))
-                    .collect::<Vec<_>>(),
-            ),
-            vec![],
-        );
         // results agree with Shapely / GEOS
         assert_eq!(rotated, correct);
     }
     #[test]
     fn test_rotate_polygon_holes() {
-        let ls1 = LineString::from(vec![
-            (5.0, 1.0),
-            (4.0, 2.0),
-            (4.0, 3.0),
-            (5.0, 4.0),
-            (6.0, 4.0),
-            (7.0, 3.0),
-            (7.0, 2.0),
-            (6.0, 1.0),
-            (5.0, 1.0),
-        ]);
-
-        let ls2 = LineString::from(vec![(5.0, 1.3), (5.5, 2.0), (6.0, 1.3), (5.0, 1.3)]);
-
-        let ls3 = LineString::from(vec![(5., 2.3), (5.5, 3.0), (6., 2.3), (5., 2.3)]);
-
-        let poly1 = Polygon::new(ls1, vec![ls2, ls3]);
+        let poly1 = polygon![
+            exterior: [
+                (x: 5.0, y: 1.0),
+                (x: 4.0, y: 2.0),
+                (x: 4.0, y: 3.0),
+                (x: 5.0, y: 4.0),
+                (x: 6.0, y: 4.0),
+                (x: 7.0, y: 3.0),
+                (x: 7.0, y: 2.0),
+                (x: 6.0, y: 1.0),
+                (x: 5.0, y: 1.0)
+            ],
+            interiors: [
+                [
+                    (x: 5.0, y: 1.3),
+                    (x: 5.5, y: 2.0),
+                    (x: 6.0, y: 1.3),
+                    (x: 5.0, y: 1.3),
+                ],
+                [
+                    (x: 5., y: 2.3),
+                    (x: 5.5, y: 3.0),
+                    (x: 6., y: 2.3),
+                    (x: 5., y: 2.3),
+                ],
+            ],
+        ];
         let rotated = poly1.rotate(-15.0);
         let correct_outside = vec![
             Coordinate::from((4.628808519201685, 1.180520783117658)),
@@ -309,8 +319,8 @@ mod test {
             Coordinate::from((5.672380059021509, 1.2114794859018578)),
             Coordinate::from((4.706454232732441, 1.4702985310043786)),
         ];
-        assert_eq!(rotated.exterior.0, correct_outside);
-        assert_eq!(rotated.interiors[0].0, correct_inside);
+        assert_eq!(rotated.exterior().0, correct_outside);
+        assert_eq!(rotated.interiors()[0].0, correct_inside);
     }
     #[test]
     fn test_rotate_around_point_arbitrary() {

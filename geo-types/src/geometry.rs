@@ -1,4 +1,4 @@
-use {
+use crate::{
     CoordinateType, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon,
 };
@@ -25,6 +25,11 @@ where
 impl<T: CoordinateType> From<Point<T>> for Geometry<T> {
     fn from(x: Point<T>) -> Geometry<T> {
         Geometry::Point(x)
+    }
+}
+impl<T: CoordinateType> From<Line<T>> for Geometry<T> {
+    fn from(x: Line<T>) -> Geometry<T> {
+        Geometry::Line(x)
     }
 }
 impl<T: CoordinateType> From<LineString<T>> for Geometry<T> {
@@ -61,10 +66,10 @@ impl<T: CoordinateType> Geometry<T> {
     /// ```
     /// use geo_types::*;
     /// let g = Geometry::Point(Point::new(0., 0.));
-    /// let p2: Point<f32> = g.as_point().unwrap();
+    /// let p2: Point<f32> = g.into_point().unwrap();
     /// assert_eq!(p2, Point::new(0., 0.,));
     /// ```
-    pub fn as_point(self) -> Option<Point<T>> {
+    pub fn into_point(self) -> Option<Point<T>> {
         if let Geometry::Point(x) = self {
             Some(x)
         } else {
@@ -73,7 +78,7 @@ impl<T: CoordinateType> Geometry<T> {
     }
 
     /// If this Geometry is a LineString, then return that LineString, else None.
-    pub fn as_linestring(self) -> Option<LineString<T>> {
+    pub fn into_line_string(self) -> Option<LineString<T>> {
         if let Geometry::LineString(x) = self {
             Some(x)
         } else {
@@ -82,7 +87,7 @@ impl<T: CoordinateType> Geometry<T> {
     }
 
     /// If this Geometry is a Line, then return that Line, else None.
-    pub fn as_line(self) -> Option<Line<T>> {
+    pub fn into_line(self) -> Option<Line<T>> {
         if let Geometry::Line(x) = self {
             Some(x)
         } else {
@@ -91,7 +96,7 @@ impl<T: CoordinateType> Geometry<T> {
     }
 
     /// If this Geometry is a Polygon, then return that, else None.
-    pub fn as_polygon(self) -> Option<Polygon<T>> {
+    pub fn into_polygon(self) -> Option<Polygon<T>> {
         if let Geometry::Polygon(x) = self {
             Some(x)
         } else {
@@ -100,7 +105,7 @@ impl<T: CoordinateType> Geometry<T> {
     }
 
     /// If this Geometry is a MultiPoint, then return that, else None.
-    pub fn as_multipoint(self) -> Option<MultiPoint<T>> {
+    pub fn into_multi_point(self) -> Option<MultiPoint<T>> {
         if let Geometry::MultiPoint(x) = self {
             Some(x)
         } else {
@@ -109,7 +114,7 @@ impl<T: CoordinateType> Geometry<T> {
     }
 
     /// If this Geometry is a MultiLineString, then return that, else None.
-    pub fn as_multilinestring(self) -> Option<MultiLineString<T>> {
+    pub fn into_multi_line_string(self) -> Option<MultiLineString<T>> {
         if let Geometry::MultiLineString(x) = self {
             Some(x)
         } else {
@@ -118,7 +123,7 @@ impl<T: CoordinateType> Geometry<T> {
     }
 
     /// If this Geometry is a MultiPolygon, then return that, else None.
-    pub fn as_multipolygon(self) -> Option<MultiPolygon<T>> {
+    pub fn into_multi_polygon(self) -> Option<MultiPolygon<T>> {
         if let Geometry::MultiPolygon(x) = self {
             Some(x)
         } else {

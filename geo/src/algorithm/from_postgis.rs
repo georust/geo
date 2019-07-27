@@ -1,9 +1,9 @@
-use postgis;
-use postgis::ewkb::{GeometryCollectionT, GeometryT};
-use {
+use crate::{
     Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
     Polygon,
 };
+use postgis;
+use postgis::ewkb::{GeometryCollectionT, GeometryT};
 
 /// Creates geometry from a PostGIS type.
 ///
@@ -11,7 +11,7 @@ use {
 /// reference system - not just WGS84. No attempt is made to convert
 /// data between reference systems.
 pub trait FromPostgis<T> {
-    fn from_postgis(T) -> Self;
+    fn from_postgis(_: T) -> Self;
 }
 
 impl<'a, T> FromPostgis<&'a T> for Point<f64>
@@ -46,10 +46,7 @@ where
             return None;
         }
         let exterior = rings.remove(0);
-        Some(Polygon {
-            exterior,
-            interiors: rings,
-        })
+        Some(Polygon::new(exterior, rings))
     }
 }
 impl<'a, T> FromPostgis<&'a T> for MultiPoint<f64>

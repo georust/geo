@@ -1,6 +1,6 @@
 [package]
 name = "geo-types"
-version = "0.2.0"
+version = "0.4.3"
 authors = ["Corey Farwell <coreyf@rwell.org>"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/georust/geo"
@@ -8,8 +8,9 @@ documentation = "https://docs.rs/geo-types/"
 readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
 description = "Geospatial primitive data types"
+edition = "2018"
 
 [dependencies]
 num-traits = "0.2"
 serde = { version = "1", optional = true, features = ["derive"] }
-spade = { version = "1.5.1", optional = true }
+rstar = { version = "0.4", optional = true }

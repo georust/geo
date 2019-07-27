@@ -1,9 +1,9 @@
 use num_traits::{Float, FromPrimitive};
 use std::iter::Sum;
 
-use algorithm::area::Area;
-use algorithm::euclidean_length::EuclideanLength;
-use {Line, LineString, MultiPolygon, Point, Polygon, Rect, Ring};
+use crate::algorithm::area::{get_linestring_area, Area};
+use crate::algorithm::euclidean_length::EuclideanLength;
+use crate::{Line, LineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Ring};
 
 /// Calculation of the centroid.
 /// The centroid is the arithmetic mean position of all points in the shape.
@@ -11,6 +11,30 @@ use {Line, LineString, MultiPolygon, Point, Polygon, Rect, Ring};
 /// balanced on the tip of a pin.
 /// The geometric centroid of a convex object always lies in the object.
 /// A non-convex object might have a centroid that _is outside the object itself_.
+///
+/// # Examples
+///
+/// ```
+/// use geo::prelude::*;
+/// use geo::{LineString, Point, Polygon};
+///
+/// // rhombus shaped polygon
+/// let polygon = Polygon::new(
+///     LineString::from(vec![
+///        (-2., 1.),
+///        (1., 3.),
+///        (4., 1.),
+///        (1., -1.),
+///        (-2., 1.),
+///     ]),
+///     vec![],
+/// );
+///
+/// assert_eq!(
+///     Point::from((1., 1.)),
+///     polygon.centroid().unwrap(),
+/// );
+/// ```
 pub trait Centroid<T: Float> {
     type Output;
 
@@ -122,7 +146,7 @@ where
     // See here for a formula: http://math.stackexchange.com/a/623849
     // See here for detail on alternative methods: https://fotino.me/calculating-centroids/
     fn centroid(&self) -> Self::Output {
-        let linestring = &self.exterior;
+        let linestring = &self.exterior();
         let vect = &linestring.0;
         if vect.is_empty() {
             return None;
@@ -130,20 +154,22 @@ where
         if vect.len() == 1 {
             Some(Point::new(vect[0].x, vect[0].y))
         } else {
-            let external_centroid = simple_polygon_centroid(&self.exterior)?;
-            if self.interiors.is_empty() {
+            let external_centroid = simple_polygon_centroid(self.exterior())?;
+            if self.interiors().is_empty() {
                 Some(external_centroid)
             } else {
-                let external_area = Ring::new(self.exterior.0.clone()).area().abs();
+                let external_area = Ring::new(self.exterior.0).area().abs();
+                let external_area = get_linestring_area(self.exterior()).abs();
                 // accumulate interior Polygons
                 let (totals_x, totals_y, internal_area) = self
-                    .interiors
+                    .interiors()
                     .iter()
                     .filter_map(|ring| {
                         let area = Ring::new(ring.0.clone()).area().abs();
                         let centroid = simple_polygon_centroid(ring)?;
                         Some((centroid.x() * area, centroid.y() * area, area))
-                    }).fold((T::zero(), T::zero(), T::zero()), |accum, val| {
+                    })
+                    .fold((T::zero(), T::zero(), T::zero()), |accum, val| {
                         (accum.0 + val.0, accum.1 + val.1, accum.2 + val.2)
                     });
 
@@ -190,7 +216,7 @@ where
                     sum_area_y = sum_area_y + area * p.y();
                 } else {
                     // the polygon is 'flat', we consider it as a linestring
-                    let ls_len = poly.exterior.euclidean_length();
+                    let ls_len = poly.exterior().euclidean_length();
                     if ls_len == T::zero() {
                         sum_x = sum_x + p.x();
                         sum_y = sum_y + p.x();
@@ -226,8 +252,8 @@ where
     fn centroid(&self) -> Self::Output {
         let two = T::one() + T::one();
         Point::new(
-            (self.max.x + self.min.x) / two,
-            (self.max.y + self.min.y) / two,
+            (self.max().x + self.min().x) / two,
+            (self.max().y + self.min().y) / two,
         )
     }
 }
@@ -243,16 +269,53 @@ where
     }
 }
 
+///
+/// ```
+/// use geo::{MultiPoint, Point};
+/// use geo::algorithm::centroid::Centroid;
+///
+/// let empty: Vec<Point<f64>> = Vec::new();
+/// let empty_multi_points: MultiPoint<_> = empty.into();
+/// assert_eq!(empty_multi_points.centroid(), None);
+///
+/// let points: MultiPoint<_> = vec![(5., 1.), (1., 3.), (3., 2.)].into();
+/// assert_eq!(points.centroid(), Some(Point::new(3., 2.)));
+/// ```
+///
+impl<T> Centroid<T> for MultiPoint<T>
+where
+    T: Float,
+{
+    type Output = Option<Point<T>>;
+
+    fn centroid(&self) -> Self::Output {
+        if self.0.is_empty() {
+            return None;
+        }
+        let sum = self.0.iter().fold(
+            Point::new(T::zero(), T::zero()),
+            |a: Point<T>, b: &Point<T>| Point::new(a.x() + b.x(), a.y() + b.y()),
+        );
+        Some(Point::new(
+            sum.x() / T::from(self.0.len()).unwrap(),
+            sum.y() / T::from(self.0.len()).unwrap(),
+        ))
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use algorithm::centroid::Centroid;
-    use algorithm::euclidean_distance::EuclideanDistance;
+    use crate::algorithm::centroid::Centroid;
+    use crate::algorithm::euclidean_distance::EuclideanDistance;
+    use crate::line_string;
+    use crate::{
+        polygon, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, COORD_PRECISION,
+    };
     use num_traits::Float;
-    use {Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, COORD_PRECISION};
 
     /// small helper to create a coordinate
     fn c<T: Float>(x: T, y: T) -> Coordinate<T> {
-        Coordinate { x: x, y: y }
+        Coordinate { x, y }
     }
 
     /// small helper to create a point
@@ -263,7 +326,7 @@ mod test {
     // Tests: Centroid of LineString
     #[test]
     fn empty_linestring_test() {
-        let linestring: LineString<f32> = LineString(vec![]);
+        let linestring: LineString<f32> = line_string![];
         let centroid = linestring.centroid();
         assert!(centroid.is_none());
     }
@@ -273,20 +336,20 @@ mod test {
             x: 40.02f64,
             y: 116.34,
         };
-        let linestring = LineString(vec![coord]);
+        let linestring = line_string![coord];
         let centroid = linestring.centroid();
         assert_eq!(centroid, Some(Point(coord)));
     }
     #[test]
     fn linestring_test() {
-        let linestring = LineString(vec![
-            Coordinate { x: 1., y: 1. },
-            Coordinate { x: 7., y: 1. },
-            Coordinate { x: 8., y: 1. },
-            Coordinate { x: 9., y: 1. },
-            Coordinate { x: 10., y: 1. },
-            Coordinate { x: 11., y: 1. },
-        ]);
+        let linestring = line_string![
+            (x: 1., y: 1.),
+            (x: 7., y: 1.),
+            (x: 8., y: 1.),
+            (x: 9., y: 1.),
+            (x: 10., y: 1.),
+            (x: 11., y: 1.)
+        ];
         assert_eq!(
             linestring.centroid(),
             Some(Point(Coordinate { x: 6., y: 1. }))
@@ -295,26 +358,27 @@ mod test {
     // Tests: Centroid of Polygon
     #[test]
     fn empty_polygon_test() {
-        let v1 = Vec::new();
-        let v2 = Vec::new();
-        let linestring = LineString::<f64>(v1);
-        let poly = Polygon::new(linestring, v2);
+        let poly: Polygon<f32> = polygon![];
         assert!(poly.centroid().is_none());
     }
     #[test]
     fn polygon_one_point_test() {
         let p = Point(Coordinate { x: 2., y: 1. });
         let v = Vec::new();
-        let linestring = LineString(vec![p.0]);
+        let linestring = line_string![p.0];
         let poly = Polygon::new(linestring, v);
         assert_eq!(poly.centroid(), Some(p));
     }
 
     #[test]
     fn polygon_test() {
-        let v = Vec::new();
-        let linestring = LineString(vec![c(0., 0.), c(2., 0.), c(2., 2.), c(0., 2.), c(0., 0.)]);
-        let poly = Polygon::new(linestring, v);
+        let poly = polygon![
+            (x: 0., y: 0.),
+            (x: 2., y: 0.),
+            (x: 2., y: 2.),
+            (x: 0., y: 2.),
+            (x: 0., y: 0.)
+        ];
         assert_eq!(poly.centroid(), Some(Point::new(1., 1.)));
     }
     #[test]
@@ -471,10 +535,10 @@ mod test {
     }
     #[test]
     fn bounding_rect_test() {
-        let bounding_rect = Rect {
-            min: Coordinate { x: 0., y: 50. },
-            max: Coordinate { x: 4., y: 100. },
-        };
+        let bounding_rect = Rect::new(
+            Coordinate { x: 0., y: 50. },
+            Coordinate { x: 4., y: 100. },
+        );
         let point = Point(Coordinate { x: 2., y: 75. });
         assert_eq!(point, bounding_rect.centroid());
     }

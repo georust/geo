@@ -1,6 +1,6 @@
-use algorithm::euclidean_distance::EuclideanDistance;
+use crate::algorithm::euclidean_distance::EuclideanDistance;
+use crate::{Line, LineString, MultiLineString, MultiPolygon, Point, Polygon};
 use num_traits::Float;
-use {Line, LineString, MultiLineString, MultiPolygon, Point, Polygon};
 
 // Ramer–Douglas-Peucker line simplification algorithm
 fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
@@ -22,7 +22,7 @@ where
         }
     }
     if dmax > *epsilon {
-        let mut intermediate = rdp(&points[..index + 1], &*epsilon);
+        let mut intermediate = rdp(&points[..=index], &*epsilon);
         intermediate.pop();
         intermediate.extend_from_slice(&rdp(&points[index..], &*epsilon));
         intermediate
@@ -93,8 +93,11 @@ where
 {
     fn simplify(&self, epsilon: &T) -> Polygon<T> {
         Polygon::new(
-            self.exterior.simplify(epsilon),
-            self.interiors.iter().map(|l| l.simplify(epsilon)).collect(),
+            self.exterior().simplify(epsilon),
+            self.interiors()
+                .iter()
+                .map(|l| l.simplify(epsilon))
+                .collect(),
         )
     }
 }
@@ -111,6 +114,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::polygon;
 
     #[test]
     fn rdp_test() {
@@ -172,51 +176,51 @@ mod test {
 
     #[test]
     fn polygon() {
-        let poly = Polygon::new(
-            LineString::from(vec![
-                (0., 0.),
-                (0., 10.),
-                (5., 11.),
-                (10., 10.),
-                (10., 0.),
-                (0., 0.),
-            ]),
-            vec![],
-        );
+        let poly = polygon![
+            (x: 0., y: 0.),
+            (x: 0., y: 10.),
+            (x: 5., y: 11.),
+            (x: 10., y: 10.),
+            (x: 10., y: 0.),
+            (x: 0., y: 0.),
+        ];
 
         let poly2 = poly.simplify(&2.);
 
         assert_eq!(
             poly2,
-            Polygon::new(
-                LineString::from(vec![(0., 0.), (0., 10.), (10., 10.), (10., 0.), (0., 0.)]),
-                vec![]
-            )
+            polygon![
+                (x: 0., y: 0.),
+                (x: 0., y: 10.),
+                (x: 10., y: 10.),
+                (x: 10., y: 0.),
+                (x: 0., y: 0.),
+            ],
         );
     }
 
     #[test]
     fn multipolygon() {
-        let mpoly = MultiPolygon(vec![Polygon::new(
-            LineString::from(vec![
-                (0., 0.),
-                (0., 10.),
-                (5., 11.),
-                (10., 10.),
-                (10., 0.),
-                (0., 0.),
-            ]),
-            vec![],
-        )]);
+        let mpoly = MultiPolygon(vec![polygon![
+            (x: 0., y: 0.),
+            (x: 0., y: 10.),
+            (x: 5., y: 11.),
+            (x: 10., y: 10.),
+            (x: 10., y: 0.),
+            (x: 0., y: 0.),
+        ]]);
 
         let mpoly2 = mpoly.simplify(&2.);
 
         assert_eq!(
             mpoly2,
-            MultiPolygon(vec![Polygon::new(
-                LineString::from(vec![(0., 0.), (0., 10.), (10., 10.), (10., 0.), (0., 0.)]),
-                vec![],
-            )])
+            MultiPolygon(vec![polygon![
+                (x: 0., y: 0.),
+                (x: 0., y: 10.),
+                (x: 10., y: 10.),
+                (x: 10., y: 0.),
+                (x: 0., y: 0.)
+            ]]),
         );
     }
 }

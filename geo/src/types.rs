@@ -1,9 +1,9 @@
+use crate::{CoordinateType, Point};
 use num_traits::Float;
-use {CoordinateType, Point};
 
 pub use geo_types::private_utils::COORD_PRECISION;
 
-/// A container for indices of the minimum and maximum points of a [`Geometry`](enum.Geometry.html)
+/// A container for _indices_ of the minimum and maximum `Point`s of a [`Geometry`](enum.Geometry.html).
 #[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Extremes {
@@ -24,7 +24,7 @@ impl From<Vec<usize>> for Extremes {
     }
 }
 
-/// A container for the coordinates of the minimum and maximum points of a [`Geometry`](enum.Geometry.html)
+/// A container for the _coordinates_ of the minimum and maximum `Point`s of a [`Geometry`](enum.Geometry.html).
 #[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct ExtremePoint<T>
@@ -53,7 +53,7 @@ impl<F: Float> Closest<F> {
     /// Compare two `Closest`s relative to `p` and return a copy of the best
     /// one.
     pub fn best_of_two(&self, other: &Self, p: Point<F>) -> Self {
-        use algorithm::euclidean_distance::EuclideanDistance;
+        use crate::algorithm::euclidean_distance::EuclideanDistance;
 
         let left = match *self {
             Closest::Indeterminate => return *other,

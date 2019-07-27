@@ -1,5 +1,5 @@
-use algorithm::map_coords::{MapCoords, MapCoordsInplace};
-use CoordinateType;
+use crate::algorithm::map_coords::{MapCoords, MapCoordsInplace};
+use crate::CoordinateType;
 
 pub trait Translate<T> {
     /// Translate a Geometry along its axes by the given offsets
@@ -7,21 +7,22 @@ pub trait Translate<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString};
-    /// use geo::algorithm::translate::{Translate};
+    /// use geo::algorithm::translate::Translate;
+    /// use geo::line_string;
     ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(0.0, 0.0));
-    /// vec.push(Point::new(5.0, 5.0));
-    /// vec.push(Point::new(10.0, 10.0));
-    /// let linestring = LineString::from(vec);
-    /// let translated = linestring.translate(1.5, 3.5);
-    /// let mut correct = Vec::new();
-    /// correct.push(Point::new(1.5, 3.5));
-    /// correct.push(Point::new(6.5, 8.5));
-    /// correct.push(Point::new(11.5, 13.5));
-    /// let correct_ls = LineString::from(correct);
-    /// assert_eq!(translated, correct_ls);
+    /// let ls = line_string![
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 5.0, y: 5.0),
+    ///     (x: 10.0, y: 10.0),
+    /// ];
+    ///
+    /// let translated = ls.translate(1.5, 3.5);
+    ///
+    /// assert_eq!(translated, line_string![
+    ///     (x: 1.5, y: 3.5),
+    ///     (x: 6.5, y: 8.5),
+    ///     (x: 11.5, y: 13.5),
+    /// ]);
     /// ```
     fn translate(&self, xoff: T, yoff: T) -> Self
     where
@@ -50,63 +51,56 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use {Coordinate, LineString, Point, Polygon};
+    use crate::{line_string, point, polygon, Coordinate, LineString, Polygon};
+
     #[test]
     fn test_translate_point() {
-        let p = Point::new(1.0, 5.0);
+        let p = point!(x: 1.0, y: 5.0);
         let translated = p.translate(30.0, 20.0);
-        assert_eq!(translated, Point::new(31.0, 25.0));
+        assert_eq!(translated, point!(x: 31.0, y: 25.0));
     }
     #[test]
     fn test_translate_linestring() {
-        let linestring = LineString::from(vec![(0.0, 0.0), (5.0, 1.0), (10.0, 0.0)]);
+        let linestring = line_string![
+            (x: 0.0, y: 0.0),
+            (x: 5.0, y: 1.0),
+            (x: 10.0, y: 0.0),
+        ];
         let translated = linestring.translate(17.0, 18.0);
-        let mut correct = Vec::new();
-        correct.push((17.0, 18.0));
-        correct.push((22.0, 19.0));
-        correct.push((27., 18.));
-        let correct_ls = LineString::from(correct);
-        assert_eq!(translated, correct_ls);
+        assert_eq!(
+            translated,
+            line_string![
+                (x: 17.0, y: 18.0),
+                (x: 22.0, y: 19.0),
+                (x: 27., y: 18.),
+            ]
+        );
     }
     #[test]
     fn test_translate_polygon() {
-        let points_raw = vec![
-            (5., 1.),
-            (4., 2.),
-            (4., 3.),
-            (5., 4.),
-            (6., 4.),
-            (7., 3.),
-            (7., 2.),
-            (6., 1.),
-            (5., 1.),
+        let poly1 = polygon![
+            (x: 5., y: 1.),
+            (x: 4., y: 2.),
+            (x: 4., y: 3.),
+            (x: 5., y: 4.),
+            (x: 6., y: 4.),
+            (x: 7., y: 3.),
+            (x: 7., y: 2.),
+            (x: 6., y: 1.),
+            (x: 5., y: 1.),
         ];
-        let points = points_raw
-            .iter()
-            .map(|e| Point::new(e.0, e.1))
-            .collect::<Vec<_>>();
-        let poly1 = Polygon::new(LineString::from(points), vec![]);
         let translated = poly1.translate(17.0, 18.0);
-        let correct_outside = vec![
-            (22.0, 19.0),
-            (21.0, 20.0),
-            (21.0, 21.0),
-            (22.0, 22.0),
-            (23.0, 22.0),
-            (24.0, 21.0),
-            (24.0, 20.0),
-            (23.0, 19.0),
-            (22.0, 19.0),
+        let correct = polygon![
+            (x: 22.0, y: 19.0),
+            (x: 21.0, y: 20.0),
+            (x: 21.0, y: 21.0),
+            (x: 22.0, y: 22.0),
+            (x: 23.0, y: 22.0),
+            (x: 24.0, y: 21.0),
+            (x: 24.0, y: 20.0),
+            (x: 23.0, y: 19.0),
+            (x: 22.0, y: 19.0),
         ];
-        let correct = Polygon::new(
-            LineString(
-                correct_outside
-                    .iter()
-                    .map(|e| Coordinate { x: e.0, y: e.1 })
-                    .collect::<Vec<_>>(),
-            ),
-            vec![],
-        );
         // results agree with Shapely / GEOS
         assert_eq!(translated, correct);
     }
@@ -145,7 +139,7 @@ mod test {
             Coordinate::from((23.0, 19.3)),
             Coordinate::from((22.0, 19.3)),
         ];
-        assert_eq!(rotated.exterior.0, correct_outside);
-        assert_eq!(rotated.interiors[0].0, correct_inside);
+        assert_eq!(rotated.exterior().0, correct_outside);
+        assert_eq!(rotated.interiors()[0].0, correct_inside);
     }
 }

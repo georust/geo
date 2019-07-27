@@ -1,10 +1,10 @@
-use num_traits::{Float, ToPrimitive};
+use crate::{Coordinate, CoordinateType};
+use num_traits::Float;
 use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
-use {Coordinate, CoordinateType};
 
-/// A single Point in 2D space.
+/// A single point in 2D space.
 ///
 /// Points can be created using the `new(x, y)` constructor, or from a `Coordinate` or pair of points.
 ///
@@ -36,7 +36,7 @@ impl<T: CoordinateType> From<(T, T)> for Point<T> {
 
 impl<T> Point<T>
 where
-    T: CoordinateType + ToPrimitive,
+    T: CoordinateType,
 {
     /// Creates a new point.
     ///
@@ -65,7 +65,7 @@ where
     ///
     /// assert_eq!(p.x(), 1.234);
     /// ```
-    pub fn x(&self) -> T {
+    pub fn x(self) -> T {
         self.0.x
     }
 
@@ -97,7 +97,7 @@ where
     ///
     /// assert_eq!(p.y(), 2.345);
     /// ```
-    pub fn y(&self) -> T {
+    pub fn y(self) -> T {
         self.0.y
     }
 
@@ -131,7 +131,7 @@ where
     /// assert_eq!(y, 2.345);
     /// assert_eq!(x, 1.234);
     /// ```
-    pub fn x_y(&self) -> (T, T) {
+    pub fn x_y(self) -> (T, T) {
         (self.0.x, self.0.y)
     }
     /// Returns the longitude/horizontal component of the point.
@@ -213,7 +213,7 @@ where
     ///
     /// assert_eq!(dot, 5.25);
     /// ```
-    pub fn dot(&self, other: Point<T>) -> T {
+    pub fn dot(self, other: Point<T>) -> T {
         self.x() * other.x() + self.y() * other.y()
     }
 
@@ -234,7 +234,7 @@ where
     ///
     /// assert_eq!(cross, 2.0)
     /// ```
-    pub fn cross_prod(&self, point_b: Point<T>, point_c: Point<T>) -> T {
+    pub fn cross_prod(self, point_b: Point<T>, point_c: Point<T>) -> T {
         (point_b.x() - self.x()) * (point_c.y() - self.y())
             - (point_b.y() - self.y()) * (point_c.x() - self.x())
     }
@@ -255,7 +255,7 @@ where
     /// assert_eq!(x.round(), 71.0);
     /// assert_eq!(y.round(), 134.0);
     /// ```
-    pub fn to_degrees(&self) -> Point<T> {
+    pub fn to_degrees(self) -> Point<T> {
         let (x, y) = self.x_y();
         let x = x.to_degrees();
         let y = y.to_degrees();
@@ -273,7 +273,7 @@ where
     /// assert_eq!(x.round(), 3.0);
     /// assert_eq!(y.round(), 6.0);
     /// ```
-    pub fn to_radians(&self) -> Point<T> {
+    pub fn to_radians(self) -> Point<T> {
         let (x, y) = self.x_y();
         let x = x.to_radians();
         let y = y.to_radians();
@@ -283,7 +283,7 @@ where
 
 impl<T> Neg for Point<T>
 where
-    T: CoordinateType + Neg<Output = T> + ToPrimitive,
+    T: CoordinateType + Neg<Output = T>,
 {
     type Output = Point<T>;
 
@@ -306,7 +306,7 @@ where
 
 impl<T> Add for Point<T>
 where
-    T: CoordinateType + ToPrimitive,
+    T: CoordinateType,
 {
     type Output = Point<T>;
 
@@ -329,7 +329,7 @@ where
 
 impl<T> Sub for Point<T>
 where
-    T: CoordinateType + ToPrimitive,
+    T: CoordinateType,
 {
     type Output = Point<T>;
 
@@ -350,24 +350,24 @@ where
     }
 }
 
-#[cfg(feature = "spade")]
-// These are required for Spade RTree
-impl<T> ::spade::PointN for Point<T>
+#[cfg(feature = "rstar")]
+// These are required for rstar RTree
+impl<T> ::rstar::Point for Point<T>
 where
-    T: ::num_traits::Float + ::spade::SpadeNum + ::std::fmt::Debug,
+    T: ::num_traits::Float + ::rstar::RTreeNum,
 {
     type Scalar = T;
 
-    fn dimensions() -> usize {
-        2
+    const DIMENSIONS: usize = 2;
+
+    fn generate(generator: impl Fn(usize) -> Self::Scalar) -> Self {
+        Point::new(generator(0), generator(1))
     }
-    fn from_value(value: Self::Scalar) -> Self {
-        Point::new(value, value)
-    }
-    fn nth(&self, index: usize) -> &Self::Scalar {
+
+    fn nth(&self, index: usize) -> Self::Scalar {
         match index {
-            0 => &self.0.x,
-            1 => &self.0.y,
+            0 => self.0.x,
+            1 => self.0.y,
             _ => unreachable!(),
         }
     }
@@ -379,11 +379,6 @@ where
         }
     }
 }
-
-#[cfg(feature = "spade")]
-impl<T> ::spade::TwoDimensional for Point<T> where
-    T: ::num_traits::Float + ::spade::SpadeNum + ::std::fmt::Debug
-{}
 
 impl<T: CoordinateType> From<[T; 2]> for Point<T> {
     fn from(coords: [T; 2]) -> Point<T> {

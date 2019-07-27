@@ -1,5 +1,5 @@
+use crate::{Point, MEAN_EARTH_RADIUS};
 use num_traits::{Float, FromPrimitive};
-use {Point, MEAN_EARTH_RADIUS};
 
 /// Returns a new Point using the distance to the existing Point and a bearing for the direction
 
@@ -49,7 +49,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use algorithm::haversine_distance::HaversineDistance;
+    use crate::algorithm::haversine_distance::HaversineDistance;
     use num_traits::pow;
 
     #[test]

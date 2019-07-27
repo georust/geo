@@ -1,7 +1,8 @@
-use algorithm::euclidean_distance::EuclideanDistance;
+use crate::algorithm::euclidean_distance::EuclideanDistance;
+use crate::utils::partition_slice;
+use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use num_traits::Float;
 use std::mem;
-use {Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
     let tmp = mem::replace(slice, &mut []);
@@ -9,31 +10,6 @@ fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T
     let (h, t) = tmp.split_first_mut().unwrap();
     *slice = t;
     h
-}
-fn swap_remove_to_last<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
-    let tmp = mem::replace(slice, &mut []);
-    let len = tmp.len();
-    tmp.swap(len - 1, idx);
-    let (h, t) = tmp.split_last_mut().unwrap();
-    *slice = t;
-    h
-}
-// slice[..result] have pred(e) == true, slice[result..] have pred(e) == false
-fn partition<T, F: FnMut(&T) -> bool>(mut slice: &mut [T], mut pred: F) -> usize {
-    let mut i = 0;
-    loop {
-        let test = match slice.first() {
-            Some(e) => pred(e),
-            None => break,
-        };
-        if test {
-            swap_remove_to_first(&mut slice, 0);
-            i += 1;
-        } else {
-            swap_remove_to_last(&mut slice, 0);
-        }
-    }
-    i
 }
 
 // Determine whether a point lies on one side of a line segment, or the other.
@@ -56,7 +32,7 @@ where
     p_a.cross_prod(p_b, p_c) > T::zero()
 }
 
-// Adapted from http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
+// Adapted from https://web.archive.org/web/20180409175413/http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
 fn quick_hull<T>(mut points: &mut [Point<T>]) -> Vec<Point<T>>
 where
     T: Float,
@@ -79,11 +55,13 @@ where
             mem::swap(point, max);
         }
     }
-    let last = partition(&mut points, |p| point_location(*max, *min, *p));
-    hull_set(*max, *min, &mut points[..last], &mut hull);
+    {
+        let (mut points, _) = partition_slice(&mut points, |p| point_location(*max, *min, *p));
+        hull_set(*max, *min, &mut points, &mut hull);
+    }
     hull.push(*max);
-    let last = partition(&mut points, |p| point_location(*min, *max, *p));
-    hull_set(*min, *max, &mut points[..last], &mut hull);
+    let (mut points, _) = partition_slice(&mut points, |p| point_location(*min, *max, *p));
+    hull_set(*min, *max, &mut points, &mut hull);
     hull.push(*min);
     // close the polygon
     let final_element = *hull.first().unwrap();
@@ -116,12 +94,14 @@ where
     // move Point at furthest_point from set into hull
     let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
     // points over PB
-    let last = partition(set, |p| point_location(*furthest_point, p_b, *p));
-    hull_set(*furthest_point, p_b, &mut set[..last], hull);
+    {
+        let (mut points, _) = partition_slice(set, |p| point_location(*furthest_point, p_b, *p));
+        hull_set(*furthest_point, p_b, &mut points, hull);
+    }
     hull.push(*furthest_point);
     // points over AP
-    let last = partition(set, |p| point_location(p_a, *furthest_point, *p));
-    hull_set(p_a, *furthest_point, &mut set[..last], hull);
+    let (mut points, _) = partition_slice(set, |p| point_location(p_a, *furthest_point, *p));
+    hull_set(p_a, *furthest_point, &mut points, hull);
 }
 
 pub trait ConvexHull<T> {
@@ -134,19 +114,32 @@ pub trait ConvexHull<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString, Polygon};
+    /// use geo::{line_string, polygon};
     /// use geo::convexhull::ConvexHull;
+    ///
     /// // an L shape
-    /// let coords = vec![(0.0, 0.0), (4.0, 0.0), (4.0, 1.0), (1.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0)];
-    /// let ls: LineString<_> = coords.iter().map(|e| Point::new(e.0, e.1)).collect();
-    /// let poly = Polygon::new(ls, vec![]);
+    /// let poly = polygon![
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 4.0, y: 0.0),
+    ///     (x: 4.0, y: 1.0),
+    ///     (x: 1.0, y: 1.0),
+    ///     (x: 1.0, y: 4.0),
+    ///     (x: 0.0, y: 4.0),
+    ///     (x: 0.0, y: 0.0),
+    /// ];
     ///
     /// // The correct convex hull coordinates
-    /// let hull_coords = vec![(4.0, 0.0), (4.0, 1.0), (1.0, 4.0), (0.0, 4.0), (0.0, 0.0), (4.0, 0.0)];
-    /// let correct_hull: LineString<_> = hull_coords.iter().map(|e| Point::new(e.0, e.1)).collect();
+    /// let correct_hull = line_string![
+    ///     (x: 4.0, y: 0.0),
+    ///     (x: 4.0, y: 1.0),
+    ///     (x: 1.0, y: 4.0),
+    ///     (x: 0.0, y: 4.0),
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 4.0, y: 0.0),
+    /// ];
     ///
     /// let res = poly.convex_hull();
-    /// assert_eq!(res.exterior, correct_hull);
+    /// assert_eq!(res.exterior(), &correct_hull);
     /// ```
     fn convex_hull(&self) -> Polygon<T>
     where
@@ -159,7 +152,7 @@ where
 {
     fn convex_hull(&self) -> Polygon<T> {
         Polygon::new(
-            LineString::from(quick_hull(&mut self.exterior.clone().into_points())),
+            LineString::from(quick_hull(&mut self.exterior().clone().into_points())),
             vec![],
         )
     }
@@ -173,7 +166,7 @@ where
         let mut aggregated: Vec<Point<T>> = self
             .0
             .iter()
-            .flat_map(|elem| elem.exterior.0.iter().map(|c| Point(*c)))
+            .flat_map(|elem| elem.exterior().0.iter().map(|c| Point(*c)))
             .collect();
         Polygon::new(LineString::from(quick_hull(&mut aggregated)), vec![])
     }
@@ -217,7 +210,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use {Coordinate, Point};
+    use crate::{line_string, polygon, Coordinate, Point};
 
     #[test]
     fn quick_hull_test1() {
@@ -348,22 +341,21 @@ mod test {
             Coordinate::from((0.0, -10.0)),
         ];
         let res = mp.convex_hull();
-        assert_eq!(res.exterior.0, correct);
+        assert_eq!(res.exterior().0, correct);
     }
     #[test]
     fn quick_hull_linestring_test() {
-        let v = vec![
-            (0.0, 10.0),
-            (1.0, 1.0),
-            (10.0, 0.0),
-            (1.0, -1.0),
-            (0.0, -10.0),
-            (-1.0, -1.0),
-            (-10.0, 0.0),
-            (-1.0, 1.0),
-            (0.0, 10.0),
+        let mp = line_string![
+            (x: 0.0, y: 10.0),
+            (x: 1.0, y: 1.0),
+            (x: 10.0, y: 0.0),
+            (x: 1.0, y: -1.0),
+            (x: 0.0, y: -10.0),
+            (x: -1.0, y: -1.0),
+            (x: -10.0, y: 0.0),
+            (x: -1.0, y: 1.0),
+            (x: 0.0, y: 10.0),
         ];
-        let mp = LineString::from(v);
         let correct = vec![
             Coordinate::from((0.0, -10.0)),
             Coordinate::from((10.0, 0.0)),
@@ -372,12 +364,12 @@ mod test {
             Coordinate::from((0.0, -10.0)),
         ];
         let res = mp.convex_hull();
-        assert_eq!(res.exterior.0, correct);
+        assert_eq!(res.exterior().0, correct);
     }
     #[test]
     fn quick_hull_multilinestring_test() {
-        let v1 = LineString::from(vec![(0.0, 0.0), (1.0, 10.0)]);
-        let v2 = LineString::from(vec![(1.0, 10.0), (2.0, 0.0), (3.0, 1.0)]);
+        let v1 = line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0)];
+        let v2 = line_string![(x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 3.0, y: 1.0)];
         let mls = MultiLineString(vec![v1, v2]);
         let correct = vec![
             Coordinate::from((2.0, 0.0)),
@@ -387,14 +379,12 @@ mod test {
             Coordinate::from((2.0, 0.0)),
         ];
         let res = mls.convex_hull();
-        assert_eq!(res.exterior.0, correct);
+        assert_eq!(res.exterior().0, correct);
     }
     #[test]
     fn quick_hull_multipolygon_test() {
-        let ls1 = LineString::from(vec![(0.0, 0.0), (1.0, 10.0), (2.0, 0.0), (0.0, 0.0)]);
-        let ls2 = LineString::from(vec![(3.0, 0.0), (4.0, 10.0), (5.0, 0.0), (3.0, 0.0)]);
-        let p1 = Polygon::new(ls1, vec![]);
-        let p2 = Polygon::new(ls2, vec![]);
+        let p1 = polygon![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 0.0, y: 0.0)];
+        let p2 = polygon![(x: 3.0, y: 0.0), (x: 4.0, y: 10.0), (x: 5.0, y: 0.0), (x: 3.0, y: 0.0)];
         let mp = MultiPolygon(vec![p1, p2]);
         let correct = vec![
             Coordinate::from((5.0, 0.0)),
@@ -404,6 +394,6 @@ mod test {
             Coordinate::from((5.0, 0.0)),
         ];
         let res = mp.convex_hull();
-        assert_eq!(res.exterior.0, correct);
+        assert_eq!(res.exterior().0, correct);
     }
 }

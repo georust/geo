@@ -1,5 +1,95 @@
 # Changes
 
+## geo 0.12.2
+
+* Introduce `point!`, `line_string!`, and `polygon!` macros.
+  * <https://github.com/georust/geo/pull/352>
+
+## geo-types 0.4.3
+
+* Introduce `point!`, `line_string!`, and `polygon!` macros.
+  * <https://github.com/georust/geo/pull/352>
+  * <https://github.com/georust/geo/pull/357>
+* Add `Rect` constructor that enforces `min.{x,y} < max.{x,y}`
+  * <https://github.com/georust/geo/pull/360>
+
+## geo 0.12.1
+
+* Add `FrechetDistance` algorithm
+  * <https://github.com/georust/geo/pull/348>
+
+## geo-types 0.4.2
+
+* Add `Polygon::num_coords`
+  * <https://github.com/georust/geo/pull/348>
+
+## geo-types 0.4.1
+
+* Add `Polygon::interiors_push` - Adds an interior ring to a `Polygon`
+  * <https://github.com/georust/geo/pull/347>
+
+## geo 0.12.0
+
+* Bump `geo-types` dependency to 0.4.0
+* Bump `rstar` and `proj` dependencies
+  * <https://github.com/georust/geo/pull/346>
+* Implement `Centroid` for `MultiPoint`
+  * <https://github.com/georust/geo/pull/322>
+
+## geo-types 0.4.0
+
+* Rewrite `Polygon` structure to enforce closed `LineString` rings
+  * <https://github.com/georust/geo/pull/337>
+* Implement `Into<Geometry>` for `Line`
+  * <https://github.com/georust/geo/pull/340>
+* Implement `Index<usize>` for `LineString` to get the coordinate at that position
+  * <https://github.com/georust/geo/pull/341>
+* Bump `rstar` dependency
+  * <https://github.com/georust/geo/pull/346>
+* Ability to construct `MultiPolygon` from `Vec` of anything that implements `Into<Polygon>`
+  * <https://github.com/georust/geo/pull/342>
+* Add `new`, `is_empty`, `len` functions on `GeometryCollection`
+  * <https://github.com/georust/geo/pull/339>
+* Tweak `Geometry` method names slightly
+  * <https://github.com/georust/geo/pull/343>
+* Remove unnecessary references in function signatures
+  * <https://github.com/georust/geo/pull/344>
+
+## geo 0.11.0
+
+* Replace the [spade](https://crates.io/crates/spade) crate with the [rstar](https://crates.io/crates/rstar) crate
+  * <https://github.com/georust/geo/pull/314>
+* Remove unnecessary algorithm trait bounds
+  * <https://github.com/georust/geo/pull/320/>
+
+## geo-types 0.3.0
+
+* Replace the [spade](https://crates.io/crates/spade) crate with the [rstar](https://crates.io/crates/rstar) crate
+  * <https://github.com/georust/geo/pull/314>
+* Remove unnecessary algorithm trait bounds
+  * <https://github.com/georust/geo/pull/320/>
+
+## geo 0.10.3
+
+* Add `MapCoords` for `Rect`s
+  * <https://github.com/georust/geo/commit/11e4b67ae5fa658bd556eea96ba6fd49f32921c4>
+* Rewrite vincenty/haversine docs; specify param/return units.
+  * <https://github.com/georust/geo/commit/6ca45c347c53c5f0fd41b90ff5d0ba67d1b2ec15>
+* `Area` can work on some non-`Float` geometries (e.g. `Rect<Integer>`)
+  * <https://github.com/georust/geo/commit/1efd87a9bf3f4140f252014b59ff174af8e014aa>
+
+## geo-types 0.2.2
+
+* Fix misnamed `serde` feature flag.
+  * <https://github.com/georust/geo/pull/316>
+* Add `width` and `height` helpers on `Rect`.
+  * <https://github.com/georust/geo/pull/317>
+
+## geo-types 0.2.1
+
+* Add `to_lines` method on a `Triangle`
+  * <https://github.com/georust/geo/pull/313>
+
 ## geo 0.10.2
 
 * Add `to_degrees` and `to_radians` methods on `Point`s

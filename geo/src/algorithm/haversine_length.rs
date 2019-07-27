@@ -1,7 +1,7 @@
 use num_traits::{Float, FromPrimitive};
 
-use algorithm::haversine_distance::HaversineDistance;
-use {Line, LineString, MultiLineString};
+use crate::algorithm::haversine_distance::HaversineDistance;
+use crate::{Line, LineString, MultiLineString};
 
 /// Determine the length of a geometry using the [haversine formula].
 ///
