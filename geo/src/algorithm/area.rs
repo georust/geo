@@ -89,9 +89,9 @@ where
     T: Float,
 {
     fn area(&self) -> T {
-        (Line::new(self.0, self.1).determinant()
-            + Line::new(self.1, self.2).determinant()
-            + Line::new(self.2, self.0).determinant())
+        self.to_lines()
+            .iter()
+            .fold(T::zero(), |total, line| total + line.determinant())
             / (T::one() + T::one())
     }
 }
@@ -126,16 +126,11 @@ mod test {
     }
     #[test]
     fn rectangle_test() {
-        let rect1: Rect<f32> = Rect::new(
-            Coordinate { x: 10., y: 30. },
-            Coordinate { x: 20., y: 40. },
-        );
+        let rect1: Rect<f32> =
+            Rect::new(Coordinate { x: 10., y: 30. }, Coordinate { x: 20., y: 40. });
         assert_relative_eq!(rect1.area(), 100.);
 
-        let rect2: Rect<i32> = Rect::new(
-            Coordinate { x: 10, y: 30 },
-            Coordinate { x: 20, y: 40 },
-        );
+        let rect2: Rect<i32> = Rect::new(Coordinate { x: 10, y: 30 }, Coordinate { x: 20, y: 40 });
         assert_eq!(rect2.area(), 100);
     }
     #[test]

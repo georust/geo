@@ -212,7 +212,8 @@ where
             (self.min().x >= bounding_rect.min().x && self.min().x <= bounding_rect.max().x
                 || self.max().x >= bounding_rect.min().x && self.max().x <= bounding_rect.max().x)
                 && (self.min().y >= bounding_rect.min().y && self.min().y <= bounding_rect.max().y
-                    || self.max().y >= bounding_rect.min().y && self.max().y <= bounding_rect.max().y)
+                    || self.max().y >= bounding_rect.min().y
+                        && self.max().y <= bounding_rect.max().y)
         }
     }
 }
@@ -487,22 +488,10 @@ mod test {
                 (7., 4.),
             ])],
         );
-        let b1 = Rect::new(
-            Coordinate { x: 11., y: 1. },
-            Coordinate { x: 13., y: 2. },
-        );
-        let b2 = Rect::new(
-            Coordinate { x: 2., y: 2. },
-            Coordinate { x: 8., y: 5. },
-        );
-        let b3 = Rect::new(
-            Coordinate { x: 8., y: 5. },
-            Coordinate { x: 10., y: 6. },
-        );
-        let b4 = Rect::new(
-            Coordinate { x: 1., y: 1. },
-            Coordinate { x: 3., y: 3. },
-        );
+        let b1 = Rect::new(Coordinate { x: 11., y: 1. }, Coordinate { x: 13., y: 2. });
+        let b2 = Rect::new(Coordinate { x: 2., y: 2. }, Coordinate { x: 8., y: 5. });
+        let b3 = Rect::new(Coordinate { x: 8., y: 5. }, Coordinate { x: 10., y: 6. });
+        let b4 = Rect::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 3., y: 3. });
         // overlaps
         assert!(poly.intersects(&b1));
         // contained in exterior, overlaps with hole
@@ -527,10 +516,8 @@ mod test {
             Coordinate { x: -10., y: -20. },
             Coordinate { x: 10., y: 20. },
         );
-        let bounding_rect_s2 = Rect::new(
-            Coordinate { x: 0., y: 0. },
-            Coordinate { x: 20., y: 30. },
-        );
+        let bounding_rect_s2 =
+            Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 20., y: 30. });
         assert_eq!(false, bounding_rect_xl.intersects(&bounding_rect_sm));
         assert_eq!(false, bounding_rect_sm.intersects(&bounding_rect_xl));
         assert_eq!(true, bounding_rect_sm.intersects(&bounding_rect_s2));

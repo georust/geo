@@ -233,7 +233,10 @@ where
     T: CoordinateType,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        p.x() >= self.min().x && p.x() <= self.max().x && p.y() >= self.min().y && p.y() <= self.max().y
+        p.x() >= self.min().x
+            && p.x() <= self.max().x
+            && p.y() >= self.min().y
+            && p.y() <= self.max().y
     }
 }
 
@@ -594,17 +597,13 @@ mod test {
     #[test]
     fn integer_bounding_rects() {
         let p: Point<i32> = Point::new(10, 20);
-        let bounding_rect: Rect<i32> = Rect::new(
-            Coordinate { x: 0, y: 0 },
-            Coordinate { x: 100, y: 100 },
-        );
+        let bounding_rect: Rect<i32> =
+            Rect::new(Coordinate { x: 0, y: 0 }, Coordinate { x: 100, y: 100 });
         assert!(bounding_rect.contains(&p));
         assert!(!bounding_rect.contains(&Point::new(-10, -10)));
 
-        let smaller_bounding_rect: Rect<i32> = Rect::new(
-            Coordinate { x: 10, y: 10 },
-            Coordinate { x: 20, y: 20 },
-        );
+        let smaller_bounding_rect: Rect<i32> =
+            Rect::new(Coordinate { x: 10, y: 10 }, Coordinate { x: 20, y: 20 });
         assert!(bounding_rect.contains(&smaller_bounding_rect));
     }
 
