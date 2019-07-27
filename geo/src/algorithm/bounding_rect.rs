@@ -185,10 +185,7 @@ mod test {
             (x: -3., y: -3.),
             (x: -4., y: 4.)
         ];
-        let bounding_rect = Rect::new(
-            Coordinate { x: -4., y: -3. },
-            Coordinate { x: 2., y: 4. },
-        );
+        let bounding_rect = Rect::new(Coordinate { x: -4., y: -3. }, Coordinate { x: 2., y: 4. });
         assert_eq!(bounding_rect, linestring.bounding_rect().unwrap());
     }
     #[test]
@@ -208,10 +205,7 @@ mod test {
     #[test]
     fn multipoint_test() {
         let multipoint = MultiPoint::from(vec![(1., 1.), (2., -2.), (-3., -3.), (-4., 4.)]);
-        let bounding_rect = Rect::new(
-            Coordinate { x: -4., y: -3. },
-            Coordinate { x: 2., y: 4. },
-        );
+        let bounding_rect = Rect::new(Coordinate { x: -4., y: -3. }, Coordinate { x: 2., y: 4. });
         assert_eq!(bounding_rect, multipoint.bounding_rect().unwrap());
     }
     #[test]
@@ -246,17 +240,11 @@ mod test {
         let line2 = Line::new(Coordinate { x: 2., y: 3. }, Coordinate { x: 0., y: 1. });
         assert_eq!(
             line1.bounding_rect(),
-            Rect::new(
-                Coordinate { x: 0., y: 1. },
-                Coordinate { x: 2., y: 3. },
-            )
+            Rect::new(Coordinate { x: 0., y: 1. }, Coordinate { x: 2., y: 3. },)
         );
         assert_eq!(
             line2.bounding_rect(),
-            Rect::new(
-                Coordinate { x: 0., y: 1. },
-                Coordinate { x: 2., y: 3. },
-            )
+            Rect::new(Coordinate { x: 0., y: 1. }, Coordinate { x: 2., y: 3. },)
         );
     }
 }

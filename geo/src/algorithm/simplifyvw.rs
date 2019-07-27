@@ -374,7 +374,11 @@ where
 }
 
 /// check whether a triangle's edges intersect with any other edges of the LineString
-fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T, bool>, orig: &[Coordinate<T>]) -> bool
+fn tree_intersect<T>(
+    tree: &RTree<Line<T>>,
+    triangle: &VScore<T, bool>,
+    orig: &[Coordinate<T>],
+) -> bool
 where
     T: Float + RTreeNum,
 {
