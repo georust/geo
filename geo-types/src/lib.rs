@@ -4,8 +4,8 @@ extern crate num_traits;
 #[macro_use]
 extern crate serde;
 
-#[cfg(feature = "spade")]
-extern crate spade;
+#[cfg(feature = "rstar")]
+extern crate rstar;
 
 use num_traits::{Num, NumCast};
 
@@ -18,40 +18,43 @@ pub trait CoordinateType: Num + Copy + NumCast + PartialOrd {}
 impl<T: Num + Copy + NumCast + PartialOrd> CoordinateType for T {}
 
 mod coordinate;
-pub use coordinate::Coordinate;
+pub use crate::coordinate::Coordinate;
 
 mod point;
-pub use point::Point;
+pub use crate::point::Point;
 
 mod multi_point;
-pub use multi_point::MultiPoint;
+pub use crate::multi_point::MultiPoint;
 
 mod line;
-pub use line::Line;
+pub use crate::line::Line;
 
 pub mod line_string;
-pub use line_string::LineString;
+pub use crate::line_string::LineString;
 
 mod multi_line_string;
-pub use multi_line_string::MultiLineString;
+pub use crate::multi_line_string::MultiLineString;
 
 mod polygon;
-pub use polygon::Polygon;
+pub use crate::polygon::Polygon;
 
 mod multi_polygon;
-pub use multi_polygon::MultiPolygon;
+pub use crate::multi_polygon::MultiPolygon;
 
 mod geometry;
-pub use geometry::Geometry;
+pub use crate::geometry::Geometry;
 
 mod geometry_collection;
-pub use geometry_collection::GeometryCollection;
+pub use crate::geometry_collection::GeometryCollection;
 
 mod triangle;
-pub use triangle::Triangle;
+pub use crate::triangle::Triangle;
 
 mod rect;
-pub use rect::Rect;
+pub use crate::rect::Rect;
+
+#[macro_use]
+mod macros;
 
 #[doc(hidden)]
 pub mod private_utils;
@@ -59,9 +62,6 @@ pub mod private_utils;
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[cfg(feature = "spade")]
-    use spade::SpatialObject;
 
     #[test]
     fn type_test() {
@@ -87,7 +87,7 @@ mod test {
         let p: Point<f32> = Point::new(0., 0.);
         let p1 = p.clone();
         let g: Geometry<f32> = p.into();
-        let p2 = g.as_point().unwrap();
+        let p2 = g.into_point().unwrap();
         assert_eq!(p1, p2);
     }
 
@@ -107,8 +107,8 @@ mod test {
         ])];
         let p = Polygon::new(exterior.clone(), interiors.clone());
 
-        assert_eq!(p.exterior, exterior);
-        assert_eq!(p.interiors, interiors);
+        assert_eq!(p.exterior(), &exterior);
+        assert_eq!(p.interiors(), &interiors[..]);
     }
 
     #[test]
@@ -116,8 +116,13 @@ mod test {
         let _: MultiPoint<_> = vec![(0., 0.), (1., 2.)].into();
         let _: MultiPoint<_> = vec![(0., 0.), (1., 2.)].into_iter().collect();
 
-        let _: LineString<_> = vec![(0., 0.), (1., 2.)].into();
+        let mut l1: LineString<_> = vec![(0., 0.), (1., 2.)].into();
+        assert_eq!(l1[1], Coordinate { x: 1., y: 2. }); // index into linestring
         let _: LineString<_> = vec![(0., 0.), (1., 2.)].into_iter().collect();
+
+        // index mutably into a linestring
+        l1[0] = Coordinate { x: 1., y: 1. };
+        assert_eq!(l1, vec![(1., 1.), (1., 2.)].into());
     }
 
     #[test]
@@ -129,23 +134,34 @@ mod test {
         assert_eq!(p.x(), 1_000_000i64);
     }
 
-    #[cfg(feature = "spade")]
+    #[cfg(feature = "rstar")]
     #[test]
     /// ensure Line's SpatialObject impl is correct
     fn line_test() {
-        use spade::primitives::SimpleEdge;
-        let se = SimpleEdge::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
+        use rstar::primitives::Line as RStarLine;
+        use rstar::{PointDistance, RTreeObject};
+
+        let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
         let l = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 5., y: 5. });
-        assert_eq!(se.mbr(), l.mbr());
+        assert_eq!(rl.envelope(), l.envelope());
         // difference in 15th decimal place
-        assert_eq!(26.0, se.distance2(&Point::new(4.0, 10.0)));
-        assert_eq!(25.999999999999996, l.distance2(&Point::new(4.0, 10.0)));
+        assert_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
+        assert_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
     }
 
     #[test]
     fn test_rects() {
-        let r = Rect{ min: Coordinate{ x: -1., y: -1. }, max: Coordinate{ x: 1., y: 1.}};
+        let r = Rect::new(
+            Coordinate { x: -1., y: -1. },
+            Coordinate { x: 1., y: 1. },
+        );
         let p: Polygon<_> = r.into();
-        assert_eq!(p, Polygon::new(vec![(-1., -1.), (1., -1.), (1., 1.), (-1., 1.), (-1., -1.)].into(), vec![]));
+        assert_eq!(
+            p,
+            Polygon::new(
+                vec![(-1., -1.), (1., -1.), (1., 1.), (-1., 1.), (-1., -1.)].into(),
+                vec![]
+            )
+        );
     }
 }

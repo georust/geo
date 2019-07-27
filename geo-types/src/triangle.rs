@@ -1,5 +1,6 @@
-use {Coordinate, CoordinateType, Line};
+use crate::{Coordinate, CoordinateType, Line};
 
+/// A bounded 2D area whose three vertices are defined by `Coordinate`s.
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Triangle<T: CoordinateType>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);

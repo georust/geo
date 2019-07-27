@@ -1,8 +1,8 @@
-use failure::Error;
-use {
-    CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon, Rect, Coordinate
+use crate::{
+    Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect,
 };
+use failure::Error;
 
 /// Map a function over all the coordinates in an object, returning a new one
 pub trait MapCoords<T, NT> {
@@ -33,7 +33,7 @@ pub trait MapCoords<T, NT> {
     ///
     /// assert_eq!(p2, Point::new(10.0f64, 20.0f64));
     /// ```
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output
+    fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output
     where
         T: CoordinateType,
         NT: CoordinateType;
@@ -58,7 +58,7 @@ pub trait TryMapCoords<T, NT> {
     /// ```
     fn try_map_coords(
         &self,
-        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+        func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error>
     where
         T: CoordinateType,
@@ -80,7 +80,7 @@ pub trait MapCoordsInplace<T> {
     ///
     /// assert_eq!(p, Point::new(1010., 40.));
     /// ```
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T))
+    fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T))
     where
         T: CoordinateType;
 }
@@ -88,7 +88,7 @@ pub trait MapCoordsInplace<T> {
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Point<T> {
     type Output = Point<NT>;
 
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+    fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         let new_point = func(&(self.0.x, self.0.y));
         Point::new(new_point.0, new_point.1)
     }
@@ -99,7 +99,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Point<T> {
 
     fn try_map_coords(
         &self,
-        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+        func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         let new_point = func(&(self.0.x, self.0.y))?;
         Ok(Point::new(new_point.0, new_point.1))
@@ -107,7 +107,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Point<T> {
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for Point<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
+    fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T)) {
         let new_point = func(&(self.0.x, self.0.y));
         self.0.x = new_point.0;
         self.0.y = new_point.1;
@@ -117,7 +117,7 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Point<T> {
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Line<T> {
     type Output = Line<NT>;
 
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+    fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         Line::new(
             self.start_point().map_coords(func).0,
             self.end_point().map_coords(func).0,
@@ -130,7 +130,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Line<T> {
 
     fn try_map_coords(
         &self,
-        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+        func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(Line::new(
             self.start_point().try_map_coords(func)?.0,
@@ -140,7 +140,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Line<T> {
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for Line<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
+    fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T)) {
         let new_start = func(&(self.start.x, self.start.y));
         self.start.x = new_start.0;
         self.start.y = new_start.1;
@@ -154,7 +154,7 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Line<T> {
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for LineString<T> {
     type Output = LineString<NT>;
 
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+    fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         LineString::from(
             self.points_iter()
                 .map(|p| p.map_coords(func))
@@ -168,7 +168,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for LineString<T
 
     fn try_map_coords(
         &self,
-        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+        func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(LineString::from(
             self.points_iter()
@@ -179,7 +179,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for LineString<T
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for LineString<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
+    fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T)) {
         for p in &mut self.0 {
             let new_coords = func(&(p.x, p.y));
             p.x = new_coords.0;
@@ -191,10 +191,13 @@ impl<T: CoordinateType> MapCoordsInplace<T> for LineString<T> {
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Polygon<T> {
     type Output = Polygon<NT>;
 
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+    fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         Polygon::new(
-            self.exterior.map_coords(func),
-            self.interiors.iter().map(|l| l.map_coords(func)).collect(),
+            self.exterior().map_coords(func),
+            self.interiors()
+                .iter()
+                .map(|l| l.map_coords(func))
+                .collect(),
         )
     }
 }
@@ -204,11 +207,11 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Polygon<T> {
 
     fn try_map_coords(
         &self,
-        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+        func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(Polygon::new(
-            self.exterior.try_map_coords(func)?,
-            self.interiors
+            self.exterior().try_map_coords(func)?,
+            self.interiors()
                 .iter()
                 .map(|l| l.try_map_coords(func))
                 .collect::<Result<Vec<_>, Error>>()?,
@@ -217,18 +220,23 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Polygon<T> {
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for Polygon<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        self.exterior.map_coords_inplace(func);
-        for p in &mut self.interiors {
-            p.map_coords_inplace(func);
-        }
+    fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T)) {
+        self.exterior_mut(|line_string| {
+            line_string.map_coords_inplace(func);
+        });
+
+        self.interiors_mut(|line_strings| {
+            for line_string in line_strings {
+                line_string.map_coords_inplace(func);
+            }
+        });
     }
 }
 
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiPoint<T> {
     type Output = MultiPoint<NT>;
 
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+    fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         MultiPoint(self.0.iter().map(|p| p.map_coords(func)).collect())
     }
 }
@@ -238,7 +246,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiPoint<T
 
     fn try_map_coords(
         &self,
-        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+        func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(MultiPoint(
             self.0
@@ -250,7 +258,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiPoint<T
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for MultiPoint<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
+    fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T)) {
         for p in &mut self.0 {
             p.map_coords_inplace(func);
         }
@@ -260,7 +268,7 @@ impl<T: CoordinateType> MapCoordsInplace<T> for MultiPoint<T> {
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiLineString<T> {
     type Output = MultiLineString<NT>;
 
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+    fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         MultiLineString(self.0.iter().map(|l| l.map_coords(func)).collect())
     }
 }
@@ -270,7 +278,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiLineStr
 
     fn try_map_coords(
         &self,
-        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+        func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(MultiLineString(
             self.0
@@ -282,7 +290,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiLineStr
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for MultiLineString<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
+    fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T)) {
         for p in &mut self.0 {
             p.map_coords_inplace(func);
         }
@@ -292,7 +300,7 @@ impl<T: CoordinateType> MapCoordsInplace<T> for MultiLineString<T> {
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiPolygon<T> {
     type Output = MultiPolygon<NT>;
 
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+    fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         MultiPolygon(self.0.iter().map(|p| p.map_coords(func)).collect())
     }
 }
@@ -302,7 +310,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiPolygon
 
     fn try_map_coords(
         &self,
-        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+        func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(MultiPolygon(
             self.0
@@ -314,7 +322,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for MultiPolygon
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for MultiPolygon<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
+    fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T)) {
         for p in &mut self.0 {
             p.map_coords_inplace(func);
         }
@@ -324,7 +332,7 @@ impl<T: CoordinateType> MapCoordsInplace<T> for MultiPolygon<T> {
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Geometry<T> {
     type Output = Geometry<NT>;
 
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+    fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         match *self {
             Geometry::Point(ref x) => Geometry::Point(x.map_coords(func)),
             Geometry::Line(ref x) => Geometry::Line(x.map_coords(func)),
@@ -343,7 +351,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Geometry<T> 
 
     fn try_map_coords(
         &self,
-        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+        func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         match *self {
             Geometry::Point(ref x) => Ok(Geometry::Point(x.try_map_coords(func)?)),
@@ -363,7 +371,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Geometry<T> 
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for Geometry<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
+    fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T)) {
         match *self {
             Geometry::Point(ref mut x) => x.map_coords_inplace(func),
             Geometry::Line(ref mut x) => x.map_coords_inplace(func),
@@ -380,7 +388,7 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Geometry<T> {
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for GeometryCollection<T> {
     type Output = GeometryCollection<NT>;
 
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+    fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
         GeometryCollection(self.0.iter().map(|g| g.map_coords(func)).collect())
     }
 }
@@ -390,7 +398,7 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for GeometryColl
 
     fn try_map_coords(
         &self,
-        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+        func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
         Ok(GeometryCollection(
             self.0
@@ -402,21 +410,30 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for GeometryColl
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for GeometryCollection<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
+    fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T)) {
         for p in &mut self.0 {
             p.map_coords_inplace(func);
         }
     }
 }
 
-
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Rect<T> {
     type Output = Rect<NT>;
 
-    fn map_coords(&self, func: &Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
-        let new_min = func(&(self.min.x, self.min.y));
-        let new_max = func(&(self.max.x, self.max.y));
-        Rect{ min: Coordinate{x: new_min.0, y: new_min.1}, max: Coordinate{ x: new_max.0, y: new_max.1 }}
+    fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+        let new_min = func(&self.min().x_y());
+        let new_max = func(&self.max().x_y());
+
+        Rect::new(
+            Coordinate {
+                x: new_min.0,
+                y: new_min.1,
+            },
+            Coordinate {
+                x: new_max.0,
+                y: new_max.1,
+            },
+        )
     }
 }
 
@@ -425,29 +442,39 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Rect<T> {
 
     fn try_map_coords(
         &self,
-        func: &Fn(&(T, T)) -> Result<(NT, NT), Error>,
+        func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Error>,
     ) -> Result<Self::Output, Error> {
-        let new_min = func(&(self.min.x, self.min.y))?;
-        let new_max = func(&(self.max.x, self.max.y))?;
-        Ok(Rect{ min: Coordinate{x: new_min.0, y: new_min.1}, max: Coordinate{ x: new_max.0, y: new_max.1 }})
+        let new_min = func(&(self.min().x, self.min().y))?;
+        let new_max = func(&(self.max().x, self.max().y))?;
+
+        Ok(Rect::new(
+            Coordinate {
+                x: new_min.0,
+                y: new_min.1,
+            },
+            Coordinate {
+                x: new_max.0,
+                y: new_max.1,
+            },
+        ))
     }
 }
 
 impl<T: CoordinateType> MapCoordsInplace<T> for Rect<T> {
-    fn map_coords_inplace(&mut self, func: &Fn(&(T, T)) -> (T, T)) {
-        let new_min = func(&(self.min.x, self.min.y));
-        let new_max = func(&(self.max.x, self.max.y));
-        self.min.x = new_min.0;
-        self.min.y = new_min.1;
-        self.max.x = new_max.0;
-        self.max.y = new_max.1;
+    fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T)) {
+        let new_min = func(&self.min().x_y());
+        let new_max = func(&self.max().x_y());
+
+        let mut new_rect = Rect::new(new_min, new_max);
+
+        ::std::mem::swap(self, &mut new_rect);
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use Coordinate;
+    use crate::{polygon, Coordinate};
 
     #[test]
     fn point() {
@@ -463,6 +490,55 @@ mod test {
         p2.map_coords_inplace(&|&(x, y)| (x + 10., y + 100.));
         assert_eq!(p2.x(), 20.);
         assert_eq!(p2.y(), 110.);
+    }
+
+    #[test]
+    fn rect_inplace() {
+        let mut rect = Rect::new((10, 10), (20, 20));
+        rect.map_coords_inplace(&|&(x, y)| (x + 10, y + 20));
+        assert_eq!(rect.min(), Coordinate { x: 20, y: 30 });
+        assert_eq!(rect.max(), Coordinate { x: 30, y: 40 });
+    }
+
+    #[test]
+    #[should_panic]
+    fn rect_inplace_panic() {
+        let mut rect = Rect::new((10, 10), (20, 20));
+        rect.map_coords_inplace(&|&(x, y)| {
+            if x < 15 && y < 15 {
+                (x, y)
+            } else {
+                (x - 15, y - 15)
+            }
+        });
+    }
+
+    #[test]
+    fn rect_map_coords() {
+        let rect = Rect::new((10, 10), (20, 20));
+        let another_rect = rect.map_coords(&|&(x, y)| (x + 10, y + 20));
+        assert_eq!(another_rect.min(), Coordinate { x: 20, y: 30 });
+        assert_eq!(another_rect.max(), Coordinate { x: 30, y: 40 });
+    }
+
+    #[test]
+    fn rect_try_map_coords() {
+        let rect = Rect::new((10, 10), (20, 20));
+        let result = rect.try_map_coords(&|&(x, y)| Ok((x + 10, y + 20)));
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    #[should_panic]
+    fn rect_try_map_coords_panic() {
+        let rect = Rect::new((10, 10), (20, 20));
+        let _ = rect.try_map_coords(&|&(x, y)| {
+            if x < 15 && y < 15 {
+                Ok((x, y))
+            } else {
+                Ok((x - 15, y - 15))
+            }
+        });
     }
 
     #[test]
@@ -537,61 +613,65 @@ mod test {
 
     #[test]
     fn multipolygon() {
-        let poly1 = Polygon::new(
-            LineString::from(vec![(0., 0.), (10., 0.), (10., 10.), (0., 10.), (0., 0.)]),
-            vec![],
-        );
-        let poly2 = Polygon::new(
-            LineString::from(vec![
-                (11., 11.),
-                (20., 11.),
-                (20., 20.),
-                (11., 20.),
-                (11., 11.),
-            ]),
-            vec![LineString::from(vec![
-                (13., 13.),
-                (13., 17.),
-                (17., 17.),
-                (17., 13.),
-                (13., 13.),
-            ])],
-        );
+        let poly1 = polygon![
+            (x: 0., y: 0.),
+            (x: 10., y: 0.),
+            (x: 10., y: 10.),
+            (x: 0., y: 10.),
+            (x: 0., y: 0.),
+        ];
+        let poly2 = polygon![
+            exterior: [
+                (x: 11., y: 11.),
+                (x: 20., y: 11.),
+                (x: 20., y: 20.),
+                (x: 11., y: 20.),
+                (x: 11., y: 11.),
+            ],
+            interiors: [
+                [
+                    (x: 13., y: 13.),
+                    (x: 13., y: 17.),
+                    (x: 17., y: 17.),
+                    (x: 17., y: 13.),
+                    (x: 13., y: 13.),
+                ]
+            ],
+        ];
 
         let mp = MultiPolygon(vec![poly1, poly2]);
         let mp2 = mp.map_coords(&|&(x, y)| (x * 2., y + 100.));
         assert_eq!(mp2.0.len(), 2);
         assert_eq!(
             mp2.0[0],
-            Polygon::new(
-                LineString::from(vec![
-                    (0., 100.),
-                    (20., 100.),
-                    (20., 110.),
-                    (0., 110.),
-                    (0., 100.),
-                ]),
-                vec![]
-            )
+            polygon![
+                (x: 0., y: 100.),
+                (x: 20., y: 100.),
+                (x: 20., y: 110.),
+                (x: 0., y: 110.),
+                (x: 0., y: 100.),
+            ],
         );
         assert_eq!(
             mp2.0[1],
-            Polygon::new(
-                LineString::from(vec![
-                    (22., 111.),
-                    (40., 111.),
-                    (40., 120.),
-                    (22., 120.),
-                    (22., 111.),
-                ]),
-                vec![LineString::from(vec![
-                    (26., 113.),
-                    (26., 117.),
-                    (34., 117.),
-                    (34., 113.),
-                    (26., 113.),
-                ])]
-            )
+            polygon![
+                exterior: [
+                    (x: 22., y: 111.),
+                    (x: 40., y: 111.),
+                    (x: 40., y: 120.),
+                    (x: 22., y: 120.),
+                    (x: 22., y: 111.),
+                ],
+                interiors: [
+                    [
+                        (x: 26., y: 113.),
+                        (x: 26., y: 117.),
+                        (x: 34., y: 117.),
+                        (x: 34., y: 113.),
+                        (x: 26., y: 113.),
+                    ],
+                ],
+            ],
         );
     }
 
@@ -634,13 +714,15 @@ mod test {
             Point::new(1.0, 1.0),
             Point::new(2.0, 2.0),
             Point::new(3.0, 3.0),
-        ].into();
+        ]
+        .into();
         // this should be fine
         let good_ls: LineString<_> = vec![
             Point::new(1.0, 1.0),
             Point::new(2.1, 2.0),
             Point::new(3.0, 3.0),
-        ].into();
+        ]
+        .into();
         let bad = bad_ls.try_map_coords(&|&(x, y)| f(x, y));
         assert!(bad.is_err());
         let good = good_ls.try_map_coords(&|&(x, y)| f(x, y));
@@ -651,7 +733,8 @@ mod test {
                 Point::new(2., 101.),
                 Point::new(4.2, 102.),
                 Point::new(6.0, 103.),
-            ].into()
+            ]
+            .into()
         );
     }
 }

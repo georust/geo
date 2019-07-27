@@ -1,5 +1,6 @@
+use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
 use std::iter::FromIterator;
-use {Coordinate, CoordinateType, Line, Point, Triangle};
+use std::ops::{Index, IndexMut};
 
 /// An ordered collection of two or more [`Coordinate`s](struct.Coordinate.html), representing a
 /// path between locations.
@@ -137,6 +138,32 @@ impl<T: CoordinateType> LineString<T> {
             }
         })
     }
+
+    /// Close the `LineString`. Specifically, if the `LineString` has is at least one coordinate,
+    /// and the value of the first coordinate does not equal the value of the last coordinate, then
+    /// a new coordinate is added to the end with the value of the first coordinate.
+    pub(crate) fn close(&mut self) {
+        if let (Some(first), Some(last)) = (self.0.first().map(|n| *n), self.0.last().map(|n| *n)) {
+            if first != last {
+                self.0.push(first);
+            }
+        }
+    }
+
+    /// Return the number of coordinates in the `LineString`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::LineString;
+    ///
+    /// let mut coords = vec![(0., 0.), (5., 0.), (7., 9.)];
+    /// let line_string: LineString<f32> = coords.into_iter().collect();
+    /// assert_eq!(3, line_string.num_coords());
+    /// ```
+    pub fn num_coords(&self) -> usize {
+        self.0.len()
+    }
 }
 
 /// Turn a `Vec` of `Point`-ish objects into a `LineString`.
@@ -163,29 +190,50 @@ impl<T: CoordinateType> IntoIterator for LineString<T> {
     }
 }
 
-#[cfg(feature = "spade")]
-impl<T> ::spade::SpatialObject for LineString<T>
-where
-    T: ::num_traits::Float + ::spade::SpadeNum + ::std::fmt::Debug,
-{
-    type Point = Point<T>;
+impl<T: CoordinateType> Index<usize> for LineString<T> {
+    type Output = Coordinate<T>;
 
-    fn mbr(&self) -> ::spade::BoundingRect<Self::Point> {
-        let bounding_rect = ::private_utils::line_string_bounding_rect(self);
+    fn index(&self, index: usize) -> &Coordinate<T> {
+        self.0.index(index)
+    }
+}
+
+impl<T: CoordinateType> IndexMut<usize> for LineString<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Coordinate<T> {
+        self.0.index_mut(index)
+    }
+}
+
+#[cfg(feature = "rstar")]
+impl<T> ::rstar::RTreeObject for LineString<T>
+where
+    T: ::num_traits::Float + ::rstar::RTreeNum,
+{
+    type Envelope = ::rstar::AABB<Point<T>>;
+
+    fn envelope(&self) -> Self::Envelope {
+        use num_traits::Bounded;
+        let bounding_rect = crate::private_utils::line_string_bounding_rect(self);
         match bounding_rect {
-            None => ::spade::BoundingRect::from_corners(
-                &Point::new(T::min_value(), T::min_value()),
-                &Point::new(T::max_value(), T::max_value()),
+            None => ::rstar::AABB::from_corners(
+                Point::new(Bounded::min_value(), Bounded::min_value()),
+                Point::new(Bounded::max_value(), Bounded::max_value()),
             ),
-            Some(b) => ::spade::BoundingRect::from_corners(
-                &Point::new(b.min.x, b.min.y),
-                &Point::new(b.max.x, b.max.y),
+            Some(b) => ::rstar::AABB::from_corners(
+                Point::new(b.min().x, b.min().y),
+                Point::new(b.max().x, b.max().y),
             ),
         }
     }
+}
 
-    fn distance2(&self, point: &Self::Point) -> <Self::Point as ::spade::PointN>::Scalar {
-        let d = ::private_utils::point_line_string_euclidean_distance(*point, self);
+#[cfg(feature = "rstar")]
+impl<T> ::rstar::PointDistance for LineString<T>
+where
+    T: ::num_traits::Float + ::rstar::RTreeNum,
+{
+    fn distance_2(&self, point: &Point<T>) -> T {
+        let d = crate::private_utils::point_line_string_euclidean_distance(*point, self);
         if d == T::zero() {
             d
         } else {

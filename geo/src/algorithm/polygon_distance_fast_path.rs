@@ -1,8 +1,8 @@
-use algorithm::extremes::ExtremeIndices;
+use crate::algorithm::extremes::ExtremeIndices;
+use crate::prelude::*;
+use crate::{Line, Point, Polygon, Triangle};
 use num_traits::float::FloatConst;
 use num_traits::{Float, Signed};
-use prelude::*;
-use {Line, Point, Polygon, Triangle};
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance
 // They use the rotating calipers method to speed up calculations.
@@ -16,8 +16,8 @@ where
 {
     let poly1_extremes = poly1.extreme_indices().unwrap();
     let poly2_extremes = poly2.extreme_indices().unwrap();
-    let ymin1 = Point(poly1.exterior.0[poly1_extremes.ymin]);
-    let ymax2 = Point(poly2.exterior.0[poly2_extremes.ymax]);
+    let ymin1 = Point(poly1.exterior().0[poly1_extremes.ymin]);
+    let ymax2 = Point(poly2.exterior().0[poly2_extremes.ymax]);
 
     let mut state = Polydist {
         poly1,
@@ -66,7 +66,7 @@ fn prev_vertex<T>(poly: &Polygon<T>, current_vertex: usize) -> usize
 where
     T: Float,
 {
-    (current_vertex + (poly.exterior.0.len() - 1) - 1) % (poly.exterior.0.len() - 1)
+    (current_vertex + (poly.exterior().0.len() - 1) - 1) % (poly.exterior().0.len() - 1)
 }
 
 /// Wrap-around next Polygon index
@@ -74,14 +74,14 @@ fn next_vertex<T>(poly: &Polygon<T>, current_vertex: usize) -> usize
 where
     T: Float,
 {
-    (current_vertex + 1) % (poly.exterior.0.len() - 1)
+    (current_vertex + 1) % (poly.exterior().0.len() - 1)
 }
 
 #[derive(Debug)]
-enum Aligned {
-    EdgeVertexP,
-    EdgeVertexQ,
-    EdgeEdge,
+enum AlignedEdge {
+    VertexP,
+    VertexQ,
+    Edge,
 }
 
 /// Distance-finding state
@@ -104,7 +104,7 @@ where
     q2next: Point<T>,
     p1prev: Point<T>,
     q2prev: Point<T>,
-    alignment: Option<Aligned>,
+    alignment: Option<AlignedEdge>,
     ap1: T,
     aq2: T,
     start: Option<bool>,
@@ -126,8 +126,8 @@ where
     let sinsq = T::one() - cossq;
     let mut cos = T::zero();
     let mut sin;
-    let pnext = poly.exterior.0[next_vertex(poly, idx)];
-    let pprev = poly.exterior.0[prev_vertex(poly, idx)];
+    let pnext = poly.exterior().0[next_vertex(poly, idx)];
+    let pprev = poly.exterior().0[prev_vertex(poly, idx)];
     let clockwise = Point(pprev).cross_prod(Point(p.0), Point(pnext)) < T::zero();
     let slope_prev;
     let slope_next;
@@ -320,8 +320,8 @@ where
     T: Float + FloatConst + Signed,
 {
     let hundred = T::from(100).unwrap();
-    let pnext = poly.exterior.0[next_vertex(poly, idx)];
-    let pprev = poly.exterior.0[prev_vertex(poly, idx)];
+    let pnext = poly.exterior().0[next_vertex(poly, idx)];
+    let pprev = poly.exterior().0[prev_vertex(poly, idx)];
     let clockwise = Point(pprev).cross_prod(Point(p.0), Point(pnext)) < T::zero();
     let punit;
     if !vertical {
@@ -456,44 +456,38 @@ where
     if (state.ap1 - minangle).abs() < T::from(0.002).unwrap() {
         state.ip1 = true;
         let p1next = next_vertex(state.poly1, state.p1_idx);
-        state.p1next = Point(state.poly1.exterior.0[p1next]);
+        state.p1next = Point(state.poly1.exterior().0[p1next]);
         state.p1_idx = p1next;
-        state.alignment = Some(Aligned::EdgeVertexP);
+        state.alignment = Some(AlignedEdge::VertexP);
     }
     if (state.aq2 - minangle).abs() < T::from(0.002).unwrap() {
         state.iq2 = true;
         let q2next = next_vertex(state.poly2, state.q2_idx);
-        state.q2next = Point(state.poly2.exterior.0[q2next]);
+        state.q2next = Point(state.poly2.exterior().0[q2next]);
         state.q2_idx = q2next;
         state.alignment = match state.alignment {
-            None => Some(Aligned::EdgeVertexQ),
-            Some(_) => Some(Aligned::EdgeEdge),
+            None => Some(AlignedEdge::VertexQ),
+            Some(_) => Some(AlignedEdge::Edge),
         }
     }
     if state.ip1 {
-        match state.p1.x() == state.p1next.x() {
+        if state.p1.x() == state.p1next.x() {
             // The P line of support is vertical
-            true => {
-                state.vertical = true;
-                state.slope = T::zero();
-            }
-            false => {
-                state.vertical = false;
-                state.slope = Line::new(state.p1next.0, state.p1.0).slope();
-            }
+            state.vertical = true;
+            state.slope = T::zero();
+        } else {
+            state.vertical = false;
+            state.slope = Line::new(state.p1next.0, state.p1.0).slope();
         }
     }
     if state.iq2 {
-        match state.q2.x() == state.q2next.x() {
-            true => {
-                // The Q line of support is vertical
-                state.vertical = true;
-                state.slope = T::zero();
-            }
-            false => {
-                state.vertical = false;
-                state.slope = Line::new(state.q2next.0, state.q2.0).slope();
-            }
+        if state.q2.x() == state.q2next.x() {
+            // The Q line of support is vertical
+            state.vertical = true;
+            state.slope = T::zero();
+        } else {
+            state.vertical = false;
+            state.slope = Line::new(state.q2next.0, state.q2.0).slope();
         }
     }
     // A start value's been set, and both polygon indices are in their initial
@@ -521,7 +515,7 @@ where
         state.dist = newdist;
     }
     match state.alignment {
-        Some(Aligned::EdgeVertexP) => {
+        Some(AlignedEdge::VertexP) => {
             // one line of support coincides with a vertex on Q, the other with an edge on P
             if !state.vertical {
                 if state.slope != T::zero() {
@@ -548,7 +542,7 @@ where
                 }
             }
         }
-        Some(Aligned::EdgeVertexQ) => {
+        Some(AlignedEdge::VertexQ) => {
             // one line of support coincides with a vertex on P, the other with an edge on Q
             if !state.vertical {
                 if state.slope != T::zero() {
@@ -575,7 +569,7 @@ where
                 }
             }
         }
-        Some(Aligned::EdgeEdge) => {
+        Some(AlignedEdge::Edge) => {
             // both lines of support coincide with edges (i.e. they're parallel)
             newdist = state.p1.euclidean_distance(&state.q2prev);
             if newdist <= state.dist {

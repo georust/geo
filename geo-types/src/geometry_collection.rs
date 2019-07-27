@@ -1,7 +1,7 @@
+use crate::{CoordinateType, Geometry};
 use std::iter::FromIterator;
-use {CoordinateType, Geometry};
 
-/// A collection of [`Geometry`](enum.Geometry.html) types
+/// A collection of [`Geometry`](enum.Geometry.html) types.
 ///
 /// Can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
 ///
@@ -11,12 +11,32 @@ pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
     T: CoordinateType;
 
+impl<T: CoordinateType> GeometryCollection<T> {
+    /// Return an empty GeometryCollection
+    pub fn new() -> GeometryCollection<T> {
+        GeometryCollection(Vec::new())
+    }
+
+    /// Number of geometries in this GeometryCollection
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Is this GeometryCollection empty
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+/// Convert any Geometry (or anything that can be converted to a Geometry) into a
+/// GeometryCollection
 impl<T: CoordinateType, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
     fn from(x: IG) -> Self {
         GeometryCollection(vec![x.into()])
     }
 }
 
+/// Collect Geometries (or what can be converted to a Geometry) into a GeometryCollection
 impl<T: CoordinateType, IG: Into<Geometry<T>>> FromIterator<IG> for GeometryCollection<T> {
     fn from_iter<I: IntoIterator<Item = IG>>(iter: I) -> Self {
         GeometryCollection(iter.into_iter().map(|g| g.into()).collect())

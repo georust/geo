@@ -6,18 +6,20 @@ matrix:
   include:
     - env: GEO_TYPES_FEATURES=""
     - env: GEO_TYPES_FEATURES="--features serde"
-    - env: GEO_TYPES_FEATURES="--features spade"
+    - env: GEO_TYPES_FEATURES="--features rstar"
     - env: GEO_FEATURES=""
     - env: GEO_FEATURES="--features postgis-integration"
     - env: GEO_FEATURES="--features use-proj"
     - env: GEO_FEATURES="--features use-serde"
 
 before_install:
-  - sudo apt-get update
-  - wget https://github.com/OSGeo/proj.4/releases/download/5.0.0/proj-5.0.0.tar.gz
-  - tar -xzvf proj-5.0.0.tar.gz
-  - pushd proj-5.0.0 && ./configure --prefix=/usr && make && sudo make install && popd
+  - if [ "${GEO_FEATURES}" == "--features use-proj" ]; then
+        sudo apt-get update;
+        wget https://github.com/OSGeo/proj.4/releases/download/5.2.0/proj-5.2.0.tar.gz;
+        tar -xzvf proj-5.2.0.tar.gz;
+        pushd proj-5.2.0 && ./configure --prefix=/usr && make && sudo make install && popd;
+    fi
 
 script:
-  - (cd geo-types && cargo build $GEO_TYPES_FEATURES && cargo test $GEO_TYPES_FEATURES)
-  - (cd geo && cargo build $GEO_FEATURES && cargo test $GEO_FEATURES)
+  - (cd geo-types && cargo build --release $GEO_TYPES_FEATURES && cargo test --release $GEO_TYPES_FEATURES)
+  - (cd geo && cargo build --release $GEO_FEATURES && cargo test --release $GEO_FEATURES)

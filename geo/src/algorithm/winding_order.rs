@@ -1,6 +1,7 @@
+use crate::utils::EitherIter;
+use crate::{CoordinateType, LineString, Point};
 use geo_types::line_string::PointsIter;
 use std::iter::Rev;
-use {CoordinateType, LineString, Point};
 
 pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
 where
@@ -15,30 +16,6 @@ where
     }
 
     tmp
-}
-
-enum EitherIter<T, I1, I2>
-where
-    I1: Iterator<Item = T>,
-    I2: Iterator<Item = T>,
-{
-    A(I1),
-    B(I2),
-}
-
-impl<T, I1, I2> Iterator for EitherIter<T, I1, I2>
-where
-    I1: Iterator<Item = T>,
-    I2: Iterator<Item = T>,
-{
-    type Item = T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self {
-            EitherIter::A(iter) => iter.next(),
-            EitherIter::B(iter) => iter.next(),
-        }
-    }
 }
 
 /// Iterates through a list of `Point`s

@@ -1,6 +1,6 @@
-use {CoordinateType, MultiPolygon, Polygon};
+use crate::{CoordinateType, MultiPolygon, Polygon};
 
-use algorithm::winding_order::{Winding, WindingOrder};
+use crate::algorithm::winding_order::{Winding, WindingOrder};
 
 pub trait Orient<T> {
     /// Orients a Polygon's exterior and interior rings according to convention
@@ -14,22 +14,20 @@ pub trait Orient<T> {
     /// use geo::{Point, LineString, Polygon};
     /// use geo::orient::{Orient, Direction};
     /// // a diamond shape, oriented clockwise outside
-    /// let points_ext_raw = vec![(1.0, 0.0), (0.0, 1.0), (1.0, 2.0), (2.0, 1.0), (1.0, 0.0)];
+    /// let points_ext = vec![(1.0, 0.0), (0.0, 1.0), (1.0, 2.0), (2.0, 1.0), (1.0, 0.0)];
     /// // counter-clockwise interior
-    /// let points_int_raw = vec![(1.0, 0.5), (1.5, 1.0), (1.0, 1.5), (0.5, 1.0), (1.0, 0.5)];
-    /// let points_ext = points_ext_raw.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>();
-    /// let points_int = points_int_raw.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>();
+    /// let points_int = vec![(1.0, 0.5), (1.5, 1.0), (1.0, 1.5), (0.5, 1.0), (1.0, 0.5)];
     /// let poly = Polygon::new(LineString::from(points_ext), vec![LineString::from(points_int)]);
     /// // a diamond shape, oriented counter-clockwise outside,
     /// let oriented_ext = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
-    /// let oriented_ext_ls = LineString::from(oriented_ext.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>());
+    /// let oriented_ext_ls = LineString::from(oriented_ext);
     /// // clockwise interior
     /// let oriented_int = vec![(1.0, 0.5), (0.5, 1.0), (1.0, 1.5), (1.5, 1.0), (1.0, 0.5)];
-    /// let oriented_int_ls = LineString::from(oriented_int.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>());
+    /// let oriented_int_ls = LineString::from(oriented_int);
     /// // build corrected Polygon
     /// let oriented = poly.orient(Direction::Default);
-    /// assert_eq!(oriented.exterior.0, oriented_ext_ls.0);
-    /// assert_eq!(oriented.interiors[0].0, oriented_int_ls.0);
+    /// assert_eq!(oriented.exterior().0, oriented_ext_ls.0);
+    /// assert_eq!(oriented.interiors()[0].0, oriented_int_ls.0);
     /// ```
     fn orient(&self, orientation: Direction) -> Self;
 }
@@ -71,16 +69,17 @@ where
     T: CoordinateType,
 {
     let interiors = poly
-        .interiors
+        .interiors()
         .iter()
         .map(|l| {
             l.clone_to_winding_order(match direction {
                 Direction::Default => WindingOrder::Clockwise,
                 Direction::Reversed => WindingOrder::CounterClockwise,
             })
-        }).collect();
+        })
+        .collect();
 
-    let ext_ring = poly.exterior.clone_to_winding_order(match direction {
+    let ext_ring = poly.exterior().clone_to_winding_order(match direction {
         Direction::Default => WindingOrder::CounterClockwise,
         Direction::Reversed => WindingOrder::Clockwise,
     });
@@ -91,7 +90,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use {LineString, Polygon};
+    use crate::{LineString, Polygon};
     #[test]
     fn test_polygon_orientation() {
         // a diamond shape, oriented clockwise outside
@@ -110,7 +109,7 @@ mod test {
         let oriented_int_ls = LineString::from(oriented_int_raw);
         // build corrected Polygon
         let oriented = orient(&poly1, Direction::Default);
-        assert_eq!(oriented.exterior.0, oriented_ext_ls.0);
-        assert_eq!(oriented.interiors[0].0, oriented_int_ls.0);
+        assert_eq!(oriented.exterior().0, oriented_ext_ls.0);
+        assert_eq!(oriented.interiors()[0].0, oriented_int_ls.0);
     }
 }
