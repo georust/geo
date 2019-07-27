@@ -12,6 +12,7 @@ extern crate proj;
 extern crate rstar;
 
 pub use crate::algorithm::*;
+#[allow(deprecated)]
 pub use crate::traits::ToGeo;
 pub use crate::types::*;
 
