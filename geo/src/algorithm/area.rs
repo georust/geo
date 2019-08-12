@@ -42,7 +42,7 @@ where
     twice_signed_ring_area(linestring) / (T::one() + T::one())
 }
 
-impl<T> Area<T> for Line<T>
+default impl<T> Area<T> for Line<T>
 where
     T: CoordinateType,
 {

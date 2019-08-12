@@ -1,3 +1,5 @@
+#![feature(specialization)]
+
 extern crate geo_types;
 extern crate num_traits;
 #[cfg(feature = "use-serde")]

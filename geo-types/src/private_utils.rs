@@ -158,3 +158,17 @@ where
     }
     false
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::point;
+
+    #[test]
+    fn test_line_segment_distance() {
+        assert_eq!(2.23606797749979, line_segment_distance(point!(x: 0., y: 0.), point!(x: 2., y: 1.), point!(x: 7., y: 2.)));
+        assert_eq!(1.5689290811054721, line_segment_distance(point!(x: 5., y: 0.), point!(x: 2., y: 1.), point!(x: 7., y: 2.)));
+        assert_eq!(1.0, line_segment_distance(point!(x: 2., y: 1.), point!(x: 0., y: 0.), point!(x: 5., y: 0.)));
+        assert_eq!(2.8284271247461903, line_segment_distance(point!(x: 7., y: 2.), point!(x: 0., y: 0.), point!(x: 5., y: 0.)));
+    }
+}

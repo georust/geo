@@ -3,6 +3,7 @@ use crate::{Coordinate, CoordinateType, Point};
 /// A line segment made up of exactly two [`Point`s](struct.Point.html).
 #[derive(PartialEq, Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[repr(C)]
 pub struct Line<T>
 where
     T: CoordinateType,
@@ -152,6 +153,18 @@ where
     pub fn points(&self) -> (Point<T>, Point<T>) {
         (self.start_point(), self.end_point())
     }
+
+    fn as_slice(&self) -> &[T] {
+        unsafe {
+            ::std::slice::from_raw_parts(self as *const Line<T> as *const T, 4)
+        }
+    }
+}
+
+fn determinant(line: Line<f64>) -> f64 {
+    ::packed_simd::f64x4::from_slice_unaligned(line.as_slice());
+    // ::packed_simd::shuffle!();
+    0.0
 }
 
 impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {
@@ -181,5 +194,16 @@ where
     fn distance_2(&self, point: &Point<T>) -> T {
         let d = crate::private_utils::point_line_euclidean_distance(*point, *self);
         d.powi(2)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_as_slice() {
+        let line = Line::new(Coordinate { x: 1., y: 2. }, Coordinate { x: 3., y: 4. });
+        assert_eq!(&[1., 2., 3., 4.], line.as_slice());
     }
 }

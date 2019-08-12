@@ -9,6 +9,7 @@ use crate::{CoordinateType, Point};
 /// methods.
 #[derive(PartialEq, Clone, Copy, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[repr(C)]
 pub struct Coordinate<T>
 where
     T: CoordinateType,

@@ -14,3 +14,4 @@ edition = "2018"
 num-traits = "0.2"
 serde = { version = "1", optional = true, features = ["derive"] }
 rstar = { version = "0.2", optional = true }
+packed_simd = "*"
