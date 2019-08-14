@@ -5,7 +5,6 @@ use num_traits::Float;
 use std::iter::Sum;
 use std::ops::{Add, Div};
 
-
 pub trait PointLocator<F: Float + Add + Div + Sum, Rhs = Point<F>> {
     /// Return a float between 0 and 1 representing the location of the closest point
     /// on the line to the given point, as a percent of the total line length.
@@ -57,12 +56,12 @@ where
     }
 }
 
-impl<F> PointLocator<F> for MultiLineString<F>
-where
-    F: Float + Add + Div + Sum,
-{
-    fn locate_point(&self, p: &Point<F>) -> Option<F> {}
-}
+//impl<F> PointLocator<F> for MultiLineString<F>
+//where
+//    F: Float + Add + Div + Sum,
+//{
+//    fn locate_point(&self, p: &Point<F>) -> Option<F> {}
+//}
 
 #[cfg(test)]
 mod test {
