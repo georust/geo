@@ -59,7 +59,6 @@ pub mod prelude {
     pub use crate::algorithm::euclidean_length::EuclideanLength;
     pub use crate::algorithm::extremes::ExtremePoints;
     pub use crate::algorithm::frechet_distance::FrechetDistance;
-    pub use crate::algorithm::line_locate_point;
     #[cfg(feature = "postgis-integration")]
     pub use crate::algorithm::from_postgis::FromPostgis;
     pub use crate::algorithm::haversine_destination::HaversineDestination;
@@ -67,6 +66,7 @@ pub mod prelude {
     pub use crate::algorithm::haversine_intermediate::HaversineIntermediate;
     pub use crate::algorithm::haversine_length::HaversineLength;
     pub use crate::algorithm::intersects::Intersects;
+    pub use crate::algorithm::line_locate_point;
     pub use crate::algorithm::map_coords::MapCoords;
     pub use crate::algorithm::orient::Orient;
     #[cfg(feature = "use-proj")]

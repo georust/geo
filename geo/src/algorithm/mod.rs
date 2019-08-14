@@ -22,8 +22,6 @@ pub mod euclidean_length;
 pub mod extremes;
 /// Calculate the Frechet distance between two `LineStrings`.
 pub mod frechet_distance;
-/// Calculate the percentage along a line of a given point
-pub mod line_locate_point;
 /// Produces a `Geometry` from PostGIS.
 #[cfg(feature = "postgis-integration")]
 pub mod from_postgis;
@@ -37,6 +35,8 @@ pub mod haversine_intermediate;
 pub mod haversine_length;
 /// Determine whether `Geometry` `A` intersects `Geometry` `B`.
 pub mod intersects;
+/// Calculate the percentage along a line of a given point
+pub mod line_locate_point;
 /// Apply a function to all `Coordinates` of a `Geometry`.
 pub mod map_coords;
 /// Orient a `Polygon`'s exterior and interior rings.
