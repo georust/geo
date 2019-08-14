@@ -11,8 +11,8 @@ pub trait PointLocator<F: Float + Add + Div + Sum, Rhs = Point<F>> {
     ///
     /// # Examples
     /// ```
-    /// use geo::{Point, LineString, Coordinate}
-    /// use geo::algorithm::line_locate_point::PointLocator
+    /// use geo::{Point, LineString, Coordinate};
+    /// use geo::algorithm::line_locate_point::PointLocator;
     ///
     /// let the_linestring = LineString(vec![
     ///     Coordinate { x: 0., y: 0. },
@@ -22,7 +22,7 @@ pub trait PointLocator<F: Float + Add + Div + Sum, Rhs = Point<F>> {
     ///
     /// let pt = Point(Coordinate{x: 1.5, y: 1.5});
     ///
-    /// println!("Percent Along Line: {}", the_linestring.locate_point(pt).unwrap())
+    /// println!("Percent Along Line: {}", the_linestring.locate_point(&pt).unwrap());
     ///
     /// ```
     fn locate_point(&self, p: &Rhs) -> Option<F>;
