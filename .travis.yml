@@ -19,7 +19,7 @@ matrix:
 
 before_cache:
   - if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
-        cargo install cargo-tarpaulin -f
+        cargo install cargo-tarpaulin -f;
     fi
 
 before_install:
@@ -36,5 +36,5 @@ script:
 
 after_success:
   - if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
-      cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+      cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID;
     fi
