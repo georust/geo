@@ -2,6 +2,11 @@ language: rust
 
 cache: cargo
 
+addons:
+  apt:
+    packages:
+      - libssl-dev
+
 matrix:
   include:
     - env: GEO_TYPES_FEATURES=""
@@ -11,6 +16,11 @@ matrix:
     - env: GEO_FEATURES="--features postgis-integration"
     - env: GEO_FEATURES="--features use-proj"
     - env: GEO_FEATURES="--features use-serde"
+
+before_cache:
+  - if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+        cargo install cargo-tarpaulin -f
+    fi
 
 before_install:
   - if [ "${GEO_FEATURES}" == "--features use-proj" ]; then
@@ -23,3 +33,8 @@ before_install:
 script:
   - (cd geo-types && cargo build --release $GEO_TYPES_FEATURES && cargo test --release $GEO_TYPES_FEATURES)
   - (cd geo && cargo build --release $GEO_FEATURES && cargo test --release $GEO_FEATURES)
+
+after_success:
+  - if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+      cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+    fi
