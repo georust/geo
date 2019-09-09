@@ -72,7 +72,7 @@ macro_rules! point {
 /// ```
 ///
 /// [`Coordinate`]: ./struct.Coordinate.html
-/// [`LineString`]: ./struct.LineString.html
+/// [`LineString`]: ./line_string/struct.LineString.html
 #[macro_export]
 macro_rules! line_string {
     () => { $crate::LineString(vec![]) };
