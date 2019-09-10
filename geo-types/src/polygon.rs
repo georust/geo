@@ -30,7 +30,7 @@ use num_traits::{Float, Signed};
 /// new `Coordinate` will be appended to the `LineString` with a value equal to
 /// the first `Coordinate`.
 ///
-/// [`LineString`]: struct.LineString.html
+/// [`LineString`]: line_string/struct.LineString.html
 #[derive(PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Polygon<T>
