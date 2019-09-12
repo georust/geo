@@ -34,7 +34,7 @@ use-serde = ["serde", "geo-types/serde"]
 
 [dev-dependencies]
 approx = "0.3.0"
-criterion = { version = "0.2" }
+criterion = { version = "0.3" }
 
 [[bench]]
 name = "area"
