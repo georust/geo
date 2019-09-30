@@ -13,8 +13,8 @@ where
 
 impl<T: CoordinateType> Rect<T> {
     /// Constructor to creates a new rectangle from coordinates, where `min` denotes to the
-    /// coordinates of the bottom-right corner, and `max` denotes to the coordinates of the
-    /// top-left corner
+    /// coordinates of the bottom-left corner, and `max` denotes to the coordinates of the
+    /// top-right corner
     ///
     /// # Panics
     ///
