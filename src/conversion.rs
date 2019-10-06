@@ -13,6 +13,7 @@
 // limitations under the License.
 
 extern crate geo_types;
+extern crate num_traits;
 
 use std::fmt;
 use types::*;
@@ -33,17 +34,34 @@ impl fmt::Display for Error {
     }
 }
 
-fn try_into_point(point: &Point) -> Result<geo_types::Geometry<f64>, Error> {
+fn create_geo_coordinate<T>(coord: &Coord) -> geo_types::Coordinate<T>
+where
+    T: num_traits::Float,
+{
+    geo_types::Coordinate {
+        x: T::from(coord.x).unwrap(),
+        y: T::from(coord.y).unwrap(),
+    }
+}
+
+fn try_into_point<T>(point: &Point) -> Result<geo_types::Geometry<T>, Error>
+where
+    T: num_traits::Float,
+{
     match point.0 {
         Some(ref c) => {
-            let geo_point: geo_types::Point<f64> = (c.x, c.y).into();
+            let geo_point: geo_types::Point<T> =
+                (T::from(c.x).unwrap(), T::from(c.y).unwrap()).into();
             Ok(geo_point.into())
         }
         None => Err(Error::PointConversionError),
     }
 }
 
-pub fn try_into_geometry(geometry: &Geometry) -> Result<geo_types::Geometry<f64>, Error> {
+pub fn try_into_geometry<T>(geometry: &Geometry) -> Result<geo_types::Geometry<T>, Error>
+where
+    T: num_traits::Float,
+{
     match geometry {
         Geometry::Point(point) => try_into_point(point),
         Geometry::LineString(linestring) => Ok(linestring.into()),
@@ -57,32 +75,40 @@ pub fn try_into_geometry(geometry: &Geometry) -> Result<geo_types::Geometry<f64>
     }
 }
 
-impl<'a> From<&'a LineString> for geo_types::Geometry<f64> {
-    fn from(linestring: &LineString) -> Self {
-        let geo_linestring: geo_types::LineString<f64> =
-            linestring.0.iter().map(|c| (c.x, c.y)).collect();
+impl<'a, T> Into<geo_types::Geometry<T>> for &'a LineString
+where
+    T: num_traits::Float,
+{
+    fn into(self) -> geo_types::Geometry<T> {
+        let geo_linestring: geo_types::LineString<T> =
+            self.0.iter().map(|c| create_geo_coordinate(&c)).collect();
 
         geo_linestring.into()
     }
 }
 
-impl<'a> From<&'a MultiLineString> for geo_types::Geometry<f64> {
-    fn from(multilinestring: &MultiLineString) -> Self {
-        let geo_multilinestring: geo_types::MultiLineString<f64> = multilinestring
+impl<'a, T> Into<geo_types::Geometry<T>> for &'a MultiLineString
+where
+    T: num_traits::Float,
+{
+    fn into(self) -> geo_types::Geometry<T> {
+        let geo_multilinestring: geo_types::MultiLineString<T> = self
             .0
             .iter()
-            .map(|l| l.0.iter().map(|c| (c.x, c.y)).collect::<Vec<_>>())
+            .map(|l| l.0.iter().map(|c| create_geo_coordinate(&c)).collect::<Vec<_>>())
             .collect();
 
         geo_multilinestring.into()
     }
 }
 
-fn w_polygon_to_g_polygon(polygon: &Polygon) -> geo_types::Polygon<f64> {
+fn w_polygon_to_g_polygon<T>(polygon: &Polygon) -> geo_types::Polygon<T>
+where
+    T: num_traits::Float,
+{
     let mut iter = polygon
         .0
-        .iter()
-        .map(|l| l.0.iter().map(|c| (c.x, c.y)).collect::<Vec<_>>().into());
+        .iter().map(|l| l.0.iter().map(|c| create_geo_coordinate(c)).collect::<Vec<_>>().into());
 
     match iter.next() {
         Some(interior) => geo_types::Polygon::new(interior, iter.collect()),
@@ -90,28 +116,37 @@ fn w_polygon_to_g_polygon(polygon: &Polygon) -> geo_types::Polygon<f64> {
     }
 }
 
-impl<'a> From<&'a Polygon> for geo_types::Geometry<f64> {
-    fn from(polygon: &Polygon) -> Self {
-        w_polygon_to_g_polygon(polygon).into()
+impl<'a, T> Into<geo_types::Geometry<T>> for &'a Polygon
+where
+    T: num_traits::Float,
+{
+    fn into(self) -> geo_types::Geometry<T> {
+        w_polygon_to_g_polygon(self).into()
     }
 }
 
-impl<'a> From<&'a MultiPoint> for geo_types::Geometry<f64> {
-    fn from(multipoint: &MultiPoint) -> Self {
-        let geo_multipoint: geo_types::MultiPoint<f64> = multipoint
+impl<'a, T> Into<geo_types::Geometry<T>> for &'a MultiPoint
+where
+    T: num_traits::Float,
+{
+    fn into(self) -> geo_types::Geometry<T> {
+        let geo_multipoint: geo_types::MultiPoint<T> = self
             .0
             .iter()
             .filter_map(|p| p.0.as_ref())
-            .map(|c| (c.x, c.y))
+            .map(|c| create_geo_coordinate(c))
             .collect();
 
         geo_multipoint.into()
     }
 }
 
-impl<'a> From<&'a MultiPolygon> for geo_types::Geometry<f64> {
-    fn from(multipolygon: &MultiPolygon) -> Self {
-        let geo_multipolygon: geo_types::MultiPolygon<f64> = multipolygon
+impl<'a, T> Into<geo_types::Geometry<T>> for &'a MultiPolygon
+where
+    T: num_traits::Float,
+{
+    fn into(self) -> geo_types::Geometry<T> {
+        let geo_multipolygon: geo_types::MultiPolygon<T> = self
             .0
             .iter()
             .map(|p| w_polygon_to_g_polygon(p))
@@ -121,10 +156,13 @@ impl<'a> From<&'a MultiPolygon> for geo_types::Geometry<f64> {
     }
 }
 
-pub fn try_into_geometry_collection(
+pub fn try_into_geometry_collection<T>(
     geometrycollection: &GeometryCollection,
-) -> Result<geo_types::Geometry<f64>, Error> {
-    let geo_geometrycollection: geo_types::GeometryCollection<f64> = geometrycollection
+) -> Result<geo_types::Geometry<T>, Error>
+where
+    T: num_traits::Float,
+{
+    let geo_geometrycollection: geo_types::GeometryCollection<T> = geometrycollection
         .0
         .iter()
         .map(|g| try_into_geometry(g))
@@ -142,7 +180,8 @@ mod tests {
     #[test]
     fn convert_empty_point() {
         let point = Point(None).as_item();
-        assert!(try_into_geometry(&point).is_err());
+        let res: Result<geo_types::Geometry<f64>, Error> = try_into_geometry(&point);
+        assert!(res.is_err());
     }
 
     #[test]
