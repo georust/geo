@@ -12,13 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+extern crate num_traits;
+
 use std::iter::Peekable;
+use std::marker::PhantomData;
 use std::str;
 
 #[derive(PartialEq, Debug)]
-pub enum Token {
+pub enum Token<T>
+where
+    T: num_traits::Float
+{
     Comma,
-    Number(f64),
+    Number(T),
     ParenClose,
     ParenOpen,
     Word(String),
@@ -39,24 +45,32 @@ fn is_numberlike(c: char) -> bool {
     }
 }
 
-pub type PeekableTokens<'a> = Peekable<Tokens<'a>>;
+pub type PeekableTokens<'a, T> = Peekable<Tokens<'a, T>>;
 
-pub struct Tokens<'a> {
+pub struct Tokens<'a, T> {
     chars: Peekable<str::Chars<'a>>,
+    phantom: PhantomData<T>,
 }
 
-impl<'a> Tokens<'a> {
+impl<'a, T> Tokens<'a, T>
+where
+    T: num_traits::Float
+{
     pub fn from_str(input: &'a str) -> Self {
         Tokens {
             chars: input.chars().peekable(),
+            phantom: PhantomData, 
         }
     }
 }
 
-impl<'a> Iterator for Tokens<'a> {
-    type Item = Token;
+impl<'a, T> Iterator for Tokens<'a, T>
+where
+    T: num_traits::Float + str::FromStr + Default
+{
+    type Item = Token<T>;
 
-    fn next(&mut self) -> Option<Token> {
+    fn next(&mut self) -> Option<Token<T>> {
         // TODO: should this return Result?
         let mut next_char = self.chars.next()?;
 
@@ -72,7 +86,7 @@ impl<'a> Iterator for Tokens<'a> {
             ',' => Some(Token::Comma),
             c if is_numberlike(c) => {
                 let mut number = c.to_string() + &self.read_until_whitespace().unwrap_or_default();
-                match number.trim_left_matches('+').parse::<f64>() {
+                match number.trim_left_matches('+').parse::<T>() {
                     Ok(parsed_num) => Some(Token::Number(parsed_num)),
                     Err(_) => None
                 }
@@ -85,7 +99,10 @@ impl<'a> Iterator for Tokens<'a> {
     }
 }
 
-impl<'a> Tokens<'a> {
+impl<'a, T> Tokens<'a, T>
+where
+    T: num_traits::Float + str::FromStr + Default
+{
     fn read_until_whitespace(&mut self) -> Option<String> {
         let mut result = String::new();
 
@@ -124,21 +141,21 @@ impl<'a> Tokens<'a> {
 #[test]
 fn test_tokenizer_empty() {
     let test_str = "";
-    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
+    let tokens: Vec<Token<f64>> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![]);
 }
 
 #[test]
 fn test_tokenizer_1word() {
     let test_str = "hello";
-    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
+    let tokens: Vec<Token<f64>> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![Token::Word("hello".to_string())]);
 }
 
 #[test]
 fn test_tokenizer_2words() {
     let test_str = "hello world";
-    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
+    let tokens: Vec<Token<f64>> = Tokens::from_str(test_str).collect();
     assert_eq!(
         tokens,
         vec![
@@ -151,28 +168,28 @@ fn test_tokenizer_2words() {
 #[test]
 fn test_tokenizer_1number() {
     let test_str = "4.2";
-    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
+    let tokens: Vec<Token<f64>> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![Token::Number(4.2)]);
 }
 
 #[test]
 fn test_tokenizer_1number_plus() {
     let test_str = "+4.2";
-    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
+    let tokens: Vec<Token<f64>> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![Token::Number(4.2)]);
 }
 
 #[test]
 fn test_tokenizer_invalid_number() {
     let test_str = "4.2p";
-    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
+    let tokens: Vec<Token<f64>> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![]);
 }
 
 #[test]
 fn test_tokenizer_2numbers() {
     let test_str = ".4 -2";
-    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
+    let tokens: Vec<Token<f64>> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![Token::Number(0.4), Token::Number(-2.0)]);
 }
 
@@ -180,7 +197,7 @@ fn test_tokenizer_2numbers() {
 fn test_no_stack_overflow() {
     fn check(c: &str, count: usize, expected: usize) {
         let test_str = c.repeat(count);
-        let tokens : Vec<Token>= Tokens::from_str(&test_str).collect();
+        let tokens : Vec<Token<f64>>= Tokens::from_str(&test_str).collect();
         assert_eq!(expected, tokens.len());
     }
 
@@ -197,7 +214,7 @@ fn test_no_stack_overflow() {
 #[test]
 fn test_tokenizer_point() {
     let test_str = "POINT (10 -20)";
-    let tokens: Vec<Token> = Tokens::from_str(test_str).collect();
+    let tokens: Vec<Token<f64>> = Tokens::from_str(test_str).collect();
     assert_eq!(
         tokens,
         vec![

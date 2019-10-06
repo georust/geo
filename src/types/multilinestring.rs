@@ -12,22 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+extern crate num_traits;
+
 use std::fmt;
+use std::str::FromStr;
 use tokenizer::PeekableTokens;
 use types::linestring::LineString;
 use FromTokens;
 use Geometry;
 
 #[derive(Default)]
-pub struct MultiLineString(pub Vec<LineString>);
+pub struct MultiLineString<T: num_traits::Float>(pub Vec<LineString<T>>);
 
-impl MultiLineString {
-    pub fn as_item(self) -> Geometry {
+impl<T> MultiLineString<T>
+where
+    T: num_traits::Float
+{
+    pub fn as_item(self) -> Geometry<T> {
         Geometry::MultiLineString(self)
     }
 }
 
-impl fmt::Display for MultiLineString {
+impl<T> fmt::Display for MultiLineString<T>
+where
+    T: num_traits::Float + fmt::Display
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.0.is_empty() {
             f.write_str("MULTILINESTRING EMPTY")
@@ -48,10 +57,13 @@ impl fmt::Display for MultiLineString {
     }
 }
 
-impl FromTokens for MultiLineString {
-    fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
+impl<T> FromTokens<T> for MultiLineString<T>
+where
+    T: num_traits::Float + FromStr + Default
+{
+    fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
         let result =
-            FromTokens::comma_many(<LineString as FromTokens>::from_tokens_with_parens, tokens);
+            FromTokens::comma_many(<LineString<T> as FromTokens<T>>::from_tokens_with_parens, tokens);
         result.map(MultiLineString)
     }
 }
@@ -64,7 +76,7 @@ mod tests {
 
     #[test]
     fn basic_multilinestring() {
-        let mut wkt = Wkt::from_str("MULTILINESTRING ((8 4, -3 0), (4 0, 6 -10))")
+        let mut wkt: Wkt<f64> = Wkt::from_str("MULTILINESTRING ((8 4, -3 0), (4 0, 6 -10))")
             .ok()
             .unwrap();
         assert_eq!(1, wkt.items.len());
@@ -77,7 +89,7 @@ mod tests {
 
     #[test]
     fn write_empty_multilinestring() {
-        let multilinestring = MultiLineString(vec![]);
+        let multilinestring: MultiLineString<f64> = MultiLineString(vec![]);
 
         assert_eq!("MULTILINESTRING EMPTY", format!("{}", multilinestring));
     }

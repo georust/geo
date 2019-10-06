@@ -12,22 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+extern crate num_traits;
+
 use std::fmt;
+use std::str::FromStr;
 use tokenizer::PeekableTokens;
 use types::linestring::LineString;
 use FromTokens;
 use Geometry;
 
 #[derive(Default)]
-pub struct Polygon(pub Vec<LineString>);
+pub struct Polygon<T: num_traits::Float>(pub Vec<LineString<T>>);
 
-impl Polygon {
-    pub fn as_item(self) -> Geometry {
+impl<T> Polygon<T>
+where
+    T: num_traits::Float
+{
+    pub fn as_item(self) -> Geometry<T> {
         Geometry::Polygon(self)
     }
 }
 
-impl fmt::Display for Polygon {
+impl<T> fmt::Display for Polygon<T>
+where
+    T: num_traits::Float + fmt::Display
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.0.is_empty() {
             f.write_str("POLYGON EMPTY")
@@ -48,10 +57,13 @@ impl fmt::Display for Polygon {
     }
 }
 
-impl FromTokens for Polygon {
-    fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
+impl<T> FromTokens<T> for Polygon<T>
+where
+    T: num_traits::Float + FromStr + Default
+{
+    fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
         let result =
-            FromTokens::comma_many(<LineString as FromTokens>::from_tokens_with_parens, tokens);
+            FromTokens::comma_many(<LineString<T> as FromTokens<T>>::from_tokens_with_parens, tokens);
         result.map(Polygon)
     }
 }
@@ -64,7 +76,7 @@ mod tests {
 
     #[test]
     fn basic_polygon() {
-        let mut wkt = Wkt::from_str("POLYGON ((8 4, 4 0, 0 4, 8 4), (7 3, 4 1, 1 4, 7 3))")
+        let mut wkt: Wkt<f64> = Wkt::from_str("POLYGON ((8 4, 4 0, 0 4, 8 4), (7 3, 4 1, 1 4, 7 3))")
             .ok()
             .unwrap();
         assert_eq!(1, wkt.items.len());
@@ -77,7 +89,7 @@ mod tests {
 
     #[test]
     fn write_empty_polygon() {
-        let polygon = Polygon(vec![]);
+        let polygon: Polygon<f64> = Polygon(vec![]);
 
         assert_eq!("POLYGON EMPTY", format!("{}", polygon));
     }

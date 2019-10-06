@@ -34,7 +34,7 @@ impl fmt::Display for Error {
     }
 }
 
-fn create_geo_coordinate<T>(coord: &Coord) -> geo_types::Coordinate<T>
+fn create_geo_coordinate<T>(coord: &Coord<T>) -> geo_types::Coordinate<T>
 where
     T: num_traits::Float,
 {
@@ -44,21 +44,20 @@ where
     }
 }
 
-fn try_into_point<T>(point: &Point) -> Result<geo_types::Geometry<T>, Error>
+fn try_into_point<T>(point: &Point<T>) -> Result<geo_types::Geometry<T>, Error>
 where
     T: num_traits::Float,
 {
     match point.0 {
         Some(ref c) => {
-            let geo_point: geo_types::Point<T> =
-                (T::from(c.x).unwrap(), T::from(c.y).unwrap()).into();
+            let geo_point: geo_types::Point<T> = (c.x, c.y).into();
             Ok(geo_point.into())
         }
         None => Err(Error::PointConversionError),
     }
 }
 
-pub fn try_into_geometry<T>(geometry: &Geometry) -> Result<geo_types::Geometry<T>, Error>
+pub fn try_into_geometry<T>(geometry: &Geometry<T>) -> Result<geo_types::Geometry<T>, Error>
 where
     T: num_traits::Float,
 {
@@ -75,7 +74,7 @@ where
     }
 }
 
-impl<'a, T> Into<geo_types::Geometry<T>> for &'a LineString
+impl<'a, T> Into<geo_types::Geometry<T>> for &'a LineString<T>
 where
     T: num_traits::Float,
 {
@@ -87,7 +86,7 @@ where
     }
 }
 
-impl<'a, T> Into<geo_types::Geometry<T>> for &'a MultiLineString
+impl<'a, T> Into<geo_types::Geometry<T>> for &'a MultiLineString<T>
 where
     T: num_traits::Float,
 {
@@ -102,7 +101,7 @@ where
     }
 }
 
-fn w_polygon_to_g_polygon<T>(polygon: &Polygon) -> geo_types::Polygon<T>
+fn w_polygon_to_g_polygon<T>(polygon: &Polygon<T>) -> geo_types::Polygon<T>
 where
     T: num_traits::Float,
 {
@@ -116,7 +115,7 @@ where
     }
 }
 
-impl<'a, T> Into<geo_types::Geometry<T>> for &'a Polygon
+impl<'a, T> Into<geo_types::Geometry<T>> for &'a Polygon<T>
 where
     T: num_traits::Float,
 {
@@ -125,7 +124,7 @@ where
     }
 }
 
-impl<'a, T> Into<geo_types::Geometry<T>> for &'a MultiPoint
+impl<'a, T> Into<geo_types::Geometry<T>> for &'a MultiPoint<T>
 where
     T: num_traits::Float,
 {
@@ -141,7 +140,7 @@ where
     }
 }
 
-impl<'a, T> Into<geo_types::Geometry<T>> for &'a MultiPolygon
+impl<'a, T> Into<geo_types::Geometry<T>> for &'a MultiPolygon<T>
 where
     T: num_traits::Float,
 {
@@ -157,7 +156,7 @@ where
 }
 
 pub fn try_into_geometry_collection<T>(
-    geometrycollection: &GeometryCollection,
+    geometrycollection: &GeometryCollection<T>,
 ) -> Result<geo_types::Geometry<T>, Error>
 where
     T: num_traits::Float,

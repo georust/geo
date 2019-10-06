@@ -12,22 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+extern crate num_traits;
+
 use std::fmt;
+use std::str::FromStr;
 use tokenizer::PeekableTokens;
 use types::coord::Coord;
 use FromTokens;
 use Geometry;
 
 #[derive(Default)]
-pub struct Point(pub Option<Coord>);
+pub struct Point<T: num_traits::Float>(pub Option<Coord<T>>);
 
-impl Point {
-    pub fn as_item(self) -> Geometry {
+impl<T> Point<T>
+where
+    T: num_traits::Float
+{
+    pub fn as_item(self) -> Geometry<T> {
         Geometry::Point(self)
     }
 }
 
-impl fmt::Display for Point {
+impl<T> fmt::Display for Point<T>
+where
+    T: num_traits::Float + fmt::Display
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self.0 {
             Some(ref coord) => {
@@ -49,9 +58,12 @@ impl fmt::Display for Point {
     }
 }
 
-impl FromTokens for Point {
-    fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result = <Coord as FromTokens>::from_tokens(tokens);
+impl<T> FromTokens<T> for Point<T>
+where
+    T: num_traits::Float + FromStr + Default
+{
+    fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
+        let result = <Coord<T> as FromTokens<T>>::from_tokens(tokens);
         result.map(|coord| Point(Some(coord)))
     }
 }
@@ -77,7 +89,7 @@ mod tests {
 
     #[test]
     fn basic_point_whitespace() {
-        let mut wkt = Wkt::from_str(" \n\t\rPOINT \n\t\r( \n\r\t10 \n\t\r-20 \n\t\r) \n\t\r")
+        let mut wkt: Wkt<f64> = Wkt::from_str(" \n\t\rPOINT \n\t\r( \n\r\t10 \n\t\r-20 \n\t\r) \n\t\r")
             .ok()
             .unwrap();
         assert_eq!(1, wkt.items.len());
@@ -93,15 +105,15 @@ mod tests {
 
     #[test]
     fn invalid_points() {
-        Wkt::from_str("POINT ()").err().unwrap();
-        Wkt::from_str("POINT (10)").err().unwrap();
-        Wkt::from_str("POINT 10").err().unwrap();
-        Wkt::from_str("POINT (10 -20 40)").err().unwrap();
+        <Wkt<f64>>::from_str("POINT ()").err().unwrap();
+        <Wkt<f64>>::from_str("POINT (10)").err().unwrap();
+        <Wkt<f64>>::from_str("POINT 10").err().unwrap();
+        <Wkt<f64>>::from_str("POINT (10 -20 40)").err().unwrap();
     }
 
     #[test]
     fn write_empty_point() {
-        let point = Point(None);
+        let point: Point<f64> = Point(None);
 
         assert_eq!("POINT EMPTY", format!("{}", point));
     }

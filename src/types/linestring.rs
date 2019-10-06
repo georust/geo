@@ -12,29 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+extern crate num_traits;
+
 use std::fmt;
+use std::str::FromStr;
 use tokenizer::PeekableTokens;
 use types::coord::Coord;
 use FromTokens;
 use Geometry;
 
 #[derive(Default)]
-pub struct LineString(pub Vec<Coord>);
+pub struct LineString<T: num_traits::Float>(pub Vec<Coord<T>>);
 
-impl LineString {
-    pub fn as_item(self) -> Geometry {
+impl<T> LineString<T>
+where
+    T: num_traits::Float
+{
+    pub fn as_item(self) -> Geometry<T> {
         Geometry::LineString(self)
     }
 }
 
-impl FromTokens for LineString {
-    fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result = FromTokens::comma_many(<Coord as FromTokens>::from_tokens, tokens);
+impl<T> FromTokens<T> for LineString<T>
+where
+    T: num_traits::Float + FromStr + Default
+{
+    fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
+        let result = FromTokens::comma_many(<Coord<T> as FromTokens<T>>::from_tokens, tokens);
         result.map(LineString)
     }
 }
 
-impl fmt::Display for LineString {
+impl<T> fmt::Display for LineString<T>
+where
+    T: num_traits::Float + fmt::Display
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.0.is_empty() {
             f.write_str("LINESTRING EMPTY")
@@ -79,7 +91,7 @@ mod tests {
 
     #[test]
     fn write_empty_linestring() {
-        let linestring = LineString(vec![]);
+        let linestring: LineString<f64> = LineString(vec![]);
 
         assert_eq!("LINESTRING EMPTY", format!("{}", linestring));
     }
