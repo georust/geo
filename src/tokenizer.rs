@@ -21,7 +21,7 @@ use std::str;
 #[derive(PartialEq, Debug)]
 pub enum Token<T>
 where
-    T: num_traits::Float
+    T: num_traits::Float,
 {
     Comma,
     Number(T),
@@ -54,19 +54,19 @@ pub struct Tokens<'a, T> {
 
 impl<'a, T> Tokens<'a, T>
 where
-    T: num_traits::Float
+    T: num_traits::Float,
 {
     pub fn from_str(input: &'a str) -> Self {
         Tokens {
             chars: input.chars().peekable(),
-            phantom: PhantomData, 
+            phantom: PhantomData,
         }
     }
 }
 
 impl<'a, T> Iterator for Tokens<'a, T>
 where
-    T: num_traits::Float + str::FromStr + Default
+    T: num_traits::Float + str::FromStr + Default,
 {
     type Item = Token<T>;
 
@@ -88,7 +88,7 @@ where
                 let mut number = c.to_string() + &self.read_until_whitespace().unwrap_or_default();
                 match number.trim_left_matches('+').parse::<T>() {
                     Ok(parsed_num) => Some(Token::Number(parsed_num)),
-                    Err(_) => None
+                    Err(_) => None,
                 }
             }
             c => {
@@ -101,7 +101,7 @@ where
 
 impl<'a, T> Tokens<'a, T>
 where
-    T: num_traits::Float + str::FromStr + Default
+    T: num_traits::Float + str::FromStr + Default,
 {
     fn read_until_whitespace(&mut self) -> Option<String> {
         let mut result = String::new();
@@ -197,7 +197,7 @@ fn test_tokenizer_2numbers() {
 fn test_no_stack_overflow() {
     fn check(c: &str, count: usize, expected: usize) {
         let test_str = c.repeat(count);
-        let tokens : Vec<Token<f64>>= Tokens::from_str(&test_str).collect();
+        let tokens: Vec<Token<f64>> = Tokens::from_str(&test_str).collect();
         assert_eq!(expected, tokens.len());
     }
 

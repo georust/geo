@@ -26,7 +26,7 @@ pub struct MultiPoint<T: num_traits::Float>(pub Vec<Point<T>>);
 
 impl<T> MultiPoint<T>
 where
-    T: num_traits::Float
+    T: num_traits::Float,
 {
     pub fn as_item(self) -> Geometry<T> {
         Geometry::MultiPoint(self)
@@ -35,7 +35,7 @@ where
 
 impl<T> fmt::Display for MultiPoint<T>
 where
-    T: num_traits::Float + fmt::Display
+    T: num_traits::Float + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.0.is_empty() {
@@ -56,10 +56,11 @@ where
 
 impl<T> FromTokens<T> for MultiPoint<T>
 where
-    T: num_traits::Float + FromStr + Default
+    T: num_traits::Float + FromStr + Default,
 {
     fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
-        let result = FromTokens::comma_many(<Point<T> as FromTokens<T>>::from_tokens_with_parens, tokens);
+        let result =
+            FromTokens::comma_many(<Point<T> as FromTokens<T>>::from_tokens_with_parens, tokens);
         result.map(MultiPoint)
     }
 }

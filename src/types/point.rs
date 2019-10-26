@@ -26,7 +26,7 @@ pub struct Point<T: num_traits::Float>(pub Option<Coord<T>>);
 
 impl<T> Point<T>
 where
-    T: num_traits::Float
+    T: num_traits::Float,
 {
     pub fn as_item(self) -> Geometry<T> {
         Geometry::Point(self)
@@ -35,7 +35,7 @@ where
 
 impl<T> fmt::Display for Point<T>
 where
-    T: num_traits::Float + fmt::Display
+    T: num_traits::Float + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self.0 {
@@ -60,7 +60,7 @@ where
 
 impl<T> FromTokens<T> for Point<T>
 where
-    T: num_traits::Float + FromStr + Default
+    T: num_traits::Float + FromStr + Default,
 {
     fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
         let result = <Coord<T> as FromTokens<T>>::from_tokens(tokens);
@@ -89,9 +89,10 @@ mod tests {
 
     #[test]
     fn basic_point_whitespace() {
-        let mut wkt: Wkt<f64> = Wkt::from_str(" \n\t\rPOINT \n\t\r( \n\r\t10 \n\t\r-20 \n\t\r) \n\t\r")
-            .ok()
-            .unwrap();
+        let mut wkt: Wkt<f64> =
+            Wkt::from_str(" \n\t\rPOINT \n\t\r( \n\r\t10 \n\t\r-20 \n\t\r) \n\t\r")
+                .ok()
+                .unwrap();
         assert_eq!(1, wkt.items.len());
         let coord = match wkt.items.pop().unwrap() {
             Geometry::Point(Point(Some(coord))) => coord,

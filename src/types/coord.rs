@@ -22,7 +22,7 @@ use FromTokens;
 #[derive(Default)]
 pub struct Coord<T>
 where
-    T: num_traits::Float
+    T: num_traits::Float,
 {
     pub x: T,
     pub y: T,
@@ -32,7 +32,7 @@ where
 
 impl<T> fmt::Display for Coord<T>
 where
-    T: num_traits::Float + fmt::Display
+    T: num_traits::Float + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "{} {}", self.x, self.y)?;
@@ -48,7 +48,7 @@ where
 
 impl<T> FromTokens<T> for Coord<T>
 where
-    T: num_traits::Float + FromStr + Default
+    T: num_traits::Float + FromStr + Default,
 {
     fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
         let x = match tokens.next() {

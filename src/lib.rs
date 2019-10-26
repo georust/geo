@@ -42,7 +42,7 @@ pub mod conversion;
 
 pub enum Geometry<T>
 where
-    T: num_traits::Float
+    T: num_traits::Float,
 {
     Point(Point<T>),
     LineString(LineString<T>),
@@ -55,9 +55,12 @@ where
 
 impl<T> Geometry<T>
 where
-    T: num_traits::Float + FromStr + Default
+    T: num_traits::Float + FromStr + Default,
 {
-    fn from_word_and_tokens(word: &str, tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
+    fn from_word_and_tokens(
+        word: &str,
+        tokens: &mut PeekableTokens<T>,
+    ) -> Result<Self, &'static str> {
         match word {
             w if w.eq_ignore_ascii_case("POINT") => {
                 let x = <Point<T> as FromTokens<T>>::from_tokens_with_parens(tokens);
@@ -94,7 +97,7 @@ where
 
 impl<T> fmt::Display for Geometry<T>
 where
-    T: num_traits::Float + fmt::Display
+    T: num_traits::Float + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
@@ -111,14 +114,14 @@ where
 
 pub struct Wkt<T>
 where
-    T: num_traits::Float
+    T: num_traits::Float,
 {
     pub items: Vec<Geometry<T>>,
 }
 
 impl<T> Wkt<T>
 where
-    T: num_traits::Float + FromStr + Default
+    T: num_traits::Float + FromStr + Default,
 {
     pub fn new() -> Self {
         Wkt { items: vec![] }
@@ -156,7 +159,7 @@ where
 
 trait FromTokens<T>: Sized + Default
 where
-    T: num_traits::Float + FromStr + Default
+    T: num_traits::Float + FromStr + Default,
 {
     fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str>;
 

@@ -26,7 +26,7 @@ pub struct Polygon<T: num_traits::Float>(pub Vec<LineString<T>>);
 
 impl<T> Polygon<T>
 where
-    T: num_traits::Float
+    T: num_traits::Float,
 {
     pub fn as_item(self) -> Geometry<T> {
         Geometry::Polygon(self)
@@ -35,7 +35,7 @@ where
 
 impl<T> fmt::Display for Polygon<T>
 where
-    T: num_traits::Float + fmt::Display
+    T: num_traits::Float + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.0.is_empty() {
@@ -49,7 +49,8 @@ where
                         .map(|c| format!("{} {}", c.x, c.y))
                         .collect::<Vec<_>>()
                         .join(",")
-                }).collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>()
                 .join("),(");
 
             write!(f, "POLYGON(({}))", strings)
@@ -59,11 +60,13 @@ where
 
 impl<T> FromTokens<T> for Polygon<T>
 where
-    T: num_traits::Float + FromStr + Default
+    T: num_traits::Float + FromStr + Default,
 {
     fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
-        let result =
-            FromTokens::comma_many(<LineString<T> as FromTokens<T>>::from_tokens_with_parens, tokens);
+        let result = FromTokens::comma_many(
+            <LineString<T> as FromTokens<T>>::from_tokens_with_parens,
+            tokens,
+        );
         result.map(Polygon)
     }
 }
@@ -76,9 +79,10 @@ mod tests {
 
     #[test]
     fn basic_polygon() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("POLYGON ((8 4, 4 0, 0 4, 8 4), (7 3, 4 1, 1 4, 7 3))")
-            .ok()
-            .unwrap();
+        let mut wkt: Wkt<f64> =
+            Wkt::from_str("POLYGON ((8 4, 4 0, 0 4, 8 4), (7 3, 4 1, 1 4, 7 3))")
+                .ok()
+                .unwrap();
         assert_eq!(1, wkt.items.len());
         let lines = match wkt.items.pop().unwrap() {
             Geometry::Polygon(Polygon(lines)) => lines,

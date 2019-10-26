@@ -25,7 +25,7 @@ pub struct GeometryCollection<T: num_traits::Float>(pub Vec<Geometry<T>>);
 
 impl<T> GeometryCollection<T>
 where
-    T: num_traits::Float
+    T: num_traits::Float,
 {
     pub fn as_item(self) -> Geometry<T> {
         Geometry::GeometryCollection(self)
@@ -34,7 +34,7 @@ where
 
 impl<T> fmt::Display for GeometryCollection<T>
 where
-    T: num_traits::Float + fmt::Display
+    T: num_traits::Float + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.0.is_empty() {
@@ -54,7 +54,7 @@ where
 
 impl<T> FromTokens<T> for GeometryCollection<T>
 where
-    T: num_traits::Float + FromStr + Default
+    T: num_traits::Float + FromStr + Default,
 {
     fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
         let mut items = Vec::new();
@@ -104,9 +104,10 @@ mod tests {
 
     #[test]
     fn complex_geometrycollection() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4),LINESTRING(4 6,7 10)))")
-            .ok()
-            .unwrap();
+        let mut wkt: Wkt<f64> =
+            Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4),LINESTRING(4 6,7 10)))")
+                .ok()
+                .unwrap();
         assert_eq!(1, wkt.items.len());
         let items = match wkt.items.pop().unwrap() {
             Geometry::GeometryCollection(GeometryCollection(items)) => items,

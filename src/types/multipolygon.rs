@@ -26,7 +26,7 @@ pub struct MultiPolygon<T: num_traits::Float>(pub Vec<Polygon<T>>);
 
 impl<T> MultiPolygon<T>
 where
-    T: num_traits::Float
+    T: num_traits::Float,
 {
     pub fn as_item(self) -> Geometry<T> {
         Geometry::MultiPolygon(self)
@@ -35,7 +35,7 @@ where
 
 impl<T> fmt::Display for MultiPolygon<T>
 where
-    T: num_traits::Float + fmt::Display
+    T: num_traits::Float + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.0.is_empty() {
@@ -51,9 +51,11 @@ where
                                 .map(|c| format!("{} {}", c.x, c.y))
                                 .collect::<Vec<String>>()
                                 .join(",")
-                        }).collect::<Vec<String>>()
+                        })
+                        .collect::<Vec<String>>()
                         .join("),(")
-                }).collect::<Vec<String>>()
+                })
+                .collect::<Vec<String>>()
                 .join(")),((");
 
             write!(f, "MULTIPOLYGON((({})))", strings)
@@ -63,11 +65,13 @@ where
 
 impl<T> FromTokens<T> for MultiPolygon<T>
 where
-    T: num_traits::Float + FromStr + Default
+    T: num_traits::Float + FromStr + Default,
 {
     fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
-        let result =
-            FromTokens::comma_many(<Polygon<T> as FromTokens<T>>::from_tokens_with_parens, tokens);
+        let result = FromTokens::comma_many(
+            <Polygon<T> as FromTokens<T>>::from_tokens_with_parens,
+            tokens,
+        );
         result.map(MultiPolygon)
     }
 }
