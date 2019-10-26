@@ -3,8 +3,6 @@ extern crate num_traits;
 #[cfg(feature = "use-serde")]
 #[macro_use]
 extern crate serde;
-#[cfg_attr(all(test, feature = "use-proj"), macro_use)]
-extern crate failure;
 #[cfg(feature = "postgis-integration")]
 extern crate postgis;
 #[cfg(feature = "use-proj")]
