@@ -11,6 +11,7 @@ keywords = ["geo", "geospatial", "wkt"]
 
 [dependencies]
 geo-types = {version = "0.4", optional = true}
+num-traits = "0.2"
 
 [dev-dependencies]
 criterion = { version = "0.2" }

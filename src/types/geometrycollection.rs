@@ -12,21 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+extern crate num_traits;
+
 use std::fmt;
+use std::str::FromStr;
 use tokenizer::{PeekableTokens, Token};
 use FromTokens;
 use Geometry;
 
 #[derive(Default)]
-pub struct GeometryCollection(pub Vec<Geometry>);
+pub struct GeometryCollection<T: num_traits::Float>(pub Vec<Geometry<T>>);
 
-impl GeometryCollection {
-    pub fn as_item(self) -> Geometry {
+impl<T> GeometryCollection<T>
+where
+    T: num_traits::Float
+{
+    pub fn as_item(self) -> Geometry<T> {
         Geometry::GeometryCollection(self)
     }
 }
 
-impl fmt::Display for GeometryCollection {
+impl<T> fmt::Display for GeometryCollection<T>
+where
+    T: num_traits::Float + fmt::Display
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.0.is_empty() {
             f.write_str("GEOMETRYCOLLECTION EMPTY")
@@ -43,8 +52,11 @@ impl fmt::Display for GeometryCollection {
     }
 }
 
-impl FromTokens for GeometryCollection {
-    fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
+impl<T> FromTokens<T> for GeometryCollection<T>
+where
+    T: num_traits::Float + FromStr + Default
+{
+    fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
         let mut items = Vec::new();
 
         let word = match tokens.next() {
@@ -79,7 +91,7 @@ mod tests {
 
     #[test]
     fn basic_geometrycollection() {
-        let mut wkt = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4)))")
+        let mut wkt: Wkt<f64> = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4)))")
             .ok()
             .unwrap();
         assert_eq!(1, wkt.items.len());
@@ -92,7 +104,7 @@ mod tests {
 
     #[test]
     fn complex_geometrycollection() {
-        let mut wkt = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4),LINESTRING(4 6,7 10)))")
+        let mut wkt: Wkt<f64> = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4),LINESTRING(4 6,7 10)))")
             .ok()
             .unwrap();
         assert_eq!(1, wkt.items.len());
@@ -105,7 +117,7 @@ mod tests {
 
     #[test]
     fn write_empty_geometry_collection() {
-        let geometry_collection = GeometryCollection(vec![]);
+        let geometry_collection: GeometryCollection<f64> = GeometryCollection(vec![]);
 
         assert_eq!(
             "GEOMETRYCOLLECTION EMPTY",

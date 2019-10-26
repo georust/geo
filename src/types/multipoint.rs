@@ -12,22 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+extern crate num_traits;
+
 use std::fmt;
+use std::str::FromStr;
 use tokenizer::PeekableTokens;
 use types::point::Point;
 use FromTokens;
 use Geometry;
 
 #[derive(Default)]
-pub struct MultiPoint(pub Vec<Point>);
+pub struct MultiPoint<T: num_traits::Float>(pub Vec<Point<T>>);
 
-impl MultiPoint {
-    pub fn as_item(self) -> Geometry {
+impl<T> MultiPoint<T>
+where
+    T: num_traits::Float
+{
+    pub fn as_item(self) -> Geometry<T> {
         Geometry::MultiPoint(self)
     }
 }
 
-impl fmt::Display for MultiPoint {
+impl<T> fmt::Display for MultiPoint<T>
+where
+    T: num_traits::Float + fmt::Display
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.0.is_empty() {
             f.write_str("MULTIPOINT EMPTY")
@@ -45,9 +54,12 @@ impl fmt::Display for MultiPoint {
     }
 }
 
-impl FromTokens for MultiPoint {
-    fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
-        let result = FromTokens::comma_many(<Point as FromTokens>::from_tokens_with_parens, tokens);
+impl<T> FromTokens<T> for MultiPoint<T>
+where
+    T: num_traits::Float + FromStr + Default
+{
+    fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
+        let result = FromTokens::comma_many(<Point<T> as FromTokens<T>>::from_tokens_with_parens, tokens);
         result.map(MultiPoint)
     }
 }
@@ -60,7 +72,7 @@ mod tests {
 
     #[test]
     fn basic_multipoint() {
-        let mut wkt = Wkt::from_str("MULTIPOINT ((8 4), (4 0))").ok().unwrap();
+        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT ((8 4), (4 0))").ok().unwrap();
         assert_eq!(1, wkt.items.len());
         let points = match wkt.items.pop().unwrap() {
             Geometry::MultiPoint(MultiPoint(points)) => points,
@@ -71,7 +83,7 @@ mod tests {
 
     #[test]
     fn write_empty_multipoint() {
-        let multipoint = MultiPoint(vec![]);
+        let multipoint: MultiPoint<f64> = MultiPoint(vec![]);
 
         assert_eq!("MULTIPOINT EMPTY", format!("{}", multipoint));
     }

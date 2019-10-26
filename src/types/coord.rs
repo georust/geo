@@ -12,19 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+extern crate num_traits;
+
 use std::fmt;
+use std::str::FromStr;
 use tokenizer::{PeekableTokens, Token};
 use FromTokens;
 
 #[derive(Default)]
-pub struct Coord {
-    pub x: f64,
-    pub y: f64,
-    pub z: Option<f64>,
-    pub m: Option<f64>,
+pub struct Coord<T>
+where
+    T: num_traits::Float
+{
+    pub x: T,
+    pub y: T,
+    pub z: Option<T>,
+    pub m: Option<T>,
 }
 
-impl fmt::Display for Coord {
+impl<T> fmt::Display for Coord<T>
+where
+    T: num_traits::Float + fmt::Display
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "{} {}", self.x, self.y)?;
         if let Some(z) = self.z {
@@ -37,8 +46,11 @@ impl fmt::Display for Coord {
     }
 }
 
-impl FromTokens for Coord {
-    fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
+impl<T> FromTokens<T> for Coord<T>
+where
+    T: num_traits::Float + FromStr + Default
+{
+    fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
         let x = match tokens.next() {
             Some(Token::Number(n)) => n,
             _ => return Err("Expected a number for the X coordinate"),

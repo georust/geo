@@ -12,22 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+extern crate num_traits;
+
 use std::fmt;
+use std::str::FromStr;
 use tokenizer::PeekableTokens;
 use types::polygon::Polygon;
 use FromTokens;
 use Geometry;
 
 #[derive(Default)]
-pub struct MultiPolygon(pub Vec<Polygon>);
+pub struct MultiPolygon<T: num_traits::Float>(pub Vec<Polygon<T>>);
 
-impl MultiPolygon {
-    pub fn as_item(self) -> Geometry {
+impl<T> MultiPolygon<T>
+where
+    T: num_traits::Float
+{
+    pub fn as_item(self) -> Geometry<T> {
         Geometry::MultiPolygon(self)
     }
 }
 
-impl fmt::Display for MultiPolygon {
+impl<T> fmt::Display for MultiPolygon<T>
+where
+    T: num_traits::Float + fmt::Display
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.0.is_empty() {
             f.write_str("MULTIPOLYGON EMPTY")
@@ -52,10 +61,13 @@ impl fmt::Display for MultiPolygon {
     }
 }
 
-impl FromTokens for MultiPolygon {
-    fn from_tokens(tokens: &mut PeekableTokens) -> Result<Self, &'static str> {
+impl<T> FromTokens<T> for MultiPolygon<T>
+where
+    T: num_traits::Float + FromStr + Default
+{
+    fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
         let result =
-            FromTokens::comma_many(<Polygon as FromTokens>::from_tokens_with_parens, tokens);
+            FromTokens::comma_many(<Polygon<T> as FromTokens<T>>::from_tokens_with_parens, tokens);
         result.map(MultiPolygon)
     }
 }
@@ -68,7 +80,7 @@ mod tests {
 
     #[test]
     fn basic_multipolygon() {
-        let mut wkt = Wkt::from_str("MULTIPOLYGON (((8 4)), ((4 0)))")
+        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOLYGON (((8 4)), ((4 0)))")
             .ok()
             .unwrap();
         assert_eq!(1, wkt.items.len());
@@ -81,7 +93,7 @@ mod tests {
 
     #[test]
     fn write_empty_multipolygon() {
-        let multipolygon = MultiPolygon(vec![]);
+        let multipolygon: MultiPolygon<f64> = MultiPolygon(vec![]);
 
         assert_eq!("MULTIPOLYGON EMPTY", format!("{}", multipolygon));
     }
