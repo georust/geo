@@ -140,7 +140,7 @@ where
         let mut wkt = Wkt::new();
         let mut tokens = tokens.peekable();
         let word = match tokens.next() {
-            Some(Token::Word(mut word)) => {
+            Some(Token::Word(word)) => {
                 if !word.is_ascii() {
                     return Err("Encountered non-ascii word");
                 }
@@ -185,13 +185,13 @@ where
     {
         let mut items = Vec::new();
 
-        let item = try!(f(tokens));
+        let item = f(tokens)?;
         items.push(item);
 
         while let Some(&Token::Comma) = tokens.peek() {
             tokens.next(); // throw away comma
 
-            let item = try!(f(tokens));
+            let item = f(tokens)?;
             items.push(item);
         }
 

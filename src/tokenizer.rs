@@ -85,8 +85,8 @@ where
             ')' => Some(Token::ParenClose),
             ',' => Some(Token::Comma),
             c if is_numberlike(c) => {
-                let mut number = c.to_string() + &self.read_until_whitespace().unwrap_or_default();
-                match number.trim_left_matches('+').parse::<T>() {
+                let number = c.to_string() + &self.read_until_whitespace().unwrap_or_default();
+                match number.trim_start_matches('+').parse::<T>() {
                     Ok(parsed_num) => Some(Token::Number(parsed_num)),
                     Err(_) => None,
                 }
