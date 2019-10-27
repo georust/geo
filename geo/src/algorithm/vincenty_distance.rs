@@ -196,5 +196,4 @@ mod test {
             epsilon = 1.0e-6
         );
     }
-
 }

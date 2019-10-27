@@ -1015,5 +1015,4 @@ mod test {
         let point = Point::new(1.0, 0.5);
         assert_eq!(triangle.euclidean_distance(&point), 0.0);
     }
-
 }
