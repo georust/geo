@@ -1,4 +1,5 @@
 use crate::{CoordinateType, Point};
+use std::hash::{Hash, Hasher};
 
 /// A lightweight struct used to store coordinates on the 2-dimensional
 /// Cartesian plane.
@@ -41,6 +42,13 @@ impl<T: CoordinateType> From<Point<T>> for Coordinate<T> {
             x: point.x(),
             y: point.y(),
         }
+    }
+}
+
+impl<T: CoordinateType + Hash> Hash for Coordinate<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.x.hash(state);
+        self.y.hash(state);
     }
 }
 

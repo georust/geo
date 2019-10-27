@@ -1,5 +1,6 @@
 use crate::{CoordinateType, Polygon};
 use std::iter::FromIterator;
+use std::hash::{Hash, Hasher};
 
 /// A collection of [`Polygon`s](struct.Polygon.html).
 ///
@@ -36,5 +37,11 @@ impl<T: CoordinateType> IntoIterator for MultiPolygon<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+impl<T: CoordinateType + Hash> Hash for MultiPolygon<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
     }
 }

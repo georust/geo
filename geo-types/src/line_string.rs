@@ -1,6 +1,7 @@
 use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
+use std::hash::{Hash, Hasher};
 
 /// An ordered collection of two or more [`Coordinate`s](struct.Coordinate.html), representing a
 /// path between locations.
@@ -201,6 +202,12 @@ impl<T: CoordinateType> Index<usize> for LineString<T> {
 impl<T: CoordinateType> IndexMut<usize> for LineString<T> {
     fn index_mut(&mut self, index: usize) -> &mut Coordinate<T> {
         self.0.index_mut(index)
+    }
+}
+
+impl<T: CoordinateType + Hash> Hash for LineString<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
     }
 }
 

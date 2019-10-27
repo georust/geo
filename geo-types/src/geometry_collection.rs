@@ -1,5 +1,6 @@
 use crate::{CoordinateType, Geometry};
 use std::iter::FromIterator;
+use std::hash::{Hash, Hasher};
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
 ///
@@ -49,5 +50,11 @@ impl<T: CoordinateType> IntoIterator for GeometryCollection<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+impl<T: CoordinateType + Hash> Hash for GeometryCollection<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
     }
 }

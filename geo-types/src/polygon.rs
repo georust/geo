@@ -1,5 +1,6 @@
 use crate::{CoordinateType, LineString, Point, Rect};
 use num_traits::{Float, Signed};
+use std::hash::{Hash, Hasher};
 
 /// A bounded two-dimensional area.
 ///
@@ -466,5 +467,12 @@ impl<T: CoordinateType> From<Rect<T>> for Polygon<T> {
             .into(),
             Vec::new(),
         )
+    }
+}
+
+impl<T: CoordinateType + Hash> Hash for Polygon<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.exterior.hash(state);
+        self.interiors.hash(state);
     }
 }
