@@ -26,7 +26,8 @@ impl<T: CoordinateType> Rect<T> {
     /// ```
     /// use geo_types::{Coordinate, Rect};
     ///
-    /// let rect = Rect::new( ///     Coordinate { x: 0., y: 0. },
+    /// let rect = Rect::new(
+    ///     Coordinate { x: 0., y: 0. },
     ///     Coordinate { x: 10., y: 20. },
     /// );
     ///
