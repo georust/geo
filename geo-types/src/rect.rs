@@ -1,4 +1,5 @@
 use crate::{Coordinate, CoordinateType};
+use std::hash::{Hash, Hasher};
 
 /// A bounded 2D quadrilateral whose area is defined by minimum and maximum `Coordinates`.
 #[derive(PartialEq, Clone, Copy, Debug)]
@@ -81,6 +82,13 @@ impl<T: CoordinateType> Rect<T> {
             min.x <= max.x && min.y <= max.y,
             "Failed to create the Rect type: 'min' coordinate's x/y value must be smaller or equal to the 'max' x/y value"
         );
+    }
+}
+
+impl<T: CoordinateType + Hash> Hash for Rect<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.min.hash(state);
+        self.max.hash(state);
     }
 }
 

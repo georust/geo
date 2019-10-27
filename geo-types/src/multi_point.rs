@@ -1,4 +1,5 @@
 use crate::{CoordinateType, Point};
+use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 
 /// A collection of [`Point`s](struct.Point.html).
@@ -50,5 +51,11 @@ impl<T: CoordinateType> IntoIterator for MultiPoint<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+impl<T: CoordinateType + Hash> Hash for MultiPoint<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
     }
 }

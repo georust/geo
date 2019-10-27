@@ -1,4 +1,5 @@
 use crate::{CoordinateType, LineString};
+use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 
 /// A collection of [`LineString`s](line_string/struct.LineString.html).
@@ -30,5 +31,11 @@ impl<T: CoordinateType> IntoIterator for MultiLineString<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+impl<T: CoordinateType + Hash> Hash for MultiLineString<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
     }
 }
