@@ -1,6 +1,6 @@
 use crate::{CoordinateType, LineString};
-use std::iter::FromIterator;
 use std::hash::{Hash, Hasher};
+use std::iter::FromIterator;
 
 /// A collection of [`LineString`s](line_string/struct.LineString.html).
 ///

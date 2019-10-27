@@ -1,9 +1,9 @@
 use crate::{Coordinate, CoordinateType};
 use num_traits::Float;
+use std::hash::{Hash, Hasher};
 use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
-use std::hash::{Hash, Hasher};
 
 /// A single point in 2D space.
 ///

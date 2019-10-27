@@ -1,6 +1,6 @@
 use crate::{CoordinateType, Geometry};
-use std::iter::FromIterator;
 use std::hash::{Hash, Hasher};
+use std::iter::FromIterator;
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
 ///

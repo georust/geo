@@ -1,7 +1,7 @@
 use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
+use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
-use std::hash::{Hash, Hasher};
 
 /// An ordered collection of two or more [`Coordinate`s](struct.Coordinate.html), representing a
 /// path between locations.

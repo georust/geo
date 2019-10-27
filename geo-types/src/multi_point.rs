@@ -1,6 +1,6 @@
 use crate::{CoordinateType, Point};
-use std::iter::FromIterator;
 use std::hash::{Hash, Hasher};
+use std::iter::FromIterator;
 
 /// A collection of [`Point`s](struct.Point.html).
 ///

@@ -1,6 +1,6 @@
 use crate::{CoordinateType, Polygon};
-use std::iter::FromIterator;
 use std::hash::{Hash, Hasher};
+use std::iter::FromIterator;
 
 /// A collection of [`Polygon`s](struct.Polygon.html).
 ///
