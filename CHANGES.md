@@ -1,5 +1,33 @@
 # Changes
 
+## geo (unreleased)
+
+* Add `BoundingRect` implementation for `Rect`
+  * <https://github.com/georust/geo/pull/355>
+* Add Chamberlain–Duquette area algorithm
+  * <https://github.com/georust/geo/pull/369>
+* Make Euclidean Line-Line distance symmetrical
+  * <https://github.com/georust/geo/pull/371>
+* Bump rstar to 0.4
+  * <https://github.com/georust/geo/pull/373>
+* Mark `ToGeo` as deprecated
+  * <https://github.com/georust/geo/pull/375>
+* Remove usages of 'failure' crate
+  * <https://github.com/georust/geo/pull/388>
+
+## geo-types (unreleased)
+
+* Make geo-types Rect fields private to force users to use constructor (breaking change)
+  * <https://github.com/georust/geo/pull/374>
+* Bump rstar to 0.4
+  * <https://github.com/georust/geo/pull/373>
+* Fix link to `LineString` in docs
+  * <https://github.com/georust/geo/pull/381>
+* Fix typo in Rect docs about min/max positions.
+  * <https://github.com/georust/geo/pull/385>
+* Implement `Hash` for all types in `geo-types`
+  * <https://github.com/georust/geo/pull/389>
+
 ## geo 0.12.2
 
 * Introduce `point!`, `line_string!`, and `polygon!` macros.
