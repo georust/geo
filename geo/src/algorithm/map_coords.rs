@@ -1,6 +1,6 @@
 use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use std::error::Error;
 
@@ -342,6 +342,8 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Geometry<T> {
             Geometry::MultiLineString(ref x) => Geometry::MultiLineString(x.map_coords(func)),
             Geometry::MultiPolygon(ref x) => Geometry::MultiPolygon(x.map_coords(func)),
             Geometry::GeometryCollection(ref x) => Geometry::GeometryCollection(x.map_coords(func)),
+            Geometry::Rect(ref x) => Geometry::Rect(x.map_coords(func)),
+            Geometry::Triangle(ref x) => Geometry::Triangle(x.map_coords(func)),
         }
     }
 }
@@ -366,6 +368,8 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Geometry<T> 
             Geometry::GeometryCollection(ref x) => {
                 Ok(Geometry::GeometryCollection(x.try_map_coords(func)?))
             }
+            Geometry::Rect(ref x) => Ok(Geometry::Rect(x.try_map_coords(func)?)),
+            Geometry::Triangle(ref x) => Ok(Geometry::Triangle(x.try_map_coords(func)?)),
         }
     }
 }
@@ -381,6 +385,8 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Geometry<T> {
             Geometry::MultiLineString(ref mut x) => x.map_coords_inplace(func),
             Geometry::MultiPolygon(ref mut x) => x.map_coords_inplace(func),
             Geometry::GeometryCollection(ref mut x) => x.map_coords_inplace(func),
+            Geometry::Rect(ref mut x) => x.map_coords_inplace(func),
+            Geometry::Triangle(ref mut x) => x.map_coords_inplace(func),
         }
     }
 }
@@ -468,6 +474,47 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Rect<T> {
         let mut new_rect = Rect::new(new_min, new_max);
 
         ::std::mem::swap(self, &mut new_rect);
+    }
+}
+
+impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Triangle<T> {
+    type Output = Triangle<NT>;
+
+    fn map_coords(&self, func: &dyn Fn(&(T, T)) -> (NT, NT)) -> Self::Output {
+        let new_points = [
+            func(&(self.0.x, self.0.y)),
+            func(&(self.1.x, self.1.y)),
+            func(&(self.2.x, self.2.y)),
+        ];
+        Triangle::from(new_points)
+    }
+}
+
+impl<T: CoordinateType> MapCoordsInplace<T> for Triangle<T> {
+    fn map_coords_inplace(&mut self, func: &dyn Fn(&(T, T)) -> (T, T)) {
+        let new_points = [
+            func(&(self.0.x, self.0.y)),
+            func(&(self.1.x, self.1.y)),
+            func(&(self.2.x, self.2.y)),
+        ];
+        let mut new_tri = Triangle::from(new_points);
+        ::std::mem::swap(self, &mut new_tri);
+    }
+}
+
+impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Triangle<T> {
+    type Output = Triangle<NT>;
+
+    fn try_map_coords(
+        &self,
+        func: &dyn Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>>,
+    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
+        let new_points = [
+            func(&(self.0.x, self.0.y))?,
+            func(&(self.1.x, self.1.y))?,
+            func(&(self.2.x, self.2.y))?,
+        ];
+        Ok(Triangle::from(new_points))
     }
 }
 
@@ -736,5 +783,46 @@ mod test {
             ]
             .into()
         );
+    }
+
+    #[test]
+    fn triangle_map_coords() {
+        let t = Triangle::from([Point::new(2., 5.), Point::new(3., 6.), Point::new(4., 7.)]);
+        let expect_t = Triangle::from([
+            Point::new(12., 105.),
+            Point::new(13., 106.),
+            Point::new(14., 107.),
+        ]);
+        let new_t = t.map_coords(&|&(x, y)| (x + 10., y + 100.));
+        assert_eq!(new_t, expect_t);
+    }
+
+    #[test]
+    fn triangle_map_coords_inplace() {
+        let mut t = Triangle::from([Point::new(1., 7.), Point::new(2., 8.), Point::new(3., 9.)]);
+        let expect_t = Triangle::from([
+            Point::new(3., 10.),
+            Point::new(4., 11.),
+            Point::new(5., 12.),
+        ]);
+        t.map_coords_inplace(&|&(x, y)| (x + 2., y + 3.));
+        assert_eq!(t, expect_t);
+    }
+
+    #[test]
+    fn triangle_try_map_coords() {
+        let t = Triangle::from([
+            Point::new(2., 101.),
+            Point::new(4.2, 102.),
+            Point::new(6.0, 103.),
+        ]);
+        let expect_t = Triangle::from([
+            Point::new(12., 201.),
+            Point::new(14.2, 202.),
+            Point::new(16.0, 203.),
+        ]);
+        let result = t.try_map_coords(&|&(x, y)| Ok((x + 10., y + 100.)));
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), expect_t);
     }
 }

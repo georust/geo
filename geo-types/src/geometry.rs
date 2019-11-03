@@ -1,6 +1,6 @@
 use crate::{
     CoordinateType, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon,
+    MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use std::hash::{Hash, Hasher};
 
@@ -21,6 +21,8 @@ where
     MultiLineString(MultiLineString<T>),
     MultiPolygon(MultiPolygon<T>),
     GeometryCollection(GeometryCollection<T>),
+    Rect(Rect<T>),
+    Triangle(Triangle<T>),
 }
 
 impl<T: CoordinateType> From<Point<T>> for Geometry<T> {
@@ -144,6 +146,8 @@ impl<T: CoordinateType + Hash> Hash for Geometry<T> {
             Geometry::MultiLineString(n) => n.hash(state),
             Geometry::MultiPolygon(n) => n.hash(state),
             Geometry::GeometryCollection(n) => n.hash(state),
+            Geometry::Rect(n) => n.hash(state),
+            Geometry::Triangle(n) => n.hash(state),
         }
     }
 }
