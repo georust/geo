@@ -1,5 +1,4 @@
 use crate::{CoordinateType, Point};
-use std::hash::{Hash, Hasher};
 
 /// A lightweight struct used to store coordinates on the 2-dimensional
 /// Cartesian plane.
@@ -8,7 +7,7 @@ use std::hash::{Hash, Hasher};
 /// as an envelope, a precision model, and spatial reference system
 /// information), a `Coordinate` only contains ordinate values and accessor
 /// methods.
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coordinate<T>
 where
@@ -42,13 +41,6 @@ impl<T: CoordinateType> From<Point<T>> for Coordinate<T> {
             x: point.x(),
             y: point.y(),
         }
-    }
-}
-
-impl<T: CoordinateType + Hash> Hash for Coordinate<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.x.hash(state);
-        self.y.hash(state);
     }
 }
 

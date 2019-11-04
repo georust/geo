@@ -1,8 +1,7 @@
 use crate::{Coordinate, CoordinateType, Point};
-use std::hash::{Hash, Hasher};
 
 /// A line segment made up of exactly two [`Point`s](struct.Point.html).
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T>
 where
@@ -158,13 +157,6 @@ where
 impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {
     fn from(coord: [(T, T); 2]) -> Line<T> {
         Line::new(coord[0], coord[1])
-    }
-}
-
-impl<T: CoordinateType + Hash> Hash for Line<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.start.hash(state);
-        self.end.hash(state);
     }
 }
 

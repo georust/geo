@@ -1,5 +1,4 @@
 use crate::{CoordinateType, Geometry};
-use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
@@ -7,7 +6,7 @@ use std::iter::FromIterator;
 /// Can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
 ///
 /// Iterating over this objects, yields the component Geometries.
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Hash)]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
     T: CoordinateType;
@@ -50,11 +49,5 @@ impl<T: CoordinateType> IntoIterator for GeometryCollection<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
-    }
-}
-
-impl<T: CoordinateType + Hash> Hash for GeometryCollection<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
     }
 }

@@ -1,6 +1,5 @@
 use crate::{CoordinateType, LineString, Point, Rect};
 use num_traits::{Float, Signed};
-use std::hash::{Hash, Hasher};
 
 /// A bounded two-dimensional area.
 ///
@@ -32,7 +31,7 @@ use std::hash::{Hash, Hasher};
 /// the first `Coordinate`.
 ///
 /// [`LineString`]: line_string/struct.LineString.html
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Polygon<T>
 where
@@ -467,12 +466,5 @@ impl<T: CoordinateType> From<Rect<T>> for Polygon<T> {
             .into(),
             Vec::new(),
         )
-    }
-}
-
-impl<T: CoordinateType + Hash> Hash for Polygon<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.exterior.hash(state);
-        self.interiors.hash(state);
     }
 }
