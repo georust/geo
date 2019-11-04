@@ -2,13 +2,12 @@ use crate::{
     CoordinateType, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
-use std::hash::{Hash, Hasher};
 
 /// An enum representing any possible geometry type.
 ///
 /// All `Geo` types can be converted to a `Geometry` member using `.into()` (as part of the
 /// `std::convert::Into` pattern).
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Hash)]
 pub enum Geometry<T>
 where
     T: CoordinateType,
@@ -131,23 +130,6 @@ impl<T: CoordinateType> Geometry<T> {
             Some(x)
         } else {
             None
-        }
-    }
-}
-
-impl<T: CoordinateType + Hash> Hash for Geometry<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        match self {
-            Geometry::Point(n) => n.hash(state),
-            Geometry::Line(n) => n.hash(state),
-            Geometry::LineString(n) => n.hash(state),
-            Geometry::Polygon(n) => n.hash(state),
-            Geometry::MultiPoint(n) => n.hash(state),
-            Geometry::MultiLineString(n) => n.hash(state),
-            Geometry::MultiPolygon(n) => n.hash(state),
-            Geometry::GeometryCollection(n) => n.hash(state),
-            Geometry::Rect(n) => n.hash(state),
-            Geometry::Triangle(n) => n.hash(state),
         }
     }
 }

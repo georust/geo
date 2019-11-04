@@ -1,5 +1,4 @@
 use crate::{CoordinateType, LineString};
-use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 
 /// A collection of [`LineString`s](line_string/struct.LineString.html).
@@ -7,7 +6,7 @@ use std::iter::FromIterator;
 /// Can be created from a `Vec` of `LineString`s, or from an Iterator which yields `LineString`s.
 ///
 /// Iterating over this objects, yields the component `LineString`s.
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>)
 where
@@ -31,11 +30,5 @@ impl<T: CoordinateType> IntoIterator for MultiLineString<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
-    }
-}
-
-impl<T: CoordinateType + Hash> Hash for MultiLineString<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
     }
 }

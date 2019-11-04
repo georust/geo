@@ -1,6 +1,5 @@
 use crate::{Coordinate, CoordinateType};
 use num_traits::Float;
-use std::hash::{Hash, Hasher};
 use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
@@ -17,7 +16,7 @@ use std::ops::Sub;
 /// let c = Coordinate{ x: 10., y: 20.};
 /// let p2: Point<f64> = c.into();
 /// ```
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T>(pub Coordinate<T>)
 where
@@ -384,11 +383,5 @@ where
 impl<T: CoordinateType> From<[T; 2]> for Point<T> {
     fn from(coords: [T; 2]) -> Point<T> {
         Point::new(coords[0], coords[1])
-    }
-}
-
-impl<T: CoordinateType + Hash> Hash for Point<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
     }
 }
