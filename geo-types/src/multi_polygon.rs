@@ -1,5 +1,4 @@
 use crate::{CoordinateType, Polygon};
-use std::hash::{Hash, Hasher};
 use std::iter::FromIterator;
 
 /// A collection of [`Polygon`s](struct.Polygon.html).
@@ -7,7 +6,7 @@ use std::iter::FromIterator;
 /// Can be created from a `Vec` of `Polygon`s, or `collect`ed from an Iterator which yields `Polygon`s.
 ///
 /// Iterating over this object yields the component Polygons.
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>)
 where
@@ -37,11 +36,5 @@ impl<T: CoordinateType> IntoIterator for MultiPolygon<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
-    }
-}
-
-impl<T: CoordinateType + Hash> Hash for MultiPolygon<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
     }
 }
