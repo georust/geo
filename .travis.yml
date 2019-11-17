@@ -22,6 +22,7 @@ before_cache:
         cargo install cargo-tarpaulin -f;
     fi
 
+
 before_install:
   - if [ "${GEO_FEATURES}" == "--features use-proj" ]; then
         sudo apt-get update;
