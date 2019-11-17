@@ -62,6 +62,7 @@ pub mod private_utils;
 #[cfg(test)]
 mod test {
     use super::*;
+    use approx::assert_relative_eq;
 
     #[test]
     fn type_test() {
@@ -74,12 +75,12 @@ mod test {
 
         let Point(c2) = p;
         assert_eq!(c, c2);
-        assert_eq!(c.x, c2.x);
-        assert_eq!(c.y, c2.y);
+        assert_relative_eq!(c.x, c2.x);
+        assert_relative_eq!(c.y, c2.y);
 
         let p: Point<f32> = (0f32, 1f32).into();
-        assert_eq!(p.x(), 0.);
-        assert_eq!(p.y(), 1.);
+        assert_relative_eq!(p.x(), 0.);
+        assert_relative_eq!(p.y(), 1.);
     }
 
     #[test]
@@ -145,8 +146,8 @@ mod test {
         let l = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 5., y: 5. });
         assert_eq!(rl.envelope(), l.envelope());
         // difference in 15th decimal place
-        assert_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
-        assert_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
+        assert_relative_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
+        assert_relative_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
     }
 
     #[test]
