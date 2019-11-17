@@ -703,7 +703,7 @@ mod test {
     #[test]
     fn test_fallible() {
         let f = |x: f64, y: f64| {
-            if x != 2.0 {
+            if relative_ne!(x, 2.0) {
                 Ok((x * 2., y + 100.))
             } else {
                 Err("Ugh".into())
