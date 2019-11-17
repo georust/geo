@@ -60,9 +60,11 @@ mod macros;
 pub mod private_utils;
 
 #[cfg(test)]
+#[macro_use]
+extern crate approx;
+
 mod test {
     use super::*;
-    use approx::assert_relative_eq;
 
     #[test]
     fn type_test() {

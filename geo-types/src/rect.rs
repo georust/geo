@@ -88,7 +88,6 @@ impl<T: CoordinateType> Rect<T> {
 mod test {
     use super::*;
     use crate::Coordinate;
-    use approx::assert_relative_eq;
 
     #[test]
     fn rect() {

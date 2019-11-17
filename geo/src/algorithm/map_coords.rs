@@ -480,16 +480,16 @@ mod test {
     fn point() {
         let p = Point::new(10., 10.);
         let new_p = p.map_coords(&|&(x, y)| (x + 10., y + 100.));
-        assert_eq!(new_p.x(), 20.);
-        assert_eq!(new_p.y(), 110.);
+        assert_relative_eq!(new_p.x(), 20.);
+        assert_relative_eq!(new_p.y(), 110.);
     }
 
     #[test]
     fn point_inplace() {
         let mut p2 = Point::new(10f32, 10f32);
         p2.map_coords_inplace(&|&(x, y)| (x + 10., y + 100.));
-        assert_eq!(p2.x(), 20.);
-        assert_eq!(p2.y(), 110.);
+        assert_relative_eq!(p2.x(), 20.);
+        assert_relative_eq!(p2.y(), 110.);
     }
 
     #[test]
@@ -695,8 +695,8 @@ mod test {
     fn convert_type() {
         let p1: Point<f64> = Point::new(1., 2.);
         let p2: Point<f32> = p1.map_coords(&|&(x, y)| (x as f32, y as f32));
-        assert_eq!(p2.x(), 1f32);
-        assert_eq!(p2.y(), 2f32);
+        assert_relative_eq!(p2.x(), 1f32);
+        assert_relative_eq!(p2.y(), 2f32);
     }
 
     #[cfg(feature = "use-proj")]

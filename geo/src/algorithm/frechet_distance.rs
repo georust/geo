@@ -86,7 +86,7 @@ mod test {
     fn test_single_point_in_linestring() {
         let ls_a = LineString::from(vec![(1., 1.)]);
         let ls_b = LineString::from(vec![(0., 2.)]);
-        assert_eq!(
+        assert_relative_eq!(
             (ls_a.clone().into_points())[0].euclidean_distance(&(&ls_b.clone().into_points())[0]),
             ls_a.frechet_distance(&ls_b)
         );
@@ -96,27 +96,27 @@ mod test {
     fn test_identical_linestrings() {
         let ls_a = LineString::from(vec![(1., 1.), (2., 1.), (2., 2.)]);
         let ls_b = LineString::from(vec![(1., 1.), (2., 1.), (2., 2.)]);
-        assert_eq!(0., ls_a.frechet_distance(&ls_b));
+        assert_relative_eq!(0., ls_a.frechet_distance(&ls_b));
     }
 
     #[test]
     fn different_dimensions_linestrings() {
         let ls_a = LineString::from(vec![(1., 1.)]);
         let ls_b = LineString::from(vec![(2., 2.), (0., 1.)]);
-        assert_eq!(2f64.sqrt(), ls_a.frechet_distance(&ls_b));
+        assert_relative_eq!(2f64.sqrt(), ls_a.frechet_distance(&ls_b));
     }
 
     #[test]
     fn test_frechet_1() {
         let ls_a = LineString::from(vec![(1., 1.), (2., 1.)]);
         let ls_b = LineString::from(vec![(2., 2.), (2., 3.)]);
-        assert_eq!(2., ls_a.frechet_distance(&ls_b));
+        assert_relative_eq!(2., ls_a.frechet_distance(&ls_b));
     }
 
     #[test]
     fn test_frechet_2() {
         let ls_a = LineString::from(vec![(1., 1.), (2., 1.), (2., 2.)]);
         let ls_b = LineString::from(vec![(2., 2.), (0., 1.), (2., 4.)]);
-        assert_eq!(2., ls_a.frechet_distance(&ls_b));
+        assert_relative_eq!(2., ls_a.frechet_distance(&ls_b));
     }
 }

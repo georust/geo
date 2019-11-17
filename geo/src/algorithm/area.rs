@@ -186,13 +186,13 @@ mod test {
             (x: 5., y: 5.)
         ];
         let mpoly = MultiPolygon(vec![poly0, poly1, poly2]);
-        assert_eq!(mpoly.area(), 102.);
+        assert_relative_eq!(mpoly.area(), 102.);
         assert_relative_eq!(mpoly.area(), 102.);
     }
     #[test]
     fn area_line_test() {
         let line1 = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 1.0, y: 1.0 });
-        assert_eq!(line1.area(), 0.);
+        assert_relative_eq!(line1.area(), 0.);
     }
 
     #[test]
@@ -202,13 +202,13 @@ mod test {
             Coordinate { x: 1.0, y: 0.0 },
             Coordinate { x: 0.0, y: 1.0 },
         );
-        assert_eq!(triangle.area(), 0.5);
+        assert_relative_eq!(triangle.area(), 0.5);
 
         let triangle = Triangle(
             Coordinate { x: 0.0, y: 0.0 },
             Coordinate { x: 0.0, y: 1.0 },
             Coordinate { x: 1.0, y: 0.0 },
         );
-        assert_eq!(triangle.area(), -0.5);
+        assert_relative_eq!(triangle.area(), -0.5);
     }
 }
