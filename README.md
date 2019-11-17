@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/georust/geo.svg?branch=master)](https://travis-ci.org/georust/geo)
 [![geo on Crates.io](https://meritbadge.herokuapp.com/geo)](https://crates.io/crates/geo)
+[![Coverage Status](https://coveralls.io/repos/github/georust/geo/badge.svg?branch=trying)](https://coveralls.io/github/georust/geo?branch=trying)
 
 # geo
 
