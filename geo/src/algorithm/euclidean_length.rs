@@ -63,12 +63,12 @@ mod test {
     #[test]
     fn empty_linestring_test() {
         let linestring = line_string![];
-        assert_eq!(0.0_f64, linestring.euclidean_length());
+        assert_relative_eq!(0.0_f64, linestring.euclidean_length());
     }
     #[test]
     fn linestring_one_point_test() {
         let linestring = line_string![(x: 0., y: 0.)];
-        assert_eq!(0.0_f64, linestring.euclidean_length());
+        assert_relative_eq!(0.0_f64, linestring.euclidean_length());
     }
     #[test]
     fn linestring_test() {
@@ -80,7 +80,7 @@ mod test {
             (x: 10., y: 1.),
             (x: 11., y: 1.)
         ];
-        assert_eq!(10.0_f64, linestring.euclidean_length());
+        assert_relative_eq!(10.0_f64, linestring.euclidean_length());
     }
     #[test]
     fn multilinestring_test() {
@@ -98,13 +98,13 @@ mod test {
                 (x: 0., y: 5.)
             ],
         ]);
-        assert_eq!(15.0_f64, mline.euclidean_length());
+        assert_relative_eq!(15.0_f64, mline.euclidean_length());
     }
     #[test]
     fn line_test() {
         let line0 = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 0., y: 1. });
         let line1 = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 3., y: 4. });
-        assert_eq!(line0.euclidean_length(), 1.);
-        assert_eq!(line1.euclidean_length(), 5.);
+        assert_relative_eq!(line0.euclidean_length(), 1.);
+        assert_relative_eq!(line1.euclidean_length(), 5.);
     }
 }

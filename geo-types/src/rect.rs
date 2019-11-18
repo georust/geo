@@ -111,6 +111,6 @@ mod test {
     #[test]
     fn rect_height() {
         let rect = Rect::new((10., 10.), (20., 20.));
-        assert_eq!(rect.height(), 10.);
+        assert_relative_eq!(rect.height(), 10.);
     }
 }

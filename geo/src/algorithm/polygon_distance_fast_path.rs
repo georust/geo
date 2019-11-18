@@ -631,6 +631,6 @@ mod test {
         let q = Point::new(3.8, 5.7);
         let r = Point::new(22.5, 10.);
         let dist = vertex_line_distance(p, q, r);
-        assert_eq!(dist, 6.850547423381579);
+        assert_relative_eq!(dist, 6.850547423381579);
     }
 }

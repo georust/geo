@@ -514,7 +514,7 @@ mod test {
         // Results agree with Shapely
         assert_relative_eq!(dist, 2.0485900789263356);
         assert_relative_eq!(dist2, 1.118033988749895);
-        assert_relative_eq!(dist3, 1.4142135623730951);
+        assert_relative_eq!(dist3, std::f64::consts::SQRT_2); // workaround clippy::correctness error approx_constant (1.4142135623730951)
         assert_relative_eq!(dist4, 1.5811388300841898);
         // Point is on the line
         let zero_dist = line_segment_distance(p1, p1, p2);
@@ -599,7 +599,7 @@ mod test {
 
         let poly = Polygon::new(exterior.clone(), vec![]);
         let bugged_point = Point::new(0.0001, 0.);
-        assert_eq!(poly.euclidean_distance(&bugged_point), 0.);
+        assert_relative_eq!(poly.euclidean_distance(&bugged_point), 0.);
     }
     #[test]
     // Point to Polygon, empty Polygon
@@ -757,7 +757,7 @@ mod test {
     }
     #[test]
     fn distance1_test() {
-        assert_eq!(
+        assert_relative_eq!(
             Point::<f64>::new(0., 0.).euclidean_distance(&Point::<f64>::new(1., 0.)),
             1.
         );
@@ -782,7 +782,7 @@ mod test {
         ];
         let mp = MultiPoint(v);
         let p = Point::new(50.0, 50.0);
-        assert_eq!(p.euclidean_distance(&mp), 64.03124237432849)
+        assert_relative_eq!(p.euclidean_distance(&mp), 64.03124237432849)
     }
     #[test]
     fn distance_line_test() {
@@ -790,21 +790,21 @@ mod test {
         let p0 = Point::new(2., 3.);
         let p1 = Point::new(3., 0.);
         let p2 = Point::new(6., 0.);
-        assert_eq!(line0.euclidean_distance(&p0), 3.);
-        assert_eq!(p0.euclidean_distance(&line0), 3.);
+        assert_relative_eq!(line0.euclidean_distance(&p0), 3.);
+        assert_relative_eq!(p0.euclidean_distance(&line0), 3.);
 
-        assert_eq!(line0.euclidean_distance(&p1), 0.);
-        assert_eq!(p1.euclidean_distance(&line0), 0.);
+        assert_relative_eq!(line0.euclidean_distance(&p1), 0.);
+        assert_relative_eq!(p1.euclidean_distance(&line0), 0.);
 
-        assert_eq!(line0.euclidean_distance(&p2), 1.);
-        assert_eq!(p2.euclidean_distance(&line0), 1.);
+        assert_relative_eq!(line0.euclidean_distance(&p2), 1.);
+        assert_relative_eq!(p2.euclidean_distance(&line0), 1.);
     }
     #[test]
     fn distance_line_line_test() {
         let line0 = Line::from([(0., 0.), (5., 0.)]);
         let line1 = Line::from([(2., 1.), (7., 2.)]);
-        assert_eq!(line0.euclidean_distance(&line1), 1.);
-        assert_eq!(line1.euclidean_distance(&line0), 1.);
+        assert_relative_eq!(line0.euclidean_distance(&line1), 1.);
+        assert_relative_eq!(line1.euclidean_distance(&line0), 1.);
     }
     #[test]
     // test edge-vertex minimum distance
@@ -841,8 +841,8 @@ mod test {
         let poly2 = Polygon::new(LineString::from(points2), vec![]);
         let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
         let dist2 = nearest_neighbour_distance(&poly1.exterior(), &poly2.exterior());
-        assert_eq!(dist, 21.0);
-        assert_eq!(dist2, 21.0);
+        assert_relative_eq!(dist, 21.0);
+        assert_relative_eq!(dist2, 21.0);
     }
     #[test]
     // test vertex-vertex minimum distance
@@ -874,8 +874,8 @@ mod test {
         let poly2 = Polygon::new(LineString::from(points2), vec![]);
         let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
         let dist2 = nearest_neighbour_distance(&poly1.exterior(), &poly2.exterior());
-        assert_eq!(dist, 29.274562336608895);
-        assert_eq!(dist2, 29.274562336608895);
+        assert_relative_eq!(dist, 29.274562336608895);
+        assert_relative_eq!(dist2, 29.274562336608895);
     }
     #[test]
     // test edge-edge minimum distance
@@ -907,8 +907,8 @@ mod test {
         let poly2 = Polygon::new(LineString::from(points2), vec![]);
         let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
         let dist2 = nearest_neighbour_distance(&poly1.exterior(), &poly2.exterior());
-        assert_eq!(dist, 12.0);
-        assert_eq!(dist2, 12.0);
+        assert_relative_eq!(dist, 12.0);
+        assert_relative_eq!(dist2, 12.0);
     }
     #[test]
     fn test_large_polygon_distance() {
@@ -925,7 +925,7 @@ mod test {
         let poly2 = Polygon::new(vec2.into(), vec![]);
         let distance = poly1.euclidean_distance(&poly2);
         // GEOS says 2.2864896295566055
-        assert_eq!(distance, 2.2864896295566055);
+        assert_relative_eq!(distance, 2.2864896295566055);
     }
     #[test]
     // A polygon inside another polygon's ring; they're disjoint in the DE-9IM sense:
@@ -940,7 +940,7 @@ mod test {
         // inside is "inside" outside's ring, but they are disjoint
         let outside = Polygon::new(shell_ls, vec![ring_ls]);
         let inside = Polygon::new(poly_in_ring_ls, vec![]);
-        assert_eq!(outside.euclidean_distance(&inside), 5.992772737231033);
+        assert_relative_eq!(outside.euclidean_distance(&inside), 5.992772737231033);
     }
     #[test]
     // two ring LineStrings; one encloses the other but they neither touch nor intersect
@@ -949,7 +949,7 @@ mod test {
         let ring_ls: LineString<f64> = ring.into();
         let in_ring = include!("test_fixtures/poly_in_ring.rs");
         let in_ring_ls: LineString<f64> = in_ring.into();
-        assert_eq!(ring_ls.euclidean_distance(&in_ring_ls), 5.992772737231033);
+        assert_relative_eq!(ring_ls.euclidean_distance(&in_ring_ls), 5.992772737231033);
     }
     #[test]
     // Line-Polygon test: closest point on Polygon is NOT nearest to a Line end-point
@@ -957,7 +957,7 @@ mod test {
         let line = Line::from([(0.0, 0.0), (0.0, 3.0)]);
         let v = vec![(5.0, 1.0), (5.0, 2.0), (0.25, 1.5), (5.0, 1.0)];
         let poly = Polygon::new(v.into(), vec![]);
-        assert_eq!(line.euclidean_distance(&poly), 0.25);
+        assert_relative_eq!(line.euclidean_distance(&poly), 0.25);
     }
     #[test]
     // Line-Polygon test: Line intersects Polygon
@@ -965,7 +965,7 @@ mod test {
         let line = Line::from([(0.5, 0.0), (0.0, 3.0)]);
         let v = vec![(5.0, 1.0), (5.0, 2.0), (0.25, 1.5), (5.0, 1.0)];
         let poly = Polygon::new(v.into(), vec![]);
-        assert_eq!(line.euclidean_distance(&poly), 0.0);
+        assert_relative_eq!(line.euclidean_distance(&poly), 0.0);
     }
     #[test]
     // Line-Polygon test: Line contained by interior ring
@@ -974,14 +974,14 @@ mod test {
         let v = vec![(5.0, 1.0), (5.0, 2.0), (0.25, 1.0), (5.0, 1.0)];
         let v2 = vec![(4.5, 1.2), (4.5, 1.8), (3.5, 1.2), (4.5, 1.2)];
         let poly = Polygon::new(v.into(), vec![v2.into()]);
-        assert_eq!(line.euclidean_distance(&poly), 0.04999999999999982);
+        assert_relative_eq!(line.euclidean_distance(&poly), 0.04999999999999982);
     }
     #[test]
     // LineString-Line test
     fn test_linestring_line_distance() {
         let line = Line::from([(0.0, 0.0), (0.0, 2.0)]);
         let ls: LineString<_> = vec![(3.0, 0.0), (1.0, 1.0), (3.0, 2.0)].into();
-        assert_eq!(ls.euclidean_distance(&line), 1.0);
+        assert_relative_eq!(ls.euclidean_distance(&line), 1.0);
     }
 
     #[test]
@@ -989,7 +989,7 @@ mod test {
     fn test_triangle_point_on_vertex_distance() {
         let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let point = Point::new(0.0, 0.0);
-        assert_eq!(triangle.euclidean_distance(&point), 0.0);
+        assert_relative_eq!(triangle.euclidean_distance(&point), 0.0);
     }
 
     #[test]
@@ -997,7 +997,7 @@ mod test {
     fn test_triangle_point_on_edge_distance() {
         let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let point = Point::new(1.5, 0.0);
-        assert_eq!(triangle.euclidean_distance(&point), 0.0);
+        assert_relative_eq!(triangle.euclidean_distance(&point), 0.0);
     }
 
     #[test]
@@ -1005,7 +1005,7 @@ mod test {
     fn test_triangle_point_distance() {
         let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let point = Point::new(2.0, 3.0);
-        assert_eq!(triangle.euclidean_distance(&point), 1.0);
+        assert_relative_eq!(triangle.euclidean_distance(&point), 1.0);
     }
 
     #[test]
@@ -1013,6 +1013,6 @@ mod test {
     fn test_triangle_point_inside_distance() {
         let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let point = Point::new(1.0, 0.5);
-        assert_eq!(triangle.euclidean_distance(&point), 0.0);
+        assert_relative_eq!(triangle.euclidean_distance(&point), 0.0);
     }
 }

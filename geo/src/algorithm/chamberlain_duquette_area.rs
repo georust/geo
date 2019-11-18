@@ -109,7 +109,7 @@ mod test {
             (x: 113., y: -22.),
             (x: 125., y: -15.),
         ];
-        assert_eq!(-7766240997209.013, polygon.chamberlain_duquette_area());
+        assert_relative_eq!(-7766240997209.013, polygon.chamberlain_duquette_area());
     }
 
     #[test]
@@ -124,7 +124,7 @@ mod test {
             (x: 144., y: -15.),
             (x: 125., y: -15.),
         ];
-        assert_eq!(7766240997209.013, polygon.chamberlain_duquette_area());
+        assert_relative_eq!(7766240997209.013, polygon.chamberlain_duquette_area());
     }
 
     #[test]
@@ -154,6 +154,6 @@ mod test {
                 ],
             ],
         ];
-        assert_eq!(1208198651182.4727, poly.chamberlain_duquette_area());
+        assert_relative_eq!(1208198651182.4727, poly.chamberlain_duquette_area());
     }
 }
