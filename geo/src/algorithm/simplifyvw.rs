@@ -104,7 +104,7 @@ where
     // Adjacent retained points. Simulating the points in a
     // linked list with indices into `orig`. Big number (larger than or equal to
     // `max`) means no next element, and (0, 0) means deleted element.
-    let mut adjacent: Vec<(_)> = (0..orig.0.len())
+    let mut adjacent: Vec<_> = (0..orig.0.len())
         .map(|i| {
             if i == 0 {
                 (-1_i32, 1_i32)
@@ -244,7 +244,7 @@ where
     // Adjacent retained points. Simulating the points in a
     // linked list with indices into `orig`. Big number (larger than or equal to
     // `max`) means no next element, and (0, 0) means deleted element.
-    let mut adjacent: Vec<(_)> = (0..orig.0.len())
+    let mut adjacent: Vec<_> = (0..orig.0.len())
         .map(|i| {
             if i == 0 {
                 (-1_i32, 1_i32)
