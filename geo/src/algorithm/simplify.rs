@@ -2,8 +2,64 @@ use crate::algorithm::euclidean_distance::EuclideanDistance;
 use crate::{Line, LineString, MultiLineString, MultiPolygon, Point, Polygon};
 use num_traits::Float;
 
-// Ramer–Douglas-Peucker line simplification algorithm
+// Because the RDP algorithm is recursive, we can't assign an index to a point inside the loop
+// instead, we wrap a simple struct around index and point in a wrapper function,
+// passing that around instead, extracting either points or indices on the way back out
+#[derive(Copy, Clone)]
+struct RdpIndex<'a, T>
+where
+    T: Float,
+{
+    index: usize,
+    point: &'a Point<T>,
+}
+
+// Wrapper for the RDP algorithm, returning simplified points
 fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
+where
+    T: Float,
+{
+    compute_rdp(
+        &points
+            .iter()
+            .enumerate()
+            .map(|(idx, point)| RdpIndex {
+                index: idx,
+                point: point,
+            })
+            .collect::<Vec<RdpIndex<T>>>(),
+        epsilon,
+    )
+    .into_iter()
+    .map(|rdpindex| *rdpindex.point)
+    .collect::<Vec<Point<T>>>()
+}
+
+// Wrapper for the RDP algorithm, returning simplified point indices
+fn rdp_indices<T>(points: &[Point<T>], epsilon: &T) -> Vec<usize>
+where
+    T: Float,
+{
+    compute_rdp(
+        &points
+            .iter()
+            .enumerate()
+            .map(|(idx, point)| RdpIndex {
+                index: idx,
+                point: point,
+            })
+            .collect::<Vec<RdpIndex<T>>>(),
+        epsilon,
+    )
+    .iter()
+    .map(|rdpindex| rdpindex.index)
+    .collect::<Vec<usize>>()
+}
+
+// Ramer–Douglas-Peucker line simplification algorithm
+// This function returns both the retained points, and their indices in the original geometry,
+// for more flexible use by FFI implementers
+fn compute_rdp<'a, T>(points: &[RdpIndex<'a, T>], epsilon: &T) -> Vec<RdpIndex<'a, T>>
 where
     T: Float,
 {
@@ -15,16 +71,18 @@ where
     let mut distance: T;
 
     for (i, _) in points.iter().enumerate().take(points.len() - 1).skip(1) {
-        distance = points[i].euclidean_distance(&Line::new(points[0].0, points.last().unwrap().0));
+        distance = points[i]
+            .point
+            .euclidean_distance(&Line::new(*points[0].point, *points.last().unwrap().point));
         if distance > dmax {
             index = i;
             dmax = distance;
         }
     }
     if dmax > *epsilon {
-        let mut intermediate = rdp(&points[..=index], &*epsilon);
+        let mut intermediate = compute_rdp(&points[..=index], &*epsilon);
         intermediate.pop();
-        intermediate.extend_from_slice(&rdp(&points[index..], &*epsilon));
+        intermediate.extend_from_slice(&compute_rdp(&points[index..], &*epsilon));
         intermediate
     } else {
         vec![*points.first().unwrap(), *points.last().unwrap()]
