@@ -127,12 +127,54 @@ pub trait Simplify<T, Epsilon = T> {
         T: Float;
 }
 
+/// Simplifies a geometry, returning the retained _indices_ of the input.
+///
+/// This operation uses the [Ramer–Douglas–Peucker algorithm](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm)
+/// and does not guarantee that the returned geometry is valid.
+pub trait SimplifyIdx<T, Epsilon = T> {
+    /// Returns the simplified indices of a geometry, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::{Point, LineString};
+    /// use geo::algorithm::simplify::{SimplifyIdx};
+    ///
+    /// let mut vec = Vec::new();
+    /// vec.push(Point::new(0.0, 0.0));
+    /// vec.push(Point::new(5.0, 4.0));
+    /// vec.push(Point::new(11.0, 5.5));
+    /// vec.push(Point::new(17.3, 3.2));
+    /// vec.push(Point::new(27.8, 0.1));
+    /// let linestring = LineString::from(vec);
+    /// let mut compare = Vec::new();
+    /// compare.push(0_usize);
+    /// compare.push(1_usize);
+    /// compare.push(2_usize);
+    /// compare.push(4_usize);
+    /// let simplified = linestring.simplify_idx(&1.0);
+    /// assert_eq!(simplified, compare)
+    /// ```
+    fn simplify_idx(&self, epsilon: &T) -> Vec<usize>
+    where
+        T: Float;
+}
+
 impl<T> Simplify<T> for LineString<T>
 where
     T: Float,
 {
     fn simplify(&self, epsilon: &T) -> LineString<T> {
         LineString::from(rdp(&self.clone().into_points(), epsilon))
+    }
+}
+
+impl<T> SimplifyIdx<T> for LineString<T>
+where
+    T: Float,
+{
+    fn simplify_idx(&self, epsilon: &T) -> Vec<usize> {
+        rdp_indices(&self.clone().into_points(), epsilon)
     }
 }
 
