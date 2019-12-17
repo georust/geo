@@ -29,8 +29,8 @@ pub use crate::multi_point::MultiPoint;
 mod line;
 pub use crate::line::Line;
 
-pub mod line_string;
-pub use crate::line_string::LineString;
+mod line_string;
+pub use crate::line_string::{LineString, PointsIter};
 
 mod multi_line_string;
 pub use crate::multi_line_string::MultiLineString;
