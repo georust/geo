@@ -36,24 +36,14 @@ where
 }
 
 // Wrapper for the RDP algorithm, returning simplified point indices
-fn rdp_indices<T>(points: &[Point<T>], epsilon: &T) -> Vec<usize>
+fn rdp_indices<'a, T>(points: &[RdpIndex<'a, T>], epsilon: &T) -> Vec<usize>
 where
     T: Float,
 {
-    compute_rdp(
-        &points
-            .iter()
-            .enumerate()
-            .map(|(idx, point)| RdpIndex {
-                index: idx,
-                point: point,
-            })
-            .collect::<Vec<RdpIndex<T>>>(),
-        epsilon,
-    )
-    .iter()
-    .map(|rdpindex| rdpindex.index)
-    .collect::<Vec<usize>>()
+    compute_rdp(points, epsilon)
+        .iter()
+        .map(|rdpindex| rdpindex.index)
+        .collect::<Vec<usize>>()
 }
 
 // Ramer–Douglas-Peucker line simplification algorithm
@@ -174,7 +164,19 @@ where
     T: Float,
 {
     fn simplify_idx(&self, epsilon: &T) -> Vec<usize> {
-        rdp_indices(&self.clone().into_points(), epsilon)
+        rdp_indices(
+            &self
+                .clone()
+                .into_points()
+                .iter()
+                .enumerate()
+                .map(|(idx, point)| RdpIndex {
+                    index: idx,
+                    point: point,
+                })
+                .collect::<Vec<RdpIndex<T>>>(),
+            epsilon,
+        )
     }
 }
 
