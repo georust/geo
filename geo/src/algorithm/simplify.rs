@@ -154,7 +154,7 @@ impl<T> Simplify<T> for LineString<T>
 where
     T: Float,
 {
-    fn simplify(&self, epsilon: &T) -> LineString<T> {
+    fn simplify(&self, epsilon: &T) -> Self {
         LineString::from(rdp(&self.clone().into_points(), epsilon))
     }
 }
@@ -184,7 +184,7 @@ impl<T> Simplify<T> for MultiLineString<T>
 where
     T: Float,
 {
-    fn simplify(&self, epsilon: &T) -> MultiLineString<T> {
+    fn simplify(&self, epsilon: &T) -> Self {
         MultiLineString(self.0.iter().map(|l| l.simplify(epsilon)).collect())
     }
 }
@@ -193,7 +193,7 @@ impl<T> Simplify<T> for Polygon<T>
 where
     T: Float,
 {
-    fn simplify(&self, epsilon: &T) -> Polygon<T> {
+    fn simplify(&self, epsilon: &T) -> Self {
         Polygon::new(
             self.exterior().simplify(epsilon),
             self.interiors()
@@ -208,7 +208,7 @@ impl<T> Simplify<T> for MultiPolygon<T>
 where
     T: Float,
 {
-    fn simplify(&self, epsilon: &T) -> MultiPolygon<T> {
+    fn simplify(&self, epsilon: &T) -> Self {
         MultiPolygon(self.0.iter().map(|p| p.simplify(epsilon)).collect())
     }
 }
