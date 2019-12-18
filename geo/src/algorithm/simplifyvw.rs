@@ -187,6 +187,7 @@ where
         .collect::<Vec<usize>>()
 }
 
+// Wrapper for visvalingam_indices, mapping indices back to points
 fn visvalingam<T>(orig: &LineString<T>, epsilon: &T) -> Vec<Coordinate<T>>
 where
     T: Float,
@@ -456,6 +457,40 @@ pub trait SimplifyVW<T, Epsilon = T> {
         T: Float;
 }
 
+/// Simplifies a geometry, returning the retained _indices_ of the output
+///
+/// This operation uses the Visvalingam-Whyatt algorithm,
+/// and does **not** guarantee that the returned geometry is valid.
+pub trait SimplifyVwIdx<T, Epsilon = T> {
+    /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
+    ///
+    /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::{Point, LineString};
+    /// use geo::algorithm::simplifyvw::{SimplifyVwIdx};
+    ///
+    /// let mut vec = Vec::new();
+    /// vec.push(Point::new(5.0, 2.0));
+    /// vec.push(Point::new(3.0, 8.0));
+    /// vec.push(Point::new(6.0, 20.0));
+    /// vec.push(Point::new(7.0, 25.0));
+    /// vec.push(Point::new(10.0, 10.0));
+    /// let linestring = LineString::from(vec);
+    /// let mut compare = Vec::new();
+    /// compare.push(0_usize);
+    /// compare.push(3_usize);
+    /// compare.push(4_usize);
+    /// let simplified = linestring.simplifyvw_idx(&30.0);
+    /// assert_eq!(simplified, compare)
+    /// ```
+    fn simplifyvw_idx(&self, epsilon: &T) -> Vec<usize>
+    where
+        T: Float;
+}
+
 /// Simplifies a geometry, preserving its topology by removing self-intersections
 pub trait SimplifyVWPreserve<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using a topology-preserving variant of the
@@ -578,6 +613,15 @@ where
 {
     fn simplifyvw(&self, epsilon: &T) -> LineString<T> {
         LineString::from(visvalingam(self, epsilon))
+    }
+}
+
+impl<T> SimplifyVwIdx<T> for LineString<T>
+where
+    T: Float,
+{
+    fn simplifyvw_idx(&self, epsilon: &T) -> Vec<usize> {
+        visvalingam_indices(self, epsilon)
     }
 }
 
