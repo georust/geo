@@ -1,3 +1,42 @@
+#![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
+//! The `geo` crate provides geospatial primitive types such as `Coordinate`, `Point`, `LineString`, and `Polygon` as 
+//! well as their `Multi–` equivalents, and provides algorithms and operations such as:
+//!   - Area and centroid calculation
+//!   - Simplification and convex hull operations
+//!   - Distance measurement
+//!   - Intersection checks
+//!   - Transformation to and from PostGIS types
+//!   - Affine transforms such as rotation and translation.
+//!
+//! The primitive types also provide the basis for other functionality in the `Geo` ecosystem, including:
+//!   - Serialization to and from [GeoJSON](https://docs.rs/geojson) and [WKT](https://docs.rs/wkt)
+//!   - [Coordinate transformation and projection](https://docs.rs/proj)
+//!   - [Geocoding](https://docs.rs/geocoding)
+//!   - [Working with GPS data](https://docs.rs/gpx)
+//!
+//! …allowing these crates to interoperate; GeoJSON can readily be read from a file, deserialised, transformed
+//! to a local datum, modified, transformed back to `WGS84`, and serialised back to GeoJSON.
+//!
+//! Operations available for primitive types can be found in the `algorithm` module, along with
+//! comprehensive usage examples.
+//!
+//! While `Geo` is primarily intended to operate on **planar** geometries, some other useful algorithms are
+//! provided: Haversine, Frechet, and Vincenty distances, as well as Chamberlain-Duquette area.
+//!
+//! ## Optional Features (these can be activated in your `cargo.toml`)
+//! The following optional features are available:
+//! - `from-postgis`: convert `Geometry` types to and from [`PostGIS`](https://docs.rs/postgis) types.
+//! - `use-proj`: enable coordinate conversion and transformation of `Point` geometries using the [`proj`](https://docs.rs/proj) crate
+//! - `use-serde`: enable serialisation of geometries using `serde`.
+//!
+//! ## GeoJSON
+//! If you wish to read or write `GeoJSON`, use the [`geojson`](https://docs.rs/geojson) crate, with the `geo-types` feature activated.
+//! This provides fallible conversions **to** `geo-types` primitives such as `Point` and `Polygon` from `geojson` `Value`
+//! structs using the standard [`TryFrom`](https://doc.rust-lang.org/stable/std/convert/trait.TryFrom.html) 
+//! and [`TryInto`](https://doc.rust-lang.org/stable/std/convert/trait.TryInto.html) traits,
+//! and conversion **from** `geo-types` primitives to `geojson`
+//! `Value` structs using the [`From`](https://doc.rust-lang.org/stable/std/convert/trait.TryFrom.html) trait.
+
 extern crate geo_types;
 extern crate num_traits;
 #[cfg(feature = "use-serde")]

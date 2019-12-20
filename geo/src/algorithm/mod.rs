@@ -6,15 +6,15 @@ pub mod bearing;
 pub mod bounding_rect;
 /// Calculate the centroid of a `Geometry`.
 pub mod centroid;
-/// Signed approximate geodesic area of a geometry.
+/// Calculate the signed approximate geodesic area of a `Geometry`.
 pub mod chamberlain_duquette_area;
-/// Calculate the minimum distance between two `Geometries`.
+/// Calculate the closest `Point` between a `Geometry` and an input `Point`.
 pub mod closest_point;
 /// Determine whether `Geometry` `A` is completely enclosed by `Geometry` `B`.
 pub mod contains;
 /// Calculate the convex hull of a `Geometry`.
 pub mod convexhull;
-/// Calculate the Euclidean distance between two `Geometries`.
+/// Calculate the minimum Euclidean distance between two `Geometries`.
 pub mod euclidean_distance;
 /// Calculate the length of a planar line between two `Geometries`.
 pub mod euclidean_length;
@@ -25,7 +25,10 @@ pub mod frechet_distance;
 /// Produces a `Geometry` from PostGIS.
 #[cfg(feature = "postgis-integration")]
 pub mod from_postgis;
-/// Calculate a new Point given a distance and a bearing.
+/// Convert a `Geometry` into a PostGIS.
+#[cfg(feature = "postgis-integration")]
+pub mod to_postgis;
+/// Calculate a destination `Point`, given a distance and a bearing.
 pub mod haversine_destination;
 /// Calculate the Haversine distance between two `Geometries`.
 pub mod haversine_distance;
@@ -41,7 +44,7 @@ pub mod map_coords;
 pub mod orient;
 /// Helper functions for the "fast path" variant of the Polygon-Polygon Euclidean distance method.
 pub(crate) mod polygon_distance_fast_path;
-/// Coordinate projections and transformations using [PROJ](http://proj4.org) v5.0.x.
+/// Coordinate projections and transformations using the current stable version of [PROJ](http://proj.org).
 #[cfg(feature = "use-proj")]
 pub mod proj;
 /// Rotate a `Geometry` around either its centroid or a `Point` by an angle given in degrees.
@@ -50,9 +53,6 @@ pub mod rotate;
 pub mod simplify;
 /// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
 pub mod simplifyvw;
-/// Convert `Geometries` into PostGIS types.
-#[cfg(feature = "postgis-integration")]
-pub mod to_postgis;
 /// Translate a `Geometry` along the given offsets.
 pub mod translate;
 /// Calculate the Vincenty distance between two `Point`s.
