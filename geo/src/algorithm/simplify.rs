@@ -6,12 +6,12 @@ use num_traits::Float;
 // instead, we wrap a simple struct around index and point in a wrapper function,
 // passing that around instead, extracting either points or indices on the way back out
 #[derive(Copy, Clone)]
-struct RdpIndex<'a, T>
+struct RdpIndex<T>
 where
     T: Float,
 {
     index: usize,
-    point: &'a Point<T>,
+    point: Point<T>,
 }
 
 // Wrapper for the RDP algorithm, returning simplified points
@@ -21,22 +21,22 @@ where
 {
     compute_rdp(
         &points
-            .iter()
+            .into_iter()
             .enumerate()
             .map(|(idx, point)| RdpIndex {
                 index: idx,
-                point: point,
+                point: *point,
             })
             .collect::<Vec<RdpIndex<T>>>(),
         epsilon,
     )
     .into_iter()
-    .map(|rdpindex| *rdpindex.point)
+    .map(|rdpindex| rdpindex.point)
     .collect::<Vec<Point<T>>>()
 }
 
 // Wrapper for the RDP algorithm, returning simplified point indices
-fn rdp_indices<'a, T>(points: &[RdpIndex<'a, T>], epsilon: &T) -> Vec<usize>
+fn rdp_indices<'a, T>(points: &[RdpIndex<T>], epsilon: &T) -> Vec<usize>
 where
     T: Float,
 {
@@ -49,7 +49,7 @@ where
 // Ramer–Douglas-Peucker line simplification algorithm
 // This function returns both the retained points, and their indices in the original geometry,
 // for more flexible use by FFI implementers
-fn compute_rdp<'a, T>(points: &[RdpIndex<'a, T>], epsilon: &T) -> Vec<RdpIndex<'a, T>>
+fn compute_rdp<'a, T>(points: &[RdpIndex<T>], epsilon: &T) -> Vec<RdpIndex<T>>
 where
     T: Float,
 {
@@ -63,7 +63,7 @@ where
     for (i, _) in points.iter().enumerate().take(points.len() - 1).skip(1) {
         distance = points[i]
             .point
-            .euclidean_distance(&Line::new(*points[0].point, *points.last().unwrap().point));
+            .euclidean_distance(&Line::new(points[0].point, points.last().unwrap().point));
         if distance > dmax {
             index = i;
             dmax = distance;
@@ -166,9 +166,7 @@ where
     fn simplify_idx(&self, epsilon: &T) -> Vec<usize> {
         rdp_indices(
             &self
-                .clone()
-                .into_points()
-                .iter()
+                .points_iter()
                 .enumerate()
                 .map(|(idx, point)| RdpIndex {
                     index: idx,
