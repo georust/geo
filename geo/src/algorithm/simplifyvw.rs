@@ -78,6 +78,7 @@ struct GeomSettings {
 
 /// Simplify a line using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
 //
+// This method returns the **indices** of the simplified line
 // epsilon is the minimum triangle area
 // The paper states that:
 // If [the new triangle's] calculated area is less than that of the last point to be
@@ -90,13 +91,13 @@ struct GeomSettings {
 // then recalculate the new triangle area and push it onto the heap
 // based on Huon Wilson's original implementation:
 // https://github.com/huonw/isrustfastyet/blob/25e7a68ff26673a8556b170d3c9af52e1c818288/mem/line_simplify.rs
-fn visvalingam<T>(orig: &LineString<T>, epsilon: &T) -> Vec<Coordinate<T>>
+fn visvalingam_indices<T>(orig: &LineString<T>, epsilon: &T) -> Vec<usize>
 where
     T: Float,
 {
     // No need to continue without at least three points
     if orig.0.len() < 3 {
-        return orig.0.to_vec();
+        return orig.0.iter().enumerate().map(|(idx, _)| idx).collect();
     }
 
     let max = orig.0.len();
@@ -177,12 +178,28 @@ where
             });
         }
     }
-    // Filter out the points that have been deleted, returning remaining points
+    // Filter out the points that have been deleted, returning remaining point indices
     orig.0
         .iter()
+        .enumerate()
         .zip(adjacent.iter())
-        .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(*tup) } else { None })
-        .collect::<Vec<Coordinate<T>>>()
+        .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(tup.0) } else { None })
+        .collect::<Vec<usize>>()
+}
+
+// Wrapper for visvalingam_indices, mapping indices back to points
+fn visvalingam<T>(orig: &LineString<T>, epsilon: &T) -> Vec<Coordinate<T>>
+where
+    T: Float,
+{
+    let subset = visvalingam_indices(orig, epsilon);
+    // filter orig using the indices
+    // using get would be more robust here, but the input subset is guaranteed to be valid in this case
+    orig.0
+        .iter()
+        .zip(subset.iter())
+        .map(|(_, s)| orig[*s])
+        .collect()
 }
 
 /// Wrap the actual VW function so the R* Tree can be shared.
@@ -440,6 +457,40 @@ pub trait SimplifyVW<T, Epsilon = T> {
         T: Float;
 }
 
+/// Simplifies a geometry, returning the retained _indices_ of the output
+///
+/// This operation uses the Visvalingam-Whyatt algorithm,
+/// and does **not** guarantee that the returned geometry is valid.
+pub trait SimplifyVwIdx<T, Epsilon = T> {
+    /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
+    ///
+    /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::{Point, LineString};
+    /// use geo::algorithm::simplifyvw::{SimplifyVwIdx};
+    ///
+    /// let mut vec = Vec::new();
+    /// vec.push(Point::new(5.0, 2.0));
+    /// vec.push(Point::new(3.0, 8.0));
+    /// vec.push(Point::new(6.0, 20.0));
+    /// vec.push(Point::new(7.0, 25.0));
+    /// vec.push(Point::new(10.0, 10.0));
+    /// let linestring = LineString::from(vec);
+    /// let mut compare = Vec::new();
+    /// compare.push(0_usize);
+    /// compare.push(3_usize);
+    /// compare.push(4_usize);
+    /// let simplified = linestring.simplifyvw_idx(&30.0);
+    /// assert_eq!(simplified, compare)
+    /// ```
+    fn simplifyvw_idx(&self, epsilon: &T) -> Vec<usize>
+    where
+        T: Float;
+}
+
 /// Simplifies a geometry, preserving its topology by removing self-intersections
 pub trait SimplifyVWPreserve<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using a topology-preserving variant of the
@@ -562,6 +613,15 @@ where
 {
     fn simplifyvw(&self, epsilon: &T) -> LineString<T> {
         LineString::from(visvalingam(self, epsilon))
+    }
+}
+
+impl<T> SimplifyVwIdx<T> for LineString<T>
+where
+    T: Float,
+{
+    fn simplifyvw_idx(&self, epsilon: &T) -> Vec<usize> {
+        visvalingam_indices(self, epsilon)
     }
 }
 

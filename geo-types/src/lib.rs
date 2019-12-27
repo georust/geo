@@ -63,7 +63,8 @@ pub mod private_utils;
 #[macro_use]
 extern crate approx;
 
-mod test {
+#[cfg(test)]
+mod tests {
     use super::*;
 
     #[test]
