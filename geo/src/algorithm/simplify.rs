@@ -170,7 +170,7 @@ where
                 .enumerate()
                 .map(|(idx, point)| RdpIndex {
                     index: idx,
-                    point: point,
+                    point,
                 })
                 .collect::<Vec<RdpIndex<T>>>(),
             epsilon,

@@ -170,7 +170,7 @@ where
             .area()
             .abs();
             pq.push(VScore {
-                area: area,
+                area,
                 current: current_point as usize,
                 left: ai as usize,
                 right: bi as usize,
