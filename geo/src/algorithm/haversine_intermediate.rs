@@ -9,13 +9,11 @@ pub trait HaversineIntermediate<T: Float> {
     /// # Examples
     ///
     /// ```
-    /// # extern crate geo;
     /// # #[macro_use] extern crate approx;
     /// #
     /// use geo::Point;
     /// use geo::algorithm::haversine_intermediate::HaversineIntermediate;
     ///
-    /// # fn main() {
     /// let p1 = Point::<f64>::new(10.0,  20.0);
     /// let p2 = Point::<f64>::new(125.0, 25.0);
     /// let i20        = p1.haversine_intermediate(&p2, 0.2);
@@ -30,7 +28,6 @@ pub trait HaversineIntermediate<T: Float> {
     /// assert_relative_eq!(i50.y(), i50_should.y(), epsilon=0.2);
     /// assert_relative_eq!(i80.x(), i80_should.x(), epsilon=0.2);
     /// assert_relative_eq!(i80.y(), i80_should.y(), epsilon=0.2);
-    /// # }
     /// ```
 
     fn haversine_intermediate(&self, other: &Point<T>, f: T) -> Point<T>;

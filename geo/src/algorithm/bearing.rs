@@ -12,18 +12,15 @@ pub trait Bearing<T: Float> {
     /// # Examples
     ///
     /// ```
-    /// # extern crate geo;
     /// # #[macro_use] extern crate approx;
     /// #
     /// use geo::Point;
     /// use geo::algorithm::bearing::Bearing;
     ///
-    /// # fn main() {
     /// let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
     /// let p_2 = Point::<f64>::new(9.274410083250379, 48.84033282787534);
     /// let bearing = p_1.bearing(p_2);
     /// assert_relative_eq!(bearing, 45., epsilon = 1.0e-6);
-    /// # }
     /// ```
     fn bearing(&self, point: Point<T>) -> T;
 }
