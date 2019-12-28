@@ -124,7 +124,7 @@ where
     fn rotate_around_point(&self, angle: T, point: Point<T>) -> Self {
         let (sin_theta, cos_theta) = angle.to_radians().sin_cos();
         let (x0, y0) = point.x_y();
-        self.map_coords(&|&(x, y)| rotate_inner(x, y, x0, y0, sin_theta, cos_theta).x_y())
+        self.map_coords(|&(x, y)| rotate_inner(x, y, x0, y0, sin_theta, cos_theta).x_y())
     }
 }
 
