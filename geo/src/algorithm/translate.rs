@@ -40,11 +40,11 @@ where
     G: MapCoords<T, T, Output = G> + MapCoordsInplace<T>,
 {
     fn translate(&self, xoff: T, yoff: T) -> Self {
-        self.map_coords(&|&(x, y)| (x + xoff, y + yoff))
+        self.map_coords(|&(x, y)| (x + xoff, y + yoff))
     }
 
     fn translate_inplace(&mut self, xoff: T, yoff: T) {
-        self.map_coords_inplace(&|&(x, y)| (x + xoff, y + yoff))
+        self.map_coords_inplace(|&(x, y)| (x + xoff, y + yoff))
     }
 }
 
