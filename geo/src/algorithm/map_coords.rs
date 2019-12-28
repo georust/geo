@@ -723,9 +723,9 @@ mod test {
             Point::new(3.0, 3.0),
         ]
         .into();
-        let bad = bad_ls.try_map_coords(&|&(x, y)| f(x, y));
+        let bad = bad_ls.try_map_coords(|&(x, y)| f(x, y));
         assert!(bad.is_err());
-        let good = good_ls.try_map_coords(&|&(x, y)| f(x, y));
+        let good = good_ls.try_map_coords(|&(x, y)| f(x, y));
         assert!(good.is_ok());
         assert_eq!(
             good.unwrap(),
