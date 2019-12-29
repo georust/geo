@@ -6,7 +6,8 @@ use std::ops::Sub;
 
 /// A single point in 2D space.
 ///
-/// Points can be created using the `new(x, y)` constructor, or from a `Coordinate` or pair of points.
+/// Points can be created using the `new(x, y)` constructor, the `point!` macro, a `Coordinate`, or from 
+/// two-element tuples or arrays – see the `From` impl section for a complete list.
 ///
 /// # Examples
 ///
@@ -31,6 +32,12 @@ impl<T: CoordinateType> From<Coordinate<T>> for Point<T> {
 impl<T: CoordinateType> From<(T, T)> for Point<T> {
     fn from(coords: (T, T)) -> Point<T> {
         Point::new(coords.0, coords.1)
+    }
+}
+
+impl<T: CoordinateType> From<[T; 2]> for Point<T> {
+    fn from(coords: [T; 2]) -> Point<T> {
+        Point::new(coords[0], coords[1])
     }
 }
 
@@ -377,11 +384,5 @@ where
             1 => &mut self.0.y,
             _ => unreachable!(),
         }
-    }
-}
-
-impl<T: CoordinateType> From<[T; 2]> for Point<T> {
-    fn from(coords: [T; 2]) -> Point<T> {
-        Point::new(coords[0], coords[1])
     }
 }

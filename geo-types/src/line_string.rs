@@ -66,12 +66,28 @@ use std::ops::{Index, IndexMut};
 /// }
 /// ```
 ///
+/// You can also iterate over the coordinates in the `LineString` as `Point`s:
+///
+/// ```
+/// use geo_types::{LineString, Coordinate};
+///
+/// let line_string = LineString(vec![
+///     Coordinate { x: 0., y: 0. },
+///     Coordinate { x: 10., y: 0. },
+/// ]);
+///
+/// for point in line_string.points_iter() {
+///     println!("Point x = {}, y = {}", point.x(), point.y());
+/// }
+/// ```
+
 #[derive(PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LineString<T>(pub Vec<Coordinate<T>>)
 where
     T: CoordinateType;
 
+/// A `Point` iterator returned by the `points_iter` method
 pub struct PointsIter<'a, T: CoordinateType + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
 
 impl<'a, T: CoordinateType> Iterator for PointsIter<'a, T> {
@@ -89,15 +105,17 @@ impl<'a, T: CoordinateType> DoubleEndedIterator for PointsIter<'a, T> {
 }
 
 impl<T: CoordinateType> LineString<T> {
+    /// Return an iterator yielding the coordinates of a `LineString` as `Point`s
     pub fn points_iter(&self) -> PointsIter<T> {
         PointsIter(self.0.iter())
     }
 
+    /// Return the coordinates of a `LineString` as a `Vec` of `Point`s
     pub fn into_points(self) -> Vec<Point<T>> {
         self.0.into_iter().map(Point).collect()
     }
 
-    /// Return an `Line` iterator that yields one `Line` for each line segment
+    /// Return an iterator yielding one `Line` for each line segment
     /// in the `LineString`.
     ///
     /// # Examples
@@ -126,6 +144,7 @@ impl<T: CoordinateType> LineString<T> {
         })
     }
 
+    /// An iterator which yields the coordinates of a `LineString` as `Triangle`s
     pub fn triangles<'a>(&'a self) -> impl ExactSizeIterator + Iterator<Item = Triangle<T>> + 'a {
         self.0.windows(3).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
@@ -166,14 +185,14 @@ impl<T: CoordinateType> LineString<T> {
     }
 }
 
-/// Turn a `Vec` of `Point`-ish objects into a `LineString`.
+/// Turn a `Vec` of `Point`-like objects into a `LineString`.
 impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T> {
     fn from(v: Vec<IC>) -> Self {
         LineString(v.into_iter().map(|c| c.into()).collect())
     }
 }
 
-/// Turn a `Point`-ish iterator into a `LineString`.
+/// Turn an iterator of `Point`-like objects into a `LineString`.
 impl<T: CoordinateType, IC: Into<Coordinate<T>>> FromIterator<IC> for LineString<T> {
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {
         LineString(iter.into_iter().map(|c| c.into()).collect())

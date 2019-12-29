@@ -3,15 +3,15 @@ use crate::{Closest, Line, LineString, MultiLineString, MultiPoint, MultiPolygon
 use num_traits::Float;
 use std::iter;
 
-/// Find the closest point between two objects, where the other object is
-/// assumed to be a `Point` by default.
+/// Find the closest `Point` between a given geometry and an input `Point`.
+/// The closest point may intersect the geometry, be a single
+/// point, or be indeterminate, as indicated by the value of the returned enum.
 ///
 /// # Examples
 ///
-/// Here's a simple example where we've got a horizontal line which goes
-/// through `(-50, 0) -> (50, 0)` and want to find the closest point to
-/// `(0, 100)`. If you draw it out on paper the point on the line which is
-/// closest to `(0, 100)` will be the origin.
+/// We have a horizontal line which goes through `(-50, 0) -> (50, 0)`,
+/// and want to find the closest point to the point `(0, 100)`.
+/// Drawn on paper, the point on the line which is closest to `(0, 100)` is the origin (0, 0).
 ///
 /// ```rust
 /// # use geo::algorithm::closest_point::ClosestPoint;

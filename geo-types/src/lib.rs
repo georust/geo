@@ -1,3 +1,11 @@
+#![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
+//! The `geo-types` library provides geospatial primitive types and traits to the [`GeoRust`](https://github.com/georust)
+//! crate ecosystem.
+//!
+//! In most cases, you will only need to use this crate if you're a crate author and want compatibility
+//! with other `GeoRust` crates. Otherwise, the [`geo`](https://crates.io/crates/geo) crate re-exports these types and
+//! provides geospatial algorithms, while the [`geojson`](https://crates.io/crates/geojson) crate allows serialising
+//! and de-serialising `geo-types` primitives to GeoJSON.
 extern crate num_traits;
 
 #[cfg(feature = "serde")]

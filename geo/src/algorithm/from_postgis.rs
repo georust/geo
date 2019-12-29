@@ -5,6 +5,7 @@ use crate::{
 use postgis;
 use postgis::ewkb::{GeometryCollectionT, GeometryT};
 
+#[cfg_attr(docsrs, doc(cfg(feature = "postgis")))]
 /// Creates geometry from a PostGIS type.
 ///
 /// Note that PostGIS databases can store data under any spatial
