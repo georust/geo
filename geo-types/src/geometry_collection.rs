@@ -6,9 +6,12 @@ use std::ops::{Index, IndexMut};
 ///
 /// It can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
 ///
-/// Iterating over this object yields its component Geometries, and it can be indexed into
+/// Looping over this object yields its component Geometry enum members, and it supports iteration and indexing
+/// as well as the various [`MapCoords`](algorithm/map_coords/index.html) functions, which can be directly
+/// applied to the underlying geometry primitives.
 ///
 /// # Examples
+/// ## Looping
 ///
 /// ```
 /// use std::convert::TryFrom;
@@ -20,6 +23,7 @@ use std::ops::{Index, IndexMut};
 ///     println!("{:?}", Point::try_from(geom).unwrap().x());
 /// }
 /// ```
+/// ## Implements `iter()`
 ///
 /// ```
 /// use std::convert::TryFrom;
@@ -30,6 +34,25 @@ use std::ops::{Index, IndexMut};
 /// gc.iter().for_each(|geom| println!("{:?}", geom));
 /// ```
 ///
+/// ## Mutable Iteration
+///
+/// ```
+/// use std::convert::TryFrom;
+/// use geo_types::{Point, point, Geometry, GeometryCollection};
+/// let p = point!(x: 1.0, y: 1.0);
+/// let pe = Geometry::Point(p);
+/// let mut gc = GeometryCollection(vec![pe]);
+/// gc.iter_mut().for_each(|geom| {
+///    if let Geometry::Point(p) = geom {
+///        p.set_x(0.2);
+///    }
+/// });
+/// let updated = gc[0].clone();
+/// assert_eq!(Point::try_from(updated).unwrap().x(), 0.2);
+/// ```
+///
+/// ## Indexing
+///
 /// ```
 /// use std::convert::TryFrom;
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
@@ -38,6 +61,7 @@ use std::ops::{Index, IndexMut};
 /// let gc = GeometryCollection(vec![pe]);
 /// println!("{:?}", gc[0]);
 /// ```
+///
 #[derive(PartialEq, Clone, Debug, Hash)]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
