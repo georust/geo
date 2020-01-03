@@ -1,11 +1,12 @@
 use crate::{CoordinateType, Geometry};
 use std::iter::FromIterator;
+use std::ops::{Index, IndexMut};
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
 ///
 /// Can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
 ///
-/// Iterating over this objects, yields the component Geometries.
+/// Iterating over this object yields its component Geometries.
 #[derive(PartialEq, Clone, Debug, Hash)]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
@@ -49,5 +50,29 @@ impl<T: CoordinateType> IntoIterator for GeometryCollection<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
+    }
+}
+
+/// Mutably iterate over all the Geometries in this `GeometryCollection`.
+impl<'a, T: CoordinateType> IntoIterator for &'a mut GeometryCollection<T> {
+    type Item = &'a mut Geometry<T>;
+    type IntoIter = ::std::slice::IterMut<'a, Geometry<T>>;
+
+    fn into_iter(self) -> ::std::slice::IterMut<'a, Geometry<T>> {
+        self.0.iter_mut()
+    }
+}
+
+impl<T: CoordinateType> Index<usize> for GeometryCollection<T> {
+    type Output = Geometry<T>;
+
+    fn index(&self, index: usize) -> &Geometry<T> {
+        self.0.index(index)
+    }
+}
+
+impl<T: CoordinateType> IndexMut<usize> for GeometryCollection<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Geometry<T> {
+        self.0.index_mut(index)
     }
 }
