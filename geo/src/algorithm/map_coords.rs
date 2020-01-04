@@ -56,6 +56,43 @@ pub trait TryMapCoords<T, NT> {
     ///
     /// assert_eq!(p2, Point::new(1010., 40.));
     /// ```
+    ///
+    /// ## Advanced Example: Geometry coordinate conversion using `PROJ`
+    ///
+    /// ```
+    /// // activate the [use-proj] feature in cargo.toml in order to access proj functions
+    /// # #[cfg(feature = "use-proj")]
+    /// use geo::{Coordinate, Point};
+    /// # #[cfg(feature = "use-proj")]
+    /// use geo::algorithm::map_coords::TryMapCoords;
+    /// # #[cfg(feature = "use-proj")]
+    /// use proj::Proj;
+    /// // GeoJSON uses the WGS 84 coordinate system
+    /// # #[cfg(feature = "use-proj")]
+    /// let from = "EPSG:4326";
+    /// // The NAD83 / California zone 6 (ftUS) coordinate system
+    /// # #[cfg(feature = "use-proj")]
+    /// let to = "EPSG:2230";
+    /// # #[cfg(feature = "use-proj")]
+    /// let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
+    /// # #[cfg(feature = "use-proj")]
+    /// let f = |x: f64, y: f64| {
+    ///     // proj can accept Point, Coordinate, Tuple, and array values, returning a Result
+    ///     let shifted = to_feet.convert((x, y))?;
+    ///     Ok((shifted.x(), shifted.y()))
+    /// };
+    /// # #[cfg(feature = "use-proj")]
+    /// // 👽
+    /// # #[cfg(feature = "use-proj")]
+    /// let usa_m = Point::new(-115.797615, 37.2647978);
+    /// // PROJ expects coordinates in EPSG:4326 order: i.e. Lat, Lon
+    /// # #[cfg(feature = "use-proj")]
+    /// let usa_ft = usa_m.try_map_coords(|&(x, y)| f(y, x)).unwrap();
+    /// # #[cfg(feature = "use-proj")]
+    /// assert_eq!(6693625.67217475, usa_ft.x());
+    /// # #[cfg(feature = "proj")]
+    /// assert_eq!(3497301.5918027186, usa_ft.y());
+    /// ```
     fn try_map_coords(
         &self,
         func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>> + Copy,
@@ -700,6 +737,25 @@ mod test {
     }
 
     #[cfg(feature = "use-proj")]
+    #[test]
+    fn test_fallible_proj() {
+        use proj::Proj;
+        let from = "EPSG:4326";
+        let to = "EPSG:2230";
+        let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
+
+        let f = |x: f64, y: f64| {
+            let shifted = to_feet.convert((x, y))?;
+            Ok((shifted.x(), shifted.y()))
+        };
+        // 👽
+        let usa_m = Point::new(-115.797615, 37.2647978);
+        // PROJ expects coordinates in EPSG:4326 order: i.e. Lat, Lon
+        let usa_ft = usa_m.try_map_coords(|&(x, y)| f(y, x)).unwrap();
+        assert_eq!(6693625.67217475, usa_ft.x());
+        assert_eq!(3497301.5918027186, usa_ft.y());
+    }
+
     #[test]
     fn test_fallible() {
         let f = |x: f64, y: f64| {
