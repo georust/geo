@@ -756,7 +756,6 @@ mod test {
         assert_eq!(3497301.5918027186, usa_ft.y());
     }
 
-    #[cfg(feature = "use-proj")]
     #[test]
     fn test_fallible() {
         let f = |x: f64, y: f64| {
