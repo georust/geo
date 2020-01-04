@@ -60,7 +60,7 @@ pub trait TryMapCoords<T, NT> {
     /// ## Advanced Example: Geometry coordinate conversion using `PROJ`
     ///
     /// ```
-    /// // activate the `[use-proj]` feature in `cargo.toml` in order to access proj functions
+    /// // activate the [use-proj] feature in cargo.toml in order to access proj functions
     /// # #[cfg(feature = "use-proj")]
     /// use geo::{Coordinate, Point};
     /// # #[cfg(feature = "use-proj")]
