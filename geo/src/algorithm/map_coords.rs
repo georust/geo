@@ -85,9 +85,8 @@ pub trait TryMapCoords<T, NT> {
     /// // 👽
     /// # #[cfg(feature = "use-proj")]
     /// let usa_m = Point::new(-115.797615, 37.2647978);
-    /// // PROJ expects coordinates in EPSG:4326 order: i.e. Lat, Lon
     /// # #[cfg(feature = "use-proj")]
-    /// let usa_ft = usa_m.try_map_coords(|&(x, y)| f(y, x)).unwrap();
+    /// let usa_ft = usa_m.try_map_coords(|&(x, y)| f(x, y)).unwrap();
     /// # #[cfg(feature = "use-proj")]
     /// assert_eq!(6693625.67217475, usa_ft.x());
     /// # #[cfg(feature = "proj")]
@@ -750,8 +749,7 @@ mod test {
         };
         // 👽
         let usa_m = Point::new(-115.797615, 37.2647978);
-        // PROJ expects coordinates in EPSG:4326 order: i.e. Lat, Lon
-        let usa_ft = usa_m.try_map_coords(|&(x, y)| f(y, x)).unwrap();
+        let usa_ft = usa_m.try_map_coords(|&(x, y)| f(x, y)).unwrap();
         assert_eq!(6693625.67217475, usa_ft.x());
         assert_eq!(3497301.5918027186, usa_ft.y());
     }
