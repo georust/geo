@@ -1,7 +1,8 @@
 # Changes
 
 ## geo (unreleased)
-
+* Bump proj to 0.14.4
+  * <https://github.com/georust/geo/pull/412>
 * Add `BoundingRect` implementation for `Rect`
   * <https://github.com/georust/geo/pull/355>
 * Add Chamberlain–Duquette area algorithm

@@ -19,7 +19,7 @@ num-traits = "0.2"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 rstar = { version = "0.7" }
 postgis = { version = "0.6", optional = true }
-proj = { version = "0.12.2", optional = true }
+proj = { version = "0.14.4", optional = true }
 
 # Swap the next two lines when publishing
 # geo-types = { version = "0.4.2", features = ["rstar"] }
