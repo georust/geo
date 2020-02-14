@@ -1,6 +1,6 @@
 use crate::euclidean_length::EuclideanLength;
 use crate::prelude::*;
-use crate::{Closest, Coordinate, Point, Line, LineString, MultiLineString};
+use crate::{Closest, Point, Line, LineString};
 use num_traits::Float;
 use std::iter::Sum;
 use std::ops::{Add, Div};
@@ -61,6 +61,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::Coordinate;
 
     #[test]
     fn test_line() {
