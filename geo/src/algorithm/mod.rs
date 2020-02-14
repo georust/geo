@@ -35,7 +35,7 @@ pub mod haversine_intermediate;
 pub mod haversine_length;
 /// Determine whether `Geometry` `A` intersects `Geometry` `B`.
 pub mod intersects;
-/// Calculate the percentage along a line of a given point
+/// Calculate the distance of a point along a given line, as a percentage.
 pub mod line_locate_point;
 /// Apply a function to all `Coordinates` of a `Geometry`.
 pub mod map_coords;
