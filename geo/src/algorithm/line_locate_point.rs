@@ -1,6 +1,6 @@
 use crate::euclidean_length::EuclideanLength;
 use crate::prelude::*;
-use crate::{Closest, Coordinate, Line, LineString, MultiLineString, Point};
+use crate::{Closest, Coordinate, Point, Line, LineString, MultiLineString};
 use num_traits::Float;
 use std::iter::Sum;
 use std::ops::{Add, Div};
@@ -22,7 +22,8 @@ pub trait PointLocator<F: Float + Add + Div + Sum, Rhs = Point<F>> {
     ///
     /// let pt = Point(Coordinate{x: 1.5, y: 1.5});
     ///
-    /// println!("Percent Along Line: {}", the_linestring.locate_point(&pt).unwrap());
+    /// let result = the_linestring.locate_point(&pt).unwrap();
+    /// assert_eq!(result, 0.5);
     ///
     /// ```
     fn locate_point(&self, p: &Rhs) -> Option<F>;
@@ -56,12 +57,6 @@ where
     }
 }
 
-//impl<F> PointLocator<F> for MultiLineString<F>
-//where
-//    F: Float + Add + Div + Sum,
-//{
-//    fn locate_point(&self, p: &Point<F>) -> Option<F> {}
-//}
 
 #[cfg(test)]
 mod test {
