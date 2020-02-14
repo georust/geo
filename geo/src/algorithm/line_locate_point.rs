@@ -23,7 +23,7 @@ pub trait PointLocator<F: Float + Add + Div + Sum, Rhs = Point<F>> {
     /// let pt = Point(Coordinate{x: 1.5, y: 1.5});
     ///
     /// let result = the_linestring.locate_point(&pt).unwrap();
-    /// assert_eq!(result, 0.5);
+    /// assert_eq!(result, 0.75);
     ///
     /// ```
     fn locate_point(&self, p: &Rhs) -> Option<F>;
