@@ -25,9 +25,6 @@ pub mod frechet_distance;
 /// Produces a `Geometry` from PostGIS.
 #[cfg(feature = "postgis-integration")]
 pub mod from_postgis;
-/// Convert a `Geometry` into a PostGIS.
-#[cfg(feature = "postgis-integration")]
-pub mod to_postgis;
 /// Calculate a destination `Point`, given a distance and a bearing.
 pub mod haversine_destination;
 /// Calculate the Haversine distance between two `Geometries`.
@@ -53,6 +50,9 @@ pub mod rotate;
 pub mod simplify;
 /// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
 pub mod simplifyvw;
+/// Convert a `Geometry` into a PostGIS.
+#[cfg(feature = "postgis-integration")]
+pub mod to_postgis;
 /// Translate a `Geometry` along the given offsets.
 pub mod translate;
 /// Calculate the Vincenty distance between two `Point`s.

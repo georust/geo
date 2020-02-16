@@ -22,8 +22,8 @@ pub trait VincentyDistance<T, Rhs = Self> {
     /// # Examples
     ///
     /// ```
-    /// use geo::Point;
     /// use geo::prelude::*;
+    /// use geo::Point;
     ///
     /// // New York City
     /// let p1 = Point::<f64>::from((-74.006, 40.7128));
@@ -33,8 +33,8 @@ pub trait VincentyDistance<T, Rhs = Self> {
     /// let distance = p1.vincenty_distance(&p2).unwrap();
     ///
     /// assert_eq!(
-    ///   5_585_234., // meters
-    ///   distance.round()
+    ///     5_585_234., // meters
+    ///     distance.round()
     /// );
     /// ```
     ///

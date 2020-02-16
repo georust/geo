@@ -22,10 +22,7 @@ where
     /// ```
     /// use geo_types::{Coordinate, Line};
     ///
-    /// let line = Line::new(
-    ///     Coordinate { x: 0., y: 0. },
-    ///     Coordinate { x: 1., y: 2. },
-    /// );
+    /// let line = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 2. });
     ///
     /// assert_eq!(line.start, Coordinate { x: 0., y: 0. });
     /// assert_eq!(line.end, Coordinate { x: 1., y: 2. });
@@ -101,8 +98,7 @@ where
     /// # let a = Point(Coordinate { x: 4., y: -12. });
     /// # let b = Point(Coordinate { x: 0., y: 9. });
     /// # assert!(
-    /// Line::new(a, b).slope() ==
-    ///     Line::new(b, a).slope()
+    /// Line::new(a, b).slope() == Line::new(b, a).slope()
     /// # );
     /// ```
     pub fn slope(&self) -> T {
@@ -121,8 +117,7 @@ where
     /// # );
     /// # assert_eq!(
     /// #     line.determinant(),
-    /// line.start.x * line.end.y -
-    ///     line.start.y * line.end.x
+    /// line.start.x * line.end.y - line.start.y * line.end.x
     /// # );
     /// ```
     ///
@@ -133,8 +128,7 @@ where
     /// # let a = Point(Coordinate { x: 4., y: -12. });
     /// # let b = Point(Coordinate { x: 0., y: 9. });
     /// # assert!(
-    /// Line::new(a, b).determinant() ==
-    ///     -Line::new(b, a).determinant()
+    /// Line::new(a, b).determinant() == -Line::new(b, a).determinant()
     /// # );
     /// ```
     pub fn determinant(&self) -> T {

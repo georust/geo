@@ -27,8 +27,8 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{COORD_PRECISION, Point, LineString, Polygon};
     /// use geo::algorithm::euclidean_distance::EuclideanDistance;
+    /// use geo::{LineString, Point, Polygon, COORD_PRECISION};
     ///
     /// // Point to Point example
     /// let p = Point::new(-72.1235, 42.3521);
@@ -45,7 +45,7 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     ///     (7., 3.),
     ///     (7., 2.),
     ///     (6., 1.),
-    ///     (5., 1.)
+    ///     (5., 1.),
     /// ];
     /// let ls: LineString<_> = points.iter().map(|e| Point::new(e.0, e.1)).collect();
     /// let poly = Polygon::new(ls, vec![]);

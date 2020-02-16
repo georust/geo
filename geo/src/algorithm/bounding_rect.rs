@@ -13,8 +13,8 @@ pub trait BoundingRect<T: CoordinateType> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString};
     /// use geo::algorithm::bounding_rect::BoundingRect;
+    /// use geo::{LineString, Point};
     ///
     /// let mut vec = Vec::new();
     /// vec.push(Point::new(40.02f64, 116.34));
@@ -28,7 +28,6 @@ pub trait BoundingRect<T: CoordinateType> {
     /// assert_eq!(116.34, bounding_rect.min().y);
     /// assert_eq!(118.34, bounding_rect.max().y);
     /// ```
-    ///
     fn bounding_rect(&self) -> Self::Output;
 }
 
@@ -40,7 +39,6 @@ where
 
     ///
     /// Return the BoundingRect for a MultiPoint
-    ///
     fn bounding_rect(&self) -> Self::Output {
         get_bounding_rect(self.0.iter().map(|p| p.0))
     }
@@ -72,7 +70,6 @@ where
 
     ///
     /// Return the BoundingRect for a LineString
-    ///
     fn bounding_rect(&self) -> Self::Output {
         line_string_bounding_rect(self)
     }
@@ -86,7 +83,6 @@ where
 
     ///
     /// Return the BoundingRect for a MultiLineString
-    ///
     fn bounding_rect(&self) -> Self::Output {
         get_bounding_rect(self.0.iter().flat_map(|line| line.0.iter().cloned()))
     }
@@ -100,7 +96,6 @@ where
 
     ///
     /// Return the BoundingRect for a Polygon
-    ///
     fn bounding_rect(&self) -> Self::Output {
         let line = self.exterior();
         get_bounding_rect(line.0.iter().cloned())
@@ -115,7 +110,6 @@ where
 
     ///
     /// Return the BoundingRect for a MultiPolygon
-    ///
     fn bounding_rect(&self) -> Self::Output {
         get_bounding_rect(
             self.0

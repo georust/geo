@@ -10,7 +10,7 @@ use std::ops::{Index, IndexMut};
 /// Create a `LineString` by calling it directly:
 ///
 /// ```
-/// use geo_types::{LineString, Coordinate};
+/// use geo_types::{Coordinate, LineString};
 ///
 /// let line_string = LineString(vec![
 ///     Coordinate { x: 0., y: 0. },
@@ -23,30 +23,22 @@ use std::ops::{Index, IndexMut};
 /// ```
 /// use geo_types::LineString;
 ///
-/// let line_string: LineString<f32> = vec![
-///     (0., 0.),
-///     (10., 0.),
-/// ].into();
+/// let line_string: LineString<f32> = vec![(0., 0.), (10., 0.)].into();
 /// ```
 ///
 /// ```
 /// use geo_types::LineString;
 ///
-/// let line_string: LineString<f64> = vec![
-///     [0., 0.],
-///     [10., 0.],
-/// ].into();
+/// let line_string: LineString<f64> = vec![[0., 0.], [10., 0.]].into();
 /// ```
 //
 /// Or `collect`ing from a `Coordinate` iterator
 ///
 /// ```
-/// use geo_types::{LineString, Coordinate};
+/// use geo_types::{Coordinate, LineString};
 ///
-/// let mut coords_iter = vec![
-///     Coordinate { x: 0., y: 0. },
-///     Coordinate { x: 10., y: 0. }
-/// ].into_iter();
+/// let mut coords_iter =
+///     vec![Coordinate { x: 0., y: 0. }, Coordinate { x: 10., y: 0. }].into_iter();
 ///
 /// let line_string: LineString<f32> = coords_iter.collect();
 /// ```
@@ -54,7 +46,7 @@ use std::ops::{Index, IndexMut};
 /// You can iterate over the coordinates in the `LineString`:
 ///
 /// ```
-/// use geo_types::{LineString, Coordinate};
+/// use geo_types::{Coordinate, LineString};
 ///
 /// let line_string = LineString(vec![
 ///     Coordinate { x: 0., y: 0. },
@@ -69,7 +61,7 @@ use std::ops::{Index, IndexMut};
 /// You can also iterate over the coordinates in the `LineString` as `Point`s:
 ///
 /// ```
-/// use geo_types::{LineString, Coordinate};
+/// use geo_types::{Coordinate, LineString};
 ///
 /// let line_string = LineString(vec![
 ///     Coordinate { x: 0., y: 0. },
@@ -121,18 +113,24 @@ impl<T: CoordinateType> LineString<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Line, LineString, Coordinate};
+    /// use geo_types::{Coordinate, Line, LineString};
     ///
     /// let mut coords = vec![(0., 0.), (5., 0.), (7., 9.)];
     /// let line_string: LineString<f32> = coords.into_iter().collect();
     ///
     /// let mut lines = line_string.lines();
     /// assert_eq!(
-    ///     Some(Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 5., y: 0. })),
+    ///     Some(Line::new(
+    ///         Coordinate { x: 0., y: 0. },
+    ///         Coordinate { x: 5., y: 0. }
+    ///     )),
     ///     lines.next()
     /// );
     /// assert_eq!(
-    ///     Some(Line::new(Coordinate { x: 5., y: 0. }, Coordinate { x: 7., y: 9. })),
+    ///     Some(Line::new(
+    ///         Coordinate { x: 5., y: 0. },
+    ///         Coordinate { x: 7., y: 9. }
+    ///     )),
     ///     lines.next()
     /// );
     /// assert!(lines.next().is_none());

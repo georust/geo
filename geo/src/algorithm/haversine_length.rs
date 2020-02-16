@@ -16,21 +16,21 @@ pub trait HaversineLength<T, RHS = Self> {
     /// # Examples
     ///
     /// ```
-    /// use geo::LineString;
     /// use geo::prelude::*;
+    /// use geo::LineString;
     ///
     /// let linestring = LineString::<f64>::from(vec![
-    ///   // New York City
-    ///   (-74.006, 40.7128),
-    ///   // London
-    ///   (-0.1278, 51.5074),
+    ///     // New York City
+    ///     (-74.006, 40.7128),
+    ///     // London
+    ///     (-0.1278, 51.5074),
     /// ]);
     ///
     /// let length = linestring.haversine_length();
     ///
     /// assert_eq!(
-    ///   5_570_222., // meters
-    ///   length.round()
+    ///     5_570_222., // meters
+    ///     length.round()
     /// );
     /// ```
     ///

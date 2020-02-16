@@ -58,8 +58,8 @@ pub trait Rotate<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString};
-    /// use geo::algorithm::rotate::{Rotate};
+    /// use geo::algorithm::rotate::Rotate;
+    /// use geo::{LineString, Point};
     ///
     /// let mut vec = Vec::new();
     /// vec.push(Point::new(0.0, 0.0));

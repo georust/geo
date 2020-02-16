@@ -434,8 +434,8 @@ pub trait SimplifyVW<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString};
-    /// use geo::algorithm::simplifyvw::{SimplifyVW};
+    /// use geo::algorithm::simplifyvw::SimplifyVW;
+    /// use geo::{LineString, Point};
     ///
     /// let mut vec = Vec::new();
     /// vec.push(Point::new(5.0, 2.0));
@@ -469,8 +469,8 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString};
-    /// use geo::algorithm::simplifyvw::{SimplifyVwIdx};
+    /// use geo::algorithm::simplifyvw::SimplifyVwIdx;
+    /// use geo::{LineString, Point};
     ///
     /// let mut vec = Vec::new();
     /// vec.push(Point::new(5.0, 2.0));
@@ -518,8 +518,8 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString};
-    /// use geo::algorithm::simplifyvw::{SimplifyVWPreserve};
+    /// use geo::algorithm::simplifyvw::SimplifyVWPreserve;
+    /// use geo::{LineString, Point};
     ///
     /// let mut vec = Vec::new();
     /// vec.push(Point::new(10., 60.));

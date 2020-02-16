@@ -13,11 +13,11 @@ pub trait MapCoords<T, NT> {
     /// # Examples
     ///
     /// ```
-    /// use geo::Point;
     /// use geo::algorithm::map_coords::MapCoords;
+    /// use geo::Point;
     ///
     /// let p1 = Point::new(10., 20.);
-    /// let p2 = p1.map_coords(|&(x, y)| (x+1000., y*2.));
+    /// let p2 = p1.map_coords(|&(x, y)| (x + 1000., y * 2.));
     ///
     /// assert_eq!(p2, Point::new(1010., 40.));
     /// ```
@@ -48,11 +48,13 @@ pub trait TryMapCoords<T, NT> {
     /// # Examples
     ///
     /// ```
-    /// use geo::Point;
     /// use geo::algorithm::map_coords::TryMapCoords;
+    /// use geo::Point;
     ///
     /// let p1 = Point::new(10., 20.);
-    /// let p2 = p1.try_map_coords(|&(x, y)| Ok((x+1000., y*2.))).unwrap();
+    /// let p2 = p1
+    ///     .try_map_coords(|&(x, y)| Ok((x + 1000., y * 2.)))
+    ///     .unwrap();
     ///
     /// assert_eq!(p2, Point::new(1010., 40.));
     /// ```
@@ -108,11 +110,11 @@ pub trait MapCoordsInplace<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::Point;
     /// use geo::algorithm::map_coords::MapCoordsInplace;
+    /// use geo::Point;
     ///
     /// let mut p = Point::new(10., 20.);
-    /// p.map_coords_inplace(|&(x, y)| (x+1000., y*2.));
+    /// p.map_coords_inplace(|&(x, y)| (x + 1000., y * 2.));
     ///
     /// assert_eq!(p, Point::new(1010., 40.));
     /// ```

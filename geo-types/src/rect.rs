@@ -25,10 +25,7 @@ impl<T: CoordinateType> Rect<T> {
     /// ```
     /// use geo_types::{Coordinate, Rect};
     ///
-    /// let rect = Rect::new(
-    ///     Coordinate { x: 0., y: 0. },
-    ///     Coordinate { x: 10., y: 20. },
-    /// );
+    /// let rect = Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 10., y: 20. });
     ///
     /// assert_eq!(rect.min(), Coordinate { x: 0., y: 0. });
     /// assert_eq!(rect.max(), Coordinate { x: 10., y: 20. });

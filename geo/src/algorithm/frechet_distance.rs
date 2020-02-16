@@ -14,8 +14,8 @@ pub trait FrechetDistance<T, Rhs = Self> {
     /// # Examples
     ///
     /// ```
-    /// use geo::LineString;
     /// use geo::algorithm::frechet_distance::FrechetDistance;
+    /// use geo::LineString;
     ///
     /// let ls_a = LineString::from(vec![(1., 1.), (2., 1.), (2., 2.), (3., 3.)]);
     /// let ls_b = LineString::from(vec![(2., 2.), (0., 1.), (2., 4.), (3., 4.)]);

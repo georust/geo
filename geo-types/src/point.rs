@@ -6,15 +6,15 @@ use std::ops::Sub;
 
 /// A single point in 2D space.
 ///
-/// Points can be created using the `new(x, y)` constructor, the `point!` macro, a `Coordinate`, or from 
+/// Points can be created using the `new(x, y)` constructor, the `point!` macro, a `Coordinate`, or from
 /// two-element tuples or arrays – see the `From` impl section for a complete list.
 ///
 /// # Examples
 ///
 /// ```
-/// use geo_types::{Point, Coordinate};
+/// use geo_types::{Coordinate, Point};
 /// let p1: Point<f64> = (0., 1.).into();
-/// let c = Coordinate{ x: 10., y: 20.};
+/// let c = Coordinate { x: 10., y: 20. };
 /// let p2: Point<f64> = c.into();
 /// ```
 #[derive(PartialEq, Clone, Copy, Debug, Hash)]
@@ -258,7 +258,7 @@ where
     /// use geo_types::Point;
     ///
     /// let p = Point::new(1.234, 2.345);
-    /// let (x,y): (f32, f32) = p.to_degrees().x_y();
+    /// let (x, y): (f32, f32) = p.to_degrees().x_y();
     /// assert_eq!(x.round(), 71.0);
     /// assert_eq!(y.round(), 134.0);
     /// ```
@@ -276,7 +276,7 @@ where
     /// use geo_types::Point;
     ///
     /// let p = Point::new(180.0, 341.5);
-    /// let (x,y): (f32, f32) = p.to_radians().x_y();
+    /// let (x, y): (f32, f32) = p.to_radians().x_y();
     /// assert_eq!(x.round(), 3.0);
     /// assert_eq!(y.round(), 6.0);
     /// ```
