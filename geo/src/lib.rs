@@ -1,5 +1,5 @@
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
-//! The `geo` crate provides geospatial primitive types such as `Coordinate`, `Point`, `LineString`, and `Polygon` as 
+//! The `geo` crate provides geospatial primitive types such as `Coordinate`, `Point`, `LineString`, and `Polygon` as
 //! well as their `Multi–` equivalents, and provides algorithms and operations such as:
 //!   - Area and centroid calculation
 //!   - Simplification and convex hull operations
@@ -32,7 +32,7 @@
 //! ## GeoJSON
 //! If you wish to read or write `GeoJSON`, use the [`geojson`](https://docs.rs/geojson) crate, with the `geo-types` feature activated.
 //! This provides fallible conversions **to** `geo-types` primitives such as `Point` and `Polygon` from `geojson` `Value`
-//! structs using the standard [`TryFrom`](https://doc.rust-lang.org/stable/std/convert/trait.TryFrom.html) 
+//! structs using the standard [`TryFrom`](https://doc.rust-lang.org/stable/std/convert/trait.TryFrom.html)
 //! and [`TryInto`](https://doc.rust-lang.org/stable/std/convert/trait.TryInto.html) traits,
 //! and conversion **from** `geo-types` primitives to `geojson`
 //! `Value` structs using the [`From`](https://doc.rust-lang.org/stable/std/convert/trait.TryFrom.html) trait.

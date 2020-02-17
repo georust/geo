@@ -11,23 +11,23 @@ pub trait HaversineIntermediate<T: Float> {
     /// ```
     /// # #[macro_use] extern crate approx;
     /// #
-    /// use geo::Point;
     /// use geo::algorithm::haversine_intermediate::HaversineIntermediate;
+    /// use geo::Point;
     ///
-    /// let p1 = Point::<f64>::new(10.0,  20.0);
+    /// let p1 = Point::<f64>::new(10.0, 20.0);
     /// let p2 = Point::<f64>::new(125.0, 25.0);
-    /// let i20        = p1.haversine_intermediate(&p2, 0.2);
-    /// let i50        = p1.haversine_intermediate(&p2, 0.5);
-    /// let i80        = p1.haversine_intermediate(&p2, 0.8);
-    /// let i20_should = Point::new(29.8,  29.9);
-    /// let i50_should = Point::new(65.8,  37.7);
+    /// let i20 = p1.haversine_intermediate(&p2, 0.2);
+    /// let i50 = p1.haversine_intermediate(&p2, 0.5);
+    /// let i80 = p1.haversine_intermediate(&p2, 0.8);
+    /// let i20_should = Point::new(29.8, 29.9);
+    /// let i50_should = Point::new(65.8, 37.7);
     /// let i80_should = Point::new(103.5, 33.5);
-    /// assert_relative_eq!(i20.x(), i20_should.x(), epsilon=0.2);
-    /// assert_relative_eq!(i20.y(), i20_should.y(), epsilon=0.2);
-    /// assert_relative_eq!(i50.x(), i50_should.x(), epsilon=0.2);
-    /// assert_relative_eq!(i50.y(), i50_should.y(), epsilon=0.2);
-    /// assert_relative_eq!(i80.x(), i80_should.x(), epsilon=0.2);
-    /// assert_relative_eq!(i80.y(), i80_should.y(), epsilon=0.2);
+    /// assert_relative_eq!(i20.x(), i20_should.x(), epsilon = 0.2);
+    /// assert_relative_eq!(i20.y(), i20_should.y(), epsilon = 0.2);
+    /// assert_relative_eq!(i50.x(), i50_should.x(), epsilon = 0.2);
+    /// assert_relative_eq!(i50.y(), i50_should.y(), epsilon = 0.2);
+    /// assert_relative_eq!(i80.x(), i80_should.x(), epsilon = 0.2);
+    /// assert_relative_eq!(i80.y(), i80_should.y(), epsilon = 0.2);
     /// ```
 
     fn haversine_intermediate(&self, other: &Point<T>, f: T) -> Point<T>;

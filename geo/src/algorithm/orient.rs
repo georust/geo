@@ -11,13 +11,16 @@ pub trait Orient<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString, Polygon};
-    /// use geo::orient::{Orient, Direction};
+    /// use geo::orient::{Direction, Orient};
+    /// use geo::{LineString, Point, Polygon};
     /// // a diamond shape, oriented clockwise outside
     /// let points_ext = vec![(1.0, 0.0), (0.0, 1.0), (1.0, 2.0), (2.0, 1.0), (1.0, 0.0)];
     /// // counter-clockwise interior
     /// let points_int = vec![(1.0, 0.5), (1.5, 1.0), (1.0, 1.5), (0.5, 1.0), (1.0, 0.5)];
-    /// let poly = Polygon::new(LineString::from(points_ext), vec![LineString::from(points_int)]);
+    /// let poly = Polygon::new(
+    ///     LineString::from(points_ext),
+    ///     vec![LineString::from(points_int)],
+    /// );
     /// // a diamond shape, oriented counter-clockwise outside,
     /// let oriented_ext = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
     /// let oriented_ext_ls = LineString::from(oriented_ext);

@@ -60,12 +60,10 @@ where
     /// ```
     /// use geo_types::{LineString, Polygon};
     ///
-    /// let polygon = Polygon::new(LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]), vec![]);
+    /// let polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![],
+    /// );
     /// ```
     ///
     /// Creating a `Polygon` with an interior ring:
@@ -73,19 +71,15 @@ where
     /// ```
     /// use geo_types::{LineString, Polygon};
     ///
-    /// let polygon = Polygon::new(LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]), vec![
-    ///     LineString::from(vec![
+    /// let polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![LineString::from(vec![
     ///         (0.1, 0.1),
     ///         (0.9, 0.9),
     ///         (0.9, 0.1),
     ///         (0.1, 0.1),
-    ///     ])
-    /// ]);
+    ///     ])],
+    /// );
     /// ```
     ///
     /// If the first and last `Coordinate`s of the exterior or interior
@@ -94,18 +88,12 @@ where
     /// ```
     /// use geo_types::{Coordinate, LineString, Polygon};
     ///
-    /// let mut polygon = Polygon::new(LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    /// ]), vec![]);
+    /// let mut polygon = Polygon::new(LineString::from(vec![(0., 0.), (1., 1.), (1., 0.)]), vec![]);
     ///
-    /// assert_eq!(polygon.exterior(), &LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]));
+    /// assert_eq!(
+    ///     polygon.exterior(),
+    ///     &LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.),])
+    /// );
     /// ```
     pub fn new(mut exterior: LineString<T>, mut interiors: Vec<LineString<T>>) -> Polygon<T> {
         exterior.close();
@@ -126,35 +114,32 @@ where
     /// ```
     /// use geo_types::{LineString, Polygon};
     ///
-    /// let mut polygon = Polygon::new(LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]), vec![
-    ///     LineString::from(vec![
+    /// let mut polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![LineString::from(vec![
     ///         (0.1, 0.1),
     ///         (0.9, 0.9),
     ///         (0.9, 0.1),
     ///         (0.1, 0.1),
-    ///     ])
-    /// ]);
+    ///     ])],
+    /// );
     ///
     /// let (exterior, interiors) = polygon.into_inner();
     ///
-    /// assert_eq!(exterior, LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]));
+    /// assert_eq!(
+    ///     exterior,
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.),])
+    /// );
     ///
-    /// assert_eq!(interiors, vec![LineString::from(vec![
-    ///     (0.1, 0.1),
-    ///     (0.9, 0.9),
-    ///     (0.9, 0.1),
-    ///     (0.1, 0.1),
-    /// ])]);
+    /// assert_eq!(
+    ///     interiors,
+    ///     vec![LineString::from(vec![
+    ///         (0.1, 0.1),
+    ///         (0.9, 0.9),
+    ///         (0.9, 0.1),
+    ///         (0.1, 0.1),
+    ///     ])]
+    /// );
     /// ```
     pub fn into_inner(self) -> (LineString<T>, Vec<LineString<T>>) {
         (self.exterior, self.interiors)
@@ -167,12 +152,7 @@ where
     /// ```
     /// use geo_types::{LineString, Polygon};
     ///
-    /// let exterior = LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]);
+    /// let exterior = LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]);
     ///
     /// let polygon = Polygon::new(exterior.clone(), vec![]);
     ///
@@ -192,23 +172,19 @@ where
     /// ```
     /// use geo_types::{Coordinate, LineString, Polygon};
     ///
-    /// let mut polygon = Polygon::new(LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]), vec![]);
+    /// let mut polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![],
+    /// );
     ///
     /// polygon.exterior_mut(|exterior| {
     ///     exterior.0[1] = Coordinate { x: 1., y: 2. };
     /// });
     ///
-    /// assert_eq!(polygon.exterior(), &LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 2.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]));
+    /// assert_eq!(
+    ///     polygon.exterior(),
+    ///     &LineString::from(vec![(0., 0.), (1., 2.), (1., 0.), (0., 0.),])
+    /// );
     /// ```
     ///
     /// If the first and last `Coordinate`s of the exterior `LineString` no
@@ -217,24 +193,19 @@ where
     /// ```
     /// use geo_types::{Coordinate, LineString, Polygon};
     ///
-    /// let mut polygon = Polygon::new(LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]), vec![]);
+    /// let mut polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![],
+    /// );
     ///
     /// polygon.exterior_mut(|exterior| {
     ///     exterior.0[0] = Coordinate { x: 0., y: 1. };
     /// });
     ///
-    /// assert_eq!(polygon.exterior(), &LineString::from(vec![
-    ///     (0., 1.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    ///     (0., 1.),
-    /// ]));
+    /// assert_eq!(
+    ///     polygon.exterior(),
+    ///     &LineString::from(vec![(0., 1.), (1., 1.), (1., 0.), (0., 0.), (0., 1.),])
+    /// );
     /// ```
     ///
     /// [will be closed]: #linestring-closing-operation
@@ -260,12 +231,10 @@ where
     ///     (0.1, 0.1),
     /// ])];
     ///
-    /// let polygon = Polygon::new(LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]), interiors.clone());
+    /// let polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     interiors.clone(),
+    /// );
     ///
     /// assert_eq!(interiors, polygon.interiors());
     /// ```
@@ -284,32 +253,29 @@ where
     /// ```
     /// use geo_types::{Coordinate, LineString, Polygon};
     ///
-    /// let mut polygon = Polygon::new(LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]), vec![
-    ///     LineString::from(vec![
+    /// let mut polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![LineString::from(vec![
     ///         (0.1, 0.1),
     ///         (0.9, 0.9),
     ///         (0.9, 0.1),
     ///         (0.1, 0.1),
-    ///     ])
-    /// ]);
+    ///     ])],
+    /// );
     ///
     /// polygon.interiors_mut(|interiors| {
     ///     interiors[0].0[1] = Coordinate { x: 0.8, y: 0.8 };
     /// });
     ///
-    /// assert_eq!(polygon.interiors(), &[
-    ///     LineString::from(vec![
+    /// assert_eq!(
+    ///     polygon.interiors(),
+    ///     &[LineString::from(vec![
     ///         (0.1, 0.1),
     ///         (0.8, 0.8),
     ///         (0.9, 0.1),
     ///         (0.1, 0.1),
-    ///     ])
-    /// ]);
+    ///     ])]
+    /// );
     /// ```
     ///
     /// If the first and last `Coordinate`s of any interior `LineString` no
@@ -318,33 +284,30 @@ where
     /// ```
     /// use geo_types::{Coordinate, LineString, Polygon};
     ///
-    /// let mut polygon = Polygon::new(LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]), vec![
-    ///     LineString::from(vec![
+    /// let mut polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![LineString::from(vec![
     ///         (0.1, 0.1),
     ///         (0.9, 0.9),
     ///         (0.9, 0.1),
     ///         (0.1, 0.1),
-    ///     ])
-    /// ]);
+    ///     ])],
+    /// );
     ///
     /// polygon.interiors_mut(|interiors| {
     ///     interiors[0].0[0] = Coordinate { x: 0.1, y: 0.2 };
     /// });
     ///
-    /// assert_eq!(polygon.interiors(), &[
-    ///     LineString::from(vec![
+    /// assert_eq!(
+    ///     polygon.interiors(),
+    ///     &[LineString::from(vec![
     ///         (0.1, 0.2),
     ///         (0.9, 0.9),
     ///         (0.9, 0.1),
     ///         (0.1, 0.1),
     ///         (0.1, 0.2),
-    ///     ])
-    /// ]);
+    ///     ])]
+    /// );
     /// ```
     ///
     /// [will be closed]: #linestring-closing-operation
@@ -367,29 +330,24 @@ where
     /// ```
     /// use geo_types::{Coordinate, LineString, Polygon};
     ///
-    /// let mut polygon = Polygon::new(LineString::from(vec![
-    ///     (0., 0.),
-    ///     (1., 1.),
-    ///     (1., 0.),
-    ///     (0., 0.),
-    /// ]), vec![]);
+    /// let mut polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![],
+    /// );
     ///
     /// assert_eq!(polygon.interiors().len(), 0);
     ///
-    /// polygon.interiors_push(vec![
-    ///         (0.1, 0.1),
-    ///         (0.9, 0.9),
-    ///         (0.9, 0.1),
-    ///     ]);
+    /// polygon.interiors_push(vec![(0.1, 0.1), (0.9, 0.9), (0.9, 0.1)]);
     ///
-    /// assert_eq!(polygon.interiors(), &[
-    ///     LineString::from(vec![
+    /// assert_eq!(
+    ///     polygon.interiors(),
+    ///     &[LineString::from(vec![
     ///         (0.1, 0.1),
     ///         (0.9, 0.9),
     ///         (0.9, 0.1),
     ///         (0.1, 0.1),
-    ///     ])
-    /// ]);
+    ///     ])]
+    /// );
     /// ```
     ///
     /// [will be closed]: #linestring-closing-operation

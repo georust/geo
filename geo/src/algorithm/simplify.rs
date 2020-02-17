@@ -93,8 +93,8 @@ pub trait Simplify<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString};
-    /// use geo::algorithm::simplify::{Simplify};
+    /// use geo::algorithm::simplify::Simplify;
+    /// use geo::{LineString, Point};
     ///
     /// let mut vec = Vec::new();
     /// vec.push(Point::new(0.0, 0.0));
@@ -127,8 +127,8 @@ pub trait SimplifyIdx<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString};
-    /// use geo::algorithm::simplify::{SimplifyIdx};
+    /// use geo::algorithm::simplify::SimplifyIdx;
+    /// use geo::{LineString, Point};
     ///
     /// let mut vec = Vec::new();
     /// vec.push(Point::new(0.0, 0.0));
@@ -168,10 +168,7 @@ where
             &self
                 .points_iter()
                 .enumerate()
-                .map(|(idx, point)| RdpIndex {
-                    index: idx,
-                    point,
-                })
+                .map(|(idx, point)| RdpIndex { index: idx, point })
                 .collect::<Vec<RdpIndex<T>>>(),
             epsilon,
         )

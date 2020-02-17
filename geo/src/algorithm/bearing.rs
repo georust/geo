@@ -14,8 +14,8 @@ pub trait Bearing<T: Float> {
     /// ```
     /// # #[macro_use] extern crate approx;
     /// #
-    /// use geo::Point;
     /// use geo::algorithm::bearing::Bearing;
+    /// use geo::Point;
     ///
     /// let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
     /// let p_2 = Point::<f64>::new(9.274410083250379, 48.84033282787534);

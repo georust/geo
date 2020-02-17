@@ -15,8 +15,8 @@ pub trait HaversineDistance<T, Rhs = Self> {
     /// # Examples
     ///
     /// ```
-    /// use geo::Point;
     /// use geo::prelude::*;
+    /// use geo::Point;
     ///
     /// // New York City
     /// let p1 = Point::<f64>::from((-74.006, 40.7128));
@@ -26,8 +26,8 @@ pub trait HaversineDistance<T, Rhs = Self> {
     /// let distance = p1.haversine_distance(&p2);
     ///
     /// assert_eq!(
-    ///   5_570_222., // meters
-    ///   distance.round()
+    ///     5_570_222., // meters
+    ///     distance.round()
     /// );
     /// ```
     ///

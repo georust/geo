@@ -12,8 +12,8 @@ pub trait Contains<Rhs = Self> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Coordinate, Point, LineString, Polygon};
     /// use geo::algorithm::contains::Contains;
+    /// use geo::{Coordinate, LineString, Point, Polygon};
     ///
     /// let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
     /// let poly = Polygon::new(linestring.clone(), vec![]);
@@ -26,9 +26,7 @@ pub trait Contains<Rhs = Self> {
     ///
     /// //Point in Polygon
     /// assert!(poly.contains(&Point::new(1., 1.)));
-    ///
     /// ```
-    ///
     fn contains(&self, rhs: &Rhs) -> bool;
 }
 

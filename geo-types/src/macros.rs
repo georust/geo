@@ -58,17 +58,32 @@ macro_rules! point {
 /// ```
 /// use geo_types::line_string;
 ///
-/// let coord1 = geo_types::Coordinate { x: -21.95156, y: 64.1446 };
-/// let coord2 = geo_types::Coordinate { x: -21.951, y: 64.14479 };
-/// let coord3 = geo_types::Coordinate { x: -21.95044, y: 64.14527 };
-/// let coord4 = geo_types::Coordinate { x: -21.951445, y: 64.145508 };
+/// let coord1 = geo_types::Coordinate {
+///     x: -21.95156,
+///     y: 64.1446,
+/// };
+/// let coord2 = geo_types::Coordinate {
+///     x: -21.951,
+///     y: 64.14479,
+/// };
+/// let coord3 = geo_types::Coordinate {
+///     x: -21.95044,
+///     y: 64.14527,
+/// };
+/// let coord4 = geo_types::Coordinate {
+///     x: -21.951445,
+///     y: 64.145508,
+/// };
 ///
 /// let ls = line_string![coord1, coord2, coord3, coord4];
 ///
-/// assert_eq!(ls[1], geo_types::Coordinate {
-///     x: -21.951,
-///     y: 64.14479
-/// });
+/// assert_eq!(
+///     ls[1],
+///     geo_types::Coordinate {
+///         x: -21.951,
+///         y: 64.14479
+///     }
+/// );
 /// ```
 ///
 /// [`Coordinate`]: ./struct.Coordinate.html

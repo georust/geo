@@ -10,16 +10,14 @@ pub trait Intersects<Rhs = Self> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Coordinate, Point, LineString};
     /// use geo::algorithm::intersects::Intersects;
+    /// use geo::{Coordinate, LineString, Point};
     ///
     /// let linestring = LineString::from(vec![(3., 2.), (7., 6.)]);
     ///
     /// assert!(linestring.intersects(&LineString::from(vec![(3., 4.), (8., 4.)])));
     /// assert!(!linestring.intersects(&LineString::from(vec![(9., 2.), (11., 5.)])));
-    ///
     /// ```
-    ///
     fn intersects(&self, rhs: &Rhs) -> bool;
 }
 

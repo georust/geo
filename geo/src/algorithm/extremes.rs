@@ -92,11 +92,14 @@ pub trait ExtremeIndices<T: Float + Signed> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString, Polygon};
     /// use geo::extremes::ExtremeIndices;
+    /// use geo::{LineString, Point, Polygon};
     /// // a diamond shape
     /// let points_raw = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
-    /// let points = points_raw.iter().map(|e| Point::new(e.0, e.1)).collect::<Vec<_>>();
+    /// let points = points_raw
+    ///     .iter()
+    ///     .map(|e| Point::new(e.0, e.1))
+    ///     .collect::<Vec<_>>();
     /// let poly = Polygon::new(LineString::from(points), vec![]);
     /// // Polygon is both convex and oriented counter-clockwise
     /// let extremes = poly.extreme_indices().unwrap();
@@ -143,8 +146,8 @@ pub trait ExtremePoints<T: Float> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Point, LineString, Polygon};
     /// use geo::extremes::ExtremePoints;
+    /// use geo::{LineString, Point, Polygon};
     /// let points_raw = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
     /// let points = points_raw
     ///     .iter()
