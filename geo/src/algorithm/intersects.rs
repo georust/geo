@@ -198,20 +198,44 @@ where
     }
 }
 
-impl<T> Intersects<Rect<T>> for Rect<T>
+// helper function for intersection check
+fn value_in_range<T>(value: T, min: T, max: T) -> bool
 where
     T: Float,
+{
+    (value >= min) && (value <= max)
+}
+
+impl<T> Intersects<Rect<T>> for Rect<T>
+where
+    T: Float + Debug,
 {
     fn intersects(&self, bounding_rect: &Rect<T>) -> bool {
         // line intersects inner or outer polygon edge
         if bounding_rect.contains(self) {
             false
         } else {
-            (self.min().x >= bounding_rect.min().x && self.min().x <= bounding_rect.max().x
-                || self.max().x >= bounding_rect.min().x && self.max().x <= bounding_rect.max().x)
-                && (self.min().y >= bounding_rect.min().y && self.min().y <= bounding_rect.max().y
-                    || self.max().y >= bounding_rect.min().y
-                        && self.max().y <= bounding_rect.max().y)
+            let x_overlap = value_in_range(
+                self.min().x,
+                bounding_rect.min().x,
+                bounding_rect.min().x + bounding_rect.width(),
+            ) || value_in_range(
+                bounding_rect.min().x,
+                self.min().x,
+                self.min().x + self.width(),
+            );
+
+            let y_overlap = value_in_range(
+                self.min().y,
+                bounding_rect.min().y,
+                bounding_rect.min().y + bounding_rect.height(),
+            ) || value_in_range(
+                bounding_rect.min().y,
+                self.min().y,
+                self.min().y + self.height(),
+            );
+
+            x_overlap && y_overlap
         }
     }
 }
@@ -516,7 +540,8 @@ mod test {
         );
         let bounding_rect_s2 =
             Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 20., y: 30. });
-        assert_eq!(false, bounding_rect_xl.intersects(&bounding_rect_sm));
+        // confirmed using GEOS
+        assert_eq!(true, bounding_rect_xl.intersects(&bounding_rect_sm));
         assert_eq!(false, bounding_rect_sm.intersects(&bounding_rect_xl));
         assert_eq!(true, bounding_rect_sm.intersects(&bounding_rect_s2));
         assert_eq!(true, bounding_rect_s2.intersects(&bounding_rect_sm));
@@ -613,5 +638,31 @@ mod test {
 
         assert!(!line0.intersects(&poly2));
         assert!(!poly2.intersects(&line0));
+    }
+    #[test]
+    // See https://github.com/georust/geo/issues/419
+    fn rect_test_419() {
+        let a = Rect::new(
+            Coordinate {
+                x: 9.228515625,
+                y: 46.83013364044739,
+            },
+            Coordinate {
+                x: 9.2724609375,
+                y: 46.86019101567026,
+            },
+        );
+        let b = Rect::new(
+            Coordinate {
+                x: 9.17953,
+                y: 46.82018,
+            },
+            Coordinate {
+                x: 9.26309,
+                y: 46.88099,
+            },
+        );
+        assert!(a.intersects(&b));
+        assert!(b.intersects(&a));
     }
 }
