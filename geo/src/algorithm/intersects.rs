@@ -208,7 +208,7 @@ where
 
 impl<T> Intersects<Rect<T>> for Rect<T>
 where
-    T: Float + Debug,
+    T: Float,
 {
     fn intersects(&self, bounding_rect: &Rect<T>) -> bool {
         // line intersects inner or outer polygon edge
