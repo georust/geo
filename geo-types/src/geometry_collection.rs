@@ -6,8 +6,9 @@ use std::ops::{Index, IndexMut};
 ///
 /// It can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
 ///
-/// Looping over this object yields its component Geometry enum members, and it supports iteration and indexing
-/// as well as the various [`MapCoords`](algorithm/map_coords/index.html) functions, which can be directly
+/// Looping over this object yields its component **Geometry enum members** (_not_ the underlying geometry primitives),
+/// and it supports iteration and indexing
+/// as well as the various [`MapCoords`](algorithm/map_coords/index.html) functions, which _are_ directly
 /// applied to the underlying geometry primitives.
 ///
 /// # Examples
