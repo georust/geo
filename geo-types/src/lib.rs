@@ -74,6 +74,7 @@ extern crate approx;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::convert::TryFrom;
 
     #[test]
     fn type_test() {
@@ -99,7 +100,7 @@ mod tests {
         let p: Point<f32> = Point::new(0., 0.);
         let p1 = p.clone();
         let g: Geometry<f32> = p.into();
-        let p2 = g.into_point().unwrap();
+        let p2 = Point::try_from(g).unwrap();
         assert_eq!(p1, p2);
     }
 
