@@ -1,6 +1,11 @@
 # Changes
 
 ## geo (unreleased)
+
+* Add a mutable Coordinate iterator to LineString
+  * https://github.com/georust/geo/pull/404
+* Fix for rectangle intersection check
+  * https://github.com/georust/geo/pull/420
 * Bump proj to 0.14.4
   * <https://github.com/georust/geo/pull/412>
 * Add `BoundingRect` implementation for `Rect`
@@ -18,6 +23,8 @@
 
 ## geo-types (unreleased)
 
+* Update Geometry enum with iterators and TryFrom impls for primitives
+  * https://github.com/georust/geo/pull/410
 * Make geo-types Rect fields private to force users to use constructor (breaking change)
   * <https://github.com/georust/geo/pull/374>
 * Bump rstar to 0.4
