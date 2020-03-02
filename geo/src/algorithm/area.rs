@@ -1,5 +1,6 @@
-use crate::{CoordinateType, Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
+use crate::{Geometry, CoordinateType, Line, LineString, MultiPolygon, Polygon, Rect, Triangle, GeometryRef, Point};
 use num_traits::Float;
+use std::borrow::Cow;
 
 use crate::algorithm::winding_order::twice_signed_ring_area;
 
@@ -42,59 +43,148 @@ where
     twice_signed_ring_area(linestring) / (T::one() + T::one())
 }
 
-impl<T> Area<T> for Line<T>
+// impl<T> Area<T> for Line<T>
+// where
+//     T: CoordinateType,
+// {
+//     fn area(&self) -> T {
+//         T::zero()
+//     }
+// }
+
+// impl<T> Area<T> for Polygon<T>
+// where
+//     T: Float,
+// {
+//     fn area(&self) -> T {
+//         self.interiors()
+//             .iter()
+//             .fold(get_linestring_area(self.exterior()), |total, next| {
+//                 total - get_linestring_area(next)
+//             })
+//     }
+// }
+
+// impl<T> Area<T> for MultiPolygon<T>
+// where
+//     T: Float,
+// {
+//     fn area(&self) -> T {
+//         self.0
+//             .iter()
+//             .fold(T::zero(), |total, next| total + next.area())
+//     }
+// }
+
+// impl<T> Area<T> for Rect<T>
+// where
+//     T: CoordinateType,
+// {
+//     fn area(&self) -> T {
+//         self.width() * self.height()
+//     }
+// }
+
+// impl<T> Area<T> for Triangle<T>
+// where
+//     T: Float,
+// {
+//     fn area(&self) -> T {
+//         self.to_lines()
+//             .iter()
+//             .fold(T::zero(), |total, line| total + line.determinant())
+//             / (T::one() + T::one())
+//     }
+// }
+
+///////////////////////////////////////////////
+
+// impl<I, T> Area<T> for &I
+// where
+//     I: Into<Geometry<T>>,
+//     T: CoordinateType,
+// {
+//     fn area(&self) -> T {
+//         let geometry: Geometry<T> = self.into();
+//         match geometry {
+//             Geometry::Point(g) => unimplemented!(),
+//             Geometry::Line(g) => unimplemented!(),
+//             Geometry::LineString(g) => unimplemented!(),
+//             Geometry::Polygon(g) => unimplemented!(),
+//             Geometry::MultiPoint(g) => unimplemented!(),
+//             Geometry::MultiLineString(g) => unimplemented!(),
+//             Geometry::MultiPolygon(g) => unimplemented!(),
+//             Geometry::GeometryCollection(g) => unimplemented!(),
+//             Geometry::Rect(g) => unimplemented!(),
+//             Geometry::Triangle(g) => unimplemented!(),
+//         }
+//     }
+// }
+
+// impl<I, J, T> Area<T> for I
+// where
+//     I: ToOwned<Owned = J>,
+//     J: Into<Geometry<T>> + std::borrow::Borrow<I>,
+//     T: CoordinateType,
+// {
+//     fn area(&self) -> T {
+//         let owned: J = self.to_owned().to_owned();
+//         let geometry: Geometry<T> = owned.into();
+//         match geometry {
+//             Geometry::Point(g) => unimplemented!(),
+//             Geometry::Line(g) => unimplemented!(),
+//             Geometry::LineString(g) => unimplemented!(),
+//             Geometry::Polygon(g) => unimplemented!(),
+//             Geometry::MultiPoint(g) => unimplemented!(),
+//             Geometry::MultiLineString(g) => unimplemented!(),
+//             Geometry::MultiPolygon(g) => unimplemented!(),
+//             Geometry::GeometryCollection(g) => unimplemented!(),
+//             Geometry::Rect(g) => unimplemented!(),
+//             Geometry::Triangle(g) => unimplemented!(),
+//         }
+//     }
+// }
+
+impl<I , T> Area<T> for I
 where
+    for<'a> &'a I: Into<Cow<'a, Geometry<T>>>,
     T: CoordinateType,
 {
     fn area(&self) -> T {
-        T::zero()
+        let geometry_ref: Cow<Geometry<T>> = self.into();
+        match *geometry_ref {
+            Geometry::Point(g) => unimplemented!(),
+            Geometry::Line(g) => unimplemented!(),
+            Geometry::LineString(g) => unimplemented!(),
+            Geometry::Polygon(g) => unimplemented!(),
+            Geometry::MultiPoint(g) => unimplemented!(),
+            Geometry::MultiLineString(g) => unimplemented!(),
+            Geometry::MultiPolygon(g) => unimplemented!(),
+            Geometry::GeometryCollection(g) => unimplemented!(),
+            Geometry::Rect(g) => unimplemented!(),
+            Geometry::Triangle(g) => unimplemented!(),
+        }
     }
 }
 
-impl<T> Area<T> for Polygon<T>
-where
-    T: Float,
-{
-    fn area(&self) -> T {
-        self.interiors()
-            .iter()
-            .fold(get_linestring_area(self.exterior()), |total, next| {
-                total - get_linestring_area(next)
-            })
+///////////////////////////////////////////////
+
+struct NewPoint<T: Float>(Point<T>);
+
+impl<'a, T: Float> Into<Cow<'a, Geometry<T>>> for &'_ NewPoint<T> {
+    fn into(self) -> Cow<'a, Geometry<T>> {
+        Cow::Owned(Geometry::Point(self.0))
     }
 }
 
-impl<T> Area<T> for MultiPolygon<T>
-where
-    T: Float,
-{
-    fn area(&self) -> T {
-        self.0
-            .iter()
-            .fold(T::zero(), |total, next| total + next.area())
-    }
+// ///////////////////////////////////////////////
+
+fn foo() {
+    let n = NewPoint(geo_types::point!(x: 1.0, y: 1.0));
+    let a = n.area();
 }
 
-impl<T> Area<T> for Rect<T>
-where
-    T: CoordinateType,
-{
-    fn area(&self) -> T {
-        self.width() * self.height()
-    }
-}
-
-impl<T> Area<T> for Triangle<T>
-where
-    T: Float,
-{
-    fn area(&self) -> T {
-        self.to_lines()
-            .iter()
-            .fold(T::zero(), |total, line| total + line.determinant())
-            / (T::one() + T::one())
-    }
-}
+///////////////////////////////////////////////
 
 #[cfg(test)]
 mod test {

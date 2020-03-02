@@ -1,6 +1,6 @@
 use crate::{
     CoordinateType, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon,
+    MultiPolygon, Point, Polygon, Rect, Triangle
 };
 use num_traits::Float;
 use std::convert::TryFrom;
@@ -36,6 +36,8 @@ where
     MultiLineString(MultiLineString<T>),
     MultiPolygon(MultiPolygon<T>),
     GeometryCollection(GeometryCollection<T>),
+    Rect(Rect<T>),
+    Triangle(Triangle<T>),
 }
 
 impl<T: CoordinateType> From<Point<T>> for Geometry<T> {
@@ -71,6 +73,95 @@ impl<T: CoordinateType> From<MultiLineString<T>> for Geometry<T> {
 impl<T: CoordinateType> From<MultiPolygon<T>> for Geometry<T> {
     fn from(x: MultiPolygon<T>) -> Geometry<T> {
         Geometry::MultiPolygon(x)
+    }
+}
+impl<T: CoordinateType> From<Rect<T>> for Geometry<T> {
+    fn from(x: Rect<T>) -> Geometry<T> {
+        Geometry::Rect(x)
+    }
+}
+impl<T: CoordinateType> From<Triangle<T>> for Geometry<T> {
+    fn from(x: Triangle<T>) -> Geometry<T> {
+        Geometry::Triangle(x)
+    }
+}
+
+// TODO impl deref? or borrow? or as_ref?
+
+#[derive(PartialEq, Clone, Debug, Hash)]
+pub enum GeometryRef<'a, T>
+where
+    T: CoordinateType,
+{
+    Point(&'a Point<T>),
+    Line(&'a Line<T>),
+    LineString(&'a LineString<T>),
+    Polygon(&'a Polygon<T>),
+    MultiPoint(&'a MultiPoint<T>),
+    MultiLineString(&'a MultiLineString<T>),
+    MultiPolygon(&'a MultiPolygon<T>),
+    GeometryCollection(&'a GeometryCollection<T>),
+    Rect(&'a Rect<T>),
+    Triangle(&'a Triangle<T>),
+}
+
+impl<'a, T: 'a + CoordinateType> From<&'a Point<T>> for GeometryRef<'a, T> {
+    fn from(x: &'a Point<T>) -> GeometryRef<'a, T> {
+        GeometryRef::Point(x)
+    }
+}
+
+impl<'a, T: 'a + CoordinateType> From<&'a Line<T>> for GeometryRef<'a, T> {
+    fn from(x: &'a Line<T>) -> GeometryRef<'a, T> {
+        GeometryRef::Line(x)
+    }
+}
+
+impl<'a, T: 'a + CoordinateType> From<&'a LineString<T>> for GeometryRef<'a, T> {
+    fn from(x: &'a LineString<T>) -> GeometryRef<'a, T> {
+        GeometryRef::LineString(x)
+    }
+}
+
+impl<'a, T: 'a + CoordinateType> From<&'a Polygon<T>> for GeometryRef<'a, T> {
+    fn from(x: &'a Polygon<T>) -> GeometryRef<'a, T> {
+        GeometryRef::Polygon(x)
+    }
+}
+
+impl<'a, T: 'a + CoordinateType> From<&'a MultiPoint<T>> for GeometryRef<'a, T> {
+    fn from(x: &'a MultiPoint<T>) -> GeometryRef<'a, T> {
+        GeometryRef::MultiPoint(x)
+    }
+}
+
+impl<'a, T: 'a + CoordinateType> From<&'a MultiLineString<T>> for GeometryRef<'a, T> {
+    fn from(x: &'a MultiLineString<T>) -> GeometryRef<'a, T> {
+        GeometryRef::MultiLineString(x)
+    }
+}
+
+impl<'a, T: 'a + CoordinateType> From<&'a MultiPolygon<T>> for GeometryRef<'a, T> {
+    fn from(x: &'a MultiPolygon<T>) -> GeometryRef<'a, T> {
+        GeometryRef::MultiPolygon(x)
+    }
+}
+
+impl<'a, T: 'a + CoordinateType> From<&'a GeometryCollection<T>> for GeometryRef<'a, T> {
+    fn from(x: &'a GeometryCollection<T>) -> GeometryRef<'a, T> {
+        GeometryRef::GeometryCollection(x)
+    }
+}
+
+impl<'a, T: 'a + CoordinateType> From<&'a Rect<T>> for GeometryRef<'a, T> {
+    fn from(x: &'a Rect<T>) -> GeometryRef<'a, T> {
+        GeometryRef::Rect(x)
+    }
+}
+
+impl<'a, T: 'a + CoordinateType> From<&'a Triangle<T>> for GeometryRef<'a, T> {
+    fn from(x: &'a Triangle<T>) -> GeometryRef<'a, T> {
+        GeometryRef::Triangle(x)
     }
 }
 
