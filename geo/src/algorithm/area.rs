@@ -1,8 +1,7 @@
 use crate::{
-    CoordinateType, GeometryCollection, LineString,
-    MultiPolygon, Point, Polygon, Rect, Triangle, GeometryCow
+    CoordinateType, GeometryCollection, GeometryCow, LineString, MultiPolygon, Polygon, Rect,
+    Triangle,
 };
-use num_traits::Float;
 
 use crate::algorithm::winding_order::twice_signed_ring_area;
 
@@ -100,38 +99,6 @@ where
         }
     }
 }
-
-///////////////////////////////////////////////
-
-struct NewPoint<T: Float>(Point<T>);
-
-impl<'a, T: Float> Into<GeometryCow<'a, T>> for &'a NewPoint<T> {
-    fn into(self) -> GeometryCow<'a, T> {
-        GeometryCow::Point(std::borrow::Cow::Borrowed(&self.0))
-    }
-}
-
-struct NewPoint2<T: Float>(T, T);
-
-impl<'a, T: Float> Into<GeometryCow<'a, T>> for &'a NewPoint2<T> {
-    fn into(self) -> GeometryCow<'a, T> {
-        GeometryCow::Point(std::borrow::Cow::Owned(Point::new(self.0, self.1)))
-    }
-}
-
-// ///////////////////////////////////////////////
-
-fn foo() {
-    let n = NewPoint(geo_types::point!(x: 1.0, y: 1.0));
-    let a = n.area();
-    let b = n.area();
-
-    let n = NewPoint2(1.0, 1.0);
-    let a = n.area();
-    let b = n.area();
-}
-
-///////////////////////////////////////////////
 
 #[cfg(test)]
 mod test {

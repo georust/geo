@@ -1,4 +1,4 @@
-use crate::{Coordinate, CoordinateType, Line};
+use crate::{polygon, Coordinate, CoordinateType, Line, Polygon};
 
 /// A bounded 2D area whose three vertices are defined by `Coordinate`s.
 #[derive(Copy, Clone, Debug, Hash, PartialEq)]
@@ -16,6 +16,10 @@ impl<T: CoordinateType> Triangle<T> {
             Line::new(self.1, self.2),
             Line::new(self.2, self.0),
         ]
+    }
+
+    pub fn to_polygon(self) -> Polygon<T> {
+        polygon![self.0, self.1, self.2, self.0]
     }
 }
 

@@ -55,8 +55,8 @@ pub use crate::types::*;
 
 pub use geo_types::{
     line_string, point, polygon, Coordinate, CoordinateType, Geometry, GeometryCollection,
-    Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
-    Polygon, Rect, Triangle, GeometryCow
+    GeometryCow, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect,
+    Triangle,
 };
 
 /// This module includes all the functions of geometric calculations
