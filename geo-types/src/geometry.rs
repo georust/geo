@@ -3,7 +3,7 @@ use crate::{
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use num_traits::Float;
-use std::borrow::{Borrow, Cow};
+use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt;
@@ -87,184 +87,101 @@ impl<T: CoordinateType> From<Triangle<T>> for Geometry<T> {
     }
 }
 
-pub enum GeometryIsh<'a, T: CoordinateType> {
-    Owned(Geometry<T>),
-    Borrowed(GeometryRef<'a, T>),
+#[derive(PartialEq, Debug, Hash)]
+pub enum GeometryCow<'a, T>
+where
+    T: CoordinateType,
+{
+    Point(Cow<'a, Point<T>>),
+    Line(Cow<'a, Line<T>>),
+    LineString(Cow<'a, LineString<T>>),
+    Polygon(Cow<'a, Polygon<T>>),
+    MultiPoint(Cow<'a, MultiPoint<T>>),
+    MultiLineString(Cow<'a, MultiLineString<T>>),
+    MultiPolygon(Cow<'a, MultiPolygon<T>>),
+    GeometryCollection(Cow<'a, GeometryCollection<T>>),
+    Rect(Cow<'a, Rect<T>>),
+    Triangle(Cow<'a, Triangle<T>>),
 }
 
 // TODO: prefer From instead of Into
 
-impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Geometry<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
+impl<'a, T: CoordinateType> Into<GeometryCow<'a, T>> for &'a Geometry<T> {
+    fn into(self) -> GeometryCow<'a, T> {
         match self {
-            Geometry::Point(g) => GeometryIsh::Borrowed(GeometryRef::Point(g)),
-            Geometry::Line(g) => GeometryIsh::Borrowed(GeometryRef::Line(g)),
-            Geometry::LineString(g) => GeometryIsh::Borrowed(GeometryRef::LineString(g)),
-            Geometry::Polygon(g) => GeometryIsh::Borrowed(GeometryRef::Polygon(g)),
-            Geometry::MultiPoint(g) => GeometryIsh::Borrowed(GeometryRef::MultiPoint(g)),
-            Geometry::MultiLineString(g) => GeometryIsh::Borrowed(GeometryRef::MultiLineString(g)),
-            Geometry::MultiPolygon(g) => GeometryIsh::Borrowed(GeometryRef::MultiPolygon(g)),
+            Geometry::Point(g) => GeometryCow::Point(Cow::Borrowed(g)),
+            Geometry::Line(g) => GeometryCow::Line(Cow::Borrowed(g)),
+            Geometry::LineString(g) => GeometryCow::LineString(Cow::Borrowed(g)),
+            Geometry::Polygon(g) => GeometryCow::Polygon(Cow::Borrowed(g)),
+            Geometry::MultiPoint(g) => GeometryCow::MultiPoint(Cow::Borrowed(g)),
+            Geometry::MultiLineString(g) => GeometryCow::MultiLineString(Cow::Borrowed(g)),
+            Geometry::MultiPolygon(g) => GeometryCow::MultiPolygon(Cow::Borrowed(g)),
             Geometry::GeometryCollection(g) => {
-                GeometryIsh::Borrowed(GeometryRef::GeometryCollection(g))
+                GeometryCow::GeometryCollection(Cow::Borrowed(g))
             }
-            Geometry::Rect(g) => GeometryIsh::Borrowed(GeometryRef::Rect(g)),
-            Geometry::Triangle(g) => GeometryIsh::Borrowed(GeometryRef::Triangle(g)),
+            Geometry::Rect(g) => GeometryCow::Rect(Cow::Borrowed(g)),
+            Geometry::Triangle(g) => GeometryCow::Triangle(Cow::Borrowed(g)),
         }
     }
 }
 
-impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Point<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
-        GeometryIsh::Borrowed(GeometryRef::Point(self))
+impl<'a, T: CoordinateType> Into<GeometryCow<'a, T>> for &'a Point<T> {
+    fn into(self) -> GeometryCow<'a, T> {
+        GeometryCow::Point(Cow::Borrowed(self))
     }
 }
 
-impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a LineString<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
-        GeometryIsh::Borrowed(GeometryRef::LineString(self))
+impl<'a, T: CoordinateType> Into<GeometryCow<'a, T>> for &'a LineString<T> {
+    fn into(self) -> GeometryCow<'a, T> {
+        GeometryCow::LineString(Cow::Borrowed(self))
     }
 }
 
-impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Line<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
-        GeometryIsh::Borrowed(GeometryRef::Line(self))
+impl<'a, T: CoordinateType> Into<GeometryCow<'a, T>> for &'a Line<T> {
+    fn into(self) -> GeometryCow<'a, T> {
+        GeometryCow::Line(Cow::Borrowed(self))
     }
 }
 
-impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Polygon<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
-        GeometryIsh::Borrowed(GeometryRef::Polygon(self))
+impl<'a, T: CoordinateType> Into<GeometryCow<'a, T>> for &'a Polygon<T> {
+    fn into(self) -> GeometryCow<'a, T> {
+        GeometryCow::Polygon(Cow::Borrowed(self))
     }
 }
 
-impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a MultiPoint<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
-        GeometryIsh::Borrowed(GeometryRef::MultiPoint(self))
+impl<'a, T: CoordinateType> Into<GeometryCow<'a, T>> for &'a MultiPoint<T> {
+    fn into(self) -> GeometryCow<'a, T> {
+        GeometryCow::MultiPoint(Cow::Borrowed(self))
     }
 }
 
-impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a MultiLineString<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
-        GeometryIsh::Borrowed(GeometryRef::MultiLineString(self))
+impl<'a, T: CoordinateType> Into<GeometryCow<'a, T>> for &'a MultiLineString<T> {
+    fn into(self) -> GeometryCow<'a, T> {
+        GeometryCow::MultiLineString(Cow::Borrowed(self))
     }
 }
 
-impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a MultiPolygon<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
-        GeometryIsh::Borrowed(GeometryRef::MultiPolygon(self))
+impl<'a, T: CoordinateType> Into<GeometryCow<'a, T>> for &'a MultiPolygon<T> {
+    fn into(self) -> GeometryCow<'a, T> {
+        GeometryCow::MultiPolygon(Cow::Borrowed(self))
     }
 }
 
-impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a GeometryCollection<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
-        GeometryIsh::Borrowed(GeometryRef::GeometryCollection(self))
+impl<'a, T: CoordinateType> Into<GeometryCow<'a, T>> for &'a GeometryCollection<T> {
+    fn into(self) -> GeometryCow<'a, T> {
+        GeometryCow::GeometryCollection(Cow::Borrowed(self))
     }
 }
 
-impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Rect<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
-        GeometryIsh::Borrowed(GeometryRef::Rect(self))
+impl<'a, T: CoordinateType> Into<GeometryCow<'a, T>> for &'a Rect<T> {
+    fn into(self) -> GeometryCow<'a, T> {
+        GeometryCow::Rect(Cow::Borrowed(self))
     }
 }
 
-impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Triangle<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
-        GeometryIsh::Borrowed(GeometryRef::Triangle(self))
-    }
-}
-
-// impl<'a, T: CoordinateType> Borrow<GeometryRef<'a, T>> for Geometry<T> {
-//     fn borrow(&self) -> &GeometryRef<'a, T> {
-//        unimplemented!()
-//     }
-// }
-
-// impl<'a, T: CoordinateType> ToOwned for GeometryRef<'a, T> {
-//     type Owned = Geometry<T>;
-
-//     fn to_owned(&self) -> Geometry<T> {
-//        match self {
-
-//        }
-//     }
-// }
-
-// TODO impl deref? or borrow? or as_ref?
-
-#[derive(PartialEq, Debug, Hash)]
-pub enum GeometryRef<'a, T>
-where
-    T: CoordinateType,
-{
-    Point(&'a Point<T>),
-    Line(&'a Line<T>),
-    LineString(&'a LineString<T>),
-    Polygon(&'a Polygon<T>),
-    MultiPoint(&'a MultiPoint<T>),
-    MultiLineString(&'a MultiLineString<T>),
-    MultiPolygon(&'a MultiPolygon<T>),
-    GeometryCollection(&'a GeometryCollection<T>),
-    Rect(&'a Rect<T>),
-    Triangle(&'a Triangle<T>),
-}
-
-impl<'a, T: 'a + CoordinateType> From<&'a Point<T>> for GeometryRef<'a, T> {
-    fn from(x: &'a Point<T>) -> GeometryRef<'a, T> {
-        GeometryRef::Point(x)
-    }
-}
-
-impl<'a, T: 'a + CoordinateType> From<&'a Line<T>> for GeometryRef<'a, T> {
-    fn from(x: &'a Line<T>) -> GeometryRef<'a, T> {
-        GeometryRef::Line(x)
-    }
-}
-
-impl<'a, T: 'a + CoordinateType> From<&'a LineString<T>> for GeometryRef<'a, T> {
-    fn from(x: &'a LineString<T>) -> GeometryRef<'a, T> {
-        GeometryRef::LineString(x)
-    }
-}
-
-impl<'a, T: 'a + CoordinateType> From<&'a Polygon<T>> for GeometryRef<'a, T> {
-    fn from(x: &'a Polygon<T>) -> GeometryRef<'a, T> {
-        GeometryRef::Polygon(x)
-    }
-}
-
-impl<'a, T: 'a + CoordinateType> From<&'a MultiPoint<T>> for GeometryRef<'a, T> {
-    fn from(x: &'a MultiPoint<T>) -> GeometryRef<'a, T> {
-        GeometryRef::MultiPoint(x)
-    }
-}
-
-impl<'a, T: 'a + CoordinateType> From<&'a MultiLineString<T>> for GeometryRef<'a, T> {
-    fn from(x: &'a MultiLineString<T>) -> GeometryRef<'a, T> {
-        GeometryRef::MultiLineString(x)
-    }
-}
-
-impl<'a, T: 'a + CoordinateType> From<&'a MultiPolygon<T>> for GeometryRef<'a, T> {
-    fn from(x: &'a MultiPolygon<T>) -> GeometryRef<'a, T> {
-        GeometryRef::MultiPolygon(x)
-    }
-}
-
-impl<'a, T: 'a + CoordinateType> From<&'a GeometryCollection<T>> for GeometryRef<'a, T> {
-    fn from(x: &'a GeometryCollection<T>) -> GeometryRef<'a, T> {
-        GeometryRef::GeometryCollection(x)
-    }
-}
-
-impl<'a, T: 'a + CoordinateType> From<&'a Rect<T>> for GeometryRef<'a, T> {
-    fn from(x: &'a Rect<T>) -> GeometryRef<'a, T> {
-        GeometryRef::Rect(x)
-    }
-}
-
-impl<'a, T: 'a + CoordinateType> From<&'a Triangle<T>> for GeometryRef<'a, T> {
-    fn from(x: &'a Triangle<T>) -> GeometryRef<'a, T> {
-        GeometryRef::Triangle(x)
+impl<'a, T: CoordinateType> Into<GeometryCow<'a, T>> for &'a Triangle<T> {
+    fn into(self) -> GeometryCow<'a, T> {
+        GeometryCow::Triangle(Cow::Borrowed(self))
     }
 }
 

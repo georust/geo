@@ -1,6 +1,6 @@
 use crate::{
-    CoordinateType, Geometry, GeometryCollection, GeometryIsh, GeometryRef, LineString,
-    MultiPolygon, Point, Polygon, Rect, Triangle,
+    CoordinateType, GeometryCollection, LineString,
+    MultiPolygon, Point, Polygon, Rect, Triangle, GeometryCow
 };
 use num_traits::Float;
 
@@ -81,32 +81,22 @@ fn area_triangle<T: CoordinateType>(triangle: &Triangle<T>) -> T {
 
 impl<'a, I: 'a, T: 'a> Area<'a, T> for I
 where
-    &'a I: Into<GeometryIsh<'a, T>>,
+    &'a I: Into<GeometryCow<'a, T>>,
     T: CoordinateType,
 {
     fn area(&'a self) -> T {
-        let geometry_ref: GeometryIsh<'a, T> = self.into();
-        match geometry_ref {
-            GeometryIsh::Borrowed(GeometryRef::Point(_))
-            | GeometryIsh::Owned(Geometry::Point(_))
-            | GeometryIsh::Borrowed(GeometryRef::Line(_))
-            | GeometryIsh::Owned(Geometry::Line(_))
-            | GeometryIsh::Borrowed(GeometryRef::LineString(_))
-            | GeometryIsh::Owned(Geometry::LineString(_))
-            | GeometryIsh::Borrowed(GeometryRef::MultiPoint(_))
-            | GeometryIsh::Owned(Geometry::MultiPoint(_))
-            | GeometryIsh::Borrowed(GeometryRef::MultiLineString(_))
-            | GeometryIsh::Owned(Geometry::MultiLineString(_)) => T::zero(),
-            GeometryIsh::Borrowed(GeometryRef::Polygon(g)) => area_polygon(g),
-            GeometryIsh::Owned(Geometry::Polygon(g)) => area_polygon(&g),
-            GeometryIsh::Borrowed(GeometryRef::MultiPolygon(g)) => area_multi_polygon(g),
-            GeometryIsh::Owned(Geometry::MultiPolygon(g)) => area_multi_polygon(&g),
-            GeometryIsh::Borrowed(GeometryRef::GeometryCollection(g)) => area_geometry_collection(g),
-            GeometryIsh::Owned(Geometry::GeometryCollection(g)) => area_geometry_collection(&g),
-            GeometryIsh::Borrowed(GeometryRef::Rect(g)) => area_rect(g),
-            GeometryIsh::Owned(Geometry::Rect(g)) => area_rect(&g),
-            GeometryIsh::Borrowed(GeometryRef::Triangle(g)) => area_triangle(g),
-            GeometryIsh::Owned(Geometry::Triangle(g)) => area_triangle(&g),
+        let geometry_cow: GeometryCow<'a, T> = self.into();
+        match geometry_cow {
+            GeometryCow::Point(_) => T::zero(),
+            GeometryCow::Line(_) => T::zero(),
+            GeometryCow::LineString(_) => T::zero(),
+            GeometryCow::Polygon(g) => area_polygon(&*g),
+            GeometryCow::MultiPoint(_) => T::zero(),
+            GeometryCow::MultiLineString(_) => T::zero(),
+            GeometryCow::MultiPolygon(g) => area_multi_polygon(&*g),
+            GeometryCow::GeometryCollection(g) => area_geometry_collection(&*g),
+            GeometryCow::Rect(g) => area_rect(&*g),
+            GeometryCow::Triangle(g) => area_triangle(&*g),
         }
     }
 }
@@ -115,15 +105,17 @@ where
 
 struct NewPoint<T: Float>(Point<T>);
 
-impl<'a, T: Float> Into<GeometryIsh<'a, T>> for &'a NewPoint<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
-        GeometryIsh::Borrowed(GeometryRef::Point(&self.0))
+impl<'a, T: Float> Into<GeometryCow<'a, T>> for &'a NewPoint<T> {
+    fn into(self) -> GeometryCow<'a, T> {
+        GeometryCow::Point(std::borrow::Cow::Borrowed(&self.0))
     }
 }
 
-impl<'a, T: Float> Into<GeometryIsh<'a, T>> for NewPoint<T> {
-    fn into(self) -> GeometryIsh<'a, T> {
-        GeometryIsh::Owned(Geometry::Point(self.0))
+struct NewPoint2<T: Float>(T, T);
+
+impl<'a, T: Float> Into<GeometryCow<'a, T>> for &'a NewPoint2<T> {
+    fn into(self) -> GeometryCow<'a, T> {
+        GeometryCow::Point(std::borrow::Cow::Owned(Point::new(self.0, self.1)))
     }
 }
 
@@ -131,6 +123,10 @@ impl<'a, T: Float> Into<GeometryIsh<'a, T>> for NewPoint<T> {
 
 fn foo() {
     let n = NewPoint(geo_types::point!(x: 1.0, y: 1.0));
+    let a = n.area();
+    let b = n.area();
+
+    let n = NewPoint2(1.0, 1.0);
     let a = n.area();
     let b = n.area();
 }
