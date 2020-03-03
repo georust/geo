@@ -1,12 +1,12 @@
 use crate::{
     CoordinateType, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon, Rect, Triangle
+    MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use num_traits::Float;
+use std::borrow::{Borrow, Cow};
 use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt;
-use std::borrow::{Borrow, Cow};
 
 /// An enum representing any possible geometry type.
 ///
@@ -90,6 +90,27 @@ impl<T: CoordinateType> From<Triangle<T>> for Geometry<T> {
 pub enum GeometryIsh<'a, T: CoordinateType> {
     Owned(Geometry<T>),
     Borrowed(GeometryRef<'a, T>),
+}
+
+// TODO: prefer From instead of Into
+
+impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Geometry<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        match self {
+            Geometry::Point(g) => GeometryIsh::Borrowed(GeometryRef::Point(g)),
+            Geometry::Line(g) => GeometryIsh::Borrowed(GeometryRef::Line(g)),
+            Geometry::LineString(g) => GeometryIsh::Borrowed(GeometryRef::LineString(g)),
+            Geometry::Polygon(g) => GeometryIsh::Borrowed(GeometryRef::Polygon(g)),
+            Geometry::MultiPoint(g) => GeometryIsh::Borrowed(GeometryRef::MultiPoint(g)),
+            Geometry::MultiLineString(g) => GeometryIsh::Borrowed(GeometryRef::MultiLineString(g)),
+            Geometry::MultiPolygon(g) => GeometryIsh::Borrowed(GeometryRef::MultiPolygon(g)),
+            Geometry::GeometryCollection(g) => {
+                GeometryIsh::Borrowed(GeometryRef::GeometryCollection(g))
+            }
+            Geometry::Rect(g) => GeometryIsh::Borrowed(GeometryRef::Rect(g)),
+            Geometry::Triangle(g) => GeometryIsh::Borrowed(GeometryRef::Triangle(g)),
+        }
+    }
 }
 
 impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Point<T> {

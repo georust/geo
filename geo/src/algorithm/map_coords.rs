@@ -1,6 +1,6 @@
 use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use std::error::Error;
 
@@ -406,12 +406,8 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Geometry<T> 
             Geometry::GeometryCollection(ref x) => {
                 Ok(Geometry::GeometryCollection(x.try_map_coords(func)?))
             }
-            Geometry::Rect(ref x) => {
-                Ok(Geometry::Rect(x.try_map_coords(func)?))
-            }
-            Geometry::Triangle(ref x) => {
-                Ok(Geometry::Triangle(x.try_map_coords(func)?))
-            }
+            Geometry::Rect(ref x) => Ok(Geometry::Rect(x.try_map_coords(func)?)),
+            Geometry::Triangle(ref x) => Ok(Geometry::Triangle(x.try_map_coords(func)?)),
         }
     }
 }
@@ -528,18 +524,9 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Triangle<T> {
         let p3 = func(&self.0.x_y());
 
         Triangle(
-            Coordinate {
-                x: p1.0,
-                y: p1.1,
-            },
-            Coordinate {
-                x: p2.0,
-                y: p2.1,
-            },
-            Coordinate {
-                x: p3.0,
-                y: p3.1,
-            },
+            Coordinate { x: p1.0, y: p1.1 },
+            Coordinate { x: p2.0, y: p2.1 },
+            Coordinate { x: p3.0, y: p3.1 },
         )
     }
 }
@@ -556,18 +543,9 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Triangle<T> 
         let p3 = func(&self.0.x_y())?;
 
         Ok(Triangle(
-            Coordinate {
-                x: p1.0,
-                y: p1.1,
-            },
-            Coordinate {
-                x: p2.0,
-                y: p2.1,
-            },
-            Coordinate {
-                x: p3.0,
-                y: p3.1,
-            },
+            Coordinate { x: p1.0, y: p1.1 },
+            Coordinate { x: p2.0, y: p2.1 },
+            Coordinate { x: p3.0, y: p3.1 },
         ))
     }
 }
@@ -579,18 +557,9 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Triangle<T> {
         let p3 = func(&self.0.x_y());
 
         let mut new_triangle = Triangle(
-            Coordinate {
-                x: p1.0,
-                y: p1.1,
-            },
-            Coordinate {
-                x: p2.0,
-                y: p2.1,
-            },
-            Coordinate {
-                x: p3.0,
-                y: p3.1,
-            },
+            Coordinate { x: p1.0, y: p1.1 },
+            Coordinate { x: p2.0, y: p2.1 },
+            Coordinate { x: p3.0, y: p3.1 },
         );
 
         ::std::mem::swap(self, &mut new_triangle);

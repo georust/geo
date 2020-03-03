@@ -50,7 +50,7 @@ mod multi_polygon;
 pub use crate::multi_polygon::MultiPolygon;
 
 mod geometry;
-pub use crate::geometry::{Geometry, GeometryRef, GeometryIsh};
+pub use crate::geometry::{Geometry, GeometryIsh, GeometryRef};
 
 mod geometry_collection;
 pub use crate::geometry_collection::GeometryCollection;
