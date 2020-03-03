@@ -6,6 +6,7 @@ use num_traits::Float;
 use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt;
+use std::borrow::{Borrow, Cow};
 
 /// An enum representing any possible geometry type.
 ///
@@ -86,9 +87,90 @@ impl<T: CoordinateType> From<Triangle<T>> for Geometry<T> {
     }
 }
 
+pub enum GeometryIsh<'a, T: CoordinateType> {
+    Owned(Geometry<T>),
+    Borrowed(GeometryRef<'a, T>),
+}
+
+impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Point<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        GeometryIsh::Borrowed(GeometryRef::Point(self))
+    }
+}
+
+impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a LineString<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        GeometryIsh::Borrowed(GeometryRef::LineString(self))
+    }
+}
+
+impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Line<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        GeometryIsh::Borrowed(GeometryRef::Line(self))
+    }
+}
+
+impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Polygon<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        GeometryIsh::Borrowed(GeometryRef::Polygon(self))
+    }
+}
+
+impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a MultiPoint<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        GeometryIsh::Borrowed(GeometryRef::MultiPoint(self))
+    }
+}
+
+impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a MultiLineString<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        GeometryIsh::Borrowed(GeometryRef::MultiLineString(self))
+    }
+}
+
+impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a MultiPolygon<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        GeometryIsh::Borrowed(GeometryRef::MultiPolygon(self))
+    }
+}
+
+impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a GeometryCollection<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        GeometryIsh::Borrowed(GeometryRef::GeometryCollection(self))
+    }
+}
+
+impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Rect<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        GeometryIsh::Borrowed(GeometryRef::Rect(self))
+    }
+}
+
+impl<'a, T: CoordinateType> Into<GeometryIsh<'a, T>> for &'a Triangle<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        GeometryIsh::Borrowed(GeometryRef::Triangle(self))
+    }
+}
+
+// impl<'a, T: CoordinateType> Borrow<GeometryRef<'a, T>> for Geometry<T> {
+//     fn borrow(&self) -> &GeometryRef<'a, T> {
+//        unimplemented!()
+//     }
+// }
+
+// impl<'a, T: CoordinateType> ToOwned for GeometryRef<'a, T> {
+//     type Owned = Geometry<T>;
+
+//     fn to_owned(&self) -> Geometry<T> {
+//        match self {
+
+//        }
+//     }
+// }
+
 // TODO impl deref? or borrow? or as_ref?
 
-#[derive(PartialEq, Clone, Debug, Hash)]
+#[derive(PartialEq, Debug, Hash)]
 pub enum GeometryRef<'a, T>
 where
     T: CoordinateType,

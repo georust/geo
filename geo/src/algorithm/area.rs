@@ -1,4 +1,4 @@
-use crate::{Geometry, CoordinateType, Line, LineString, MultiPolygon, Polygon, Rect, Triangle, GeometryRef, Point};
+use crate::{Geometry, CoordinateType, Line, LineString, MultiPolygon, Polygon, Rect, Triangle, GeometryRef, Point, GeometryIsh};
 use num_traits::Float;
 use std::borrow::Cow;
 
@@ -28,11 +28,11 @@ use crate::algorithm::winding_order::twice_signed_ring_area;
 ///
 /// assert_eq!(polygon.area(), -30.);
 /// ```
-pub trait Area<T>
+pub trait Area<'a, T>
 where
     T: CoordinateType,
 {
-    fn area(&self) -> T;
+    fn area(&'a self) -> T;
 }
 
 // Calculation of simple (no interior holes) Polygon area
@@ -145,25 +145,26 @@ where
 //     }
 // }
 
-impl<I , T> Area<T> for I
+impl<'a, I: 'a, T: 'a> Area<'a, T> for I
 where
-    for<'a> &'a I: Into<Cow<'a, Geometry<T>>>,
+    &'a I: Into<GeometryIsh<'a, T>>,
     T: CoordinateType,
 {
-    fn area(&self) -> T {
-        let geometry_ref: Cow<Geometry<T>> = self.into();
-        match *geometry_ref {
-            Geometry::Point(g) => unimplemented!(),
-            Geometry::Line(g) => unimplemented!(),
-            Geometry::LineString(g) => unimplemented!(),
-            Geometry::Polygon(g) => unimplemented!(),
-            Geometry::MultiPoint(g) => unimplemented!(),
-            Geometry::MultiLineString(g) => unimplemented!(),
-            Geometry::MultiPolygon(g) => unimplemented!(),
-            Geometry::GeometryCollection(g) => unimplemented!(),
-            Geometry::Rect(g) => unimplemented!(),
-            Geometry::Triangle(g) => unimplemented!(),
-        }
+    fn area(&'a self) -> T {
+        let geometry_ref: GeometryIsh<'a, T> = self.into();
+        unimplemented!()
+        // match geometry_ref {
+        //     Geometry::Point(g) => unimplemented!(),
+        //     Geometry::Line(g) => unimplemented!(),
+        //     Geometry::LineString(g) => unimplemented!(),
+        //     Geometry::Polygon(g) => unimplemented!(),
+        //     Geometry::MultiPoint(g) => unimplemented!(),
+        //     Geometry::MultiLineString(g) => unimplemented!(),
+        //     Geometry::MultiPolygon(g) => unimplemented!(),
+        //     Geometry::GeometryCollection(g) => unimplemented!(),
+        //     Geometry::Rect(g) => unimplemented!(),
+        //     Geometry::Triangle(g) => unimplemented!(),
+        // }
     }
 }
 
@@ -171,9 +172,15 @@ where
 
 struct NewPoint<T: Float>(Point<T>);
 
-impl<'a, T: Float> Into<Cow<'a, Geometry<T>>> for &'_ NewPoint<T> {
-    fn into(self) -> Cow<'a, Geometry<T>> {
-        Cow::Owned(Geometry::Point(self.0))
+impl<'a, T: Float> Into<GeometryIsh<'a, T>> for &'a NewPoint<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        GeometryIsh::Borrowed(GeometryRef::Point(&self.0))
+    }
+}
+
+impl<'a, T: Float> Into<GeometryIsh<'a, T>> for NewPoint<T> {
+    fn into(self) -> GeometryIsh<'a, T> {
+        GeometryIsh::Owned(Geometry::Point(self.0))
     }
 }
 
