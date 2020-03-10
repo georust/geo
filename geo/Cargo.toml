@@ -1,7 +1,7 @@
 [package]
 name = "geo"
 description = "Geospatial primitives and algorithms"
-version = "0.12.2"
+version = "0.12.3"
 authors = ["Corey Farwell <coreyf@rwell.org>"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/georust/geo"
@@ -19,7 +19,7 @@ num-traits = "0.2"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 rstar = { version = "0.7" }
 postgis = { version = "0.6", optional = true }
-proj = { version = "0.14.4", optional = true }
+proj = { version = "0.15.1", optional = true }
 
 # Swap the next two lines when publishing
 # geo-types = { version = "0.4.2", features = ["rstar"] }
