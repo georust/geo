@@ -1,6 +1,7 @@
 use crate::{CoordinateType, Geometry};
-use std::iter::FromIterator;
-use std::ops::{Index, IndexMut};
+use core::iter::FromIterator;
+use core::ops::{Index, IndexMut};
+use alloc::vec::Vec;
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
 ///
@@ -15,7 +16,7 @@ use std::ops::{Index, IndexMut};
 /// ## Looping
 ///
 /// ```
-/// use std::convert::TryFrom;
+/// use core::convert::TryFrom;
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
 /// let p = point!(x: 1.0, y: 1.0);
 /// let pe = Geometry::Point(p);
@@ -116,7 +117,7 @@ impl<T: CoordinateType> IndexMut<usize> for GeometryCollection<T> {
 
 // structure helper for consuming iterator
 pub struct IntoIteratorHelper<T: CoordinateType> {
-    iter: ::std::vec::IntoIter<Geometry<T>>,
+    iter: ::alloc::vec::IntoIter<Geometry<T>>,
 }
 
 // implement the IntoIterator trait for a consuming iterator. Iteration will
@@ -145,7 +146,7 @@ impl<T: CoordinateType> Iterator for IntoIteratorHelper<T> {
 
 // structure helper for non-consuming iterator
 pub struct IterHelper<'a, T: CoordinateType> {
-    iter: ::std::slice::Iter<'a, Geometry<T>>,
+    iter: ::core::slice::Iter<'a, Geometry<T>>,
 }
 
 // implement the IntoIterator trait for a non-consuming iterator. Iteration will
@@ -174,7 +175,7 @@ impl<'a, T: CoordinateType> Iterator for IterHelper<'a, T> {
 
 // structure helper for mutable non-consuming iterator
 pub struct IterMutHelper<'a, T: CoordinateType> {
-    iter: ::std::slice::IterMut<'a, Geometry<T>>,
+    iter: ::core::slice::IterMut<'a, Geometry<T>>,
 }
 
 // implement the IntoIterator trait for a mutable non-consuming iterator. Iteration will

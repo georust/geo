@@ -3,9 +3,9 @@ use crate::{
     MultiPolygon, Point, Polygon,
 };
 use num_traits::Float;
-use std::convert::TryFrom;
-use std::error::Error;
-use std::fmt;
+use core::convert::TryFrom;
+use core_error::Error;
+use core::fmt;
 
 /// An enum representing any possible geometry type.
 ///

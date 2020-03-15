@@ -2,7 +2,7 @@ use crate::algorithm::centroid::Centroid;
 use crate::algorithm::map_coords::MapCoords;
 use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use num_traits::{Float, FromPrimitive};
-use std::iter::Sum;
+use core::iter::Sum;
 
 #[inline]
 fn rotate_inner<T>(x: T, y: T, x0: T, y0: T, sin_theta: T, cos_theta: T) -> Point<T>

@@ -38,7 +38,8 @@ use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect,
 };
-use std::error::Error;
+use core_error::Error;
+use alloc::{vec::Vec, boxed::Box};
 
 /// Map a function over all the coordinates in an object, returning a new one
 pub trait MapCoords<T, NT> {
@@ -541,7 +542,7 @@ impl<T: CoordinateType> MapCoordsInplace<T> for Rect<T> {
 
         let mut new_rect = Rect::new(new_min, new_max);
 
-        ::std::mem::swap(self, &mut new_rect);
+        ::core::mem::swap(self, &mut new_rect);
     }
 }
 

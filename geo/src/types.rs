@@ -1,6 +1,6 @@
 use crate::{CoordinateType, Point};
 use num_traits::Float;
-
+use alloc::vec::Vec;
 pub use geo_types::private_utils::COORD_PRECISION;
 
 /// A container for _indices_ of the minimum and maximum `Point`s of a [`Geometry`](enum.Geometry.html).

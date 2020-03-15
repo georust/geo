@@ -1,5 +1,5 @@
 use num_traits::{Float, FromPrimitive};
-use std::iter::Sum;
+use core::iter::Sum;
 
 use crate::algorithm::area::{get_linestring_area, Area};
 use crate::algorithm::euclidean_length::EuclideanLength;

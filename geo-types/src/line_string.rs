@@ -1,7 +1,7 @@
 use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
-use std::iter::FromIterator;
-use std::ops::{Index, IndexMut};
-
+use core::iter::FromIterator;
+use core::ops::{Index, IndexMut};
+use alloc::vec::Vec;
 /// An ordered collection of two or more [`Coordinate`s](struct.Coordinate.html), representing a
 /// path between locations.
 ///
@@ -80,7 +80,7 @@ where
     T: CoordinateType;
 
 /// A `Point` iterator returned by the `points_iter` method
-pub struct PointsIter<'a, T: CoordinateType + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
+pub struct PointsIter<'a, T: CoordinateType + 'a>(::core::slice::Iter<'a, Coordinate<T>>);
 
 impl<'a, T: CoordinateType> Iterator for PointsIter<'a, T> {
     type Item = Point<T>;
@@ -200,7 +200,7 @@ impl<T: CoordinateType, IC: Into<Coordinate<T>>> FromIterator<IC> for LineString
 /// Iterate over all the [Coordinate](struct.Coordinates.html)s in this `LineString`.
 impl<T: CoordinateType> IntoIterator for LineString<T> {
     type Item = Coordinate<T>;
-    type IntoIter = ::std::vec::IntoIter<Coordinate<T>>;
+    type IntoIter = ::alloc::vec::IntoIter<Coordinate<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -210,9 +210,9 @@ impl<T: CoordinateType> IntoIterator for LineString<T> {
 /// Mutably iterate over all the [Coordinate](struct.Coordinates.html)s in this `LineString`.
 impl<'a, T: CoordinateType> IntoIterator for &'a mut LineString<T> {
     type Item = &'a mut Coordinate<T>;
-    type IntoIter = ::std::slice::IterMut<'a, Coordinate<T>>;
+    type IntoIter = ::core::slice::IterMut<'a, Coordinate<T>>;
 
-    fn into_iter(self) -> ::std::slice::IterMut<'a, Coordinate<T>> {
+    fn into_iter(self) -> ::core::slice::IterMut<'a, Coordinate<T>> {
         self.0.iter_mut()
     }
 }

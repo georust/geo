@@ -1,5 +1,6 @@
 use crate::{Point, MEAN_EARTH_RADIUS};
 use num_traits::{Float, FromPrimitive};
+use alloc::vec::Vec;
 
 /// Returns a new Point along a great circle route between two existing points
 

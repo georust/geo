@@ -2,7 +2,8 @@ use crate::algorithm::euclidean_distance::EuclideanDistance;
 use crate::utils::partition_slice;
 use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use num_traits::Float;
-use std::mem;
+use core::mem;
+use alloc::vec::Vec;
 
 fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
     let tmp = mem::replace(slice, &mut []);

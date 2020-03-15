@@ -1,5 +1,6 @@
 use crate::{CoordinateType, Polygon};
-use std::iter::FromIterator;
+use core::iter::FromIterator;
+use alloc::vec::Vec;
 
 /// A collection of [`Polygon`s](struct.Polygon.html).
 ///
@@ -32,7 +33,7 @@ impl<T: CoordinateType, IP: Into<Polygon<T>>> FromIterator<IP> for MultiPolygon<
 
 impl<T: CoordinateType> IntoIterator for MultiPolygon<T> {
     type Item = Polygon<T>;
-    type IntoIter = ::std::vec::IntoIter<Polygon<T>>;
+    type IntoIter = ::alloc::vec::IntoIter<Polygon<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()

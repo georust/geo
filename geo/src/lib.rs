@@ -36,6 +36,10 @@
 //! and [`TryInto`](https://doc.rust-lang.org/stable/std/convert/trait.TryInto.html) traits,
 //! and conversion **from** `geo-types` primitives to `geojson`
 //! `Value` structs using the [`From`](https://doc.rust-lang.org/stable/std/convert/trait.TryFrom.html) trait.
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[macro_use]
+extern crate alloc;
 
 extern crate geo_types;
 extern crate num_traits;
@@ -60,6 +64,7 @@ pub use geo_types::{
 
 /// This module includes all the functions of geometric calculations
 pub mod algorithm;
+
 mod traits;
 mod types;
 mod utils;

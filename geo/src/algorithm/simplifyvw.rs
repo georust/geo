@@ -3,8 +3,8 @@ use crate::{
     Coordinate, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Triangle,
 };
 use num_traits::Float;
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
+use core::cmp::Ordering;
+use alloc::{vec::Vec, collections::BinaryHeap};
 
 use rstar::{RTree, RTreeNum};
 

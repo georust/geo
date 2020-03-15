@@ -1,2 +1,6 @@
 [workspace]
 members = ["geo", "geo-types"]
+
+#remove this once PR https://github.com/Stoeoef/rstar/pull/27 is merged
+[patch.crates-io]
+rstar = { git = "https://github.com/encointer/rstar", branch = "no_std", default-features = false }

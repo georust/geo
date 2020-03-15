@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use crate::{Closest, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use num_traits::Float;
-use std::iter;
+use core::iter;
 
 /// Find the closest `Point` between a given geometry and an input `Point`.
 /// The closest point may intersect the geometry, be a single

@@ -1,8 +1,8 @@
 use crate::{Coordinate, CoordinateType};
 use num_traits::Float;
-use std::ops::Add;
-use std::ops::Neg;
-use std::ops::Sub;
+use core::ops::Add;
+use core::ops::Neg;
+use core::ops::Sub;
 
 /// A single point in 2D space.
 ///

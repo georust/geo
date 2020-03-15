@@ -6,6 +6,12 @@
 //! with other `GeoRust` crates. Otherwise, the [`geo`](https://crates.io/crates/geo) crate re-exports these types and
 //! provides geospatial algorithms, while the [`geojson`](https://crates.io/crates/geojson) crate allows serialising
 //! and de-serialising `geo-types` primitives to GeoJSON.
+
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[macro_use]
+extern crate alloc;
+
 extern crate num_traits;
 
 #[cfg(feature = "serde")]
@@ -74,7 +80,7 @@ extern crate approx;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
 
     #[test]
     fn type_test() {

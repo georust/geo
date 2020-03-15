@@ -1,6 +1,7 @@
 use crate::euclidean_distance::EuclideanDistance;
 use crate::{LineString, Point};
 use num_traits::{Float, FromPrimitive};
+use alloc::vec::Vec;
 
 /// Determine the similarity between two `LineStrings` using the [Frechet distance].
 ///

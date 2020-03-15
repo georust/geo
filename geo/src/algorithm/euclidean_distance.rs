@@ -11,6 +11,8 @@ use num_traits::{Bounded, Float, Signed};
 use rstar::RTree;
 use rstar::RTreeNum;
 
+use alloc::vec::Vec;
+
 /// Returns the distance between two geometries.
 
 pub trait EuclideanDistance<T, Rhs = Self> {
@@ -514,7 +516,7 @@ mod test {
         // Results agree with Shapely
         assert_relative_eq!(dist, 2.0485900789263356);
         assert_relative_eq!(dist2, 1.118033988749895);
-        assert_relative_eq!(dist3, std::f64::consts::SQRT_2); // workaround clippy::correctness error approx_constant (1.4142135623730951)
+        assert_relative_eq!(dist3, core::f64::consts::SQRT_2); // workaround clippy::correctness error approx_constant (1.4142135623730951)
         assert_relative_eq!(dist4, 1.5811388300841898);
         // Point is on the line
         let zero_dist = line_segment_distance(p1, p1, p2);

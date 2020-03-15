@@ -10,10 +10,19 @@ keywords = ["gis", "geo", "geography", "geospatial"]
 description = "Geospatial primitive data types"
 edition = "2018"
 
+[features]
+default = [ "std" ]
+std = [
+    "num-traits/std",
+    "rstar/std",
+    "core-error/std"
+]
+
 [dependencies]
-num-traits = "0.2"
+num-traits = { version = "0.2", default-features = false, features = ["libm"]}
 serde = { version = "1", optional = true, features = ["derive"] }
-rstar = { version = "0.7", optional = true }
+rstar = { version = "0.7", default-features = false, optional = true }
+core-error = { version = "0.0.0", default-features = false }
 
 [dev-dependencies]
 approx = "0.3"

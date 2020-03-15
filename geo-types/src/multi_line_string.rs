@@ -1,5 +1,6 @@
 use crate::{CoordinateType, LineString};
-use std::iter::FromIterator;
+use core::iter::FromIterator;
+use alloc::vec::Vec;
 
 /// A collection of [`LineString`s](line_string/struct.LineString.html).
 ///
@@ -26,7 +27,7 @@ impl<T: CoordinateType, ILS: Into<LineString<T>>> FromIterator<ILS> for MultiLin
 
 impl<T: CoordinateType> IntoIterator for MultiLineString<T> {
     type Item = LineString<T>;
-    type IntoIter = ::std::vec::IntoIter<LineString<T>>;
+    type IntoIter = ::alloc::vec::IntoIter<LineString<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()

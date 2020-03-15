@@ -1,5 +1,5 @@
 use num_traits::Float;
-use std::iter::Sum;
+use core::iter::Sum;
 
 use crate::{Line, LineString, MultiLineString};
 

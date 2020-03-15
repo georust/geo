@@ -1,5 +1,6 @@
 use crate::{CoordinateType, LineString, Point, Rect};
 use num_traits::{Float, Signed};
+use alloc::vec::Vec;
 
 /// A bounded two-dimensional area.
 ///
