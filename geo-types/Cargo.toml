@@ -1,6 +1,6 @@
 [package]
 name = "geo-types"
-version = "0.4.3"
+version = "0.5.0"
 authors = ["Corey Farwell <coreyf@rwell.org>"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/georust/geo"
