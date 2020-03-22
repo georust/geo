@@ -1,6 +1,6 @@
 # Changes
 
-## geo 0.12.3
+## geo 0.13.0
 * Bump proj to 0.15.1
 * Add a mutable Coordinate iterator to LineString
   * https://github.com/georust/geo/pull/404
@@ -21,7 +21,7 @@
 * Remove usages of 'failure' crate
   * <https://github.com/georust/geo/pull/388>
 
-## geo-types 0.4.4
+## geo-types 0.5.0
 
 * Update Geometry enum with iterators and TryFrom impls for primitives
   * https://github.com/georust/geo/pull/410
