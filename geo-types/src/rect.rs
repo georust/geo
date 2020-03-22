@@ -1,4 +1,4 @@
-use crate::{Coordinate, CoordinateType};
+use crate::{polygon, Coordinate, CoordinateType, Polygon};
 
 /// A bounded 2D quadrilateral whose area is defined by minimum and maximum `Coordinates`.
 #[derive(PartialEq, Clone, Copy, Debug, Hash)]
@@ -71,6 +71,39 @@ impl<T: CoordinateType> Rect<T> {
 
     pub fn height(self) -> T {
         self.max().y - self.min().y
+    }
+
+    /// Create a `Polygon` from the `Rect`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use geo_types::{Coordinate, Rect, polygon};
+    ///
+    /// let rect = Rect::new(
+    ///     Coordinate { x: 0., y: 0. },
+    ///     Coordinate { x: 10., y: 20. },
+    /// );
+    ///
+    /// assert_eq!(
+    ///     rect.to_polygon(),
+    ///     polygon![
+    ///         (x: 0., y: 0.),
+    ///         (x: 0., y: 20.),
+    ///         (x: 10., y: 20.),
+    ///         (x: 10., y: 0.),
+    ///         (x: 0., y: 0.),
+    ///     ],
+    /// );
+    /// ```
+    pub fn to_polygon(self) -> Polygon<T> {
+        polygon![
+            (x: self.min.x, y: self.min.y),
+            (x: self.min.x, y: self.max.y),
+            (x: self.max.x, y: self.max.y),
+            (x: self.max.x, y: self.min.y),
+            (x: self.min.x, y: self.min.y),
+        ]
     }
 
     fn assert_valid_bounds(min: Coordinate<T>, max: Coordinate<T>) {
