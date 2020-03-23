@@ -17,6 +17,8 @@ where
     pub y: T,
 }
 
+impl<T: CoordinateType> std::cmp::Eq for Coordinate<T> where T: std::cmp::Eq {}
+
 impl<T: CoordinateType> From<(T, T)> for Coordinate<T> {
     fn from(coords: (T, T)) -> Self {
         Coordinate {
