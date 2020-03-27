@@ -1,5 +1,5 @@
 use crate::algorithm::contains::Contains;
-use crate::{Line, LineString, Point, Polygon, Rect};
+use crate::{Coordinate, Line, LineString, Point, Polygon, Rect, Triangle};
 use num_traits::Float;
 
 /// Checks if the geometry A intersects the geometry B.
@@ -19,6 +19,41 @@ pub trait Intersects<Rhs = Self> {
     /// assert!(!linestring.intersects(&LineString::from(vec![(9., 2.), (11., 5.)])));
     /// ```
     fn intersects(&self, rhs: &Rhs) -> bool;
+}
+
+fn cross<T: Float>(points: &Triangle<T>, b: Coordinate<T>, c: Coordinate<T>, normal: T) -> bool {
+    let bx = b.x;
+    let by = b.y;
+    let cyby = c.y - by;
+    let cxbx = c.x - bx;
+    let pa = points.0;
+    let pb = points.1;
+    let pc = points.2;
+    !(
+        (((pa.x - bx) * cyby - (pa.y - by) * cxbx) * normal < T::zero()) ||
+        (((pb.x - bx) * cyby - (pb.y - by) * cxbx) * normal < T::zero()) ||
+        (((pc.x - bx) * cyby - (pc.y - by) * cxbx) * normal < T::zero())
+    )
+}
+
+// test if one of the triangles has a side with all of the other triangles points on the outside.  Assume that we know all the normals of each triangle, which tells us the direction that the points are specified.
+impl<T> Intersects<Triangle<T>> for Triangle<T>
+where
+    T: Float,
+{
+    fn intersects(&self, t1: &Triangle<T>) -> bool {
+        let t0 = self;
+        let normal0 = (t0.1.x-t0.0.x)*(t0.2.y-t0.0.y)-
+                      (t0.1.y-t0.0.y)*(t0.2.x-t0.0.x);
+        let normal1 = (t1.1.x-t1.0.x)*(t1.2.y-t1.0.y)-
+                      (t1.1.y-t1.0.y)*(t1.2.x-t1.0.x);
+        !(cross(t1, t0.0, t0.1, normal0) ||
+            cross(t1, t0.1, t0.2, normal0) ||
+            cross(t1, t0.2, t0.0, normal0) ||
+            cross(t0, t1.0, t1.1, normal1) ||
+            cross(t0, t1.1, t1.2, normal1) ||
+            cross(t0, t1.2, t1.0, normal1))
+    }
 }
 
 impl<T> Intersects<Point<T>> for Line<T>

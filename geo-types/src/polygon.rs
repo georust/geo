@@ -426,3 +426,25 @@ impl<T: CoordinateType> From<Rect<T>> for Polygon<T> {
         )
     }
 }
+
+#[cfg(feature = "rstar")]
+impl<T> ::rstar::RTreeObject for Polygon<T>
+where
+    T: ::num_traits::Float + ::rstar::RTreeNum,
+{
+    type Envelope = ::rstar::AABB<Point<T>>;
+
+    fn envelope(&self) -> Self::Envelope {
+        self.exterior.envelope()
+    }
+}
+
+#[cfg(feature = "rstar")]
+impl<T> ::rstar::PointDistance for Polygon<T>
+where
+    T: ::num_traits::Float + ::rstar::RTreeNum,
+{
+    fn distance_2(&self, point: &Point<T>) -> T {
+        self.exterior.distance_2(point)
+    }
+}
