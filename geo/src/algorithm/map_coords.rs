@@ -553,8 +553,8 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Triangle<T> 
 impl<T: CoordinateType> MapCoordsInplace<T> for Triangle<T> {
     fn map_coords_inplace(&mut self, func: impl Fn(&(T, T)) -> (T, T)) {
         let p1 = func(&self.0.x_y());
-        let p2 = func(&self.0.x_y());
-        let p3 = func(&self.0.x_y());
+        let p2 = func(&self.1.x_y());
+        let p3 = func(&self.2.x_y());
 
         let mut new_triangle = Triangle(
             Coordinate { x: p1.0, y: p1.1 },
