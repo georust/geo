@@ -539,8 +539,8 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Triangle<T> 
         func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>>,
     ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
         let p1 = func(&self.0.x_y())?;
-        let p2 = func(&self.0.x_y())?;
-        let p3 = func(&self.0.x_y())?;
+        let p2 = func(&self.1.x_y())?;
+        let p3 = func(&self.2.x_y())?;
 
         Ok(Triangle(
             Coordinate { x: p1.0, y: p1.1 },
