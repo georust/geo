@@ -88,6 +88,12 @@ impl ToPostgis<ewkb::Geometry> for Geometry<f64> {
             Geometry::GeometryCollection(ref p) => {
                 ewkb::GeometryT::GeometryCollection(p.to_postgis_with_srid(srid))
             }
+            Geometry::Rect(ref p) => {
+                ewkb::GeometryT::Polygon(p.to_polygon().to_postgis_with_srid(srid))
+            }
+            Geometry::Triangle(ref p) => {
+                ewkb::GeometryT::Polygon(p.to_polygon().to_postgis_with_srid(srid))
+            }
         }
     }
 }
