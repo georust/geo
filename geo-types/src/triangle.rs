@@ -18,6 +18,29 @@ impl<T: CoordinateType> Triangle<T> {
         ]
     }
 
+    /// Create a `Polygon` from the `Triangle`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use geo_types::{Coordinate, Triangle, polygon};
+    ///
+    /// let triangle = Triangle(
+    ///     Coordinate { x: 0., y: 0. },
+    ///     Coordinate { x: 10., y: 20. },
+    ///     Coordinate { x: 20., y: -10. },
+    /// );
+    ///
+    /// assert_eq!(
+    ///     triangle.to_polygon(),
+    ///     polygon![
+    ///         (x: 0., y: 0.),
+    ///         (x: 10., y: 20.),
+    ///         (x: 20., y: -10.),
+    ///         (x: 0., y: 0.),
+    ///     ],
+    /// );
+    /// ```
     pub fn to_polygon(self) -> Polygon<T> {
         polygon![self.0, self.1, self.2, self.0]
     }

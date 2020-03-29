@@ -1,6 +1,42 @@
+//! # Advanced Example: Fallible Geometry coordinate conversion using `PROJ`
+//!
+//! ```
+//! // activate the [use-proj] feature in cargo.toml in order to access proj functions
+//! # #[cfg(feature = "use-proj")]
+//! use geo::{Coordinate, Point};
+//! # #[cfg(feature = "use-proj")]
+//! use geo::algorithm::map_coords::TryMapCoords;
+//! # #[cfg(feature = "use-proj")]
+//! use proj::Proj;
+//! // GeoJSON uses the WGS 84 coordinate system
+//! # #[cfg(feature = "use-proj")]
+//! let from = "EPSG:4326";
+//! // The NAD83 / California zone 6 (ftUS) coordinate system
+//! # #[cfg(feature = "use-proj")]
+//! let to = "EPSG:2230";
+//! # #[cfg(feature = "use-proj")]
+//! let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
+//! # #[cfg(feature = "use-proj")]
+//! let f = |x: f64, y: f64| {
+//!     // proj can accept Point, Coordinate, Tuple, and array values, returning a Result
+//!     let shifted = to_feet.convert((x, y))?;
+//!     Ok((shifted.x(), shifted.y()))
+//! };
+//! # #[cfg(feature = "use-proj")]
+//! // 👽
+//! # #[cfg(feature = "use-proj")]
+//! let usa_m = Point::new(-115.797615, 37.2647978);
+//! # #[cfg(feature = "use-proj")]
+//! let usa_ft = usa_m.try_map_coords(|&(x, y)| f(x, y)).unwrap();
+//! # #[cfg(feature = "use-proj")]
+//! assert_eq!(6693625.67217475, usa_ft.x());
+//! # #[cfg(feature = "proj")]
+//! assert_eq!(3497301.5918027186, usa_ft.y());
+//! ```
+
 use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle
 };
 use std::error::Error;
 
@@ -103,7 +139,7 @@ pub trait TryMapCoords<T, NT> {
         NT: CoordinateType;
 }
 
-/// Map all the coordinates in an object in place
+/// Map a function over all the coordinates in an object in place
 pub trait MapCoordsInplace<T> {
     /// Apply a function to all the coordinates in a geometric object, in place
     ///

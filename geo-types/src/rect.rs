@@ -73,6 +73,29 @@ impl<T: CoordinateType> Rect<T> {
         self.max().y - self.min().y
     }
 
+    /// Create a `Polygon` from the `Rect`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use geo_types::{Coordinate, Rect, polygon};
+    ///
+    /// let rect = Rect::new(
+    ///     Coordinate { x: 0., y: 0. },
+    ///     Coordinate { x: 10., y: 20. },
+    /// );
+    ///
+    /// assert_eq!(
+    ///     rect.to_polygon(),
+    ///     polygon![
+    ///         (x: 0., y: 0.),
+    ///         (x: 0., y: 20.),
+    ///         (x: 10., y: 20.),
+    ///         (x: 10., y: 0.),
+    ///         (x: 0., y: 0.),
+    ///     ],
+    /// );
+    /// ```
     pub fn to_polygon(self) -> Polygon<T> {
         polygon![
             (x: self.min.x, y: self.min.y),

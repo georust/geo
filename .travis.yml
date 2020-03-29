@@ -25,9 +25,9 @@ before_cache:
 before_install:
   - if [ "${GEO_FEATURES}" == "--features use-proj" ]; then
         sudo apt-get update;
-        wget https://github.com/OSGeo/proj.4/releases/download/6.2.1/proj-6.2.1.tar.gz;
-        tar -xzvf proj-6.2.1.tar.gz;
-        pushd proj-6.2.1 && ./configure --prefix=/usr && make && sudo make install && popd;
+        wget https://github.com/OSGeo/PROJ/releases/download/7.0.0/proj-7.0.0.tar.gz;
+        tar -xzvf proj-7.0.0.tar.gz;
+        pushd proj-7.0.0 && ./configure --prefix=/usr && make && sudo make install && popd;
     fi
 
 script:

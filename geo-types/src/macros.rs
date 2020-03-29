@@ -1,7 +1,7 @@
 /// Creates a [`Point`] from the given coordinates.
 ///
 /// ```txt
-/// point!(«(x,y)»)
+/// point!(x: <number>, y: <number>)
 /// ```
 ///
 /// # Examples
@@ -30,7 +30,7 @@ macro_rules! point {
 /// Creates a [`LineString`] containing the given coordinates.
 ///
 /// ```txt
-/// line_string![«Coordinate|(x,y)», …]
+/// line_string![Coordinate OR (x: <number>, y: <number>), …]
 /// ```
 ///
 /// # Examples
@@ -118,12 +118,14 @@ macro_rules! line_string {
 /// Creates a [`Polygon`] containing the given coordinates.
 ///
 /// ```txt
-/// polygon![«Coordinate|(x,y)», …]
+/// polygon![Coordinate OR (x: <number>, y: <number>), …]
+///
 /// // or
+///
 /// polygon!(
-///     exterior: [«Coordinate|(x,y)», …],
+///     exterior: [Coordinate OR (x: <number>, y: <number>), …],
 ///     interiors: [
-///         [«Coordinate|(x,y)», …],
+///         [Coordinate OR (x: <number>, y: <number>), …],
 ///         …
 ///     ],
 /// )

@@ -1,6 +1,13 @@
 # Changes
 
-## geo (unreleased)
+## geo 0.13.0
+
+* Bump geo-types dependency to 0.5.0
+* Bump proj dependency to 0.15.1
+* Add a mutable Coordinate iterator to LineString
+  * https://github.com/georust/geo/pull/404
+* Fix for rectangle intersection check
+  * https://github.com/georust/geo/pull/420
 * Bump proj to 0.14.4
   * <https://github.com/georust/geo/pull/412>
 * Add `BoundingRect` implementation for `Rect`
@@ -9,18 +16,20 @@
   * <https://github.com/georust/geo/pull/369>
 * Make Euclidean Line-Line distance symmetrical
   * <https://github.com/georust/geo/pull/371>
-* Bump rstar to 0.4
+* Bump rstar dependency to 0.4
   * <https://github.com/georust/geo/pull/373>
 * Mark `ToGeo` as deprecated
   * <https://github.com/georust/geo/pull/375>
 * Remove usages of 'failure' crate
   * <https://github.com/georust/geo/pull/388>
 
-## geo-types (unreleased)
+## geo-types 0.5.0
 
+* Update Geometry enum with iterators and TryFrom impls for primitives
+  * https://github.com/georust/geo/pull/410
 * Make geo-types Rect fields private to force users to use constructor (breaking change)
   * <https://github.com/georust/geo/pull/374>
-* Bump rstar to 0.4
+* Bump rstar dependency to 0.4
   * <https://github.com/georust/geo/pull/373>
 * Fix link to `LineString` in docs
   * <https://github.com/georust/geo/pull/381>
