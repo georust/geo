@@ -181,18 +181,6 @@ impl<'a, T: CoordinateType> From<&'a Triangle<T>> for GeometryCow<'a, T> {
     }
 }
 
-impl<T: CoordinateType> From<Rect<T>> for Geometry<T> {
-    fn from(x: Rect<T>) -> Geometry<T> {
-        Geometry::Rect(x)
-    }
-}
-
-impl<T: CoordinateType> From<Triangle<T>> for Geometry<T> {
-    fn from(x: Triangle<T>) -> Geometry<T> {
-        Geometry::Triangle(x)
-    }
-}
-
 impl<T: CoordinateType> Geometry<T> {
     /// If this Geometry is a Point, then return that, else None.
     ///
