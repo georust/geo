@@ -520,8 +520,8 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Triangle<T> {
 
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output {
         let p1 = func(&self.0.x_y());
-        let p2 = func(&self.0.x_y());
-        let p3 = func(&self.0.x_y());
+        let p2 = func(&self.1.x_y());
+        let p3 = func(&self.2.x_y());
 
         Triangle(
             Coordinate { x: p1.0, y: p1.1 },
