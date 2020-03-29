@@ -1,6 +1,6 @@
 use crate::{
     CoordinateType, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon,
+    MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use num_traits::Float;
 use std::convert::TryFrom;
@@ -36,6 +36,8 @@ where
     MultiLineString(MultiLineString<T>),
     MultiPolygon(MultiPolygon<T>),
     GeometryCollection(GeometryCollection<T>),
+    Rect(Rect<T>),
+    Triangle(Triangle<T>),
 }
 
 impl<T: CoordinateType> From<Point<T>> for Geometry<T> {
@@ -71,6 +73,18 @@ impl<T: CoordinateType> From<MultiLineString<T>> for Geometry<T> {
 impl<T: CoordinateType> From<MultiPolygon<T>> for Geometry<T> {
     fn from(x: MultiPolygon<T>) -> Geometry<T> {
         Geometry::MultiPolygon(x)
+    }
+}
+
+impl<T: CoordinateType> From<Rect<T>> for Geometry<T> {
+    fn from(x: Rect<T>) -> Geometry<T> {
+        Geometry::Rect(x)
+    }
+}
+
+impl<T: CoordinateType> From<Triangle<T>> for Geometry<T> {
+    fn from(x: Triangle<T>) -> Geometry<T> {
+        Geometry::Triangle(x)
     }
 }
 
