@@ -1,4 +1,4 @@
-use crate::{CoordinateType, LineString, Point, Rect};
+use crate::{CoordinateType, LineString, Point, Rect, Triangle};
 use num_traits::{Float, Signed};
 
 /// A bounded two-dimensional area.
@@ -424,5 +424,11 @@ impl<T: CoordinateType> From<Rect<T>> for Polygon<T> {
             .into(),
             Vec::new(),
         )
+    }
+}
+
+impl<T: CoordinateType> From<Triangle<T>> for Polygon<T> {
+    fn from(t: Triangle<T>) -> Polygon<T> {
+        Polygon::new(vec![t.0, t.1, t.2, t.0].into(), Vec::new())
     }
 }
