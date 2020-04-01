@@ -1,7 +1,7 @@
 use crate::{polygon, Coordinate, CoordinateType, Line, Polygon};
 
 /// A bounded 2D area whose three vertices are defined by `Coordinate`s.
-#[derive(Copy, Clone, Debug, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Triangle<T: CoordinateType>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);
 

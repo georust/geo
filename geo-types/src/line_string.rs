@@ -73,7 +73,7 @@ use std::ops::{Index, IndexMut};
 /// }
 /// ```
 
-#[derive(PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LineString<T>(pub Vec<Coordinate<T>>)
 where

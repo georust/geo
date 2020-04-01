@@ -31,7 +31,7 @@ use num_traits::{Float, Signed};
 /// the first `Coordinate`.
 ///
 /// [`LineString`]: line_string/struct.LineString.html
-#[derive(PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Polygon<T>
 where

@@ -14,7 +14,7 @@ use std::iter::FromIterator;
 ///     println!("Point x = {}, y = {}", point.x(), point.y());
 /// }
 /// ```
-#[derive(PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiPoint<T>(pub Vec<Point<T>>)
 where

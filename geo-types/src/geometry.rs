@@ -23,7 +23,37 @@ use std::fmt;
 /// let pn = Point::try_from(pe).unwrap();
 /// ```
 ///
-#[derive(PartialEq, Clone, Debug, Hash)]
+/// ## Equality Examples
+///
+/// ```
+/// use geo_types::{Geometry, Point};
+///
+/// let p1 = Point::new(1.0, 2.0);
+/// let p2 = Point::new(1.0, 2.0);
+/// let g1 = Geometry::Point(p1);
+/// let g2 = Geometry::Point(p2);
+/// assert_eq!(g1, g2);
+///
+/// let p3 = Point::new(1.0, 2.1);
+/// let g3 = Geometry::Point(p3);
+/// assert_ne!(g1, g3);
+/// ```
+///
+/// ```
+/// use geo_types::{Geometry, Point};
+///
+/// struct AssertEq<T: Eq>(pub T);
+/// let _: AssertEq<Geometry<i32>> = AssertEq(Geometry::Point(Point::new(1, 2)));
+/// ```
+///
+/// ```compile_fail
+/// use geo_types::{Geometry, Point};
+///
+/// struct AssertEq<T: Eq>(pub T);
+/// // Eq impl is not derived for Geometry<f32> because f32 is not Eq
+/// let _: AssertEq<Geometry<f32>> = AssertEq(Geometry::Point(Point::new(1.0, 2.0)));
+/// ```
+#[derive(Eq, PartialEq, Clone, Debug, Hash)]
 pub enum Geometry<T>
 where
     T: CoordinateType,

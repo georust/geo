@@ -17,7 +17,35 @@ use std::ops::Sub;
 /// let c = Coordinate { x: 10., y: 20. };
 /// let p2: Point<f64> = c.into();
 /// ```
-#[derive(PartialEq, Clone, Copy, Debug, Hash)]
+///
+/// ## Equality Examples
+///
+/// ```
+/// use geo_types::Point;
+///
+/// let p1 = Point::new(1.0, 2.0);
+/// let p2 = Point::new(1.0, 2.0);
+/// assert_eq!(p1, p2);
+///
+/// let p3 = Point::new(1.0, 2.1);
+/// assert_ne!(p1, p3);
+/// ```
+///
+/// ```
+/// use geo_types::Point;
+///
+/// struct AssertEq<T: Eq>(pub T);
+/// let _: AssertEq<Point<i32>> = AssertEq(Point::new(1, 2));
+/// ```
+///
+/// ```compile_fail
+/// use geo_types::Point;
+///
+/// struct AssertEq<T: Eq>(pub T);
+/// // Eq impl is not derived for Point<f32> because f32 is not Eq
+/// let _: AssertEq<Point<f32>> = AssertEq(Point::new(1.0, 2.0));
+/// ```
+#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T>(pub Coordinate<T>)
 where
