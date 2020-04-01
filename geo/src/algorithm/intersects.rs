@@ -542,6 +542,35 @@ mod test {
         assert_eq!(true, bounding_rect_s2.intersects(&bounding_rect_sm));
     }
     #[test]
+    fn rect_interesection_consistent_with_poly_intersection_test() {
+        let bounding_rect_xl = Rect::new(
+            Coordinate { x: -100., y: -200. },
+            Coordinate { x: 100., y: 200. },
+        );
+        let bounding_rect_sm = Rect::new(
+            Coordinate { x: -10., y: -20. },
+            Coordinate { x: 10., y: 20. },
+        );
+        let bounding_rect_s2 =
+            Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 20., y: 30. });
+
+        assert_eq!(true, bounding_rect_xl.to_polygon().intersects(&bounding_rect_sm));
+        assert_eq!(true, bounding_rect_xl.intersects(&bounding_rect_sm.to_polygon()));
+        assert_eq!(true, bounding_rect_xl.to_polygon().intersects(&bounding_rect_sm.to_polygon()));
+
+        assert_eq!(true, bounding_rect_sm.to_polygon().intersects(&bounding_rect_xl));
+        assert_eq!(true, bounding_rect_sm.intersects(&bounding_rect_xl.to_polygon()));
+        assert_eq!(true, bounding_rect_sm.to_polygon().intersects(&bounding_rect_xl.to_polygon()));
+
+        assert_eq!(true, bounding_rect_sm.to_polygon().intersects(&bounding_rect_s2));
+        assert_eq!(true, bounding_rect_sm.intersects(&bounding_rect_s2.to_polygon()));
+        assert_eq!(true, bounding_rect_sm.to_polygon().intersects(&bounding_rect_s2.to_polygon()));
+
+        assert_eq!(true, bounding_rect_s2.to_polygon().intersects(&bounding_rect_sm));
+        assert_eq!(true, bounding_rect_s2.intersects(&bounding_rect_sm.to_polygon()));
+        assert_eq!(true, bounding_rect_s2.to_polygon().intersects(&bounding_rect_sm.to_polygon()));
+    }
+    #[test]
     fn point_intersects_line_test() {
         let p0 = Point::new(2., 4.);
         // vertical line
