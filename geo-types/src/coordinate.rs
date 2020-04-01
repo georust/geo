@@ -7,34 +7,6 @@ use crate::{CoordinateType, Point};
 /// as an envelope, a precision model, and spatial reference system
 /// information), a `Coordinate` only contains ordinate values and accessor
 /// methods.
-///
-/// ## Equality Examples
-///
-/// ```
-/// use geo_types::Coordinate;
-///
-/// let c1 = Coordinate { x: 1.0, y: 2.0};
-/// let c2 = Coordinate { x: 1.0, y: 2.0} ;
-/// assert_eq!(c1, c2);
-///
-/// let c3 = Coordinate { x: 1.0, y: 2.1};
-/// assert_ne!(c1, c3);
-/// ```
-///
-/// ```
-/// use geo_types::Coordinate;
-///
-/// struct AssertEq<T: Eq>(pub T);
-/// let _: AssertEq<Coordinate<i32>> = AssertEq(Coordinate { x: 1, y: 2 });
-/// ```
-///
-/// ```compile_fail
-/// use geo_types::Coordinate;
-///
-/// struct AssertEq<T: Eq>(pub T);
-/// // Eq impl is not derived for Coordinate<f32> because f32 is not Eq
-/// let _: AssertEq<Coordinate<f32>> = AssertEq(Coordinate { x: 1.0, y: 2.0 });
-/// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coordinate<T>
