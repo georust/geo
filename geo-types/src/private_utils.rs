@@ -6,7 +6,7 @@
 use crate::{Coordinate, CoordinateType, Line, LineString, Point, Rect};
 use num_traits::Float;
 
-pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
+pub static COORD_PRECISION: f32 = std::f32::EPSILON;
 
 pub fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<T>>
 where
