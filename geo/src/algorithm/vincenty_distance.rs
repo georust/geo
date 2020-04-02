@@ -110,6 +110,7 @@ where
 
             if cosSqAlpha.is_zero() {
                 // equatorial geodesics require special handling
+                // per [Algorithms for geodesics, Charles F. F. Karney](https://arxiv.org/pdf/1109.4448.pdf)
                 cos2SigmaM = T::zero()
             } else {
                 cos2SigmaM = cosSigma - t_2 * sinU1 * sinU2 / cosSqAlpha;
