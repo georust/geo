@@ -92,9 +92,17 @@ where
                 + (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda)
                     * (cosU1 * sinU2 - sinU1 * cosU2 * cosLambda))
                 .sqrt();
+
             if sinSigma.is_zero() {
-                return Err(FailedToConvergeError);
+                if self == rhs {
+                    // coincident points
+                    return Ok(T::zero());
+                } else {
+                    // anitpodal points, for which vincenty does not converge
+                    return Err(FailedToConvergeError);
+                }
             }
+
             cosSigma = sinU1 * sinU2 + cosU1 * cosU2 * cosLambda;
             sigma = sinSigma.atan2(cosSigma);
             let sinAlpha = cosU1 * cosU2 * sinLambda / sinSigma;
@@ -152,7 +160,7 @@ where
     }
 }
 
-#[derive(Debug)]
+#[derive(Eq, PartialEq, Debug)]
 pub struct FailedToConvergeError;
 
 impl fmt::Display for FailedToConvergeError {
@@ -213,5 +221,23 @@ mod test {
             11131949.079,
             epsilon = 1.0e-3
         );
+    }
+
+    #[test]
+    fn test_vincenty_distance_coincident() {
+        let a = Point::<f64>::new(12.3, 4.56);
+        let b = Point::<f64>::new(12.3, 4.56);
+        assert_relative_eq!(
+            a.vincenty_distance(&b).unwrap(),
+            0.0,
+            epsilon = 1.0e-3
+        );
+    }
+
+    #[test]
+    fn test_vincenty_distance_antipodal() {
+        let a = Point::<f64>::new(2.0, 4.0);
+        let b = Point::<f64>::new(-178.0, -4.0);
+        assert_eq!(a.vincenty_distance(&b), Err(FailedToConvergeError))
     }
 }
