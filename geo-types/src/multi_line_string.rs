@@ -6,7 +6,7 @@ use std::iter::FromIterator;
 /// Can be created from a `Vec` of `LineString`s, or from an Iterator which yields `LineString`s.
 ///
 /// Iterating over this objects, yields the component `LineString`s.
-#[derive(PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>)
 where

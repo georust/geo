@@ -63,7 +63,7 @@ use std::ops::{Index, IndexMut};
 /// println!("{:?}", gc[0]);
 /// ```
 ///
-#[derive(PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash)]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
     T: CoordinateType;

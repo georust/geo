@@ -7,7 +7,7 @@ use crate::{CoordinateType, Point};
 /// as an envelope, a precision model, and spatial reference system
 /// information), a `Coordinate` only contains ordinate values and accessor
 /// methods.
-#[derive(PartialEq, Clone, Copy, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coordinate<T>
 where
@@ -16,8 +16,6 @@ where
     pub x: T,
     pub y: T,
 }
-
-impl<T: CoordinateType> std::cmp::Eq for Coordinate<T> where T: std::cmp::Eq {}
 
 impl<T: CoordinateType> From<(T, T)> for Coordinate<T> {
     fn from(coords: (T, T)) -> Self {

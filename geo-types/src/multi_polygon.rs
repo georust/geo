@@ -6,7 +6,7 @@ use std::iter::FromIterator;
 /// Can be created from a `Vec` of `Polygon`s, or `collect`ed from an Iterator which yields `Polygon`s.
 ///
 /// Iterating over this object yields the component Polygons.
-#[derive(PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>)
 where

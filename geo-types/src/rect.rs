@@ -1,7 +1,7 @@
 use crate::{polygon, Coordinate, CoordinateType, Polygon};
 
 /// A bounded 2D quadrilateral whose area is defined by minimum and maximum `Coordinates`.
-#[derive(PartialEq, Clone, Copy, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect<T>
 where

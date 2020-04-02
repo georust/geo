@@ -1,7 +1,7 @@
 use crate::{Coordinate, CoordinateType, Point};
 
 /// A line segment made up of exactly two [`Point`s](struct.Point.html).
-#[derive(PartialEq, Clone, Copy, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T>
 where

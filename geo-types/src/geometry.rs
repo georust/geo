@@ -23,7 +23,7 @@ use std::fmt;
 /// let pn = Point::try_from(pe).unwrap();
 /// ```
 ///
-#[derive(PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash)]
 pub enum Geometry<T>
 where
     T: CoordinateType,

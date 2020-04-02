@@ -17,7 +17,7 @@ use std::ops::Sub;
 /// let c = Coordinate { x: 10., y: 20. };
 /// let p2: Point<f64> = c.into();
 /// ```
-#[derive(PartialEq, Clone, Copy, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T>(pub Coordinate<T>)
 where
