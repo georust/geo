@@ -99,7 +99,14 @@ where
             sigma = sinSigma.atan2(cosSigma);
             let sinAlpha = cosU1 * cosU2 * sinLambda / sinSigma;
             cosSqAlpha = t_1 - sinAlpha * sinAlpha;
-            cos2SigmaM = cosSigma - t_2 * sinU1 * sinU2 / cosSqAlpha;
+
+            if cosSqAlpha.is_zero() {
+                // equatorial geodesics require special handling
+                cos2SigmaM = T::zero()
+            } else {
+                cos2SigmaM = cosSigma - t_2 * sinU1 * sinU2 / cosSqAlpha;
+            }
+
             let C = f / t_16 * cosSqAlpha * (t_4 + f * (t_4 - t_3 * cosSqAlpha));
             lambdaP = lambda;
             lambda = L
@@ -194,6 +201,17 @@ mod test {
             a.vincenty_distance(&b).unwrap(),
             55073.68246366003,
             epsilon = 1.0e-6
+        );
+    }
+
+    #[test]
+    fn test_vincenty_distance_equatorial() {
+        let a = Point::<f64>::new(0.0, 0.0);
+        let b = Point::<f64>::new(100.0, 0.0);
+        assert_relative_eq!(
+            a.vincenty_distance(&b).unwrap(),
+            11131949.079,
+            epsilon = 1.0e-3
         );
     }
 }
