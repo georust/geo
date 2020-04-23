@@ -98,6 +98,8 @@ pub mod prelude {
     pub use crate::algorithm::frechet_distance::FrechetDistance;
     #[cfg(feature = "postgis-integration")]
     pub use crate::algorithm::from_postgis::FromPostgis;
+    pub use crate::algorithm::geodesic_distance::GeodesicDistance;
+    pub use crate::algorithm::geodesic_length::GeodesicLength;
     pub use crate::algorithm::haversine_destination::HaversineDestination;
     pub use crate::algorithm::haversine_distance::HaversineDistance;
     pub use crate::algorithm::haversine_intermediate::HaversineIntermediate;
