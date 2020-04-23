@@ -29,12 +29,14 @@ pub trait GeodesicLength<T, RHS = Self> {
     ///     (-74.006, 40.7128),
     ///     // London
     ///     (-0.1278, 51.5074),
+    ///     // Osaka
+    ///     (135.5244559, 34.687455)
     /// ]);
     ///
     /// let length = linestring.geodesic_length();
     ///
     /// assert_eq!(
-    ///     5_585_234., // meters
+    ///     15_109_158., // meters
     ///     length.round()
     /// );
     /// ```
