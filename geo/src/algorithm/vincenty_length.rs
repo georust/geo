@@ -3,11 +3,11 @@ use num_traits::{Float, FromPrimitive};
 use crate::algorithm::vincenty_distance::{FailedToConvergeError, VincentyDistance};
 use crate::{Line, LineString, MultiLineString};
 
-/// Determine the length of a geometries using [Vincenty’s formulae].
+/// Determine the length of a geometry using [Vincenty’s formulae].
 ///
 /// [Vincenty’s formulae]: https://en.wikipedia.org/wiki/Vincenty%27s_formulae
 pub trait VincentyLength<T, RHS = Self> {
-    /// Determine the length of a geometries using [Vincenty’s formulae].
+    /// Determine the length of a geometry using [Vincenty’s formulae].
     ///
     /// # Units
     ///
