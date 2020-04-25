@@ -1,6 +1,7 @@
+use crate::utils::{partial_max, partial_min};
 use crate::{
-    Coordinate, CoordinateType, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
-    Polygon, Rect, Triangle,
+    Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Polygon, Rect, Triangle,
 };
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 
@@ -139,6 +140,61 @@ where
     fn bounding_rect(&self) -> Self::Output {
         *self
     }
+}
+
+impl<T> BoundingRect<T> for Geometry<T>
+where
+    T: CoordinateType,
+{
+    type Output = Option<Rect<T>>;
+
+    fn bounding_rect(&self) -> Self::Output {
+        match self {
+            Geometry::Point(_) => None,
+            Geometry::Line(g) => Some(g.bounding_rect()),
+            Geometry::LineString(g) => g.bounding_rect(),
+            Geometry::Polygon(g) => g.bounding_rect(),
+            Geometry::MultiPoint(g) => g.bounding_rect(),
+            Geometry::MultiLineString(g) => g.bounding_rect(),
+            Geometry::MultiPolygon(g) => g.bounding_rect(),
+            Geometry::GeometryCollection(g) => g.bounding_rect(),
+            Geometry::Rect(g) => Some(g.bounding_rect()),
+            Geometry::Triangle(g) => Some(g.bounding_rect()),
+        }
+    }
+}
+
+impl<T> BoundingRect<T> for GeometryCollection<T>
+where
+    T: CoordinateType,
+{
+    type Output = Option<Rect<T>>;
+
+    fn bounding_rect(&self) -> Self::Output {
+        self.iter().fold(None, |acc, next| {
+            let next_bounding_rect = next.bounding_rect();
+
+            match (acc, next_bounding_rect) {
+                (None, None) => None,
+                (Some(r), None) | (None, Some(r)) => Some(r),
+                (Some(r1), Some(r2)) => bounding_rect_merge(r1, r2),
+            }
+        })
+    }
+}
+
+// Return a new rectangle that encompasses the provided rectangles
+fn bounding_rect_merge<T: CoordinateType>(a: Rect<T>, b: Rect<T>) -> Option<Rect<T>> {
+    Rect::try_new(
+        Coordinate {
+            x: partial_min(a.min().y, b.min().y),
+            y: partial_min(a.min().x, b.min().x),
+        },
+        Coordinate {
+            x: partial_max(a.max().x, b.max().x),
+            y: partial_max(a.max().y, b.max().y),
+        },
+    )
 }
 
 #[cfg(test)]
