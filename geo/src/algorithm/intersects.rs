@@ -211,25 +211,11 @@ where
     T: Float,
 {
     fn intersects(&self, bounding_rect: &Rect<T>) -> bool {
-        let x_overlap = value_in_range(
-            self.min().x,
-            bounding_rect.min().x,
-            bounding_rect.max().x
-        ) || value_in_range(
-            bounding_rect.min().x,
-            self.min().x,
-            self.max().x
-        );
+        let x_overlap = value_in_range(self.min().x, bounding_rect.min().x, bounding_rect.max().x)
+            || value_in_range(bounding_rect.min().x, self.min().x, self.max().x);
 
-        let y_overlap = value_in_range(
-            self.min().y,
-            bounding_rect.min().y,
-            bounding_rect.max().y
-        ) || value_in_range(
-            bounding_rect.min().y,
-            self.min().y,
-            self.max().y
-        );
+        let y_overlap = value_in_range(self.min().y, bounding_rect.min().y, bounding_rect.max().y)
+            || value_in_range(bounding_rect.min().y, self.min().y, self.max().y);
 
         x_overlap && y_overlap
     }
@@ -554,21 +540,65 @@ mod test {
         let bounding_rect_s2 =
             Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 20., y: 30. });
 
-        assert_eq!(true, bounding_rect_xl.to_polygon().intersects(&bounding_rect_sm));
-        assert_eq!(true, bounding_rect_xl.intersects(&bounding_rect_sm.to_polygon()));
-        assert_eq!(true, bounding_rect_xl.to_polygon().intersects(&bounding_rect_sm.to_polygon()));
+        assert_eq!(
+            true,
+            bounding_rect_xl.to_polygon().intersects(&bounding_rect_sm)
+        );
+        assert_eq!(
+            true,
+            bounding_rect_xl.intersects(&bounding_rect_sm.to_polygon())
+        );
+        assert_eq!(
+            true,
+            bounding_rect_xl
+                .to_polygon()
+                .intersects(&bounding_rect_sm.to_polygon())
+        );
 
-        assert_eq!(true, bounding_rect_sm.to_polygon().intersects(&bounding_rect_xl));
-        assert_eq!(true, bounding_rect_sm.intersects(&bounding_rect_xl.to_polygon()));
-        assert_eq!(true, bounding_rect_sm.to_polygon().intersects(&bounding_rect_xl.to_polygon()));
+        assert_eq!(
+            true,
+            bounding_rect_sm.to_polygon().intersects(&bounding_rect_xl)
+        );
+        assert_eq!(
+            true,
+            bounding_rect_sm.intersects(&bounding_rect_xl.to_polygon())
+        );
+        assert_eq!(
+            true,
+            bounding_rect_sm
+                .to_polygon()
+                .intersects(&bounding_rect_xl.to_polygon())
+        );
 
-        assert_eq!(true, bounding_rect_sm.to_polygon().intersects(&bounding_rect_s2));
-        assert_eq!(true, bounding_rect_sm.intersects(&bounding_rect_s2.to_polygon()));
-        assert_eq!(true, bounding_rect_sm.to_polygon().intersects(&bounding_rect_s2.to_polygon()));
+        assert_eq!(
+            true,
+            bounding_rect_sm.to_polygon().intersects(&bounding_rect_s2)
+        );
+        assert_eq!(
+            true,
+            bounding_rect_sm.intersects(&bounding_rect_s2.to_polygon())
+        );
+        assert_eq!(
+            true,
+            bounding_rect_sm
+                .to_polygon()
+                .intersects(&bounding_rect_s2.to_polygon())
+        );
 
-        assert_eq!(true, bounding_rect_s2.to_polygon().intersects(&bounding_rect_sm));
-        assert_eq!(true, bounding_rect_s2.intersects(&bounding_rect_sm.to_polygon()));
-        assert_eq!(true, bounding_rect_s2.to_polygon().intersects(&bounding_rect_sm.to_polygon()));
+        assert_eq!(
+            true,
+            bounding_rect_s2.to_polygon().intersects(&bounding_rect_sm)
+        );
+        assert_eq!(
+            true,
+            bounding_rect_s2.intersects(&bounding_rect_sm.to_polygon())
+        );
+        assert_eq!(
+            true,
+            bounding_rect_s2
+                .to_polygon()
+                .intersects(&bounding_rect_sm.to_polygon())
+        );
     }
     #[test]
     fn point_intersects_line_test() {
