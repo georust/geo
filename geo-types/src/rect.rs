@@ -34,11 +34,23 @@ impl<T: CoordinateType> Rect<T> {
     where
         C: Into<Coordinate<T>>,
     {
-        let (min, max) = (min.into(), max.into());
+        Rect::try_new(min, max).unwrap()
+    }
 
-        Self::assert_valid_bounds(min, max);
+    pub fn try_new<C>(min: C, max: C) -> Result<Rect<T>, InvalidRectCoordinatesError>
+    where
+        C: Into<Coordinate<T>>,
+    {
+        let rect = Rect {
+            min: min.into(),
+            max: max.into(),
+        };
 
-        Rect { min, max }
+        if rect.has_valid_bounds() {
+            Ok(rect)
+        } else {
+            Err(InvalidRectCoordinatesError)
+        }
     }
 
     pub fn min(self) -> Coordinate<T> {
@@ -50,7 +62,7 @@ impl<T: CoordinateType> Rect<T> {
         C: Into<Coordinate<T>>,
     {
         self.min = min.into();
-        Self::assert_valid_bounds(self.min, self.max);
+        self.assert_valid_bounds();
     }
 
     pub fn max(self) -> Coordinate<T> {
@@ -62,7 +74,7 @@ impl<T: CoordinateType> Rect<T> {
         C: Into<Coordinate<T>>,
     {
         self.max = max.into();
-        Self::assert_valid_bounds(self.min, self.max);
+        self.assert_valid_bounds();
     }
 
     pub fn width(self) -> T {
@@ -106,11 +118,27 @@ impl<T: CoordinateType> Rect<T> {
         ]
     }
 
-    fn assert_valid_bounds(min: Coordinate<T>, max: Coordinate<T>) {
-        assert!(
-            min.x <= max.x && min.y <= max.y,
-            "Failed to create the Rect type: 'min' coordinate's x/y value must be smaller or equal to the 'max' x/y value"
-        );
+    fn assert_valid_bounds(&self) {
+        if !self.has_valid_bounds() {
+            panic!(RECT_INVALID_BOUNDS_ERROR);
+        }
+    }
+
+    fn has_valid_bounds(&self) -> bool {
+        self.min.x <= self.max.x && self.min.y <= self.max.y
+    }
+}
+
+static RECT_INVALID_BOUNDS_ERROR: &str = "Failed to create Rect: 'min' coordinate's x/y value must be smaller or equal to the 'max' x/y value";
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct InvalidRectCoordinatesError;
+
+impl std::error::Error for InvalidRectCoordinatesError {}
+
+impl std::fmt::Display for InvalidRectCoordinatesError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", RECT_INVALID_BOUNDS_ERROR)
     }
 }
 
