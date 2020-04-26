@@ -34,10 +34,10 @@ impl<T: CoordinateType> Rect<T> {
     where
         C: Into<Coordinate<T>>,
     {
-        Rect::try_new(min, max).expect(RECT_INVALID_BOUNDS_ERROR)
+        Rect::try_new(min, max).unwrap()
     }
 
-    pub fn try_new<C>(min: C, max: C) -> Option<Rect<T>>
+    pub fn try_new<C>(min: C, max: C) -> Result<Rect<T>, InvalidRectCoordinatesError>
     where
         C: Into<Coordinate<T>>,
     {
@@ -47,9 +47,9 @@ impl<T: CoordinateType> Rect<T> {
         };
 
         if rect.has_valid_bounds() {
-            Some(rect)
+            Ok(rect)
         } else {
-            None
+            Err(InvalidRectCoordinatesError)
         }
     }
 
@@ -130,6 +130,17 @@ impl<T: CoordinateType> Rect<T> {
 }
 
 static RECT_INVALID_BOUNDS_ERROR: &str = "Failed to create Rect: 'min' coordinate's x/y value must be smaller or equal to the 'max' x/y value";
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct InvalidRectCoordinatesError;
+
+impl std::error::Error for InvalidRectCoordinatesError {}
+
+impl std::fmt::Display for InvalidRectCoordinatesError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", RECT_INVALID_BOUNDS_ERROR)
+    }
+}
 
 #[cfg(test)]
 mod test {
