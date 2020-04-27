@@ -36,7 +36,7 @@
 
 use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use std::error::Error;
 

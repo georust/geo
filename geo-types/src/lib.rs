@@ -59,7 +59,7 @@ mod triangle;
 pub use crate::triangle::Triangle;
 
 mod rect;
-pub use crate::rect::Rect;
+pub use crate::rect::{InvalidRectCoordinatesError, Rect};
 
 #[macro_use]
 mod macros;

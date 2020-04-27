@@ -228,11 +228,7 @@ mod test {
     fn test_vincenty_distance_coincident() {
         let a = Point::<f64>::new(12.3, 4.56);
         let b = Point::<f64>::new(12.3, 4.56);
-        assert_relative_eq!(
-            a.vincenty_distance(&b).unwrap(),
-            0.0,
-            epsilon = 1.0e-3
-        );
+        assert_relative_eq!(a.vincenty_distance(&b).unwrap(), 0.0, epsilon = 1.0e-3);
     }
 
     #[test]
