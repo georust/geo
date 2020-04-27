@@ -1,8 +1,9 @@
 use crate::utils::{partial_max, partial_min};
 use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Polygon, Rect, Triangle,
+    MultiPoint, MultiPolygon, Polygon, Rect, Triangle
 };
+use geo_types::InvalidRectCoordinatesError;
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 
 /// Calculation of the bounding rectangle of a geometry.
@@ -177,18 +178,18 @@ where
             match (acc, next_bounding_rect) {
                 (None, None) => None,
                 (Some(r), None) | (None, Some(r)) => Some(r),
-                (Some(r1), Some(r2)) => bounding_rect_merge(r1, r2),
+                (Some(r1), Some(r2)) => bounding_rect_merge(r1, r2).ok(),
             }
         })
     }
 }
 
 // Return a new rectangle that encompasses the provided rectangles
-fn bounding_rect_merge<T: CoordinateType>(a: Rect<T>, b: Rect<T>) -> Option<Rect<T>> {
+fn bounding_rect_merge<T: CoordinateType>(a: Rect<T>, b: Rect<T>) -> Result<Rect<T>, InvalidRectCoordinatesError> {
     Rect::try_new(
         Coordinate {
-            x: partial_min(a.min().y, b.min().y),
-            y: partial_min(a.min().x, b.min().x),
+            x: partial_min(a.min().x, b.min().x),
+            y: partial_min(a.min().y, b.min().y),
         },
         Coordinate {
             x: partial_max(a.max().x, b.max().x),
@@ -205,6 +206,7 @@ mod test {
         polygon, Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon,
         Rect,
     };
+    use super::bounding_rect_merge;
 
     #[test]
     fn empty_linestring_test() {
@@ -295,6 +297,16 @@ mod test {
         assert_eq!(
             line2.bounding_rect(),
             Rect::new(Coordinate { x: 0., y: 1. }, Coordinate { x: 2., y: 3. },)
+        );
+    }
+
+    #[test]
+    fn bounding_rect_merge_test() {
+        assert_eq!( bounding_rect_merge(
+                Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. }),
+                Rect::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 2., y: 2. }),
+            ),
+            Ok(Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 2., y: 2. })),
         );
     }
 }
