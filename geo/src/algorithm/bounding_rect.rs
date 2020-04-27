@@ -1,10 +1,10 @@
 use crate::utils::{partial_max, partial_min};
 use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Polygon, Rect, Triangle
+    MultiPoint, MultiPolygon, Polygon, Rect, Triangle,
 };
-use geo_types::InvalidRectCoordinatesError;
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
+use geo_types::InvalidRectCoordinatesError;
 
 /// Calculation of the bounding rectangle of a geometry.
 pub trait BoundingRect<T: CoordinateType> {
@@ -185,7 +185,10 @@ where
 }
 
 // Return a new rectangle that encompasses the provided rectangles
-fn bounding_rect_merge<T: CoordinateType>(a: Rect<T>, b: Rect<T>) -> Result<Rect<T>, InvalidRectCoordinatesError> {
+fn bounding_rect_merge<T: CoordinateType>(
+    a: Rect<T>,
+    b: Rect<T>,
+) -> Result<Rect<T>, InvalidRectCoordinatesError> {
     Rect::try_new(
         Coordinate {
             x: partial_min(a.min().x, b.min().x),
@@ -200,13 +203,13 @@ fn bounding_rect_merge<T: CoordinateType>(a: Rect<T>, b: Rect<T>) -> Result<Rect
 
 #[cfg(test)]
 mod test {
+    use super::bounding_rect_merge;
     use crate::algorithm::bounding_rect::BoundingRect;
     use crate::line_string;
     use crate::{
         polygon, Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon,
         Rect,
     };
-    use super::bounding_rect_merge;
 
     #[test]
     fn empty_linestring_test() {
@@ -302,11 +305,15 @@ mod test {
 
     #[test]
     fn bounding_rect_merge_test() {
-        assert_eq!( bounding_rect_merge(
+        assert_eq!(
+            bounding_rect_merge(
                 Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. }),
                 Rect::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 2., y: 2. }),
             ),
-            Ok(Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 2., y: 2. })),
+            Ok(Rect::new(
+                Coordinate { x: 0., y: 0. },
+                Coordinate { x: 2., y: 2. }
+            )),
         );
     }
 }
