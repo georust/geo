@@ -1,7 +1,7 @@
 use crate::utils::{partial_max, partial_min};
 use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Polygon, Rect, Triangle,
+    MultiPoint, MultiPolygon, Polygon, Rect, Triangle, Point
 };
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 use geo_types::InvalidRectCoordinatesError;
@@ -31,6 +31,19 @@ pub trait BoundingRect<T: CoordinateType> {
     /// assert_eq!(118.34, bounding_rect.max().y);
     /// ```
     fn bounding_rect(&self) -> Self::Output;
+}
+
+impl<T> BoundingRect<T> for Point<T>
+where
+    T: CoordinateType,
+{
+    type Output = Rect<T>;
+
+    /// Return the bounding rectangle for a `Point`. It will have zero width
+    /// and zero height.
+    fn bounding_rect(&self) -> Self::Output {
+        Rect::new(self.0, self.0)
+    }
 }
 
 impl<T> BoundingRect<T> for MultiPoint<T>
@@ -151,7 +164,7 @@ where
 
     fn bounding_rect(&self) -> Self::Output {
         match self {
-            Geometry::Point(_) => None,
+            Geometry::Point(g) => Some(g.bounding_rect()),
             Geometry::Line(g) => Some(g.bounding_rect()),
             Geometry::LineString(g) => g.bounding_rect(),
             Geometry::Polygon(g) => g.bounding_rect(),
@@ -208,7 +221,7 @@ mod test {
     use crate::line_string;
     use crate::{
         polygon, Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon,
-        Rect,
+        Rect, Point, GeometryCollection, Geometry
     };
 
     #[test]
@@ -314,6 +327,31 @@ mod test {
                 Coordinate { x: 0., y: 0. },
                 Coordinate { x: 2., y: 2. }
             )),
+        );
+    }
+
+    #[test]
+    fn point_bounding_rect_test() {
+        assert_eq!(
+            Rect::new(
+                Coordinate { x: 1., y: 2. },
+                Coordinate { x: 1., y: 2. }
+            ),
+            Point(Coordinate { x: 1., y: 2. }).bounding_rect(),
+        );
+    }
+
+    #[test]
+    fn geometry_collection_bounding_rect_test() {
+        assert_eq!(
+            Some(Rect::new(
+                Coordinate { x: 0., y: 0. },
+                Coordinate { x: 1., y: 2. }
+            )),
+            GeometryCollection(vec![
+                Geometry::Point(Point(Coordinate { x: 0., y: 0. })),
+                Geometry::Point(Point(Coordinate { x: 1., y: 2. })),
+            ]).bounding_rect(),
         );
     }
 }
