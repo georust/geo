@@ -3,11 +3,11 @@ use num_traits::{Float, FromPrimitive};
 use crate::algorithm::vincenty_distance::{FailedToConvergeError, VincentyDistance};
 use crate::{Line, LineString, MultiLineString};
 
-/// Determine the length of a geometries using [Vincenty’s formulae].
+/// Determine the length of a geometry using [Vincenty’s formulae].
 ///
 /// [Vincenty’s formulae]: https://en.wikipedia.org/wiki/Vincenty%27s_formulae
 pub trait VincentyLength<T, RHS = Self> {
-    /// Determine the length of a geometries using [Vincenty’s formulae].
+    /// Determine the length of a geometry using [Vincenty’s formulae].
     ///
     /// # Units
     ///
@@ -24,12 +24,14 @@ pub trait VincentyLength<T, RHS = Self> {
     ///     (-74.006, 40.7128),
     ///     // London
     ///     (-0.1278, 51.5074),
+    ///     // Osaka
+    ///     (135.5244559, 34.687455)
     /// ]);
     ///
     /// let length = linestring.vincenty_length().unwrap();
     ///
     /// assert_eq!(
-    ///     5_585_234., // meters
+    ///     15_109_158., // meters
     ///     length.round()
     /// );
     /// ```
