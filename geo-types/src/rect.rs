@@ -1,6 +1,25 @@
 use crate::{polygon, Coordinate, CoordinateType, Polygon};
 
-/// A bounded 2D quadrilateral whose area is defined by minimum and maximum `Coordinates`.
+/// A bounded 2D quadrilateral whose area is defined by minimum and maximum `Coordinate`s.
+///
+/// The constructors and setters ensure the maximum `Coordinate` is greater than or equal to the
+/// minimum. Thus, a `Rect`s width, height, and area is guaranteed to be greater than or equal to
+/// zero.
+///
+/// # Examples
+///
+/// ```
+/// use geo_types::{Coordinate, Rect};
+///
+/// let rect = Rect::new(
+///     Coordinate { x: 0., y. 4.},
+///     Coordinate { x: 3., y. 10.},
+/// );
+///
+/// assert_eq!(3. rect.width());
+/// assert_eq!(6. rect.height());
+/// assert_eq!(18. rect.area());
+/// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect<T>
@@ -25,10 +44,10 @@ impl<T: CoordinateType> Rect<T> {
     /// ```
     /// use geo_types::{Coordinate, Rect};
     ///
-    /// let rect = Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 10., y: 20. });
-    ///
-    /// assert_eq!(rect.min(), Coordinate { x: 0., y: 0. });
-    /// assert_eq!(rect.max(), Coordinate { x: 10., y: 20. });
+    /// let rect = Rect::new(
+    ///     Coordinate { x: 0., y: 0. },
+    ///     Coordinate { x: 10., y: 20. }
+    /// );
     /// ```
     pub fn new<C>(min: C, max: C) -> Rect<T>
     where
@@ -57,6 +76,11 @@ impl<T: CoordinateType> Rect<T> {
         self.min
     }
 
+    /// Set the `Rect`’s minimum coordinate.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `min`’s x/y is greater than the minimum coordinate’s x/y.
     pub fn set_min<C>(&mut self, min: C)
     where
         C: Into<Coordinate<T>>,
@@ -69,6 +93,11 @@ impl<T: CoordinateType> Rect<T> {
         self.max
     }
 
+    /// Set the `Rect`’s maximum coordinate.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `max`’s x/y is less than the maximum coordinate’s x/y.
     pub fn set_max<C>(&mut self, max: C)
     where
         C: Into<Coordinate<T>>,
