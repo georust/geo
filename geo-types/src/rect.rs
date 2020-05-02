@@ -12,13 +12,13 @@ use crate::{polygon, Coordinate, CoordinateType, Polygon};
 /// use geo_types::{Coordinate, Rect};
 ///
 /// let rect = Rect::new(
-///     Coordinate { x: 0., y. 4.},
-///     Coordinate { x: 3., y. 10.},
+///     Coordinate { x: 0., y: 4.},
+///     Coordinate { x: 3., y: 10.},
 /// );
 ///
-/// assert_eq!(3. rect.width());
-/// assert_eq!(6. rect.height());
-/// assert_eq!(18. rect.area());
+/// assert_eq!(3., rect.width());
+/// assert_eq!(6., rect.height());
+/// assert_eq!(18., rect.area());
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
