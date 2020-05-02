@@ -80,7 +80,7 @@ impl<T: CoordinateType> Rect<T> {
     ///
     /// # Panics
     ///
-    /// Panics if `min`’s x/y is greater than the minimum coordinate’s x/y.
+    /// Panics if `min`’s x/y is greater than the maximum coordinate’s x/y.
     pub fn set_min<C>(&mut self, min: C)
     where
         C: Into<Coordinate<T>>,
@@ -97,7 +97,7 @@ impl<T: CoordinateType> Rect<T> {
     ///
     /// # Panics
     ///
-    /// Panics if `max`’s x/y is less than the maximum coordinate’s x/y.
+    /// Panics if `max`’s x/y is less than the minimum coordinate’s x/y.
     pub fn set_max<C>(&mut self, max: C)
     where
         C: Into<Coordinate<T>>,
