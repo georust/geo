@@ -18,7 +18,6 @@ use crate::{polygon, Coordinate, CoordinateType, Polygon};
 ///
 /// assert_eq!(3., rect.width());
 /// assert_eq!(6., rect.height());
-/// assert_eq!(18., rect.area());
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
