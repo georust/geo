@@ -260,7 +260,7 @@ where
         let sign_2 = sign(&point.0, &self.1, &self.2);
         let sign_3 = sign(&point.0, &self.2, &self.0);
 
-        ((sign_1 == sign_2) && (sign_2 == sign_3))
+        (sign_1 == sign_2) && (sign_2 == sign_3)
     }
 }
 

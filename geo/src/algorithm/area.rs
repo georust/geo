@@ -3,7 +3,7 @@ use num_traits::Float;
 
 use crate::algorithm::winding_order::twice_signed_ring_area;
 
-/// Signed planar area of a geometry.
+/// Planar area of a geometry.
 ///
 /// # Examples
 ///
@@ -25,7 +25,7 @@ use crate::algorithm::winding_order::twice_signed_ring_area;
 ///     line_string.0.reverse();
 /// });
 ///
-/// assert_eq!(polygon.area(), -30.);
+/// assert_eq!(polygon.area(), 30.);
 /// ```
 pub trait Area<T>
 where
@@ -58,8 +58,8 @@ where
     fn area(&self) -> T {
         self.interiors()
             .iter()
-            .fold(get_linestring_area(self.exterior()), |total, next| {
-                total - get_linestring_area(next)
+            .fold(get_linestring_area(self.exterior()).abs(), |total, next| {
+                total - get_linestring_area(next).abs()
             })
     }
 }
