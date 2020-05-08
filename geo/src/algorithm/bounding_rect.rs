@@ -1,7 +1,7 @@
 use crate::utils::{partial_max, partial_min};
 use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Polygon, Rect, Triangle, Point
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 use geo_types::InvalidRectCoordinatesError;
@@ -220,8 +220,8 @@ mod test {
     use crate::algorithm::bounding_rect::BoundingRect;
     use crate::line_string;
     use crate::{
-        polygon, Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon,
-        Rect, Point, GeometryCollection, Geometry
+        polygon, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+        MultiPoint, MultiPolygon, Point, Polygon, Rect,
     };
 
     #[test]
@@ -333,10 +333,7 @@ mod test {
     #[test]
     fn point_bounding_rect_test() {
         assert_eq!(
-            Rect::new(
-                Coordinate { x: 1., y: 2. },
-                Coordinate { x: 1., y: 2. }
-            ),
+            Rect::new(Coordinate { x: 1., y: 2. }, Coordinate { x: 1., y: 2. }),
             Point(Coordinate { x: 1., y: 2. }).bounding_rect(),
         );
     }
@@ -351,7 +348,8 @@ mod test {
             GeometryCollection(vec![
                 Geometry::Point(Point(Coordinate { x: 0., y: 0. })),
                 Geometry::Point(Point(Coordinate { x: 1., y: 2. })),
-            ]).bounding_rect(),
+            ])
+            .bounding_rect(),
         );
     }
 }
