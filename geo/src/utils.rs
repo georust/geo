@@ -1,5 +1,7 @@
 //! Internal utility functions, types, and data structures.
 
+use crate::contains::Contains;
+
 /// Partition a mutable slice in-place so that it contains all elements for
 /// which `predicate(e)` is `true`, followed by all elements for which
 /// `predicate(e)` is `false`. Returns sub-slices to all predicated and
@@ -70,6 +72,72 @@ pub fn partial_min<T: PartialOrd>(a: T, b: T) -> T {
     } else {
         b
     }
+}
+
+/// The position of a `Coordinate` relative to a `LineString`
+#[derive(PartialEq, Clone, Debug)]
+pub enum CoordPos {
+    OnBoundary,
+    Inside,
+    Outside,
+}
+
+/// Calculate the position of a `Coordinate` relative to a `LineString`
+pub fn coord_pos_relative_to_line_string<T>(
+    coord: crate::Coordinate<T>,
+    linestring: &crate::LineString<T>,
+) -> CoordPos
+where
+    T: num_traits::Float,
+{
+    // See: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+    //      http://geospatialpython.com/search
+    //         ?updated-min=2011-01-01T00:00:00-06:00&updated-max=2012-01-01T00:00:00-06:00&max-results=19
+
+    // LineString without points
+    if linestring.0.is_empty() {
+        return CoordPos::Outside;
+    }
+    // Point is on linestring
+    if linestring.contains(&coord) {
+        return CoordPos::OnBoundary;
+    }
+
+    let mut xints = T::zero();
+    let mut crossings = 0;
+    for line in linestring.lines() {
+        if coord.y > line.start.y.min(line.end.y)
+            && coord.y <= line.start.y.max(line.end.y)
+            && coord.x <= line.start.x.max(line.end.x)
+        {
+            if line.start.y != line.end.y {
+                xints = (coord.y - line.start.y) * (line.end.x - line.start.x)
+                    / (line.end.y - line.start.y)
+                    + line.start.x;
+            }
+            if (line.start.x == line.end.x) || (coord.x <= xints) {
+                crossings += 1;
+            }
+        }
+    }
+    if crossings % 2 == 1 {
+        CoordPos::Inside
+    } else {
+        CoordPos::Outside
+    }
+}
+
+pub fn sign<T>(
+    point_1: &crate::Coordinate<T>,
+    point_2: &crate::Coordinate<T>,
+    point_3: &crate::Coordinate<T>,
+) -> bool
+where
+    T: crate::CoordinateType,
+{
+    (point_1.x - point_3.x) * (point_2.y - point_3.y)
+        - (point_2.x - point_3.x) * (point_1.y - point_3.y)
+        < T::zero()
 }
 
 #[cfg(test)]
