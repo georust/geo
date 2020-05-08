@@ -1,4 +1,6 @@
 use crate::{CoordinateType, Point};
+#[cfg(test)]
+use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 
 /// A lightweight struct used to store coordinates on the 2-dimensional
 /// Cartesian plane.
@@ -66,5 +68,51 @@ where
     /// ```
     pub fn x_y(&self) -> (T, T) {
         (self.x, self.y)
+    }
+}
+
+#[cfg(test)]
+impl<T: CoordinateType + AbsDiffEq> AbsDiffEq for Coordinate<T>
+where
+    T::Epsilon: Copy,
+{
+    type Epsilon = T::Epsilon;
+
+    fn default_epsilon() -> T::Epsilon {
+        T::default_epsilon()
+    }
+
+    fn abs_diff_eq(&self, other: &Self, epsilon: T::Epsilon) -> bool {
+        T::abs_diff_eq(&self.x, &other.x, epsilon) && T::abs_diff_eq(&self.y, &other.y, epsilon)
+    }
+}
+
+#[cfg(test)]
+impl<T: CoordinateType + RelativeEq> RelativeEq for Coordinate<T>
+where
+    T::Epsilon: Copy,
+{
+    fn default_max_relative() -> T::Epsilon {
+        T::default_max_relative()
+    }
+
+    fn relative_eq(&self, other: &Self, epsilon: T::Epsilon, max_relative: T::Epsilon) -> bool {
+        T::relative_eq(&self.x, &other.x, epsilon, max_relative)
+            && T::relative_eq(&self.y, &other.y, epsilon, max_relative)
+    }
+}
+
+#[cfg(test)]
+impl<T: CoordinateType + UlpsEq> UlpsEq for Coordinate<T>
+where
+    T::Epsilon: Copy,
+{
+    fn default_max_ulps() -> u32 {
+        T::default_max_ulps()
+    }
+
+    fn ulps_eq(&self, other: &Self, epsilon: T::Epsilon, max_ulps: u32) -> bool {
+        T::ulps_eq(&self.x, &other.x, epsilon, max_ulps)
+            && T::ulps_eq(&self.y, &other.y, epsilon, max_ulps)
     }
 }

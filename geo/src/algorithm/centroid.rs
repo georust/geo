@@ -239,11 +239,7 @@ where
     type Output = Point<T>;
 
     fn centroid(&self) -> Self::Output {
-        let two = T::one() + T::one();
-        Point::new(
-            (self.max().x + self.min().x) / two,
-            (self.max().y + self.min().y) / two,
-        )
+        self.center().into()
     }
 }
 
