@@ -1,8 +1,10 @@
 use num_traits::Float;
 
 use crate::algorithm::intersects::Intersects;
+use crate::utils;
 use crate::{
-    Coordinate, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle,
+    Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
 ///  Checks if the geometry A is completely inside the B geometry
@@ -30,6 +32,19 @@ pub trait Contains<Rhs = Self> {
     fn contains(&self, rhs: &Rhs) -> bool;
 }
 
+// ┌───────────────────────────┐
+// │ Implementations for Point │
+// └───────────────────────────┘
+
+impl<T> Contains<Coordinate<T>> for Point<T>
+where
+    T: Float,
+{
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        self.contains(&Point(*coord))
+    }
+}
+
 impl<T> Contains<Point<T>> for Point<T>
 where
     T: Float,
@@ -39,12 +54,38 @@ where
     }
 }
 
-impl<T> Contains<Point<T>> for LineString<T>
+// ┌────────────────────────────────┐
+// │ Implementations for MultiPoint │
+// └────────────────────────────────┘
+
+impl<T> Contains<Coordinate<T>> for MultiPoint<T>
 where
     T: Float,
 {
-    fn contains(&self, p: &Point<T>) -> bool {
-        ::geo_types::private_utils::line_string_contains_point(self, *p)
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        self.0.iter().any(|point| point.contains(coord))
+    }
+}
+
+impl<T> Contains<Point<T>> for MultiPoint<T>
+where
+    T: Float,
+{
+    fn contains(&self, point: &Point<T>) -> bool {
+        self.contains(&point.0)
+    }
+}
+
+// ┌──────────────────────────┐
+// │ Implementations for Line │
+// └──────────────────────────┘
+
+impl<T> Contains<Coordinate<T>> for Line<T>
+where
+    T: Float,
+{
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        self.contains(&Point(*coord))
     }
 }
 
@@ -72,6 +113,28 @@ where
 {
     fn contains(&self, linestring: &LineString<T>) -> bool {
         linestring.points_iter().all(|pt| self.contains(&pt))
+    }
+}
+
+// ┌────────────────────────────────┐
+// │ Implementations for LineString │
+// └────────────────────────────────┘
+
+impl<T> Contains<Coordinate<T>> for LineString<T>
+where
+    T: Float,
+{
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        self.contains(&Point(*coord))
+    }
+}
+
+impl<T> Contains<Point<T>> for LineString<T>
+where
+    T: Float,
+{
+    fn contains(&self, p: &Point<T>) -> bool {
+        ::geo_types::private_utils::line_string_contains_point(self, *p)
     }
 }
 
@@ -109,53 +172,43 @@ where
     }
 }
 
-/// The position of a `Point` with respect to a `LineString`
-#[derive(PartialEq, Clone, Debug)]
-pub(crate) enum PositionPoint {
-    OnBoundary,
-    Inside,
-    Outside,
-}
+// ┌─────────────────────────────────────┐
+// │ Implementations for MultiLineString │
+// └─────────────────────────────────────┘
 
-/// Calculate the position of `Point` p relative to a linestring
-pub(crate) fn get_position<T>(p: Point<T>, linestring: &LineString<T>) -> PositionPoint
+impl<T> Contains<Coordinate<T>> for MultiLineString<T>
 where
     T: Float,
 {
-    // See: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-    //      http://geospatialpython.com/search
-    //         ?updated-min=2011-01-01T00:00:00-06:00&updated-max=2012-01-01T00:00:00-06:00&max-results=19
-
-    // LineString without points
-    if linestring.0.is_empty() {
-        return PositionPoint::Outside;
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        self.0.iter().any(|line_string| line_string.contains(coord))
     }
-    // Point is on linestring
-    if linestring.contains(&p) {
-        return PositionPoint::OnBoundary;
-    }
+}
 
-    let mut xints = T::zero();
-    let mut crossings = 0;
-    for line in linestring.lines() {
-        if p.y() > line.start.y.min(line.end.y)
-            && p.y() <= line.start.y.max(line.end.y)
-            && p.x() <= line.start.x.max(line.end.x)
-        {
-            if line.start.y != line.end.y {
-                xints = (p.y() - line.start.y) * (line.end.x - line.start.x)
-                    / (line.end.y - line.start.y)
-                    + line.start.x;
-            }
-            if (line.start.x == line.end.x) || (p.x() <= xints) {
-                crossings += 1;
-            }
+impl<T> Contains<Point<T>> for MultiLineString<T>
+where
+    T: Float,
+{
+    fn contains(&self, point: &Point<T>) -> bool {
+        self.contains(&point.0)
+    }
+}
+
+// ┌─────────────────────────────┐
+// │ Implementations for Polygon │
+// └─────────────────────────────┘
+
+impl<T> Contains<Coordinate<T>> for Polygon<T>
+where
+    T: Float,
+{
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        match utils::coord_pos_relative_to_line_string(*coord, &self.exterior()) {
+            utils::CoordPos::OnBoundary | utils::CoordPos::Outside => false,
+            _ => self.interiors().iter().all(|ls| {
+                utils::coord_pos_relative_to_line_string(*coord, ls) == utils::CoordPos::Outside
+            }),
         }
-    }
-    if crossings % 2 == 1 {
-        PositionPoint::Inside
-    } else {
-        PositionPoint::Outside
     }
 }
 
@@ -164,22 +217,7 @@ where
     T: Float,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        match get_position(*p, &self.exterior()) {
-            PositionPoint::OnBoundary | PositionPoint::Outside => false,
-            _ => self
-                .interiors()
-                .iter()
-                .all(|ls| get_position(*p, ls) == PositionPoint::Outside),
-        }
-    }
-}
-
-impl<T> Contains<Point<T>> for MultiPolygon<T>
-where
-    T: Float,
-{
-    fn contains(&self, p: &Point<T>) -> bool {
-        self.0.iter().any(|poly| poly.contains(p))
+        self.contains(&p.0)
     }
 }
 
@@ -226,15 +264,50 @@ where
     }
 }
 
+// ┌──────────────────────────────────┐
+// │ Implementations for MultiPolygon │
+// └──────────────────────────────────┘
+
+impl<T> Contains<Coordinate<T>> for MultiPolygon<T>
+where
+    T: Float,
+{
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        self.0.iter().any(|poly| poly.contains(coord))
+    }
+}
+
+impl<T> Contains<Point<T>> for MultiPolygon<T>
+where
+    T: Float,
+{
+    fn contains(&self, p: &Point<T>) -> bool {
+        self.contains(&p.0)
+    }
+}
+
+// ┌──────────────────────────┐
+// │ Implementations for Rect │
+// └──────────────────────────┘
+
+impl<T> Contains<Coordinate<T>> for Rect<T>
+where
+    T: CoordinateType,
+{
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        coord.x >= self.min().x
+            && coord.x <= self.max().x
+            && coord.y >= self.min().y
+            && coord.y <= self.max().y
+    }
+}
+
 impl<T> Contains<Point<T>> for Rect<T>
 where
     T: CoordinateType,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        p.x() >= self.min().x
-            && p.x() <= self.max().x
-            && p.y() >= self.min().y
-            && p.y() <= self.max().y
+        self.contains(&p.0)
     }
 }
 
@@ -251,27 +324,90 @@ where
     }
 }
 
+// ┌──────────────────────────────┐
+// │ Implementations for Triangle │
+// └──────────────────────────────┘
+
+impl<T> Contains<Coordinate<T>> for Triangle<T>
+where
+    T: CoordinateType,
+{
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        let sign_1 = utils::sign(coord, &self.0, &self.1);
+        let sign_2 = utils::sign(coord, &self.1, &self.2);
+        let sign_3 = utils::sign(coord, &self.2, &self.0);
+
+        (sign_1 == sign_2) && (sign_2 == sign_3)
+    }
+}
+
 impl<T> Contains<Point<T>> for Triangle<T>
 where
     T: CoordinateType,
 {
     fn contains(&self, point: &Point<T>) -> bool {
-        let sign_1 = sign(&point.0, &self.0, &self.1);
-        let sign_2 = sign(&point.0, &self.1, &self.2);
-        let sign_3 = sign(&point.0, &self.2, &self.0);
-
-        ((sign_1 == sign_2) && (sign_2 == sign_3))
+        self.contains(&point.0)
     }
 }
 
-fn sign<T>(point_1: &Coordinate<T>, point_2: &Coordinate<T>, point_3: &Coordinate<T>) -> bool
+// ┌──────────────────────────────┐
+// │ Implementations for Geometry │
+// └──────────────────────────────┘
+
+impl<T> Contains<Coordinate<T>> for Geometry<T>
 where
-    T: CoordinateType,
+    T: Float,
 {
-    (point_1.x - point_3.x) * (point_2.y - point_3.y)
-        - (point_2.x - point_3.x) * (point_1.y - point_3.y)
-        < T::zero()
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        match self {
+            Geometry::Point(g) => g.contains(coord),
+            Geometry::Line(g) => g.contains(coord),
+            Geometry::LineString(g) => g.contains(coord),
+            Geometry::Polygon(g) => g.contains(coord),
+            Geometry::MultiPoint(g) => g.contains(coord),
+            Geometry::MultiLineString(g) => g.contains(coord),
+            Geometry::MultiPolygon(g) => g.contains(coord),
+            Geometry::GeometryCollection(g) => g.contains(coord),
+            Geometry::Rect(g) => g.contains(coord),
+            Geometry::Triangle(g) => g.contains(coord),
+        }
+    }
 }
+
+impl<T> Contains<Point<T>> for Geometry<T>
+where
+    T: Float,
+{
+    fn contains(&self, point: &Point<T>) -> bool {
+        self.contains(&point.0)
+    }
+}
+
+// ┌────────────────────────────────────────┐
+// │ Implementations for GeometryCollection │
+// └────────────────────────────────────────┘
+
+impl<T> Contains<Coordinate<T>> for GeometryCollection<T>
+where
+    T: Float,
+{
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        self.0.iter().any(|geometry| geometry.contains(coord))
+    }
+}
+
+impl<T> Contains<Point<T>> for GeometryCollection<T>
+where
+    T: Float,
+{
+    fn contains(&self, point: &Point<T>) -> bool {
+        self.contains(&point.0)
+    }
+}
+
+// ┌───────┐
+// │ Tests │
+// └───────┘
 
 #[cfg(test)]
 mod test {

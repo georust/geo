@@ -1,7 +1,8 @@
-use crate::algorithm::contains::{get_position, Contains, PositionPoint};
+use crate::algorithm::contains::Contains;
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::algorithm::intersects::Intersects;
 use crate::algorithm::polygon_distance_fast_path::*;
+use crate::utils::{coord_pos_relative_to_line_string, CoordPos};
 use crate::{
     Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Triangle,
 };
@@ -260,9 +261,9 @@ fn ring_contains_point<T>(poly: &Polygon<T>, p: Point<T>) -> bool
 where
     T: Float,
 {
-    match get_position(p, &poly.exterior()) {
-        PositionPoint::Inside => true,
-        PositionPoint::OnBoundary | PositionPoint::Outside => false,
+    match coord_pos_relative_to_line_string(p.0, &poly.exterior()) {
+        CoordPos::Inside => true,
+        CoordPos::OnBoundary | CoordPos::Outside => false,
     }
 }
 
