@@ -1,4 +1,5 @@
 use crate::{polygon, Coordinate, CoordinateType, Polygon};
+use num_traits::Float;
 
 /// A bounded 2D quadrilateral whose area is defined by minimum and maximum `Coordinate`s.
 ///
@@ -18,6 +19,10 @@ use crate::{polygon, Coordinate, CoordinateType, Polygon};
 ///
 /// assert_eq!(3., rect.width());
 /// assert_eq!(6., rect.height());
+/// assert_eq!(
+///     Coordinate { x: 1.5, y: 7. },
+///     rect.center()
+/// );
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -71,6 +76,20 @@ impl<T: CoordinateType> Rect<T> {
         }
     }
 
+    /// Returns the minimum `Coordinate` (bottom-left corner) of the `Rect`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use geo_types::{Coordinate, Rect};
+    ///
+    /// let rect = Rect::new(
+    ///     Coordinate { x: 5., y: 5. },
+    ///     Coordinate { x: 15., y: 15. },
+    /// );
+    ///
+    /// assert_eq!(rect.min(), Coordinate { x: 5., y: 5. });
+    /// ```
     pub fn min(self) -> Coordinate<T> {
         self.min
     }
@@ -88,6 +107,20 @@ impl<T: CoordinateType> Rect<T> {
         self.assert_valid_bounds();
     }
 
+    /// Returns the maximum `Coordinate` (top-right corner) of the `Rect`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use geo_types::{Coordinate, Rect};
+    ///
+    /// let rect = Rect::new(
+    ///     Coordinate { x: 5., y: 5. },
+    ///     Coordinate { x: 15., y: 15. },
+    /// );
+    ///
+    /// assert_eq!(rect.max(), Coordinate { x: 15., y: 15. });
+    /// ```
     pub fn max(self) -> Coordinate<T> {
         self.max
     }
@@ -105,10 +138,38 @@ impl<T: CoordinateType> Rect<T> {
         self.assert_valid_bounds();
     }
 
+    /// Returns the width of the `Rect`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use geo_types::{Coordinate, Rect};
+    ///
+    /// let rect = Rect::new(
+    ///     Coordinate { x: 5., y: 5. },
+    ///     Coordinate { x: 15., y: 15. },
+    /// );
+    ///
+    /// assert_eq!(rect.width(), 10.);
+    /// ```
     pub fn width(self) -> T {
         self.max().x - self.min().x
     }
 
+    /// Returns the height of the `Rect`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use geo_types::{Coordinate, Rect};
+    ///
+    /// let rect = Rect::new(
+    ///     Coordinate { x: 5., y: 5. },
+    ///     Coordinate { x: 15., y: 15. },
+    /// );
+    ///
+    /// assert_eq!(rect.height(), 10.);
+    /// ```
     pub fn height(self) -> T {
         self.max().y - self.min().y
     }
@@ -157,6 +218,34 @@ impl<T: CoordinateType> Rect<T> {
     }
 }
 
+impl<T: CoordinateType + Float> Rect<T> {
+    /// Returns the center `Coordinate` of the `Rect`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use geo_types::{Coordinate, Rect};
+    ///
+    /// let rect = Rect::new(
+    ///     Coordinate { x: 5., y: 5. },
+    ///     Coordinate { x: 15., y: 15. },
+    /// );
+    ///
+    /// assert_eq!(
+    ///     rect.center(),
+    ///     Coordinate { x: 10., y: 10. }
+    /// );
+    /// ```
+    pub fn center(self) -> Coordinate<T> {
+        let two = T::one() + T::one();
+        (
+            (self.max.x + self.min.x) / two,
+            (self.max.y + self.min.y) / two,
+        )
+            .into()
+    }
+}
+
 static RECT_INVALID_BOUNDS_ERROR: &str = "Failed to create Rect: 'min' coordinate's x/y value must be smaller or equal to the 'max' x/y value";
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -198,5 +287,21 @@ mod test {
     fn rect_height() {
         let rect = Rect::new((10., 10.), (20., 20.));
         assert_relative_eq!(rect.height(), 10.);
+    }
+
+    #[test]
+    fn rect_center() {
+        assert_relative_eq!(
+            Rect::new((0., 10.), (10., 90.)).center(),
+            Coordinate::from((5., 50.))
+        );
+        assert_relative_eq!(
+            Rect::new((-42., -42.), (42., 42.)).center(),
+            Coordinate::from((0., 0.))
+        );
+        assert_relative_eq!(
+            Rect::new((0., 0.), (0., 0.)).center(),
+            Coordinate::from((0., 0.))
+        );
     }
 }
