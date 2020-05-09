@@ -42,6 +42,10 @@ name = "area"
 harness = false
 
 [[bench]]
+name = "contains"
+harness = false
+
+[[bench]]
 name = "convex_hull"
 harness = false
 
