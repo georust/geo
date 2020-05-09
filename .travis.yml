@@ -17,17 +17,17 @@ matrix:
     - env: GEO_FEATURES="--features use-proj"
     - env: GEO_FEATURES="--features use-serde"
 
-before_cache:
-  - if [[ "${TRAVIS_RUST_VERSION}" == stable ]]; then
-        cargo install cargo-tarpaulin -f;
-    fi
-
 before_install:
   - if [ "${GEO_FEATURES}" == "--features use-proj" ]; then
         sudo apt-get update;
         wget https://github.com/OSGeo/PROJ/releases/download/7.0.0/proj-7.0.0.tar.gz;
         tar -xzvf proj-7.0.0.tar.gz;
         pushd proj-7.0.0 && ./configure --prefix=/usr && make && sudo make install && popd;
+    fi
+  - if [[ "${TRAVIS_RUST_VERSION}" == stable ]]; then
+      if [[ "${GEO_FEATURES}" == "" ]]; then
+        cargo install cargo-tarpaulin;
+      fi
     fi
 
 script:
