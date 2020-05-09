@@ -9,10 +9,9 @@ addons:
 
 matrix:
   include:
-    - env: GEO_TYPES_FEATURES=""
+    - env: GEO_TYPES_FEATURES="" GEO_FEATURES="" RUN_TARPAULIN=1
     - env: GEO_TYPES_FEATURES="--features serde"
     - env: GEO_TYPES_FEATURES="--features rstar"
-    - env: GEO_FEATURES="" RUN_TARPAULIN=1
     - env: GEO_FEATURES="--features postgis-integration"
     - env: GEO_FEATURES="--features use-proj"
     - env: GEO_FEATURES="--features use-serde"
