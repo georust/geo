@@ -31,8 +31,8 @@ before_install:
     fi
 
 script:
-  - (cd geo-types && cargo build --release $GEO_TYPES_FEATURES && cargo test --release $GEO_TYPES_FEATURES)
-  - (cd geo && cargo build --release $GEO_FEATURES && cargo test --release $GEO_FEATURES)
+  - (cd geo-types && cargo test $GEO_TYPES_FEATURES)
+  - (cd geo && cargo test $GEO_FEATURES)
 
 after_success:
   - if [[ "${TRAVIS_RUST_VERSION}" == stable ]]; then
