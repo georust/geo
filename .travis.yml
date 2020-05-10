@@ -4,8 +4,8 @@ cache: cargo
 
 addons:
   apt:
-    sources:
-      - debian-sid
+    packages:
+      - libssl-dev
 
 matrix:
   include:
@@ -17,9 +17,10 @@ matrix:
     - env: GEO_TYPES_FEATURES="--features rstar"
 
 before_install:
-  - sudo apt-get -y --allow-unauthenticated install libssl-dev
   - if [ "${GEO_FEATURES}" == "--features use-proj" ]; then
-        sudo apt-get -y --allow-unauthenticated install libproj-dev;
+        sudo add-apt-repository -y ppa:deity/sid;
+        sudo apt-get update;
+        sudo apt-get -y --allow-unauthenticated install libproj-dev=7.0.1-1;
     fi
   - if [[ "${TRAVIS_RUST_VERSION}" == stable && "${RUN_TARPAULIN}" ]]; then
       cargo install cargo-tarpaulin;
