@@ -9,18 +9,12 @@ addons:
 
 matrix:
   include:
-    - env: GEO_TYPES_FEATURES=""
+    - env: GEO_FEATURES="" GEO_TYPES_FEATURES="" RUN_TARPAULIN=1
+    - env: GEO_FEATURES="--features use-proj"
+    - env: GEO_FEATURES="--features postgis-integration"
+    - env: GEO_FEATURES="--features use-serde"
     - env: GEO_TYPES_FEATURES="--features serde"
     - env: GEO_TYPES_FEATURES="--features rstar"
-    - env: GEO_FEATURES=""
-    - env: GEO_FEATURES="--features postgis-integration"
-    - env: GEO_FEATURES="--features use-proj"
-    - env: GEO_FEATURES="--features use-serde"
-
-before_cache:
-  - if [[ "${TRAVIS_RUST_VERSION}" == stable ]]; then
-        cargo install cargo-tarpaulin -f;
-    fi
 
 before_install:
   - if [ "${GEO_FEATURES}" == "--features use-proj" ]; then
@@ -29,14 +23,15 @@ before_install:
         tar -xzvf proj-7.0.0.tar.gz;
         pushd proj-7.0.0 && ./configure --prefix=/usr && make && sudo make install && popd;
     fi
+  - if [[ "${TRAVIS_RUST_VERSION}" == stable && "${RUN_TARPAULIN}" ]]; then
+      cargo install cargo-tarpaulin;
+    fi
 
 script:
   - (cd geo-types && cargo build --release $GEO_TYPES_FEATURES && cargo test --release $GEO_TYPES_FEATURES)
   - (cd geo && cargo build --release $GEO_FEATURES && cargo test --release $GEO_FEATURES)
 
 after_success:
-  - if [[ "${TRAVIS_RUST_VERSION}" == stable ]]; then
-      if [[ "${GEO_FEATURES}" == "" ]]; then
-        cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID;
-      fi
+  - if [[ "${TRAVIS_RUST_VERSION}" == stable && "${RUN_TARPAULIN}" ]]; then
+      cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID;
     fi
