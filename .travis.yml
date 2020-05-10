@@ -4,8 +4,11 @@ cache: cargo
 
 addons:
   apt:
+    sources:
+      - debian-sid
     packages:
       - libssl-dev
+      - libproj-dev
 
 matrix:
   include:
@@ -17,12 +20,6 @@ matrix:
     - env: GEO_TYPES_FEATURES="--features rstar"
 
 before_install:
-  - if [ "${GEO_FEATURES}" == "--features use-proj" ]; then
-        sudo apt-get update;
-        wget https://github.com/OSGeo/PROJ/releases/download/7.0.0/proj-7.0.0.tar.gz;
-        tar -xzvf proj-7.0.0.tar.gz;
-        pushd proj-7.0.0 && ./configure --prefix=/usr && make && sudo make install && popd;
-    fi
   - if [[ "${TRAVIS_RUST_VERSION}" == stable && "${RUN_TARPAULIN}" ]]; then
       cargo install cargo-tarpaulin;
     fi
