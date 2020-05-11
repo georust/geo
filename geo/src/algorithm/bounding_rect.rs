@@ -16,14 +16,15 @@ pub trait BoundingRect<T: CoordinateType> {
     ///
     /// ```
     /// use geo::algorithm::bounding_rect::BoundingRect;
-    /// use geo::{LineString, Point};
+    /// use geo::line_string;
     ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(40.02f64, 116.34));
-    /// vec.push(Point::new(42.02f64, 116.34));
-    /// vec.push(Point::new(42.02f64, 118.34));
-    /// let linestring = LineString::from(vec);
-    /// let bounding_rect = linestring.bounding_rect().unwrap();
+    /// let line_string = line_string![
+    ///     (x: 40.02f64, y: 116.34),
+    ///     (x: 42.02f64, y: 116.34),
+    ///     (x: 42.02f64, y: 118.34),
+    /// ];
+    ///
+    /// let bounding_rect = line_string.bounding_rect().unwrap();
     ///
     /// assert_eq!(40.02f64, bounding_rect.min().x);
     /// assert_eq!(42.02f64, bounding_rect.max().x);

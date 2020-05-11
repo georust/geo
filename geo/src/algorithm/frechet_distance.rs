@@ -15,12 +15,23 @@ pub trait FrechetDistance<T, Rhs = Self> {
     ///
     /// ```
     /// use geo::algorithm::frechet_distance::FrechetDistance;
-    /// use geo::LineString;
+    /// use geo::line_string;
     ///
-    /// let ls_a = LineString::from(vec![(1., 1.), (2., 1.), (2., 2.), (3., 3.)]);
-    /// let ls_b = LineString::from(vec![(2., 2.), (0., 1.), (2., 4.), (3., 4.)]);
+    /// let line_string_a = line_string![
+    ///     (x: 1., y: 1.),
+    ///     (x: 2., y: 1.),
+    ///     (x: 2., y: 2.),
+    ///     (x: 3., y: 3.)
+    /// ];
     ///
-    /// let distance = ls_a.frechet_distance(&ls_b);
+    /// let line_string_b = line_string![
+    ///     (x: 2., y: 2.),
+    ///     (x: 0., y: 1.),
+    ///     (x: 2., y: 4.),
+    ///     (x: 3., y: 4.)
+    /// ];
+    ///
+    /// let distance = line_string_a.frechet_distance(&line_string_b);
     ///
     /// assert_eq!(2., distance);
     /// ```

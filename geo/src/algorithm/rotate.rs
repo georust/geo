@@ -59,20 +59,23 @@ pub trait Rotate<T> {
     ///
     /// ```
     /// use geo::algorithm::rotate::Rotate;
-    /// use geo::{LineString, Point};
+    /// use geo::line_string;
     ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(0.0, 0.0));
-    /// vec.push(Point::new(5.0, 5.0));
-    /// vec.push(Point::new(10.0, 10.0));
-    /// let linestring = LineString::from(vec);
-    /// let rotated = linestring.rotate(-45.0);
-    /// let mut correct = Vec::new();
-    /// correct.push(Point::new(-2.0710678118654755, 5.0));
-    /// correct.push(Point::new(5.0, 5.0));
-    /// correct.push(Point::new(12.071067811865476, 5.0));
-    /// let correct_ls = LineString::from(correct);
-    /// assert_eq!(rotated, correct_ls);
+    /// let line_string = line_string![
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 5.0, y: 5.0),
+    ///     (x: 10.0, y: 10.0),
+    /// ];
+    ///
+    /// let rotated = line_string.rotate(-45.0);
+    ///
+    /// let expected = line_string![
+    ///     (x: -2.0710678118654755, y: 5.0),
+    ///     (x: 5.0, y: 5.0),
+    ///     (x: 12.071067811865476, y: 5.0),
+    /// ];
+    ///
+    /// assert_eq!(expected, rotated);
     /// ```
     fn rotate(&self, angle: T) -> Self
     where

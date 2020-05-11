@@ -435,22 +435,25 @@ pub trait SimplifyVW<T, Epsilon = T> {
     ///
     /// ```
     /// use geo::algorithm::simplifyvw::SimplifyVW;
-    /// use geo::{LineString, Point};
+    /// use geo::line_string;
     ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(5.0, 2.0));
-    /// vec.push(Point::new(3.0, 8.0));
-    /// vec.push(Point::new(6.0, 20.0));
-    /// vec.push(Point::new(7.0, 25.0));
-    /// vec.push(Point::new(10.0, 10.0));
-    /// let linestring = LineString::from(vec);
-    /// let mut compare = Vec::new();
-    /// compare.push(Point::new(5.0, 2.0));
-    /// compare.push(Point::new(7.0, 25.0));
-    /// compare.push(Point::new(10.0, 10.0));
-    /// let ls_compare = LineString::from(compare);
-    /// let simplified = linestring.simplifyvw(&30.0);
-    /// assert_eq!(simplified, ls_compare)
+    /// let line_string = line_string![
+    ///     (x: 5.0, y: 2.0),
+    ///     (x: 3.0, y: 8.0),
+    ///     (x: 6.0, y: 20.0),
+    ///     (x: 7.0, y: 25.0),
+    ///     (x: 10.0, y: 10.0),
+    /// ];
+    ///
+    /// let simplified = line_string.simplifyvw(&30.0);
+    ///
+    /// let expected = line_string![
+    ///     (x: 5.0, y: 2.0),
+    ///     (x: 7.0, y: 25.0),
+    ///     (x: 10.0, y: 10.0),
+    /// ];
+    ///
+    /// assert_eq!(expected, simplified);
     /// ```
     fn simplifyvw(&self, epsilon: &T) -> Self
     where
@@ -470,21 +473,25 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
     ///
     /// ```
     /// use geo::algorithm::simplifyvw::SimplifyVwIdx;
-    /// use geo::{LineString, Point};
+    /// use geo::line_string;
     ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(5.0, 2.0));
-    /// vec.push(Point::new(3.0, 8.0));
-    /// vec.push(Point::new(6.0, 20.0));
-    /// vec.push(Point::new(7.0, 25.0));
-    /// vec.push(Point::new(10.0, 10.0));
-    /// let linestring = LineString::from(vec);
-    /// let mut compare = Vec::new();
-    /// compare.push(0_usize);
-    /// compare.push(3_usize);
-    /// compare.push(4_usize);
-    /// let simplified = linestring.simplifyvw_idx(&30.0);
-    /// assert_eq!(simplified, compare)
+    /// let line_string = line_string![
+    ///     (x: 5.0, y: 2.0),
+    ///     (x: 3.0, y: 8.0),
+    ///     (x: 6.0, y: 20.0),
+    ///     (x: 7.0, y: 25.0),
+    ///     (x: 10.0, y: 10.0),
+    /// ];
+    ///
+    /// let simplified = line_string.simplifyvw_idx(&30.0);
+    ///
+    /// let expected = vec![
+    ///     0_usize,
+    ///     3_usize,
+    ///     4_usize,
+    /// ];
+    ///
+    /// assert_eq!(expected, simplified);
     /// ```
     fn simplifyvw_idx(&self, epsilon: &T) -> Vec<usize>
     where
@@ -519,28 +526,31 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     ///
     /// ```
     /// use geo::algorithm::simplifyvw::SimplifyVWPreserve;
-    /// use geo::{LineString, Point};
+    /// use geo::line_string;
     ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(10., 60.));
-    /// vec.push(Point::new(135., 68.));
-    /// vec.push(Point::new(94., 48.));
-    /// vec.push(Point::new(126., 31.));
-    /// vec.push(Point::new(280., 19.));
-    /// vec.push(Point::new(117., 48.));
-    /// vec.push(Point::new(300., 40.));
-    /// vec.push(Point::new(301., 10.));
-    /// let linestring = LineString::from(vec);
-    /// let mut compare = Vec::new();
-    /// compare.push(Point::new(10., 60.));
-    /// compare.push(Point::new(126., 31.));
-    /// compare.push(Point::new(280., 19.));
-    /// compare.push(Point::new(117., 48.));
-    /// compare.push(Point::new(300., 40.));
-    /// compare.push(Point::new(301., 10.));
-    /// let ls_compare = LineString::from(compare);
-    /// let simplified = linestring.simplifyvw_preserve(&668.6);
-    /// assert_eq!(simplified, ls_compare)
+    /// let line_string = line_string![
+    ///     (x: 10., y: 60.),
+    ///     (x: 135., y: 68.),
+    ///     (x: 94., y: 48.),
+    ///     (x: 126., y: 31.),
+    ///     (x: 280., y: 19.),
+    ///     (x: 117., y: 48.),
+    ///     (x: 300., y: 40.),
+    ///     (x: 301., y: 10.),
+    /// ];
+    ///
+    /// let simplified = line_string.simplifyvw_preserve(&668.6);
+    ///
+    /// let expected = line_string![
+    ///     (x: 10., y: 60.),
+    ///     (x: 126., y: 31.),
+    ///     (x: 280., y: 19.),
+    ///     (x: 117., y: 48.),
+    ///     (x: 300., y: 40.),
+    ///     (x: 301., y: 10.),
+    /// ];
+    ///
+    /// assert_eq!(expected, simplified);
     /// ```
     fn simplifyvw_preserve(&self, epsilon: &T) -> Self
     where

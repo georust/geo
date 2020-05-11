@@ -12,14 +12,17 @@ pub trait EuclideanLength<T, RHS = Self> {
     ///
     /// ```
     /// use geo::algorithm::euclidean_length::EuclideanLength;
-    /// use geo::{Coordinate, LineString, Point};
+    /// use geo::line_string;
     ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(40.02f64, 116.34));
-    /// vec.push(Point::new(42.02f64, 116.34));
-    /// let linestring = LineString::from(vec);
+    /// let line_string = line_string![
+    ///     (x: 40.02f64, y: 116.34),
+    ///     (x: 42.02f64, y: 116.34),
+    /// ];
     ///
-    /// println!("EuclideanLength {}", linestring.euclidean_length());
+    /// assert_eq!(
+    ///     2.,
+    ///     line_string.euclidean_length(),
+    /// )
     /// ```
     fn euclidean_length(&self) -> T;
 }

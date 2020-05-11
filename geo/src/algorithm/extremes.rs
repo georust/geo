@@ -93,16 +93,20 @@ pub trait ExtremeIndices<T: Float + Signed> {
     ///
     /// ```
     /// use geo::extremes::ExtremeIndices;
-    /// use geo::{LineString, Point, Polygon};
+    /// use geo::polygon;
+    ///
     /// // a diamond shape
-    /// let points_raw = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
-    /// let points = points_raw
-    ///     .iter()
-    ///     .map(|e| Point::new(e.0, e.1))
-    ///     .collect::<Vec<_>>();
-    /// let poly = Polygon::new(LineString::from(points), vec![]);
+    /// let polygon = polygon![
+    ///     (x: 1.0, y: 0.0),
+    ///     (x: 2.0, y: 1.0),
+    ///     (x: 1.0, y: 2.0),
+    ///     (x: 0.0, y: 1.0),
+    ///     (x: 1.0, y: 0.0),
+    /// ];
+    ///
     /// // Polygon is both convex and oriented counter-clockwise
-    /// let extremes = poly.extreme_indices().unwrap();
+    /// let extremes = polygon.extreme_indices().unwrap();
+    ///
     /// assert_eq!(extremes.ymin, 0);
     /// assert_eq!(extremes.xmax, 1);
     /// assert_eq!(extremes.ymax, 2);
@@ -147,16 +151,20 @@ pub trait ExtremePoints<T: Float> {
     ///
     /// ```
     /// use geo::extremes::ExtremePoints;
-    /// use geo::{LineString, Point, Polygon};
-    /// let points_raw = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
-    /// let points = points_raw
-    ///     .iter()
-    ///     .map(|e| Point::new(e.0, e.1))
-    ///     .collect::<Vec<_>>();
-    /// let poly1 = Polygon::new(LineString::from(points), vec![]);
-    /// let extremes = poly1.extreme_points();
-    /// let correct = Point::new(0.0, 1.0);
-    /// assert_eq!(extremes.xmin, correct);
+    /// use geo::{point, polygon};
+    ///
+    /// // a diamond shape
+    /// let polygon = polygon![
+    ///     (x: 1.0, y: 0.0),
+    ///     (x: 2.0, y: 1.0),
+    ///     (x: 1.0, y: 2.0),
+    ///     (x: 0.0, y: 1.0),
+    ///     (x: 1.0, y: 0.0),
+    /// ];
+    ///
+    /// let extremes = polygon.extreme_points();
+    ///
+    /// assert_eq!(extremes.xmin, point!(x: 0., y: 1.));
     /// ```
     fn extreme_points(&self) -> ExtremePoint<T>;
 }

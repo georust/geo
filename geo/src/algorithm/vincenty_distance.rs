@@ -23,12 +23,13 @@ pub trait VincentyDistance<T, Rhs = Self> {
     ///
     /// ```
     /// use geo::prelude::*;
-    /// use geo::Point;
+    /// use geo::point;
     ///
     /// // New York City
-    /// let p1 = Point::<f64>::from((-74.006, 40.7128));
+    /// let p1 = point!(x: -74.006f64, y: 40.7128f64);
+    ///
     /// // London
-    /// let p2 = Point::<f64>::from((-0.1278, 51.5074));
+    /// let p2 = point!(x: -0.1278f64, y: 51.5074f64);
     ///
     /// let distance = p1.vincenty_distance(&p2).unwrap();
     ///
