@@ -27,50 +27,70 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     ///
     /// # Examples
     ///
+    /// `Point` to `Point`:
+    ///
     /// ```
+    /// use approx::assert_relative_eq;
     /// use geo::algorithm::euclidean_distance::EuclideanDistance;
-    /// use geo::{LineString, Point, Polygon, COORD_PRECISION};
+    /// use geo::point;
     ///
-    /// // Point to Point example
-    /// let p = Point::new(-72.1235, 42.3521);
-    /// let dist = p.euclidean_distance(&Point::new(-72.1260, 42.45));
-    /// assert!(dist < COORD_PRECISION);
+    /// let p1 = point!(x: -72.1235, y: 42.3521);
+    /// let p2 = point!(x: -72.1260, y: 42.45);
     ///
-    /// // Point to Polygon example
-    /// let points = vec![
-    ///     (5., 1.),
-    ///     (4., 2.),
-    ///     (4., 3.),
-    ///     (5., 4.),
-    ///     (6., 4.),
-    ///     (7., 3.),
-    ///     (7., 2.),
-    ///     (6., 1.),
-    ///     (5., 1.),
+    /// let distance = p1.euclidean_distance(&p2);
+    ///
+    /// assert_relative_eq!(distance, 0.09793191512474639);
+    /// ```
+    ///
+    /// `Point` to `Polygon`:
+    ///
+    /// ```
+    /// use approx::assert_relative_eq;
+    /// use geo::algorithm::euclidean_distance::EuclideanDistance;
+    /// use geo::{point, polygon};
+    ///
+    /// let polygon = polygon![
+    ///     (x: 5., y: 1.),
+    ///     (x: 4., y: 2.),
+    ///     (x: 4., y: 3.),
+    ///     (x: 5., y: 4.),
+    ///     (x: 6., y: 4.),
+    ///     (x: 7., y: 3.),
+    ///     (x: 7., y: 2.),
+    ///     (x: 6., y: 1.),
+    ///     (x: 5., y: 1.),
     /// ];
-    /// let ls: LineString<_> = points.iter().map(|e| Point::new(e.0, e.1)).collect();
-    /// let poly = Polygon::new(ls, vec![]);
-    /// // A Random point outside the polygon
-    /// let p = Point::new(2.5, 0.5);
-    /// let dist = p.euclidean_distance(&poly);
-    /// assert_eq!(dist, 2.1213203435596424);
     ///
-    /// // Point to LineString example
-    /// let points = vec![
-    ///     (5., 1.),
-    ///     (4., 2.),
-    ///     (4., 3.),
-    ///     (5., 4.),
-    ///     (6., 4.),
-    ///     (7., 3.),
-    ///     (7., 2.),
-    ///     (6., 1.),
+    /// let point = point!(x: 2.5, y: 0.5);
+    ///
+    /// let distance = point.euclidean_distance(&polygon);
+    ///
+    /// assert_relative_eq!(distance, 2.1213203435596424);
+    /// ```
+    ///
+    /// `Point` to `LineString`:
+    ///
+    /// ```
+    /// use approx::assert_relative_eq;
+    /// use geo::algorithm::euclidean_distance::EuclideanDistance;
+    /// use geo::{point, line_string};
+    ///
+    /// let line_string = line_string![
+    ///     (x: 5., y: 1.),
+    ///     (x: 4., y: 2.),
+    ///     (x: 4., y: 3.),
+    ///     (x: 5., y: 4.),
+    ///     (x: 6., y: 4.),
+    ///     (x: 7., y: 3.),
+    ///     (x: 7., y: 2.),
+    ///     (x: 6., y: 1.),
     /// ];
-    /// let ls: LineString<_> = points.iter().map(|e| Point::new(e.0, e.1)).collect();
-    /// // A Random point outside the LineString
-    /// let p = Point::new(5.5, 2.1);
-    /// let dist = p.euclidean_distance(&ls);
-    /// assert_eq!(dist, 1.1313708498984762);
+    ///
+    /// let point = point!(x: 5.5, y: 2.1);
+    ///
+    /// let distance = point.euclidean_distance(&line_string);
+    ///
+    /// assert_relative_eq!(distance, 1.1313708498984762);
     /// ```
     fn euclidean_distance(&self, rhs: &Rhs) -> T;
 }

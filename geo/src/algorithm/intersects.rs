@@ -11,12 +11,25 @@ pub trait Intersects<Rhs = Self> {
     ///
     /// ```
     /// use geo::algorithm::intersects::Intersects;
-    /// use geo::{Coordinate, LineString, Point};
+    /// use geo::line_string;
     ///
-    /// let linestring = LineString::from(vec![(3., 2.), (7., 6.)]);
+    /// let line_string_a = line_string![
+    ///     (x: 3., y: 2.),
+    ///     (x: 7., y: 6.),
+    /// ];
     ///
-    /// assert!(linestring.intersects(&LineString::from(vec![(3., 4.), (8., 4.)])));
-    /// assert!(!linestring.intersects(&LineString::from(vec![(9., 2.), (11., 5.)])));
+    /// let line_string_b = line_string![
+    ///     (x: 3., y: 4.),
+    ///     (x: 8., y: 4.),
+    /// ];
+    ///
+    /// let line_string_c = line_string![
+    ///     (x: 9., y: 2.),
+    ///     (x: 11., y: 5.),
+    /// ];
+    ///
+    /// assert!(line_string_a.intersects(&line_string_b));
+    /// assert!(!line_string_a.intersects(&line_string_c));
     /// ```
     fn intersects(&self, rhs: &Rhs) -> bool;
 }

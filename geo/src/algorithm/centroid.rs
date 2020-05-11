@@ -15,16 +15,22 @@ use crate::{Line, LineString, MultiPoint, MultiPolygon, Point, Polygon, Rect};
 /// # Examples
 ///
 /// ```
-/// use geo::prelude::*;
-/// use geo::{LineString, Point, Polygon};
+/// use geo::algorithm::centroid::Centroid;
+/// use geo::{point, polygon};
 ///
 /// // rhombus shaped polygon
-/// let polygon = Polygon::new(
-///     LineString::from(vec![(-2., 1.), (1., 3.), (4., 1.), (1., -1.), (-2., 1.)]),
-///     vec![],
-/// );
+/// let polygon = polygon![
+///     (x: -2., y: 1.),
+///     (x: 1., y: 3.),
+///     (x: 4., y: 1.),
+///     (x: 1., y: -1.),
+///     (x: -2., y: 1.),
+/// ];
 ///
-/// assert_eq!(Point::from((1., 1.)), polygon.centroid().unwrap(),);
+/// assert_eq!(
+///     Some(point!(x: 1., y: 1.)),
+///     polygon.centroid(),
+/// );
 /// ```
 pub trait Centroid<T: Float> {
     type Output;
@@ -35,14 +41,17 @@ pub trait Centroid<T: Float> {
     ///
     /// ```
     /// use geo::algorithm::centroid::Centroid;
-    /// use geo::{LineString, Point};
+    /// use geo::{line_string, point};
     ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(40.02f64, 116.34));
-    /// vec.push(Point::new(40.02f64, 118.23));
-    /// let linestring = LineString::from(vec);
+    /// let line_string = line_string![
+    ///     (x: 40.02f64, y: 116.34),
+    ///     (x: 40.02f64, y: 118.23),
+    /// ];
     ///
-    /// assert_eq!(linestring.centroid().unwrap(), Point::new(40.02, 117.285));
+    /// assert_eq!(
+    ///     Some(point!(x: 40.02, y: 117.285)),
+    ///     line_string.centroid(),
+    /// );
     /// ```
     fn centroid(&self) -> Self::Output;
 }

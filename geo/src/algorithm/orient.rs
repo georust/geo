@@ -12,25 +12,55 @@ pub trait Orient<T> {
     ///
     /// ```
     /// use geo::orient::{Direction, Orient};
-    /// use geo::{LineString, Point, Polygon};
-    /// // a diamond shape, oriented clockwise outside
-    /// let points_ext = vec![(1.0, 0.0), (0.0, 1.0), (1.0, 2.0), (2.0, 1.0), (1.0, 0.0)];
-    /// // counter-clockwise interior
-    /// let points_int = vec![(1.0, 0.5), (1.5, 1.0), (1.0, 1.5), (0.5, 1.0), (1.0, 0.5)];
-    /// let poly = Polygon::new(
-    ///     LineString::from(points_ext),
-    ///     vec![LineString::from(points_int)],
-    /// );
-    /// // a diamond shape, oriented counter-clockwise outside,
-    /// let oriented_ext = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
-    /// let oriented_ext_ls = LineString::from(oriented_ext);
-    /// // clockwise interior
-    /// let oriented_int = vec![(1.0, 0.5), (0.5, 1.0), (1.0, 1.5), (1.5, 1.0), (1.0, 0.5)];
-    /// let oriented_int_ls = LineString::from(oriented_int);
-    /// // build corrected Polygon
-    /// let oriented = poly.orient(Direction::Default);
-    /// assert_eq!(oriented.exterior().0, oriented_ext_ls.0);
-    /// assert_eq!(oriented.interiors()[0].0, oriented_int_ls.0);
+    /// use geo::polygon;
+    ///
+    /// // a diamond shape
+    /// let polygon = polygon![
+    ///     // exterior oriented clockwise
+    ///     exterior: [
+    ///         (x: 1.0, y: 0.0),
+    ///         (x: 0.0, y: 1.0),
+    ///         (x: 1.0, y: 2.0),
+    ///         (x: 2.0, y: 1.0),
+    ///         (x: 1.0, y: 0.0),
+    ///     ],
+    ///     // interior oriented counter-clockwise
+    ///     interiors: [
+    ///         [
+    ///             (x: 1.0, y: 0.5),
+    ///             (x: 1.5, y: 1.0),
+    ///             (x: 1.0, y: 1.5),
+    ///             (x: 0.5, y: 1.0),
+    ///             (x: 1.0, y: 0.5),
+    ///         ],
+    ///     ],
+    /// ];
+    ///
+    /// let oriented = polygon.orient(Direction::Default);
+    ///
+    /// // a diamond shape
+    /// let expected = polygon![
+    ///     // exterior oriented counter-clockwise
+    ///     exterior: [
+    ///         (x: 1.0, y: 0.0),
+    ///         (x: 2.0, y: 1.0),
+    ///         (x: 1.0, y: 2.0),
+    ///         (x: 0.0, y: 1.0),
+    ///         (x: 1.0, y: 0.0),
+    ///     ],
+    ///     // interior oriented clockwise
+    ///     interiors: [
+    ///         [
+    ///             (x: 1.0, y: 0.5),
+    ///             (x: 0.5, y: 1.0),
+    ///             (x: 1.0, y: 1.5),
+    ///             (x: 1.5, y: 1.0),
+    ///             (x: 1.0, y: 0.5),
+    ///         ],
+    ///     ],
+    /// ];
+    ///
+    /// assert_eq!(expected, oriented);
     /// ```
     fn orient(&self, orientation: Direction) -> Self;
 }

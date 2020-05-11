@@ -94,23 +94,26 @@ pub trait Simplify<T, Epsilon = T> {
     ///
     /// ```
     /// use geo::algorithm::simplify::Simplify;
-    /// use geo::{LineString, Point};
+    /// use geo::line_string;
     ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(0.0, 0.0));
-    /// vec.push(Point::new(5.0, 4.0));
-    /// vec.push(Point::new(11.0, 5.5));
-    /// vec.push(Point::new(17.3, 3.2));
-    /// vec.push(Point::new(27.8, 0.1));
-    /// let linestring = LineString::from(vec);
-    /// let mut compare = Vec::new();
-    /// compare.push(Point::new(0.0, 0.0));
-    /// compare.push(Point::new(5.0, 4.0));
-    /// compare.push(Point::new(11.0, 5.5));
-    /// compare.push(Point::new(27.8, 0.1));
-    /// let ls_compare = LineString::from(compare);
-    /// let simplified = linestring.simplify(&1.0);
-    /// assert_eq!(simplified, ls_compare)
+    /// let line_string = line_string![
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 5.0, y: 4.0),
+    ///     (x: 11.0, y: 5.5),
+    ///     (x: 17.3, y: 3.2),
+    ///     (x: 27.8, y: 0.1),
+    /// ];
+    ///
+    /// let simplified = line_string.simplify(&1.0);
+    ///
+    /// let expected = line_string![
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 5.0, y: 4.0),
+    ///     (x: 11.0, y: 5.5),
+    ///     (x: 27.8, y: 0.1),
+    /// ];
+    ///
+    /// assert_eq!(expected, simplified)
     /// ```
     fn simplify(&self, epsilon: &T) -> Self
     where
@@ -128,22 +131,26 @@ pub trait SimplifyIdx<T, Epsilon = T> {
     ///
     /// ```
     /// use geo::algorithm::simplify::SimplifyIdx;
-    /// use geo::{LineString, Point};
+    /// use geo::line_string;
     ///
-    /// let mut vec = Vec::new();
-    /// vec.push(Point::new(0.0, 0.0));
-    /// vec.push(Point::new(5.0, 4.0));
-    /// vec.push(Point::new(11.0, 5.5));
-    /// vec.push(Point::new(17.3, 3.2));
-    /// vec.push(Point::new(27.8, 0.1));
-    /// let linestring = LineString::from(vec);
-    /// let mut compare = Vec::new();
-    /// compare.push(0_usize);
-    /// compare.push(1_usize);
-    /// compare.push(2_usize);
-    /// compare.push(4_usize);
-    /// let simplified = linestring.simplify_idx(&1.0);
-    /// assert_eq!(simplified, compare)
+    /// let line_string = line_string![
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 5.0, y: 4.0),
+    ///     (x: 11.0, y: 5.5),
+    ///     (x: 17.3, y: 3.2),
+    ///     (x: 27.8, y: 0.1),
+    /// ];
+    ///
+    /// let simplified = line_string.simplify_idx(&1.0);
+    ///
+    /// let expected = vec![
+    ///     0_usize,
+    ///     1_usize,
+    ///     2_usize,
+    ///     4_usize,
+    /// ];
+    ///
+    /// assert_eq!(expected, simplified);
     /// ```
     fn simplify_idx(&self, epsilon: &T) -> Vec<usize>
     where
