@@ -1,4 +1,7 @@
-use crate::{CoordinateType, Line, LineString, MultiPolygon, Polygon, Rect, Triangle};
+use crate::{
+    CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    MultiPolygon, Point, Polygon, Rect, Triangle,
+};
 use num_traits::Float;
 
 use crate::algorithm::winding_order::twice_signed_ring_area;
@@ -42,6 +45,24 @@ where
     twice_signed_ring_area(linestring) / (T::one() + T::one())
 }
 
+impl<T> Area<T> for Point<T>
+where
+    T: CoordinateType,
+{
+    fn area(&self) -> T {
+        T::zero()
+    }
+}
+
+impl<T> Area<T> for LineString<T>
+where
+    T: CoordinateType,
+{
+    fn area(&self) -> T {
+        T::zero()
+    }
+}
+
 impl<T> Area<T> for Line<T>
 where
     T: CoordinateType,
@@ -61,6 +82,24 @@ where
             .fold(get_linestring_area(self.exterior()), |total, next| {
                 total - get_linestring_area(next)
             })
+    }
+}
+
+impl<T> Area<T> for MultiPoint<T>
+where
+    T: CoordinateType,
+{
+    fn area(&self) -> T {
+        T::zero()
+    }
+}
+
+impl<T> Area<T> for MultiLineString<T>
+where
+    T: CoordinateType,
+{
+    fn area(&self) -> T {
+        T::zero()
     }
 }
 
@@ -93,6 +132,38 @@ where
             .iter()
             .fold(T::zero(), |total, line| total + line.determinant())
             / (T::one() + T::one())
+    }
+}
+
+impl<T> Area<T> for Geometry<T>
+where
+    T: Float,
+{
+    fn area(&self) -> T {
+        match self {
+            Geometry::Point(g) => g.area(),
+            Geometry::Line(g) => g.area(),
+            Geometry::LineString(g) => g.area(),
+            Geometry::Polygon(g) => g.area(),
+            Geometry::MultiPoint(g) => g.area(),
+            Geometry::MultiLineString(g) => g.area(),
+            Geometry::MultiPolygon(g) => g.area(),
+            Geometry::GeometryCollection(g) => g.area(),
+            Geometry::Rect(g) => g.area(),
+            Geometry::Triangle(g) => g.area(),
+        }
+    }
+}
+
+impl<T> Area<T> for GeometryCollection<T>
+where
+    T: Float,
+{
+    fn area(&self) -> T {
+        self.0
+            .iter()
+            .map(|g| g.area())
+            .fold(T::zero(), |acc, next| acc + next)
     }
 }
 
