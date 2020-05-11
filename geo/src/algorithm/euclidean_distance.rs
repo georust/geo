@@ -30,6 +30,7 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     /// `Point` to `Point`:
     ///
     /// ```
+    /// use approx::assert_relative_eq;
     /// use geo::algorithm::euclidean_distance::EuclideanDistance;
     /// use geo::point;
     ///
@@ -38,12 +39,13 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     ///
     /// let distance = p1.euclidean_distance(&p2);
     ///
-    /// assert_eq!(distance, 0.09793191512474639);
+    /// assert_relative_eq!(distance, 0.09793191512474639);
     /// ```
     ///
     /// `Point` to `Polygon`:
     ///
     /// ```
+    /// use approx::assert_relative_eq;
     /// use geo::algorithm::euclidean_distance::EuclideanDistance;
     /// use geo::{point, polygon};
     ///
@@ -63,12 +65,13 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     ///
     /// let distance = point.euclidean_distance(&polygon);
     ///
-    /// assert_eq!(distance, 2.1213203435596424);
+    /// assert_relative_eq!(distance, 2.1213203435596424);
     /// ```
     ///
     /// `Point` to `LineString`:
     ///
     /// ```
+    /// use approx::assert_relative_eq;
     /// use geo::algorithm::euclidean_distance::EuclideanDistance;
     /// use geo::{point, line_string};
     ///
@@ -87,7 +90,7 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     ///
     /// let distance = point.euclidean_distance(&line_string);
     ///
-    /// assert_eq!(distance, 1.1313708498984762);
+    /// assert_relative_eq!(distance, 1.1313708498984762);
     /// ```
     fn euclidean_distance(&self, rhs: &Rhs) -> T;
 }
