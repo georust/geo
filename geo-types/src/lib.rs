@@ -7,6 +7,7 @@
 //! provides geospatial algorithms, while the [`geojson`](https://crates.io/crates/geojson) crate allows serialising
 //! and de-serialising `geo-types` primitives to GeoJSON.
 extern crate num_traits;
+use num_traits::{Num, NumCast};
 
 #[cfg(feature = "serde")]
 #[macro_use]
@@ -15,7 +16,8 @@ extern crate serde;
 #[cfg(feature = "rstar")]
 extern crate rstar;
 
-use num_traits::{Num, NumCast};
+#[macro_use]
+extern crate approx;
 
 /// The type of an x or y value of a point/coordinate.
 ///
@@ -66,10 +68,6 @@ mod macros;
 
 #[doc(hidden)]
 pub mod private_utils;
-
-#[cfg(test)]
-#[macro_use]
-extern crate approx;
 
 #[cfg(test)]
 mod tests {

@@ -6,8 +6,6 @@
 use crate::{Coordinate, CoordinateType, Line, LineString, Point, Rect};
 use num_traits::Float;
 
-pub static COORD_PRECISION: f32 = 1e-1; // 0.1m
-
 pub fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<T>>
 where
     T: CoordinateType,
@@ -124,7 +122,8 @@ pub fn point_contains_point<T>(p1: Point<T>, p2: Point<T>) -> bool
 where
     T: Float,
 {
-    line_euclidean_length(Line::new(p1, p2)).to_f32().unwrap() < COORD_PRECISION
+    let distance = line_euclidean_length(Line::new(p1, p2)).to_f32().unwrap();
+    relative_eq!(distance, 0.0)
 }
 
 pub fn line_string_contains_point<T>(line_string: &LineString<T>, point: Point<T>) -> bool
