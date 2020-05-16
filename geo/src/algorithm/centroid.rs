@@ -205,8 +205,7 @@ where
             return None;
         }
         for poly in &self.0 {
-            // the area is signed
-            let area = poly.area().abs();
+            let area = poly.unsigned_area();
             total_area = total_area + area;
             if let Some(p) = poly.centroid() {
                 if area != T::zero() {
