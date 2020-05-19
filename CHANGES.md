@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+* geo-types: Remove COORD_PRECISION which was an arbitrary constant of 0.1m
+
 ## geo 0.13.0
 
 * Bump geo-types dependency to 0.5.0
