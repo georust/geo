@@ -13,7 +13,6 @@ The `geo` crate provides geospatial primitive types such as `Point`, `LineString
 - Simplification and convex hull operations
 - Euclidean and Haversine distance measurement
 - Intersection checks
-- Transformation to and from PostGIS types
 - Affine transforms such as rotation and translation.
 
 Please refer to [the documentation](https://docs.rs/geo) for a complete list.
