@@ -3,6 +3,7 @@
 ## Unreleased
 
 * geo-types: Remove COORD_PRECISION which was an arbitrary constant of 0.1m
+* Bump rstar version to 0.8.0
 
 ## 0.5.0
 
