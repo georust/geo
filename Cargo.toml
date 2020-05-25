@@ -1,2 +1,2 @@
 [workspace]
-members = ["geo", "geo-types"]
+members = ["geo", "geo-types", "geo-postgis"]

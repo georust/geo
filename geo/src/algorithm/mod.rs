@@ -22,9 +22,6 @@ pub mod euclidean_length;
 pub mod extremes;
 /// Calculate the Frechet distance between two `LineStrings`.
 pub mod frechet_distance;
-/// Produces a `Geometry` from PostGIS.
-#[cfg(feature = "postgis-integration")]
-pub mod from_postgis;
 /// Calculate the Geodesic distance between two `Point`s.
 pub mod geodesic_distance;
 /// Calculate the Geodesic length of a line.
@@ -54,9 +51,6 @@ pub mod rotate;
 pub mod simplify;
 /// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
 pub mod simplifyvw;
-/// Convert a `Geometry` into a PostGIS.
-#[cfg(feature = "postgis-integration")]
-pub mod to_postgis;
 /// Translate a `Geometry` along the given offsets.
 pub mod translate;
 /// Calculate the Vincenty distance between two `Point`s.
