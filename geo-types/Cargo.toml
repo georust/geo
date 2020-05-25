@@ -14,7 +14,7 @@ edition = "2018"
 approx = "0.3"
 num-traits = "0.2"
 serde = { version = "1", optional = true, features = ["derive"] }
-rstar = { version = "0.7", optional = true }
+rstar = { version = "0.8", optional = true }
 
 [dev-dependencies]
 approx = "0.3"
