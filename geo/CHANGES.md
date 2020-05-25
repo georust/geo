@@ -1,5 +1,8 @@
 # Changes
 
+## Unreleased
+* Bump rstar version to 0.8.0
+
 ## 0.13.0
 
 * Bump geo-types dependency to 0.5.0
