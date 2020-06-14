@@ -13,9 +13,6 @@ use num_traits::{Num, NumCast};
 #[macro_use]
 extern crate serde;
 
-#[cfg(feature = "rstar")]
-extern crate rstar;
-
 #[macro_use]
 extern crate approx;
 
@@ -68,6 +65,11 @@ mod macros;
 
 #[doc(hidden)]
 pub mod private_utils;
+
+#[cfg(feature = "rstar")]
+mod geo_rstar;
+
+mod exterior_iter;
 
 #[cfg(test)]
 mod tests {
@@ -143,21 +145,6 @@ mod tests {
 
         let p: Point<i64> = Point::new(1_000_000, 0);
         assert_eq!(p.x(), 1_000_000i64);
-    }
-
-    #[cfg(feature = "rstar")]
-    #[test]
-    /// ensure Line's SpatialObject impl is correct
-    fn line_test() {
-        use rstar::primitives::Line as RStarLine;
-        use rstar::{PointDistance, RTreeObject};
-
-        let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
-        let l = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 5., y: 5. });
-        assert_eq!(rl.envelope(), l.envelope());
-        // difference in 15th decimal place
-        assert_relative_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
-        assert_relative_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
     }
 
     #[test]

@@ -1,10 +1,8 @@
-use crate::utils::{partial_max, partial_min};
 use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
-use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
-use geo_types::InvalidRectCoordinatesError;
+use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect, bounding_rect_merge};
 
 /// Calculation of the bounding rectangle of a geometry.
 pub trait BoundingRect<T: CoordinateType> {
@@ -196,23 +194,6 @@ where
             }
         })
     }
-}
-
-// Return a new rectangle that encompasses the provided rectangles
-fn bounding_rect_merge<T: CoordinateType>(
-    a: Rect<T>,
-    b: Rect<T>,
-) -> Result<Rect<T>, InvalidRectCoordinatesError> {
-    Rect::try_new(
-        Coordinate {
-            x: partial_min(a.min().x, b.min().x),
-            y: partial_min(a.min().y, b.min().y),
-        },
-        Coordinate {
-            x: partial_max(a.max().x, b.max().x),
-            y: partial_max(a.max().y, b.max().y),
-        },
-    )
 }
 
 #[cfg(test)]

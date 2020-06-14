@@ -356,33 +356,3 @@ where
         Point::new(self.x() - rhs.x(), self.y() - rhs.y())
     }
 }
-
-#[cfg(feature = "rstar")]
-// These are required for rstar RTree
-impl<T> ::rstar::Point for Point<T>
-where
-    T: ::num_traits::Float + ::rstar::RTreeNum,
-{
-    type Scalar = T;
-
-    const DIMENSIONS: usize = 2;
-
-    fn generate(generator: impl Fn(usize) -> Self::Scalar) -> Self {
-        Point::new(generator(0), generator(1))
-    }
-
-    fn nth(&self, index: usize) -> Self::Scalar {
-        match index {
-            0 => self.0.x,
-            1 => self.0.y,
-            _ => unreachable!(),
-        }
-    }
-    fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
-        match index {
-            0 => &mut self.0.x,
-            1 => &mut self.0.y,
-            _ => unreachable!(),
-        }
-    }
-}

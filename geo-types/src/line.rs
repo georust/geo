@@ -153,27 +153,3 @@ impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {
         Line::new(coord[0], coord[1])
     }
 }
-
-#[cfg(feature = "rstar")]
-impl<T> ::rstar::RTreeObject for Line<T>
-where
-    T: ::num_traits::Float + ::rstar::RTreeNum,
-{
-    type Envelope = ::rstar::AABB<Point<T>>;
-
-    fn envelope(&self) -> Self::Envelope {
-        let bounding_rect = crate::private_utils::line_bounding_rect(*self);
-        ::rstar::AABB::from_corners(bounding_rect.min().into(), bounding_rect.max().into())
-    }
-}
-
-#[cfg(feature = "rstar")]
-impl<T> ::rstar::PointDistance for Line<T>
-where
-    T: ::num_traits::Float + ::rstar::RTreeNum,
-{
-    fn distance_2(&self, point: &Point<T>) -> T {
-        let d = crate::private_utils::point_line_euclidean_distance(*point, *self);
-        d.powi(2)
-    }
-}

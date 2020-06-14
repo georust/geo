@@ -17,12 +17,34 @@ The `geo` crate provides geospatial primitive types such as `Point`, `LineString
 
 Please refer to [the documentation](https://docs.rs/geo) for a complete list.
 
+## Ecosystem
+
 The primitive types also provide the basis for other functionality in the `Geo` ecosystem, including:
 
 - [Coordinate transformation and projection](https://github.com/georust/proj)
+
 - Serialization to and from [GeoJSON](https://github.com/georust/geojson) and [WKT](https://github.com/georust/wkt)
 - [Geocoding](https://github.com/georust/geocoding)
 - [Working with GPS data](https://github.com/georust/gpx)
+
+- https://crates.io/crates/geojson
+- https://crates.io/crates/geohash
+- https://crates.io/crates/wkt
+- https://crates.io/crates/proj
+- https://crates.io/crates/polylabel
+- https://crates.io/crates/geos
+- https://github.com/georust/gdal
+- https://crates.io/crates/gpx
+- https://crates.io/crates/geo-booleanop
+- https://crates.io/crates/wkb
+- https://crates.io/crates/shapefile
+- https://crates.io/crates/geocoding
+- https://crates.io/crates/geo-svg
+- https://crates.io/crates/geo-offset
+- https://crates.io/crates/latlon
+- https://crates.io/crates/geo-raycasting
+- https://crates.io/crates/geo-clipper
+- https://crates.io/crates/geo-validator
 
 ## Example
 
