@@ -9,14 +9,12 @@ jobs:
         working-directory: geo-types
     container:
       image: georust/geo-ci:53626b645f1cffa79ee7088407fea22982bd81f8
-    strategy:
-      matrix:
-        features: ['', '--features serde', '--features rstar']
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - run: cargo build ${{ matrix.features }}
-      - run: cargo test ${{ matrix.features }}
+      - run: cargo install cargo-all-features
+      - run: cargo build-all-features
+      - run: cargo test-all-features
 
   geo:
     name: geo
@@ -26,14 +24,12 @@ jobs:
         working-directory: geo
     container:
       image: georust/geo-ci:53626b645f1cffa79ee7088407fea22982bd81f8
-    strategy:
-      matrix:
-        features: ['', '--features use-proj', '--features use-serde']
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - run: cargo build ${{ matrix.features }}
-      - run: cargo test ${{ matrix.features }}
+      - run: cargo install cargo-all-features
+      - run: cargo build-all-features
+      - run: cargo test-all-features
 
   geo_postgis:
     name: geo-postgis
@@ -46,8 +42,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - run: cargo build
-      - run: cargo test
+      - run: cargo install cargo-all-features
+      - run: cargo build-all-features
+      - run: cargo test-all-features
 
   test:
     name: coverage
