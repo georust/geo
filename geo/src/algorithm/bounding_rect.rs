@@ -3,7 +3,6 @@ use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
-use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 use geo_types::InvalidRectCoordinatesError;
 
 /// Calculation of the bounding rectangle of a geometry.
@@ -213,6 +212,55 @@ fn bounding_rect_merge<T: CoordinateType>(
             y: partial_max(a.max().y, b.max().y),
         },
     )
+}
+
+fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<T>>
+where
+    T: CoordinateType,
+{
+    get_bounding_rect(line_string.0.iter().cloned())
+}
+
+fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>
+where
+    T: CoordinateType,
+    I: IntoIterator<Item = Coordinate<T>>,
+{
+    let mut iter = collection.into_iter();
+    if let Some(pnt) = iter.next() {
+        let mut xrange = (pnt.x, pnt.x);
+        let mut yrange = (pnt.y, pnt.y);
+        for pnt in iter {
+            let (px, py) = pnt.x_y();
+            xrange = get_min_max(px, xrange.0, xrange.1);
+            yrange = get_min_max(py, yrange.0, yrange.1);
+        }
+
+        return Some(Rect::new(
+            Coordinate {
+                x: xrange.0,
+                y: yrange.0,
+            },
+            Coordinate {
+                x: xrange.1,
+                y: yrange.1,
+            },
+        ));
+    }
+    None
+}
+
+fn get_min_max<T>(p: T, min: T, max: T) -> (T, T)
+where
+    T: CoordinateType,
+{
+    if p > max {
+        (min, p)
+    } else if p < min {
+        (p, max)
+    } else {
+        (min, max)
+    }
 }
 
 #[cfg(test)]

@@ -152,12 +152,12 @@ mod tests {
         use rstar::primitives::Line as RStarLine;
         use rstar::{PointDistance, RTreeObject};
 
-        let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
+        let rl = RStarLine::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 5.0, y: 5.0 });
         let l = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 5., y: 5. });
         assert_eq!(rl.envelope(), l.envelope());
         // difference in 15th decimal place
-        assert_relative_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
-        assert_relative_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
+        assert_relative_eq!(26.0, rl.distance_2(&Coordinate { x: 4.0, y: 10.0 }));
+        assert_relative_eq!(25.999999999999996, l.distance_2(&Coordinate { x: 4.0, y: 10.0 }));
     }
 
     #[test]

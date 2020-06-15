@@ -3,72 +3,8 @@
 // hidden module is public so the geo crate can reuse these algorithms to
 // prevent duplication. These functions are _not_ meant for public consumption.
 
-use crate::{Coordinate, CoordinateType, Line, LineString, Point, Rect};
+use crate::{Line, LineString, Point};
 use num_traits::Float;
-
-pub fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<T>>
-where
-    T: CoordinateType,
-{
-    get_bounding_rect(line_string.0.iter().cloned())
-}
-
-pub fn line_bounding_rect<T>(line: Line<T>) -> Rect<T>
-where
-    T: CoordinateType,
-{
-    let a = line.start;
-    let b = line.end;
-    let (xmin, xmax) = if a.x <= b.x { (a.x, b.x) } else { (b.x, a.x) };
-    let (ymin, ymax) = if a.y <= b.y { (a.y, b.y) } else { (b.y, a.y) };
-
-    Rect::new(
-        Coordinate { x: xmin, y: ymin },
-        Coordinate { x: xmax, y: ymax },
-    )
-}
-
-pub fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>
-where
-    T: CoordinateType,
-    I: IntoIterator<Item = Coordinate<T>>,
-{
-    let mut iter = collection.into_iter();
-    if let Some(pnt) = iter.next() {
-        let mut xrange = (pnt.x, pnt.x);
-        let mut yrange = (pnt.y, pnt.y);
-        for pnt in iter {
-            let (px, py) = pnt.x_y();
-            xrange = get_min_max(px, xrange.0, xrange.1);
-            yrange = get_min_max(py, yrange.0, yrange.1);
-        }
-
-        return Some(Rect::new(
-            Coordinate {
-                x: xrange.0,
-                y: yrange.0,
-            },
-            Coordinate {
-                x: xrange.1,
-                y: yrange.1,
-            },
-        ));
-    }
-    None
-}
-
-fn get_min_max<T>(p: T, min: T, max: T) -> (T, T)
-where
-    T: CoordinateType,
-{
-    if p > max {
-        (min, p)
-    } else if p < min {
-        (p, max)
-    } else {
-        (min, max)
-    }
-}
 
 pub fn line_segment_distance<T>(point: Point<T>, start: Point<T>, end: Point<T>) -> T
 where

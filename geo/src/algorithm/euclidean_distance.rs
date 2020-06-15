@@ -4,7 +4,7 @@ use crate::algorithm::intersects::Intersects;
 use crate::algorithm::polygon_distance_fast_path::*;
 use crate::utils::{coord_pos_relative_to_line_string, CoordPos};
 use crate::{
-    Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Triangle,
+    Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Triangle,
 };
 use num_traits::float::FloatConst;
 use num_traits::{Bounded, Float, Signed};
@@ -236,6 +236,16 @@ where
     /// Minimum distance from a LineString to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
         point.euclidean_distance(self)
+    }
+}
+
+impl<T> EuclideanDistance<T, Coordinate<T>> for Line<T>
+where
+    T: Float,
+{
+    /// Minimum distance from a Line to a Point
+    fn euclidean_distance(&self, coord: &Coordinate<T>) -> T {
+        self.euclidean_distance(&Point(*coord))
     }
 }
 
@@ -495,17 +505,19 @@ where
     let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect::<Vec<_>>());
     // Return minimum distance between all geom a points and all geom b points
     geom2
-        .points_iter()
-        .fold(<T as Bounded>::max_value(), |acc, point| {
-            let nearest = tree_a.nearest_neighbor(&point).unwrap();
-            acc.min(nearest.euclidean_distance(&point))
+        .0
+        .iter()
+        .fold(<T as Bounded>::max_value(), |acc, coord| {
+            let nearest = tree_a.nearest_neighbor(&coord).unwrap();
+            acc.min(nearest.euclidean_distance(coord))
         })
         .min(
             geom1
-                .points_iter()
-                .fold(Bounded::max_value(), |acc, point| {
-                    let nearest = tree_b.nearest_neighbor(&point).unwrap();
-                    acc.min(nearest.euclidean_distance(&point))
+                .0
+                .iter()
+                .fold(Bounded::max_value(), |acc, coord| {
+                    let nearest = tree_b.nearest_neighbor(&coord).unwrap();
+                    acc.min(nearest.euclidean_distance(coord))
                 }),
         )
 }
