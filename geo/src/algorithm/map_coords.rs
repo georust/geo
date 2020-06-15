@@ -30,7 +30,7 @@
 //! let usa_ft = usa_m.try_map_coords(|&(x, y)| f(x, y)).unwrap();
 //! # #[cfg(feature = "use-proj")]
 //! assert_eq!(6693625.67217475, usa_ft.x());
-//! # #[cfg(feature = "proj")]
+//! # #[cfg(feature = "use-proj")]
 //! assert_eq!(3497301.5918027186, usa_ft.y());
 //! ```
 
@@ -127,7 +127,7 @@ pub trait TryMapCoords<T, NT> {
     /// let usa_ft = usa_m.try_map_coords(|&(x, y)| f(x, y)).unwrap();
     /// # #[cfg(feature = "use-proj")]
     /// assert_eq!(6693625.67217475, usa_ft.x());
-    /// # #[cfg(feature = "proj")]
+    /// # #[cfg(feature = "use-proj")]
     /// assert_eq!(3497301.5918027186, usa_ft.y());
     /// ```
     fn try_map_coords(
