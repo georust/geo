@@ -3,7 +3,7 @@ extern crate criterion;
 extern crate geo;
 
 use criterion::Criterion;
-use geo::prelude::*;
+use geo::algorithm::area::Area;
 use geo::{LineString, Polygon};
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -13,7 +13,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
         bencher.iter(|| {
             criterion::black_box(|| {
-                polygon.area();
+                polygon.signed_area();
             });
         });
     });

@@ -205,8 +205,7 @@ where
             return None;
         }
         for poly in &self.0 {
-            // the area is signed
-            let area = poly.area().abs();
+            let area = poly.unsigned_area();
             total_area = total_area + area;
             if let Some(p) = poly.centroid() {
                 if area != T::zero() {
@@ -301,9 +300,7 @@ mod test {
     use crate::algorithm::centroid::Centroid;
     use crate::algorithm::euclidean_distance::EuclideanDistance;
     use crate::line_string;
-    use crate::{
-        polygon, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect,
-    };
+    use crate::{polygon, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect};
     use num_traits::Float;
 
     /// small helper to create a coordinate

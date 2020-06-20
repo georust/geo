@@ -16,10 +16,11 @@ use num_traits::Float;
 /// # Examples
 ///
 /// ```
-/// use geo::{polygon, prelude::*};
+/// use geo::{polygon, Polygon};
+/// use geo::chamberlain_duquette_area::ChamberlainDuquetteArea;
 ///
 /// // The O2 in London
-/// let p = polygon![
+/// let mut polygon: Polygon<f64> = polygon![
 ///     (x: 0.00388383, y: 51.501574),
 ///     (x: 0.00538587, y: 51.502278),
 ///     (x: 0.00553607, y: 51.503299),
@@ -32,30 +33,40 @@ use num_traits::Float;
 ///     (x: 0.00388383, y: 51.501574),
 /// ];
 ///
-/// let area: f64 = p.chamberlain_duquette_area();
+/// // 78,478 meters²
+/// assert_eq!(78_478., polygon.chamberlain_duquette_unsigned_area().round());
+/// assert_eq!(78_478., polygon.chamberlain_duquette_signed_area().round());
 ///
-/// assert_eq!(
-///     78478., // 78,478 meters²
-///     area.round(),
-/// );
+/// polygon.exterior_mut(|line_string| {
+///     line_string.0.reverse();
+/// });
+///
+/// assert_eq!(78_478., polygon.chamberlain_duquette_unsigned_area().round());
+/// assert_eq!(-78_478., polygon.chamberlain_duquette_signed_area().round());
 /// ```
 pub trait ChamberlainDuquetteArea<T>
 where
     T: Float + CoordinateType,
 {
-    fn chamberlain_duquette_area(&self) -> T;
+    fn chamberlain_duquette_signed_area(&self) -> T;
+
+    fn chamberlain_duquette_unsigned_area(&self) -> T;
 }
 
 impl<T> ChamberlainDuquetteArea<T> for Polygon<T>
 where
     T: Float + CoordinateType,
 {
-    fn chamberlain_duquette_area(&self) -> T {
+    fn chamberlain_duquette_signed_area(&self) -> T {
         self.interiors()
             .iter()
             .fold(ring_area(self.exterior()), |total, next| {
                 total - ring_area(next)
             })
+    }
+
+    fn chamberlain_duquette_unsigned_area(&self) -> T {
+        self.chamberlain_duquette_signed_area().abs()
     }
 }
 
@@ -109,7 +120,10 @@ mod test {
             (x: 113., y: -22.),
             (x: 125., y: -15.),
         ];
-        assert_relative_eq!(-7766240997209.013, polygon.chamberlain_duquette_area());
+        assert_relative_eq!(
+            -7766240997209.013,
+            polygon.chamberlain_duquette_signed_area()
+        );
     }
 
     #[test]
@@ -124,7 +138,10 @@ mod test {
             (x: 144., y: -15.),
             (x: 125., y: -15.),
         ];
-        assert_relative_eq!(7766240997209.013, polygon.chamberlain_duquette_area());
+        assert_relative_eq!(
+            7766240997209.013,
+            polygon.chamberlain_duquette_signed_area()
+        );
     }
 
     #[test]
@@ -154,6 +171,6 @@ mod test {
                 ],
             ],
         ];
-        assert_relative_eq!(1208198651182.4727, poly.chamberlain_duquette_area());
+        assert_relative_eq!(1208198651182.4727, poly.chamberlain_duquette_signed_area());
     }
 }

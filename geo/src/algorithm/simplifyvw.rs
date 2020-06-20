@@ -126,7 +126,7 @@ where
         .triangles()
         .enumerate()
         .map(|(i, triangle)| VScore {
-            area: triangle.area().abs(),
+            area: triangle.unsigned_area(),
             current: i + 1,
             left: i,
             right: i + 2,
@@ -167,8 +167,7 @@ where
                 orig.0[current_point as usize],
                 orig.0[bi as usize],
             )
-            .area()
-            .abs();
+            .unsigned_area();
             pq.push(VScore {
                 area,
                 current: current_point as usize,
@@ -281,7 +280,7 @@ where
         .triangles()
         .enumerate()
         .map(|(i, triangle)| VScore {
-            area: triangle.area().abs(),
+            area: triangle.unsigned_area(),
             current: i + 1,
             left: i,
             right: i + 2,
@@ -352,7 +351,7 @@ where
             let temp_area = if smallest.intersector && (current_point as usize) < smallest.current {
                 -*epsilon
             } else {
-                new.area().abs()
+                new.unsigned_area()
             };
             let new_triangle = VScore {
                 area: temp_area,

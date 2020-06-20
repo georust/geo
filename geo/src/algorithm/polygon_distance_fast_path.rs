@@ -359,7 +359,7 @@ where
         // implies p.x() < pprev.x()
         punit = Point::new(p.x(), p.y() - hundred);
     }
-    let triarea = Triangle::from([p, punit, Point(pnext)]).area();
+    let triarea = Triangle::from([p, punit, Point(pnext)]).signed_area();
     let edgelen = p.euclidean_distance(&Point(pnext));
     let mut sine = triarea / (T::from(0.5).unwrap() * T::from(100).unwrap() * edgelen);
     if sine < -T::one() || sine > T::one() {
@@ -400,7 +400,7 @@ fn leftturn<T>(a: Point<T>, b: Point<T>, c: Point<T>) -> i8
 where
     T: Float,
 {
-    let narea = Triangle::from([a, b, c]).area();
+    let narea = Triangle::from([a, b, c]).signed_area();
     if narea > T::zero() {
         1
     } else if narea < T::zero() {
