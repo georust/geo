@@ -5,7 +5,6 @@
 //!   - Simplification and convex hull operations
 //!   - Distance measurement
 //!   - Intersection checks
-//!   - Transformation to and from PostGIS types
 //!   - Affine transforms such as rotation and translation.
 //!
 //! The primitive types also provide the basis for other functionality in the `Geo` ecosystem, including:
@@ -25,7 +24,6 @@
 //!
 //! ## Optional Features (these can be activated in your `cargo.toml`)
 //! The following optional features are available:
-//! - `from-postgis`: convert `Geometry` types to and from [`PostGIS`](https://docs.rs/postgis) types.
 //! - `use-proj`: enable coordinate conversion and transformation of `Point` geometries using the [`proj`](https://docs.rs/proj) crate
 //! - `use-serde`: enable serialisation of geometries using `serde`.
 //!
@@ -42,8 +40,6 @@ extern crate num_traits;
 #[cfg(feature = "use-serde")]
 #[macro_use]
 extern crate serde;
-#[cfg(feature = "postgis-integration")]
-extern crate postgis;
 #[cfg(feature = "use-proj")]
 extern crate proj;
 extern crate rstar;
@@ -96,8 +92,6 @@ pub mod prelude {
     pub use crate::algorithm::euclidean_length::EuclideanLength;
     pub use crate::algorithm::extremes::ExtremePoints;
     pub use crate::algorithm::frechet_distance::FrechetDistance;
-    #[cfg(feature = "postgis-integration")]
-    pub use crate::algorithm::from_postgis::FromPostgis;
     pub use crate::algorithm::geodesic_distance::GeodesicDistance;
     pub use crate::algorithm::geodesic_length::GeodesicLength;
     pub use crate::algorithm::haversine_destination::HaversineDestination;
@@ -112,8 +106,6 @@ pub mod prelude {
     pub use crate::algorithm::rotate::{Rotate, RotatePoint};
     pub use crate::algorithm::simplify::Simplify;
     pub use crate::algorithm::simplifyvw::SimplifyVW;
-    #[cfg(feature = "postgis-integration")]
-    pub use crate::algorithm::to_postgis::ToPostgis;
     pub use crate::algorithm::translate::Translate;
     pub use crate::algorithm::vincenty_distance::VincentyDistance;
     pub use crate::algorithm::vincenty_length::VincentyLength;

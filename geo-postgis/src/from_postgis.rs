@@ -1,4 +1,4 @@
-use crate::{
+use geo_types::{
     Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
     Polygon,
 };

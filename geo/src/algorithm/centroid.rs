@@ -301,7 +301,7 @@ mod test {
     use crate::algorithm::euclidean_distance::EuclideanDistance;
     use crate::line_string;
     use crate::{
-        polygon, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, COORD_PRECISION,
+        polygon, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect,
     };
     use num_traits::Float;
 
@@ -511,7 +511,7 @@ mod test {
             .centroid()
             .unwrap()
             .euclidean_distance(&p(4.07142857142857, 1.92857142857143));
-        assert!(dist < COORD_PRECISION);
+        assert_relative_eq!(dist, 0.0, epsilon = 1e-14); // the results is larger than f64::EPSILON
     }
     #[test]
     fn multipolygon_two_polygons_of_opposite_clockwise_test() {
