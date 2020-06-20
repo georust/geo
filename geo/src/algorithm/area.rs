@@ -142,7 +142,9 @@ where
     }
 
     fn unsigned_area(&self) -> T {
-        self.signed_area().abs()
+        self.0
+            .iter()
+            .fold(T::zero(), |total, next| total + next.signed_area().abs())
     }
 }
 
@@ -344,5 +346,30 @@ mod test {
             Coordinate { x: 1.0, y: 0.0 },
         );
         assert_relative_eq!(triangle.signed_area(), -0.5);
+    }
+
+    #[test]
+    fn area_multi_polygon_area_reversed() {
+        let polygon_cw: Polygon<f32> = polygon![
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 0.0, y: 1.0 },
+            Coordinate { x: 1.0, y: 1.0 },
+            Coordinate { x: 1.0, y: 0.0 },
+            Coordinate { x: 0.0, y: 0.0 },
+        ];
+        let polygon_ccw: Polygon<f32> = polygon![
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 1.0, y: 0.0 },
+            Coordinate { x: 1.0, y: 1.0 },
+            Coordinate { x: 0.0, y: 1.0 },
+            Coordinate { x: 0.0, y: 0.0 },
+        ];
+        let polygon_area = polygon_cw.unsigned_area();
+
+        let multi_polygon = MultiPolygon(
+            vec![polygon_cw, polygon_ccw],
+        );
+
+        assert_eq!(polygon_area * 2., multi_polygon.unsigned_area());
     }
 }
