@@ -366,9 +366,7 @@ mod test {
         ];
         let polygon_area = polygon_cw.unsigned_area();
 
-        let multi_polygon = MultiPolygon(
-            vec![polygon_cw, polygon_ccw],
-        );
+        let multi_polygon = MultiPolygon(vec![polygon_cw, polygon_ccw]);
 
         assert_eq!(polygon_area * 2., multi_polygon.unsigned_area());
     }

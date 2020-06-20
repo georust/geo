@@ -300,9 +300,7 @@ mod test {
     use crate::algorithm::centroid::Centroid;
     use crate::algorithm::euclidean_distance::EuclideanDistance;
     use crate::line_string;
-    use crate::{
-        polygon, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect,
-    };
+    use crate::{polygon, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect};
     use num_traits::Float;
 
     /// small helper to create a coordinate
