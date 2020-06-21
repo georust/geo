@@ -19,7 +19,7 @@
   * <https://github.com/georust/geo/pull/451>
 * Fix Vincenty algorithms for equatorial and coincident points
   * <https://github.com/georust/geo/pull/438>
-* Separate area algorithms into unsigned and signed methods
+* Separate area algorithms into unsigned and signed methods. For clarity, the existing `Area#area`, which can return a negative value depending on winding order, has been renamed to `Area#signed_area`.  Most likely, if you aren't sure which one to use, you'll want `unsigned_area` which is always positive.
   * <https://github.com/georust/geo/pull/463>
 
 ## 0.13.0
