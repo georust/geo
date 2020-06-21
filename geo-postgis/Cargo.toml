@@ -5,13 +5,11 @@ authors = ["Corey Farwell <coreyf@rwell.org>"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/georust/geo"
 documentation = "https://docs.rs/geo-postgis/"
-readme = "../README.md" # TODO
+readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial", "postgis"]
 description = "Conversion between `geo-types` and `postgis` types."
 edition = "2018"
 
 [dependencies]
 postgis = "0.7"
-# Swap the next two lines when publishing
-# geo-types = "0.5"
-geo-types = { path = "../geo-types" }
+geo-types = { version = "0.6", path = "../geo-types" }
