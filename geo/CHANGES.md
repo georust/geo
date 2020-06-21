@@ -1,16 +1,35 @@
 # Changes
 
-## Unreleased
+## 0.14.0
+
+* Bump geo-types version to 0.6.0
 * Bump rstar version to 0.8.0
+  * <https://github.com/georust/geo/pull/468>
+* Bump proj version to 16.2
+  * <https://github.com/georust/geo/pull/453>
+* Extract PostGIS integration out to new `geo-postgis` crate
+  * <https://github.com/georust/geo/pull/466>
+* Add new `GeodesicDistance` and `GeodesicLength` algorithms
+  * <https://github.com/georust/geo/pull/440>
+* Implement `Area` for all types
+  * <https://github.com/georust/geo/pull/459>
+* Implement `BoundingRect` for all types
+  * <https://github.com/georust/geo/pull/443>
+* Add more `Contains` implementations
+  * <https://github.com/georust/geo/pull/451>
+* Fix Vincenty algorithms for equatorial and coincident points
+  * <https://github.com/georust/geo/pull/438>
+* Separate area algorithms into unsigned and signed methods
+  * <https://github.com/georust/geo/pull/463>
 
 ## 0.13.0
 
 * Bump geo-types dependency to 0.5.0
 * Bump proj dependency to 0.15.1
 * Add a mutable Coordinate iterator to LineString
-  * https://github.com/georust/geo/pull/404
+  * <https://github.com/georust/geo/pull/404>
 * Fix for rectangle intersection check
-  * https://github.com/georust/geo/pull/420
+  * <https://github.com/georust/geo/pull/420>
 * Bump proj to 0.14.4
   * <https://github.com/georust/geo/pull/412>
 * Add `BoundingRect` implementation for `Rect`
