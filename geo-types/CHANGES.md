@@ -1,9 +1,22 @@
 # Changes
 
-## Unreleased
+## 0.6.0
 
-* geo-types: Remove COORD_PRECISION which was an arbitrary constant of 0.1m
+* Remove `COORD_PRECISION` which was an arbitrary constant of 0.1m
+  * <https://github.com/georust/geo/pull/462>
 * Bump rstar version to 0.8.0
+  * <https://github.com/georust/geo/pull/468>
+* Add `Triangle` and `Rect` to `Geometry`
+  * <https://github.com/georust/geo/pull/432>
+* Introduce `Rect::try_new` constructor which doesn’t panic
+  * <https://github.com/georust/geo/pull/442>
+* Add `Rect::center` method
+  * <https://github.com/georust/geo/pull/450>
+* Derive `Eq` for types when applicable
+  * <https://github.com/georust/geo/pull/431>
+  * <https://github.com/georust/geo/pull/435>
+* Implement `From<Triangle> for Polygon`
+  * <https://github.com/georust/geo/pull/433>
 
 ## 0.5.0
 
