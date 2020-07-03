@@ -340,11 +340,29 @@ where
     T: CoordinateType,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
-        let sign_1 = utils::sign(coord, &self.0, &self.1);
-        let sign_2 = utils::sign(coord, &self.1, &self.2);
-        let sign_3 = utils::sign(coord, &self.2, &self.0);
+        let s = self.0.y * self.2.x - self.0.x * self.2.y
+            + (self.2.y - self.0.y) * coord.x
+            + (self.0.x - self.2.x) * coord.y;
+        let t = self.0.x * self.1.y - self.0.y * self.1.x
+            + (self.0.y - self.1.y) * coord.x
+            + (self.1.x - self.0.x) * coord.y;
 
-        (sign_1 == sign_2) && (sign_2 == sign_3)
+        if (s < T::zero()) != (t < T::zero()) {
+            return false;
+        }
+
+        let a = (T::zero() - self.1.y) * self.2.x
+            + self.0.y * (self.2.x - self.1.x)
+            + self.0.x * (self.1.y - self.2.y)
+            + self.1.x * self.2.y;
+
+        if a == T::zero() {
+            false
+        } else if a < T::zero() {
+            s <= T::zero() && s + t >= a
+        } else {
+            s >= T::zero() && s + t <= a
+        }
     }
 }
 
@@ -788,5 +806,22 @@ mod test {
         let t = Triangle::from([(0.0, 0.0), (-2.0, 0.0), (-2.0, -2.0)]);
         let p = Point::new(-1.0, -0.5);
         assert!(t.contains(&p));
+    }
+
+    #[test]
+    // https://github.com/georust/geo/issues/473
+    fn triangle_contains_collinear_points() {
+        let origin: Coordinate<f64> = (0., 0.).into();
+        let tri = Triangle(origin, origin, origin);
+        let pt: Point<f64> = (0., 1.23456).into();
+        assert!(!tri.contains(&pt));
+        let pt: Point<f64> = (0., 0.).into();
+        assert!(!tri.contains(&pt));
+        let origin: Coordinate<f64> = (0., 0.).into();
+        let tri = Triangle((1., 1.).into(), origin, origin);
+        let pt: Point<f64> = (1., 1.).into();
+        assert!(!tri.contains(&pt));
+        let pt: Point<f64> = (0.5, 0.5).into();
+        assert!(!tri.contains(&pt));
     }
 }
