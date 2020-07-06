@@ -95,6 +95,22 @@ where
     w_lines
 }
 
+fn g_triangle_to_w_polygon<T>(g_triangle: &geo_types::Triangle<T>) -> Polygon<T>
+where
+    T: num_traits::Float,
+{
+    let polygon = g_triangle.to_polygon();
+    g_polygon_to_w_polygon(&polygon)
+}
+
+fn g_rect_to_w_polygon<T>(g_rect: &geo_types::Rect<T>) -> Polygon<T>
+where
+    T: num_traits::Float,
+{
+    let polygon = g_rect.to_polygon();
+    g_polygon_to_w_polygon(&polygon)
+}
+
 fn g_polygon_to_w_polygon<T>(g_polygon: &geo_types::Polygon<T>) -> Polygon<T>
 where
     T: num_traits::Float,
@@ -179,6 +195,12 @@ where
         &geo_types::Geometry::LineString(ref g_line) => {
             g_linestring_to_w_linestring(g_line).as_item()
         }
+
+        &geo_types::Geometry::Triangle(ref g_triangle) => {
+            g_triangle_to_w_polygon(g_triangle).as_item()
+        }
+
+        &geo_types::Geometry::Rect(ref g_rect) => g_rect_to_w_polygon(g_rect).as_item(),
 
         &geo_types::Geometry::Polygon(ref g_polygon) => g_polygon_to_w_polygon(g_polygon).as_item(),
 
