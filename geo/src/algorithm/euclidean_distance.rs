@@ -391,14 +391,14 @@ where
         if other.contains(self) || self.intersects(other) {
             return T::zero();
         }
-        // point-line distance between each exterior polygon point and the line
+        // line-line distance between each exterior polygon segment and the line
         let exterior_min = other
             .exterior()
-            .points_iter()
+            .lines()
             .fold(<T as Bounded>::max_value(), |acc, point| {
                 acc.min(self.euclidean_distance(&point))
             });
-        // point-line distance between each interior ring point and the line
+        // line-line distance between each interior ring segment and the line
         // if there are no rings this just evaluates to max_float
         let interior_min = other
             .interiors()
@@ -516,7 +516,7 @@ mod test {
     use crate::algorithm::convexhull::ConvexHull;
     use crate::algorithm::euclidean_distance::EuclideanDistance;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
-    use geo_types::private_utils::line_segment_distance;
+    use geo_types::{polygon, private_utils::line_segment_distance, Coordinate};
 
     #[test]
     fn line_segment_distance_test() {
@@ -826,6 +826,39 @@ mod test {
         let line1 = Line::from([(2., 1.), (7., 2.)]);
         assert_relative_eq!(line0.euclidean_distance(&line1), 1.);
         assert_relative_eq!(line1.euclidean_distance(&line0), 1.);
+    }
+    #[test]
+    // See https://github.com/georust/geo/issues/476
+    fn distance_line_polygon_test() {
+        let line = Line::new(
+            Coordinate {
+                x: -0.17084137691985102,
+                y: 0.8748085493016657,
+            },
+            Coordinate {
+                x: -0.17084137691985102,
+                y: 0.09858870312437906,
+            },
+        );
+        let poly: Polygon<f64> = polygon![
+            Coordinate {
+                x: -0.10781391405721802,
+                y: -0.15433610862574643,
+            },
+            Coordinate {
+                x: -0.7855276236615211,
+                y: 0.23694208404779793,
+            },
+            Coordinate {
+                x: -0.7855276236615214,
+                y: -0.5456143012992907,
+            },
+            Coordinate {
+                x: -0.10781391405721802,
+                y: -0.15433610862574643,
+            },
+        ];
+        assert_eq!(line.euclidean_distance(&poly), 0.18752558079168907);
     }
     #[test]
     // test edge-vertex minimum distance
