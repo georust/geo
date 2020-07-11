@@ -1,5 +1,10 @@
 # Changes
 
+## 0.14.1
+
+* Fix bug in Line-Polygon Euclidean distance
+  * <https://github.com/georust/geo/pull/477>
+
 ## 0.14.0
 
 * Bump geo-types version to 0.6.0
