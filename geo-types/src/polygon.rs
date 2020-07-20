@@ -209,9 +209,9 @@ where
     /// ```
     ///
     /// [will be closed]: #linestring-closing-operation
-    pub fn exterior_mut<F>(&mut self, mut f: F)
+    pub fn exterior_mut<F>(&mut self, f: F)
     where
-        F: FnMut(&mut LineString<T>),
+        F: FnOnce(&mut LineString<T>),
     {
         f(&mut self.exterior);
         self.exterior.close();
@@ -311,9 +311,9 @@ where
     /// ```
     ///
     /// [will be closed]: #linestring-closing-operation
-    pub fn interiors_mut<F>(&mut self, mut f: F)
+    pub fn interiors_mut<F>(&mut self, f: F)
     where
-        F: FnMut(&mut [LineString<T>]),
+        F: FnOnce(&mut [LineString<T>]),
     {
         f(&mut self.interiors);
         for interior in &mut self.interiors {
