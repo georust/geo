@@ -1,5 +1,10 @@
 # Changes
 
+## 0.14.2
+
+* Change closure for `exterior_mut()` and `interiors_mut()` to be `FnOnce`
+  * <https://github.com/georust/geo/pull/479>
+
 ## 0.14.1
 
 * Fix bug in Line-Polygon Euclidean distance

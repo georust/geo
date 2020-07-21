@@ -1,7 +1,7 @@
 [package]
 name = "geo"
 description = "Geospatial primitives and algorithms"
-version = "0.14.1"
+version = "0.14.2"
 authors = ["Corey Farwell <coreyf@rwell.org>"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/georust/geo"
