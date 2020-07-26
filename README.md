@@ -41,7 +41,7 @@ let poly = polygon![
     (x: 0.0, y: 0.0),
 ];
 
-// Ccalculate the polygon's convex hull
+// Calculate the polygon's convex hull
 let hull = poly.convex_hull();
 
 assert_eq!(hull.exterior(), line_string![
