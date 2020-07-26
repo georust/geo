@@ -261,6 +261,42 @@ mod test {
         assert_relative_eq!(polygon.signed_area(), 30.);
     }
     #[test]
+    fn area_polygon_numerical_stability() {
+        let polygon = {
+            use std::f64::consts::PI;
+            const NUM_VERTICES: usize = 10;
+            const ANGLE_INC: f64 = 2. * PI / NUM_VERTICES as f64;
+
+            Polygon::new(
+                (0..NUM_VERTICES).map(|i| {
+                    let angle = i as f64 * ANGLE_INC;
+                    Coordinate {
+                        x: angle.cos(),
+                        y: angle.sin(),
+                    }
+                })
+                    .collect::<Vec<_>>()
+                    .into(),
+                vec![],
+            )
+        };
+
+        let area = polygon.signed_area();
+
+        let shift_x = 1.5e8;
+        let shift_y = 1.5e8;
+
+        use crate::map_coords::MapCoords;
+        let polygon = polygon.map_coords(
+            |&(x, y)| (x + shift_x, y + shift_y)
+        );
+
+        let new_area = polygon.signed_area();
+        let err = (area - new_area).abs() / area;
+
+        assert!(err < 1e-2);
+    }
+    #[test]
     fn rectangle_test() {
         let rect1: Rect<f32> =
             Rect::new(Coordinate { x: 10., y: 30. }, Coordinate { x: 20., y: 40. });

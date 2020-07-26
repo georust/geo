@@ -10,8 +10,39 @@ where
     if linestring.0.is_empty() || linestring.0.len() == 1 {
         return T::zero();
     }
+
+    // Above test ensures the vector has at least 2 elements.
+    // We check if linestring is closed, and return 0 otherwise.
+    if linestring.0.first().unwrap() != linestring.0.last().unwrap() {
+        return T::zero();
+    }
+
+    // Compute a reasonable shift for the line-string coords
+    // to avoid numerical-errors when summing the
+    // determinants.
+    //
+    // Note: we can't use the `Centroid` trait as it
+    // requries `T: Float` and in fact computes area in the
+    // implementation. Another option is to use the average
+    // of the coordinates, but it is not fool-proof to
+    // divide by the length of the linestring (eg. a long
+    // line-string with T = u8)
+    let mut shift = linestring.0[0];
+    for pt in linestring.0.iter() {
+        if shift.x > pt.x {
+            shift.x = pt.x;
+        }
+        if shift.y > pt.y {
+            shift.y = pt.y;
+        }
+    }
+
     let mut tmp = T::zero();
     for line in linestring.lines() {
+        use crate::algorithm::map_coords::MapCoords;
+        let line = line.map_coords(|&(x, y)| {
+            (x - shift.x, y - shift.y)
+        });
         tmp = tmp + line.determinant();
     }
 
@@ -168,6 +199,9 @@ mod test {
         let cw_line = LineString::from(vec![a.0, c.0, b.0, a.0]);
         // That triangle, but in counterclockwise ordering
         let ccw_line = LineString::from(vec![a.0, b.0, c.0, a.0]);
+
+        // Verify open linestrings return None
+        assert!(LineString::from(vec![a.0, b.0, c.0]).winding_order().is_none());
 
         assert_eq!(cw_line.winding_order(), Some(WindingOrder::Clockwise));
         assert_eq!(cw_line.is_cw(), true);
