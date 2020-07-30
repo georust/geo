@@ -6,6 +6,8 @@
   * <https://github.com/georust/geo/pull/479>
 * Bump proj version to 0.20.0
   * <https://github.com/georust/geo/pull/472>
+* Fix numerical stability in area computation
+  * <https://github.com/georust/geo/pull/482>
 
 ## 0.14.1
 
