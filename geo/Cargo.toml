@@ -20,7 +20,7 @@ serde = { version = "1.0", optional = true, features = ["derive"] }
 rstar = { version = "0.8" }
 geographiclib-rs = { version = "0.2" }
 
-proj = { version = "0.16.2", optional = true }
+proj = { version = "0.20.0", optional = true }
 
 geo-types = { version = "0.6.0", path = "../geo-types", features = ["rstar"] }
 
