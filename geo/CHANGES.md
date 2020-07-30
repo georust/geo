@@ -4,6 +4,8 @@
 
 * Change closure for `exterior_mut()` and `interiors_mut()` to be `FnOnce`
   * <https://github.com/georust/geo/pull/479>
+* Bump proj version to 0.20.0
+  * <https://github.com/georust/geo/pull/472>
 
 ## 0.14.1
 
