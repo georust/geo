@@ -3,7 +3,7 @@ use std::iter::Sum;
 
 use crate::algorithm::area::{get_linestring_area, Area};
 use crate::algorithm::euclidean_length::EuclideanLength;
-use crate::{Line, LineString, MultiPoint, MultiPolygon, Point, Polygon, Rect};
+use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect};
 
 /// Calculation of the centroid.
 /// The centroid is the arithmetic mean position of all points in the shape.
@@ -122,6 +122,54 @@ where
             if total_length == T::zero() {
                 // length == 0 means that all points were equal, we can just the first one
                 Some(Point(self.0[0]))
+            } else {
+                Some(Point::new(sum_x / total_length, sum_y / total_length))
+            }
+        }
+    }
+}
+
+impl<T> Centroid<T> for MultiLineString<T>
+where
+    T: Float + FromPrimitive + Sum,
+{
+    type Output = Option<Point<T>>;
+
+    // The Centroid of a MultiLineString is the mean of the middles of all the constituent linestrings,
+    // weighted by the length of the each linestring
+    fn centroid(&self) -> Self::Output {
+        if self.0.is_empty() || self.0.iter().all(|ls| ls.0.is_empty()) {
+            return None;
+        }
+        if self.0.len() == 1 {
+            self.0[0].centroid()
+        } else {
+            let (sum_x, sum_y, total_length) =
+                self.0
+                    .iter()
+                    .fold(
+                        (T::zero(), T::zero(), T::zero()),
+                        |accum, line| match line.centroid() {
+                            Some(center) => {
+                                let segment_len = line.euclidean_length();
+                                (
+                                    accum.0 + segment_len * center.x(),
+                                    accum.1 + segment_len * center.y(),
+                                    accum.2 + segment_len,
+                                )
+                            }
+                            None => accum,
+                        },
+                    );
+            if total_length == T::zero() {
+                // length == 0 means that all points in all constituent linestrings were equal.
+                // we can just use the first defined point in this case.
+                for linestring in self.0.iter() {
+                    if linestring.0.len() > 0 {
+                        return Some(Point(linestring[0]));
+                    }
+                }
+                return None; // this should never happen, since all linestrings being empty was previously checked
             } else {
                 Some(Point::new(sum_x / total_length, sum_y / total_length))
             }
@@ -300,7 +348,9 @@ mod test {
     use crate::algorithm::centroid::Centroid;
     use crate::algorithm::euclidean_distance::EuclideanDistance;
     use crate::line_string;
-    use crate::{polygon, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect};
+    use crate::{
+        polygon, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect,
+    };
     use num_traits::Float;
 
     /// small helper to create a coordinate
@@ -343,6 +393,59 @@ mod test {
         assert_eq!(
             linestring.centroid(),
             Some(Point(Coordinate { x: 6., y: 1. }))
+        );
+    }
+    // Tests: Centroid of MultiLineString
+    #[test]
+    fn empty_multilinestring_test() {
+        let mls: MultiLineString<f64> = MultiLineString(vec![]);
+        let centroid = mls.centroid();
+        assert!(centroid.is_none());
+    }
+    #[test]
+    fn multilinestring_with_empty_line_test() {
+        let mls: MultiLineString<f64> = MultiLineString(vec![line_string![]]);
+        let centroid = mls.centroid();
+        assert!(centroid.is_none());
+    }
+    #[test]
+    fn multilinestring_length_0_test() {
+        let coord = Coordinate {
+            x: 40.02f64,
+            y: 116.34,
+        };
+        let mls: MultiLineString<f64> = MultiLineString(vec![
+            line_string![coord],
+            line_string![coord],
+            line_string![coord],
+        ]);
+        assert_eq!(mls.centroid(), Some(Point(coord)));
+    }
+    #[test]
+    fn multilinestring_one_line_test() {
+        let linestring = line_string![
+            (x: 1., y: 1.),
+            (x: 7., y: 1.),
+            (x: 8., y: 1.),
+            (x: 9., y: 1.),
+            (x: 10., y: 1.),
+            (x: 11., y: 1.)
+        ];
+        let mls: MultiLineString<f64> = MultiLineString(vec![linestring]);
+        assert_eq!(mls.centroid(), Some(Point(Coordinate { x: 6., y: 1. })));
+    }
+    #[test]
+    fn multilinestring_test() {
+        let v1 = line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0)];
+        let v2 = line_string![(x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 3.0, y: 1.0)];
+        let v3 = line_string![(x: -12.0, y: -100.0), (x: 7.0, y: 8.0)];
+        let mls = MultiLineString(vec![v1, v2, v3]);
+        assert_eq!(
+            mls.centroid(),
+            Some(Point(Coordinate {
+                x: -1.9097834383655845,
+                y: -37.683866439745714
+            }))
         );
     }
     // Tests: Centroid of Polygon
