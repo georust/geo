@@ -135,8 +135,8 @@ where
 {
     type Output = Option<Point<T>>;
 
-    // The Centroid of a MultiLineString is the mean of the middles of all the constituent linestrings,
-    // weighted by the length of the each linestring
+    /// The Centroid of a MultiLineString is the mean of the centroids of all the constituent linestrings,
+    /// weighted by the length of each linestring
     fn centroid(&self) -> Self::Output {
         if self.0.is_empty() || self.0.iter().all(|ls| ls.0.is_empty()) {
             return None;
