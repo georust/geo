@@ -497,12 +497,23 @@ impl<T: CoordinateType> MapCoordsInplace<T> for GeometryCollection<T> {
     }
 }
 
+fn normalize_rect_bounds<T: PartialOrd>(min: &mut (T, T), max: &mut (T, T)) {
+    use std::mem::swap;
+    if min.0 > max.0 {
+        swap(&mut min.0, &mut max.0);
+    }
+    if min.1 > max.1 {
+        swap(&mut min.1, &mut max.1);
+    }
+}
+
 impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for Rect<T> {
     type Output = Rect<NT>;
 
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output {
-        let new_min = func(&self.min().x_y());
-        let new_max = func(&self.max().x_y());
+        let mut new_min = func(&self.min().x_y());
+        let mut new_max = func(&self.max().x_y());
+        normalize_rect_bounds(&mut new_min, &mut new_max);
 
         Rect::new(
             Coordinate {
@@ -524,8 +535,9 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Rect<T> {
         &self,
         func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>>,
     ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
-        let new_min = func(&(self.min().x, self.min().y))?;
-        let new_max = func(&(self.max().x, self.max().y))?;
+        let mut new_min = func(&(self.min().x, self.min().y))?;
+        let mut new_max = func(&(self.max().x, self.max().y))?;
+        normalize_rect_bounds(&mut new_min, &mut new_max);
 
         Ok(Rect::new(
             Coordinate {
@@ -542,9 +554,10 @@ impl<T: CoordinateType, NT: CoordinateType> TryMapCoords<T, NT> for Rect<T> {
 
 impl<T: CoordinateType> MapCoordsInplace<T> for Rect<T> {
     fn map_coords_inplace(&mut self, func: impl Fn(&(T, T)) -> (T, T)) {
-        let new_min = func(&self.min().x_y());
-        let new_max = func(&self.max().x_y());
+        let mut new_min = func(&self.min().x_y());
+        let mut new_max = func(&self.max().x_y());
 
+        normalize_rect_bounds(&mut new_min, &mut new_max);
         let mut new_rect = Rect::new(new_min, new_max);
 
         ::std::mem::swap(self, &mut new_rect);
@@ -885,5 +898,17 @@ mod test {
             ]
             .into()
         );
+    }
+
+    #[test]
+    fn rect_map_invert_coords() {
+        let rect = Rect::new(
+            Coordinate{x: 0., y: 0.},
+            Coordinate{x: 1., y: 1.}
+        );
+
+        // This call should not panic even though Rect::new
+        // constructor panics if min coords > max coords
+        rect.map_coords(|&(x, y)| (-x, -y));
     }
 }
