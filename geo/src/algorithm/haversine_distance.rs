@@ -4,6 +4,9 @@ use num_traits::{Float, FromPrimitive};
 /// Determine the distance between two geometries using the [haversine formula].
 ///
 /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
+///
+/// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
+/// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
 pub trait HaversineDistance<T, Rhs = Self> {
     /// Determine the distance between two geometries using the [haversine
     /// formula].
@@ -27,7 +30,7 @@ pub trait HaversineDistance<T, Rhs = Self> {
     /// let distance = p1.haversine_distance(&p2);
     ///
     /// assert_eq!(
-    ///     5_570_222., // meters
+    ///     5_570_230., // meters
     ///     distance.round()
     /// );
     /// ```
@@ -64,7 +67,7 @@ mod test {
         let b = Point::<f64>::new(1., 0.);
         assert_relative_eq!(
             a.haversine_distance(&b),
-            111194.92664455874_f64,
+            111195.0802335329_f64,
             epsilon = 1.0e-6
         );
     }
@@ -75,7 +78,7 @@ mod test {
         let b = Point::new(72.1260, 70.612);
         assert_relative_eq!(
             a.haversine_distance(&b),
-            7130570.458772508_f64,
+            7130580.307935911_f64,
             epsilon = 1.0e-6
         );
     }
@@ -87,7 +90,7 @@ mod test {
         let b = Point::<f64>::new(-77.009080, 38.889825);
         assert_relative_eq!(
             a.haversine_distance(&b),
-            2526.820014113592_f64,
+            2526.823504306046_f64,
             epsilon = 1.0e-6
         );
     }
@@ -97,6 +100,6 @@ mod test {
         // this input comes from issue #100
         let a = Point::<f32>::new(-77.036585, 38.897448);
         let b = Point::<f32>::new(-77.009080, 38.889825);
-        assert_relative_eq!(a.haversine_distance(&b), 2526.8318_f32, epsilon = 1.0e-6);
+        assert_relative_eq!(a.haversine_distance(&b), 2526.8354_f32, epsilon = 1.0e-6);
     }
 }
