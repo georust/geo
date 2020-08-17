@@ -9,7 +9,7 @@ jobs:
       run:
         working-directory: geo-types
     container:
-      image: georust/geo-ci:53626b645f1cffa79ee7088407fea22982bd81f8
+      image: georust/geo-ci:088c49bece4afbb8381019cba17f230710de4040
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -24,7 +24,7 @@ jobs:
       run:
         working-directory: geo
     container:
-      image: georust/geo-ci:53626b645f1cffa79ee7088407fea22982bd81f8
+      image: georust/geo-ci:088c49bece4afbb8381019cba17f230710de4040
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -39,7 +39,7 @@ jobs:
       run:
         working-directory: geo-postgis
     container:
-      image: georust/geo-ci:53626b645f1cffa79ee7088407fea22982bd81f8
+      image: georust/geo-ci:088c49bece4afbb8381019cba17f230710de4040
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -51,7 +51,7 @@ jobs:
     name: coverage
     runs-on: ubuntu-latest
     container:
-      image: georust/geo-ci:53626b645f1cffa79ee7088407fea22982bd81f8
+      image: georust/geo-ci:088c49bece4afbb8381019cba17f230710de4040
       options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout repository
