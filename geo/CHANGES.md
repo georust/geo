@@ -8,6 +8,14 @@
   * <https://github.com/georust/geo/pull/472>
 * Fix numerical stability in area computation
   * <https://github.com/georust/geo/pull/482>
+* Fix `contains` for degenerate zero-area triangles
+  * <https://github.com/georust/geo/pull/474>
+* Allow MapCoords on Rect to invert coords
+  * <https://github.com/georust/geo/pull/490>
+* Centroid impl for LineString
+  * <https://github.com/georust/geo/pull/485>
+* Fix Area logic for Polygon with interiors
+  * <https://github.com/georust/geo/pull/487>
 
 ## 0.14.1
 
