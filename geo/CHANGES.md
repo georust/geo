@@ -14,7 +14,7 @@
   * <https://github.com/georust/geo/pull/474>
 * Allow MapCoords on Rect to invert coords
   * <https://github.com/georust/geo/pull/490>
-* Centroid impl for LineString
+* Centroid impl for MultiLineString
   * <https://github.com/georust/geo/pull/485>
 * Fix Area logic for Polygon with interiors
   * <https://github.com/georust/geo/pull/487>
