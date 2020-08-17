@@ -7,7 +7,9 @@ pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
 where
     T: CoordinateType,
 {
-    if linestring.0.is_empty() || linestring.0.len() == 1 {
+    // LineString with less than 3 points is empty, or a
+    // single point, or is not closed.
+    if linestring.0.len() < 3 {
         return T::zero();
     }
 
@@ -17,7 +19,7 @@ where
         return T::zero();
     }
 
-    // Compute a reasonable shift for the line-string coords
+    // Use a reasonable shift for the line-string coords
     // to avoid numerical-errors when summing the
     // determinants.
     //
@@ -27,15 +29,7 @@ where
     // of the coordinates, but it is not fool-proof to
     // divide by the length of the linestring (eg. a long
     // line-string with T = u8)
-    let mut shift = linestring.0[0];
-    for pt in linestring.0.iter() {
-        if shift.x > pt.x {
-            shift.x = pt.x;
-        }
-        if shift.y > pt.y {
-            shift.y = pt.y;
-        }
-    }
+    let shift = linestring.0[0];
 
     let mut tmp = T::zero();
     for line in linestring.lines() {
