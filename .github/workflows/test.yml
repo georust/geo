@@ -1,5 +1,4 @@
-# Trigger the workflow on push or pull request
-on: [push, pull_request]
+on: push
 name: Run tests
 jobs:
   geo_types:
