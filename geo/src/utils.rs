@@ -127,19 +127,6 @@ where
     }
 }
 
-pub fn sign<T>(
-    point_1: &crate::Coordinate<T>,
-    point_2: &crate::Coordinate<T>,
-    point_3: &crate::Coordinate<T>,
-) -> bool
-where
-    T: crate::CoordinateType,
-{
-    (point_1.x - point_3.x) * (point_2.y - point_3.y)
-        - (point_2.x - point_3.x) * (point_1.y - point_3.y)
-        < T::zero()
-}
-
 #[cfg(test)]
 mod test {
     use super::{partial_max, partial_min};
