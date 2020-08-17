@@ -65,7 +65,7 @@ mod utils;
 extern crate approx;
 
 // Mean radius of Earth in meters
-const MEAN_EARTH_RADIUS: f64 = 6_371_000.0;
+const MEAN_EARTH_RADIUS: f64 = 6371008.8;
 
 // Radius of Earth at the equator in meters (derived from the WGS-84 ellipsoid)
 const EQUATORIAL_EARTH_RADIUS: f64 = 6_378_137.0;

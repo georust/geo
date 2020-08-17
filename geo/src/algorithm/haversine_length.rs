@@ -6,6 +6,9 @@ use crate::{Line, LineString, MultiLineString};
 /// Determine the length of a geometry using the [haversine formula].
 ///
 /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
+///
+/// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
+/// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
 pub trait HaversineLength<T, RHS = Self> {
     /// Determine the length of a geometry using the [haversine formula].
     ///
@@ -29,7 +32,7 @@ pub trait HaversineLength<T, RHS = Self> {
     /// let length = linestring.haversine_length();
     ///
     /// assert_eq!(
-    ///     5_570_222., // meters
+    ///     5_570_230., // meters
     ///     length.round()
     /// );
     /// ```
