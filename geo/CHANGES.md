@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Bump proj version to 0.20.3
-  * <https://github.com/georust/geo/pull/494>
+  * <https://github.com/georust/geo/pull/496>
 
 ## 0.14.2
 
