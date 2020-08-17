@@ -102,11 +102,9 @@ where
         // result in computing the shoelace formula twice.
         let is_negative = area < T::zero();
 
-        let area = self.interiors()
-            .iter()
-            .fold(area.abs(), |total, next| {
-                total - get_linestring_area(next).abs()
-            });
+        let area = self.interiors().iter().fold(area.abs(), |total, next| {
+            total - get_linestring_area(next).abs()
+        });
 
         if is_negative {
             -area
@@ -289,13 +287,14 @@ mod test {
             const ANGLE_INC: f64 = 2. * PI / NUM_VERTICES as f64;
 
             Polygon::new(
-                (0..NUM_VERTICES).map(|i| {
-                    let angle = i as f64 * ANGLE_INC;
-                    Coordinate {
-                        x: angle.cos(),
-                        y: angle.sin(),
-                    }
-                })
+                (0..NUM_VERTICES)
+                    .map(|i| {
+                        let angle = i as f64 * ANGLE_INC;
+                        Coordinate {
+                            x: angle.cos(),
+                            y: angle.sin(),
+                        }
+                    })
                     .collect::<Vec<_>>()
                     .into(),
                 vec![],
@@ -308,9 +307,7 @@ mod test {
         let shift_y = 1.5e8;
 
         use crate::map_coords::MapCoords;
-        let polygon = polygon.map_coords(
-            |&(x, y)| (x + shift_x, y + shift_y)
-        );
+        let polygon = polygon.map_coords(|&(x, y)| (x + shift_x, y + shift_y));
 
         let new_area = polygon.signed_area();
         let err = (area - new_area).abs() / area;

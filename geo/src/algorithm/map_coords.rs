@@ -915,10 +915,7 @@ mod test {
 
     #[test]
     fn rect_map_invert_coords() {
-        let rect = Rect::new(
-            Coordinate{x: 0., y: 0.},
-            Coordinate{x: 1., y: 1.}
-        );
+        let rect = Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. });
 
         // This call should not panic even though Rect::new
         // constructor panics if min coords > max coords

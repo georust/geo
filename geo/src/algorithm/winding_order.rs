@@ -40,9 +40,7 @@ where
     let mut tmp = T::zero();
     for line in linestring.lines() {
         use crate::algorithm::map_coords::MapCoords;
-        let line = line.map_coords(|&(x, y)| {
-            (x - shift.x, y - shift.y)
-        });
+        let line = line.map_coords(|&(x, y)| (x - shift.x, y - shift.y));
         tmp = tmp + line.determinant();
     }
 
@@ -201,7 +199,9 @@ mod test {
         let ccw_line = LineString::from(vec![a.0, b.0, c.0, a.0]);
 
         // Verify open linestrings return None
-        assert!(LineString::from(vec![a.0, b.0, c.0]).winding_order().is_none());
+        assert!(LineString::from(vec![a.0, b.0, c.0])
+            .winding_order()
+            .is_none());
 
         assert_eq!(cw_line.winding_order(), Some(WindingOrder::Clockwise));
         assert_eq!(cw_line.is_cw(), true);
