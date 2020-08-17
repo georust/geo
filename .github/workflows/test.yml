@@ -1,10 +1,10 @@
-# Trigger the workflow on push or pull request
-on: [push, pull_request]
+on: push
 name: Run tests
 jobs:
   geo_types:
     name: geo-types
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
       run:
         working-directory: geo-types
@@ -20,6 +20,7 @@ jobs:
   geo:
     name: geo
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
       run:
         working-directory: geo
@@ -35,6 +36,7 @@ jobs:
   geo_postgis:
     name: geo-postgis
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
       run:
         working-directory: geo-postgis
@@ -50,6 +52,7 @@ jobs:
   test:
     name: coverage
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     container:
       image: georust/geo-ci:088c49bece4afbb8381019cba17f230710de4040
       options: --security-opt seccomp=unconfined
