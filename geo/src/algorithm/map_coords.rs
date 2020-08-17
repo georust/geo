@@ -645,16 +645,22 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
-    fn rect_inplace_panic() {
-        let mut rect = Rect::new((10, 10), (20, 20));
-        rect.map_coords_inplace(|&(x, y)| {
-            if x < 15 && y < 15 {
-                (x, y)
-            } else {
-                (x - 15, y - 15)
+    fn rect_inplace_normalized() {
+        let mut rect = Rect::new((2, 2), (3, 3));
+        // Rect's enforce that rect.min is up and left of p2.  Here we test that the points are
+        // normalized into a valid rect, regardless of the order they are mapped.
+        rect.map_coords_inplace(|&pt| {
+            match pt {
+                // old min point maps to new max point
+                (2, 2) => (4, 4),
+                // old max point maps to new min point
+                (3, 3) => (1, 1),
+                _ => panic!("unexpected point"),
             }
         });
+
+        assert_eq!(rect.min(), Coordinate { x: 1, y: 1 });
+        assert_eq!(rect.max(), Coordinate { x: 4, y: 4 });
     }
 
     #[test]
@@ -673,16 +679,23 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
-    fn rect_try_map_coords_panic() {
-        let rect = Rect::new((10, 10), (20, 20));
-        let _ = rect.try_map_coords(|&(x, y)| {
-            if x < 15 && y < 15 {
-                Ok((x, y))
-            } else {
-                Ok((x - 15, y - 15))
-            }
-        });
+    fn rect_try_map_coords_normalized() {
+        let rect = Rect::new((2, 2), (3, 3));
+        // Rect's enforce that rect.min is up and left of p2.  Here we test that the points are
+        // normalized into a valid rect, regardless of the order they are mapped.
+        let new_rect = rect
+            .try_map_coords(|&pt| {
+                match pt {
+                    // old min point maps to new max point
+                    (2, 2) => Ok((4, 4)),
+                    // old max point maps to new min point
+                    (3, 3) => Ok((1, 1)),
+                    _ => panic!("unexpected point"),
+                }
+            })
+            .unwrap();
+        assert_eq!(new_rect.min(), Coordinate { x: 1, y: 1 });
+        assert_eq!(new_rect.max(), Coordinate { x: 4, y: 4 });
     }
 
     #[test]
