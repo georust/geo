@@ -1,11 +1,22 @@
 use crate::{polygon, Coordinate, CoordinateType, Polygon};
 use num_traits::Float;
 
-/// A bounded 2D quadrilateral whose area is defined by minimum and maximum `Coordinate`s.
+/// An _axis-aligned_ bounded 2D rectangle whose area is
+/// defined by minimum and maximum `Coordinate`s.
 ///
-/// The constructors and setters ensure the maximum `Coordinate` is greater than or equal to the
-/// minimum. Thus, a `Rect`s width, height, and area is guaranteed to be greater than or equal to
-/// zero.
+/// The constructors and setters ensure the maximum
+/// `Coordinate` is greater than or equal to the minimum.
+/// Thus, a `Rect`s width, height, and area is guaranteed to
+/// be greater than or equal to zero.
+///
+/// **Note.** While `Rect` implements `MapCoords` and
+/// `RotatePoint` algorithmic traits, the usage is expected
+/// to maintain the axis alignment. In particular, only
+/// rotation by integer multiples of 90 degrees, will
+/// preserve the original shape. In other cases, the min,
+/// and max points are rotated or transformed, and a new
+/// rectangle is created (with coordinate swaps to ensure
+/// min < max).
 ///
 /// # Examples
 ///
