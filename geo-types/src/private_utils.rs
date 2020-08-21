@@ -143,15 +143,36 @@ where
         return true;
     }
     for line in line_string.lines() {
-        if ((line.start.y == line.end.y)
-            && (line.start.y == point.y())
-            && (point.x() > line.start.x.min(line.end.x))
-            && (point.x() < line.start.x.max(line.end.x)))
-            || ((line.start.x == line.end.x)
-                && (line.start.x == point.x())
-                && (point.y() > line.start.y.min(line.end.y))
-                && (point.y() < line.start.y.max(line.end.y)))
-        {
+        // This is a duplicate of the line-contains-point logic in the "intersects" module
+        let tx = if line.dx() == T::zero() {
+            None
+        } else {
+            Some((point.x() - line.start.x) / line.dx())
+        };
+        let ty = if line.dy() == T::zero() {
+            None
+        } else {
+            Some((point.y() - line.start.y) / line.dy())
+        };
+        let contains = match (tx, ty) {
+            (None, None) => {
+                // Degenerate line
+                point.0 == line.start
+            }
+            (Some(t), None) => {
+                // Horizontal line
+                point.y() == line.start.y && T::zero() <= t && t <= T::one()
+            }
+            (None, Some(t)) => {
+                // Vertical line
+                point.x() == line.start.x && T::zero() <= t && t <= T::one()
+            }
+            (Some(t_x), Some(t_y)) => {
+                // All other lines
+                (t_x - t_y).abs() <= T::epsilon() && T::zero() <= t_x && t_x <= T::one()
+            }
+        };
+        if contains {
             return true;
         }
     }
