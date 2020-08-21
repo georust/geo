@@ -1,6 +1,6 @@
 use crate::{Coordinate, CoordinateType};
-use num_traits::NumCast;
 use num_traits::Float;
+use num_traits::NumCast;
 use robust::{orient2d, Coord};
 use std::ops::Add;
 use std::ops::Neg;
@@ -244,6 +244,20 @@ where
     /// assert_eq!(cross, 2.0)
     /// ```
     pub fn cross_prod(self, point_b: Point<T>, point_c: Point<T>) -> T {
+        (point_b.x() - self.x()) * (point_c.y() - self.y())
+            - (point_b.y() - self.y()) * (point_c.x() - self.x())
+    }
+}
+
+impl<T> Point<T>
+where
+    T: Float,
+{
+    /// Returns a positive value if the coordinates `pa`, `pb`, and `pc` occur in counterclockwise order
+    /// (pc lies to the **left** of the directed line defined by coordinates pa and pb).  
+    /// Returns a negative value if they occur in clockwise order (`pc` lies to the **right** of the directed line `pa, pb`).  
+    /// Returns `0` if they are **collinear**.  
+    pub fn orient2d(self, point_b: Point<T>, point_c: Point<T>) -> T {
         let pa: Coord<f64> = Coord {
             x: NumCast::from(self.x()).unwrap(),
             y: NumCast::from(self.y()).unwrap(),
