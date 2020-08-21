@@ -141,7 +141,7 @@ where
     T: Float,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        ::geo_types::private_utils::line_string_contains_point(self, *p)
+        self.lines().any(|line| line.contains(p))
     }
 }
 
