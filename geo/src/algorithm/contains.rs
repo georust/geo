@@ -439,6 +439,15 @@ mod test {
     use crate::algorithm::contains::Contains;
     use crate::line_string;
     use crate::{Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
+
+
+    #[test]
+    // see https://github.com/georust/geo/issues/452
+    fn linestring_contains_point() {
+        let line_string = LineString::from(vec![(0., 0.), (3., 3.)]);
+        let point_on_line = Point::new(1., 1.);
+        assert!(line_string.contains(&point_on_line));
+    }
     #[test]
     // V doesn't contain rect because two of its edges intersect with V's exterior boundary
     fn polygon_does_not_contain_polygon() {
