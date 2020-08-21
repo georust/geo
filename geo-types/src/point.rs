@@ -1,5 +1,7 @@
 use crate::{Coordinate, CoordinateType};
+use num_traits::NumCast;
 use num_traits::Float;
+use robust::{orient2d, Coord};
 use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
@@ -242,8 +244,19 @@ where
     /// assert_eq!(cross, 2.0)
     /// ```
     pub fn cross_prod(self, point_b: Point<T>, point_c: Point<T>) -> T {
-        (point_b.x() - self.x()) * (point_c.y() - self.y())
-            - (point_b.y() - self.y()) * (point_c.x() - self.x())
+        let pa: Coord<f64> = Coord {
+            x: NumCast::from(self.x()).unwrap(),
+            y: NumCast::from(self.y()).unwrap(),
+        };
+        let pb: Coord<f64> = Coord {
+            x: NumCast::from(point_b.x()).unwrap(),
+            y: NumCast::from(point_b.y()).unwrap(),
+        };
+        let pc: Coord<f64> = Coord {
+            x: NumCast::from(point_c.x()).unwrap(),
+            y: NumCast::from(point_c.y()).unwrap(),
+        };
+        T::from(orient2d(pa, pb, pc)).unwrap()
     }
 }
 
