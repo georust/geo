@@ -24,6 +24,8 @@ proj = { version = "0.20.3", optional = true }
 
 geo-types = { version = "0.6.0", path = "../geo-types", features = ["rstar"] }
 
+robust = { version = "0.2.2" }
+
 [features]
 default = []
 use-proj = ["proj"]

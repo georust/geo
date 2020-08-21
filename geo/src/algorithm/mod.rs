@@ -59,6 +59,8 @@ pub mod vincenty_distance;
 pub mod vincenty_length;
 /// Calculate and work with the winding order of `Linestring`s.
 pub mod winding_order;
+/// Calculate the winding order of `LineString`s using robust predicates.
+pub mod robust_winding_order;
 /// Locate a point along a `Line` or `LineString`.
 pub mod line_locate_point;
 /// Interpolate a point along a `Line` or `LineString`.
