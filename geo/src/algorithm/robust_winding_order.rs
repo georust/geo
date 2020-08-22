@@ -1,10 +1,8 @@
 use super::winding_order::*;
-use super::kernels::Kernel;
+use super::kernels::*;
 use crate::{CoordinateType, LineString};
 
-pub trait RobustWinding<K>
-where K: Kernel
-{
+pub trait RobustWinding {
     /// Return the winding order of this object
     fn robust_winding_order(&self) -> Option<WindingOrder>;
 }
@@ -28,8 +26,8 @@ fn lexicographically_least_index<T: Copy + PartialOrd>(pts: &[T]) -> usize {
     min.unwrap().0
 }
 
-impl<T, K> RobustWinding<K> for LineString<T>
-where T: CoordinateType,
+impl<T, K> RobustWinding for LineString<T>
+where T: CoordinateType + HasKernel<Ker = K>,
       K: Kernel<Scalar = T>
 {
     fn robust_winding_order(&self) -> Option<WindingOrder> {
@@ -96,7 +94,7 @@ mod test {
     use crate::algorithm::kernels::*;
 
     #[test]
-    fn robust_winding_order() {
+    fn robust_winding_float() {
         // 3 points forming a triangle
         let a = Point::new(0., 0.);
         let b = Point::new(2., 0.);
@@ -110,27 +108,48 @@ mod test {
         // Verify open linestrings return None
         let open_line = LineString::from(vec![a.0, b.0, c.0]);
         assert!(
-            RobustWinding::<RobustKernel<_>>::robust_winding_order(&open_line)
+            open_line.robust_winding_order()
                 .is_none()
         );
 
         assert_eq!(
-            RobustWinding::<RobustKernel<_>>::robust_winding_order(&cw_line),
+            cw_line.robust_winding_order(),
             Some(WindingOrder::Clockwise)
         );
         assert_eq!(
-            RobustWinding::<RobustKernel<_>>::robust_winding_order(&ccw_line),
+            ccw_line.robust_winding_order(),
             Some(WindingOrder::CounterClockwise)
         );
 
-        // This is simple enough that SimpleKernel works
+    }
+
+    #[test]
+    fn robust_winding_integers() {
+        // 3 points forming a triangle
+        let a = Point::new(0i64, 0);
+        let b = Point::new(2, 0);
+        let c = Point::new(1, 2);
+
+        // That triangle, but in clockwise ordering
+        let cw_line = LineString::from(vec![a.0, c.0, b.0, a.0]);
+        // That triangle, but in counterclockwise ordering
+        let ccw_line = LineString::from(vec![a.0, b.0, c.0, a.0]);
+
+        // Verify open linestrings return None
+        let open_line = LineString::from(vec![a.0, b.0, c.0]);
+        assert!(
+            open_line.robust_winding_order()
+                .is_none()
+        );
+
         assert_eq!(
-            RobustWinding::<SimpleKernel<_>>::robust_winding_order(&cw_line),
+            cw_line.robust_winding_order(),
             Some(WindingOrder::Clockwise)
         );
         assert_eq!(
-            RobustWinding::<SimpleKernel<_>>::robust_winding_order(&ccw_line),
+            ccw_line.robust_winding_order(),
             Some(WindingOrder::CounterClockwise)
         );
+
     }
 }
