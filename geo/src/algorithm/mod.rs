@@ -1,3 +1,6 @@
+/// Kernels to compute various predicates
+pub mod kernels;
+
 /// Calculate the area of the surface of a `Geometry`.
 pub mod area;
 /// Calculate the bearing to another `Point`, in degrees.

@@ -193,14 +193,7 @@ impl<T: CoordinateType> LineString<T> {
     /// assert!(line_string.is_closed());
     /// ```
     pub fn is_closed(&self) -> bool {
-        // LineString with less than 2 elements can't be closed
-        if self.0.len() < 2 {
-            false
-        } else if self.0.first().unwrap() != self.0.last().unwrap() {
-            false
-        } else {
-            true
-        }
+        self.0.len() > 1 && self.0.first() == self.0.last()
     }
 }
 
