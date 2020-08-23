@@ -17,6 +17,7 @@ pub mod closest_point;
 pub mod contains;
 /// Calculate the convex hull of a `Geometry`.
 pub mod convexhull;
+pub mod graham_hull;
 /// Calculate the minimum Euclidean distance between two `Geometries`.
 pub mod euclidean_distance;
 /// Calculate the length of a planar line between two `Geometries`.

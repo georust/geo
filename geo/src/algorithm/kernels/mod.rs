@@ -1,5 +1,11 @@
 use crate::{CoordinateType, Coordinate};
-use super::winding_order::WindingOrder;
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Orientation {
+    CounterClockwise,
+    Clockwise,
+    Colinear,
+}
 
 /// Kernel trait to provide predicates to operate on
 /// different scalar types.
@@ -12,7 +18,26 @@ pub trait Kernel {
         p: Coordinate<Self::Scalar>,
         q: Coordinate<Self::Scalar>,
         r: Coordinate<Self::Scalar>,
-    ) -> Option<WindingOrder>;
+    ) -> Orientation {
+
+        let res = (q.x - p.x) * (r.y - q.y) - (q.y - p.y) * (r.x - q.x);
+        use num_traits::Zero;
+        if res > Zero::zero() {
+            Orientation::CounterClockwise
+        } else if res < Zero::zero() {
+            Orientation::Clockwise
+        } else {
+            Orientation::Colinear
+        }
+
+    }
+
+    fn square_euclidean_distance(
+        p: Coordinate<Self::Scalar>,
+        q: Coordinate<Self::Scalar>,
+    ) -> Self::Scalar {
+        (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)
+    }
 }
 
 /// Marker trait to assign Kernel for scalars

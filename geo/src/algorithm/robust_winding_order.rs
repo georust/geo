@@ -1,4 +1,4 @@
-use super::winding_order::{WindingOrder, Points};
+use super::winding_order::{Points, WindingOrder};
 use super::kernels::*;
 use crate::{CoordinateType, LineString};
 use crate::utils::EitherIter;
@@ -56,24 +56,6 @@ pub trait RobustWinding {
     }
 }
 
-/// Compute index of the lexicographically least point.
-/// Should only be called on a non-empty slice.
-fn lexicographically_least_index<T: Copy + PartialOrd>(pts: &[T]) -> usize {
-    assert!(pts.len() > 0);
-
-    let mut min: Option<(usize, T)> = None;
-    for (i, pt) in pts.iter().enumerate() {
-        if let Some((_, min_pt)) = min {
-            if pt < &min_pt {
-                min = Some( (i, *pt) )
-            }
-        } else {
-            min = Some( (i, *pt) )
-        }
-    }
-
-    min.unwrap().0
-}
 
 impl<T, K> RobustWinding for LineString<T>
 where T: CoordinateType + HasKernel<Ker = K>,
@@ -101,6 +83,7 @@ where T: CoordinateType + HasKernel<Ker = K>,
             } else { *x -= 1; }
         };
 
+        use crate::utils::lexicographically_least_index;
         let i = lexicographically_least_index(&self.0);
 
         let mut next = i;
@@ -123,11 +106,15 @@ where T: CoordinateType + HasKernel<Ker = K>,
             decrement(&mut prev);
         }
 
-        K::orient2d(
+        match K::orient2d(
             self.0[prev],
             self.0[i],
             self.0[next]
-        )
+        ) {
+            Orientation::CounterClockwise => Some(WindingOrder::CounterClockwise),
+            Orientation::Clockwise => Some(WindingOrder::Clockwise),
+            _ => None
+        }
 
     }
 

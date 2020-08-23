@@ -83,7 +83,7 @@ fn orient2d_tests<T: From<f64> + CoordinateType + HasKernel>(
     x2: f64, y2: f64,
     x3: f64, y3: f64,
     width: usize, height: usize,
-) -> Vec<Option<WindingOrder>> {
+) -> Vec<Orientation> {
     let p1 = Coordinate{
         x: <T as From<_>>::from(x1),
         y: <T as From<_>>::from(y1),
@@ -115,7 +115,7 @@ fn orient2d_tests<T: From<f64> + CoordinateType + HasKernel>(
 
 use std::path::Path;
 fn write_png(
-    data: &[Option<WindingOrder>],
+    data: &[Orientation],
     path: &Path,
     width: usize, height: usize,
 ) {
@@ -133,10 +133,11 @@ fn write_png(
 
     let mut writer = encoder.write_header().unwrap();
     let data = data.iter().map(|w| {
+        use Orientation::*;
         match w {
-            Some(WindingOrder::Clockwise) => 0u8,
-            None => 127,
-            Some(WindingOrder::CounterClockwise) => 255,
+            Clockwise => 0u8,
+            Colinear => 127,
+            CounterClockwise => 255,
         }
     }).collect::<Vec<_>>();
     writer.write_image_data(&data).unwrap();

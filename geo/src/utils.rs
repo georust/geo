@@ -127,6 +127,25 @@ where
     }
 }
 
+/// Compute index of the lexicographically least point.
+/// Should only be called on a non-empty slice.
+pub fn lexicographically_least_index<T: Copy + PartialOrd>(pts: &[T]) -> usize {
+    assert!(pts.len() > 0);
+
+    let mut min: Option<(usize, T)> = None;
+    for (i, pt) in pts.iter().enumerate() {
+        if let Some((_, min_pt)) = min {
+            if pt < &min_pt {
+                min = Some( (i, *pt) )
+            }
+        } else {
+            min = Some( (i, *pt) )
+        }
+    }
+
+    min.unwrap().0
+}
+
 #[cfg(test)]
 mod test {
     use super::{partial_max, partial_min};

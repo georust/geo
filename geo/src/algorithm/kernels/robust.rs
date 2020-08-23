@@ -1,6 +1,5 @@
-use super::Kernel;
+use super::{Kernel, Orientation};
 use crate::Coordinate;
-use crate::algorithm::winding_order::WindingOrder;
 use std::marker::PhantomData;
 
 /// Robust kernel that uses [fast robust
@@ -19,7 +18,7 @@ impl<T: Float> Kernel for RobustKernel<T> {
         p: Coordinate<Self::Scalar>,
         q: Coordinate<Self::Scalar>,
         r: Coordinate<Self::Scalar>,
-    ) -> Option<WindingOrder> {
+    ) -> Orientation {
         use robust::{orient2d, Coord};
 
         let orientation = orient2d(
@@ -38,11 +37,11 @@ impl<T: Float> Kernel for RobustKernel<T> {
         );
 
         if orientation < 0. {
-            Some(WindingOrder::Clockwise)
+            Orientation::Clockwise
         } else if orientation > 0. {
-            Some(WindingOrder::CounterClockwise)
+            Orientation::CounterClockwise
         } else {
-            None
+            Orientation::Colinear
         }
     }
 }

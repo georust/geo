@@ -159,7 +159,7 @@ impl<T: CoordinateType> LineString<T> {
     /// Close the `LineString`. Specifically, if the `LineString` has is at least one coordinate,
     /// and the value of the first coordinate does not equal the value of the last coordinate, then
     /// a new coordinate is added to the end with the value of the first coordinate.
-    pub(crate) fn close(&mut self) {
+    pub fn close(&mut self) {
         if !self.is_closed() && !self.0.is_empty() {
             self.0.push(self.0[0]);
         }
