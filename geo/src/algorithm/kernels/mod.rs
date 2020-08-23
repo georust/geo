@@ -1,9 +1,13 @@
 use crate::{CoordinateType, Coordinate};
 use super::winding_order::WindingOrder;
 
+/// Kernel trait to provide predicates to operate on
+/// different scalar types.
 pub trait Kernel {
     type Scalar: CoordinateType;
 
+    /// Gives the orientation of 3 2-dimensional points:
+    /// ccw, cw or colinear (None)
     fn orient2d(
         p: Coordinate<Self::Scalar>,
         q: Coordinate<Self::Scalar>,
@@ -11,29 +15,30 @@ pub trait Kernel {
     ) -> Option<WindingOrder>;
 }
 
-/// Marker trait
+/// Marker trait to assign Kernel for scalars
 pub trait HasKernel: CoordinateType {
     type Ker: Kernel<Scalar = Self>;
 }
 
+#[macro_export]
+macro_rules! has_kernel {
+	  ($t:ident, $k:ident) => {
+        impl $crate::algorithm::kernels::HasKernel for $t {
+            type Ker = $k<$t>;
+        }
+	  };
+}
+
 pub mod robust;
 pub use self::robust::RobustKernel;
+has_kernel!(f64, RobustKernel);
+has_kernel!(f32, RobustKernel);
+
 
 pub mod simple;
 pub use self::simple::SimpleKernel;
+has_kernel!(i64, SimpleKernel);
+has_kernel!(i32, SimpleKernel);
 
-impl HasKernel for f64 {
-    type Ker = RobustKernel<f64>;
-}
-
-impl HasKernel for f32 {
-    type Ker = RobustKernel<f32>;
-}
-
-impl HasKernel for i64 {
-    type Ker = SimpleKernel<i64>;
-}
-
-impl HasKernel for i32 {
-    type Ker = SimpleKernel<i32>;
-}
+#[cfg(test)]
+mod test;

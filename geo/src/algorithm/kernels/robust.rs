@@ -3,6 +3,11 @@ use crate::Coordinate;
 use crate::algorithm::winding_order::WindingOrder;
 use std::marker::PhantomData;
 
+/// Robust kernel that uses [fast robust
+/// predicates](//www.cs.cmu.edu/~quake/robust.html) to
+/// provide robust floating point predicates. Should only be
+/// used with types that can _always_ be casted to `f64`
+/// _without loss in precision_.
 #[derive(Default)]
 pub struct RobustKernel<T>(PhantomData<T>);
 

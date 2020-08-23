@@ -34,6 +34,8 @@ use-serde = ["serde", "geo-types/serde"]
 [dev-dependencies]
 approx = "0.3.0"
 criterion = { version = "0.3" }
+png = "0.16.7"
+float_extras = "0.1.6"
 
 [[bench]]
 name = "area"

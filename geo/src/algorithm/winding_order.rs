@@ -42,7 +42,7 @@ where
 }
 
 /// Iterates through a list of `Point`s
-pub struct Points<'a, T>(EitherIter<Point<T>, PointsIter<'a, T>, Rev<PointsIter<'a, T>>>)
+pub struct Points<'a, T>(pub(crate) EitherIter<Point<T>, PointsIter<'a, T>, Rev<PointsIter<'a, T>>>)
 where
     T: CoordinateType + 'a;
 

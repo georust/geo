@@ -3,6 +3,9 @@ use crate::{Coordinate, CoordinateType};
 use crate::algorithm::winding_order::WindingOrder;
 use std::marker::PhantomData;
 
+/// Simple kernel provides the direct implementation of the
+/// predicates. These are meant to be used with exact
+/// arithmetic signed tpyes (eg. i32, i64).
 #[derive(Default)]
 pub struct SimpleKernel<T>(PhantomData<T>);
 

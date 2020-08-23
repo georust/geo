@@ -1,10 +1,59 @@
-use super::winding_order::*;
+use super::winding_order::{WindingOrder, Points};
 use super::kernels::*;
 use crate::{CoordinateType, LineString};
+use crate::utils::EitherIter;
 
 pub trait RobustWinding {
+    type Scalar: CoordinateType;
+
     /// Return the winding order of this object
-    fn robust_winding_order(&self) -> Option<WindingOrder>;
+    fn winding_order(&self) -> Option<WindingOrder>;
+
+    /// True iff this clockwise
+    fn is_cw(&self) -> bool {
+        self.winding_order() == Some(WindingOrder::Clockwise)
+    }
+
+    /// True iff this is wound counterclockwise
+    fn is_ccw(&self) -> bool {
+        self.winding_order() == Some(WindingOrder::CounterClockwise)
+    }
+
+    /// Iterate over the points in a clockwise order
+    ///
+    /// The object isn't changed, and the points are returned either in order, or in reverse
+    /// order, so that the resultant order makes it appear clockwise
+    fn points_cw(&self) -> Points<Self::Scalar>;
+
+    /// Iterate over the points in a counter-clockwise order
+    ///
+    /// The object isn't changed, and the points are returned either in order, or in reverse
+    /// order, so that the resultant order makes it appear counter-clockwise
+    fn points_ccw(&self) -> Points<Self::Scalar>;
+
+    /// Change this objects's points so they are in clockwise winding order
+    fn make_cw_winding(&mut self);
+
+    /// Change this line's points so they are in counterclockwise winding order
+    fn make_ccw_winding(&mut self);
+
+    /// Return a clone of this object, but in the specified winding order
+    fn clone_to_winding_order(&self, winding_order: WindingOrder) -> Self
+    where
+        Self: Sized + Clone,
+    {
+        let mut new: Self = self.clone();
+        new.make_winding_order(winding_order);
+        new
+    }
+
+    /// Change the winding order so that it is in this winding order
+    fn make_winding_order(&mut self, winding_order: WindingOrder) {
+        match winding_order {
+            WindingOrder::Clockwise => self.make_cw_winding(),
+            WindingOrder::CounterClockwise => self.make_ccw_winding(),
+        }
+    }
 }
 
 /// Compute index of the lexicographically least point.
@@ -30,7 +79,9 @@ impl<T, K> RobustWinding for LineString<T>
 where T: CoordinateType + HasKernel<Ker = K>,
       K: Kernel<Scalar = T>
 {
-    fn robust_winding_order(&self) -> Option<WindingOrder> {
+    type Scalar = T;
+
+    fn winding_order(&self) -> Option<WindingOrder> {
         // If linestring has at most 2 points, it is either
         // not closed, or is the same point. Either way, the
         // WindingOrder is unspecified.
@@ -66,15 +117,9 @@ where T: CoordinateType + HasKernel<Ker = K>,
         let mut prev = i;
         decrement(&mut prev);
         while self.0[prev] == self.0[i] {
-            if prev == i {
-                // We've looped too much. There aren't enough
-                // unique coords to compute orientation.
-                //
-                // Note: we actually don't need this check as
-                // the previous loop succeeded, and so we have
-                // at least two distinct elements in the list
-                return None;
-            }
+            // Note: we don't need to check if prev == i as
+            // the previous loop succeeded, and so we have
+            // at least two distinct elements in the list
             decrement(&mut prev);
         }
 
@@ -85,13 +130,48 @@ where T: CoordinateType + HasKernel<Ker = K>,
         )
 
     }
+
+    /// Iterate over the points in a clockwise order
+    ///
+    /// The Linestring isn't changed, and the points are returned either in order, or in reverse
+    /// order, so that the resultant order makes it appear clockwise
+    fn points_cw(&self) -> Points<Self::Scalar> {
+        match self.winding_order() {
+            Some(WindingOrder::CounterClockwise) => Points(EitherIter::B(self.points_iter().rev())),
+            _ => Points(EitherIter::A(self.points_iter())),
+        }
+    }
+
+    /// Iterate over the points in a counter-clockwise order
+    ///
+    /// The Linestring isn't changed, and the points are returned either in order, or in reverse
+    /// order, so that the resultant order makes it appear counter-clockwise
+    fn points_ccw(&self) -> Points<Self::Scalar> {
+        match self.winding_order() {
+            Some(WindingOrder::Clockwise) => Points(EitherIter::B(self.points_iter().rev())),
+            _ => Points(EitherIter::A(self.points_iter())),
+        }
+    }
+
+    /// Change this line's points so they are in clockwise winding order
+    fn make_cw_winding(&mut self) {
+        if let Some(WindingOrder::CounterClockwise) = self.winding_order() {
+            self.0.reverse();
+        }
+    }
+
+    /// Change this line's points so they are in counterclockwise winding order
+    fn make_ccw_winding(&mut self) {
+        if let Some(WindingOrder::Clockwise) = self.winding_order() {
+            self.0.reverse();
+        }
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::Point;
-    use crate::algorithm::kernels::*;
 
     #[test]
     fn robust_winding_float() {
@@ -100,56 +180,49 @@ mod test {
         let b = Point::new(2., 0.);
         let c = Point::new(1., 2.);
 
-        // That triangle, but in clockwise ordering
-        let cw_line = LineString::from(vec![a.0, c.0, b.0, a.0]);
-        // That triangle, but in counterclockwise ordering
-        let ccw_line = LineString::from(vec![a.0, b.0, c.0, a.0]);
-
         // Verify open linestrings return None
-        let open_line = LineString::from(vec![a.0, b.0, c.0]);
+        let mut ls = LineString::from(vec![a.0, b.0, c.0]);
         assert!(
-            open_line.robust_winding_order()
+            ls.winding_order()
                 .is_none()
         );
 
+        ls.0.push(ls.0[0]);
         assert_eq!(
-            cw_line.robust_winding_order(),
-            Some(WindingOrder::Clockwise)
-        );
-        assert_eq!(
-            ccw_line.robust_winding_order(),
+            ls.winding_order(),
             Some(WindingOrder::CounterClockwise)
+        );
+
+        ls.make_cw_winding();
+        assert_eq!(
+            ls.winding_order(),
+            Some(WindingOrder::Clockwise)
         );
 
     }
 
     #[test]
-    fn robust_winding_integers() {
+    fn robust_winding_integer() {
         // 3 points forming a triangle
         let a = Point::new(0i64, 0);
         let b = Point::new(2, 0);
         let c = Point::new(1, 2);
 
-        // That triangle, but in clockwise ordering
-        let cw_line = LineString::from(vec![a.0, c.0, b.0, a.0]);
-        // That triangle, but in counterclockwise ordering
-        let ccw_line = LineString::from(vec![a.0, b.0, c.0, a.0]);
-
         // Verify open linestrings return None
-        let open_line = LineString::from(vec![a.0, b.0, c.0]);
-        assert!(
-            open_line.robust_winding_order()
-                .is_none()
-        );
+        let mut ls = LineString::from(vec![a.0, b.0, c.0]);
+        assert!(ls.winding_order().is_none());
+
+        ls.0.push(ls.0[0]);
+        assert!(ls.is_ccw());
+
+        let ccw_ls: Vec<_> = ls.points_ccw().collect();
+
+        ls.make_cw_winding();
+        assert!(ls.is_cw());
 
         assert_eq!(
-            cw_line.robust_winding_order(),
-            Some(WindingOrder::Clockwise)
+            &ls.points_ccw().collect::<Vec<_>>(),
+            &ccw_ls,
         );
-        assert_eq!(
-            ccw_line.robust_winding_order(),
-            Some(WindingOrder::CounterClockwise)
-        );
-
     }
 }
