@@ -181,7 +181,8 @@ impl<T: CoordinateType> LineString<T> {
     }
 
     /// Checks if the linestring is closed; i.e. the first
-    /// and last points have the same coords.
+    /// and last points have the same coords. Note that a
+    /// single point is considered closed.
     ///
     /// # Examples
     ///
@@ -193,7 +194,7 @@ impl<T: CoordinateType> LineString<T> {
     /// assert!(line_string.is_closed());
     /// ```
     pub fn is_closed(&self) -> bool {
-        self.0.len() > 1 && self.0.first() == self.0.last()
+        !self.0.is_empty() && self.0.first() == self.0.last()
     }
 }
 

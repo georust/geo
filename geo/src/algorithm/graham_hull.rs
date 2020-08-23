@@ -20,7 +20,7 @@ where
         // Nothing to build with fewer than four points. We
         // remove repeated points if any, and ensure ccw
         // invariant.
-        use super::robust_winding_order::RobustWinding;
+        use super::winding_order::Winding;
         let mut ls: LineString<T> = points
             .iter()
             .enumerate()

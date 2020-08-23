@@ -64,6 +64,3 @@ pub mod simple;
 pub use self::simple::SimpleKernel;
 has_kernel!(i64, SimpleKernel);
 has_kernel!(i32, SimpleKernel);
-
-#[cfg(test)]
-mod test;
