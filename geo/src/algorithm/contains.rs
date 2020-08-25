@@ -440,7 +440,6 @@ mod test {
     use crate::line_string;
     use crate::{Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
 
-
     #[test]
     // see https://github.com/georust/geo/issues/452
     fn linestring_contains_point() {

@@ -1,23 +1,15 @@
-use std::{
-    ops::AddAssign,
-};
 use crate::{
-    Point,
-    Line,
-    LineString,
-    CoordinateType,
-    algorithm::{
-        euclidean_distance::EuclideanDistance, 
-        euclidean_length::EuclideanLength
-    },
+    algorithm::{euclidean_distance::EuclideanDistance, euclidean_length::EuclideanLength},
+    CoordinateType, Line, LineString, Point,
 };
 use num_traits::{
+    identities::{One, Zero},
     Float,
-    identities::{Zero, One},
 };
+use std::ops::AddAssign;
 
 /// Returns a fraction of the line's total length
-/// representing the location 
+/// representing the location
 /// of the closest point on the line to the given point.
 ///
 /// # Examples
@@ -38,17 +30,16 @@ use num_traits::{
 /// assert_eq!(linestring.line_locate_point(&point!(x: 0.0, y: 0.5)), 0.75);
 /// assert_eq!(linestring.line_locate_point(&point!(x: 0.0, y: 1.0)), 1.0);
 /// ```
-pub trait LineLocatePoint<T, Rhs>
-{
+pub trait LineLocatePoint<T, Rhs> {
     type Output;
     type Rhs;
 
     fn line_locate_point(&self, p: &Rhs) -> Self::Output;
 }
 
-impl<T> LineLocatePoint<T, Point<T>> for Line<T> 
-where 
-    T: CoordinateType + Float + Zero + One
+impl<T> LineLocatePoint<T, Point<T>> for Line<T>
+where
+    T: CoordinateType + Float + Zero + One,
 {
     type Output = T;
     type Rhs = Point<T>;
@@ -57,7 +48,8 @@ where
         let sp = [p.x() - self.start.x, p.y() - self.start.y];
         let v = [self.end.x - self.start.x, self.end.y - self.start.y];
         let v_sq = v[0] * v[0] + v[1] * v[1];
-        if v_sq == T::zero() { // The line has zero length, return zero
+        if v_sq == T::zero() {
+            // The line has zero length, return zero
             return T::zero();
         } else {
             let v_dot_sp = v[0] * sp[0] + v[1] * sp[1];
@@ -74,7 +66,7 @@ where
 impl<T> LineLocatePoint<T, Point<T>> for LineString<T>
 where
     T: CoordinateType + Float + Zero + One + PartialOrd + AddAssign,
-    Line<T>: EuclideanDistance<T, Point<T>> + EuclideanLength<T>
+    Line<T>: EuclideanDistance<T, Point<T>> + EuclideanLength<T>,
 {
     type Output = T;
     type Rhs = Point<T>;
@@ -85,17 +77,16 @@ where
         for line in self.lines() {
             let length = line.euclidean_length();
             let distance_to_point = line.euclidean_distance(p);
-            queue.push(
-                (
-                    total_length.clone(), 
-                    length.clone(), 
-                    distance_to_point.clone(), 
-                    line.clone()
-                )
-            );
+            queue.push((
+                total_length.clone(),
+                length.clone(),
+                distance_to_point.clone(),
+                line.clone(),
+            ));
             total_length += length;
         }
-        let l = queue.iter()
+        let l = queue
+            .iter()
             .min_by(|x, y| (x.2).partial_cmp(&y.2).unwrap())
             .unwrap();
 
@@ -106,16 +97,13 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{
-        Coordinate, 
-        point
-    };
+    use crate::{point, Coordinate};
 
     #[test]
     fn test_line_locate_point_line() {
         let line = Line::new(
-            Coordinate {x: -1.0, y: 0.0 },
-            Coordinate {x: 1.0, y: 0.0 }
+            Coordinate { x: -1.0, y: 0.0 },
+            Coordinate { x: 1.0, y: 0.0 },
         );
         let point = Point::new(0.0, 1.0);
         assert_eq!(line.line_locate_point(&point), 0.5);
@@ -133,15 +121,21 @@ mod test {
         assert_eq!(line.line_locate_point(&point), 0.0);
 
         let line = Line::new(
-            Coordinate {x: 0.0, y: 0.0},
-            Coordinate {x: Float::infinity(), y:0.0}
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate {
+                x: Float::infinity(),
+                y: 0.0,
+            },
         );
         let point = Point::new(1000.0, 1000.0);
         assert_eq!(line.line_locate_point(&point), 0.0);
 
         let line = Line::new(
-            Coordinate {x: 0.0, y: 0.0},
-            Coordinate {x: Float::nan(), y:0.0}
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate {
+                x: Float::nan(),
+                y: 0.0,
+            },
         );
         let point = Point::new(1000.0, 1000.0);
         assert!(line.line_locate_point(&point).is_nan());
