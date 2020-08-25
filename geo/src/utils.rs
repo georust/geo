@@ -127,8 +127,10 @@ where
     }
 }
 
-/// Compute index of the lexicographically least point.
-/// Should only be called on a non-empty slice.
+/// Compute index of the lexicographically least point. In
+/// other words, point with minimum `x` coord, and breaking
+/// ties with minimum `y` coord. Should only be called on a
+/// non-empty slice with no `nan` coordinates.
 pub fn lexicographically_least_index<T: Copy + PartialOrd>(pts: &[T]) -> usize {
     assert!(pts.len() > 0);
 
