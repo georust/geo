@@ -9,7 +9,7 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// as an envelope, a precision model, and spatial reference system
 /// information), a `Coordinate` only contains ordinate values and accessor
 /// methods.
-#[derive(Eq, PartialEq, PartialOrd, Clone, Copy, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coordinate<T>
 where

@@ -1,4 +1,4 @@
-use crate::{Coordinate, CoordinateType, LineString};
+use crate::{Coordinate, LineString};
 use super::kernels::*;
 
 // Utility function: swap idx to head(0th position), remove
@@ -87,15 +87,10 @@ where
     output
 }
 
-pub trait ConvexHull {
-    type Scalar: CoordinateType;
-    fn convex_hull(&self) -> LineString<Self::Scalar>;
-}
-
-
 #[cfg(test)]
 mod test {
     use super::*;
+    use geo_types::CoordinateType;
 
     fn is_ccw_convex<T: CoordinateType + HasKernel>(mut ls: &[Coordinate<T>]) -> bool {
         if ls.len() > 1 && ls[0] == ls[ls.len() - 1] {

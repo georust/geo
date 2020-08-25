@@ -1,6 +1,7 @@
 //! Internal utility functions, types, and data structures.
 
 use crate::contains::Contains;
+use geo_types::{CoordinateType, Coordinate};
 
 /// Partition a mutable slice in-place so that it contains all elements for
 /// which `predicate(e)` is `true`, followed by all elements for which
@@ -131,21 +132,14 @@ where
 /// other words, point with minimum `x` coord, and breaking
 /// ties with minimum `y` coord. Should only be called on a
 /// non-empty slice with no `nan` coordinates.
-pub fn lexicographically_least_index<T: Copy + PartialOrd>(pts: &[T]) -> usize {
-    assert!(pts.len() > 0);
+pub fn lexicographically_least_index<T: CoordinateType>(pts: &[Coordinate<T>]) -> usize {
 
-    let mut min: Option<(usize, T)> = None;
-    for (i, pt) in pts.iter().enumerate() {
-        if let Some((_, min_pt)) = min {
-            if pt < &min_pt {
-                min = Some( (i, *pt) )
-            }
-        } else {
-            min = Some( (i, *pt) )
-        }
-    }
+    pts.iter().enumerate().min_by(
+        |(_, p), (_, q)| p.x.partial_cmp(&q.x).unwrap().then(
+            p.y.partial_cmp(&q.y).unwrap()
+        )
+    ).unwrap().0
 
-    min.unwrap().0
 }
 
 #[cfg(test)]
