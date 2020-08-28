@@ -4,7 +4,43 @@ use crate::{
 };
 use num_traits::Float;
 
-use crate::algorithm::winding_order::twice_signed_ring_area;
+pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
+where
+    T: CoordinateType,
+{
+    // LineString with less than 3 points is empty, or a
+    // single point, or is not closed.
+    if linestring.0.len() < 3 {
+        return T::zero();
+    }
+
+    // Above test ensures the vector has at least 2 elements.
+    // We check if linestring is closed, and return 0 otherwise.
+    if linestring.0.first().unwrap() != linestring.0.last().unwrap() {
+        return T::zero();
+    }
+
+    // Use a reasonable shift for the line-string coords
+    // to avoid numerical-errors when summing the
+    // determinants.
+    //
+    // Note: we can't use the `Centroid` trait as it
+    // requries `T: Float` and in fact computes area in the
+    // implementation. Another option is to use the average
+    // of the coordinates, but it is not fool-proof to
+    // divide by the length of the linestring (eg. a long
+    // line-string with T = u8)
+    let shift = linestring.0[0];
+
+    let mut tmp = T::zero();
+    for line in linestring.lines() {
+        use crate::algorithm::map_coords::MapCoords;
+        let line = line.map_coords(|&(x, y)| (x - shift.x, y - shift.y));
+        tmp = tmp + line.determinant();
+    }
+
+    tmp
+}
 
 /// Signed and unsigned planar area of a geometry.
 ///

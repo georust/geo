@@ -159,11 +159,9 @@ impl<T: CoordinateType> LineString<T> {
     /// Close the `LineString`. Specifically, if the `LineString` has is at least one coordinate,
     /// and the value of the first coordinate does not equal the value of the last coordinate, then
     /// a new coordinate is added to the end with the value of the first coordinate.
-    pub(crate) fn close(&mut self) {
-        if let (Some(first), Some(last)) = (self.0.first().copied(), self.0.last().copied()) {
-            if first != last {
-                self.0.push(first);
-            }
+    pub fn close(&mut self) {
+        if !self.is_closed() && !self.0.is_empty() {
+            self.0.push(self.0[0]);
         }
     }
 
@@ -180,6 +178,23 @@ impl<T: CoordinateType> LineString<T> {
     /// ```
     pub fn num_coords(&self) -> usize {
         self.0.len()
+    }
+
+    /// Checks if the linestring is closed; i.e. the first
+    /// and last points have the same coords. Note that a
+    /// single point is considered closed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::LineString;
+    ///
+    /// let mut coords = vec![(0., 0.), (5., 0.), (0., 0.)];
+    /// let line_string: LineString<f32> = coords.into_iter().collect();
+    /// assert!(line_string.is_closed());
+    /// ```
+    pub fn is_closed(&self) -> bool {
+        !self.0.is_empty() && self.0.first() == self.0.last()
     }
 }
 
