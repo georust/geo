@@ -1,6 +1,7 @@
-use crate::algorithm::convexhull::ConvexHull;
+use crate::algorithm::convex_hull::ConvexHull;
 use crate::{ExtremePoint, Extremes};
 use crate::{MultiPoint, MultiPolygon, Point, Polygon};
+use super::kernels::HasKernel;
 use num_traits::{Float, Signed};
 
 // Useful direction vectors, aligned with x and y axes:
@@ -126,7 +127,7 @@ where
 
 impl<T> ExtremeIndices<T> for MultiPolygon<T>
 where
-    T: Float + Signed,
+    T: Float + Signed + HasKernel,
 {
     fn extreme_indices(&self) -> Result<Extremes, ()> {
         find_extreme_indices(polymax_naive_indices, &self.convex_hull())
@@ -135,14 +136,14 @@ where
 
 impl<T> ExtremeIndices<T> for MultiPoint<T>
 where
-    T: Float + Signed,
+    T: Float + Signed + HasKernel,
 {
     fn extreme_indices(&self) -> Result<Extremes, ()> {
         find_extreme_indices(polymax_naive_indices, &self.convex_hull())
     }
 }
 
-pub trait ExtremePoints<T: Float> {
+pub trait ExtremePoints<T: Float + HasKernel> {
     /// Find the extreme `x` and `y` `Point`s of a Geometry
     ///
     /// This trait is available to any struct implementing both `ConvexHull` amd `ExtremeIndices`
@@ -171,8 +172,8 @@ pub trait ExtremePoints<T: Float> {
 
 impl<T, G> ExtremePoints<T> for G
 where
-    T: Float + Signed,
-    G: ConvexHull<T> + ExtremeIndices<T>,
+    T: Float + Signed + HasKernel,
+    G: ConvexHull<Scalar = T> + ExtremeIndices<T>,
 {
     // Any Geometry implementing `ConvexHull` and `ExtremeIndices` gets this automatically
     fn extreme_points(&self) -> ExtremePoint<T> {

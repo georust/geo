@@ -1,38 +1,48 @@
 use crate::{Coordinate, LineString};
-use super::kernels::*;
-
-// Utility function: swap idx to head(0th position), remove
-// head (modifies the slice), and return head as a reference
-fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
-    let tmp = std::mem::replace(slice, &mut []);
-    tmp.swap(0, idx);
-    let (h, t) = tmp.split_first_mut().unwrap();
-    *slice = t;
-    h
-}
+use crate::algorithm::kernels::*;
+use super::swap_remove_to_first;
 
 /// Graham Scan: https://en.wikipedia.org/wiki/Graham_scan
-pub fn graham_hull<T>(mut points: &mut [Coordinate<T>], include_colinear: bool) -> LineString<T>
+/// This algorithm also provides an option to obtain all
+/// points on the convex hull as opposed to only the
+/// strictly convex points.
+pub fn graham_hull<T>(
+    mut points: &mut [Coordinate<T>],
+    include_on_hull: bool,
+) -> LineString<T>
 where
     T: HasKernel,
 {
     if points.len() < 4 {
-        // Nothing to build with fewer than four points. We
-        // remove repeated points if any, and ensure ccw
-        // invariant.
-        use super::winding_order::Winding;
-        let mut ls: LineString<T> = points
-            .iter()
-            .enumerate()
-            .filter_map(|(i, pt)| {
-                if i == 0 || pt != &points[i - 1] {
-                    Some(*pt)
-                } else {
-                    None
-                }
-            })
-            .collect();
+        // Nothing to build with fewer than four points.
+
+        // Remove repeated points unless colinear points
+        // are to be included.
+        let mut ls: LineString<T> = if include_on_hull {
+            points
+                .iter()
+                .copied()
+                .collect()
+        } else {
+            points
+                .iter()
+                .enumerate()
+                .filter_map(|(i, pt)| {
+                    // Do not care if first and last are
+                    // same, as we anyway close the linestring
+                    if i == 0 || pt != &points[i - 1] {
+                        Some(*pt)
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        };
+
         ls.close();
+
+        // Maintain the CCW invariance
+        use super::winding_order::Winding;
         ls.make_ccw_winding();
         return ls;
     }
@@ -40,9 +50,9 @@ where
     // Allocate output vector
     let mut output = Vec::with_capacity(points.len());
 
-    // Find lexicographically least point
-    use crate::utils::lexicographically_least_index;
-    let min_idx = lexicographically_least_index(points);
+    // Find lexicographically least point and add to hull
+    use crate::utils::least_or_greatest_index;
+    let min_idx = least_or_greatest_index(points, false);
     let head = swap_remove_to_first(&mut points, min_idx);
     output.push(*head);
 
@@ -70,7 +80,7 @@ where
                 Orientation::CounterClockwise => { break; }
                 Orientation::Clockwise => { output.pop(); }
                 Orientation::Colinear => {
-                    if include_colinear {
+                    if include_on_hull {
                         break;
                     } else {
                         output.pop();
@@ -78,7 +88,13 @@ where
                 }
             }
         }
-        output.push(*pt);
+        // Corner case: if the lex. least point added before
+        // this loop is repeated, then we should not end up
+        // adding it here (because output.len() == 1 in the
+        // first iteration)
+        if include_on_hull || pt != output.last().unwrap() {
+            output.push(*pt);
+        }
     }
 
     // Close and output the line string
@@ -90,21 +106,8 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use super::super::test::is_ccw_convex;
     use geo_types::CoordinateType;
-
-    fn is_ccw_convex<T: CoordinateType + HasKernel>(mut ls: &[Coordinate<T>]) -> bool {
-        if ls.len() > 1 && ls[0] == ls[ls.len() - 1] {
-            ls = &ls[1..];
-        }
-        let n = ls.len();
-        if n < 3 { return true; }
-
-        ls.iter().enumerate().all(|(i, coord)| {
-            let np = ls[( i + 1 ) % n];
-            let nnp = ls[( i + 2 ) % n];
-            T::Ker::orient2d(*coord, np, nnp) == Orientation::CounterClockwise
-        })
-    }
 
     fn test_convexity<T: CoordinateType + HasKernel>(initial: &[(T, T)]) {
         let mut v: Vec<_> = initial.iter().map(|e| Coordinate::from((e.0, e.1))).collect();
@@ -142,14 +145,14 @@ mod test {
 
     #[test]
     fn graham_test_complex() {
-        let v = include!("test_fixtures/poly1.rs");
+        let v = include!("../test_fixtures/poly1.rs");
         test_convexity(&v);
 
     }
 
     #[test]
     fn quick_hull_test_complex_2() {
-        let coords = include!("test_fixtures/poly2.rs");
+        let coords = include!("../test_fixtures/poly2.rs");
         test_convexity(&coords);
     }
 }

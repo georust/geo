@@ -107,8 +107,8 @@ where T: CoordinateType + HasKernel<Ker = K>,
             } else { *x -= 1; }
         };
 
-        use crate::utils::lexicographically_least_index;
-        let i = lexicographically_least_index(&self.0);
+        use crate::utils::least_or_greatest_index;
+        let i = least_or_greatest_index(&self.0, false);
 
         let mut next = i;
         increment(&mut next);

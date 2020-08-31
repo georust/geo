@@ -128,17 +128,22 @@ where
     }
 }
 
-/// Compute index of the lexicographically least point. In
-/// other words, point with minimum `x` coord, and breaking
-/// ties with minimum `y` coord. Should only be called on a
-/// non-empty slice with no `nan` coordinates.
-pub fn lexicographically_least_index<T: CoordinateType>(pts: &[Coordinate<T>]) -> usize {
+/// Compute index of the lexicographically least or greatest
+/// coordinate. In other words, coord. with minimum `x`
+/// coord., and breaking ties with minimum `y` coord unless
+/// `invert` is `true` in which case the greatest coord.'s
+/// index. Should only be called on a non-empty slice with
+/// no `nan` coordinates.
+pub fn least_or_greatest_index<T: CoordinateType>(pts: &[Coordinate<T>], invert: bool) -> usize {
 
-    pts.iter().enumerate().min_by(
-        |(_, p), (_, q)| p.x.partial_cmp(&q.x).unwrap().then(
+    pts.iter().enumerate().min_by(|(_, p), (_, q)| {
+        let cmp = p.x.partial_cmp(&q.x).unwrap().then(
             p.y.partial_cmp(&q.y).unwrap()
-        )
-    ).unwrap().0
+                .reverse()
+        );
+        if invert { cmp.reverse() }
+        else { cmp }
+    }).unwrap().0
 
 }
 

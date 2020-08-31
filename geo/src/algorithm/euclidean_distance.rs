@@ -513,7 +513,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::algorithm::convexhull::ConvexHull;
+    use crate::algorithm::convex_hull::ConvexHull;
     use crate::algorithm::euclidean_distance::EuclideanDistance;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
     use geo_types::{polygon, private_utils::line_segment_distance, Coordinate};
