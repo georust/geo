@@ -111,7 +111,9 @@ mod test {
             .map(|e| Coordinate::from((e.0, e.1)))
             .collect();
         let hull = graham_hull(&mut v, false);
-        assert!(is_ccw_convex(&hull.0));
+        assert!(is_ccw_convex(&hull.0, false));
+        let hull = graham_hull(&mut v, true);
+        assert!(is_ccw_convex(&hull.0, true));
     }
 
     #[test]

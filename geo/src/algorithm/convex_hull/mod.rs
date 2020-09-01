@@ -27,12 +27,12 @@ pub trait ConvexHull {
     ///
     /// // The correct convex hull coordinates
     /// let correct_hull = line_string![
-    ///     (x: 0.0, y: 0.0),
     ///     (x: 4.0, y: 0.0),
     ///     (x: 4.0, y: 1.0),
     ///     (x: 1.0, y: 4.0),
     ///     (x: 0.0, y: 4.0),
     ///     (x: 0.0, y: 0.0),
+    ///     (x: 4.0, y: 0.0),
     /// ];
     ///
     /// let res = poly.convex_hull();
@@ -100,7 +100,7 @@ where
 }
 
 pub mod qhull;
-use qhull::quick_hull;
+pub use qhull::quick_hull;
 
 pub mod graham;
 pub use graham::graham_hull;

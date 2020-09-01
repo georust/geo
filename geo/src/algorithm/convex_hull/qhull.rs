@@ -8,15 +8,17 @@ use crate::{Coordinate, LineString};
 // `p_a` to `p_c` is a counter-clockwise rotation from the
 // segment. We use kernels to ensure this predicate is
 // exact.
-fn point_location<T>(p_a: Coordinate<T>, p_b: Coordinate<T>, p_c: Coordinate<T>) -> bool
+#[inline]
+fn is_ccw<T>(p_a: Coordinate<T>, p_b: Coordinate<T>, p_c: Coordinate<T>) -> bool
 where
     T: HasKernel,
 {
-    T::Ker::orient2d(p_a, p_b, p_c) == Orientation::CounterClockwise
+    let o = T::Ker::orient2d(p_a, p_b, p_c);
+    o == Orientation::CounterClockwise
 }
 
 // Adapted from https://web.archive.org/web/20180409175413/http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
-pub(crate) fn quick_hull<T>(mut points: &mut [Coordinate<T>]) -> LineString<T>
+pub fn quick_hull<T>(mut points: &mut [Coordinate<T>]) -> LineString<T>
 where
     T: HasKernel,
 {
@@ -26,30 +28,37 @@ where
     }
     let mut hull = vec![];
 
-    use crate::utils::least_or_greatest_index;
-    use std::cmp::Ordering;
-    let min = {
-        let idx = least_or_greatest_index(&points, Ordering::Less);
-        swap_remove_to_first(&mut points, idx)
-    };
+    use crate::utils::least_and_greatest_index;
+    let (min, max) = {
+        let (min_idx, mut max_idx) = least_and_greatest_index(&points);
+        let min = swap_remove_to_first(&mut points, min_idx);
 
-    let max = {
-        let idx = least_or_greatest_index(&points, Ordering::Greater);
-        swap_remove_to_first(&mut points, idx)
+        // Two special cases to consider:
+        // (1) max_idx = 0, and got swapped
+        if max_idx == 0 {
+            max_idx = min_idx;
+        }
+
+        // (2) max_idx = min_idx: then any point could be
+        // chosen as max. But from case (1), it could now be
+        // 0, and we should not decrement it.
+        if max_idx > 0 { max_idx -= 1; }
+        let max = swap_remove_to_first(&mut points, max_idx);
+        (min, max)
     };
 
     {
-        let (mut points, _) = partition_slice(&mut points, |p| point_location(*max, *min, *p));
+        let (mut points, _) = partition_slice(&mut points, |p| is_ccw(*max, *min, *p));
         hull_set(*max, *min, &mut points, &mut hull);
     }
     hull.push(*max);
-    let (mut points, _) = partition_slice(&mut points, |p| point_location(*min, *max, *p));
+    let (mut points, _) = partition_slice(&mut points, |p| is_ccw(*min, *max, *p));
     hull_set(*min, *max, &mut points, &mut hull);
     hull.push(*min);
     // close the polygon
-    let final_element = *hull.first().unwrap();
-    hull.push(final_element);
-    hull.into()
+    let mut hull: LineString<_> = hull.into();
+    hull.close();
+    hull
 }
 
 // recursively calculate the convex hull of a subset of points
@@ -95,12 +104,12 @@ fn hull_set<T>(
     let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
     // points over PB
     {
-        let (mut points, _) = partition_slice(set, |p| point_location(*furthest_point, p_b, *p));
+        let (mut points, _) = partition_slice(set, |p| is_ccw(*furthest_point, p_b, *p));
         hull_set(*furthest_point, p_b, &mut points, hull);
     }
     hull.push(*furthest_point);
     // points over AP
-    let (mut points, _) = partition_slice(set, |p| point_location(p_a, *furthest_point, *p));
+    let (mut points, _) = partition_slice(set, |p| is_ccw(p_a, *furthest_point, *p));
     hull_set(p_a, *furthest_point, &mut points, hull);
 }
 
@@ -121,28 +130,28 @@ mod test {
             Coordinate { x: 0.0, y: 0.0 },
         ];
         let res = quick_hull(&mut v);
-        assert!(is_ccw_convex(&res.0));
+        assert!(is_ccw_convex(&res.0, false));
     }
 
     #[test]
     fn quick_hull_test2() {
         let mut v = vec![
-            Coordinate { x: 0.0, y: 10.0 },
-            Coordinate { x: 1.0, y: 1.0 },
-            Coordinate { x: 10.0, y: 0.0 },
-            Coordinate { x: 1.0, y: -1.0 },
-            Coordinate { x: 0.0, y: -10.0 },
-            Coordinate { x: -1.0, y: -1.0 },
-            Coordinate { x: -10.0, y: 0.0 },
-            Coordinate { x: -1.0, y: 1.0 },
-            Coordinate { x: 0.0, y: 10.0 },
+            Coordinate { x: 0, y: 10 },
+            Coordinate { x: 1, y: 1 },
+            Coordinate { x: 10, y: 0 },
+            Coordinate { x: 1, y: -1 },
+            Coordinate { x: 0, y: -10 },
+            Coordinate { x: -1, y: -1 },
+            Coordinate { x: -10, y: 0 },
+            Coordinate { x: -1, y: 1 },
+            Coordinate { x: 0, y: 10 },
         ];
         let correct = vec![
-            Coordinate { x: 0.0, y: -10.0 },
-            Coordinate { x: 10.0, y: 0.0 },
-            Coordinate { x: 0.0, y: 10.0 },
-            Coordinate { x: -10.0, y: 0.0 },
-            Coordinate { x: 0.0, y: -10.0 },
+            Coordinate { x: 0, y: -10 },
+            Coordinate { x: 10, y: 0 },
+            Coordinate { x: 0, y: 10 },
+            Coordinate { x: -10, y: 0 },
+            Coordinate { x: 0, y: -10 },
         ];
         let res = quick_hull(&mut v);
         assert_eq!(res.0, correct);
@@ -190,7 +199,7 @@ mod test {
             .map(|e| Coordinate { x: e.0, y: e.1 })
             .collect();
         let res = quick_hull(&mut v);
-        assert!(is_ccw_convex(&res.0));
+        assert!(is_ccw_convex(&res.0, false));
     }
 
     #[test]
@@ -217,7 +226,7 @@ mod test {
             .map(|e| Coordinate { x: e.0, y: e.1 })
             .collect();
         let res = quick_hull(&mut v);
-        assert!(is_ccw_convex(&res.0));
+        assert!(is_ccw_convex(&res.0, false));
     }
 
     #[test]
@@ -241,6 +250,6 @@ mod test {
             .map(|e| Coordinate { x: e.0, y: e.1 })
             .collect();
         let res = quick_hull(&mut v);
-        assert!(is_ccw_convex(&res.0));
+        assert!(is_ccw_convex(&res.0, false));
     }
 }

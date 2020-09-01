@@ -4,7 +4,22 @@ extern crate geo;
 
 use criterion::Criterion;
 use geo::prelude::*;
-use geo::LineString;
+use geo::{LineString, CoordinateType, Coordinate};
+
+use rand::Rng;
+use rand::distributions::uniform::SampleUniform;
+use num_traits::Signed;
+pub fn uniform_points_in_range<S: CoordinateType + SampleUniform + Signed, R: Rng>(
+    range: S,
+    size: usize,
+    rng: &mut R,
+) -> Vec<Coordinate<S>> {
+
+    (0..size)
+        .map(|_| (rng.gen_range(-range, range), rng.gen_range(-range, range)).into())
+        .collect()
+
+}
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("convex hull f32", |bencher| {
@@ -22,6 +37,14 @@ fn criterion_benchmark(c: &mut Criterion) {
 
         bencher.iter(|| {
             line_string.convex_hull();
+        });
+    });
+
+    c.bench_function("convex hull with collinear random i64", |bencher| {
+        let mut points = uniform_points_in_range(10_000_i64, 1_000_000, &mut rand::thread_rng());
+        use geo::algorithm::convex_hull::graham_hull;
+        bencher.iter(|| {
+            graham_hull(&mut points, true);
         });
     });
 }
