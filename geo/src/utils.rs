@@ -140,23 +140,15 @@ pub fn lex_cmp<T: CoordinateType>(p: &Coordinate<T>, q: &Coordinate<T>) -> Order
         .then(p.y.partial_cmp(&q.y).unwrap())
 }
 
-/// Compute index of the least or greatest coordinate based
-/// on `order` parameter. Comparison is done using [`lex_cmp`].
+/// Compute index of the least point in slice. Comparison is
+/// done using [`lex_cmp`].
 ///
 /// Should only be called on a non-empty slice with no `nan`
-/// coordinates, and `order` should not be `Equal`
-pub fn least_or_greatest_index<T: CoordinateType>(pts: &[Coordinate<T>], order: Ordering) -> usize {
-    assert_ne!(order, Ordering::Equal);
+/// coordinates.
+pub fn least_index<T: CoordinateType>(pts: &[Coordinate<T>]) -> usize {
     pts.iter()
         .enumerate()
-        .min_by(|(_, p), (_, q)| {
-            let cmp = lex_cmp(p, q);
-            if order == Ordering::Greater {
-                cmp.reverse()
-            } else {
-                cmp
-            }
-        })
+        .min_by(|(_, p), (_, q)| lex_cmp(p, q))
         .unwrap()
         .0
 }
@@ -168,7 +160,8 @@ pub fn least_or_greatest_index<T: CoordinateType>(pts: &[Coordinate<T>], order: 
 /// coordinates.
 pub fn least_and_greatest_index<T: CoordinateType>(pts: &[Coordinate<T>]) -> (usize, usize) {
     assert_ne!(pts.len(), 0);
-    let (min, max) = pts.iter()
+    let (min, max) = pts
+        .iter()
         .enumerate()
         .fold((None, None), |(min, max), (idx, p)| {
             (
@@ -181,7 +174,6 @@ pub fn least_and_greatest_index<T: CoordinateType>(pts: &[Coordinate<T>]) -> (us
                 } else {
                     Some((idx, p))
                 },
-
                 if let Some((midx, max)) = max {
                     if lex_cmp(p, max) == Ordering::Greater {
                         Some((idx, p))
@@ -191,7 +183,6 @@ pub fn least_and_greatest_index<T: CoordinateType>(pts: &[Coordinate<T>]) -> (us
                 } else {
                     Some((idx, p))
                 },
-
             )
         });
     (min.unwrap().0, max.unwrap().0)

@@ -1,4 +1,4 @@
-use super::swap_remove_to_first;
+use super::{swap_remove_to_first, trivial_hull};
 use crate::algorithm::kernels::*;
 use crate::{Coordinate, LineString};
 
@@ -12,42 +12,16 @@ where
 {
     if points.len() < 4 {
         // Nothing to build with fewer than four points.
-
-        // Remove repeated points unless colinear points
-        // are to be included.
-        let mut ls: LineString<T> = if include_on_hull {
-            points.iter().copied().collect()
-        } else {
-            points
-                .iter()
-                .enumerate()
-                .filter_map(|(i, pt)| {
-                    // Do not care if first and last are
-                    // same, as we anyway close the linestring
-                    if i == 0 || pt != &points[i - 1] {
-                        Some(*pt)
-                    } else {
-                        None
-                    }
-                })
-                .collect()
-        };
-
-        ls.close();
-
-        // Maintain the CCW invariance
-        use super::winding_order::Winding;
-        ls.make_ccw_winding();
-        return ls;
+        return trivial_hull(points, include_on_hull);
     }
 
     // Allocate output vector
     let mut output = Vec::with_capacity(points.len());
 
     // Find lexicographically least point and add to hull
-    use crate::utils::least_or_greatest_index;
+    use crate::utils::least_index;
     use std::cmp::Ordering;
-    let min_idx = least_or_greatest_index(points, Ordering::Less);
+    let min_idx = least_index(points);
     let head = swap_remove_to_first(&mut points, min_idx);
     output.push(*head);
 

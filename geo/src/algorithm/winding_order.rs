@@ -117,9 +117,8 @@ where
             }
         };
 
-        use crate::utils::least_or_greatest_index;
-        use std::cmp::Ordering;
-        let i = least_or_greatest_index(&self.0, Ordering::Less);
+        use crate::utils::least_index;
+        let i = least_index(&self.0);
 
         let mut next = i;
         increment(&mut next);

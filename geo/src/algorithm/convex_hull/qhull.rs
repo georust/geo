@@ -42,7 +42,9 @@ where
         // (2) max_idx = min_idx: then any point could be
         // chosen as max. But from case (1), it could now be
         // 0, and we should not decrement it.
-        if max_idx > 0 { max_idx -= 1; }
+        if max_idx > 0 {
+            max_idx -= 1;
+        }
         let max = swap_remove_to_first(&mut points, max_idx);
         (min, max)
     };

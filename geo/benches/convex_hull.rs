@@ -4,21 +4,19 @@ extern crate geo;
 
 use criterion::Criterion;
 use geo::prelude::*;
-use geo::{LineString, CoordinateType, Coordinate};
+use geo::{Coordinate, CoordinateType, LineString};
 
-use rand::Rng;
-use rand::distributions::uniform::SampleUniform;
 use num_traits::Signed;
+use rand::distributions::uniform::SampleUniform;
+use rand::Rng;
 pub fn uniform_points_in_range<S: CoordinateType + SampleUniform + Signed, R: Rng>(
     range: S,
     size: usize,
     rng: &mut R,
 ) -> Vec<Coordinate<S>> {
-
     (0..size)
         .map(|_| (rng.gen_range(-range, range), rng.gen_range(-range, range)).into())
         .collect()
-
 }
 
 fn criterion_benchmark(c: &mut Criterion) {

@@ -3,7 +3,10 @@ use crate::algorithm::kernels::{HasKernel, Kernel, Orientation};
 use crate::*;
 
 // Utility function to test convex hull
-pub(super) fn is_ccw_convex<T: CoordinateType + HasKernel>(mut ls: &[Coordinate<T>], allow_collinear: bool) -> bool {
+pub(super) fn is_ccw_convex<T: CoordinateType + HasKernel>(
+    mut ls: &[Coordinate<T>],
+    allow_collinear: bool,
+) -> bool {
     if ls.len() > 1 && ls[0] == ls[ls.len() - 1] {
         ls = &ls[1..];
     }
@@ -16,8 +19,7 @@ pub(super) fn is_ccw_convex<T: CoordinateType + HasKernel>(mut ls: &[Coordinate<
         let np = ls[(i + 1) % n];
         let nnp = ls[(i + 2) % n];
         let o = T::Ker::orient2d(*coord, np, nnp);
-        o == Orientation::CounterClockwise
-            || (allow_collinear && o == Orientation::Colinear)
+        o == Orientation::CounterClockwise || (allow_collinear && o == Orientation::Colinear)
     })
 }
 

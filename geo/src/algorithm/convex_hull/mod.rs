@@ -117,24 +117,10 @@ where
 
     // Remove repeated points unless colinear points
     // are to be included.
-    let mut ls: LineString<T> = if include_on_hull {
-        points.iter().copied().collect()
-    } else {
-        points
-            .iter()
-            .enumerate()
-            .filter_map(|(i, pt)| {
-                // Do not care if first and last are
-                // same, as we anyway close the linestring
-                if i == 0 || pt != &points[i - 1] {
-                    Some(*pt)
-                } else {
-                    None
-                }
-            })
-            .collect()
-    };
-
+    let mut ls: LineString<T> = points.iter().copied().collect();
+    if !include_on_hull {
+        ls.0.dedup();
+    }
     ls.close();
 
     // Maintain the CCW invariance
