@@ -1,5 +1,5 @@
-use crate::*;
 use super::kernels::*;
+use crate::*;
 
 pub trait ConvexHull {
     /// Returns the convex hull of a Polygon. The hull is always oriented counter-clockwise.
@@ -48,10 +48,7 @@ where
 {
     type Scalar = T;
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(
-            quick_hull(&mut self.exterior().0.clone()),
-            vec![],
-        )
+        Polygon::new(quick_hull(&mut self.exterior().0.clone()), vec![])
     }
 }
 
@@ -76,10 +73,7 @@ where
 {
     type Scalar = T;
     fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(
-            quick_hull(&mut self.0.clone()),
-            vec![],
-        )
+        Polygon::new(quick_hull(&mut self.0.clone()), vec![])
     }
 }
 
@@ -89,11 +83,7 @@ where
 {
     type Scalar = T;
     fn convex_hull(&self) -> Polygon<T> {
-        let mut aggregated: Vec<_> = self
-            .0
-            .iter()
-            .flat_map(|elem| elem.clone().0)
-            .collect();
+        let mut aggregated: Vec<_> = self.0.iter().flat_map(|elem| elem.clone().0).collect();
         Polygon::new(quick_hull(&mut aggregated), vec![])
     }
 }
@@ -104,11 +94,7 @@ where
 {
     type Scalar = T;
     fn convex_hull(&self) -> Polygon<T> {
-        let mut aggregated: Vec<_> = self
-            .0
-            .iter()
-            .map(|p| p.0)
-            .collect();
+        let mut aggregated: Vec<_> = self.0.iter().map(|p| p.0).collect();
         Polygon::new(quick_hull(&mut aggregated), vec![])
     }
 }
@@ -123,10 +109,7 @@ pub use graham::graham_hull;
 // trivial case: input with at most 3 points. It ensures the
 // output is ccw, and does not repeat points unless
 // required.
-fn trivial_hull<T>(
-    points: &mut [Coordinate<T>],
-    include_on_hull: bool,
-) -> LineString<T>
+fn trivial_hull<T>(points: &mut [Coordinate<T>], include_on_hull: bool) -> LineString<T>
 where
     T: HasKernel,
 {
@@ -135,10 +118,7 @@ where
     // Remove repeated points unless colinear points
     // are to be included.
     let mut ls: LineString<T> = if include_on_hull {
-        points
-            .iter()
-            .copied()
-            .collect()
+        points.iter().copied().collect()
     } else {
         points
             .iter()

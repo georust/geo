@@ -23,16 +23,16 @@ impl<T: Float> Kernel for RobustKernel<T> {
 
         let orientation = orient2d(
             Coord {
-                x: <f64 as NumCast>::from( p.x ).unwrap(),
-                y: <f64 as NumCast>::from( p.y ).unwrap(),
+                x: <f64 as NumCast>::from(p.x).unwrap(),
+                y: <f64 as NumCast>::from(p.y).unwrap(),
             },
             Coord {
-                x: <f64 as NumCast>::from( q.x ).unwrap(),
-                y: <f64 as NumCast>::from( q.y ).unwrap(),
+                x: <f64 as NumCast>::from(q.x).unwrap(),
+                y: <f64 as NumCast>::from(q.y).unwrap(),
             },
             Coord {
-                x: <f64 as NumCast>::from( r.x ).unwrap(),
-                y: <f64 as NumCast>::from( r.y ).unwrap(),
+                x: <f64 as NumCast>::from(r.x).unwrap(),
+                y: <f64 as NumCast>::from(r.y).unwrap(),
             },
         );
 

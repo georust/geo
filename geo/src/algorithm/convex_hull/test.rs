@@ -1,6 +1,6 @@
-use crate::*;
 use super::ConvexHull;
-use crate::algorithm::kernels::{Kernel, Orientation, HasKernel};
+use crate::algorithm::kernels::{HasKernel, Kernel, Orientation};
+use crate::*;
 
 // Utility function to test convex hull
 pub(super) fn is_ccw_convex<T: CoordinateType + HasKernel>(mut ls: &[Coordinate<T>]) -> bool {
@@ -8,11 +8,13 @@ pub(super) fn is_ccw_convex<T: CoordinateType + HasKernel>(mut ls: &[Coordinate<
         ls = &ls[1..];
     }
     let n = ls.len();
-    if n < 3 { return true; }
+    if n < 3 {
+        return true;
+    }
 
     ls.iter().enumerate().all(|(i, coord)| {
-        let np = ls[( i + 1 ) % n];
-        let nnp = ls[( i + 2 ) % n];
+        let np = ls[(i + 1) % n];
+        let nnp = ls[(i + 2) % n];
         T::Ker::orient2d(*coord, np, nnp) == Orientation::CounterClockwise
     })
 }

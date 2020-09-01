@@ -1,7 +1,7 @@
 //! Internal utility functions, types, and data structures.
 
 use crate::contains::Contains;
-use geo_types::{CoordinateType, Coordinate};
+use geo_types::{Coordinate, CoordinateType};
 
 /// Partition a mutable slice in-place so that it contains all elements for
 /// which `predicate(e)` is `true`, followed by all elements for which
@@ -128,23 +128,31 @@ where
     }
 }
 
+use std::cmp::Ordering;
 /// Compute index of the lexicographically least or greatest
-/// coordinate. In other words, coord. with minimum `x`
-/// coord., and breaking ties with minimum `y` coord unless
-/// `invert` is `true` in which case the greatest coord.'s
-/// index. Should only be called on a non-empty slice with
-/// no `nan` coordinates.
-pub fn least_or_greatest_index<T: CoordinateType>(pts: &[Coordinate<T>], invert: bool) -> usize {
-
-    pts.iter().enumerate().min_by(|(_, p), (_, q)| {
-        let cmp = p.x.partial_cmp(&q.x).unwrap().then(
-            p.y.partial_cmp(&q.y).unwrap()
-                .reverse()
-        );
-        if invert { cmp.reverse() }
-        else { cmp }
-    }).unwrap().0
-
+/// coordinate based on `order` parameter. In other words,
+/// the index of the first or the last element, when sorting
+/// by `x` coord., and breaking ties with minimum `y` coord.
+///
+/// Should only be called on a non-empty slice with no `nan`
+/// coordinates, and `order` should not be `Equal`
+pub fn least_or_greatest_index<T: CoordinateType>(pts: &[Coordinate<T>], order: Ordering) -> usize {
+    assert_ne!(order, Ordering::Equal);
+    pts.iter()
+        .enumerate()
+        .min_by(|(_, p), (_, q)| {
+            let cmp =
+                p.x.partial_cmp(&q.x)
+                    .unwrap()
+                    .then(p.y.partial_cmp(&q.y).unwrap().reverse());
+            if order == Ordering::Greater {
+                cmp.reverse()
+            } else {
+                cmp
+            }
+        })
+        .unwrap()
+        .0
 }
 
 #[cfg(test)]

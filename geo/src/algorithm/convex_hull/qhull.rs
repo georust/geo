@@ -1,7 +1,7 @@
-use crate::utils::partition_slice;
-use crate::algorithm::kernels::*;
-use crate::{Coordinate, LineString};
 use super::{swap_remove_to_first, trivial_hull};
+use crate::algorithm::kernels::*;
+use crate::utils::partition_slice;
+use crate::{Coordinate, LineString};
 
 // Determines if `p_c` lies on the positive side of the
 // segment `p_a` to `p_b`. In other words, whether segment
@@ -27,13 +27,14 @@ where
     let mut hull = vec![];
 
     use crate::utils::least_or_greatest_index;
+    use std::cmp::Ordering;
     let min = {
-        let idx = least_or_greatest_index(&points, false);
+        let idx = least_or_greatest_index(&points, Ordering::Less);
         swap_remove_to_first(&mut points, idx)
     };
 
     let max = {
-        let idx = least_or_greatest_index(&points, true);
+        let idx = least_or_greatest_index(&points, Ordering::Greater);
         swap_remove_to_first(&mut points, idx)
     };
 
@@ -52,8 +53,12 @@ where
 }
 
 // recursively calculate the convex hull of a subset of points
-fn hull_set<T>(p_a: Coordinate<T>, p_b: Coordinate<T>, mut set: &mut [Coordinate<T>], hull: &mut Vec<Coordinate<T>>)
-where
+fn hull_set<T>(
+    p_a: Coordinate<T>,
+    p_b: Coordinate<T>,
+    mut set: &mut [Coordinate<T>],
+    hull: &mut Vec<Coordinate<T>>,
+) where
     T: HasKernel,
 {
     if set.is_empty() {
@@ -67,11 +72,18 @@ where
     // Construct orthogonal vector to `p_b` - `p_a` We
     // compute inner product of this with `v` - `p_a` to
     // find the farthest point from the line segment a-b.
-    let p_orth = Coordinate{y: p_b.x - p_a.x, x: p_a.y - p_b.y};
+    let p_orth = Coordinate {
+        y: p_b.x - p_a.x,
+        x: p_a.y - p_b.y,
+    };
 
-    let furthest_idx = set.iter()
+    let furthest_idx = set
+        .iter()
         .map(|pt| {
-            let p_diff = Coordinate{x: pt.x - p_a.x, y: pt.y - p_a.y};
+            let p_diff = Coordinate {
+                x: pt.x - p_a.x,
+                y: pt.y - p_a.y,
+            };
             p_orth.x * p_diff.x + p_orth.y * p_diff.y
         })
         .enumerate()
@@ -92,22 +104,21 @@ where
     hull_set(p_a, *furthest_point, &mut points, hull);
 }
 
-
 #[cfg(test)]
 mod test {
-    use super::*;
     use super::super::test::is_ccw_convex;
+    use super::*;
 
     #[test]
     fn quick_hull_test1() {
         let mut v = vec![
-            Coordinate{x: 0.0, y: 0.0},
-            Coordinate{x: 4.0, y: 0.0},
-            Coordinate{x: 4.0, y: 1.0},
-            Coordinate{x: 1.0, y: 1.0},
-            Coordinate{x: 1.0, y: 4.0},
-            Coordinate{x: 0.0, y: 4.0},
-            Coordinate{x: 0.0, y: 0.0},
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 4.0, y: 0.0 },
+            Coordinate { x: 4.0, y: 1.0 },
+            Coordinate { x: 1.0, y: 1.0 },
+            Coordinate { x: 1.0, y: 4.0 },
+            Coordinate { x: 0.0, y: 4.0 },
+            Coordinate { x: 0.0, y: 0.0 },
         ];
         let res = quick_hull(&mut v);
         assert!(is_ccw_convex(&res.0));
@@ -116,22 +127,22 @@ mod test {
     #[test]
     fn quick_hull_test2() {
         let mut v = vec![
-            Coordinate{x: 0.0, y: 10.0},
-            Coordinate{x: 1.0, y: 1.0},
-            Coordinate{x: 10.0, y: 0.0},
-            Coordinate{x: 1.0, y: -1.0},
-            Coordinate{x: 0.0, y: -10.0},
-            Coordinate{x: -1.0, y: -1.0},
-            Coordinate{x: -10.0, y: 0.0},
-            Coordinate{x: -1.0, y: 1.0},
-            Coordinate{x: 0.0, y: 10.0},
+            Coordinate { x: 0.0, y: 10.0 },
+            Coordinate { x: 1.0, y: 1.0 },
+            Coordinate { x: 10.0, y: 0.0 },
+            Coordinate { x: 1.0, y: -1.0 },
+            Coordinate { x: 0.0, y: -10.0 },
+            Coordinate { x: -1.0, y: -1.0 },
+            Coordinate { x: -10.0, y: 0.0 },
+            Coordinate { x: -1.0, y: 1.0 },
+            Coordinate { x: 0.0, y: 10.0 },
         ];
         let correct = vec![
-            Coordinate{x: 0.0, y: -10.0},
-            Coordinate{x: 10.0, y: 0.0},
-            Coordinate{x: 0.0, y: 10.0},
-            Coordinate{x: -10.0, y: 0.0},
-            Coordinate{x: 0.0, y: -10.0},
+            Coordinate { x: 0.0, y: -10.0 },
+            Coordinate { x: 10.0, y: 0.0 },
+            Coordinate { x: 0.0, y: 10.0 },
+            Coordinate { x: -10.0, y: 0.0 },
+            Coordinate { x: 0.0, y: -10.0 },
         ];
         let res = quick_hull(&mut v);
         assert_eq!(res.0, correct);
@@ -148,9 +159,15 @@ mod test {
             (0.0, 1.0),
             (1.0, 0.0),
         ];
-        let mut v: Vec<_> = initial.iter().map(|e| Coordinate{x: e.0, y: e.1}).collect();
+        let mut v: Vec<_> = initial
+            .iter()
+            .map(|e| Coordinate { x: e.0, y: e.1 })
+            .collect();
         let correct = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
-        let v_correct: Vec<_> = correct.iter().map(|e| Coordinate{x: e.0, y: e.1}).collect();
+        let v_correct: Vec<_> = correct
+            .iter()
+            .map(|e| Coordinate { x: e.0, y: e.1 })
+            .collect();
         let res = quick_hull(&mut v);
         assert_eq!(res.0, v_correct);
     }
@@ -168,7 +185,10 @@ mod test {
             (0., 2.),
             (0., 0.),
         ];
-        let mut v: Vec<_> = initial.iter().map(|e| Coordinate{x: e.0, y: e.1}).collect();
+        let mut v: Vec<_> = initial
+            .iter()
+            .map(|e| Coordinate { x: e.0, y: e.1 })
+            .collect();
         let res = quick_hull(&mut v);
         assert!(is_ccw_convex(&res.0));
     }
@@ -176,9 +196,15 @@ mod test {
     #[test]
     fn quick_hull_test_complex() {
         let coords = include!("../test_fixtures/poly1.rs");
-        let mut v: Vec<_> = coords.iter().map(|e| Coordinate{x: e.0, y: e.1}).collect();
+        let mut v: Vec<_> = coords
+            .iter()
+            .map(|e| Coordinate { x: e.0, y: e.1 })
+            .collect();
         let correct = include!("../test_fixtures/poly1_hull.rs");
-        let v_correct: Vec<_> = correct.iter().map(|e| Coordinate{x: e.0, y: e.1}).collect();
+        let v_correct: Vec<_> = correct
+            .iter()
+            .map(|e| Coordinate { x: e.0, y: e.1 })
+            .collect();
         let res = quick_hull(&mut v);
         assert_eq!(res.0, v_correct);
     }
@@ -186,7 +212,10 @@ mod test {
     #[test]
     fn quick_hull_test_complex_2() {
         let coords = include!("../test_fixtures/poly2.rs");
-        let mut v: Vec<_> = coords.iter().map(|e| Coordinate{x: e.0, y: e.1}).collect();
+        let mut v: Vec<_> = coords
+            .iter()
+            .map(|e| Coordinate { x: e.0, y: e.1 })
+            .collect();
         let res = quick_hull(&mut v);
         assert!(is_ccw_convex(&res.0));
     }
@@ -197,11 +226,20 @@ mod test {
         // There are three points with same x.
         // Output should not contain the middle point.
         let initial = vec![
-            (-1., 0.), (-1., -1.), (-1., 1.),
-            (0., 0.), (0., -1.), (0., 1.),
-            (1., 0.), (1., -1.), (1., 1.),
+            (-1., 0.),
+            (-1., -1.),
+            (-1., 1.),
+            (0., 0.),
+            (0., -1.),
+            (0., 1.),
+            (1., 0.),
+            (1., -1.),
+            (1., 1.),
         ];
-        let mut v: Vec<_> = initial.iter().map(|e| Coordinate{x: e.0, y: e.1}).collect();
+        let mut v: Vec<_> = initial
+            .iter()
+            .map(|e| Coordinate { x: e.0, y: e.1 })
+            .collect();
         let res = quick_hull(&mut v);
         assert!(is_ccw_convex(&res.0));
     }
