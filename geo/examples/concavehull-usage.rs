@@ -53,22 +53,19 @@ fn main() -> std::io::Result<()> {
     let mut points_file = File::create("points.svg")?;
     let mut concave_hull_file = File::create("concavehull.svg")?;
     let mut convex_hull_file = File::create("convexhull.svg")?;
-    let width = 200;
+    let width = 100;
     let height = 100;
     let svg_file_string = format!(
-        "<svg viewBox=\"0 0 {} {}\" xmlns=\"http://www.w3.org/2000/svg\">\n",
+        "<svg viewBox=\"50 50 {} {}\" xmlns=\"http://www.w3.org/2000/svg\">\n",
         width, height
     );
-    let v = vec![
-        Point::new(0.0, 0.0),
-        Point::new(4.0, 0.0),
-        Point::new(4.0, 4.0),
-        Point::new(3.0, 1.0),
-        Point::new(3.0, 2.0),
-    ];
-    let moved_v = move_points_in_viewbox(width as f64, height as f64, v);
+    let loaded_v = include!("../src/algorithm/test_fixtures/norway_main.rs");
+    let v: Vec<_> = loaded_v.iter().map(|loaded_point| {
+       Point::new(loaded_point[0], loaded_point[1])
+    }).collect();
+    let moved_v = move_points_in_viewbox(width as f64, height as f64, v.clone());
     let multipoint = MultiPoint::from(moved_v);
-    let concave = multipoint.concave_hull(0.1);
+    let concave = multipoint.concave_hull(2.0);
     let convex = multipoint.convex_hull();
     let concave_polygon_str = generate_polygon_str(&concave.exterior().0);
     let convex_polygon_str = generate_polygon_str(&convex.exterior().0);
