@@ -1,11 +1,13 @@
 use super::kernels::*;
-use crate::{Point, CoordinateType, LineString};
 use crate::utils::EitherIter;
+use crate::{CoordinateType, LineString, Point};
 use geo_types::PointsIter;
 use std::iter::Rev;
 
 /// Iterates through a list of `Point`s
-pub struct Points<'a, T>(pub(crate) EitherIter<Point<T>, PointsIter<'a, T>, Rev<PointsIter<'a, T>>>)
+pub struct Points<'a, T>(
+    pub(crate) EitherIter<Point<T>, PointsIter<'a, T>, Rev<PointsIter<'a, T>>>,
+)
 where
     T: CoordinateType + 'a;
 
@@ -80,10 +82,10 @@ pub trait Winding {
     }
 }
 
-
 impl<T, K> Winding for LineString<T>
-where T: CoordinateType + HasKernel<Ker = K>,
-      K: Kernel<Scalar = T>
+where
+    T: CoordinateType + HasKernel<Ker = K>,
+    K: Kernel<Scalar = T>,
 {
     type Scalar = T;
 
@@ -91,20 +93,28 @@ where T: CoordinateType + HasKernel<Ker = K>,
         // If linestring has at most 2 points, it is either
         // not closed, or is the same point. Either way, the
         // WindingOrder is unspecified.
-        if self.num_coords() < 3 { return None; }
+        if self.num_coords() < 3 {
+            return None;
+        }
 
         // Open linestrings do not have a winding order.
-        if !self.is_closed() { return None; }
+        if !self.is_closed() {
+            return None;
+        }
 
         let increment = |x: &mut usize| {
             *x += 1;
-            if *x >= self.num_coords() { *x = 0; }
+            if *x >= self.num_coords() {
+                *x = 0;
+            }
         };
 
         let decrement = |x: &mut usize| {
             if *x == 0 {
                 *x = self.num_coords() - 1;
-            } else { *x -= 1; }
+            } else {
+                *x -= 1;
+            }
         };
 
         use crate::utils::lexicographically_least_index;
@@ -130,16 +140,11 @@ where T: CoordinateType + HasKernel<Ker = K>,
             decrement(&mut prev);
         }
 
-        match K::orient2d(
-            self.0[prev],
-            self.0[i],
-            self.0[next]
-        ) {
+        match K::orient2d(self.0[prev], self.0[i], self.0[next]) {
             Orientation::CounterClockwise => Some(WindingOrder::CounterClockwise),
             Orientation::Clockwise => Some(WindingOrder::Clockwise),
-            _ => None
+            _ => None,
         }
-
     }
 
     /// Iterate over the points in a clockwise order
@@ -193,23 +198,13 @@ mod test {
 
         // Verify open linestrings return None
         let mut ls = LineString::from(vec![a.0, b.0, c.0]);
-        assert!(
-            ls.winding_order()
-                .is_none()
-        );
+        assert!(ls.winding_order().is_none());
 
         ls.0.push(ls.0[0]);
-        assert_eq!(
-            ls.winding_order(),
-            Some(WindingOrder::CounterClockwise)
-        );
+        assert_eq!(ls.winding_order(), Some(WindingOrder::CounterClockwise));
 
         ls.make_cw_winding();
-        assert_eq!(
-            ls.winding_order(),
-            Some(WindingOrder::Clockwise)
-        );
-
+        assert_eq!(ls.winding_order(), Some(WindingOrder::Clockwise));
     }
 
     #[test]
@@ -231,9 +226,6 @@ mod test {
         ls.make_cw_winding();
         assert!(ls.is_cw());
 
-        assert_eq!(
-            &ls.points_ccw().collect::<Vec<_>>(),
-            &ccw_ls,
-        );
+        assert_eq!(&ls.points_ccw().collect::<Vec<_>>(), &ccw_ls,);
     }
 }

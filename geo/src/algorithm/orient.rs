@@ -1,5 +1,5 @@
-use crate::{CoordinateType, MultiPolygon, Polygon};
 use super::kernels::*;
+use crate::{CoordinateType, MultiPolygon, Polygon};
 
 use crate::algorithm::winding_order::{Winding, WindingOrder};
 
@@ -68,7 +68,7 @@ pub trait Orient {
 
 impl<T> Orient for Polygon<T>
 where
-    T: CoordinateType + HasKernel ,
+    T: CoordinateType + HasKernel,
 {
     fn orient(&self, direction: Direction) -> Polygon<T> {
         orient(self, direction)

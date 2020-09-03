@@ -17,7 +17,6 @@ pub mod closest_point;
 pub mod contains;
 /// Calculate the convex hull of a `Geometry`.
 pub mod convexhull;
-pub mod graham_hull;
 /// Calculate the minimum Euclidean distance between two `Geometries`.
 pub mod euclidean_distance;
 /// Calculate the length of a planar line between two `Geometries`.
@@ -30,6 +29,7 @@ pub mod frechet_distance;
 pub mod geodesic_distance;
 /// Calculate the Geodesic length of a line.
 pub mod geodesic_length;
+pub mod graham_hull;
 /// Calculate a destination `Point`, given a distance and a bearing.
 pub mod haversine_destination;
 /// Calculate the Haversine distance between two `Geometries`.

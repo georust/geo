@@ -1,4 +1,4 @@
-use crate::{CoordinateType, Coordinate};
+use crate::{Coordinate, CoordinateType};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Orientation {
@@ -19,7 +19,6 @@ pub trait Kernel {
         q: Coordinate<Self::Scalar>,
         r: Coordinate<Self::Scalar>,
     ) -> Orientation {
-
         let res = (q.x - p.x) * (r.y - q.y) - (q.y - p.y) * (r.x - q.x);
         use num_traits::Zero;
         if res > Zero::zero() {
@@ -29,7 +28,6 @@ pub trait Kernel {
         } else {
             Orientation::Colinear
         }
-
     }
 
     fn square_euclidean_distance(
@@ -51,11 +49,11 @@ pub trait HasKernel: CoordinateType {
 // parameter that is `T`.
 #[macro_use]
 macro_rules! has_kernel {
-	  ($t:ident, $k:ident) => {
+    ($t:ident, $k:ident) => {
         impl $crate::algorithm::kernels::HasKernel for $t {
             type Ker = $k<$t>;
         }
-	  };
+    };
 }
 
 pub mod robust;
