@@ -7,7 +7,6 @@ use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, 
 use num_traits::Float;
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
-use std::ops::Add;
 
 pub trait ConcaveHull<T> {
     /// Returns a polygon which covers a geometry. Unlike convex hulls, which also cover
@@ -121,6 +120,9 @@ fn find_point_closest_to_line<T>(
     interior_points_tree: &RTree<Point<T>>,
     line: Line<T>,
     max_dist: T,
+    edge_length: T,
+    concavity: T,
+    line_tree: &RTree<Line<T>>
 ) -> Option<Point<T>>
 where
     T: Float + RTreeNum,
@@ -135,13 +137,44 @@ where
     let peek = candidates.peek();
     match peek {
         None => None,
-        Some(&point) => Some(candidates.fold(*point, |acc, candidate| {
-            if line.euclidean_distance(&acc) > line.euclidean_distance(candidate) {
-                *candidate
-            } else {
-                acc
+        Some(&point) => {
+            let closest_point = candidates.fold(*point, |acc, candidate| {
+                if line.euclidean_distance(&acc) > line.euclidean_distance(candidate) {
+                    *candidate
+                } else {
+                    acc
+                }
+            });
+            let mut edges_nearby_point = line_tree
+                .locate_within_distance(closest_point, search_dist)
+                .peekable();
+            let peeked_edge = edges_nearby_point.peek();
+            let closest_edge_option = match peeked_edge{
+                None => None,
+                Some(&edge) => Some(edges_nearby_point.fold(*edge, |acc, candidate| {
+                    if closest_point.euclidean_distance(&acc) > closest_point.euclidean_distance(candidate) {
+                        *candidate
+                    } else {
+                        acc
+                    }
+                }))
+            };
+            let decision_distance = partial_min(
+                closest_point.euclidean_distance(&line.start_point()),
+                closest_point.euclidean_distance(&line.end_point()),
+            );
+            if let Some(closest_edge) = closest_edge_option {
+               let far_enough = edge_length / decision_distance > concavity;
+               let are_edges_equal = closest_edge == line;
+               if far_enough && are_edges_equal {
+                   Some(closest_point)
+               } else {
+                   None
+               }
+            }else {
+               None
             }
-        })),
+        }
     }
 }
 
@@ -169,63 +202,41 @@ where
         })
         .collect();
     let mut interior_points_tree: RTree<Point<T>> = RTree::bulk_load(interior_points.clone());
+    let mut line_tree: RTree<Line<T>> = RTree::new();
 
     let mut concave_list: Vec<Point<T>> = vec![];
-    let mut added_interior_points: Vec<Point<T>> = vec![];
     let lines = hull_exterior.lines();
     let mut line_queue: VecDeque<Line<T>> = VecDeque::new();
+
     for line in lines {
-        line_queue.push_back(line);
+        line_queue.push_back(line.clone());
+        line_tree.insert(line);
     }
     while let Some(line) = line_queue.pop_front() {
         let edge_length = line.euclidean_length();
         let dist = edge_length / concavity;
-        let possible_closest_point = find_point_closest_to_line(&interior_points_tree, line, dist);
+        let possible_closest_point = find_point_closest_to_line(
+            &interior_points_tree, line, dist, edge_length, concavity, &line_tree);
 
-        if concave_list.is_empty() || !concave_list.ends_with(&[line.start_point()]) {
-            concave_list.push(line.start_point());
-        }
         if let Some(closest_point) = possible_closest_point {
-            add_closest_point_to_line_queue_if_far_enough(
-                &concavity,
-                &mut interior_points_tree,
-                &mut added_interior_points,
-                &mut line_queue,
-                &line,
-                &edge_length,
-                &closest_point,
-            )
+           interior_points_tree.remove(&closest_point);
+           line_tree.remove(&line);
+           let start_line = Line::new(line.start_point(), closest_point);
+           let end_line = Line::new(closest_point, line.end_point());
+           line_tree.insert(start_line);
+           line_tree.insert(end_line);
+           line_queue.push_front(end_line);
+           line_queue.push_front(start_line);
         } else {
-            concave_list.push(line.end_point());
+           // Make sure we don't add duplicates
+           if concave_list.is_empty() || !concave_list.ends_with(&[line.start_point()]) {
+              concave_list.push(line.start_point());
+           }
+           concave_list.push(line.end_point());
         }
     }
 
     return concave_list;
-}
-
-fn add_closest_point_to_line_queue_if_far_enough<T>(
-    concavity: &T,
-    interior_points_tree: &mut RTree<Point<T>>,
-    added_interior_points: &mut Vec<Point<T>>,
-    line_queue: &mut VecDeque<Line<T>>,
-    line: &Line<T>,
-    edge_length: &T,
-    closest_point: &Point<T>,
-) where
-    T: Float + RTreeNum,
-{
-    let decision_distance = partial_min(
-        closest_point.euclidean_distance(&line.start_point()),
-        closest_point.euclidean_distance(&line.end_point()),
-    );
-    if (*edge_length) / decision_distance > (*concavity)
-        && !added_interior_points.contains(closest_point)
-    {
-        interior_points_tree.remove(closest_point);
-        added_interior_points.push(*closest_point);
-        let new_line = Line::new(*closest_point, line.end_point());
-        line_queue.push_front(new_line);
-    }
 }
 
 #[cfg(test)]
@@ -268,10 +279,10 @@ mod test {
         ];
         let correct = vec![
             Point::new(4.0, 0.0),
-            Point::new(2.0, 1.0),
             Point::new(4.0, 4.0),
             Point::new(0.0, 4.0),
             Point::new(0.0, 0.0),
+            Point::new(2.0, 1.0),
             Point::new(4.0, 0.0),
         ];
         let concavity = 1.0;
