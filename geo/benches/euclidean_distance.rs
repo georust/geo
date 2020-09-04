@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate criterion;
 extern crate geo;
-use geo::convexhull::ConvexHull;
+use geo::convex_hull::ConvexHull;
 use geo::euclidean_distance::EuclideanDistance;
 use geo::{polygon, Polygon};
 

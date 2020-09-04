@@ -117,8 +117,8 @@ where
             }
         };
 
-        use crate::utils::lexicographically_least_index;
-        let i = lexicographically_least_index(&self.0);
+        use crate::utils::least_index;
+        let i = least_index(&self.0);
 
         let mut next = i;
         increment(&mut next);

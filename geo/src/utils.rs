@@ -128,20 +128,64 @@ where
     }
 }
 
-/// Compute index of the lexicographically least point. In
-/// other words, point with minimum `x` coord, and breaking
-/// ties with minimum `y` coord. Should only be called on a
-/// non-empty slice with no `nan` coordinates.
-pub fn lexicographically_least_index<T: CoordinateType>(pts: &[Coordinate<T>]) -> usize {
+use std::cmp::Ordering;
+
+/// Compare two coordinates lexicographically: first by the
+/// x coordinate, and break ties with the y coordinate.
+/// Expects none of coordinates to be uncomparable (eg. nan)
+#[inline]
+pub fn lex_cmp<T: CoordinateType>(p: &Coordinate<T>, q: &Coordinate<T>) -> Ordering {
+    p.x.partial_cmp(&q.x)
+        .unwrap()
+        .then(p.y.partial_cmp(&q.y).unwrap())
+}
+
+/// Compute index of the least point in slice. Comparison is
+/// done using [`lex_cmp`].
+///
+/// Should only be called on a non-empty slice with no `nan`
+/// coordinates.
+pub fn least_index<T: CoordinateType>(pts: &[Coordinate<T>]) -> usize {
     pts.iter()
         .enumerate()
-        .min_by(|(_, p), (_, q)| {
-            p.x.partial_cmp(&q.x)
-                .unwrap()
-                .then(p.y.partial_cmp(&q.y).unwrap())
-        })
+        .min_by(|(_, p), (_, q)| lex_cmp(p, q))
         .unwrap()
         .0
+}
+
+/// Compute index of the lexicographically least _and_ the
+/// greatest coordinate in one pass.
+///
+/// Should only be called on a non-empty slice with no `nan`
+/// coordinates.
+pub fn least_and_greatest_index<T: CoordinateType>(pts: &[Coordinate<T>]) -> (usize, usize) {
+    assert_ne!(pts.len(), 0);
+    let (min, max) = pts
+        .iter()
+        .enumerate()
+        .fold((None, None), |(min, max), (idx, p)| {
+            (
+                if let Some((midx, min)) = min {
+                    if lex_cmp(p, min) == Ordering::Less {
+                        Some((idx, p))
+                    } else {
+                        Some((midx, min))
+                    }
+                } else {
+                    Some((idx, p))
+                },
+                if let Some((midx, max)) = max {
+                    if lex_cmp(p, max) == Ordering::Greater {
+                        Some((idx, p))
+                    } else {
+                        Some((midx, max))
+                    }
+                } else {
+                    Some((idx, p))
+                },
+            )
+        });
+    (min.unwrap().0, max.unwrap().0)
 }
 
 #[cfg(test)]

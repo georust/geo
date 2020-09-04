@@ -28,7 +28,7 @@ The primitive types also provide the basis for other functionality in the `Geo` 
 
 ```rust
 use geo::{line_string, polygon};
-use geo::convexhull::ConvexHull;
+use geo::convex_hull::ConvexHull;
 
 // An L shape
 let poly = polygon![
