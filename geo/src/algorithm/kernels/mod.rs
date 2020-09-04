@@ -1,10 +1,10 @@
 use crate::{Coordinate, CoordinateType};
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum Orientation {
     CounterClockwise,
     Clockwise,
-    Colinear,
+    Collinear,
 }
 
 /// Kernel trait to provide predicates to operate on
@@ -13,7 +13,7 @@ pub trait Kernel {
     type Scalar: CoordinateType;
 
     /// Gives the orientation of 3 2-dimensional points:
-    /// ccw, cw or colinear (None)
+    /// ccw, cw or collinear (None)
     fn orient2d(
         p: Coordinate<Self::Scalar>,
         q: Coordinate<Self::Scalar>,
@@ -26,7 +26,7 @@ pub trait Kernel {
         } else if res < Zero::zero() {
             Orientation::Clockwise
         } else {
-            Orientation::Colinear
+            Orientation::Collinear
         }
     }
 

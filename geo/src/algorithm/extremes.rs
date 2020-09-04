@@ -1,8 +1,20 @@
-use super::kernels::HasKernel;
-use crate::algorithm::convex_hull::ConvexHull;
-use crate::{ExtremePoint, Extremes};
-use crate::{MultiPoint, MultiPolygon, Point, Polygon};
-use num_traits::{Float, Signed};
+use super::kernels::*;
+use crate::prelude::*;
+use crate::*;
+use num_traits::{Float, Signed, Zero};
+
+/// Compute the sign of the dot product of `u` and `v` using
+/// robust predicates. The output is `CounterClockwise` if
+/// the sign is positive, `Clockwise` if negative, and
+/// `Collinear` if zero.
+fn dot_product_sign<T>(u: Coordinate<T>, v: Coordinate<T>) -> Orientation
+where
+    T: CoordinateType + Signed + HasKernel,
+{
+    let zero = Coordinate::zero();
+    let vdash = Coordinate { x: -v.y, y: v.x };
+    T::Ker::orient2d(zero, u, vdash)
+}
 
 // Useful direction vectors, aligned with x and y axes:
 // 1., 0. = largest x
@@ -10,75 +22,58 @@ use num_traits::{Float, Signed};
 // 0., -1. = smallest y
 // -1, 0. = smallest x
 
-// various tests for vector orientation relative to a direction vector u
+/// Predicate that returns `true` if `vi` is (strictly) above `vj`
+/// along the direction of `u`
+fn above<T>(u: Coordinate<T>, vi: Coordinate<T>, vj: Coordinate<T>) -> bool
+where
+    T: CoordinateType + Signed + HasKernel,
+{
+    dot_product_sign(u, vi - vj) == Orientation::CounterClockwise
+}
 
-// Not currently used, but maybe useful in the future
+/// Predicate that returns `true` if `vi` is (strictly) below `vj`
+/// along the direction of `u`
 #[allow(dead_code)]
-fn up<T>(u: Point<T>, v: Point<T>) -> bool
+fn below<T>(u: Coordinate<T>, vi: Coordinate<T>, vj: Coordinate<T>) -> bool
 where
-    T: Float,
+    T: CoordinateType + Signed + HasKernel,
 {
-    u.dot(v) > T::zero()
-}
-
-fn direction_sign<T>(u: Point<T>, vi: Point<T>, vj: Point<T>) -> T
-where
-    T: Float,
-{
-    u.dot(vi - vj)
-}
-
-// true if Vi is above Vj
-fn above<T>(u: Point<T>, vi: Point<T>, vj: Point<T>) -> bool
-where
-    T: Float,
-{
-    direction_sign(u, vi, vj) > T::zero()
-}
-
-// true if Vi is below Vj
-// Not currently used, but maybe useful in the future
-#[allow(dead_code)]
-fn below<T>(u: Point<T>, vi: Point<T>, vj: Point<T>) -> bool
-where
-    T: Float,
-{
-    direction_sign(u, vi, vj) < T::zero()
+    dot_product_sign(u, vi - vj) == Orientation::Clockwise
 }
 
 // wrapper for extreme-finding function
 fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes, ()>
 where
     T: Float + Signed,
-    F: Fn(Point<T>, &Polygon<T>) -> Result<usize, ()>,
+    F: Fn(Coordinate<T>, &Polygon<T>) -> Result<usize, ()>,
 {
     if !polygon.is_convex() {
         return Err(());
     }
-    let directions = vec![
-        Point::new(T::zero(), -T::one()),
-        Point::new(T::one(), T::zero()),
-        Point::new(T::zero(), T::one()),
-        Point::new(-T::one(), T::zero()),
+    let directions: Vec<Coordinate<_>> = vec![
+        (T::zero(), -T::one()).into(),
+        (T::one(), T::zero()).into(),
+        (T::zero(), T::one()).into(),
+        (-T::one(), T::zero()).into(),
     ];
     Ok(directions
-        .iter()
-        .map(|p| func(*p, polygon).unwrap())
+        .into_iter()
+        .map(|p| func(p, polygon).unwrap())
         .collect::<Vec<usize>>()
         .into())
 }
 
 // find a convex, counter-clockwise oriented polygon's maximum vertex in a specified direction
 // u: a direction vector. We're using a point to represent this, which is a hack but works fine
-fn polymax_naive_indices<T>(u: Point<T>, poly: &Polygon<T>) -> Result<usize, ()>
+fn polymax_naive_indices<T>(u: Coordinate<T>, poly: &Polygon<T>) -> Result<usize, ()>
 where
-    T: Float,
+    T: CoordinateType + HasKernel + Signed,
 {
     let vertices = &poly.exterior().0;
     let mut max: usize = 0;
     for (i, _) in vertices.iter().enumerate() {
         // if vertices[i] is above prior vertices[max]
-        if above(u, Point(vertices[i]), Point(vertices[max])) {
+        if above(u, vertices[i], vertices[max]) {
             max = i;
         }
     }
@@ -118,7 +113,7 @@ pub trait ExtremeIndices<T: Float + Signed> {
 
 impl<T> ExtremeIndices<T> for Polygon<T>
 where
-    T: Float + Signed,
+    T: Float + Signed + HasKernel,
 {
     fn extreme_indices(&self) -> Result<Extremes, ()> {
         find_extreme_indices(polymax_naive_indices, self)
@@ -204,7 +199,7 @@ mod test {
             (x: 0.0, y: 1.0),
             (x: 1.0, y: 0.0)
         ];
-        let min_x = polymax_naive_indices(point!(x: -1., y: 0.), &poly1).unwrap();
+        let min_x = polymax_naive_indices(Coordinate { x: -1., y: 0. }, &poly1).unwrap();
         let correct = 3_usize;
         assert_eq!(min_x, correct);
     }

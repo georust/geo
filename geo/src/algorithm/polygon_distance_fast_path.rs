@@ -1,4 +1,5 @@
 use crate::algorithm::extremes::ExtremeIndices;
+use crate::kernels::*;
 use crate::prelude::*;
 use crate::{Line, Point, Polygon, Triangle};
 use num_traits::float::FloatConst;
@@ -12,7 +13,7 @@ use num_traits::{Float, Signed};
 /// using the rotating calipers method
 pub(crate) fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
 where
-    T: Float + FloatConst + Signed,
+    T: Float + FloatConst + Signed + HasKernel,
 {
     let poly1_extremes = poly1.extreme_indices().unwrap();
     let poly2_extremes = poly2.extreme_indices().unwrap();

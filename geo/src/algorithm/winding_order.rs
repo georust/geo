@@ -30,12 +30,19 @@ pub enum WindingOrder {
 }
 
 pub trait Winding {
+    //! Determine and operate on how a [`LineString`] is
+    //! wound. This functionality, and our implementation is
+    //! based on [CGAL's Polygon_2::orientation].
+    //!
+    //! [CGAL's Polygon_2::orientation]: //doc.cgal.org/latest/Polygon/classCGAL_1_1Polygon__2.html#a4ce8b4b8395406243ac16c2a120ffc15
     type Scalar: CoordinateType;
 
-    /// Return the winding order of this object
+    /// Return the winding order of this object if it
+    /// contains at least three distinct coordinates, and
+    /// `None` otherwise.
     fn winding_order(&self) -> Option<WindingOrder>;
 
-    /// True iff this clockwise
+    /// True iff this is wound clockwise
     fn is_cw(&self) -> bool {
         self.winding_order() == Some(WindingOrder::Clockwise)
     }
@@ -90,15 +97,10 @@ where
     type Scalar = T;
 
     fn winding_order(&self) -> Option<WindingOrder> {
-        // If linestring has at most 2 points, it is either
-        // not closed, or is the same point. Either way, the
-        // WindingOrder is unspecified.
-        if self.num_coords() < 3 {
-            return None;
-        }
-
-        // Open linestrings do not have a winding order.
-        if !self.is_closed() {
+        // If linestring has at most 3 coords, it is either
+        // not closed, or is at most two distinct points.
+        // Either way, the WindingOrder is unspecified.
+        if self.num_coords() < 4 || !self.is_closed() {
             return None;
         }
 

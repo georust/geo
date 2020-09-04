@@ -9,6 +9,13 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// as an envelope, a precision model, and spatial reference system
 /// information), a `Coordinate` only contains ordinate values and accessor
 /// methods.
+///
+/// This type obeys the typical [vector space] structure:
+/// implements the [`Add`], [`Sub`], [`Neg`], [`Zero`]
+/// traits and allows [`scaling`][`Coordinate::scale_by`] by
+/// a scalar.
+///
+/// [vector space]: //en.wikipedia.org/wiki/Vector_space
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coordinate<T>
@@ -68,6 +75,103 @@ where
     /// ```
     pub fn x_y(&self) -> (T, T) {
         (self.x, self.y)
+    }
+
+    /// Scale the coordinates by a scalar value.
+    pub fn scale_by(&self, scale: T) -> Self {
+        Coordinate {
+            x: scale * self.x,
+            y: scale * self.y,
+        }
+    }
+}
+
+use std::ops::{Add, Neg, Sub};
+impl<T> Neg for Coordinate<T>
+where
+    T: CoordinateType + Neg<Output = T>,
+{
+    type Output = Coordinate<T>;
+
+    /// Returns a coordinate with the x and y components negated.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Coordinate;
+    ///
+    /// let p: Coordinate<_> = (-1.25, 2.5).into();
+    /// let p = -p;
+    ///
+    /// assert_eq!(p.x, 1.25);
+    /// assert_eq!(p.y, -2.5);
+    /// ```
+    fn neg(self) -> Coordinate<T> {
+        (-self.x, -self.y).into()
+    }
+}
+
+impl<T> Add for Coordinate<T>
+where
+    T: CoordinateType,
+{
+    type Output = Coordinate<T>;
+
+    /// Add a point to the given point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Coordinate;
+    ///
+    /// let p: Coordinate<_> = (1.25, 2.5).into();
+    /// let q: Coordinate<_> = (1.5, 2.5).into();
+    /// let sum = p + q;
+    ///
+    /// assert_eq!(sum.x, 2.75);
+    /// assert_eq!(sum.y, 5.0);
+    /// ```
+    fn add(self, rhs: Coordinate<T>) -> Coordinate<T> {
+        (self.x + rhs.x, self.y + rhs.y).into()
+    }
+}
+
+impl<T> Sub for Coordinate<T>
+where
+    T: CoordinateType,
+{
+    type Output = Coordinate<T>;
+
+    /// Subtract a point from the given point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Coordinate;
+    ///
+    /// let p: Coordinate<_> = (1.5, 2.5).into();
+    /// let q: Coordinate<_> = (1.25, 2.5).into();
+    /// let diff = p - q;
+    ///
+    /// assert_eq!(diff.x, 0.25);
+    /// assert_eq!(diff.y, 0.);
+    /// ```
+    fn sub(self, rhs: Coordinate<T>) -> Coordinate<T> {
+        (self.x - rhs.x, self.y - rhs.y).into()
+    }
+}
+
+use num_traits::Zero;
+impl<T: CoordinateType> Zero for Coordinate<T> {
+    fn zero() -> Self {
+        Coordinate {
+            x: T::zero(),
+            y: T::zero(),
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.x.is_zero() && self.y.is_zero()
     }
 }
 

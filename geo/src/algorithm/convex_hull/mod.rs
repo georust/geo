@@ -2,42 +2,42 @@ use super::kernels::*;
 use crate::*;
 
 pub trait ConvexHull {
-    /// Returns the convex hull of a Polygon. The hull is always oriented counter-clockwise.
-    ///
-    /// This implementation uses the QuickHull algorithm,
-    /// based on [Barber, C. Bradford; Dobkin, David P.; Huhdanpaa, Hannu (1 December 1996)](https://dx.doi.org/10.1145%2F235815.235821)
-    /// Original paper here: http://www.cs.princeton.edu/~dpd/Papers/BarberDobkinHuhdanpaa.pdf
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo::{line_string, polygon};
-    /// use geo::algorithm::convex_hull::ConvexHull;
-    ///
-    /// // an L shape
-    /// let poly = polygon![
-    ///     (x: 0.0, y: 0.0),
-    ///     (x: 4.0, y: 0.0),
-    ///     (x: 4.0, y: 1.0),
-    ///     (x: 1.0, y: 1.0),
-    ///     (x: 1.0, y: 4.0),
-    ///     (x: 0.0, y: 4.0),
-    ///     (x: 0.0, y: 0.0),
-    /// ];
-    ///
-    /// // The correct convex hull coordinates
-    /// let correct_hull = line_string![
-    ///     (x: 4.0, y: 0.0),
-    ///     (x: 4.0, y: 1.0),
-    ///     (x: 1.0, y: 4.0),
-    ///     (x: 0.0, y: 4.0),
-    ///     (x: 0.0, y: 0.0),
-    ///     (x: 4.0, y: 0.0),
-    /// ];
-    ///
-    /// let res = poly.convex_hull();
-    /// assert_eq!(res.exterior(), &correct_hull);
-    /// ```
+    //! Returns the convex hull of a Polygon. The hull is always oriented counter-clockwise.
+    //!
+    //! This implementation uses the QuickHull algorithm,
+    //! based on [Barber, C. Bradford; Dobkin, David P.; Huhdanpaa, Hannu (1 December 1996)](https://dx.doi.org/10.1145%2F235815.235821)
+    //! Original paper here: http://www.cs.princeton.edu/~dpd/Papers/BarberDobkinHuhdanpaa.pdf
+    //!
+    //! # Examples
+    //!
+    //! ```
+    //! use geo::{line_string, polygon};
+    //! use geo::algorithm::convex_hull::ConvexHull;
+    //!
+    //! // an L shape
+    //! let poly = polygon![
+    //!     (x: 0.0, y: 0.0),
+    //!     (x: 4.0, y: 0.0),
+    //!     (x: 4.0, y: 1.0),
+    //!     (x: 1.0, y: 1.0),
+    //!     (x: 1.0, y: 4.0),
+    //!     (x: 0.0, y: 4.0),
+    //!     (x: 0.0, y: 0.0),
+    //! ];
+    //!
+    //! // The correct convex hull coordinates
+    //! let correct_hull = line_string![
+    //!     (x: 4.0, y: 0.0),
+    //!     (x: 4.0, y: 1.0),
+    //!     (x: 1.0, y: 4.0),
+    //!     (x: 0.0, y: 4.0),
+    //!     (x: 0.0, y: 0.0),
+    //!     (x: 4.0, y: 0.0),
+    //! ];
+    //!
+    //! let res = poly.convex_hull();
+    //! assert_eq!(res.exterior(), &correct_hull);
+    //! ```
     type Scalar: CoordinateType;
     fn convex_hull(&self) -> Polygon<Self::Scalar>;
 }
@@ -115,7 +115,7 @@ where
 {
     assert!(points.len() < 4);
 
-    // Remove repeated points unless colinear points
+    // Remove repeated points unless collinear points
     // are to be included.
     let mut ls: LineString<T> = points.iter().copied().collect();
     if !include_on_hull {

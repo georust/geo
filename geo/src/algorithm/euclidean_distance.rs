@@ -2,6 +2,7 @@ use crate::algorithm::contains::Contains;
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::algorithm::intersects::Intersects;
 use crate::algorithm::polygon_distance_fast_path::*;
+use crate::kernels::*;
 use crate::utils::{coord_pos_relative_to_line_string, CoordPos};
 use crate::{
     Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Triangle,
@@ -429,7 +430,7 @@ where
 // Polygon to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Polygon<T>
 where
-    T: Float + FloatConst + RTreeNum,
+    T: Float + FloatConst + RTreeNum + HasKernel,
 {
     /// This implementation has a "fast path" in cases where both input polygons are convex:
     /// it switches to an implementation of the "rotating calipers" method described in [Pirzadeh (1999), pp24—30](http://digitool.library.mcgill.ca/R/?func=dbin-jump-full&object_id=21623&local_base=GEN01-MCG02),

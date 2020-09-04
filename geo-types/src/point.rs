@@ -307,7 +307,7 @@ where
     /// assert_eq!(p.y(), -2.5);
     /// ```
     fn neg(self) -> Point<T> {
-        Point::new(-self.x(), -self.y())
+        Point(-self.0)
     }
 }
 
@@ -330,7 +330,7 @@ where
     /// assert_eq!(p.y(), 5.0);
     /// ```
     fn add(self, rhs: Point<T>) -> Point<T> {
-        Point::new(self.x() + rhs.x(), self.y() + rhs.y())
+        Point(self.0 + rhs.0)
     }
 }
 
@@ -353,7 +353,7 @@ where
     /// assert_eq!(p.y(), 0.5);
     /// ```
     fn sub(self, rhs: Point<T>) -> Point<T> {
-        Point::new(self.x() - rhs.x(), self.y() - rhs.y())
+        Point(self.0 - rhs.0)
     }
 }
 
