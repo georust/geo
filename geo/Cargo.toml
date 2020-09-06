@@ -29,6 +29,7 @@ robust = { version = "0.2.2" }
 [features]
 default = []
 use-proj = ["proj"]
+proj-network = ["use-proj", "proj/network"]
 use-serde = ["serde", "geo-types/serde"]
 
 [dev-dependencies]
