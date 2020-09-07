@@ -10,26 +10,26 @@ use crate::{Coordinate, CoordinateType, LineString};
 ///
 /// # Remarks
 ///
-/// 1. The convexity, and collinearity of an empty
+/// - The convexity, and collinearity of an empty
 /// `LineString` is _unspecified_ and must not be relied
 /// upon.
 ///
-/// 1. Collinearity does not require that the `LineString`
+/// - Collinearity does not require that the `LineString`
 /// be closed, but the rest of the predicates do.
 ///
-/// 1. A `LineString` with a single point is both strictly
+/// - A `LineString` with a single point is both strictly
 /// convex, and collinear.
 ///
-/// 1. A closed `LineString` with three vertices (where the
+/// - A closed `LineString` with three vertices (where the
 /// first and third coordinates are the same) is not strictly
 /// convex.  However, it is convex and collinear.
 ///
-/// 1. This definition is closely related to the notion
+/// - This definition is closely related to the notion
 /// of [convexity of polygons][convex set]. In particular, a
 /// [`Polygon`] is convex, if and only if its `exterior` is
 /// convex, and `interiors` is empty.
 ///
-/// 1. The [`ConvexHull`] algorithm always returns a
+/// - The [`ConvexHull`] algorithm always returns a
 /// strictly convex `LineString` unless the input is
 /// collinear. The [`graham_hull`] algorithm provides an
 /// option to include collinear points, producing a (possibly

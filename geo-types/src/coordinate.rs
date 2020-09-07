@@ -76,17 +76,9 @@ where
     pub fn x_y(&self) -> (T, T) {
         (self.x, self.y)
     }
-
-    /// Scale the coordinates by a scalar value.
-    pub fn scale_by(&self, scale: T) -> Self {
-        Coordinate {
-            x: scale * self.x,
-            y: scale * self.y,
-        }
-    }
 }
 
-use std::ops::{Add, Neg, Sub};
+use std::ops::{Add, Neg, Sub, Mul, Div};
 impl<T> Neg for Coordinate<T>
 where
     T: CoordinateType + Neg<Output = T>,
@@ -158,6 +150,54 @@ where
     /// ```
     fn sub(self, rhs: Coordinate<T>) -> Coordinate<T> {
         (self.x - rhs.x, self.y - rhs.y).into()
+    }
+}
+
+impl<T> Mul<T> for Coordinate<T>
+where
+    T: CoordinateType,
+{
+    type Output = Coordinate<T>;
+
+    /// Add a point to the given point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Coordinate;
+    ///
+    /// let p: Coordinate<_> = (1.25, 2.5).into();
+    /// let q: Coordinate<_> = p * 4.;
+    ///
+    /// assert_eq!(q.x, 5.0);
+    /// assert_eq!(q.y, 10.0);
+    /// ```
+    fn mul(self, rhs: T) -> Coordinate<T> {
+        (self.x * rhs, self.y * rhs).into()
+    }
+}
+
+impl<T> Div<T> for Coordinate<T>
+where
+    T: CoordinateType,
+{
+    type Output = Coordinate<T>;
+
+    /// Add a point to the given point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Coordinate;
+    ///
+    /// let p: Coordinate<_> = (5., 10.).into();
+    /// let q: Coordinate<_> = p / 4.;
+    ///
+    /// assert_eq!(q.x, 1.25);
+    /// assert_eq!(q.y, 2.5);
+    /// ```
+    fn div(self, rhs: T) -> Coordinate<T> {
+        (self.x / rhs, self.y / rhs).into()
     }
 }
 

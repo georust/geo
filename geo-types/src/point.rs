@@ -374,7 +374,7 @@ where
     /// assert_eq!(p.y(), 6.0);
     /// ```
     fn mul(self, rhs: T) -> Point<T> {
-        Point::new(self.x() * rhs, self.y() * rhs)
+        Point(self.0 * rhs)
     }
 }
 
@@ -397,7 +397,7 @@ where
     /// assert_eq!(p.y(), 1.5);
     /// ```
     fn div(self, rhs: T) -> Point<T> {
-        Point::new(self.x() / rhs, self.y() / rhs)
+        Point(self.0 / rhs)
     }
 }
 
