@@ -44,10 +44,11 @@ where
 // wrapper for extreme-finding function
 fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes, ()>
 where
-    T: Float + Signed,
+    T: CoordinateType + HasKernel + Signed,
     F: Fn(Coordinate<T>, &Polygon<T>) -> Result<usize, ()>,
 {
-    if !polygon.is_convex() {
+    use crate::is_convex::IsConvex;
+    if !polygon.exterior().is_convex() {
         return Err(());
     }
     let directions: Vec<Coordinate<_>> = vec![

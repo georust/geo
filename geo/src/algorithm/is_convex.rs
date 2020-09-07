@@ -10,30 +10,30 @@ use crate::{Coordinate, CoordinateType, LineString};
 ///
 /// # Remarks
 ///
-/// - The convexity, and collinearity of an empty
-/// `LineString` is _unspecified_ and must not be relied
-/// upon.
-///
 /// - Collinearity does not require that the `LineString`
 /// be closed, but the rest of the predicates do.
-///
-/// - A `LineString` with a single point is both strictly
-/// convex, and collinear.
-///
-/// - A closed `LineString` with three vertices (where the
-/// first and third coordinates are the same) is not strictly
-/// convex.  However, it is convex and collinear.
 ///
 /// - This definition is closely related to the notion
 /// of [convexity of polygons][convex set]. In particular, a
 /// [`Polygon`] is convex, if and only if its `exterior` is
 /// convex, and `interiors` is empty.
 ///
-/// - The [`ConvexHull`] algorithm always returns a
-/// strictly convex `LineString` unless the input is
+/// - The [`ConvexHull`] algorithm always returns a strictly
+/// convex `LineString` unless the input is empty or
 /// collinear. The [`graham_hull`] algorithm provides an
-/// option to include collinear points, producing a (possibly
-/// non-strict) convex `LineString`.
+/// option to include collinear points, producing a
+/// (possibly non-strict) convex `LineString`.
+///
+/// # Edge Cases
+///
+/// - the convexity, and collinearity of an empty
+/// `LineString` is _unspecified_ and must not be relied
+/// upon.
+///
+/// - A closed `LineString` with at most three coordinates
+/// (including the possibly repeated first coordinate) is
+/// both convex and collinear. However, the strict convexity
+/// is _unspecified_ and must not be relied upon.
 ///
 /// [convex combination]: //en.wikipedia.org/wiki/Convex_combination
 /// [convex set]: //en.wikipedia.org/wiki/Convex_set
@@ -114,7 +114,7 @@ impl<T: CoordinateType + HasKernel> IsConvex for LineString<T> {
         allow_collinear: bool,
         specific_orientation: Option<Orientation>,
     ) -> Option<Orientation> {
-        if !self.is_closed() {
+        if !self.is_closed() || self.0.is_empty() {
             None
         } else {
             is_convex_shaped(&self.0[1..], allow_collinear, specific_orientation)
@@ -209,29 +209,40 @@ mod tests {
 
     #[test]
     fn test_corner_cases() {
-        // let empty: LineString<f64> = line_string!();
-        // assert!(empty.is_collinear());
-        // assert!(!empty.is_convex());
-        // assert!(!empty.is_strictly_ccw_convex());
+        // This is just tested to ensure there is no panic
+        // due to out-of-index access
+        let empty: LineString<f64> = line_string!();
+        assert!(empty.is_collinear());
+        assert!(!empty.is_convex());
+        assert!(!empty.is_strictly_ccw_convex());
 
-        // let one = line_string![(x: 0., y: 0.)];
-        // assert!(one.is_collinear());
-        // assert!(one.is_convex());
-        // assert!(one.is_cw_convex());
-        // assert!(one.is_ccw_convex());
-        // assert!(one.is_strictly_convex());
-        // assert!(!one.is_strictly_ccw_convex());
-        // assert!(!one.is_strictly_cw_convex());
+        let one = line_string![(x: 0., y: 0.)];
+        assert!(one.is_collinear());
+        assert!(one.is_convex());
+        assert!(one.is_cw_convex());
+        assert!(one.is_ccw_convex());
+        assert!(one.is_strictly_convex());
+        assert!(!one.is_strictly_ccw_convex());
+        assert!(!one.is_strictly_cw_convex());
 
-        // let mut two = line_string![(x: 0, y: 0), (x: 1, y: 1)];
-        // assert!(two.is_collinear());
-        // assert!(!two.is_convex());
+        let one_rep = line_string![(x: 0, y: 0), (x: 0, y: 0)];
+        assert!(one_rep.is_collinear());
+        assert!(one_rep.is_convex());
+        assert!(one_rep.is_cw_convex());
+        assert!(one_rep.is_ccw_convex());
+        assert!(!one_rep.is_strictly_convex());
+        assert!(!one_rep.is_strictly_ccw_convex());
+        assert!(!one_rep.is_strictly_cw_convex());
 
-        // two.close();
-        // assert!(two.is_cw_convex());
-        // assert!(two.is_ccw_convex());
-        // assert!(two.is_strictly_convex());
-        // assert!(!two.is_strictly_ccw_convex());
-        // assert!(!two.is_strictly_cw_convex());
+        let mut two = line_string![(x: 0, y: 0), (x: 1, y: 1)];
+        assert!(two.is_collinear());
+        assert!(!two.is_convex());
+
+        two.close();
+        assert!(two.is_cw_convex());
+        assert!(two.is_ccw_convex());
+        assert!(!two.is_strictly_convex());
+        assert!(!two.is_strictly_ccw_convex());
+        assert!(!two.is_strictly_cw_convex());
     }
 }
