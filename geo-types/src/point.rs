@@ -1,8 +1,6 @@
 use crate::{Coordinate, CoordinateType};
 use num_traits::Float;
-use std::ops::Add;
-use std::ops::Neg;
-use std::ops::Sub;
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 /// A single point in 2D space.
 ///
@@ -354,6 +352,52 @@ where
     /// ```
     fn sub(self, rhs: Point<T>) -> Point<T> {
         Point(self.0 - rhs.0)
+    }
+}
+
+impl<T> Mul<T> for Point<T>
+where
+    T: CoordinateType,
+{
+    type Output = Point<T>;
+
+    /// Scaler multiplication of a point
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let p = Point::new(2.0, 3.0) * 2.0;
+    ///
+    /// assert_eq!(p.x(), 4.0);
+    /// assert_eq!(p.y(), 6.0);
+    /// ```
+    fn mul(self, rhs: T) -> Point<T> {
+        Point::new(self.x() * rhs, self.y() * rhs)
+    }
+}
+
+impl<T> Div<T> for Point<T>
+where
+    T: CoordinateType,
+{
+    type Output = Point<T>;
+
+    /// Scaler division of a point
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let p = Point::new(2.0, 3.0) / 2.0;
+    ///
+    /// assert_eq!(p.x(), 1.0);
+    /// assert_eq!(p.y(), 1.5);
+    /// ```
+    fn div(self, rhs: T) -> Point<T> {
+        Point::new(self.x() / rhs, self.y() / rhs)
     }
 }
 
