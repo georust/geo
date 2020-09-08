@@ -41,7 +41,7 @@ impl<T: Float> Kernel for RobustKernel<T> {
         } else if orientation > 0. {
             Orientation::CounterClockwise
         } else {
-            Orientation::Colinear
+            Orientation::Collinear
         }
     }
 }

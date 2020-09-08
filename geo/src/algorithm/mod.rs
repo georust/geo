@@ -39,6 +39,8 @@ pub mod haversine_intermediate;
 pub mod haversine_length;
 /// Determine whether `Geometry` `A` intersects `Geometry` `B`.
 pub mod intersects;
+/// Determins whether a `LineString` is convex.
+pub mod is_convex;
 /// Interpolate a point along a `Line` or `LineString`.
 pub mod line_interpolate_point;
 /// Locate a point along a `Line` or `LineString`.

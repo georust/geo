@@ -1,13 +1,13 @@
 use crate::{Coordinate, CoordinateType};
 use num_traits::Float;
-use std::ops::Add;
-use std::ops::Neg;
-use std::ops::Sub;
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 /// A single point in 2D space.
 ///
-/// Points can be created using the `new(x, y)` constructor, the `point!` macro, a `Coordinate`, or from
-/// two-element tuples or arrays – see the `From` impl section for a complete list.
+/// Points can be created using the `new(x, y)` constructor,
+/// the `point!` macro, or from a `Coordinate`, two-element
+/// tuples, or arrays – see the `From` impl section for a
+/// complete list.
 ///
 /// # Examples
 ///
@@ -307,7 +307,7 @@ where
     /// assert_eq!(p.y(), -2.5);
     /// ```
     fn neg(self) -> Point<T> {
-        Point::new(-self.x(), -self.y())
+        Point(-self.0)
     }
 }
 
@@ -330,7 +330,7 @@ where
     /// assert_eq!(p.y(), 5.0);
     /// ```
     fn add(self, rhs: Point<T>) -> Point<T> {
-        Point::new(self.x() + rhs.x(), self.y() + rhs.y())
+        Point(self.0 + rhs.0)
     }
 }
 
@@ -353,7 +353,53 @@ where
     /// assert_eq!(p.y(), 0.5);
     /// ```
     fn sub(self, rhs: Point<T>) -> Point<T> {
-        Point::new(self.x() - rhs.x(), self.y() - rhs.y())
+        Point(self.0 - rhs.0)
+    }
+}
+
+impl<T> Mul<T> for Point<T>
+where
+    T: CoordinateType,
+{
+    type Output = Point<T>;
+
+    /// Scaler multiplication of a point
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let p = Point::new(2.0, 3.0) * 2.0;
+    ///
+    /// assert_eq!(p.x(), 4.0);
+    /// assert_eq!(p.y(), 6.0);
+    /// ```
+    fn mul(self, rhs: T) -> Point<T> {
+        Point(self.0 * rhs)
+    }
+}
+
+impl<T> Div<T> for Point<T>
+where
+    T: CoordinateType,
+{
+    type Output = Point<T>;
+
+    /// Scaler division of a point
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let p = Point::new(2.0, 3.0) / 2.0;
+    ///
+    /// assert_eq!(p.x(), 1.0);
+    /// assert_eq!(p.y(), 1.5);
+    /// ```
+    fn div(self, rhs: T) -> Point<T> {
+        Point(self.0 / rhs)
     }
 }
 

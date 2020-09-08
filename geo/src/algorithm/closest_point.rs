@@ -61,8 +61,8 @@ impl<F: Float> ClosestPoint<F> for Line<F> {
         //
         // Line equation: P = start + t * (end - start)
 
-        let direction_vector = Point(self.end) - Point(self.start);
-        let to_p = *p - Point(self.start);
+        let direction_vector = Point(self.end - self.start);
+        let to_p = Point(p.0 - self.start);
 
         let t = to_p.dot(direction_vector) / direction_vector.dot(direction_vector);
 
@@ -75,8 +75,7 @@ impl<F: Float> ClosestPoint<F> for Line<F> {
 
         let x = direction_vector.x();
         let y = direction_vector.y();
-        let displacement = Point::new(t * x, t * y);
-        let c = Point(self.start) + displacement;
+        let c = Point(self.start + (t * x, t * y).into());
 
         if self.contains(p) {
             Closest::Intersection(c)

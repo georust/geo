@@ -117,8 +117,8 @@ fn hull_set<T>(
 
 #[cfg(test)]
 mod test {
-    use super::super::test::is_ccw_convex;
     use super::*;
+    use crate::algorithm::is_convex::IsConvex;
 
     #[test]
     fn quick_hull_test1() {
@@ -132,7 +132,7 @@ mod test {
             Coordinate { x: 0.0, y: 0.0 },
         ];
         let res = quick_hull(&mut v);
-        assert!(is_ccw_convex(&res.0, false));
+        assert!(res.is_strictly_ccw_convex());
     }
 
     #[test]
@@ -201,7 +201,7 @@ mod test {
             .map(|e| Coordinate { x: e.0, y: e.1 })
             .collect();
         let res = quick_hull(&mut v);
-        assert!(is_ccw_convex(&res.0, false));
+        assert!(res.is_strictly_ccw_convex());
     }
 
     #[test]
@@ -228,11 +228,11 @@ mod test {
             .map(|e| Coordinate { x: e.0, y: e.1 })
             .collect();
         let res = quick_hull(&mut v);
-        assert!(is_ccw_convex(&res.0, false));
+        assert!(res.is_strictly_ccw_convex());
     }
 
     #[test]
-    fn quick_hull_test_colinear() {
+    fn quick_hull_test_collinear() {
         // Initial input begins at min x, but not min y
         // There are three points with same x.
         // Output should not contain the middle point.
@@ -252,6 +252,6 @@ mod test {
             .map(|e| Coordinate { x: e.0, y: e.1 })
             .collect();
         let res = quick_hull(&mut v);
-        assert!(is_ccw_convex(&res.0, false));
+        assert!(res.is_strictly_ccw_convex());
     }
 }
