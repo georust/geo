@@ -456,7 +456,8 @@ where
             }
             return mindist;
         }
-        if poly2.is_convex() || !self.is_convex() {
+        use super::is_convex::IsConvex;
+        if !poly2.exterior().is_convex() || !self.exterior().is_convex() {
             // fall back to R* nearest neighbour method
             nearest_neighbour_distance(&self.exterior(), &poly2.exterior())
         } else {

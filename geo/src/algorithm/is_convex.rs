@@ -170,6 +170,7 @@ where
         match orientation {
             Orientation::Collinear => {
                 // Only happens if !allow_collinear
+                assert!(!allow_collinear);
                 return None;
             }
             _ => (i, orientation),

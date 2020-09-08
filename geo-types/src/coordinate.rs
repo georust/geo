@@ -10,10 +10,9 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// information), a `Coordinate` only contains ordinate values and accessor
 /// methods.
 ///
-/// This type obeys the typical [vector space] structure:
-/// implements the [`Add`], [`Sub`], [`Neg`], [`Zero`]
-/// traits and allows [`scaling`][`Coordinate::scale_by`] by
-/// a scalar.
+/// This type implements the [vector space] operations:
+/// [`Add`], [`Sub`], [`Neg`], [`Zero`],
+/// [`Mul<T>`][`Mul`], and [`Div<T>`][`Div`] traits.
 ///
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
@@ -79,129 +78,143 @@ where
 }
 
 use std::ops::{Add, Neg, Sub, Mul, Div};
+
+/// Negate a coordinate.
+///
+/// # Examples
+///
+/// ```
+/// use geo_types::Coordinate;
+///
+/// let p: Coordinate<_> = (1.25, 2.5).into();
+/// let q = -p;
+///
+/// assert_eq!(q.x, -p.x);
+/// assert_eq!(q.y, -p.y);
+/// ```
 impl<T> Neg for Coordinate<T>
 where
     T: CoordinateType + Neg<Output = T>,
 {
     type Output = Coordinate<T>;
 
-    /// Returns a coordinate with the x and y components negated.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::Coordinate;
-    ///
-    /// let p: Coordinate<_> = (-1.25, 2.5).into();
-    /// let p = -p;
-    ///
-    /// assert_eq!(p.x, 1.25);
-    /// assert_eq!(p.y, -2.5);
-    /// ```
     fn neg(self) -> Coordinate<T> {
         (-self.x, -self.y).into()
     }
 }
 
+/// Add two coordinates.
+///
+/// # Examples
+///
+/// ```
+/// use geo_types::Coordinate;
+///
+/// let p: Coordinate<_> = (1.25, 2.5).into();
+/// let q: Coordinate<_> = (1.5, 2.5).into();
+/// let sum = p + q;
+///
+/// assert_eq!(sum.x, 2.75);
+/// assert_eq!(sum.y, 5.0);
+/// ```
 impl<T> Add for Coordinate<T>
 where
     T: CoordinateType,
 {
     type Output = Coordinate<T>;
 
-    /// Add a point to the given point.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::Coordinate;
-    ///
-    /// let p: Coordinate<_> = (1.25, 2.5).into();
-    /// let q: Coordinate<_> = (1.5, 2.5).into();
-    /// let sum = p + q;
-    ///
-    /// assert_eq!(sum.x, 2.75);
-    /// assert_eq!(sum.y, 5.0);
-    /// ```
     fn add(self, rhs: Coordinate<T>) -> Coordinate<T> {
         (self.x + rhs.x, self.y + rhs.y).into()
     }
 }
 
+/// Subtract a coordinate from another.
+///
+/// # Examples
+///
+/// ```
+/// use geo_types::Coordinate;
+///
+/// let p: Coordinate<_> = (1.5, 2.5).into();
+/// let q: Coordinate<_> = (1.25, 2.5).into();
+/// let diff = p - q;
+///
+/// assert_eq!(diff.x, 0.25);
+/// assert_eq!(diff.y, 0.);
+/// ```
 impl<T> Sub for Coordinate<T>
 where
     T: CoordinateType,
 {
     type Output = Coordinate<T>;
 
-    /// Subtract a point from the given point.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::Coordinate;
-    ///
-    /// let p: Coordinate<_> = (1.5, 2.5).into();
-    /// let q: Coordinate<_> = (1.25, 2.5).into();
-    /// let diff = p - q;
-    ///
-    /// assert_eq!(diff.x, 0.25);
-    /// assert_eq!(diff.y, 0.);
-    /// ```
     fn sub(self, rhs: Coordinate<T>) -> Coordinate<T> {
         (self.x - rhs.x, self.y - rhs.y).into()
     }
 }
 
+/// Multiply coordinate wise by a scalar.
+///
+/// # Examples
+///
+/// ```
+/// use geo_types::Coordinate;
+///
+/// let p: Coordinate<_> = (1.25, 2.5).into();
+/// let q: Coordinate<_> = p * 4.;
+///
+/// assert_eq!(q.x, 5.0);
+/// assert_eq!(q.y, 10.0);
+/// ```
 impl<T> Mul<T> for Coordinate<T>
 where
     T: CoordinateType,
 {
     type Output = Coordinate<T>;
 
-    /// Add a point to the given point.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::Coordinate;
-    ///
-    /// let p: Coordinate<_> = (1.25, 2.5).into();
-    /// let q: Coordinate<_> = p * 4.;
-    ///
-    /// assert_eq!(q.x, 5.0);
-    /// assert_eq!(q.y, 10.0);
-    /// ```
     fn mul(self, rhs: T) -> Coordinate<T> {
         (self.x * rhs, self.y * rhs).into()
     }
 }
 
+/// Divide coordinate wise by a scalar.
+///
+/// # Examples
+///
+/// ```
+/// use geo_types::Coordinate;
+///
+/// let p: Coordinate<_> = (5., 10.).into();
+/// let q: Coordinate<_> = p / 4.;
+///
+/// assert_eq!(q.x, 1.25);
+/// assert_eq!(q.y, 2.5);
+/// ```
 impl<T> Div<T> for Coordinate<T>
 where
     T: CoordinateType,
 {
     type Output = Coordinate<T>;
 
-    /// Add a point to the given point.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::Coordinate;
-    ///
-    /// let p: Coordinate<_> = (5., 10.).into();
-    /// let q: Coordinate<_> = p / 4.;
-    ///
-    /// assert_eq!(q.x, 1.25);
-    /// assert_eq!(q.y, 2.5);
-    /// ```
     fn div(self, rhs: T) -> Coordinate<T> {
         (self.x / rhs, self.y / rhs).into()
     }
 }
 
 use num_traits::Zero;
+/// Create a coordinate at the origin.
+///
+/// # Examples
+///
+/// ```
+/// use geo_types::Coordinate;
+/// use num_traits::Zero;
+///
+/// let p: Coordinate<f64> = Zero::zero();
+///
+/// assert_eq!(p.x, 0.);
+/// assert_eq!(p.y, 0.);
+/// ```
 impl<T: CoordinateType> Zero for Coordinate<T> {
     fn zero() -> Self {
         Coordinate {
