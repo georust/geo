@@ -1,7 +1,7 @@
 use super::kernels::*;
 use crate::prelude::*;
 use crate::*;
-use num_traits::{Float, Signed, Zero};
+use num_traits::{Signed, Zero};
 
 /// Compute the sign of the dot product of `u` and `v` using
 /// robust predicates. The output is `CounterClockwise` if
@@ -81,7 +81,7 @@ where
     Ok(max)
 }
 
-pub trait ExtremeIndices<T: Float + Signed> {
+pub trait ExtremeIndices {
     /// Find the extreme `x` and `y` _indices_ of a convex Polygon
     ///
     /// The polygon **must be convex and properly (ccw) oriented**.
@@ -112,34 +112,35 @@ pub trait ExtremeIndices<T: Float + Signed> {
     fn extreme_indices(&self) -> Result<Extremes, ()>;
 }
 
-impl<T> ExtremeIndices<T> for Polygon<T>
+impl<T> ExtremeIndices for Polygon<T>
 where
-    T: Float + Signed + HasKernel,
+    T: Signed + HasKernel,
 {
     fn extreme_indices(&self) -> Result<Extremes, ()> {
         find_extreme_indices(polymax_naive_indices, self)
     }
 }
 
-impl<T> ExtremeIndices<T> for MultiPolygon<T>
+impl<T> ExtremeIndices for MultiPolygon<T>
 where
-    T: Float + Signed + HasKernel,
+    T: Signed + HasKernel,
 {
     fn extreme_indices(&self) -> Result<Extremes, ()> {
         find_extreme_indices(polymax_naive_indices, &self.convex_hull())
     }
 }
 
-impl<T> ExtremeIndices<T> for MultiPoint<T>
+impl<T> ExtremeIndices for MultiPoint<T>
 where
-    T: Float + Signed + HasKernel,
+    T: Signed + HasKernel,
 {
     fn extreme_indices(&self) -> Result<Extremes, ()> {
         find_extreme_indices(polymax_naive_indices, &self.convex_hull())
     }
 }
 
-pub trait ExtremePoints<T: Float + HasKernel> {
+pub trait ExtremePoints {
+    type Scalar: CoordinateType;
     /// Find the extreme `x` and `y` `Point`s of a Geometry
     ///
     /// This trait is available to any struct implementing both `ConvexHull` amd `ExtremeIndices`
@@ -163,14 +164,16 @@ pub trait ExtremePoints<T: Float + HasKernel> {
     ///
     /// assert_eq!(extremes.xmin, point!(x: 0., y: 1.));
     /// ```
-    fn extreme_points(&self) -> ExtremePoint<T>;
+    fn extreme_points(&self) -> ExtremePoint<Self::Scalar>;
 }
 
-impl<T, G> ExtremePoints<T> for G
+impl<T, G> ExtremePoints for G
 where
-    T: Float + Signed + HasKernel,
-    G: ConvexHull<Scalar = T> + ExtremeIndices<T>,
+    T: Signed + HasKernel,
+    G: ConvexHull<Scalar = T> + ExtremeIndices,
 {
+    type Scalar = T;
+
     // Any Geometry implementing `ConvexHull` and `ExtremeIndices` gets this automatically
     fn extreme_points(&self) -> ExtremePoint<T> {
         let ch = self.convex_hull();

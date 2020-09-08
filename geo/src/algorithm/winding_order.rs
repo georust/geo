@@ -29,12 +29,12 @@ pub enum WindingOrder {
     CounterClockwise,
 }
 
+/// Determine and operate on how a [`LineString`] is
+/// wound. This functionality, and our implementation is
+/// based on [CGAL's Polygon_2::orientation].
+///
+/// [CGAL's Polygon_2::orientation]: //doc.cgal.org/latest/Polygon/classCGAL_1_1Polygon__2.html#a4ce8b4b8395406243ac16c2a120ffc15
 pub trait Winding {
-    //! Determine and operate on how a [`LineString`] is
-    //! wound. This functionality, and our implementation is
-    //! based on [CGAL's Polygon_2::orientation].
-    //!
-    //! [CGAL's Polygon_2::orientation]: //doc.cgal.org/latest/Polygon/classCGAL_1_1Polygon__2.html#a4ce8b4b8395406243ac16c2a120ffc15
     type Scalar: CoordinateType;
 
     /// Return the winding order of this object if it
