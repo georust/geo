@@ -455,11 +455,11 @@ where
             }
             return mindist;
         }
-        if poly2.is_convex() || !self.is_convex() {
+        if poly2.is_convex() && self.is_convex() {
+            min_poly_dist(self, poly2)
+        } else {
             // fall back to R* nearest neighbour method
             nearest_neighbour_distance(&self.exterior(), &poly2.exterior())
-        } else {
-            min_poly_dist(self, poly2)
         }
     }
 }
