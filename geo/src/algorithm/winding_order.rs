@@ -91,7 +91,7 @@ pub trait Winding {
 
 impl<T, K> Winding for LineString<T>
 where
-    T: CoordinateType + HasKernel<Ker = K>,
+    T: HasKernel<Ker = K>,
     K: Kernel<Scalar = T>,
 {
     type Scalar = T;

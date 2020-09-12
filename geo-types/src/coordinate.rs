@@ -77,7 +77,7 @@ where
     }
 }
 
-use std::ops::{Add, Neg, Sub, Mul, Div};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 /// Negate a coordinate.
 ///

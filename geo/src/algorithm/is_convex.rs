@@ -1,5 +1,5 @@
 use crate::kernels::*;
-use crate::{Coordinate, CoordinateType, LineString};
+use crate::{Coordinate, LineString};
 
 /// Predicates to test the convexity of a [ `LineString` ].
 /// A closed `LineString` is said to be _convex_ if it
@@ -108,7 +108,7 @@ pub trait IsConvex {
     fn is_collinear(&self) -> bool;
 }
 
-impl<T: CoordinateType + HasKernel> IsConvex for LineString<T> {
+impl<T: HasKernel> IsConvex for LineString<T> {
     fn convex_orientation(
         &self,
         allow_collinear: bool,
@@ -140,7 +140,7 @@ fn is_convex_shaped<T>(
     specific_orientation: Option<Orientation>,
 ) -> Option<Orientation>
 where
-    T: CoordinateType + HasKernel,
+    T: HasKernel,
 {
     let n = coords.len();
 

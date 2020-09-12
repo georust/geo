@@ -1,5 +1,5 @@
 use super::kernels::*;
-use crate::{CoordinateType, MultiPolygon, Polygon};
+use crate::{MultiPolygon, Polygon};
 
 use crate::algorithm::winding_order::{Winding, WindingOrder};
 
@@ -68,7 +68,7 @@ pub trait Orient {
 
 impl<T> Orient for Polygon<T>
 where
-    T: CoordinateType + HasKernel,
+    T: HasKernel,
 {
     fn orient(&self, direction: Direction) -> Polygon<T> {
         orient(self, direction)
@@ -77,7 +77,7 @@ where
 
 impl<T> Orient for MultiPolygon<T>
 where
-    T: CoordinateType + HasKernel,
+    T: HasKernel,
 {
     fn orient(&self, direction: Direction) -> MultiPolygon<T> {
         MultiPolygon(self.0.iter().map(|poly| poly.orient(direction)).collect())
@@ -100,7 +100,7 @@ pub enum Direction {
 // and the interior ring(s) will be oriented clockwise
 fn orient<T>(poly: &Polygon<T>, direction: Direction) -> Polygon<T>
 where
-    T: CoordinateType + HasKernel,
+    T: HasKernel,
 {
     let interiors = poly
         .interiors()

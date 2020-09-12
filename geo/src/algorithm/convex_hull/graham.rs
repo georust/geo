@@ -89,9 +89,8 @@ where
 mod test {
     use super::*;
     use crate::algorithm::is_convex::IsConvex;
-    use geo_types::CoordinateType;
     use std::fmt::Debug;
-    fn test_convexity<T: CoordinateType + HasKernel + Debug>(initial: &[(T, T)]) {
+    fn test_convexity<T: HasKernel + Debug>(initial: &[(T, T)]) {
         let mut v: Vec<_> = initial
             .iter()
             .map(|e| Coordinate::from((e.0, e.1)))
