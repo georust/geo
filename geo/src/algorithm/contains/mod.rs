@@ -29,13 +29,13 @@ pub trait Contains<Rhs = Self> {
     fn contains(&self, rhs: &Rhs) -> bool;
 }
 
-mod point;
+mod geometry;
 mod line;
 mod line_string;
-mod triangle;
-mod rect;
+mod point;
 mod polygon;
-mod geometry;
+mod rect;
+mod triangle;
 
 // ┌───────┐
 // │ Tests │

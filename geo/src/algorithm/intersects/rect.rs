@@ -1,4 +1,4 @@
-use super::{Intersects, value_in_range};
+use super::{value_in_range, Intersects};
 use crate::*;
 
 impl<T> Intersects<Rect<T>> for Rect<T>

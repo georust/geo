@@ -143,14 +143,20 @@ where
         // possibly at the beginning of the line. This is to
         // prevent a double counting when the ray passes
         // through a vertex of the plygon
-        if line.start.y == coord.y  {
+        if line.start.y == coord.y {
             continue;
         }
 
         // Otherwise, check if ray intersects the line
         // segment. Enough to consider ray upto the max_x
         // coordinate of the current segment.
-        let ray = Line::new(coord, Coordinate {x: max_x, y: coord.y});
+        let ray = Line::new(
+            coord,
+            Coordinate {
+                x: max_x,
+                y: coord.y,
+            },
+        );
         if ray.intersects(&line) {
             crossings += 1;
         }

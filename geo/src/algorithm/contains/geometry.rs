@@ -1,6 +1,6 @@
 use super::Contains;
-use crate::*;
 use crate::kernels::*;
+use crate::*;
 
 // ┌──────────────────────────────┐
 // │ Implementations for Geometry │

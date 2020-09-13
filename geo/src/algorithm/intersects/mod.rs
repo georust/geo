@@ -34,9 +34,8 @@ mod coordinate;
 mod line;
 mod line_string;
 mod point;
-mod rect;
 mod polygon;
-
+mod rect;
 
 // Since `Intersects` is symmetric, we use a macro to
 // implement `T: Intersects<S>` if `S: Intersects<T>` is
@@ -105,8 +104,6 @@ where
     value_in_between(value.x, bound_1.x, bound_2.x)
         && value_in_between(value.y, bound_1.y, bound_2.y)
 }
-
-
 
 #[cfg(test)]
 mod test {

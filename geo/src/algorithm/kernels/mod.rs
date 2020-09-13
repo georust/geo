@@ -43,7 +43,10 @@ pub trait Kernel {
     /// `Collinear` if zero.
     fn dot_product_sign(u: Coordinate<Self::Scalar>, v: Coordinate<Self::Scalar>) -> Orientation {
         let zero = Coordinate::zero();
-        let vdash = Coordinate { x: Self::Scalar::zero() - v.y, y: v.x };
+        let vdash = Coordinate {
+            x: Self::Scalar::zero() - v.y,
+            y: v.x,
+        };
         Self::orient2d(zero, u, vdash)
     }
 }

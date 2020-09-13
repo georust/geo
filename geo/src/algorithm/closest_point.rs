@@ -1,5 +1,5 @@
-use crate::prelude::*;
 use crate::kernels::*;
+use crate::prelude::*;
 use crate::{Closest, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 use num_traits::Float;
 use std::iter;

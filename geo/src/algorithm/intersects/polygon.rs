@@ -1,7 +1,7 @@
 use super::Intersects;
+use crate::contains::Contains;
 use crate::kernels::*;
 use crate::*;
-use crate::contains::Contains;
 
 impl<T> Intersects<Line<T>> for Polygon<T>
 where
