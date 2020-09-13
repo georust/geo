@@ -1,20 +1,7 @@
 use super::kernels::*;
 use crate::prelude::*;
 use crate::*;
-use num_traits::{Signed, Zero};
-
-/// Compute the sign of the dot product of `u` and `v` using
-/// robust predicates. The output is `CounterClockwise` if
-/// the sign is positive, `Clockwise` if negative, and
-/// `Collinear` if zero.
-fn dot_product_sign<T>(u: Coordinate<T>, v: Coordinate<T>) -> Orientation
-where
-    T: CoordinateType + Signed + HasKernel,
-{
-    let zero = Coordinate::zero();
-    let vdash = Coordinate { x: -v.y, y: v.x };
-    T::Ker::orient2d(zero, u, vdash)
-}
+use num_traits::Signed;
 
 // Useful direction vectors, aligned with x and y axes:
 // 1., 0. = largest x
@@ -28,7 +15,7 @@ fn above<T>(u: Coordinate<T>, vi: Coordinate<T>, vj: Coordinate<T>) -> bool
 where
     T: CoordinateType + Signed + HasKernel,
 {
-    dot_product_sign(u, vi - vj) == Orientation::CounterClockwise
+    T::Ker::dot_product_sign(u, vi - vj) == Orientation::CounterClockwise
 }
 
 /// Predicate that returns `true` if `vi` is (strictly) below `vj`
@@ -38,13 +25,13 @@ fn below<T>(u: Coordinate<T>, vi: Coordinate<T>, vj: Coordinate<T>) -> bool
 where
     T: CoordinateType + Signed + HasKernel,
 {
-    dot_product_sign(u, vi - vj) == Orientation::Clockwise
+    T::Ker::dot_product_sign(u, vi - vj) == Orientation::Clockwise
 }
 
 // wrapper for extreme-finding function
 fn find_extreme_indices<T, F>(func: F, polygon: &Polygon<T>) -> Result<Extremes, ()>
 where
-    T: CoordinateType + HasKernel + Signed,
+    T: HasKernel + Signed,
     F: Fn(Coordinate<T>, &Polygon<T>) -> Result<usize, ()>,
 {
     use crate::is_convex::IsConvex;
@@ -68,7 +55,7 @@ where
 // u: a direction vector. We're using a point to represent this, which is a hack but works fine
 fn polymax_naive_indices<T>(u: Coordinate<T>, poly: &Polygon<T>) -> Result<usize, ()>
 where
-    T: CoordinateType + HasKernel + Signed,
+    T: HasKernel + Signed,
 {
     let vertices = &poly.exterior().0;
     let mut max: usize = 0;

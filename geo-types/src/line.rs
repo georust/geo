@@ -37,6 +37,11 @@ where
         }
     }
 
+    /// Calculate the difference in coordinates (Δx, Δy).
+    pub fn delta(&self) -> Coordinate<T> {
+        self.end - self.start
+    }
+
     /// Calculate the difference in ‘x’ components (Δx).
     ///
     /// Equivalent to:
@@ -53,7 +58,7 @@ where
     /// # );
     /// ```
     pub fn dx(&self) -> T {
-        self.end.x - self.start.x
+        self.delta().x
     }
 
     /// Calculate the difference in ‘y’ components (Δy).
@@ -72,7 +77,7 @@ where
     /// # );
     /// ```
     pub fn dy(&self) -> T {
-        self.end.y - self.start.y
+        self.delta().y
     }
 
     /// Calculate the slope (Δy/Δx).

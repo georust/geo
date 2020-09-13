@@ -1,4 +1,5 @@
 use crate::{Coordinate, CoordinateType};
+use num_traits::Zero;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum Orientation {
@@ -20,7 +21,6 @@ pub trait Kernel {
         r: Coordinate<Self::Scalar>,
     ) -> Orientation {
         let res = (q.x - p.x) * (r.y - q.y) - (q.y - p.y) * (r.x - q.x);
-        use num_traits::Zero;
         if res > Zero::zero() {
             Orientation::CounterClockwise
         } else if res < Zero::zero() {
@@ -35,6 +35,16 @@ pub trait Kernel {
         q: Coordinate<Self::Scalar>,
     ) -> Self::Scalar {
         (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)
+    }
+
+    /// Compute the sign of the dot product of `u` and `v` using
+    /// robust predicates. The output is `CounterClockwise` if
+    /// the sign is positive, `Clockwise` if negative, and
+    /// `Collinear` if zero.
+    fn dot_product_sign(u: Coordinate<Self::Scalar>, v: Coordinate<Self::Scalar>) -> Orientation {
+        let zero = Coordinate::zero();
+        let vdash = Coordinate { x: Self::Scalar::zero() - v.y, y: v.x };
+        Self::orient2d(zero, u, vdash)
     }
 }
 

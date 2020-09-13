@@ -1,7 +1,8 @@
 //! Internal utility functions, types, and data structures.
 
-use crate::contains::Contains;
-use geo_types::{Coordinate, CoordinateType};
+use crate::intersects::Intersects;
+use crate::kernels::*;
+use geo_types::{Coordinate, CoordinateType, Line};
 
 /// Partition a mutable slice in-place so that it contains all elements for
 /// which `predicate(e)` is `true`, followed by all elements for which
@@ -83,43 +84,77 @@ pub enum CoordPos {
     Outside,
 }
 
-/// Calculate the position of a `Coordinate` relative to a `LineString`
-pub fn coord_pos_relative_to_line_string<T>(
+/// Calculate the position of a `Coordinate` relative to a
+/// closed `LineString`.
+pub fn coord_pos_relative_to_ring<T>(
     coord: crate::Coordinate<T>,
     linestring: &crate::LineString<T>,
 ) -> CoordPos
 where
-    T: num_traits::Float,
+    T: HasKernel,
 {
-    // See: http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-    //      http://geospatialpython.com/search
-    //         ?updated-min=2011-01-01T00:00:00-06:00&updated-max=2012-01-01T00:00:00-06:00&max-results=19
+    // Use the ray-tracing algorithm: count #times a
+    // horizontal ray from point (to positive infinity).
+    //
+    // See: https://en.wikipedia.org/wiki/Point_in_polygon
+
+    assert!(linestring.is_closed());
 
     // LineString without points
     if linestring.0.is_empty() {
         return CoordPos::Outside;
     }
-    // Point is on linestring
-    if linestring.contains(&coord) {
-        return CoordPos::OnBoundary;
+    if linestring.0.len() == 1 {
+        // If LineString has one point, it will not generate
+        // any lines.  So, we handle this edge case separately.
+        return if coord == linestring.0[0] {
+            CoordPos::OnBoundary
+        } else {
+            CoordPos::Outside
+        };
     }
 
-    let mut xints = T::zero();
     let mut crossings = 0;
-    for line in linestring.lines() {
-        if coord.y > line.start.y.min(line.end.y)
-            && coord.y <= line.start.y.max(line.end.y)
-            && coord.x <= line.start.x.max(line.end.x)
-        {
-            if line.start.y != line.end.y {
-                xints = (coord.y - line.start.y) * (line.end.x - line.start.x)
-                    / (line.end.y - line.start.y)
-                    + line.start.x;
-            }
-            if (line.start.x == line.end.x) || (coord.x <= xints) {
-                crossings += 1;
-            }
+    for (i, line) in linestring.lines().enumerate() {
+        // Check if coord lies on the line
+        if line.intersects(&coord) {
+            return CoordPos::OnBoundary;
         }
+
+        // Ignore if the line is strictly to the left of the coord.
+        let max_x = if line.start.x < line.end.x {
+            line.end.x
+        } else {
+            line.start.x
+        };
+        if max_x < coord.x {
+            continue;
+        }
+
+        // Ignore if line is horizontal. This includes an
+        // edge case where the ray would intersect a
+        // horizontal segment of the ring infinitely many
+        // times, and is irrelevant for the calculation.
+        if line.start.y == line.end.y {
+            continue;
+        }
+
+        // Ignore if the intersection of the line is
+        // possibly at the beginning of the line. This is to
+        // prevent a double counting when the ray passes
+        // through a vertex of the plygon
+        if line.start.y == coord.y  {
+            continue;
+        }
+
+        // Otherwise, check if ray intersects the line
+        // segment. Enough to consider ray upto the max_x
+        // coordinate of the current segment.
+        let ray = Line::new(coord, Coordinate {x: max_x, y: coord.y});
+        if ray.intersects(&line) {
+            crossings += 1;
+        }
+        eprintln!("current crossing @ iter {} = {}", i, crossings);
     }
     if crossings % 2 == 1 {
         CoordPos::Inside

@@ -1,279 +1,112 @@
-use crate::algorithm::contains::Contains;
-use crate::{Line, LineString, Point, Polygon, Rect};
-use num_traits::Float;
+use crate::*;
 
 /// Checks if the geometry A intersects the geometry B.
-
+///
+/// # Examples
+///
+/// ```
+/// use geo::algorithm::intersects::Intersects;
+/// use geo::line_string;
+///
+/// let line_string_a = line_string![
+///     (x: 3., y: 2.),
+///     (x: 7., y: 6.),
+/// ];
+///
+/// let line_string_b = line_string![
+///     (x: 3., y: 4.),
+///     (x: 8., y: 4.),
+/// ];
+///
+/// let line_string_c = line_string![
+///     (x: 9., y: 2.),
+///     (x: 11., y: 5.),
+/// ];
+///
+/// assert!(line_string_a.intersects(&line_string_b));
+/// assert!(!line_string_a.intersects(&line_string_c));
+/// ```
 pub trait Intersects<Rhs = Self> {
-    /// Checks if the geometry A intersects the geometry B.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo::algorithm::intersects::Intersects;
-    /// use geo::line_string;
-    ///
-    /// let line_string_a = line_string![
-    ///     (x: 3., y: 2.),
-    ///     (x: 7., y: 6.),
-    /// ];
-    ///
-    /// let line_string_b = line_string![
-    ///     (x: 3., y: 4.),
-    ///     (x: 8., y: 4.),
-    /// ];
-    ///
-    /// let line_string_c = line_string![
-    ///     (x: 9., y: 2.),
-    ///     (x: 11., y: 5.),
-    /// ];
-    ///
-    /// assert!(line_string_a.intersects(&line_string_b));
-    /// assert!(!line_string_a.intersects(&line_string_c));
-    /// ```
     fn intersects(&self, rhs: &Rhs) -> bool;
 }
 
-impl<T> Intersects<Point<T>> for Line<T>
-where
-    T: Float,
-{
-    fn intersects(&self, p: &Point<T>) -> bool {
-        let tx = if self.dx() == T::zero() {
-            None
-        } else {
-            Some((p.x() - self.start.x) / self.dx())
-        };
-        let ty = if self.dy() == T::zero() {
-            None
-        } else {
-            Some((p.y() - self.start.y) / self.dy())
-        };
-        match (tx, ty) {
-            (None, None) => {
-                // Degenerate line
-                p.0 == self.start
-            }
-            (Some(t), None) => {
-                // Horizontal line
-                p.y() == self.start.y && T::zero() <= t && t <= T::one()
-            }
-            (None, Some(t)) => {
-                // Vertical line
-                p.x() == self.start.x && T::zero() <= t && t <= T::one()
-            }
-            (Some(t_x), Some(t_y)) => {
-                // All other lines
-                (t_x - t_y).abs() <= T::epsilon() && T::zero() <= t_x && t_x <= T::one()
-            }
-        }
-    }
-}
+mod coordinate;
+mod line;
+mod line_string;
+mod point;
+mod rect;
+mod polygon;
 
-impl<T> Intersects<Line<T>> for Point<T>
-where
-    T: Float,
-{
-    fn intersects(&self, line: &Line<T>) -> bool {
-        line.intersects(self)
-    }
-}
 
-impl<T> Intersects<Line<T>> for Line<T>
-where
-    T: Float,
-{
-    fn intersects(&self, line: &Line<T>) -> bool {
-        // Using Cramer's Rule:
-        // https://en.wikipedia.org/wiki/Intersection_%28Euclidean_geometry%29#Two_line_segments
-        let a1 = self.dx();
-        let a2 = self.dy();
-        let b1 = -line.dx();
-        let b2 = -line.dy();
-        let c1 = line.start.x - self.start.x;
-        let c2 = line.start.y - self.start.y;
-
-        let d = a1 * b2 - a2 * b1;
-        if d == T::zero() {
-            let (self_start, self_end) = self.points();
-            let (other_start, other_end) = line.points();
-            // lines are parallel
-            // return true iff at least one endpoint intersects the other line
-            self_start.intersects(line)
-                || self_end.intersects(line)
-                || other_start.intersects(self)
-                || other_end.intersects(self)
-        } else {
-            let s = (c1 * b2 - c2 * b1) / d;
-            let t = (a1 * c2 - a2 * c1) / d;
-            (T::zero() <= s) && (s <= T::one()) && (T::zero() <= t) && (t <= T::one())
-        }
-    }
-}
-
-impl<T> Intersects<LineString<T>> for Line<T>
-where
-    T: Float,
-{
-    fn intersects(&self, linestring: &LineString<T>) -> bool {
-        linestring.lines().any(|line| self.intersects(&line))
-    }
-}
-
-impl<T> Intersects<Line<T>> for LineString<T>
-where
-    T: Float,
-{
-    fn intersects(&self, line: &Line<T>) -> bool {
-        line.intersects(self)
-    }
-}
-
-impl<T> Intersects<Polygon<T>> for Line<T>
-where
-    T: Float,
-{
-    fn intersects(&self, p: &Polygon<T>) -> bool {
-        p.exterior().intersects(self)
-            || p.interiors().iter().any(|inner| inner.intersects(self))
-            || p.contains(&self.start_point())
-            || p.contains(&self.end_point())
-    }
-}
-
-impl<T> Intersects<Line<T>> for Polygon<T>
-where
-    T: Float,
-{
-    fn intersects(&self, line: &Line<T>) -> bool {
-        line.intersects(self)
-    }
-}
-
-impl<T> Intersects<LineString<T>> for LineString<T>
-where
-    T: Float,
-{
-    // See: https://github.com/brandonxiang/geojson-python-utils/blob/33b4c00c6cf27921fb296052d0c0341bd6ca1af2/geojson_utils.py
-    fn intersects(&self, linestring: &LineString<T>) -> bool {
-        if self.0.is_empty() || linestring.0.is_empty() {
-            return false;
-        }
-        for a in self.lines() {
-            for b in linestring.lines() {
-                let u_b = b.dy() * a.dx() - b.dx() * a.dy();
-                if u_b == T::zero() {
-                    continue;
-                }
-                let ua_t = b.dx() * (a.start.y - b.start.y) - b.dy() * (a.start.x - b.start.x);
-                let ub_t = a.dx() * (a.start.y - b.start.y) - a.dy() * (a.start.x - b.start.x);
-                let u_a = ua_t / u_b;
-                let u_b = ub_t / u_b;
-                if (T::zero() <= u_a)
-                    && (u_a <= T::one())
-                    && (T::zero() <= u_b)
-                    && (u_b <= T::one())
-                {
-                    return true;
-                }
-            }
-        }
-        false
-    }
-}
-
-impl<T> Intersects<LineString<T>> for Polygon<T>
-where
-    T: Float,
-{
-    fn intersects(&self, linestring: &LineString<T>) -> bool {
-        // line intersects inner or outer polygon edge
-        if self.exterior().intersects(linestring)
-            || self
-                .interiors()
-                .iter()
-                .any(|inner| inner.intersects(linestring))
+// Since `Intersects` is symmetric, we use a macro to
+// implement `T: Intersects<S>` if `S: Intersects<T>` is
+// available. As a convention, we provide explicit impl.
+// whenever the Rhs is a "simpler geometry" than the target
+// type, and use the macro for the reverse impl.
+#[macro_use]
+macro_rules! symmetric_intersects_impl {
+    ($t:ty, $k:ty, $bounds:tt $(+ $more_bounds:tt )*) => {
+        impl<T> $crate::algorithm::intersects::Intersects<$k> for $t
+        where T: $bounds $(+ $more_bounds)*
         {
-            true
-        } else {
-            // or if it's contained in the polygon
-            linestring.points_iter().any(|point| self.contains(&point))
+            fn intersects(&self, rhs: &$k) -> bool {
+                rhs.intersects(self)
+            }
+
         }
-    }
+    };
 }
 
-impl<T> Intersects<Polygon<T>> for LineString<T>
-where
-    T: Float,
-{
-    fn intersects(&self, polygon: &Polygon<T>) -> bool {
-        polygon.intersects(self)
-    }
-}
+use crate::kernels::HasKernel;
 
-// helper function for intersection check
+symmetric_intersects_impl!(Coordinate<T>, Point<T>, CoordinateType);
+symmetric_intersects_impl!(Coordinate<T>, Line<T>, HasKernel);
+
+symmetric_intersects_impl!(Point<T>, Line<T>, HasKernel);
+
+symmetric_intersects_impl!(Line<T>, LineString<T>, HasKernel);
+symmetric_intersects_impl!(Line<T>, Polygon<T>, HasKernel);
+
+symmetric_intersects_impl!(LineString<T>, Polygon<T>, HasKernel);
+
+symmetric_intersects_impl!(Rect<T>, Polygon<T>, HasKernel);
+
+// Helper function to check value lies between min and max.
+// Only makes sense if min <= max (or always false)
+#[inline]
 fn value_in_range<T>(value: T, min: T, max: T) -> bool
 where
-    T: Float,
+    T: std::cmp::PartialOrd,
 {
-    (value >= min) && (value <= max)
+    value >= min && value <= max
 }
 
-impl<T> Intersects<Rect<T>> for Rect<T>
+// Helper function to check value lies between two bounds,
+// where the ordering of the bounds is not known
+#[inline]
+fn value_in_between<T>(value: T, bound_1: T, bound_2: T) -> bool
 where
-    T: Float,
+    T: std::cmp::PartialOrd,
 {
-    fn intersects(&self, bounding_rect: &Rect<T>) -> bool {
-        let x_overlap = value_in_range(self.min().x, bounding_rect.min().x, bounding_rect.max().x)
-            || value_in_range(bounding_rect.min().x, self.min().x, self.max().x);
-
-        let y_overlap = value_in_range(self.min().y, bounding_rect.min().y, bounding_rect.max().y)
-            || value_in_range(bounding_rect.min().y, self.min().y, self.max().y);
-
-        x_overlap && y_overlap
+    if bound_1 < bound_2 {
+        value_in_range(value, bound_1, bound_2)
+    } else {
+        value_in_range(value, bound_2, bound_1)
     }
 }
 
-impl<T> Intersects<Polygon<T>> for Rect<T>
+// Helper function to check point lies inside rect given by
+// bounds.  The first bound need not be min.
+#[inline]
+fn point_in_rect<T>(value: Coordinate<T>, bound_1: Coordinate<T>, bound_2: Coordinate<T>) -> bool
 where
-    T: Float,
+    T: CoordinateType,
 {
-    fn intersects(&self, polygon: &Polygon<T>) -> bool {
-        polygon.intersects(self)
-    }
+    value_in_between(value.x, bound_1.x, bound_2.x)
+        && value_in_between(value.y, bound_1.y, bound_2.y)
 }
 
-impl<T> Intersects<Rect<T>> for Polygon<T>
-where
-    T: Float,
-{
-    fn intersects(&self, bounding_rect: &Rect<T>) -> bool {
-        let p = Polygon::new(
-            LineString::from(vec![
-                (bounding_rect.min().x, bounding_rect.min().y),
-                (bounding_rect.min().x, bounding_rect.max().y),
-                (bounding_rect.max().x, bounding_rect.max().y),
-                (bounding_rect.max().x, bounding_rect.min().y),
-                (bounding_rect.min().x, bounding_rect.min().y),
-            ]),
-            vec![],
-        );
-        self.intersects(&p)
-    }
-}
 
-impl<T> Intersects<Polygon<T>> for Polygon<T>
-where
-    T: Float,
-{
-    fn intersects(&self, polygon: &Polygon<T>) -> bool {
-        // self intersects (or contains) any line in polygon
-        self.intersects(polygon.exterior()) ||
-            polygon.interiors().iter().any(|inner_line_string| self.intersects(inner_line_string)) ||
-            // self is contained inside polygon
-            polygon.intersects(self.exterior())
-    }
-}
 
 #[cfg(test)]
 mod test {
