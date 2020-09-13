@@ -382,17 +382,17 @@ mod test {
     }
 
     #[test]
-    fn triangle_contains_point_on_edge() {
+    fn triangle_not_contains_point_on_edge() {
         let t = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let p = Point::new(1.0, 0.0);
-        assert!(t.contains(&p));
+        assert!(!t.contains(&p));
     }
 
     #[test]
-    fn triangle_contains_point_on_vertex() {
+    fn triangle_not_contains_point_on_vertex() {
         let t = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let p = Point::new(2.0, 0.0);
-        assert!(t.contains(&p));
+        assert!(!t.contains(&p));
     }
 
     #[test]

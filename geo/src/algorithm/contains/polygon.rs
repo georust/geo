@@ -37,8 +37,8 @@ where
     fn contains(&self, line: &Line<T>) -> bool {
         // both endpoints are contained in the polygon and the line
         // does NOT intersect the exterior or any of the interior boundaries
-        self.contains(&line.start_point())
-            && self.contains(&line.end_point())
+        self.contains(&line.start)
+            && self.contains(&line.end)
             && !self.exterior().intersects(line)
             && !self.interiors().iter().any(|inner| inner.intersects(line))
     }
