@@ -32,7 +32,7 @@ use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, 
 ///     polygon.centroid(),
 /// );
 /// ```
-pub trait Centroid<T: Float> {
+pub trait Centroid {
     type Output;
 
     /// See: https://en.wikipedia.org/wiki/Centroid
@@ -66,9 +66,15 @@ where
         // if the polygon is flat (area = 0), it is considered as a linestring
         return poly_ext.centroid();
     }
+
+    // At this point, we know the exterior contains at least one point
+    let shift = poly_ext.0.first().unwrap();
+
     let (sum_x, sum_y) = poly_ext
         .lines()
         .fold((T::zero(), T::zero()), |accum, line| {
+            use crate::algorithm::map_coords::MapCoords;
+            let line = line.map_coords(|&(x, y)| (x - shift.x, y - shift.y));
             let tmp = line.determinant();
             (
                 accum.0 + ((line.end.x + line.start.x) * tmp),
@@ -76,10 +82,10 @@ where
             )
         });
     let six = T::from_i32(6).unwrap();
-    Some(Point::new(sum_x / (six * area), sum_y / (six * area)))
+    Some(Point::new(sum_x / (six * area) + shift.x, sum_y / (six * area) + shift.y))
 }
 
-impl<T> Centroid<T> for Line<T>
+impl<T> Centroid for Line<T>
 where
     T: Float,
 {
@@ -93,7 +99,7 @@ where
     }
 }
 
-impl<T> Centroid<T> for LineString<T>
+impl<T> Centroid for LineString<T>
 where
     T: Float,
 {
@@ -129,7 +135,7 @@ where
     }
 }
 
-impl<T> Centroid<T> for MultiLineString<T>
+impl<T> Centroid for MultiLineString<T>
 where
     T: Float + FromPrimitive + Sum,
 {
@@ -177,7 +183,7 @@ where
     }
 }
 
-impl<T> Centroid<T> for Polygon<T>
+impl<T> Centroid for Polygon<T>
 where
     T: Float + FromPrimitive + Sum,
 {
@@ -233,7 +239,7 @@ where
     }
 }
 
-impl<T> Centroid<T> for MultiPolygon<T>
+impl<T> Centroid for MultiPolygon<T>
 where
     T: Float + FromPrimitive + Sum,
 {
@@ -288,7 +294,7 @@ where
     }
 }
 
-impl<T> Centroid<T> for Rect<T>
+impl<T> Centroid for Rect<T>
 where
     T: Float,
 {
@@ -299,7 +305,7 @@ where
     }
 }
 
-impl<T> Centroid<T> for Point<T>
+impl<T> Centroid for Point<T>
 where
     T: Float,
 {
@@ -322,7 +328,7 @@ where
 /// let points: MultiPoint<_> = vec![(5., 1.), (1., 3.), (3., 2.)].into();
 /// assert_eq!(points.centroid(), Some(Point::new(3., 2.)));
 /// ```
-impl<T> Centroid<T> for MultiPoint<T>
+impl<T> Centroid for MultiPoint<T>
 where
     T: Float,
 {
@@ -464,6 +470,44 @@ mod test {
     }
 
     #[test]
+    fn centroid_polygon_numerical_stability() {
+        let polygon = {
+            use std::f64::consts::PI;
+            const NUM_VERTICES: usize = 10;
+            const ANGLE_INC: f64 = 2. * PI / NUM_VERTICES as f64;
+
+            Polygon::new(
+                (0..NUM_VERTICES)
+                    .map(|i| {
+                        let angle = i as f64 * ANGLE_INC;
+                        Coordinate {
+                            x: angle.cos(),
+                            y: angle.sin(),
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .into(),
+                vec![],
+            )
+        };
+
+        let centroid = polygon.centroid().unwrap();
+
+        let shift_x = 1.5e8;
+        let shift_y = 1.5e8;
+
+        use crate::map_coords::MapCoords;
+        let polygon = polygon.map_coords(|&(x, y)| (x + shift_x, y + shift_y));
+
+        let new_centroid = polygon.centroid().unwrap()
+            .map_coords(|&(x, y)| (x - shift_x, y - shift_y));
+        eprintln!("centroid {:?}", centroid.0);
+        eprintln!("new_centroid {:?}", new_centroid.0);
+        assert_relative_eq!(centroid.0.x, new_centroid.0.x, max_relative = 0.0001);
+        assert_relative_eq!(centroid.0.y, new_centroid.0.y, max_relative = 0.0001);
+    }
+
+    #[test]
     fn polygon_test() {
         let poly = polygon![
             (x: 0., y: 0.),
@@ -494,7 +538,8 @@ mod test {
 
         let p1 = Polygon::new(ls1, vec![ls2, ls3]);
         let centroid = p1.centroid().unwrap();
-        assert_eq!(centroid, Point::new(5.5, 2.5518518518518514));
+        assert_relative_eq!(centroid.x(), 5.5, max_relative = 1e-6);
+        assert_relative_eq!(centroid.y(), 2.5518518518518514, max_relative = 1e-6);
     }
     #[test]
     fn flat_polygon_test() {
