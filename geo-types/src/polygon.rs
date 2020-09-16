@@ -7,6 +7,11 @@ use num_traits::{Float, Signed};
 /// [`LineString`]. It may contain zero or more holes (_interior rings_), also
 /// represented by `LineString`s.
 ///
+/// The _boundary_ of the polygon is the union of the
+/// boundaries of the exterior and interiors. The interior
+/// is all the points inside the polygon (not on the
+/// boundary).
+///
 /// The `Polygon` structure guarantees that all exterior and interior rings will
 /// be _closed_, such that the first and last `Coordinate` of each ring has
 /// the same value.

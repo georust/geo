@@ -1,6 +1,12 @@
 use crate::*;
 
-/// Checks if the geometry A intersects the geometry B.
+/// Checks if the geometry A intersects the geometry B. More
+/// formally, either boundary or interior of A has non-empty
+/// (set-theoretic) intersection with the boundary or
+/// interior of B. In other words, the [DE-9IM] intersection
+/// matrix for (A, B) is _not_ `FF*FF****`.
+///
+/// [DE-9IM]: https://en.wikipedia.org/wiki/DE-9IM
 ///
 /// # Examples
 ///

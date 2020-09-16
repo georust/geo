@@ -9,6 +9,10 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 /// tuples, or arrays – see the `From` impl section for a
 /// complete list.
 ///
+/// A point is _valid_ iff neither coordinate is `NaN`. The
+/// _interior_ of the point is itself (a singleton set), and
+/// its _boundary_ is empty.
+///
 /// # Examples
 ///
 /// ```

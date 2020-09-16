@@ -1,7 +1,9 @@
 use crate::{CoordinateType, Point};
 use std::iter::FromIterator;
 
-/// A collection of [`Point`s](struct.Point.html).
+/// A collection of [`Point`s](struct.Point.html). The
+/// interior and the boundary are the union of the interior
+/// or the boundary of the constituent points.
 ///
 /// # Examples
 ///

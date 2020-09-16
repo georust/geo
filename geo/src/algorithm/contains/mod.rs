@@ -1,4 +1,11 @@
 /// Checks if `rhs` is completely contained within `self`.
+/// More formally, the interior of `rhs` has non-empty
+/// (set-theoretic) intersection but neither the interior,
+/// nor the boundary of `rhs` intersects the exterior of
+/// `self`. In other words, the [DE-9IM] intersection matrix
+/// of `(rhs, self)` is `T*F**F***`.
+///
+/// [DE-9IM]: https://en.wikipedia.org/wiki/DE-9IM
 ///
 /// # Examples
 ///
