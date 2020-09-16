@@ -138,7 +138,11 @@ mod test {
     #[test]
     fn linestring_point_is_vertex_test() {
         let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.)]);
-        assert!(linestring.contains(&Point::new(2., 2.)));
+        // Note: the end points of a linestring are not
+        // considered to be "contained"
+        assert!(linestring.contains(&Point::new(2., 0.)));
+        assert!(!linestring.contains(&Point::new(0., 0.)));
+        assert!(!linestring.contains(&Point::new(2., 2.)));
     }
     #[test]
     fn linestring_test() {
@@ -347,6 +351,32 @@ mod test {
         let poly1 = Polygon::new(linestring1, Vec::new());
         assert!(poly0.contains(&line));
         assert!(!poly1.contains(&line));
+    }
+    #[test]
+    #[ignore]
+    fn line_in_polygon_edgecases_test() {
+        // Some DE-9IM edge cases for checking line is
+        // inside polygon The end points of the line can be
+        // on the boundary of the polygon but we don't allow
+        // that yet.
+        let c = |x, y| Coordinate { x, y };
+        // A non-convex polygon
+        let linestring0 = line_string![c(0, 0), c(1, 1), c(1, -1), c(-1, -1), c(-1, 1)];
+        let poly = Polygon::new(linestring0, Vec::new());
+
+        assert!(poly.contains(&Line::new(c(0, 0), c(1, -1))));
+        assert!(poly.contains(&Line::new(c(-1, 1), c(1, -1))));
+        assert!(!poly.contains(&Line::new(c(-1, 1), c(1, 1))));
+    }
+    #[test]
+    fn line_in_linestring_edgecases() {
+        let c = |x, y| Coordinate { x, y };
+        use crate::line_string;
+        let mut ls = line_string![c(0, 0), c(1, 0), c(0, 1), c(-1, 0)];
+        assert!(!ls.contains(&Line::from([(0, 0), (0, 0)])));
+        ls.close();
+        assert!(ls.contains(&Line::from([(0, 0), (0, 0)])));
+        assert!(ls.contains(&Line::from([(-1, 0), (1, 0)])));
     }
     #[test]
     fn line_in_linestring_test() {

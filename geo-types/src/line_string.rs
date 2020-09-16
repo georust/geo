@@ -15,9 +15,9 @@ use std::ops::{Index, IndexMut};
 ///
 /// # Validity
 ///
-/// A `LineString` is valid if it does not self-intersect
-/// except possibly at the end points, and is either empty
-/// or contains 2 or more coordinates. Note that the
+/// A `LineString` is valid if it is either empty or
+/// contains 2 or more coordinates. Further, a closed
+/// `LineString` must not self intersect. Note that the
 /// validity is not enforced, and the operations and
 /// predicates are undefined on invalid linestrings.
 ///

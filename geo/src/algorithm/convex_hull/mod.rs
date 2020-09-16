@@ -117,10 +117,17 @@ where
 
     // Remove repeated points unless collinear points
     // are to be included.
-    let mut ls: LineString<T> = points.iter().copied().collect();
+    let mut ls: Vec<Coordinate<T>> = points.iter().copied().collect();
     if !include_on_hull {
-        ls.0.dedup();
+        ls.dedup();
     }
+
+    // A linestring with a single point is invalid.
+    if ls.len() == 1 {
+        ls.push(ls[0]);
+    }
+
+    let mut ls = LineString(ls);
     ls.close();
 
     // Maintain the CCW invariance

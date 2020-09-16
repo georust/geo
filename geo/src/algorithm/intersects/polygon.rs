@@ -2,6 +2,29 @@ use super::Intersects;
 use crate::contains::Contains;
 use crate::kernels::*;
 use crate::*;
+use crate::utils::{coord_pos_relative_to_ring, CoordPos};
+
+impl<T> Intersects<Coordinate<T>> for Polygon<T>
+where
+    T: HasKernel,
+{
+    fn intersects(&self, p: &Coordinate<T>) -> bool {
+        coord_pos_relative_to_ring(*p, &self.exterior()) != CoordPos::Outside
+            && self.interiors().iter().all(
+                |int| coord_pos_relative_to_ring(*p, int) != CoordPos::Inside
+            )
+    }
+}
+
+impl<T> Intersects<Point<T>> for Polygon<T>
+where
+    T: HasKernel,
+{
+    fn intersects(&self, p: &Point<T>) -> bool {
+        self.intersects(&p.0)
+    }
+}
+
 
 impl<T> Intersects<Line<T>> for Polygon<T>
 where

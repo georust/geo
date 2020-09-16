@@ -78,7 +78,7 @@ impl<F: Float + HasKernel> ClosestPoint<F> for Line<F> {
         let y = direction_vector.y();
         let c = Point(self.start + (t * x, t * y).into());
 
-        if self.contains(p) {
+        if self.intersects(p) {
             Closest::Intersection(c)
         } else {
             Closest::SinglePoint(c)

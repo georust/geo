@@ -12,7 +12,11 @@ where
     T: HasKernel,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
-        self.intersects(coord)
+        if self.start == self.end {
+            &self.start == coord
+        } else {
+            coord != &self.start && coord != &self.end && self.intersects(coord)
+        }
     }
 }
 
@@ -30,7 +34,11 @@ where
     T: HasKernel,
 {
     fn contains(&self, line: &Line<T>) -> bool {
-        self.contains(&line.start) && self.contains(&line.end)
+        if line.start == line.end {
+            self.contains(&line.start)
+        } else {
+            self.intersects(&line.start) && self.intersects(&line.end)
+        }
     }
 }
 
@@ -39,6 +47,19 @@ where
     T: HasKernel,
 {
     fn contains(&self, linestring: &LineString<T>) -> bool {
-        linestring.0.iter().all(|c| self.contains(c))
+        // Empty linestring has no interior, and not
+        // contained in anything.
+        if linestring.0.is_empty() {
+            return false;
+        }
+
+        // A closed linestring contains the start point in
+        // its interior and hence, must be within the line
+        // too.
+        if linestring.is_closed() && !self.contains(&linestring.0[0]) {
+            return false;
+        }
+
+        linestring.0.iter().all(|c| self.intersects(c))
     }
 }

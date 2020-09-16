@@ -30,6 +30,8 @@ where
     }
 }
 
+// TODO: ensure DE-9IM compliance: esp., when
+// line.start and line.end is on the boundaries
 impl<T> Contains<Line<T>> for Polygon<T>
 where
     T: HasKernel,
@@ -44,6 +46,7 @@ where
     }
 }
 
+// TODO: also check interiors
 impl<T> Contains<Polygon<T>> for Polygon<T>
 where
     T: HasKernel,
@@ -54,6 +57,7 @@ where
     }
 }
 
+// TODO: ensure DE-9IM compliance
 impl<T> Contains<LineString<T>> for Polygon<T>
 where
     T: HasKernel,
@@ -76,21 +80,12 @@ where
 // ┌──────────────────────────────────┐
 // │ Implementations for MultiPolygon │
 // └──────────────────────────────────┘
-
-impl<T> Contains<Coordinate<T>> for MultiPolygon<T>
+impl<G, T> Contains<G> for MultiPolygon<T>
 where
-    T: HasKernel,
+    T: CoordinateType,
+    Polygon<T>: Contains<G>,
 {
-    fn contains(&self, coord: &Coordinate<T>) -> bool {
-        self.0.iter().any(|poly| poly.contains(coord))
-    }
-}
-
-impl<T> Contains<Point<T>> for MultiPolygon<T>
-where
-    T: HasKernel,
-{
-    fn contains(&self, p: &Point<T>) -> bool {
-        self.contains(&p.0)
+    fn contains(&self, rhs: &G) -> bool {
+        self.0.iter().any(|p| p.contains(rhs))
     }
 }

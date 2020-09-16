@@ -34,7 +34,6 @@ where
     T: HasKernel + Signed,
     F: Fn(Coordinate<T>, &Polygon<T>) -> Result<usize, ()>,
 {
-    use crate::is_convex::IsConvex;
     if !polygon.exterior().is_convex() {
         return Err(());
     }

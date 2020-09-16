@@ -10,10 +10,10 @@ where
     T: CoordinateType,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
-        coord.x >= self.min().x
-            && coord.x <= self.max().x
-            && coord.y >= self.min().y
-            && coord.y <= self.max().y
+        coord.x > self.min().x
+            && coord.x < self.max().x
+            && coord.y > self.min().y
+            && coord.y < self.max().y
     }
 }
 

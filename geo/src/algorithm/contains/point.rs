@@ -26,21 +26,12 @@ where
 // ┌────────────────────────────────┐
 // │ Implementations for MultiPoint │
 // └────────────────────────────────┘
-
-impl<T> Contains<Coordinate<T>> for MultiPoint<T>
+impl<G, T> Contains<G> for MultiPoint<T>
 where
     T: CoordinateType,
+    Point<T>: Contains<G>,
 {
-    fn contains(&self, coord: &Coordinate<T>) -> bool {
-        self.0.iter().any(|point| point.contains(coord))
-    }
-}
-
-impl<T> Contains<Point<T>> for MultiPoint<T>
-where
-    T: CoordinateType,
-{
-    fn contains(&self, point: &Point<T>) -> bool {
-        self.contains(&point.0)
+    fn contains(&self, rhs: &G) -> bool {
+        self.0.iter().any(|p| p.contains(rhs))
     }
 }
