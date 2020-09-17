@@ -1,4 +1,3 @@
-use crate::algorithm::convexhull::ConvexHull;
 use crate::algorithm::euclidean_distance::EuclideanDistance;
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::prelude::Centroid;
@@ -7,112 +6,111 @@ use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, 
 use num_traits::Float;
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
+use geo_types::{CoordinateType, Coordinate};
+use crate::algorithm::convex_hull::qhull;
 
-pub trait ConcaveHull<T> {
-    /// Returns a polygon which covers a geometry. Unlike convex hulls, which also cover
-    /// their geometry, a concave hull does so while trying to further minimize its area by
-    /// constructing edges such that the exterior of the polygon incorporates points that would
-    /// be interior points in a convex hull.
-    ///
-    /// This implementation is inspired by https://github.com/mapbox/concaveman
-    /// and also uses ideas from the following paper:
-    /// www.iis.sinica.edu.tw/page/jise/2012/201205_10.pdf
-    ///
-    /// # Example
-    /// ```
-    /// use geo::{line_string, polygon};
-    /// use geo::algorithm::concave_hull::ConcaveHull;
-    ///
-    /// // a square shape
-    /// let poly = polygon![
-    ///     (x: 0.0, y: 0.0),
-    ///     (x: 4.0, y: 0.0),
-    ///     (x: 4.0, y: 4.0),
-    ///     (x: 0.0, y: 4.0),
-    /// ];
-    ///
-    /// // The correct concave hull coordinates
-    /// let correct_hull = line_string![
-    ///     (x: 4.0, y: 0.0),
-    ///     (x: 4.0, y: 4.0),
-    ///     (x: 0.0, y: 4.0),
-    ///     (x: 0.0, y: 0.0),
-    ///     (x: 4.0, y: 0.0),
-    /// ];
-    ///
-    /// let res = poly.concave_hull(2.0);
-    /// assert_eq!(res.exterior(), &correct_hull);
-    /// ```
-    fn concave_hull(&self, concavity: T) -> Polygon<T>
-    where
-        T: Float + RTreeNum;
+/// Returns a polygon which covers a geometry. Unlike convex hulls, which also cover
+/// their geometry, a concave hull does so while trying to further minimize its area by
+/// constructing edges such that the exterior of the polygon incorporates points that would
+/// be interior points in a convex hull.
+///
+/// This implementation is inspired by https://github.com/mapbox/concaveman
+/// and also uses ideas from the following paper:
+/// www.iis.sinica.edu.tw/page/jise/2012/201205_10.pdf
+///
+/// # Example
+/// ```
+/// use geo::{line_string, polygon};
+/// use geo::algorithm::concave_hull::ConcaveHull;
+///
+/// // a square shape
+/// let poly = polygon![
+///     (x: 0.0, y: 0.0),
+///     (x: 4.0, y: 0.0),
+///     (x: 4.0, y: 4.0),
+///     (x: 0.0, y: 4.0),
+/// ];
+///
+/// // The correct concave hull coordinates
+/// let correct_hull = line_string![
+///     (x: 4.0, y: 0.0),
+///     (x: 4.0, y: 4.0),
+///     (x: 0.0, y: 4.0),
+///     (x: 0.0, y: 0.0),
+///     (x: 4.0, y: 0.0),
+/// ];
+///
+/// let res = poly.concave_hull(2.0);
+/// assert_eq!(res.exterior(), &correct_hull);
+/// ```
+pub trait ConcaveHull {
+    type Scalar: CoordinateType;
+    fn concave_hull(&self, concavity: Self::Scalar) -> LineString<Self::Scalar>;
 }
 
-impl<T> ConcaveHull<T> for Polygon<T>
+impl<T> ConcaveHull for Polygon<T>
 where
     T: Float + RTreeNum,
 {
-    fn concave_hull(&self, concavity: T) -> Polygon<T> {
-        let points: Vec<_> = self.exterior().points_iter().collect();
-        Polygon::new(LineString::from(concave_hull(&points, concavity)), vec![])
+    type Scalar = T;
+    fn concave_hull(&self, concavity: Self::Scalar) -> LineString<Self::Scalar> {
+        let mut points: Vec<_> = self.exterior().points_iter().map(|point|{
+           point.0
+        }).collect();
+        concave_hull(&mut points, concavity)
     }
 }
 
-impl<T> ConcaveHull<T> for MultiPolygon<T>
+impl<T> ConcaveHull for MultiPolygon<T>
 where
     T: Float + RTreeNum,
 {
-    fn concave_hull(&self, concavity: T) -> Polygon<T> {
-        let aggregated: Vec<Point<T>> = self
+    type Scalar = T;
+    fn concave_hull(&self, concavity: Self::Scalar) -> LineString<Self::Scalar> {
+        let mut aggregated: Vec<Point<Self::Scalar>> = self
             .0
             .iter()
             .flat_map(|elem| elem.exterior().0.iter().map(|c| Point(*c)))
             .collect();
-        Polygon::new(
-            LineString::from(concave_hull(&aggregated, concavity)),
-            vec![],
-        )
+        concave_hull(&mut aggregated, concavity)
     }
 }
 
-impl<T> ConcaveHull<T> for LineString<T>
+impl<T> ConcaveHull for LineString<T>
 where
     T: Float + RTreeNum,
 {
-    fn concave_hull(&self, concavity: T) -> Polygon<T> {
-        Polygon::new(
-            LineString::from(concave_hull(&self.clone().into_points(), concavity)),
-            vec![],
-        )
+    type Scalar = T;
+    fn concave_hull(&self, concavity: Self::Scalar) -> LineString<Self::Scalar> {
+        concave_hull(&mut self.clone().into(), concavity)
     }
 }
 
-impl<T> ConcaveHull<T> for MultiLineString<T>
+impl<T> ConcaveHull for MultiLineString<T>
 where
     T: Float + RTreeNum,
 {
-    fn concave_hull(&self, concavity: T) -> Polygon<T> {
-        let aggregated: Vec<Point<T>> = self
+    type Scalar = T;
+    fn concave_hull(&self, concavity: T) -> LineString<T> {
+        let mut aggregated: [Coordinate<T>] = self
             .0
             .iter()
-            .flat_map(|elem| elem.clone().into_points())
+            .flat_map(|elem| elem.clone().0)
             .collect();
-        Polygon::new(
-            LineString::from(concave_hull(&aggregated, concavity)),
-            vec![],
-        )
+        concave_hull(&mut aggregated, concavity)
     }
 }
 
-impl<T> ConcaveHull<T> for MultiPoint<T>
+impl<T> ConcaveHull for MultiPoint<T>
 where
     T: Float + RTreeNum,
 {
-    fn concave_hull(&self, concavity: T) -> Polygon<T> {
-        Polygon::new(
-            LineString::from(concave_hull(&self.0.clone(), concavity)),
-            vec![],
-        )
+    type Scalar = T;
+    fn concave_hull(&self, concavity: T) -> LineString<T> {
+        let mut coordinates: [Coordinate<T>] = self.0.iter().map(|point|{
+           point.0
+        }).collect();
+        concave_hull(&mut coordinates, concavity)
     }
 }
 
@@ -180,12 +178,14 @@ where
 
 // This takes significant inspiration from:
 // https://github.com/mapbox/concaveman/blob/54838e1/index.js#L11
-fn concave_hull<T>(points: &Vec<Point<T>>, concavity: T) -> Vec<Point<T>>
+fn concave_hull<T>(coords: &mut [Coordinate<T>], concavity: T) -> LineString<T>
 where
     T: Float + RTreeNum,
 {
-    let multipoint: MultiPoint<T> = points.clone().into();
-    let hull = multipoint.convex_hull();
+    let hull = qhull::quick_hull(coords);
+    let points = coords.iter().map(|coord|{
+      Point::new(coord.x, coord.y)
+    });
 
     //Get points in overall dataset that aren't on the exterior linestring of the hull
     let hull_exterior = hull.exterior();
@@ -236,7 +236,7 @@ where
         }
     }
 
-    return concave_list;
+    return concave_list.into();
 }
 
 #[cfg(test)]
