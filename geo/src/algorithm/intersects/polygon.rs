@@ -1,8 +1,8 @@
 use super::Intersects;
 use crate::contains::Contains;
 use crate::kernels::*;
-use crate::*;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
+use crate::*;
 
 impl<T> Intersects<Coordinate<T>> for Polygon<T>
 where
@@ -10,9 +10,10 @@ where
 {
     fn intersects(&self, p: &Coordinate<T>) -> bool {
         coord_pos_relative_to_ring(*p, &self.exterior()) != CoordPos::Outside
-            && self.interiors().iter().all(
-                |int| coord_pos_relative_to_ring(*p, int) != CoordPos::Inside
-            )
+            && self
+                .interiors()
+                .iter()
+                .all(|int| coord_pos_relative_to_ring(*p, int) != CoordPos::Inside)
     }
 }
 
@@ -24,7 +25,6 @@ where
         self.intersects(&p.0)
     }
 }
-
 
 impl<T> Intersects<Line<T>> for Polygon<T>
 where
