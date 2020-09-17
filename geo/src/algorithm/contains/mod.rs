@@ -336,10 +336,16 @@ mod test {
         let linestring2 = LineString::from(vec![(01, 11), (10, 20), (40, 50)]);
         // no part of linestring3 is contained in line
         let linestring3 = LineString::from(vec![(11, 11), (20, 20), (25, 25)]);
+        // a linestring with singleton interior on the boundary of the line
+        let linestring4 = LineString::from(vec![(0, 10), (0, 10), (0, 10)]);
+        // a linestring with singleton interior that is contained in the line
+        let linestring5 = LineString::from(vec![(1, 11), (1, 11), (1, 11)]);
         assert!(line.contains(&linestring0));
         assert!(!line.contains(&linestring1));
         assert!(!line.contains(&linestring2));
         assert!(!line.contains(&linestring3));
+        assert!(!line.contains(&linestring4));
+        assert!(line.contains(&linestring5));
     }
     #[test]
     fn line_in_polygon_test() {

@@ -53,13 +53,32 @@ where
             return false;
         }
 
-        // A closed linestring contains the start point in
-        // its interior and hence, must be within the line
-        // too.
-        if linestring.is_closed() && !self.contains(&linestring.0[0]) {
-            return false;
-        }
+        // The interior of the linestring should have some
+        // intersection with the interior of self. Two cases
+        // arise:
+        //
+        // 1. There are at least two distinct points in the
+        // linestring. Then, if both intersect, the interior
+        // between these two must have non-empty intersection.
+        //
+        // 2. Otherwise, all the points on the linestring
+        // are the same. In this case, the interior is this
+        // specific point, and it should be contained in the
+        // line.
+        let first = linestring.0.first().unwrap();
+        let mut all_equal = true;
 
-        linestring.0.iter().all(|c| self.intersects(c))
+        // If all the vertices of the linestring intersect
+        // self, then the interior or boundary of the
+        // linestring cannot have non-empty intersection
+        // with the exterior.
+        let all_intersects = linestring.0.iter().all(|c| {
+            if c != first {
+                all_equal = false;
+            }
+            self.intersects(c)
+        });
+
+        all_intersects && (!all_equal || self.contains(first))
     }
 }
