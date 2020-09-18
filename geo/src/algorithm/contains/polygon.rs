@@ -80,6 +80,7 @@ where
 // ┌──────────────────────────────────┐
 // │ Implementations for MultiPolygon │
 // └──────────────────────────────────┘
+// TODO: ensure DE-9IM compliance
 impl<G, T> Contains<G> for MultiPolygon<T>
 where
     T: CoordinateType,

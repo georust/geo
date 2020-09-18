@@ -30,11 +30,12 @@ impl<T> Contains<Rect<T>> for Rect<T>
 where
     T: CoordinateType,
 {
-    fn contains(&self, bounding_rect: &Rect<T>) -> bool {
+    fn contains(&self, other: &Rect<T>) -> bool {
+        // TODO: check for degenerate rectangle (which is a line or a point)
         // All points of LineString must be in the polygon ?
-        self.min().x <= bounding_rect.min().x
-            && self.max().x >= bounding_rect.max().x
-            && self.min().y <= bounding_rect.min().y
-            && self.max().y >= bounding_rect.max().y
+        self.min().x <= other.min().x
+            && self.max().x >= other.max().x
+            && self.min().y <= other.min().y
+            && self.max().y >= other.max().y
     }
 }

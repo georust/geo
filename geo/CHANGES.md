@@ -1,5 +1,15 @@
 # Changes
 
+## Master (not released)
+
+* Add robust predicates
+  * <https://github.com/georust/geo/pull/511>
+  * <https://github.com/georust/geo/pull/505>
+  * <https://github.com/georust/geo/pull/504>
+  * <https://github.com/georust/geo/pull/502>
+* Improve numerical stability in centroid computation
+  * <https://github.com/georust/geo/pull/510>
+
 ## 0.14.2
 
 * Bump proj version to 0.20.3
