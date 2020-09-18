@@ -64,6 +64,7 @@ mod line_string;
 mod point;
 mod polygon;
 mod rect;
+mod triangle;
 
 // Helper function to check value lies between min and max.
 // Only makes sense if min <= max (or always false)

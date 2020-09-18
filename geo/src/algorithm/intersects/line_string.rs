@@ -2,6 +2,26 @@ use super::Intersects;
 use crate::kernels::*;
 use crate::*;
 
+impl<T> Intersects<Coordinate<T>> for LineString<T>
+where
+    T: HasKernel,
+{
+    fn intersects(&self, coord: &Coordinate<T>) -> bool {
+        self.lines().any(|l| coord.intersects(&l))
+    }
+}
+symmetric_intersects_impl!(Coordinate<T>, LineString<T>, HasKernel);
+
+impl<T> Intersects<Point<T>> for LineString<T>
+where
+    T: HasKernel,
+{
+    fn intersects(&self, point: &Point<T>) -> bool {
+        self.intersects(&point.0)
+    }
+}
+symmetric_intersects_impl!(Point<T>, LineString<T>, HasKernel);
+
 impl<T> Intersects<Line<T>> for LineString<T>
 where
     T: HasKernel,

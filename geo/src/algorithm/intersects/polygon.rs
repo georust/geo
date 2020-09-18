@@ -67,17 +67,7 @@ where
     T: HasKernel,
 {
     fn intersects(&self, rect: &Rect<T>) -> bool {
-        let p = Polygon::new(
-            LineString::from(vec![
-                (rect.min().x, rect.min().y),
-                (rect.min().x, rect.max().y),
-                (rect.max().x, rect.max().y),
-                (rect.max().x, rect.min().y),
-                (rect.min().x, rect.min().y),
-            ]),
-            vec![],
-        );
-        self.intersects(&p)
+        self.intersects(&rect.clone().to_polygon())
     }
 }
 symmetric_intersects_impl!(Rect<T>, Polygon<T>, HasKernel);
