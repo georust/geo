@@ -10,16 +10,10 @@ pub enum Orientation {
 
 /// Kernel trait to provide predicates to operate on
 /// different scalar types.
-pub trait Kernel {
-    type Scalar: CoordinateType;
-
+pub trait Kernel<T: CoordinateType> {
     /// Gives the orientation of 3 2-dimensional points:
     /// ccw, cw or collinear (None)
-    fn orient2d(
-        p: Coordinate<Self::Scalar>,
-        q: Coordinate<Self::Scalar>,
-        r: Coordinate<Self::Scalar>,
-    ) -> Orientation {
+    fn orient2d(p: Coordinate<T>, q: Coordinate<T>, r: Coordinate<T>) -> Orientation {
         let res = (q.x - p.x) * (r.y - q.y) - (q.y - p.y) * (r.x - q.x);
         if res > Zero::zero() {
             Orientation::CounterClockwise
@@ -30,10 +24,7 @@ pub trait Kernel {
         }
     }
 
-    fn square_euclidean_distance(
-        p: Coordinate<Self::Scalar>,
-        q: Coordinate<Self::Scalar>,
-    ) -> Self::Scalar {
+    fn square_euclidean_distance(p: Coordinate<T>, q: Coordinate<T>) -> T {
         (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)
     }
 
@@ -41,10 +32,10 @@ pub trait Kernel {
     /// robust predicates. The output is `CounterClockwise` if
     /// the sign is positive, `Clockwise` if negative, and
     /// `Collinear` if zero.
-    fn dot_product_sign(u: Coordinate<Self::Scalar>, v: Coordinate<Self::Scalar>) -> Orientation {
+    fn dot_product_sign(u: Coordinate<T>, v: Coordinate<T>) -> Orientation {
         let zero = Coordinate::zero();
         let vdash = Coordinate {
-            x: Self::Scalar::zero() - v.y,
+            x: T::zero() - v.y,
             y: v.x,
         };
         Self::orient2d(zero, u, vdash)
@@ -53,7 +44,7 @@ pub trait Kernel {
 
 /// Marker trait to assign Kernel for scalars
 pub trait HasKernel: CoordinateType {
-    type Ker: Kernel<Scalar = Self>;
+    type Ker: Kernel<Self>;
 }
 
 // Helper macro to implement `HasKernel` on a a scalar type
@@ -64,7 +55,7 @@ pub trait HasKernel: CoordinateType {
 macro_rules! has_kernel {
     ($t:ident, $k:ident) => {
         impl $crate::algorithm::kernels::HasKernel for $t {
-            type Ker = $k<$t>;
+            type Ker = $k;
         }
     };
 }

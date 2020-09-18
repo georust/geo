@@ -534,7 +534,6 @@ mod test {
     #[test]
     // See https://github.com/georust/geo/issues/419
     fn rect_test_419() {
-
         let a = Rect::new(
             Coordinate {
                 x: 9.228515625,
