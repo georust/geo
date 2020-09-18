@@ -1,10 +1,13 @@
 use crate::*;
 
-/// Checks if the geometry A intersects the geometry B. More
-/// formally, either boundary or interior of A has non-empty
-/// (set-theoretic) intersection with the boundary or
-/// interior of B. In other words, the [DE-9IM] intersection
-/// matrix for (A, B) is _not_ `FF*FF****`.
+/// Checks if the geometry Self intersects the geometry Rhs.
+/// More formally, either boundary or interior of Self has
+/// non-empty (set-theoretic) intersection with the boundary
+/// or interior of Rhs. In other words, the [DE-9IM]
+/// intersection matrix for (Self, Rhs) is _not_ `FF*FF****`.
+///
+/// This predicate is symmetric: `a.intersects(b)` iff
+/// `b.intersects(a)`.
 ///
 /// [DE-9IM]: https://en.wikipedia.org/wiki/DE-9IM
 ///
@@ -36,13 +39,6 @@ pub trait Intersects<Rhs = Self> {
     fn intersects(&self, rhs: &Rhs) -> bool;
 }
 
-mod coordinate;
-mod line;
-mod line_string;
-mod point;
-mod polygon;
-mod rect;
-
 // Since `Intersects` is symmetric, we use a macro to
 // implement `T: Intersects<S>` if `S: Intersects<T>` is
 // available. As a convention, we provide explicit impl.
@@ -62,19 +58,12 @@ macro_rules! symmetric_intersects_impl {
     };
 }
 
-use crate::kernels::HasKernel;
-
-symmetric_intersects_impl!(Coordinate<T>, Point<T>, CoordinateType);
-symmetric_intersects_impl!(Coordinate<T>, Line<T>, HasKernel);
-
-symmetric_intersects_impl!(Point<T>, Line<T>, HasKernel);
-
-symmetric_intersects_impl!(Line<T>, LineString<T>, HasKernel);
-symmetric_intersects_impl!(Line<T>, Polygon<T>, HasKernel);
-
-symmetric_intersects_impl!(LineString<T>, Polygon<T>, HasKernel);
-
-symmetric_intersects_impl!(Rect<T>, Polygon<T>, HasKernel);
+mod coordinate;
+mod line;
+mod line_string;
+mod point;
+mod polygon;
+mod rect;
 
 // Helper function to check value lies between min and max.
 // Only makes sense if min <= max (or always false)
@@ -545,6 +534,7 @@ mod test {
     #[test]
     // See https://github.com/georust/geo/issues/419
     fn rect_test_419() {
+
         let a = Rect::new(
             Coordinate {
                 x: 9.228515625,

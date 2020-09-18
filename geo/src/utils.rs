@@ -115,7 +115,7 @@ where
     }
 
     let mut crossings = 0;
-    for (i, line) in linestring.lines().enumerate() {
+    for line in linestring.lines() {
         // Check if coord lies on the line
         if line.intersects(&coord) {
             return CoordPos::OnBoundary;
@@ -160,7 +160,6 @@ where
         if ray.intersects(&line) {
             crossings += 1;
         }
-        eprintln!("current crossing @ iter {} = {}", i, crossings);
     }
     if crossings % 2 == 1 {
         CoordPos::Inside

@@ -10,6 +10,7 @@ where
         self.lines().any(|l| line.intersects(&l))
     }
 }
+symmetric_intersects_impl!(Line<T>, LineString<T>, HasKernel);
 
 impl<T> Intersects<LineString<T>> for LineString<T>
 where

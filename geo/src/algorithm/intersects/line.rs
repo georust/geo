@@ -11,6 +11,7 @@ where
             && point_in_rect(*rhs, self.start, self.end)
     }
 }
+symmetric_intersects_impl!(Coordinate<T>, Line<T>, HasKernel);
 
 impl<T> Intersects<Point<T>> for Line<T>
 where
@@ -20,6 +21,7 @@ where
         self.intersects(&p.0)
     }
 }
+symmetric_intersects_impl!(Point<T>, Line<T>, HasKernel);
 
 impl<T> Intersects<Line<T>> for Line<T>
 where

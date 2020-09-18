@@ -9,6 +9,7 @@ where
         &self.0 == rhs
     }
 }
+symmetric_intersects_impl!(Coordinate<T>, Point<T>, CoordinateType);
 
 impl<T> Intersects<Point<T>> for Point<T>
 where

@@ -16,6 +16,7 @@ where
                 .all(|int| coord_pos_relative_to_ring(*p, int) != CoordPos::Inside)
     }
 }
+symmetric_intersects_impl!(Coordinate<T>, Polygon<T>, HasKernel);
 
 impl<T> Intersects<Point<T>> for Polygon<T>
 where
@@ -25,18 +26,20 @@ where
         self.intersects(&p.0)
     }
 }
+symmetric_intersects_impl!(Point<T>, Polygon<T>, HasKernel);
 
 impl<T> Intersects<Line<T>> for Polygon<T>
 where
     T: HasKernel,
 {
-    fn intersects(&self, p: &Line<T>) -> bool {
-        self.exterior().intersects(p)
-            || self.interiors().iter().any(|inner| inner.intersects(p))
-            || self.contains(&p.start)
-            || self.contains(&p.end)
+    fn intersects(&self, line: &Line<T>) -> bool {
+        self.exterior().intersects(line)
+            || self.interiors().iter().any(|inner| inner.intersects(line))
+            || self.contains(&line.start)
+            || self.contains(&line.end)
     }
 }
+symmetric_intersects_impl!(Line<T>, Polygon<T>, HasKernel);
 
 impl<T> Intersects<LineString<T>> for Polygon<T>
 where
@@ -53,10 +56,11 @@ where
             true
         } else {
             // or if it's contained in the polygon
-            linestring.points_iter().any(|point| self.contains(&point))
+            linestring.0.iter().any(|c| self.contains(c))
         }
     }
 }
+symmetric_intersects_impl!(LineString<T>, Polygon<T>, HasKernel);
 
 impl<T> Intersects<Rect<T>> for Polygon<T>
 where
@@ -76,6 +80,7 @@ where
         self.intersects(&p)
     }
 }
+symmetric_intersects_impl!(Rect<T>, Polygon<T>, HasKernel);
 
 impl<T> Intersects<Polygon<T>> for Polygon<T>
 where
