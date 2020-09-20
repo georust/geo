@@ -2,8 +2,24 @@ use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
-/// An ordered collection of two or more [`Coordinate`s](struct.Coordinate.html), representing a
+/// An ordered collection of two or more
+/// [`Coordinate`s](struct.Coordinate.html), representing a
 /// path between locations.
+///
+/// A `LineString` is _closed_ if it is empty, or if the
+/// first and last coordinates are the same. The _boundary_
+/// of a `LineString` is empty if closed, and otherwise the
+/// end points. The interior is the (infinite) set of all
+/// points along the linestring _not including_ the
+/// boundary.
+///
+/// # Validity
+///
+/// A `LineString` is valid if it is either empty or
+/// contains 2 or more coordinates. Further, a closed
+/// `LineString` must not self intersect. Note that the
+/// validity is not enforced, and the operations and
+/// predicates are undefined on invalid linestrings.
 ///
 /// # Examples
 ///
@@ -180,11 +196,9 @@ impl<T: CoordinateType> LineString<T> {
         self.0.len()
     }
 
-    /// Checks if the linestring is closed; i.e. the first
-    /// and last points have the same coords. Note that a
-    /// single point is considered closed, but the output on
-    /// an empty linestring is _unspecified_ and must not be
-    /// relied upon.
+    /// Checks if the linestring is closed; i.e. it is
+    /// either empty or, the first and last points are the
+    /// same.
     ///
     /// # Examples
     ///

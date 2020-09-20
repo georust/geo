@@ -105,6 +105,7 @@ pub mod prelude {
     pub use crate::algorithm::haversine_intermediate::HaversineIntermediate;
     pub use crate::algorithm::haversine_length::HaversineLength;
     pub use crate::algorithm::intersects::Intersects;
+    pub use crate::algorithm::is_convex::IsConvex;
     pub use crate::algorithm::map_coords::MapCoords;
     pub use crate::algorithm::orient::Orient;
     #[cfg(feature = "use-proj")]

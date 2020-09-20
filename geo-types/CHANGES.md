@@ -1,5 +1,10 @@
 # Changes
 
+## Master (not released)
+
+* Add vector-space operations to `Coordinate` and `Point`
+  * <https://github.com/georust/geo/pull/505>
+
 ## 0.6.0
 
 * Remove `COORD_PRECISION` which was an arbitrary constant of 0.1m

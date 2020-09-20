@@ -1,7 +1,9 @@
 use crate::{CoordinateType, Polygon};
 use std::iter::FromIterator;
 
-/// A collection of [`Polygon`s](struct.Polygon.html).
+/// A collection of [`Polygon`s](struct.Polygon.html). The
+/// interior and the boundary are the union of the interior
+/// or the boundary of the constituent polygons.
 ///
 /// Can be created from a `Vec` of `Polygon`s, or `collect`ed from an Iterator which yields `Polygon`s.
 ///

@@ -89,20 +89,13 @@ where
 mod test {
     use super::*;
     use crate::algorithm::is_convex::IsConvex;
-    use geo_types::CoordinateType;
     use std::fmt::Debug;
-    fn test_convexity<T: CoordinateType + HasKernel + Debug>(initial: &[(T, T)]) {
+    fn test_convexity<T: HasKernel + Debug>(initial: &[(T, T)]) {
         let mut v: Vec<_> = initial
             .iter()
             .map(|e| Coordinate::from((e.0, e.1)))
             .collect();
         let hull = graham_hull(&mut v, false);
-        eprintln!("Strict hull");
-        for v in hull.0.iter() {
-            eprintln!("{:?}", v);
-        }
-        eprintln!("{}", hull.is_closed());
-        eprintln!("{:?}", hull.convex_orientation(true, None));
         assert!(hull.is_strictly_ccw_convex());
         let hull = graham_hull(&mut v, true);
         assert!(hull.is_ccw_convex());

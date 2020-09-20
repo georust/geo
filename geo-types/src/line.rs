@@ -1,6 +1,9 @@
 use crate::{Coordinate, CoordinateType, Point};
 
-/// A line segment made up of exactly two [`Point`s](struct.Point.html).
+/// A line segment made up of exactly two
+/// [`Coordinate`s](struct.Coordinate.html). The interior and
+/// boundaries are defined as with a `LineString` with the
+/// two end points.
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T>
@@ -37,6 +40,11 @@ where
         }
     }
 
+    /// Calculate the difference in coordinates (Δx, Δy).
+    pub fn delta(&self) -> Coordinate<T> {
+        self.end - self.start
+    }
+
     /// Calculate the difference in ‘x’ components (Δx).
     ///
     /// Equivalent to:
@@ -53,7 +61,7 @@ where
     /// # );
     /// ```
     pub fn dx(&self) -> T {
-        self.end.x - self.start.x
+        self.delta().x
     }
 
     /// Calculate the difference in ‘y’ components (Δy).
@@ -72,7 +80,7 @@ where
     /// # );
     /// ```
     pub fn dy(&self) -> T {
-        self.end.y - self.start.y
+        self.delta().y
     }
 
     /// Calculate the slope (Δy/Δx).
