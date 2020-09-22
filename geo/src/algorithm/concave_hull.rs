@@ -8,6 +8,7 @@ use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
 use geo_types::{CoordinateType, Coordinate};
 use crate::algorithm::convex_hull::qhull;
+use crate::algorithm::kernels::HasKernel;
 
 /// Returns a polygon which covers a geometry. Unlike convex hulls, which also cover
 /// their geometry, a concave hull does so while trying to further minimize its area by
@@ -45,83 +46,83 @@ use crate::algorithm::convex_hull::qhull;
 /// ```
 pub trait ConcaveHull {
     type Scalar: CoordinateType;
-    fn concave_hull(&self, concavity: Self::Scalar) -> LineString<Self::Scalar>;
+    fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar>;
 }
 
 impl<T> ConcaveHull for Polygon<T>
 where
-    T: Float + RTreeNum,
+    T: Float + RTreeNum + HasKernel,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: Self::Scalar) -> LineString<Self::Scalar> {
+    fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
         let mut points: Vec<_> = self.exterior().points_iter().map(|point|{
            point.0
         }).collect();
-        concave_hull(&mut points, concavity)
+        Polygon::new(concave_hull(&mut points, concavity), vec![])
     }
 }
 
 impl<T> ConcaveHull for MultiPolygon<T>
 where
-    T: Float + RTreeNum,
+    T: Float + RTreeNum + HasKernel,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: Self::Scalar) -> LineString<Self::Scalar> {
-        let mut aggregated: Vec<Point<Self::Scalar>> = self
+    fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
+        let mut aggregated: Vec<Coordinate<Self::Scalar>> = self
             .0
             .iter()
-            .flat_map(|elem| elem.exterior().0.iter().map(|c| Point(*c)))
+            .flat_map(|elem| elem.exterior().0.iter().map(|c| *c))
             .collect();
-        concave_hull(&mut aggregated, concavity)
+        Polygon::new(concave_hull(&mut aggregated, concavity), vec![])
     }
 }
 
 impl<T> ConcaveHull for LineString<T>
 where
-    T: Float + RTreeNum,
+    T: Float + RTreeNum + HasKernel,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: Self::Scalar) -> LineString<Self::Scalar> {
-        concave_hull(&mut self.clone().into(), concavity)
+    fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
+        Polygon::new(concave_hull(&mut self.clone().0, concavity), vec![])
     }
 }
 
 impl<T> ConcaveHull for MultiLineString<T>
 where
-    T: Float + RTreeNum,
+    T: Float + RTreeNum + HasKernel,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: T) -> LineString<T> {
-        let mut aggregated: [Coordinate<T>] = self
+    fn concave_hull(&self, concavity: T) -> Polygon<T> {
+        let mut aggregated: Vec<Coordinate<T>> = self
             .0
             .iter()
             .flat_map(|elem| elem.clone().0)
             .collect();
-        concave_hull(&mut aggregated, concavity)
+        Polygon::new(concave_hull(&mut aggregated, concavity), vec![])
     }
 }
 
 impl<T> ConcaveHull for MultiPoint<T>
 where
-    T: Float + RTreeNum,
+    T: Float + RTreeNum + HasKernel,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: T) -> LineString<T> {
-        let mut coordinates: [Coordinate<T>] = self.0.iter().map(|point|{
+    fn concave_hull(&self, concavity: T) -> Polygon<T> {
+        let mut coordinates: Vec<Coordinate<T>> = self.0.iter().map(|point|{
            point.0
         }).collect();
-        concave_hull(&mut coordinates, concavity)
+        Polygon::new(concave_hull(&mut coordinates, concavity), vec![])
     }
 }
 
 fn find_point_closest_to_line<T>(
-    interior_points_tree: &RTree<Point<T>>,
+    interior_coords_tree: &RTree<Coordinate<T>>,
     line: Line<T>,
     max_dist: T,
     edge_length: T,
     concavity: T,
     line_tree: &RTree<Line<T>>
-) -> Option<Point<T>>
+) -> Option<Coordinate<T>>
 where
     T: Float + RTreeNum,
 {
@@ -129,18 +130,21 @@ where
     let w = line.euclidean_length() + h;
     let two = T::add(T::one(), T::one());
     let search_dist = T::div(T::sqrt(T::powi(w, 2) + T::powi(h, 2)), two);
-    let mut candidates = interior_points_tree
-        .locate_within_distance(line.centroid(), search_dist)
+    let centroid = line.centroid();
+    let centroid_coord = Coordinate{ x: centroid.x(),y: centroid.y()};
+    let mut candidates = interior_coords_tree
+        .locate_within_distance(centroid_coord, search_dist)
         .peekable();
     let peek = candidates.peek();
     match peek {
         None => None,
         Some(&point) => {
-            let closest_point = candidates.fold(*point, |acc, candidate| {
-                if line.euclidean_distance(&acc) > line.euclidean_distance(candidate) {
-                    *candidate
+            let closest_point = candidates.fold(Point::new(point.x, point.y), |acc_point, candidate| {
+                let candidate_point = Point::new(candidate.x, candidate.y);
+                if line.euclidean_distance(&acc_point) > line.euclidean_distance(&candidate_point) {
+                    candidate_point
                 } else {
-                    acc
+                    acc_point
                 }
             });
             let mut edges_nearby_point = line_tree
@@ -165,7 +169,7 @@ where
                let far_enough = edge_length / decision_distance > concavity;
                let are_edges_equal = closest_edge == line;
                if far_enough && are_edges_equal {
-                   Some(closest_point)
+                   Some(Coordinate{x: closest_point.x(), y: closest_point.y()})
                } else {
                    None
                }
@@ -180,32 +184,28 @@ where
 // https://github.com/mapbox/concaveman/blob/54838e1/index.js#L11
 fn concave_hull<T>(coords: &mut [Coordinate<T>], concavity: T) -> LineString<T>
 where
-    T: Float + RTreeNum,
+    T: Float + RTreeNum + HasKernel,
 {
     let hull = qhull::quick_hull(coords);
-    let points = coords.iter().map(|coord|{
-      Point::new(coord.x, coord.y)
-    });
 
     //Get points in overall dataset that aren't on the exterior linestring of the hull
-    let hull_exterior = hull.exterior();
-    let hull_tree: RTree<Point<T>> = RTree::bulk_load(hull_exterior.clone().into_points());
+    let hull_tree: RTree<Coordinate<T>> = RTree::bulk_load(hull.clone().0);
 
-    let interior_points: Vec<Point<T>> = points
+    let interior_coords: Vec<Coordinate<T>> = coords
         .iter()
-        .filter_map(|point| {
-            if !hull_tree.contains(point) {
-                Some(*point)
+        .filter_map(|coord| {
+            if !hull_tree.contains(coord) {
+                Some(*coord)
             } else {
                 None
             }
         })
         .collect();
-    let mut interior_points_tree: RTree<Point<T>> = RTree::bulk_load(interior_points.clone());
+    let mut interior_points_tree: RTree<Coordinate<T>> = RTree::bulk_load(interior_coords.clone());
     let mut line_tree: RTree<Line<T>> = RTree::new();
 
     let mut concave_list: Vec<Point<T>> = vec![];
-    let lines = hull_exterior.lines();
+    let lines = hull.lines();
     let mut line_queue: VecDeque<Line<T>> = VecDeque::new();
 
     for line in lines {
@@ -221,8 +221,9 @@ where
         if let Some(closest_point) = possible_closest_point {
            interior_points_tree.remove(&closest_point);
            line_tree.remove(&line);
-           let start_line = Line::new(line.start_point(), closest_point);
-           let end_line = Line::new(closest_point, line.end_point());
+           let point = Point::new(closest_point.x, closest_point.y);
+           let start_line = Line::new(line.start_point(), point);
+           let end_line = Line::new(point, line.end_point());
            line_tree.insert(start_line);
            line_tree.insert(end_line);
            line_queue.push_front(end_line);
@@ -248,95 +249,95 @@ mod test {
 
     #[test]
     fn square_test() {
-        let square = vec![
-            Point::new(0.0, 0.0),
-            Point::new(4.0, 0.0),
-            Point::new(4.0, 4.0),
-            Point::new(0.0, 4.0),
+        let mut square = vec![
+            Coordinate{ x: 0.0, y: 0.0},
+            Coordinate{ x: 4.0, y: 0.0},
+            Coordinate{ x: 4.0, y: 4.0},
+            Coordinate{ x: 0.0, y: 4.0}
         ];
 
-        let correct = vec![
-            Point::new(4.0, 0.0),
-            Point::new(4.0, 4.0),
-            Point::new(0.0, 4.0),
-            Point::new(0.0, 0.0),
-            Point::new(4.0, 0.0),
+        let correct = line_string![
+            (x: 4.0, y: 0.0),
+            (x: 4.0, y: 4.0),
+            (x: 0.0, y: 4.0),
+            (x: 0.0, y: 0.0),
+            (x: 4.0, y: 0.0),
         ];
 
         let concavity = 2.0;
-        let res = concave_hull(&square.clone(), concavity);
+        let res = concave_hull(&mut square, concavity);
         assert_eq!(res, correct);
     }
 
     #[test]
     fn one_flex_test() {
-        let v = vec![
-            Point::new(0.0, 0.0),
-            Point::new(2.0, 1.0),
-            Point::new(4.0, 0.0),
-            Point::new(4.0, 4.0),
-            Point::new(0.0, 4.0),
+        let mut v = vec![
+            Coordinate{ x: 0.0, y: 0.0},
+            Coordinate{ x: 2.0, y: 1.0},
+            Coordinate{ x: 4.0, y: 0.0},
+            Coordinate{ x: 4.0, y: 4.0},
+            Coordinate{ x: 0.0, y: 4.0},
         ];
-        let correct = vec![
-            Point::new(4.0, 0.0),
-            Point::new(4.0, 4.0),
-            Point::new(0.0, 4.0),
-            Point::new(0.0, 0.0),
-            Point::new(2.0, 1.0),
-            Point::new(4.0, 0.0),
+        let correct = line_string![
+            (x: 4.0, y: 0.0),
+            (x: 4.0, y: 4.0),
+            (x: 0.0, y: 4.0),
+            (x: 0.0, y: 0.0),
+            (x: 2.0, y: 1.0),
+            (x: 4.0, y: 0.0),
         ];
         let concavity = 1.0;
-        let res = concave_hull(&v, concavity);
+        let res = concave_hull(&mut v, concavity);
         assert_eq!(res, correct);
     }
 
     #[test]
     fn four_flex_test() {
-        let v = vec![
-            Point::new(0.0, 0.0),
-            Point::new(2.0, 1.0),
-            Point::new(4.0, 0.0),
-            Point::new(3.0, 2.0),
-            Point::new(4.0, 4.0),
-            Point::new(2.0, 3.0),
-            Point::new(0.0, 4.0),
-            Point::new(1.0, 2.0),
+        let mut v = vec![
+            Coordinate{ x: 0.0, y: 0.0},
+            Coordinate{ x: 2.0, y: 1.0},
+            Coordinate{ x: 4.0, y: 0.0},
+            Coordinate{ x: 3.0, y: 2.0},
+            Coordinate{ x: 4.0, y: 4.0},
+            Coordinate{ x: 2.0, y: 3.0},
+            Coordinate{ x: 0.0, y: 4.0},
+            Coordinate{ x: 1.0, y: 2.0},
         ];
-        let correct = vec![
-            Point::new(4.0, 0.0),
-            Point::new(3.0, 2.0),
-            Point::new(4.0, 4.0),
-            Point::new(2.0, 3.0),
-            Point::new(0.0, 4.0),
-            Point::new(1.0, 2.0),
-            Point::new(0.0, 0.0),
-            Point::new(2.0, 1.0),
-            Point::new(4.0, 0.0),
+        let correct = line_string![
+            (x: 4.0, y: 0.0),
+            (x: 3.0, y: 2.0),
+            (x: 4.0, y: 4.0),
+            (x: 2.0, y: 3.0),
+            (x: 0.0, y: 4.0),
+            (x: 1.0, y: 2.0),
+            (x: 0.0, y: 0.0),
+            (x: 2.0, y: 1.0),
+            (x: 4.0, y: 0.0),
         ];
         let concavity = 1.7;
-        let res = concave_hull(&v, concavity);
+        let res = concave_hull(&mut v, concavity);
         assert_eq!(res, correct);
     }
 
     #[test]
     fn consecutive_flex_test() {
-        let v = vec![
-            Point::new(0.0, 0.0),
-            Point::new(4.0, 0.0),
-            Point::new(4.0, 4.0),
-            Point::new(3.0, 1.0),
-            Point::new(3.0, 2.0),
+        let mut v = vec![
+            Coordinate{ x: 0.0, y: 0.0},
+            Coordinate{ x: 4.0, y: 0.0},
+            Coordinate{ x: 4.0, y: 4.0},
+            Coordinate{ x: 3.0, y: 1.0},
+            Coordinate{ x: 3.0, y: 2.0},
         ];
-        let correct = vec![
-            Point::new(4.0, 0.0),
-            Point::new(4.0, 4.0),
-            Point::new(3.0, 2.0),
-            Point::new(3.0, 1.0),
-            Point::new(0.0, 0.0),
-            Point::new(4.0, 0.0),
+        let correct = line_string![
+            (x: 4.0, y: 0.0),
+            (x: 4.0, y: 4.0),
+            (x: 3.0, y: 2.0),
+            (x: 3.0, y: 1.0),
+            (x: 0.0, y: 0.0),
+            (x: 4.0, y: 0.0),
         ];
         let concavity = 2.0;
-        let res = concave_hull(&v, concavity);
+        let res = concave_hull(&mut v, concavity);
         assert_eq!(res, correct);
     }
 
