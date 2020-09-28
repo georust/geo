@@ -84,3 +84,21 @@ where
             polygon.intersects(self.exterior())
     }
 }
+
+// Implementations for MultiPolygon
+
+impl<G, T> Intersects<G> for MultiPolygon<T>
+where
+    T: HasKernel,
+    Polygon<T>: Intersects<G>,
+{
+    fn intersects(&self, rhs: &G) -> bool {
+        self.0.iter().any(|p| p.intersects(rhs))
+    }
+}
+
+symmetric_intersects_impl!(Point<T>, MultiPolygon<T>, HasKernel);
+symmetric_intersects_impl!(Line<T>, MultiPolygon<T>, HasKernel);
+symmetric_intersects_impl!(LineString<T>, MultiPolygon<T>, HasKernel);
+symmetric_intersects_impl!(Polygon<T>, MultiPolygon<T>, HasKernel);
+symmetric_intersects_impl!(Rect<T>, MultiPolygon<T>, HasKernel);
