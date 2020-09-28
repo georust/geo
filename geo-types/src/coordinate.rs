@@ -284,7 +284,10 @@ where
     const DIMENSIONS: usize = 2;
 
     fn generate(generator: impl Fn(usize) -> Self::Scalar) -> Self {
-        Coordinate { x: generator(0), y: generator(1) }
+        Coordinate {
+            x: generator(0),
+            y: generator(1),
+        }
     }
 
     fn nth(&self, index: usize) -> Self::Scalar {
@@ -300,6 +303,6 @@ where
             0 => &mut self.x,
             1 => &mut self.y,
             _ => unreachable!(),
-       }
-   }
+        }
+    }
 }

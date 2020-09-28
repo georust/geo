@@ -49,6 +49,10 @@ name = "convex_hull"
 harness = false
 
 [[bench]]
+name = "concave_hull"
+harness = false
+
+[[bench]]
 name = "vincenty_distance"
 harness = false
 

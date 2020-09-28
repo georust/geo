@@ -1,14 +1,14 @@
+use crate::algorithm::convex_hull::qhull;
 use crate::algorithm::euclidean_distance::EuclideanDistance;
 use crate::algorithm::euclidean_length::EuclideanLength;
+use crate::algorithm::kernels::HasKernel;
 use crate::prelude::Centroid;
 use crate::utils::partial_min;
 use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use geo_types::{Coordinate, CoordinateType};
 use num_traits::Float;
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
-use geo_types::{CoordinateType, Coordinate};
-use crate::algorithm::convex_hull::qhull;
-use crate::algorithm::kernels::HasKernel;
 
 /// Returns a polygon which covers a geometry. Unlike convex hulls, which also cover
 /// their geometry, a concave hull does so while trying to further minimize its area by
@@ -55,9 +55,7 @@ where
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
-        let mut points: Vec<_> = self.exterior().points_iter().map(|point|{
-           point.0
-        }).collect();
+        let mut points: Vec<_> = self.exterior().0.clone();
         Polygon::new(concave_hull(&mut points, concavity), vec![])
     }
 }
@@ -71,7 +69,7 @@ where
         let mut aggregated: Vec<Coordinate<Self::Scalar>> = self
             .0
             .iter()
-            .flat_map(|elem| elem.exterior().0.iter().map(|c| *c))
+            .flat_map(|elem| elem.exterior().0.clone())
             .collect();
         Polygon::new(concave_hull(&mut aggregated, concavity), vec![])
     }
@@ -83,7 +81,7 @@ where
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
-        Polygon::new(concave_hull(&mut self.clone().0, concavity), vec![])
+        Polygon::new(concave_hull(&mut self.0.clone(), concavity), vec![])
     }
 }
 
@@ -93,11 +91,8 @@ where
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: T) -> Polygon<T> {
-        let mut aggregated: Vec<Coordinate<T>> = self
-            .0
-            .iter()
-            .flat_map(|elem| elem.clone().0)
-            .collect();
+        let mut aggregated: Vec<Coordinate<T>> =
+            self.0.iter().flat_map(|elem| elem.0.clone()).collect();
         Polygon::new(concave_hull(&mut aggregated, concavity), vec![])
     }
 }
@@ -108,9 +103,7 @@ where
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: T) -> Polygon<T> {
-        let mut coordinates: Vec<Coordinate<T>> = self.0.iter().map(|point|{
-           point.0
-        }).collect();
+        let mut coordinates: Vec<Coordinate<T>> = self.0.iter().map(|point| point.0).collect();
         Polygon::new(concave_hull(&mut coordinates, concavity), vec![])
     }
 }
@@ -121,7 +114,7 @@ fn find_point_closest_to_line<T>(
     max_dist: T,
     edge_length: T,
     concavity: T,
-    line_tree: &RTree<Line<T>>
+    line_tree: &RTree<Line<T>>,
 ) -> Option<Coordinate<T>>
 where
     T: Float + RTreeNum,
@@ -131,7 +124,10 @@ where
     let two = T::add(T::one(), T::one());
     let search_dist = T::div(T::sqrt(T::powi(w, 2) + T::powi(h, 2)), two);
     let centroid = line.centroid();
-    let centroid_coord = Coordinate{ x: centroid.x(),y: centroid.y()};
+    let centroid_coord = Coordinate {
+        x: centroid.x(),
+        y: centroid.y(),
+    };
     let mut candidates = interior_coords_tree
         .locate_within_distance(centroid_coord, search_dist)
         .peekable();
@@ -139,42 +135,50 @@ where
     match peek {
         None => None,
         Some(&point) => {
-            let closest_point = candidates.fold(Point::new(point.x, point.y), |acc_point, candidate| {
-                let candidate_point = Point::new(candidate.x, candidate.y);
-                if line.euclidean_distance(&acc_point) > line.euclidean_distance(&candidate_point) {
-                    candidate_point
-                } else {
-                    acc_point
-                }
-            });
+            let closest_point =
+                candidates.fold(Point::new(point.x, point.y), |acc_point, candidate| {
+                    let candidate_point = Point::new(candidate.x, candidate.y);
+                    if line.euclidean_distance(&acc_point)
+                        > line.euclidean_distance(&candidate_point)
+                    {
+                        candidate_point
+                    } else {
+                        acc_point
+                    }
+                });
             let mut edges_nearby_point = line_tree
                 .locate_within_distance(closest_point, search_dist)
                 .peekable();
             let peeked_edge = edges_nearby_point.peek();
-            let closest_edge_option = match peeked_edge{
+            let closest_edge_option = match peeked_edge {
                 None => None,
                 Some(&edge) => Some(edges_nearby_point.fold(*edge, |acc, candidate| {
-                    if closest_point.euclidean_distance(&acc) > closest_point.euclidean_distance(candidate) {
+                    if closest_point.euclidean_distance(&acc)
+                        > closest_point.euclidean_distance(candidate)
+                    {
                         *candidate
                     } else {
                         acc
                     }
-                }))
+                })),
             };
             let decision_distance = partial_min(
                 closest_point.euclidean_distance(&line.start_point()),
                 closest_point.euclidean_distance(&line.end_point()),
             );
             if let Some(closest_edge) = closest_edge_option {
-               let far_enough = edge_length / decision_distance > concavity;
-               let are_edges_equal = closest_edge == line;
-               if far_enough && are_edges_equal {
-                   Some(Coordinate{x: closest_point.x(), y: closest_point.y()})
-               } else {
-                   None
-               }
-            }else {
-               None
+                let far_enough = edge_length / decision_distance > concavity;
+                let are_edges_equal = closest_edge == line;
+                if far_enough && are_edges_equal {
+                    Some(Coordinate {
+                        x: closest_point.x(),
+                        y: closest_point.y(),
+                    })
+                } else {
+                    None
+                }
+            } else {
+                None
             }
         }
     }
@@ -187,6 +191,10 @@ where
     T: Float + RTreeNum + HasKernel,
 {
     let hull = qhull::quick_hull(coords);
+
+    if coords.len() < 4 {
+        return hull;
+    }
 
     //Get points in overall dataset that aren't on the exterior linestring of the hull
     let hull_tree: RTree<Coordinate<T>> = RTree::bulk_load(hull.clone().0);
@@ -201,7 +209,7 @@ where
             }
         })
         .collect();
-    let mut interior_points_tree: RTree<Coordinate<T>> = RTree::bulk_load(interior_coords.clone());
+    let mut interior_points_tree: RTree<Coordinate<T>> = RTree::bulk_load(interior_coords);
     let mut line_tree: RTree<Line<T>> = RTree::new();
 
     let mut concave_list: Vec<Point<T>> = vec![];
@@ -216,24 +224,30 @@ where
         let edge_length = line.euclidean_length();
         let dist = edge_length / concavity;
         let possible_closest_point = find_point_closest_to_line(
-            &interior_points_tree, line, dist, edge_length, concavity, &line_tree);
+            &interior_points_tree,
+            line,
+            dist,
+            edge_length,
+            concavity,
+            &line_tree,
+        );
 
         if let Some(closest_point) = possible_closest_point {
-           interior_points_tree.remove(&closest_point);
-           line_tree.remove(&line);
-           let point = Point::new(closest_point.x, closest_point.y);
-           let start_line = Line::new(line.start_point(), point);
-           let end_line = Line::new(point, line.end_point());
-           line_tree.insert(start_line);
-           line_tree.insert(end_line);
-           line_queue.push_front(end_line);
-           line_queue.push_front(start_line);
+            interior_points_tree.remove(&closest_point);
+            line_tree.remove(&line);
+            let point = Point::new(closest_point.x, closest_point.y);
+            let start_line = Line::new(line.start_point(), point);
+            let end_line = Line::new(point, line.end_point());
+            line_tree.insert(start_line);
+            line_tree.insert(end_line);
+            line_queue.push_front(end_line);
+            line_queue.push_front(start_line);
         } else {
-           // Make sure we don't add duplicates
-           if concave_list.is_empty() || !concave_list.ends_with(&[line.start_point()]) {
-              concave_list.push(line.start_point());
-           }
-           concave_list.push(line.end_point());
+            // Make sure we don't add duplicates
+            if concave_list.is_empty() || !concave_list.ends_with(&[line.start_point()]) {
+                concave_list.push(line.start_point());
+            }
+            concave_list.push(line.end_point());
         }
     }
 
@@ -248,12 +262,33 @@ mod test {
     use geo_types::Coordinate;
 
     #[test]
+    fn triangle_test() {
+        let mut triangle = vec![
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 4.0, y: 0.0 },
+            Coordinate { x: 2.0, y: 2.0 }
+        ];
+
+        let correct = line_string![
+            (x: 0.0, y: 0.0),
+            (x: 4.0, y: 0.0),
+            (x: 2.0, y: 2.0),
+            (x: 0.0, y: 0.0),
+        ];
+
+
+        let concavity = 2.0;
+        let res = concave_hull(&mut triangle, concavity);
+        assert_eq!(res, correct);
+    }
+
+    #[test]
     fn square_test() {
         let mut square = vec![
-            Coordinate{ x: 0.0, y: 0.0},
-            Coordinate{ x: 4.0, y: 0.0},
-            Coordinate{ x: 4.0, y: 4.0},
-            Coordinate{ x: 0.0, y: 4.0}
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 4.0, y: 0.0 },
+            Coordinate { x: 4.0, y: 4.0 },
+            Coordinate { x: 0.0, y: 4.0 },
         ];
 
         let correct = line_string![
@@ -272,11 +307,11 @@ mod test {
     #[test]
     fn one_flex_test() {
         let mut v = vec![
-            Coordinate{ x: 0.0, y: 0.0},
-            Coordinate{ x: 2.0, y: 1.0},
-            Coordinate{ x: 4.0, y: 0.0},
-            Coordinate{ x: 4.0, y: 4.0},
-            Coordinate{ x: 0.0, y: 4.0},
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 2.0, y: 1.0 },
+            Coordinate { x: 4.0, y: 0.0 },
+            Coordinate { x: 4.0, y: 4.0 },
+            Coordinate { x: 0.0, y: 4.0 },
         ];
         let correct = line_string![
             (x: 4.0, y: 0.0),
@@ -294,14 +329,14 @@ mod test {
     #[test]
     fn four_flex_test() {
         let mut v = vec![
-            Coordinate{ x: 0.0, y: 0.0},
-            Coordinate{ x: 2.0, y: 1.0},
-            Coordinate{ x: 4.0, y: 0.0},
-            Coordinate{ x: 3.0, y: 2.0},
-            Coordinate{ x: 4.0, y: 4.0},
-            Coordinate{ x: 2.0, y: 3.0},
-            Coordinate{ x: 0.0, y: 4.0},
-            Coordinate{ x: 1.0, y: 2.0},
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 2.0, y: 1.0 },
+            Coordinate { x: 4.0, y: 0.0 },
+            Coordinate { x: 3.0, y: 2.0 },
+            Coordinate { x: 4.0, y: 4.0 },
+            Coordinate { x: 2.0, y: 3.0 },
+            Coordinate { x: 0.0, y: 4.0 },
+            Coordinate { x: 1.0, y: 2.0 },
         ];
         let correct = line_string![
             (x: 4.0, y: 0.0),
@@ -322,11 +357,11 @@ mod test {
     #[test]
     fn consecutive_flex_test() {
         let mut v = vec![
-            Coordinate{ x: 0.0, y: 0.0},
-            Coordinate{ x: 4.0, y: 0.0},
-            Coordinate{ x: 4.0, y: 4.0},
-            Coordinate{ x: 3.0, y: 1.0},
-            Coordinate{ x: 3.0, y: 2.0},
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 4.0, y: 0.0 },
+            Coordinate { x: 4.0, y: 4.0 },
+            Coordinate { x: 3.0, y: 1.0 },
+            Coordinate { x: 3.0, y: 2.0 },
         ];
         let correct = line_string![
             (x: 4.0, y: 0.0),
