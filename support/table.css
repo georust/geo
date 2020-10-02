@@ -1,0 +1,3 @@
+table tbody td:nth-child(1n + 2) {
+    text-align: center;
+}
