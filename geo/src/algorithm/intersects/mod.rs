@@ -41,14 +41,21 @@ pub trait Intersects<Rhs = Self> {
 
 // Since `Intersects` is symmetric, we use a macro to
 // implement `T: Intersects<S>` if `S: Intersects<T>` is
-// available. As a convention, we provide explicit impl.
+// available.
+//
+// As a convention, we typically provide explicit impl.
 // whenever the Rhs is a "simpler geometry" than the target
-// type, and use the macro for the reverse impl.
+// type, and use the macro for the reverse impl. However,
+// when there is a blanket implementations (eg. Point from
+// Coordinate, MultiPoint from Point), we need to provide
+// the reverse (where Self is "simpler" than Rhs).
 #[macro_use]
 macro_rules! symmetric_intersects_impl {
-    ($t:ty, $k:ty, $bounds:tt $(+ $more_bounds:tt )*) => {
+    ($t:ty, $k:ty) => {
         impl<T> $crate::algorithm::intersects::Intersects<$k> for $t
-        where T: $bounds $(+ $more_bounds)*
+        where
+            $k: $crate::algorithm::intersects::Intersects<$t>,
+            T: CoordinateType,
         {
             fn intersects(&self, rhs: &$k) -> bool {
                 rhs.intersects(self)
@@ -57,6 +64,31 @@ macro_rules! symmetric_intersects_impl {
         }
     };
 }
+
+// Macro to delegate implementation to field `0` of rhs.
+// Used for `Intersects<Point<T>>` from corresponding
+// `Coordinate<T>` impl. This cannot be a blanket impl.
+// because it would conflict with blanket impl. of Point<T>.
+#[macro_use]
+macro_rules! rhs_pt_from_coord_intersects_impl {
+    ($t:ty) => {
+        impl<T> $crate::algorithm::intersects::Intersects<Point<T>> for $t
+        where
+            T: CoordinateType,
+            $t: $crate::algorithm::intersects::Intersects<Coordinate<T>>
+        {
+            fn intersects(&self, rhs: &Point<T>) -> bool {
+                self.intersects(&rhs.0)
+            }
+
+        }
+    };
+}
+
+// Macro to delegate implementation to any() of an iterator.
+// Used for `LineString`, `Intersects<Point<T>>` from corresponding
+// `Coordinate<T>` impl. This cannot be a blanket impl.
+// because it would conflict with blanket impl. of Point<T>.
 
 mod coordinate;
 mod line;

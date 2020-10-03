@@ -9,3 +9,6 @@ where
         self == rhs
     }
 }
+
+// The other side of this is handled via a blanket impl.
+rhs_pt_from_coord_intersects_impl!(Coordinate<T>);
