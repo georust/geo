@@ -6,12 +6,18 @@ use std::ops::{Index, IndexMut};
 /// [`Coordinate`s](struct.Coordinate.html), representing a
 /// path between locations.
 ///
+/// # Semantics
+///
 /// A `LineString` is _closed_ if it is empty, or if the
 /// first and last coordinates are the same. The _boundary_
 /// of a `LineString` is empty if closed, and otherwise the
-/// end points. The interior is the (infinite) set of all
+/// end points. The _interior_ is the (infinite) set of all
 /// points along the linestring _not including_ the
-/// boundary.
+/// boundary. A `LineString` is _simple_ if it does not
+/// intersect except possibly at the first and last
+/// coordinates. A simple and closed `LineString` is a
+/// `LinearRing` as defined in the OGC-SFA (but is not a
+/// separate type here).
 ///
 /// # Validity
 ///

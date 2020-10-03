@@ -1,13 +1,27 @@
 use crate::{CoordinateType, Polygon};
 use std::iter::FromIterator;
 
-/// A collection of [`Polygon`s](struct.Polygon.html). The
-/// interior and the boundary are the union of the interior
-/// or the boundary of the constituent polygons.
+/// A collection of [`Polygon`s](struct.Polygon.html). Can
+/// be created from a `Vec` of `Polygon`s, or from an
+/// Iterator which yields `Polygon`s. Iterating over this
+/// objects, yields the component `Polygon`s.
 ///
-/// Can be created from a `Vec` of `Polygon`s, or `collect`ed from an Iterator which yields `Polygon`s.
+/// # Semantics
 ///
-/// Iterating over this object yields the component Polygons.
+/// The _interior_ and the _boundary_ are the union of the
+/// interior and the boundary of the constituent polygons.
+///
+/// # Validity
+///
+/// - The interiors of no two constituent polygons may intersect.
+///
+/// - The boundaries of two (distinct) constituent polygons
+/// may only intersect at finitely many points.
+///
+/// Refer section 6.1.14 of the OGC-SFA for a formal
+/// definition of validity. Note that the validity is not
+/// enforced, but expected by the operations and
+/// predicates that operate on it.
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>)

@@ -1,9 +1,17 @@
 use crate::{CoordinateType, Point};
 use std::iter::FromIterator;
 
-/// A collection of [`Point`s](struct.Point.html). The
-/// interior and the boundary are the union of the interior
-/// or the boundary of the constituent points.
+/// A collection of [`Point`s](struct.Point.html). Can
+/// be created from a `Vec` of `Point`s, or from an
+/// Iterator which yields `Point`s. Iterating over this
+/// objects, yields the component `Point`s.
+///
+/// # Semantics
+///
+/// The _interior_ and the _boundary_ are the union of the
+/// interior and the boundary of the constituent points. In
+/// particular, the boundary of a a `MultiPoint` is always
+/// empty.
 ///
 /// # Examples
 ///

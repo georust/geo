@@ -7,6 +7,8 @@ use num_traits::{Float, Signed};
 /// [`LineString`]. It may contain zero or more holes (_interior rings_), also
 /// represented by `LineString`s.
 ///
+/// # Semantics
+///
 /// The _boundary_ of the polygon is the union of the
 /// boundaries of the exterior and interiors. The interior
 /// is all the points inside the polygon (not on the
@@ -18,8 +20,29 @@ use num_traits::{Float, Signed};
 ///
 /// # Validity
 ///
-/// Besides the closed `LineString` rings guarantee, the `Polygon` structure
-/// does not enforce validity at this time. For example, it is possible to
+/// - The exterior and interior rings must be valid
+/// `LinearRing`s (see [`LineString`]).
+///
+/// - No two rings in the boundary may cross, and may
+/// intersect at a `Point` only as a tangent. In other
+/// words, the rings must be distinct, and for every pair of
+/// common points in two of the rings, there must be a
+/// neighborhood (a topological open set) around one that
+/// does not contain the other point.
+///
+/// - The closure of the interior of the `Polygon` must
+/// equal the `Polygon` itself. For instance, the exterior
+/// may not contain a spike.
+///
+/// - The interior of the polygon must be a connected
+/// point-set. That is, any two distinct points in the
+/// interior must admit a curve between these two that lies
+/// in the interior.
+///
+/// Refer section 6.1.11.1 of the OGC-SFA for a formal
+/// definition of validity. Besides the closed `LineString`
+/// guarantee, the `Polygon` structure does not enforce
+/// validity at this time. For example, it is possible to
 /// construct a `Polygon` that has:
 ///
 /// - fewer than 3 coordinates per `LineString` ring

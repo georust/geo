@@ -6,6 +6,17 @@
 //! with other `GeoRust` crates. Otherwise, the [`geo`](https://crates.io/crates/geo) crate re-exports these types and
 //! provides geospatial algorithms, while the [`geojson`](https://crates.io/crates/geojson) crate allows serialising
 //! and de-serialising `geo-types` primitives to GeoJSON.
+//!
+//! # Semantics
+//!
+//! The geospatial types provided here aim to adhere to the
+//! [OpenGIS Simple feature access][OGC-SFA] standards.
+//! Thus, the types here are inter-operable with other
+//! implementations of the standards: [JTS], [geos], etc.
+//!
+//! [OGC-SFA]: //www.ogc.org/standards/sfa
+//! [JTS]: //github.com/locationtech/jts
+//! [geos]: //trac.osgeo.org/geos
 extern crate num_traits;
 use num_traits::{Num, NumCast};
 
@@ -21,8 +32,9 @@ extern crate approx;
 
 /// The type of an x or y value of a point/coordinate.
 ///
-/// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this. Many algorithms only
-/// make sense for Float types (like area, or length calculations).
+/// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.)
+/// implement this. Many algorithms only make sense for
+/// Float types (like area, or length calculations).
 pub trait CoordinateType: Num + Copy + NumCast + PartialOrd {}
 // Little bit of a hack to make to make this work
 impl<T: Num + Copy + NumCast + PartialOrd> CoordinateType for T {}

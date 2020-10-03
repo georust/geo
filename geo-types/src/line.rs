@@ -1,9 +1,12 @@
 use crate::{Coordinate, CoordinateType, Point};
 
 /// A line segment made up of exactly two
-/// [`Coordinate`s](struct.Coordinate.html). The interior and
-/// boundaries are defined as with a `LineString` with the
-/// two end points.
+/// [`Coordinate`s](struct.Coordinate.html).
+///
+/// # Semantics
+///
+/// The _interior_ and _boundary_ are defined as with a
+/// `LineString` with the two end points.
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T>
