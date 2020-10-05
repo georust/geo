@@ -2,71 +2,150 @@
 style: table.css
 ---
 
-## Status
+## Intersects Trait
 
-Current status of the `Intersects` trait.
+Current status of the `Intersects` trait. The row denotes
+the data-type that implements, and the column is the `Rhs`.
 
-<table>
+<table class="impltrait">
     <thead>
         <tr>
             <th>Type</th>
+            <!-- 0-D -->
             <th>C</th>
             <th>Pt</th>
             <th>MPt</th>
+            <!-- 1-D -->
             <th>L</th>
             <th>LS</th>
             <th>MLS</th>
-            <th>Pl</th>
+            <!-- 2-D -->
             <th>Tr</th>
             <th>Rc</th>
+            <th>Pl</th>
             <th>MPl</th>
+            <!-- Collections -->
             <th>Gm</th>
             <th>GmC</th>
         </tr>
     </thead>
     <tbody>
         <tr>
-            <td>Coord (C)</td>
-            <td>Yes</td>
-            <td>Sym</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            <td>Coordinate (C)</td>
+            <!-- 0-D -->
+            <td class="good">Y</td>
+            <td class="good">Y</td>
+            <td class="good">S</td>
+            <!-- 1-D -->
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <!-- 2-D -->
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <!-- Collections -->
+            <td class="good">S</td>
+            <td class="good">S</td>
+        </tr>
         <tr>
             <td>Point (Pt)</td>
-            <td colspan="12">blanket impl using Coordinate</td>
+            <td colspan="12" class="good">blanket impl using Coordinate</td>
         </tr>
         <tr>
             <td>MultiPoint (MPt)</td>
-            <td colspan="12">blanket impl using Point</td>
+            <td colspan="12" class="good">blanket impl using Point</td>
         </tr>
-        <tr><td>Line (L)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td>LineString (LS)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr>
+            <td>Line (L)</td>
+            <!-- 0-D -->
+            <td class="good">Y</td>
+            <td class="good">Y</td>
+            <td class="good">S</td>
+            <!-- 1-D -->
+            <td class="good">Y</td>
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <!-- 2-D -->
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <!-- Collections -->
+            <td class="good">S</td>
+            <td class="good">S</td>
+        </tr>
+        <tr>
+            <td>LineString (LS)</td>
+            <td class="good" colspan="12">blanket impl from Line using <code>self.lines.any()</code></td>
+        </tr>
         <tr>
             <td>MultiLineString (MLS)</td>
-            <td colspan="12">blanket impl using LineString</td>
+            <td class="good" colspan="12">blanket impl using LineString</td>
         </tr>
-        <tr><td>Polygon (Pl)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
         <tr>
             <td>Triangle (Tr)</td>
-            <td colspan="12">blanket impl using Polygon</td>
+            <td class="good" colspan="12">blanket impl using Polygon</td>
         </tr>
-        <tr><td>Rect (Rc)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
         <tr>
-            <td>MPl</td>
-            <td colspan="12">blanket impl using Polygon</td>
+            <td>Rect (Rc)</td>
+            <!-- 0-D -->
+            <td class="good">Y</td>
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <!-- 1-D -->
+            <td class="good">Y</td>
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <!-- 2-D -->
+            <td class="good">S</td>
+            <td class="good">Y</td>
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <!-- Collections -->
+            <td class="good">S</td>
+            <td class="good">S</td>
+        </tr>
+        <tr>
+            <td>Polygon (Pl)</td>
+            <!-- 0-D -->
+            <td class="good">Y</td>
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <!-- 1-D -->
+            <td class="good">Y</td>
+            <td class="good">S</td>
+            <td class="good">S</td>
+            <!-- 2-D -->
+            <td class="good">S</td>
+            <td class="good">Y</td>
+            <td class="good">Y</td>
+            <td class="good">S</td>
+            <!-- Collections -->
+            <td class="good">S</td>
+            <td class="good">S</td>
+        </tr>
+        <tr>
+            <td>MultiPolygon (MPl)</td>
+            <td colspan="12" class="good">blanket impl using Polygon</td>
         </tr>
         <tr>
             <td>Geometry (Gm)</td>
-            <td colspan="12">TODO</td>
+            <td colspan="12" class="good">blanket impl using rest</td>
         </tr>
         <tr>
             <td>GeometryCollection (GmC)</td>
-            <td colspan="12">TODO</td>
+            <td colspan="12" class="good">blanket impl using rest</td>
         </tr>
     </tbody>
 </table>
 
 ### Legend
 
-- **Yes** Implemented, and verified to be correct to the best of our knowledge.
-- **Bug** Implemented, but known to have some bugs.
-- **Sym** Implemented via symmetry
-- **TODO** Well, todo.
+| Symbol | Meaning                                  |
+| :---:  | :---                                     |
+| Y      | Implemented                              |
+| S      | Implemented via symmetry                 |
+| B      | Implemented with (a few) documented bugs |
+| N      | Not implemented                          |

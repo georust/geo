@@ -1,0 +1,22 @@
+---
+---
+
+table.impltrait {
+    tbody {
+        code {
+            background-color: inherit;
+            color: inherit;
+        }
+        td:nth-child(1n+2) {
+            text-align: center;
+            &.good {
+                color: snow;
+                background-color: darkgreen;
+            }
+            &.bad {
+                color: snow;
+                background-color: brown;
+            }
+        }
+    }
+}
