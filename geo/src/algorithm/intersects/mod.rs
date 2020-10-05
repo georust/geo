@@ -65,31 +65,6 @@ macro_rules! symmetric_intersects_impl {
     };
 }
 
-// Macro to delegate implementation to field `0` of rhs.
-// Used for `Intersects<Point<T>>` from corresponding
-// `Coordinate<T>` impl. This cannot be a blanket impl.
-// because it would conflict with blanket impl. of Point<T>.
-#[macro_use]
-macro_rules! rhs_pt_from_coord_intersects_impl {
-    ($t:ty) => {
-        impl<T> $crate::algorithm::intersects::Intersects<Point<T>> for $t
-        where
-            T: CoordinateType,
-            $t: $crate::algorithm::intersects::Intersects<Coordinate<T>>
-        {
-            fn intersects(&self, rhs: &Point<T>) -> bool {
-                self.intersects(&rhs.0)
-            }
-
-        }
-    };
-}
-
-// Macro to delegate implementation to any() of an iterator.
-// Used for `LineString`, `Intersects<Point<T>>` from corresponding
-// `Coordinate<T>` impl. This cannot be a blanket impl.
-// because it would conflict with blanket impl. of Point<T>.
-
 mod coordinate;
 mod line;
 mod line_string;
@@ -97,6 +72,8 @@ mod point;
 mod polygon;
 mod rect;
 mod triangle;
+mod collections;
+
 
 // Helper function to check value lies between min and max.
 // Only makes sense if min <= max (or always false)

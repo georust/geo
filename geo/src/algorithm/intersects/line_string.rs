@@ -8,12 +8,7 @@ where
     Line<T>: Intersects<G>,
 {
     fn intersects(&self, geom: &G) -> bool {
-        // No need to loop if either self or rhs is empty.
-        if self.0.is_empty() {
-            false
-        } else {
-            self.lines().any(|l| l.intersects(geom))
-        }
+        self.lines().any(|l| l.intersects(geom))
     }
 }
 symmetric_intersects_impl!(Coordinate<T>, LineString<T>);
