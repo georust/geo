@@ -5,7 +5,7 @@ use std::iter::FromIterator;
 /// [`LineString`s](line_string/struct.LineString.html). Can
 /// be created from a `Vec` of `LineString`s, or from an
 /// Iterator which yields `LineString`s. Iterating over this
-/// objects, yields the component `LineString`s.
+/// object yields the component `LineString`s.
 ///
 /// # Semantics
 ///

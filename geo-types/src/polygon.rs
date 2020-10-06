@@ -39,7 +39,7 @@ use num_traits::{Float, Signed};
 /// interior must admit a curve between these two that lies
 /// in the interior.
 ///
-/// Refer section 6.1.11.1 of the OGC-SFA for a formal
+/// Refer to section 6.1.11.1 of the OGC-SFA for a formal
 /// definition of validity. Besides the closed `LineString`
 /// guarantee, the `Polygon` structure does not enforce
 /// validity at this time. For example, it is possible to

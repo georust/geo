@@ -4,7 +4,7 @@ use std::iter::FromIterator;
 /// A collection of [`Polygon`s](struct.Polygon.html). Can
 /// be created from a `Vec` of `Polygon`s, or from an
 /// Iterator which yields `Polygon`s. Iterating over this
-/// objects, yields the component `Polygon`s.
+/// object yields the component `Polygon`s.
 ///
 /// # Semantics
 ///
@@ -18,7 +18,7 @@ use std::iter::FromIterator;
 /// - The boundaries of two (distinct) constituent polygons
 /// may only intersect at finitely many points.
 ///
-/// Refer section 6.1.14 of the OGC-SFA for a formal
+/// Refer to section 6.1.14 of the OGC-SFA for a formal
 /// definition of validity. Note that the validity is not
 /// enforced, but expected by the operations and
 /// predicates that operate on it.
