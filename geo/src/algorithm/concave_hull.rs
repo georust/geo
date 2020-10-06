@@ -384,17 +384,13 @@ mod test {
             .map(|tuple| Point::new(f64::from(tuple[0]), f64::from(tuple[1])))
             .collect();
         let loaded_norway_concave_hull = include!("test_fixtures/norway_concave_hull.rs");
-        let norway_concave_hull: Vec<Point<f64>> = loaded_norway_concave_hull
+        let norway_concave_hull_points: Vec<Point<f64>> = loaded_norway_concave_hull
             .iter()
             .map(|tuple| Point::new(f64::from(tuple[0]), f64::from(tuple[1])))
             .collect();
+        let norway_concave_hull: LineString<f64> = norway_concave_hull_points.into_iter().collect();
         let res = norway.concave_hull(2.0);
-        let coords: &Vec<Coordinate<f64>> = &res.exterior().0;
-        let output_points: Vec<Point<f64>> = coords
-            .iter()
-            .map(|coord| Point::new(coord.x, coord.y))
-            .collect();
-        assert_eq!(output_points, norway_concave_hull)
+        assert_eq!(res.exterior(), &norway_concave_hull);
     }
 
     #[test]
