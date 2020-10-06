@@ -82,7 +82,10 @@ where
             )
         });
     let six = T::from_i32(6).unwrap();
-    Some(Point::new(sum_x / (six * area) + shift.x, sum_y / (six * area) + shift.y))
+    Some(Point::new(
+        sum_x / (six * area) + shift.x,
+        sum_y / (six * area) + shift.y,
+    ))
 }
 
 impl<T> Centroid for Line<T>
@@ -499,7 +502,9 @@ mod test {
         use crate::map_coords::MapCoords;
         let polygon = polygon.map_coords(|&(x, y)| (x + shift_x, y + shift_y));
 
-        let new_centroid = polygon.centroid().unwrap()
+        let new_centroid = polygon
+            .centroid()
+            .unwrap()
             .map_coords(|&(x, y)| (x - shift_x, y - shift_y));
         eprintln!("centroid {:?}", centroid.0);
         eprintln!("new_centroid {:?}", new_centroid.0);
