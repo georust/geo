@@ -54,3 +54,4 @@ where
             || Line::new(lt, lb).intersects(rhs)
     }
 }
+symmetric_intersects_impl!(Line<T>, Rect<T>);

@@ -113,7 +113,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::algorithm::intersects::Intersects;
-    use crate::{line_string, polygon, Coordinate, Line, LineString, Point, Polygon, Rect};
+    use crate::{line_string, polygon, Geometry, Coordinate, Line, LineString, Point, Polygon, Rect};
 
     /// Tests: intersection LineString and LineString
     #[test]
@@ -566,5 +566,13 @@ mod test {
         );
         assert!(a.intersects(&b));
         assert!(b.intersects(&a));
+    }
+
+    #[test]
+    fn compile_test_geom_geom() {
+        // This test should check existance of all
+        // combinations of geometry types.
+        let geom: Geometry<_> = Line::from([(0.5, 0.5), (2., 1.)]).into();
+        assert!(geom.intersects(&geom));
     }
 }
