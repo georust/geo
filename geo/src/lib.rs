@@ -25,6 +25,10 @@
 //! ## Optional Features (these can be activated in your `cargo.toml`)
 //! The following optional features are available:
 //! - `use-proj`: enable coordinate conversion and transformation of `Point` geometries using the [`proj`](https://docs.rs/proj) crate
+//! - `proj-network`: enables functionality for `proj` crate's network grid. After enabling
+//! this feature, some [further
+//! configuration](https://docs.rs/proj/0.20.5/proj/#grid-file-download) is
+//! required to actually use the network grid.
 //! - `use-serde`: enable serialisation of geometries using `serde`.
 //!
 //! ## GeoJSON
