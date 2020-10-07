@@ -9,6 +9,7 @@ use geo::{Coordinate, CoordinateType, LineString};
 use num_traits::Signed;
 use rand::distributions::uniform::SampleUniform;
 use rand::Rng;
+
 pub fn uniform_points_in_range<S: CoordinateType + SampleUniform + Signed, R: Rng>(
     range: S,
     size: usize,

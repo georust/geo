@@ -19,7 +19,7 @@ use std::collections::VecDeque;
 /// and also uses ideas from the following paper:
 /// www.iis.sinica.edu.tw/page/jise/2012/201205_10.pdf
 ///
-/// # Example
+/// # Examples
 /// ```
 /// use geo::{line_string, polygon};
 /// use geo::algorithm::concave_hull::ConcaveHull;
@@ -201,13 +201,8 @@ where
 
     let interior_coords: Vec<Coordinate<T>> = coords
         .iter()
-        .filter_map(|coord| {
-            if !hull_tree.contains(coord) {
-                Some(*coord)
-            } else {
-                None
-            }
-        })
+        .filter(|coord| !hull_tree.contains(coord))
+        .map(|coord| *coord)
         .collect();
     let mut interior_points_tree: RTree<Coordinate<T>> = RTree::bulk_load(interior_coords);
     let mut line_tree: RTree<Line<T>> = RTree::new();
@@ -266,7 +261,7 @@ mod test {
         let mut triangle = vec![
             Coordinate { x: 0.0, y: 0.0 },
             Coordinate { x: 4.0, y: 0.0 },
-            Coordinate { x: 2.0, y: 2.0 }
+            Coordinate { x: 2.0, y: 2.0 },
         ];
 
         let correct = line_string![
@@ -275,7 +270,6 @@ mod test {
             (x: 2.0, y: 2.0),
             (x: 0.0, y: 0.0),
         ];
-
 
         let concavity = 2.0;
         let res = concave_hull(&mut triangle, concavity);
