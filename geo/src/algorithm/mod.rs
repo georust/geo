@@ -13,6 +13,8 @@ pub mod centroid;
 pub mod chamberlain_duquette_area;
 /// Calculate the closest `Point` between a `Geometry` and an input `Point`.
 pub mod closest_point;
+/// Calculate the concave hull of a `Geometry`.
+pub mod concave_hull;
 /// Determine whether `Geometry` `A` is completely enclosed by `Geometry` `B`.
 pub mod contains;
 /// Calculate the convex hull of a `Geometry`.
