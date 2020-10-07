@@ -53,7 +53,6 @@ where
             // those two have to be same, and lies (interior
             // or boundary, but not exterior) on both lines.
             check_2_1 != check_2_2
-
         } else if check_1_1 == Orientation::Collinear {
             // Special case: collinear line segments.
 

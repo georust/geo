@@ -11,8 +11,7 @@ where
         // self.min <= self.max.
         let bound_1 = self.min();
         let bound_2 = self.max();
-        value_in_range(rhs.x, bound_1.x, bound_2.x)
-            && value_in_range(rhs.y, bound_1.y, bound_2.y)
+        value_in_range(rhs.x, bound_1.x, bound_2.x) && value_in_range(rhs.y, bound_1.y, bound_2.y)
     }
 }
 symmetric_intersects_impl!(Coordinate<T>, Rect<T>);

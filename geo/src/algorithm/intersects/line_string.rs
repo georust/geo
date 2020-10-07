@@ -14,7 +14,6 @@ where
 symmetric_intersects_impl!(Coordinate<T>, LineString<T>);
 symmetric_intersects_impl!(Line<T>, LineString<T>);
 
-
 // Blanket implementation from LineString<T>
 impl<T, G> Intersects<G> for MultiLineString<T>
 where

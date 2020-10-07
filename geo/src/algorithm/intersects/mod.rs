@@ -60,11 +60,11 @@ macro_rules! symmetric_intersects_impl {
             fn intersects(&self, rhs: &$k) -> bool {
                 rhs.intersects(self)
             }
-
         }
     };
 }
 
+mod collections;
 mod coordinate;
 mod line;
 mod line_string;
@@ -72,8 +72,6 @@ mod point;
 mod polygon;
 mod rect;
 mod triangle;
-mod collections;
-
 
 // Helper function to check value lies between min and max.
 // Only makes sense if min <= max (or always false)
@@ -113,7 +111,9 @@ where
 #[cfg(test)]
 mod test {
     use crate::algorithm::intersects::Intersects;
-    use crate::{line_string, polygon, Geometry, Coordinate, Line, LineString, Point, Polygon, Rect};
+    use crate::{
+        line_string, polygon, Coordinate, Geometry, Line, LineString, Point, Polygon, Rect,
+    };
 
     /// Tests: intersection LineString and LineString
     #[test]
