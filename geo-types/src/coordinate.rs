@@ -14,6 +14,13 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// [`Add`], [`Sub`], [`Neg`], [`Zero`],
 /// [`Mul<T>`][`Mul`], and [`Div<T>`][`Div`] traits.
 ///
+/// # Semantics
+///
+/// This type does not represent any geospatial primitive,
+/// but is used in their definitions. The only requirement
+/// is that the coordinates it contains are valid numbers
+/// (for eg. not `f64::NAN`).
+///
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

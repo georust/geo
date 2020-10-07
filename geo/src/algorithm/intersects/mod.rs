@@ -41,14 +41,21 @@ pub trait Intersects<Rhs = Self> {
 
 // Since `Intersects` is symmetric, we use a macro to
 // implement `T: Intersects<S>` if `S: Intersects<T>` is
-// available. As a convention, we provide explicit impl.
+// available.
+//
+// As a convention, we typically provide explicit impl.
 // whenever the Rhs is a "simpler geometry" than the target
-// type, and use the macro for the reverse impl.
+// type, and use the macro for the reverse impl. However,
+// when there is a blanket implementations (eg. Point from
+// Coordinate, MultiPoint from Point), we need to provide
+// the reverse (where Self is "simpler" than Rhs).
 #[macro_use]
 macro_rules! symmetric_intersects_impl {
-    ($t:ty, $k:ty, $bounds:tt $(+ $more_bounds:tt )*) => {
+    ($t:ty, $k:ty) => {
         impl<T> $crate::algorithm::intersects::Intersects<$k> for $t
-        where T: $bounds $(+ $more_bounds)*
+        where
+            $k: $crate::algorithm::intersects::Intersects<$t>,
+            T: CoordinateType,
         {
             fn intersects(&self, rhs: &$k) -> bool {
                 rhs.intersects(self)
@@ -65,6 +72,8 @@ mod point;
 mod polygon;
 mod rect;
 mod triangle;
+mod collections;
+
 
 // Helper function to check value lies between min and max.
 // Only makes sense if min <= max (or always false)
@@ -104,7 +113,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::algorithm::intersects::Intersects;
-    use crate::{line_string, polygon, Coordinate, Line, LineString, Point, Polygon, Rect};
+    use crate::{line_string, polygon, Geometry, Coordinate, Line, LineString, Point, Polygon, Rect};
 
     /// Tests: intersection LineString and LineString
     #[test]
@@ -557,5 +566,13 @@ mod test {
         );
         assert!(a.intersects(&b));
         assert!(b.intersects(&a));
+    }
+
+    #[test]
+    fn compile_test_geom_geom() {
+        // This test should check existance of all
+        // combinations of geometry types.
+        let geom: Geometry<_> = Line::from([(0.5, 0.5), (2., 1.)]).into();
+        assert!(geom.intersects(&geom));
     }
 }
