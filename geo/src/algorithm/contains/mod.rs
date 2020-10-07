@@ -370,29 +370,45 @@ mod test {
     #[test]
     fn line_in_polygon_test() {
         let c = |x, y| Coordinate { x, y };
-        let line = Line::new(c(0, 10), c(30, 40));
-        let linestring0 = line_string![c(-10, 0), c(50, 0), c(50, 50), c(0, 50), c(-10, 0)];
+        let line = Line::new(c(0.0, 10.0), c(30.0, 40.0));
+        let linestring0 = line_string![
+            c(-10.0, 0.0),
+            c(50.0, 0.0),
+            c(50.0, 50.0),
+            c(0.0, 50.0),
+            c(-10.0, 0.0)
+        ];
         let poly0 = Polygon::new(linestring0, Vec::new());
-        let linestring1 = line_string![c(0, 0), c(0, 20), c(20, 20), c(20, 0), c(0, 0)];
+        let linestring1 = line_string![
+            c(0.0, 0.0),
+            c(0.0, 20.0),
+            c(20.0, 20.0),
+            c(20.0, 0.0),
+            c(0.0, 0.0)
+        ];
         let poly1 = Polygon::new(linestring1, Vec::new());
         assert!(poly0.contains(&line));
         assert!(!poly1.contains(&line));
     }
     #[test]
-    #[ignore]
     fn line_in_polygon_edgecases_test() {
         // Some DE-9IM edge cases for checking line is
         // inside polygon The end points of the line can be
-        // on the boundary of the polygon but we don't allow
-        // that yet.
+        // on the boundary of the polygon.
         let c = |x, y| Coordinate { x, y };
         // A non-convex polygon
-        let linestring0 = line_string![c(0, 0), c(1, 1), c(1, -1), c(-1, -1), c(-1, 1)];
+        let linestring0 = line_string![
+            c(0.0, 0.0),
+            c(1.0, 1.0),
+            c(1.0, -1.0),
+            c(-1.0, -1.0),
+            c(-1.0, 1.0)
+        ];
         let poly = Polygon::new(linestring0, Vec::new());
 
-        assert!(poly.contains(&Line::new(c(0, 0), c(1, -1))));
-        assert!(poly.contains(&Line::new(c(-1, 1), c(1, -1))));
-        assert!(!poly.contains(&Line::new(c(-1, 1), c(1, 1))));
+        assert!(poly.contains(&Line::new(c(0.0, 0.0), c(1.0, -1.0))));
+        assert!(poly.contains(&Line::new(c(-1.0, 1.0), c(1.0, -1.0))));
+        assert!(!poly.contains(&Line::new(c(-1.0, 1.0), c(1.0, 1.0))));
     }
     #[test]
     fn line_in_linestring_edgecases() {

@@ -1,7 +1,7 @@
 use crate::utils::{partial_max, partial_min};
 use crate::{
-    CoordNum, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+    CoordNum, Coordinate, Geometry, GeometryCollection, GeometryCow, Line, LineString,
+    MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 
@@ -155,6 +155,17 @@ where
     type Output = Option<Rect<T>>;
 
     crate::geometry_delegate_impl! {
+       fn bounding_rect(&self) -> Self::Output;
+    }
+}
+
+impl<T> BoundingRect<T> for GeometryCow<'_, T>
+where
+    T: CoordNum,
+{
+    type Output = Option<Rect<T>>;
+
+    crate::geometry_cow_delegate_impl! {
        fn bounding_rect(&self) -> Self::Output;
     }
 }

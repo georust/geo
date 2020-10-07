@@ -1,7 +1,7 @@
 use crate::algorithm::kernels::Orientation::Collinear;
 use crate::{
-    CoordNum, GeoNum, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon, Rect, Triangle,
+    CoordNum, GeoNum, Geometry, GeometryCollection, GeometryCow, Line, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
 /// Geometries can have 0, 1, or two dimensions. Or, in the case of an [`empty`](#is_empty)
@@ -134,6 +134,14 @@ pub trait HasDimensions {
 
 impl<C: GeoNum> HasDimensions for Geometry<C> {
     crate::geometry_delegate_impl! {
+        fn is_empty(&self) -> bool;
+        fn dimensions(&self) -> Dimensions;
+        fn boundary_dimensions(&self) -> Dimensions;
+    }
+}
+
+impl<C: GeoNum> HasDimensions for GeometryCow<'_, C> {
+    crate::geometry_cow_delegate_impl! {
         fn is_empty(&self) -> bool;
         fn dimensions(&self) -> Dimensions;
         fn boundary_dimensions(&self) -> Dimensions;

@@ -4,6 +4,12 @@
 
 * Add `line_intersection` to compute point or segment intersection of two Lines.
   * <https://github.com/georust/geo/pull/636>
+* Add `Relate` trait to topologically relate two geometries based on [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
+  * <https://github.com/georust/geo/pull/639>
+* Fix `Contains` implementation for Polygons to match the OGC spec using the new `Relate` trait
+  * <https://github.com/georust/geo/pull/639>
+* BREAKING: `Contains` no longer supports integer `Polygon` and `Geometry`
+  * <https://github.com/georust/geo/pull/639>
 
 ## 0.17.1
 

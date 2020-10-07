@@ -86,6 +86,8 @@
 //!   another geometry
 //! - **[`line_intersection`](algorithm::line_intersection::line_intersection)**: Calculates the
 //!   intersection, if any, between two lines.
+//! - **[`Relate`](algorithm::relate::Relate)**: Topologically relate two geometries based on
+//!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
 //!
 //! ## Winding
 //!
@@ -175,7 +177,7 @@ extern crate rstar;
 pub use crate::algorithm::*;
 #[allow(deprecated)]
 pub use crate::traits::ToGeo;
-pub use crate::types::*;
+pub use crate::types::Closest;
 
 pub use geo_types::{
     line_string, point, polygon, CoordFloat, CoordNum, Coordinate, Geometry, GeometryCollection,
@@ -184,13 +186,18 @@ pub use geo_types::{
 
 /// This module includes all the functions of geometric calculations
 pub mod algorithm;
+mod geometry_cow;
 mod traits;
 mod types;
 mod utils;
+pub(crate) use geometry_cow::GeometryCow;
 
 #[cfg(test)]
 #[macro_use]
 extern crate approx;
+
+#[macro_use]
+extern crate log;
 
 /// Mean radius of Earth in meters
 /// This is the value recommended by the IUGG:
