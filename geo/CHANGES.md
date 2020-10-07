@@ -1,7 +1,12 @@
 # Changes
 
-## Master (not released)
+## 0.15.0
 
+* Add `Intersects` implementations for all pairs of types
+  * <https://github.com/georust/geo/pull/516>
+  * <https://github.com/georust/geo/pull/514>
+* Add `ConcaveHull` algorithm
+  * <https://github.com/georust/geo/pull/480>
 * Add robust predicates
   * <https://github.com/georust/geo/pull/511>
   * <https://github.com/georust/geo/pull/505>

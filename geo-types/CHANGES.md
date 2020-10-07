@@ -1,7 +1,9 @@
 # Changes
 
-## Master (not released)
+## 0.6.1
 
+* Add documentation on semantics (based on OGC-SFA)
+  * <https://github.com/georust/geo/pull/516>
 * Add vector-space operations to `Coordinate` and `Point`
   * <https://github.com/georust/geo/pull/505>
 
