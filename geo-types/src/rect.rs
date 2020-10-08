@@ -46,13 +46,7 @@ where
 }
 
 impl<T: CoordinateType> Rect<T> {
-    /// Constructor to creates a new rectangle from coordinates, where `min` denotes to the
-    /// coordinates of the bottom-left corner, and `max` denotes to the coordinates of the
-    /// top-right corner
-    ///
-    /// # Panics
-    ///
-    /// Panics if `min`'s x/y coordinate is larger than that of the `max`'s.
+    /// Creates a new rectangle from two corner coordinates.
     ///
     /// # Examples
     ///
@@ -60,9 +54,11 @@ impl<T: CoordinateType> Rect<T> {
     /// use geo_types::{Coordinate, Rect};
     ///
     /// let rect = Rect::new(
-    ///     Coordinate { x: 0., y: 0. },
-    ///     Coordinate { x: 10., y: 20. }
+    ///     Coordinate { x: 10., y: 20. },
+    ///     Coordinate { x: 30., y: 10. }
     /// );
+    /// assert_eq!(rect.min(), Coordinate { x: 10., y: 10. });
+    /// assert_eq!(rect.max(), Coordinate { x: 30., y: 20. });
     /// ```
     pub fn new<C>(c1: C, c2: C) -> Rect<T>
     where
@@ -97,7 +93,7 @@ impl<T: CoordinateType> Rect<T> {
         Ok(Rect::new(c1, c2))
     }
 
-    /// Returns the minimum `Coordinate` (bottom-left corner) of the `Rect`.
+    /// Returns the minimum `Coordinate` of the `Rect`.
     ///
     /// # Examples
     ///
@@ -128,7 +124,7 @@ impl<T: CoordinateType> Rect<T> {
         self.assert_valid_bounds();
     }
 
-    /// Returns the maximum `Coordinate` (top-right corner) of the `Rect`.
+    /// Returns the maximum `Coordinate` of the `Rect`.
     ///
     /// # Examples
     ///
