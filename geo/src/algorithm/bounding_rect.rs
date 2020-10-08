@@ -4,7 +4,6 @@ use crate::{
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
-use geo_types::InvalidRectCoordinatesError;
 
 /// Calculation of the bounding rectangle of a geometry.
 pub trait BoundingRect<T: CoordinateType> {
@@ -192,18 +191,15 @@ where
             match (acc, next_bounding_rect) {
                 (None, None) => None,
                 (Some(r), None) | (None, Some(r)) => Some(r),
-                (Some(r1), Some(r2)) => bounding_rect_merge(r1, r2).ok(),
+                (Some(r1), Some(r2)) => Some(bounding_rect_merge(r1, r2)),
             }
         })
     }
 }
 
 // Return a new rectangle that encompasses the provided rectangles
-fn bounding_rect_merge<T: CoordinateType>(
-    a: Rect<T>,
-    b: Rect<T>,
-) -> Result<Rect<T>, InvalidRectCoordinatesError> {
-    Rect::try_new(
+fn bounding_rect_merge<T: CoordinateType>(a: Rect<T>, b: Rect<T>) -> Rect<T> {
+    Rect::new(
         Coordinate {
             x: partial_min(a.min().x, b.min().x),
             y: partial_min(a.min().y, b.min().y),
@@ -324,10 +320,7 @@ mod test {
                 Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. }),
                 Rect::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 2., y: 2. }),
             ),
-            Ok(Rect::new(
-                Coordinate { x: 0., y: 0. },
-                Coordinate { x: 2., y: 2. }
-            )),
+            Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 2., y: 2. }),
         );
     }
 

@@ -64,27 +64,37 @@ impl<T: CoordinateType> Rect<T> {
     ///     Coordinate { x: 10., y: 20. }
     /// );
     /// ```
-    pub fn new<C>(min: C, max: C) -> Rect<T>
+    pub fn new<C>(c1: C, c2: C) -> Rect<T>
     where
         C: Into<Coordinate<T>>,
     {
-        Rect::try_new(min, max).unwrap()
+        let c1 = c1.into();
+        let c2 = c2.into();
+        let (min_x, max_x) = if c1.x < c2.x {
+            (c1.x, c2.x)
+        } else {
+            (c2.x, c1.x)
+        };
+        let (min_y, max_y) = if c1.y < c2.y {
+            (c1.y, c2.y)
+        } else {
+            (c2.y, c1.y)
+        };
+        Rect {
+            min: Coordinate { x: min_x, y: min_y },
+            max: Coordinate { x: max_x, y: max_y },
+        }
     }
 
-    pub fn try_new<C>(min: C, max: C) -> Result<Rect<T>, InvalidRectCoordinatesError>
+    #[deprecated(
+        since = "0.6.2",
+        note = "Use `Rect::new` instead, since `Rect::try_new` will never Error"
+    )]
+    pub fn try_new<C>(c1: C, c2: C) -> Result<Rect<T>, InvalidRectCoordinatesError>
     where
         C: Into<Coordinate<T>>,
     {
-        let rect = Rect {
-            min: min.into(),
-            max: max.into(),
-        };
-
-        if rect.has_valid_bounds() {
-            Ok(rect)
-        } else {
-            Err(InvalidRectCoordinatesError)
-        }
+        Ok(Rect::new(c1, c2))
     }
 
     /// Returns the minimum `Coordinate` (bottom-left corner) of the `Rect`.
@@ -280,12 +290,14 @@ mod test {
         let rect = Rect::new((10, 10), (20, 20));
         assert_eq!(rect.min, Coordinate { x: 10, y: 10 });
         assert_eq!(rect.max, Coordinate { x: 20, y: 20 });
-    }
 
-    #[test]
-    #[should_panic]
-    fn rect_panic() {
-        let _ = Rect::new((10, 20), (20, 10));
+        let rect = Rect::new((20, 20), (10, 10));
+        assert_eq!(rect.min, Coordinate { x: 10, y: 10 });
+        assert_eq!(rect.max, Coordinate { x: 20, y: 20 });
+
+        let rect = Rect::new((10, 20), (20, 10));
+        assert_eq!(rect.min, Coordinate { x: 10, y: 10 });
+        assert_eq!(rect.max, Coordinate { x: 20, y: 20 });
     }
 
     #[test]
