@@ -131,6 +131,14 @@ mod test {
             linestring.line_interpolate_point(&1.5),
             point!(x: 0.0, y: 1.0)
         );
+
+        let coords: Vec<Point<f64>> = Vec::new();
+        let linestring: LineString<f64> = coords.into();
+        assert_eq!(
+            linestring.line_interpolate_point(&0.5),
+            point!(x: Float::nan(), y: Float::nan())
+        );
+
     }
 
     #[test]
