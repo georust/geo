@@ -12,6 +12,8 @@ use std::ops::AddAssign;
 /// representing the location
 /// of the closest point on the line to the given point.
 ///
+/// If the line has zero length the fraction returned is zero.
+///
 /// # Examples
 ///
 /// ```
@@ -85,12 +87,17 @@ where
             ));
             total_length += length;
         }
-        let l = queue
-            .iter()
-            .min_by(|x, y| (x.2).partial_cmp(&y.2).unwrap())
-            .unwrap();
+        if total_length == T::zero() {
+            // linestring has zero legnth, return zero
+            return T::zero();
+        } else {
+            let l = queue
+                .iter()
+                .min_by(|x, y| (x.2).partial_cmp(&y.2).unwrap())
+                .unwrap();
 
-        (l.0 + l.1 * (l.3).line_locate_point(p)) / total_length
+            return (l.0 + l.1 * (l.3).line_locate_point(p)) / total_length
+        }
     }
 }
 
