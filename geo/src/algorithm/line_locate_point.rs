@@ -6,7 +6,10 @@ use num_traits::{
     identities::{One, Zero},
     Float,
 };
-use std::ops::AddAssign;
+use std::{
+    ops::AddAssign,
+    cmp::Ordering
+};
 
 /// Returns a fraction of the line's total length
 /// representing the location
@@ -91,12 +94,22 @@ where
             // linestring has zero legnth, return zero
             return T::zero();
         } else {
-            let l = queue
+            let first = queue.pop();
+            let opt_l = queue
                 .iter()
-                .min_by(|x, y| (x.2).partial_cmp(&y.2).unwrap())
-                .unwrap();
+                .fold(first, |l, y| { 
+                    match l.map(|x| (x.2).partial_cmp(&y.2)).flatten() {
+                        Some(o) => match o {
+                            Ordering::Less => l,
+                            _ => Some(*y)
+                        },
+                        None => None
+                    }});
 
-            return (l.0 + l.1 * (l.3).line_locate_point(p)) / total_length
+            match opt_l {
+                Some(l) => (l.0 + l.1 * (l.3).line_locate_point(p)) / total_length,
+                None => T::nan()
+            }
         }
     }
 }
