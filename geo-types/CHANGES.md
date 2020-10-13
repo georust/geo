@@ -1,5 +1,9 @@
 # Changes
 
+## 0.6.2
+
+* `Rect::new` automatically determines min/max points
+
 ## 0.6.1
 
 * Add documentation on semantics (based on OGC-SFA)

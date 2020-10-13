@@ -46,13 +46,7 @@ where
 }
 
 impl<T: CoordinateType> Rect<T> {
-    /// Constructor to creates a new rectangle from coordinates, where `min` denotes to the
-    /// coordinates of the bottom-left corner, and `max` denotes to the coordinates of the
-    /// top-right corner
-    ///
-    /// # Panics
-    ///
-    /// Panics if `min`'s x/y coordinate is larger than that of the `max`'s.
+    /// Creates a new rectangle from two corner coordinates.
     ///
     /// # Examples
     ///
@@ -60,34 +54,46 @@ impl<T: CoordinateType> Rect<T> {
     /// use geo_types::{Coordinate, Rect};
     ///
     /// let rect = Rect::new(
-    ///     Coordinate { x: 0., y: 0. },
-    ///     Coordinate { x: 10., y: 20. }
+    ///     Coordinate { x: 10., y: 20. },
+    ///     Coordinate { x: 30., y: 10. }
     /// );
+    /// assert_eq!(rect.min(), Coordinate { x: 10., y: 10. });
+    /// assert_eq!(rect.max(), Coordinate { x: 30., y: 20. });
     /// ```
-    pub fn new<C>(min: C, max: C) -> Rect<T>
+    pub fn new<C>(c1: C, c2: C) -> Rect<T>
     where
         C: Into<Coordinate<T>>,
     {
-        Rect::try_new(min, max).unwrap()
-    }
-
-    pub fn try_new<C>(min: C, max: C) -> Result<Rect<T>, InvalidRectCoordinatesError>
-    where
-        C: Into<Coordinate<T>>,
-    {
-        let rect = Rect {
-            min: min.into(),
-            max: max.into(),
-        };
-
-        if rect.has_valid_bounds() {
-            Ok(rect)
+        let c1 = c1.into();
+        let c2 = c2.into();
+        let (min_x, max_x) = if c1.x < c2.x {
+            (c1.x, c2.x)
         } else {
-            Err(InvalidRectCoordinatesError)
+            (c2.x, c1.x)
+        };
+        let (min_y, max_y) = if c1.y < c2.y {
+            (c1.y, c2.y)
+        } else {
+            (c2.y, c1.y)
+        };
+        Rect {
+            min: Coordinate { x: min_x, y: min_y },
+            max: Coordinate { x: max_x, y: max_y },
         }
     }
 
-    /// Returns the minimum `Coordinate` (bottom-left corner) of the `Rect`.
+    #[deprecated(
+        since = "0.6.2",
+        note = "Use `Rect::new` instead, since `Rect::try_new` will never Error"
+    )]
+    pub fn try_new<C>(c1: C, c2: C) -> Result<Rect<T>, InvalidRectCoordinatesError>
+    where
+        C: Into<Coordinate<T>>,
+    {
+        Ok(Rect::new(c1, c2))
+    }
+
+    /// Returns the minimum `Coordinate` of the `Rect`.
     ///
     /// # Examples
     ///
@@ -118,7 +124,7 @@ impl<T: CoordinateType> Rect<T> {
         self.assert_valid_bounds();
     }
 
-    /// Returns the maximum `Coordinate` (top-right corner) of the `Rect`.
+    /// Returns the maximum `Coordinate` of the `Rect`.
     ///
     /// # Examples
     ///
@@ -280,12 +286,14 @@ mod test {
         let rect = Rect::new((10, 10), (20, 20));
         assert_eq!(rect.min, Coordinate { x: 10, y: 10 });
         assert_eq!(rect.max, Coordinate { x: 20, y: 20 });
-    }
 
-    #[test]
-    #[should_panic]
-    fn rect_panic() {
-        let _ = Rect::new((10, 20), (20, 10));
+        let rect = Rect::new((20, 20), (10, 10));
+        assert_eq!(rect.min, Coordinate { x: 10, y: 10 });
+        assert_eq!(rect.max, Coordinate { x: 20, y: 20 });
+
+        let rect = Rect::new((10, 20), (20, 10));
+        assert_eq!(rect.min, Coordinate { x: 10, y: 10 });
+        assert_eq!(rect.max, Coordinate { x: 20, y: 20 });
     }
 
     #[test]
