@@ -84,7 +84,7 @@ where
                 let line_frac = (fractional_length - x.0) / x.2;
                 (x.3).line_interpolate_point(&line_frac)
             }
-            None => self.points_iter().last().unwrap(),
+            None => self.points_iter().last().unwrap_or(Point::new(T::nan(), T::nan())),
         }
     }
 }
@@ -134,10 +134,8 @@ mod test {
 
         let coords: Vec<Point<f64>> = Vec::new();
         let linestring: LineString<f64> = coords.into();
-        assert_eq!(
-            linestring.line_interpolate_point(&0.5),
-            point!(x: Float::nan(), y: Float::nan())
-        );
+        let pt = linestring.line_interpolate_point(&0.5);
+        assert!(pt.x().is_nan() & pt.y().is_nan());
 
     }
 
