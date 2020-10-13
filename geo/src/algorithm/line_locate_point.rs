@@ -170,5 +170,11 @@ mod test {
                                                     (1.0, 1.0).into()]);
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), 0.0);
+
+        let line: LineString<f64> = LineString(vec![Coordinate { x: 1.0, y: 1.0 },
+                                                    Coordinate { x: f64::NAN, y: 1.0},
+                                                    Coordinate { x: 0.0, y:0.0 }]);
+        let pt = point!(x: 2.0, y: 2.0);
+        assert!(line.line_locate_point(&pt).is_nan())
     }
 }
