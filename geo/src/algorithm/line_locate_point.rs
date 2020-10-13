@@ -94,14 +94,15 @@ where
             // linestring has zero legnth, return zero
             return T::zero();
         } else {
-            let first = queue.pop();
+            let first = queue.first().map(|x| x.clone());
             let opt_l = queue
                 .iter()
                 .fold(first, |l, y| { 
                     match l.map(|x| (x.2).partial_cmp(&y.2)).flatten() {
                         Some(o) => match o {
                             Ordering::Less => l,
-                            _ => Some(*y)
+                            Ordering::Equal => l,
+                            Ordering::Greater => Some(*y)
                         },
                         None => None
                     }});
@@ -177,6 +178,13 @@ mod test {
 
         let pt = point!(x: 10.0, y: 1.0);
         assert_eq!(ring.line_locate_point(&pt), 0.0);
+
+        let line: LineString<f64> = LineString(vec![(0.0, 0.0).into(),
+                                                    (1.0, 0.0).into(),
+                                                    (1.0, 1.0).into(),
+                                                    (0.0, 1.0).into()]);
+        let pt = point!(x: 0.0, y: 0.5);
+        assert_eq!(line.line_locate_point(&pt), 0.0);
 
         let line: LineString<f64> = LineString(vec![(1.0, 1.0).into(),
                                                     (1.0, 1.0).into(),
