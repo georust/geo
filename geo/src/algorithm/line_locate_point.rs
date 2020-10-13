@@ -139,6 +139,11 @@ mod test {
         );
         let point = Point::new(1000.0, 1000.0);
         assert!(line.line_locate_point(&point).is_nan());
+
+        let line: Line<f64> = Line::new(Coordinate { x: 1.0, y: 1.0},
+                                        Coordinate { x: 1.0, y: 1.0});
+        let pt = point!(x: 2.0, y: 2.0);
+        assert_eq!(line.line_locate_point(&pt), 0.0);
     }
 
     #[test]
@@ -152,5 +157,11 @@ mod test {
 
         let pt = point!(x: 10.0, y: 1.0);
         assert_eq!(ring.line_locate_point(&pt), 0.0);
+
+        let line: LineString<f64> = LineString(vec![(1.0, 1.0).into(),
+                                                    (1.0, 1.0).into(),
+                                                    (1.0, 1.0).into()]);
+        let pt = point!(x: 2.0, y: 2.0);
+        assert_eq!(line.line_locate_point(&pt), 0.0);
     }
 }
