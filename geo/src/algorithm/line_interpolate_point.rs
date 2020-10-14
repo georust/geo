@@ -49,23 +49,17 @@ where
     type Output = Option<Point<T>>;
 
     fn line_interpolate_point(&self, fraction: &T) -> Self::Output {
-        match fraction.partial_cmp(&T::zero()) {
-            Some(o) => match o {
-                Ordering::Less => return Some(self.start.into()),
-                Ordering::Equal => return Some(self.start.into()),
-                Ordering::Greater => {
-                    match fraction.partial_cmp(&T::one()) {
-                        Some(p) => match p {
-                            Ordering::Greater => return Some(self.end.into()),
-                            Ordering::Equal => return Some(self.end.into()),
-                            Ordering::Less => {}
-                        },
-                        None => return None
-                    }
+        match fraction.partial_cmp(&T::zero())? {
+            Ordering::Less => return Some(self.start.into()),
+            Ordering::Equal => return Some(self.start.into()),
+            Ordering::Greater => {
+                match fraction.partial_cmp(&T::one())? {
+                    Ordering::Greater => return Some(self.end.into()),
+                    Ordering::Equal => return Some(self.end.into()),
+                    Ordering::Less => {}
                 }
-            },
-            None => return None
-        };
+            }
+        }
         let s = [self.start.x, self.start.y];
         let v = [self.end.x - self.start.x, self.end.y - self.start.y];
         let r = [*fraction * v[0] + s[0], *fraction * v[1] + s[1]];
