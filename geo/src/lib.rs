@@ -98,6 +98,7 @@ pub mod prelude {
     pub use crate::algorithm::closest_point::ClosestPoint;
     pub use crate::algorithm::contains::Contains;
     pub use crate::algorithm::convex_hull::ConvexHull;
+    pub use crate::algorithm::empty::Empty;
     pub use crate::algorithm::euclidean_distance::EuclideanDistance;
     pub use crate::algorithm::euclidean_length::EuclideanLength;
     pub use crate::algorithm::extremes::ExtremePoints;
