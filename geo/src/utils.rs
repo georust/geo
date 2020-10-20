@@ -98,7 +98,7 @@ where
     //
     // See: https://en.wikipedia.org/wiki/Point_in_polygon
 
-    assert!(linestring.is_closed());
+    debug_assert!(linestring.is_closed());
 
     // LineString without points
     if linestring.0.is_empty() {

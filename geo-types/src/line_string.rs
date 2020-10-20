@@ -178,12 +178,14 @@ impl<T: CoordinateType> LineString<T> {
         })
     }
 
-    /// Close the `LineString`. Specifically, if the `LineString` has is at least one coordinate,
-    /// and the value of the first coordinate does not equal the value of the last coordinate, then
-    /// a new coordinate is added to the end with the value of the first coordinate.
+    /// Close the `LineString`. Specifically, if the `LineString` has at least one coordinate, and
+    /// the value of the first coordinate does not equal the value of the last coordinate, then a
+    /// new coordinate is added to the end with the value of the first coordinate.
     pub fn close(&mut self) {
         if !self.is_closed() {
-            self.0.push(self.0[0]);
+            if self.0.len() > 0 {
+                self.0.push(self.0[0]);
+            }
         }
     }
 
@@ -216,6 +218,10 @@ impl<T: CoordinateType> LineString<T> {
     /// assert!(line_string.is_closed());
     /// ```
     pub fn is_closed(&self) -> bool {
+        if self.0.is_empty() {
+            return false;
+        }
+
         self.0.first() == self.0.last()
     }
 }

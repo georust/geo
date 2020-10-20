@@ -12,6 +12,12 @@ where
     T: HasKernel,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
+        // Officially, we require the exterior to be a valid ring, but this isn't curently enforced
+        // by the Polygon contructor. We bail out here rather than trigger later debug asserts.
+        if self.exterior().0.is_empty() {
+            return false;
+        }
+
         match utils::coord_pos_relative_to_ring(*coord, &self.exterior()) {
             utils::CoordPos::OnBoundary | utils::CoordPos::Outside => false,
             _ => self.interiors().iter().all(|ls| {
