@@ -35,8 +35,8 @@ where
     T: CoordinateType;
 
 impl<T: CoordinateType> MultiLineString<T> {
-    /// True if the MultiLineString is non-empty and each of its LineStrings is closed - that is,
-    /// that the first and last coordinates of each line string are the same.
+    /// True if the MultiLineString is empty or if all of its LineStrings are closed - see
+    /// [`LineString::is_closed`].
     ///
     /// # Examples
     ///
@@ -56,10 +56,7 @@ impl<T: CoordinateType> MultiLineString<T> {
     /// assert!(!MultiLineString::<f32>(vec![]).is_closed());
     /// ```
     pub fn is_closed(&self) -> bool {
-        if self.0.is_empty() {
-            return false;
-        }
-
+        // Note: Unlike JTS et al, we consider an empty MultiLineString as closed.
         self.0.iter().all(LineString::is_closed)
     }
 }
