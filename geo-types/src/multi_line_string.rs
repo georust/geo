@@ -54,11 +54,6 @@ impl<T: CoordinateType> MultiLineString<T> {
     ///
     /// // An empty MultiLineString is not closed
     /// assert!(!MultiLineString::<f32>(vec![]).is_closed());
-    ///
-    /// // Because an empty LineString is not closed, a MultiLineString containing an empty
-    /// // LineString cannot be closed.
-    /// let empty_line_string: LineString<f32> = line_string![];
-    /// assert!(!MultiLineString(vec![empty_line_string]).is_closed());
     /// ```
     pub fn is_closed(&self) -> bool {
         if self.0.is_empty() {

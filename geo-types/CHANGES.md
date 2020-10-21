@@ -4,7 +4,6 @@
 
 * `Rect::new` automatically determines min/max points
 * Add `MultiLineString::is_closed` method
-* Fixed `LineString::is_closed` to return false when empty
 
 ## 0.6.1
 

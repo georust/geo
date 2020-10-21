@@ -183,9 +183,9 @@ impl<T: CoordinateType> LineString<T> {
     /// new coordinate is added to the end with the value of the first coordinate.
     pub fn close(&mut self) {
         if !self.is_closed() {
-            if self.0.len() > 0 {
-                self.0.push(self.0[0]);
-            }
+            // by definition, we treat empty LineString's as closed.
+            debug_assert!(self.0.len() > 0);
+            self.0.push(self.0[0]);
         }
     }
 
@@ -217,11 +217,17 @@ impl<T: CoordinateType> LineString<T> {
     /// let line_string: LineString<f32> = coords.into_iter().collect();
     /// assert!(line_string.is_closed());
     /// ```
+    ///
+    /// Note that we diverge from some libraries (JTS et al), which have a LinearRing type,
+    /// separate from LineString. Those libraries treat an empty LinearRing as closed, by
+    /// definition, while treating an empty LineString as open. Since we don't have a separate
+    /// LinearRing type, and use a LineString in its place, we adopt the JTS LinearRing `is_closed`
+    /// behavior in all places, that is, we consider an empty LineString as closed.
+    ///
+    /// This is expected when used in the context of a Polygon.exterior and elswhere; And there
+    /// seems to be no reason to maintain the separate behavior for LineStrings used in
+    /// non-LinearRing contexts.
     pub fn is_closed(&self) -> bool {
-        if self.0.is_empty() {
-            return false;
-        }
-
         self.0.first() == self.0.last()
     }
 }
