@@ -1,4 +1,4 @@
-use num_traits::{Float, One, Zero};
+use num_traits::Float;
 use std::{
     cmp::Ordering,
     ops::AddAssign
@@ -44,7 +44,7 @@ pub trait LineInterpolatePoint<F: Float> {
 
 impl<T> LineInterpolatePoint<T> for Line<T>
 where
-    T: CoordinateType + Float + Zero + One,
+    T: CoordinateType + Float,
 {
     type Output = Option<Point<T>>;
 
@@ -73,7 +73,7 @@ where
 
 impl<T> LineInterpolatePoint<T> for LineString<T>
 where
-    T: CoordinateType + Float + Zero + AddAssign + One,
+    T: CoordinateType + Float + AddAssign,
     Line<T>: EuclideanLength<T>,
     LineString<T>: EuclideanLength<T>,
 {

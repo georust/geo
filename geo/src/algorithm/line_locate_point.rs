@@ -2,10 +2,7 @@ use crate::{
     algorithm::{euclidean_distance::EuclideanDistance, euclidean_length::EuclideanLength},
     CoordinateType, Line, LineString, Point,
 };
-use num_traits::{
-    identities::{One, Zero},
-    Float,
-};
+use num_traits::Float;
 use std::{
     ops::AddAssign,
     cmp::Ordering
@@ -46,7 +43,7 @@ pub trait LineLocatePoint<T, Rhs> {
 
 impl<T> LineLocatePoint<T, Point<T>> for Line<T>
 where
-    T: CoordinateType + Float + Zero + One,
+    T: CoordinateType + Float,
 {
     type Output = Option<T>;
     type Rhs = Point<T>;
@@ -83,7 +80,7 @@ where
 
 impl<T> LineLocatePoint<T, Point<T>> for LineString<T>
 where
-    T: CoordinateType + Float + Zero + One + PartialOrd + AddAssign,
+    T: CoordinateType + Float + AddAssign,
     Line<T>: EuclideanDistance<T, Point<T>> + EuclideanLength<T>,
 {
     type Output = Option<T>;
