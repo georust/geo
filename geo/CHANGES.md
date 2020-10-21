@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+* Add `HasDimensions` trait for working with Geometry dimensionality
+  * <https://github.com/georust/geo/pull/524>
+
 ## 0.15.0
 
 * Add `Intersects` implementations for all pairs of types
