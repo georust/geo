@@ -1,11 +1,11 @@
 use num_traits::Float;
-use std::{cmp::Ordering, ops::AddAssign};
+use std::ops::AddAssign;
 
 use crate::{
     algorithm::euclidean_length::EuclideanLength, CoordinateType, Line, LineString, Point,
 };
 
-/// Returns the point that lies a given fraction along the line.
+/// Returns an option of the point that lies a given fraction along the line.
 ///
 /// If the given fraction is
 ///  * less than zero (including negative infinity): returns a `Some` of the starting point
@@ -44,7 +44,7 @@ where
     type Output = Option<Point<T>>;
 
     fn line_interpolate_point(&self, fraction: T) -> Self::Output {
-        if (fraction >= T::zero()) && (fraction <= T::one()) {
+        if (fraction > T::zero()) && (fraction < T::one()) {
             // fraction between 0 and 1, return a point between start and end
             let diff = self.end - self.start;
             let r = self.start + diff * (fraction);
@@ -53,10 +53,10 @@ where
             } else {
                 return None;
             }
-        } else if fraction < T::zero() {
+        } else if fraction <= T::zero() {
             // negative fractions just return the start point
             return Some(self.start_point());
-        } else if fraction > T::one() {
+        } else if fraction >= T::one() {
             // fraction above one is just the end point
             return Some(self.end_point());
         } else {
@@ -75,33 +75,27 @@ where
     type Output = Option<Point<T>>;
 
     fn line_interpolate_point(&self, fraction: T) -> Self::Output {
-        let total_length = self.euclidean_length();
-        let fractional_length = total_length.clone() * fraction;
-        let mut cum_length = T::zero();
-        let mut queue = Vec::new();
-        for line in self.lines() {
-            let length = line.euclidean_length();
-            let entry = (cum_length.clone() + length.clone())
-                .partial_cmp(&fractional_length)
-                .map(|o| (cum_length.clone(), o, length.clone(), line.clone()));
-            queue.push(entry);
-            cum_length += length;
+        if (fraction > T::zero()) && (fraction < T::one()) {
+            // if fraction is outside these bounds the result is trivial
+            let total_length = self.euclidean_length();
+            let fractional_length = total_length.clone() * fraction;
+            let mut cum_length = T::zero();
+            for segment in self.lines() {
+                let length = segment.euclidean_length();
+                if cum_length + length >= fractional_length {
+                    let segment_fraction = (fractional_length - cum_length) / length;
+                    return segment.line_interpolate_point(segment_fraction);
+                }
+                cum_length += length;
+            }
+            return None;
+        } else if fraction <= T::zero() {
+            return self.points_iter().next();
+        } else if fraction >= T::one() {
+            return self.points_iter().last();
+        } else {
+            return None;
         }
-        queue
-            .into_iter()
-            .collect::<Option<Vec<_>>>()
-            .map(|q| {
-                q.iter()
-                    // the first line segment who ends after tracing `fractional_length`
-                    .find(|x| x.1 != Ordering::Less)
-                    .map(|x| {
-                        let line_frac = (fractional_length - x.0) / x.2;
-                        (x.3).line_interpolate_point(line_frac)
-                    })
-                    // Nothing found, return the last point
-                    .unwrap_or(self.points_iter().last())
-            })
-            .flatten()
     }
 }
 
