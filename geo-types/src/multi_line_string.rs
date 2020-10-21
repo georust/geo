@@ -52,8 +52,8 @@ impl<T: CoordinateType> MultiLineString<T> {
     /// // MultiLineString is not closed if *any* of it's LineStrings are not closed
     /// assert!(!MultiLineString(vec![open_line_string, closed_line_string]).is_closed());
     ///
-    /// // An empty MultiLineString is not closed
-    /// assert!(!MultiLineString::<f32>(vec![]).is_closed());
+    /// // An empty MultiLineString is closed
+    /// assert!(MultiLineString::<f32>(vec![]).is_closed());
     /// ```
     pub fn is_closed(&self) -> bool {
         // Note: Unlike JTS et al, we consider an empty MultiLineString as closed.
