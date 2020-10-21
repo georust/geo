@@ -15,12 +15,12 @@ use crate::{
 /// let point = Point::new(0.0, 5.0);
 /// let line_string = line_string![(x: 0.0, y: 0.0), (x: 5.0, y: 5.0), (x: 0.0, y: 5.0)];
 /// let rect = Rect::new((0.0, 0.0), (10.0, 10.0));
-/// assert_eq!(Dimensions::ZeroDimensional, point.get_dimensions());
-/// assert_eq!(Dimensions::OneDimensional, line_string.get_dimensions());
-/// assert_eq!(Dimensions::TwoDimensional, rect.get_dimensions());
+/// assert_eq!(Dimensions::ZeroDimensional, point.dimensions());
+/// assert_eq!(Dimensions::OneDimensional, line_string.dimensions());
+/// assert_eq!(Dimensions::TwoDimensional, rect.dimensions());
 ///
-/// assert!(point.get_dimensions() < line_string.get_dimensions());
-/// assert!(rect.get_dimensions() > line_string.get_dimensions());
+/// assert!(point.dimensions() < line_string.dimensions());
+/// assert!(rect.dimensions() > line_string.dimensions());
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd)]
 pub enum Dimensions {
@@ -72,29 +72,29 @@ pub trait HasDimensions {
     ///
     /// // normal rectangle
     /// let rect = Rect::new((0.0, 0.0), (10.0, 10.0));
-    /// assert_eq!(Dimensions::TwoDimensional, rect.get_dimensions());
+    /// assert_eq!(Dimensions::TwoDimensional, rect.dimensions());
     ///
     /// // "rectangle" with zero height degenerates to a line
     /// let degenerate_line_rect = Rect::new((0.0, 10.0), (10.0, 10.0));
-    /// assert_eq!(Dimensions::OneDimensional, degenerate_line_rect.get_dimensions());
+    /// assert_eq!(Dimensions::OneDimensional, degenerate_line_rect.dimensions());
     ///
     /// // "rectangle" with zero height and zero width degenerates to a point
     /// let degenerate_point_rect = Rect::new((10.0, 10.0), (10.0, 10.0));
-    /// assert_eq!(Dimensions::ZeroDimensional, degenerate_point_rect.get_dimensions());
+    /// assert_eq!(Dimensions::ZeroDimensional, degenerate_point_rect.dimensions());
     ///
     /// // collections inherit the greatest dimensionality of their elements
     /// let geometry_collection = GeometryCollection(vec![degenerate_line_rect.into(), degenerate_point_rect.into()]);
-    /// assert_eq!(Dimensions::OneDimensional, geometry_collection.get_dimensions());
+    /// assert_eq!(Dimensions::OneDimensional, geometry_collection.dimensions());
     ///
     /// let point = Point::new(10.0, 10.0);
-    /// assert_eq!(Dimensions::ZeroDimensional, point.get_dimensions());
+    /// assert_eq!(Dimensions::ZeroDimensional, point.dimensions());
     ///
     /// // An `Empty` dimensionality is distinct from, and less than, being 0-dimensional
     /// let empty_collection = GeometryCollection::<f32>(vec![]);
-    /// assert_eq!(Dimensions::Empty, empty_collection.get_dimensions());
-    /// assert!(empty_collection.get_dimensions() < point.get_dimensions());
+    /// assert_eq!(Dimensions::Empty, empty_collection.dimensions());
+    /// assert!(empty_collection.dimensions() < point.dimensions());
     /// ```
-    fn get_dimensions(&self) -> Dimensions;
+    fn dimensions(&self) -> Dimensions;
 
     /// The dimensions of the `Geometry`'s boundary, as used by OGC-SFA.
     ///
@@ -106,29 +106,29 @@ pub trait HasDimensions {
     ///
     /// // a point has no boundary
     /// let point = Point::new(10.0, 10.0);
-    /// assert_eq!(Dimensions::Empty, point.get_boundary_dimensions());
+    /// assert_eq!(Dimensions::Empty, point.boundary_dimensions());
     ///
     /// // a typical rectangle has a *line* (one dimensional) boundary
     /// let rect = Rect::new((0.0, 0.0), (10.0, 10.0));
-    /// assert_eq!(Dimensions::OneDimensional, rect.get_boundary_dimensions());
+    /// assert_eq!(Dimensions::OneDimensional, rect.boundary_dimensions());
     ///
     /// // a "rectangle" with zero height degenerates to a line, whose boundary is two points
     /// let degenerate_line_rect = Rect::new((0.0, 10.0), (10.0, 10.0));
-    /// assert_eq!(Dimensions::ZeroDimensional, degenerate_line_rect.get_boundary_dimensions());
+    /// assert_eq!(Dimensions::ZeroDimensional, degenerate_line_rect.boundary_dimensions());
     ///
     /// // a "rectangle" with zero height and zero width degenerates to a point,
     /// // and points have no boundary
     /// let degenerate_point_rect = Rect::new((10.0, 10.0), (10.0, 10.0));
-    /// assert_eq!(Dimensions::Empty, degenerate_point_rect.get_boundary_dimensions());
+    /// assert_eq!(Dimensions::Empty, degenerate_point_rect.boundary_dimensions());
     ///
     /// // collections inherit the greatest dimensionality of their elements
     /// let geometry_collection = GeometryCollection(vec![degenerate_line_rect.into(), degenerate_point_rect.into()]);
-    /// assert_eq!(Dimensions::ZeroDimensional, geometry_collection.get_boundary_dimensions());
+    /// assert_eq!(Dimensions::ZeroDimensional, geometry_collection.boundary_dimensions());
     ///
     /// let geometry_collection = GeometryCollection::<f32>(vec![]);
-    /// assert_eq!(Dimensions::Empty, geometry_collection.get_boundary_dimensions());
+    /// assert_eq!(Dimensions::Empty, geometry_collection.boundary_dimensions());
     /// ```
-    fn get_boundary_dimensions(&self) -> Dimensions;
+    fn boundary_dimensions(&self) -> Dimensions;
 }
 
 impl<C: CoordinateType> HasDimensions for Geometry<C> {
@@ -147,33 +147,33 @@ impl<C: CoordinateType> HasDimensions for Geometry<C> {
         }
     }
 
-    fn get_dimensions(&self) -> Dimensions {
+    fn dimensions(&self) -> Dimensions {
         match self {
-            Geometry::Point(g) => g.get_dimensions(),
-            Geometry::Line(g) => g.get_dimensions(),
-            Geometry::LineString(g) => g.get_dimensions(),
-            Geometry::Polygon(g) => g.get_dimensions(),
-            Geometry::MultiPoint(g) => g.get_dimensions(),
-            Geometry::MultiLineString(g) => g.get_dimensions(),
-            Geometry::MultiPolygon(g) => g.get_dimensions(),
-            Geometry::GeometryCollection(g) => g.get_dimensions(),
-            Geometry::Rect(g) => g.get_dimensions(),
-            Geometry::Triangle(g) => g.get_dimensions(),
+            Geometry::Point(g) => g.dimensions(),
+            Geometry::Line(g) => g.dimensions(),
+            Geometry::LineString(g) => g.dimensions(),
+            Geometry::Polygon(g) => g.dimensions(),
+            Geometry::MultiPoint(g) => g.dimensions(),
+            Geometry::MultiLineString(g) => g.dimensions(),
+            Geometry::MultiPolygon(g) => g.dimensions(),
+            Geometry::GeometryCollection(g) => g.dimensions(),
+            Geometry::Rect(g) => g.dimensions(),
+            Geometry::Triangle(g) => g.dimensions(),
         }
     }
 
-    fn get_boundary_dimensions(&self) -> Dimensions {
+    fn boundary_dimensions(&self) -> Dimensions {
         match self {
-            Geometry::Point(g) => g.get_boundary_dimensions(),
-            Geometry::Line(g) => g.get_boundary_dimensions(),
-            Geometry::LineString(g) => g.get_boundary_dimensions(),
-            Geometry::Polygon(g) => g.get_boundary_dimensions(),
-            Geometry::MultiPoint(g) => g.get_boundary_dimensions(),
-            Geometry::MultiLineString(g) => g.get_boundary_dimensions(),
-            Geometry::MultiPolygon(g) => g.get_boundary_dimensions(),
-            Geometry::GeometryCollection(g) => g.get_boundary_dimensions(),
-            Geometry::Rect(g) => g.get_boundary_dimensions(),
-            Geometry::Triangle(g) => g.get_boundary_dimensions(),
+            Geometry::Point(g) => g.boundary_dimensions(),
+            Geometry::Line(g) => g.boundary_dimensions(),
+            Geometry::LineString(g) => g.boundary_dimensions(),
+            Geometry::Polygon(g) => g.boundary_dimensions(),
+            Geometry::MultiPoint(g) => g.boundary_dimensions(),
+            Geometry::MultiLineString(g) => g.boundary_dimensions(),
+            Geometry::MultiPolygon(g) => g.boundary_dimensions(),
+            Geometry::GeometryCollection(g) => g.boundary_dimensions(),
+            Geometry::Rect(g) => g.boundary_dimensions(),
+            Geometry::Triangle(g) => g.boundary_dimensions(),
         }
     }
 }
@@ -183,11 +183,11 @@ impl<C: CoordinateType> HasDimensions for Point<C> {
         false
     }
 
-    fn get_dimensions(&self) -> Dimensions {
+    fn dimensions(&self) -> Dimensions {
         Dimensions::ZeroDimensional
     }
 
-    fn get_boundary_dimensions(&self) -> Dimensions {
+    fn boundary_dimensions(&self) -> Dimensions {
         Dimensions::Empty
     }
 }
@@ -197,7 +197,7 @@ impl<C: CoordinateType> HasDimensions for Line<C> {
         false
     }
 
-    fn get_dimensions(&self) -> Dimensions {
+    fn dimensions(&self) -> Dimensions {
         if self.start == self.end {
             // degenerate line is a point
             Dimensions::ZeroDimensional
@@ -206,7 +206,7 @@ impl<C: CoordinateType> HasDimensions for Line<C> {
         }
     }
 
-    fn get_boundary_dimensions(&self) -> Dimensions {
+    fn boundary_dimensions(&self) -> Dimensions {
         if self.start == self.end {
             // degenerate line is a point, which has no boundary
             Dimensions::Empty
@@ -221,7 +221,7 @@ impl<C: CoordinateType> HasDimensions for LineString<C> {
         self.0.is_empty()
     }
 
-    fn get_dimensions(&self) -> Dimensions {
+    fn dimensions(&self) -> Dimensions {
         if self.0.is_empty() {
             return Dimensions::Empty;
         }
@@ -241,17 +241,17 @@ impl<C: CoordinateType> HasDimensions for LineString<C> {
     /// use geo::algorithm::dimensions::{HasDimensions, Dimensions};
     ///
     /// let ls = line_string![(x: 0.,  y: 0.), (x: 0., y: 1.), (x: 1., y: 1.)];
-    /// assert_eq!(Dimensions::ZeroDimensional, ls.get_boundary_dimensions());
+    /// assert_eq!(Dimensions::ZeroDimensional, ls.boundary_dimensions());
     ///
     /// let ls = line_string![(x: 0.,  y: 0.), (x: 0., y: 1.), (x: 1., y: 1.), (x: 0., y: 0.)];
-    /// assert_eq!(Dimensions::Empty, ls.get_boundary_dimensions());
+    /// assert_eq!(Dimensions::Empty, ls.boundary_dimensions());
     ///```
-    fn get_boundary_dimensions(&self) -> Dimensions {
+    fn boundary_dimensions(&self) -> Dimensions {
         if self.is_closed() {
             return Dimensions::Empty;
         }
 
-        match self.get_dimensions() {
+        match self.dimensions() {
             Dimensions::Empty | Dimensions::ZeroDimensional => Dimensions::Empty,
             Dimensions::OneDimensional => Dimensions::ZeroDimensional,
             Dimensions::TwoDimensional => unreachable!("line_string cannot be 2 dimensional"),
@@ -264,11 +264,11 @@ impl<C: CoordinateType> HasDimensions for Polygon<C> {
         self.exterior().is_empty()
     }
 
-    fn get_dimensions(&self) -> Dimensions {
+    fn dimensions(&self) -> Dimensions {
         Dimensions::TwoDimensional
     }
 
-    fn get_boundary_dimensions(&self) -> Dimensions {
+    fn boundary_dimensions(&self) -> Dimensions {
         Dimensions::OneDimensional
     }
 }
@@ -278,7 +278,7 @@ impl<C: CoordinateType> HasDimensions for MultiPoint<C> {
         self.0.is_empty()
     }
 
-    fn get_dimensions(&self) -> Dimensions {
+    fn dimensions(&self) -> Dimensions {
         if self.0.is_empty() {
             return Dimensions::Empty;
         }
@@ -286,7 +286,7 @@ impl<C: CoordinateType> HasDimensions for MultiPoint<C> {
         Dimensions::OneDimensional
     }
 
-    fn get_boundary_dimensions(&self) -> Dimensions {
+    fn boundary_dimensions(&self) -> Dimensions {
         Dimensions::Empty
     }
 }
@@ -300,10 +300,10 @@ impl<C: CoordinateType> HasDimensions for MultiLineString<C> {
         self.0.iter().all(LineString::is_empty)
     }
 
-    fn get_dimensions(&self) -> Dimensions {
+    fn dimensions(&self) -> Dimensions {
         let mut max = Dimensions::Empty;
         for line in &self.0 {
-            match line.get_dimensions() {
+            match line.dimensions() {
                 Dimensions::Empty => {}
                 Dimensions::ZeroDimensional => max = Dimensions::ZeroDimensional,
                 Dimensions::OneDimensional => {
@@ -317,12 +317,12 @@ impl<C: CoordinateType> HasDimensions for MultiLineString<C> {
         max
     }
 
-    fn get_boundary_dimensions(&self) -> Dimensions {
+    fn boundary_dimensions(&self) -> Dimensions {
         if self.is_closed() {
             return Dimensions::Empty;
         }
 
-        match self.get_dimensions() {
+        match self.dimensions() {
             Dimensions::Empty | Dimensions::ZeroDimensional => Dimensions::Empty,
             Dimensions::OneDimensional => Dimensions::ZeroDimensional,
             Dimensions::TwoDimensional => unreachable!("line_string cannot be 2 dimensional"),
@@ -339,7 +339,7 @@ impl<C: CoordinateType> HasDimensions for MultiPolygon<C> {
         self.0.iter().all(Polygon::is_empty)
     }
 
-    fn get_dimensions(&self) -> Dimensions {
+    fn dimensions(&self) -> Dimensions {
         if self.0.is_empty() {
             return Dimensions::Empty;
         }
@@ -347,7 +347,7 @@ impl<C: CoordinateType> HasDimensions for MultiPolygon<C> {
         Dimensions::TwoDimensional
     }
 
-    fn get_boundary_dimensions(&self) -> Dimensions {
+    fn boundary_dimensions(&self) -> Dimensions {
         if self.0.is_empty() {
             return Dimensions::Empty;
         }
@@ -365,10 +365,10 @@ impl<C: CoordinateType> HasDimensions for GeometryCollection<C> {
         }
     }
 
-    fn get_dimensions(&self) -> Dimensions {
+    fn dimensions(&self) -> Dimensions {
         let mut max = Dimensions::Empty;
         for geom in self {
-            let dimensions = geom.get_dimensions();
+            let dimensions = geom.dimensions();
             if dimensions == Dimensions::TwoDimensional {
                 // short-circuit since we know none can be larger
                 return Dimensions::TwoDimensional;
@@ -378,10 +378,10 @@ impl<C: CoordinateType> HasDimensions for GeometryCollection<C> {
         max
     }
 
-    fn get_boundary_dimensions(&self) -> Dimensions {
+    fn boundary_dimensions(&self) -> Dimensions {
         let mut max = Dimensions::Empty;
         for geom in self {
-            let d = geom.get_boundary_dimensions();
+            let d = geom.boundary_dimensions();
 
             if d == Dimensions::OneDimensional {
                 return Dimensions::OneDimensional;
@@ -398,7 +398,7 @@ impl<C: CoordinateType> HasDimensions for Rect<C> {
         false
     }
 
-    fn get_dimensions(&self) -> Dimensions {
+    fn dimensions(&self) -> Dimensions {
         if self.min() == self.max() {
             // degenerate rectangle is a point
             Dimensions::ZeroDimensional
@@ -410,8 +410,8 @@ impl<C: CoordinateType> HasDimensions for Rect<C> {
         }
     }
 
-    fn get_boundary_dimensions(&self) -> Dimensions {
-        match self.get_dimensions() {
+    fn boundary_dimensions(&self) -> Dimensions {
+        match self.dimensions() {
             Dimensions::Empty => {
                 unreachable!("even a degenerate rect should be at least 0-Dimensional")
             }
@@ -427,7 +427,7 @@ impl<C: CoordinateType> HasDimensions for Triangle<C> {
         false
     }
 
-    fn get_dimensions(&self) -> Dimensions {
+    fn dimensions(&self) -> Dimensions {
         if self.0 == self.1 && self.1 == self.2 {
             // degenerate triangle is a point
             Dimensions::ZeroDimensional
@@ -439,8 +439,8 @@ impl<C: CoordinateType> HasDimensions for Triangle<C> {
         }
     }
 
-    fn get_boundary_dimensions(&self) -> Dimensions {
-        match self.get_dimensions() {
+    fn boundary_dimensions(&self) -> Dimensions {
+        match self.dimensions() {
             Dimensions::Empty => {
                 unreachable!("even a degenerate triangle should be at least 0-dimensional")
             }
