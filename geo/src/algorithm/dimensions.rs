@@ -293,10 +293,6 @@ impl<C: CoordinateType> HasDimensions for MultiPoint<C> {
 
 impl<C: CoordinateType> HasDimensions for MultiLineString<C> {
     fn is_empty(&self) -> bool {
-        if self.0.is_empty() {
-            return true;
-        }
-
         self.0.iter().all(LineString::is_empty)
     }
 
@@ -332,10 +328,6 @@ impl<C: CoordinateType> HasDimensions for MultiLineString<C> {
 
 impl<C: CoordinateType> HasDimensions for MultiPolygon<C> {
     fn is_empty(&self) -> bool {
-        if self.0.is_empty() {
-            return true;
-        }
-
         self.0.iter().all(Polygon::is_empty)
     }
 
