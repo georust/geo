@@ -2,8 +2,7 @@ use num_traits::Float;
 use std::{cmp::Ordering, ops::AddAssign};
 
 use crate::{
-    algorithm::euclidean_length::EuclideanLength, Coordinate, CoordinateType, Line, LineString,
-    Point,
+    algorithm::euclidean_length::EuclideanLength, CoordinateType, Line, LineString, Point,
 };
 
 /// Returns the point that lies a given fraction along the line.
@@ -26,16 +25,16 @@ use crate::{
 ///     [0.0, 1.0]
 /// ].into();
 ///
-/// assert_eq!(linestring.line_interpolate_point(&-1.0), Some(point!(x: -1.0, y: 0.0)));
-/// assert_eq!(linestring.line_interpolate_point(&0.25), Some(point!(x: -0.5, y: 0.0)));
-/// assert_eq!(linestring.line_interpolate_point(&0.5), Some(point!(x: 0.0, y: 0.0)));
-/// assert_eq!(linestring.line_interpolate_point(&0.75), Some(point!(x: 0.0, y: 0.5)));
-/// assert_eq!(linestring.line_interpolate_point(&2.0), Some(point!(x: 0.0, y: 1.0)));
+/// assert_eq!(linestring.line_interpolate_point(-1.0), Some(point!(x: -1.0, y: 0.0)));
+/// assert_eq!(linestring.line_interpolate_point(0.25), Some(point!(x: -0.5, y: 0.0)));
+/// assert_eq!(linestring.line_interpolate_point(0.5), Some(point!(x: 0.0, y: 0.0)));
+/// assert_eq!(linestring.line_interpolate_point(0.75), Some(point!(x: 0.0, y: 0.5)));
+/// assert_eq!(linestring.line_interpolate_point(2.0), Some(point!(x: 0.0, y: 1.0)));
 /// ```
 pub trait LineInterpolatePoint<F: Float> {
     type Output;
 
-    fn line_interpolate_point(&self, fraction: &F) -> Self::Output;
+    fn line_interpolate_point(&self, fraction: F) -> Self::Output;
 }
 
 impl<T> LineInterpolatePoint<T> for Line<T>
@@ -44,22 +43,24 @@ where
 {
     type Output = Option<Point<T>>;
 
-    fn line_interpolate_point(&self, fraction: &T) -> Self::Output {
-        match fraction.partial_cmp(&T::zero())? {
-            Ordering::Less => return Some(self.start.into()),
-            Ordering::Equal => return Some(self.start.into()),
-            Ordering::Greater => match fraction.partial_cmp(&T::one())? {
-                Ordering::Greater => return Some(self.end.into()),
-                Ordering::Equal => return Some(self.end.into()),
-                Ordering::Less => {}
-            },
-        }
-        let s = [self.start.x, self.start.y];
-        let v = [self.end.x - self.start.x, self.end.y - self.start.y];
-        let r = [*fraction * v[0] + s[0], *fraction * v[1] + s[1]];
-        if r[0].is_finite() & r[1].is_finite() {
-            return Some(Coordinate { x: r[0], y: r[1] }.into());
+    fn line_interpolate_point(&self, fraction: T) -> Self::Output {
+        if (fraction >= T::zero()) && (fraction <= T::one()) {
+            // fraction between 0 and 1, return a point between start and end
+            let diff = self.end - self.start;
+            let r = self.start + diff * (fraction);
+            if r.x.is_finite() && r.y.is_finite() {
+                return Some(r.into());
+            } else {
+                return None;
+            }
+        } else if fraction < T::zero() {
+            // negative fractions just return the start point
+            return Some(self.start_point());
+        } else if fraction > T::one() {
+            // fraction above one is just the end point
+            return Some(self.end_point());
         } else {
+            // fraction is nan
             return None;
         }
     }
@@ -73,9 +74,9 @@ where
 {
     type Output = Option<Point<T>>;
 
-    fn line_interpolate_point(&self, fraction: &T) -> Self::Output {
+    fn line_interpolate_point(&self, fraction: T) -> Self::Output {
         let total_length = self.euclidean_length();
-        let fractional_length = total_length.clone() * *fraction;
+        let fractional_length = total_length.clone() * fraction;
         let mut cum_length = T::zero();
         let mut queue = Vec::new();
         for line in self.lines() {
@@ -95,7 +96,7 @@ where
                     .find(|x| x.1 != Ordering::Less)
                     .map(|x| {
                         let line_frac = (fractional_length - x.0) / x.2;
-                        (x.3).line_interpolate_point(&line_frac)
+                        (x.3).line_interpolate_point(line_frac)
                     })
                     // Nothing found, return the last point
                     .unwrap_or(self.points_iter().last())
@@ -109,7 +110,7 @@ mod test {
     use super::*;
     use crate::{
         algorithm::{closest_point::ClosestPoint, line_locate_point::LineLocatePoint},
-        point,
+        point, Coordinate,
     };
 
     #[test]
@@ -120,44 +121,44 @@ mod test {
         );
         // some finite examples
         assert_eq!(
-            line.line_interpolate_point(&-1.0),
+            line.line_interpolate_point(-1.0),
             Some(point!(x: -1.0, y: 0.0))
         );
         assert_eq!(
-            line.line_interpolate_point(&0.5),
+            line.line_interpolate_point(0.5),
             Some(point!(x: 0.0, y: 0.0))
         );
         assert_eq!(
-            line.line_interpolate_point(&0.75),
+            line.line_interpolate_point(0.75),
             Some(point!(x: 0.5, y: 0.0))
         );
         assert_eq!(
-            line.line_interpolate_point(&0.0),
+            line.line_interpolate_point(0.0),
             Some(point!(x: -1.0, y: 0.0))
         );
         assert_eq!(
-            line.line_interpolate_point(&1.0),
+            line.line_interpolate_point(1.0),
             Some(point!(x: 1.0, y: 0.0))
         );
         assert_eq!(
-            line.line_interpolate_point(&2.0),
+            line.line_interpolate_point(2.0),
             Some(point!(x: 1.0, y: 0.0))
         );
 
         // fraction is nan or inf
-        assert_eq!(line.line_interpolate_point(&Float::nan()), None);
+        assert_eq!(line.line_interpolate_point(Float::nan()), None);
         assert_eq!(
-            line.line_interpolate_point(&Float::infinity()),
+            line.line_interpolate_point(Float::infinity()),
             Some(line.end.into())
         );
         assert_eq!(
-            line.line_interpolate_point(&Float::neg_infinity()),
+            line.line_interpolate_point(Float::neg_infinity()),
             Some(line.start.into())
         );
 
         let line = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 1.0, y: 1.0 });
         assert_eq!(
-            line.line_interpolate_point(&0.5),
+            line.line_interpolate_point(0.5),
             Some(point!(x: 0.5, y: 0.5))
         );
 
@@ -169,7 +170,7 @@ mod test {
             },
             Coordinate { x: 1.0, y: 1.0 },
         );
-        assert_eq!(line.line_interpolate_point(&0.5), None);
+        assert_eq!(line.line_interpolate_point(0.5), None);
 
         let line = Line::new(
             Coordinate {
@@ -178,7 +179,7 @@ mod test {
             },
             Coordinate { x: 1.0, y: 1.0 },
         );
-        assert_eq!(line.line_interpolate_point(&0.5), None);
+        assert_eq!(line.line_interpolate_point(0.5), None);
 
         let line = Line::new(
             Coordinate { x: 0.0, y: 0.0 },
@@ -187,7 +188,7 @@ mod test {
                 y: Float::infinity(),
             },
         );
-        assert_eq!(line.line_interpolate_point(&0.5), None);
+        assert_eq!(line.line_interpolate_point(0.5), None);
 
         let line = Line::new(
             Coordinate {
@@ -196,7 +197,7 @@ mod test {
             },
             Coordinate { x: 1.0, y: 1.0 },
         );
-        assert_eq!(line.line_interpolate_point(&0.5), None);
+        assert_eq!(line.line_interpolate_point(0.5), None);
 
         let line = Line::new(
             Coordinate { x: 0.0, y: 0.0 },
@@ -205,7 +206,7 @@ mod test {
                 y: Float::neg_infinity(),
             },
         );
-        assert_eq!(line.line_interpolate_point(&0.5), None);
+        assert_eq!(line.line_interpolate_point(0.5), None);
     }
 
     #[test]
@@ -213,47 +214,47 @@ mod test {
         // some finite examples
         let linestring: LineString<f64> = vec![[-1.0, 0.0], [0.0, 0.0], [1.0, 0.0]].into();
         assert_eq!(
-            linestring.line_interpolate_point(&0.5),
+            linestring.line_interpolate_point(0.5),
             Some(point!(x: 0.0, y: 0.0))
         );
         assert_eq!(
-            linestring.line_interpolate_point(&1.0),
+            linestring.line_interpolate_point(1.0),
             Some(point!(x: 1.0, y: 0.0))
         );
 
         // fraction is nan or inf
         assert_eq!(
-            linestring.line_interpolate_point(&Float::infinity()),
+            linestring.line_interpolate_point(Float::infinity()),
             linestring.points_iter().last()
         );
         assert_eq!(
-            linestring.line_interpolate_point(&Float::neg_infinity()),
+            linestring.line_interpolate_point(Float::neg_infinity()),
             linestring.points_iter().next()
         );
-        assert_eq!(linestring.line_interpolate_point(&Float::nan()), None);
+        assert_eq!(linestring.line_interpolate_point(Float::nan()), None);
 
         let linestring: LineString<f64> = vec![[-1.0, 0.0], [0.0, 0.0], [0.0, 1.0]].into();
         assert_eq!(
-            linestring.line_interpolate_point(&1.5),
+            linestring.line_interpolate_point(1.5),
             Some(point!(x: 0.0, y: 1.0))
         );
 
         // linestrings with nans/infs
         let linestring: LineString<f64> = vec![[-1.0, 0.0], [0.0, Float::nan()], [0.0, 1.0]].into();
-        assert_eq!(linestring.line_interpolate_point(&0.5), None);
+        assert_eq!(linestring.line_interpolate_point(0.5), None);
 
         let linestring: LineString<f64> =
             vec![[-1.0, 0.0], [0.0, Float::infinity()], [0.0, 1.0]].into();
-        assert_eq!(linestring.line_interpolate_point(&0.5), None);
+        assert_eq!(linestring.line_interpolate_point(0.5), None);
 
         let linestring: LineString<f64> =
             vec![[-1.0, 0.0], [0.0, Float::neg_infinity()], [0.0, 1.0]].into();
-        assert_eq!(linestring.line_interpolate_point(&0.5), None);
+        assert_eq!(linestring.line_interpolate_point(0.5), None);
 
         // Empty line
         let coords: Vec<Point<f64>> = Vec::new();
         let linestring: LineString<f64> = coords.into();
-        assert_eq!(linestring.line_interpolate_point(&0.5), None);
+        assert_eq!(linestring.line_interpolate_point(0.5), None);
     }
 
     #[test]
@@ -267,7 +268,7 @@ mod test {
             .expect("Should result in fraction between 0 and 1");
         println!("{:?}", &frac);
         let interpolated_point = linestring
-            .line_interpolate_point(&frac)
+            .line_interpolate_point(frac)
             .expect("Shouldn't return None");
         let closest_point = linestring.closest_point(&pt);
         match closest_point {
