@@ -3,10 +3,7 @@ use crate::{
     CoordinateType, Line, LineString, Point,
 };
 use num_traits::Float;
-use std::{
-    ops::AddAssign,
-    cmp::Ordering
-};
+use std::{cmp::Ordering, ops::AddAssign};
 
 /// Returns a (option of the) fraction of the line's total length
 /// representing the location
@@ -50,7 +47,7 @@ where
 
     fn line_locate_point(&self, p: &Self::Rhs) -> Self::Output {
         // let $s$ be the starting point of the line, and $v$ its
-        // direction vector. We want to find $l$ such that 
+        // direction vector. We want to find $l$ such that
         // $(p - (s + lv)) \cdot v = 0$, i.e. the vector from
         // $l$ along the line to $p$ is perpendicular to $v$.a
 
@@ -70,9 +67,9 @@ where
             let v_dot_sp = v[0] * sp[0] + v[1] * sp[1];
             let l = v_dot_sp / v_sq;
             if l.is_finite() {
-                return Some(l.max(T::zero()).min(T::one()))
+                return Some(l.max(T::zero()).min(T::one()));
             } else {
-                return None
+                return None;
             }
         }
     }
@@ -107,16 +104,21 @@ where
             let first = queue.first().map(|x| x.clone());
             queue
                 .iter()
-                .fold(first, |l, y| { 
+                .fold(first, |l, y| {
                     match l.map(|x| (x.2).partial_cmp(&y.2)).flatten() {
                         Some(o) => match o {
                             Ordering::Less => l,
                             Ordering::Equal => l,
-                            Ordering::Greater => Some(*y)
+                            Ordering::Greater => Some(*y),
                         },
-                        None => None
-                    }})
-                .map(|l| (l.3).line_locate_point(p).map(|lf| (l.0 + l.1 * lf) / total_length))
+                        None => None,
+                    }
+                })
+                .map(|l| {
+                    (l.3)
+                        .line_locate_point(p)
+                        .map(|lf| (l.0 + l.1 * lf) / total_length)
+                })
                 .flatten()
         }
     }
@@ -169,7 +171,7 @@ mod test {
         );
         let point = Point::new(1000.0, 1000.0);
         assert_eq!(line.line_locate_point(&point), None);
-        
+
         let line = Line::new(
             Coordinate { x: 0.0, y: 0.0 },
             Coordinate {
@@ -191,14 +193,16 @@ mod test {
         assert_eq!(line.line_locate_point(&point), None);
 
         // zero length line
-        let line: Line<f64> = Line::new(Coordinate { x: 1.0, y: 1.0},
-                                        Coordinate { x: 1.0, y: 1.0});
+        let line: Line<f64> =
+            Line::new(Coordinate { x: 1.0, y: 1.0 }, Coordinate { x: 1.0, y: 1.0 });
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), Some(0.0));
 
         // another concrete example
-        let line: Line<f64> = Line::new(Coordinate { x: 0.0, y: 0.0},
-                                        Coordinate { x: 10.0, y: 0.0});
+        let line: Line<f64> = Line::new(
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 10.0, y: 0.0 },
+        );
         let pt = Point::new(555.0, 555.0);
         assert_eq!(line.line_locate_point(&pt), Some(1.0));
         let pt = Point::new(10.0000001, 0.0);
@@ -231,34 +235,53 @@ mod test {
         assert_eq!(ring.line_locate_point(&pt), None);
 
         // point is equidistant to two line segments - return the fraction from the first closest
-        let line: LineString<f64> = LineString(vec![(0.0, 0.0).into(),
-                                                    (1.0, 0.0).into(),
-                                                    (1.0, 1.0).into(),
-                                                    (0.0, 1.0).into()]);
+        let line: LineString<f64> = LineString(vec![
+            (0.0, 0.0).into(),
+            (1.0, 0.0).into(),
+            (1.0, 1.0).into(),
+            (0.0, 1.0).into(),
+        ]);
         let pt = point!(x: 0.0, y: 0.5);
         assert_eq!(line.line_locate_point(&pt), Some(0.0));
 
-        let line: LineString<f64> = LineString(vec![(1.0, 1.0).into(),
-                                                    (1.0, 1.0).into(),
-                                                    (1.0, 1.0).into()]);
+        let line: LineString<f64> = LineString(vec![
+            (1.0, 1.0).into(),
+            (1.0, 1.0).into(),
+            (1.0, 1.0).into(),
+        ]);
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), Some(0.0));
 
         // line contains inf or nan
-        let line: LineString<f64> = LineString(vec![Coordinate { x: 1.0, y: 1.0 },
-                                                    Coordinate { x: Float::nan(), y: 1.0},
-                                                    Coordinate { x: 0.0, y:0.0 }]);
+        let line: LineString<f64> = LineString(vec![
+            Coordinate { x: 1.0, y: 1.0 },
+            Coordinate {
+                x: Float::nan(),
+                y: 1.0,
+            },
+            Coordinate { x: 0.0, y: 0.0 },
+        ]);
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), None);
 
-        let line: LineString<f64> = LineString(vec![Coordinate { x: 1.0, y: 1.0 },
-                                                    Coordinate { x: Float::infinity(), y: 1.0},
-                                                    Coordinate { x: 0.0, y:0.0 }]);
+        let line: LineString<f64> = LineString(vec![
+            Coordinate { x: 1.0, y: 1.0 },
+            Coordinate {
+                x: Float::infinity(),
+                y: 1.0,
+            },
+            Coordinate { x: 0.0, y: 0.0 },
+        ]);
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), None);
-        let line: LineString<f64> = LineString(vec![Coordinate { x: 1.0, y: 1.0 },
-                                                    Coordinate { x: Float::neg_infinity(), y: 1.0},
-                                                    Coordinate { x: 0.0, y:0.0 }]);
+        let line: LineString<f64> = LineString(vec![
+            Coordinate { x: 1.0, y: 1.0 },
+            Coordinate {
+                x: Float::neg_infinity(),
+                y: 1.0,
+            },
+            Coordinate { x: 0.0, y: 0.0 },
+        ]);
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), None);
     }
