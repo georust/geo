@@ -15,7 +15,7 @@ use crate::{Coordinate, LineString};
 ///
 /// - This definition is closely related to the notion
 /// of [convexity of polygons][convex set]. In particular, a
-/// [`Polygon`] is convex, if and only if its `exterior` is
+/// [`Polygon`](crate::Polygon) is convex, if and only if its `exterior` is
 /// convex, and `interiors` is empty.
 ///
 /// - The [`ConvexHull`] algorithm always returns a strictly
