@@ -6,7 +6,7 @@ use crate::{
 /// Geometries can have 0, 1, or two dimensions. Or, in the case of an [`empty`](#is_empty)
 /// geometry, a special `Empty` dimensionality.
 ///
-/// ## Examples
+/// # Examples
 ///
 /// ```
 /// use geo_types::{Point, Rect, line_string};
@@ -236,7 +236,7 @@ impl<C: CoordinateType> HasDimensions for LineString<C> {
         }
     }
 
-    ///```
+    /// ```
     /// use geo_types::line_string;
     /// use geo::algorithm::dimensions::{HasDimensions, Dimensions};
     ///
