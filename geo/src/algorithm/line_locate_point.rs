@@ -52,19 +52,19 @@ where
         // $l$ along the line to $p$ is perpendicular to $v$.a
 
         // vector $p - s$
-        let sp = [p.x() - self.start.x, p.y() - self.start.y];
+        let sp: Point<_> = (*p - self.start.into()).into();
 
         // direction vector of line, $v$
-        let v = [self.end.x - self.start.x, self.end.y - self.start.y];
+        let v: Point<_> = (self.end - self.start).into();
 
         // $v \cdot v$
-        let v_sq = v[0] * v[0] + v[1] * v[1];
+        let v_sq = v.dot(v);
         if v_sq == T::zero() {
             // The line has zero length, return zero
             return Some(T::zero());
         } else {
             // $v \cdot (p - s)$
-            let v_dot_sp = v[0] * sp[0] + v[1] * sp[1];
+            let v_dot_sp = v.dot(sp);
             let l = v_dot_sp / v_sq;
             if l.is_finite() {
                 return Some(l.max(T::zero()).min(T::one()));
