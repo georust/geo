@@ -3,7 +3,7 @@ use std::iter::FromIterator;
 
 /// A collection of
 /// [`LineString`s](line_string/struct.LineString.html). Can
-/// be created from a `Vec` of `LineString`s, or from an
+/// be created from a `Vec` of `LineString`s or from an
 /// Iterator which yields `LineString`s. Iterating over this
 /// object yields the component `LineString`s.
 ///
@@ -33,6 +33,33 @@ use std::iter::FromIterator;
 pub struct MultiLineString<T>(pub Vec<LineString<T>>)
 where
     T: CoordinateType;
+
+impl<T: CoordinateType> MultiLineString<T> {
+    /// True if the MultiLineString is empty or if all of its LineStrings are closed - see
+    /// [`LineString::is_closed`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{MultiLineString, LineString, line_string};
+    ///
+    /// let open_line_string: LineString<f32> = line_string![(x: 0., y: 0.), (x: 5., y: 0.)];
+    /// assert!(!MultiLineString(vec![open_line_string.clone()]).is_closed());
+    ///
+    /// let closed_line_string: LineString<f32> = line_string![(x: 0., y: 0.), (x: 5., y: 0.), (x: 0., y: 0.)];
+    /// assert!(MultiLineString(vec![closed_line_string.clone()]).is_closed());
+    ///
+    /// // MultiLineString is not closed if *any* of it's LineStrings are not closed
+    /// assert!(!MultiLineString(vec![open_line_string, closed_line_string]).is_closed());
+    ///
+    /// // An empty MultiLineString is closed
+    /// assert!(MultiLineString::<f32>(vec![]).is_closed());
+    /// ```
+    pub fn is_closed(&self) -> bool {
+        // Note: Unlike JTS et al, we consider an empty MultiLineString as closed.
+        self.0.iter().all(LineString::is_closed)
+    }
+}
 
 impl<T: CoordinateType, ILS: Into<LineString<T>>> From<ILS> for MultiLineString<T> {
     fn from(ls: ILS) -> Self {

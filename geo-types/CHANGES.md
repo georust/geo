@@ -1,8 +1,11 @@
 # Changes
 
-## 0.6.2
+## Unreleased
 
 * `Rect::new` automatically determines min/max points
+  * <https://github.com/georust/geo/pull/519>
+* Add `MultiLineString::is_closed` method
+  * <https://github.com/georust/geo/pull/523>
 
 ## 0.6.1
 
