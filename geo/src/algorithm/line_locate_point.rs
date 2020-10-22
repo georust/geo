@@ -3,7 +3,7 @@ use crate::{
     CoordinateType, Line, LineString, Point,
 };
 use num_traits::Float;
-use std::{cmp::Ordering, ops::AddAssign};
+use std::ops::AddAssign;
 
 /// Returns a (option of the) fraction of the line's total length
 /// representing the location
@@ -79,48 +79,30 @@ impl<T> LineLocatePoint<T, Point<T>> for LineString<T>
 where
     T: CoordinateType + Float + AddAssign,
     Line<T>: EuclideanDistance<T, Point<T>> + EuclideanLength<T>,
+    LineString<T>: EuclideanLength<T>,
 {
     type Output = Option<T>;
     type Rhs = Point<T>;
 
     fn line_locate_point(&self, p: &Self::Rhs) -> Self::Output {
-        let mut total_length = T::zero();
-        let mut queue = Vec::new();
-        for line in self.lines() {
-            let length = line.euclidean_length();
-            let distance_to_point = line.euclidean_distance(p);
-            queue.push((
-                total_length.clone(),
-                length.clone(),
-                distance_to_point.clone(),
-                line.clone(),
-            ));
-            total_length += length;
-        }
+        let total_length = (*self).euclidean_length();
         if total_length == T::zero() {
-            // linestring has zero legnth, return zero
             return Some(T::zero());
-        } else {
-            let first = queue.first().map(|x| x.clone());
-            queue
-                .iter()
-                .fold(first, |l, y| {
-                    match l.map(|x| (x.2).partial_cmp(&y.2)).flatten() {
-                        Some(o) => match o {
-                            Ordering::Less => l,
-                            Ordering::Equal => l,
-                            Ordering::Greater => Some(*y),
-                        },
-                        None => None,
-                    }
-                })
-                .map(|l| {
-                    (l.3)
-                        .line_locate_point(p)
-                        .map(|lf| (l.0 + l.1 * lf) / total_length)
-                })
-                .flatten()
         }
+        let mut cum_length = T::zero();
+        let mut closest_dist_to_point = T::infinity();
+        let mut fraction = T::zero();
+        for segment in self.lines() {
+            let segment_distance_to_point = segment.euclidean_distance(p);
+            let segment_length = segment.euclidean_length();
+            let segment_fraction = segment.line_locate_point(p)?; // if any segment has a None fraction, return None
+            if segment_distance_to_point < closest_dist_to_point {
+                closest_dist_to_point = segment_distance_to_point;
+                fraction = (cum_length + segment_fraction * segment_length) / total_length;
+            }
+            cum_length += segment_length;
+        }
+        Some(fraction)
     }
 }
 
