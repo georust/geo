@@ -8,10 +8,12 @@ use crate::{
 /// Returns an option of the point that lies a given fraction along the line.
 ///
 /// If the given fraction is
-///  * less than zero (including negative infinity): returns a `Some` of the starting point
+///  * less than zero (including negative infinity): returns a `Some`
+///    of the starting point
 ///  * greater than one (including infinity): returns a `Some` of the ending point
 ///
-///  If either the fraction is NaN, or any coordinates of the line are not finite, returns `None`.
+///  If either the fraction is NaN, or any coordinates of the line are not
+///  finite, returns `None`.
 ///
 /// # Examples
 ///

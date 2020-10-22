@@ -6,12 +6,13 @@ use num_traits::Float;
 use std::ops::AddAssign;
 
 /// Returns a (option of the) fraction of the line's total length
-/// representing the location
-/// of the closest point on the line to the given point.
+/// representing the location of the closest point on the line to
+/// the given point.
 ///
 /// If the line has zero length the fraction returned is zero.
 ///
-/// If either the point's coordinates or any coordinates of the line are not finite, returns `None`
+/// If either the point's coordinates or any coordinates of the line
+/// are not finite, returns `None`.
 ///
 /// # Examples
 ///
