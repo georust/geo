@@ -143,11 +143,11 @@ mod test {
         assert_eq!(line.line_interpolate_point(Float::nan()), None);
         assert_eq!(
             line.line_interpolate_point(Float::infinity()),
-            Some(line.end.into())
+            Some(line.end_point())
         );
         assert_eq!(
             line.line_interpolate_point(Float::neg_infinity()),
-            Some(line.start.into())
+            Some(line.start_point())
         );
 
         let line = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 1.0, y: 1.0 });
