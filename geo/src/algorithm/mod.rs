@@ -19,6 +19,8 @@ pub mod concave_hull;
 pub mod contains;
 /// Calculate the convex hull of a `Geometry`.
 pub mod convex_hull;
+/// Dimensionality of a geometry and its boundary, based on OGC-SFA.
+pub mod dimensions;
 /// Calculate the minimum Euclidean distance between two `Geometries`.
 pub mod euclidean_distance;
 /// Calculate the length of a planar line between two `Geometries`.
