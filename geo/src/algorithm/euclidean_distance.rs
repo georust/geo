@@ -153,9 +153,7 @@ where
                     .lines()
                     .map(|line| {
                         ::geo_types::private_utils::line_segment_distance(
-                            *self,
-                            line.start_point(),
-                            line.end_point(),
+                            self.0, line.start, line.end,
                         )
                     })
                     .fold(T::max_value(), |accum, val| accum.min(val)),
@@ -477,13 +475,7 @@ where
 
         [(self.0, self.1), (self.1, self.2), (self.2, self.0)]
             .iter()
-            .map(|edge| {
-                ::geo_types::private_utils::line_segment_distance(
-                    *point,
-                    edge.0.into(),
-                    edge.1.into(),
-                )
-            })
+            .map(|edge| ::geo_types::private_utils::line_segment_distance(point.0, edge.0, edge.1))
             .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
