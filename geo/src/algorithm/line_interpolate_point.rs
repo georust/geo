@@ -46,7 +46,7 @@ where
     type Output = Option<Point<T>>;
 
     fn line_interpolate_point(&self, fraction: T) -> Self::Output {
-        if (fraction > T::zero()) && (fraction < T::one()) {
+        if (fraction >= T::zero()) && (fraction <= T::one()) {
             // fraction between 0 and 1, return a point between start and end
             let diff = self.end - self.start;
             let r = self.start + diff * (fraction);
@@ -55,14 +55,15 @@ where
             } else {
                 return None;
             }
-        } else if fraction <= T::zero() {
-            // negative fractions just return the start point
-            return Some(self.start_point());
-        } else if fraction >= T::one() {
-            // fraction above one is just the end point
-            return Some(self.end_point());
+        } else if fraction < T::zero() {
+            // negative fractions are replaced with zero
+            return self.line_interpolate_point(T::zero());
+        } else if fraction > T::one() {
+            // fractions above one are replaced with one 
+            return self.line_interpolate_point(T::one());
         } else {
             // fraction is nan
+            debug_assert!(fraction.is_nan());
             return None;
         }
     }
@@ -70,17 +71,17 @@ where
 
 impl<T> LineInterpolatePoint<T> for LineString<T>
 where
-    T: CoordinateType + Float + AddAssign,
+    T: CoordinateType + Float + AddAssign + std::fmt::Debug,
     Line<T>: EuclideanLength<T>,
     LineString<T>: EuclideanLength<T>,
 {
     type Output = Option<Point<T>>;
 
     fn line_interpolate_point(&self, fraction: T) -> Self::Output {
-        if (fraction > T::zero()) && (fraction < T::one()) {
-            // if fraction is outside these bounds the result is trivial
+        if (fraction >= T::zero()) && (fraction <= T::one()) {
+            // find the point along the linestring which is fraction along it
             let total_length = self.euclidean_length();
-            let fractional_length = total_length.clone() * fraction;
+            let fractional_length = total_length * fraction;
             let mut cum_length = T::zero();
             for segment in self.lines() {
                 let length = segment.euclidean_length();
@@ -90,12 +91,19 @@ where
                 }
                 cum_length += length;
             }
+            // either cum_length + length is never larger than fractional_length, i.e. 
+            // fractional_length is nan, or the linestring has no lines to loop through
+            debug_assert!(fractional_length.is_nan() || (self.num_coords() == 0));
             return None;
-        } else if fraction <= T::zero() {
-            return self.points_iter().next();
-        } else if fraction >= T::one() {
-            return self.points_iter().last();
+        } else if fraction < T::zero() {
+            // negative fractions replaced with zero
+            return self.line_interpolate_point(T::zero());
+        } else if fraction > T::one() {
+            // fractions above one replaced with one
+            return self.line_interpolate_point(T::one());
         } else {
+            // fraction is nan
+            debug_assert!(fraction.is_nan());
             return None;
         }
     }
@@ -210,6 +218,10 @@ mod test {
         // some finite examples
         let linestring: LineString<f64> = vec![[-1.0, 0.0], [0.0, 0.0], [1.0, 0.0]].into();
         assert_eq!(
+            linestring.line_interpolate_point(0.0),
+            Some(point!(x: -1.0, y: 0.0))
+        );
+        assert_eq!(
             linestring.line_interpolate_point(0.5),
             Some(point!(x: 0.0, y: 0.0))
         );
@@ -217,6 +229,8 @@ mod test {
             linestring.line_interpolate_point(1.0),
             Some(point!(x: 1.0, y: 0.0))
         );
+        assert_eq!(linestring.line_interpolate_point(1.0), linestring.line_interpolate_point(2.0));
+        assert_eq!(linestring.line_interpolate_point(0.0), linestring.line_interpolate_point(-2.0));
 
         // fraction is nan or inf
         assert_eq!(
@@ -231,6 +245,10 @@ mod test {
 
         let linestring: LineString<f64> = vec![[-1.0, 0.0], [0.0, 0.0], [0.0, 1.0]].into();
         assert_eq!(
+            linestring.line_interpolate_point(0.5),
+            Some(point!(x: 0.0, y: 0.0))
+        );
+        assert_eq!(
             linestring.line_interpolate_point(1.5),
             Some(point!(x: 0.0, y: 1.0))
         );
@@ -238,14 +256,20 @@ mod test {
         // linestrings with nans/infs
         let linestring: LineString<f64> = vec![[-1.0, 0.0], [0.0, Float::nan()], [0.0, 1.0]].into();
         assert_eq!(linestring.line_interpolate_point(0.5), None);
+        assert_eq!(linestring.line_interpolate_point(1.5), None);
+        assert_eq!(linestring.line_interpolate_point(-1.0), None);
 
         let linestring: LineString<f64> =
             vec![[-1.0, 0.0], [0.0, Float::infinity()], [0.0, 1.0]].into();
         assert_eq!(linestring.line_interpolate_point(0.5), None);
+        assert_eq!(linestring.line_interpolate_point(1.5), None);
+        assert_eq!(linestring.line_interpolate_point(-1.0), None);
 
         let linestring: LineString<f64> =
             vec![[-1.0, 0.0], [0.0, Float::neg_infinity()], [0.0, 1.0]].into();
         assert_eq!(linestring.line_interpolate_point(0.5), None);
+        assert_eq!(linestring.line_interpolate_point(1.5), None);
+        assert_eq!(linestring.line_interpolate_point(-1.0), None);
 
         // Empty line
         let coords: Vec<Point<f64>> = Vec::new();

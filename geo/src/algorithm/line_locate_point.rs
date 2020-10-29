@@ -53,7 +53,7 @@ where
         // $l$ along the line to $p$ is perpendicular to $v$.a
 
         // vector $p - s$
-        let sp: Point<_> = (*p - self.start_point()).into();
+        let sp: Point<_> = *p - self.start_point();
 
         // direction vector of line, $v$
         let v: Point<_> = (self.end - self.start).into();
