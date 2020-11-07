@@ -140,10 +140,13 @@ where
         }
 
         // Ignore if the intersection of the line is
-        // possibly at the beginning of the line. This is to
+        // possibly at the beginning/end of the line, and
+        // the line lies below the ray. This is to
         // prevent a double counting when the ray passes
-        // through a vertex of the plygon
-        if line.start.y == coord.y {
+        // through a vertex of the polygon.
+        if (line.start.y == coord.y && line.end.y < coord.y)
+            || (line.end.y == coord.y && line.start.y < coord.y)
+        {
             continue;
         }
 
