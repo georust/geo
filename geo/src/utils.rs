@@ -144,6 +144,12 @@ where
         // the line lies below the ray. This is to
         // prevent a double counting when the ray passes
         // through a vertex of the polygon.
+        //
+        // The below logic handles two cases:
+        //   1. if the ray enters/exits the polygon
+        //      at the point of intersection
+        //   2. if the ray touches a vertex,
+        //      but doesn't enter/exit at that point
         if (line.start.y == coord.y && line.end.y < coord.y)
             || (line.end.y == coord.y && line.start.y < coord.y)
         {
