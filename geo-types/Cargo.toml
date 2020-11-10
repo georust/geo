@@ -12,6 +12,7 @@ edition = "2018"
 
 [dependencies]
 approx = "0.3"
+arbitrary = "*"
 num-traits = "0.2"
 serde = { version = "1", optional = true, features = ["derive"] }
 rstar = { version = "0.8", optional = true }
