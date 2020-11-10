@@ -81,7 +81,9 @@ mod macros;
 #[doc(hidden)]
 pub mod private_utils;
 
-impl<T: num_traits::Float + arbitrary::Arbitrary + CoordinateType> arbitrary::Arbitrary for Coordinate<T> {
+impl<T: num_traits::Float + arbitrary::Arbitrary + CoordinateType> arbitrary::Arbitrary
+    for Coordinate<T>
+{
     fn arbitrary(u: &mut arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
         let x = u.arbitrary::<T>()?;
         if x.is_nan() {
@@ -97,22 +99,19 @@ impl<T: num_traits::Float + arbitrary::Arbitrary + CoordinateType> arbitrary::Ar
     }
 }
 
-impl<T: num_traits::Float + arbitrary::Arbitrary + CoordinateType> arbitrary::Arbitrary for LineString<T> {
+impl<T: num_traits::Float + arbitrary::Arbitrary + CoordinateType> arbitrary::Arbitrary
+    for LineString<T>
+{
     fn arbitrary(u: &mut arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
-        let iter = u.arbitrary_iter::<Coordinate<T>>()?;
+        let coords = u
+            .arbitrary_iter::<Coordinate<T>>()?
+            .collect::<Result<Vec<Coordinate<T>>, _>>()?;
 
-        let mut vec = vec![];
-
-        for result in iter {
-            let t = result?;
-            vec.push(t);
-        }
-
-        if vec.len() < 2 {
+        if coords.len() < 2 {
             return Err(arbitrary::Error::IncorrectFormat);
         }
 
-        Ok(LineString(vec))
+        Ok(LineString(coords))
     }
 }
 
