@@ -184,31 +184,6 @@ mod test {
         assert!(poly.contains(&Point::new(1., 1.)));
     }
     #[test]
-    fn point_in_polygon_with_ray_passing_through_a_vertex_test() {
-        let linestring = LineString::from(vec![
-            (1., 0.),
-            (0., 1.),
-            (-1., 0.),
-            (0., -1.),
-        ]);
-        let poly = Polygon::new(linestring, Vec::new());
-        assert!(poly.contains(&Point::new(0., 0.)));
-    }
-    #[test]
-    fn point_in_polygon_with_ray_passing_through_a_vertex_and_not_crossing() {
-        let linestring = LineString::from(vec![
-            (0., 0.),
-            (2., 0.),
-            (3., 1.),
-            (4., 0.),
-            (4., 2.),
-            (0., 2.),
-            (0., 0.),
-        ]);
-        let poly = Polygon::new(linestring, Vec::new());
-        assert!(poly.contains(&Point::new(1., 1.)));
-    }
-    #[test]
     fn point_out_polygon_test() {
         let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
