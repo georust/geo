@@ -19,6 +19,10 @@ fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
 where
     T: Float,
 {
+    // Epsilon must be greater than zero for any meaningful simplification to happen
+    if *epsilon <= T::zero() {
+        points.to_vec();
+    }
     compute_rdp(
         &points
             .into_iter()

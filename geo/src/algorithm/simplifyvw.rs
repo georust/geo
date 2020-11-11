@@ -191,6 +191,10 @@ fn visvalingam<T>(orig: &LineString<T>, epsilon: &T) -> Vec<Coordinate<T>>
 where
     T: Float,
 {
+    // Epsilon must be greater than zero for any meaningful simplification to happen
+    if *epsilon <= T::zero() {
+        return orig.0.to_vec()
+    }
     let subset = visvalingam_indices(orig, epsilon);
     // filter orig using the indices
     // using get would be more robust here, but the input subset is guaranteed to be valid in this case
@@ -251,7 +255,7 @@ fn visvalingam_preserve<T>(
 where
     T: Float + RTreeNum,
 {
-    if orig.0.len() < 3 {
+    if orig.0.len() < 3 || *epsilon <= T::zero() {
         return orig.0.to_vec();
     }
     let max = orig.0.len();
