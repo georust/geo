@@ -39,6 +39,18 @@ test = false
 doc = false
 
 [[bin]]
+name = "simplify"
+path = "fuzz_targets/simplify.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "simplifyvw"
+path = "fuzz_targets/simplifyvw.rs"
+test = false
+doc = false
+
+[[bin]]
 name = "fuzz_target_1"
 path = "fuzz_targets/fuzz_target_1.rs"
 test = false
