@@ -222,14 +222,19 @@ use num_traits::Zero;
 /// assert_eq!(p.x, 0.);
 /// assert_eq!(p.y, 0.);
 /// ```
-impl<T: CoordinateType> Zero for Coordinate<T> {
-    fn zero() -> Self {
+impl<T: CoordinateType> Coordinate<T> {
+    pub fn zero() -> Self {
         Coordinate {
             x: T::zero(),
             y: T::zero(),
         }
     }
+}
 
+impl<T: CoordinateType> Zero for Coordinate<T> {
+    fn zero() -> Self {
+        Coordinate::zero()
+    }
     fn is_zero(&self) -> bool {
         self.x.is_zero() && self.y.is_zero()
     }
