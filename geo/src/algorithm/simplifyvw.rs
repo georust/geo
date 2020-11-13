@@ -429,6 +429,8 @@ where
 /// Polygons are simplified by running the algorithm on all their constituent rings.  This may
 /// result in invalid Polygons, and has no guarantee of preserving topology. Multi* objects are
 /// simplified by simplifying all their constituent geometries individually.
+///
+/// An epsilon less than or equal to zero will return an unaltered version of the geometry.
 pub trait SimplifyVW<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
     ///
@@ -467,6 +469,8 @@ pub trait SimplifyVW<T, Epsilon = T> {
 ///
 /// This operation uses the Visvalingam-Whyatt algorithm,
 /// and does **not** guarantee that the returned geometry is valid.
+///
+/// An epsilon less than or equal to zero will return an unaltered version of the geometry.
 pub trait SimplifyVwIdx<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
     ///
@@ -502,6 +506,8 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
 }
 
 /// Simplifies a geometry, preserving its topology by removing self-intersections
+///
+/// An epsilon less than or equal to zero will return an unaltered version of the geometry.
 pub trait SimplifyVWPreserve<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using a topology-preserving variant of the
     /// [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm.
