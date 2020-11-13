@@ -19,7 +19,7 @@ where
     Point<T>: Intersects<G>,
 {
     fn intersects(&self, rhs: &G) -> bool {
-        self.0.iter().any(|p| p.intersects(rhs))
+        self.iter().any(|p| p.intersects(rhs))
     }
 }
 

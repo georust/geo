@@ -99,7 +99,7 @@ where
     ///
     /// Return the BoundingRect for a MultiLineString
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.0.iter().flat_map(|line| line.0.iter().cloned()))
+        get_bounding_rect(self.iter().flat_map(|line| line.0.iter().cloned()))
     }
 }
 
@@ -127,8 +127,7 @@ where
     /// Return the BoundingRect for a MultiPolygon
     fn bounding_rect(&self) -> Self::Output {
         get_bounding_rect(
-            self.0
-                .iter()
+            self.iter()
                 .flat_map(|poly| poly.exterior().0.iter().cloned()),
         )
     }

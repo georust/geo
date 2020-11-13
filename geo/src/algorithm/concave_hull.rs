@@ -92,7 +92,7 @@ where
     type Scalar = T;
     fn concave_hull(&self, concavity: T) -> Polygon<T> {
         let mut aggregated: Vec<Coordinate<T>> =
-            self.0.iter().flat_map(|elem| elem.0.clone()).collect();
+            self.iter().flat_map(|elem| elem.0.clone()).collect();
         Polygon::new(concave_hull(&mut aggregated, concavity), vec![])
     }
 }
@@ -103,7 +103,7 @@ where
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: T) -> Polygon<T> {
-        let mut coordinates: Vec<Coordinate<T>> = self.0.iter().map(|point| point.0).collect();
+        let mut coordinates: Vec<Coordinate<T>> = self.iter().map(|point| point.0).collect();
         Polygon::new(concave_hull(&mut coordinates, concavity), vec![])
     }
 }

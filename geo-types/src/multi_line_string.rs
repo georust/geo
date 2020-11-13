@@ -57,7 +57,7 @@ impl<T: CoordinateType> MultiLineString<T> {
     /// ```
     pub fn is_closed(&self) -> bool {
         // Note: Unlike JTS et al, we consider an empty MultiLineString as closed.
-        self.0.iter().all(LineString::is_closed)
+        self.iter().all(LineString::is_closed)
     }
 }
 
