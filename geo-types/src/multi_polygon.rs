@@ -54,3 +54,120 @@ impl<T: CoordinateType> IntoIterator for MultiPolygon<T> {
         self.0.into_iter()
     }
 }
+
+impl<'a, T: CoordinateType> IntoIterator for &'a MultiPolygon<T> {
+    type Item = &'a Polygon<T>;
+    type IntoIter = ::std::slice::Iter<'a, Polygon<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&self.0).into_iter()
+    }
+}
+
+impl<'a, T: CoordinateType> IntoIterator for &'a mut MultiPolygon<T> {
+    type Item = &'a mut Polygon<T>;
+    type IntoIter = ::std::slice::IterMut<'a, Polygon<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&mut self.0).iter_mut()
+    }
+}
+
+impl<T: CoordinateType> MultiPolygon<T> {
+    pub fn iter(&self) -> impl Iterator<Item = &Polygon<T>> {
+        self.0.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Polygon<T>> {
+        self.0.iter_mut()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::polygon;
+
+    #[test]
+    fn test_iter() {
+        let multi = MultiPolygon(vec![
+            polygon![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
+            polygon![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)],
+        ]);
+
+        let mut first = true;
+        for p in &multi {
+            if first {
+                assert_eq!(
+                    p,
+                    &polygon![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)]
+                );
+                first = false;
+            } else {
+                assert_eq!(
+                    p,
+                    &polygon![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)]
+                );
+            }
+        }
+
+        // Do it again to prove that `multi` wasn't `moved`.
+        first = true;
+        for p in &multi {
+            if first {
+                assert_eq!(
+                    p,
+                    &polygon![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)]
+                );
+                first = false;
+            } else {
+                assert_eq!(
+                    p,
+                    &polygon![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)]
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_iter_mut() {
+        let mut multi = MultiPolygon(vec![
+            polygon![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
+            polygon![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)],
+        ]);
+
+        for poly in &mut multi {
+            poly.exterior_mut(|exterior| {
+                for coord in exterior {
+                    coord.x += 1;
+                    coord.y += 1;
+                }
+            });
+        }
+
+        for poly in multi.iter_mut() {
+            poly.exterior_mut(|exterior| {
+                for coord in exterior {
+                    coord.x += 1;
+                    coord.y += 1;
+                }
+            });
+        }
+
+        let mut first = true;
+        for p in &multi {
+            if first {
+                assert_eq!(
+                    p,
+                    &polygon![(x: 2, y: 2), (x: 4, y: 2), (x: 3, y: 4), (x:2, y:2)]
+                );
+                first = false;
+            } else {
+                assert_eq!(
+                    p,
+                    &polygon![(x: 12, y: 12), (x: 14, y: 12), (x: 13, y: 14), (x:12, y:12)]
+                );
+            }
+        }
+    }
+}
