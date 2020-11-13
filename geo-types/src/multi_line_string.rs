@@ -81,3 +81,116 @@ impl<T: CoordinateType> IntoIterator for MultiLineString<T> {
         self.0.into_iter()
     }
 }
+
+impl<'a, T: CoordinateType> IntoIterator for &'a MultiLineString<T> {
+    type Item = &'a LineString<T>;
+    type IntoIter = ::std::slice::Iter<'a, LineString<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&self.0).into_iter()
+    }
+}
+
+impl<'a, T: CoordinateType> IntoIterator for &'a mut MultiLineString<T> {
+    type Item = &'a mut LineString<T>;
+    type IntoIter = ::std::slice::IterMut<'a, LineString<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&mut self.0).iter_mut()
+    }
+}
+
+impl<T: CoordinateType> MultiLineString<T> {
+    pub fn iter(&self) -> impl Iterator<Item = &LineString<T>> {
+        self.0.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut LineString<T>> {
+        self.0.iter_mut()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::line_string;
+
+    #[test]
+    fn test_iter() {
+        let multi = MultiLineString(vec![
+            line_string![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
+            line_string![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)],
+        ]);
+
+        let mut first = true;
+        for p in &multi {
+            if first {
+                assert_eq!(
+                    p,
+                    &line_string![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)]
+                );
+                first = false;
+            } else {
+                assert_eq!(
+                    p,
+                    &line_string![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)]
+                );
+            }
+        }
+
+        // Do it again to prove that `multi` wasn't `moved`.
+        first = true;
+        for p in &multi {
+            if first {
+                assert_eq!(
+                    p,
+                    &line_string![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)]
+                );
+                first = false;
+            } else {
+                assert_eq!(
+                    p,
+                    &line_string![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)]
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_iter_mut() {
+        let mut multi = MultiLineString(vec![
+            line_string![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
+            line_string![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)],
+        ]);
+
+        for line_string in &mut multi {
+            for coord in line_string {
+                coord.x += 1;
+                coord.y += 1;
+            }
+        }
+
+        for line_string in multi.iter_mut() {
+            for coord in line_string {
+                coord.x += 1;
+                coord.y += 1;
+            }
+        }
+
+        let mut first = true;
+        for p in &multi {
+            if first {
+                assert_eq!(
+                    p,
+                    &line_string![(x: 2, y: 2), (x: 4, y: 2), (x: 3, y: 4), (x:2, y:2)]
+                );
+                first = false;
+            } else {
+                assert_eq!(
+                    p,
+                    &line_string![(x: 12, y: 12), (x: 14, y: 12), (x: 13, y: 14), (x:12, y:12)]
+                );
+            }
+        }
+    }
+}
