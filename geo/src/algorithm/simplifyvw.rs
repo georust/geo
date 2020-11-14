@@ -639,7 +639,7 @@ where
     T: Float,
 {
     fn simplifyvw(&self, epsilon: &T) -> MultiLineString<T> {
-        MultiLineString(self.0.iter().map(|l| l.simplifyvw(epsilon)).collect())
+        MultiLineString(self.iter().map(|l| l.simplifyvw(epsilon)).collect())
     }
 }
 
@@ -663,7 +663,7 @@ where
     T: Float,
 {
     fn simplifyvw(&self, epsilon: &T) -> MultiPolygon<T> {
-        MultiPolygon(self.0.iter().map(|p| p.simplifyvw(epsilon)).collect())
+        MultiPolygon(self.iter().map(|p| p.simplifyvw(epsilon)).collect())
     }
 }
 

@@ -87,6 +87,6 @@ where
     Polygon<T>: Contains<G>,
 {
     fn contains(&self, rhs: &G) -> bool {
-        self.0.iter().any(|p| p.contains(rhs))
+        self.iter().any(|p| p.contains(rhs))
     }
 }

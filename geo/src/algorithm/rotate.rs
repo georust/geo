@@ -193,7 +193,7 @@ where
 {
     /// Rotate the contained Polygons about their centroids by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
-        MultiPolygon(self.0.iter().map(|poly| poly.rotate(angle)).collect())
+        MultiPolygon(self.iter().map(|poly| poly.rotate(angle)).collect())
     }
 }
 
@@ -203,7 +203,7 @@ where
 {
     /// Rotate the contained LineStrings about their centroids by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
-        MultiLineString(self.0.iter().map(|ls| ls.rotate(angle)).collect())
+        MultiLineString(self.iter().map(|ls| ls.rotate(angle)).collect())
     }
 }
 
@@ -213,7 +213,7 @@ where
 {
     /// Rotate the contained Points about their centroids by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
-        MultiPoint(self.0.iter().map(|p| p.rotate(angle)).collect())
+        MultiPoint(self.iter().map(|p| p.rotate(angle)).collect())
     }
 }
 

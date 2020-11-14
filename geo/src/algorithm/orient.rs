@@ -80,7 +80,7 @@ where
     T: HasKernel,
 {
     fn orient(&self, direction: Direction) -> MultiPolygon<T> {
-        MultiPolygon(self.0.iter().map(|poly| poly.orient(direction)).collect())
+        MultiPolygon(self.iter().map(|poly| poly.orient(direction)).collect())
     }
 }
 

@@ -62,3 +62,88 @@ impl<T: CoordinateType> IntoIterator for MultiPoint<T> {
         self.0.into_iter()
     }
 }
+
+impl<'a, T: CoordinateType> IntoIterator for &'a MultiPoint<T> {
+    type Item = &'a Point<T>;
+    type IntoIter = ::std::slice::Iter<'a, Point<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&self.0).into_iter()
+    }
+}
+
+impl<'a, T: CoordinateType> IntoIterator for &'a mut MultiPoint<T> {
+    type Item = &'a mut Point<T>;
+    type IntoIter = ::std::slice::IterMut<'a, Point<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        (&mut self.0).iter_mut()
+    }
+}
+
+impl<T: CoordinateType> MultiPoint<T> {
+    pub fn iter(&self) -> impl Iterator<Item = &Point<T>> {
+        self.0.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Point<T>> {
+        self.0.iter_mut()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::point;
+
+    #[test]
+    fn test_iter() {
+        let multi = MultiPoint(vec![point![x: 0, y: 0], point![x: 10, y: 10]]);
+
+        let mut first = true;
+        for p in &multi {
+            if first {
+                assert_eq!(p, &point![x: 0, y: 0]);
+                first = false;
+            } else {
+                assert_eq!(p, &point![x: 10, y: 10]);
+            }
+        }
+
+        // Do it again to prove that `multi` wasn't `moved`.
+        first = true;
+        for p in &multi {
+            if first {
+                assert_eq!(p, &point![x: 0, y: 0]);
+                first = false;
+            } else {
+                assert_eq!(p, &point![x: 10, y: 10]);
+            }
+        }
+    }
+
+    #[test]
+    fn test_iter_mut() {
+        let mut multi = MultiPoint(vec![point![x: 0, y: 0], point![x: 10, y: 10]]);
+
+        for point in &mut multi {
+            point.0.x += 1;
+            point.0.y += 1;
+        }
+
+        for point in multi.iter_mut() {
+            point.0.x += 1;
+            point.0.y += 1;
+        }
+
+        let mut first = true;
+        for p in &multi {
+            if first {
+                assert_eq!(p, &point![x: 2, y: 2]);
+                first = false;
+            } else {
+                assert_eq!(p, &point![x: 12, y: 12]);
+            }
+        }
+    }
+}

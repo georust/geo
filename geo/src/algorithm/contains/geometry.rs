@@ -44,7 +44,7 @@ where
     T: HasKernel,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
-        self.0.iter().any(|geometry| geometry.contains(coord))
+        self.iter().any(|geometry| geometry.contains(coord))
     }
 }
 

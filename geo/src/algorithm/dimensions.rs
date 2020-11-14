@@ -293,7 +293,7 @@ impl<C: CoordinateType> HasDimensions for MultiPoint<C> {
 
 impl<C: CoordinateType> HasDimensions for MultiLineString<C> {
     fn is_empty(&self) -> bool {
-        self.0.iter().all(LineString::is_empty)
+        self.iter().all(LineString::is_empty)
     }
 
     fn dimensions(&self) -> Dimensions {
@@ -328,7 +328,7 @@ impl<C: CoordinateType> HasDimensions for MultiLineString<C> {
 
 impl<C: CoordinateType> HasDimensions for MultiPolygon<C> {
     fn is_empty(&self) -> bool {
-        self.0.iter().all(Polygon::is_empty)
+        self.iter().all(Polygon::is_empty)
     }
 
     fn dimensions(&self) -> Dimensions {
@@ -353,7 +353,7 @@ impl<C: CoordinateType> HasDimensions for GeometryCollection<C> {
         if self.0.is_empty() {
             true
         } else {
-            self.0.iter().all(Geometry::is_empty)
+            self.iter().all(Geometry::is_empty)
         }
     }
 
