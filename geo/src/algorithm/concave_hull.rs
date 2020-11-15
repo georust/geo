@@ -119,10 +119,27 @@ fn find_point_closest_to_line<T>(
 where
     T: Float + RTreeNum,
 {
+    /*
+        So, concaveman uses a rectangular envelope where the borders are
+        a distance of max_dist from the line to look for points. Unfortunately,
+        rstar uses a circular envelope so to avoid implemeting a new envelope
+        this code constructs a circular envelope with a radius that would
+        fit the rectangular envelope of concaveman. This entails 
+        constructing a rectangular envelope with a width of the line's
+        euclidean length + max_dist * 2 and a height of max_dist * 2
+        which roughly matches what concaveman looks for. Then,
+        we calculate the length of the diagonal as sqrt(h^2 + w^2) and
+        divide that by 2 to get the radius. Since, the search
+        function in rstar takes the squared radius, we multiply
+        the radius by itself to get (h^2 + w^2)/4 which
+        is the calculation below.
+    */
     let h = max_dist + max_dist;
     let w = line.euclidean_length() + h;
+    let diagonal_squared = T::powi(h, 2) + T::powi(w, 2);
     let two = T::add(T::one(), T::one());
-    let search_dist = T::div(T::sqrt(T::powi(w, 2) + T::powi(h, 2)), two);
+    let four = T::add(two, two);
+    let search_dist = T::div(diagonal_squared, four);
     let centroid = line.centroid();
     let centroid_coord = Coordinate {
         x: centroid.x(),
@@ -277,6 +294,37 @@ mod test {
     }
 
     #[test]
+    fn diagonals_test() {
+        let mut coords = vec![
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 10.0, y: 0.0 },
+            Coordinate { x: 15.0, y: 5.0 },
+            Coordinate { x: 15.0, y: 5.0 },
+            Coordinate { x: 15.0, y: 10.0 },
+            Coordinate { x: 5.0, y: 10.0 },
+            Coordinate { x: 5.0, y: 15.0 },
+            Coordinate { x: 5.0, y: 20.0 },
+            Coordinate { x: 0.0, y: 20.0 },
+        ];
+
+        let correct = line_string![
+            (x: 10.0, y: 0.0 ),
+            (x: 15.0, y: 5.0 ),
+            (x: 15.0, y: 10.0 ),
+            (x: 5.0, y: 10.0 ),
+            (x: 5.0, y: 15.0 ),
+            (x: 5.0, y: 20.0 ),
+            (x: 0.0, y: 20.0 ),
+            (x: 0.0, y: 0.0 ),
+            (x: 10.0, y: 0.0 ),
+        ];
+
+        let concavity = 2.0;
+        let res = concave_hull(&mut coords, concavity);
+        assert_eq!(res, correct);
+    }
+
+    #[test]
     fn square_test() {
         let mut square = vec![
             Coordinate { x: 0.0, y: 0.0 },
@@ -368,23 +416,6 @@ mod test {
         let concavity = 2.0;
         let res = concave_hull(&mut v, concavity);
         assert_eq!(res, correct);
-    }
-
-    #[test]
-    fn concave_hull_norway_test() {
-        let loaded_norway = include!("test_fixtures/norway_main.rs");
-        let norway: MultiPoint<f64> = loaded_norway
-            .iter()
-            .map(|tuple| Point::new(f64::from(tuple[0]), f64::from(tuple[1])))
-            .collect();
-        let loaded_norway_concave_hull = include!("test_fixtures/norway_concave_hull.rs");
-        let norway_concave_hull_points: Vec<Point<f64>> = loaded_norway_concave_hull
-            .iter()
-            .map(|tuple| Point::new(f64::from(tuple[0]), f64::from(tuple[1])))
-            .collect();
-        let norway_concave_hull: LineString<f64> = norway_concave_hull_points.into_iter().collect();
-        let res = norway.concave_hull(2.0);
-        assert_eq!(res.exterior(), &norway_concave_hull);
     }
 
     #[test]
