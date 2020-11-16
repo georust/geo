@@ -58,7 +58,7 @@ mod multi_line_string;
 pub use crate::multi_line_string::MultiLineString;
 
 mod polygon;
-pub use crate::polygon::Polygon;
+pub use crate::polygon::{Polygon, InteriorCoordsIter};
 
 mod multi_polygon;
 pub use crate::multi_polygon::MultiPolygon;

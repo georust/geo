@@ -37,17 +37,13 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for LineString<T> {
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
     type Iter = iter::Chain<
         <geo_types::LineString<T> as CoordsIter<'a, T>>::Iter,
-        iter::FlatMap<
-            slice::Iter<'a, geo_types::LineString<T>>,
-            <geo_types::LineString<T> as CoordsIter<'a, T>>::Iter,
-            fn(&'a LineString<T>) -> Copied<std::slice::Iter<'a, Coordianate<T>>>,
-        >,
+        geo_types::InteriorCoordsIter<'a, T>,
     >;
 
     fn coords_iter(&'a self) -> Self::Iter {
         self.exterior()
             .coords_iter()
-            .chain(self.interiors().iter().flat_map(CoordsIter::Iter))
+            .chain(self.interior_coords_iter())
     }
 }
 
