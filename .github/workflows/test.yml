@@ -1,0 +1,68 @@
+on: push
+name: Run tests
+jobs:
+  geo_types:
+    name: geo-types
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    defaults:
+      run:
+        working-directory: geo-types
+    container:
+      image: georust/geo-ci
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - run: cargo install cargo-all-features
+      - run: cargo build-all-features
+      - run: cargo test-all-features
+
+  geo:
+    name: geo
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    defaults:
+      run:
+        working-directory: geo
+    container:
+      image: georust/geo-ci
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - run: cargo install cargo-all-features
+      - run: cargo build-all-features
+      - run: cargo test-all-features
+
+  geo_postgis:
+    name: geo-postgis
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    defaults:
+      run:
+        working-directory: geo-postgis
+    container:
+      image: georust/geo-ci
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - run: cargo install cargo-all-features
+      - run: cargo build-all-features
+      - run: cargo test-all-features
+
+  test:
+    name: coverage
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    container:
+      image: georust/geo-ci
+      options: --security-opt seccomp=unconfined
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Generate code coverage
+        run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Lcov
+      - name: Upload coverage to Coveralls
+        uses: coverallsapp/github-action@v1.1.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: lcov.info
