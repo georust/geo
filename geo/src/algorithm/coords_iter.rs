@@ -102,10 +102,10 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPolygon<T> {
 // └───────────────────────────────────────┘
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for GeometryCollection<T> {
-    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
+    type Iter = iter::Flatten<GeometriesToGeometryCoordsIterIter<'a, T>>;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(self.0.iter().flat_map(|m| m.coords_iter()))
+        GeometriesToGeometryCoordsIterIter(self.0.iter()).flatten()
     }
 }
 
@@ -184,54 +184,6 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Geometry<T> {
     }
 }
 
-#[doc(hidden)]
-pub enum GeometryCoordsIter<'a, T: CoordinateType> {
-    Point(<Point<T> as CoordsIter<'a, T>>::Iter),
-    Line(<Line<T> as CoordsIter<'a, T>>::Iter),
-    LineString(<LineString<T> as CoordsIter<'a, T>>::Iter),
-    Polygon(<Polygon<T> as CoordsIter<'a, T>>::Iter),
-    MultiPoint(<MultiPoint<T> as CoordsIter<'a, T>>::Iter),
-    MultiLineString(<MultiLineString<T> as CoordsIter<'a, T>>::Iter),
-    MultiPolygon(<MultiPolygon<T> as CoordsIter<'a, T>>::Iter),
-    GeometryCollection(<GeometryCollection<T> as CoordsIter<'a, T>>::Iter),
-    Rect(<Rect<T> as CoordsIter<'a, T>>::Iter),
-    Triangle(<Triangle<T> as CoordsIter<'a, T>>::Iter),
-}
-
-impl<'a, T: CoordinateType> Iterator for GeometryCoordsIter<'a, T> {
-    type Item = Coordinate<T>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self {
-            GeometryCoordsIter::Point(g) => g.next(),
-            GeometryCoordsIter::Line(g) => g.next(),
-            GeometryCoordsIter::LineString(g) => g.next(),
-            GeometryCoordsIter::Polygon(g) => g.next(),
-            GeometryCoordsIter::MultiPoint(g) => g.next(),
-            GeometryCoordsIter::MultiLineString(g) => g.next(),
-            GeometryCoordsIter::MultiPolygon(g) => g.next(),
-            GeometryCoordsIter::GeometryCollection(g) => g.next(),
-            GeometryCoordsIter::Rect(g) => g.next(),
-            GeometryCoordsIter::Triangle(g) => g.next(),
-        }
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        match self {
-            GeometryCoordsIter::Point(g) => g.size_hint(),
-            GeometryCoordsIter::Line(g) => g.size_hint(),
-            GeometryCoordsIter::LineString(g) => g.size_hint(),
-            GeometryCoordsIter::Polygon(g) => g.size_hint(),
-            GeometryCoordsIter::MultiPoint(g) => g.size_hint(),
-            GeometryCoordsIter::MultiLineString(g) => g.size_hint(),
-            GeometryCoordsIter::MultiPolygon(g) => g.size_hint(),
-            GeometryCoordsIter::GeometryCollection(g) => g.size_hint(),
-            GeometryCoordsIter::Rect(g) => g.size_hint(),
-            GeometryCoordsIter::Triangle(g) => g.size_hint(),
-        }
-    }
-}
-
 // ┌───────────┐
 // │ Utilities │
 // └───────────┘
@@ -282,5 +234,82 @@ impl<'a, T: CoordinateType> Iterator for LineStringsToCoordsIter<'a, T> {
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.0.size_hint()
+    }
+}
+
+#[doc(hidden)]
+// Utility to transform Iterator<Geometry> into Iterator<Iterator<Coordinate>>
+pub struct GeometriesToGeometryCoordsIterIter<'a, T: CoordinateType>(slice::Iter<'a, Geometry<T>>);
+
+impl<'a, T: CoordinateType> Iterator for GeometriesToGeometryCoordsIterIter<'a, T> {
+    type Item = GeometryCoordsIter<'a, T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|n| match n {
+            Geometry::Point(n) => GeometryCoordsIter::Point(n.coords_iter()),
+            Geometry::Line(n) => GeometryCoordsIter::Line(n.coords_iter()),
+            Geometry::LineString(n) => GeometryCoordsIter::LineString(n.coords_iter()),
+            Geometry::Polygon(n) => GeometryCoordsIter::Polygon(n.coords_iter()),
+            Geometry::MultiPoint(n) => GeometryCoordsIter::MultiPoint(n.coords_iter()),
+            Geometry::MultiLineString(n) => GeometryCoordsIter::MultiLineString(n.coords_iter()),
+            Geometry::MultiPolygon(n) => GeometryCoordsIter::MultiPolygon(n.coords_iter()),
+            Geometry::GeometryCollection(n) => {
+                GeometryCoordsIter::GeometryCollection(n.coords_iter())
+            }
+            Geometry::Rect(n) => GeometryCoordsIter::Rect(n.coords_iter()),
+            Geometry::Triangle(n) => GeometryCoordsIter::Triangle(n.coords_iter()),
+        })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+}
+
+#[doc(hidden)]
+pub enum GeometryCoordsIter<'a, T: CoordinateType> {
+    Point(<Point<T> as CoordsIter<'a, T>>::Iter),
+    Line(<Line<T> as CoordsIter<'a, T>>::Iter),
+    LineString(<LineString<T> as CoordsIter<'a, T>>::Iter),
+    Polygon(<Polygon<T> as CoordsIter<'a, T>>::Iter),
+    MultiPoint(<MultiPoint<T> as CoordsIter<'a, T>>::Iter),
+    MultiLineString(<MultiLineString<T> as CoordsIter<'a, T>>::Iter),
+    MultiPolygon(<MultiPolygon<T> as CoordsIter<'a, T>>::Iter),
+    GeometryCollection(<GeometryCollection<T> as CoordsIter<'a, T>>::Iter),
+    Rect(<Rect<T> as CoordsIter<'a, T>>::Iter),
+    Triangle(<Triangle<T> as CoordsIter<'a, T>>::Iter),
+}
+
+impl<'a, T: CoordinateType> Iterator for GeometryCoordsIter<'a, T> {
+    type Item = Coordinate<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            GeometryCoordsIter::Point(g) => g.next(),
+            GeometryCoordsIter::Line(g) => g.next(),
+            GeometryCoordsIter::LineString(g) => g.next(),
+            GeometryCoordsIter::Polygon(g) => g.next(),
+            GeometryCoordsIter::MultiPoint(g) => g.next(),
+            GeometryCoordsIter::MultiLineString(g) => g.next(),
+            GeometryCoordsIter::MultiPolygon(g) => g.next(),
+            GeometryCoordsIter::GeometryCollection(g) => g.next(),
+            GeometryCoordsIter::Rect(g) => g.next(),
+            GeometryCoordsIter::Triangle(g) => g.next(),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            GeometryCoordsIter::Point(g) => g.size_hint(),
+            GeometryCoordsIter::Line(g) => g.size_hint(),
+            GeometryCoordsIter::LineString(g) => g.size_hint(),
+            GeometryCoordsIter::Polygon(g) => g.size_hint(),
+            GeometryCoordsIter::MultiPoint(g) => g.size_hint(),
+            GeometryCoordsIter::MultiLineString(g) => g.size_hint(),
+            GeometryCoordsIter::MultiPolygon(g) => g.size_hint(),
+            GeometryCoordsIter::GeometryCollection(g) => g.size_hint(),
+            GeometryCoordsIter::Rect(g) => g.size_hint(),
+            GeometryCoordsIter::Triangle(g) => g.size_hint(),
+        }
     }
 }
