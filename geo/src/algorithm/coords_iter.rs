@@ -190,7 +190,7 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Geometry<T> {
 // │ Utilities │
 // └───────────┘
 
-// Utility to transform Iterator<CoordsIter> into Iterator<CoordsIter::Iter>
+// Utility to transform Iterator<CoordsIter> into Iterator<Iterator<Coordinate>>
 #[doc(hidden)]
 pub struct MapCoordsIter<
     'a,
