@@ -1,8 +1,6 @@
 use std::iter;
 use crate::{Coordinate, Point, Polygon, LineString, Line, MultiPoint, MultiPolygon,
-            MultiLineString, CoordinateType};
-
-// TODO add geometry impl
+            MultiLineString, CoordinateType, Geometry, GeometryCollection, Triangle, Rect};
 
 pub trait CoordsIter<'a, T: CoordinateType + 'a> {
     type Iter: Iterator<Item = &'a Coordinate<T>>;
@@ -69,5 +67,52 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPolygon<T> {
 
     fn coords_iter(&'a self) -> Self::Iter {
         Box::new(self.0.iter().flat_map(|m| m.coords_iter()))
+    }
+}
+
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for GeometryCollection<T> {
+    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+
+    fn coords_iter(&'a self) -> Self::Iter {
+        Box::new(self.0.iter().flat_map(|m| m.coords_iter()))
+    }
+}
+
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
+    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+
+    fn coords_iter(&'a self) -> Self::Iter {
+        unimplemented!()
+    }
+}
+
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Triangle<T> {
+    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+
+    fn coords_iter(&'a self) -> Self::Iter {
+        Box::new(
+            ::std::iter::once(&self.0)
+                .chain(::std::iter::once(&self.1))
+                .chain(::std::iter::once(&self.2))
+        )
+    }
+}
+
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Geometry<T> {
+    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+
+    fn coords_iter(&'a self) -> Self::Iter {
+        match self {
+            Geometry::Point(g) => g.coords_iter(),
+            Geometry::Line(g) => g.coords_iter(),
+            Geometry::LineString(g) => g.coords_iter(),
+            Geometry::Polygon(g) => g.coords_iter(),
+            Geometry::MultiPoint(g) => g.coords_iter(),
+            Geometry::MultiLineString(g) => g.coords_iter(),
+            Geometry::MultiPolygon(g) => g.coords_iter(),
+            Geometry::GeometryCollection(g) => g.coords_iter(),
+            Geometry::Rect(g) => g.coords_iter(),
+            Geometry::Triangle(g) => g.coords_iter(),
+        }
     }
 }
