@@ -52,7 +52,7 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for LineString<T> {
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
     type Iter = iter::Chain<
-        <geo_types::LineString<T> as CoordsIter<'a, T>>::Iter,
+        <LineString<T> as CoordsIter<'a, T>>::Iter,
         LineStringsToCoordsIter<'a, T>,
     >;
 
@@ -122,10 +122,18 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for GeometryCollection<T> {
 // └─────────────────────────┘
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
-    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
+    type Iter = iter::Chain<
+        iter::Chain<
+            iter::Chain<
+                iter::Once<Coordinate<T>>,
+                iter::Once<Coordinate<T>>,
+            >,
+            iter::Once<Coordinate<T>>,
+        >,
+        iter::Once<Coordinate<T>>
+    >;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(
             iter::once(Coordinate {
                 x: self.min().x,
                 y: self.min().y,
@@ -141,8 +149,7 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
             .chain(iter::once(Coordinate {
                 x: self.max().x,
                 y: self.min().y,
-            })),
-        )
+            }))
     }
 }
 
@@ -151,14 +158,18 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
 // └─────────────────────────────┘
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Triangle<T> {
-    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
+    type Iter = iter::Chain<
+        iter::Chain<
+            iter::Once<Coordinate<T>>,
+            iter::Once<Coordinate<T>>,
+        >,
+        iter::Once<Coordinate<T>>
+    >;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(
-            iter::once(self.0)
-                .chain(iter::once(self.1))
-                .chain(iter::once(self.2)),
-        )
+        iter::once(self.0)
+            .chain(iter::once(self.1))
+            .chain(iter::once(self.2))
     }
 }
 
@@ -167,20 +178,68 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Triangle<T> {
 // └─────────────────────────────┘
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Geometry<T> {
-    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
+    type Iter = GeometryCoordsIter<'a, T>;
 
     fn coords_iter(&'a self) -> Self::Iter {
         match self {
-            Geometry::Point(g) => Box::new(g.coords_iter()),
-            Geometry::Line(g) => Box::new(g.coords_iter()),
-            Geometry::LineString(g) => Box::new(g.coords_iter()),
-            Geometry::Polygon(g) => Box::new(g.coords_iter()),
-            Geometry::MultiPoint(g) => Box::new(g.coords_iter()),
-            Geometry::MultiLineString(g) => Box::new(g.coords_iter()),
-            Geometry::MultiPolygon(g) => g.coords_iter(),
-            Geometry::GeometryCollection(g) => g.coords_iter(),
-            Geometry::Rect(g) => g.coords_iter(),
-            Geometry::Triangle(g) => g.coords_iter(),
+            Geometry::Point(g) => GeometryCoordsIter::Point(g.coords_iter()),
+            Geometry::Line(g) => GeometryCoordsIter::Line(g.coords_iter()),
+            Geometry::LineString(g) => GeometryCoordsIter::LineString(g.coords_iter()),
+            Geometry::Polygon(g) => GeometryCoordsIter::Polygon(g.coords_iter()),
+            Geometry::MultiPoint(g) => GeometryCoordsIter::MultiPoint(g.coords_iter()),
+            Geometry::MultiLineString(g) => GeometryCoordsIter::MultiLineString(g.coords_iter()),
+            Geometry::MultiPolygon(g) => GeometryCoordsIter::MultiPolygon(g.coords_iter()),
+            Geometry::GeometryCollection(g) => GeometryCoordsIter::GeometryCollection(g.coords_iter()),
+            Geometry::Rect(g) => GeometryCoordsIter::Rect(g.coords_iter()),
+            Geometry::Triangle(g) => GeometryCoordsIter::Triangle(g.coords_iter()),
+        }
+    }
+}
+
+#[doc(hidden)]
+pub enum GeometryCoordsIter<'a, T: CoordinateType> {
+    Point(<Point<T> as CoordsIter<'a, T>>::Iter),
+    Line(<Line<T> as CoordsIter<'a, T>>::Iter),
+    LineString(<LineString<T> as CoordsIter<'a, T>>::Iter),
+    Polygon(<Polygon<T> as CoordsIter<'a, T>>::Iter),
+    MultiPoint(<MultiPoint<T> as CoordsIter<'a, T>>::Iter),
+    MultiLineString(<MultiLineString<T> as CoordsIter<'a, T>>::Iter),
+    MultiPolygon(<MultiPolygon<T> as CoordsIter<'a, T>>::Iter),
+    GeometryCollection(<GeometryCollection<T> as CoordsIter<'a, T>>::Iter),
+    Rect(<Rect<T> as CoordsIter<'a, T>>::Iter),
+    Triangle(<Triangle<T> as CoordsIter<'a, T>>::Iter),
+}
+
+impl<'a, T: CoordinateType> Iterator for GeometryCoordsIter<'a, T> {
+    type Item = Coordinate<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            GeometryCoordsIter::Point(g) => g.next(),
+            GeometryCoordsIter::Line(g) => g.next(),
+            GeometryCoordsIter::LineString(g) => g.next(),
+            GeometryCoordsIter::Polygon(g) => g.next(),
+            GeometryCoordsIter::MultiPoint(g) => g.next(),
+            GeometryCoordsIter::MultiLineString(g) => g.next(),
+            GeometryCoordsIter::MultiPolygon(g) => g.next(),
+            GeometryCoordsIter::GeometryCollection(g) => g.next(),
+            GeometryCoordsIter::Rect(g) => g.next(),
+            GeometryCoordsIter::Triangle(g) => g.next(),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            GeometryCoordsIter::Point(g) => g.size_hint(),
+            GeometryCoordsIter::Line(g) => g.size_hint(),
+            GeometryCoordsIter::LineString(g) => g.size_hint(),
+            GeometryCoordsIter::Polygon(g) => g.size_hint(),
+            GeometryCoordsIter::MultiPoint(g) => g.size_hint(),
+            GeometryCoordsIter::MultiLineString(g) => g.size_hint(),
+            GeometryCoordsIter::MultiPolygon(g) => g.size_hint(),
+            GeometryCoordsIter::GeometryCollection(g) => g.size_hint(),
+            GeometryCoordsIter::Rect(g) => g.size_hint(),
+            GeometryCoordsIter::Triangle(g) => g.size_hint(),
         }
     }
 }
