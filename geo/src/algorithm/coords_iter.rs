@@ -51,19 +51,13 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for LineString<T> {
 // └────────────────────────────┘
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
-    type Iter = iter::Chain<
-        <LineString<T> as CoordsIter<'a, T>>::Iter,
-        LineStringsToCoordsIter<'a, T>,
-    >;
+    type Iter =
+        iter::Chain<<LineString<T> as CoordsIter<'a, T>>::Iter, LineStringsToCoordsIter<'a, T>>;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        self.exterior()
-            .coords_iter()
-            .chain(
-                LineStringsToCoordsIter(
-                    LineStringsToCoordSliceIter(self.interiors().iter()).flatten()
-                )
-            )
+        self.exterior().coords_iter().chain(LineStringsToCoordsIter(
+            LineStringsToCoordSliceIter(self.interiors().iter()).flatten(),
+        ))
     }
 }
 
@@ -87,9 +81,7 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiLineString<T> {
     type Iter = LineStringsToCoordsIter<'a, T>;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        LineStringsToCoordsIter(
-            LineStringsToCoordSliceIter(self.0.iter()).flatten()
-        )
+        LineStringsToCoordsIter(LineStringsToCoordSliceIter(self.0.iter()).flatten())
     }
 }
 
@@ -124,32 +116,29 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for GeometryCollection<T> {
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
     type Iter = iter::Chain<
         iter::Chain<
-            iter::Chain<
-                iter::Once<Coordinate<T>>,
-                iter::Once<Coordinate<T>>,
-            >,
+            iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>,
             iter::Once<Coordinate<T>>,
         >,
-        iter::Once<Coordinate<T>>
+        iter::Once<Coordinate<T>>,
     >;
 
     fn coords_iter(&'a self) -> Self::Iter {
-            iter::once(Coordinate {
-                x: self.min().x,
-                y: self.min().y,
-            })
-            .chain(iter::once(Coordinate {
-                x: self.min().x,
-                y: self.max().y,
-            }))
-            .chain(iter::once(Coordinate {
-                x: self.max().x,
-                y: self.max().y,
-            }))
-            .chain(iter::once(Coordinate {
-                x: self.max().x,
-                y: self.min().y,
-            }))
+        iter::once(Coordinate {
+            x: self.min().x,
+            y: self.min().y,
+        })
+        .chain(iter::once(Coordinate {
+            x: self.min().x,
+            y: self.max().y,
+        }))
+        .chain(iter::once(Coordinate {
+            x: self.max().x,
+            y: self.max().y,
+        }))
+        .chain(iter::once(Coordinate {
+            x: self.max().x,
+            y: self.min().y,
+        }))
     }
 }
 
@@ -159,11 +148,8 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Triangle<T> {
     type Iter = iter::Chain<
-        iter::Chain<
-            iter::Once<Coordinate<T>>,
-            iter::Once<Coordinate<T>>,
-        >,
-        iter::Once<Coordinate<T>>
+        iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>,
+        iter::Once<Coordinate<T>>,
     >;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -189,7 +175,9 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Geometry<T> {
             Geometry::MultiPoint(g) => GeometryCoordsIter::MultiPoint(g.coords_iter()),
             Geometry::MultiLineString(g) => GeometryCoordsIter::MultiLineString(g.coords_iter()),
             Geometry::MultiPolygon(g) => GeometryCoordsIter::MultiPolygon(g.coords_iter()),
-            Geometry::GeometryCollection(g) => GeometryCoordsIter::GeometryCollection(g.coords_iter()),
+            Geometry::GeometryCollection(g) => {
+                GeometryCoordsIter::GeometryCollection(g.coords_iter())
+            }
             Geometry::Rect(g) => GeometryCoordsIter::Rect(g.coords_iter()),
             Geometry::Triangle(g) => GeometryCoordsIter::Triangle(g.coords_iter()),
         }
@@ -281,7 +269,9 @@ impl<'a, T: CoordinateType> Iterator for LineStringsToCoordSliceIter<'a, T> {
 
 // Utility to transform Iterator<&[Coordinate]> into Iterator<Coordinate>
 #[doc(hidden)]
-pub struct LineStringsToCoordsIter<'a, T: CoordinateType>(iter::Flatten<LineStringsToCoordSliceIter<'a, T>>);
+pub struct LineStringsToCoordsIter<'a, T: CoordinateType>(
+    iter::Flatten<LineStringsToCoordSliceIter<'a, T>>,
+);
 
 impl<'a, T: CoordinateType> Iterator for LineStringsToCoordsIter<'a, T> {
     type Item = Coordinate<T>;
