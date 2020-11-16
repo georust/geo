@@ -2,7 +2,7 @@ use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
-use std::{iter, slice};
+use std::{iter, marker, slice};
 
 pub trait CoordsIter<'a, T: CoordinateType + 'a> {
     type Iter: Iterator<Item = Coordinate<T>>;
@@ -90,10 +90,17 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiLineString<T> {
 // └─────────────────────────────────┘
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPolygon<T> {
-    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
+    type Iter = iter::Flatten<
+        MultiPolygonIter<
+            'a,
+            T,
+            slice::Iter<'a, Polygon<T>>,
+            Polygon<T>,
+        >
+    >;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(self.0.iter().flat_map(|m| m.coords_iter()))
+        MultiPolygonIter(self.0.iter(), marker::PhantomData).flatten()
     }
 }
 
@@ -234,6 +241,27 @@ impl<'a, T: CoordinateType> Iterator for LineStringsToCoordsIter<'a, T> {
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.0.size_hint()
+    }
+}
+#[doc(hidden)]
+// Utility to transform Iterator<Geometry> into Iterator<Iterator<Coordinate>>
+pub struct MultiPolygonIter<
+    'a,
+    T: 'a + CoordinateType,
+    Iter1: Iterator<Item = &'a Iter2>,
+    Iter2: 'a + CoordsIter<'a, T>
+>(Iter1, marker::PhantomData<T>);
+
+impl<
+    'a,
+    T: 'a + CoordinateType,
+    Iter1: Iterator<Item = &'a Iter2>,
+    Iter2: CoordsIter<'a, T>
+> Iterator for MultiPolygonIter<'a, T, Iter1, Iter2> {
+    type Item = Iter2::Iter;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|g| g.coords_iter())
     }
 }
 
