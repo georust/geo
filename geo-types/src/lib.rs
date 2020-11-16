@@ -199,7 +199,7 @@ impl<T: num_traits::Float + arbitrary::Arbitrary + CoordinateType> arbitrary::Ar
             2 => Geometry::Polygon(u.arbitrary()?),
             3 => Geometry::MultiPoint(u.arbitrary()?),
             4 => Geometry::MultiLineString(u.arbitrary()?),
-            5 => Geometry::MultiPoint(u.arbitrary()?),
+            5 => Geometry::MultiPolygon(u.arbitrary()?),
             6 => Geometry::GeometryCollection(u.arbitrary()?),
             7 => Geometry::Triangle(u.arbitrary()?),
             8 => Geometry::Rect(u.arbitrary()?),
