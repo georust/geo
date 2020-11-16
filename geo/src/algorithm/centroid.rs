@@ -147,7 +147,7 @@ where
     /// The Centroid of a MultiLineString is the mean of the centroids of all the constituent linestrings,
     /// weighted by the length of each linestring
     fn centroid(&self) -> Self::Output {
-        if self.0.is_empty() || self.0.iter().all(|ls| ls.0.is_empty()) {
+        if self.0.is_empty() || self.iter().all(|ls| ls.0.is_empty()) {
             return None;
         }
         if self.0.len() == 1 {
@@ -341,7 +341,7 @@ where
         if self.0.is_empty() {
             return None;
         }
-        let sum = self.0.iter().fold(
+        let sum = self.iter().fold(
             Point::new(T::zero(), T::zero()),
             |a: Point<T>, b: &Point<T>| Point::new(a.x() + b.x(), a.y() + b.y()),
         );

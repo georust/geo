@@ -311,7 +311,7 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiPoint<T> {
     type Output = MultiPoint<NT>;
 
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output {
-        MultiPoint(self.0.iter().map(|p| p.map_coords(func)).collect())
+        MultiPoint(self.iter().map(|p| p.map_coords(func)).collect())
     }
 }
 
@@ -343,7 +343,7 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiLineString
     type Output = MultiLineString<NT>;
 
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output {
-        MultiLineString(self.0.iter().map(|l| l.map_coords(func)).collect())
+        MultiLineString(self.iter().map(|l| l.map_coords(func)).collect())
     }
 }
 
@@ -375,7 +375,7 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for MultiPolygon<T>
     type Output = MultiPolygon<NT>;
 
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output {
-        MultiPolygon(self.0.iter().map(|p| p.map_coords(func)).collect())
+        MultiPolygon(self.iter().map(|p| p.map_coords(func)).collect())
     }
 }
 
@@ -469,7 +469,7 @@ impl<T: CoordinateType, NT: CoordinateType> MapCoords<T, NT> for GeometryCollect
     type Output = GeometryCollection<NT>;
 
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output {
-        GeometryCollection(self.0.iter().map(|g| g.map_coords(func)).collect())
+        GeometryCollection(self.iter().map(|g| g.map_coords(func)).collect())
     }
 }
 

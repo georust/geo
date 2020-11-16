@@ -59,7 +59,7 @@ where
             // negative fractions are replaced with zero
             return self.line_interpolate_point(T::zero());
         } else if fraction > T::one() {
-            // fractions above one are replaced with one 
+            // fractions above one are replaced with one
             return self.line_interpolate_point(T::one());
         } else {
             // fraction is nan
@@ -91,7 +91,7 @@ where
                 }
                 cum_length += length;
             }
-            // either cum_length + length is never larger than fractional_length, i.e. 
+            // either cum_length + length is never larger than fractional_length, i.e.
             // fractional_length is nan, or the linestring has no lines to loop through
             debug_assert!(fractional_length.is_nan() || (self.num_coords() == 0));
             return None;
@@ -229,8 +229,14 @@ mod test {
             linestring.line_interpolate_point(1.0),
             Some(point!(x: 1.0, y: 0.0))
         );
-        assert_eq!(linestring.line_interpolate_point(1.0), linestring.line_interpolate_point(2.0));
-        assert_eq!(linestring.line_interpolate_point(0.0), linestring.line_interpolate_point(-2.0));
+        assert_eq!(
+            linestring.line_interpolate_point(1.0),
+            linestring.line_interpolate_point(2.0)
+        );
+        assert_eq!(
+            linestring.line_interpolate_point(0.0),
+            linestring.line_interpolate_point(-2.0)
+        );
 
         // fraction is nan or inf
         assert_eq!(

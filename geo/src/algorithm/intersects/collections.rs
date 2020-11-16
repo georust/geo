@@ -40,7 +40,7 @@ where
     Geometry<T>: Intersects<G>,
 {
     fn intersects(&self, rhs: &G) -> bool {
-        self.0.iter().any(|geom| geom.intersects(rhs))
+        self.iter().any(|geom| geom.intersects(rhs))
     }
 }
 symmetric_intersects_impl!(Coordinate<T>, GeometryCollection<T>);

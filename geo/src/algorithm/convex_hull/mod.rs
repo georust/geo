@@ -83,7 +83,7 @@ where
 {
     type Scalar = T;
     fn convex_hull(&self) -> Polygon<T> {
-        let mut aggregated: Vec<_> = self.0.iter().flat_map(|elem| elem.clone().0).collect();
+        let mut aggregated: Vec<_> = self.iter().flat_map(|elem| elem.clone().0).collect();
         Polygon::new(quick_hull(&mut aggregated), vec![])
     }
 }
@@ -94,7 +94,7 @@ where
 {
     type Scalar = T;
     fn convex_hull(&self) -> Polygon<T> {
-        let mut aggregated: Vec<_> = self.0.iter().map(|p| p.0).collect();
+        let mut aggregated: Vec<_> = self.iter().map(|p| p.0).collect();
         Polygon::new(quick_hull(&mut aggregated), vec![])
     }
 }
