@@ -1,6 +1,5 @@
-use crate::{CoordinateType, LineString, Point, Rect, Triangle, Coordinate};
+use crate::{CoordinateType, LineString, Point, Rect, Triangle};
 use num_traits::{Float, Signed};
-use std::{iter, slice};
 
 /// A bounded two-dimensional area.
 ///
@@ -271,13 +270,6 @@ where
         &self.interiors
     }
 
-    /// Returns an iterator of all interior `LineString` coordinates.
-    pub fn interior_coords_iter<'a>(&'a self) -> InteriorCoordsIter<'a, T> {
-        InteriorCoordsIter(
-            LineStringsCoordsIter(self.interiors.iter()).flatten()
-        )
-    }
-
     /// Execute the provided closure `f`, which is provided with a mutable
     /// reference to the interior `LineString` rings.
     ///
@@ -448,29 +440,6 @@ where
                 _ => ListSign::Mixed,
             });
         convex != ListSign::Mixed
-    }
-}
-
-// Utility to transform Iterator<LineString<T>> into Iterator<&[Coordinate<T>]>
-struct LineStringsCoordsIter<'a, T: CoordinateType>(slice::Iter<'a, LineString<T>>);
-
-impl<'a, T: CoordinateType> Iterator for LineStringsCoordsIter<'a, T> {
-    type Item = &'a [Coordinate<T>];
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|n| &n.0[..])
-    }
-}
-
-
-/// Constructed from `Polygon::interior_coords_iter`.
-pub struct InteriorCoordsIter<'a, T: CoordinateType>(iter::Flatten<LineStringsCoordsIter<'a, T>>);
-
-impl<'a, T: CoordinateType> Iterator for InteriorCoordsIter<'a, T> {
-    type Item = Coordinate<T>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().copied()
     }
 }
 
