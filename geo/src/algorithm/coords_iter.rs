@@ -3,37 +3,37 @@ use crate::{Coordinate, Point, Polygon, LineString, Line, MultiPoint, MultiPolyg
             MultiLineString, CoordinateType, Geometry, GeometryCollection, Triangle, Rect};
 
 pub trait CoordsIter<'a, T: CoordinateType + 'a> {
-    type Iter: Iterator<Item = &'a Coordinate<T>>;
+    type Iter: Iterator<Item = Coordinate<T>>;
 
     fn coords_iter(&'a self) -> Self::Iter;
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Point<T> {
-    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(iter::once(&self.0))
+        Box::new(iter::once(self.0))
     }
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Line<T> {
-    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(iter::once(&self.start).chain(iter::once(&self.end)))
+        Box::new(iter::once(self.start).chain(iter::once(self.end)))
     }
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for LineString<T> {
-    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(self.0.iter())
+        Box::new(self.0.iter().copied())
     }
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
-    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
         Box::new(self.exterior().coords_iter().chain(
@@ -47,7 +47,7 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPoint<T> {
-    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
         Box::new(self.0.iter().flat_map(|m| m.coords_iter()))
@@ -55,7 +55,7 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPoint<T> {
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiLineString<T> {
-    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
         Box::new(self.0.iter().flat_map(|m| m.coords_iter()))
@@ -63,7 +63,7 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiLineString<T> {
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPolygon<T> {
-    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
         Box::new(self.0.iter().flat_map(|m| m.coords_iter()))
@@ -71,7 +71,7 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPolygon<T> {
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for GeometryCollection<T> {
-    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
         Box::new(self.0.iter().flat_map(|m| m.coords_iter()))
@@ -79,27 +79,32 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for GeometryCollection<T> {
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
-    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        unimplemented!()
+        Box::new(
+            iter::once(Coordinate { x: self.min().x, y: self.min().y })
+                .chain(iter::once(Coordinate { x: self.min().x, y: self.max().y }))
+                .chain(iter::once(Coordinate { x: self.max().x, y: self.max().y }))
+                .chain(iter::once(Coordinate { x: self.max().x, y: self.min().y }))
+        )
     }
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Triangle<T> {
-    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
         Box::new(
-            ::std::iter::once(&self.0)
-                .chain(::std::iter::once(&self.1))
-                .chain(::std::iter::once(&self.2))
+            iter::once(self.0)
+                .chain(iter::once(self.1))
+                .chain(iter::once(self.2))
         )
     }
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Geometry<T> {
-    type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
+    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
         match self {
