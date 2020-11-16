@@ -1,18 +1,16 @@
-use num_traits::Float;
 use std::iter;
 use crate::{Coordinate, Point, Polygon, LineString, Line, MultiPoint, MultiPolygon,
-            MultiLineString};
+            MultiLineString, CoordinateType};
 
 // TODO add geometry impl
-// TODO move away from Float
 
-pub trait CoordsIter<'a, T: Float + 'a> {
+pub trait CoordsIter<'a, T: CoordinateType + 'a> {
     type Iter: Iterator<Item = &'a Coordinate<T>>;
 
     fn coords_iter(&'a self) -> Self::Iter;
 }
 
-impl<'a, T: Float + 'a> CoordsIter<'a, T> for Point<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Point<T> {
     type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -20,7 +18,7 @@ impl<'a, T: Float + 'a> CoordsIter<'a, T> for Point<T> {
     }
 }
 
-impl<'a, T: Float + 'a> CoordsIter<'a, T> for Line<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Line<T> {
     type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -28,7 +26,7 @@ impl<'a, T: Float + 'a> CoordsIter<'a, T> for Line<T> {
     }
 }
 
-impl<'a, T: Float + 'a> CoordsIter<'a, T> for LineString<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for LineString<T> {
     type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -36,7 +34,7 @@ impl<'a, T: Float + 'a> CoordsIter<'a, T> for LineString<T> {
     }
 }
 
-impl<'a, T: Float + 'a> CoordsIter<'a, T> for Polygon<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
     type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -50,7 +48,7 @@ impl<'a, T: Float + 'a> CoordsIter<'a, T> for Polygon<T> {
     }
 }
 
-impl<'a, T: Float + 'a> CoordsIter<'a, T> for MultiPoint<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPoint<T> {
     type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -58,7 +56,7 @@ impl<'a, T: Float + 'a> CoordsIter<'a, T> for MultiPoint<T> {
     }
 }
 
-impl<'a, T: Float + 'a> CoordsIter<'a, T> for MultiLineString<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiLineString<T> {
     type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -66,7 +64,7 @@ impl<'a, T: Float + 'a> CoordsIter<'a, T> for MultiLineString<T> {
     }
 }
 
-impl<'a, T: Float + 'a> CoordsIter<'a, T> for MultiPolygon<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPolygon<T> {
     type Iter = Box<dyn Iterator<Item = &'a Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
