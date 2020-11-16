@@ -1,6 +1,8 @@
+use crate::{
+    Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+};
 use std::iter;
-use crate::{Coordinate, Point, Polygon, LineString, Line, MultiPoint, MultiPolygon,
-            MultiLineString, CoordinateType, Geometry, GeometryCollection, Triangle, Rect};
 
 pub trait CoordsIter<'a, T: CoordinateType + 'a> {
     type Iter: Iterator<Item = Coordinate<T>>;
@@ -36,13 +38,11 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
     type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(self.exterior().coords_iter().chain(
-            self.interiors().iter().flat_map(
-                |i| {
-                    i.coords_iter()
-                },
-            ),
-        ))
+        Box::new(
+            self.exterior()
+                .coords_iter()
+                .chain(self.interiors().iter().flat_map(|i| i.coords_iter())),
+        )
     }
 }
 
@@ -83,10 +83,22 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
 
     fn coords_iter(&'a self) -> Self::Iter {
         Box::new(
-            iter::once(Coordinate { x: self.min().x, y: self.min().y })
-                .chain(iter::once(Coordinate { x: self.min().x, y: self.max().y }))
-                .chain(iter::once(Coordinate { x: self.max().x, y: self.max().y }))
-                .chain(iter::once(Coordinate { x: self.max().x, y: self.min().y }))
+            iter::once(Coordinate {
+                x: self.min().x,
+                y: self.min().y,
+            })
+            .chain(iter::once(Coordinate {
+                x: self.min().x,
+                y: self.max().y,
+            }))
+            .chain(iter::once(Coordinate {
+                x: self.max().x,
+                y: self.max().y,
+            }))
+            .chain(iter::once(Coordinate {
+                x: self.max().x,
+                y: self.min().y,
+            })),
         )
     }
 }
@@ -98,7 +110,7 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Triangle<T> {
         Box::new(
             iter::once(self.0)
                 .chain(iter::once(self.1))
-                .chain(iter::once(self.2))
+                .chain(iter::once(self.2)),
         )
     }
 }
