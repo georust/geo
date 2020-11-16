@@ -2,7 +2,7 @@ use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
-use std::iter;
+use std::{iter, slice};
 
 pub trait CoordsIter<'a, T: CoordinateType + 'a> {
     type Iter: Iterator<Item = Coordinate<T>>;
@@ -11,38 +11,43 @@ pub trait CoordsIter<'a, T: CoordinateType + 'a> {
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Point<T> {
-    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
+    type Iter = iter::Once<Coordinate<T>>;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(iter::once(self.0))
+        iter::once(self.0)
     }
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Line<T> {
-    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
+    type Iter = iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(iter::once(self.start).chain(iter::once(self.end)))
+        iter::once(self.start).chain(iter::once(self.end))
     }
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for LineString<T> {
-    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
+    type Iter = iter::Copied<slice::Iter<'a, Coordinate<T>>>;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(self.0.iter().copied())
+        self.0.iter().copied()
     }
 }
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
-    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
+    type Iter = iter::Chain<
+        <geo_types::LineString<T> as CoordsIter<'a, T>>::Iter,
+        iter::FlatMap<
+            slice::Iter<'a, geo_types::LineString<T>>,
+            <geo_types::LineString<T> as CoordsIter<'a, T>>::Iter,
+            fn(&'a LineString<T>) -> Copied<std::slice::Iter<'a, Coordianate<T>>>,
+        >,
+    >;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(
-            self.exterior()
-                .coords_iter()
-                .chain(self.interiors().iter().flat_map(|i| i.coords_iter())),
-        )
+        self.exterior()
+            .coords_iter()
+            .chain(self.interiors().iter().flat_map(CoordsIter::Iter))
     }
 }
 
@@ -120,10 +125,10 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Geometry<T> {
 
     fn coords_iter(&'a self) -> Self::Iter {
         match self {
-            Geometry::Point(g) => g.coords_iter(),
-            Geometry::Line(g) => g.coords_iter(),
-            Geometry::LineString(g) => g.coords_iter(),
-            Geometry::Polygon(g) => g.coords_iter(),
+            Geometry::Point(g) => Box::new(g.coords_iter()),
+            Geometry::Line(g) => Box::new(g.coords_iter()),
+            Geometry::LineString(g) => Box::new(g.coords_iter()),
+            Geometry::Polygon(g) => Box::new(g.coords_iter()),
             Geometry::MultiPoint(g) => g.coords_iter(),
             Geometry::MultiLineString(g) => g.coords_iter(),
             Geometry::MultiPolygon(g) => g.coords_iter(),
