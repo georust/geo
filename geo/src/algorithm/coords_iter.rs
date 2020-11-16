@@ -76,8 +76,11 @@ impl<'a, T: CoordinateType> Iterator for LineStringsToCoordsIter<'a, T> {
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next().map(|n| &n.0[..])
     }
-}
 
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+}
 
 // Utility to transform Iterator<&[Coordinate]> into Iterator<Coordinate>
 #[doc(hidden)]
@@ -88,6 +91,10 @@ impl<'a, T: CoordinateType> Iterator for InteriorCoordsIter<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next().copied()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
     }
 }
 
@@ -112,6 +119,10 @@ impl<'a, T: CoordinateType> Iterator for MultiPointCoordsIter<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next().map(|point| point.0)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
     }
 }
 
