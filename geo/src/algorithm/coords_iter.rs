@@ -5,7 +5,7 @@ use crate::{
 use std::{iter, marker, slice};
 
 /// Iterate over geometry coordinates.
-pub trait CoordsIter<'a, T: CoordinateType + 'a> {
+pub trait CoordsIter<'a, T: CoordinateType> {
     type Iter: Iterator<Item = Coordinate<T>>;
 
     /// Iterate over all exterior and (if any) interior coordinates of a geometry.
@@ -231,7 +231,7 @@ impl<'a, T: 'a + CoordinateType, Iter1: Iterator<Item = &'a Iter2>, Iter2: Coord
 
 // Utility to transform Geometry into Iterator<Coordinate>
 #[doc(hidden)]
-pub enum GeometryCoordsIter<'a, T: CoordinateType> {
+pub enum GeometryCoordsIter<'a, T: CoordinateType + 'a> {
     Point(<Point<T> as CoordsIter<'a, T>>::Iter),
     Line(<Line<T> as CoordsIter<'a, T>>::Iter),
     LineString(<LineString<T> as CoordsIter<'a, T>>::Iter),
