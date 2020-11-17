@@ -277,3 +277,81 @@ impl<'a, T: CoordinateType> Iterator for GeometryCoordsIter<'a, T> {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::CoordsIter;
+    use crate::{Coordinate, point, line_string, Line, polygon};
+
+    #[test]
+    fn test_point() {
+        let point = point!(x: 1., y: 2.);
+
+        let coords = point.coords_iter().collect::<Vec<_>>();
+
+        assert_eq!(
+            vec![Coordinate { x: 1., y: 2. }],
+            coords
+        );
+    }
+
+    #[test]
+    fn test_line() {
+        let line = Line::new(
+            Coordinate { x: 1., y: 2. },
+            Coordinate { x: 2., y: 3. },
+        );
+
+        let coords = line.coords_iter().collect::<Vec<_>>();
+
+        assert_eq!(
+            vec![
+                Coordinate { x: 1., y: 2. },
+                Coordinate { x: 2., y: 3. },
+            ],
+            coords
+        );
+    }
+
+    #[test]
+    fn test_line_string() {
+        let line_string = line_string![
+            (x: 1., y: 2.),
+            (x: 2., y: 3.),
+        ];
+
+        let coords = line_string.coords_iter().collect::<Vec<_>>();
+
+        assert_eq!(
+            vec![
+                Coordinate { x: 1., y: 2. },
+                Coordinate { x: 2., y: 3. },
+            ],
+            coords
+        );
+    }
+
+    #[test]
+    fn test_polygon() {
+        let polygon = polygon!(
+            exterior: [(x: 0., y: 0.), (x: 5., y: 10.), (x: 10., y: 0.), (x: 0., y: 0.)],
+            interiors: [[(x: 1., y: 1.), (x: 9., y: 1.), (x: 5., y: 9.), (x: 1., y: 1.)]],
+        );
+
+        let coords = polygon.coords_iter().collect::<Vec<_>>();
+
+        assert_eq!(
+            vec![
+                Coordinate { x: 0.0, y: 0.0 },
+                Coordinate { x: 5.0, y: 10.0 },
+                Coordinate { x: 10.0, y: 0.0 },
+                Coordinate { x: 0.0, y: 0.0 },
+                Coordinate { x: 1.0, y: 1.0 },
+                Coordinate { x: 9.0, y: 1.0 },
+                Coordinate { x: 5.0, y: 9.0 },
+                Coordinate { x: 1.0, y: 1.0 }
+            ],
+            coords
+        );
+    }
+}
