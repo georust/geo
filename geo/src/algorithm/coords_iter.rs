@@ -124,10 +124,10 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPolygon<T> {
 // └───────────────────────────────────────┘
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for GeometryCollection<T> {
-    type Iter = iter::Flatten<MapCoordsIter<'a, T, slice::Iter<'a, Geometry<T>>, Geometry<T>>>;
+    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
+        Box::new(self.0.iter().flat_map(|geometry| geometry.coords_iter()))
     }
 }
 
@@ -367,16 +367,16 @@ mod test {
         assert_eq!(expected_coords, actual_coords);
     }
 
-    // #[test]
-    // fn test_geometry() {
-    //     let (line_string, expected_coords) = create_line_string();
+    #[test]
+    fn test_geometry() {
+        let (line_string, expected_coords) = create_line_string();
 
-    //     let actual_coords = Geometry::LineString(line_string)
-    //         .coords_iter()
-    //         .collect::<Vec<_>>();
+        let actual_coords = Geometry::LineString(line_string)
+            .coords_iter()
+            .collect::<Vec<_>>();
 
-    //     assert_eq!(expected_coords, actual_coords);
-    // }
+        assert_eq!(expected_coords, actual_coords);
+    }
 
     #[test]
     fn test_rect() {
@@ -396,23 +396,23 @@ mod test {
         assert_eq!(expected_coords, actual_coords);
     }
 
-    // #[test]
-    // fn test_geometry_collection() {
-    //     let mut expected_coords = vec![];
-    //     let (line_string, mut coords) = create_line_string();
-    //     expected_coords.append(&mut coords);
-    //     let (polygon, mut coords) = create_polygon();
-    //     expected_coords.append(&mut coords);
+    #[test]
+    fn test_geometry_collection() {
+        let mut expected_coords = vec![];
+        let (line_string, mut coords) = create_line_string();
+        expected_coords.append(&mut coords);
+        let (polygon, mut coords) = create_polygon();
+        expected_coords.append(&mut coords);
 
-    //     let actual_coords = GeometryCollection(vec![
-    //         Geometry::LineString(line_string),
-    //         Geometry::Polygon(polygon),
-    //     ])
-    //     .coords_iter()
-    //     .collect::<Vec<_>>();
+        let actual_coords = GeometryCollection(vec![
+            Geometry::LineString(line_string),
+            Geometry::Polygon(polygon),
+        ])
+        .coords_iter()
+        .collect::<Vec<_>>();
 
-    //     assert_eq!(expected_coords, actual_coords);
-    // }
+        assert_eq!(expected_coords, actual_coords);
+    }
 
     fn create_point() -> (Point<f64>, Vec<Coordinate<f64>>) {
         (point!(x: 1., y: 2.), vec![Coordinate { x: 1., y: 2. }])
