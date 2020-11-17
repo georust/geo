@@ -4,9 +4,29 @@ use crate::{
 };
 use std::{iter, marker, slice};
 
+/// Iterate over geometry coordinates.
 pub trait CoordsIter<'a, T: CoordinateType + 'a> {
     type Iter: Iterator<Item = Coordinate<T>>;
 
+    /// Iterate over all exterior and (if any) interior coordinates of a geometry.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::coords_iter::CoordsIter;
+    ///
+    /// let multi_point = geo::MultiPoint(vec![
+    ///     geo::point!(x: -10., y: 0.),
+    ///     geo::point!(x: 20., y: 20.),
+    ///     geo::point!(x: 30., y: 40.),
+    /// ]);
+    ///
+    /// let mut iter = multi_point.coords_iter();
+    /// assert_eq!(Some(geo::Coordinate { x: -10., y: 0. }), iter.next());
+    /// assert_eq!(Some(geo::Coordinate { x: 20., y: 20. }), iter.next());
+    /// assert_eq!(Some(geo::Coordinate { x: 30., y: 40. }), iter.next());
+    /// assert_eq!(None, iter.next());
+    /// ```
     fn coords_iter(&'a self) -> Self::Iter;
 }
 
