@@ -34,7 +34,7 @@ pub trait CoordsIter<'a, T: CoordinateType> {
 // │ Implementation for Point │
 // └──────────────────────────┘
 
-impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Point<T> {
+impl<'a, T: CoordinateType> CoordsIter<'a, T> for Point<T> {
     type Iter = iter::Once<Coordinate<T>>;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -46,7 +46,7 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Point<T> {
 // │ Implementation for Line │
 // └─────────────────────────┘
 
-impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Line<T> {
+impl<'a, T: CoordinateType> CoordsIter<'a, T> for Line<T> {
     type Iter = iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>;
 
     fn coords_iter(&'a self) -> Self::Iter {
