@@ -281,66 +281,186 @@ impl<'a, T: CoordinateType> Iterator for GeometryCoordsIter<'a, T> {
 #[cfg(test)]
 mod test {
     use super::CoordsIter;
-    use crate::{Coordinate, point, line_string, Line, polygon};
+    use crate::{
+        line_string, point, polygon, Coordinate, Geometry, GeometryCollection, Line, LineString,
+        MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+    };
 
     #[test]
     fn test_point() {
-        let point = point!(x: 1., y: 2.);
+        let (point, expected_coords) = create_point();
 
-        let coords = point.coords_iter().collect::<Vec<_>>();
+        let actual_coords = point.coords_iter().collect::<Vec<_>>();
 
-        assert_eq!(
-            vec![Coordinate { x: 1., y: 2. }],
-            coords
-        );
+        assert_eq!(expected_coords, actual_coords);
     }
 
     #[test]
     fn test_line() {
-        let line = Line::new(
-            Coordinate { x: 1., y: 2. },
-            Coordinate { x: 2., y: 3. },
-        );
+        let line = Line::new(Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 3. });
 
         let coords = line.coords_iter().collect::<Vec<_>>();
 
         assert_eq!(
-            vec![
-                Coordinate { x: 1., y: 2. },
-                Coordinate { x: 2., y: 3. },
-            ],
+            vec![Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 3. },],
             coords
         );
     }
 
     #[test]
     fn test_line_string() {
-        let line_string = line_string![
-            (x: 1., y: 2.),
-            (x: 2., y: 3.),
-        ];
+        let (line_string, expected_coords) = create_line_string();
 
-        let coords = line_string.coords_iter().collect::<Vec<_>>();
+        let actual_coords = line_string.coords_iter().collect::<Vec<_>>();
 
-        assert_eq!(
-            vec![
-                Coordinate { x: 1., y: 2. },
-                Coordinate { x: 2., y: 3. },
-            ],
-            coords
-        );
+        assert_eq!(expected_coords, actual_coords);
     }
 
     #[test]
     fn test_polygon() {
-        let polygon = polygon!(
-            exterior: [(x: 0., y: 0.), (x: 5., y: 10.), (x: 10., y: 0.), (x: 0., y: 0.)],
-            interiors: [[(x: 1., y: 1.), (x: 9., y: 1.), (x: 5., y: 9.), (x: 1., y: 1.)]],
-        );
+        let (polygon, expected_coords) = create_polygon();
 
-        let coords = polygon.coords_iter().collect::<Vec<_>>();
+        let actual_coords = polygon.coords_iter().collect::<Vec<_>>();
 
-        assert_eq!(
+        assert_eq!(expected_coords, actual_coords);
+    }
+
+    #[test]
+    fn test_multi_point() {
+        let mut expected_coords = vec![];
+        let (point, mut coords) = create_point();
+        expected_coords.append(&mut coords.clone());
+        expected_coords.append(&mut coords);
+
+        let actual_coords = MultiPoint(vec![point.clone(), point.clone()])
+            .coords_iter()
+            .collect::<Vec<_>>();
+
+        assert_eq!(expected_coords, actual_coords);
+    }
+
+    #[test]
+    fn test_multi_line_string() {
+        let mut expected_coords = vec![];
+        let (line_string, mut coords) = create_line_string();
+        expected_coords.append(&mut coords.clone());
+        expected_coords.append(&mut coords);
+
+        let actual_coords = MultiLineString(vec![line_string.clone(), line_string.clone()])
+            .coords_iter()
+            .collect::<Vec<_>>();
+
+        assert_eq!(expected_coords, actual_coords);
+    }
+
+    #[test]
+    fn test_multi_polygon() {
+        let mut expected_coords = vec![];
+        let (polygon, mut coords) = create_polygon();
+        expected_coords.append(&mut coords.clone());
+        expected_coords.append(&mut coords);
+
+        let actual_coords = MultiPolygon(vec![polygon.clone(), polygon.clone()])
+            .coords_iter()
+            .collect::<Vec<_>>();
+
+        assert_eq!(expected_coords, actual_coords);
+    }
+
+    // #[test]
+    // fn test_geometry() {
+    //     let (line_string, expected_coords) = create_line_string();
+
+    //     let actual_coords = Geometry::LineString(line_string)
+    //         .coords_iter()
+    //         .collect::<Vec<_>>();
+
+    //     assert_eq!(expected_coords, actual_coords);
+    // }
+
+    #[test]
+    fn test_rect() {
+        let (rect, expected_coords) = create_rect();
+
+        let actual_coords = rect.coords_iter().collect::<Vec<_>>();
+
+        assert_eq!(expected_coords, actual_coords);
+    }
+
+    #[test]
+    fn test_triangle() {
+        let (triangle, expected_coords) = create_triangle();
+
+        let actual_coords = triangle.coords_iter().collect::<Vec<_>>();
+
+        assert_eq!(expected_coords, actual_coords);
+    }
+
+    // #[test]
+    // fn test_geometry_collection() {
+    //     let mut expected_coords = vec![];
+    //     let (line_string, mut coords) = create_line_string();
+    //     expected_coords.append(&mut coords);
+    //     let (polygon, mut coords) = create_polygon();
+    //     expected_coords.append(&mut coords);
+
+    //     let actual_coords = GeometryCollection(vec![
+    //         Geometry::LineString(line_string),
+    //         Geometry::Polygon(polygon),
+    //     ])
+    //     .coords_iter()
+    //     .collect::<Vec<_>>();
+
+    //     assert_eq!(expected_coords, actual_coords);
+    // }
+
+    fn create_point() -> (Point<f64>, Vec<Coordinate<f64>>) {
+        (point!(x: 1., y: 2.), vec![Coordinate { x: 1., y: 2. }])
+    }
+
+    fn create_triangle() -> (Triangle<f64>, Vec<Coordinate<f64>>) {
+        (
+            Triangle(
+                Coordinate { x: 1., y: 2. },
+                Coordinate { x: 3., y: 4. },
+                Coordinate { x: 5., y: 6. },
+            ),
+            vec![
+                Coordinate { x: 1., y: 2. },
+                Coordinate { x: 3., y: 4. },
+                Coordinate { x: 5., y: 6. },
+            ],
+        )
+    }
+
+    fn create_rect() -> (Rect<f64>, Vec<Coordinate<f64>>) {
+        (
+            Rect::new(Coordinate { x: 1., y: 2. }, Coordinate { x: 3., y: 4. }),
+            vec![
+                Coordinate { x: 1., y: 2. },
+                Coordinate { x: 1., y: 4. },
+                Coordinate { x: 3., y: 4. },
+                Coordinate { x: 3., y: 2. }
+            ],
+        )
+    }
+
+    fn create_line_string() -> (LineString<f64>, Vec<Coordinate<f64>>) {
+        (
+            line_string![
+                (x: 1., y: 2.),
+                (x: 2., y: 3.),
+            ],
+            vec![Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 3. }],
+        )
+    }
+
+    fn create_polygon() -> (Polygon<f64>, Vec<Coordinate<f64>>) {
+        (
+            polygon!(
+                exterior: [(x: 0., y: 0.), (x: 5., y: 10.), (x: 10., y: 0.), (x: 0., y: 0.)],
+                interiors: [[(x: 1., y: 1.), (x: 9., y: 1.), (x: 5., y: 9.), (x: 1., y: 1.)]],
+            ),
             vec![
                 Coordinate { x: 0.0, y: 0.0 },
                 Coordinate { x: 5.0, y: 10.0 },
@@ -351,7 +471,6 @@ mod test {
                 Coordinate { x: 5.0, y: 9.0 },
                 Coordinate { x: 1.0, y: 1.0 }
             ],
-            coords
-        );
+        )
     }
 }
