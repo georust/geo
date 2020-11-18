@@ -137,9 +137,9 @@ where
     let h = max_dist + max_dist;
     let w = line.euclidean_length() + h;
     let diagonal_squared = T::powi(h, 2) + T::powi(w, 2);
-    let two = T::add(T::one(), T::one());
-    let four = T::add(two, two);
-    let search_dist = T::div(diagonal_squared, four);
+    let two = T::one() + T::one();
+    let four = two + two;
+    let search_dist = diagonal_squared / four;
     let centroid = line.centroid();
     let centroid_coord = Coordinate {
         x: centroid.x(),
