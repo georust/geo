@@ -119,27 +119,7 @@ fn find_point_closest_to_line<T>(
 where
     T: Float + RTreeNum,
 {
-    /*
-        So, concaveman uses a rectangular envelope where the borders are
-        a distance of max_dist from the line to look for points. Unfortunately,
-        rstar uses a circular envelope so to avoid implemeting a new envelope
-        this code constructs a circular envelope with a radius that would
-        fit the rectangular envelope of concaveman. This entails 
-        constructing a rectangular envelope with a width of the line's
-        euclidean length + max_dist * 2 and a height of max_dist * 2
-        which roughly matches what concaveman looks for. Then,
-        we calculate the length of the diagonal as sqrt(h^2 + w^2) and
-        divide that by 2 to get the radius. Since, the search
-        function in rstar takes the squared radius, we multiply
-        the radius by itself to get (h^2 + w^2)/4 which
-        is the calculation below.
-    */
-    let h = max_dist + max_dist;
-    let w = line.euclidean_length() + h;
-    let diagonal_squared = T::powi(h, 2) + T::powi(w, 2);
-    let two = T::one() + T::one();
-    let four = two + two;
-    let search_dist = diagonal_squared / four;
+    let search_dist = max_dist * max_dist;
     let centroid = line.centroid();
     let centroid_coord = Coordinate {
         x: centroid.x(),
@@ -269,7 +249,6 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Point;
     use crate::{line_string, polygon};
     use geo_types::Coordinate;
 
