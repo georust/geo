@@ -33,6 +33,12 @@ test = false
 doc = false
 
 [[bin]]
+name = "geodesic_distance"
+path = "fuzz_targets/geodesic_distance.rs"
+test = false
+doc = false
+
+[[bin]]
 name = "intersects"
 path = "fuzz_targets/intersects.rs"
 test = false
