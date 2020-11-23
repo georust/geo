@@ -1,7 +1,7 @@
 use super::Contains;
 use crate::intersects::Intersects;
-use crate::kernels::*;
-use crate::*;
+use crate::kernels::HasKernel;
+use crate::{Coordinate, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon};
 
 // ┌─────────────────────────────┐
 // │ Implementations for Polygon │
@@ -12,12 +12,9 @@ where
     T: HasKernel,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
-        match utils::coord_pos_relative_to_ring(*coord, &self.exterior()) {
-            utils::CoordPos::OnBoundary | utils::CoordPos::Outside => false,
-            _ => self.interiors().iter().all(|ls| {
-                utils::coord_pos_relative_to_ring(*coord, ls) == utils::CoordPos::Outside
-            }),
-        }
+        use crate::algorithm::coordinate_position::{CoordPos, CoordinatePosition};
+
+        self.coordinate_position(coord) == CoordPos::Inside
     }
 }
 
