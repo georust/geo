@@ -440,7 +440,7 @@ mod test {
                 Coordinate { x: 1., y: 2. },
                 Coordinate { x: 1., y: 4. },
                 Coordinate { x: 3., y: 4. },
-                Coordinate { x: 3., y: 2. }
+                Coordinate { x: 3., y: 2. },
             ],
         )
     }

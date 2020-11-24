@@ -188,7 +188,8 @@ where
         boundary_count: &mut usize,
     ) {
         // PERF TODO: I'm sure there's a better way to calculate than converting to a polygon
-        self.to_polygon().calculate_coordinate_position(coord, is_inside, boundary_count);
+        self.to_polygon()
+            .calculate_coordinate_position(coord, is_inside, boundary_count);
     }
 }
 
@@ -204,7 +205,8 @@ where
         boundary_count: &mut usize,
     ) {
         // PERF TODO: I'm sure there's a better way to calculate than converting to a polygon
-        self.to_polygon().calculate_coordinate_position(coord, is_inside, boundary_count);
+        self.to_polygon()
+            .calculate_coordinate_position(coord, is_inside, boundary_count);
     }
 }
 
