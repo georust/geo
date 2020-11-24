@@ -1,5 +1,7 @@
 # Changes
 
+## Unreleased
+
 ## 0.16.0
 
 * Fix panic when `simplify` is given a negative epsilon

@@ -1,5 +1,7 @@
 # Changes
 
+## Unreleased
+
 ## 0.6.2
 
 * Add `into_iter`, `iter` and `iter_mut` methods for `MultiPolygon`, `MultiPoint`, and `MultiLineString`

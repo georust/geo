@@ -132,7 +132,7 @@ releases may involve all three.  If publishing more than one,
 ### Publishing a sub-crate
 
 1. Ensure `CHANGES.md` lists the PRs, or features added in
-   the version to be released.q
+   the version to be released.
 
 1. Update `Cargo.toml` to reflect the new version. Note
    that, a breaking change should be released with a change
