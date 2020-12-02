@@ -1,3 +1,4 @@
+#![warn(missing_debug_implementations)]
 //! Conversion between [`geo-types`] and [`postgis`] types.
 //!
 //! # Examples

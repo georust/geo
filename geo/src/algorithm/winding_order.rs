@@ -5,6 +5,7 @@ use geo_types::PointsIter;
 use std::iter::Rev;
 
 /// Iterates through a list of `Point`s
+#[allow(missing_debug_implementations)]
 pub struct Points<'a, T>(
     pub(crate) EitherIter<Point<T>, PointsIter<'a, T>, Rev<PointsIter<'a, T>>>,
 )
