@@ -80,7 +80,7 @@ where
         }
 
         if include_ends {
-            points.push(other.clone());
+            points.push(*other);
         }
 
         points
