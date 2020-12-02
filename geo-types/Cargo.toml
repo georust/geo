@@ -11,10 +11,10 @@ description = "Geospatial primitive data types"
 edition = "2018"
 
 [dependencies]
-approx = "0.3"
+approx = "0.4.0"
 num-traits = "0.2"
 serde = { version = "1", optional = true, features = ["derive"] }
 rstar = { version = "0.8", optional = true }
 
 [dev-dependencies]
-approx = "0.3"
+approx = "0.4.0"
