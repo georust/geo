@@ -212,7 +212,7 @@ where
     let mut line_queue: VecDeque<Line<T>> = VecDeque::new();
 
     for line in lines {
-        line_queue.push_back(line.clone());
+        line_queue.push_back(line);
         line_tree.insert(line);
     }
     while let Some(line) = line_queue.pop_front() {
