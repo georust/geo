@@ -2,9 +2,6 @@
 
 ## Unreleased
 
-* Add `line_segement_distance` now accepts `Coordinate`s as well as `Point`s
-  * <https://github.com/georust/geo/pull/552>
-
 ## 0.6.2
 
 * Add `into_iter`, `iter` and `iter_mut` methods for `MultiPolygon`, `MultiPoint`, and `MultiLineString`
