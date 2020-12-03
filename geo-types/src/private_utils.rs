@@ -70,24 +70,28 @@ where
     }
 }
 
-pub fn line_segment_distance<T>(point: Point<T>, start: Point<T>, end: Point<T>) -> T
+pub fn line_segment_distance<T, C>(point: C, start: C, end: C) -> T
 where
     T: Float,
+    C: Into<Coordinate<T>>,
 {
+    let point = point.into();
+    let start = start.into();
+    let end = end.into();
+
     if start == end {
         return line_euclidean_length(Line::new(point, start));
     }
-    let dx = end.x() - start.x();
-    let dy = end.y() - start.y();
-    let r =
-        ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
+    let dx = end.x - start.x;
+    let dy = end.y - start.y;
+    let r = ((point.x - start.x) * dx + (point.y - start.y) * dy) / (dx.powi(2) + dy.powi(2));
     if r <= T::zero() {
         return line_euclidean_length(Line::new(point, start));
     }
     if r >= T::one() {
         return line_euclidean_length(Line::new(point, end));
     }
-    let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) / (dx * dx + dy * dy);
+    let s = ((start.y - point.y) * dx - (start.x - point.x) * dy) / (dx * dx + dy * dy);
     s.abs() * dx.hypot(dy)
 }
 
@@ -107,7 +111,7 @@ where
         return T::zero();
     }
     l.lines()
-        .map(|line| line_segment_distance(p, line.start_point(), line.end_point()))
+        .map(|line| line_segment_distance(p.0, line.start, line.end))
         .fold(T::max_value(), |accum, val| accum.min(val))
 }
 
@@ -115,7 +119,7 @@ pub fn point_line_euclidean_distance<T>(p: Point<T>, l: Line<T>) -> T
 where
     T: Float,
 {
-    line_segment_distance(p, l.start_point(), l.end_point())
+    line_segment_distance(p.0, l.start, l.end)
 }
 
 pub fn point_contains_point<T>(p1: Point<T>, p2: Point<T>) -> bool
