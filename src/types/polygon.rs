@@ -21,7 +21,7 @@ use types::linestring::LineString;
 use FromTokens;
 use Geometry;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Polygon<T: num_traits::Float>(pub Vec<LineString<T>>);
 
 impl<T> Polygon<T>

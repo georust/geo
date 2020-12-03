@@ -21,7 +21,7 @@ use types::coord::Coord;
 use FromTokens;
 use Geometry;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Point<T: num_traits::Float>(pub Option<Coord<T>>);
 
 impl<T> Point<T>

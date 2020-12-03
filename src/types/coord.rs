@@ -19,7 +19,7 @@ use std::str::FromStr;
 use tokenizer::{PeekableTokens, Token};
 use FromTokens;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Coord<T>
 where
     T: num_traits::Float,

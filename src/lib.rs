@@ -40,6 +40,7 @@ pub use towkt::ToWkt;
 #[cfg(feature = "geo-types")]
 pub mod conversion;
 
+#[derive(Clone)]
 pub enum Geometry<T>
 where
     T: num_traits::Float,
@@ -112,6 +113,7 @@ where
     }
 }
 
+#[derive(Clone)]
 pub struct Wkt<T>
 where
     T: num_traits::Float,

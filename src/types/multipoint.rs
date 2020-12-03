@@ -21,7 +21,7 @@ use types::point::Point;
 use FromTokens;
 use Geometry;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MultiPoint<T: num_traits::Float>(pub Vec<Point<T>>);
 
 impl<T> MultiPoint<T>
