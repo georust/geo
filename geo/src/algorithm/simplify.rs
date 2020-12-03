@@ -25,7 +25,7 @@ where
     }
     compute_rdp(
         &points
-            .into_iter()
+            .iter()
             .enumerate()
             .map(|(idx, point)| RdpIndex {
                 index: idx,
