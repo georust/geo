@@ -2,7 +2,7 @@ use geo_types::{
     Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
     Polygon,
 };
-use postgis;
+
 use postgis::ewkb::{GeometryCollectionT, GeometryT};
 
 #[cfg_attr(docsrs, doc(cfg(feature = "postgis")))]
