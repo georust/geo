@@ -43,7 +43,7 @@ where
             .rings()
             .map(|x| LineString::from_postgis(x))
             .collect::<Vec<_>>();
-        if rings.len() == 0 {
+        if rings.is_empty() {
             return None;
         }
         let exterior = rings.remove(0);
@@ -75,10 +75,7 @@ where
     /// This implementation discards PostGIS polygons that don't convert
     /// (return `None` when `from_postgis()` is called on them).
     fn from_postgis(mp: &'a T) -> Self {
-        let ret = mp
-            .polygons()
-            .filter_map(|x| Option::from_postgis(x))
-            .collect();
+        let ret = mp.polygons().filter_map(Option::from_postgis).collect();
         MultiPolygon(ret)
     }
 }
@@ -92,7 +89,7 @@ where
         let geoms = gc
             .geometries
             .iter()
-            .filter_map(|x| Option::from_postgis(x))
+            .filter_map(Option::from_postgis)
             .collect();
         GeometryCollection(geoms)
     }

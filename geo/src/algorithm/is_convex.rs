@@ -193,7 +193,7 @@ where
         .map(orientation_at)
         .find(|&(_, orientation)| match orientation {
             Orientation::Collinear => !allow_collinear,
-            orientation => !(orientation == first_non_collinear),
+            orientation => orientation != first_non_collinear,
         })
         .is_none()
     {

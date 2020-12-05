@@ -184,7 +184,7 @@ impl<T: CoordinateType> LineString<T> {
     pub fn close(&mut self) {
         if !self.is_closed() {
             // by definition, we treat empty LineString's as closed.
-            debug_assert!(self.0.len() > 0);
+            debug_assert!(!self.0.is_empty());
             self.0.push(self.0[0]);
         }
     }
