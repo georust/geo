@@ -178,7 +178,7 @@ where
                         return Some(Point(linestring[0]));
                     }
                 }
-                return None; // this should never happen, since all linestrings being empty was previously checked
+                None // this should never happen, since all linestrings being empty was previously checked
             } else {
                 Some(Point::new(sum_x / total_length, sum_y / total_length))
             }

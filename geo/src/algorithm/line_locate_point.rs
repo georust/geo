@@ -62,15 +62,15 @@ where
         let v_sq = v.dot(v);
         if v_sq == T::zero() {
             // The line has zero length, return zero
-            return Some(T::zero());
+            Some(T::zero())
         } else {
             // $v \cdot (p - s)$
             let v_dot_sp = v.dot(sp);
             let l = v_dot_sp / v_sq;
             if l.is_finite() {
-                return Some(l.max(T::zero()).min(T::one()));
+                Some(l.max(T::zero()).min(T::one()))
             } else {
-                return None;
+                None
             }
         }
     }
