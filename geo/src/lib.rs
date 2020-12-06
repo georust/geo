@@ -1,3 +1,4 @@
+#![allow(clippy::needless_return)]
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
 //! The `geo` crate provides geospatial primitive types such as `Coordinate`, `Point`, `LineString`, and `Polygon` as
 //! well as their `Multi–` equivalents, and provides algorithms and operations such as:

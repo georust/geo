@@ -48,6 +48,7 @@ impl<F: Float> ClosestPoint<F> for Point<F> {
     }
 }
 
+#[allow(clippy::many_single_char_names)]
 impl<F: Float + HasKernel> ClosestPoint<F> for Line<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         let line_length = self.euclidean_length();

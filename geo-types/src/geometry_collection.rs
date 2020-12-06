@@ -71,6 +71,12 @@ pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
     T: CoordinateType;
 
+impl<T: CoordinateType> Default for GeometryCollection<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: CoordinateType> GeometryCollection<T> {
     /// Return an empty GeometryCollection
     pub fn new() -> GeometryCollection<T> {
