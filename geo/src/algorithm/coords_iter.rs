@@ -5,7 +5,7 @@ use crate::{
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
-use std::{fmt iter, marker, slice};
+use std::{fmt, iter, marker, slice};
 
 type CoordinateChainOnce<T> = iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>;
 
@@ -295,8 +295,13 @@ impl<'a, T: CoordinateType + Debug> fmt::Debug for GeometryCoordsIter<'a, T> {
             GeometryCoordsIter::MultiPolygon(i) => {
                 fmt.debug_tuple("MultiPolygon").field(i).finish()
             }
-            GeometryCoordsIter::GeometryCollection(_) => {
-                write!(fmt, "GeometryCollection Iterator")
+            GeometryCoordsIter::GeometryCollection(i) => {                
+                let dynamicIter: Box<dyn CoordsIter<T, Iter=Box<dyn Iterator<Item = dyn CoordsIter<T, Iter=Box<dyn CoordsIter<T, Iter=dyn Iterator<Item = Coordinate<T>>>>>>>>> = Box::new(i);                
+                let mut debug_tuple = fmt.debug_tuple("GeometryCollection");
+                for geometry in dynamicIter.into_iter() {
+                    debug_tuple.field(&geometry);
+                }
+                debug_tuple.finish()
             }
             GeometryCoordsIter::Rect(i) => fmt.debug_tuple("Rect").field(i).finish(),
             GeometryCoordsIter::Triangle(i) => fmt.debug_tuple("Triangle").field(i).finish(),
