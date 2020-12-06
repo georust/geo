@@ -51,20 +51,20 @@ where
             let diff = self.end - self.start;
             let r = self.start + diff * (fraction);
             if r.x.is_finite() && r.y.is_finite() {
-                return Some(r.into());
+                Some(r.into())
             } else {
-                return None;
+                None
             }
         } else if fraction < T::zero() {
             // negative fractions are replaced with zero
-            return self.line_interpolate_point(T::zero());
+            self.line_interpolate_point(T::zero())
         } else if fraction > T::one() {
             // fractions above one are replaced with one
-            return self.line_interpolate_point(T::one());
+            self.line_interpolate_point(T::one())
         } else {
             // fraction is nan
             debug_assert!(fraction.is_nan());
-            return None;
+            None
         }
     }
 }
@@ -94,17 +94,17 @@ where
             // either cum_length + length is never larger than fractional_length, i.e.
             // fractional_length is nan, or the linestring has no lines to loop through
             debug_assert!(fractional_length.is_nan() || (self.num_coords() == 0));
-            return None;
+            None
         } else if fraction < T::zero() {
             // negative fractions replaced with zero
-            return self.line_interpolate_point(T::zero());
+            self.line_interpolate_point(T::zero())
         } else if fraction > T::one() {
             // fractions above one replaced with one
-            return self.line_interpolate_point(T::one());
+            self.line_interpolate_point(T::one())
         } else {
             // fraction is nan
             debug_assert!(fraction.is_nan());
-            return None;
+            None
         }
     }
 }

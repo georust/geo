@@ -246,7 +246,7 @@ where
         }
     }
 
-    return concave_list.into();
+    concave_list.into()
 }
 
 #[cfg(test)]

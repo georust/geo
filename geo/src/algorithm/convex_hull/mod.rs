@@ -133,7 +133,7 @@ where
     // Maintain the CCW invariance
     use super::winding_order::Winding;
     ls.make_ccw_winding();
-    return ls;
+    ls
 }
 
 // Utility function: swap idx to head(0th position), remove
