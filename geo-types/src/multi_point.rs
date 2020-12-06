@@ -68,7 +68,7 @@ impl<'a, T: CoordinateType> IntoIterator for &'a MultiPoint<T> {
     type IntoIter = ::std::slice::Iter<'a, Point<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&self.0).into_iter()
+        (&self.0).iter()
     }
 }
 

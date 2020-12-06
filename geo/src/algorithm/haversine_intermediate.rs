@@ -80,13 +80,14 @@ where
         }
 
         if include_ends {
-            points.push(other.clone());
+            points.push(*other);
         }
 
         points
     }
 }
 
+#[allow(clippy::many_single_char_names)]
 struct HaversineParams<T: Float + FromPrimitive> {
     d: T,
     n: T,
@@ -97,6 +98,7 @@ struct HaversineParams<T: Float + FromPrimitive> {
     s: T,
 }
 
+#[allow(clippy::many_single_char_names)]
 fn get_point<T: Float + FromPrimitive>(params: &HaversineParams<T>, f: T) -> Point<T> {
     let one = T::one();
 
@@ -123,6 +125,7 @@ fn get_point<T: Float + FromPrimitive>(params: &HaversineParams<T>, f: T) -> Poi
     Point::new(lon.to_degrees(), lat.to_degrees())
 }
 
+#[allow(clippy::many_single_char_names)]
 fn get_params<T: Float + FromPrimitive>(p1: &Point<T>, p2: &Point<T>) -> HaversineParams<T> {
     let one = T::one();
     let two = one + one;

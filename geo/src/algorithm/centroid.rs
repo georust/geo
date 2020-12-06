@@ -174,7 +174,7 @@ where
                 // length == 0 means that all points in all constituent linestrings were equal.
                 // we can just use the first defined point in this case.
                 for linestring in self.0.iter() {
-                    if linestring.0.len() > 0 {
+                    if !linestring.0.is_empty() {
                         return Some(Point(linestring[0]));
                     }
                 }

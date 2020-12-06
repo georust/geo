@@ -202,7 +202,7 @@ where
     let interior_coords: Vec<Coordinate<T>> = coords
         .iter()
         .filter(|coord| !hull_tree.contains(coord))
-        .map(|coord| *coord)
+        .copied()
         .collect();
     let mut interior_points_tree: RTree<Coordinate<T>> = RTree::bulk_load(interior_coords);
     let mut line_tree: RTree<Line<T>> = RTree::new();
@@ -212,7 +212,7 @@ where
     let mut line_queue: VecDeque<Line<T>> = VecDeque::new();
 
     for line in lines {
-        line_queue.push_back(line.clone());
+        line_queue.push_back(line);
         line_tree.insert(line);
     }
     while let Some(line) = line_queue.pop_front() {

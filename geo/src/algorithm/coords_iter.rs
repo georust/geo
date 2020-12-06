@@ -5,8 +5,10 @@ use crate::{
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
-use std::fmt;
-use std::{iter, marker, slice};
+use std::{fmt iter, marker, slice};
+
+type CoordinateChainOnce<T> = iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>;
+
 /// Iterate over geometry coordinates.
 pub trait CoordsIter<'a, T: CoordinateType> {
     type Iter: Iterator<Item = Coordinate<T>>;
@@ -72,12 +74,13 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for LineString<T> {
 // ┌────────────────────────────┐
 // │ Implementation for Polygon │
 // └────────────────────────────┘
+type PolygonChainIter<'a, T> = iter::Chain<
+    <LineString<T> as CoordsIter<'a, T>>::Iter,
+    iter::Flatten<MapCoordsIter<'a, T, slice::Iter<'a, LineString<T>>, LineString<T>>>,
+>;
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
-    type Iter = iter::Chain<
-        <LineString<T> as CoordsIter<'a, T>>::Iter,
-        iter::Flatten<MapCoordsIter<'a, T, slice::Iter<'a, LineString<T>>, LineString<T>>>,
-    >;
+    type Iter = PolygonChainIter<'a, T>;
 
     fn coords_iter(&'a self) -> Self::Iter {
         self.exterior()
@@ -138,14 +141,13 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for GeometryCollection<T> {
 // │ Implementation for Rect │
 // └─────────────────────────┘
 
+type RectChainIter<T> = iter::Chain<
+    iter::Chain<CoordinateChainOnce<T>, iter::Once<Coordinate<T>>>,
+    iter::Once<Coordinate<T>>,
+>;
+
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
-    type Iter = iter::Chain<
-        iter::Chain<
-            iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>,
-            iter::Once<Coordinate<T>>,
-        >,
-        iter::Once<Coordinate<T>>,
-    >;
+    type Iter = RectChainIter<T>;
 
     fn coords_iter(&'a self) -> Self::Iter {
         iter::once(Coordinate {
@@ -172,10 +174,7 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
 // └─────────────────────────────┘
 
 impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Triangle<T> {
-    type Iter = iter::Chain<
-        iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>,
-        iter::Once<Coordinate<T>>,
-    >;
+    type Iter = iter::Chain<CoordinateChainOnce<T>, iter::Once<Coordinate<T>>>;
 
     fn coords_iter(&'a self) -> Self::Iter {
         iter::once(self.0)
