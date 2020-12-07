@@ -1,8 +1,0 @@
-language: rust
-matrix:
-  include:
-    - env: FEATURES=""
-    - env: FEATURES="geo-types"
-script:
-  - cargo build --verbose --no-default-features --features "$FEATURES"
-  - cargo test --verbose --no-default-features --features "$FEATURES"
