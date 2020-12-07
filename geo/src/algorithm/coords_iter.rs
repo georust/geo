@@ -295,14 +295,10 @@ impl<'a, T: CoordinateType + Debug> fmt::Debug for GeometryCoordsIter<'a, T> {
             GeometryCoordsIter::MultiPolygon(i) => {
                 fmt.debug_tuple("MultiPolygon").field(i).finish()
             }
-            GeometryCoordsIter::GeometryCollection(i) => {                
-                let dynamicIter: Box<dyn CoordsIter<T, Iter=Box<dyn Iterator<Item = dyn CoordsIter<T, Iter=Box<dyn CoordsIter<T, Iter=dyn Iterator<Item = Coordinate<T>>>>>>>>> = Box::new(i);                
-                let mut debug_tuple = fmt.debug_tuple("GeometryCollection");
-                for geometry in dynamicIter.into_iter() {
-                    debug_tuple.field(&geometry);
-                }
-                debug_tuple.finish()
-            }
+            GeometryCoordsIter::GeometryCollection(_) => fmt
+                .debug_tuple("GeometryCollection")
+                .field(&String::from("..."))
+                .finish(),
             GeometryCoordsIter::Rect(i) => fmt.debug_tuple("Rect").field(i).finish(),
             GeometryCoordsIter::Triangle(i) => fmt.debug_tuple("Triangle").field(i).finish(),
         }
