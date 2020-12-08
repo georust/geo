@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Introduce `num_coords` method on all geometry types.
+  * <https://github.com/georust/geo/pull/563>
+
 ## 0.6.2
 
 * Add `into_iter`, `iter` and `iter_mut` methods for `MultiPolygon`, `MultiPoint`, and `MultiLineString`
