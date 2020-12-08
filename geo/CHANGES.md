@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Fix non-empty MultiPoint has 0-dimensions, not 1.
+  * <https://github.com/georust/geo/pull/561>
+
 ## 0.16.0
 
 * Fix panic when `simplify` is given a negative epsilon
