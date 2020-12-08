@@ -1,9 +1,10 @@
 use crate::algorithm::centroid::Centroid;
 use crate::algorithm::map_coords::MapCoords;
-use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use crate::{
+    CoordinateType, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+};
 use num_traits::{Float, FromPrimitive};
 use std::iter::Sum;
-
 #[inline]
 fn rotate_inner<T>(x: T, y: T, x0: T, y0: T, sin_theta: T, cos_theta: T) -> Point<T>
 where
@@ -217,6 +218,16 @@ where
     }
 }
 
+pub trait RotateCentroid<T: CoordinateType>: RotatePoint<T> + Centroid<Output = Point<T>> {
+    fn rotate_around_centroid(&self, angle: T) -> Self
+    where
+        T: Float,
+        Self: Sized,
+    {
+        self.rotate_around_point(angle, self.centroid())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -345,5 +356,45 @@ mod test {
             Point::new(-2., 0.00000000000000012246467991473532),
         );
         assert_eq!(line0.rotate_around_point(90., Point::new(0., 0.)), line1);
+    }
+
+    #[test]
+    fn test_rotate_around_centroid_point() {
+        let origin = Point::new(0., 0.);
+
+        let mpoly = MultiPolygon(vec![
+            // Box in quadrant 1.
+            polygon![
+                (x: 1., y: 1.),
+                (x: 2., y: 1.),
+                (x: 2., y: 2.),
+                (x: 1., y: 2.)
+            ],
+            // 345-triangle quadrant 2.
+            polygon![
+                (x: -1., y: 1.),
+                (x: -1., y: 5.),
+                (x: -4., y: 1.),
+            ],
+        ]);
+
+        let expected = MultiPolygon(vec![
+            // Box rotate into quadrant 2.
+            polygon![
+                (x: -0.9999999999999999, y: 1.),
+                (x: -0.9999999999999999, y: 2.),
+                (x: -1.9999999999999998, y: 2.),
+                (x: -2., y: 1.0000000000000002),
+                (x: -0.9999999999999999, y: 1.0 )
+            ],
+            // 345-triangle rotated into quadrant 3.
+            polygon![
+                (x: -1., y: -0.9999999999999999),
+                (x: -5., y: -0.9999999999999997),
+                (x: -1.0000000000000002, y: -4.),
+                (x: -1.0, y: -0.9999999999999999)
+            ],
+        ]);
+        assert_eq!(mpoly.rotate_around_point(90., origin), expected);
     }
 }
