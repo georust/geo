@@ -102,6 +102,7 @@ where
     T: CoordinateType;
 
 /// A `Point` iterator returned by the `points_iter` method
+#[derive(Debug)]
 pub struct PointsIter<'a, T: CoordinateType + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
 
 impl<'a, T: CoordinateType> Iterator for PointsIter<'a, T> {

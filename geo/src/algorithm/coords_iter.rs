@@ -1,8 +1,11 @@
+use std::fmt::Debug;
+
 use crate::{
     Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
-use std::{iter, marker, slice};
+
+use std::{fmt, iter, marker, slice};
 
 type CoordinateChainOnce<T> = iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>;
 
@@ -211,6 +214,7 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Geometry<T> {
 
 // Utility to transform Iterator<CoordsIter> into Iterator<Iterator<Coordinate>>
 #[doc(hidden)]
+#[derive(Debug)]
 pub struct MapCoordsIter<
     'a,
     T: 'a + CoordinateType,
@@ -273,6 +277,30 @@ impl<'a, T: CoordinateType> Iterator for GeometryCoordsIter<'a, T> {
             GeometryCoordsIter::GeometryCollection(g) => g.size_hint(),
             GeometryCoordsIter::Rect(g) => g.size_hint(),
             GeometryCoordsIter::Triangle(g) => g.size_hint(),
+        }
+    }
+}
+
+impl<'a, T: CoordinateType + Debug> fmt::Debug for GeometryCoordsIter<'a, T> {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            GeometryCoordsIter::Point(i) => fmt.debug_tuple("Point").field(i).finish(),
+            GeometryCoordsIter::Line(i) => fmt.debug_tuple("Line").field(i).finish(),
+            GeometryCoordsIter::LineString(i) => fmt.debug_tuple("LineString").field(i).finish(),
+            GeometryCoordsIter::Polygon(i) => fmt.debug_tuple("Polygon").field(i).finish(),
+            GeometryCoordsIter::MultiPoint(i) => fmt.debug_tuple("MultiPoint").field(i).finish(),
+            GeometryCoordsIter::MultiLineString(i) => {
+                fmt.debug_tuple("MultiLineString").field(i).finish()
+            }
+            GeometryCoordsIter::MultiPolygon(i) => {
+                fmt.debug_tuple("MultiPolygon").field(i).finish()
+            }
+            GeometryCoordsIter::GeometryCollection(_) => fmt
+                .debug_tuple("GeometryCollection")
+                .field(&String::from("..."))
+                .finish(),
+            GeometryCoordsIter::Rect(i) => fmt.debug_tuple("Rect").field(i).finish(),
+            GeometryCoordsIter::Triangle(i) => fmt.debug_tuple("Triangle").field(i).finish(),
         }
     }
 }
