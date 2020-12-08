@@ -89,6 +89,11 @@ impl<T: CoordinateType> MultiPoint<T> {
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Point<T>> {
         self.0.iter_mut()
     }
+
+    /// Return the number of coordinates in the `MultiPoint`.
+    pub fn num_coords(&self) -> usize {
+        self.0.len()
+    }
 }
 
 #[cfg(test)]

@@ -81,6 +81,11 @@ impl<T: CoordinateType> MultiPolygon<T> {
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Polygon<T>> {
         self.0.iter_mut()
     }
+
+    /// Return the number of coordinates in the `MultiPolygon`.
+    pub fn num_coords(&self) -> usize {
+        self.0.iter().map(|polygon| polygon.num_coords()).sum()
+    }
 }
 
 #[cfg(test)]

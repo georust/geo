@@ -207,6 +207,11 @@ where
     pub fn set_lat(&mut self, lat: T) -> &mut Point<T> {
         self.set_y(lat)
     }
+
+    /// Return the number of coordinates in the `Point`.
+    pub fn num_coords(self) -> usize {
+        1
+    }
 }
 
 impl<T> Point<T>

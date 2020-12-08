@@ -392,6 +392,12 @@ where
     {
         (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
     }
+
+    /// Return the number of coordinates in the `Polygon`.
+    pub fn num_coords(&self) -> usize {
+        self.exterior().num_coords() +
+            self.interiors().iter().map(|i| i.num_coords()).sum::<usize>()
+    }
 }
 
 // used to check the sign of a vec of floats

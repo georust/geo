@@ -108,6 +108,11 @@ impl<T: CoordinateType> MultiLineString<T> {
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut LineString<T>> {
         self.0.iter_mut()
     }
+
+    /// Return the number of coordinates in this `MultiLineString`.
+    pub fn num_coords(&self) -> usize {
+        self.0.iter().map(|line_string| line_string.num_coords()).sum()
+    }
 }
 
 #[cfg(test)]

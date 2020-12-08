@@ -92,6 +92,11 @@ impl<T: CoordinateType> GeometryCollection<T> {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
+
+    /// Return the number of coordinates in the `GeometryCollection`.
+    pub fn num_coords(&self) -> usize {
+        self.0.iter().map(|geometry| geometry.num_coords()).sum()
+    }
 }
 
 /// Convert any Geometry (or anything that can be converted to a Geometry) into a
