@@ -125,6 +125,17 @@ where
         x: centroid.x(),
         y: centroid.y(),
     };
+    let invalid_line = Line::new(
+        Coordinate{ x: T::from(355.333).unwrap(), y: T::from(72.2397).unwrap() },
+        Coordinate{ x: T::from(800.5243).unwrap(), y: T::from(864.0099).unwrap() },
+    );
+    let is_line_invalid = check_approximate_equality_to_line(line, invalid_line); 
+
+    if is_line_invalid {
+        println!("God damn it!");
+    }
+
+
     let mut candidates = interior_coords_tree
         .locate_within_distance(centroid_coord, search_dist)
         .peekable();
@@ -443,6 +454,30 @@ mod test {
     }
 
     #[test]
+    fn abstreet_test(){
+        let loaded_abstreet = include!("test_fixtures/abstreet.rs");
+        let abstreet: MultiPoint<f64> = loaded_abstreet
+            .iter()
+            .map(|tuple| Point::new(f64::from(tuple[0]), f64::from(tuple[1])))
+            .collect();
+        
+        let res = abstreet.concave_hull(0.1);
+        let invalid_line = Line::new(
+            Coordinate{ x: 355.333, y: 72.2397 },
+            Coordinate{ x: 800.5243, y: 864.0099 },
+        );
+
+        for line in res.exterior().lines() {
+            let are_lines_equal = check_approximate_equality_to_line(line, invalid_line);
+            if are_lines_equal {
+                println!("God damn it!");
+            }
+            assert_eq!(are_lines_equal, false);
+        }
+
+    }
+
+    #[test]
     fn concave_hull_multipolygon_test() {
         let v1 = polygon![
              (x: 0.0, y: 0.0),
@@ -464,5 +499,32 @@ mod test {
             Coordinate::from((4.0, 0.0)),
         ];
         assert_eq!(res.exterior().0, correct);
+    }
+}
+
+fn check_approximate_equality_to_line<T>(line_to_check: Line<T>, other_line: Line<T>) -> bool 
+where
+    T: Float + RTreeNum {
+    let start = line_to_check.start;
+    let end = line_to_check.end;
+
+    let other_start = other_line.start; 
+    let other_end = other_line.end;
+
+    let are_starts_equal = check_approximate_equality_to_coord(start, other_start, T::from(0.1).unwrap()); 
+    let are_ends_equal = check_approximate_equality_to_coord(end, other_end, T::from(0.1).unwrap());
+
+    are_starts_equal && are_ends_equal
+}
+
+fn check_approximate_equality_to_coord<T>(coord_to_check: Coordinate<T>, other_coord: Coordinate<T>, acceptable_diff: T) -> bool
+where
+    T: Float + RTreeNum {
+    if (coord_to_check.x - other_coord.x).abs() > acceptable_diff {
+        false
+    }else if (coord_to_check.y - other_coord.y).abs() > acceptable_diff {
+        false
+    }else{
+        true
     }
 }
