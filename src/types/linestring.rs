@@ -21,7 +21,7 @@ use types::coord::Coord;
 use FromTokens;
 use Geometry;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LineString<T: num_traits::Float>(pub Vec<Coord<T>>);
 
 impl<T> LineString<T>

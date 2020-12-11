@@ -21,7 +21,7 @@ use types::polygon::Polygon;
 use FromTokens;
 use Geometry;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MultiPolygon<T: num_traits::Float>(pub Vec<Polygon<T>>);
 
 impl<T> MultiPolygon<T>

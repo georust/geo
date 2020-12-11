@@ -20,7 +20,7 @@ use tokenizer::{PeekableTokens, Token};
 use FromTokens;
 use Geometry;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct GeometryCollection<T: num_traits::Float>(pub Vec<Geometry<T>>);
 
 impl<T> GeometryCollection<T>
