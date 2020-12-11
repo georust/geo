@@ -449,7 +449,7 @@ where
         let diff_x = self.x() - other.x();
         let diff_y = self.y() - other.y();
         let abs_diff = (diff_x * diff_x + diff_y * diff_y).sqrt();
-        println!("compute largest");
+
         // For when the numbers are really close together.
         if abs_diff <= epsilon {
             return true;
