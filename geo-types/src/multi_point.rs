@@ -1,4 +1,11 @@
 use crate::{CoordinateType, Point};
+#[cfg(test)]
+use approx::AbsDiffEq;
+#[cfg(test)]
+use approx::RelativeEq;
+#[cfg(test)]
+use num_traits::float::Float;
+
 use std::iter::FromIterator;
 
 /// A collection of [`Point`s](struct.Point.html). Can
@@ -91,6 +98,78 @@ impl<T: CoordinateType> MultiPoint<T> {
     }
 }
 
+impl<T: CoordinateType> MultiPoint<T> {
+    /// Return the number of coordinates in the `MultiPoint`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::MultiPoint;
+    ///
+    /// let mut coords = vec![(0., 0.), (5., 0.), (7., 9.)];
+    /// let multi_point: MultiPoint<f32> = coords.into_iter().collect();
+    /// assert_eq!(3, multi_point.num_coords());
+    /// ```
+    pub fn num_coords(&self) -> usize {
+        self.0.len()
+    }
+}
+
+#[cfg(test)]
+impl<T> RelativeEq for MultiPoint<T>
+where
+    T: CoordinateType + Float + AbsDiffEq,
+{
+    #[inline]
+    fn default_max_relative() -> Self::Epsilon {
+        T::epsilon()
+    }
+
+    #[inline]
+    fn relative_eq(
+        &self,
+        other: &MultiPoint<T>,
+        epsilon: Self::Epsilon,
+        max_relative: Self::Epsilon,
+    ) -> bool {
+        if self.num_coords() != other.num_coords() {
+            return false;
+        }
+
+        let mp_zipper = self.iter().zip(other.iter());
+        for (lhs, rhs) in mp_zipper {
+            if lhs.relative_ne(&rhs, epsilon, max_relative) {
+                return false;
+            }
+        }
+        true
+    }
+}
+
+#[cfg(test)]
+impl<T> AbsDiffEq for MultiPoint<T>
+where
+    T: CoordinateType + Float,
+{
+    type Epsilon = T;
+
+    #[inline]
+    fn default_epsilon() -> Self::Epsilon {
+        T::epsilon()
+    }
+
+    #[inline]
+    fn abs_diff_eq(&self, other: &MultiPoint<T>, epsilon: Self::Epsilon) -> bool {
+        let mp_zipper = self.into_iter().zip(other.into_iter());
+        for (lhs, rhs) in mp_zipper {
+            if lhs.abs_diff_ne(&rhs, epsilon) {
+                return false;
+            }
+        }
+        true
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -145,5 +224,32 @@ mod test {
                 assert_eq!(p, &point![x: 12, y: 12]);
             }
         }
+    }
+
+    #[test]
+    fn test_relative_eq() {
+        let delta = 1e-6;
+
+        let multi = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+
+        let multi_x = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.+delta, y: 10.]]);
+        assert!(multi.relative_eq(&multi_x, 1e-2, 1e-2));
+        assert!(multi.relative_ne(&multi_x, 1e-12, 1e-12));
+
+        let multi_y = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.+delta]]);
+        assert!(multi.relative_eq(&multi_y, 1e-2, 1e-2));
+        assert!(multi.relative_ne(&multi_y, 1e-12, 1e-12));
+
+        // Under-sized but otherwise equal.
+        let multi_undersized = MultiPoint(vec![point![x: 0., y: 0.]]);
+        assert!(multi.relative_ne(&multi_undersized, 1., 1.));
+
+        // Over-sized but otherwise equal.
+        let multi_oversized = MultiPoint(vec![
+            point![x: 0., y: 0.],
+            point![x: 10., y: 10.],
+            point![x: 10., y:100.],
+        ]);
+        assert!(multi.relative_ne(&multi_oversized, 1., 1.));
     }
 }

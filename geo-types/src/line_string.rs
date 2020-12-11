@@ -1,3 +1,10 @@
+#[cfg(test)]
+use approx::AbsDiffEq;
+#[cfg(test)]
+use approx::RelativeEq;
+#[cfg(test)]
+use num_traits::Float;
+
 use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
@@ -282,6 +289,61 @@ impl<T: CoordinateType> IndexMut<usize> for LineString<T> {
     }
 }
 
+#[cfg(test)]
+impl<T> RelativeEq for LineString<T>
+where
+    T: CoordinateType + Float + AbsDiffEq,
+{
+    // type Epsilon = T;
+
+    #[inline]
+    fn default_max_relative() -> Self::Epsilon {
+        T::epsilon()
+    }
+
+    #[inline]
+    fn relative_eq(
+        &self,
+        other: &LineString<T>,
+        epsilon: Self::Epsilon,
+        max_relative: Self::Epsilon,
+    ) -> bool {
+        if self.num_coords() != other.num_coords() {
+            return false;
+        }
+
+        let points_zipper = self.points_iter().zip(other.points_iter());
+        for (lhs, rhs) in points_zipper {
+            if lhs.relative_ne(&rhs, epsilon, max_relative) {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
+#[cfg(test)]
+impl<T: AbsDiffEq + CoordinateType + Float> AbsDiffEq for LineString<T> {
+    type Epsilon = T;
+
+    #[inline]
+    fn default_epsilon() -> Self::Epsilon {
+        T::epsilon()
+    }
+
+    #[inline]
+    fn abs_diff_eq(&self, other: &LineString<T>, epsilon: Self::Epsilon) -> bool {
+        let points_zipper = self.points_iter().zip(other.points_iter());
+        for (lhs, rhs) in points_zipper {
+            if lhs.abs_diff_ne(&rhs, epsilon) {
+                return false;
+            }
+        }
+        true
+    }
+}
+
 #[cfg(feature = "rstar")]
 impl<T> ::rstar::RTreeObject for LineString<T>
 where
@@ -317,5 +379,59 @@ where
         } else {
             d.powi(2)
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use approx::AbsDiffEq;
+    // use geo_types::LineString;
+
+    #[test]
+    fn test_abs_diff_eq() {
+        let delta = 1e-6;
+
+        let coords = vec![(0., 0.), (5., 0.), (10., 10.)];
+        let ls: LineString<f32> = coords.into_iter().collect();
+
+        let coords_x = vec![(0., 0.), (5. + delta, 0.), (10., 10.)];
+        let ls_x: LineString<f32> = coords_x.into_iter().collect();
+        assert!(ls.abs_diff_eq(&ls_x, 1e-2));
+        assert!(ls.abs_diff_ne(&ls_x, 1e-12));
+
+        let coords_y = vec![(0., 0.), (5., 0. + delta), (10., 10.)];
+        let ls_y: LineString<f32> = coords_y.into_iter().collect();
+        assert!(ls.abs_diff_eq(&ls_y, 1e-2));
+        assert!(ls.abs_diff_ne(&ls_y, 1e-12));
+    }
+
+    #[test]
+    fn test_relative_eq() {
+        let delta = 1e-6;
+
+        let coords = vec![(0., 0.), (5., 0.), (10., 10.)];
+        let ls: LineString<f32> = coords.into_iter().collect();
+
+        let coords_x = vec![(0., 0.), (5. + delta, 0.), (10., 10.)];
+        let ls_x: LineString<f32> = coords_x.into_iter().collect();
+        assert!(ls.relative_eq(&ls_x, 1e-2, 1e-2));
+        assert!(ls.relative_ne(&ls_x, 1e-12, 1e-12));
+
+        let coords_y = vec![(0., 0.), (5., 0. + delta), (10., 10.)];
+        let ls_y: LineString<f32> = coords_y.into_iter().collect();
+        assert!(ls.relative_eq(&ls_y, 1e-2, 1e-2));
+        assert!(ls.relative_ne(&ls_y, 1e-12, 1e-12));
+
+        // Undersized, but otherwise equal.
+        let coords_x = vec![(0., 0.), (5., 0.)];
+        let ls_under: LineString<f32> = coords_x.into_iter().collect();
+        assert!(ls.relative_ne(&ls_under, 1., 1.));
+
+        // Oversized, but otherwise equal.
+        let coords_x = vec![(0., 0.), (5., 0.), (10., 10.), (10., 100.)];
+        let ls_oversized: LineString<f32> = coords_x.into_iter().collect();
+        assert!(ls.relative_ne(&ls_oversized, 1., 1.));
     }
 }

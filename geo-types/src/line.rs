@@ -1,5 +1,10 @@
 use crate::{Coordinate, CoordinateType, Point};
-
+#[cfg(test)]
+use approx::AbsDiffEq;
+#[cfg(test)]
+use approx::RelativeEq;
+#[cfg(test)]
+use num_traits::Float;
 /// A line segment made up of exactly two
 /// [`Coordinate`s](struct.Coordinate.html).
 ///
@@ -165,6 +170,49 @@ impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {
     }
 }
 
+#[cfg(test)]
+impl<T> RelativeEq for Line<T>
+where
+    T: CoordinateType + Float + AbsDiffEq,
+{
+
+    #[inline]
+    fn default_max_relative() -> Self::Epsilon {
+        T::epsilon()
+    }
+
+    #[inline]
+    fn relative_eq(
+        &self,
+        other: &Line<T>,
+        epsilon: Self::Epsilon,
+        max_relative: Self::Epsilon,
+    ) -> bool {
+        self.start_point()
+            .relative_eq(&other.start_point(), epsilon, max_relative)
+            && self
+                .end_point()
+                .relative_eq(&other.end_point(), epsilon, max_relative)
+    }
+}
+
+#[cfg(test)]
+impl<T: AbsDiffEq + CoordinateType + Float> AbsDiffEq for Line<T> {
+    type Epsilon = T;
+
+    #[inline]
+    fn default_epsilon() -> Self::Epsilon {
+        T::epsilon()
+    }
+
+    #[inline]
+    fn abs_diff_eq(&self, other: &Line<T>, epsilon: Self::Epsilon) -> bool {
+        self.start_point()
+            .abs_diff_eq(&other.start_point(), epsilon)
+            && self.end_point().abs_diff_eq(&other.end_point(), epsilon)
+    }
+}
+
 #[cfg(feature = "rstar")]
 impl<T> ::rstar::RTreeObject for Line<T>
 where
@@ -186,5 +234,86 @@ where
     fn distance_2(&self, point: &Point<T>) -> T {
         let d = crate::private_utils::point_line_euclidean_distance(*point, *self);
         d.powi(2)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use super::{Coordinate, Line, Point};
+    use approx::AbsDiffEq;
+    #[test]
+    fn test_abs_diff_eq() {
+        let delta = 1e-6;
+        let line = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. });
+        let line_start_x = Line::new(
+            Point(Coordinate {
+                x: 0. + delta,
+                y: 0.,
+            }),
+            Point(Coordinate { x: 1., y: 1. }),
+        );
+        assert!(line.abs_diff_eq(&line_start_x, 1e-2));
+        assert!(line.abs_diff_ne(&line_start_x, 1e-12));
+
+        let line_start_y = Line::new(
+            Coordinate {
+                x: 0.,
+                y: 0. + delta,
+            },
+            Coordinate { x: 1., y: 1. },
+        );
+        assert!(line.abs_diff_eq(&line_start_y, 1e-2));
+        assert!(line.abs_diff_ne(&line_start_y, 1e-12));
+
+        let line_end_x = Line::new(
+            Coordinate { x: 0., y: 0. },
+            Coordinate {
+                x: 1. + delta,
+                y: 1.,
+            },
+        );
+
+        assert!(line.abs_diff_eq(&line_end_x, 1e-2));
+        assert!(line.abs_diff_ne(&line_end_x, 1e-12));
+
+        let line_end_y = Line::new(
+            Coordinate { x: 0., y: 0. },
+            Coordinate {
+                x: 1.,
+                y: 1. + delta,
+            },
+        );
+
+        assert!(line.abs_diff_eq(&line_end_y, 1e-2));
+        assert!(line.abs_diff_ne(&line_end_y, 1e-12));
+    }
+
+    #[test]
+    fn test_relative_eq() {
+        let delta = 1e-6;
+
+        let line = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. });
+        let line_start_x = Line::new(
+            Point(Coordinate {
+                x: 0. + delta,
+                y: 0.,
+            }),
+            Point(Coordinate { x: 1., y: 1. }),
+        );
+        let line_start_y = Line::new(
+            Coordinate {
+                x: 0.,
+                y: 0. + delta,
+            },
+            Coordinate { x: 1., y: 1. },
+        );
+
+        assert!(line.relative_eq(&line_start_x, 1e-2, 1e-2));
+        assert!(line.relative_ne(&line_start_x, 1e-12, 1e-12));
+
+        assert!(line.relative_eq(&line_start_y, 1e-2, 1e-2));
+        assert!(line.relative_ne(&line_start_y, 1e-12, 1e-12));
     }
 }

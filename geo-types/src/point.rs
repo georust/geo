@@ -1,4 +1,9 @@
 use crate::{Coordinate, CoordinateType};
+#[cfg(test)]
+use approx::AbsDiffEq;
+#[cfg(test)]
+use approx::RelativeEq;
+
 use num_traits::Float;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
@@ -409,6 +414,79 @@ where
     }
 }
 
+#[cfg(test)]
+impl<T> RelativeEq for Point<T>
+where
+    T: CoordinateType + Float,
+{
+    // type Epsilon = T;
+
+    #[inline]
+    fn default_max_relative() -> Self::Epsilon {
+        T::epsilon()
+    }
+
+    #[inline]
+    fn relative_eq(
+        &self,
+        other: &Point<T>,
+        epsilon: Self::Epsilon,
+        max_relative: Self::Epsilon,
+    ) -> bool {
+        // Handle same infinities.
+        if self == other {
+            return true;
+        }
+
+        if self.x().is_infinite()
+            || self.y().is_infinite()
+            || other.x().is_infinite()
+            || other.y().is_infinite()
+        {
+            return false;
+        }
+
+        let diff_x = self.x() - other.x();
+        let diff_y = self.y() - other.y();
+        let abs_diff = (diff_x * diff_x + diff_y * diff_y).sqrt();
+        println!("compute largest");
+        // For when the numbers are really close together.
+        if abs_diff <= epsilon {
+            return true;
+        }
+
+        let abs_self = (self.x() * self.x() + self.y() + self.y()).sqrt();
+        let abs_other = (other.x() * other.x() + other.y() * other.y()).sqrt();
+
+        let largest = if abs_other > abs_self {
+            abs_other
+        } else {
+            abs_self
+        };
+
+        // Use a relative difference comparison.
+        abs_diff <= largest * max_relative
+    }
+}
+
+#[cfg(test)]
+impl<T> AbsDiffEq for Point<T>
+where
+    T: CoordinateType + Float,
+{
+    type Epsilon = T;
+
+    #[inline]
+    fn default_epsilon() -> Self::Epsilon {
+        T::epsilon()
+    }
+
+    #[inline]
+    fn abs_diff_eq(&self, other: &Point<T>, epsilon: Self::Epsilon) -> bool {
+        (self.x() - other.x()).abs() < epsilon && (self.y() - other.y()).abs() < epsilon
+    }
+}
+
 #[cfg(feature = "rstar")]
 // These are required for rstar RTree
 impl<T> ::rstar::Point for Point<T>
@@ -436,5 +514,54 @@ where
             1 => &mut self.0.y,
             _ => unreachable!(),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use approx::AbsDiffEq;
+
+    #[test]
+    fn test_abs_diff_eq() {
+        let delta = 1e-6;
+        let p = Point::new(1.0, 1.0);
+
+        let p_x = Point::new(1.0 - delta, 1.0);
+        assert!(p.abs_diff_eq(&p_x, 1e-2));
+        assert!(p.abs_diff_ne(&p_x, 1e-12));
+
+        let p_y = Point::new(1.0, 1.0 + delta);
+        assert!(p.abs_diff_eq(&p_y, 1e-2));
+        assert!(p.abs_diff_ne(&p_y, 1e-12));
+
+        let p_xy = Point::new(1.0 + delta, 1.0 - delta);
+        assert!(p.abs_diff_eq(&p_xy, 1e-2));
+        assert!(p.abs_diff_ne(&p_xy, 1e-12));
+
+        let p_inf = Point::new(f64::INFINITY, 1.);
+        assert!(p.abs_diff_ne(&p_inf, 1e-2));
+    }
+
+    #[test]
+    fn test_relative_eq() {
+        let delta = 1e-6;
+        let p = Point::new(1.0, 1.0);
+
+        let p_x = Point::new(1.0 - delta, 1.0);
+        assert!(p.relative_eq(&p_x, 1e-2, 1e-2));
+        assert!(p.relative_ne(&p_x, 1e-12, 1e-12));
+
+        let p_y = Point::new(1.0, 1.0 + delta);
+        assert!(p.relative_eq(&p_y, 1e-2, 1e-2));
+        assert!(p.relative_ne(&p_y, 1e-12, 1e-12));
+
+        let p_xy = Point::new(1.0 + delta, 1.0 - delta);
+        assert!(p.relative_eq(&p_xy, 1e-2, 1e-2));
+        assert!(p.relative_ne(&p_xy, 1e-12, 1e-12));
+
+        let p_inf = Point::new(f64::INFINITY, 1.);
+        assert!(p.relative_ne(&p_inf, 1e-2, 1e-2));
     }
 }
