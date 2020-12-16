@@ -37,12 +37,12 @@ impl<T> BoundingRect<T> for Point<T>
 where
     T: CoordinateType,
 {
-    type Output = Rect<T>;
+    type Output = Result<Rect<T>, ()>;
 
     /// Return the bounding rectangle for a `Point`. It will have zero width
     /// and zero height.
     fn bounding_rect(&self) -> Self::Output {
-        Rect::new(self.0, self.0)
+        Ok(Rect::new(self.0, self.0))
     }
 }
 
@@ -50,12 +50,12 @@ impl<T> BoundingRect<T> for MultiPoint<T>
 where
     T: CoordinateType,
 {
-    type Output = Option<Rect<T>>;
+    type Output = Result<Rect<T>, ()>;
 
     ///
     /// Return the BoundingRect for a MultiPoint
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.0.iter().map(|p| p.0))
+        get_bounding_rect(self.0.iter().map(|p| p.0)).ok_or(())
     }
 }
 
@@ -63,17 +63,17 @@ impl<T> BoundingRect<T> for Line<T>
 where
     T: CoordinateType,
 {
-    type Output = Rect<T>;
+    type Output = Result<Rect<T>, ()>;
 
     fn bounding_rect(&self) -> Self::Output {
         let a = self.start;
         let b = self.end;
         let (xmin, xmax) = if a.x <= b.x { (a.x, b.x) } else { (b.x, a.x) };
         let (ymin, ymax) = if a.y <= b.y { (a.y, b.y) } else { (b.y, a.y) };
-        Rect::new(
+        Ok(Rect::new(
             Coordinate { x: xmin, y: ymin },
             Coordinate { x: xmax, y: ymax },
-        )
+        ))
     }
 }
 
@@ -81,12 +81,12 @@ impl<T> BoundingRect<T> for LineString<T>
 where
     T: CoordinateType,
 {
-    type Output = Option<Rect<T>>;
+    type Output = Result<Rect<T>, ()>;
 
     ///
     /// Return the BoundingRect for a LineString
     fn bounding_rect(&self) -> Self::Output {
-        line_string_bounding_rect(self)
+        line_string_bounding_rect(self).ok_or(())
     }
 }
 
@@ -94,12 +94,12 @@ impl<T> BoundingRect<T> for MultiLineString<T>
 where
     T: CoordinateType,
 {
-    type Output = Option<Rect<T>>;
+    type Output = Result<Rect<T>, ()>;
 
     ///
     /// Return the BoundingRect for a MultiLineString
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.iter().flat_map(|line| line.0.iter().cloned()))
+        get_bounding_rect(self.iter().flat_map(|line| line.0.iter().cloned())).ok_or(())
     }
 }
 
@@ -107,13 +107,13 @@ impl<T> BoundingRect<T> for Polygon<T>
 where
     T: CoordinateType,
 {
-    type Output = Option<Rect<T>>;
+    type Output = Result<Rect<T>, ()>;
 
     ///
     /// Return the BoundingRect for a Polygon
     fn bounding_rect(&self) -> Self::Output {
         let line = self.exterior();
-        get_bounding_rect(line.0.iter().cloned())
+        get_bounding_rect(line.0.iter().cloned()).ok_or(())
     }
 }
 
@@ -121,7 +121,7 @@ impl<T> BoundingRect<T> for MultiPolygon<T>
 where
     T: CoordinateType,
 {
-    type Output = Option<Rect<T>>;
+    type Output = Result<Rect<T>, ()>;
 
     ///
     /// Return the BoundingRect for a MultiPolygon
@@ -130,6 +130,7 @@ where
             self.iter()
                 .flat_map(|poly| poly.exterior().0.iter().cloned()),
         )
+        .ok_or(())
     }
 }
 
@@ -137,10 +138,10 @@ impl<T> BoundingRect<T> for Triangle<T>
 where
     T: CoordinateType,
 {
-    type Output = Rect<T>;
+    type Output = Result<Rect<T>, ()>;
 
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.to_array().iter().cloned()).unwrap()
+        get_bounding_rect(self.to_array().iter().cloned()).ok_or(())
     }
 }
 
@@ -148,10 +149,10 @@ impl<T> BoundingRect<T> for Rect<T>
 where
     T: CoordinateType,
 {
-    type Output = Rect<T>;
+    type Output = Result<Rect<T>, ()>;
 
     fn bounding_rect(&self) -> Self::Output {
-        *self
+        Ok(*self)
     }
 }
 
@@ -159,20 +160,20 @@ impl<T> BoundingRect<T> for Geometry<T>
 where
     T: CoordinateType,
 {
-    type Output = Option<Rect<T>>;
+    type Output = Result<Rect<T>, ()>;
 
     fn bounding_rect(&self) -> Self::Output {
         match self {
-            Geometry::Point(g) => Some(g.bounding_rect()),
-            Geometry::Line(g) => Some(g.bounding_rect()),
+            Geometry::Point(g) => g.bounding_rect(),
+            Geometry::Line(g) => g.bounding_rect(),
             Geometry::LineString(g) => g.bounding_rect(),
             Geometry::Polygon(g) => g.bounding_rect(),
             Geometry::MultiPoint(g) => g.bounding_rect(),
             Geometry::MultiLineString(g) => g.bounding_rect(),
             Geometry::MultiPolygon(g) => g.bounding_rect(),
             Geometry::GeometryCollection(g) => g.bounding_rect(),
-            Geometry::Rect(g) => Some(g.bounding_rect()),
-            Geometry::Triangle(g) => Some(g.bounding_rect()),
+            Geometry::Rect(g) => g.bounding_rect(),
+            Geometry::Triangle(g) => g.bounding_rect(),
         }
     }
 }
@@ -181,16 +182,16 @@ impl<T> BoundingRect<T> for GeometryCollection<T>
 where
     T: CoordinateType,
 {
-    type Output = Option<Rect<T>>;
+    type Output = Result<Rect<T>, ()>;
 
     fn bounding_rect(&self) -> Self::Output {
-        self.iter().fold(None, |acc, next| {
+        self.iter().fold(Err(()), |acc, next| {
             let next_bounding_rect = next.bounding_rect();
 
             match (acc, next_bounding_rect) {
-                (None, None) => None,
-                (Some(r), None) | (None, Some(r)) => Some(r),
-                (Some(r1), Some(r2)) => Some(bounding_rect_merge(r1, r2)),
+                (Err(()), Err(())) => Err(()),
+                (Ok(r), Err(())) | (Err(()), Ok(r)) => Ok(r),
+                (Ok(r1), Ok(r2)) => Ok(bounding_rect_merge(r1, r2)),
             }
         })
     }
@@ -224,7 +225,7 @@ mod test {
     fn empty_linestring_test() {
         let linestring: LineString<f32> = line_string![];
         let bounding_rect = linestring.bounding_rect();
-        assert!(bounding_rect.is_none());
+        assert!(bounding_rect.is_err());
     }
     #[test]
     fn linestring_one_point_test() {
@@ -303,11 +304,11 @@ mod test {
         let line1 = Line::new(Coordinate { x: 0., y: 1. }, Coordinate { x: 2., y: 3. });
         let line2 = Line::new(Coordinate { x: 2., y: 3. }, Coordinate { x: 0., y: 1. });
         assert_eq!(
-            line1.bounding_rect(),
+            line1.bounding_rect().unwrap(),
             Rect::new(Coordinate { x: 0., y: 1. }, Coordinate { x: 2., y: 3. },)
         );
         assert_eq!(
-            line2.bounding_rect(),
+            line2.bounding_rect().unwrap(),
             Rect::new(Coordinate { x: 0., y: 1. }, Coordinate { x: 2., y: 3. },)
         );
     }
@@ -327,14 +328,14 @@ mod test {
     fn point_bounding_rect_test() {
         assert_eq!(
             Rect::new(Coordinate { x: 1., y: 2. }, Coordinate { x: 1., y: 2. }),
-            Point(Coordinate { x: 1., y: 2. }).bounding_rect(),
+            Point(Coordinate { x: 1., y: 2. }).bounding_rect().unwrap(),
         );
     }
 
     #[test]
     fn geometry_collection_bounding_rect_test() {
         assert_eq!(
-            Some(Rect::new(
+            Ok(Rect::new(
                 Coordinate { x: 0., y: 0. },
                 Coordinate { x: 1., y: 2. }
             )),
