@@ -118,7 +118,7 @@ impl<T: CoordinateType> MultiPoint<T> {
 #[cfg(test)]
 impl<T> RelativeEq for MultiPoint<T>
 where
-    T: CoordinateType + Float + AbsDiffEq,
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + Float + RelativeEq
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {

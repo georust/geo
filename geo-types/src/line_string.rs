@@ -292,7 +292,7 @@ impl<T: CoordinateType> IndexMut<usize> for LineString<T> {
 #[cfg(test)]
 impl<T> RelativeEq for LineString<T>
 where
-    T: CoordinateType + Float + AbsDiffEq,
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + Float + RelativeEq
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {

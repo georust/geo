@@ -173,7 +173,7 @@ impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {
 #[cfg(test)]
 impl<T> RelativeEq for Line<T>
 where
-    T: CoordinateType + Float + AbsDiffEq,
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + Float + RelativeEq
 {
 
     #[inline]
@@ -188,11 +188,11 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        self.start_point()
-            .relative_eq(&other.start_point(), epsilon, max_relative)
+        self.start
+            .relative_eq(&other.start, epsilon, max_relative)
             && self
-                .end_point()
-                .relative_eq(&other.end_point(), epsilon, max_relative)
+                .end
+                .relative_eq(&other.end, epsilon, max_relative)
     }
 }
 

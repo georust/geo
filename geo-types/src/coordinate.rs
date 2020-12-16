@@ -247,10 +247,12 @@ where
 {
     type Epsilon = T::Epsilon;
 
+    #[inline]
     fn default_epsilon() -> T::Epsilon {
         T::default_epsilon()
     }
 
+    #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: T::Epsilon) -> bool {
         T::abs_diff_eq(&self.x, &other.x, epsilon) && T::abs_diff_eq(&self.y, &other.y, epsilon)
     }
@@ -261,10 +263,12 @@ impl<T: CoordinateType + RelativeEq> RelativeEq for Coordinate<T>
 where
     T::Epsilon: Copy,
 {
+    #[inline]
     fn default_max_relative() -> T::Epsilon {
         T::default_max_relative()
     }
 
+    #[inline]
     fn relative_eq(&self, other: &Self, epsilon: T::Epsilon, max_relative: T::Epsilon) -> bool {
         T::relative_eq(&self.x, &other.x, epsilon, max_relative)
             && T::relative_eq(&self.y, &other.y, epsilon, max_relative)

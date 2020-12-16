@@ -417,7 +417,7 @@ where
 #[cfg(test)]
 impl<T> RelativeEq for Point<T>
 where
-    T: CoordinateType + Float,
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + Float + RelativeEq
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
@@ -431,39 +431,7 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        // Handle same infinities.
-        if self == other {
-            return true;
-        }
-
-        if self.x().is_infinite()
-            || self.y().is_infinite()
-            || other.x().is_infinite()
-            || other.y().is_infinite()
-        {
-            return false;
-        }
-
-        let diff_x = self.x() - other.x();
-        let diff_y = self.y() - other.y();
-        let abs_diff = (diff_x * diff_x + diff_y * diff_y).sqrt();
-
-        // For when the numbers are really close together.
-        if abs_diff <= epsilon {
-            return true;
-        }
-
-        let abs_self = (self.x() * self.x() + self.y() + self.y()).sqrt();
-        let abs_other = (other.x() * other.x() + other.y() * other.y()).sqrt();
-
-        let largest = if abs_other > abs_self {
-            abs_other
-        } else {
-            abs_self
-        };
-
-        // Use a relative difference comparison.
-        abs_diff <= largest * max_relative
+        self.0.relative_eq(&other.0, epsilon, max_relative)
     }
 }
 
