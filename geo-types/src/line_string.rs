@@ -294,8 +294,6 @@ impl<T> RelativeEq for LineString<T>
 where
     T: CoordinateType + Float + AbsDiffEq,
 {
-    // type Epsilon = T;
-
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
         T::epsilon()
