@@ -155,6 +155,10 @@ where
 
     #[inline]
     fn abs_diff_eq(&self, other: &MultiPoint<T>, epsilon: Self::Epsilon) -> bool {
+        if self.num_coords() != other.num_coords() {
+            return false;
+        }
+
         let mut mp_zipper = self.into_iter().zip(other.into_iter());
         mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(&rhs, epsilon))
     }
@@ -242,4 +246,32 @@ mod test {
         ]);
         assert!(multi.relative_ne(&multi_oversized, 1., 1.));
     }
+
+    #[test]
+    fn test_abs_diff_eq() {
+        let delta = 1e-6;
+
+        let multi = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+
+        let multi_x = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.+delta, y: 10.]]);
+        assert!(multi.abs_diff_eq(&multi_x, 1e-2));
+        assert!(multi.abs_diff_ne(&multi_x, 1e-12));
+
+        let multi_y = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.+delta]]);
+        assert!(multi.abs_diff_eq(&multi_y, 1e-2));
+        assert!(multi.abs_diff_ne(&multi_y, 1e-12));
+
+        // Under-sized but otherwise equal.
+        let multi_undersized = MultiPoint(vec![point![x: 0., y: 0.]]);
+        assert!(multi.abs_diff_ne(&multi_undersized, 1.));
+
+        // Over-sized but otherwise equal.
+        let multi_oversized = MultiPoint(vec![
+            point![x: 0., y: 0.],
+            point![x: 10., y: 10.],
+            point![x: 10., y:100.],
+        ]);
+        assert!(multi.abs_diff_ne(&multi_oversized, 1.));
+    }
+
 }
