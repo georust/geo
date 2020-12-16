@@ -197,7 +197,7 @@ where
 }
 
 #[cfg(test)]
-impl<T: AbsDiffEq + CoordinateType + Float> AbsDiffEq for Line<T> {
+impl<T: AbsDiffEq<Epsilon = T> + CoordinateType + Float> AbsDiffEq for Line<T> {
     type Epsilon = T;
 
     #[inline]
@@ -207,9 +207,9 @@ impl<T: AbsDiffEq + CoordinateType + Float> AbsDiffEq for Line<T> {
 
     #[inline]
     fn abs_diff_eq(&self, other: &Line<T>, epsilon: Self::Epsilon) -> bool {
-        self.start_point()
-            .abs_diff_eq(&other.start_point(), epsilon)
-            && self.end_point().abs_diff_eq(&other.end_point(), epsilon)
+        self.start
+            .abs_diff_eq(&other.start, epsilon)
+            && self.end.abs_diff_eq(&other.end, epsilon)
     }
 }
 
