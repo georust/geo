@@ -332,13 +332,8 @@ impl<T: AbsDiffEq + CoordinateType + Float> AbsDiffEq for LineString<T> {
 
     #[inline]
     fn abs_diff_eq(&self, other: &LineString<T>, epsilon: Self::Epsilon) -> bool {
-        let points_zipper = self.points_iter().zip(other.points_iter());
-        for (lhs, rhs) in points_zipper {
-            if lhs.abs_diff_ne(&rhs, epsilon) {
-                return false;
-            }
-        }
-        true
+        let mut points_zipper = self.points_iter().zip(other.points_iter());
+        points_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(&rhs, epsilon))
     }
 }
 
