@@ -419,8 +419,6 @@ impl<T> RelativeEq for Point<T>
 where
     T: CoordinateType + Float,
 {
-    // type Epsilon = T;
-
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
         T::epsilon()
