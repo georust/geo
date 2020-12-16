@@ -136,13 +136,8 @@ where
             return false;
         }
 
-        let mp_zipper = self.iter().zip(other.iter());
-        for (lhs, rhs) in mp_zipper {
-            if lhs.relative_ne(&rhs, epsilon, max_relative) {
-                return false;
-            }
-        }
-        true
+        let mut mp_zipper = self.iter().zip(other.iter());
+        mp_zipper.all(|(lhs, rhs)| lhs.relative_eq(&rhs, epsilon, max_relative))
     }
 }
 
@@ -160,13 +155,8 @@ where
 
     #[inline]
     fn abs_diff_eq(&self, other: &MultiPoint<T>, epsilon: Self::Epsilon) -> bool {
-        let mp_zipper = self.into_iter().zip(other.into_iter());
-        for (lhs, rhs) in mp_zipper {
-            if lhs.abs_diff_ne(&rhs, epsilon) {
-                return false;
-            }
-        }
-        true
+        let mut mp_zipper = self.into_iter().zip(other.into_iter());
+        mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(&rhs, epsilon))
     }
 }
 
