@@ -299,7 +299,6 @@ where
         T::epsilon()
     }
 
-    #[inline]
     fn relative_eq(
         &self,
         other: &LineString<T>,
@@ -330,8 +329,10 @@ impl<T: AbsDiffEq + CoordinateType + Float> AbsDiffEq for LineString<T> {
         T::epsilon()
     }
 
-    #[inline]
     fn abs_diff_eq(&self, other: &LineString<T>, epsilon: Self::Epsilon) -> bool {
+        if self.num_coords() != other.num_coords() {
+            return false;
+        }
         let mut points_zipper = self.points_iter().zip(other.points_iter());
         points_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(&rhs, epsilon))
     }
@@ -398,6 +399,16 @@ mod test {
         let ls_y: LineString<f32> = coords_y.into_iter().collect();
         assert!(ls.abs_diff_eq(&ls_y, 1e-2));
         assert!(ls.abs_diff_ne(&ls_y, 1e-12));
+
+        // Undersized, but otherwise equal.
+        let coords_x = vec![(0., 0.), (5., 0.)];
+        let ls_under: LineString<f32> = coords_x.into_iter().collect();
+        assert!(ls.abs_diff_ne(&ls_under, 1.));
+
+        // Oversized, but otherwise equal.
+        let coords_x = vec![(0., 0.), (5., 0.), (10., 10.), (10., 100.)];
+        let ls_oversized: LineString<f32> = coords_x.into_iter().collect();
+        assert!(ls.abs_diff_ne(&ls_oversized, 1.));
     }
 
     #[test]
