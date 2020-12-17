@@ -172,9 +172,8 @@ impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {
 #[cfg(test)]
 impl<T> RelativeEq for Line<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
 {
-
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
         T::default_max_relative()
@@ -187,11 +186,8 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        self.start
-            .relative_eq(&other.start, epsilon, max_relative)
-            && self
-                .end
-                .relative_eq(&other.end, epsilon, max_relative)
+        self.start.relative_eq(&other.start, epsilon, max_relative)
+            && self.end.relative_eq(&other.end, epsilon, max_relative)
     }
 }
 
@@ -206,9 +202,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for Line<T> {
 
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        self.start
-            .abs_diff_eq(&other.start, epsilon)
-            && self.end.abs_diff_eq(&other.end, epsilon)
+        self.start.abs_diff_eq(&other.start, epsilon) && self.end.abs_diff_eq(&other.end, epsilon)
     }
 }
 

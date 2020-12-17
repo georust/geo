@@ -116,7 +116,7 @@ impl<T: CoordinateType> MultiPoint<T> {
 #[cfg(test)]
 impl<T> RelativeEq for MultiPoint<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
@@ -272,5 +272,4 @@ mod test {
         ]);
         assert!(multi.abs_diff_ne(&multi_oversized, 1.));
     }
-
 }

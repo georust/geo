@@ -417,7 +417,7 @@ where
 #[cfg(test)]
 impl<T> RelativeEq for Point<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
@@ -439,7 +439,7 @@ where
 impl<T> AbsDiffEq for Point<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType,
-    T::Epsilon: Copy
+    T::Epsilon: Copy,
 {
     type Epsilon = T::Epsilon;
 
