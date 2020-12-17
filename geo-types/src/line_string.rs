@@ -2,8 +2,6 @@
 use approx::AbsDiffEq;
 #[cfg(test)]
 use approx::RelativeEq;
-#[cfg(test)]
-use num_traits::Float;
 
 use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
 use std::iter::FromIterator;
@@ -292,16 +290,16 @@ impl<T: CoordinateType> IndexMut<usize> for LineString<T> {
 #[cfg(test)]
 impl<T> RelativeEq for LineString<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType + Float + RelativeEq
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
-        T::epsilon()
+        T::default_max_relative()
     }
 
     fn relative_eq(
         &self,
-        other: &LineString<T>,
+        other: &Self,
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
@@ -321,15 +319,15 @@ where
 }
 
 #[cfg(test)]
-impl<T: AbsDiffEq + CoordinateType + Float> AbsDiffEq for LineString<T> {
+impl<T: AbsDiffEq<Epsilon = T> + CoordinateType > AbsDiffEq for LineString<T> {
     type Epsilon = T;
 
     #[inline]
     fn default_epsilon() -> Self::Epsilon {
-        T::epsilon()
+        T::default_epsilon()
     }
 
-    fn abs_diff_eq(&self, other: &LineString<T>, epsilon: Self::Epsilon) -> bool {
+    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
         if self.num_coords() != other.num_coords() {
             return false;
         }

@@ -417,17 +417,17 @@ where
 #[cfg(test)]
 impl<T> RelativeEq for Point<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType + Float + RelativeEq
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
-        T::epsilon()
+        T::default_max_relative()
     }
 
     #[inline]
     fn relative_eq(
         &self,
-        other: &Point<T>,
+        other: &Self,
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
@@ -438,18 +438,19 @@ where
 #[cfg(test)]
 impl<T> AbsDiffEq for Point<T>
 where
-    T: CoordinateType + Float,
+    T: AbsDiffEq<Epsilon = T> + CoordinateType,
+    T::Epsilon: Copy
 {
-    type Epsilon = T;
+    type Epsilon = T::Epsilon;
 
     #[inline]
     fn default_epsilon() -> Self::Epsilon {
-        T::epsilon()
+        T::default_epsilon()
     }
 
     #[inline]
-    fn abs_diff_eq(&self, other: &Point<T>, epsilon: Self::Epsilon) -> bool {
-        (self.x() - other.x()).abs() < epsilon && (self.y() - other.y()).abs() < epsilon
+    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+        self.0.abs_diff_eq(&other.0, epsilon)
     }
 }
 

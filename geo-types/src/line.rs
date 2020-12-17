@@ -3,8 +3,7 @@ use crate::{Coordinate, CoordinateType, Point};
 use approx::AbsDiffEq;
 #[cfg(test)]
 use approx::RelativeEq;
-#[cfg(test)]
-use num_traits::Float;
+
 /// A line segment made up of exactly two
 /// [`Coordinate`s](struct.Coordinate.html).
 ///
@@ -173,18 +172,18 @@ impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {
 #[cfg(test)]
 impl<T> RelativeEq for Line<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType + Float + RelativeEq
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq
 {
 
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
-        T::epsilon()
+        T::default_max_relative()
     }
 
     #[inline]
     fn relative_eq(
         &self,
-        other: &Line<T>,
+        other: &Self,
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
@@ -197,16 +196,16 @@ where
 }
 
 #[cfg(test)]
-impl<T: AbsDiffEq<Epsilon = T> + CoordinateType + Float> AbsDiffEq for Line<T> {
+impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for Line<T> {
     type Epsilon = T;
 
     #[inline]
     fn default_epsilon() -> Self::Epsilon {
-        T::epsilon()
+        T::default_epsilon()
     }
 
     #[inline]
-    fn abs_diff_eq(&self, other: &Line<T>, epsilon: Self::Epsilon) -> bool {
+    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
         self.start
             .abs_diff_eq(&other.start, epsilon)
             && self.end.abs_diff_eq(&other.end, epsilon)

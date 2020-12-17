@@ -3,8 +3,6 @@ use crate::{CoordinateType, Point};
 use approx::AbsDiffEq;
 #[cfg(test)]
 use approx::RelativeEq;
-#[cfg(test)]
-use num_traits::float::Float;
 
 use std::iter::FromIterator;
 
@@ -118,17 +116,17 @@ impl<T: CoordinateType> MultiPoint<T> {
 #[cfg(test)]
 impl<T> RelativeEq for MultiPoint<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType + Float + RelativeEq
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
-        T::epsilon()
+        T::default_max_relative()
     }
 
     #[inline]
     fn relative_eq(
         &self,
-        other: &MultiPoint<T>,
+        other: &Self,
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
@@ -144,17 +142,18 @@ where
 #[cfg(test)]
 impl<T> AbsDiffEq for MultiPoint<T>
 where
-    T: CoordinateType + Float,
+    T: AbsDiffEq<Epsilon = T> + CoordinateType,
+    T::Epsilon: Copy,
 {
     type Epsilon = T;
 
     #[inline]
     fn default_epsilon() -> Self::Epsilon {
-        T::epsilon()
+        T::default_epsilon()
     }
 
     #[inline]
-    fn abs_diff_eq(&self, other: &MultiPoint<T>, epsilon: Self::Epsilon) -> bool {
+    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
         if self.num_coords() != other.num_coords() {
             return false;
         }
