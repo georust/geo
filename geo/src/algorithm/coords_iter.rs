@@ -34,6 +34,21 @@ pub trait CoordsIter<'a, T: CoordinateType> {
     /// ```
     fn coords_iter(&'a self) -> Self::Iter;
 
+    /// Return the number of coordinates in a geometry.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::coords_iter::CoordsIter;
+    ///
+    /// let line_string = geo::line_string![
+    ///     (x: 1., y: 2.),
+    ///     (x: 23., y: 82.),
+    ///     (x: -1., y: 0.),
+    /// ];
+    ///
+    /// assert_eq!(3, line_string.coords_count());
+    /// ```
     fn coords_count(&'a self) -> usize;
 }
 
