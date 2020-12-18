@@ -1,4 +1,5 @@
 use super::kernels::*;
+use crate::coords_iter::CoordsIter;
 use crate::utils::EitherIter;
 use crate::{CoordinateType, LineString, Point};
 use geo_types::PointsIter;
@@ -101,20 +102,20 @@ where
         // If linestring has at most 3 coords, it is either
         // not closed, or is at most two distinct points.
         // Either way, the WindingOrder is unspecified.
-        if self.num_coords() < 4 || !self.is_closed() {
+        if self.coords_count() < 4 || !self.is_closed() {
             return None;
         }
 
         let increment = |x: &mut usize| {
             *x += 1;
-            if *x >= self.num_coords() {
+            if *x >= self.coords_count() {
                 *x = 0;
             }
         };
 
         let decrement = |x: &mut usize| {
             if *x == 0 {
-                *x = self.num_coords() - 1;
+                *x = self.coords_count() - 1;
             } else {
                 *x -= 1;
             }

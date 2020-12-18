@@ -1,3 +1,4 @@
+use crate::coords_iter::CoordsIter;
 use crate::euclidean_distance::EuclideanDistance;
 use crate::{LineString, Point};
 use num_traits::{Float, FromPrimitive};
@@ -45,13 +46,13 @@ where
     T: Float + FromPrimitive,
 {
     fn frechet_distance(&self, ls: &LineString<T>) -> T {
-        if self.num_coords() != 0 && ls.num_coords() != 0 {
+        if self.coords_count() != 0 && ls.coords_count() != 0 {
             let mut data = Data {
-                cache: vec![vec![T::nan(); ls.num_coords()]; self.num_coords()],
+                cache: vec![vec![T::nan(); ls.coords_count()]; self.coords_count()],
                 ls_a: self,
                 ls_b: ls,
             };
-            data.compute(self.num_coords() - 1, ls.num_coords() - 1)
+            data.compute(self.coords_count() - 1, ls.coords_count() - 1)
         } else {
             T::zero()
         }
