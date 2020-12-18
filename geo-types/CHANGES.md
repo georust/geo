@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-* `Rect::new` automatically determines min/max points
+## 0.6.2
+
+* Add `into_iter`, `iter` and `iter_mut` methods for `MultiPolygon`, `MultiPoint`, and `MultiLineString`
+  * <https://github.com/georust/geo/pull/539>
+* `Rect::new` automatically determines min/max points. Deprecates `Rect::try_new` which can no longer fail.
   * <https://github.com/georust/geo/pull/519>
 * Add `MultiLineString::is_closed` method
   * <https://github.com/georust/geo/pull/523>

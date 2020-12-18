@@ -19,7 +19,9 @@ pub mod concave_hull;
 pub mod contains;
 /// Calculate the convex hull of a `Geometry`.
 pub mod convex_hull;
-// Iterate over geometry coordinates.
+/// Determine whether a `Coordinate` lies inside, outside, or on the boundary of a geometry.
+pub mod coordinate_position;
+/// Iterate over geometry coordinates.
 pub mod coords_iter;
 /// Dimensionality of a geometry and its boundary, based on OGC-SFA.
 pub mod dimensions;

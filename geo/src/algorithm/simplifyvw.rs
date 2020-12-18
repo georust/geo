@@ -193,7 +193,7 @@ where
 {
     // Epsilon must be greater than zero for any meaningful simplification to happen
     if *epsilon <= T::zero() {
-        return orig.0.to_vec()
+        return orig.0.to_vec();
     }
     let subset = visvalingam_indices(orig, epsilon);
     // filter orig using the indices

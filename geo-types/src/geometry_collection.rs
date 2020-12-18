@@ -71,6 +71,12 @@ pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
     T: CoordinateType;
 
+impl<T: CoordinateType> Default for GeometryCollection<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: CoordinateType> GeometryCollection<T> {
     /// Return an empty GeometryCollection
     pub fn new() -> GeometryCollection<T> {
@@ -118,6 +124,7 @@ impl<T: CoordinateType> IndexMut<usize> for GeometryCollection<T> {
 }
 
 // structure helper for consuming iterator
+#[derive(Debug)]
 pub struct IntoIteratorHelper<T: CoordinateType> {
     iter: ::std::vec::IntoIter<Geometry<T>>,
 }
@@ -147,6 +154,7 @@ impl<T: CoordinateType> Iterator for IntoIteratorHelper<T> {
 }
 
 // structure helper for non-consuming iterator
+#[derive(Debug)]
 pub struct IterHelper<'a, T: CoordinateType> {
     iter: ::std::slice::Iter<'a, Geometry<T>>,
 }
@@ -176,6 +184,7 @@ impl<'a, T: CoordinateType> Iterator for IterHelper<'a, T> {
 }
 
 // structure helper for mutable non-consuming iterator
+#[derive(Debug)]
 pub struct IterMutHelper<'a, T: CoordinateType> {
     iter: ::std::slice::IterMut<'a, Geometry<T>>,
 }

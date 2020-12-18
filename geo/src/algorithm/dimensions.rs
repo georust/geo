@@ -283,7 +283,7 @@ impl<C: CoordinateType> HasDimensions for MultiPoint<C> {
             return Dimensions::Empty;
         }
 
-        Dimensions::OneDimensional
+        Dimensions::ZeroDimensional
     }
 
     fn boundary_dimensions(&self) -> Dimensions {

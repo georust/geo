@@ -87,7 +87,7 @@ impl<'a, T: CoordinateType> IntoIterator for &'a MultiLineString<T> {
     type IntoIter = ::std::slice::Iter<'a, LineString<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&self.0).into_iter()
+        (&self.0).iter()
     }
 }
 

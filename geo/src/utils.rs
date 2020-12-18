@@ -1,8 +1,6 @@
 //! Internal utility functions, types, and data structures.
 
-use crate::intersects::Intersects;
-use crate::kernels::*;
-use geo_types::{Coordinate, CoordinateType, Line};
+use geo_types::{Coordinate, CoordinateType};
 
 /// Partition a mutable slice in-place so that it contains all elements for
 /// which `predicate(e)` is `true`, followed by all elements for which
@@ -76,106 +74,8 @@ pub fn partial_min<T: PartialOrd>(a: T, b: T) -> T {
     }
 }
 
-/// The position of a `Coordinate` relative to a `LineString`
-#[derive(PartialEq, Clone, Debug)]
-pub enum CoordPos {
-    OnBoundary,
-    Inside,
-    Outside,
-}
-
-/// Calculate the position of a `Coordinate` relative to a
-/// closed `LineString`.
-pub fn coord_pos_relative_to_ring<T>(
-    coord: crate::Coordinate<T>,
-    linestring: &crate::LineString<T>,
-) -> CoordPos
-where
-    T: HasKernel,
-{
-    // Use the ray-tracing algorithm: count #times a
-    // horizontal ray from point (to positive infinity).
-    //
-    // See: https://en.wikipedia.org/wiki/Point_in_polygon
-
-    debug_assert!(linestring.is_closed());
-
-    // LineString without points
-    if linestring.0.is_empty() {
-        return CoordPos::Outside;
-    }
-    if linestring.0.len() == 1 {
-        // If LineString has one point, it will not generate
-        // any lines.  So, we handle this edge case separately.
-        return if coord == linestring.0[0] {
-            CoordPos::OnBoundary
-        } else {
-            CoordPos::Outside
-        };
-    }
-
-    let mut crossings = 0;
-    for line in linestring.lines() {
-        // Check if coord lies on the line
-        if line.intersects(&coord) {
-            return CoordPos::OnBoundary;
-        }
-
-        // Ignore if the line is strictly to the left of the coord.
-        let max_x = if line.start.x < line.end.x {
-            line.end.x
-        } else {
-            line.start.x
-        };
-        if max_x < coord.x {
-            continue;
-        }
-
-        // Ignore if line is horizontal. This includes an
-        // edge case where the ray would intersect a
-        // horizontal segment of the ring infinitely many
-        // times, and is irrelevant for the calculation.
-        if line.start.y == line.end.y {
-            continue;
-        }
-
-        // Ignore if the intersection of the line is
-        // possibly at the beginning/end of the line, and
-        // the line lies below the ray. This is to
-        // prevent a double counting when the ray passes
-        // through a vertex of the polygon.
-        //
-        // The below logic handles two cases:
-        //   1. if the ray enters/exits the polygon
-        //      at the point of intersection
-        //   2. if the ray touches a vertex,
-        //      but doesn't enter/exit at that point
-        if (line.start.y == coord.y && line.end.y < coord.y)
-            || (line.end.y == coord.y && line.start.y < coord.y)
-        {
-            continue;
-        }
-
-        // Otherwise, check if ray intersects the line
-        // segment. Enough to consider ray upto the max_x
-        // coordinate of the current segment.
-        let ray = Line::new(
-            coord,
-            Coordinate {
-                x: max_x,
-                y: coord.y,
-            },
-        );
-        if ray.intersects(&line) {
-            crossings += 1;
-        }
-    }
-    if crossings % 2 == 1 {
-        CoordPos::Inside
-    } else {
-        CoordPos::Outside
-    }
-}
+// Moved to their own module, but we re-export to avoid breaking the API.
+pub use crate::algorithm::coordinate_position::{coord_pos_relative_to_ring, CoordPos};
 
 use std::cmp::Ordering;
 

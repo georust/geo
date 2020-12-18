@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+* Fix non-empty MultiPoint has 0-dimensions, not 1.
+  * <https://github.com/georust/geo/pull/561>
+
+## 0.16.0
+
+* Fix panic when `simplify` is given a negative epsilon
+  * <https://github.com/georust/geo/pull/537>
+* Add `CoordsIter` trait for iterating over coordinates in geometries.
+  * <https://github.com/georust/geo/pull/164>
+* Fix edge case handling in `Contains`
+  * <https://github.com/georust/geo/pull/526>
+* Fix edge case handling in `line_locate_point`
+  * <https://github.com/georust/geo/pull/520>
+* Add `proj-network` feature enables network grid for optional `proj` integration.
+  * <https://github.com/georust/geo/pull/506>
 * Add `HasDimensions` trait for working with Geometry dimensionality
   * <https://github.com/georust/geo/pull/524>
 

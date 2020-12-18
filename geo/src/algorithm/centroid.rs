@@ -174,11 +174,11 @@ where
                 // length == 0 means that all points in all constituent linestrings were equal.
                 // we can just use the first defined point in this case.
                 for linestring in self.0.iter() {
-                    if linestring.0.len() > 0 {
+                    if !linestring.0.is_empty() {
                         return Some(Point(linestring[0]));
                     }
                 }
-                return None; // this should never happen, since all linestrings being empty was previously checked
+                None // this should never happen, since all linestrings being empty was previously checked
             } else {
                 Some(Point::new(sum_x / total_length, sum_y / total_length))
             }
