@@ -224,14 +224,6 @@ impl<T: CoordinateType> Rect<T> {
         ]
     }
 
-    /// Return the number of coordinates in the `Rect`.
-    ///
-    /// Note: Although a `Rect` is represented by two coordinates, it is
-    /// spatially represented by four, so this method returns `4`.
-    pub fn num_coords(self) -> usize {
-        4
-    }
-
     fn assert_valid_bounds(&self) {
         if !self.has_valid_bounds() {
             panic!(RECT_INVALID_BOUNDS_ERROR);

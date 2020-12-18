@@ -47,11 +47,6 @@ impl<T: CoordinateType> Triangle<T> {
     pub fn to_polygon(self) -> Polygon<T> {
         polygon![self.0, self.1, self.2, self.0]
     }
-
-    /// Number of coordinates in this `Triangle`.
-    pub fn num_coords(self) -> usize {
-        3
-    }
 }
 
 impl<IC: Into<Coordinate<T>> + Copy, T: CoordinateType> From<[IC; 3]> for Triangle<T> {

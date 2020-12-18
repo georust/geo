@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Introduce `coords_count` method on `CoordsIter`.
+  * <https://github.com/georust/geo/pull/563>
+
 ## 0.16.0
 
 * Fix panic when `simplify` is given a negative epsilon

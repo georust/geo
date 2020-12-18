@@ -157,11 +157,6 @@ where
     pub fn points(&self) -> (Point<T>, Point<T>) {
         (self.start_point(), self.end_point())
     }
-
-    /// Return the number of coordinates in the `Line`.
-    pub fn num_coords(self) -> usize {
-        2
-    }
 }
 
 impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {

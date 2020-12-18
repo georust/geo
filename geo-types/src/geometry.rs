@@ -181,22 +181,6 @@ impl<T: CoordinateType> Geometry<T> {
             None
         }
     }
-
-    /// Return the number of coordinates in the `Geometry`.
-    pub fn num_coords(&self) -> usize {
-        match self {
-            Geometry::Point(g) => g.num_coords(),
-            Geometry::Line(g) => g.num_coords(),
-            Geometry::LineString(g) => g.num_coords(),
-            Geometry::Polygon(g) => g.num_coords(),
-            Geometry::MultiPoint(g) => g.num_coords(),
-            Geometry::MultiLineString(g) => g.num_coords(),
-            Geometry::MultiPolygon(g) => g.num_coords(),
-            Geometry::GeometryCollection(g) => g.num_coords(),
-            Geometry::Rect(g) => g.num_coords(),
-            Geometry::Triangle(g) => g.num_coords(),
-        }
-    }
 }
 
 #[derive(Debug)]
