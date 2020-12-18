@@ -40,14 +40,15 @@ pub trait CoordsIter<'a, T: CoordinateType> {
     ///
     /// ```
     /// use geo::coords_iter::CoordsIter;
+    /// use geo::line_string;
     ///
-    /// let line_string = geo::line_string![
+    /// let ls = line_string![
     ///     (x: 1., y: 2.),
     ///     (x: 23., y: 82.),
     ///     (x: -1., y: 0.),
     /// ];
     ///
-    /// assert_eq!(3, line_string.coords_count());
+    /// assert_eq!(3, ls.coords_count());
     /// ```
     fn coords_count(&'a self) -> usize;
 }
