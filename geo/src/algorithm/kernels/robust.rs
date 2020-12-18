@@ -6,7 +6,7 @@ use crate::Coordinate;
 /// provide robust floating point predicates. Should only be
 /// used with types that can _always_ be casted to `f64`
 /// _without loss in precision_.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct RobustKernel;
 
 use num_traits::{Float, NumCast};

@@ -1,3 +1,4 @@
+#![warn(missing_debug_implementations)]
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
 //! The `geo-types` library provides geospatial primitive types and traits to the [`GeoRust`](https://github.com/georust)
 //! crate ecosystem.
