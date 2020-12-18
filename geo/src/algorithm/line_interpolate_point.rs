@@ -1,3 +1,4 @@
+use crate::coords_iter::CoordsIter;
 use num_traits::Float;
 use std::ops::AddAssign;
 
@@ -93,7 +94,7 @@ where
             }
             // either cum_length + length is never larger than fractional_length, i.e.
             // fractional_length is nan, or the linestring has no lines to loop through
-            debug_assert!(fractional_length.is_nan() || (self.num_coords() == 0));
+            debug_assert!(fractional_length.is_nan() || (self.coords_count() == 0));
             None
         } else if fraction < T::zero() {
             // negative fractions replaced with zero

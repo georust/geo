@@ -33,6 +33,24 @@ pub trait CoordsIter<'a, T: CoordinateType> {
     /// assert_eq!(None, iter.next());
     /// ```
     fn coords_iter(&'a self) -> Self::Iter;
+
+    /// Return the number of coordinates in a geometry.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::coords_iter::CoordsIter;
+    /// use geo::line_string;
+    ///
+    /// let ls = line_string![
+    ///     (x: 1., y: 2.),
+    ///     (x: 23., y: 82.),
+    ///     (x: -1., y: 0.),
+    /// ];
+    ///
+    /// assert_eq!(3, ls.coords_count());
+    /// ```
+    fn coords_count(&'a self) -> usize;
 }
 
 // ┌──────────────────────────┐
@@ -44,6 +62,11 @@ impl<'a, T: CoordinateType> CoordsIter<'a, T> for Point<T> {
 
     fn coords_iter(&'a self) -> Self::Iter {
         iter::once(self.0)
+    }
+
+    /// Return the number of coordinates in the `Point`.
+    fn coords_count(&'a self) -> usize {
+        1
     }
 }
 
@@ -57,6 +80,11 @@ impl<'a, T: CoordinateType> CoordsIter<'a, T> for Line<T> {
     fn coords_iter(&'a self) -> Self::Iter {
         iter::once(self.start).chain(iter::once(self.end))
     }
+
+    /// Return the number of coordinates in the `Line`.
+    fn coords_count(&'a self) -> usize {
+        2
+    }
 }
 
 // ┌───────────────────────────────┐
@@ -68,6 +96,11 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for LineString<T> {
 
     fn coords_iter(&'a self) -> Self::Iter {
         self.0.iter().copied()
+    }
+
+    /// Return the number of coordinates in the `LineString`.
+    fn coords_count(&'a self) -> usize {
+        self.0.len()
     }
 }
 
@@ -87,6 +120,12 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
             .coords_iter()
             .chain(MapCoordsIter(self.interiors().iter(), marker::PhantomData).flatten())
     }
+
+    /// Return the number of coordinates in the `Polygon`.
+    fn coords_count(&'a self) -> usize {
+        self.exterior().coords_count() +
+            self.interiors().iter().map(|i| i.coords_count()).sum::<usize>()
+    }
 }
 
 // ┌───────────────────────────────┐
@@ -98,6 +137,11 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPoint<T> {
 
     fn coords_iter(&'a self) -> Self::Iter {
         MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
+    }
+
+    /// Return the number of coordinates in the `MultiPoint`.
+    fn coords_count(&'a self) -> usize {
+        self.0.len()
     }
 }
 
@@ -111,6 +155,11 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiLineString<T> {
     fn coords_iter(&'a self) -> Self::Iter {
         MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
     }
+
+    /// Return the number of coordinates in the `MultiLineString`.
+    fn coords_count(&'a self) -> usize {
+        self.0.iter().map(|line_string| line_string.coords_count()).sum()
+    }
 }
 
 // ┌─────────────────────────────────┐
@@ -123,6 +172,11 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPolygon<T> {
     fn coords_iter(&'a self) -> Self::Iter {
         MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
     }
+
+    /// Return the number of coordinates in the `MultiPolygon`.
+    fn coords_count(&'a self) -> usize {
+        self.0.iter().map(|polygon| polygon.coords_count()).sum()
+    }
 }
 
 // ┌───────────────────────────────────────┐
@@ -134,6 +188,11 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for GeometryCollection<T> {
 
     fn coords_iter(&'a self) -> Self::Iter {
         Box::new(self.0.iter().flat_map(|geometry| geometry.coords_iter()))
+    }
+
+    /// Return the number of coordinates in the `GeometryCollection`.
+    fn coords_count(&'a self) -> usize {
+        self.0.iter().map(|geometry| geometry.coords_count()).sum()
     }
 }
 
@@ -167,6 +226,14 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
             y: self.min().y,
         }))
     }
+
+    /// Return the number of coordinates in the `Rect`.
+    ///
+    /// Note: Although a `Rect` is represented by two coordinates, it is
+    /// spatially represented by four, so this method returns `4`.
+    fn coords_count(&'a self) -> usize {
+        4
+    }
 }
 
 // ┌─────────────────────────────┐
@@ -180,6 +247,11 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Triangle<T> {
         iter::once(self.0)
             .chain(iter::once(self.1))
             .chain(iter::once(self.2))
+    }
+
+    /// Return the number of coordinates in the `Triangle`.
+    fn coords_count(&'a self) -> usize {
+        3
     }
 }
 
@@ -204,6 +276,22 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Geometry<T> {
             }
             Geometry::Rect(g) => GeometryCoordsIter::Rect(g.coords_iter()),
             Geometry::Triangle(g) => GeometryCoordsIter::Triangle(g.coords_iter()),
+        }
+    }
+
+    /// Return the number of coordinates in the `Geometry`.
+    fn coords_count(&'a self) -> usize {
+        match self {
+            Geometry::Point(g) => g.coords_count(),
+            Geometry::Line(g) => g.coords_count(),
+            Geometry::LineString(g) => g.coords_count(),
+            Geometry::Polygon(g) => g.coords_count(),
+            Geometry::MultiPoint(g) => g.coords_count(),
+            Geometry::MultiLineString(g) => g.coords_count(),
+            Geometry::MultiPolygon(g) => g.coords_count(),
+            Geometry::GeometryCollection(g) => g.coords_count(),
+            Geometry::Rect(g) => g.coords_count(),
+            Geometry::Triangle(g) => g.coords_count(),
         }
     }
 }

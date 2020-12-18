@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Introduce `coords_count` method on `CoordsIter`.
+  * <https://github.com/georust/geo/pull/563>
 * Fix non-empty MultiPoint has 0-dimensions, not 1.
   * <https://github.com/georust/geo/pull/561>
 
