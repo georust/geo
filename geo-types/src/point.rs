@@ -1,7 +1,7 @@
 use crate::{Coordinate, CoordinateType};
-#[cfg(test)]
+
 use approx::AbsDiffEq;
-#[cfg(test)]
+#[cfg(feature = "relative_eq")]
 use approx::RelativeEq;
 
 use num_traits::Float;
@@ -414,7 +414,7 @@ where
     }
 }
 
-#[cfg(test)]
+#[cfg(feature = "relative_eq")]
 impl<T> RelativeEq for Point<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
@@ -424,6 +424,18 @@ where
         T::default_max_relative()
     }
 
+    /// Equality assertion within a relative limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let a = Point::new(2.0, 3.0);
+    /// let b = Point::new(2.0, 3.01);
+    ///
+    /// approx::assert_relative_eq!(a, b, max_relative=0.1)
+    /// ```
     #[inline]
     fn relative_eq(
         &self,
@@ -434,8 +446,7 @@ where
         self.0.relative_eq(&other.0, epsilon, max_relative)
     }
 }
-
-#[cfg(test)]
+#[cfg(feature = "relative_eq")]
 impl<T> AbsDiffEq for Point<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType,
@@ -448,6 +459,18 @@ where
         T::default_epsilon()
     }
 
+    /// Equality assertion within a absolute limit.
+    ///
+    /// # Examples
+    ///
+    /// ```relative_eq
+    /// use geo_types::Point;
+    ///
+    /// let a = Point::new(2.0, 3.0);
+    /// let b = Point::new(2.0, 3.0000001);
+    ///
+    /// approx::assert_relative_eq!(a, b, epsilon=0.1)
+    /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
         self.0.abs_diff_eq(&other.0, epsilon)

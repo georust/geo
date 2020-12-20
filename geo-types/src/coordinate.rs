@@ -1,7 +1,10 @@
 use crate::{CoordinateType, Point};
-#[cfg(test)]
-use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 
+#[cfg(any(test, feature = "relative_eq"))]
+use approx::{AbsDiffEq, RelativeEq};
+
+#[cfg(test)]
+use approx::UlpsEq;
 /// A lightweight struct used to store coordinates on the 2-dimensional
 /// Cartesian plane.
 ///
@@ -240,7 +243,7 @@ impl<T: CoordinateType> Zero for Coordinate<T> {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "relative_eq"))]
 impl<T: CoordinateType + AbsDiffEq> AbsDiffEq for Coordinate<T>
 where
     T::Epsilon: Copy,
@@ -258,7 +261,7 @@ where
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "relative_eq"))]
 impl<T: CoordinateType + RelativeEq> RelativeEq for Coordinate<T>
 where
     T::Epsilon: Copy,

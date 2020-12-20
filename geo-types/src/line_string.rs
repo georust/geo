@@ -1,6 +1,6 @@
-#[cfg(test)]
+#[cfg(feature = "relative_eq")]
 use approx::AbsDiffEq;
-#[cfg(test)]
+#[cfg(feature = "relative_eq")]
 use approx::RelativeEq;
 
 use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
@@ -287,7 +287,7 @@ impl<T: CoordinateType> IndexMut<usize> for LineString<T> {
     }
 }
 
-#[cfg(test)]
+#[cfg(feature = "relative_eq")]
 impl<T> RelativeEq for LineString<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
@@ -297,6 +297,22 @@ where
         T::default_max_relative()
     }
 
+    /// Equality assertion within a relative limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::LineString;
+    ///
+    /// let mut coords_a = vec![(0., 0.), (5., 0.), (7., 9.)];
+    /// let a: LineString<f32> = coords_a.into_iter().collect();
+    ///
+    /// let mut coords_b = vec![(0., 0.), (5., 0.), (7.001, 9.)];
+    /// let b: LineString<f32> = coords_b.into_iter().collect();
+    ///
+    /// approx::assert_relative_eq!(a, b, max_relative=0.1)
+    /// ```
+    ///
     fn relative_eq(
         &self,
         other: &Self,
@@ -318,7 +334,7 @@ where
     }
 }
 
-#[cfg(test)]
+#[cfg(feature = "relative_eq")]
 impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for LineString<T> {
     type Epsilon = T;
 
@@ -327,6 +343,21 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for LineString<T> {
         T::default_epsilon()
     }
 
+    /// Equality assertion within a relative limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::LineString;
+    ///
+    /// let mut coords_a = vec![(0., 0.), (5., 0.), (7., 9.)];
+    /// let a: LineString<f32> = coords_a.into_iter().collect();
+    ///
+    /// let mut coords_b = vec![(0., 0.), (5., 0.), (7.001, 9.)];
+    /// let b: LineString<f32> = coords_b.into_iter().collect();
+    ///
+    /// approx::assert_relative_eq!(a, b, epsilon=0.1)
+    /// ```
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
         if self.num_coords() != other.num_coords() {
             return false;
@@ -374,12 +405,11 @@ where
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "relative_eq"))]
 mod test {
     use super::*;
 
     use approx::AbsDiffEq;
-    // use geo_types::LineString;
 
     #[test]
     fn test_abs_diff_eq() {

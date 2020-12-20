@@ -10,6 +10,9 @@ keywords = ["gis", "geo", "geography", "geospatial"]
 description = "Geospatial primitive data types"
 edition = "2018"
 
+[features]
+relative_eq = []
+
 [dependencies]
 approx = "0.4.0"
 num-traits = "0.2"

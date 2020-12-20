@@ -1,7 +1,7 @@
 use crate::{CoordinateType, Point};
-#[cfg(test)]
+#[cfg(any(feature = "relative_eq"))]
 use approx::AbsDiffEq;
-#[cfg(test)]
+#[cfg(feature = "relative_eq")]
 use approx::RelativeEq;
 
 use std::iter::FromIterator;
@@ -113,7 +113,7 @@ impl<T: CoordinateType> MultiPoint<T> {
     }
 }
 
-#[cfg(test)]
+#[cfg(feature = "relative_eq")]
 impl<T> RelativeEq for MultiPoint<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
@@ -123,6 +123,19 @@ where
         T::default_max_relative()
     }
 
+    /// Equality assertion within a relative limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::MultiPoint;
+    /// use geo_types::point;
+    ///
+    /// let a = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+    /// let b = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.001, y: 10.]]);
+    ///
+    /// approx::assert_relative_eq!(a, b, max_relative=0.1)
+    /// ```
     #[inline]
     fn relative_eq(
         &self,
@@ -139,7 +152,7 @@ where
     }
 }
 
-#[cfg(test)]
+#[cfg(feature = "relative_eq")]
 impl<T> AbsDiffEq for MultiPoint<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType,
@@ -152,6 +165,19 @@ where
         T::default_epsilon()
     }
 
+    /// Equality assertion within a absolute limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::MultiPoint;
+    /// use geo_types::point;
+    ///
+    /// let a = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+    /// let b = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.001, y: 10.]]);
+    ///
+    /// approx::assert_relative_eq!(a, b, epsilon=0.1)
+    /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
         if self.num_coords() != other.num_coords() {

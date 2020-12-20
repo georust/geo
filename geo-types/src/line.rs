@@ -1,7 +1,7 @@
 use crate::{Coordinate, CoordinateType, Point};
-#[cfg(test)]
+#[cfg(any(feature = "relative_eq", test))]
 use approx::AbsDiffEq;
-#[cfg(test)]
+#[cfg(any(feature = "relative_eq", test))]
 use approx::RelativeEq;
 
 /// A line segment made up of exactly two
@@ -168,8 +168,7 @@ impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {
         Line::new(coord[0], coord[1])
     }
 }
-
-#[cfg(test)]
+#[cfg(feature = "relative_eq")]
 impl<T> RelativeEq for Line<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
@@ -179,6 +178,18 @@ where
         T::default_max_relative()
     }
 
+    /// Equality assertion within a relative limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{Coordinate, Line};
+    ///
+    /// let a = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. });
+    /// let b = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1.001, y: 1. });
+    ///
+    /// approx::assert_relative_eq!(a, b, max_relative=0.1)
+    /// ```
     #[inline]
     fn relative_eq(
         &self,
@@ -191,7 +202,7 @@ where
     }
 }
 
-#[cfg(test)]
+#[cfg(feature = "relative_eq")]
 impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for Line<T> {
     type Epsilon = T;
 
@@ -200,6 +211,18 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for Line<T> {
         T::default_epsilon()
     }
 
+    /// Equality assertion within a relative limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{Coordinate, Line};
+    ///
+    /// let a = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. });
+    /// let b = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1.001, y: 1. });
+    ///
+    /// approx::assert_relative_eq!(a, b, epsilon=0.1)
+    /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
         self.start.abs_diff_eq(&other.start, epsilon) && self.end.abs_diff_eq(&other.end, epsilon)
@@ -234,8 +257,6 @@ where
 mod test {
     use super::*;
 
-    use super::{Coordinate, Line, Point};
-    use approx::AbsDiffEq;
     #[test]
     fn test_abs_diff_eq() {
         let delta = 1e-6;
