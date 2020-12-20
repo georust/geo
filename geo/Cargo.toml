@@ -1,4 +1,4 @@
-[package]
+    [package]
 name = "geo"
 description = "Geospatial primitives and algorithms"
 version = "0.16.0"
@@ -35,7 +35,7 @@ use-serde = ["serde", "geo-types/serde"]
 [dev-dependencies]
 approx = "0.4.0"
 criterion = { version = "0.3" }
-rand = "0.7.3"
+rand = "0.8.0"
 
 [[bench]]
 name = "area"
