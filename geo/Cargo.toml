@@ -1,4 +1,4 @@
-    [package]
+[package]
 name = "geo"
 description = "Geospatial primitives and algorithms"
 version = "0.16.0"
