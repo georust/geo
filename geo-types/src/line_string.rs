@@ -319,7 +319,7 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        if self.num_coords() != other.num_coords() {
+        if self.0.len() != other.0.len() {
             return false;
         }
 
@@ -359,7 +359,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for LineString<T> {
     /// approx::assert_relative_eq!(a, b, epsilon=0.1)
     /// ```
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        if self.num_coords() != other.num_coords() {
+        if self.0.len() != other.0.len() {
             return false;
         }
         let mut points_zipper = self.points_iter().zip(other.points_iter());
