@@ -1,6 +1,6 @@
 use crate::{CoordinateType, Point};
 
-#[cfg(any(test, feature = "relative_eq"))]
+#[cfg(any(feature = "relative_eq", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
 #[cfg(test)]
@@ -243,7 +243,7 @@ impl<T: CoordinateType> Zero for Coordinate<T> {
     }
 }
 
-#[cfg(any(test, feature = "relative_eq"))]
+#[cfg(feature = "relative_eq")]
 impl<T: CoordinateType + AbsDiffEq> AbsDiffEq for Coordinate<T>
 where
     T::Epsilon: Copy,
@@ -261,7 +261,7 @@ where
     }
 }
 
-#[cfg(any(test, feature = "relative_eq"))]
+#[cfg(feature = "relative_eq")]
 impl<T: CoordinateType + RelativeEq> RelativeEq for Coordinate<T>
 where
     T::Epsilon: Copy,

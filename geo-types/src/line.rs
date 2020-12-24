@@ -1,7 +1,7 @@
 use crate::{Coordinate, CoordinateType, Point};
-#[cfg(any(feature = "relative_eq", test))]
+#[cfg(feature = "relative_eq")]
 use approx::AbsDiffEq;
-#[cfg(any(feature = "relative_eq", test))]
+#[cfg(feature = "relative_eq")]
 use approx::RelativeEq;
 
 /// A line segment made up of exactly two

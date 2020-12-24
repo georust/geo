@@ -1,5 +1,5 @@
 use crate::{CoordinateType, Point};
-#[cfg(any(feature = "relative_eq"))]
+#[cfg(feature = "relative_eq")]
 use approx::AbsDiffEq;
 #[cfg(feature = "relative_eq")]
 use approx::RelativeEq;

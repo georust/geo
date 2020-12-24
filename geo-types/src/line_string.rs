@@ -405,7 +405,7 @@ where
     }
 }
 
-#[cfg(all(test, feature = "relative_eq"))]
+#[cfg(test)]
 mod test {
     use super::*;
 
