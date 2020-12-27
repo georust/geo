@@ -49,6 +49,7 @@
 //!
 //! ## Query
 //!
+//! - [`Bearing`]:
 //! - [`ClosestPoint`]:
 //! - [`Contains`]:
 //! - [`CoordinatePosition`]:
@@ -68,15 +69,17 @@
 //! - [`MapCoordsInplace`]:
 //! - [`TryMapCoords`]:
 //!
+//! ## Boundary
+//!
+//! - [`BoundingRect`]:
+//! - [`ConcaveHull`]:
+//! - [`ConvexHull`]:
+//! - [`ExtremePoints`]:
+//!
 //! ## Unsorted
 //!
-//! - [`Bearing`]:
-//! - [`BoundingRect`]:
 //! - [`Centroid`]:
-//! - [`ConvexHull`]:
 //! - [`CoordsIter`]:
-//! - [`HasDimensions`]:
-//! - [`ExtremePoints`]:
 //! - [`HasDimensions`]:
 //! - [`HaversineDestination`]:
 //! - [`HaversineIntermediate`]:
