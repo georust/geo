@@ -12,7 +12,7 @@
 //! - **[`Line`]**: A line segment represented by two [`Coordinate`]s
 //! - **[`LineString`]**: A series of contiguous line segments represented by two or more [`Coordinate`]s
 //! - **[`MultiLineString`]**: A collection of [`LineString`]s
-//! - **[`Polygon`]**: A bounded area represented by one [`LineString`] exeterior ring, and zero or more [`LineString`] interior rings
+//! - **[`Polygon`]**: A bounded area represented by one [`LineString`] exterior ring, and zero or more [`LineString`] interior rings
 //! - **[`MultiPolygon`]**: A collection of [`Polygon`]s
 //! - **[`Rect`]**: An axis-aligned bounded rectangle represented by minimum and maximum [`Coordinate`]s
 //! - **[`Triangle`]**: A bounded area represented by three [`Coordinate`] vertices
