@@ -59,7 +59,7 @@ fn main() -> std::io::Result<()> {
         "<svg viewBox=\"50 50 {} {}\" xmlns=\"http://www.w3.org/2000/svg\">\n",
         width, height
     );
-    let loaded_v = include!("../src/algorithm/test_fixtures/norway_main.rs");
+    let loaded_v = include!("../src/test_fixtures/norway_main.rs");
     let v: Vec<_> = loaded_v
         .iter()
         .map(|loaded_point| Point::new(loaded_point[0], loaded_point[1]))

@@ -1,7 +1,7 @@
 use crate::algorithm::convex_hull::qhull;
 use crate::algorithm::euclidean_distance::EuclideanDistance;
 use crate::algorithm::euclidean_length::EuclideanLength;
-use crate::algorithm::kernels::HasKernel;
+use crate::kernels::HasKernel;
 use crate::prelude::Centroid;
 use crate::utils::partial_min;
 use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};

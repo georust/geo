@@ -1,5 +1,5 @@
 use super::{swap_remove_to_first, trivial_hull};
-use crate::algorithm::kernels::*;
+use crate::kernels::*;
 use crate::{Coordinate, LineString};
 
 /// The [Graham's scan] algorithm to compute the convex hull

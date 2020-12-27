@@ -1,7 +1,7 @@
 use crate::algorithm::contains::Contains;
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::algorithm::intersects::Intersects;
-use crate::algorithm::polygon_distance_fast_path::*;
+use crate::polygon_distance_fast_path::*;
 use crate::kernels::*;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
 use crate::{

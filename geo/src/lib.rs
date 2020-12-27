@@ -1,4 +1,64 @@
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
+//! # Types
+//!
+//! TODO: diagram
+//! https://shapely.readthedocs.io/en/stable/manual.html#linestrings
+//!
+//! - [`Coordinate`]: 
+//! - [`Point`]: 
+//! - [`MultiPoint`]: 
+//! - [`Line`]: 
+//! - [`LineString`]: 
+//! - [`MultiLineString`]: 
+//! - [`Polygon`]: 
+//! - [`MultiPolygon`]: 
+//! - [`Rect`]: 
+//! - [`Triangle`]: 
+//! - [`GeometryCollection`]: 
+//!
+//! # Algorithms
+//!
+//! - [`Area`]:
+//! - [`Bearing`]:
+//! - [`BoundingRect`]:
+//! - [`Centroid`]:
+//! - [`ChamberlainDuquetteArea`]:
+//! - [`ClosestPoint`]:
+//! - [`Contains`]:
+//! - [`ConvexHull`]:
+//! - [`CoordinatePosition`]:
+//! - [`CoordsIter`]:
+//! - [`HasDimensions`]:
+//! - [`EuclideanDistance`]:
+//! - [`EuclideanLength`]:
+//! - [`ExtremePoints`]:
+//! - [`FrechetDistance`]:
+//! - [`GeodesicDistance`]:
+//! - [`GeodesicLength`]:
+//! - [`HasDimensions`]:
+//! - [`HaversineDestination`]:
+//! - [`HaversineDistance`]:
+//! - [`HaversineIntermediate`]:
+//! - [`HaversineLength`]:
+//! - [`Intersects`]:
+//! - [`IsConvex`]:
+//! - [`LineInterpolatePoint`]:
+//! - [`LineLocatePoint`]:
+//! - [`MapCoords`]:
+//! - [`Orient`]:
+//! - [`Proj`]:
+//! - [`Rotate`]
+//! - [`RotatePoint`]:
+//! - [`Simplify`]:
+//! - [`SimplifyVW`]:
+//! - [`Translate`]:
+//! - [`VincentyDistance`]:
+//! - [`VincentyLength`]:
+//! - [`WindingOrder`]
+//!
+//!
+//!
+//!
 //! The `geo` crate provides geospatial primitive types such as `Coordinate`, `Point`, `LineString`, and `Polygon` as
 //! well as their `Multi–` equivalents, and provides algorithms and operations such as:
 //!   - Area and centroid calculation
@@ -44,10 +104,9 @@ extern crate num_traits;
 #[cfg(feature = "use-serde")]
 #[macro_use]
 extern crate serde;
-#[cfg(feature = "use-proj")]
-extern crate proj;
 extern crate rstar;
 
+#[allow(deprecated)]
 pub use crate::algorithm::*;
 #[allow(deprecated)]
 pub use crate::traits::ToGeo;
@@ -58,8 +117,127 @@ pub use geo_types::{
     LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
+/// Kernels to compute various predicates
+pub(crate) mod kernels;
+
+/// Calculate the area of the surface of a `Geometry`.
+pub mod area;
+/// Calculate the bearing to another `Point`, in degrees.
+pub mod bearing;
+/// Calculate the bounding rectangle of a `Geometry`.
+pub mod bounding_rect;
+/// Calculate the centroid of a `Geometry`.
+pub mod centroid;
+/// Calculate the signed approximate geodesic area of a `Geometry`.
+pub mod chamberlain_duquette_area;
+/// Calculate the closest `Point` between a `Geometry` and an input `Point`.
+pub mod closest_point;
+/// Calculate the concave hull of a `Geometry`.
+pub mod concave_hull;
+/// Determine whether `Geometry` `A` is completely enclosed by `Geometry` `B`.
+pub mod contains;
+/// Calculate the convex hull of a `Geometry`.
+pub mod convex_hull;
+/// Determine whether a `Coordinate` lies inside, outside, or on the boundary of a geometry.
+pub mod coordinate_position;
+/// Iterate over geometry coordinates.
+pub mod coords_iter;
+/// Dimensionality of a geometry and its boundary, based on OGC-SFA.
+pub mod dimensions;
+/// Calculate the minimum Euclidean distance between two `Geometries`.
+pub mod euclidean_distance;
+/// Calculate the length of a planar line between two `Geometries`.
+pub mod euclidean_length;
+/// Calculate the extreme indices of a `Polygon`, `MultiPolygon`, or `MultiPoint`.
+pub mod extremes;
+/// Calculate the Frechet distance between two `LineStrings`.
+pub mod frechet_distance;
+/// Calculate the Geodesic distance between two `Point`s.
+pub mod geodesic_distance;
+/// Calculate the Geodesic length of a line.
+pub mod geodesic_length;
+/// Calculate a destination `Point`, given a distance and a bearing.
+pub mod haversine_destination;
+/// Calculate the Haversine distance between two `Geometries`.
+pub mod haversine_distance;
+/// Calculate a new `Point` lying on a Great Circle arc between two `Point`s.
+pub mod haversine_intermediate;
+/// Calculate the Haversine length of a Line.
+pub mod haversine_length;
+/// Determine whether `Geometry` `A` intersects `Geometry` `B`.
+pub mod intersects;
+/// Determins whether a `LineString` is convex.
+pub mod is_convex;
+/// Interpolate a point along a `Line` or `LineString`.
+pub mod line_interpolate_point;
+/// Locate a point along a `Line` or `LineString`.
+pub mod line_locate_point;
+/// Apply a function to all `Coordinates` of a `Geometry`.
+pub mod map_coords;
+/// Orient a `Polygon`'s exterior and interior rings.
+pub mod orient;
+/// Helper functions for the "fast path" variant of the Polygon-Polygon Euclidean distance method.
+pub(crate) mod polygon_distance_fast_path;
+/// Coordinate projections and transformations using the current stable version of [PROJ](http://proj.org).
+#[cfg(feature = "use-proj")]
+pub mod proj;
+/// Rotate a `Geometry` around either its centroid or a `Point` by an angle given in degrees.
+pub mod rotate;
+/// Simplify `Geometries` using the Ramer-Douglas-Peucker algorithm.
+pub mod simplify;
+/// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
+pub mod simplifyvw;
+/// Translate a `Geometry` along the given offsets.
+pub mod translate;
+/// Calculate the Vincenty distance between two `Point`s.
+pub mod vincenty_distance;
+/// Calculate the Vincenty length of a `LineString`.
+pub mod vincenty_length;
+/// Calculate and work with the winding order of `Linestring`s.
+pub mod winding_order;
+
+#[deprecated(note = "TODO")]
 /// This module includes all the functions of geometric calculations
 pub mod algorithm;
+
+pub use area::Area;
+pub use bearing::Bearing;
+pub use bounding_rect::BoundingRect;
+pub use centroid::Centroid;
+pub use chamberlain_duquette_area::ChamberlainDuquetteArea;
+pub use closest_point::ClosestPoint;
+pub use concave_hull::ConcaveHull;
+pub use contains::Contains;
+pub use convex_hull::ConvexHull;
+pub use coordinate_position::CoordinatePosition;
+pub use coords_iter::CoordsIter;
+pub use dimensions::HasDimensions;
+pub use euclidean_distance::EuclideanDistance;
+pub use euclidean_length::EuclideanLength;
+pub use extremes::ExtremePoints;
+pub use frechet_distance::FrechetDistance;
+pub use geodesic_distance::GeodesicDistance;
+pub use geodesic_length::GeodesicLength;
+pub use haversine_destination::HaversineDestination;
+pub use haversine_distance::HaversineDistance;
+pub use haversine_intermediate::HaversineIntermediate;
+pub use haversine_length::HaversineLength;
+pub use intersects::Intersects;
+pub use is_convex::IsConvex;
+pub use line_interpolate_point::LineInterpolatePoint;
+pub use line_locate_point::LineLocatePoint;
+pub use map_coords::MapCoords;
+pub use orient::Orient;
+#[cfg(feature = "use-proj")]
+pub use crate::proj::Proj;
+pub use rotate::{Rotate, RotatePoint};
+pub use simplify::Simplify;
+pub use simplifyvw::SimplifyVW;
+pub use translate::Translate;
+pub use vincenty_distance::VincentyDistance;
+pub use vincenty_length::VincentyLength;
+pub use winding_order::WindingOrder;
+
 mod traits;
 mod types;
 mod utils;
@@ -90,35 +268,35 @@ const EARTH_FLATTENING: f64 =
 /// A prelude which re-exports the traits for manipulating objects in this
 /// crate. Typically imported with `use geo::prelude::*`.
 pub mod prelude {
-    pub use crate::algorithm::area::Area;
-    pub use crate::algorithm::bearing::Bearing;
-    pub use crate::algorithm::bounding_rect::BoundingRect;
-    pub use crate::algorithm::centroid::Centroid;
-    pub use crate::algorithm::chamberlain_duquette_area::ChamberlainDuquetteArea;
-    pub use crate::algorithm::closest_point::ClosestPoint;
-    pub use crate::algorithm::contains::Contains;
-    pub use crate::algorithm::convex_hull::ConvexHull;
-    pub use crate::algorithm::dimensions::HasDimensions;
-    pub use crate::algorithm::euclidean_distance::EuclideanDistance;
-    pub use crate::algorithm::euclidean_length::EuclideanLength;
-    pub use crate::algorithm::extremes::ExtremePoints;
-    pub use crate::algorithm::frechet_distance::FrechetDistance;
-    pub use crate::algorithm::geodesic_distance::GeodesicDistance;
-    pub use crate::algorithm::geodesic_length::GeodesicLength;
-    pub use crate::algorithm::haversine_destination::HaversineDestination;
-    pub use crate::algorithm::haversine_distance::HaversineDistance;
-    pub use crate::algorithm::haversine_intermediate::HaversineIntermediate;
-    pub use crate::algorithm::haversine_length::HaversineLength;
-    pub use crate::algorithm::intersects::Intersects;
-    pub use crate::algorithm::is_convex::IsConvex;
-    pub use crate::algorithm::map_coords::MapCoords;
-    pub use crate::algorithm::orient::Orient;
+    pub use crate::area::Area;
+    pub use crate::bearing::Bearing;
+    pub use crate::bounding_rect::BoundingRect;
+    pub use crate::centroid::Centroid;
+    pub use crate::chamberlain_duquette_area::ChamberlainDuquetteArea;
+    pub use crate::closest_point::ClosestPoint;
+    pub use crate::contains::Contains;
+    pub use crate::convex_hull::ConvexHull;
+    pub use crate::dimensions::HasDimensions;
+    pub use crate::euclidean_distance::EuclideanDistance;
+    pub use crate::euclidean_length::EuclideanLength;
+    pub use crate::extremes::ExtremePoints;
+    pub use crate::frechet_distance::FrechetDistance;
+    pub use crate::geodesic_distance::GeodesicDistance;
+    pub use crate::geodesic_length::GeodesicLength;
+    pub use crate::haversine_destination::HaversineDestination;
+    pub use crate::haversine_distance::HaversineDistance;
+    pub use crate::haversine_intermediate::HaversineIntermediate;
+    pub use crate::haversine_length::HaversineLength;
+    pub use crate::intersects::Intersects;
+    pub use crate::is_convex::IsConvex;
+    pub use crate::map_coords::MapCoords;
+    pub use crate::orient::Orient;
     #[cfg(feature = "use-proj")]
-    pub use crate::algorithm::proj::Proj;
-    pub use crate::algorithm::rotate::{Rotate, RotatePoint};
-    pub use crate::algorithm::simplify::Simplify;
-    pub use crate::algorithm::simplifyvw::SimplifyVW;
-    pub use crate::algorithm::translate::Translate;
-    pub use crate::algorithm::vincenty_distance::VincentyDistance;
-    pub use crate::algorithm::vincenty_length::VincentyLength;
+    pub use crate::proj::Proj;
+    pub use crate::rotate::{Rotate, RotatePoint};
+    pub use crate::simplify::Simplify;
+    pub use crate::simplifyvw::SimplifyVW;
+    pub use crate::translate::Translate;
+    pub use crate::vincenty_distance::VincentyDistance;
+    pub use crate::vincenty_length::VincentyLength;
 }

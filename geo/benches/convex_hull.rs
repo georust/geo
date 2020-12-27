@@ -21,7 +21,7 @@ pub fn uniform_points_in_range<S: CoordinateType + SampleUniform + Signed, R: Rn
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("convex hull f32", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/norway_main.rs");
+        let points = include!("../src/test_fixtures/norway_main.rs");
         let line_string = LineString::<f32>::from(points);
 
         bencher.iter(|| {
@@ -30,7 +30,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("convex hull f64", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/norway_main.rs");
+        let points = include!("../src/test_fixtures/norway_main.rs");
         let line_string = LineString::<f64>::from(points);
 
         bencher.iter(|| {
