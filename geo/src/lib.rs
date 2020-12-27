@@ -23,79 +23,79 @@
 //!
 //! ## Area
 //!
-//! - [`Area`]: Planar area of a geometry
-//! - [`ChamberlainDuquetteArea`]: Geodesic area of a geometry
+//! - **[`Area`]**: Planar area of a geometry
+//! - **[`ChamberlainDuquetteArea`]**: Geodesic area of a geometry
 //!
 //! ## Distance
 //!
-//! - [`EuclideanDistance`]: Euclidean distance between geometries
-//! - [`GeodesicDistance`]:
-//! - [`HaversineDistance`]:
-//! - [`VincentyDistance`]:
+//! - **[`EuclideanDistance`]**: Euclidean distance between geometries
+//! - **[`GeodesicDistance`]**:
+//! - **[`HaversineDistance`]**:
+//! - **[`VincentyDistance`]**:
 //!
 //! ## Length
 //!
-//! - [`EuclideanLength`]:
-//! - [`GeodesicLength`]:
-//! - [`HaversineLength`]:
-//! - [`VincentyLength`]:
+//! - **[`EuclideanLength`]**:
+//! - **[`GeodesicLength`]**:
+//! - **[`HaversineLength`]**:
+//! - **[`VincentyLength`]**:
 //!
 //! ## Simplify
 //!
-//! - [`Simplify`]:
-//! - [`SimplifyIdx`]:
-//! - [`SimplifyVW`]:
-//! - [`SimplifyVWPreserve`]:
-//! - [`SimplifyVwIdx`]:
+//! - **[`Simplify`]**:
+//! - **[`SimplifyIdx`]**:
+//! - **[`SimplifyVW`]**:
+//! - **[`SimplifyVWPreserve`]**:
+//! - **[`SimplifyVwIdx`]**:
 //!
 //! ## Query
 //!
-//! - [`Bearing`]:
-//! - [`ClosestPoint`]:
-//! - [`Contains`]:
-//! - [`CoordinatePosition`]:
-//! - [`Intersects`]:
-//! - [`IsConvex`]:
-//! - [`LineInterpolatePoint`]:
-//! - [`LineLocatePoint`]:
+//! - **[`Bearing`]**:
+//! - **[`ClosestPoint`]**:
+//! - **[`Contains`]**:
+//! - **[`CoordinatePosition`]**:
+//! - **[`Intersects`]**:
+//! - **[`IsConvex`]**:
+//! - **[`LineInterpolatePoint`]**:
+//! - **[`LineLocatePoint`]**:
 //!
 //! ## Similarity
 //!
-//! - [`FrechetDistance`]:
+//! - **[`FrechetDistance`]**:
 //!
 //! ## Winding
 //!
-//! - [`Orient`]:
-//! - [`WindingOrder`]
+//! - **[`Orient`]**:
+//! - **[`WindingOrder`]**
 //!
 //! ## Map
 //!
-//! - [`MapCoords`]:
-//! - [`MapCoordsInplace`]:
-//! - [`TryMapCoords`]:
+//! - **[`MapCoords`]**:
+//! - **[`MapCoordsInplace`]**:
+//! - **[`TryMapCoords`]**:
 //!
 //! ## Boundary
 //!
-//! - [`BoundingRect`]:
-//! - [`ConcaveHull`]:
-//! - [`ConvexHull`]:
-//! - [`ExtremePoints`]:
-//! - [`ExtremeIndices`]:
+//! - **[`BoundingRect`]**:
+//! - **[`ConcaveHull`]**:
+//! - **[`ConvexHull`]**:
+//! - **[`ExtremePoints`]**:
+//! - **[`ExtremeIndices`]**:
 //!
 //! ## Affine transformations
 //!
-//! - [`Rotate`]
-//! - [`RotatePoint`]:
-//! - [`Translate`]:
+//! - **[`Rotate`]**
+//! - **[`RotatePoint`]**:
+//! - **[`Translate`]**:
 //!
 //! ## Unsorted
 //!
-//! - [`Centroid`]:
-//! - [`CoordsIter`]:
-//! - [`HasDimensions`]:
-//! - [`HaversineDestination`]:
-//! - [`HaversineIntermediate`]:
-//! - [`Proj`]:
+//! - **[`Centroid`]**:
+//! - **[`CoordsIter`]**:
+//! - **[`HasDimensions`]**:
+//! - **[`HaversineDestination`]**:
+//! - **[`HaversineIntermediate`]**:
+//! - **[`Proj`]**:
 //!
 //! --------
 //!
