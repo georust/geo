@@ -1,21 +1,23 @@
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
+//! The `geo` crate provides geospatial primitive types and algorithms.
+//!
 //! # Types
 //!
 //! TODO: diagram
 //! https://shapely.readthedocs.io/en/stable/manual.html#linestrings
 //!
-//! - [`Coordinate`]:
-//! - [`Point`]:
-//! - [`MultiPoint`]: A collection of `Point`s
-//! - [`Line`]:
-//! - [`LineString`]:
-//! - [`MultiLineString`]: A collection of `LineString`s
-//! - [`Polygon`]:
-//! - [`MultiPolygon`]: A collection of `Polygon`s
-//! - [`Rect`]:
-//! - [`Triangle`]:
-//! - [`GeometryCollection`]:
-//! - [`Geometry`]:
+//! - **[`Coordinate`]**:
+//! - **[`Point`]**:
+//! - **[`MultiPoint`]**: A collection of [`Point`]s
+//! - **[`Line`]**:
+//! - **[`LineString`]**:
+//! - **[`MultiLineString`]**: A collection of [`LineString`]s
+//! - **[`Polygon`]**:
+//! - **[`MultiPolygon`]**: A collection of [`Polygon`]s
+//! - **[`Rect`]**: An axis-aligned bounded two-dimensional rectangle defined by minimum and maximum [`Coordinate`]s
+//! - **[`Triangle`]**: A bounded two-dimensional area with three [`Coordinate`] vertices
+//! - **[`GeometryCollection`]**: A collection of [`Geometry`]s
+//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coordinate`]
 //!
 //! # Algorithms
 //!
@@ -80,6 +82,12 @@
 //! - [`ExtremePoints`]:
 //! - [`ExtremeIndices`]:
 //!
+//! ## Affine transformations
+//!
+//! - [`Rotate`]
+//! - [`RotatePoint`]:
+//! - [`Translate`]:
+//!
 //! ## Unsorted
 //!
 //! - [`Centroid`]:
@@ -88,22 +96,11 @@
 //! - [`HaversineDestination`]:
 //! - [`HaversineIntermediate`]:
 //! - [`Proj`]:
-//! - [`Rotate`]
-//! - [`RotatePoint`]:
-//! - [`Translate`]:
 //!
 //! --------
 //!
 //!
 //!
-//!
-//! The `geo` crate provides geospatial primitive types such as `Coordinate`, `Point`, `LineString`, and `Polygon` as
-//! well as their `Multi–` equivalents, and provides algorithms and operations such as:
-//!   - Area and centroid calculation
-//!   - Simplification and convex hull operations
-//!   - Distance measurement
-//!   - Intersection checks
-//!   - Affine transforms such as rotation and translation.
 //!
 //! The primitive types also provide the basis for other functionality in the `Geo` ecosystem, including:
 //!   - Serialization to and from [GeoJSON](https://docs.rs/geojson) and [WKT](https://docs.rs/wkt)
