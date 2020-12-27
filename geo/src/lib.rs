@@ -57,6 +57,11 @@
 //! - [`LineInterpolatePoint`]:
 //! - [`LineLocatePoint`]:
 //!
+//! ## Winding
+//!
+//! - [`Orient`]:
+//! - [`WindingOrder`]
+//!
 //! ## Map
 //!
 //! - [`MapCoords`]:
@@ -75,12 +80,10 @@
 //! - [`HasDimensions`]:
 //! - [`HaversineDestination`]:
 //! - [`HaversineIntermediate`]:
-//! - [`Orient`]:
 //! - [`Proj`]:
 //! - [`Rotate`]
 //! - [`RotatePoint`]:
 //! - [`Translate`]:
-//! - [`WindingOrder`]
 //!
 //! --------
 //!
