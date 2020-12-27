@@ -6,16 +6,16 @@
 //! TODO: diagram
 //! https://shapely.readthedocs.io/en/stable/manual.html#linestrings
 //!
-//! - **[`Coordinate`]**:
+//! - **[`Coordinate`]**: A two-dimensional coordinate all other geometry types are based on
 //! - **[`Point`]**: A single point represented by one [`Coordinate`]
 //! - **[`MultiPoint`]**: A collection of [`Point`]s
 //! - **[`Line`]**: A line segment represented by two [`Coordinate`]s
 //! - **[`LineString`]**: A series of contiguous line segments represented by two or more [`Coordinate`]s
 //! - **[`MultiLineString`]**: A collection of [`LineString`]s
-//! - **[`Polygon`]**: A bounded two-dimensional area represented by one [`LineString`] exeterior ring, and zero or more [`LineString`] interior rings
+//! - **[`Polygon`]**: A bounded area represented by one [`LineString`] exeterior ring, and zero or more [`LineString`] interior rings
 //! - **[`MultiPolygon`]**: A collection of [`Polygon`]s
-//! - **[`Rect`]**: An axis-aligned bounded two-dimensional rectangle represented by minimum and maximum [`Coordinate`]s
-//! - **[`Triangle`]**: A bounded two-dimensional area represented by three [`Coordinate`] vertices
+//! - **[`Rect`]**: An axis-aligned bounded rectangle represented by minimum and maximum [`Coordinate`]s
+//! - **[`Triangle`]**: A bounded area represented by three [`Coordinate`] vertices
 //! - **[`GeometryCollection`]**: A collection of [`Geometry`]s
 //! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coordinate`]
 //!
