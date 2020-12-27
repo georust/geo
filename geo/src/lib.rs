@@ -39,7 +39,7 @@
 //! - [`HaversineLength`]:
 //! - [`VincentyLength`]:
 //!
-//! ## Simplification
+//! ## Simplify
 //!
 //! - [`Simplify`]:
 //! - [`SimplifyIdx`]:
@@ -47,34 +47,42 @@
 //! - [`SimplifyVWPreserve`]:
 //! - [`SimplifyVwIdx`]:
 //!
+//! ## Query
+//!
+//! - [`ClosestPoint`]:
+//! - [`Contains`]:
+//! - [`CoordinatePosition`]:
+//! - [`Intersects`]:
+//! - [`IsConvex`]:
+//! - [`LineInterpolatePoint`]:
+//! - [`LineLocatePoint`]:
+//!
+//! ## Map
+//!
+//! - [`MapCoords`]:
+//! - [`MapCoordsInplace`]:
+//! - [`TryMapCoords`]:
+//!
 //! ## Unsorted
 //!
 //! - [`Bearing`]:
 //! - [`BoundingRect`]:
 //! - [`Centroid`]:
-//! - [`ClosestPoint`]:
-//! - [`Contains`]:
 //! - [`ConvexHull`]:
-//! - [`CoordinatePosition`]:
 //! - [`CoordsIter`]:
 //! - [`HasDimensions`]:
 //! - [`ExtremePoints`]:
 //! - [`HasDimensions`]:
 //! - [`HaversineDestination`]:
 //! - [`HaversineIntermediate`]:
-//! - [`Intersects`]:
-//! - [`IsConvex`]:
-//! - [`LineInterpolatePoint`]:
-//! - [`LineLocatePoint`]:
-//! - [`MapCoords`]:
-//! - [`MapCoordsInplace`]:
 //! - [`Orient`]:
 //! - [`Proj`]:
 //! - [`Rotate`]
 //! - [`RotatePoint`]:
 //! - [`Translate`]:
-//! - [`TryMapCoords`]:
 //! - [`WindingOrder`]
+//!
+//! --------
 //!
 //!
 //!
