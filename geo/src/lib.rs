@@ -4,17 +4,18 @@
 //! TODO: diagram
 //! https://shapely.readthedocs.io/en/stable/manual.html#linestrings
 //!
-//! - [`Coordinate`]: 
-//! - [`Point`]: 
-//! - [`MultiPoint`]: 
-//! - [`Line`]: 
-//! - [`LineString`]: 
-//! - [`MultiLineString`]: 
-//! - [`Polygon`]: 
-//! - [`MultiPolygon`]: 
-//! - [`Rect`]: 
-//! - [`Triangle`]: 
-//! - [`GeometryCollection`]: 
+//! - [`Coordinate`]:
+//! - [`Point`]:
+//! - [`MultiPoint`]: A collection of `Point`s
+//! - [`Line`]:
+//! - [`LineString`]:
+//! - [`MultiLineString`]: A collection of `LineString`s
+//! - [`Polygon`]:
+//! - [`MultiPolygon`]: A collection of `Polygon`s
+//! - [`Rect`]:
+//! - [`Triangle`]:
+//! - [`GeometryCollection`]:
+//! - [`Geometry`]:
 //!
 //! # Algorithms
 //!
