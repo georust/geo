@@ -1,6 +1,4 @@
-use geo::algorithm::concave_hull::ConcaveHull;
-use geo::algorithm::convex_hull::ConvexHull;
-use geo::{Coordinate, Point};
+use geo::{ConcaveHull, ConvexHull, Coordinate, Point};
 use geo_types::MultiPoint;
 use std::fs::File;
 use std::io::Write;

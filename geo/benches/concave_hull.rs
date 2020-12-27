@@ -3,8 +3,7 @@ extern crate criterion;
 extern crate geo;
 
 use criterion::Criterion;
-use geo::algorithm::concave_hull::ConcaveHull;
-use geo::{Coordinate, CoordinateType, LineString};
+use geo::{ConcaveHull, Coordinate, CoordinateType, LineString};
 
 use num_traits::Signed;
 use rand::distributions::uniform::SampleUniform;

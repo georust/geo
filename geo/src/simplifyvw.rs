@@ -439,8 +439,7 @@ pub trait SimplifyVW<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::simplifyvw::SimplifyVW;
-    /// use geo::line_string;
+    /// use geo::{line_string, SimplifyVW};
     ///
     /// let line_string = line_string![
     ///     (x: 5.0, y: 2.0),
@@ -479,8 +478,7 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::simplifyvw::SimplifyVwIdx;
-    /// use geo::line_string;
+    /// use geo::{line_string, SimplifyVwIdx};
     ///
     /// let line_string = line_string![
     ///     (x: 5.0, y: 2.0),
@@ -534,8 +532,7 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::simplifyvw::SimplifyVWPreserve;
-    /// use geo::line_string;
+    /// use geo::{line_string, SimplifyVWPreserve};
     ///
     /// let line_string = line_string![
     ///     (x: 10., y: 60.),

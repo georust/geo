@@ -45,13 +45,18 @@
 //! - [`LineInterpolatePoint`]:
 //! - [`LineLocatePoint`]:
 //! - [`MapCoords`]:
+//! - [`MapCoordsInplace`]:
 //! - [`Orient`]:
 //! - [`Proj`]:
 //! - [`Rotate`]
 //! - [`RotatePoint`]:
 //! - [`Simplify`]:
+//! - [`SimplifyIdx`]:
 //! - [`SimplifyVW`]:
+//! - [`SimplifyVWPreserve`]:
+//! - [`SimplifyVwIdx`]:
 //! - [`Translate`]:
+//! - [`TryMapCoords`]:
 //! - [`VincentyDistance`]:
 //! - [`VincentyLength`]:
 //! - [`WindingOrder`]
@@ -226,13 +231,13 @@ pub use intersects::Intersects;
 pub use is_convex::IsConvex;
 pub use line_interpolate_point::LineInterpolatePoint;
 pub use line_locate_point::LineLocatePoint;
-pub use map_coords::MapCoords;
+pub use map_coords::{MapCoords, MapCoordsInplace, TryMapCoords};
 pub use orient::Orient;
 #[cfg(feature = "use-proj")]
 pub use crate::proj::Proj;
 pub use rotate::{Rotate, RotatePoint};
-pub use simplify::Simplify;
-pub use simplifyvw::SimplifyVW;
+pub use simplify::{Simplify, SimplifyIdx};
+pub use simplifyvw::{SimplifyVW, SimplifyVWPreserve, SimplifyVwIdx};
 pub use translate::Translate;
 pub use vincenty_distance::VincentyDistance;
 pub use vincenty_length::VincentyLength;

@@ -21,8 +21,7 @@ use std::collections::VecDeque;
 ///
 /// # Examples
 /// ```
-/// use geo::{line_string, polygon};
-/// use geo::algorithm::concave_hull::ConcaveHull;
+/// use geo::{ConcaveHull, line_string, polygon};
 ///
 /// // a square shape
 /// let poly = polygon![

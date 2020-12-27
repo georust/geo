@@ -11,8 +11,7 @@ pub trait HaversineIntermediate<T: Float> {
     /// ```
     /// # #[macro_use] extern crate approx;
     /// #
-    /// use geo::algorithm::haversine_intermediate::HaversineIntermediate;
-    /// use geo::Point;
+    /// use geo::{HaversineIntermediate, Point};
     ///
     /// let p1 = Point::<f64>::new(10.0, 20.0);
     /// let p2 = Point::<f64>::new(125.0, 25.0);

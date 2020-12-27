@@ -15,8 +15,7 @@ use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, 
 /// # Examples
 ///
 /// ```
-/// use geo::algorithm::centroid::Centroid;
-/// use geo::{point, polygon};
+/// use geo::{Centroid, point, polygon};
 ///
 /// // rhombus shaped polygon
 /// let polygon = polygon![
@@ -40,8 +39,7 @@ pub trait Centroid {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::centroid::Centroid;
-    /// use geo::{line_string, point};
+    /// use geo::{Centroid, line_string, point};
     ///
     /// let line_string = line_string![
     ///     (x: 40.02f64, y: 116.34),
@@ -321,8 +319,7 @@ where
 
 ///
 /// ```
-/// use geo::algorithm::centroid::Centroid;
-/// use geo::{MultiPoint, Point};
+/// use geo::{Centroid, MultiPoint, Point};
 ///
 /// let empty: Vec<Point<f64>> = Vec::new();
 /// let empty_multi_points: MultiPoint<_> = empty.into();

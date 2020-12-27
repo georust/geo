@@ -16,8 +16,7 @@ pub trait HaversineDestination<T: Float> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::haversine_destination::HaversineDestination;
-    /// use geo::Point;
+    /// use geo::{HaversineDestination, Point};
     ///
     /// let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
     /// let p_2 = p_1.haversine_destination(45., 10000.);

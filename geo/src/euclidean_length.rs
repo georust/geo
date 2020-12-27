@@ -11,8 +11,7 @@ pub trait EuclideanLength<T, RHS = Self> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::euclidean_length::EuclideanLength;
-    /// use geo::line_string;
+    /// use geo::{EuclideanLength, line_string};
     ///
     /// let line_string = line_string![
     ///     (x: 40.02f64, y: 116.34),

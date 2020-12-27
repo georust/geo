@@ -7,8 +7,7 @@ pub trait Translate<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::translate::Translate;
-    /// use geo::line_string;
+    /// use geo::{line_string, Translate};
     ///
     /// let ls = line_string![
     ///     (x: 0.0, y: 0.0),

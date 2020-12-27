@@ -14,8 +14,7 @@ use crate::*;
 /// # Examples
 ///
 /// ```
-/// use geo::algorithm::intersects::Intersects;
-/// use geo::line_string;
+/// use geo::{Intersects, line_string};
 ///
 /// let line_string_a = line_string![
 ///     (x: 3., y: 2.),
