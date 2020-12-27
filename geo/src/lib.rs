@@ -18,28 +18,49 @@
 //!
 //! # Algorithms
 //!
+//! ## Area
+//!
 //! - [`Area`]:
+//! - [`ChamberlainDuquetteArea`]:
+//!
+//! ## Distance
+//!
+//! - [`EuclideanDistance`]:
+//! - [`FrechetDistance`]:
+//! - [`GeodesicDistance`]:
+//! - [`HaversineDistance`]:
+//! - [`VincentyDistance`]:
+//!
+//! ## Length
+//!
+//! - [`EuclideanLength`]:
+//! - [`GeodesicLength`]:
+//! - [`HaversineLength`]:
+//! - [`VincentyLength`]:
+//!
+//! ## Simplification
+//!
+//! - [`Simplify`]:
+//! - [`SimplifyIdx`]:
+//! - [`SimplifyVW`]:
+//! - [`SimplifyVWPreserve`]:
+//! - [`SimplifyVwIdx`]:
+//!
+//! ## Unsorted
+//!
 //! - [`Bearing`]:
 //! - [`BoundingRect`]:
 //! - [`Centroid`]:
-//! - [`ChamberlainDuquetteArea`]:
 //! - [`ClosestPoint`]:
 //! - [`Contains`]:
 //! - [`ConvexHull`]:
 //! - [`CoordinatePosition`]:
 //! - [`CoordsIter`]:
 //! - [`HasDimensions`]:
-//! - [`EuclideanDistance`]:
-//! - [`EuclideanLength`]:
 //! - [`ExtremePoints`]:
-//! - [`FrechetDistance`]:
-//! - [`GeodesicDistance`]:
-//! - [`GeodesicLength`]:
 //! - [`HasDimensions`]:
 //! - [`HaversineDestination`]:
-//! - [`HaversineDistance`]:
 //! - [`HaversineIntermediate`]:
-//! - [`HaversineLength`]:
 //! - [`Intersects`]:
 //! - [`IsConvex`]:
 //! - [`LineInterpolatePoint`]:
@@ -50,15 +71,8 @@
 //! - [`Proj`]:
 //! - [`Rotate`]
 //! - [`RotatePoint`]:
-//! - [`Simplify`]:
-//! - [`SimplifyIdx`]:
-//! - [`SimplifyVW`]:
-//! - [`SimplifyVWPreserve`]:
-//! - [`SimplifyVwIdx`]:
 //! - [`Translate`]:
 //! - [`TryMapCoords`]:
-//! - [`VincentyDistance`]:
-//! - [`VincentyLength`]:
 //! - [`WindingOrder`]
 //!
 //!
