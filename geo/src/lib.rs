@@ -21,13 +21,12 @@
 //!
 //! ## Area
 //!
-//! - [`Area`]:
-//! - [`ChamberlainDuquetteArea`]:
+//! - [`Area`]: Planar area of a geometry
+//! - [`ChamberlainDuquetteArea`]: Geodesic area of a geometry
 //!
 //! ## Distance
 //!
-//! - [`EuclideanDistance`]:
-//! - [`FrechetDistance`]:
+//! - [`EuclideanDistance`]: Euclidean distance between geometries
 //! - [`GeodesicDistance`]:
 //! - [`HaversineDistance`]:
 //! - [`VincentyDistance`]:
@@ -58,6 +57,10 @@
 //! - [`LineInterpolatePoint`]:
 //! - [`LineLocatePoint`]:
 //!
+//! ## Similarity
+//!
+//! - [`FrechetDistance`]:
+//!
 //! ## Winding
 //!
 //! - [`Orient`]:
@@ -75,6 +78,7 @@
 //! - [`ConcaveHull`]:
 //! - [`ConvexHull`]:
 //! - [`ExtremePoints`]:
+//! - [`ExtremeIndices`]:
 //!
 //! ## Unsorted
 //!
@@ -248,7 +252,7 @@ pub use coords_iter::CoordsIter;
 pub use dimensions::HasDimensions;
 pub use euclidean_distance::EuclideanDistance;
 pub use euclidean_length::EuclideanLength;
-pub use extremes::ExtremePoints;
+pub use extremes::{ExtremeIndices, ExtremePoints};
 pub use frechet_distance::FrechetDistance;
 pub use geodesic_distance::GeodesicDistance;
 pub use geodesic_length::GeodesicLength;
