@@ -122,3 +122,6 @@ pub mod prelude {
     pub use crate::algorithm::vincenty_distance::VincentyDistance;
     pub use crate::algorithm::vincenty_length::VincentyLength;
 }
+
+pub trait Float: num_traits::Float + CoordinateType + algorithm::kernels::HasKernel {}
+impl<T> Float for T where T: num_traits::Float + CoordinateType + algorithm::kernels::HasKernel {}
