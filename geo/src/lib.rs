@@ -23,14 +23,14 @@
 //!
 //! ## Area
 //!
-//! - **[`Area`]**: Planar area of a geometry
-//! - **[`ChamberlainDuquetteArea`]**: Geodesic area of a geometry
+//! - **[`Area`]**: Planar area of geometries
+//! - **[`ChamberlainDuquetteArea`]**: Geodesic area of geometries
 //!
 //! ## Distance
 //!
 //! - **[`EuclideanDistance`]**: Euclidean distance between geometries
-//! - **[`GeodesicDistance`]**:
-//! - **[`HaversineDistance`]**:
+//! - **[`GeodesicDistance`]**: Geodesic distance between geometries
+//! - **[`HaversineDistance`]**: Haversine distance between geometries
 //! - **[`VincentyDistance`]**:
 //!
 //! ## Length
@@ -42,7 +42,7 @@
 //!
 //! ## Simplify
 //!
-//! - **[`Simplify`]**:
+//! - **[`Simplify`]**: Simplify geometries with the Ramer–Douglas–Peucker algorithm
 //! - **[`SimplifyIdx`]**:
 //! - **[`SimplifyVW`]**:
 //! - **[`SimplifyVWPreserve`]**:
