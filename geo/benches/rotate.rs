@@ -12,7 +12,9 @@ fn criterion_benchmark(c: &mut Criterion) {
         let line_string = LineString::<f32>::from(points);
 
         bencher.iter(|| {
-            line_string.rotate(180.);
+            criterion::black_box(
+                criterion::black_box(&line_string).rotate(criterion::black_box(180.)),
+            );
         });
     });
 
@@ -21,7 +23,9 @@ fn criterion_benchmark(c: &mut Criterion) {
         let line_string = LineString::<f64>::from(points);
 
         bencher.iter(|| {
-            line_string.rotate(180.);
+            criterion::black_box(
+                criterion::black_box(&line_string).rotate(criterion::black_box(180.)),
+            );
         });
     });
 }

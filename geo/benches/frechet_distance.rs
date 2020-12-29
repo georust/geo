@@ -22,7 +22,9 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         );
 
         bencher.iter(|| {
-            let _ = ls_a.frechet_distance(&ls_b);
+            criterion::black_box(
+                criterion::black_box(&ls_a).frechet_distance(criterion::black_box(&ls_b)),
+            );
         });
     });
 
@@ -43,7 +45,9 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         );
 
         bencher.iter(|| {
-            let _ = ls_a.frechet_distance(&ls_b);
+            criterion::black_box(
+                criterion::black_box(&ls_a).frechet_distance(criterion::black_box(&ls_b)),
+            );
         });
     });
 }

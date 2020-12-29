@@ -10,7 +10,9 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         let b = geo::Point::<f64>::new(16.372477, 48.208810);
 
         bencher.iter(|| {
-            let _ = a.geodesic_distance(&b);
+            criterion::black_box(
+                criterion::black_box(&a).geodesic_distance(criterion::black_box(&b)),
+            );
         });
     });
 }

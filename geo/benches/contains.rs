@@ -17,7 +17,9 @@ fn criterion_benchmark(c: &mut Criterion) {
         ];
         let in_candidate = geo::Point::new(0.5, 0.1);
         bencher.iter(|| {
-            polygon.contains(&in_candidate);
+            criterion::black_box(
+                criterion::black_box(&polygon).contains(criterion::black_box(&in_candidate)),
+            );
         });
     });
 
@@ -30,7 +32,9 @@ fn criterion_benchmark(c: &mut Criterion) {
         ];
         let out_candidate = geo::Point::new(2.0, 2.0);
         bencher.iter(|| {
-            polygon.contains(&out_candidate);
+            criterion::black_box(
+                criterion::black_box(&polygon).contains(criterion::black_box(&out_candidate)),
+            );
         });
     });
 }
