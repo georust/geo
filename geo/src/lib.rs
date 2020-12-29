@@ -30,22 +30,22 @@
 //!
 //! - **[`EuclideanDistance`]**: Calculate the euclidean distance between geometries
 //! - **[`GeodesicDistance`]**: Calculate the geodesic distance between geometries using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
-//! - **[`HaversineDistance`]**: Calculate the geodesic distance between geometries using haversine
+//! - **[`HaversineDistance`]**: Calculate the geodesic distance between geometries using the haversine formula
 //! - **[`VincentyDistance`]**: Calculate the geodesic distance between geometries using Vincenty’s formula
 //!
 //! ## Length
 //!
-//! - **[`EuclideanLength`]**:
-//! - **[`GeodesicLength`]**:
-//! - **[`HaversineLength`]**:
-//! - **[`VincentyLength`]**:
+//! - **[`EuclideanLength`]**: Calculate the euclidean length of a geometry
+//! - **[`GeodesicLength`]**: Calculate the geodesic length of a geometry using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
+//! - **[`HaversineLength`]**: Calculate the geodesic length of a geometry using the haversine formula
+//! - **[`VincentyLength`]**: Calculate the geodesic length of a geometry using Vincenty’s formula
 //!
 //! ## Simplify
 //!
-//! - **[`Simplify`]**: Simplify geometries with the Ramer–Douglas–Peucker algorithm
+//! - **[`Simplify`]**: Simplify a geometry using the Ramer–Douglas–Peucker algorithm
 //! - **[`SimplifyIdx`]**:
-//! - **[`SimplifyVW`]**:
-//! - **[`SimplifyVWPreserve`]**:
+//! - **[`SimplifyVW`]**: Simplify a geometry using the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVWPreserve`]**: Simplify a geometry with the using a topology-preserving variant of the Visvalingam-Whyatt algorithm
 //! - **[`SimplifyVwIdx`]**:
 //!
 //! ## Query
