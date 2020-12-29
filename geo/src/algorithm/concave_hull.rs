@@ -108,6 +108,37 @@ where
     }
 }
 
+fn check_closest_edge<T>(
+    line_tree: &RTree<Line<T>>,
+    point: Point<T>,
+    search_dist: T,
+    line: Line<T>,
+) -> bool 
+where
+    T: Float + RTreeNum {
+    let mut edges_nearby_point = line_tree
+        .locate_within_distance(point, search_dist)
+        .peekable();
+    let peeked_edge = edges_nearby_point.peek();
+    let closest_edge_option = match peeked_edge {
+        None => None,
+        Some(&edge) => Some(edges_nearby_point.fold(*edge, |acc, candidate| {
+            if point.euclidean_distance(&acc) > point.euclidean_distance(candidate)
+            {
+                *candidate
+            } else {
+                acc
+            }
+        })),
+    };
+    if let Some(closest_edge) = closest_edge_option {
+        return closest_edge == line;
+    }else{
+        return false;
+    }
+    
+}
+
 fn find_point_closest_to_line<T>(
     interior_coords_tree: &RTree<Coordinate<T>>,
     line: Line<T>,
@@ -115,6 +146,7 @@ fn find_point_closest_to_line<T>(
     edge_length: T,
     concavity: T,
     line_tree: &RTree<Line<T>>,
+    should_check_closest_edge: bool,
 ) -> Option<Coordinate<T>>
 where
     T: Float + RTreeNum,
@@ -154,38 +186,19 @@ where
                         acc_point
                     }
                 });
-            let mut edges_nearby_point = line_tree
-                .locate_within_distance(closest_point, search_dist)
-                .peekable();
-            let peeked_edge = edges_nearby_point.peek();
-            let closest_edge_option = match peeked_edge {
-                None => None,
-                Some(&edge) => Some(edges_nearby_point.fold(*edge, |acc, candidate| {
-                    if closest_point.euclidean_distance(&acc)
-                        > closest_point.euclidean_distance(candidate)
-                    {
-                        *candidate
-                    } else {
-                        acc
-                    }
-                })),
-            };
             let decision_distance = partial_min(
                 closest_point.euclidean_distance(&line.start_point()),
                 closest_point.euclidean_distance(&line.end_point()),
             );
-            if let Some(closest_edge) = closest_edge_option {
-                let far_enough = edge_length / decision_distance > concavity;
-                let are_edges_equal = closest_edge == line;
-                if far_enough && are_edges_equal {
-                    Some(Coordinate {
-                        x: closest_point.x(),
-                        y: closest_point.y(),
-                    })
-                } else {
-                    None
-                }
-            } else {
+            let far_enough = edge_length / decision_distance > concavity;
+            let are_edges_equal = check_closest_edge(line_tree, closest_point, search_dist, line);
+            let edges_check = !should_check_closest_edge || are_edges_equal;
+            if far_enough && edges_check {
+                Some(Coordinate{
+                    x: closest_point.x(),
+                    y: closest_point.y(),
+                })
+            }else{
                 None
             }
         }
@@ -233,6 +246,7 @@ where
             edge_length,
             concavity,
             &line_tree,
+            false,
         );
 
         if let Some(closest_point) = possible_closest_point {
