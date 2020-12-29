@@ -23,15 +23,15 @@
 //!
 //! ## Area
 //!
-//! - **[`Area`]**: Planar area of geometries
-//! - **[`ChamberlainDuquetteArea`]**: Geodesic area of geometries
+//! - **[`Area`]**: Calculate the planar area of a geometry
+//! - **[`ChamberlainDuquetteArea`]**: Calculate the geodesic area of a geometry
 //!
 //! ## Distance
 //!
-//! - **[`EuclideanDistance`]**: Euclidean distance between geometries
-//! - **[`GeodesicDistance`]**: Geodesic distance between geometries
-//! - **[`HaversineDistance`]**: Haversine distance between geometries
-//! - **[`VincentyDistance`]**:
+//! - **[`EuclideanDistance`]**: Calculate the euclidean distance between geometries
+//! - **[`GeodesicDistance`]**: Calculate the geodesic distance between geometries using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
+//! - **[`HaversineDistance`]**: Calculate the geodesic distance between geometries using haversine
+//! - **[`VincentyDistance`]**: Calculate the geodesic distance between geometries using Vincenty’s formula
 //!
 //! ## Length
 //!
