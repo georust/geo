@@ -11,7 +11,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
 
         bencher.iter(|| {
             let _ = criterion::black_box(
-                criterion::black_box(&a).vincenty_distance(criterion::black_box(&b))
+                criterion::black_box(&a).vincenty_distance(criterion::black_box(&b)),
             );
         });
     });
@@ -22,7 +22,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
 
         bencher.iter(|| {
             let _ = criterion::black_box(
-                criterion::black_box(&a).vincenty_distance(criterion::black_box(&b))
+                criterion::black_box(&a).vincenty_distance(criterion::black_box(&b)),
             );
         });
     });
