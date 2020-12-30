@@ -96,23 +96,6 @@ impl<T: CoordinateType> MultiPoint<T> {
     }
 }
 
-impl<T: CoordinateType> MultiPoint<T> {
-    /// Return the number of coordinates in the `MultiPoint`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::MultiPoint;
-    ///
-    /// let mut coords = vec![(0., 0.), (5., 0.), (7., 9.)];
-    /// let multi_point: MultiPoint<f32> = coords.into_iter().collect();
-    /// assert_eq!(3, multi_point.num_coords());
-    /// ```
-    pub fn num_coords(&self) -> usize {
-        self.0.len()
-    }
-}
-
 #[cfg(feature = "relative_eq")]
 impl<T> RelativeEq for MultiPoint<T>
 where
@@ -143,7 +126,7 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        if self.num_coords() != other.num_coords() {
+        if self.0.len() != other.0.len() {
             return false;
         }
 
@@ -165,7 +148,7 @@ where
         T::default_epsilon()
     }
 
-    /// Equality assertion within a absolute limit.
+    /// Equality assertion with a absolute limit.
     ///
     /// # Examples
     ///
@@ -176,11 +159,11 @@ where
     /// let a = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
     /// let b = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.001, y: 10.]]);
     ///
-    /// approx::assert_relative_eq!(a, b, epsilon=0.1)
+    /// approx::abs_diff_eq!(a, b, epsilon=0.1);
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        if self.num_coords() != other.num_coords() {
+        if self.0.len() != other.0.len() {
             return false;
         }
 

@@ -459,11 +459,11 @@ where
         T::default_epsilon()
     }
 
-    /// Equality assertion within a absolute limit.
+    /// Equality assertion with a absolute limit.
     ///
     /// # Examples
     ///
-    /// ```relative_eq
+    /// ```
     /// use geo_types::Point;
     ///
     /// let a = Point::new(2.0, 3.0);

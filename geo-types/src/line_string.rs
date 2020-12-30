@@ -343,7 +343,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for LineString<T> {
         T::default_epsilon()
     }
 
-    /// Equality assertion within a relative limit.
+    /// Equality assertion with a absolute limit.
     ///
     /// # Examples
     ///

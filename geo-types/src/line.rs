@@ -188,7 +188,7 @@ where
     /// let a = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. });
     /// let b = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1.001, y: 1. });
     ///
-    /// approx::assert_relative_eq!(a, b, max_relative=0.1)
+    /// approx::assert_relative_eq!(a, b, max_relative=0.1);
     /// ```
     #[inline]
     fn relative_eq(
@@ -211,7 +211,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for Line<T> {
         T::default_epsilon()
     }
 
-    /// Equality assertion within a relative limit.
+    /// Equality assertion with a absolute limit.
     ///
     /// # Examples
     ///
@@ -221,7 +221,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for Line<T> {
     /// let a = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. });
     /// let b = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1.001, y: 1. });
     ///
-    /// approx::assert_relative_eq!(a, b, epsilon=0.1)
+    /// approx::assert_abs_diff_eq!(a, b, epsilon=0.1);
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
