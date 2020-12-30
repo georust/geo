@@ -78,5 +78,9 @@ name = "simplify"
 harness = false
 
 [[bench]]
+name = "simplifyvw"
+harness = false
+
+[[bench]]
 name = "frechet_distance"
 harness = false
