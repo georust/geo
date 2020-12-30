@@ -1,5 +1,6 @@
+use crate::algorithm::coords_iter::CoordsIter;
 use crate::algorithm::euclidean_distance::EuclideanDistance;
-use crate::{Line, LineString, MultiLineString, MultiPolygon, Point, Polygon};
+use crate::{Coordinate, Line, LineString, MultiLineString, MultiPolygon, Polygon};
 use num_traits::Float;
 
 // Because the RDP algorithm is recursive, we can't assign an index to a point inside the loop
@@ -11,41 +12,40 @@ where
     T: Float,
 {
     index: usize,
-    point: Point<T>,
+    coord: Coordinate<T>,
 }
 
 // Wrapper for the RDP algorithm, returning simplified points
-fn rdp<T>(points: &[Point<T>], epsilon: &T) -> Vec<Point<T>>
+fn rdp<T>(coords: impl Iterator<Item = Coordinate<T>>, epsilon: &T) -> Vec<Coordinate<T>>
 where
     T: Float,
 {
     // Epsilon must be greater than zero for any meaningful simplification to happen
     if *epsilon <= T::zero() {
-        points.to_vec();
+        return coords.collect::<Vec<Coordinate<T>>>();
     }
     compute_rdp(
-        &points
-            .iter()
+        &coords
             .enumerate()
-            .map(|(idx, point)| RdpIndex {
-                index: idx,
-                point: *point,
-            })
+            .map(|(idx, coord)| RdpIndex { index: idx, coord })
             .collect::<Vec<RdpIndex<T>>>(),
         epsilon,
     )
     .into_iter()
-    .map(|rdpindex| rdpindex.point)
-    .collect::<Vec<Point<T>>>()
+    .map(|rdpindex| rdpindex.coord)
+    .collect()
 }
 
 // Wrapper for the RDP algorithm, returning simplified point indices
-fn rdp_indices<T>(points: &[RdpIndex<T>], epsilon: &T) -> Vec<usize>
+fn calculate_rdp_indices<T>(rdp_indices: &[RdpIndex<T>], epsilon: &T) -> Vec<usize>
 where
     T: Float,
 {
-    compute_rdp(points, epsilon)
-        .iter()
+    if *epsilon <= T::zero() {
+        return rdp_indices.iter().map(|rdp_index| rdp_index.index).collect();
+    }
+    compute_rdp(rdp_indices, epsilon)
+        .into_iter()
         .map(|rdpindex| rdpindex.index)
         .collect::<Vec<usize>>()
 }
@@ -53,33 +53,47 @@ where
 // Ramer–Douglas-Peucker line simplification algorithm
 // This function returns both the retained points, and their indices in the original geometry,
 // for more flexible use by FFI implementers
-fn compute_rdp<T>(points: &[RdpIndex<T>], epsilon: &T) -> Vec<RdpIndex<T>>
+fn compute_rdp<T>(rdp_indices: &[RdpIndex<T>], epsilon: &T) -> Vec<RdpIndex<T>>
 where
     T: Float,
 {
-    if points.is_empty() {
-        return points.to_vec();
+    if rdp_indices.is_empty() {
+        return vec![];
     }
-    let mut dmax = T::zero();
-    let mut index: usize = 0;
-    let mut distance: T;
 
-    for (i, _) in points.iter().enumerate().take(points.len() - 1).skip(1) {
-        distance = points[i]
-            .point
-            .euclidean_distance(&Line::new(points[0].point, points.last().unwrap().point));
-        if distance > dmax {
-            index = i;
-            dmax = distance;
-        }
-    }
-    if dmax > *epsilon {
-        let mut intermediate = compute_rdp(&points[..=index], &*epsilon);
-        intermediate.pop();
-        intermediate.extend_from_slice(&compute_rdp(&points[index..], &*epsilon));
+    let first = rdp_indices[0];
+    let last = rdp_indices[rdp_indices.len() - 1];
+    let first_last_line = Line::new(first.coord, last.coord);
+
+    // Find the farthest `RdpIndex` from `first_last_line`
+    let (farthest_index, farthest_distance) = rdp_indices
+        .iter()
+        .enumerate()
+        .take(rdp_indices.len() - 1) // Don't include the last index
+        .skip(1) // Don't include the first index
+        .map(|(index, rdp_index)| (index, rdp_index.coord.euclidean_distance(&first_last_line)))
+        .fold(
+            (0usize, T::zero()),
+            |(farthest_index, farthest_distance), (index, distance)| {
+                if distance > farthest_distance {
+                    (index, distance)
+                } else {
+                    (farthest_index, farthest_distance)
+                }
+            },
+        );
+
+    if farthest_distance > *epsilon {
+        // The farthest index was larger than epsilon, so we will recursively simplify subsegments
+        // split by the farthest index.
+        let mut intermediate = compute_rdp(&rdp_indices[..=farthest_index], &*epsilon);
+        intermediate.pop(); // Don't include the farthest index twice
+        intermediate.extend_from_slice(&compute_rdp(&rdp_indices[farthest_index..], &*epsilon));
         intermediate
     } else {
-        vec![*points.first().unwrap(), *points.last().unwrap()]
+        // The farthest index was less than or equal to epsilon, so we will retain only the first
+        // and last indices, resulting in the indices inbetween getting culled.
+        vec![first, last]
     }
 }
 
@@ -168,7 +182,7 @@ where
     T: Float,
 {
     fn simplify(&self, epsilon: &T) -> Self {
-        LineString::from(rdp(&self.clone().into_points(), epsilon))
+        LineString::from(rdp(self.coords_iter(), epsilon))
     }
 }
 
@@ -177,11 +191,15 @@ where
     T: Float,
 {
     fn simplify_idx(&self, epsilon: &T) -> Vec<usize> {
-        rdp_indices(
+        calculate_rdp_indices(
             &self
-                .points_iter()
+                .0
+                .iter()
                 .enumerate()
-                .map(|(idx, point)| RdpIndex { index: idx, point })
+                .map(|(idx, coord)| RdpIndex {
+                    index: idx,
+                    coord: *coord,
+                })
                 .collect::<Vec<RdpIndex<T>>>(),
             epsilon,
         )
@@ -224,40 +242,44 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::polygon;
+    use crate::{line_string, polygon};
 
     #[test]
     fn rdp_test() {
-        let mut vec = Vec::new();
-        vec.push(Point::new(0.0, 0.0));
-        vec.push(Point::new(5.0, 4.0));
-        vec.push(Point::new(11.0, 5.5));
-        vec.push(Point::new(17.3, 3.2));
-        vec.push(Point::new(27.8, 0.1));
-        let mut compare = Vec::new();
-        compare.push(Point::new(0.0, 0.0));
-        compare.push(Point::new(5.0, 4.0));
-        compare.push(Point::new(11.0, 5.5));
-        compare.push(Point::new(27.8, 0.1));
-        let simplified = rdp(&vec, &1.0);
+        let vec = vec![
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 5.0, y: 4.0 },
+            Coordinate { x: 11.0, y: 5.5 },
+            Coordinate { x: 17.3, y: 3.2 },
+            Coordinate { x: 27.8, y: 0.1 },
+        ];
+        let compare = vec![
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 5.0, y: 4.0 },
+            Coordinate { x: 11.0, y: 5.5 },
+            Coordinate { x: 27.8, y: 0.1 },
+        ];
+        let simplified = rdp(vec.into_iter(), &1.0);
         assert_eq!(simplified, compare);
     }
     #[test]
     fn rdp_test_empty_linestring() {
         let vec = Vec::new();
         let compare = Vec::new();
-        let simplified = rdp(&vec, &1.0);
+        let simplified = rdp(vec.into_iter(), &1.0);
         assert_eq!(simplified, compare);
     }
     #[test]
     fn rdp_test_two_point_linestring() {
-        let mut vec = Vec::new();
-        vec.push(Point::new(0.0, 0.0));
-        vec.push(Point::new(27.8, 0.1));
-        let mut compare = Vec::new();
-        compare.push(Point::new(0.0, 0.0));
-        compare.push(Point::new(27.8, 0.1));
-        let simplified = rdp(&vec, &1.0);
+        let vec = vec![
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 27.8, y: 0.1 },
+        ];
+        let compare = vec![
+            Coordinate { x: 0.0, y: 0.0 },
+            Coordinate { x: 27.8, y: 0.1 },
+        ];
+        let simplified = rdp(vec.into_iter(), &1.0);
         assert_eq!(simplified, compare);
     }
 
@@ -332,5 +354,31 @@ mod test {
                 (x: 0., y: 0.)
             ]]),
         );
+    }
+
+    #[test]
+    fn simplify_negative_epsilon() {
+        let ls = line_string![
+            (x: 0., y: 0.),
+            (x: 0., y: 10.),
+            (x: 5., y: 11.),
+            (x: 10., y: 10.),
+            (x: 10., y: 0.),
+        ];
+        let simplified = ls.simplify(&-1.0);
+        assert_eq!(ls, simplified);
+    }
+
+    #[test]
+    fn simplify_idx_negative_epsilon() {
+        let ls = line_string![
+            (x: 0., y: 0.),
+            (x: 0., y: 10.),
+            (x: 5., y: 11.),
+            (x: 10., y: 10.),
+            (x: 10., y: 0.),
+        ];
+        let indices = ls.simplify_idx(&-1.0);
+        assert_eq!(vec![0usize, 1, 2, 3, 4], indices);
     }
 }
