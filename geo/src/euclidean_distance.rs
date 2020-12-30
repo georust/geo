@@ -5,7 +5,8 @@ use crate::polygon_distance_fast_path::*;
 use crate::kernels::*;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
 use crate::{
-    Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Triangle,
+    Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    Triangle,
 };
 use num_traits::float::FloatConst;
 use num_traits::{Bounded, Float, Signed};
@@ -93,13 +94,23 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     fn euclidean_distance(&self, rhs: &Rhs) -> T;
 }
 
+impl<T> EuclideanDistance<T, Coordinate<T>> for Coordinate<T>
+where
+    T: Float,
+{
+    /// Minimum distance between two `Coordinate`s
+    fn euclidean_distance(&self, c: &Coordinate<T>) -> T {
+        Line::new(*self, *c).euclidean_length()
+    }
+}
+
 impl<T> EuclideanDistance<T, Point<T>> for Point<T>
 where
     T: Float,
 {
     /// Minimum distance between two Points
     fn euclidean_distance(&self, p: &Point<T>) -> T {
-        Line::new(self.0, p.0).euclidean_length()
+        self.0.euclidean_distance(&p.0)
     }
 }
 
@@ -235,13 +246,33 @@ where
     }
 }
 
+impl<T> EuclideanDistance<T, Coordinate<T>> for Line<T>
+where
+    T: Float,
+{
+    /// Minimum distance from a `Line` to a `Coordinate`
+    fn euclidean_distance(&self, coord: &Coordinate<T>) -> T {
+        ::geo_types::private_utils::point_line_euclidean_distance(Point(*coord), *self)
+    }
+}
+
+impl<T> EuclideanDistance<T, Line<T>> for Coordinate<T>
+where
+    T: Float,
+{
+    /// Minimum distance from a `Coordinate` to a `Line`
+    fn euclidean_distance(&self, line: &Line<T>) -> T {
+        line.euclidean_distance(self)
+    }
+}
+
 impl<T> EuclideanDistance<T, Point<T>> for Line<T>
 where
     T: Float,
 {
     /// Minimum distance from a Line to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
-        ::geo_types::private_utils::point_line_euclidean_distance(*point, *self)
+        self.euclidean_distance(&point.0)
     }
 }
 
@@ -251,7 +282,7 @@ where
 {
     /// Minimum distance from a Line to a Point
     fn euclidean_distance(&self, line: &Line<T>) -> T {
-        line.euclidean_distance(self)
+        self.0.euclidean_distance(line)
     }
 }
 

@@ -15,7 +15,7 @@ pub fn uniform_points_in_range<S: CoordinateType + SampleUniform + Signed, R: Rn
     rng: &mut R,
 ) -> Vec<Coordinate<S>> {
     (0..size)
-        .map(|_| (rng.gen_range(-range, range), rng.gen_range(-range, range)).into())
+        .map(|_| (rng.gen_range(-range..=range), rng.gen_range(-range..=range)).into())
         .collect()
 }
 
@@ -25,7 +25,9 @@ fn criterion_benchmark(c: &mut Criterion) {
         let line_string = LineString::<f32>::from(points);
 
         bencher.iter(|| {
-            line_string.concave_hull(2.0);
+            criterion::black_box(
+                criterion::black_box(&line_string).concave_hull(criterion::black_box(2.0)),
+            );
         });
     });
 
@@ -34,7 +36,9 @@ fn criterion_benchmark(c: &mut Criterion) {
         let line_string = LineString::<f64>::from(points);
 
         bencher.iter(|| {
-            line_string.concave_hull(2.0);
+            criterion::black_box(
+                criterion::black_box(&line_string).concave_hull(criterion::black_box(2.0)),
+            );
         });
     });
 }

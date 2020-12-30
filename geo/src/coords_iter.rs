@@ -123,8 +123,12 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
 
     /// Return the number of coordinates in the `Polygon`.
     fn coords_count(&'a self) -> usize {
-        self.exterior().coords_count() +
-            self.interiors().iter().map(|i| i.coords_count()).sum::<usize>()
+        self.exterior().coords_count()
+            + self
+                .interiors()
+                .iter()
+                .map(|i| i.coords_count())
+                .sum::<usize>()
     }
 }
 
@@ -158,7 +162,10 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiLineString<T> {
 
     /// Return the number of coordinates in the `MultiLineString`.
     fn coords_count(&'a self) -> usize {
-        self.0.iter().map(|line_string| line_string.coords_count()).sum()
+        self.0
+            .iter()
+            .map(|line_string| line_string.coords_count())
+            .sum()
     }
 }
 

@@ -6,6 +6,8 @@
   * <https://github.com/georust/geo/pull/563>
 * Fix non-empty MultiPoint has 0-dimensions, not 1.
   * <https://github.com/georust/geo/pull/561>
+* Add new `EuclideanDistance` implementations: `impl EuclideanDistance<Coordinate<T>> for Line`, `impl EuclideanDistance<Line> for Coordinate`, `impl EuclideanDistance<Coordinate> for Coordinate`
+  * <https://github.com/georust/geo/pull/580>
 
 ## 0.16.0
 

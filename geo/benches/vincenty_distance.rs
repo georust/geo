@@ -10,7 +10,9 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         let b = geo::Point::<f32>::new(16.372477, 48.208810);
 
         bencher.iter(|| {
-            let _ = a.vincenty_distance(&b);
+            let _ = criterion::black_box(
+                criterion::black_box(&a).vincenty_distance(criterion::black_box(&b)),
+            );
         });
     });
 
@@ -19,7 +21,9 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         let b = geo::Point::<f64>::new(16.372477, 48.208810);
 
         bencher.iter(|| {
-            let _ = a.vincenty_distance(&b);
+            let _ = criterion::black_box(
+                criterion::black_box(&a).vincenty_distance(criterion::black_box(&b)),
+            );
         });
     });
 }
