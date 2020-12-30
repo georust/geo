@@ -28,6 +28,7 @@ extern crate serde;
 #[cfg(feature = "rstar")]
 extern crate rstar;
 
+#[cfg(test)]
 #[macro_use]
 extern crate approx;
 
@@ -79,6 +80,7 @@ pub use crate::rect::{InvalidRectCoordinatesError, Rect};
 #[macro_use]
 mod macros;
 
+#[cfg(feature = "rstar")]
 #[doc(hidden)]
 pub mod private_utils;
 

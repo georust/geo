@@ -1,8 +1,7 @@
 use crate::{Coordinate, CoordinateType};
 
-use approx::AbsDiffEq;
-#[cfg(feature = "relative_eq")]
-use approx::RelativeEq;
+#[cfg(any(feature = "approx", test))]
+use approx::{AbsDiffEq, RelativeEq};
 
 use num_traits::Float;
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -414,7 +413,7 @@ where
     }
 }
 
-#[cfg(feature = "relative_eq")]
+#[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for Point<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
@@ -446,7 +445,8 @@ where
         self.0.relative_eq(&other.0, epsilon, max_relative)
     }
 }
-#[cfg(feature = "relative_eq")]
+
+#[cfg(any(feature = "approx", test))]
 impl<T> AbsDiffEq for Point<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType,
