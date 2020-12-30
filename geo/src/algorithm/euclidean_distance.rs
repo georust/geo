@@ -2,14 +2,14 @@ use crate::algorithm::contains::Contains;
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::algorithm::intersects::Intersects;
 use crate::algorithm::polygon_distance_fast_path::*;
-use crate::kernels::*;
+use crate::kernels::HasKernel;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
 use crate::{
-    Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    Coordinate, Float, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
     Triangle,
 };
 use num_traits::float::FloatConst;
-use num_traits::{Bounded, Float, Signed};
+use num_traits::{Bounded, Signed};
 
 use rstar::RTree;
 use rstar::RTreeNum;
@@ -143,7 +143,7 @@ where
 
 impl<T> EuclideanDistance<T, Polygon<T>> for Point<T>
 where
-    T: Float + HasKernel,
+    T: Float,
 {
     /// Minimum distance from a Point to a Polygon
     fn euclidean_distance(&self, polygon: &Polygon<T>) -> T {
@@ -174,7 +174,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for Polygon<T>
 where
-    T: Float + HasKernel,
+    T: Float,
 {
     /// Minimum distance from a Polygon to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
@@ -184,7 +184,7 @@ where
 
 impl<T> EuclideanDistance<T, MultiPolygon<T>> for Point<T>
 where
-    T: Float + HasKernel,
+    T: Float,
 {
     /// Minimum distance from a Point to a MultiPolygon
     fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
@@ -198,7 +198,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for MultiPolygon<T>
 where
-    T: Float + HasKernel,
+    T: Float,
 {
     /// Minimum distance from a MultiPolygon to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
@@ -292,7 +292,7 @@ where
 /// LineString-LineString distance
 impl<T> EuclideanDistance<T, LineString<T>> for LineString<T>
 where
-    T: Float + HasKernel + Signed + RTreeNum,
+    T: Float + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         if self.intersects(other) {
@@ -320,7 +320,7 @@ where
 /// LineString to Line
 impl<T> EuclideanDistance<T, Line<T>> for LineString<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         self.lines().fold(Bounded::max_value(), |acc, line| {
@@ -332,7 +332,7 @@ where
 /// Line to LineString
 impl<T> EuclideanDistance<T, LineString<T>> for Line<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         other.euclidean_distance(self)
@@ -342,14 +342,14 @@ where
 /// LineString to Polygon
 impl<T> EuclideanDistance<T, Polygon<T>> for LineString<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if self.intersects(other) || other.contains(self) {
             T::zero()
         } else if !other.interiors().is_empty() && ring_contains_point(other, Point(self.0[0])) {
             // check each ring distance, returning the minimum
-            let mut mindist: T = Float::max_value();
+            let mut mindist: T = num_traits::Float::max_value();
             for ring in other.interiors() {
                 mindist = mindist.min(nearest_neighbour_distance(self, ring))
             }
@@ -363,7 +363,7 @@ where
 /// Polygon to LineString distance
 impl<T> EuclideanDistance<T, LineString<T>> for Polygon<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         other.euclidean_distance(self)
@@ -373,7 +373,7 @@ where
 /// Line to MultiPolygon distance
 impl<T> EuclideanDistance<T, MultiPolygon<T>> for Line<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
         mpolygon
@@ -387,7 +387,7 @@ where
 /// MultiPolygon to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for MultiPolygon<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         other.euclidean_distance(self)
@@ -397,7 +397,7 @@ where
 /// Line to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for Line<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         if self.intersects(other) || self.contains(other) {
@@ -415,7 +415,7 @@ where
 // Line to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Line<T>
 where
-    T: Float + Signed + RTreeNum + FloatConst + HasKernel,
+    T: Float + Signed + RTreeNum + FloatConst,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if other.contains(self) || self.intersects(other) {
@@ -449,7 +449,7 @@ where
 // Polygon to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for Polygon<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: Float + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         other.euclidean_distance(self)
@@ -459,7 +459,7 @@ where
 // Polygon to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Polygon<T>
 where
-    T: Float + FloatConst + RTreeNum + HasKernel,
+    T: Float + FloatConst + RTreeNum,
 {
     /// This implementation has a "fast path" in cases where both input polygons are convex:
     /// it switches to an implementation of the "rotating calipers" method described in [Pirzadeh (1999), pp24—30](http://digitool.library.mcgill.ca/R/?func=dbin-jump-full&object_id=21623&local_base=GEN01-MCG02),
@@ -471,7 +471,7 @@ where
         // Containment check
         if !self.interiors().is_empty() && ring_contains_point(self, Point(poly2.exterior().0[0])) {
             // check each ring distance, returning the minimum
-            let mut mindist: T = Float::max_value();
+            let mut mindist: T = num_traits::Float::max_value();
             for ring in self.interiors() {
                 mindist = mindist.min(nearest_neighbour_distance(&poly2.exterior(), ring))
             }
@@ -479,7 +479,7 @@ where
         } else if !poly2.interiors().is_empty()
             && ring_contains_point(poly2, Point(self.exterior().0[0]))
         {
-            let mut mindist: T = Float::max_value();
+            let mut mindist: T = num_traits::Float::max_value();
             for ring in poly2.interiors() {
                 mindist = mindist.min(nearest_neighbour_distance(&self.exterior(), ring))
             }
@@ -497,7 +497,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for Triangle<T>
 where
-    T: Float + HasKernel,
+    T: Float,
 {
     fn euclidean_distance(&self, point: &Point<T>) -> T {
         if self.contains(point) {

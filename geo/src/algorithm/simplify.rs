@@ -1,7 +1,6 @@
 use crate::algorithm::coords_iter::CoordsIter;
 use crate::algorithm::euclidean_distance::EuclideanDistance;
-use crate::{Coordinate, Line, LineString, MultiLineString, MultiPolygon, Polygon};
-use num_traits::Float;
+use crate::{Float, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Polygon};
 
 // Because the RDP algorithm is recursive, we can't assign an index to a point inside the loop
 // instead, we wrap a simple struct around index and point in a wrapper function,

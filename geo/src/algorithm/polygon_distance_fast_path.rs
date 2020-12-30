@@ -1,9 +1,8 @@
 use crate::algorithm::extremes::ExtremeIndices;
-use crate::kernels::*;
 use crate::prelude::*;
-use crate::{Line, Point, Polygon, Triangle};
+use crate::{Float, Line, Point, Polygon, Triangle};
 use num_traits::float::FloatConst;
-use num_traits::{Float, Signed};
+use num_traits::Signed;
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance
 // They use the rotating calipers method to speed up calculations.
@@ -13,7 +12,7 @@ use num_traits::{Float, Signed};
 /// using the rotating calipers method
 pub(crate) fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
 where
-    T: Float + FloatConst + Signed + HasKernel,
+    T: Float + FloatConst + Signed,
 {
     let poly1_extremes = poly1.extreme_indices().unwrap();
     let poly2_extremes = poly2.extreme_indices().unwrap();

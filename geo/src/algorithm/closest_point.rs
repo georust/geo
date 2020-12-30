@@ -1,7 +1,7 @@
-use crate::kernels::*;
 use crate::prelude::*;
-use crate::{Closest, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
-use num_traits::Float;
+use crate::{
+    Closest, Float, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+};
 use std::iter;
 
 /// Find the closest `Point` between a given geometry and an input `Point`.
@@ -49,7 +49,7 @@ impl<F: Float> ClosestPoint<F> for Point<F> {
 }
 
 #[allow(clippy::many_single_char_names)]
-impl<F: Float + HasKernel> ClosestPoint<F> for Line<F> {
+impl<F: Float> ClosestPoint<F> for Line<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         let line_length = self.euclidean_length();
         if line_length == F::zero() {
@@ -108,20 +108,20 @@ where
     best
 }
 
-impl<F: Float + HasKernel> ClosestPoint<F> for LineString<F> {
+impl<F: Float> ClosestPoint<F> for LineString<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         closest_of(self.lines(), *p)
     }
 }
 
-impl<F: Float + HasKernel> ClosestPoint<F> for Polygon<F> {
+impl<F: Float> ClosestPoint<F> for Polygon<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         let prospectives = self.interiors().iter().chain(iter::once(self.exterior()));
         closest_of(prospectives, *p)
     }
 }
 
-impl<F: Float + HasKernel> ClosestPoint<F> for MultiPolygon<F> {
+impl<F: Float> ClosestPoint<F> for MultiPolygon<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         closest_of(self.iter(), *p)
     }
@@ -133,7 +133,7 @@ impl<F: Float> ClosestPoint<F> for MultiPoint<F> {
     }
 }
 
-impl<F: Float + HasKernel> ClosestPoint<F> for MultiLineString<F> {
+impl<F: Float> ClosestPoint<F> for MultiLineString<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         closest_of(self.iter(), *p)
     }

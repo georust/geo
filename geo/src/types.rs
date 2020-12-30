@@ -1,5 +1,4 @@
-use crate::{CoordinateType, Point};
-use num_traits::Float;
+use crate::{CoordinateType, Float, Point};
 
 /// A container for _indices_ of the minimum and maximum `Point`s of a [`Geometry`](enum.Geometry.html).
 #[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
