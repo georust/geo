@@ -74,5 +74,5 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - run: cargo bench
+      - run: cargo bench --no-run
 
