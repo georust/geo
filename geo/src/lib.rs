@@ -61,12 +61,12 @@
 //!
 //! ## Similarity
 //!
-//! - **[`FrechetDistance`]**:
+//! - **[`FrechetDistance`]**: Calculate the similarity between [`LineString`]s using the Fréchet distance
 //!
 //! ## Winding
 //!
-//! - **[`Orient`]**:
-//! - **[`WindingOrder`]**
+//! - **[`Orient`]**: Orients the exterior and interior rings of a [`Polygon`] according to convention
+//! - **[`Winding`]**: Calculate and manipulate the winding order of a [`LineString`]
 //!
 //! ## Map
 //!
