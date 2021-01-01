@@ -96,7 +96,6 @@ where
                 x: pt.x - p_a.x,
                 y: pt.y - p_a.y,
             };
-            println!("PREFOO {:?}", p_diff);
             p_orth.x * p_diff.x + p_orth.y * p_diff.y
         })
         .enumerate()
@@ -106,7 +105,6 @@ where
                 // Ensure `distance` is not NaN
                 // TODO: we need a better check
                 if curr_dist != curr_dist {
-                    panic!("FOO {:?}", curr_dist);
                     return Err(());
                 }
 
