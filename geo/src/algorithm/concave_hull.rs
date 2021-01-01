@@ -1,12 +1,12 @@
 use crate::algorithm::convex_hull::qhull;
 use crate::algorithm::euclidean_distance::EuclideanDistance;
 use crate::algorithm::euclidean_length::EuclideanLength;
-use crate::algorithm::kernels::HasKernel;
 use crate::prelude::Centroid;
 use crate::utils::partial_min;
-use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use crate::{
+    GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+};
 use geo_types::{Coordinate, CoordinateType};
-use num_traits::Float;
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
 
@@ -51,7 +51,7 @@ pub trait ConcaveHull {
 
 impl<T> ConcaveHull for Polygon<T>
 where
-    T: Float + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
@@ -62,7 +62,7 @@ where
 
 impl<T> ConcaveHull for MultiPolygon<T>
 where
-    T: Float + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
@@ -77,7 +77,7 @@ where
 
 impl<T> ConcaveHull for LineString<T>
 where
-    T: Float + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
@@ -87,7 +87,7 @@ where
 
 impl<T> ConcaveHull for MultiLineString<T>
 where
-    T: Float + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: T) -> Polygon<T> {
@@ -99,7 +99,7 @@ where
 
 impl<T> ConcaveHull for MultiPoint<T>
 where
-    T: Float + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: T) -> Polygon<T> {
@@ -117,7 +117,7 @@ fn find_point_closest_to_line<T>(
     line_tree: &RTree<Line<T>>,
 ) -> Option<Coordinate<T>>
 where
-    T: Float + RTreeNum,
+    T: GeoFloat + RTreeNum,
 {
     let h = max_dist + max_dist;
     let w = line.euclidean_length() + h;
@@ -188,7 +188,7 @@ where
 // https://github.com/mapbox/concaveman/blob/54838e1/index.js#L11
 fn concave_hull<T>(coords: &mut [Coordinate<T>], concavity: T) -> LineString<T>
 where
-    T: Float + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     let hull = qhull::quick_hull(coords);
 
