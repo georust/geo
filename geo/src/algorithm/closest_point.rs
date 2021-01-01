@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use crate::{
-    Closest, Float, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    Closest, GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
 use std::iter;
 
@@ -23,7 +23,7 @@ use std::iter;
 /// let closest = horizontal_line.closest_point(&p);
 /// assert_eq!(closest, Closest::SinglePoint(Point::new(0.0, 0.0)));
 /// ```
-pub trait ClosestPoint<F: Float, Rhs = Point<F>> {
+pub trait ClosestPoint<F: GeoFloat, Rhs = Point<F>> {
     /// Find the closest point between `self` and `p`.
     fn closest_point(&self, p: &Rhs) -> Closest<F>;
 }
@@ -31,14 +31,14 @@ pub trait ClosestPoint<F: Float, Rhs = Point<F>> {
 impl<'a, F, C> ClosestPoint<F> for &'a C
 where
     C: ClosestPoint<F>,
-    F: Float,
+    F: GeoFloat,
 {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         (*self).closest_point(p)
     }
 }
 
-impl<F: Float> ClosestPoint<F> for Point<F> {
+impl<F: GeoFloat> ClosestPoint<F> for Point<F> {
     fn closest_point(&self, p: &Self) -> Closest<F> {
         if self == p {
             Closest::Intersection(*self)
@@ -49,7 +49,7 @@ impl<F: Float> ClosestPoint<F> for Point<F> {
 }
 
 #[allow(clippy::many_single_char_names)]
-impl<F: Float> ClosestPoint<F> for Line<F> {
+impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         let line_length = self.euclidean_length();
         if line_length == F::zero() {
@@ -94,7 +94,7 @@ impl<F: Float> ClosestPoint<F> for Line<F> {
 /// If the iterator is empty, we get `Closest::Indeterminate`.
 fn closest_of<C, F, I>(iter: I, p: Point<F>) -> Closest<F>
 where
-    F: Float,
+    F: GeoFloat,
     I: IntoIterator<Item = C>,
     C: ClosestPoint<F>,
 {
@@ -108,32 +108,32 @@ where
     best
 }
 
-impl<F: Float> ClosestPoint<F> for LineString<F> {
+impl<F: GeoFloat> ClosestPoint<F> for LineString<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         closest_of(self.lines(), *p)
     }
 }
 
-impl<F: Float> ClosestPoint<F> for Polygon<F> {
+impl<F: GeoFloat> ClosestPoint<F> for Polygon<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         let prospectives = self.interiors().iter().chain(iter::once(self.exterior()));
         closest_of(prospectives, *p)
     }
 }
 
-impl<F: Float> ClosestPoint<F> for MultiPolygon<F> {
+impl<F: GeoFloat> ClosestPoint<F> for MultiPolygon<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         closest_of(self.iter(), *p)
     }
 }
 
-impl<F: Float> ClosestPoint<F> for MultiPoint<F> {
+impl<F: GeoFloat> ClosestPoint<F> for MultiPoint<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         closest_of(self.iter(), *p)
     }
 }
 
-impl<F: Float> ClosestPoint<F> for MultiLineString<F> {
+impl<F: GeoFloat> ClosestPoint<F> for MultiLineString<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         closest_of(self.iter(), *p)
     }
