@@ -33,7 +33,7 @@
 //! [GeoRust]: https://georust.org
 //! [OGC-SFA]: https://www.ogc.org/standards/sfa
 //! [JTS]: https://github.com/locationtech/jts
-//! [geos]: https://trac.osgeo.org/geos
+//! [GEOS]: https://trac.osgeo.org/geos
 extern crate num_traits;
 use num_traits::{Num, NumCast};
 
