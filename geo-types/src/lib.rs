@@ -28,7 +28,7 @@
 //!
 //! The geospatial types provided here aim to adhere to the [OpenGIS Simple feature access][OGC-SFA]
 //! standards. Thus, the types here are inter-operable with other implementations of the standards:
-//! [JTS], [geos], etc.
+//! [JTS], [GEOS], etc.
 //!
 //! [GeoRust]: https://georust.org
 //! [OGC-SFA]: https://www.ogc.org/standards/sfa
