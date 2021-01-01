@@ -7,6 +7,8 @@ use num_traits::{Float, Signed};
 /// [`LineString`]. It may contain zero or more holes (_interior rings_), also
 /// represented by `LineString`s.
 ///
+/// A `Polygon` can be created with the [`Polygon::new`] constructor or the [`polygon!`] macro.
+///
 /// # Semantics
 ///
 /// The _boundary_ of the polygon is the union of the

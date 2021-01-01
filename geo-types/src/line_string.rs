@@ -2,8 +2,7 @@ use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
-/// An ordered collection of two or more
-/// [`Coordinate`s](struct.Coordinate.html), representing a
+/// An ordered collection of two or more [`Coordinate`]s, representing a
 /// path between locations.
 ///
 /// # Semantics
@@ -38,6 +37,17 @@ use std::ops::{Index, IndexMut};
 ///     Coordinate { x: 0., y: 0. },
 ///     Coordinate { x: 10., y: 0. },
 /// ]);
+/// ```
+///
+/// Create a `LineString` with the [`line_string!`] macro:
+///
+/// ```
+/// use geo_types::line_string;
+///
+/// let line_string = line_string![
+///     (x: 0., y: 0.),
+///     (x: 10., y: 0.),
+/// ];
 /// ```
 ///
 /// Converting a `Vec` of `Coordinate`-like things:
