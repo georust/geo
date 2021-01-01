@@ -8,7 +8,7 @@
 //!
 //! # Types
 //!
-//! - **[`Coordinate`]**: A two-dimensional coordinate. All [`Geometry`] types are composed of [`Coordinate`]s, though [`Coordinate`] itself is not a [`Geometry`] type.
+//! - **[`Coordinate`]**: A two-dimensional coordinate. All geometry types are composed of [`Coordinate`]s, though [`Coordinate`] itself is not a [`Geometry`] type.
 //! - **[`Point`]**: A single point represented by one [`Coordinate`]
 //! - **[`MultiPoint`]**: A collection of [`Point`]s
 //! - **[`Line`]**: A line segment represented by two [`Coordinate`]s
