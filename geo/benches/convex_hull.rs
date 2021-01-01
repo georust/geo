@@ -25,7 +25,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let line_string = LineString::<f32>::from(points);
 
         bencher.iter(|| {
-            criterion::black_box(criterion::black_box(&line_string).convex_hull());
+            criterion::black_box(criterion::black_box(&line_string).convex_hull().unwrap());
         });
     });
 
@@ -34,7 +34,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let line_string = LineString::<f64>::from(points);
 
         bencher.iter(|| {
-            criterion::black_box(criterion::black_box(&line_string).convex_hull());
+            criterion::black_box(criterion::black_box(&line_string).convex_hull().unwrap());
         });
     });
 

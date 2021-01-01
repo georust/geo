@@ -43,7 +43,7 @@ pub trait Kernel<T: CoordinateType> {
 }
 
 /// Marker trait to assign Kernel for scalars
-pub trait HasKernel: CoordinateType {
+pub trait HasKernel: CoordinateType + std::fmt::Debug {
     type Ker: Kernel<Self>;
 }
 

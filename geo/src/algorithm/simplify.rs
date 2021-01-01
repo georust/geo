@@ -42,7 +42,10 @@ where
     T: Float,
 {
     if *epsilon <= T::zero() {
-        return rdp_indices.iter().map(|rdp_index| rdp_index.index).collect();
+        return rdp_indices
+            .iter()
+            .map(|rdp_index| rdp_index.index)
+            .collect();
     }
     compute_rdp(rdp_indices, epsilon)
         .into_iter()

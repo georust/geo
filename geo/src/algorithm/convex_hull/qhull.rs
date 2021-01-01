@@ -18,13 +18,13 @@ where
 }
 
 // Adapted from https://web.archive.org/web/20180409175413/http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
-pub fn quick_hull<T>(mut points: &mut [Coordinate<T>]) -> LineString<T>
+pub fn quick_hull<T>(mut points: &mut [Coordinate<T>]) -> Result<LineString<T>, ()>
 where
     T: HasKernel,
 {
     // can't build a hull from fewer than four points
     if points.len() < 4 {
-        return trivial_hull(points, false);
+        return Ok(trivial_hull(points, false));
     }
     let mut hull = vec![];
 
@@ -60,7 +60,7 @@ where
     // close the polygon
     let mut hull: LineString<_> = hull.into();
     hull.close();
-    hull
+    Ok(hull)
 }
 
 // recursively calculate the convex hull of a subset of points
@@ -69,15 +69,16 @@ fn hull_set<T>(
     p_b: Coordinate<T>,
     mut set: &mut [Coordinate<T>],
     hull: &mut Vec<Coordinate<T>>,
-) where
+) -> Result<(), ()>
+where
     T: HasKernel,
 {
     if set.is_empty() {
-        return;
+        return Ok(());
     }
     if set.len() == 1 {
         hull.push(set[0]);
-        return;
+        return Ok(());
     }
 
     // Construct orthogonal vector to `p_b` - `p_a` We
@@ -88,31 +89,48 @@ fn hull_set<T>(
         x: p_a.y - p_b.y,
     };
 
-    let furthest_idx = set
+    let (farthest_idx, _) = set
         .iter()
         .map(|pt| {
             let p_diff = Coordinate {
                 x: pt.x - p_a.x,
                 y: pt.y - p_a.y,
             };
+            println!("PREFOO {:?}", p_diff);
             p_orth.x * p_diff.x + p_orth.y * p_diff.y
         })
         .enumerate()
-        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-        .unwrap()
-        .0;
+        .try_fold(
+            (0, T::zero()),
+            |(farthest_idx, farthest_dist), (curr_idx, curr_dist)| {
+                // Ensure `distance` is not NaN
+                // TODO: we need a better check
+                if curr_dist != curr_dist {
+                    panic!("FOO {:?}", curr_dist);
+                    return Err(());
+                }
 
-    // move Coordinate at furthest_point from set into hull
-    let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
+                Ok(if curr_dist > farthest_dist {
+                    (curr_idx, curr_dist)
+                } else {
+                    (farthest_idx, farthest_dist)
+                })
+            },
+        )?;
+
+    // move Coordinate at farthest_point from set into hull
+    let farthest_point = swap_remove_to_first(&mut set, farthest_idx);
     // points over PB
     {
-        let (mut points, _) = partition_slice(set, |p| is_ccw(*furthest_point, p_b, *p));
-        hull_set(*furthest_point, p_b, &mut points, hull);
+        let (mut points, _) = partition_slice(set, |p| is_ccw(*farthest_point, p_b, *p));
+        hull_set(*farthest_point, p_b, &mut points, hull)?;
     }
-    hull.push(*furthest_point);
+    hull.push(*farthest_point);
     // points over AP
-    let (mut points, _) = partition_slice(set, |p| is_ccw(p_a, *furthest_point, *p));
-    hull_set(p_a, *furthest_point, &mut points, hull);
+    let (mut points, _) = partition_slice(set, |p| is_ccw(p_a, *farthest_point, *p));
+    hull_set(p_a, *farthest_point, &mut points, hull)?;
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -131,7 +149,7 @@ mod test {
             Coordinate { x: 0.0, y: 4.0 },
             Coordinate { x: 0.0, y: 0.0 },
         ];
-        let res = quick_hull(&mut v);
+        let res = quick_hull(&mut v).unwrap();
         assert!(res.is_strictly_ccw_convex());
     }
 
@@ -155,7 +173,7 @@ mod test {
             Coordinate { x: -10, y: 0 },
             Coordinate { x: 0, y: -10 },
         ];
-        let res = quick_hull(&mut v);
+        let res = quick_hull(&mut v).unwrap();
         assert_eq!(res.0, correct);
     }
 
@@ -179,7 +197,7 @@ mod test {
             .iter()
             .map(|e| Coordinate { x: e.0, y: e.1 })
             .collect();
-        let res = quick_hull(&mut v);
+        let res = quick_hull(&mut v).unwrap();
         assert_eq!(res.0, v_correct);
     }
 
@@ -200,7 +218,7 @@ mod test {
             .iter()
             .map(|e| Coordinate { x: e.0, y: e.1 })
             .collect();
-        let res = quick_hull(&mut v);
+        let res = quick_hull(&mut v).unwrap();
         assert!(res.is_strictly_ccw_convex());
     }
 
@@ -216,7 +234,7 @@ mod test {
             .iter()
             .map(|e| Coordinate { x: e.0, y: e.1 })
             .collect();
-        let res = quick_hull(&mut v);
+        let res = quick_hull(&mut v).unwrap();
         assert_eq!(res.0, v_correct);
     }
 
@@ -227,7 +245,7 @@ mod test {
             .iter()
             .map(|e| Coordinate { x: e.0, y: e.1 })
             .collect();
-        let res = quick_hull(&mut v);
+        let res = quick_hull(&mut v).unwrap();
         assert!(res.is_strictly_ccw_convex());
     }
 
@@ -251,7 +269,7 @@ mod test {
             .iter()
             .map(|e| Coordinate { x: e.0, y: e.1 })
             .collect();
-        let res = quick_hull(&mut v);
+        let res = quick_hull(&mut v).unwrap();
         assert!(res.is_strictly_ccw_convex());
     }
 }

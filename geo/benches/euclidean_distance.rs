@@ -50,7 +50,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         "Polygon Euclidean distance rotating calipers f64",
         |bencher| {
             let points = include!("../src/algorithm/test_fixtures/norway_convex_hull.rs");
-            let poly1 = Polygon::new(points.into(), vec![]).convex_hull();
+            let poly1 = Polygon::new(points.into(), vec![]).convex_hull().unwrap();
             let poly2 = polygon![
                 (x: -6.064453, y: 68.49604),
                 (x: -7.426758, y: 68.688521),
@@ -82,7 +82,8 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
                 (x: -4.833984, y: 67.958148),
                 (x: -6.064453, y: 68.49604),
             ]
-            .convex_hull();
+            .convex_hull()
+            .unwrap();
             bencher.iter(|| {
                 criterion::black_box(
                     criterion::black_box(&poly1).euclidean_distance(criterion::black_box(&poly2)),

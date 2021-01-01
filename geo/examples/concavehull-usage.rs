@@ -66,8 +66,8 @@ fn main() -> std::io::Result<()> {
         .collect();
     let moved_v = move_points_in_viewbox(width as f64, height as f64, v.clone());
     let multipoint = MultiPoint::from(moved_v);
-    let concave = multipoint.concave_hull(2.0);
-    let convex = multipoint.convex_hull();
+    let concave = multipoint.concave_hull(2.0).unwrap(); // TODO: use ? here?
+    let convex = multipoint.convex_hull().unwrap(); // TODO: use ? here?
     let concave_polygon_str = generate_polygon_str(&concave.exterior().0);
     let convex_polygon_str = generate_polygon_str(&convex.exterior().0);
     let v_coords = map_points_to_coords(multipoint.0);

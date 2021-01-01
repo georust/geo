@@ -22,7 +22,7 @@ fn convex_hull_multipoint_test() {
         Coordinate::from((-10, 0)),
         Coordinate::from((0, -10)),
     ];
-    let res = mp.convex_hull();
+    let res = mp.convex_hull().unwrap();
     assert_eq!(res.exterior().0, correct);
 }
 #[test]
@@ -45,7 +45,7 @@ fn convex_hull_linestring_test() {
         Coordinate::from((-10.0, 0.0)),
         Coordinate::from((0.0, -10.0)),
     ];
-    let res = mp.convex_hull();
+    let res = mp.convex_hull().unwrap();
     assert_eq!(res.exterior().0, correct);
 }
 #[test]
@@ -60,7 +60,7 @@ fn convex_hull_multilinestring_test() {
         Coordinate::from((0.0, 0.0)),
         Coordinate::from((2.0, 0.0)),
     ];
-    let res = mls.convex_hull();
+    let res = mls.convex_hull().unwrap();
     assert_eq!(res.exterior().0, correct);
 }
 #[test]
@@ -75,6 +75,6 @@ fn convex_hull_multipolygon_test() {
         Coordinate::from((0.0, 0.0)),
         Coordinate::from((5.0, 0.0)),
     ];
-    let res = mp.convex_hull();
+    let res = mp.convex_hull().unwrap();
     assert_eq!(res.exterior().0, correct);
 }

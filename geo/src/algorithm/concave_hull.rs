@@ -46,7 +46,7 @@ use std::collections::VecDeque;
 /// ```
 pub trait ConcaveHull {
     type Scalar: CoordinateType;
-    fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar>;
+    fn concave_hull(&self, concavity: Self::Scalar) -> Result<Polygon<Self::Scalar>, ()>;
 }
 
 impl<T> ConcaveHull for Polygon<T>
@@ -54,9 +54,9 @@ where
     T: Float + RTreeNum + HasKernel,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
+    fn concave_hull(&self, concavity: Self::Scalar) -> Result<Polygon<Self::Scalar>, ()> {
         let mut points: Vec<_> = self.exterior().0.clone();
-        Polygon::new(concave_hull(&mut points, concavity), vec![])
+        Ok(Polygon::new(concave_hull(&mut points, concavity)?, vec![]))
     }
 }
 
@@ -65,13 +65,16 @@ where
     T: Float + RTreeNum + HasKernel,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
+    fn concave_hull(&self, concavity: Self::Scalar) -> Result<Polygon<Self::Scalar>, ()> {
         let mut aggregated: Vec<Coordinate<Self::Scalar>> = self
             .0
             .iter()
             .flat_map(|elem| elem.exterior().0.clone())
             .collect();
-        Polygon::new(concave_hull(&mut aggregated, concavity), vec![])
+        Ok(Polygon::new(
+            concave_hull(&mut aggregated, concavity)?,
+            vec![],
+        ))
     }
 }
 
@@ -80,8 +83,11 @@ where
     T: Float + RTreeNum + HasKernel,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
-        Polygon::new(concave_hull(&mut self.0.clone(), concavity), vec![])
+    fn concave_hull(&self, concavity: Self::Scalar) -> Result<Polygon<Self::Scalar>, ()> {
+        Ok(Polygon::new(
+            concave_hull(&mut self.0.clone(), concavity)?,
+            vec![],
+        ))
     }
 }
 
@@ -90,10 +96,13 @@ where
     T: Float + RTreeNum + HasKernel,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: T) -> Polygon<T> {
+    fn concave_hull(&self, concavity: T) -> Result<Polygon<T>, ()> {
         let mut aggregated: Vec<Coordinate<T>> =
             self.iter().flat_map(|elem| elem.0.clone()).collect();
-        Polygon::new(concave_hull(&mut aggregated, concavity), vec![])
+        Ok(Polygon::new(
+            concave_hull(&mut aggregated, concavity)?,
+            vec![],
+        ))
     }
 }
 
@@ -102,9 +111,12 @@ where
     T: Float + RTreeNum + HasKernel,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: T) -> Polygon<T> {
+    fn concave_hull(&self, concavity: T) -> Result<Polygon<T>, ()> {
         let mut coordinates: Vec<Coordinate<T>> = self.iter().map(|point| point.0).collect();
-        Polygon::new(concave_hull(&mut coordinates, concavity), vec![])
+        Ok(Polygon::new(
+            concave_hull(&mut coordinates, concavity)?,
+            vec![],
+        ))
     }
 }
 
@@ -186,14 +198,14 @@ where
 
 // This takes significant inspiration from:
 // https://github.com/mapbox/concaveman/blob/54838e1/index.js#L11
-fn concave_hull<T>(coords: &mut [Coordinate<T>], concavity: T) -> LineString<T>
+fn concave_hull<T>(coords: &mut [Coordinate<T>], concavity: T) -> Result<LineString<T>, ()>
 where
     T: Float + RTreeNum + HasKernel,
 {
-    let hull = qhull::quick_hull(coords);
+    let hull = qhull::quick_hull(coords)?;
 
     if coords.len() < 4 {
-        return hull;
+        return Ok(hull);
     }
 
     //Get points in overall dataset that aren't on the exterior linestring of the hull
@@ -246,7 +258,7 @@ where
         }
     }
 
-    concave_list.into()
+    Ok(LineString::from(concave_list))
 }
 
 #[cfg(test)]
@@ -383,7 +395,7 @@ mod test {
             .map(|tuple| Point::new(f64::from(tuple[0]), f64::from(tuple[1])))
             .collect();
         let norway_concave_hull: LineString<f64> = norway_concave_hull_points.into_iter().collect();
-        let res = norway.concave_hull(2.0);
+        let res = norway.concave_hull(2.0).unwrap();
         assert_eq!(res.exterior(), &norway_concave_hull);
     }
 
@@ -396,7 +408,7 @@ mod test {
             (x: 3.0, y: 1.0),
             (x: 3.0, y: 2.0)
         ];
-        let concave = linestring.concave_hull(2.0);
+        let concave = linestring.concave_hull(2.0).unwrap();
         let correct = vec![
             Coordinate::from((4.0, 0.0)),
             Coordinate::from((4.0, 4.0)),
@@ -428,7 +440,7 @@ mod test {
             Coordinate::from((0.0, 0.0)),
             Coordinate::from((4.0, 0.0)),
         ];
-        let res = mls.concave_hull(2.0);
+        let res = mls.concave_hull(2.0).unwrap();
         assert_eq!(res.exterior().0, correct);
     }
 
@@ -444,7 +456,7 @@ mod test {
              (x: 3.0, y: 2.0)
         ];
         let multipolygon = MultiPolygon(vec![v1, v2]);
-        let res = multipolygon.concave_hull(2.0);
+        let res = multipolygon.concave_hull(2.0).unwrap();
         let correct = vec![
             Coordinate::from((4.0, 0.0)),
             Coordinate::from((4.0, 4.0)),
