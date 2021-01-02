@@ -101,7 +101,7 @@ pub mod prelude {
     pub use crate::algorithm::dimensions::HasDimensions;
     pub use crate::algorithm::euclidean_distance::EuclideanDistance;
     pub use crate::algorithm::euclidean_length::EuclideanLength;
-    pub use crate::algorithm::extremes::ExtremePoints;
+    pub use crate::algorithm::extremes::Extremes;
     pub use crate::algorithm::frechet_distance::FrechetDistance;
     pub use crate::algorithm::geodesic_distance::GeodesicDistance;
     pub use crate::algorithm::geodesic_length::GeodesicLength;
