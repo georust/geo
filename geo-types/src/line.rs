@@ -1,8 +1,6 @@
 use crate::{Coordinate, CoordinateType, Point};
-#[cfg(feature = "relative_eq")]
-use approx::AbsDiffEq;
-#[cfg(feature = "relative_eq")]
-use approx::RelativeEq;
+#[cfg(any(feature = "approx", test))]
+use approx::{AbsDiffEq, RelativeEq};
 
 /// A line segment made up of exactly two
 /// [`Coordinate`s](struct.Coordinate.html).
@@ -168,7 +166,7 @@ impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {
         Line::new(coord[0], coord[1])
     }
 }
-#[cfg(feature = "relative_eq")]
+#[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for Line<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
@@ -202,7 +200,7 @@ where
     }
 }
 
-#[cfg(feature = "relative_eq")]
+#[cfg(any(feature = "approx", test))]
 impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for Line<T> {
     type Epsilon = T;
 

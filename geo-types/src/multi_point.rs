@@ -1,8 +1,7 @@
 use crate::{CoordinateType, Point};
-#[cfg(feature = "relative_eq")]
-use approx::AbsDiffEq;
-#[cfg(feature = "relative_eq")]
-use approx::RelativeEq;
+
+#[cfg(any(feature = "approx", test))]
+use approx::{AbsDiffEq, RelativeEq};
 
 use std::iter::FromIterator;
 
@@ -96,7 +95,7 @@ impl<T: CoordinateType> MultiPoint<T> {
     }
 }
 
-#[cfg(feature = "relative_eq")]
+#[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for MultiPoint<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
@@ -135,7 +134,7 @@ where
     }
 }
 
-#[cfg(feature = "relative_eq")]
+#[cfg(any(feature = "approx", test))]
 impl<T> AbsDiffEq for MultiPoint<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType,

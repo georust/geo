@@ -4,6 +4,8 @@
 
 * `geo_types::LineString::num_coords` has been deprecated in favor of `geo::algorithm::coords_iter::CoordsIter::coords_count`
   * <https://github.com/georust/geo/pull/563>
+* Introduce `use-rstar` feature rather than `rstar` so that `approx` dependency can be optional
+  * <https://github.com/georust/geo/pull/567>
 
 ## 0.6.2
 

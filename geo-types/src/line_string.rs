@@ -1,7 +1,5 @@
-#[cfg(feature = "relative_eq")]
-use approx::AbsDiffEq;
-#[cfg(feature = "relative_eq")]
-use approx::RelativeEq;
+#[cfg(any(feature = "approx", test))]
+use approx::{AbsDiffEq, RelativeEq};
 
 use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
 use std::iter::FromIterator;
@@ -287,7 +285,7 @@ impl<T: CoordinateType> IndexMut<usize> for LineString<T> {
     }
 }
 
-#[cfg(feature = "relative_eq")]
+#[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for LineString<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
@@ -334,7 +332,7 @@ where
     }
 }
 
-#[cfg(feature = "relative_eq")]
+#[cfg(any(feature = "approx", test))]
 impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for LineString<T> {
     type Epsilon = T;
 
