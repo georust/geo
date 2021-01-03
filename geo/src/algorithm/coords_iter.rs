@@ -10,8 +10,9 @@ use std::{fmt, iter, marker, slice};
 type CoordinateChainOnce<T> = iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>;
 
 /// Iterate over geometry coordinates.
-pub trait CoordsIter<'a, T: CoordinateType> {
-    type Iter: Iterator<Item = Coordinate<T>>;
+pub trait CoordsIter<'a> {
+    type Iter: Iterator<Item = Coordinate<Self::Scalar>>;
+    type Scalar: CoordinateType;
 
     /// Iterate over all exterior and (if any) interior coordinates of a geometry.
     ///
@@ -57,8 +58,9 @@ pub trait CoordsIter<'a, T: CoordinateType> {
 // │ Implementation for Point │
 // └──────────────────────────┘
 
-impl<'a, T: CoordinateType> CoordsIter<'a, T> for Point<T> {
+impl<'a, T: CoordinateType> CoordsIter<'a> for Point<T> {
     type Iter = iter::Once<Coordinate<T>>;
+    type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
         iter::once(self.0)
@@ -74,8 +76,9 @@ impl<'a, T: CoordinateType> CoordsIter<'a, T> for Point<T> {
 // │ Implementation for Line │
 // └─────────────────────────┘
 
-impl<'a, T: CoordinateType> CoordsIter<'a, T> for Line<T> {
+impl<'a, T: CoordinateType> CoordsIter<'a> for Line<T> {
     type Iter = iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>;
+    type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
         iter::once(self.start).chain(iter::once(self.end))
@@ -91,8 +94,9 @@ impl<'a, T: CoordinateType> CoordsIter<'a, T> for Line<T> {
 // │ Implementation for LineString │
 // └───────────────────────────────┘
 
-impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for LineString<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a> for LineString<T> {
     type Iter = iter::Copied<slice::Iter<'a, Coordinate<T>>>;
+    type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
         self.0.iter().copied()
@@ -108,12 +112,13 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for LineString<T> {
 // │ Implementation for Polygon │
 // └────────────────────────────┘
 type PolygonChainIter<'a, T> = iter::Chain<
-    <LineString<T> as CoordsIter<'a, T>>::Iter,
+    <LineString<T> as CoordsIter<'a>>::Iter,
     iter::Flatten<MapCoordsIter<'a, T, slice::Iter<'a, LineString<T>>, LineString<T>>>,
 >;
 
-impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a> for Polygon<T> {
     type Iter = PolygonChainIter<'a, T>;
+    type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
         self.exterior()
@@ -136,8 +141,9 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Polygon<T> {
 // │ Implementation for MultiPoint │
 // └───────────────────────────────┘
 
-impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPoint<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a> for MultiPoint<T> {
     type Iter = iter::Flatten<MapCoordsIter<'a, T, slice::Iter<'a, Point<T>>, Point<T>>>;
+    type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
         MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
@@ -153,8 +159,9 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPoint<T> {
 // │ Implementation for MultiLineString │
 // └────────────────────────────────────┘
 
-impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiLineString<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a> for MultiLineString<T> {
     type Iter = iter::Flatten<MapCoordsIter<'a, T, slice::Iter<'a, LineString<T>>, LineString<T>>>;
+    type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
         MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
@@ -173,8 +180,9 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiLineString<T> {
 // │ Implementation for MultiPolygon │
 // └─────────────────────────────────┘
 
-impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPolygon<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a> for MultiPolygon<T> {
     type Iter = iter::Flatten<MapCoordsIter<'a, T, slice::Iter<'a, Polygon<T>>, Polygon<T>>>;
+    type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
         MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
@@ -190,8 +198,9 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for MultiPolygon<T> {
 // │ Implementation for GeometryCollection │
 // └───────────────────────────────────────┘
 
-impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for GeometryCollection<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a> for GeometryCollection<T> {
     type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
+    type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
         Box::new(self.0.iter().flat_map(|geometry| geometry.coords_iter()))
@@ -212,8 +221,9 @@ type RectChainIter<T> = iter::Chain<
     iter::Once<Coordinate<T>>,
 >;
 
-impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a> for Rect<T> {
     type Iter = RectChainIter<T>;
+    type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
         iter::once(Coordinate {
@@ -247,8 +257,9 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Rect<T> {
 // │ Implementation for Triangle │
 // └─────────────────────────────┘
 
-impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Triangle<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a> for Triangle<T> {
     type Iter = iter::Chain<CoordinateChainOnce<T>, iter::Once<Coordinate<T>>>;
+    type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
         iter::once(self.0)
@@ -266,8 +277,9 @@ impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Triangle<T> {
 // │ Implementation for Geometry │
 // └─────────────────────────────┘
 
-impl<'a, T: CoordinateType + 'a> CoordsIter<'a, T> for Geometry<T> {
+impl<'a, T: CoordinateType + 'a> CoordsIter<'a> for Geometry<T> {
     type Iter = GeometryCoordsIter<'a, T>;
+    type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
         match self {
@@ -314,10 +326,10 @@ pub struct MapCoordsIter<
     'a,
     T: 'a + CoordinateType,
     Iter1: Iterator<Item = &'a Iter2>,
-    Iter2: 'a + CoordsIter<'a, T>,
+    Iter2: 'a + CoordsIter<'a>,
 >(Iter1, marker::PhantomData<T>);
 
-impl<'a, T: 'a + CoordinateType, Iter1: Iterator<Item = &'a Iter2>, Iter2: CoordsIter<'a, T>>
+impl<'a, T: 'a + CoordinateType, Iter1: Iterator<Item = &'a Iter2>, Iter2: CoordsIter<'a>>
     Iterator for MapCoordsIter<'a, T, Iter1, Iter2>
 {
     type Item = Iter2::Iter;
@@ -330,16 +342,16 @@ impl<'a, T: 'a + CoordinateType, Iter1: Iterator<Item = &'a Iter2>, Iter2: Coord
 // Utility to transform Geometry into Iterator<Coordinate>
 #[doc(hidden)]
 pub enum GeometryCoordsIter<'a, T: CoordinateType + 'a> {
-    Point(<Point<T> as CoordsIter<'a, T>>::Iter),
-    Line(<Line<T> as CoordsIter<'a, T>>::Iter),
-    LineString(<LineString<T> as CoordsIter<'a, T>>::Iter),
-    Polygon(<Polygon<T> as CoordsIter<'a, T>>::Iter),
-    MultiPoint(<MultiPoint<T> as CoordsIter<'a, T>>::Iter),
-    MultiLineString(<MultiLineString<T> as CoordsIter<'a, T>>::Iter),
-    MultiPolygon(<MultiPolygon<T> as CoordsIter<'a, T>>::Iter),
-    GeometryCollection(<GeometryCollection<T> as CoordsIter<'a, T>>::Iter),
-    Rect(<Rect<T> as CoordsIter<'a, T>>::Iter),
-    Triangle(<Triangle<T> as CoordsIter<'a, T>>::Iter),
+    Point(<Point<T> as CoordsIter<'a>>::Iter),
+    Line(<Line<T> as CoordsIter<'a>>::Iter),
+    LineString(<LineString<T> as CoordsIter<'a>>::Iter),
+    Polygon(<Polygon<T> as CoordsIter<'a>>::Iter),
+    MultiPoint(<MultiPoint<T> as CoordsIter<'a>>::Iter),
+    MultiLineString(<MultiLineString<T> as CoordsIter<'a>>::Iter),
+    MultiPolygon(<MultiPolygon<T> as CoordsIter<'a>>::Iter),
+    GeometryCollection(<GeometryCollection<T> as CoordsIter<'a>>::Iter),
+    Rect(<Rect<T> as CoordsIter<'a>>::Iter),
+    Triangle(<Triangle<T> as CoordsIter<'a>>::Iter),
 }
 
 impl<'a, T: CoordinateType> Iterator for GeometryCoordsIter<'a, T> {
