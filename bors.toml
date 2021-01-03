@@ -2,5 +2,6 @@ status = [
     "geo-types",
     "geo",
     "geo-postgis",
-    "coverage"
+    "coverage",
+    "bench"
 ]

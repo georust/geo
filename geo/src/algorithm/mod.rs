@@ -1,5 +1,5 @@
 /// Kernels to compute various predicates
-pub(crate) mod kernels;
+pub mod kernels;
 
 /// Calculate the area of the surface of a `Geometry`.
 pub mod area;

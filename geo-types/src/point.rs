@@ -4,8 +4,8 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 
 /// A single point in 2D space.
 ///
-/// Points can be created using the `new(x, y)` constructor,
-/// the `point!` macro, or from a `Coordinate`, two-element
+/// Points can be created using the [`Point::new`] constructor,
+/// the [`point!`] macro, or from a `Coordinate`, two-element
 /// tuples, or arrays – see the `From` impl section for a
 /// complete list.
 ///

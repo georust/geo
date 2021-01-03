@@ -4,12 +4,12 @@ use crate::algorithm::intersects::Intersects;
 use crate::algorithm::polygon_distance_fast_path::*;
 use crate::kernels::*;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
+use crate::GeoFloat;
 use crate::{
     Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
     Triangle,
 };
-use num_traits::float::FloatConst;
-use num_traits::{Bounded, Float, Signed};
+use num_traits::{Float, float::FloatConst, Bounded, Signed};
 
 use rstar::RTree;
 use rstar::RTreeNum;
@@ -103,7 +103,7 @@ pub trait EuclideanDistance<T, Rhs = Self> {
 
 impl<T> EuclideanDistance<T, Coordinate<T>> for Coordinate<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance between two `Coordinate`s
     fn euclidean_distance(&self, c: &Coordinate<T>) -> T {
@@ -113,7 +113,7 @@ where
 
 impl<T> EuclideanDistance<T, Line<T>> for Coordinate<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a `Coordinate` to a `Line`
     fn euclidean_distance(&self, line: &Line<T>) -> T {
@@ -127,7 +127,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for Point<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance between two Points
     fn euclidean_distance(&self, p: &Point<T>) -> T {
@@ -137,7 +137,7 @@ where
 
 impl<T> EuclideanDistance<T, MultiPoint<T>> for Point<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a Point to a MultiPoint
     fn euclidean_distance(&self, points: &MultiPoint<T>) -> T {
@@ -151,7 +151,7 @@ where
 
 impl<T> EuclideanDistance<T, Line<T>> for Point<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a Line to a Point
     fn euclidean_distance(&self, line: &Line<T>) -> T {
@@ -161,7 +161,7 @@ where
 
 impl<T> EuclideanDistance<T, LineString<T>> for Point<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a Point to a LineString
     fn euclidean_distance(&self, linestring: &LineString<T>) -> T {
@@ -171,7 +171,7 @@ where
 
 impl<T> EuclideanDistance<T, MultiLineString<T>> for Point<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a Point to a MultiLineString
     fn euclidean_distance(&self, mls: &MultiLineString<T>) -> T {
@@ -184,7 +184,7 @@ where
 
 impl<T> EuclideanDistance<T, Polygon<T>> for Point<T>
 where
-    T: Float + HasKernel,
+    T: GeoFloat + HasKernel,
 {
     /// Minimum distance from a Point to a Polygon
     fn euclidean_distance(&self, polygon: &Polygon<T>) -> T {
@@ -215,7 +215,7 @@ where
 
 impl<T> EuclideanDistance<T, MultiPolygon<T>> for Point<T>
 where
-    T: Float + HasKernel,
+    T: GeoFloat + HasKernel,
 {
     /// Minimum distance from a Point to a MultiPolygon
     fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
@@ -233,7 +233,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for MultiPoint<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a MultiPoint to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
@@ -247,7 +247,7 @@ where
 
 impl<T> EuclideanDistance<T, Coordinate<T>> for Line<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a `Line` to a `Coordinate`
     fn euclidean_distance(&self, coord: &Coordinate<T>) -> T {
@@ -257,7 +257,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for Line<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a Line to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
@@ -268,7 +268,7 @@ where
 /// Line to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for Line<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         if self.intersects(other) || self.contains(other) {
@@ -286,7 +286,7 @@ where
 /// Line to LineString
 impl<T> EuclideanDistance<T, LineString<T>> for Line<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         other.euclidean_distance(self)
@@ -296,7 +296,7 @@ where
 // Line to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Line<T>
 where
-    T: Float + Signed + RTreeNum + FloatConst + HasKernel,
+    T: GeoFloat + Signed + RTreeNum + FloatConst + HasKernel,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if other.contains(self) || self.intersects(other) {
@@ -330,7 +330,7 @@ where
 /// Line to MultiPolygon distance
 impl<T> EuclideanDistance<T, MultiPolygon<T>> for Line<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
 {
     fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
         mpolygon
@@ -347,7 +347,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for LineString<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a LineString to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
@@ -358,7 +358,7 @@ where
 /// LineString to Line
 impl<T> EuclideanDistance<T, Line<T>> for LineString<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         self.lines().fold(Bounded::max_value(), |acc, line| {
@@ -370,7 +370,7 @@ where
 /// LineString-LineString distance
 impl<T> EuclideanDistance<T, LineString<T>> for LineString<T>
 where
-    T: Float + HasKernel + Signed + RTreeNum,
+    T: GeoFloat + HasKernel + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         if self.intersects(other) {
@@ -384,7 +384,7 @@ where
 /// LineString to Polygon
 impl<T> EuclideanDistance<T, Polygon<T>> for LineString<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if self.intersects(other) || other.contains(self) {
@@ -408,7 +408,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for MultiLineString<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a MultiLineString to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
@@ -422,7 +422,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for Polygon<T>
 where
-    T: Float + HasKernel,
+    T: GeoFloat + HasKernel,
 {
     /// Minimum distance from a Polygon to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
@@ -433,7 +433,7 @@ where
 // Polygon to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for Polygon<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         other.euclidean_distance(self)
@@ -443,7 +443,7 @@ where
 /// Polygon to LineString distance
 impl<T> EuclideanDistance<T, LineString<T>> for Polygon<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         other.euclidean_distance(self)
@@ -453,7 +453,7 @@ where
 // Polygon to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Polygon<T>
 where
-    T: Float + FloatConst + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + RTreeNum + HasKernel,
 {
     /// This implementation has a "fast path" in cases where both input polygons are convex:
     /// it switches to an implementation of the "rotating calipers" method described in [Pirzadeh (1999), pp24—30](http://digitool.library.mcgill.ca/R/?func=dbin-jump-full&object_id=21623&local_base=GEN01-MCG02),
@@ -495,7 +495,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for MultiPolygon<T>
 where
-    T: Float + HasKernel,
+    T: GeoFloat + HasKernel,
 {
     /// Minimum distance from a MultiPolygon to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
@@ -506,7 +506,7 @@ where
 /// MultiPolygon to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for MultiPolygon<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         other.euclidean_distance(self)
@@ -519,7 +519,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for Triangle<T>
 where
-    T: Float + HasKernel,
+    T: GeoFloat + HasKernel,
 {
     fn euclidean_distance(&self, point: &Point<T>) -> T {
         if self.contains(point) {
@@ -555,7 +555,7 @@ where
 // This is somewhat slow and memory-inefficient, but certainly better than quadratic time
 pub fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -> T
 where
-    T: Float + RTreeNum,
+    T: GeoFloat + RTreeNum,
 {
     let tree_a: RTree<Line<_>> = RTree::bulk_load(geom1.lines().collect::<Vec<_>>());
     let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect::<Vec<_>>());

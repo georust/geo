@@ -1,9 +1,8 @@
 use crate::algorithm::extremes::ExtremeIndices;
-use crate::kernels::*;
 use crate::prelude::*;
-use crate::{Line, Point, Polygon, Triangle};
+use crate::{GeoFloat, Line, Point, Polygon, Triangle};
 use num_traits::float::FloatConst;
-use num_traits::{Float, Signed};
+use num_traits::Signed;
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance
 // They use the rotating calipers method to speed up calculations.
@@ -13,7 +12,7 @@ use num_traits::{Float, Signed};
 /// using the rotating calipers method
 pub(crate) fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
 where
-    T: Float + FloatConst + Signed + HasKernel,
+    T: GeoFloat + FloatConst + Signed,
 {
     let poly1_extremes = poly1.extreme_indices().unwrap();
     let poly2_extremes = poly2.extreme_indices().unwrap();
@@ -57,7 +56,7 @@ where
 /// Minimum distance between a vertex and an imaginary line drawn from p to q
 fn vertex_line_distance<T>(v: Point<T>, p: Point<T>, q: Point<T>) -> T
 where
-    T: Float,
+    T: GeoFloat,
 {
     v.euclidean_distance(&Line::new(p.0, q.0))
 }
@@ -65,7 +64,7 @@ where
 /// Wrap-around previous Polygon index
 fn prev_vertex<T>(poly: &Polygon<T>, current_vertex: usize) -> usize
 where
-    T: Float,
+    T: GeoFloat,
 {
     (current_vertex + (poly.exterior().0.len() - 1) - 1) % (poly.exterior().0.len() - 1)
 }
@@ -73,7 +72,7 @@ where
 /// Wrap-around next Polygon index
 fn next_vertex<T>(poly: &Polygon<T>, current_vertex: usize) -> usize
 where
-    T: Float,
+    T: GeoFloat,
 {
     (current_vertex + 1) % (poly.exterior().0.len() - 1)
 }
@@ -89,7 +88,7 @@ enum AlignedEdge {
 #[derive(Debug)]
 pub(crate) struct Polydist<'a, T>
 where
-    T: Float,
+    T: GeoFloat,
     T: 'a,
 {
     poly1: &'a Polygon<T>,
@@ -120,7 +119,7 @@ where
 // http://web.archive.org/web/20150330010154/http://cgm.cs.mcgill.ca/%7Eorm/rotcal.html
 fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: Point<T>, idx: usize) -> Point<T>
 where
-    T: Float + Signed,
+    T: GeoFloat + Signed,
 {
     let tansq = slope.powi(2);
     let cossq = T::one() / (T::one() + tansq);
@@ -268,7 +267,7 @@ where
 /// Perpendicular unit vector of a vertex and a unit vector
 fn unitpvector<T>(p: Point<T>, u: Point<T>) -> Point<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     let hundred = T::from(100).unwrap();
     let vertical = p.x() == u.x();
@@ -318,7 +317,7 @@ where
 /// Angle between a vertex and an edge
 fn vertex_line_angle<T>(poly: &Polygon<T>, p: Point<T>, m: &T, vertical: bool, idx: usize) -> T
 where
-    T: Float + FloatConst + Signed,
+    T: GeoFloat + FloatConst + Signed,
 {
     let hundred = T::from(100).unwrap();
     let pnext = poly.exterior().0[next_vertex(poly, idx)];
@@ -399,7 +398,7 @@ where
 /// Does abc turn left?
 fn leftturn<T>(a: Point<T>, b: Point<T>, c: Point<T>) -> i8
 where
-    T: Float,
+    T: GeoFloat,
 {
     let narea = Triangle::from([a, b, c]).signed_area();
     if narea > T::zero() {
@@ -414,7 +413,7 @@ where
 /// Calculate next set of caliper points
 fn nextpoints<T>(state: &mut Polydist<T>)
 where
-    T: Float + FloatConst + Signed,
+    T: GeoFloat + FloatConst + Signed,
 {
     state.alignment = None;
     state.ip1 = false;
@@ -505,7 +504,7 @@ where
 /// compute the minimum distance between entities (edges or vertices)
 fn computemin<T>(state: &mut Polydist<T>)
 where
-    T: Float + Signed,
+    T: GeoFloat + Signed,
 {
     let u;
     let u1;
