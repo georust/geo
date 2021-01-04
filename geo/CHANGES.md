@@ -17,6 +17,8 @@
   * <https://github.com/georust/geo/pull/584>
 * Performance improvements to `simplify`
   * <https://github.com/georust/geo/pull/584>
+* The `T` generic parameter for `CoordsIter` is now an associated type
+  * <https://github.com/georust/geo/pull/593>
 
 
 ## 0.16.0
