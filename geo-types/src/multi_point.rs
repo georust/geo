@@ -1,4 +1,8 @@
 use crate::{CoordinateType, Point};
+
+#[cfg(any(feature = "approx", test))]
+use approx::{AbsDiffEq, RelativeEq};
+
 use std::iter::FromIterator;
 
 /// A collection of [`Point`s](struct.Point.html). Can
@@ -91,6 +95,82 @@ impl<T: CoordinateType> MultiPoint<T> {
     }
 }
 
+#[cfg(any(feature = "approx", test))]
+impl<T> RelativeEq for MultiPoint<T>
+where
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
+{
+    #[inline]
+    fn default_max_relative() -> Self::Epsilon {
+        T::default_max_relative()
+    }
+
+    /// Equality assertion within a relative limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::MultiPoint;
+    /// use geo_types::point;
+    ///
+    /// let a = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+    /// let b = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.001, y: 10.]]);
+    ///
+    /// approx::assert_relative_eq!(a, b, max_relative=0.1)
+    /// ```
+    #[inline]
+    fn relative_eq(
+        &self,
+        other: &Self,
+        epsilon: Self::Epsilon,
+        max_relative: Self::Epsilon,
+    ) -> bool {
+        if self.0.len() != other.0.len() {
+            return false;
+        }
+
+        let mut mp_zipper = self.iter().zip(other.iter());
+        mp_zipper.all(|(lhs, rhs)| lhs.relative_eq(&rhs, epsilon, max_relative))
+    }
+}
+
+#[cfg(any(feature = "approx", test))]
+impl<T> AbsDiffEq for MultiPoint<T>
+where
+    T: AbsDiffEq<Epsilon = T> + CoordinateType,
+    T::Epsilon: Copy,
+{
+    type Epsilon = T;
+
+    #[inline]
+    fn default_epsilon() -> Self::Epsilon {
+        T::default_epsilon()
+    }
+
+    /// Equality assertion with a absolute limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::MultiPoint;
+    /// use geo_types::point;
+    ///
+    /// let a = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+    /// let b = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.001, y: 10.]]);
+    ///
+    /// approx::abs_diff_eq!(a, b, epsilon=0.1);
+    /// ```
+    #[inline]
+    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+        if self.0.len() != other.0.len() {
+            return false;
+        }
+
+        let mut mp_zipper = self.into_iter().zip(other.into_iter());
+        mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(&rhs, epsilon))
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -145,5 +225,59 @@ mod test {
                 assert_eq!(p, &point![x: 12, y: 12]);
             }
         }
+    }
+
+    #[test]
+    fn test_relative_eq() {
+        let delta = 1e-6;
+
+        let multi = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+
+        let multi_x = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.+delta, y: 10.]]);
+        assert!(multi.relative_eq(&multi_x, 1e-2, 1e-2));
+        assert!(multi.relative_ne(&multi_x, 1e-12, 1e-12));
+
+        let multi_y = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.+delta]]);
+        assert!(multi.relative_eq(&multi_y, 1e-2, 1e-2));
+        assert!(multi.relative_ne(&multi_y, 1e-12, 1e-12));
+
+        // Under-sized but otherwise equal.
+        let multi_undersized = MultiPoint(vec![point![x: 0., y: 0.]]);
+        assert!(multi.relative_ne(&multi_undersized, 1., 1.));
+
+        // Over-sized but otherwise equal.
+        let multi_oversized = MultiPoint(vec![
+            point![x: 0., y: 0.],
+            point![x: 10., y: 10.],
+            point![x: 10., y:100.],
+        ]);
+        assert!(multi.relative_ne(&multi_oversized, 1., 1.));
+    }
+
+    #[test]
+    fn test_abs_diff_eq() {
+        let delta = 1e-6;
+
+        let multi = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+
+        let multi_x = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.+delta, y: 10.]]);
+        assert!(multi.abs_diff_eq(&multi_x, 1e-2));
+        assert!(multi.abs_diff_ne(&multi_x, 1e-12));
+
+        let multi_y = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.+delta]]);
+        assert!(multi.abs_diff_eq(&multi_y, 1e-2));
+        assert!(multi.abs_diff_ne(&multi_y, 1e-12));
+
+        // Under-sized but otherwise equal.
+        let multi_undersized = MultiPoint(vec![point![x: 0., y: 0.]]);
+        assert!(multi.abs_diff_ne(&multi_undersized, 1.));
+
+        // Over-sized but otherwise equal.
+        let multi_oversized = MultiPoint(vec![
+            point![x: 0., y: 0.],
+            point![x: 10., y: 10.],
+            point![x: 10., y:100.],
+        ]);
+        assert!(multi.abs_diff_ne(&multi_oversized, 1.));
     }
 }
