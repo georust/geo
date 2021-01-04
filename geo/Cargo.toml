@@ -22,12 +22,11 @@ geographiclib-rs = { version = "0.2" }
 
 proj = { version = "0.20.3", optional = true }
 
-geo-types = { version = "0.6.2", path = "../geo-types", features = ["rstar"] }
+geo-types = { version = "0.6.2", path = "../geo-types", features = ["approx", "use-rstar"] }
 
 robust = { version = "0.2.2" }
 
 [features]
-default = []
 use-proj = ["proj"]
 proj-network = ["use-proj", "proj/network"]
 use-serde = ["serde", "geo-types/serde"]

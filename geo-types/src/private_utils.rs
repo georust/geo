@@ -127,7 +127,7 @@ where
     T: Float,
 {
     let distance = line_euclidean_length(Line::new(p1, p2)).to_f32().unwrap();
-    relative_eq!(distance, 0.0)
+    approx::relative_eq!(distance, 0.0)
 }
 
 pub fn line_string_contains_point<T>(line_string: &LineString<T>, point: Point<T>) -> bool
