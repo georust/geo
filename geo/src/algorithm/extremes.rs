@@ -9,8 +9,8 @@ pub trait Extremes<'a, T: CoordinateType> {
     /// # Examples
     ///
     /// ```
-    /// use geo::extremes::ExtremeIndices;
-    /// use geo::polygon;
+    /// use geo::extremes::Extremes;
+    /// use geo::{Coordinate, polygon};
     ///
     /// // a diamond shape
     /// let polygon = polygon![
@@ -22,12 +22,10 @@ pub trait Extremes<'a, T: CoordinateType> {
     /// ];
     ///
     /// // Polygon is both convex and oriented counter-clockwise
-    /// let extremes = polygon.extreme_indices().unwrap();
+    /// let extremes = polygon.extremes().unwrap();
     ///
-    /// assert_eq!(extremes.ymin, 0);
-    /// assert_eq!(extremes.xmax, 1);
-    /// assert_eq!(extremes.ymax, 2);
-    /// assert_eq!(extremes.xmin, 3);
+    /// assert_eq!(extremes.y_max.index, 2);
+    /// assert_eq!(extremes.y_max.coord, geo::Coordinate { x: 1., y: 2. });
     /// ```
     fn extremes(&'a self) -> Option<Outcome<T>>;
 }
