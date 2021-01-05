@@ -1,32 +1,29 @@
 use crate::algorithm::coords_iter::CoordsIter;
 use crate::{Coordinate, CoordinateType};
 
+/// Find the extreme coordinates and indices of a geometry.
+///
+/// # Examples
+///
+/// ```
+/// use geo::extremes::Extremes;
+/// use geo::{Coordinate, polygon};
+///
+/// // a diamond shape
+/// let polygon = polygon![
+///     (x: 1.0, y: 0.0),
+///     (x: 2.0, y: 1.0),
+///     (x: 1.0, y: 2.0),
+///     (x: 0.0, y: 1.0),
+///     (x: 1.0, y: 0.0),
+/// ];
+///
+/// let extremes = polygon.extremes().unwrap();
+///
+/// assert_eq!(extremes.y_max.index, 2);
+/// assert_eq!(extremes.y_max.coord, geo::Coordinate { x: 1., y: 2. });
+/// ```
 pub trait Extremes<'a, T: CoordinateType> {
-    /// Find the extreme `x` and `y` _indices_ of a convex Polygon
-    ///
-    /// The polygon **must be convex and properly (ccw) oriented**.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo::extremes::Extremes;
-    /// use geo::{Coordinate, polygon};
-    ///
-    /// // a diamond shape
-    /// let polygon = polygon![
-    ///     (x: 1.0, y: 0.0),
-    ///     (x: 2.0, y: 1.0),
-    ///     (x: 1.0, y: 2.0),
-    ///     (x: 0.0, y: 1.0),
-    ///     (x: 1.0, y: 0.0),
-    /// ];
-    ///
-    /// // Polygon is both convex and oriented counter-clockwise
-    /// let extremes = polygon.extremes().unwrap();
-    ///
-    /// assert_eq!(extremes.y_max.index, 2);
-    /// assert_eq!(extremes.y_max.coord, geo::Coordinate { x: 1., y: 2. });
-    /// ```
     fn extremes(&'a self) -> Option<Outcome<T>>;
 }
 
