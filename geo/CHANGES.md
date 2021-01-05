@@ -19,6 +19,8 @@
   * <https://github.com/georust/geo/pull/584>
 * The `T` generic parameter for `CoordsIter` is now an associated type
   * <https://github.com/georust/geo/pull/593>
+* Add `CoordsIter::exterior_coords_iter` method to iterate over exterior coordinates of a geometry
+  * <https://github.com/georust/geo/pull/594>
 
 
 ## 0.16.0
