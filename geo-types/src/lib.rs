@@ -1,23 +1,39 @@
 #![warn(missing_debug_implementations)]
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
-//! The `geo-types` library provides geospatial primitive types and traits to the [`GeoRust`](https://github.com/georust)
-//! crate ecosystem.
+//! The `geo-types` library provides geospatial primitive types for the [GeoRust] ecosystem.
 //!
-//! In most cases, you will only need to use this crate if you're a crate author and want compatibility
-//! with other `GeoRust` crates. Otherwise, the [`geo`](https://crates.io/crates/geo) crate re-exports these types and
-//! provides geospatial algorithms, while the [`geojson`](https://crates.io/crates/geojson) crate allows serialising
-//! and de-serialising `geo-types` primitives to GeoJSON.
+//! In most cases, you will only need to use this crate if you’re a crate author and want
+//! compatibility with other GeoRust crates. Otherwise, the [`geo`](https://crates.io/crates/geo)
+//! crate re-exports these types and provides geospatial algorithms.
+//!
+//! # Types
+//!
+//! - **[`Coordinate`]**: A two-dimensional coordinate. All geometry types are composed of [`Coordinate`]s, though [`Coordinate`] itself is not a [`Geometry`] type.
+//! - **[`Point`]**: A single point represented by one [`Coordinate`]
+//! - **[`MultiPoint`]**: A collection of [`Point`]s
+//! - **[`Line`]**: A line segment represented by two [`Coordinate`]s
+//! - **[`LineString`]**: A series of contiguous line segments represented by two or more
+//!   [`Coordinate`]s
+//! - **[`MultiLineString`]**: A collection of [`LineString`]s
+//! - **[`Polygon`]**: A bounded area represented by one [`LineString`] exterior ring, and zero or
+//!   more [`LineString`] interior rings
+//! - **[`MultiPolygon`]**: A collection of [`Polygon`]s
+//! - **[`Rect`]**: An axis-aligned bounded rectangle represented by minimum and maximum
+//!   [`Coordinate`]s
+//! - **[`Triangle`]**: A bounded area represented by three [`Coordinate`] vertices
+//! - **[`GeometryCollection`]**: A collection of [`Geometry`]s
+//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coordinate`]
 //!
 //! # Semantics
 //!
-//! The geospatial types provided here aim to adhere to the
-//! [OpenGIS Simple feature access][OGC-SFA] standards.
-//! Thus, the types here are inter-operable with other
-//! implementations of the standards: [JTS], [geos], etc.
+//! The geospatial types provided here aim to adhere to the [OpenGIS Simple feature access][OGC-SFA]
+//! standards. Thus, the types here are inter-operable with other implementations of the standards:
+//! [JTS], [GEOS], etc.
 //!
-//! [OGC-SFA]: //www.ogc.org/standards/sfa
-//! [JTS]: //github.com/locationtech/jts
-//! [geos]: //trac.osgeo.org/geos
+//! [GeoRust]: https://georust.org
+//! [OGC-SFA]: https://www.ogc.org/standards/sfa
+//! [JTS]: https://github.com/locationtech/jts
+//! [GEOS]: https://trac.osgeo.org/geos
 extern crate num_traits;
 use num_traits::{Num, NumCast};
 
@@ -28,6 +44,7 @@ extern crate serde;
 #[cfg(feature = "rstar")]
 extern crate rstar;
 
+#[cfg(test)]
 #[macro_use]
 extern crate approx;
 
@@ -79,6 +96,7 @@ pub use crate::rect::{InvalidRectCoordinatesError, Rect};
 #[macro_use]
 mod macros;
 
+#[cfg(feature = "rstar")]
 #[doc(hidden)]
 pub mod private_utils;
 

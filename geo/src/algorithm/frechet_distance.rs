@@ -1,7 +1,7 @@
 use crate::coords_iter::CoordsIter;
 use crate::euclidean_distance::EuclideanDistance;
-use crate::{LineString, Point};
-use num_traits::{Float, FromPrimitive};
+use crate::{GeoFloat, LineString, Point};
+use num_traits::FromPrimitive;
 
 /// Determine the similarity between two `LineStrings` using the [Frechet distance].
 ///
@@ -43,7 +43,7 @@ pub trait FrechetDistance<T, Rhs = Self> {
 
 impl<T> FrechetDistance<T, LineString<T>> for LineString<T>
 where
-    T: Float + FromPrimitive,
+    T: GeoFloat + FromPrimitive,
 {
     fn frechet_distance(&self, ls: &LineString<T>) -> T {
         if self.coords_count() != 0 && ls.coords_count() != 0 {
@@ -61,7 +61,7 @@ where
 
 struct Data<'a, T>
 where
-    T: Float + FromPrimitive,
+    T: GeoFloat + FromPrimitive,
 {
     cache: Vec<Vec<T>>,
     ls_a: &'a LineString<T>,
@@ -70,7 +70,7 @@ where
 
 impl<'a, T> Data<'a, T>
 where
-    T: Float + FromPrimitive,
+    T: GeoFloat + FromPrimitive,
 {
     fn compute(&mut self, i: usize, j: usize) -> T {
         if self.cache[i][j].is_nan() {

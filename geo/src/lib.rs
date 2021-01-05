@@ -122,3 +122,35 @@ pub mod prelude {
     pub use crate::algorithm::vincenty_distance::VincentyDistance;
     pub use crate::algorithm::vincenty_length::VincentyLength;
 }
+
+/// A common floating point trait used for geo algorithms.
+///
+/// Different numeric types have different tradeoffs. `geo` strives to utilize generics to allow
+/// users to choose their numeric types. If you are writing a function which you'd like to be
+/// generic over the floating point types supported by geo, you probably want to constrain
+/// your function input to GeoFloat.
+///
+/// # Examples
+///
+/// ```
+/// use geo::{GeoFloat, MultiPolygon, Polygon, Point};
+///
+/// // An admittedly silly method implementation, but the signature shows how to use the GeoFloat trait
+/// fn farthest_from<'a, T: GeoFloat>(point: &Point<T>, polygons: &'a MultiPolygon<T>) -> Option<&'a Polygon<T>> {
+///     polygons.iter().fold(None, |accum, next| {
+///         match accum {
+///             None => Some(next),
+///             Some(farthest) => {
+///                 use geo::algorithm::{euclidean_distance::EuclideanDistance};
+///                 if next.euclidean_distance(point) > farthest.euclidean_distance(point) {
+///                     Some(next)
+///                 } else {
+///                     Some(farthest)
+///                 }
+///             }
+///         }
+///     })
+/// }
+/// ```
+pub trait GeoFloat: num_traits::Float + CoordinateType + algorithm::kernels::HasKernel {}
+impl<T> GeoFloat for T where T: num_traits::Float + CoordinateType + algorithm::kernels::HasKernel {}
