@@ -7,7 +7,7 @@ use crate::{Coordinate, CoordinateType};
 ///
 /// ```
 /// use geo::extremes::Extremes;
-/// use geo::{Coordinate, polygon};
+/// use geo::polygon;
 ///
 /// // a diamond shape
 /// let polygon = polygon![
@@ -21,7 +21,8 @@ use crate::{Coordinate, CoordinateType};
 /// let extremes = polygon.extremes().unwrap();
 ///
 /// assert_eq!(extremes.y_max.index, 2);
-/// assert_eq!(extremes.y_max.coord, geo::Coordinate { x: 1., y: 2. });
+/// assert_eq!(extremes.y_max.coord.x, 1.);
+/// assert_eq!(extremes.y_max.coord.x, 2.);
 /// ```
 pub trait Extremes<'a, T: CoordinateType> {
     fn extremes(&'a self) -> Option<Outcome<T>>;
