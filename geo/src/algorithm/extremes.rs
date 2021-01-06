@@ -28,11 +28,13 @@ pub trait Extremes<'a, T: CoordinateType> {
     fn extremes(&'a self) -> Option<Outcome<T>>;
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Extreme<T: CoordinateType> {
     pub index: usize,
     pub coord: Coordinate<T>,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Outcome<T: CoordinateType> {
     pub x_min: Extreme<T>,
     pub y_min: Extreme<T>,
@@ -80,102 +82,50 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{point, polygon};
+    use crate::{MultiPoint, polygon};
 
-    /*
     #[test]
-    fn test_polygon_extreme_x() {
+    fn polygon() {
         // a diamond shape
-        let poly1 = polygon![
+        let polygon = polygon![
             (x: 1.0, y: 0.0),
             (x: 2.0, y: 1.0),
             (x: 1.0, y: 2.0),
             (x: 0.0, y: 1.0),
-            (x: 1.0, y: 0.0)
-        ];
-        let min_x = polymax_naive_indices(Coordinate { x: -1., y: 0. }, &poly1).unwrap();
-        let correct = 3_usize;
-        assert_eq!(min_x, correct);
-    }
-    #[test]
-    #[should_panic]
-    fn test_extreme_indices_bad_polygon() {
-        // non-convex, with a bump on the top-right edge
-        let poly1 = polygon![
             (x: 1.0, y: 0.0),
-            (x: 1.3, y: 1.),
-            (x: 2.0, y: 1.0),
-            (x: 1.75, y: 1.75),
-            (x: 1.0, y: 2.0),
-            (x: 0.0, y: 1.0),
-            (x: 1.0, y: 0.0)
         ];
-        let extremes = find_extreme_indices(polymax_naive_indices, &poly1).unwrap();
-        let correct = Extremes {
-            ymin: 0,
-            xmax: 1,
-            ymax: 3,
-            xmin: 4,
-        };
-        assert_eq!(extremes, correct);
-    }
-    #[test]
-    fn test_extreme_indices_good_polygon() {
-        // non-convex, with a bump on the top-right edge
-        let poly1 = polygon![
-            (x: 1.0, y: 0.0),
-            (x: 1.3, y: 1.),
-            (x: 2.0, y: 1.0),
-            (x: 1.75, y: 1.75),
-            (x: 1.0, y: 2.0),
-            (x: 0.0, y: 1.0),
-            (x: 1.0, y: 0.0)
-        ];
-        let extremes = find_extreme_indices(polymax_naive_indices, &poly1.convex_hull()).unwrap();
-        let correct = Extremes {
-            ymin: 0,
-            xmax: 1,
-            ymax: 3,
-            xmin: 4,
-        };
-        assert_eq!(extremes, correct);
-    }
-    #[test]
-    fn test_polygon_extreme_wrapper_convex() {
-        // convex, with a bump on the top-right edge
-        let poly1 = polygon![
-            (x: 1.0, y: 0.0),
-            (x: 2.0, y: 1.0),
-            (x: 1.75, y: 1.75),
-            (x: 1.0, y: 2.0),
-            (x: 0.0, y: 1.0),
-            (x: 1.0, y: 0.0)
-        ];
-        let extremes = find_extreme_indices(polymax_naive_indices, &poly1.convex_hull()).unwrap();
-        let correct = Extremes {
-            ymin: 0,
-            xmax: 1,
-            ymax: 3,
-            xmin: 4,
-        };
-        assert_eq!(extremes, correct);
-    }
-    */
 
-    /*
-    #[test]
-    fn test_polygon_extreme_point_x() {
-        // a diamond shape
-        let poly1 = polygon![
-            (x: 1.0, y: 0.0),
-            (x: 2.0, y: 1.0),
-            (x: 1.0, y: 2.0),
-            (x: 0.0, y: 1.0),
-            (x: 1.0, y: 0.0)
-        ];
-        let extremes = poly1.extreme_points();
-        let correct = point!(x: 0.0, y: 1.0);
-        assert_eq!(extremes.xmin, correct);
+        let actual = polygon.extremes();
+
+        assert_eq!(
+            Some(Outcome {
+                x_min: Extreme {
+                    index: 3,
+                    coord: Coordinate { x: 0.0, y: 1.0 }
+                },
+                y_min: Extreme {
+                    index: 0,
+                    coord: Coordinate { x: 1.0, y: 0.0 }
+                },
+                x_max: Extreme {
+                    index: 1,
+                    coord: Coordinate { x: 2.0, y: 1.0 }
+                },
+                y_max: Extreme {
+                    index: 2,
+                    coord: Coordinate { x: 1.0, y: 2.0 }
+                }
+            }),
+            actual
+        );
     }
-    */
+
+    #[test]
+    fn empty() {
+        let multi_point: MultiPoint<f32> = MultiPoint(vec![]);
+
+        let actual = multi_point.extremes();
+
+        assert!(actual.is_none());
+    }
 }
