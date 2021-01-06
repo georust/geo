@@ -22,7 +22,7 @@ use crate::{Coordinate, CoordinateType};
 ///
 /// assert_eq!(extremes.y_max.index, 2);
 /// assert_eq!(extremes.y_max.coord.x, 1.);
-/// assert_eq!(extremes.y_max.coord.x, 2.);
+/// assert_eq!(extremes.y_max.coord.y, 2.);
 /// ```
 pub trait Extremes<'a, T: CoordinateType> {
     fn extremes(&'a self) -> Option<Outcome<T>>;
