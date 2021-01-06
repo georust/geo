@@ -46,7 +46,7 @@ where
     T: CoordinateType,
 {
     fn extremes(&'a self) -> Option<Outcome<T>> {
-        let mut iter = self.coords_iter().enumerate();
+        let mut iter = self.exterior_coords_iter().enumerate();
 
         let mut outcome = iter.next().map(|(index, coord)| Outcome {
             x_min: Extreme { index, coord },
