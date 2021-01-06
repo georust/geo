@@ -55,25 +55,21 @@ where
             y_max: Extreme { index, coord },
         })?;
 
-        for (i, coord) in iter {
+        for (index, coord) in iter {
             if coord.x < outcome.x_min.coord.x {
-                outcome.x_min.index = i;
-                outcome.x_min.coord = coord;
+                outcome.x_min = Extreme { coord, index };
             }
 
             if coord.y < outcome.y_min.coord.y {
-                outcome.y_min.index = i;
-                outcome.y_min.coord = coord;
+                outcome.y_min = Extreme { coord, index };
             }
 
             if coord.x > outcome.x_max.coord.x {
-                outcome.x_max.index = i;
-                outcome.x_max.coord = coord;
+                outcome.x_max = Extreme { coord, index };
             }
 
             if coord.y > outcome.y_max.coord.y {
-                outcome.y_max.index = i;
-                outcome.y_max.coord = coord;
+                outcome.y_max = Extreme { coord, index };
             }
         }
 
