@@ -112,7 +112,8 @@ where
     T: Signed + HasKernel,
 {
     fn extreme_indices(&self) -> Result<Extremes, ()> {
-        find_extreme_indices(polymax_naive_indices, &self.convex_hull())
+        find_extreme_indices(polymax_naive_indices, &self.convex_hull().unwrap())
+        // TODO
     }
 }
 
@@ -121,7 +122,8 @@ where
     T: Signed + HasKernel,
 {
     fn extreme_indices(&self) -> Result<Extremes, ()> {
-        find_extreme_indices(polymax_naive_indices, &self.convex_hull())
+        find_extreme_indices(polymax_naive_indices, &self.convex_hull().unwrap())
+        // TODO
     }
 }
 
@@ -162,7 +164,8 @@ where
 
     // Any Geometry implementing `ConvexHull` and `ExtremeIndices` gets this automatically
     fn extreme_points(&self) -> ExtremePoint<T> {
-        let ch = self.convex_hull();
+        let ch = self.convex_hull().unwrap(); // TODO
+
         // safe to unwrap, since we're guaranteeing the polygon's convexity
         let indices = ch.extreme_indices().unwrap();
         ExtremePoint {
@@ -227,7 +230,8 @@ mod test {
             (x: 0.0, y: 1.0),
             (x: 1.0, y: 0.0)
         ];
-        let extremes = find_extreme_indices(polymax_naive_indices, &poly1.convex_hull()).unwrap();
+        let extremes =
+            find_extreme_indices(polymax_naive_indices, &poly1.convex_hull().unwrap()).unwrap();
         let correct = Extremes {
             ymin: 0,
             xmax: 1,
@@ -247,7 +251,8 @@ mod test {
             (x: 0.0, y: 1.0),
             (x: 1.0, y: 0.0)
         ];
-        let extremes = find_extreme_indices(polymax_naive_indices, &poly1.convex_hull()).unwrap();
+        let extremes =
+            find_extreme_indices(polymax_naive_indices, &poly1.convex_hull().unwrap()).unwrap();
         let correct = Extremes {
             ymin: 0,
             xmax: 1,

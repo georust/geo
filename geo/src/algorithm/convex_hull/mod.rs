@@ -39,7 +39,7 @@ use crate::*;
 /// ```
 pub trait ConvexHull {
     type Scalar: CoordinateType;
-    fn convex_hull(&self) -> Polygon<Self::Scalar>;
+    fn convex_hull(&self) -> Result<Polygon<Self::Scalar>, ()>;
 }
 
 impl<T> ConvexHull for Polygon<T>
@@ -47,8 +47,11 @@ where
     T: HasKernel,
 {
     type Scalar = T;
-    fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(quick_hull(&mut self.exterior().0.clone()), vec![])
+    fn convex_hull(&self) -> Result<Polygon<T>, ()> {
+        Ok(Polygon::new(
+            quick_hull(&mut self.exterior().0.clone())?,
+            vec![],
+        ))
     }
 }
 
@@ -57,13 +60,13 @@ where
     T: HasKernel,
 {
     type Scalar = T;
-    fn convex_hull(&self) -> Polygon<T> {
+    fn convex_hull(&self) -> Result<Polygon<T>, ()> {
         let mut aggregated: Vec<_> = self
             .0
             .iter()
             .flat_map(|elem| elem.exterior().0.iter().copied())
             .collect();
-        Polygon::new(quick_hull(&mut aggregated), vec![])
+        Ok(Polygon::new(quick_hull(&mut aggregated)?, vec![]))
     }
 }
 
@@ -72,8 +75,8 @@ where
     T: HasKernel,
 {
     type Scalar = T;
-    fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(quick_hull(&mut self.0.clone()), vec![])
+    fn convex_hull(&self) -> Result<Polygon<T>, ()> {
+        Ok(Polygon::new(quick_hull(&mut self.0.clone())?, vec![]))
     }
 }
 
@@ -82,9 +85,9 @@ where
     T: HasKernel,
 {
     type Scalar = T;
-    fn convex_hull(&self) -> Polygon<T> {
+    fn convex_hull(&self) -> Result<Polygon<T>, ()> {
         let mut aggregated: Vec<_> = self.iter().flat_map(|elem| elem.clone().0).collect();
-        Polygon::new(quick_hull(&mut aggregated), vec![])
+        Ok(Polygon::new(quick_hull(&mut aggregated)?, vec![]))
     }
 }
 
@@ -93,9 +96,9 @@ where
     T: HasKernel,
 {
     type Scalar = T;
-    fn convex_hull(&self) -> Polygon<T> {
+    fn convex_hull(&self) -> Result<Polygon<T>, ()> {
         let mut aggregated: Vec<_> = self.iter().map(|p| p.0).collect();
-        Polygon::new(quick_hull(&mut aggregated), vec![])
+        Ok(Polygon::new(quick_hull(&mut aggregated)?, vec![]))
     }
 }
 
