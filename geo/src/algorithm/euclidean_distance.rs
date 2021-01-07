@@ -9,7 +9,7 @@ use crate::{
     Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
     Triangle,
 };
-use num_traits::{Float, float::FloatConst, Bounded, Signed};
+use num_traits::{float::FloatConst, Bounded, Float, Signed};
 
 use rstar::RTree;
 use rstar::RTreeNum;
