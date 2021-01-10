@@ -1,5 +1,5 @@
 use super::{swap_remove_to_first, trivial_hull};
-use crate::algorithm::kernels::*;
+use crate::kernels::*;
 use crate::utils::partition_slice;
 use crate::{Coordinate, LineString};
 

@@ -10,8 +10,7 @@
 /// # Examples
 ///
 /// ```
-/// use geo::algorithm::contains::Contains;
-/// use geo::{line_string, point, Polygon};
+/// use geo::{Contains, line_string, point, Polygon};
 ///
 /// let line_string = line_string![
 ///     (x: 0., y: 0.),

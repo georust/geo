@@ -5,7 +5,7 @@
 //! # #[cfg(feature = "use-proj")]
 //! use geo::{Coordinate, Point};
 //! # #[cfg(feature = "use-proj")]
-//! use geo::algorithm::map_coords::TryMapCoords;
+//! use geo::TryMapCoords;
 //! # #[cfg(feature = "use-proj")]
 //! use proj::Proj;
 //! // GeoJSON uses the WGS 84 coordinate system
@@ -49,8 +49,7 @@ pub trait MapCoords<T, NT> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::map_coords::MapCoords;
-    /// use geo::Point;
+    /// use geo::{MapCoords, Point};
     ///
     /// let p1 = Point::new(10., 20.);
     /// let p2 = p1.map_coords(|&(x, y)| (x + 1000., y * 2.));
@@ -61,8 +60,7 @@ pub trait MapCoords<T, NT> {
     /// You can convert the coordinate type this way as well
     ///
     /// ```
-    /// # use geo::Point;
-    /// # use geo::algorithm::map_coords::MapCoords;
+    /// # use geo::{Point, MapCoords};
     ///
     /// let p1: Point<f32> = Point::new(10.0f32, 20.0f32);
     /// let p2: Point<f64> = p1.map_coords(|&(x, y)| (x as f64, y as f64));
@@ -84,8 +82,7 @@ pub trait TryMapCoords<T, NT> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::map_coords::TryMapCoords;
-    /// use geo::Point;
+    /// use geo::{Point, TryMapCoords};
     ///
     /// let p1 = Point::new(10., 20.);
     /// let p2 = p1
@@ -102,7 +99,7 @@ pub trait TryMapCoords<T, NT> {
     /// # #[cfg(feature = "use-proj")]
     /// use geo::{Coordinate, Point};
     /// # #[cfg(feature = "use-proj")]
-    /// use geo::algorithm::map_coords::TryMapCoords;
+    /// use geo::TryMapCoords;
     /// # #[cfg(feature = "use-proj")]
     /// use proj::Proj;
     /// // GeoJSON uses the WGS 84 coordinate system
@@ -146,8 +143,7 @@ pub trait MapCoordsInplace<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::map_coords::MapCoordsInplace;
-    /// use geo::Point;
+    /// use geo::{MapCoordsInplace, Point};
     ///
     /// let mut p = Point::new(10., 20.);
     /// p.map_coords_inplace(|&(x, y)| (x + 1000., y * 2.));

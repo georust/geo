@@ -47,8 +47,7 @@ where
 /// # Examples
 ///
 /// ```
-/// use geo::polygon;
-/// use geo::algorithm::area::Area;
+/// use geo::{Area, polygon};
 ///
 /// let mut polygon = polygon![
 ///     (x: 0., y: 0.),

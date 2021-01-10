@@ -21,7 +21,7 @@ pub fn uniform_points_in_range<S: CoordinateType + SampleUniform + Signed, R: Rn
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("convex hull f32", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/norway_main.rs");
+        let points = include!("../src/test_fixtures/norway_main.rs");
         let line_string = LineString::<f32>::from(points);
 
         bencher.iter(|| {
@@ -30,7 +30,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("convex hull f64", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/norway_main.rs");
+        let points = include!("../src/test_fixtures/norway_main.rs");
         let line_string = LineString::<f64>::from(points);
 
         bencher.iter(|| {
@@ -40,7 +40,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("convex hull with collinear random i64", |bencher| {
         let mut points = uniform_points_in_range(10_000_i64, 1_000_000, &mut rand::thread_rng());
-        use geo::algorithm::convex_hull::graham_hull;
+        use geo::convex_hull::graham_hull;
         bencher.iter(|| {
             criterion::black_box(graham_hull(
                 criterion::black_box(&mut points),

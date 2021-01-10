@@ -15,7 +15,7 @@ use std::iter;
 /// Drawn on paper, the point on the line which is closest to `(0, 100)` is the origin (0, 0).
 ///
 /// ```rust
-/// # use geo::algorithm::closest_point::ClosestPoint;
+/// # use geo::closest_point::ClosestPoint;
 /// # use geo::{Point, Line, Closest};
 /// let p: Point<f32> = Point::new(0.0, 100.0);
 /// let horizontal_line: Line<f32> = Line::new(Point::new(-50.0, 0.0), Point::new(50.0, 0.0));

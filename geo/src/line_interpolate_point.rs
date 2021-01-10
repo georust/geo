@@ -19,8 +19,7 @@ use crate::{
 /// # Examples
 ///
 /// ```
-/// use geo::{LineString, point};
-/// use geo::algorithm::line_interpolate_point::LineInterpolatePoint;
+/// use geo::{LineInterpolatePoint, LineString, point};
 ///
 /// let linestring: LineString<f64> = vec![
 ///     [-1.0, 0.0],

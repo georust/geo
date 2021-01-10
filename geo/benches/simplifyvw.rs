@@ -9,7 +9,7 @@ use geo::LineString;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("simplify vw simple f32", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/louisiana.rs");
+        let points = include!("../src/test_fixtures/louisiana.rs");
         let ls: LineString<f32> = points.into();
         bencher.iter(|| {
             criterion::black_box(
@@ -19,7 +19,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("simplify vw simple f64", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/louisiana.rs");
+        let points = include!("../src/test_fixtures/louisiana.rs");
         let ls: LineString<f64> = points.into();
         bencher.iter(|| {
             criterion::black_box(
@@ -29,7 +29,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("simplify vwp f32", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/louisiana.rs");
+        let points = include!("../src/test_fixtures/louisiana.rs");
         let ls: LineString<f32> = points.into();
         bencher.iter(|| {
             criterion::black_box(
@@ -39,7 +39,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("simplify vwp f64", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/louisiana.rs");
+        let points = include!("../src/test_fixtures/louisiana.rs");
         let ls: LineString<f32> = points.into();
         bencher.iter(|| {
             criterion::black_box(

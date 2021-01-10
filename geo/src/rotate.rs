@@ -58,8 +58,7 @@ pub trait Rotate<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::rotate::Rotate;
-    /// use geo::line_string;
+    /// use geo::{line_string, Rotate};
     ///
     /// let line_string = line_string![
     ///     (x: 0.0, y: 0.0),
@@ -94,8 +93,7 @@ pub trait RotatePoint<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::rotate::RotatePoint;
-    /// use geo::{line_string, point};
+    /// use geo::{line_string, point, RotatePoint};
     ///
     /// let ls = line_string![
     ///     (x: 0.0, y: 0.0),

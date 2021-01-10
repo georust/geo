@@ -54,7 +54,7 @@ pub trait HasKernel: CoordinateType {
 #[macro_use]
 macro_rules! has_kernel {
     ($t:ident, $k:ident) => {
-        impl $crate::algorithm::kernels::HasKernel for $t {
+        impl $crate::kernels::HasKernel for $t {
             type Ker = $k;
         }
     };

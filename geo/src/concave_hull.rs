@@ -1,6 +1,7 @@
 use crate::algorithm::convex_hull::qhull;
 use crate::algorithm::euclidean_distance::EuclideanDistance;
 use crate::algorithm::euclidean_length::EuclideanLength;
+use crate::kernels::HasKernel;
 use crate::prelude::Centroid;
 use crate::utils::partial_min;
 use crate::{
@@ -21,8 +22,7 @@ use std::collections::VecDeque;
 ///
 /// # Examples
 /// ```
-/// use geo::{line_string, polygon};
-/// use geo::algorithm::concave_hull::ConcaveHull;
+/// use geo::{ConcaveHull, line_string, polygon};
 ///
 /// // a square shape
 /// let poly = polygon![

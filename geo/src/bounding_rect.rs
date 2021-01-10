@@ -14,8 +14,7 @@ pub trait BoundingRect<T: CoordinateType> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::bounding_rect::BoundingRect;
-    /// use geo::line_string;
+    /// use geo::{BoundingRect, line_string};
     ///
     /// let line_string = line_string![
     ///     (x: 40.02f64, y: 116.34),

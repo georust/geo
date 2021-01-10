@@ -1,10 +1,10 @@
 use crate::algorithm::{
     bounding_rect::BoundingRect, dimensions::HasDimensions, intersects::Intersects,
-    kernels::HasKernel,
 };
 use crate::{
     Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon, Rect, Triangle,
+    kernels::HasKernel,
 };
 
 /// The position of a `Coordinate` relative to a `Geometry`
