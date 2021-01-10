@@ -12,7 +12,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let polygon = Polygon::new(LineString::<f32>::from(points), vec![]);
 
         bencher.iter(|| {
-            criterion::black_box(criterion::black_box(&polygon).extreme_points());
+            criterion::black_box(criterion::black_box(&polygon).extremes());
         });
     });
 
@@ -21,7 +21,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let polygon = Polygon::new(LineString::<f32>::from(points), vec![]);
 
         bencher.iter(|| {
-            criterion::black_box(criterion::black_box(&polygon).extreme_points());
+            criterion::black_box(criterion::black_box(&polygon).extremes());
         });
     });
 }

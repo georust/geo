@@ -1,38 +1,4 @@
-use crate::{CoordinateType, GeoFloat, Point};
-
-/// A container for _indices_ of the minimum and maximum `Point`s of a [`Geometry`](enum.Geometry.html).
-#[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
-#[derive(PartialEq, Clone, Copy, Debug)]
-pub struct Extremes {
-    pub ymin: usize,
-    pub xmax: usize,
-    pub ymax: usize,
-    pub xmin: usize,
-}
-
-impl From<Vec<usize>> for Extremes {
-    fn from(original: Vec<usize>) -> Extremes {
-        Extremes {
-            ymin: original[0],
-            xmax: original[1],
-            ymax: original[2],
-            xmin: original[3],
-        }
-    }
-}
-
-/// A container for the _coordinates_ of the minimum and maximum `Point`s of a [`Geometry`](enum.Geometry.html).
-#[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
-#[derive(PartialEq, Clone, Copy, Debug)]
-pub struct ExtremePoint<T>
-where
-    T: CoordinateType,
-{
-    pub ymin: Point<T>,
-    pub xmax: Point<T>,
-    pub ymax: Point<T>,
-    pub xmin: Point<T>,
-}
+use crate::{GeoFloat, Point};
 
 /// The result of trying to find the closest spot on an object to a point.
 #[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]

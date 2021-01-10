@@ -1,4 +1,4 @@
-use crate::algorithm::extremes::ExtremeIndices;
+use crate::algorithm::extremes::Extremes;
 use crate::prelude::*;
 use crate::{GeoFloat, Line, Point, Polygon, Triangle};
 use num_traits::float::FloatConst;
@@ -14,10 +14,10 @@ pub(crate) fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
 where
     T: GeoFloat + FloatConst + Signed,
 {
-    let poly1_extremes = poly1.extreme_indices().unwrap();
-    let poly2_extremes = poly2.extreme_indices().unwrap();
-    let ymin1 = Point(poly1.exterior().0[poly1_extremes.ymin]);
-    let ymax2 = Point(poly2.exterior().0[poly2_extremes.ymax]);
+    let poly1_extremes = poly1.extremes().unwrap();
+    let poly2_extremes = poly2.extremes().unwrap();
+    let ymin1 = Point(poly1.exterior().0[poly1_extremes.y_min.index]);
+    let ymax2 = Point(poly2.exterior().0[poly2_extremes.y_max.index]);
 
     let mut state = Polydist {
         poly1,
@@ -26,9 +26,9 @@ where
         ymin1,
         ymax2,
         // initial polygon 1 min y idx
-        p1_idx: poly1_extremes.ymin,
+        p1_idx: poly1_extremes.y_min.index,
         // initial polygon 2 max y idx
-        q2_idx: poly2_extremes.ymax,
+        q2_idx: poly2_extremes.y_max.index,
         // set p1 and q2 to p1ymin and p2ymax initially
         p1: ymin1,
         q2: ymax2,

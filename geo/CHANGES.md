@@ -21,7 +21,7 @@
   * <https://github.com/georust/geo/pull/593>
 * Add `CoordsIter::exterior_coords_iter` method to iterate over exterior coordinates of a geometry
   * <https://github.com/georust/geo/pull/594>
-
+* The `ExtremeIndices` and `ExtremePoints` traits have been combined into a new `Extremes` trait containing an `extremes` method. The output of the `extremes` method contains both indices and coordinates. The new implementation is based on `CoordsIter` instead of `ConvexHull`, and now runs 6x faster.
 
 ## 0.16.0
 
