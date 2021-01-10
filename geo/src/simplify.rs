@@ -1,7 +1,6 @@
 use crate::algorithm::coords_iter::CoordsIter;
 use crate::algorithm::euclidean_distance::EuclideanDistance;
-use crate::{Coordinate, Line, LineString, MultiLineString, MultiPolygon, Polygon};
-use num_traits::Float;
+use crate::{Coordinate, GeoFloat, Line, LineString, MultiLineString, MultiPolygon, Polygon};
 
 // Because the RDP algorithm is recursive, we can't assign an index to a point inside the loop
 // instead, we wrap a simple struct around index and point in a wrapper function,
@@ -9,7 +8,7 @@ use num_traits::Float;
 #[derive(Copy, Clone)]
 struct RdpIndex<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     index: usize,
     coord: Coordinate<T>,
@@ -18,7 +17,7 @@ where
 // Wrapper for the RDP algorithm, returning simplified points
 fn rdp<T>(coords: impl Iterator<Item = Coordinate<T>>, epsilon: &T) -> Vec<Coordinate<T>>
 where
-    T: Float,
+    T: GeoFloat,
 {
     // Epsilon must be greater than zero for any meaningful simplification to happen
     if *epsilon <= T::zero() {
@@ -39,10 +38,13 @@ where
 // Wrapper for the RDP algorithm, returning simplified point indices
 fn calculate_rdp_indices<T>(rdp_indices: &[RdpIndex<T>], epsilon: &T) -> Vec<usize>
 where
-    T: Float,
+    T: GeoFloat,
 {
     if *epsilon <= T::zero() {
-        return rdp_indices.iter().map(|rdp_index| rdp_index.index).collect();
+        return rdp_indices
+            .iter()
+            .map(|rdp_index| rdp_index.index)
+            .collect();
     }
     compute_rdp(rdp_indices, epsilon)
         .into_iter()
@@ -55,7 +57,7 @@ where
 // for more flexible use by FFI implementers
 fn compute_rdp<T>(rdp_indices: &[RdpIndex<T>], epsilon: &T) -> Vec<RdpIndex<T>>
 where
-    T: Float,
+    T: GeoFloat,
 {
     if rdp_indices.is_empty() {
         return vec![];
@@ -136,7 +138,7 @@ pub trait Simplify<T, Epsilon = T> {
     /// ```
     fn simplify(&self, epsilon: &T) -> Self
     where
-        T: Float;
+        T: GeoFloat;
 }
 
 /// Simplifies a geometry, returning the retained _indices_ of the input.
@@ -174,12 +176,12 @@ pub trait SimplifyIdx<T, Epsilon = T> {
     /// ```
     fn simplify_idx(&self, epsilon: &T) -> Vec<usize>
     where
-        T: Float;
+        T: GeoFloat;
 }
 
 impl<T> Simplify<T> for LineString<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     fn simplify(&self, epsilon: &T) -> Self {
         LineString::from(rdp(self.coords_iter(), epsilon))
@@ -188,7 +190,7 @@ where
 
 impl<T> SimplifyIdx<T> for LineString<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     fn simplify_idx(&self, epsilon: &T) -> Vec<usize> {
         calculate_rdp_indices(
@@ -208,7 +210,7 @@ where
 
 impl<T> Simplify<T> for MultiLineString<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     fn simplify(&self, epsilon: &T) -> Self {
         MultiLineString(self.iter().map(|l| l.simplify(epsilon)).collect())
@@ -217,7 +219,7 @@ where
 
 impl<T> Simplify<T> for Polygon<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     fn simplify(&self, epsilon: &T) -> Self {
         Polygon::new(
@@ -232,7 +234,7 @@ where
 
 impl<T> Simplify<T> for MultiPolygon<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     fn simplify(&self, epsilon: &T) -> Self {
         MultiPolygon(self.iter().map(|p| p.simplify(epsilon)).collect())

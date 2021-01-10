@@ -8,10 +8,20 @@
   * <https://github.com/georust/geo/pull/561>
 * Add new `EuclideanDistance` implementations: `impl EuclideanDistance<Coordinate<T>> for Line`, `impl EuclideanDistance<Line> for Coordinate`, `impl EuclideanDistance<Coordinate> for Coordinate`
   * <https://github.com/georust/geo/pull/580>
+* Introduce `geo::Float` trait so external crates can implement methods which
+  operate on geometries generically.
+  * <https://github.com/georust/geo/pull/583>
+* Make `HasKernel` public to allow geo on exotic numeric types.
+  * <https://github.com/georust/geo/pull/583>
 * Fix panic when `simplify` is given a negative epsilon
   * <https://github.com/georust/geo/pull/584>
 * Performance improvements to `simplify`
   * <https://github.com/georust/geo/pull/584>
+* The `T` generic parameter for `CoordsIter` is now an associated type
+  * <https://github.com/georust/geo/pull/593>
+* Add `CoordsIter::exterior_coords_iter` method to iterate over exterior coordinates of a geometry
+  * <https://github.com/georust/geo/pull/594>
+
 
 ## 0.16.0
 

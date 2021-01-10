@@ -1,11 +1,15 @@
 use crate::{Coordinate, CoordinateType};
+
+#[cfg(any(feature = "approx", test))]
+use approx::{AbsDiffEq, RelativeEq};
+
 use num_traits::Float;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 /// A single point in 2D space.
 ///
-/// Points can be created using the `new(x, y)` constructor,
-/// the `point!` macro, or from a `Coordinate`, two-element
+/// Points can be created using the [`Point::new`] constructor,
+/// the [`point!`] macro, or from a `Coordinate`, two-element
 /// tuples, or arrays – see the `From` impl section for a
 /// complete list.
 ///
@@ -409,6 +413,70 @@ where
     }
 }
 
+#[cfg(any(feature = "approx", test))]
+impl<T> RelativeEq for Point<T>
+where
+    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
+{
+    #[inline]
+    fn default_max_relative() -> Self::Epsilon {
+        T::default_max_relative()
+    }
+
+    /// Equality assertion within a relative limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let a = Point::new(2.0, 3.0);
+    /// let b = Point::new(2.0, 3.01);
+    ///
+    /// approx::assert_relative_eq!(a, b, max_relative=0.1)
+    /// ```
+    #[inline]
+    fn relative_eq(
+        &self,
+        other: &Self,
+        epsilon: Self::Epsilon,
+        max_relative: Self::Epsilon,
+    ) -> bool {
+        self.0.relative_eq(&other.0, epsilon, max_relative)
+    }
+}
+
+#[cfg(any(feature = "approx", test))]
+impl<T> AbsDiffEq for Point<T>
+where
+    T: AbsDiffEq<Epsilon = T> + CoordinateType,
+    T::Epsilon: Copy,
+{
+    type Epsilon = T::Epsilon;
+
+    #[inline]
+    fn default_epsilon() -> Self::Epsilon {
+        T::default_epsilon()
+    }
+
+    /// Equality assertion with a absolute limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let a = Point::new(2.0, 3.0);
+    /// let b = Point::new(2.0, 3.0000001);
+    ///
+    /// approx::assert_relative_eq!(a, b, epsilon=0.1)
+    /// ```
+    #[inline]
+    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+        self.0.abs_diff_eq(&other.0, epsilon)
+    }
+}
+
 #[cfg(feature = "rstar")]
 // These are required for rstar RTree
 impl<T> ::rstar::Point for Point<T>
@@ -436,5 +504,54 @@ where
             1 => &mut self.0.y,
             _ => unreachable!(),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use approx::AbsDiffEq;
+
+    #[test]
+    fn test_abs_diff_eq() {
+        let delta = 1e-6;
+        let p = Point::new(1.0, 1.0);
+
+        let p_x = Point::new(1.0 - delta, 1.0);
+        assert!(p.abs_diff_eq(&p_x, 1e-2));
+        assert!(p.abs_diff_ne(&p_x, 1e-12));
+
+        let p_y = Point::new(1.0, 1.0 + delta);
+        assert!(p.abs_diff_eq(&p_y, 1e-2));
+        assert!(p.abs_diff_ne(&p_y, 1e-12));
+
+        let p_xy = Point::new(1.0 + delta, 1.0 - delta);
+        assert!(p.abs_diff_eq(&p_xy, 1e-2));
+        assert!(p.abs_diff_ne(&p_xy, 1e-12));
+
+        let p_inf = Point::new(f64::INFINITY, 1.);
+        assert!(p.abs_diff_ne(&p_inf, 1e-2));
+    }
+
+    #[test]
+    fn test_relative_eq() {
+        let delta = 1e-6;
+        let p = Point::new(1.0, 1.0);
+
+        let p_x = Point::new(1.0 - delta, 1.0);
+        assert!(p.relative_eq(&p_x, 1e-2, 1e-2));
+        assert!(p.relative_ne(&p_x, 1e-12, 1e-12));
+
+        let p_y = Point::new(1.0, 1.0 + delta);
+        assert!(p.relative_eq(&p_y, 1e-2, 1e-2));
+        assert!(p.relative_ne(&p_y, 1e-12, 1e-12));
+
+        let p_xy = Point::new(1.0 + delta, 1.0 - delta);
+        assert!(p.relative_eq(&p_xy, 1e-2, 1e-2));
+        assert!(p.relative_ne(&p_xy, 1e-12, 1e-12));
+
+        let p_inf = Point::new(f64::INFINITY, 1.);
+        assert!(p.relative_ne(&p_inf, 1e-2, 1e-2));
     }
 }

@@ -4,12 +4,12 @@ use crate::algorithm::intersects::Intersects;
 use crate::polygon_distance_fast_path::*;
 use crate::kernels::*;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
+use crate::GeoFloat;
 use crate::{
     Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
     Triangle,
 };
-use num_traits::float::FloatConst;
-use num_traits::{Bounded, Float, Signed};
+use num_traits::{float::FloatConst, Bounded, Float, Signed};
 
 use rstar::RTree;
 use rstar::RTreeNum;
@@ -94,9 +94,13 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     fn euclidean_distance(&self, rhs: &Rhs) -> T;
 }
 
+// ┌────────────────────────────────┐
+// │ Implementations for Coordinate │
+// └────────────────────────────────┘
+
 impl<T> EuclideanDistance<T, Coordinate<T>> for Coordinate<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance between two `Coordinate`s
     fn euclidean_distance(&self, c: &Coordinate<T>) -> T {
@@ -104,9 +108,23 @@ where
     }
 }
 
+impl<T> EuclideanDistance<T, Line<T>> for Coordinate<T>
+where
+    T: GeoFloat,
+{
+    /// Minimum distance from a `Coordinate` to a `Line`
+    fn euclidean_distance(&self, line: &Line<T>) -> T {
+        line.euclidean_distance(self)
+    }
+}
+
+// ┌───────────────────────────┐
+// │ Implementations for Point │
+// └───────────────────────────┘
+
 impl<T> EuclideanDistance<T, Point<T>> for Point<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance between two Points
     fn euclidean_distance(&self, p: &Point<T>) -> T {
@@ -116,7 +134,7 @@ where
 
 impl<T> EuclideanDistance<T, MultiPoint<T>> for Point<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a Point to a MultiPoint
     fn euclidean_distance(&self, points: &MultiPoint<T>) -> T {
@@ -128,19 +146,42 @@ where
     }
 }
 
-impl<T> EuclideanDistance<T, Point<T>> for MultiPoint<T>
+impl<T> EuclideanDistance<T, Line<T>> for Point<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
-    /// Minimum distance from a MultiPoint to a Point
-    fn euclidean_distance(&self, point: &Point<T>) -> T {
-        point.euclidean_distance(self)
+    /// Minimum distance from a Line to a Point
+    fn euclidean_distance(&self, line: &Line<T>) -> T {
+        self.0.euclidean_distance(line)
+    }
+}
+
+impl<T> EuclideanDistance<T, LineString<T>> for Point<T>
+where
+    T: GeoFloat,
+{
+    /// Minimum distance from a Point to a LineString
+    fn euclidean_distance(&self, linestring: &LineString<T>) -> T {
+        ::geo_types::private_utils::point_line_string_euclidean_distance(*self, linestring)
+    }
+}
+
+impl<T> EuclideanDistance<T, MultiLineString<T>> for Point<T>
+where
+    T: GeoFloat,
+{
+    /// Minimum distance from a Point to a MultiLineString
+    fn euclidean_distance(&self, mls: &MultiLineString<T>) -> T {
+        mls.0
+            .iter()
+            .map(|ls| self.euclidean_distance(ls))
+            .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
 
 impl<T> EuclideanDistance<T, Polygon<T>> for Point<T>
 where
-    T: Float + HasKernel,
+    T: GeoFloat + HasKernel,
 {
     /// Minimum distance from a Point to a Polygon
     fn euclidean_distance(&self, polygon: &Polygon<T>) -> T {
@@ -169,19 +210,9 @@ where
     }
 }
 
-impl<T> EuclideanDistance<T, Point<T>> for Polygon<T>
-where
-    T: Float + HasKernel,
-{
-    /// Minimum distance from a Polygon to a Point
-    fn euclidean_distance(&self, point: &Point<T>) -> T {
-        point.euclidean_distance(self)
-    }
-}
-
 impl<T> EuclideanDistance<T, MultiPolygon<T>> for Point<T>
 where
-    T: Float + HasKernel,
+    T: GeoFloat + HasKernel,
 {
     /// Minimum distance from a Point to a MultiPolygon
     fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
@@ -193,62 +224,27 @@ where
     }
 }
 
-impl<T> EuclideanDistance<T, Point<T>> for MultiPolygon<T>
+// ┌────────────────────────────────┐
+// │ Implementations for MultiPoint │
+// └────────────────────────────────┘
+
+impl<T> EuclideanDistance<T, Point<T>> for MultiPoint<T>
 where
-    T: Float + HasKernel,
+    T: GeoFloat,
 {
-    /// Minimum distance from a MultiPolygon to a Point
+    /// Minimum distance from a MultiPoint to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
         point.euclidean_distance(self)
     }
 }
 
-impl<T> EuclideanDistance<T, MultiLineString<T>> for Point<T>
-where
-    T: Float,
-{
-    /// Minimum distance from a Point to a MultiLineString
-    fn euclidean_distance(&self, mls: &MultiLineString<T>) -> T {
-        mls.0
-            .iter()
-            .map(|ls| self.euclidean_distance(ls))
-            .fold(T::max_value(), |accum, val| accum.min(val))
-    }
-}
-
-impl<T> EuclideanDistance<T, Point<T>> for MultiLineString<T>
-where
-    T: Float,
-{
-    /// Minimum distance from a MultiLineString to a Point
-    fn euclidean_distance(&self, point: &Point<T>) -> T {
-        point.euclidean_distance(self)
-    }
-}
-
-impl<T> EuclideanDistance<T, LineString<T>> for Point<T>
-where
-    T: Float,
-{
-    /// Minimum distance from a Point to a LineString
-    fn euclidean_distance(&self, linestring: &LineString<T>) -> T {
-        ::geo_types::private_utils::point_line_string_euclidean_distance(*self, linestring)
-    }
-}
-
-impl<T> EuclideanDistance<T, Point<T>> for LineString<T>
-where
-    T: Float,
-{
-    /// Minimum distance from a LineString to a Point
-    fn euclidean_distance(&self, point: &Point<T>) -> T {
-        point.euclidean_distance(self)
-    }
-}
+// ┌──────────────────────────┐
+// │ Implementations for Line │
+// └──────────────────────────┘
 
 impl<T> EuclideanDistance<T, Coordinate<T>> for Line<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a `Line` to a `Coordinate`
     fn euclidean_distance(&self, coord: &Coordinate<T>) -> T {
@@ -256,19 +252,9 @@ where
     }
 }
 
-impl<T> EuclideanDistance<T, Line<T>> for Coordinate<T>
-where
-    T: Float,
-{
-    /// Minimum distance from a `Coordinate` to a `Line`
-    fn euclidean_distance(&self, line: &Line<T>) -> T {
-        line.euclidean_distance(self)
-    }
-}
-
 impl<T> EuclideanDistance<T, Point<T>> for Line<T>
 where
-    T: Float,
+    T: GeoFloat,
 {
     /// Minimum distance from a Line to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
@@ -276,125 +262,10 @@ where
     }
 }
 
-impl<T> EuclideanDistance<T, Line<T>> for Point<T>
-where
-    T: Float,
-{
-    /// Minimum distance from a Line to a Point
-    fn euclidean_distance(&self, line: &Line<T>) -> T {
-        self.0.euclidean_distance(line)
-    }
-}
-
-/// LineString-LineString distance
-impl<T> EuclideanDistance<T, LineString<T>> for LineString<T>
-where
-    T: Float + HasKernel + Signed + RTreeNum,
-{
-    fn euclidean_distance(&self, other: &LineString<T>) -> T {
-        if self.intersects(other) {
-            T::zero()
-        } else {
-            nearest_neighbour_distance(self, other)
-        }
-    }
-}
-
-/// This method handles a corner case in which a candidate polygon
-/// is disjoint because it's contained in the inner ring
-/// we work around this by checking that Polygons with inner rings don't
-/// contain a point from the candidate Polygon's outer shell in their simple representations
-fn ring_contains_point<T>(poly: &Polygon<T>, p: Point<T>) -> bool
-where
-    T: HasKernel,
-{
-    match coord_pos_relative_to_ring(p.0, &poly.exterior()) {
-        CoordPos::Inside => true,
-        CoordPos::OnBoundary | CoordPos::Outside => false,
-    }
-}
-
-/// LineString to Line
-impl<T> EuclideanDistance<T, Line<T>> for LineString<T>
-where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
-{
-    fn euclidean_distance(&self, other: &Line<T>) -> T {
-        self.lines().fold(Bounded::max_value(), |acc, line| {
-            acc.min(line.euclidean_distance(other))
-        })
-    }
-}
-
-/// Line to LineString
-impl<T> EuclideanDistance<T, LineString<T>> for Line<T>
-where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
-{
-    fn euclidean_distance(&self, other: &LineString<T>) -> T {
-        other.euclidean_distance(self)
-    }
-}
-
-/// LineString to Polygon
-impl<T> EuclideanDistance<T, Polygon<T>> for LineString<T>
-where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
-{
-    fn euclidean_distance(&self, other: &Polygon<T>) -> T {
-        if self.intersects(other) || other.contains(self) {
-            T::zero()
-        } else if !other.interiors().is_empty() && ring_contains_point(other, Point(self.0[0])) {
-            // check each ring distance, returning the minimum
-            let mut mindist: T = Float::max_value();
-            for ring in other.interiors() {
-                mindist = mindist.min(nearest_neighbour_distance(self, ring))
-            }
-            mindist
-        } else {
-            nearest_neighbour_distance(self, &other.exterior())
-        }
-    }
-}
-
-/// Polygon to LineString distance
-impl<T> EuclideanDistance<T, LineString<T>> for Polygon<T>
-where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
-{
-    fn euclidean_distance(&self, other: &LineString<T>) -> T {
-        other.euclidean_distance(self)
-    }
-}
-
-/// Line to MultiPolygon distance
-impl<T> EuclideanDistance<T, MultiPolygon<T>> for Line<T>
-where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
-{
-    fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
-        mpolygon
-            .0
-            .iter()
-            .map(|p| self.euclidean_distance(p))
-            .fold(Bounded::max_value(), |accum, val| accum.min(val))
-    }
-}
-
-/// MultiPolygon to Line distance
-impl<T> EuclideanDistance<T, Line<T>> for MultiPolygon<T>
-where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
-{
-    fn euclidean_distance(&self, other: &Line<T>) -> T {
-        other.euclidean_distance(self)
-    }
-}
-
 /// Line to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for Line<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         if self.intersects(other) || self.contains(other) {
@@ -409,10 +280,20 @@ where
     }
 }
 
+/// Line to LineString
+impl<T> EuclideanDistance<T, LineString<T>> for Line<T>
+where
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+{
+    fn euclidean_distance(&self, other: &LineString<T>) -> T {
+        other.euclidean_distance(self)
+    }
+}
+
 // Line to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Line<T>
 where
-    T: Float + Signed + RTreeNum + FloatConst + HasKernel,
+    T: GeoFloat + Signed + RTreeNum + FloatConst + HasKernel,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if other.contains(self) || self.intersects(other) {
@@ -443,12 +324,125 @@ where
     }
 }
 
+/// Line to MultiPolygon distance
+impl<T> EuclideanDistance<T, MultiPolygon<T>> for Line<T>
+where
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+{
+    fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
+        mpolygon
+            .0
+            .iter()
+            .map(|p| self.euclidean_distance(p))
+            .fold(Bounded::max_value(), |accum, val| accum.min(val))
+    }
+}
+
+// ┌────────────────────────────────┐
+// │ Implementations for LineString │
+// └────────────────────────────────┘
+
+impl<T> EuclideanDistance<T, Point<T>> for LineString<T>
+where
+    T: GeoFloat,
+{
+    /// Minimum distance from a LineString to a Point
+    fn euclidean_distance(&self, point: &Point<T>) -> T {
+        point.euclidean_distance(self)
+    }
+}
+
+/// LineString to Line
+impl<T> EuclideanDistance<T, Line<T>> for LineString<T>
+where
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+{
+    fn euclidean_distance(&self, other: &Line<T>) -> T {
+        self.lines().fold(Bounded::max_value(), |acc, line| {
+            acc.min(line.euclidean_distance(other))
+        })
+    }
+}
+
+/// LineString-LineString distance
+impl<T> EuclideanDistance<T, LineString<T>> for LineString<T>
+where
+    T: GeoFloat + HasKernel + Signed + RTreeNum,
+{
+    fn euclidean_distance(&self, other: &LineString<T>) -> T {
+        if self.intersects(other) {
+            T::zero()
+        } else {
+            nearest_neighbour_distance(self, other)
+        }
+    }
+}
+
+/// LineString to Polygon
+impl<T> EuclideanDistance<T, Polygon<T>> for LineString<T>
+where
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+{
+    fn euclidean_distance(&self, other: &Polygon<T>) -> T {
+        if self.intersects(other) || other.contains(self) {
+            T::zero()
+        } else if !other.interiors().is_empty() && ring_contains_point(other, Point(self.0[0])) {
+            // check each ring distance, returning the minimum
+            let mut mindist: T = Float::max_value();
+            for ring in other.interiors() {
+                mindist = mindist.min(nearest_neighbour_distance(self, ring))
+            }
+            mindist
+        } else {
+            nearest_neighbour_distance(self, &other.exterior())
+        }
+    }
+}
+
+// ┌─────────────────────────────────────┐
+// │ Implementations for MultiLineString │
+// └─────────────────────────────────────┘
+
+impl<T> EuclideanDistance<T, Point<T>> for MultiLineString<T>
+where
+    T: GeoFloat,
+{
+    /// Minimum distance from a MultiLineString to a Point
+    fn euclidean_distance(&self, point: &Point<T>) -> T {
+        point.euclidean_distance(self)
+    }
+}
+
+// ┌─────────────────────────────┐
+// │ Implementations for Polygon │
+// └─────────────────────────────┘
+
+impl<T> EuclideanDistance<T, Point<T>> for Polygon<T>
+where
+    T: GeoFloat + HasKernel,
+{
+    /// Minimum distance from a Polygon to a Point
+    fn euclidean_distance(&self, point: &Point<T>) -> T {
+        point.euclidean_distance(self)
+    }
+}
+
 // Polygon to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for Polygon<T>
 where
-    T: Float + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
+        other.euclidean_distance(self)
+    }
+}
+
+/// Polygon to LineString distance
+impl<T> EuclideanDistance<T, LineString<T>> for Polygon<T>
+where
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+{
+    fn euclidean_distance(&self, other: &LineString<T>) -> T {
         other.euclidean_distance(self)
     }
 }
@@ -456,7 +450,7 @@ where
 // Polygon to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Polygon<T>
 where
-    T: Float + FloatConst + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + RTreeNum + HasKernel,
 {
     /// This implementation has a "fast path" in cases where both input polygons are convex:
     /// it switches to an implementation of the "rotating calipers" method described in [Pirzadeh (1999), pp24—30](http://digitool.library.mcgill.ca/R/?func=dbin-jump-full&object_id=21623&local_base=GEN01-MCG02),
@@ -492,9 +486,37 @@ where
     }
 }
 
+// ┌──────────────────────────────────┐
+// │ Implementations for MultiPolygon │
+// └──────────────────────────────────┘
+
+impl<T> EuclideanDistance<T, Point<T>> for MultiPolygon<T>
+where
+    T: GeoFloat + HasKernel,
+{
+    /// Minimum distance from a MultiPolygon to a Point
+    fn euclidean_distance(&self, point: &Point<T>) -> T {
+        point.euclidean_distance(self)
+    }
+}
+
+/// MultiPolygon to Line distance
+impl<T> EuclideanDistance<T, Line<T>> for MultiPolygon<T>
+where
+    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+{
+    fn euclidean_distance(&self, other: &Line<T>) -> T {
+        other.euclidean_distance(self)
+    }
+}
+
+// ┌──────────────────────────────┐
+// │ Implementations for Triangle │
+// └──────────────────────────────┘
+
 impl<T> EuclideanDistance<T, Point<T>> for Triangle<T>
 where
-    T: Float + HasKernel,
+    T: GeoFloat + HasKernel,
 {
     fn euclidean_distance(&self, point: &Point<T>) -> T {
         if self.contains(point) {
@@ -507,11 +529,30 @@ where
             .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
+
+// ┌───────────┐
+// │ Utilities │
+// └───────────┘
+
+/// This method handles a corner case in which a candidate polygon
+/// is disjoint because it's contained in the inner ring
+/// we work around this by checking that Polygons with inner rings don't
+/// contain a point from the candidate Polygon's outer shell in their simple representations
+fn ring_contains_point<T>(poly: &Polygon<T>, p: Point<T>) -> bool
+where
+    T: HasKernel,
+{
+    match coord_pos_relative_to_ring(p.0, &poly.exterior()) {
+        CoordPos::Inside => true,
+        CoordPos::OnBoundary | CoordPos::Outside => false,
+    }
+}
+
 /// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
 // This is somewhat slow and memory-inefficient, but certainly better than quadratic time
 pub fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T>) -> T
 where
-    T: Float + RTreeNum,
+    T: GeoFloat + RTreeNum,
 {
     let tree_a: RTree<Line<_>> = RTree::bulk_load(geom1.lines().collect::<Vec<_>>());
     let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect::<Vec<_>>());

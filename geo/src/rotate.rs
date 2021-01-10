@@ -219,6 +219,7 @@ where
 mod test {
     use super::*;
     use crate::{line_string, point, polygon, Coordinate, Point};
+    use approx::assert_relative_eq;
 
     #[test]
     fn test_rotate_around_point() {
@@ -332,16 +333,13 @@ mod test {
     #[test]
     fn test_rotate_line() {
         let line0 = Line::from([(0., 0.), (0., 2.)]);
-        let line1 = Line::from([(1., 0.9999999999999999), (-1., 1.)]);
-        assert_eq!(line0.rotate(90.), line1);
+        let line1 = Line::from([(1., 1.), (-1., 1.)]);
+        assert_relative_eq!(line0.rotate(90.0), line1);
     }
     #[test]
     fn test_rotate_line_around_point() {
         let line0 = Line::new(Point::new(0., 0.), Point::new(0., 2.));
-        let line1 = Line::new(
-            Point::new(0., 0.),
-            Point::new(-2., 0.00000000000000012246467991473532),
-        );
-        assert_eq!(line0.rotate_around_point(90., Point::new(0., 0.)), line1);
+        let line1 = Line::new(Point::new(0., 0.), Point::new(-2., 0.));
+        assert_relative_eq!(line0.rotate_around_point(90., Point::new(0., 0.)), line1);
     }
 }
