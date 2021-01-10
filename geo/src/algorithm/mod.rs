@@ -29,7 +29,7 @@ pub mod dimensions;
 pub mod euclidean_distance;
 /// Calculate the length of a planar line between two `Geometries`.
 pub mod euclidean_length;
-/// Calculate the extreme indices of a `Polygon`, `MultiPolygon`, or `MultiPoint`.
+/// Calculate the extreme coordinates and indices of a geometry.
 pub mod extremes;
 /// Calculate the Frechet distance between two `LineStrings`.
 pub mod frechet_distance;
