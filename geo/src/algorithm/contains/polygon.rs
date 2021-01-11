@@ -1,7 +1,6 @@
 use super::Contains;
 use crate::intersects::Intersects;
-use crate::kernels::HasKernel;
-use crate::{CoordNum, Coordinate, Line, LineString, MultiPolygon, Point, Polygon};
+use crate::{CoordNum, Coordinate, GeoNum, Line, LineString, MultiPolygon, Point, Polygon};
 
 // ┌─────────────────────────────┐
 // │ Implementations for Polygon │
@@ -9,7 +8,7 @@ use crate::{CoordNum, Coordinate, Line, LineString, MultiPolygon, Point, Polygon
 
 impl<T> Contains<Coordinate<T>> for Polygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
         use crate::algorithm::coordinate_position::{CoordPos, CoordinatePosition};
@@ -20,7 +19,7 @@ where
 
 impl<T> Contains<Point<T>> for Polygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, p: &Point<T>) -> bool {
         self.contains(&p.0)
@@ -31,7 +30,7 @@ where
 // line.start and line.end is on the boundaries
 impl<T> Contains<Line<T>> for Polygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, line: &Line<T>) -> bool {
         // both endpoints are contained in the polygon and the line
@@ -46,7 +45,7 @@ where
 // TODO: also check interiors
 impl<T> Contains<Polygon<T>> for Polygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, poly: &Polygon<T>) -> bool {
         // decompose poly's exterior ring into Lines, and check each for containment
@@ -57,7 +56,7 @@ where
 // TODO: ensure DE-9IM compliance
 impl<T> Contains<LineString<T>> for Polygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, linestring: &LineString<T>) -> bool {
         // All LineString points must be inside the Polygon

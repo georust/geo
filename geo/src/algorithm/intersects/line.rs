@@ -4,7 +4,7 @@ use crate::*;
 
 impl<T> Intersects<Coordinate<T>> for Line<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn intersects(&self, rhs: &Coordinate<T>) -> bool {
         // First we check if the point is collinear with the line.
@@ -19,7 +19,7 @@ symmetric_intersects_impl!(Line<T>, Point<T>);
 
 impl<T> Intersects<Line<T>> for Line<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn intersects(&self, line: &Line<T>) -> bool {
         // Special case: self is equiv. to a point.

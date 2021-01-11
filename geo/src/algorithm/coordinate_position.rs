@@ -1,10 +1,9 @@
 use crate::algorithm::{
     bounding_rect::BoundingRect, dimensions::HasDimensions, intersects::Intersects,
-    kernels::HasKernel,
 };
 use crate::{
-    Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon, Rect, Triangle,
+    Coordinate, GeoNum, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
 /// The position of a `Coordinate` relative to a `Geometry`
@@ -35,7 +34,7 @@ pub enum CoordPos {
 /// assert_eq!(square_poly.coordinate_position(&outside_coord), CoordPos::Outside);
 /// ```
 pub trait CoordinatePosition {
-    type Scalar: HasKernel;
+    type Scalar: GeoNum;
     fn coordinate_position(&self, coord: &Coordinate<Self::Scalar>) -> CoordPos {
         let mut is_inside = false;
         let mut boundary_count = 0;
@@ -69,7 +68,7 @@ pub trait CoordinatePosition {
 
 impl<T> CoordinatePosition for Coordinate<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
@@ -86,7 +85,7 @@ where
 
 impl<T> CoordinatePosition for Point<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
@@ -103,7 +102,7 @@ where
 
 impl<T> CoordinatePosition for Line<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
@@ -129,7 +128,7 @@ where
 
 impl<T> CoordinatePosition for LineString<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
@@ -178,7 +177,7 @@ where
 
 impl<T> CoordinatePosition for Triangle<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
@@ -195,7 +194,7 @@ where
 
 impl<T> CoordinatePosition for Rect<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
@@ -212,7 +211,7 @@ where
 
 impl<T> CoordinatePosition for MultiPoint<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
@@ -229,7 +228,7 @@ where
 
 impl<T> CoordinatePosition for Polygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
@@ -274,7 +273,7 @@ where
 
 impl<T> CoordinatePosition for MultiLineString<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
@@ -291,7 +290,7 @@ where
 
 impl<T> CoordinatePosition for MultiPolygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
@@ -308,7 +307,7 @@ where
 
 impl<T> CoordinatePosition for GeometryCollection<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
@@ -325,7 +324,7 @@ where
 
 impl<T> CoordinatePosition for Geometry<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
@@ -377,7 +376,7 @@ where
 /// closed `LineString`.
 pub fn coord_pos_relative_to_ring<T>(coord: Coordinate<T>, linestring: &LineString<T>) -> CoordPos
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     // Use the ray-tracing algorithm: count #times a
     // horizontal ray from point (to positive infinity).

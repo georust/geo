@@ -1,7 +1,7 @@
 use super::{swap_remove_to_first, trivial_hull};
-use crate::algorithm::kernels::*;
+use crate::kernels::{HasKernel, Kernel, Orientation};
 use crate::utils::partition_slice;
-use crate::{Coordinate, LineString};
+use crate::{Coordinate, GeoNum, LineString};
 
 // Determines if `p_c` lies on the positive side of the
 // segment `p_a` to `p_b`. In other words, whether segment
@@ -11,16 +11,16 @@ use crate::{Coordinate, LineString};
 #[inline]
 fn is_ccw<T>(p_a: Coordinate<T>, p_b: Coordinate<T>, p_c: Coordinate<T>) -> bool
 where
-    T: HasKernel,
+    T: GeoNum,
 {
-    let o = T::Ker::orient2d(p_a, p_b, p_c);
+    let o = <T as HasKernel>::Ker::orient2d(p_a, p_b, p_c);
     o == Orientation::CounterClockwise
 }
 
 // Adapted from https://web.archive.org/web/20180409175413/http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
 pub fn quick_hull<T>(mut points: &mut [Coordinate<T>]) -> LineString<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     // can't build a hull from fewer than four points
     if points.len() < 4 {
@@ -70,7 +70,7 @@ fn hull_set<T>(
     mut set: &mut [Coordinate<T>],
     hull: &mut Vec<Coordinate<T>>,
 ) where
-    T: HasKernel,
+    T: GeoNum,
 {
     if set.is_empty() {
         return;

@@ -1,5 +1,4 @@
 use super::{value_in_range, Intersects};
-use crate::kernels::*;
 use crate::*;
 
 impl<T> Intersects<Coordinate<T>> for Rect<T>
@@ -37,7 +36,7 @@ where
 // an allocation.
 impl<T> Intersects<Line<T>> for Rect<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn intersects(&self, rhs: &Line<T>) -> bool {
         let lt = self.min();

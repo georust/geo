@@ -2,12 +2,10 @@ use crate::algorithm::contains::Contains;
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::algorithm::intersects::Intersects;
 use crate::algorithm::polygon_distance_fast_path::*;
-use crate::kernels::*;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
-use crate::GeoFloat;
 use crate::{
-    Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
-    Triangle,
+    Coordinate, GeoFloat, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
+    Point, Polygon, Triangle,
 };
 use num_traits::{float::FloatConst, Bounded, Float, Signed};
 
@@ -543,7 +541,7 @@ where
 /// contain a point from the candidate Polygon's outer shell in their simple representations
 fn ring_contains_point<T>(poly: &Polygon<T>, p: Point<T>) -> bool
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     match coord_pos_relative_to_ring(p.0, &poly.exterior()) {
         CoordPos::Inside => true,
