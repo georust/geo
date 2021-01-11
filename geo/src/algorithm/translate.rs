@@ -1,5 +1,5 @@
 use crate::algorithm::map_coords::{MapCoords, MapCoordsInplace};
-use crate::CoordinateType;
+use crate::CoordNum;
 
 pub trait Translate<T> {
     /// Translate a Geometry along its axes by the given offsets
@@ -26,17 +26,17 @@ pub trait Translate<T> {
     /// ```
     fn translate(&self, xoff: T, yoff: T) -> Self
     where
-        T: CoordinateType;
+        T: CoordNum;
 
     /// Translate a Geometry along its axes, but in place.
     fn translate_inplace(&mut self, xoff: T, yoff: T)
     where
-        T: CoordinateType;
+        T: CoordNum;
 }
 
 impl<T, G> Translate<T> for G
 where
-    T: CoordinateType,
+    T: CoordNum,
     G: MapCoords<T, T, Output = G> + MapCoordsInplace<T>,
 {
     fn translate(&self, xoff: T, yoff: T) -> Self {

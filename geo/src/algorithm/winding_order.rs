@@ -1,7 +1,7 @@
 use super::kernels::*;
 use crate::coords_iter::CoordsIter;
 use crate::utils::EitherIter;
-use crate::{CoordinateType, LineString, Point};
+use crate::{CoordNum, LineString, Point};
 use geo_types::PointsIter;
 use std::iter::Rev;
 
@@ -11,11 +11,11 @@ pub struct Points<'a, T>(
     pub(crate) EitherIter<Point<T>, PointsIter<'a, T>, Rev<PointsIter<'a, T>>>,
 )
 where
-    T: CoordinateType + 'a;
+    T: CoordNum + 'a;
 
 impl<'a, T> Iterator for Points<'a, T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Item = Point<T>;
 
@@ -37,7 +37,7 @@ pub enum WindingOrder {
 ///
 /// [CGAL's Polygon_2::orientation]: //doc.cgal.org/latest/Polygon/classCGAL_1_1Polygon__2.html#a4ce8b4b8395406243ac16c2a120ffc15
 pub trait Winding {
-    type Scalar: CoordinateType;
+    type Scalar: CoordNum;
 
     /// Return the winding order of this object if it
     /// contains at least three distinct coordinates, and

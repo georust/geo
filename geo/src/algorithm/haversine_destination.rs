@@ -1,11 +1,11 @@
-use crate::{CoordinateType, Point, MEAN_EARTH_RADIUS};
+use crate::{CoordNum, Point, MEAN_EARTH_RADIUS};
 use num_traits::{Float, FromPrimitive};
 
 /// Returns a new Point using the distance to the existing Point and a bearing for the direction
 ///
 /// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
 /// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
-pub trait HaversineDestination<T: CoordinateType + Float> {
+pub trait HaversineDestination<T: CoordNum + Float> {
     /// Returns a new Point using distance to the existing Point and a bearing for the direction
     ///
     /// # Units
@@ -28,7 +28,7 @@ pub trait HaversineDestination<T: CoordinateType + Float> {
 
 impl<T> HaversineDestination<T> for Point<T>
 where
-    T: CoordinateType + Float + FromPrimitive,
+    T: CoordNum + Float + FromPrimitive,
 {
     fn haversine_destination(&self, bearing: T, distance: T) -> Point<T> {
         let center_lng = self.x().to_radians();

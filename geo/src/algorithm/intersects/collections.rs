@@ -3,7 +3,7 @@ use crate::*;
 
 impl<T, G> Intersects<G> for Geometry<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
     Point<T>: Intersects<G>,
     MultiPoint<T>: Intersects<G>,
     Line<T>: Intersects<G>,
@@ -36,7 +36,7 @@ symmetric_intersects_impl!(Polygon<T>, Geometry<T>);
 
 impl<T, G> Intersects<G> for GeometryCollection<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
     Geometry<T>: Intersects<G>,
 {
     fn intersects(&self, rhs: &G) -> bool {

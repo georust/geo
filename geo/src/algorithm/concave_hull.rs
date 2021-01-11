@@ -6,7 +6,7 @@ use crate::utils::partial_min;
 use crate::{
     GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
-use geo_types::{Coordinate, CoordinateType};
+use geo_types::{CoordNum, Coordinate};
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
 
@@ -45,7 +45,7 @@ use std::collections::VecDeque;
 /// assert_eq!(res.exterior(), &correct_hull);
 /// ```
 pub trait ConcaveHull {
-    type Scalar: CoordinateType;
+    type Scalar: CoordNum;
     fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar>;
 }
 

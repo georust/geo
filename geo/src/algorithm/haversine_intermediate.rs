@@ -1,9 +1,9 @@
-use crate::{CoordinateType, Point, MEAN_EARTH_RADIUS};
+use crate::{CoordNum, Point, MEAN_EARTH_RADIUS};
 use num_traits::{Float, FromPrimitive};
 
 /// Returns a new Point along a great circle route between two existing points
 
-pub trait HaversineIntermediate<T: CoordinateType + Float> {
+pub trait HaversineIntermediate<T: CoordNum + Float> {
     /// Returns a new Point along a great circle route between two existing points.
     ///
     /// # Examples
@@ -41,7 +41,7 @@ pub trait HaversineIntermediate<T: CoordinateType + Float> {
 
 impl<T> HaversineIntermediate<T> for Point<T>
 where
-    T: CoordinateType + Float + FromPrimitive,
+    T: CoordNum + Float + FromPrimitive,
 {
     fn haversine_intermediate(&self, other: &Point<T>, f: T) -> Point<T> {
         let params = get_params(&self, &other);
@@ -99,10 +99,7 @@ struct HaversineParams<T: Float + FromPrimitive> {
 }
 
 #[allow(clippy::many_single_char_names)]
-fn get_point<T: CoordinateType + Float + FromPrimitive>(
-    params: &HaversineParams<T>,
-    f: T,
-) -> Point<T> {
+fn get_point<T: CoordNum + Float + FromPrimitive>(params: &HaversineParams<T>, f: T) -> Point<T> {
     let one = T::one();
 
     let HaversineParams {
@@ -129,7 +126,7 @@ fn get_point<T: CoordinateType + Float + FromPrimitive>(
 }
 
 #[allow(clippy::many_single_char_names)]
-fn get_params<T: CoordinateType + Float + FromPrimitive>(
+fn get_params<T: CoordNum + Float + FromPrimitive>(
     p1: &Point<T>,
     p2: &Point<T>,
 ) -> HaversineParams<T> {

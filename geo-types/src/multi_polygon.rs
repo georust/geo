@@ -1,4 +1,4 @@
-use crate::{CoordinateType, Polygon};
+use crate::{CoordNum, Polygon};
 use std::iter::FromIterator;
 
 /// A collection of [`Polygon`s](struct.Polygon.html). Can
@@ -26,27 +26,27 @@ use std::iter::FromIterator;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiPolygon<T>(pub Vec<Polygon<T>>)
 where
-    T: CoordinateType;
+    T: CoordNum;
 
-impl<T: CoordinateType, IP: Into<Polygon<T>>> From<IP> for MultiPolygon<T> {
+impl<T: CoordNum, IP: Into<Polygon<T>>> From<IP> for MultiPolygon<T> {
     fn from(x: IP) -> Self {
         MultiPolygon(vec![x.into()])
     }
 }
 
-impl<T: CoordinateType, IP: Into<Polygon<T>>> From<Vec<IP>> for MultiPolygon<T> {
+impl<T: CoordNum, IP: Into<Polygon<T>>> From<Vec<IP>> for MultiPolygon<T> {
     fn from(x: Vec<IP>) -> Self {
         MultiPolygon(x.into_iter().map(|p| p.into()).collect())
     }
 }
 
-impl<T: CoordinateType, IP: Into<Polygon<T>>> FromIterator<IP> for MultiPolygon<T> {
+impl<T: CoordNum, IP: Into<Polygon<T>>> FromIterator<IP> for MultiPolygon<T> {
     fn from_iter<I: IntoIterator<Item = IP>>(iter: I) -> Self {
         MultiPolygon(iter.into_iter().map(|p| p.into()).collect())
     }
 }
 
-impl<T: CoordinateType> IntoIterator for MultiPolygon<T> {
+impl<T: CoordNum> IntoIterator for MultiPolygon<T> {
     type Item = Polygon<T>;
     type IntoIter = ::std::vec::IntoIter<Polygon<T>>;
 
@@ -55,7 +55,7 @@ impl<T: CoordinateType> IntoIterator for MultiPolygon<T> {
     }
 }
 
-impl<'a, T: CoordinateType> IntoIterator for &'a MultiPolygon<T> {
+impl<'a, T: CoordNum> IntoIterator for &'a MultiPolygon<T> {
     type Item = &'a Polygon<T>;
     type IntoIter = ::std::slice::Iter<'a, Polygon<T>>;
 
@@ -64,7 +64,7 @@ impl<'a, T: CoordinateType> IntoIterator for &'a MultiPolygon<T> {
     }
 }
 
-impl<'a, T: CoordinateType> IntoIterator for &'a mut MultiPolygon<T> {
+impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPolygon<T> {
     type Item = &'a mut Polygon<T>;
     type IntoIter = ::std::slice::IterMut<'a, Polygon<T>>;
 
@@ -73,7 +73,7 @@ impl<'a, T: CoordinateType> IntoIterator for &'a mut MultiPolygon<T> {
     }
 }
 
-impl<T: CoordinateType> MultiPolygon<T> {
+impl<T: CoordNum> MultiPolygon<T> {
     pub fn iter(&self) -> impl Iterator<Item = &Polygon<T>> {
         self.0.iter()
     }

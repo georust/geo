@@ -1,4 +1,4 @@
-use crate::{polygon, Coordinate, CoordinateType, Polygon};
+use crate::{polygon, CoordNum, Coordinate, Polygon};
 use num_traits::Float;
 
 /// An _axis-aligned_ bounded 2D rectangle whose area is
@@ -39,13 +39,13 @@ use num_traits::Float;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     min: Coordinate<T>,
     max: Coordinate<T>,
 }
 
-impl<T: CoordinateType> Rect<T> {
+impl<T: CoordNum> Rect<T> {
     /// Creates a new rectangle from two corner coordinates.
     ///
     /// # Examples
@@ -235,7 +235,7 @@ impl<T: CoordinateType> Rect<T> {
     }
 }
 
-impl<T: CoordinateType + Float> Rect<T> {
+impl<T: CoordNum + Float> Rect<T> {
     /// Returns the center `Coordinate` of the `Rect`.
     ///
     /// # Examples

@@ -54,7 +54,7 @@ pub use crate::traits::ToGeo;
 pub use crate::types::*;
 
 pub use geo_types::{
-    line_string, point, polygon, Coordinate, CoordinateType, Geometry, GeometryCollection, Line,
+    line_string, point, polygon, CoordNum, Coordinate, Geometry, GeometryCollection, Line,
     LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
@@ -153,10 +153,10 @@ pub mod prelude {
 /// }
 /// ```
 pub trait GeoFloat:
-    num_traits::Float + CoordinateType + algorithm::kernels::HasKernel + std::fmt::Debug
+    num_traits::Float + CoordNum + algorithm::kernels::HasKernel + std::fmt::Debug
 {
 }
 impl<T> GeoFloat for T where
-    T: num_traits::Float + CoordinateType + algorithm::kernels::HasKernel + std::fmt::Debug
+    T: num_traits::Float + CoordNum + algorithm::kernels::HasKernel + std::fmt::Debug
 {
 }

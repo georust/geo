@@ -38,7 +38,7 @@ use crate::*;
 /// assert_eq!(res.exterior(), &correct_hull);
 /// ```
 pub trait ConvexHull {
-    type Scalar: CoordinateType;
+    type Scalar: CoordNum;
     fn convex_hull(&self) -> Polygon<Self::Scalar>;
 }
 

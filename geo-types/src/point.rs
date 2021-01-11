@@ -1,4 +1,4 @@
-use crate::{Coordinate, CoordinateType};
+use crate::{CoordNum, Coordinate};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -31,21 +31,21 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T>(pub Coordinate<T>)
 where
-    T: CoordinateType;
+    T: CoordNum;
 
-impl<T: CoordinateType> From<Coordinate<T>> for Point<T> {
+impl<T: CoordNum> From<Coordinate<T>> for Point<T> {
     fn from(x: Coordinate<T>) -> Point<T> {
         Point(x)
     }
 }
 
-impl<T: CoordinateType> From<(T, T)> for Point<T> {
+impl<T: CoordNum> From<(T, T)> for Point<T> {
     fn from(coords: (T, T)) -> Point<T> {
         Point::new(coords.0, coords.1)
     }
 }
 
-impl<T: CoordinateType> From<[T; 2]> for Point<T> {
+impl<T: CoordNum> From<[T; 2]> for Point<T> {
     fn from(coords: [T; 2]) -> Point<T> {
         Point::new(coords[0], coords[1])
     }
@@ -53,7 +53,7 @@ impl<T: CoordinateType> From<[T; 2]> for Point<T> {
 
 impl<T> Point<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     /// Creates a new point.
     ///
@@ -215,7 +215,7 @@ where
 
 impl<T> Point<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     /// Returns the dot product of the two points:
     /// `dot = x1 * x2 + y1 * y2`
@@ -259,7 +259,7 @@ where
 
 impl<T> Point<T>
 where
-    T: CoordinateType + Float,
+    T: CoordNum + Float,
 {
     /// Converts the (x,y) components of Point to degrees
     ///
@@ -300,7 +300,7 @@ where
 
 impl<T> Neg for Point<T>
 where
-    T: CoordinateType + Neg<Output = T>,
+    T: CoordNum + Neg<Output = T>,
 {
     type Output = Point<T>;
 
@@ -323,7 +323,7 @@ where
 
 impl<T> Add for Point<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Point<T>;
 
@@ -346,7 +346,7 @@ where
 
 impl<T> Sub for Point<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Point<T>;
 
@@ -369,7 +369,7 @@ where
 
 impl<T> Mul<T> for Point<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Point<T>;
 
@@ -392,7 +392,7 @@ where
 
 impl<T> Div<T> for Point<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Point<T>;
 
@@ -416,7 +416,7 @@ where
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for Point<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
+    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
@@ -449,7 +449,7 @@ where
 #[cfg(any(feature = "approx", test))]
 impl<T> AbsDiffEq for Point<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType,
+    T: AbsDiffEq<Epsilon = T> + CoordNum,
     T::Epsilon: Copy,
 {
     type Epsilon = T::Epsilon;

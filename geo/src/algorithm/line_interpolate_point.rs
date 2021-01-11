@@ -2,9 +2,7 @@ use crate::coords_iter::CoordsIter;
 use num_traits::Float;
 use std::ops::AddAssign;
 
-use crate::{
-    algorithm::euclidean_length::EuclideanLength, CoordinateType, Line, LineString, Point,
-};
+use crate::{algorithm::euclidean_length::EuclideanLength, CoordNum, Line, LineString, Point};
 
 /// Returns an option of the point that lies a given fraction along the line.
 ///
@@ -42,7 +40,7 @@ pub trait LineInterpolatePoint<F: Float> {
 
 impl<T> LineInterpolatePoint<T> for Line<T>
 where
-    T: CoordinateType + Float,
+    T: CoordNum + Float,
 {
     type Output = Option<Point<T>>;
 
@@ -72,7 +70,7 @@ where
 
 impl<T> LineInterpolatePoint<T> for LineString<T>
 where
-    T: CoordinateType + Float + AddAssign + std::fmt::Debug,
+    T: CoordNum + Float + AddAssign + std::fmt::Debug,
     Line<T>: EuclideanLength<T>,
     LineString<T>: EuclideanLength<T>,
 {

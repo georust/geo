@@ -1,4 +1,4 @@
-use crate::{CoordinateType, LineString, Point, Rect, Triangle};
+use crate::{CoordNum, LineString, Point, Rect, Triangle};
 use num_traits::{Float, Signed};
 
 /// A bounded two-dimensional area.
@@ -65,7 +65,7 @@ use num_traits::{Float, Signed};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Polygon<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     exterior: LineString<T>,
     interiors: Vec<LineString<T>>,
@@ -73,7 +73,7 @@ where
 
 impl<T> Polygon<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     /// Create a new `Polygon` with the provided exterior `LineString` ring and
     /// interior `LineString` rings.
@@ -407,7 +407,7 @@ enum ListSign {
 
 impl<T> Polygon<T>
 where
-    T: CoordinateType + Float + Signed,
+    T: CoordNum + Float + Signed,
 {
     /// Determine whether a Polygon is convex
     // For each consecutive pair of edges of the polygon (each triplet of points),
@@ -445,7 +445,7 @@ where
     }
 }
 
-impl<T: CoordinateType> From<Rect<T>> for Polygon<T> {
+impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
     fn from(r: Rect<T>) -> Polygon<T> {
         Polygon::new(
             vec![
@@ -461,7 +461,7 @@ impl<T: CoordinateType> From<Rect<T>> for Polygon<T> {
     }
 }
 
-impl<T: CoordinateType> From<Triangle<T>> for Polygon<T> {
+impl<T: CoordNum> From<Triangle<T>> for Polygon<T> {
     fn from(t: Triangle<T>) -> Polygon<T> {
         Polygon::new(vec![t.0, t.1, t.2, t.0].into(), Vec::new())
     }

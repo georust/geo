@@ -4,7 +4,7 @@
 // - https://nathanrooy.github.io/posts/2016-12-18/vincenty-formula-with-python/
 // - https://github.com/janantala/GPS-distance/blob/master/java/Distance.java
 
-use crate::{CoordinateType, Point, EARTH_FLATTENING, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS};
+use crate::{CoordNum, Point, EARTH_FLATTENING, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS};
 use num_traits::{Float, FromPrimitive};
 use std::{error, fmt};
 
@@ -45,7 +45,7 @@ pub trait VincentyDistance<T, Rhs = Self> {
 
 impl<T> VincentyDistance<T, Point<T>> for Point<T>
 where
-    T: CoordinateType + Float + FromPrimitive,
+    T: CoordNum + Float + FromPrimitive,
 {
     #[allow(non_snake_case)]
     fn vincenty_distance(&self, rhs: &Point<T>) -> Result<T, FailedToConvergeError> {

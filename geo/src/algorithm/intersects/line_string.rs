@@ -4,7 +4,7 @@ use crate::*;
 // Blanket implementation using self.lines().any().
 impl<T, G> Intersects<G> for LineString<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
     Line<T>: Intersects<G>,
 {
     fn intersects(&self, geom: &G) -> bool {
@@ -17,7 +17,7 @@ symmetric_intersects_impl!(Line<T>, LineString<T>);
 // Blanket implementation from LineString<T>
 impl<T, G> Intersects<G> for MultiLineString<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
     LineString<T>: Intersects<G>,
 {
     fn intersects(&self, rhs: &G) -> bool {

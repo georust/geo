@@ -1,5 +1,5 @@
 use crate::{
-    CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
@@ -131,7 +131,7 @@ pub trait HasDimensions {
     fn boundary_dimensions(&self) -> Dimensions;
 }
 
-impl<C: CoordinateType> HasDimensions for Geometry<C> {
+impl<C: CoordNum> HasDimensions for Geometry<C> {
     fn is_empty(&self) -> bool {
         match self {
             Geometry::Point(g) => g.is_empty(),
@@ -178,7 +178,7 @@ impl<C: CoordinateType> HasDimensions for Geometry<C> {
     }
 }
 
-impl<C: CoordinateType> HasDimensions for Point<C> {
+impl<C: CoordNum> HasDimensions for Point<C> {
     fn is_empty(&self) -> bool {
         false
     }
@@ -192,7 +192,7 @@ impl<C: CoordinateType> HasDimensions for Point<C> {
     }
 }
 
-impl<C: CoordinateType> HasDimensions for Line<C> {
+impl<C: CoordNum> HasDimensions for Line<C> {
     fn is_empty(&self) -> bool {
         false
     }
@@ -216,7 +216,7 @@ impl<C: CoordinateType> HasDimensions for Line<C> {
     }
 }
 
-impl<C: CoordinateType> HasDimensions for LineString<C> {
+impl<C: CoordNum> HasDimensions for LineString<C> {
     fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -259,7 +259,7 @@ impl<C: CoordinateType> HasDimensions for LineString<C> {
     }
 }
 
-impl<C: CoordinateType> HasDimensions for Polygon<C> {
+impl<C: CoordNum> HasDimensions for Polygon<C> {
     fn is_empty(&self) -> bool {
         self.exterior().is_empty()
     }
@@ -273,7 +273,7 @@ impl<C: CoordinateType> HasDimensions for Polygon<C> {
     }
 }
 
-impl<C: CoordinateType> HasDimensions for MultiPoint<C> {
+impl<C: CoordNum> HasDimensions for MultiPoint<C> {
     fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -291,7 +291,7 @@ impl<C: CoordinateType> HasDimensions for MultiPoint<C> {
     }
 }
 
-impl<C: CoordinateType> HasDimensions for MultiLineString<C> {
+impl<C: CoordNum> HasDimensions for MultiLineString<C> {
     fn is_empty(&self) -> bool {
         self.iter().all(LineString::is_empty)
     }
@@ -326,7 +326,7 @@ impl<C: CoordinateType> HasDimensions for MultiLineString<C> {
     }
 }
 
-impl<C: CoordinateType> HasDimensions for MultiPolygon<C> {
+impl<C: CoordNum> HasDimensions for MultiPolygon<C> {
     fn is_empty(&self) -> bool {
         self.iter().all(Polygon::is_empty)
     }
@@ -348,7 +348,7 @@ impl<C: CoordinateType> HasDimensions for MultiPolygon<C> {
     }
 }
 
-impl<C: CoordinateType> HasDimensions for GeometryCollection<C> {
+impl<C: CoordNum> HasDimensions for GeometryCollection<C> {
     fn is_empty(&self) -> bool {
         if self.0.is_empty() {
             true
@@ -385,7 +385,7 @@ impl<C: CoordinateType> HasDimensions for GeometryCollection<C> {
     }
 }
 
-impl<C: CoordinateType> HasDimensions for Rect<C> {
+impl<C: CoordNum> HasDimensions for Rect<C> {
     fn is_empty(&self) -> bool {
         false
     }
@@ -414,7 +414,7 @@ impl<C: CoordinateType> HasDimensions for Rect<C> {
     }
 }
 
-impl<C: CoordinateType> HasDimensions for Triangle<C> {
+impl<C: CoordNum> HasDimensions for Triangle<C> {
     fn is_empty(&self) -> bool {
         false
     }

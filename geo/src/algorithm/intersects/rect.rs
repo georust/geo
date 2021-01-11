@@ -4,7 +4,7 @@ use crate::*;
 
 impl<T> Intersects<Coordinate<T>> for Rect<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn intersects(&self, rhs: &Coordinate<T>) -> bool {
         // Funnily, we don't use point_in_rect, as we know
@@ -20,7 +20,7 @@ symmetric_intersects_impl!(Rect<T>, MultiPoint<T>);
 
 impl<T> Intersects<Rect<T>> for Rect<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn intersects(&self, other: &Rect<T>) -> bool {
         let x_overlap = value_in_range(self.min().x, other.min().x, other.max().x)

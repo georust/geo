@@ -1,7 +1,7 @@
 use super::Contains;
 use crate::intersects::Intersects;
 use crate::kernels::HasKernel;
-use crate::{Coordinate, CoordinateType, Line, LineString, MultiPolygon, Point, Polygon};
+use crate::{CoordNum, Coordinate, Line, LineString, MultiPolygon, Point, Polygon};
 
 // ┌─────────────────────────────┐
 // │ Implementations for Polygon │
@@ -80,7 +80,7 @@ where
 // TODO: ensure DE-9IM compliance
 impl<G, T> Contains<G> for MultiPolygon<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
     Polygon<T>: Contains<G>,
 {
     fn contains(&self, rhs: &G) -> bool {

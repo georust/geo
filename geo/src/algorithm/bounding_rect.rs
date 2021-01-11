@@ -1,12 +1,12 @@
 use crate::utils::{partial_max, partial_min};
 use crate::{
-    Coordinate, CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    CoordNum, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 
 /// Calculation of the bounding rectangle of a geometry.
-pub trait BoundingRect<T: CoordinateType> {
+pub trait BoundingRect<T: CoordNum> {
     type Output;
 
     /// Return the bounding rectangle of a geometry
@@ -35,7 +35,7 @@ pub trait BoundingRect<T: CoordinateType> {
 
 impl<T> BoundingRect<T> for Point<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Rect<T>;
 
@@ -48,7 +48,7 @@ where
 
 impl<T> BoundingRect<T> for MultiPoint<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Option<Rect<T>>;
 
@@ -61,7 +61,7 @@ where
 
 impl<T> BoundingRect<T> for Line<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Rect<T>;
 
@@ -79,7 +79,7 @@ where
 
 impl<T> BoundingRect<T> for LineString<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Option<Rect<T>>;
 
@@ -92,7 +92,7 @@ where
 
 impl<T> BoundingRect<T> for MultiLineString<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Option<Rect<T>>;
 
@@ -105,7 +105,7 @@ where
 
 impl<T> BoundingRect<T> for Polygon<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Option<Rect<T>>;
 
@@ -119,7 +119,7 @@ where
 
 impl<T> BoundingRect<T> for MultiPolygon<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Option<Rect<T>>;
 
@@ -135,7 +135,7 @@ where
 
 impl<T> BoundingRect<T> for Triangle<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Rect<T>;
 
@@ -146,7 +146,7 @@ where
 
 impl<T> BoundingRect<T> for Rect<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Rect<T>;
 
@@ -157,7 +157,7 @@ where
 
 impl<T> BoundingRect<T> for Geometry<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Option<Rect<T>>;
 
@@ -179,7 +179,7 @@ where
 
 impl<T> BoundingRect<T> for GeometryCollection<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Option<Rect<T>>;
 
@@ -197,7 +197,7 @@ where
 }
 
 // Return a new rectangle that encompasses the provided rectangles
-fn bounding_rect_merge<T: CoordinateType>(a: Rect<T>, b: Rect<T>) -> Rect<T> {
+fn bounding_rect_merge<T: CoordNum>(a: Rect<T>, b: Rect<T>) -> Rect<T> {
     Rect::new(
         Coordinate {
             x: partial_min(a.min().x, b.min().x),

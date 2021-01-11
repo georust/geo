@@ -119,7 +119,7 @@ where
 // └─────────────────────────────────────┘
 impl<G, T> Contains<G> for MultiLineString<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
     LineString<T>: Contains<G>,
 {
     fn contains(&self, rhs: &G) -> bool {

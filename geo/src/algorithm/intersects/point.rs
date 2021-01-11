@@ -4,7 +4,7 @@ use crate::*;
 // Blanket implementation from Coordinate<T>
 impl<T, G> Intersects<G> for Point<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
     Coordinate<T>: Intersects<G>,
 {
     fn intersects(&self, rhs: &G) -> bool {
@@ -15,7 +15,7 @@ where
 // Blanket implementation from Point<T>
 impl<T, G> Intersects<G> for MultiPoint<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
     Point<T>: Intersects<G>,
 {
     fn intersects(&self, rhs: &G) -> bool {
