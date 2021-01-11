@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.17.0
 
 * Introduce `coords_count` method on `CoordsIter`.
   * <https://github.com/georust/geo/pull/563>
