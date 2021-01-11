@@ -3,7 +3,10 @@ use std::iter::Sum;
 
 use crate::algorithm::area::{get_linestring_area, Area};
 use crate::algorithm::euclidean_length::EuclideanLength;
-use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect};
+use crate::{
+    CoordinateType, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    Rect,
+};
 
 /// Calculation of the centroid.
 /// The centroid is the arithmetic mean position of all points in the shape.
@@ -59,7 +62,7 @@ pub trait Centroid {
 // Calculation of a Polygon centroid without interior rings
 fn simple_polygon_centroid<T>(poly_ext: &LineString<T>) -> Option<Point<T>>
 where
-    T: Float + FromPrimitive + Sum,
+    T: CoordinateType + Float + FromPrimitive + Sum,
 {
     let area = get_linestring_area(poly_ext);
     if area == T::zero() {
@@ -90,7 +93,7 @@ where
 
 impl<T> Centroid for Line<T>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     type Output = Point<T>;
 
@@ -104,7 +107,7 @@ where
 
 impl<T> Centroid for LineString<T>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     type Output = Option<Point<T>>;
 
@@ -140,7 +143,7 @@ where
 
 impl<T> Centroid for MultiLineString<T>
 where
-    T: Float + FromPrimitive + Sum,
+    T: CoordinateType + Float + FromPrimitive + Sum,
 {
     type Output = Option<Point<T>>;
 
@@ -188,7 +191,7 @@ where
 
 impl<T> Centroid for Polygon<T>
 where
-    T: Float + FromPrimitive + Sum,
+    T: CoordinateType + Float + FromPrimitive + Sum,
 {
     type Output = Option<Point<T>>;
 
@@ -244,7 +247,7 @@ where
 
 impl<T> Centroid for MultiPolygon<T>
 where
-    T: Float + FromPrimitive + Sum,
+    T: CoordinateType + Float + FromPrimitive + Sum,
 {
     type Output = Option<Point<T>>;
 
@@ -299,7 +302,7 @@ where
 
 impl<T> Centroid for Rect<T>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     type Output = Point<T>;
 
@@ -310,7 +313,7 @@ where
 
 impl<T> Centroid for Point<T>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     type Output = Point<T>;
 
@@ -333,7 +336,7 @@ where
 /// ```
 impl<T> Centroid for MultiPoint<T>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     type Output = Option<Point<T>>;
 
@@ -358,17 +361,18 @@ mod test {
     use crate::algorithm::euclidean_distance::EuclideanDistance;
     use crate::line_string;
     use crate::{
-        polygon, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect,
+        polygon, Coordinate, CoordinateType, Line, LineString, MultiLineString, MultiPolygon,
+        Point, Polygon, Rect,
     };
     use num_traits::Float;
 
     /// small helper to create a coordinate
-    fn c<T: Float>(x: T, y: T) -> Coordinate<T> {
+    fn c<T: CoordinateType + Float>(x: T, y: T) -> Coordinate<T> {
         Coordinate { x, y }
     }
 
     /// small helper to create a point
-    fn p<T: Float>(x: T, y: T) -> Point<T> {
+    fn p<T: CoordinateType + Float>(x: T, y: T) -> Point<T> {
         Point(c(x, y))
     }
 

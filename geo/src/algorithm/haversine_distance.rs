@@ -1,4 +1,4 @@
-use crate::{Point, MEAN_EARTH_RADIUS};
+use crate::{CoordinateType, Point, MEAN_EARTH_RADIUS};
 use num_traits::{Float, FromPrimitive};
 
 /// Determine the distance between two geometries using the [haversine formula].
@@ -41,7 +41,7 @@ pub trait HaversineDistance<T, Rhs = Self> {
 
 impl<T> HaversineDistance<T, Point<T>> for Point<T>
 where
-    T: Float + FromPrimitive,
+    T: CoordinateType + Float + FromPrimitive,
 {
     fn haversine_distance(&self, rhs: &Point<T>) -> T {
         let two = T::one() + T::one();

@@ -1,7 +1,7 @@
 use num_traits::Float;
 use std::iter::Sum;
 
-use crate::{Line, LineString, MultiLineString};
+use crate::{CoordinateType, Line, LineString, MultiLineString};
 
 /// Calculation of the length
 
@@ -29,7 +29,7 @@ pub trait EuclideanLength<T, RHS = Self> {
 
 impl<T> EuclideanLength<T> for Line<T>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     fn euclidean_length(&self) -> T {
         ::geo_types::private_utils::line_euclidean_length(*self)
@@ -38,7 +38,7 @@ where
 
 impl<T> EuclideanLength<T> for LineString<T>
 where
-    T: Float + Sum,
+    T: CoordinateType + Float + Sum,
 {
     fn euclidean_length(&self) -> T {
         self.lines().map(|line| line.euclidean_length()).sum()
@@ -47,7 +47,7 @@ where
 
 impl<T> EuclideanLength<T> for MultiLineString<T>
 where
-    T: Float + Sum,
+    T: CoordinateType + Float + Sum,
 {
     fn euclidean_length(&self) -> T {
         self.0

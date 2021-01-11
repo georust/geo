@@ -72,7 +72,7 @@ where
 
 pub fn line_segment_distance<T, C>(point: C, start: C, end: C) -> T
 where
-    T: Float,
+    T: CoordinateType + Float,
     C: Into<Coordinate<T>>,
 {
     let point = point.into();
@@ -97,14 +97,14 @@ where
 
 pub fn line_euclidean_length<T>(line: Line<T>) -> T
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     line.dx().hypot(line.dy())
 }
 
 pub fn point_line_string_euclidean_distance<T>(p: Point<T>, l: &LineString<T>) -> T
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     // No need to continue if the point is on the LineString, or it's empty
     if line_string_contains_point(l, p) || l.0.is_empty() {
@@ -117,14 +117,14 @@ where
 
 pub fn point_line_euclidean_distance<T>(p: Point<T>, l: Line<T>) -> T
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     line_segment_distance(p.0, l.start, l.end)
 }
 
 pub fn point_contains_point<T>(p1: Point<T>, p2: Point<T>) -> bool
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     let distance = line_euclidean_length(Line::new(p1, p2)).to_f32().unwrap();
     approx::relative_eq!(distance, 0.0)
@@ -132,7 +132,7 @@ where
 
 pub fn line_string_contains_point<T>(line_string: &LineString<T>, point: Point<T>) -> bool
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     // LineString without points
     if line_string.0.is_empty() {

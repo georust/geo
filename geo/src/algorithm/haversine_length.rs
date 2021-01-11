@@ -1,7 +1,7 @@
 use num_traits::{Float, FromPrimitive};
 
 use crate::algorithm::haversine_distance::HaversineDistance;
-use crate::{Line, LineString, MultiLineString};
+use crate::{CoordinateType, Line, LineString, MultiLineString};
 
 /// Determine the length of a geometry using the [haversine formula].
 ///
@@ -43,7 +43,7 @@ pub trait HaversineLength<T, RHS = Self> {
 
 impl<T> HaversineLength<T> for Line<T>
 where
-    T: Float + FromPrimitive,
+    T: CoordinateType + Float + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
         let (start, end) = self.points();
@@ -53,7 +53,7 @@ where
 
 impl<T> HaversineLength<T> for LineString<T>
 where
-    T: Float + FromPrimitive,
+    T: CoordinateType + Float + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
         self.lines().fold(T::zero(), |total_length, line| {
@@ -64,7 +64,7 @@ where
 
 impl<T> HaversineLength<T> for MultiLineString<T>
 where
-    T: Float + FromPrimitive,
+    T: CoordinateType + Float + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
         self.0

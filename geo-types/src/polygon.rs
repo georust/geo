@@ -407,7 +407,7 @@ enum ListSign {
 
 impl<T> Polygon<T>
 where
-    T: Float + Signed,
+    T: CoordinateType + Float + Signed,
 {
     /// Determine whether a Polygon is convex
     // For each consecutive pair of edges of the polygon (each triplet of points),

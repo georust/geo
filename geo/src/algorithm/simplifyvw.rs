@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use crate::{
-    Coordinate, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Triangle,
+    Coordinate, CoordinateType, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
+    Triangle,
 };
 use num_traits::Float;
 use std::cmp::Ordering;
@@ -93,7 +94,7 @@ struct GeomSettings {
 // https://github.com/huonw/isrustfastyet/blob/25e7a68ff26673a8556b170d3c9af52e1c818288/mem/line_simplify.rs
 fn visvalingam_indices<T>(orig: &LineString<T>, epsilon: &T) -> Vec<usize>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     // No need to continue without at least three points
     if orig.0.len() < 3 {
@@ -189,7 +190,7 @@ where
 // Wrapper for visvalingam_indices, mapping indices back to points
 fn visvalingam<T>(orig: &LineString<T>, epsilon: &T) -> Vec<Coordinate<T>>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     // Epsilon must be greater than zero for any meaningful simplification to happen
     if *epsilon <= T::zero() {
@@ -215,7 +216,7 @@ fn vwp_wrapper<T>(
     epsilon: &T,
 ) -> Vec<Vec<Coordinate<T>>>
 where
-    T: Float + RTreeNum,
+    T: CoordinateType + Float + RTreeNum,
 {
     let mut rings = vec![];
     // Populate R* tree with exterior and interior samples, if any
@@ -253,7 +254,7 @@ fn visvalingam_preserve<T>(
     tree: &mut RTree<Line<T>>,
 ) -> Vec<Coordinate<T>>
 where
-    T: Float + RTreeNum,
+    T: CoordinateType + Float + RTreeNum,
 {
     if orig.0.len() < 3 || *epsilon <= T::zero() {
         return orig.0.to_vec();
@@ -380,7 +381,7 @@ where
 /// is p1 -> p2 -> p3 wound counterclockwise?
 fn ccw<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>) -> bool
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     (p3.y() - p1.y()) * (p2.x() - p1.x()) > (p2.y() - p1.y()) * (p3.x() - p1.x())
 }
@@ -388,7 +389,7 @@ where
 /// checks whether line segments with p1-p4 as their start and endpoints touch or cross
 fn cartesian_intersect<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>, p4: Point<T>) -> bool
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     (ccw(p1, p3, p4) ^ ccw(p2, p3, p4)) & (ccw(p1, p2, p3) ^ ccw(p1, p2, p4))
 }
@@ -400,7 +401,7 @@ fn tree_intersect<T>(
     orig: &[Coordinate<T>],
 ) -> bool
 where
-    T: Float + RTreeNum,
+    T: CoordinateType + Float + RTreeNum,
 {
     let point_a = orig[triangle.left];
     let point_c = orig[triangle.right];
@@ -462,7 +463,7 @@ pub trait SimplifyVW<T, Epsilon = T> {
     /// ```
     fn simplifyvw(&self, epsilon: &T) -> Self
     where
-        T: Float;
+        T: CoordinateType + Float;
 }
 
 /// Simplifies a geometry, returning the retained _indices_ of the output
@@ -502,7 +503,7 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
     /// ```
     fn simplifyvw_idx(&self, epsilon: &T) -> Vec<usize>
     where
-        T: Float;
+        T: CoordinateType + Float;
 }
 
 /// Simplifies a geometry, preserving its topology by removing self-intersections
@@ -563,12 +564,12 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     /// ```
     fn simplifyvw_preserve(&self, epsilon: &T) -> Self
     where
-        T: Float + RTreeNum;
+        T: CoordinateType + Float + RTreeNum;
 }
 
 impl<T> SimplifyVWPreserve<T> for LineString<T>
 where
-    T: Float + RTreeNum,
+    T: CoordinateType + Float + RTreeNum,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> LineString<T> {
         let gt = GeomSettings {
@@ -583,7 +584,7 @@ where
 
 impl<T> SimplifyVWPreserve<T> for MultiLineString<T>
 where
-    T: Float + RTreeNum,
+    T: CoordinateType + Float + RTreeNum,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> MultiLineString<T> {
         MultiLineString(
@@ -597,7 +598,7 @@ where
 
 impl<T> SimplifyVWPreserve<T> for Polygon<T>
 where
-    T: Float + RTreeNum,
+    T: CoordinateType + Float + RTreeNum,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> Polygon<T> {
         let gt = GeomSettings {
@@ -614,7 +615,7 @@ where
 
 impl<T> SimplifyVWPreserve<T> for MultiPolygon<T>
 where
-    T: Float + RTreeNum,
+    T: CoordinateType + Float + RTreeNum,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> MultiPolygon<T> {
         MultiPolygon(
@@ -628,7 +629,7 @@ where
 
 impl<T> SimplifyVW<T> for LineString<T>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     fn simplifyvw(&self, epsilon: &T) -> LineString<T> {
         LineString::from(visvalingam(self, epsilon))
@@ -637,7 +638,7 @@ where
 
 impl<T> SimplifyVwIdx<T> for LineString<T>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     fn simplifyvw_idx(&self, epsilon: &T) -> Vec<usize> {
         visvalingam_indices(self, epsilon)
@@ -646,7 +647,7 @@ where
 
 impl<T> SimplifyVW<T> for MultiLineString<T>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     fn simplifyvw(&self, epsilon: &T) -> MultiLineString<T> {
         MultiLineString(self.iter().map(|l| l.simplifyvw(epsilon)).collect())
@@ -655,7 +656,7 @@ where
 
 impl<T> SimplifyVW<T> for Polygon<T>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     fn simplifyvw(&self, epsilon: &T) -> Polygon<T> {
         Polygon::new(
@@ -670,7 +671,7 @@ where
 
 impl<T> SimplifyVW<T> for MultiPolygon<T>
 where
-    T: Float,
+    T: CoordinateType + Float,
 {
     fn simplifyvw(&self, epsilon: &T) -> MultiPolygon<T> {
         MultiPolygon(self.iter().map(|p| p.simplifyvw(epsilon)).collect())
