@@ -152,5 +152,11 @@ pub mod prelude {
 ///     })
 /// }
 /// ```
-pub trait GeoFloat: num_traits::Float + CoordinateType + algorithm::kernels::HasKernel {}
-impl<T> GeoFloat for T where T: num_traits::Float + CoordinateType + algorithm::kernels::HasKernel {}
+pub trait GeoFloat:
+    num_traits::Float + CoordinateType + algorithm::kernels::HasKernel + std::fmt::Debug
+{
+}
+impl<T> GeoFloat for T where
+    T: num_traits::Float + CoordinateType + algorithm::kernels::HasKernel + std::fmt::Debug
+{
+}
