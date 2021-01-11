@@ -1,5 +1,4 @@
-use crate::{polygon, CoordNum, Coordinate, Polygon};
-use num_traits::Float;
+use crate::{polygon, CoordFloat, CoordNum, Coordinate, Polygon};
 
 /// An _axis-aligned_ bounded 2D rectangle whose area is
 /// defined by minimum and maximum `Coordinate`s.
@@ -235,7 +234,7 @@ impl<T: CoordNum> Rect<T> {
     }
 }
 
-impl<T: CoordNum + Float> Rect<T> {
+impl<T: CoordFloat> Rect<T> {
     /// Returns the center `Coordinate` of the `Rect`.
     ///
     /// # Examples

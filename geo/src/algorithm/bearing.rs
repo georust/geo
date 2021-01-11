@@ -1,12 +1,11 @@
-use crate::{CoordNum, Point};
-use num_traits::Float;
+use crate::{CoordFloat, Point};
 
 /// Returns the bearing to another Point in degrees.
 ///
 /// Bullock, R.: Great Circle Distances and Bearings Between Two Locations, 2007.
 /// (https://dtcenter.org/met/users/docs/write_ups/gc_simple.pdf)
 
-pub trait Bearing<T: CoordNum + Float> {
+pub trait Bearing<T: CoordFloat> {
     /// Returns the bearing to another Point in degrees, where North is 0° and East is 90°.
     ///
     /// # Examples
@@ -27,7 +26,7 @@ pub trait Bearing<T: CoordNum + Float> {
 
 impl<T> Bearing<T> for Point<T>
 where
-    T: CoordNum + Float,
+    T: CoordFloat,
 {
     fn bearing(&self, point: Point<T>) -> T {
         let (lng_a, lat_a) = (self.x().to_radians(), self.y().to_radians());

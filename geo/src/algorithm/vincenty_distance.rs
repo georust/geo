@@ -4,8 +4,8 @@
 // - https://nathanrooy.github.io/posts/2016-12-18/vincenty-formula-with-python/
 // - https://github.com/janantala/GPS-distance/blob/master/java/Distance.java
 
-use crate::{CoordNum, Point, EARTH_FLATTENING, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS};
-use num_traits::{Float, FromPrimitive};
+use crate::{CoordFloat, Point, EARTH_FLATTENING, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS};
+use num_traits::FromPrimitive;
 use std::{error, fmt};
 
 /// Determine the distance between two geometries using [Vincenty’s formulae].
@@ -45,7 +45,7 @@ pub trait VincentyDistance<T, Rhs = Self> {
 
 impl<T> VincentyDistance<T, Point<T>> for Point<T>
 where
-    T: CoordNum + Float + FromPrimitive,
+    T: CoordFloat + FromPrimitive,
 {
     #[allow(non_snake_case)]
     fn vincenty_distance(&self, rhs: &Point<T>) -> Result<T, FailedToConvergeError> {

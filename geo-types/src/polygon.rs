@@ -1,4 +1,4 @@
-use crate::{CoordNum, LineString, Point, Rect, Triangle};
+use crate::{CoordFloat, CoordNum, LineString, Point, Rect, Triangle};
 use num_traits::{Float, Signed};
 
 /// A bounded two-dimensional area.
@@ -407,7 +407,7 @@ enum ListSign {
 
 impl<T> Polygon<T>
 where
-    T: CoordNum + Float + Signed,
+    T: CoordFloat + Signed,
 {
     /// Determine whether a Polygon is convex
     // For each consecutive pair of edges of the polygon (each triplet of points),

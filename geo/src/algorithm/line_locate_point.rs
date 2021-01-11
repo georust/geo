@@ -1,8 +1,7 @@
 use crate::{
     algorithm::{euclidean_distance::EuclideanDistance, euclidean_length::EuclideanLength},
-    CoordNum, Line, LineString, Point,
+    CoordFloat, Line, LineString, Point,
 };
-use num_traits::Float;
 use std::ops::AddAssign;
 
 /// Returns a (option of the) fraction of the line's total length
@@ -41,7 +40,7 @@ pub trait LineLocatePoint<T, Rhs> {
 
 impl<T> LineLocatePoint<T, Point<T>> for Line<T>
 where
-    T: CoordNum + Float,
+    T: CoordFloat,
 {
     type Output = Option<T>;
     type Rhs = Point<T>;
@@ -78,7 +77,7 @@ where
 
 impl<T> LineLocatePoint<T, Point<T>> for LineString<T>
 where
-    T: CoordNum + Float + AddAssign,
+    T: CoordFloat + AddAssign,
     Line<T>: EuclideanDistance<T, Point<T>> + EuclideanLength<T>,
     LineString<T>: EuclideanLength<T>,
 {
@@ -111,6 +110,7 @@ where
 mod test {
     use super::*;
     use crate::{point, Coordinate};
+    use num_traits::Float;
 
     #[test]
     fn test_line_locate_point_line() {

@@ -1,9 +1,8 @@
-use crate::{CoordNum, Coordinate};
+use crate::{CoordFloat, CoordNum, Coordinate};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use num_traits::Float;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 /// A single point in 2D space.
@@ -259,7 +258,7 @@ where
 
 impl<T> Point<T>
 where
-    T: CoordNum + Float,
+    T: CoordFloat,
 {
     /// Converts the (x,y) components of Point to degrees
     ///
