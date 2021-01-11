@@ -123,12 +123,13 @@ pub mod prelude {
     pub use crate::algorithm::vincenty_length::VincentyLength;
 }
 
-/// A common floating point trait used for geo algorithms.
+/// A common numeric trait used for geo algorithms.
 ///
 /// Different numeric types have different tradeoffs. `geo` strives to utilize generics to allow
 /// users to choose their numeric types. If you are writing a function which you'd like to be
-/// generic over the floating point types supported by geo, you probably want to constrain
-/// your function input to GeoFloat.
+/// generic over all the numeric types supported by geo, you probably want to constraint
+/// your function input to `GeoFloat`. For methods which work for integers, and not just floating
+/// point, see [`GeoNum`](trait.GeoFloat.html).
 ///
 /// # Examples
 ///
@@ -152,11 +153,8 @@ pub mod prelude {
 ///     })
 /// }
 /// ```
-pub trait GeoFloat:
-    num_traits::Float + CoordNum + algorithm::kernels::HasKernel + std::fmt::Debug
-{
-}
-impl<T> GeoFloat for T where
-    T: num_traits::Float + CoordNum + algorithm::kernels::HasKernel + std::fmt::Debug
-{
-}
+pub trait GeoFloat: num_traits::Float + GeoNum {}
+impl<T> GeoFloat for T where T: num_traits::Float + GeoNum {}
+
+pub trait GeoNum: CoordNum + algorithm::kernels::HasKernel {}
+impl<T> GeoNum for T where T: CoordNum + algorithm::kernels::HasKernel {}
