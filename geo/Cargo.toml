@@ -22,7 +22,7 @@ geographiclib-rs = { version = "0.2" }
 
 proj = { version = "0.20.3", optional = true }
 
-geo-types = { version = "0.6.2", path = "../geo-types", features = ["approx", "use-rstar"] }
+geo-types = { version = "0.7.0", path = "../geo-types", features = ["approx", "use-rstar"] }
 
 robust = { version = "0.2.2" }
 

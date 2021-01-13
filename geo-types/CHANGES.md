@@ -1,12 +1,15 @@
 # Changes
 
-## Unreleased
-* `geo_types::LineString::num_coords` has been deprecated in favor of `geo::algorithm::coords_iter::CoordsIter::coords_count`
+## 0.7.0
+
+* BREAKING: `geo_types::CoordinateType` now extends Debug and has been deprecated in favor of `geo_types::CoordNum` and `geo_types::CoordFloat`
   * <https://github.com/georust/geo/pull/563>
-* Introduce `use-rstar` feature rather than `rstar` so that `approx` dependency can be optional
+* BREAKING: Introduce `use-rstar` feature rather than `rstar` so that `approx` dependency can be optional
   * <https://github.com/georust/geo/pull/567>
 * Implement `approx::{RelativeEq, AbsDiffEq}` for geo-types when using the `approx` feature
   * <https://github.com/georust/geo/pull/567>
+* `geo_types::LineString::num_coords` has been deprecated in favor of `geo::algorithm::coords_iter::CoordsIter::coords_count`
+  * <https://github.com/georust/geo/pull/563>
 
 ## 0.6.2
 

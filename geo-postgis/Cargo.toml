@@ -12,4 +12,4 @@ edition = "2018"
 
 [dependencies]
 postgis = "0.7"
-geo-types = { version = "0.6", path = "../geo-types" }
+geo-types = { version = "0.7", path = "../geo-types" }
