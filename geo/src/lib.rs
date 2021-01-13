@@ -129,7 +129,7 @@ pub mod prelude {
 /// users to choose their numeric types. If you are writing a function which you'd like to be
 /// generic over all the numeric types supported by geo, you probably want to constraint
 /// your function input to `GeoFloat`. For methods which work for integers, and not just floating
-/// point, see [`GeoNum`](trait.GeoFloat.html).
+/// point, see [`GeoNum`].
 ///
 /// # Examples
 ///
