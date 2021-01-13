@@ -51,7 +51,6 @@ extern crate approx;
 
 #[deprecated(since = "0.7", note = "use `CoordFloat` or `CoordNum` instead")]
 pub trait CoordinateType: Num + Copy + NumCast + PartialOrd + Debug {}
-// Little bit of a hack to make to make this work
 #[allow(deprecated)]
 impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordinateType for T {}
 
