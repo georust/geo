@@ -1,27 +1,30 @@
 # Changes
 
-## Unreleased
+## 0.17.0
 
+* BREAKING: update geo-types to 0.7
+  * <https://github.com/georust/geo/blob/geo-types-0.7.0/geo-types/CHANGES.md>
 * Introduce `coords_count` method on `CoordsIter`.
   * <https://github.com/georust/geo/pull/563>
 * Fix non-empty MultiPoint has 0-dimensions, not 1.
   * <https://github.com/georust/geo/pull/561>
 * Add new `EuclideanDistance` implementations: `impl EuclideanDistance<Coordinate<T>> for Line`, `impl EuclideanDistance<Line> for Coordinate`, `impl EuclideanDistance<Coordinate> for Coordinate`
   * <https://github.com/georust/geo/pull/580>
-* Introduce `geo::Float` trait so external crates can implement methods which
+* Introduce `geo::GeoFloat` and `geo::GeoNum` trait so external crates can implement methods which
   operate on geometries generically.
   * <https://github.com/georust/geo/pull/583>
+  * <https://github.com/georust/geo/pull/602>
 * Make `HasKernel` public to allow geo on exotic numeric types.
   * <https://github.com/georust/geo/pull/583>
 * Fix panic when `simplify` is given a negative epsilon
   * <https://github.com/georust/geo/pull/584>
 * Performance improvements to `simplify`
   * <https://github.com/georust/geo/pull/584>
-* The `T` generic parameter for `CoordsIter` is now an associated type
+* BREAKING: The `T` generic parameter for `CoordsIter` is now an associated type
   * <https://github.com/georust/geo/pull/593>
 * Add `CoordsIter::exterior_coords_iter` method to iterate over exterior coordinates of a geometry
   * <https://github.com/georust/geo/pull/594>
-* The `ExtremeIndices` and `ExtremePoints` traits have been combined into a new `Extremes` trait containing an `extremes` method. The output of the `extremes` method contains both indices and coordinates. The new implementation is based on `CoordsIter` instead of `ConvexHull`, and now runs 6x faster.
+* BREAKING: The `ExtremeIndices` and `ExtremePoints` traits have been combined into a new `Extremes` trait containing an `extremes` method. The output of the `extremes` method contains both indices and coordinates. The new implementation is based on `CoordsIter` instead of `ConvexHull`, and now runs 6x faster.
   * <https://github.com/georust/geo/pull/592>
 
 ## 0.16.0
