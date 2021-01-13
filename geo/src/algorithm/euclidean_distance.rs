@@ -2,12 +2,10 @@ use crate::algorithm::contains::Contains;
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::algorithm::intersects::Intersects;
 use crate::algorithm::polygon_distance_fast_path::*;
-use crate::kernels::*;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
-use crate::GeoFloat;
 use crate::{
-    Coordinate, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
-    Triangle,
+    Coordinate, GeoFloat, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
+    Point, Polygon, Triangle,
 };
 use num_traits::{float::FloatConst, Bounded, Float, Signed};
 
@@ -184,7 +182,7 @@ where
 
 impl<T> EuclideanDistance<T, Polygon<T>> for Point<T>
 where
-    T: GeoFloat + HasKernel,
+    T: GeoFloat,
 {
     /// Minimum distance from a Point to a Polygon
     fn euclidean_distance(&self, polygon: &Polygon<T>) -> T {
@@ -215,7 +213,7 @@ where
 
 impl<T> EuclideanDistance<T, MultiPolygon<T>> for Point<T>
 where
-    T: GeoFloat + HasKernel,
+    T: GeoFloat,
 {
     /// Minimum distance from a Point to a MultiPolygon
     fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
@@ -268,7 +266,7 @@ where
 /// Line to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for Line<T>
 where
-    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         if self.intersects(other) || self.contains(other) {
@@ -286,7 +284,7 @@ where
 /// Line to LineString
 impl<T> EuclideanDistance<T, LineString<T>> for Line<T>
 where
-    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         other.euclidean_distance(self)
@@ -296,7 +294,7 @@ where
 // Line to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Line<T>
 where
-    T: GeoFloat + Signed + RTreeNum + FloatConst + HasKernel,
+    T: GeoFloat + Signed + RTreeNum + FloatConst,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if other.contains(self) || self.intersects(other) {
@@ -330,7 +328,7 @@ where
 /// Line to MultiPolygon distance
 impl<T> EuclideanDistance<T, MultiPolygon<T>> for Line<T>
 where
-    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
         mpolygon
@@ -358,7 +356,7 @@ where
 /// LineString to Line
 impl<T> EuclideanDistance<T, Line<T>> for LineString<T>
 where
-    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         self.lines().fold(Bounded::max_value(), |acc, line| {
@@ -370,7 +368,7 @@ where
 /// LineString-LineString distance
 impl<T> EuclideanDistance<T, LineString<T>> for LineString<T>
 where
-    T: GeoFloat + HasKernel + Signed + RTreeNum,
+    T: GeoFloat + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         if self.intersects(other) {
@@ -384,7 +382,7 @@ where
 /// LineString to Polygon
 impl<T> EuclideanDistance<T, Polygon<T>> for LineString<T>
 where
-    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if self.intersects(other) || other.contains(self) {
@@ -422,7 +420,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for Polygon<T>
 where
-    T: GeoFloat + HasKernel,
+    T: GeoFloat,
 {
     /// Minimum distance from a Polygon to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
@@ -433,7 +431,7 @@ where
 // Polygon to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for Polygon<T>
 where
-    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         other.euclidean_distance(self)
@@ -443,7 +441,7 @@ where
 /// Polygon to LineString distance
 impl<T> EuclideanDistance<T, LineString<T>> for Polygon<T>
 where
-    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
         other.euclidean_distance(self)
@@ -453,7 +451,7 @@ where
 // Polygon to Polygon distance
 impl<T> EuclideanDistance<T, Polygon<T>> for Polygon<T>
 where
-    T: GeoFloat + FloatConst + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + RTreeNum,
 {
     /// This implementation has a "fast path" in cases where both input polygons are convex:
     /// it switches to an implementation of the "rotating calipers" method described in [Pirzadeh (1999), pp24—30](http://digitool.library.mcgill.ca/R/?func=dbin-jump-full&object_id=21623&local_base=GEN01-MCG02),
@@ -495,7 +493,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for MultiPolygon<T>
 where
-    T: GeoFloat + HasKernel,
+    T: GeoFloat,
 {
     /// Minimum distance from a MultiPolygon to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
@@ -506,7 +504,7 @@ where
 /// MultiPolygon to Line distance
 impl<T> EuclideanDistance<T, Line<T>> for MultiPolygon<T>
 where
-    T: GeoFloat + FloatConst + Signed + RTreeNum + HasKernel,
+    T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
         other.euclidean_distance(self)
@@ -519,7 +517,7 @@ where
 
 impl<T> EuclideanDistance<T, Point<T>> for Triangle<T>
 where
-    T: GeoFloat + HasKernel,
+    T: GeoFloat,
 {
     fn euclidean_distance(&self, point: &Point<T>) -> T {
         if self.contains(point) {
@@ -543,7 +541,7 @@ where
 /// contain a point from the candidate Polygon's outer shell in their simple representations
 fn ring_contains_point<T>(poly: &Polygon<T>, p: Point<T>) -> bool
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     match coord_pos_relative_to_ring(p.0, &poly.exterior()) {
         CoordPos::Inside => true,

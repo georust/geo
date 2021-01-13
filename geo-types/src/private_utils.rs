@@ -3,19 +3,18 @@
 // hidden module is public so the geo crate can reuse these algorithms to
 // prevent duplication. These functions are _not_ meant for public consumption.
 
-use crate::{Coordinate, CoordinateType, Line, LineString, Point, Rect};
-use num_traits::Float;
+use crate::{CoordFloat, CoordNum, Coordinate, Line, LineString, Point, Rect};
 
 pub fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<T>>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     get_bounding_rect(line_string.0.iter().cloned())
 }
 
 pub fn line_bounding_rect<T>(line: Line<T>) -> Rect<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     let a = line.start;
     let b = line.end;
@@ -30,7 +29,7 @@ where
 
 pub fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>
 where
-    T: CoordinateType,
+    T: CoordNum,
     I: IntoIterator<Item = Coordinate<T>>,
 {
     let mut iter = collection.into_iter();
@@ -59,7 +58,7 @@ where
 
 fn get_min_max<T>(p: T, min: T, max: T) -> (T, T)
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     if p > max {
         (min, p)
@@ -72,7 +71,7 @@ where
 
 pub fn line_segment_distance<T, C>(point: C, start: C, end: C) -> T
 where
-    T: Float,
+    T: CoordFloat,
     C: Into<Coordinate<T>>,
 {
     let point = point.into();
@@ -97,14 +96,14 @@ where
 
 pub fn line_euclidean_length<T>(line: Line<T>) -> T
 where
-    T: Float,
+    T: CoordFloat,
 {
     line.dx().hypot(line.dy())
 }
 
 pub fn point_line_string_euclidean_distance<T>(p: Point<T>, l: &LineString<T>) -> T
 where
-    T: Float,
+    T: CoordFloat,
 {
     // No need to continue if the point is on the LineString, or it's empty
     if line_string_contains_point(l, p) || l.0.is_empty() {
@@ -117,14 +116,14 @@ where
 
 pub fn point_line_euclidean_distance<T>(p: Point<T>, l: Line<T>) -> T
 where
-    T: Float,
+    T: CoordFloat,
 {
     line_segment_distance(p.0, l.start, l.end)
 }
 
 pub fn point_contains_point<T>(p1: Point<T>, p2: Point<T>) -> bool
 where
-    T: Float,
+    T: CoordFloat,
 {
     let distance = line_euclidean_length(Line::new(p1, p2)).to_f32().unwrap();
     approx::relative_eq!(distance, 0.0)
@@ -132,7 +131,7 @@ where
 
 pub fn line_string_contains_point<T>(line_string: &LineString<T>, point: Point<T>) -> bool
 where
-    T: Float,
+    T: CoordFloat,
 {
     // LineString without points
     if line_string.0.is_empty() {

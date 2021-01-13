@@ -3,7 +3,7 @@ use crate::*;
 
 impl<T, G> Intersects<G> for Triangle<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
     Polygon<T>: Intersects<G>,
 {
     fn intersects(&self, rhs: &G) -> bool {

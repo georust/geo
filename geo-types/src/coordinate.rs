@@ -1,4 +1,4 @@
-use crate::{CoordinateType, Point};
+use crate::{CoordNum, Point};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq, UlpsEq};
@@ -27,13 +27,13 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coordinate<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     pub x: T,
     pub y: T,
 }
 
-impl<T: CoordinateType> From<(T, T)> for Coordinate<T> {
+impl<T: CoordNum> From<(T, T)> for Coordinate<T> {
     fn from(coords: (T, T)) -> Self {
         Coordinate {
             x: coords.0,
@@ -42,7 +42,7 @@ impl<T: CoordinateType> From<(T, T)> for Coordinate<T> {
     }
 }
 
-impl<T: CoordinateType> From<[T; 2]> for Coordinate<T> {
+impl<T: CoordNum> From<[T; 2]> for Coordinate<T> {
     fn from(coords: [T; 2]) -> Self {
         Coordinate {
             x: coords[0],
@@ -51,7 +51,7 @@ impl<T: CoordinateType> From<[T; 2]> for Coordinate<T> {
     }
 }
 
-impl<T: CoordinateType> From<Point<T>> for Coordinate<T> {
+impl<T: CoordNum> From<Point<T>> for Coordinate<T> {
     fn from(point: Point<T>) -> Self {
         Coordinate {
             x: point.x(),
@@ -62,7 +62,7 @@ impl<T: CoordinateType> From<Point<T>> for Coordinate<T> {
 
 impl<T> Coordinate<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the coordinate.
     ///
@@ -102,7 +102,7 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 /// ```
 impl<T> Neg for Coordinate<T>
 where
-    T: CoordinateType + Neg<Output = T>,
+    T: CoordNum + Neg<Output = T>,
 {
     type Output = Coordinate<T>;
 
@@ -127,7 +127,7 @@ where
 /// ```
 impl<T> Add for Coordinate<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Coordinate<T>;
 
@@ -152,7 +152,7 @@ where
 /// ```
 impl<T> Sub for Coordinate<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Coordinate<T>;
 
@@ -176,7 +176,7 @@ where
 /// ```
 impl<T> Mul<T> for Coordinate<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Coordinate<T>;
 
@@ -200,7 +200,7 @@ where
 /// ```
 impl<T> Div<T> for Coordinate<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     type Output = Coordinate<T>;
 
@@ -223,7 +223,7 @@ use num_traits::Zero;
 /// assert_eq!(p.x, 0.);
 /// assert_eq!(p.y, 0.);
 /// ```
-impl<T: CoordinateType> Coordinate<T> {
+impl<T: CoordNum> Coordinate<T> {
     pub fn zero() -> Self {
         Coordinate {
             x: T::zero(),
@@ -232,7 +232,7 @@ impl<T: CoordinateType> Coordinate<T> {
     }
 }
 
-impl<T: CoordinateType> Zero for Coordinate<T> {
+impl<T: CoordNum> Zero for Coordinate<T> {
     fn zero() -> Self {
         Coordinate::zero()
     }
@@ -242,7 +242,7 @@ impl<T: CoordinateType> Zero for Coordinate<T> {
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T: CoordinateType + AbsDiffEq> AbsDiffEq for Coordinate<T>
+impl<T: CoordNum + AbsDiffEq> AbsDiffEq for Coordinate<T>
 where
     T::Epsilon: Copy,
 {
@@ -260,7 +260,7 @@ where
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T: CoordinateType + RelativeEq> RelativeEq for Coordinate<T>
+impl<T: CoordNum + RelativeEq> RelativeEq for Coordinate<T>
 where
     T::Epsilon: Copy,
 {
@@ -277,7 +277,7 @@ where
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T: CoordinateType + UlpsEq> UlpsEq for Coordinate<T>
+impl<T: CoordNum + UlpsEq> UlpsEq for Coordinate<T>
 where
     T::Epsilon: Copy,
 {

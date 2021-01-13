@@ -1,11 +1,13 @@
 use super::Intersects;
-use crate::kernels::*;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
-use crate::*;
+use crate::{
+    CoordNum, Coordinate, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
+    Rect,
+};
 
 impl<T> Intersects<Coordinate<T>> for Polygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn intersects(&self, p: &Coordinate<T>) -> bool {
         coord_pos_relative_to_ring(*p, &self.exterior()) != CoordPos::Outside
@@ -20,7 +22,7 @@ symmetric_intersects_impl!(Polygon<T>, Point<T>);
 
 impl<T> Intersects<Line<T>> for Polygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn intersects(&self, line: &Line<T>) -> bool {
         self.exterior().intersects(line)
@@ -35,7 +37,7 @@ symmetric_intersects_impl!(Polygon<T>, MultiLineString<T>);
 
 impl<T> Intersects<Rect<T>> for Polygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn intersects(&self, rect: &Rect<T>) -> bool {
         self.intersects(&rect.clone().to_polygon())
@@ -45,7 +47,7 @@ symmetric_intersects_impl!(Rect<T>, Polygon<T>);
 
 impl<T> Intersects<Polygon<T>> for Polygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn intersects(&self, polygon: &Polygon<T>) -> bool {
         // self intersects (or contains) any line in polygon
@@ -60,7 +62,7 @@ where
 
 impl<G, T> Intersects<G> for MultiPolygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
     Polygon<T>: Intersects<G>,
 {
     fn intersects(&self, rhs: &G) -> bool {

@@ -1,4 +1,4 @@
-use crate::{polygon, Coordinate, CoordinateType, Line, Polygon};
+use crate::{polygon, CoordNum, Coordinate, Line, Polygon};
 
 /// A bounded 2D area whose three vertices are defined by
 /// `Coordinate`s. The semantics and validity are that of
@@ -6,9 +6,9 @@ use crate::{polygon, Coordinate, CoordinateType, Line, Polygon};
 /// vertices must not be collinear and they must be distinct.
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Triangle<T: CoordinateType>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);
+pub struct Triangle<T: CoordNum>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);
 
-impl<T: CoordinateType> Triangle<T> {
+impl<T: CoordNum> Triangle<T> {
     pub fn to_array(&self) -> [Coordinate<T>; 3] {
         [self.0, self.1, self.2]
     }
@@ -49,7 +49,7 @@ impl<T: CoordinateType> Triangle<T> {
     }
 }
 
-impl<IC: Into<Coordinate<T>> + Copy, T: CoordinateType> From<[IC; 3]> for Triangle<T> {
+impl<IC: Into<Coordinate<T>> + Copy, T: CoordNum> From<[IC; 3]> for Triangle<T> {
     fn from(array: [IC; 3]) -> Triangle<T> {
         Triangle(array[0].into(), array[1].into(), array[2].into())
     }

@@ -55,7 +55,7 @@ macro_rules! symmetric_intersects_impl {
         impl<T> $crate::algorithm::intersects::Intersects<$k> for $t
         where
             $k: $crate::algorithm::intersects::Intersects<$t>,
-            T: CoordinateType,
+            T: CoordNum,
         {
             fn intersects(&self, rhs: &$k) -> bool {
                 rhs.intersects(self)
@@ -102,7 +102,7 @@ where
 #[inline]
 fn point_in_rect<T>(value: Coordinate<T>, bound_1: Coordinate<T>, bound_2: Coordinate<T>) -> bool
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     value_in_between(value.x, bound_1.x, bound_2.x)
         && value_in_between(value.y, bound_1.y, bound_2.y)

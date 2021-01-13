@@ -4,12 +4,12 @@ extern crate geo;
 
 use criterion::Criterion;
 use geo::prelude::*;
-use geo::{Coordinate, CoordinateType, LineString};
+use geo::{CoordNum, Coordinate, LineString};
 
 use num_traits::Signed;
 use rand::distributions::uniform::SampleUniform;
 use rand::Rng;
-pub fn uniform_points_in_range<S: CoordinateType + SampleUniform + Signed, R: Rng>(
+pub fn uniform_points_in_range<S: CoordNum + SampleUniform + Signed, R: Rng>(
     range: S,
     size: usize,
     rng: &mut R,

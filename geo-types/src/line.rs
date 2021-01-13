@@ -1,4 +1,4 @@
-use crate::{Coordinate, CoordinateType, Point};
+use crate::{CoordNum, Coordinate, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
@@ -13,7 +13,7 @@ use approx::{AbsDiffEq, RelativeEq};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     pub start: Coordinate<T>,
     pub end: Coordinate<T>,
@@ -21,7 +21,7 @@ where
 
 impl<T> Line<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     /// Creates a new line segment.
     ///
@@ -161,7 +161,7 @@ where
     }
 }
 
-impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {
+impl<T: CoordNum> From<[(T, T); 2]> for Line<T> {
     fn from(coord: [(T, T); 2]) -> Line<T> {
         Line::new(coord[0], coord[1])
     }
@@ -169,7 +169,7 @@ impl<T: CoordinateType> From<[(T, T); 2]> for Line<T> {
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for Line<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
+    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
@@ -201,7 +201,7 @@ where
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for Line<T> {
+impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Line<T> {
     type Epsilon = T;
 
     #[inline]

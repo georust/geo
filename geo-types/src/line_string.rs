@@ -1,7 +1,7 @@
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use crate::{Coordinate, CoordinateType, Line, Point, Triangle};
+use crate::{CoordNum, Coordinate, Line, Point, Triangle};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
@@ -112,13 +112,13 @@ use std::ops::{Index, IndexMut};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LineString<T>(pub Vec<Coordinate<T>>)
 where
-    T: CoordinateType;
+    T: CoordNum;
 
 /// A `Point` iterator returned by the `points_iter` method
 #[derive(Debug)]
-pub struct PointsIter<'a, T: CoordinateType + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
+pub struct PointsIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
 
-impl<'a, T: CoordinateType> Iterator for PointsIter<'a, T> {
+impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
     type Item = Point<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -126,13 +126,13 @@ impl<'a, T: CoordinateType> Iterator for PointsIter<'a, T> {
     }
 }
 
-impl<'a, T: CoordinateType> DoubleEndedIterator for PointsIter<'a, T> {
+impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back().map(|c| Point(*c))
     }
 }
 
-impl<T: CoordinateType> LineString<T> {
+impl<T: CoordNum> LineString<T> {
     /// Return an iterator yielding the coordinates of a `LineString` as `Point`s
     pub fn points_iter(&self) -> PointsIter<T> {
         PointsIter(self.0.iter())
@@ -248,21 +248,21 @@ impl<T: CoordinateType> LineString<T> {
 }
 
 /// Turn a `Vec` of `Point`-like objects into a `LineString`.
-impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T> {
+impl<T: CoordNum, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T> {
     fn from(v: Vec<IC>) -> Self {
         LineString(v.into_iter().map(|c| c.into()).collect())
     }
 }
 
 /// Turn an iterator of `Point`-like objects into a `LineString`.
-impl<T: CoordinateType, IC: Into<Coordinate<T>>> FromIterator<IC> for LineString<T> {
+impl<T: CoordNum, IC: Into<Coordinate<T>>> FromIterator<IC> for LineString<T> {
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {
         LineString(iter.into_iter().map(|c| c.into()).collect())
     }
 }
 
 /// Iterate over all the [Coordinate](struct.Coordinates.html)s in this `LineString`.
-impl<T: CoordinateType> IntoIterator for LineString<T> {
+impl<T: CoordNum> IntoIterator for LineString<T> {
     type Item = Coordinate<T>;
     type IntoIter = ::std::vec::IntoIter<Coordinate<T>>;
 
@@ -272,7 +272,7 @@ impl<T: CoordinateType> IntoIterator for LineString<T> {
 }
 
 /// Mutably iterate over all the [Coordinate](struct.Coordinates.html)s in this `LineString`.
-impl<'a, T: CoordinateType> IntoIterator for &'a mut LineString<T> {
+impl<'a, T: CoordNum> IntoIterator for &'a mut LineString<T> {
     type Item = &'a mut Coordinate<T>;
     type IntoIter = ::std::slice::IterMut<'a, Coordinate<T>>;
 
@@ -281,7 +281,7 @@ impl<'a, T: CoordinateType> IntoIterator for &'a mut LineString<T> {
     }
 }
 
-impl<T: CoordinateType> Index<usize> for LineString<T> {
+impl<T: CoordNum> Index<usize> for LineString<T> {
     type Output = Coordinate<T>;
 
     fn index(&self, index: usize) -> &Coordinate<T> {
@@ -289,7 +289,7 @@ impl<T: CoordinateType> Index<usize> for LineString<T> {
     }
 }
 
-impl<T: CoordinateType> IndexMut<usize> for LineString<T> {
+impl<T: CoordNum> IndexMut<usize> for LineString<T> {
     fn index_mut(&mut self, index: usize) -> &mut Coordinate<T> {
         self.0.index_mut(index)
     }
@@ -298,7 +298,7 @@ impl<T: CoordinateType> IndexMut<usize> for LineString<T> {
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for LineString<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
+    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
@@ -343,7 +343,7 @@ where
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T: AbsDiffEq<Epsilon = T> + CoordinateType> AbsDiffEq for LineString<T> {
+impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
     type Epsilon = T;
 
     #[inline]

@@ -1,5 +1,5 @@
 use crate::algorithm::coords_iter::CoordsIter;
-use crate::{Coordinate, CoordinateType};
+use crate::{CoordNum, Coordinate};
 
 /// Find the extreme coordinates and indices of a geometry.
 ///
@@ -24,18 +24,18 @@ use crate::{Coordinate, CoordinateType};
 /// assert_eq!(extremes.y_max.coord.x, 1.);
 /// assert_eq!(extremes.y_max.coord.y, 2.);
 /// ```
-pub trait Extremes<'a, T: CoordinateType> {
+pub trait Extremes<'a, T: CoordNum> {
     fn extremes(&'a self) -> Option<Outcome<T>>;
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Extreme<T: CoordinateType> {
+pub struct Extreme<T: CoordNum> {
     pub index: usize,
     pub coord: Coordinate<T>,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Outcome<T: CoordinateType> {
+pub struct Outcome<T: CoordNum> {
     pub x_min: Extreme<T>,
     pub y_min: Extreme<T>,
     pub x_max: Extreme<T>,
@@ -45,7 +45,7 @@ pub struct Outcome<T: CoordinateType> {
 impl<'a, T, G> Extremes<'a, T> for G
 where
     G: CoordsIter<'a, Scalar = T>,
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn extremes(&'a self) -> Option<Outcome<T>> {
         let mut iter = self.exterior_coords_iter().enumerate();

@@ -7,7 +7,7 @@ use crate::*;
 
 impl<T> Contains<Coordinate<T>> for Rect<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
         coord.x > self.min().x
@@ -19,7 +19,7 @@ where
 
 impl<T> Contains<Point<T>> for Rect<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn contains(&self, p: &Point<T>) -> bool {
         self.contains(&p.0)
@@ -28,7 +28,7 @@ where
 
 impl<T> Contains<Rect<T>> for Rect<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn contains(&self, other: &Rect<T>) -> bool {
         // TODO: check for degenerate rectangle (which is a line or a point)

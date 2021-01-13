@@ -1,4 +1,4 @@
-use crate::{CoordinateType, Geometry};
+use crate::{CoordNum, Geometry};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
@@ -69,15 +69,15 @@ use std::ops::{Index, IndexMut};
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
-    T: CoordinateType;
+    T: CoordNum;
 
-impl<T: CoordinateType> Default for GeometryCollection<T> {
+impl<T: CoordNum> Default for GeometryCollection<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T: CoordinateType> GeometryCollection<T> {
+impl<T: CoordNum> GeometryCollection<T> {
     /// Return an empty GeometryCollection
     pub fn new() -> GeometryCollection<T> {
         GeometryCollection(Vec::new())
@@ -96,20 +96,20 @@ impl<T: CoordinateType> GeometryCollection<T> {
 
 /// Convert any Geometry (or anything that can be converted to a Geometry) into a
 /// GeometryCollection
-impl<T: CoordinateType, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
+impl<T: CoordNum, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
     fn from(x: IG) -> Self {
         GeometryCollection(vec![x.into()])
     }
 }
 
 /// Collect Geometries (or what can be converted to a Geometry) into a GeometryCollection
-impl<T: CoordinateType, IG: Into<Geometry<T>>> FromIterator<IG> for GeometryCollection<T> {
+impl<T: CoordNum, IG: Into<Geometry<T>>> FromIterator<IG> for GeometryCollection<T> {
     fn from_iter<I: IntoIterator<Item = IG>>(iter: I) -> Self {
         GeometryCollection(iter.into_iter().map(|g| g.into()).collect())
     }
 }
 
-impl<T: CoordinateType> Index<usize> for GeometryCollection<T> {
+impl<T: CoordNum> Index<usize> for GeometryCollection<T> {
     type Output = Geometry<T>;
 
     fn index(&self, index: usize) -> &Geometry<T> {
@@ -117,7 +117,7 @@ impl<T: CoordinateType> Index<usize> for GeometryCollection<T> {
     }
 }
 
-impl<T: CoordinateType> IndexMut<usize> for GeometryCollection<T> {
+impl<T: CoordNum> IndexMut<usize> for GeometryCollection<T> {
     fn index_mut(&mut self, index: usize) -> &mut Geometry<T> {
         self.0.index_mut(index)
     }
@@ -125,13 +125,13 @@ impl<T: CoordinateType> IndexMut<usize> for GeometryCollection<T> {
 
 // structure helper for consuming iterator
 #[derive(Debug)]
-pub struct IntoIteratorHelper<T: CoordinateType> {
+pub struct IntoIteratorHelper<T: CoordNum> {
     iter: ::std::vec::IntoIter<Geometry<T>>,
 }
 
 // implement the IntoIterator trait for a consuming iterator. Iteration will
 // consume the GeometryCollection
-impl<T: CoordinateType> IntoIterator for GeometryCollection<T> {
+impl<T: CoordNum> IntoIterator for GeometryCollection<T> {
     type Item = Geometry<T>;
     type IntoIter = IntoIteratorHelper<T>;
 
@@ -144,7 +144,7 @@ impl<T: CoordinateType> IntoIterator for GeometryCollection<T> {
 }
 
 // implement Iterator trait for the helper struct, to be used by adapters
-impl<T: CoordinateType> Iterator for IntoIteratorHelper<T> {
+impl<T: CoordNum> Iterator for IntoIteratorHelper<T> {
     type Item = Geometry<T>;
 
     // just return the reference
@@ -155,13 +155,13 @@ impl<T: CoordinateType> Iterator for IntoIteratorHelper<T> {
 
 // structure helper for non-consuming iterator
 #[derive(Debug)]
-pub struct IterHelper<'a, T: CoordinateType> {
+pub struct IterHelper<'a, T: CoordNum> {
     iter: ::std::slice::Iter<'a, Geometry<T>>,
 }
 
 // implement the IntoIterator trait for a non-consuming iterator. Iteration will
 // borrow the GeometryCollection
-impl<'a, T: CoordinateType> IntoIterator for &'a GeometryCollection<T> {
+impl<'a, T: CoordNum> IntoIterator for &'a GeometryCollection<T> {
     type Item = &'a Geometry<T>;
     type IntoIter = IterHelper<'a, T>;
 
@@ -174,7 +174,7 @@ impl<'a, T: CoordinateType> IntoIterator for &'a GeometryCollection<T> {
 }
 
 // implement the Iterator trait for the helper struct, to be used by adapters
-impl<'a, T: CoordinateType> Iterator for IterHelper<'a, T> {
+impl<'a, T: CoordNum> Iterator for IterHelper<'a, T> {
     type Item = &'a Geometry<T>;
 
     // just return the str reference
@@ -185,13 +185,13 @@ impl<'a, T: CoordinateType> Iterator for IterHelper<'a, T> {
 
 // structure helper for mutable non-consuming iterator
 #[derive(Debug)]
-pub struct IterMutHelper<'a, T: CoordinateType> {
+pub struct IterMutHelper<'a, T: CoordNum> {
     iter: ::std::slice::IterMut<'a, Geometry<T>>,
 }
 
 // implement the IntoIterator trait for a mutable non-consuming iterator. Iteration will
 // mutably borrow the GeometryCollection
-impl<'a, T: CoordinateType> IntoIterator for &'a mut GeometryCollection<T> {
+impl<'a, T: CoordNum> IntoIterator for &'a mut GeometryCollection<T> {
     type Item = &'a mut Geometry<T>;
     type IntoIter = IterMutHelper<'a, T>;
 
@@ -204,7 +204,7 @@ impl<'a, T: CoordinateType> IntoIterator for &'a mut GeometryCollection<T> {
 }
 
 // implement the Iterator trait for the helper struct, to be used by adapters
-impl<'a, T: CoordinateType> Iterator for IterMutHelper<'a, T> {
+impl<'a, T: CoordNum> Iterator for IterMutHelper<'a, T> {
     type Item = &'a mut Geometry<T>;
 
     // just return the str reference
@@ -213,7 +213,7 @@ impl<'a, T: CoordinateType> Iterator for IterMutHelper<'a, T> {
     }
 }
 
-impl<'a, T: CoordinateType> GeometryCollection<T> {
+impl<'a, T: CoordNum> GeometryCollection<T> {
     pub fn iter(&'a self) -> IterHelper<'a, T> {
         self.into_iter()
     }

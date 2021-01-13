@@ -1,7 +1,6 @@
 use super::Contains;
 use crate::intersects::Intersects;
-use crate::kernels::*;
-use crate::*;
+use crate::{Coordinate, GeoNum, Line, LineString, Point};
 
 // ┌──────────────────────────┐
 // │ Implementations for Line │
@@ -9,7 +8,7 @@ use crate::*;
 
 impl<T> Contains<Coordinate<T>> for Line<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
         if self.start == self.end {
@@ -22,7 +21,7 @@ where
 
 impl<T> Contains<Point<T>> for Line<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, p: &Point<T>) -> bool {
         self.contains(&p.0)
@@ -31,7 +30,7 @@ where
 
 impl<T> Contains<Line<T>> for Line<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, line: &Line<T>) -> bool {
         if line.start == line.end {
@@ -44,7 +43,7 @@ where
 
 impl<T> Contains<LineString<T>> for Line<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, linestring: &LineString<T>) -> bool {
         // Empty linestring has no interior, and not

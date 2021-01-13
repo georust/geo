@@ -1,7 +1,6 @@
 use super::Contains;
-use crate::kernels::*;
-use crate::*;
-use intersects::Intersects;
+use crate::intersects::Intersects;
+use crate::{CoordNum, Coordinate, GeoNum, Line, LineString, MultiLineString, Point};
 
 // ┌────────────────────────────────┐
 // │ Implementations for LineString │
@@ -9,7 +8,7 @@ use intersects::Intersects;
 
 impl<T> Contains<Coordinate<T>> for LineString<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
         if self.0.is_empty() {
@@ -28,7 +27,7 @@ where
 
 impl<T> Contains<Point<T>> for LineString<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, p: &Point<T>) -> bool {
         self.contains(&p.0)
@@ -37,7 +36,7 @@ where
 
 impl<T> Contains<Line<T>> for LineString<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, line: &Line<T>) -> bool {
         if line.start == line.end {
@@ -107,7 +106,7 @@ where
 
 impl<T> Contains<LineString<T>> for LineString<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     fn contains(&self, rhs: &LineString<T>) -> bool {
         rhs.lines().all(|l| self.contains(&l))
@@ -119,7 +118,7 @@ where
 // └─────────────────────────────────────┘
 impl<G, T> Contains<G> for MultiLineString<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
     LineString<T>: Contains<G>,
 {
     fn contains(&self, rhs: &G) -> bool {

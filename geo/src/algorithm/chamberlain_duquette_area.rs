@@ -1,4 +1,4 @@
-use crate::{CoordinateType, LineString, Polygon, EQUATORIAL_EARTH_RADIUS};
+use crate::{CoordNum, LineString, Polygon, EQUATORIAL_EARTH_RADIUS};
 use num_traits::Float;
 
 /// Calculate the signed approximate geodesic area of a `Geometry`.
@@ -46,7 +46,7 @@ use num_traits::Float;
 /// ```
 pub trait ChamberlainDuquetteArea<T>
 where
-    T: Float + CoordinateType,
+    T: Float + CoordNum,
 {
     fn chamberlain_duquette_signed_area(&self) -> T;
 
@@ -55,7 +55,7 @@ where
 
 impl<T> ChamberlainDuquetteArea<T> for Polygon<T>
 where
-    T: Float + CoordinateType,
+    T: Float + CoordNum,
 {
     fn chamberlain_duquette_signed_area(&self) -> T {
         self.interiors()
@@ -72,7 +72,7 @@ where
 
 fn ring_area<T>(coords: &LineString<T>) -> T
 where
-    T: Float + CoordinateType,
+    T: Float + CoordNum,
 {
     let mut total = T::zero();
     let coords_len = coords.0.len();

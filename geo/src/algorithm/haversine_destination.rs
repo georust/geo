@@ -1,11 +1,11 @@
-use crate::{Point, MEAN_EARTH_RADIUS};
-use num_traits::{Float, FromPrimitive};
+use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
+use num_traits::FromPrimitive;
 
 /// Returns a new Point using the distance to the existing Point and a bearing for the direction
 ///
 /// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
 /// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
-pub trait HaversineDestination<T: Float> {
+pub trait HaversineDestination<T: CoordFloat> {
     /// Returns a new Point using distance to the existing Point and a bearing for the direction
     ///
     /// # Units
@@ -28,7 +28,7 @@ pub trait HaversineDestination<T: Float> {
 
 impl<T> HaversineDestination<T> for Point<T>
 where
-    T: Float + FromPrimitive,
+    T: CoordFloat + FromPrimitive,
 {
     fn haversine_destination(&self, bearing: T, distance: T) -> Point<T> {
         let center_lng = self.x().to_radians();
@@ -67,10 +67,9 @@ mod test {
     fn direct_and_indirect_destinations_are_close() {
         let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
         let p_2 = p_1.haversine_destination(45., 10000.);
-        let square_edge = { pow(10000., 2) / 2. }.sqrt();
+        let square_edge = { pow(10000., 2) / 2f64 }.sqrt();
         let p_3 = p_1.haversine_destination(0., square_edge);
         let p_4 = p_3.haversine_destination(90., square_edge);
-        assert_relative_eq!(p_4.x(), p_2.x(), epsilon = 1.0e-6);
-        assert_relative_eq!(p_4.y(), p_2.y(), epsilon = 1.0e-6);
+        assert_relative_eq!(p_4, p_2, epsilon = 1.0e-6);
     }
 }

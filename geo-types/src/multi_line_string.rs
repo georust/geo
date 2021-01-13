@@ -1,4 +1,4 @@
-use crate::{CoordinateType, LineString};
+use crate::{CoordNum, LineString};
 use std::iter::FromIterator;
 
 /// A collection of
@@ -32,9 +32,9 @@ use std::iter::FromIterator;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiLineString<T>(pub Vec<LineString<T>>)
 where
-    T: CoordinateType;
+    T: CoordNum;
 
-impl<T: CoordinateType> MultiLineString<T> {
+impl<T: CoordNum> MultiLineString<T> {
     /// True if the MultiLineString is empty or if all of its LineStrings are closed - see
     /// [`LineString::is_closed`].
     ///
@@ -61,19 +61,19 @@ impl<T: CoordinateType> MultiLineString<T> {
     }
 }
 
-impl<T: CoordinateType, ILS: Into<LineString<T>>> From<ILS> for MultiLineString<T> {
+impl<T: CoordNum, ILS: Into<LineString<T>>> From<ILS> for MultiLineString<T> {
     fn from(ls: ILS) -> Self {
         MultiLineString(vec![ls.into()])
     }
 }
 
-impl<T: CoordinateType, ILS: Into<LineString<T>>> FromIterator<ILS> for MultiLineString<T> {
+impl<T: CoordNum, ILS: Into<LineString<T>>> FromIterator<ILS> for MultiLineString<T> {
     fn from_iter<I: IntoIterator<Item = ILS>>(iter: I) -> Self {
         MultiLineString(iter.into_iter().map(|ls| ls.into()).collect())
     }
 }
 
-impl<T: CoordinateType> IntoIterator for MultiLineString<T> {
+impl<T: CoordNum> IntoIterator for MultiLineString<T> {
     type Item = LineString<T>;
     type IntoIter = ::std::vec::IntoIter<LineString<T>>;
 
@@ -82,7 +82,7 @@ impl<T: CoordinateType> IntoIterator for MultiLineString<T> {
     }
 }
 
-impl<'a, T: CoordinateType> IntoIterator for &'a MultiLineString<T> {
+impl<'a, T: CoordNum> IntoIterator for &'a MultiLineString<T> {
     type Item = &'a LineString<T>;
     type IntoIter = ::std::slice::Iter<'a, LineString<T>>;
 
@@ -91,7 +91,7 @@ impl<'a, T: CoordinateType> IntoIterator for &'a MultiLineString<T> {
     }
 }
 
-impl<'a, T: CoordinateType> IntoIterator for &'a mut MultiLineString<T> {
+impl<'a, T: CoordNum> IntoIterator for &'a mut MultiLineString<T> {
     type Item = &'a mut LineString<T>;
     type IntoIter = ::std::slice::IterMut<'a, LineString<T>>;
 
@@ -100,7 +100,7 @@ impl<'a, T: CoordinateType> IntoIterator for &'a mut MultiLineString<T> {
     }
 }
 
-impl<T: CoordinateType> MultiLineString<T> {
+impl<T: CoordNum> MultiLineString<T> {
     pub fn iter(&self) -> impl Iterator<Item = &LineString<T>> {
         self.0.iter()
     }

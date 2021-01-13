@@ -1,4 +1,4 @@
-use crate::{CoordinateType, Point};
+use crate::{CoordNum, Point};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -32,9 +32,9 @@ use std::iter::FromIterator;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiPoint<T>(pub Vec<Point<T>>)
 where
-    T: CoordinateType;
+    T: CoordNum;
 
-impl<T: CoordinateType, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
+impl<T: CoordNum, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
     /// Convert a single `Point` (or something which can be converted to a `Point`) into a
     /// one-member `MultiPoint`
     fn from(x: IP) -> MultiPoint<T> {
@@ -42,7 +42,7 @@ impl<T: CoordinateType, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
     }
 }
 
-impl<T: CoordinateType, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
+impl<T: CoordNum, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
     /// Convert a `Vec` of `Points` (or `Vec` of things which can be converted to a `Point`) into a
     /// `MultiPoint`.
     fn from(v: Vec<IP>) -> MultiPoint<T> {
@@ -50,7 +50,7 @@ impl<T: CoordinateType, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
     }
 }
 
-impl<T: CoordinateType, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
+impl<T: CoordNum, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
     /// Collect the results of a `Point` iterator into a `MultiPoint`
     fn from_iter<I: IntoIterator<Item = IP>>(iter: I) -> Self {
         MultiPoint(iter.into_iter().map(|p| p.into()).collect())
@@ -58,7 +58,7 @@ impl<T: CoordinateType, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
 }
 
 /// Iterate over the `Point`s in this `MultiPoint`.
-impl<T: CoordinateType> IntoIterator for MultiPoint<T> {
+impl<T: CoordNum> IntoIterator for MultiPoint<T> {
     type Item = Point<T>;
     type IntoIter = ::std::vec::IntoIter<Point<T>>;
 
@@ -67,7 +67,7 @@ impl<T: CoordinateType> IntoIterator for MultiPoint<T> {
     }
 }
 
-impl<'a, T: CoordinateType> IntoIterator for &'a MultiPoint<T> {
+impl<'a, T: CoordNum> IntoIterator for &'a MultiPoint<T> {
     type Item = &'a Point<T>;
     type IntoIter = ::std::slice::Iter<'a, Point<T>>;
 
@@ -76,7 +76,7 @@ impl<'a, T: CoordinateType> IntoIterator for &'a MultiPoint<T> {
     }
 }
 
-impl<'a, T: CoordinateType> IntoIterator for &'a mut MultiPoint<T> {
+impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPoint<T> {
     type Item = &'a mut Point<T>;
     type IntoIter = ::std::slice::IterMut<'a, Point<T>>;
 
@@ -85,7 +85,7 @@ impl<'a, T: CoordinateType> IntoIterator for &'a mut MultiPoint<T> {
     }
 }
 
-impl<T: CoordinateType> MultiPoint<T> {
+impl<T: CoordNum> MultiPoint<T> {
     pub fn iter(&self) -> impl Iterator<Item = &Point<T>> {
         self.0.iter()
     }
@@ -98,7 +98,7 @@ impl<T: CoordinateType> MultiPoint<T> {
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for MultiPoint<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType + RelativeEq,
+    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
@@ -137,7 +137,7 @@ where
 #[cfg(any(feature = "approx", test))]
 impl<T> AbsDiffEq for MultiPoint<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordinateType,
+    T: AbsDiffEq<Epsilon = T> + CoordNum,
     T::Epsilon: Copy,
 {
     type Epsilon = T;

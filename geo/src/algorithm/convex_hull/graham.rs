@@ -1,6 +1,6 @@
 use super::{swap_remove_to_first, trivial_hull};
 use crate::algorithm::kernels::*;
-use crate::{Coordinate, LineString};
+use crate::{Coordinate, GeoNum, LineString};
 
 /// The [Graham's scan] algorithm to compute the convex hull
 /// of a collection of points. This algorithm is less
@@ -20,7 +20,7 @@ use crate::{Coordinate, LineString};
 /// [Graham's scan]: //en.wikipedia.org/wiki/Graham_scan
 pub fn graham_hull<T>(mut points: &mut [Coordinate<T>], include_on_hull: bool) -> LineString<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     if points.len() < 4 {
         // Nothing to build with fewer than four points.
@@ -89,8 +89,7 @@ where
 mod test {
     use super::*;
     use crate::algorithm::is_convex::IsConvex;
-    use std::fmt::Debug;
-    fn test_convexity<T: HasKernel + Debug>(initial: &[(T, T)]) {
+    fn test_convexity<T: GeoNum>(initial: &[(T, T)]) {
         let mut v: Vec<_> = initial
             .iter()
             .map(|e| Coordinate::from((e.0, e.1)))

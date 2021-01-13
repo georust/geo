@@ -35,7 +35,8 @@
 //! [JTS]: https://github.com/locationtech/jts
 //! [GEOS]: https://trac.osgeo.org/geos
 extern crate num_traits;
-use num_traits::{Num, NumCast};
+use num_traits::{Float, Num, NumCast};
+use std::fmt::Debug;
 
 #[cfg(feature = "serde")]
 #[macro_use]
@@ -48,14 +49,24 @@ extern crate rstar;
 #[macro_use]
 extern crate approx;
 
+#[deprecated(since = "0.7", note = "use `CoordFloat` or `CoordNum` instead")]
+pub trait CoordinateType: Num + Copy + NumCast + PartialOrd + Debug {}
+#[allow(deprecated)]
+impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordinateType for T {}
+
 /// The type of an x or y value of a point/coordinate.
 ///
-/// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.)
-/// implement this. Many algorithms only make sense for
-/// Float types (like area, or length calculations).
-pub trait CoordinateType: Num + Copy + NumCast + PartialOrd {}
-// Little bit of a hack to make to make this work
-impl<T: Num + Copy + NumCast + PartialOrd> CoordinateType for T {}
+/// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
+///
+/// For algorithms which only make sense for floating point, like area or length calculations,
+/// see [CoordFloat](trait.CoordFloat.html).
+#[allow(deprecated)]
+pub trait CoordNum: CoordinateType + Debug {}
+#[allow(deprecated)]
+impl<T: CoordinateType + Debug> CoordNum for T {}
+
+pub trait CoordFloat: CoordNum + Float {}
+impl<T: CoordNum + Float> CoordFloat for T {}
 
 mod coordinate;
 pub use crate::coordinate::Coordinate;

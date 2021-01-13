@@ -1,4 +1,4 @@
-use crate::{Coordinate, CoordinateType};
+use crate::{CoordNum, Coordinate};
 use num_traits::Zero;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
@@ -10,7 +10,7 @@ pub enum Orientation {
 
 /// Kernel trait to provide predicates to operate on
 /// different scalar types.
-pub trait Kernel<T: CoordinateType> {
+pub trait Kernel<T: CoordNum> {
     /// Gives the orientation of 3 2-dimensional points:
     /// ccw, cw or collinear (None)
     fn orient2d(p: Coordinate<T>, q: Coordinate<T>, r: Coordinate<T>) -> Orientation {
@@ -43,7 +43,7 @@ pub trait Kernel<T: CoordinateType> {
 }
 
 /// Marker trait to assign Kernel for scalars
-pub trait HasKernel: CoordinateType {
+pub trait HasKernel: CoordNum {
     type Ker: Kernel<Self>;
 }
 

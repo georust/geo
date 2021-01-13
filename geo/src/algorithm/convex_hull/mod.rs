@@ -1,5 +1,4 @@
-use super::kernels::*;
-use crate::*;
+use crate::{Coordinate, GeoNum, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon};
 
 /// Returns the convex hull of a Polygon. The hull is always oriented counter-clockwise.
 ///
@@ -38,13 +37,13 @@ use crate::*;
 /// assert_eq!(res.exterior(), &correct_hull);
 /// ```
 pub trait ConvexHull {
-    type Scalar: CoordinateType;
+    type Scalar: GeoNum;
     fn convex_hull(&self) -> Polygon<Self::Scalar>;
 }
 
 impl<T> ConvexHull for Polygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn convex_hull(&self) -> Polygon<T> {
@@ -54,7 +53,7 @@ where
 
 impl<T> ConvexHull for MultiPolygon<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn convex_hull(&self) -> Polygon<T> {
@@ -69,7 +68,7 @@ where
 
 impl<T> ConvexHull for LineString<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn convex_hull(&self) -> Polygon<T> {
@@ -79,7 +78,7 @@ where
 
 impl<T> ConvexHull for MultiLineString<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn convex_hull(&self) -> Polygon<T> {
@@ -90,7 +89,7 @@ where
 
 impl<T> ConvexHull for MultiPoint<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     type Scalar = T;
     fn convex_hull(&self) -> Polygon<T> {
@@ -111,7 +110,7 @@ pub use graham::graham_hull;
 // required.
 fn trivial_hull<T>(points: &mut [Coordinate<T>], include_on_hull: bool) -> LineString<T>
 where
-    T: HasKernel,
+    T: GeoNum,
 {
     assert!(points.len() < 4);
 

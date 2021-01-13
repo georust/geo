@@ -1,12 +1,11 @@
 use crate::{
-    CoordinateType, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon, Rect, Triangle,
+    CoordFloat, CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
-use num_traits::Float;
 
 pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     // LineString with less than 3 points is empty, or a
     // single point, or is not closed.
@@ -70,7 +69,7 @@ where
 /// ```
 pub trait Area<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn signed_area(&self) -> T;
 
@@ -80,14 +79,14 @@ where
 // Calculation of simple (no interior holes) Polygon area
 pub(crate) fn get_linestring_area<T>(linestring: &LineString<T>) -> T
 where
-    T: Float,
+    T: CoordFloat,
 {
     twice_signed_ring_area(linestring) / (T::one() + T::one())
 }
 
 impl<T> Area<T> for Point<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn signed_area(&self) -> T {
         T::zero()
@@ -100,7 +99,7 @@ where
 
 impl<T> Area<T> for LineString<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn signed_area(&self) -> T {
         T::zero()
@@ -113,7 +112,7 @@ where
 
 impl<T> Area<T> for Line<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn signed_area(&self) -> T {
         T::zero()
@@ -129,7 +128,7 @@ where
 /// the output is the same as that of the exterior shell.
 impl<T> Area<T> for Polygon<T>
 where
-    T: Float,
+    T: CoordFloat,
 {
     fn signed_area(&self) -> T {
         let area = get_linestring_area(self.exterior());
@@ -156,7 +155,7 @@ where
 
 impl<T> Area<T> for MultiPoint<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn signed_area(&self) -> T {
         T::zero()
@@ -169,7 +168,7 @@ where
 
 impl<T> Area<T> for MultiLineString<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn signed_area(&self) -> T {
         T::zero()
@@ -188,7 +187,7 @@ where
 /// same.
 impl<T> Area<T> for MultiPolygon<T>
 where
-    T: Float,
+    T: CoordFloat,
 {
     fn signed_area(&self) -> T {
         self.0
@@ -206,7 +205,7 @@ where
 /// Because a `Rect` has no winding order, the area will always be positive.
 impl<T> Area<T> for Rect<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn signed_area(&self) -> T {
         self.width() * self.height()
@@ -219,7 +218,7 @@ where
 
 impl<T> Area<T> for Triangle<T>
 where
-    T: Float,
+    T: CoordFloat,
 {
     fn signed_area(&self) -> T {
         self.to_lines()
@@ -235,7 +234,7 @@ where
 
 impl<T> Area<T> for Geometry<T>
 where
-    T: Float,
+    T: CoordFloat,
 {
     fn signed_area(&self) -> T {
         match self {
@@ -270,7 +269,7 @@ where
 
 impl<T> Area<T> for GeometryCollection<T>
 where
-    T: Float,
+    T: CoordFloat,
 {
     fn signed_area(&self) -> T {
         self.0

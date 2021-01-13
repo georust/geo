@@ -1,8 +1,7 @@
 use crate::{
-    CoordinateType, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon, Rect, Triangle,
+    CoordNum, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
+    Point, Polygon, Rect, Triangle,
 };
-use num_traits::Float;
 use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt;
@@ -26,7 +25,7 @@ use std::fmt;
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 pub enum Geometry<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     Point(Point<T>),
     Line(Line<T>),
@@ -40,55 +39,55 @@ where
     Triangle(Triangle<T>),
 }
 
-impl<T: CoordinateType> From<Point<T>> for Geometry<T> {
+impl<T: CoordNum> From<Point<T>> for Geometry<T> {
     fn from(x: Point<T>) -> Geometry<T> {
         Geometry::Point(x)
     }
 }
-impl<T: CoordinateType> From<Line<T>> for Geometry<T> {
+impl<T: CoordNum> From<Line<T>> for Geometry<T> {
     fn from(x: Line<T>) -> Geometry<T> {
         Geometry::Line(x)
     }
 }
-impl<T: CoordinateType> From<LineString<T>> for Geometry<T> {
+impl<T: CoordNum> From<LineString<T>> for Geometry<T> {
     fn from(x: LineString<T>) -> Geometry<T> {
         Geometry::LineString(x)
     }
 }
-impl<T: CoordinateType> From<Polygon<T>> for Geometry<T> {
+impl<T: CoordNum> From<Polygon<T>> for Geometry<T> {
     fn from(x: Polygon<T>) -> Geometry<T> {
         Geometry::Polygon(x)
     }
 }
-impl<T: CoordinateType> From<MultiPoint<T>> for Geometry<T> {
+impl<T: CoordNum> From<MultiPoint<T>> for Geometry<T> {
     fn from(x: MultiPoint<T>) -> Geometry<T> {
         Geometry::MultiPoint(x)
     }
 }
-impl<T: CoordinateType> From<MultiLineString<T>> for Geometry<T> {
+impl<T: CoordNum> From<MultiLineString<T>> for Geometry<T> {
     fn from(x: MultiLineString<T>) -> Geometry<T> {
         Geometry::MultiLineString(x)
     }
 }
-impl<T: CoordinateType> From<MultiPolygon<T>> for Geometry<T> {
+impl<T: CoordNum> From<MultiPolygon<T>> for Geometry<T> {
     fn from(x: MultiPolygon<T>) -> Geometry<T> {
         Geometry::MultiPolygon(x)
     }
 }
 
-impl<T: CoordinateType> From<Rect<T>> for Geometry<T> {
+impl<T: CoordNum> From<Rect<T>> for Geometry<T> {
     fn from(x: Rect<T>) -> Geometry<T> {
         Geometry::Rect(x)
     }
 }
 
-impl<T: CoordinateType> From<Triangle<T>> for Geometry<T> {
+impl<T: CoordNum> From<Triangle<T>> for Geometry<T> {
     fn from(x: Triangle<T>) -> Geometry<T> {
         Geometry::Triangle(x)
     }
 }
 
-impl<T: CoordinateType> Geometry<T> {
+impl<T: CoordNum> Geometry<T> {
     /// If this Geometry is a Point, then return that, else None.
     ///
     /// # Examples
@@ -198,10 +197,7 @@ impl Error for FailedToConvertError {
     }
 }
 
-impl<T> TryFrom<Geometry<T>> for Point<T>
-where
-    T: Float,
-{
+impl<T: CoordNum> TryFrom<Geometry<T>> for Point<T> {
     type Error = FailedToConvertError;
 
     fn try_from(geom: Geometry<T>) -> Result<Point<T>, Self::Error> {
@@ -212,10 +208,7 @@ where
     }
 }
 
-impl<T> TryFrom<Geometry<T>> for Line<T>
-where
-    T: Float,
-{
+impl<T: CoordNum> TryFrom<Geometry<T>> for Line<T> {
     type Error = FailedToConvertError;
 
     fn try_from(geom: Geometry<T>) -> Result<Line<T>, Self::Error> {
@@ -226,10 +219,7 @@ where
     }
 }
 
-impl<T> TryFrom<Geometry<T>> for LineString<T>
-where
-    T: Float,
-{
+impl<T: CoordNum> TryFrom<Geometry<T>> for LineString<T> {
     type Error = FailedToConvertError;
 
     fn try_from(geom: Geometry<T>) -> Result<LineString<T>, Self::Error> {
@@ -240,10 +230,7 @@ where
     }
 }
 
-impl<T> TryFrom<Geometry<T>> for Polygon<T>
-where
-    T: Float,
-{
+impl<T: CoordNum> TryFrom<Geometry<T>> for Polygon<T> {
     type Error = FailedToConvertError;
 
     fn try_from(geom: Geometry<T>) -> Result<Polygon<T>, Self::Error> {
@@ -254,10 +241,7 @@ where
     }
 }
 
-impl<T> TryFrom<Geometry<T>> for MultiPoint<T>
-where
-    T: Float,
-{
+impl<T: CoordNum> TryFrom<Geometry<T>> for MultiPoint<T> {
     type Error = FailedToConvertError;
 
     fn try_from(geom: Geometry<T>) -> Result<MultiPoint<T>, Self::Error> {
@@ -268,10 +252,7 @@ where
     }
 }
 
-impl<T> TryFrom<Geometry<T>> for MultiLineString<T>
-where
-    T: Float,
-{
+impl<T: CoordNum> TryFrom<Geometry<T>> for MultiLineString<T> {
     type Error = FailedToConvertError;
 
     fn try_from(geom: Geometry<T>) -> Result<MultiLineString<T>, Self::Error> {
@@ -282,10 +263,7 @@ where
     }
 }
 
-impl<T> TryFrom<Geometry<T>> for MultiPolygon<T>
-where
-    T: Float,
-{
+impl<T: CoordNum> TryFrom<Geometry<T>> for MultiPolygon<T> {
     type Error = FailedToConvertError;
 
     fn try_from(geom: Geometry<T>) -> Result<MultiPolygon<T>, Self::Error> {

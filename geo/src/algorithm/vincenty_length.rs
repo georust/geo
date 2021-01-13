@@ -1,7 +1,7 @@
-use num_traits::{Float, FromPrimitive};
+use num_traits::FromPrimitive;
 
 use crate::algorithm::vincenty_distance::{FailedToConvergeError, VincentyDistance};
-use crate::{Line, LineString, MultiLineString};
+use crate::{CoordFloat, Line, LineString, MultiLineString};
 
 /// Determine the length of a geometry using [Vincenty’s formulae].
 ///
@@ -42,7 +42,7 @@ pub trait VincentyLength<T, RHS = Self> {
 
 impl<T> VincentyLength<T> for Line<T>
 where
-    T: Float + FromPrimitive,
+    T: CoordFloat + FromPrimitive,
 {
     /// The units of the returned value is meters.
     fn vincenty_length(&self) -> Result<T, FailedToConvergeError> {
@@ -53,7 +53,7 @@ where
 
 impl<T> VincentyLength<T> for LineString<T>
 where
-    T: Float + FromPrimitive,
+    T: CoordFloat + FromPrimitive,
 {
     fn vincenty_length(&self) -> Result<T, FailedToConvergeError> {
         let mut length = T::zero();
@@ -66,7 +66,7 @@ where
 
 impl<T> VincentyLength<T> for MultiLineString<T>
 where
-    T: Float + FromPrimitive,
+    T: CoordFloat + FromPrimitive,
 {
     fn vincenty_length(&self) -> Result<T, FailedToConvergeError> {
         let mut length = T::zero();

@@ -7,7 +7,7 @@ use crate::*;
 
 impl<T> Contains<Coordinate<T>> for Point<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
         &self.0 == coord
@@ -16,7 +16,7 @@ where
 
 impl<T> Contains<Point<T>> for Point<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
 {
     fn contains(&self, p: &Point<T>) -> bool {
         self.contains(&p.0)
@@ -28,7 +28,7 @@ where
 // └────────────────────────────────┘
 impl<G, T> Contains<G> for MultiPoint<T>
 where
-    T: CoordinateType,
+    T: CoordNum,
     Point<T>: Contains<G>,
 {
     fn contains(&self, rhs: &G) -> bool {
