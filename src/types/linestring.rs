@@ -16,15 +16,14 @@ use std::fmt;
 use std::str::FromStr;
 use tokenizer::PeekableTokens;
 use types::coord::Coord;
-use FromTokens;
-use Geometry;
+use {FromTokens, Geometry, WktFloat};
 
-#[derive(Clone, Default)]
-pub struct LineString<T: num_traits::Float>(pub Vec<Coord<T>>);
+#[derive(Clone, Debug, Default)]
+pub struct LineString<T: WktFloat>(pub Vec<Coord<T>>);
 
 impl<T> LineString<T>
 where
-    T: num_traits::Float,
+    T: WktFloat,
 {
     pub fn as_item(self) -> Geometry<T> {
         Geometry::LineString(self)
@@ -33,7 +32,7 @@ where
 
 impl<T> FromTokens<T> for LineString<T>
 where
-    T: num_traits::Float + FromStr + Default,
+    T: WktFloat + FromStr + Default,
 {
     fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
         let result = FromTokens::comma_many(<Coord<T> as FromTokens<T>>::from_tokens, tokens);
@@ -43,7 +42,7 @@ where
 
 impl<T> fmt::Display for LineString<T>
 where
-    T: num_traits::Float + fmt::Display,
+    T: WktFloat + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.0.is_empty() {
