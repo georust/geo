@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate num_traits;
-
 use std::iter::Peekable;
 use std::marker::PhantomData;
 use std::str;

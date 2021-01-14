@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate geo_types;
-extern crate num_traits;
-
 use types::*;
 use Geometry;
 use Wkt;
@@ -22,7 +19,7 @@ use Wkt;
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
 
-use self::geo_types::CoordFloat;
+use geo_types::CoordFloat;
 
 #[derive(Debug)]
 pub enum Error {

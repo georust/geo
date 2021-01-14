@@ -1,18 +1,11 @@
-extern crate geo_types;
-extern crate num_traits;
-
-use types::Coord;
-use types::GeometryCollection;
-use types::LineString;
-use types::MultiLineString;
-use types::MultiPoint;
-use types::MultiPolygon;
-use types::Point;
-use types::Polygon;
+use types::{
+    Coord, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
+    Polygon,
+};
 use Geometry;
 use Wkt;
 
-use self::geo_types::CoordFloat;
+use geo_types::CoordFloat;
 
 /// A trait for converting values to WKT
 pub trait ToWkt<T>

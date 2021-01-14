@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate num_traits;
-
 use std::default::Default;
 use std::fmt;
 use std::str::FromStr;
@@ -33,6 +31,9 @@ mod tokenizer;
 mod towkt;
 
 pub mod types;
+
+#[cfg(feature = "geo-types")]
+extern crate geo_types;
 
 #[cfg(feature = "geo-types")]
 pub use towkt::ToWkt;
