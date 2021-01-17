@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate num_traits;
-
 use std::iter::Peekable;
 use std::marker::PhantomData;
 use std::str;
+use WktFloat;
 
-#[derive(PartialEq, Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Token<T>
 where
-    T: num_traits::Float,
+    T: WktFloat,
 {
     Comma,
     Number(T),
@@ -47,6 +46,7 @@ fn is_numberlike(c: char) -> bool {
 
 pub type PeekableTokens<'a, T> = Peekable<Tokens<'a, T>>;
 
+#[derive(Debug)]
 pub struct Tokens<'a, T> {
     chars: Peekable<str::Chars<'a>>,
     phantom: PhantomData<T>,
@@ -54,7 +54,7 @@ pub struct Tokens<'a, T> {
 
 impl<'a, T> Tokens<'a, T>
 where
-    T: num_traits::Float,
+    T: WktFloat,
 {
     pub fn from_str(input: &'a str) -> Self {
         Tokens {
@@ -66,7 +66,7 @@ where
 
 impl<'a, T> Iterator for Tokens<'a, T>
 where
-    T: num_traits::Float + str::FromStr + Default,
+    T: WktFloat + str::FromStr + Default,
 {
     type Item = Token<T>;
 
@@ -101,7 +101,7 @@ where
 
 impl<'a, T> Tokens<'a, T>
 where
-    T: num_traits::Float + str::FromStr + Default,
+    T: WktFloat + str::FromStr + Default,
 {
     fn read_until_whitespace(&mut self) -> Option<String> {
         let mut result = String::new();

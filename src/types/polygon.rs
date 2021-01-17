@@ -12,21 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate num_traits;
-
 use std::fmt;
 use std::str::FromStr;
 use tokenizer::PeekableTokens;
 use types::linestring::LineString;
-use FromTokens;
-use Geometry;
+use {FromTokens, Geometry, WktFloat};
 
-#[derive(Clone, Default)]
-pub struct Polygon<T: num_traits::Float>(pub Vec<LineString<T>>);
+#[derive(Clone, Debug, Default)]
+pub struct Polygon<T: WktFloat>(pub Vec<LineString<T>>);
 
 impl<T> Polygon<T>
 where
-    T: num_traits::Float,
+    T: WktFloat,
 {
     pub fn as_item(self) -> Geometry<T> {
         Geometry::Polygon(self)
@@ -35,7 +32,7 @@ where
 
 impl<T> fmt::Display for Polygon<T>
 where
-    T: num_traits::Float + fmt::Display,
+    T: WktFloat + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         if self.0.is_empty() {
@@ -60,7 +57,7 @@ where
 
 impl<T> FromTokens<T> for Polygon<T>
 where
-    T: num_traits::Float + FromStr + Default,
+    T: WktFloat + FromStr + Default,
 {
     fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
         let result = FromTokens::comma_many(

@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate num_traits;
-
 use std::default::Default;
 use std::fmt;
 use std::str::FromStr;
@@ -35,15 +33,21 @@ mod towkt;
 pub mod types;
 
 #[cfg(feature = "geo-types")]
+extern crate geo_types;
+
+#[cfg(feature = "geo-types")]
 pub use towkt::ToWkt;
 
 #[cfg(feature = "geo-types")]
 pub mod conversion;
 
-#[derive(Clone)]
+pub trait WktFloat: num_traits::Float + std::fmt::Debug {}
+impl<T> WktFloat for T where T: num_traits::Float + std::fmt::Debug {}
+
+#[derive(Clone, Debug)]
 pub enum Geometry<T>
 where
-    T: num_traits::Float,
+    T: WktFloat,
 {
     Point(Point<T>),
     LineString(LineString<T>),
@@ -56,7 +60,7 @@ where
 
 impl<T> Geometry<T>
 where
-    T: num_traits::Float + FromStr + Default,
+    T: WktFloat + FromStr + Default,
 {
     fn from_word_and_tokens(
         word: &str,
@@ -98,7 +102,7 @@ where
 
 impl<T> fmt::Display for Geometry<T>
 where
-    T: num_traits::Float + fmt::Display,
+    T: WktFloat + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
@@ -113,17 +117,17 @@ where
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Wkt<T>
 where
-    T: num_traits::Float,
+    T: WktFloat,
 {
     pub items: Vec<Geometry<T>>,
 }
 
 impl<T> Wkt<T>
 where
-    T: num_traits::Float + FromStr + Default,
+    T: WktFloat + FromStr + Default,
 {
     pub fn new() -> Self {
         Wkt { items: vec![] }
@@ -161,7 +165,7 @@ where
 
 trait FromTokens<T>: Sized + Default
 where
-    T: num_traits::Float + FromStr + Default,
+    T: WktFloat + FromStr + Default,
 {
     fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str>;
 
@@ -203,7 +207,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use types::{MultiPolygon, Point};
+    use types::{MultiPolygon, Point, Coord};
     use {Geometry, Wkt};
 
     #[test]
@@ -246,5 +250,11 @@ mod tests {
         } else {
             panic!("Should not have parsed");
         }
+    }
+
+    #[test]
+    fn test_debug() {
+        let g = Geometry::Point(Point(Some(Coord { x: 1.0, y: 2.0, m: None, z: None})));
+        assert_eq!(format!("{:?}", g), "Point(Point(Some(Coord { x: 1.0, y: 2.0, z: None, m: None })))");
     }
 }

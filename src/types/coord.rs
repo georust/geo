@@ -12,17 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate num_traits;
-
 use std::fmt;
 use std::str::FromStr;
 use tokenizer::{PeekableTokens, Token};
-use FromTokens;
+use {FromTokens, WktFloat};
 
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Coord<T>
 where
-    T: num_traits::Float,
+    T: WktFloat,
 {
     pub x: T,
     pub y: T,
@@ -32,7 +30,7 @@ where
 
 impl<T> fmt::Display for Coord<T>
 where
-    T: num_traits::Float + fmt::Display,
+    T: WktFloat + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "{} {}", self.x, self.y)?;
@@ -48,7 +46,7 @@ where
 
 impl<T> FromTokens<T> for Coord<T>
 where
-    T: num_traits::Float + FromStr + Default,
+    T: WktFloat + FromStr + Default,
 {
     fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
         let x = match tokens.next() {

@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate geo_types;
-extern crate num_traits;
-
 use types::*;
 use Geometry;
 use Wkt;
 
 use std::convert::{TryFrom, TryInto};
 use std::fmt;
+
+use geo_types::CoordFloat;
 
 #[derive(Debug)]
 pub enum Error {
@@ -39,7 +38,7 @@ impl fmt::Display for Error {
 
 impl<T> TryFrom<Wkt<T>> for geo_types::Geometry<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     type Error = Error;
 
@@ -54,7 +53,7 @@ where
 
 impl<T> From<Coord<T>> for geo_types::Coordinate<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     fn from(coord: Coord<T>) -> geo_types::Coordinate<T> {
         Self {
@@ -66,7 +65,7 @@ where
 
 impl<T> TryFrom<Point<T>> for geo_types::Point<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     type Error = Error;
 
@@ -81,14 +80,14 @@ where
 #[deprecated(since = "0.9", note = "use `geometry.try_into()` instead")]
 pub fn try_into_geometry<T>(geometry: &Geometry<T>) -> Result<geo_types::Geometry<T>, Error>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     geometry.clone().try_into()
 }
 
 impl<'a, T> From<&'a LineString<T>> for geo_types::Geometry<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     fn from(line_string: &'a LineString<T>) -> Self {
         Self::LineString(line_string.clone().into())
@@ -97,7 +96,7 @@ where
 
 impl<T> From<LineString<T>> for geo_types::LineString<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     fn from(line_string: LineString<T>) -> Self {
         let coords = line_string
@@ -112,7 +111,7 @@ where
 
 impl<'a, T> From<&'a MultiLineString<T>> for geo_types::Geometry<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     fn from(multi_line_string: &'a MultiLineString<T>) -> geo_types::Geometry<T> {
         Self::MultiLineString(multi_line_string.clone().into())
@@ -121,7 +120,7 @@ where
 
 impl<T> From<MultiLineString<T>> for geo_types::MultiLineString<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     fn from(multi_line_string: MultiLineString<T>) -> geo_types::MultiLineString<T> {
         let geo_line_strings: Vec<geo_types::LineString<T>> = multi_line_string
@@ -136,7 +135,7 @@ where
 
 impl<'a, T> From<&'a Polygon<T>> for geo_types::Geometry<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     fn from(polygon: &'a Polygon<T>) -> geo_types::Geometry<T> {
         Self::Polygon(polygon.clone().into())
@@ -145,7 +144,7 @@ where
 
 impl<T> From<Polygon<T>> for geo_types::Polygon<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     fn from(polygon: Polygon<T>) -> Self {
         let mut iter = polygon.0.into_iter().map(geo_types::LineString::from);
@@ -158,7 +157,7 @@ where
 
 impl<'a, T> TryFrom<&'a MultiPoint<T>> for geo_types::Geometry<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     type Error = Error;
 
@@ -169,7 +168,7 @@ where
 
 impl<T> TryFrom<MultiPoint<T>> for geo_types::MultiPoint<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     type Error = Error;
 
@@ -186,7 +185,7 @@ where
 
 impl<'a, T> From<&'a MultiPolygon<T>> for geo_types::Geometry<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     fn from(multi_polygon: &'a MultiPolygon<T>) -> Self {
         Self::MultiPolygon(multi_polygon.clone().into())
@@ -195,7 +194,7 @@ where
 
 impl<T> From<MultiPolygon<T>> for geo_types::MultiPolygon<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     fn from(multi_polygon: MultiPolygon<T>) -> Self {
         let geo_polygons: Vec<geo_types::Polygon<T>> = multi_polygon
@@ -213,7 +212,7 @@ pub fn try_into_geometry_collection<T>(
     geometry_collection: &GeometryCollection<T>,
 ) -> Result<geo_types::Geometry<T>, Error>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     Ok(geo_types::Geometry::GeometryCollection(
         geometry_collection.clone().try_into()?,
@@ -222,7 +221,7 @@ where
 
 impl<T> TryFrom<GeometryCollection<T>> for geo_types::GeometryCollection<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     type Error = Error;
 
@@ -239,7 +238,7 @@ where
 
 impl<T> TryFrom<Geometry<T>> for geo_types::Geometry<T>
 where
-    T: num_traits::Float,
+    T: CoordFloat,
 {
     type Error = Error;
 
