@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+* Add Changes Here
+
 ## 0.7.0
 
 * BREAKING: `geo_types::CoordinateType` now extends Debug and has been deprecated in favor of `geo_types::CoordNum` and `geo_types::CoordFloat`
