@@ -22,12 +22,9 @@ pub trait GeodesicIntermediate<T: CoordFloat> {
     /// let i20_should = Point::new(29.842907, 29.951445);
     /// let i50_should = Point::new(65.879360, 37.722253);
     /// let i80_should = Point::new(103.556796, 33.506196);
-    /// assert_relative_eq!(i20.x(), i20_should.x(), epsilon = 1.0e-6);
-    /// assert_relative_eq!(i20.y(), i20_should.y(), epsilon = 1.0e-6);
-    /// assert_relative_eq!(i50.x(), i50_should.x(), epsilon = 1.0e-6);
-    /// assert_relative_eq!(i50.y(), i50_should.y(), epsilon = 1.0e-6);
-    /// assert_relative_eq!(i80.x(), i80_should.x(), epsilon = 1.0e-6);
-    /// assert_relative_eq!(i80.y(), i80_should.y(), epsilon = 1.0e-6);
+    /// assert_relative_eq!(i20, i20_should, epsilon = 1.0e-6);
+    /// assert_relative_eq!(i50, i50_should, epsilon = 1.0e-6);
+    /// assert_relative_eq!(i80, i80_should, epsilon = 1.0e-6);
     /// ```
 
     fn geodesic_intermediate(&self, other: &Point<T>, f: T) -> Point<T>;
@@ -101,10 +98,8 @@ mod tests {
         let p2 = Point::<f64>::new(15.0, 25.0);
         let i0 = p1.geodesic_intermediate(&p2, 0.0);
         let i100 = p1.geodesic_intermediate(&p2, 1.0);
-        assert_relative_eq!(i0.x(), p1.x(), epsilon = 1.0e-6);
-        assert_relative_eq!(i0.y(), p1.y(), epsilon = 1.0e-6);
-        assert_relative_eq!(i100.x(), p2.x(), epsilon = 1.0e-6);
-        assert_relative_eq!(i100.y(), p2.y(), epsilon = 1.0e-6);
+        assert_relative_eq!(i0, p1, epsilon = 1.0e-6);
+        assert_relative_eq!(i100, p2, epsilon = 1.0e-6);
     }
 
     #[test]
@@ -117,12 +112,9 @@ mod tests {
         let i20_should = Point::new(29.842907, 29.951445);
         let i50_should = Point::new(65.879360, 37.722253);
         let i80_should = Point::new(103.556796, 33.506196);
-        assert_relative_eq!(i20.x(), i20_should.x(), epsilon = 1.0e-6);
-        assert_relative_eq!(i20.y(), i20_should.y(), epsilon = 1.0e-6);
-        assert_relative_eq!(i50.x(), i50_should.x(), epsilon = 1.0e-6);
-        assert_relative_eq!(i50.y(), i50_should.y(), epsilon = 1.0e-6);
-        assert_relative_eq!(i80.x(), i80_should.x(), epsilon = 1.0e-6);
-        assert_relative_eq!(i80.y(), i80_should.y(), epsilon = 1.0e-6);
+        assert_relative_eq!(i20, i20_should, epsilon = 1.0e-6);
+        assert_relative_eq!(i50, i50_should, epsilon = 1.0e-6);
+        assert_relative_eq!(i80, i80_should, epsilon = 1.0e-6);
     }
 
     #[test]
