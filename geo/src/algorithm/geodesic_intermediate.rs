@@ -131,7 +131,7 @@ mod tests {
         let p2 = Point::<f64>::new(40.0, 50.0);
         let max_dist = 1000000.0; // meters
         let include_ends = true;
-        let i50 = p1.clone().geodesic_intermediate(&p2, 0.5);
+        let i50 = p1.geodesic_intermediate(&p2, 0.5);
         let route = p1.geodesic_intermediate_fill(&p2, max_dist, include_ends);
         assert_eq!(route, vec![p1, i50, p2]);
     }
