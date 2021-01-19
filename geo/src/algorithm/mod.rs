@@ -37,6 +37,8 @@ pub mod frechet_distance;
 pub mod geodesic_distance;
 /// Calculate the Geodesic length of a line.
 pub mod geodesic_length;
+/// Calculate a new `Point` lying on a Geodesic arc between two `Point`s.
+pub mod geodesic_intermediate;
 /// Calculate a destination `Point`, given a distance and a bearing.
 pub mod haversine_destination;
 /// Calculate the Haversine distance between two `Geometries`.
