@@ -76,7 +76,7 @@ impl GeodesicIntermediate<f64> for Point<f64> {
                 g.direct(self.lat(), self.lng(), azi1, total_distance * current_step);
             let point = Point::new(lon2, lat2);
             points.push(point);
-            current_step = current_step + interval;
+            current_step += interval;
         }
 
         if include_ends {
