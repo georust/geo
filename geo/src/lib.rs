@@ -105,6 +105,7 @@ pub mod prelude {
     pub use crate::algorithm::frechet_distance::FrechetDistance;
     pub use crate::algorithm::geodesic_distance::GeodesicDistance;
     pub use crate::algorithm::geodesic_length::GeodesicLength;
+    pub use crate::algorithm::geodesic_intermediate::GeodesicIntermediate;
     pub use crate::algorithm::haversine_destination::HaversineDestination;
     pub use crate::algorithm::haversine_distance::HaversineDistance;
     pub use crate::algorithm::haversine_intermediate::HaversineIntermediate;

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Add Changes Here
+* Add `GeodesicIntermediate` algorithm
 
 ## 0.17.0
 
