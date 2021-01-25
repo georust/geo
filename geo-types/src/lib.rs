@@ -49,7 +49,7 @@ extern crate rstar;
 #[macro_use]
 extern crate approx;
 
-#[deprecated(since = "0.7", note = "use `CoordFloat` or `CoordNum` instead")]
+#[deprecated(since = "0.7.0", note = "use `CoordFloat` or `CoordNum` instead")]
 pub trait CoordinateType: Num + Copy + NumCast + PartialOrd + Debug {}
 #[allow(deprecated)]
 impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordinateType for T {}
