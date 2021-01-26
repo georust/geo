@@ -36,3 +36,111 @@ impl<F: GeoFloat> Closest<F> {
         }
     }
 }
+
+/// Implements the common pattern where a Geometry enum simply delegates its trait impl to it's inner type.
+///
+/// e.g.
+/// ```
+/// # use geo::{GeoNum, Polygon, Point, Coordinate, Line, Rect, Triangle, LineString, Geometry, MultiLineString, MultiPoint, MultiPolygon, GeometryCollection};
+///
+/// trait Foo<T: GeoNum> {
+///     fn foo_1(&self, coord: Coordinate<T>)  -> bool;
+///     fn foo_2(&self) -> i32;
+/// }
+///
+/// // Assuming we have an impl for all the inner types like this:
+/// impl<T: GeoNum> Foo<T> for Point<T> {
+///     fn foo_1(&self, coord: Coordinate<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 3 }
+/// }
+/// impl<T: GeoNum> Foo<T> for LineString<T> {
+///     fn foo_1(&self, coord: Coordinate<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 9 }
+/// }
+/// impl<T: GeoNum> Foo<T> for Line<T> {
+///     fn foo_1(&self, coord: Coordinate<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 8 }
+/// }
+/// impl<T: GeoNum> Foo<T> for Rect<T> {
+///     fn foo_1(&self, coord: Coordinate<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 7 }
+/// }
+/// impl<T: GeoNum> Foo<T> for Triangle<T> {
+///     fn foo_1(&self, coord: Coordinate<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 6 }
+/// }
+/// impl<T: GeoNum> Foo<T> for Polygon<T> {
+///     fn foo_1(&self, coord: Coordinate<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 5 }
+/// }
+/// impl<T: GeoNum> Foo<T> for MultiPoint<T> {
+///     fn foo_1(&self, coord: Coordinate<T>)  -> bool { false }
+///     fn foo_2(&self)  -> i32 { 4 }
+/// }
+/// impl<T: GeoNum> Foo<T> for MultiPolygon<T> {
+///     fn foo_1(&self, coord: Coordinate<T>)  -> bool { false }
+///     fn foo_2(&self)  -> i32 { 3 }
+/// }
+/// impl<T: GeoNum> Foo<T> for GeometryCollection<T> {
+///     fn foo_1(&self, coord: Coordinate<T>)  -> bool { false }
+///     fn foo_2(&self)  -> i32 { 2 }
+/// }
+/// impl<T: GeoNum> Foo<T> for MultiLineString<T> {
+///     fn foo_1(&self, coord: Coordinate<T>)  -> bool { false }
+///     fn foo_2(&self)  -> i32 { 1 }
+/// }
+///
+/// // If we want the impl for Geometry to simply delegate to it's
+/// // inner case...
+/// impl<T: GeoNum> Foo<T> for Geometry<T> {
+///     // Instead of writing out this trivial enum delegation...
+///     // fn foo_1(&self, coord: Coordinate<T>)  -> bool {
+///     //     match self {
+///     //        Geometry::Point(g) => g.foo_1(coord),
+///     //        Geometry::LineString(g) => g.foo_1(coord),
+///     //        _ => todo!("...etc for other cases")
+///     //     }
+///     // }
+///     //
+///     // fn foo_2(&self)  -> i32 {
+///     //     match self {
+///     //        Geometry::Point(g) => g.foo_2(),
+///     //        Geometry::LineString(g) => g.foo_2(),
+///     //        _ => todo!("...etc for other cases")
+///     //     }
+///     // }
+///
+///     // we can equivalently write:
+///     geo::geometry_delegate_impl! {
+///         fn foo_1(&self, coord: Coordinate<T>) -> bool;
+///         fn foo_2(&self) -> i32;
+///     }
+/// }
+/// ```
+#[macro_export]
+macro_rules! geometry_delegate_impl {
+    (
+        $(
+            $(#[$outer:meta])*
+            fn $func_name: ident(&$($self_life:lifetime)?self $(, $arg_name: ident: $arg_type: ty)*) -> $return: ty;
+         )+
+    ) => {
+            $(
+                $(#[$outer])*
+                fn $func_name(&$($self_life)? self, $($arg_name: $arg_type),*) -> $return {
+                    match self {
+                        Geometry::Point(g) => g.$func_name($($arg_name),*).into(),
+                        Geometry::Line(g) =>  g.$func_name($($arg_name),*).into(),
+                        Geometry::LineString(g) => g.$func_name($($arg_name),*).into(),
+                        Geometry::Polygon(g) => g.$func_name($($arg_name),*).into(),
+                        Geometry::MultiPoint(g) => g.$func_name($($arg_name),*).into(),
+                        Geometry::MultiLineString(g) => g.$func_name($($arg_name),*).into(),
+                        Geometry::MultiPolygon(g) => g.$func_name($($arg_name),*).into(),
+                        Geometry::GeometryCollection(g) => g.$func_name($($arg_name),*).into(),
+                        Geometry::Rect(g) => g.$func_name($($arg_name),*).into(),
+                        Geometry::Triangle(g) => g.$func_name($($arg_name),*).into(),
+                    }
+                }
+            )+
+        };
+}

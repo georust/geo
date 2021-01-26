@@ -14,19 +14,8 @@ where
     Polygon<T>: Intersects<G>,
     MultiPolygon<T>: Intersects<G>,
 {
-    fn intersects(&self, rhs: &G) -> bool {
-        match self {
-            Geometry::Point(geom) => geom.intersects(rhs),
-            Geometry::MultiPoint(geom) => geom.intersects(rhs),
-            Geometry::Line(geom) => geom.intersects(rhs),
-            Geometry::LineString(geom) => geom.intersects(rhs),
-            Geometry::MultiLineString(geom) => geom.intersects(rhs),
-            Geometry::Triangle(geom) => geom.intersects(rhs),
-            Geometry::Rect(geom) => geom.intersects(rhs),
-            Geometry::Polygon(geom) => geom.intersects(rhs),
-            Geometry::MultiPolygon(geom) => geom.intersects(rhs),
-            Geometry::GeometryCollection(geom) => geom.intersects(rhs),
-        }
+    geometry_delegate_impl! {
+        fn intersects(&self, rhs: &G) -> bool;
     }
 }
 symmetric_intersects_impl!(Coordinate<T>, Geometry<T>);

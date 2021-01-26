@@ -395,21 +395,9 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Geometry<T> {
             Geometry::Triangle(g) => GeometryCoordsIter::Triangle(g.coords_iter()),
         }
     }
-
-    /// Return the number of coordinates in the `Geometry`.
-    fn coords_count(&'a self) -> usize {
-        match self {
-            Geometry::Point(g) => g.coords_count(),
-            Geometry::Line(g) => g.coords_count(),
-            Geometry::LineString(g) => g.coords_count(),
-            Geometry::Polygon(g) => g.coords_count(),
-            Geometry::MultiPoint(g) => g.coords_count(),
-            Geometry::MultiLineString(g) => g.coords_count(),
-            Geometry::MultiPolygon(g) => g.coords_count(),
-            Geometry::GeometryCollection(g) => g.coords_count(),
-            Geometry::Rect(g) => g.coords_count(),
-            Geometry::Triangle(g) => g.coords_count(),
-        }
+    crate::geometry_delegate_impl! {
+        /// Return the number of coordinates in the `Geometry`.
+        fn coords_count(&'a self) -> usize;
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
