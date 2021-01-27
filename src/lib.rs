@@ -207,7 +207,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use types::{MultiPolygon, Point, Coord};
+    use types::{Coord, MultiPolygon, Point};
     use {Geometry, Wkt};
 
     #[test]
@@ -254,7 +254,15 @@ mod tests {
 
     #[test]
     fn test_debug() {
-        let g = Geometry::Point(Point(Some(Coord { x: 1.0, y: 2.0, m: None, z: None})));
-        assert_eq!(format!("{:?}", g), "Point(Point(Some(Coord { x: 1.0, y: 2.0, z: None, m: None })))");
+        let g = Geometry::Point(Point(Some(Coord {
+            x: 1.0,
+            y: 2.0,
+            m: None,
+            z: None,
+        })));
+        assert_eq!(
+            format!("{:?}", g),
+            "Point(Point(Some(Coord { x: 1.0, y: 2.0, z: None, m: None })))"
+        );
     }
 }
