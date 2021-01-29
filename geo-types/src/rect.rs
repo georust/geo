@@ -85,6 +85,7 @@ impl<T: CoordNum> Rect<T> {
         since = "0.6.2",
         note = "Use `Rect::new` instead, since `Rect::try_new` will never Error"
     )]
+    #[allow(deprecated)]
     pub fn try_new<C>(c1: C, c2: C) -> Result<Rect<T>, InvalidRectCoordinatesError>
     where
         C: Into<Coordinate<T>>,
@@ -264,11 +265,17 @@ impl<T: CoordFloat> Rect<T> {
 
 static RECT_INVALID_BOUNDS_ERROR: &str = "Failed to create Rect: 'min' coordinate's x/y value must be smaller or equal to the 'max' x/y value";
 
+#[deprecated(
+    since = "0.6.2",
+    note = "Use `Rect::new` instead, since `Rect::try_new` will never Error"
+)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct InvalidRectCoordinatesError;
 
+#[allow(deprecated)]
 impl std::error::Error for InvalidRectCoordinatesError {}
 
+#[allow(deprecated)]
 impl std::fmt::Display for InvalidRectCoordinatesError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", RECT_INVALID_BOUNDS_ERROR)
