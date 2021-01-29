@@ -10,8 +10,9 @@ readme = "README.md"
 keywords = ["geo", "geospatial", "wkt"]
 
 [dependencies]
-geo-types = {version = "0.7", optional = true}
+geo-types = {version = "0.7.1", optional = true}
 num-traits = "0.2"
+thiserror = "1.0.23"
 
 [dev-dependencies]
 criterion = { version = "0.2" }
@@ -22,3 +23,4 @@ default = ["geo-types"]
 [[bench]]
 name = "parse"
 harness = false
+

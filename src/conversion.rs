@@ -17,23 +17,23 @@ use Geometry;
 use Wkt;
 
 use std::convert::{TryFrom, TryInto};
-use std::fmt;
 
 use geo_types::CoordFloat;
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum Error {
+    #[error("The WKT Point was empty, but geo_type::Points cannot be empty")]
     PointConversionError,
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Error::PointConversionError => {
-                f.write_str("impossible to convert empty point to geo_type point")
-            }
-        }
-    }
+    #[error("Mismatched geometry (expected {expected:?}, found {found:?})")]
+    MismatchedGeometry {
+        expected: &'static str,
+        found: &'static str,
+    },
+    #[error("Wrong number of Geometries: {0}")]
+    WrongNumberOfGeometries(usize),
+    #[error("External error: {0}")]
+    External(Box<dyn std::error::Error>),
 }
 
 impl<T> TryFrom<Wkt<T>> for geo_types::Geometry<T>
@@ -50,6 +50,50 @@ where
         }
     }
 }
+
+#[macro_use]
+macro_rules! try_from_wkt_impl {
+    ($($type: ident),+) => {
+        $(
+            /// Convert a Wkt enum into a specific geo-type
+            impl<T: CoordFloat> TryFrom<Wkt<T>> for geo_types::$type<T> {
+                type Error = Error;
+
+                fn try_from(mut wkt: Wkt<T>) -> Result<Self, Self::Error> {
+                    match wkt.items.len() {
+                        1 => {
+                            let item = wkt.items.pop().unwrap();
+                            let geometry = geo_types::Geometry::try_from(item)?;
+                            Self::try_from(geometry).map_err(|e| {
+                                match e {
+                                    geo_types::Error::MismatchedGeometry { expected, found } => {
+                                        Error::MismatchedGeometry { expected, found }
+                                    }
+                                    // currently only one error type in geo-types error enum, but that seems likely to change
+                                    #[allow(unreachable_patterns)]
+                                    other => Error::External(Box::new(other)),
+                                }
+                            })
+                        }
+                        other => Err(Error::WrongNumberOfGeometries(other)),
+                    }
+                }
+            }
+        )+
+    }
+}
+
+try_from_wkt_impl!(
+    Point,
+    Line,
+    LineString,
+    Polygon,
+    MultiPoint,
+    MultiLineString,
+    MultiPolygon,
+    Rect,
+    Triangle
+);
 
 impl<T> From<Coord<T>> for geo_types::Coordinate<T>
 where
