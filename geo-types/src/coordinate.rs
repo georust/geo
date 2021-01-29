@@ -33,6 +33,15 @@ where
     pub y: T,
 }
 
+impl<T: Default + CoordNum> Default for Coordinate<T> {
+    fn default() -> Coordinate<T> {
+        Coordinate {
+            x: T::default(),
+            y: T::default(),
+        }
+    }
+}
+
 impl<T: CoordNum> From<(T, T)> for Coordinate<T> {
     fn from(coords: (T, T)) -> Self {
         Coordinate {
