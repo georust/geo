@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Add Changes Here
+* Implement Default on Coordinate struct (Defaults to (0,0)) #612
 
 ## 0.7.0
 
