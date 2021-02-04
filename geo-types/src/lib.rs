@@ -30,10 +30,22 @@
 //! standards. Thus, the types here are inter-operable with other implementations of the standards:
 //! [JTS], [GEOS], etc.
 //!
+//! # Features
+//!
+//! The following optional [Cargo features] are available:
+//!
+//! - `approx`: Allows geometry types to be checked for approximate equality with [approx]
+//! - `serde`: Allows geometry types to be serialized and deserialized with [Serde]
+//! - `use-rstar`: Allows geometry types to be inserted into [rstar] R*-trees
+//!
+//! [approx]: https://github.com/brendanzab/approx
+//! [Cargo features]: https://doc.rust-lang.org/cargo/reference/features.html
 //! [GeoRust]: https://georust.org
-//! [OGC-SFA]: https://www.ogc.org/standards/sfa
-//! [JTS]: https://github.com/locationtech/jts
 //! [GEOS]: https://trac.osgeo.org/geos
+//! [JTS]: https://github.com/locationtech/jts
+//! [OGC-SFA]: https://www.ogc.org/standards/sfa
+//! [rstar]: https://github.com/Stoeoef/rstar
+//! [Serde]: https://serde.rs/
 extern crate num_traits;
 use num_traits::{Float, Num, NumCast};
 use std::fmt::Debug;
