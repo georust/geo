@@ -161,19 +161,8 @@ where
 {
     type Output = Option<Rect<T>>;
 
-    fn bounding_rect(&self) -> Self::Output {
-        match self {
-            Geometry::Point(g) => Some(g.bounding_rect()),
-            Geometry::Line(g) => Some(g.bounding_rect()),
-            Geometry::LineString(g) => g.bounding_rect(),
-            Geometry::Polygon(g) => g.bounding_rect(),
-            Geometry::MultiPoint(g) => g.bounding_rect(),
-            Geometry::MultiLineString(g) => g.bounding_rect(),
-            Geometry::MultiPolygon(g) => g.bounding_rect(),
-            Geometry::GeometryCollection(g) => g.bounding_rect(),
-            Geometry::Rect(g) => Some(g.bounding_rect()),
-            Geometry::Triangle(g) => Some(g.bounding_rect()),
-        }
+    crate::geometry_delegate_impl! {
+       fn bounding_rect(&self) -> Self::Output;
     }
 }
 

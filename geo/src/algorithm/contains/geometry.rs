@@ -9,19 +9,8 @@ impl<T> Contains<Coordinate<T>> for Geometry<T>
 where
     T: GeoNum,
 {
-    fn contains(&self, coord: &Coordinate<T>) -> bool {
-        match self {
-            Geometry::Point(g) => g.contains(coord),
-            Geometry::Line(g) => g.contains(coord),
-            Geometry::LineString(g) => g.contains(coord),
-            Geometry::Polygon(g) => g.contains(coord),
-            Geometry::MultiPoint(g) => g.contains(coord),
-            Geometry::MultiLineString(g) => g.contains(coord),
-            Geometry::MultiPolygon(g) => g.contains(coord),
-            Geometry::GeometryCollection(g) => g.contains(coord),
-            Geometry::Rect(g) => g.contains(coord),
-            Geometry::Triangle(g) => g.contains(coord),
-        }
+    geometry_delegate_impl! {
+        fn contains(&self, coord: &Coordinate<T>) -> bool;
     }
 }
 

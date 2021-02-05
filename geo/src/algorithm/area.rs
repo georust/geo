@@ -236,34 +236,9 @@ impl<T> Area<T> for Geometry<T>
 where
     T: CoordFloat,
 {
-    fn signed_area(&self) -> T {
-        match self {
-            Geometry::Point(g) => g.signed_area(),
-            Geometry::Line(g) => g.signed_area(),
-            Geometry::LineString(g) => g.signed_area(),
-            Geometry::Polygon(g) => g.signed_area(),
-            Geometry::MultiPoint(g) => g.signed_area(),
-            Geometry::MultiLineString(g) => g.signed_area(),
-            Geometry::MultiPolygon(g) => g.signed_area(),
-            Geometry::GeometryCollection(g) => g.signed_area(),
-            Geometry::Rect(g) => g.signed_area(),
-            Geometry::Triangle(g) => g.signed_area(),
-        }
-    }
-
-    fn unsigned_area(&self) -> T {
-        match self {
-            Geometry::Point(g) => g.unsigned_area(),
-            Geometry::Line(g) => g.unsigned_area(),
-            Geometry::LineString(g) => g.unsigned_area(),
-            Geometry::Polygon(g) => g.unsigned_area(),
-            Geometry::MultiPoint(g) => g.unsigned_area(),
-            Geometry::MultiLineString(g) => g.unsigned_area(),
-            Geometry::MultiPolygon(g) => g.unsigned_area(),
-            Geometry::GeometryCollection(g) => g.unsigned_area(),
-            Geometry::Rect(g) => g.unsigned_area(),
-            Geometry::Triangle(g) => g.unsigned_area(),
-        }
+    crate::geometry_delegate_impl! {
+        fn signed_area(&self) -> T;
+        fn unsigned_area(&self) -> T;
     }
 }
 

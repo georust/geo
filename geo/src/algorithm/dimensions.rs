@@ -132,49 +132,10 @@ pub trait HasDimensions {
 }
 
 impl<C: CoordNum> HasDimensions for Geometry<C> {
-    fn is_empty(&self) -> bool {
-        match self {
-            Geometry::Point(g) => g.is_empty(),
-            Geometry::Line(g) => g.is_empty(),
-            Geometry::LineString(g) => g.is_empty(),
-            Geometry::Polygon(g) => g.is_empty(),
-            Geometry::MultiPoint(g) => g.is_empty(),
-            Geometry::MultiLineString(g) => g.is_empty(),
-            Geometry::MultiPolygon(g) => g.is_empty(),
-            Geometry::GeometryCollection(g) => g.is_empty(),
-            Geometry::Rect(g) => g.is_empty(),
-            Geometry::Triangle(g) => g.is_empty(),
-        }
-    }
-
-    fn dimensions(&self) -> Dimensions {
-        match self {
-            Geometry::Point(g) => g.dimensions(),
-            Geometry::Line(g) => g.dimensions(),
-            Geometry::LineString(g) => g.dimensions(),
-            Geometry::Polygon(g) => g.dimensions(),
-            Geometry::MultiPoint(g) => g.dimensions(),
-            Geometry::MultiLineString(g) => g.dimensions(),
-            Geometry::MultiPolygon(g) => g.dimensions(),
-            Geometry::GeometryCollection(g) => g.dimensions(),
-            Geometry::Rect(g) => g.dimensions(),
-            Geometry::Triangle(g) => g.dimensions(),
-        }
-    }
-
-    fn boundary_dimensions(&self) -> Dimensions {
-        match self {
-            Geometry::Point(g) => g.boundary_dimensions(),
-            Geometry::Line(g) => g.boundary_dimensions(),
-            Geometry::LineString(g) => g.boundary_dimensions(),
-            Geometry::Polygon(g) => g.boundary_dimensions(),
-            Geometry::MultiPoint(g) => g.boundary_dimensions(),
-            Geometry::MultiLineString(g) => g.boundary_dimensions(),
-            Geometry::MultiPolygon(g) => g.boundary_dimensions(),
-            Geometry::GeometryCollection(g) => g.boundary_dimensions(),
-            Geometry::Rect(g) => g.boundary_dimensions(),
-            Geometry::Triangle(g) => g.boundary_dimensions(),
-        }
+    crate::geometry_delegate_impl! {
+        fn is_empty(&self) -> bool;
+        fn dimensions(&self) -> Dimensions;
+        fn boundary_dimensions(&self) -> Dimensions;
     }
 }
 
