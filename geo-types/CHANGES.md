@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* Add Changes Here
-* Implement Default on Coordinate struct (Defaults to (0,0)) #612
+* Implement `Default` on `Coordinate` and `Point` structs (defaults to `(x: 0, y: 0)`)
+  * <https://github.com/georust/geo/pull/616>
 
 ## 0.7.0
 
