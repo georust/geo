@@ -1,10 +1,9 @@
 use crate::{
-    CoordNum, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
-    Point, Polygon, Rect, Triangle,
+    CoordNum, Error, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    MultiPolygon, Point, Polygon, Rect, Triangle,
 };
+use core::any::type_name;
 use std::convert::TryFrom;
-use std::error::Error;
-use std::fmt;
 
 /// An enum representing any possible geometry type.
 ///
@@ -182,94 +181,56 @@ impl<T: CoordNum> Geometry<T> {
     }
 }
 
-#[derive(Debug)]
-pub struct FailedToConvertError;
+#[macro_use]
+macro_rules! try_from_geometry_impl {
+    ($($type: ident),+) => {
+        $(
+        /// Convert a Geometry enum into its inner type.
+        ///
+        /// Fails if the enum case does not match the type you are trying to convert it to.
+        impl <T: CoordNum> TryFrom<Geometry<T>> for $type<T> {
+            type Error = Error;
 
-impl fmt::Display for FailedToConvertError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Could not convert from enum member to concrete type")
-    }
-}
-
-impl Error for FailedToConvertError {
-    fn description(&self) -> &str {
-        "Could not convert from enum member to concrete type"
-    }
-}
-
-impl<T: CoordNum> TryFrom<Geometry<T>> for Point<T> {
-    type Error = FailedToConvertError;
-
-    fn try_from(geom: Geometry<T>) -> Result<Point<T>, Self::Error> {
-        match geom {
-            Geometry::Point(p) => Ok(p),
-            _ => Err(FailedToConvertError),
+            fn try_from(geom: Geometry<T>) -> Result<Self, Self::Error> {
+                match geom {
+                    Geometry::$type(g) => Ok(g),
+                    other => Err(Error::MismatchedGeometry {
+                        expected: type_name::<$type<T>>(),
+                        found: inner_type_name(other)
+                    })
+                }
+            }
         }
+        )+
     }
 }
 
-impl<T: CoordNum> TryFrom<Geometry<T>> for Line<T> {
-    type Error = FailedToConvertError;
+try_from_geometry_impl!(
+    Point,
+    Line,
+    LineString,
+    Polygon,
+    MultiPoint,
+    MultiLineString,
+    MultiPolygon,
+    Rect,
+    Triangle
+);
 
-    fn try_from(geom: Geometry<T>) -> Result<Line<T>, Self::Error> {
-        match geom {
-            Geometry::Line(l) => Ok(l),
-            _ => Err(FailedToConvertError),
-        }
-    }
-}
-
-impl<T: CoordNum> TryFrom<Geometry<T>> for LineString<T> {
-    type Error = FailedToConvertError;
-
-    fn try_from(geom: Geometry<T>) -> Result<LineString<T>, Self::Error> {
-        match geom {
-            Geometry::LineString(ls) => Ok(ls),
-            _ => Err(FailedToConvertError),
-        }
-    }
-}
-
-impl<T: CoordNum> TryFrom<Geometry<T>> for Polygon<T> {
-    type Error = FailedToConvertError;
-
-    fn try_from(geom: Geometry<T>) -> Result<Polygon<T>, Self::Error> {
-        match geom {
-            Geometry::Polygon(ls) => Ok(ls),
-            _ => Err(FailedToConvertError),
-        }
-    }
-}
-
-impl<T: CoordNum> TryFrom<Geometry<T>> for MultiPoint<T> {
-    type Error = FailedToConvertError;
-
-    fn try_from(geom: Geometry<T>) -> Result<MultiPoint<T>, Self::Error> {
-        match geom {
-            Geometry::MultiPoint(mp) => Ok(mp),
-            _ => Err(FailedToConvertError),
-        }
-    }
-}
-
-impl<T: CoordNum> TryFrom<Geometry<T>> for MultiLineString<T> {
-    type Error = FailedToConvertError;
-
-    fn try_from(geom: Geometry<T>) -> Result<MultiLineString<T>, Self::Error> {
-        match geom {
-            Geometry::MultiLineString(mls) => Ok(mls),
-            _ => Err(FailedToConvertError),
-        }
-    }
-}
-
-impl<T: CoordNum> TryFrom<Geometry<T>> for MultiPolygon<T> {
-    type Error = FailedToConvertError;
-
-    fn try_from(geom: Geometry<T>) -> Result<MultiPolygon<T>, Self::Error> {
-        match geom {
-            Geometry::MultiPolygon(mp) => Ok(mp),
-            _ => Err(FailedToConvertError),
-        }
+fn inner_type_name<T>(geometry: Geometry<T>) -> &'static str
+where
+    T: CoordNum,
+{
+    match geometry {
+        Geometry::Point(_) => type_name::<Point<T>>(),
+        Geometry::Line(_) => type_name::<Line<T>>(),
+        Geometry::LineString(_) => type_name::<LineString<T>>(),
+        Geometry::Polygon(_) => type_name::<Polygon<T>>(),
+        Geometry::MultiPoint(_) => type_name::<MultiPoint<T>>(),
+        Geometry::MultiLineString(_) => type_name::<MultiLineString<T>>(),
+        Geometry::MultiPolygon(_) => type_name::<MultiPolygon<T>>(),
+        Geometry::GeometryCollection(_) => type_name::<GeometryCollection<T>>(),
+        Geometry::Rect(_) => type_name::<Rect<T>>(),
+        Geometry::Triangle(_) => type_name::<Triangle<T>>(),
     }
 }

@@ -4,6 +4,8 @@
 
 * Implement `Default` on `Coordinate` and `Point` structs (defaults to `(x: 0, y: 0)`)
   * <https://github.com/georust/geo/pull/616>
+* Add specific details about conversion failures in the newly public `geo_types::Error`
+  * <https://github.com/georust/geo/pull/614>
 
 ## 0.7.0
 

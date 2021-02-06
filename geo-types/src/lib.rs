@@ -114,7 +114,11 @@ mod triangle;
 pub use crate::triangle::Triangle;
 
 mod rect;
+#[allow(deprecated)]
 pub use crate::rect::{InvalidRectCoordinatesError, Rect};
+
+mod error;
+pub use error::Error;
 
 #[macro_use]
 mod macros;
