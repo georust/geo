@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Add new entries here.
+
+## 0.9.0
+
 * WKT errors impl `std::error::Error`
   * <https://github.com/georust/wkt/pull/57>
 * Add TryFrom for converting directly to geo-types::Geometry enum members, such
