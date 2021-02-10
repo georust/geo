@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* WKT errors impl `std::error::Error`
+  * <https://github.com/georust/wkt/pull/57>
+* Add TryFrom for converting directly to geo-types::Geometry enum members, such
+  as `geo_types::LineString::try_from(wkt)`
+  * <https://github.com/georust/wkt/pull/57>
 * Add `geo-types::Geometry::from(wkt)`
 * BREAKING: update geo-types, apply new `geo_types::CoordFloat`
   * <https://github.com/georust/wkt/pull/53>

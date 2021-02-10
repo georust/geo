@@ -35,6 +35,8 @@ pub mod types;
 #[cfg(feature = "geo-types")]
 extern crate geo_types;
 
+extern crate thiserror;
+
 #[cfg(feature = "geo-types")]
 pub use towkt::ToWkt;
 
