@@ -94,6 +94,37 @@ where
     }
 }
 
+/// This is a helper function to convert directly from WKT format into a geo_types::Geometry.
+/// ```
+/// # extern crate wkt;
+/// # extern crate geo_types;
+/// # extern crate serde_json;
+/// use geo_types::Geometry;
+///
+/// #[derive(serde::Deserialize)]
+/// struct MyType {
+///     #[serde(deserialize_with = "wkt::deserialize::deserialize_wkt_geometry")]
+///     pub geometry: Geometry<f64>,
+/// }
+///
+/// let json = r#"{ "geometry": "POINT (3.14 42)" }"#;
+/// let my_type: MyType = serde_json::from_str(json).unwrap();
+/// assert!(matches!(my_type.geometry, Geometry::Point(_)));
+/// ```
+#[cfg(feature = "geo-types")]
+pub fn deserialize_wkt_geometry<'de, D>(
+    deserializer: D,
+) -> Result<geo_types::Geometry<f64>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use serde::Deserialize;
+    use std::convert::TryInto;
+    let geometry: Geometry<f64> = Geometry::deserialize(deserializer)?;
+    let geometry: geo_types::Geometry<f64> = geometry.try_into().unwrap();
+    Ok(geometry)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
