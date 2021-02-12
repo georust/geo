@@ -112,12 +112,13 @@ where
 /// assert!(matches!(my_type.geometry, Geometry::Point(_)));
 /// ```
 #[cfg(feature = "geo-types")]
-pub fn deserialize_geometry<'de, D>(deserializer: D) -> Result<geo_types::Geometry<f64>, D::Error>
+pub fn deserialize_geometry<'de, D, T>(deserializer: D) -> Result<geo_types::Geometry<T>, D::Error>
 where
     D: Deserializer<'de>,
+    T: FromStr + Default + WktFloat,
 {
     use serde::Deserialize;
-    Geometry::deserialize(deserializer).and_then(|g: Geometry<f64>| {
+    Geometry::deserialize(deserializer).and_then(|g: Geometry<T>| {
         use std::convert::TryInto;
         g.try_into().map_err(|e| D::Error::custom(e))
     })
