@@ -43,6 +43,11 @@ pub use towkt::ToWkt;
 #[cfg(feature = "geo-types")]
 pub mod conversion;
 
+#[cfg(feature = "serde")]
+extern crate serde;
+#[cfg(feature = "serde")]
+pub mod deserialize;
+
 pub trait WktFloat: num_traits::Float + std::fmt::Debug {}
 impl<T> WktFloat for T where T: num_traits::Float + std::fmt::Debug {}
 

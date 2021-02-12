@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Add new entries here.
+* Add serde::Deserialize for Wkt and Geometry.
 
 ## 0.9.0
 
