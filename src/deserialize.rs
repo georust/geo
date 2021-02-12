@@ -117,10 +117,10 @@ where
     D: Deserializer<'de>,
 {
     use serde::Deserialize;
-    use std::convert::TryInto;
-    let geometry: Geometry<f64> = Geometry::deserialize(deserializer)?;
-    let geometry: geo_types::Geometry<f64> = geometry.try_into().unwrap();
-    Ok(geometry)
+    Geometry::deserialize(deserializer).and_then(|g: Geometry<f64>| {
+        use std::convert::TryInto;
+        g.try_into().map_err(|e| D::Error::custom(e))
+    })
 }
 
 #[cfg(test)]
