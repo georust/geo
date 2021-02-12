@@ -103,7 +103,7 @@ where
 ///
 /// #[derive(serde::Deserialize)]
 /// struct MyType {
-///     #[serde(deserialize_with = "wkt::deserialize::deserialize_wkt_geometry")]
+///     #[serde(deserialize_with = "wkt::deserialize_geometry")]
 ///     pub geometry: Geometry<f64>,
 /// }
 ///
@@ -112,9 +112,7 @@ where
 /// assert!(matches!(my_type.geometry, Geometry::Point(_)));
 /// ```
 #[cfg(feature = "geo-types")]
-pub fn deserialize_wkt_geometry<'de, D>(
-    deserializer: D,
-) -> Result<geo_types::Geometry<f64>, D::Error>
+pub fn deserialize_geometry<'de, D>(deserializer: D) -> Result<geo_types::Geometry<f64>, D::Error>
 where
     D: Deserializer<'de>,
 {

@@ -47,6 +47,8 @@ pub mod conversion;
 extern crate serde;
 #[cfg(feature = "serde")]
 pub mod deserialize;
+#[cfg(feature = "serde")]
+pub use deserialize::deserialize_geometry;
 
 pub trait WktFloat: num_traits::Float + std::fmt::Debug {}
 impl<T> WktFloat for T where T: num_traits::Float + std::fmt::Debug {}
