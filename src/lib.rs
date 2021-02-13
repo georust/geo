@@ -47,7 +47,7 @@ pub mod conversion;
 extern crate serde;
 #[cfg(feature = "serde")]
 pub mod deserialize;
-#[cfg(feature = "serde")]
+#[cfg(all(feature = "serde", feature = "geo-types"))]
 pub use deserialize::deserialize_geometry;
 
 pub trait WktFloat: num_traits::Float + std::fmt::Debug {}
