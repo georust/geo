@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-* Add new entries here.
+* Add serde::Deserialize for Wkt and Geometry.
+* Add helper function for deserializing from WKT format into geo_types::Geometry.
 
 ## 0.9.0
 
