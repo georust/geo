@@ -1,11 +1,15 @@
 wkt
 ===
 
-[![Build Status](https://travis-ci.org/georust/wkt.svg?branch=master)](https://travis-ci.org/georust/wkt)
-
-[API Documentation](https://docs.rs/wkt/)
-
 Rust read/write support for [well-known text (WKT)](https://en.wikipedia.org/wiki/Well-known_text).
+
+[![Crate][crates-badge]][crates-url]
+[![API Documentation][docs-badge]][docs-url]
+
+[crates-badge]: https://img.shields.io/crates/v/wkt.svg
+[crates-url]: https://crates.io/crates/wkt
+[docs-badge]: https://docs.rs/wkt/badge.svg
+[docs-url]: https://docs.rs/wkt
 
 ## License
 
