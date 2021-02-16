@@ -8,8 +8,11 @@ jobs:
     defaults:
       run:
         working-directory: geo-types
+    strategy:
+      matrix:
+        container_image: ["georust/geo-ci:rust-1.49", "georust/geo-ci:rust-1.50"]
     container:
-      image: georust/geo-ci
+      image: ${{ matrix.container_image }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -24,8 +27,11 @@ jobs:
     defaults:
       run:
         working-directory: geo
+    strategy:
+      matrix:
+        container_image: ["georust/geo-ci:rust-1.49", "georust/geo-ci:rust-1.50"]
     container:
-      image: georust/geo-ci
+      image: ${{ matrix.container_image }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -40,8 +46,11 @@ jobs:
     defaults:
       run:
         working-directory: geo-postgis
+    strategy:
+      matrix:
+        container_image: ["georust/geo-ci:rust-1.49", "georust/geo-ci:rust-1.50"]
     container:
-      image: georust/geo-ci
+      image: ${{ matrix.container_image }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
