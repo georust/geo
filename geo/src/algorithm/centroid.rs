@@ -4,7 +4,8 @@ use std::iter::Sum;
 use crate::algorithm::area::{get_linestring_area, Area};
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::{
-    CoordFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect,
+    CoordFloat, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
 /// Calculation of the centroid.
@@ -351,6 +352,39 @@ where
             sum.x() / T::from(self.0.len()).unwrap(),
             sum.y() / T::from(self.0.len()).unwrap(),
         ))
+    }
+}
+
+impl<T> Centroid for Geometry<T>
+where
+    T: CoordFloat + FromPrimitive + Sum,
+{
+    type Output = Option<Point<T>>;
+
+    crate::geometry_delegate_impl! {
+        fn centroid(&self) -> Self::Output;
+    }
+}
+
+impl<T> Centroid for GeometryCollection<T>
+where
+    T: CoordFloat + FromPrimitive + Sum,
+{
+    type Output = Option<Point<T>>;
+    fn centroid(&self) -> Self::Output {
+        let centroids = self.iter().flat_map(Centroid::centroid).collect();
+        MultiPoint(centroids).centroid()
+    }
+}
+
+impl<T> Centroid for Triangle<T>
+where
+    T: CoordFloat + FromPrimitive + Sum,
+{
+    type Output = Point<T>;
+    fn centroid(&self) -> Self::Output {
+        let coord = self.0 + self.1 + self.2 / T::from_usize(3).unwrap();
+        Point::from(coord)
     }
 }
 
