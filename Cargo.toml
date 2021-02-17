@@ -1,2 +1,6 @@
 [workspace]
 members = ["geo", "geo-types", "geo-postgis"]
+
+[patch.crates-io]
+geo = { path = "geo" }
+geo-types = { path = "geo-types" }
