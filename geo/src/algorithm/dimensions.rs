@@ -226,7 +226,19 @@ impl<C: CoordNum> HasDimensions for Polygon<C> {
     }
 
     fn dimensions(&self) -> Dimensions {
-        Dimensions::TwoDimensional
+        use crate::algorithm::coords_iter::CoordsIter;
+        let mut coords = self.exterior_coords_iter();
+        match coords.next() {
+            None => Dimensions::Empty,
+            Some(coord_0) => {
+                if coords.all(|coord_n| coord_0 == coord_n) {
+                    // all coords are a single point
+                    Dimensions::ZeroDimensional
+                } else {
+                    Dimensions::TwoDimensional
+                }
+            }
+        }
     }
 
     fn boundary_dimensions(&self) -> Dimensions {

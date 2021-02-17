@@ -355,7 +355,7 @@ where
 
 impl<T> Centroid for Geometry<T>
 where
-    T: CoordFloat + FromPrimitive + Sum,
+    T: CoordFloat + FromPrimitive + Sum + Default,
 {
     type Output = Option<Point<T>>;
 
@@ -366,12 +366,80 @@ where
 
 impl<T> Centroid for GeometryCollection<T>
 where
-    T: CoordFloat + FromPrimitive + Sum,
+    T: CoordFloat + FromPrimitive + Sum + Default,
 {
     type Output = Option<Point<T>>;
     fn centroid(&self) -> Self::Output {
-        let centroids = self.iter().flat_map(Centroid::centroid).collect();
-        MultiPoint(centroids).centroid()
+        use crate::algorithm::dimensions::{Dimensions, HasDimensions};
+
+        let mut centroid_0d_accum: Option<(Point<T>, T)> = None;
+        let mut centroid_1d_accum: Option<(Point<T>, T)> = None;
+        let mut centroid_2d_accum: Option<(Point<T>, T)> = None;
+
+        for geometry in self.iter() {
+            let centroid = geometry.centroid();
+            match (geometry.dimensions(), centroid) {
+                (Dimensions::Empty, _) | (_, None) => continue,
+                (Dimensions::ZeroDimensional, Some(centroid)) => {
+                    let mut centroid_accum = centroid_0d_accum.unwrap_or_default();
+                    let weight = T::one();
+                    centroid_accum.0 = centroid_accum.0 + centroid * weight;
+                    centroid_accum.1 = centroid_accum.1 + weight;
+                    centroid_0d_accum = Some(centroid_accum);
+                }
+                (Dimensions::OneDimensional, Some(centroid)) => {
+                    let mut centroid_accum = centroid_1d_accum.unwrap_or_default();
+
+                    fn length<T>(geometry: &Geometry<T>) -> T
+                    where
+                        T: CoordFloat + FromPrimitive + Sum + Default,
+                    {
+                        match geometry {
+                            Geometry::Line(l) => l.euclidean_length(),
+                            Geometry::LineString(l) => l.euclidean_length(),
+                            Geometry::MultiLineString(l) => l.euclidean_length(),
+                            Geometry::GeometryCollection(geometry_collection) => {
+                                geometry_collection.iter().map(length).sum()
+                            }
+                            Geometry::Point(_)
+                            | Geometry::MultiPoint(_)
+                            | Geometry::Polygon(_)
+                            | Geometry::MultiPolygon(_)
+                            | Geometry::Rect(_)
+                            | Geometry::Triangle(_) => T::zero(),
+                        }
+                    }
+                    let weight = length(geometry);
+
+                    if weight == T::zero() {
+                        continue;
+                    }
+
+                    centroid_accum.0 = centroid_accum.0 + centroid * weight;
+                    centroid_accum.1 = centroid_accum.1 + weight;
+                    centroid_1d_accum = Some(centroid_accum);
+                }
+                (Dimensions::TwoDimensional, Some(centroid)) => {
+                    let mut centroid_accum = centroid_2d_accum.unwrap_or_default();
+
+                    // REVIEW: unsigned?
+                    let weight = geometry.unsigned_area();
+
+                    if weight == T::zero() {
+                        continue;
+                    }
+
+                    centroid_accum.0 = centroid_accum.0 + centroid * weight;
+                    centroid_accum.1 = centroid_accum.1 + weight;
+                    centroid_2d_accum = Some(centroid_accum);
+                }
+            };
+        }
+
+        centroid_2d_accum
+            .or(centroid_1d_accum)
+            .or(centroid_0d_accum)
+            .map(|(centroid, weight)| centroid / weight)
     }
 }
 
