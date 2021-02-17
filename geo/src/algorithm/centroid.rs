@@ -174,14 +174,12 @@ where
                         },
                     );
             if total_length == T::zero() {
-                // length == 0 means that all points in all constituent linestrings were equal.
-                // we can just use the first defined point in this case.
-                for linestring in self.0.iter() {
-                    if !linestring.0.is_empty() {
-                        return Some(Point(linestring[0]));
-                    }
-                }
-                None // this should never happen, since all linestrings being empty was previously checked
+                // All line strings were 0 length - dimensionally equivalent to a multi point.
+                let points = self
+                    .iter()
+                    .flat_map(|line_string| Some(Point::from(*line_string.0.first()?)))
+                    .collect();
+                MultiPoint(points).centroid()
             } else {
                 Some(Point::new(sum_x / total_length, sum_y / total_length))
             }
