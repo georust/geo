@@ -457,11 +457,9 @@ where
 #[cfg(test)]
 mod test {
     use crate::algorithm::centroid::Centroid;
-    use crate::algorithm::euclidean_distance::EuclideanDistance;
-    use crate::line_string;
     use crate::{
-        polygon, CoordFloat, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Point,
-        Polygon, Rect,
+        line_string, point, polygon, CoordFloat, Coordinate, Line, LineString, MultiLineString,
+        MultiPolygon, Point, Polygon, Rect,
     };
 
     /// small helper to create a coordinate
@@ -530,7 +528,7 @@ mod test {
             line_string![coord],
             line_string![coord],
         ]);
-        assert_eq!(mls.centroid(), Some(Point(coord)));
+        assert_relative_eq!(mls.centroid().unwrap(), Point(coord));
     }
     #[test]
     fn multilinestring_one_line_test() {
@@ -543,7 +541,7 @@ mod test {
             (x: 11., y: 1.)
         ];
         let mls: MultiLineString<f64> = MultiLineString(vec![linestring]);
-        assert_eq!(mls.centroid(), Some(Point(Coordinate { x: 6., y: 1. })));
+        assert_relative_eq!(mls.centroid().unwrap(), Point(Coordinate { x: 6., y: 1. }));
     }
     #[test]
     fn multilinestring_test() {
@@ -551,12 +549,9 @@ mod test {
         let v2 = line_string![(x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 3.0, y: 1.0)];
         let v3 = line_string![(x: -12.0, y: -100.0), (x: 7.0, y: 8.0)];
         let mls = MultiLineString(vec![v1, v2, v3]);
-        assert_eq!(
-            mls.centroid(),
-            Some(Point(Coordinate {
-                x: -1.9097834383655845,
-                y: -37.683866439745714
-            }))
+        assert_relative_eq!(
+            mls.centroid().unwrap(),
+            point![x: -1.9097834383655845, y: -37.683866439745714]
         );
     }
     // Tests: Centroid of Polygon
@@ -567,11 +562,11 @@ mod test {
     }
     #[test]
     fn polygon_one_point_test() {
-        let p = Point(Coordinate { x: 2., y: 1. });
+        let p = point![ x: 2., y: 1. ];
         let v = Vec::new();
         let linestring = line_string![p.0];
         let poly = Polygon::new(linestring, v);
-        assert_eq!(poly.centroid(), Some(p));
+        assert_relative_eq!(poly.centroid().unwrap(), p);
     }
 
     #[test]
@@ -623,7 +618,7 @@ mod test {
             (x: 0., y: 2.),
             (x: 0., y: 0.)
         ];
-        assert_eq!(poly.centroid(), Some(Point::new(1., 1.)));
+        assert_relative_eq!(poly.centroid().unwrap(), point![x:1., y:1.]);
     }
     #[test]
     fn polygon_hole_test() {
@@ -760,11 +755,11 @@ mod test {
         let linestring =
             LineString::from(vec![p(7., 1.), p(8., 1.), p(8., 2.), p(7., 2.), p(7., 1.)]);
         let poly2 = Polygon::new(linestring, Vec::new());
-        let dist = MultiPolygon(vec![poly1, poly2])
-            .centroid()
-            .unwrap()
-            .euclidean_distance(&p(4.07142857142857, 1.92857142857143));
-        assert_relative_eq!(dist, 0.0, epsilon = 1e-14); // the results is larger than f64::EPSILON
+        let centroid = MultiPolygon(vec![poly1, poly2]).centroid().unwrap();
+        assert_relative_eq!(
+            centroid,
+            point![x: 4.071428571428571, y: 1.9285714285714286]
+        );
     }
     #[test]
     fn multipolygon_two_polygons_of_opposite_clockwise_test() {
@@ -772,20 +767,20 @@ mod test {
         let poly1 = Polygon::new(linestring, Vec::new());
         let linestring = LineString::from(vec![(0., 0.), (-2., 0.), (-2., 2.), (0., 2.), (0., 0.)]);
         let poly2 = Polygon::new(linestring, Vec::new());
-        assert_eq!(
-            MultiPolygon(vec![poly1, poly2]).centroid(),
-            Some(Point::new(0., 1.))
+        assert_relative_eq!(
+            MultiPolygon(vec![poly1, poly2]).centroid().unwrap(),
+            point![x: 0., y: 1.]
         );
     }
     #[test]
     fn bounding_rect_test() {
         let bounding_rect = Rect::new(Coordinate { x: 0., y: 50. }, Coordinate { x: 4., y: 100. });
-        let point = Point(Coordinate { x: 2., y: 75. });
+        let point = point![x: 2., y: 75.];
         assert_eq!(point, bounding_rect.centroid());
     }
     #[test]
     fn line_test() {
         let line1 = Line::new(c(0., 1.), c(1., 3.));
-        assert_eq!(line1.centroid(), Point::new(0.5, 2.));
+        assert_eq!(line1.centroid(), point![x: 0.5, y: 2.]);
     }
 }
