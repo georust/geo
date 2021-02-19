@@ -1,5 +1,8 @@
 use crate::{polygon, CoordFloat, CoordNum, Coordinate, Polygon};
 
+#[cfg(any(feature = "approx", test))]
+use approx::{AbsDiffEq, RelativeEq};
+
 /// An _axis-aligned_ bounded 2D rectangle whose area is
 /// defined by minimum and maximum `Coordinate`s.
 ///
@@ -264,6 +267,88 @@ impl<T: CoordFloat> Rect<T> {
 }
 
 static RECT_INVALID_BOUNDS_ERROR: &str = "Failed to create Rect: 'min' coordinate's x/y value must be smaller or equal to the 'max' x/y value";
+
+#[cfg(any(feature = "approx", test))]
+impl<T> RelativeEq for Rect<T>
+where
+    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+{
+    #[inline]
+    fn default_max_relative() -> Self::Epsilon {
+        T::default_max_relative()
+    }
+
+    /// Equality assertion within a relative limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Rect;
+    ///
+    /// let a = Rect::new((0.0, 0.0), (10.0, 10.0));
+    /// let b = Rect::new((0.0, 0.0), (10.01, 10.0));
+    ///
+    /// approx::assert_relative_eq!(a, b, max_relative=0.1);
+    /// approx::assert_relative_ne!(a, b, max_relative=0.0001);
+    /// ```
+    #[inline]
+    fn relative_eq(
+        &self,
+        other: &Self,
+        epsilon: Self::Epsilon,
+        max_relative: Self::Epsilon,
+    ) -> bool {
+        if !self.min.relative_eq(&other.min, epsilon, max_relative) {
+            return false;
+        }
+
+        if !self.max.relative_eq(&other.max, epsilon, max_relative) {
+            return false;
+        }
+
+        true
+    }
+}
+
+#[cfg(any(feature = "approx", test))]
+impl<T> AbsDiffEq for Rect<T>
+where
+    T: AbsDiffEq<Epsilon = T> + CoordNum,
+    T::Epsilon: Copy,
+{
+    type Epsilon = T;
+
+    #[inline]
+    fn default_epsilon() -> Self::Epsilon {
+        T::default_epsilon()
+    }
+
+    /// Equality assertion with an absolute limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{point, Rect};
+    ///
+    /// let a = Rect::new((0.0, 0.0), (10.0, 10.0));
+    /// let b = Rect::new((0.0, 0.0), (10.01, 10.0));
+    ///
+    /// approx::abs_diff_eq!(a, b, epsilon=0.1);
+    /// approx::abs_diff_ne!(a, b, epsilon=0.001);
+    /// ```
+    #[inline]
+    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+        if !self.min.abs_diff_eq(&other.min, epsilon) {
+            return false;
+        }
+
+        if !self.max.abs_diff_eq(&other.max, epsilon) {
+            return false;
+        }
+
+        true
+    }
+}
 
 #[deprecated(
     since = "0.6.2",

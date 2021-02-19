@@ -147,7 +147,7 @@ where
         T::default_epsilon()
     }
 
-    /// Equality assertion with a absolute limit.
+    /// Equality assertion with an absolute limit.
     ///
     /// # Examples
     ///

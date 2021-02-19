@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+* Implement `RelativeEq` and `AbsDiffEq` for fuzzy comparison of remaining Geometry Types
+  * <https://github.com/georust/geo/pull/628>
+
 ## 0.7.1
 
 * Implement `Default` on `Coordinate` and `Point` structs (defaults to `(x: 0, y: 0)`)

@@ -1,4 +1,7 @@
 use crate::{CoordNum, Geometry};
+
+#[cfg(any(feature = "approx", test))]
+use approx::{AbsDiffEq, RelativeEq};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
@@ -220,5 +223,81 @@ impl<'a, T: CoordNum> GeometryCollection<T> {
 
     pub fn iter_mut(&'a mut self) -> IterMutHelper<'a, T> {
         self.into_iter()
+    }
+}
+
+#[cfg(any(feature = "approx", test))]
+impl<T> RelativeEq for GeometryCollection<T>
+where
+    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+{
+    #[inline]
+    fn default_max_relative() -> Self::Epsilon {
+        T::default_max_relative()
+    }
+
+    /// Equality assertion within a relative limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{GeometryCollection, point};
+    ///
+    /// let a = GeometryCollection(vec![point![x: 1.0, y: 2.0].into()]);
+    /// let b = GeometryCollection(vec![point![x: 1.0, y: 2.01].into()]);
+    ///
+    /// approx::assert_relative_eq!(a, b, max_relative=0.1);
+    /// approx::assert_relative_ne!(a, b, max_relative=0.0001);
+    /// ```
+    #[inline]
+    fn relative_eq(
+        &self,
+        other: &Self,
+        epsilon: Self::Epsilon,
+        max_relative: Self::Epsilon,
+    ) -> bool {
+        if self.0.len() != other.0.len() {
+            return false;
+        }
+
+        let mut mp_zipper = self.iter().zip(other.iter());
+        mp_zipper.all(|(lhs, rhs)| lhs.relative_eq(&rhs, epsilon, max_relative))
+    }
+}
+
+#[cfg(any(feature = "approx", test))]
+impl<T> AbsDiffEq for GeometryCollection<T>
+where
+    T: AbsDiffEq<Epsilon = T> + CoordNum,
+    T::Epsilon: Copy,
+{
+    type Epsilon = T;
+
+    #[inline]
+    fn default_epsilon() -> Self::Epsilon {
+        T::default_epsilon()
+    }
+
+    /// Equality assertion with an absolute limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{GeometryCollection, point};
+    ///
+    /// let a = GeometryCollection(vec![point![x: 0.0, y: 0.0].into()]);
+    /// let b = GeometryCollection(vec![point![x: 0.0, y: 0.1].into()]);
+    ///
+    /// approx::abs_diff_eq!(a, b, epsilon=0.1);
+    /// approx::abs_diff_ne!(a, b, epsilon=0.001);
+    /// ```
+    #[inline]
+    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+        if self.0.len() != other.0.len() {
+            return false;
+        }
+
+        let mut mp_zipper = self.into_iter().zip(other.into_iter());
+        mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(&rhs, epsilon))
     }
 }
