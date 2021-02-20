@@ -130,7 +130,7 @@ where
 /// # extern crate wkt;
 /// # extern crate geo_types;
 /// # extern crate serde_json;
-/// use geo_types::Geometry;
+/// use geo_types::Point;
 ///
 /// #[derive(serde::Deserialize)]
 /// struct MyType {
