@@ -4,8 +4,8 @@ use std::iter::Sum;
 use crate::algorithm::area::{get_linestring_area, Area};
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::{
-    CoordFloat, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon, Rect, Triangle,
+    CoordFloat, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
 /// Calculation of the centroid.
@@ -174,12 +174,12 @@ where
                         },
                     );
             if total_length == T::zero() {
-                // All line strings were 0 length - dimensionally equivalent to a multi point.
-                let points = self
-                    .iter()
-                    .flat_map(|line_string| Some(Point::from(*line_string.0.first()?)))
-                    .collect();
-                MultiPoint(points).centroid()
+                // All line strings were 0 length - dimensionally equivalent to a MultiPoint.
+                centroid_of_coords(
+                    self.iter()
+                        .flat_map(|line_string| Some(*line_string.0.first()?)),
+                )
+                .map(Point)
             } else {
                 Some(Point::new(sum_x / total_length, sum_y / total_length))
             }
@@ -339,17 +339,7 @@ where
     type Output = Option<Point<T>>;
 
     fn centroid(&self) -> Self::Output {
-        if self.0.is_empty() {
-            return None;
-        }
-        let sum = self.iter().fold(
-            Point::new(T::zero(), T::zero()),
-            |a: Point<T>, b: &Point<T>| Point::new(a.x() + b.x(), a.y() + b.y()),
-        );
-        Some(Point::new(
-            sum.x() / T::from(self.0.len()).unwrap(),
-            sum.y() / T::from(self.0.len()).unwrap(),
-        ))
+        centroid_of_coords(self.iter().map(|p| p.0)).map(Point)
     }
 }
 
@@ -451,6 +441,25 @@ where
     fn centroid(&self) -> Self::Output {
         let coord = self.0 + self.1 + self.2 / T::from_usize(3).unwrap();
         Point::from(coord)
+    }
+}
+
+fn centroid_of_coords<T>(
+    mut coords_iter: impl Iterator<Item = Coordinate<T>>,
+) -> Option<Coordinate<T>>
+where
+    T: CoordFloat,
+{
+    let mut len = 0;
+    if let Some(first) = coords_iter.next() {
+        len += 1;
+        let coord_sum = coords_iter.fold(first, |a, b| {
+            len += 1;
+            a + b
+        });
+        Some(coord_sum / T::from(len).unwrap())
+    } else {
+        None
     }
 }
 
