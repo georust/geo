@@ -362,6 +362,21 @@ where
     fn centroid(&self) -> Self::Output {
         use crate::algorithm::dimensions::{Dimensions, HasDimensions};
 
+        // The Geometries in the GeometryCollection could have different dimensionality. Centroids
+        // must be considered separately by dimensionality.
+        //
+        // e.g. If I have several Points, adding a new `Point` will affect their centroid.
+        //
+        // However, because a Point is zero dimensional, it is infinitely small when compared to
+        // any 2-D Polygon. Thus a Point will not affect the centroid of any GeometryCollection
+        // containing a 2-D Polygon.
+        //
+        // So, for each Geometry in the GeometryCollection, we accumulate that Geometry's
+        // `(centroid, weight)` with that of other geometries of the same dimensionality. And at
+        // the end, the centroid of the GeometryCollection as a whole is the highest dimensional
+        // centroid which has `Some` value.
+
+        // (accumulated centroid, accumulated weight) tuples for each dimensionality.
         let mut centroid_0d_accum: Option<(Point<T>, T)> = None;
         let mut centroid_1d_accum: Option<(Point<T>, T)> = None;
         let mut centroid_2d_accum: Option<(Point<T>, T)> = None;
