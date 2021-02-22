@@ -1,6 +1,9 @@
 use crate::{CoordFloat, CoordNum, LineString, Point, Rect, Triangle};
 use num_traits::{Float, Signed};
 
+#[cfg(any(feature = "approx", test))]
+use approx::{AbsDiffEq, RelativeEq};
+
 /// A bounded two-dimensional area.
 ///
 /// A `Polygon`’s outer boundary (_exterior ring_) is represented by a
@@ -464,5 +467,85 @@ impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
 impl<T: CoordNum> From<Triangle<T>> for Polygon<T> {
     fn from(t: Triangle<T>) -> Polygon<T> {
         Polygon::new(vec![t.0, t.1, t.2, t.0].into(), Vec::new())
+    }
+}
+
+#[cfg(any(feature = "approx", test))]
+impl<T> RelativeEq for Polygon<T>
+where
+    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+{
+    #[inline]
+    fn default_max_relative() -> Self::Epsilon {
+        T::default_max_relative()
+    }
+
+    /// Equality assertion within a relative limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{Polygon, polygon};
+    ///
+    /// let a: Polygon<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7., y: 9.), (x: 0., y: 0.)];
+    /// let b: Polygon<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7.01, y: 9.), (x: 0., y: 0.)];
+    ///
+    /// approx::assert_relative_eq!(a, b, max_relative=0.1);
+    /// approx::assert_relative_ne!(a, b, max_relative=0.001);
+    /// ```
+    ///
+    fn relative_eq(
+        &self,
+        other: &Self,
+        epsilon: Self::Epsilon,
+        max_relative: Self::Epsilon,
+    ) -> bool {
+        if !self
+            .exterior
+            .relative_eq(&other.exterior, epsilon, max_relative)
+        {
+            return false;
+        }
+
+        if self.interiors.len() != other.interiors.len() {
+            return false;
+        }
+        let mut zipper = self.interiors.iter().zip(other.interiors.iter());
+        zipper.all(|(lhs, rhs)| lhs.relative_eq(&rhs, epsilon, max_relative))
+    }
+}
+
+#[cfg(any(feature = "approx", test))]
+impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Polygon<T> {
+    type Epsilon = T;
+
+    #[inline]
+    fn default_epsilon() -> Self::Epsilon {
+        T::default_epsilon()
+    }
+
+    /// Equality assertion with an absolute limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{Polygon, polygon};
+    ///
+    /// let a: Polygon<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7., y: 9.), (x: 0., y: 0.)];
+    /// let b: Polygon<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7.01, y: 9.), (x: 0., y: 0.)];
+    ///
+    /// approx::assert_abs_diff_eq!(a, b, epsilon=0.1);
+    /// approx::assert_abs_diff_ne!(a, b, epsilon=0.001);
+    /// ```
+    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+        if !self.exterior.abs_diff_eq(&other.exterior, epsilon) {
+            return false;
+        }
+
+        if self.interiors.len() != other.interiors.len() {
+            return false;
+        }
+        let mut zipper = self.interiors.iter().zip(other.interiors.iter());
+        zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(&rhs, epsilon))
     }
 }

@@ -209,7 +209,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Line<T> {
         T::default_epsilon()
     }
 
-    /// Equality assertion with a absolute limit.
+    /// Equality assertion with an absolute limit.
     ///
     /// # Examples
     ///

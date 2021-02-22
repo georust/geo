@@ -1,4 +1,7 @@
 use crate::{CoordNum, Polygon};
+
+#[cfg(any(feature = "approx", test))]
+use approx::{AbsDiffEq, RelativeEq};
 use std::iter::FromIterator;
 
 /// A collection of [`Polygon`s](struct.Polygon.html). Can
@@ -80,6 +83,86 @@ impl<T: CoordNum> MultiPolygon<T> {
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Polygon<T>> {
         self.0.iter_mut()
+    }
+}
+
+#[cfg(any(feature = "approx", test))]
+impl<T> RelativeEq for MultiPolygon<T>
+where
+    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+{
+    #[inline]
+    fn default_max_relative() -> Self::Epsilon {
+        T::default_max_relative()
+    }
+
+    /// Equality assertion within a relative limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{polygon, Polygon, MultiPolygon};
+    ///
+    /// let a_el: Polygon<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7., y: 9.), (x: 0., y: 0.)];
+    /// let a = MultiPolygon(vec![a_el]);
+    /// let b_el: Polygon<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7.01, y: 9.), (x: 0., y: 0.)];
+    /// let b = MultiPolygon(vec![b_el]);
+    ///
+    /// approx::assert_relative_eq!(a, b, max_relative=0.1);
+    /// approx::assert_relative_ne!(a, b, max_relative=0.001);
+    /// ```
+    #[inline]
+    fn relative_eq(
+        &self,
+        other: &Self,
+        epsilon: Self::Epsilon,
+        max_relative: Self::Epsilon,
+    ) -> bool {
+        if self.0.len() != other.0.len() {
+            return false;
+        }
+
+        let mut mp_zipper = self.iter().zip(other.iter());
+        mp_zipper.all(|(lhs, rhs)| lhs.relative_eq(&rhs, epsilon, max_relative))
+    }
+}
+
+#[cfg(any(feature = "approx", test))]
+impl<T> AbsDiffEq for MultiPolygon<T>
+where
+    T: AbsDiffEq<Epsilon = T> + CoordNum,
+    T::Epsilon: Copy,
+{
+    type Epsilon = T;
+
+    #[inline]
+    fn default_epsilon() -> Self::Epsilon {
+        T::default_epsilon()
+    }
+
+    /// Equality assertion with an absolute limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{polygon, Polygon, MultiPolygon};
+    ///
+    /// let a_el: Polygon<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7., y: 9.), (x: 0., y: 0.)];
+    /// let a = MultiPolygon(vec![a_el]);
+    /// let b_el: Polygon<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7.01, y: 9.), (x: 0., y: 0.)];
+    /// let b = MultiPolygon(vec![b_el]);
+    ///
+    /// approx::abs_diff_eq!(a, b, epsilon=0.1);
+    /// approx::abs_diff_ne!(a, b, epsilon=0.001);
+    /// ```
+    #[inline]
+    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+        if self.0.len() != other.0.len() {
+            return false;
+        }
+
+        let mut mp_zipper = self.into_iter().zip(other.into_iter());
+        mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(&rhs, epsilon))
     }
 }
 
