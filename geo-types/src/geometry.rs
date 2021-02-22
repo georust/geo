@@ -268,77 +268,32 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        match self {
-            Geometry::Point(g) => {
-                if let Geometry::Point(other) = other {
-                    g.relative_eq(other, epsilon, max_relative)
-                } else {
-                    false
-                }
+        match (self, other) {
+            (Geometry::Point(g1), Geometry::Point(g2)) => g1.relative_eq(g2, epsilon, max_relative),
+            (Geometry::Line(g1), Geometry::Line(g2)) => g1.relative_eq(g2, epsilon, max_relative),
+            (Geometry::LineString(g1), Geometry::LineString(g2)) => {
+                g1.relative_eq(g2, epsilon, max_relative)
             }
-            Geometry::Line(g) => {
-                if let Geometry::Line(other) = other {
-                    g.relative_eq(other, epsilon, max_relative)
-                } else {
-                    false
-                }
+            (Geometry::Polygon(g1), Geometry::Polygon(g2)) => {
+                g1.relative_eq(g2, epsilon, max_relative)
             }
-            Geometry::LineString(g) => {
-                if let Geometry::LineString(other) = other {
-                    g.relative_eq(other, epsilon, max_relative)
-                } else {
-                    false
-                }
+            (Geometry::MultiPoint(g1), Geometry::MultiPoint(g2)) => {
+                g1.relative_eq(g2, epsilon, max_relative)
             }
-            Geometry::Polygon(g) => {
-                if let Geometry::Polygon(other) = other {
-                    g.relative_eq(other, epsilon, max_relative)
-                } else {
-                    false
-                }
+            (Geometry::MultiLineString(g1), Geometry::MultiLineString(g2)) => {
+                g1.relative_eq(g2, epsilon, max_relative)
             }
-            Geometry::MultiPoint(g) => {
-                if let Geometry::MultiPoint(other) = other {
-                    g.relative_eq(other, epsilon, max_relative)
-                } else {
-                    false
-                }
+            (Geometry::MultiPolygon(g1), Geometry::MultiPolygon(g2)) => {
+                g1.relative_eq(g2, epsilon, max_relative)
             }
-            Geometry::MultiLineString(g) => {
-                if let Geometry::MultiLineString(other) = other {
-                    g.relative_eq(other, epsilon, max_relative)
-                } else {
-                    false
-                }
+            (Geometry::GeometryCollection(g1), Geometry::GeometryCollection(g2)) => {
+                g1.relative_eq(g2, epsilon, max_relative)
             }
-            Geometry::MultiPolygon(g) => {
-                if let Geometry::MultiPolygon(other) = other {
-                    g.relative_eq(other, epsilon, max_relative)
-                } else {
-                    false
-                }
+            (Geometry::Rect(g1), Geometry::Rect(g2)) => g1.relative_eq(g2, epsilon, max_relative),
+            (Geometry::Triangle(g1), Geometry::Triangle(g2)) => {
+                g1.relative_eq(g2, epsilon, max_relative)
             }
-            Geometry::GeometryCollection(g) => {
-                if let Geometry::GeometryCollection(other) = other {
-                    g.relative_eq(other, epsilon, max_relative)
-                } else {
-                    false
-                }
-            }
-            Geometry::Rect(g) => {
-                if let Geometry::Rect(other) = other {
-                    g.relative_eq(other, epsilon, max_relative)
-                } else {
-                    false
-                }
-            }
-            Geometry::Triangle(g) => {
-                if let Geometry::Triangle(other) = other {
-                    g.relative_eq(other, epsilon, max_relative)
-                } else {
-                    false
-                }
-            }
+            (_, _) => false,
         }
     }
 }
@@ -366,77 +321,22 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Geometry<T> {
     /// approx::assert_abs_diff_ne!(a, b, epsilon=0.001);
     /// ```
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        match self {
-            Geometry::Point(g) => {
-                if let Geometry::Point(other) = other {
-                    g.abs_diff_eq(other, epsilon)
-                } else {
-                    false
-                }
+        match (self, other) {
+            (Geometry::Point(g1), Geometry::Point(g2)) => g1.abs_diff_eq(g2, epsilon),
+            (Geometry::Line(g1), Geometry::Line(g2)) => g1.abs_diff_eq(g2, epsilon),
+            (Geometry::LineString(g1), Geometry::LineString(g2)) => g1.abs_diff_eq(g2, epsilon),
+            (Geometry::Polygon(g1), Geometry::Polygon(g2)) => g1.abs_diff_eq(g2, epsilon),
+            (Geometry::MultiPoint(g1), Geometry::MultiPoint(g2)) => g1.abs_diff_eq(g2, epsilon),
+            (Geometry::MultiLineString(g1), Geometry::MultiLineString(g2)) => {
+                g1.abs_diff_eq(g2, epsilon)
             }
-            Geometry::Line(g) => {
-                if let Geometry::Line(other) = other {
-                    g.abs_diff_eq(other, epsilon)
-                } else {
-                    false
-                }
+            (Geometry::MultiPolygon(g1), Geometry::MultiPolygon(g2)) => g1.abs_diff_eq(g2, epsilon),
+            (Geometry::GeometryCollection(g1), Geometry::GeometryCollection(g2)) => {
+                g1.abs_diff_eq(g2, epsilon)
             }
-            Geometry::LineString(g) => {
-                if let Geometry::LineString(other) = other {
-                    g.abs_diff_eq(other, epsilon)
-                } else {
-                    false
-                }
-            }
-            Geometry::Polygon(g) => {
-                if let Geometry::Polygon(other) = other {
-                    g.abs_diff_eq(other, epsilon)
-                } else {
-                    false
-                }
-            }
-            Geometry::MultiPoint(g) => {
-                if let Geometry::MultiPoint(other) = other {
-                    g.abs_diff_eq(other, epsilon)
-                } else {
-                    false
-                }
-            }
-            Geometry::MultiLineString(g) => {
-                if let Geometry::MultiLineString(other) = other {
-                    g.abs_diff_eq(other, epsilon)
-                } else {
-                    false
-                }
-            }
-            Geometry::MultiPolygon(g) => {
-                if let Geometry::MultiPolygon(other) = other {
-                    g.abs_diff_eq(other, epsilon)
-                } else {
-                    false
-                }
-            }
-            Geometry::GeometryCollection(g) => {
-                if let Geometry::GeometryCollection(other) = other {
-                    g.abs_diff_eq(other, epsilon)
-                } else {
-                    false
-                }
-            }
-            Geometry::Rect(g) => {
-                if let Geometry::Rect(other) = other {
-                    g.abs_diff_eq(other, epsilon)
-                } else {
-                    false
-                }
-            }
-            Geometry::Triangle(g) => {
-                if let Geometry::Triangle(other) = other {
-                    g.abs_diff_eq(other, epsilon)
-                } else {
-                    false
-                }
-            }
+            (Geometry::Rect(g1), Geometry::Rect(g2)) => g1.abs_diff_eq(g2, epsilon),
+            (Geometry::Triangle(g1), Geometry::Triangle(g2)) => g1.abs_diff_eq(g2, epsilon),
+            (_, _) => false,
         }
     }
 }
