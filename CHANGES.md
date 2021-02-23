@@ -2,8 +2,12 @@
 
 ## Unreleased
 
-* Add serde::Deserialize for Wkt and Geometry.
-* Add helper function for deserializing from WKT format into geo_types::Geometry.
+* Add `serde::Deserialize` for `Wkt` and `Geometry`.
+  * <https://github.com/georust/wkt/pull/59>
+* Add helper functions for deserializing from WKT format into
+  `geo_types::Geometry` and `geo_types::Point`
+  * <https://github.com/georust/wkt/pull/59>
+  * <https://github.com/georust/wkt/pull/62>
 
 ## 0.9.0
 
