@@ -126,6 +126,9 @@ where
 
 /// Deserializes directly from WKT format into a `Option<geo_types::Point>`.
 ///
+/// # Examples
+///
+///
 /// ```
 /// # extern crate wkt;
 /// # extern crate geo_types;
