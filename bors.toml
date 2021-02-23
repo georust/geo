@@ -1,7 +1,3 @@
 status = [
-    "geo-types",
-    "geo",
-    "geo-postgis",
-    "coverage",
-    "bench"
+    "ci result",
 ]
