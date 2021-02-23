@@ -94,7 +94,7 @@ where
     }
 }
 
-/// This is a helper function to convert directly from WKT format into a geo_types::Geometry.
+/// Deserializes directly from WKT format into a geo_types::Geometry.
 /// ```
 /// # extern crate wkt;
 /// # extern crate geo_types;
@@ -121,6 +121,52 @@ where
     Geometry::deserialize(deserializer).and_then(|g: Geometry<T>| {
         use std::convert::TryInto;
         g.try_into().map_err(|e| D::Error::custom(e))
+    })
+}
+
+/// Deserializes directly from WKT format into a `Option<geo_types::Point>`.
+///
+/// # Examples
+///
+///
+/// ```
+/// # extern crate wkt;
+/// # extern crate geo_types;
+/// # extern crate serde_json;
+/// use geo_types::Point;
+///
+/// #[derive(serde::Deserialize)]
+/// struct MyType {
+///     #[serde(deserialize_with = "wkt::deserialize_point")]
+///     pub geometry: Option<Point<f64>>,
+/// }
+///
+/// let json = r#"{ "geometry": "POINT (3.14 42)" }"#;
+/// let my_type: MyType = serde_json::from_str(json).unwrap();
+/// assert!(matches!(my_type.geometry, Some(Point(_))));
+///
+/// let json = r#"{ "geometry": "POINT EMPTY" }"#;
+/// let my_type: MyType = serde_json::from_str(json).unwrap();
+/// assert!(matches!(my_type.geometry, None));
+/// ```
+#[cfg(feature = "geo-types")]
+pub fn deserialize_point<'de, D, T>(deserializer: D) -> Result<Option<geo_types::Point<T>>, D::Error>
+    where
+        D: Deserializer<'de>,
+        T: FromStr + Default + WktFloat,
+{
+    use serde::Deserialize;
+    Wkt::deserialize(deserializer).and_then(|wkt: Wkt<T>| {
+        use std::convert::TryFrom;
+        geo_types::Point::try_from(wkt).map(|p| Some(p))
+            .or_else(|e| {
+            if let crate::conversion::Error::PointConversionError = e {
+                // map a WKT: 'POINT EMPTY' to an `Option<geo_types::Point>::None`
+                return Ok(None);
+            }
+
+            Err(D::Error::custom(e))
+        })
     })
 }
 

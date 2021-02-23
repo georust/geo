@@ -48,7 +48,7 @@ extern crate serde;
 #[cfg(feature = "serde")]
 pub mod deserialize;
 #[cfg(all(feature = "serde", feature = "geo-types"))]
-pub use deserialize::deserialize_geometry;
+pub use deserialize::{deserialize_geometry, deserialize_point};
 
 pub trait WktFloat: num_traits::Float + std::fmt::Debug {}
 impl<T> WktFloat for T where T: num_traits::Float + std::fmt::Debug {}
