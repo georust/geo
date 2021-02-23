@@ -150,23 +150,26 @@ where
 /// assert!(matches!(my_type.geometry, None));
 /// ```
 #[cfg(feature = "geo-types")]
-pub fn deserialize_point<'de, D, T>(deserializer: D) -> Result<Option<geo_types::Point<T>>, D::Error>
-    where
-        D: Deserializer<'de>,
-        T: FromStr + Default + WktFloat,
+pub fn deserialize_point<'de, D, T>(
+    deserializer: D,
+) -> Result<Option<geo_types::Point<T>>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: FromStr + Default + WktFloat,
 {
     use serde::Deserialize;
     Wkt::deserialize(deserializer).and_then(|wkt: Wkt<T>| {
         use std::convert::TryFrom;
-        geo_types::Point::try_from(wkt).map(|p| Some(p))
+        geo_types::Point::try_from(wkt)
+            .map(|p| Some(p))
             .or_else(|e| {
-            if let crate::conversion::Error::PointConversionError = e {
-                // map a WKT: 'POINT EMPTY' to an `Option<geo_types::Point>::None`
-                return Ok(None);
-            }
+                if let crate::conversion::Error::PointConversionError = e {
+                    // map a WKT: 'POINT EMPTY' to an `Option<geo_types::Point>::None`
+                    return Ok(None);
+                }
 
-            Err(D::Error::custom(e))
-        })
+                Err(D::Error::custom(e))
+            })
     })
 }
 
