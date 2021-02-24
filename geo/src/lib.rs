@@ -80,7 +80,7 @@
 //!
 //! ## Winding
 //!
-//! - **[`Orient`](algorithm::orient::Orient)**: Orients the exterior and interior rings of a [`Polygon`] according to convention
+//! - **[`Orient`](algorithm::orient::Orient)**: Apply a specified [`Winding`](algorithm::winding_order::Winding) to a [`Polygon`]’s interior and exterior rings
 //! - **[`Winding`](algorithm::winding_order::Winding)**: Calculate and manipulate the winding order of a [`LineString`]
 //!
 //! ## Iteration
