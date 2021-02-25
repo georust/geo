@@ -129,8 +129,27 @@
 //! - `use-proj`: Enables coordinate conversion and transformation of `Point` geometries using the [`proj` crate]
 //! - `use-serde`: Allows geometry types to be serialized and deserialized with [Serde]
 //!
+//! # Ecosystem
+//!
+//! There’s a wide variety of `geo`-compatible crates in the ecosystem that offer functionality not
+//! included in the `geo` crate, including:
+//!
+//! * Reading and writing file formats (e.g. [GeoJSON][geojson crate], [WKT][wkt crate],
+//!   [shapefile][shapefile crate])
+//! * [Latitude and longitude parsing][latlng crate]
+//! * [Label placement][polylabel crate]
+//! * [Geocoding][geocoding crate]
+//! * [and much more...][georust website]
+//!
 //! [`geo-types`]: https://crates.io/crates/geo-types
 //! [`proj` crate]: https://github.com/georust/proj
+//! [geojson crate]: https://crates.io/crates/geojson
+//! [wkt crate]: https://crates.io/crates/wkt
+//! [shapefile crate]: https://crates.io/crates/shapefile
+//! [latlng crate]: https://crates.io/crates/latlon
+//! [polylabel crate]: https://crates.io/crates/polylabel
+//! [geocoding crate]: https://crates.io/crates/geocoding
+//! [georust website]: https://georust.org
 //! [Cargo features]: https://doc.rust-lang.org/cargo/reference/features.html
 //! [GEOS]: https://trac.osgeo.org/geos
 //! [JTS]: https://github.com/locationtech/jts
