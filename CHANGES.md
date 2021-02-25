@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+* Add new entries here
+
 ## 0.9.1
 
 * Add `serde::Deserialize` for `Wkt` and `Geometry`.
