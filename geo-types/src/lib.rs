@@ -35,10 +35,12 @@
 //! The following optional [Cargo features] are available:
 //!
 //! - `approx`: Allows geometry types to be checked for approximate equality with [approx]
+//! - `arbitrary`: Allows geometry types to be created from unstructured input with [arbitrary]
 //! - `serde`: Allows geometry types to be serialized and deserialized with [Serde]
 //! - `use-rstar`: Allows geometry types to be inserted into [rstar] R*-trees
 //!
 //! [approx]: https://github.com/brendanzab/approx
+//! [arbitrary]: https://github.com/rust-fuzz/arbitrary
 //! [Cargo features]: https://doc.rust-lang.org/cargo/reference/features.html
 //! [GeoRust]: https://georust.org
 //! [GEOS]: https://trac.osgeo.org/geos
@@ -122,6 +124,9 @@ pub use error::Error;
 
 #[macro_use]
 mod macros;
+
+#[cfg(feature = "arbitrary")]
+mod arbitrary;
 
 #[cfg(feature = "rstar")]
 #[doc(hidden)]

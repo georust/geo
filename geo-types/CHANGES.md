@@ -11,6 +11,8 @@
   * <https://github.com/georust/geo/pull/616>
 * Add specific details about conversion failures in the newly public `geo_types::Error`
   * <https://github.com/georust/geo/pull/614>
+* Add optional `arbitrary` feature for integration with the [arbitrary](https://github.com/rust-fuzz/arbitrary) crate
+  * <https://github.com/georust/geo/pull/622>
 
 ## 0.7.0
 
