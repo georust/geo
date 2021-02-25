@@ -20,6 +20,9 @@
 //! - **[`GeometryCollection`]**: A collection of [`Geometry`]s
 //! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coordinate`]
 //!
+//! The preceding types are reexported from the [`geo-types`] crate. Consider using that crate
+//! if you only need access to these types and no other `geo` functionality.
+//!
 //! ## Semantics
 //!
 //! The geospatial types provided here aim to adhere to the [OpenGIS Simple feature access][OGC-SFA]
@@ -126,6 +129,7 @@
 //! - `use-proj`: Enables coordinate conversion and transformation of `Point` geometries using the [`proj` crate]
 //! - `use-serde`: Allows geometry types to be serialized and deserialized with [Serde]
 //!
+//! [`geo-types`]: https://crates.io/crates/geo-types
 //! [`proj` crate]: https://github.com/georust/proj
 //! [Cargo features]: https://doc.rust-lang.org/cargo/reference/features.html
 //! [GEOS]: https://trac.osgeo.org/geos
