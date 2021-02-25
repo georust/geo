@@ -1,0 +1,24 @@
+[package]
+name = "jts-test-runner"
+version = "0.1.0"
+authors = ["Michael Kirk <michael.code@endoftheworl.de>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+approx = "0.4.0"
+geo = "*"
+include_dir = { version = "0.6", features = ["search"] }
+log = "0.4.14"
+serde =  { version = "*", features = ["derive"] }
+serde-xml-rs = "*"
+wkt = { version = "0.9", features = ["geo-types", "serde"] }
+
+[dev-dependencies]
+pretty_env_logger = "*"
+
+[patch.crates-io]
+geo = { git = "https://github.com/georust/geo", branch = "mkirk/centroid-fixups" }
+geo-types = { git = "https://github.com/georust/geo", branch = "mkirk/centroid-fixups" }
+wkt = { git = "https://github.com/georust/wkt" }
