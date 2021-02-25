@@ -2,9 +2,14 @@
 
 ## Unreleased
 
+*
+
+## 0.17.1
+
 * Rewrite the crate documentation
   * <https://github.com/georust/geo/pull/619>
 * Add `GeodesicIntermediate` algorithm
+  * <https://github.com/georust/geo/pull/608>
 
 ## 0.17.0
 
