@@ -1,3 +1,4 @@
+use std::mem;
 use crate::{
     CoordFloat, Coordinate, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon, Rect, Triangle,
@@ -26,6 +27,10 @@ impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for 
         }
 
         Ok(LineString(coords))
+    }
+
+    fn size_hint(_depth: usize) -> (usize, Option<usize>) {
+        (mem::size_of::<T>() * 2, None)
     }
 }
 
