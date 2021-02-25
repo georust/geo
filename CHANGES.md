@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.9.1
 
 * Add `serde::Deserialize` for `Wkt` and `Geometry`.
   * <https://github.com/georust/wkt/pull/59>
