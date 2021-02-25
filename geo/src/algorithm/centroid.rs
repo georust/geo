@@ -406,12 +406,15 @@ where
                             Geometry::GeometryCollection(geometry_collection) => {
                                 geometry_collection.iter().map(length).sum()
                             }
-                            Geometry::Point(_)
-                            | Geometry::MultiPoint(_)
-                            | Geometry::Polygon(_)
-                            | Geometry::MultiPolygon(_)
-                            | Geometry::Rect(_)
-                            | Geometry::Triangle(_) => T::zero(),
+                            Geometry::Point(_) | Geometry::MultiPoint(_) => unreachable!(
+                                "Point geometries can never be more than ZeroDimensional"
+                            ),
+                            Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {
+                                debug_assert!(false, "Polygon/MultiPolygon should either be TwoDimensional or Empty, never OneDimensional");
+                                T::zero()
+                            }
+                            // degenerate Rect/Triangles can collapse to a line
+                            Geometry::Rect(_) | Geometry::Triangle(_) => T::zero(),
                         }
                     }
                     let weight = length(geometry);
