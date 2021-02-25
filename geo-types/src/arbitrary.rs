@@ -6,15 +6,7 @@ use crate::{
 impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for Coordinate<T> {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         let x = u.arbitrary::<T>()?;
-        if x.is_nan() {
-            return Err(arbitrary::Error::IncorrectFormat);
-        }
-
         let y = u.arbitrary::<T>()?;
-        if y.is_nan() {
-            return Err(arbitrary::Error::IncorrectFormat);
-        }
-
         Ok(Coordinate { x, y })
     }
 }
