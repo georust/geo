@@ -430,7 +430,6 @@ where
                 (Dimensions::TwoDimensional, Some(centroid)) => {
                     let mut centroid_accum = centroid_2d_accum.unwrap_or_default();
 
-                    // REVIEW: unsigned?
                     let weight = geometry.unsigned_area();
 
                     if weight == T::zero() {
