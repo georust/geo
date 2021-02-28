@@ -52,7 +52,6 @@ mod tests {
 
     #[test]
     // several of the ConvexHull tests are currently failing
-    #[ignore]
     fn test_all_general() {
         init_logging();
         let mut runner = TestRunner::new();
