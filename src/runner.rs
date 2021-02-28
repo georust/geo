@@ -1,8 +1,10 @@
-use include_dir::{include_dir, Dir, DirEntry};
-use approx::relative_eq;
+use std::collections::BTreeSet;
 
-use geo::Geometry;
+use approx::relative_eq;
+use include_dir::{include_dir, Dir, DirEntry};
+
 use super::{input, Operation, Result};
+use geo::{Coordinate, Geometry, LineString, Polygon};
 
 const GENERAL_TEST_XML: Dir = include_dir!("resources/testxml/general");
 
@@ -99,7 +101,7 @@ impl TestRunner {
                             debug!("ConvexHull not implemented for this geometry (yet?)");
                             self.unsupported.push(test_case);
                             continue;
-                        },
+                        }
                         Geometry::Line(_g) => {
                             debug!("ConvexHull not implemented for this geometry (yet?)");
                             self.unsupported.push(test_case);
@@ -142,14 +144,25 @@ impl TestRunner {
                     // whereas geo *alway* returns a polygon
                     //
                     // This is currently the cause of some test failures.
-                    let actual = Geometry::from(actual_polygon);
-                    if relative_eq!(actual, expected) {
+                    let expected = match expected {
+                        Geometry::LineString(ext) => Polygon::new(ext.clone(), vec![]),
+                        Geometry::Polygon(p) => p.clone(),
+                        _ => {
+                            let error_description = format!("expected result for convex hull is not a polygon or a linestring: {:?}", expected);
+                            self.failures.push(TestFailure {
+                                test_case,
+                                error_description,
+                            });
+                            continue;
+                        },
+                    };
+                    if is_polygon_rotated_eq(&actual_polygon, &expected, |c1, c2| relative_eq!(c1, c2)) {
                         debug!("ConvexHull success: actual == expected");
                         self.successes.push(test_case);
                     } else {
                         debug!("ConvexHull failure: actual != expected");
                         let error_description =
-                            format!("expected {:?}, actual: {:?}", expected, actual);
+                            format!("expected {:?}, actual: {:?}", expected, actual_polygon);
                         self.failures.push(TestFailure {
                             test_case,
                             error_description,
@@ -158,7 +171,11 @@ impl TestRunner {
                 }
             }
         }
-        info!("successes: {}, failures: {}", self.successes.len(), self.failures.len());
+        info!(
+            "successes: {}, failures: {}",
+            self.successes.len(),
+            self.failures.len()
+        );
         Ok(())
     }
 
@@ -173,8 +190,11 @@ impl TestRunner {
 
         for entry in GENERAL_TEST_XML.find(&filename_filter)? {
             let file = match entry {
-                DirEntry::Dir(_) => { debug_assert!(false, "unexpectedly found dir.xml"); continue }
-                DirEntry::File(file) => file
+                DirEntry::Dir(_) => {
+                    debug_assert!(false, "unexpectedly found dir.xml");
+                    continue;
+                }
+                DirEntry::File(file) => file,
             };
             debug!("deserializing from {:?}", file.path());
             let file_reader = std::io::BufReader::new(file.contents());
@@ -204,7 +224,10 @@ impl TestRunner {
                 let geometry = match geometry_try_from_wkt_str(&case.a) {
                     Ok(g) => g,
                     Err(e) => {
-                        warn!("skipping case after failing to parse wkt into geometry: {:?}", e);
+                        warn!(
+                            "skipping case after failing to parse wkt into geometry: {:?}",
+                            e
+                        );
                         continue;
                     }
                 };
@@ -240,8 +263,54 @@ impl TestRunner {
 }
 
 fn geometry_try_from_wkt_str<T>(wkt_str: &str) -> Result<Geometry<T>>
-    where T: wkt::WktFloat + std::str::FromStr + std::default::Default
+where
+    T: wkt::WktFloat + std::str::FromStr + std::default::Default,
 {
     use std::convert::TryInto;
     Ok(wkt::Wkt::from_str(&wkt_str)?.try_into()?)
+}
+
+/// Test if two polygons are equal upto rotation, and permutation of iteriors
+pub fn is_polygon_rotated_eq<T, F>(p1: &Polygon<T>, p2: &Polygon<T>, coord_matcher: F) -> bool
+where
+    T: geo::GeoNum,
+    F: Fn(&Coordinate<T>, &Coordinate<T>) -> bool,
+{
+    if p1.interiors().len() != p2.interiors().len() {
+        return false;
+    }
+    if !is_ring_rotated_eq(p1.exterior(), p2.exterior(), &coord_matcher) {
+        return false;
+    }
+
+    let mut matched_in_p2: BTreeSet<usize> = BTreeSet::new();
+    for r1 in p1.interiors().iter() {
+        let did_match = p2.interiors().iter().enumerate().find(|(j, r2)| {
+            !matched_in_p2.contains(&j) && is_ring_rotated_eq(r1, r2, &coord_matcher)
+        });
+        if let Some((j, _)) = did_match {
+            matched_in_p2.insert(j);
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// Test if two rings are equal upto rotation / reversal
+pub fn is_ring_rotated_eq<T, F>(r1: &LineString<T>, r2: &LineString<T>, coord_matcher: F) -> bool
+where
+    T: geo::GeoNum,
+    F: Fn(&Coordinate<T>, &Coordinate<T>) -> bool,
+{
+    assert!(r1.is_closed(), "r1 is not closed");
+    assert!(r2.is_closed(), "r2 is not closed");
+    if r1.0.len() != r2.0.len() {
+        return false;
+    }
+    let len = r1.0.len() - 1;
+    (0..len).any(|shift| {
+        (0..len).all(|i| coord_matcher(&r1.0[i], &r2.0[(i + shift) % len]))
+            || (0..len).all(|i| coord_matcher(&r1.0[len - i], &r2.0[(i + shift) % len]))
+    })
 }
