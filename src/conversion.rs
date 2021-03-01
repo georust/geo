@@ -288,7 +288,14 @@ where
 
     fn try_from(geometry: Geometry<T>) -> Result<Self, Self::Error> {
         Ok(match geometry {
-            Geometry::Point(g) => geo_types::Geometry::Point(g.try_into()?),
+            Geometry::Point(g) => {
+                // Special case as `geo::Point` can't be empty
+                if g.0.is_some() {
+                    geo_types::Geometry::Point(g.try_into()?)
+                } else {
+                    geo_types::Geometry::MultiPoint(geo_types::MultiPoint(vec![]))
+                }
+            }
             Geometry::LineString(g) => geo_types::Geometry::LineString(g.into()),
             Geometry::Polygon(g) => geo_types::Geometry::Polygon(g.into()),
             Geometry::MultiLineString(g) => geo_types::Geometry::MultiLineString(g.into()),
