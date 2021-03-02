@@ -36,13 +36,7 @@ pub(crate) struct Run {
 pub(crate) struct Case {
     #[serde(default)]
     pub(crate) desc: String,
-    // `a` seems to always be a WKT geometry, but until we can handle `POINT EMPTY` this
-    // will error.
-    // see https://github.com/georust/wkt/issues/61
-    //
-    // I also spent some time trying to have serde "try" to deserialize, skipping any
-    // cases that were unparseable, without throwing away the whole thing but eventually ran out of time.
-    // See https://github.com/serde-rs/serde/issues/1583 for a related approach
+
     #[serde(deserialize_with = "wkt::deserialize_geometry")]
     pub(crate) a: Geometry<f64>,
 
