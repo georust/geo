@@ -291,9 +291,9 @@ where
             Geometry::Point(g) => {
                 // Special case as `geo::Point` can't be empty
                 if g.0.is_some() {
-                    geo_types::Geometry::Point(g.try_into()?)
+                    geo_types::Point::try_from(g)?.into()
                 } else {
-                    geo_types::Geometry::MultiPoint(geo_types::MultiPoint(vec![]))
+                    geo_types::MultiPoint(vec![]).into()
                 }
             }
             Geometry::LineString(g) => geo_types::Geometry::LineString(g.into()),
@@ -365,8 +365,8 @@ mod tests {
 
     #[test]
     fn convert_empty_point() {
-        let point = Point(None).as_item();
-        let res: Result<geo_types::Geometry<f64>, Error> = point.try_into();
+        let point = Point(None);
+        let res: Result<geo_types::Point<f64>, Error> = point.try_into();
         assert!(res.is_err());
     }
 
