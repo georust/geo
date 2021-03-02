@@ -3,6 +3,9 @@
 ## Unreleased
 
 * Add new entries here
+* Support `POINT EMPTY` in conversion to `geo_types`.
+  Converts to `MultiPoint([])`.
+  * <https://github.com/georust/wkt/pull/64>
 
 ## 0.9.1
 

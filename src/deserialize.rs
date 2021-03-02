@@ -160,15 +160,17 @@ where
     use serde::Deserialize;
     Wkt::deserialize(deserializer).and_then(|wkt: Wkt<T>| {
         use std::convert::TryFrom;
-        geo_types::Point::try_from(wkt)
-            .map(|p| Some(p))
-            .or_else(|e| {
-                if let crate::conversion::Error::PointConversionError = e {
-                    // map a WKT: 'POINT EMPTY' to an `Option<geo_types::Point>::None`
-                    return Ok(None);
+        geo_types::Geometry::try_from(wkt)
+            .map_err(D::Error::custom)
+            .and_then(|geom| {
+                use geo_types::Geometry::*;
+                match geom {
+                    Point(p) => Ok(Some(p)),
+                    MultiPoint(mp) if mp.0.len() == 0 => Ok(None),
+                    _ => geo_types::Point::try_from(geom)
+                        .map(Some)
+                        .map_err(D::Error::custom),
                 }
-
-                Err(D::Error::custom(e))
             })
     })
 }
