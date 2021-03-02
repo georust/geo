@@ -1,5 +1,5 @@
-use geo::{Point, Geometry};
-use serde::Deserialize;
+use geo::{Geometry, Point};
+use serde::{Deserialize, Deserializer};
 
 use super::Result;
 
@@ -28,12 +28,13 @@ use super::Result;
 /// ```
 #[derive(Debug, Deserialize)]
 pub(crate) struct Run {
-    #[serde(rename="case")]
+    #[serde(rename = "case")]
     pub cases: Vec<Case>,
 }
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct Case {
+    #[serde(default)]
     pub(crate) desc: String,
     // `a` seems to always be a WKT geometry, but until we can handle `POINT EMPTY` this
     // will error.
@@ -42,15 +43,19 @@ pub(crate) struct Case {
     // I also spent some time trying to have serde "try" to deserialize, skipping any
     // cases that were unparseable, without throwing away the whole thing but eventually ran out of time.
     // See https://github.com/serde-rs/serde/issues/1583 for a related approach
-    //#[serde(deserialize_with = "wkt::deserialize_geometry")]
-    pub(crate) a: String,
-    #[serde(rename = "test")]
+    #[serde(deserialize_with = "wkt::deserialize_geometry")]
+    pub(crate) a: Geometry<f64>,
+
+    #[serde(deserialize_with = "deserialize_opt_geometry", default)]
+    pub(crate) b: Option<Geometry<f64>>,
+
+    #[serde(rename = "test", default)]
     pub(crate) tests: Vec<Test>,
 }
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct Test {
-    #[serde(rename="op")]
+    #[serde(rename = "op")]
     pub(crate) operation_input: OperationInput,
 }
 
@@ -73,6 +78,15 @@ pub struct ConvexHullInput {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct IntersectsInput {
+    pub(crate) arg1: String,
+    pub(crate) arg2: String,
+
+    #[serde(rename = "$value")]
+    pub(crate) expected: String,
+}
+
+#[derive(Debug, Deserialize)]
 #[serde(tag = "name")]
 pub(crate) enum OperationInput {
     #[serde(rename = "getCentroid")]
@@ -80,6 +94,9 @@ pub(crate) enum OperationInput {
 
     #[serde(rename = "convexhull")]
     ConvexHullInput(ConvexHullInput),
+
+    #[serde(rename = "intersects")]
+    IntersectsInput(IntersectsInput),
 
     #[serde(other)]
     Unsupported,
@@ -94,22 +111,65 @@ pub(crate) enum Operation {
     ConvexHull {
         subject: Geometry<f64>,
         expected: Geometry<f64>,
-    }
+    },
+    Intersects {
+        subject: Geometry<f64>,
+        clip: Geometry<f64>,
+        expected: bool,
+    },
 }
 
 impl OperationInput {
-    pub(crate) fn into_operation(self, geometry: Geometry<f64>) -> Result<Operation>
-    {
+    pub(crate) fn into_operation(self, case: &Case) -> Result<Operation> {
+        let geometry = &case.a;
         match self {
             Self::CentroidInput(centroid_input) => {
                 assert_eq!("A", centroid_input.arg1);
-                Ok(Operation::Centroid { subject: geometry.clone(), expected: centroid_input.expected })
+                Ok(Operation::Centroid {
+                    subject: geometry.clone(),
+                    expected: centroid_input.expected,
+                })
             }
             Self::ConvexHullInput(convex_hull_input) => {
                 assert_eq!("A", convex_hull_input.arg1);
-                Ok(Operation::ConvexHull { subject: geometry.clone(), expected: convex_hull_input.expected })
+                Ok(Operation::ConvexHull {
+                    subject: geometry.clone(),
+                    expected: convex_hull_input.expected,
+                })
             }
-            Self::Unsupported => Err("This OperationInput not supported".into())
+            Self::IntersectsInput(input) => {
+                assert_eq!("A", input.arg1);
+                assert_eq!("B", input.arg2);
+                assert!(
+                    case.b.is_some(),
+                    "intersects test case must contain geometry b"
+                );
+                let expected = if input.expected.eq_ignore_ascii_case("true") {
+                    true
+                } else if input.expected.eq_ignore_ascii_case("false") {
+                    false
+                } else {
+                    panic!("expected value was neither \"true\" nor \"false\"");
+                };
+                Ok(Operation::Intersects {
+                    subject: geometry.clone(),
+                    clip: case.b.clone().expect("no geometry b in case"),
+                    expected,
+                })
+            }
+            Self::Unsupported => Err("This OperationInput not supported".into()),
         }
     }
+}
+
+pub fn deserialize_opt_geometry<'de, D>(
+    deserializer: D,
+) -> std::result::Result<Option<Geometry<f64>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Debug, Deserialize)]
+    struct Wrapper(#[serde(deserialize_with = "wkt::deserialize_geometry")] Geometry<f64>);
+
+    Option::<Wrapper>::deserialize(deserializer).map(|opt_wrapped| opt_wrapped.map(|w| w.0))
 }
