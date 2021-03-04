@@ -21,4 +21,4 @@ pretty_env_logger = "*"
 [patch.crates-io]
 geo = { git = "https://github.com/georust/geo", branch = "mkirk/centroid-fixups" }
 geo-types = { git = "https://github.com/georust/geo", branch = "mkirk/centroid-fixups" }
-wkt = { git = "https://github.com/georust/wkt" }
+wkt = { git = "https://github.com/rmanoka/wkt", branch = "rmanoka/jts-test-runner" }

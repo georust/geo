@@ -4,7 +4,7 @@ use approx::relative_eq;
 use include_dir::{include_dir, Dir, DirEntry};
 
 use super::{input, Operation, Result};
-use geo::{Coordinate, Geometry, LineString, Polygon};
+use geo::{intersects::Intersects, Coordinate, Geometry, LineString, Polygon};
 
 const GENERAL_TEST_XML: Dir = include_dir!("resources/testxml/general");
 
@@ -154,15 +154,36 @@ impl TestRunner {
                                 error_description,
                             });
                             continue;
-                        },
+                        }
                     };
-                    if is_polygon_rotated_eq(&actual_polygon, &expected, |c1, c2| relative_eq!(c1, c2)) {
+                    if is_polygon_rotated_eq(&actual_polygon, &expected, |c1, c2| {
+                        relative_eq!(c1, c2)
+                    }) {
                         debug!("ConvexHull success: actual == expected");
                         self.successes.push(test_case);
                     } else {
                         debug!("ConvexHull failure: actual != expected");
                         let error_description =
                             format!("expected {:?}, actual: {:?}", expected, actual_polygon);
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    }
+                }
+                Operation::Intersects {
+                    subject,
+                    clip,
+                    expected,
+                } => {
+                    let actual = subject.intersects(clip);
+                    if actual == *expected {
+                        debug!("Intersects success: actual == expected");
+                        self.successes.push(test_case);
+                    } else {
+                        debug!("Intersects failure: actual != expected");
+                        let error_description =
+                            format!("expected {:?}, actual: {:?}", expected, actual);
                         self.failures.push(TestFailure {
                             test_case,
                             error_description,
@@ -209,7 +230,7 @@ impl TestRunner {
                     continue;
                 }
             };
-            for case in run.cases {
+            for mut case in run.cases {
                 if let Some(desc_filter) = &self.desc_filter {
                     if case.desc.as_str() != desc_filter {
                         debug!("filter skipped case: {}", &case.desc);
@@ -220,19 +241,8 @@ impl TestRunner {
                 } else {
                     debug!("parsing case {}:", &case.desc);
                 }
-
-                let geometry = match geometry_try_from_wkt_str(&case.a) {
-                    Ok(g) => g,
-                    Err(e) => {
-                        warn!(
-                            "skipping case after failing to parse wkt into geometry: {:?}",
-                            e
-                        );
-                        continue;
-                    }
-                };
-
-                for test in case.tests {
+                let tests = std::mem::replace(&mut case.tests, vec![]);
+                for test in tests {
                     let description = case.desc.clone();
 
                     let test_file_name = file
@@ -242,7 +252,7 @@ impl TestRunner {
                         .to_string_lossy()
                         .to_string();
 
-                    match test.operation_input.into_operation(geometry.clone()) {
+                    match test.operation_input.into_operation(&case) {
                         Ok(operation) => {
                             cases.push(TestCase {
                                 description,
@@ -262,15 +272,8 @@ impl TestRunner {
     }
 }
 
-fn geometry_try_from_wkt_str<T>(wkt_str: &str) -> Result<Geometry<T>>
-where
-    T: wkt::WktFloat + std::str::FromStr + std::default::Default,
-{
-    use std::convert::TryInto;
-    Ok(wkt::Wkt::from_str(&wkt_str)?.try_into()?)
-}
-
-/// Test if two polygons are equal upto rotation, and permutation of iteriors
+/// Test if two polygons are equal upto rotation, and
+/// permutation of interiors.
 pub fn is_polygon_rotated_eq<T, F>(p1: &Polygon<T>, p2: &Polygon<T>, coord_matcher: F) -> bool
 where
     T: geo::GeoNum,
