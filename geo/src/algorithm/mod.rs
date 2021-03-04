@@ -51,6 +51,8 @@ pub mod haversine_length;
 pub mod intersects;
 /// Determins whether a `LineString` is convex.
 pub mod is_convex;
+/// Calculate concave hull using k-nearest algorithm
+pub mod k_nearest_concave_hull;
 /// Interpolate a point along a `Line` or `LineString`.
 pub mod line_interpolate_point;
 /// Locate a point along a `Line` or `LineString`.
