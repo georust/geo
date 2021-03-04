@@ -1,7 +1,7 @@
-use num_traits::FromPrimitive;
-use std::iter::Sum;
+use std::cmp::Ordering;
 
 use crate::algorithm::area::{get_linestring_area, Area};
+use crate::algorithm::dimensions::{Dimensions, Dimensions::*, HasDimensions};
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::{
     CoordFloat, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
@@ -59,38 +59,6 @@ pub trait Centroid {
     fn centroid(&self) -> Self::Output;
 }
 
-// Calculation of a Polygon centroid without interior rings
-fn simple_polygon_centroid<T>(poly_ext: &LineString<T>) -> Option<Point<T>>
-where
-    T: CoordFloat + FromPrimitive + Sum,
-{
-    let area = get_linestring_area(poly_ext);
-    if area == T::zero() {
-        // if the polygon is flat (area = 0), it is considered as a linestring
-        return poly_ext.centroid();
-    }
-
-    // At this point, we know the exterior contains at least one point
-    let shift = poly_ext.0.first().unwrap();
-
-    let (sum_x, sum_y) = poly_ext
-        .lines()
-        .fold((T::zero(), T::zero()), |accum, line| {
-            use crate::algorithm::map_coords::MapCoords;
-            let line = line.map_coords(|&(x, y)| (x - shift.x, y - shift.y));
-            let tmp = line.determinant();
-            (
-                accum.0 + ((line.end.x + line.start.x) * tmp),
-                accum.1 + ((line.end.y + line.start.y) * tmp),
-            )
-        });
-    let six = T::from_i32(6).unwrap();
-    Some(Point::new(
-        sum_x / (six * area) + shift.x,
-        sum_y / (six * area) + shift.y,
-    ))
-}
-
 impl<T> Centroid for Line<T>
 where
     T: CoordFloat,
@@ -99,9 +67,7 @@ where
 
     fn centroid(&self) -> Self::Output {
         let two = T::one() + T::one();
-        let x = self.start.x + self.dx() / two;
-        let y = self.start.y + self.dy() / two;
-        Point::new(x, y)
+        (self.start_point() + self.end_point()) / two
     }
 }
 
@@ -114,187 +80,50 @@ where
     // The Centroid of a LineString is the mean of the middle of the segment
     // weighted by the length of the segments.
     fn centroid(&self) -> Self::Output {
-        if self.0.is_empty() {
-            return None;
-        }
-        if self.0.len() == 1 {
-            Some(Point(self.0[0]))
-        } else {
-            let (sum_x, sum_y, total_length) =
-                self.lines()
-                    .fold((T::zero(), T::zero(), T::zero()), |accum, line| {
-                        let segment_len = line.euclidean_length();
-                        let line_center = line.centroid();
-                        (
-                            accum.0 + segment_len * line_center.x(),
-                            accum.1 + segment_len * line_center.y(),
-                            accum.2 + segment_len,
-                        )
-                    });
-            if total_length == T::zero() {
-                // length == 0 means that all points were equal, we can just the first one
-                Some(Point(self.0[0]))
-            } else {
-                Some(Point::new(sum_x / total_length, sum_y / total_length))
-            }
-        }
+        let mut operation = CentroidOperation::new();
+        operation.add_line_string(self);
+        operation.centroid()
     }
 }
 
 impl<T> Centroid for MultiLineString<T>
 where
-    T: CoordFloat + FromPrimitive + Sum,
+    T: CoordFloat,
 {
     type Output = Option<Point<T>>;
 
     /// The Centroid of a MultiLineString is the mean of the centroids of all the constituent linestrings,
     /// weighted by the length of each linestring
     fn centroid(&self) -> Self::Output {
-        if self.0.is_empty() || self.iter().all(|ls| ls.0.is_empty()) {
-            return None;
-        }
-        if self.0.len() == 1 {
-            self.0[0].centroid()
-        } else {
-            let (sum_x, sum_y, total_length) =
-                self.0
-                    .iter()
-                    .fold(
-                        (T::zero(), T::zero(), T::zero()),
-                        |accum, line| match line.centroid() {
-                            Some(center) => {
-                                let segment_len = line.euclidean_length();
-                                (
-                                    accum.0 + segment_len * center.x(),
-                                    accum.1 + segment_len * center.y(),
-                                    accum.2 + segment_len,
-                                )
-                            }
-                            None => accum,
-                        },
-                    );
-            if total_length == T::zero() {
-                // All line strings were 0 length - dimensionally equivalent to a MultiPoint.
-                centroid_of_coords(
-                    self.iter()
-                        .flat_map(|line_string| Some(*line_string.0.first()?)),
-                )
-                .map(Point)
-            } else {
-                Some(Point::new(sum_x / total_length, sum_y / total_length))
-            }
-        }
+        let mut operation = CentroidOperation::new();
+        operation.add_multi_line_string(self);
+        operation.centroid()
     }
 }
 
 impl<T> Centroid for Polygon<T>
 where
-    T: CoordFloat + FromPrimitive + Sum,
+    T: CoordFloat,
 {
     type Output = Option<Point<T>>;
 
-    // Calculate the centroid of a Polygon.
-    // We distinguish between a simple polygon, which has no interior rings (holes),
-    // and a complex polygon, which has one or more interior rings.
-    // A complex polygon's centroid is the weighted average of its
-    // exterior shell centroid and the centroids of the interior ring(s).
-    // Both the shell and the ring(s) are considered simple polygons for the purposes of
-    // this calculation.
-    // See here for a formula: http://math.stackexchange.com/a/623849
-    // See here for detail on alternative methods: https://fotino.me/calculating-centroids/
     fn centroid(&self) -> Self::Output {
-        let linestring = &self.exterior();
-        let vect = &linestring.0;
-        if vect.is_empty() {
-            return None;
-        }
-        if vect.len() == 1 {
-            Some(Point::new(vect[0].x, vect[0].y))
-        } else {
-            let external_centroid = simple_polygon_centroid(self.exterior())?;
-            if self.interiors().is_empty() {
-                Some(external_centroid)
-            } else {
-                let external_area = get_linestring_area(self.exterior()).abs();
-                // accumulate interior Polygons
-                let (totals_x, totals_y, internal_area) = self
-                    .interiors()
-                    .iter()
-                    .filter_map(|ring| {
-                        let area = get_linestring_area(ring).abs();
-                        let centroid = simple_polygon_centroid(ring)?;
-                        Some((centroid.x() * area, centroid.y() * area, area))
-                    })
-                    .fold((T::zero(), T::zero(), T::zero()), |accum, val| {
-                        (accum.0 + val.0, accum.1 + val.1, accum.2 + val.2)
-                    });
-
-                let diff_area = external_area - internal_area;
-                if diff_area == T::zero() {
-                    Some(external_centroid)
-                } else {
-                    Some(Point::new(
-                        ((external_centroid.x() * external_area) - totals_x) / diff_area,
-                        ((external_centroid.y() * external_area) - totals_y) / diff_area,
-                    ))
-                }
-            }
-        }
+        let mut operation = CentroidOperation::new();
+        operation.add_polygon(self);
+        operation.centroid()
     }
 }
 
 impl<T> Centroid for MultiPolygon<T>
 where
-    T: CoordFloat + FromPrimitive + Sum,
+    T: CoordFloat,
 {
     type Output = Option<Point<T>>;
 
     fn centroid(&self) -> Self::Output {
-        let mut sum_area_x = T::zero();
-        let mut sum_area_y = T::zero();
-        let mut sum_seg_x = T::zero();
-        let mut sum_seg_y = T::zero();
-        let mut sum_x = T::zero();
-        let mut sum_y = T::zero();
-        let mut total_area = T::zero();
-        let mut total_length = T::zero();
-        let vect = &self.0;
-        if vect.is_empty() {
-            return None;
-        }
-        for poly in &self.0 {
-            let area = poly.unsigned_area();
-            total_area = total_area + area;
-            if let Some(p) = poly.centroid() {
-                if area != T::zero() {
-                    sum_area_x = sum_area_x + area * p.x();
-                    sum_area_y = sum_area_y + area * p.y();
-                } else {
-                    // the polygon is 'flat', we consider it as a linestring
-                    let ls_len = poly.exterior().euclidean_length();
-                    if ls_len == T::zero() {
-                        sum_x = sum_x + p.x();
-                        sum_y = sum_y + p.x();
-                    } else {
-                        sum_seg_x = sum_seg_x + ls_len * p.x();
-                        sum_seg_y = sum_seg_y + ls_len * p.y();
-                        total_length = total_length + ls_len;
-                    }
-                }
-            }
-        }
-        if total_area != T::zero() {
-            Some(Point::new(sum_area_x / total_area, sum_area_y / total_area))
-        } else if total_length != T::zero() {
-            Some(Point::new(
-                sum_seg_x / total_length,
-                sum_seg_y / total_length,
-            ))
-        } else {
-            let nb_points = T::from_usize(self.0.len()).unwrap();
-            // there was only "point" polygons, we do a simple centroid of all points
-            Some(Point::new(sum_x / nb_points, sum_y / nb_points))
-        }
+        let mut operation = CentroidOperation::new();
+        operation.add_multi_polygon(self);
+        operation.centroid()
     }
 }
 
@@ -316,7 +145,7 @@ where
     type Output = Point<T>;
 
     fn centroid(&self) -> Self::Output {
-        Point::new(self.x(), self.y())
+        *self
     }
 }
 
@@ -339,13 +168,15 @@ where
     type Output = Option<Point<T>>;
 
     fn centroid(&self) -> Self::Output {
-        centroid_of_coords(self.iter().map(|p| p.0)).map(Point)
+        let mut operation = CentroidOperation::new();
+        operation.add_multi_point(self);
+        operation.centroid()
     }
 }
 
 impl<T> Centroid for Geometry<T>
 where
-    T: CoordFloat + FromPrimitive + Sum + Default,
+    T: CoordFloat,
 {
     type Output = Option<Point<T>>;
 
@@ -356,137 +187,292 @@ where
 
 impl<T> Centroid for GeometryCollection<T>
 where
-    T: CoordFloat + FromPrimitive + Sum + Default,
+    T: CoordFloat,
 {
     type Output = Option<Point<T>>;
+
     fn centroid(&self) -> Self::Output {
-        use crate::algorithm::dimensions::{Dimensions, HasDimensions};
-
-        // The Geometries in the GeometryCollection could have different dimensionality. Centroids
-        // must be considered separately by dimensionality.
-        //
-        // e.g. If I have several Points, adding a new `Point` will affect their centroid.
-        //
-        // However, because a Point is zero dimensional, it is infinitely small when compared to
-        // any 2-D Polygon. Thus a Point will not affect the centroid of any GeometryCollection
-        // containing a 2-D Polygon.
-        //
-        // So, for each Geometry in the GeometryCollection, we accumulate that Geometry's
-        // `(centroid, weight)` with that of other geometries of the same dimensionality. And at
-        // the end, the centroid of the GeometryCollection as a whole is the highest dimensional
-        // centroid which has `Some` value.
-
-        // (accumulated centroid, accumulated weight) tuples for each dimensionality.
-        let mut centroid_0d_accum: Option<(Point<T>, T)> = None;
-        let mut centroid_1d_accum: Option<(Point<T>, T)> = None;
-        let mut centroid_2d_accum: Option<(Point<T>, T)> = None;
-
-        for geometry in self.iter() {
-            let centroid = geometry.centroid();
-            match (geometry.dimensions(), centroid) {
-                (Dimensions::Empty, _) | (_, None) => continue,
-                (Dimensions::ZeroDimensional, Some(centroid)) => {
-                    let mut centroid_accum = centroid_0d_accum.unwrap_or_default();
-                    let weight = T::one();
-                    centroid_accum.0 = centroid_accum.0 + centroid * weight;
-                    centroid_accum.1 = centroid_accum.1 + weight;
-                    centroid_0d_accum = Some(centroid_accum);
-                }
-                (Dimensions::OneDimensional, Some(centroid)) => {
-                    let mut centroid_accum = centroid_1d_accum.unwrap_or_default();
-
-                    fn length<T>(geometry: &Geometry<T>) -> T
-                    where
-                        T: CoordFloat + FromPrimitive + Sum + Default,
-                    {
-                        match geometry {
-                            Geometry::Line(l) => l.euclidean_length(),
-                            Geometry::LineString(l) => l.euclidean_length(),
-                            Geometry::MultiLineString(l) => l.euclidean_length(),
-                            Geometry::GeometryCollection(geometry_collection) => {
-                                geometry_collection.iter().map(length).sum()
-                            }
-                            Geometry::Point(_) | Geometry::MultiPoint(_) => unreachable!(
-                                "Point geometries can never be more than ZeroDimensional"
-                            ),
-                            Geometry::Polygon(_) | Geometry::MultiPolygon(_) => {
-                                debug_assert!(false, "Polygon/MultiPolygon should either be TwoDimensional or Empty, never OneDimensional");
-                                T::zero()
-                            }
-                            // degenerate Rect/Triangles can collapse to a line
-                            Geometry::Rect(_) | Geometry::Triangle(_) => T::zero(),
-                        }
-                    }
-                    let weight = length(geometry);
-
-                    if weight == T::zero() {
-                        continue;
-                    }
-
-                    centroid_accum.0 = centroid_accum.0 + centroid * weight;
-                    centroid_accum.1 = centroid_accum.1 + weight;
-                    centroid_1d_accum = Some(centroid_accum);
-                }
-                (Dimensions::TwoDimensional, Some(centroid)) => {
-                    let mut centroid_accum = centroid_2d_accum.unwrap_or_default();
-
-                    let weight = geometry.unsigned_area();
-
-                    if weight == T::zero() {
-                        continue;
-                    }
-
-                    centroid_accum.0 = centroid_accum.0 + centroid * weight;
-                    centroid_accum.1 = centroid_accum.1 + weight;
-                    centroid_2d_accum = Some(centroid_accum);
-                }
-            };
-        }
-
-        centroid_2d_accum
-            .or(centroid_1d_accum)
-            .or(centroid_0d_accum)
-            .map(|(centroid, weight)| centroid / weight)
+        let mut operation = CentroidOperation::new();
+        operation.add_geometry_collection(self);
+        operation.centroid()
     }
 }
 
 impl<T> Centroid for Triangle<T>
 where
-    T: CoordFloat + FromPrimitive + Sum,
+    T: CoordFloat,
 {
     type Output = Point<T>;
+
     fn centroid(&self) -> Self::Output {
-        let coord = self.0 + self.1 + self.2 / T::from_usize(3).unwrap();
-        Point::from(coord)
+        let mut operation = CentroidOperation::new();
+        operation.add_triangle(self);
+        operation
+            .centroid()
+            .expect("triangle cannot have an empty centroid")
     }
 }
 
-fn centroid_of_coords<T>(
-    mut coords_iter: impl Iterator<Item = Coordinate<T>>,
-) -> Option<Coordinate<T>>
-where
-    T: CoordFloat,
-{
-    let mut len = 0;
-    if let Some(first) = coords_iter.next() {
-        len += 1;
-        let coord_sum = coords_iter.fold(first, |a, b| {
-            len += 1;
-            a + b
+struct CentroidOperation<T: CoordFloat>(Option<WeightedCentroid<T>>);
+impl<T: CoordFloat> CentroidOperation<T> {
+    fn new() -> Self {
+        CentroidOperation(None)
+    }
+
+    fn centroid(&self) -> Option<Point<T>> {
+        self.0.as_ref().map(|weighted_centroid| {
+            Point(weighted_centroid.accumulated / weighted_centroid.weight)
+        })
+    }
+
+    fn centroid_dimensions(&self) -> Dimensions {
+        self.0
+            .as_ref()
+            .map(|weighted_centroid| weighted_centroid.dimensions)
+            .unwrap_or(Empty)
+    }
+
+    fn add_coord(&mut self, coord: Coordinate<T>) {
+        self.add_centroid(ZeroDimensional, coord, T::one());
+    }
+
+    fn add_line(&mut self, line: &Line<T>) {
+        match line.dimensions() {
+            ZeroDimensional => self.add_coord(line.start),
+            OneDimensional => {
+                self.add_centroid(OneDimensional, line.centroid().0, line.euclidean_length())
+            }
+            _ => unreachable!("Line must be zero or one dimensional"),
+        }
+    }
+
+    fn add_line_string(&mut self, line_string: &LineString<T>) {
+        if self.centroid_dimensions() > OneDimensional {
+            return;
+        }
+
+        if line_string.0.len() == 1 {
+            self.add_coord(line_string.0[0]);
+            return;
+        }
+
+        for line in line_string.lines() {
+            self.add_line(&line);
+        }
+    }
+
+    fn add_multi_line_string(&mut self, multi_line_string: &MultiLineString<T>) {
+        if self.centroid_dimensions() > OneDimensional {
+            return;
+        }
+
+        for element in &multi_line_string.0 {
+            self.add_line_string(element);
+        }
+    }
+
+    fn add_polygon(&mut self, polygon: &Polygon<T>) {
+        // Polygons which are completely covered by their interior rings have zero area, and
+        // represent a unique degeneracy into a line_string which cannot be handled by accumulating
+        // directly into `self`. Instead, we perform a sub-operation, inspect the result, and only
+        // then incorporate the result into `self.
+
+        let mut exterior_operation = CentroidOperation::new();
+        exterior_operation.add_ring(polygon.exterior());
+
+        let mut interior_operation = CentroidOperation::new();
+        for interior in polygon.interiors() {
+            interior_operation.add_ring(interior);
+        }
+
+        if let Some(exterior_weighted_centroid) = exterior_operation.0 {
+            let mut poly_weighted_centroid = exterior_weighted_centroid;
+            if let Some(interior_weighted_centroid) = interior_operation.0 {
+                poly_weighted_centroid.sub_assign(interior_weighted_centroid);
+                if poly_weighted_centroid.weight.is_zero() {
+                    // A polygon with no area `interiors` completely covers `exterior`, degenerating to a linestring
+                    self.add_line_string(polygon.exterior());
+                    return;
+                }
+            }
+            self.add_weighted_centroid(poly_weighted_centroid);
+        }
+    }
+
+    fn add_multi_point(&mut self, multi_point: &MultiPoint<T>) {
+        if self.centroid_dimensions() > ZeroDimensional {
+            return;
+        }
+
+        for element in &multi_point.0 {
+            self.add_coord(element.0);
+        }
+    }
+
+    fn add_multi_polygon(&mut self, multi_polygon: &MultiPolygon<T>) {
+        for element in &multi_polygon.0 {
+            self.add_polygon(element);
+        }
+    }
+
+    fn add_geometry_collection(&mut self, geometry_collection: &GeometryCollection<T>) {
+        for element in &geometry_collection.0 {
+            self.add_geometry(element);
+        }
+    }
+
+    fn add_rect(&mut self, rect: &Rect<T>) {
+        match rect.dimensions() {
+            ZeroDimensional => self.add_coord(rect.min()),
+            OneDimensional => self.add_line(&Line::new(rect.min(), rect.max())),
+            TwoDimensional => {
+                self.add_centroid(TwoDimensional, rect.centroid().0, rect.unsigned_area())
+            }
+            Empty => unreachable!("Rect dimensions cannot be empty"),
+        }
+    }
+
+    fn add_triangle(&mut self, triangle: &Triangle<T>) {
+        match triangle.dimensions() {
+            ZeroDimensional => self.add_coord(triangle.0),
+            OneDimensional => {
+                // Degenerate triangle is a line.
+                // We need to find the longest line to get the proper weight.
+                let l0_1 = Line::new(triangle.0, triangle.1);
+                let l1_2 = Line::new(triangle.1, triangle.2);
+                let l2_0 = Line::new(triangle.2, triangle.0);
+
+                let d0_1 = l0_1.euclidean_length();
+                let d1_2 = l1_2.euclidean_length();
+                let d2_0 = l2_0.euclidean_length();
+                let max = d0_1.max(d1_2).max(d2_0);
+
+                let longest_line = if max == d0_1 {
+                    l0_1
+                } else if max == d1_2 {
+                    l1_2
+                } else {
+                    l2_0
+                };
+
+                self.add_line(&longest_line);
+            }
+            TwoDimensional => {
+                let centroid = (triangle.0 + triangle.1 + triangle.2) / T::from(3).unwrap();
+                self.add_centroid(TwoDimensional, centroid, triangle.unsigned_area());
+            }
+            Empty => unreachable!("Rect dimensions cannot be empty"),
+        }
+    }
+
+    fn add_geometry(&mut self, geometry: &Geometry<T>) {
+        match geometry {
+            Geometry::Point(g) => self.add_coord(g.0),
+            Geometry::Line(g) => self.add_line(g),
+            Geometry::LineString(g) => self.add_line_string(g),
+            Geometry::Polygon(g) => self.add_polygon(g),
+            Geometry::MultiPoint(g) => self.add_multi_point(g),
+            Geometry::MultiLineString(g) => self.add_multi_line_string(g),
+            Geometry::MultiPolygon(g) => self.add_multi_polygon(g),
+            Geometry::GeometryCollection(g) => self.add_geometry_collection(g),
+            Geometry::Rect(g) => self.add_rect(g),
+            Geometry::Triangle(g) => self.add_triangle(g),
+        }
+    }
+
+    fn add_ring(&mut self, ring: &LineString<T>) {
+        debug_assert!(ring.is_closed());
+
+        let area = get_linestring_area(ring);
+        if area == T::zero() {
+            match ring.dimensions() {
+                // empty ring doesn't contribute to centroid
+                Empty => {}
+                // degenerate ring is a point
+                ZeroDimensional => self.add_coord(ring[0]),
+                // zero-area ring is a line string
+                _ => self.add_line_string(ring),
+            }
+            return;
+        }
+
+        // Since area is non-zero, we know the ring has at least one point
+        let shift = ring.0[0];
+
+        let accumulated_coord = ring.lines().fold(Coordinate::zero(), |accum, line| {
+            use crate::algorithm::map_coords::MapCoords;
+            let line = line.map_coords(|&(x, y)| (x - shift.x, y - shift.y));
+            let tmp = line.determinant();
+            accum + (line.end + line.start) * tmp
         });
-        Some(coord_sum / T::from(len).unwrap())
-    } else {
-        None
+        let six = T::from(6).unwrap();
+        let centroid = accumulated_coord / (six * area) + shift;
+        let weight = area.abs();
+        self.add_centroid(TwoDimensional, centroid, weight);
+    }
+
+    fn add_centroid(&mut self, dimensions: Dimensions, centroid: Coordinate<T>, weight: T) {
+        let weighted_centroid = WeightedCentroid {
+            dimensions,
+            weight: weight,
+            accumulated: centroid * weight,
+        };
+        self.add_weighted_centroid(weighted_centroid);
+    }
+
+    fn add_weighted_centroid(&mut self, other: WeightedCentroid<T>) {
+        match self.0.as_mut() {
+            Some(centroid) => centroid.add_assign(other),
+            None => self.0 = Some(other),
+        }
+    }
+}
+
+// Aggregated state for accumulating the centroid of a geometry or collection of geometries.
+struct WeightedCentroid<T: CoordFloat> {
+    weight: T,
+    accumulated: Coordinate<T>,
+    /// Collections of Geometries can have different dimensionality. Centroids must be considered
+    /// separately by dimensionality.
+    ///
+    /// e.g. If I have several Points, adding a new `Point` will affect their centroid.
+    ///
+    /// However, because a Point is zero dimensional, it is infinitely small when compared to
+    /// any 2-D Polygon. Thus a Point will not affect the centroid of any GeometryCollection
+    /// containing a 2-D Polygon.
+    ///
+    /// So, when accumulating a centroid, we must track the dimensionality of the centroid
+    dimensions: Dimensions,
+}
+
+impl<T: CoordFloat> WeightedCentroid<T> {
+    fn add_assign(&mut self, b: WeightedCentroid<T>) {
+        match self.dimensions.cmp(&b.dimensions) {
+            Ordering::Less => *self = b,
+            Ordering::Greater => return,
+            Ordering::Equal => {
+                self.accumulated = self.accumulated + b.accumulated;
+                self.weight = self.weight + b.weight;
+            }
+        }
+    }
+
+    fn sub_assign(&mut self, b: WeightedCentroid<T>) {
+        match self.dimensions.cmp(&b.dimensions) {
+            Ordering::Less => *self = b,
+            Ordering::Greater => return,
+            Ordering::Equal => {
+                self.accumulated = self.accumulated - b.accumulated;
+                self.weight = self.weight - b.weight;
+            }
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::algorithm::centroid::Centroid;
-    use crate::{
-        line_string, point, polygon, CoordFloat, Coordinate, GeometryCollection, Line, LineString,
-        MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect,
-    };
+    use super::*;
+    use crate::{line_string, point, polygon};
 
     /// small helper to create a coordinate
     fn c<T: CoordFloat>(x: T, y: T) -> Coordinate<T> {
@@ -525,10 +511,16 @@ mod test {
             (x: 10., y: 1.),
             (x: 11., y: 1.)
         ];
-        assert_eq!(
-            linestring.centroid(),
-            Some(Point(Coordinate { x: 6., y: 1. }))
-        );
+        assert_eq!(linestring.centroid(), Some(point!(x: 6., y: 1. )));
+    }
+    #[test]
+    fn linestring_with_repeated_point_test() {
+        let l1 = LineString::from(vec![p(1., 1.), p(1., 1.), p(1., 1.)]);
+        assert_eq!(l1.centroid(), Some(p(1., 1.)));
+
+        let l2 = LineString::from(vec![p(2., 2.), p(2., 2.), p(2., 2.)]);
+        let mls = MultiLineString(vec![l1, l2]);
+        assert_eq!(mls.centroid(), Some(p(1.5, 1.5)));
     }
     // Tests: Centroid of MultiLineString
     #[test]
@@ -648,6 +640,7 @@ mod test {
     }
     #[test]
     fn polygon_hole_test() {
+        // hexagon
         let ls1 = LineString::from(vec![
             (5.0, 1.0),
             (4.0, 2.0),
@@ -666,8 +659,7 @@ mod test {
 
         let p1 = Polygon::new(ls1, vec![ls2, ls3]);
         let centroid = p1.centroid().unwrap();
-        assert_relative_eq!(centroid.x(), 5.5, max_relative = 1e-6);
-        assert_relative_eq!(centroid.y(), 2.5518518518518514, max_relative = 1e-6);
+        assert_relative_eq!(centroid, point!(x: 5.5, y: 2.5518518518518523));
     }
     #[test]
     fn flat_polygon_test() {
@@ -822,5 +814,73 @@ mod test {
         let collection = GeometryCollection(vec![MultiPoint(vec![p1, p2, p3]).into(), p0.into()]);
 
         assert_eq!(collection.centroid().unwrap(), point!(x: 1.0, y: 1.0));
+    }
+    #[test]
+    fn triangles() {
+        // boring triangle
+        assert_eq!(
+            Triangle(c(0., 0.), c(3., 0.), c(1.5, 3.)).centroid(),
+            point!(x: 1.5, y: 1.0)
+        );
+
+        // flat triangle
+        assert_eq!(
+            Triangle(c(0., 0.), c(3., 0.), c(1., 0.)).centroid(),
+            point!(x: 1.5, y: 0.0)
+        );
+
+        // triangle with some repeated points
+        assert_eq!(
+            Triangle(c(0., 0.), c(0., 0.), c(1., 0.)).centroid(),
+            point!(x: 0.5, y: 0.0)
+        );
+
+        // triangle with all repeated points
+        assert_eq!(
+            Triangle(c(0., 0.5), c(0., 0.5), c(0., 0.5)).centroid(),
+            point!(x: 0., y: 0.5)
+        )
+    }
+    #[test]
+    fn rectangles() {
+        // boring rect
+        assert_eq!(
+            Rect::new(c(0., 0.), c(4., 4.)).centroid(),
+            point!(x: 2.0, y: 2.0)
+        );
+
+        // flat rect
+        assert_eq!(
+            Rect::new(c(0., 0.), c(4., 0.)).centroid(),
+            point!(x: 2.0, y: 0.0)
+        );
+
+        // rect with all repeated points
+        assert_eq!(
+            Rect::new(c(4., 4.), c(4., 4.)).centroid(),
+            point!(x: 4., y: 4.)
+        );
+
+        // collection with rect
+        let mut collection =
+            GeometryCollection(vec![p(0., 0.).into(), p(6., 0.).into(), p(6., 6.).into()]);
+        // sanity check
+        assert_eq!(collection.centroid().unwrap(), point!(x: 4., y: 2.));
+
+        // 0-d rect treated like point
+        collection.0.push(Rect::new(c(0., 6.), c(0., 6.)).into());
+        assert_eq!(collection.centroid().unwrap(), point!(x: 3., y: 3.));
+
+        // 1-d rect treated like line. Since a line has higher dimensions than the rest of the
+        // collection, it's centroid clobbers everything else in the collection.
+        collection.0.push(Rect::new(c(0., 0.), c(0., 2.)).into());
+        assert_eq!(collection.centroid().unwrap(), point!(x: 0., y: 1.));
+
+        // 2-d has higher dimensions than the rest of the collection, so it's centroid clobbers
+        // everything else in the collection.
+        collection
+            .0
+            .push(Rect::new(c(10., 10.), c(11., 11.)).into());
+        assert_eq!(collection.centroid().unwrap(), point!(x: 10.5, y: 10.5));
     }
 }

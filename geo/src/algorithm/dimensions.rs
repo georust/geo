@@ -187,7 +187,6 @@ impl<C: CoordNum> HasDimensions for LineString<C> {
             return Dimensions::Empty;
         }
 
-        debug_assert!(self.0.len() > 1, "invalid line_string with 1 coord");
         let first = self.0[0];
         if self.0.iter().any(|&coord| first != coord) {
             Dimensions::OneDimensional
@@ -396,7 +395,12 @@ impl<C: CoordNum> HasDimensions for Triangle<C> {
         if self.0 == self.1 && self.1 == self.2 {
             // degenerate triangle is a point
             Dimensions::ZeroDimensional
-        } else if self.0 == self.1 || self.1 == self.2 || self.2 == self.0 {
+        } else if self.0 == self.1
+            || self.1 == self.2
+            || self.2 == self.0
+            || (self.0.x == self.1.x && self.0.x == self.2.x)
+            || (self.0.y == self.1.y && self.0.y == self.2.y)
+        {
             // degenerate triangle is a line
             Dimensions::OneDimensional
         } else {
