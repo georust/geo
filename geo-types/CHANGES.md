@@ -4,6 +4,8 @@
 
 * Implement `RelativeEq` and `AbsDiffEq` for fuzzy comparison of remaining Geometry Types
   * <https://github.com/georust/geo/pull/628>
+* Implement `From<Line>` for `LineString`
+  * <https://github.com/georust/geo/pull/634>
 
 ## 0.7.1
 
