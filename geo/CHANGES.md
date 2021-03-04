@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-*
+* Add KNearestConcaveHull algorithm
+  * <https://github.com/georust/geo/pull/635>
 
 ## 0.17.1
 
