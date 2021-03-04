@@ -484,8 +484,8 @@ where
 mod test {
     use crate::algorithm::centroid::Centroid;
     use crate::{
-        line_string, point, polygon, CoordFloat, Coordinate, Line, LineString, MultiLineString,
-        MultiPolygon, Point, Polygon, Rect,
+        line_string, point, polygon, CoordFloat, Coordinate, GeometryCollection, Line, LineString,
+        MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect,
     };
 
     /// small helper to create a coordinate
@@ -808,5 +808,19 @@ mod test {
     fn line_test() {
         let line1 = Line::new(c(0., 1.), c(1., 3.));
         assert_eq!(line1.centroid(), point![x: 0.5, y: 2.]);
+    }
+    #[test]
+    fn collection_weighting() {
+        let p0 = point!(x: 0.0, y: 0.0);
+        let p1 = point!(x: 2.0, y: 0.0);
+        let p2 = point!(x: 2.0, y: 2.0);
+        let p3 = point!(x: 0.0, y: 2.0);
+
+        let multi_point = MultiPoint(vec![p0, p1, p2, p3]);
+        assert_eq!(multi_point.centroid().unwrap(), point!(x: 1.0, y: 1.0));
+
+        let collection = GeometryCollection(vec![MultiPoint(vec![p1, p2, p3]).into(), p0.into()]);
+
+        assert_eq!(collection.centroid().unwrap(), point!(x: 1.0, y: 1.0));
     }
 }
