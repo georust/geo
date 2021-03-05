@@ -4,7 +4,7 @@ use crate::algorithm::area::{get_linestring_area, Area};
 use crate::algorithm::dimensions::{Dimensions, Dimensions::*, HasDimensions};
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::{
-    CoordFloat, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    Coordinate, GeoFloat, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
@@ -61,7 +61,7 @@ pub trait Centroid {
 
 impl<T> Centroid for Line<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     type Output = Point<T>;
 
@@ -73,7 +73,7 @@ where
 
 impl<T> Centroid for LineString<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     type Output = Option<Point<T>>;
 
@@ -88,7 +88,7 @@ where
 
 impl<T> Centroid for MultiLineString<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     type Output = Option<Point<T>>;
 
@@ -103,7 +103,7 @@ where
 
 impl<T> Centroid for Polygon<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     type Output = Option<Point<T>>;
 
@@ -116,7 +116,7 @@ where
 
 impl<T> Centroid for MultiPolygon<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     type Output = Option<Point<T>>;
 
@@ -129,7 +129,7 @@ where
 
 impl<T> Centroid for Rect<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     type Output = Point<T>;
 
@@ -140,7 +140,7 @@ where
 
 impl<T> Centroid for Point<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     type Output = Point<T>;
 
@@ -163,7 +163,7 @@ where
 /// ```
 impl<T> Centroid for MultiPoint<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     type Output = Option<Point<T>>;
 
@@ -176,7 +176,7 @@ where
 
 impl<T> Centroid for Geometry<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     type Output = Option<Point<T>>;
 
@@ -187,7 +187,7 @@ where
 
 impl<T> Centroid for GeometryCollection<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     type Output = Option<Point<T>>;
 
@@ -200,7 +200,7 @@ where
 
 impl<T> Centroid for Triangle<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     type Output = Point<T>;
 
@@ -213,8 +213,8 @@ where
     }
 }
 
-struct CentroidOperation<T: CoordFloat>(Option<WeightedCentroid<T>>);
-impl<T: CoordFloat> CentroidOperation<T> {
+struct CentroidOperation<T: GeoFloat>(Option<WeightedCentroid<T>>);
+impl<T: GeoFloat> CentroidOperation<T> {
     fn new() -> Self {
         CentroidOperation(None)
     }
@@ -429,7 +429,7 @@ impl<T: CoordFloat> CentroidOperation<T> {
 }
 
 // Aggregated state for accumulating the centroid of a geometry or collection of geometries.
-struct WeightedCentroid<T: CoordFloat> {
+struct WeightedCentroid<T: GeoFloat> {
     weight: T,
     accumulated: Coordinate<T>,
     /// Collections of Geometries can have different dimensionality. Centroids must be considered
@@ -445,7 +445,7 @@ struct WeightedCentroid<T: CoordFloat> {
     dimensions: Dimensions,
 }
 
-impl<T: CoordFloat> WeightedCentroid<T> {
+impl<T: GeoFloat> WeightedCentroid<T> {
     fn add_assign(&mut self, b: WeightedCentroid<T>) {
         match self.dimensions.cmp(&b.dimensions) {
             Ordering::Less => *self = b,
@@ -475,12 +475,12 @@ mod test {
     use crate::{line_string, point, polygon};
 
     /// small helper to create a coordinate
-    fn c<T: CoordFloat>(x: T, y: T) -> Coordinate<T> {
+    fn c<T: GeoFloat>(x: T, y: T) -> Coordinate<T> {
         Coordinate { x, y }
     }
 
     /// small helper to create a point
-    fn p<T: CoordFloat>(x: T, y: T) -> Point<T> {
+    fn p<T: GeoFloat>(x: T, y: T) -> Point<T> {
         Point(c(x, y))
     }
 
@@ -827,6 +827,12 @@ mod test {
         assert_eq!(
             Triangle(c(0., 0.), c(3., 0.), c(1., 0.)).centroid(),
             point!(x: 1.5, y: 0.0)
+        );
+
+        // flat triangle that's not axis-aligned
+        assert_eq!(
+            Triangle(c(0., 0.), c(3., 3.), c(1., 1.)).centroid(),
+            point!(x: 1.5, y: 1.5)
         );
 
         // triangle with some repeated points

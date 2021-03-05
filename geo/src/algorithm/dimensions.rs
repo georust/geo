@@ -1,5 +1,6 @@
+use crate::algorithm::kernels::Orientation::Collinear;
 use crate::{
-    CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    CoordNum, GeoNum, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
@@ -131,7 +132,7 @@ pub trait HasDimensions {
     fn boundary_dimensions(&self) -> Dimensions;
 }
 
-impl<C: CoordNum> HasDimensions for Geometry<C> {
+impl<C: GeoNum> HasDimensions for Geometry<C> {
     crate::geometry_delegate_impl! {
         fn is_empty(&self) -> bool;
         fn dimensions(&self) -> Dimensions;
@@ -320,7 +321,7 @@ impl<C: CoordNum> HasDimensions for MultiPolygon<C> {
     }
 }
 
-impl<C: CoordNum> HasDimensions for GeometryCollection<C> {
+impl<C: GeoNum> HasDimensions for GeometryCollection<C> {
     fn is_empty(&self) -> bool {
         if self.0.is_empty() {
             true
@@ -386,23 +387,21 @@ impl<C: CoordNum> HasDimensions for Rect<C> {
     }
 }
 
-impl<C: CoordNum> HasDimensions for Triangle<C> {
+impl<C: crate::GeoNum> HasDimensions for Triangle<C> {
     fn is_empty(&self) -> bool {
         false
     }
 
     fn dimensions(&self) -> Dimensions {
-        if self.0 == self.1 && self.1 == self.2 {
-            // degenerate triangle is a point
-            Dimensions::ZeroDimensional
-        } else if self.0 == self.1
-            || self.1 == self.2
-            || self.2 == self.0
-            || (self.0.x == self.1.x && self.0.x == self.2.x)
-            || (self.0.y == self.1.y && self.0.y == self.2.y)
-        {
-            // degenerate triangle is a line
-            Dimensions::OneDimensional
+        use crate::algorithm::kernels::Kernel;
+        if Collinear == C::Ker::orient2d(self.0, self.1, self.2) {
+            if self.0 == self.1 && self.1 == self.2 {
+                // degenerate triangle is a point
+                Dimensions::ZeroDimensional
+            } else {
+                // degenerate triangle is a line
+                Dimensions::OneDimensional
+            }
         } else {
             Dimensions::TwoDimensional
         }
