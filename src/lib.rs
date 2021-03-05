@@ -23,9 +23,9 @@ mod tests {
     }
 
     #[test]
-    fn test_centroid() {
+    fn test_relate() {
         init_logging();
-        let mut runner = TestRunner::new().matching_filename_glob("*Centroid.xml");
+        let mut runner = TestRunner::new().matching_filename_glob("*Relate*.xml");
         runner.run().expect("test cases failed");
 
         // sanity check that *something* was run
