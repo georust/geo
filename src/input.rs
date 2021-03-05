@@ -1,3 +1,4 @@
+use geo::algorithm::relate::IntersectionMatrix;
 use geo::{Geometry, Point};
 use serde::{Deserialize, Deserializer};
 
@@ -81,6 +82,16 @@ pub struct IntersectsInput {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct RelateInput {
+    pub(crate) arg1: String,
+    pub(crate) arg2: String,
+
+    #[serde(rename = "arg3")]
+    #[serde(deserialize_with = "deserialize_intersection_matrix")]
+    pub(crate) expected: IntersectionMatrix,
+}
+
+#[derive(Debug, Deserialize)]
 #[serde(tag = "name")]
 pub(crate) enum OperationInput {
     #[serde(rename = "getCentroid")]
@@ -91,6 +102,9 @@ pub(crate) enum OperationInput {
 
     #[serde(rename = "intersects")]
     IntersectsInput(IntersectsInput),
+
+    #[serde(rename = "relate")]
+    RelateInput(RelateInput),
 
     #[serde(other)]
     Unsupported,
@@ -110,6 +124,11 @@ pub(crate) enum Operation {
         subject: Geometry<f64>,
         clip: Geometry<f64>,
         expected: bool,
+    },
+    Relate {
+        a: Geometry<f64>,
+        b: Geometry<f64>,
+        expected: IntersectionMatrix,
     },
 }
 
@@ -151,6 +170,19 @@ impl OperationInput {
                     expected,
                 })
             }
+            Self::RelateInput(input) => {
+                assert_eq!("A", input.arg1);
+                assert_eq!("B", input.arg2);
+                assert!(
+                    case.b.is_some(),
+                    "intersects test case must contain geometry b"
+                );
+                Ok(Operation::Relate {
+                    a: geometry.clone(),
+                    b: case.b.clone().expect("no geometry b in case"),
+                    expected: input.expected,
+                })
+            }
             Self::Unsupported => Err("This OperationInput not supported".into()),
         }
     }
@@ -166,4 +198,15 @@ where
     struct Wrapper(#[serde(deserialize_with = "wkt::deserialize_geometry")] Geometry<f64>);
 
     Option::<Wrapper>::deserialize(deserializer).map(|opt_wrapped| opt_wrapped.map(|w| w.0))
+}
+
+pub fn deserialize_intersection_matrix<'de, D>(
+    deserializer: D,
+) -> std::result::Result<IntersectionMatrix, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use std::str::FromStr;
+    String::deserialize(deserializer)
+        .and_then(|str| IntersectionMatrix::from_str(&str).map_err(serde::de::Error::custom))
 }

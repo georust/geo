@@ -141,9 +141,7 @@ impl TestRunner {
                     };
 
                     // JTS returns a variety of Geometry types depending on the convex hull
-                    // whereas geo *alway* returns a polygon
-                    //
-                    // This is currently the cause of some test failures.
+                    // whereas geo *always* returns a polygon.
                     let expected = match expected {
                         Geometry::LineString(ext) => Polygon::new(ext.clone(), vec![]),
                         Geometry::Polygon(p) => p.clone(),
@@ -182,6 +180,22 @@ impl TestRunner {
                         self.successes.push(test_case);
                     } else {
                         debug!("Intersects failure: actual != expected");
+                        let error_description =
+                            format!("expected {:?}, actual: {:?}", expected, actual);
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    }
+                }
+                Operation::Relate { a, b, expected } => {
+                    use geo::algorithm::relate::Relate;
+                    let actual = a.relate(b);
+                    if actual == *expected {
+                        debug!("Relate success: actual == expected");
+                        self.successes.push(test_case);
+                    } else {
+                        debug!("Relate failure: actual != expected");
                         let error_description =
                             format!("expected {:?}, actual: {:?}", expected, actual);
                         self.failures.push(TestFailure {
