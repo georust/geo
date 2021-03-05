@@ -12,10 +12,8 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 
 [dependencies.geo]
-path = ".."
 
 [dependencies.geo-types]
-path = "../../geo-types"
 features = ["arbitrary"]
 
 # Prevent this from interfering with workspaces
@@ -27,3 +25,7 @@ name = "simplify"
 path = "fuzz_targets/simplify.rs"
 test = false
 doc = false
+
+[patch.crates-io]
+geo = { path = ".." }
+geo-types = { path = "../../geo-types" }
