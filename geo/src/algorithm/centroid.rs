@@ -324,7 +324,13 @@ impl<T: GeoFloat> CentroidOperation<T> {
     fn add_rect(&mut self, rect: &Rect<T>) {
         match rect.dimensions() {
             ZeroDimensional => self.add_coord(rect.min()),
-            OneDimensional => self.add_line(&Line::new(rect.min(), rect.max())),
+            OneDimensional => {
+                // Degenerate rect is a line, treat it the same way we treat flat polygons
+                self.add_line(&Line::new(rect.min(), rect.min()));
+                self.add_line(&Line::new(rect.min(), rect.max()));
+                self.add_line(&Line::new(rect.max(), rect.max()));
+                self.add_line(&Line::new(rect.max(), rect.min()));
+            }
             TwoDimensional => {
                 self.add_centroid(TwoDimensional, rect.centroid().0, rect.unsigned_area())
             }
@@ -336,26 +342,14 @@ impl<T: GeoFloat> CentroidOperation<T> {
         match triangle.dimensions() {
             ZeroDimensional => self.add_coord(triangle.0),
             OneDimensional => {
-                // Degenerate triangle is a line.
-                // We need to find the longest line to get the proper weight.
+                // Degenerate triangle is a line, treat it the same way we treat flat
+                // polygons
                 let l0_1 = Line::new(triangle.0, triangle.1);
                 let l1_2 = Line::new(triangle.1, triangle.2);
                 let l2_0 = Line::new(triangle.2, triangle.0);
-
-                let d0_1 = l0_1.euclidean_length();
-                let d1_2 = l1_2.euclidean_length();
-                let d2_0 = l2_0.euclidean_length();
-                let max = d0_1.max(d1_2).max(d2_0);
-
-                let longest_line = if max == d0_1 {
-                    l0_1
-                } else if max == d1_2 {
-                    l1_2
-                } else {
-                    l2_0
-                };
-
-                self.add_line(&longest_line);
+                self.add_line(&l0_1);
+                self.add_line(&l1_2);
+                self.add_line(&l2_0);
             }
             TwoDimensional => {
                 let centroid = (triangle.0 + triangle.1 + triangle.2) / T::from(3).unwrap();
@@ -847,6 +841,31 @@ mod test {
             point!(x: 0., y: 0.5)
         )
     }
+
+    #[test]
+    fn degenerate_triangle_like_ring() {
+        let triangle = Triangle(c(0., 0.), c(1., 1.), c(2., 2.));
+        let poly: Polygon<_> = triangle.clone().into();
+
+        let line = Line::new(c(0., 1.), c(1., 3.));
+
+        let g1 = GeometryCollection(vec![triangle.into(), line.into()]);
+        let g2 = GeometryCollection(vec![poly.into(), line.into()]);
+        assert_eq!(g1.centroid(), g2.centroid());
+    }
+
+    #[test]
+    fn degenerate_rect_like_ring() {
+        let rect = Rect::new(c(0., 0.), c(0., 4.));
+        let poly: Polygon<_> = rect.clone().into();
+
+        let line = Line::new(c(0., 1.), c(1., 3.));
+
+        let g1 = GeometryCollection(vec![rect.into(), line.into()]);
+        let g2 = GeometryCollection(vec![poly.into(), line.into()]);
+        assert_eq!(g1.centroid(), g2.centroid());
+    }
+
     #[test]
     fn rectangles() {
         // boring rect
