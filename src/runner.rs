@@ -232,11 +232,11 @@ impl TestRunner {
             };
             for mut case in run.cases {
                 if let Some(desc_filter) = &self.desc_filter {
-                    if case.desc.as_str() != desc_filter {
+                    if case.desc.as_str().contains(desc_filter) {
+                        debug!("filter matched case: {}", &case.desc);
+                    } else {
                         debug!("filter skipped case: {}", &case.desc);
                         continue;
-                    } else {
-                        debug!("filter matched case: {}", &case.desc);
                     }
                 } else {
                     debug!("parsing case {}:", &case.desc);
