@@ -114,11 +114,12 @@ where
         .fold(T::max_value(), |accum, val| accum.min(val))
 }
 
-pub fn point_line_euclidean_distance<T>(p: Point<T>, l: Line<T>) -> T
+pub fn point_line_euclidean_distance<C, T>(p: C, l: Line<T>) -> T
 where
     T: CoordFloat,
+    C: Into<Coordinate<T>>,
 {
-    line_segment_distance(p.0, l.start, l.end)
+    line_segment_distance(p.into(), l.start, l.end)
 }
 
 pub fn point_contains_point<T>(p1: Point<T>, p2: Point<T>) -> bool
