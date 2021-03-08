@@ -408,7 +408,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
     fn add_centroid(&mut self, dimensions: Dimensions, centroid: Coordinate<T>, weight: T) {
         let weighted_centroid = WeightedCentroid {
             dimensions,
-            weight: weight,
+            weight,
             accumulated: centroid * weight,
         };
         self.add_weighted_centroid(weighted_centroid);
@@ -443,7 +443,7 @@ impl<T: GeoFloat> WeightedCentroid<T> {
     fn add_assign(&mut self, b: WeightedCentroid<T>) {
         match self.dimensions.cmp(&b.dimensions) {
             Ordering::Less => *self = b,
-            Ordering::Greater => return,
+            Ordering::Greater => {}
             Ordering::Equal => {
                 self.accumulated = self.accumulated + b.accumulated;
                 self.weight = self.weight + b.weight;
@@ -454,7 +454,7 @@ impl<T: GeoFloat> WeightedCentroid<T> {
     fn sub_assign(&mut self, b: WeightedCentroid<T>) {
         match self.dimensions.cmp(&b.dimensions) {
             Ordering::Less => *self = b,
-            Ordering::Greater => return,
+            Ordering::Greater => {}
             Ordering::Equal => {
                 self.accumulated = self.accumulated - b.accumulated;
                 self.weight = self.weight - b.weight;

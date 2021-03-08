@@ -229,7 +229,7 @@ impl<T: CoordNum> Rect<T> {
 
     fn assert_valid_bounds(&self) {
         if !self.has_valid_bounds() {
-            panic!(RECT_INVALID_BOUNDS_ERROR);
+            panic!("{}", RECT_INVALID_BOUNDS_ERROR);
         }
     }
 
