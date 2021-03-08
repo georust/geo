@@ -1,10 +1,9 @@
 use crate::algorithm::centroid::Centroid;
 use crate::algorithm::map_coords::MapCoords;
 use crate::{
-    CoordFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    CoordFloat, GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
+    Polygon,
 };
-use num_traits::FromPrimitive;
-use std::iter::Sum;
 
 #[inline]
 fn rotate_inner<T>(x: T, y: T, x0: T, y0: T, sin_theta: T, cos_theta: T) -> Point<T>
@@ -146,7 +145,7 @@ where
 
 impl<T> Rotate<T> for Line<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     fn rotate(&self, angle: T) -> Self {
         let centroid = self.centroid();
@@ -159,7 +158,7 @@ where
 
 impl<T> Rotate<T> for LineString<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     /// Rotate the LineString about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
@@ -169,7 +168,7 @@ where
 
 impl<T> Rotate<T> for Polygon<T>
 where
-    T: CoordFloat + FromPrimitive + Sum,
+    T: GeoFloat,
 {
     /// Rotate the Polygon about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
@@ -191,7 +190,7 @@ where
 
 impl<T> Rotate<T> for MultiPolygon<T>
 where
-    T: CoordFloat + FromPrimitive + Sum,
+    T: GeoFloat,
 {
     /// Rotate the contained Polygons about their centroids by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
@@ -201,7 +200,7 @@ where
 
 impl<T> Rotate<T> for MultiLineString<T>
 where
-    T: CoordFloat + FromPrimitive,
+    T: GeoFloat,
 {
     /// Rotate the contained LineStrings about their centroids by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
@@ -211,7 +210,7 @@ where
 
 impl<T> Rotate<T> for MultiPoint<T>
 where
-    T: CoordFloat + FromPrimitive,
+    T: CoordFloat,
 {
     /// Rotate the contained Points about their centroids by the given number of degrees
     fn rotate(&self, angle: T) -> Self {

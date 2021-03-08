@@ -1,2 +1,8 @@
 [workspace]
 members = ["geo", "geo-types", "geo-postgis"]
+
+[patch.crates-io]
+
+# Ensure any transitive dependencies also use the local geo/geo-types
+geo = { path = "geo" }
+geo-types = { path = "geo-types" }
