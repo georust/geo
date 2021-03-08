@@ -63,12 +63,6 @@
 //! - **[`Bearing`](algorithm::bearing::Bearing)**: Calculate the bearing between points
 //! - **[`ClosestPoint`](algorithm::closest_point::ClosestPoint)**: Find the point on a geometry
 //!   closest to a given point
-//! - **[`Contains`](algorithm::contains::Contains)**: Calculate if a geometry contains another
-//!   geometry
-//! - **[`CoordinatePosition`](algorithm::coordinate_position::CoordinatePosition)**: Calculate
-//!   the position of a coordinate relative to a geometry
-//! - **[`Intersects`](algorithm::intersects::Intersects)**: Calculate if a geometry intersects
-//!   another geometry
 //! - **[`IsConvex`](algorithm::is_convex::IsConvex)**: Calculate the convexity of a
 //!   [`LineString`]
 //! - **[`LineInterpolatePoint`](algorithm::line_interpolate_point::LineInterpolatePoint)**:
@@ -80,6 +74,18 @@
 //! ## Similarity
 //!
 //! - **[`FrechetDistance`](algorithm::frechet_distance::FrechetDistance)**: Calculate the similarity between [`LineString`]s using the Fréchet distance
+//!
+//! ## Topology
+//!
+//! - **[`Contains`](algorithm::contains::Contains)**: Calculate if a geometry contains another
+//!   geometry
+//! - **[`CoordinatePosition`](algorithm::coordinate_position::CoordinatePosition)**: Calculate
+//!   the position of a coordinate relative to a geometry
+//! - **[`HasDimensions`](algorithm::dimensions::HasDimensions)**: Determine the dimensions of a geometry
+//! - **[`Intersects`](algorithm::intersects::Intersects)**: Calculate if a geometry intersects
+//!   another geometry
+//! - **[`line_intersection`](algorithm::line_intersection::line_intersection)**: Calculates the
+//!   intersection, if any, between two lines.
 //!
 //! ## Winding
 //!
@@ -116,7 +122,6 @@
 //! ## Miscellaneous
 //!
 //! - **[`Centroid`](algorithm::centroid::Centroid)**: Calculate the centroid of a geometry
-//! - **[`HasDimensions`](algorithm::dimensions::HasDimensions)**: Determine the dimensions of a geometry
 //! - **[`HaversineDestination`](algorithm::haversine_destination::HaversineDestination)**:
 //! - **[`HaversineIntermediate`](algorithm::haversine_intermediate::HaversineIntermediate)**:
 //! - **`Proj`**: Project geometries with the `proj` crate
