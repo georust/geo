@@ -29,19 +29,14 @@ where
     Word(String),
 }
 
+#[inline]
 fn is_whitespace(c: char) -> bool {
-    match c {
-        '\n' | '\r' | '\t' | ' ' => true,
-        _ => false,
-    }
+    c == ' ' || c == '\n' || c == '\r' || c == '\t'
 }
 
+#[inline]
 fn is_numberlike(c: char) -> bool {
-    match c {
-        c if c.is_numeric() => true,
-        '.' | '-' | '+' => true,
-        _ => false,
-    }
+    c == '.' || c == '-' || c == '+' || c.is_ascii_digit()
 }
 
 pub type PeekableTokens<'a, T> = Peekable<Tokens<'a, T>>;
@@ -66,7 +61,7 @@ where
 
 impl<'a, T> Iterator for Tokens<'a, T>
 where
-    T: WktFloat + str::FromStr + Default,
+    T: WktFloat + str::FromStr,
 {
     type Item = Token<T>;
 
@@ -85,14 +80,19 @@ where
             ')' => Some(Token::ParenClose),
             ',' => Some(Token::Comma),
             c if is_numberlike(c) => {
-                let number = c.to_string() + &self.read_until_whitespace().unwrap_or_default();
-                match number.trim_start_matches('+').parse::<T>() {
+                let mut number = self.read_until_whitespace().unwrap_or_default();
+                if c != '+' {
+                    // Prepend the character because the string likely has capacity.
+                    number.insert(0, c);
+                }
+                match number.parse::<T>() {
                     Ok(parsed_num) => Some(Token::Number(parsed_num)),
                     Err(_) => None,
                 }
             }
             c => {
-                let word = c.to_string() + &self.read_until_whitespace().unwrap_or_default();
+                let mut word = self.read_until_whitespace().unwrap_or_default();
+                word.insert(0, c);
                 Some(Token::Word(word))
             }
         }
@@ -101,40 +101,28 @@ where
 
 impl<'a, T> Tokens<'a, T>
 where
-    T: WktFloat + str::FromStr + Default,
+    T: str::FromStr,
 {
     fn read_until_whitespace(&mut self) -> Option<String> {
-        let mut result = String::new();
+        let mut result = None;
 
         while let Some(&next_char) = self.chars.peek() {
-            let marker = match next_char {
-                '\0' | '(' | ')' | ',' => true,
-                _ => false,
-            };
-
-            // Consume non-markers
-            if !marker {
-                let _ = self.chars.next();
-            }
-
-            let whitespace = is_whitespace(next_char);
-
-            // Append non-whitespace, non-marker characters
-            if !marker && !whitespace {
-                result.push(next_char);
-            }
-
-            // Stop reading when reached marker or whitespace
-            if marker || whitespace {
-                break;
+            match next_char {
+                '\0' | '(' | ')' | ',' => break, // Just stop on a marker
+                c if is_whitespace(c) => {
+                    let _ = self.chars.next();
+                    break;
+                }
+                _ => {
+                    let _ = self.chars.next();
+                    result
+                        .get_or_insert_with(|| String::with_capacity(16))
+                        .push(next_char);
+                }
             }
         }
 
-        if result.is_empty() {
-            None
-        } else {
-            Some(result)
-        }
+        result
     }
 }
 
@@ -184,6 +172,13 @@ fn test_tokenizer_invalid_number() {
     let test_str = "4.2p";
     let tokens: Vec<Token<f64>> = Tokens::from_str(test_str).collect();
     assert_eq!(tokens, vec![]);
+}
+
+#[test]
+fn test_tokenizer_not_a_number() {
+    let test_str = "¾"; // A number according to char.is_numeric()
+    let tokens: Vec<Token<f64>> = Tokens::from_str(test_str).collect();
+    assert_eq!(tokens, vec![Token::Word("¾".to_owned())]);
 }
 
 #[test]

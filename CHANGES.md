@@ -3,6 +3,8 @@
 ## Unreleased
 
 * Add new entries here
+* Approximately 40% faster according to `cargo bench`.
+* Some "numeric" characters like `¾` and `①` were being treated as digits.
 * Support `POINT EMPTY` in conversion to `geo_types`.
   Converts to `MultiPoint([])`.
   * <https://github.com/georust/wkt/pull/64>
