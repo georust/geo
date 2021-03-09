@@ -26,6 +26,3 @@ default = ["geo-types"]
 [[bench]]
 name = "parse"
 harness = false
-
-[profile.release]
-debug = true
