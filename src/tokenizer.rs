@@ -80,21 +80,13 @@ where
             ')' => Some(Token::ParenClose),
             ',' => Some(Token::Comma),
             c if is_numberlike(c) => {
-                let mut number = self.read_until_whitespace().unwrap_or_default();
-                if c != '+' {
-                    // Prepend the character because the string likely has capacity.
-                    number.insert(0, c);
-                }
+                let number = self.read_until_whitespace(if c == '+' { None } else { Some(c) });
                 match number.parse::<T>() {
                     Ok(parsed_num) => Some(Token::Number(parsed_num)),
                     Err(_) => None,
                 }
             }
-            c => {
-                let mut word = self.read_until_whitespace().unwrap_or_default();
-                word.insert(0, c);
-                Some(Token::Word(word))
-            }
+            c => Some(Token::Word(self.read_until_whitespace(Some(c)))),
         }
     }
 }
@@ -103,8 +95,11 @@ impl<'a, T> Tokens<'a, T>
 where
     T: str::FromStr,
 {
-    fn read_until_whitespace(&mut self) -> Option<String> {
-        let mut result = None;
+    fn read_until_whitespace(&mut self, first_char: Option<char>) -> String {
+        let mut result = String::with_capacity(12); // Big enough for most tokens
+        if let Some(c) = first_char {
+            result.push(c);
+        }
 
         while let Some(&next_char) = self.chars.peek() {
             match next_char {
@@ -114,10 +109,8 @@ where
                     break;
                 }
                 _ => {
+                    result.push(next_char);
                     let _ = self.chars.next();
-                    result
-                        .get_or_insert_with(|| String::with_capacity(16))
-                        .push(next_char);
                 }
             }
         }
