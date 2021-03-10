@@ -174,18 +174,29 @@ impl TestRunner {
                     clip,
                     expected,
                 } => {
-                    let actual = subject.intersects(clip);
-                    if actual == *expected {
-                        debug!("Intersects success: actual == expected");
-                        self.successes.push(test_case);
-                    } else {
-                        debug!("Intersects failure: actual != expected");
+                    use geo::algorithm::relate::Relate;
+                    let direct_actual = subject.intersects(clip);
+                    let relate_actual = subject.relate(clip).is_intersects();
+
+                    if direct_actual != *expected {
+                        debug!("Intersects failure: direct_actual != expected");
                         let error_description =
-                            format!("expected {:?}, actual: {:?}", expected, actual);
+                            format!("expected {:?}, direct_actual: {:?}", expected, direct_actual);
                         self.failures.push(TestFailure {
                             test_case,
                             error_description,
                         });
+                    } else if relate_actual != *expected {
+                        debug!("Intersects failure: relate_actual != expected");
+                        let error_description =
+                            format!("expected {:?}, relate_actual: {:?}", expected, relate_actual);
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    } else {
+                        debug!("Intersects success: actual == expected");
+                        self.successes.push(test_case);
                     }
                 }
                 Operation::Relate { a, b, expected } => {
