@@ -92,6 +92,32 @@ impl TestRunner {
                         }
                     }
                 }
+                Operation::Contains {
+                    subject,
+                    target,
+                    expected,
+                } => {
+                    use geo::algorithm::relate::Relate;
+                    let relate_actual = subject.relate(target).is_contains();
+
+                    // TODO: impl `Contains` for `Geometry` in geo and check that result here too
+                    // let direct_actual = subject.contains(target);
+
+                    if relate_actual != *expected {
+                        debug!("Intersects failure: relate_actual != expected");
+                        let error_description = format!(
+                            "expected {:?}, relate_actual: {:?}",
+                            expected, relate_actual
+                        );
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    } else {
+                        debug!("Intersects success: actual == expected");
+                        self.successes.push(test_case);
+                    }
+                }
                 Operation::ConvexHull { subject, expected } => {
                     use geo::prelude::ConvexHull;
 
@@ -180,16 +206,20 @@ impl TestRunner {
 
                     if direct_actual != *expected {
                         debug!("Intersects failure: direct_actual != expected");
-                        let error_description =
-                            format!("expected {:?}, direct_actual: {:?}", expected, direct_actual);
+                        let error_description = format!(
+                            "expected {:?}, direct_actual: {:?}",
+                            expected, direct_actual
+                        );
                         self.failures.push(TestFailure {
                             test_case,
                             error_description,
                         });
                     } else if relate_actual != *expected {
                         debug!("Intersects failure: relate_actual != expected");
-                        let error_description =
-                            format!("expected {:?}, relate_actual: {:?}", expected, relate_actual);
+                        let error_description = format!(
+                            "expected {:?}, relate_actual: {:?}",
+                            expected, relate_actual
+                        );
                         self.failures.push(TestFailure {
                             test_case,
                             error_description,
