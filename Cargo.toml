@@ -26,4 +26,3 @@ default = ["geo-types"]
 [[bench]]
 name = "parse"
 harness = false
-
