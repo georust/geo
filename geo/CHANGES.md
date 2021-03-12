@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-*
+* Add `line_intersection` to compute point or segment intersection of two Lines.
+  * <https://github.com/georust/geo/pull/636>
 
 ## 0.17.1
 
