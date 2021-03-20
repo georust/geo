@@ -66,14 +66,7 @@ where
     type Output = Rect<T>;
 
     fn bounding_rect(&self) -> Self::Output {
-        let a = self.start;
-        let b = self.end;
-        let (xmin, xmax) = if a.x <= b.x { (a.x, b.x) } else { (b.x, a.x) };
-        let (ymin, ymax) = if a.y <= b.y { (a.y, b.y) } else { (b.y, a.y) };
-        Rect::new(
-            Coordinate { x: xmin, y: ymin },
-            Coordinate { x: xmax, y: ymax },
-        )
+        Rect::new(self.start, self.end)
     }
 }
 

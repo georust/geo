@@ -16,15 +16,7 @@ pub fn line_bounding_rect<T>(line: Line<T>) -> Rect<T>
 where
     T: CoordNum,
 {
-    let a = line.start;
-    let b = line.end;
-    let (xmin, xmax) = if a.x <= b.x { (a.x, b.x) } else { (b.x, a.x) };
-    let (ymin, ymax) = if a.y <= b.y { (a.y, b.y) } else { (b.y, a.y) };
-
-    Rect::new(
-        Coordinate { x: xmin, y: ymin },
-        Coordinate { x: xmax, y: ymax },
-    )
+    Rect::new(line.start, line.end)
 }
 
 pub fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>

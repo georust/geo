@@ -497,34 +497,11 @@ impl<T: CoordNum> MapCoordsInplace<T> for GeometryCollection<T> {
     }
 }
 
-fn normalize_rect_bounds<T: PartialOrd>(min: &mut (T, T), max: &mut (T, T)) {
-    use std::mem::swap;
-    if min.0 > max.0 {
-        swap(&mut min.0, &mut max.0);
-    }
-    if min.1 > max.1 {
-        swap(&mut min.1, &mut max.1);
-    }
-}
-
 impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Rect<T> {
     type Output = Rect<NT>;
 
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output {
-        let mut new_min = func(&self.min().x_y());
-        let mut new_max = func(&self.max().x_y());
-        normalize_rect_bounds(&mut new_min, &mut new_max);
-
-        Rect::new(
-            Coordinate {
-                x: new_min.0,
-                y: new_min.1,
-            },
-            Coordinate {
-                x: new_max.0,
-                y: new_max.1,
-            },
-        )
+        Rect::new(func(&self.min().x_y()), func(&self.max().x_y()))
     }
 }
 
@@ -535,31 +512,16 @@ impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for Rect<T> {
         &self,
         func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>>,
     ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
-        let mut new_min = func(&(self.min().x, self.min().y))?;
-        let mut new_max = func(&(self.max().x, self.max().y))?;
-        normalize_rect_bounds(&mut new_min, &mut new_max);
-
         Ok(Rect::new(
-            Coordinate {
-                x: new_min.0,
-                y: new_min.1,
-            },
-            Coordinate {
-                x: new_max.0,
-                y: new_max.1,
-            },
+            func(&self.min().x_y())?,
+            func(&self.max().x_y())?,
         ))
     }
 }
 
 impl<T: CoordNum> MapCoordsInplace<T> for Rect<T> {
     fn map_coords_inplace(&mut self, func: impl Fn(&(T, T)) -> (T, T)) {
-        let mut new_min = func(&self.min().x_y());
-        let mut new_max = func(&self.max().x_y());
-
-        normalize_rect_bounds(&mut new_min, &mut new_max);
-        let mut new_rect = Rect::new(new_min, new_max);
-
+        let mut new_rect = Rect::new(func(&self.min().x_y()), func(&self.max().x_y()));
         ::std::mem::swap(self, &mut new_rect);
     }
 }
