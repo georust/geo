@@ -1,3 +1,4 @@
+use geo::algorithm::relate::IntersectionMatrix;
 use geo::{Geometry, Point};
 use serde::{Deserialize, Deserializer};
 
@@ -57,8 +58,7 @@ pub(crate) struct Test {
 pub struct CentroidInput {
     pub(crate) arg1: String,
 
-    #[serde(rename = "$value")]
-    #[serde(deserialize_with = "wkt::deserialize_point")]
+    #[serde(rename = "$value", deserialize_with = "wkt::deserialize_point")]
     pub(crate) expected: Option<geo::Point<f64>>,
 }
 
@@ -66,8 +66,7 @@ pub struct CentroidInput {
 pub struct ConvexHullInput {
     pub(crate) arg1: String,
 
-    #[serde(rename = "$value")]
-    #[serde(deserialize_with = "wkt::deserialize_geometry")]
+    #[serde(rename = "$value", deserialize_with = "wkt::deserialize_geometry")]
     pub(crate) expected: geo::Geometry<f64>,
 }
 
@@ -76,8 +75,26 @@ pub struct IntersectsInput {
     pub(crate) arg1: String,
     pub(crate) arg2: String,
 
-    #[serde(rename = "$value")]
-    pub(crate) expected: String,
+    #[serde(rename = "$value", deserialize_with = "deserialize_from_str")]
+    pub(crate) expected: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RelateInput {
+    pub(crate) arg1: String,
+    pub(crate) arg2: String,
+
+    #[serde(rename = "arg3", deserialize_with = "deserialize_from_str")]
+    pub(crate) expected: IntersectionMatrix,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ContainsInput {
+    pub(crate) arg1: String,
+    pub(crate) arg2: String,
+
+    #[serde(rename = "$value", deserialize_with = "deserialize_from_str")]
+    pub(crate) expected: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -92,6 +109,12 @@ pub(crate) enum OperationInput {
     #[serde(rename = "intersects")]
     IntersectsInput(IntersectsInput),
 
+    #[serde(rename = "relate")]
+    RelateInput(RelateInput),
+
+    #[serde(rename = "contains")]
+    ContainsInput(ContainsInput),
+
     #[serde(other)]
     Unsupported,
 }
@@ -102,6 +125,11 @@ pub(crate) enum Operation {
         subject: Geometry<f64>,
         expected: Option<Point<f64>>,
     },
+    Contains {
+        subject: Geometry<f64>,
+        target: Geometry<f64>,
+        expected: bool,
+    },
     ConvexHull {
         subject: Geometry<f64>,
         expected: Geometry<f64>,
@@ -110,6 +138,11 @@ pub(crate) enum Operation {
         subject: Geometry<f64>,
         clip: Geometry<f64>,
         expected: bool,
+    },
+    Relate {
+        a: Geometry<f64>,
+        b: Geometry<f64>,
+        expected: IntersectionMatrix,
     },
 }
 
@@ -138,17 +171,36 @@ impl OperationInput {
                     case.b.is_some(),
                     "intersects test case must contain geometry b"
                 );
-                let expected = if input.expected.eq_ignore_ascii_case("true") {
-                    true
-                } else if input.expected.eq_ignore_ascii_case("false") {
-                    false
-                } else {
-                    panic!("expected value was neither \"true\" nor \"false\"");
-                };
                 Ok(Operation::Intersects {
                     subject: geometry.clone(),
                     clip: case.b.clone().expect("no geometry b in case"),
-                    expected,
+                    expected: input.expected,
+                })
+            }
+            Self::RelateInput(input) => {
+                assert_eq!("A", input.arg1);
+                assert_eq!("B", input.arg2);
+                assert!(
+                    case.b.is_some(),
+                    "intersects test case must contain geometry b"
+                );
+                Ok(Operation::Relate {
+                    a: geometry.clone(),
+                    b: case.b.clone().expect("no geometry b in case"),
+                    expected: input.expected,
+                })
+            }
+            Self::ContainsInput(input) => {
+                assert_eq!("A", input.arg1);
+                assert_eq!("B", input.arg2);
+                assert!(
+                    case.b.is_some(),
+                    "intersects test case must contain geometry b"
+                );
+                Ok(Operation::Contains {
+                    subject: geometry.clone(),
+                    target: case.b.clone().expect("no geometry b in case"),
+                    expected: input.expected,
                 })
             }
             Self::Unsupported => Err("This OperationInput not supported".into()),
@@ -166,4 +218,14 @@ where
     struct Wrapper(#[serde(deserialize_with = "wkt::deserialize_geometry")] Geometry<f64>);
 
     Option::<Wrapper>::deserialize(deserializer).map(|opt_wrapped| opt_wrapped.map(|w| w.0))
+}
+
+pub fn deserialize_from_str<'de, T, D>(deserializer: D) -> std::result::Result<T, D::Error>
+where
+    T: std::str::FromStr,
+    D: Deserializer<'de>,
+    <T as std::str::FromStr>::Err: std::fmt::Display,
+{
+    String::deserialize(deserializer)
+        .and_then(|str| T::from_str(&str).map_err(serde::de::Error::custom))
 }
