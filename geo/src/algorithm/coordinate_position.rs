@@ -2,12 +2,12 @@ use crate::algorithm::{
     bounding_rect::BoundingRect, dimensions::HasDimensions, intersects::Intersects,
 };
 use crate::{
-    Coordinate, GeoNum, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+    Coordinate, GeoNum, Geometry, GeometryCollection, GeometryCow, Line, LineString,
+    MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
 /// The position of a `Coordinate` relative to a `Geometry`
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum CoordPos {
     OnBoundary,
     Inside,
@@ -327,48 +327,23 @@ where
     T: GeoNum,
 {
     type Scalar = T;
-    fn calculate_coordinate_position(
-        &self,
-        coord: &Coordinate<T>,
-        is_inside: &mut bool,
-        boundary_count: &mut usize,
-    ) {
-        if self.is_empty() {
-            return;
-        }
+    crate::geometry_delegate_impl! {
+        fn calculate_coordinate_position(
+            &self,
+            coord: &Coordinate<T>,
+            is_inside: &mut bool,
+            boundary_count: &mut usize) -> ();
+    }
+}
 
-        match self {
-            Geometry::Point(point) => {
-                point.calculate_coordinate_position(coord, is_inside, boundary_count)
-            }
-            Geometry::Line(line) => {
-                line.calculate_coordinate_position(coord, is_inside, boundary_count)
-            }
-            Geometry::LineString(line_string) => {
-                line_string.calculate_coordinate_position(coord, is_inside, boundary_count)
-            }
-            Geometry::Polygon(polygon) => {
-                polygon.calculate_coordinate_position(coord, is_inside, boundary_count)
-            }
-            Geometry::Rect(rect) => {
-                rect.calculate_coordinate_position(coord, is_inside, boundary_count)
-            }
-            Geometry::Triangle(triangle) => {
-                triangle.calculate_coordinate_position(coord, is_inside, boundary_count)
-            }
-            Geometry::MultiPoint(multi_point) => {
-                multi_point.calculate_coordinate_position(coord, is_inside, boundary_count)
-            }
-            Geometry::MultiLineString(multi_line_string) => {
-                multi_line_string.calculate_coordinate_position(coord, is_inside, boundary_count)
-            }
-            Geometry::MultiPolygon(multi_polygon) => {
-                multi_polygon.calculate_coordinate_position(coord, is_inside, boundary_count)
-            }
-            Geometry::GeometryCollection(geometry_collection) => {
-                geometry_collection.calculate_coordinate_position(coord, is_inside, boundary_count)
-            }
-        }
+impl<'a, T: GeoNum> CoordinatePosition for GeometryCow<'a, T> {
+    type Scalar = T;
+    crate::geometry_cow_delegate_impl! {
+        fn calculate_coordinate_position(
+            &self,
+            coord: &Coordinate<T>,
+            is_inside: &mut bool,
+            boundary_count: &mut usize) -> ();
     }
 }
 

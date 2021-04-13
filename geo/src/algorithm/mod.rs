@@ -66,6 +66,8 @@ pub(crate) mod polygon_distance_fast_path;
 /// Coordinate projections and transformations using the current stable version of [PROJ](http://proj.org).
 #[cfg(feature = "use-proj")]
 pub mod proj;
+/// Relate two geometries based on DE-9IM
+pub mod relate;
 /// Rotate a `Geometry` around either its centroid or a `Point` by an angle given in degrees.
 pub mod rotate;
 /// Simplify `Geometries` using the Ramer-Douglas-Peucker algorithm.

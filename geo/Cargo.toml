@@ -19,6 +19,7 @@ num-traits = "0.2"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 rstar = { version = "0.8" }
 geographiclib-rs = { version = "0.2" }
+log = "0.4.11"
 
 proj = { version = "0.20.3", optional = true }
 
@@ -32,11 +33,12 @@ proj-network = ["use-proj", "proj/network"]
 use-serde = ["serde", "geo-types/serde"]
 
 [dev-dependencies]
+pretty_env_logger = "0.4"
 approx = "0.4.0"
 criterion = { version = "0.3" }
 # jts-test-runner is an internal crate which exists only to be part of the geo test suite.
 # As such it's kept unpublished. It's in a separate repo primarily because it's kind of large.
-jts-test-runner = { git = "https://github.com/georust/jts-test-runner", rev = "3294b9af1d3e64fcc9caf9646a93d0116f7d8321" }
+jts-test-runner = { git = "https://github.com/georust/jts-test-runner", rev = "4a69a552546bd3d1dec574a51280dbc82bb417ce" }
 rand = "0.8.0"
 
 [[bench]]
@@ -73,6 +75,10 @@ harness = false
 
 [[bench]]
 name = "rotate"
+harness = false
+
+[[bench]]
+name = "relate"
 harness = false
 
 [[bench]]

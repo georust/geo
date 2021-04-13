@@ -615,8 +615,8 @@ mod test {
             .centroid()
             .unwrap()
             .map_coords(|&(x, y)| (x - shift_x, y - shift_y));
-        eprintln!("centroid {:?}", centroid.0);
-        eprintln!("new_centroid {:?}", new_centroid.0);
+        debug!("centroid {:?}", centroid.0);
+        debug!("new_centroid {:?}", new_centroid.0);
         assert_relative_eq!(centroid.0.x, new_centroid.0.x, max_relative = 0.0001);
         assert_relative_eq!(centroid.0.y, new_centroid.0.y, max_relative = 0.0001);
     }
