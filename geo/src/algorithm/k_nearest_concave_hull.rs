@@ -1,9 +1,10 @@
-use crate::{Point, Polygon, LineString, CoordNum, GeoFloat, MultiPoint, MultiPolygon, MultiLineString};
+use crate::{Point, Polygon, LineString, CoordNum, GeoFloat, MultiPoint, MultiPolygon, MultiLineString, Coordinate};
 use std::cmp::max;
 use crate::algorithm::contains::Contains;
 use crate::algorithm::intersects::Intersects;
 use rstar::RTreeNum;
 use crate::algorithm::convex_hull::ConvexHull;
+use num_traits::Float;
 
 const K_MULTIPLIER: f32 = 1.5;
 
@@ -97,28 +98,72 @@ impl<T> KNearestConcaveHull for MultiLineString<T>
     }
 }
 
-fn concave_hull<T>(mut points: Vec<Point<T>>, k: u32) -> Polygon<T>
-where T: GeoFloat + RTreeNum    
+fn concave_hull<T>(points: Vec<Point<T>>, k: u32) -> Polygon<T>
+    where T: GeoFloat + RTreeNum
 {
-    points.dedup();
+    let dataset = prepare_dataset(&points);
+    concave_hull_inner(dataset, k)
+}
 
-    let set_length = points.len();
+const DELTA: f32 = 0.000000001;
+
+// Removes duplicate points from the dataset.
+fn prepare_dataset<T>(points: &Vec<Point<T>>) -> rstar::RTree<Point<T>>
+    where T: GeoFloat + RTreeNum
+{
+    let mut dataset: rstar::RTree<Point<T>> = rstar::RTree::new();
+    for point in points {
+        let closest = dataset.nearest_neighbor(point);
+        if let Some(closest) = closest {
+            if taxicab_distance(closest, point) < T::from(DELTA).expect("Conversion from constant is always valid") {
+                continue;
+            }
+        }
+        
+        dataset.insert(point.clone())
+    }
+
+    dataset
+}
+
+fn taxicab_distance<T>(p1: &Point<T>, p2: &Point<T>) -> T
+    where T: GeoFloat + RTreeNum
+{
+    (p1.x() - p2.x()).abs() + (p2.y() - p2.y()).abs()
+}
+
+fn polygon_from_tree<T>(dataset: &rstar::RTree<Point<T>>) -> Polygon<T>
+    where T: GeoFloat + RTreeNum
+{
+    let mut points: Vec<Coordinate<T>> = dataset.iter().map(|p| p.0).collect();
+    points.push(points[0]);
+    
+    return Polygon::new(
+        LineString::from(points),
+        vec![],
+    )
+}
+
+fn concave_hull_inner<T>(original_dataset: rstar::RTree<Point<T>>, k: u32) -> Polygon<T>
+    where T: GeoFloat + RTreeNum    
+{
+    let set_length = original_dataset.size();
     if set_length <= 3 {
-        return Polygon::new(LineString::from(points), vec![]);
+        return polygon_from_tree(&original_dataset);
     }
     if k >= set_length as u32 {
-        return fall_back_hull(points);
+        return fall_back_hull(&original_dataset);
     }
 
     let k_adjusted = adjust_k(k);
+    let mut dataset = original_dataset.clone();
 
-    let first_point = get_first_point(&points).clone();
+    let first_point = get_first_point(&dataset).clone();
     let mut hull = vec![first_point.clone()];
 
     let mut current_point = first_point;
-    let mut dataset = rstar::RTree::bulk_load(points.clone());
-
     dataset.remove(&first_point);
+    
     let mut prev_angle = T::zero();
     let mut curr_step = 2;
     while (current_point != first_point || curr_step == 2) && dataset.size() > 0 {
@@ -139,23 +184,23 @@ where T: GeoFloat + RTreeNum
 
             curr_step += 1;
         } else {
-            return concave_hull(points, get_next_k(k_adjusted));
+            return concave_hull_inner(original_dataset, get_next_k(k_adjusted));
         }
     }
 
     let poly = Polygon::new(LineString::from(hull), vec![]);
 
-    if points.iter().any(|&p| !point_inside(&p, &poly)) {
-        return concave_hull(points, get_next_k(k_adjusted));
+    if original_dataset.iter().any(|&p| !point_inside(&p, &poly)) {
+        return concave_hull_inner(original_dataset, get_next_k(k_adjusted));
     }
 
     poly
 }
 
-fn fall_back_hull<T>(points: Vec<Point<T>>) -> Polygon<T>
-where T: GeoFloat
+fn fall_back_hull<T>(dataset: &rstar::RTree<Point<T>>) -> Polygon<T>
+where T: GeoFloat + RTreeNum
 {
-    let multipoint = MultiPoint::from(points);
+    let multipoint = MultiPoint::from(dataset.iter().map(|p| p.clone()).collect::<Vec<Point<T>>>());
     multipoint.convex_hull()
 }
 
@@ -167,20 +212,20 @@ fn adjust_k(k: u32) -> u32 {
     max(k, 3)
 }
 
-fn get_first_point<T>(point_set: &Vec<Point<T>>) -> &Point<T>
-where T: GeoFloat
+fn get_first_point<T>(point_set: &rstar::RTree<Point<T>>) -> &Point<T>
+where T: GeoFloat + RTreeNum
 {
-    let mut min_y = T::max_value();
-    let mut min_i = usize::MAX;
+    let mut min_y = Float::max_value();
+    let mut result = point_set.iter().next().expect("We checked that there are more then 3 points in the set before.");
 
-    for (index, p) in point_set.iter().enumerate() {
+    for p in point_set.iter() {
         if p.y() < min_y {
             min_y = p.y();
-            min_i = index;
+            result = p;
         }
     }
 
-    &point_set[min_i]
+    result
 }
 
 fn get_nearest_points<'a, T>(dataset: &'a rstar::RTree<Point<T>>, base_point: &Point<T>, candidate_no: u32) -> Vec<&'a Point<T>>
