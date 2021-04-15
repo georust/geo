@@ -11,5 +11,5 @@ description = "Conversion between `geo-types` and `postgis` types."
 edition = "2018"
 
 [dependencies]
-postgis = "0.7"
+postgis = { version = ">=0.7.0, <9.0" }
 geo-types = { version = "0.7", path = "../geo-types" }
