@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Add Changes Here
+* Update `postgis` to allow 0.8.0
 
 ## 0.2.0
 
