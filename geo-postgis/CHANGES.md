@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.2.1
 
 * Update `postgis` to allow 0.8.0
 

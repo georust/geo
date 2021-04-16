@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.18.0
 
 * Add `line_intersection` to compute point or segment intersection of two Lines.
   * <https://github.com/georust/geo/pull/636>
@@ -8,7 +8,7 @@
   * <https://github.com/georust/geo/pull/639>
 * Fix `Contains` implementation for Polygons to match the OGC spec using the new `Relate` trait
   * <https://github.com/georust/geo/pull/639>
-* BREAKING: `Contains` no longer supports integer `Polygon` and `Geometry`
+* BREAKING: `Contains` no longer supports Integer `Polygon` and `Geometry`. This was a trade-off for a `Contains` implementation that was more correct for Floats.
   * <https://github.com/georust/geo/pull/639>
 
 ## 0.17.1
