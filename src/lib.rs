@@ -80,7 +80,7 @@ where
                 let x = <Point<T> as FromTokens<T>>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             }
-            w if w.eq_ignore_ascii_case("LINESTRING") || w.eq_ignore_ascii_case("LINEARRING")  => {
+            w if w.eq_ignore_ascii_case("LINESTRING") || w.eq_ignore_ascii_case("LINEARRING") => {
                 let x = <LineString<T> as FromTokens<T>>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             }
@@ -270,7 +270,6 @@ mod tests {
             Geometry::LineString(_ls) => (),
             _ => panic!("expected to be parsed as a LINESTRING"),
         };
-
     }
 
     #[test]

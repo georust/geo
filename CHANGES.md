@@ -8,6 +8,7 @@
 * Support `POINT EMPTY` in conversion to `geo_types`.
   Converts to `MultiPoint([])`.
   * <https://github.com/georust/wkt/pull/64>
+* Minimal support for JTS extension: `LINEARRING` by parsing it as a `LINESTRING`.
 
 ## 0.9.1
 
