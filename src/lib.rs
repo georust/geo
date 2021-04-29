@@ -80,7 +80,7 @@ where
                 let x = <Point<T> as FromTokens<T>>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             }
-            w if w.eq_ignore_ascii_case("LINESTRING") => {
+            w if w.eq_ignore_ascii_case("LINESTRING") || w.eq_ignore_ascii_case("LINEARRING")  => {
                 let x = <LineString<T> as FromTokens<T>>::from_tokens_with_parens(tokens);
                 x.map(|y| y.as_item())
             }
@@ -259,6 +259,18 @@ mod tests {
         } else {
             panic!("Should not have parsed");
         }
+    }
+
+    #[test]
+    fn support_jts_linearring() {
+        let mut wkt: Wkt<f64> = Wkt::from_str("linearring (10 20, 30 40)").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+
+        match wkt.items.pop().unwrap() {
+            Geometry::LineString(_ls) => (),
+            _ => panic!("expected to be parsed as a LINESTRING"),
+        };
+
     }
 
     #[test]
