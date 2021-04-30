@@ -1,14 +1,15 @@
 # Changes
 
-## Unreleased
-
-* Add new entries here
-* Approximately 40% faster according to `cargo bench`.
-* Some "numeric" characters like `¾` and `①` were being treated as digits.
+## 0.9.2 - 2020-04-30
+### Added
+* Minimal support for JTS extension: `LINEARRING` by parsing it as a `LINESTRING`.
 * Support `POINT EMPTY` in conversion to `geo_types`.
   Converts to `MultiPoint([])`.
   * <https://github.com/georust/wkt/pull/64>
-* Minimal support for JTS extension: `LINEARRING` by parsing it as a `LINESTRING`.
+### Fixed
+* Some "numeric" characters like `¾` and `①` were being treated as digits.
+### Changed
+* Approximately 40% faster according to `cargo bench`.
 
 ## 0.9.1
 
