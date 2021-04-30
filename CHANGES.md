@@ -1,5 +1,7 @@
 # Changes
 
+## Unreleased
+
 ## 0.9.2 - 2020-04-30
 ### Added
 * Minimal support for JTS extension: `LINEARRING` by parsing it as a `LINESTRING`.
