@@ -82,3 +82,5 @@ pub mod vincenty_distance;
 pub mod vincenty_length;
 /// Calculate and work with the winding order of `Linestring`s.
 pub mod winding_order;
+/// Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
+pub mod chaikins_smoothing;
