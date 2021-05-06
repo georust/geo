@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Add `ChaikinsSmoothing` algorithm
+* Add `ChaikinSmoothing` algorithm
 
 ## 0.18.0
 
