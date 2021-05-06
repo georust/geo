@@ -8,25 +8,26 @@ use crate::{CoordFloat, Coordinate, LineString, MultiLineString, MultiPolygon, P
 ///
 /// [Chaikins smoothing algorithm](http://www.idav.ucdavis.edu/education/CAGDNotes/Chaikins-Algorithm/Chaikins-Algorithm.html)
 ///
+/// Each iteration of the smoothing doubles the number of vertices of the geometry, so in some
+/// cases it may make sense to apply a simplification afterwards to remove insignificant
+/// coordinates.
+///
 /// This implementation preserves the start and end vertices of an open linestring and
 /// smoothes the corner between start and end of a closed linestring.
-///
-/// The smoothing increases the number of vertices of the geometry, so in some
-/// cases it makes sense to apply a simplification afterwards.
-pub trait ChaikinsSmoothing<T>
+pub trait ChaikinSmoothing<T>
 where
     T: CoordFloat + FromPrimitive,
 {
-    /// create a new geometry with the Chaikins smoothing being
-    /// applied `n_iterations` times
-    fn chaikins_smoothing(&self, n_iterations: usize) -> Self;
+    /// create a new geometry with the Chaikin smoothing being
+    /// applied `n_iterations` times.
+    fn chaikin_smoothing(&self, n_iterations: usize) -> Self;
 }
 
-impl<T> ChaikinsSmoothing<T> for LineString<T>
+impl<T> ChaikinSmoothing<T> for LineString<T>
 where
     T: CoordFloat + FromPrimitive,
 {
-    fn chaikins_smoothing(&self, n_iterations: usize) -> Self {
+    fn chaikin_smoothing(&self, n_iterations: usize) -> Self {
         if n_iterations == 0 {
             self.clone()
         } else {
@@ -39,44 +40,44 @@ where
     }
 }
 
-impl<T> ChaikinsSmoothing<T> for MultiLineString<T>
+impl<T> ChaikinSmoothing<T> for MultiLineString<T>
 where
     T: CoordFloat + FromPrimitive,
 {
-    fn chaikins_smoothing(&self, n_iterations: usize) -> Self {
+    fn chaikin_smoothing(&self, n_iterations: usize) -> Self {
         MultiLineString(
             self.0
                 .iter()
-                .map(|ls| ls.chaikins_smoothing(n_iterations))
+                .map(|ls| ls.chaikin_smoothing(n_iterations))
                 .collect(),
         )
     }
 }
 
-impl<T> ChaikinsSmoothing<T> for Polygon<T>
+impl<T> ChaikinSmoothing<T> for Polygon<T>
 where
     T: CoordFloat + FromPrimitive,
 {
-    fn chaikins_smoothing(&self, n_iterations: usize) -> Self {
+    fn chaikin_smoothing(&self, n_iterations: usize) -> Self {
         Polygon::new(
-            self.exterior().chaikins_smoothing(n_iterations),
+            self.exterior().chaikin_smoothing(n_iterations),
             self.interiors()
                 .iter()
-                .map(|ls| ls.chaikins_smoothing(n_iterations))
+                .map(|ls| ls.chaikin_smoothing(n_iterations))
                 .collect(),
         )
     }
 }
 
-impl<T> ChaikinsSmoothing<T> for MultiPolygon<T>
+impl<T> ChaikinSmoothing<T> for MultiPolygon<T>
 where
     T: CoordFloat + FromPrimitive,
 {
-    fn chaikins_smoothing(&self, n_iterations: usize) -> Self {
+    fn chaikin_smoothing(&self, n_iterations: usize) -> Self {
         MultiPolygon(
             self.0
                 .iter()
-                .map(|poly| poly.chaikins_smoothing(n_iterations))
+                .map(|poly| poly.chaikin_smoothing(n_iterations))
                 .collect(),
         )
     }
@@ -94,8 +95,8 @@ where
             out_coords.push(*first);
         }
     }
-    for window_coordiates in linestring.0.windows(2) {
-        let (q, r) = smoothen_coordinates(window_coordiates[0], window_coordiates[1]);
+    for window_coordinates in linestring.0.windows(2) {
+        let (q, r) = smoothen_coordinates(window_coordinates[0], window_coordinates[1]);
         out_coords.push(q);
         out_coords.push(r);
     }
@@ -132,13 +133,13 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::algorithm::chaikins_smoothing::ChaikinsSmoothing;
+    use crate::algorithm::chaikin_smoothing::ChaikinSmoothing;
     use crate::{LineString, Polygon};
 
     #[test]
     fn linestring_open() {
         let ls = LineString::from(vec![(3.0, 0.0), (6.0, 3.0), (3.0, 6.0), (0.0, 3.0)]);
-        let ls_out = ls.chaikins_smoothing(1);
+        let ls_out = ls.chaikin_smoothing(1);
         assert_eq!(
             ls_out,
             LineString::from(vec![
@@ -163,7 +164,7 @@ mod test {
             (0.0, 3.0),
             (3.0, 0.0),
         ]);
-        let ls_out = ls.chaikins_smoothing(1);
+        let ls_out = ls.chaikin_smoothing(1);
         assert_eq!(
             ls_out,
             LineString::from(vec![
@@ -192,7 +193,7 @@ mod test {
             ]),
             vec![],
         );
-        let poly_out = poly.chaikins_smoothing(1);
+        let poly_out = poly.chaikin_smoothing(1);
         assert_eq!(
             poly_out.exterior(),
             &LineString::from(vec![

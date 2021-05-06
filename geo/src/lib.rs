@@ -127,7 +127,7 @@
 //! - **[`HaversineDestination`](algorithm::haversine_destination::HaversineDestination)**:
 //! - **[`HaversineIntermediate`](algorithm::haversine_intermediate::HaversineIntermediate)**:
 //! - **`Proj`**: Project geometries with the `proj` crate
-//! - **[`ChaikinsSmoothing`](algorithm::chaikins_smoothing::ChaikinsSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
+//! - **[`ChaikinSmoothing`](algorithm::chaikin_smoothing::ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 //!
 //! # Features
 //!
@@ -254,7 +254,7 @@ pub mod prelude {
     pub use crate::algorithm::translate::Translate;
     pub use crate::algorithm::vincenty_distance::VincentyDistance;
     pub use crate::algorithm::vincenty_length::VincentyLength;
-    pub use crate::algorithm::chaikins_smoothing::ChaikinsSmoothing;
+    pub use crate::algorithm::chaikin_smoothing::ChaikinSmoothing;
 }
 
 /// A common numeric trait used for geo algorithms.
