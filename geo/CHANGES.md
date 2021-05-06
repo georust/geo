@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+* Add `ChaikinSmoothing` algorithm
+
 ## 0.18.0
 
 * Add `line_intersection` to compute point or segment intersection of two Lines.
