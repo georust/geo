@@ -1,4 +1,4 @@
-use crate::{Point, Polygon, LineString, CoordNum, GeoFloat, MultiPoint, MultiPolygon, MultiLineString, Coordinate};
+use crate::{Point, Polygon, LineString, CoordNum, GeoFloat, MultiPoint, Coordinate};
 use std::cmp::max;
 use crate::algorithm::contains::Contains;
 use crate::algorithm::intersects::Intersects;
@@ -15,35 +15,44 @@ const K_MULTIPLIER: f32 = 1.5;
 /// The idea of the algorithm is simple:
 /// 1. Find a point on a future hull (e. g. a point with the smallest Y coordinate).
 /// 2. Find K nearest neighbours to the chosen point.
-/// 3. As the next point on the hull choose one of the nearest points, that would make the largest
+/// 3. As the next point on the hull chose one of the nearest points, that would make the largest
 ///    left hand turn from the previous segment.
 /// 4. Repeat 2-4.
 /// 
 /// In cases when the hull cannot be calculated for the given K, a larger value is chosen and
 /// calculation starts from the beginning.
 /// 
-/// In the worst case scenario, when no K can be found to build a correct hull, convex hull is
+/// In the worst case scenario, when no K can be found to build a correct hull, the convex hull is
 /// returned.
 /// 
-/// This algorithm is generally several times slower then the one used in 
+/// This algorithm is generally several times slower then the one used in the
 /// [ConcaveHull](trait.algorithm.ConcaveHull.html) trait, but gives better results and
 /// does not require manual coefficient adjustment.
 /// 
 /// The larger K is given to the algorithm, the more "smooth" the hull will generally be, but the
 /// longer calculation may take. If performance is not critical, K=3 is a safe value to set
-/// (lower values do not make sense for this algorithm). If K is equal or larger then the number of
-/// input points, convex hull will be produced.
+/// (lower values do not make sense for this algorithm). If K is equal or larger than the number of
+/// input points, the convex hull will be produced.
 pub trait KNearestConcaveHull {
     type Scalar: CoordNum;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar>;
 }
 
 impl<T> KNearestConcaveHull for Vec<Point<T>>
-where T: GeoFloat + RTreeNum
+    where T: GeoFloat + RTreeNum
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
         concave_hull(self.clone(), k)
+    }
+}
+
+impl<T> KNearestConcaveHull for [Point<T>]
+    where T: GeoFloat + RTreeNum
+{
+    type Scalar = T;
+    fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
+        concave_hull(Vec::from(self), k)
     }
 }
 
@@ -53,48 +62,6 @@ impl<T> KNearestConcaveHull for MultiPoint<T>
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
         concave_hull(self.iter().map(|x| x.clone()).collect(), k)
-    }
-}
-
-impl<T> KNearestConcaveHull for LineString<T>
-where T: GeoFloat + RTreeNum
-{
-    type Scalar = T;
-    fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(self.points_iter().map(|x| x.clone()).collect(), k)
-    }
-}
-
-impl<T> KNearestConcaveHull for Polygon<T>
-    where
-        T: GeoFloat + RTreeNum,
-{
-    type Scalar = T;
-    fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        let points: Vec<Point<T>> = self.exterior().points_iter().map(|x| x.clone()).collect();
-        concave_hull(points, k)
-    }
-}
-
-impl<T> KNearestConcaveHull for MultiPolygon<T>
-    where
-        T: GeoFloat + RTreeNum,
-{
-    type Scalar = T;
-    fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        let points: Vec<Point<T>> = self.iter().flat_map(|poly| poly.exterior().points_iter().map(|x| x.clone())).collect();
-        concave_hull(points, k)
-    }
-}
-
-impl<T> KNearestConcaveHull for MultiLineString<T>
-    where
-        T: GeoFloat + RTreeNum,
-{
-    type Scalar = T;
-    fn k_nearest_concave_hull(&self, k: u32) -> Polygon<T> {
-        let points: Vec<Point<T>> = self.iter().flat_map(|poly| poly.points_iter().map(|x| x.clone())).collect();
-        concave_hull(points, k)
     }
 }
 
@@ -115,7 +82,7 @@ fn prepare_dataset<T>(points: &Vec<Point<T>>) -> rstar::RTree<Point<T>>
     for point in points {
         let closest = dataset.nearest_neighbor(point);
         if let Some(closest) = closest {
-            if taxicab_distance(closest, point) < T::from(DELTA).expect("Conversion from constant is always valid") {
+            if points_are_equal(point, closest) {
                 continue;
             }
         }
@@ -126,15 +93,24 @@ fn prepare_dataset<T>(points: &Vec<Point<T>>) -> rstar::RTree<Point<T>>
     dataset
 }
 
-fn taxicab_distance<T>(p1: &Point<T>, p2: &Point<T>) -> T
+fn points_are_equal<T>(p1: &Point<T>, p2: &Point<T>) -> bool
     where T: GeoFloat + RTreeNum
 {
-    (p1.x() - p2.x()).abs() + (p2.y() - p2.y()).abs()
+    float_equal(p1.x(), p2.x()) && float_equal(p1.x(), p2.y())
+}
+
+fn float_equal<T>(a: T, b: T) -> bool
+    where T: GeoFloat
+{
+    let da = a * T::from(DELTA).expect("Conversion from constant is always valid.");
+    b > (a - da) && b < (a + da)
 }
 
 fn polygon_from_tree<T>(dataset: &rstar::RTree<Point<T>>) -> Polygon<T>
     where T: GeoFloat + RTreeNum
 {
+    assert!(dataset.size() <= 3);
+
     let mut points: Vec<Coordinate<T>> = dataset.iter().map(|p| p.0).collect();
     points.push(points[0]);
     
@@ -158,8 +134,8 @@ fn concave_hull_inner<T>(original_dataset: rstar::RTree<Point<T>>, k: u32) -> Po
     let k_adjusted = adjust_k(k);
     let mut dataset = original_dataset.clone();
 
-    let first_point = get_first_point(&dataset).clone();
-    let mut hull = vec![first_point.clone()];
+    let first_point = get_first_point(&dataset);
+    let mut hull = vec![first_point];
 
     let mut current_point = first_point;
     dataset.remove(&first_point);
@@ -168,7 +144,7 @@ fn concave_hull_inner<T>(original_dataset: rstar::RTree<Point<T>>, k: u32) -> Po
     let mut curr_step = 2;
     while (current_point != first_point || curr_step == 2) && dataset.size() > 0 {
         if curr_step == 5 {
-            dataset.insert(first_point.clone());
+            dataset.insert(first_point);
         }
 
         let mut nearest_points = get_nearest_points(&dataset, &current_point, k_adjusted);
@@ -178,7 +154,7 @@ fn concave_hull_inner<T>(original_dataset: rstar::RTree<Point<T>>, k: u32) -> Po
 
         if let Some(sel) = selected {
             current_point = **sel;
-            hull.push(current_point.clone());
+            hull.push(current_point);
             prev_angle = get_angle(&[&hull[hull.len() - 1], &hull[hull.len() - 2]]);
             dataset.remove(&current_point);
 
@@ -212,8 +188,8 @@ fn adjust_k(k: u32) -> u32 {
     max(k, 3)
 }
 
-fn get_first_point<T>(point_set: &rstar::RTree<Point<T>>) -> &Point<T>
-where T: GeoFloat + RTreeNum
+fn get_first_point<T>(point_set: &rstar::RTree<Point<T>>) -> Point<T>
+    where T: GeoFloat + RTreeNum
 {
     let mut min_y = Float::max_value();
     let mut result = point_set.iter().next().expect("We checked that there are more then 3 points in the set before.");
@@ -225,7 +201,7 @@ where T: GeoFloat + RTreeNum
         }
     }
 
-    result
+    *result
 }
 
 fn get_nearest_points<'a, T>(dataset: &'a rstar::RTree<Point<T>>, base_point: &Point<T>, candidate_no: u32) -> Vec<&'a Point<T>>
@@ -321,7 +297,7 @@ mod tests {
             point!(x: 1.0, y: 1.0),
             point!(x: -1.0, y: 0.0),
             point!(x: 0.0, y: 1.0),
-            point!(x: 0.0, y: 0.0),
+            point!(x: 1.0, y: 0.0),
         ];
 
         let mut points_mapped: Vec<&Point<f32>> = points.iter().map(|x| x).collect();
@@ -357,8 +333,10 @@ mod tests {
             point!(x: 0.0, y: 1.0),
             point!(x: 0.0, y: 0.0),
         ];
+        let tree = rstar::RTree::bulk_load(points);
+        let first = point!(x: -1.0, y: 0.0);
 
-        assert_eq!(get_first_point(&points), &points[1]);
+        assert_eq!(get_first_point(&tree), first);
     }
 
     #[test]
