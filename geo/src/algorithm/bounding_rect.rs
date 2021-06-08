@@ -1,7 +1,7 @@
 use crate::utils::{partial_max, partial_min};
 use crate::{
-    CoordNum, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+    CoordNum, Coordinate, Geometry, GeometryCollection, GeometryCow, Line, LineString,
+    MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 
@@ -66,14 +66,7 @@ where
     type Output = Rect<T>;
 
     fn bounding_rect(&self) -> Self::Output {
-        let a = self.start;
-        let b = self.end;
-        let (xmin, xmax) = if a.x <= b.x { (a.x, b.x) } else { (b.x, a.x) };
-        let (ymin, ymax) = if a.y <= b.y { (a.y, b.y) } else { (b.y, a.y) };
-        Rect::new(
-            Coordinate { x: xmin, y: ymin },
-            Coordinate { x: xmax, y: ymax },
-        )
+        Rect::new(self.start, self.end)
     }
 }
 
@@ -162,6 +155,17 @@ where
     type Output = Option<Rect<T>>;
 
     crate::geometry_delegate_impl! {
+       fn bounding_rect(&self) -> Self::Output;
+    }
+}
+
+impl<T> BoundingRect<T> for GeometryCow<'_, T>
+where
+    T: CoordNum,
+{
+    type Output = Option<Rect<T>>;
+
+    crate::geometry_cow_delegate_impl! {
        fn bounding_rect(&self) -> Self::Output;
     }
 }

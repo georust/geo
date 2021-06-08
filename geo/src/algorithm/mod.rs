@@ -49,12 +49,14 @@ pub mod haversine_intermediate;
 pub mod haversine_length;
 /// Determine whether `Geometry` `A` intersects `Geometry` `B`.
 pub mod intersects;
-/// Determins whether a `LineString` is convex.
+/// Determines whether a `LineString` is convex.
 pub mod is_convex;
 /// Calculate concave hull using k-nearest algorithm
 pub mod k_nearest_concave_hull;
 /// Interpolate a point along a `Line` or `LineString`.
 pub mod line_interpolate_point;
+/// Computes the intersection of two Lines.
+pub mod line_intersection;
 /// Locate a point along a `Line` or `LineString`.
 pub mod line_locate_point;
 /// Apply a function to all `Coordinates` of a `Geometry`.
@@ -66,6 +68,8 @@ pub(crate) mod polygon_distance_fast_path;
 /// Coordinate projections and transformations using the current stable version of [PROJ](http://proj.org).
 #[cfg(feature = "use-proj")]
 pub mod proj;
+/// Relate two geometries based on DE-9IM
+pub mod relate;
 /// Rotate a `Geometry` around either its centroid or a `Point` by an angle given in degrees.
 pub mod rotate;
 /// Simplify `Geometries` using the Ramer-Douglas-Peucker algorithm.
@@ -80,3 +84,5 @@ pub mod vincenty_distance;
 pub mod vincenty_length;
 /// Calculate and work with the winding order of `Linestring`s.
 pub mod winding_order;
+/// Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
+pub mod chaikin_smoothing;

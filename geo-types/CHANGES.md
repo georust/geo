@@ -1,9 +1,13 @@
 # Changes
 
-## Unreleased
+## 0.7.2
 
 * Implement `RelativeEq` and `AbsDiffEq` for fuzzy comparison of remaining Geometry Types
   * <https://github.com/georust/geo/pull/628>
+* Implement `From<Line>` for `LineString`
+  * <https://github.com/georust/geo/pull/634>
+* Add optional `arbitrary` feature for integration with the [arbitrary](https://github.com/rust-fuzz/arbitrary) crate
+  * <https://github.com/georust/geo/pull/622>
 
 ## 0.7.1
 
@@ -11,8 +15,6 @@
   * <https://github.com/georust/geo/pull/616>
 * Add specific details about conversion failures in the newly public `geo_types::Error`
   * <https://github.com/georust/geo/pull/614>
-* Add optional `arbitrary` feature for integration with the [arbitrary](https://github.com/rust-fuzz/arbitrary) crate
-  * <https://github.com/georust/geo/pull/622>
 
 ## 0.7.0
 

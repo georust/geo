@@ -254,6 +254,12 @@ impl<T: CoordNum, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T> {
     }
 }
 
+impl<T: CoordNum> From<Line<T>> for LineString<T> {
+    fn from(line: Line<T>) -> Self {
+        LineString(vec![line.start, line.end])
+    }
+}
+
 /// Turn an iterator of `Point`-like objects into a `LineString`.
 impl<T: CoordNum, IC: Into<Coordinate<T>>> FromIterator<IC> for LineString<T> {
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {
@@ -473,5 +479,22 @@ mod test {
         let coords_x = vec![(0., 0.), (5., 0.), (10., 10.), (10., 100.)];
         let ls_oversized: LineString<f32> = coords_x.into_iter().collect();
         assert!(ls.relative_ne(&ls_oversized, 1., 1.));
+    }
+
+    #[test]
+    fn should_be_built_from_line() {
+        let start = Coordinate { x: 0, y: 0 };
+        let end = Coordinate { x: 10, y: 10 };
+        let line = Line::new(start, end);
+        let expected = LineString(vec![start, end]);
+
+        assert_eq!(expected, LineString::from(line));
+
+        let start = Coordinate { x: 10., y: 0.5 };
+        let end = Coordinate { x: 10000., y: 10.4 };
+        let line = Line::new(start, end);
+        let expected = LineString(vec![start, end]);
+
+        assert_eq!(expected, LineString::from(line));
     }
 }

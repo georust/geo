@@ -9,8 +9,8 @@ impl<T> Contains<Coordinate<T>> for Geometry<T>
 where
     T: GeoNum,
 {
-    geometry_delegate_impl! {
-        fn contains(&self, coord: &Coordinate<T>) -> bool;
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        self.contains(&Point::from(*coord))
     }
 }
 
@@ -18,8 +18,8 @@ impl<T> Contains<Point<T>> for Geometry<T>
 where
     T: GeoNum,
 {
-    fn contains(&self, point: &Point<T>) -> bool {
-        self.contains(&point.0)
+    geometry_delegate_impl! {
+        fn contains(&self, point: &Point<T>) -> bool;
     }
 }
 

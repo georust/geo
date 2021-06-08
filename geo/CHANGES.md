@@ -2,13 +2,33 @@
 
 ## Unreleased
 
-* Add KNearestConcaveHull algorithm
+* Add `ChaikinSmoothing` algorithm
+* Add `KNearestConcaveHull` algorithm
   * <https://github.com/georust/geo/pull/635>
+
+## 0.18.0
+
+* Add `line_intersection` to compute point or segment intersection of two Lines.
+  * <https://github.com/georust/geo/pull/636>
+* Add `Relate` trait to topologically relate two geometries based on [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
+  * <https://github.com/georust/geo/pull/639>
+* Fix `Contains` implementation for Polygons to match the OGC spec using the new `Relate` trait
+  * <https://github.com/georust/geo/pull/639>
+* BREAKING: `Contains` no longer supports Integer `Polygon` and `Geometry`. This was a trade-off for a `Contains` implementation that was more correct for Floats.
+  * <https://github.com/georust/geo/pull/639>
 
 ## 0.17.1
 
 * Rewrite the crate documentation
   * <https://github.com/georust/geo/pull/619>
+* Fix `Centroid` algorithm for `MultiLineString` when all members have only one
+  point.
+  * <https://github.com/georust/geo/pull/629>
+* Implement `Centroid` algorithm on `Geometry` and its remaining variants.
+  * <https://github.com/georust/geo/pull/629>
+
+## 0.17.1
+
 * Add `GeodesicIntermediate` algorithm
   * <https://github.com/georust/geo/pull/608>
 

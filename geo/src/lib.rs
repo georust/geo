@@ -63,12 +63,6 @@
 //! - **[`Bearing`](algorithm::bearing::Bearing)**: Calculate the bearing between points
 //! - **[`ClosestPoint`](algorithm::closest_point::ClosestPoint)**: Find the point on a geometry
 //!   closest to a given point
-//! - **[`Contains`](algorithm::contains::Contains)**: Calculate if a geometry contains another
-//!   geometry
-//! - **[`CoordinatePosition`](algorithm::coordinate_position::CoordinatePosition)**: Calculate
-//!   the position of a coordinate relative to a geometry
-//! - **[`Intersects`](algorithm::intersects::Intersects)**: Calculate if a geometry intersects
-//!   another geometry
 //! - **[`IsConvex`](algorithm::is_convex::IsConvex)**: Calculate the convexity of a
 //!   [`LineString`]
 //! - **[`LineInterpolatePoint`](algorithm::line_interpolate_point::LineInterpolatePoint)**:
@@ -80,6 +74,20 @@
 //! ## Similarity
 //!
 //! - **[`FrechetDistance`](algorithm::frechet_distance::FrechetDistance)**: Calculate the similarity between [`LineString`]s using the Fréchet distance
+//!
+//! ## Topology
+//!
+//! - **[`Contains`](algorithm::contains::Contains)**: Calculate if a geometry contains another
+//!   geometry
+//! - **[`CoordinatePosition`](algorithm::coordinate_position::CoordinatePosition)**: Calculate
+//!   the position of a coordinate relative to a geometry
+//! - **[`HasDimensions`](algorithm::dimensions::HasDimensions)**: Determine the dimensions of a geometry
+//! - **[`Intersects`](algorithm::intersects::Intersects)**: Calculate if a geometry intersects
+//!   another geometry
+//! - **[`line_intersection`](algorithm::line_intersection::line_intersection)**: Calculates the
+//!   intersection, if any, between two lines.
+//! - **[`Relate`](algorithm::relate::Relate)**: Topologically relate two geometries based on
+//!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
 //!
 //! ## Winding
 //!
@@ -116,10 +124,10 @@
 //! ## Miscellaneous
 //!
 //! - **[`Centroid`](algorithm::centroid::Centroid)**: Calculate the centroid of a geometry
-//! - **[`HasDimensions`](algorithm::dimensions::HasDimensions)**: Determine the dimensions of a geometry
 //! - **[`HaversineDestination`](algorithm::haversine_destination::HaversineDestination)**:
 //! - **[`HaversineIntermediate`](algorithm::haversine_intermediate::HaversineIntermediate)**:
 //! - **`Proj`**: Project geometries with the `proj` crate
+//! - **[`ChaikinSmoothing`](algorithm::chaikin_smoothing::ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 //!
 //! # Features
 //!
@@ -170,7 +178,7 @@ extern crate rstar;
 pub use crate::algorithm::*;
 #[allow(deprecated)]
 pub use crate::traits::ToGeo;
-pub use crate::types::*;
+pub use crate::types::Closest;
 
 pub use geo_types::{
     line_string, point, polygon, CoordFloat, CoordNum, Coordinate, Geometry, GeometryCollection,
@@ -179,13 +187,18 @@ pub use geo_types::{
 
 /// This module includes all the functions of geometric calculations
 pub mod algorithm;
+mod geometry_cow;
 mod traits;
 mod types;
 mod utils;
+pub(crate) use geometry_cow::GeometryCow;
 
 #[cfg(test)]
 #[macro_use]
 extern crate approx;
+
+#[macro_use]
+extern crate log;
 
 /// Mean radius of Earth in meters
 /// This is the value recommended by the IUGG:
@@ -241,6 +254,7 @@ pub mod prelude {
     pub use crate::algorithm::translate::Translate;
     pub use crate::algorithm::vincenty_distance::VincentyDistance;
     pub use crate::algorithm::vincenty_length::VincentyLength;
+    pub use crate::algorithm::chaikin_smoothing::ChaikinSmoothing;
 }
 
 /// A common numeric trait used for geo algorithms.

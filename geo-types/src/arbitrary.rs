@@ -1,8 +1,8 @@
-use std::mem;
 use crate::{
     CoordFloat, Coordinate, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
+use std::mem;
 
 impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for Coordinate<T> {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {

@@ -1,11 +1,13 @@
 use super::Contains;
-use crate::intersects::Intersects;
-use crate::{CoordNum, Coordinate, GeoNum, Line, LineString, MultiPolygon, Point, Polygon};
+use crate::relate::Relate;
+use crate::{
+    Coordinate, GeoFloat, GeoNum, GeometryCollection, Line, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+};
 
 // ┌─────────────────────────────┐
 // │ Implementations for Polygon │
 // └─────────────────────────────┘
-
 impl<T> Contains<Coordinate<T>> for Polygon<T>
 where
     T: GeoNum,
@@ -26,63 +28,129 @@ where
     }
 }
 
-// TODO: ensure DE-9IM compliance: esp., when
-// line.start and line.end is on the boundaries
 impl<T> Contains<Line<T>> for Polygon<T>
 where
-    T: GeoNum,
+    T: GeoFloat,
 {
     fn contains(&self, line: &Line<T>) -> bool {
-        // both endpoints are contained in the polygon and the line
-        // does NOT intersect the exterior or any of the interior boundaries
-        self.contains(&line.start)
-            && self.contains(&line.end)
-            && !self.exterior().intersects(line)
-            && !self.interiors().iter().any(|inner| inner.intersects(line))
+        self.relate(line).is_contains()
     }
 }
 
-// TODO: also check interiors
 impl<T> Contains<Polygon<T>> for Polygon<T>
 where
-    T: GeoNum,
+    T: GeoFloat,
 {
     fn contains(&self, poly: &Polygon<T>) -> bool {
-        // decompose poly's exterior ring into Lines, and check each for containment
-        poly.exterior().lines().all(|line| self.contains(&line))
+        self.relate(poly).is_contains()
     }
 }
 
-// TODO: ensure DE-9IM compliance
 impl<T> Contains<LineString<T>> for Polygon<T>
 where
-    T: GeoNum,
+    T: GeoFloat,
 {
     fn contains(&self, linestring: &LineString<T>) -> bool {
-        // All LineString points must be inside the Polygon
-        if linestring.points_iter().all(|point| self.contains(&point)) {
-            // The Polygon interior is allowed to intersect with the LineString
-            // but the Polygon's rings are not
-            !self
-                .interiors()
-                .iter()
-                .any(|ring| ring.intersects(linestring))
-        } else {
-            false
-        }
+        self.relate(linestring).is_contains()
     }
 }
 
 // ┌──────────────────────────────────┐
 // │ Implementations for MultiPolygon │
 // └──────────────────────────────────┘
-// TODO: ensure DE-9IM compliance
-impl<G, T> Contains<G> for MultiPolygon<T>
+
+impl<T> Contains<Coordinate<T>> for MultiPolygon<T>
 where
-    T: CoordNum,
-    Polygon<T>: Contains<G>,
+    T: GeoNum,
 {
-    fn contains(&self, rhs: &G) -> bool {
-        self.iter().any(|p| p.contains(rhs))
+    fn contains(&self, coord: &Coordinate<T>) -> bool {
+        self.iter().any(|poly| poly.contains(coord))
+    }
+}
+
+impl<T> Contains<Point<T>> for MultiPolygon<T>
+where
+    T: GeoNum,
+{
+    fn contains(&self, p: &Point<T>) -> bool {
+        self.contains(&p.0)
+    }
+}
+
+impl<T: GeoNum> Contains<MultiPoint<T>> for MultiPolygon<T> {
+    fn contains(&self, rhs: &MultiPoint<T>) -> bool {
+        rhs.iter().all(|point| self.contains(point))
+    }
+}
+
+impl<F> Contains<Line<F>> for MultiPolygon<F>
+where
+    F: GeoFloat,
+{
+    fn contains(&self, rhs: &Line<F>) -> bool {
+        rhs.relate(self).is_within()
+    }
+}
+
+impl<F> Contains<LineString<F>> for MultiPolygon<F>
+where
+    F: GeoFloat,
+{
+    fn contains(&self, rhs: &LineString<F>) -> bool {
+        rhs.relate(self).is_within()
+    }
+}
+
+impl<F> Contains<MultiLineString<F>> for MultiPolygon<F>
+where
+    F: GeoFloat,
+{
+    fn contains(&self, rhs: &MultiLineString<F>) -> bool {
+        rhs.relate(self).is_within()
+    }
+}
+
+impl<F> Contains<Polygon<F>> for MultiPolygon<F>
+where
+    F: GeoFloat,
+{
+    fn contains(&self, rhs: &Polygon<F>) -> bool {
+        rhs.relate(self).is_within()
+    }
+}
+
+impl<F> Contains<MultiPolygon<F>> for MultiPolygon<F>
+where
+    F: GeoFloat,
+{
+    fn contains(&self, rhs: &MultiPolygon<F>) -> bool {
+        rhs.relate(self).is_within()
+    }
+}
+
+impl<F> Contains<GeometryCollection<F>> for MultiPolygon<F>
+where
+    F: GeoFloat,
+{
+    fn contains(&self, rhs: &GeometryCollection<F>) -> bool {
+        rhs.relate(self).is_within()
+    }
+}
+
+impl<F> Contains<Rect<F>> for MultiPolygon<F>
+where
+    F: GeoFloat,
+{
+    fn contains(&self, rhs: &Rect<F>) -> bool {
+        rhs.relate(self).is_within()
+    }
+}
+
+impl<F> Contains<Triangle<F>> for MultiPolygon<F>
+where
+    F: GeoFloat,
+{
+    fn contains(&self, rhs: &Triangle<F>) -> bool {
+        rhs.relate(self).is_within()
     }
 }

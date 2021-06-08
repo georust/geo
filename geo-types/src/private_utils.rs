@@ -16,15 +16,7 @@ pub fn line_bounding_rect<T>(line: Line<T>) -> Rect<T>
 where
     T: CoordNum,
 {
-    let a = line.start;
-    let b = line.end;
-    let (xmin, xmax) = if a.x <= b.x { (a.x, b.x) } else { (b.x, a.x) };
-    let (ymin, ymax) = if a.y <= b.y { (a.y, b.y) } else { (b.y, a.y) };
-
-    Rect::new(
-        Coordinate { x: xmin, y: ymin },
-        Coordinate { x: xmax, y: ymax },
-    )
+    Rect::new(line.start, line.end)
 }
 
 pub fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>
@@ -114,11 +106,12 @@ where
         .fold(T::max_value(), |accum, val| accum.min(val))
 }
 
-pub fn point_line_euclidean_distance<T>(p: Point<T>, l: Line<T>) -> T
+pub fn point_line_euclidean_distance<C, T>(p: C, l: Line<T>) -> T
 where
     T: CoordFloat,
+    C: Into<Coordinate<T>>,
 {
-    line_segment_distance(p.0, l.start, l.end)
+    line_segment_distance(p.into(), l.start, l.end)
 }
 
 pub fn point_contains_point<T>(p1: Point<T>, p2: Point<T>) -> bool

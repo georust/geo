@@ -1,6 +1,6 @@
 [package]
 name = "geo-postgis"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Corey Farwell <coreyf@rwell.org>"]
 license = "MIT/Apache-2.0"
 repository = "https://github.com/georust/geo"
@@ -11,5 +11,5 @@ description = "Conversion between `geo-types` and `postgis` types."
 edition = "2018"
 
 [dependencies]
-postgis = "0.7"
+postgis = { version = ">=0.7.0, <0.9.0" }
 geo-types = { version = "0.7", path = "../geo-types" }
