@@ -74,7 +74,7 @@ fn concave_hull<T>(points: Vec<Point<T>>, k: u32) -> Polygon<T>
 
 const DELTA: f32 = 0.000000001;
 
-// Removes duplicate points from the dataset.
+/// Removes duplicate points from the dataset.
 fn prepare_dataset<T>(points: &Vec<Point<T>>) -> rstar::RTree<Point<T>>
     where T: GeoFloat + RTreeNum
 {
@@ -93,16 +93,18 @@ fn prepare_dataset<T>(points: &Vec<Point<T>>) -> rstar::RTree<Point<T>>
     dataset
 }
 
+/// The points are considered equal, if both coordinate values are same with 0.0000001% range
+/// (see the value of DELTA constant).
 fn points_are_equal<T>(p1: &Point<T>, p2: &Point<T>) -> bool
     where T: GeoFloat + RTreeNum
 {
-    float_equal(p1.x(), p2.x()) && float_equal(p1.x(), p2.y())
+    float_equal(p1.x(), p2.x()) && float_equal(p1.y(), p2.y())
 }
 
 fn float_equal<T>(a: T, b: T) -> bool
     where T: GeoFloat
 {
-    let da = a * T::from(DELTA).expect("Conversion from constant is always valid.");
+    let da = a * T::from(DELTA).expect("Conversion from constant is always valid.").abs();
     b > (a - da) && b < (a + da)
 }
 
@@ -140,7 +142,7 @@ fn concave_hull_inner<T>(original_dataset: rstar::RTree<Point<T>>, k: u32) -> Po
     let mut current_point = first_point;
     dataset.remove(&first_point);
     
-    let mut prev_angle = T::zero();
+    let mut prev_point = current_point;
     let mut curr_step = 2;
     while (current_point != first_point || curr_step == 2) && dataset.size() > 0 {
         if curr_step == 5 {
@@ -148,14 +150,14 @@ fn concave_hull_inner<T>(original_dataset: rstar::RTree<Point<T>>, k: u32) -> Po
         }
 
         let mut nearest_points = get_nearest_points(&dataset, &current_point, k_adjusted);
-        sort_by_angle(&mut nearest_points, &current_point, prev_angle);
+        sort_by_angle(&mut nearest_points, &current_point, &prev_point);
 
         let selected = nearest_points.iter().find(|x| !intersects(&hull, &[&current_point, x]));
 
         if let Some(sel) = selected {
+            prev_point = current_point;
             current_point = **sel;
             hull.push(current_point);
-            prev_angle = get_angle(&[&hull[hull.len() - 1], &hull[hull.len() - 2]]);
             dataset.remove(&current_point);
 
             curr_step += 1;
@@ -210,16 +212,38 @@ where T: GeoFloat + RTreeNum
     dataset.nearest_neighbor_iter(base_point).take(candidate_no as usize).collect()
 }
 
-fn sort_by_angle<'a, T>(points: &'a mut Vec<&Point<T>>, curr_point: &Point<T>, prev_angle: T)
+fn sort_by_angle<'a, T>(points: &'a mut Vec<&Point<T>>, curr_point: &Point<T>, prev_point: &Point<T>)
 where T: GeoFloat
 {
+    let base_angle = pseudo_angle(prev_point.x() - curr_point.x(), prev_point.y() - curr_point.y());
     points.sort_by(|a, b| {
-        let mut angle_a = get_angle(&[curr_point, a]) - prev_angle;
-        let mut angle_b = get_angle(&[curr_point, b]) - prev_angle;
-        if angle_a < T::zero() { angle_a = angle_a + two_pi(); }
-        if angle_b < T::zero() { angle_b = angle_b + two_pi(); }
+        let mut angle_a = pseudo_angle(a.x() - curr_point.x(), a.y() - curr_point.y()) - base_angle;
+        if angle_a < T::zero() {
+            angle_a = angle_a + T::from(4.0).unwrap();
+        }
+
+        let mut angle_b = pseudo_angle(b.x() - curr_point.x(), b.y() - curr_point.y()) - base_angle;
+        if angle_b < T::zero() {
+            angle_b = angle_b + T::from(4.0).unwrap();
+        }
+
         angle_a.partial_cmp(&angle_b).unwrap().reverse()
     });
+}
+
+fn pseudo_angle<T>(dx: T, dy: T) -> T
+    where T: GeoFloat
+{
+    if dx == T::zero() && dy == T::zero() {
+        return T::zero();
+    }
+
+    let p = dx / (dx.abs() + dy.abs());
+    if dy < T::zero() {
+        T::from(3.).unwrap() + p
+    } else {
+        T::from(1.).unwrap() - p
+    }
 }
 
 fn intersects<T>(hull: &Vec<Point<T>>, line: &[&Point<T>; 2]) -> bool
@@ -234,62 +258,17 @@ where T: GeoFloat
     linestring.intersects(&line)
 }
 
-fn get_angle<T>(line: &[&Point<T>; 2]) -> T
-where T: GeoFloat
-{
-    let x1 = line[0].x();
-    let y1 = line[0].y();
-    let x2 = line[1].x();
-    let y2 = line[1].y();
-
-    let a = x2 - x1;
-    let b = y2 - y1;
-    let c = (a*a + b*b).sqrt();
-    if c == T::zero() {
-        return T::zero();
-    }
-
-    let cos = a / c;
-    let mut acos = cos.acos();
-    if y1 > y2 {
-        acos = two_pi::<T>() - acos;
-    }
-
-    acos
-}
-
 fn point_inside<T>(point: &Point<T>, poly: &Polygon<T>) -> bool
 where T: GeoFloat
 {
     poly.contains(point) || poly.exterior().contains(point)
 }
 
-fn two_pi<T>() -> T
-where T: GeoFloat
-{
-    T::from(std::f64::consts::PI * 2f64).unwrap()
-}
-
 #[cfg(test)]
 mod tests {
-    use test_case::test_case;
     use crate::point;
     use super::*;
     use crate::coords_iter::CoordsIter;
-    use num_traits::FloatConst;
-    use std::f32::consts::PI;
-
-    #[test_case(0., 0., 1., 0., 0.)]
-    #[test_case(0., 0., 0., 1., PI / 2.)]
-    #[test_case(0., 0., -1., 0., PI)]
-    #[test_case(0., 0., 0., -1., PI / 2. * 3.)]
-    #[test_case(0., 0., -1., 1., PI / 4. * 3.)]
-    #[test_case(0., 0., -1., -1., PI / 4. * 5.)]
-    fn get_angle_test(x1: f32, y1: f32, x2: f32, y2: f32, angle: f32) {
-        let p1 = point!(x: x1, y: y1);
-        let p2 = point!(x: x2, y: y2);
-        assert_eq!(get_angle(&[&p1, &p2]), angle);
-    }
 
     #[test]
     fn point_ordering() {
@@ -303,7 +282,7 @@ mod tests {
         let mut points_mapped: Vec<&Point<f32>> = points.iter().map(|x| x).collect();
 
         let center = point!(x: 0.0, y: 0.0);
-        let angle = FloatConst::FRAC_PI_4();
+        let prev_point = point!(x: 1.0, y: 1.0);
 
         let expected = vec![
             &points[3],
@@ -312,7 +291,7 @@ mod tests {
             &points[0],
         ];
 
-        sort_by_angle(&mut points_mapped, &center, angle);
+        sort_by_angle(&mut points_mapped, &center, &prev_point);
         assert_eq!(points_mapped, expected);
 
         let expected = vec![
@@ -321,7 +300,9 @@ mod tests {
             &points[0],
             &points[3],
         ];
-        sort_by_angle(&mut points_mapped, &center, -angle);
+
+        let prev_point = point!(x: 1.0, y: -1.0);
+        sort_by_angle(&mut points_mapped, &center, &prev_point);
         assert_eq!(points_mapped, expected);
     }
 
@@ -331,7 +312,7 @@ mod tests {
             point!(x: 1.0, y: 1.0),
             point!(x: -1.0, y: 0.0),
             point!(x: 0.0, y: 1.0),
-            point!(x: 0.0, y: 0.0),
+            point!(x: 0.0, y: 0.5),
         ];
         let tree = rstar::RTree::bulk_load(points);
         let first = point!(x: -1.0, y: 0.0);
