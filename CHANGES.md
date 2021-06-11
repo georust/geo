@@ -1,7 +1,6 @@
 # Changes
 
 ## Unreleased
-
 ### Changed
 * Now accepts `MULTIPOINT`s with less parentheses, as output by `ST_AsText` in postgis:
   `MULTIPOINT(0 1, 2 3)` as opposed to `MULTIPOINT((0 1), (2 3))`

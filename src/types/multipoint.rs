@@ -83,7 +83,7 @@ mod tests {
 
     #[test]
     fn postgis_style_multipoint() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT (8 4, 4 0)").ok().unwrap();
+        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT (8 4, 4 0)").unwrap();
         assert_eq!(1, wkt.items.len());
         let points = match wkt.items.pop().unwrap() {
             Geometry::MultiPoint(MultiPoint(points)) => points,
@@ -94,7 +94,7 @@ mod tests {
 
     #[test]
     fn mixed_parens_multipoint() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT (8 4, (4 0))").ok().unwrap();
+        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT (8 4, (4 0))").unwrap();
         assert_eq!(1, wkt.items.len());
         let points = match wkt.items.pop().unwrap() {
             Geometry::MultiPoint(MultiPoint(points)) => points,
