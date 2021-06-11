@@ -56,8 +56,10 @@ where
     T: WktFloat + FromStr + Default,
 {
     fn from_tokens(tokens: &mut PeekableTokens<T>) -> Result<Self, &'static str> {
-        let result =
-            FromTokens::comma_many(<Point<T> as FromTokens<T>>::from_tokens_with_parens, tokens);
+        let result = FromTokens::comma_many(
+            <Point<T> as FromTokens<T>>::from_tokens_with_optional_parens,
+            tokens,
+        );
         result.map(MultiPoint)
     }
 }
@@ -77,6 +79,39 @@ mod tests {
             _ => unreachable!(),
         };
         assert_eq!(2, points.len());
+    }
+
+    #[test]
+    fn postgis_style_multipoint() {
+        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT (8 4, 4 0)").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let points = match wkt.items.pop().unwrap() {
+            Geometry::MultiPoint(MultiPoint(points)) => points,
+            _ => unreachable!(),
+        };
+        assert_eq!(2, points.len());
+    }
+
+    #[test]
+    fn mixed_parens_multipoint() {
+        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT (8 4, (4 0))").ok().unwrap();
+        assert_eq!(1, wkt.items.len());
+        let points = match wkt.items.pop().unwrap() {
+            Geometry::MultiPoint(MultiPoint(points)) => points,
+            _ => unreachable!(),
+        };
+        assert_eq!(2, points.len());
+    }
+
+    #[test]
+    fn empty_multipoint() {
+        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT EMPTY").unwrap();
+        assert_eq!(1, wkt.items.len());
+        let points = match wkt.items.pop().unwrap() {
+            Geometry::MultiPoint(MultiPoint(points)) => points,
+            _ => unreachable!(),
+        };
+        assert_eq!(0, points.len());
     }
 
     #[test]
