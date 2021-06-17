@@ -194,6 +194,15 @@ where
         result
     }
 
+    fn from_tokens_with_optional_parens(
+        tokens: &mut PeekableTokens<T>,
+    ) -> Result<Self, &'static str> {
+        match tokens.peek() {
+            Some(Token::ParenOpen) => Self::from_tokens_with_parens(tokens),
+            _ => Self::from_tokens(tokens),
+        }
+    }
+
     fn comma_many<F>(f: F, tokens: &mut PeekableTokens<T>) -> Result<Vec<Self>, &'static str>
     where
         F: Fn(&mut PeekableTokens<T>) -> Result<Self, &'static str>,
