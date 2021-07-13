@@ -222,7 +222,7 @@ where
 mod test {
     use super::*;
     use crate::{line_string, point, polygon, Coordinate, Point};
-    use approx::{assert_relative_eq};
+    use approx::assert_relative_eq;
 
     #[test]
     fn test_rotate_around_point() {
