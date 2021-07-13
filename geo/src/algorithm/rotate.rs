@@ -345,4 +345,9 @@ mod test {
         let line1 = Line::new(Point::new(0., 0.), Point::new(-2., 0.));
         assert_relative_eq!(line0.rotate_around_point(90., Point::new(0., 0.)), line1);
     }
+
+    #[test]
+    fn test_rotate_multipolygon_around_centroid() {
+        todo!("implement");
+    }
 }
