@@ -194,7 +194,14 @@ where
 {
     /// Rotate the contained Polygons about their centroids by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
-        MultiPolygon(self.iter().map(|poly| poly.rotate_around_point(angle, self.centroid().unwrap())).collect())
+        match self.centroid() {
+            Some(centroid) => {
+                MultiPolygon(self.iter().map(|poly| poly.rotate_around_point(angle, centroid)).collect())
+            },
+            None => {
+                self.clone()
+            }
+        }
     }
 }
 
