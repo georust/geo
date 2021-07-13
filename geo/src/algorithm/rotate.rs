@@ -220,9 +220,11 @@ where
 
 #[cfg(test)]
 mod test {
+    use std::ops::Mul;
+
     use super::*;
     use crate::{line_string, point, polygon, Coordinate, Point};
-    use approx::assert_relative_eq;
+    use approx::{RelativeEq, assert_relative_eq};
 
     #[test]
     fn test_rotate_around_point() {
@@ -348,6 +350,40 @@ mod test {
 
     #[test]
     fn test_rotate_multipolygon_around_centroid() {
-        todo!("implement");
+        let multipolygon: MultiPolygon<f64> = vec![
+            polygon![
+                (x: 0., y: 0.),
+                (x: 10., y: 0.),
+                (x: 10., y: 10.),
+                (x: 0., y: 10.),
+                (x: 0., y: 0.),
+            ], 
+            polygon![
+                (x: 0., y: 0.),
+                (x: -10., y: 0.),
+                (x: -10., y: -10.),
+                (x: 0., y: -10.),
+                (x: 0., y: 0.),
+            ]
+        ].into();
+
+        let expected: MultiPolygon<f64> = vec![
+            polygon![
+                (x: 0., y: 0.),
+                (x: 10., y: 0.),
+                (x: 10., y: -10.),
+                (x: 0., y: -10.),
+                (x: 0., y: 0.),
+            ],
+            polygon![
+                (x: 0., y: 0.),
+                (x: -10., y: 0.),
+                (x: -10., y: 10.),
+                (x: 0., y: 10.),
+                (x: 0., y: 0.),
+            ]
+        ].into();
+
+        assert_relative_eq!(multipolygon.rotate(-90.), expected, max_relative=1.0);
     }
 }
