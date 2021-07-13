@@ -220,11 +220,9 @@ where
 
 #[cfg(test)]
 mod test {
-    use std::ops::Mul;
-
     use super::*;
     use crate::{line_string, point, polygon, Coordinate, Point};
-    use approx::{RelativeEq, assert_relative_eq};
+    use approx::{assert_relative_eq};
 
     #[test]
     fn test_rotate_around_point() {
