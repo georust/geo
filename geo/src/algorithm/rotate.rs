@@ -199,6 +199,7 @@ where
                 MultiPolygon(self.iter().map(|poly| poly.rotate_around_point(angle, centroid)).collect())
             },
             None => {
+                // Multipolygon was empty or otherwise degenerate and had no computable centroid
                 self.clone()
             }
         }
@@ -388,7 +389,7 @@ mod test {
                 (x: 0., y: 0.),
             ]
         ].into();
-
-        assert_relative_eq!(multipolygon.rotate(-90.), expected, max_relative=1.0);
+        
+        assert_relative_eq!(multipolygon.rotate(-90.), expected, max_relative=1.);
     }
 }
