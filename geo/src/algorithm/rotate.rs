@@ -390,6 +390,7 @@ mod test {
             ]
         ].into();
         
+        //TODO: make sure max_relative is doing the right thing here (or fix the test)
         assert_relative_eq!(multipolygon.rotate(-90.), expected, max_relative=1.);
     }
 }
