@@ -363,7 +363,7 @@ mod test {
                 (x: 10., y: 10.),
                 (x: 0., y: 10.),
                 (x: 0., y: 0.),
-            ], 
+            ],
             polygon![
                 (x: 0., y: 0.),
                 (x: -10., y: 0.),
@@ -371,7 +371,7 @@ mod test {
                 (x: 0., y: -10.),
                 (x: 0., y: 0.),
             ]
-        ].into(); 
+        ].into();
             
         let expected: MultiPolygon<f64> = vec![
             polygon![
@@ -389,7 +389,7 @@ mod test {
                 (x: 0., y: 0.),
             ]
         ].into();
-        
+
         // results agree with Shapely / GEOS
         // (relaxing the episilon a bit)
         assert_relative_eq!(multipolygon.rotate(45.), expected, epsilon=1e-12);
