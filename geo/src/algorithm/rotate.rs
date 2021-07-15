@@ -371,26 +371,36 @@ mod test {
                 (x: 0., y: -10.),
                 (x: 0., y: 0.),
             ]
-        ].into();
-
+        ].into(); 
+            
         let expected: MultiPolygon<f64> = vec![
             polygon![
                 (x: 0., y: 0.),
-                (x: 10., y: 0.),
-                (x: 10., y: -10.),
-                (x: 0., y: -10.),
+                (x: 7.0710678118654755, y: 7.0710678118654746),
+                (x: 0., y: 14.1421356237309510),
+                (x: -7.0710678118654746, y: 7.0710678118654755),
                 (x: 0., y: 0.),
             ],
             polygon![
                 (x: 0., y: 0.),
-                (x: -10., y: 0.),
-                (x: -10., y: 10.),
-                (x: 0., y: 10.),
+                (x: -7.0710678118654755, y: -7.0710678118654746),
+                (x: 0., y: -14.1421356237309510),
+                (x: 7.0710678118654746, y: -7.0710678118654755),
                 (x: 0., y: 0.),
             ]
         ].into();
         
-        //TODO: make sure max_relative is doing the right thing here (or fix the test)
-        assert_relative_eq!(multipolygon.rotate(-90.), expected, max_relative=1.);
+        // results agree with Shapely / GEOS
+        // (relaxing the episilon a bit)
+        assert_relative_eq!(multipolygon.rotate(45.), expected, epsilon=1e-12);
+    }
+
+    #[test]
+    fn test_rotate_multipolygon_errors_gracefully() {
+        // an multipolygon whose centroid cannot be found should return itself, rather
+        // than panicing (e.g. an empty multipolygon, or a multipolygon composed of empty polygons)
+        let empty_multipolygon: MultiPolygon<f64> = Vec::<Polygon<f64>>::new().into();
+        let rotated_empty_multipolygon = empty_multipolygon.rotate(90.);
+        assert_eq!(empty_multipolygon, rotated_empty_multipolygon);
     }
 }
