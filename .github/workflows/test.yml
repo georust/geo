@@ -35,7 +35,7 @@ jobs:
         working-directory: geo-types
     strategy:
       matrix:
-        container_image: ["georust/geo-ci:rust-1.49", "georust/geo-ci:rust-1.50", "georust/geo-ci:rust-1.51"]
+        container_image: ["georust/geo-ci:rust-1.51", "georust/geo-ci:rust-1.52", "georust/geo-ci:rust-1.53"]
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -54,7 +54,7 @@ jobs:
         working-directory: geo
     strategy:
       matrix:
-        container_image: ["georust/geo-ci:rust-1.49", "georust/geo-ci:rust-1.50", "georust/geo-ci:rust-1.51"]
+        container_image: ["georust/geo-ci:rust-1.51", "georust/geo-ci:rust-1.52", "georust/geo-ci:rust-1.53"]
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -73,7 +73,7 @@ jobs:
         working-directory: geo-postgis
     strategy:
       matrix:
-        container_image: ["georust/geo-ci:rust-1.49", "georust/geo-ci:rust-1.50", "georust/geo-ci:rust-1.51"]
+        container_image: ["georust/geo-ci:rust-1.51", "georust/geo-ci:rust-1.52", "georust/geo-ci:rust-1.53"]
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -92,7 +92,7 @@ jobs:
         working-directory: geo/fuzz
     strategy:
       matrix:
-        container_image: ["georust/geo-ci:rust-1.49", "georust/geo-ci:rust-1.50", "georust/geo-ci:rust-1.51"]
+        container_image: ["georust/geo-ci:rust-1.51", "georust/geo-ci:rust-1.52", "georust/geo-ci:rust-1.53"]
     container:
       image: ${{ matrix.container_image }}
     steps:
