@@ -3,6 +3,8 @@
 ## Unreleased
 
 * Add `ChaikinSmoothing` algorithm
+* Add `KNearestConcaveHull` algorithm
+  * <https://github.com/georust/geo/pull/635>
 
 ## 0.18.0
 
