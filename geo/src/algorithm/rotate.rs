@@ -194,7 +194,15 @@ where
 {
     /// Rotate the contained Polygons about their centroids by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
-        MultiPolygon(self.iter().map(|poly| poly.rotate(angle)).collect())
+        match self.centroid() {
+            Some(centroid) => {
+                MultiPolygon(self.iter().map(|poly| poly.rotate_around_point(angle, centroid)).collect())
+            },
+            None => {
+                // Multipolygon was empty or otherwise degenerate and had no computable centroid
+                self.clone()
+            }
+        }
     }
 }
 
@@ -344,5 +352,55 @@ mod test {
         let line0 = Line::new(Point::new(0., 0.), Point::new(0., 2.));
         let line1 = Line::new(Point::new(0., 0.), Point::new(-2., 0.));
         assert_relative_eq!(line0.rotate_around_point(90., Point::new(0., 0.)), line1);
+    }
+
+    #[test]
+    fn test_rotate_multipolygon_around_centroid() {
+        let multipolygon: MultiPolygon<f64> = vec![
+            polygon![
+                (x: 0., y: 0.),
+                (x: 10., y: 0.),
+                (x: 10., y: 10.),
+                (x: 0., y: 10.),
+                (x: 0., y: 0.),
+            ],
+            polygon![
+                (x: 0., y: 0.),
+                (x: -10., y: 0.),
+                (x: -10., y: -10.),
+                (x: 0., y: -10.),
+                (x: 0., y: 0.),
+            ]
+        ].into();
+            
+        let expected: MultiPolygon<f64> = vec![
+            polygon![
+                (x: 0., y: 0.),
+                (x: 7.0710678118654755, y: 7.0710678118654746),
+                (x: 0., y: 14.1421356237309510),
+                (x: -7.0710678118654746, y: 7.0710678118654755),
+                (x: 0., y: 0.),
+            ],
+            polygon![
+                (x: 0., y: 0.),
+                (x: -7.0710678118654755, y: -7.0710678118654746),
+                (x: 0., y: -14.1421356237309510),
+                (x: 7.0710678118654746, y: -7.0710678118654755),
+                (x: 0., y: 0.),
+            ]
+        ].into();
+
+        // results agree with Shapely / GEOS
+        // (relaxing the episilon a bit)
+        assert_relative_eq!(multipolygon.rotate(45.), expected, epsilon=1e-12);
+    }
+
+    #[test]
+    fn test_rotate_multipolygon_errors_gracefully() {
+        // an multipolygon whose centroid cannot be found should return itself, rather
+        // than panicing (e.g. an empty multipolygon, or a multipolygon composed of empty polygons)
+        let empty_multipolygon: MultiPolygon<f64> = Vec::<Polygon<f64>>::new().into();
+        let rotated_empty_multipolygon = empty_multipolygon.rotate(90.);
+        assert_eq!(empty_multipolygon, rotated_empty_multipolygon);
     }
 }
