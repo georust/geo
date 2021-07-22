@@ -226,6 +226,7 @@ pub mod prelude {
     pub use crate::algorithm::bearing::Bearing;
     pub use crate::algorithm::bounding_rect::BoundingRect;
     pub use crate::algorithm::centroid::Centroid;
+    pub use crate::algorithm::chaikin_smoothing::ChaikinSmoothing;
     pub use crate::algorithm::chamberlain_duquette_area::ChamberlainDuquetteArea;
     pub use crate::algorithm::closest_point::ClosestPoint;
     pub use crate::algorithm::contains::Contains;
@@ -254,7 +255,6 @@ pub mod prelude {
     pub use crate::algorithm::translate::Translate;
     pub use crate::algorithm::vincenty_distance::VincentyDistance;
     pub use crate::algorithm::vincenty_length::VincentyLength;
-    pub use crate::algorithm::chaikin_smoothing::ChaikinSmoothing;
 }
 
 /// A common numeric trait used for geo algorithms.

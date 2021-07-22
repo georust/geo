@@ -9,6 +9,8 @@ pub mod bearing;
 pub mod bounding_rect;
 /// Calculate the centroid of a `Geometry`.
 pub mod centroid;
+/// Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
+pub mod chaikin_smoothing;
 /// Calculate the signed approximate geodesic area of a `Geometry`.
 pub mod chamberlain_duquette_area;
 /// Calculate the closest `Point` between a `Geometry` and an input `Point`.
@@ -82,5 +84,3 @@ pub mod vincenty_distance;
 pub mod vincenty_length;
 /// Calculate and work with the winding order of `Linestring`s.
 pub mod winding_order;
-/// Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
-pub mod chaikin_smoothing;

@@ -195,9 +195,11 @@ where
     /// Rotate the contained Polygons about their centroids by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
         match self.centroid() {
-            Some(centroid) => {
-                MultiPolygon(self.iter().map(|poly| poly.rotate_around_point(angle, centroid)).collect())
-            },
+            Some(centroid) => MultiPolygon(
+                self.iter()
+                    .map(|poly| poly.rotate_around_point(angle, centroid))
+                    .collect(),
+            ),
             None => {
                 // Multipolygon was empty or otherwise degenerate and had no computable centroid
                 self.clone()
@@ -370,9 +372,10 @@ mod test {
                 (x: -10., y: -10.),
                 (x: 0., y: -10.),
                 (x: 0., y: 0.),
-            ]
-        ].into();
-            
+            ],
+        ]
+        .into();
+
         let expected: MultiPolygon<f64> = vec![
             polygon![
                 (x: 0., y: 0.),
@@ -387,12 +390,13 @@ mod test {
                 (x: 0., y: -14.1421356237309510),
                 (x: 7.0710678118654746, y: -7.0710678118654755),
                 (x: 0., y: 0.),
-            ]
-        ].into();
+            ],
+        ]
+        .into();
 
         // results agree with Shapely / GEOS
         // (relaxing the episilon a bit)
-        assert_relative_eq!(multipolygon.rotate(45.), expected, epsilon=1e-12);
+        assert_relative_eq!(multipolygon.rotate(45.), expected, epsilon = 1e-12);
     }
 
     #[test]
