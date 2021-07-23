@@ -114,7 +114,7 @@ where
             }
         }
 
-        dataset.insert(coord.clone())
+        dataset.insert(*coord)
     }
 
     dataset
@@ -148,7 +148,7 @@ where
     let mut coords: Vec<Coordinate<T>> = dataset.iter().cloned().collect();
     coords.push(coords[0]);
 
-    return Polygon::new(LineString::from(coords), vec![]);
+    Polygon::new(LineString::from(coords), vec![])
 }
 
 fn concave_hull_inner<T>(original_dataset: rstar::RTree<Coordinate<T>>, k: u32) -> Polygon<T>
@@ -298,7 +298,7 @@ where
     }
 }
 
-fn intersects<T>(hull: &Vec<Coordinate<T>>, line: &[&Coordinate<T>; 2]) -> bool
+fn intersects<T>(hull: &[Coordinate<T>], line: &[&Coordinate<T>; 2]) -> bool
 where
     T: GeoFloat,
 {
@@ -307,11 +307,7 @@ where
         return false;
     }
 
-    let coords = hull
-        .iter()
-        .take(hull.len() - 1)
-        .map(|x| crate::Coordinate::from(x.clone()))
-        .collect();
+    let coords = hull.iter().take(hull.len() - 1).cloned().collect();
     let linestring = LineString(coords);
     let line = crate::Line::new(*line[0], *line[1]);
     linestring.intersects(&line)
