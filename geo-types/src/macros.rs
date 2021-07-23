@@ -27,6 +27,32 @@ macro_rules! point {
     };
 }
 
+/// Creates a [`Coordinate`] from the given scalars.
+///
+/// ```txt
+/// coord!(x: <number>, y: <number>)
+/// ```
+///
+/// # Examples
+///
+/// Creating a [`Coordinate`], supplying x/y values:
+///
+/// ```
+/// use geo_types::coord;
+///
+/// let c = coord!(x: 181.2, y: 51.79);
+///
+/// assert_eq!(c, geo_types::Coordinate { x: 181.2, y: 51.79 });
+/// ```
+///
+/// [`Coordinate`]: ./struct.Point.html
+#[macro_export]
+macro_rules! coord {
+    (x: $x:expr, y: $y:expr) => {
+        $crate::Coordinate { x: $x, y: $y }
+    };
+}
+
 /// Creates a [`LineString`] containing the given coordinates.
 ///
 /// ```txt

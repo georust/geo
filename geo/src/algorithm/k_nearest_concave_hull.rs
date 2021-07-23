@@ -44,11 +44,31 @@ where
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(self.clone(), k)
+        concave_hull(self.iter().map(|point| point.0).collect(), k)
     }
 }
 
 impl<T> KNearestConcaveHull for [Point<T>]
+where
+    T: GeoFloat + RTreeNum,
+{
+    type Scalar = T;
+    fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
+        concave_hull(self.iter().map(|point| point.0).collect(), k)
+    }
+}
+
+impl<T> KNearestConcaveHull for Vec<Coordinate<T>>
+where
+    T: GeoFloat + RTreeNum,
+{
+    type Scalar = T;
+    fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
+        concave_hull(self.clone(), k)
+    }
+}
+
+impl<T> KNearestConcaveHull for [Coordinate<T>]
 where
     T: GeoFloat + RTreeNum,
 {
@@ -64,35 +84,35 @@ where
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(self.iter().map(|x| x.clone()).collect(), k)
+        concave_hull(self.iter().map(|point| point.0).collect(), k)
     }
 }
 
-fn concave_hull<T>(points: Vec<Point<T>>, k: u32) -> Polygon<T>
+fn concave_hull<T>(coords: Vec<Coordinate<T>>, k: u32) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
-    let dataset = prepare_dataset(&points);
+    let dataset = prepare_dataset(&coords);
     concave_hull_inner(dataset, k)
 }
 
 const DELTA: f32 = 0.000000001;
 
-/// Removes duplicate points from the dataset.
-fn prepare_dataset<T>(points: &Vec<Point<T>>) -> rstar::RTree<Point<T>>
+/// Removes duplicate coords from the dataset.
+fn prepare_dataset<T>(coords: &Vec<Coordinate<T>>) -> rstar::RTree<Coordinate<T>>
 where
     T: GeoFloat + RTreeNum,
 {
-    let mut dataset: rstar::RTree<Point<T>> = rstar::RTree::new();
-    for point in points {
-        let closest = dataset.nearest_neighbor(point);
+    let mut dataset: rstar::RTree<Coordinate<T>> = rstar::RTree::new();
+    for coord in coords {
+        let closest = dataset.nearest_neighbor(coord);
         if let Some(closest) = closest {
-            if points_are_equal(point, closest) {
+            if coords_are_equal(coord, closest) {
                 continue;
             }
         }
 
-        dataset.insert(point.clone())
+        dataset.insert(coord.clone())
     }
 
     dataset
@@ -100,11 +120,11 @@ where
 
 /// The points are considered equal, if both coordinate values are same with 0.0000001% range
 /// (see the value of DELTA constant).
-fn points_are_equal<T>(p1: &Point<T>, p2: &Point<T>) -> bool
+fn coords_are_equal<T>(c1: &Coordinate<T>, c2: &Coordinate<T>) -> bool
 where
     T: GeoFloat + RTreeNum,
 {
-    float_equal(p1.x(), p2.x()) && float_equal(p1.y(), p2.y())
+    float_equal(c1.x, c2.x) && float_equal(c1.y, c2.y)
 }
 
 fn float_equal<T>(a: T, b: T) -> bool
@@ -117,19 +137,19 @@ where
     b > (a - da) && b < (a + da)
 }
 
-fn polygon_from_tree<T>(dataset: &rstar::RTree<Point<T>>) -> Polygon<T>
+fn polygon_from_tree<T>(dataset: &rstar::RTree<Coordinate<T>>) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
     assert!(dataset.size() <= 3);
 
-    let mut points: Vec<Coordinate<T>> = dataset.iter().map(|p| p.0).collect();
-    points.push(points[0]);
+    let mut coords: Vec<Coordinate<T>> = dataset.iter().map(|coord| *coord).collect();
+    coords.push(coords[0]);
 
-    return Polygon::new(LineString::from(points), vec![]);
+    return Polygon::new(LineString::from(coords), vec![]);
 }
 
-fn concave_hull_inner<T>(original_dataset: rstar::RTree<Point<T>>, k: u32) -> Polygon<T>
+fn concave_hull_inner<T>(original_dataset: rstar::RTree<Coordinate<T>>, k: u32) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
@@ -144,31 +164,31 @@ where
     let k_adjusted = adjust_k(k);
     let mut dataset = original_dataset.clone();
 
-    let first_point = get_first_point(&dataset);
-    let mut hull = vec![first_point];
+    let first_coord = get_first_coord(&dataset);
+    let mut hull = vec![first_coord];
 
-    let mut current_point = first_point;
-    dataset.remove(&first_point);
+    let mut current_coord = first_coord;
+    dataset.remove(&first_coord);
 
-    let mut prev_point = current_point;
+    let mut prev_coord = current_coord;
     let mut curr_step = 2;
-    while (current_point != first_point || curr_step == 2) && dataset.size() > 0 {
+    while (current_coord != first_coord || curr_step == 2) && dataset.size() > 0 {
         if curr_step == 5 {
-            dataset.insert(first_point);
+            dataset.insert(first_coord);
         }
 
-        let mut nearest_points = get_nearest_points(&dataset, &current_point, k_adjusted);
-        sort_by_angle(&mut nearest_points, &current_point, &prev_point);
+        let mut nearest_coords = get_nearest_coords(&dataset, &current_coord, k_adjusted);
+        sort_by_angle(&mut nearest_coords, &current_coord, &prev_coord);
 
-        let selected = nearest_points
+        let selected = nearest_coords
             .iter()
-            .find(|x| !intersects(&hull, &[&current_point, x]));
+            .find(|x| !intersects(&hull, &[&current_coord, x]));
 
         if let Some(sel) = selected {
-            prev_point = current_point;
-            current_point = **sel;
-            hull.push(current_point);
-            dataset.remove(&current_point);
+            prev_coord = current_coord;
+            current_coord = **sel;
+            hull.push(current_coord);
+            dataset.remove(&current_coord);
 
             curr_step += 1;
         } else {
@@ -178,18 +198,26 @@ where
 
     let poly = Polygon::new(LineString::from(hull), vec![]);
 
-    if original_dataset.iter().any(|&p| !point_inside(&p, &poly)) {
+    if original_dataset
+        .iter()
+        .any(|&coord| !coord_inside(&coord, &poly))
+    {
         return concave_hull_inner(original_dataset, get_next_k(k_adjusted));
     }
 
     poly
 }
 
-fn fall_back_hull<T>(dataset: &rstar::RTree<Point<T>>) -> Polygon<T>
+fn fall_back_hull<T>(dataset: &rstar::RTree<Coordinate<T>>) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
-    let multipoint = MultiPoint::from(dataset.iter().map(|p| p.clone()).collect::<Vec<Point<T>>>());
+    let multipoint = MultiPoint::from(
+        dataset
+            .iter()
+            .map(|coord| coord.clone())
+            .collect::<Vec<Coordinate<T>>>(),
+    );
     multipoint.convex_hull()
 }
 
@@ -201,58 +229,55 @@ fn adjust_k(k: u32) -> u32 {
     max(k, 3)
 }
 
-fn get_first_point<T>(point_set: &rstar::RTree<Point<T>>) -> Point<T>
+fn get_first_coord<T>(coord_set: &rstar::RTree<Coordinate<T>>) -> Coordinate<T>
 where
     T: GeoFloat + RTreeNum,
 {
     let mut min_y = Float::max_value();
-    let mut result = point_set
+    let mut result = coord_set
         .iter()
         .next()
-        .expect("We checked that there are more then 3 points in the set before.");
+        .expect("We checked that there are more then 3 coords in the set before.");
 
-    for p in point_set.iter() {
-        if p.y() < min_y {
-            min_y = p.y();
-            result = p;
+    for coord in coord_set.iter() {
+        if coord.y < min_y {
+            min_y = coord.y;
+            result = coord;
         }
     }
 
     *result
 }
 
-fn get_nearest_points<'a, T>(
-    dataset: &'a rstar::RTree<Point<T>>,
-    base_point: &Point<T>,
+fn get_nearest_coords<'a, T>(
+    dataset: &'a rstar::RTree<Coordinate<T>>,
+    base_coord: &Coordinate<T>,
     candidate_no: u32,
-) -> Vec<&'a Point<T>>
+) -> Vec<&'a Coordinate<T>>
 where
     T: GeoFloat + RTreeNum,
 {
     dataset
-        .nearest_neighbor_iter(base_point)
+        .nearest_neighbor_iter(base_coord)
         .take(candidate_no as usize)
         .collect()
 }
 
 fn sort_by_angle<'a, T>(
-    points: &'a mut Vec<&Point<T>>,
-    curr_point: &Point<T>,
-    prev_point: &Point<T>,
+    coords: &'a mut Vec<&Coordinate<T>>,
+    curr_coord: &Coordinate<T>,
+    prev_coord: &Coordinate<T>,
 ) where
     T: GeoFloat,
 {
-    let base_angle = pseudo_angle(
-        prev_point.x() - curr_point.x(),
-        prev_point.y() - curr_point.y(),
-    );
-    points.sort_by(|a, b| {
-        let mut angle_a = pseudo_angle(a.x() - curr_point.x(), a.y() - curr_point.y()) - base_angle;
+    let base_angle = pseudo_angle(prev_coord.x - curr_coord.x, prev_coord.y - curr_coord.y);
+    coords.sort_by(|a, b| {
+        let mut angle_a = pseudo_angle(a.x - curr_coord.x, a.y - curr_coord.y) - base_angle;
         if angle_a < T::zero() {
             angle_a = angle_a + T::from(4.0).unwrap();
         }
 
-        let mut angle_b = pseudo_angle(b.x() - curr_point.x(), b.y() - curr_point.y()) - base_angle;
+        let mut angle_b = pseudo_angle(b.x - curr_coord.x, b.y - curr_coord.y) - base_angle;
         if angle_b < T::zero() {
             angle_b = angle_b + T::from(4.0).unwrap();
         }
@@ -277,7 +302,7 @@ where
     }
 }
 
-fn intersects<T>(hull: &Vec<Point<T>>, line: &[&Point<T>; 2]) -> bool
+fn intersects<T>(hull: &Vec<Coordinate<T>>, line: &[&Coordinate<T>; 2]) -> bool
 where
     T: GeoFloat,
 {
@@ -286,95 +311,95 @@ where
         return false;
     }
 
-    let points = hull
+    let coords = hull
         .iter()
         .take(hull.len() - 1)
         .map(|x| crate::Coordinate::from(x.clone()))
         .collect();
-    let linestring = LineString(points);
+    let linestring = LineString(coords);
     let line = crate::Line::new(*line[0], *line[1]);
     linestring.intersects(&line)
 }
 
-fn point_inside<T>(point: &Point<T>, poly: &Polygon<T>) -> bool
+fn coord_inside<T>(coord: &Coordinate<T>, poly: &Polygon<T>) -> bool
 where
     T: GeoFloat,
 {
-    poly.contains(point) || poly.exterior().contains(point)
+    poly.contains(coord) || poly.exterior().contains(coord)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::coords_iter::CoordsIter;
-    use crate::point;
+    use geo_types::coord;
 
     #[test]
-    fn point_ordering() {
-        let points = vec![
-            point!(x: 1.0, y: 1.0),
-            point!(x: -1.0, y: 0.0),
-            point!(x: 0.0, y: 1.0),
-            point!(x: 1.0, y: 0.0),
+    fn coord_ordering() {
+        let coords = vec![
+            coord!(x: 1.0, y: 1.0),
+            coord!(x: -1.0, y: 0.0),
+            coord!(x: 0.0, y: 1.0),
+            coord!(x: 1.0, y: 0.0),
         ];
 
-        let mut points_mapped: Vec<&Point<f32>> = points.iter().map(|x| x).collect();
+        let mut coords_mapped: Vec<&Coordinate<f32>> = coords.iter().map(|x| x).collect();
 
-        let center = point!(x: 0.0, y: 0.0);
-        let prev_point = point!(x: 1.0, y: 1.0);
+        let center = coord!(x: 0.0, y: 0.0);
+        let prev_coord = coord!(x: 1.0, y: 1.0);
 
-        let expected = vec![&points[3], &points[1], &points[2], &points[0]];
+        let expected = vec![&coords[3], &coords[1], &coords[2], &coords[0]];
 
-        sort_by_angle(&mut points_mapped, &center, &prev_point);
-        assert_eq!(points_mapped, expected);
+        sort_by_angle(&mut coords_mapped, &center, &prev_coord);
+        assert_eq!(coords_mapped, expected);
 
-        let expected = vec![&points[1], &points[2], &points[0], &points[3]];
+        let expected = vec![&coords[1], &coords[2], &coords[0], &coords[3]];
 
-        let prev_point = point!(x: 1.0, y: -1.0);
-        sort_by_angle(&mut points_mapped, &center, &prev_point);
-        assert_eq!(points_mapped, expected);
+        let prev_coord = coord!(x: 1.0, y: -1.0);
+        sort_by_angle(&mut coords_mapped, &center, &prev_coord);
+        assert_eq!(coords_mapped, expected);
     }
 
     #[test]
-    fn get_first_point_test() {
-        let points = vec![
-            point!(x: 1.0, y: 1.0),
-            point!(x: -1.0, y: 0.0),
-            point!(x: 0.0, y: 1.0),
-            point!(x: 0.0, y: 0.5),
+    fn get_first_coord_test() {
+        let coords = vec![
+            coord!(x: 1.0, y: 1.0),
+            coord!(x: -1.0, y: 0.0),
+            coord!(x: 0.0, y: 1.0),
+            coord!(x: 0.0, y: 0.5),
         ];
-        let tree = rstar::RTree::bulk_load(points);
-        let first = point!(x: -1.0, y: 0.0);
+        let tree = rstar::RTree::bulk_load(coords);
+        let first = coord!(x: -1.0, y: 0.0);
 
-        assert_eq!(get_first_point(&tree), first);
+        assert_eq!(get_first_coord(&tree), first);
     }
 
     #[test]
     fn concave_hull_test() {
-        let points = vec![
-            point!(x: 0.0, y: 0.0),
-            point!(x: 1.0, y: 0.0),
-            point!(x: 2.0, y: 0.0),
-            point!(x: 3.0, y: 0.0),
-            point!(x: 0.0, y: 1.0),
-            point!(x: 1.0, y: 1.0),
-            point!(x: 2.0, y: 1.0),
-            point!(x: 3.0, y: 1.0),
-            point!(x: 0.0, y: 2.0),
-            point!(x: 1.0, y: 2.5),
-            point!(x: 2.0, y: 2.5),
-            point!(x: 3.0, y: 2.0),
-            point!(x: 0.0, y: 3.0),
-            point!(x: 3.0, y: 3.0),
+        let coords = vec![
+            coord!(x: 0.0, y: 0.0),
+            coord!(x: 1.0, y: 0.0),
+            coord!(x: 2.0, y: 0.0),
+            coord!(x: 3.0, y: 0.0),
+            coord!(x: 0.0, y: 1.0),
+            coord!(x: 1.0, y: 1.0),
+            coord!(x: 2.0, y: 1.0),
+            coord!(x: 3.0, y: 1.0),
+            coord!(x: 0.0, y: 2.0),
+            coord!(x: 1.0, y: 2.5),
+            coord!(x: 2.0, y: 2.5),
+            coord!(x: 3.0, y: 2.0),
+            coord!(x: 0.0, y: 3.0),
+            coord!(x: 3.0, y: 3.0),
         ];
 
-        let poly = concave_hull(points.clone(), 3);
+        let poly = concave_hull(coords.clone(), 3);
         assert_eq!(poly.exterior().coords_count(), 12);
 
-        let must_not_be_in = vec![&points[6]];
-        for p in poly.exterior().points_iter() {
-            for not_p in must_not_be_in.iter() {
-                assert_ne!(&p, *not_p);
+        let must_not_be_in = vec![&coords[6]];
+        for coord in poly.exterior().coords_iter() {
+            for not_coord in must_not_be_in.iter() {
+                assert_ne!(&coord, *not_coord);
             }
         }
     }
