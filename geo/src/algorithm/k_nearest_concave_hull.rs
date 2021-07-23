@@ -44,7 +44,7 @@ where
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(self.iter().map(|point| point.0).collect(), k)
+        concave_hull(self.iter().map(|point| &point.0), k)
     }
 }
 
@@ -54,7 +54,7 @@ where
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(self.iter().map(|point| point.0).collect(), k)
+        concave_hull(self.iter().map(|point| &point.0), k)
     }
 }
 
@@ -64,7 +64,7 @@ where
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(self.clone(), k)
+        concave_hull(self.iter(), k)
     }
 }
 
@@ -74,7 +74,7 @@ where
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(Vec::from(self), k)
+        concave_hull(self.iter(), k)
     }
 }
 
@@ -84,22 +84,24 @@ where
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(self.iter().map(|point| point.0).collect(), k)
+        concave_hull(self.iter().map(|point| &point.0), k)
     }
 }
 
-fn concave_hull<T>(coords: Vec<Coordinate<T>>, k: u32) -> Polygon<T>
+fn concave_hull<'a, T: 'a>(coords: impl Iterator<Item = &'a Coordinate<T>>, k: u32) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
-    let dataset = prepare_dataset(&coords);
+    let dataset = prepare_dataset(coords);
     concave_hull_inner(dataset, k)
 }
 
 const DELTA: f32 = 0.000000001;
 
 /// Removes duplicate coords from the dataset.
-fn prepare_dataset<T>(coords: &Vec<Coordinate<T>>) -> rstar::RTree<Coordinate<T>>
+fn prepare_dataset<'a, T: 'a>(
+    coords: impl Iterator<Item = &'a Coordinate<T>>,
+) -> rstar::RTree<Coordinate<T>>
 where
     T: GeoFloat + RTreeNum,
 {
@@ -143,7 +145,7 @@ where
 {
     assert!(dataset.size() <= 3);
 
-    let mut coords: Vec<Coordinate<T>> = dataset.iter().map(|coord| *coord).collect();
+    let mut coords: Vec<Coordinate<T>> = dataset.iter().cloned().collect();
     coords.push(coords[0]);
 
     return Polygon::new(LineString::from(coords), vec![]);
@@ -177,7 +179,7 @@ where
             dataset.insert(first_coord);
         }
 
-        let mut nearest_coords = get_nearest_coords(&dataset, &current_coord, k_adjusted);
+        let mut nearest_coords = get_nearest_coords(&dataset, &current_coord, k_adjusted).collect();
         sort_by_angle(&mut nearest_coords, &current_coord, &prev_coord);
 
         let selected = nearest_coords
@@ -212,12 +214,7 @@ fn fall_back_hull<T>(dataset: &rstar::RTree<Coordinate<T>>) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
-    let multipoint = MultiPoint::from(
-        dataset
-            .iter()
-            .map(|coord| coord.clone())
-            .collect::<Vec<Coordinate<T>>>(),
-    );
+    let multipoint = MultiPoint::from(dataset.iter().cloned().collect::<Vec<Coordinate<T>>>());
     multipoint.convex_hull()
 }
 
@@ -253,18 +250,17 @@ fn get_nearest_coords<'a, T>(
     dataset: &'a rstar::RTree<Coordinate<T>>,
     base_coord: &Coordinate<T>,
     candidate_no: u32,
-) -> Vec<&'a Coordinate<T>>
+) -> impl Iterator<Item = &'a Coordinate<T>>
 where
     T: GeoFloat + RTreeNum,
 {
     dataset
         .nearest_neighbor_iter(base_coord)
         .take(candidate_no as usize)
-        .collect()
 }
 
-fn sort_by_angle<'a, T>(
-    coords: &'a mut Vec<&Coordinate<T>>,
+fn sort_by_angle<T>(
+    coords: &mut Vec<&Coordinate<T>>,
     curr_coord: &Coordinate<T>,
     prev_coord: &Coordinate<T>,
 ) where
@@ -393,7 +389,7 @@ mod tests {
             coord!(x: 3.0, y: 3.0),
         ];
 
-        let poly = concave_hull(coords.clone(), 3);
+        let poly = concave_hull(coords.iter(), 3);
         assert_eq!(poly.exterior().coords_count(), 12);
 
         let must_not_be_in = vec![&coords[6]];
