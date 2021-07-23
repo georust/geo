@@ -146,7 +146,10 @@ where
     assert!(dataset.size() <= 3);
 
     let mut coords: Vec<Coordinate<T>> = dataset.iter().cloned().collect();
-    coords.push(coords[0]);
+    if !coords.is_empty() {
+        // close the linestring provided it's not empty
+        coords.push(coords[0]);
+    }
 
     Polygon::new(LineString::from(coords), vec![])
 }
@@ -394,5 +397,12 @@ mod tests {
                 assert_ne!(&coord, *not_coord);
             }
         }
+    }
+
+    #[test]
+    fn empty_hull() {
+        let actual: Polygon<f64> = concave_hull(vec![].iter(), 3);
+        let expected = Polygon::new(LineString(vec![]), vec![]);
+        assert_eq!(actual, expected);
     }
 }
