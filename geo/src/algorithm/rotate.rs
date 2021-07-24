@@ -162,7 +162,10 @@ where
 {
     /// Rotate the LineString about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
-        rotate_many(angle, self.centroid().unwrap(), self.points_iter()).collect()
+        match self.centroid() {
+            Some(centroid) => rotate_many(angle, centroid, self.points_iter()).collect(),
+            None => self.clone(),
+        }
     }
 }
 
@@ -174,17 +177,24 @@ where
     fn rotate(&self, angle: T) -> Self {
         // if a polygon has holes, use the centroid of its outer shell as the rotation origin
         let centroid = if self.interiors().is_empty() {
-            self.centroid().unwrap()
+            self.centroid()
         } else {
-            self.exterior().centroid().unwrap()
+            self.exterior().centroid()
         };
-        Polygon::new(
-            rotate_many(angle, centroid, self.exterior().points_iter()).collect(),
-            self.interiors()
-                .iter()
-                .map(|ring| rotate_many(angle, centroid, ring.points_iter()).collect())
-                .collect(),
-        )
+
+        // return a rotated polygon, or a clone if no centroid is computable
+        if let Some(centroid) = centroid {
+            Polygon::new(
+                rotate_many(angle, centroid, self.exterior().points_iter()).collect(),
+                self.interiors()
+                    .iter()
+                    .map(|ring| rotate_many(angle, centroid, ring.points_iter()).collect())
+                    .collect(),
+            )
+        } else {
+            // Polygon was empty or otherwise degenerate and had no computable centroid
+            self.clone()
+        }
     }
 }
 
@@ -400,9 +410,23 @@ mod test {
     }
 
     #[test]
-    fn test_rotate_multipolygon_errors_gracefully() {
-        // an multipolygon whose centroid cannot be found should return itself, rather
-        // than panicing (e.g. an empty multipolygon, or a multipolygon composed of empty polygons)
+    fn test_rotate_empty_geometries_error_gracefully() {
+        // line string
+        let empty_linestring: LineString<f64> = line_string![];
+        let rotated_empty_linestring = empty_linestring.rotate(90.);
+        assert_eq!(empty_linestring, rotated_empty_linestring);
+
+        // multi line string
+        let empty_multilinestring: MultiLineString<f64> = MultiLineString::<f64>(vec![]);
+        let rotated_empty_multilinestring = empty_multilinestring.rotate(90.);
+        assert_eq!(empty_multilinestring, rotated_empty_multilinestring);
+
+        // polygon
+        let empty_polygon: Polygon<f64> = polygon![];
+        let rotated_empty_polygon = empty_polygon.rotate(90.);
+        assert_eq!(empty_polygon, rotated_empty_polygon);
+
+        // multi polygon
         let empty_multipolygon: MultiPolygon<f64> = Vec::<Polygon<f64>>::new().into();
         let rotated_empty_multipolygon = empty_multipolygon.rotate(90.);
         assert_eq!(empty_multipolygon, rotated_empty_multipolygon);
