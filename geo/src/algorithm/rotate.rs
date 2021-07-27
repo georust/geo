@@ -164,7 +164,16 @@ where
     fn rotate(&self, angle: T) -> Self {
         match self.centroid() {
             Some(centroid) => rotate_many(angle, centroid, self.points_iter()).collect(),
-            None => self.clone(),
+            None => {
+                // LineString was empty and had no computable centroid
+                let points = self.clone().into_points();
+                debug_assert!(
+                    points.len() == 0,
+                    "Expected `None` centroid to only occur for an empty LineString, but this LineString has {} points", 
+                    points.len()
+                );
+                self.clone()
+            }
         }
     }
 }
