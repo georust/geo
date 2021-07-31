@@ -69,7 +69,7 @@ pub trait Rotate<T> {
     ///     (x: 10.0, y: 10.0),
     /// ];
     ///
-    /// let rotated = line_string.rotate(-45.0);
+    /// let rotated = line_string.rotate_around_centroid(-45.0);
     ///
     /// let expected = line_string![
     ///     (x: -2.0710678118654755, y: 5.0),
@@ -379,6 +379,31 @@ mod test {
         // results agree with Shapely / GEOS
         assert_eq!(rotated, Point::new(1.0, 5.0));
     }
+
+    #[test]
+    fn test_rotate_points() {
+        let point = point!(x: 1.0, y: 5.0);
+        let rotated_center = point.rotate_around_center(30.);
+        let rotated_centroid = point.rotate_around_centroid(30.);
+
+        // results agree with Shapely / GEOS
+        // a rotated point should always equal itself
+        assert_eq!(point, rotated_center);
+        assert_eq!(point, rotated_centroid);
+    }
+
+    #[test]
+    fn test_rotate_multipoints() {
+        let multi_points = MultiPoint(
+            vec![
+                point!(x: 0., y: 0.),
+                point!(x: 1., y: 1.),
+                point!(x: 2., y: 1.)
+            ]
+        );
+        // TODO Next: get some output from shapely
+    }
+
     #[test]
     fn test_rotate_linestring() {
         let linestring = line_string![
