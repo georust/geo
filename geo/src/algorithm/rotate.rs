@@ -1,5 +1,6 @@
 use crate::algorithm::centroid::Centroid;
 use crate::algorithm::map_coords::MapCoords;
+use crate::prelude::BoundingRect;
 use crate::{
     CoordFloat, GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
     Polygon,
@@ -78,7 +79,17 @@ pub trait Rotate<T> {
     ///
     /// assert_eq!(expected, rotated);
     /// ```
+    #[deprecated(note="equivalent to `rotate_around_centroid` in most instances. Call that instead, or `rotate_around_center` if you'd like to rotate around the geometry's bounding box center")]
     fn rotate(&self, angle: T) -> Self
+    where
+        T: CoordFloat;
+
+    
+    fn rotate_around_centroid(&self, angle: T) -> Self
+    where
+        T: CoordFloat;
+
+    fn rotate_around_center(&self, angle: T) -> Self
     where
         T: CoordFloat;
 }
@@ -141,6 +152,14 @@ where
     fn rotate(&self, _angle: T) -> Self {
         *self
     }
+
+    fn rotate_around_center(&self, _angle: T) -> Self {
+        *self
+    }
+
+    fn rotate_around_centroid(&self, angle: T) -> Self {
+        *self
+    }
 }
 
 impl<T> Rotate<T> for Line<T>
@@ -148,10 +167,22 @@ where
     T: GeoFloat,
 {
     fn rotate(&self, angle: T) -> Self {
+        self.rotate_around_centroid(angle)
+    }
+
+    fn rotate_around_centroid(&self, angle: T) -> Self {
         let centroid = self.centroid();
         Line::new(
             rotate_one(angle, centroid, self.start_point()),
             rotate_one(angle, centroid, self.end_point()),
+        )
+    }
+
+    fn rotate_around_center(&self, angle: T) -> Self {
+        let center: Point<T> = self.bounding_rect().center().into();
+        Line::new(
+            rotate_one(angle, center, self.start_point()),
+            rotate_one(angle,center, self.end_point()),
         )
     }
 }
@@ -160,14 +191,27 @@ impl<T> Rotate<T> for LineString<T>
 where
     T: GeoFloat,
 {
-    /// Rotate the LineString about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
+        self.rotate_around_centroid(angle)
+    }
+
+    /// Rotate the LineString about its centroid by the given number of degrees
+    fn rotate_around_centroid(&self, angle: T) -> Self {
         match self.centroid() {
             Some(centroid) => rotate_many(angle, centroid, self.points_iter()).collect(),
             None => {
                 // LineString was empty or otherwise degenerate and had no computable centroid
                 self.clone()
             }
+        }
+    }
+
+    fn rotate_around_center(&self, angle: T) -> Self {
+        match self.bounding_rect() {
+            Some(bounding_rect) => {
+                rotate_many(angle, bounding_rect.center().into(), self.points_iter()).collect()
+            },
+            None => self.clone(), // LineString was empty or otherwise degenerate and had no computable bounding rect
         }
     }
 }
@@ -197,6 +241,38 @@ where
         } else {
             // Polygon was empty or otherwise degenerate and had no computable centroid
             self.clone()
+        }
+    }
+
+    /// Rotate the Polygon about its centroid by the given number of degrees
+    fn rotate_around_centroid(&self, angle: T) -> Self {
+        match self.centroid() {
+            Some(centroid) => {
+                Polygon::new(
+                    rotate_many(angle, centroid, self.exterior().points_iter()).collect(),
+                    self.interiors()
+                        .iter()
+                        .map(|ring| rotate_many(angle, centroid, ring.points_iter()).collect())
+                        .collect(),
+                )
+            },
+            None => self.clone(),// Polygon was empty or otherwise degenerate and had no computable centroid
+        }
+    }
+    
+    /// Rotate the Polygon about the center of its bounding rectangle by the given number of degrees
+    fn rotate_around_center(&self, angle: T) -> Self {
+        match self.bounding_rect() {
+            Some(bounding_rect) => {
+                Polygon::new(
+                    rotate_many(angle, bounding_rect.center().into(), self.exterior().points_iter()).collect(),
+                    self.interiors()
+                        .iter()
+                        .map(|ring| rotate_many(angle, bounding_rect.center().into(), ring.points_iter()).collect())
+                        .collect(),
+                )
+            },
+            None => self.clone(), // Polygon was empty or otherwise degenerate and had no computable center
         }
     }
 }
