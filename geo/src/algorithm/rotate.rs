@@ -545,7 +545,8 @@ mod test {
     fn test_rotate_line() {
         let line0 = Line::from([(0., 0.), (0., 2.)]);
         let line1 = Line::from([(1., 1.), (-1., 1.)]);
-        assert_relative_eq!(line0.rotate(90.0), line1);
+        assert_relative_eq!(line0.rotate_around_centroid(90.0), line1);
+        assert_relative_eq!(line0.rotate_around_center(90.0), line1);
     }
     #[test]
     fn test_rotate_line_around_point() {
