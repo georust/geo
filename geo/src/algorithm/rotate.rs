@@ -378,7 +378,7 @@ mod test {
     #[test]
     fn test_rotate_around_point() {
         let p = point!(x: 1.0, y: 5.0);
-        let rotated = p.rotate(30.0);
+        let rotated = p.rotate_around_centroid(30.0);
         // results agree with Shapely / GEOS
         assert_eq!(rotated, Point::new(1.0, 5.0));
     }
@@ -470,7 +470,7 @@ mod test {
             (x: 6., y: 1.),
             (x: 5., y: 1.)
         ];
-        let rotated = poly1.rotate(-15.0);
+        let rotated = poly1.rotate_around_centroid(-15.0);
         let correct = polygon![
             (x: 4.628808519201685, y: 1.1805207831176578),
             (x: 3.921701738015137, y: 2.405265654509247),
@@ -548,6 +548,61 @@ mod test {
         assert_relative_eq!(line0.rotate_around_centroid(90.0), line1);
         assert_relative_eq!(line0.rotate_around_center(90.0), line1);
     }
+
+    #[test]
+    fn test_rotate_multi_line_string() {
+        let ls1 = line_string![
+            (x: 0., y: 0.),
+            (x: 1., y: 1.),
+            (x: 4., y: 1.),
+        ];
+        let ls2 = line_string![
+            (x: 10., y: 10.),
+            (x: 20., y: 20.),
+            (x: 40., y: 20.)
+        ];
+        let multi_line_string: MultiLineString<f64> = MultiLineString(vec![ls1, ls2]);
+
+        // Results match with Shapely for `centroid`
+        let expected_around_centroid = MultiLineString(
+            vec![
+                //MULTILINESTRING ((,  , ), 
+                //  (9.079616340338735 19.72288595632566, 
+                    //23.22175196406969 19.72288595632566, 
+                    //37.36388758780063 5.580750332594715))
+                line_string![
+                    (x: -5.062519283392216, y: 19.72288595632566),
+                    (x: -3.648305721019121, y: 19.72288595632566),
+                    (x: -1.526985377459479, y: 17.60156561276602)
+                ],
+                line_string![
+                    (x: 9.079616340338735, y: 19.72288595632566),
+                    (x: 23.22175196406969, y: 19.72288595632566),
+                    (x: 37.36388758780063, y: 5.580750332594715)
+                ]
+            ]
+        );
+        assert_relative_eq!(multi_line_string.rotate_around_centroid(-45.), expected_around_centroid, epsilon=1e-12);
+
+        // Results match with Shapely for `center`
+        let expected_around_center: MultiLineString<f64> = MultiLineString(
+            vec![
+                line_string![
+                    (x: -1.213203435596426, y: 17.07106781186548),
+                    (x: 0.2010101267766693, y: 17.07106781186548),
+                    (x: 2.322330470336312, y: 14.94974746830583),
+                ],
+                line_string![
+                    (x: 12.92893218813452, y: 17.07106781186548),
+                    (x: 27.07106781186548, y: 17.07106781186548),
+                    (x: 41.21320343559643, y: 2.928932188134528),
+                    
+                ]
+            ]
+        );
+        assert_relative_eq!(multi_line_string.rotate_around_center(-45.), expected_around_center, epsilon=1e-12);
+    }
+
     #[test]
     fn test_rotate_line_around_point() {
         let line0 = Line::new(Point::new(0., 0.), Point::new(0., 2.));
@@ -595,29 +650,29 @@ mod test {
 
         // results agree with Shapely / GEOS
         // (relaxing the episilon a bit)
-        assert_relative_eq!(multipolygon.rotate(45.), expected, epsilon = 1e-12);
+        assert_relative_eq!(multipolygon.rotate_around_centroid(45.), expected, epsilon = 1e-12);
     }
 
     #[test]
     fn test_rotate_empty_geometries_error_gracefully() {
         // line string
         let empty_linestring: LineString<f64> = line_string![];
-        let rotated_empty_linestring = empty_linestring.rotate(90.);
+        let rotated_empty_linestring = empty_linestring.rotate_around_centroid(90.);
         assert_eq!(empty_linestring, rotated_empty_linestring);
 
         // multi line string
         let empty_multilinestring: MultiLineString<f64> = MultiLineString::<f64>(vec![]);
-        let rotated_empty_multilinestring = empty_multilinestring.rotate(90.);
+        let rotated_empty_multilinestring = empty_multilinestring.rotate_around_centroid(90.);
         assert_eq!(empty_multilinestring, rotated_empty_multilinestring);
 
         // polygon
         let empty_polygon: Polygon<f64> = polygon![];
-        let rotated_empty_polygon = empty_polygon.rotate(90.);
+        let rotated_empty_polygon = empty_polygon.rotate_around_centroid(90.);
         assert_eq!(empty_polygon, rotated_empty_polygon);
 
         // multi polygon
         let empty_multipolygon: MultiPolygon<f64> = Vec::<Polygon<f64>>::new().into();
-        let rotated_empty_multipolygon = empty_multipolygon.rotate(90.);
+        let rotated_empty_multipolygon = empty_multipolygon.rotate_around_centroid(90.);
         assert_eq!(empty_multipolygon, rotated_empty_multipolygon);
     }
 }
