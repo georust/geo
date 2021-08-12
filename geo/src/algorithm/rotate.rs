@@ -566,10 +566,6 @@ mod test {
         // Results match with Shapely for `centroid`
         let expected_around_centroid = MultiLineString(
             vec![
-                //MULTILINESTRING ((,  , ), 
-                //  (9.079616340338735 19.72288595632566, 
-                    //23.22175196406969 19.72288595632566, 
-                    //37.36388758780063 5.580750332594715))
                 line_string![
                     (x: -5.062519283392216, y: 19.72288595632566),
                     (x: -3.648305721019121, y: 19.72288595632566),
