@@ -79,7 +79,10 @@ pub trait Rotate<T> {
     ///
     /// assert_eq!(expected, rotated);
     /// ```
-    #[deprecated(note="equivalent to `rotate_around_centroid` in most instances. Call that instead, or `rotate_around_center` if you'd like to rotate around the geometry's bounding box center")]
+    #[deprecated(note="Equivalent to `rotate_around_centroid` except for `Polygon<T>`, 
+                    where it is equivalent to rotating around the polygon's outer ring. 
+                    Call that instead, or `rotate_around_center` if you'd like to rotate 
+                    around the geometry's bounding box center.")]
     fn rotate(&self, angle: T) -> Self
     where
         T: CoordFloat;
@@ -428,17 +431,30 @@ mod test {
         let linestring = line_string![
             (x: 0.0, y: 0.0),
             (x: 5.0, y: 5.0),
-            (x: 10.0, y: 10.0)
+            (x: 5.0, y: 10.0)
         ];
-        let rotated = linestring.rotate(-45.0);
-        // results agree with Shapely / GEOS
-        assert_eq!(
-            rotated,
+
+        // results agree with Shapely / GEOS for `centroid`
+        let rotated_around_centroid = linestring.rotate_around_centroid(-45.0);
+        assert_relative_eq!(
+            rotated_around_centroid,
             line_string![
-                (x: -2.0710678118654755, y: 5.0),
-                (x: 5.0, y: 5.0),
-                (x: 12.071067811865476, y: 5.0)
+                (x: -2.196699141100894, y: 3.838834764831844),
+                (x: 4.874368670764582, y: 3.838834764831844),
+                (x: 8.40990257669732, y: 7.374368670764582)
             ]
+        );
+        
+        // results agree with Shapely / GEOS for `center`
+        let rotated_around_center = linestring.rotate_around_center(-45.0);
+        assert_relative_eq!(
+            rotated_around_center,
+            line_string![
+                (x: -2.803300858899106, y: 3.232233047033631),
+                (x: 4.267766952966369, y: 3.232233047033632),
+                (x: 7.803300858899107, y: 6.767766952966369)
+            ], 
+            epsilon=1e-12
         );
     }
     #[test]
