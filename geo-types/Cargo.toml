@@ -21,7 +21,7 @@ serde = { version = "1", optional = true, features = ["derive"] }
 # Prefer `use-rstar` feature rather than enabling rstar directly.
 # rstar integration relies on the optional approx crate, but implicit features cannot yet enable other features.
 # See: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#namespaced-features
-rstar = { version = "0.8", optional = true }
+rstar = { version = "0.9", optional = true }
 
 [dev-dependencies]
 approx = "0.4.0"

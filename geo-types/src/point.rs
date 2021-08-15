@@ -486,7 +486,7 @@ where
 
     const DIMENSIONS: usize = 2;
 
-    fn generate(generator: impl Fn(usize) -> Self::Scalar) -> Self {
+    fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
         Point::new(generator(0), generator(1))
     }
 

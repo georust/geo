@@ -1,5 +1,10 @@
 # Changes
 
+
+## Unreleased
+
+* Bump `rstar` dependency
+
 ## 0.7.2
 
 * Implement `RelativeEq` and `AbsDiffEq` for fuzzy comparison of remaining Geometry Types

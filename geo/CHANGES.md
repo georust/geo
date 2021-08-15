@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Bump `rstar` dependency
 * Add `ChaikinSmoothing` algorithm
 * Fix `rotate` for multipolygons to rotate around the collection's centroid, instead of rotating each individual polygon around its own centroid.
   * <https://github.com/georust/geo/pull/651>
