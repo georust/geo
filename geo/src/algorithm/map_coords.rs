@@ -8,7 +8,7 @@
 //! # #[cfg(feature = "use-proj")]
 //! use geo::algorithm::map_coords::TryMapCoords;
 //! # #[cfg(feature = "use-proj")]
-//! use proj::Proj;
+//! use proj::{Coord, Proj};
 //! // GeoJSON uses the WGS 84 coordinate system
 //! # #[cfg(feature = "use-proj")]
 //! let from = "EPSG:4326";
@@ -109,7 +109,7 @@ pub trait TryMapCoords<T, NT> {
     /// # #[cfg(feature = "use-proj")]
     /// use geo::algorithm::map_coords::TryMapCoords;
     /// # #[cfg(feature = "use-proj")]
-    /// use proj::Proj;
+    /// use proj::{Coord, Proj};
     /// // GeoJSON uses the WGS 84 coordinate system
     /// # #[cfg(feature = "use-proj")]
     /// let from = "EPSG:4326";
@@ -829,7 +829,7 @@ mod test {
     #[cfg(feature = "use-proj")]
     #[test]
     fn test_fallible_proj() {
-        use proj::Proj;
+        use proj::{Coord, Proj};
         let from = "EPSG:4326";
         let to = "EPSG:2230";
         let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
