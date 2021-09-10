@@ -79,15 +79,16 @@ pub trait Rotate<T> {
     ///
     /// assert_eq!(expected, rotated);
     /// ```
-    #[deprecated(note="Equivalent to `rotate_around_centroid` except for `Polygon<T>`, 
+    #[deprecated(
+        note = "Equivalent to `rotate_around_centroid` except for `Polygon<T>`, 
                     where it is equivalent to rotating around the polygon's outer ring. 
                     Call that instead, or `rotate_around_center` if you'd like to rotate 
-                    around the geometry's bounding box center.")]
+                    around the geometry's bounding box center."
+    )]
     fn rotate(&self, angle: T) -> Self
     where
         T: CoordFloat;
 
-    
     fn rotate_around_centroid(&self, angle: T) -> Self
     where
         T: CoordFloat;
@@ -185,7 +186,7 @@ where
         let center: Point<T> = self.bounding_rect().center().into();
         Line::new(
             rotate_one(angle, center, self.start_point()),
-            rotate_one(angle,center, self.end_point()),
+            rotate_one(angle, center, self.end_point()),
         )
     }
 }
@@ -213,7 +214,7 @@ where
         match self.bounding_rect() {
             Some(bounding_rect) => {
                 rotate_many(angle, bounding_rect.center().into(), self.points_iter()).collect()
-            },
+            }
             None => self.clone(), // LineString was empty or otherwise degenerate and had no computable bounding rect
         }
     }
@@ -250,31 +251,35 @@ where
     /// Rotate the Polygon about its centroid by the given number of degrees
     fn rotate_around_centroid(&self, angle: T) -> Self {
         match self.centroid() {
-            Some(centroid) => {
-                Polygon::new(
-                    rotate_many(angle, centroid, self.exterior().points_iter()).collect(),
-                    self.interiors()
-                        .iter()
-                        .map(|ring| rotate_many(angle, centroid, ring.points_iter()).collect())
-                        .collect(),
-                )
-            },
-            None => self.clone(),// Polygon was empty or otherwise degenerate and had no computable centroid
+            Some(centroid) => Polygon::new(
+                rotate_many(angle, centroid, self.exterior().points_iter()).collect(),
+                self.interiors()
+                    .iter()
+                    .map(|ring| rotate_many(angle, centroid, ring.points_iter()).collect())
+                    .collect(),
+            ),
+            None => self.clone(), // Polygon was empty or otherwise degenerate and had no computable centroid
         }
     }
-    
+
     /// Rotate the Polygon about the center of its bounding rectangle by the given number of degrees
     fn rotate_around_center(&self, angle: T) -> Self {
         match self.bounding_rect() {
-            Some(bounding_rect) => {
-                Polygon::new(
-                    rotate_many(angle, bounding_rect.center().into(), self.exterior().points_iter()).collect(),
-                    self.interiors()
-                        .iter()
-                        .map(|ring| rotate_many(angle, bounding_rect.center().into(), ring.points_iter()).collect())
-                        .collect(),
+            Some(bounding_rect) => Polygon::new(
+                rotate_many(
+                    angle,
+                    bounding_rect.center().into(),
+                    self.exterior().points_iter(),
                 )
-            },
+                .collect(),
+                self.interiors()
+                    .iter()
+                    .map(|ring| {
+                        rotate_many(angle, bounding_rect.center().into(), ring.points_iter())
+                            .collect()
+                    })
+                    .collect(),
+            ),
             None => self.clone(), // Polygon was empty or otherwise degenerate and had no computable center
         }
     }
@@ -291,13 +296,11 @@ where
     /// Rotate the MultiPolygon about the center of its bounding rectangle by the given number of degrees
     fn rotate_around_center(&self, angle: T) -> Self {
         match self.bounding_rect() {
-            Some(bounding_rect) => {
-                MultiPolygon(
-                   self.iter()
-                        .map(|poly| poly.rotate_around_point(angle, bounding_rect.center().into()))
-                        .collect() 
-                )
-            },
+            Some(bounding_rect) => MultiPolygon(
+                self.iter()
+                    .map(|poly| poly.rotate_around_point(angle, bounding_rect.center().into()))
+                    .collect(),
+            ),
             None => self.clone(), // MultiPolygon was empty or otherwise degenerate and had no computable center
         }
     }
@@ -312,7 +315,7 @@ where
             ),
             None => {
                 // Multipolygon was empty or otherwise degenerate and had no computable centroid
-                self.clone() 
+                self.clone()
             }
         }
     }
@@ -338,7 +341,11 @@ where
     /// Rotate the contained LineStrings about the centroid by the given number of degrees
     fn rotate_around_centroid(&self, angle: T) -> Self {
         match self.centroid() {
-            Some(centroid) => MultiLineString(self.iter().map(|ls| ls.rotate_around_point(angle, centroid)).collect()),
+            Some(centroid) => MultiLineString(
+                self.iter()
+                    .map(|ls| ls.rotate_around_point(angle, centroid))
+                    .collect(),
+            ),
             None => self.clone(), // MultiLineString was empty or otherwise degenerate and had not computable bounding rect
         }
     }
@@ -363,7 +370,7 @@ where
     /// Rotate the contained Points about the centroid by the given number of degrees
     fn rotate_around_centroid(&self, angle: T) -> Self {
         match self.centroid() {
-            Some(centroid) => self.rotate_around_point(angle,centroid),
+            Some(centroid) => self.rotate_around_point(angle, centroid),
             None => self.clone(), // MultiPoint was empty or otherwise degenerate and had no computable centroid
         }
     }
@@ -397,32 +404,29 @@ mod test {
 
     #[test]
     fn test_rotate_multipoints() {
-        let multi_points = MultiPoint(
-            vec![
-                point!(x: 0., y: 0.),
-                point!(x: 1., y: 1.),
-                point!(x: 2., y: 1.)
-            ]
-        );
-        
+        let multi_points = MultiPoint(vec![
+            point!(x: 0., y: 0.),
+            point!(x: 1., y: 1.),
+            point!(x: 2., y: 1.),
+        ]);
+
         // Results match shapely for `centroid`
-        let expected_for_centroid = MultiPoint(
-            vec![
-                point!(x: 0.7642977396044841, y: -0.5118446353109125),
-                point!(x: 0.7642977396044842, y:  0.9023689270621824),
-                point!(x: 1.471404520791032, y:  1.60947570824873)
-            ]
+        let expected_for_centroid = MultiPoint(vec![
+            point!(x: 0.7642977396044841, y: -0.5118446353109125),
+            point!(x: 0.7642977396044842, y:  0.9023689270621824),
+            point!(x: 1.471404520791032, y:  1.60947570824873),
+        ]);
+        assert_relative_eq!(
+            multi_points.rotate_around_centroid(45.),
+            expected_for_centroid
         );
-        assert_relative_eq!(multi_points.rotate_around_centroid(45.), expected_for_centroid);
 
         // Results match shapely for `center`
-        let expected_for_center = MultiPoint(
-            vec![
-                point!(x: 0.6464466094067262, y: -0.5606601717798212), 
-                point!(x: 0.6464466094067263, y: 0.8535533905932737), 
-                point!(x: 1.353553390593274, y: 1.560660171779821)
-            ]
-        );
+        let expected_for_center = MultiPoint(vec![
+            point!(x: 0.6464466094067262, y: -0.5606601717798212),
+            point!(x: 0.6464466094067263, y: 0.8535533905932737),
+            point!(x: 1.353553390593274, y: 1.560660171779821),
+        ]);
         assert_relative_eq!(multi_points.rotate_around_center(45.), expected_for_center);
     }
 
@@ -444,7 +448,7 @@ mod test {
                 (x: 8.40990257669732, y: 7.374368670764582)
             ]
         );
-        
+
         // results agree with Shapely / GEOS for `center`
         let rotated_around_center = linestring.rotate_around_center(-45.0);
         assert_relative_eq!(
@@ -453,8 +457,8 @@ mod test {
                 (x: -2.803300858899106, y: 3.232233047033631),
                 (x: 4.267766952966369, y: 3.232233047033632),
                 (x: 7.803300858899107, y: 6.767766952966369)
-            ], 
-            epsilon=1e-12
+            ],
+            epsilon = 1e-12
         );
     }
     #[test]
@@ -535,7 +539,7 @@ mod test {
         assert_eq!(rotated.exterior().0, correct_outside);
         assert_eq!(rotated.interiors()[0].0, correct_inside);
 
-        // now rotate around center 
+        // now rotate around center
         let center_expected = polygon![
             exterior: [
                 (x: 4.628808519201685, y: 1.180520783117658),
@@ -566,7 +570,7 @@ mod test {
 
         let rotated_around_center = poly1.rotate_around_center(-15.);
 
-        assert_relative_eq!(rotated_around_center, center_expected, epsilon=1e-12);
+        assert_relative_eq!(rotated_around_center, center_expected, epsilon = 1e-12);
 
         // now rotate around centroid
         let centroid_expected = polygon![
@@ -597,7 +601,7 @@ mod test {
             ],
         ];
         let rotated_around_centroid = poly1.rotate_around_centroid(-15.);
-        assert_relative_eq!(rotated_around_centroid, centroid_expected, epsilon=1e-12);
+        assert_relative_eq!(rotated_around_centroid, centroid_expected, epsilon = 1e-12);
     }
     #[test]
     fn test_rotate_around_point_arbitrary() {
@@ -628,39 +632,43 @@ mod test {
         let multi_line_string: MultiLineString<f64> = MultiLineString(vec![ls1, ls2]);
 
         // Results match with Shapely for `centroid`
-        let expected_around_centroid = MultiLineString(
-            vec![
-                line_string![
-                    (x: -5.062519283392216, y: 19.72288595632566),
-                    (x: -3.648305721019121, y: 19.72288595632566),
-                    (x: -1.526985377459479, y: 17.60156561276602)
-                ],
-                line_string![
-                    (x: 9.079616340338735, y: 19.72288595632566),
-                    (x: 23.22175196406969, y: 19.72288595632566),
-                    (x: 37.36388758780063, y: 5.580750332594715)
-                ]
-            ]
+        let expected_around_centroid = MultiLineString(vec![
+            line_string![
+                (x: -5.062519283392216, y: 19.72288595632566),
+                (x: -3.648305721019121, y: 19.72288595632566),
+                (x: -1.526985377459479, y: 17.60156561276602)
+            ],
+            line_string![
+                (x: 9.079616340338735, y: 19.72288595632566),
+                (x: 23.22175196406969, y: 19.72288595632566),
+                (x: 37.36388758780063, y: 5.580750332594715)
+            ],
+        ]);
+        assert_relative_eq!(
+            multi_line_string.rotate_around_centroid(-45.),
+            expected_around_centroid,
+            epsilon = 1e-12
         );
-        assert_relative_eq!(multi_line_string.rotate_around_centroid(-45.), expected_around_centroid, epsilon=1e-12);
 
         // Results match with Shapely for `center`
-        let expected_around_center: MultiLineString<f64> = MultiLineString(
-            vec![
-                line_string![
-                    (x: -1.213203435596426, y: 17.07106781186548),
-                    (x: 0.2010101267766693, y: 17.07106781186548),
-                    (x: 2.322330470336312, y: 14.94974746830583),
-                ],
-                line_string![
-                    (x: 12.92893218813452, y: 17.07106781186548),
-                    (x: 27.07106781186548, y: 17.07106781186548),
-                    (x: 41.21320343559643, y: 2.928932188134528),
-                    
-                ]
-            ]
+        let expected_around_center: MultiLineString<f64> = MultiLineString(vec![
+            line_string![
+                (x: -1.213203435596426, y: 17.07106781186548),
+                (x: 0.2010101267766693, y: 17.07106781186548),
+                (x: 2.322330470336312, y: 14.94974746830583),
+            ],
+            line_string![
+                (x: 12.92893218813452, y: 17.07106781186548),
+                (x: 27.07106781186548, y: 17.07106781186548),
+                (x: 41.21320343559643, y: 2.928932188134528),
+
+            ],
+        ]);
+        assert_relative_eq!(
+            multi_line_string.rotate_around_center(-45.),
+            expected_around_center,
+            epsilon = 1e-12
         );
-        assert_relative_eq!(multi_line_string.rotate_around_center(-45.), expected_around_center, epsilon=1e-12);
     }
 
     #[test]
@@ -710,7 +718,11 @@ mod test {
 
         // results agree with Shapely / GEOS
         // (relaxing the episilon a bit)
-        assert_relative_eq!(multipolygon.rotate_around_centroid(45.), expected_centroid, epsilon = 1e-12);
+        assert_relative_eq!(
+            multipolygon.rotate_around_centroid(45.),
+            expected_centroid,
+            epsilon = 1e-12
+        );
     }
 
     #[test]
@@ -729,8 +741,9 @@ mod test {
                 (x: 12., y:  12.),
                 (x: 10., y:  12.),
                 (x: 10., y:  1.),
-            ]
-        ].into();
+            ],
+        ]
+        .into();
 
         let expected_center: MultiPolygon<f64> = vec![
             polygon![
@@ -746,8 +759,9 @@ mod test {
                 (x: 13.23609679265374, y: 10.38908729652601),
                 (x: 11.3042451400756, y: 10.90672538673105),
                 (x: 8.457235643947875, y: 0.2815412975513012),
-            ]
-        ].into();
+            ],
+        ]
+        .into();
 
         let expected_centroid: MultiPolygon<f64> = vec![
             polygon![
@@ -763,12 +777,21 @@ mod test {
                 (x: 13.37059281801868, y: 10.83004087304658),
                 (x: 11.43874116544054, y: 11.34767896325162),
                 (x: 8.591731669312811, y: 0.7224948740718733),
-            ]
-        ].into();
+            ],
+        ]
+        .into();
 
         // results agree with Shapely / GEOS
-        assert_relative_eq!(multipolygon.rotate_around_center(-15.), expected_center, epsilon=1e-12);
-        assert_relative_eq!(multipolygon.rotate_around_centroid(-15.), expected_centroid, epsilon=1e-12);
+        assert_relative_eq!(
+            multipolygon.rotate_around_center(-15.),
+            expected_center,
+            epsilon = 1e-12
+        );
+        assert_relative_eq!(
+            multipolygon.rotate_around_centroid(-15.),
+            expected_centroid,
+            epsilon = 1e-12
+        );
     }
 
     #[test]
