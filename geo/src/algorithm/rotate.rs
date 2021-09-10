@@ -690,7 +690,7 @@ mod test {
         ]
         .into();
 
-        let expected: MultiPolygon<f64> = vec![
+        let expected_centroid: MultiPolygon<f64> = vec![
             polygon![
                 (x: 0., y: 0.),
                 (x: 7.0710678118654755, y: 7.0710678118654746),
@@ -710,7 +710,65 @@ mod test {
 
         // results agree with Shapely / GEOS
         // (relaxing the episilon a bit)
-        assert_relative_eq!(multipolygon.rotate_around_centroid(45.), expected, epsilon = 1e-12);
+        assert_relative_eq!(multipolygon.rotate_around_centroid(45.), expected_centroid, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn test_rotate_multipolygons() {
+        let multipolygon: MultiPolygon<f64> = vec![
+            polygon![
+               (x: 1., y: 1. ),
+               (x: 2., y: 1. ),
+               (x: 2., y: 10.),
+               (x: 1., y: 10.),
+               (x: 1., y: 1. ),
+            ],
+            polygon![
+                (x: 10., y:  1.),
+                (x: 12., y:  1.),
+                (x: 12., y:  12.),
+                (x: 10., y:  12.),
+                (x: 10., y:  1.),
+            ]
+        ].into();
+
+        let expected_center: MultiPolygon<f64> = vec![
+            polygon![
+                (x: -0.2360967926537398, y: 2.610912703473988),
+                (x: 0.7298290336353284, y: 2.352093658371467),
+                (x: 3.059200439558015, y: 11.04542609497308),
+                (x: 2.093274613268947, y: 11.3042451400756),
+                (x: -0.2360967926537398, y: 2.610912703473988),
+            ],
+            polygon![
+                (x: 8.457235643947875, y: 0.2815412975513012),
+                (x: 10.38908729652601, y: -0.2360967926537403),
+                (x: 13.23609679265374, y: 10.38908729652601),
+                (x: 11.3042451400756, y: 10.90672538673105),
+                (x: 8.457235643947875, y: 0.2815412975513012),
+            ]
+        ].into();
+
+        let expected_centroid: MultiPolygon<f64> = vec![
+            polygon![
+                (x: -0.1016007672888048, y: 3.05186627999456),
+                (x: 0.8643250590002634, y: 2.793047234892039),
+                (x: 3.19369646492295, y: 11.48637967149365),
+                (x: 2.227770638633882, y: 11.74519871659617),
+                (x: -0.1016007672888048, y: 3.05186627999456),
+            ],
+            polygon![
+                (x: 8.591731669312811, y: 0.7224948740718733),
+                (x: 10.52358332189095, y: 0.2048567838668318),
+                (x: 13.37059281801868, y: 10.83004087304658),
+                (x: 11.43874116544054, y: 11.34767896325162),
+                (x: 8.591731669312811, y: 0.7224948740718733),
+            ]
+        ].into();
+
+        // results agree with Shapely / GEOS
+        assert_relative_eq!(multipolygon.rotate_around_center(-15.), expected_center, epsilon=1e-12);
+        assert_relative_eq!(multipolygon.rotate_around_centroid(-15.), expected_centroid, epsilon=1e-12);
     }
 
     #[test]
