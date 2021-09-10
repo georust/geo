@@ -50,6 +50,18 @@ impl<T: CoordNum> From<[T; 2]> for Point<T> {
     }
 }
 
+impl<T: CoordNum> From<Point<T>> for (T, T) {
+    fn from(point: Point<T>) -> Self {
+        point.0.into()
+    }
+}
+
+impl<T: CoordNum> From<Point<T>> for [T; 2] {
+    fn from(point: Point<T>) -> Self {
+        point.0.into()
+    }
+}
+
 impl<T> Point<T>
 where
     T: CoordNum,
