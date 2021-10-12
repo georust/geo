@@ -7,7 +7,7 @@ where
     Polygon<T>: Intersects<G>,
 {
     fn intersects(&self, rhs: &G) -> bool {
-        self.clone().to_polygon().intersects(rhs)
+        (*self).to_polygon().intersects(rhs)
     }
 }
 symmetric_intersects_impl!(Coordinate<T>, Triangle<T>);
