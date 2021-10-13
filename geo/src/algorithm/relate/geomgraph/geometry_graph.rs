@@ -258,7 +258,7 @@ where
     /// Add a point computed externally.  The point is assumed to be a
     /// Point Geometry part, which has a location of INTERIOR.
     fn add_point(&mut self, point: &Point<F>) {
-        self.insert_point(self.arg_index, point.clone().into(), CoordPos::Inside);
+        self.insert_point(self.arg_index, (*point).into(), CoordPos::Inside);
     }
 
     /// Compute self-nodes, taking advantage of the Geometry type to minimize the number of

@@ -40,7 +40,7 @@ where
     T: GeoNum,
 {
     fn intersects(&self, rect: &Rect<T>) -> bool {
-        self.intersects(&rect.clone().to_polygon())
+        self.intersects(&rect.to_polygon())
     }
 }
 symmetric_intersects_impl!(Rect<T>, Polygon<T>);
