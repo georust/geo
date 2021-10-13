@@ -29,9 +29,9 @@
 //! # #[cfg(feature = "use-proj")]
 //! let usa_ft = usa_m.try_map_coords(|&(x, y)| f(x, y)).unwrap();
 //! # #[cfg(feature = "use-proj")]
-//! assert_eq!(6693625.67217475, usa_ft.x());
+//! assert_relative_eq!(6693625.67217475, usa_ft.x());
 //! # #[cfg(feature = "use-proj")]
-//! assert_eq!(3497301.5918027186, usa_ft.y());
+//! assert_relative_eq!(3497301.5918027186, usa_ft.y());
 //! ```
 
 use crate::{
@@ -51,11 +51,12 @@ pub trait MapCoords<T, NT> {
     /// ```
     /// use geo::algorithm::map_coords::MapCoords;
     /// use geo::Point;
+    /// use approx::assert_relative_eq;
     ///
     /// let p1 = Point::new(10., 20.);
     /// let p2 = p1.map_coords(|&(x, y)| (x + 1000., y * 2.));
     ///
-    /// assert_eq!(p2, Point::new(1010., 40.));
+    /// assert_relative_eq!(p2, Point::new(1010., 40.));
     /// ```
     ///
     /// You can convert the coordinate type this way as well
@@ -63,11 +64,12 @@ pub trait MapCoords<T, NT> {
     /// ```
     /// # use geo::Point;
     /// # use geo::algorithm::map_coords::MapCoords;
+    /// # use approx::assert_relative_eq;
     ///
     /// let p1: Point<f32> = Point::new(10.0f32, 20.0f32);
     /// let p2: Point<f64> = p1.map_coords(|&(x, y)| (x as f64, y as f64));
     ///
-    /// assert_eq!(p2, Point::new(10.0f64, 20.0f64));
+    /// assert_relative_eq!(p2, Point::new(10.0f64, 20.0f64));
     /// ```
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output
     where
@@ -126,9 +128,9 @@ pub trait TryMapCoords<T, NT> {
     /// # #[cfg(feature = "use-proj")]
     /// let usa_ft = usa_m.try_map_coords(|&(x, y)| f(x, y)).unwrap();
     /// # #[cfg(feature = "use-proj")]
-    /// assert_eq!(6693625.67217475, usa_ft.x());
+    /// assert_relative_eq!(6693625.67217475, usa_ft.x());
     /// # #[cfg(feature = "use-proj")]
-    /// assert_eq!(3497301.5918027186, usa_ft.y());
+    /// assert_relativE_eq!(3497301.5918027186, usa_ft.y());
     /// ```
     fn try_map_coords(
         &self,
@@ -148,11 +150,12 @@ pub trait MapCoordsInplace<T> {
     /// ```
     /// use geo::algorithm::map_coords::MapCoordsInplace;
     /// use geo::Point;
+    /// use approx::assert_relative_eq;
     ///
     /// let mut p = Point::new(10., 20.);
     /// p.map_coords_inplace(|&(x, y)| (x + 1000., y * 2.));
     ///
-    /// assert_eq!(p, Point::new(1010., 40.));
+    /// assert_relative_eq!(p, Point::new(1010., 40.));
     /// ```
     fn map_coords_inplace(&mut self, func: impl Fn(&(T, T)) -> (T, T) + Copy)
     where
@@ -663,7 +666,7 @@ mod test {
     #[test]
     fn line() {
         let line = Line::from([(0., 0.), (1., 2.)]);
-        assert_eq!(
+        assert_relative_eq!(
             line.map_coords(|&(x, y)| (x * 2., y)),
             Line::from([(0., 0.), (2., 2.)])
         );
@@ -673,8 +676,8 @@ mod test {
     fn linestring() {
         let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
         let line2 = line1.map_coords(|&(x, y)| (x + 10., y - 100.));
-        assert_eq!(line2.0[0], Coordinate::from((10., -100.)));
-        assert_eq!(line2.0[1], Coordinate::from((11., -98.)));
+        assert_relative_eq!(line2.0[0], Coordinate::from((10., -100.)));
+        assert_relative_eq!(line2.0[1], Coordinate::from((11., -98.)));
     }
 
     #[test]
@@ -700,7 +703,7 @@ mod test {
         ])];
         let expected_p2 = Polygon::new(exterior2, interiors2);
 
-        assert_eq!(p2, expected_p2);
+        assert_relative_eq!(p2, expected_p2);
     }
 
     #[test]
@@ -721,7 +724,7 @@ mod test {
         let line2: LineString<f32> = LineString::from(vec![(-1., 0.), (0., 0.), (1., 2.)]);
         let mline = MultiLineString(vec![line1, line2]);
         let mline2 = mline.map_coords(|&(x, y)| (x + 10., y - 100.));
-        assert_eq!(
+        assert_relative_eq!(
             mline2,
             MultiLineString(vec![
                 LineString::from(vec![(10., -100.), (11., -98.)]),
@@ -761,7 +764,7 @@ mod test {
         let mp = MultiPolygon(vec![poly1, poly2]);
         let mp2 = mp.map_coords(|&(x, y)| (x * 2., y + 100.));
         assert_eq!(mp2.0.len(), 2);
-        assert_eq!(
+        assert_relative_eq!(
             mp2.0[0],
             polygon![
                 (x: 0., y: 100.),
@@ -771,7 +774,7 @@ mod test {
                 (x: 0., y: 100.),
             ],
         );
-        assert_eq!(
+        assert_relative_eq!(
             mp2.0[1],
             polygon![
                 exterior: [
@@ -833,8 +836,8 @@ mod test {
         // 👽
         let usa_m = Point::new(-115.797615, 37.2647978);
         let usa_ft = usa_m.try_map_coords(|&(x, y)| f(x, y)).unwrap();
-        assert_eq!(6693625.67217475, usa_ft.x());
-        assert_eq!(3497301.5918027186, usa_ft.y());
+        assert_relative_eq!(6693625.67217475, usa_ft.x());
+        assert_relative_eq!(3497301.5918027186, usa_ft.y());
     }
 
     #[test]
@@ -864,7 +867,7 @@ mod test {
         assert!(bad.is_err());
         let good = good_ls.try_map_coords(|&(x, y)| f(x, y));
         assert!(good.is_ok());
-        assert_eq!(
+        assert_relative_eq!(
             good.unwrap(),
             vec![
                 Point::new(2., 101.),
