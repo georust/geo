@@ -29,9 +29,9 @@
 //! # #[cfg(feature = "use-proj")]
 //! let usa_ft = usa_m.try_map_coords(|&(x, y)| f(x, y)).unwrap();
 //! # #[cfg(feature = "use-proj")]
-//! assert_relative_eq!(6693625.67217475, usa_ft.x());
+//! assert_relative_eq!(6693625.67217475, usa_ft.x(), epsilon = 1e-6);
 //! # #[cfg(feature = "use-proj")]
-//! assert_relative_eq!(3497301.5918027186, usa_ft.y());
+//! assert_relative_eq!(3497301.5918027186, usa_ft.y(), epsilon = 1e-6);
 //! ```
 
 use crate::{
@@ -56,7 +56,7 @@ pub trait MapCoords<T, NT> {
     /// let p1 = Point::new(10., 20.);
     /// let p2 = p1.map_coords(|&(x, y)| (x + 1000., y * 2.));
     ///
-    /// assert_relative_eq!(p2, Point::new(1010., 40.));
+    /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon=1e-6);
     /// ```
     ///
     /// You can convert the coordinate type this way as well
@@ -69,7 +69,7 @@ pub trait MapCoords<T, NT> {
     /// let p1: Point<f32> = Point::new(10.0f32, 20.0f32);
     /// let p2: Point<f64> = p1.map_coords(|&(x, y)| (x as f64, y as f64));
     ///
-    /// assert_relative_eq!(p2, Point::new(10.0f64, 20.0f64));
+    /// assert_relative_eq!(p2, Point::new(10.0f64, 20.0f64), epsilon = 1e-6);
     /// ```
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output
     where
@@ -86,6 +86,7 @@ pub trait TryMapCoords<T, NT> {
     /// # Examples
     ///
     /// ```
+    /// use approx::assert_relative_eq;
     /// use geo::algorithm::map_coords::TryMapCoords;
     /// use geo::Point;
     ///
@@ -94,7 +95,7 @@ pub trait TryMapCoords<T, NT> {
     ///     .try_map_coords(|&(x, y)| Ok((x + 1000., y * 2.)))
     ///     .unwrap();
     ///
-    /// assert_eq!(p2, Point::new(1010., 40.));
+    /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon = 1e-6);
     /// ```
     ///
     /// ## Advanced Example: Geometry coordinate conversion using `PROJ`
@@ -128,9 +129,9 @@ pub trait TryMapCoords<T, NT> {
     /// # #[cfg(feature = "use-proj")]
     /// let usa_ft = usa_m.try_map_coords(|&(x, y)| f(x, y)).unwrap();
     /// # #[cfg(feature = "use-proj")]
-    /// assert_relative_eq!(6693625.67217475, usa_ft.x());
+    /// assert_relative_eq!(6693625.67217475, usa_ft.x(), epsilon=1e-6);
     /// # #[cfg(feature = "use-proj")]
-    /// assert_relativE_eq!(3497301.5918027186, usa_ft.y());
+    /// assert_relativE_eq!(3497301.5918027186, usa_ft.y(), epsilon=1e-6);
     /// ```
     fn try_map_coords(
         &self,
@@ -155,7 +156,7 @@ pub trait MapCoordsInplace<T> {
     /// let mut p = Point::new(10., 20.);
     /// p.map_coords_inplace(|&(x, y)| (x + 1000., y * 2.));
     ///
-    /// assert_relative_eq!(p, Point::new(1010., 40.));
+    /// assert_relative_eq!(p, Point::new(1010., 40.), epsilon=1e-6);
     /// ```
     fn map_coords_inplace(&mut self, func: impl Fn(&(T, T)) -> (T, T) + Copy)
     where
@@ -668,7 +669,8 @@ mod test {
         let line = Line::from([(0., 0.), (1., 2.)]);
         assert_relative_eq!(
             line.map_coords(|&(x, y)| (x * 2., y)),
-            Line::from([(0., 0.), (2., 2.)])
+            Line::from([(0., 0.), (2., 2.)]),
+            epsilon = 1e-6
         );
     }
 
@@ -676,8 +678,8 @@ mod test {
     fn linestring() {
         let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
         let line2 = line1.map_coords(|&(x, y)| (x + 10., y - 100.));
-        assert_relative_eq!(line2.0[0], Coordinate::from((10., -100.)));
-        assert_relative_eq!(line2.0[1], Coordinate::from((11., -98.)));
+        assert_relative_eq!(line2.0[0], Coordinate::from((10., -100.)), epsilon = 1e-6);
+        assert_relative_eq!(line2.0[1], Coordinate::from((11., -98.)), epsilon = 1e-6);
     }
 
     #[test]
@@ -703,7 +705,7 @@ mod test {
         ])];
         let expected_p2 = Polygon::new(exterior2, interiors2);
 
-        assert_relative_eq!(p2, expected_p2);
+        assert_relative_eq!(p2, expected_p2, epsilon = 1e-6);
     }
 
     #[test]
@@ -729,7 +731,8 @@ mod test {
             MultiLineString(vec![
                 LineString::from(vec![(10., -100.), (11., -98.)]),
                 LineString::from(vec![(9., -100.), (10., -100.), (11., -98.)]),
-            ])
+            ]),
+            epsilon = 1e-6
         );
     }
 
@@ -836,8 +839,8 @@ mod test {
         // 👽
         let usa_m = Point::new(-115.797615, 37.2647978);
         let usa_ft = usa_m.try_map_coords(|&(x, y)| f(x, y)).unwrap();
-        assert_relative_eq!(6693625.67217475, usa_ft.x());
-        assert_relative_eq!(3497301.5918027186, usa_ft.y());
+        assert_relative_eq!(6693625.67217475, usa_ft.x(), epsilon = 1e-6);
+        assert_relative_eq!(3497301.5918027186, usa_ft.y(), epsilon = 1e-6);
     }
 
     #[test]

@@ -534,6 +534,7 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
+    /// use approx::assert_relative_eq;
     /// use geo::algorithm::simplifyvw::SimplifyVWPreserve;
     /// use geo::line_string;
     ///
@@ -559,7 +560,7 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     ///     (x: 301., y: 10.),
     /// ];
     ///
-    /// assert_eq!(expected, simplified);
+    /// assert_relative_eq!(expected, simplified, epsilon=1e-6);
     /// ```
     fn simplifyvw_preserve(&self, epsilon: &T) -> Self
     where
@@ -785,7 +786,7 @@ mod test {
         ];
         let poly = Polygon::new(outer.clone(), vec![inner]);
         let simplified = poly.simplifyvw_preserve(&95.4);
-        assert_eq!(simplified.exterior(), &outer);
+        assert_relative_eq!(simplified.exterior(), &outer, epsilon = 1e-6);
     }
     #[test]
     fn remove_inner_point_vwp_test() {
@@ -854,7 +855,7 @@ mod test {
         let correct = include!("test_fixtures/vw_simplified.rs");
         let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e[0], e[1])).collect();
         let simplified = LineString::from(points_ls).simplifyvw_preserve(&0.0005);
-        assert_eq!(simplified, LineString::from(correct_ls));
+        assert_relative_eq!(simplified, LineString::from(correct_ls), epsilon = 1e-6);
     }
     #[test]
     fn visvalingam_test_empty_linestring() {
@@ -891,9 +892,10 @@ mod test {
         let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
 
         let mline = MultiLineString(vec![LineString::from(points_ls)]);
-        assert_eq!(
+        assert_relative_eq!(
             mline.simplifyvw(&30.),
-            MultiLineString(vec![LineString::from(correct_ls)])
+            MultiLineString(vec![LineString::from(correct_ls)]),
+            epsilon = 1e-6
         );
     }
 
@@ -910,7 +912,7 @@ mod test {
 
         let poly2 = poly.simplifyvw(&10.);
 
-        assert_eq!(
+        assert_relative_eq!(
             poly2,
             polygon![
                 (x: 0., y: 0.),
@@ -919,6 +921,7 @@ mod test {
                 (x: 10., y: 0.),
                 (x: 0., y: 0.),
             ],
+            epsilon = 1e-6
         );
     }
 
@@ -938,12 +941,13 @@ mod test {
 
         let mpoly2 = mpoly.simplifyvw(&10.);
 
-        assert_eq!(
+        assert_relative_eq!(
             mpoly2,
             MultiPolygon(vec![Polygon::new(
                 LineString::from(vec![(0., 0.), (0., 10.), (10., 10.), (10., 0.), (0., 0.)]),
                 vec![],
-            )])
+            )]),
+            epsilon = 1e-6
         );
     }
 }
