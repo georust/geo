@@ -38,7 +38,7 @@ use crate::{
 pub trait Centroid {
     type Output;
 
-    /// See: https://en.wikipedia.org/wiki/Centroid
+    /// See: <https://en.wikipedia.org/wiki/Centroid>
     ///
     /// # Examples
     ///

@@ -3,7 +3,7 @@ use crate::{CoordFloat, Point};
 /// Returns the bearing to another Point in degrees.
 ///
 /// Bullock, R.: Great Circle Distances and Bearings Between Two Locations, 2007.
-/// (https://dtcenter.org/met/users/docs/write_ups/gc_simple.pdf)
+/// (<https://dtcenter.org/met/users/docs/write_ups/gc_simple.pdf>)
 
 pub trait Bearing<T: CoordFloat> {
     /// Returns the bearing to another Point in degrees, where North is 0° and East is 90°.
