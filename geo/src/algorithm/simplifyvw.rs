@@ -560,7 +560,7 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     ///     (x: 301., y: 10.),
     /// ];
     ///
-    /// assert_relative_eq!(expected, simplified, epsilon=1e-6);
+    /// assert_relative_eq!(expected, simplified, epsilon = 1e-6);
     /// ```
     fn simplifyvw_preserve(&self, epsilon: &T) -> Self
     where

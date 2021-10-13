@@ -2,6 +2,7 @@
 //!
 //! ```
 //! // activate the [use-proj] feature in cargo.toml in order to access proj functions
+//! use approx::assert_relative_eq;
 //! # #[cfg(feature = "use-proj")]
 //! use geo::{Coordinate, Point};
 //! # #[cfg(feature = "use-proj")]
@@ -56,7 +57,7 @@ pub trait MapCoords<T, NT> {
     /// let p1 = Point::new(10., 20.);
     /// let p2 = p1.map_coords(|&(x, y)| (x + 1000., y * 2.));
     ///
-    /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon=1e-6);
+    /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon = 1e-6);
     /// ```
     ///
     /// You can convert the coordinate type this way as well
@@ -101,6 +102,7 @@ pub trait TryMapCoords<T, NT> {
     /// ## Advanced Example: Geometry coordinate conversion using `PROJ`
     ///
     /// ```
+    /// use approx::assert_relative_eq;
     /// // activate the [use-proj] feature in cargo.toml in order to access proj functions
     /// # #[cfg(feature = "use-proj")]
     /// use geo::{Coordinate, Point};
@@ -129,9 +131,9 @@ pub trait TryMapCoords<T, NT> {
     /// # #[cfg(feature = "use-proj")]
     /// let usa_ft = usa_m.try_map_coords(|&(x, y)| f(x, y)).unwrap();
     /// # #[cfg(feature = "use-proj")]
-    /// assert_relative_eq!(6693625.67217475, usa_ft.x(), epsilon=1e-6);
+    /// assert_relative_eq!(6693625.67217475, usa_ft.x(), epsilon = 1e-6);
     /// # #[cfg(feature = "use-proj")]
-    /// assert_relativE_eq!(3497301.5918027186, usa_ft.y(), epsilon=1e-6);
+    /// assert_relative_eq!(3497301.5918027186, usa_ft.y(), epsilon = 1e-6);
     /// ```
     fn try_map_coords(
         &self,
@@ -156,7 +158,7 @@ pub trait MapCoordsInplace<T> {
     /// let mut p = Point::new(10., 20.);
     /// p.map_coords_inplace(|&(x, y)| (x + 1000., y * 2.));
     ///
-    /// assert_relative_eq!(p, Point::new(1010., 40.), epsilon=1e-6);
+    /// assert_relative_eq!(p, Point::new(1010., 40.), epsilon = 1e-6);
     /// ```
     fn map_coords_inplace(&mut self, func: impl Fn(&(T, T)) -> (T, T) + Copy)
     where
