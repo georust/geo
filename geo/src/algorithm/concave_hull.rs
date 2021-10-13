@@ -15,7 +15,7 @@ use std::collections::VecDeque;
 /// constructing edges such that the exterior of the polygon incorporates points that would
 /// be interior points in a convex hull.
 ///
-/// This implementation is inspired by https://github.com/mapbox/concaveman
+/// This implementation is inspired by <https://github.com/mapbox/concaveman>
 /// and also uses ideas from the following paper:
 /// www.iis.sinica.edu.tw/page/jise/2012/201205_10.pdf
 ///
