@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* New Feaure 'use-approx' exports the implementation of the traits AbsDiffEq and RelativeEq
+  for various geometry types, for use in third party crates.
 * Add `ChaikinSmoothing` algorithm
 * Fix `rotate` for multipolygons to rotate around the collection's centroid, instead of rotating each individual polygon around its own centroid.
   * <https://github.com/georust/geo/pull/651>
