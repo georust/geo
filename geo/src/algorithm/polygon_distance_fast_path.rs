@@ -369,10 +369,10 @@ where
     let perpunit = unitpvector(p, punit);
     let mut obtuse = false;
     let left = leftturn(p, perpunit, Point(pnext));
+    if left == 0 {
+        obtuse = true;
+    }
     if clockwise {
-        if left == 0 {
-            obtuse = true;
-        }
         if left == -1 {
             angle = T::PI() / (T::one() + T::one());
         } else if !obtuse {
@@ -380,18 +380,14 @@ where
         } else {
             angle = T::PI() - (-sine).asin();
         }
+    } else if left == -1 {
+        angle = T::PI() / (T::one() + T::one());
+    } else if !obtuse {
+        angle = sine.asin();
     } else {
-        if left == 0 {
-            obtuse = true;
-        }
-        if left == -1 {
-            angle = T::PI() / (T::one() + T::one());
-        } else if !obtuse {
-            angle = sine.asin();
-        } else {
-            angle = T::PI() - sine.asin();
-        }
+        angle = T::PI() - sine.asin();
     }
+
     angle
 }
 
