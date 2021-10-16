@@ -25,10 +25,3 @@ rstar = { version = "0.8", optional = true }
 
 [dev-dependencies]
 approx = "0.4.0"
-
-[package.metadata.cargo-all-features]
-
-skip_feature_sets = [
-    # must be enabled via use-rstar
-    ["rstar"],
-]

@@ -41,9 +41,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - run: cargo install cargo-all-features
-      - run: cargo build-all-features
-      - run: cargo test-all-features
+      - run: cargo check --all-targets --no-default-features
+      - run: cargo test --all-features
 
   geo:
     name: geo
@@ -60,9 +59,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - run: cargo install cargo-all-features
-      - run: cargo build-all-features
-      - run: cargo test-all-features
+      - run: cargo check --all-targets --no-default-features
+      - run: cargo test --all-features
 
   geo_postgis:
     name: geo-postgis
@@ -79,9 +77,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - run: cargo install cargo-all-features
-      - run: cargo build-all-features
-      - run: cargo test-all-features
+      - run: cargo check --all-targets --no-default-features
+      - run: cargo test --all-features
 
   geo_fuzz:
     name: geo-fuzz
