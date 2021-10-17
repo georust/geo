@@ -60,7 +60,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - run: cargo check --all-targets --no-default-features
-      - run: cargo test --all-features
+      # we don't want to test `proj-network` because it only enables the `proj` feature
+      - run: cargo test --features use-proj use-serde
 
   geo_postgis:
     name: geo-postgis
@@ -77,8 +78,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - run: cargo check --all-targets --no-default-features
-      - run: cargo test --all-features
+      - run: cargo check --all-targets
+      - run: cargo test
 
   geo_fuzz:
     name: geo-fuzz
