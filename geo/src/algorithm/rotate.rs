@@ -19,20 +19,6 @@ where
     )
 }
 
-// Rotate a single point "angle" degrees about an origin. Origin can be an
-// arbitrary point. Pass Point::new(0., 0.) for the actual origin.
-fn rotate_one<T: CoordFloat>(angle: T, origin: Point<T>, point: Point<T>) -> Point<T> {
-    let (sin_theta, cos_theta) = angle.to_radians().sin_cos();
-    rotate_inner(
-        point.x(),
-        point.y(),
-        origin.x(),
-        origin.y(),
-        sin_theta,
-        cos_theta,
-    )
-}
-
 // Rotate an iterator of points "angle" degrees about an origin. Origin can be
 // an arbitrary point. Pass Point::new(0., 0.) for the actual origin.
 fn rotate_many<T>(
@@ -49,7 +35,7 @@ where
 }
 
 pub trait Rotate<T> {
-    /// Rotate a Geometry around its centroid by an angle, in degrees
+    /// Rotate a geometry around its [centroid](Centroid) by an angle, in degrees
     ///
     /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
     ///
@@ -79,6 +65,22 @@ pub trait Rotate<T> {
     ///
     /// assert_eq!(expected, rotated);
     /// ```
+    fn rotate_around_centroid(&self, angle: T) -> Self
+    where
+        T: CoordFloat;
+
+    /// Rotate a geometry around the center of its [bounding box](BoundingRect) by an angle, in
+    /// degrees.
+    ///
+    /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
+    ///
+    /// # Units
+    ///
+    /// - `angle`: degrees
+    fn rotate_around_center(&self, angle: T) -> Self
+    where
+        T: CoordFloat;
+
     #[deprecated(
         note = "Equivalent to `rotate_around_centroid` except for `Polygon<T>`, 
                     where it is equivalent to rotating around the polygon's outer ring. 
@@ -86,14 +88,6 @@ pub trait Rotate<T> {
                     around the geometry's bounding box center."
     )]
     fn rotate(&self, angle: T) -> Self
-    where
-        T: CoordFloat;
-
-    fn rotate_around_centroid(&self, angle: T) -> Self
-    where
-        T: CoordFloat;
-
-    fn rotate_around_center(&self, angle: T) -> Self
     where
         T: CoordFloat;
 }
