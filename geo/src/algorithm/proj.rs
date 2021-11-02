@@ -1,1 +1,1 @@
-pub use proj::{Area, Info, Proj, ProjBuilder, ProjError, Projinfo};
+pub use proj::{Area, Coord, Info, Proj, ProjBuilder, ProjError, Projinfo};
