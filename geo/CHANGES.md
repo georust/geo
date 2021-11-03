@@ -8,6 +8,7 @@
   * <https://github.com/georust/geo/pull/651>
 * Add KNearestConcaveHull algorithm
   * <https://github.com/georust/geo/pull/635>
+* remove cargo-tarpaulin due to instability (#676, #677)
 
 ## 0.18.0
 
