@@ -1,7 +1,8 @@
+use crate::coords_iter::CoordsIter;
 use crate::prelude::*;
 use crate::{
-    Closest, GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, 
-    Rect, Triangle, Geometry, GeometryCollection,
+    Closest, Coordinate, GeoFloat, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use std::iter;
 
@@ -122,15 +123,21 @@ impl<F: GeoFloat> ClosestPoint<F> for Polygon<F> {
     }
 }
 
+impl<F: GeoFloat> ClosestPoint<F> for Coordinate<F> {
+    fn closest_point(&self, p: &Point<F>) -> Closest<F> {
+        Point(*self).closest_point(p)
+    }
+}
+
 impl<F: GeoFloat> ClosestPoint<F> for Triangle<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        self.to_polygon().closest_point(p)
+        closest_of(self.coords_iter(), *p)
     }
 }
 
 impl<F: GeoFloat> ClosestPoint<F> for Rect<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        self.to_polygon().closest_point(p)
+        closest_of(self.coords_iter(), *p)
     }
 }
 

@@ -7,6 +7,8 @@
   * <https://github.com/georust/geo/pull/651>
 * Add KNearestConcaveHull algorithm
   * <https://github.com/georust/geo/pull/635>
+* Implemented `ClosestPoint` method for types Triangle, Rect, GeometryCollection, Coordinate and the Geometry enum.
+  * <https://github.com/georust/geo/pull/675>
 
 ## 0.18.0
 
