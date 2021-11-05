@@ -100,9 +100,13 @@ where
 {
     let mut best = Closest::Indeterminate;
 
-    for line_segment in iter {
-        let got = line_segment.closest_point(&p);
+    for element in iter {
+        let got = element.closest_point(&p);
         best = got.best_of_two(&best, p);
+        if matches!(best, Closest::Intersection(_)) {
+            // short circuit - nothing can be closer than an intersection
+            return best;
+        }
     }
 
     best
@@ -282,5 +286,27 @@ mod tests {
 
         // the point is within the square, so the closest point should be the point itself.
         assert_eq!(result, Closest::Intersection(point!(x: 1.0, y: 2.0)));
+    }
+
+    #[test]
+    fn multi_polygon_with_internal_and_external_points() {
+        use crate::{point, polygon};
+
+        let square_1 = polygon![
+            (x: 0.0, y: 0.0),
+            (x: 1.0, y: 0.0),
+            (x: 1.0, y: 1.0),
+            (x: 0.0, y: 1.0)
+        ];
+        use crate::translate::Translate;
+        let square_10 = square_1.translate(10.0, 10.0);
+        let square_50 = square_1.translate(50.0, 50.0);
+
+        let multi_polygon = MultiPolygon(vec![square_1, square_10, square_50]);
+        let result = multi_polygon.closest_point(&point!(x: 8.0, y: 8.0));
+        assert_eq!(result, Closest::SinglePoint(point!(x: 10.0, y: 10.0)));
+
+        let result = multi_polygon.closest_point(&point!(x: 10.5, y: 10.5));
+        assert_eq!(result, Closest::Intersection(point!(x: 10.5, y: 10.5)));
     }
 }
