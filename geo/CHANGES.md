@@ -9,6 +9,7 @@
 * Add KNearestConcaveHull algorithm
   * <https://github.com/georust/geo/pull/635>
 * remove cargo-tarpaulin due to instability (#676, #677)
+* Fix: `ClosestPoint` for Polygon's handling of internal points
 
 ## 0.18.0
 
