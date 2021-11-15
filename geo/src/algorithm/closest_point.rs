@@ -102,9 +102,13 @@ where
 {
     let mut best = Closest::Indeterminate;
 
-    for line_segment in iter {
-        let got = line_segment.closest_point(&p);
+    for element in iter {
+        let got = element.closest_point(&p);
         best = got.best_of_two(&best, p);
+        if matches!(best, Closest::Intersection(_)) {
+            // short circuit - nothing can be closer than an intersection
+            return best;
+        }
     }
 
     best
@@ -118,6 +122,9 @@ impl<F: GeoFloat> ClosestPoint<F> for LineString<F> {
 
 impl<F: GeoFloat> ClosestPoint<F> for Polygon<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
+        if self.intersects(p) {
+            return Closest::Intersection(*p);
+        }
         let prospectives = self.interiors().iter().chain(iter::once(self.exterior()));
         closest_of(prospectives, *p)
     }
@@ -173,6 +180,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Geometry<F> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{point, polygon};
 
     /// Create a test which checks that we get `$should_be` when trying to find
     /// the closest distance between `$p` and the line `(0, 0) -> (100, 100)`.
@@ -209,44 +217,6 @@ mod tests {
         ])
     }
 
-    /// A bunch of "random" points.
-    fn random_looking_points() -> Vec<Point<f32>> {
-        vec![
-            (0.0, 0.0),
-            (100.0, 100.0),
-            (1000.0, 1000.0),
-            (100.0, 0.0),
-            (50.0, 50.0),
-            (1234.567, -987.6543),
-        ]
-        .into_iter()
-        .map(Point::from)
-        .collect()
-    }
-
-    /// Throw a bunch of random points at two `ClosestPoint` implementations
-    /// and make sure they give identical results.
-    fn fuzz_two_impls<A, B>(left: A, right: B)
-    where
-        A: ClosestPoint<f32>,
-        B: ClosestPoint<f32>,
-    {
-        let some_random_points = random_looking_points();
-
-        for (i, random_point) in some_random_points.into_iter().enumerate() {
-            let p: Point<_> = random_point.into();
-
-            let got_from_left = left.closest_point(&p);
-            let got_from_right = right.closest_point(&p);
-
-            assert_eq!(
-                got_from_left, got_from_right,
-                "{}: {:?} got {:?} and {:?}",
-                i, p, got_from_left, got_from_right
-            );
-        }
-    }
-
     #[test]
     fn zero_length_line_is_indeterminate() {
         let line: Line<f32> = Line::from([(0.0, 0.0), (0.0, 0.0)]);
@@ -263,7 +233,23 @@ mod tests {
         let line_string = LineString::<f32>::from(points.clone());
         let line = Line::new(points[0], points[1]);
 
-        fuzz_two_impls(line, line_string);
+        let some_random_points = vec![
+            point!(x: 0.0, y: 0.0),
+            point!(x: 100.0, y: 100.0),
+            point!(x: 1000.0, y: 1000.0),
+            point!(x: 100.0, y: 0.0),
+            point!(x: 50.0, y: 50.0),
+            point!(x: 1234.567, y: -987.6543),
+        ];
+
+        for p in some_random_points {
+            assert_eq!(
+                line_string.closest_point(&p),
+                line.closest_point(&p),
+                "closest point to: {:?}",
+                p
+            );
+        }
     }
 
     #[test]
@@ -275,18 +261,10 @@ mod tests {
         assert_eq!(got, Closest::Indeterminate);
     }
 
-    #[test]
-    fn simple_polygon_is_same_as_linestring() {
-        let square: LineString<f32> = a_square(100.0);
-        let poly = Polygon::new(square.clone(), Vec::new());
-
-        fuzz_two_impls(square, poly);
-    }
-
     /// A polygon with 2 holes in it.
     fn holy_polygon() -> Polygon<f32> {
         let square: LineString<f32> = a_square(100.0);
-        let ring_1 = a_square(20.0).translate(20.0, 10.0);
+        let ring_1 = a_square(20.0).translate(10.0, 10.0);
         let ring_2 = a_square(10.0).translate(70.0, 60.0);
         Polygon::new(square.clone(), vec![ring_1, ring_2])
     }
@@ -321,13 +299,45 @@ mod tests {
     fn polygon_with_point_near_interior_ring() {
         let poly = holy_polygon();
         let random_ring_corner = poly.interiors()[0].0[3];
-        let p = Point(random_ring_corner).translate(-3.0, 3.0);
+        let p = point!(x: 17.0, y: 33.0);
+        assert!(poly.intersects(&p), "sanity check");
 
-        let should_be = Closest::SinglePoint(random_ring_corner.into());
-        println!("{:?} {:?}", p, random_ring_corner);
+        assert_eq!(Closest::Intersection(p), poly.closest_point(&p));
+    }
 
-        let got = poly.closest_point(&p);
+    #[test]
+    fn polygon_with_interior_point() {
+        let square = polygon![
+            (x: 0.0, y: 0.0),
+            (x: 10.0, y: 0.0),
+            (x: 10.0, y: 10.0),
+            (x: 0.0, y: 10.0)
+        ];
+        let result = square.closest_point(&point!(x: 1.0, y: 2.0));
 
-        assert_eq!(got, should_be);
+        // the point is within the square, so the closest point should be the point itself.
+        assert_eq!(result, Closest::Intersection(point!(x: 1.0, y: 2.0)));
+    }
+
+    #[test]
+    fn multi_polygon_with_internal_and_external_points() {
+        use crate::{point, polygon};
+
+        let square_1 = polygon![
+            (x: 0.0, y: 0.0),
+            (x: 1.0, y: 0.0),
+            (x: 1.0, y: 1.0),
+            (x: 0.0, y: 1.0)
+        ];
+        use crate::translate::Translate;
+        let square_10 = square_1.translate(10.0, 10.0);
+        let square_50 = square_1.translate(50.0, 50.0);
+
+        let multi_polygon = MultiPolygon(vec![square_1, square_10, square_50]);
+        let result = multi_polygon.closest_point(&point!(x: 8.0, y: 8.0));
+        assert_eq!(result, Closest::SinglePoint(point!(x: 10.0, y: 10.0)));
+
+        let result = multi_polygon.closest_point(&point!(x: 10.5, y: 10.5));
+        assert_eq!(result, Closest::Intersection(point!(x: 10.5, y: 10.5)));
     }
 }
