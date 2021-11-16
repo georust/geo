@@ -138,13 +138,19 @@ impl<F: GeoFloat> ClosestPoint<F> for Coordinate<F> {
 
 impl<F: GeoFloat> ClosestPoint<F> for Triangle<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        closest_of(self.coords_iter(), *p)
+        if self.intersects(p) {
+            return Closest::Intersection(*p);
+        }
+        closest_of(self.to_lines(), *p)
     }
 }
 
 impl<F: GeoFloat> ClosestPoint<F> for Rect<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        closest_of(self.coords_iter(), *p)
+        if self.intersects(p) {
+            return Closest::Intersection(*p);
+        }
+        closest_of(self.to_lines(), *p)
     }
 }
 

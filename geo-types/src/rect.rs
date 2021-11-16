@@ -1,4 +1,4 @@
-use crate::{polygon, CoordFloat, CoordNum, Coordinate, Polygon};
+use crate::{polygon, CoordFloat, CoordNum, Coordinate, Polygon, Line};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -224,6 +224,51 @@ impl<T: CoordNum> Rect<T> {
             (x: self.max.x, y: self.max.y),
             (x: self.max.x, y: self.min.y),
             (x: self.min.x, y: self.min.y),
+        ]
+    }
+
+    pub fn to_lines(&self) -> [Line<T>; 4] {
+        [
+            Line::new(
+                Coordinate {
+                    x: self.min.x,
+                    y: self.min.y,
+                },
+                Coordinate {
+                    x: self.min.x,
+                    y: self.max.y,
+                },
+            ),
+            Line::new(
+                Coordinate {
+                    x: self.min.x,
+                    y: self.max.y,
+                },
+                Coordinate {
+                    x: self.max.x,
+                    y: self.max.y,
+                },
+            ),
+            Line::new(
+                Coordinate {
+                    x: self.min.x,
+                    y: self.min.y,
+                },
+                Coordinate {
+                    x: self.max.x,
+                    y: self.min.y,
+                },
+            ),
+            Line::new(
+                Coordinate {
+                    x: self.max.x,
+                    y: self.min.y,
+                },
+                Coordinate {
+                    x: self.max.x,
+                    y: self.max.y,
+                },
+            ),
         ]
     }
 
