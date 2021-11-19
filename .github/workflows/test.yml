@@ -34,7 +34,13 @@ jobs:
         working-directory: geo-types
     strategy:
       matrix:
-        container_image: ["georust/geo-ci:rust-1.51", "georust/geo-ci:rust-1.52", "georust/geo-ci:rust-1.53"]
+        container_image:
+          - "georust/geo-ci:rust-1.51"
+          - "georust/geo-ci:rust-1.52"
+          - "georust/geo-ci:rust-1.53"
+          - "georust/geo-ci:rust-1.54"
+          - "georust/geo-ci:rust-1.55"
+          - "georust/geo-ci:rust-1.56"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -52,7 +58,13 @@ jobs:
         working-directory: geo
     strategy:
       matrix:
-        container_image: ["georust/geo-ci:rust-1.51", "georust/geo-ci:rust-1.52", "georust/geo-ci:rust-1.53"]
+        container_image:
+          - "georust/geo-ci:rust-1.51"
+          - "georust/geo-ci:rust-1.52"
+          - "georust/geo-ci:rust-1.53"
+          - "georust/geo-ci:rust-1.54"
+          - "georust/geo-ci:rust-1.55"
+          - "georust/geo-ci:rust-1.56"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -71,7 +83,13 @@ jobs:
         working-directory: geo-postgis
     strategy:
       matrix:
-        container_image: ["georust/geo-ci:rust-1.51", "georust/geo-ci:rust-1.52", "georust/geo-ci:rust-1.53"]
+        container_image:
+          - "georust/geo-ci:rust-1.51"
+          - "georust/geo-ci:rust-1.52"
+          - "georust/geo-ci:rust-1.53"
+          - "georust/geo-ci:rust-1.54"
+          - "georust/geo-ci:rust-1.55"
+          - "georust/geo-ci:rust-1.56"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -89,7 +107,13 @@ jobs:
         working-directory: geo/fuzz
     strategy:
       matrix:
-        container_image: ["georust/geo-ci:rust-1.51", "georust/geo-ci:rust-1.52", "georust/geo-ci:rust-1.53"]
+        container_image:
+          - "georust/geo-ci:rust-1.51"
+          - "georust/geo-ci:rust-1.52"
+          - "georust/geo-ci:rust-1.53"
+          - "georust/geo-ci:rust-1.54"
+          - "georust/geo-ci:rust-1.55"
+          - "georust/geo-ci:rust-1.56"
     container:
       image: ${{ matrix.container_image }}
     steps:
