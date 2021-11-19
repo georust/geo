@@ -10,6 +10,8 @@
   * <https://github.com/georust/geo/pull/635>
 * remove cargo-tarpaulin due to instability (#676, #677)
 * Fix: `ClosestPoint` for Polygon's handling of internal points
+* Implemented `ClosestPoint` method for types Triangle, Rect, GeometryCollection, Coordinate and the Geometry enum.
+  * <https://github.com/georust/geo/pull/675>
 
 ## 0.18.0
 

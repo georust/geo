@@ -1,6 +1,8 @@
+use crate::coords_iter::CoordsIter;
 use crate::prelude::*;
 use crate::{
-    Closest, GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    Closest, Coordinate, GeoFloat, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use std::iter;
 
@@ -128,6 +130,30 @@ impl<F: GeoFloat> ClosestPoint<F> for Polygon<F> {
     }
 }
 
+impl<F: GeoFloat> ClosestPoint<F> for Coordinate<F> {
+    fn closest_point(&self, p: &Point<F>) -> Closest<F> {
+        Point(*self).closest_point(p)
+    }
+}
+
+impl<F: GeoFloat> ClosestPoint<F> for Triangle<F> {
+    fn closest_point(&self, p: &Point<F>) -> Closest<F> {
+        if self.intersects(p) {
+            return Closest::Intersection(*p);
+        }
+        closest_of(&self.to_lines(), *p)
+    }
+}
+
+impl<F: GeoFloat> ClosestPoint<F> for Rect<F> {
+    fn closest_point(&self, p: &Point<F>) -> Closest<F> {
+        if self.intersects(p) {
+            return Closest::Intersection(*p);
+        }
+        closest_of(&self.to_lines(), *p)
+    }
+}
+
 impl<F: GeoFloat> ClosestPoint<F> for MultiPolygon<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         closest_of(self.iter(), *p)
@@ -143,6 +169,17 @@ impl<F: GeoFloat> ClosestPoint<F> for MultiPoint<F> {
 impl<F: GeoFloat> ClosestPoint<F> for MultiLineString<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         closest_of(self.iter(), *p)
+    }
+}
+
+impl<F: GeoFloat> ClosestPoint<F> for GeometryCollection<F> {
+    fn closest_point(&self, p: &Point<F>) -> Closest<F> {
+        closest_of(self.iter(), *p)
+    }
+}
+impl<F: GeoFloat> ClosestPoint<F> for Geometry<F> {
+    crate::geometry_delegate_impl! {
+        fn closest_point(&self, p: &Point<F>) -> Closest<F>;
     }
 }
 
