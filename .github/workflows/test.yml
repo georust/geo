@@ -91,7 +91,7 @@ jobs:
           # We aim to support rust-stable plus (at least) the prior 3 releases,
           # giving us about 6 months of coverage.
           #
-          # Minimum supported rust versino (MSRV)
+          # Minimum supported rust version (MSRV)
           - "georust/geo-ci:rust-1.51"
           # Two most recent releases - we omit older ones for expedient CI
           - "georust/geo-ci:rust-1.55"
