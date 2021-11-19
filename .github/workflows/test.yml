@@ -35,10 +35,11 @@ jobs:
     strategy:
       matrix:
         container_image:
+          # We aim to support at least the last 6 months of rust toolchains, so
+          # run on MSRV and the most recent two releases.
+          #
+          # We omit some of the middle releases for faster CI runs.
           - "georust/geo-ci:rust-1.51"
-          - "georust/geo-ci:rust-1.52"
-          - "georust/geo-ci:rust-1.53"
-          - "georust/geo-ci:rust-1.54"
           - "georust/geo-ci:rust-1.55"
           - "georust/geo-ci:rust-1.56"
     container:
@@ -59,10 +60,11 @@ jobs:
     strategy:
       matrix:
         container_image:
+          # We aim to support at least the last 6 months of rust toolchains, so
+          # run on MSRV and the most recent two releases.
+          #
+          # We omit some of the middle releases for faster CI runs.
           - "georust/geo-ci:rust-1.51"
-          - "georust/geo-ci:rust-1.52"
-          - "georust/geo-ci:rust-1.53"
-          - "georust/geo-ci:rust-1.54"
           - "georust/geo-ci:rust-1.55"
           - "georust/geo-ci:rust-1.56"
     container:
@@ -84,10 +86,11 @@ jobs:
     strategy:
       matrix:
         container_image:
+          # We aim to support at least the last 6 months of rust toolchains, so
+          # run on MSRV and the most recent two releases.
+          #
+          # We omit some of the middle releases for faster CI runs.
           - "georust/geo-ci:rust-1.51"
-          - "georust/geo-ci:rust-1.52"
-          - "georust/geo-ci:rust-1.53"
-          - "georust/geo-ci:rust-1.54"
           - "georust/geo-ci:rust-1.55"
           - "georust/geo-ci:rust-1.56"
     container:
@@ -108,11 +111,7 @@ jobs:
     strategy:
       matrix:
         container_image:
-          - "georust/geo-ci:rust-1.51"
-          - "georust/geo-ci:rust-1.52"
-          - "georust/geo-ci:rust-1.53"
-          - "georust/geo-ci:rust-1.54"
-          - "georust/geo-ci:rust-1.55"
+          # Fuzz only on latest
           - "georust/geo-ci:rust-1.56"
     container:
       image: ${{ matrix.container_image }}
