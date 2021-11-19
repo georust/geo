@@ -35,11 +35,12 @@ jobs:
     strategy:
       matrix:
         container_image:
-          # We aim to support at least the last 6 months of rust toolchains, so
-          # run on MSRV and the most recent two releases.
+          # We aim to support rust-stable plus (at least) the prior 3 releases,
+          # giving us about 6 months of coverage.
           #
-          # We omit some of the middle releases for faster CI runs.
+          # Minimum supported rust versino (MSRV)
           - "georust/geo-ci:rust-1.51"
+          # Two most recent releases - we omit older ones for expedient CI
           - "georust/geo-ci:rust-1.55"
           - "georust/geo-ci:rust-1.56"
     container:
@@ -60,11 +61,12 @@ jobs:
     strategy:
       matrix:
         container_image:
-          # We aim to support at least the last 6 months of rust toolchains, so
-          # run on MSRV and the most recent two releases.
+          # We aim to support rust-stable plus (at least) the prior 3 releases,
+          # giving us about 6 months of coverage.
           #
-          # We omit some of the middle releases for faster CI runs.
+          # Minimum supported rust versino (MSRV)
           - "georust/geo-ci:rust-1.51"
+          # Two most recent releases - we omit older ones for expedient CI
           - "georust/geo-ci:rust-1.55"
           - "georust/geo-ci:rust-1.56"
     container:
@@ -86,11 +88,12 @@ jobs:
     strategy:
       matrix:
         container_image:
-          # We aim to support at least the last 6 months of rust toolchains, so
-          # run on MSRV and the most recent two releases.
+          # We aim to support rust-stable plus (at least) the prior 3 releases,
+          # giving us about 6 months of coverage.
           #
-          # We omit some of the middle releases for faster CI runs.
+          # Minimum supported rust versino (MSRV)
           - "georust/geo-ci:rust-1.51"
+          # Two most recent releases - we omit older ones for expedient CI
           - "georust/geo-ci:rust-1.55"
           - "georust/geo-ci:rust-1.56"
     container:
