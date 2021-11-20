@@ -381,43 +381,51 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
     }
 }
 
-#[cfg(feature = "rstar")]
-impl<T> ::rstar::RTreeObject for LineString<T>
-where
-    T: ::num_traits::Float + ::rstar::RTreeNum,
-{
-    type Envelope = ::rstar::AABB<Point<T>>;
+macro_rules! impl_rstar_line_string {
+	  ($rstar:ident) => {
+        impl<T> ::$rstar::RTreeObject for LineString<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            type Envelope = ::$rstar::AABB<Point<T>>;
 
-    fn envelope(&self) -> Self::Envelope {
-        use num_traits::Bounded;
-        let bounding_rect = crate::private_utils::line_string_bounding_rect(self);
-        match bounding_rect {
-            None => ::rstar::AABB::from_corners(
-                Point::new(Bounded::min_value(), Bounded::min_value()),
-                Point::new(Bounded::max_value(), Bounded::max_value()),
-            ),
-            Some(b) => ::rstar::AABB::from_corners(
-                Point::new(b.min().x, b.min().y),
-                Point::new(b.max().x, b.max().y),
-            ),
+            fn envelope(&self) -> Self::Envelope {
+                use num_traits::Bounded;
+                let bounding_rect = crate::private_utils::line_string_bounding_rect(self);
+                match bounding_rect {
+                    None => ::$rstar::AABB::from_corners(
+                        Point::new(Bounded::min_value(), Bounded::min_value()),
+                        Point::new(Bounded::max_value(), Bounded::max_value()),
+                    ),
+                    Some(b) => ::$rstar::AABB::from_corners(
+                        Point::new(b.min().x, b.min().y),
+                        Point::new(b.max().x, b.max().y),
+                    ),
+                }
+            }
         }
-    }
+
+        impl<T> ::$rstar::PointDistance for LineString<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            fn distance_2(&self, point: &Point<T>) -> T {
+                let d = crate::private_utils::point_line_string_euclidean_distance(*point, self);
+                if d == T::zero() {
+                    d
+                } else {
+                    d.powi(2)
+                }
+            }
+        }
+	  };
 }
 
 #[cfg(feature = "rstar")]
-impl<T> ::rstar::PointDistance for LineString<T>
-where
-    T: ::num_traits::Float + ::rstar::RTreeNum,
-{
-    fn distance_2(&self, point: &Point<T>) -> T {
-        let d = crate::private_utils::point_line_string_euclidean_distance(*point, self);
-        if d == T::zero() {
-            d
-        } else {
-            d.powi(2)
-        }
-    }
-}
+impl_rstar_line_string!(rstar);
+
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_line_string!(rstar_0_9);
 
 #[cfg(test)]
 mod test {
