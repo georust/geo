@@ -12,9 +12,11 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 
 [dependencies.geo]
+path = ".."
 
 [dependencies.geo-types]
 features = ["arbitrary"]
+path = "../../geo-types"
 
 # Prevent this from interfering with workspaces
 [workspace]
