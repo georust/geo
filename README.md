@@ -45,14 +45,17 @@ let poly = polygon![
 // Calculate the polygon's convex hull
 let hull = poly.convex_hull();
 
-assert_eq!(hull.exterior(), line_string![
-    (x: 0.0, y: 0.0),
-    (x: 0.0, y: 4.0),
-    (x: 1.0, y: 4.0),
-    (x: 4.0, y: 1.0),
-    (x: 4.0, y: 0.0),
-    (x: 0.0, y: 0.0),
-]);
+assert_eq!(
+    hull.exterior(),
+    &line_string![
+        (x: 4.0, y: 0.0),
+        (x: 4.0, y: 1.0),
+        (x: 1.0, y: 4.0),
+        (x: 0.0, y: 4.0),
+        (x: 0.0, y: 0.0),
+        (x: 4.0, y: 0.0),
+    ]
+);
 ```
 
 ## Contributing
