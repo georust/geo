@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+* Support `rstar` version `0.9` in feature `use-rstar_0_9`
+  * <https://github.com/georust/geo/pull/682>
+
 ## 0.7.2
 
 * Implement `RelativeEq` and `AbsDiffEq` for fuzzy comparison of remaining Geometry Types

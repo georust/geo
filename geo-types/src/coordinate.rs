@@ -344,3 +344,36 @@ where
         }
     }
 }
+
+#[cfg(feature = "rstar_0_9")]
+impl<T> ::rstar_0_9::Point for Coordinate<T>
+where
+    T: ::num_traits::Float + ::rstar_0_9::RTreeNum,
+{
+    type Scalar = T;
+
+    const DIMENSIONS: usize = 2;
+
+    fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
+        Coordinate {
+            x: generator(0),
+            y: generator(1),
+        }
+    }
+
+    fn nth(&self, index: usize) -> Self::Scalar {
+        match index {
+            0 => self.x,
+            1 => self.y,
+            _ => unreachable!(),
+        }
+    }
+
+    fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
+        match index {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            _ => unreachable!(),
+        }
+    }
+}
