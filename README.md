@@ -1,7 +1,7 @@
 [![geo](https://avatars1.githubusercontent.com/u/10320338?v=4&s=50)](https://github.com/georust)
 
 [![Build Status](https://travis-ci.org/georust/geo.svg?branch=master)](https://travis-ci.org/georust/geo)
-[![geo on Crates.io](https://meritbadge.herokuapp.com/geo)](https://crates.io/crates/geo)
+[![geo on Crates.io](https://img.shields.io/crates/v/geo.svg)](https://crates.io/crates/geo)
 [![Coverage Status](https://coveralls.io/repos/github/georust/geo/badge.svg?branch=trying)](https://coveralls.io/github/georust/geo?branch=trying)
 [![Documentation](https://docs.rs/geo/badge.svg)](https://docs.rs/geo)
 
