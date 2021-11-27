@@ -49,7 +49,6 @@ pub trait Intersects<Rhs = Self> {
 // when there is a blanket implementations (eg. Point from
 // Coordinate, MultiPoint from Point), we need to provide
 // the reverse (where Self is "simpler" than Rhs).
-#[macro_use]
 macro_rules! symmetric_intersects_impl {
     ($t:ty, $k:ty) => {
         impl<T> $crate::algorithm::intersects::Intersects<$k> for $t
