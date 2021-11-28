@@ -44,7 +44,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_intermediate(&self, other: &Point<T>, f: T) -> Point<T> {
-        let params = get_params(&self, &other);
+        let params = get_params(self, other);
         get_point(&params, f)
     }
 
@@ -54,7 +54,7 @@ where
         max_dist: T,
         include_ends: bool,
     ) -> Vec<Point<T>> {
-        let params = get_params(&self, &other);
+        let params = get_params(self, other);
         let HaversineParams { d, .. } = params;
 
         let total_distance = d * T::from(MEAN_EARTH_RADIUS).unwrap();

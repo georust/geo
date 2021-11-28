@@ -10,7 +10,7 @@ where
     T: GeoNum,
 {
     fn intersects(&self, p: &Coordinate<T>) -> bool {
-        coord_pos_relative_to_ring(*p, &self.exterior()) != CoordPos::Outside
+        coord_pos_relative_to_ring(*p, self.exterior()) != CoordPos::Outside
             && self
                 .interiors()
                 .iter()

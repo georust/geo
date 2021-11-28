@@ -511,7 +511,7 @@ where
             return false;
         }
         let mut zipper = self.interiors.iter().zip(other.interiors.iter());
-        zipper.all(|(lhs, rhs)| lhs.relative_eq(&rhs, epsilon, max_relative))
+        zipper.all(|(lhs, rhs)| lhs.relative_eq(rhs, epsilon, max_relative))
     }
 }
 
@@ -546,6 +546,6 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Polygon<T> {
             return false;
         }
         let mut zipper = self.interiors.iter().zip(other.interiors.iter());
-        zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(&rhs, epsilon))
+        zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(rhs, epsilon))
     }
 }
