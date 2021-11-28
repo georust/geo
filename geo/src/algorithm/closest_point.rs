@@ -1,4 +1,3 @@
-use crate::coords_iter::CoordsIter;
 use crate::prelude::*;
 use crate::{
     Closest, Coordinate, GeoFloat, Geometry, GeometryCollection, Line, LineString, MultiLineString,
@@ -304,7 +303,6 @@ mod tests {
     #[test]
     fn polygon_with_point_near_interior_ring() {
         let poly = holy_polygon();
-        let random_ring_corner = poly.interiors()[0].0[3];
         let p = point!(x: 17.0, y: 33.0);
         assert!(poly.intersects(&p), "sanity check");
 
