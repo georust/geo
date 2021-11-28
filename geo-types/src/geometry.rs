@@ -184,7 +184,6 @@ impl<T: CoordNum> Geometry<T> {
     }
 }
 
-#[macro_use]
 macro_rules! try_from_geometry_impl {
     ($($type: ident),+) => {
         $(

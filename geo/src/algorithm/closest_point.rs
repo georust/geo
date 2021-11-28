@@ -1,4 +1,3 @@
-use crate::coords_iter::CoordsIter;
 use crate::prelude::*;
 use crate::{
     Closest, Coordinate, GeoFloat, Geometry, GeometryCollection, Line, LineString, MultiLineString,

@@ -51,7 +51,6 @@ pub trait HasKernel: CoordNum {
 // `T` (first arg.) by assigning the second arg. It expects
 // the second arg. to be a type that takes one generic
 // parameter that is `T`.
-#[macro_use]
 macro_rules! has_kernel {
     ($t:ident, $k:ident) => {
         impl $crate::algorithm::kernels::HasKernel for $t {
