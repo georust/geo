@@ -13,7 +13,8 @@ fn criterion_benchmark(c: &mut Criterion) {
 
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&line_string).rotate_around_centroid(criterion::black_box(180.)),
+                criterion::black_box(&line_string)
+                    .rotate_around_centroid(criterion::black_box(180.)),
             );
         });
     });
@@ -24,7 +25,8 @@ fn criterion_benchmark(c: &mut Criterion) {
 
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&line_string).rotate_around_centroid(criterion::black_box(180.)),
+                criterion::black_box(&line_string)
+                    .rotate_around_centroid(criterion::black_box(180.)),
             );
         });
     });

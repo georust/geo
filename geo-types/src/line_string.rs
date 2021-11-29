@@ -382,7 +382,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
 }
 
 macro_rules! impl_rstar_line_string {
-	  ($rstar:ident) => {
+    ($rstar:ident) => {
         impl<T> ::$rstar::RTreeObject for LineString<T>
         where
             T: ::num_traits::Float + ::$rstar::RTreeNum,
@@ -418,7 +418,7 @@ macro_rules! impl_rstar_line_string {
                 }
             }
         }
-	  };
+    };
 }
 
 #[cfg(feature = "rstar")]
