@@ -395,7 +395,7 @@ where
             }
             mindist
         } else {
-            nearest_neighbour_distance(self, &other.exterior())
+            nearest_neighbour_distance(self, other.exterior())
         }
     }
 }
@@ -465,7 +465,7 @@ where
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
             for ring in self.interiors() {
-                mindist = mindist.min(nearest_neighbour_distance(&poly2.exterior(), ring))
+                mindist = mindist.min(nearest_neighbour_distance(poly2.exterior(), ring))
             }
             return mindist;
         } else if !poly2.interiors().is_empty()
@@ -473,14 +473,14 @@ where
         {
             let mut mindist: T = Float::max_value();
             for ring in poly2.interiors() {
-                mindist = mindist.min(nearest_neighbour_distance(&self.exterior(), ring))
+                mindist = mindist.min(nearest_neighbour_distance(self.exterior(), ring))
             }
             return mindist;
         }
         use super::is_convex::IsConvex;
         if !poly2.exterior().is_convex() || !self.exterior().is_convex() {
             // fall back to R* nearest neighbour method
-            nearest_neighbour_distance(&self.exterior(), &poly2.exterior())
+            nearest_neighbour_distance(self.exterior(), poly2.exterior())
         } else {
             min_poly_dist(self, poly2)
         }
@@ -543,7 +543,7 @@ fn ring_contains_point<T>(poly: &Polygon<T>, p: Point<T>) -> bool
 where
     T: GeoNum,
 {
-    match coord_pos_relative_to_ring(p.0, &poly.exterior()) {
+    match coord_pos_relative_to_ring(p.0, poly.exterior()) {
         CoordPos::Inside => true,
         CoordPos::OnBoundary | CoordPos::Outside => false,
     }

@@ -30,7 +30,7 @@ where
 
     use crate::utils::least_and_greatest_index;
     let (min, max) = {
-        let (min_idx, mut max_idx) = least_and_greatest_index(&points);
+        let (min_idx, mut max_idx) = least_and_greatest_index(points);
         let min = swap_remove_to_first(&mut points, min_idx);
 
         // Two special cases to consider:

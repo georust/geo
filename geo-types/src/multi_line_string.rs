@@ -148,7 +148,7 @@ where
         }
 
         let mut mp_zipper = self.iter().zip(other.iter());
-        mp_zipper.all(|(lhs, rhs)| lhs.relative_eq(&rhs, epsilon, max_relative))
+        mp_zipper.all(|(lhs, rhs)| lhs.relative_eq(rhs, epsilon, max_relative))
     }
 }
 
@@ -185,7 +185,7 @@ where
         }
 
         let mut mp_zipper = self.into_iter().zip(other.into_iter());
-        mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(&rhs, epsilon))
+        mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(rhs, epsilon))
     }
 }
 

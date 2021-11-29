@@ -232,13 +232,11 @@ where
     );
 
     // Simplify shell
-    rings.push(visvalingam_preserve(
-        geomtype, &exterior, epsilon, &mut tree,
-    ));
+    rings.push(visvalingam_preserve(geomtype, exterior, epsilon, &mut tree));
     // Simplify interior rings, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
-            rings.push(visvalingam_preserve(geomtype, &ring, epsilon, &mut tree))
+            rings.push(visvalingam_preserve(geomtype, ring, epsilon, &mut tree))
         }
     }
     rings
