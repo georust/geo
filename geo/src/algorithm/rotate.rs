@@ -472,6 +472,7 @@ mod test {
                 ],
             ],
         ];
+        #[allow(deprecated)]
         let rotated = poly1.rotate(-15.0);
         let correct_outside = vec![
             Coordinate::from((4.628808519201685, 1.180520783117658)),

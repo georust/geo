@@ -291,7 +291,6 @@ mod test {
         let frac = linestring
             .line_locate_point(&pt)
             .expect("Should result in fraction between 0 and 1");
-        println!("{:?}", &frac);
         let interpolated_point = linestring
             .line_interpolate_point(frac)
             .expect("Shouldn't return None");
