@@ -38,7 +38,7 @@ approx = "0.4.0"
 criterion = { version = "0.3" }
 # jts-test-runner is an internal crate which exists only to be part of the geo test suite.
 # As such it's kept unpublished. It's in a separate repo primarily because it's kind of large.
-jts-test-runner = { git = "https://github.com/georust/jts-test-runner", rev = "4a69a552546bd3d1dec574a51280dbc82bb417ce" }
+jts-test-runner = { git = "https://github.com/georust/jts-test-runner", rev = "1cf7a2f848a10869720383e931271d0dd54f7bf8" }
 rand = "0.8.0"
 
 [[bench]]
