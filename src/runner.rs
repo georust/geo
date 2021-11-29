@@ -391,7 +391,7 @@ impl TestRunner {
             let run: input::Run = match serde_xml_rs::from_reader(file_reader) {
                 Ok(r) => r,
                 Err(err) => {
-                    error!(
+                    debug!(
                         "skipping invalid test input: {:?}. error: {:?}",
                         file.path(),
                         err
