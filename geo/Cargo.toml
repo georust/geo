@@ -11,9 +11,6 @@ keywords = ["gis", "geo", "geography", "geospatial"]
 autobenches = true
 edition = "2018"
 
-[badges]
-travis-ci = { repository = "georust/geo" }
-
 [dependencies]
 num-traits = "0.2"
 serde = { version = "1.0", optional = true, features = ["derive"] }
