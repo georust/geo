@@ -50,12 +50,12 @@ where
     };
 
     {
-        let (mut points, _) = partition_slice(&mut points, |p| is_ccw(*max, *min, *p));
-        hull_set(*max, *min, &mut points, &mut hull);
+        let (points, _) = partition_slice(points, |p| is_ccw(*max, *min, *p));
+        hull_set(*max, *min, points, &mut hull);
     }
     hull.push(*max);
-    let (mut points, _) = partition_slice(&mut points, |p| is_ccw(*min, *max, *p));
-    hull_set(*min, *max, &mut points, &mut hull);
+    let (points, _) = partition_slice(points, |p| is_ccw(*min, *max, *p));
+    hull_set(*min, *max, points, &mut hull);
     hull.push(*min);
     // close the polygon
     let mut hull: LineString<_> = hull.into();
@@ -106,13 +106,13 @@ fn hull_set<T>(
     let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
     // points over PB
     {
-        let (mut points, _) = partition_slice(set, |p| is_ccw(*furthest_point, p_b, *p));
-        hull_set(*furthest_point, p_b, &mut points, hull);
+        let (points, _) = partition_slice(set, |p| is_ccw(*furthest_point, p_b, *p));
+        hull_set(*furthest_point, p_b, points, hull);
     }
     hull.push(*furthest_point);
     // points over AP
-    let (mut points, _) = partition_slice(set, |p| is_ccw(p_a, *furthest_point, *p));
-    hull_set(p_a, *furthest_point, &mut points, hull);
+    let (points, _) = partition_slice(set, |p| is_ccw(p_a, *furthest_point, *p));
+    hull_set(p_a, *furthest_point, points, hull);
 }
 
 #[cfg(test)]
