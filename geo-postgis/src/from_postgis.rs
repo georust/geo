@@ -28,7 +28,7 @@ where
     T: postgis::LineString<'a>,
 {
     fn from_postgis(ls: &'a T) -> Self {
-        let ret: Vec<Point<f64>> = ls.points().map(|x| Point::from_postgis(x)).collect();
+        let ret: Vec<Point<f64>> = ls.points().map(Point::from_postgis).collect();
         LineString::from(ret)
     }
 }
@@ -41,7 +41,7 @@ where
     fn from_postgis(poly: &'a T) -> Self {
         let mut rings = poly
             .rings()
-            .map(|x| LineString::from_postgis(x))
+            .map(LineString::from_postgis)
             .collect::<Vec<_>>();
         if rings.is_empty() {
             return None;
@@ -55,7 +55,7 @@ where
     T: postgis::MultiPoint<'a>,
 {
     fn from_postgis(mp: &'a T) -> Self {
-        let ret = mp.points().map(|x| Point::from_postgis(x)).collect();
+        let ret = mp.points().map(Point::from_postgis).collect();
         MultiPoint(ret)
     }
 }
@@ -64,7 +64,7 @@ where
     T: postgis::MultiLineString<'a>,
 {
     fn from_postgis(mp: &'a T) -> Self {
-        let ret = mp.lines().map(|x| LineString::from_postgis(x)).collect();
+        let ret = mp.lines().map(LineString::from_postgis).collect();
         MultiLineString(ret)
     }
 }
