@@ -746,7 +746,7 @@ mod test {
             min_points: 4,
             geomtype: GeomType::Line,
         };
-        let simplified = vwp_wrapper(&gt, &ls, None, &668.6);
+        let simplified = vwp_wrapper(gt, &ls, None, &668.6);
         // this is the correct, non-intersecting LineString
         let correct = vec![
             (10., 60.),
@@ -828,7 +828,7 @@ mod test {
             min_points: 4,
             geomtype: GeomType::Line,
         };
-        let simplified = vwp_wrapper(&gt, &points_ls.into(), None, &0.0005);
+        let simplified = vwp_wrapper(gt, &points_ls.into(), None, &0.0005);
         assert_eq!(simplified[0].len(), 3278);
     }
 
