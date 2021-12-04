@@ -682,7 +682,7 @@ mod test {
             (0., 0.),
         ]);
 
-        let poly = Polygon::new(exterior.clone(), vec![]);
+        let poly = Polygon::new(exterior, vec![]);
         let bugged_point = Point::new(0.0001, 0.);
         assert_relative_eq!(poly.euclidean_distance(&bugged_point), 0.);
     }
@@ -756,7 +756,7 @@ mod test {
         let pol1 = Polygon::new(ls1, vec![]);
         let pol2 = Polygon::new(ls2, vec![]);
         let pol3 = Polygon::new(ls3, vec![]);
-        let mp = MultiPolygon(vec![pol1.clone(), pol2.clone(), pol3.clone()]);
+        let mp = MultiPolygon(vec![pol1.clone(), pol2, pol3]);
         let pnt1 = Point::new(0.0, 15.0);
         let pnt2 = Point::new(10.0, 20.0);
         let ln = Line::new(pnt1.0, pnt2.0);

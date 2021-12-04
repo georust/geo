@@ -698,7 +698,7 @@ mod test {
         expected_coords.append(&mut coords.clone());
         expected_coords.append(&mut coords);
 
-        let actual_coords = MultiLineString(vec![line_string.clone(), line_string.clone()])
+        let actual_coords = MultiLineString(vec![line_string.clone(), line_string])
             .coords_iter()
             .collect::<Vec<_>>();
 
@@ -712,7 +712,7 @@ mod test {
         expected_coords.append(&mut coords.clone());
         expected_coords.append(&mut coords);
 
-        let actual_coords = MultiPolygon(vec![polygon.clone(), polygon.clone()])
+        let actual_coords = MultiPolygon(vec![polygon.clone(), polygon])
             .coords_iter()
             .collect::<Vec<_>>();
 

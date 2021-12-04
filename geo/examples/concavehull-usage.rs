@@ -64,7 +64,7 @@ fn main() -> std::io::Result<()> {
         .iter()
         .map(|loaded_point| Point::new(loaded_point[0], loaded_point[1]))
         .collect();
-    let moved_v = move_points_in_viewbox(width as f64, height as f64, v.clone());
+    let moved_v = move_points_in_viewbox(width as f64, height as f64, v);
     let multipoint = MultiPoint::from(moved_v);
     let concave = multipoint.concave_hull(2.0);
     let convex = multipoint.convex_hull();
