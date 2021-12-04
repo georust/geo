@@ -154,7 +154,7 @@ mod test {
             fake_label.clone(),
         );
         assert_eq!(
-            edge_end_1.key().cmp(&edge_end_2.key()),
+            edge_end_1.key().cmp(edge_end_2.key()),
             std::cmp::Ordering::Equal
         );
 
@@ -165,11 +165,11 @@ mod test {
             fake_label.clone(),
         );
         assert_eq!(
-            edge_end_1.key().cmp(&edge_end_3.key()),
+            edge_end_1.key().cmp(edge_end_3.key()),
             std::cmp::Ordering::Less
         );
         assert_eq!(
-            edge_end_3.key().cmp(&edge_end_1.key()),
+            edge_end_3.key().cmp(edge_end_1.key()),
             std::cmp::Ordering::Greater
         );
     }
