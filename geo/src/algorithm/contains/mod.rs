@@ -276,7 +276,7 @@ mod test {
     fn linestring_in_polygon_with_linestring_is_boundary_test() {
         let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
         let poly = Polygon::new(linestring.clone(), Vec::new());
-        assert!(!poly.contains(&linestring.clone()));
+        assert!(!poly.contains(&linestring));
         assert!(!poly.contains(&LineString::from(vec![(0., 0.), (2., 0.)])));
         assert!(!poly.contains(&LineString::from(vec![(2., 0.), (2., 2.)])));
         assert!(!poly.contains(&LineString::from(vec![(0., 2.), (0., 0.)])));

@@ -271,7 +271,7 @@ mod tests {
         let square: LineString<f32> = a_square(100.0);
         let ring_1 = a_square(20.0).translate(10.0, 10.0);
         let ring_2 = a_square(10.0).translate(70.0, 60.0);
-        Polygon::new(square.clone(), vec![ring_1, ring_2])
+        Polygon::new(square, vec![ring_1, ring_2])
     }
 
     #[test]

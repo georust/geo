@@ -162,7 +162,7 @@ mod test {
         let edge_end_3 = EdgeEnd::new(
             Coordinate::zero(),
             Coordinate { x: 1.0, y: -1.0 },
-            fake_label.clone(),
+            fake_label,
         );
         assert_eq!(
             edge_end_1.key().cmp(&edge_end_3.key()),
