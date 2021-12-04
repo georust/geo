@@ -160,7 +160,7 @@ mod tests {
     #[test]
     fn convert_types() {
         let p: Point<f32> = Point::new(0., 0.);
-        let p1 = p.clone();
+        let p1 = p;
         let g: Geometry<f32> = p.into();
         let p2 = Point::try_from(g).unwrap();
         assert_eq!(p1, p2);
