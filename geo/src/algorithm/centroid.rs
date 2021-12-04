@@ -845,7 +845,7 @@ mod test {
     #[test]
     fn degenerate_triangle_like_ring() {
         let triangle = Triangle(c(0., 0.), c(1., 1.), c(2., 2.));
-        let poly: Polygon<_> = triangle.clone().into();
+        let poly: Polygon<_> = triangle.into();
 
         let line = Line::new(c(0., 1.), c(1., 3.));
 
@@ -857,7 +857,7 @@ mod test {
     #[test]
     fn degenerate_rect_like_ring() {
         let rect = Rect::new(c(0., 0.), c(0., 4.));
-        let poly: Polygon<_> = rect.clone().into();
+        let poly: Polygon<_> = rect.into();
 
         let line = Line::new(c(0., 1.), c(1., 3.));
 

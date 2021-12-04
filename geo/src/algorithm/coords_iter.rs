@@ -684,7 +684,7 @@ mod test {
         expected_coords.append(&mut coords.clone());
         expected_coords.append(&mut coords);
 
-        let actual_coords = MultiPoint(vec![point.clone(), point.clone()])
+        let actual_coords = MultiPoint(vec![point, point])
             .coords_iter()
             .collect::<Vec<_>>();
 
