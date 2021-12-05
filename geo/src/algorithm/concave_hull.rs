@@ -375,14 +375,13 @@ mod test {
         let loaded_norway = include!("test_fixtures/norway_main.rs");
         let norway: MultiPoint<f64> = loaded_norway
             .iter()
-            .map(|tuple| Point::new(f64::from(tuple[0]), f64::from(tuple[1])))
+            .map(|tuple| Point::new(tuple[0], tuple[1]))
             .collect();
         let loaded_norway_concave_hull = include!("test_fixtures/norway_concave_hull.rs");
-        let norway_concave_hull_points: Vec<Point<f64>> = loaded_norway_concave_hull
+        let norway_concave_hull_points = loaded_norway_concave_hull
             .iter()
-            .map(|tuple| Point::new(f64::from(tuple[0]), f64::from(tuple[1])))
-            .collect();
-        let norway_concave_hull: LineString<f64> = norway_concave_hull_points.into_iter().collect();
+            .map(|tuple| Point::new(tuple[0], tuple[1]));
+        let norway_concave_hull: LineString<f64> = norway_concave_hull_points.collect();
         let res = norway.concave_hull(2.0);
         assert_eq!(res.exterior(), &norway_concave_hull);
     }
