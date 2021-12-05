@@ -852,7 +852,7 @@ mod test {
         let points_ls: LineString<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
         let correct = include!("test_fixtures/vw_simplified.rs");
         let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e[0], e[1])).collect();
-        let simplified = LineString::from(points_ls).simplifyvw_preserve(&0.0005);
+        let simplified = points_ls.simplifyvw_preserve(&0.0005);
         assert_relative_eq!(simplified, LineString::from(correct_ls), epsilon = 1e-6);
     }
     #[test]
