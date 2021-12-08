@@ -561,13 +561,3 @@ where
         self.exterior.envelope()
     }
 }
-
-#[cfg(feature = "rstar")]
-impl<T> ::rstar::PointDistance for Polygon<T>
-where
-    T: ::num_traits::Float + ::rstar::RTreeNum,
-{
-    fn distance_2(&self, point: &Point<T>) -> T {
-        self.exterior.distance_2(point)
-    }
-}
