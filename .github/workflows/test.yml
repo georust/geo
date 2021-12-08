@@ -41,8 +41,8 @@ jobs:
           # Minimum supported rust version (MSRV)
           - "georust/geo-ci:rust-1.51"
           # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:rust-1.55"
           - "georust/geo-ci:rust-1.56"
+          - "georust/geo-ci:rust-1.57"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -67,8 +67,8 @@ jobs:
           # Minimum supported rust version (MSRV)
           - "georust/geo-ci:rust-1.51"
           # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:rust-1.55"
           - "georust/geo-ci:rust-1.56"
+          - "georust/geo-ci:rust-1.57"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -94,8 +94,8 @@ jobs:
           # Minimum supported rust version (MSRV)
           - "georust/geo-ci:rust-1.51"
           # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:rust-1.55"
           - "georust/geo-ci:rust-1.56"
+          - "georust/geo-ci:rust-1.57"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -115,7 +115,7 @@ jobs:
       matrix:
         container_image:
           # Fuzz only on latest
-          - "georust/geo-ci:rust-1.56"
+          - "georust/geo-ci:rust-1.57"
     container:
       image: ${{ matrix.container_image }}
     steps:
