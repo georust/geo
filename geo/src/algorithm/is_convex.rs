@@ -189,13 +189,12 @@ where
 
     // Now we have a fixed orientation expected at the rest
     // of the coords. Loop to check everything matches it.
-    if ((i + 1)..n)
+    if !((i + 1)..n)
         .map(orientation_at)
-        .find(|&(_, orientation)| match orientation {
+        .any(|(_, orientation)| match orientation {
             Orientation::Collinear => !allow_collinear,
             orientation => orientation != first_non_collinear,
         })
-        .is_none()
     {
         Some(first_non_collinear)
     } else {

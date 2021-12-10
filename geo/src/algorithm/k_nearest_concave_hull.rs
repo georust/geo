@@ -338,7 +338,7 @@ mod tests {
             coord!(x: 1.0, y: 0.0),
         ];
 
-        let mut coords_mapped: Vec<&Coordinate<f32>> = coords.iter().map(|x| x).collect();
+        let mut coords_mapped: Vec<&Coordinate<f32>> = coords.iter().collect();
 
         let center = coord!(x: 0.0, y: 0.0);
         let prev_coord = coord!(x: 1.0, y: 1.0);
