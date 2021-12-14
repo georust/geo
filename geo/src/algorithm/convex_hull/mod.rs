@@ -138,6 +138,7 @@ where
 // Utility function: swap idx to head(0th position), remove
 // head (modifies the slice), and return head as a reference
 fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
+    // temporarily replace `slice` with an empty value
     let tmp = std::mem::take(slice);
     tmp.swap(0, idx);
     let (h, t) = tmp.split_first_mut().unwrap();
