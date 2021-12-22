@@ -8,7 +8,7 @@ use crate::{
 use rstar::{RTree, RTreeObject};
 // the largest total number of segments geometries can have before the algorithm switches
 // to using an R*-tree for queries
-const MAX_NAIVE_SEGMENTS: usize = 100;
+const MAX_NAIVE_SEGMENTS: usize = 10000;
 
 impl<T> Intersects<Coordinate<T>> for Polygon<T>
 where
@@ -31,26 +31,10 @@ where
     geo_types::Line<T>: RTreeObject,
 {
     fn intersects(&self, line: &Line<T>) -> bool {
-        if self.exterior().0.len() + self.interiors().iter().map(|ls| ls.0.len()).sum::<usize>()
-            > MAX_NAIVE_SEGMENTS
-        {
-            // We only care about segments, so combine all exterior and interior rings
-            let lines: Vec<_> = self
-                .exterior()
-                .lines()
-                .chain(self.interiors().iter().flat_map(|ls| ls.lines()))
-                .collect();
-            let tree = RTree::bulk_load(lines);
-            let mut neighbours = tree.locate_in_envelope_intersecting(&line.envelope());
-            neighbours.any(|segment| segment.intersects(line))
-                || self.intersects(&line.start)
-                || self.intersects(&line.end)
-        } else {
-            self.exterior().intersects(line)
-                || self.interiors().iter().any(|inner| inner.intersects(line))
-                || self.intersects(&line.start)
-                || self.intersects(&line.end)
-        }
+        self.exterior().intersects(line)
+            || self.interiors().iter().any(|inner| inner.intersects(line))
+            || self.intersects(&line.start)
+            || self.intersects(&line.end)
     }
 }
 symmetric_intersects_impl!(Line<T>, Polygon<T>);
@@ -78,14 +62,15 @@ where
             return false;
         }
         // switch to querying trees above some threshold x: polygons' combined segment count is higher than x
-        if self.exterior().0.len()
-            + self.interiors().iter().map(|ls| ls.0.len()).sum::<usize>()
-            + polygon.exterior().0.len()
+        if (self.exterior().0.len()
+            + self.interiors().iter().map(|ls| ls.0.len()).sum::<usize>())
+        *
+        (polygon.exterior().0.len()
             + polygon
                 .interiors()
                 .iter()
                 .map(|ls| ls.0.len())
-                .sum::<usize>()
+                .sum::<usize>())
             > MAX_NAIVE_SEGMENTS
         {
             let lines_a: Vec<_> = self
