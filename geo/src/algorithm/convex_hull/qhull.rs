@@ -215,8 +215,9 @@ mod test {
     #[test]
     fn quick_hull_test_complex_2() {
         let mut coords = geo_test_fixtures::poly2::<f64>().0;
+        let correct = geo_test_fixtures::poly2_hull::<f64>().0;
         let res = quick_hull(&mut coords);
-        assert!(res.is_strictly_ccw_convex());
+        assert_eq!(res.0, correct);
     }
 
     #[test]
