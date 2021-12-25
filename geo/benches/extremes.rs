@@ -17,7 +17,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("extremes f64", |bencher| {
-        let norway = geo_test_fixtures::norway_main::<f32>();
+        let norway = geo_test_fixtures::norway_main::<f64>();
         let polygon = Polygon::new(norway, vec![]);
 
         bencher.iter(|| {
