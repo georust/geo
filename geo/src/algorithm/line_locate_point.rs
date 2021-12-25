@@ -197,7 +197,7 @@ mod test {
     #[test]
     fn test_line_locate_point_linestring() {
         // finite example using the ring
-        let ring: LineString<f64> = include!("./test_fixtures/ring.rs").into();
+        let ring: LineString<f64> = geo_test_fixtures::ring::<f64>();
         let pt = point!(x: 10.0, y: 1.0);
         assert_eq!(ring.line_locate_point(&pt), Some(0.0));
 

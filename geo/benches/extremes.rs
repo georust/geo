@@ -4,12 +4,12 @@ extern crate geo;
 
 use criterion::Criterion;
 use geo::prelude::*;
-use geo::{LineString, Polygon};
+use geo::Polygon;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("extremes f32", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/norway_main.rs");
-        let polygon = Polygon::new(LineString::<f32>::from(points), vec![]);
+        let norway = geo_test_fixtures::norway_main::<f32>();
+        let polygon = Polygon::new(norway, vec![]);
 
         bencher.iter(|| {
             criterion::black_box(criterion::black_box(&polygon).extremes());
@@ -17,8 +17,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("extremes f64", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/norway_main.rs");
-        let polygon = Polygon::new(LineString::<f32>::from(points), vec![]);
+        let norway = geo_test_fixtures::norway_main::<f32>();
+        let polygon = Polygon::new(norway, vec![]);
 
         bencher.iter(|| {
             criterion::black_box(criterion::black_box(&polygon).extremes());

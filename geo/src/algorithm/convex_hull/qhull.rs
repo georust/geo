@@ -206,28 +206,16 @@ mod test {
 
     #[test]
     fn quick_hull_test_complex() {
-        let coords = include!("../test_fixtures/poly1.rs");
-        let mut v: Vec<_> = coords
-            .iter()
-            .map(|e| Coordinate { x: e.0, y: e.1 })
-            .collect();
-        let correct = include!("../test_fixtures/poly1_hull.rs");
-        let v_correct: Vec<_> = correct
-            .iter()
-            .map(|e| Coordinate { x: e.0, y: e.1 })
-            .collect();
-        let res = quick_hull(&mut v);
-        assert_eq!(res.0, v_correct);
+        let mut coords = geo_test_fixtures::poly1::<f64>().0;
+        let correct = geo_test_fixtures::poly1_hull::<f64>().0;
+        let res = quick_hull(&mut coords);
+        assert_eq!(res.0, correct);
     }
 
     #[test]
     fn quick_hull_test_complex_2() {
-        let coords = include!("../test_fixtures/poly2.rs");
-        let mut v: Vec<_> = coords
-            .iter()
-            .map(|e| Coordinate { x: e.0, y: e.1 })
-            .collect();
-        let res = quick_hull(&mut v);
+        let mut coords = geo_test_fixtures::poly2::<f64>().0;
+        let res = quick_hull(&mut coords);
         assert!(res.is_strictly_ccw_convex());
     }
 

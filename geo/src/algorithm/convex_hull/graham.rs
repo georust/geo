@@ -89,14 +89,10 @@ where
 mod test {
     use super::*;
     use crate::algorithm::is_convex::IsConvex;
-    fn test_convexity<T: GeoNum>(initial: &[(T, T)]) {
-        let mut v: Vec<_> = initial
-            .iter()
-            .map(|e| Coordinate::from((e.0, e.1)))
-            .collect();
-        let hull = graham_hull(&mut v, false);
+    fn test_convexity<T: GeoNum>(mut initial: Vec<Coordinate<T>>) {
+        let hull = graham_hull(&mut initial, false);
         assert!(hull.is_strictly_ccw_convex());
-        let hull = graham_hull(&mut v, true);
+        let hull = graham_hull(&mut initial, true);
         assert!(hull.is_ccw_convex());
     }
 
@@ -110,13 +106,18 @@ mod test {
             (0.0, 1.0),
             (1.0, 0.0),
         ];
-        test_convexity(&initial);
+        let initial = initial
+            .iter()
+            .map(|e| Coordinate::from((e.0, e.1)))
+            .collect();
+        test_convexity(initial);
     }
 
     #[test]
     fn graham_hull_test1() {
         let v: Vec<_> = vec![(0, 0), (4, 0), (4, 1), (1, 1), (1, 4), (0, 4), (0, 0)];
-        test_convexity(&v);
+        let initial = v.iter().map(|e| Coordinate::from((e.0, e.1))).collect();
+        test_convexity(initial);
     }
 
     #[test]
@@ -132,18 +133,17 @@ mod test {
             (-1, 1),
             (0, 10),
         ];
-        test_convexity(&v);
+        let initial = v.iter().map(|e| Coordinate::from((e.0, e.1))).collect();
+        test_convexity(initial);
     }
 
     #[test]
     fn graham_test_complex() {
-        let v = include!("../test_fixtures/poly1.rs");
-        test_convexity(&v);
+        test_convexity(geo_test_fixtures::poly1::<f64>().0);
     }
 
     #[test]
     fn quick_hull_test_complex_2() {
-        let coords = include!("../test_fixtures/poly2.rs");
-        test_convexity(&coords);
+        test_convexity(geo_test_fixtures::poly2::<f64>().0);
     }
 }

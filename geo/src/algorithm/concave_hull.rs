@@ -252,7 +252,6 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Point;
     use crate::{line_string, polygon};
     use geo_types::Coordinate;
 
@@ -372,16 +371,8 @@ mod test {
 
     #[test]
     fn concave_hull_norway_test() {
-        let loaded_norway = include!("test_fixtures/norway_main.rs");
-        let norway: MultiPoint<f64> = loaded_norway
-            .iter()
-            .map(|tuple| Point::new(tuple[0], tuple[1]))
-            .collect();
-        let loaded_norway_concave_hull = include!("test_fixtures/norway_concave_hull.rs");
-        let norway_concave_hull_points = loaded_norway_concave_hull
-            .iter()
-            .map(|tuple| Point::new(tuple[0], tuple[1]));
-        let norway_concave_hull: LineString<f64> = norway_concave_hull_points.collect();
+        let norway = geo_test_fixtures::norway_main::<f64>();
+        let norway_concave_hull: LineString<f64> = geo_test_fixtures::norway_concave_hull::<f64>();
         let res = norway.concave_hull(2.0);
         assert_eq!(res.exterior(), &norway_concave_hull);
     }

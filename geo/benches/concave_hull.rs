@@ -4,7 +4,7 @@ extern crate geo;
 
 use criterion::Criterion;
 use geo::algorithm::concave_hull::ConcaveHull;
-use geo::{CoordNum, Coordinate, LineString};
+use geo::{CoordNum, Coordinate};
 
 use num_traits::Signed;
 use rand::distributions::uniform::SampleUniform;
@@ -22,8 +22,7 @@ pub fn uniform_points_in_range<S: CoordNum + SampleUniform + Signed, R: Rng>(
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("concave hull f32", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/norway_main.rs");
-        let line_string = LineString::<f32>::from(points);
+        let line_string = geo_test_fixtures::norway_main::<f32>();
 
         bencher.iter(|| {
             criterion::black_box(
@@ -33,8 +32,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("concave hull f64", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/norway_main.rs");
-        let line_string = LineString::<f64>::from(points);
+        let line_string = geo_test_fixtures::norway_main::<f64>();
 
         bencher.iter(|| {
             criterion::black_box(

@@ -821,8 +821,7 @@ mod test {
     #[test]
     fn very_long_vwp_test() {
         // simplify an 8k-point LineString, eliminating self-intersections
-        let points = include!("test_fixtures/norway_main.rs");
-        let points_ls: Vec<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
+        let points_ls = geo_test_fixtures::norway_main::<f64>();
         let gt = &GeomSettings {
             initial_min: 2,
             min_points: 4,
@@ -835,25 +834,18 @@ mod test {
     #[test]
     fn visvalingam_test_long() {
         // simplify a longer LineString
-        let points = include!("test_fixtures/vw_orig.rs");
-        let points_ls: LineString<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
-        let correct = include!("test_fixtures/vw_simplified.rs");
-        let correct_ls: Vec<_> = correct
-            .iter()
-            .map(|e| Coordinate::from((e[0], e[1])))
-            .collect();
+        let points_ls = geo_test_fixtures::vw_orig::<f64>();
+        let correct_ls = geo_test_fixtures::vw_simplified::<f64>();
         let simplified = visvalingam(&points_ls, &0.0005);
-        assert_eq!(simplified, correct_ls);
+        assert_eq!(simplified, correct_ls.0);
     }
     #[test]
     fn visvalingam_preserve_test_long() {
         // simplify a longer LineString using the preserve variant
-        let points = include!("test_fixtures/vw_orig.rs");
-        let points_ls: LineString<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
-        let correct = include!("test_fixtures/vw_simplified.rs");
-        let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e[0], e[1])).collect();
+        let points_ls = geo_test_fixtures::vw_orig::<f64>();
+        let correct_ls = geo_test_fixtures::vw_simplified::<f64>();
         let simplified = points_ls.simplifyvw_preserve(&0.0005);
-        assert_relative_eq!(simplified, LineString::from(correct_ls), epsilon = 1e-6);
+        assert_relative_eq!(simplified, correct_ls, epsilon = 1e-6);
     }
     #[test]
     fn visvalingam_test_empty_linestring() {
