@@ -1031,9 +1031,7 @@ mod test {
     }
     #[test]
     fn test_large_polygon_distance() {
-        let points = include!("test_fixtures/norway_main.rs");
-        let points_ls: Vec<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
-        let ls = LineString::from(points_ls);
+        let ls = geo_test_fixtures::norway_main::<f64>();
         let poly1 = Polygon::new(ls, vec![]);
         let vec2 = vec![
             (4.921875, 66.33750501996518),
@@ -1050,25 +1048,20 @@ mod test {
     // A polygon inside another polygon's ring; they're disjoint in the DE-9IM sense:
     // FF2FF1212
     fn test_poly_in_ring() {
-        let shell = include!("test_fixtures/shell.rs");
-        let shell_ls: LineString<f64> = shell.into();
-        let ring = include!("test_fixtures/ring.rs");
-        let ring_ls: LineString<f64> = ring.into();
-        let poly_in_ring = include!("test_fixtures/poly_in_ring.rs");
-        let poly_in_ring_ls: LineString<f64> = poly_in_ring.into();
+        let shell = geo_test_fixtures::shell::<f64>();
+        let ring = geo_test_fixtures::ring::<f64>();
+        let poly_in_ring = geo_test_fixtures::poly_in_ring::<f64>();
         // inside is "inside" outside's ring, but they are disjoint
-        let outside = Polygon::new(shell_ls, vec![ring_ls]);
-        let inside = Polygon::new(poly_in_ring_ls, vec![]);
+        let outside = Polygon::new(shell, vec![ring]);
+        let inside = Polygon::new(poly_in_ring, vec![]);
         assert_relative_eq!(outside.euclidean_distance(&inside), 5.992772737231033);
     }
     #[test]
     // two ring LineStrings; one encloses the other but they neither touch nor intersect
     fn test_linestring_distance() {
-        let ring = include!("test_fixtures/ring.rs");
-        let ring_ls: LineString<f64> = ring.into();
-        let in_ring = include!("test_fixtures/poly_in_ring.rs");
-        let in_ring_ls: LineString<f64> = in_ring.into();
-        assert_relative_eq!(ring_ls.euclidean_distance(&in_ring_ls), 5.992772737231033);
+        let ring = geo_test_fixtures::ring::<f64>();
+        let poly_in_ring = geo_test_fixtures::poly_in_ring::<f64>();
+        assert_relative_eq!(ring.euclidean_distance(&poly_in_ring), 5.992772737231033);
     }
     #[test]
     // Line-Polygon test: closest point on Polygon is NOT nearest to a Line end-point

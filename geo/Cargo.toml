@@ -37,6 +37,7 @@ criterion = { version = "0.3" }
 # As such it's kept unpublished. It's in a separate repo primarily because it's kind of large.
 jts-test-runner = { git = "https://github.com/georust/jts-test-runner", rev = "1cf7a2f848a10869720383e931271d0dd54f7bf8" }
 rand = "0.8.0"
+geo-test-fixtures = { path = "../geo-test-fixtures" }
 
 [[bench]]
 name = "area"

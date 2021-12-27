@@ -4,12 +4,12 @@ extern crate geo;
 
 use criterion::Criterion;
 use geo::algorithm::area::Area;
-use geo::{LineString, Polygon};
+use geo::Polygon;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("area", |bencher| {
-        let points = include!("../src/algorithm/test_fixtures/norway_main.rs");
-        let polygon = Polygon::new(LineString::<f32>::from(points), vec![]);
+        let norway = geo_test_fixtures::norway_main::<f32>();
+        let polygon = Polygon::new(norway, vec![]);
 
         bencher.iter(|| {
             criterion::black_box(criterion::black_box(&polygon).signed_area());
