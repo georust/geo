@@ -78,7 +78,7 @@ use std::ops::{Index, IndexMut};
 /// let line_string: LineString<f32> = coords_iter.collect();
 /// ```
 ///
-/// You can iterate over the coordinates in the `LineString`:
+/// You can iterate and loop over the coordinates in the `LineString`, yielding [Coordinate]s:
 ///
 /// ```
 /// use geo_types::{Coordinate, LineString};
@@ -87,6 +87,8 @@ use std::ops::{Index, IndexMut};
 ///     Coordinate { x: 0., y: 0. },
 ///     Coordinate { x: 10., y: 0. },
 /// ]);
+///
+/// line_string.iter().for_each(|coord| println!("Coordinate x = {}, y = {}", coord.x, coord.y));
 ///
 /// for coord in line_string {
 ///     println!("Coordinate x = {}, y = {}", coord.x, coord.y);
@@ -132,15 +134,47 @@ impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
     }
 }
 
+/// A [Coordinate] iterator returned by the `iter` method over a [LineString]
+#[derive(Debug)]
+pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
+
+impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
+    type Item = &'a Coordinate<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+}
+
+impl<'a, T: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.0.next_back()
+    }
+}
+
 impl<T: CoordNum> LineString<T> {
     /// Return an iterator yielding the coordinates of a `LineString` as `Point`s
     pub fn points_iter(&self) -> PointsIter<T> {
         PointsIter(self.0.iter())
     }
 
+    /// Return an iterator yielding the members of a [LineString] as [Coordinate]s
+    pub fn iter(&self) -> CoordinatesIter<T> {
+        CoordinatesIter(self.0.iter())
+    }
+    /// Return an iterator yielding the coordinates of a [LineString] as mutable [Coordinate]s
+    pub fn iter_mut(&mut self) -> CoordinatesIter<T> {
+        CoordinatesIter(self.0.iter())
+    }
+
     /// Return the coordinates of a `LineString` as a `Vec` of `Point`s
     pub fn into_points(self) -> Vec<Point<T>> {
         self.0.into_iter().map(Point).collect()
+    }
+
+    /// Return the coordinates of a [LineString] as a `Vec` of [Coordinate]s
+    pub fn into_coordinates(self) -> Vec<Coordinate<T>> {
+        self.0.into_iter().collect()
     }
 
     /// Return an iterator yielding one `Line` for each line segment
