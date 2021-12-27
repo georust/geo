@@ -37,8 +37,36 @@ where
             || self.intersects(&line.end)
     }
 }
+
+impl<T> Intersects<LineString<T>> for Polygon<T>
+where
+    T: GeoNum,
+    geo_types::Line<T>: RTreeObject,
+{
+    fn intersects(&self, linestring: &LineString<T>) -> bool {
+        if (self.exterior().0.len() + self.interiors().iter().map(|ls| ls.0.len()).sum::<usize>())
+            * linestring.0.len()
+            > MAX_NAIVE_SEGMENTS
+        {
+            let lines_a: Vec<_> = self
+                .exterior()
+                .lines()
+                .chain(self.interiors().iter().flat_map(|ls| ls.lines()))
+                .collect();
+            let tree_a = RTree::bulk_load(lines_a);
+            let lines_b: Vec<_> = linestring.lines().collect();
+            let tree_b = RTree::bulk_load(lines_b);
+            let mut candidates = tree_a.intersection_candidates_with_other_tree(&tree_b);
+            candidates.any(|line_pair| {
+                dbg!("{:?}", line_pair);
+                line_pair.0.intersects(line_pair.1)
+            })
+        } else {
+            linestring.lines().any(|line| self.intersects(&line))
+        }
+    }
+}
 symmetric_intersects_impl!(Line<T>, Polygon<T>);
-symmetric_intersects_impl!(Polygon<T>, LineString<T>);
 symmetric_intersects_impl!(Polygon<T>, MultiLineString<T>);
 
 impl<T> Intersects<Rect<T>> for Polygon<T>
@@ -87,7 +115,7 @@ where
                 .collect();
             let tree_b = RTree::bulk_load(lines_b);
             let mut candidates = tree_a.intersection_candidates_with_other_tree(&tree_b);
-            candidates.any(|line_pairs| line_pairs.0.intersects(line_pairs.1))
+            candidates.any(|line_pair| line_pair.0.intersects(line_pair.1))
         } else {
             self.intersects(polygon.exterior()) ||
             polygon.interiors().iter().any(|inner_line_string| self.intersects(inner_line_string)) ||
