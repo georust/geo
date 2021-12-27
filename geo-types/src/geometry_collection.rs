@@ -70,6 +70,7 @@ use std::ops::{Index, IndexMut};
 /// ```
 ///
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
     T: CoordNum;
