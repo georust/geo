@@ -311,7 +311,16 @@ impl<T: CoordNum> IntoIterator for LineString<T> {
     }
 }
 
-/// Mutably iterate over all the [Coordinate](struct.Coordinates.html)s in this `LineString`.
+impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
+    type Item = &'a Coordinate<T>;
+    type IntoIter = CoordinatesIter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        CoordinatesIter(self.0.iter())
+    }
+}
+
+/// Mutably iterate over all the [Coordinate](struct.Coordinates.html)s in this [LineString].
 impl<'a, T: CoordNum> IntoIterator for &'a mut LineString<T> {
     type Item = &'a mut Coordinate<T>;
     type IntoIter = ::std::slice::IterMut<'a, Coordinate<T>>;
