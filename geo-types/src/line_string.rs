@@ -163,8 +163,8 @@ impl<T: CoordNum> LineString<T> {
     }
 
     /// Return an iterator yielding the members of a [LineString] as [Coordinate]s
-    pub fn iter(&self) -> CoordinatesIter<T> {
-        CoordinatesIter(self.0.iter())
+    pub fn iter(&self) -> impl Iterator<Item = &Coordinate<T>> {
+        self.0.iter()
     }
 
     /// Return an iterator yielding the coordinates of a [LineString] as mutable [Coordinate]s
