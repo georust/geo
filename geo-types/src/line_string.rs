@@ -5,7 +5,7 @@ use crate::{CoordNum, Coordinate, Line, Point, Triangle};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
-/// An ordered collection of two or more [`Coordinate`]s, representing a
+/// An ordered collection of two or more [Coordinate]s, representing a
 /// path between locations.
 ///
 /// # Semantics
@@ -25,9 +25,9 @@ use std::ops::{Index, IndexMut};
 ///
 /// A `LineString` is valid if it is either empty or
 /// contains 2 or more coordinates. Further, a closed
-/// `LineString` must not self intersect. Note that the
-/// validity is not enforced, and the operations and
-/// predicates are undefined on invalid linestrings.
+/// `LineString` must not self-intersect. Note that its
+/// validity is **not** enforced, and operations and
+/// predicates are **undefined** on invalid `LineString`s.
 ///
 /// # Examples
 ///
@@ -53,7 +53,7 @@ use std::ops::{Index, IndexMut};
 /// ];
 /// ```
 ///
-/// Converting a `Vec` of `Coordinate`-like things:
+/// Converting from a `Vec` of [Coordinate]-like things:
 ///
 /// ```
 /// use geo_types::LineString;
@@ -67,7 +67,7 @@ use std::ops::{Index, IndexMut};
 /// let line_string: LineString<f64> = vec![[0., 0.], [10., 0.]].into();
 /// ```
 //
-/// Or `collect`ing from a `Coordinate` iterator
+/// Or `collect`ing from a [Coordinate] iterator
 ///
 /// ```
 /// use geo_types::{Coordinate, LineString};
@@ -78,7 +78,7 @@ use std::ops::{Index, IndexMut};
 /// let line_string: LineString<f32> = coords_iter.collect();
 /// ```
 ///
-/// You can iterate and loop over the coordinates in the `LineString`, yielding [Coordinate]s:
+/// You can iterate and loop over the coordinates in the [LineString], yielding [Coordinate]s:
 ///
 /// ```
 /// use geo_types::{Coordinate, LineString};
@@ -90,12 +90,16 @@ use std::ops::{Index, IndexMut};
 ///
 /// line_string.iter().for_each(|coord| println!("Coordinate x = {}, y = {}", coord.x, coord.y));
 ///
+/// for coord in &line_string {
+///     println!("Coordinate x = {}, y = {}", coord.x, coord.y);
+/// }
+///
 /// for coord in line_string {
 ///     println!("Coordinate x = {}, y = {}", coord.x, coord.y);
 /// }
 /// ```
 ///
-/// You can also iterate over the coordinates in the `LineString` as `Point`s:
+/// You can also iterate over the coordinates in the [LineString] as [Point]s:
 ///
 /// ```
 /// use geo_types::{Coordinate, LineString};
@@ -116,7 +120,7 @@ pub struct LineString<T>(pub Vec<Coordinate<T>>)
 where
     T: CoordNum;
 
-/// A `Point` iterator returned by the `points_iter` method
+/// A [Point] iterator returned by the `points_iter` method
 #[derive(Debug)]
 pub struct PointsIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
 
@@ -134,7 +138,7 @@ impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
     }
 }
 
-/// A [Coordinate] iterator returned by the `iter` method over a [LineString]
+/// A [Coordinate] iterator returned by the `iter` method on a [LineString]
 #[derive(Debug)]
 pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
 
@@ -153,7 +157,7 @@ impl<'a, T: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T> {
 }
 
 impl<T: CoordNum> LineString<T> {
-    /// Return an iterator yielding the coordinates of a `LineString` as `Point`s
+    /// Return an iterator yielding the coordinates of a [LineString] as [Point]s
     pub fn points_iter(&self) -> PointsIter<T> {
         PointsIter(self.0.iter())
     }
@@ -167,7 +171,7 @@ impl<T: CoordNum> LineString<T> {
         CoordinatesIter(self.0.iter())
     }
 
-    /// Return the coordinates of a `LineString` as a `Vec` of `Point`s
+    /// Return the coordinates of a [LineString] as a `Vec` of [Point]s
     pub fn into_points(self) -> Vec<Point<T>> {
         self.0.into_iter().map(Point).collect()
     }
@@ -177,8 +181,8 @@ impl<T: CoordNum> LineString<T> {
         self.0.into_iter().collect()
     }
 
-    /// Return an iterator yielding one `Line` for each line segment
-    /// in the `LineString`.
+    /// Return an iterator yielding one [Line] for each line segment
+    /// in the [LineString].
     ///
     /// # Examples
     ///
@@ -212,7 +216,7 @@ impl<T: CoordNum> LineString<T> {
         })
     }
 
-    /// An iterator which yields the coordinates of a `LineString` as `Triangle`s
+    /// An iterator which yields the coordinates of a [LineString] as [Triangle]s
     pub fn triangles(&'_ self) -> impl ExactSizeIterator + Iterator<Item = Triangle<T>> + '_ {
         self.0.windows(3).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
@@ -226,7 +230,7 @@ impl<T: CoordNum> LineString<T> {
         })
     }
 
-    /// Close the `LineString`. Specifically, if the `LineString` has at least one coordinate, and
+    /// Close the [LineString]. Specifically, if the [LineString] has at least one coordinate, and
     /// the value of the first coordinate does not equal the value of the last coordinate, then a
     /// new coordinate is added to the end with the value of the first coordinate.
     pub fn close(&mut self) {
@@ -237,7 +241,7 @@ impl<T: CoordNum> LineString<T> {
         }
     }
 
-    /// Return the number of coordinates in the `LineString`.
+    /// Return the number of coordinates in the [LineString].
     ///
     /// # Examples
     ///
@@ -281,7 +285,7 @@ impl<T: CoordNum> LineString<T> {
     }
 }
 
-/// Turn a `Vec` of `Point`-like objects into a `LineString`.
+/// Turn a `Vec` of [Point]-like objects into a [LineString].
 impl<T: CoordNum, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T> {
     fn from(v: Vec<IC>) -> Self {
         LineString(v.into_iter().map(|c| c.into()).collect())
@@ -294,14 +298,14 @@ impl<T: CoordNum> From<Line<T>> for LineString<T> {
     }
 }
 
-/// Turn an iterator of `Point`-like objects into a `LineString`.
+/// Turn an iterator of [Point]-like objects into a [LineString].
 impl<T: CoordNum, IC: Into<Coordinate<T>>> FromIterator<IC> for LineString<T> {
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {
         LineString(iter.into_iter().map(|c| c.into()).collect())
     }
 }
 
-/// Iterate over all the [Coordinate](struct.Coordinates.html)s in this `LineString`.
+/// Iterate over all the [Coordinate](struct.Coordinates.html)s in this [LineString].
 impl<T: CoordNum> IntoIterator for LineString<T> {
     type Item = Coordinate<T>;
     type IntoIter = ::std::vec::IntoIter<Coordinate<T>>;
