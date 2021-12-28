@@ -166,9 +166,10 @@ impl<T: CoordNum> LineString<T> {
     pub fn iter(&self) -> CoordinatesIter<T> {
         CoordinatesIter(self.0.iter())
     }
+
     /// Return an iterator yielding the coordinates of a [LineString] as mutable [Coordinate]s
-    pub fn iter_mut(&mut self) -> CoordinatesIter<T> {
-        CoordinatesIter(self.0.iter())
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Coordinate<T>> {
+        self.0.iter_mut()
     }
 
     /// Return the coordinates of a [LineString] as a `Vec` of [Point]s
