@@ -138,7 +138,7 @@ impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
     }
 }
 
-/// A [Coordinate] iterator returned by the `iter` method on a [LineString]
+/// A [Coordinate] iterator used by the `into_iter` method on a [LineString]
 #[derive(Debug)]
 pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
 
