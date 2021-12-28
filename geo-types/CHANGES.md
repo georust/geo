@@ -4,6 +4,8 @@
 
 * Support `rstar` version `0.9` in feature `use-rstar_0_9`
   * <https://github.com/georust/geo/pull/682>
+* `Geometry` and `GeometryCollection` now support serde.
+  * <https://github.com/georust/geo/pull/704>
 
 ## 0.7.2
 
