@@ -5,7 +5,7 @@ use crate::{CoordNum, Coordinate, Line, Point, Triangle};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
-/// An ordered collection of two or more [Coordinate]s, representing a
+/// An ordered collection of two or more [`Coordinate`]s, representing a
 /// path between locations.
 ///
 /// # Semantics
