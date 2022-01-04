@@ -157,8 +157,8 @@ where
     /// order, so that the resultant order makes it appear clockwise
     fn points_cw(&self) -> Points<Self::Scalar> {
         match self.winding_order() {
-            Some(WindingOrder::CounterClockwise) => Points(EitherIter::B(self.points_iter().rev())),
-            _ => Points(EitherIter::A(self.points_iter())),
+            Some(WindingOrder::CounterClockwise) => Points(EitherIter::B(self.points().rev())),
+            _ => Points(EitherIter::A(self.points())),
         }
     }
 
@@ -168,8 +168,8 @@ where
     /// order, so that the resultant order makes it appear counter-clockwise
     fn points_ccw(&self) -> Points<Self::Scalar> {
         match self.winding_order() {
-            Some(WindingOrder::Clockwise) => Points(EitherIter::B(self.points_iter().rev())),
-            _ => Points(EitherIter::A(self.points_iter())),
+            Some(WindingOrder::Clockwise) => Points(EitherIter::B(self.points().rev())),
+            _ => Points(EitherIter::A(self.points())),
         }
     }
 

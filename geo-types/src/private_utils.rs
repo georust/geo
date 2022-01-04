@@ -9,7 +9,7 @@ pub fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<
 where
     T: CoordNum,
 {
-    get_bounding_rect(line_string.iter().cloned())
+    get_bounding_rect(line_string.coords().cloned())
 }
 
 pub fn line_bounding_rect<T>(line: Line<T>) -> Rect<T>

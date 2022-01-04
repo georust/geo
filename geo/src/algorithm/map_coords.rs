@@ -236,7 +236,7 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for LineString<T> {
 
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output {
         LineString::from(
-            self.points_iter()
+            self.points()
                 .map(|p| p.map_coords(func))
                 .collect::<Vec<_>>(),
         )
@@ -251,7 +251,7 @@ impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for LineString<T> {
         func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>> + Copy,
     ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
         Ok(LineString::from(
-            self.points_iter()
+            self.points()
                 .map(|p| p.try_map_coords(func))
                 .collect::<Result<Vec<_>, Box<dyn Error + Send + Sync>>>()?,
         ))
