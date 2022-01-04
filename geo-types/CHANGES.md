@@ -7,6 +7,9 @@
 * `Geometry` and `GeometryCollection` now support serde.
   * <https://github.com/georust/geo/pull/704>
 
+* add `Coordinate` iterators to LineString, regularise its iterator methods, and refactor its docs
+  * https://github.com/georust/geo/pull/705
+
 ## 0.7.2
 
 * Implement `RelativeEq` and `AbsDiffEq` for fuzzy comparison of remaining Geometry Types
