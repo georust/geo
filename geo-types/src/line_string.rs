@@ -12,7 +12,7 @@ use std::ops::{Index, IndexMut};
 ///
 /// 1. A [`LineString`] is _closed_ if it is empty, **or** if the first and last coordinates are the same.
 /// 2. The _boundary_ of a [`LineString`] is either:
-///     - **empty** if it is closed **or**
+///     - **empty** if it is _closed_ (see **1**) **or**
 ///     - contains the **start** and **end** coordinates.
 /// 3. The _interior_ is the (infinite) set of all coordinates along the [`LineString`], _not including_ the boundary.
 /// 4. A [`LineString`] is _simple_ if it does not intersect except **optionally** at the first and last coordinates (in which case it is also _closed_, see **1**).
