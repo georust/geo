@@ -10,22 +10,20 @@ use std::ops::{Index, IndexMut};
 ///
 /// # Semantics
 ///
-/// A [`LineString`] is _closed_ if it is empty, or if the
-/// first and last coordinates are the same. The _boundary_
-/// of a [`LineString`] is empty if closed, and otherwise the
-/// end points. The _interior_ is the (infinite) set of all
-/// points along the linestring _not including_ the
-/// boundary. A [`LineString`] is _simple_ if it does not
-/// intersect except possibly at the first and last
-/// coordinates. A simple and closed [`LineString`] is a
-/// `LinearRing` as defined in the OGC-SFA (but is not a
-/// separate type here).
+/// 1. A [`LineString`] is _closed_ if it is empty, **or** if the first and last coordinates are the same.
+/// 2. The _boundary_ of a [`LineString`] is either:
+///     - **empty** if it is closed **or**
+///     - contains the **start** and **end** coordinates.
+/// 3. The _interior_ is the (infinite) set of all coordinates along the [`LineString`], _not including_ the boundary.
+/// 4. A [`LineString`] is _simple_ if it does not intersect except **optionally** at the first and last coordinates (in which case it is also _closed_, see **1**).
+/// 5. A _simple_ **and** _closed_ [`LineString`] is a `LinearRing` as defined in the OGC-SFA (but is not defined as a separate type in this crate).
 ///
 /// # Validity
 ///
 /// A [`LineString`] is valid if it is either empty or
-/// contains 2 or more coordinates. Further, a closed
-/// [`LineString`] must not self-intersect. Note that its
+/// contains 2 or more coordinates.
+///
+/// Further, a closed [`LineString`] **must not** self-intersect. Note that its
 /// validity is **not** enforced, and operations and
 /// predicates are **undefined** on invalid `LineString`s.
 ///
@@ -261,9 +259,9 @@ impl<T: CoordNum> LineString<T> {
         })
     }
 
-    /// Close the [`LineString`]. Specifically, if the [`LineString`] has at least one coordinate, and
-    /// the value of the first coordinate does not equal the value of the last coordinate, then a
-    /// new coordinate is added to the end with the value of the first coordinate.
+    /// Close the [`LineString`]. Specifically, if the [`LineString`] has at least one [`Coordinate`], and
+    /// the value of the first [`Coordinate`] **does not** equal the value of the last [`Coordinate`], then a
+    /// new [`Coordinate`] is added to the end with the value of the first [`Coordinate`].
     pub fn close(&mut self) {
         if !self.is_closed() {
             // by definition, we treat empty LineString's as closed.
@@ -302,15 +300,15 @@ impl<T: CoordNum> LineString<T> {
     /// assert!(line_string.is_closed());
     /// ```
     ///
-    /// Note that we diverge from some libraries (JTS et al), which have a LinearRing type,
-    /// separate from LineString. Those libraries treat an empty LinearRing as closed, by
-    /// definition, while treating an empty LineString as open. Since we don't have a separate
-    /// LinearRing type, and use a LineString in its place, we adopt the JTS LinearRing `is_closed`
-    /// behavior in all places, that is, we consider an empty LineString as closed.
+    /// Note that we diverge from some libraries ([JTS](https://locationtech.github.io/jts/javadoc/org/locationtech/jts/geom/LinearRing.html) et al), which have a `LinearRing` type,
+    /// separate from [`LineString`]. Those libraries treat an empty `LinearRing` as **closed** by
+    /// definition, while treating an empty `LineString` as **open**. Since we don't have a separate
+    /// `LinearRing` type, and use a [`LineString`] in its place, we adopt the JTS `LinearRing` `is_closed`
+    /// behavior in all places: that is, **we consider an empty [`LineString`] as closed**.
     ///
     /// This is expected when used in the context of a [`Polygon.exterior`](crate::Polygon::exterior) and elsewhere; And there
-    /// seems to be no reason to maintain the separate behavior for LineStrings used in
-    /// non-LinearRing contexts.
+    /// seems to be no reason to maintain the separate behavior for [`LineString`]s used in
+    /// non-`LinearRing` contexts.
     pub fn is_closed(&self) -> bool {
         self.0.first() == self.0.last()
     }
