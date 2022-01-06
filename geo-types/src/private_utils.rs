@@ -9,7 +9,7 @@ pub fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<
 where
     T: CoordNum,
 {
-    get_bounding_rect(line_string.0.iter().cloned())
+    get_bounding_rect(line_string.coords().cloned())
 }
 
 pub fn line_bounding_rect<T>(line: Line<T>) -> Rect<T>
@@ -132,7 +132,7 @@ where
     }
     // LineString with one point equal p
     if line_string.0.len() == 1 {
-        return point_contains_point(Point(line_string.0[0]), point);
+        return point_contains_point(Point(line_string[0]), point);
     }
     // check if point is a vertex
     if line_string.0.contains(&point.0) {

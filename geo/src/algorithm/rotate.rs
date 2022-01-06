@@ -222,10 +222,10 @@ where
         // return a rotated polygon, or a clone if no centroid is computable
         if let Some(centroid) = centroid {
             Polygon::new(
-                rotate_many(angle, centroid, self.exterior().points_iter()).collect(),
+                rotate_many(angle, centroid, self.exterior().points()).collect(),
                 self.interiors()
                     .iter()
-                    .map(|ring| rotate_many(angle, centroid, ring.points_iter()).collect())
+                    .map(|ring| rotate_many(angle, centroid, ring.points()).collect())
                     .collect(),
             )
         } else {

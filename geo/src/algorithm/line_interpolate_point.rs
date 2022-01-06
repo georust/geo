@@ -240,11 +240,11 @@ mod test {
         // fraction is nan or inf
         assert_eq!(
             linestring.line_interpolate_point(Float::infinity()),
-            linestring.points_iter().last()
+            linestring.points().last()
         );
         assert_eq!(
             linestring.line_interpolate_point(Float::neg_infinity()),
-            linestring.points_iter().next()
+            linestring.points().next()
         );
         assert_eq!(linestring.line_interpolate_point(Float::nan()), None);
 

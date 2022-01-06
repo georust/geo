@@ -559,19 +559,15 @@ where
     let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect::<Vec<_>>());
     // Return minimum distance between all geom a points and all geom b points
     geom2
-        .points_iter()
+        .points()
         .fold(<T as Bounded>::max_value(), |acc, point| {
             let nearest = tree_a.nearest_neighbor(&point).unwrap();
             acc.min(nearest.euclidean_distance(&point))
         })
-        .min(
-            geom1
-                .points_iter()
-                .fold(Bounded::max_value(), |acc, point| {
-                    let nearest = tree_b.nearest_neighbor(&point).unwrap();
-                    acc.min(nearest.euclidean_distance(&point))
-                }),
-        )
+        .min(geom1.points().fold(Bounded::max_value(), |acc, point| {
+            let nearest = tree_b.nearest_neighbor(&point).unwrap();
+            acc.min(nearest.euclidean_distance(&point))
+        }))
 }
 
 #[cfg(test)]
