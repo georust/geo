@@ -173,6 +173,7 @@ where
     ///
     /// assert_eq!(p.lng(), 1.234);
     /// ```
+    #[deprecated = "use `Point::x` instead, it's less ambigous"]
     pub fn lng(self) -> T {
         self.x()
     }
@@ -189,6 +190,7 @@ where
     ///
     /// assert_eq!(p.lng(), 9.876);
     /// ```
+    #[deprecated = "use `Point::set_x` instead, it's less ambigous"]
     pub fn set_lng(&mut self, lng: T) -> &mut Point<T> {
         self.set_x(lng)
     }
@@ -204,6 +206,7 @@ where
     ///
     /// assert_eq!(p.lat(), 2.345);
     /// ```
+    #[deprecated = "use `Point::y` instead, it's less ambigous"]
     pub fn lat(self) -> T {
         self.y()
     }
@@ -219,6 +222,7 @@ where
     ///
     /// assert_eq!(p.lat(), 9.876);
     /// ```
+    #[deprecated = "use `Point::set_y` instead, it's less ambigous"]
     pub fn set_lat(&mut self, lat: T) -> &mut Point<T> {
         self.set_y(lat)
     }
