@@ -2,13 +2,14 @@
 
 ## Unreleased
 
+* DEPRECATION: Deprecate `Point::lng`, `Point::lat`, `Point::set_lng` and `Point::set_lat`
+  * <https://github.com/georust/geo/pull/711>
 * Support `rstar` version `0.9` in feature `use-rstar_0_9`
   * <https://github.com/georust/geo/pull/682>
 * `Geometry` and `GeometryCollection` now support serde.
   * <https://github.com/georust/geo/pull/704>
-
-* add `Coordinate` iterators to LineString, regularise its iterator methods, and refactor its docs
-  * https://github.com/georust/geo/pull/705
+* Add `Coordinate` iterators to LineString, regularise its iterator methods, and refactor its docs
+  * <https://github.com/georust/geo/pull/705>
 
 ## 0.7.2
 
