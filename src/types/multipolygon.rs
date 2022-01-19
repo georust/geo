@@ -81,11 +81,10 @@ mod tests {
 
     #[test]
     fn basic_multipolygon() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOLYGON (((8 4)), ((4 0)))")
+        let wkt: Wkt<f64> = Wkt::from_str("MULTIPOLYGON (((8 4)), ((4 0)))")
             .ok()
             .unwrap();
-        assert_eq!(1, wkt.items.len());
-        let polygons = match wkt.items.pop().unwrap() {
+        let polygons = match wkt.item {
             Geometry::MultiPolygon(MultiPolygon(polygons)) => polygons,
             _ => unreachable!(),
         };

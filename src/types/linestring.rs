@@ -67,9 +67,8 @@ mod tests {
 
     #[test]
     fn basic_linestring() {
-        let mut wkt = Wkt::from_str("LINESTRING (10 -20, -0 -0.5)").ok().unwrap();
-        assert_eq!(1, wkt.items.len());
-        let coords = match wkt.items.pop().unwrap() {
+        let wkt = Wkt::from_str("LINESTRING (10 -20, -0 -0.5)").ok().unwrap();
+        let coords = match wkt.item {
             Geometry::LineString(LineString(coords)) => coords,
             _ => unreachable!(),
         };

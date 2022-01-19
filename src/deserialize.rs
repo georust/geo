@@ -71,14 +71,8 @@ where
     where
         E: Error,
     {
-        let mut wkt = Wkt::from_str(s).map_err(|e| serde::de::Error::custom(e))?;
-        if wkt.items.len() == 1 {
-            Ok(wkt.items.remove(0))
-        } else {
-            Err(serde::de::Error::custom(
-                "WKT should have only 1 Geometry item",
-            ))
-        }
+        let wkt = Wkt::from_str(s).map_err(|e| serde::de::Error::custom(e))?;
+        Ok(wkt.item)
     }
 }
 
@@ -197,7 +191,7 @@ mod tests {
                 .deserialize_any(WktVisitor::<f64>::default())
                 .unwrap();
             assert!(matches!(
-                wkt.items[0],
+                wkt.item,
                 Geometry::Point(Point(Some(Coord {
                     x: _, // floating-point types cannot be used in patterns
                     y: _, // floating-point types cannot be used in patterns

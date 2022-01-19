@@ -88,11 +88,10 @@ mod tests {
 
     #[test]
     fn basic_geometrycollection() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4)))")
+        let wkt: Wkt<f64> = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4)))")
             .ok()
             .unwrap();
-        assert_eq!(1, wkt.items.len());
-        let items = match wkt.items.pop().unwrap() {
+        let items = match wkt.item {
             Geometry::GeometryCollection(GeometryCollection(items)) => items,
             _ => unreachable!(),
         };
@@ -101,12 +100,10 @@ mod tests {
 
     #[test]
     fn complex_geometrycollection() {
-        let mut wkt: Wkt<f64> =
-            Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4),LINESTRING(4 6,7 10)))")
-                .ok()
-                .unwrap();
-        assert_eq!(1, wkt.items.len());
-        let items = match wkt.items.pop().unwrap() {
+        let wkt: Wkt<f64> = Wkt::from_str("GEOMETRYCOLLECTION (POINT (8 4),LINESTRING(4 6,7 10)))")
+            .ok()
+            .unwrap();
+        let items = match wkt.item {
             Geometry::GeometryCollection(GeometryCollection(items)) => items,
             _ => unreachable!(),
         };
