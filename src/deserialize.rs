@@ -1,3 +1,5 @@
+//! This module provides deserialisation to WKT primitives using [`serde`]
+
 use crate::{Geometry, Wkt, WktFloat};
 use serde::de::{Deserializer, Error, Visitor};
 use std::{
@@ -88,7 +90,7 @@ where
     }
 }
 
-/// Deserializes directly from WKT format into a geo_types::Geometry.
+/// Deserializes directly from WKT format into a [`geo_types::Geometry`].
 /// ```
 /// # extern crate wkt;
 /// # extern crate geo_types;
@@ -112,13 +114,11 @@ where
     T: FromStr + Default + WktFloat,
 {
     use serde::Deserialize;
-    Geometry::deserialize(deserializer).and_then(|g: Geometry<T>| {
-        use std::convert::TryInto;
-        g.try_into().map_err(|e| D::Error::custom(e))
-    })
+    Geometry::deserialize(deserializer)
+        .and_then(|g: Geometry<T>| g.try_into().map_err(|e| D::Error::custom(e)))
 }
 
-/// Deserializes directly from WKT format into a `Option<geo_types::Point>`.
+/// Deserializes directly from WKT format into an `Option<geo_types::Point>`.
 ///
 /// # Examples
 ///
@@ -153,7 +153,6 @@ where
 {
     use serde::Deserialize;
     Wkt::deserialize(deserializer).and_then(|wkt: Wkt<T>| {
-        use std::convert::TryFrom;
         geo_types::Geometry::try_from(wkt)
             .map_err(D::Error::custom)
             .and_then(|geom| {

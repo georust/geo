@@ -14,9 +14,9 @@
 
 use std::fmt;
 use std::str::FromStr;
-use tokenizer::PeekableTokens;
-use types::coord::Coord;
-use {FromTokens, Geometry, WktFloat};
+use crate::tokenizer::PeekableTokens;
+use crate::types::coord::Coord;
+use crate::{FromTokens, Geometry, WktFloat};
 
 #[derive(Clone, Debug, Default)]
 pub struct Point<T: WktFloat>(pub Option<Coord<T>>);
@@ -68,7 +68,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::{Coord, Point};
-    use {Geometry, Wkt};
+    use crate::{Geometry, Wkt};
 
     #[test]
     fn basic_point() {
