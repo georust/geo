@@ -47,7 +47,6 @@ where
     }
 }
 
-#[macro_use]
 macro_rules! try_from_wkt_impl {
     ($($type: ident),+) => {
         $(
