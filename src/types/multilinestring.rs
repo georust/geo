@@ -76,11 +76,10 @@ mod tests {
 
     #[test]
     fn basic_multilinestring() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("MULTILINESTRING ((8 4, -3 0), (4 0, 6 -10))")
+        let wkt: Wkt<f64> = Wkt::from_str("MULTILINESTRING ((8 4, -3 0), (4 0, 6 -10))")
             .ok()
             .unwrap();
-        assert_eq!(1, wkt.items.len());
-        let lines = match wkt.items.pop().unwrap() {
+        let lines = match wkt.item {
             Geometry::MultiLineString(MultiLineString(lines)) => lines,
             _ => unreachable!(),
         };

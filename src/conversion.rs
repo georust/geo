@@ -42,16 +42,11 @@ where
 {
     type Error = Error;
 
-    fn try_from(mut wkt: Wkt<T>) -> Result<Self, Self::Error> {
-        if wkt.items.len() == 1 {
-            Self::try_from(wkt.items.pop().unwrap())
-        } else {
-            Geometry::GeometryCollection(GeometryCollection(wkt.items)).try_into()
-        }
+    fn try_from(wkt: Wkt<T>) -> Result<Self, Self::Error> {
+        Self::try_from(wkt.item)
     }
 }
 
-#[macro_use]
 macro_rules! try_from_wkt_impl {
     ($($type: ident),+) => {
         $(
@@ -59,24 +54,19 @@ macro_rules! try_from_wkt_impl {
             impl<T: CoordFloat> TryFrom<Wkt<T>> for geo_types::$type<T> {
                 type Error = Error;
 
-                fn try_from(mut wkt: Wkt<T>) -> Result<Self, Self::Error> {
-                    match wkt.items.len() {
-                        1 => {
-                            let item = wkt.items.pop().unwrap();
-                            let geometry = geo_types::Geometry::try_from(item)?;
-                            Self::try_from(geometry).map_err(|e| {
-                                match e {
-                                    geo_types::Error::MismatchedGeometry { expected, found } => {
-                                        Error::MismatchedGeometry { expected, found }
-                                    }
-                                    // currently only one error type in geo-types error enum, but that seems likely to change
-                                    #[allow(unreachable_patterns)]
-                                    other => Error::External(Box::new(other)),
-                                }
-                            })
+                fn try_from(wkt: Wkt<T>) -> Result<Self, Self::Error> {
+                    let item = wkt.item;
+                    let geometry = geo_types::Geometry::try_from(item)?;
+                    Self::try_from(geometry).map_err(|e| {
+                        match e {
+                            geo_types::Error::MismatchedGeometry { expected, found } => {
+                                Error::MismatchedGeometry { expected, found }
+                            }
+                            // currently only one error type in geo-types error enum, but that seems likely to change
+                            #[allow(unreachable_patterns)]
+                            other => Error::External(Box::new(other)),
                         }
-                        other => Err(Error::WrongNumberOfGeometries(other)),
-                    }
+                    })
                 }
             }
         )+
@@ -321,46 +311,12 @@ mod tests {
             m: None,
         }))
         .as_item();
-        let mut wkt = Wkt::new();
-        wkt.add_item(w_point);
+        let wkt = Wkt { item: w_point };
 
         let converted = geo_types::Geometry::try_from(wkt).unwrap();
         let g_point: geo_types::Point<f64> = geo_types::Point::new(1.0, 2.0);
 
         assert_eq!(converted, geo_types::Geometry::Point(g_point));
-    }
-
-    #[test]
-    fn convert_collection_wkt() {
-        let w_point_1 = Point(Some(Coord {
-            x: 1.0,
-            y: 2.0,
-            z: None,
-            m: None,
-        }))
-        .as_item();
-        let w_point_2 = Point(Some(Coord {
-            x: 3.0,
-            y: 4.0,
-            z: None,
-            m: None,
-        }))
-        .as_item();
-        let mut wkt = Wkt::new();
-        wkt.add_item(w_point_1);
-        wkt.add_item(w_point_2);
-
-        let converted = geo_types::Geometry::try_from(wkt).unwrap();
-        let geo_collection: geo_types::GeometryCollection<f64> =
-            geo_types::GeometryCollection(vec![
-                geo_types::Point::new(1.0, 2.0).into(),
-                geo_types::Point::new(3.0, 4.0).into(),
-            ]);
-
-        assert_eq!(
-            converted,
-            geo_types::Geometry::GeometryCollection(geo_collection)
-        );
     }
 
     #[test]

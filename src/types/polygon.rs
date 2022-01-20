@@ -76,12 +76,10 @@ mod tests {
 
     #[test]
     fn basic_polygon() {
-        let mut wkt: Wkt<f64> =
-            Wkt::from_str("POLYGON ((8 4, 4 0, 0 4, 8 4), (7 3, 4 1, 1 4, 7 3))")
-                .ok()
-                .unwrap();
-        assert_eq!(1, wkt.items.len());
-        let lines = match wkt.items.pop().unwrap() {
+        let wkt: Wkt<f64> = Wkt::from_str("POLYGON ((8 4, 4 0, 0 4, 8 4), (7 3, 4 1, 1 4, 7 3))")
+            .ok()
+            .unwrap();
+        let lines = match wkt.item {
             Geometry::Polygon(Polygon(lines)) => lines,
             _ => unreachable!(),
         };

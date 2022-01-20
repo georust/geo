@@ -72,9 +72,8 @@ mod tests {
 
     #[test]
     fn basic_multipoint() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT ((8 4), (4 0))").ok().unwrap();
-        assert_eq!(1, wkt.items.len());
-        let points = match wkt.items.pop().unwrap() {
+        let wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT ((8 4), (4 0))").ok().unwrap();
+        let points = match wkt.item {
             Geometry::MultiPoint(MultiPoint(points)) => points,
             _ => unreachable!(),
         };
@@ -83,9 +82,8 @@ mod tests {
 
     #[test]
     fn postgis_style_multipoint() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT (8 4, 4 0)").unwrap();
-        assert_eq!(1, wkt.items.len());
-        let points = match wkt.items.pop().unwrap() {
+        let wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT (8 4, 4 0)").unwrap();
+        let points = match wkt.item {
             Geometry::MultiPoint(MultiPoint(points)) => points,
             _ => unreachable!(),
         };
@@ -94,9 +92,8 @@ mod tests {
 
     #[test]
     fn mixed_parens_multipoint() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT (8 4, (4 0))").unwrap();
-        assert_eq!(1, wkt.items.len());
-        let points = match wkt.items.pop().unwrap() {
+        let wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT (8 4, (4 0))").unwrap();
+        let points = match wkt.item {
             Geometry::MultiPoint(MultiPoint(points)) => points,
             _ => unreachable!(),
         };
@@ -105,9 +102,8 @@ mod tests {
 
     #[test]
     fn empty_multipoint() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT EMPTY").unwrap();
-        assert_eq!(1, wkt.items.len());
-        let points = match wkt.items.pop().unwrap() {
+        let wkt: Wkt<f64> = Wkt::from_str("MULTIPOINT EMPTY").unwrap();
+        let points = match wkt.item {
             Geometry::MultiPoint(MultiPoint(points)) => points,
             _ => unreachable!(),
         };

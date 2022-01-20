@@ -2,8 +2,12 @@
 
 ## Unreleased
 ### Changed
-* Now accepts `MULTIPOINT`s with less parentheses, as output by `ST_AsText` in postgis:
+* Now accepts `MULTIPOINT`s with fewer parentheses, as output by `ST_AsText` in postgis:
   `MULTIPOINT(0 1, 2 3)` in addition to `MULTIPOINT((0 1), (2 3))`
+* BREAKING: Replace `Wkt::items` with `Wkt::item` and remove `Wkt::add_item()`.
+  * <https://github.com/georust/wkt/pull/72>
+* BREAKING: Reject empty strings instead of parsing them into an empty `Wkt`.
+  * <https://github.com/georust/wkt/pull/72>
 
 ## 0.9.2 - 2020-04-30
 ### Added

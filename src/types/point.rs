@@ -72,9 +72,8 @@ mod tests {
 
     #[test]
     fn basic_point() {
-        let mut wkt = Wkt::from_str("POINT (10 -20)").ok().unwrap();
-        assert_eq!(1, wkt.items.len());
-        let coord = match wkt.items.pop().unwrap() {
+        let wkt = Wkt::from_str("POINT (10 -20)").ok().unwrap();
+        let coord = match wkt.item {
             Geometry::Point(Point(Some(coord))) => coord,
             _ => unreachable!(),
         };
@@ -86,12 +85,10 @@ mod tests {
 
     #[test]
     fn basic_point_whitespace() {
-        let mut wkt: Wkt<f64> =
-            Wkt::from_str(" \n\t\rPOINT \n\t\r( \n\r\t10 \n\t\r-20 \n\t\r) \n\t\r")
-                .ok()
-                .unwrap();
-        assert_eq!(1, wkt.items.len());
-        let coord = match wkt.items.pop().unwrap() {
+        let wkt: Wkt<f64> = Wkt::from_str(" \n\t\rPOINT \n\t\r( \n\r\t10 \n\t\r-20 \n\t\r) \n\t\r")
+            .ok()
+            .unwrap();
+        let coord = match wkt.item {
             Geometry::Point(Point(Some(coord))) => coord,
             _ => unreachable!(),
         };

@@ -131,28 +131,19 @@ pub struct Wkt<T>
 where
     T: WktFloat,
 {
-    pub items: Vec<Geometry<T>>,
+    pub item: Geometry<T>,
 }
 
 impl<T> Wkt<T>
 where
     T: WktFloat + FromStr + Default,
 {
-    pub fn new() -> Self {
-        Wkt { items: vec![] }
-    }
-
-    pub fn add_item(&mut self, item: Geometry<T>) {
-        self.items.push(item);
-    }
-
     pub fn from_str(wkt_str: &str) -> Result<Self, &'static str> {
         let tokens = Tokens::from_str(wkt_str);
         Wkt::from_tokens(tokens)
     }
 
     fn from_tokens(tokens: Tokens<T>) -> Result<Self, &'static str> {
-        let mut wkt = Wkt::new();
         let mut tokens = tokens.peekable();
         let word = match tokens.next() {
             Some(Token::Word(word)) => {
@@ -161,14 +152,12 @@ where
                 }
                 word
             }
-            None => return Ok(wkt),
             _ => return Err("Invalid WKT format"),
         };
         match Geometry::from_word_and_tokens(&word, &mut tokens) {
-            Ok(item) => wkt.add_item(item),
+            Ok(item) => Ok(Wkt { item }),
             Err(s) => return Err(s),
         }
-        Ok(wkt)
     }
 }
 
@@ -230,22 +219,20 @@ mod tests {
 
     #[test]
     fn empty_string() {
-        let wkt: Wkt<f64> = Wkt::from_str("").ok().unwrap();
-        assert_eq!(0, wkt.items.len());
+        let res: Result<Wkt<f64>, _> = Wkt::from_str("");
+        assert!(res.is_err());
     }
 
     #[test]
     fn empty_items() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("POINT EMPTY").ok().unwrap();
-        assert_eq!(1, wkt.items.len());
-        match wkt.items.pop().unwrap() {
+        let wkt: Wkt<f64> = Wkt::from_str("POINT EMPTY").ok().unwrap();
+        match wkt.item {
             Geometry::Point(Point(None)) => (),
             _ => unreachable!(),
         };
 
-        let mut wkt: Wkt<f64> = Wkt::from_str("MULTIPOLYGON EMPTY").ok().unwrap();
-        assert_eq!(1, wkt.items.len());
-        match wkt.items.pop().unwrap() {
+        let wkt: Wkt<f64> = Wkt::from_str("MULTIPOLYGON EMPTY").ok().unwrap();
+        match wkt.item {
             Geometry::MultiPolygon(MultiPolygon(polygons)) => assert_eq!(polygons.len(), 0),
             _ => unreachable!(),
         };
@@ -253,9 +240,8 @@ mod tests {
 
     #[test]
     fn lowercase_point() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("point EMPTY").ok().unwrap();
-        assert_eq!(1, wkt.items.len());
-        match wkt.items.pop().unwrap() {
+        let wkt: Wkt<f64> = Wkt::from_str("point EMPTY").ok().unwrap();
+        match wkt.item {
             Geometry::Point(Point(None)) => (),
             _ => unreachable!(),
         };
@@ -272,10 +258,8 @@ mod tests {
 
     #[test]
     fn support_jts_linearring() {
-        let mut wkt: Wkt<f64> = Wkt::from_str("linearring (10 20, 30 40)").ok().unwrap();
-        assert_eq!(1, wkt.items.len());
-
-        match wkt.items.pop().unwrap() {
+        let wkt: Wkt<f64> = Wkt::from_str("linearring (10 20, 30 40)").ok().unwrap();
+        match wkt.item {
             Geometry::LineString(_ls) => (),
             _ => panic!("expected to be parsed as a LINESTRING"),
         };

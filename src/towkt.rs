@@ -219,8 +219,6 @@ where
 {
     fn to_wkt(&self) -> Wkt<T> {
         let w_geom = g_geom_to_w_geom(&self);
-        Wkt {
-            items: vec![w_geom],
-        }
+        Wkt { item: w_geom }
     }
 }
