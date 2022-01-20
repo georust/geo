@@ -18,12 +18,3 @@ wkt = { version = "0.9", features = ["geo-types", "serde"] }
 [dev-dependencies]
 pretty_env_logger = "*"
 
-[patch.crates-io]
-geo = { git = "https://github.com/georust/geo", branch = "mkirk/geomgraph" }
-geo-types = { git = "https://github.com/georust/geo", branch = "mkirk/geomgraph" }
-
-# This branch allows parsing more cases and will eventually be upstreamed.
-#
-# Since we gracefully skip cases which fail to parse, the existing tests will
-# still pass when using the published WKT, but less cases will be executed.
-wkt = { git = "https://github.com/rmanoka/wkt", branch = "rmanoka/jts-test-runner" }
