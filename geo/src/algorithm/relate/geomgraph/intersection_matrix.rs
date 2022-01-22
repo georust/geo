@@ -222,7 +222,6 @@ impl IntersectionMatrix {
     }
 
     /// Directly accesses this matrix
-    ///
     pub fn get(&self, lhs: CoordPos, rhs: CoordPos) -> Dimensions {
         self.0[lhs][rhs]
     }
