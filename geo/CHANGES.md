@@ -14,6 +14,7 @@
   * <https://github.com/georust/geo/pull/675>
 * BREAKING: `TryMapCoords` Result is now generic rather than a Box<dyn Error>.
   * <https://github.com/georust/geo/issues/722>
+* Add `get()` to `IntersectionMatrix` for directly querying DE-9IM matrices
 
 ## 0.18.0
 
