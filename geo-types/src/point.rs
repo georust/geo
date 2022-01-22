@@ -3,7 +3,7 @@ use crate::{CoordFloat, CoordNum, Coordinate};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// A single point in 2D space.
 ///
@@ -359,6 +359,28 @@ where
     }
 }
 
+impl<T> AddAssign for Point<T>
+where
+    T: CoordNum,
+{
+    /// Add a point to the given point and assign it to the original point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let mut p = Point::new(1.25, 2.5);
+    /// p += Point::new(1.5, 2.5);
+    ///
+    /// assert_eq!(p.x(), 2.75);
+    /// assert_eq!(p.y(), 5.0);
+    /// ```
+    fn add_assign(&mut self, rhs: Point<T>) {
+        self.0 = self.0 + rhs.0;
+    }
+}
+
 impl<T> Sub for Point<T>
 where
     T: CoordNum,
@@ -379,6 +401,28 @@ where
     /// ```
     fn sub(self, rhs: Point<T>) -> Point<T> {
         Point(self.0 - rhs.0)
+    }
+}
+
+impl<T> SubAssign for Point<T>
+where
+    T: CoordNum,
+{
+    /// Subtract a point from the given point and assign it to the original point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let mut p = Point::new(1.25, 2.5);
+    /// p -= Point::new(1.5, 2.5);
+    ///
+    /// assert_eq!(p.x(), -0.25);
+    /// assert_eq!(p.y(), 0.0);
+    /// ```
+    fn sub_assign(&mut self, rhs: Point<T>) {
+        self.0 = self.0 - rhs.0;
     }
 }
 
@@ -405,6 +449,28 @@ where
     }
 }
 
+impl<T> MulAssign<T> for Point<T>
+where
+    T: CoordNum,
+{
+    /// Scaler multiplication of a point in place
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let mut p = Point::new(2.0, 3.0);
+    /// p *= 2.0;
+    ///
+    /// assert_eq!(p.x(), 4.0);
+    /// assert_eq!(p.y(), 6.0);
+    /// ```
+    fn mul_assign(&mut self, rhs: T) {
+        self.0 = self.0 * rhs
+    }
+}
+
 impl<T> Div<T> for Point<T>
 where
     T: CoordNum,
@@ -425,6 +491,28 @@ where
     /// ```
     fn div(self, rhs: T) -> Point<T> {
         Point(self.0 / rhs)
+    }
+}
+
+impl<T> DivAssign<T> for Point<T>
+where
+    T: CoordNum,
+{
+    /// Scaler division of a point in place
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let mut p = Point::new(2.0, 3.0);
+    /// p /= 2.0;
+    ///
+    /// assert_eq!(p.x(), 1.0);
+    /// assert_eq!(p.y(), 1.5);
+    /// ```
+    fn div_assign(&mut self, rhs: T) {
+        self.0 = self.0 / rhs
     }
 }
 
