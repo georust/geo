@@ -220,6 +220,12 @@ impl IntersectionMatrix {
             && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
     }
+
+    /// Directly accesses this matrix
+    ///
+    pub fn get(&self, lhs: CoordPos, rhs: CoordPos) -> Dimensions {
+        self.0[lhs][rhs]
+    }
 }
 
 impl std::str::FromStr for IntersectionMatrix {
