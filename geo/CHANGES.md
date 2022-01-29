@@ -2,18 +2,24 @@
 
 ## Unreleased
 
-* Bump proj crate to 0.23.0, using PROJ 8.1.0
+* Bump `proj` crate to 0.25.0, using PROJ 8.1.0
+  * <https://github.com/georust/geo/pull/661>
+  * <https://github.com/georust/geo/pull/718>
 * Add `ChaikinSmoothing` algorithm
+  * <https://github.com/georust/geo/pull/648>
 * Fix `rotate` for multipolygons to rotate around the collection's centroid, instead of rotating each individual polygon around its own centroid.
   * <https://github.com/georust/geo/pull/651>
-* Add KNearestConcaveHull algorithm
+* Add `KNearestConcaveHull` algorithm
   * <https://github.com/georust/geo/pull/635>
-* remove cargo-tarpaulin due to instability (#676, #677)
+* Remove cargo-tarpaulin due to instability (#676, #677)
 * Fix: `ClosestPoint` for Polygon's handling of internal points
+  * <https://github.com/georust/geo/pull/679>
 * Implemented `ClosestPoint` method for types Triangle, Rect, GeometryCollection, Coordinate and the Geometry enum.
   * <https://github.com/georust/geo/pull/675>
 * BREAKING: `TryMapCoords` Result is now generic rather than a Box<dyn Error>.
   * <https://github.com/georust/geo/issues/722>
+* Add `Transform` algorithm
+  * <https://github.com/georust/geo/pull/718>
 
 ## 0.18.0
 

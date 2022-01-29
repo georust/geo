@@ -126,7 +126,7 @@
 //! - **[`Centroid`](algorithm::centroid::Centroid)**: Calculate the centroid of a geometry
 //! - **[`HaversineDestination`](algorithm::haversine_destination::HaversineDestination)**:
 //! - **[`HaversineIntermediate`](algorithm::haversine_intermediate::HaversineIntermediate)**:
-//! - **`Proj`**: Project geometries with the `proj` crate
+//! - **[`Proj`](algorithm::proj::Proj)**: Project geometries with the `proj` crate (requires the `use-proj` feature)
 //! - **[`ChaikinSmoothing`](algorithm::chaikin_smoothing::ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 //!
 //! # Features
@@ -252,6 +252,8 @@ pub mod prelude {
     pub use crate::algorithm::rotate::{Rotate, RotatePoint};
     pub use crate::algorithm::simplify::Simplify;
     pub use crate::algorithm::simplifyvw::SimplifyVW;
+    #[cfg(feature = "use-proj")]
+    pub use crate::algorithm::transform::Transform;
     pub use crate::algorithm::translate::Translate;
     pub use crate::algorithm::vincenty_distance::VincentyDistance;
     pub use crate::algorithm::vincenty_length::VincentyLength;
