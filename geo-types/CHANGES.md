@@ -10,6 +10,8 @@
   * <https://github.com/georust/geo/pull/704>
 * Add `Coordinate` iterators to LineString, regularise its iterator methods, and refactor its docs
   * <https://github.com/georust/geo/pull/705>
+* Add +=, -=, \*=, and /= for Point
+  * <https://github.com/georust/geo/pull/715>
 
 ## 0.7.2
 
