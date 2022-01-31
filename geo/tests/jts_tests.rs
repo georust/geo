@@ -9,6 +9,7 @@ fn init_logging() {
 }
 
 #[test]
+#[cfg(not(tarpaulin_include))]
 fn test_all_general() {
     init_logging();
 
