@@ -8,7 +8,7 @@
 //! # #[cfg(feature = "use-proj")]
 //! use geo::algorithm::map_coords::TryMapCoords;
 //! # #[cfg(feature = "use-proj")]
-//! use proj::{Coord, Proj};
+//! use proj::{Coord, Proj, ProjError};
 //! // GeoJSON uses the WGS 84 coordinate system
 //! # #[cfg(feature = "use-proj")]
 //! let from = "EPSG:4326";
@@ -18,7 +18,7 @@
 //! # #[cfg(feature = "use-proj")]
 //! let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
 //! # #[cfg(feature = "use-proj")]
-//! let f = |x: f64, y: f64| {
+//! let f = |x: f64, y: f64| -> Result<_, ProjError> {
 //!     // proj can accept Point, Coordinate, Tuple, and array values, returning a Result
 //!     let shifted = to_feet.convert((x, y))?;
 //!     Ok((shifted.x(), shifted.y()))
@@ -39,7 +39,6 @@ use crate::{
     CoordNum, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
-use std::error::Error;
 
 /// Map a function over all the coordinates in an object, returning a new one
 pub trait MapCoords<T, NT> {
@@ -79,7 +78,7 @@ pub trait MapCoords<T, NT> {
 }
 
 /// Map a fallible function over all the coordinates in a geometry, returning a Result
-pub trait TryMapCoords<T, NT> {
+pub trait TryMapCoords<T, NT, E> {
     type Output;
 
     /// Map a fallible function over all the coordinates in a geometry, returning a Result
@@ -93,8 +92,9 @@ pub trait TryMapCoords<T, NT> {
     ///
     /// let p1 = Point::new(10., 20.);
     /// let p2 = p1
-    ///     .try_map_coords(|&(x, y)| Ok((x + 1000., y * 2.)))
-    ///     .unwrap();
+    ///     .try_map_coords(|&(x, y)| -> Result<_, std::convert::Infallible> {
+    ///         Ok((x + 1000., y * 2.))
+    ///     }).unwrap();
     ///
     /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon = 1e-6);
     /// ```
@@ -109,7 +109,7 @@ pub trait TryMapCoords<T, NT> {
     /// # #[cfg(feature = "use-proj")]
     /// use geo::algorithm::map_coords::TryMapCoords;
     /// # #[cfg(feature = "use-proj")]
-    /// use proj::{Coord, Proj};
+    /// use proj::{Coord, Proj, ProjError};
     /// // GeoJSON uses the WGS 84 coordinate system
     /// # #[cfg(feature = "use-proj")]
     /// let from = "EPSG:4326";
@@ -119,7 +119,7 @@ pub trait TryMapCoords<T, NT> {
     /// # #[cfg(feature = "use-proj")]
     /// let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
     /// # #[cfg(feature = "use-proj")]
-    /// let f = |x: f64, y: f64| {
+    /// let f = |x: f64, y: f64| -> Result<_, ProjError> {
     ///     // proj can accept Point, Coordinate, Tuple, and array values, returning a Result
     ///     let shifted = to_feet.convert((x, y))?;
     ///     Ok((shifted.x(), shifted.y()))
@@ -137,8 +137,8 @@ pub trait TryMapCoords<T, NT> {
     /// ```
     fn try_map_coords(
         &self,
-        func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>> + Copy,
-    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>>
+        func: impl Fn(&(T, T)) -> Result<(NT, NT), E> + Copy,
+    ) -> Result<Self::Output, E>
     where
         T: CoordNum,
         NT: CoordNum;
@@ -174,13 +174,13 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Point<T> {
     }
 }
 
-impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for Point<T> {
+impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for Point<T> {
     type Output = Point<NT>;
 
     fn try_map_coords(
         &self,
-        func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>>,
-    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
+        func: impl Fn(&(T, T)) -> Result<(NT, NT), E>,
+    ) -> Result<Self::Output, E> {
         let new_point = func(&(self.0.x, self.0.y))?;
         Ok(Point::new(new_point.0, new_point.1))
     }
@@ -205,13 +205,13 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Line<T> {
     }
 }
 
-impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for Line<T> {
+impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for Line<T> {
     type Output = Line<NT>;
 
     fn try_map_coords(
         &self,
-        func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>> + Copy,
-    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
+        func: impl Fn(&(T, T)) -> Result<(NT, NT), E> + Copy,
+    ) -> Result<Self::Output, E> {
         Ok(Line::new(
             self.start_point().try_map_coords(func)?.0,
             self.end_point().try_map_coords(func)?.0,
@@ -243,17 +243,17 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for LineString<T> {
     }
 }
 
-impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for LineString<T> {
+impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for LineString<T> {
     type Output = LineString<NT>;
 
     fn try_map_coords(
         &self,
-        func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>> + Copy,
-    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
+        func: impl Fn(&(T, T)) -> Result<(NT, NT), E> + Copy,
+    ) -> Result<Self::Output, E> {
         Ok(LineString::from(
             self.points()
                 .map(|p| p.try_map_coords(func))
-                .collect::<Result<Vec<_>, Box<dyn Error + Send + Sync>>>()?,
+                .collect::<Result<Vec<_>, E>>()?,
         ))
     }
 }
@@ -282,19 +282,19 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Polygon<T> {
     }
 }
 
-impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for Polygon<T> {
+impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for Polygon<T> {
     type Output = Polygon<NT>;
 
     fn try_map_coords(
         &self,
-        func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>> + Copy,
-    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
+        func: impl Fn(&(T, T)) -> Result<(NT, NT), E> + Copy,
+    ) -> Result<Self::Output, E> {
         Ok(Polygon::new(
             self.exterior().try_map_coords(func)?,
             self.interiors()
                 .iter()
                 .map(|l| l.try_map_coords(func))
-                .collect::<Result<Vec<_>, Box<dyn Error + Send + Sync>>>()?,
+                .collect::<Result<Vec<_>, E>>()?,
         ))
     }
 }
@@ -321,18 +321,18 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPoint<T> {
     }
 }
 
-impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for MultiPoint<T> {
+impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for MultiPoint<T> {
     type Output = MultiPoint<NT>;
 
     fn try_map_coords(
         &self,
-        func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>> + Copy,
-    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
+        func: impl Fn(&(T, T)) -> Result<(NT, NT), E> + Copy,
+    ) -> Result<Self::Output, E> {
         Ok(MultiPoint(
             self.0
                 .iter()
                 .map(|p| p.try_map_coords(func))
-                .collect::<Result<Vec<_>, Box<dyn Error + Send + Sync>>>()?,
+                .collect::<Result<Vec<_>, E>>()?,
         ))
     }
 }
@@ -353,18 +353,18 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiLineString<T> {
     }
 }
 
-impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for MultiLineString<T> {
+impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for MultiLineString<T> {
     type Output = MultiLineString<NT>;
 
     fn try_map_coords(
         &self,
-        func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>> + Copy,
-    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
+        func: impl Fn(&(T, T)) -> Result<(NT, NT), E> + Copy,
+    ) -> Result<Self::Output, E> {
         Ok(MultiLineString(
             self.0
                 .iter()
                 .map(|l| l.try_map_coords(func))
-                .collect::<Result<Vec<_>, Box<dyn Error + Send + Sync>>>()?,
+                .collect::<Result<Vec<_>, E>>()?,
         ))
     }
 }
@@ -385,18 +385,18 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPolygon<T> {
     }
 }
 
-impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for MultiPolygon<T> {
+impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for MultiPolygon<T> {
     type Output = MultiPolygon<NT>;
 
     fn try_map_coords(
         &self,
-        func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>> + Copy,
-    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
+        func: impl Fn(&(T, T)) -> Result<(NT, NT), E> + Copy,
+    ) -> Result<Self::Output, E> {
         Ok(MultiPolygon(
             self.0
                 .iter()
                 .map(|p| p.try_map_coords(func))
-                .collect::<Result<Vec<_>, Box<dyn Error + Send + Sync>>>()?,
+                .collect::<Result<Vec<_>, E>>()?,
         ))
     }
 }
@@ -428,13 +428,13 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Geometry<T> {
     }
 }
 
-impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for Geometry<T> {
+impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for Geometry<T> {
     type Output = Geometry<NT>;
 
     fn try_map_coords(
         &self,
-        func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>> + Copy,
-    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
+        func: impl Fn(&(T, T)) -> Result<(NT, NT), E> + Copy,
+    ) -> Result<Self::Output, E> {
         match *self {
             Geometry::Point(ref x) => Ok(Geometry::Point(x.try_map_coords(func)?)),
             Geometry::Line(ref x) => Ok(Geometry::Line(x.try_map_coords(func)?)),
@@ -479,18 +479,18 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for GeometryCollection<T> {
     }
 }
 
-impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for GeometryCollection<T> {
+impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for GeometryCollection<T> {
     type Output = GeometryCollection<NT>;
 
     fn try_map_coords(
         &self,
-        func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>> + Copy,
-    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
+        func: impl Fn(&(T, T)) -> Result<(NT, NT), E> + Copy,
+    ) -> Result<Self::Output, E> {
         Ok(GeometryCollection(
             self.0
                 .iter()
                 .map(|g| g.try_map_coords(func))
-                .collect::<Result<Vec<_>, Box<dyn Error + Send + Sync>>>()?,
+                .collect::<Result<Vec<_>, E>>()?,
         ))
     }
 }
@@ -511,13 +511,13 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Rect<T> {
     }
 }
 
-impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for Rect<T> {
+impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for Rect<T> {
     type Output = Rect<NT>;
 
     fn try_map_coords(
         &self,
-        func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>>,
-    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
+        func: impl Fn(&(T, T)) -> Result<(NT, NT), E>,
+    ) -> Result<Self::Output, E> {
         Ok(Rect::new(
             func(&self.min().x_y())?,
             func(&self.max().x_y())?,
@@ -548,13 +548,13 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Triangle<T> {
     }
 }
 
-impl<T: CoordNum, NT: CoordNum> TryMapCoords<T, NT> for Triangle<T> {
+impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for Triangle<T> {
     type Output = Triangle<NT>;
 
     fn try_map_coords(
         &self,
-        func: impl Fn(&(T, T)) -> Result<(NT, NT), Box<dyn Error + Send + Sync>>,
-    ) -> Result<Self::Output, Box<dyn Error + Send + Sync>> {
+        func: impl Fn(&(T, T)) -> Result<(NT, NT), E>,
+    ) -> Result<Self::Output, E> {
         let p1 = func(&self.0.x_y())?;
         let p2 = func(&self.1.x_y())?;
         let p3 = func(&self.2.x_y())?;
@@ -641,8 +641,13 @@ mod test {
 
     #[test]
     fn rect_try_map_coords() {
-        let rect = Rect::new((10, 10), (20, 20));
-        let result = rect.try_map_coords(|&(x, y)| Ok((x + 10, y + 20)));
+        let rect = Rect::new((10i32, 10), (20, 20));
+        let result = rect.try_map_coords(|&(x, y)| -> Result<_, &'static str> {
+            Ok((
+                x.checked_add(10).ok_or("overflow")?,
+                y.checked_add(20).ok_or("overflow")?,
+            ))
+        });
         assert!(result.is_ok());
     }
 
@@ -651,17 +656,16 @@ mod test {
         let rect = Rect::new((2, 2), (3, 3));
         // Rect's enforce that rect.min is up and left of p2.  Here we test that the points are
         // normalized into a valid rect, regardless of the order they are mapped.
-        let new_rect = rect
-            .try_map_coords(|&pt| {
-                match pt {
-                    // old min point maps to new max point
-                    (2, 2) => Ok((4, 4)),
-                    // old max point maps to new min point
-                    (3, 3) => Ok((1, 1)),
-                    _ => panic!("unexpected point"),
-                }
-            })
-            .unwrap();
+        let result: Result<_, std::convert::Infallible> = rect.try_map_coords(|&pt| {
+            match pt {
+                // old min point maps to new max point
+                (2, 2) => Ok((4, 4)),
+                // old max point maps to new min point
+                (3, 3) => Ok((1, 1)),
+                _ => panic!("unexpected point"),
+            }
+        });
+        let new_rect = result.unwrap();
         assert_eq!(new_rect.min(), Coordinate { x: 1, y: 1 });
         assert_eq!(new_rect.max(), Coordinate { x: 4, y: 4 });
     }
@@ -829,12 +833,12 @@ mod test {
     #[cfg(feature = "use-proj")]
     #[test]
     fn test_fallible_proj() {
-        use proj::{Coord, Proj};
+        use proj::{Coord, Proj, ProjError};
         let from = "EPSG:4326";
         let to = "EPSG:2230";
         let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
 
-        let f = |x: f64, y: f64| {
+        let f = |x: f64, y: f64| -> Result<_, ProjError> {
             let shifted = to_feet.convert((x, y))?;
             Ok((shifted.x(), shifted.y()))
         };
@@ -847,11 +851,11 @@ mod test {
 
     #[test]
     fn test_fallible() {
-        let f = |x: f64, y: f64| {
+        let f = |x: f64, y: f64| -> Result<_, &'static str> {
             if relative_ne!(x, 2.0) {
                 Ok((x * 2., y + 100.))
             } else {
-                Err("Ugh".into())
+                Err("Ugh")
             }
         };
         // this should produce an error
