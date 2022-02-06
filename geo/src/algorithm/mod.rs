@@ -78,6 +78,9 @@ pub mod rotate;
 pub mod simplify;
 /// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
 pub mod simplifyvw;
+/// Transform a geometry using PROJ.
+#[cfg(feature = "use-proj")]
+pub mod transform;
 /// Translate a `Geometry` along the given offsets.
 pub mod translate;
 /// Calculate the Vincenty distance between two `Point`s.
