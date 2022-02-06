@@ -108,8 +108,8 @@ impl fmt::Display for TransformError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             TransformError::UnknownCrs => write!(f, "Unknown CRS"),
-            TransformError::ProjCreateError(err) => write!(f, "{}", err),
-            TransformError::ProjError(err) => write!(f, "{}", err),
+            TransformError::ProjCreateError(err) => err.fmt(f),
+            TransformError::ProjError(err) => err.fmt(f),
         }
     }
 }
