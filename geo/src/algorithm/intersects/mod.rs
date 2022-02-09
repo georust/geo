@@ -111,7 +111,8 @@ where
 mod test {
     use crate::algorithm::intersects::Intersects;
     use crate::{
-        line_string, polygon, Coordinate, Geometry, Line, LineString, Point, Polygon, Rect,
+        line_string, polygon, Coordinate, Geometry, Line, LineString, MultiLineString, MultiPoint,
+        MultiPolygon, Point, Polygon, Rect,
     };
 
     /// Tests: intersection LineString and LineString
@@ -573,5 +574,147 @@ mod test {
         // combinations of geometry types.
         let geom: Geometry<_> = Line::from([(0.5, 0.5), (2., 1.)]).into();
         assert!(geom.intersects(&geom));
+    }
+
+    #[test]
+    fn exhaustive_compile_test() {
+        use geo_types::{GeometryCollection, Triangle};
+        let pt: Point<f64> = Point::new(0., 0.);
+        let ln: Line<f64> = Line::new((0., 0.), (1., 1.));
+        let ls = line_string![(0., 0.).into(), (1., 1.).into()];
+        let poly = Polygon::new(LineString::from(vec![(0., 0.), (1., 1.), (1., 0.)]), vec![]);
+        let rect = Rect::new(Coordinate { x: 10., y: 20. }, Coordinate { x: 30., y: 10. });
+        let tri = Triangle(
+            Coordinate { x: 0., y: 0. },
+            Coordinate { x: 10., y: 20. },
+            Coordinate { x: 20., y: -10. },
+        );
+        let geom = Geometry::Point(pt.clone());
+        let gc = GeometryCollection(vec![geom.clone()]);
+        let multi_point = MultiPoint(vec![pt.clone()]);
+        let multi_ls = MultiLineString(vec![ls.clone()]);
+        let multi_poly = MultiPolygon(vec![poly.clone()]);
+
+        dbg!(pt.intersects(&pt));
+        dbg!(pt.intersects(&ln));
+        dbg!(pt.intersects(&ls));
+        dbg!(pt.intersects(&poly));
+        dbg!(pt.intersects(&rect));
+        dbg!(pt.intersects(&tri));
+        dbg!(pt.intersects(&geom));
+        dbg!(pt.intersects(&gc));
+        dbg!(pt.intersects(&multi_point));
+        dbg!(pt.intersects(&multi_ls));
+        dbg!(pt.intersects(&multi_poly));
+        dbg!(ln.intersects(&pt));
+        dbg!(ln.intersects(&ln));
+        dbg!(ln.intersects(&ls));
+        dbg!(ln.intersects(&poly));
+        dbg!(ln.intersects(&rect));
+        dbg!(ln.intersects(&tri));
+        dbg!(ln.intersects(&geom));
+        dbg!(ln.intersects(&gc));
+        dbg!(ln.intersects(&multi_point));
+        dbg!(ln.intersects(&multi_ls));
+        dbg!(ln.intersects(&multi_poly));
+        dbg!(ls.intersects(&pt));
+        dbg!(ls.intersects(&ln));
+        dbg!(ls.intersects(&ls));
+        dbg!(ls.intersects(&poly));
+        dbg!(ls.intersects(&rect));
+        dbg!(ls.intersects(&tri));
+        dbg!(ls.intersects(&geom));
+        dbg!(ls.intersects(&gc));
+        dbg!(ls.intersects(&multi_point));
+        dbg!(ls.intersects(&multi_ls));
+        dbg!(ls.intersects(&multi_poly));
+        dbg!(poly.intersects(&pt));
+        dbg!(poly.intersects(&ln));
+        dbg!(poly.intersects(&ls));
+        dbg!(poly.intersects(&poly));
+        dbg!(poly.intersects(&rect));
+        dbg!(poly.intersects(&tri));
+        dbg!(poly.intersects(&geom));
+        dbg!(poly.intersects(&gc));
+        dbg!(poly.intersects(&multi_point));
+        dbg!(poly.intersects(&multi_ls));
+        dbg!(poly.intersects(&multi_poly));
+        dbg!(rect.intersects(&pt));
+        dbg!(rect.intersects(&ln));
+        dbg!(rect.intersects(&ls));
+        dbg!(rect.intersects(&poly));
+        dbg!(rect.intersects(&rect));
+        dbg!(rect.intersects(&tri));
+        dbg!(rect.intersects(&geom));
+        dbg!(rect.intersects(&gc));
+        dbg!(rect.intersects(&multi_point));
+        dbg!(rect.intersects(&multi_ls));
+        dbg!(rect.intersects(&multi_poly));
+        dbg!(tri.intersects(&pt));
+        dbg!(tri.intersects(&ln));
+        dbg!(tri.intersects(&ls));
+        dbg!(tri.intersects(&poly));
+        dbg!(tri.intersects(&rect));
+        dbg!(tri.intersects(&tri));
+        dbg!(tri.intersects(&geom));
+        dbg!(tri.intersects(&gc));
+        dbg!(tri.intersects(&multi_point));
+        dbg!(tri.intersects(&multi_ls));
+        dbg!(tri.intersects(&multi_poly));
+        dbg!(geom.intersects(&pt));
+        dbg!(geom.intersects(&ln));
+        dbg!(geom.intersects(&ls));
+        dbg!(geom.intersects(&poly));
+        dbg!(geom.intersects(&rect));
+        dbg!(geom.intersects(&tri));
+        dbg!(geom.intersects(&geom));
+        dbg!(geom.intersects(&gc));
+        dbg!(geom.intersects(&multi_point));
+        dbg!(geom.intersects(&multi_ls));
+        dbg!(geom.intersects(&multi_poly));
+        dbg!(gc.intersects(&pt));
+        dbg!(gc.intersects(&ln));
+        dbg!(gc.intersects(&ls));
+        dbg!(gc.intersects(&poly));
+        dbg!(gc.intersects(&rect));
+        dbg!(gc.intersects(&tri));
+        dbg!(gc.intersects(&geom));
+        dbg!(gc.intersects(&gc));
+        dbg!(gc.intersects(&multi_point));
+        dbg!(gc.intersects(&multi_ls));
+        dbg!(gc.intersects(&multi_poly));
+        dbg!(multi_point.intersects(&pt));
+        dbg!(multi_point.intersects(&ln));
+        dbg!(multi_point.intersects(&ls));
+        dbg!(multi_point.intersects(&poly));
+        dbg!(multi_point.intersects(&rect));
+        dbg!(multi_point.intersects(&tri));
+        dbg!(multi_point.intersects(&geom));
+        dbg!(multi_point.intersects(&gc));
+        dbg!(multi_point.intersects(&multi_point));
+        dbg!(multi_point.intersects(&multi_ls));
+        dbg!(multi_point.intersects(&multi_poly));
+        dbg!(multi_ls.intersects(&pt));
+        dbg!(multi_ls.intersects(&ln));
+        dbg!(multi_ls.intersects(&ls));
+        dbg!(multi_ls.intersects(&poly));
+        dbg!(multi_ls.intersects(&rect));
+        dbg!(multi_ls.intersects(&tri));
+        dbg!(multi_ls.intersects(&geom));
+        dbg!(multi_ls.intersects(&gc));
+        dbg!(multi_ls.intersects(&multi_point));
+        dbg!(multi_ls.intersects(&multi_ls));
+        dbg!(multi_ls.intersects(&multi_poly));
+        dbg!(multi_poly.intersects(&pt));
+        dbg!(multi_poly.intersects(&ln));
+        dbg!(multi_poly.intersects(&ls));
+        dbg!(multi_poly.intersects(&poly));
+        dbg!(multi_poly.intersects(&rect));
+        dbg!(multi_poly.intersects(&tri));
+        dbg!(multi_poly.intersects(&geom));
+        dbg!(multi_poly.intersects(&gc));
+        dbg!(multi_poly.intersects(&multi_point));
+        dbg!(multi_poly.intersects(&multi_ls));
+        dbg!(multi_poly.intersects(&multi_poly));
     }
 }
