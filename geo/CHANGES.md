@@ -20,6 +20,8 @@
   * <https://github.com/georust/geo/issues/722>
 * Add `Transform` algorithm
   * <https://github.com/georust/geo/pull/718>
+* Add missing `Intersects` implementations
+  * <https://github.com/georust/geo/pull/725>
 
 ## 0.18.0
 
