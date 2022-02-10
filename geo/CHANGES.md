@@ -20,6 +20,8 @@
   * <https://github.com/georust/geo/issues/722>
 * Add `Transform` algorithm
   * <https://github.com/georust/geo/pull/718>
+* Note: The MSRV when installing latest dependencies has increased to 1.55
+  * <https://github.com/georust/geo/pull/726>
 
 ## 0.18.0
 
