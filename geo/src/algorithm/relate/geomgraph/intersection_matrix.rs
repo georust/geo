@@ -234,7 +234,7 @@ impl IntersectionMatrix {
     /// // The intersection of the two interiors is empty, because no part of the string is inside the rect
     /// assert_eq!(intersection.get(CoordPos::Inside, CoordPos::Inside), Dimensions::Empty);
     ///
-    /// // The intersection of the two string's interior with the rect's boundary is one-dimensoinal, because part of the first line overlaps one of the rect's edges
+    /// // The intersection of the line string's interior with the rect's boundary is one-dimensoinal, because part of the first line overlaps one of the rect's edges
     /// assert_eq!(intersection.get(CoordPos::Inside, CoordPos::OnBoundary), Dimensions::OneDimensional);
     ///
     /// // The intersection of the line string's interior with the rect's exterior is one-dimensional, because part of the string is outside the rect
