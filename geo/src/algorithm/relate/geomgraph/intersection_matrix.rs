@@ -249,7 +249,7 @@ impl IntersectionMatrix {
     /// // The intersection of the line string's boundary with the rect's exterior is empty, because neither of its end points are outside the rect
     /// assert_eq!(intersection.get(CoordPos::OnBoundary, CoordPos::Outside), Dimensions::Empty);
     ///
-    /// // The intersection of the the line's exteror with the rect's interior is two-dimensional, because it's simply the rect's interior
+    /// // The intersection of the the line's exterior with the rect's interior is two-dimensional, because it's simply the rect's interior
     /// assert_eq!(intersection.get(CoordPos::Outside, CoordPos::Inside), Dimensions::TwoDimensional);
     ///
     /// // The intersection of the line's exteror with the rect's boundary is one-dimensional, because it's the rect's edges (minus where the string overlaps it)
