@@ -255,7 +255,7 @@ impl IntersectionMatrix {
     /// // The intersection of the line's exteror with the rect's boundary is one-dimensional, because it's the rect's edges (minus where the string overlaps it)
     /// assert_eq!(intersection.get(CoordPos::Outside, CoordPos::OnBoundary), Dimensions::OneDimensional);
     ///
-    /// // The intersection of the two exterors is two-dimensional, because it's the whole plane around the two shapes
+    /// // The intersection of the two exteriors is two-dimensional, because it's the whole plane around the two shapes
     /// assert_eq!(intersection.get(CoordPos::Outside, CoordPos::Outside), Dimensions::TwoDimensional);
     /// ```
     pub fn get(&self, lhs: CoordPos, rhs: CoordPos) -> Dimensions {
