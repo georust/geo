@@ -97,8 +97,10 @@ impl<T: CoordNum> Geometry<T> {
     ///
     /// ```
     /// use geo_types::*;
+    /// use std::convert::TryInto;
+    ///
     /// let g = Geometry::Point(Point::new(0., 0.));
-    /// let p2: Point<f32> = g.into_point().unwrap();
+    /// let p2: Point<f32> = g.try_into().unwrap();
     /// assert_eq!(p2, Point::new(0., 0.,));
     /// ```
     #[deprecated(

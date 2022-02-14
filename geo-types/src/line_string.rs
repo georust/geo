@@ -279,7 +279,11 @@ impl<T: CoordNum> LineString<T> {
     ///
     /// let mut coords = vec![(0., 0.), (5., 0.), (7., 9.)];
     /// let line_string: LineString<f32> = coords.into_iter().collect();
+    ///
+    /// # #[allow(deprecated)]
+    /// # {
     /// assert_eq!(3, line_string.num_coords());
+    /// # }
     /// ```
     #[deprecated(note = "Use geo::algorithm::coords_iter::CoordsIter::coords_count instead")]
     pub fn num_coords(&self) -> usize {
