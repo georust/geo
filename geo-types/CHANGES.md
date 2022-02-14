@@ -12,6 +12,8 @@
   * <https://github.com/georust/geo/pull/705>
 * Add +=, -=, \*=, and /= for Point
   * <https://github.com/georust/geo/pull/715>
+* Note: The MSRV when installing latest dependencies has increased to 1.55
+  * <https://github.com/georust/geo/pull/726>
 
 ## 0.7.2
 
