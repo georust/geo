@@ -186,6 +186,7 @@ where
     /// use geo_types::Point;
     ///
     /// let mut p = Point::new(1.234, 2.345);
+    /// #[allow(deprecated)]
     /// p.set_lng(9.876);
     ///
     /// assert_eq!(p.x(), 9.876);
@@ -218,6 +219,7 @@ where
     /// use geo_types::Point;
     ///
     /// let mut p = Point::new(1.234, 2.345);
+    /// #[allow(deprecated)]
     /// p.set_lat(9.876);
     ///
     /// assert_eq!(p.y(), 9.876);

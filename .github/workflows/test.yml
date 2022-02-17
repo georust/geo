@@ -1,4 +1,7 @@
-on: push
+on:
+  push:
+  schedule: [cron: "45 6 * * *"]
+
 name: Run tests
 jobs:
   # The `ci-result` job doesn't actually test anything - it just aggregates the

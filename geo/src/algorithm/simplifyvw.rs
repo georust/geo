@@ -56,13 +56,6 @@ where
     }
 }
 
-/// Geometries that can be simplified using the topology-preserving variant
-#[derive(Debug, Clone, Copy)]
-enum GeomType {
-    Line,
-    Ring,
-}
-
 /// Settings for Ring and Line geometries
 // initial min: if we ever have fewer than these, stop immediately
 // min_points: if we detect a self-intersection before point removal, and we only
@@ -73,7 +66,6 @@ enum GeomType {
 struct GeomSettings {
     initial_min: usize,
     min_points: usize,
-    geomtype: GeomType,
 }
 
 /// Simplify a line using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
@@ -573,7 +565,6 @@ where
         let gt = GeomSettings {
             initial_min: 2,
             min_points: 4,
-            geomtype: GeomType::Line,
         };
         let mut simplified = vwp_wrapper(&gt, self, None, epsilon);
         LineString::from(simplified.pop().unwrap())
@@ -602,7 +593,6 @@ where
         let gt = GeomSettings {
             initial_min: 4,
             min_points: 6,
-            geomtype: GeomType::Ring,
         };
         let mut simplified = vwp_wrapper(&gt, self.exterior(), Some(self.interiors()), epsilon);
         let exterior = LineString::from(simplified.remove(0));
@@ -679,8 +669,7 @@ where
 #[cfg(test)]
 mod test {
     use super::{
-        cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, GeomType, SimplifyVW,
-        SimplifyVWPreserve,
+        cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, SimplifyVW, SimplifyVWPreserve,
     };
     use crate::{
         line_string, point, polygon, Coordinate, LineString, MultiLineString, MultiPolygon, Point,
@@ -744,7 +733,6 @@ mod test {
         let gt = &GeomSettings {
             initial_min: 2,
             min_points: 4,
-            geomtype: GeomType::Line,
         };
         let simplified = vwp_wrapper(gt, &ls, None, &668.6);
         // this is the correct, non-intersecting LineString
@@ -825,7 +813,6 @@ mod test {
         let gt = &GeomSettings {
             initial_min: 2,
             min_points: 4,
-            geomtype: GeomType::Line,
         };
         let simplified = vwp_wrapper(gt, &points_ls.into(), None, &0.0005);
         assert_eq!(simplified[0].len(), 3278);
