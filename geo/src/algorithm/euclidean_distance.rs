@@ -576,6 +576,7 @@ mod test {
     use crate::algorithm::convex_hull::ConvexHull;
     use crate::algorithm::euclidean_distance::EuclideanDistance;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+    use geo_types::Rect;
     use geo_types::{polygon, private_utils::line_segment_distance, Coordinate};
 
     #[test]
@@ -1024,6 +1025,44 @@ mod test {
         let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
         assert_relative_eq!(dist, 12.0);
         assert_relative_eq!(dist2, 12.0);
+    }
+    #[test]
+    // test vertex-vertex minimum distance
+    fn test_minimum_polygon_distance_4() {
+        let poly1 = Rect::new((0., 0.), (1., 1.)).to_polygon();
+        let poly2 = Rect::new((2., 2.), (3., 3.)).to_polygon();
+        let dist = min_poly_dist(&poly1, &poly2);
+        let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
+        assert_eq!(dist, dist2);
+    }
+    #[test]
+    fn test_minimum_polygon_distance_5() {
+        let poly1 = polygon!(
+                exterior: [
+                    (x: -1.5350399, y: -0.18596762),
+                    (x: -0.33726108, y: 0.2206358),
+                    (x: -0.13836576, y: 0.42173427),
+                    (x: -0.33946428, y: 0.6206298),
+                    (x: -1.1405537, y: 0.8162205),
+                    (x: -1.3405507, y: 0.81511897),
+                    (x: -1.5372429, y: 0.21402647),
+                ],
+                interiors: []
+            );
+
+        let poly2 = polygon!(
+                exterior: [
+                    (x: 0.6649223, y: -0.17384565),
+                    (x: 0.8649193, y: -0.1727441),
+                    (x: 1.0616114, y: 0.4283484),
+                    (x: 0.8616146, y: 0.4272468),
+                    (x: 0.66271913, y: 0.22614834),
+                ],
+                interiors: []
+            );
+        let dist = min_poly_dist(&poly1, &poly2);
+        let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
+        assert_eq!(dist, dist2);
     }
     #[test]
     fn test_large_polygon_distance() {
