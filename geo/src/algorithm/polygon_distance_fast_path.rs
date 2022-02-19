@@ -43,12 +43,9 @@ where
         slope: T::zero(),
         vertical: false,
         // minimum distance can be calculated in at most this many iterations
-        // we only need to spin the calipers equal to the number of edges in the largest polygon
-        max_iterations: poly1
-            .exterior()
-            .lines()
-            .len()
-            .max(poly2.exterior().lines().len()),
+        // we only need to spin the calipers equal to the total number of vertices in both polygons
+        // alternatively, we could accumulate the total rotation angle and stop when it exceeds 2pi
+        max_iterations: poly1.exterior().0.len() + poly2.exterior().0.len(),
     };
     let mut iterations = 0usize;
     while iterations <= state.max_iterations {
