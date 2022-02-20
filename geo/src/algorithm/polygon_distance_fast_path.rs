@@ -2,17 +2,18 @@ use crate::prelude::*;
 use crate::Extremes;
 use crate::{GeoFloat, Line, Point, Polygon, Triangle};
 use num_traits::float::FloatConst;
-use num_traits::Signed;
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance
 // They use the rotating calipers method to speed up calculations.
 // Tests for these functions are in the Distance module
 
 /// Calculate the minimum distance between two disjoint and linearly separable convex polygons
-/// using the rotating calipers method
-pub(crate) fn min_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
+/// using the rotating calipers method.
+///
+/// For a detailed description of the algorithm, see https://escholarship.mcgill.ca/concern/theses/fx719p46g pp30-2
+pub(crate) fn min_convex_poly_dist<T>(poly1: &Polygon<T>, poly2: &Polygon<T>) -> T
 where
-    T: GeoFloat + FloatConst + Signed,
+    T: GeoFloat + FloatConst,
 {
     let poly1_extremes = poly1.extremes().unwrap();
     let poly2_extremes = poly2.extremes().unwrap();
@@ -42,16 +43,15 @@ where
         iq2: false,
         slope: T::zero(),
         vertical: false,
-        // minimum distance can be calculated in at most this many iterations
-        // we only need to spin the calipers equal to the total number of vertices in both polygons
-        // alternatively, we could accumulate the total rotation angle and stop when it exceeds 2pi
-        max_iterations: poly1.exterior().0.len() + poly2.exterior().0.len(),
+        // we need to spin the calipers equal to the total number of vertices in both polygons
+        // alternatively, we can accumulate the total rotation angle and stop when it = 2pi radians
+        angle: T::zero(),
     };
-    let mut iterations = 0usize;
-    while iterations <= state.max_iterations {
+    // recall that 360 degrees == 2pi radians
+    let max_angle = T::from(360.0f64.to_radians()).unwrap();
+    while state.angle < max_angle {
         nextpoints(&mut state);
         computemin(&mut state);
-        iterations += 1;
     }
     state.dist
 }
@@ -92,7 +92,6 @@ enum AlignedEdge {
 pub(crate) struct Polydist<'a, T>
 where
     T: GeoFloat,
-    T: 'a,
 {
     poly1: &'a Polygon<T>,
     poly2: &'a Polygon<T>,
@@ -113,14 +112,14 @@ where
     iq2: bool,
     slope: T,
     vertical: bool,
-    max_iterations: usize,
+    angle: T,
 }
 
 // much of the following code is ported from Java, copyright 1999 Hormoz Pirzadeh, available at:
 // http://web.archive.org/web/20150330010154/http://cgm.cs.mcgill.ca/%7Eorm/rotcal.html
 fn unitvector<T>(slope: &T, poly: &Polygon<T>, p: Point<T>, idx: usize) -> Point<T>
 where
-    T: GeoFloat + Signed,
+    T: GeoFloat,
 {
     let tansq = slope.powi(2);
     let cossq = T::one() / (T::one() + tansq);
@@ -318,9 +317,9 @@ where
 /// Angle between a vertex and an edge
 fn vertex_line_angle<T>(poly: &Polygon<T>, p: Point<T>, m: &T, vertical: bool, idx: usize) -> T
 where
-    T: GeoFloat + FloatConst + Signed,
+    T: GeoFloat + FloatConst,
 {
-    let hundred = T::from(100).unwrap();
+    let hundred = T::from::<i32>(100).unwrap();
     let pnext = poly.exterior().0[next_vertex(poly, idx)];
     let pprev = poly.exterior().0[prev_vertex(poly, idx)];
     let clockwise = Point::from(pprev).cross_prod(Point::from(p.0), Point::from(pnext)) < T::zero();
@@ -360,57 +359,40 @@ where
         // implies p.x() < pprev.x()
         punit = Point::new(p.x(), p.y() - hundred);
     }
-    let triarea = Triangle::from([p, punit, Point::from(pnext)]).signed_area();
-    let edgelen = p.euclidean_distance(&Point::from(pnext));
-    let mut sine = triarea / (T::from(0.5).unwrap() * T::from(100).unwrap() * edgelen);
+    let triarea = Triangle::from([p, punit, Point(pnext)]).signed_area();
+    let edgelen = p.euclidean_distance(&Point(pnext));
+    let mut sine =
+        triarea / (T::from::<f64>(0.5).unwrap() * T::from::<i32>(100).unwrap() * edgelen);
     if sine < -T::one() || sine > T::one() {
         sine = T::one();
     }
-    let angle;
     let perpunit = unitpvector(p, punit);
     let mut obtuse = false;
-    let left = leftturn(p, perpunit, Point::from(pnext));
-    if left == 0 {
+    let left = p.cross_prod(perpunit, Point(pnext));
+    if left < T::zero() {
         obtuse = true;
     }
     if clockwise {
-        if left == -1 {
-            angle = T::PI() / (T::one() + T::one());
+        if left == T::zero() {
+            T::PI() / (T::one() + T::one())
         } else if !obtuse {
-            angle = (-sine).asin();
+            (-sine).asin()
         } else {
-            angle = T::PI() - (-sine).asin();
+            T::PI() - (-sine).asin()
         }
-    } else if left == -1 {
-        angle = T::PI() / (T::one() + T::one());
+    } else if left == T::zero() {
+        T::PI() / (T::one() + T::one())
     } else if !obtuse {
-        angle = sine.asin();
+        sine.asin()
     } else {
-        angle = T::PI() - sine.asin();
-    }
-
-    angle
-}
-
-/// Does abc turn left?
-fn leftturn<T>(a: Point<T>, b: Point<T>, c: Point<T>) -> i8
-where
-    T: GeoFloat,
-{
-    let narea = Triangle::from([a, b, c]).signed_area();
-    if narea > T::zero() {
-        1
-    } else if narea < T::zero() {
-        0
-    } else {
-        -1
+        T::PI() - sine.asin()
     }
 }
 
 /// Calculate next set of caliper points
 fn nextpoints<T>(state: &mut Polydist<T>)
 where
-    T: GeoFloat + FloatConst + Signed,
+    T: GeoFloat + FloatConst,
 {
     state.alignment = Some(AlignedEdge::VertexP);
     state.ip1 = false;
@@ -430,6 +412,7 @@ where
         state.q2_idx,
     );
     let minangle = state.ap1.min(state.aq2);
+    state.angle = state.angle + minangle;
     state.p1prev = state.p1;
     state.p1next = state.p1prev;
     state.q2prev = state.q2;
@@ -450,14 +433,14 @@ where
     // intersections must be computed between both segments, and if one is
     // found, the [pi, p`] - [qj, q`] edge-edge orthogonal distance is found and compared.
     // see Pirzadeh (1999), p31
-    if (state.ap1 - minangle).abs() < T::from(0.002).unwrap() {
+    if (state.ap1 - minangle).abs() < T::epsilon() {
         state.ip1 = true;
         let p1next = next_vertex(state.poly1, state.p1_idx);
         state.p1next = Point::from(state.poly1.exterior().0[p1next]);
         state.p1_idx = p1next;
         state.alignment = Some(AlignedEdge::VertexP);
     }
-    if (state.aq2 - minangle).abs() < T::from(0.002).unwrap() {
+    if (state.aq2 - minangle).abs() < T::epsilon() {
         state.iq2 = true;
         let q2next = next_vertex(state.poly2, state.q2_idx);
         state.q2next = Point::from(state.poly2.exterior().0[q2next]);
@@ -502,7 +485,7 @@ where
 /// compute the minimum distance between entities (edges or vertices)
 fn computemin<T>(state: &mut Polydist<T>)
 where
-    T: GeoFloat + Signed,
+    T: GeoFloat,
 {
     let u;
     let u1;
@@ -529,9 +512,9 @@ where
             } else {
                 u = unitvector(&T::zero(), state.poly2, state.q2, state.q2_idx);
             }
-            let line_1 = leftturn(u, state.q2, state.p1);
-            let line_2 = leftturn(u, state.q2, state.p1prev);
-            if line_1 != line_2 && line_1 != -1 && line_2 != -1 {
+            let line_1 = u.cross_prod(state.q2, state.p1);
+            let line_2 = u.cross_prod(state.q2, state.p1prev);
+            if line_1 != line_2 && line_1 != T::zero() && line_2 != T::zero() {
                 // an orthogonal intersection exists
                 newdist = vertex_line_distance(state.q2, state.p1prev, state.p1);
                 if newdist <= state.dist {
@@ -556,9 +539,9 @@ where
             } else {
                 u = unitvector(&T::zero(), state.poly1, state.p1, state.p1_idx);
             }
-            let line_1 = leftturn(u, state.p1, state.q2);
-            let line_2 = leftturn(u, state.p1, state.q2prev);
-            if line_1 != line_2 && line_1 != -1 && line_2 != -1 {
+            let line_1 = u.cross_prod(state.p1, state.q2);
+            let line_2 = u.cross_prod(state.p1, state.q2prev);
+            if line_1 != line_2 && line_1 != T::zero() && line_2 != T::zero() {
                 // an orthogonal intersection exists
                 newdist = vertex_line_distance(state.p1, state.q2prev, state.q2);
                 if newdist <= state.dist {
@@ -606,12 +589,12 @@ where
                 u1 = unitvector(&T::zero(), state.poly1, state.p1prev, state.p1_idx);
                 u2 = unitvector(&T::zero(), state.poly1, state.p1, state.p1_idx);
             }
-            let line_1a = leftturn(u1, state.p1prev, state.q2prev);
-            let line_1b = leftturn(u1, state.p1prev, state.q2);
-            let line_2a = leftturn(u2, state.p1, state.q2prev);
-            let line_2b = leftturn(u2, state.p1, state.q2);
-            if line_1a != line_1b && line_1a != -1 && line_1b != -1
-                || line_2a != line_2b && line_2a != -1 && line_2b != -2
+            let line_1a = u1.cross_prod(state.p1prev, state.q2prev);
+            let line_1b = u1.cross_prod(state.p1prev, state.q2);
+            let line_2a = u2.cross_prod(state.p1, state.q2prev);
+            let line_2b = u2.cross_prod(state.p1, state.q2);
+            if line_1a != line_1b && line_1a != T::zero() && line_1b != T::zero()
+                || line_2a != line_2b && line_2a != T::zero() && line_2b != T::zero()
             {
                 // an orthogonal intersection exists
                 newdist = vertex_line_distance(state.p1, state.q2prev, state.q2);
@@ -622,18 +605,5 @@ where
             }
         }
         _ => unreachable!(),
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    #[test]
-    fn test_vertex_line_distance() {
-        let p = Point::new(0., 0.);
-        let q = Point::new(3.8, 5.7);
-        let r = Point::new(22.5, 10.);
-        let dist = vertex_line_distance(p, q, r);
-        assert_relative_eq!(dist, 6.850547423381579);
     }
 }
