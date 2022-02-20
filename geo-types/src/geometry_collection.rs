@@ -69,22 +69,16 @@ use std::ops::{Index, IndexMut};
 /// println!("{:?}", gc[0]);
 /// ```
 ///
-#[derive(Eq, PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
     T: CoordNum;
 
-impl<T: CoordNum> Default for GeometryCollection<T> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl<T: CoordNum> GeometryCollection<T> {
     /// Return an empty GeometryCollection
     pub fn new() -> GeometryCollection<T> {
-        GeometryCollection(Vec::new())
+        GeometryCollection::default()
     }
 
     /// Number of geometries in this GeometryCollection
