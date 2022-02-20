@@ -252,11 +252,11 @@ pub mod prelude {
     pub use crate::algorithm::rotate::{Rotate, RotatePoint};
     pub use crate::algorithm::simplify::Simplify;
     pub use crate::algorithm::simplifyvw::SimplifyVW;
-    #[cfg(feature = "use-proj")]
-    pub use crate::algorithm::transform::Transform;
     pub use crate::algorithm::translate::Translate;
     pub use crate::algorithm::vincenty_distance::VincentyDistance;
     pub use crate::algorithm::vincenty_length::VincentyLength;
+    #[cfg(feature = "use-proj")]
+    pub use crate::proj::Transform;
 }
 
 /// A common numeric trait used for geo algorithms.

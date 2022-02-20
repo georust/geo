@@ -21,7 +21,7 @@ geo-types = { version = "0.7.2", features = ["approx", "use-rstar"] }
 geographiclib-rs = { version = "0.2" }
 log = "0.4.11"
 num-traits = "0.2"
-proj = { version = "0.25", optional = true }
+proj = { version = "0.25.2", optional = true }
 robust = { version = "0.2.2" }
 rstar = { version = "0.8" }
 serde = { version = "1.0", optional = true, features = ["derive"] }
