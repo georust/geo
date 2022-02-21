@@ -2,7 +2,6 @@
 extern crate criterion;
 extern crate geo;
 use geo::frechet_distance::FrechetDistance;
-use geo::{Coordinate, LineString};
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {
     c.bench_function("frechet distance f32", |bencher| {

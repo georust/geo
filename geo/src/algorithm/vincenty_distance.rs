@@ -95,12 +95,12 @@ where
                 .sqrt();
 
             if sinSigma.is_zero() {
-                if self == rhs {
+                return if self == rhs {
                     // coincident points
-                    return Ok(T::zero());
+                    Ok(T::zero())
                 } else {
-                    // anitpodal points, for which vincenty does not converge
-                    return Err(FailedToConvergeError);
+                    // antipodal points, for which vincenty does not converge
+                    Err(FailedToConvergeError)
                 }
             }
 

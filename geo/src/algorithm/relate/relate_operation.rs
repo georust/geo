@@ -243,7 +243,7 @@ where
         let graph = if geom_index == 0 {
             &self.graph_a
         } else {
-            assert!(geom_index == 1);
+            assert_eq!(geom_index, 1);
             &self.graph_b
         };
         for graph_node in graph.nodes_iter() {
@@ -271,7 +271,7 @@ where
         let graph = if geom_index == 0 {
             &self.graph_a
         } else {
-            assert!(geom_index == 1);
+            assert_eq!(geom_index, 1);
             &self.graph_b
         };
 

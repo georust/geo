@@ -58,10 +58,10 @@ impl GeodesicIntermediate<f64> for Point<f64> {
             g.inverse(self.y(), self.x(), other.y(), other.x());
 
         if total_distance <= max_dist {
-            if include_ends {
-                return vec![*self, *other];
+            return if include_ends {
+                vec![*self, *other]
             } else {
-                return vec![];
+                vec![]
             }
         }
 

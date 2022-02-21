@@ -376,7 +376,7 @@ mod test {
         assert_eq!(true, bounding_rect_s2.intersects(&bounding_rect_sm));
     }
     #[test]
-    fn rect_interesection_consistent_with_poly_intersection_test() {
+    fn rect_intersection_consistent_with_poly_intersection_test() {
         let bounding_rect_xl = Rect::new(
             Coordinate { x: -100., y: -200. },
             Coordinate { x: 100., y: 200. },
