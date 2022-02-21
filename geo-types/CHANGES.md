@@ -12,7 +12,7 @@
   * <https://github.com/georust/geo/pull/705>
 * Add +=, -=, \*=, and /= for Point
   * <https://github.com/georust/geo/pull/715>
-* Note: The MSRV when installing latest dependencies has increased to 1.55
+* Note: The MSRV when installing the latest dependencies has increased to 1.55
   * <https://github.com/georust/geo/pull/726>
 
 ## 0.7.2
@@ -66,7 +66,7 @@
   * <https://github.com/georust/geo/pull/468>
 * Add `Triangle` and `Rect` to `Geometry`
   * <https://github.com/georust/geo/pull/432>
-* Introduce `Rect::try_new` constructor which doesn’t panic
+* Introduce `Rect::try_new` constructor which does not panic
   * <https://github.com/georust/geo/pull/442>
 * Add `Rect::center` method
   * <https://github.com/georust/geo/pull/450>
@@ -155,7 +155,7 @@
   * <https://github.com/georust/geo/pull/265>
 * Introduce `x_y` method on `Point` and `Coordinate`
   * <https://github.com/georust/geo/pull/277>
-* Migrate `Line` aand `LineString` to be a series of `Coordinates` (not `Points`).
+* Migrate `Line` and `LineString` to be a series of `Coordinates` (not `Points`).
   * <https://github.com/georust/geo/pull/244>
 * Introduce Triangle geometry type.
   * <https://github.com/georust/geo/pull/285>

@@ -136,7 +136,7 @@ where
         ) {
             if self.edges_are_from_same_geometry || !intersection.is_proper() {
                 // In the case of self-noding, `edge0` might alias `edge1`, so it's imperative that
-                // the mutable borrow's are short lived and do not overlap.
+                // the mutable borrows are short lived and do not overlap.
                 edge0
                     .borrow_mut()
                     .add_intersections(intersection, line_0, segment_index_0);

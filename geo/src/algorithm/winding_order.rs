@@ -66,7 +66,7 @@ pub trait Winding {
     /// order, so that the resultant order makes it appear counter-clockwise
     fn points_ccw(&self) -> Points<Self::Scalar>;
 
-    /// Change this objects's points so they are in clockwise winding order
+    /// Change this object's points so they are in clockwise winding order
     fn make_cw_winding(&mut self);
 
     /// Change this line's points so they are in counterclockwise winding order

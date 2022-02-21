@@ -82,9 +82,9 @@ pub trait Rotate<T> {
         T: CoordFloat;
 
     #[deprecated(
-        note = "Equivalent to `rotate_around_centroid` except for `Polygon<T>`, 
-                    where it is equivalent to rotating around the polygon's outer ring. 
-                    Call that instead, or `rotate_around_center` if you'd like to rotate 
+        note = "Equivalent to `rotate_around_centroid` except for `Polygon<T>`,
+                    where it is equivalent to rotating around the polygon's outer ring.
+                    Call that instead, or `rotate_around_center` if you'd like to rotate
                     around the geometry's bounding box center."
     )]
     fn rotate(&self, angle: T) -> Self
@@ -672,7 +672,7 @@ mod test {
         .into();
 
         // results agree with Shapely / GEOS
-        // (relaxing the episilon a bit)
+        // (relaxing the epsilon a bit)
         assert_relative_eq!(
             multipolygon.rotate_around_centroid(45.),
             expected_centroid,

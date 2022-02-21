@@ -22,7 +22,7 @@
   * <https://github.com/georust/geo/pull/718>
 * Add missing `Intersects` implementations
   * <https://github.com/georust/geo/pull/725>
-* Note: The MSRV when installing latest dependencies has increased to 1.55
+* Note: The MSRV when installing the latest dependencies has increased to 1.55
   * <https://github.com/georust/geo/pull/726>
 * Add `get()` to `IntersectionMatrix` for directly querying DE-9IM matrices
   * <https://github.com/georust/geo/pull/714>

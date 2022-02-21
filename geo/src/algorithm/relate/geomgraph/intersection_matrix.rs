@@ -3,7 +3,7 @@ use crate::algorithm::{coordinate_position::CoordPos, dimensions::Dimensions};
 /// Models a *Dimensionally Extended Nine-Intersection Model (DE-9IM)* matrix.
 ///
 /// DE-9IM matrix values (such as "212FF1FF2") specify the topological relationship between
-/// two [Geometeries](struct.Geometry.html).
+/// two [Geometries](struct.Geometry.html).
 ///
 /// DE-9IM matrices are 3x3 matrices that represent the topological locations
 /// that occur in a geometry (Interior, Boundary, Exterior).
@@ -25,7 +25,7 @@ pub struct IntersectionMatrix(LocationArray<LocationArray<Dimensions>>);
 
 /// Helper struct so we can index IntersectionMatrix by CoordPos
 ///
-/// CoordPos enum members are ordered: OnBondary, Inside, Outside
+/// CoordPos enum members are ordered: OnBoundary, Inside, Outside
 /// DE-9IM matrices are ordered: Inside, Boundary, Exterior
 ///
 /// So we can't simply `CoordPos as usize` without losing the conventional ordering
@@ -234,7 +234,7 @@ impl IntersectionMatrix {
     /// // The intersection of the two interiors is empty, because no part of the string is inside the rect
     /// assert_eq!(intersection.get(CoordPos::Inside, CoordPos::Inside), Dimensions::Empty);
     ///
-    /// // The intersection of the line string's interior with the rect's boundary is one-dimensoinal, because part of the first line overlaps one of the rect's edges
+    /// // The intersection of the line string's interior with the rect's boundary is one-dimensional, because part of the first line overlaps one of the rect's edges
     /// assert_eq!(intersection.get(CoordPos::Inside, CoordPos::OnBoundary), Dimensions::OneDimensional);
     ///
     /// // The intersection of the line string's interior with the rect's exterior is one-dimensional, because part of the string is outside the rect

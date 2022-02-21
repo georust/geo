@@ -81,7 +81,7 @@ use std::cmp::Ordering;
 
 /// Compare two coordinates lexicographically: first by the
 /// x coordinate, and break ties with the y coordinate.
-/// Expects none of coordinates to be uncomparable (eg. nan)
+/// Expects none of coordinates to be incomparable (eg. nan)
 #[inline]
 pub fn lex_cmp<T: CoordNum>(p: &Coordinate<T>, q: &Coordinate<T>) -> Ordering {
     p.x.partial_cmp(&q.x)
