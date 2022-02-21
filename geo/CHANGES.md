@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+*
+
+## 0.19.0
+
 * Bump `proj` crate to 0.25.0, using PROJ 8.1.0
   * <https://github.com/georust/geo/pull/661>
   * <https://github.com/georust/geo/pull/718>
