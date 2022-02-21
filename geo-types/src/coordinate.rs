@@ -23,7 +23,7 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// (for eg. not `f64::NAN`).
 ///
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
-#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coordinate<T>
 where
@@ -31,15 +31,6 @@ where
 {
     pub x: T,
     pub y: T,
-}
-
-impl<T: Default + CoordNum> Default for Coordinate<T> {
-    fn default() -> Coordinate<T> {
-        Coordinate {
-            x: T::default(),
-            y: T::default(),
-        }
-    }
 }
 
 impl<T: CoordNum> From<(T, T)> for Coordinate<T> {

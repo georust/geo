@@ -75,16 +75,18 @@ pub struct GeometryCollection<T>(pub Vec<Geometry<T>>)
 where
     T: CoordNum;
 
+// Implementing Default by hand because T does not have Default restriction
+// todo: consider adding Default as a CoordNum requirement
 impl<T: CoordNum> Default for GeometryCollection<T> {
     fn default() -> Self {
-        Self::new()
+        GeometryCollection(Vec::new())
     }
 }
 
 impl<T: CoordNum> GeometryCollection<T> {
     /// Return an empty GeometryCollection
     pub fn new() -> GeometryCollection<T> {
-        GeometryCollection(Vec::new())
+        GeometryCollection::default()
     }
 
     /// Number of geometries in this GeometryCollection
