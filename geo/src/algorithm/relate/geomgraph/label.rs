@@ -87,8 +87,8 @@ impl Label {
         self.geometry_topologies[geom_index].set_all_positions(position)
     }
 
-    pub fn set_all_positions_if_empty(&mut self, geom_index: usize, postion: CoordPos) {
-        self.geometry_topologies[geom_index].set_all_positions_if_empty(postion)
+    pub fn set_all_positions_if_empty(&mut self, geom_index: usize, position: CoordPos) {
+        self.geometry_topologies[geom_index].set_all_positions_if_empty(position)
     }
 
     pub fn geometry_count(&self) -> usize {

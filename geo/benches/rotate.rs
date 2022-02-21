@@ -4,7 +4,6 @@ extern crate geo;
 
 use criterion::Criterion;
 use geo::prelude::*;
-use geo::LineString;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("rotate f32", |bencher| {

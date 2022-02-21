@@ -145,9 +145,7 @@ impl<T> Rotate<T> for Point<T>
 where
     T: CoordFloat,
 {
-    /// Rotate the Point about itself by the given number of degrees
-    /// This operation leaves the point coordinates unchanged
-    fn rotate(&self, _angle: T) -> Self {
+    fn rotate_around_centroid(&self, _angle: T) -> Self {
         *self
     }
 
@@ -155,7 +153,9 @@ where
         *self
     }
 
-    fn rotate_around_centroid(&self, _angle: T) -> Self {
+    /// Rotate the Point about itself by the given number of degrees
+    /// This operation leaves the point coordinates unchanged
+    fn rotate(&self, _angle: T) -> Self {
         *self
     }
 }
@@ -164,10 +164,6 @@ impl<T> Rotate<T> for Line<T>
 where
     T: GeoFloat,
 {
-    fn rotate(&self, angle: T) -> Self {
-        self.rotate_around_centroid(angle)
-    }
-
     fn rotate_around_centroid(&self, angle: T) -> Self {
         let centroid = self.centroid();
         self.rotate_around_point(angle, centroid)
@@ -177,16 +173,16 @@ where
         let center: Point<T> = self.bounding_rect().center().into();
         self.rotate_around_point(angle, center)
     }
+
+    fn rotate(&self, angle: T) -> Self {
+        self.rotate_around_centroid(angle)
+    }
 }
 
 impl<T> Rotate<T> for LineString<T>
 where
     T: GeoFloat,
 {
-    fn rotate(&self, angle: T) -> Self {
-        self.rotate_around_centroid(angle)
-    }
-
     /// Rotate the LineString about its centroid by the given number of degrees
     fn rotate_around_centroid(&self, angle: T) -> Self {
         match self.centroid() {
@@ -204,12 +200,32 @@ where
             None => self.clone(), // LineString was empty or otherwise degenerate and had no computable bounding rect
         }
     }
+
+    fn rotate(&self, angle: T) -> Self {
+        self.rotate_around_centroid(angle)
+    }
 }
 
 impl<T> Rotate<T> for Polygon<T>
 where
     T: GeoFloat,
 {
+    /// Rotate the Polygon about its centroid by the given number of degrees
+    fn rotate_around_centroid(&self, angle: T) -> Self {
+        match self.centroid() {
+            Some(centroid) => self.rotate_around_point(angle, centroid),
+            None => self.clone(), // Polygon was empty or otherwise degenerate and had no computable centroid
+        }
+    }
+
+    /// Rotate the Polygon about the center of its bounding rectangle by the given number of degrees
+    fn rotate_around_center(&self, angle: T) -> Self {
+        match self.bounding_rect() {
+            Some(bounding_rect) => self.rotate_around_point(angle, bounding_rect.center().into()),
+            None => self.clone(), // Polygon was empty or otherwise degenerate and had no computable center
+        }
+    }
+
     /// Rotate the Polygon about its centroid by the given number of degrees
     fn rotate(&self, angle: T) -> Self {
         // if a polygon has holes, use the centroid of its outer shell as the rotation origin
@@ -233,40 +249,12 @@ where
             self.clone()
         }
     }
-
-    /// Rotate the Polygon about its centroid by the given number of degrees
-    fn rotate_around_centroid(&self, angle: T) -> Self {
-        match self.centroid() {
-            Some(centroid) => self.rotate_around_point(angle, centroid),
-            None => self.clone(), // Polygon was empty or otherwise degenerate and had no computable centroid
-        }
-    }
-
-    /// Rotate the Polygon about the center of its bounding rectangle by the given number of degrees
-    fn rotate_around_center(&self, angle: T) -> Self {
-        match self.bounding_rect() {
-            Some(bounding_rect) => self.rotate_around_point(angle, bounding_rect.center().into()),
-            None => self.clone(), // Polygon was empty or otherwise degenerate and had no computable center
-        }
-    }
 }
 
 impl<T> Rotate<T> for MultiPolygon<T>
 where
     T: GeoFloat,
 {
-    fn rotate(&self, angle: T) -> Self {
-        self.rotate_around_centroid(angle)
-    }
-
-    /// Rotate the MultiPolygon about the center of its bounding rectangle by the given number of degrees
-    fn rotate_around_center(&self, angle: T) -> Self {
-        match self.bounding_rect() {
-            Some(bounding_rect) => self.rotate_around_point(angle, bounding_rect.center().into()),
-            None => self.clone(), // MultiPolygon was empty or otherwise degenerate and had no computable center
-        }
-    }
-
     /// Rotate the contained Polygons about their centroids by the given number of degrees
     fn rotate_around_centroid(&self, angle: T) -> Self {
         match self.centroid() {
@@ -277,15 +265,30 @@ where
             }
         }
     }
+
+    /// Rotate the MultiPolygon about the center of its bounding rectangle by the given number of degrees
+    fn rotate_around_center(&self, angle: T) -> Self {
+        match self.bounding_rect() {
+            Some(bounding_rect) => self.rotate_around_point(angle, bounding_rect.center().into()),
+            None => self.clone(), // MultiPolygon was empty or otherwise degenerate and had no computable center
+        }
+    }
+
+    fn rotate(&self, angle: T) -> Self {
+        self.rotate_around_centroid(angle)
+    }
 }
 
 impl<T> Rotate<T> for MultiLineString<T>
 where
     T: GeoFloat,
 {
-    /// Rotate the contained LineStrings about their centroid by the given number of degrees
-    fn rotate(&self, angle: T) -> Self {
-        self.rotate_around_centroid(angle)
+    /// Rotate the contained LineStrings about the centroid by the given number of degrees
+    fn rotate_around_centroid(&self, angle: T) -> Self {
+        match self.centroid() {
+            Some(centroid) => self.rotate_around_point(angle, centroid),
+            None => self.clone(), // MultiLineString was empty or otherwise degenerate and had not computable bounding rect
+        }
     }
 
     /// Rotate the contained LineStrings about center of the bounding rectangle by the given number of degrees
@@ -296,12 +299,9 @@ where
         }
     }
 
-    /// Rotate the contained LineStrings about the centroid by the given number of degrees
-    fn rotate_around_centroid(&self, angle: T) -> Self {
-        match self.centroid() {
-            Some(centroid) => self.rotate_around_point(angle, centroid),
-            None => self.clone(), // MultiLineString was empty or otherwise degenerate and had not computable bounding rect
-        }
+    /// Rotate the contained LineStrings about their centroid by the given number of degrees
+    fn rotate(&self, angle: T) -> Self {
+        self.rotate_around_centroid(angle)
     }
 }
 
@@ -309,8 +309,12 @@ impl<T> Rotate<T> for MultiPoint<T>
 where
     T: GeoFloat,
 {
-    fn rotate(&self, angle: T) -> Self {
-        self.rotate_around_centroid(angle)
+    /// Rotate the contained Points about the centroid by the given number of degrees
+    fn rotate_around_centroid(&self, angle: T) -> Self {
+        match self.centroid() {
+            Some(centroid) => self.rotate_around_point(angle, centroid),
+            None => self.clone(), // MultiPoint was empty or otherwise degenerate and had no computable centroid
+        }
     }
 
     /// Rotate the contained Points about the center of their bounding rectangle by the given number of degrees
@@ -321,12 +325,8 @@ where
         }
     }
 
-    /// Rotate the contained Points about the centroid by the given number of degrees
-    fn rotate_around_centroid(&self, angle: T) -> Self {
-        match self.centroid() {
-            Some(centroid) => self.rotate_around_point(angle, centroid),
-            None => self.clone(), // MultiPoint was empty or otherwise degenerate and had no computable centroid
-        }
+    fn rotate(&self, angle: T) -> Self {
+        self.rotate_around_centroid(angle)
     }
 }
 

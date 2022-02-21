@@ -60,10 +60,10 @@ where
         let total_distance = d * T::from(MEAN_EARTH_RADIUS).unwrap();
 
         if total_distance <= max_dist {
-            if include_ends {
-                return vec![*self, *other];
+            return if include_ends {
+                vec![*self, *other]
             } else {
-                return vec![];
+                vec![]
             }
         }
 
