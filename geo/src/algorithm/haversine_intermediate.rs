@@ -64,7 +64,7 @@ where
                 vec![*self, *other]
             } else {
                 vec![]
-            }
+            };
         }
 
         let number_of_points = (total_distance / max_dist).ceil();

@@ -101,7 +101,7 @@ where
                 } else {
                     // antipodal points, for which vincenty does not converge
                     Err(FailedToConvergeError)
-                }
+                };
             }
 
             cosSigma = sinU1 * sinU2 + cosU1 * cosU2 * cosLambda;

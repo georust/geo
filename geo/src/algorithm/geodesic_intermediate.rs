@@ -62,7 +62,7 @@ impl GeodesicIntermediate<f64> for Point<f64> {
                 vec![*self, *other]
             } else {
                 vec![]
-            }
+            };
         }
 
         let number_of_points = (total_distance / max_dist).ceil();
