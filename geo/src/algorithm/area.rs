@@ -24,7 +24,7 @@ where
     // determinants.
     //
     // Note: we can't use the `Centroid` trait as it
-    // requries `T: Float` and in fact computes area in the
+    // requires `T: Float` and in fact computes area in the
     // implementation. Another option is to use the average
     // of the coordinates, but it is not fool-proof to
     // divide by the length of the linestring (eg. a long

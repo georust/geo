@@ -102,11 +102,11 @@ where
 /// Simplifies a geometry.
 ///
 /// The [Ramer–Douglas–Peucker
-/// algorithm](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) simplifes a
+/// algorithm](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) simplifies a
 /// linestring. Polygons are simplified by running the RDP algorithm on all their constituent
 /// rings. This may result in invalid Polygons, and has no guarantee of preserving topology.
 ///
-/// Multi* objects are simplified by simplifing all their constituent geometries individually.
+/// Multi* objects are simplified by simplifying all their constituent geometries individually.
 ///
 /// An epsilon less than or equal to zero will return an unaltered version of the geometry.
 pub trait Simplify<T, Epsilon = T> {

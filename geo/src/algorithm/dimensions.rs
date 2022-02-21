@@ -25,7 +25,7 @@ use crate::{
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd)]
 pub enum Dimensions {
-    /// Some geometries, like a `MultiPoint` or `GeometryColletion` may have no elements - thus no
+    /// Some geometries, like a `MultiPoint` or `GeometryCollection` may have no elements - thus no
     /// dimensions. Note that this is distinct from being `ZeroDimensional`, like a `Point`.
     Empty,
     /// Dimension of a point

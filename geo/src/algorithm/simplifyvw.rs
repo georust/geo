@@ -321,7 +321,7 @@ where
         assert!(tree.remove(&line_1).is_some());
         assert!(tree.remove(&line_2).is_some());
 
-        // Restore continous line segment
+        // Restore continuous line segment
         tree.insert(Line::new(left_point, right_point));
 
         // Now recompute the adjacent triangle(s), using left and right adjacent points

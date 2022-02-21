@@ -570,7 +570,7 @@ mod test {
 
     #[test]
     fn compile_test_geom_geom() {
-        // This test should check existance of all
+        // This test should check existence of all
         // combinations of geometry types.
         let geom: Geometry<_> = Line::from([(0.5, 0.5), (2., 1.)]).into();
         assert!(geom.intersects(&geom));
