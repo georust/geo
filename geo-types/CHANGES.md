@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+*
+
+## 0.7.3
+
 * DEPRECATION: Deprecate `Point::lng`, `Point::lat`, `Point::set_lng` and `Point::set_lat`
   * <https://github.com/georust/geo/pull/711>
 * Support `rstar` version `0.9` in feature `use-rstar_0_9`
