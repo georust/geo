@@ -44,7 +44,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - run: rustup component add clippy
-      - run: cargo clippy --all-features --all-targets --no-default-features -- -Dwarnings
+      - run: cargo clippy --all-features --all-targets -- -Dwarnings
 
   geo_types:
     name: geo-types
