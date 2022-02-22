@@ -21,7 +21,7 @@ jobs:
     name: ci result
     runs-on: ubuntu-latest
     needs:
-      - clippy
+      - lint
       - geo_types
       - geo
       - geo_postgis
@@ -35,14 +35,14 @@ jobs:
         if: "!success()"
         run: exit 1
 
-  clippy:
-    name: clippy
+  lint:
+    name: lint
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     strategy:
       matrix:
         container_image:
-          # Use the latest stable clippy. No need for older versions.
+          # Use the latest stable version. No need for older versions.
           - "georust/geo-ci:rust-1.58"
     container:
       image: ${{ matrix.container_image }}
@@ -50,6 +50,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - run: rustup component add clippy
+      - run: cargo fmt --all -- --check
       - run: cargo clippy --all-features --all-targets -- -Dwarnings
 
   geo_types:
