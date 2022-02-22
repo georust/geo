@@ -26,9 +26,9 @@ fn generate_consecutive_circles(coords: &[Coordinate<f64>]) -> String {
     circles_str
 }
 
-fn produce_file_content(start_str: &str, mid_str: String) -> String {
+fn produce_file_content(start_str: &str, mid_str: &str) -> String {
     let mut overall_string = start_str.to_string();
-    overall_string.push_str(mid_str.as_ref());
+    overall_string.push_str(mid_str);
     overall_string.push_str("</svg>");
     overall_string
 }
@@ -73,9 +73,9 @@ fn main() -> std::io::Result<()> {
     let convex_polygon_str = generate_polygon_str(&convex.exterior().0);
     let v_coords = map_points_to_coords(multipoint.0);
     let circles_str = generate_consecutive_circles(&v_coords);
-    let points_str = produce_file_content(&svg_file_string, circles_str);
-    let concave_hull_str = produce_file_content(&svg_file_string, concave_polygon_str);
-    let convex_hull_str = produce_file_content(&svg_file_string, convex_polygon_str);
+    let points_str = produce_file_content(&svg_file_string, &circles_str);
+    let concave_hull_str = produce_file_content(&svg_file_string, &concave_polygon_str);
+    let convex_hull_str = produce_file_content(&svg_file_string, &convex_polygon_str);
 
     points_file.write_all(points_str.as_ref())?;
     concave_hull_file.write_all(concave_hull_str.as_ref())?;
