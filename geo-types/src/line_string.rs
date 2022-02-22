@@ -1,3 +1,5 @@
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+use crate::CoordFloat;
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
@@ -483,7 +485,7 @@ macro_rules! impl_rstar_line_string {
     ($rstar:ident) => {
         impl<T> ::$rstar::RTreeObject for LineString<T>
         where
-            T: ::num_traits::Float + ::$rstar::RTreeNum,
+            T: CoordFloat + ::$rstar::RTreeNum,
         {
             type Envelope = ::$rstar::AABB<Point<T>>;
 
@@ -505,7 +507,7 @@ macro_rules! impl_rstar_line_string {
 
         impl<T> ::$rstar::PointDistance for LineString<T>
         where
-            T: ::num_traits::Float + ::$rstar::RTreeNum,
+            T: CoordFloat + ::$rstar::RTreeNum,
         {
             fn distance_2(&self, point: &Point<T>) -> T {
                 let d = crate::private_utils::point_line_string_euclidean_distance(*point, self);

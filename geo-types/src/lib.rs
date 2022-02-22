@@ -76,9 +76,9 @@ impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordinateType for T {}
 /// For algorithms which only make sense for floating point, like area or length calculations,
 /// see [CoordFloat](trait.CoordFloat.html).
 #[allow(deprecated)]
-pub trait CoordNum: CoordinateType + Debug {}
+pub trait CoordNum: CoordinateType + Debug + Default {}
 #[allow(deprecated)]
-impl<T: CoordinateType + Debug> CoordNum for T {}
+impl<T: CoordinateType + Debug + Default> CoordNum for T {}
 
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}

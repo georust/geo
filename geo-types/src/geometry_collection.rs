@@ -69,17 +69,9 @@ use std::ops::{Index, IndexMut};
 /// println!("{:?}", gc[0]);
 /// ```
 ///
-#[derive(Eq, PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GeometryCollection<T: CoordNum>(pub Vec<Geometry<T>>);
-
-// Implementing Default by hand because T does not have Default restriction
-// todo: consider adding Default as a CoordNum requirement
-impl<T: CoordNum> Default for GeometryCollection<T> {
-    fn default() -> Self {
-        Self(Vec::new())
-    }
-}
 
 impl<T: CoordNum> GeometryCollection<T> {
     /// Return an empty GeometryCollection
