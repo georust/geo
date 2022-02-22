@@ -49,7 +49,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - run: rustup component add clippy
+      - run: rustup component add rustfmt clippy
       - run: cargo fmt --all -- --check
       - run: cargo clippy --all-features --all-targets -- -Dwarnings
 
