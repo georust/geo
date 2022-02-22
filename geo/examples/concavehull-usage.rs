@@ -5,7 +5,7 @@ use geo_types::MultiPoint;
 use std::fs::File;
 use std::io::Write;
 
-fn generate_polygon_str(coords: &Vec<Coordinate<f64>>) -> String {
+fn generate_polygon_str(coords: &[Coordinate<f64>]) -> String {
     let mut points_str = String::from("");
     for coord in coords {
         points_str.push_str(format!("{},{} ", coord.x, coord.y).as_ref());
@@ -16,21 +16,21 @@ fn generate_polygon_str(coords: &Vec<Coordinate<f64>>) -> String {
     );
 }
 
-fn generate_consecutive_circles(coords: &Vec<Coordinate<f64>>) -> String {
+fn generate_consecutive_circles(coords: &[Coordinate<f64>]) -> String {
     let mut circles_str = String::from("");
     for coord in coords {
         circles_str.push_str(
             format!("<circle cx=\"{}\" cy=\"{}\" r=\"1\"/>\n", coord.x, coord.y).as_ref(),
         );
     }
-    return circles_str;
+    circles_str
 }
 
-fn produce_file_content(start_str: &String, mid_str: String) -> String {
-    let mut overall_string = start_str.clone();
+fn produce_file_content(start_str: &str, mid_str: String) -> String {
+    let mut overall_string = start_str.to_string();
     overall_string.push_str(mid_str.as_ref());
     overall_string.push_str("</svg>");
-    return overall_string;
+    overall_string
 }
 
 //Move the points such that they're clustered around the center of the image

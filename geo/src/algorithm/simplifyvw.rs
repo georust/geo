@@ -704,13 +704,13 @@ mod test {
         let c = point!(x: 3., y: 3.);
         let d = point!(x: 1., y: 1.);
         // cw + ccw
-        assert_eq!(cartesian_intersect(a, b, c, d), true);
+        assert!(cartesian_intersect(a, b, c, d));
         // ccw + ccw
-        assert_eq!(cartesian_intersect(b, a, c, d), true);
+        assert!(cartesian_intersect(b, a, c, d));
         // cw + cw
-        assert_eq!(cartesian_intersect(a, b, d, c), true);
+        assert!(cartesian_intersect(a, b, d, c));
         // ccw + cw
-        assert_eq!(cartesian_intersect(b, a, d, c), true);
+        assert!(cartesian_intersect(b, a, d, c));
     }
     #[test]
     fn simple_vwp_test() {
@@ -814,7 +814,7 @@ mod test {
             initial_min: 2,
             min_points: 4,
         };
-        let simplified = vwp_wrapper(gt, &points_ls.into(), None, &0.0005);
+        let simplified = vwp_wrapper(gt, &points_ls, None, &0.0005);
         assert_eq!(simplified[0].len(), 3278);
     }
 
@@ -843,12 +843,8 @@ mod test {
     }
     #[test]
     fn visvalingam_test_two_point_linestring() {
-        let mut vec = Vec::new();
-        vec.push(Point::new(0.0, 0.0));
-        vec.push(Point::new(27.8, 0.1));
-        let mut compare = Vec::new();
-        compare.push(Coordinate::from((0.0, 0.0)));
-        compare.push(Coordinate::from((27.8, 0.1)));
+        let vec = vec![Point::new(0.0, 0.0), Point::new(27.8, 0.1)];
+        let compare = vec![Coordinate::from((0.0, 0.0)), Coordinate::from((27.8, 0.1))];
         let simplified = visvalingam(&LineString::from(vec), &1.0);
         assert_eq!(simplified, compare);
     }

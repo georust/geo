@@ -88,7 +88,7 @@ mod test {
             .into(),
             vec![],
         );
-        assert_eq!(!v.contains(&rect), true);
+        assert!(!v.contains(&rect));
     }
     #[test]
     // V contains rect because all its vertices are contained, and none of its edges intersect with V's boundaries
@@ -117,7 +117,7 @@ mod test {
             .into(),
             vec![],
         );
-        assert_eq!(v.contains(&rect), true);
+        assert!(v.contains(&rect));
     }
     #[test]
     // LineString is fully contained
@@ -127,7 +127,7 @@ mod test {
             vec![],
         );
         let ls = LineString::from(vec![(3.0, 0.5), (3.0, 3.5)]);
-        assert_eq!(poly.contains(&ls), true);
+        assert!(poly.contains(&ls));
     }
     /// Tests: Point in LineString
     #[test]
@@ -314,8 +314,8 @@ mod test {
             Coordinate { x: -10., y: -20. },
             Coordinate { x: 10., y: 20. },
         );
-        assert_eq!(true, bounding_rect_xl.contains(&bounding_rect_sm));
-        assert_eq!(false, bounding_rect_sm.contains(&bounding_rect_xl));
+        assert!(bounding_rect_xl.contains(&bounding_rect_sm));
+        assert!(!bounding_rect_sm.contains(&bounding_rect_xl));
     }
     #[test]
     fn point_in_line_test() {
@@ -349,11 +349,11 @@ mod test {
     fn linestring_in_line_test() {
         let line = Line::from([(0, 10), (30, 40)]);
         // linestring0 in line
-        let linestring0 = LineString::from(vec![(01, 11), (10, 20), (15, 25)]);
+        let linestring0 = LineString::from(vec![(1, 11), (10, 20), (15, 25)]);
         // linestring1 starts and ends in line, but wanders in the middle
-        let linestring1 = LineString::from(vec![(01, 11), (20, 20), (15, 25)]);
+        let linestring1 = LineString::from(vec![(1, 11), (20, 20), (15, 25)]);
         // linestring2 is co-linear, but extends beyond line
-        let linestring2 = LineString::from(vec![(01, 11), (10, 20), (40, 50)]);
+        let linestring2 = LineString::from(vec![(1, 11), (10, 20), (40, 50)]);
         // no part of linestring3 is contained in line
         let linestring3 = LineString::from(vec![(11, 11), (20, 20), (25, 25)]);
         // a linestring with singleton interior on the boundary of the line

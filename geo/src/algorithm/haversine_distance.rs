@@ -58,6 +58,7 @@ where
 
 #[cfg(test)]
 mod test {
+    #![allow(clippy::excessive_precision)]
     use crate::algorithm::haversine_distance::HaversineDistance;
     use crate::Point;
 

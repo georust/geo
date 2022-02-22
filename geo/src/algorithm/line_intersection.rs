@@ -299,6 +299,7 @@ fn proper_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coordinate<F> {
 
 #[cfg(test)]
 mod test {
+    #![allow(clippy::excessive_precision)]
     use super::*;
 
     /// Based on JTS test `testCentralEndpointHeuristicFailure`

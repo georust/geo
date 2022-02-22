@@ -332,6 +332,7 @@ where
 
 #[cfg(test)]
 mod test {
+    #![allow(clippy::excessive_precision)]
     use super::*;
     use crate::{line_string, point, polygon, Coordinate, Point};
     use approx::assert_relative_eq;

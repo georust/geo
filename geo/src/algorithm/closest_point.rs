@@ -184,6 +184,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Geometry<F> {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::excessive_precision)]
     use super::*;
     use crate::{point, polygon};
 
