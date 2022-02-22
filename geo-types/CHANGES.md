@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Note: All crates have been migrated to Rust 2021 edition. The MSRV when installing the latest dependencies has increased to 1.56.
+  * <https://github.com/georust/geo/pull/741>
 *
 
 ## 0.7.3
