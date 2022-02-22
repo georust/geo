@@ -277,7 +277,7 @@ mod tests {
     #[test]
     fn polygon_without_rings_and_point_outside_is_same_as_linestring() {
         let poly = holy_polygon();
-        let p = Point::new(1000.0, 12345.6789);
+        let p = Point::new(1000.0, 12345.678);
         assert!(
             !poly.exterior().contains(&p),
             "`p` should be outside the polygon!"

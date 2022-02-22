@@ -66,18 +66,12 @@ use approx::{AbsDiffEq, RelativeEq};
 /// [`LineString`]: line_string/struct.LineString.html
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Polygon<T>
-where
-    T: CoordNum,
-{
+pub struct Polygon<T: CoordNum> {
     exterior: LineString<T>,
     interiors: Vec<LineString<T>>,
 }
 
-impl<T> Polygon<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Polygon<T> {
     /// Create a new `Polygon` with the provided exterior `LineString` ring and
     /// interior `LineString` rings.
     ///
@@ -408,10 +402,7 @@ enum ListSign {
     Mixed,
 }
 
-impl<T> Polygon<T>
-where
-    T: CoordFloat + Signed,
-{
+impl<T: CoordFloat + Signed> Polygon<T> {
     /// Determine whether a Polygon is convex
     // For each consecutive pair of edges of the polygon (each triplet of points),
     // compute the z-component of the cross product of the vectors defined by the
