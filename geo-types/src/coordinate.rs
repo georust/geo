@@ -25,10 +25,7 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Coordinate<T>
-where
-    T: CoordNum,
-{
+pub struct Coordinate<T: CoordNum> {
     pub x: T,
     pub y: T,
 }
@@ -72,10 +69,7 @@ impl<T: CoordNum> From<Coordinate<T>> for [T; 2] {
     }
 }
 
-impl<T> Coordinate<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Coordinate<T> {
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the coordinate.
     ///
     /// # Examples
@@ -137,10 +131,7 @@ where
 /// assert_eq!(sum.x, 2.75);
 /// assert_eq!(sum.y, 5.0);
 /// ```
-impl<T> Add for Coordinate<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Add for Coordinate<T> {
     type Output = Coordinate<T>;
 
     fn add(self, rhs: Coordinate<T>) -> Coordinate<T> {
@@ -162,10 +153,7 @@ where
 /// assert_eq!(diff.x, 0.25);
 /// assert_eq!(diff.y, 0.);
 /// ```
-impl<T> Sub for Coordinate<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Sub for Coordinate<T> {
     type Output = Coordinate<T>;
 
     fn sub(self, rhs: Coordinate<T>) -> Coordinate<T> {
@@ -186,10 +174,7 @@ where
 /// assert_eq!(q.x, 5.0);
 /// assert_eq!(q.y, 10.0);
 /// ```
-impl<T> Mul<T> for Coordinate<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Mul<T> for Coordinate<T> {
     type Output = Coordinate<T>;
 
     fn mul(self, rhs: T) -> Coordinate<T> {
@@ -210,10 +195,7 @@ where
 /// assert_eq!(q.x, 1.25);
 /// assert_eq!(q.y, 2.5);
 /// ```
-impl<T> Div<T> for Coordinate<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Div<T> for Coordinate<T> {
     type Output = Coordinate<T>;
 
     fn div(self, rhs: T) -> Coordinate<T> {

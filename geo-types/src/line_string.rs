@@ -132,9 +132,7 @@ use std::ops::{Index, IndexMut};
 
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct LineString<T>(pub Vec<Coordinate<T>>)
-where
-    T: CoordNum;
+pub struct LineString<T: CoordNum>(pub Vec<Coordinate<T>>);
 
 /// A [`Point`] iterator returned by the `points` method
 #[derive(Debug)]
