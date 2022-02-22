@@ -150,6 +150,11 @@ where
                 .locate_within_distance(closest_point, search_dist)
                 .peekable();
             let peeked_edge = edges_nearby_point.peek();
+
+            // Clippy is having an issue here. It might be a valid suggestion,
+            // but the automatic clippy fix breaks the code, so may need to be done by hand.
+            // See https://github.com/rust-lang/rust/issues/94241
+            #[allow(clippy::manual_map)]
             let closest_edge_option = match peeked_edge {
                 None => None,
                 Some(&edge) => Some(edges_nearby_point.fold(*edge, |acc, candidate| {

@@ -98,8 +98,8 @@ mod test {
     #[test]
     fn distance3_test_f32() {
         // this input comes from issue #100
-        let a = Point::<f32>::new(-77.036585, 38.897448);
-        let b = Point::<f32>::new(-77.009080, 38.889825);
+        let a = Point::<f32>::new(-77.03658, 38.89745);
+        let b = Point::<f32>::new(-77.00908, 38.889825);
         assert_relative_eq!(a.haversine_distance(&b), 2526.8354_f32, epsilon = 1.0e-6);
     }
 }

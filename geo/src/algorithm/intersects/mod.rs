@@ -370,10 +370,10 @@ mod test {
         let bounding_rect_s2 =
             Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 20., y: 30. });
         // confirmed using GEOS
-        assert_eq!(true, bounding_rect_xl.intersects(&bounding_rect_sm));
-        assert_eq!(true, bounding_rect_sm.intersects(&bounding_rect_xl));
-        assert_eq!(true, bounding_rect_sm.intersects(&bounding_rect_s2));
-        assert_eq!(true, bounding_rect_s2.intersects(&bounding_rect_sm));
+        assert!(bounding_rect_xl.intersects(&bounding_rect_sm));
+        assert!(bounding_rect_sm.intersects(&bounding_rect_xl));
+        assert!(bounding_rect_sm.intersects(&bounding_rect_s2));
+        assert!(bounding_rect_s2.intersects(&bounding_rect_sm));
     }
     #[test]
     fn rect_intersection_consistent_with_poly_intersection_test() {
@@ -388,65 +388,29 @@ mod test {
         let bounding_rect_s2 =
             Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 20., y: 30. });
 
-        assert_eq!(
-            true,
-            bounding_rect_xl.to_polygon().intersects(&bounding_rect_sm)
-        );
-        assert_eq!(
-            true,
-            bounding_rect_xl.intersects(&bounding_rect_sm.to_polygon())
-        );
-        assert_eq!(
-            true,
-            bounding_rect_xl
-                .to_polygon()
-                .intersects(&bounding_rect_sm.to_polygon())
-        );
+        assert!(bounding_rect_xl.to_polygon().intersects(&bounding_rect_sm));
+        assert!(bounding_rect_xl.intersects(&bounding_rect_sm.to_polygon()));
+        assert!(bounding_rect_xl
+            .to_polygon()
+            .intersects(&bounding_rect_sm.to_polygon()));
 
-        assert_eq!(
-            true,
-            bounding_rect_sm.to_polygon().intersects(&bounding_rect_xl)
-        );
-        assert_eq!(
-            true,
-            bounding_rect_sm.intersects(&bounding_rect_xl.to_polygon())
-        );
-        assert_eq!(
-            true,
-            bounding_rect_sm
-                .to_polygon()
-                .intersects(&bounding_rect_xl.to_polygon())
-        );
+        assert!(bounding_rect_sm.to_polygon().intersects(&bounding_rect_xl));
+        assert!(bounding_rect_sm.intersects(&bounding_rect_xl.to_polygon()));
+        assert!(bounding_rect_sm
+            .to_polygon()
+            .intersects(&bounding_rect_xl.to_polygon()));
 
-        assert_eq!(
-            true,
-            bounding_rect_sm.to_polygon().intersects(&bounding_rect_s2)
-        );
-        assert_eq!(
-            true,
-            bounding_rect_sm.intersects(&bounding_rect_s2.to_polygon())
-        );
-        assert_eq!(
-            true,
-            bounding_rect_sm
-                .to_polygon()
-                .intersects(&bounding_rect_s2.to_polygon())
-        );
+        assert!(bounding_rect_sm.to_polygon().intersects(&bounding_rect_s2));
+        assert!(bounding_rect_sm.intersects(&bounding_rect_s2.to_polygon()));
+        assert!(bounding_rect_sm
+            .to_polygon()
+            .intersects(&bounding_rect_s2.to_polygon()));
 
-        assert_eq!(
-            true,
-            bounding_rect_s2.to_polygon().intersects(&bounding_rect_sm)
-        );
-        assert_eq!(
-            true,
-            bounding_rect_s2.intersects(&bounding_rect_sm.to_polygon())
-        );
-        assert_eq!(
-            true,
-            bounding_rect_s2
-                .to_polygon()
-                .intersects(&bounding_rect_sm.to_polygon())
-        );
+        assert!(bounding_rect_s2.to_polygon().intersects(&bounding_rect_sm));
+        assert!(bounding_rect_s2.intersects(&bounding_rect_sm.to_polygon()));
+        assert!(bounding_rect_s2
+            .to_polygon()
+            .intersects(&bounding_rect_sm.to_polygon()));
     }
     #[test]
     fn point_intersects_line_test() {
@@ -589,9 +553,9 @@ mod test {
             Coordinate { x: 10., y: 20. },
             Coordinate { x: 20., y: -10. },
         );
-        let geom = Geometry::Point(pt.clone());
+        let geom = Geometry::Point(pt);
         let gc = GeometryCollection(vec![geom.clone()]);
-        let multi_point = MultiPoint(vec![pt.clone()]);
+        let multi_point = MultiPoint(vec![pt]);
         let multi_ls = MultiLineString(vec![ls.clone()]);
         let multi_poly = MultiPolygon(vec![poly.clone()]);
 

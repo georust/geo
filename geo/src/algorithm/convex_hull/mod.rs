@@ -116,7 +116,7 @@ where
 
     // Remove repeated points unless collinear points
     // are to be included.
-    let mut ls: Vec<Coordinate<T>> = points.iter().copied().collect();
+    let mut ls: Vec<Coordinate<T>> = points.to_vec();
     if !include_on_hull {
         ls.dedup();
     }

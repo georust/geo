@@ -836,7 +836,7 @@ mod test {
         use proj::{Coord, Proj, ProjError};
         let from = "EPSG:4326";
         let to = "EPSG:2230";
-        let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
+        let to_feet = Proj::new_known_crs(from, to, None).unwrap();
 
         let f = |x: f64, y: f64| -> Result<_, ProjError> {
             let shifted = to_feet.convert((x, y))?;
