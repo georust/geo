@@ -28,9 +28,7 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T>(pub Coordinate<T>)
-where
-    T: CoordNum;
+pub struct Point<T: CoordNum>(pub Coordinate<T>);
 
 impl<T: CoordNum> From<Coordinate<T>> for Point<T> {
     fn from(x: Coordinate<T>) -> Point<T> {
@@ -62,10 +60,7 @@ impl<T: CoordNum> From<Point<T>> for [T; 2] {
     }
 }
 
-impl<T> Point<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Point<T> {
     /// Creates a new point.
     ///
     /// # Examples
@@ -230,10 +225,7 @@ where
     }
 }
 
-impl<T> Point<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Point<T> {
     /// Returns the dot product of the two points:
     /// `dot = x1 * x2 + y1 * y2`
     ///
@@ -274,10 +266,7 @@ where
     }
 }
 
-impl<T> Point<T>
-where
-    T: CoordFloat,
-{
+impl<T: CoordFloat> Point<T> {
     /// Converts the (x,y) components of Point to degrees
     ///
     /// # Example
@@ -338,10 +327,7 @@ where
     }
 }
 
-impl<T> Add for Point<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Add for Point<T> {
     type Output = Point<T>;
 
     /// Add a point to the given point.
@@ -361,10 +347,7 @@ where
     }
 }
 
-impl<T> AddAssign for Point<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> AddAssign for Point<T> {
     /// Add a point to the given point and assign it to the original point.
     ///
     /// # Examples
@@ -383,10 +366,7 @@ where
     }
 }
 
-impl<T> Sub for Point<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Sub for Point<T> {
     type Output = Point<T>;
 
     /// Subtract a point from the given point.
@@ -406,10 +386,7 @@ where
     }
 }
 
-impl<T> SubAssign for Point<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> SubAssign for Point<T> {
     /// Subtract a point from the given point and assign it to the original point.
     ///
     /// # Examples
@@ -428,10 +405,7 @@ where
     }
 }
 
-impl<T> Mul<T> for Point<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Mul<T> for Point<T> {
     type Output = Point<T>;
 
     /// Scaler multiplication of a point
@@ -451,10 +425,7 @@ where
     }
 }
 
-impl<T> MulAssign<T> for Point<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> MulAssign<T> for Point<T> {
     /// Scaler multiplication of a point in place
     ///
     /// # Examples
@@ -473,10 +444,7 @@ where
     }
 }
 
-impl<T> Div<T> for Point<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Div<T> for Point<T> {
     type Output = Point<T>;
 
     /// Scaler division of a point
@@ -496,10 +464,7 @@ where
     }
 }
 
-impl<T> DivAssign<T> for Point<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> DivAssign<T> for Point<T> {
     /// Scaler division of a point in place
     ///
     /// # Examples
