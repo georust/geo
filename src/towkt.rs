@@ -59,7 +59,7 @@ fn g_line_to_w_linestring<T>(g_line: &geo_types::Line<T>) -> LineString<T>
 where
     T: CoordFloat,
 {
-    g_points_to_w_linestring(&vec![g_line.start, g_line.end])
+    g_points_to_w_linestring(&[g_line.start, g_line.end])
 }
 
 fn g_linestring_to_w_linestring<T>(g_linestring: &geo_types::LineString<T>) -> LineString<T>
@@ -218,7 +218,7 @@ where
     T: CoordFloat,
 {
     fn to_wkt(&self) -> Wkt<T> {
-        let w_geom = g_geom_to_w_geom(&self);
+        let w_geom = g_geom_to_w_geom(self);
         Wkt { item: w_geom }
     }
 }

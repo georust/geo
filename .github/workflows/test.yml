@@ -1,4 +1,12 @@
-on: push
+on:
+  push:
+    branches:
+      - main
+      - master
+      - staging
+      - trying
+  pull_request:
+
 name: Run tests
 jobs:
   wkt:

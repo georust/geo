@@ -260,13 +260,13 @@ where
     type Error = Error;
 
     fn try_from(geometry_collection: GeometryCollection<T>) -> Result<Self, Self::Error> {
-        let geo_geometeries = geometry_collection
+        let geo_geometries = geometry_collection
             .0
             .into_iter()
             .map(Geometry::try_into)
             .collect::<Result<_, _>>()?;
 
-        Ok(geo_types::GeometryCollection(geo_geometeries))
+        Ok(geo_types::GeometryCollection(geo_geometries))
     }
 }
 

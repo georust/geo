@@ -58,8 +58,8 @@ where
             _ => return Err("Expected a number for the Y coordinate"),
         };
         Ok(Coord {
-            x: x,
-            y: y,
+            x,
+            y,
             z: None,
             m: None,
         })
