@@ -69,6 +69,7 @@ mod tests {
     use super::{MultiPoint, Point};
     use crate::types::Coord;
     use crate::{Geometry, Wkt};
+    use std::str::FromStr;
 
     #[test]
     fn basic_multipoint() {

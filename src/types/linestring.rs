@@ -64,6 +64,7 @@ where
 mod tests {
     use super::{Coord, LineString};
     use crate::{Geometry, Wkt};
+    use std::str::FromStr;
 
     #[test]
     fn basic_linestring() {

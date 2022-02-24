@@ -73,6 +73,7 @@ mod tests {
     use super::{LineString, Polygon};
     use crate::types::Coord;
     use crate::{Geometry, Wkt};
+    use std::str::FromStr;
 
     #[test]
     fn basic_polygon() {

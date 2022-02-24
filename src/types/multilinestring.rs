@@ -73,6 +73,7 @@ mod tests {
     use super::{LineString, MultiLineString};
     use crate::types::Coord;
     use crate::{Geometry, Wkt};
+    use std::str::FromStr;
 
     #[test]
     fn basic_multilinestring() {

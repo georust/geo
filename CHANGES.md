@@ -8,6 +8,8 @@
   * <https://github.com/georust/wkt/pull/72>
 * BREAKING: Reject empty strings instead of parsing them into an empty `Wkt`.
   * <https://github.com/georust/wkt/pull/72>
+* BREAKING: move `Wkt::from_str` to `FromStr` trait. Add `use std::str::FromStr;` to your code to use it.
+  * <https://github.com/georust/wkt/pull/79>
 * Switch to 2021 edition and add examples
   * <https://github.com/georust/wkt/pull/65>
 

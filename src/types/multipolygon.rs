@@ -78,6 +78,7 @@ mod tests {
     use super::{MultiPolygon, Polygon};
     use crate::types::{Coord, LineString};
     use crate::{Geometry, Wkt};
+    use std::str::FromStr;
 
     #[test]
     fn basic_multipolygon() {

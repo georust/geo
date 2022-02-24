@@ -85,6 +85,7 @@ mod tests {
     use super::GeometryCollection;
     use crate::types::*;
     use crate::{Geometry, Wkt};
+    use std::str::FromStr;
 
     #[test]
     fn basic_geometrycollection() {

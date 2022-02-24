@@ -23,6 +23,7 @@
 //! # Examples
 //!
 //! ```
+//! use std::str::FromStr;
 //! use wkt::Wkt;
 //! let point: Wkt<f64> = Wkt::from_str("POINT(10 20)").unwrap();
 //! ```
@@ -43,6 +44,7 @@
 //! If you wish to work directly with one of the WKT [`types`] you can match on the `item` field
 //! ```
 //! use std::convert::TryInto;
+//! use std::str::FromStr;
 //! use wkt::Wkt;
 //! use wkt::Geometry;
 //!
@@ -187,11 +189,6 @@ impl<T> Wkt<T>
 where
     T: WktFloat + FromStr + Default,
 {
-    pub fn from_str(wkt_str: &str) -> Result<Self, &'static str> {
-        let tokens = Tokens::from_str(wkt_str);
-        Wkt::from_tokens(tokens)
-    }
-
     fn from_tokens(tokens: Tokens<T>) -> Result<Self, &'static str> {
         let mut tokens = tokens.peekable();
         let word = match tokens.next() {
@@ -207,6 +204,17 @@ where
             Ok(item) => Ok(Wkt { item }),
             Err(s) => Err(s),
         }
+    }
+}
+
+impl<T> FromStr for Wkt<T>
+where
+    T: WktFloat + FromStr + Default,
+{
+    type Err = &'static str;
+
+    fn from_str(wkt_str: &str) -> Result<Self, Self::Err> {
+        Wkt::from_tokens(Tokens::from_str(wkt_str))
     }
 }
 
@@ -265,6 +273,7 @@ where
 mod tests {
     use crate::types::{Coord, MultiPolygon, Point};
     use crate::{Geometry, Wkt};
+    use std::str::FromStr;
 
     #[test]
     fn empty_string() {
