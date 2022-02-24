@@ -8,6 +8,7 @@ repository = "https://github.com/georust/wkt"
 autobenches = true
 readme = "README.md"
 keywords = ["geo", "geospatial", "wkt"]
+edition = "2021"
 
 [dependencies]
 geo-types = { version = "0.7.1", optional = true }

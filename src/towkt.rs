@@ -1,9 +1,9 @@
-use types::{
+use crate::types::{
     Coord, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
     Polygon,
 };
-use Geometry;
-use Wkt;
+use crate::Geometry;
+use crate::Wkt;
 
 use geo_types::CoordFloat;
 

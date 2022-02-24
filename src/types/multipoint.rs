@@ -14,9 +14,9 @@
 
 use std::fmt;
 use std::str::FromStr;
-use tokenizer::PeekableTokens;
-use types::point::Point;
-use {FromTokens, Geometry, WktFloat};
+use crate::tokenizer::PeekableTokens;
+use crate::types::point::Point;
+use crate::{FromTokens, Geometry, WktFloat};
 
 #[derive(Clone, Debug, Default)]
 pub struct MultiPoint<T: WktFloat>(pub Vec<Point<T>>);
@@ -67,8 +67,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::{MultiPoint, Point};
-    use types::Coord;
-    use {Geometry, Wkt};
+    use crate::types::Coord;
+    use crate::{Geometry, Wkt};
 
     #[test]
     fn basic_multipoint() {

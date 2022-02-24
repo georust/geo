@@ -15,7 +15,7 @@
 use std::iter::Peekable;
 use std::marker::PhantomData;
 use std::str;
-use WktFloat;
+use crate::WktFloat;
 
 #[derive(Debug, PartialEq)]
 pub enum Token<T>
