@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::fmt;
-use std::str::FromStr;
 use crate::tokenizer::PeekableTokens;
 use crate::types::coord::Coord;
 use crate::{FromTokens, Geometry, WktFloat};
+use std::fmt;
+use std::str::FromStr;
 
 #[derive(Clone, Debug, Default)]
 pub struct LineString<T: WktFloat>(pub Vec<Coord<T>>);

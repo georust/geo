@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::fmt;
-use std::str::FromStr;
 use crate::tokenizer::{PeekableTokens, Token};
 use crate::{FromTokens, WktFloat};
+use std::fmt;
+use std::str::FromStr;
 
 #[derive(Clone, Debug, Default)]
 pub struct Coord<T>

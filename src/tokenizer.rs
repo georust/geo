@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::WktFloat;
 use std::iter::Peekable;
 use std::marker::PhantomData;
 use std::str;
-use crate::WktFloat;
 
 #[derive(Debug, PartialEq)]
 pub enum Token<T>

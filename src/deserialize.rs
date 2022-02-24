@@ -114,9 +114,8 @@ where
     T: FromStr + Default + WktFloat,
 {
     use serde::Deserialize;
-    Geometry::deserialize(deserializer).and_then(|g: Geometry<T>| {
-        g.try_into().map_err(D::Error::custom)
-    })
+    Geometry::deserialize(deserializer)
+        .and_then(|g: Geometry<T>| g.try_into().map_err(D::Error::custom))
 }
 
 /// Deserializes directly from WKT format into an `Option<geo_types::Point>`.
