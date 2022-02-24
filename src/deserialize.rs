@@ -115,7 +115,7 @@ where
 {
     use serde::Deserialize;
     Geometry::deserialize(deserializer)
-        .and_then(|g: Geometry<T>| g.try_into().map_err(|e| D::Error::custom(e)))
+        .and_then(|g: Geometry<T>| g.try_into().map_err(D::Error::custom))
 }
 
 /// Deserializes directly from WKT format into an `Option<geo_types::Point>`.
@@ -159,7 +159,7 @@ where
                 use geo_types::Geometry::*;
                 match geom {
                     Point(p) => Ok(Some(p)),
-                    MultiPoint(mp) if mp.0.len() == 0 => Ok(None),
+                    MultiPoint(mp) if mp.0.is_empty() => Ok(None),
                     _ => geo_types::Point::try_from(geom)
                         .map(Some)
                         .map_err(D::Error::custom),

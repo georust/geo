@@ -122,7 +122,7 @@ where
     }
 }
 
-#[deprecated(since = "0.9", note = "use `geometry.try_into()` instead")]
+#[deprecated(since = "0.9.0", note = "use `geometry.try_into()` instead")]
 pub fn try_into_geometry<T>(geometry: &Geometry<T>) -> Result<geo_types::Geometry<T>, Error>
 where
     T: CoordFloat,
@@ -256,7 +256,7 @@ where
     }
 }
 
-#[deprecated(since = "0.9", note = "use `geometry_collection.try_into()` instead")]
+#[deprecated(since = "0.9.0", note = "use `geometry_collection.try_into()` instead")]
 pub fn try_into_geometry_collection<T>(
     geometry_collection: &GeometryCollection<T>,
 ) -> Result<geo_types::Geometry<T>, Error>

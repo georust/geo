@@ -205,7 +205,7 @@ where
         };
         match Geometry::from_word_and_tokens(&word, &mut tokens) {
             Ok(item) => Ok(Wkt { item }),
-            Err(s) => return Err(s),
+            Err(s) => Err(s),
         }
     }
 }
