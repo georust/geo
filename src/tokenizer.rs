@@ -185,8 +185,7 @@ fn test_tokenizer_2numbers() {
 fn test_no_stack_overflow() {
     fn check(c: &str, count: usize, expected: usize) {
         let test_str = c.repeat(count);
-        let tokens: Vec<Token<f64>> = Tokens::from_str(&test_str).collect();
-        assert_eq!(expected, tokens.len());
+        assert_eq!(expected, Tokens::<f64>::from_str(&test_str).count());
     }
 
     let count = 100_000;
