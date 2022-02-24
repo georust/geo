@@ -26,7 +26,7 @@ use crate::Wkt;
 
 use std::convert::{TryFrom, TryInto};
 
-use geo_types::CoordFloat;
+use geo_types::{coord, CoordFloat};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -100,10 +100,7 @@ where
 {
     /// Convert from a WKT Coordinate to a [`geo_types::Coordinate`]
     fn from(coord: Coord<T>) -> geo_types::Coordinate<T> {
-        Self {
-            x: coord.x,
-            y: coord.y,
-        }
+        coord! { x: coord.x, y: coord.y }
     }
 }
 
