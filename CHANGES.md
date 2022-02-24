@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.10.0 - 2022-02-24
 ### Changed
 * Now accepts `MULTIPOINT`s with fewer parentheses, as output by `ST_AsText` in postgis:
   `MULTIPOINT(0 1, 2 3)` in addition to `MULTIPOINT((0 1), (2 3))`
@@ -12,6 +12,8 @@
   * <https://github.com/georust/wkt/pull/79>
 * Switch to 2021 edition and add examples
   * <https://github.com/georust/wkt/pull/65>
+* Update to geo-types v0.7.3
+* Add MIT license file
 
 ## 0.9.2 - 2020-04-30
 ### Added
