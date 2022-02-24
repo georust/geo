@@ -18,7 +18,7 @@ use Wkt;
 
 use std::convert::{TryFrom, TryInto};
 
-use geo_types::CoordFloat;
+use geo_types::{coord, CoordFloat};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -90,10 +90,7 @@ where
     T: CoordFloat,
 {
     fn from(coord: Coord<T>) -> geo_types::Coordinate<T> {
-        Self {
-            x: coord.x,
-            y: coord.y,
-        }
+        coord! { x: coord.x, y: coord.y }
     }
 }
 
