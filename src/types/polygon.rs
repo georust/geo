@@ -14,9 +14,9 @@
 
 use std::fmt;
 use std::str::FromStr;
-use tokenizer::PeekableTokens;
-use types::linestring::LineString;
-use {FromTokens, Geometry, WktFloat};
+use crate::tokenizer::PeekableTokens;
+use crate::types::linestring::LineString;
+use crate::{FromTokens, Geometry, WktFloat};
 
 #[derive(Clone, Debug, Default)]
 pub struct Polygon<T: WktFloat>(pub Vec<LineString<T>>);
@@ -71,8 +71,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::{LineString, Polygon};
-    use types::Coord;
-    use {Geometry, Wkt};
+    use crate::types::Coord;
+    use crate::{Geometry, Wkt};
 
     #[test]
     fn basic_polygon() {

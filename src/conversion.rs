@@ -1,3 +1,11 @@
+//! This module provides conversions between WKT primitives and [`geo_types`] primitives.
+//!
+//! See the [`std::convert::From`] and [`std::convert::TryFrom`] impls on individual [`crate::types`] and [`Wkt`] for details.
+//!
+//!
+//!
+//!
+//!
 // Copyright 2014-2018 The GeoRust Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +20,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use types::*;
-use Geometry;
-use Wkt;
+use crate::types::*;
+use crate::Geometry;
+use crate::Wkt;
 
 use std::convert::{TryFrom, TryInto};
 
@@ -22,6 +30,7 @@ use geo_types::CoordFloat;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+/// WKT to [`geo_types`] conversion errors
 pub enum Error {
     #[error("The WKT Point was empty, but geo_type::Points cannot be empty")]
     PointConversionError,
@@ -41,7 +50,7 @@ where
     T: CoordFloat,
 {
     type Error = Error;
-
+    /// Try to convert from a WKT member to a [`geo-types`] primitive or collection
     fn try_from(wkt: Wkt<T>) -> Result<Self, Self::Error> {
         Self::try_from(wkt.item)
     }
@@ -50,7 +59,7 @@ where
 macro_rules! try_from_wkt_impl {
     ($($type: ident),+) => {
         $(
-            /// Convert a Wkt enum into a specific geo-type
+            /// Fallibly convert this WKT primitive into this [`geo_types`] primitive
             impl<T: CoordFloat> TryFrom<Wkt<T>> for geo_types::$type<T> {
                 type Error = Error;
 
@@ -89,6 +98,7 @@ impl<T> From<Coord<T>> for geo_types::Coordinate<T>
 where
     T: CoordFloat,
 {
+    /// Convert from a WKT Coordinate to a [`geo_types::Coordinate`]
     fn from(coord: Coord<T>) -> geo_types::Coordinate<T> {
         Self {
             x: coord.x,
@@ -103,6 +113,7 @@ where
 {
     type Error = Error;
 
+    /// Fallibly convert from a WKT `POINT` to a [`geo_types::Point`]
     fn try_from(point: Point<T>) -> Result<Self, Self::Error> {
         match point.0 {
             Some(coord) => Ok(Self::new(coord.x, coord.y)),
@@ -132,6 +143,7 @@ impl<T> From<LineString<T>> for geo_types::LineString<T>
 where
     T: CoordFloat,
 {
+    /// Convert from a WKT `LINESTRING` to a [`geo_types::LineString`]
     fn from(line_string: LineString<T>) -> Self {
         let coords = line_string
             .0
@@ -156,6 +168,7 @@ impl<T> From<MultiLineString<T>> for geo_types::MultiLineString<T>
 where
     T: CoordFloat,
 {
+    /// Convert from a WKT `MULTILINESTRING` to a [`geo_types::MultiLineString`]
     fn from(multi_line_string: MultiLineString<T>) -> geo_types::MultiLineString<T> {
         let geo_line_strings: Vec<geo_types::LineString<T>> = multi_line_string
             .0
@@ -180,6 +193,7 @@ impl<T> From<Polygon<T>> for geo_types::Polygon<T>
 where
     T: CoordFloat,
 {
+    /// Convert from a WKT `POLYGON` to a [`geo_types::Polygon`]
     fn from(polygon: Polygon<T>) -> Self {
         let mut iter = polygon.0.into_iter().map(geo_types::LineString::from);
         match iter.next() {
@@ -205,7 +219,7 @@ where
     T: CoordFloat,
 {
     type Error = Error;
-
+    /// Fallibly convert from a WKT `MULTIPOINT` to a [`geo_types::MultiPoint`]
     fn try_from(multi_point: MultiPoint<T>) -> Result<Self, Self::Error> {
         let points: Vec<geo_types::Point<T>> = multi_point
             .0
@@ -230,6 +244,7 @@ impl<T> From<MultiPolygon<T>> for geo_types::MultiPolygon<T>
 where
     T: CoordFloat,
 {
+    /// Convert from a WKT `MULTIPOLYGON` to a [`geo_types::MultiPolygon`]
     fn from(multi_polygon: MultiPolygon<T>) -> Self {
         let geo_polygons: Vec<geo_types::Polygon<T>> = multi_polygon
             .0

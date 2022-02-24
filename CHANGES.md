@@ -8,6 +8,8 @@
   * <https://github.com/georust/wkt/pull/72>
 * BREAKING: Reject empty strings instead of parsing them into an empty `Wkt`.
   * <https://github.com/georust/wkt/pull/72>
+* Switch to 2021 edition and add examples
+  * <https://github.com/georust/wkt/pull/65>
 
 ## 0.9.2 - 2020-04-30
 ### Added

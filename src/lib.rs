@@ -1,3 +1,4 @@
+#![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
 // Copyright 2014-2015 The GeoRust Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,24 +13,68 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! The `wkt` crate provides conversions to and from [`WKT`](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry) primitive types.
+//! See the [`types`](crate::types) module for a list of available types.
+//!
+//! Conversions (using [`std::convert::From`] and [`std::convert::TryFrom`]) to and from [`geo_types`] primitives are enabled by default, but the feature is **optional**.
+//!
+//! Enable the `serde` feature if you need to deserialise data into custom structs containing `WKT` geometry fields.
+//!
+//! # Examples
+//!
+//! ```
+//! use wkt::Wkt;
+//! let point: Wkt<f64> = Wkt::from_str("POINT(10 20)").unwrap();
+//! ```
+//!
+//! ```ignore
+//! // Convert to a geo_types primitive from a Wkt struct
+//! use std::convert::TryInto;
+//! use wkt::Wkt;
+//! use geo_types::Point;
+//! let point: Wkt<f64> = Wkt::from_str("POINT(10 20)").unwrap();
+//! let g_point: geo_types::Point<f64> = (10., 20.).into();
+// // We can attempt to directly convert the Wkt without having to access its items field
+//! let converted: Point<f64> = point.try_into().unwrap();
+//! assert_eq!(g_point, converted);
+//! ```
+//!
+//! ## Direct Access to the `item` Field
+//! If you wish to work directly with one of the WKT [`types`] you can match on the `item` field
+//! ```
+//! use std::convert::TryInto;
+//! use wkt::Wkt;
+//! use wkt::Geometry;
+//!
+//! let wktls: Wkt<f64> = Wkt::from_str("LINESTRING(10 20, 20 30)").unwrap();
+//! let ls = match wktls.item {
+//!     Geometry::LineString(line_string) => {
+//!         // you now have access to the types::LineString
+//!     }
+//!     _ => unreachable!(),
+//! };
+//!
+//!
+//!
 use std::default::Default;
 use std::fmt;
 use std::str::FromStr;
 
-use tokenizer::{PeekableTokens, Token, Tokens};
-use types::GeometryCollection;
-use types::LineString;
-use types::MultiLineString;
-use types::MultiPoint;
-use types::MultiPolygon;
-use types::Point;
-use types::Polygon;
+use crate::tokenizer::{PeekableTokens, Token, Tokens};
+use crate::types::GeometryCollection;
+use crate::types::LineString;
+use crate::types::MultiLineString;
+use crate::types::MultiPoint;
+use crate::types::MultiPolygon;
+use crate::types::Point;
+use crate::types::Polygon;
 
 mod tokenizer;
 
 #[cfg(feature = "geo-types")]
 mod towkt;
 
+/// `WKT` primitive types and collections
 pub mod types;
 
 #[cfg(feature = "geo-types")]
@@ -38,7 +83,7 @@ extern crate geo_types;
 extern crate thiserror;
 
 #[cfg(feature = "geo-types")]
-pub use towkt::ToWkt;
+pub use crate::towkt::ToWkt;
 
 #[cfg(feature = "geo-types")]
 pub mod conversion;
@@ -54,6 +99,7 @@ pub trait WktFloat: num_traits::Float + std::fmt::Debug {}
 impl<T> WktFloat for T where T: num_traits::Float + std::fmt::Debug {}
 
 #[derive(Clone, Debug)]
+/// All supported WKT geometry [`types`]
 pub enum Geometry<T>
 where
     T: WktFloat,
@@ -127,6 +173,9 @@ where
 }
 
 #[derive(Clone, Debug)]
+/// Container for WKT primitives and collections
+///
+/// This type can be fallibly converted to a [`geo_types`] primitive using [`std::convert::TryFrom`].
 pub struct Wkt<T>
 where
     T: WktFloat,
@@ -214,8 +263,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use types::{Coord, MultiPolygon, Point};
-    use {Geometry, Wkt};
+    use crate::types::{Coord, MultiPolygon, Point};
+    use crate::{Geometry, Wkt};
 
     #[test]
     fn empty_string() {

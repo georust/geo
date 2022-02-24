@@ -14,9 +14,9 @@
 
 use std::fmt;
 use std::str::FromStr;
-use tokenizer::PeekableTokens;
-use types::polygon::Polygon;
-use {FromTokens, Geometry, WktFloat};
+use crate::tokenizer::PeekableTokens;
+use crate::types::polygon::Polygon;
+use crate::{FromTokens, Geometry, WktFloat};
 
 #[derive(Clone, Debug, Default)]
 pub struct MultiPolygon<T: WktFloat>(pub Vec<Polygon<T>>);
@@ -76,8 +76,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::{MultiPolygon, Polygon};
-    use types::{Coord, LineString};
-    use {Geometry, Wkt};
+    use crate::types::{Coord, LineString};
+    use crate::{Geometry, Wkt};
 
     #[test]
     fn basic_multipolygon() {

@@ -14,8 +14,8 @@
 
 use std::fmt;
 use std::str::FromStr;
-use tokenizer::{PeekableTokens, Token};
-use {FromTokens, WktFloat};
+use crate::tokenizer::{PeekableTokens, Token};
+use crate::{FromTokens, WktFloat};
 
 #[derive(Clone, Debug, Default)]
 pub struct Coord<T>
