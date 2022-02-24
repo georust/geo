@@ -14,8 +14,8 @@
 
 use std::fmt;
 use std::str::FromStr;
-use tokenizer::{PeekableTokens, Token};
-use {FromTokens, Geometry, WktFloat};
+use crate::tokenizer::{PeekableTokens, Token};
+use crate::{FromTokens, Geometry, WktFloat};
 
 #[derive(Clone, Debug, Default)]
 pub struct GeometryCollection<T: WktFloat>(pub Vec<Geometry<T>>);
@@ -83,8 +83,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::GeometryCollection;
-    use types::*;
-    use {Geometry, Wkt};
+    use crate::types::*;
+    use crate::{Geometry, Wkt};
 
     #[test]
     fn basic_geometrycollection() {
