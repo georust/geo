@@ -2,6 +2,8 @@
 extern crate criterion;
 extern crate wkt;
 
+use std::str::FromStr;
+
 fn criterion_benchmark(c: &mut criterion::Criterion) {
     c.bench_function("parse small", |bencher| {
         let s = include_str!("./small.wkt");

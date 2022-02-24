@@ -21,7 +21,10 @@ jobs:
           toolchain: stable
           profile: minimal
           override: true
-          components: rustfmt, rust-src
+          components: rustfmt, clippy, rust-src
       - name: Checkout repository
         uses: actions/checkout@v2
-      - run: cargo test --all-features && cargo test --no-default-features
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all-features --all-targets -- -Dwarnings
+      - run: cargo test --all-features
+      - run: cargo test --no-default-features
