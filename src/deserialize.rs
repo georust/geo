@@ -115,7 +115,6 @@ where
 {
     use serde::Deserialize;
     Geometry::deserialize(deserializer).and_then(|g: Geometry<T>| {
-        use std::convert::TryInto;
         g.try_into().map_err(D::Error::custom)
     })
 }
