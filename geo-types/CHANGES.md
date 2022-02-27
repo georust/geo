@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-*
+* Macros `coord!`, `point!`, `line_string!`, and `polygon!` now support trailing commas such as `coord! { x: 181.2, y: 51.79, }`
+  * <https://github.com/georust/geo/pull/752> 
 
 ## 0.7.3
 
