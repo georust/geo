@@ -1,4 +1,4 @@
-use crate::{Coordinate, CoordNum, Line, LineString, MultiLineString, Polygon};
+use crate::{CoordNum, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Polygon};
 use core::slice;
 use std::iter;
 
@@ -21,7 +21,6 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Line<T> {
         iter::once(self).copied()
     }
 }
-
 
 // ┌──────────────────────────────────┐
 // │ Implementation for LineString    │
@@ -59,11 +58,9 @@ impl<'a, T: CoordNum> Iterator for LineStringLinesIter<'a, T> {
     }
 }
 
-
 // ┌───────────────────────────────────────┐
 // │ Implementation for MultiLineString    │
 // └───────────────────────────────────────┘
-
 
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for MultiLineString<T> {
     type Scalar = T;
@@ -86,14 +83,13 @@ impl<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: LinesIter<'a>> Iterator
     }
 }
 
-
 // ┌───────────────────────────────┐
 // │ Implementation for Polygon    │
 // └───────────────────────────────┘
 
 type PolygonIter<'a, T> = iter::Chain<
     LineStringLinesIter<'a, T>,
-    iter::Flatten<MapLinesIter<'a, slice::Iter<'a, LineString<T>>, LineString<T>>>
+    iter::Flatten<MapLinesIter<'a, slice::Iter<'a, LineString<T>>, LineString<T>>>,
 >;
 
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for Polygon<T> {
@@ -101,16 +97,32 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Polygon<T> {
     type Iter = PolygonIter<'a, T>;
 
     fn lines_iter(&'a self) -> Self::Iter {
-        self.exterior().lines_iter().chain(MapLinesIter(self.interiors().iter()).flatten())
+        self.exterior()
+            .lines_iter()
+            .chain(MapLinesIter(self.interiors().iter()).flatten())
     }
 }
 
+// ┌────────────────────────────────────┐
+// │ Implementation for MultiPolygon    │
+// └────────────────────────────────────┘
+
+impl<'a, T: CoordNum + 'a> LinesIter<'a> for MultiPolygon<T> {
+    type Scalar = T;
+    type Iter = iter::Flatten<MapLinesIter<'a, slice::Iter<'a, Polygon<T>>, Polygon<T>>>;
+
+    fn lines_iter(&'a self) -> Self::Iter {
+        MapLinesIter(self.0.iter()).flatten()
+    }
+}
 
 #[cfg(test)]
 mod test {
 
     use super::LinesIter;
-    use crate::{line_string, polygon, Coordinate, Line, LineString, MultiLineString};
+    use crate::{
+        line_string, polygon, Coordinate, Line, LineString, MultiLineString, MultiPolygon,
+    };
 
     #[test]
     fn test_line() {
@@ -175,21 +187,54 @@ mod test {
             ],
         );
         let want = vec![
+            // exterior ring
             Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 0., y: 10. }),
             Line::new(Coordinate { x: 0., y: 10. }, Coordinate { x: 10., y: 10. }),
             Line::new(Coordinate { x: 10., y: 10. }, Coordinate { x: 10., y: 0. }),
             Line::new(Coordinate { x: 10., y: 0. }, Coordinate { x: 0., y: 0. }),
-
+            // first interior ring
             Line::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 1., y: 2. }),
             Line::new(Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 2. }),
             Line::new(Coordinate { x: 2., y: 2. }, Coordinate { x: 2., y: 1. }),
             Line::new(Coordinate { x: 2., y: 1. }, Coordinate { x: 1., y: 1. }),
-
+            // second interior ring
             Line::new(Coordinate { x: 3., y: 3. }, Coordinate { x: 5., y: 3. }),
             Line::new(Coordinate { x: 5., y: 3. }, Coordinate { x: 5., y: 5. }),
             Line::new(Coordinate { x: 5., y: 5. }, Coordinate { x: 3., y: 5. }),
             Line::new(Coordinate { x: 3., y: 5. }, Coordinate { x: 3., y: 3. }),
         ];
         assert_eq!(want, p.lines_iter().collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn test_multi_polygon() {
+        let mp = MultiPolygon(vec![
+            polygon!(
+                exterior: [(x: 0., y: 0.), (x: 0., y: 10.), (x: 10., y: 10.), (x: 10., y: 0.)],
+                interiors: [[(x: 1., y: 1.), (x: 1., y: 2.), (x: 2., y: 2.), (x: 2., y: 1.)]],
+            ),
+            polygon!(
+                exterior: [(x: 3., y: 3.), (x: 5., y: 3.), (x: 5., y: 5.), (x: 3., y: 5.)],
+                interiors: [],
+            ),
+        ]);
+        let want = vec![
+            // first polygon - exterior ring
+            Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 0., y: 10. }),
+            Line::new(Coordinate { x: 0., y: 10. }, Coordinate { x: 10., y: 10. }),
+            Line::new(Coordinate { x: 10., y: 10. }, Coordinate { x: 10., y: 0. }),
+            Line::new(Coordinate { x: 10., y: 0. }, Coordinate { x: 0., y: 0. }),
+            // first polygon - interior ring
+            Line::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 1., y: 2. }),
+            Line::new(Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 2. }),
+            Line::new(Coordinate { x: 2., y: 2. }, Coordinate { x: 2., y: 1. }),
+            Line::new(Coordinate { x: 2., y: 1. }, Coordinate { x: 1., y: 1. }),
+            // second polygon - exterior ring
+            Line::new(Coordinate { x: 3., y: 3. }, Coordinate { x: 5., y: 3. }),
+            Line::new(Coordinate { x: 5., y: 3. }, Coordinate { x: 5., y: 5. }),
+            Line::new(Coordinate { x: 5., y: 5. }, Coordinate { x: 3., y: 5. }),
+            Line::new(Coordinate { x: 3., y: 5. }, Coordinate { x: 3., y: 3. }),
+        ];
+        assert_eq!(want, mp.lines_iter().collect::<Vec<_>>());
     }
 }
