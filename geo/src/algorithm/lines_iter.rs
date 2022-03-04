@@ -1,4 +1,4 @@
-use crate::{Coordinate, CoordNum, Line, LineString, MultiLineString};
+use crate::{Coordinate, CoordNum, Line, LineString, MultiLineString, Polygon};
 use core::slice;
 use std::iter;
 
@@ -86,11 +86,31 @@ impl<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: LinesIter<'a>> Iterator
     }
 }
 
+
+// ┌───────────────────────────────┐
+// │ Implementation for Polygon    │
+// └───────────────────────────────┘
+
+type PolygonIter<'a, T> = iter::Chain<
+    LineStringLinesIter<'a, T>,
+    iter::Flatten<MapLinesIter<'a, slice::Iter<'a, LineString<T>>, LineString<T>>>
+>;
+
+impl<'a, T: CoordNum + 'a> LinesIter<'a> for Polygon<T> {
+    type Scalar = T;
+    type Iter = PolygonIter<'a, T>;
+
+    fn lines_iter(&'a self) -> Self::Iter {
+        self.exterior().lines_iter().chain(MapLinesIter(self.interiors().iter()).flatten())
+    }
+}
+
+
 #[cfg(test)]
 mod test {
 
     use super::LinesIter;
-    use crate::{line_string, Coordinate, Line, LineString, MultiLineString};
+    use crate::{line_string, polygon, Coordinate, Line, LineString, MultiLineString};
 
     #[test]
     fn test_line() {
@@ -143,5 +163,33 @@ mod test {
             Line::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 2., y: 2. }),
         ];
         assert_eq!(want, mls.lines_iter().collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn test_polygon() {
+        let p = polygon!(
+            exterior: [(x: 0., y: 0.), (x: 0., y: 10.), (x: 10., y: 10.), (x: 10., y: 0.)],
+            interiors: [
+                [(x: 1., y: 1.), (x: 1., y: 2.), (x: 2., y: 2.), (x: 2., y: 1.)],
+                [(x: 3., y: 3.), (x: 5., y: 3.), (x: 5., y: 5.), (x: 3., y: 5.)],
+            ],
+        );
+        let want = vec![
+            Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 0., y: 10. }),
+            Line::new(Coordinate { x: 0., y: 10. }, Coordinate { x: 10., y: 10. }),
+            Line::new(Coordinate { x: 10., y: 10. }, Coordinate { x: 10., y: 0. }),
+            Line::new(Coordinate { x: 10., y: 0. }, Coordinate { x: 0., y: 0. }),
+
+            Line::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 1., y: 2. }),
+            Line::new(Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 2. }),
+            Line::new(Coordinate { x: 2., y: 2. }, Coordinate { x: 2., y: 1. }),
+            Line::new(Coordinate { x: 2., y: 1. }, Coordinate { x: 1., y: 1. }),
+
+            Line::new(Coordinate { x: 3., y: 3. }, Coordinate { x: 5., y: 3. }),
+            Line::new(Coordinate { x: 5., y: 3. }, Coordinate { x: 5., y: 5. }),
+            Line::new(Coordinate { x: 5., y: 5. }, Coordinate { x: 3., y: 5. }),
+            Line::new(Coordinate { x: 3., y: 5. }, Coordinate { x: 3., y: 3. }),
+        ];
+        assert_eq!(want, p.lines_iter().collect::<Vec<_>>());
     }
 }
