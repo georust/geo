@@ -61,6 +61,8 @@ pub mod line_interpolate_point;
 pub mod line_intersection;
 /// Locate a point along a `Line` or `LineString`.
 pub mod line_locate_point;
+/// Iterate over the lines in a geometry.
+pub mod lines_iter;
 /// Apply a function to all `Coordinates` of a `Geometry`.
 pub mod map_coords;
 /// Orient a `Polygon`'s exterior and interior rings.
