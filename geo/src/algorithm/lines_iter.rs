@@ -1,4 +1,4 @@
-use crate::{Coordinate, CoordNum, Line, LineString};
+use crate::{Coordinate, CoordNum, Line, LineString, MultiLineString};
 use core::slice;
 use std::iter;
 
@@ -59,11 +59,38 @@ impl<'a, T: CoordNum> Iterator for LineStringLinesIter<'a, T> {
     }
 }
 
+
+// ┌───────────────────────────────────────┐
+// │ Implementation for MultiLineString    │
+// └───────────────────────────────────────┘
+
+
+impl<'a, T: CoordNum + 'a> LinesIter<'a> for MultiLineString<T> {
+    type Scalar = T;
+    type Iter = iter::Flatten<MapLinesIter<'a, slice::Iter<'a, LineString<T>>, LineString<T>>>;
+
+    fn lines_iter(&'a self) -> Self::Iter {
+        MapLinesIter(self.0.iter()).flatten()
+    }
+}
+
+pub struct MapLinesIter<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: 'a + LinesIter<'a>>(Iter1);
+
+impl<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: LinesIter<'a>> Iterator
+    for MapLinesIter<'a, Iter1, Iter2>
+{
+    type Item = Iter2::Iter;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|g| g.lines_iter())
+    }
+}
+
 #[cfg(test)]
 mod test {
 
     use super::LinesIter;
-    use crate::{line_string, Coordinate, Line, LineString};
+    use crate::{line_string, Coordinate, Line, LineString, MultiLineString};
 
     #[test]
     fn test_line() {
@@ -101,5 +128,20 @@ mod test {
             Line::new(Coordinate { x: 2., y: 2. }, Coordinate { x: 0., y: 0. }),
         ];
         assert_eq!(want, ls.lines_iter().collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn test_multi_line_string() {
+        let mls = MultiLineString(vec![
+            line_string![],
+            line_string![(x: 0., y: 0.), (x: 1., y: 1.)],
+            line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x:2., y: 2.)],
+        ]);
+        let want = vec![
+            Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. }),
+            Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. }),
+            Line::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 2., y: 2. }),
+        ];
+        assert_eq!(want, mls.lines_iter().collect::<Vec<_>>());
     }
 }
