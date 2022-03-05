@@ -1,15 +1,35 @@
-
-use std::fmt::Debug;
 use crate::{
     CoordNum, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Polygon, Rect, Triangle,
 };
 use core::slice;
+use std::fmt::Debug;
 use std::iter;
 
+/// Iterate over lines of a geometry.
 pub trait LinesIter<'a> {
     type Scalar: CoordNum;
     type Iter: Iterator<Item = Line<Self::Scalar>>;
 
+    /// Iterate over all exterior and (if any) interior lines of a geometry.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::{Coordinate, Line};
+    /// use geo::line_string;
+    /// use geo::lines_iter::LinesIter;
+    ///
+    /// let ls = line_string![
+    ///     (x: 1., y: 2.),
+    ///     (x: 23., y: 82.),
+    ///     (x: -1., y: 0.),
+    /// ];
+    ///
+    /// let mut iter = ls.lines_iter();
+    /// assert_eq!(Some(Line::new(Coordinate{x: 1., y: 2.}, Coordinate{x: 23., y:82.})), iter.next());
+    /// assert_eq!(Some(Line::new(Coordinate{x: 23., y: 82.}, Coordinate{x: -1., y:0.})), iter.next());
+    /// assert_eq!(None, iter.next());
+    /// ```
     fn lines_iter(&'a self) -> Self::Iter;
 }
 
@@ -39,6 +59,8 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for LineString<T> {
     }
 }
 
+#[doc(hidden)]
+#[derive(Debug)]
 pub struct LineStringIter<'a, T: CoordNum>(slice::Windows<'a, Coordinate<T>>);
 
 impl<'a, T: CoordNum> LineStringIter<'a, T> {
@@ -75,21 +97,6 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for MultiLineString<T> {
 
     fn lines_iter(&'a self) -> Self::Iter {
         MapLinesIter(self.0.iter()).flatten()
-    }
-}
-
-// Utility to transform Iterator<LinesIter> into Iterator<Iterator<Line>>
-#[doc(hidden)]
-#[derive(Debug)]
-pub struct MapLinesIter<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: 'a + LinesIter<'a>>(Iter1);
-
-impl<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: LinesIter<'a>> Iterator
-    for MapLinesIter<'a, Iter1, Iter2>
-{
-    type Item = Iter2::Iter;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|g| g.lines_iter())
     }
 }
 
@@ -156,6 +163,25 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Triangle<T> {
         // Explicitly iterate by value so this works for pre-2021 rust editions.
         // See https://doc.rust-lang.org/std/primitive.array.html#editions
         IntoIterator::into_iter(self.to_lines())
+    }
+}
+
+// ┌───────────┐
+// │ Utilities │
+// └───────────┘
+
+// Transform Iterator<LinesIter> into Iterator<Iterator<Line>>
+#[doc(hidden)]
+#[derive(Debug)]
+pub struct MapLinesIter<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: 'a + LinesIter<'a>>(Iter1);
+
+impl<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: LinesIter<'a>> Iterator
+    for MapLinesIter<'a, Iter1, Iter2>
+{
+    type Item = Iter2::Iter;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|g| g.lines_iter())
     }
 }
 
