@@ -1,4 +1,4 @@
-use crate::{CoordNum, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Polygon, Rect};
+use crate::{CoordNum, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Polygon, Rect, Triangle};
 use core::slice;
 use std::iter;
 
@@ -131,12 +131,29 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Rect<T> {
     }
 }
 
+
+// ┌────────────────────────────────┐
+// │ Implementation for Triangle    │
+// └────────────────────────────────┘
+
+
+impl<'a, T: CoordNum + 'a> LinesIter<'a> for Triangle<T> {
+    type Scalar = T;
+    type Iter = <[Line<T>; 3] as IntoIterator>::IntoIter;
+
+    fn lines_iter(&'a self) -> Self::Iter {
+        // Explicitly iterate by value so this works for pre-2021 rust editions.
+        // See https://doc.rust-lang.org/std/primitive.array.html#editions
+        IntoIterator::into_iter(self.to_lines())
+    }
+}
+
 #[cfg(test)]
 mod test {
 
     use super::LinesIter;
     use crate::{
-        line_string, polygon, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Rect,
+        line_string, polygon, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Rect, Triangle
     };
 
     #[test]
@@ -258,5 +275,12 @@ mod test {
         let rect = Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 2. });
         let want = rect.to_polygon().lines_iter().collect::<Vec<_>>();
         assert_eq!(want, rect.lines_iter().collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn test_triangle() {
+        let triangle = Triangle(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 3.});
+        let want = triangle.to_polygon().lines_iter().collect::<Vec<_>>();
+        assert_eq!(want, triangle.lines_iter().collect::<Vec<_>>());
     }
 }
