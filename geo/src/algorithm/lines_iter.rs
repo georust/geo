@@ -1,4 +1,8 @@
-use crate::{CoordNum, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Polygon, Rect, Triangle};
+
+use std::fmt::Debug;
+use crate::{
+    CoordNum, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Polygon, Rect, Triangle,
+};
 use core::slice;
 use std::iter;
 
@@ -15,7 +19,7 @@ pub trait LinesIter<'a> {
 
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for Line<T> {
     type Scalar = T;
-    type Iter = iter::Copied<iter::Once<&'a Line<T>>>;
+    type Iter = iter::Copied<iter::Once<&'a Line<Self::Scalar>>>;
 
     fn lines_iter(&'a self) -> Self::Iter {
         iter::once(self).copied()
@@ -28,22 +32,22 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Line<T> {
 
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for LineString<T> {
     type Scalar = T;
-    type Iter = LineStringLinesIter<'a, T>;
+    type Iter = LineStringIter<'a, Self::Scalar>;
 
     fn lines_iter(&'a self) -> Self::Iter {
-        LineStringLinesIter::new(self)
+        LineStringIter::new(self)
     }
 }
 
-pub struct LineStringLinesIter<'a, T: CoordNum>(slice::Windows<'a, Coordinate<T>>);
+pub struct LineStringIter<'a, T: CoordNum>(slice::Windows<'a, Coordinate<T>>);
 
-impl<'a, T: CoordNum> LineStringLinesIter<'a, T> {
+impl<'a, T: CoordNum> LineStringIter<'a, T> {
     fn new(line_string: &'a LineString<T>) -> Self {
         Self(line_string.0.windows(2))
     }
 }
 
-impl<'a, T: CoordNum> Iterator for LineStringLinesIter<'a, T> {
+impl<'a, T: CoordNum> Iterator for LineStringIter<'a, T> {
     type Item = Line<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -62,15 +66,21 @@ impl<'a, T: CoordNum> Iterator for LineStringLinesIter<'a, T> {
 // │ Implementation for MultiLineString    │
 // └───────────────────────────────────────┘
 
+type MultiLineStringIter<'a, T> =
+    iter::Flatten<MapLinesIter<'a, slice::Iter<'a, LineString<T>>, LineString<T>>>;
+
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for MultiLineString<T> {
     type Scalar = T;
-    type Iter = iter::Flatten<MapLinesIter<'a, slice::Iter<'a, LineString<T>>, LineString<T>>>;
+    type Iter = MultiLineStringIter<'a, Self::Scalar>;
 
     fn lines_iter(&'a self) -> Self::Iter {
         MapLinesIter(self.0.iter()).flatten()
     }
 }
 
+// Utility to transform Iterator<LinesIter> into Iterator<Iterator<Line>>
+#[doc(hidden)]
+#[derive(Debug)]
 pub struct MapLinesIter<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: 'a + LinesIter<'a>>(Iter1);
 
 impl<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: LinesIter<'a>> Iterator
@@ -88,13 +98,13 @@ impl<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: LinesIter<'a>> Iterator
 // └───────────────────────────────┘
 
 type PolygonIter<'a, T> = iter::Chain<
-    LineStringLinesIter<'a, T>,
+    LineStringIter<'a, T>,
     iter::Flatten<MapLinesIter<'a, slice::Iter<'a, LineString<T>>, LineString<T>>>,
 >;
 
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for Polygon<T> {
     type Scalar = T;
-    type Iter = PolygonIter<'a, T>;
+    type Iter = PolygonIter<'a, Self::Scalar>;
 
     fn lines_iter(&'a self) -> Self::Iter {
         self.exterior()
@@ -107,9 +117,12 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Polygon<T> {
 // │ Implementation for MultiPolygon    │
 // └────────────────────────────────────┘
 
+type MultiPolygonIter<'a, T> =
+    iter::Flatten<MapLinesIter<'a, slice::Iter<'a, Polygon<T>>, Polygon<T>>>;
+
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for MultiPolygon<T> {
     type Scalar = T;
-    type Iter = iter::Flatten<MapLinesIter<'a, slice::Iter<'a, Polygon<T>>, Polygon<T>>>;
+    type Iter = MultiPolygonIter<'a, Self::Scalar>;
 
     fn lines_iter(&'a self) -> Self::Iter {
         MapLinesIter(self.0.iter()).flatten()
@@ -122,7 +135,7 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for MultiPolygon<T> {
 
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for Rect<T> {
     type Scalar = T;
-    type Iter = <[Line<T>; 4] as IntoIterator>::IntoIter;
+    type Iter = <[Line<Self::Scalar>; 4] as IntoIterator>::IntoIter;
 
     fn lines_iter(&'a self) -> Self::Iter {
         // Explicitly iterate by value so this works for pre-2021 rust editions.
@@ -131,15 +144,13 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Rect<T> {
     }
 }
 
-
 // ┌────────────────────────────────┐
 // │ Implementation for Triangle    │
 // └────────────────────────────────┘
 
-
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for Triangle<T> {
     type Scalar = T;
-    type Iter = <[Line<T>; 3] as IntoIterator>::IntoIter;
+    type Iter = <[Line<Self::Scalar>; 3] as IntoIterator>::IntoIter;
 
     fn lines_iter(&'a self) -> Self::Iter {
         // Explicitly iterate by value so this works for pre-2021 rust editions.
@@ -153,7 +164,8 @@ mod test {
 
     use super::LinesIter;
     use crate::{
-        line_string, polygon, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Rect, Triangle
+        line_string, polygon, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Rect,
+        Triangle,
     };
 
     #[test]
@@ -279,7 +291,11 @@ mod test {
 
     #[test]
     fn test_triangle() {
-        let triangle = Triangle(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 3.});
+        let triangle = Triangle(
+            Coordinate { x: 0., y: 0. },
+            Coordinate { x: 1., y: 2. },
+            Coordinate { x: 2., y: 3. },
+        );
         let want = triangle.to_polygon().lines_iter().collect::<Vec<_>>();
         assert_eq!(want, triangle.lines_iter().collect::<Vec<_>>());
     }
