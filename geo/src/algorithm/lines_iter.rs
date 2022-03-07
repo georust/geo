@@ -135,6 +135,10 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Rect<T> {
     fn lines_iter(&'a self) -> Self::Iter {
         // Explicitly iterate by value so this works for pre-2021 rust editions.
         // See https://doc.rust-lang.org/std/primitive.array.html#editions
+        //
+        // TODO: Simplify once [#741] bumps MSRV.
+        //
+        // [#741]: https://github.com/georust/geo/pull/741
         IntoIterator::into_iter(self.to_lines())
     }
 }
@@ -146,11 +150,15 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Triangle<T> {
     fn lines_iter(&'a self) -> Self::Iter {
         // Explicitly iterate by value so this works for pre-2021 rust editions.
         // See https://doc.rust-lang.org/std/primitive.array.html#editions
+        //
+        // TODO: Simplify once [#741] bumps MSRV.
+        //
+        // [#741]: https://github.com/georust/geo/pull/741
         IntoIterator::into_iter(self.to_lines())
     }
 }
 
-/// An iterator that transform Iterator<LinesIter> into Iterator<Iterator<Line>>
+/// Utility to transform Iterator<LinesIter> into Iterator<Iterator<Line>>.
 #[derive(Debug)]
 pub struct MapLinesIter<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: 'a + LinesIter<'a>>(Iter1);
 
