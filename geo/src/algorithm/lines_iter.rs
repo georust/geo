@@ -15,9 +15,9 @@ pub trait LinesIter<'a> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Coordinate, Line};
     /// use geo::line_string;
     /// use geo::lines_iter::LinesIter;
+    /// use geo::{Coordinate, Line};
     ///
     /// let ls = line_string![
     ///     (x: 1., y: 2.),
@@ -26,16 +26,24 @@ pub trait LinesIter<'a> {
     /// ];
     ///
     /// let mut iter = ls.lines_iter();
-    /// assert_eq!(Some(Line::new(Coordinate{x: 1., y: 2.}, Coordinate{x: 23., y:82.})), iter.next());
-    /// assert_eq!(Some(Line::new(Coordinate{x: 23., y: 82.}, Coordinate{x: -1., y:0.})), iter.next());
+    /// assert_eq!(
+    ///     Some(Line::new(
+    ///         Coordinate { x: 1., y: 2. },
+    ///         Coordinate { x: 23., y: 82. }
+    ///     )),
+    ///     iter.next()
+    /// );
+    /// assert_eq!(
+    ///     Some(Line::new(
+    ///         Coordinate { x: 23., y: 82. },
+    ///         Coordinate { x: -1., y: 0. }
+    ///     )),
+    ///     iter.next()
+    /// );
     /// assert_eq!(None, iter.next());
     /// ```
     fn lines_iter(&'a self) -> Self::Iter;
 }
-
-// ┌────────────────────────────┐
-// │ Implementation for Line    │
-// └────────────────────────────┘
 
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for Line<T> {
     type Scalar = T;
@@ -46,10 +54,6 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Line<T> {
     }
 }
 
-// ┌──────────────────────────────────┐
-// │ Implementation for LineString    │
-// └──────────────────────────────────┘
-
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for LineString<T> {
     type Scalar = T;
     type Iter = LineStringIter<'a, Self::Scalar>;
@@ -59,7 +63,7 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for LineString<T> {
     }
 }
 
-#[doc(hidden)]
+/// Iterator over lines in a [LineString].
 #[derive(Debug)]
 pub struct LineStringIter<'a, T: CoordNum>(slice::Windows<'a, Coordinate<T>>);
 
@@ -78,15 +82,11 @@ impl<'a, T: CoordNum> Iterator for LineStringIter<'a, T> {
         //
         // [RFC 2071]: https://rust-lang.github.io/rfcs/2071-impl-trait-existential-types.html
         self.0.next().map(|w| {
-            // slice::windows(2) is guaranteed to yield a slice with exactly 2 elements
+            // SAFETY: slice::windows(2) is guaranteed to yield a slice with exactly 2 elements
             unsafe { Line::new(*w.get_unchecked(0), *w.get_unchecked(1)) }
         })
     }
 }
-
-// ┌───────────────────────────────────────┐
-// │ Implementation for MultiLineString    │
-// └───────────────────────────────────────┘
 
 type MultiLineStringIter<'a, T> =
     iter::Flatten<MapLinesIter<'a, slice::Iter<'a, LineString<T>>, LineString<T>>>;
@@ -99,10 +99,6 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for MultiLineString<T> {
         MapLinesIter(self.0.iter()).flatten()
     }
 }
-
-// ┌───────────────────────────────┐
-// │ Implementation for Polygon    │
-// └───────────────────────────────┘
 
 type PolygonIter<'a, T> = iter::Chain<
     LineStringIter<'a, T>,
@@ -120,10 +116,6 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Polygon<T> {
     }
 }
 
-// ┌────────────────────────────────────┐
-// │ Implementation for MultiPolygon    │
-// └────────────────────────────────────┘
-
 type MultiPolygonIter<'a, T> =
     iter::Flatten<MapLinesIter<'a, slice::Iter<'a, Polygon<T>>, Polygon<T>>>;
 
@@ -136,10 +128,6 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for MultiPolygon<T> {
     }
 }
 
-// ┌────────────────────────────┐
-// │ Implementation for Rect    │
-// └────────────────────────────┘
-
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for Rect<T> {
     type Scalar = T;
     type Iter = <[Line<Self::Scalar>; 4] as IntoIterator>::IntoIter;
@@ -150,10 +138,6 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Rect<T> {
         IntoIterator::into_iter(self.to_lines())
     }
 }
-
-// ┌────────────────────────────────┐
-// │ Implementation for Triangle    │
-// └────────────────────────────────┘
 
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for Triangle<T> {
     type Scalar = T;
@@ -166,12 +150,7 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Triangle<T> {
     }
 }
 
-// ┌───────────┐
-// │ Utilities │
-// └───────────┘
-
-// Transform Iterator<LinesIter> into Iterator<Iterator<Line>>
-#[doc(hidden)]
+/// An iterator that transform Iterator<LinesIter> into Iterator<Iterator<Line>>
 #[derive(Debug)]
 pub struct MapLinesIter<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: 'a + LinesIter<'a>>(Iter1);
 
