@@ -37,7 +37,7 @@
 //! - `approx`: Allows geometry types to be checked for approximate equality with [approx]
 //! - `arbitrary`: Allows geometry types to be created from unstructured input with [arbitrary]
 //! - `serde`: Allows geometry types to be serialized and deserialized with [Serde]
-//! - `use-rstar`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.8`)
+//! - `use-rstar_0_8`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.8`)
 //! - `use-rstar_0_9`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.9`)
 //!
 //! [approx]: https://github.com/brendanzab/approx
@@ -57,7 +57,7 @@ use std::fmt::Debug;
 #[macro_use]
 extern crate serde;
 
-#[cfg(feature = "rstar")]
+#[cfg(feature = "rstar_0_8")]
 extern crate rstar_0_8;
 
 #[cfg(test)]
@@ -129,7 +129,7 @@ mod macros;
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
 
-#[cfg(feature = "rstar")]
+#[cfg(feature = "rstar_0_8")]
 #[doc(hidden)]
 pub mod private_utils;
 
@@ -209,7 +209,7 @@ mod tests {
         assert_eq!(p.x(), 1_000_000i64);
     }
 
-    #[cfg(feature = "rstar")]
+    #[cfg(feature = "rstar_0_8")]
     #[test]
     /// ensure Line's SpatialObject impl is correct
     fn line_test() {

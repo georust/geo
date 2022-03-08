@@ -221,7 +221,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Line<T> {
     }
 }
 
-#[cfg(any(feature = "rstar", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
 macro_rules! impl_rstar_line {
     ($rstar:ident) => {
         impl<T> ::$rstar::RTreeObject for Line<T>
