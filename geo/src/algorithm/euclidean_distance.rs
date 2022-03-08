@@ -577,7 +577,7 @@ mod test {
     use crate::algorithm::euclidean_distance::EuclideanDistance;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
     use geo_types::Rect;
-    use geo_types::{polygon, private_utils::line_segment_distance, coord};
+    use geo_types::{coord, polygon, private_utils::line_segment_distance};
 
     #[test]
     fn line_segment_distance_test() {

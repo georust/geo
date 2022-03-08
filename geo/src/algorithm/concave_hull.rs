@@ -6,7 +6,7 @@ use crate::utils::partial_min;
 use crate::{
     GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
-use geo_types::{CoordNum, coord, Coordinate};
+use geo_types::{coord, CoordNum, Coordinate};
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
 

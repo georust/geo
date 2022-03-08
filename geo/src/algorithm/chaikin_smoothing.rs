@@ -2,7 +2,7 @@ use std::ops::Mul;
 
 use num_traits::FromPrimitive;
 
-use crate::{CoordFloat, coord, Coordinate, LineString, MultiLineString, MultiPolygon, Polygon};
+use crate::{coord, CoordFloat, Coordinate, LineString, MultiLineString, MultiPolygon, Polygon};
 
 /// Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 ///

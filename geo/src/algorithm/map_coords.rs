@@ -36,7 +36,7 @@
 //! ```
 
 use crate::{
-    CoordNum, coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    coord, CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 

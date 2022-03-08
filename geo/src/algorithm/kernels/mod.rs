@@ -1,4 +1,4 @@
-use crate::{CoordNum, coord, Coordinate};
+use crate::{coord, CoordNum, Coordinate};
 use num_traits::Zero;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]

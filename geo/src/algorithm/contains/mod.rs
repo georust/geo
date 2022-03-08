@@ -52,7 +52,9 @@ mod triangle;
 mod test {
     use crate::algorithm::contains::Contains;
     use crate::line_string;
-    use crate::{coord, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
+    use crate::{
+        coord, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle,
+    };
 
     #[test]
     // see https://github.com/georust/geo/issues/452

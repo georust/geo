@@ -1,6 +1,6 @@
 use crate::utils::{partial_max, partial_min};
 use crate::{
-    CoordNum, coord, Geometry, GeometryCollection, GeometryCow, Line, LineString, MultiLineString,
+    coord, CoordNum, Geometry, GeometryCollection, GeometryCow, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
@@ -209,8 +209,8 @@ mod test {
     use crate::algorithm::bounding_rect::BoundingRect;
     use crate::line_string;
     use crate::{
-        polygon, coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-        MultiPolygon, Point, Polygon, Rect,
+        coord, polygon, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+        MultiPoint, MultiPolygon, Point, Polygon, Rect,
     };
 
     #[test]

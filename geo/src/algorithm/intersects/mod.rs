@@ -111,7 +111,7 @@ where
 mod test {
     use crate::algorithm::intersects::Intersects;
     use crate::{
-        line_string, polygon, coord, Geometry, Line, LineString, MultiLineString, MultiPoint,
+        coord, line_string, polygon, Geometry, Line, LineString, MultiLineString, MultiPoint,
         MultiPolygon, Point, Polygon, Rect,
     };
 
