@@ -22,7 +22,7 @@
 /// [`Point`]: ./struct.Point.html
 #[macro_export]
 macro_rules! point {
-    (x: $x:expr, y: $y:expr) => {
+    (x: $x:expr, y: $y:expr $(,)?) => {
         $crate::Point::new($x, $y)
     };
 }
@@ -48,7 +48,7 @@ macro_rules! point {
 /// [`Coordinate`]: ./struct.Point.html
 #[macro_export]
 macro_rules! coord {
-    (x: $x:expr, y: $y:expr) => {
+    (x: $x:expr, y: $y:expr $(,)?) => {
         $crate::Coordinate { x: $x, y: $y }
     };
 }
@@ -70,7 +70,7 @@ macro_rules! coord {
 ///     (x: -21.95156, y: 64.1446),
 ///     (x: -21.951, y: 64.14479),
 ///     (x: -21.95044, y: 64.14527),
-///     (x: -21.951445, y: 64.145508)
+///     (x: -21.951445, y: 64.145508),
 /// ];
 ///
 /// assert_eq!(ls[1], geo_types::Coordinate {
@@ -118,7 +118,7 @@ macro_rules! coord {
 macro_rules! line_string {
     () => { $crate::LineString(vec![]) };
     (
-        $((x: $x:expr, y: $y:expr)),*
+        $((x: $x:expr, y: $y:expr $(,)?)),*
         $(,)?
     ) => {
         line_string![
@@ -212,12 +212,12 @@ macro_rules! polygon {
     () => { $crate::Polygon::new(line_string![], vec![]) };
     (
         exterior: [
-            $((x: $exterior_x:expr, y: $exterior_y:expr)),*
+            $((x: $exterior_x:expr, y: $exterior_y:expr $(,)?)),*
             $(,)?
         ],
         interiors: [
             $([
-                $((x: $interior_x:expr, y: $interior_y:expr)),*
+                $((x: $interior_x:expr, y: $interior_y:expr $(,)?)),*
                 $(,)?
             ]),*
             $(,)?
@@ -234,7 +234,6 @@ macro_rules! polygon {
                 $([
                     $($crate::Coordinate { x: $interior_x, y: $interior_y }),*
                 ]),*
-
             ],
         )
     };
@@ -268,7 +267,7 @@ macro_rules! polygon {
         )
     };
     (
-        $((x: $x:expr, y: $y:expr)),*
+        $((x: $x:expr, y: $y:expr $(,)?)),*
         $(,)?
     ) => {
         polygon![
