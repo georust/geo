@@ -181,7 +181,7 @@ pub use crate::traits::ToGeo;
 pub use crate::types::Closest;
 
 pub use geo_types::{
-    line_string, point, polygon, CoordFloat, CoordNum, Coordinate, Geometry, GeometryCollection,
+    line_string, point, polygon, CoordFloat, CoordNum, coord, Coordinate, Geometry, GeometryCollection,
     Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 

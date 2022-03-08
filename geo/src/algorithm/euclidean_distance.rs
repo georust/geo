@@ -577,7 +577,7 @@ mod test {
     use crate::algorithm::euclidean_distance::EuclideanDistance;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
     use geo_types::Rect;
-    use geo_types::{polygon, private_utils::line_segment_distance, Coordinate};
+    use geo_types::{polygon, private_utils::line_segment_distance, coord};
 
     #[test]
     fn line_segment_distance_test() {
@@ -893,29 +893,29 @@ mod test {
     // See https://github.com/georust/geo/issues/476
     fn distance_line_polygon_test() {
         let line = Line::new(
-            Coordinate {
+            coord! {
                 x: -0.17084137691985102,
                 y: 0.8748085493016657,
             },
-            Coordinate {
+            coord! {
                 x: -0.17084137691985102,
                 y: 0.09858870312437906,
             },
         );
         let poly: Polygon<f64> = polygon![
-            Coordinate {
+            coord! {
                 x: -0.10781391405721802,
                 y: -0.15433610862574643,
             },
-            Coordinate {
+            coord! {
                 x: -0.7855276236615211,
                 y: 0.23694208404779793,
             },
-            Coordinate {
+            coord! {
                 x: -0.7855276236615214,
                 y: -0.5456143012992907,
             },
-            Coordinate {
+            coord! {
                 x: -0.10781391405721802,
                 y: -0.15433610862574643,
             },

@@ -52,7 +52,7 @@ mod triangle;
 mod test {
     use crate::algorithm::contains::Contains;
     use crate::line_string;
-    use crate::{Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
+    use crate::{coord, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
 
     #[test]
     // see https://github.com/georust/geo/issues/452
@@ -306,20 +306,15 @@ mod test {
     }
     #[test]
     fn bounding_rect_in_inner_bounding_rect_test() {
-        let bounding_rect_xl = Rect::new(
-            Coordinate { x: -100., y: -200. },
-            Coordinate { x: 100., y: 200. },
-        );
-        let bounding_rect_sm = Rect::new(
-            Coordinate { x: -10., y: -20. },
-            Coordinate { x: 10., y: 20. },
-        );
+        let bounding_rect_xl =
+            Rect::new(coord! { x: -100., y: -200. }, coord! { x: 100., y: 200. });
+        let bounding_rect_sm = Rect::new(coord! { x: -10., y: -20. }, coord! { x: 10., y: 20. });
         assert!(bounding_rect_xl.contains(&bounding_rect_sm));
         assert!(!bounding_rect_sm.contains(&bounding_rect_xl));
     }
     #[test]
     fn point_in_line_test() {
-        let c = |x, y| Coordinate { x, y };
+        let c = |x, y| coord! { x: x, y: y };
         let p0 = c(2., 4.);
         // vertical line
         let line1 = Line::new(c(2., 0.), c(2., 5.));
@@ -333,7 +328,7 @@ mod test {
     }
     #[test]
     fn line_in_line_test() {
-        let c = |x, y| Coordinate { x, y };
+        let c = |x, y| coord! { x: x, y: y };
         let line0 = Line::new(c(0., 1.), c(3., 4.));
         // first point on line0, second not
         let line1 = Line::new(c(1., 2.), c(2., 2.));
@@ -369,7 +364,7 @@ mod test {
     }
     #[test]
     fn line_in_polygon_test() {
-        let c = |x, y| Coordinate { x, y };
+        let c = |x, y| coord! { x: x, y: y };
         let line = Line::new(c(0.0, 10.0), c(30.0, 40.0));
         let linestring0 = line_string![
             c(-10.0, 0.0),
@@ -395,7 +390,7 @@ mod test {
         // Some DE-9IM edge cases for checking line is
         // inside polygon The end points of the line can be
         // on the boundary of the polygon.
-        let c = |x, y| Coordinate { x, y };
+        let c = |x, y| coord! { x: x, y: y };
         // A non-convex polygon
         let linestring0 = line_string![
             c(0.0, 0.0),
@@ -412,7 +407,7 @@ mod test {
     }
     #[test]
     fn line_in_linestring_edgecases() {
-        let c = |x, y| Coordinate { x, y };
+        let c = |x, y| coord! { x: x, y: y };
         use crate::line_string;
         let mut ls = line_string![c(0, 0), c(1, 0), c(0, 1), c(-1, 0)];
         assert!(!ls.contains(&Line::from([(0, 0), (0, 0)])));
@@ -450,13 +445,12 @@ mod test {
     #[test]
     fn integer_bounding_rects() {
         let p: Point<i32> = Point::new(10, 20);
-        let bounding_rect: Rect<i32> =
-            Rect::new(Coordinate { x: 0, y: 0 }, Coordinate { x: 100, y: 100 });
+        let bounding_rect: Rect<i32> = Rect::new(coord! { x: 0, y: 0 }, coord! { x: 100, y: 100 });
         assert!(bounding_rect.contains(&p));
         assert!(!bounding_rect.contains(&Point::new(-10, -10)));
 
         let smaller_bounding_rect: Rect<i32> =
-            Rect::new(Coordinate { x: 10, y: 10 }, Coordinate { x: 20, y: 20 });
+            Rect::new(coord! { x: 10, y: 10 }, coord! { x: 20, y: 20 });
         assert!(bounding_rect.contains(&smaller_bounding_rect));
     }
 

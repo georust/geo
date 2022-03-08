@@ -1,7 +1,7 @@
 use super::{swap_remove_to_first, trivial_hull};
 use crate::kernels::{HasKernel, Kernel, Orientation};
 use crate::utils::partition_slice;
-use crate::{Coordinate, GeoNum, LineString};
+use crate::{coord, Coordinate, GeoNum, LineString};
 
 // Determines if `p_c` lies on the positive side of the
 // segment `p_a` to `p_b`. In other words, whether segment
@@ -83,15 +83,15 @@ fn hull_set<T>(
     // Construct orthogonal vector to `p_b` - `p_a` We
     // compute inner product of this with `v` - `p_a` to
     // find the farthest point from the line segment a-b.
-    let p_orth = Coordinate {
-        y: p_b.x - p_a.x,
+    let p_orth = coord! {
         x: p_a.y - p_b.y,
+        y: p_b.x - p_a.x,
     };
 
     let furthest_idx = set
         .iter()
         .map(|pt| {
-            let p_diff = Coordinate {
+            let p_diff = coord! {
                 x: pt.x - p_a.x,
                 y: pt.y - p_a.y,
             };
@@ -123,13 +123,13 @@ mod test {
     #[test]
     fn quick_hull_test1() {
         let mut v = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 1.0 },
-            Coordinate { x: 1.0, y: 1.0 },
-            Coordinate { x: 1.0, y: 4.0 },
-            Coordinate { x: 0.0, y: 4.0 },
-            Coordinate { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 4.0, y: 1.0 },
+            coord! { x: 1.0, y: 1.0 },
+            coord! { x: 1.0, y: 4.0 },
+            coord! { x: 0.0, y: 4.0 },
+            coord! { x: 0.0, y: 0.0 },
         ];
         let res = quick_hull(&mut v);
         assert!(res.is_strictly_ccw_convex());
@@ -138,22 +138,22 @@ mod test {
     #[test]
     fn quick_hull_test2() {
         let mut v = vec![
-            Coordinate { x: 0, y: 10 },
-            Coordinate { x: 1, y: 1 },
-            Coordinate { x: 10, y: 0 },
-            Coordinate { x: 1, y: -1 },
-            Coordinate { x: 0, y: -10 },
-            Coordinate { x: -1, y: -1 },
-            Coordinate { x: -10, y: 0 },
-            Coordinate { x: -1, y: 1 },
-            Coordinate { x: 0, y: 10 },
+            coord! { x: 0, y: 10 },
+            coord! { x: 1, y: 1 },
+            coord! { x: 10, y: 0 },
+            coord! { x: 1, y: -1 },
+            coord! { x: 0, y: -10 },
+            coord! { x: -1, y: -1 },
+            coord! { x: -10, y: 0 },
+            coord! { x: -1, y: 1 },
+            coord! { x: 0, y: 10 },
         ];
         let correct = vec![
-            Coordinate { x: 0, y: -10 },
-            Coordinate { x: 10, y: 0 },
-            Coordinate { x: 0, y: 10 },
-            Coordinate { x: -10, y: 0 },
-            Coordinate { x: 0, y: -10 },
+            coord! { x: 0, y: -10 },
+            coord! { x: 10, y: 0 },
+            coord! { x: 0, y: 10 },
+            coord! { x: -10, y: 0 },
+            coord! { x: 0, y: -10 },
         ];
         let res = quick_hull(&mut v);
         assert_eq!(res.0, correct);
@@ -170,15 +170,9 @@ mod test {
             (0.0, 1.0),
             (1.0, 0.0),
         ];
-        let mut v: Vec<_> = initial
-            .iter()
-            .map(|e| Coordinate { x: e.0, y: e.1 })
-            .collect();
+        let mut v: Vec<_> = initial.iter().map(|e| coord! { x: e.0, y: e.1 }).collect();
         let correct = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
-        let v_correct: Vec<_> = correct
-            .iter()
-            .map(|e| Coordinate { x: e.0, y: e.1 })
-            .collect();
+        let v_correct: Vec<_> = correct.iter().map(|e| coord! { x: e.0, y: e.1 }).collect();
         let res = quick_hull(&mut v);
         assert_eq!(res.0, v_correct);
     }
@@ -196,10 +190,7 @@ mod test {
             (0., 2.),
             (0., 0.),
         ];
-        let mut v: Vec<_> = initial
-            .iter()
-            .map(|e| Coordinate { x: e.0, y: e.1 })
-            .collect();
+        let mut v: Vec<_> = initial.iter().map(|e| coord! { x: e.0, y: e.1 }).collect();
         let res = quick_hull(&mut v);
         assert!(res.is_strictly_ccw_convex());
     }
@@ -236,10 +227,7 @@ mod test {
             (1., -1.),
             (1., 1.),
         ];
-        let mut v: Vec<_> = initial
-            .iter()
-            .map(|e| Coordinate { x: e.0, y: e.1 })
-            .collect();
+        let mut v: Vec<_> = initial.iter().map(|e| coord! { x: e.0, y: e.1 }).collect();
         let res = quick_hull(&mut v);
         assert!(res.is_strictly_ccw_convex());
     }

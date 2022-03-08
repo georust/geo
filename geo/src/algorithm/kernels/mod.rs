@@ -1,4 +1,4 @@
-use crate::{CoordNum, Coordinate};
+use crate::{CoordNum, coord, Coordinate};
 use num_traits::Zero;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
@@ -34,7 +34,7 @@ pub trait Kernel<T: CoordNum> {
     /// `Collinear` if zero.
     fn dot_product_sign(u: Coordinate<T>, v: Coordinate<T>) -> Orientation {
         let zero = Coordinate::zero();
-        let vdash = Coordinate {
+        let vdash = coord! {
             x: T::zero() - v.y,
             y: v.x,
         };

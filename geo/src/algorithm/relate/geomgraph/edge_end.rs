@@ -1,5 +1,5 @@
 use super::{CoordNode, Edge, Label, Quadrant};
-use crate::{Coordinate, GeoFloat};
+use crate::{coord, Coordinate, GeoFloat};
 
 use std::cell::RefCell;
 use std::fmt;
@@ -145,12 +145,12 @@ mod test {
         let fake_label = Label::empty_line_or_point();
         let edge_end_1 = EdgeEnd::new(
             Coordinate::zero(),
-            Coordinate { x: 1.0, y: 1.0 },
+            coord! { x: 1.0, y: 1.0 },
             fake_label.clone(),
         );
         let edge_end_2 = EdgeEnd::new(
             Coordinate::zero(),
-            Coordinate { x: 1.0, y: 1.0 },
+            coord! { x: 1.0, y: 1.0 },
             fake_label.clone(),
         );
         assert_eq!(
@@ -159,11 +159,7 @@ mod test {
         );
 
         // edge_end_3 is clockwise from edge_end_1
-        let edge_end_3 = EdgeEnd::new(
-            Coordinate::zero(),
-            Coordinate { x: 1.0, y: -1.0 },
-            fake_label,
-        );
+        let edge_end_3 = EdgeEnd::new(Coordinate::zero(), coord! { x: 1.0, y: -1.0 }, fake_label);
         assert_eq!(
             edge_end_1.key().cmp(edge_end_3.key()),
             std::cmp::Ordering::Less
