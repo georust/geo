@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Note: All crates have been migrated to Rust 2021 edition. The MSRV when installing the latest dependencies has increased to 1.56.
+  * <https://github.com/georust/geo/pull/741>
 * Macros `coord!`, `point!`, `line_string!`, and `polygon!` now support trailing commas such as `coord! { x: 181.2, y: 51.79, }`
   * <https://github.com/georust/geo/pull/752> 
 
