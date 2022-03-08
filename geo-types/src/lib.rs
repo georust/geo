@@ -58,7 +58,7 @@ use std::fmt::Debug;
 extern crate serde;
 
 #[cfg(feature = "rstar")]
-extern crate rstar;
+extern crate rstar_0_8;
 
 #[cfg(test)]
 #[macro_use]
@@ -213,8 +213,8 @@ mod tests {
     #[test]
     /// ensure Line's SpatialObject impl is correct
     fn line_test() {
-        use rstar::primitives::Line as RStarLine;
-        use rstar::{PointDistance, RTreeObject};
+        use rstar_0_8::primitives::Line as RStarLine;
+        use rstar_0_8::{PointDistance, RTreeObject};
 
         let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
         let l = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 5., y: 5. });

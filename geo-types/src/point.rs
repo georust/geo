@@ -547,11 +547,11 @@ where
     }
 }
 
-#[cfg(feature = "rstar")]
+#[cfg(feature = "rstar_0_8")]
 // These are required for rstar RTree
-impl<T> ::rstar::Point for Point<T>
+impl<T> ::rstar_0_8::Point for Point<T>
 where
-    T: ::num_traits::Float + ::rstar::RTreeNum,
+    T: ::num_traits::Float + ::rstar_0_8::RTreeNum,
 {
     type Scalar = T;
 

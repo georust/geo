@@ -18,17 +18,17 @@ use-serde = ["serde", "geo-types/serde"]
 
 [dependencies]
 geo-types = { version = "0.7.3", features = ["approx", "use-rstar"] }
-geographiclib-rs = { version = "0.2" }
+geographiclib-rs = "0.2"
 log = "0.4.11"
 num-traits = "0.2"
 proj = { version = "0.25.2", optional = true }
-robust = { version = "0.2.2" }
-rstar = { version = "0.8" }
+robust = "0.2.2"
+rstar = "0.8"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 
 [dev-dependencies]
 approx = "0.4.0"
-criterion = { version = "0.3" }
+criterion = "0.3"
 geo-test-fixtures = { path = "../geo-test-fixtures" }
 # jts-test-runner is an internal crate which exists only to be part of the geo test suite.
 # As such it's kept unpublished. It's in a separate repo primarily because it's kind of large.

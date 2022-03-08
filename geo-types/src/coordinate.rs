@@ -285,10 +285,10 @@ where
     }
 }
 
-#[cfg(feature = "rstar")]
-impl<T> ::rstar::Point for Coordinate<T>
+#[cfg(feature = "rstar_0_8")]
+impl<T> ::rstar_0_8::Point for Coordinate<T>
 where
-    T: ::num_traits::Float + ::rstar::RTreeNum,
+    T: ::num_traits::Float + ::rstar_0_8::RTreeNum,
 {
     type Scalar = T;
 
