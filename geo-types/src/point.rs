@@ -232,10 +232,10 @@ impl<T: CoordNum> Point<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo_types::Point;
+    /// use geo_types::{coord, Point};
     ///
-    /// let point = Point::new(1.5, 0.5);
-    /// let dot = point.dot(Point::new(2.0, 4.5);
+    /// let point = Point(coord! { x: 1.5, y: 0.5 });
+    /// let dot = point.dot(Point(coord! { x: 2.0, y: 4.5 }));
     ///
     /// assert_eq!(dot, 5.25);
     /// ```
@@ -250,11 +250,11 @@ impl<T: CoordNum> Point<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo_types::Point;
+    /// use geo_types::{coord, Point};
     ///
-    /// let point_a = Point::new(1., 2.);
-    /// let point_b = Point::new(3., 5.);
-    /// let point_c = Point::new(7., 12.);
+    /// let point_a = Point(coord! { x: 1., y: 2. });
+    /// let point_b = Point(coord! { x: 3., y: 5. });
+    /// let point_c = Point(coord! { x: 7., y: 12. });
     ///
     /// let cross = point_a.cross_prod(point_b, point_c);
     ///
