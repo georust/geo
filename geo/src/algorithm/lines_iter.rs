@@ -133,13 +133,7 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Rect<T> {
     type Iter = <[Line<Self::Scalar>; 4] as IntoIterator>::IntoIter;
 
     fn lines_iter(&'a self) -> Self::Iter {
-        // Explicitly iterate by value so this works for pre-2021 rust editions.
-        // See https://doc.rust-lang.org/std/primitive.array.html#editions
-        //
-        // TODO: Simplify once [#741] bumps MSRV.
-        //
-        // [#741]: https://github.com/georust/geo/pull/741
-        IntoIterator::into_iter(self.to_lines())
+        self.to_lines().into_iter()
     }
 }
 
@@ -148,13 +142,7 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Triangle<T> {
     type Iter = <[Line<Self::Scalar>; 3] as IntoIterator>::IntoIter;
 
     fn lines_iter(&'a self) -> Self::Iter {
-        // Explicitly iterate by value so this works for pre-2021 rust editions.
-        // See https://doc.rust-lang.org/std/primitive.array.html#editions
-        //
-        // TODO: Simplify once [#741] bumps MSRV.
-        //
-        // [#741]: https://github.com/georust/geo/pull/741
-        IntoIterator::into_iter(self.to_lines())
+        self.to_lines().into_iter()
     }
 }
 
