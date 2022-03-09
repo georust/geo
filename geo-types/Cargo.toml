@@ -8,7 +8,7 @@ documentation = "https://docs.rs/geo-types/"
 readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
 description = "Geospatial primitive data types"
-edition = "2018"
+edition = "2021"
 
 [features]
 use-rstar = ["rstar", "approx"]
