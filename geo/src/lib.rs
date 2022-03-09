@@ -103,6 +103,7 @@
 //!   coordinates in a geometry in-place
 //! - **[`TryMapCoords`](algorithm::map_coords::TryMapCoords)**: Map a fallible function over all
 //!   the coordinates in a geometry, returning a new geometry wrapped in a `Result`
+//! - **[`LinesIter`](algorithm::lines_iter::LinesIter)**: Iterate over lines of a geometry
 //!
 //! ## Boundary
 //!

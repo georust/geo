@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-*
+* Add `LinesIter` algorithm to iterate over the lines in geometries.
+  * Very similar to `CoordsIter`, but only implemented where it makes sense (e.g., for `Polygon`, `Rect`, but not `Point`).
+  * <https://github.com/georust/geo/pull/757>
 
 ## 0.19.0
 
