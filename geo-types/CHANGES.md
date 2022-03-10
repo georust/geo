@@ -8,6 +8,8 @@
   * <https://github.com/georust/geo/pull/741>
 * Macros `coord!`, `point!`, `line_string!`, and `polygon!` now support trailing commas such as `coord! { x: 181.2, y: 51.79, }`
   * <https://github.com/georust/geo/pull/752>
+* Internal cleanup: Explicitly declare `rstar_0_8` and `rstar_0_9` features to be explicit which rstar version is being used. For backward compatibility, the `rstar` feature will still enable `rstar_0_8`.
+  * <https://github.com/georust/geo/pull/759>
 
 ## 0.7.3
 
