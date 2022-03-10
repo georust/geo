@@ -27,6 +27,7 @@ jobs:
       - geo_postgis
       - geo_fuzz
       - bench
+      - min_version
     steps:
       - name: Mark the job as a success
         if: success()
@@ -161,3 +162,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - run: cargo bench --no-run
+
+  min_version:
+    name: min_version
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    strategy:
+      matrix:
+        container_image:
+          # Only run it with the minimum supported rust version (MSRV)
+          - "georust/geo-ci:rust-1.56"
+    container:
+      image: ${{ matrix.container_image }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - run: rustup toolchain install nightly-x86_64-unknown-linux-gnu
+      - run: cargo +nightly test -Z minimal-versions --all-features
