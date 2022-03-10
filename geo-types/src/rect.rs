@@ -248,8 +248,8 @@ impl<T: CoordNum> Rect<T> {
             ),
             Line::new(
                 Coordinate {
-                    x: self.min.x,
-                    y: self.min.y,
+                    x: self.max.x,
+                    y: self.max.y,
                 },
                 Coordinate {
                     x: self.max.x,
@@ -262,8 +262,8 @@ impl<T: CoordNum> Rect<T> {
                     y: self.min.y,
                 },
                 Coordinate {
-                    x: self.max.x,
-                    y: self.max.y,
+                    x: self.min.x,
+                    y: self.min.y,
                 },
             ),
         ]
