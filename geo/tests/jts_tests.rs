@@ -1,4 +1,6 @@
-use jts_test_runner::TestRunner;
+mod jts_test_runner;
+
+use crate::jts_test_runner::TestRunner;
 
 fn init_logging() {
     use std::sync::Once;

@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate log;
-
 mod input;
 use input::Operation;
 

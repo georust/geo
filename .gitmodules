@@ -1,0 +1,3 @@
+[submodule "geo/tests/data"]
+	path = geo/tests/data
+	url = https://github.com/georust/jts-test-runner.git
