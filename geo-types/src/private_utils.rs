@@ -35,11 +35,11 @@ where
         }
 
         return Some(Rect::new(
-            Coordinate {
+            coord! {
                 x: xrange.0,
                 y: yrange.0,
             },
-            Coordinate {
+            coord! {
                 x: xrange.1,
                 y: yrange.1,
             },
