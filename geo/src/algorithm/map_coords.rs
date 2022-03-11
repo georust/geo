@@ -666,8 +666,8 @@ mod test {
             }
         });
         let new_rect = result.unwrap();
-        assert_eq!(new_rect.min(), Coordinate { x: 1, y: 1 });
-        assert_eq!(new_rect.max(), Coordinate { x: 4, y: 4 });
+        assert_eq!(new_rect.min(), coord! { x: 1, y: 1 });
+        assert_eq!(new_rect.max(), coord! { x: 4, y: 4 });
     }
 
     #[test]

@@ -219,7 +219,7 @@ use num_traits::Zero;
 /// ```
 impl<T: CoordNum> Coordinate<T> {
     pub fn zero() -> Self {
-        Coordinate {
+        coord! {
             x: T::zero(),
             y: T::zero(),
         }
@@ -295,7 +295,7 @@ where
     const DIMENSIONS: usize = 2;
 
     fn generate(generator: impl Fn(usize) -> Self::Scalar) -> Self {
-        Coordinate {
+        coord! {
             x: generator(0),
             y: generator(1),
         }
