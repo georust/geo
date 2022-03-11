@@ -425,9 +425,9 @@ impl TestRunner {
         let mut cases = vec![];
 
         let filename_filter = if let Some(filter) = &self.filename_filter {
-            format!("{}", filter)
+            filter.to_string()
         } else {
-            format!("**/*.xml")
+            "**/*.xml".to_string()
         };
 
         for entry in GENERAL_TEST_XML.find(&filename_filter)? {
@@ -462,7 +462,7 @@ impl TestRunner {
                 } else {
                     debug!("parsing case {}:", &case.desc);
                 }
-                let tests = std::mem::replace(&mut case.tests, vec![]);
+                let tests = std::mem::take(&mut case.tests);
                 for test in tests {
                     let description = case.desc.clone();
 
@@ -510,7 +510,7 @@ where
     let mut matched_in_p2: BTreeSet<usize> = BTreeSet::new();
     for r1 in p1.interiors().iter() {
         let did_match = p2.interiors().iter().enumerate().find(|(j, r2)| {
-            !matched_in_p2.contains(&j) && is_ring_rotated_eq(r1, r2, &coord_matcher)
+            !matched_in_p2.contains(j) && is_ring_rotated_eq(r1, r2, &coord_matcher)
         });
         if let Some((j, _)) = did_match {
             matched_in_p2.insert(j);
@@ -518,7 +518,7 @@ where
             return false;
         }
     }
-    return true;
+    true
 }
 
 /// Test if two rings are equal upto rotation / reversal
