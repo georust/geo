@@ -82,7 +82,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{polygon, MultiPoint};
+    use crate::{coord, polygon, MultiPoint};
 
     #[test]
     fn polygon() {
@@ -101,19 +101,19 @@ mod test {
             Some(Outcome {
                 x_min: Extreme {
                     index: 3,
-                    coord: Coordinate { x: 0.0, y: 1.0 }
+                    coord: coord! { x: 0.0, y: 1.0 }
                 },
                 y_min: Extreme {
                     index: 0,
-                    coord: Coordinate { x: 1.0, y: 0.0 }
+                    coord: coord! { x: 1.0, y: 0.0 }
                 },
                 x_max: Extreme {
                     index: 1,
-                    coord: Coordinate { x: 2.0, y: 1.0 }
+                    coord: coord! { x: 2.0, y: 1.0 }
                 },
                 y_max: Extreme {
                     index: 2,
-                    coord: Coordinate { x: 1.0, y: 2.0 }
+                    coord: coord! { x: 1.0, y: 2.0 }
                 }
             }),
             actual

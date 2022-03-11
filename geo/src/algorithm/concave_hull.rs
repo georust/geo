@@ -6,7 +6,7 @@ use crate::utils::partial_min;
 use crate::{
     GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
-use geo_types::{CoordNum, Coordinate};
+use geo_types::{coord, CoordNum, Coordinate};
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
 
@@ -124,7 +124,7 @@ where
     let two = T::add(T::one(), T::one());
     let search_dist = T::div(T::sqrt(T::powi(w, 2) + T::powi(h, 2)), two);
     let centroid = line.centroid();
-    let centroid_coord = Coordinate {
+    let centroid_coord = coord! {
         x: centroid.x(),
         y: centroid.y(),
     };
@@ -175,7 +175,7 @@ where
                 let far_enough = edge_length / decision_distance > concavity;
                 let are_edges_equal = closest_edge == line;
                 if far_enough && are_edges_equal {
-                    Some(Coordinate {
+                    Some(coord! {
                         x: closest_point.x(),
                         y: closest_point.y(),
                     })
@@ -263,9 +263,9 @@ mod test {
     #[test]
     fn triangle_test() {
         let mut triangle = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 0.0 },
-            Coordinate { x: 2.0, y: 2.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 2.0, y: 2.0 },
         ];
 
         let correct = line_string![
@@ -283,10 +283,10 @@ mod test {
     #[test]
     fn square_test() {
         let mut square = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 4.0 },
-            Coordinate { x: 0.0, y: 4.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 4.0, y: 4.0 },
+            coord! { x: 0.0, y: 4.0 },
         ];
 
         let correct = line_string![
@@ -305,11 +305,11 @@ mod test {
     #[test]
     fn one_flex_test() {
         let mut v = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 2.0, y: 1.0 },
-            Coordinate { x: 4.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 4.0 },
-            Coordinate { x: 0.0, y: 4.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 2.0, y: 1.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 4.0, y: 4.0 },
+            coord! { x: 0.0, y: 4.0 },
         ];
         let correct = line_string![
             (x: 4.0, y: 0.0),
@@ -327,14 +327,14 @@ mod test {
     #[test]
     fn four_flex_test() {
         let mut v = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 2.0, y: 1.0 },
-            Coordinate { x: 4.0, y: 0.0 },
-            Coordinate { x: 3.0, y: 2.0 },
-            Coordinate { x: 4.0, y: 4.0 },
-            Coordinate { x: 2.0, y: 3.0 },
-            Coordinate { x: 0.0, y: 4.0 },
-            Coordinate { x: 1.0, y: 2.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 2.0, y: 1.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 3.0, y: 2.0 },
+            coord! { x: 4.0, y: 4.0 },
+            coord! { x: 2.0, y: 3.0 },
+            coord! { x: 0.0, y: 4.0 },
+            coord! { x: 1.0, y: 2.0 },
         ];
         let correct = line_string![
             (x: 4.0, y: 0.0),
@@ -355,11 +355,11 @@ mod test {
     #[test]
     fn consecutive_flex_test() {
         let mut v = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 4.0 },
-            Coordinate { x: 3.0, y: 1.0 },
-            Coordinate { x: 3.0, y: 2.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 4.0, y: 4.0 },
+            coord! { x: 3.0, y: 1.0 },
+            coord! { x: 3.0, y: 2.0 },
         ];
         let correct = line_string![
             (x: 4.0, y: 0.0),
