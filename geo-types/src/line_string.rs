@@ -144,6 +144,10 @@ impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next().map(|c| Point(*c))
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
 }
 
 impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
@@ -161,6 +165,10 @@ impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
     }
 }
 
@@ -510,6 +518,20 @@ mod test {
     use super::*;
     use crate::coord;
     use approx::AbsDiffEq;
+
+    #[test]
+    fn test_exact_size() {
+        // see https://github.com/georust/geo/issues/762
+        let ls = LineString(vec![
+            Coordinate { x: 0., y: 0. },
+            Coordinate { x: 10., y: 0. },
+        ]);
+
+        // reference to force the `impl IntoIterator for &LineString` impl, giving a `CoordinatesIter`
+        for c in (&ls).into_iter().rev().skip(1).rev() {
+            println!("{:?}", c);
+        }
+    }
 
     #[test]
     fn test_abs_diff_eq() {
