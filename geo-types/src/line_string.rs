@@ -150,6 +150,12 @@ impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
     }
 }
 
+impl<'a, T: CoordNum> ExactSizeIterator for PointsIter<'a, T> {
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
 impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back().map(|c| Point(*c))
@@ -530,6 +536,9 @@ mod test {
         // reference to force the `impl IntoIterator for &LineString` impl, giving a `CoordinatesIter`
         for c in (&ls).into_iter().rev().skip(1).rev() {
             println!("{:?}", c);
+        }
+        for p in (&ls).points().rev().skip(1).rev() {
+            println!("{:?}", p);
         }
     }
 

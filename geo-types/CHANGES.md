@@ -10,6 +10,8 @@
   * <https://github.com/georust/geo/pull/752>
 * Add missing size_hint() method for point and coordinate iterators on LineString
   * <https://github.com/georust/geo/issues/762>
+* Add ExactsizeIterator impl for Points iterator on LineString
+  * <https://github.com/georust/geo/pull/767>
 
 ## 0.7.3
 
