@@ -2,9 +2,7 @@
 name = "jts-test-runner"
 version = "0.1.0"
 authors = ["Michael Kirk <michael.code@endoftheworl.de>"]
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition = "2021"
 
 [dependencies]
 approx = "0.4.0"
@@ -13,8 +11,7 @@ include_dir = { version = "0.6", features = ["search"] }
 log = "0.4.14"
 serde =  { version = "*", features = ["derive"] }
 serde-xml-rs = "*"
-wkt = { version = "0.9", features = ["geo-types", "serde"] }
+wkt = { version = "0.10.0", features = ["geo-types", "serde"] }
 
 [dev-dependencies]
 pretty_env_logger = "*"
-
