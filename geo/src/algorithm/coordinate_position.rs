@@ -701,7 +701,7 @@ mod test {
             CoordPos::OnBoundary
         );
         assert_eq!(
-            triangle.coordinate_position(&Coordinate { x: 2.49, y: 5.0 }),
+            triangle.coordinate_position(&coord! { x: 2.49, y: 5.0 }),
             CoordPos::Outside
         );
     }

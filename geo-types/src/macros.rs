@@ -30,7 +30,7 @@ macro_rules! point {
 /// Creates a [`Coordinate`] from the given scalars.
 ///
 /// ```txt
-/// coord!(x: <number>, y: <number>)
+/// coord! { x: <number>, y: <number> }
 /// ```
 ///
 /// # Examples
@@ -40,7 +40,7 @@ macro_rules! point {
 /// ```
 /// use geo_types::coord;
 ///
-/// let c = coord!(x: 181.2, y: 51.79);
+/// let c = coord! { x: 181.2, y: 51.79 };
 ///
 /// assert_eq!(c, geo_types::coord! { x: 181.2, y: 51.79 });
 /// ```
