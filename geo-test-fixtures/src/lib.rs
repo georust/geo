@@ -105,10 +105,8 @@ fn line_string<T>(name: &str) -> LineString<T>
 where
     T: WktFloat + Default + FromStr,
 {
-    let mut wkt = Wkt::from_str(&file(name)).unwrap();
-
-    assert_eq!(wkt.items.len(), 1);
-    match wkt.items.swap_remove(0) {
+    let wkt = Wkt::from_str(&file(name)).unwrap();
+    match wkt.item {
         Geometry::LineString(line_string) => {
             LineString::from_iter(line_string.0.into_iter().map(|coord| (coord.x, coord.y)))
         }
