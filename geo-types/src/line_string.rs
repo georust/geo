@@ -528,10 +528,7 @@ mod test {
     #[test]
     fn test_exact_size() {
         // see https://github.com/georust/geo/issues/762
-        let ls = LineString(vec![
-            Coordinate { x: 0., y: 0. },
-            Coordinate { x: 10., y: 0. },
-        ]);
+        let ls = LineString(vec![coord! { x: 0., y: 0. }, coord! { x: 10., y: 0. }]);
 
         // reference to force the `impl IntoIterator for &LineString` impl, giving a `CoordinatesIter`
         for c in (&ls).into_iter().rev().skip(1).rev() {
