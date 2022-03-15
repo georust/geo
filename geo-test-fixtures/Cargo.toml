@@ -6,4 +6,6 @@ publish = false
 
 [dependencies]
 wkt = { version = "0.10.0", default-features = false }
-geo-types = { path = "../geo-types" }
+geo-types = "0.7.4"
+# Use this after geo-types 0.8+ is published with TZM support
+#geo-types = { version = "0.8", path = "../geo-types" }

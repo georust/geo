@@ -12,4 +12,6 @@ edition = "2021"
 
 [dependencies]
 postgis = { version = ">=0.7.0, <0.9.0" }
-geo-types = { version = "0.7", path = "../geo-types" }
+geo-types = "0.7.4"
+# Use this after geo-types 0.8+ is published with TZM support
+#geo-types = { version = "0.8", path = "../geo-types" }

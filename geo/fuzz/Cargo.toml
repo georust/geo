@@ -16,7 +16,8 @@ path = ".."
 
 [dependencies.geo-types]
 features = ["arbitrary"]
-path = "../../geo-types"
+# Uncomment after geo-types 0.8+ is published with TZM support
+# path = "../../geo-types"
 
 # Prevent this from interfering with workspaces
 [workspace]
@@ -30,4 +31,5 @@ doc = false
 
 [patch.crates-io]
 geo = { path = ".." }
-geo-types = { path = "../../geo-types" }
+# Uncomment after geo-types 0.8+ is published with TZM support
+# geo-types = { path = "../../geo-types" }
