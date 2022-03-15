@@ -1,5 +1,4 @@
-use crate::{CoordFloat, CoordNum, LineString, Point, Rect, Triangle};
-use num_traits::{Float, Signed};
+use crate::{CoordNum, LineString, Rect, Triangle};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -382,62 +381,6 @@ impl<T: CoordNum> Polygon<T> {
         let mut new_interior = new_interior.into();
         new_interior.close();
         self.interiors.push(new_interior);
-    }
-
-    /// Wrap-around previous-vertex
-    fn previous_vertex(&self, current_vertex: usize) -> usize
-    where
-        T: Float,
-    {
-        (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
-    }
-}
-
-// used to check the sign of a vec of floats
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum ListSign {
-    Empty,
-    Positive,
-    Negative,
-    Mixed,
-}
-
-impl<T: CoordFloat + Signed> Polygon<T> {
-    /// Determine whether a Polygon is convex
-    // For each consecutive pair of edges of the polygon (each triplet of points),
-    // compute the z-component of the cross product of the vectors defined by the
-    // edges pointing towards the points in increasing order.
-    // Take the cross product of these vectors
-    // The polygon is convex if the z-components of the cross products are either
-    // all positive or all negative. Otherwise, the polygon is non-convex.
-    // see: http://stackoverflow.com/a/1881201/416626
-    #[deprecated(
-        since = "0.6.1",
-        note = "Please use `geo::is_convex` on `poly.exterior()` instead"
-    )]
-    pub fn is_convex(&self) -> bool {
-        let convex = self
-            .exterior
-            .0
-            .iter()
-            .enumerate()
-            .map(|(idx, _)| {
-                let prev_1 = self.previous_vertex(idx);
-                let prev_2 = self.previous_vertex(prev_1);
-                Point::from(self.exterior[prev_2]).cross_prod(
-                    Point::from(self.exterior[prev_1]),
-                    Point::from(self.exterior[idx]),
-                )
-            })
-            // accumulate and check cross-product result signs in a single pass
-            // positive implies ccw convexity, negative implies cw convexity
-            // anything else implies non-convexity
-            .fold(ListSign::Empty, |acc, n| match (acc, n.is_positive()) {
-                (ListSign::Empty, true) | (ListSign::Positive, true) => ListSign::Positive,
-                (ListSign::Empty, false) | (ListSign::Negative, false) => ListSign::Negative,
-                _ => ListSign::Mixed,
-            });
-        convex != ListSign::Mixed
     }
 }
 

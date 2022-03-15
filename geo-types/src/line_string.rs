@@ -197,12 +197,6 @@ impl<T: CoordNum> LineString<T> {
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
-    #[deprecated(note = "Use points() instead")]
-    pub fn points_iter(&self) -> PointsIter<T> {
-        PointsIter(self.0.iter())
-    }
-
-    /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
     pub fn points(&self) -> PointsIter<T> {
         PointsIter(self.0.iter())
     }
@@ -285,26 +279,6 @@ impl<T: CoordNum> LineString<T> {
             debug_assert!(!self.0.is_empty());
             self.0.push(self.0[0]);
         }
-    }
-
-    /// Return the number of coordinates in the [`LineString`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::LineString;
-    ///
-    /// let mut coords = vec![(0., 0.), (5., 0.), (7., 9.)];
-    /// let line_string: LineString<f32> = coords.into_iter().collect();
-    ///
-    /// # #[allow(deprecated)]
-    /// # {
-    /// assert_eq!(3, line_string.num_coords());
-    /// # }
-    /// ```
-    #[deprecated(note = "Use geo::algorithm::coords_iter::CoordsIter::coords_count instead")]
-    pub fn num_coords(&self) -> usize {
-        self.0.len()
     }
 
     /// Checks if the linestring is closed; i.e. it is
