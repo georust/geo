@@ -64,21 +64,14 @@ extern crate rstar_0_8;
 #[macro_use]
 extern crate approx;
 
-#[deprecated(since = "0.7.0", note = "use `CoordFloat` or `CoordNum` instead")]
-pub trait CoordinateType: Num + Copy + NumCast + PartialOrd + Debug {}
-#[allow(deprecated)]
-impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordinateType for T {}
-
 /// The type of an x or y value of a point/coordinate.
 ///
 /// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
 ///
 /// For algorithms which only make sense for floating point, like area or length calculations,
 /// see [CoordFloat](trait.CoordFloat.html).
-#[allow(deprecated)]
-pub trait CoordNum: CoordinateType + Debug {}
-#[allow(deprecated)]
-impl<T: CoordinateType + Debug> CoordNum for T {}
+pub trait CoordNum: Num + Copy + NumCast + PartialOrd + Debug {}
+impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordNum for T {}
 
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}
@@ -117,8 +110,7 @@ mod triangle;
 pub use crate::triangle::Triangle;
 
 mod rect;
-#[allow(deprecated)]
-pub use crate::rect::{InvalidRectCoordinatesError, Rect};
+pub use crate::rect::Rect;
 
 mod error;
 pub use error::Error;

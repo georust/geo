@@ -1,5 +1,27 @@
 # Changes
 
+## Unreleased
+
+* BREAKING: Remove deprecated functions on the `Geometry<T>`:
+  * `into_point` - Switch to `std::convert::TryInto<Point>`
+  * `into_line_string` - Switch to `std::convert::TryInto<LineString>`
+  * `into_line` - Switch to `std::convert::TryInto<Line>`
+  * `into_polygon` - Switch to `std::convert::TryInto<Polygon>`
+  * `into_multi_point` - Switch to `std::convert::TryInto<MultiPoint>`
+  * `into_multi_line_string` - Switch to `std::convert::TryInto<MultiLineString>`
+  * `into_multi_polygon` - Switch to `std::convert::TryInto<MultiPolygon>`
+* BREAKING: Remove deprecated `CoordinateType` trait. Use `CoordFloat` or `CoordNum` instead.
+* BREAKING: Remove deprecated functions from `LineString<T>`
+  * Remove `points_iter()` -- use `points()` instead.
+  * Remove `num_coords()` -- use `geo::algorithm::coords_iter::CoordsIter::coords_count` instead.
+* BREAKING: Remove deprecated functions from `Point<T>`
+  * Remove `lng()` -- use `x()` instead.
+  * Remove `set_lng()` -- use `set_x()` instead.
+  * Remove `lat()` -- use `y()` instead.
+  * Remove `set_lat()` -- use `set_y()` instead.
+* BREAKING: Remove deprecated `Polygon<T>::is_convex()` -- use `geo::is_convex` on `poly.exterior()` instead.
+* BREAKING: Remove deprecated `Rect<T>::try_new()` -- use `Rect::new` instead, since `Rect::try_new` will never Error. Also removes corresponding `InvalidRectCoordinatesError`.
+
 ## 0.7.4
 
 * BREAKING: Make `Rect::to_lines` return lines in winding order for `Rect::to_polygon`.

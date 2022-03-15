@@ -19,21 +19,6 @@ where
     )
 }
 
-// Rotate an iterator of points "angle" degrees about an origin. Origin can be
-// an arbitrary point. Pass Point::new(0., 0.) for the actual origin.
-fn rotate_many<T>(
-    angle: T,
-    origin: Point<T>,
-    points: impl Iterator<Item = Point<T>>,
-) -> impl Iterator<Item = Point<T>>
-where
-    T: CoordFloat,
-{
-    let (sin_theta, cos_theta) = angle.to_radians().sin_cos();
-    let (x0, y0) = origin.x_y();
-    points.map(move |point| rotate_inner(point.x(), point.y(), x0, y0, sin_theta, cos_theta))
-}
-
 pub trait Rotate<T> {
     /// Rotate a geometry around its [centroid](Centroid) by an angle, in degrees
     ///
@@ -78,16 +63,6 @@ pub trait Rotate<T> {
     ///
     /// - `angle`: degrees
     fn rotate_around_center(&self, angle: T) -> Self
-    where
-        T: CoordFloat;
-
-    #[deprecated(
-        note = "Equivalent to `rotate_around_centroid` except for `Polygon<T>`,
-                    where it is equivalent to rotating around the polygon's outer ring.
-                    Call that instead, or `rotate_around_center` if you'd like to rotate
-                    around the geometry's bounding box center."
-    )]
-    fn rotate(&self, angle: T) -> Self
     where
         T: CoordFloat;
 }
@@ -152,12 +127,6 @@ where
     fn rotate_around_center(&self, _angle: T) -> Self {
         *self
     }
-
-    /// Rotate the Point about itself by the given number of degrees
-    /// This operation leaves the point coordinates unchanged
-    fn rotate(&self, _angle: T) -> Self {
-        *self
-    }
 }
 
 impl<T> Rotate<T> for Line<T>
@@ -172,10 +141,6 @@ where
     fn rotate_around_center(&self, angle: T) -> Self {
         let center: Point<T> = self.bounding_rect().center().into();
         self.rotate_around_point(angle, center)
-    }
-
-    fn rotate(&self, angle: T) -> Self {
-        self.rotate_around_centroid(angle)
     }
 }
 
@@ -200,10 +165,6 @@ where
             None => self.clone(), // LineString was empty or otherwise degenerate and had no computable bounding rect
         }
     }
-
-    fn rotate(&self, angle: T) -> Self {
-        self.rotate_around_centroid(angle)
-    }
 }
 
 impl<T> Rotate<T> for Polygon<T>
@@ -223,30 +184,6 @@ where
         match self.bounding_rect() {
             Some(bounding_rect) => self.rotate_around_point(angle, bounding_rect.center().into()),
             None => self.clone(), // Polygon was empty or otherwise degenerate and had no computable center
-        }
-    }
-
-    /// Rotate the Polygon about its centroid by the given number of degrees
-    fn rotate(&self, angle: T) -> Self {
-        // if a polygon has holes, use the centroid of its outer shell as the rotation origin
-        let centroid = if self.interiors().is_empty() {
-            self.centroid()
-        } else {
-            self.exterior().centroid()
-        };
-
-        // return a rotated polygon, or a clone if no centroid is computable
-        if let Some(centroid) = centroid {
-            Polygon::new(
-                rotate_many(angle, centroid, self.exterior().points()).collect(),
-                self.interiors()
-                    .iter()
-                    .map(|ring| rotate_many(angle, centroid, ring.points()).collect())
-                    .collect(),
-            )
-        } else {
-            // Polygon was empty or otherwise degenerate and had no computable centroid
-            self.clone()
         }
     }
 }
@@ -273,10 +210,6 @@ where
             None => self.clone(), // MultiPolygon was empty or otherwise degenerate and had no computable center
         }
     }
-
-    fn rotate(&self, angle: T) -> Self {
-        self.rotate_around_centroid(angle)
-    }
 }
 
 impl<T> Rotate<T> for MultiLineString<T>
@@ -297,11 +230,6 @@ where
             Some(bounding_rect) => self.rotate_around_point(angle, bounding_rect.center().into()),
             None => self.clone(),
         }
-    }
-
-    /// Rotate the contained LineStrings about their centroid by the given number of degrees
-    fn rotate(&self, angle: T) -> Self {
-        self.rotate_around_centroid(angle)
     }
 }
 
@@ -324,16 +252,12 @@ where
             None => self.clone(), // MultiPoint was empty or otherwise degenerate and had no computable bounding rectangle
         }
     }
-
-    fn rotate(&self, angle: T) -> Self {
-        self.rotate_around_centroid(angle)
-    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{line_string, point, polygon, Coordinate, Point};
+    use crate::{line_string, point, polygon, Point};
     use approx::assert_relative_eq;
 
     #[test]
@@ -472,27 +396,6 @@ mod test {
                 ],
             ],
         ];
-        #[allow(deprecated)]
-        let rotated = poly1.rotate(-15.0);
-        let correct_outside = vec![
-            Coordinate::from((4.628808519201685, 1.180520783117658)),
-            Coordinate::from((3.921701738015137, 2.4052656545092472)),
-            Coordinate::from((4.180520783117657, 3.3711914807983154)),
-            Coordinate::from((5.405265654509247, 4.078298261984863)),
-            Coordinate::from((6.371191480798315, 3.8194792168823426)),
-            Coordinate::from((7.0782982619848624, 2.594734345490753)),
-            Coordinate::from((6.819479216882343, 1.628808519201685)),
-            Coordinate::from((5.594734345490753, 0.9217017380151373)),
-            Coordinate::from((4.628808519201685, 1.180520783117658)),
-        ];
-        let correct_inside = vec![
-            Coordinate::from((4.706454232732441, 1.4702985310043786)),
-            Coordinate::from((5.37059047744874, 2.017037086855466)),
-            Coordinate::from((5.672380059021509, 1.2114794859018578)),
-            Coordinate::from((4.706454232732441, 1.4702985310043786)),
-        ];
-        assert_eq!(rotated.exterior().0, correct_outside);
-        assert_eq!(rotated.interiors()[0].0, correct_inside);
 
         // now rotate around center
         let center_expected = polygon![

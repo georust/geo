@@ -1,5 +1,11 @@
 # Changes
 
+## Major Unreleased
+
+* BREAKING: Remove deprecated `rotate()` from the `Rotate` trait:
+> Equivalent to `rotate_around_centroid` except for `Polygon<T>`, where it is equivalent to rotating around the polygon's outer ring. Call that instead, or `rotate_around_center` if you'd like to rotate around the geometry's bounding box center.
+* BREAKING: Remove `ToGeo` trait. Switch to `std::convert::Into<Geo>` or `std::convert::TryInto<Geo>`.
+
 ## Unreleased
 
 * Add `LinesIter` algorithm to iterate over the lines in geometries.
