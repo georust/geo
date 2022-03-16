@@ -117,29 +117,29 @@ mod test {
     fn test_line_locate_point_line() {
         // Some finite examples
         let line = Line::new(coord! { x: -1.0, y: 0.0 }, coord! { x: 1.0, y: 0.0 });
-        let point = Point::new(0.0, 1.0);
+        let point = point!(0.0, 1.0);
         assert_eq!(line.line_locate_point(&point), Some(0.5));
 
-        let point = Point::new(1.0, 1.0);
+        let point = point!(1.0, 1.0);
         assert_eq!(line.line_locate_point(&point), Some(1.0));
 
-        let point = Point::new(2.0, 1.0);
+        let point = point!(2.0, 1.0);
         assert_eq!(line.line_locate_point(&point), Some(1.0));
 
-        let point = Point::new(-1.0, 1.0);
+        let point = point!(-1.0, 1.0);
         assert_eq!(line.line_locate_point(&point), Some(0.0));
 
-        let point = Point::new(-2.0, 1.0);
+        let point = point!(-2.0, 1.0);
         assert_eq!(line.line_locate_point(&point), Some(0.0));
 
         // point contains inf or nan
-        let point = Point::new(Float::nan(), 1.0);
+        let point = point!(Float::nan(), 1.0);
         assert_eq!(line.line_locate_point(&point), None);
 
-        let point = Point::new(Float::infinity(), 1.0);
+        let point = point!(Float::infinity(), 1.0);
         assert_eq!(line.line_locate_point(&point), None);
 
-        let point = Point::new(Float::neg_infinity(), 1.0);
+        let point = point!(Float::neg_infinity(), 1.0);
         assert_eq!(line.line_locate_point(&point), None);
 
         // line contains inf or nan
@@ -150,7 +150,7 @@ mod test {
                 y: 0.0,
             },
         );
-        let point = Point::new(1000.0, 1000.0);
+        let point = point!(1000.0, 1000.0);
         assert_eq!(line.line_locate_point(&point), None);
 
         let line = Line::new(
@@ -160,7 +160,7 @@ mod test {
                 y: 0.0,
             },
         );
-        let point = Point::new(1000.0, 1000.0);
+        let point = point!(1000.0, 1000.0);
         assert_eq!(line.line_locate_point(&point), None);
 
         let line = Line::new(
@@ -170,7 +170,7 @@ mod test {
                 y: 0.0,
             },
         );
-        let point = Point::new(1000.0, 1000.0);
+        let point = point!(1000.0, 1000.0);
         assert_eq!(line.line_locate_point(&point), None);
 
         // zero length line
@@ -180,11 +180,11 @@ mod test {
 
         // another concrete example
         let line: Line<f64> = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 10.0, y: 0.0 });
-        let pt = Point::new(555.0, 555.0);
+        let pt = point!(555.0, 555.0);
         assert_eq!(line.line_locate_point(&pt), Some(1.0));
-        let pt = Point::new(10.0000001, 0.0);
+        let pt = point!(10.0000001, 0.0);
         assert_eq!(line.line_locate_point(&pt), Some(1.0));
-        let pt = Point::new(9.0, 0.001);
+        let pt = point!(9.0, 0.001);
         assert_eq!(line.line_locate_point(&pt), Some(0.9));
     }
 

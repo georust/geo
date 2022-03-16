@@ -1,7 +1,8 @@
 /// Creates a [`Point`] from the given coordinates.
 ///
 /// ```txt
-/// point!(x: <number>, y: <number>)
+/// point!(<x_number>, <y_number>)
+/// point! { x: <number>, y: <number> }
 /// ```
 ///
 /// # Examples
@@ -11,7 +12,7 @@
 /// ```
 /// use geo_types::point;
 ///
-/// let p = point! { x: 181.2, y: 51.79 };
+/// let p = point!(181.2, 51.79);
 ///
 /// assert_eq!(p, geo_types::Point(geo_types::coord! {
 ///     x: 181.2,
@@ -24,6 +25,9 @@
 macro_rules! point {
     ( $($tag:tt : $val:expr),* $(,)? ) => {
         $crate::Point ( $crate::coord! { $( $tag: $val , )* } )
+    };
+    ( $x:expr, $y:expr $(,)? ) => {
+        $crate::point! { x: $x, y: $y }
     };
 }
 

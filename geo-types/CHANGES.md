@@ -12,6 +12,8 @@
   * <https://github.com/georust/geo/issues/762>
 * Add ExactsizeIterator impl for Points iterator on LineString
   * <https://github.com/georust/geo/pull/767>
+* Support positional `point!(x, y)` macro, preferred over `Point::new(x, y)`
+  * <https://github.com/georust/geo/pull/774>
 
 ## 0.7.3
 

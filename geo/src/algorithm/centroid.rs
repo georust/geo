@@ -152,14 +152,14 @@ where
 ///
 /// ```
 /// use geo::algorithm::centroid::Centroid;
-/// use geo::{MultiPoint, Point};
+/// use geo::{MultiPoint, Point, point};
 ///
 /// let empty: Vec<Point<f64>> = Vec::new();
 /// let empty_multi_points: MultiPoint<_> = empty.into();
 /// assert_eq!(empty_multi_points.centroid(), None);
 ///
 /// let points: MultiPoint<_> = vec![(5., 1.), (1., 3.), (3., 2.)].into();
-/// assert_eq!(points.centroid(), Some(Point::new(3., 2.)));
+/// assert_eq!(points.centroid(), Some(point!(3., 2.)));
 /// ```
 impl<T> Centroid for MultiPoint<T>
 where

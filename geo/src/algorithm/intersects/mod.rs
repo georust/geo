@@ -111,8 +111,8 @@ where
 mod test {
     use crate::algorithm::intersects::Intersects;
     use crate::{
-        coord, line_string, polygon, Geometry, Line, LineString, MultiLineString, MultiPoint,
-        MultiPolygon, Point, Polygon, Rect,
+        coord, line_string, point, polygon, Geometry, Line, LineString, MultiLineString,
+        MultiPoint, MultiPolygon, Point, Polygon, Rect,
     };
 
     /// Tests: intersection LineString and LineString
@@ -402,7 +402,7 @@ mod test {
     }
     #[test]
     fn point_intersects_line_test() {
-        let p0 = Point::new(2., 4.);
+        let p0 = point!(2., 4.);
         // vertical line
         let line1 = Line::from([(2., 0.), (2., 5.)]);
         // point on line, but outside line segment
@@ -531,7 +531,7 @@ mod test {
     #[test]
     fn exhaustive_compile_test() {
         use geo_types::{GeometryCollection, Triangle};
-        let pt: Point<f64> = Point::new(0., 0.);
+        let pt: Point<f64> = point!(0., 0.);
         let ln: Line<f64> = Line::new((0., 0.), (1., 1.));
         let ls = line_string![(0., 0.).into(), (1., 1.).into()];
         let poly = Polygon::new(LineString::from(vec![(0., 0.), (1., 1.), (1., 0.)]), vec![]);

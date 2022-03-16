@@ -53,14 +53,14 @@ mod test {
     use crate::algorithm::contains::Contains;
     use crate::line_string;
     use crate::{
-        coord, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle,
+        coord, point, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle,
     };
 
     #[test]
     // see https://github.com/georust/geo/issues/452
     fn linestring_contains_point() {
         let line_string = LineString::from(vec![(0., 0.), (3., 3.)]);
-        let point_on_line = Point::new(1., 1.);
+        let point_on_line = point!(1., 1.);
         assert!(line_string.contains(&point_on_line));
     }
     #[test]
@@ -135,61 +135,61 @@ mod test {
     #[test]
     fn empty_linestring_test() {
         let linestring = LineString(Vec::new());
-        assert!(!linestring.contains(&Point::new(2., 1.)));
+        assert!(!linestring.contains(&point!(2., 1.)));
     }
     #[test]
     fn linestring_point_is_vertex_test() {
         let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.)]);
         // Note: the end points of a linestring are not
         // considered to be "contained"
-        assert!(linestring.contains(&Point::new(2., 0.)));
-        assert!(!linestring.contains(&Point::new(0., 0.)));
-        assert!(!linestring.contains(&Point::new(2., 2.)));
+        assert!(linestring.contains(&point!(2., 0.)));
+        assert!(!linestring.contains(&point!(0., 0.)));
+        assert!(!linestring.contains(&point!(2., 2.)));
     }
     #[test]
     fn linestring_test() {
         let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.)]);
-        assert!(linestring.contains(&Point::new(1., 0.)));
+        assert!(linestring.contains(&point!(1., 0.)));
     }
     /// Tests: Point in Polygon
     #[test]
     fn empty_polygon_test() {
         let linestring = LineString(Vec::new());
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(!poly.contains(&Point::new(2., 1.)));
+        assert!(!poly.contains(&point!(2., 1.)));
     }
     #[test]
     fn polygon_with_one_point_test() {
         let linestring = LineString::from(vec![(2., 1.)]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(!poly.contains(&Point::new(3., 1.)));
+        assert!(!poly.contains(&point!(3., 1.)));
     }
     #[test]
     fn polygon_with_one_point_is_vertex_test() {
         let linestring = LineString::from(vec![(2., 1.)]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(!poly.contains(&Point::new(2., 1.)));
+        assert!(!poly.contains(&point!(2., 1.)));
     }
     #[test]
     fn polygon_with_point_on_boundary_test() {
         let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(!poly.contains(&Point::new(1., 0.)));
-        assert!(!poly.contains(&Point::new(2., 1.)));
-        assert!(!poly.contains(&Point::new(1., 2.)));
-        assert!(!poly.contains(&Point::new(0., 1.)));
+        assert!(!poly.contains(&point!(1., 0.)));
+        assert!(!poly.contains(&point!(2., 1.)));
+        assert!(!poly.contains(&point!(1., 2.)));
+        assert!(!poly.contains(&point!(0., 1.)));
     }
     #[test]
     fn point_in_polygon_test() {
         let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(poly.contains(&Point::new(1., 1.)));
+        assert!(poly.contains(&point!(1., 1.)));
     }
     #[test]
     fn point_in_polygon_with_ray_passing_through_a_vertex_test() {
         let linestring = LineString::from(vec![(1., 0.), (0., 1.), (-1., 0.), (0., -1.)]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(poly.contains(&Point::new(0., 0.)));
+        assert!(poly.contains(&point!(0., 0.)));
     }
     #[test]
     fn point_in_polygon_with_ray_passing_through_a_vertex_and_not_crossing() {
@@ -203,15 +203,15 @@ mod test {
             (0., 0.),
         ]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(poly.contains(&Point::new(1., 1.)));
+        assert!(poly.contains(&point!(1., 1.)));
     }
     #[test]
     fn point_out_polygon_test() {
         let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert!(!poly.contains(&Point::new(2.1, 1.)));
-        assert!(!poly.contains(&Point::new(1., 2.1)));
-        assert!(!poly.contains(&Point::new(2.1, 2.1)));
+        assert!(!poly.contains(&point!(2.1, 1.)));
+        assert!(!poly.contains(&point!(1., 2.1)));
+        assert!(!poly.contains(&point!(2.1, 2.1)));
     }
     #[test]
     fn point_polygon_with_inner_test() {
@@ -224,17 +224,17 @@ mod test {
             [0.0, 0.0],
         ]);
         let poly = Polygon::new(linestring, vec![inner_linestring]);
-        assert!(!poly.contains(&Point::new(0.25, 0.25)));
-        assert!(!poly.contains(&Point::new(1., 1.)));
-        assert!(!poly.contains(&Point::new(1.5, 1.5)));
-        assert!(!poly.contains(&Point::new(1.5, 1.)));
+        assert!(!poly.contains(&point!(0.25, 0.25)));
+        assert!(!poly.contains(&point!(1., 1.)));
+        assert!(!poly.contains(&point!(1.5, 1.5)));
+        assert!(!poly.contains(&point!(1.5, 1.)));
     }
 
     /// Tests: Point in MultiPolygon
     #[test]
     fn empty_multipolygon_test() {
         let multipoly = MultiPolygon(Vec::new());
-        assert!(!multipoly.contains(&Point::new(2., 1.)));
+        assert!(!multipoly.contains(&point!(2., 1.)));
     }
     #[test]
     fn empty_multipolygon_two_polygons_test() {
@@ -247,9 +247,9 @@ mod test {
             Vec::new(),
         );
         let multipoly = MultiPolygon(vec![poly1, poly2]);
-        assert!(multipoly.contains(&Point::new(0.5, 0.5)));
-        assert!(multipoly.contains(&Point::new(2.5, 0.5)));
-        assert!(!multipoly.contains(&Point::new(1.5, 0.5)));
+        assert!(multipoly.contains(&point!(0.5, 0.5)));
+        assert!(multipoly.contains(&point!(2.5, 0.5)));
+        assert!(!multipoly.contains(&point!(1.5, 0.5)));
     }
     #[test]
     fn empty_multipolygon_two_polygons_and_inner_test() {
@@ -268,10 +268,10 @@ mod test {
         );
 
         let multipoly = MultiPolygon(vec![poly1, poly2]);
-        assert!(multipoly.contains(&Point::new(3., 5.)));
-        assert!(multipoly.contains(&Point::new(12., 2.)));
-        assert!(!multipoly.contains(&Point::new(3., 2.)));
-        assert!(!multipoly.contains(&Point::new(7., 2.)));
+        assert!(multipoly.contains(&point!(3., 5.)));
+        assert!(multipoly.contains(&point!(12., 2.)));
+        assert!(!multipoly.contains(&point!(3., 2.)));
+        assert!(!multipoly.contains(&point!(7., 2.)));
     }
     /// Tests: LineString in Polygon
     #[test]
@@ -446,10 +446,10 @@ mod test {
 
     #[test]
     fn integer_bounding_rects() {
-        let p: Point<i32> = Point::new(10, 20);
+        let p: Point<i32> = point!(10, 20);
         let bounding_rect: Rect<i32> = Rect::new(coord! { x: 0, y: 0 }, coord! { x: 100, y: 100 });
         assert!(bounding_rect.contains(&p));
-        assert!(!bounding_rect.contains(&Point::new(-10, -10)));
+        assert!(!bounding_rect.contains(&point!(-10, -10)));
 
         let smaller_bounding_rect: Rect<i32> =
             Rect::new(coord! { x: 10, y: 10 }, coord! { x: 20, y: 20 });
@@ -459,42 +459,42 @@ mod test {
     #[test]
     fn triangle_not_contains_point_on_edge() {
         let t = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
-        let p = Point::new(1.0, 0.0);
+        let p = point!(1.0, 0.0);
         assert!(!t.contains(&p));
     }
 
     #[test]
     fn triangle_not_contains_point_on_vertex() {
         let t = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
-        let p = Point::new(2.0, 0.0);
+        let p = point!(2.0, 0.0);
         assert!(!t.contains(&p));
     }
 
     #[test]
     fn triangle_contains_point_inside() {
         let t = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
-        let p = Point::new(1.0, 0.5);
+        let p = point!(1.0, 0.5);
         assert!(t.contains(&p));
     }
 
     #[test]
     fn triangle_not_contains_point_above() {
         let t = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
-        let p = Point::new(1.0, 1.5);
+        let p = point!(1.0, 1.5);
         assert!(!t.contains(&p));
     }
 
     #[test]
     fn triangle_not_contains_point_below() {
         let t = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
-        let p = Point::new(-1.0, 0.5);
+        let p = point!(-1.0, 0.5);
         assert!(!t.contains(&p));
     }
 
     #[test]
     fn triangle_contains_neg_point() {
         let t = Triangle::from([(0.0, 0.0), (-2.0, 0.0), (-2.0, -2.0)]);
-        let p = Point::new(-1.0, -0.5);
+        let p = point!(-1.0, -0.5);
         assert!(t.contains(&p));
     }
 

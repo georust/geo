@@ -1,7 +1,7 @@
 use geo::algorithm::concave_hull::ConcaveHull;
 use geo::algorithm::convex_hull::ConvexHull;
 use geo::{Coordinate, Point};
-use geo_types::MultiPoint;
+use geo_types::{point, MultiPoint};
 use std::fs::File;
 use std::io::Write;
 
@@ -37,10 +37,7 @@ fn produce_file_content(start_str: &str, mid_str: &str) -> String {
 fn move_points_in_viewbox(width: f64, height: f64, points: Vec<Point<f64>>) -> Vec<Point<f64>> {
     let mut new_points = vec![];
     for point in points {
-        new_points.push(Point::new(
-            point.0.x + width / 2.0,
-            point.0.y + height / 2.0,
-        ));
+        new_points.push(point!(point.0.x + width / 2.0, point.0.y + height / 2.0));
     }
     new_points
 }
@@ -63,7 +60,7 @@ fn main() -> std::io::Result<()> {
     let v: Vec<_> = norway
         .0
         .into_iter()
-        .map(|coord| Point::new(coord.x, coord.y))
+        .map(|coord| point!(coord.x, coord.y))
         .collect();
     let moved_v = move_points_in_viewbox(width as f64, height as f64, v);
     let multipoint = MultiPoint::from(moved_v);

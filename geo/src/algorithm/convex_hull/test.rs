@@ -4,15 +4,15 @@ use crate::*;
 #[test]
 fn convex_hull_multipoint_test() {
     let v = vec![
-        Point::new(0, 10),
-        Point::new(1, 1),
-        Point::new(10, 0),
-        Point::new(1, -1),
-        Point::new(0, -10),
-        Point::new(-1, -1),
-        Point::new(-10, 0),
-        Point::new(-1, 1),
-        Point::new(0, 10),
+        point!(0, 10),
+        point!(1, 1),
+        point!(10, 0),
+        point!(1, -1),
+        point!(0, -10),
+        point!(-1, -1),
+        point!(-10, 0),
+        point!(-1, 1),
+        point!(0, 10),
     ];
     let mp = MultiPoint(v);
     let correct = vec![
