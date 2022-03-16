@@ -304,7 +304,7 @@ mod test {
     #[test]
     fn test_line() {
         let ls = line_string![(x: -1.2f32, y: 3.4f32)];
-        assert_eq!(ls[0], coord! {x: -1.2, y: 3.4});
+        assert_eq!(ls[0], coord! { x: -1.2, y: 3.4 });
 
         let ls = line_string![
             (x: -1.2f32, y: 3.4f32),
