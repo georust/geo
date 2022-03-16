@@ -11,17 +11,19 @@ description = "Geospatial primitive data types"
 edition = "2021"
 
 [features]
-use-rstar = ["rstar", "approx"]
+# Prefer `use-rstar` feature rather than enabling rstar directly.
+# rstar integration relies on the optional approx crate, but implicit features cannot yet enable other features.
+# See: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#namespaced-features
+rstar = ["rstar_0_8"]
+use-rstar = ["use-rstar_0_8"]
+use-rstar_0_8 = ["rstar_0_8", "approx"]
 use-rstar_0_9 = ["rstar_0_9", "approx"]
 
 [dependencies]
 approx = { version = "0.4.0", optional = true }
 arbitrary = { version = "1.0.0", optional = true }
 num-traits = "0.2.0"
-# Prefer `use-rstar` feature rather than enabling rstar directly.
-# rstar integration relies on the optional approx crate, but implicit features cannot yet enable other features.
-# See: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#namespaced-features
-rstar = { version = "0.8.0", optional = true }
+rstar_0_8 = { package = "rstar", version = "0.8.0", optional = true }
 rstar_0_9 = { package = "rstar", version = "0.9.0", optional = true }
 serde = { version = "1.0.0", optional = true, features = ["derive"] }
 
