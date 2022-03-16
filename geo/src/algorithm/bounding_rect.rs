@@ -209,8 +209,8 @@ mod test {
     use crate::algorithm::bounding_rect::BoundingRect;
     use crate::line_string;
     use crate::{
-        coord, polygon, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-        MultiPoint, MultiPolygon, Point, Polygon, Rect,
+        coord, point, polygon, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+        MultiPoint, MultiPolygon, Polygon, Rect,
     };
 
     #[test]
@@ -314,7 +314,7 @@ mod test {
     fn point_bounding_rect_test() {
         assert_eq!(
             Rect::new(coord! { x: 1., y: 2. }, coord! { x: 1., y: 2. }),
-            Point(coord! { x: 1., y: 2. }).bounding_rect(),
+            point! { x: 1., y: 2. }.bounding_rect(),
         );
     }
 
@@ -323,8 +323,8 @@ mod test {
         assert_eq!(
             Some(Rect::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 2. })),
             GeometryCollection(vec![
-                Geometry::Point(Point(coord! { x: 0., y: 0. })),
-                Geometry::Point(Point(coord! { x: 1., y: 2. })),
+                Geometry::Point(point! { x: 0., y: 0. }),
+                Geometry::Point(point! { x: 1., y: 2. }),
             ])
             .bounding_rect(),
         );
