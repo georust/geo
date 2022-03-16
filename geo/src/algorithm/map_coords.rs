@@ -36,8 +36,8 @@
 //! ```
 
 use crate::{
-    CoordNum, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+    coord, CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
 /// Map a function over all the coordinates in an object, returning a new one
@@ -541,9 +541,9 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Triangle<T> {
         let p3 = func(&self.2.x_y());
 
         Triangle(
-            Coordinate { x: p1.0, y: p1.1 },
-            Coordinate { x: p2.0, y: p2.1 },
-            Coordinate { x: p3.0, y: p3.1 },
+            coord! { x: p1.0, y: p1.1 },
+            coord! { x: p2.0, y: p2.1 },
+            coord! { x: p3.0, y: p3.1 },
         )
     }
 }
@@ -560,9 +560,9 @@ impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for Triangle<T> {
         let p3 = func(&self.2.x_y())?;
 
         Ok(Triangle(
-            Coordinate { x: p1.0, y: p1.1 },
-            Coordinate { x: p2.0, y: p2.1 },
-            Coordinate { x: p3.0, y: p3.1 },
+            coord! { x: p1.0, y: p1.1 },
+            coord! { x: p2.0, y: p2.1 },
+            coord! { x: p3.0, y: p3.1 },
         ))
     }
 }
@@ -574,9 +574,9 @@ impl<T: CoordNum> MapCoordsInplace<T> for Triangle<T> {
         let p3 = func(&self.2.x_y());
 
         let mut new_triangle = Triangle(
-            Coordinate { x: p1.0, y: p1.1 },
-            Coordinate { x: p2.0, y: p2.1 },
-            Coordinate { x: p3.0, y: p3.1 },
+            coord! { x: p1.0, y: p1.1 },
+            coord! { x: p2.0, y: p2.1 },
+            coord! { x: p3.0, y: p3.1 },
         );
 
         ::std::mem::swap(self, &mut new_triangle);
@@ -608,8 +608,8 @@ mod test {
     fn rect_inplace() {
         let mut rect = Rect::new((10, 10), (20, 20));
         rect.map_coords_inplace(|&(x, y)| (x + 10, y + 20));
-        assert_eq!(rect.min(), Coordinate { x: 20, y: 30 });
-        assert_eq!(rect.max(), Coordinate { x: 30, y: 40 });
+        assert_eq!(rect.min(), coord! { x: 20, y: 30 });
+        assert_eq!(rect.max(), coord! { x: 30, y: 40 });
     }
 
     #[test]
@@ -627,16 +627,16 @@ mod test {
             }
         });
 
-        assert_eq!(rect.min(), Coordinate { x: 1, y: 1 });
-        assert_eq!(rect.max(), Coordinate { x: 4, y: 4 });
+        assert_eq!(rect.min(), coord! { x: 1, y: 1 });
+        assert_eq!(rect.max(), coord! { x: 4, y: 4 });
     }
 
     #[test]
     fn rect_map_coords() {
         let rect = Rect::new((10, 10), (20, 20));
         let another_rect = rect.map_coords(|&(x, y)| (x + 10, y + 20));
-        assert_eq!(another_rect.min(), Coordinate { x: 20, y: 30 });
-        assert_eq!(another_rect.max(), Coordinate { x: 30, y: 40 });
+        assert_eq!(another_rect.min(), coord! { x: 20, y: 30 });
+        assert_eq!(another_rect.max(), coord! { x: 30, y: 40 });
     }
 
     #[test]
@@ -666,8 +666,8 @@ mod test {
             }
         });
         let new_rect = result.unwrap();
-        assert_eq!(new_rect.min(), Coordinate { x: 1, y: 1 });
-        assert_eq!(new_rect.max(), Coordinate { x: 4, y: 4 });
+        assert_eq!(new_rect.min(), coord! { x: 1, y: 1 });
+        assert_eq!(new_rect.max(), coord! { x: 4, y: 4 });
     }
 
     #[test]
@@ -889,7 +889,7 @@ mod test {
 
     #[test]
     fn rect_map_invert_coords() {
-        let rect = Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. });
+        let rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. });
 
         // This call should not panic even though Rect::new
         // constructor panics if min coords > max coords

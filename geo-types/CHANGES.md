@@ -8,6 +8,10 @@
   * <https://github.com/georust/geo/pull/741>
 * Macros `coord!`, `point!`, `line_string!`, and `polygon!` now support trailing commas such as `coord! { x: 181.2, y: 51.79, }`
   * <https://github.com/georust/geo/pull/752>
+* Add missing size_hint() method for point and coordinate iterators on LineString
+  * <https://github.com/georust/geo/issues/762>
+* Add ExactsizeIterator impl for Points iterator on LineString
+  * <https://github.com/georust/geo/pull/767>
 
 ## 0.7.3
 

@@ -110,18 +110,16 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::geo_types::coord;
     use crate::{
         algorithm::{closest_point::ClosestPoint, line_locate_point::LineLocatePoint},
-        point, Coordinate,
+        point,
     };
     use num_traits::Float;
 
     #[test]
     fn test_line_interpolate_point_line() {
-        let line = Line::new(
-            Coordinate { x: -1.0, y: 0.0 },
-            Coordinate { x: 1.0, y: 0.0 },
-        );
+        let line = Line::new(coord! { x: -1.0, y: 0.0 }, coord! { x: 1.0, y: 0.0 });
         // some finite examples
         assert_eq!(
             line.line_interpolate_point(-1.0),
@@ -159,7 +157,7 @@ mod test {
             Some(line.start_point())
         );
 
-        let line = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 1.0, y: 1.0 });
+        let line = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
         assert_eq!(
             line.line_interpolate_point(0.5),
             Some(point!(x: 0.5, y: 0.5))
@@ -167,26 +165,26 @@ mod test {
 
         // line contains nans or infs
         let line = Line::new(
-            Coordinate {
+            coord! {
                 x: Float::nan(),
                 y: 0.0,
             },
-            Coordinate { x: 1.0, y: 1.0 },
+            coord! { x: 1.0, y: 1.0 },
         );
         assert_eq!(line.line_interpolate_point(0.5), None);
 
         let line = Line::new(
-            Coordinate {
+            coord! {
                 x: Float::infinity(),
                 y: 0.0,
             },
-            Coordinate { x: 1.0, y: 1.0 },
+            coord! { x: 1.0, y: 1.0 },
         );
         assert_eq!(line.line_interpolate_point(0.5), None);
 
         let line = Line::new(
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate {
+            coord! { x: 0.0, y: 0.0 },
+            coord! {
                 x: 1.0,
                 y: Float::infinity(),
             },
@@ -194,17 +192,17 @@ mod test {
         assert_eq!(line.line_interpolate_point(0.5), None);
 
         let line = Line::new(
-            Coordinate {
+            coord! {
                 x: Float::neg_infinity(),
                 y: 0.0,
             },
-            Coordinate { x: 1.0, y: 1.0 },
+            coord! { x: 1.0, y: 1.0 },
         );
         assert_eq!(line.line_interpolate_point(0.5), None);
 
         let line = Line::new(
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate {
+            coord! { x: 0.0, y: 0.0 },
+            coord! {
                 x: 1.0,
                 y: Float::neg_infinity(),
             },

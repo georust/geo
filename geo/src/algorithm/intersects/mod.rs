@@ -111,7 +111,7 @@ where
 mod test {
     use crate::algorithm::intersects::Intersects;
     use crate::{
-        line_string, polygon, Coordinate, Geometry, Line, LineString, MultiLineString, MultiPoint,
+        coord, line_string, polygon, Geometry, Line, LineString, MultiLineString, MultiPoint,
         MultiPolygon, Point, Polygon, Rect,
     };
 
@@ -339,10 +339,10 @@ mod test {
                 (7., 4.),
             ])],
         );
-        let b1 = Rect::new(Coordinate { x: 11., y: 1. }, Coordinate { x: 13., y: 2. });
-        let b2 = Rect::new(Coordinate { x: 2., y: 2. }, Coordinate { x: 8., y: 5. });
-        let b3 = Rect::new(Coordinate { x: 8., y: 5. }, Coordinate { x: 10., y: 6. });
-        let b4 = Rect::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 3., y: 3. });
+        let b1 = Rect::new(coord! { x: 11., y: 1. }, coord! { x: 13., y: 2. });
+        let b2 = Rect::new(coord! { x: 2., y: 2. }, coord! { x: 8., y: 5. });
+        let b3 = Rect::new(coord! { x: 8., y: 5. }, coord! { x: 10., y: 6. });
+        let b4 = Rect::new(coord! { x: 1., y: 1. }, coord! { x: 3., y: 3. });
         // overlaps
         assert!(poly.intersects(&b1));
         // contained in exterior, overlaps with hole
@@ -359,16 +359,10 @@ mod test {
     }
     #[test]
     fn bounding_rect_test() {
-        let bounding_rect_xl = Rect::new(
-            Coordinate { x: -100., y: -200. },
-            Coordinate { x: 100., y: 200. },
-        );
-        let bounding_rect_sm = Rect::new(
-            Coordinate { x: -10., y: -20. },
-            Coordinate { x: 10., y: 20. },
-        );
-        let bounding_rect_s2 =
-            Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 20., y: 30. });
+        let bounding_rect_xl =
+            Rect::new(coord! { x: -100., y: -200. }, coord! { x: 100., y: 200. });
+        let bounding_rect_sm = Rect::new(coord! { x: -10., y: -20. }, coord! { x: 10., y: 20. });
+        let bounding_rect_s2 = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 20., y: 30. });
         // confirmed using GEOS
         assert!(bounding_rect_xl.intersects(&bounding_rect_sm));
         assert!(bounding_rect_sm.intersects(&bounding_rect_xl));
@@ -377,16 +371,10 @@ mod test {
     }
     #[test]
     fn rect_intersection_consistent_with_poly_intersection_test() {
-        let bounding_rect_xl = Rect::new(
-            Coordinate { x: -100., y: -200. },
-            Coordinate { x: 100., y: 200. },
-        );
-        let bounding_rect_sm = Rect::new(
-            Coordinate { x: -10., y: -20. },
-            Coordinate { x: 10., y: 20. },
-        );
-        let bounding_rect_s2 =
-            Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 20., y: 30. });
+        let bounding_rect_xl =
+            Rect::new(coord! { x: -100., y: -200. }, coord! { x: 100., y: 200. });
+        let bounding_rect_sm = Rect::new(coord! { x: -10., y: -20. }, coord! { x: 10., y: 20. });
+        let bounding_rect_s2 = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 20., y: 30. });
 
         assert!(bounding_rect_xl.to_polygon().intersects(&bounding_rect_sm));
         assert!(bounding_rect_xl.intersects(&bounding_rect_sm.to_polygon()));
@@ -509,21 +497,21 @@ mod test {
     // See https://github.com/georust/geo/issues/419
     fn rect_test_419() {
         let a = Rect::new(
-            Coordinate {
+            coord! {
                 x: 9.228515625,
                 y: 46.83013364044739,
             },
-            Coordinate {
+            coord! {
                 x: 9.2724609375,
                 y: 46.86019101567026,
             },
         );
         let b = Rect::new(
-            Coordinate {
+            coord! {
                 x: 9.17953,
                 y: 46.82018,
             },
-            Coordinate {
+            coord! {
                 x: 9.26309,
                 y: 46.88099,
             },
@@ -547,11 +535,11 @@ mod test {
         let ln: Line<f64> = Line::new((0., 0.), (1., 1.));
         let ls = line_string![(0., 0.).into(), (1., 1.).into()];
         let poly = Polygon::new(LineString::from(vec![(0., 0.), (1., 1.), (1., 0.)]), vec![]);
-        let rect = Rect::new(Coordinate { x: 10., y: 20. }, Coordinate { x: 30., y: 10. });
+        let rect = Rect::new(coord! { x: 10., y: 20. }, coord! { x: 30., y: 10. });
         let tri = Triangle(
-            Coordinate { x: 0., y: 0. },
-            Coordinate { x: 10., y: 20. },
-            Coordinate { x: 20., y: -10. },
+            coord! { x: 0., y: 0. },
+            coord! { x: 10., y: 20. },
+            coord! { x: 20., y: -10. },
         );
         let geom = Geometry::Point(pt);
         let gc = GeometryCollection(vec![geom.clone()]);
