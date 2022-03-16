@@ -475,7 +475,7 @@ mod test {
 
     /// small helper to create a point
     fn p<T: GeoFloat>(x: T, y: T) -> Point<T> {
-        Point(c(x, y))
+        point! { x: x, y: y }
     }
 
     // Tests: Centroid of LineString
@@ -553,7 +553,7 @@ mod test {
             (x: 11., y: 1.)
         ];
         let mls: MultiLineString<f64> = MultiLineString(vec![linestring]);
-        assert_relative_eq!(mls.centroid().unwrap(), Point(coord! { x: 6., y: 1. }));
+        assert_relative_eq!(mls.centroid().unwrap(), point! { x: 6., y: 1. });
     }
     #[test]
     fn multilinestring_test() {

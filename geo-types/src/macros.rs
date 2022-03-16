@@ -11,7 +11,7 @@
 /// ```
 /// use geo_types::point;
 ///
-/// let p = point!(x: 181.2, y: 51.79);
+/// let p = point! { x: 181.2, y: 51.79 };
 ///
 /// assert_eq!(p, geo_types::Point(geo_types::coord! {
 ///     x: 181.2,
@@ -22,8 +22,8 @@
 /// [`Point`]: ./struct.Point.html
 #[macro_export]
 macro_rules! point {
-    (x: $x:expr, y: $y:expr $(,)?) => {
-        $crate::Point::new($x, $y)
+    ( $($tag:tt : $val:expr),* $(,)? ) => {
+        $crate::Point ( $crate::coord! { $( $tag: $val , )* } )
     };
 }
 
