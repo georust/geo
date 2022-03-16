@@ -314,7 +314,7 @@ mod test {
     fn point_bounding_rect_test() {
         assert_eq!(
             Rect::new(coord! { x: 1., y: 2. }, coord! { x: 1., y: 2. }),
-            point! { x: 1., y: 2. }.bounding_rect(),
+            point!(1., 2.).bounding_rect(),
         );
     }
 
