@@ -33,11 +33,11 @@ use std::ops::{Index, IndexMut};
 /// Create a [`LineString`] by calling it directly:
 ///
 /// ```
-/// use geo_types::{Coordinate, LineString};
+/// use geo_types::{coord, LineString};
 ///
 /// let line_string = LineString(vec![
-///     Coordinate { x: 0., y: 0. },
-///     Coordinate { x: 10., y: 0. },
+///     coord! { x: 0., y: 0. },
+///     coord! { x: 10., y: 0. },
 /// ]);
 /// ```
 ///
@@ -69,10 +69,10 @@ use std::ops::{Index, IndexMut};
 /// Or by `collect`ing from a [`Coordinate`] iterator
 ///
 /// ```
-/// use geo_types::{Coordinate, LineString};
+/// use geo_types::{coord, LineString};
 ///
 /// let mut coords_iter =
-///     vec![Coordinate { x: 0., y: 0. }, Coordinate { x: 10., y: 0. }].into_iter();
+///     vec![coord! { x: 0., y: 0. }, coord! { x: 10., y: 0. }].into_iter();
 ///
 /// let line_string: LineString<f32> = coords_iter.collect();
 /// ```
@@ -81,11 +81,11 @@ use std::ops::{Index, IndexMut};
 /// [`LineString`] provides five iterators: [`coords`](LineString::coords), [`coords_mut`](LineString::coords_mut), [`points`](LineString::points), [`lines`](LineString::lines), and [`triangles`](LineString::triangles):
 ///
 /// ```
-/// use geo_types::{Coordinate, LineString};
+/// use geo_types::{coord, LineString};
 ///
 /// let line_string = LineString(vec![
-///     Coordinate { x: 0., y: 0. },
-///     Coordinate { x: 10., y: 0. },
+///     coord! { x: 0., y: 0. },
+///     coord! { x: 10., y: 0. },
 /// ]);
 ///
 /// line_string.coords().for_each(|coord| println!("{:?}", coord));
@@ -98,11 +98,11 @@ use std::ops::{Index, IndexMut};
 /// Note that its [`IntoIterator`] impl yields [`Coordinate`]s when looping:
 ///
 /// ```
-/// use geo_types::{Coordinate, LineString};
+/// use geo_types::{coord, LineString};
 ///
 /// let line_string = LineString(vec![
-///     Coordinate { x: 0., y: 0. },
-///     Coordinate { x: 10., y: 0. },
+///     coord! { x: 0., y: 0. },
+///     coord! { x: 10., y: 0. },
 /// ]);
 ///
 /// for coord in &line_string {
@@ -118,11 +118,11 @@ use std::ops::{Index, IndexMut};
 ///
 /// You can decompose a [`LineString`] into a [`Vec`] of [`Coordinate`]s or [`Point`]s:
 /// ```
-/// use geo_types::{Coordinate, LineString, Point};
+/// use geo_types::{coord, LineString, Point};
 ///
 /// let line_string = LineString(vec![
-///     Coordinate { x: 0., y: 0. },
-///     Coordinate { x: 10., y: 0. },
+///     coord! { x: 0., y: 0. },
+///     coord! { x: 10., y: 0. },
 /// ]);
 ///
 /// let coordinate_vec = line_string.clone().into_inner();
@@ -144,6 +144,16 @@ impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next().map(|c| Point(*c))
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+}
+
+impl<'a, T: CoordNum> ExactSizeIterator for PointsIter<'a, T> {
+    fn len(&self) -> usize {
+        self.0.len()
+    }
 }
 
 impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
@@ -161,6 +171,10 @@ impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
     }
 }
 
@@ -214,7 +228,7 @@ impl<T: CoordNum> LineString<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, Line, LineString};
+    /// use geo_types::{coord, Line, LineString};
     ///
     /// let mut coords = vec![(0., 0.), (5., 0.), (7., 9.)];
     /// let line_string: LineString<f32> = coords.into_iter().collect();
@@ -222,15 +236,15 @@ impl<T: CoordNum> LineString<T> {
     /// let mut lines = line_string.lines();
     /// assert_eq!(
     ///     Some(Line::new(
-    ///         Coordinate { x: 0., y: 0. },
-    ///         Coordinate { x: 5., y: 0. }
+    ///         coord! { x: 0., y: 0. },
+    ///         coord! { x: 5., y: 0. }
     ///     )),
     ///     lines.next()
     /// );
     /// assert_eq!(
     ///     Some(Line::new(
-    ///         Coordinate { x: 5., y: 0. },
-    ///         Coordinate { x: 7., y: 9. }
+    ///         coord! { x: 5., y: 0. },
+    ///         coord! { x: 7., y: 9. }
     ///     )),
     ///     lines.next()
     /// );
@@ -509,8 +523,22 @@ impl_rstar_line_string!(rstar_0_9);
 #[cfg(test)]
 mod test {
     use super::*;
-
+    use crate::coord;
     use approx::AbsDiffEq;
+
+    #[test]
+    fn test_exact_size() {
+        // see https://github.com/georust/geo/issues/762
+        let ls = LineString(vec![coord! { x: 0., y: 0. }, coord! { x: 10., y: 0. }]);
+
+        // reference to force the `impl IntoIterator for &LineString` impl, giving a `CoordinatesIter`
+        for c in (&ls).into_iter().rev().skip(1).rev() {
+            println!("{:?}", c);
+        }
+        for p in (&ls).points().rev().skip(1).rev() {
+            println!("{:?}", p);
+        }
+    }
 
     #[test]
     fn test_abs_diff_eq() {
@@ -570,15 +598,15 @@ mod test {
 
     #[test]
     fn should_be_built_from_line() {
-        let start = Coordinate { x: 0, y: 0 };
-        let end = Coordinate { x: 10, y: 10 };
+        let start = coord! { x: 0, y: 0 };
+        let end = coord! { x: 10, y: 10 };
         let line = Line::new(start, end);
         let expected = LineString(vec![start, end]);
 
         assert_eq!(expected, LineString::from(line));
 
-        let start = Coordinate { x: 10., y: 0.5 };
-        let end = Coordinate { x: 10000., y: 10.4 };
+        let start = coord! { x: 10., y: 0.5 };
+        let end = coord! { x: 10000., y: 10.4 };
         let line = Line::new(start, end);
         let expected = LineString(vec![start, end]);
 

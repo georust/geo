@@ -10,6 +10,10 @@
   * <https://github.com/georust/geo/pull/752>
 * Internal cleanup: Explicitly declare `use-rstar_0_8` and `use-rstar_0_9` features to be explicit which rstar version is being used. For backward compatibility, the `use-rstar` feature will still enable `use-rstar_0_8`.
   * <https://github.com/georust/geo/pull/759>
+* Add missing size_hint() method for point and coordinate iterators on LineString
+  * <https://github.com/georust/geo/issues/762>
+* Add ExactsizeIterator impl for Points iterator on LineString
+  * <https://github.com/georust/geo/pull/767>
 
 ## 0.7.3
 

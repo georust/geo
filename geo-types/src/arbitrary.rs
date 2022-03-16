@@ -8,7 +8,7 @@ impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for 
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         let x = u.arbitrary::<T>()?;
         let y = u.arbitrary::<T>()?;
-        Ok(Coordinate { x, y })
+        Ok(coord! { x: x, y: y })
     }
 }
 

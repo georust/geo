@@ -246,22 +246,23 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::geo_types::coord;
     use crate::{line_string, polygon};
 
     #[test]
     fn rdp_test() {
         let vec = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 5.0, y: 4.0 },
-            Coordinate { x: 11.0, y: 5.5 },
-            Coordinate { x: 17.3, y: 3.2 },
-            Coordinate { x: 27.8, y: 0.1 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 5.0, y: 4.0 },
+            coord! { x: 11.0, y: 5.5 },
+            coord! { x: 17.3, y: 3.2 },
+            coord! { x: 27.8, y: 0.1 },
         ];
         let compare = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 5.0, y: 4.0 },
-            Coordinate { x: 11.0, y: 5.5 },
-            Coordinate { x: 27.8, y: 0.1 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 5.0, y: 4.0 },
+            coord! { x: 11.0, y: 5.5 },
+            coord! { x: 27.8, y: 0.1 },
         ];
         let simplified = rdp(vec.into_iter(), &1.0);
         assert_eq!(simplified, compare);
@@ -275,14 +276,8 @@ mod test {
     }
     #[test]
     fn rdp_test_two_point_linestring() {
-        let vec = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 27.8, y: 0.1 },
-        ];
-        let compare = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 27.8, y: 0.1 },
-        ];
+        let vec = vec![coord! { x: 0.0, y: 0.0 }, coord! { x: 27.8, y: 0.1 }];
+        let compare = vec![coord! { x: 0.0, y: 0.0 }, coord! { x: 27.8, y: 0.1 }];
         let simplified = rdp(vec.into_iter(), &1.0);
         assert_eq!(simplified, compare);
     }

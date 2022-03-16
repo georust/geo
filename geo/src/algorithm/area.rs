@@ -264,7 +264,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::algorithm::area::Area;
-    use crate::{line_string, polygon, Coordinate, Line, MultiPolygon, Polygon, Rect, Triangle};
+    use crate::{coord, line_string, polygon, Line, MultiPolygon, Polygon, Rect, Triangle};
 
     // Area of the polygon
     #[test]
@@ -300,7 +300,7 @@ mod test {
                 (0..NUM_VERTICES)
                     .map(|i| {
                         let angle = i as f64 * ANGLE_INC;
-                        Coordinate {
+                        coord! {
                             x: angle.cos(),
                             y: angle.sin(),
                         }
@@ -326,11 +326,10 @@ mod test {
     }
     #[test]
     fn rectangle_test() {
-        let rect1: Rect<f32> =
-            Rect::new(Coordinate { x: 10., y: 30. }, Coordinate { x: 20., y: 40. });
+        let rect1: Rect<f32> = Rect::new(coord! { x: 10., y: 30. }, coord! { x: 20., y: 40. });
         assert_relative_eq!(rect1.signed_area(), 100.);
 
-        let rect2: Rect<i32> = Rect::new(Coordinate { x: 10, y: 30 }, Coordinate { x: 20, y: 40 });
+        let rect2: Rect<i32> = Rect::new(coord! { x: 10, y: 30 }, coord! { x: 20, y: 40 });
         assert_eq!(rect2.signed_area(), 100);
     }
     #[test]
@@ -391,23 +390,23 @@ mod test {
     }
     #[test]
     fn area_line_test() {
-        let line1 = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 1.0, y: 1.0 });
+        let line1 = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
         assert_relative_eq!(line1.signed_area(), 0.);
     }
 
     #[test]
     fn area_triangle_test() {
         let triangle = Triangle(
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 1.0, y: 0.0 },
-            Coordinate { x: 0.0, y: 1.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: 0.0, y: 1.0 },
         );
         assert_relative_eq!(triangle.signed_area(), 0.5);
 
         let triangle = Triangle(
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 0.0, y: 1.0 },
-            Coordinate { x: 1.0, y: 0.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: 1.0 },
+            coord! { x: 1.0, y: 0.0 },
         );
         assert_relative_eq!(triangle.signed_area(), -0.5);
     }
@@ -415,18 +414,18 @@ mod test {
     #[test]
     fn area_multi_polygon_area_reversed() {
         let polygon_cw: Polygon<f32> = polygon![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 0.0, y: 1.0 },
-            Coordinate { x: 1.0, y: 1.0 },
-            Coordinate { x: 1.0, y: 0.0 },
-            Coordinate { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: 1.0 },
+            coord! { x: 1.0, y: 1.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: 0.0, y: 0.0 },
         ];
         let polygon_ccw: Polygon<f32> = polygon![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 1.0, y: 0.0 },
-            Coordinate { x: 1.0, y: 1.0 },
-            Coordinate { x: 0.0, y: 1.0 },
-            Coordinate { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: 1.0, y: 1.0 },
+            coord! { x: 0.0, y: 1.0 },
+            coord! { x: 0.0, y: 0.0 },
         ];
         let polygon_area = polygon_cw.unsigned_area();
 

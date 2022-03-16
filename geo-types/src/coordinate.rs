@@ -1,4 +1,4 @@
-use crate::{CoordNum, Point};
+use crate::{coord, CoordNum, Point};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq, UlpsEq};
@@ -32,7 +32,7 @@ pub struct Coordinate<T: CoordNum> {
 
 impl<T: CoordNum> From<(T, T)> for Coordinate<T> {
     fn from(coords: (T, T)) -> Self {
-        Coordinate {
+        coord! {
             x: coords.0,
             y: coords.1,
         }
@@ -41,7 +41,7 @@ impl<T: CoordNum> From<(T, T)> for Coordinate<T> {
 
 impl<T: CoordNum> From<[T; 2]> for Coordinate<T> {
     fn from(coords: [T; 2]) -> Self {
-        Coordinate {
+        coord! {
             x: coords[0],
             y: coords[1],
         }
@@ -50,7 +50,7 @@ impl<T: CoordNum> From<[T; 2]> for Coordinate<T> {
 
 impl<T: CoordNum> From<Point<T>> for Coordinate<T> {
     fn from(point: Point<T>) -> Self {
-        Coordinate {
+        coord! {
             x: point.x(),
             y: point.y(),
         }
@@ -75,9 +75,9 @@ impl<T: CoordNum> Coordinate<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo_types::Coordinate;
+    /// use geo_types::coord;
     ///
-    /// let c = Coordinate {
+    /// let c = coord! {
     ///     x: 40.02f64,
     ///     y: 116.34,
     /// };
@@ -219,7 +219,7 @@ use num_traits::Zero;
 /// ```
 impl<T: CoordNum> Coordinate<T> {
     pub fn zero() -> Self {
-        Coordinate {
+        coord! {
             x: T::zero(),
             y: T::zero(),
         }
@@ -295,7 +295,7 @@ where
     const DIMENSIONS: usize = 2;
 
     fn generate(generator: impl Fn(usize) -> Self::Scalar) -> Self {
-        Coordinate {
+        coord! {
             x: generator(0),
             y: generator(1),
         }
@@ -328,7 +328,7 @@ where
     const DIMENSIONS: usize = 2;
 
     fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
-        Coordinate {
+        coord! {
             x: generator(0),
             y: generator(1),
         }

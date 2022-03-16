@@ -11,9 +11,9 @@
 /// ```
 /// use geo_types::point;
 ///
-/// let p = point!(x: 181.2, y: 51.79);
+/// let p = point! { x: 181.2, y: 51.79 };
 ///
-/// assert_eq!(p, geo_types::Point(geo_types::Coordinate {
+/// assert_eq!(p, geo_types::Point(geo_types::coord! {
 ///     x: 181.2,
 ///     y: 51.79,
 /// }));
@@ -22,15 +22,15 @@
 /// [`Point`]: ./struct.Point.html
 #[macro_export]
 macro_rules! point {
-    (x: $x:expr, y: $y:expr $(,)?) => {
-        $crate::Point::new($x, $y)
+    ( $($tag:tt : $val:expr),* $(,)? ) => {
+        $crate::Point ( $crate::coord! { $( $tag: $val , )* } )
     };
 }
 
 /// Creates a [`Coordinate`] from the given scalars.
 ///
 /// ```txt
-/// coord!(x: <number>, y: <number>)
+/// coord! { x: <number>, y: <number> }
 /// ```
 ///
 /// # Examples
@@ -40,9 +40,9 @@ macro_rules! point {
 /// ```
 /// use geo_types::coord;
 ///
-/// let c = coord!(x: 181.2, y: 51.79);
+/// let c = coord! { x: 181.2, y: 51.79 };
 ///
-/// assert_eq!(c, geo_types::Coordinate { x: 181.2, y: 51.79 });
+/// assert_eq!(c, geo_types::coord! { x: 181.2, y: 51.79 });
 /// ```
 ///
 /// [`Coordinate`]: ./struct.Point.html
@@ -73,7 +73,7 @@ macro_rules! coord {
 ///     (x: -21.951445, y: 64.145508),
 /// ];
 ///
-/// assert_eq!(ls[1], geo_types::Coordinate {
+/// assert_eq!(ls[1], geo_types::coord! {
 ///     x: -21.951,
 ///     y: 64.14479
 /// });
@@ -84,19 +84,19 @@ macro_rules! coord {
 /// ```
 /// use geo_types::line_string;
 ///
-/// let coord1 = geo_types::Coordinate {
+/// let coord1 = geo_types::coord! {
 ///     x: -21.95156,
 ///     y: 64.1446,
 /// };
-/// let coord2 = geo_types::Coordinate {
+/// let coord2 = geo_types::coord! {
 ///     x: -21.951,
 ///     y: 64.14479,
 /// };
-/// let coord3 = geo_types::Coordinate {
+/// let coord3 = geo_types::coord! {
 ///     x: -21.95044,
 ///     y: 64.14527,
 /// };
-/// let coord4 = geo_types::Coordinate {
+/// let coord4 = geo_types::coord! {
 ///     x: -21.951445,
 ///     y: 64.145508,
 /// };
@@ -105,7 +105,7 @@ macro_rules! coord {
 ///
 /// assert_eq!(
 ///     ls[1],
-///     geo_types::Coordinate {
+///     geo_types::coord! {
 ///         x: -21.951,
 ///         y: 64.14479
 ///     }
@@ -123,7 +123,7 @@ macro_rules! line_string {
     ) => {
         line_string![
             $(
-                $crate::Coordinate { x: $x, y: $y },
+                $crate::coord! { x: $x, y: $y },
             )*
         ]
     };
@@ -173,7 +173,7 @@ macro_rules! line_string {
 ///
 /// assert_eq!(
 ///     poly.exterior()[1],
-///     geo_types::Coordinate { x: -111., y: 41. },
+///     geo_types::coord! { x: -111., y: 41. },
 /// );
 /// ```
 ///
@@ -201,7 +201,7 @@ macro_rules! line_string {
 ///
 /// assert_eq!(
 ///     poly.exterior()[1],
-///     geo_types::Coordinate { x: -111., y: 41. },
+///     geo_types::coord! { x: -111., y: 41. },
 /// );
 /// ```
 ///
@@ -227,12 +227,12 @@ macro_rules! polygon {
         polygon!(
             exterior: [
                 $(
-                    $crate::Coordinate { x: $exterior_x, y: $exterior_y },
+                    $crate::coord! { x: $exterior_x, y: $exterior_y },
                 )*
             ],
             interiors: [
                 $([
-                    $($crate::Coordinate { x: $interior_x, y: $interior_y }),*
+                    $($crate::coord! { x: $interior_x, y: $interior_y }),*
                 ]),*
             ],
         )
@@ -271,7 +271,7 @@ macro_rules! polygon {
         $(,)?
     ) => {
         polygon![
-            $($crate::Coordinate { x: $x, y: $y }),*
+            $($crate::coord! { x: $x, y: $y }),*
         ]
     };
     (

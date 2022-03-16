@@ -29,12 +29,12 @@ impl<T: CoordNum> Triangle<T> {
     /// # Examples
     ///
     /// ```rust
-    /// use geo_types::{Coordinate, Triangle, polygon};
+    /// use geo_types::{coord, Triangle, polygon};
     ///
     /// let triangle = Triangle(
-    ///     Coordinate { x: 0., y: 0. },
-    ///     Coordinate { x: 10., y: 20. },
-    ///     Coordinate { x: 20., y: -10. },
+    ///     coord! { x: 0., y: 0. },
+    ///     coord! { x: 10., y: 20. },
+    ///     coord! { x: 20., y: -10. },
     /// );
     ///
     /// assert_eq!(

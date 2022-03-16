@@ -17,7 +17,7 @@ pub trait LinesIter<'a> {
     /// ```
     /// use geo::line_string;
     /// use geo::lines_iter::LinesIter;
-    /// use geo::{Coordinate, Line};
+    /// use geo::{coord, Line};
     ///
     /// let ls = line_string![
     ///     (x: 1., y: 2.),
@@ -28,15 +28,15 @@ pub trait LinesIter<'a> {
     /// let mut iter = ls.lines_iter();
     /// assert_eq!(
     ///     Some(Line::new(
-    ///         Coordinate { x: 1., y: 2. },
-    ///         Coordinate { x: 23., y: 82. }
+    ///         coord! { x: 1., y: 2. },
+    ///         coord! { x: 23., y: 82. }
     ///     )),
     ///     iter.next()
     /// );
     /// assert_eq!(
     ///     Some(Line::new(
-    ///         Coordinate { x: 23., y: 82. },
-    ///         Coordinate { x: -1., y: 0. }
+    ///         coord! { x: 23., y: 82. },
+    ///         coord! { x: -1., y: 0. }
     ///     )),
     ///     iter.next()
     /// );
@@ -165,17 +165,14 @@ mod test {
 
     use super::LinesIter;
     use crate::{
-        line_string, polygon, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Rect,
+        coord, line_string, polygon, Line, LineString, MultiLineString, MultiPolygon, Rect,
         Triangle,
     };
 
     #[test]
     fn test_line() {
-        let line = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 5., y: 10. });
-        let want = vec![Line::new(
-            Coordinate { x: 0., y: 0. },
-            Coordinate { x: 5., y: 10. },
-        )];
+        let line = Line::new(coord! { x: 0., y: 0. }, coord! { x: 5., y: 10. });
+        let want = vec![Line::new(coord! { x: 0., y: 0. }, coord! { x: 5., y: 10. })];
         assert_eq!(want, line.lines_iter().collect::<Vec<_>>());
     }
 
@@ -189,8 +186,8 @@ mod test {
     fn test_open_line_string() {
         let ls = line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x:2., y: 2.)];
         let want = vec![
-            Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. }),
-            Line::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 2., y: 2. }),
+            Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. }),
+            Line::new(coord! { x: 1., y: 1. }, coord! { x: 2., y: 2. }),
         ];
         assert_eq!(want, ls.lines_iter().collect::<Vec<_>>());
     }
@@ -200,9 +197,9 @@ mod test {
         let mut ls = line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x:2., y: 2.)];
         ls.close();
         let want = vec![
-            Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. }),
-            Line::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 2., y: 2. }),
-            Line::new(Coordinate { x: 2., y: 2. }, Coordinate { x: 0., y: 0. }),
+            Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. }),
+            Line::new(coord! { x: 1., y: 1. }, coord! { x: 2., y: 2. }),
+            Line::new(coord! { x: 2., y: 2. }, coord! { x: 0., y: 0. }),
         ];
         assert_eq!(want, ls.lines_iter().collect::<Vec<_>>());
     }
@@ -215,9 +212,9 @@ mod test {
             line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x:2., y: 2.)],
         ]);
         let want = vec![
-            Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. }),
-            Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. }),
-            Line::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 2., y: 2. }),
+            Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. }),
+            Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. }),
+            Line::new(coord! { x: 1., y: 1. }, coord! { x: 2., y: 2. }),
         ];
         assert_eq!(want, mls.lines_iter().collect::<Vec<_>>());
     }
@@ -233,20 +230,20 @@ mod test {
         );
         let want = vec![
             // exterior ring
-            Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 0., y: 10. }),
-            Line::new(Coordinate { x: 0., y: 10. }, Coordinate { x: 10., y: 10. }),
-            Line::new(Coordinate { x: 10., y: 10. }, Coordinate { x: 10., y: 0. }),
-            Line::new(Coordinate { x: 10., y: 0. }, Coordinate { x: 0., y: 0. }),
+            Line::new(coord! { x: 0., y: 0. }, coord! { x: 0., y: 10. }),
+            Line::new(coord! { x: 0., y: 10. }, coord! { x: 10., y: 10. }),
+            Line::new(coord! { x: 10., y: 10. }, coord! { x: 10., y: 0. }),
+            Line::new(coord! { x: 10., y: 0. }, coord! { x: 0., y: 0. }),
             // first interior ring
-            Line::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 1., y: 2. }),
-            Line::new(Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 2. }),
-            Line::new(Coordinate { x: 2., y: 2. }, Coordinate { x: 2., y: 1. }),
-            Line::new(Coordinate { x: 2., y: 1. }, Coordinate { x: 1., y: 1. }),
+            Line::new(coord! { x: 1., y: 1. }, coord! { x: 1., y: 2. }),
+            Line::new(coord! { x: 1., y: 2. }, coord! { x: 2., y: 2. }),
+            Line::new(coord! { x: 2., y: 2. }, coord! { x: 2., y: 1. }),
+            Line::new(coord! { x: 2., y: 1. }, coord! { x: 1., y: 1. }),
             // second interior ring
-            Line::new(Coordinate { x: 3., y: 3. }, Coordinate { x: 5., y: 3. }),
-            Line::new(Coordinate { x: 5., y: 3. }, Coordinate { x: 5., y: 5. }),
-            Line::new(Coordinate { x: 5., y: 5. }, Coordinate { x: 3., y: 5. }),
-            Line::new(Coordinate { x: 3., y: 5. }, Coordinate { x: 3., y: 3. }),
+            Line::new(coord! { x: 3., y: 3. }, coord! { x: 5., y: 3. }),
+            Line::new(coord! { x: 5., y: 3. }, coord! { x: 5., y: 5. }),
+            Line::new(coord! { x: 5., y: 5. }, coord! { x: 3., y: 5. }),
+            Line::new(coord! { x: 3., y: 5. }, coord! { x: 3., y: 3. }),
         ];
         assert_eq!(want, p.lines_iter().collect::<Vec<_>>());
     }
@@ -265,27 +262,27 @@ mod test {
         ]);
         let want = vec![
             // first polygon - exterior ring
-            Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 0., y: 10. }),
-            Line::new(Coordinate { x: 0., y: 10. }, Coordinate { x: 10., y: 10. }),
-            Line::new(Coordinate { x: 10., y: 10. }, Coordinate { x: 10., y: 0. }),
-            Line::new(Coordinate { x: 10., y: 0. }, Coordinate { x: 0., y: 0. }),
+            Line::new(coord! { x: 0., y: 0. }, coord! { x: 0., y: 10. }),
+            Line::new(coord! { x: 0., y: 10. }, coord! { x: 10., y: 10. }),
+            Line::new(coord! { x: 10., y: 10. }, coord! { x: 10., y: 0. }),
+            Line::new(coord! { x: 10., y: 0. }, coord! { x: 0., y: 0. }),
             // first polygon - interior ring
-            Line::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 1., y: 2. }),
-            Line::new(Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 2. }),
-            Line::new(Coordinate { x: 2., y: 2. }, Coordinate { x: 2., y: 1. }),
-            Line::new(Coordinate { x: 2., y: 1. }, Coordinate { x: 1., y: 1. }),
+            Line::new(coord! { x: 1., y: 1. }, coord! { x: 1., y: 2. }),
+            Line::new(coord! { x: 1., y: 2. }, coord! { x: 2., y: 2. }),
+            Line::new(coord! { x: 2., y: 2. }, coord! { x: 2., y: 1. }),
+            Line::new(coord! { x: 2., y: 1. }, coord! { x: 1., y: 1. }),
             // second polygon - exterior ring
-            Line::new(Coordinate { x: 3., y: 3. }, Coordinate { x: 5., y: 3. }),
-            Line::new(Coordinate { x: 5., y: 3. }, Coordinate { x: 5., y: 5. }),
-            Line::new(Coordinate { x: 5., y: 5. }, Coordinate { x: 3., y: 5. }),
-            Line::new(Coordinate { x: 3., y: 5. }, Coordinate { x: 3., y: 3. }),
+            Line::new(coord! { x: 3., y: 3. }, coord! { x: 5., y: 3. }),
+            Line::new(coord! { x: 5., y: 3. }, coord! { x: 5., y: 5. }),
+            Line::new(coord! { x: 5., y: 5. }, coord! { x: 3., y: 5. }),
+            Line::new(coord! { x: 3., y: 5. }, coord! { x: 3., y: 3. }),
         ];
         assert_eq!(want, mp.lines_iter().collect::<Vec<_>>());
     }
 
     #[test]
     fn test_rect() {
-        let rect = Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 2. });
+        let rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 2. });
         let want = rect.to_polygon().lines_iter().collect::<Vec<_>>();
         assert_eq!(want, rect.lines_iter().collect::<Vec<_>>());
     }
@@ -293,9 +290,9 @@ mod test {
     #[test]
     fn test_triangle() {
         let triangle = Triangle(
-            Coordinate { x: 0., y: 0. },
-            Coordinate { x: 1., y: 2. },
-            Coordinate { x: 2., y: 3. },
+            coord! { x: 0., y: 0. },
+            coord! { x: 1., y: 2. },
+            coord! { x: 2., y: 3. },
         );
         let want = triangle.to_polygon().lines_iter().collect::<Vec<_>>();
         assert_eq!(want, triangle.lines_iter().collect::<Vec<_>>());

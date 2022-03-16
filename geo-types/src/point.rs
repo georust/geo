@@ -1,4 +1,4 @@
-use crate::{CoordFloat, CoordNum, Coordinate};
+use crate::{point, CoordFloat, CoordNum, Coordinate};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -21,9 +21,9 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 /// # Examples
 ///
 /// ```
-/// use geo_types::{Coordinate, Point};
+/// use geo_types::{coord, Point};
 /// let p1: Point<f64> = (0., 1.).into();
-/// let c = Coordinate { x: 10., y: 20. };
+/// let c = coord! { x: 10., y: 20. };
 /// let p2: Point<f64> = c.into();
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
@@ -74,7 +74,7 @@ impl<T: CoordNum> Point<T> {
     /// assert_eq!(p.y(), 2.345);
     /// ```
     pub fn new(x: T, y: T) -> Point<T> {
-        Point(Coordinate { x, y })
+        point! { x: x, y: y }
     }
 
     /// Returns the x/horizontal component of the point.
@@ -232,10 +232,10 @@ impl<T: CoordNum> Point<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, Point};
+    /// use geo_types::{point, Point};
     ///
-    /// let point = Point(Coordinate { x: 1.5, y: 0.5 });
-    /// let dot = point.dot(Point(Coordinate { x: 2.0, y: 4.5 }));
+    /// let point = point! { x: 1.5, y: 0.5 };
+    /// let dot = point.dot(point! { x: 2.0, y: 4.5 });
     ///
     /// assert_eq!(dot, 5.25);
     /// ```
@@ -250,11 +250,11 @@ impl<T: CoordNum> Point<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, Point};
+    /// use geo_types::point;
     ///
-    /// let point_a = Point(Coordinate { x: 1., y: 2. });
-    /// let point_b = Point(Coordinate { x: 3., y: 5. });
-    /// let point_c = Point(Coordinate { x: 7., y: 12. });
+    /// let point_a = point! { x: 1., y: 2. };
+    /// let point_b = point! { x: 3., y: 5. };
+    /// let point_c = point! { x: 7., y: 12. };
     ///
     /// let cross = point_a.cross_prod(point_b, point_c);
     ///

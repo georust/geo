@@ -466,16 +466,16 @@ impl<T: GeoFloat> WeightedCentroid<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{line_string, point, polygon};
+    use crate::{coord, line_string, point, polygon};
 
     /// small helper to create a coordinate
     fn c<T: GeoFloat>(x: T, y: T) -> Coordinate<T> {
-        Coordinate { x, y }
+        coord! { x: x, y: y }
     }
 
     /// small helper to create a point
     fn p<T: GeoFloat>(x: T, y: T) -> Point<T> {
-        Point(c(x, y))
+        point! { x: x, y: y }
     }
 
     // Tests: Centroid of LineString
@@ -487,7 +487,7 @@ mod test {
     }
     #[test]
     fn linestring_one_point_test() {
-        let coord = Coordinate {
+        let coord = coord! {
             x: 40.02f64,
             y: 116.34,
         };
@@ -531,7 +531,7 @@ mod test {
     }
     #[test]
     fn multilinestring_length_0_test() {
-        let coord = Coordinate {
+        let coord = coord! {
             x: 40.02f64,
             y: 116.34,
         };
@@ -553,7 +553,7 @@ mod test {
             (x: 11., y: 1.)
         ];
         let mls: MultiLineString<f64> = MultiLineString(vec![linestring]);
-        assert_relative_eq!(mls.centroid().unwrap(), Point(Coordinate { x: 6., y: 1. }));
+        assert_relative_eq!(mls.centroid().unwrap(), point! { x: 6., y: 1. });
     }
     #[test]
     fn multilinestring_test() {
@@ -592,7 +592,7 @@ mod test {
                 (0..NUM_VERTICES)
                     .map(|i| {
                         let angle = i as f64 * ANGLE_INC;
-                        Coordinate {
+                        coord! {
                             x: angle.cos(),
                             y: angle.sin(),
                         }
@@ -786,7 +786,7 @@ mod test {
     }
     #[test]
     fn bounding_rect_test() {
-        let bounding_rect = Rect::new(Coordinate { x: 0., y: 50. }, Coordinate { x: 4., y: 100. });
+        let bounding_rect = Rect::new(coord! { x: 0., y: 50. }, coord! { x: 4., y: 100. });
         let point = point![x: 2., y: 75.];
         assert_eq!(point, bounding_rect.centroid());
     }
