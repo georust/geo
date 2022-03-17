@@ -31,19 +31,19 @@ pub struct MultiPolygon<T: CoordNum>(pub Vec<Polygon<T>>);
 
 impl<T: CoordNum, IP: Into<Polygon<T>>> From<IP> for MultiPolygon<T> {
     fn from(x: IP) -> Self {
-        MultiPolygon(vec![x.into()])
+        Self(vec![x.into()])
     }
 }
 
 impl<T: CoordNum, IP: Into<Polygon<T>>> From<Vec<IP>> for MultiPolygon<T> {
     fn from(x: Vec<IP>) -> Self {
-        MultiPolygon(x.into_iter().map(|p| p.into()).collect())
+        Self(x.into_iter().map(|p| p.into()).collect())
     }
 }
 
 impl<T: CoordNum, IP: Into<Polygon<T>>> FromIterator<IP> for MultiPolygon<T> {
     fn from_iter<I: IntoIterator<Item = IP>>(iter: I) -> Self {
-        MultiPolygon(iter.into_iter().map(|p| p.into()).collect())
+        Self(iter.into_iter().map(|p| p.into()).collect())
     }
 }
 

@@ -40,49 +40,49 @@ pub enum Geometry<T: CoordNum> {
 }
 
 impl<T: CoordNum> From<Point<T>> for Geometry<T> {
-    fn from(x: Point<T>) -> Geometry<T> {
+    fn from(x: Point<T>) -> Self {
         Geometry::Point(x)
     }
 }
 impl<T: CoordNum> From<Line<T>> for Geometry<T> {
-    fn from(x: Line<T>) -> Geometry<T> {
+    fn from(x: Line<T>) -> Self {
         Geometry::Line(x)
     }
 }
 impl<T: CoordNum> From<LineString<T>> for Geometry<T> {
-    fn from(x: LineString<T>) -> Geometry<T> {
+    fn from(x: LineString<T>) -> Self {
         Geometry::LineString(x)
     }
 }
 impl<T: CoordNum> From<Polygon<T>> for Geometry<T> {
-    fn from(x: Polygon<T>) -> Geometry<T> {
+    fn from(x: Polygon<T>) -> Self {
         Geometry::Polygon(x)
     }
 }
 impl<T: CoordNum> From<MultiPoint<T>> for Geometry<T> {
-    fn from(x: MultiPoint<T>) -> Geometry<T> {
+    fn from(x: MultiPoint<T>) -> Self {
         Geometry::MultiPoint(x)
     }
 }
 impl<T: CoordNum> From<MultiLineString<T>> for Geometry<T> {
-    fn from(x: MultiLineString<T>) -> Geometry<T> {
+    fn from(x: MultiLineString<T>) -> Self {
         Geometry::MultiLineString(x)
     }
 }
 impl<T: CoordNum> From<MultiPolygon<T>> for Geometry<T> {
-    fn from(x: MultiPolygon<T>) -> Geometry<T> {
+    fn from(x: MultiPolygon<T>) -> Self {
         Geometry::MultiPolygon(x)
     }
 }
 
 impl<T: CoordNum> From<Rect<T>> for Geometry<T> {
-    fn from(x: Rect<T>) -> Geometry<T> {
+    fn from(x: Rect<T>) -> Self {
         Geometry::Rect(x)
     }
 }
 
 impl<T: CoordNum> From<Triangle<T>> for Geometry<T> {
-    fn from(x: Triangle<T>) -> Geometry<T> {
+    fn from(x: Triangle<T>) -> Self {
         Geometry::Triangle(x)
     }
 }

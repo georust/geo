@@ -14,7 +14,7 @@ impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for 
 
 impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for Point<T> {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Coordinate<T>>().map(Point)
+        u.arbitrary::<Coordinate<T>>().map(Self)
     }
 }
 
@@ -26,7 +26,7 @@ impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for 
             return Err(arbitrary::Error::IncorrectFormat);
         }
 
-        Ok(LineString(coords))
+        Ok(Self(coords))
     }
 
     fn size_hint(_depth: usize) -> (usize, Option<usize>) {
@@ -45,19 +45,19 @@ impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for 
 
 impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for MultiPoint<T> {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Vec<Point<T>>>().map(MultiPoint)
+        u.arbitrary::<Vec<Point<T>>>().map(Self)
     }
 }
 
 impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for MultiLineString<T> {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Vec<LineString<T>>>().map(MultiLineString)
+        u.arbitrary::<Vec<LineString<T>>>().map(Self)
     }
 }
 
 impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for MultiPolygon<T> {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Vec<Polygon<T>>>().map(MultiPolygon)
+        u.arbitrary::<Vec<Polygon<T>>>().map(Self)
     }
 }
 
@@ -80,7 +80,7 @@ impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for 
 
 impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for Triangle<T> {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Triangle(
+        Ok(Self(
             u.arbitrary::<Coordinate<T>>()?,
             u.arbitrary::<Coordinate<T>>()?,
             u.arbitrary::<Coordinate<T>>()?,
