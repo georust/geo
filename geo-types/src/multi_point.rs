@@ -35,23 +35,23 @@ pub struct MultiPoint<T: CoordNum>(pub Vec<Point<T>>);
 impl<T: CoordNum, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
     /// Convert a single `Point` (or something which can be converted to a `Point`) into a
     /// one-member `MultiPoint`
-    fn from(x: IP) -> MultiPoint<T> {
-        MultiPoint(vec![x.into()])
+    fn from(x: IP) -> Self {
+        Self(vec![x.into()])
     }
 }
 
 impl<T: CoordNum, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
     /// Convert a `Vec` of `Points` (or `Vec` of things which can be converted to a `Point`) into a
     /// `MultiPoint`.
-    fn from(v: Vec<IP>) -> MultiPoint<T> {
-        MultiPoint(v.into_iter().map(|p| p.into()).collect())
+    fn from(v: Vec<IP>) -> Self {
+        Self(v.into_iter().map(|p| p.into()).collect())
     }
 }
 
 impl<T: CoordNum, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
     /// Collect the results of a `Point` iterator into a `MultiPoint`
     fn from_iter<I: IntoIterator<Item = IP>>(iter: I) -> Self {
-        MultiPoint(iter.into_iter().map(|p| p.into()).collect())
+        Self(iter.into_iter().map(|p| p.into()).collect())
     }
 }
 

@@ -77,13 +77,13 @@ pub struct GeometryCollection<T: CoordNum>(pub Vec<Geometry<T>>);
 // todo: consider adding Default as a CoordNum requirement
 impl<T: CoordNum> Default for GeometryCollection<T> {
     fn default() -> Self {
-        GeometryCollection(Vec::new())
+        Self(Vec::new())
     }
 }
 
 impl<T: CoordNum> GeometryCollection<T> {
     /// Return an empty GeometryCollection
-    pub fn new() -> GeometryCollection<T> {
+    pub fn new() -> Self {
         GeometryCollection::default()
     }
 
@@ -102,14 +102,14 @@ impl<T: CoordNum> GeometryCollection<T> {
 /// GeometryCollection
 impl<T: CoordNum, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
     fn from(x: IG) -> Self {
-        GeometryCollection(vec![x.into()])
+        Self(vec![x.into()])
     }
 }
 
 /// Collect Geometries (or what can be converted to a Geometry) into a GeometryCollection
 impl<T: CoordNum, IG: Into<Geometry<T>>> FromIterator<IG> for GeometryCollection<T> {
     fn from_iter<I: IntoIterator<Item = IG>>(iter: I) -> Self {
-        GeometryCollection(iter.into_iter().map(|g| g.into()).collect())
+        Self(iter.into_iter().map(|g| g.into()).collect())
     }
 }
 

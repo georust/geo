@@ -110,9 +110,9 @@ impl<T> Neg for Coordinate<T>
 where
     T: CoordNum + Neg<Output = T>,
 {
-    type Output = Coordinate<T>;
+    type Output = Self;
 
-    fn neg(self) -> Coordinate<T> {
+    fn neg(self) -> Self {
         (-self.x, -self.y).into()
     }
 }
@@ -132,9 +132,9 @@ where
 /// assert_eq!(sum.y, 5.0);
 /// ```
 impl<T: CoordNum> Add for Coordinate<T> {
-    type Output = Coordinate<T>;
+    type Output = Self;
 
-    fn add(self, rhs: Coordinate<T>) -> Coordinate<T> {
+    fn add(self, rhs: Self) -> Self {
         (self.x + rhs.x, self.y + rhs.y).into()
     }
 }
@@ -154,9 +154,9 @@ impl<T: CoordNum> Add for Coordinate<T> {
 /// assert_eq!(diff.y, 0.);
 /// ```
 impl<T: CoordNum> Sub for Coordinate<T> {
-    type Output = Coordinate<T>;
+    type Output = Self;
 
-    fn sub(self, rhs: Coordinate<T>) -> Coordinate<T> {
+    fn sub(self, rhs: Self) -> Self {
         (self.x - rhs.x, self.y - rhs.y).into()
     }
 }
@@ -175,9 +175,9 @@ impl<T: CoordNum> Sub for Coordinate<T> {
 /// assert_eq!(q.y, 10.0);
 /// ```
 impl<T: CoordNum> Mul<T> for Coordinate<T> {
-    type Output = Coordinate<T>;
+    type Output = Self;
 
-    fn mul(self, rhs: T) -> Coordinate<T> {
+    fn mul(self, rhs: T) -> Self {
         (self.x * rhs, self.y * rhs).into()
     }
 }
@@ -196,9 +196,9 @@ impl<T: CoordNum> Mul<T> for Coordinate<T> {
 /// assert_eq!(q.y, 2.5);
 /// ```
 impl<T: CoordNum> Div<T> for Coordinate<T> {
-    type Output = Coordinate<T>;
+    type Output = Self;
 
-    fn div(self, rhs: T) -> Coordinate<T> {
+    fn div(self, rhs: T) -> Self {
         (self.x / rhs, self.y / rhs).into()
     }
 }
