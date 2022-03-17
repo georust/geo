@@ -259,8 +259,7 @@ mod tests {
 
     #[test]
     fn empty_line_string_is_indeterminate() {
-        let empty: Vec<Coordinate<f32>> = Vec::new();
-        let ls = LineString::from(empty);
+        let ls: LineString<f32> = LineString(Vec::new());
         let p = Point::new(0.0, 0.0);
 
         let got = ls.closest_point(&p);

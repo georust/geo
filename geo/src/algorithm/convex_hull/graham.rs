@@ -80,7 +80,7 @@ where
     }
 
     // Close and output the line string
-    let mut output = LineString::from(output);
+    let mut output = LineString(output);
     output.close();
     output
 }

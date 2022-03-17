@@ -126,7 +126,7 @@ where
         ls.push(ls[0]);
     }
 
-    let mut ls = LineString::from(ls);
+    let mut ls = LineString(ls);
     ls.close();
 
     // Maintain the CCW invariance
