@@ -53,8 +53,8 @@ impl<T: CoordNum> Triangle<T> {
 }
 
 impl<IC: Into<Coordinate<T>> + Copy, T: CoordNum> From<[IC; 3]> for Triangle<T> {
-    fn from(array: [IC; 3]) -> Triangle<T> {
-        Triangle(array[0].into(), array[1].into(), array[2].into())
+    fn from(array: [IC; 3]) -> Self {
+        Self(array[0].into(), array[1].into(), array[2].into())
     }
 }
 

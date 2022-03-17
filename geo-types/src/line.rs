@@ -29,11 +29,11 @@ impl<T: CoordNum> Line<T> {
     /// assert_eq!(line.start, coord! { x: 0., y: 0. });
     /// assert_eq!(line.end, coord! { x: 1., y: 2. });
     /// ```
-    pub fn new<C>(start: C, end: C) -> Line<T>
+    pub fn new<C>(start: C, end: C) -> Self
     where
         C: Into<Coordinate<T>>,
     {
-        Line {
+        Self {
             start: start.into(),
             end: end.into(),
         }
@@ -156,7 +156,7 @@ impl<T: CoordNum> Line<T> {
 }
 
 impl<T: CoordNum> From<[(T, T); 2]> for Line<T> {
-    fn from(coord: [(T, T); 2]) -> Line<T> {
+    fn from(coord: [(T, T); 2]) -> Self {
         Line::new(coord[0], coord[1])
     }
 }

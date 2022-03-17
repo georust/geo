@@ -64,13 +64,13 @@ impl<T: CoordNum> MultiLineString<T> {
 
 impl<T: CoordNum, ILS: Into<LineString<T>>> From<ILS> for MultiLineString<T> {
     fn from(ls: ILS) -> Self {
-        MultiLineString(vec![ls.into()])
+        Self(vec![ls.into()])
     }
 }
 
 impl<T: CoordNum, ILS: Into<LineString<T>>> FromIterator<ILS> for MultiLineString<T> {
     fn from_iter<I: IntoIterator<Item = ILS>>(iter: I) -> Self {
-        MultiLineString(iter.into_iter().map(|ls| ls.into()).collect())
+        Self(iter.into_iter().map(|ls| ls.into()).collect())
     }
 }
 
