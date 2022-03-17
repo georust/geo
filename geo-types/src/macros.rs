@@ -122,12 +122,12 @@ macro_rules! coord {
 macro_rules! line_string {
     () => { $crate::LineString(vec![]) };
     (
-        $((x: $x:expr, y: $y:expr $(,)?)),*
+        $(( $($tag:tt : $val:expr),* $(,)? )),*
         $(,)?
     ) => {
         line_string![
             $(
-                $crate::coord! { x: $x, y: $y },
+                $crate::coord! { $( $tag: $val , )* },
             )*
         ]
     };
@@ -216,12 +216,12 @@ macro_rules! polygon {
     () => { $crate::Polygon::new(line_string![], vec![]) };
     (
         exterior: [
-            $((x: $exterior_x:expr, y: $exterior_y:expr $(,)?)),*
+            $(( $($exterior_tag:tt : $exterior_val:expr),* $(,)? )),*
             $(,)?
         ],
         interiors: [
             $([
-                $((x: $interior_x:expr, y: $interior_y:expr $(,)?)),*
+                $(( $($interior_tag:tt : $interior_val:expr),* $(,)? )),*
                 $(,)?
             ]),*
             $(,)?
@@ -231,12 +231,12 @@ macro_rules! polygon {
         polygon!(
             exterior: [
                 $(
-                    $crate::coord! { x: $exterior_x, y: $exterior_y },
+                    $crate::coord! { $( $exterior_tag: $exterior_val , )* },
                 )*
             ],
             interiors: [
                 $([
-                    $($crate::coord! { x: $interior_x, y: $interior_y }),*
+                    $($crate::coord! { $( $interior_tag: $interior_val , )* }),*
                 ]),*
             ],
         )
@@ -271,11 +271,11 @@ macro_rules! polygon {
         )
     };
     (
-        $((x: $x:expr, y: $y:expr $(,)?)),*
+        $(( $($tag:tt : $val:expr),* $(,)? )),*
         $(,)?
     ) => {
         polygon![
-            $($crate::coord! { x: $x, y: $y }),*
+            $($crate::coord! { $( $tag: $val , )* }),*
         ]
     };
     (
@@ -287,4 +287,83 @@ macro_rules! polygon {
             vec![],
         )
     };
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn test_point() {
+        let p = point!(x: 1.2, y: 3.4);
+        assert_eq!(p.x(), 1.2);
+        assert_eq!(p.y(), 3.4);
+
+        let p = point! {
+            x: 1.2,
+            y: 3.4,
+        };
+        assert_eq!(p.x(), 1.2);
+        assert_eq!(p.y(), 3.4);
+    }
+
+    #[test]
+    fn test_line() {
+        let ls = line_string![(x: -1.2f32, y: 3.4f32)];
+        assert_eq!(ls[0], coord! { x: -1.2, y: 3.4 });
+
+        let ls = line_string![
+            (x: -1.2f32, y: 3.4f32),
+        ];
+        assert_eq!(ls[0], coord! { x: -1.2, y: 3.4 });
+
+        let ls = line_string![(
+            x: -1.2f32,
+            y: 3.4f32,
+        )];
+        assert_eq!(ls[0], coord! { x: -1.2, y: 3.4 });
+
+        let ls = line_string![
+            (x: -1.2f32, y: 3.4f32),
+            (x: -5.6, y: 7.8),
+        ];
+        assert_eq!(ls[0], coord! { x: -1.2, y: 3.4 });
+        assert_eq!(ls[1], coord! { x: -5.6, y: 7.8 });
+    }
+
+    #[test]
+    fn test_polygon() {
+        let p = polygon!(
+            exterior: [(x: 1, y: 2)],
+            interiors: [[(x: 3, y: 4)]]
+        );
+        assert_eq!(p.exterior()[0], coord! { x: 1, y: 2 });
+        assert_eq!(p.interiors()[0][0], coord! { x: 3, y: 4 });
+
+        let p = polygon!(
+            exterior: [(x: 1, y: 2)],
+            interiors: [[(x: 3, y: 4)]],
+        );
+        assert_eq!(p.exterior()[0], coord! { x: 1, y: 2 });
+        assert_eq!(p.interiors()[0][0], coord! { x: 3, y: 4 });
+
+        let p = polygon!(
+            exterior: [(x: 1, y: 2, )],
+            interiors: [[(x: 3, y: 4, )]],
+        );
+        assert_eq!(p.exterior()[0], coord! { x: 1, y: 2 });
+        assert_eq!(p.interiors()[0][0], coord! { x: 3, y: 4 });
+
+        let p = polygon!(
+            exterior: [(x: 1, y: 2, ), ],
+            interiors: [[(x: 3, y: 4, ), ]],
+        );
+        assert_eq!(p.exterior()[0], coord! { x: 1, y: 2 });
+        assert_eq!(p.interiors()[0][0], coord! { x: 3, y: 4 });
+
+        let p = polygon!(
+            exterior: [(x: 1, y: 2, ), ],
+            interiors: [[(x: 3, y: 4, ), ], ],
+        );
+        assert_eq!(p.exterior()[0], coord! { x: 1, y: 2 });
+        assert_eq!(p.interiors()[0][0], coord! { x: 3, y: 4 });
+    }
 }

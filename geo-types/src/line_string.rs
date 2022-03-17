@@ -333,20 +333,20 @@ impl<T: CoordNum> LineString<T> {
 /// Turn a [`Vec`] of [`Point`]-like objects into a [`LineString`].
 impl<T: CoordNum, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T> {
     fn from(v: Vec<IC>) -> Self {
-        LineString(v.into_iter().map(|c| c.into()).collect())
+        Self(v.into_iter().map(|c| c.into()).collect())
     }
 }
 
 impl<T: CoordNum> From<Line<T>> for LineString<T> {
     fn from(line: Line<T>) -> Self {
-        LineString(vec![line.start, line.end])
+        Self(vec![line.start, line.end])
     }
 }
 
 /// Turn an iterator of [`Point`]-like objects into a [`LineString`].
 impl<T: CoordNum, IC: Into<Coordinate<T>>> FromIterator<IC> for LineString<T> {
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {
-        LineString(iter.into_iter().map(|c| c.into()).collect())
+        Self(iter.into_iter().map(|c| c.into()).collect())
     }
 }
 
@@ -473,6 +473,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
     }
 }
 
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
 macro_rules! impl_rstar_line_string {
     ($rstar:ident) => {
         impl<T> ::$rstar::RTreeObject for LineString<T>
@@ -513,8 +514,8 @@ macro_rules! impl_rstar_line_string {
     };
 }
 
-#[cfg(feature = "rstar")]
-impl_rstar_line_string!(rstar);
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_line_string!(rstar_0_8);
 
 #[cfg(feature = "rstar_0_9")]
 impl_rstar_line_string!(rstar_0_9);
