@@ -114,6 +114,7 @@ mod test {
         coord, line_string, polygon, Geometry, Line, LineString, MultiLineString, MultiPoint,
         MultiPolygon, Point, Polygon, Rect,
     };
+    use geo_types::Coordinate;
 
     /// Tests: intersection LineString and LineString
     #[test]
@@ -124,7 +125,8 @@ mod test {
     #[test]
     fn empty_linestring2_test() {
         let linestring = line_string![(x: 3., y: 2.), (x: 7., y: 6.)];
-        assert!(!linestring.intersects(&LineString(Vec::new())));
+        let empty: Vec<Coordinate<f64>> = Vec::new();
+        assert!(!linestring.intersects(&LineString::from(empty)));
     }
     #[test]
     fn empty_all_linestring_test() {

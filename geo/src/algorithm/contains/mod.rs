@@ -134,7 +134,8 @@ mod test {
     /// Tests: Point in LineString
     #[test]
     fn empty_linestring_test() {
-        let linestring = LineString(Vec::new());
+        let empty: Vec<Coordinate<f64>> = Vec::new();
+        let linestring = LineString::from(empty);
         assert!(!linestring.contains(&Point::new(2., 1.)));
     }
     #[test]
@@ -154,7 +155,8 @@ mod test {
     /// Tests: Point in Polygon
     #[test]
     fn empty_polygon_test() {
-        let linestring = LineString(Vec::new());
+        let empty: Vec<Coordinate<f64>> = Vec::new();
+        let linestring = LineString::from(empty);
         let poly = Polygon::new(linestring, Vec::new());
         assert!(!poly.contains(&Point::new(2., 1.)));
     }

@@ -111,6 +111,7 @@ mod test {
     use super::*;
     use crate::geo_types::coord;
     use crate::point;
+    use geo_types::Coordinate;
     use num_traits::Float;
 
     #[test]
@@ -212,25 +213,24 @@ mod test {
         assert_eq!(ring.line_locate_point(&pt), None);
 
         // point is equidistant to two line segments - return the fraction from the first closest
-        let line: LineString<f64> = LineString(vec![
+        let line: Vec<Coordinate<f64>> = vec![
             (0.0, 0.0).into(),
             (1.0, 0.0).into(),
             (1.0, 1.0).into(),
             (0.0, 1.0).into(),
-        ]);
+        ];
+        let line = LineString::from(line);
         let pt = point!(x: 0.0, y: 0.5);
         assert_eq!(line.line_locate_point(&pt), Some(0.0));
 
-        let line: LineString<f64> = LineString(vec![
-            (1.0, 1.0).into(),
-            (1.0, 1.0).into(),
-            (1.0, 1.0).into(),
-        ]);
+        let line: Vec<Coordinate<f64>> =
+            vec![(1.0, 1.0).into(), (1.0, 1.0).into(), (1.0, 1.0).into()];
+        let line = LineString::from(line);
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), Some(0.0));
 
         // line contains inf or nan
-        let line: LineString<f64> = LineString(vec![
+        let line = LineString::from(vec![
             coord! { x: 1.0, y: 1.0 },
             coord! {
                 x: Float::nan(),
@@ -241,7 +241,7 @@ mod test {
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), None);
 
-        let line: LineString<f64> = LineString(vec![
+        let line = LineString::from(vec![
             coord! { x: 1.0, y: 1.0 },
             coord! {
                 x: Float::infinity(),
@@ -251,7 +251,7 @@ mod test {
         ]);
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), None);
-        let line: LineString<f64> = LineString(vec![
+        let line = LineString::from(vec![
             coord! { x: 1.0, y: 1.0 },
             coord! {
                 x: Float::neg_infinity(),
