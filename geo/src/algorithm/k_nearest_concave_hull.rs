@@ -402,7 +402,7 @@ mod tests {
     #[test]
     fn empty_hull() {
         let actual: Polygon<f64> = concave_hull(vec![].iter(), 3);
-        let empty : Vec<Coordinate<f64>> = vec![];
+        let empty: Vec<Coordinate<f64>> = vec![];
         let expected = Polygon::new(LineString::from(empty), vec![]);
         assert_eq!(actual, expected);
     }

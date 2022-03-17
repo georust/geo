@@ -111,8 +111,8 @@ mod test {
     use super::*;
     use crate::geo_types::coord;
     use crate::point;
-    use num_traits::Float;
     use geo_types::Coordinate;
+    use num_traits::Float;
 
     #[test]
     fn test_line_locate_point_line() {
@@ -223,11 +223,8 @@ mod test {
         let pt = point!(x: 0.0, y: 0.5);
         assert_eq!(line.line_locate_point(&pt), Some(0.0));
 
-        let line: Vec<Coordinate<f64>> = vec![
-            (1.0, 1.0).into(),
-            (1.0, 1.0).into(),
-            (1.0, 1.0).into(),
-        ];
+        let line: Vec<Coordinate<f64>> =
+            vec![(1.0, 1.0).into(), (1.0, 1.0).into(), (1.0, 1.0).into()];
         let line = LineString::from(line);
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), Some(0.0));

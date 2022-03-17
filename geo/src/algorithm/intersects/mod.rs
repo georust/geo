@@ -109,12 +109,12 @@ where
 
 #[cfg(test)]
 mod test {
-    use geo_types::Coordinate;
     use crate::algorithm::intersects::Intersects;
     use crate::{
         coord, line_string, polygon, Geometry, Line, LineString, MultiLineString, MultiPoint,
         MultiPolygon, Point, Polygon, Rect,
     };
+    use geo_types::Coordinate;
 
     /// Tests: intersection LineString and LineString
     #[test]
