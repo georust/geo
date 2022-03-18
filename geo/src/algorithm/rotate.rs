@@ -358,14 +358,14 @@ mod test {
 
     #[test]
     fn test_rotate_multipoints() {
-        let multi_points = MultiPoint(vec![
+        let multi_points = MultiPoint::new(vec![
             point!(x: 0., y: 0.),
             point!(x: 1., y: 1.),
             point!(x: 2., y: 1.),
         ]);
 
         // Results match shapely for `centroid`
-        let expected_for_centroid = MultiPoint(vec![
+        let expected_for_centroid = MultiPoint::new(vec![
             point!(x: 0.7642977396044841, y: -0.5118446353109125),
             point!(x: 0.7642977396044842, y:  0.9023689270621824),
             point!(x: 1.471404520791032, y:  1.60947570824873),
@@ -376,7 +376,7 @@ mod test {
         );
 
         // Results match shapely for `center`
-        let expected_for_center = MultiPoint(vec![
+        let expected_for_center = MultiPoint::new(vec![
             point!(x: 0.6464466094067262, y: -0.5606601717798212),
             point!(x: 0.6464466094067263, y: 0.8535533905932737),
             point!(x: 1.353553390593274, y: 1.560660171779821),

@@ -122,7 +122,7 @@ mod test {
 
     #[test]
     fn empty() {
-        let multi_point: MultiPoint<f32> = MultiPoint(vec![]);
+        let multi_point: MultiPoint<f32> = MultiPoint::new(vec![]);
 
         let actual = multi_point.extremes();
 

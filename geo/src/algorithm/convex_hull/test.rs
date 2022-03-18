@@ -14,7 +14,7 @@ fn convex_hull_multipoint_test() {
         Point::new(-1, 1),
         Point::new(0, 10),
     ];
-    let mp = MultiPoint(v);
+    let mp = MultiPoint::new(v);
     let correct = vec![
         Coordinate::from((0, -10)),
         Coordinate::from((10, 0)),

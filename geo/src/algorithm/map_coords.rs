@@ -317,7 +317,7 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPoint<T> {
     type Output = MultiPoint<NT>;
 
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output {
-        MultiPoint(self.iter().map(|p| p.map_coords(func)).collect())
+        MultiPoint::new(self.iter().map(|p| p.map_coords(func)).collect())
     }
 }
 
@@ -328,7 +328,7 @@ impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for MultiPoint<T> {
         &self,
         func: impl Fn(&(T, T)) -> Result<(NT, NT), E> + Copy,
     ) -> Result<Self::Output, E> {
-        Ok(MultiPoint(
+        Ok(MultiPoint::new(
             self.0
                 .iter()
                 .map(|p| p.try_map_coords(func))
@@ -718,11 +718,11 @@ mod test {
     fn multipoint() {
         let p1 = Point::new(10., 10.);
         let p2 = Point::new(0., -100.);
-        let mp = MultiPoint(vec![p1, p2]);
+        let mp = MultiPoint::new(vec![p1, p2]);
 
         assert_eq!(
             mp.map_coords(|&(x, y)| (x + 10., y + 100.)),
-            MultiPoint(vec![Point::new(20., 110.), Point::new(10., 0.)])
+            MultiPoint::new(vec![Point::new(20., 110.), Point::new(10., 0.)])
         );
     }
 
