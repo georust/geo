@@ -76,7 +76,7 @@ where
     /// (return `None` when `from_postgis()` is called on them).
     fn from_postgis(mp: &'a T) -> Self {
         let ret = mp.polygons().filter_map(Option::from_postgis).collect();
-        MultiPolygon(ret)
+        MultiPolygon::new(ret)
     }
 }
 impl<'a, T> FromPostgis<&'a GeometryCollectionT<T>> for GeometryCollection<f64>

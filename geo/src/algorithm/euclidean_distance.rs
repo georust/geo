@@ -753,7 +753,7 @@ mod test {
         let pol1 = Polygon::new(ls1, vec![]);
         let pol2 = Polygon::new(ls2, vec![]);
         let pol3 = Polygon::new(ls3, vec![]);
-        let mp = MultiPolygon(vec![pol1.clone(), pol2, pol3]);
+        let mp = MultiPolygon::new(vec![pol1.clone(), pol2, pol3]);
         let pnt1 = Point::new(0.0, 15.0);
         let pnt2 = Point::new(10.0, 20.0);
         let ln = Line::new(pnt1.0, pnt2.0);
@@ -768,7 +768,7 @@ mod test {
         let ls2 = LineString::from(vec![(3.0, 0.0), (4.0, 10.0), (5.0, 0.0), (3.0, 0.0)]);
         let p1 = Polygon::new(ls1, vec![]);
         let p2 = Polygon::new(ls2, vec![]);
-        let mp = MultiPolygon(vec![p1, p2]);
+        let mp = MultiPolygon::new(vec![p1, p2]);
         let p = Point::new(50.0, 50.0);
         assert_relative_eq!(p.euclidean_distance(&mp), 60.959002616512684);
     }

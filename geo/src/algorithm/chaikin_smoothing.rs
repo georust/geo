@@ -74,7 +74,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn chaikin_smoothing(&self, n_iterations: usize) -> Self {
-        MultiPolygon(
+        MultiPolygon::new(
             self.0
                 .iter()
                 .map(|poly| poly.chaikin_smoothing(n_iterations))

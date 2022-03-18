@@ -250,7 +250,7 @@ mod test {
 
     #[test]
     fn test_multi_polygon() {
-        let mp = MultiPolygon(vec![
+        let mp = MultiPolygon::new(vec![
             polygon!(
                 exterior: [(x: 0., y: 0.), (x: 0., y: 10.), (x: 10., y: 10.), (x: 10., y: 0.)],
                 interiors: [[(x: 1., y: 1.), (x: 1., y: 2.), (x: 2., y: 2.), (x: 2., y: 1.)]],

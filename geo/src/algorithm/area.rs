@@ -384,7 +384,7 @@ mod test {
             (x: 5., y: 6.),
             (x: 5., y: 5.)
         ];
-        let mpoly = MultiPolygon(vec![poly0, poly1, poly2]);
+        let mpoly = MultiPolygon::new(vec![poly0, poly1, poly2]);
         assert_relative_eq!(mpoly.signed_area(), 102.);
         assert_relative_eq!(mpoly.signed_area(), 102.);
     }
@@ -429,7 +429,7 @@ mod test {
         ];
         let polygon_area = polygon_cw.unsigned_area();
 
-        let multi_polygon = MultiPolygon(vec![polygon_cw, polygon_ccw]);
+        let multi_polygon = MultiPolygon::new(vec![polygon_cw, polygon_ccw]);
 
         assert_eq!(polygon_area * 2., multi_polygon.unsigned_area());
     }

@@ -233,7 +233,7 @@ mod test {
     /// Tests: Point in MultiPolygon
     #[test]
     fn empty_multipolygon_test() {
-        let multipoly = MultiPolygon(Vec::new());
+        let multipoly = MultiPolygon::new(Vec::new());
         assert!(!multipoly.contains(&Point::new(2., 1.)));
     }
     #[test]
@@ -246,7 +246,7 @@ mod test {
             LineString::from(vec![(2., 0.), (3., 0.), (3., 1.), (2., 1.), (2., 0.)]),
             Vec::new(),
         );
-        let multipoly = MultiPolygon(vec![poly1, poly2]);
+        let multipoly = MultiPolygon::new(vec![poly1, poly2]);
         assert!(multipoly.contains(&Point::new(0.5, 0.5)));
         assert!(multipoly.contains(&Point::new(2.5, 0.5)));
         assert!(!multipoly.contains(&Point::new(1.5, 0.5)));
@@ -267,7 +267,7 @@ mod test {
             Vec::new(),
         );
 
-        let multipoly = MultiPolygon(vec![poly1, poly2]);
+        let multipoly = MultiPolygon::new(vec![poly1, poly2]);
         assert!(multipoly.contains(&Point::new(3., 5.)));
         assert!(multipoly.contains(&Point::new(12., 2.)));
         assert!(!multipoly.contains(&Point::new(3., 2.)));

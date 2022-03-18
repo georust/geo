@@ -381,7 +381,7 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPolygon<T> {
     type Output = MultiPolygon<NT>;
 
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output {
-        MultiPolygon(self.iter().map(|p| p.map_coords(func)).collect())
+        MultiPolygon::new(self.iter().map(|p| p.map_coords(func)).collect())
     }
 }
 
@@ -392,7 +392,7 @@ impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for MultiPolygon<T> {
         &self,
         func: impl Fn(&(T, T)) -> Result<(NT, NT), E> + Copy,
     ) -> Result<Self::Output, E> {
-        Ok(MultiPolygon(
+        Ok(MultiPolygon::new(
             self.0
                 .iter()
                 .map(|p| p.try_map_coords(func))
@@ -770,7 +770,7 @@ mod test {
             ],
         ];
 
-        let mp = MultiPolygon(vec![poly1, poly2]);
+        let mp = MultiPolygon::new(vec![poly1, poly2]);
         let mp2 = mp.map_coords(|&(x, y)| (x * 2., y + 100.));
         assert_eq!(mp2.0.len(), 2);
         assert_relative_eq!(

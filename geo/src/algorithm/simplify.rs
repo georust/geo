@@ -239,7 +239,7 @@ where
     T: GeoFloat,
 {
     fn simplify(&self, epsilon: &T) -> Self {
-        MultiPolygon(self.iter().map(|p| p.simplify(epsilon)).collect())
+        MultiPolygon::new(self.iter().map(|p| p.simplify(epsilon)).collect())
     }
 }
 
@@ -332,7 +332,7 @@ mod test {
 
     #[test]
     fn multipolygon() {
-        let mpoly = MultiPolygon(vec![polygon![
+        let mpoly = MultiPolygon::new(vec![polygon![
             (x: 0., y: 0.),
             (x: 0., y: 10.),
             (x: 5., y: 11.),
@@ -345,7 +345,7 @@ mod test {
 
         assert_eq!(
             mpoly2,
-            MultiPolygon(vec![polygon![
+            MultiPolygon::new(vec![polygon![
                 (x: 0., y: 0.),
                 (x: 0., y: 10.),
                 (x: 10., y: 10.),

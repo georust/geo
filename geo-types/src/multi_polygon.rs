@@ -75,6 +75,11 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPolygon<T> {
 }
 
 impl<T: CoordNum> MultiPolygon<T> {
+    /// Instantiate Self from the raw content value
+    pub fn new(value: Vec<Polygon<T>>) -> Self {
+        Self(value)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &Polygon<T>> {
         self.0.iter()
     }
@@ -102,9 +107,9 @@ where
     /// use geo_types::{polygon, Polygon, MultiPolygon};
     ///
     /// let a_el: Polygon<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7., y: 9.), (x: 0., y: 0.)];
-    /// let a = MultiPolygon(vec![a_el]);
+    /// let a = MultiPolygon::new(vec![a_el]);
     /// let b_el: Polygon<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7.01, y: 9.), (x: 0., y: 0.)];
-    /// let b = MultiPolygon(vec![b_el]);
+    /// let b = MultiPolygon::new(vec![b_el]);
     ///
     /// approx::assert_relative_eq!(a, b, max_relative=0.1);
     /// approx::assert_relative_ne!(a, b, max_relative=0.001);
@@ -146,9 +151,9 @@ where
     /// use geo_types::{polygon, Polygon, MultiPolygon};
     ///
     /// let a_el: Polygon<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7., y: 9.), (x: 0., y: 0.)];
-    /// let a = MultiPolygon(vec![a_el]);
+    /// let a = MultiPolygon::new(vec![a_el]);
     /// let b_el: Polygon<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7.01, y: 9.), (x: 0., y: 0.)];
-    /// let b = MultiPolygon(vec![b_el]);
+    /// let b = MultiPolygon::new(vec![b_el]);
     ///
     /// approx::abs_diff_eq!(a, b, epsilon=0.1);
     /// approx::abs_diff_ne!(a, b, epsilon=0.001);
@@ -171,7 +176,7 @@ mod test {
 
     #[test]
     fn test_iter() {
-        let multi = MultiPolygon(vec![
+        let multi = MultiPolygon::new(vec![
             polygon![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
             polygon![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)],
         ]);
@@ -212,7 +217,7 @@ mod test {
 
     #[test]
     fn test_iter_mut() {
-        let mut multi = MultiPolygon(vec![
+        let mut multi = MultiPolygon::new(vec![
             polygon![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
             polygon![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)],
         ]);

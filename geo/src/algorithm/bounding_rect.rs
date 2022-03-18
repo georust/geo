@@ -277,7 +277,7 @@ mod test {
     }
     #[test]
     fn multipolygon_test() {
-        let mpoly = MultiPolygon(vec![
+        let mpoly = MultiPolygon::new(vec![
             polygon![(x: 0., y: 0.), (x: 50., y: 0.), (x: 0., y: -70.), (x: 0., y: 0.)],
             polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 0., y: 80.), (x: 0., y: 0.)],
             polygon![(x: 0., y: 0.), (x: -60., y: 0.), (x: 0., y: 6.), (x: 0., y: 0.)],
