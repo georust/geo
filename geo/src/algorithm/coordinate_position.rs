@@ -691,7 +691,7 @@ mod test {
 
     #[test]
     fn test_triangle() {
-        let triangle = Triangle((0.0, 0.0).into(), (5.0, 10.0).into(), (10.0, 0.0).into());
+        let triangle = Triangle::new((0.0, 0.0).into(), (5.0, 10.0).into(), (10.0, 0.0).into());
         assert_eq!(
             triangle.coordinate_position(&coord! { x: 5.0, y: 5.0 }),
             CoordPos::Inside
@@ -708,7 +708,7 @@ mod test {
 
     #[test]
     fn test_collection() {
-        let triangle = Triangle((0.0, 0.0).into(), (5.0, 10.0).into(), (10.0, 0.0).into());
+        let triangle = Triangle::new((0.0, 0.0).into(), (5.0, 10.0).into(), (10.0, 0.0).into());
         let rect = Rect::new((0.0, 0.0), (10.0, 10.0));
         let collection = GeometryCollection(vec![triangle.into(), rect.into()]);
 

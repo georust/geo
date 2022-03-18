@@ -12,6 +12,11 @@ use approx::{AbsDiffEq, RelativeEq};
 pub struct Triangle<T: CoordNum>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);
 
 impl<T: CoordNum> Triangle<T> {
+    /// Instantiate Self from the raw content value
+    pub fn new(v1: Coordinate<T>, v2: Coordinate<T>, v3: Coordinate<T>) -> Self {
+        Self(v1, v2, v3)
+    }
+
     pub fn to_array(&self) -> [Coordinate<T>; 3] {
         [self.0, self.1, self.2]
     }
@@ -31,7 +36,7 @@ impl<T: CoordNum> Triangle<T> {
     /// ```rust
     /// use geo_types::{coord, Triangle, polygon};
     ///
-    /// let triangle = Triangle(
+    /// let triangle = Triangle::new(
     ///     coord! { x: 0., y: 0. },
     ///     coord! { x: 10., y: 20. },
     ///     coord! { x: 20., y: -10. },
@@ -75,8 +80,8 @@ where
     /// ```
     /// use geo_types::{point, Triangle};
     ///
-    /// let a = Triangle((0.0, 0.0).into(), (10.0, 10.0).into(), (0.0, 5.0).into());
-    /// let b = Triangle((0.0, 0.0).into(), (10.01, 10.0).into(), (0.0, 5.0).into());
+    /// let a = Triangle::new((0.0, 0.0).into(), (10.0, 10.0).into(), (0.0, 5.0).into());
+    /// let b = Triangle::new((0.0, 0.0).into(), (10.01, 10.0).into(), (0.0, 5.0).into());
     ///
     /// approx::assert_relative_eq!(a, b, max_relative=0.1);
     /// approx::assert_relative_ne!(a, b, max_relative=0.0001);
@@ -122,8 +127,8 @@ where
     /// ```
     /// use geo_types::{point, Triangle};
     ///
-    /// let a = Triangle((0.0, 0.0).into(), (10.0, 10.0).into(), (0.0, 5.0).into());
-    /// let b = Triangle((0.0, 0.0).into(), (10.01, 10.0).into(), (0.0, 5.0).into());
+    /// let a = Triangle::new((0.0, 0.0).into(), (10.0, 10.0).into(), (0.0, 5.0).into());
+    /// let b = Triangle::new((0.0, 0.0).into(), (10.01, 10.0).into(), (0.0, 5.0).into());
     ///
     /// approx::abs_diff_eq!(a, b, epsilon=0.1);
     /// approx::abs_diff_ne!(a, b, epsilon=0.001);

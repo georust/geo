@@ -289,7 +289,7 @@ mod test {
 
     #[test]
     fn test_triangle() {
-        let triangle = Triangle(
+        let triangle = Triangle::new(
             coord! { x: 0., y: 0. },
             coord! { x: 1., y: 2. },
             coord! { x: 2., y: 3. },

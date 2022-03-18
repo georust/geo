@@ -813,38 +813,38 @@ mod test {
     fn triangles() {
         // boring triangle
         assert_eq!(
-            Triangle(c(0., 0.), c(3., 0.), c(1.5, 3.)).centroid(),
+            Triangle::new(c(0., 0.), c(3., 0.), c(1.5, 3.)).centroid(),
             point!(x: 1.5, y: 1.0)
         );
 
         // flat triangle
         assert_eq!(
-            Triangle(c(0., 0.), c(3., 0.), c(1., 0.)).centroid(),
+            Triangle::new(c(0., 0.), c(3., 0.), c(1., 0.)).centroid(),
             point!(x: 1.5, y: 0.0)
         );
 
         // flat triangle that's not axis-aligned
         assert_eq!(
-            Triangle(c(0., 0.), c(3., 3.), c(1., 1.)).centroid(),
+            Triangle::new(c(0., 0.), c(3., 3.), c(1., 1.)).centroid(),
             point!(x: 1.5, y: 1.5)
         );
 
         // triangle with some repeated points
         assert_eq!(
-            Triangle(c(0., 0.), c(0., 0.), c(1., 0.)).centroid(),
+            Triangle::new(c(0., 0.), c(0., 0.), c(1., 0.)).centroid(),
             point!(x: 0.5, y: 0.0)
         );
 
         // triangle with all repeated points
         assert_eq!(
-            Triangle(c(0., 0.5), c(0., 0.5), c(0., 0.5)).centroid(),
+            Triangle::new(c(0., 0.5), c(0., 0.5), c(0., 0.5)).centroid(),
             point!(x: 0., y: 0.5)
         )
     }
 
     #[test]
     fn degenerate_triangle_like_ring() {
-        let triangle = Triangle(c(0., 0.), c(1., 1.), c(2., 2.));
+        let triangle = Triangle::new(c(0., 0.), c(1., 1.), c(2., 2.));
         let poly: Polygon<_> = triangle.into();
 
         let line = Line::new(c(0., 1.), c(1., 3.));
