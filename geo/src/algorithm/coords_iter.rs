@@ -756,7 +756,7 @@ mod test {
         let (polygon, mut coords) = create_polygon();
         expected_coords.append(&mut coords);
 
-        let actual_coords = GeometryCollection(vec![
+        let actual_coords = GeometryCollection::new_from(vec![
             Geometry::LineString(line_string),
             Geometry::Polygon(polygon),
         ])

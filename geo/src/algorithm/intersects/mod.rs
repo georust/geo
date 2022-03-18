@@ -542,7 +542,7 @@ mod test {
             coord! { x: 20., y: -10. },
         );
         let geom = Geometry::Point(pt);
-        let gc = GeometryCollection(vec![geom.clone()]);
+        let gc = GeometryCollection::new_from(vec![geom.clone()]);
         let multi_point = MultiPoint::new(vec![pt]);
         let multi_ls = MultiLineString(vec![ls.clone()]);
         let multi_poly = MultiPolygon::new(vec![poly.clone()]);
