@@ -626,7 +626,7 @@ mod test {
 
     #[test]
     fn test_boundary_rule() {
-        let multi_line_string = MultiLineString(vec![
+        let multi_line_string = MultiLineString::new(vec![
             // first two lines have same start point but different end point
             line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 1.0)],
             line_string![(x: 0.0, y: 0.0), (x: -1.0, y: -1.0)],

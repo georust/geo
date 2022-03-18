@@ -349,7 +349,7 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiLineString<T> {
     type Output = MultiLineString<NT>;
 
     fn map_coords(&self, func: impl Fn(&(T, T)) -> (NT, NT) + Copy) -> Self::Output {
-        MultiLineString(self.iter().map(|l| l.map_coords(func)).collect())
+        MultiLineString::new(self.iter().map(|l| l.map_coords(func)).collect())
     }
 }
 
@@ -360,7 +360,7 @@ impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for MultiLineString<T>
         &self,
         func: impl Fn(&(T, T)) -> Result<(NT, NT), E> + Copy,
     ) -> Result<Self::Output, E> {
-        Ok(MultiLineString(
+        Ok(MultiLineString::new(
             self.0
                 .iter()
                 .map(|l| l.try_map_coords(func))
@@ -730,11 +730,11 @@ mod test {
     fn multilinestring() {
         let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
         let line2: LineString<f32> = LineString::from(vec![(-1., 0.), (0., 0.), (1., 2.)]);
-        let mline = MultiLineString(vec![line1, line2]);
+        let mline = MultiLineString::new(vec![line1, line2]);
         let mline2 = mline.map_coords(|&(x, y)| (x + 10., y - 100.));
         assert_relative_eq!(
             mline2,
-            MultiLineString(vec![
+            MultiLineString::new(vec![
                 LineString::from(vec![(10., -100.), (11., -98.)]),
                 LineString::from(vec![(9., -100.), (10., -100.), (11., -98.)]),
             ]),

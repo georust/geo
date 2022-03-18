@@ -513,19 +513,19 @@ mod test {
         assert_eq!(l1.centroid(), Some(p(1., 1.)));
 
         let l2 = LineString::from(vec![p(2., 2.), p(2., 2.), p(2., 2.)]);
-        let mls = MultiLineString(vec![l1, l2]);
+        let mls = MultiLineString::new(vec![l1, l2]);
         assert_eq!(mls.centroid(), Some(p(1.5, 1.5)));
     }
     // Tests: Centroid of MultiLineString
     #[test]
     fn empty_multilinestring_test() {
-        let mls: MultiLineString<f64> = MultiLineString(vec![]);
+        let mls: MultiLineString<f64> = MultiLineString::new(vec![]);
         let centroid = mls.centroid();
         assert!(centroid.is_none());
     }
     #[test]
     fn multilinestring_with_empty_line_test() {
-        let mls: MultiLineString<f64> = MultiLineString(vec![line_string![]]);
+        let mls: MultiLineString<f64> = MultiLineString::new(vec![line_string![]]);
         let centroid = mls.centroid();
         assert!(centroid.is_none());
     }
@@ -535,7 +535,7 @@ mod test {
             x: 40.02f64,
             y: 116.34,
         };
-        let mls: MultiLineString<f64> = MultiLineString(vec![
+        let mls: MultiLineString<f64> = MultiLineString::new(vec![
             line_string![coord],
             line_string![coord],
             line_string![coord],
@@ -552,7 +552,7 @@ mod test {
             (x: 10., y: 1.),
             (x: 11., y: 1.)
         ];
-        let mls: MultiLineString<f64> = MultiLineString(vec![linestring]);
+        let mls: MultiLineString<f64> = MultiLineString::new(vec![linestring]);
         assert_relative_eq!(mls.centroid().unwrap(), point! { x: 6., y: 1. });
     }
     #[test]
@@ -560,7 +560,7 @@ mod test {
         let v1 = line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0)];
         let v2 = line_string![(x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 3.0, y: 1.0)];
         let v3 = line_string![(x: -12.0, y: -100.0), (x: 7.0, y: 8.0)];
-        let mls = MultiLineString(vec![v1, v2, v3]);
+        let mls = MultiLineString::new(vec![v1, v2, v3]);
         assert_relative_eq!(
             mls.centroid().unwrap(),
             point![x: -1.9097834383655845, y: -37.683866439745714]

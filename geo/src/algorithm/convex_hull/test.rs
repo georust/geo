@@ -52,7 +52,7 @@ fn convex_hull_linestring_test() {
 fn convex_hull_multilinestring_test() {
     let v1 = line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0)];
     let v2 = line_string![(x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 3.0, y: 1.0)];
-    let mls = MultiLineString(vec![v1, v2]);
+    let mls = MultiLineString::new(vec![v1, v2]);
     let correct = vec![
         Coordinate::from((2.0, 0.0)),
         Coordinate::from((3.0, 1.0)),

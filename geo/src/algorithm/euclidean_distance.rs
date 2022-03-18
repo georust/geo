@@ -838,7 +838,7 @@ mod test {
     fn distance_multilinestring_test() {
         let v1 = LineString::from(vec![(0.0, 0.0), (1.0, 10.0)]);
         let v2 = LineString::from(vec![(1.0, 10.0), (2.0, 0.0), (3.0, 1.0)]);
-        let mls = MultiLineString(vec![v1, v2]);
+        let mls = MultiLineString::new(vec![v1, v2]);
         let p = Point::new(50.0, 50.0);
         assert_relative_eq!(p.euclidean_distance(&mls), 63.25345840347388);
     }
