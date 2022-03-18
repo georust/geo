@@ -424,8 +424,10 @@ impl<T: CoordFloat + Signed> Polygon<T> {
             .map(|(idx, _)| {
                 let prev_1 = self.previous_vertex(idx);
                 let prev_2 = self.previous_vertex(prev_1);
-                Point(self.exterior[prev_2])
-                    .cross_prod(Point(self.exterior[prev_1]), Point(self.exterior[idx]))
+                Point::from(self.exterior[prev_2]).cross_prod(
+                    Point::from(self.exterior[prev_1]),
+                    Point::from(self.exterior[idx]),
+                )
             })
             // accumulate and check cross-product result signs in a single pass
             // positive implies ccw convexity, negative implies cw convexity

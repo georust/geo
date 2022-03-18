@@ -143,11 +143,11 @@ impl<T: CoordNum> Line<T> {
     }
 
     pub fn start_point(&self) -> Point<T> {
-        Point(self.start)
+        Point::from(self.start)
     }
 
     pub fn end_point(&self) -> Point<T> {
-        Point(self.end)
+        Point::from(self.end)
     }
 
     pub fn points(&self) -> (Point<T>, Point<T>) {

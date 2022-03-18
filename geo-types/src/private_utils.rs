@@ -132,7 +132,7 @@ where
     }
     // LineString with one point equal p
     if line_string.0.len() == 1 {
-        return point_contains_point(Point(line_string[0]), point);
+        return point_contains_point(Point::from(line_string[0]), point);
     }
     // check if point is a vertex
     if line_string.0.contains(&point.0) {
