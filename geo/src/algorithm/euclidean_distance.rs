@@ -688,7 +688,7 @@ mod test {
     fn point_polygon_empty_test() {
         // an empty Polygon
         let points = vec![];
-        let ls = LineString(points);
+        let ls = LineString::new(points);
         let poly = Polygon::new(ls, vec![]);
         // A point on the octagon
         let p = Point::new(2.5, 0.5);
@@ -825,7 +825,7 @@ mod test {
     // Point to LineString, empty LineString
     fn point_linestring_empty_test() {
         let points = vec![];
-        let ls = LineString(points);
+        let ls = LineString::new(points);
         let p = Point::new(5.0, 4.0);
         let dist = p.euclidean_distance(&ls);
         assert_relative_eq!(dist, 0.0);

@@ -168,13 +168,13 @@ mod tests {
 
     #[test]
     fn polygon_new_test() {
-        let exterior = LineString(vec![
+        let exterior = LineString::new(vec![
             coord! { x: 0., y: 0. },
             coord! { x: 1., y: 1. },
             coord! { x: 1., y: 0. },
             coord! { x: 0., y: 0. },
         ]);
-        let interiors = vec![LineString(vec![
+        let interiors = vec![LineString::new(vec![
             coord! { x: 0.1, y: 0.1 },
             coord! { x: 0.9, y: 0.9 },
             coord! { x: 0.9, y: 0.1 },

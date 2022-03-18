@@ -311,7 +311,7 @@ where
     }
 
     let coords = hull.iter().take(hull.len() - 1).cloned().collect();
-    let linestring = LineString(coords);
+    let linestring = LineString::new(coords);
     let line = crate::Line::new(*line[0], *line[1]);
     linestring.intersects(&line)
 }
@@ -402,7 +402,7 @@ mod tests {
     #[test]
     fn empty_hull() {
         let actual: Polygon<f64> = concave_hull(vec![].iter(), 3);
-        let expected = Polygon::new(LineString(vec![]), vec![]);
+        let expected = Polygon::new(LineString::new(vec![]), vec![]);
         assert_eq!(actual, expected);
     }
 }
