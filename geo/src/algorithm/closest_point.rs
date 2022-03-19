@@ -64,8 +64,8 @@ impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
         //
         // Line equation: P = start + t * (end - start)
 
-        let direction_vector = Point(self.end - self.start);
-        let to_p = Point(p.0 - self.start);
+        let direction_vector = Point::from(self.end - self.start);
+        let to_p = Point::from(p.0 - self.start);
 
         let t = to_p.dot(direction_vector) / direction_vector.dot(direction_vector);
 
@@ -78,7 +78,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
 
         let x = direction_vector.x();
         let y = direction_vector.y();
-        let c = Point(self.start + (t * x, t * y).into());
+        let c = Point::from(self.start + (t * x, t * y).into());
 
         if self.intersects(p) {
             Closest::Intersection(c)
@@ -131,7 +131,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Polygon<F> {
 
 impl<F: GeoFloat> ClosestPoint<F> for Coordinate<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        Point(*self).closest_point(p)
+        Point::from(*self).closest_point(p)
     }
 }
 

@@ -249,7 +249,7 @@ where
 {
     /// Minimum distance from a `Line` to a `Coordinate`
     fn euclidean_distance(&self, coord: &Coordinate<T>) -> T {
-        ::geo_types::private_utils::point_line_euclidean_distance(Point(*coord), *self)
+        ::geo_types::private_utils::point_line_euclidean_distance(Point::from(*coord), *self)
     }
 }
 
@@ -387,7 +387,9 @@ where
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if self.intersects(other) || other.contains(self) {
             T::zero()
-        } else if !other.interiors().is_empty() && ring_contains_point(other, Point(self.0[0])) {
+        } else if !other.interiors().is_empty()
+            && ring_contains_point(other, Point::from(self.0[0]))
+        {
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
             for ring in other.interiors() {
@@ -461,7 +463,9 @@ where
             return T::zero();
         }
         // Containment check
-        if !self.interiors().is_empty() && ring_contains_point(self, Point(poly2.exterior().0[0])) {
+        if !self.interiors().is_empty()
+            && ring_contains_point(self, Point::from(poly2.exterior().0[0]))
+        {
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
             for ring in self.interiors() {
@@ -469,7 +473,7 @@ where
             }
             return mindist;
         } else if !poly2.interiors().is_empty()
-            && ring_contains_point(poly2, Point(self.exterior().0[0]))
+            && ring_contains_point(poly2, Point::from(self.exterior().0[0]))
         {
             let mut mindist: T = Float::max_value();
             for ring in poly2.interiors() {

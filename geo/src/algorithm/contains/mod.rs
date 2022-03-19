@@ -324,9 +324,9 @@ mod test {
         let line2 = Line::new(c(0., 6.), c(1.5, 4.5));
         // point on line
         let line3 = Line::new(c(0., 6.), c(3., 3.));
-        assert!(line1.contains(&Point(p0)));
-        assert!(!line2.contains(&Point(p0)));
-        assert!(line3.contains(&Point(p0)));
+        assert!(line1.contains(&Point::from(p0)));
+        assert!(!line2.contains(&Point::from(p0)));
+        assert!(line3.contains(&Point::from(p0)));
     }
     #[test]
     fn line_in_line_test() {

@@ -145,7 +145,7 @@ mod tests {
             y: 116.34,
         };
 
-        let p = Point(c);
+        let p = Point::from(c);
 
         let Point(c2) = p;
         assert_eq!(c, c2);
