@@ -31,7 +31,7 @@ fn test_all_general() {
         let failure_text = runner
             .failures()
             .iter()
-            .map(|failure| format!("{}", failure))
+            .map(|failure| failure.to_string())
             .collect::<Vec<String>>()
             .join("\n");
         panic!(

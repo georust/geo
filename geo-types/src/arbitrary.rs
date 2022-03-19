@@ -71,7 +71,7 @@ impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a>
 
 impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for Rect<T> {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Rect::new(
+        Ok(Self::new(
             u.arbitrary::<Coordinate<T>>()?,
             u.arbitrary::<Coordinate<T>>()?,
         ))
@@ -93,15 +93,15 @@ impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for 
         let n = u.int_in_range(0..=8)?;
 
         Ok(match n {
-            0 => Geometry::Point(u.arbitrary()?),
-            1 => Geometry::LineString(u.arbitrary()?),
-            2 => Geometry::Polygon(u.arbitrary()?),
-            3 => Geometry::MultiPoint(u.arbitrary()?),
-            4 => Geometry::MultiLineString(u.arbitrary()?),
-            5 => Geometry::MultiPolygon(u.arbitrary()?),
-            6 => Geometry::GeometryCollection(u.arbitrary()?),
-            7 => Geometry::Triangle(u.arbitrary()?),
-            8 => Geometry::Rect(u.arbitrary()?),
+            0 => Self::Point(u.arbitrary()?),
+            1 => Self::LineString(u.arbitrary()?),
+            2 => Self::Polygon(u.arbitrary()?),
+            3 => Self::MultiPoint(u.arbitrary()?),
+            4 => Self::MultiLineString(u.arbitrary()?),
+            5 => Self::MultiPolygon(u.arbitrary()?),
+            6 => Self::GeometryCollection(u.arbitrary()?),
+            7 => Self::Triangle(u.arbitrary()?),
+            8 => Self::Rect(u.arbitrary()?),
             _ => unreachable!(),
         })
     }
