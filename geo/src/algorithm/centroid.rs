@@ -727,7 +727,7 @@ mod test {
     fn empty_interior_polygon_test() {
         let poly = Polygon::new(
             LineString::from(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
-            vec![LineString(vec![])],
+            vec![LineString::new(vec![])],
         );
         assert_eq!(poly.centroid(), Some(p(0.5, 0.5)));
     }

@@ -444,7 +444,7 @@ mod test {
 
     #[test]
     fn test_empty_poly() {
-        let square_poly: Polygon<f64> = Polygon::new(LineString(vec![]), vec![]);
+        let square_poly: Polygon<f64> = Polygon::new(LineString::new(vec![]), vec![]);
         assert_eq!(
             square_poly.coordinate_position(&Coordinate::zero()),
             CoordPos::Outside

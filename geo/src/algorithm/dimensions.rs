@@ -46,13 +46,13 @@ pub trait HasDimensions {
     /// use geo_types::{Point, coord, LineString};
     /// use geo::algorithm::dimensions::HasDimensions;
     ///
-    /// let line_string = LineString(vec![
+    /// let line_string = LineString::new(vec![
     ///     coord! { x: 0., y: 0. },
     ///     coord! { x: 10., y: 0. },
     /// ]);
     /// assert!(!line_string.is_empty());
     ///
-    /// let empty_line_string: LineString<f64> = LineString(vec![]);
+    /// let empty_line_string: LineString<f64> = LineString::new(vec![]);
     /// assert!(empty_line_string.is_empty());
     ///
     /// let point = Point::new(0.0, 0.0);

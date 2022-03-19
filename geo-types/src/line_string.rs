@@ -35,7 +35,7 @@ use std::ops::{Index, IndexMut};
 /// ```
 /// use geo_types::{coord, LineString};
 ///
-/// let line_string = LineString(vec![
+/// let line_string = LineString::new(vec![
 ///     coord! { x: 0., y: 0. },
 ///     coord! { x: 10., y: 0. },
 /// ]);
@@ -83,7 +83,7 @@ use std::ops::{Index, IndexMut};
 /// ```
 /// use geo_types::{coord, LineString};
 ///
-/// let line_string = LineString(vec![
+/// let line_string = LineString::new(vec![
 ///     coord! { x: 0., y: 0. },
 ///     coord! { x: 10., y: 0. },
 /// ]);
@@ -100,7 +100,7 @@ use std::ops::{Index, IndexMut};
 /// ```
 /// use geo_types::{coord, LineString};
 ///
-/// let line_string = LineString(vec![
+/// let line_string = LineString::new(vec![
 ///     coord! { x: 0., y: 0. },
 ///     coord! { x: 10., y: 0. },
 /// ]);
@@ -120,7 +120,7 @@ use std::ops::{Index, IndexMut};
 /// ```
 /// use geo_types::{coord, LineString, Point};
 ///
-/// let line_string = LineString(vec![
+/// let line_string = LineString::new(vec![
 ///     coord! { x: 0., y: 0. },
 ///     coord! { x: 10., y: 0. },
 /// ]);
@@ -191,6 +191,11 @@ impl<'a, T: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T> {
 }
 
 impl<T: CoordNum> LineString<T> {
+    /// Instantiate Self from the raw content value
+    pub fn new(value: Vec<Coordinate<T>>) -> Self {
+        Self(value)
+    }
+
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
     #[deprecated(note = "Use points() instead")]
     pub fn points_iter(&self) -> PointsIter<T> {
@@ -529,7 +534,7 @@ mod test {
     #[test]
     fn test_exact_size() {
         // see https://github.com/georust/geo/issues/762
-        let ls = LineString(vec![coord! { x: 0., y: 0. }, coord! { x: 10., y: 0. }]);
+        let ls = LineString::new(vec![coord! { x: 0., y: 0. }, coord! { x: 10., y: 0. }]);
 
         // reference to force the `impl IntoIterator for &LineString` impl, giving a `CoordinatesIter`
         for c in (&ls).into_iter().rev().skip(1).rev() {
@@ -601,14 +606,14 @@ mod test {
         let start = coord! { x: 0, y: 0 };
         let end = coord! { x: 10, y: 10 };
         let line = Line::new(start, end);
-        let expected = LineString(vec![start, end]);
+        let expected = LineString::new(vec![start, end]);
 
         assert_eq!(expected, LineString::from(line));
 
         let start = coord! { x: 10., y: 0.5 };
         let end = coord! { x: 10000., y: 10.4 };
         let line = Line::new(start, end);
-        let expected = LineString(vec![start, end]);
+        let expected = LineString::new(vec![start, end]);
 
         assert_eq!(expected, LineString::from(line));
     }
