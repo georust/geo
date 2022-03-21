@@ -98,9 +98,9 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 /// # Examples
 ///
 /// ```
-/// use geo_types::Coordinate;
+/// use geo_types::coord;
 ///
-/// let p: Coordinate<_> = (1.25, 2.5).into();
+/// let p = coord! { x: 1.25, y: 2.5 };
 /// let q = -p;
 ///
 /// assert_eq!(q.x, -p.x);
@@ -113,7 +113,10 @@ where
     type Output = Self;
 
     fn neg(self) -> Self {
-        (-self.x, -self.y).into()
+        coord! {
+            x: -self.x,
+            y: -self.y,
+        }
     }
 }
 
@@ -122,10 +125,10 @@ where
 /// # Examples
 ///
 /// ```
-/// use geo_types::Coordinate;
+/// use geo_types::coord;
 ///
-/// let p: Coordinate<_> = (1.25, 2.5).into();
-/// let q: Coordinate<_> = (1.5, 2.5).into();
+/// let p = coord! { x: 1.25, y: 2.5 };
+/// let q = coord! { x: 1.5, y: 2.5 };
 /// let sum = p + q;
 ///
 /// assert_eq!(sum.x, 2.75);
@@ -135,7 +138,10 @@ impl<T: CoordNum> Add for Coordinate<T> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        (self.x + rhs.x, self.y + rhs.y).into()
+        coord! {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
     }
 }
 
@@ -144,10 +150,10 @@ impl<T: CoordNum> Add for Coordinate<T> {
 /// # Examples
 ///
 /// ```
-/// use geo_types::Coordinate;
+/// use geo_types::coord;
 ///
-/// let p: Coordinate<_> = (1.5, 2.5).into();
-/// let q: Coordinate<_> = (1.25, 2.5).into();
+/// let p = coord! { x: 1.5, y: 2.5 };
+/// let q = coord! { x: 1.25, y: 2.5 };
 /// let diff = p - q;
 ///
 /// assert_eq!(diff.x, 0.25);
@@ -157,7 +163,10 @@ impl<T: CoordNum> Sub for Coordinate<T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        (self.x - rhs.x, self.y - rhs.y).into()
+        coord! {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
     }
 }
 
@@ -166,10 +175,10 @@ impl<T: CoordNum> Sub for Coordinate<T> {
 /// # Examples
 ///
 /// ```
-/// use geo_types::Coordinate;
+/// use geo_types::coord;
 ///
-/// let p: Coordinate<_> = (1.25, 2.5).into();
-/// let q: Coordinate<_> = p * 4.;
+/// let p = coord! { x: 1.25, y: 2.5 };
+/// let q = p * 4.;
 ///
 /// assert_eq!(q.x, 5.0);
 /// assert_eq!(q.y, 10.0);
@@ -178,7 +187,10 @@ impl<T: CoordNum> Mul<T> for Coordinate<T> {
     type Output = Self;
 
     fn mul(self, rhs: T) -> Self {
-        (self.x * rhs, self.y * rhs).into()
+        coord! {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
     }
 }
 
@@ -187,10 +199,10 @@ impl<T: CoordNum> Mul<T> for Coordinate<T> {
 /// # Examples
 ///
 /// ```
-/// use geo_types::Coordinate;
+/// use geo_types::coord;
 ///
-/// let p: Coordinate<_> = (5., 10.).into();
-/// let q: Coordinate<_> = p / 4.;
+/// let p = coord! { x: 5., y: 10. };
+/// let q = p / 4.;
 ///
 /// assert_eq!(q.x, 1.25);
 /// assert_eq!(q.y, 2.5);
@@ -199,7 +211,10 @@ impl<T: CoordNum> Div<T> for Coordinate<T> {
     type Output = Self;
 
     fn div(self, rhs: T) -> Self {
-        (self.x / rhs, self.y / rhs).into()
+        coord! {
+            x: self.x / rhs,
+            y: self.y / rhs,
+        }
     }
 }
 
