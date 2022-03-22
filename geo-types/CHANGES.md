@@ -14,7 +14,7 @@
   * <https://github.com/georust/geo/issues/762>
 * Add ExactsizeIterator impl for Points iterator on LineString
   * <https://github.com/georust/geo/pull/767>
-* Extend `point!` macro to support positional arguments `point!(x, y)` and single coordinate expression arguments `point!(coordinate)`.
+* Extend `point!` macro to support single coordinate expression arguments `point!(coordinate)` (coordinate can be created with the `coord!` macro)
   * <https://github.com/georust/geo/pull/775>
 
 ## 0.7.3
