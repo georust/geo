@@ -48,10 +48,7 @@ where
     None
 }
 
-fn get_min_max<T>(p: T, min: T, max: T) -> (T, T)
-where
-    T: CoordNum,
-{
+fn get_min_max<T: PartialOrd>(p: T, min: T, max: T) -> (T, T) {
     if p > max {
         (min, p)
     } else if p < min {

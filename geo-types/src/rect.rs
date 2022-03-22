@@ -59,7 +59,7 @@ impl<T: CoordNum> Rect<T> {
     /// assert_eq!(rect.min(), coord! { x: 10., y: 10. });
     /// assert_eq!(rect.max(), coord! { x: 30., y: 20. });
     /// ```
-    pub fn new<C>(c1: C, c2: C) -> Rect<T>
+    pub fn new<C>(c1: C, c2: C) -> Self
     where
         C: Into<Coordinate<T>>,
     {
@@ -75,7 +75,7 @@ impl<T: CoordNum> Rect<T> {
         } else {
             (c2.y, c1.y)
         };
-        Rect {
+        Self {
             min: coord! { x: min_x, y: min_y },
             max: coord! { x: max_x, y: max_y },
         }
@@ -200,16 +200,16 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// let rect = Rect::new(
     ///     coord! { x: 0., y: 0. },
-    ///     coord! { x: 10., y: 20. },
+    ///     coord! { x: 1., y: 2. },
     /// );
     ///
     /// assert_eq!(
     ///     rect.to_polygon(),
     ///     polygon![
     ///         (x: 0., y: 0.),
-    ///         (x: 0., y: 20.),
-    ///         (x: 10., y: 20.),
-    ///         (x: 10., y: 0.),
+    ///         (x: 0., y: 2.),
+    ///         (x: 1., y: 2.),
+    ///         (x: 1., y: 0.),
     ///         (x: 0., y: 0.),
     ///     ],
     /// );
@@ -293,18 +293,14 @@ impl<T: CoordFloat> Rect<T> {
     ///     coord! { x: 15., y: 15. },
     /// );
     ///
-    /// assert_eq!(
-    ///     rect.center(),
-    ///     coord! { x: 10., y: 10. }
-    /// );
+    /// assert_eq!(rect.center(), coord! { x: 10., y: 10. });
     /// ```
     pub fn center(self) -> Coordinate<T> {
         let two = T::one() + T::one();
-        (
-            (self.max.x + self.min.x) / two,
-            (self.max.y + self.min.y) / two,
-        )
-            .into()
+        coord! {
+            x: (self.max.x + self.min.x) / two,
+            y: (self.max.y + self.min.y) / two,
+        }
     }
 }
 

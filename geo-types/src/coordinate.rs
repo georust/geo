@@ -243,7 +243,7 @@ impl<T: CoordNum> Coordinate<T> {
 
 impl<T: CoordNum> Zero for Coordinate<T> {
     fn zero() -> Self {
-        Coordinate::zero()
+        Self::zero()
     }
     fn is_zero(&self) -> bool {
         self.x.is_zero() && self.y.is_zero()
