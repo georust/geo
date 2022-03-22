@@ -1,7 +1,8 @@
 /// Creates a [`Point`] from the given coordinates.
 ///
 /// ```txt
-/// point!(x: <number>, y: <number>)
+/// point! { x: <number>, y: <number> }
+/// point!(<coordinate>)
 /// ```
 ///
 /// # Examples
@@ -9,21 +10,27 @@
 /// Creating a [`Point`], supplying x/y values:
 ///
 /// ```
-/// use geo_types::point;
+/// use geo_types::{point, coord};
 ///
 /// let p = point! { x: 181.2, y: 51.79 };
 ///
-/// assert_eq!(p, geo_types::Point(geo_types::coord! {
-///     x: 181.2,
-///     y: 51.79,
-/// }));
+/// assert_eq!(p.x(), 181.2);
+/// assert_eq!(p.y(), 51.79);
+///
+/// let p = point!(coord! { x: 181.2, y: 51.79 });
+///
+/// assert_eq!(p.x(), 181.2);
+/// assert_eq!(p.y(), 51.79);
 /// ```
 ///
 /// [`Point`]: ./struct.Point.html
 #[macro_export]
 macro_rules! point {
     ( $($tag:tt : $val:expr),* $(,)? ) => {
-        $crate::Point::from( $crate::coord! { $( $tag: $val , )* } )
+        $crate::point! ( $crate::coord! { $( $tag: $val , )* } )
+    };
+    ( $coord:expr $(,)? ) => {
+        $crate::Point::from($coord)
     };
 }
 
@@ -297,6 +304,14 @@ mod test {
             x: 1.2,
             y: 3.4,
         };
+        assert_eq!(p.x(), 1.2);
+        assert_eq!(p.y(), 3.4);
+
+        let p = point!(coord! { x: 1.2, y: 3.4 });
+        assert_eq!(p.x(), 1.2);
+        assert_eq!(p.y(), 3.4);
+
+        let p = point!(coord! { x: 1.2, y: 3.4 },);
         assert_eq!(p.x(), 1.2);
         assert_eq!(p.y(), 3.4);
     }
