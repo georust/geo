@@ -13,7 +13,7 @@ sections:
 
 As a reminder, all contributors are expected to follow our [Code of Conduct][coc].
 
-[coc]: https://github.com/georust/geo/blob/master/CODE_OF_CONDUCT.md
+[coc]: https://github.com/georust/geo/blob/main/CODE_OF_CONDUCT.md
 
 ## Feature Requests
 [feature-requests]: #feature-requests
@@ -94,7 +94,7 @@ those changes into the source repository.
 [about-pull-requests]: https://help.github.com/articles/about-pull-requests/
 [development-models]: https://help.github.com/articles/about-collaborative-development-models/
 
-Please make pull requests against the `master` branch.
+Please make pull requests against the `main` branch.
 
 All pull requests are reviewed by another person.
 
@@ -108,7 +108,7 @@ This tells @bors, our lovable integration bot, that your
 pull request has been approved. The PR then enters the merge
 queue, where @bors will run all the tests on every platform
 we support. If it all works out, @bors will merge your code
-into `master` and close the pull request.
+into `main` and close the pull request.
 
 ## Writing Tests and Documentation
 
