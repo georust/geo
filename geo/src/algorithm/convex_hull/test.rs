@@ -67,7 +67,7 @@ fn convex_hull_multilinestring_test() {
 fn convex_hull_multipolygon_test() {
     let p1 = polygon![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 0.0, y: 0.0)];
     let p2 = polygon![(x: 3.0, y: 0.0), (x: 4.0, y: 10.0), (x: 5.0, y: 0.0), (x: 3.0, y: 0.0)];
-    let mp = MultiPolygon(vec![p1, p2]);
+    let mp = MultiPolygon::new(vec![p1, p2]);
     let correct = vec![
         Coordinate::from((5.0, 0.0)),
         Coordinate::from((4.0, 10.0)),

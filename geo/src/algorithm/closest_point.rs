@@ -337,7 +337,7 @@ mod tests {
         let square_10 = square_1.translate(10.0, 10.0);
         let square_50 = square_1.translate(50.0, 50.0);
 
-        let multi_polygon = MultiPolygon(vec![square_1, square_10, square_50]);
+        let multi_polygon = MultiPolygon::new(vec![square_1, square_10, square_50]);
         let result = multi_polygon.closest_point(&point!(x: 8.0, y: 8.0));
         assert_eq!(result, Closest::SinglePoint(point!(x: 10.0, y: 10.0)));
 

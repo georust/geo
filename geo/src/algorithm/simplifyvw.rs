@@ -606,7 +606,7 @@ where
     T: CoordFloat + RTreeNum,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> MultiPolygon<T> {
-        MultiPolygon(
+        MultiPolygon::new(
             self.0
                 .iter()
                 .map(|p| p.simplifyvw_preserve(epsilon))
@@ -662,7 +662,7 @@ where
     T: CoordFloat,
 {
     fn simplifyvw(&self, epsilon: &T) -> MultiPolygon<T> {
-        MultiPolygon(self.iter().map(|p| p.simplifyvw(epsilon)).collect())
+        MultiPolygon::new(self.iter().map(|p| p.simplifyvw(epsilon)).collect())
     }
 }
 
@@ -900,7 +900,7 @@ mod test {
 
     #[test]
     fn multipolygon() {
-        let mpoly = MultiPolygon(vec![Polygon::new(
+        let mpoly = MultiPolygon::new(vec![Polygon::new(
             LineString::from(vec![
                 (0., 0.),
                 (0., 10.),
@@ -916,7 +916,7 @@ mod test {
 
         assert_relative_eq!(
             mpoly2,
-            MultiPolygon(vec![Polygon::new(
+            MultiPolygon::new(vec![Polygon::new(
                 LineString::from(vec![(0., 0.), (0., 10.), (10., 10.), (10., 0.), (0., 0.)]),
                 vec![],
             )]),

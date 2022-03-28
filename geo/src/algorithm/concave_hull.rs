@@ -438,7 +438,7 @@ mod test {
              (x: 3.0, y: 1.0),
              (x: 3.0, y: 2.0)
         ];
-        let multipolygon = MultiPolygon(vec![v1, v2]);
+        let multipolygon = MultiPolygon::new(vec![v1, v2]);
         let res = multipolygon.concave_hull(2.0);
         let correct = vec![
             Coordinate::from((4.0, 0.0)),

@@ -669,7 +669,7 @@ mod test {
             LineString::from(vec![p(0., 0.), p(1., 0.), p(0., 0.)]),
             vec![],
         );
-        let multipoly = MultiPolygon(vec![poly]);
+        let multipoly = MultiPolygon::new(vec![poly]);
         assert_eq!(multipoly.centroid(), Some(p(0.5, 0.)));
     }
     #[test]
@@ -682,7 +682,7 @@ mod test {
             LineString::from(vec![p(2., 2.), p(6., 2.), p(2., 2.)]),
             vec![],
         );
-        let multipoly = MultiPolygon(vec![p1, p2]);
+        let multipoly = MultiPolygon::new(vec![p1, p2]);
         assert_eq!(multipoly.centroid(), Some(p(3., 2.)));
     }
     #[test]
@@ -696,7 +696,7 @@ mod test {
             LineString::from(vec![p(2., 2.), p(2., 2.), p(2., 2.)]),
             vec![],
         );
-        let multipoly = MultiPolygon(vec![p1, p2]);
+        let multipoly = MultiPolygon::new(vec![p1, p2]);
         assert_eq!(multipoly.centroid(), Some(p(1.5, 1.5)));
     }
     #[test]
@@ -712,7 +712,7 @@ mod test {
             LineString::from(vec![p(2., 2.), p(6., 2.), p(2., 2.)]),
             vec![],
         );
-        let multipoly = MultiPolygon(vec![normal.clone(), flat]);
+        let multipoly = MultiPolygon::new(vec![normal.clone(), flat]);
         assert_eq!(multipoly.centroid(), normal.centroid());
     }
     #[test]
@@ -750,14 +750,14 @@ mod test {
     // Tests: Centroid of MultiPolygon
     #[test]
     fn empty_multipolygon_polygon_test() {
-        assert!(MultiPolygon::<f64>(Vec::new()).centroid().is_none());
+        assert!(MultiPolygon::<f64>::new(Vec::new()).centroid().is_none());
     }
     #[test]
     fn multipolygon_one_polygon_test() {
         let linestring =
             LineString::from(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert_eq!(MultiPolygon(vec![poly]).centroid(), Some(p(1., 1.)));
+        assert_eq!(MultiPolygon::new(vec![poly]).centroid(), Some(p(1., 1.)));
     }
     #[test]
     fn multipolygon_two_polygons_test() {
@@ -767,7 +767,7 @@ mod test {
         let linestring =
             LineString::from(vec![p(7., 1.), p(8., 1.), p(8., 2.), p(7., 2.), p(7., 1.)]);
         let poly2 = Polygon::new(linestring, Vec::new());
-        let centroid = MultiPolygon(vec![poly1, poly2]).centroid().unwrap();
+        let centroid = MultiPolygon::new(vec![poly1, poly2]).centroid().unwrap();
         assert_relative_eq!(
             centroid,
             point![x: 4.071428571428571, y: 1.9285714285714286]
@@ -780,7 +780,7 @@ mod test {
         let linestring = LineString::from(vec![(0., 0.), (-2., 0.), (-2., 2.), (0., 2.), (0., 0.)]);
         let poly2 = Polygon::new(linestring, Vec::new());
         assert_relative_eq!(
-            MultiPolygon(vec![poly1, poly2]).centroid().unwrap(),
+            MultiPolygon::new(vec![poly1, poly2]).centroid().unwrap(),
             point![x: 0., y: 1.]
         );
     }
