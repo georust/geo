@@ -267,7 +267,7 @@ impl<T: CoordNum> LineString<T> {
         self.0.windows(3).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe {
-                Triangle(
+                Triangle::new(
                     *w.get_unchecked(0),
                     *w.get_unchecked(1),
                     *w.get_unchecked(2),

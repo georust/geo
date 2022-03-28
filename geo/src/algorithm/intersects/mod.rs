@@ -536,7 +536,7 @@ mod test {
         let ls = line_string![(0., 0.).into(), (1., 1.).into()];
         let poly = Polygon::new(LineString::from(vec![(0., 0.), (1., 1.), (1., 0.)]), vec![]);
         let rect = Rect::new(coord! { x: 10., y: 20. }, coord! { x: 30., y: 10. });
-        let tri = Triangle(
+        let tri = Triangle::new(
             coord! { x: 0., y: 0. },
             coord! { x: 10., y: 20. },
             coord! { x: 20., y: -10. },

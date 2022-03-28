@@ -772,7 +772,7 @@ mod test {
 
     fn create_triangle() -> (Triangle<f64>, Vec<Coordinate<f64>>) {
         (
-            Triangle(
+            Triangle::new(
                 coord! { x: 1., y: 2. },
                 coord! { x: 3., y: 4. },
                 coord! { x: 5., y: 6. },

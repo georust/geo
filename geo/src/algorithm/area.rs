@@ -396,14 +396,14 @@ mod test {
 
     #[test]
     fn area_triangle_test() {
-        let triangle = Triangle(
+        let triangle = Triangle::new(
             coord! { x: 0.0, y: 0.0 },
             coord! { x: 1.0, y: 0.0 },
             coord! { x: 0.0, y: 1.0 },
         );
         assert_relative_eq!(triangle.signed_area(), 0.5);
 
-        let triangle = Triangle(
+        let triangle = Triangle::new(
             coord! { x: 0.0, y: 0.0 },
             coord! { x: 0.0, y: 1.0 },
             coord! { x: 1.0, y: 0.0 },

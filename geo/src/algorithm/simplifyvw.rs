@@ -154,7 +154,7 @@ where
                 // Out of bounds, i.e. we're on one edge
                 continue;
             }
-            let area = Triangle(
+            let area = Triangle::new(
                 orig.0[ai as usize],
                 orig.0[current_point as usize],
                 orig.0[bi as usize],
@@ -335,7 +335,7 @@ where
                 // Out of bounds, i.e. we're on one edge
                 continue;
             }
-            let new = Triangle(
+            let new = Triangle::new(
                 orig.0[ai as usize],
                 orig.0[current_point as usize],
                 orig.0[bi as usize],
@@ -394,7 +394,7 @@ where
 {
     let point_a = orig[triangle.left];
     let point_c = orig[triangle.right];
-    let bounding_rect = Triangle(
+    let bounding_rect = Triangle::new(
         orig[triangle.left],
         orig[triangle.current],
         orig[triangle.right],
