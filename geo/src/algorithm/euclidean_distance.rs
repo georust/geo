@@ -867,7 +867,7 @@ mod test {
             Point::new(-1.0, 1.0),
             Point::new(0.0, 10.0),
         ];
-        let mp = MultiPoint(v);
+        let mp = MultiPoint::new(v);
         let p = Point::new(50.0, 50.0);
         assert_relative_eq!(p.euclidean_distance(&mp), 64.03124237432849)
     }

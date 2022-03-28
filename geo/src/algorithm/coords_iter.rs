@@ -22,7 +22,7 @@ pub trait CoordsIter<'a> {
     /// ```
     /// use geo::coords_iter::CoordsIter;
     ///
-    /// let multi_point = geo::MultiPoint(vec![
+    /// let multi_point = geo::MultiPoint::new(vec![
     ///     geo::point!(x: -10., y: 0.),
     ///     geo::point!(x: 20., y: 20.),
     ///     geo::point!(x: 30., y: 40.),
@@ -684,7 +684,7 @@ mod test {
         expected_coords.append(&mut coords.clone());
         expected_coords.append(&mut coords);
 
-        let actual_coords = MultiPoint(vec![point, point])
+        let actual_coords = MultiPoint::new(vec![point, point])
             .coords_iter()
             .collect::<Vec<_>>();
 

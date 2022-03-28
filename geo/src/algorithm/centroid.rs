@@ -802,10 +802,11 @@ mod test {
         let p2 = point!(x: 2.0, y: 2.0);
         let p3 = point!(x: 0.0, y: 2.0);
 
-        let multi_point = MultiPoint(vec![p0, p1, p2, p3]);
+        let multi_point = MultiPoint::new(vec![p0, p1, p2, p3]);
         assert_eq!(multi_point.centroid().unwrap(), point!(x: 1.0, y: 1.0));
 
-        let collection = GeometryCollection(vec![MultiPoint(vec![p1, p2, p3]).into(), p0.into()]);
+        let collection =
+            GeometryCollection(vec![MultiPoint::new(vec![p1, p2, p3]).into(), p0.into()]);
 
         assert_eq!(collection.centroid().unwrap(), point!(x: 1.0, y: 1.0));
     }
