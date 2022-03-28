@@ -3,45 +3,55 @@
 // hidden module is public so the geo crate can reuse these algorithms to
 // prevent duplication. These functions are _not_ meant for public consumption.
 
-use crate::{CoordFloat, CoordNum, Coordinate, Line, LineString, Point, Rect};
+use crate::{
+    CoordFloat, CoordNum, CoordTZM, Coordinate, Line, LineM, LineString, LineStringTZM, LineTZM,
+    Measure, Point, RectTZM, ZCoord,
+};
 
-pub fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<T>>
-where
-    T: CoordNum,
-{
+pub fn line_string_bounding_rect<T: CoordNum, Z: ZCoord, M: Measure>(
+    line_string: &LineStringTZM<T, Z, M>,
+) -> Option<RectTZM<T, Z, M>> {
     get_bounding_rect(line_string.coords().cloned())
 }
 
-pub fn line_bounding_rect<T>(line: Line<T>) -> Rect<T>
-where
-    T: CoordNum,
-{
-    Rect::new(line.start, line.end)
+pub fn line_bounding_rect<T: CoordNum, Z: ZCoord, M: Measure>(
+    line: LineTZM<T, Z, M>,
+) -> RectTZM<T, Z, M> {
+    RectTZM::new(line.start, line.end)
 }
 
-pub fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>
+pub fn get_bounding_rect<I, T, Z, M>(collection: I) -> Option<RectTZM<T, Z, M>>
 where
     T: CoordNum,
-    I: IntoIterator<Item = Coordinate<T>>,
+    Z: ZCoord,
+    M: Measure,
+    I: IntoIterator<Item = CoordTZM<T, Z, M>>,
 {
     let mut iter = collection.into_iter();
     if let Some(pnt) = iter.next() {
         let mut xrange = (pnt.x, pnt.x);
         let mut yrange = (pnt.y, pnt.y);
+        let mut zrange = (pnt.z, pnt.z);
+        let mut mrange = (pnt.m, pnt.m);
         for pnt in iter {
-            let (px, py) = pnt.x_y();
-            xrange = get_min_max(px, xrange.0, xrange.1);
-            yrange = get_min_max(py, yrange.0, yrange.1);
+            xrange = get_min_max(pnt.x, xrange.0, xrange.1);
+            yrange = get_min_max(pnt.y, yrange.0, yrange.1);
+            zrange = get_min_max(pnt.z, zrange.0, zrange.1);
+            mrange = get_min_max(pnt.m, mrange.0, mrange.1);
         }
 
-        return Some(Rect::new(
+        return Some(RectTZM::new(
             coord! {
                 x: xrange.0,
                 y: yrange.0,
+                z: zrange.0,
+                m: mrange.0,
             },
             coord! {
                 x: xrange.1,
                 y: yrange.1,
+                z: zrange.1,
+                m: mrange.1,
             },
         ));
     }
@@ -83,10 +93,7 @@ where
     s.abs() * dx.hypot(dy)
 }
 
-pub fn line_euclidean_length<T>(line: Line<T>) -> T
-where
-    T: CoordFloat,
-{
+pub fn line_euclidean_length<T: CoordFloat, M: Measure>(line: LineM<T, M>) -> T {
     line.dx().hypot(line.dy())
 }
 

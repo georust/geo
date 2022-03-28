@@ -1,4 +1,4 @@
-use crate::{CoordNum, Geometry};
+use crate::{CoordNum, Geometry, GeometryTZM, Measure, NoValue, ZCoord};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -71,29 +71,34 @@ use std::ops::{Index, IndexMut};
 ///
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct GeometryCollection<T: CoordNum>(pub Vec<Geometry<T>>);
+pub struct GeometryCollectionTZM<T: CoordNum, Z: ZCoord, M: Measure>(pub Vec<GeometryTZM<T, Z, M>>);
+
+pub type GeometryCollection<T> = GeometryCollectionTZM<T, NoValue, NoValue>;
+pub type GeometryCollectionM<T, M> = GeometryCollectionTZM<T, NoValue, M>;
+pub type GeometryCollectionZ<T> = GeometryCollectionTZM<T, T, NoValue>;
+pub type GeometryCollectionZM<T, M> = GeometryCollectionTZM<T, T, M>;
 
 // Implementing Default by hand because T does not have Default restriction
 // todo: consider adding Default as a CoordNum requirement
-impl<T: CoordNum> Default for GeometryCollection<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> Default for GeometryCollectionTZM<T, Z, M> {
     fn default() -> Self {
         Self(Vec::new())
     }
 }
 
-impl<T: CoordNum> GeometryCollection<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> GeometryCollectionTZM<T, Z, M> {
     /// Return an empty GeometryCollection
     #[deprecated(
         note = "Will be replaced with a parametrized version in upcoming version. Use GeometryCollection::default() instead"
     )]
     pub fn new() -> Self {
-        GeometryCollection::default()
+        GeometryCollectionTZM::default()
     }
 
     /// DO NOT USE!
     /// This fn will be renamed to `new` in the upcoming version.
     /// This fn is not marked as deprecated because it would require extensive refactoring of the geo code.
-    pub fn new_from(value: Vec<Geometry<T>>) -> Self {
+    pub fn new_from(value: Vec<GeometryTZM<T, Z, M>>) -> Self {
         Self(value)
     }
 
@@ -110,29 +115,33 @@ impl<T: CoordNum> GeometryCollection<T> {
 
 /// Convert any Geometry (or anything that can be converted to a Geometry) into a
 /// GeometryCollection
-impl<T: CoordNum, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure, IG: Into<GeometryTZM<T, Z, M>>> From<IG>
+    for GeometryCollectionTZM<T, Z, M>
+{
     fn from(x: IG) -> Self {
         Self(vec![x.into()])
     }
 }
 
 /// Collect Geometries (or what can be converted to a Geometry) into a GeometryCollection
-impl<T: CoordNum, IG: Into<Geometry<T>>> FromIterator<IG> for GeometryCollection<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure, IG: Into<GeometryTZM<T, Z, M>>> FromIterator<IG>
+    for GeometryCollectionTZM<T, Z, M>
+{
     fn from_iter<I: IntoIterator<Item = IG>>(iter: I) -> Self {
         Self(iter.into_iter().map(|g| g.into()).collect())
     }
 }
 
-impl<T: CoordNum> Index<usize> for GeometryCollection<T> {
-    type Output = Geometry<T>;
+impl<T: CoordNum, Z: ZCoord, M: Measure> Index<usize> for GeometryCollectionTZM<T, Z, M> {
+    type Output = GeometryTZM<T, Z, M>;
 
-    fn index(&self, index: usize) -> &Geometry<T> {
+    fn index(&self, index: usize) -> &GeometryTZM<T, Z, M> {
         self.0.index(index)
     }
 }
 
-impl<T: CoordNum> IndexMut<usize> for GeometryCollection<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Geometry<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> IndexMut<usize> for GeometryCollectionTZM<T, Z, M> {
+    fn index_mut(&mut self, index: usize) -> &mut GeometryTZM<T, Z, M> {
         self.0.index_mut(index)
     }
 }

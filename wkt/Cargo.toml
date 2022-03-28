@@ -1,0 +1,28 @@
+[package]
+name = "wkt"
+description = "Rust read/write support for well-known text (WKT)"
+version = "0.10.0"
+license = "MIT/Apache-2.0"
+repository = "https://github.com/georust/wkt"
+autobenches = true
+readme = "README.md"
+keywords = ["geo", "geospatial", "wkt"]
+edition = "2021"
+
+[dependencies]
+geo-types = { path = "../geo-types", version = "0.7.3", optional = true }
+num-traits = "0.2"
+serde = { version = "1.0", default-features = false, optional = true }
+thiserror = "1.0.23"
+
+[dev-dependencies]
+criterion = { version = "0.2" }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = "1.0"
+
+[features]
+default = ["geo-types"]
+
+[[bench]]
+name = "parse"
+harness = false

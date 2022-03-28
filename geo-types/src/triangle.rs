@@ -1,4 +1,4 @@
-use crate::{polygon, CoordNum, Coordinate, Line, Polygon};
+use crate::{polygon, CoordNum, CoordTZM, LineTZM, Measure, NoValue, PolygonTZM, ZCoord};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -9,23 +9,32 @@ use approx::{AbsDiffEq, RelativeEq};
 /// vertices must not be collinear and they must be distinct.
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Triangle<T: CoordNum>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);
+pub struct TriangleTZM<T: CoordNum, Z: ZCoord, M: Measure>(
+    pub CoordTZM<T, Z, M>,
+    pub CoordTZM<T, Z, M>,
+    pub CoordTZM<T, Z, M>,
+);
 
-impl<T: CoordNum> Triangle<T> {
+pub type Triangle<T> = TriangleTZM<T, NoValue, NoValue>;
+pub type TriangleM<T, M> = TriangleTZM<T, NoValue, M>;
+pub type TriangleZ<T> = TriangleTZM<T, T, NoValue>;
+pub type TriangleZM<T, M> = TriangleTZM<T, T, M>;
+
+impl<T: CoordNum, Z: ZCoord, M: Measure> TriangleTZM<T, Z, M> {
     /// Instantiate Self from the raw content value
-    pub fn new(v1: Coordinate<T>, v2: Coordinate<T>, v3: Coordinate<T>) -> Self {
+    pub fn new(v1: CoordTZM<T, Z, M>, v2: CoordTZM<T, Z, M>, v3: CoordTZM<T, Z, M>) -> Self {
         Self(v1, v2, v3)
     }
 
-    pub fn to_array(&self) -> [Coordinate<T>; 3] {
+    pub fn to_array(&self) -> [CoordTZM<T, Z, M>; 3] {
         [self.0, self.1, self.2]
     }
 
-    pub fn to_lines(&self) -> [Line<T>; 3] {
+    pub fn to_lines(&self) -> [LineTZM<T, Z, M>; 3] {
         [
-            Line::new(self.0, self.1),
-            Line::new(self.1, self.2),
-            Line::new(self.2, self.0),
+            LineTZM::new(self.0, self.1),
+            LineTZM::new(self.1, self.2),
+            LineTZM::new(self.2, self.0),
         ]
     }
 
@@ -52,12 +61,14 @@ impl<T: CoordNum> Triangle<T> {
     ///     ],
     /// );
     /// ```
-    pub fn to_polygon(self) -> Polygon<T> {
+    pub fn to_polygon(self) -> PolygonTZM<T, Z, M> {
         polygon![self.0, self.1, self.2, self.0]
     }
 }
 
-impl<IC: Into<Coordinate<T>> + Copy, T: CoordNum> From<[IC; 3]> for Triangle<T> {
+impl<IC: Into<CoordTZM<T, Z, M>> + Copy, T: CoordNum, Z: ZCoord, M: Measure> From<[IC; 3]>
+    for TriangleTZM<T, Z, M>
+{
     fn from(array: [IC; 3]) -> Self {
         Self(array[0].into(), array[1].into(), array[2].into())
     }

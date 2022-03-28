@@ -17,11 +17,13 @@ proj-network = ["use-proj", "proj/network"]
 use-serde = ["serde", "geo-types/serde"]
 
 [dependencies]
-geo-types = { version = "0.7.3", features = ["approx", "use-rstar"] }
+geo-types = { path = "../geo-types", version = "0.7.3", features = ["approx", "use-rstar"] }
 geographiclib-rs = "0.2"
 log = "0.4.11"
 num-traits = "0.2"
-proj = { version = "0.25.2", optional = true }
+#proj = { version = "0.25.2", optional = true }
+# Fixing proj to #117 merge
+proj = { git = "https://github.com/georust/proj", rev = "e39a671d9afd52c13e180516d6dffd9b79a89d2e", optional = true }
 robust = "0.2.2"
 rstar = "0.8"
 serde = { version = "1.0", optional = true, features = ["derive"] }
