@@ -1,4 +1,4 @@
-use crate::{CoordNum, LineString};
+use crate::{CoordNum, LineStringTZM, Measure, NoValue, ZCoord};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -33,11 +33,16 @@ use std::iter::FromIterator;
 /// of a closed `MultiLineString` is always empty.
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MultiLineString<T: CoordNum>(pub Vec<LineString<T>>);
+pub struct MultiLineStringTZM<T: CoordNum, Z: ZCoord, M: Measure>(pub Vec<LineStringTZM<T, Z, M>>);
 
-impl<T: CoordNum> MultiLineString<T> {
+pub type MultiLineString<T> = MultiLineStringTZM<T, NoValue, NoValue>;
+pub type MultiLineStringM<T, M> = MultiLineStringTZM<T, NoValue, M>;
+pub type MultiLineStringZ<T> = MultiLineStringTZM<T, T, NoValue>;
+pub type MultiLineStringZM<T, M> = MultiLineStringTZM<T, T, M>;
+
+impl<T: CoordNum, Z: ZCoord, M: Measure> MultiLineStringTZM<T, Z, M> {
     /// Instantiate Self from the raw content value
-    pub fn new(value: Vec<LineString<T>>) -> Self {
+    pub fn new(value: Vec<LineStringTZM<T, Z, M>>) -> Self {
         Self(value)
     }
 
@@ -63,55 +68,59 @@ impl<T: CoordNum> MultiLineString<T> {
     /// ```
     pub fn is_closed(&self) -> bool {
         // Note: Unlike JTS et al, we consider an empty MultiLineString as closed.
-        self.iter().all(LineString::is_closed)
+        self.iter().all(LineStringTZM::is_closed)
     }
 }
 
-impl<T: CoordNum, ILS: Into<LineString<T>>> From<ILS> for MultiLineString<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure, ILS: Into<LineStringTZM<T, Z, M>>> From<ILS>
+    for MultiLineStringTZM<T, Z, M>
+{
     fn from(ls: ILS) -> Self {
         Self(vec![ls.into()])
     }
 }
 
-impl<T: CoordNum, ILS: Into<LineString<T>>> FromIterator<ILS> for MultiLineString<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure, ILS: Into<LineStringTZM<T, Z, M>>> FromIterator<ILS>
+    for MultiLineStringTZM<T, Z, M>
+{
     fn from_iter<I: IntoIterator<Item = ILS>>(iter: I) -> Self {
         Self(iter.into_iter().map(|ls| ls.into()).collect())
     }
 }
 
-impl<T: CoordNum> IntoIterator for MultiLineString<T> {
-    type Item = LineString<T>;
-    type IntoIter = ::std::vec::IntoIter<LineString<T>>;
+impl<T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for MultiLineStringTZM<T, Z, M> {
+    type Item = LineStringTZM<T, Z, M>;
+    type IntoIter = ::std::vec::IntoIter<LineStringTZM<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
 }
 
-impl<'a, T: CoordNum> IntoIterator for &'a MultiLineString<T> {
-    type Item = &'a LineString<T>;
-    type IntoIter = ::std::slice::Iter<'a, LineString<T>>;
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a MultiLineStringTZM<T, Z, M> {
+    type Item = &'a LineStringTZM<T, Z, M>;
+    type IntoIter = ::std::slice::Iter<'a, LineStringTZM<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         (&self.0).iter()
     }
 }
 
-impl<'a, T: CoordNum> IntoIterator for &'a mut MultiLineString<T> {
-    type Item = &'a mut LineString<T>;
-    type IntoIter = ::std::slice::IterMut<'a, LineString<T>>;
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a mut MultiLineStringTZM<T, Z, M> {
+    type Item = &'a mut LineStringTZM<T, Z, M>;
+    type IntoIter = ::std::slice::IterMut<'a, LineStringTZM<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         (&mut self.0).iter_mut()
     }
 }
 
-impl<T: CoordNum> MultiLineString<T> {
-    pub fn iter(&self) -> impl Iterator<Item = &LineString<T>> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> MultiLineStringTZM<T, Z, M> {
+    pub fn iter(&self) -> impl Iterator<Item = &LineStringTZM<T, Z, M>> {
         self.0.iter()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut LineString<T>> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut LineStringTZM<T, Z, M>> {
         self.0.iter_mut()
     }
 }
@@ -195,7 +204,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::line_string;
+    use crate::{line_string, LineString};
 
     #[test]
     fn test_iter() {

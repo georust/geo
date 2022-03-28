@@ -177,22 +177,26 @@ extern crate proj;
 extern crate rstar;
 
 pub use crate::algorithm::*;
-#[allow(deprecated)]
-pub use crate::traits::ToGeo;
 pub use crate::types::Closest;
 
 pub use geo_types::{
-    coord, line_string, point, polygon, CoordFloat, CoordNum, Coordinate, Geometry,
-    GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
-    Polygon, Rect, Triangle,
+    coord, line_string, point, polygon, CoordFloat, CoordM, CoordNum, CoordTZM, CoordZ, CoordZM,
+    Coordinate, Geometry, GeometryCollection, GeometryCollectionM, GeometryCollectionTZM,
+    GeometryCollectionZ, GeometryCollectionZM, GeometryM, GeometryTZM, GeometryZ, GeometryZM, Line,
+    LineM, LineString, LineStringM, LineStringTZM, LineStringZ, LineStringZM, LineTZM, LineZ,
+    LineZM, MultiLineString, MultiLineStringM, MultiLineStringTZM, MultiLineStringZ,
+    MultiLineStringZM, MultiPoint, MultiPointM, MultiPointTZM, MultiPointZ, MultiPointZM,
+    MultiPolygon, MultiPolygonM, MultiPolygonTZM, MultiPolygonZ, MultiPolygonZM, NoValue, Point,
+    PointM, PointTZM, PointZ, PointZM, Polygon, PolygonM, PolygonTZM, PolygonZ, PolygonZM, Rect,
+    RectM, RectTZM, RectZ, RectZM, Triangle, TriangleM, TriangleTZM, TriangleZ, TriangleZM,
 };
 
 /// This module includes all the functions of geometric calculations
 pub mod algorithm;
 mod geometry_cow;
-mod traits;
 mod types;
 mod utils;
+
 pub(crate) use geometry_cow::GeometryCow;
 
 #[cfg(test)]
@@ -292,7 +296,9 @@ pub mod prelude {
 /// }
 /// ```
 pub trait GeoFloat: num_traits::Float + GeoNum {}
+
 impl<T> GeoFloat for T where T: num_traits::Float + GeoNum {}
 
 pub trait GeoNum: CoordNum + algorithm::kernels::HasKernel {}
+
 impl<T> GeoNum for T where T: CoordNum + algorithm::kernels::HasKernel {}

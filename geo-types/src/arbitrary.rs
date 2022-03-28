@@ -1,36 +1,45 @@
 use crate::{
-    CoordFloat, Coordinate, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon, Rect, Triangle,
+    CoordFloat, CoordTZM, GeometryCollectionTZM, GeometryTZM, LineStringTZM, Measure,
+    MultiLineStringTZM, MultiPointTZM, MultiPolygonTZM, PointTZM, PolygonTZM, RectTZM, TriangleTZM,
+    ZCoord,
 };
 use std::mem;
 
-impl<'a, T> arbitrary::Arbitrary<'a> for Coordinate<T>
+impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for CoordTZM<T, Z, M>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
+    Z: arbitrary::Arbitrary<'a> + ZCoord,
+    M: arbitrary::Arbitrary<'a> + Measure,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(coord! {
             x: u.arbitrary::<T>()?,
             y: u.arbitrary::<T>()?,
+            z: u.arbitrary::<Z>()?,
+            m: u.arbitrary::<M>()?,
         })
     }
 }
 
-impl<'a, T> arbitrary::Arbitrary<'a> for Point<T>
+impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for PointTZM<T, Z, M>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
+    Z: arbitrary::Arbitrary<'a> + ZCoord,
+    M: arbitrary::Arbitrary<'a> + Measure,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Coordinate<T>>().map(Self)
+        u.arbitrary::<CoordTZM<T, Z, M>>().map(Self)
     }
 }
 
-impl<'a, T> arbitrary::Arbitrary<'a> for LineString<T>
+impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for LineStringTZM<T, Z, M>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
+    Z: arbitrary::Arbitrary<'a> + ZCoord,
+    M: arbitrary::Arbitrary<'a> + Measure,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        let coords = u.arbitrary::<Vec<Coordinate<T>>>()?;
+        let coords = u.arbitrary::<Vec<CoordTZM<T, Z, M>>>()?;
         if coords.len() < 2 {
             Err(arbitrary::Error::IncorrectFormat)
         } else {
@@ -39,86 +48,105 @@ where
     }
 
     fn size_hint(_depth: usize) -> (usize, Option<usize>) {
-        (mem::size_of::<T>() * 2, None)
+        (
+            mem::size_of::<T>() * 2 + mem::size_of::<Z>() + mem::size_of::<M>(),
+            None,
+        )
     }
 }
 
-impl<'a, T> arbitrary::Arbitrary<'a> for Polygon<T>
+impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for PolygonTZM<T, Z, M>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
+    Z: arbitrary::Arbitrary<'a> + ZCoord,
+    M: arbitrary::Arbitrary<'a> + Measure,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self::new(
-            u.arbitrary::<LineString<T>>()?,
-            u.arbitrary::<Vec<LineString<T>>>()?,
+            u.arbitrary::<LineStringTZM<T, Z, M>>()?,
+            u.arbitrary::<Vec<LineStringTZM<T, Z, M>>>()?,
         ))
     }
 }
 
-impl<'a, T> arbitrary::Arbitrary<'a> for MultiPoint<T>
+impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for MultiPointTZM<T, Z, M>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
+    Z: arbitrary::Arbitrary<'a> + ZCoord,
+    M: arbitrary::Arbitrary<'a> + Measure,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Vec<Point<T>>>().map(Self)
+        u.arbitrary::<Vec<PointTZM<T, Z, M>>>().map(Self)
     }
 }
 
-impl<'a, T> arbitrary::Arbitrary<'a> for MultiLineString<T>
+impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for MultiLineStringTZM<T, Z, M>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
+    Z: arbitrary::Arbitrary<'a> + ZCoord,
+    M: arbitrary::Arbitrary<'a> + Measure,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Vec<LineString<T>>>().map(Self)
+        u.arbitrary::<Vec<LineStringTZM<T, Z, M>>>().map(Self)
     }
 }
 
-impl<'a, T> arbitrary::Arbitrary<'a> for MultiPolygon<T>
+impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for MultiPolygonTZM<T, Z, M>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
+    Z: arbitrary::Arbitrary<'a> + ZCoord,
+    M: arbitrary::Arbitrary<'a> + Measure,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Vec<Polygon<T>>>().map(Self)
+        u.arbitrary::<Vec<PolygonTZM<T, Z, M>>>().map(Self)
     }
 }
 
-impl<'a, T> arbitrary::Arbitrary<'a> for GeometryCollection<T>
+impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for GeometryCollectionTZM<T, Z, M>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
+    Z: arbitrary::Arbitrary<'a> + ZCoord,
+    M: arbitrary::Arbitrary<'a> + Measure,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         u.arbitrary()
     }
 }
 
-impl<'a, T> arbitrary::Arbitrary<'a> for Rect<T>
+impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for RectTZM<T, Z, M>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
+    Z: arbitrary::Arbitrary<'a> + ZCoord,
+    M: arbitrary::Arbitrary<'a> + Measure,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self::new(
-            u.arbitrary::<Coordinate<T>>()?,
-            u.arbitrary::<Coordinate<T>>()?,
+            u.arbitrary::<CoordTZM<T, Z, M>>()?,
+            u.arbitrary::<CoordTZM<T, Z, M>>()?,
         ))
     }
 }
 
-impl<'a, T> arbitrary::Arbitrary<'a> for Triangle<T>
+impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for TriangleTZM<T, Z, M>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
+    Z: arbitrary::Arbitrary<'a> + ZCoord,
+    M: arbitrary::Arbitrary<'a> + Measure,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self(
-            u.arbitrary::<Coordinate<T>>()?,
-            u.arbitrary::<Coordinate<T>>()?,
-            u.arbitrary::<Coordinate<T>>()?,
+            u.arbitrary::<CoordTZM<T, Z, M>>()?,
+            u.arbitrary::<CoordTZM<T, Z, M>>()?,
+            u.arbitrary::<CoordTZM<T, Z, M>>()?,
         ))
     }
 }
 
-impl<'a, T> arbitrary::Arbitrary<'a> for Geometry<T>
+impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for GeometryTZM<T, Z, M>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
+    Z: arbitrary::Arbitrary<'a> + ZCoord,
+    M: arbitrary::Arbitrary<'a> + Measure,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         let n = u.int_in_range(0..=8)?;

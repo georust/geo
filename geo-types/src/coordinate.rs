@@ -1,4 +1,5 @@
-use crate::{coord, CoordNum, Point};
+use crate::{coord, CoordNum, Measure, NoValue, PointTZM, ZCoord};
+use std::fmt::Debug;
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq, UlpsEq};
@@ -25,10 +26,24 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Coordinate<T: CoordNum> {
+pub struct CoordTZM<T: CoordNum, Z: ZCoord, M: Measure> {
     pub x: T,
     pub y: T,
+    pub z: Z,
+    pub m: M,
 }
+
+impl<T: CoordNum, Z: ZCoord, M: Measure> CoordTZM<T, Z, M> {
+    pub fn new(x: T, y: T, z: Z, m: M) -> Self {
+        Self { x, y, z, m }
+    }
+}
+
+pub type Coordinate<T> = CoordTZM<T, NoValue, NoValue>;
+pub type Coord<T> = CoordTZM<T, NoValue, NoValue>;
+pub type CoordM<T, M> = CoordTZM<T, NoValue, M>;
+pub type CoordZ<T> = CoordTZM<T, T, NoValue>;
+pub type CoordZM<T, M> = CoordTZM<T, T, M>;
 
 impl<T: CoordNum> From<(T, T)> for Coordinate<T> {
     fn from(coords: (T, T)) -> Self {
@@ -48,28 +63,25 @@ impl<T: CoordNum> From<[T; 2]> for Coordinate<T> {
     }
 }
 
-impl<T: CoordNum> From<Point<T>> for Coordinate<T> {
-    fn from(point: Point<T>) -> Self {
-        coord! {
-            x: point.x(),
-            y: point.y(),
-        }
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<PointTZM<T, Z, M>> for CoordTZM<T, Z, M> {
+    fn from(point: PointTZM<T, Z, M>) -> Self {
+        point.0
     }
 }
 
-impl<T: CoordNum> From<Coordinate<T>> for (T, T) {
-    fn from(coord: Coordinate<T>) -> Self {
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<CoordTZM<T, Z, M>> for (T, T) {
+    fn from(coord: CoordTZM<T, Z, M>) -> Self {
         (coord.x, coord.y)
     }
 }
 
-impl<T: CoordNum> From<Coordinate<T>> for [T; 2] {
-    fn from(coord: Coordinate<T>) -> Self {
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<CoordTZM<T, Z, M>> for [T; 2] {
+    fn from(coord: CoordTZM<T, Z, M>) -> Self {
         [coord.x, coord.y]
     }
 }
 
-impl<T: CoordNum> Coordinate<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> CoordTZM<T, Z, M> {
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the coordinate.
     ///
     /// # Examples
@@ -106,9 +118,11 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 /// assert_eq!(q.x, -p.x);
 /// assert_eq!(q.y, -p.y);
 /// ```
-impl<T> Neg for Coordinate<T>
+impl<T, Z, M> Neg for CoordTZM<T, Z, M>
 where
     T: CoordNum + Neg<Output = T>,
+    Z: ZCoord + Neg<Output = Z>,
+    M: Measure + Neg<Output = M>,
 {
     type Output = Self;
 
@@ -116,6 +130,8 @@ where
         coord! {
             x: -self.x,
             y: -self.y,
+            z: -self.z,
+            m: -self.m, // todo - is this right?
         }
     }
 }
@@ -134,13 +150,15 @@ where
 /// assert_eq!(sum.x, 2.75);
 /// assert_eq!(sum.y, 5.0);
 /// ```
-impl<T: CoordNum> Add for Coordinate<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> Add for CoordTZM<T, Z, M> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
         coord! {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
+            z: self.z + rhs.z,
+            m: self.m + rhs.m, // todo - is this right?
         }
     }
 }
@@ -159,13 +177,15 @@ impl<T: CoordNum> Add for Coordinate<T> {
 /// assert_eq!(diff.x, 0.25);
 /// assert_eq!(diff.y, 0.);
 /// ```
-impl<T: CoordNum> Sub for Coordinate<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> Sub for CoordTZM<T, Z, M> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
         coord! {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
+            z: self.z - rhs.z,
+            m: self.m - rhs.m, // todo - is this right?
         }
     }
 }
@@ -183,13 +203,20 @@ impl<T: CoordNum> Sub for Coordinate<T> {
 /// assert_eq!(q.x, 5.0);
 /// assert_eq!(q.y, 10.0);
 /// ```
-impl<T: CoordNum> Mul<T> for Coordinate<T> {
+impl<T, Z, M> Mul<T> for CoordTZM<T, Z, M>
+where
+    T: CoordNum,
+    Z: ZCoord + Mul<T, Output = Z>,
+    M: Measure + Mul<T, Output = M>,
+{
     type Output = Self;
 
     fn mul(self, rhs: T) -> Self {
         coord! {
             x: self.x * rhs,
             y: self.y * rhs,
+            z: self.z * rhs,
+            m: self.m * rhs,
         }
     }
 }
@@ -207,13 +234,20 @@ impl<T: CoordNum> Mul<T> for Coordinate<T> {
 /// assert_eq!(q.x, 1.25);
 /// assert_eq!(q.y, 2.5);
 /// ```
-impl<T: CoordNum> Div<T> for Coordinate<T> {
+impl<T, Z, M> Div<T> for CoordTZM<T, Z, M>
+where
+    T: CoordNum,
+    Z: ZCoord + Div<T, Output = Z>,
+    M: Measure + Div<T, Output = M>,
+{
     type Output = Self;
 
     fn div(self, rhs: T) -> Self {
         coord! {
             x: self.x / rhs,
             y: self.y / rhs,
+            z: self.z / rhs,
+            m: self.m / rhs,
         }
     }
 }
@@ -232,21 +266,23 @@ use num_traits::Zero;
 /// assert_eq!(p.x, 0.);
 /// assert_eq!(p.y, 0.);
 /// ```
-impl<T: CoordNum> Coordinate<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> CoordTZM<T, Z, M> {
     pub fn zero() -> Self {
         coord! {
             x: T::zero(),
             y: T::zero(),
+            z: Z::zero(),
+            m: M::zero(),
         }
     }
 }
 
-impl<T: CoordNum> Zero for Coordinate<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> Zero for CoordTZM<T, Z, M> {
     fn zero() -> Self {
         Self::zero()
     }
     fn is_zero(&self) -> bool {
-        self.x.is_zero() && self.y.is_zero()
+        self.x.is_zero() && self.y.is_zero() && self.z.is_zero() && self.m.is_zero()
     }
 }
 
@@ -363,5 +399,37 @@ where
             1 => &mut self.y,
             _ => unreachable!(),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_coordinates() {
+        let p = coord! { x: 1.0, y: 2.0 };
+        assert_relative_eq!(p.x, 1.0);
+        assert_relative_eq!(p.y, 2.0);
+        assert_eq!(p.z, NoValue);
+        assert_eq!(p.m, NoValue);
+
+        let p = coord! { x: 1.0, y: 2.0, z: 3.0 };
+        assert_relative_eq!(p.x, 1.0);
+        assert_relative_eq!(p.y, 2.0);
+        assert_relative_eq!(p.z, 3.0);
+        assert_eq!(p.m, NoValue);
+
+        let p = coord! { x: 1.0, y: 2.0, m: 4_u8 };
+        assert_relative_eq!(p.x, 1.0);
+        assert_relative_eq!(p.y, 2.0);
+        assert_eq!(p.z, NoValue);
+        assert_eq!(p.m, 4_u8);
+
+        let p = coord! { x: 1_i32, y: 2_i32, z: 3_i32, m: 4.0_f64 };
+        assert_eq!(p.x, 1);
+        assert_eq!(p.y, 2);
+        assert_eq!(p.z, 3);
+        assert_relative_eq!(p.m, 4.0);
     }
 }

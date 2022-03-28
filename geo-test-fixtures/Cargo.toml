@@ -5,5 +5,5 @@ edition = "2021"
 publish = false
 
 [dependencies]
-wkt = { version = "0.10.0", default-features = false }
+wkt = { git = "https://github.com/nyurik/wkt.git", branch = "wkt-dim", optional = true }
 geo-types = { path = "../geo-types" }
