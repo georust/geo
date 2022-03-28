@@ -584,10 +584,10 @@ mod test {
             (x: 20., y: 20.),
             (x: 40., y: 20.)
         ];
-        let multi_line_string: MultiLineString<f64> = MultiLineString(vec![ls1, ls2]);
+        let multi_line_string: MultiLineString<f64> = MultiLineString::new(vec![ls1, ls2]);
 
         // Results match with Shapely for `centroid`
-        let expected_around_centroid = MultiLineString(vec![
+        let expected_around_centroid = MultiLineString::new(vec![
             line_string![
                 (x: -5.062519283392216, y: 19.72288595632566),
                 (x: -3.648305721019121, y: 19.72288595632566),
@@ -606,7 +606,7 @@ mod test {
         );
 
         // Results match with Shapely for `center`
-        let expected_around_center: MultiLineString<f64> = MultiLineString(vec![
+        let expected_around_center: MultiLineString<f64> = MultiLineString::new(vec![
             line_string![
                 (x: -1.213203435596426, y: 17.07106781186548),
                 (x: 0.2010101267766693, y: 17.07106781186548),
@@ -757,7 +757,7 @@ mod test {
         assert_eq!(empty_linestring, rotated_empty_linestring);
 
         // multi line string
-        let empty_multilinestring: MultiLineString<f64> = MultiLineString::<f64>(vec![]);
+        let empty_multilinestring: MultiLineString<f64> = MultiLineString::<f64>::new(vec![]);
         let rotated_empty_multilinestring = empty_multilinestring.rotate_around_centroid(90.);
         assert_eq!(empty_multilinestring, rotated_empty_multilinestring);
 

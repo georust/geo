@@ -247,7 +247,7 @@ mod test {
     }
     #[test]
     fn multilinestring_test() {
-        let multiline = MultiLineString(vec![
+        let multiline = MultiLineString::new(vec![
             line_string![(x: 1., y: 1.), (x: -40., y: 1.)],
             line_string![(x: 1., y: 1.), (x: 50., y: 1.)],
             line_string![(x: 1., y: 1.), (x: 1., y: -60.)],

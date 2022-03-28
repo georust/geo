@@ -45,7 +45,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn chaikin_smoothing(&self, n_iterations: usize) -> Self {
-        MultiLineString(
+        MultiLineString::new(
             self.0
                 .iter()
                 .map(|ls| ls.chaikin_smoothing(n_iterations))

@@ -215,7 +215,7 @@ where
     T: GeoFloat,
 {
     fn simplify(&self, epsilon: &T) -> Self {
-        MultiLineString(self.iter().map(|l| l.simplify(epsilon)).collect())
+        MultiLineString::new(self.iter().map(|l| l.simplify(epsilon)).collect())
     }
 }
 
@@ -284,7 +284,7 @@ mod test {
 
     #[test]
     fn multilinestring() {
-        let mline = MultiLineString(vec![LineString::from(vec![
+        let mline = MultiLineString::new(vec![LineString::from(vec![
             (0.0, 0.0),
             (5.0, 4.0),
             (11.0, 5.5),
@@ -296,7 +296,7 @@ mod test {
 
         assert_eq!(
             mline2,
-            MultiLineString(vec![LineString::from(vec![
+            MultiLineString::new(vec![LineString::from(vec![
                 (0.0, 0.0),
                 (5.0, 4.0),
                 (11.0, 5.5),

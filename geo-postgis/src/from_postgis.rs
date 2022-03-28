@@ -65,7 +65,7 @@ where
 {
     fn from_postgis(mp: &'a T) -> Self {
         let ret = mp.lines().map(LineString::from_postgis).collect();
-        MultiLineString(ret)
+        MultiLineString::new(ret)
     }
 }
 impl<'a, T> FromPostgis<&'a T> for MultiPolygon<f64>

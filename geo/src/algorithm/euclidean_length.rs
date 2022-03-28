@@ -85,7 +85,7 @@ mod test {
     }
     #[test]
     fn multilinestring_test() {
-        let mline = MultiLineString(vec![
+        let mline = MultiLineString::new(vec![
             line_string![
                 (x: 1., y: 0.),
                 (x: 7., y: 0.),

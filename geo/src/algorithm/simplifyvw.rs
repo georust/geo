@@ -576,7 +576,7 @@ where
     T: CoordFloat + RTreeNum,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> MultiLineString<T> {
-        MultiLineString(
+        MultiLineString::new(
             self.0
                 .iter()
                 .map(|l| l.simplifyvw_preserve(epsilon))
@@ -638,7 +638,7 @@ where
     T: CoordFloat,
 {
     fn simplifyvw(&self, epsilon: &T) -> MultiLineString<T> {
-        MultiLineString(self.iter().map(|l| l.simplifyvw(epsilon)).collect())
+        MultiLineString::new(self.iter().map(|l| l.simplifyvw(epsilon)).collect())
     }
 }
 
@@ -864,10 +864,10 @@ mod test {
         let correct = vec![(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
         let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
 
-        let mline = MultiLineString(vec![LineString::from(points_ls)]);
+        let mline = MultiLineString::new(vec![LineString::from(points_ls)]);
         assert_relative_eq!(
             mline.simplifyvw(&30.),
-            MultiLineString(vec![LineString::from(correct_ls)]),
+            MultiLineString::new(vec![LineString::from(correct_ls)]),
             epsilon = 1e-6
         );
     }

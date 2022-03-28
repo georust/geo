@@ -206,7 +206,7 @@ mod test {
 
     #[test]
     fn test_multi_line_string() {
-        let mls = MultiLineString(vec![
+        let mls = MultiLineString::new(vec![
             line_string![],
             line_string![(x: 0., y: 0.), (x: 1., y: 1.)],
             line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x:2., y: 2.)],
