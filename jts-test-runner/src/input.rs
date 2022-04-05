@@ -269,9 +269,9 @@ fn convert(itm: geo_types::Geometry<f64>) -> geo::GeometryTZM<f64, NoValue, NoVa
                 v.into_iter().map(convert).collect(),
             ))
         }
-        geo_types::Geometry::Line(v) => todo!("{v:?}"),
-        geo_types::Geometry::Rect(v) => todo!("{v:?}"),
-        geo_types::Geometry::Triangle(v) => todo!("{v:?}"),
+        geo_types::Geometry::Line(v) => unreachable!("{v:?}"),
+        geo_types::Geometry::Rect(v) => unreachable!("{v:?}"),
+        geo_types::Geometry::Triangle(v) => unreachable!("{v:?}"),
     }
 }
 
