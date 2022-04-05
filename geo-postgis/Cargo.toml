@@ -12,4 +12,4 @@ edition = "2021"
 
 [dependencies]
 postgis = { version = ">=0.7.0, <0.9.0" }
-geo-types = { version = "0.7", path = "../geo-types" }
+geo-types = { version = "0.8.0", path = "../geo-types" }

@@ -1,5 +1,5 @@
 use geo::algorithm::relate::IntersectionMatrix;
-use geo::{Geometry, Point};
+use geo::{coord, Geometry, NoValue, Point};
 use serde::{Deserialize, Deserializer};
 
 use super::Result;
@@ -38,7 +38,7 @@ pub(crate) struct Case {
     #[serde(default)]
     pub(crate) desc: String,
 
-    #[serde(deserialize_with = "wkt::deserialize_geometry")]
+    #[serde(deserialize_with = "deserialize_from_wkt")]
     pub(crate) a: Geometry<f64>,
 
     #[serde(deserialize_with = "deserialize_opt_geometry", default)]
@@ -58,7 +58,7 @@ pub(crate) struct Test {
 pub struct CentroidInput {
     pub(crate) arg1: String,
 
-    #[serde(rename = "$value", deserialize_with = "wkt::deserialize_point")]
+    #[serde(rename = "$value", deserialize_with = "deserialize_point_from_wkt")]
     pub(crate) expected: Option<geo::Point<f64>>,
 }
 
@@ -66,7 +66,7 @@ pub struct CentroidInput {
 pub struct ConvexHullInput {
     pub(crate) arg1: String,
 
-    #[serde(rename = "$value", deserialize_with = "wkt::deserialize_geometry")]
+    #[serde(rename = "$value", deserialize_with = "deserialize_from_wkt")]
     pub(crate) expected: geo::Geometry<f64>,
 }
 
@@ -215,7 +215,7 @@ where
     D: Deserializer<'de>,
 {
     #[derive(Debug, Deserialize)]
-    struct Wrapper(#[serde(deserialize_with = "wkt::deserialize_geometry")] Geometry<f64>);
+    struct Wrapper(#[serde(deserialize_with = "deserialize_from_wkt")] Geometry<f64>);
 
     Option::<Wrapper>::deserialize(deserializer).map(|opt_wrapped| opt_wrapped.map(|w| w.0))
 }
@@ -228,4 +228,69 @@ where
 {
     String::deserialize(deserializer)
         .and_then(|str| T::from_str(&str).map_err(serde::de::Error::custom))
+}
+
+pub fn deserialize_point_from_wkt<'de, D>(
+    deserializer: D,
+) -> std::result::Result<Option<Point<f64>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    Ok(wkt::deserialize_point::<D, f64>(deserializer)?.map(to_point))
+}
+
+pub fn deserialize_from_wkt<'de, D>(deserializer: D) -> std::result::Result<Geometry<f64>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    return Ok(convert(wkt::deserialize_geometry::<D, f64>(deserializer)?));
+}
+
+fn convert(itm: geo_types::Geometry<f64>) -> geo::GeometryTZM<f64, NoValue, NoValue> {
+    match itm {
+        geo_types::Geometry::Point(v) => geo::Geometry::Point(Point::<f64>::new(v.x(), v.y())),
+        geo_types::Geometry::LineString(v) => geo::Geometry::LineString(to_line_string(v)),
+        geo_types::Geometry::Polygon(v) => geo::Geometry::Polygon(to_polygon(v)),
+        geo_types::Geometry::MultiPoint(geo_types::MultiPoint(v)) => {
+            geo::Geometry::MultiPoint(geo::MultiPoint::new(v.into_iter().map(to_point).collect()))
+        }
+        geo_types::Geometry::MultiLineString(geo_types::MultiLineString(v)) => {
+            geo::Geometry::MultiLineString(geo::MultiLineString::new(
+                v.into_iter().map(to_line_string).collect(),
+            ))
+        }
+        geo_types::Geometry::MultiPolygon(geo_types::MultiPolygon(v)) => {
+            geo::Geometry::MultiPolygon(geo::MultiPolygon::new(
+                v.into_iter().map(to_polygon).collect(),
+            ))
+        }
+        geo_types::Geometry::GeometryCollection(geo_types::GeometryCollection(v)) => {
+            geo::Geometry::GeometryCollection(geo::GeometryCollection::new_from(
+                v.into_iter().map(convert).collect(),
+            ))
+        }
+        geo_types::Geometry::Line(v) => todo!("{v:?}"),
+        geo_types::Geometry::Rect(v) => todo!("{v:?}"),
+        geo_types::Geometry::Triangle(v) => todo!("{v:?}"),
+    }
+}
+
+fn to_point(v: geo_types::Point<f64>) -> geo::Point<f64> {
+    Point::new(v.x(), v.y())
+}
+
+fn to_polygon(v: geo_types::Polygon<f64>) -> geo::PolygonTZM<f64, NoValue, NoValue> {
+    let (exterior, interiors) = v.into_inner();
+    geo::Polygon::new(
+        to_line_string(exterior),
+        interiors.into_iter().map(to_line_string).collect(),
+    )
+}
+
+fn to_line_string(v: geo_types::LineString<f64>) -> geo::LineStringTZM<f64, NoValue, NoValue> {
+    let coords =
+        v.0.into_iter()
+            .map(|coord| coord! { x: coord.x, y: coord.y })
+            .collect();
+    geo::LineString::new(coords)
 }
