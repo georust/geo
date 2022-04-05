@@ -6,3 +6,5 @@ members = ["geo", "geo-types", "geo-postgis", "geo-test-fixtures", "jts-test-run
 # Ensure any transitive dependencies also use the local geo/geo-types
 geo = { path = "geo" }
 geo-types = { path = "geo-types" }
+wkt = { git = "https://github.com/nyurik/wkt",  branch = "wkt-dim" }
+proj = { git = "https://github.com/georust/proj", branch = "main" }
