@@ -22,7 +22,7 @@
 * BREAKING: Remove deprecated `Polygon<T>::is_convex()` -- use `geo::is_convex` on `poly.exterior()` instead.
 * BREAKING: Remove deprecated `Rect<T>::try_new()` -- use `Rect::new` instead, since `Rect::try_new` will never Error. Also removes corresponding `InvalidRectCoordinatesError`.
 
-## Unreleased
+## 0.7.4
 
 * BREAKING: Make `Rect::to_lines` return lines in winding order for `Rect::to_polygon`.
   * <https://github.com/georust/geo/pull/757>
