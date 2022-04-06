@@ -84,14 +84,14 @@ pub trait HasDimensions {
     /// assert_eq!(Dimensions::ZeroDimensional, degenerate_point_rect.dimensions());
     ///
     /// // collections inherit the greatest dimensionality of their elements
-    /// let geometry_collection = GeometryCollection::new_from(vec![degenerate_line_rect.into(), degenerate_point_rect.into()]);
+    /// let geometry_collection = GeometryCollection::new(vec![degenerate_line_rect.into(), degenerate_point_rect.into()]);
     /// assert_eq!(Dimensions::OneDimensional, geometry_collection.dimensions());
     ///
     /// let point = Point::new(10.0, 10.0);
     /// assert_eq!(Dimensions::ZeroDimensional, point.dimensions());
     ///
     /// // An `Empty` dimensionality is distinct from, and less than, being 0-dimensional
-    /// let empty_collection = GeometryCollection::<f32>::new_from(vec![]);
+    /// let empty_collection = GeometryCollection::<f32>::new(vec![]);
     /// assert_eq!(Dimensions::Empty, empty_collection.dimensions());
     /// assert!(empty_collection.dimensions() < point.dimensions());
     /// ```
@@ -123,10 +123,10 @@ pub trait HasDimensions {
     /// assert_eq!(Dimensions::Empty, degenerate_point_rect.boundary_dimensions());
     ///
     /// // collections inherit the greatest dimensionality of their elements
-    /// let geometry_collection = GeometryCollection::new_from(vec![degenerate_line_rect.into(), degenerate_point_rect.into()]);
+    /// let geometry_collection = GeometryCollection::new(vec![degenerate_line_rect.into(), degenerate_point_rect.into()]);
     /// assert_eq!(Dimensions::ZeroDimensional, geometry_collection.boundary_dimensions());
     ///
-    /// let geometry_collection = GeometryCollection::<f32>::new_from(vec![]);
+    /// let geometry_collection = GeometryCollection::<f32>::new(vec![]);
     /// assert_eq!(Dimensions::Empty, geometry_collection.boundary_dimensions());
     /// ```
     fn boundary_dimensions(&self) -> Dimensions;
