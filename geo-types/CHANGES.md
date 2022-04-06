@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.7.4
 
 * BREAKING: Make `Rect::to_lines` return lines in winding order for `Rect::to_polygon`.
   * <https://github.com/georust/geo/pull/757>
