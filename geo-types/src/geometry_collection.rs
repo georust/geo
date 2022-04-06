@@ -25,7 +25,7 @@ use std::ops::{Index, IndexMut};
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
 /// let p = point!(x: 1.0, y: 1.0);
 /// let pe = Geometry::Point(p);
-/// let gc = GeometryCollection::new_from(vec![pe]);
+/// let gc = GeometryCollection::new(vec![pe]);
 /// for geom in gc {
 ///     println!("{:?}", Point::try_from(geom).unwrap().x());
 /// }
@@ -37,7 +37,7 @@ use std::ops::{Index, IndexMut};
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
 /// let p = point!(x: 1.0, y: 1.0);
 /// let pe = Geometry::Point(p);
-/// let gc = GeometryCollection::new_from(vec![pe]);
+/// let gc = GeometryCollection::new(vec![pe]);
 /// gc.iter().for_each(|geom| println!("{:?}", geom));
 /// ```
 ///
@@ -48,7 +48,7 @@ use std::ops::{Index, IndexMut};
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
 /// let p = point!(x: 1.0, y: 1.0);
 /// let pe = Geometry::Point(p);
-/// let mut gc = GeometryCollection::new_from(vec![pe]);
+/// let mut gc = GeometryCollection::new(vec![pe]);
 /// gc.iter_mut().for_each(|geom| {
 ///    if let Geometry::Point(p) = geom {
 ///        p.set_x(0.2);
@@ -65,7 +65,7 @@ use std::ops::{Index, IndexMut};
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
 /// let p = point!(x: 1.0, y: 1.0);
 /// let pe = Geometry::Point(p);
-/// let gc = GeometryCollection::new_from(vec![pe]);
+/// let gc = GeometryCollection::new(vec![pe]);
 /// println!("{:?}", gc[0]);
 /// ```
 ///
@@ -82,17 +82,12 @@ impl<T: CoordNum> Default for GeometryCollection<T> {
 }
 
 impl<T: CoordNum> GeometryCollection<T> {
-    /// Return an empty GeometryCollection
-    #[deprecated(
-        note = "Will be replaced with a parametrized version in upcoming version. Use GeometryCollection::default() instead"
-    )]
-    pub fn new() -> Self {
-        GeometryCollection::default()
+    /// Instantiate Self from the raw content value
+    pub fn new(value: Vec<Geometry<T>>) -> Self {
+        Self(value)
     }
 
-    /// DO NOT USE!
-    /// This fn will be renamed to `new` in the upcoming version.
-    /// This fn is not marked as deprecated because it would require extensive refactoring of the geo code.
+    #[deprecated(note = "Use `GeometryCollection::new()` instead")]
     pub fn new_from(value: Vec<Geometry<T>>) -> Self {
         Self(value)
     }
@@ -254,8 +249,8 @@ where
     /// ```
     /// use geo_types::{GeometryCollection, point};
     ///
-    /// let a = GeometryCollection::new_from(vec![point![x: 1.0, y: 2.0].into()]);
-    /// let b = GeometryCollection::new_from(vec![point![x: 1.0, y: 2.01].into()]);
+    /// let a = GeometryCollection::new(vec![point![x: 1.0, y: 2.0].into()]);
+    /// let b = GeometryCollection::new(vec![point![x: 1.0, y: 2.01].into()]);
     ///
     /// approx::assert_relative_eq!(a, b, max_relative=0.1);
     /// approx::assert_relative_ne!(a, b, max_relative=0.0001);
@@ -296,8 +291,8 @@ where
     /// ```
     /// use geo_types::{GeometryCollection, point};
     ///
-    /// let a = GeometryCollection::new_from(vec![point![x: 0.0, y: 0.0].into()]);
-    /// let b = GeometryCollection::new_from(vec![point![x: 0.0, y: 0.1].into()]);
+    /// let a = GeometryCollection::new(vec![point![x: 0.0, y: 0.0].into()]);
+    /// let b = GeometryCollection::new(vec![point![x: 0.0, y: 0.1].into()]);
     ///
     /// approx::abs_diff_eq!(a, b, epsilon=0.1);
     /// approx::abs_diff_ne!(a, b, epsilon=0.001);
