@@ -92,6 +92,11 @@ impl<T: CoordNum> GeometryCollection<T> {
         Self(value)
     }
 
+    #[deprecated(note = "Use `GeometryCollection::new()` instead")]
+    pub fn new_from(value: Vec<Geometry<T>>) -> Self {
+        Self(value)
+    }
+
     /// Number of geometries in this GeometryCollection
     pub fn len(&self) -> usize {
         self.0.len()

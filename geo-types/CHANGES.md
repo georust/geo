@@ -21,7 +21,7 @@
   * Remove `set_lat()` -- use `set_y()` instead.
 * BREAKING: Remove deprecated `Polygon<T>::is_convex()` -- use `geo::is_convex` on `poly.exterior()` instead.
 * BREAKING: Remove deprecated `Rect<T>::try_new()` -- use `Rect::new` instead, since `Rect::try_new` will never Error. Also removes corresponding `InvalidRectCoordinatesError`.
-* BREAKING: Rename `GeometryCollection::new(value)` into the `GeometryCollection::new(value)`.
+* BREAKING: Remove `GeometryCollection::new(value)`,  replace it with `GeometryCollection::new(value)`, and deprecate `GeometryCollection::new_from(value)`.
   * The old `GeometryCollection::new()` is no longer available, and should be replaced with `GeometryCollection::default()` if an empty `GeometryCollection` is needed.
 
 ## 0.7.4
