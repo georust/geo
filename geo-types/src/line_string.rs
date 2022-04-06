@@ -1,4 +1,4 @@
-use crate::{CoordNum, CoordTZM, LineTZM, Measure, NoValue, Point, PointTZM, TriangleTZM, ZCoord};
+use crate::{CoordNum, CoordTZM, LineTZM, Measure, NoValue, PointTZM, TriangleTZM, ZCoord};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
@@ -483,19 +483,19 @@ macro_rules! impl_rstar_line_string {
         where
             T: ::num_traits::Float + ::$rstar::RTreeNum,
         {
-            type Envelope = ::$rstar::AABB<Point<T>>;
+            type Envelope = ::$rstar::AABB<crate::Point<T>>;
 
             fn envelope(&self) -> Self::Envelope {
                 use num_traits::Bounded;
                 let bounding_rect = crate::private_utils::line_string_bounding_rect(self);
                 match bounding_rect {
                     None => ::$rstar::AABB::from_corners(
-                        Point::new(Bounded::min_value(), Bounded::min_value()),
-                        Point::new(Bounded::max_value(), Bounded::max_value()),
+                        crate::Point::new(Bounded::min_value(), Bounded::min_value()),
+                        crate::Point::new(Bounded::max_value(), Bounded::max_value()),
                     ),
                     Some(b) => ::$rstar::AABB::from_corners(
-                        Point::new(b.min().x, b.min().y),
-                        Point::new(b.max().x, b.max().y),
+                        crate::Point::new(b.min().x, b.min().y),
+                        crate::Point::new(b.max().x, b.max().y),
                     ),
                 }
             }
@@ -505,7 +505,7 @@ macro_rules! impl_rstar_line_string {
         where
             T: ::num_traits::Float + ::$rstar::RTreeNum,
         {
-            fn distance_2(&self, point: &Point<T>) -> T {
+            fn distance_2(&self, point: &crate::Point<T>) -> T {
                 let d = crate::private_utils::point_line_string_euclidean_distance(*point, self);
                 if d == T::zero() {
                     d

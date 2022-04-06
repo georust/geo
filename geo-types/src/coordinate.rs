@@ -131,7 +131,7 @@ where
             x: -self.x,
             y: -self.y,
             z: -self.z,
-            m: -self.m, // todo - is this right?
+            m: -self.m,
         }
     }
 }
@@ -158,7 +158,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> Add for CoordTZM<T, Z, M> {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
             z: self.z + rhs.z,
-            m: self.m + rhs.m, // todo - is this right?
+            m: self.m + rhs.m,
         }
     }
 }
@@ -185,7 +185,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> Sub for CoordTZM<T, Z, M> {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
             z: self.z - rhs.z,
-            m: self.m - rhs.m, // todo - is this right?
+            m: self.m - rhs.m,
         }
     }
 }
