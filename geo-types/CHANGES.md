@@ -21,6 +21,8 @@
   * Remove `set_lat()` -- use `set_y()` instead.
 * BREAKING: Remove deprecated `Polygon<T>::is_convex()` -- use `geo::is_convex` on `poly.exterior()` instead.
 * BREAKING: Remove deprecated `Rect<T>::try_new()` -- use `Rect::new` instead, since `Rect::try_new` will never Error. Also removes corresponding `InvalidRectCoordinatesError`.
+* BREAKING: Rename `GeometryCollection::new(value)` into the `GeometryCollection::new(value)`.
+  * The old `GeometryCollection::new()` is no longer available, and should be replaced with `GeometryCollection::default()` if an empty `GeometryCollection` is needed.
 
 ## 0.7.4
 
@@ -39,7 +41,7 @@
 * Extend `point!` macro to support single coordinate expression arguments `point!(coordinate)` (coordinate can be created with the `coord!` macro)
   * <https://github.com/georust/geo/pull/775>
 * `LineString`, `MultiPoint`, `MultiPolygon`, `Triangle`, `MultiLineString` now have a new constructor `new(...)`. `GeometryCollection` has a `new_from(...)` constructor. `GeometryCollection::new()` has been deprecated - use `GeometryCollection::default()` instead. Do not use tuple constructors like ~~`MultiPoint(...)`~~ for any of the geo-types. Use `MultiPoint::new(...)` and similar ones instead.
-  * PRs: [MultiPolygon::new](https://github.com/georust/geo/pull/786), [MultiLineString::new](https://github.com/georust/geo/pull/784), [Triangle::new](https://github.com/georust/geo/pull/783), [GeometryCollection::new_from](https://github.com/georust/geo/pull/782), [LineString::new](https://github.com/georust/geo/pull/781), [MultiPoint::new](https://github.com/georust/geo/pull/778), [Point::from](https://github.com/georust/geo/pull/777)
+  * PRs: [MultiPolygon::new](https://github.com/georust/geo/pull/786), [MultiLineString::new](https://github.com/georust/geo/pull/784), [Triangle::new](https://github.com/georust/geo/pull/783), [GeometryCollection::new](https://github.com/georust/geo/pull/782), [LineString::new](https://github.com/georust/geo/pull/781), [MultiPoint::new](https://github.com/georust/geo/pull/778), [Point::from](https://github.com/georust/geo/pull/777)
 
 ## 0.7.3
 
