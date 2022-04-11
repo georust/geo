@@ -5,6 +5,8 @@
 * Add `LinesIter` algorithm to iterate over the lines in geometries.
   * Very similar to `CoordsIter`, but only implemented where it makes sense (e.g., for `Polygon`, `Rect`, but not `Point`).
   * <https://github.com/georust/geo/pull/757>
+* Add `TryMapCoordsInplace` algorithm that is similar to `TryMapCoords` but modifies a geometry in-place
+  * <https://github.com/georust/geo/pull/800>
 
 ## 0.19.0
 
