@@ -421,18 +421,16 @@ impl<T: CoordNum, E> TryMapCoordsInplace<T, E> for Polygon<T> {
             }
         });
 
-        if result.is_err() {
-            return result;
-        }
-
-        self.interiors_mut(|line_strings| {
-            for line_string in line_strings {
-                if let Err(e) = line_string.try_map_coords_inplace(&func) {
-                    result = Err(e);
-                    break;
+        if result.is_ok() {
+            self.interiors_mut(|line_strings| {
+                for line_string in line_strings {
+                    if let Err(e) = line_string.try_map_coords_inplace(&func) {
+                        result = Err(e);
+                        break;
+                    }
                 }
-            }
-        });
+            });
+        }
 
         result
     }
