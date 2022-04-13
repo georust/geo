@@ -74,6 +74,7 @@ pub(crate) mod polygon_distance_fast_path;
 pub mod proj;
 /// Relate two geometries based on DE-9IM
 pub mod relate;
+pub mod rings_iter;
 /// Rotate a `Geometry` around either its centroid or a `Point` by an angle given in degrees.
 pub mod rotate;
 /// Simplify `Geometries` using the Ramer-Douglas-Peucker algorithm.

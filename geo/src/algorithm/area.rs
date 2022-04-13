@@ -2,6 +2,7 @@ use crate::{
     CoordFloat, CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
+use crate::algorithm::rings_iter::RingsIter;
 
 pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
 where
@@ -67,23 +68,54 @@ where
 /// assert_eq!(polygon.signed_area(), -30.);
 /// assert_eq!(polygon.unsigned_area(), 30.);
 /// ```
-pub trait Area<T>
+pub trait Area<'a, T>
 where
-    T: CoordNum,
+    T: CoordNum + 'a,
 {
-    fn signed_area(&self) -> T;
+    fn signed_area(&'a self) -> T;
 
-    fn unsigned_area(&self) -> T;
+    fn unsigned_area(&'a self) -> T;
+}
+
+impl<'a, T, G> Area<'a, T> for G
+where
+    G: RingsIter<'a, Scalar = T>,
+    T: CoordNum + num_traits::Signed + 'a,
+{
+    fn signed_area(&'a self) -> T {
+        let area = self.exterior_rings_iter().fold(T::zero(), |total, next| {
+            total - get_linestring_area(&next).abs()
+        });
+
+        // We could use winding order here, but that would
+        // result in computing the shoelace formula twice.
+        let is_negative = area < T::zero();
+
+        let area = self.interior_rings_iter().fold(area.abs(), |total, next| {
+            total - get_linestring_area(&next).abs()
+        });
+
+        if is_negative {
+            -area
+        } else {
+            area
+        }
+    }
+
+    fn unsigned_area(&'a self) -> T {
+        self.signed_area().abs()
+    }
 }
 
 // Calculation of simple (no interior holes) Polygon area
 pub(crate) fn get_linestring_area<T>(linestring: &LineString<T>) -> T
 where
-    T: CoordFloat,
+    T: CoordNum,
 {
     twice_signed_ring_area(linestring) / (T::one() + T::one())
 }
 
+/*
 impl<T> Area<T> for Point<T>
 where
     T: CoordNum,
@@ -260,6 +292,7 @@ where
             .fold(T::zero(), |acc, next| acc + next)
     }
 }
+*/
 
 #[cfg(test)]
 mod test {

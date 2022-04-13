@@ -70,6 +70,7 @@ where
     }
 }
 
+// TODO: use triangles here
 fn ring_area<T>(coords: &LineString<T>) -> T
 where
     T: Float + CoordNum,
