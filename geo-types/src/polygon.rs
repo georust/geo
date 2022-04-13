@@ -384,6 +384,22 @@ impl<T: CoordNum> Polygon<T> {
         self.interiors.push(new_interior);
     }
 
+    pub fn rings_mut<F>(&mut self, f: F)
+    where
+        F: FnOnce(
+            std::iter::Chain<
+                std::iter::Once<&mut LineString<T>>,
+                std::slice::IterMut<'_, LineString<T>>,
+            >,
+        ),
+    {
+        f(std::iter::once(&mut self.exterior).chain(self.interiors.iter_mut()));
+        self.exterior.close();
+        for interior in &mut self.interiors {
+            interior.close();
+        }
+    }
+
     /// Wrap-around previous-vertex
     fn previous_vertex(&self, current_vertex: usize) -> usize
     where

@@ -396,11 +396,7 @@ impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for Polygon<T> {
 
 impl<T: CoordNum> MapCoordsInplace<T> for Polygon<T> {
     fn map_coords_inplace(&mut self, func: impl Fn(&(T, T)) -> (T, T) + Copy) {
-        self.exterior_mut(|line_string| {
-            line_string.map_coords_inplace(func);
-        });
-
-        self.interiors_mut(|line_strings| {
+        self.rings_mut(|line_strings| {
             for line_string in line_strings {
                 line_string.map_coords_inplace(func);
             }
@@ -415,22 +411,14 @@ impl<T: CoordNum, E> TryMapCoordsInplace<T, E> for Polygon<T> {
     ) -> Result<(), E> {
         let mut result = Ok(());
 
-        self.exterior_mut(|line_string| {
-            if let Err(e) = line_string.try_map_coords_inplace(&func) {
-                result = Err(e);
+        self.rings_mut(|line_strings| {
+            for line_string in line_strings {
+                if let Err(e) = line_string.try_map_coords_inplace(&func) {
+                    result = Err(e);
+                    break;
+                }
             }
         });
-
-        if result.is_ok() {
-            self.interiors_mut(|line_strings| {
-                for line_string in line_strings {
-                    if let Err(e) = line_string.try_map_coords_inplace(&func) {
-                        result = Err(e);
-                        break;
-                    }
-                }
-            });
-        }
 
         result
     }
