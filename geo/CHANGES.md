@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.20.0
 
 * Add `LinesIter` algorithm to iterate over the lines in geometries.
   * Very similar to `CoordsIter`, but only implemented where it makes sense (e.g., for `Polygon`, `Rect`, but not `Point`).
@@ -55,9 +55,6 @@
   * <https://github.com/georust/geo/pull/629>
 * Implement `Centroid` algorithm on `Geometry` and its remaining variants.
   * <https://github.com/georust/geo/pull/629>
-
-## 0.17.1
-
 * Add `GeodesicIntermediate` algorithm
   * <https://github.com/georust/geo/pull/608>
 
