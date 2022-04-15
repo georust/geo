@@ -100,13 +100,19 @@ where
     }
 
     fn unsigned_area(&'a self) -> T {
-        abs(self.signed_area())
+        self.rings().fold(T::zero(), |acc, ring_set| {
+            acc + ring_set.interiors.iter().fold(
+                abs(get_linestring_area(&ring_set.exterior)),
+                |total, next| {
+                    total - abs(get_linestring_area(next))
+                })
+        })
     }
 }
 
 fn abs<T: CoordNum>(t: T) -> T {
     if t < T::zero() {
-        (T::zero() - T::one()) * t
+        T::zero() - t
     } else {
         t
     }
