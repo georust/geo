@@ -77,18 +77,18 @@ where
 impl<'a, T, G> Area<'a, T> for G
 where
     G: RingsIter<'a, Scalar = T>,
-    T: CoordNum + num_traits::Signed + 'a,
+    T: CoordNum + 'a,
 {
     fn signed_area(&'a self) -> T {
         self.rings().fold(T::zero(), |acc, ring_set| {
-            let area = get_linestring_area(&ring_set.exterior).abs();
+            let area = get_linestring_area(&ring_set.exterior);
 
             // We could use winding order here, but that would
             // result in computing the shoelace formula twice.
             let is_negative = area < T::zero();
 
-            let area = ring_set.interiors.iter().fold(area.abs(), |total, next| {
-                total - get_linestring_area(&next).abs()
+            let area = ring_set.interiors.iter().fold(abs(area), |total, next| {
+                total - abs(get_linestring_area(next))
             });
 
             if is_negative {
@@ -100,7 +100,15 @@ where
     }
 
     fn unsigned_area(&'a self) -> T {
-        self.signed_area().abs()
+        abs(self.signed_area())
+    }
+}
+
+fn abs<T: CoordNum>(t: T) -> T {
+    if t < T::zero() {
+        (T::zero() - T::one()) * t
+    } else {
+        t
     }
 }
 
@@ -111,185 +119,6 @@ where
 {
     twice_signed_ring_area(linestring) / (T::one() + T::one())
 }
-
-/*
-impl<T> Area<T> for Point<T>
-where
-    T: CoordNum,
-{
-    fn signed_area(&self) -> T {
-        T::zero()
-    }
-
-    fn unsigned_area(&self) -> T {
-        T::zero()
-    }
-}
-
-impl<T> Area<T> for LineString<T>
-where
-    T: CoordNum,
-{
-    fn signed_area(&self) -> T {
-        T::zero()
-    }
-
-    fn unsigned_area(&self) -> T {
-        T::zero()
-    }
-}
-
-impl<T> Area<T> for Line<T>
-where
-    T: CoordNum,
-{
-    fn signed_area(&self) -> T {
-        T::zero()
-    }
-
-    fn unsigned_area(&self) -> T {
-        T::zero()
-    }
-}
-
-/// **Note.** The implementation handles polygons whose
-/// holes do not all have the same orientation. The sign of
-/// the output is the same as that of the exterior shell.
-impl<T> Area<T> for Polygon<T>
-where
-    T: CoordFloat,
-{
-    fn signed_area(&self) -> T {
-        let area = get_linestring_area(self.exterior());
-
-        // We could use winding order here, but that would
-        // result in computing the shoelace formula twice.
-        let is_negative = area < T::zero();
-
-        let area = self.interiors().iter().fold(area.abs(), |total, next| {
-            total - get_linestring_area(next).abs()
-        });
-
-        if is_negative {
-            -area
-        } else {
-            area
-        }
-    }
-
-    fn unsigned_area(&self) -> T {
-        self.signed_area().abs()
-    }
-}
-
-impl<T> Area<T> for MultiPoint<T>
-where
-    T: CoordNum,
-{
-    fn signed_area(&self) -> T {
-        T::zero()
-    }
-
-    fn unsigned_area(&self) -> T {
-        T::zero()
-    }
-}
-
-impl<T> Area<T> for MultiLineString<T>
-where
-    T: CoordNum,
-{
-    fn signed_area(&self) -> T {
-        T::zero()
-    }
-
-    fn unsigned_area(&self) -> T {
-        T::zero()
-    }
-}
-
-/// **Note.** The implementation is a straight-forward
-/// summation of the signed areas of the individual
-/// polygons. In particular, `unsigned_area` is not
-/// necessarily the sum of the `unsigned_area` of the
-/// constituent polygons unless they are all oriented the
-/// same.
-impl<T> Area<T> for MultiPolygon<T>
-where
-    T: CoordFloat,
-{
-    fn signed_area(&self) -> T {
-        self.0
-            .iter()
-            .fold(T::zero(), |total, next| total + next.signed_area())
-    }
-
-    fn unsigned_area(&self) -> T {
-        self.0
-            .iter()
-            .fold(T::zero(), |total, next| total + next.signed_area().abs())
-    }
-}
-
-/// Because a `Rect` has no winding order, the area will always be positive.
-impl<T> Area<T> for Rect<T>
-where
-    T: CoordNum,
-{
-    fn signed_area(&self) -> T {
-        self.width() * self.height()
-    }
-
-    fn unsigned_area(&self) -> T {
-        self.width() * self.height()
-    }
-}
-
-impl<T> Area<T> for Triangle<T>
-where
-    T: CoordFloat,
-{
-    fn signed_area(&self) -> T {
-        self.to_lines()
-            .iter()
-            .fold(T::zero(), |total, line| total + line.determinant())
-            / (T::one() + T::one())
-    }
-
-    fn unsigned_area(&self) -> T {
-        self.signed_area().abs()
-    }
-}
-
-impl<T> Area<T> for Geometry<T>
-where
-    T: CoordFloat,
-{
-    crate::geometry_delegate_impl! {
-        fn signed_area(&self) -> T;
-        fn unsigned_area(&self) -> T;
-    }
-}
-
-impl<T> Area<T> for GeometryCollection<T>
-where
-    T: CoordFloat,
-{
-    fn signed_area(&self) -> T {
-        self.0
-            .iter()
-            .map(|g| g.signed_area())
-            .fold(T::zero(), |acc, next| acc + next)
-    }
-
-    fn unsigned_area(&self) -> T {
-        self.0
-            .iter()
-            .map(|g| g.unsigned_area())
-            .fold(T::zero(), |acc, next| acc + next)
-    }
-}
-*/
 
 #[cfg(test)]
 mod test {

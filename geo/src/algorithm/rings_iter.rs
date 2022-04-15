@@ -2,9 +2,9 @@ use crate::{
     line_string, CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
-use std::{borrow, iter};
+use std::{borrow, iter, slice};
 
-struct RingSet<'a, T: CoordNum + 'a> {
+pub struct RingSet<'a, T: CoordNum + 'a> {
     pub exterior: borrow::Cow<'a, LineString<T>>,
     pub interiors: &'a [LineString<T>],
 }
@@ -75,10 +75,23 @@ impl<'a, T: CoordNum + 'a> RingsIter<'a> for MultiLineString<T> {
 
 impl<'a, T: CoordNum + 'a> RingsIter<'a> for MultiPolygon<T> {
     type Scalar = T;
-    type RingSetIter = iter::Empty<RingSet<'a, T>>;
+    type RingSetIter = MultiPolygonRingsIter<'a, Self::Scalar>;
 
     fn rings(&'a self) -> Self::RingSetIter {
-        iter::empty()
+        MultiPolygonRingsIter(self.0.iter())
+    }
+}
+
+#[doc(hidden)]
+pub struct MultiPolygonRingsIter<'a, T: CoordNum + 'a>(slice::Iter<'a, Polygon<T>>);
+
+impl<'a, T: CoordNum> Iterator for MultiPolygonRingsIter<'a, T> {
+    type Item = RingSet<'a, T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|n| {
+            n.rings().next().unwrap() // TODO
+        })
     }
 }
 
@@ -239,54 +252,3 @@ impl<'a, T: CoordNum> Iterator for GeometryRingsIter<'a, T> {
         }
     }
 }
-
-/*
-// Utility to transform Geometry into Iterator<LineString>
-#[doc(hidden)]
-pub enum GeometryInteriorRingsIter<'a, T: CoordNum + 'a> {
-    Point(<Point<T> as RingsIter<'a>>::InteriorRingsIter),
-    Line(<Line<T> as RingsIter<'a>>::InteriorRingsIter),
-    LineString(<LineString<T> as RingsIter<'a>>::InteriorRingsIter),
-    Polygon(<Polygon<T> as RingsIter<'a>>::InteriorRingsIter),
-    MultiPoint(<MultiPoint<T> as RingsIter<'a>>::InteriorRingsIter),
-    MultiLineString(<MultiLineString<T> as RingsIter<'a>>::InteriorRingsIter),
-    MultiPolygon(<MultiPolygon<T> as RingsIter<'a>>::InteriorRingsIter),
-    GeometryCollection(<GeometryCollection<T> as RingsIter<'a>>::InteriorRingsIter),
-    Rect(<Rect<T> as RingsIter<'a>>::InteriorRingsIter),
-    Triangle(<Triangle<T> as RingsIter<'a>>::InteriorRingsIter),
-}
-
-impl<'a, T: CoordNum> Iterator for GeometryInteriorRingsIter<'a, T> {
-    type Item = Ring<'a, T>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self {
-            GeometryInteriorRingsIter::Point(g) => g.next(),
-            GeometryInteriorRingsIter::Line(g) => g.next(),
-            GeometryInteriorRingsIter::LineString(g) => g.next(),
-            GeometryInteriorRingsIter::Polygon(g) => g.next(),
-            GeometryInteriorRingsIter::MultiPoint(g) => g.next(),
-            GeometryInteriorRingsIter::MultiLineString(g) => g.next(),
-            GeometryInteriorRingsIter::MultiPolygon(g) => g.next(),
-            GeometryInteriorRingsIter::GeometryCollection(g) => g.next(),
-            GeometryInteriorRingsIter::Rect(g) => g.next(),
-            GeometryInteriorRingsIter::Triangle(g) => g.next(),
-        }
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        match self {
-            GeometryInteriorRingsIter::Point(g) => g.size_hint(),
-            GeometryInteriorRingsIter::Line(g) => g.size_hint(),
-            GeometryInteriorRingsIter::LineString(g) => g.size_hint(),
-            GeometryInteriorRingsIter::Polygon(g) => g.size_hint(),
-            GeometryInteriorRingsIter::MultiPoint(g) => g.size_hint(),
-            GeometryInteriorRingsIter::MultiLineString(g) => g.size_hint(),
-            GeometryInteriorRingsIter::MultiPolygon(g) => g.size_hint(),
-            GeometryInteriorRingsIter::GeometryCollection(g) => g.size_hint(),
-            GeometryInteriorRingsIter::Rect(g) => g.size_hint(),
-            GeometryInteriorRingsIter::Triangle(g) => g.size_hint(),
-        }
-    }
-}
-*/
