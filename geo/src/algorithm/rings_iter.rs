@@ -105,9 +105,9 @@ impl<'a, T: CoordNum + 'a> RingsIter<'a> for Rect<T> {
             RingSet {
                 exterior: borrow::Cow::Owned(line_string![
                     (x: self.min().x, y: self.min().y),
-                    (x: self.min().x, y: self.max().y),
-                    (x: self.max().x, y: self.max().y),
                     (x: self.max().x, y: self.min().y),
+                    (x: self.max().x, y: self.max().y),
+                    (x: self.min().x, y: self.max().y),
                     (x: self.min().x, y: self.min().y),
                 ]),
                 interiors: &[],
@@ -121,8 +121,7 @@ impl<'a, T: CoordNum + 'a> RingsIter<'a> for Triangle<T> {
     type RingSetIter = iter::Once<RingSet<'a, T>>;
 
     fn rings(&'a self) -> Self::RingSetIter {
-        iter::once(
-            RingSet {
+        iter::once(RingSet {
                 exterior:
                     // TODO is this the right order?
                     borrow::Cow::Owned(
@@ -134,8 +133,7 @@ impl<'a, T: CoordNum + 'a> RingsIter<'a> for Triangle<T> {
                         ]
                     ),
                 interiors: &[],
-            }
-        )
+            })
     }
 }
 
@@ -156,52 +154,16 @@ impl<'a, T: CoordNum + 'a> RingsIter<'a> for Geometry<T> {
         match self {
             Geometry::Point(g) => GeometryRingsIter::Point(g.rings()),
             Geometry::Line(g) => GeometryRingsIter::Line(g.rings()),
-            Geometry::LineString(g) => {
-                GeometryRingsIter::LineString(g.rings())
-            }
+            Geometry::LineString(g) => GeometryRingsIter::LineString(g.rings()),
             Geometry::Polygon(g) => GeometryRingsIter::Polygon(g.rings()),
-            Geometry::MultiPoint(g) => {
-                GeometryRingsIter::MultiPoint(g.rings())
-            }
-            Geometry::MultiLineString(g) => {
-                GeometryRingsIter::MultiLineString(g.rings())
-            }
-            Geometry::MultiPolygon(g) => {
-                GeometryRingsIter::MultiPolygon(g.rings())
-            }
-            Geometry::GeometryCollection(g) => {
-                GeometryRingsIter::GeometryCollection(g.rings())
-            }
+            Geometry::MultiPoint(g) => GeometryRingsIter::MultiPoint(g.rings()),
+            Geometry::MultiLineString(g) => GeometryRingsIter::MultiLineString(g.rings()),
+            Geometry::MultiPolygon(g) => GeometryRingsIter::MultiPolygon(g.rings()),
+            Geometry::GeometryCollection(g) => GeometryRingsIter::GeometryCollection(g.rings()),
             Geometry::Rect(g) => GeometryRingsIter::Rect(g.rings()),
             Geometry::Triangle(g) => GeometryRingsIter::Triangle(g.rings()),
         }
     }
-
-    /*
-    fn interior_rings_iter(&'a self) -> Self::InteriorRingsIter {
-        match self {
-            Geometry::Point(g) => GeometryInteriorRingsIter::Point(g.interior_rings_iter()),
-            Geometry::Line(g) => GeometryInteriorRingsIter::Line(g.interior_rings_iter()),
-            Geometry::LineString(g) => {
-                GeometryInteriorRingsIter::LineString(g.interior_rings_iter())
-            }
-            Geometry::Polygon(g) => GeometryInteriorRingsIter::Polygon(g.interior_rings_iter()),
-            Geometry::MultiPoint(g) => {
-                GeometryInteriorRingsIter::MultiPoint(g.interior_rings_iter())
-            }
-            Geometry::MultiLineString(g) => {
-                GeometryInteriorRingsIter::MultiLineString(g.interior_rings_iter())
-            }
-            Geometry::MultiPolygon(g) => {
-                GeometryInteriorRingsIter::MultiPolygon(g.interior_rings_iter())
-            }
-            Geometry::GeometryCollection(g) => {
-                GeometryInteriorRingsIter::GeometryCollection(g.interior_rings_iter())
-            }
-            Geometry::Rect(g) => GeometryInteriorRingsIter::Rect(g.interior_rings_iter()),
-            Geometry::Triangle(g) => GeometryInteriorRingsIter::Triangle(g.interior_rings_iter()),
-        }
-    } */
 }
 
 // Utility to transform Geometry into Iterator<LineString>
