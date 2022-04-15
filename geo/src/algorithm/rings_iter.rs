@@ -75,10 +75,10 @@ impl<'a, T: CoordNum + 'a> RingsIter<'a> for MultiLineString<T> {
 
 impl<'a, T: CoordNum + 'a> RingsIter<'a> for MultiPolygon<T> {
     type Scalar = T;
-    type RingSetIter = MultiPolygonRingsIter<'a, Self::Scalar>;
+    type RingSetIter = iter::Flatten<MultiPolygonRingsIter<'a, Self::Scalar>>;
 
     fn rings(&'a self) -> Self::RingSetIter {
-        MultiPolygonRingsIter(self.0.iter())
+        MultiPolygonRingsIter(self.0.iter()).flatten()
     }
 }
 
@@ -86,11 +86,11 @@ impl<'a, T: CoordNum + 'a> RingsIter<'a> for MultiPolygon<T> {
 pub struct MultiPolygonRingsIter<'a, T: CoordNum + 'a>(slice::Iter<'a, Polygon<T>>);
 
 impl<'a, T: CoordNum> Iterator for MultiPolygonRingsIter<'a, T> {
-    type Item = RingSet<'a, T>;
+    type Item = Box<<Polygon<T> as RingsIter<'a>>::RingSetIter>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next().map(|n| {
-            n.rings().next().unwrap() // TODO
+            Box::new(n.rings())
         })
     }
 }

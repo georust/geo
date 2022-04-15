@@ -314,6 +314,7 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Rect<T> {
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
+        // TODO: ordering here
         iter::once(coord! {
             x: self.min().x,
             y: self.min().y,
