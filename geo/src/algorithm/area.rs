@@ -1,7 +1,4 @@
-use crate::{
-    CoordFloat, CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
-};
+use crate::{CoordNum, LineString};
 use crate::algorithm::rings_iter::RingsIter;
 
 pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
@@ -83,23 +80,23 @@ where
     T: CoordNum + num_traits::Signed + 'a,
 {
     fn signed_area(&'a self) -> T {
-        let area = self.exterior_rings_iter().fold(T::zero(), |total, next| {
-            total - get_linestring_area(&next).abs()
-        });
+        self.rings().fold(T::zero(), |acc, ring_set| {
+            let area = get_linestring_area(&ring_set.exterior).abs();
 
-        // We could use winding order here, but that would
-        // result in computing the shoelace formula twice.
-        let is_negative = area < T::zero();
+            // We could use winding order here, but that would
+            // result in computing the shoelace formula twice.
+            let is_negative = area < T::zero();
 
-        let area = self.interior_rings_iter().fold(area.abs(), |total, next| {
-            total - get_linestring_area(&next).abs()
-        });
+            let area = ring_set.interiors.iter().fold(area.abs(), |total, next| {
+                total - get_linestring_area(&next).abs()
+            });
 
-        if is_negative {
-            -area
-        } else {
-            area
-        }
+            if is_negative {
+                acc - area
+            } else {
+                acc + area
+            }
+        })
     }
 
     fn unsigned_area(&'a self) -> T {
