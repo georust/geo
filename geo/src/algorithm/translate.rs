@@ -1,4 +1,4 @@
-use crate::algorithm::map_coords::{MapCoords, MapCoordsInplace};
+use crate::algorithm::map_coords::{MapCoords, MapCoordsInPlace};
 use crate::CoordNum;
 
 pub trait Translate<T> {
@@ -37,14 +37,14 @@ pub trait Translate<T> {
 impl<T, G> Translate<T> for G
 where
     T: CoordNum,
-    G: MapCoords<T, T, Output = G> + MapCoordsInplace<T>,
+    G: MapCoords<T, T, Output = G> + MapCoordsInPlace<T>,
 {
     fn translate(&self, xoff: T, yoff: T) -> Self {
         self.map_coords(|(x, y)| (x + xoff, y + yoff))
     }
 
     fn translate_inplace(&mut self, xoff: T, yoff: T) {
-        self.map_coords_inplace(|(x, y)| (x + xoff, y + yoff))
+        self.map_coords_in_place(|(x, y)| (x + xoff, y + yoff))
     }
 }
 

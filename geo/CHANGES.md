@@ -7,6 +7,10 @@
   * <https://github.com/georust/geo/pull/810>
 * BREAKING: Bump proj dependency to 0.26 which uses proj lib 9.0
   * <https://github.com/georust/geo/pull/813>
+* MapCoords restrucuring
+  - rename MapCoordsInplace::map_coords_inplace -> MapCoordsInPlace::map_coords_in_place
+  - rename TryMapCoordsInplace::try_map_coords_inplace -> TryMapCoordsInPlace::try_map_coords_in_place
+  - Consolidate traits `TryMapCoords` into `MapCoords` and `TryMapCoordsInplace` into `MapCoordsInPlace`
 
 ## 0.20.1
 
