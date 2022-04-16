@@ -733,10 +733,7 @@ impl<T: CoordNum, NT: CoordNum, E> TryMapCoords<T, NT, E> for Rect<T> {
         &self,
         func: impl Fn((T, T)) -> Result<(NT, NT), E>,
     ) -> Result<Self::Output, E> {
-        Ok(Rect::new(
-            func(self.min().x_y())?,
-            func(self.max().x_y())?,
-        ))
+        Ok(Rect::new(func(self.min().x_y())?, func(self.max().x_y())?))
     }
 }
 
