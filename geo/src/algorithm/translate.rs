@@ -29,6 +29,12 @@ pub trait Translate<T> {
         T: CoordNum;
 
     /// Translate a Geometry along its axes, but in place.
+    fn translate_in_place(&mut self, xoff: T, yoff: T)
+    where
+        T: CoordNum;
+
+    /// Translate a Geometry along its axes, but in place.
+    #[deprecated(since = "0.20.1", note = "renamed to `translate_in_place`")]
     fn translate_inplace(&mut self, xoff: T, yoff: T)
     where
         T: CoordNum;
@@ -43,8 +49,12 @@ where
         self.map_coords(|(x, y)| (x + xoff, y + yoff))
     }
 
-    fn translate_inplace(&mut self, xoff: T, yoff: T) {
+    fn translate_in_place(&mut self, xoff: T, yoff: T) {
         self.map_coords_in_place(|(x, y)| (x + xoff, y + yoff))
+    }
+
+    fn translate_inplace(&mut self, xoff: T, yoff: T) {
+        self.translate_in_place(xoff, yoff)
     }
 }
 
@@ -58,6 +68,12 @@ mod test {
         let p = point!(x: 1.0, y: 5.0);
         let translated = p.translate(30.0, 20.0);
         assert_eq!(translated, point!(x: 31.0, y: 25.0));
+    }
+    #[test]
+    fn test_translate_point_in_place() {
+        let mut p = point!(x: 1.0, y: 5.0);
+        p.translate_in_place(30.0, 20.0);
+        assert_eq!(p, point!(x: 31.0, y: 25.0));
     }
     #[test]
     fn test_translate_linestring() {
