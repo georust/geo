@@ -4,6 +4,8 @@
 
 * Remove unneded reference for `*MapCoords*` closure parameter.
   * <https://github.com/georust/geo/pull/810>
+* BREAKING: Bump proj dependency to 0.26 which uses proj lib 9.0
+  * <https://github.com/georust/geo/pull/813>
 
 ## 0.20.0
 
