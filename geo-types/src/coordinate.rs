@@ -31,6 +31,7 @@ pub struct Coordinate<T: CoordNum> {
 }
 
 impl<T: CoordNum> From<(T, T)> for Coordinate<T> {
+    #[inline]
     fn from(coords: (T, T)) -> Self {
         coord! {
             x: coords.0,
@@ -40,6 +41,7 @@ impl<T: CoordNum> From<(T, T)> for Coordinate<T> {
 }
 
 impl<T: CoordNum> From<[T; 2]> for Coordinate<T> {
+    #[inline]
     fn from(coords: [T; 2]) -> Self {
         coord! {
             x: coords[0],
@@ -49,6 +51,7 @@ impl<T: CoordNum> From<[T; 2]> for Coordinate<T> {
 }
 
 impl<T: CoordNum> From<Point<T>> for Coordinate<T> {
+    #[inline]
     fn from(point: Point<T>) -> Self {
         coord! {
             x: point.x(),
@@ -58,12 +61,14 @@ impl<T: CoordNum> From<Point<T>> for Coordinate<T> {
 }
 
 impl<T: CoordNum> From<Coordinate<T>> for (T, T) {
+    #[inline]
     fn from(coord: Coordinate<T>) -> Self {
         (coord.x, coord.y)
     }
 }
 
 impl<T: CoordNum> From<Coordinate<T>> for [T; 2] {
+    #[inline]
     fn from(coord: Coordinate<T>) -> Self {
         [coord.x, coord.y]
     }
@@ -86,6 +91,7 @@ impl<T: CoordNum> Coordinate<T> {
     /// assert_eq!(y, 116.34);
     /// assert_eq!(x, 40.02f64);
     /// ```
+    #[inline]
     pub fn x_y(&self) -> (T, T) {
         (self.x, self.y)
     }
@@ -112,6 +118,7 @@ where
 {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self {
         coord! {
             x: -self.x,
@@ -137,6 +144,7 @@ where
 impl<T: CoordNum> Add for Coordinate<T> {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: Self) -> Self {
         coord! {
             x: self.x + rhs.x,
@@ -162,6 +170,7 @@ impl<T: CoordNum> Add for Coordinate<T> {
 impl<T: CoordNum> Sub for Coordinate<T> {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: Self) -> Self {
         coord! {
             x: self.x - rhs.x,
@@ -186,6 +195,7 @@ impl<T: CoordNum> Sub for Coordinate<T> {
 impl<T: CoordNum> Mul<T> for Coordinate<T> {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rhs: T) -> Self {
         coord! {
             x: self.x * rhs,
@@ -210,6 +220,7 @@ impl<T: CoordNum> Mul<T> for Coordinate<T> {
 impl<T: CoordNum> Div<T> for Coordinate<T> {
     type Output = Self;
 
+    #[inline]
     fn div(self, rhs: T) -> Self {
         coord! {
             x: self.x / rhs,
@@ -233,6 +244,7 @@ use num_traits::Zero;
 /// assert_eq!(p.y, 0.);
 /// ```
 impl<T: CoordNum> Coordinate<T> {
+    #[inline]
     pub fn zero() -> Self {
         coord! {
             x: T::zero(),
@@ -242,9 +254,11 @@ impl<T: CoordNum> Coordinate<T> {
 }
 
 impl<T: CoordNum> Zero for Coordinate<T> {
+    #[inline]
     fn zero() -> Self {
         Self::zero()
     }
+    #[inline]
     fn is_zero(&self) -> bool {
         self.x.is_zero() && self.y.is_zero()
     }
@@ -290,10 +304,12 @@ impl<T: CoordNum + UlpsEq> UlpsEq for Coordinate<T>
 where
     T::Epsilon: Copy,
 {
+    #[inline]
     fn default_max_ulps() -> u32 {
         T::default_max_ulps()
     }
 
+    #[inline]
     fn ulps_eq(&self, other: &Self, epsilon: T::Epsilon, max_ulps: u32) -> bool {
         T::ulps_eq(&self.x, &other.x, epsilon, max_ulps)
             && T::ulps_eq(&self.y, &other.y, epsilon, max_ulps)
@@ -309,6 +325,7 @@ where
 
     const DIMENSIONS: usize = 2;
 
+    #[inline]
     fn generate(generator: impl Fn(usize) -> Self::Scalar) -> Self {
         coord! {
             x: generator(0),
@@ -316,6 +333,7 @@ where
         }
     }
 
+    #[inline]
     fn nth(&self, index: usize) -> Self::Scalar {
         match index {
             0 => self.x,
@@ -324,6 +342,7 @@ where
         }
     }
 
+    #[inline]
     fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
         match index {
             0 => &mut self.x,
@@ -342,6 +361,7 @@ where
 
     const DIMENSIONS: usize = 2;
 
+    #[inline]
     fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
         coord! {
             x: generator(0),
@@ -349,6 +369,7 @@ where
         }
     }
 
+    #[inline]
     fn nth(&self, index: usize) -> Self::Scalar {
         match index {
             0 => self.x,
@@ -357,6 +378,7 @@ where
         }
     }
 
+    #[inline]
     fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
         match index {
             0 => &mut self.x,
