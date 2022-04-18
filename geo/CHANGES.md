@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+* Remove unneded reference for `*MapCoords*` closure parameter.
+  * <https://github.com/georust/geo/pull/810>
+
 ## 0.20.0
 
 * Add `LinesIter` algorithm to iterate over the lines in geometries.
