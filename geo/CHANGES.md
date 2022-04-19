@@ -1,5 +1,9 @@
 # Changes
 
+## UNRELEASED
+
+* FIX: update to proper minimum geo-types version
+
 ## 0.20.0
 
 * Add `LinesIter` algorithm to iterate over the lines in geometries.
