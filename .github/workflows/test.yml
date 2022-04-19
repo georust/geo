@@ -4,6 +4,7 @@ on:
       - main
       - staging
       - trying
+      - release/**
   pull_request:
   schedule: [cron: "45 6 * * *"]
 
