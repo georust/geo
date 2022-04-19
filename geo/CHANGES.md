@@ -1,6 +1,6 @@
 # Changes
 
-## UNRELEASED
+## 0.20.1
 
 * FIX: update to proper minimum geo-types version
 
