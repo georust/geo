@@ -34,7 +34,7 @@ where
     let mut tmp = T::zero();
     for line in linestring.lines() {
         use crate::algorithm::map_coords::MapCoords;
-        let line = line.map_coords(|&(x, y)| (x - shift.x, y - shift.y));
+        let line = line.map_coords(|(x, y)| (x - shift.x, y - shift.y));
         tmp = tmp + line.determinant();
     }
 
@@ -317,7 +317,7 @@ mod test {
         let shift_y = 1.5e8;
 
         use crate::map_coords::MapCoords;
-        let polygon = polygon.map_coords(|&(x, y)| (x + shift_x, y + shift_y));
+        let polygon = polygon.map_coords(|(x, y)| (x + shift_x, y + shift_y));
 
         let new_area = polygon.signed_area();
         let err = (area - new_area).abs() / area;
