@@ -1,6 +1,6 @@
 use crate::{
-    CoordNum, Error, GeometryCollection, Line, LineString, Measure, MultiLineString, MultiPoint,
-    MultiPolygon, NoValue, Point, Polygon, Rect, Triangle, ZCoord,
+    CoordNum, Error, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    MultiPolygon, NoValue, Point, Polygon, Rect, Triangle,
 };
 
 #[cfg(any(feature = "approx", test))]
@@ -26,7 +26,7 @@ use std::convert::TryFrom;
 /// ```
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Geometry<T: CoordNum, Z: ZCoord = NoValue, M: Measure = NoValue> {
+pub enum Geometry<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue> {
     Point(Point<T, Z, M>),
     Line(Line<T, Z, M>),
     LineString(LineString<T, Z, M>),
@@ -43,49 +43,49 @@ pub type GeometryM<T> = Geometry<T, NoValue, T>;
 pub type Geometry3D<T> = Geometry<T, T, NoValue>;
 pub type Geometry3DM<T> = Geometry<T, T, T>;
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Point<T, Z, M>> for Geometry<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Point<T, Z, M>> for Geometry<T, Z, M> {
     fn from(x: Point<T, Z, M>) -> Self {
         Self::Point(x)
     }
 }
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Line<T, Z, M>> for Geometry<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Line<T, Z, M>> for Geometry<T, Z, M> {
     fn from(x: Line<T, Z, M>) -> Self {
         Self::Line(x)
     }
 }
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<LineString<T, Z, M>> for Geometry<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<LineString<T, Z, M>> for Geometry<T, Z, M> {
     fn from(x: LineString<T, Z, M>) -> Self {
         Self::LineString(x)
     }
 }
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Polygon<T, Z, M>> for Geometry<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Polygon<T, Z, M>> for Geometry<T, Z, M> {
     fn from(x: Polygon<T, Z, M>) -> Self {
         Self::Polygon(x)
     }
 }
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<MultiPoint<T, Z, M>> for Geometry<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<MultiPoint<T, Z, M>> for Geometry<T, Z, M> {
     fn from(x: MultiPoint<T, Z, M>) -> Self {
         Self::MultiPoint(x)
     }
 }
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<MultiLineString<T, Z, M>> for Geometry<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<MultiLineString<T, Z, M>> for Geometry<T, Z, M> {
     fn from(x: MultiLineString<T, Z, M>) -> Self {
         Self::MultiLineString(x)
     }
 }
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<MultiPolygon<T, Z, M>> for Geometry<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<MultiPolygon<T, Z, M>> for Geometry<T, Z, M> {
     fn from(x: MultiPolygon<T, Z, M>) -> Self {
         Self::MultiPolygon(x)
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Rect<T, Z, M>> for Geometry<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Rect<T, Z, M>> for Geometry<T, Z, M> {
     fn from(x: Rect<T, Z, M>) -> Self {
         Self::Rect(x)
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Triangle<T, Z, M>> for Geometry<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Triangle<T, Z, M>> for Geometry<T, Z, M> {
     fn from(x: Triangle<T, Z, M>) -> Self {
         Self::Triangle(x)
     }
@@ -97,7 +97,7 @@ macro_rules! try_from_geometry_impl {
         /// Convert a Geometry enum into its inner type.
         ///
         /// Fails if the enum case does not match the type you are trying to convert it to.
-        impl<T: CoordNum, Z: ZCoord, M: Measure> TryFrom<Geometry<T, Z, M>> for $type<T, Z, M> {
+        impl<T: CoordNum, Z: CoordNum, M: CoordNum> TryFrom<Geometry<T, Z, M>> for $type<T, Z, M> {
             type Error = Error;
 
             fn try_from(geom: Geometry<T, Z, M>) -> Result<Self, Self::Error> {
@@ -127,7 +127,7 @@ try_from_geometry_impl!(
     Triangle,
 );
 
-fn inner_type_name<T: CoordNum, Z: ZCoord, M: Measure>(
+fn inner_type_name<T: CoordNum, Z: CoordNum, M: CoordNum>(
     geometry: Geometry<T, Z, M>,
 ) -> &'static str {
     match geometry {

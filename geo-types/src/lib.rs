@@ -50,7 +50,7 @@
 //! [rstar]: https://github.com/Stoeoef/rstar
 //! [Serde]: https://serde.rs/
 extern crate num_traits;
-use num_traits::{Float, Num, NumCast, NumOps, One, Zero};
+use num_traits::{Float, Num, NumCast};
 use std::fmt::Debug;
 
 #[cfg(feature = "serde")]
@@ -75,26 +75,6 @@ impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordNum for T {}
 
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}
-
-/// The type of the optional z value of a point/coordinate.
-///
-/// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
-/// Also, an empty [`NoValue`] generic type can be used instead of the real value,
-/// allowing geo-types to avoid having Z value if it is not needed.
-///
-/// Unlike [CoordNum], this trait does not require [NumCast] and [Num] traits.
-pub trait ZCoord: NumOps + One + Zero + Copy + PartialEq + PartialOrd + Debug {}
-impl<Z: NumOps + One + Zero + Copy + PartialEq + PartialOrd + Debug> ZCoord for Z {}
-
-/// The type of the optional measurement (m) value of a point/coordinate.
-///
-/// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
-/// Also, an empty [`NoValue`] generic type can be used instead of the real value,
-/// allowing geo-types to avoid having M value if it is not needed.
-///
-/// Unlike [CoordNum], this trait does not require [NumCast] and [Num] traits.
-pub trait Measure: NumOps + One + Zero + Copy + PartialEq + PartialOrd + Debug {}
-impl<M: NumOps + One + Zero + Copy + PartialEq + PartialOrd + Debug> Measure for M {}
 
 mod novalue;
 pub use crate::novalue::NoValue;

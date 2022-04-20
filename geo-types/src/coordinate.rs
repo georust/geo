@@ -1,4 +1,4 @@
-use crate::{coord, CoordNum, Measure, NoValue, Point, ZCoord};
+use crate::{coord, CoordNum, NoValue, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 use num_traits::Zero;
@@ -27,14 +27,14 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Coordinate<T: CoordNum, Z: ZCoord = NoValue, M: Measure = NoValue> {
+pub struct Coordinate<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue> {
     pub x: T,
     pub y: T,
     pub z: Z,
     pub m: M,
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> Coordinate<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Coordinate<T, Z, M> {
     /// Create a new instance of a coordinate.
     /// **ATTENTION** Use [`coord!`] macro or one of the [`from`] methods instead.
     #[inline]
@@ -82,28 +82,28 @@ impl<T: CoordNum> From<[T; 2]> for Coordinate<T> {
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Point<T, Z, M>> for Coordinate<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Point<T, Z, M>> for Coordinate<T, Z, M> {
     #[inline]
     fn from(point: Point<T, Z, M>) -> Self {
         point.0
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Coordinate<T, Z, M>> for (T, T) {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Coordinate<T, Z, M>> for (T, T) {
     #[inline]
     fn from(coord: Coordinate<T, Z, M>) -> Self {
         (coord.x, coord.y)
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Coordinate<T, Z, M>> for [T; 2] {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Coordinate<T, Z, M>> for [T; 2] {
     #[inline]
     fn from(coord: Coordinate<T, Z, M>) -> Self {
         [coord.x, coord.y]
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> Coordinate<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Coordinate<T, Z, M> {
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the coordinate.
     ///
     /// # Examples
@@ -142,8 +142,8 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> Coordinate<T, Z, M> {
 impl<T, Z, M> Neg for Coordinate<T, Z, M>
 where
     T: CoordNum + Neg<Output = T>,
-    Z: ZCoord + Neg<Output = Z>,
-    M: Measure + Neg<Output = M>,
+    Z: CoordNum + Neg<Output = Z>,
+    M: CoordNum + Neg<Output = M>,
 {
     type Output = Self;
 
@@ -172,7 +172,7 @@ where
 /// assert_eq!(sum.x, 2.75);
 /// assert_eq!(sum.y, 5.0);
 /// ```
-impl<T: CoordNum, Z: ZCoord, M: Measure> Add for Coordinate<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Add for Coordinate<T, Z, M> {
     type Output = Self;
 
     #[inline]
@@ -200,7 +200,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> Add for Coordinate<T, Z, M> {
 /// assert_eq!(diff.x, 0.25);
 /// assert_eq!(diff.y, 0.);
 /// ```
-impl<T: CoordNum, Z: ZCoord, M: Measure> Sub for Coordinate<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Sub for Coordinate<T, Z, M> {
     type Output = Self;
 
     #[inline]
@@ -230,8 +230,8 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> Sub for Coordinate<T, Z, M> {
 impl<T, Z, M> Mul<T> for Coordinate<T, Z, M>
 where
     T: CoordNum,
-    Z: ZCoord + Mul<T, Output = Z>,
-    M: Measure + Mul<T, Output = M>,
+    Z: CoordNum + Mul<T, Output = Z>,
+    M: CoordNum + Mul<T, Output = M>,
 {
     type Output = Self;
 
@@ -262,8 +262,8 @@ where
 impl<T, Z, M> Div<T> for Coordinate<T, Z, M>
 where
     T: CoordNum,
-    Z: ZCoord + Div<T, Output = Z>,
-    M: Measure + Div<T, Output = M>,
+    Z: CoordNum + Div<T, Output = Z>,
+    M: CoordNum + Div<T, Output = M>,
 {
     type Output = Self;
 
@@ -291,7 +291,7 @@ where
 /// assert_eq!(p.x, 0.);
 /// assert_eq!(p.y, 0.);
 /// ```
-impl<T: CoordNum, Z: ZCoord, M: Measure> Coordinate<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Coordinate<T, Z, M> {
     #[inline]
     pub fn zero() -> Self {
         coord! {
@@ -303,7 +303,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> Coordinate<T, Z, M> {
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> Zero for Coordinate<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Zero for Coordinate<T, Z, M> {
     #[inline]
     fn zero() -> Self {
         Self::zero()

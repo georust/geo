@@ -25,7 +25,9 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T: CoordNum, Z: ZCoord = NoValue, M: Measure = NoValue>(pub Coordinate<T, Z, M>);
+pub struct Point<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue>(
+    pub Coordinate<T, Z, M>,
+);
 
 /// A single point in 2D space + Measure value.
 ///
@@ -66,7 +68,7 @@ pub type Point3D<T> = Point<T, T, NoValue>;
 /// ```
 pub type Point3DM<T> = Point<T, T, T>;
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Coordinate<T, Z, M>> for Point<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Coordinate<T, Z, M>> for Point<T, Z, M> {
     fn from(x: Coordinate<T, Z, M>) -> Self {
         Self(x)
     }
@@ -114,7 +116,7 @@ impl<T: CoordNum> Point<T> {
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> Point<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Point<T, Z, M> {
     /// Returns the x/horizontal component of the point.
     ///
     /// # Examples

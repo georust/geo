@@ -1,4 +1,4 @@
-use crate::{coord, polygon, CoordNum, Coordinate, Line, Measure, NoValue, Polygon, ZCoord};
+use crate::{coord, polygon, CoordNum, Coordinate, Line, NoValue, Polygon};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -42,7 +42,7 @@ use num_traits::{NumOps, One};
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T: CoordNum, Z: ZCoord = NoValue, M: Measure = NoValue> {
+pub struct Rect<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue> {
     min: Coordinate<T, Z, M>,
     max: Coordinate<T, Z, M>,
 }
@@ -62,7 +62,7 @@ pub type Rect3D<T> = Rect<T, T, NoValue>;
 /// See [Rect]
 pub type Rect3DM<T> = Rect<T, T, T>;
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> Rect<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Rect<T, Z, M> {
     /// Creates a new rectangle from two corner coordinates.
     ///
     /// # Examples
@@ -293,8 +293,8 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> Rect<T, Z, M> {
 impl<T, Z, M> Rect<T, Z, M>
 where
     T: CoordNum,
-    Z: ZCoord + One + NumOps,
-    M: Measure + One + NumOps,
+    Z: CoordNum + One + NumOps,
+    M: CoordNum + One + NumOps,
 {
     /// Returns the center `Coordinate` of the `Rect`.
     ///
