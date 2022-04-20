@@ -66,7 +66,7 @@ pub type Point3D<T> = Point<T, T, NoValue>;
 /// ```
 pub type Point3DM<T> = Point<T, T, T>;
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Coordinate<T, Z, M>> for Point<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Coordinate<T, Z, M>> for Point<T, Z, M> {
     fn from(x: Coordinate<T, Z, M>) -> Self {
         Self(x)
     }
@@ -114,7 +114,7 @@ impl<T: CoordNum> Point<T> {
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> Point<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Point<T, Z, M> {
     /// Returns the x/horizontal component of the point.
     ///
     /// # Examples

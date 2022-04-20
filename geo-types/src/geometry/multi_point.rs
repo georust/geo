@@ -1,4 +1,4 @@
-use crate::{CoordNum, Measure, NoValue, Point, ZCoord};
+use crate::{CoordNum, NoValue, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 use std::iter::FromIterator;
@@ -49,7 +49,7 @@ pub type MultiPoint3D<T> = MultiPoint<T, T, NoValue>;
 /// See [MultiPoint]
 pub type MultiPoint3DM<T> = MultiPoint<T, T, T>;
 
-impl<T: CoordNum, Z: ZCoord, M: Measure, IP: Into<Point<T, Z, M>>> From<IP>
+impl<T: CoordNum, Z: CoordNum, M: CoordNum, IP: Into<Point<T, Z, M>>> From<IP>
     for MultiPoint<T, Z, M>
 {
     /// Convert a single `Point` (or something which can be converted to a `Point`) into a
@@ -59,7 +59,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure, IP: Into<Point<T, Z, M>>> From<IP>
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure, IP: Into<Point<T, Z, M>>> From<Vec<IP>>
+impl<T: CoordNum, Z: CoordNum, M: CoordNum, IP: Into<Point<T, Z, M>>> From<Vec<IP>>
     for MultiPoint<T, Z, M>
 {
     /// Convert a `Vec` of `Points` (or `Vec` of things which can be converted to a `Point`) into a
@@ -69,7 +69,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure, IP: Into<Point<T, Z, M>>> From<Vec<IP>>
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure, IP: Into<Point<T, Z, M>>> FromIterator<IP>
+impl<T: CoordNum, Z: CoordNum, M: CoordNum, IP: Into<Point<T, Z, M>>> FromIterator<IP>
     for MultiPoint<T, Z, M>
 {
     /// Collect the results of a `Point` iterator into a `MultiPoint`
@@ -79,7 +79,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure, IP: Into<Point<T, Z, M>>> FromIterator<
 }
 
 /// Iterate over the `Point`s in this `MultiPoint`.
-impl<T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for MultiPoint<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for MultiPoint<T, Z, M> {
     type Item = Point<T, Z, M>;
     type IntoIter = ::std::vec::IntoIter<Point<T, Z, M>>;
 
@@ -88,7 +88,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for MultiPoint<T, Z, M> {
     }
 }
 
-impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a MultiPoint<T, Z, M> {
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a MultiPoint<T, Z, M> {
     type Item = &'a Point<T, Z, M>;
     type IntoIter = ::std::slice::Iter<'a, Point<T, Z, M>>;
 
@@ -97,7 +97,7 @@ impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a MultiPoint<T, 
     }
 }
 
-impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a mut MultiPoint<T, Z, M> {
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a mut MultiPoint<T, Z, M> {
     type Item = &'a mut Point<T, Z, M>;
     type IntoIter = ::std::slice::IterMut<'a, Point<T, Z, M>>;
 
@@ -106,7 +106,7 @@ impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a mut MultiPoint
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> MultiPoint<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> MultiPoint<T, Z, M> {
     pub fn new(value: Vec<Point<T, Z, M>>) -> Self {
         Self(value)
     }

@@ -154,8 +154,8 @@ pub type LineString3DM<T> = LineString<T, T, T>;
 pub struct PointsIter<'a, T, Z = NoValue, M = NoValue>(::std::slice::Iter<'a, Coordinate<T, Z, M>>)
 where
     T: CoordNum + 'a,
-    Z: ZCoord + 'a,
-    M: Measure + 'a;
+    Z: CoordNum + 'a,
+    M: CoordNum + 'a;
 
 pub type PointsIterM<'a, T> = PointsIter<'a, T, NoValue, T>;
 pub type PointsIter3D<'a, T> = PointsIter<'a, T, T, NoValue>;
@@ -164,8 +164,8 @@ pub type PointsIter3DM<'a, T> = PointsIter<'a, T, T, T>;
 impl<'a, T, Z, M> Iterator for PointsIter<'a, T, Z, M>
 where
     T: CoordNum + 'a,
-    Z: ZCoord + 'a,
-    M: Measure + 'a,
+    Z: CoordNum + 'a,
+    M: CoordNum + 'a,
 {
     type Item = Point<T, Z, M>;
 
@@ -178,13 +178,13 @@ where
     }
 }
 
-impl<'a, T: CoordNum, Z: ZCoord, M: Measure> ExactSizeIterator for PointsIter<'a, T, Z, M> {
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> ExactSizeIterator for PointsIter<'a, T, Z, M> {
     fn len(&self) -> usize {
         self.0.len()
     }
 }
 
-impl<'a, T: CoordNum, Z: ZCoord, M: Measure> DoubleEndedIterator for PointsIter<'a, T, Z, M> {
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> DoubleEndedIterator for PointsIter<'a, T, Z, M> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back().map(|c| Point::from(*c))
     }
@@ -192,11 +192,11 @@ impl<'a, T: CoordNum, Z: ZCoord, M: Measure> DoubleEndedIterator for PointsIter<
 
 /// A [`Coordinate`] iterator used by the `into_iter` method on a [`LineString`]
 #[derive(Debug)]
-pub struct CoordinatesIter<'a, T: CoordNum + 'a, Z: ZCoord + 'a, M: Measure + 'a>(
+pub struct CoordinatesIter<'a, T: CoordNum + 'a, Z: CoordNum + 'a, M: CoordNum + 'a>(
     ::std::slice::Iter<'a, Coordinate<T, Z, M>>,
 );
 
-impl<'a, T: CoordNum, Z: ZCoord, M: Measure> Iterator for CoordinatesIter<'a, T, Z, M> {
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> Iterator for CoordinatesIter<'a, T, Z, M> {
     type Item = &'a Coordinate<T, Z, M>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -208,19 +208,21 @@ impl<'a, T: CoordNum, Z: ZCoord, M: Measure> Iterator for CoordinatesIter<'a, T,
     }
 }
 
-impl<'a, T: CoordNum, Z: ZCoord, M: Measure> ExactSizeIterator for CoordinatesIter<'a, T, Z, M> {
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> ExactSizeIterator for CoordinatesIter<'a, T, Z, M> {
     fn len(&self) -> usize {
         self.0.len()
     }
 }
 
-impl<'a, T: CoordNum, Z: ZCoord, M: Measure> DoubleEndedIterator for CoordinatesIter<'a, T, Z, M> {
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> DoubleEndedIterator
+    for CoordinatesIter<'a, T, Z, M>
+{
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back()
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> LineString<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> LineString<T, Z, M> {
     /// Instantiate Self from the raw content value
     pub fn new(value: Vec<Coordinate<T, Z, M>>) -> Self {
         Self(value)
@@ -360,7 +362,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> LineString<T, Z, M> {
 }
 
 /// Turn a [`Vec`] of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, Z: ZCoord, M: Measure, IC: Into<Coordinate<T, Z, M>>> From<Vec<IC>>
+impl<T: CoordNum, Z: CoordNum, M: CoordNum, IC: Into<Coordinate<T, Z, M>>> From<Vec<IC>>
     for LineString<T, Z, M>
 {
     fn from(v: Vec<IC>) -> Self {
@@ -368,14 +370,14 @@ impl<T: CoordNum, Z: ZCoord, M: Measure, IC: Into<Coordinate<T, Z, M>>> From<Vec
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Line<T, Z, M>> for LineString<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Line<T, Z, M>> for LineString<T, Z, M> {
     fn from(line: Line<T, Z, M>) -> Self {
         Self(vec![line.start, line.end])
     }
 }
 
 /// Turn an iterator of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, Z: ZCoord, M: Measure, IC: Into<Coordinate<T, Z, M>>> FromIterator<IC>
+impl<T: CoordNum, Z: CoordNum, M: CoordNum, IC: Into<Coordinate<T, Z, M>>> FromIterator<IC>
     for LineString<T, Z, M>
 {
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {
@@ -384,7 +386,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure, IC: Into<Coordinate<T, Z, M>>> FromIter
 }
 
 /// Iterate over all the [`Coordinate`]s in this [`LineString`].
-impl<T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for LineString<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for LineString<T, Z, M> {
     type Item = Coordinate<T, Z, M>;
     type IntoIter = ::std::vec::IntoIter<Coordinate<T, Z, M>>;
 
@@ -393,7 +395,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for LineString<T, Z, M> {
     }
 }
 
-impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a LineString<T, Z, M> {
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a LineString<T, Z, M> {
     type Item = &'a Coordinate<T, Z, M>;
     type IntoIter = CoordinatesIter<'a, T, Z, M>;
 
@@ -403,7 +405,7 @@ impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a LineString<T, 
 }
 
 /// Mutably iterate over all the [`Coordinate`]s in this [`LineString`]
-impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a mut LineString<T, Z, M> {
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a mut LineString<T, Z, M> {
     type Item = &'a mut Coordinate<T, Z, M>;
     type IntoIter = ::std::slice::IterMut<'a, Coordinate<T, Z, M>>;
 
@@ -412,7 +414,7 @@ impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a mut LineString
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> Index<usize> for LineString<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Index<usize> for LineString<T, Z, M> {
     type Output = Coordinate<T, Z, M>;
 
     fn index(&self, index: usize) -> &Coordinate<T, Z, M> {
@@ -420,7 +422,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> Index<usize> for LineString<T, Z, M> {
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> IndexMut<usize> for LineString<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> IndexMut<usize> for LineString<T, Z, M> {
     fn index_mut(&mut self, index: usize) -> &mut Coordinate<T, Z, M> {
         self.0.index_mut(index)
     }

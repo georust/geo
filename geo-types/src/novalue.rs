@@ -1,6 +1,6 @@
 #[cfg(any(feature = "approx", test))]
 use approx::AbsDiffEq;
-use num_traits::{One, Zero};
+use num_traits::{Num, NumCast, One, ToPrimitive, Zero};
 use std::fmt::Debug;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
@@ -77,11 +77,35 @@ impl Zero for NoValue {
     }
 }
 
-/// This hack allows mathematical operations that result in noop due to above ops
+/// Thhese hacks allows mathematical operations that result in noop due to above ops
 impl One for NoValue {
     #[inline]
     fn one() -> Self {
         NoValue::default()
+    }
+}
+
+impl ToPrimitive for NoValue {
+    fn to_i64(&self) -> Option<i64> {
+        Some(0)
+    }
+
+    fn to_u64(&self) -> Option<u64> {
+        Some(0)
+    }
+}
+
+impl NumCast for NoValue {
+    fn from<T: ToPrimitive>(_: T) -> Option<Self> {
+        Some(Self::default())
+    }
+}
+
+impl Num for NoValue {
+    type FromStrRadixErr = ();
+
+    fn from_str_radix(_str: &str, _radix: u32) -> Result<Self, Self::FromStrRadixErr> {
+        Ok(Self::default())
     }
 }
 

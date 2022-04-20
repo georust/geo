@@ -1,4 +1,4 @@
-use crate::{CoordNum, LineString, Measure, NoValue, Rect, Triangle, ZCoord};
+use crate::{CoordNum, LineString, NoValue, Rect, Triangle};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
@@ -82,7 +82,7 @@ pub type Polygon3D<T> = Polygon<T, T, NoValue>;
 /// See [Polygon]
 pub type Polygon3DM<T> = Polygon<T, T, T>;
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> Polygon<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Polygon<T, Z, M> {
     /// Create a new `Polygon` with the provided exterior `LineString` ring and
     /// interior `LineString` rings.
     ///
@@ -413,7 +413,7 @@ impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Triangle<T, Z, M>> for Polygon<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Triangle<T, Z, M>> for Polygon<T, Z, M> {
     fn from(t: Triangle<T, Z, M>) -> Self {
         Self::new(vec![t.0, t.1, t.2, t.0].into(), Vec::new())
     }

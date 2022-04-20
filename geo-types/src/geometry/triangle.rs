@@ -1,4 +1,4 @@
-use crate::{polygon, CoordNum, Coordinate, Line, Measure, NoValue, Polygon, ZCoord};
+use crate::{polygon, CoordNum, Coordinate, Line, NoValue, Polygon};
 #[cfg(doc)]
 use crate::{Polygon3D, Polygon3DM, PolygonM};
 #[cfg(any(feature = "approx", test))]
@@ -34,7 +34,7 @@ pub type Triangle3D<T> = Triangle<T, T, NoValue>;
 /// vertices must not be collinear and they must be distinct.
 pub type Triangle3DM<T> = Triangle<T, T, T>;
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> Triangle<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Triangle<T, Z, M> {
     /// Instantiate Self from the raw content value
     pub fn new(v1: Coordinate<T, Z, M>, v2: Coordinate<T, Z, M>, v3: Coordinate<T, Z, M>) -> Self {
         Self(v1, v2, v3)
@@ -80,7 +80,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> Triangle<T, Z, M> {
     }
 }
 
-impl<IC: Into<Coordinate<T, Z, M>> + Copy, T: CoordNum, Z: ZCoord, M: Measure> From<[IC; 3]>
+impl<IC: Into<Coordinate<T, Z, M>> + Copy, T: CoordNum, Z: CoordNum, M: CoordNum> From<[IC; 3]>
     for Triangle<T, Z, M>
 {
     fn from(array: [IC; 3]) -> Self {

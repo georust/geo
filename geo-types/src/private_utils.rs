@@ -3,17 +3,15 @@
 // hidden module is public so the geo crate can reuse these algorithms to
 // prevent duplication. These functions are _not_ meant for public consumption.
 
-use crate::{
-    CoordFloat, CoordNum, Coordinate, Line, LineString, Measure, NoValue, Point, Rect, ZCoord,
-};
+use crate::{CoordFloat, CoordNum, Coordinate, Line, LineString, NoValue, Point, Rect};
 
-pub fn line_string_bounding_rect<T: CoordNum, Z: ZCoord, M: Measure>(
+pub fn line_string_bounding_rect<T: CoordNum, Z: CoordNum, M: CoordNum>(
     line_string: &LineString<T, Z, M>,
 ) -> Option<Rect<T, Z, M>> {
     get_bounding_rect(line_string.coords().cloned())
 }
 
-pub fn line_bounding_rect<T: CoordNum, Z: ZCoord, M: Measure>(
+pub fn line_bounding_rect<T: CoordNum, Z: CoordNum, M: CoordNum>(
     line: Line<T, Z, M>,
 ) -> Rect<T, Z, M> {
     Rect::new(line.start, line.end)
@@ -22,8 +20,8 @@ pub fn line_bounding_rect<T: CoordNum, Z: ZCoord, M: Measure>(
 pub fn get_bounding_rect<I, T, Z, M>(collection: I) -> Option<Rect<T, Z, M>>
 where
     T: CoordNum,
-    Z: ZCoord,
-    M: Measure,
+    Z: CoordNum,
+    M: CoordNum,
     I: IntoIterator<Item = Coordinate<T, Z, M>>,
 {
     let mut iter = collection.into_iter();
@@ -92,7 +90,7 @@ where
     s.abs() * dx.hypot(dy)
 }
 
-pub fn line_euclidean_length<T: CoordFloat, M: Measure>(line: Line<T, NoValue, M>) -> T {
+pub fn line_euclidean_length<T: CoordFloat, M: CoordNum>(line: Line<T, NoValue, M>) -> T {
     line.dx().hypot(line.dy())
 }
 

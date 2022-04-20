@@ -1,4 +1,4 @@
-use crate::{CoordNum, Coordinate, Measure, NoValue, Point, ZCoord};
+use crate::{CoordNum, Coordinate, NoValue, Point};
 #[cfg(doc)]
 use crate::{Coordinate3D, Coordinate3DM, CoordinateM};
 #[cfg(any(feature = "approx", test))]
@@ -41,7 +41,7 @@ pub type Line3D<T> = Line<T, T, NoValue>;
 /// `LineString` with the two end points.
 pub type Line3DM<T> = Line<T, T, T>;
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> Line<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Line<T, Z, M> {
     /// Creates a new line segment.
     ///
     /// # Examples
@@ -68,7 +68,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> Line<T, Z, M> {
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> Line<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Line<T, Z, M> {
     /// Calculate the difference in coordinates (Δx, Δy).
     pub fn delta(&self) -> Coordinate<T, Z, M> {
         self.end - self.start
@@ -133,7 +133,7 @@ impl<T: CoordNum, Z: ZCoord, M: Measure> Line<T, Z, M> {
 }
 
 /// Implementations for 2D lines with optional Measure
-impl<T: CoordNum, M: Measure> Line<T, NoValue, M> {
+impl<T: CoordNum, M: CoordNum> Line<T, NoValue, M> {
     /// Calculate the slope (Δy/Δx).
     ///
     /// Equivalent to:
@@ -195,7 +195,7 @@ impl<T: CoordNum, M: Measure> Line<T, NoValue, M> {
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> Line<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> Line<T, Z, M> {
     pub fn start_point(&self) -> Point<T, Z, M> {
         Point::from(self.start)
     }
