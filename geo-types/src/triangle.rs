@@ -1,27 +1,50 @@
-use crate::{polygon, CoordNum, Coordinate, Line, Polygon};
-
+use crate::{polygon, CoordNum, Coordinate, Line, Measure, NoValue, Polygon, ZCoord};
+#[cfg(doc)]
+use crate::{Polygon3D, Polygon3DM, PolygonM};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-/// A bounded 2D area whose three vertices are defined by
+/// A generic area with 3D+M support whose three vertices are defined by
 /// `Coordinate`s. The semantics and validity are that of
-/// the equivalent [`Polygon`]; in addition, the three
+/// the equivalent [Polygon]; in addition, the three
 /// vertices must not be collinear and they must be distinct.
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Triangle<T: CoordNum>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);
+pub struct Triangle<T: CoordNum, Z: ZCoord = NoValue, M: Measure = NoValue>(
+    pub Coordinate<T, Z, M>,
+    pub Coordinate<T, Z, M>,
+    pub Coordinate<T, Z, M>,
+);
 
-impl<T: CoordNum> Triangle<T> {
+/// A bounded 2D area whose three vertices are defined by
+/// `Coordinate`s. The semantics and validity are that of
+/// the equivalent [PolygonM]; in addition, the three
+/// vertices must not be collinear and they must be distinct.
+pub type TriangleM<T> = Triangle<T, NoValue, T>;
+
+/// A bounded 2D area whose three vertices are defined by
+/// `Coordinate`s. The semantics and validity are that of
+/// the equivalent [Polygon3D]; in addition, the three
+/// vertices must not be collinear and they must be distinct.
+pub type Triangle3D<T> = Triangle<T, T, NoValue>;
+
+/// A bounded 2D area whose three vertices are defined by
+/// `Coordinate`s. The semantics and validity are that of
+/// the equivalent [Polygon3DM]; in addition, the three
+/// vertices must not be collinear and they must be distinct.
+pub type Triangle3DM<T> = Triangle<T, T, T>;
+
+impl<T: CoordNum, Z: ZCoord, M: Measure> Triangle<T, Z, M> {
     /// Instantiate Self from the raw content value
-    pub fn new(v1: Coordinate<T>, v2: Coordinate<T>, v3: Coordinate<T>) -> Self {
+    pub fn new(v1: Coordinate<T, Z, M>, v2: Coordinate<T, Z, M>, v3: Coordinate<T, Z, M>) -> Self {
         Self(v1, v2, v3)
     }
 
-    pub fn to_array(&self) -> [Coordinate<T>; 3] {
+    pub fn to_array(&self) -> [Coordinate<T, Z, M>; 3] {
         [self.0, self.1, self.2]
     }
 
-    pub fn to_lines(&self) -> [Line<T>; 3] {
+    pub fn to_lines(&self) -> [Line<T, Z, M>; 3] {
         [
             Line::new(self.0, self.1),
             Line::new(self.1, self.2),
@@ -52,12 +75,14 @@ impl<T: CoordNum> Triangle<T> {
     ///     ],
     /// );
     /// ```
-    pub fn to_polygon(self) -> Polygon<T> {
+    pub fn to_polygon(self) -> Polygon<T, Z, M> {
         polygon![self.0, self.1, self.2, self.0]
     }
 }
 
-impl<IC: Into<Coordinate<T>> + Copy, T: CoordNum> From<[IC; 3]> for Triangle<T> {
+impl<IC: Into<Coordinate<T, Z, M>> + Copy, T: CoordNum, Z: ZCoord, M: Measure> From<[IC; 3]>
+    for Triangle<T, Z, M>
+{
     fn from(array: [IC; 3]) -> Self {
         Self(array[0].into(), array[1].into(), array[2].into())
     }

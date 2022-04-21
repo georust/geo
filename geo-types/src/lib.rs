@@ -50,7 +50,7 @@
 //! [rstar]: https://github.com/Stoeoef/rstar
 //! [Serde]: https://serde.rs/
 extern crate num_traits;
-use num_traits::{Float, Num, NumCast};
+use num_traits::{Float, Num, NumCast, NumOps, One, Zero};
 use std::fmt::Debug;
 
 #[cfg(feature = "serde")]
@@ -64,61 +64,83 @@ extern crate rstar_0_8;
 #[macro_use]
 extern crate approx;
 
-#[deprecated(since = "0.7.0", note = "use `CoordFloat` or `CoordNum` instead")]
-pub trait CoordinateType: Num + Copy + NumCast + PartialOrd + Debug {}
-#[allow(deprecated)]
-impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordinateType for T {}
-
 /// The type of an x or y value of a point/coordinate.
 ///
 /// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
 ///
 /// For algorithms which only make sense for floating point, like area or length calculations,
 /// see [CoordFloat](trait.CoordFloat.html).
-#[allow(deprecated)]
-pub trait CoordNum: CoordinateType + Debug {}
-#[allow(deprecated)]
-impl<T: CoordinateType + Debug> CoordNum for T {}
+pub trait CoordNum: Num + Copy + NumCast + PartialOrd + Debug {}
+impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordNum for T {}
 
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}
 
+/// The type of the optional z value of a point/coordinate.
+///
+/// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
+/// Also, an empty [`NoValue`] generic type can be used instead of the real value,
+/// allowing geo-types to avoid having Z value if it is not needed.
+///
+/// Unlike [CoordNum], this trait does not require [NumCast] and [Num] traits.
+pub trait ZCoord: NumOps + One + Zero + Copy + PartialEq + PartialOrd + Debug {}
+impl<Z: NumOps + One + Zero + Copy + PartialEq + PartialOrd + Debug> ZCoord for Z {}
+
+/// The type of the optional measurement (m) value of a point/coordinate.
+///
+/// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
+/// Also, an empty [`NoValue`] generic type can be used instead of the real value,
+/// allowing geo-types to avoid having M value if it is not needed.
+///
+/// Unlike [CoordNum], this trait does not require [NumCast] and [Num] traits.
+pub trait Measure: NumOps + One + Zero + Copy + PartialEq + PartialOrd + Debug {}
+impl<M: NumOps + One + Zero + Copy + PartialEq + PartialOrd + Debug> Measure for M {}
+
+mod novalue;
+pub use crate::novalue::NoValue;
+
 mod coordinate;
-pub use crate::coordinate::Coordinate;
+pub use crate::coordinate::{Coordinate, Coordinate3D, Coordinate3DM, CoordinateM};
 
 mod point;
-pub use crate::point::Point;
+pub use crate::point::{Point, Point3D, Point3DM, PointM};
 
 mod multi_point;
-pub use crate::multi_point::MultiPoint;
+pub use crate::multi_point::{MultiPoint, MultiPoint3D, MultiPoint3DM, MultiPointM};
 
 mod line;
-pub use crate::line::Line;
+pub use crate::line::{Line, Line3D, Line3DM, LineM};
 
 mod line_string;
-pub use crate::line_string::{LineString, PointsIter};
+pub use crate::line_string::{
+    LineString, LineString3D, LineString3DM, LineStringM, PointsIter, PointsIter3D, PointsIter3DM,
+    PointsIterM,
+};
 
 mod multi_line_string;
-pub use crate::multi_line_string::MultiLineString;
+pub use crate::multi_line_string::{
+    MultiLineString, MultiLineString3D, MultiLineString3DM, MultiLineStringM,
+};
 
 mod polygon;
-pub use crate::polygon::Polygon;
+pub use crate::polygon::{Polygon, Polygon3D, Polygon3DM, PolygonM};
 
 mod multi_polygon;
-pub use crate::multi_polygon::MultiPolygon;
+pub use crate::multi_polygon::{MultiPolygon, MultiPolygon3D, MultiPolygon3DM, MultiPolygonM};
 
 mod geometry;
-pub use crate::geometry::Geometry;
+pub use crate::geometry::{Geometry, Geometry3D, Geometry3DM, GeometryM};
 
 mod geometry_collection;
-pub use crate::geometry_collection::GeometryCollection;
+pub use crate::geometry_collection::{
+    GeometryCollection, GeometryCollection3D, GeometryCollection3DM, GeometryCollectionM,
+};
 
 mod triangle;
-pub use crate::triangle::Triangle;
+pub use crate::triangle::{Triangle, Triangle3D, Triangle3DM, TriangleM};
 
 mod rect;
-#[allow(deprecated)]
-pub use crate::rect::{InvalidRectCoordinatesError, Rect};
+pub use crate::rect::{Rect, Rect3D, Rect3DM, RectM};
 
 mod error;
 pub use error::Error;

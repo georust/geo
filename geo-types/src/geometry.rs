@@ -1,6 +1,6 @@
 use crate::{
-    CoordNum, Error, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon, Rect, Triangle,
+    CoordNum, Error, GeometryCollection, Line, LineString, Measure, MultiLineString, MultiPoint,
+    MultiPolygon, NoValue, Point, Polygon, Rect, Triangle, ZCoord,
 };
 
 #[cfg(any(feature = "approx", test))]
@@ -19,185 +19,92 @@ use std::convert::TryFrom;
 /// ```
 /// use std::convert::TryFrom;
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
-/// let p = point!(x: 1.0, y: 1.0);
+///
+/// let p = point!{ x: 1.0, y: 1.0 };
 /// let pe: Geometry<f64> = p.into();
 /// let pn = Point::try_from(pe).unwrap();
 /// ```
-///
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Geometry<T: CoordNum> {
-    Point(Point<T>),
-    Line(Line<T>),
-    LineString(LineString<T>),
-    Polygon(Polygon<T>),
-    MultiPoint(MultiPoint<T>),
-    MultiLineString(MultiLineString<T>),
-    MultiPolygon(MultiPolygon<T>),
-    GeometryCollection(GeometryCollection<T>),
-    Rect(Rect<T>),
-    Triangle(Triangle<T>),
+pub enum Geometry<T: CoordNum, Z: ZCoord = NoValue, M: Measure = NoValue> {
+    Point(Point<T, Z, M>),
+    Line(Line<T, Z, M>),
+    LineString(LineString<T, Z, M>),
+    Polygon(Polygon<T, Z, M>),
+    MultiPoint(MultiPoint<T, Z, M>),
+    MultiLineString(MultiLineString<T, Z, M>),
+    MultiPolygon(MultiPolygon<T, Z, M>),
+    GeometryCollection(GeometryCollection<T, Z, M>),
+    Rect(Rect<T, Z, M>),
+    Triangle(Triangle<T, Z, M>),
 }
 
-impl<T: CoordNum> From<Point<T>> for Geometry<T> {
-    fn from(x: Point<T>) -> Self {
+pub type GeometryM<T> = Geometry<T, NoValue, T>;
+pub type Geometry3D<T> = Geometry<T, T, NoValue>;
+pub type Geometry3DM<T> = Geometry<T, T, T>;
+
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<Point<T, Z, M>> for Geometry<T, Z, M> {
+    fn from(x: Point<T, Z, M>) -> Self {
         Self::Point(x)
     }
 }
-impl<T: CoordNum> From<Line<T>> for Geometry<T> {
-    fn from(x: Line<T>) -> Self {
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<Line<T, Z, M>> for Geometry<T, Z, M> {
+    fn from(x: Line<T, Z, M>) -> Self {
         Self::Line(x)
     }
 }
-impl<T: CoordNum> From<LineString<T>> for Geometry<T> {
-    fn from(x: LineString<T>) -> Self {
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<LineString<T, Z, M>> for Geometry<T, Z, M> {
+    fn from(x: LineString<T, Z, M>) -> Self {
         Self::LineString(x)
     }
 }
-impl<T: CoordNum> From<Polygon<T>> for Geometry<T> {
-    fn from(x: Polygon<T>) -> Self {
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<Polygon<T, Z, M>> for Geometry<T, Z, M> {
+    fn from(x: Polygon<T, Z, M>) -> Self {
         Self::Polygon(x)
     }
 }
-impl<T: CoordNum> From<MultiPoint<T>> for Geometry<T> {
-    fn from(x: MultiPoint<T>) -> Self {
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<MultiPoint<T, Z, M>> for Geometry<T, Z, M> {
+    fn from(x: MultiPoint<T, Z, M>) -> Self {
         Self::MultiPoint(x)
     }
 }
-impl<T: CoordNum> From<MultiLineString<T>> for Geometry<T> {
-    fn from(x: MultiLineString<T>) -> Self {
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<MultiLineString<T, Z, M>> for Geometry<T, Z, M> {
+    fn from(x: MultiLineString<T, Z, M>) -> Self {
         Self::MultiLineString(x)
     }
 }
-impl<T: CoordNum> From<MultiPolygon<T>> for Geometry<T> {
-    fn from(x: MultiPolygon<T>) -> Self {
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<MultiPolygon<T, Z, M>> for Geometry<T, Z, M> {
+    fn from(x: MultiPolygon<T, Z, M>) -> Self {
         Self::MultiPolygon(x)
     }
 }
 
-impl<T: CoordNum> From<Rect<T>> for Geometry<T> {
-    fn from(x: Rect<T>) -> Self {
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<Rect<T, Z, M>> for Geometry<T, Z, M> {
+    fn from(x: Rect<T, Z, M>) -> Self {
         Self::Rect(x)
     }
 }
 
-impl<T: CoordNum> From<Triangle<T>> for Geometry<T> {
-    fn from(x: Triangle<T>) -> Self {
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<Triangle<T, Z, M>> for Geometry<T, Z, M> {
+    fn from(x: Triangle<T, Z, M>) -> Self {
         Self::Triangle(x)
     }
 }
 
-impl<T: CoordNum> Geometry<T> {
-    /// If this Geometry is a Point, then return that, else None.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::*;
-    /// use std::convert::TryInto;
-    ///
-    /// let g = Geometry::Point(Point::new(0., 0.));
-    /// let p2: Point<f32> = g.try_into().unwrap();
-    /// assert_eq!(p2, Point::new(0., 0.,));
-    /// ```
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<Point>"
-    )]
-    pub fn into_point(self) -> Option<Point<T>> {
-        if let Geometry::Point(x) = self {
-            Some(x)
-        } else {
-            None
-        }
-    }
-
-    /// If this Geometry is a LineString, then return that LineString, else None.
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<LineString>"
-    )]
-    pub fn into_line_string(self) -> Option<LineString<T>> {
-        if let Geometry::LineString(x) = self {
-            Some(x)
-        } else {
-            None
-        }
-    }
-
-    /// If this Geometry is a Line, then return that Line, else None.
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<Line>"
-    )]
-    pub fn into_line(self) -> Option<Line<T>> {
-        if let Geometry::Line(x) = self {
-            Some(x)
-        } else {
-            None
-        }
-    }
-
-    /// If this Geometry is a Polygon, then return that, else None.
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<Polygon>"
-    )]
-    pub fn into_polygon(self) -> Option<Polygon<T>> {
-        if let Geometry::Polygon(x) = self {
-            Some(x)
-        } else {
-            None
-        }
-    }
-
-    /// If this Geometry is a MultiPoint, then return that, else None.
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<MultiPoint>"
-    )]
-    pub fn into_multi_point(self) -> Option<MultiPoint<T>> {
-        if let Geometry::MultiPoint(x) = self {
-            Some(x)
-        } else {
-            None
-        }
-    }
-
-    /// If this Geometry is a MultiLineString, then return that, else None.
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<MultiLineString>"
-    )]
-    pub fn into_multi_line_string(self) -> Option<MultiLineString<T>> {
-        if let Geometry::MultiLineString(x) = self {
-            Some(x)
-        } else {
-            None
-        }
-    }
-
-    /// If this Geometry is a MultiPolygon, then return that, else None.
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<MultiPolygon>"
-    )]
-    pub fn into_multi_polygon(self) -> Option<MultiPolygon<T>> {
-        if let Geometry::MultiPolygon(x) = self {
-            Some(x)
-        } else {
-            None
-        }
-    }
-}
-
 macro_rules! try_from_geometry_impl {
-    ($($type: ident),+) => {
+    ($($type: ident),+ $(,)? ) => {
         $(
         /// Convert a Geometry enum into its inner type.
         ///
         /// Fails if the enum case does not match the type you are trying to convert it to.
-        impl <T: CoordNum> TryFrom<Geometry<T>> for $type<T> {
+        impl<T: CoordNum, Z: ZCoord, M: Measure> TryFrom<Geometry<T, Z, M>> for $type<T, Z, M> {
             type Error = Error;
 
-            fn try_from(geom: Geometry<T>) -> Result<Self, Self::Error> {
+            fn try_from(geom: Geometry<T, Z, M>) -> Result<Self, Self::Error> {
                 match geom {
                     Geometry::$type(g) => Ok(g),
                     other => Err(Error::MismatchedGeometry {
-                        expected: type_name::<$type<T>>(),
+                        expected: type_name::<$type<T, Z, M>>(),
                         found: inner_type_name(other)
                     })
                 }
@@ -207,6 +114,7 @@ macro_rules! try_from_geometry_impl {
     }
 }
 
+// `concat_idents` is not available, so hacking around it
 try_from_geometry_impl!(
     Point,
     Line,
@@ -216,24 +124,23 @@ try_from_geometry_impl!(
     MultiLineString,
     MultiPolygon,
     Rect,
-    Triangle
+    Triangle,
 );
 
-fn inner_type_name<T>(geometry: Geometry<T>) -> &'static str
-where
-    T: CoordNum,
-{
+fn inner_type_name<T: CoordNum, Z: ZCoord, M: Measure>(
+    geometry: Geometry<T, Z, M>,
+) -> &'static str {
     match geometry {
-        Geometry::Point(_) => type_name::<Point<T>>(),
-        Geometry::Line(_) => type_name::<Line<T>>(),
-        Geometry::LineString(_) => type_name::<LineString<T>>(),
-        Geometry::Polygon(_) => type_name::<Polygon<T>>(),
-        Geometry::MultiPoint(_) => type_name::<MultiPoint<T>>(),
-        Geometry::MultiLineString(_) => type_name::<MultiLineString<T>>(),
-        Geometry::MultiPolygon(_) => type_name::<MultiPolygon<T>>(),
-        Geometry::GeometryCollection(_) => type_name::<GeometryCollection<T>>(),
-        Geometry::Rect(_) => type_name::<Rect<T>>(),
-        Geometry::Triangle(_) => type_name::<Triangle<T>>(),
+        Geometry::Point(_) => type_name::<Point<T, Z, M>>(),
+        Geometry::Line(_) => type_name::<Line<T, Z, M>>(),
+        Geometry::LineString(_) => type_name::<LineString<T, Z, M>>(),
+        Geometry::Polygon(_) => type_name::<Polygon<T, Z, M>>(),
+        Geometry::MultiPoint(_) => type_name::<MultiPoint<T, Z, M>>(),
+        Geometry::MultiLineString(_) => type_name::<MultiLineString<T, Z, M>>(),
+        Geometry::MultiPolygon(_) => type_name::<MultiPolygon<T, Z, M>>(),
+        Geometry::GeometryCollection(_) => type_name::<GeometryCollection<T, Z, M>>(),
+        Geometry::Rect(_) => type_name::<Rect<T, Z, M>>(),
+        Geometry::Triangle(_) => type_name::<Triangle<T, Z, M>>(),
     }
 }
 
