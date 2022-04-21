@@ -1,4 +1,4 @@
-use crate::{CoordNum, LineString};
+use crate::{CoordNum, LineString, Measure, NoValue, ZCoord};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -33,11 +33,17 @@ use std::iter::FromIterator;
 /// of a closed `MultiLineString` is always empty.
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MultiLineString<T: CoordNum = f64>(pub Vec<LineString<T>>);
+pub struct MultiLineString<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoValue>(
+    pub Vec<LineString<T, Z, M>>,
+);
 
-impl<T: CoordNum> MultiLineString<T> {
+pub type MultiLineStringM<T> = MultiLineString<T, NoValue, T>;
+pub type MultiLineString3D<T> = MultiLineString<T, T, NoValue>;
+pub type MultiLineString3DM<T> = MultiLineString<T, T, T>;
+
+impl<T: CoordNum, Z: ZCoord, M: Measure> MultiLineString<T, Z, M> {
     /// Instantiate Self from the raw content value
-    pub fn new(value: Vec<LineString<T>>) -> Self {
+    pub fn new(value: Vec<LineString<T, Z, M>>) -> Self {
         Self(value)
     }
 
@@ -67,51 +73,55 @@ impl<T: CoordNum> MultiLineString<T> {
     }
 }
 
-impl<T: CoordNum, ILS: Into<LineString<T>>> From<ILS> for MultiLineString<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure, ILS: Into<LineString<T, Z, M>>> From<ILS>
+    for MultiLineString<T, Z, M>
+{
     fn from(ls: ILS) -> Self {
         Self(vec![ls.into()])
     }
 }
 
-impl<T: CoordNum, ILS: Into<LineString<T>>> FromIterator<ILS> for MultiLineString<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure, ILS: Into<LineString<T, Z, M>>> FromIterator<ILS>
+    for MultiLineString<T, Z, M>
+{
     fn from_iter<I: IntoIterator<Item = ILS>>(iter: I) -> Self {
         Self(iter.into_iter().map(|ls| ls.into()).collect())
     }
 }
 
-impl<T: CoordNum> IntoIterator for MultiLineString<T> {
-    type Item = LineString<T>;
-    type IntoIter = ::std::vec::IntoIter<LineString<T>>;
+impl<T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for MultiLineString<T, Z, M> {
+    type Item = LineString<T, Z, M>;
+    type IntoIter = ::std::vec::IntoIter<LineString<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
 }
 
-impl<'a, T: CoordNum> IntoIterator for &'a MultiLineString<T> {
-    type Item = &'a LineString<T>;
-    type IntoIter = ::std::slice::Iter<'a, LineString<T>>;
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a MultiLineString<T, Z, M> {
+    type Item = &'a LineString<T, Z, M>;
+    type IntoIter = ::std::slice::Iter<'a, LineString<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         (&self.0).iter()
     }
 }
 
-impl<'a, T: CoordNum> IntoIterator for &'a mut MultiLineString<T> {
-    type Item = &'a mut LineString<T>;
-    type IntoIter = ::std::slice::IterMut<'a, LineString<T>>;
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a mut MultiLineString<T, Z, M> {
+    type Item = &'a mut LineString<T, Z, M>;
+    type IntoIter = ::std::slice::IterMut<'a, LineString<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         (&mut self.0).iter_mut()
     }
 }
 
-impl<T: CoordNum> MultiLineString<T> {
-    pub fn iter(&self) -> impl Iterator<Item = &LineString<T>> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> MultiLineString<T, Z, M> {
+    pub fn iter(&self) -> impl Iterator<Item = &LineString<T, Z, M>> {
         self.0.iter()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut LineString<T>> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut LineString<T, Z, M>> {
         self.0.iter_mut()
     }
 }
@@ -195,7 +205,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::line_string;
+    use crate::{line_string, LineString};
 
     #[test]
     fn test_iter() {

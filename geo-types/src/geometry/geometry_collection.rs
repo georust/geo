@@ -1,11 +1,11 @@
-use crate::{CoordNum, Geometry};
+use crate::{CoordNum, Geometry, Measure, NoValue, ZCoord};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
-/// A collection of [`Geometry`](enum.Geometry.html) types.
+/// A generic collection of [Geometry] types with 3D space and measurement value support.
 ///
 /// It can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
 ///
@@ -23,9 +23,9 @@ use std::ops::{Index, IndexMut};
 /// ```
 /// use std::convert::TryFrom;
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
-/// let p = point!(x: 1.0, y: 1.0);
+/// let p = point! { x: 1.0, y: 1.0 };
 /// let pe = Geometry::Point(p);
-/// let gc = GeometryCollection::new_from(vec![pe]);
+/// let gc = GeometryCollection::new(vec![pe]);
 /// for geom in gc {
 ///     println!("{:?}", Point::try_from(geom).unwrap().x());
 /// }
@@ -35,9 +35,9 @@ use std::ops::{Index, IndexMut};
 /// ```
 /// use std::convert::TryFrom;
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
-/// let p = point!(x: 1.0, y: 1.0);
+/// let p = point! { x: 1.0, y: 1.0 };
 /// let pe = Geometry::Point(p);
-/// let gc = GeometryCollection::new_from(vec![pe]);
+/// let gc = GeometryCollection::new(vec![pe]);
 /// gc.iter().for_each(|geom| println!("{:?}", geom));
 /// ```
 ///
@@ -46,9 +46,9 @@ use std::ops::{Index, IndexMut};
 /// ```
 /// use std::convert::TryFrom;
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
-/// let p = point!(x: 1.0, y: 1.0);
+/// let p = point! { x: 1.0, y: 1.0 };
 /// let pe = Geometry::Point(p);
-/// let mut gc = GeometryCollection::new_from(vec![pe]);
+/// let mut gc = GeometryCollection::new(vec![pe]);
 /// gc.iter_mut().for_each(|geom| {
 ///    if let Geometry::Point(p) = geom {
 ///        p.set_x(0.2);
@@ -63,38 +63,52 @@ use std::ops::{Index, IndexMut};
 /// ```
 /// use std::convert::TryFrom;
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
-/// let p = point!(x: 1.0, y: 1.0);
+/// let p = point! { x: 1.0, y: 1.0 };
 /// let pe = Geometry::Point(p);
-/// let gc = GeometryCollection::new_from(vec![pe]);
+/// let gc = GeometryCollection::new(vec![pe]);
 /// println!("{:?}", gc[0]);
 /// ```
-///
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct GeometryCollection<T: CoordNum = f64>(pub Vec<Geometry<T>>);
+pub struct GeometryCollection<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoValue>(
+    pub Vec<Geometry<T, Z, M>>,
+);
+
+/// A geometry collection in 2D space + Measure value.
+///
+/// See [GeometryCollection]
+pub type GeometryCollectionM<T> = GeometryCollection<T, NoValue, T>;
+
+/// A geometry collection in 3D space.
+///
+/// See [GeometryCollection]
+pub type GeometryCollection3D<T> = GeometryCollection<T, T, NoValue>;
+
+/// A geometry collection in 3D space + Measure value.
+///
+/// See [GeometryCollection]
+pub type GeometryCollection3DM<T> = GeometryCollection<T, T, T>;
 
 // Implementing Default by hand because T does not have Default restriction
 // todo: consider adding Default as a CoordNum requirement
-impl<T: CoordNum> Default for GeometryCollection<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> Default for GeometryCollection<T, Z, M> {
     fn default() -> Self {
         Self(Vec::new())
     }
 }
 
-impl<T: CoordNum> GeometryCollection<T> {
-    /// Return an empty GeometryCollection
-    #[deprecated(
-        note = "Will be replaced with a parametrized version in upcoming version. Use GeometryCollection::default() instead"
-    )]
-    pub fn new() -> Self {
-        GeometryCollection::default()
+impl<T: CoordNum, Z: ZCoord, M: Measure> GeometryCollection<T, Z, M> {
+    /// Instantiate Self from the raw content value
+    pub fn new(value: Vec<Geometry<T, Z, M>>) -> Self {
+        Self(value)
     }
 
     /// DO NOT USE!
     /// This fn will be renamed to `new` in the upcoming version.
     /// This fn is not marked as deprecated because it would require extensive refactoring of the geo code.
-    pub fn new_from(value: Vec<Geometry<T>>) -> Self {
-        Self(value)
+    #[inline]
+    pub fn new_from(value: Vec<Geometry<T, Z, M>>) -> Self {
+        Self::new(value)
     }
 
     /// Number of geometries in this GeometryCollection
@@ -108,8 +122,12 @@ impl<T: CoordNum> GeometryCollection<T> {
     }
 }
 
-#[deprecated(since = 0.7.5, note = "Use `GeometryCollection::from(vec![geom])` instead.")]
-impl<T: CoordNum, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
+/// Convert any Geometry (or anything that can be converted to a Geometry) into a
+/// GeometryCollection
+[deprecated(since = 0.7.5, note = "Use `GeometryCollection::from(vec![geom])` instead.")]
+impl<T: CoordNum, Z: ZCoord, M: Measure, IG: Into<Geometry<T, Z, M>>> From<IG>
+    for GeometryCollection<T, Z, M>
+{
     fn from(x: IG) -> Self {
         Self(vec![x.into()])
     }
@@ -123,37 +141,39 @@ impl<T: CoordNum, IG: Into<Geometry<T>>> From<Vec<IG>> for GeometryCollection<T>
 }
 
 /// Collect Geometries (or what can be converted to a Geometry) into a GeometryCollection
-impl<T: CoordNum, IG: Into<Geometry<T>>> FromIterator<IG> for GeometryCollection<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure, IG: Into<Geometry<T, Z, M>>> FromIterator<IG>
+    for GeometryCollection<T, Z, M>
+{
     fn from_iter<I: IntoIterator<Item = IG>>(iter: I) -> Self {
         Self(iter.into_iter().map(|g| g.into()).collect())
     }
 }
 
-impl<T: CoordNum> Index<usize> for GeometryCollection<T> {
-    type Output = Geometry<T>;
+impl<T: CoordNum, Z: ZCoord, M: Measure> Index<usize> for GeometryCollection<T, Z, M> {
+    type Output = Geometry<T, Z, M>;
 
-    fn index(&self, index: usize) -> &Geometry<T> {
+    fn index(&self, index: usize) -> &Geometry<T, Z, M> {
         self.0.index(index)
     }
 }
 
-impl<T: CoordNum> IndexMut<usize> for GeometryCollection<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Geometry<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> IndexMut<usize> for GeometryCollection<T, Z, M> {
+    fn index_mut(&mut self, index: usize) -> &mut Geometry<T, Z, M> {
         self.0.index_mut(index)
     }
 }
 
 // structure helper for consuming iterator
 #[derive(Debug)]
-pub struct IntoIteratorHelper<T: CoordNum> {
-    iter: ::std::vec::IntoIter<Geometry<T>>,
+pub struct IntoIteratorHelper<T: CoordNum, Z: ZCoord, M: Measure> {
+    iter: ::std::vec::IntoIter<Geometry<T, Z, M>>,
 }
 
 // implement the IntoIterator trait for a consuming iterator. Iteration will
 // consume the GeometryCollection
-impl<T: CoordNum> IntoIterator for GeometryCollection<T> {
-    type Item = Geometry<T>;
-    type IntoIter = IntoIteratorHelper<T>;
+impl<T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for GeometryCollection<T, Z, M> {
+    type Item = Geometry<T, Z, M>;
+    type IntoIter = IntoIteratorHelper<T, Z, M>;
 
     // note that into_iter() is consuming self
     fn into_iter(self) -> Self::IntoIter {
@@ -164,8 +184,8 @@ impl<T: CoordNum> IntoIterator for GeometryCollection<T> {
 }
 
 // implement Iterator trait for the helper struct, to be used by adapters
-impl<T: CoordNum> Iterator for IntoIteratorHelper<T> {
-    type Item = Geometry<T>;
+impl<T: CoordNum, Z: ZCoord, M: Measure> Iterator for IntoIteratorHelper<T, Z, M> {
+    type Item = Geometry<T, Z, M>;
 
     // just return the reference
     fn next(&mut self) -> Option<Self::Item> {
@@ -175,15 +195,15 @@ impl<T: CoordNum> Iterator for IntoIteratorHelper<T> {
 
 // structure helper for non-consuming iterator
 #[derive(Debug)]
-pub struct IterHelper<'a, T: CoordNum> {
-    iter: ::std::slice::Iter<'a, Geometry<T>>,
+pub struct IterHelper<'a, T: CoordNum, Z: ZCoord, M: Measure> {
+    iter: ::std::slice::Iter<'a, Geometry<T, Z, M>>,
 }
 
 // implement the IntoIterator trait for a non-consuming iterator. Iteration will
 // borrow the GeometryCollection
-impl<'a, T: CoordNum> IntoIterator for &'a GeometryCollection<T> {
-    type Item = &'a Geometry<T>;
-    type IntoIter = IterHelper<'a, T>;
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a GeometryCollection<T, Z, M> {
+    type Item = &'a Geometry<T, Z, M>;
+    type IntoIter = IterHelper<'a, T, Z, M>;
 
     // note that into_iter() is consuming self
     fn into_iter(self) -> Self::IntoIter {
@@ -194,8 +214,8 @@ impl<'a, T: CoordNum> IntoIterator for &'a GeometryCollection<T> {
 }
 
 // implement the Iterator trait for the helper struct, to be used by adapters
-impl<'a, T: CoordNum> Iterator for IterHelper<'a, T> {
-    type Item = &'a Geometry<T>;
+impl<'a, T: CoordNum, Z: 'a + ZCoord, M: 'a + Measure> Iterator for IterHelper<'a, T, Z, M> {
+    type Item = &'a Geometry<T, Z, M>;
 
     // just return the str reference
     fn next(&mut self) -> Option<Self::Item> {
@@ -205,15 +225,15 @@ impl<'a, T: CoordNum> Iterator for IterHelper<'a, T> {
 
 // structure helper for mutable non-consuming iterator
 #[derive(Debug)]
-pub struct IterMutHelper<'a, T: CoordNum> {
-    iter: ::std::slice::IterMut<'a, Geometry<T>>,
+pub struct IterMutHelper<'a, T: CoordNum, Z: ZCoord, M: Measure> {
+    iter: ::std::slice::IterMut<'a, Geometry<T, Z, M>>,
 }
 
 // implement the IntoIterator trait for a mutable non-consuming iterator. Iteration will
 // mutably borrow the GeometryCollection
-impl<'a, T: CoordNum> IntoIterator for &'a mut GeometryCollection<T> {
-    type Item = &'a mut Geometry<T>;
-    type IntoIter = IterMutHelper<'a, T>;
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a mut GeometryCollection<T, Z, M> {
+    type Item = &'a mut Geometry<T, Z, M>;
+    type IntoIter = IterMutHelper<'a, T, Z, M>;
 
     // note that into_iter() is consuming self
     fn into_iter(self) -> Self::IntoIter {
@@ -224,8 +244,8 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut GeometryCollection<T> {
 }
 
 // implement the Iterator trait for the helper struct, to be used by adapters
-impl<'a, T: CoordNum> Iterator for IterMutHelper<'a, T> {
-    type Item = &'a mut Geometry<T>;
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> Iterator for IterMutHelper<'a, T, Z, M> {
+    type Item = &'a mut Geometry<T, Z, M>;
 
     // just return the str reference
     fn next(&mut self) -> Option<Self::Item> {
@@ -233,12 +253,12 @@ impl<'a, T: CoordNum> Iterator for IterMutHelper<'a, T> {
     }
 }
 
-impl<'a, T: CoordNum> GeometryCollection<T> {
-    pub fn iter(&'a self) -> IterHelper<'a, T> {
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> GeometryCollection<T, Z, M> {
+    pub fn iter(&'a self) -> IterHelper<'a, T, Z, M> {
         self.into_iter()
     }
 
-    pub fn iter_mut(&'a mut self) -> IterMutHelper<'a, T> {
+    pub fn iter_mut(&'a mut self) -> IterMutHelper<'a, T, Z, M> {
         self.into_iter()
     }
 }
@@ -260,8 +280,8 @@ where
     /// ```
     /// use geo_types::{GeometryCollection, point};
     ///
-    /// let a = GeometryCollection::new_from(vec![point![x: 1.0, y: 2.0].into()]);
-    /// let b = GeometryCollection::new_from(vec![point![x: 1.0, y: 2.01].into()]);
+    /// let a = GeometryCollection::new(vec![point![x: 1.0, y: 2.0].into()]);
+    /// let b = GeometryCollection::new(vec![point![x: 1.0, y: 2.01].into()]);
     ///
     /// approx::assert_relative_eq!(a, b, max_relative=0.1);
     /// approx::assert_relative_ne!(a, b, max_relative=0.0001);
@@ -302,8 +322,8 @@ where
     /// ```
     /// use geo_types::{GeometryCollection, point};
     ///
-    /// let a = GeometryCollection::new_from(vec![point![x: 0.0, y: 0.0].into()]);
-    /// let b = GeometryCollection::new_from(vec![point![x: 0.0, y: 0.1].into()]);
+    /// let a = GeometryCollection::new(vec![point![x: 0.0, y: 0.0].into()]);
+    /// let b = GeometryCollection::new(vec![point![x: 0.0, y: 0.1].into()]);
     ///
     /// approx::abs_diff_eq!(a, b, epsilon=0.1);
     /// approx::abs_diff_ne!(a, b, epsilon=0.001);

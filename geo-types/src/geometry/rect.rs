@@ -1,8 +1,11 @@
-use crate::{coord, polygon, CoordFloat, CoordNum, Coordinate, Line, Polygon};
+use crate::{coord, polygon, CoordNum, Coordinate, Line, Measure, NoValue, Polygon, ZCoord};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
+use num_traits::{NumOps, One};
 
+/// A generic bounded rectangle with 3D space + Measure value support.
+///
 /// An _axis-aligned_ bounded 2D rectangle whose area is
 /// defined by minimum and maximum `Coordinate`s.
 ///
@@ -39,12 +42,27 @@ use approx::{AbsDiffEq, RelativeEq};
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T: CoordNum = f64> {
-    min: Coordinate<T>,
-    max: Coordinate<T>,
+pub struct Rect<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoValue> {
+    min: Coordinate<T, Z, M>,
+    max: Coordinate<T, Z, M>,
 }
 
-impl<T: CoordNum> Rect<T> {
+/// A bounded rectangle with a measurement value in 2D space.
+///
+/// See [Rect]
+pub type RectM<T> = Rect<T, NoValue, T>;
+
+/// A bounded rectangle in 3D space.
+///
+/// See [Rect]
+pub type Rect3D<T> = Rect<T, T, NoValue>;
+
+/// A bounded rectangle with a measurement value in 3D space.
+///
+/// See [Rect]
+pub type Rect3DM<T> = Rect<T, T, T>;
+
+impl<T: CoordNum, Z: ZCoord, M: Measure> Rect<T, Z, M> {
     /// Creates a new rectangle from two corner coordinates.
     ///
     /// # Examples
@@ -61,7 +79,7 @@ impl<T: CoordNum> Rect<T> {
     /// ```
     pub fn new<C>(c1: C, c2: C) -> Self
     where
-        C: Into<Coordinate<T>>,
+        C: Into<Coordinate<T, Z, M>>,
     {
         let c1 = c1.into();
         let c2 = c2.into();
@@ -75,22 +93,20 @@ impl<T: CoordNum> Rect<T> {
         } else {
             (c2.y, c1.y)
         };
+        let (min_z, max_z) = if c1.z < c2.z {
+            (c1.z, c2.z)
+        } else {
+            (c2.z, c1.z)
+        };
+        let (min_m, max_m) = if c1.m < c2.m {
+            (c1.m, c2.m)
+        } else {
+            (c2.m, c1.m)
+        };
         Self {
-            min: coord! { x: min_x, y: min_y },
-            max: coord! { x: max_x, y: max_y },
+            min: coord! { x: min_x, y: min_y, z: min_z, m: min_m },
+            max: coord! { x: max_x, y: max_y, z: max_z, m: max_m },
         }
-    }
-
-    #[deprecated(
-        since = "0.6.2",
-        note = "Use `Rect::new` instead, since `Rect::try_new` will never Error"
-    )]
-    #[allow(deprecated)]
-    pub fn try_new<C>(c1: C, c2: C) -> Result<Rect<T>, InvalidRectCoordinatesError>
-    where
-        C: Into<Coordinate<T>>,
-    {
-        Ok(Rect::new(c1, c2))
     }
 
     /// Returns the minimum `Coordinate` of the `Rect`.
@@ -107,7 +123,7 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// assert_eq!(rect.min(), coord! { x: 5., y: 5. });
     /// ```
-    pub fn min(self) -> Coordinate<T> {
+    pub fn min(self) -> Coordinate<T, Z, M> {
         self.min
     }
 
@@ -116,10 +132,7 @@ impl<T: CoordNum> Rect<T> {
     /// # Panics
     ///
     /// Panics if `min`’s x/y is greater than the maximum coordinate’s x/y.
-    pub fn set_min<C>(&mut self, min: C)
-    where
-        C: Into<Coordinate<T>>,
-    {
+    pub fn set_min<C: Into<Coordinate<T, Z, M>>>(&mut self, min: C) {
         self.min = min.into();
         self.assert_valid_bounds();
     }
@@ -138,7 +151,7 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// assert_eq!(rect.max(), coord! { x: 15., y: 15. });
     /// ```
-    pub fn max(self) -> Coordinate<T> {
+    pub fn max(self) -> Coordinate<T, Z, M> {
         self.max
     }
 
@@ -147,10 +160,7 @@ impl<T: CoordNum> Rect<T> {
     /// # Panics
     ///
     /// Panics if `max`’s x/y is less than the minimum coordinate’s x/y.
-    pub fn set_max<C>(&mut self, max: C)
-    where
-        C: Into<Coordinate<T>>,
-    {
+    pub fn set_max<C: Into<Coordinate<T, Z, M>>>(&mut self, max: C) {
         self.max = max.into();
         self.assert_valid_bounds();
     }
@@ -352,26 +362,50 @@ impl<T: CoordNum> Rect<T> {
     }
 }
 
-impl<T: CoordFloat> Rect<T> {
+impl<T, Z, M> Rect<T, Z, M>
+where
+    T: CoordNum,
+    Z: ZCoord + One + NumOps,
+    M: Measure + One + NumOps,
+{
     /// Returns the center `Coordinate` of the `Rect`.
     ///
     /// # Examples
     ///
     /// ```rust
-    /// use geo_types::{coord, Rect};
+    /// use geo_types::{coord, Rect, Rect3D, RectM, Rect3DM};
     ///
     /// let rect = Rect::new(
     ///     coord! { x: 5., y: 5. },
     ///     coord! { x: 15., y: 15. },
     /// );
-    ///
     /// assert_eq!(rect.center(), coord! { x: 10., y: 10. });
+    ///
+    /// let rect = Rect3D::new(
+    ///     coord! { x: 1., y: 2., z: 3. },
+    ///     coord! { x: 3., y: 4., z: 5. },
+    /// );
+    /// assert_eq!(rect.center(), coord! { x: 2., y: 3., z: 4. });
+    ///
+    /// let rect = RectM::new(
+    ///     coord! { x: 1., y: 2., m: 4. },
+    ///     coord! { x: 3., y: 4., m: 6. },
+    /// );
+    /// assert_eq!(rect.center(), coord! { x: 2., y: 3., m: 5. });
+    ///
+    /// let rect = Rect3DM::new(
+    ///     coord! { x: 1., y: 2., z: 3., m: 4. },
+    ///     coord! { x: 3., y: 4., z: 5., m: 6. },
+    /// );
+    /// assert_eq!(rect.center(), coord! { x: 2., y: 3., z: 4., m: 5. });
     /// ```
-    pub fn center(self) -> Coordinate<T> {
+    pub fn center(self) -> Coordinate<T, Z, M> {
         let two = T::one() + T::one();
         coord! {
             x: (self.max.x + self.min.x) / two,
             y: (self.max.y + self.min.y) / two,
+            z: (self.max.z + self.min.z) / (Z::one() + Z::one()),
+            m: (self.max.m + self.min.m) / (M::one() + M::one()),
         }
     }
 }
@@ -460,27 +494,9 @@ where
     }
 }
 
-#[deprecated(
-    since = "0.6.2",
-    note = "Use `Rect::new` instead, since `Rect::try_new` will never Error"
-)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct InvalidRectCoordinatesError;
-
-#[allow(deprecated)]
-impl std::error::Error for InvalidRectCoordinatesError {}
-
-#[allow(deprecated)]
-impl std::fmt::Display for InvalidRectCoordinatesError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", RECT_INVALID_BOUNDS_ERROR)
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::coord;
+    use crate::{coord, Coordinate, Rect};
 
     #[test]
     fn rect() {

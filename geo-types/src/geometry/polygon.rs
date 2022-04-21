@@ -1,10 +1,8 @@
-use crate::{CoordFloat, CoordNum, LineString, Point, Rect, Triangle};
-use num_traits::{Float, Signed};
-
+use crate::{CoordNum, LineString, Measure, NoValue, Rect, Triangle, ZCoord};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-/// A bounded two-dimensional area.
+/// A generic bounded area with 3D space + Measure value support.
 ///
 /// A `Polygon`’s outer boundary (_exterior ring_) is represented by a
 /// [`LineString`]. It may contain zero or more holes (_interior rings_), also
@@ -62,16 +60,29 @@ use approx::{AbsDiffEq, RelativeEq};
 /// If a `LineString`’s first and last `Coordinate` have different values, a
 /// new `Coordinate` will be appended to the `LineString` with a value equal to
 /// the first `Coordinate`.
-///
-/// [`LineString`]: line_string/struct.LineString.html
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Polygon<T: CoordNum = f64> {
-    exterior: LineString<T>,
-    interiors: Vec<LineString<T>>,
+pub struct Polygon<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoValue> {
+    exterior: LineString<T, Z, M>,
+    interiors: Vec<LineString<T, Z, M>>,
 }
 
-impl<T: CoordNum> Polygon<T> {
+/// A bounded area with a measurement value in 2D space.
+///
+/// See [Polygon]
+pub type PolygonM<T> = Polygon<T, NoValue, T>;
+
+/// A bounded area in 3D space.
+///
+/// See [Polygon]
+pub type Polygon3D<T> = Polygon<T, T, NoValue>;
+
+/// A bounded area with a measurement value in 3D space.
+///
+/// See [Polygon]
+pub type Polygon3DM<T> = Polygon<T, T, T>;
+
+impl<T: CoordNum, Z: ZCoord, M: Measure> Polygon<T, Z, M> {
     /// Create a new `Polygon` with the provided exterior `LineString` ring and
     /// interior `LineString` rings.
     ///
@@ -122,7 +133,7 @@ impl<T: CoordNum> Polygon<T> {
     ///     &LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.),])
     /// );
     /// ```
-    pub fn new(mut exterior: LineString<T>, mut interiors: Vec<LineString<T>>) -> Self {
+    pub fn new(mut exterior: LineString<T, Z, M>, mut interiors: Vec<LineString<T, Z, M>>) -> Self {
         exterior.close();
         for interior in &mut interiors {
             interior.close();
@@ -168,7 +179,8 @@ impl<T: CoordNum> Polygon<T> {
     ///     ])]
     /// );
     /// ```
-    pub fn into_inner(self) -> (LineString<T>, Vec<LineString<T>>) {
+    #[allow(clippy::type_complexity)]
+    pub fn into_inner(self) -> (LineString<T, Z, M>, Vec<LineString<T, Z, M>>) {
         (self.exterior, self.interiors)
     }
 
@@ -185,7 +197,7 @@ impl<T: CoordNum> Polygon<T> {
     ///
     /// assert_eq!(polygon.exterior(), &exterior);
     /// ```
-    pub fn exterior(&self) -> &LineString<T> {
+    pub fn exterior(&self) -> &LineString<T, Z, M> {
         &self.exterior
     }
 
@@ -238,7 +250,7 @@ impl<T: CoordNum> Polygon<T> {
     /// [will be closed]: #linestring-closing-operation
     pub fn exterior_mut<F>(&mut self, f: F)
     where
-        F: FnOnce(&mut LineString<T>),
+        F: FnOnce(&mut LineString<T, Z, M>),
     {
         f(&mut self.exterior);
         self.exterior.close();
@@ -265,7 +277,7 @@ impl<T: CoordNum> Polygon<T> {
     ///
     /// assert_eq!(interiors, polygon.interiors());
     /// ```
-    pub fn interiors(&self) -> &[LineString<T>] {
+    pub fn interiors(&self) -> &[LineString<T, Z, M>] {
         &self.interiors
     }
 
@@ -340,7 +352,7 @@ impl<T: CoordNum> Polygon<T> {
     /// [will be closed]: #linestring-closing-operation
     pub fn interiors_mut<F>(&mut self, f: F)
     where
-        F: FnOnce(&mut [LineString<T>]),
+        F: FnOnce(&mut [LineString<T, Z, M>]),
     {
         f(&mut self.interiors);
         for interior in &mut self.interiors {
@@ -378,66 +390,10 @@ impl<T: CoordNum> Polygon<T> {
     /// ```
     ///
     /// [will be closed]: #linestring-closing-operation
-    pub fn interiors_push(&mut self, new_interior: impl Into<LineString<T>>) {
+    pub fn interiors_push(&mut self, new_interior: impl Into<LineString<T, Z, M>>) {
         let mut new_interior = new_interior.into();
         new_interior.close();
         self.interiors.push(new_interior);
-    }
-
-    /// Wrap-around previous-vertex
-    fn previous_vertex(&self, current_vertex: usize) -> usize
-    where
-        T: Float,
-    {
-        (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
-    }
-}
-
-// used to check the sign of a vec of floats
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum ListSign {
-    Empty,
-    Positive,
-    Negative,
-    Mixed,
-}
-
-impl<T: CoordFloat + Signed> Polygon<T> {
-    /// Determine whether a Polygon is convex
-    // For each consecutive pair of edges of the polygon (each triplet of points),
-    // compute the z-component of the cross product of the vectors defined by the
-    // edges pointing towards the points in increasing order.
-    // Take the cross product of these vectors
-    // The polygon is convex if the z-components of the cross products are either
-    // all positive or all negative. Otherwise, the polygon is non-convex.
-    // see: http://stackoverflow.com/a/1881201/416626
-    #[deprecated(
-        since = "0.6.1",
-        note = "Please use `geo::is_convex` on `poly.exterior()` instead"
-    )]
-    pub fn is_convex(&self) -> bool {
-        let convex = self
-            .exterior
-            .0
-            .iter()
-            .enumerate()
-            .map(|(idx, _)| {
-                let prev_1 = self.previous_vertex(idx);
-                let prev_2 = self.previous_vertex(prev_1);
-                Point::from(self.exterior[prev_2]).cross_prod(
-                    Point::from(self.exterior[prev_1]),
-                    Point::from(self.exterior[idx]),
-                )
-            })
-            // accumulate and check cross-product result signs in a single pass
-            // positive implies ccw convexity, negative implies cw convexity
-            // anything else implies non-convexity
-            .fold(ListSign::Empty, |acc, n| match (acc, n.is_positive()) {
-                (ListSign::Empty, true) | (ListSign::Positive, true) => ListSign::Positive,
-                (ListSign::Empty, false) | (ListSign::Negative, false) => ListSign::Negative,
-                _ => ListSign::Mixed,
-            });
-        convex != ListSign::Mixed
     }
 }
 
@@ -457,9 +413,9 @@ impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
     }
 }
 
-impl<T: CoordNum> From<Triangle<T>> for Polygon<T> {
-    fn from(t: Triangle<T>) -> Self {
-        Polygon::new(vec![t.0, t.1, t.2, t.0].into(), Vec::new())
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<Triangle<T, Z, M>> for Polygon<T, Z, M> {
+    fn from(t: Triangle<T, Z, M>) -> Self {
+        Self::new(vec![t.0, t.1, t.2, t.0].into(), Vec::new())
     }
 }
 

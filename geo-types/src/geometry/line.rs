@@ -1,9 +1,10 @@
-use crate::{CoordNum, Coordinate, Point};
+use crate::{CoordNum, Coordinate, Measure, NoValue, Point, ZCoord};
+#[cfg(doc)]
+use crate::{Coordinate3D, Coordinate3DM, CoordinateM};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-/// A line segment made up of exactly two
-/// [`Coordinate`s](struct.Coordinate.html).
+/// A generic line segment made up of exactly two [Coordinate] values.
 ///
 /// # Semantics
 ///
@@ -11,36 +12,65 @@ use approx::{AbsDiffEq, RelativeEq};
 /// `LineString` with the two end points.
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Line<T: CoordNum = f64> {
-    pub start: Coordinate<T>,
-    pub end: Coordinate<T>,
+pub struct Line<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoValue> {
+    pub start: Coordinate<T, Z, M>,
+    pub end: Coordinate<T, Z, M>,
 }
 
-impl<T: CoordNum> Line<T> {
+/// A line segment made up of exactly two [CoordinateM] values.
+///
+/// # Semantics
+///
+/// The _interior_ and _boundary_ are defined as with a
+/// `LineString` with the two end points.
+pub type LineM<T> = Line<T, NoValue, T>;
+
+/// A line segment in 3D made up of exactly two [Coordinate3D] values.
+///
+/// # Semantics
+///
+/// The _interior_ and _boundary_ are defined as with a
+/// `LineString` with the two end points.
+pub type Line3D<T> = Line<T, T, NoValue>;
+
+/// A line segment in 3D made up of exactly two [Coordinate3DM] values.
+///
+/// # Semantics
+///
+/// The _interior_ and _boundary_ are defined as with a
+/// `LineString` with the two end points.
+pub type Line3DM<T> = Line<T, T, T>;
+
+impl<T: CoordNum, Z: ZCoord, M: Measure> Line<T, Z, M> {
     /// Creates a new line segment.
     ///
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{coord, Line};
+    /// use geo_types::{coord, Line, Line3DM};
     ///
     /// let line = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 2. });
-    ///
     /// assert_eq!(line.start, coord! { x: 0., y: 0. });
     /// assert_eq!(line.end, coord! { x: 1., y: 2. });
+    ///
+    /// let line = Line3DM::new(coord! { x: 0., y: 0., z: 0., m: 1. }, coord! { x: 1., y: 2., z: 3., m: 4. });
+    /// assert_eq!(line.start, coord! { x: 0., y: 0., z: 0., m: 1. });
+    /// assert_eq!(line.end, coord! { x: 1., y: 2., z: 3., m: 4. });
     /// ```
     pub fn new<C>(start: C, end: C) -> Self
     where
-        C: Into<Coordinate<T>>,
+        C: Into<Coordinate<T, Z, M>>,
     {
         Self {
             start: start.into(),
             end: end.into(),
         }
     }
+}
 
+impl<T: CoordNum, Z: ZCoord, M: Measure> Line<T, Z, M> {
     /// Calculate the difference in coordinates (Δx, Δy).
-    pub fn delta(&self) -> Coordinate<T> {
+    pub fn delta(&self) -> Coordinate<T, Z, M> {
         self.end - self.start
     }
 
@@ -82,6 +112,28 @@ impl<T: CoordNum> Line<T> {
         self.delta().y
     }
 
+    /// Calculate the difference in ‘z’ components (Δz).
+    ///
+    /// Equivalent to:
+    ///
+    /// ```rust
+    /// # use geo_types::{Line3D, point};
+    /// # let line = Line3D::new(
+    /// #     point! { x: 1., y: 3., z: 5. },
+    /// #     point! { x: 0., y: 9., z: 4. },
+    /// # );
+    /// # assert_eq!(
+    /// #     line.dz(),
+    /// line.end.z - line.start.z
+    /// # );
+    /// ```
+    pub fn dz(&self) -> Z {
+        self.delta().z
+    }
+}
+
+/// Implementations for 2D lines with optional Measure
+impl<T: CoordNum, M: Measure> Line<T, NoValue, M> {
     /// Calculate the slope (Δy/Δx).
     ///
     /// Equivalent to:
@@ -141,16 +193,18 @@ impl<T: CoordNum> Line<T> {
     pub fn determinant(&self) -> T {
         self.start.x * self.end.y - self.start.y * self.end.x
     }
+}
 
-    pub fn start_point(&self) -> Point<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> Line<T, Z, M> {
+    pub fn start_point(&self) -> Point<T, Z, M> {
         Point::from(self.start)
     }
 
-    pub fn end_point(&self) -> Point<T> {
+    pub fn end_point(&self) -> Point<T, Z, M> {
         Point::from(self.end)
     }
 
-    pub fn points(&self) -> (Point<T>, Point<T>) {
+    pub fn points(&self) -> (Point<T, Z, M>, Point<T, Z, M>) {
         (self.start_point(), self.end_point())
     }
 }
@@ -224,11 +278,11 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Line<T> {
 #[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
 macro_rules! impl_rstar_line {
     ($rstar:ident) => {
-        impl<T> ::$rstar::RTreeObject for Line<T>
+        impl<T> ::$rstar::RTreeObject for crate::Line<T>
         where
             T: ::num_traits::Float + ::$rstar::RTreeNum,
         {
-            type Envelope = ::$rstar::AABB<Point<T>>;
+            type Envelope = ::$rstar::AABB<crate::Point<T>>;
 
             fn envelope(&self) -> Self::Envelope {
                 let bounding_rect = crate::private_utils::line_bounding_rect(*self);
@@ -236,11 +290,11 @@ macro_rules! impl_rstar_line {
             }
         }
 
-        impl<T> ::$rstar::PointDistance for Line<T>
+        impl<T> ::$rstar::PointDistance for crate::Line<T>
         where
             T: ::num_traits::Float + ::$rstar::RTreeNum,
         {
-            fn distance_2(&self, point: &Point<T>) -> T {
+            fn distance_2(&self, point: &crate::Point<T>) -> T {
                 let d = crate::private_utils::point_line_euclidean_distance(*point, *self);
                 d.powi(2)
             }

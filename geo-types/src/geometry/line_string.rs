@@ -1,10 +1,9 @@
-#[cfg(any(feature = "approx", test))]
-use approx::{AbsDiffEq, RelativeEq};
-
-use crate::{CoordNum, Coordinate, Line, Point, Triangle};
+use crate::*;
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
+/// A generic line string with 3D space + Measure value support.
+///
 /// An ordered collection of two or more [`Coordinate`]s, representing a
 /// path between locations.
 ///
@@ -129,17 +128,46 @@ use std::ops::{Index, IndexMut};
 /// let point_vec = line_string.clone().into_points();
 ///
 /// ```
-
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct LineString<T: CoordNum = f64>(pub Vec<Coordinate<T>>);
+pub struct LineString<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoValue>(
+    pub Vec<Coordinate<T, Z, M>>,
+);
+
+/// A line string with a measurement value in 2D space.
+///
+/// See [LineString]
+pub type LineStringM<T> = LineString<T, NoValue, T>;
+
+/// A line string in 3D space.
+///
+/// See [LineString]
+pub type LineString3D<T> = LineString<T, T, NoValue>;
+
+/// A line string with a measurement value in 3D space.
+///
+/// See [LineString]
+pub type LineString3DM<T> = LineString<T, T, T>;
 
 /// A [`Point`] iterator returned by the `points` method
 #[derive(Debug)]
-pub struct PointsIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
+pub struct PointsIter<'a, T, Z = NoValue, M = NoValue>(::std::slice::Iter<'a, Coordinate<T, Z, M>>)
+where
+    T: CoordNum + 'a,
+    Z: ZCoord + 'a,
+    M: Measure + 'a;
 
-impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
-    type Item = Point<T>;
+pub type PointsIterM<'a, T> = PointsIter<'a, T, NoValue, T>;
+pub type PointsIter3D<'a, T> = PointsIter<'a, T, T, NoValue>;
+pub type PointsIter3DM<'a, T> = PointsIter<'a, T, T, T>;
+
+impl<'a, T, Z, M> Iterator for PointsIter<'a, T, Z, M>
+where
+    T: CoordNum + 'a,
+    Z: ZCoord + 'a,
+    M: Measure + 'a,
+{
+    type Item = Point<T, Z, M>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next().map(|c| Point::from(*c))
@@ -150,13 +178,13 @@ impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
     }
 }
 
-impl<'a, T: CoordNum> ExactSizeIterator for PointsIter<'a, T> {
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> ExactSizeIterator for PointsIter<'a, T, Z, M> {
     fn len(&self) -> usize {
         self.0.len()
     }
 }
 
-impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> DoubleEndedIterator for PointsIter<'a, T, Z, M> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back().map(|c| Point::from(*c))
     }
@@ -164,10 +192,12 @@ impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
 
 /// A [`Coordinate`] iterator used by the `into_iter` method on a [`LineString`]
 #[derive(Debug)]
-pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
+pub struct CoordinatesIter<'a, T: CoordNum + 'a, Z: ZCoord + 'a, M: Measure + 'a>(
+    ::std::slice::Iter<'a, Coordinate<T, Z, M>>,
+);
 
-impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
-    type Item = &'a Coordinate<T>;
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> Iterator for CoordinatesIter<'a, T, Z, M> {
+    type Item = &'a Coordinate<T, Z, M>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
@@ -178,52 +208,46 @@ impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
     }
 }
 
-impl<'a, T: CoordNum> ExactSizeIterator for CoordinatesIter<'a, T> {
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> ExactSizeIterator for CoordinatesIter<'a, T, Z, M> {
     fn len(&self) -> usize {
         self.0.len()
     }
 }
 
-impl<'a, T: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T> {
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> DoubleEndedIterator for CoordinatesIter<'a, T, Z, M> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back()
     }
 }
 
-impl<T: CoordNum> LineString<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> LineString<T, Z, M> {
     /// Instantiate Self from the raw content value
-    pub fn new(value: Vec<Coordinate<T>>) -> Self {
+    pub fn new(value: Vec<Coordinate<T, Z, M>>) -> Self {
         Self(value)
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
-    #[deprecated(note = "Use points() instead")]
-    pub fn points_iter(&self) -> PointsIter<T> {
-        PointsIter(self.0.iter())
-    }
-
-    /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
-    pub fn points(&self) -> PointsIter<T> {
+    pub fn points(&self) -> PointsIter<T, Z, M> {
         PointsIter(self.0.iter())
     }
 
     /// Return an iterator yielding the members of a [`LineString`] as [`Coordinate`]s
-    pub fn coords(&self) -> impl Iterator<Item = &Coordinate<T>> {
+    pub fn coords(&self) -> impl Iterator<Item = &Coordinate<T, Z, M>> {
         self.0.iter()
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as mutable [`Coordinate`]s
-    pub fn coords_mut(&mut self) -> impl Iterator<Item = &mut Coordinate<T>> {
+    pub fn coords_mut(&mut self) -> impl Iterator<Item = &mut Coordinate<T, Z, M>> {
         self.0.iter_mut()
     }
 
     /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Point`]s
-    pub fn into_points(self) -> Vec<Point<T>> {
+    pub fn into_points(self) -> Vec<Point<T, Z, M>> {
         self.0.into_iter().map(Point::from).collect()
     }
 
     /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Coordinate`]s
-    pub fn into_inner(self) -> Vec<Coordinate<T>> {
+    pub fn into_inner(self) -> Vec<Coordinate<T, Z, M>> {
         self.0
     }
 
@@ -255,7 +279,7 @@ impl<T: CoordNum> LineString<T> {
     /// );
     /// assert!(lines.next().is_none());
     /// ```
-    pub fn lines(&'_ self) -> impl ExactSizeIterator + Iterator<Item = Line<T>> + '_ {
+    pub fn lines(&'_ self) -> impl ExactSizeIterator + Iterator<Item = Line<T, Z, M>> + '_ {
         self.0.windows(2).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe { Line::new(*w.get_unchecked(0), *w.get_unchecked(1)) }
@@ -263,7 +287,7 @@ impl<T: CoordNum> LineString<T> {
     }
 
     /// An iterator which yields the coordinates of a [`LineString`] as [Triangle]s
-    pub fn triangles(&'_ self) -> impl ExactSizeIterator + Iterator<Item = Triangle<T>> + '_ {
+    pub fn triangles(&'_ self) -> impl ExactSizeIterator + Iterator<Item = Triangle<T, Z, M>> + '_ {
         self.0.windows(3).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe {
@@ -336,38 +360,42 @@ impl<T: CoordNum> LineString<T> {
 }
 
 /// Turn a [`Vec`] of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure, IC: Into<Coordinate<T, Z, M>>> From<Vec<IC>>
+    for LineString<T, Z, M>
+{
     fn from(v: Vec<IC>) -> Self {
         Self(v.into_iter().map(|c| c.into()).collect())
     }
 }
 
-impl<T: CoordNum> From<Line<T>> for LineString<T> {
-    fn from(line: Line<T>) -> Self {
+impl<T: CoordNum, Z: ZCoord, M: Measure> From<Line<T, Z, M>> for LineString<T, Z, M> {
+    fn from(line: Line<T, Z, M>) -> Self {
         Self(vec![line.start, line.end])
     }
 }
 
 /// Turn an iterator of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, IC: Into<Coordinate<T>>> FromIterator<IC> for LineString<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure, IC: Into<Coordinate<T, Z, M>>> FromIterator<IC>
+    for LineString<T, Z, M>
+{
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {
         Self(iter.into_iter().map(|c| c.into()).collect())
     }
 }
 
 /// Iterate over all the [`Coordinate`]s in this [`LineString`].
-impl<T: CoordNum> IntoIterator for LineString<T> {
-    type Item = Coordinate<T>;
-    type IntoIter = ::std::vec::IntoIter<Coordinate<T>>;
+impl<T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for LineString<T, Z, M> {
+    type Item = Coordinate<T, Z, M>;
+    type IntoIter = ::std::vec::IntoIter<Coordinate<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
 }
 
-impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
-    type Item = &'a Coordinate<T>;
-    type IntoIter = CoordinatesIter<'a, T>;
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a LineString<T, Z, M> {
+    type Item = &'a Coordinate<T, Z, M>;
+    type IntoIter = CoordinatesIter<'a, T, Z, M>;
 
     fn into_iter(self) -> Self::IntoIter {
         CoordinatesIter(self.0.iter())
@@ -375,33 +403,33 @@ impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
 }
 
 /// Mutably iterate over all the [`Coordinate`]s in this [`LineString`]
-impl<'a, T: CoordNum> IntoIterator for &'a mut LineString<T> {
-    type Item = &'a mut Coordinate<T>;
-    type IntoIter = ::std::slice::IterMut<'a, Coordinate<T>>;
+impl<'a, T: CoordNum, Z: ZCoord, M: Measure> IntoIterator for &'a mut LineString<T, Z, M> {
+    type Item = &'a mut Coordinate<T, Z, M>;
+    type IntoIter = ::std::slice::IterMut<'a, Coordinate<T, Z, M>>;
 
-    fn into_iter(self) -> ::std::slice::IterMut<'a, Coordinate<T>> {
+    fn into_iter(self) -> ::std::slice::IterMut<'a, Coordinate<T, Z, M>> {
         self.0.iter_mut()
     }
 }
 
-impl<T: CoordNum> Index<usize> for LineString<T> {
-    type Output = Coordinate<T>;
+impl<T: CoordNum, Z: ZCoord, M: Measure> Index<usize> for LineString<T, Z, M> {
+    type Output = Coordinate<T, Z, M>;
 
-    fn index(&self, index: usize) -> &Coordinate<T> {
+    fn index(&self, index: usize) -> &Coordinate<T, Z, M> {
         self.0.index(index)
     }
 }
 
-impl<T: CoordNum> IndexMut<usize> for LineString<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Coordinate<T> {
+impl<T: CoordNum, Z: ZCoord, M: Measure> IndexMut<usize> for LineString<T, Z, M> {
+    fn index_mut(&mut self, index: usize) -> &mut Coordinate<T, Z, M> {
         self.0.index_mut(index)
     }
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T> RelativeEq for LineString<T>
+impl<T> approx::RelativeEq for LineString<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+    T: approx::AbsDiffEq<Epsilon = T> + CoordNum + approx::RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
@@ -446,7 +474,7 @@ where
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
+impl<T: approx::AbsDiffEq<Epsilon = T> + CoordNum> approx::AbsDiffEq for LineString<T> {
     type Epsilon = T;
 
     #[inline]
@@ -481,33 +509,33 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
 #[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
 macro_rules! impl_rstar_line_string {
     ($rstar:ident) => {
-        impl<T> ::$rstar::RTreeObject for LineString<T>
+        impl<T> ::$rstar::RTreeObject for crate::LineString<T>
         where
             T: ::num_traits::Float + ::$rstar::RTreeNum,
         {
-            type Envelope = ::$rstar::AABB<Point<T>>;
+            type Envelope = ::$rstar::AABB<crate::Point<T>>;
 
             fn envelope(&self) -> Self::Envelope {
                 use num_traits::Bounded;
                 let bounding_rect = crate::private_utils::line_string_bounding_rect(self);
                 match bounding_rect {
                     None => ::$rstar::AABB::from_corners(
-                        Point::new(Bounded::min_value(), Bounded::min_value()),
-                        Point::new(Bounded::max_value(), Bounded::max_value()),
+                        crate::Point::new(Bounded::min_value(), Bounded::min_value()),
+                        crate::Point::new(Bounded::max_value(), Bounded::max_value()),
                     ),
                     Some(b) => ::$rstar::AABB::from_corners(
-                        Point::new(b.min().x, b.min().y),
-                        Point::new(b.max().x, b.max().y),
+                        crate::Point::new(b.min().x, b.min().y),
+                        crate::Point::new(b.max().x, b.max().y),
                     ),
                 }
             }
         }
 
-        impl<T> ::$rstar::PointDistance for LineString<T>
+        impl<T> ::$rstar::PointDistance for crate::LineString<T>
         where
             T: ::num_traits::Float + ::$rstar::RTreeNum,
         {
-            fn distance_2(&self, point: &Point<T>) -> T {
+            fn distance_2(&self, point: &crate::Point<T>) -> T {
                 let d = crate::private_utils::point_line_string_euclidean_distance(*point, self);
                 if d == T::zero() {
                     d
@@ -528,8 +556,8 @@ impl_rstar_line_string!(rstar_0_9);
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::coord;
-    use approx::AbsDiffEq;
+    use crate::{coord, Line};
+    use approx::{AbsDiffEq, RelativeEq};
 
     #[test]
     fn test_exact_size() {

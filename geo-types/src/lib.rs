@@ -76,7 +76,7 @@
 //! [rstar]: https://github.com/Stoeoef/rstar
 //! [Serde]: https://serde.rs/
 extern crate num_traits;
-use num_traits::{Float, Num, NumCast};
+use num_traits::{Float, Num, NumCast, NumOps, One, Zero};
 use std::fmt::Debug;
 
 #[cfg(feature = "serde")]
@@ -109,6 +109,72 @@ impl<T: CoordinateType + Debug> CoordNum for T {}
 /// For algorithms which can only use floating point `Point`s/`Coordinate`s, like area or length calculations
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}
+
+/// The type of the optional z value of a point/coordinate.
+///
+/// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
+/// Also, an empty [`NoValue`] generic type can be used instead of the real value,
+/// allowing geo-types to avoid having Z value if it is not needed.
+///
+/// Unlike [CoordNum], this trait does not require [NumCast] and [Num] traits.
+pub trait ZCoord: NumOps + One + Zero + Copy + PartialEq + PartialOrd + Debug {}
+impl<Z: NumOps + One + Zero + Copy + PartialEq + PartialOrd + Debug> ZCoord for Z {}
+
+/// The type of the optional measurement (m) value of a point/coordinate.
+///
+/// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
+/// Also, an empty [`NoValue`] generic type can be used instead of the real value,
+/// allowing geo-types to avoid having M value if it is not needed.
+///
+/// Unlike [CoordNum], this trait does not require [NumCast] and [Num] traits.
+pub trait Measure: NumOps + One + Zero + Copy + PartialEq + PartialOrd + Debug {}
+impl<M: NumOps + One + Zero + Copy + PartialEq + PartialOrd + Debug> Measure for M {}
+
+mod novalue;
+pub use crate::novalue::NoValue;
+
+mod coordinate;
+pub use crate::coordinate::{Coordinate, Coordinate3D, Coordinate3DM, CoordinateM};
+
+mod point;
+pub use crate::point::{Point, Point3D, Point3DM, PointM};
+
+mod multi_point;
+pub use crate::multi_point::{MultiPoint, MultiPoint3D, MultiPoint3DM, MultiPointM};
+
+mod line;
+pub use crate::line::{Line, Line3D, Line3DM, LineM};
+
+mod line_string;
+pub use crate::line_string::{
+    LineString, LineString3D, LineString3DM, LineStringM, PointsIter, PointsIter3D, PointsIter3DM,
+    PointsIterM,
+};
+
+mod multi_line_string;
+pub use crate::multi_line_string::{
+    MultiLineString, MultiLineString3D, MultiLineString3DM, MultiLineStringM,
+};
+
+mod polygon;
+pub use crate::polygon::{Polygon, Polygon3D, Polygon3DM, PolygonM};
+
+mod multi_polygon;
+pub use crate::multi_polygon::{MultiPolygon, MultiPolygon3D, MultiPolygon3DM, MultiPolygonM};
+
+mod geometry;
+pub use crate::geometry::{Geometry, Geometry3D, Geometry3DM, GeometryM};
+
+mod geometry_collection;
+pub use crate::geometry_collection::{
+    GeometryCollection, GeometryCollection3D, GeometryCollection3DM, GeometryCollectionM,
+};
+
+mod triangle;
+pub use crate::triangle::{Triangle, Triangle3D, Triangle3DM, TriangleM};
+
+mod rect;
+pub use crate::rect::{Rect, Rect3D, Rect3DM, RectM};
 
 pub mod geometry;
 pub use geometry::*;

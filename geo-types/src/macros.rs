@@ -56,7 +56,21 @@ macro_rules! point {
 #[macro_export]
 macro_rules! coord {
     (x: $x:expr, y: $y:expr $(,)* ) => {
-        $crate::Coordinate { x: $x, y: $y }
+        $crate::Coordinate::new__(
+            $x,
+            $y,
+            $crate::NoValue::default(),
+            $crate::NoValue::default(),
+        )
+    };
+    (x: $x:expr, y: $y:expr, z: $z:expr $(,)* ) => {
+        $crate::Coordinate::new__($x, $y, $z, $crate::NoValue::default())
+    };
+    (x: $x:expr, y: $y:expr, m: $m:expr $(,)* ) => {
+        $crate::Coordinate::new__($x, $y, $crate::NoValue::default(), $m)
+    };
+    (x: $x:expr, y: $y:expr, z: $z:expr, m: $m:expr $(,)* ) => {
+        $crate::Coordinate::new__($x, $y, $z, $m)
     };
 }
 
