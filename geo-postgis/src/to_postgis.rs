@@ -21,7 +21,7 @@ pub trait ToPostgis<T> {
 
 impl ToPostgis<ewkb::Point> for Coordinate<f64> {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Point {
-        ewkb::Point::new(self.x, self.y, srid)
+        ewkb::Point::new(self.x(), self.y(), srid)
     }
 }
 
@@ -52,11 +52,7 @@ macro_rules! to_postgis_impl {
     ($from:ident, $to:path, $name:ident) => {
         impl ToPostgis<$to> for $from<f64> {
             fn to_postgis_with_srid(&self, srid: Option<i32>) -> $to {
-                let $name = self
-                    .0
-                    .iter()
-                    .map(|x| x.to_postgis_with_srid(srid))
-                    .collect();
+                let $name = self.iter().map(|x| x.to_postgis_with_srid(srid)).collect();
                 $to { $name, srid }
             }
         }
@@ -66,7 +62,17 @@ to_postgis_impl!(GeometryCollection, ewkb::GeometryCollection, geometries);
 to_postgis_impl!(MultiPolygon, ewkb::MultiPolygon, polygons);
 to_postgis_impl!(MultiLineString, ewkb::MultiLineString, lines);
 to_postgis_impl!(MultiPoint, ewkb::MultiPoint, points);
-to_postgis_impl!(LineString, ewkb::LineString, points);
+
+impl ToPostgis<ewkb::LineString> for LineString<f64> {
+    fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::LineString {
+        let points = self
+            .coords()
+            .map(|x| x.to_postgis_with_srid(srid))
+            .collect();
+        ewkb::LineString { points, srid }
+    }
+}
+
 impl ToPostgis<ewkb::Geometry> for Geometry<f64> {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Geometry {
         match *self {

@@ -26,8 +26,53 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coordinate<T: CoordNum> {
+    #[deprecated(
+        since = "0.7.5",
+        note = "Direct field access is deprecated - use `coord.x()` or `coord.x_mut()` for field access and  `coord!(x: 1, y: 2)` or `Coordinate::new(x, y)` for construction"
+    )]
     pub x: T,
+    #[deprecated(
+        since = "0.7.5",
+        note = "Direct field access is deprecated - use `coord.y()` or `coord.y_mut()` for field access and  `coord!(x: 1, y: 2)` or `Coordinate::new(x, y)` for construction"
+    )]
     pub y: T,
+}
+
+impl<T: CoordNum> Coordinate<T> {
+    #[inline]
+    pub fn new(x: T, y: T) -> Self {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
+        Self { x, y }
+    }
+
+    #[inline]
+    pub fn x(&self) -> T {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
+        self.x
+    }
+
+    #[inline]
+    pub fn x_mut(&mut self) -> &mut T {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
+        &mut self.x
+    }
+
+    #[inline]
+    pub fn y(&self) -> T {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
+        self.y
+    }
+
+    #[inline]
+    pub fn y_mut(&mut self) -> &mut T {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
+        &mut self.y
+    }
 }
 
 impl<T: CoordNum> From<(T, T)> for Coordinate<T> {
@@ -63,14 +108,14 @@ impl<T: CoordNum> From<Point<T>> for Coordinate<T> {
 impl<T: CoordNum> From<Coordinate<T>> for (T, T) {
     #[inline]
     fn from(coord: Coordinate<T>) -> Self {
-        (coord.x, coord.y)
+        (coord.x(), coord.y())
     }
 }
 
 impl<T: CoordNum> From<Coordinate<T>> for [T; 2] {
     #[inline]
     fn from(coord: Coordinate<T>) -> Self {
-        [coord.x, coord.y]
+        [coord.x(), coord.y()]
     }
 }
 
@@ -93,7 +138,7 @@ impl<T: CoordNum> Coordinate<T> {
     /// ```
     #[inline]
     pub fn x_y(&self) -> (T, T) {
-        (self.x, self.y)
+        (self.x(), self.y())
     }
 }
 
@@ -109,8 +154,8 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 /// let p = coord! { x: 1.25, y: 2.5 };
 /// let q = -p;
 ///
-/// assert_eq!(q.x, -p.x);
-/// assert_eq!(q.y, -p.y);
+/// assert_eq!(q.x(), -p.x());
+/// assert_eq!(q.y(), -p.y());
 /// ```
 impl<T> Neg for Coordinate<T>
 where
@@ -121,8 +166,8 @@ where
     #[inline]
     fn neg(self) -> Self {
         coord! {
-            x: -self.x,
-            y: -self.y,
+            x: -self.x(),
+            y: -self.y(),
         }
     }
 }
@@ -138,8 +183,8 @@ where
 /// let q = coord! { x: 1.5, y: 2.5 };
 /// let sum = p + q;
 ///
-/// assert_eq!(sum.x, 2.75);
-/// assert_eq!(sum.y, 5.0);
+/// assert_eq!(sum.x(), 2.75);
+/// assert_eq!(sum.y(), 5.0);
 /// ```
 impl<T: CoordNum> Add for Coordinate<T> {
     type Output = Self;
@@ -147,8 +192,8 @@ impl<T: CoordNum> Add for Coordinate<T> {
     #[inline]
     fn add(self, rhs: Self) -> Self {
         coord! {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
+            x: self.x() + rhs.x(),
+            y: self.y() + rhs.y(),
         }
     }
 }
@@ -164,8 +209,8 @@ impl<T: CoordNum> Add for Coordinate<T> {
 /// let q = coord! { x: 1.25, y: 2.5 };
 /// let diff = p - q;
 ///
-/// assert_eq!(diff.x, 0.25);
-/// assert_eq!(diff.y, 0.);
+/// assert_eq!(diff.x(), 0.25);
+/// assert_eq!(diff.y(), 0.);
 /// ```
 impl<T: CoordNum> Sub for Coordinate<T> {
     type Output = Self;
@@ -173,8 +218,8 @@ impl<T: CoordNum> Sub for Coordinate<T> {
     #[inline]
     fn sub(self, rhs: Self) -> Self {
         coord! {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
+            x: self.x() - rhs.x(),
+            y: self.y() - rhs.y(),
         }
     }
 }
@@ -189,8 +234,8 @@ impl<T: CoordNum> Sub for Coordinate<T> {
 /// let p = coord! { x: 1.25, y: 2.5 };
 /// let q = p * 4.;
 ///
-/// assert_eq!(q.x, 5.0);
-/// assert_eq!(q.y, 10.0);
+/// assert_eq!(q.x(), 5.0);
+/// assert_eq!(q.y(), 10.0);
 /// ```
 impl<T: CoordNum> Mul<T> for Coordinate<T> {
     type Output = Self;
@@ -198,8 +243,8 @@ impl<T: CoordNum> Mul<T> for Coordinate<T> {
     #[inline]
     fn mul(self, rhs: T) -> Self {
         coord! {
-            x: self.x * rhs,
-            y: self.y * rhs,
+            x: self.x() * rhs,
+            y: self.y() * rhs,
         }
     }
 }
@@ -214,8 +259,8 @@ impl<T: CoordNum> Mul<T> for Coordinate<T> {
 /// let p = coord! { x: 5., y: 10. };
 /// let q = p / 4.;
 ///
-/// assert_eq!(q.x, 1.25);
-/// assert_eq!(q.y, 2.5);
+/// assert_eq!(q.x(), 1.25);
+/// assert_eq!(q.y(), 2.5);
 /// ```
 impl<T: CoordNum> Div<T> for Coordinate<T> {
     type Output = Self;
@@ -223,8 +268,8 @@ impl<T: CoordNum> Div<T> for Coordinate<T> {
     #[inline]
     fn div(self, rhs: T) -> Self {
         coord! {
-            x: self.x / rhs,
-            y: self.y / rhs,
+            x: self.x() / rhs,
+            y: self.y() / rhs,
         }
     }
 }
@@ -240,8 +285,8 @@ use num_traits::Zero;
 ///
 /// let p: Coordinate<f64> = Zero::zero();
 ///
-/// assert_eq!(p.x, 0.);
-/// assert_eq!(p.y, 0.);
+/// assert_eq!(p.x(), 0.);
+/// assert_eq!(p.y(), 0.);
 /// ```
 impl<T: CoordNum> Coordinate<T> {
     #[inline]
@@ -260,7 +305,7 @@ impl<T: CoordNum> Zero for Coordinate<T> {
     }
     #[inline]
     fn is_zero(&self) -> bool {
-        self.x.is_zero() && self.y.is_zero()
+        self.x().is_zero() && self.y().is_zero()
     }
 }
 
@@ -278,7 +323,8 @@ where
 
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: T::Epsilon) -> bool {
-        T::abs_diff_eq(&self.x, &other.x, epsilon) && T::abs_diff_eq(&self.y, &other.y, epsilon)
+        T::abs_diff_eq(&self.x(), &other.x(), epsilon)
+            && T::abs_diff_eq(&self.y(), &other.y(), epsilon)
     }
 }
 
@@ -294,8 +340,8 @@ where
 
     #[inline]
     fn relative_eq(&self, other: &Self, epsilon: T::Epsilon, max_relative: T::Epsilon) -> bool {
-        T::relative_eq(&self.x, &other.x, epsilon, max_relative)
-            && T::relative_eq(&self.y, &other.y, epsilon, max_relative)
+        T::relative_eq(&self.x(), &other.x(), epsilon, max_relative)
+            && T::relative_eq(&self.y(), &other.y(), epsilon, max_relative)
     }
 }
 
@@ -311,8 +357,8 @@ where
 
     #[inline]
     fn ulps_eq(&self, other: &Self, epsilon: T::Epsilon, max_ulps: u32) -> bool {
-        T::ulps_eq(&self.x, &other.x, epsilon, max_ulps)
-            && T::ulps_eq(&self.y, &other.y, epsilon, max_ulps)
+        T::ulps_eq(&self.x(), &other.x(), epsilon, max_ulps)
+            && T::ulps_eq(&self.y(), &other.y(), epsilon, max_ulps)
     }
 }
 
@@ -336,8 +382,8 @@ where
     #[inline]
     fn nth(&self, index: usize) -> Self::Scalar {
         match index {
-            0 => self.x,
-            1 => self.y,
+            0 => self.x(),
+            1 => self.y(),
             _ => unreachable!(),
         }
     }
@@ -345,8 +391,8 @@ where
     #[inline]
     fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
         match index {
-            0 => &mut self.x,
-            1 => &mut self.y,
+            0 => self.x_mut(),
+            1 => self.y_mut(),
             _ => unreachable!(),
         }
     }
@@ -372,8 +418,8 @@ where
     #[inline]
     fn nth(&self, index: usize) -> Self::Scalar {
         match index {
-            0 => self.x,
-            1 => self.y,
+            0 => self.x(),
+            1 => self.y(),
             _ => unreachable!(),
         }
     }
@@ -381,8 +427,8 @@ where
     #[inline]
     fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
         match index {
-            0 => &mut self.x,
-            1 => &mut self.y,
+            0 => self.x_mut(),
+            1 => self.y_mut(),
             _ => unreachable!(),
         }
     }

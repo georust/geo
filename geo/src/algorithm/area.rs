@@ -9,13 +9,13 @@ where
 {
     // LineString with less than 3 points is empty, or a
     // single point, or is not closed.
-    if linestring.0.len() < 3 {
+    if linestring.inner().len() < 3 {
         return T::zero();
     }
 
     // Above test ensures the vector has at least 2 elements.
     // We check if linestring is closed, and return 0 otherwise.
-    if linestring.0.first().unwrap() != linestring.0.last().unwrap() {
+    if linestring.inner().first().unwrap() != linestring.inner().last().unwrap() {
         return T::zero();
     }
 
@@ -29,12 +29,12 @@ where
     // of the coordinates, but it is not fool-proof to
     // divide by the length of the linestring (eg. a long
     // line-string with T = u8)
-    let shift = linestring.0[0];
+    let shift = linestring[0];
 
     let mut tmp = T::zero();
     for line in linestring.lines() {
         use crate::algorithm::map_coords::MapCoords;
-        let line = line.map_coords(|(x, y)| (x - shift.x, y - shift.y));
+        let line = line.map_coords(|(x, y)| (x - shift.x(), y - shift.y()));
         tmp = tmp + line.determinant();
     }
 
@@ -190,13 +190,13 @@ where
     T: CoordFloat,
 {
     fn signed_area(&self) -> T {
-        self.0
+        self.polygons()
             .iter()
             .fold(T::zero(), |total, next| total + next.signed_area())
     }
 
     fn unsigned_area(&self) -> T {
-        self.0
+        self.polygons()
             .iter()
             .fold(T::zero(), |total, next| total + next.signed_area().abs())
     }
@@ -247,15 +247,13 @@ where
     T: CoordFloat,
 {
     fn signed_area(&self) -> T {
-        self.0
-            .iter()
+        self.iter()
             .map(|g| g.signed_area())
             .fold(T::zero(), |acc, next| acc + next)
     }
 
     fn unsigned_area(&self) -> T {
-        self.0
-            .iter()
+        self.iter()
             .map(|g| g.unsigned_area())
             .fold(T::zero(), |acc, next| acc + next)
     }

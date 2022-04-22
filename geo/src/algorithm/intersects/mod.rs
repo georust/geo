@@ -103,8 +103,8 @@ fn point_in_rect<T>(value: Coordinate<T>, bound_1: Coordinate<T>, bound_2: Coord
 where
     T: CoordNum,
 {
-    value_in_between(value.x, bound_1.x, bound_2.x)
-        && value_in_between(value.y, bound_1.y, bound_2.y)
+    value_in_between(value.x(), bound_1.x(), bound_2.x())
+        && value_in_between(value.y(), bound_1.y(), bound_2.y())
 }
 
 #[cfg(test)]

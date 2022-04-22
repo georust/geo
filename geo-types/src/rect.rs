@@ -65,15 +65,15 @@ impl<T: CoordNum> Rect<T> {
     {
         let c1 = c1.into();
         let c2 = c2.into();
-        let (min_x, max_x) = if c1.x < c2.x {
-            (c1.x, c2.x)
+        let (min_x, max_x) = if c1.x() < c2.x() {
+            (c1.x(), c2.x())
         } else {
-            (c2.x, c1.x)
+            (c2.x(), c1.x())
         };
-        let (min_y, max_y) = if c1.y < c2.y {
-            (c1.y, c2.y)
+        let (min_y, max_y) = if c1.y() < c2.y() {
+            (c1.y(), c2.y())
         } else {
-            (c2.y, c1.y)
+            (c2.y(), c1.y())
         };
         Self {
             min: coord! { x: min_x, y: min_y },
@@ -170,7 +170,7 @@ impl<T: CoordNum> Rect<T> {
     /// assert_eq!(rect.width(), 10.);
     /// ```
     pub fn width(self) -> T {
-        self.max().x - self.min().x
+        self.max().x() - self.min().x()
     }
 
     /// Returns the height of the `Rect`.
@@ -188,7 +188,7 @@ impl<T: CoordNum> Rect<T> {
     /// assert_eq!(rect.height(), 10.);
     /// ```
     pub fn height(self) -> T {
-        self.max().y - self.min().y
+        self.max().y() - self.min().y()
     }
 
     /// Create a `Polygon` from the `Rect`.
@@ -216,11 +216,11 @@ impl<T: CoordNum> Rect<T> {
     /// ```
     pub fn to_polygon(self) -> Polygon<T> {
         polygon![
-            (x: self.min.x, y: self.min.y),
-            (x: self.min.x, y: self.max.y),
-            (x: self.max.x, y: self.max.y),
-            (x: self.max.x, y: self.min.y),
-            (x: self.min.x, y: self.min.y),
+            (x: self.min.x(), y: self.min.y()),
+            (x: self.min.x(), y: self.max.y()),
+            (x: self.max.x(), y: self.max.y()),
+            (x: self.max.x(), y: self.min.y()),
+            (x: self.min.x(), y: self.min.y()),
         ]
     }
 
@@ -228,42 +228,42 @@ impl<T: CoordNum> Rect<T> {
         [
             Line::new(
                 coord! {
-                    x: self.min.x,
-                    y: self.min.y,
+                    x: self.min.x(),
+                    y: self.min.y(),
                 },
                 coord! {
-                    x: self.min.x,
-                    y: self.max.y,
-                },
-            ),
-            Line::new(
-                coord! {
-                    x: self.min.x,
-                    y: self.max.y,
-                },
-                coord! {
-                    x: self.max.x,
-                    y: self.max.y,
+                    x: self.min.x(),
+                    y: self.max.y(),
                 },
             ),
             Line::new(
                 coord! {
-                    x: self.max.x,
-                    y: self.max.y,
+                    x: self.min.x(),
+                    y: self.max.y(),
                 },
                 coord! {
-                    x: self.max.x,
-                    y: self.min.y,
+                    x: self.max.x(),
+                    y: self.max.y(),
                 },
             ),
             Line::new(
                 coord! {
-                    x: self.max.x,
-                    y: self.min.y,
+                    x: self.max.x(),
+                    y: self.max.y(),
                 },
                 coord! {
-                    x: self.min.x,
-                    y: self.min.y,
+                    x: self.max.x(),
+                    y: self.min.y(),
+                },
+            ),
+            Line::new(
+                coord! {
+                    x: self.max.x(),
+                    y: self.min.y(),
+                },
+                coord! {
+                    x: self.min.x(),
+                    y: self.min.y(),
                 },
             ),
         ]
@@ -276,7 +276,7 @@ impl<T: CoordNum> Rect<T> {
     }
 
     fn has_valid_bounds(&self) -> bool {
-        self.min.x <= self.max.x && self.min.y <= self.max.y
+        self.min.x() <= self.max.x() && self.min.y() <= self.max.y()
     }
 }
 
@@ -298,8 +298,8 @@ impl<T: CoordFloat> Rect<T> {
     pub fn center(self) -> Coordinate<T> {
         let two = T::one() + T::one();
         coord! {
-            x: (self.max.x + self.min.x) / two,
-            y: (self.max.y + self.min.y) / two,
+            x: (self.max.x() + self.min.x()) / two,
+            y: (self.max.y() + self.min.y()) / two,
         }
     }
 }

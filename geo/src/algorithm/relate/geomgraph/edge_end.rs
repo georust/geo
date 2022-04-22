@@ -53,7 +53,7 @@ where
 {
     pub fn new(coord_0: Coordinate<F>, coord_1: Coordinate<F>, label: Label) -> EdgeEnd<F> {
         let delta = coord_1 - coord_0;
-        let quadrant = Quadrant::new(delta.x, delta.y);
+        let quadrant = Quadrant::new(delta.x(), delta.y());
         EdgeEnd {
             label,
             key: EdgeEndKey {

@@ -94,7 +94,7 @@ where
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
-        if &self.0 == coord {
+        if &self.coord() == coord {
             *is_inside = true;
         }
     }
@@ -112,13 +112,13 @@ where
         boundary_count: &mut usize,
     ) {
         // degenerate line is a point
-        if self.start == self.end {
-            self.start
+        if self.start() == self.end() {
+            self.start()
                 .calculate_coordinate_position(coord, is_inside, boundary_count);
             return;
         }
 
-        if coord == &self.start || coord == &self.end {
+        if coord == &self.start() || coord == &self.end() {
             *boundary_count += 1;
         } else if self.intersects(coord) {
             *is_inside = true;
@@ -137,14 +137,14 @@ where
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        if self.0.len() < 2 {
+        if self.inner().len() < 2 {
             debug_assert!(false, "invalid line string with less than 2 coords");
             return;
         }
 
-        if self.0.len() == 2 {
+        if self.inner().len() == 2 {
             // line string with two coords is just a line
-            Line::new(self.0[0], self.0[1]).calculate_coordinate_position(
+            Line::new(self[0], self[1]).calculate_coordinate_position(
                 coord,
                 is_inside,
                 boundary_count,
@@ -161,7 +161,7 @@ where
         // A closed linestring has no boundary, per SFS
         if !self.is_closed() {
             // since self.0 is non-empty, safe to `unwrap`
-            if coord == self.0.first().unwrap() || coord == self.0.last().unwrap() {
+            if coord == self.inner().first().unwrap() || coord == self.inner().last().unwrap() {
                 *boundary_count += 1;
                 return;
             }
@@ -220,7 +220,7 @@ where
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
-        if self.0.iter().any(|p| &p.0 == coord) {
+        if self.iter().any(|p| &p.coord() == coord) {
             *is_inside = true;
         }
     }
@@ -282,7 +282,7 @@ where
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        for line_string in &self.0 {
+        for line_string in self {
             line_string.calculate_coordinate_position(coord, is_inside, boundary_count);
         }
     }
@@ -299,7 +299,7 @@ where
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        for polygon in &self.0 {
+        for polygon in self {
             polygon.calculate_coordinate_position(coord, is_inside, boundary_count);
         }
     }
@@ -361,13 +361,13 @@ where
     debug_assert!(linestring.is_closed());
 
     // LineString without points
-    if linestring.0.is_empty() {
+    if linestring.inner().is_empty() {
         return CoordPos::Outside;
     }
-    if linestring.0.len() == 1 {
+    if linestring.inner().len() == 1 {
         // If LineString has one point, it will not generate
         // any lines.  So, we handle this edge case separately.
-        return if coord == linestring.0[0] {
+        return if coord == linestring[0] {
             CoordPos::OnBoundary
         } else {
             CoordPos::Outside
@@ -382,12 +382,12 @@ where
         }
 
         // Ignore if the line is strictly to the left of the coord.
-        let max_x = if line.start.x < line.end.x {
-            line.end.x
+        let max_x = if line.start().x() < line.end().x() {
+            line.end().x()
         } else {
-            line.start.x
+            line.start().x()
         };
-        if max_x < coord.x {
+        if max_x < coord.x() {
             continue;
         }
 
@@ -395,7 +395,7 @@ where
         // edge case where the ray would intersect a
         // horizontal segment of the ring infinitely many
         // times, and is irrelevant for the calculation.
-        if line.start.y == line.end.y {
+        if line.start().y() == line.end().y() {
             continue;
         }
 
@@ -410,8 +410,8 @@ where
         //      at the point of intersection
         //   2. if the ray touches a vertex,
         //      but doesn't enter/exit at that point
-        if (line.start.y == coord.y && line.end.y < coord.y)
-            || (line.end.y == coord.y && line.start.y < coord.y)
+        if (line.start().y() == coord.y() && line.end().y() < coord.y())
+            || (line.end().y() == coord.y() && line.start().y() < coord.y())
         {
             continue;
         }
@@ -423,7 +423,7 @@ where
             coord,
             coord! {
                 x: max_x,
-                y: coord.y,
+                y: coord.y(),
             },
         );
         if ray.intersects(&line) {

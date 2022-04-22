@@ -16,6 +16,6 @@ where
     T: CoordNum,
 {
     fn intersects(&self, rhs: &Point<T>) -> bool {
-        self == &rhs.0
+        self == &rhs.coord()
     }
 }

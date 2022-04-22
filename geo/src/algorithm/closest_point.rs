@@ -64,21 +64,21 @@ impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
         //
         // Line equation: P = start + t * (end - start)
 
-        let direction_vector = Point::from(self.end - self.start);
-        let to_p = Point::from(p.0 - self.start);
+        let direction_vector = Point::from(self.end() - self.start());
+        let to_p = Point::from(p.coord() - self.start());
 
         let t = to_p.dot(direction_vector) / direction_vector.dot(direction_vector);
 
         // check the cases where the closest point is "outside" the line
         if t < F::zero() {
-            return Closest::SinglePoint(self.start.into());
+            return Closest::SinglePoint(self.start().into());
         } else if t > F::one() {
-            return Closest::SinglePoint(self.end.into());
+            return Closest::SinglePoint(self.end().into());
         }
 
         let x = direction_vector.x();
         let y = direction_vector.y();
-        let c = Point::from(self.start + (t * x, t * y).into());
+        let c = Point::from(self.start() + (t * x, t * y).into());
 
         if self.intersects(p) {
             Closest::Intersection(c)
@@ -292,7 +292,7 @@ mod tests {
     #[test]
     fn polygon_with_point_on_interior_ring() {
         let poly = holy_polygon();
-        let p = poly.interiors()[0].0[3];
+        let p = poly.interiors()[0][3];
         let should_be = Closest::Intersection(p.into());
 
         let got = poly.closest_point(&p.into());

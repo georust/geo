@@ -122,11 +122,11 @@ where
         };
 
         use crate::utils::least_index;
-        let i = least_index(&self.0);
+        let i = least_index(self.inner());
 
         let mut next = i;
         increment(&mut next);
-        while self.0[next] == self.0[i] {
+        while self[next] == self[i] {
             if next == i {
                 // We've looped too much. There aren't
                 // enough unique coords to compute orientation.
@@ -137,14 +137,14 @@ where
 
         let mut prev = i;
         decrement(&mut prev);
-        while self.0[prev] == self.0[i] {
+        while self[prev] == self[i] {
             // Note: we don't need to check if prev == i as
             // the previous loop succeeded, and so we have
             // at least two distinct elements in the list
             decrement(&mut prev);
         }
 
-        match K::orient2d(self.0[prev], self.0[i], self.0[next]) {
+        match K::orient2d(self[prev], self[i], self[next]) {
             Orientation::CounterClockwise => Some(WindingOrder::CounterClockwise),
             Orientation::Clockwise => Some(WindingOrder::Clockwise),
             _ => None,
@@ -176,14 +176,14 @@ where
     /// Change this line's points so they are in clockwise winding order
     fn make_cw_winding(&mut self) {
         if let Some(WindingOrder::CounterClockwise) = self.winding_order() {
-            self.0.reverse();
+            self.inner_mut().reverse();
         }
     }
 
     /// Change this line's points so they are in counterclockwise winding order
     fn make_ccw_winding(&mut self) {
         if let Some(WindingOrder::Clockwise) = self.winding_order() {
-            self.0.reverse();
+            self.inner_mut().reverse();
         }
     }
 }
@@ -201,10 +201,10 @@ mod test {
         let c = Point::new(1., 2.);
 
         // Verify open linestrings return None
-        let mut ls = LineString::from(vec![a.0, b.0, c.0]);
+        let mut ls = LineString::from(vec![a.coord(), b.coord(), c.coord()]);
         assert!(ls.winding_order().is_none());
 
-        ls.0.push(ls.0[0]);
+        ls.push(ls[0]);
         assert_eq!(ls.winding_order(), Some(WindingOrder::CounterClockwise));
 
         ls.make_cw_winding();
@@ -219,10 +219,10 @@ mod test {
         let c = Point::new(1, 2);
 
         // Verify open linestrings return None
-        let mut ls = LineString::from(vec![a.0, b.0, c.0]);
+        let mut ls = LineString::from(vec![a.coord(), b.coord(), c.coord()]);
         assert!(ls.winding_order().is_none());
 
-        ls.0.push(ls.0[0]);
+        ls.push(ls[0]);
         assert!(ls.is_ccw());
 
         let ccw_ls: Vec<_> = ls.points_ccw().collect();

@@ -71,13 +71,35 @@ use std::ops::{Index, IndexMut};
 ///
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct GeometryCollection<T: CoordNum>(pub Vec<Geometry<T>>);
+pub struct GeometryCollection<T: CoordNum>(
+    #[deprecated(
+        since = "0.7.5",
+        note = "Direct field access is deprecated - use `geometry_collection.geometries()`, `geometry_collection.geometries_mut()`, or `geometry_collection[idx]` for field access and `GeometryCollection::from(geometry_vec)` for construction"
+    )]
+    pub Vec<Geometry<T>>,
+);
 
 // Implementing Default by hand because T does not have Default restriction
 // todo: consider adding Default as a CoordNum requirement
 impl<T: CoordNum> Default for GeometryCollection<T> {
     fn default() -> Self {
         Self(Vec::new())
+    }
+}
+
+/// Create a `GeometryCollection` from a `Vec` of geometries.
+/// # Examples
+/// ```
+/// use geo_types::{point, line_string, Geometry, GeometryCollection};
+///
+/// let point = Geometry::from(point!(x: 1.0, y: 2.0));
+/// let line_string = Geometry::from(line_string![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0), (x: 2.0, y: 2.0)]);
+/// let collection = GeometryCollection::from(vec![point, line_string]);
+/// ```
+impl<T: CoordNum> From<Vec<Geometry<T>>> for GeometryCollection<T> {
+    /// Create a `GeometryCollection` with geometries as its members.
+    fn from(geometries: Vec<Geometry<T>>) -> Self {
+        GeometryCollection(geometries)
     }
 }
 
@@ -97,14 +119,38 @@ impl<T: CoordNum> GeometryCollection<T> {
         Self(value)
     }
 
+    /// Get the constituent geometries of this collection.
+    pub fn geometries(&self) -> &[Geometry<T>] {
+        #[allow(deprecated)]
+        &self.0
+    }
+
+    /// Mutable borrow the constituent geometries of this collection.
+    pub fn geometries_mut(&mut self) -> &mut [Geometry<T>] {
+        #[allow(deprecated)]
+        &mut self.0
+    }
+
+    /// Consume this collection to get ownership of the constituent geometries.
+    pub fn into_inner(self) -> Vec<Geometry<T>> {
+        #[allow(deprecated)]
+        self.0
+    }
+
     /// Number of geometries in this GeometryCollection
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.geometries().len()
     }
 
     /// Is this GeometryCollection empty
     pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.geometries().is_empty()
+    }
+
+    /// Push `geometry` onto the end of the collection.
+    pub fn push(&mut self, geometry: Geometry<T>) {
+        #[allow(deprecated)]
+        self.0.push(geometry)
     }
 }
 
@@ -127,13 +173,13 @@ impl<T: CoordNum> Index<usize> for GeometryCollection<T> {
     type Output = Geometry<T>;
 
     fn index(&self, index: usize) -> &Geometry<T> {
-        self.0.index(index)
+        self.geometries().index(index)
     }
 }
 
 impl<T: CoordNum> IndexMut<usize> for GeometryCollection<T> {
     fn index_mut(&mut self, index: usize) -> &mut Geometry<T> {
-        self.0.index_mut(index)
+        self.geometries_mut().index_mut(index)
     }
 }
 
@@ -152,7 +198,7 @@ impl<T: CoordNum> IntoIterator for GeometryCollection<T> {
     // note that into_iter() is consuming self
     fn into_iter(self) -> Self::IntoIter {
         IntoIteratorHelper {
-            iter: self.0.into_iter(),
+            iter: self.into_inner().into_iter(),
         }
     }
 }
@@ -182,7 +228,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a GeometryCollection<T> {
     // note that into_iter() is consuming self
     fn into_iter(self) -> Self::IntoIter {
         IterHelper {
-            iter: self.0.iter(),
+            iter: self.geometries().iter(),
         }
     }
 }
@@ -212,7 +258,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut GeometryCollection<T> {
     // note that into_iter() is consuming self
     fn into_iter(self) -> Self::IntoIter {
         IterMutHelper {
-            iter: self.0.iter_mut(),
+            iter: self.geometries_mut().iter_mut(),
         }
     }
 }
@@ -267,7 +313,7 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        if self.0.len() != other.0.len() {
+        if self.len() != other.len() {
             return false;
         }
 
@@ -304,7 +350,7 @@ where
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        if self.0.len() != other.0.len() {
+        if self.len() != other.len() {
             return false;
         }
 

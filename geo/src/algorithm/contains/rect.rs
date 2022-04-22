@@ -10,10 +10,10 @@ where
     T: CoordNum,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
-        coord.x > self.min().x
-            && coord.x < self.max().x
-            && coord.y > self.min().y
-            && coord.y < self.max().y
+        coord.x() > self.min().x()
+            && coord.x() < self.max().x()
+            && coord.y() > self.min().y()
+            && coord.y() < self.max().y()
     }
 }
 
@@ -22,7 +22,7 @@ where
     T: CoordNum,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        self.contains(&p.0)
+        self.contains(&p.coord())
     }
 }
 
@@ -33,9 +33,9 @@ where
     fn contains(&self, other: &Rect<T>) -> bool {
         // TODO: check for degenerate rectangle (which is a line or a point)
         // All points of LineString must be in the polygon ?
-        self.min().x <= other.min().x
-            && self.max().x >= other.max().x
-            && self.min().y <= other.min().y
-            && self.max().y >= other.max().y
+        self.min().x() <= other.min().x()
+            && self.max().x() >= other.max().x()
+            && self.min().y() <= other.min().y()
+            && self.max().y() >= other.max().y()
     }
 }

@@ -9,23 +9,82 @@ use approx::{AbsDiffEq, RelativeEq};
 /// vertices must not be collinear and they must be distinct.
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Triangle<T: CoordNum>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);
+pub struct Triangle<T: CoordNum>(
+    #[deprecated(
+        since = "0.7.5",
+        note = "Direct field access is deprecated - use `triangle.vertex_0()` or `triangle.vertex_0_mut()` for field access and `Triangle::new(v0, v1, v2) for construction"
+    )]
+    pub Coordinate<T>,
+    #[deprecated(
+        since = "0.7.5",
+        note = "Direct field access is deprecated - use `triangle.vertex_1()` or `triangle.vertex_1_mut()` for field access and `Triangle::new(v0, v1, v2) for construction"
+    )]
+    pub Coordinate<T>,
+    #[deprecated(
+        since = "0.7.5",
+        note = "Direct field access is deprecated - use `triangle.vertex_2()` or `triangle.vertex_2_mut()` for field access and `Triangle::new(v0, v1, v2) for construction"
+    )]
+    pub Coordinate<T>,
+);
 
 impl<T: CoordNum> Triangle<T> {
-    /// Instantiate Self from the raw content value
-    pub fn new(v1: Coordinate<T>, v2: Coordinate<T>, v3: Coordinate<T>) -> Self {
-        Self(v1, v2, v3)
+    /// Create a new [`Triangle`] with the given [`Coordinate`]s as vertices.
+    #[inline]
+    pub fn new(v0: Coordinate<T>, v1: Coordinate<T>, v2: Coordinate<T>) -> Self {
+        Self(v0, v1, v2)
+    }
+
+    /// Get the first of the triangle's three corners
+    #[inline]
+    pub fn vertex_0(&self) -> Coordinate<T> {
+        #[allow(deprecated)]
+        self.0
+    }
+
+    /// Mutably borrow the first of the triangle's three corners
+    #[inline]
+    pub fn vertex_0_mut(&mut self) -> &mut Coordinate<T> {
+        #[allow(deprecated)]
+        &mut self.0
+    }
+
+    /// Get the second of the triangle's three corners
+    #[inline]
+    pub fn vertex_1(&self) -> Coordinate<T> {
+        #[allow(deprecated)]
+        self.1
+    }
+
+    /// Mutably borrow the second of the triangle's three corners
+    #[inline]
+    pub fn vertex_1_mut(&mut self) -> &mut Coordinate<T> {
+        #[allow(deprecated)]
+        &mut self.1
+    }
+
+    /// Get the third of the triangle's three corners
+    #[inline]
+    pub fn vertex_2(&self) -> Coordinate<T> {
+        #[allow(deprecated)]
+        self.2
+    }
+
+    /// Mutably borrow the third of the triangle's three corners
+    #[inline]
+    pub fn vertex_2_mut(&mut self) -> &mut Coordinate<T> {
+        #[allow(deprecated)]
+        &mut self.2
     }
 
     pub fn to_array(&self) -> [Coordinate<T>; 3] {
-        [self.0, self.1, self.2]
+        [self.vertex_0(), self.vertex_1(), self.vertex_2()]
     }
 
     pub fn to_lines(&self) -> [Line<T>; 3] {
         [
-            Line::new(self.0, self.1),
-            Line::new(self.1, self.2),
-            Line::new(self.2, self.0),
+            Line::new(self.vertex_0(), self.vertex_1()),
+            Line::new(self.vertex_1(), self.vertex_2()),
+            Line::new(self.vertex_2(), self.vertex_0()),
         ]
     }
 
@@ -53,7 +112,12 @@ impl<T: CoordNum> Triangle<T> {
     /// );
     /// ```
     pub fn to_polygon(self) -> Polygon<T> {
-        polygon![self.0, self.1, self.2, self.0]
+        polygon![
+            self.vertex_0(),
+            self.vertex_1(),
+            self.vertex_2(),
+            self.vertex_0()
+        ]
     }
 }
 
@@ -93,13 +157,22 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        if !self.0.relative_eq(&other.0, epsilon, max_relative) {
+        if !self
+            .vertex_0()
+            .relative_eq(&other.vertex_0(), epsilon, max_relative)
+        {
             return false;
         }
-        if !self.1.relative_eq(&other.1, epsilon, max_relative) {
+        if !self
+            .vertex_1()
+            .relative_eq(&other.vertex_1(), epsilon, max_relative)
+        {
             return false;
         }
-        if !self.2.relative_eq(&other.2, epsilon, max_relative) {
+        if !self
+            .vertex_2()
+            .relative_eq(&other.vertex_2(), epsilon, max_relative)
+        {
             return false;
         }
 
@@ -135,13 +208,13 @@ where
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        if !self.0.abs_diff_eq(&other.0, epsilon) {
+        if !self.vertex_0().abs_diff_eq(&other.vertex_0(), epsilon) {
             return false;
         }
-        if !self.1.abs_diff_eq(&other.1, epsilon) {
+        if !self.vertex_1().abs_diff_eq(&other.vertex_1(), epsilon) {
             return false;
         }
-        if !self.2.abs_diff_eq(&other.2, epsilon) {
+        if !self.vertex_2().abs_diff_eq(&other.vertex_2(), epsilon) {
             return false;
         }
 

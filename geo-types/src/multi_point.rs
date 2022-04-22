@@ -30,7 +30,13 @@ use std::iter::FromIterator;
 /// ```
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MultiPoint<T: CoordNum>(pub Vec<Point<T>>);
+pub struct MultiPoint<T: CoordNum>(
+    #[deprecated(
+        since = "0.7.5",
+        note = "Direct field access is deprecated - use `multi_point.points()` or `multi_point.points_mut()` for field access and `MultiPoint::new(points)` for construction"
+    )]
+    pub Vec<Point<T>>,
+);
 
 impl<T: CoordNum, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
     /// Convert a single `Point` (or something which can be converted to a `Point`) into a
@@ -61,7 +67,7 @@ impl<T: CoordNum> IntoIterator for MultiPoint<T> {
     type IntoIter = ::std::vec::IntoIter<Point<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
+        self.into_inner().into_iter()
     }
 }
 
@@ -70,7 +76,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a MultiPoint<T> {
     type IntoIter = ::std::slice::Iter<'a, Point<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&self.0).iter()
+        self.points().iter()
     }
 }
 
@@ -79,21 +85,50 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPoint<T> {
     type IntoIter = ::std::slice::IterMut<'a, Point<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&mut self.0).iter_mut()
+        self.points_mut().iter_mut()
     }
 }
 
 impl<T: CoordNum> MultiPoint<T> {
+    #[inline]
     pub fn new(value: Vec<Point<T>>) -> Self {
         Self(value)
     }
 
+    /// Get this collection's constituent [`Point`]s
+    #[inline]
+    pub fn points(&self) -> &[Point<T>] {
+        #[allow(deprecated)]
+        &self.0
+    }
+
+    /// Mutably borrow this collection's constituent [`Point`]s.
+    #[inline]
+    pub fn points_mut(&mut self) -> &mut [Point<T>] {
+        #[allow(deprecated)]
+        &mut self.0
+    }
+
+    /// Push `point` onto the end of this collection.
+    #[inline]
+    pub fn push(&mut self, point: Point<T>) {
+        #[allow(deprecated)]
+        self.0.push(point)
+    }
+
+    /// Consume this [`MultiPoint`] to get ownership of its constituent [`Point`]s.
+    #[inline]
+    pub fn into_inner(self) -> Vec<Point<T>> {
+        #[allow(deprecated)]
+        self.0
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &Point<T>> {
-        self.0.iter()
+        self.points().iter()
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Point<T>> {
-        self.0.iter_mut()
+        self.points_mut().iter_mut()
     }
 }
 
@@ -127,7 +162,7 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        if self.0.len() != other.0.len() {
+        if self.points().len() != other.points().len() {
             return false;
         }
 
@@ -164,7 +199,7 @@ where
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        if self.0.len() != other.0.len() {
+        if self.points().len() != other.points().len() {
             return false;
         }
 
@@ -209,13 +244,13 @@ mod test {
         let mut multi = MultiPoint::new(vec![point![x: 0, y: 0], point![x: 10, y: 10]]);
 
         for point in &mut multi {
-            point.0.x += 1;
-            point.0.y += 1;
+            *point.x_mut() += 1;
+            *point.y_mut() += 1;
         }
 
         for point in multi.iter_mut() {
-            point.0.x += 1;
-            point.0.y += 1;
+            *point.x_mut() += 1;
+            *point.y_mut() += 1;
         }
 
         let mut first = true;

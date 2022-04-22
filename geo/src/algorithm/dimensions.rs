@@ -168,7 +168,7 @@ impl<C: CoordNum> HasDimensions for Line<C> {
     }
 
     fn dimensions(&self) -> Dimensions {
-        if self.start == self.end {
+        if self.start() == self.end() {
             // degenerate line is a point
             Dimensions::ZeroDimensional
         } else {
@@ -177,7 +177,7 @@ impl<C: CoordNum> HasDimensions for Line<C> {
     }
 
     fn boundary_dimensions(&self) -> Dimensions {
-        if self.start == self.end {
+        if self.start() == self.end() {
             // degenerate line is a point, which has no boundary
             Dimensions::Empty
         } else {
@@ -188,16 +188,16 @@ impl<C: CoordNum> HasDimensions for Line<C> {
 
 impl<C: CoordNum> HasDimensions for LineString<C> {
     fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.inner().is_empty()
     }
 
     fn dimensions(&self) -> Dimensions {
-        if self.0.is_empty() {
+        if self.inner().is_empty() {
             return Dimensions::Empty;
         }
 
-        let first = self.0[0];
-        if self.0.iter().any(|&coord| first != coord) {
+        let first = self[0];
+        if self.coords().any(|&coord| first != coord) {
             Dimensions::OneDimensional
         } else {
             // all coords are the same - i.e. a point
@@ -256,11 +256,11 @@ impl<C: CoordNum> HasDimensions for Polygon<C> {
 
 impl<C: CoordNum> HasDimensions for MultiPoint<C> {
     fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.points().is_empty()
     }
 
     fn dimensions(&self) -> Dimensions {
-        if self.0.is_empty() {
+        if self.points().is_empty() {
             return Dimensions::Empty;
         }
 
@@ -279,7 +279,7 @@ impl<C: CoordNum> HasDimensions for MultiLineString<C> {
 
     fn dimensions(&self) -> Dimensions {
         let mut max = Dimensions::Empty;
-        for line in &self.0 {
+        for line in self {
             match line.dimensions() {
                 Dimensions::Empty => {}
                 Dimensions::ZeroDimensional => max = Dimensions::ZeroDimensional,
@@ -313,7 +313,7 @@ impl<C: CoordNum> HasDimensions for MultiPolygon<C> {
     }
 
     fn dimensions(&self) -> Dimensions {
-        if self.0.is_empty() {
+        if self.polygons().is_empty() {
             return Dimensions::Empty;
         }
 
@@ -321,7 +321,7 @@ impl<C: CoordNum> HasDimensions for MultiPolygon<C> {
     }
 
     fn boundary_dimensions(&self) -> Dimensions {
-        if self.0.is_empty() {
+        if self.polygons().is_empty() {
             return Dimensions::Empty;
         }
 
@@ -331,7 +331,7 @@ impl<C: CoordNum> HasDimensions for MultiPolygon<C> {
 
 impl<C: GeoNum> HasDimensions for GeometryCollection<C> {
     fn is_empty(&self) -> bool {
-        if self.0.is_empty() {
+        if self.geometries().is_empty() {
             true
         } else {
             self.iter().all(Geometry::is_empty)
@@ -375,7 +375,7 @@ impl<C: CoordNum> HasDimensions for Rect<C> {
         if self.min() == self.max() {
             // degenerate rectangle is a point
             Dimensions::ZeroDimensional
-        } else if self.min().x == self.max().x || self.min().y == self.max().y {
+        } else if self.min().x() == self.max().x() || self.min().y() == self.max().y() {
             // degenerate rectangle is a line
             Dimensions::OneDimensional
         } else {
@@ -402,8 +402,8 @@ impl<C: crate::GeoNum> HasDimensions for Triangle<C> {
 
     fn dimensions(&self) -> Dimensions {
         use crate::algorithm::kernels::Kernel;
-        if Collinear == C::Ker::orient2d(self.0, self.1, self.2) {
-            if self.0 == self.1 && self.1 == self.2 {
+        if Collinear == C::Ker::orient2d(self.vertex_0(), self.vertex_1(), self.vertex_2()) {
+            if self.vertex_0() == self.vertex_1() && self.vertex_1() == self.vertex_2() {
                 // degenerate triangle is a point
                 Dimensions::ZeroDimensional
             } else {

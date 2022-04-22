@@ -25,10 +25,10 @@ pub trait BoundingRect<T: CoordNum> {
     ///
     /// let bounding_rect = line_string.bounding_rect().unwrap();
     ///
-    /// assert_eq!(40.02f64, bounding_rect.min().x);
-    /// assert_eq!(42.02f64, bounding_rect.max().x);
-    /// assert_eq!(116.34, bounding_rect.min().y);
-    /// assert_eq!(118.34, bounding_rect.max().y);
+    /// assert_eq!(40.02f64, bounding_rect.min().x());
+    /// assert_eq!(42.02f64, bounding_rect.max().x());
+    /// assert_eq!(116.34, bounding_rect.min().y());
+    /// assert_eq!(118.34, bounding_rect.max().y());
     /// ```
     fn bounding_rect(&self) -> Self::Output;
 }
@@ -42,7 +42,7 @@ where
     /// Return the bounding rectangle for a `Point`. It will have zero width
     /// and zero height.
     fn bounding_rect(&self) -> Self::Output {
-        Rect::new(self.0, self.0)
+        Rect::new(self.coord(), self.coord())
     }
 }
 
@@ -55,7 +55,7 @@ where
     ///
     /// Return the BoundingRect for a MultiPoint
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.0.iter().map(|p| p.0))
+        get_bounding_rect(self.iter().map(|p| p.coord()))
     }
 }
 
@@ -66,7 +66,7 @@ where
     type Output = Rect<T>;
 
     fn bounding_rect(&self) -> Self::Output {
-        Rect::new(self.start, self.end)
+        Rect::new(self.start(), self.end())
     }
 }
 
@@ -92,7 +92,7 @@ where
     ///
     /// Return the BoundingRect for a MultiLineString
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.iter().flat_map(|line| line.0.iter().cloned()))
+        get_bounding_rect(self.iter().flat_map(|line| line.coords().cloned()))
     }
 }
 
@@ -106,7 +106,7 @@ where
     /// Return the BoundingRect for a Polygon
     fn bounding_rect(&self) -> Self::Output {
         let line = self.exterior();
-        get_bounding_rect(line.0.iter().cloned())
+        get_bounding_rect(line.coords().cloned())
     }
 }
 
@@ -121,7 +121,7 @@ where
     fn bounding_rect(&self) -> Self::Output {
         get_bounding_rect(
             self.iter()
-                .flat_map(|poly| poly.exterior().0.iter().cloned()),
+                .flat_map(|poly| poly.exterior().coords().cloned()),
         )
     }
 }
@@ -193,12 +193,12 @@ where
 fn bounding_rect_merge<T: CoordNum>(a: Rect<T>, b: Rect<T>) -> Rect<T> {
     Rect::new(
         coord! {
-            x: partial_min(a.min().x, b.min().x),
-            y: partial_min(a.min().y, b.min().y),
+            x: partial_min(a.min().x(), b.min().x()),
+            y: partial_min(a.min().y(), b.min().y()),
         },
         coord! {
-            x: partial_max(a.max().x, b.max().x),
-            y: partial_max(a.max().y, b.max().y),
+            x: partial_max(a.max().x(), b.max().x()),
+            y: partial_max(a.max().y(), b.max().y()),
         },
     )
 }

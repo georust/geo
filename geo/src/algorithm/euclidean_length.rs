@@ -49,8 +49,7 @@ where
     T: CoordFloat + Sum,
 {
     fn euclidean_length(&self) -> T {
-        self.0
-            .iter()
+        self.iter()
             .fold(T::zero(), |total, line| total + line.euclidean_length())
     }
 }

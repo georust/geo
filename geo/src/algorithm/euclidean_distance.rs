@@ -129,7 +129,7 @@ where
 {
     /// Minimum distance between two Points
     fn euclidean_distance(&self, p: &Point<T>) -> T {
-        self.0.euclidean_distance(&p.0)
+        self.coord().euclidean_distance(&p.coord())
     }
 }
 
@@ -140,7 +140,6 @@ where
     /// Minimum distance from a Point to a MultiPoint
     fn euclidean_distance(&self, points: &MultiPoint<T>) -> T {
         points
-            .0
             .iter()
             .map(|p| self.euclidean_distance(p))
             .fold(T::max_value(), |accum, val| accum.min(val))
@@ -153,7 +152,7 @@ where
 {
     /// Minimum distance from a Line to a Point
     fn euclidean_distance(&self, line: &Line<T>) -> T {
-        self.0.euclidean_distance(line)
+        self.coord().euclidean_distance(line)
     }
 }
 
@@ -173,8 +172,7 @@ where
 {
     /// Minimum distance from a Point to a MultiLineString
     fn euclidean_distance(&self, mls: &MultiLineString<T>) -> T {
-        mls.0
-            .iter()
+        mls.iter()
             .map(|ls| self.euclidean_distance(ls))
             .fold(T::max_value(), |accum, val| accum.min(val))
     }
@@ -187,7 +185,7 @@ where
     /// Minimum distance from a Point to a Polygon
     fn euclidean_distance(&self, polygon: &Polygon<T>) -> T {
         // No need to continue if the polygon contains the point, or is zero-length
-        if polygon.contains(self) || polygon.exterior().0.is_empty() {
+        if polygon.contains(self) || polygon.exterior().inner().is_empty() {
             return T::zero();
         }
         // fold the minimum interior ring distance if any, followed by the exterior
@@ -203,7 +201,9 @@ where
                     .lines()
                     .map(|line| {
                         ::geo_types::private_utils::line_segment_distance(
-                            self.0, line.start, line.end,
+                            self.coord(),
+                            line.start(),
+                            line.end(),
                         )
                     })
                     .fold(T::max_value(), |accum, val| accum.min(val)),
@@ -218,7 +218,6 @@ where
     /// Minimum distance from a Point to a MultiPolygon
     fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
         mpolygon
-            .0
             .iter()
             .map(|p| self.euclidean_distance(p))
             .fold(T::max_value(), |accum, val| accum.min(val))
@@ -259,7 +258,7 @@ where
 {
     /// Minimum distance from a Line to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
-        self.euclidean_distance(&point.0)
+        self.euclidean_distance(&point.coord())
     }
 }
 
@@ -332,7 +331,6 @@ where
 {
     fn euclidean_distance(&self, mpolygon: &MultiPolygon<T>) -> T {
         mpolygon
-            .0
             .iter()
             .map(|p| self.euclidean_distance(p))
             .fold(Bounded::max_value(), |accum, val| accum.min(val))
@@ -387,8 +385,7 @@ where
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if self.intersects(other) || other.contains(self) {
             T::zero()
-        } else if !other.interiors().is_empty()
-            && ring_contains_point(other, Point::from(self.0[0]))
+        } else if !other.interiors().is_empty() && ring_contains_point(other, Point::from(self[0]))
         {
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
@@ -464,7 +461,7 @@ where
         }
         // Containment check
         if !self.interiors().is_empty()
-            && ring_contains_point(self, Point::from(poly2.exterior().0[0]))
+            && ring_contains_point(self, Point::from(poly2.exterior()[0]))
         {
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
@@ -473,7 +470,7 @@ where
             }
             return mindist;
         } else if !poly2.interiors().is_empty()
-            && ring_contains_point(poly2, Point::from(self.exterior().0[0]))
+            && ring_contains_point(poly2, Point::from(self.exterior()[0]))
         {
             let mut mindist: T = Float::max_value();
             for ring in poly2.interiors() {
@@ -528,10 +525,16 @@ where
             return T::zero();
         }
 
-        [(self.0, self.1), (self.1, self.2), (self.2, self.0)]
-            .iter()
-            .map(|edge| ::geo_types::private_utils::line_segment_distance(point.0, edge.0, edge.1))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+        [
+            (self.vertex_0(), self.vertex_1()),
+            (self.vertex_1(), self.vertex_2()),
+            (self.vertex_2(), self.vertex_0()),
+        ]
+        .iter()
+        .map(|edge| {
+            ::geo_types::private_utils::line_segment_distance(point.coord(), edge.0, edge.1)
+        })
+        .fold(T::max_value(), |accum, val| accum.min(val))
     }
 }
 
@@ -547,7 +550,7 @@ fn ring_contains_point<T>(poly: &Polygon<T>, p: Point<T>) -> bool
 where
     T: GeoNum,
 {
-    match coord_pos_relative_to_ring(p.0, poly.exterior()) {
+    match coord_pos_relative_to_ring(p.coord(), poly.exterior()) {
         CoordPos::Inside => true,
         CoordPos::OnBoundary | CoordPos::Outside => false,
     }
@@ -760,7 +763,7 @@ mod test {
         let mp = MultiPolygon::new(vec![pol1.clone(), pol2, pol3]);
         let pnt1 = Point::new(0.0, 15.0);
         let pnt2 = Point::new(10.0, 20.0);
-        let ln = Line::new(pnt1.0, pnt2.0);
+        let ln = Line::new(pnt1.coord(), pnt2.coord());
         let dist_mp_ln = ln.euclidean_distance(&mp);
         let dist_pol1_ln = ln.euclidean_distance(&pol1);
         assert_relative_eq!(dist_mp_ln, dist_pol1_ln);

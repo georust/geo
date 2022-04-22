@@ -11,10 +11,10 @@ where
     T: GeoNum,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
-        if self.start == self.end {
-            &self.start == coord
+        if self.start() == self.end() {
+            &self.start() == coord
         } else {
-            coord != &self.start && coord != &self.end && self.intersects(coord)
+            coord != &self.start() && coord != &self.end() && self.intersects(coord)
         }
     }
 }
@@ -24,7 +24,7 @@ where
     T: GeoNum,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        self.contains(&p.0)
+        self.contains(&p.coord())
     }
 }
 
@@ -33,10 +33,10 @@ where
     T: GeoNum,
 {
     fn contains(&self, line: &Line<T>) -> bool {
-        if line.start == line.end {
-            self.contains(&line.start)
+        if line.start() == line.end() {
+            self.contains(&line.start())
         } else {
-            self.intersects(&line.start) && self.intersects(&line.end)
+            self.intersects(&line.start()) && self.intersects(&line.end())
         }
     }
 }
@@ -48,7 +48,7 @@ where
     fn contains(&self, linestring: &LineString<T>) -> bool {
         // Empty linestring has no interior, and not
         // contained in anything.
-        if linestring.0.is_empty() {
+        if linestring.inner().is_empty() {
             return false;
         }
 
@@ -64,14 +64,14 @@ where
         // are the same. In this case, the interior is this
         // specific point, and it should be contained in the
         // line.
-        let first = linestring.0.first().unwrap();
+        let first = linestring.inner().first().unwrap();
         let mut all_equal = true;
 
         // If all the vertices of the linestring intersect
         // self, then the interior or boundary of the
         // linestring cannot have non-empty intersection
         // with the exterior.
-        let all_intersects = linestring.0.iter().all(|c| {
+        let all_intersects = linestring.coords().all(|c| {
             if c != first {
                 all_equal = false;
             }

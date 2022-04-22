@@ -55,9 +55,10 @@ macro_rules! point {
 /// [`Coordinate`]: ./struct.Point.html
 #[macro_export]
 macro_rules! coord {
-    (x: $x:expr, y: $y:expr $(,)* ) => {
+    (x: $x:expr, y: $y:expr $(,)* ) => {{
+        #[allow(deprecated)]
         $crate::Coordinate { x: $x, y: $y }
-    };
+    }};
 }
 
 /// Creates a [`LineString`] containing the given coordinates.

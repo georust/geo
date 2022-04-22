@@ -46,8 +46,7 @@ where
 {
     fn chaikin_smoothing(&self, n_iterations: usize) -> Self {
         MultiLineString::new(
-            self.0
-                .iter()
+            self.iter()
                 .map(|ls| ls.chaikin_smoothing(n_iterations))
                 .collect(),
         )
@@ -75,8 +74,7 @@ where
 {
     fn chaikin_smoothing(&self, n_iterations: usize) -> Self {
         MultiPolygon::new(
-            self.0
-                .iter()
+            self.iter()
                 .map(|poly| poly.chaikin_smoothing(n_iterations))
                 .collect(),
         )
@@ -87,21 +85,21 @@ fn smoothen_linestring<T>(linestring: &LineString<T>) -> LineString<T>
 where
     T: CoordFloat + Mul<T> + FromPrimitive,
 {
-    let mut out_coords: Vec<_> = Vec::with_capacity(linestring.0.len() * 2);
+    let mut out_coords: Vec<_> = Vec::with_capacity(linestring.inner().len() * 2);
 
-    if let (Some(first), Some(last)) = (linestring.0.first(), linestring.0.last()) {
+    if let (Some(first), Some(last)) = (linestring.inner().first(), linestring.inner().last()) {
         if first != last {
             // preserve start coordinate when the linestring is open
             out_coords.push(*first);
         }
     }
-    for window_coordinates in linestring.0.windows(2) {
+    for window_coordinates in linestring.inner().windows(2) {
         let (q, r) = smoothen_coordinates(window_coordinates[0], window_coordinates[1]);
         out_coords.push(q);
         out_coords.push(r);
     }
 
-    if let (Some(first), Some(last)) = (linestring.0.first(), linestring.0.last()) {
+    if let (Some(first), Some(last)) = (linestring.inner().first(), linestring.inner().last()) {
         if first != last {
             // preserve the last coordinate of an open linestring
             out_coords.push(*last);
@@ -121,12 +119,12 @@ where
     T: CoordFloat + Mul<T> + FromPrimitive,
 {
     let q = coord! {
-        x: (T::from(0.75).unwrap() * c0.x) + (T::from(0.25).unwrap() * c1.x),
-        y: (T::from(0.75).unwrap() * c0.y) + (T::from(0.25).unwrap() * c1.y),
+        x: (T::from(0.75).unwrap() * c0.x()) + (T::from(0.25).unwrap() * c1.x()),
+        y: (T::from(0.75).unwrap() * c0.y()) + (T::from(0.25).unwrap() * c1.y()),
     };
     let r = coord! {
-        x: (T::from(0.25).unwrap() * c0.x) + (T::from(0.75).unwrap() * c1.x),
-        y: (T::from(0.25).unwrap() * c0.y) + (T::from(0.75).unwrap() * c1.y),
+        x: (T::from(0.25).unwrap() * c0.x()) + (T::from(0.75).unwrap() * c1.x()),
+        y: (T::from(0.25).unwrap() * c0.y()) + (T::from(0.75).unwrap() * c1.y()),
     };
     (q, r)
 }

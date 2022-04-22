@@ -84,18 +84,18 @@ fn hull_set<T>(
     // compute inner product of this with `v` - `p_a` to
     // find the farthest point from the line segment a-b.
     let p_orth = coord! {
-        x: p_a.y - p_b.y,
-        y: p_b.x - p_a.x,
+        x: p_a.y() - p_b.y(),
+        y: p_b.x() - p_a.x(),
     };
 
     let furthest_idx = set
         .iter()
         .map(|pt| {
             let p_diff = coord! {
-                x: pt.x - p_a.x,
-                y: pt.y - p_a.y,
+                x: pt.x() - p_a.x(),
+                y: pt.y() - p_a.y(),
             };
-            p_orth.x * p_diff.x + p_orth.y * p_diff.y
+            p_orth.x() * p_diff.x() + p_orth.y() * p_diff.y()
         })
         .enumerate()
         .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
@@ -156,7 +156,7 @@ mod test {
             coord! { x: 0, y: -10 },
         ];
         let res = quick_hull(&mut v);
-        assert_eq!(res.0, correct);
+        assert_eq!(res.inner(), correct);
     }
 
     #[test]
@@ -174,7 +174,7 @@ mod test {
         let correct = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
         let v_correct: Vec<_> = correct.iter().map(|e| coord! { x: e.0, y: e.1 }).collect();
         let res = quick_hull(&mut v);
-        assert_eq!(res.0, v_correct);
+        assert_eq!(res.inner(), v_correct);
     }
 
     #[test]
@@ -197,18 +197,18 @@ mod test {
 
     #[test]
     fn quick_hull_test_complex() {
-        let mut coords = geo_test_fixtures::poly1::<f64>().0;
-        let correct = geo_test_fixtures::poly1_hull::<f64>().0;
+        let mut coords = geo_test_fixtures::poly1::<f64>().into_inner();
+        let correct = geo_test_fixtures::poly1_hull::<f64>().into_inner();
         let res = quick_hull(&mut coords);
-        assert_eq!(res.0, correct);
+        assert_eq!(res.inner(), correct);
     }
 
     #[test]
     fn quick_hull_test_complex_2() {
-        let mut coords = geo_test_fixtures::poly2::<f64>().0;
-        let correct = geo_test_fixtures::poly2_hull::<f64>().0;
+        let mut coords = geo_test_fixtures::poly2::<f64>().into_inner();
+        let correct = geo_test_fixtures::poly2_hull::<f64>().into_inner();
         let res = quick_hull(&mut coords);
-        assert_eq!(res.0, correct);
+        assert_eq!(res.inner(), correct);
     }
 
     #[test]

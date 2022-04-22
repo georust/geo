@@ -41,6 +41,6 @@ where
     T: GeoNum,
 {
     fn contains(&self, point: &Point<T>) -> bool {
-        self.contains(&point.0)
+        self.contains(&point.coord())
     }
 }

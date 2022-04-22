@@ -21,8 +21,8 @@ use crate::{CoordNum, Coordinate};
 /// let extremes = polygon.extremes().unwrap();
 ///
 /// assert_eq!(extremes.y_max.index, 2);
-/// assert_eq!(extremes.y_max.coord.x, 1.);
-/// assert_eq!(extremes.y_max.coord.y, 2.);
+/// assert_eq!(extremes.y_max.coord.x(), 1.);
+/// assert_eq!(extremes.y_max.coord.y(), 2.);
 /// ```
 pub trait Extremes<'a, T: CoordNum> {
     fn extremes(&'a self) -> Option<Outcome<T>>;
@@ -58,19 +58,19 @@ where
         })?;
 
         for (index, coord) in iter {
-            if coord.x < outcome.x_min.coord.x {
+            if coord.x() < outcome.x_min.coord.x() {
                 outcome.x_min = Extreme { coord, index };
             }
 
-            if coord.y < outcome.y_min.coord.y {
+            if coord.y() < outcome.y_min.coord.y() {
                 outcome.y_min = Extreme { coord, index };
             }
 
-            if coord.x > outcome.x_max.coord.x {
+            if coord.x() > outcome.x_max.coord.x() {
                 outcome.x_max = Extreme { coord, index };
             }
 
-            if coord.y > outcome.y_max.coord.y {
+            if coord.y() > outcome.y_max.coord.y() {
                 outcome.y_max = Extreme { coord, index };
             }
         }

@@ -67,8 +67,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
-        self.0
-            .iter()
+        self.iter()
             .fold(T::zero(), |total, line| total + line.haversine_length())
     }
 }

@@ -16,8 +16,8 @@ where
 {
     let poly1_extremes = poly1.extremes().unwrap();
     let poly2_extremes = poly2.extremes().unwrap();
-    let ymin1 = Point::from(poly1.exterior().0[poly1_extremes.y_min.index]);
-    let ymax2 = Point::from(poly2.exterior().0[poly2_extremes.y_max.index]);
+    let ymin1 = Point::from(poly1.exterior()[poly1_extremes.y_min.index]);
+    let ymax2 = Point::from(poly2.exterior()[poly2_extremes.y_max.index]);
 
     let mut state = Polydist {
         poly1,
@@ -45,7 +45,7 @@ where
         // minimum distance can be calculated in at most this many iterations
         // we only need to spin the calipers equal to the total number of vertices in both polygons
         // alternatively, we could accumulate the total rotation angle and stop when it exceeds 2pi
-        max_iterations: poly1.exterior().0.len() + poly2.exterior().0.len(),
+        max_iterations: poly1.exterior().inner().len() + poly2.exterior().inner().len(),
     };
     let mut iterations = 0usize;
     while iterations <= state.max_iterations {
@@ -61,7 +61,7 @@ fn vertex_line_distance<T>(v: Point<T>, p: Point<T>, q: Point<T>) -> T
 where
     T: GeoFloat,
 {
-    v.euclidean_distance(&Line::new(p.0, q.0))
+    v.euclidean_distance(&Line::new(p.coord(), q.coord()))
 }
 
 /// Wrap-around previous Polygon index
@@ -69,7 +69,7 @@ fn prev_vertex<T>(poly: &Polygon<T>, current_vertex: usize) -> usize
 where
     T: GeoFloat,
 {
-    (current_vertex + (poly.exterior().0.len() - 1) - 1) % (poly.exterior().0.len() - 1)
+    (current_vertex + (poly.exterior().inner().len() - 1) - 1) % (poly.exterior().inner().len() - 1)
 }
 
 /// Wrap-around next Polygon index
@@ -77,7 +77,7 @@ fn next_vertex<T>(poly: &Polygon<T>, current_vertex: usize) -> usize
 where
     T: GeoFloat,
 {
-    (current_vertex + 1) % (poly.exterior().0.len() - 1)
+    (current_vertex + 1) % (poly.exterior().inner().len() - 1)
 }
 
 #[derive(Debug)]
@@ -127,20 +127,21 @@ where
     let sinsq = T::one() - cossq;
     let mut cos = T::zero();
     let mut sin;
-    let pnext = poly.exterior().0[next_vertex(poly, idx)];
-    let pprev = poly.exterior().0[prev_vertex(poly, idx)];
-    let clockwise = Point::from(pprev).cross_prod(Point::from(p.0), Point::from(pnext)) < T::zero();
+    let pnext = poly.exterior()[next_vertex(poly, idx)];
+    let pprev = poly.exterior()[prev_vertex(poly, idx)];
+    let clockwise =
+        Point::from(pprev).cross_prod(Point::from(p.coord()), Point::from(pnext)) < T::zero();
     let slope_prev;
     let slope_next;
     // Slope isn't 0, things are complicated
     if *slope != T::zero() {
         cos = cossq.sqrt();
         sin = sinsq.sqrt();
-        if pnext.x > p.x() {
-            if pprev.x > p.x() {
-                if pprev.y >= p.y() && pnext.y >= p.y() {
+        if pnext.x() > p.x() {
+            if pprev.x() > p.x() {
+                if pprev.y() >= p.y() && pnext.y() >= p.y() {
                     if *slope > T::zero() {
-                        slope_prev = Line::new(p.0, pprev).slope();
+                        slope_prev = Line::new(p.coord(), pprev).slope();
                         if clockwise && *slope <= slope_prev || !clockwise && *slope >= slope_prev {
                             cos = -cos;
                             sin = -sin;
@@ -150,15 +151,15 @@ where
                             sin = -sin;
                         }
                     }
-                } else if pprev.y <= p.y() && pnext.y <= p.y() {
+                } else if pprev.y() <= p.y() && pnext.y() <= p.y() {
                     if *slope > T::zero() {
                         if !clockwise {
                             cos = -cos;
                             sin = -sin;
                         }
                     } else {
-                        slope_prev = Line::new(p.0, pprev).slope();
-                        slope_next = Line::new(p.0, pnext).slope();
+                        slope_prev = Line::new(p.coord(), pprev).slope();
+                        slope_next = Line::new(p.coord(), pnext).slope();
                         if clockwise {
                             if *slope <= slope_prev {
                                 cos = -cos;
@@ -184,17 +185,17 @@ where
             } else if *slope < T::zero() {
                 sin = -sin;
             }
-        } else if pnext.x < p.x() {
-            if pprev.x < p.x() {
-                if pprev.y >= p.y() && pnext.y >= p.y() {
+        } else if pnext.x() < p.x() {
+            if pprev.x() < p.x() {
+                if pprev.y() >= p.y() && pnext.y() >= p.y() {
                     if *slope > T::zero() {
                         if clockwise {
                             cos = -cos;
                             sin = -sin;
                         }
                     } else {
-                        slope_prev = Line::new(p.0, pprev).slope();
-                        slope_next = Line::new(p.0, pnext).slope();
+                        slope_prev = Line::new(p.coord(), pprev).slope();
+                        slope_next = Line::new(p.coord(), pnext).slope();
                         if clockwise {
                             if *slope <= slope_prev {
                                 sin = -sin;
@@ -207,9 +208,9 @@ where
                             sin = -sin;
                         }
                     }
-                } else if pprev.y <= p.y() && pnext.y <= p.y() {
+                } else if pprev.y() <= p.y() && pnext.y() <= p.y() {
                     if *slope > T::zero() {
-                        slope_next = Line::new(p.0, pnext).slope();
+                        slope_next = Line::new(p.coord(), pnext).slope();
                         if *slope >= slope_next {
                             cos = -cos;
                             sin = -sin;
@@ -236,7 +237,7 @@ where
                     sin = -sin;
                 }
             }
-        } else if pprev.x > p.x() {
+        } else if pprev.x() > p.x() {
             cos = -cos;
             if *slope > T::zero() {
                 sin = -sin;
@@ -247,12 +248,12 @@ where
     } else {
         // Slope is 0, things are fairly simple
         sin = T::zero();
-        if pnext.x > p.x() {
+        if pnext.x() > p.x() {
             cos = T::one();
-        } else if pnext.x < p.x() {
+        } else if pnext.x() < p.x() {
             cos = -T::one();
-        } else if pnext.x == p.x() {
-            if pprev.x < p.x() {
+        } else if pnext.x() == p.x() {
+            if pprev.x() < p.x() {
                 cos = T::one();
             } else {
                 cos = -T::one();
@@ -321,17 +322,18 @@ where
     T: GeoFloat + FloatConst + Signed,
 {
     let hundred = T::from(100).unwrap();
-    let pnext = poly.exterior().0[next_vertex(poly, idx)];
-    let pprev = poly.exterior().0[prev_vertex(poly, idx)];
-    let clockwise = Point::from(pprev).cross_prod(Point::from(p.0), Point::from(pnext)) < T::zero();
+    let pnext = poly.exterior()[next_vertex(poly, idx)];
+    let pprev = poly.exterior()[prev_vertex(poly, idx)];
+    let clockwise =
+        Point::from(pprev).cross_prod(Point::from(p.coord()), Point::from(pnext)) < T::zero();
     let punit;
     if !vertical {
         punit = unitvector(m, poly, p, idx);
     } else if clockwise {
-        if p.x() > pprev.x {
+        if p.x() > pprev.x() {
             punit = Point::new(p.x(), p.y() - hundred);
-        } else if p.x() == pprev.x {
-            if p.y() > pprev.y {
+        } else if p.x() == pprev.x() {
+            if p.y() > pprev.y() {
                 punit = Point::new(p.x(), p.y() + hundred);
             } else {
                 // implies p.y() < pprev.y()
@@ -344,10 +346,10 @@ where
             // implies p.x() < pprev.x()
             punit = Point::new(p.x(), p.y() + hundred);
         }
-    } else if p.x() > pprev.x {
+    } else if p.x() > pprev.x() {
         punit = Point::new(p.x(), p.y() + hundred);
-    } else if p.x() == pprev.x {
-        if p.y() > pprev.y {
+    } else if p.x() == pprev.x() {
+        if p.y() > pprev.y() {
             punit = Point::new(p.x(), p.y() + hundred);
         } else {
             // implies p.y() < pprev.y()
@@ -453,14 +455,14 @@ where
     if (state.ap1 - minangle).abs() < T::from(0.002).unwrap() {
         state.ip1 = true;
         let p1next = next_vertex(state.poly1, state.p1_idx);
-        state.p1next = Point::from(state.poly1.exterior().0[p1next]);
+        state.p1next = Point::from(state.poly1.exterior()[p1next]);
         state.p1_idx = p1next;
         state.alignment = Some(AlignedEdge::VertexP);
     }
     if (state.aq2 - minangle).abs() < T::from(0.002).unwrap() {
         state.iq2 = true;
         let q2next = next_vertex(state.poly2, state.q2_idx);
-        state.q2next = Point::from(state.poly2.exterior().0[q2next]);
+        state.q2next = Point::from(state.poly2.exterior()[q2next]);
         state.q2_idx = q2next;
         state.alignment = match state.alignment {
             None => Some(AlignedEdge::VertexQ),

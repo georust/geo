@@ -70,7 +70,7 @@ where
 {
     fn vincenty_length(&self) -> Result<T, FailedToConvergeError> {
         let mut length = T::zero();
-        for line_string in &self.0 {
+        for line_string in self {
             length = length + line_string.vincenty_length()?;
         }
         Ok(length)

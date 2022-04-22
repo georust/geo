@@ -12,7 +12,15 @@ use approx::{AbsDiffEq, RelativeEq};
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T: CoordNum> {
+    #[deprecated(
+        since = "0.7.5",
+        note = "Direct field access is deprecated - use `line.start()` or `line.start_mut()` for field access and `Line::new(start, end)` for construction"
+    )]
     pub start: Coordinate<T>,
+    #[deprecated(
+        since = "0.7.5",
+        note = "Direct field access is deprecated - use `line.end()` or `line.end_mut()` for field access and `Line::new(start, end)` for construction"
+    )]
     pub end: Coordinate<T>,
 }
 
@@ -26,22 +34,57 @@ impl<T: CoordNum> Line<T> {
     ///
     /// let line = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 2. });
     ///
-    /// assert_eq!(line.start, coord! { x: 0., y: 0. });
-    /// assert_eq!(line.end, coord! { x: 1., y: 2. });
+    /// assert_eq!(line.start(), coord! { x: 0., y: 0. });
+    /// assert_eq!(line.end(), coord! { x: 1., y: 2. });
     /// ```
+    #[inline]
     pub fn new<C>(start: C, end: C) -> Self
     where
         C: Into<Coordinate<T>>,
     {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
         Self {
             start: start.into(),
             end: end.into(),
         }
     }
 
+    /// Get the first coordinate of the line.
+    #[inline]
+    pub fn start(&self) -> Coordinate<T> {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
+        self.start
+    }
+
+    /// Mutably borrow the first coordinate of the line.
+    #[inline]
+    pub fn start_mut(&mut self) -> &mut Coordinate<T> {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
+        &mut self.start
+    }
+
+    /// Get the second, and final, coordinate of the line.
+    #[inline]
+    pub fn end(&self) -> Coordinate<T> {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
+        self.end
+    }
+
+    /// Mutably borrow the second, and final, coordinate of the line.
+    #[inline]
+    pub fn end_mut(&mut self) -> &mut Coordinate<T> {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
+        &mut self.end
+    }
+
     /// Calculate the difference in coordinates (Δx, Δy).
     pub fn delta(&self) -> Coordinate<T> {
-        self.end - self.start
+        self.end() - self.start()
     }
 
     /// Calculate the difference in ‘x’ components (Δx).
@@ -56,11 +99,11 @@ impl<T: CoordNum> Line<T> {
     /// # );
     /// # assert_eq!(
     /// #     line.dx(),
-    /// line.end.x - line.start.x
+    /// line.end().x() - line.start().x()
     /// # );
     /// ```
     pub fn dx(&self) -> T {
-        self.delta().x
+        self.delta().x()
     }
 
     /// Calculate the difference in ‘y’ components (Δy).
@@ -75,11 +118,11 @@ impl<T: CoordNum> Line<T> {
     /// # );
     /// # assert_eq!(
     /// #     line.dy(),
-    /// line.end.y - line.start.y
+    /// line.end().y() - line.start().y()
     /// # );
     /// ```
     pub fn dy(&self) -> T {
-        self.delta().y
+        self.delta().y()
     }
 
     /// Calculate the slope (Δy/Δx).
@@ -124,7 +167,7 @@ impl<T: CoordNum> Line<T> {
     /// # );
     /// # assert_eq!(
     /// #     line.determinant(),
-    /// line.start.x * line.end.y - line.start.y * line.end.x
+    /// line.start().x() * line.end().y() - line.start().y() * line.end().x()
     /// # );
     /// ```
     ///
@@ -139,15 +182,15 @@ impl<T: CoordNum> Line<T> {
     /// # );
     /// ```
     pub fn determinant(&self) -> T {
-        self.start.x * self.end.y - self.start.y * self.end.x
+        self.start().x() * self.end().y() - self.start().y() * self.end().x()
     }
 
     pub fn start_point(&self) -> Point<T> {
-        Point::from(self.start)
+        Point::from(self.start())
     }
 
     pub fn end_point(&self) -> Point<T> {
-        Point::from(self.end)
+        Point::from(self.end())
     }
 
     pub fn points(&self) -> (Point<T>, Point<T>) {
@@ -189,8 +232,9 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        self.start.relative_eq(&other.start, epsilon, max_relative)
-            && self.end.relative_eq(&other.end, epsilon, max_relative)
+        self.start()
+            .relative_eq(&other.start(), epsilon, max_relative)
+            && self.end().relative_eq(&other.end(), epsilon, max_relative)
     }
 }
 
@@ -217,7 +261,8 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Line<T> {
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        self.start.abs_diff_eq(&other.start, epsilon) && self.end.abs_diff_eq(&other.end, epsilon)
+        self.start().abs_diff_eq(&other.start(), epsilon)
+            && self.end().abs_diff_eq(&other.end(), epsilon)
     }
 }
 

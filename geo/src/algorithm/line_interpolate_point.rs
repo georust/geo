@@ -46,9 +46,9 @@ where
     fn line_interpolate_point(&self, fraction: T) -> Self::Output {
         if (fraction >= T::zero()) && (fraction <= T::one()) {
             // fraction between 0 and 1, return a point between start and end
-            let diff = self.end - self.start;
-            let r = self.start + diff * (fraction);
-            if r.x.is_finite() && r.y.is_finite() {
+            let diff = self.end() - self.start();
+            let r = self.start() + diff * (fraction);
+            if r.x().is_finite() && r.y().is_finite() {
                 Some(r.into())
             } else {
                 None

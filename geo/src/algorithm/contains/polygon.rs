@@ -24,7 +24,7 @@ where
     T: GeoNum,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        self.contains(&p.0)
+        self.contains(&p.coord())
     }
 }
 
@@ -73,7 +73,7 @@ where
     T: GeoNum,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        self.contains(&p.0)
+        self.contains(&p.coord())
     }
 }
 

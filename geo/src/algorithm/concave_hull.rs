@@ -55,7 +55,7 @@ where
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
-        let mut points: Vec<_> = self.exterior().0.clone();
+        let mut points: Vec<_> = self.exterior().inner().to_vec();
         Polygon::new(concave_hull(&mut points, concavity), vec![])
     }
 }
@@ -67,9 +67,8 @@ where
     type Scalar = T;
     fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
         let mut aggregated: Vec<Coordinate<Self::Scalar>> = self
-            .0
             .iter()
-            .flat_map(|elem| elem.exterior().0.clone())
+            .flat_map(|elem| elem.exterior().inner().to_vec())
             .collect();
         Polygon::new(concave_hull(&mut aggregated, concavity), vec![])
     }
@@ -81,7 +80,7 @@ where
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: Self::Scalar) -> Polygon<Self::Scalar> {
-        Polygon::new(concave_hull(&mut self.0.clone(), concavity), vec![])
+        Polygon::new(concave_hull(&mut self.inner().to_vec(), concavity), vec![])
     }
 }
 
@@ -92,7 +91,7 @@ where
     type Scalar = T;
     fn concave_hull(&self, concavity: T) -> Polygon<T> {
         let mut aggregated: Vec<Coordinate<T>> =
-            self.iter().flat_map(|elem| elem.0.clone()).collect();
+            self.iter().flat_map(|elem| elem.inner().to_vec()).collect();
         Polygon::new(concave_hull(&mut aggregated, concavity), vec![])
     }
 }
@@ -103,7 +102,7 @@ where
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: T) -> Polygon<T> {
-        let mut coordinates: Vec<Coordinate<T>> = self.iter().map(|point| point.0).collect();
+        let mut coordinates: Vec<Coordinate<T>> = self.iter().map(|point| point.coord()).collect();
         Polygon::new(concave_hull(&mut coordinates, concavity), vec![])
     }
 }
@@ -136,8 +135,8 @@ where
         None => None,
         Some(&point) => {
             let closest_point =
-                candidates.fold(Point::new(point.x, point.y), |acc_point, candidate| {
-                    let candidate_point = Point::new(candidate.x, candidate.y);
+                candidates.fold(Point::new(point.x(), point.y()), |acc_point, candidate| {
+                    let candidate_point = Point::new(candidate.x(), candidate.y());
                     if line.euclidean_distance(&acc_point)
                         > line.euclidean_distance(&candidate_point)
                     {
@@ -202,7 +201,7 @@ where
     }
 
     //Get points in overall dataset that aren't on the exterior linestring of the hull
-    let hull_tree: RTree<Coordinate<T>> = RTree::bulk_load(hull.clone().0);
+    let hull_tree: RTree<Coordinate<T>> = RTree::bulk_load(hull.inner().to_vec());
 
     let interior_coords: Vec<Coordinate<T>> = coords
         .iter()
@@ -235,7 +234,7 @@ where
         if let Some(closest_point) = possible_closest_point {
             interior_points_tree.remove(&closest_point);
             line_tree.remove(&line);
-            let point = Point::new(closest_point.x, closest_point.y);
+            let point = Point::new(closest_point.x(), closest_point.y());
             let start_line = Line::new(line.start_point(), point);
             let end_line = Line::new(point, line.end_point());
             line_tree.insert(start_line);
@@ -400,7 +399,7 @@ mod test {
             Coordinate::from((0.0, 0.0)),
             Coordinate::from((4.0, 0.0)),
         ];
-        assert_eq!(concave.exterior().0, correct);
+        assert_eq!(concave.exterior().inner(), correct);
     }
 
     #[test]
@@ -424,7 +423,7 @@ mod test {
             Coordinate::from((4.0, 0.0)),
         ];
         let res = mls.concave_hull(2.0);
-        assert_eq!(res.exterior().0, correct);
+        assert_eq!(res.exterior().inner(), correct);
     }
 
     #[test]
@@ -448,6 +447,6 @@ mod test {
             Coordinate::from((0.0, 0.0)),
             Coordinate::from((4.0, 0.0)),
         ];
-        assert_eq!(res.exterior().0, correct);
+        assert_eq!(res.exterior().inner(), correct);
     }
 }

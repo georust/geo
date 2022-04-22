@@ -14,7 +14,7 @@ pub trait Kernel<T: CoordNum> {
     /// Gives the orientation of 3 2-dimensional points:
     /// ccw, cw or collinear (None)
     fn orient2d(p: Coordinate<T>, q: Coordinate<T>, r: Coordinate<T>) -> Orientation {
-        let res = (q.x - p.x) * (r.y - q.y) - (q.y - p.y) * (r.x - q.x);
+        let res = (q.x() - p.x()) * (r.y() - q.y()) - (q.y() - p.y()) * (r.x() - q.x());
         if res > Zero::zero() {
             Orientation::CounterClockwise
         } else if res < Zero::zero() {
@@ -25,7 +25,7 @@ pub trait Kernel<T: CoordNum> {
     }
 
     fn square_euclidean_distance(p: Coordinate<T>, q: Coordinate<T>) -> T {
-        (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)
+        (p.x() - q.x()) * (p.x() - q.x()) + (p.y() - q.y()) * (p.y() - q.y())
     }
 
     /// Compute the sign of the dot product of `u` and `v` using
@@ -35,8 +35,8 @@ pub trait Kernel<T: CoordNum> {
     fn dot_product_sign(u: Coordinate<T>, v: Coordinate<T>) -> Orientation {
         let zero = Coordinate::zero();
         let vdash = coord! {
-            x: T::zero() - v.y,
-            y: v.x,
+            x: T::zero() - v.y(),
+            y: v.x(),
         };
         Self::orient2d(zero, u, vdash)
     }

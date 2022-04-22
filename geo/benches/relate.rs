@@ -9,7 +9,7 @@ use geo::{LineString, Polygon};
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("relate overlapping 50-point polygons", |bencher| {
         let norway = geo_test_fixtures::norway_main::<f32>();
-        let points = norway.0;
+        let points = norway.into_inner();
 
         let sub_polygon = {
             let points = points[0..50].to_vec();

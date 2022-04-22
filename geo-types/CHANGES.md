@@ -1,5 +1,57 @@
 # Changes
 
+## UNRELEASED
+
+* DEPRECATED: Direct access to geometry fields (this is a big change).
+
+  This is intended to be a non-breaking change for now, to give people an
+  upgrade window. In an upcoming *breaking* release of geo-types we'll drop pub
+  field access altogether.
+
+  This is in pursuit of adding support for 3D/4D geometries. We'll leverage
+  generics in a way that is intended to avoid runtime cost for our mostly 2D
+  user base. See https://github.com/georust/geo/issues/5 for more.
+
+  ADDED: A bunch of new methods that correspond to the deprecated field access.
+  Here's a cheatsheet of new methods, and a reminder of few existing methods
+  which you might now need:
+  * Coordinate:
+    - `Coordinate::new(x, y)`
+    - `coord.x()` / `coord.x_mut()`
+    - `coord.y()` / `coord.y_mut()`
+  * Point:
+    - `point.coord()` / `point.coord_mut()`
+    - `point.x_mut()`
+    - `point.y_mut()`
+    - `point.x()` / `point.y()` are not new, but you might need them now.
+  * GeometryCollection:
+    - `GeometryCollection::from(geometry_vec)`
+    - `gc.geometries()` / `gc.geometries_mut()`
+    - `gc.push(geometry)`: add a Geometry
+    - `gc.into_inner()`: decompose into an owned Vec<Geometry> 
+  * Line:
+    - `line.start()` / `line.start_mut()`
+    - `line.end()` / `line.end_mut()`
+  * LineString:
+    - `line_string.inner()` / `line_string.inner_mut()`
+    - `line_string.push(coord)`
+    - `line_string[2]` get a particular coord. This isn't new, but you might need it now.
+    - `line_string[0..2]` - you can now access a slice of coords too.
+  * MultiPoint:
+    - `multi_point.points()` / `multi_point.points_mut()`
+    - `multi_point.push(point)` - add a point
+    - `multi_point.into_inner()` - decompose into an owned Vec<Point>
+  * MultiLineString:
+    - `mls.line_strings()` / `mls.line_strings_mut()`
+    - `mls.push(line_string)` - add a LineString
+    - `mls.into_inner()`: decompose into an owned Vec<LineString>
+  * MultiPolygon:
+    - `multi_poly.polygons()` / `multi_poly.polygons_mut()`
+    - `multi_poly.push(polygon)`: add a Polygon
+    - `multi_poly.into_inner()`: decompose into an owned Vec<Polygon>
+
+  Something missing? Let us know! https://github.com/georust/geo/issues/new
+
 ## 0.7.4
 
 * BREAKING: Make `Rect::to_lines` return lines in winding order for `Rect::to_polygon`.

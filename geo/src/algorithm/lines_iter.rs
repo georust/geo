@@ -69,7 +69,7 @@ pub struct LineStringIter<'a, T: CoordNum>(slice::Windows<'a, Coordinate<T>>);
 
 impl<'a, T: CoordNum> LineStringIter<'a, T> {
     fn new(line_string: &'a LineString<T>) -> Self {
-        Self(line_string.0.windows(2))
+        Self(line_string.inner().windows(2))
     }
 }
 
@@ -96,7 +96,7 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for MultiLineString<T> {
     type Iter = MultiLineStringIter<'a, Self::Scalar>;
 
     fn lines_iter(&'a self) -> Self::Iter {
-        MapLinesIter(self.0.iter()).flatten()
+        MapLinesIter(self.line_strings().iter()).flatten()
     }
 }
 
@@ -124,7 +124,7 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for MultiPolygon<T> {
     type Iter = MultiPolygonIter<'a, Self::Scalar>;
 
     fn lines_iter(&'a self) -> Self::Iter {
-        MapLinesIter(self.0.iter()).flatten()
+        MapLinesIter(self.polygons().iter()).flatten()
     }
 }
 

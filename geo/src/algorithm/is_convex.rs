@@ -114,16 +114,16 @@ impl<T: HasKernel> IsConvex for LineString<T> {
         allow_collinear: bool,
         specific_orientation: Option<Orientation>,
     ) -> Option<Orientation> {
-        if !self.is_closed() || self.0.is_empty() {
+        if !self.is_closed() || self.inner().is_empty() {
             None
         } else {
-            is_convex_shaped(&self.0[1..], allow_collinear, specific_orientation)
+            is_convex_shaped(&self[1..], allow_collinear, specific_orientation)
         }
     }
 
     fn is_collinear(&self) -> bool {
-        self.0.is_empty()
-            || is_convex_shaped(&self.0[1..], true, Some(Orientation::Collinear)).is_some()
+        self.inner().is_empty()
+            || is_convex_shaped(&self[1..], true, Some(Orientation::Collinear)).is_some()
     }
 }
 

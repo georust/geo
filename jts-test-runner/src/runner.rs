@@ -535,12 +535,12 @@ where
 {
     assert!(r1.is_closed(), "r1 is not closed");
     assert!(r2.is_closed(), "r2 is not closed");
-    if r1.0.len() != r2.0.len() {
+    if r1.inner().len() != r2.inner().len() {
         return false;
     }
-    let len = r1.0.len() - 1;
+    let len = r1.inner().len() - 1;
     (0..len).any(|shift| {
-        (0..len).all(|i| coord_matcher(&r1.0[i], &r2.0[(i + shift) % len]))
-            || (0..len).all(|i| coord_matcher(&r1.0[len - i], &r2.0[(i + shift) % len]))
+        (0..len).all(|i| coord_matcher(&r1[i], &r2[(i + shift) % len]))
+            || (0..len).all(|i| coord_matcher(&r1[len - i], &r2[(i + shift) % len]))
     })
 }

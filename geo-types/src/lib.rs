@@ -147,10 +147,10 @@ mod tests {
 
         let p = Point::from(c);
 
-        let Point(c2) = p;
+        let c2 = p.coord();
         assert_eq!(c, c2);
-        assert_relative_eq!(c.x, c2.x);
-        assert_relative_eq!(c.y, c2.y);
+        assert_relative_eq!(c.x(), c2.x());
+        assert_relative_eq!(c.y(), c2.y());
 
         let p: Point<f32> = (0f32, 1f32).into();
         assert_relative_eq!(p.x(), 0.);

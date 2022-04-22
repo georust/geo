@@ -44,7 +44,7 @@ where
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(self.iter().map(|point| &point.0), k)
+        concave_hull(self.iter().map(|point| point.coord()), k)
     }
 }
 
@@ -54,7 +54,7 @@ where
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(self.iter().map(|point| &point.0), k)
+        concave_hull(self.iter().map(|point| point.coord()), k)
     }
 }
 
@@ -64,7 +64,7 @@ where
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(self.iter(), k)
+        concave_hull(self.iter().copied(), k)
     }
 }
 
@@ -74,7 +74,7 @@ where
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(self.iter(), k)
+        concave_hull(self.iter().copied(), k)
     }
 }
 
@@ -84,11 +84,11 @@ where
 {
     type Scalar = T;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar> {
-        concave_hull(self.iter().map(|point| &point.0), k)
+        concave_hull(self.iter().map(|point| point.coord()), k)
     }
 }
 
-fn concave_hull<'a, T: 'a>(coords: impl Iterator<Item = &'a Coordinate<T>>, k: u32) -> Polygon<T>
+fn concave_hull<T>(coords: impl Iterator<Item = Coordinate<T>>, k: u32) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
@@ -99,22 +99,20 @@ where
 const DELTA: f32 = 0.000000001;
 
 /// Removes duplicate coords from the dataset.
-fn prepare_dataset<'a, T: 'a>(
-    coords: impl Iterator<Item = &'a Coordinate<T>>,
-) -> rstar::RTree<Coordinate<T>>
+fn prepare_dataset<T>(coords: impl Iterator<Item = Coordinate<T>>) -> rstar::RTree<Coordinate<T>>
 where
     T: GeoFloat + RTreeNum,
 {
     let mut dataset: rstar::RTree<Coordinate<T>> = rstar::RTree::new();
     for coord in coords {
-        let closest = dataset.nearest_neighbor(coord);
+        let closest = dataset.nearest_neighbor(&coord);
         if let Some(closest) = closest {
-            if coords_are_equal(coord, closest) {
+            if coords_are_equal(&coord, closest) {
                 continue;
             }
         }
 
-        dataset.insert(*coord)
+        dataset.insert(coord)
     }
 
     dataset
@@ -126,7 +124,7 @@ fn coords_are_equal<T>(c1: &Coordinate<T>, c2: &Coordinate<T>) -> bool
 where
     T: GeoFloat + RTreeNum,
 {
-    float_equal(c1.x, c2.x) && float_equal(c1.y, c2.y)
+    float_equal(c1.x(), c2.x()) && float_equal(c1.y(), c2.y())
 }
 
 fn float_equal<T>(a: T, b: T) -> bool
@@ -240,8 +238,8 @@ where
         .expect("We checked that there are more then 3 coords in the set before.");
 
     for coord in coord_set.iter() {
-        if coord.y < min_y {
-            min_y = coord.y;
+        if coord.y() < min_y {
+            min_y = coord.y();
             result = coord;
         }
     }
@@ -269,14 +267,17 @@ fn sort_by_angle<T>(
 ) where
     T: GeoFloat,
 {
-    let base_angle = pseudo_angle(prev_coord.x - curr_coord.x, prev_coord.y - curr_coord.y);
+    let base_angle = pseudo_angle(
+        prev_coord.x() - curr_coord.x(),
+        prev_coord.y() - curr_coord.y(),
+    );
     coords.sort_by(|a, b| {
-        let mut angle_a = pseudo_angle(a.x - curr_coord.x, a.y - curr_coord.y) - base_angle;
+        let mut angle_a = pseudo_angle(a.x() - curr_coord.x(), a.y() - curr_coord.y()) - base_angle;
         if angle_a < T::zero() {
             angle_a = angle_a + T::from(4.0).unwrap();
         }
 
-        let mut angle_b = pseudo_angle(b.x - curr_coord.x, b.y - curr_coord.y) - base_angle;
+        let mut angle_b = pseudo_angle(b.x() - curr_coord.x(), b.y() - curr_coord.y()) - base_angle;
         if angle_b < T::zero() {
             angle_b = angle_b + T::from(4.0).unwrap();
         }
@@ -388,7 +389,7 @@ mod tests {
             coord!(x: 3.0, y: 3.0),
         ];
 
-        let poly = concave_hull(coords.iter(), 3);
+        let poly = concave_hull(coords.iter().copied(), 3);
         assert_eq!(poly.exterior().coords_count(), 12);
 
         let must_not_be_in = vec![&coords[6]];
@@ -401,7 +402,7 @@ mod tests {
 
     #[test]
     fn empty_hull() {
-        let actual: Polygon<f64> = concave_hull(vec![].iter(), 3);
+        let actual: Polygon<f64> = concave_hull(vec![].iter().copied(), 3);
         let expected = Polygon::new(LineString::new(vec![]), vec![]);
         assert_eq!(actual, expected);
     }

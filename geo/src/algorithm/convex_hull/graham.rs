@@ -139,11 +139,11 @@ mod test {
 
     #[test]
     fn graham_test_complex() {
-        test_convexity(geo_test_fixtures::poly1::<f64>().0);
+        test_convexity(geo_test_fixtures::poly1::<f64>().into_inner());
     }
 
     #[test]
     fn quick_hull_test_complex_2() {
-        test_convexity(geo_test_fixtures::poly2::<f64>().0);
+        test_convexity(geo_test_fixtures::poly2::<f64>().into_inner());
     }
 }

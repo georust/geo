@@ -66,7 +66,7 @@ impl GeodesicLength<f64> for LineString<f64> {
 impl GeodesicLength<f64> for MultiLineString<f64> {
     fn geodesic_length(&self) -> f64 {
         let mut length = 0.0;
-        for line_string in &self.0 {
+        for line_string in self {
             length += line_string.geodesic_length();
         }
         length

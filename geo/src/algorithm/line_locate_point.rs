@@ -55,7 +55,7 @@ where
         let sp: Point<_> = *p - self.start_point();
 
         // direction vector of line, $v$
-        let v: Point<_> = (self.end - self.start).into();
+        let v: Point<_> = (self.end() - self.start()).into();
 
         // $v \cdot v$
         let v_sq = v.dot(v);

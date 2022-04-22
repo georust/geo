@@ -389,7 +389,7 @@ impl<T: CoordNum> Polygon<T> {
     where
         T: Float,
     {
-        (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
+        (current_vertex + (self.exterior.inner().len() - 1) - 1) % (self.exterior.inner().len() - 1)
     }
 }
 
@@ -418,8 +418,7 @@ impl<T: CoordFloat + Signed> Polygon<T> {
     pub fn is_convex(&self) -> bool {
         let convex = self
             .exterior
-            .0
-            .iter()
+            .coords()
             .enumerate()
             .map(|(idx, _)| {
                 let prev_1 = self.previous_vertex(idx);
@@ -445,11 +444,11 @@ impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
     fn from(r: Rect<T>) -> Self {
         Polygon::new(
             vec![
-                (r.min().x, r.min().y),
-                (r.max().x, r.min().y),
-                (r.max().x, r.max().y),
-                (r.min().x, r.max().y),
-                (r.min().x, r.min().y),
+                (r.min().x(), r.min().y()),
+                (r.max().x(), r.min().y()),
+                (r.max().x(), r.max().y()),
+                (r.min().x(), r.max().y()),
+                (r.min().x(), r.min().y()),
             ]
             .into(),
             Vec::new(),
@@ -459,7 +458,7 @@ impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
 
 impl<T: CoordNum> From<Triangle<T>> for Polygon<T> {
     fn from(t: Triangle<T>) -> Self {
-        Polygon::new(vec![t.0, t.1, t.2, t.0].into(), Vec::new())
+        t.to_polygon()
     }
 }
 

@@ -97,8 +97,8 @@ impl<F: GeoFloat> Edge<F> {
                 self.add_intersection(intersection, line, segment_index);
             }
             LineIntersection::Collinear { intersection } => {
-                self.add_intersection(intersection.start, line, segment_index);
-                self.add_intersection(intersection.end, line, segment_index);
+                self.add_intersection(intersection.start(), line, segment_index);
+                self.add_intersection(intersection.end(), line, segment_index);
             }
         }
     }

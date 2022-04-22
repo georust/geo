@@ -197,8 +197,7 @@ where
     fn simplify_idx(&self, epsilon: &T) -> Vec<usize> {
         calculate_rdp_indices(
             &self
-                .0
-                .iter()
+                .coords()
                 .enumerate()
                 .map(|(idx, coord)| RdpIndex {
                     index: idx,

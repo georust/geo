@@ -238,10 +238,12 @@ impl<T: GeoFloat> CentroidOperation<T> {
 
     fn add_line(&mut self, line: &Line<T>) {
         match line.dimensions() {
-            ZeroDimensional => self.add_coord(line.start),
-            OneDimensional => {
-                self.add_centroid(OneDimensional, line.centroid().0, line.euclidean_length())
-            }
+            ZeroDimensional => self.add_coord(line.start()),
+            OneDimensional => self.add_centroid(
+                OneDimensional,
+                line.centroid().coord(),
+                line.euclidean_length(),
+            ),
             _ => unreachable!("Line must be zero or one dimensional"),
         }
     }
@@ -251,8 +253,8 @@ impl<T: GeoFloat> CentroidOperation<T> {
             return;
         }
 
-        if line_string.0.len() == 1 {
-            self.add_coord(line_string.0[0]);
+        if line_string.inner().len() == 1 {
+            self.add_coord(line_string[0]);
             return;
         }
 
@@ -266,7 +268,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
             return;
         }
 
-        for element in &multi_line_string.0 {
+        for element in multi_line_string {
             self.add_line_string(element);
         }
     }
@@ -304,19 +306,19 @@ impl<T: GeoFloat> CentroidOperation<T> {
             return;
         }
 
-        for element in &multi_point.0 {
-            self.add_coord(element.0);
+        for element in multi_point {
+            self.add_coord(element.coord());
         }
     }
 
     fn add_multi_polygon(&mut self, multi_polygon: &MultiPolygon<T>) {
-        for element in &multi_polygon.0 {
+        for element in multi_polygon {
             self.add_polygon(element);
         }
     }
 
     fn add_geometry_collection(&mut self, geometry_collection: &GeometryCollection<T>) {
-        for element in &geometry_collection.0 {
+        for element in geometry_collection {
             self.add_geometry(element);
         }
     }
@@ -331,28 +333,31 @@ impl<T: GeoFloat> CentroidOperation<T> {
                 self.add_line(&Line::new(rect.max(), rect.max()));
                 self.add_line(&Line::new(rect.max(), rect.min()));
             }
-            TwoDimensional => {
-                self.add_centroid(TwoDimensional, rect.centroid().0, rect.unsigned_area())
-            }
+            TwoDimensional => self.add_centroid(
+                TwoDimensional,
+                rect.centroid().coord(),
+                rect.unsigned_area(),
+            ),
             Empty => unreachable!("Rect dimensions cannot be empty"),
         }
     }
 
     fn add_triangle(&mut self, triangle: &Triangle<T>) {
         match triangle.dimensions() {
-            ZeroDimensional => self.add_coord(triangle.0),
+            ZeroDimensional => self.add_coord(triangle.vertex_0()),
             OneDimensional => {
                 // Degenerate triangle is a line, treat it the same way we treat flat
                 // polygons
-                let l0_1 = Line::new(triangle.0, triangle.1);
-                let l1_2 = Line::new(triangle.1, triangle.2);
-                let l2_0 = Line::new(triangle.2, triangle.0);
+                let l0_1 = Line::new(triangle.vertex_0(), triangle.vertex_1());
+                let l1_2 = Line::new(triangle.vertex_1(), triangle.vertex_2());
+                let l2_0 = Line::new(triangle.vertex_2(), triangle.vertex_0());
                 self.add_line(&l0_1);
                 self.add_line(&l1_2);
                 self.add_line(&l2_0);
             }
             TwoDimensional => {
-                let centroid = (triangle.0 + triangle.1 + triangle.2) / T::from(3).unwrap();
+                let centroid = (triangle.vertex_0() + triangle.vertex_1() + triangle.vertex_2())
+                    / T::from(3).unwrap();
                 self.add_centroid(TwoDimensional, centroid, triangle.unsigned_area());
             }
             Empty => unreachable!("Rect dimensions cannot be empty"),
@@ -361,7 +366,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
 
     fn add_geometry(&mut self, geometry: &Geometry<T>) {
         match geometry {
-            Geometry::Point(g) => self.add_coord(g.0),
+            Geometry::Point(g) => self.add_coord(g.coord()),
             Geometry::Line(g) => self.add_line(g),
             Geometry::LineString(g) => self.add_line_string(g),
             Geometry::Polygon(g) => self.add_polygon(g),
@@ -391,13 +396,13 @@ impl<T: GeoFloat> CentroidOperation<T> {
         }
 
         // Since area is non-zero, we know the ring has at least one point
-        let shift = ring.0[0];
+        let shift = ring[0];
 
         let accumulated_coord = ring.lines().fold(Coordinate::zero(), |accum, line| {
             use crate::algorithm::map_coords::MapCoords;
-            let line = line.map_coords(|(x, y)| (x - shift.x, y - shift.y));
+            let line = line.map_coords(|(x, y)| (x - shift.x(), y - shift.y()));
             let tmp = line.determinant();
-            accum + (line.end + line.start) * tmp
+            accum + (line.end() + line.start()) * tmp
         });
         let six = T::from(6).unwrap();
         let centroid = accumulated_coord / (six * area) + shift;
@@ -576,7 +581,7 @@ mod test {
     fn polygon_one_point_test() {
         let p = point![ x: 2., y: 1. ];
         let v = Vec::new();
-        let linestring = line_string![p.0];
+        let linestring = line_string![p.coord()];
         let poly = Polygon::new(linestring, v);
         assert_relative_eq!(poly.centroid().unwrap(), p);
     }
@@ -615,10 +620,10 @@ mod test {
             .centroid()
             .unwrap()
             .map_coords(|(x, y)| (x - shift_x, y - shift_y));
-        debug!("centroid {:?}", centroid.0);
-        debug!("new_centroid {:?}", new_centroid.0);
-        assert_relative_eq!(centroid.0.x, new_centroid.0.x, max_relative = 0.0001);
-        assert_relative_eq!(centroid.0.y, new_centroid.0.y, max_relative = 0.0001);
+        debug!("centroid {:?}", centroid.coord());
+        debug!("new_centroid {:?}", new_centroid.coord());
+        assert_relative_eq!(centroid.x(), new_centroid.x(), max_relative = 0.0001);
+        assert_relative_eq!(centroid.y(), new_centroid.y(), max_relative = 0.0001);
     }
 
     #[test]
@@ -897,19 +902,17 @@ mod test {
         assert_eq!(collection.centroid().unwrap(), point!(x: 4., y: 2.));
 
         // 0-d rect treated like point
-        collection.0.push(Rect::new(c(0., 6.), c(0., 6.)).into());
+        collection.push(Rect::new(c(0., 6.), c(0., 6.)).into());
         assert_eq!(collection.centroid().unwrap(), point!(x: 3., y: 3.));
 
         // 1-d rect treated like line. Since a line has higher dimensions than the rest of the
         // collection, it's centroid clobbers everything else in the collection.
-        collection.0.push(Rect::new(c(0., 0.), c(0., 2.)).into());
+        collection.push(Rect::new(c(0., 0.), c(0., 2.)).into());
         assert_eq!(collection.centroid().unwrap(), point!(x: 0., y: 1.));
 
         // 2-d has higher dimensions than the rest of the collection, so it's centroid clobbers
         // everything else in the collection.
-        collection
-            .0
-            .push(Rect::new(c(10., 10.), c(11., 11.)).into());
+        collection.push(Rect::new(c(10., 10.), c(11., 11.)).into());
         assert_eq!(collection.centroid().unwrap(), point!(x: 10.5, y: 10.5));
     }
 }

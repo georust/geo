@@ -75,7 +75,7 @@ where
     T: Float + CoordNum,
 {
     let mut total = T::zero();
-    let coords_len = coords.0.len();
+    let coords_len = coords.inner().len();
 
     if coords_len > 2 {
         for i in 0..coords_len {
@@ -92,7 +92,7 @@ where
             let p1 = coords[lower_index];
             let p2 = coords[middle_index];
             let p3 = coords[upper_index];
-            total = total + (p3.x.to_radians() - p1.x.to_radians()) * p2.y.to_radians().sin();
+            total = total + (p3.x().to_radians() - p1.x().to_radians()) * p2.y().to_radians().sin();
         }
 
         total = total

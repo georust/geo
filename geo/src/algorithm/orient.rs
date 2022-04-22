@@ -142,7 +142,7 @@ mod test {
         let oriented_int_ls = LineString::from(oriented_int_raw);
         // build corrected Polygon
         let oriented = orient(&poly1, Direction::Default);
-        assert_eq!(oriented.exterior().0, oriented_ext_ls.0);
-        assert_eq!(oriented.interiors()[0].0, oriented_int_ls.0);
+        assert_eq!(oriented.exterior(), &oriented_ext_ls);
+        assert_eq!(oriented.interiors()[0], oriented_int_ls);
     }
 }

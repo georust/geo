@@ -27,7 +27,13 @@ use std::iter::FromIterator;
 /// predicates that operate on it.
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MultiPolygon<T: CoordNum>(pub Vec<Polygon<T>>);
+pub struct MultiPolygon<T: CoordNum>(
+    #[deprecated(
+        since = "0.7.5",
+        note = "Direct field access is deprecated - use `multi_poly.polygons()` or `multi_poly.polygons_mut()` for field access and `MultiPolygon::new(polygons_vec)` for construction"
+    )]
+    pub Vec<Polygon<T>>,
+);
 
 impl<T: CoordNum, IP: Into<Polygon<T>>> From<IP> for MultiPolygon<T> {
     fn from(x: IP) -> Self {
@@ -52,7 +58,7 @@ impl<T: CoordNum> IntoIterator for MultiPolygon<T> {
     type IntoIter = ::std::vec::IntoIter<Polygon<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
+        self.into_inner().into_iter()
     }
 }
 
@@ -61,7 +67,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a MultiPolygon<T> {
     type IntoIter = ::std::slice::Iter<'a, Polygon<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&self.0).iter()
+        self.polygons().iter()
     }
 }
 
@@ -70,22 +76,51 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPolygon<T> {
     type IntoIter = ::std::slice::IterMut<'a, Polygon<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&mut self.0).iter_mut()
+        self.polygons_mut().iter_mut()
     }
 }
 
 impl<T: CoordNum> MultiPolygon<T> {
-    /// Instantiate Self from the raw content value
-    pub fn new(value: Vec<Polygon<T>>) -> Self {
-        Self(value)
+    /// Create a `MultiPolygon` with `polygons` as its members.
+    #[inline]
+    pub fn new(polygons: Vec<Polygon<T>>) -> Self {
+        Self(polygons)
+    }
+
+    /// Get this collection's constituent [`Polygon`]s
+    #[inline]
+    pub fn polygons(&self) -> &[Polygon<T>] {
+        #[allow(deprecated)]
+        &self.0
+    }
+
+    /// Mutably borrow this collection's constituent [`Polygon`]s.
+    #[inline]
+    pub fn polygons_mut(&mut self) -> &mut [Polygon<T>] {
+        #[allow(deprecated)]
+        &mut self.0
+    }
+
+    /// Push a `polygon` onto the end of this collection.
+    #[inline]
+    pub fn push(&mut self, polygon: Polygon<T>) {
+        #[allow(deprecated)]
+        self.0.push(polygon)
+    }
+
+    /// Consume this [`MultiPolygon`] to get ownership of its constituent [`Polygon`]s.
+    #[inline]
+    pub fn into_inner(self) -> Vec<Polygon<T>> {
+        #[allow(deprecated)]
+        self.0
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Polygon<T>> {
-        self.0.iter()
+        self.polygons().iter()
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Polygon<T>> {
-        self.0.iter_mut()
+        self.polygons_mut().iter_mut()
     }
 }
 
@@ -121,7 +156,7 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        if self.0.len() != other.0.len() {
+        if self.polygons().len() != other.polygons().len() {
             return false;
         }
 
@@ -160,7 +195,7 @@ where
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        if self.0.len() != other.0.len() {
+        if self.polygons().len() != other.polygons().len() {
             return false;
         }
 
@@ -225,8 +260,8 @@ mod test {
         for poly in &mut multi {
             poly.exterior_mut(|exterior| {
                 for coord in exterior {
-                    coord.x += 1;
-                    coord.y += 1;
+                    *coord.x_mut() += 1;
+                    *coord.y_mut() += 1;
                 }
             });
         }
@@ -234,8 +269,8 @@ mod test {
         for poly in multi.iter_mut() {
             poly.exterior_mut(|exterior| {
                 for coord in exterior {
-                    coord.x += 1;
-                    coord.y += 1;
+                    *coord.x_mut() += 1;
+                    *coord.y_mut() += 1;
                 }
             });
         }

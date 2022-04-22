@@ -179,7 +179,7 @@ mod modern {
         type Output = Point<NT>;
 
         fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
-            let new_point = func((self.0.x, self.0.y));
+            let new_point = func((self.x(), self.y()));
             Point::new(new_point.0, new_point.1)
         }
 
@@ -187,25 +187,25 @@ mod modern {
             &self,
             func: impl Fn((T, T)) -> Result<(NT, NT), E>,
         ) -> Result<Self::Output, E> {
-            let new_point = func((self.0.x, self.0.y))?;
+            let new_point = func((self.x(), self.y()))?;
             Ok(Point::new(new_point.0, new_point.1))
         }
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for Point<T> {
         fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T)) {
-            let new_point = func((self.0.x, self.0.y));
-            self.0.x = new_point.0;
-            self.0.y = new_point.1;
+            let new_point = func((self.x(), self.y()));
+            *self.x_mut() = new_point.0;
+            *self.y_mut() = new_point.1;
         }
 
         fn try_map_coords_in_place<E>(
             &mut self,
             func: impl Fn((T, T)) -> Result<(T, T), E>,
         ) -> Result<(), E> {
-            let new_point = func((self.0.x, self.0.y))?;
-            self.0.x = new_point.0;
-            self.0.y = new_point.1;
+            let new_point = func((self.x(), self.y()))?;
+            *self.x_mut() = new_point.0;
+            *self.y_mut() = new_point.1;
 
             Ok(())
         }
@@ -220,8 +220,8 @@ mod modern {
 
         fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
             Line::new(
-                self.start_point().map_coords(func).0,
-                self.end_point().map_coords(func).0,
+                self.start_point().map_coords(func).coord(),
+                self.end_point().map_coords(func).coord(),
             )
         }
 
@@ -230,34 +230,34 @@ mod modern {
             func: impl Fn((T, T)) -> Result<(NT, NT), E> + Copy,
         ) -> Result<Self::Output, E> {
             Ok(Line::new(
-                self.start_point().try_map_coords(func)?.0,
-                self.end_point().try_map_coords(func)?.0,
+                self.start_point().try_map_coords(func)?.coord(),
+                self.end_point().try_map_coords(func)?.coord(),
             ))
         }
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for Line<T> {
         fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T)) {
-            let new_start = func((self.start.x, self.start.y));
-            self.start.x = new_start.0;
-            self.start.y = new_start.1;
+            let new_start = func((self.start().x(), self.start().y()));
+            *self.start().x_mut() = new_start.0;
+            *self.start().y_mut() = new_start.1;
 
-            let new_end = func((self.end.x, self.end.y));
-            self.end.x = new_end.0;
-            self.end.y = new_end.1;
+            let new_end = func((self.end().x(), self.end().y()));
+            *self.end().x_mut() = new_end.0;
+            *self.end().y_mut() = new_end.1;
         }
 
         fn try_map_coords_in_place<E>(
             &mut self,
             func: impl Fn((T, T)) -> Result<(T, T), E>,
         ) -> Result<(), E> {
-            let new_start = func((self.start.x, self.start.y))?;
-            self.start.x = new_start.0;
-            self.start.y = new_start.1;
+            let new_start = func((self.start().x(), self.start().y()))?;
+            *self.start().x_mut() = new_start.0;
+            *self.start().y_mut() = new_start.1;
 
-            let new_end = func((self.end.x, self.end.y))?;
-            self.end.x = new_end.0;
-            self.end.y = new_end.1;
+            let new_end = func((self.end().x(), self.end().y()))?;
+            *self.end().x_mut() = new_end.0;
+            *self.end().y_mut() = new_end.1;
 
             Ok(())
         }
@@ -292,10 +292,10 @@ mod modern {
 
     impl<T: CoordNum> MapCoordsInPlace<T> for LineString<T> {
         fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T)) {
-            for p in &mut self.0 {
-                let new_coords = func((p.x, p.y));
-                p.x = new_coords.0;
-                p.y = new_coords.1;
+            for p in &mut self.coords_mut() {
+                let new_coords = func((p.x(), p.y()));
+                *p.x_mut() = new_coords.0;
+                *p.y_mut() = new_coords.1;
             }
         }
 
@@ -303,10 +303,10 @@ mod modern {
             &mut self,
             func: impl Fn((T, T)) -> Result<(T, T), E>,
         ) -> Result<(), E> {
-            for p in &mut self.0 {
-                let new_coords = func((p.x, p.y))?;
-                p.x = new_coords.0;
-                p.y = new_coords.1;
+            for p in &mut self.coords_mut() {
+                let new_coords = func((p.x(), p.y()))?;
+                *p.x_mut() = new_coords.0;
+                *p.y_mut() = new_coords.1;
             }
             Ok(())
         }
@@ -399,8 +399,7 @@ mod modern {
             func: impl Fn((T, T)) -> Result<(NT, NT), E> + Copy,
         ) -> Result<Self::Output, E> {
             Ok(MultiPoint::new(
-                self.0
-                    .iter()
+                self.iter()
                     .map(|p| p.try_map_coords(func))
                     .collect::<Result<Vec<_>, E>>()?,
             ))
@@ -409,7 +408,7 @@ mod modern {
 
     impl<T: CoordNum> MapCoordsInPlace<T> for MultiPoint<T> {
         fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Copy) {
-            for p in &mut self.0 {
+            for p in self {
                 p.map_coords_in_place(func);
             }
         }
@@ -418,7 +417,7 @@ mod modern {
             &mut self,
             func: impl Fn((T, T)) -> Result<(T, T), E>,
         ) -> Result<(), E> {
-            for p in &mut self.0 {
+            for p in self {
                 p.try_map_coords_in_place(&func)?;
             }
             Ok(())
@@ -441,8 +440,7 @@ mod modern {
             func: impl Fn((T, T)) -> Result<(NT, NT), E> + Copy,
         ) -> Result<Self::Output, E> {
             Ok(MultiLineString::new(
-                self.0
-                    .iter()
+                self.iter()
                     .map(|l| l.try_map_coords(func))
                     .collect::<Result<Vec<_>, E>>()?,
             ))
@@ -451,8 +449,8 @@ mod modern {
 
     impl<T: CoordNum> MapCoordsInPlace<T> for MultiLineString<T> {
         fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Copy) {
-            for p in &mut self.0 {
-                p.map_coords_in_place(func);
+            for line_string in self {
+                line_string.map_coords_in_place(func);
             }
         }
 
@@ -460,8 +458,8 @@ mod modern {
             &mut self,
             func: impl Fn((T, T)) -> Result<(T, T), E>,
         ) -> Result<(), E> {
-            for p in &mut self.0 {
-                p.try_map_coords_in_place(&func)?;
+            for line_string in self {
+                line_string.try_map_coords_in_place(&func)?;
             }
             Ok(())
         }
@@ -483,8 +481,7 @@ mod modern {
             func: impl Fn((T, T)) -> Result<(NT, NT), E> + Copy,
         ) -> Result<Self::Output, E> {
             Ok(MultiPolygon::new(
-                self.0
-                    .iter()
+                self.iter()
                     .map(|p| p.try_map_coords(func))
                     .collect::<Result<Vec<_>, E>>()?,
             ))
@@ -493,7 +490,7 @@ mod modern {
 
     impl<T: CoordNum> MapCoordsInPlace<T> for MultiPolygon<T> {
         fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Copy) {
-            for p in &mut self.0 {
+            for p in self {
                 p.map_coords_in_place(func);
             }
         }
@@ -502,7 +499,7 @@ mod modern {
             &mut self,
             func: impl Fn((T, T)) -> Result<(T, T), E>,
         ) -> Result<(), E> {
-            for p in &mut self.0 {
+            for p in self {
                 p.try_map_coords_in_place(&func)?;
             }
             Ok(())
@@ -609,8 +606,7 @@ mod modern {
             func: impl Fn((T, T)) -> Result<(NT, NT), E> + Copy,
         ) -> Result<Self::Output, E> {
             Ok(GeometryCollection::new_from(
-                self.0
-                    .iter()
+                self.iter()
                     .map(|g| g.try_map_coords(func))
                     .collect::<Result<Vec<_>, E>>()?,
             ))
@@ -619,7 +615,7 @@ mod modern {
 
     impl<T: CoordNum> MapCoordsInPlace<T> for GeometryCollection<T> {
         fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Copy) {
-            for p in &mut self.0 {
+            for p in self {
                 p.map_coords_in_place(func);
             }
         }
@@ -628,7 +624,7 @@ mod modern {
             &mut self,
             func: impl Fn((T, T)) -> Result<(T, T), E>,
         ) -> Result<(), E> {
-            for p in &mut self.0 {
+            for p in self {
                 p.try_map_coords_in_place(&func)?;
             }
             Ok(())
@@ -678,9 +674,9 @@ mod modern {
         type Output = Triangle<NT>;
 
         fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
-            let p1 = func(self.0.x_y());
-            let p2 = func(self.1.x_y());
-            let p3 = func(self.2.x_y());
+            let p1 = func(self.vertex_0().x_y());
+            let p2 = func(self.vertex_1().x_y());
+            let p3 = func(self.vertex_2().x_y());
 
             Triangle::new(
                 coord! { x: p1.0, y: p1.1 },
@@ -693,9 +689,9 @@ mod modern {
             &self,
             func: impl Fn((T, T)) -> Result<(NT, NT), E>,
         ) -> Result<Self::Output, E> {
-            let p1 = func(self.0.x_y())?;
-            let p2 = func(self.1.x_y())?;
-            let p3 = func(self.2.x_y())?;
+            let p1 = func(self.vertex_0().x_y())?;
+            let p2 = func(self.vertex_1().x_y())?;
+            let p3 = func(self.vertex_2().x_y())?;
 
             Ok(Triangle::new(
                 coord! { x: p1.0, y: p1.1 },
@@ -707,9 +703,9 @@ mod modern {
 
     impl<T: CoordNum> MapCoordsInPlace<T> for Triangle<T> {
         fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T)) {
-            let p1 = func(self.0.x_y());
-            let p2 = func(self.1.x_y());
-            let p3 = func(self.2.x_y());
+            let p1 = func(self.vertex_0().x_y());
+            let p2 = func(self.vertex_1().x_y());
+            let p3 = func(self.vertex_2().x_y());
 
             let mut new_triangle = Triangle::new(
                 coord! { x: p1.0, y: p1.1 },
@@ -724,9 +720,9 @@ mod modern {
             &mut self,
             func: impl Fn((T, T)) -> Result<(T, T), E>,
         ) -> Result<(), E> {
-            let p1 = func(self.0.x_y())?;
-            let p2 = func(self.1.x_y())?;
-            let p3 = func(self.2.x_y())?;
+            let p1 = func(self.vertex_0().x_y())?;
+            let p2 = func(self.vertex_1().x_y())?;
+            let p3 = func(self.vertex_2().x_y())?;
 
             let mut new_triangle = Triangle::new(
                 coord! { x: p1.0, y: p1.1 },
@@ -1042,8 +1038,8 @@ mod test {
     fn linestring() {
         let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
         let line2 = line1.map_coords(|(x, y)| (x + 10., y - 100.));
-        assert_relative_eq!(line2.0[0], Coordinate::from((10., -100.)), epsilon = 1e-6);
-        assert_relative_eq!(line2.0[1], Coordinate::from((11., -98.)), epsilon = 1e-6);
+        assert_relative_eq!(line2[0], Coordinate::from((10., -100.)), epsilon = 1e-6);
+        assert_relative_eq!(line2[1], Coordinate::from((11., -98.)), epsilon = 1e-6);
     }
 
     #[test]
@@ -1130,9 +1126,9 @@ mod test {
 
         let mp = MultiPolygon::new(vec![poly1, poly2]);
         let mp2 = mp.map_coords(|(x, y)| (x * 2., y + 100.));
-        assert_eq!(mp2.0.len(), 2);
+        assert_eq!(mp2.polygons().len(), 2);
         assert_relative_eq!(
-            mp2.0[0],
+            mp2.polygons()[0],
             polygon![
                 (x: 0., y: 100.),
                 (x: 20., y: 100.),
@@ -1142,7 +1138,7 @@ mod test {
             ],
         );
         assert_relative_eq!(
-            mp2.0[1],
+            mp2.polygons()[1],
             polygon![
                 exterior: [
                     (x: 22., y: 111.),

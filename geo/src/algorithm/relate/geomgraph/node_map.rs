@@ -38,10 +38,10 @@ struct NodeKey<F: GeoFloat>(Coordinate<F>);
 
 impl<F: GeoFloat> std::cmp::Ord for NodeKey<F> {
     fn cmp(&self, other: &NodeKey<F>) -> std::cmp::Ordering {
-        debug_assert!(!self.0.x.is_nan());
-        debug_assert!(!self.0.y.is_nan());
-        debug_assert!(!other.0.x.is_nan());
-        debug_assert!(!other.0.y.is_nan());
+        debug_assert!(!self.0.x().is_nan());
+        debug_assert!(!self.0.y().is_nan());
+        debug_assert!(!other.0.x().is_nan());
+        debug_assert!(!other.0.y().is_nan());
         crate::utils::lex_cmp(&self.0, &other.0)
     }
 }
@@ -54,10 +54,10 @@ impl<F: GeoFloat> std::cmp::PartialOrd for NodeKey<F> {
 
 impl<F: GeoFloat> std::cmp::PartialEq for NodeKey<F> {
     fn eq(&self, other: &NodeKey<F>) -> bool {
-        debug_assert!(!self.0.x.is_nan());
-        debug_assert!(!self.0.y.is_nan());
-        debug_assert!(!other.0.x.is_nan());
-        debug_assert!(!other.0.y.is_nan());
+        debug_assert!(!self.0.x().is_nan());
+        debug_assert!(!self.0.y().is_nan());
+        debug_assert!(!other.0.x().is_nan());
+        debug_assert!(!other.0.y().is_nan());
         self.0 == other.0
     }
 }
@@ -80,7 +80,7 @@ where
     /// Note: Coordinates must be non-NaN.
     pub fn insert_node_with_coordinate(&mut self, coord: Coordinate<F>) -> &mut NF::Node {
         debug_assert!(
-            !coord.x.is_nan() && !coord.y.is_nan(),
+            !coord.x().is_nan() && !coord.y().is_nan(),
             "NaN coordinates are not supported"
         );
         let key = NodeKey(coord);

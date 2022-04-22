@@ -8,7 +8,7 @@ where
     Coordinate<T>: Intersects<G>,
 {
     fn intersects(&self, rhs: &G) -> bool {
-        self.0.intersects(rhs)
+        self.coord().intersects(rhs)
     }
 }
 

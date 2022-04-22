@@ -10,7 +10,7 @@ where
     T: CoordNum,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
-        &self.0 == coord
+        &self.coord() == coord
     }
 }
 
@@ -19,7 +19,7 @@ where
     T: CoordNum,
 {
     fn contains(&self, p: &Point<T>) -> bool {
-        self.contains(&p.0)
+        self.contains(&p.coord())
     }
 }
 

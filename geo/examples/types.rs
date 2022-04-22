@@ -1,6 +1,5 @@
 extern crate geo;
 
-use geo::Point;
 use geo_types::point;
 
 fn main() {
@@ -9,6 +8,6 @@ fn main() {
         y: 116.34,
     };
 
-    let Point(coord) = p;
-    println!("Point at ({}, {})", coord.x, coord.y);
+    let coord = p.coord();
+    println!("Point at ({}, {})", coord.x(), coord.y());
 }

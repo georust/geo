@@ -124,7 +124,7 @@ where
             }
             GeometryCow::LineString(line_string) => self.add_line_string(line_string),
             GeometryCow::MultiPoint(multi_point) => {
-                for point in &multi_point.0 {
+                for point in multi_point.points() {
                     self.add_point(point);
                 }
             }
@@ -132,12 +132,12 @@ where
                 // check if this Geometry should obey the Boundary Determination Rule
                 // all collections except MultiPolygons obey the rule
                 self.use_boundary_determination_rule = false;
-                for polygon in &multi_polygon.0 {
+                for polygon in multi_polygon.polygons() {
                     self.add_polygon(polygon);
                 }
             }
             GeometryCow::MultiLineString(multi_line_string) => {
-                for line_string in &multi_line_string.0 {
+                for line_string in multi_line_string.line_strings() {
                     self.add_line_string(line_string);
                 }
             }
@@ -160,9 +160,9 @@ where
             return;
         }
 
-        let mut coords: Vec<Coordinate<F>> = Vec::with_capacity(linear_ring.0.len());
+        let mut coords: Vec<Coordinate<F>> = Vec::with_capacity(linear_ring.inner().len());
         // remove repeated coords
-        for coord in &linear_ring.0 {
+        for coord in linear_ring.coords() {
             if coords.last() != Some(coord) {
                 coords.push(*coord)
             }
@@ -214,8 +214,8 @@ where
             return;
         }
 
-        let mut coords: Vec<Coordinate<F>> = Vec::with_capacity(line_string.0.len());
-        for coord in &line_string.0 {
+        let mut coords: Vec<Coordinate<F>> = Vec::with_capacity(line_string.inner().len());
+        for coord in line_string.coords() {
             if coords.last() != Some(coord) {
                 coords.push(*coord)
             }
@@ -241,11 +241,11 @@ where
     }
 
     fn add_line(&mut self, line: &Line<F>) {
-        self.insert_boundary_point(line.start);
-        self.insert_boundary_point(line.end);
+        self.insert_boundary_point(line.start());
+        self.insert_boundary_point(line.end());
 
         let edge = Edge::new(
-            vec![line.start, line.end],
+            vec![line.start(), line.end()],
             Label::new(
                 self.arg_index,
                 TopologyPosition::line_or_point(CoordPos::Inside),

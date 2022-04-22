@@ -27,8 +27,8 @@ where
     fn intersects(&self, line: &Line<T>) -> bool {
         self.exterior().intersects(line)
             || self.interiors().iter().any(|inner| inner.intersects(line))
-            || self.intersects(&line.start)
-            || self.intersects(&line.end)
+            || self.intersects(&line.start())
+            || self.intersects(&line.end())
     }
 }
 symmetric_intersects_impl!(Line<T>, Polygon<T>);

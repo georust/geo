@@ -491,8 +491,8 @@ mod test {
             Coordinate::from((5.672380059021509, 1.2114794859018578)),
             Coordinate::from((4.706454232732441, 1.4702985310043786)),
         ];
-        assert_eq!(rotated.exterior().0, correct_outside);
-        assert_eq!(rotated.interiors()[0].0, correct_inside);
+        assert_eq!(rotated.exterior().inner(), correct_outside);
+        assert_eq!(rotated.interiors()[0].inner(), correct_inside);
 
         // now rotate around center
         let center_expected = polygon![

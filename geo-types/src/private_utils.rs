@@ -16,7 +16,7 @@ pub fn line_bounding_rect<T>(line: Line<T>) -> Rect<T>
 where
     T: CoordNum,
 {
-    Rect::new(line.start, line.end)
+    Rect::new(line.start(), line.end())
 }
 
 pub fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>
@@ -26,8 +26,8 @@ where
 {
     let mut iter = collection.into_iter();
     if let Some(pnt) = iter.next() {
-        let mut xrange = (pnt.x, pnt.x);
-        let mut yrange = (pnt.y, pnt.y);
+        let mut xrange = (pnt.x(), pnt.x());
+        let mut yrange = (pnt.y(), pnt.y());
         for pnt in iter {
             let (px, py) = pnt.x_y();
             xrange = get_min_max(px, xrange.0, xrange.1);
@@ -70,16 +70,17 @@ where
     if start == end {
         return line_euclidean_length(Line::new(point, start));
     }
-    let dx = end.x - start.x;
-    let dy = end.y - start.y;
-    let r = ((point.x - start.x) * dx + (point.y - start.y) * dy) / (dx.powi(2) + dy.powi(2));
+    let dx = end.x() - start.x();
+    let dy = end.y() - start.y();
+    let r =
+        ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
     if r <= T::zero() {
         return line_euclidean_length(Line::new(point, start));
     }
     if r >= T::one() {
         return line_euclidean_length(Line::new(point, end));
     }
-    let s = ((start.y - point.y) * dx - (start.x - point.x) * dy) / (dx * dx + dy * dy);
+    let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) / (dx * dx + dy * dy);
     s.abs() * dx.hypot(dy)
 }
 
@@ -95,11 +96,11 @@ where
     T: CoordFloat,
 {
     // No need to continue if the point is on the LineString, or it's empty
-    if line_string_contains_point(l, p) || l.0.is_empty() {
+    if line_string_contains_point(l, p) || l.inner().is_empty() {
         return T::zero();
     }
     l.lines()
-        .map(|line| line_segment_distance(p.0, line.start, line.end))
+        .map(|line| line_segment_distance(p.coord(), line.start(), line.end()))
         .fold(T::max_value(), |accum, val| accum.min(val))
 }
 
@@ -108,7 +109,7 @@ where
     T: CoordFloat,
     C: Into<Coordinate<T>>,
 {
-    line_segment_distance(p.into(), l.start, l.end)
+    line_segment_distance(p.into(), l.start(), l.end())
 }
 
 pub fn point_contains_point<T>(p1: Point<T>, p2: Point<T>) -> bool
@@ -124,15 +125,15 @@ where
     T: CoordFloat,
 {
     // LineString without points
-    if line_string.0.is_empty() {
+    if line_string.inner().is_empty() {
         return false;
     }
     // LineString with one point equal p
-    if line_string.0.len() == 1 {
+    if line_string.inner().len() == 1 {
         return point_contains_point(Point::from(line_string[0]), point);
     }
     // check if point is a vertex
-    if line_string.0.contains(&point.0) {
+    if line_string.inner().contains(&point.coord()) {
         return true;
     }
     for line in line_string.lines() {
@@ -140,25 +141,25 @@ where
         let tx = if line.dx() == T::zero() {
             None
         } else {
-            Some((point.x() - line.start.x) / line.dx())
+            Some((point.x() - line.start().x()) / line.dx())
         };
         let ty = if line.dy() == T::zero() {
             None
         } else {
-            Some((point.y() - line.start.y) / line.dy())
+            Some((point.y() - line.start().y()) / line.dy())
         };
         let contains = match (tx, ty) {
             (None, None) => {
                 // Degenerate line
-                point.0 == line.start
+                point.coord() == line.start()
             }
             (Some(t), None) => {
                 // Horizontal line
-                point.y() == line.start.y && T::zero() <= t && t <= T::one()
+                point.y() == line.start().y() && T::zero() <= t && t <= T::one()
             }
             (None, Some(t)) => {
                 // Vertical line
-                point.x() == line.start.x && T::zero() <= t && t <= T::one()
+                point.x() == line.start().x() && T::zero() <= t && t <= T::one()
             }
             (Some(t_x), Some(t_y)) => {
                 // All other lines

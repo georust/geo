@@ -3,7 +3,7 @@ use approx::{AbsDiffEq, RelativeEq};
 
 use crate::{CoordNum, Coordinate, Line, Point, Triangle};
 use std::iter::FromIterator;
-use std::ops::{Index, IndexMut};
+use std::ops::{Index, IndexMut, RangeFrom};
 
 /// An ordered collection of two or more [`Coordinate`]s, representing a
 /// path between locations.
@@ -106,11 +106,11 @@ use std::ops::{Index, IndexMut};
 /// ]);
 ///
 /// for coord in &line_string {
-///     println!("Coordinate x = {}, y = {}", coord.x, coord.y);
+///     println!("Coordinate x = {}, y = {}", coord.x(), coord.y());
 /// }
 ///
 /// for coord in line_string {
-///     println!("Coordinate x = {}, y = {}", coord.x, coord.y);
+///     println!("Coordinate x = {}, y = {}", coord.x(), coord.y());
 /// }
 ///
 /// ```
@@ -132,7 +132,13 @@ use std::ops::{Index, IndexMut};
 
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct LineString<T: CoordNum>(pub Vec<Coordinate<T>>);
+pub struct LineString<T: CoordNum>(
+    #[deprecated(
+        since = "0.7.5",
+        note = "Direct field access is deprecated - use `line_string.inner()` or `point.inner_mut()` for field access and `LineString::new(coords)` for construction"
+    )]
+    pub Vec<Coordinate<T>>,
+);
 
 /// A [`Point`] iterator returned by the `points` method
 #[derive(Debug)]
@@ -191,40 +197,87 @@ impl<'a, T: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T> {
 }
 
 impl<T: CoordNum> LineString<T> {
-    /// Instantiate Self from the raw content value
-    pub fn new(value: Vec<Coordinate<T>>) -> Self {
-        Self(value)
+    /// Create a `LineString` with `coordinates` as its vertices.
+    #[inline]
+    pub fn new(coordinates: Vec<Coordinate<T>>) -> Self {
+        Self(coordinates)
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
     #[deprecated(note = "Use points() instead")]
     pub fn points_iter(&self) -> PointsIter<T> {
-        PointsIter(self.0.iter())
+        PointsIter(self.inner().iter())
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
     pub fn points(&self) -> PointsIter<T> {
-        PointsIter(self.0.iter())
+        PointsIter(self.inner().iter())
     }
 
     /// Return an iterator yielding the members of a [`LineString`] as [`Coordinate`]s
     pub fn coords(&self) -> impl Iterator<Item = &Coordinate<T>> {
-        self.0.iter()
+        self.inner().iter()
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as mutable [`Coordinate`]s
     pub fn coords_mut(&mut self) -> impl Iterator<Item = &mut Coordinate<T>> {
-        self.0.iter_mut()
+        self.inner_mut().iter_mut()
     }
 
     /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Point`]s
     pub fn into_points(self) -> Vec<Point<T>> {
-        self.0.into_iter().map(Point::from).collect()
+        self.inner().iter().cloned().map(Point::from).collect()
+    }
+
+    /// Get the coordinates of this [`LineString`].
+    ///
+    /// ```
+    /// use geo_types::{coord, line_string, LineString};
+    /// let line_string: LineString<f64> = line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 1.0), (x: 2.0, y: 2.0)];
+    ///
+    /// let first_coord = line_string[0];
+    /// let final_coord = line_string[2];
+    /// assert_eq!(first_coord, coord!(x: 0.0, y: 0.0));
+    /// assert_eq!(final_coord, coord!(x: 2.0, y: 2.0));
+    /// ```
+    #[inline]
+    pub fn inner(&self) -> &[Coordinate<T>] {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
+        &self.0
+    }
+
+    /// Mutably borrow the coordinates of this [`LineString`].
+    ///
+    /// ```
+    /// use geo_types::{coord, line_string, LineString};
+    /// let mut line_string: LineString<f64> = line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 1.0), (x: 2.0, y: 2.0)];
+    ///
+    /// line_string.inner_mut().reverse();
+    ///
+    /// assert_eq!(line_string, line_string![(x: 2.0, y: 2.0), (x: 1.0, y: 1.0), (x: 0.0, y: 0.0)]);
+    /// ```
+    #[inline]
+    pub fn inner_mut(&mut self) -> &mut [Coordinate<T>] {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
+        &mut self.0
     }
 
     /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Coordinate`]s
+    #[inline]
     pub fn into_inner(self) -> Vec<Coordinate<T>> {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
         self.0
+    }
+
+    /// Push `coordinate` onto the end of this `LineString`
+    #[inline]
+    pub fn push(&mut self, coordinate: Coordinate<T>) {
+        // we can delete this `allow(deprecated)` once the fields are no longer pub
+        #[allow(deprecated)]
+        self.0.push(coordinate)
     }
 
     /// Return an iterator yielding one [Line] for each line segment
@@ -256,7 +309,7 @@ impl<T: CoordNum> LineString<T> {
     /// assert!(lines.next().is_none());
     /// ```
     pub fn lines(&'_ self) -> impl ExactSizeIterator + Iterator<Item = Line<T>> + '_ {
-        self.0.windows(2).map(|w| {
+        self.inner().windows(2).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe { Line::new(*w.get_unchecked(0), *w.get_unchecked(1)) }
         })
@@ -264,7 +317,7 @@ impl<T: CoordNum> LineString<T> {
 
     /// An iterator which yields the coordinates of a [`LineString`] as [Triangle]s
     pub fn triangles(&'_ self) -> impl ExactSizeIterator + Iterator<Item = Triangle<T>> + '_ {
-        self.0.windows(3).map(|w| {
+        self.inner().windows(3).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe {
                 Triangle::new(
@@ -282,8 +335,8 @@ impl<T: CoordNum> LineString<T> {
     pub fn close(&mut self) {
         if !self.is_closed() {
             // by definition, we treat empty LineString's as closed.
-            debug_assert!(!self.0.is_empty());
-            self.0.push(self.0[0]);
+            debug_assert!(!self.inner().is_empty());
+            self.push(self[0]);
         }
     }
 
@@ -304,7 +357,7 @@ impl<T: CoordNum> LineString<T> {
     /// ```
     #[deprecated(note = "Use geo::algorithm::coords_iter::CoordsIter::coords_count instead")]
     pub fn num_coords(&self) -> usize {
-        self.0.len()
+        self.inner().len()
     }
 
     /// Checks if the linestring is closed; i.e. it is
@@ -331,7 +384,7 @@ impl<T: CoordNum> LineString<T> {
     /// seems to be no reason to maintain the separate behavior for [`LineString`]s used in
     /// non-`LinearRing` contexts.
     pub fn is_closed(&self) -> bool {
-        self.0.first() == self.0.last()
+        self.inner().first() == self.inner().last()
     }
 }
 
@@ -344,7 +397,7 @@ impl<T: CoordNum, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T> {
 
 impl<T: CoordNum> From<Line<T>> for LineString<T> {
     fn from(line: Line<T>) -> Self {
-        Self(vec![line.start, line.end])
+        Self(vec![line.start(), line.end()])
     }
 }
 
@@ -361,7 +414,7 @@ impl<T: CoordNum> IntoIterator for LineString<T> {
     type IntoIter = ::std::vec::IntoIter<Coordinate<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
+        self.into_inner().into_iter()
     }
 }
 
@@ -370,7 +423,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
     type IntoIter = CoordinatesIter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        CoordinatesIter(self.0.iter())
+        CoordinatesIter(self.inner().iter())
     }
 }
 
@@ -380,7 +433,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut LineString<T> {
     type IntoIter = ::std::slice::IterMut<'a, Coordinate<T>>;
 
     fn into_iter(self) -> ::std::slice::IterMut<'a, Coordinate<T>> {
-        self.0.iter_mut()
+        self.inner_mut().iter_mut()
     }
 }
 
@@ -388,13 +441,21 @@ impl<T: CoordNum> Index<usize> for LineString<T> {
     type Output = Coordinate<T>;
 
     fn index(&self, index: usize) -> &Coordinate<T> {
-        self.0.index(index)
+        self.inner().index(index)
+    }
+}
+
+impl<T: CoordNum> Index<RangeFrom<usize>> for LineString<T> {
+    type Output = [Coordinate<T>];
+
+    fn index(&self, index: RangeFrom<usize>) -> &[Coordinate<T>] {
+        self.inner().index(index)
     }
 }
 
 impl<T: CoordNum> IndexMut<usize> for LineString<T> {
     fn index_mut(&mut self, index: usize) -> &mut Coordinate<T> {
-        self.0.index_mut(index)
+        self.inner_mut().index_mut(index)
     }
 }
 
@@ -430,7 +491,7 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        if self.0.len() != other.0.len() {
+        if self.inner().len() != other.inner().len() {
             return false;
         }
 
@@ -470,7 +531,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
     /// approx::assert_relative_eq!(a, b, epsilon=0.1)
     /// ```
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        if self.0.len() != other.0.len() {
+        if self.inner().len() != other.inner().len() {
             return false;
         }
         let mut points_zipper = self.points().zip(other.points());
@@ -496,8 +557,8 @@ macro_rules! impl_rstar_line_string {
                         Point::new(Bounded::max_value(), Bounded::max_value()),
                     ),
                     Some(b) => ::$rstar::AABB::from_corners(
-                        Point::new(b.min().x, b.min().y),
-                        Point::new(b.max().x, b.max().y),
+                        Point::new(b.min().x(), b.min().y()),
+                        Point::new(b.max().x(), b.max().y()),
                     ),
                 }
             }

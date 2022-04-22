@@ -88,16 +88,16 @@ where
     T: CoordFloat,
 {
     // No need to continue without at least three points
-    if orig.0.len() < 3 {
-        return orig.0.iter().enumerate().map(|(idx, _)| idx).collect();
+    if orig.inner().len() < 3 {
+        return orig.coords().enumerate().map(|(idx, _)| idx).collect();
     }
 
-    let max = orig.0.len();
+    let max = orig.inner().len();
 
     // Adjacent retained points. Simulating the points in a
     // linked list with indices into `orig`. Big number (larger than or equal to
     // `max`) means no next element, and (0, 0) means deleted element.
-    let mut adjacent: Vec<_> = (0..orig.0.len())
+    let mut adjacent: Vec<_> = (0..orig.inner().len())
         .map(|i| {
             if i == 0 {
                 (-1_i32, 1_i32)
@@ -155,9 +155,9 @@ where
                 continue;
             }
             let area = Triangle::new(
-                orig.0[ai as usize],
-                orig.0[current_point as usize],
-                orig.0[bi as usize],
+                orig[ai as usize],
+                orig[current_point as usize],
+                orig[bi as usize],
             )
             .unsigned_area();
             pq.push(VScore {
@@ -170,8 +170,7 @@ where
         }
     }
     // Filter out the points that have been deleted, returning remaining point indices
-    orig.0
-        .iter()
+    orig.coords()
         .enumerate()
         .zip(adjacent.iter())
         .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(tup.0) } else { None })
@@ -185,13 +184,12 @@ where
 {
     // Epsilon must be greater than zero for any meaningful simplification to happen
     if *epsilon <= T::zero() {
-        return orig.0.to_vec();
+        return orig.inner().to_vec();
     }
     let subset = visvalingam_indices(orig, epsilon);
     // filter orig using the indices
     // using get would be more robust here, but the input subset is guaranteed to be valid in this case
-    orig.0
-        .iter()
+    orig.coords()
         .zip(subset.iter())
         .map(|(_, s)| orig[*s])
         .collect()
@@ -245,16 +243,16 @@ fn visvalingam_preserve<T>(
 where
     T: CoordFloat + RTreeNum,
 {
-    if orig.0.len() < 3 || *epsilon <= T::zero() {
-        return orig.0.to_vec();
+    if orig.inner().len() < 3 || *epsilon <= T::zero() {
+        return orig.inner().to_vec();
     }
-    let max = orig.0.len();
-    let mut counter = orig.0.len();
+    let max = orig.inner().len();
+    let mut counter = orig.inner().len();
 
     // Adjacent retained points. Simulating the points in a
     // linked list with indices into `orig`. Big number (larger than or equal to
     // `max`) means no next element, and (0, 0) means deleted element.
-    let mut adjacent: Vec<_> = (0..orig.0.len())
+    let mut adjacent: Vec<_> = (0..orig.inner().len())
         .map(|i| {
             if i == 0 {
                 (-1_i32, 1_i32)
@@ -303,7 +301,7 @@ where
         // HOWEVER if we're within 2 points of the absolute minimum, we can't remove this point or the next
         // because we could then no longer form a valid geometry if removal of next also caused an intersection.
         // The simplification process is thus over.
-        smallest.intersector = tree_intersect(tree, &smallest, &orig.0);
+        smallest.intersector = tree_intersect(tree, &smallest, orig.inner());
         if smallest.intersector && counter <= geomtype.min_points {
             break;
         }
@@ -312,9 +310,9 @@ where
         adjacent[smallest.current as usize] = (0, 0);
         counter -= 1;
         // Remove stale segments from R* tree
-        let left_point = Point::from(orig.0[left as usize]);
-        let middle_point = Point::from(orig.0[smallest.current]);
-        let right_point = Point::from(orig.0[right as usize]);
+        let left_point = Point::from(orig[left as usize]);
+        let middle_point = Point::from(orig[smallest.current]);
+        let right_point = Point::from(orig[right as usize]);
 
         let line_1 = Line::new(left_point, middle_point);
         let line_2 = Line::new(middle_point, right_point);
@@ -336,9 +334,9 @@ where
                 continue;
             }
             let new = Triangle::new(
-                orig.0[ai as usize],
-                orig.0[current_point as usize],
-                orig.0[bi as usize],
+                orig[ai as usize],
+                orig[current_point as usize],
+                orig[bi as usize],
             );
             // The current point causes a self-intersection, and this point precedes it
             // we ensure it gets removed next by demoting its area to negative epsilon
@@ -360,8 +358,7 @@ where
         }
     }
     // Filter out the points that have been deleted, returning remaining points
-    orig.0
-        .iter()
+    orig.coords()
         .zip(adjacent.iter())
         .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(*tup) } else { None })
         .collect()
@@ -400,16 +397,16 @@ where
         orig[triangle.right],
     )
     .bounding_rect();
-    let br = Point::new(bounding_rect.min().x, bounding_rect.min().y);
-    let tl = Point::new(bounding_rect.max().x, bounding_rect.max().y);
+    let br = Point::new(bounding_rect.min().x(), bounding_rect.min().y());
+    let tl = Point::new(bounding_rect.max().x(), bounding_rect.max().y());
     tree.locate_in_envelope_intersecting(&rstar::AABB::from_corners(br, tl))
         .any(|c| {
             // triangle start point, end point
             let (ca, cb) = c.points();
-            ca.0 != point_a
-                && ca.0 != point_c
-                && cb.0 != point_a
-                && cb.0 != point_c
+            ca.coord() != point_a
+                && ca.coord() != point_c
+                && cb.coord() != point_a
+                && cb.coord() != point_c
                 && cartesian_intersect(ca, cb, Point::from(point_a), Point::from(point_c))
         })
 }
@@ -577,8 +574,7 @@ where
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> MultiLineString<T> {
         MultiLineString::new(
-            self.0
-                .iter()
+            self.iter()
                 .map(|l| l.simplifyvw_preserve(epsilon))
                 .collect(),
         )
@@ -607,8 +603,7 @@ where
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> MultiPolygon<T> {
         MultiPolygon::new(
-            self.0
-                .iter()
+            self.iter()
                 .map(|p| p.simplifyvw_preserve(epsilon))
                 .collect(),
         )
@@ -824,7 +819,7 @@ mod test {
         let points_ls = geo_test_fixtures::vw_orig::<f64>();
         let correct_ls = geo_test_fixtures::vw_simplified::<f64>();
         let simplified = visvalingam(&points_ls, &0.0005);
-        assert_eq!(simplified, correct_ls.0);
+        assert_eq!(simplified, correct_ls.inner());
     }
     #[test]
     fn visvalingam_preserve_test_long() {

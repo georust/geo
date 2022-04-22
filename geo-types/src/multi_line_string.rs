@@ -33,10 +33,17 @@ use std::iter::FromIterator;
 /// of a closed `MultiLineString` is always empty.
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MultiLineString<T: CoordNum>(pub Vec<LineString<T>>);
+pub struct MultiLineString<T: CoordNum>(
+    #[deprecated(
+        since = "0.7.5",
+        note = "Direct field access is deprecated - use `mls.line_strings()` or `mls.line_strings_mut()` for field access and `MultiLineString::new(line_strings)` for construction"
+    )]
+    pub Vec<LineString<T>>,
+);
 
 impl<T: CoordNum> MultiLineString<T> {
     /// Instantiate Self from the raw content value
+    #[inline]
     pub fn new(value: Vec<LineString<T>>) -> Self {
         Self(value)
     }
@@ -65,6 +72,34 @@ impl<T: CoordNum> MultiLineString<T> {
         // Note: Unlike JTS et al, we consider an empty MultiLineString as closed.
         self.iter().all(LineString::is_closed)
     }
+
+    /// Get this collection's constituent [`LineString`]s
+    #[inline]
+    pub fn line_strings(&self) -> &[LineString<T>] {
+        #[allow(deprecated)]
+        &self.0
+    }
+
+    /// Mutably borrow this collection's constituent [`LineString`]s.
+    #[inline]
+    pub fn line_strings_mut(&mut self) -> &mut [LineString<T>] {
+        #[allow(deprecated)]
+        &mut self.0
+    }
+
+    /// Push `line_string` onto the end of this collection.
+    #[inline]
+    pub fn push(&mut self, line_string: LineString<T>) {
+        #[allow(deprecated)]
+        self.0.push(line_string)
+    }
+
+    /// Consume this [`MultiLineString`] to get ownership of its constituent [`LineString`]s.
+    #[inline]
+    pub fn into_inner(self) -> Vec<LineString<T>> {
+        #[allow(deprecated)]
+        self.0
+    }
 }
 
 impl<T: CoordNum, ILS: Into<LineString<T>>> From<ILS> for MultiLineString<T> {
@@ -84,7 +119,7 @@ impl<T: CoordNum> IntoIterator for MultiLineString<T> {
     type IntoIter = ::std::vec::IntoIter<LineString<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
+        self.into_inner().into_iter()
     }
 }
 
@@ -93,7 +128,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a MultiLineString<T> {
     type IntoIter = ::std::slice::Iter<'a, LineString<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&self.0).iter()
+        self.line_strings().iter()
     }
 }
 
@@ -102,17 +137,17 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut MultiLineString<T> {
     type IntoIter = ::std::slice::IterMut<'a, LineString<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&mut self.0).iter_mut()
+        self.line_strings_mut().iter_mut()
     }
 }
 
 impl<T: CoordNum> MultiLineString<T> {
     pub fn iter(&self) -> impl Iterator<Item = &LineString<T>> {
-        self.0.iter()
+        self.line_strings().iter()
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut LineString<T>> {
-        self.0.iter_mut()
+        self.line_strings_mut().iter_mut()
     }
 }
 
@@ -146,7 +181,7 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        if self.0.len() != other.0.len() {
+        if self.line_strings().len() != other.line_strings().len() {
             return false;
         }
 
@@ -183,7 +218,7 @@ where
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        if self.0.len() != other.0.len() {
+        if self.line_strings().len() != other.line_strings().len() {
             return false;
         }
 
@@ -248,15 +283,15 @@ mod test {
 
         for line_string in &mut multi {
             for coord in line_string {
-                coord.x += 1;
-                coord.y += 1;
+                *coord.x_mut() += 1;
+                *coord.y_mut() += 1;
             }
         }
 
         for line_string in multi.iter_mut() {
             for coord in line_string {
-                coord.x += 1;
-                coord.y += 1;
+                *coord.x_mut() += 1;
+                *coord.y_mut() += 1;
             }
         }
 

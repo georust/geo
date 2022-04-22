@@ -103,7 +103,7 @@ impl<'a, T: CoordNum> CoordsIter<'a> for Point<T> {
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        iter::once(self.0)
+        iter::once(self.coord())
     }
 
     /// Return the number of coordinates in the `Point`.
@@ -126,7 +126,7 @@ impl<'a, T: CoordNum> CoordsIter<'a> for Line<T> {
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        iter::once(self.start).chain(iter::once(self.end))
+        iter::once(self.start()).chain(iter::once(self.end()))
     }
 
     /// Return the number of coordinates in the `Line`.
@@ -151,12 +151,12 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for LineString<T> {
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        self.0.iter().copied()
+        self.inner().iter().copied()
     }
 
     /// Return the number of coordinates in the `LineString`.
     fn coords_count(&'a self) -> usize {
-        self.0.len()
+        self.inner().len()
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
@@ -209,12 +209,12 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for MultiPoint<T> {
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
+        MapCoordsIter(self.points().iter(), marker::PhantomData).flatten()
     }
 
     /// Return the number of coordinates in the `MultiPoint`.
     fn coords_count(&'a self) -> usize {
-        self.0.len()
+        self.points().len()
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
@@ -232,13 +232,12 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for MultiLineString<T> {
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
+        MapCoordsIter(self.line_strings().iter(), marker::PhantomData).flatten()
     }
 
     /// Return the number of coordinates in the `MultiLineString`.
     fn coords_count(&'a self) -> usize {
-        self.0
-            .iter()
+        self.iter()
             .map(|line_string| line_string.coords_count())
             .sum()
     }
@@ -259,16 +258,16 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for MultiPolygon<T> {
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
+        MapCoordsIter(self.polygons().iter(), marker::PhantomData).flatten()
     }
 
     /// Return the number of coordinates in the `MultiPolygon`.
     fn coords_count(&'a self) -> usize {
-        self.0.iter().map(|polygon| polygon.coords_count()).sum()
+        self.iter().map(|polygon| polygon.coords_count()).sum()
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
-        MapExteriorCoordsIter(self.0.iter(), marker::PhantomData).flatten()
+        MapExteriorCoordsIter(self.polygons().iter(), marker::PhantomData).flatten()
     }
 }
 
@@ -282,18 +281,17 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for GeometryCollection<T> {
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(self.0.iter().flat_map(|geometry| geometry.coords_iter()))
+        Box::new(self.iter().flat_map(|geometry| geometry.coords_iter()))
     }
 
     /// Return the number of coordinates in the `GeometryCollection`.
     fn coords_count(&'a self) -> usize {
-        self.0.iter().map(|geometry| geometry.coords_count()).sum()
+        self.iter().map(|geometry| geometry.coords_count()).sum()
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
         Box::new(
-            self.0
-                .iter()
+            self.iter()
                 .flat_map(|geometry| geometry.exterior_coords_iter()),
         )
     }
@@ -315,20 +313,20 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Rect<T> {
 
     fn coords_iter(&'a self) -> Self::Iter {
         iter::once(coord! {
-            x: self.min().x,
-            y: self.min().y,
+            x: self.min().x(),
+            y: self.min().y(),
         })
         .chain(iter::once(coord! {
-            x: self.min().x,
-            y: self.max().y,
+            x: self.min().x(),
+            y: self.max().y(),
         }))
         .chain(iter::once(coord! {
-            x: self.max().x,
-            y: self.max().y,
+            x: self.max().x(),
+            y: self.max().y(),
         }))
         .chain(iter::once(coord! {
-            x: self.max().x,
-            y: self.min().y,
+            x: self.max().x(),
+            y: self.min().y(),
         }))
     }
 
@@ -355,9 +353,9 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Triangle<T> {
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        iter::once(self.0)
-            .chain(iter::once(self.1))
-            .chain(iter::once(self.2))
+        iter::once(self.vertex_0())
+            .chain(iter::once(self.vertex_1()))
+            .chain(iter::once(self.vertex_2()))
     }
 
     /// Return the number of coordinates in the `Triangle`.
