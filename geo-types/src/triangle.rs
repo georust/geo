@@ -4,10 +4,12 @@ use crate::{Polygon3D, Polygon3DM, PolygonM};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-/// A generic area with 3D+M support whose three vertices are defined by
+/// A bounded area whose three vertices are defined by
 /// `Coordinate`s. The semantics and validity are that of
-/// the equivalent [Polygon]; in addition, the three
+/// the equivalent [`Polygon`]; in addition, the three
 /// vertices must not be collinear and they must be distinct.
+///
+/// `Triangle`s are 2D by default, but optionally support 3D and Measure values.
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Triangle<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue>(
@@ -18,19 +20,19 @@ pub struct Triangle<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue>(
 
 /// A bounded 2D area whose three vertices are defined by
 /// `Coordinate`s. The semantics and validity are that of
-/// the equivalent [PolygonM]; in addition, the three
+/// the equivalent [`PolygonM`]; in addition, the three
 /// vertices must not be collinear and they must be distinct.
 pub type TriangleM<T> = Triangle<T, NoValue, T>;
 
 /// A bounded 2D area whose three vertices are defined by
 /// `Coordinate`s. The semantics and validity are that of
-/// the equivalent [Polygon3D]; in addition, the three
+/// the equivalent [`Polygon3D`]; in addition, the three
 /// vertices must not be collinear and they must be distinct.
 pub type Triangle3D<T> = Triangle<T, T, NoValue>;
 
 /// A bounded 2D area whose three vertices are defined by
 /// `Coordinate`s. The semantics and validity are that of
-/// the equivalent [Polygon3DM]; in addition, the three
+/// the equivalent [`Polygon3DM`]; in addition, the three
 /// vertices must not be collinear and they must be distinct.
 pub type Triangle3DM<T> = Triangle<T, T, T>;
 

@@ -4,8 +4,9 @@ use num_traits::{Num, NumCast, One, ToPrimitive, Zero};
 use std::fmt::Debug;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
-/// An empty placeholder type that can be used instead of the real
-/// numerical value types for 3D (z) and measurement (m) values.
+/// An empty placeholder type that can be used anywhere [`CoordNum`] is required.
+/// All geo types by default are 2D - (x,y) only, using `NoValue` for 3D (z) and measurement (m) values.
+/// It is also possible to create an empty value, i.e. `POINT EMPTY` (wkt) using `Point<NoValue>`.
 #[derive(Eq, PartialEq, PartialOrd, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct NoValue;
@@ -15,7 +16,7 @@ impl Add for NoValue {
 
     #[inline]
     fn add(self, _: Self) -> Self::Output {
-        NoValue::default()
+        NoValue
     }
 }
 
@@ -24,7 +25,7 @@ impl<T> Div<T> for NoValue {
 
     #[inline]
     fn div(self, _: T) -> Self::Output {
-        NoValue::default()
+        NoValue
     }
 }
 
@@ -33,7 +34,7 @@ impl<T> Mul<T> for NoValue {
 
     #[inline]
     fn mul(self, _: T) -> Self::Output {
-        NoValue::default()
+        NoValue
     }
 }
 
@@ -42,7 +43,7 @@ impl Neg for NoValue {
 
     #[inline]
     fn neg(self) -> Self::Output {
-        NoValue::default()
+        NoValue
     }
 }
 
@@ -51,7 +52,7 @@ impl<T> Rem<T> for NoValue {
 
     #[inline]
     fn rem(self, _: T) -> Self::Output {
-        NoValue::default()
+        NoValue
     }
 }
 
@@ -60,7 +61,7 @@ impl Sub for NoValue {
 
     #[inline]
     fn sub(self, _: Self) -> Self::Output {
-        NoValue::default()
+        NoValue
     }
 }
 
@@ -68,7 +69,7 @@ impl Sub for NoValue {
 impl Zero for NoValue {
     #[inline]
     fn zero() -> Self {
-        NoValue::default()
+        NoValue
     }
 
     #[inline]
@@ -77,27 +78,27 @@ impl Zero for NoValue {
     }
 }
 
-/// Thhese hacks allows mathematical operations that result in noop due to above ops
+/// These hacks allows mathematical operations that result in noop due to above ops
 impl One for NoValue {
     #[inline]
     fn one() -> Self {
-        NoValue::default()
+        NoValue
     }
 }
 
 impl ToPrimitive for NoValue {
     fn to_i64(&self) -> Option<i64> {
-        Some(0)
+        None
     }
 
     fn to_u64(&self) -> Option<u64> {
-        Some(0)
+        None
     }
 }
 
 impl NumCast for NoValue {
     fn from<T: ToPrimitive>(_: T) -> Option<Self> {
-        Some(Self::default())
+        None
     }
 }
 
@@ -105,7 +106,7 @@ impl Num for NoValue {
     type FromStrRadixErr = ();
 
     fn from_str_radix(_str: &str, _radix: u32) -> Result<Self, Self::FromStrRadixErr> {
-        Ok(Self::default())
+        Err(())
     }
 }
 
@@ -115,7 +116,7 @@ impl AbsDiffEq for NoValue {
 
     #[inline]
     fn default_epsilon() -> Self::Epsilon {
-        NoValue::default()
+        NoValue
     }
 
     #[inline]
@@ -128,6 +129,6 @@ impl AbsDiffEq for NoValue {
 impl<'a> arbitrary::Arbitrary<'a> for NoValue {
     #[inline]
     fn arbitrary(_: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(NoValue::default())
+        Ok(NoValue)
     }
 }

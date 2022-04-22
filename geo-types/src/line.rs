@@ -4,7 +4,9 @@ use crate::{Coordinate3D, Coordinate3DM, CoordinateM};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-/// A generic line segment made up of exactly two [Coordinate] values.
+/// A line segment made up of exactly two [`Coordinate`] values.
+///
+/// `Line`s are 2D by default, but optionally support 3D and Measure values.
 ///
 /// # Semantics
 ///
@@ -17,7 +19,7 @@ pub struct Line<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue> {
     pub end: Coordinate<T, Z, M>,
 }
 
-/// A line segment made up of exactly two [CoordinateM] values.
+/// A line segment made up of exactly two [`CoordinateM`] values.
 ///
 /// # Semantics
 ///
@@ -25,7 +27,7 @@ pub struct Line<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue> {
 /// `LineString` with the two end points.
 pub type LineM<T> = Line<T, NoValue, T>;
 
-/// A line segment in 3D made up of exactly two [Coordinate3D] values.
+/// A line segment in 3D made up of exactly two [`Coordinate3D`] values.
 ///
 /// # Semantics
 ///
@@ -33,7 +35,7 @@ pub type LineM<T> = Line<T, NoValue, T>;
 /// `LineString` with the two end points.
 pub type Line3D<T> = Line<T, T, NoValue>;
 
-/// A line segment in 3D made up of exactly two [Coordinate3DM] values.
+/// A line segment in 3D made up of exactly two [`Coordinate3DM`] values.
 ///
 /// # Semantics
 ///

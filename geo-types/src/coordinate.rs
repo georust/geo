@@ -5,8 +5,8 @@ use num_traits::Zero;
 use std::fmt::Debug;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-/// A generic struct used to store a single coordinate with optional
-/// 3D (Z) and measurement support.
+/// A lightweight struct used to store a single coordinate in 2D cartesian
+/// plane (x,y) with optional 3D (z) and measurement (m) values.
 ///
 /// Unlike [`Point`] (which in the future may contain additional information such
 /// as an envelope, a precision model, and spatial reference system
@@ -37,6 +37,8 @@ pub struct Coordinate<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue>
 impl<T: CoordNum, Z: CoordNum, M: CoordNum> Coordinate<T, Z, M> {
     /// Create a new instance of a coordinate.
     /// **ATTENTION** Use [`coord!`] macro or one of the [`from`] methods instead.
+    /// This method exists because it seems instantiation is slower from a macro
+    /// without a dedicated method. This fn should go away once perf issues are resolved.
     #[inline]
     #[doc(hidden)]
     pub fn new__(x: T, y: T, z: Z, m: M) -> Self {
@@ -47,19 +49,19 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> Coordinate<T, Z, M> {
 /// A lightweight struct used to store coordinates on the 2-dimensional
 /// Cartesian plane together with a Measure value of the same type.
 ///
-/// See also [Coordinate]
+/// See also [`Coordinate`]
 pub type CoordinateM<T, M = T> = Coordinate<T, NoValue, M>;
 
 /// A lightweight struct used to store coordinates on the 3-dimensional
 /// Cartesian plane.
 ///
-/// See also [Coordinate]
+/// See also [`Coordinate`]
 pub type Coordinate3D<T> = Coordinate<T, T, NoValue>;
 
 /// A lightweight struct used to store coordinates on the 3-dimensional
 /// Cartesian plane together with a Measure value of the same type.
 ///
-/// See also [Coordinate]
+/// See also [`Coordinate`]
 pub type Coordinate3DM<T, M = T> = Coordinate<T, T, M>;
 
 impl<T: CoordNum> From<(T, T)> for Coordinate<T> {

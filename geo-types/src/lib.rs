@@ -76,8 +76,8 @@ impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordNum for T {}
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}
 
-mod novalue;
-pub use crate::novalue::NoValue;
+mod no_value;
+pub use crate::no_value::NoValue;
 
 mod coordinate;
 pub use crate::coordinate::{Coordinate, Coordinate3D, Coordinate3DM, CoordinateM};

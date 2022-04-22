@@ -4,10 +4,10 @@ use crate::{coord, polygon, CoordNum, Coordinate, Line, NoValue, Polygon};
 use approx::{AbsDiffEq, RelativeEq};
 use num_traits::{NumOps, One};
 
-/// A generic bounded rectangle with 3D space + Measure value support.
-///
-/// An _axis-aligned_ bounded 2D rectangle whose area is
+/// An _axis-aligned_ bounded rectangle whose area is
 /// defined by minimum and maximum `Coordinate`s.
+///
+/// `Rect`s are 2D by default, but optionally support 3D and Measure values.
 ///
 /// The constructors and setters ensure the maximum
 /// `Coordinate` is greater than or equal to the minimum.
@@ -49,17 +49,17 @@ pub struct Rect<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue> {
 
 /// A bounded rectangle with a measurement value in 2D space.
 ///
-/// See [Rect]
+/// See [`Rect`]
 pub type RectM<T> = Rect<T, NoValue, T>;
 
 /// A bounded rectangle in 3D space.
 ///
-/// See [Rect]
+/// See [`Rect`]
 pub type Rect3D<T> = Rect<T, T, NoValue>;
 
 /// A bounded rectangle with a measurement value in 3D space.
 ///
-/// See [Rect]
+/// See [`Rect`]
 pub type Rect3DM<T> = Rect<T, T, T>;
 
 impl<T: CoordNum, Z: CoordNum, M: CoordNum> Rect<T, Z, M> {

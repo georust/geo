@@ -1,11 +1,11 @@
-use crate::*;
+use crate::{CoordNum, Coordinate, Line, NoValue, Point, Triangle};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
-/// A generic line string with 3D space + Measure value support.
-///
 /// An ordered collection of two or more [`Coordinate`]s, representing a
 /// path between locations.
+///
+/// `LineString`s are 2D by default, but optionally support 3D and Measure values.
 ///
 /// # Semantics
 ///
@@ -64,7 +64,7 @@ use std::ops::{Index, IndexMut};
 ///
 /// let line_string: LineString<f64> = vec![[0., 0.], [10., 0.]].into();
 /// ```
-//
+///
 /// Or by `collect`ing from a [`Coordinate`] iterator
 ///
 /// ```
@@ -136,17 +136,17 @@ pub struct LineString<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue>
 
 /// A line string with a measurement value in 2D space.
 ///
-/// See [LineString]
+/// See [`LineString`]
 pub type LineStringM<T> = LineString<T, NoValue, T>;
 
 /// A line string in 3D space.
 ///
-/// See [LineString]
+/// See [`LineString`]
 pub type LineString3D<T> = LineString<T, T, NoValue>;
 
 /// A line string with a measurement value in 3D space.
 ///
-/// See [LineString]
+/// See [`LineString`]
 pub type LineString3DM<T> = LineString<T, T, T>;
 
 /// A [`Point`] iterator returned by the `points` method
@@ -253,7 +253,7 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> LineString<T, Z, M> {
         self.0
     }
 
-    /// Return an iterator yielding one [Line] for each line segment
+    /// Return an iterator yielding one [`Line`] for each line segment
     /// in the [`LineString`].
     ///
     /// # Examples
@@ -288,7 +288,7 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> LineString<T, Z, M> {
         })
     }
 
-    /// An iterator which yields the coordinates of a [`LineString`] as [Triangle]s
+    /// An iterator which yields the coordinates of a [`LineString`] as [`Triangle`]s
     pub fn triangles(&'_ self) -> impl ExactSizeIterator + Iterator<Item = Triangle<T, Z, M>> + '_ {
         self.0.windows(3).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements

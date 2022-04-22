@@ -3,12 +3,12 @@ use crate::{CoordNum, NoValue, Point};
 use approx::{AbsDiffEq, RelativeEq};
 use std::iter::FromIterator;
 
-/// A generic line string with 3D space + Measure value support.
-///
-/// A collection of [Point]s. Can
+/// A collection of [`Point`s]. Can
 /// be created from a `Vec` of `Point`s, or from an
 /// Iterator which yields `Point`s. Iterating over this
 /// object yields the component `Point`s.
+///
+/// `MultiPoint`s are 2D by default, but optionally support 3D and Measure values.
 ///
 /// # Semantics
 ///

@@ -10,6 +10,8 @@ use std::iter::FromIterator;
 /// Iterator which yields `LineString`s. Iterating over this
 /// object yields the component `LineString`s.
 ///
+/// `MultiLineString`s are 2D by default, but optionally support 3D and Measure values.
+///
 /// # Semantics
 ///
 /// The _boundary_ of a `MultiLineString` is obtained by
