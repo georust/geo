@@ -91,7 +91,7 @@ where
             .iter()
             .filter_map(Option::from_postgis)
             .collect();
-        GeometryCollection::new_from(geoms)
+        GeometryCollection::new(geoms)
     }
 }
 impl<'a, T> FromPostgis<&'a GeometryT<T>> for Option<Geometry>

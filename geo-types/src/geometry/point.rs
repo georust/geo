@@ -1,14 +1,15 @@
-use crate::*;
+use crate::{point, CoordFloat, CoordNum, Coordinate, NoValue};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-
 /// A generic single point in 3D space with a measurement value.
 ///
-/// Points can be created using the the [point!] macro,
-/// or from a [Coordinate] or other types – see the `From` implementations below.
+/// Points can be created using the the [`point!`] macro,
+/// or from a [`Coordinate`] or other types – see the `From` implementations below.
+///
+/// `Point`s are 2D by default, but optionally support 3D and Measure values.
 ///
 /// # Semantics
 ///
@@ -67,8 +68,8 @@ pub type Point3D<T> = Point<T, T, NoValue>;
 pub type Point3DM<T> = Point<T, T, T>;
 
 impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Coordinate<T, Z, M>> for Point<T, Z, M> {
-    fn from(x: Coordinate<T, Z, M>) -> Self {
-        Self(x)
+    fn from(coords: Coordinate<T, Z, M>) -> Self {
+        Self(coords)
     }
 }
 
@@ -684,7 +685,6 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    #[cfg(any(feature = "approx", test))]
     use approx::AbsDiffEq;
 
     #[test]

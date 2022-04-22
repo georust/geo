@@ -82,7 +82,7 @@ pub trait HasDimensions {
     /// assert_eq!(Dimensions::ZeroDimensional, degenerate_point_rect.dimensions());
     ///
     /// // collections inherit the greatest dimensionality of their elements
-    /// let geometry_collection = GeometryCollection::new_from(vec![degenerate_line_rect.into(), degenerate_point_rect.into()]);
+    /// let geometry_collection = GeometryCollection::new(vec![degenerate_line_rect.into(), degenerate_point_rect.into()]);
     /// assert_eq!(Dimensions::OneDimensional, geometry_collection.dimensions());
     ///
     /// let point = Point::new(10.0, 10.0);
@@ -121,7 +121,7 @@ pub trait HasDimensions {
     /// assert_eq!(Dimensions::Empty, degenerate_point_rect.boundary_dimensions());
     ///
     /// // collections inherit the greatest dimensionality of their elements
-    /// let geometry_collection = GeometryCollection::new_from(vec![degenerate_line_rect.into(), degenerate_point_rect.into()]);
+    /// let geometry_collection = GeometryCollection::new(vec![degenerate_line_rect.into(), degenerate_point_rect.into()]);
     /// assert_eq!(Dimensions::ZeroDimensional, geometry_collection.boundary_dimensions());
     ///
     /// let geometry_collection = GeometryCollection::<f32>::new_from(vec![]);

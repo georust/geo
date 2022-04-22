@@ -332,7 +332,7 @@ mod test {
     fn geometry_collection_bounding_rect_test() {
         assert_eq!(
             Some(Rect::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 2. })),
-            GeometryCollection::new_from(vec![
+            GeometryCollection::new(vec![
                 Geometry::Point(point! { x: 0., y: 0. }),
                 Geometry::Point(point! { x: 1., y: 2. }),
             ])

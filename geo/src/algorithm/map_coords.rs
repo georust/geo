@@ -1162,7 +1162,7 @@ mod test {
         let p1 = Geometry::Point(Point::new(10., 10.));
         let line1 = Geometry::LineString(LineString::from(vec![(0., 0.), (1., 2.)]));
 
-        let gc = GeometryCollection::new_from(vec![p1, line1]);
+        let gc = GeometryCollection::new(vec![p1, line1]);
 
         assert_eq!(
             gc.map_coords(|Coordinate { x, y }| (x + 10., y + 100.).into()),

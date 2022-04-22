@@ -5,7 +5,9 @@ use std::iter::FromIterator;
 
 /// A generic collection of polygons with 3D space + Measure value support.
 ///
-/// A collection of [Polygon]s. Can
+/// `MultiPolygon`s are 2D by default, but optionally support 3D and Measure values.
+///
+/// A collection of [`Polygon`]s. Can
 /// be created from a `Vec` of `Polygon`s, or from an
 /// Iterator which yields `Polygon`s. Iterating over this
 /// object yields the component `Polygon`s.
@@ -34,17 +36,17 @@ pub struct MultiPolygon<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoV
 
 /// A collection of polygons with a measurement value in 2D space.
 ///
-/// See [MultiPolygon]
+/// See [`MultiPolygon`]
 pub type MultiPolygonM<T> = MultiPolygon<T, NoValue, T>;
 
 /// A collection of polygons in 3D space.
 ///
-/// See [MultiPolygon]
+/// See [`MultiPolygon`]
 pub type MultiPolygon3D<T> = MultiPolygon<T, T, NoValue>;
 
 /// A collection of polygons with a measurement value in 3D space.
 ///
-/// See [MultiPolygon]
+/// See [`MultiPolygon`]
 pub type MultiPolygon3DM<T> = MultiPolygon<T, T, T>;
 
 impl<T: CoordNum, Z: CoordNum, M: CoordNum, IP: Into<Polygon<T, Z, M>>> From<IP>

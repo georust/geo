@@ -5,7 +5,9 @@ use approx::{AbsDiffEq, RelativeEq};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
-/// A generic collection of [Geometry] types with 3D space and measurement value support.
+/// A collection of [`Geometry`] types.
+///
+/// `GeometryCollection`s are 2D by default, but optionally support 3D and Measure values.
 ///
 /// It can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
 ///
@@ -76,17 +78,17 @@ pub struct GeometryCollection<T: CoordNum = f64, Z: CoordNum = NoValue, M: Coord
 
 /// A geometry collection in 2D space + Measure value.
 ///
-/// See [GeometryCollection]
+/// See [`GeometryCollection`]
 pub type GeometryCollectionM<T> = GeometryCollection<T, NoValue, T>;
 
 /// A geometry collection in 3D space.
 ///
-/// See [GeometryCollection]
+/// See [`GeometryCollection`]
 pub type GeometryCollection3D<T> = GeometryCollection<T, T, NoValue>;
 
 /// A geometry collection in 3D space + Measure value.
 ///
-/// See [GeometryCollection]
+/// See [`GeometryCollection`]
 pub type GeometryCollection3DM<T> = GeometryCollection<T, T, T>;
 
 // Implementing Default by hand because T does not have Default restriction
@@ -99,14 +101,16 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> Default for GeometryCollection<T, Z,
 
 impl<T: CoordNum, Z: CoordNum, M: CoordNum> GeometryCollection<T, Z, M> {
     /// Instantiate Self from the raw content value
+    #[inline]
     pub fn new(value: Vec<Geometry<T, Z, M>>) -> Self {
         Self(value)
     }
 
     /// DO NOT USE!
-    /// This fn will be renamed to `new` in the upcoming version.
-    /// This fn is not marked as deprecated because it would require extensive refactoring of the geo code.
+    /// This function was added temporarily while the `new(...)` fn was changing its signature.
     #[inline]
+    #[deprecated(note = "Use GeometryCollection::new(...) instead")]
+    #[doc(hidden)]
     pub fn new_from(value: Vec<Geometry<T, Z, M>>) -> Self {
         Self::new(value)
     }

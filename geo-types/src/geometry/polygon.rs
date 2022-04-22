@@ -2,7 +2,7 @@ use crate::{CoordNum, LineString, NoValue, Rect, Triangle};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-/// A generic bounded area with 3D space + Measure value support.
+/// A bounded area, 2D by default, with 3D space + Measure value support.
 ///
 /// A `Polygon`’s outer boundary (_exterior ring_) is represented by a
 /// [`LineString`]. It may contain zero or more holes (_interior rings_), also

@@ -143,7 +143,6 @@ macro_rules! try_from_geometry_impl {
     }
 }
 
-// `concat_idents` is not available, so hacking around it
 try_from_geometry_impl!(
     Point,
     Line,
