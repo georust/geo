@@ -55,7 +55,7 @@ macro_rules! point {
 /// [`Coordinate`]: ./struct.Point.html
 #[macro_export]
 macro_rules! coord {
-    (x: $x:expr, y: $y:expr $(,)?) => {
+    (x: $x:expr, y: $y:expr $(,)* ) => {
         $crate::Coordinate { x: $x, y: $y }
     };
 }
@@ -123,7 +123,7 @@ macro_rules! coord {
 /// [`LineString`]: ./line_string/struct.LineString.html
 #[macro_export]
 macro_rules! line_string {
-    () => { $crate::LineString(vec![]) };
+    () => { $crate::LineString::new(vec![]) };
     (
         $(( $($tag:tt : $val:expr),* $(,)? )),*
         $(,)?
@@ -138,7 +138,7 @@ macro_rules! line_string {
         $($coord:expr),*
         $(,)?
     ) => {
-        $crate::LineString(
+        $crate::LineString::new(
             <[_]>::into_vec(
                 ::std::boxed::Box::new(
                     [$($coord), *]
@@ -296,7 +296,7 @@ macro_rules! polygon {
 mod test {
     #[test]
     fn test_point() {
-        let p = point!(x: 1.2, y: 3.4);
+        let p = point! { x: 1.2, y: 3.4 };
         assert_eq!(p.x(), 1.2);
         assert_eq!(p.y(), 3.4);
 
