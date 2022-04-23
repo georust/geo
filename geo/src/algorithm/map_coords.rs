@@ -598,14 +598,14 @@ mod modern {
         type Output = GeometryCollection<NT>;
 
         fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
-            GeometryCollection::new_from(self.iter().map(|g| g.map_coords(func)).collect())
+            GeometryCollection::from(self.iter().map(|g| g.map_coords(func)).collect::<Vec<_>>())
         }
 
         fn try_map_coords<E>(
             &self,
             func: impl Fn((T, T)) -> Result<(NT, NT), E> + Copy,
         ) -> Result<Self::Output, E> {
-            Ok(GeometryCollection::new_from(
+            Ok(GeometryCollection::from(
                 self.iter()
                     .map(|g| g.try_map_coords(func))
                     .collect::<Result<Vec<_>, E>>()?,
@@ -1165,11 +1165,11 @@ mod test {
         let p1 = Geometry::Point(Point::new(10., 10.));
         let line1 = Geometry::LineString(LineString::from(vec![(0., 0.), (1., 2.)]));
 
-        let gc = GeometryCollection::new_from(vec![p1, line1]);
+        let gc = GeometryCollection::from(vec![p1, line1]);
 
         assert_eq!(
             gc.map_coords(|(x, y)| (x + 10., y + 100.)),
-            GeometryCollection::new_from(vec![
+            GeometryCollection::from(vec![
                 Geometry::Point(Point::new(20., 110.)),
                 Geometry::LineString(LineString::from(vec![(10., 100.), (11., 102.)])),
             ])

@@ -86,12 +86,12 @@ where
     /// This implementation discards geometries that don't convert
     /// (return `None` when `from_postgis()` is called on them).
     fn from_postgis(gc: &'a GeometryCollectionT<T>) -> Self {
-        let geoms = gc
+        let geoms: Vec<_> = gc
             .geometries
             .iter()
             .filter_map(Option::from_postgis)
             .collect();
-        GeometryCollection::new_from(geoms)
+        GeometryCollection::from(geoms)
     }
 }
 impl<'a, T> FromPostgis<&'a GeometryT<T>> for Option<Geometry<f64>>

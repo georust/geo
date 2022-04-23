@@ -811,7 +811,7 @@ mod test {
         assert_eq!(multi_point.centroid().unwrap(), point!(x: 1.0, y: 1.0));
 
         let collection =
-            GeometryCollection::new_from(vec![MultiPoint::new(vec![p1, p2, p3]).into(), p0.into()]);
+            GeometryCollection::from(vec![MultiPoint::new(vec![p1, p2, p3]).into(), p0.into()]);
 
         assert_eq!(collection.centroid().unwrap(), point!(x: 1.0, y: 1.0));
     }
@@ -855,8 +855,8 @@ mod test {
 
         let line = Line::new(c(0., 1.), c(1., 3.));
 
-        let g1 = GeometryCollection::new_from(vec![triangle.into(), line.into()]);
-        let g2 = GeometryCollection::new_from(vec![poly.into(), line.into()]);
+        let g1 = GeometryCollection::from(vec![triangle.into(), line.into()]);
+        let g2 = GeometryCollection::from(vec![poly.into(), line.into()]);
         assert_eq!(g1.centroid(), g2.centroid());
     }
 
@@ -867,8 +867,8 @@ mod test {
 
         let line = Line::new(c(0., 1.), c(1., 3.));
 
-        let g1 = GeometryCollection::new_from(vec![rect.into(), line.into()]);
-        let g2 = GeometryCollection::new_from(vec![poly.into(), line.into()]);
+        let g1 = GeometryCollection::from(vec![rect.into(), line.into()]);
+        let g2 = GeometryCollection::from(vec![poly.into(), line.into()]);
         assert_eq!(g1.centroid(), g2.centroid());
     }
 
@@ -893,11 +893,8 @@ mod test {
         );
 
         // collection with rect
-        let mut collection = GeometryCollection::new_from(vec![
-            p(0., 0.).into(),
-            p(6., 0.).into(),
-            p(6., 6.).into(),
-        ]);
+        let mut collection =
+            GeometryCollection::from(vec![p(0., 0.).into(), p(6., 0.).into(), p(6., 6.).into()]);
         // sanity check
         assert_eq!(collection.centroid().unwrap(), point!(x: 4., y: 2.));
 
