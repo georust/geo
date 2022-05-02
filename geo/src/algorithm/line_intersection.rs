@@ -17,7 +17,7 @@ pub enum LineIntersection<F: GeoFloat> {
         ///
         /// Due to the limited precision of most float data-types, the
         /// calculated intersection point may be snapped to one of the
-        /// end-points even though the all the end-points of the two
+        /// end-points even though all the end-points of the two
         /// lines are distinct points. In such cases, this field is
         /// still set to `true`. Please refer test_case:
         /// `test_central_endpoint_heuristic_failure_1` for such an
