@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+* Add `split_x` and `split_y` methods on `Rect`
+  * <https://github.com/georust/geo/pull/823>
+
 ## 0.7.4
 
 * BREAKING: Make `Rect::to_lines` return lines in winding order for `Rect::to_polygon`.
