@@ -269,6 +269,78 @@ impl<T: CoordNum> Rect<T> {
         ]
     }
 
+    /// Split a rectangle into two rectangles along the X-axis with equal widths.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let rect = geo_types::Rect::new(
+    ///     geo_types::coord! { x: 0., y: 0. },
+    ///     geo_types::coord! { x: 4., y: 4. },
+    /// );
+    ///
+    /// let [rect1, rect2] = rect.split_x();
+    ///
+    /// assert_eq!(
+    ///     geo_types::Rect::new(
+    ///         geo_types::coord! { x: 0., y: 0. },
+    ///         geo_types::coord! { x: 2., y: 4. },
+    ///     ),
+    ///     rect1,
+    /// );
+    /// assert_eq!(
+    ///     geo_types::Rect::new(
+    ///         geo_types::coord! { x: 2., y: 0. },
+    ///         geo_types::coord! { x: 4., y: 4. },
+    ///     ),
+    ///     rect2,
+    /// );
+    /// ```
+    pub fn split_x(self) -> [Rect<T>; 2] {
+        let two = T::one() + T::one();
+        let mid_x = self.min().x + self.width() / two;
+        [
+            Rect::new(self.min(), coord! { x: mid_x, y: self.max().y }),
+            Rect::new(coord! { x: mid_x, y: self.min().y }, self.max()),
+        ]
+    }
+
+    /// Split a rectangle into two rectangles along the Y-axis with equal heights.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let rect = geo_types::Rect::new(
+    ///     geo_types::coord! { x: 0., y: 0. },
+    ///     geo_types::coord! { x: 4., y: 4. },
+    /// );
+    ///
+    /// let [rect1, rect2] = rect.split_y();
+    ///
+    /// assert_eq!(
+    ///     geo_types::Rect::new(
+    ///         geo_types::coord! { x: 0., y: 0. },
+    ///         geo_types::coord! { x: 4., y: 2. },
+    ///     ),
+    ///     rect1,
+    /// );
+    /// assert_eq!(
+    ///     geo_types::Rect::new(
+    ///         geo_types::coord! { x: 0., y: 2. },
+    ///         geo_types::coord! { x: 4., y: 4. },
+    ///     ),
+    ///     rect2,
+    /// );
+    /// ```
+    pub fn split_y(self) -> [Rect<T>; 2] {
+        let two = T::one() + T::one();
+        let mid_y = self.min().y + self.height() / two;
+        [
+            Rect::new(self.min(), coord! { x: self.max().x, y: mid_y }),
+            Rect::new(coord! { x: self.min().x, y: mid_y }, self.max()),
+        ]
+    }
+
     fn assert_valid_bounds(&self) {
         if !self.has_valid_bounds() {
             panic!("{}", RECT_INVALID_BOUNDS_ERROR);
