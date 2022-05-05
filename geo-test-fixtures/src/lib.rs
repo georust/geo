@@ -1,6 +1,6 @@
 use std::{fs, iter::FromIterator, path::PathBuf, str::FromStr};
 
-use geo_types::{LineString, MultiPolygon, Polygon};
+use geo_types::{LineString, MultiPolygon, Point, Polygon};
 use wkt::{Geometry, Wkt, WktFloat};
 
 pub fn louisiana<T>() -> LineString<T>
@@ -8,6 +8,22 @@ where
     T: WktFloat + Default + FromStr,
 {
     line_string("louisiana.wkt")
+}
+
+pub fn baton_rouge<T>() -> Point<T>
+where
+    T: WktFloat + Default + FromStr,
+{
+    let x = T::from(-91.147385).unwrap();
+    let y = T::from(30.471165).unwrap();
+    Point::new(x, y)
+}
+
+pub fn east_baton_rouge<T>() -> Polygon<T>
+where
+    T: WktFloat + Default + FromStr,
+{
+    polygon("east_baton_rouge.wkt")
 }
 
 pub fn norway_main<T>() -> LineString<T>
@@ -123,9 +139,18 @@ where
 {
     let wkt = Wkt::from_str(&file(name)).unwrap();
     match wkt.item {
-        Geometry::LineString(line_string) => {
-            LineString::from_iter(line_string.0.into_iter().map(|coord| (coord.x, coord.y)))
-        }
+        Geometry::LineString(line_string) => wkt_line_string_to_geo(&line_string),
+        _ => unreachable!(),
+    }
+}
+
+fn polygon<T>(name: &str) -> Polygon<T>
+where
+    T: WktFloat + Default + FromStr,
+{
+    let wkt = Wkt::from_str(&file(name)).unwrap();
+    match wkt.item {
+        Geometry::Polygon(wkt_polygon) => wkt_polygon_to_geo(&wkt_polygon),
         _ => unreachable!(),
     }
 }
@@ -136,32 +161,34 @@ where
 {
     let wkt = Wkt::from_str(&file(name)).unwrap();
     match wkt.item {
-        Geometry::MultiPolygon(multi_polygon) => {
-            let polygons: Vec<Polygon<T>> = multi_polygon
-                .0
-                .into_iter()
-                .map(|wkt_polygon| {
-                    let exterior: LineString<T> = LineString::from_iter(
-                        wkt_polygon.0[0].0.iter().map(|coord| (coord.x, coord.y)),
-                    );
-
-                    let interiors: Vec<LineString<T>> = wkt_polygon.0[1..]
-                        .iter()
-                        .map(|wkt_line_string| {
-                            LineString::from_iter(
-                                wkt_line_string.0.iter().map(|coord| (coord.x, coord.y)),
-                            )
-                        })
-                        .collect();
-
-                    Polygon::new(exterior, interiors)
-                })
-                .collect();
-
-            MultiPolygon(polygons)
-        }
+        Geometry::MultiPolygon(multi_polygon) => wkt_multi_polygon_to_geo(&multi_polygon),
         _ => unreachable!(),
     }
+}
+
+fn wkt_line_string_to_geo<T>(line_string: &wkt::types::LineString<T>) -> LineString<T>
+where
+    T: WktFloat + Default + FromStr,
+{
+    LineString::from_iter(line_string.0.iter().map(|coord| (coord.x, coord.y)))
+}
+
+fn wkt_polygon_to_geo<T>(polygon: &wkt::types::Polygon<T>) -> Polygon<T>
+where
+    T: WktFloat + Default + FromStr,
+{
+    let exterior: LineString<T> = wkt_line_string_to_geo(&polygon.0[0]);
+    let interiors: Vec<LineString<T>> = polygon.0[1..].iter().map(wkt_line_string_to_geo).collect();
+
+    Polygon::new(exterior, interiors)
+}
+
+fn wkt_multi_polygon_to_geo<T>(multi_polygon: &wkt::types::MultiPolygon<T>) -> MultiPolygon<T>
+where
+    T: WktFloat + Default + FromStr,
+{
+    let polygons: Vec<Polygon<T>> = multi_polygon.0.iter().map(wkt_polygon_to_geo).collect();
+    MultiPolygon(polygons)
 }
 
 fn file(name: &str) -> String {
