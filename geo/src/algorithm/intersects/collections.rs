@@ -1,4 +1,5 @@
-use super::Intersects;
+use super::{has_disjoint_bboxes, Intersects};
+use crate::bounding_rect::BoundingRect;
 use crate::*;
 
 impl<T, G> Intersects<G> for Geometry<T>
@@ -13,6 +14,7 @@ where
     Rect<T>: Intersects<G>,
     Polygon<T>: Intersects<G>,
     MultiPolygon<T>: Intersects<G>,
+    G: BoundingRect<T>,
 {
     geometry_delegate_impl! {
         fn intersects(&self, rhs: &G) -> bool;
@@ -27,8 +29,12 @@ impl<T, G> Intersects<G> for GeometryCollection<T>
 where
     T: CoordNum,
     Geometry<T>: Intersects<G>,
+    G: BoundingRect<T>,
 {
     fn intersects(&self, rhs: &G) -> bool {
+        if has_disjoint_bboxes(self, rhs) {
+            return false;
+        }
         self.iter().any(|geom| geom.intersects(rhs))
     }
 }
