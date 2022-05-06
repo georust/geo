@@ -4,6 +4,8 @@
 
 * Add `split_x` and `split_y` methods on `Rect`
   * <https://github.com/georust/geo/pull/823>
+* Add support for `Polygon` in `RTree`
+  * <https://github.com/georust/geo/pull/351>
 
 ## 0.7.4
 
@@ -38,9 +40,6 @@
   * <https://github.com/georust/geo/pull/715>
 * Note: The MSRV when installing the latest dependencies has increased to 1.55
   * <https://github.com/georust/geo/pull/726>
-
-* Add support for `Polygon` in `RTree`
-  * https://github.com/georust/geo/pull/351
 
 ## 0.7.2
 
