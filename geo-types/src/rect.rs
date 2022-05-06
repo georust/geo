@@ -279,6 +279,18 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> Rect<T, Z, M> {
         ]
     }
 
+    fn assert_valid_bounds(&self) {
+        if !self.has_valid_bounds() {
+            panic!("{}", RECT_INVALID_BOUNDS_ERROR);
+        }
+    }
+
+    fn has_valid_bounds(&self) -> bool {
+        self.min.x <= self.max.x && self.min.y <= self.max.y
+    }
+}
+
+impl<T: CoordNum> Rect<T> {
     /// Split a rectangle into two rectangles along the X-axis with equal widths.
     ///
     /// # Examples
@@ -349,16 +361,6 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> Rect<T, Z, M> {
             Rect::new(self.min(), coord! { x: self.max().x, y: mid_y }),
             Rect::new(coord! { x: self.min().x, y: mid_y }, self.max()),
         ]
-    }
-
-    fn assert_valid_bounds(&self) {
-        if !self.has_valid_bounds() {
-            panic!("{}", RECT_INVALID_BOUNDS_ERROR);
-        }
-    }
-
-    fn has_valid_bounds(&self) -> bool {
-        self.min.x <= self.max.x && self.min.y <= self.max.y
     }
 }
 
