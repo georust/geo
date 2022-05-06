@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Add `split_x` and `split_y` methods on `Rect`
+  * <https://github.com/georust/geo/pull/823>
+
 ### Breaking changes
 * All geo types now support optional 3D (z coordinate) and M (measure) values. For example, `LineM` contains `x`, `y`, and `m` values, whereas `Line3D` has `x,y,z`. `Line3DM` has both `z` and `m`. When not used, `z` and `m` values are represented by the `NoValue` empty struct. `NoValue` behaves like a number. 
 * Remove deprecated functions on the `Geometry<T>`:

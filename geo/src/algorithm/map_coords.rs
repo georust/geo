@@ -849,7 +849,7 @@ pub(crate) mod deprecated {
     /// Map a function over all the coordinates in an object in place
     #[deprecated(
         since = "0.21.0",
-        note = "use `MapCoordsInPlace::try_map_coords_in_place` instead"
+        note = "use `MapCoordsInPlace::map_coords_in_place` instead"
     )]
     pub trait MapCoordsInplace<T>: MapCoordsInPlace<T> {
         /// Apply a function to all the coordinates in a geometric object, in place
