@@ -1,4 +1,3 @@
-use crate::algorithm::contains::Contains;
 use crate::algorithm::euclidean_length::EuclideanLength;
 use crate::algorithm::intersects::Intersects;
 use crate::algorithm::polygon_distance_fast_path::*;
@@ -186,8 +185,8 @@ where
 {
     /// Minimum distance from a Point to a Polygon
     fn euclidean_distance(&self, polygon: &Polygon<T>) -> T {
-        // No need to continue if the polygon contains the point, or is zero-length
-        if polygon.contains(self) || polygon.exterior().0.is_empty() {
+        // No need to continue if the polygon intersects the point, or is zero-length
+        if polygon.exterior().0.is_empty() || polygon.intersects(self) {
             return T::zero();
         }
         // fold the minimum interior ring distance if any, followed by the exterior
@@ -269,7 +268,7 @@ where
     T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
-        if self.intersects(other) || self.contains(other) {
+        if self.intersects(other) {
             return T::zero();
         }
         // minimum of all Point-Line distances
@@ -297,7 +296,7 @@ where
     T: GeoFloat + Signed + RTreeNum + FloatConst,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
-        if other.contains(self) || self.intersects(other) {
+        if self.intersects(other) {
             return T::zero();
         }
         // line-line distance between each exterior polygon segment and the line
@@ -385,7 +384,7 @@ where
     T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
-        if self.intersects(other) || other.contains(self) {
+        if self.intersects(other) {
             T::zero()
         } else if !other.interiors().is_empty()
             && ring_contains_point(other, Point::from(self.0[0]))
@@ -524,7 +523,7 @@ where
     T: GeoFloat,
 {
     fn euclidean_distance(&self, point: &Point<T>) -> T {
-        if self.contains(point) {
+        if self.intersects(point) {
             return T::zero();
         }
 
