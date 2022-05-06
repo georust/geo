@@ -1,10 +1,9 @@
-use crate::algorithm::coordinate_position::CoordPos;
-use crate::algorithm::dimensions::Dimensions;
+use crate::algorithm::{coordinate_position::CoordPos, dimensions::Dimensions};
 
 /// Models a *Dimensionally Extended Nine-Intersection Model (DE-9IM)* matrix.
 ///
 /// DE-9IM matrix values (such as "212FF1FF2") specify the topological relationship between
-/// two [Geometeries](struct.Geometry.html).
+/// two [Geometries](struct.Geometry.html).
 ///
 /// DE-9IM matrices are 3x3 matrices that represent the topological locations
 /// that occur in a geometry (Interior, Boundary, Exterior).
@@ -26,7 +25,7 @@ pub struct IntersectionMatrix(LocationArray<LocationArray<Dimensions>>);
 
 /// Helper struct so we can index IntersectionMatrix by CoordPos
 ///
-/// CoordPos enum members are ordered: OnBondary, Inside, Outside
+/// CoordPos enum members are ordered: OnBoundary, Inside, Outside
 /// DE-9IM matrices are ordered: Inside, Boundary, Exterior
 ///
 /// So we can't simply `CoordPos as usize` without losing the conventional ordering
@@ -219,6 +218,48 @@ impl IntersectionMatrix {
         self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
+    }
+
+    /// Directly accesses this matrix
+    ///
+    /// ```
+    /// use geo_types::{LineString, Rect, line_string};
+    /// use geo::algorithm::{coordinate_position::CoordPos, dimensions::Dimensions, relate::Relate};
+    ///
+    /// let line_string: LineString<f64> = line_string![(x: 0.0, y: 0.0), (x: 10.0, y: 0.0), (x: 5.0, y: 5.0)];
+    /// let rect = Rect::new((0.0, 0.0), (5.0, 5.0));
+    ///
+    /// let intersection = line_string.relate(&rect);
+    ///
+    /// // The intersection of the two interiors is empty, because no part of the string is inside the rect
+    /// assert_eq!(intersection.get(CoordPos::Inside, CoordPos::Inside), Dimensions::Empty);
+    ///
+    /// // The intersection of the line string's interior with the rect's boundary is one-dimensional, because part of the first line overlaps one of the rect's edges
+    /// assert_eq!(intersection.get(CoordPos::Inside, CoordPos::OnBoundary), Dimensions::OneDimensional);
+    ///
+    /// // The intersection of the line string's interior with the rect's exterior is one-dimensional, because part of the string is outside the rect
+    /// assert_eq!(intersection.get(CoordPos::Inside, CoordPos::Outside), Dimensions::OneDimensional);
+    ///
+    /// // The intersection of the line string's boundary with the rect's interior is empty, because neither of its end points are inside the rect
+    /// assert_eq!(intersection.get(CoordPos::OnBoundary, CoordPos::Inside), Dimensions::Empty);
+    ///
+    /// // The intersection of the line string's boundary with the rect's boundary is zero-dimensional, because the string's start and end points are on the rect's edges
+    /// assert_eq!(intersection.get(CoordPos::OnBoundary, CoordPos::OnBoundary), Dimensions::ZeroDimensional);
+    ///
+    /// // The intersection of the line string's boundary with the rect's exterior is empty, because neither of its end points are outside the rect
+    /// assert_eq!(intersection.get(CoordPos::OnBoundary, CoordPos::Outside), Dimensions::Empty);
+    ///
+    /// // The intersection of the the line's exterior with the rect's interior is two-dimensional, because it's simply the rect's interior
+    /// assert_eq!(intersection.get(CoordPos::Outside, CoordPos::Inside), Dimensions::TwoDimensional);
+    ///
+    /// // The intersection of the line's exterior with the rect's boundary is one-dimensional, because it's the rect's edges (minus where the string overlaps it)
+    /// assert_eq!(intersection.get(CoordPos::Outside, CoordPos::OnBoundary), Dimensions::OneDimensional);
+    ///
+    /// // The intersection of the two exteriors is two-dimensional, because it's the whole plane around the two shapes
+    /// assert_eq!(intersection.get(CoordPos::Outside, CoordPos::Outside), Dimensions::TwoDimensional);
+    /// ```
+    pub fn get(&self, lhs: CoordPos, rhs: CoordPos) -> Dimensions {
+        self.0[lhs][rhs]
     }
 }
 

@@ -17,11 +17,11 @@ mod relate_operation;
 /// # Examples
 ///
 /// ```
-/// use geo::{Coordinate, Line, Rect, line_string};
+/// use geo::{coord, Line, Rect, line_string};
 /// use crate::geo::relate::Relate;
 ///
-/// let line = Line::new(Coordinate { x: 2.0, y: 2.0}, Coordinate { x: 4.0, y: 4.0 });
-/// let rect = Rect::new(Coordinate { x: 2.0, y: 2.0}, Coordinate { x: 4.0, y: 4.0 });
+/// let line = Line::new(coord! { x: 2.0, y: 2.0}, coord! { x: 4.0, y: 4.0 });
+/// let rect = Rect::new(coord! { x: 2.0, y: 2.0}, coord! { x: 4.0, y: 4.0 });
 /// let intersection_matrix = rect.relate(&line);
 ///
 /// assert!(intersection_matrix.is_intersects());
@@ -29,8 +29,8 @@ mod relate_operation;
 /// assert!(intersection_matrix.is_contains());
 /// assert!(!intersection_matrix.is_within());
 ///
-/// let line = Line::new(Coordinate { x: 1.0, y: 1.0}, Coordinate { x: 5.0, y: 5.0 });
-/// let rect = Rect::new(Coordinate { x: 2.0, y: 2.0}, Coordinate { x: 4.0, y: 4.0 });
+/// let line = Line::new(coord! { x: 1.0, y: 1.0}, coord! { x: 5.0, y: 5.0 });
+/// let rect = Rect::new(coord! { x: 2.0, y: 2.0}, coord! { x: 4.0, y: 4.0 });
 /// let intersection_matrix = rect.relate(&line);
 /// assert!(intersection_matrix.is_intersects());
 /// assert!(!intersection_matrix.is_disjoint());
@@ -88,7 +88,7 @@ macro_rules! relate_impl {
 /// ```
 /// Is akin to calling:
 /// ```no_run
-/// foo![(Bar, Bar), (Bar, Baz), (Bar, Qux), (Baz, Bar), (Baz, Baz), (Baz, Qux), (Qux, Bar), (Qux, Baz), (Qux, Qux)]);
+/// foo![(Bar, Bar), (Bar, Baz), (Bar, Qux), (Baz, Bar), (Baz, Baz), (Baz, Qux), (Qux, Bar), (Qux, Baz), (Qux, Qux)];
 /// ```
 macro_rules! cartesian_pairs {
     ($macro_name:ident, [$($a:ty),*]) => {

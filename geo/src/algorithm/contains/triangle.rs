@@ -10,7 +10,7 @@ where
     T: GeoNum,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
-        let ls = LineString(vec![self.0, self.1, self.2, self.0]);
+        let ls = LineString::new(vec![self.0, self.1, self.2, self.0]);
         use crate::utils::{coord_pos_relative_to_ring, CoordPos};
         coord_pos_relative_to_ring(*coord, &ls) == CoordPos::Inside
     }

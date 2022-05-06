@@ -59,7 +59,7 @@ where
 mod test {
     use crate::algorithm::euclidean_length::EuclideanLength;
     use crate::line_string;
-    use crate::{Coordinate, Line, MultiLineString};
+    use crate::{coord, Line, MultiLineString};
 
     #[test]
     fn empty_linestring_test() {
@@ -85,7 +85,7 @@ mod test {
     }
     #[test]
     fn multilinestring_test() {
-        let mline = MultiLineString(vec![
+        let mline = MultiLineString::new(vec![
             line_string![
                 (x: 1., y: 0.),
                 (x: 7., y: 0.),
@@ -103,8 +103,8 @@ mod test {
     }
     #[test]
     fn line_test() {
-        let line0 = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 0., y: 1. });
-        let line1 = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 3., y: 4. });
+        let line0 = Line::new(coord! { x: 0., y: 0. }, coord! { x: 0., y: 1. });
+        let line1 = Line::new(coord! { x: 0., y: 0. }, coord! { x: 3., y: 4. });
         assert_relative_eq!(line0.euclidean_length(), 1.);
         assert_relative_eq!(line1.euclidean_length(), 5.);
     }

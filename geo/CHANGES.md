@@ -1,17 +1,57 @@
 # Changes
 
+
 ## Unreleased
 
-* Bump proj crate to 0.23.0, using PROJ 8.1.0
+* Remove unneeded reference for `*MapCoords*` closure parameter.
+  * <https://github.com/georust/geo/pull/810>
+* BREAKING: Bump proj dependency to 0.26 which uses proj lib 9.0
+  * <https://github.com/georust/geo/pull/813>
+* rename Translate::translate_inplace -> Translate::translate_in_place
+  * <https://github.com/georust/geo/pull/811>
+* MapCoords restructuring: <https://github.com/georust/geo/pull/811>
+  - rename MapCoordsInplace::map_coords_inplace -> MapCoordsInPlace::map_coords_in_place
+  - rename TryMapCoordsInplace::try_map_coords_inplace -> TryMapCoordsInPlace::try_map_coords_in_place
+  - Consolidate traits `TryMapCoords` into `MapCoords` and `TryMapCoordsInplace` into `MapCoordsInPlace`
+## 0.20.1
+
+* FIX: update to proper minimum geo-types version
+  * <https://github.com/georust/geo/pull/815>
+
+## 0.20.0
+
+* Add `LinesIter` algorithm to iterate over the lines in geometries.
+  * Very similar to `CoordsIter`, but only implemented where it makes sense (e.g., for `Polygon`, `Rect`, but not `Point`).
+  * <https://github.com/georust/geo/pull/757>
+* Add `TryMapCoordsInplace` algorithm that is similar to `TryMapCoords` but modifies a geometry in-place
+  * <https://github.com/georust/geo/pull/800>
+
+## 0.19.0
+
+* Bump `proj` crate to 0.25.0, using PROJ 8.1.0
+  * <https://github.com/georust/geo/pull/661>
+  * <https://github.com/georust/geo/pull/718>
 * Add `ChaikinSmoothing` algorithm
+  * <https://github.com/georust/geo/pull/648>
 * Fix `rotate` for multipolygons to rotate around the collection's centroid, instead of rotating each individual polygon around its own centroid.
   * <https://github.com/georust/geo/pull/651>
-* Add KNearestConcaveHull algorithm
+* Add `KNearestConcaveHull` algorithm
   * <https://github.com/georust/geo/pull/635>
-* remove cargo-tarpaulin due to instability (#676, #677)
+* Remove cargo-tarpaulin due to instability (#676, #677)
 * Fix: `ClosestPoint` for Polygon's handling of internal points
+  * <https://github.com/georust/geo/pull/679>
 * Implemented `ClosestPoint` method for types Triangle, Rect, GeometryCollection, Coordinate and the Geometry enum.
   * <https://github.com/georust/geo/pull/675>
+* BREAKING: `TryMapCoords` Result is now generic rather than a Box<dyn Error>.
+  * <https://github.com/georust/geo/issues/722>
+* Add `Transform` algorithm
+  * <https://github.com/georust/geo/pull/718>
+* Add missing `Intersects` implementations
+  * <https://github.com/georust/geo/pull/725>
+* Note: The MSRV when installing the latest dependencies has increased to 1.55
+  * <https://github.com/georust/geo/pull/726>
+* Add `get()` to `IntersectionMatrix` for directly querying DE-9IM matrices
+  * <https://github.com/georust/geo/pull/714>
 
 ## 0.18.0
 
@@ -33,9 +73,6 @@
   * <https://github.com/georust/geo/pull/629>
 * Implement `Centroid` algorithm on `Geometry` and its remaining variants.
   * <https://github.com/georust/geo/pull/629>
-
-## 0.17.1
-
 * Add `GeodesicIntermediate` algorithm
   * <https://github.com/georust/geo/pull/608>
 

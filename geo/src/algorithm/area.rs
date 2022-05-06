@@ -24,7 +24,7 @@ where
     // determinants.
     //
     // Note: we can't use the `Centroid` trait as it
-    // requries `T: Float` and in fact computes area in the
+    // requires `T: Float` and in fact computes area in the
     // implementation. Another option is to use the average
     // of the coordinates, but it is not fool-proof to
     // divide by the length of the linestring (eg. a long
@@ -34,7 +34,7 @@ where
     let mut tmp = T::zero();
     for line in linestring.lines() {
         use crate::algorithm::map_coords::MapCoords;
-        let line = line.map_coords(|&(x, y)| (x - shift.x, y - shift.y));
+        let line = line.map_coords(|(x, y)| (x - shift.x, y - shift.y));
         tmp = tmp + line.determinant();
     }
 
@@ -264,7 +264,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::algorithm::area::Area;
-    use crate::{line_string, polygon, Coordinate, Line, MultiPolygon, Polygon, Rect, Triangle};
+    use crate::{coord, line_string, polygon, Line, MultiPolygon, Polygon, Rect, Triangle};
 
     // Area of the polygon
     #[test]
@@ -300,7 +300,7 @@ mod test {
                 (0..NUM_VERTICES)
                     .map(|i| {
                         let angle = i as f64 * ANGLE_INC;
-                        Coordinate {
+                        coord! {
                             x: angle.cos(),
                             y: angle.sin(),
                         }
@@ -317,7 +317,7 @@ mod test {
         let shift_y = 1.5e8;
 
         use crate::map_coords::MapCoords;
-        let polygon = polygon.map_coords(|&(x, y)| (x + shift_x, y + shift_y));
+        let polygon = polygon.map_coords(|(x, y)| (x + shift_x, y + shift_y));
 
         let new_area = polygon.signed_area();
         let err = (area - new_area).abs() / area;
@@ -326,11 +326,10 @@ mod test {
     }
     #[test]
     fn rectangle_test() {
-        let rect1: Rect<f32> =
-            Rect::new(Coordinate { x: 10., y: 30. }, Coordinate { x: 20., y: 40. });
+        let rect1: Rect<f32> = Rect::new(coord! { x: 10., y: 30. }, coord! { x: 20., y: 40. });
         assert_relative_eq!(rect1.signed_area(), 100.);
 
-        let rect2: Rect<i32> = Rect::new(Coordinate { x: 10, y: 30 }, Coordinate { x: 20, y: 40 });
+        let rect2: Rect<i32> = Rect::new(coord! { x: 10, y: 30 }, coord! { x: 20, y: 40 });
         assert_eq!(rect2.signed_area(), 100);
     }
     #[test]
@@ -385,29 +384,29 @@ mod test {
             (x: 5., y: 6.),
             (x: 5., y: 5.)
         ];
-        let mpoly = MultiPolygon(vec![poly0, poly1, poly2]);
+        let mpoly = MultiPolygon::new(vec![poly0, poly1, poly2]);
         assert_relative_eq!(mpoly.signed_area(), 102.);
         assert_relative_eq!(mpoly.signed_area(), 102.);
     }
     #[test]
     fn area_line_test() {
-        let line1 = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 1.0, y: 1.0 });
+        let line1 = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
         assert_relative_eq!(line1.signed_area(), 0.);
     }
 
     #[test]
     fn area_triangle_test() {
-        let triangle = Triangle(
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 1.0, y: 0.0 },
-            Coordinate { x: 0.0, y: 1.0 },
+        let triangle = Triangle::new(
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: 0.0, y: 1.0 },
         );
         assert_relative_eq!(triangle.signed_area(), 0.5);
 
-        let triangle = Triangle(
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 0.0, y: 1.0 },
-            Coordinate { x: 1.0, y: 0.0 },
+        let triangle = Triangle::new(
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: 1.0 },
+            coord! { x: 1.0, y: 0.0 },
         );
         assert_relative_eq!(triangle.signed_area(), -0.5);
     }
@@ -415,22 +414,22 @@ mod test {
     #[test]
     fn area_multi_polygon_area_reversed() {
         let polygon_cw: Polygon<f32> = polygon![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 0.0, y: 1.0 },
-            Coordinate { x: 1.0, y: 1.0 },
-            Coordinate { x: 1.0, y: 0.0 },
-            Coordinate { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: 1.0 },
+            coord! { x: 1.0, y: 1.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: 0.0, y: 0.0 },
         ];
         let polygon_ccw: Polygon<f32> = polygon![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 1.0, y: 0.0 },
-            Coordinate { x: 1.0, y: 1.0 },
-            Coordinate { x: 0.0, y: 1.0 },
-            Coordinate { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: 1.0, y: 1.0 },
+            coord! { x: 0.0, y: 1.0 },
+            coord! { x: 0.0, y: 0.0 },
         ];
         let polygon_area = polygon_cw.unsigned_area();
 
-        let multi_polygon = MultiPolygon(vec![polygon_cw, polygon_ccw]);
+        let multi_polygon = MultiPolygon::new(vec![polygon_cw, polygon_ccw]);
 
         assert_eq!(polygon_area * 2., multi_polygon.unsigned_area());
     }

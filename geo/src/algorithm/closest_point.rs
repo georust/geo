@@ -64,8 +64,8 @@ impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
         //
         // Line equation: P = start + t * (end - start)
 
-        let direction_vector = Point(self.end - self.start);
-        let to_p = Point(p.0 - self.start);
+        let direction_vector = Point::from(self.end - self.start);
+        let to_p = Point::from(p.0 - self.start);
 
         let t = to_p.dot(direction_vector) / direction_vector.dot(direction_vector);
 
@@ -78,7 +78,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
 
         let x = direction_vector.x();
         let y = direction_vector.y();
-        let c = Point(self.start + (t * x, t * y).into());
+        let c = Point::from(self.start + (t * x, t * y).into());
 
         if self.intersects(p) {
             Closest::Intersection(c)
@@ -131,7 +131,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Polygon<F> {
 
 impl<F: GeoFloat> ClosestPoint<F> for Coordinate<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        Point(*self).closest_point(p)
+        Point::from(*self).closest_point(p)
     }
 }
 
@@ -259,7 +259,7 @@ mod tests {
 
     #[test]
     fn empty_line_string_is_indeterminate() {
-        let ls: LineString<f32> = LineString(Vec::new());
+        let ls = LineString::new(Vec::new());
         let p = Point::new(0.0, 0.0);
 
         let got = ls.closest_point(&p);
@@ -277,7 +277,7 @@ mod tests {
     #[test]
     fn polygon_without_rings_and_point_outside_is_same_as_linestring() {
         let poly = holy_polygon();
-        let p = Point::new(1000.0, 12345.6789);
+        let p = Point::new(1000.0, 12345.678);
         assert!(
             !poly.exterior().contains(&p),
             "`p` should be outside the polygon!"
@@ -337,7 +337,7 @@ mod tests {
         let square_10 = square_1.translate(10.0, 10.0);
         let square_50 = square_1.translate(50.0, 50.0);
 
-        let multi_polygon = MultiPolygon(vec![square_1, square_10, square_50]);
+        let multi_polygon = MultiPolygon::new(vec![square_1, square_10, square_50]);
         let result = multi_polygon.closest_point(&point!(x: 8.0, y: 8.0));
         assert_eq!(result, Closest::SinglePoint(point!(x: 10.0, y: 10.0)));
 

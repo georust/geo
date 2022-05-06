@@ -1,7 +1,8 @@
 /// Creates a [`Point`] from the given coordinates.
 ///
 /// ```txt
-/// point!(x: <number>, y: <number>)
+/// point! { x: <number>, y: <number> }
+/// point!(<coordinate>)
 /// ```
 ///
 /// # Examples
@@ -9,28 +10,34 @@
 /// Creating a [`Point`], supplying x/y values:
 ///
 /// ```
-/// use geo_types::point;
+/// use geo_types::{point, coord};
 ///
-/// let p = point!(x: 181.2, y: 51.79);
+/// let p = point! { x: 181.2, y: 51.79 };
 ///
-/// assert_eq!(p, geo_types::Point(geo_types::Coordinate {
-///     x: 181.2,
-///     y: 51.79,
-/// }));
+/// assert_eq!(p.x(), 181.2);
+/// assert_eq!(p.y(), 51.79);
+///
+/// let p = point!(coord! { x: 181.2, y: 51.79 });
+///
+/// assert_eq!(p.x(), 181.2);
+/// assert_eq!(p.y(), 51.79);
 /// ```
 ///
 /// [`Point`]: ./struct.Point.html
 #[macro_export]
 macro_rules! point {
-    (x: $x:expr, y: $y:expr) => {
-        $crate::Point::new($x, $y)
+    ( $($tag:tt : $val:expr),* $(,)? ) => {
+        $crate::point! ( $crate::coord! { $( $tag: $val , )* } )
+    };
+    ( $coord:expr $(,)? ) => {
+        $crate::Point::from($coord)
     };
 }
 
 /// Creates a [`Coordinate`] from the given scalars.
 ///
 /// ```txt
-/// coord!(x: <number>, y: <number>)
+/// coord! { x: <number>, y: <number> }
 /// ```
 ///
 /// # Examples
@@ -40,15 +47,15 @@ macro_rules! point {
 /// ```
 /// use geo_types::coord;
 ///
-/// let c = coord!(x: 181.2, y: 51.79);
+/// let c = coord! { x: 181.2, y: 51.79 };
 ///
-/// assert_eq!(c, geo_types::Coordinate { x: 181.2, y: 51.79 });
+/// assert_eq!(c, geo_types::coord! { x: 181.2, y: 51.79 });
 /// ```
 ///
 /// [`Coordinate`]: ./struct.Point.html
 #[macro_export]
 macro_rules! coord {
-    (x: $x:expr, y: $y:expr) => {
+    (x: $x:expr, y: $y:expr $(,)* ) => {
         $crate::Coordinate { x: $x, y: $y }
     };
 }
@@ -70,10 +77,10 @@ macro_rules! coord {
 ///     (x: -21.95156, y: 64.1446),
 ///     (x: -21.951, y: 64.14479),
 ///     (x: -21.95044, y: 64.14527),
-///     (x: -21.951445, y: 64.145508)
+///     (x: -21.951445, y: 64.145508),
 /// ];
 ///
-/// assert_eq!(ls[1], geo_types::Coordinate {
+/// assert_eq!(ls[1], geo_types::coord! {
 ///     x: -21.951,
 ///     y: 64.14479
 /// });
@@ -84,19 +91,19 @@ macro_rules! coord {
 /// ```
 /// use geo_types::line_string;
 ///
-/// let coord1 = geo_types::Coordinate {
+/// let coord1 = geo_types::coord! {
 ///     x: -21.95156,
 ///     y: 64.1446,
 /// };
-/// let coord2 = geo_types::Coordinate {
+/// let coord2 = geo_types::coord! {
 ///     x: -21.951,
 ///     y: 64.14479,
 /// };
-/// let coord3 = geo_types::Coordinate {
+/// let coord3 = geo_types::coord! {
 ///     x: -21.95044,
 ///     y: 64.14527,
 /// };
-/// let coord4 = geo_types::Coordinate {
+/// let coord4 = geo_types::coord! {
 ///     x: -21.951445,
 ///     y: 64.145508,
 /// };
@@ -105,7 +112,7 @@ macro_rules! coord {
 ///
 /// assert_eq!(
 ///     ls[1],
-///     geo_types::Coordinate {
+///     geo_types::coord! {
 ///         x: -21.951,
 ///         y: 64.14479
 ///     }
@@ -116,14 +123,14 @@ macro_rules! coord {
 /// [`LineString`]: ./line_string/struct.LineString.html
 #[macro_export]
 macro_rules! line_string {
-    () => { $crate::LineString(vec![]) };
+    () => { $crate::LineString::new(vec![]) };
     (
-        $((x: $x:expr, y: $y:expr)),*
+        $(( $($tag:tt : $val:expr),* $(,)? )),*
         $(,)?
     ) => {
         line_string![
             $(
-                $crate::Coordinate { x: $x, y: $y },
+                $crate::coord! { $( $tag: $val , )* },
             )*
         ]
     };
@@ -131,7 +138,7 @@ macro_rules! line_string {
         $($coord:expr),*
         $(,)?
     ) => {
-        $crate::LineString(
+        $crate::LineString::new(
             <[_]>::into_vec(
                 ::std::boxed::Box::new(
                     [$($coord), *]
@@ -173,7 +180,7 @@ macro_rules! line_string {
 ///
 /// assert_eq!(
 ///     poly.exterior()[1],
-///     geo_types::Coordinate { x: -111., y: 41. },
+///     geo_types::coord! { x: -111., y: 41. },
 /// );
 /// ```
 ///
@@ -201,7 +208,7 @@ macro_rules! line_string {
 ///
 /// assert_eq!(
 ///     poly.exterior()[1],
-///     geo_types::Coordinate { x: -111., y: 41. },
+///     geo_types::coord! { x: -111., y: 41. },
 /// );
 /// ```
 ///
@@ -212,12 +219,12 @@ macro_rules! polygon {
     () => { $crate::Polygon::new(line_string![], vec![]) };
     (
         exterior: [
-            $((x: $exterior_x:expr, y: $exterior_y:expr)),*
+            $(( $($exterior_tag:tt : $exterior_val:expr),* $(,)? )),*
             $(,)?
         ],
         interiors: [
             $([
-                $((x: $interior_x:expr, y: $interior_y:expr)),*
+                $(( $($interior_tag:tt : $interior_val:expr),* $(,)? )),*
                 $(,)?
             ]),*
             $(,)?
@@ -227,14 +234,13 @@ macro_rules! polygon {
         polygon!(
             exterior: [
                 $(
-                    $crate::Coordinate { x: $exterior_x, y: $exterior_y },
+                    $crate::coord! { $( $exterior_tag: $exterior_val , )* },
                 )*
             ],
             interiors: [
                 $([
-                    $($crate::Coordinate { x: $interior_x, y: $interior_y }),*
+                    $($crate::coord! { $( $interior_tag: $interior_val , )* }),*
                 ]),*
-
             ],
         )
     };
@@ -268,11 +274,11 @@ macro_rules! polygon {
         )
     };
     (
-        $((x: $x:expr, y: $y:expr)),*
+        $(( $($tag:tt : $val:expr),* $(,)? )),*
         $(,)?
     ) => {
         polygon![
-            $($crate::Coordinate { x: $x, y: $y }),*
+            $($crate::coord! { $( $tag: $val , )* }),*
         ]
     };
     (
@@ -284,4 +290,91 @@ macro_rules! polygon {
             vec![],
         )
     };
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn test_point() {
+        let p = point! { x: 1.2, y: 3.4 };
+        assert_eq!(p.x(), 1.2);
+        assert_eq!(p.y(), 3.4);
+
+        let p = point! {
+            x: 1.2,
+            y: 3.4,
+        };
+        assert_eq!(p.x(), 1.2);
+        assert_eq!(p.y(), 3.4);
+
+        let p = point!(coord! { x: 1.2, y: 3.4 });
+        assert_eq!(p.x(), 1.2);
+        assert_eq!(p.y(), 3.4);
+
+        let p = point!(coord! { x: 1.2, y: 3.4 },);
+        assert_eq!(p.x(), 1.2);
+        assert_eq!(p.y(), 3.4);
+    }
+
+    #[test]
+    fn test_line() {
+        let ls = line_string![(x: -1.2f32, y: 3.4f32)];
+        assert_eq!(ls[0], coord! { x: -1.2, y: 3.4 });
+
+        let ls = line_string![
+            (x: -1.2f32, y: 3.4f32),
+        ];
+        assert_eq!(ls[0], coord! { x: -1.2, y: 3.4 });
+
+        let ls = line_string![(
+            x: -1.2f32,
+            y: 3.4f32,
+        )];
+        assert_eq!(ls[0], coord! { x: -1.2, y: 3.4 });
+
+        let ls = line_string![
+            (x: -1.2f32, y: 3.4f32),
+            (x: -5.6, y: 7.8),
+        ];
+        assert_eq!(ls[0], coord! { x: -1.2, y: 3.4 });
+        assert_eq!(ls[1], coord! { x: -5.6, y: 7.8 });
+    }
+
+    #[test]
+    fn test_polygon() {
+        let p = polygon!(
+            exterior: [(x: 1, y: 2)],
+            interiors: [[(x: 3, y: 4)]]
+        );
+        assert_eq!(p.exterior()[0], coord! { x: 1, y: 2 });
+        assert_eq!(p.interiors()[0][0], coord! { x: 3, y: 4 });
+
+        let p = polygon!(
+            exterior: [(x: 1, y: 2)],
+            interiors: [[(x: 3, y: 4)]],
+        );
+        assert_eq!(p.exterior()[0], coord! { x: 1, y: 2 });
+        assert_eq!(p.interiors()[0][0], coord! { x: 3, y: 4 });
+
+        let p = polygon!(
+            exterior: [(x: 1, y: 2, )],
+            interiors: [[(x: 3, y: 4, )]],
+        );
+        assert_eq!(p.exterior()[0], coord! { x: 1, y: 2 });
+        assert_eq!(p.interiors()[0][0], coord! { x: 3, y: 4 });
+
+        let p = polygon!(
+            exterior: [(x: 1, y: 2, ), ],
+            interiors: [[(x: 3, y: 4, ), ]],
+        );
+        assert_eq!(p.exterior()[0], coord! { x: 1, y: 2 });
+        assert_eq!(p.interiors()[0][0], coord! { x: 3, y: 4 });
+
+        let p = polygon!(
+            exterior: [(x: 1, y: 2, ), ],
+            interiors: [[(x: 3, y: 4, ), ], ],
+        );
+        assert_eq!(p.exterior()[0], coord! { x: 1, y: 2 });
+        assert_eq!(p.interiors()[0][0], coord! { x: 3, y: 4 });
+    }
 }

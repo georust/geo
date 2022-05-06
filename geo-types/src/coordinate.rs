@@ -1,4 +1,4 @@
-use crate::{CoordNum, Point};
+use crate::{coord, CoordNum, Point};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq, UlpsEq};
@@ -23,28 +23,17 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// (for eg. not `f64::NAN`).
 ///
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
-#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Coordinate<T>
-where
-    T: CoordNum,
-{
+pub struct Coordinate<T: CoordNum> {
     pub x: T,
     pub y: T,
 }
 
-impl<T: Default + CoordNum> Default for Coordinate<T> {
-    fn default() -> Coordinate<T> {
-        Coordinate {
-            x: T::default(),
-            y: T::default(),
-        }
-    }
-}
-
 impl<T: CoordNum> From<(T, T)> for Coordinate<T> {
+    #[inline]
     fn from(coords: (T, T)) -> Self {
-        Coordinate {
+        coord! {
             x: coords.0,
             y: coords.1,
         }
@@ -52,8 +41,9 @@ impl<T: CoordNum> From<(T, T)> for Coordinate<T> {
 }
 
 impl<T: CoordNum> From<[T; 2]> for Coordinate<T> {
+    #[inline]
     fn from(coords: [T; 2]) -> Self {
-        Coordinate {
+        coord! {
             x: coords[0],
             y: coords[1],
         }
@@ -61,8 +51,9 @@ impl<T: CoordNum> From<[T; 2]> for Coordinate<T> {
 }
 
 impl<T: CoordNum> From<Point<T>> for Coordinate<T> {
+    #[inline]
     fn from(point: Point<T>) -> Self {
-        Coordinate {
+        coord! {
             x: point.x(),
             y: point.y(),
         }
@@ -70,29 +61,28 @@ impl<T: CoordNum> From<Point<T>> for Coordinate<T> {
 }
 
 impl<T: CoordNum> From<Coordinate<T>> for (T, T) {
+    #[inline]
     fn from(coord: Coordinate<T>) -> Self {
         (coord.x, coord.y)
     }
 }
 
 impl<T: CoordNum> From<Coordinate<T>> for [T; 2] {
+    #[inline]
     fn from(coord: Coordinate<T>) -> Self {
         [coord.x, coord.y]
     }
 }
 
-impl<T> Coordinate<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Coordinate<T> {
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the coordinate.
     ///
     /// # Examples
     ///
     /// ```
-    /// use geo_types::Coordinate;
+    /// use geo_types::coord;
     ///
-    /// let c = Coordinate {
+    /// let c = coord! {
     ///     x: 40.02f64,
     ///     y: 116.34,
     /// };
@@ -101,6 +91,7 @@ where
     /// assert_eq!(y, 116.34);
     /// assert_eq!(x, 40.02f64);
     /// ```
+    #[inline]
     pub fn x_y(&self) -> (T, T) {
         (self.x, self.y)
     }
@@ -113,9 +104,9 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 /// # Examples
 ///
 /// ```
-/// use geo_types::Coordinate;
+/// use geo_types::coord;
 ///
-/// let p: Coordinate<_> = (1.25, 2.5).into();
+/// let p = coord! { x: 1.25, y: 2.5 };
 /// let q = -p;
 ///
 /// assert_eq!(q.x, -p.x);
@@ -125,10 +116,14 @@ impl<T> Neg for Coordinate<T>
 where
     T: CoordNum + Neg<Output = T>,
 {
-    type Output = Coordinate<T>;
+    type Output = Self;
 
-    fn neg(self) -> Coordinate<T> {
-        (-self.x, -self.y).into()
+    #[inline]
+    fn neg(self) -> Self {
+        coord! {
+            x: -self.x,
+            y: -self.y,
+        }
     }
 }
 
@@ -137,23 +132,24 @@ where
 /// # Examples
 ///
 /// ```
-/// use geo_types::Coordinate;
+/// use geo_types::coord;
 ///
-/// let p: Coordinate<_> = (1.25, 2.5).into();
-/// let q: Coordinate<_> = (1.5, 2.5).into();
+/// let p = coord! { x: 1.25, y: 2.5 };
+/// let q = coord! { x: 1.5, y: 2.5 };
 /// let sum = p + q;
 ///
 /// assert_eq!(sum.x, 2.75);
 /// assert_eq!(sum.y, 5.0);
 /// ```
-impl<T> Add for Coordinate<T>
-where
-    T: CoordNum,
-{
-    type Output = Coordinate<T>;
+impl<T: CoordNum> Add for Coordinate<T> {
+    type Output = Self;
 
-    fn add(self, rhs: Coordinate<T>) -> Coordinate<T> {
-        (self.x + rhs.x, self.y + rhs.y).into()
+    #[inline]
+    fn add(self, rhs: Self) -> Self {
+        coord! {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
     }
 }
 
@@ -162,23 +158,24 @@ where
 /// # Examples
 ///
 /// ```
-/// use geo_types::Coordinate;
+/// use geo_types::coord;
 ///
-/// let p: Coordinate<_> = (1.5, 2.5).into();
-/// let q: Coordinate<_> = (1.25, 2.5).into();
+/// let p = coord! { x: 1.5, y: 2.5 };
+/// let q = coord! { x: 1.25, y: 2.5 };
 /// let diff = p - q;
 ///
 /// assert_eq!(diff.x, 0.25);
 /// assert_eq!(diff.y, 0.);
 /// ```
-impl<T> Sub for Coordinate<T>
-where
-    T: CoordNum,
-{
-    type Output = Coordinate<T>;
+impl<T: CoordNum> Sub for Coordinate<T> {
+    type Output = Self;
 
-    fn sub(self, rhs: Coordinate<T>) -> Coordinate<T> {
-        (self.x - rhs.x, self.y - rhs.y).into()
+    #[inline]
+    fn sub(self, rhs: Self) -> Self {
+        coord! {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
     }
 }
 
@@ -187,22 +184,23 @@ where
 /// # Examples
 ///
 /// ```
-/// use geo_types::Coordinate;
+/// use geo_types::coord;
 ///
-/// let p: Coordinate<_> = (1.25, 2.5).into();
-/// let q: Coordinate<_> = p * 4.;
+/// let p = coord! { x: 1.25, y: 2.5 };
+/// let q = p * 4.;
 ///
 /// assert_eq!(q.x, 5.0);
 /// assert_eq!(q.y, 10.0);
 /// ```
-impl<T> Mul<T> for Coordinate<T>
-where
-    T: CoordNum,
-{
-    type Output = Coordinate<T>;
+impl<T: CoordNum> Mul<T> for Coordinate<T> {
+    type Output = Self;
 
-    fn mul(self, rhs: T) -> Coordinate<T> {
-        (self.x * rhs, self.y * rhs).into()
+    #[inline]
+    fn mul(self, rhs: T) -> Self {
+        coord! {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
     }
 }
 
@@ -211,22 +209,23 @@ where
 /// # Examples
 ///
 /// ```
-/// use geo_types::Coordinate;
+/// use geo_types::coord;
 ///
-/// let p: Coordinate<_> = (5., 10.).into();
-/// let q: Coordinate<_> = p / 4.;
+/// let p = coord! { x: 5., y: 10. };
+/// let q = p / 4.;
 ///
 /// assert_eq!(q.x, 1.25);
 /// assert_eq!(q.y, 2.5);
 /// ```
-impl<T> Div<T> for Coordinate<T>
-where
-    T: CoordNum,
-{
-    type Output = Coordinate<T>;
+impl<T: CoordNum> Div<T> for Coordinate<T> {
+    type Output = Self;
 
-    fn div(self, rhs: T) -> Coordinate<T> {
-        (self.x / rhs, self.y / rhs).into()
+    #[inline]
+    fn div(self, rhs: T) -> Self {
+        coord! {
+            x: self.x / rhs,
+            y: self.y / rhs,
+        }
     }
 }
 
@@ -245,8 +244,9 @@ use num_traits::Zero;
 /// assert_eq!(p.y, 0.);
 /// ```
 impl<T: CoordNum> Coordinate<T> {
+    #[inline]
     pub fn zero() -> Self {
-        Coordinate {
+        coord! {
             x: T::zero(),
             y: T::zero(),
         }
@@ -254,9 +254,11 @@ impl<T: CoordNum> Coordinate<T> {
 }
 
 impl<T: CoordNum> Zero for Coordinate<T> {
+    #[inline]
     fn zero() -> Self {
-        Coordinate::zero()
+        Self::zero()
     }
+    #[inline]
     fn is_zero(&self) -> bool {
         self.x.is_zero() && self.y.is_zero()
     }
@@ -302,32 +304,36 @@ impl<T: CoordNum + UlpsEq> UlpsEq for Coordinate<T>
 where
     T::Epsilon: Copy,
 {
+    #[inline]
     fn default_max_ulps() -> u32 {
         T::default_max_ulps()
     }
 
+    #[inline]
     fn ulps_eq(&self, other: &Self, epsilon: T::Epsilon, max_ulps: u32) -> bool {
         T::ulps_eq(&self.x, &other.x, epsilon, max_ulps)
             && T::ulps_eq(&self.y, &other.y, epsilon, max_ulps)
     }
 }
 
-#[cfg(feature = "rstar")]
-impl<T> ::rstar::Point for Coordinate<T>
+#[cfg(feature = "rstar_0_8")]
+impl<T> ::rstar_0_8::Point for Coordinate<T>
 where
-    T: ::num_traits::Float + ::rstar::RTreeNum,
+    T: ::num_traits::Float + ::rstar_0_8::RTreeNum,
 {
     type Scalar = T;
 
     const DIMENSIONS: usize = 2;
 
+    #[inline]
     fn generate(generator: impl Fn(usize) -> Self::Scalar) -> Self {
-        Coordinate {
+        coord! {
             x: generator(0),
             y: generator(1),
         }
     }
 
+    #[inline]
     fn nth(&self, index: usize) -> Self::Scalar {
         match index {
             0 => self.x,
@@ -336,6 +342,7 @@ where
         }
     }
 
+    #[inline]
     fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
         match index {
             0 => &mut self.x,
@@ -354,13 +361,15 @@ where
 
     const DIMENSIONS: usize = 2;
 
+    #[inline]
     fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
-        Coordinate {
+        coord! {
             x: generator(0),
             y: generator(1),
         }
     }
 
+    #[inline]
     fn nth(&self, index: usize) -> Self::Scalar {
         match index {
             0 => self.x,
@@ -369,6 +378,7 @@ where
         }
     }
 
+    #[inline]
     fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
         match index {
             0 => &mut self.x,

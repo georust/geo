@@ -1,41 +1,36 @@
 [package]
 name = "geo"
 description = "Geospatial primitives and algorithms"
-version = "0.18.0"
-authors = ["Corey Farwell <coreyf@rwell.org>"]
+version = "0.20.1"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/georust/geo"
 documentation = "https://docs.rs/geo/"
 readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
 autobenches = true
-edition = "2018"
-
-[dependencies]
-num-traits = "0.2"
-serde = { version = "1.0", optional = true, features = ["derive"] }
-rstar = { version = "0.8" }
-geographiclib-rs = { version = "0.2" }
-log = "0.4.11"
-
-proj = { version = "0.23.1", optional = true }
-
-geo-types = { version = "0.7.2", features = ["approx", "use-rstar"] }
-
-robust = { version = "0.2.2" }
+edition = "2021"
 
 [features]
 use-proj = ["proj"]
 proj-network = ["use-proj", "proj/network"]
 use-serde = ["serde", "geo-types/serde"]
 
+[dependencies]
+geo-types = { version = "0.7.4", features = ["approx", "use-rstar"] }
+geographiclib-rs = "0.2"
+log = "0.4.11"
+num-traits = "0.2"
+proj = { version = "0.26.0", optional = true }
+robust = "0.2.2"
+rstar = "0.8"
+serde = { version = "1.0", optional = true, features = ["derive"] }
+
 [dev-dependencies]
-pretty_env_logger = "0.4"
 approx = "0.4.0"
-criterion = { version = "0.3" }
-# jts-test-runner is an internal crate which exists only to be part of the geo test suite.
-# As such it's kept unpublished. It's in a separate repo primarily because it's kind of large.
-jts-test-runner = { git = "https://github.com/georust/jts-test-runner", rev = "1cf7a2f848a10869720383e931271d0dd54f7bf8" }
+criterion = { version = "0.3", features = ["html_reports"] }
+geo-test-fixtures = { path = "../geo-test-fixtures" }
+jts-test-runner = { path = "../jts-test-runner" }
+pretty_env_logger = "0.4"
 rand = "0.8.0"
 
 [[bench]]

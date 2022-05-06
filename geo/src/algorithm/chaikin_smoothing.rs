@@ -2,7 +2,7 @@ use std::ops::Mul;
 
 use num_traits::FromPrimitive;
 
-use crate::{CoordFloat, Coordinate, LineString, MultiLineString, MultiPolygon, Polygon};
+use crate::{coord, CoordFloat, Coordinate, LineString, MultiLineString, MultiPolygon, Polygon};
 
 /// Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 ///
@@ -45,7 +45,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn chaikin_smoothing(&self, n_iterations: usize) -> Self {
-        MultiLineString(
+        MultiLineString::new(
             self.0
                 .iter()
                 .map(|ls| ls.chaikin_smoothing(n_iterations))
@@ -74,7 +74,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn chaikin_smoothing(&self, n_iterations: usize) -> Self {
-        MultiPolygon(
+        MultiPolygon::new(
             self.0
                 .iter()
                 .map(|poly| poly.chaikin_smoothing(n_iterations))
@@ -120,11 +120,11 @@ fn smoothen_coordinates<T>(c0: Coordinate<T>, c1: Coordinate<T>) -> (Coordinate<
 where
     T: CoordFloat + Mul<T> + FromPrimitive,
 {
-    let q = Coordinate {
+    let q = coord! {
         x: (T::from(0.75).unwrap() * c0.x) + (T::from(0.25).unwrap() * c1.x),
         y: (T::from(0.75).unwrap() * c0.y) + (T::from(0.25).unwrap() * c1.y),
     };
-    let r = Coordinate {
+    let r = coord! {
         x: (T::from(0.25).unwrap() * c0.x) + (T::from(0.75).unwrap() * c1.x),
         y: (T::from(0.25).unwrap() * c0.y) + (T::from(0.75).unwrap() * c1.y),
     };

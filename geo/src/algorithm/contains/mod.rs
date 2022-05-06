@@ -52,7 +52,9 @@ mod triangle;
 mod test {
     use crate::algorithm::contains::Contains;
     use crate::line_string;
-    use crate::{Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
+    use crate::{
+        coord, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle,
+    };
 
     #[test]
     // see https://github.com/georust/geo/issues/452
@@ -88,7 +90,7 @@ mod test {
             .into(),
             vec![],
         );
-        assert_eq!(!v.contains(&rect), true);
+        assert!(!v.contains(&rect));
     }
     #[test]
     // V contains rect because all its vertices are contained, and none of its edges intersect with V's boundaries
@@ -117,7 +119,7 @@ mod test {
             .into(),
             vec![],
         );
-        assert_eq!(v.contains(&rect), true);
+        assert!(v.contains(&rect));
     }
     #[test]
     // LineString is fully contained
@@ -127,12 +129,12 @@ mod test {
             vec![],
         );
         let ls = LineString::from(vec![(3.0, 0.5), (3.0, 3.5)]);
-        assert_eq!(poly.contains(&ls), true);
+        assert!(poly.contains(&ls));
     }
     /// Tests: Point in LineString
     #[test]
     fn empty_linestring_test() {
-        let linestring = LineString(Vec::new());
+        let linestring = LineString::new(Vec::new());
         assert!(!linestring.contains(&Point::new(2., 1.)));
     }
     #[test]
@@ -152,7 +154,7 @@ mod test {
     /// Tests: Point in Polygon
     #[test]
     fn empty_polygon_test() {
-        let linestring = LineString(Vec::new());
+        let linestring = LineString::new(Vec::new());
         let poly = Polygon::new(linestring, Vec::new());
         assert!(!poly.contains(&Point::new(2., 1.)));
     }
@@ -231,7 +233,7 @@ mod test {
     /// Tests: Point in MultiPolygon
     #[test]
     fn empty_multipolygon_test() {
-        let multipoly = MultiPolygon(Vec::new());
+        let multipoly = MultiPolygon::new(Vec::new());
         assert!(!multipoly.contains(&Point::new(2., 1.)));
     }
     #[test]
@@ -244,7 +246,7 @@ mod test {
             LineString::from(vec![(2., 0.), (3., 0.), (3., 1.), (2., 1.), (2., 0.)]),
             Vec::new(),
         );
-        let multipoly = MultiPolygon(vec![poly1, poly2]);
+        let multipoly = MultiPolygon::new(vec![poly1, poly2]);
         assert!(multipoly.contains(&Point::new(0.5, 0.5)));
         assert!(multipoly.contains(&Point::new(2.5, 0.5)));
         assert!(!multipoly.contains(&Point::new(1.5, 0.5)));
@@ -265,7 +267,7 @@ mod test {
             Vec::new(),
         );
 
-        let multipoly = MultiPolygon(vec![poly1, poly2]);
+        let multipoly = MultiPolygon::new(vec![poly1, poly2]);
         assert!(multipoly.contains(&Point::new(3., 5.)));
         assert!(multipoly.contains(&Point::new(12., 2.)));
         assert!(!multipoly.contains(&Point::new(3., 2.)));
@@ -306,20 +308,15 @@ mod test {
     }
     #[test]
     fn bounding_rect_in_inner_bounding_rect_test() {
-        let bounding_rect_xl = Rect::new(
-            Coordinate { x: -100., y: -200. },
-            Coordinate { x: 100., y: 200. },
-        );
-        let bounding_rect_sm = Rect::new(
-            Coordinate { x: -10., y: -20. },
-            Coordinate { x: 10., y: 20. },
-        );
-        assert_eq!(true, bounding_rect_xl.contains(&bounding_rect_sm));
-        assert_eq!(false, bounding_rect_sm.contains(&bounding_rect_xl));
+        let bounding_rect_xl =
+            Rect::new(coord! { x: -100., y: -200. }, coord! { x: 100., y: 200. });
+        let bounding_rect_sm = Rect::new(coord! { x: -10., y: -20. }, coord! { x: 10., y: 20. });
+        assert!(bounding_rect_xl.contains(&bounding_rect_sm));
+        assert!(!bounding_rect_sm.contains(&bounding_rect_xl));
     }
     #[test]
     fn point_in_line_test() {
-        let c = |x, y| Coordinate { x, y };
+        let c = |x, y| coord! { x: x, y: y };
         let p0 = c(2., 4.);
         // vertical line
         let line1 = Line::new(c(2., 0.), c(2., 5.));
@@ -327,13 +324,13 @@ mod test {
         let line2 = Line::new(c(0., 6.), c(1.5, 4.5));
         // point on line
         let line3 = Line::new(c(0., 6.), c(3., 3.));
-        assert!(line1.contains(&Point(p0)));
-        assert!(!line2.contains(&Point(p0)));
-        assert!(line3.contains(&Point(p0)));
+        assert!(line1.contains(&Point::from(p0)));
+        assert!(!line2.contains(&Point::from(p0)));
+        assert!(line3.contains(&Point::from(p0)));
     }
     #[test]
     fn line_in_line_test() {
-        let c = |x, y| Coordinate { x, y };
+        let c = |x, y| coord! { x: x, y: y };
         let line0 = Line::new(c(0., 1.), c(3., 4.));
         // first point on line0, second not
         let line1 = Line::new(c(1., 2.), c(2., 2.));
@@ -349,11 +346,11 @@ mod test {
     fn linestring_in_line_test() {
         let line = Line::from([(0, 10), (30, 40)]);
         // linestring0 in line
-        let linestring0 = LineString::from(vec![(01, 11), (10, 20), (15, 25)]);
+        let linestring0 = LineString::from(vec![(1, 11), (10, 20), (15, 25)]);
         // linestring1 starts and ends in line, but wanders in the middle
-        let linestring1 = LineString::from(vec![(01, 11), (20, 20), (15, 25)]);
+        let linestring1 = LineString::from(vec![(1, 11), (20, 20), (15, 25)]);
         // linestring2 is co-linear, but extends beyond line
-        let linestring2 = LineString::from(vec![(01, 11), (10, 20), (40, 50)]);
+        let linestring2 = LineString::from(vec![(1, 11), (10, 20), (40, 50)]);
         // no part of linestring3 is contained in line
         let linestring3 = LineString::from(vec![(11, 11), (20, 20), (25, 25)]);
         // a linestring with singleton interior on the boundary of the line
@@ -369,7 +366,7 @@ mod test {
     }
     #[test]
     fn line_in_polygon_test() {
-        let c = |x, y| Coordinate { x, y };
+        let c = |x, y| coord! { x: x, y: y };
         let line = Line::new(c(0.0, 10.0), c(30.0, 40.0));
         let linestring0 = line_string![
             c(-10.0, 0.0),
@@ -395,7 +392,7 @@ mod test {
         // Some DE-9IM edge cases for checking line is
         // inside polygon The end points of the line can be
         // on the boundary of the polygon.
-        let c = |x, y| Coordinate { x, y };
+        let c = |x, y| coord! { x: x, y: y };
         // A non-convex polygon
         let linestring0 = line_string![
             c(0.0, 0.0),
@@ -412,7 +409,7 @@ mod test {
     }
     #[test]
     fn line_in_linestring_edgecases() {
-        let c = |x, y| Coordinate { x, y };
+        let c = |x, y| coord! { x: x, y: y };
         use crate::line_string;
         let mut ls = line_string![c(0, 0), c(1, 0), c(0, 1), c(-1, 0)];
         assert!(!ls.contains(&Line::from([(0, 0), (0, 0)])));
@@ -450,13 +447,12 @@ mod test {
     #[test]
     fn integer_bounding_rects() {
         let p: Point<i32> = Point::new(10, 20);
-        let bounding_rect: Rect<i32> =
-            Rect::new(Coordinate { x: 0, y: 0 }, Coordinate { x: 100, y: 100 });
+        let bounding_rect: Rect<i32> = Rect::new(coord! { x: 0, y: 0 }, coord! { x: 100, y: 100 });
         assert!(bounding_rect.contains(&p));
         assert!(!bounding_rect.contains(&Point::new(-10, -10)));
 
         let smaller_bounding_rect: Rect<i32> =
-            Rect::new(Coordinate { x: 10, y: 10 }, Coordinate { x: 20, y: 20 });
+            Rect::new(coord! { x: 10, y: 10 }, coord! { x: 20, y: 20 });
         assert!(bounding_rect.contains(&smaller_bounding_rect));
     }
 
@@ -506,13 +502,13 @@ mod test {
     // https://github.com/georust/geo/issues/473
     fn triangle_contains_collinear_points() {
         let origin: Coordinate<f64> = (0., 0.).into();
-        let tri = Triangle(origin, origin, origin);
+        let tri = Triangle::new(origin, origin, origin);
         let pt: Point<f64> = (0., 1.23456).into();
         assert!(!tri.contains(&pt));
         let pt: Point<f64> = (0., 0.).into();
         assert!(!tri.contains(&pt));
         let origin: Coordinate<f64> = (0., 0.).into();
-        let tri = Triangle((1., 1.).into(), origin, origin);
+        let tri = Triangle::new((1., 1.).into(), origin, origin);
         let pt: Point<f64> = (1., 1.).into();
         assert!(!tri.contains(&pt));
         let pt: Point<f64> = (0.5, 0.5).into();

@@ -56,7 +56,7 @@ where
 {
     fn from_postgis(mp: &'a T) -> Self {
         let ret = mp.points().map(Point::from_postgis).collect();
-        MultiPoint(ret)
+        MultiPoint::new(ret)
     }
 }
 impl<'a, T> FromPostgis<&'a T> for MultiLineString<f64>
@@ -65,7 +65,7 @@ where
 {
     fn from_postgis(mp: &'a T) -> Self {
         let ret = mp.lines().map(LineString::from_postgis).collect();
-        MultiLineString(ret)
+        MultiLineString::new(ret)
     }
 }
 impl<'a, T> FromPostgis<&'a T> for MultiPolygon<f64>
@@ -76,7 +76,7 @@ where
     /// (return `None` when `from_postgis()` is called on them).
     fn from_postgis(mp: &'a T) -> Self {
         let ret = mp.polygons().filter_map(Option::from_postgis).collect();
-        MultiPolygon(ret)
+        MultiPolygon::new(ret)
     }
 }
 impl<'a, T> FromPostgis<&'a GeometryCollectionT<T>> for GeometryCollection<f64>
@@ -91,7 +91,7 @@ where
             .iter()
             .filter_map(Option::from_postgis)
             .collect();
-        GeometryCollection(geoms)
+        GeometryCollection::new_from(geoms)
     }
 }
 impl<'a, T> FromPostgis<&'a GeometryT<T>> for Option<Geometry<f64>>

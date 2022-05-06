@@ -61,6 +61,8 @@ pub mod line_interpolate_point;
 pub mod line_intersection;
 /// Locate a point along a `Line` or `LineString`.
 pub mod line_locate_point;
+/// Iterate over the lines in a geometry.
+pub mod lines_iter;
 /// Apply a function to all `Coordinates` of a `Geometry`.
 pub mod map_coords;
 /// Orient a `Polygon`'s exterior and interior rings.
@@ -78,6 +80,9 @@ pub mod rotate;
 pub mod simplify;
 /// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
 pub mod simplifyvw;
+/// Transform a geometry using PROJ.
+#[cfg(feature = "use-proj")]
+pub mod transform;
 /// Translate a `Geometry` along the given offsets.
 pub mod translate;
 /// Calculate the Vincenty distance between two `Point`s.

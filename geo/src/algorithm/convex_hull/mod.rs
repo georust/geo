@@ -116,7 +116,7 @@ where
 
     // Remove repeated points unless collinear points
     // are to be included.
-    let mut ls: Vec<Coordinate<T>> = points.iter().copied().collect();
+    let mut ls: Vec<Coordinate<T>> = points.to_vec();
     if !include_on_hull {
         ls.dedup();
     }
@@ -126,7 +126,7 @@ where
         ls.push(ls[0]);
     }
 
-    let mut ls = LineString(ls);
+    let mut ls = LineString::new(ls);
     ls.close();
 
     // Maintain the CCW invariance
@@ -138,7 +138,8 @@ where
 // Utility function: swap idx to head(0th position), remove
 // head (modifies the slice), and return head as a reference
 fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
-    let tmp = std::mem::replace(slice, &mut []);
+    // temporarily replace `slice` with an empty value
+    let tmp = std::mem::take(slice);
     tmp.swap(0, idx);
     let (h, t) = tmp.split_first_mut().unwrap();
     *slice = t;

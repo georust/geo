@@ -25,10 +25,8 @@ use std::convert::TryFrom;
 /// ```
 ///
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
-pub enum Geometry<T>
-where
-    T: CoordNum,
-{
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum Geometry<T: CoordNum> {
     Point(Point<T>),
     Line(Line<T>),
     LineString(LineString<T>),
@@ -42,50 +40,50 @@ where
 }
 
 impl<T: CoordNum> From<Point<T>> for Geometry<T> {
-    fn from(x: Point<T>) -> Geometry<T> {
-        Geometry::Point(x)
+    fn from(x: Point<T>) -> Self {
+        Self::Point(x)
     }
 }
 impl<T: CoordNum> From<Line<T>> for Geometry<T> {
-    fn from(x: Line<T>) -> Geometry<T> {
-        Geometry::Line(x)
+    fn from(x: Line<T>) -> Self {
+        Self::Line(x)
     }
 }
 impl<T: CoordNum> From<LineString<T>> for Geometry<T> {
-    fn from(x: LineString<T>) -> Geometry<T> {
-        Geometry::LineString(x)
+    fn from(x: LineString<T>) -> Self {
+        Self::LineString(x)
     }
 }
 impl<T: CoordNum> From<Polygon<T>> for Geometry<T> {
-    fn from(x: Polygon<T>) -> Geometry<T> {
-        Geometry::Polygon(x)
+    fn from(x: Polygon<T>) -> Self {
+        Self::Polygon(x)
     }
 }
 impl<T: CoordNum> From<MultiPoint<T>> for Geometry<T> {
-    fn from(x: MultiPoint<T>) -> Geometry<T> {
-        Geometry::MultiPoint(x)
+    fn from(x: MultiPoint<T>) -> Self {
+        Self::MultiPoint(x)
     }
 }
 impl<T: CoordNum> From<MultiLineString<T>> for Geometry<T> {
-    fn from(x: MultiLineString<T>) -> Geometry<T> {
-        Geometry::MultiLineString(x)
+    fn from(x: MultiLineString<T>) -> Self {
+        Self::MultiLineString(x)
     }
 }
 impl<T: CoordNum> From<MultiPolygon<T>> for Geometry<T> {
-    fn from(x: MultiPolygon<T>) -> Geometry<T> {
-        Geometry::MultiPolygon(x)
+    fn from(x: MultiPolygon<T>) -> Self {
+        Self::MultiPolygon(x)
     }
 }
 
 impl<T: CoordNum> From<Rect<T>> for Geometry<T> {
-    fn from(x: Rect<T>) -> Geometry<T> {
-        Geometry::Rect(x)
+    fn from(x: Rect<T>) -> Self {
+        Self::Rect(x)
     }
 }
 
 impl<T: CoordNum> From<Triangle<T>> for Geometry<T> {
-    fn from(x: Triangle<T>) -> Geometry<T> {
-        Geometry::Triangle(x)
+    fn from(x: Triangle<T>) -> Self {
+        Self::Triangle(x)
     }
 }
 
@@ -96,8 +94,10 @@ impl<T: CoordNum> Geometry<T> {
     ///
     /// ```
     /// use geo_types::*;
+    /// use std::convert::TryInto;
+    ///
     /// let g = Geometry::Point(Point::new(0., 0.));
-    /// let p2: Point<f32> = g.into_point().unwrap();
+    /// let p2: Point<f32> = g.try_into().unwrap();
     /// assert_eq!(p2, Point::new(0., 0.,));
     /// ```
     #[deprecated(

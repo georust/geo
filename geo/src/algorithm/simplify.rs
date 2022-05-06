@@ -102,11 +102,11 @@ where
 /// Simplifies a geometry.
 ///
 /// The [Ramer–Douglas–Peucker
-/// algorithm](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) simplifes a
+/// algorithm](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) simplifies a
 /// linestring. Polygons are simplified by running the RDP algorithm on all their constituent
 /// rings. This may result in invalid Polygons, and has no guarantee of preserving topology.
 ///
-/// Multi* objects are simplified by simplifing all their constituent geometries individually.
+/// Multi* objects are simplified by simplifying all their constituent geometries individually.
 ///
 /// An epsilon less than or equal to zero will return an unaltered version of the geometry.
 pub trait Simplify<T, Epsilon = T> {
@@ -215,7 +215,7 @@ where
     T: GeoFloat,
 {
     fn simplify(&self, epsilon: &T) -> Self {
-        MultiLineString(self.iter().map(|l| l.simplify(epsilon)).collect())
+        MultiLineString::new(self.iter().map(|l| l.simplify(epsilon)).collect())
     }
 }
 
@@ -239,29 +239,30 @@ where
     T: GeoFloat,
 {
     fn simplify(&self, epsilon: &T) -> Self {
-        MultiPolygon(self.iter().map(|p| p.simplify(epsilon)).collect())
+        MultiPolygon::new(self.iter().map(|p| p.simplify(epsilon)).collect())
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::geo_types::coord;
     use crate::{line_string, polygon};
 
     #[test]
     fn rdp_test() {
         let vec = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 5.0, y: 4.0 },
-            Coordinate { x: 11.0, y: 5.5 },
-            Coordinate { x: 17.3, y: 3.2 },
-            Coordinate { x: 27.8, y: 0.1 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 5.0, y: 4.0 },
+            coord! { x: 11.0, y: 5.5 },
+            coord! { x: 17.3, y: 3.2 },
+            coord! { x: 27.8, y: 0.1 },
         ];
         let compare = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 5.0, y: 4.0 },
-            Coordinate { x: 11.0, y: 5.5 },
-            Coordinate { x: 27.8, y: 0.1 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 5.0, y: 4.0 },
+            coord! { x: 11.0, y: 5.5 },
+            coord! { x: 27.8, y: 0.1 },
         ];
         let simplified = rdp(vec.into_iter(), &1.0);
         assert_eq!(simplified, compare);
@@ -275,21 +276,15 @@ mod test {
     }
     #[test]
     fn rdp_test_two_point_linestring() {
-        let vec = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 27.8, y: 0.1 },
-        ];
-        let compare = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 27.8, y: 0.1 },
-        ];
+        let vec = vec![coord! { x: 0.0, y: 0.0 }, coord! { x: 27.8, y: 0.1 }];
+        let compare = vec![coord! { x: 0.0, y: 0.0 }, coord! { x: 27.8, y: 0.1 }];
         let simplified = rdp(vec.into_iter(), &1.0);
         assert_eq!(simplified, compare);
     }
 
     #[test]
     fn multilinestring() {
-        let mline = MultiLineString(vec![LineString::from(vec![
+        let mline = MultiLineString::new(vec![LineString::from(vec![
             (0.0, 0.0),
             (5.0, 4.0),
             (11.0, 5.5),
@@ -301,7 +296,7 @@ mod test {
 
         assert_eq!(
             mline2,
-            MultiLineString(vec![LineString::from(vec![
+            MultiLineString::new(vec![LineString::from(vec![
                 (0.0, 0.0),
                 (5.0, 4.0),
                 (11.0, 5.5),
@@ -337,7 +332,7 @@ mod test {
 
     #[test]
     fn multipolygon() {
-        let mpoly = MultiPolygon(vec![polygon![
+        let mpoly = MultiPolygon::new(vec![polygon![
             (x: 0., y: 0.),
             (x: 0., y: 10.),
             (x: 5., y: 11.),
@@ -350,7 +345,7 @@ mod test {
 
         assert_eq!(
             mpoly2,
-            MultiPolygon(vec![polygon![
+            MultiPolygon::new(vec![polygon![
                 (x: 0., y: 0.),
                 (x: 0., y: 10.),
                 (x: 10., y: 10.),

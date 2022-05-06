@@ -249,7 +249,7 @@ where
 {
     /// Minimum distance from a `Line` to a `Coordinate`
     fn euclidean_distance(&self, coord: &Coordinate<T>) -> T {
-        ::geo_types::private_utils::point_line_euclidean_distance(Point(*coord), *self)
+        ::geo_types::private_utils::point_line_euclidean_distance(Point::from(*coord), *self)
     }
 }
 
@@ -387,7 +387,9 @@ where
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
         if self.intersects(other) || other.contains(self) {
             T::zero()
-        } else if !other.interiors().is_empty() && ring_contains_point(other, Point(self.0[0])) {
+        } else if !other.interiors().is_empty()
+            && ring_contains_point(other, Point::from(self.0[0]))
+        {
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
             for ring in other.interiors() {
@@ -461,7 +463,9 @@ where
             return T::zero();
         }
         // Containment check
-        if !self.interiors().is_empty() && ring_contains_point(self, Point(poly2.exterior().0[0])) {
+        if !self.interiors().is_empty()
+            && ring_contains_point(self, Point::from(poly2.exterior().0[0]))
+        {
             // check each ring distance, returning the minimum
             let mut mindist: T = Float::max_value();
             for ring in self.interiors() {
@@ -469,7 +473,7 @@ where
             }
             return mindist;
         } else if !poly2.interiors().is_empty()
-            && ring_contains_point(poly2, Point(self.exterior().0[0]))
+            && ring_contains_point(poly2, Point::from(self.exterior().0[0]))
         {
             let mut mindist: T = Float::max_value();
             for ring in poly2.interiors() {
@@ -559,19 +563,15 @@ where
     let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect::<Vec<_>>());
     // Return minimum distance between all geom a points and all geom b points
     geom2
-        .points_iter()
+        .points()
         .fold(<T as Bounded>::max_value(), |acc, point| {
             let nearest = tree_a.nearest_neighbor(&point).unwrap();
             acc.min(nearest.euclidean_distance(&point))
         })
-        .min(
-            geom1
-                .points_iter()
-                .fold(Bounded::max_value(), |acc, point| {
-                    let nearest = tree_b.nearest_neighbor(&point).unwrap();
-                    acc.min(nearest.euclidean_distance(&point))
-                }),
-        )
+        .min(geom1.points().fold(Bounded::max_value(), |acc, point| {
+            let nearest = tree_b.nearest_neighbor(&point).unwrap();
+            acc.min(nearest.euclidean_distance(&point))
+        }))
 }
 
 #[cfg(test)]
@@ -580,7 +580,8 @@ mod test {
     use crate::algorithm::convex_hull::ConvexHull;
     use crate::algorithm::euclidean_distance::EuclideanDistance;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
-    use geo_types::{polygon, private_utils::line_segment_distance, Coordinate};
+    use geo_types::Rect;
+    use geo_types::{coord, polygon, private_utils::line_segment_distance};
 
     #[test]
     fn line_segment_distance_test() {
@@ -691,7 +692,7 @@ mod test {
     fn point_polygon_empty_test() {
         // an empty Polygon
         let points = vec![];
-        let ls = LineString(points);
+        let ls = LineString::new(points);
         let poly = Polygon::new(ls, vec![]);
         // A point on the octagon
         let p = Point::new(2.5, 0.5);
@@ -756,7 +757,7 @@ mod test {
         let pol1 = Polygon::new(ls1, vec![]);
         let pol2 = Polygon::new(ls2, vec![]);
         let pol3 = Polygon::new(ls3, vec![]);
-        let mp = MultiPolygon(vec![pol1.clone(), pol2, pol3]);
+        let mp = MultiPolygon::new(vec![pol1.clone(), pol2, pol3]);
         let pnt1 = Point::new(0.0, 15.0);
         let pnt2 = Point::new(10.0, 20.0);
         let ln = Line::new(pnt1.0, pnt2.0);
@@ -771,7 +772,7 @@ mod test {
         let ls2 = LineString::from(vec![(3.0, 0.0), (4.0, 10.0), (5.0, 0.0), (3.0, 0.0)]);
         let p1 = Polygon::new(ls1, vec![]);
         let p2 = Polygon::new(ls2, vec![]);
-        let mp = MultiPolygon(vec![p1, p2]);
+        let mp = MultiPolygon::new(vec![p1, p2]);
         let p = Point::new(50.0, 50.0);
         assert_relative_eq!(p.euclidean_distance(&mp), 60.959002616512684);
     }
@@ -828,7 +829,7 @@ mod test {
     // Point to LineString, empty LineString
     fn point_linestring_empty_test() {
         let points = vec![];
-        let ls = LineString(points);
+        let ls = LineString::new(points);
         let p = Point::new(5.0, 4.0);
         let dist = p.euclidean_distance(&ls);
         assert_relative_eq!(dist, 0.0);
@@ -837,7 +838,7 @@ mod test {
     fn distance_multilinestring_test() {
         let v1 = LineString::from(vec![(0.0, 0.0), (1.0, 10.0)]);
         let v2 = LineString::from(vec![(1.0, 10.0), (2.0, 0.0), (3.0, 1.0)]);
-        let mls = MultiLineString(vec![v1, v2]);
+        let mls = MultiLineString::new(vec![v1, v2]);
         let p = Point::new(50.0, 50.0);
         assert_relative_eq!(p.euclidean_distance(&mls), 63.25345840347388);
     }
@@ -866,7 +867,7 @@ mod test {
             Point::new(-1.0, 1.0),
             Point::new(0.0, 10.0),
         ];
-        let mp = MultiPoint(v);
+        let mp = MultiPoint::new(v);
         let p = Point::new(50.0, 50.0);
         assert_relative_eq!(p.euclidean_distance(&mp), 64.03124237432849)
     }
@@ -896,29 +897,29 @@ mod test {
     // See https://github.com/georust/geo/issues/476
     fn distance_line_polygon_test() {
         let line = Line::new(
-            Coordinate {
+            coord! {
                 x: -0.17084137691985102,
                 y: 0.8748085493016657,
             },
-            Coordinate {
+            coord! {
                 x: -0.17084137691985102,
                 y: 0.09858870312437906,
             },
         );
         let poly: Polygon<f64> = polygon![
-            Coordinate {
+            coord! {
                 x: -0.10781391405721802,
                 y: -0.15433610862574643,
             },
-            Coordinate {
+            coord! {
                 x: -0.7855276236615211,
                 y: 0.23694208404779793,
             },
-            Coordinate {
+            coord! {
                 x: -0.7855276236615214,
                 y: -0.5456143012992907,
             },
-            Coordinate {
+            coord! {
                 x: -0.10781391405721802,
                 y: -0.15433610862574643,
             },
@@ -1030,10 +1031,46 @@ mod test {
         assert_relative_eq!(dist2, 12.0);
     }
     #[test]
+    // test vertex-vertex minimum distance
+    fn test_minimum_polygon_distance_4() {
+        let poly1 = Rect::new((0., 0.), (1., 1.)).to_polygon();
+        let poly2 = Rect::new((2., 2.), (3., 3.)).to_polygon();
+        let dist = min_poly_dist(&poly1, &poly2);
+        let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
+        assert_eq!(dist, dist2);
+    }
+    #[test]
+    fn test_minimum_polygon_distance_5() {
+        let poly1 = polygon!(
+                exterior: [
+                    (x: -1.5350399, y: -0.18596762),
+                    (x: -0.33726108, y: 0.2206358),
+                    (x: -0.13836576, y: 0.42173427),
+                    (x: -0.33946428, y: 0.6206298),
+                    (x: -1.1405537, y: 0.8162205),
+                    (x: -1.3405507, y: 0.81511897),
+                    (x: -1.5372429, y: 0.21402647),
+                ],
+                interiors: []
+            );
+
+        let poly2 = polygon!(
+                exterior: [
+                    (x: 0.6649223, y: -0.17384565),
+                    (x: 0.8649193, y: -0.1727441),
+                    (x: 1.0616114, y: 0.4283484),
+                    (x: 0.8616146, y: 0.4272468),
+                    (x: 0.66271913, y: 0.22614834),
+                ],
+                interiors: []
+            );
+        let dist = min_poly_dist(&poly1, &poly2);
+        let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
+        assert_eq!(dist, dist2);
+    }
+    #[test]
     fn test_large_polygon_distance() {
-        let points = include!("test_fixtures/norway_main.rs");
-        let points_ls: Vec<_> = points.iter().map(|e| Point::new(e[0], e[1])).collect();
-        let ls = LineString::from(points_ls);
+        let ls = geo_test_fixtures::norway_main::<f64>();
         let poly1 = Polygon::new(ls, vec![]);
         let vec2 = vec![
             (4.921875, 66.33750501996518),
@@ -1050,25 +1087,20 @@ mod test {
     // A polygon inside another polygon's ring; they're disjoint in the DE-9IM sense:
     // FF2FF1212
     fn test_poly_in_ring() {
-        let shell = include!("test_fixtures/shell.rs");
-        let shell_ls: LineString<f64> = shell.into();
-        let ring = include!("test_fixtures/ring.rs");
-        let ring_ls: LineString<f64> = ring.into();
-        let poly_in_ring = include!("test_fixtures/poly_in_ring.rs");
-        let poly_in_ring_ls: LineString<f64> = poly_in_ring.into();
+        let shell = geo_test_fixtures::shell::<f64>();
+        let ring = geo_test_fixtures::ring::<f64>();
+        let poly_in_ring = geo_test_fixtures::poly_in_ring::<f64>();
         // inside is "inside" outside's ring, but they are disjoint
-        let outside = Polygon::new(shell_ls, vec![ring_ls]);
-        let inside = Polygon::new(poly_in_ring_ls, vec![]);
+        let outside = Polygon::new(shell, vec![ring]);
+        let inside = Polygon::new(poly_in_ring, vec![]);
         assert_relative_eq!(outside.euclidean_distance(&inside), 5.992772737231033);
     }
     #[test]
     // two ring LineStrings; one encloses the other but they neither touch nor intersect
     fn test_linestring_distance() {
-        let ring = include!("test_fixtures/ring.rs");
-        let ring_ls: LineString<f64> = ring.into();
-        let in_ring = include!("test_fixtures/poly_in_ring.rs");
-        let in_ring_ls: LineString<f64> = in_ring.into();
-        assert_relative_eq!(ring_ls.euclidean_distance(&in_ring_ls), 5.992772737231033);
+        let ring = geo_test_fixtures::ring::<f64>();
+        let poly_in_ring = geo_test_fixtures::poly_in_ring::<f64>();
+        assert_relative_eq!(ring.euclidean_distance(&poly_in_ring), 5.992772737231033);
     }
     #[test]
     // Line-Polygon test: closest point on Polygon is NOT nearest to a Line end-point

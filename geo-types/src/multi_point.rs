@@ -30,30 +30,28 @@ use std::iter::FromIterator;
 /// ```
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MultiPoint<T>(pub Vec<Point<T>>)
-where
-    T: CoordNum;
+pub struct MultiPoint<T: CoordNum>(pub Vec<Point<T>>);
 
 impl<T: CoordNum, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
     /// Convert a single `Point` (or something which can be converted to a `Point`) into a
     /// one-member `MultiPoint`
-    fn from(x: IP) -> MultiPoint<T> {
-        MultiPoint(vec![x.into()])
+    fn from(x: IP) -> Self {
+        Self(vec![x.into()])
     }
 }
 
 impl<T: CoordNum, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
     /// Convert a `Vec` of `Points` (or `Vec` of things which can be converted to a `Point`) into a
     /// `MultiPoint`.
-    fn from(v: Vec<IP>) -> MultiPoint<T> {
-        MultiPoint(v.into_iter().map(|p| p.into()).collect())
+    fn from(v: Vec<IP>) -> Self {
+        Self(v.into_iter().map(|p| p.into()).collect())
     }
 }
 
 impl<T: CoordNum, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
     /// Collect the results of a `Point` iterator into a `MultiPoint`
     fn from_iter<I: IntoIterator<Item = IP>>(iter: I) -> Self {
-        MultiPoint(iter.into_iter().map(|p| p.into()).collect())
+        Self(iter.into_iter().map(|p| p.into()).collect())
     }
 }
 
@@ -86,6 +84,10 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPoint<T> {
 }
 
 impl<T: CoordNum> MultiPoint<T> {
+    pub fn new(value: Vec<Point<T>>) -> Self {
+        Self(value)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &Point<T>> {
         self.0.iter()
     }
@@ -113,8 +115,8 @@ where
     /// use geo_types::MultiPoint;
     /// use geo_types::point;
     ///
-    /// let a = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
-    /// let b = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.001, y: 10.]]);
+    /// let a = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+    /// let b = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10.001, y: 10.]]);
     ///
     /// approx::assert_relative_eq!(a, b, max_relative=0.1)
     /// ```
@@ -155,8 +157,8 @@ where
     /// use geo_types::MultiPoint;
     /// use geo_types::point;
     ///
-    /// let a = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
-    /// let b = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.001, y: 10.]]);
+    /// let a = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+    /// let b = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10.001, y: 10.]]);
     ///
     /// approx::abs_diff_eq!(a, b, epsilon=0.1);
     /// ```
@@ -178,7 +180,7 @@ mod test {
 
     #[test]
     fn test_iter() {
-        let multi = MultiPoint(vec![point![x: 0, y: 0], point![x: 10, y: 10]]);
+        let multi = MultiPoint::new(vec![point![x: 0, y: 0], point![x: 10, y: 10]]);
 
         let mut first = true;
         for p in &multi {
@@ -204,7 +206,7 @@ mod test {
 
     #[test]
     fn test_iter_mut() {
-        let mut multi = MultiPoint(vec![point![x: 0, y: 0], point![x: 10, y: 10]]);
+        let mut multi = MultiPoint::new(vec![point![x: 0, y: 0], point![x: 10, y: 10]]);
 
         for point in &mut multi {
             point.0.x += 1;
@@ -231,22 +233,22 @@ mod test {
     fn test_relative_eq() {
         let delta = 1e-6;
 
-        let multi = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+        let multi = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
 
-        let multi_x = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.+delta, y: 10.]]);
+        let multi_x = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10.+delta, y: 10.]]);
         assert!(multi.relative_eq(&multi_x, 1e-2, 1e-2));
         assert!(multi.relative_ne(&multi_x, 1e-12, 1e-12));
 
-        let multi_y = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.+delta]]);
+        let multi_y = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10., y: 10.+delta]]);
         assert!(multi.relative_eq(&multi_y, 1e-2, 1e-2));
         assert!(multi.relative_ne(&multi_y, 1e-12, 1e-12));
 
         // Under-sized but otherwise equal.
-        let multi_undersized = MultiPoint(vec![point![x: 0., y: 0.]]);
+        let multi_undersized = MultiPoint::new(vec![point![x: 0., y: 0.]]);
         assert!(multi.relative_ne(&multi_undersized, 1., 1.));
 
         // Over-sized but otherwise equal.
-        let multi_oversized = MultiPoint(vec![
+        let multi_oversized = MultiPoint::new(vec![
             point![x: 0., y: 0.],
             point![x: 10., y: 10.],
             point![x: 10., y:100.],
@@ -258,22 +260,22 @@ mod test {
     fn test_abs_diff_eq() {
         let delta = 1e-6;
 
-        let multi = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+        let multi = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
 
-        let multi_x = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10.+delta, y: 10.]]);
+        let multi_x = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10.+delta, y: 10.]]);
         assert!(multi.abs_diff_eq(&multi_x, 1e-2));
         assert!(multi.abs_diff_ne(&multi_x, 1e-12));
 
-        let multi_y = MultiPoint(vec![point![x: 0., y: 0.], point![x: 10., y: 10.+delta]]);
+        let multi_y = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10., y: 10.+delta]]);
         assert!(multi.abs_diff_eq(&multi_y, 1e-2));
         assert!(multi.abs_diff_ne(&multi_y, 1e-12));
 
         // Under-sized but otherwise equal.
-        let multi_undersized = MultiPoint(vec![point![x: 0., y: 0.]]);
+        let multi_undersized = MultiPoint::new(vec![point![x: 0., y: 0.]]);
         assert!(multi.abs_diff_ne(&multi_undersized, 1.));
 
         // Over-sized but otherwise equal.
-        let multi_oversized = MultiPoint(vec![
+        let multi_oversized = MultiPoint::new(vec![
             point![x: 0., y: 0.],
             point![x: 10., y: 10.],
             point![x: 10., y:100.],

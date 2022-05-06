@@ -40,9 +40,9 @@ impl GeodesicIntermediate<f64> for Point<f64> {
     fn geodesic_intermediate(&self, other: &Point<f64>, f: f64) -> Point<f64> {
         let g = Geodesic::wgs84();
         let (total_distance, azi1, _azi2, _a12) =
-            g.inverse(self.lat(), self.lng(), other.lat(), other.lng());
+            g.inverse(self.y(), self.x(), other.y(), other.x());
         let distance = total_distance * f;
-        let (lat2, lon2) = g.direct(self.lat(), self.lng(), azi1, distance);
+        let (lat2, lon2) = g.direct(self.y(), self.x(), azi1, distance);
 
         Point::new(lon2, lat2)
     }
@@ -55,14 +55,14 @@ impl GeodesicIntermediate<f64> for Point<f64> {
     ) -> Vec<Point<f64>> {
         let g = Geodesic::wgs84();
         let (total_distance, azi1, _azi2, _a12) =
-            g.inverse(self.lat(), self.lng(), other.lat(), other.lng());
+            g.inverse(self.y(), self.x(), other.y(), other.x());
 
         if total_distance <= max_dist {
-            if include_ends {
-                return vec![*self, *other];
+            return if include_ends {
+                vec![*self, *other]
             } else {
-                return vec![];
-            }
+                vec![]
+            };
         }
 
         let number_of_points = (total_distance / max_dist).ceil();
@@ -72,8 +72,7 @@ impl GeodesicIntermediate<f64> for Point<f64> {
         let mut points = if include_ends { vec![*self] } else { vec![] };
 
         while current_step < 1.0 {
-            let (lat2, lon2) =
-                g.direct(self.lat(), self.lng(), azi1, total_distance * current_step);
+            let (lat2, lon2) = g.direct(self.y(), self.x(), azi1, total_distance * current_step);
             let point = Point::new(lon2, lat2);
             points.push(point);
             current_step += interval;

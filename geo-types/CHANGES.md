@@ -2,8 +2,42 @@
 
 ## Unreleased
 
+* Add `split_x` and `split_y` methods on `Rect`
+  * <https://github.com/georust/geo/pull/823>
+
+## 0.7.4
+
+* BREAKING: Make `Rect::to_lines` return lines in winding order for `Rect::to_polygon`.
+  * <https://github.com/georust/geo/pull/757>
+* Note: All crates have been migrated to Rust 2021 edition. The MSRV when installing the latest dependencies has increased to 1.56.
+  * <https://github.com/georust/geo/pull/741>
+* Macros `coord!`, `point!`, `line_string!`, and `polygon!` now support trailing commas such as `coord! { x: 181.2, y: 51.79, }`
+  * <https://github.com/georust/geo/pull/752>
+* Internal cleanup: Explicitly declare `use-rstar_0_8` and `use-rstar_0_9` features to be explicit which rstar version is being used. For backward compatibility, the `use-rstar` feature will still enable `use-rstar_0_8`.
+  * <https://github.com/georust/geo/pull/759>
+* Add missing size_hint() method for point and coordinate iterators on LineString
+  * <https://github.com/georust/geo/issues/762>
+* Add ExactsizeIterator impl for Points iterator on LineString
+  * <https://github.com/georust/geo/pull/767>
+* Extend `point!` macro to support single coordinate expression arguments `point!(coordinate)` (coordinate can be created with the `coord!` macro)
+  * <https://github.com/georust/geo/pull/775>
+* `LineString`, `MultiPoint`, `MultiPolygon`, `Triangle`, `MultiLineString` now have a new constructor `new(...)`. `GeometryCollection` has a `new_from(...)` constructor. `GeometryCollection::new()` has been deprecated - use `GeometryCollection::default()` instead. Do not use tuple constructors like ~~`MultiPoint(...)`~~ for any of the geo-types. Use `MultiPoint::new(...)` and similar ones instead.
+  * PRs: [MultiPolygon::new](https://github.com/georust/geo/pull/786), [MultiLineString::new](https://github.com/georust/geo/pull/784), [Triangle::new](https://github.com/georust/geo/pull/783), [GeometryCollection::new_from](https://github.com/georust/geo/pull/782), [LineString::new](https://github.com/georust/geo/pull/781), [MultiPoint::new](https://github.com/georust/geo/pull/778), [Point::from](https://github.com/georust/geo/pull/777)
+
+## 0.7.3
+
+* DEPRECATION: Deprecate `Point::lng`, `Point::lat`, `Point::set_lng` and `Point::set_lat`
+  * <https://github.com/georust/geo/pull/711>
 * Support `rstar` version `0.9` in feature `use-rstar_0_9`
   * <https://github.com/georust/geo/pull/682>
+* `Geometry` and `GeometryCollection` now support serde.
+  * <https://github.com/georust/geo/pull/704>
+* Add `Coordinate` iterators to LineString, regularise its iterator methods, and refactor its docs
+  * <https://github.com/georust/geo/pull/705>
+* Add +=, -=, \*=, and /= for Point
+  * <https://github.com/georust/geo/pull/715>
+* Note: The MSRV when installing the latest dependencies has increased to 1.55
+  * <https://github.com/georust/geo/pull/726>
 
 * Add support for `Polygon` in `RTree`
   * https://github.com/georust/geo/pull/351
@@ -59,7 +93,7 @@
   * <https://github.com/georust/geo/pull/468>
 * Add `Triangle` and `Rect` to `Geometry`
   * <https://github.com/georust/geo/pull/432>
-* Introduce `Rect::try_new` constructor which doesn’t panic
+* Introduce `Rect::try_new` constructor which does not panic
   * <https://github.com/georust/geo/pull/442>
 * Add `Rect::center` method
   * <https://github.com/georust/geo/pull/450>
@@ -148,7 +182,7 @@
   * <https://github.com/georust/geo/pull/265>
 * Introduce `x_y` method on `Point` and `Coordinate`
   * <https://github.com/georust/geo/pull/277>
-* Migrate `Line` aand `LineString` to be a series of `Coordinates` (not `Points`).
+* Migrate `Line` and `LineString` to be a series of `Coordinates` (not `Points`).
   * <https://github.com/georust/geo/pull/244>
 * Introduce Triangle geometry type.
   * <https://github.com/georust/geo/pull/285>

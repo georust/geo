@@ -70,11 +70,11 @@ where
         let b = T::from(POLAR_EARTH_RADIUS).unwrap();
         let f = T::from(EARTH_FLATTENING).unwrap();
         // Difference in longitude
-        let L = (rhs.lng() - self.lng()).to_radians();
+        let L = (rhs.x() - self.x()).to_radians();
         // Reduced latitude (latitude on the auxiliary sphere)
-        let U1 = ((t_1 - f) * self.lat().to_radians().tan()).atan();
+        let U1 = ((t_1 - f) * self.y().to_radians().tan()).atan();
         // Reduced latitude (latitude on the auxiliary sphere)
-        let U2 = ((t_1 - f) * rhs.lat().to_radians().tan()).atan();
+        let U2 = ((t_1 - f) * rhs.y().to_radians().tan()).atan();
         let (sinU1, cosU1) = U1.sin_cos();
         let (sinU2, cosU2) = U2.sin_cos();
         let mut cosSqAlpha;
@@ -95,13 +95,13 @@ where
                 .sqrt();
 
             if sinSigma.is_zero() {
-                if self == rhs {
+                return if self == rhs {
                     // coincident points
-                    return Ok(T::zero());
+                    Ok(T::zero())
                 } else {
-                    // anitpodal points, for which vincenty does not converge
-                    return Err(FailedToConvergeError);
-                }
+                    // antipodal points, for which vincenty does not converge
+                    Err(FailedToConvergeError)
+                };
             }
 
             cosSigma = sinU1 * sinU2 + cosU1 * cosU2 * cosLambda;

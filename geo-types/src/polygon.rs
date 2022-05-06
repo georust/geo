@@ -66,18 +66,12 @@ use approx::{AbsDiffEq, RelativeEq};
 /// [`LineString`]: line_string/struct.LineString.html
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Polygon<T>
-where
-    T: CoordNum,
-{
+pub struct Polygon<T: CoordNum> {
     exterior: LineString<T>,
     interiors: Vec<LineString<T>>,
 }
 
-impl<T> Polygon<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Polygon<T> {
     /// Create a new `Polygon` with the provided exterior `LineString` ring and
     /// interior `LineString` rings.
     ///
@@ -119,7 +113,7 @@ where
     /// `LineString`s no longer match, those `LineString`s [will be closed]:
     ///
     /// ```
-    /// use geo_types::{Coordinate, LineString, Polygon};
+    /// use geo_types::{coord, LineString, Polygon};
     ///
     /// let mut polygon = Polygon::new(LineString::from(vec![(0., 0.), (1., 1.), (1., 0.)]), vec![]);
     ///
@@ -128,12 +122,12 @@ where
     ///     &LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.),])
     /// );
     /// ```
-    pub fn new(mut exterior: LineString<T>, mut interiors: Vec<LineString<T>>) -> Polygon<T> {
+    pub fn new(mut exterior: LineString<T>, mut interiors: Vec<LineString<T>>) -> Self {
         exterior.close();
         for interior in &mut interiors {
             interior.close();
         }
-        Polygon {
+        Self {
             exterior,
             interiors,
         }
@@ -203,7 +197,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, LineString, Polygon};
+    /// use geo_types::{coord, LineString, Polygon};
     ///
     /// let mut polygon = Polygon::new(
     ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
@@ -211,7 +205,7 @@ where
     /// );
     ///
     /// polygon.exterior_mut(|exterior| {
-    ///     exterior.0[1] = Coordinate { x: 1., y: 2. };
+    ///     exterior.0[1] = coord! { x: 1., y: 2. };
     /// });
     ///
     /// assert_eq!(
@@ -224,7 +218,7 @@ where
     /// longer match, the `LineString` [will be closed]:
     ///
     /// ```
-    /// use geo_types::{Coordinate, LineString, Polygon};
+    /// use geo_types::{coord, LineString, Polygon};
     ///
     /// let mut polygon = Polygon::new(
     ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
@@ -232,7 +226,7 @@ where
     /// );
     ///
     /// polygon.exterior_mut(|exterior| {
-    ///     exterior.0[0] = Coordinate { x: 0., y: 1. };
+    ///     exterior.0[0] = coord! { x: 0., y: 1. };
     /// });
     ///
     /// assert_eq!(
@@ -255,7 +249,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, LineString, Polygon};
+    /// use geo_types::{coord, LineString, Polygon};
     ///
     /// let interiors = vec![LineString::from(vec![
     ///     (0.1, 0.1),
@@ -284,7 +278,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, LineString, Polygon};
+    /// use geo_types::{coord, LineString, Polygon};
     ///
     /// let mut polygon = Polygon::new(
     ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
@@ -297,7 +291,7 @@ where
     /// );
     ///
     /// polygon.interiors_mut(|interiors| {
-    ///     interiors[0].0[1] = Coordinate { x: 0.8, y: 0.8 };
+    ///     interiors[0].0[1] = coord! { x: 0.8, y: 0.8 };
     /// });
     ///
     /// assert_eq!(
@@ -315,7 +309,7 @@ where
     /// longer match, those `LineString`s [will be closed]:
     ///
     /// ```
-    /// use geo_types::{Coordinate, LineString, Polygon};
+    /// use geo_types::{coord, LineString, Polygon};
     ///
     /// let mut polygon = Polygon::new(
     ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
@@ -328,7 +322,7 @@ where
     /// );
     ///
     /// polygon.interiors_mut(|interiors| {
-    ///     interiors[0].0[0] = Coordinate { x: 0.1, y: 0.2 };
+    ///     interiors[0].0[0] = coord! { x: 0.1, y: 0.2 };
     /// });
     ///
     /// assert_eq!(
@@ -361,7 +355,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, LineString, Polygon};
+    /// use geo_types::{coord, LineString, Polygon};
     ///
     /// let mut polygon = Polygon::new(
     ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
@@ -408,10 +402,7 @@ enum ListSign {
     Mixed,
 }
 
-impl<T> Polygon<T>
-where
-    T: CoordFloat + Signed,
-{
+impl<T: CoordFloat + Signed> Polygon<T> {
     /// Determine whether a Polygon is convex
     // For each consecutive pair of edges of the polygon (each triplet of points),
     // compute the z-component of the cross product of the vectors defined by the
@@ -433,8 +424,10 @@ where
             .map(|(idx, _)| {
                 let prev_1 = self.previous_vertex(idx);
                 let prev_2 = self.previous_vertex(prev_1);
-                Point(self.exterior.0[prev_2])
-                    .cross_prod(Point(self.exterior.0[prev_1]), Point(self.exterior.0[idx]))
+                Point::from(self.exterior[prev_2]).cross_prod(
+                    Point::from(self.exterior[prev_1]),
+                    Point::from(self.exterior[idx]),
+                )
             })
             // accumulate and check cross-product result signs in a single pass
             // positive implies ccw convexity, negative implies cw convexity
@@ -449,7 +442,7 @@ where
 }
 
 impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
-    fn from(r: Rect<T>) -> Polygon<T> {
+    fn from(r: Rect<T>) -> Self {
         Polygon::new(
             vec![
                 (r.min().x, r.min().y),
@@ -465,7 +458,7 @@ impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
 }
 
 impl<T: CoordNum> From<Triangle<T>> for Polygon<T> {
-    fn from(t: Triangle<T>) -> Polygon<T> {
+    fn from(t: Triangle<T>) -> Self {
         Polygon::new(vec![t.0, t.1, t.2, t.0].into(), Vec::new())
     }
 }

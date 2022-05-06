@@ -1,4 +1,4 @@
-use crate::{polygon, CoordFloat, CoordNum, Coordinate, Line, Polygon};
+use crate::{coord, polygon, CoordFloat, CoordNum, Coordinate, Line, Polygon};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -23,26 +23,23 @@ use approx::{AbsDiffEq, RelativeEq};
 /// # Examples
 ///
 /// ```
-/// use geo_types::{Coordinate, Rect};
+/// use geo_types::{coord, Rect};
 ///
 /// let rect = Rect::new(
-///     Coordinate { x: 0., y: 4.},
-///     Coordinate { x: 3., y: 10.},
+///     coord! { x: 0., y: 4.},
+///     coord! { x: 3., y: 10.},
 /// );
 ///
 /// assert_eq!(3., rect.width());
 /// assert_eq!(6., rect.height());
 /// assert_eq!(
-///     Coordinate { x: 1.5, y: 7. },
+///     coord! { x: 1.5, y: 7. },
 ///     rect.center()
 /// );
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T>
-where
-    T: CoordNum,
-{
+pub struct Rect<T: CoordNum> {
     min: Coordinate<T>,
     max: Coordinate<T>,
 }
@@ -53,16 +50,16 @@ impl<T: CoordNum> Rect<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, Rect};
+    /// use geo_types::{coord, Rect};
     ///
     /// let rect = Rect::new(
-    ///     Coordinate { x: 10., y: 20. },
-    ///     Coordinate { x: 30., y: 10. }
+    ///     coord! { x: 10., y: 20. },
+    ///     coord! { x: 30., y: 10. }
     /// );
-    /// assert_eq!(rect.min(), Coordinate { x: 10., y: 10. });
-    /// assert_eq!(rect.max(), Coordinate { x: 30., y: 20. });
+    /// assert_eq!(rect.min(), coord! { x: 10., y: 10. });
+    /// assert_eq!(rect.max(), coord! { x: 30., y: 20. });
     /// ```
-    pub fn new<C>(c1: C, c2: C) -> Rect<T>
+    pub fn new<C>(c1: C, c2: C) -> Self
     where
         C: Into<Coordinate<T>>,
     {
@@ -78,9 +75,9 @@ impl<T: CoordNum> Rect<T> {
         } else {
             (c2.y, c1.y)
         };
-        Rect {
-            min: Coordinate { x: min_x, y: min_y },
-            max: Coordinate { x: max_x, y: max_y },
+        Self {
+            min: coord! { x: min_x, y: min_y },
+            max: coord! { x: max_x, y: max_y },
         }
     }
 
@@ -101,14 +98,14 @@ impl<T: CoordNum> Rect<T> {
     /// # Examples
     ///
     /// ```rust
-    /// use geo_types::{Coordinate, Rect};
+    /// use geo_types::{coord, Rect};
     ///
     /// let rect = Rect::new(
-    ///     Coordinate { x: 5., y: 5. },
-    ///     Coordinate { x: 15., y: 15. },
+    ///     coord! { x: 5., y: 5. },
+    ///     coord! { x: 15., y: 15. },
     /// );
     ///
-    /// assert_eq!(rect.min(), Coordinate { x: 5., y: 5. });
+    /// assert_eq!(rect.min(), coord! { x: 5., y: 5. });
     /// ```
     pub fn min(self) -> Coordinate<T> {
         self.min
@@ -132,14 +129,14 @@ impl<T: CoordNum> Rect<T> {
     /// # Examples
     ///
     /// ```rust
-    /// use geo_types::{Coordinate, Rect};
+    /// use geo_types::{coord, Rect};
     ///
     /// let rect = Rect::new(
-    ///     Coordinate { x: 5., y: 5. },
-    ///     Coordinate { x: 15., y: 15. },
+    ///     coord! { x: 5., y: 5. },
+    ///     coord! { x: 15., y: 15. },
     /// );
     ///
-    /// assert_eq!(rect.max(), Coordinate { x: 15., y: 15. });
+    /// assert_eq!(rect.max(), coord! { x: 15., y: 15. });
     /// ```
     pub fn max(self) -> Coordinate<T> {
         self.max
@@ -163,11 +160,11 @@ impl<T: CoordNum> Rect<T> {
     /// # Examples
     ///
     /// ```rust
-    /// use geo_types::{Coordinate, Rect};
+    /// use geo_types::{coord, Rect};
     ///
     /// let rect = Rect::new(
-    ///     Coordinate { x: 5., y: 5. },
-    ///     Coordinate { x: 15., y: 15. },
+    ///     coord! { x: 5., y: 5. },
+    ///     coord! { x: 15., y: 15. },
     /// );
     ///
     /// assert_eq!(rect.width(), 10.);
@@ -181,11 +178,11 @@ impl<T: CoordNum> Rect<T> {
     /// # Examples
     ///
     /// ```rust
-    /// use geo_types::{Coordinate, Rect};
+    /// use geo_types::{coord, Rect};
     ///
     /// let rect = Rect::new(
-    ///     Coordinate { x: 5., y: 5. },
-    ///     Coordinate { x: 15., y: 15. },
+    ///     coord! { x: 5., y: 5. },
+    ///     coord! { x: 15., y: 15. },
     /// );
     ///
     /// assert_eq!(rect.height(), 10.);
@@ -199,20 +196,20 @@ impl<T: CoordNum> Rect<T> {
     /// # Examples
     ///
     /// ```rust
-    /// use geo_types::{Coordinate, Rect, polygon};
+    /// use geo_types::{coord, Rect, polygon};
     ///
     /// let rect = Rect::new(
-    ///     Coordinate { x: 0., y: 0. },
-    ///     Coordinate { x: 10., y: 20. },
+    ///     coord! { x: 0., y: 0. },
+    ///     coord! { x: 1., y: 2. },
     /// );
     ///
     /// assert_eq!(
     ///     rect.to_polygon(),
     ///     polygon![
     ///         (x: 0., y: 0.),
-    ///         (x: 0., y: 20.),
-    ///         (x: 10., y: 20.),
-    ///         (x: 10., y: 0.),
+    ///         (x: 0., y: 2.),
+    ///         (x: 1., y: 2.),
+    ///         (x: 1., y: 0.),
     ///         (x: 0., y: 0.),
     ///     ],
     /// );
@@ -230,45 +227,117 @@ impl<T: CoordNum> Rect<T> {
     pub fn to_lines(&self) -> [Line<T>; 4] {
         [
             Line::new(
-                Coordinate {
+                coord! {
                     x: self.min.x,
                     y: self.min.y,
                 },
-                Coordinate {
+                coord! {
                     x: self.min.x,
                     y: self.max.y,
                 },
             ),
             Line::new(
-                Coordinate {
+                coord! {
                     x: self.min.x,
                     y: self.max.y,
                 },
-                Coordinate {
+                coord! {
                     x: self.max.x,
                     y: self.max.y,
                 },
             ),
             Line::new(
-                Coordinate {
-                    x: self.min.x,
-                    y: self.min.y,
+                coord! {
+                    x: self.max.x,
+                    y: self.max.y,
                 },
-                Coordinate {
+                coord! {
                     x: self.max.x,
                     y: self.min.y,
                 },
             ),
             Line::new(
-                Coordinate {
+                coord! {
                     x: self.max.x,
                     y: self.min.y,
                 },
-                Coordinate {
-                    x: self.max.x,
-                    y: self.max.y,
+                coord! {
+                    x: self.min.x,
+                    y: self.min.y,
                 },
             ),
+        ]
+    }
+
+    /// Split a rectangle into two rectangles along the X-axis with equal widths.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let rect = geo_types::Rect::new(
+    ///     geo_types::coord! { x: 0., y: 0. },
+    ///     geo_types::coord! { x: 4., y: 4. },
+    /// );
+    ///
+    /// let [rect1, rect2] = rect.split_x();
+    ///
+    /// assert_eq!(
+    ///     geo_types::Rect::new(
+    ///         geo_types::coord! { x: 0., y: 0. },
+    ///         geo_types::coord! { x: 2., y: 4. },
+    ///     ),
+    ///     rect1,
+    /// );
+    /// assert_eq!(
+    ///     geo_types::Rect::new(
+    ///         geo_types::coord! { x: 2., y: 0. },
+    ///         geo_types::coord! { x: 4., y: 4. },
+    ///     ),
+    ///     rect2,
+    /// );
+    /// ```
+    pub fn split_x(self) -> [Rect<T>; 2] {
+        let two = T::one() + T::one();
+        let mid_x = self.min().x + self.width() / two;
+        [
+            Rect::new(self.min(), coord! { x: mid_x, y: self.max().y }),
+            Rect::new(coord! { x: mid_x, y: self.min().y }, self.max()),
+        ]
+    }
+
+    /// Split a rectangle into two rectangles along the Y-axis with equal heights.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let rect = geo_types::Rect::new(
+    ///     geo_types::coord! { x: 0., y: 0. },
+    ///     geo_types::coord! { x: 4., y: 4. },
+    /// );
+    ///
+    /// let [rect1, rect2] = rect.split_y();
+    ///
+    /// assert_eq!(
+    ///     geo_types::Rect::new(
+    ///         geo_types::coord! { x: 0., y: 0. },
+    ///         geo_types::coord! { x: 4., y: 2. },
+    ///     ),
+    ///     rect1,
+    /// );
+    /// assert_eq!(
+    ///     geo_types::Rect::new(
+    ///         geo_types::coord! { x: 0., y: 2. },
+    ///         geo_types::coord! { x: 4., y: 4. },
+    ///     ),
+    ///     rect2,
+    /// );
+    /// ```
+    pub fn split_y(self) -> [Rect<T>; 2] {
+        let two = T::one() + T::one();
+        let mid_y = self.min().y + self.height() / two;
+        [
+            Rect::new(self.min(), coord! { x: self.max().x, y: mid_y }),
+            Rect::new(coord! { x: self.min().x, y: mid_y }, self.max()),
         ]
     }
 
@@ -289,25 +358,21 @@ impl<T: CoordFloat> Rect<T> {
     /// # Examples
     ///
     /// ```rust
-    /// use geo_types::{Coordinate, Rect};
+    /// use geo_types::{coord, Rect};
     ///
     /// let rect = Rect::new(
-    ///     Coordinate { x: 5., y: 5. },
-    ///     Coordinate { x: 15., y: 15. },
+    ///     coord! { x: 5., y: 5. },
+    ///     coord! { x: 15., y: 15. },
     /// );
     ///
-    /// assert_eq!(
-    ///     rect.center(),
-    ///     Coordinate { x: 10., y: 10. }
-    /// );
+    /// assert_eq!(rect.center(), coord! { x: 10., y: 10. });
     /// ```
     pub fn center(self) -> Coordinate<T> {
         let two = T::one() + T::one();
-        (
-            (self.max.x + self.min.x) / two,
-            (self.max.y + self.min.y) / two,
-        )
-            .into()
+        coord! {
+            x: (self.max.x + self.min.x) / two,
+            y: (self.max.y + self.min.y) / two,
+        }
     }
 }
 
@@ -415,21 +480,21 @@ impl std::fmt::Display for InvalidRectCoordinatesError {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Coordinate;
+    use crate::coord;
 
     #[test]
     fn rect() {
         let rect = Rect::new((10, 10), (20, 20));
-        assert_eq!(rect.min, Coordinate { x: 10, y: 10 });
-        assert_eq!(rect.max, Coordinate { x: 20, y: 20 });
+        assert_eq!(rect.min, coord! { x: 10, y: 10 });
+        assert_eq!(rect.max, coord! { x: 20, y: 20 });
 
         let rect = Rect::new((20, 20), (10, 10));
-        assert_eq!(rect.min, Coordinate { x: 10, y: 10 });
-        assert_eq!(rect.max, Coordinate { x: 20, y: 20 });
+        assert_eq!(rect.min, coord! { x: 10, y: 10 });
+        assert_eq!(rect.max, coord! { x: 20, y: 20 });
 
         let rect = Rect::new((10, 20), (20, 10));
-        assert_eq!(rect.min, Coordinate { x: 10, y: 10 });
-        assert_eq!(rect.max, Coordinate { x: 20, y: 20 });
+        assert_eq!(rect.min, coord! { x: 10, y: 10 });
+        assert_eq!(rect.max, coord! { x: 20, y: 20 });
     }
 
     #[test]

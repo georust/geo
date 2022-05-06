@@ -311,7 +311,7 @@ where
     }
 
     let coords = hull.iter().take(hull.len() - 1).cloned().collect();
-    let linestring = LineString(coords);
+    let linestring = LineString::new(coords);
     let line = crate::Line::new(*line[0], *line[1]);
     linestring.intersects(&line)
 }
@@ -327,7 +327,7 @@ where
 mod tests {
     use super::*;
     use crate::coords_iter::CoordsIter;
-    use geo_types::coord;
+    use crate::geo_types::coord;
 
     #[test]
     fn coord_ordering() {
@@ -338,7 +338,7 @@ mod tests {
             coord!(x: 1.0, y: 0.0),
         ];
 
-        let mut coords_mapped: Vec<&Coordinate<f32>> = coords.iter().map(|x| x).collect();
+        let mut coords_mapped: Vec<&Coordinate<f32>> = coords.iter().collect();
 
         let center = coord!(x: 0.0, y: 0.0);
         let prev_coord = coord!(x: 1.0, y: 1.0);
@@ -402,7 +402,7 @@ mod tests {
     #[test]
     fn empty_hull() {
         let actual: Polygon<f64> = concave_hull(vec![].iter(), 3);
-        let expected = Polygon::new(LineString(vec![]), vec![]);
+        let expected = Polygon::new(LineString::new(vec![]), vec![]);
         assert_eq!(actual, expected);
     }
 }

@@ -79,7 +79,7 @@ where
     T: GeoNum,
 {
     fn orient(&self, direction: Direction) -> MultiPolygon<T> {
-        MultiPolygon(self.iter().map(|poly| poly.orient(direction)).collect())
+        MultiPolygon::new(self.iter().map(|poly| poly.orient(direction)).collect())
     }
 }
 

@@ -1,4 +1,5 @@
 use crate::{Coordinate, GeoFloat, Line};
+use geo_types::coord;
 
 use crate::algorithm::bounding_rect::BoundingRect;
 use crate::algorithm::intersects::Intersects;
@@ -11,6 +12,16 @@ pub enum LineIntersection<F: GeoFloat> {
         /// For Lines which intersect in a single point, that point may be either an endpoint
         /// or in the interior of each Line.
         /// If the point lies in the interior of both Lines, we call it a _proper_ intersection.
+        ///
+        /// # Note
+        ///
+        /// Due to the limited precision of most float data-types, the
+        /// calculated intersection point may be snapped to one of the
+        /// end-points even though all the end-points of the two
+        /// lines are distinct points. In such cases, this field is
+        /// still set to `true`. Please refer test_case:
+        /// `test_central_endpoint_heuristic_failure_1` for such an
+        /// example.
         is_proper: bool,
     },
 
@@ -35,26 +46,27 @@ impl<F: GeoFloat> LineIntersection<F> {
 /// # Examples
 ///
 /// ```
+/// use geo_types::coord;
 /// use geo::{Line, Coordinate};
 /// use geo::algorithm::line_intersection::{line_intersection, LineIntersection};
 ///
-/// let line_1 = Line::new(Coordinate {x: 0.0, y: 0.0}, Coordinate { x: 5.0, y: 5.0 } );
-/// let line_2 = Line::new(Coordinate {x: 0.0, y: 5.0}, Coordinate { x: 5.0, y: 0.0 } );
-/// let expected = LineIntersection::SinglePoint { intersection: Coordinate { x: 2.5, y: 2.5 }, is_proper: true };
+/// let line_1 = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 5.0, y: 5.0 } );
+/// let line_2 = Line::new(coord! {x: 0.0, y: 5.0}, coord! { x: 5.0, y: 0.0 } );
+/// let expected = LineIntersection::SinglePoint { intersection: coord! { x: 2.5, y: 2.5 }, is_proper: true };
 /// assert_eq!(line_intersection(line_1, line_2), Some(expected));
 ///
-/// let line_1 = Line::new(Coordinate {x: 0.0, y: 0.0}, Coordinate { x: 5.0, y: 5.0 } );
-/// let line_2 = Line::new(Coordinate {x: 0.0, y: 1.0}, Coordinate { x: 5.0, y: 6.0 } );
+/// let line_1 = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 5.0, y: 5.0 } );
+/// let line_2 = Line::new(coord! {x: 0.0, y: 1.0}, coord! { x: 5.0, y: 6.0 } );
 /// assert_eq!(line_intersection(line_1, line_2), None);
 ///
-/// let line_1 = Line::new(Coordinate {x: 0.0, y: 0.0}, Coordinate { x: 5.0, y: 5.0 } );
-/// let line_2 = Line::new(Coordinate {x: 5.0, y: 5.0}, Coordinate { x: 5.0, y: 0.0 } );
-/// let expected = LineIntersection::SinglePoint { intersection: Coordinate { x: 5.0, y: 5.0 }, is_proper: false };
+/// let line_1 = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 5.0, y: 5.0 } );
+/// let line_2 = Line::new(coord! {x: 5.0, y: 5.0}, coord! { x: 5.0, y: 0.0 } );
+/// let expected = LineIntersection::SinglePoint { intersection: coord! { x: 5.0, y: 5.0 }, is_proper: false };
 /// assert_eq!(line_intersection(line_1, line_2), Some(expected));
 ///
-/// let line_1 = Line::new(Coordinate {x: 0.0, y: 0.0}, Coordinate { x: 5.0, y: 5.0 } );
-/// let line_2 = Line::new(Coordinate {x: 3.0, y: 3.0}, Coordinate { x: 6.0, y: 6.0 } );
-/// let expected = LineIntersection::Collinear { intersection: Line::new(Coordinate { x: 3.0, y: 3.0 }, Coordinate { x: 5.0, y: 5.0 })};
+/// let line_1 = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 5.0, y: 5.0 } );
+/// let line_2 = Line::new(coord! {x: 3.0, y: 3.0}, coord! { x: 6.0, y: 6.0 } );
+/// let expected = LineIntersection::Collinear { intersection: Line::new(coord! { x: 3.0, y: 3.0 }, coord! { x: 5.0, y: 5.0 })};
 /// assert_eq!(line_intersection(line_1, line_2), Some(expected));
 /// ```
 /// Strongly inspired by, and meant to produce the same results as, [JTS's RobustLineIntersector](https://github.com/locationtech/jts/blob/master/modules/core/src/main/java/org/locationtech/jts/algorithm/RobustLineIntersector.java#L26).
@@ -266,7 +278,7 @@ fn raw_line_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<Coordina
         None
     } else {
         // de-condition intersection point
-        Some(Coordinate {
+        Some(coord! {
             x: x_int + mid_x,
             y: y_int + mid_y,
         })
@@ -300,6 +312,7 @@ fn proper_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coordinate<F> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::geo_types::coord;
 
     /// Based on JTS test `testCentralEndpointHeuristicFailure`
     /// > Following cases were failures when using the CentralEndpointIntersector heuristic.
@@ -312,28 +325,28 @@ mod test {
     #[test]
     fn test_central_endpoint_heuristic_failure_1() {
         let line_1 = Line::new(
-            Coordinate {
+            coord! {
                 x: 163.81867067,
                 y: -211.31840378,
             },
-            Coordinate {
+            coord! {
                 x: 165.9174252,
                 y: -214.1665075,
             },
         );
         let line_2 = Line::new(
-            Coordinate {
+            coord! {
                 x: 2.84139601,
                 y: -57.95412726,
             },
-            Coordinate {
+            coord! {
                 x: 469.59990601,
                 y: -502.63851732,
             },
         );
         let actual = line_intersection(line_1, line_2);
         let expected = LineIntersection::SinglePoint {
-            intersection: Coordinate {
+            intersection: coord! {
                 x: 163.81867067,
                 y: -211.31840378,
             },
@@ -350,28 +363,28 @@ mod test {
     #[test]
     fn test_central_endpoint_heuristic_failure_2() {
         let line_1 = Line::new(
-            Coordinate {
+            coord! {
                 x: -58.00593335955,
                 y: -1.43739086465,
             },
-            Coordinate {
+            coord! {
                 x: -513.86101637525,
                 y: -457.29247388035,
             },
         );
         let line_2 = Line::new(
-            Coordinate {
+            coord! {
                 x: -215.22279674875,
                 y: -158.65425425385,
             },
-            Coordinate {
+            coord! {
                 x: -218.1208801283,
                 y: -160.68343590235,
             },
         );
         let actual = line_intersection(line_1, line_2);
         let expected = LineIntersection::SinglePoint {
-            intersection: Coordinate {
+            intersection: coord! {
                 x: -215.22279674875,
                 y: -158.65425425385,
             },
@@ -387,14 +400,8 @@ mod test {
     /// > Succeeds using DD and Shewchuk orientation
     #[test]
     fn test_tomas_fa_1() {
-        let line_1 = Line::<f64>::new(
-            Coordinate { x: -42.0, y: 163.2 },
-            Coordinate { x: 21.2, y: 265.2 },
-        );
-        let line_2 = Line::<f64>::new(
-            Coordinate { x: -26.2, y: 188.7 },
-            Coordinate { x: 37.0, y: 290.7 },
-        );
+        let line_1 = Line::<f64>::new(coord! { x: -42.0, y: 163.2 }, coord! { x: 21.2, y: 265.2 });
+        let line_2 = Line::<f64>::new(coord! { x: -26.2, y: 188.7 }, coord! { x: 37.0, y: 290.7 });
         let actual = line_intersection(line_1, line_2);
         let expected = None;
         assert_eq!(actual, expected);
@@ -407,14 +414,8 @@ mod test {
     /// > Fails using original JTS DeVillers determine orientation test.
     #[test]
     fn test_tomas_fa_2() {
-        let line_1 = Line::<f64>::new(
-            Coordinate { x: -5.9, y: 163.1 },
-            Coordinate { x: 76.1, y: 250.7 },
-        );
-        let line_2 = Line::<f64>::new(
-            Coordinate { x: 14.6, y: 185.0 },
-            Coordinate { x: 96.6, y: 272.6 },
-        );
+        let line_1 = Line::<f64>::new(coord! { x: -5.9, y: 163.1 }, coord! { x: 76.1, y: 250.7 });
+        let line_2 = Line::<f64>::new(coord! { x: 14.6, y: 185.0 }, coord! { x: 96.6, y: 272.6 });
         let actual = line_intersection(line_1, line_2);
         let expected = None;
         assert_eq!(actual, expected);
@@ -427,28 +428,28 @@ mod test {
     #[test]
     fn test_leduc_1() {
         let line_1 = Line::new(
-            Coordinate {
+            coord! {
                 x: 305690.0434123494,
                 y: 254176.46578338774,
             },
-            Coordinate {
+            coord! {
                 x: 305601.9999843455,
                 y: 254243.19999846347,
             },
         );
         let line_2 = Line::new(
-            Coordinate {
+            coord! {
                 x: 305689.6153764265,
                 y: 254177.33102743194,
             },
-            Coordinate {
+            coord! {
                 x: 305692.4999844298,
                 y: 254171.4999983967,
             },
         );
         let actual = line_intersection(line_1, line_2);
         let expected = LineIntersection::SinglePoint {
-            intersection: Coordinate {
+            intersection: coord! {
                 x: 305690.0434123494,
                 y: 254176.46578338774,
             },
@@ -463,28 +464,28 @@ mod test {
     #[test]
     fn test_geos_1() {
         let line_1 = Line::new(
-            Coordinate {
+            coord! {
                 x: 588750.7429703881,
                 y: 4518950.493668233,
             },
-            Coordinate {
+            coord! {
                 x: 588748.2060409798,
                 y: 4518933.9452804085,
             },
         );
         let line_2 = Line::new(
-            Coordinate {
+            coord! {
                 x: 588745.824857241,
                 y: 4518940.742239175,
             },
-            Coordinate {
+            coord! {
                 x: 588748.2060437313,
                 y: 4518933.9452791475,
             },
         );
         let actual = line_intersection(line_1, line_2);
         let expected = LineIntersection::SinglePoint {
-            intersection: Coordinate {
+            intersection: coord! {
                 x: 588748.2060416829,
                 y: 4518933.945284994,
             },
@@ -499,28 +500,28 @@ mod test {
     #[test]
     fn test_geos_2() {
         let line_1 = Line::new(
-            Coordinate {
+            coord! {
                 x: 588743.626135934,
                 y: 4518924.610969561,
             },
-            Coordinate {
+            coord! {
                 x: 588732.2822865889,
                 y: 4518925.4314047815,
             },
         );
         let line_2 = Line::new(
-            Coordinate {
+            coord! {
                 x: 588739.1191384895,
                 y: 4518927.235700594,
             },
-            Coordinate {
+            coord! {
                 x: 588731.7854614238,
                 y: 4518924.578370095,
             },
         );
         let actual = line_intersection(line_1, line_2);
         let expected = LineIntersection::SinglePoint {
-            intersection: Coordinate {
+            intersection: coord! {
                 x: 588733.8306132929,
                 y: 4518925.319423238,
             },
@@ -536,28 +537,28 @@ mod test {
     #[test]
     fn test_dave_skea_case() {
         let line_1 = Line::new(
-            Coordinate {
+            coord! {
                 x: 2089426.5233462777,
-                y: 1180182.3877339689,
+                y: 1180182.387733969,
             },
-            Coordinate {
+            coord! {
                 x: 2085646.6891757075,
                 y: 1195618.7333999649,
             },
         );
         let line_2 = Line::new(
-            Coordinate {
+            coord! {
                 x: 1889281.8148903656,
                 y: 1997547.0560044837,
             },
-            Coordinate {
-                x: 2259977.3672235999,
+            coord! {
+                x: 2259977.3672236,
                 y: 483675.17050843034,
             },
         );
         let actual = line_intersection(line_1, line_2);
         let expected = LineIntersection::SinglePoint {
-            intersection: Coordinate {
+            intersection: coord! {
                 x: 2087536.6062609926,
                 y: 1187900.560566967,
             },
@@ -572,28 +573,28 @@ mod test {
     #[test]
     fn test_cmp_5_cask_wkt() {
         let line_1 = Line::new(
-            Coordinate {
+            coord! {
                 x: 4348433.262114629,
                 y: 5552595.478385733,
             },
-            Coordinate {
+            coord! {
                 x: 4348440.849387404,
                 y: 5552599.272022122,
             },
         );
         let line_2 = Line::new(
-            Coordinate {
+            coord! {
                 x: 4348433.26211463,
                 y: 5552595.47838573,
             },
-            Coordinate {
+            coord! {
                 x: 4348440.8493874,
                 y: 5552599.27202212,
             },
         );
         let actual = line_intersection(line_1, line_2);
         let expected = LineIntersection::SinglePoint {
-            intersection: Coordinate {
+            intersection: coord! {
                 x: 4348440.8493874,
                 y: 5552599.27202212,
             },

@@ -1,9 +1,9 @@
-use crate::{CoordFloat, CoordNum, Coordinate};
+use crate::{point, CoordFloat, CoordNum, Coordinate};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// A single point in 2D space.
 ///
@@ -21,31 +21,29 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 /// # Examples
 ///
 /// ```
-/// use geo_types::{Coordinate, Point};
+/// use geo_types::{coord, Point};
 /// let p1: Point<f64> = (0., 1.).into();
-/// let c = Coordinate { x: 10., y: 20. };
+/// let c = coord! { x: 10., y: 20. };
 /// let p2: Point<f64> = c.into();
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T>(pub Coordinate<T>)
-where
-    T: CoordNum;
+pub struct Point<T: CoordNum>(pub Coordinate<T>);
 
 impl<T: CoordNum> From<Coordinate<T>> for Point<T> {
-    fn from(x: Coordinate<T>) -> Point<T> {
+    fn from(x: Coordinate<T>) -> Self {
         Point(x)
     }
 }
 
 impl<T: CoordNum> From<(T, T)> for Point<T> {
-    fn from(coords: (T, T)) -> Point<T> {
+    fn from(coords: (T, T)) -> Self {
         Point::new(coords.0, coords.1)
     }
 }
 
 impl<T: CoordNum> From<[T; 2]> for Point<T> {
-    fn from(coords: [T; 2]) -> Point<T> {
+    fn from(coords: [T; 2]) -> Self {
         Point::new(coords[0], coords[1])
     }
 }
@@ -62,10 +60,7 @@ impl<T: CoordNum> From<Point<T>> for [T; 2] {
     }
 }
 
-impl<T> Point<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Point<T> {
     /// Creates a new point.
     ///
     /// # Examples
@@ -78,8 +73,8 @@ where
     /// assert_eq!(p.x(), 1.234);
     /// assert_eq!(p.y(), 2.345);
     /// ```
-    pub fn new(x: T, y: T) -> Point<T> {
-        Point(Coordinate { x, y })
+    pub fn new(x: T, y: T) -> Self {
+        point! { x: x, y: y }
     }
 
     /// Returns the x/horizontal component of the point.
@@ -109,7 +104,7 @@ where
     ///
     /// assert_eq!(p.x(), 9.876);
     /// ```
-    pub fn set_x(&mut self, x: T) -> &mut Point<T> {
+    pub fn set_x(&mut self, x: T) -> &mut Self {
         self.0.x = x;
         self
     }
@@ -141,7 +136,7 @@ where
     ///
     /// assert_eq!(p.y(), 9.876);
     /// ```
-    pub fn set_y(&mut self, y: T) -> &mut Point<T> {
+    pub fn set_y(&mut self, y: T) -> &mut Self {
         self.0.y = y;
         self
     }
@@ -171,8 +166,9 @@ where
     ///
     /// let p = Point::new(1.234, 2.345);
     ///
-    /// assert_eq!(p.lng(), 1.234);
+    /// assert_eq!(p.x(), 1.234);
     /// ```
+    #[deprecated = "use `Point::x` instead, it's less ambiguous"]
     pub fn lng(self) -> T {
         self.x()
     }
@@ -185,11 +181,13 @@ where
     /// use geo_types::Point;
     ///
     /// let mut p = Point::new(1.234, 2.345);
+    /// #[allow(deprecated)]
     /// p.set_lng(9.876);
     ///
-    /// assert_eq!(p.lng(), 9.876);
+    /// assert_eq!(p.x(), 9.876);
     /// ```
-    pub fn set_lng(&mut self, lng: T) -> &mut Point<T> {
+    #[deprecated = "use `Point::set_x` instead, it's less ambiguous"]
+    pub fn set_lng(&mut self, lng: T) -> &mut Self {
         self.set_x(lng)
     }
 
@@ -202,8 +200,9 @@ where
     ///
     /// let p = Point::new(1.234, 2.345);
     ///
-    /// assert_eq!(p.lat(), 2.345);
+    /// assert_eq!(p.y(), 2.345);
     /// ```
+    #[deprecated = "use `Point::y` instead, it's less ambiguous"]
     pub fn lat(self) -> T {
         self.y()
     }
@@ -215,33 +214,32 @@ where
     /// use geo_types::Point;
     ///
     /// let mut p = Point::new(1.234, 2.345);
+    /// #[allow(deprecated)]
     /// p.set_lat(9.876);
     ///
-    /// assert_eq!(p.lat(), 9.876);
+    /// assert_eq!(p.y(), 9.876);
     /// ```
-    pub fn set_lat(&mut self, lat: T) -> &mut Point<T> {
+    #[deprecated = "use `Point::set_y` instead, it's less ambiguous"]
+    pub fn set_lat(&mut self, lat: T) -> &mut Self {
         self.set_y(lat)
     }
 }
 
-impl<T> Point<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Point<T> {
     /// Returns the dot product of the two points:
     /// `dot = x1 * x2 + y1 * y2`
     ///
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, Point};
+    /// use geo_types::{point, Point};
     ///
-    /// let point = Point(Coordinate { x: 1.5, y: 0.5 });
-    /// let dot = point.dot(Point(Coordinate { x: 2.0, y: 4.5 }));
+    /// let point = point! { x: 1.5, y: 0.5 };
+    /// let dot = point.dot(point! { x: 2.0, y: 4.5 });
     ///
     /// assert_eq!(dot, 5.25);
     /// ```
-    pub fn dot(self, other: Point<T>) -> T {
+    pub fn dot(self, other: Self) -> T {
         self.x() * other.x() + self.y() * other.y()
     }
 
@@ -252,26 +250,23 @@ where
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, Point};
+    /// use geo_types::point;
     ///
-    /// let point_a = Point(Coordinate { x: 1., y: 2. });
-    /// let point_b = Point(Coordinate { x: 3., y: 5. });
-    /// let point_c = Point(Coordinate { x: 7., y: 12. });
+    /// let point_a = point! { x: 1., y: 2. };
+    /// let point_b = point! { x: 3., y: 5. };
+    /// let point_c = point! { x: 7., y: 12. };
     ///
     /// let cross = point_a.cross_prod(point_b, point_c);
     ///
     /// assert_eq!(cross, 2.0)
     /// ```
-    pub fn cross_prod(self, point_b: Point<T>, point_c: Point<T>) -> T {
+    pub fn cross_prod(self, point_b: Self, point_c: Self) -> T {
         (point_b.x() - self.x()) * (point_c.y() - self.y())
             - (point_b.y() - self.y()) * (point_c.x() - self.x())
     }
 }
 
-impl<T> Point<T>
-where
-    T: CoordFloat,
-{
+impl<T: CoordFloat> Point<T> {
     /// Converts the (x,y) components of Point to degrees
     ///
     /// # Example
@@ -283,7 +278,7 @@ where
     /// assert_eq!(x.round(), 71.0);
     /// assert_eq!(y.round(), 134.0);
     /// ```
-    pub fn to_degrees(self) -> Point<T> {
+    pub fn to_degrees(self) -> Self {
         let (x, y) = self.x_y();
         let x = x.to_degrees();
         let y = y.to_degrees();
@@ -301,7 +296,7 @@ where
     /// assert_eq!(x.round(), 3.0);
     /// assert_eq!(y.round(), 6.0);
     /// ```
-    pub fn to_radians(self) -> Point<T> {
+    pub fn to_radians(self) -> Self {
         let (x, y) = self.x_y();
         let x = x.to_radians();
         let y = y.to_radians();
@@ -313,7 +308,7 @@ impl<T> Neg for Point<T>
 where
     T: CoordNum + Neg<Output = T>,
 {
-    type Output = Point<T>;
+    type Output = Self;
 
     /// Returns a point with the x and y components negated.
     ///
@@ -327,16 +322,13 @@ where
     /// assert_eq!(p.x(), 1.25);
     /// assert_eq!(p.y(), -2.5);
     /// ```
-    fn neg(self) -> Point<T> {
-        Point(-self.0)
+    fn neg(self) -> Self::Output {
+        Point::from(-self.0)
     }
 }
 
-impl<T> Add for Point<T>
-where
-    T: CoordNum,
-{
-    type Output = Point<T>;
+impl<T: CoordNum> Add for Point<T> {
+    type Output = Self;
 
     /// Add a point to the given point.
     ///
@@ -350,16 +342,32 @@ where
     /// assert_eq!(p.x(), 2.75);
     /// assert_eq!(p.y(), 5.0);
     /// ```
-    fn add(self, rhs: Point<T>) -> Point<T> {
-        Point(self.0 + rhs.0)
+    fn add(self, rhs: Self) -> Self::Output {
+        Point::from(self.0 + rhs.0)
     }
 }
 
-impl<T> Sub for Point<T>
-where
-    T: CoordNum,
-{
-    type Output = Point<T>;
+impl<T: CoordNum> AddAssign for Point<T> {
+    /// Add a point to the given point and assign it to the original point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let mut p = Point::new(1.25, 2.5);
+    /// p += Point::new(1.5, 2.5);
+    ///
+    /// assert_eq!(p.x(), 2.75);
+    /// assert_eq!(p.y(), 5.0);
+    /// ```
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 = self.0 + rhs.0;
+    }
+}
+
+impl<T: CoordNum> Sub for Point<T> {
+    type Output = Self;
 
     /// Subtract a point from the given point.
     ///
@@ -373,16 +381,32 @@ where
     /// assert_eq!(p.x(), -0.25);
     /// assert_eq!(p.y(), 0.5);
     /// ```
-    fn sub(self, rhs: Point<T>) -> Point<T> {
-        Point(self.0 - rhs.0)
+    fn sub(self, rhs: Self) -> Self::Output {
+        Point::from(self.0 - rhs.0)
     }
 }
 
-impl<T> Mul<T> for Point<T>
-where
-    T: CoordNum,
-{
-    type Output = Point<T>;
+impl<T: CoordNum> SubAssign for Point<T> {
+    /// Subtract a point from the given point and assign it to the original point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let mut p = Point::new(1.25, 2.5);
+    /// p -= Point::new(1.5, 2.5);
+    ///
+    /// assert_eq!(p.x(), -0.25);
+    /// assert_eq!(p.y(), 0.0);
+    /// ```
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 = self.0 - rhs.0;
+    }
+}
+
+impl<T: CoordNum> Mul<T> for Point<T> {
+    type Output = Self;
 
     /// Scaler multiplication of a point
     ///
@@ -396,16 +420,32 @@ where
     /// assert_eq!(p.x(), 4.0);
     /// assert_eq!(p.y(), 6.0);
     /// ```
-    fn mul(self, rhs: T) -> Point<T> {
-        Point(self.0 * rhs)
+    fn mul(self, rhs: T) -> Self::Output {
+        Point::from(self.0 * rhs)
     }
 }
 
-impl<T> Div<T> for Point<T>
-where
-    T: CoordNum,
-{
-    type Output = Point<T>;
+impl<T: CoordNum> MulAssign<T> for Point<T> {
+    /// Scaler multiplication of a point in place
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let mut p = Point::new(2.0, 3.0);
+    /// p *= 2.0;
+    ///
+    /// assert_eq!(p.x(), 4.0);
+    /// assert_eq!(p.y(), 6.0);
+    /// ```
+    fn mul_assign(&mut self, rhs: T) {
+        self.0 = self.0 * rhs
+    }
+}
+
+impl<T: CoordNum> Div<T> for Point<T> {
+    type Output = Self;
 
     /// Scaler division of a point
     ///
@@ -419,8 +459,27 @@ where
     /// assert_eq!(p.x(), 1.0);
     /// assert_eq!(p.y(), 1.5);
     /// ```
-    fn div(self, rhs: T) -> Point<T> {
-        Point(self.0 / rhs)
+    fn div(self, rhs: T) -> Self::Output {
+        Point::from(self.0 / rhs)
+    }
+}
+
+impl<T: CoordNum> DivAssign<T> for Point<T> {
+    /// Scaler division of a point in place
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let mut p = Point::new(2.0, 3.0);
+    /// p /= 2.0;
+    ///
+    /// assert_eq!(p.x(), 1.0);
+    /// assert_eq!(p.y(), 1.5);
+    /// ```
+    fn div_assign(&mut self, rhs: T) {
+        self.0 = self.0 / rhs
     }
 }
 
@@ -488,11 +547,11 @@ where
     }
 }
 
-#[cfg(feature = "rstar")]
+#[cfg(feature = "rstar_0_8")]
 // These are required for rstar RTree
-impl<T> ::rstar::Point for Point<T>
+impl<T> ::rstar_0_8::Point for Point<T>
 where
-    T: ::num_traits::Float + ::rstar::RTreeNum,
+    T: ::num_traits::Float + ::rstar_0_8::RTreeNum,
 {
     type Scalar = T;
 

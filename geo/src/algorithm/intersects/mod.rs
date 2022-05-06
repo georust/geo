@@ -111,7 +111,8 @@ where
 mod test {
     use crate::algorithm::intersects::Intersects;
     use crate::{
-        line_string, polygon, Coordinate, Geometry, Line, LineString, Point, Polygon, Rect,
+        coord, line_string, polygon, Geometry, Line, LineString, MultiLineString, MultiPoint,
+        MultiPolygon, Point, Polygon, Rect,
     };
 
     /// Tests: intersection LineString and LineString
@@ -123,7 +124,7 @@ mod test {
     #[test]
     fn empty_linestring2_test() {
         let linestring = line_string![(x: 3., y: 2.), (x: 7., y: 6.)];
-        assert!(!linestring.intersects(&LineString(Vec::new())));
+        assert!(!linestring.intersects(&LineString::new(Vec::new())));
     }
     #[test]
     fn empty_all_linestring_test() {
@@ -338,10 +339,10 @@ mod test {
                 (7., 4.),
             ])],
         );
-        let b1 = Rect::new(Coordinate { x: 11., y: 1. }, Coordinate { x: 13., y: 2. });
-        let b2 = Rect::new(Coordinate { x: 2., y: 2. }, Coordinate { x: 8., y: 5. });
-        let b3 = Rect::new(Coordinate { x: 8., y: 5. }, Coordinate { x: 10., y: 6. });
-        let b4 = Rect::new(Coordinate { x: 1., y: 1. }, Coordinate { x: 3., y: 3. });
+        let b1 = Rect::new(coord! { x: 11., y: 1. }, coord! { x: 13., y: 2. });
+        let b2 = Rect::new(coord! { x: 2., y: 2. }, coord! { x: 8., y: 5. });
+        let b3 = Rect::new(coord! { x: 8., y: 5. }, coord! { x: 10., y: 6. });
+        let b4 = Rect::new(coord! { x: 1., y: 1. }, coord! { x: 3., y: 3. });
         // overlaps
         assert!(poly.intersects(&b1));
         // contained in exterior, overlaps with hole
@@ -358,94 +359,46 @@ mod test {
     }
     #[test]
     fn bounding_rect_test() {
-        let bounding_rect_xl = Rect::new(
-            Coordinate { x: -100., y: -200. },
-            Coordinate { x: 100., y: 200. },
-        );
-        let bounding_rect_sm = Rect::new(
-            Coordinate { x: -10., y: -20. },
-            Coordinate { x: 10., y: 20. },
-        );
-        let bounding_rect_s2 =
-            Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 20., y: 30. });
+        let bounding_rect_xl =
+            Rect::new(coord! { x: -100., y: -200. }, coord! { x: 100., y: 200. });
+        let bounding_rect_sm = Rect::new(coord! { x: -10., y: -20. }, coord! { x: 10., y: 20. });
+        let bounding_rect_s2 = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 20., y: 30. });
         // confirmed using GEOS
-        assert_eq!(true, bounding_rect_xl.intersects(&bounding_rect_sm));
-        assert_eq!(true, bounding_rect_sm.intersects(&bounding_rect_xl));
-        assert_eq!(true, bounding_rect_sm.intersects(&bounding_rect_s2));
-        assert_eq!(true, bounding_rect_s2.intersects(&bounding_rect_sm));
+        assert!(bounding_rect_xl.intersects(&bounding_rect_sm));
+        assert!(bounding_rect_sm.intersects(&bounding_rect_xl));
+        assert!(bounding_rect_sm.intersects(&bounding_rect_s2));
+        assert!(bounding_rect_s2.intersects(&bounding_rect_sm));
     }
     #[test]
-    fn rect_interesection_consistent_with_poly_intersection_test() {
-        let bounding_rect_xl = Rect::new(
-            Coordinate { x: -100., y: -200. },
-            Coordinate { x: 100., y: 200. },
-        );
-        let bounding_rect_sm = Rect::new(
-            Coordinate { x: -10., y: -20. },
-            Coordinate { x: 10., y: 20. },
-        );
-        let bounding_rect_s2 =
-            Rect::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 20., y: 30. });
+    fn rect_intersection_consistent_with_poly_intersection_test() {
+        let bounding_rect_xl =
+            Rect::new(coord! { x: -100., y: -200. }, coord! { x: 100., y: 200. });
+        let bounding_rect_sm = Rect::new(coord! { x: -10., y: -20. }, coord! { x: 10., y: 20. });
+        let bounding_rect_s2 = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 20., y: 30. });
 
-        assert_eq!(
-            true,
-            bounding_rect_xl.to_polygon().intersects(&bounding_rect_sm)
-        );
-        assert_eq!(
-            true,
-            bounding_rect_xl.intersects(&bounding_rect_sm.to_polygon())
-        );
-        assert_eq!(
-            true,
-            bounding_rect_xl
-                .to_polygon()
-                .intersects(&bounding_rect_sm.to_polygon())
-        );
+        assert!(bounding_rect_xl.to_polygon().intersects(&bounding_rect_sm));
+        assert!(bounding_rect_xl.intersects(&bounding_rect_sm.to_polygon()));
+        assert!(bounding_rect_xl
+            .to_polygon()
+            .intersects(&bounding_rect_sm.to_polygon()));
 
-        assert_eq!(
-            true,
-            bounding_rect_sm.to_polygon().intersects(&bounding_rect_xl)
-        );
-        assert_eq!(
-            true,
-            bounding_rect_sm.intersects(&bounding_rect_xl.to_polygon())
-        );
-        assert_eq!(
-            true,
-            bounding_rect_sm
-                .to_polygon()
-                .intersects(&bounding_rect_xl.to_polygon())
-        );
+        assert!(bounding_rect_sm.to_polygon().intersects(&bounding_rect_xl));
+        assert!(bounding_rect_sm.intersects(&bounding_rect_xl.to_polygon()));
+        assert!(bounding_rect_sm
+            .to_polygon()
+            .intersects(&bounding_rect_xl.to_polygon()));
 
-        assert_eq!(
-            true,
-            bounding_rect_sm.to_polygon().intersects(&bounding_rect_s2)
-        );
-        assert_eq!(
-            true,
-            bounding_rect_sm.intersects(&bounding_rect_s2.to_polygon())
-        );
-        assert_eq!(
-            true,
-            bounding_rect_sm
-                .to_polygon()
-                .intersects(&bounding_rect_s2.to_polygon())
-        );
+        assert!(bounding_rect_sm.to_polygon().intersects(&bounding_rect_s2));
+        assert!(bounding_rect_sm.intersects(&bounding_rect_s2.to_polygon()));
+        assert!(bounding_rect_sm
+            .to_polygon()
+            .intersects(&bounding_rect_s2.to_polygon()));
 
-        assert_eq!(
-            true,
-            bounding_rect_s2.to_polygon().intersects(&bounding_rect_sm)
-        );
-        assert_eq!(
-            true,
-            bounding_rect_s2.intersects(&bounding_rect_sm.to_polygon())
-        );
-        assert_eq!(
-            true,
-            bounding_rect_s2
-                .to_polygon()
-                .intersects(&bounding_rect_sm.to_polygon())
-        );
+        assert!(bounding_rect_s2.to_polygon().intersects(&bounding_rect_sm));
+        assert!(bounding_rect_s2.intersects(&bounding_rect_sm.to_polygon()));
+        assert!(bounding_rect_s2
+            .to_polygon()
+            .intersects(&bounding_rect_sm.to_polygon()));
     }
     #[test]
     fn point_intersects_line_test() {
@@ -544,21 +497,21 @@ mod test {
     // See https://github.com/georust/geo/issues/419
     fn rect_test_419() {
         let a = Rect::new(
-            Coordinate {
+            coord! {
                 x: 9.228515625,
                 y: 46.83013364044739,
             },
-            Coordinate {
+            coord! {
                 x: 9.2724609375,
                 y: 46.86019101567026,
             },
         );
         let b = Rect::new(
-            Coordinate {
+            coord! {
                 x: 9.17953,
                 y: 46.82018,
             },
-            Coordinate {
+            coord! {
                 x: 9.26309,
                 y: 46.88099,
             },
@@ -569,9 +522,151 @@ mod test {
 
     #[test]
     fn compile_test_geom_geom() {
-        // This test should check existance of all
+        // This test should check existence of all
         // combinations of geometry types.
         let geom: Geometry<_> = Line::from([(0.5, 0.5), (2., 1.)]).into();
         assert!(geom.intersects(&geom));
+    }
+
+    #[test]
+    fn exhaustive_compile_test() {
+        use geo_types::{GeometryCollection, Triangle};
+        let pt: Point<f64> = Point::new(0., 0.);
+        let ln: Line<f64> = Line::new((0., 0.), (1., 1.));
+        let ls = line_string![(0., 0.).into(), (1., 1.).into()];
+        let poly = Polygon::new(LineString::from(vec![(0., 0.), (1., 1.), (1., 0.)]), vec![]);
+        let rect = Rect::new(coord! { x: 10., y: 20. }, coord! { x: 30., y: 10. });
+        let tri = Triangle::new(
+            coord! { x: 0., y: 0. },
+            coord! { x: 10., y: 20. },
+            coord! { x: 20., y: -10. },
+        );
+        let geom = Geometry::Point(pt);
+        let gc = GeometryCollection::new_from(vec![geom.clone()]);
+        let multi_point = MultiPoint::new(vec![pt]);
+        let multi_ls = MultiLineString::new(vec![ls.clone()]);
+        let multi_poly = MultiPolygon::new(vec![poly.clone()]);
+
+        let _ = pt.intersects(&pt);
+        let _ = pt.intersects(&ln);
+        let _ = pt.intersects(&ls);
+        let _ = pt.intersects(&poly);
+        let _ = pt.intersects(&rect);
+        let _ = pt.intersects(&tri);
+        let _ = pt.intersects(&geom);
+        let _ = pt.intersects(&gc);
+        let _ = pt.intersects(&multi_point);
+        let _ = pt.intersects(&multi_ls);
+        let _ = pt.intersects(&multi_poly);
+        let _ = ln.intersects(&pt);
+        let _ = ln.intersects(&ln);
+        let _ = ln.intersects(&ls);
+        let _ = ln.intersects(&poly);
+        let _ = ln.intersects(&rect);
+        let _ = ln.intersects(&tri);
+        let _ = ln.intersects(&geom);
+        let _ = ln.intersects(&gc);
+        let _ = ln.intersects(&multi_point);
+        let _ = ln.intersects(&multi_ls);
+        let _ = ln.intersects(&multi_poly);
+        let _ = ls.intersects(&pt);
+        let _ = ls.intersects(&ln);
+        let _ = ls.intersects(&ls);
+        let _ = ls.intersects(&poly);
+        let _ = ls.intersects(&rect);
+        let _ = ls.intersects(&tri);
+        let _ = ls.intersects(&geom);
+        let _ = ls.intersects(&gc);
+        let _ = ls.intersects(&multi_point);
+        let _ = ls.intersects(&multi_ls);
+        let _ = ls.intersects(&multi_poly);
+        let _ = poly.intersects(&pt);
+        let _ = poly.intersects(&ln);
+        let _ = poly.intersects(&ls);
+        let _ = poly.intersects(&poly);
+        let _ = poly.intersects(&rect);
+        let _ = poly.intersects(&tri);
+        let _ = poly.intersects(&geom);
+        let _ = poly.intersects(&gc);
+        let _ = poly.intersects(&multi_point);
+        let _ = poly.intersects(&multi_ls);
+        let _ = poly.intersects(&multi_poly);
+        let _ = rect.intersects(&pt);
+        let _ = rect.intersects(&ln);
+        let _ = rect.intersects(&ls);
+        let _ = rect.intersects(&poly);
+        let _ = rect.intersects(&rect);
+        let _ = rect.intersects(&tri);
+        let _ = rect.intersects(&geom);
+        let _ = rect.intersects(&gc);
+        let _ = rect.intersects(&multi_point);
+        let _ = rect.intersects(&multi_ls);
+        let _ = rect.intersects(&multi_poly);
+        let _ = tri.intersects(&pt);
+        let _ = tri.intersects(&ln);
+        let _ = tri.intersects(&ls);
+        let _ = tri.intersects(&poly);
+        let _ = tri.intersects(&rect);
+        let _ = tri.intersects(&tri);
+        let _ = tri.intersects(&geom);
+        let _ = tri.intersects(&gc);
+        let _ = tri.intersects(&multi_point);
+        let _ = tri.intersects(&multi_ls);
+        let _ = tri.intersects(&multi_poly);
+        let _ = geom.intersects(&pt);
+        let _ = geom.intersects(&ln);
+        let _ = geom.intersects(&ls);
+        let _ = geom.intersects(&poly);
+        let _ = geom.intersects(&rect);
+        let _ = geom.intersects(&tri);
+        let _ = geom.intersects(&geom);
+        let _ = geom.intersects(&gc);
+        let _ = geom.intersects(&multi_point);
+        let _ = geom.intersects(&multi_ls);
+        let _ = geom.intersects(&multi_poly);
+        let _ = gc.intersects(&pt);
+        let _ = gc.intersects(&ln);
+        let _ = gc.intersects(&ls);
+        let _ = gc.intersects(&poly);
+        let _ = gc.intersects(&rect);
+        let _ = gc.intersects(&tri);
+        let _ = gc.intersects(&geom);
+        let _ = gc.intersects(&gc);
+        let _ = gc.intersects(&multi_point);
+        let _ = gc.intersects(&multi_ls);
+        let _ = gc.intersects(&multi_poly);
+        let _ = multi_point.intersects(&pt);
+        let _ = multi_point.intersects(&ln);
+        let _ = multi_point.intersects(&ls);
+        let _ = multi_point.intersects(&poly);
+        let _ = multi_point.intersects(&rect);
+        let _ = multi_point.intersects(&tri);
+        let _ = multi_point.intersects(&geom);
+        let _ = multi_point.intersects(&gc);
+        let _ = multi_point.intersects(&multi_point);
+        let _ = multi_point.intersects(&multi_ls);
+        let _ = multi_point.intersects(&multi_poly);
+        let _ = multi_ls.intersects(&pt);
+        let _ = multi_ls.intersects(&ln);
+        let _ = multi_ls.intersects(&ls);
+        let _ = multi_ls.intersects(&poly);
+        let _ = multi_ls.intersects(&rect);
+        let _ = multi_ls.intersects(&tri);
+        let _ = multi_ls.intersects(&geom);
+        let _ = multi_ls.intersects(&gc);
+        let _ = multi_ls.intersects(&multi_point);
+        let _ = multi_ls.intersects(&multi_ls);
+        let _ = multi_ls.intersects(&multi_poly);
+        let _ = multi_poly.intersects(&pt);
+        let _ = multi_poly.intersects(&ln);
+        let _ = multi_poly.intersects(&ls);
+        let _ = multi_poly.intersects(&poly);
+        let _ = multi_poly.intersects(&rect);
+        let _ = multi_poly.intersects(&tri);
+        let _ = multi_poly.intersects(&geom);
+        let _ = multi_poly.intersects(&gc);
+        let _ = multi_poly.intersects(&multi_point);
+        let _ = multi_poly.intersects(&multi_ls);
+        let _ = multi_poly.intersects(&multi_poly);
     }
 }

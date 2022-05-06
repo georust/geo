@@ -243,7 +243,7 @@ where
         let graph = if geom_index == 0 {
             &self.graph_a
         } else {
-            assert!(geom_index == 1);
+            assert_eq!(geom_index, 1);
             &self.graph_b
         };
         for graph_node in graph.nodes_iter() {
@@ -260,7 +260,7 @@ where
         }
     }
 
-    /// Insert nodes for all intersections on the edges of a Geometry.  
+    /// Insert nodes for all intersections on the edges of a Geometry.
     ///
     /// Label the created nodes the same as the edge label if they do not already have a label.
     /// This allows nodes created by either self-intersections or mutual intersections to be
@@ -271,7 +271,7 @@ where
         let graph = if geom_index == 0 {
             &self.graph_a
         } else {
-            assert!(geom_index == 1);
+            assert_eq!(geom_index, 1);
             &self.graph_b
         };
 
@@ -397,7 +397,7 @@ where
     }
 
     /// Isolated nodes are nodes whose labels are incomplete (e.g. the location for one Geometry is
-    /// null).  
+    /// null).
     /// This is the case because nodes in one graph which don't intersect nodes in the other
     /// are not completely labeled by the initial process of adding nodes to the nodeList.  To
     /// complete the labelling we need to check for nodes that lie in the interior of edges, and in

@@ -9,17 +9,17 @@ sections:
 * [Feature Requests](#feature-requests)
 * [Bug Reports](#bug-reports)
 * [Pull Requests](#pull-requests)
-* [Writing Tests and Documentation](#writing-documentation)
+* [Writing Tests and Documentation](#writing-tests-and-documentation)
 
 As a reminder, all contributors are expected to follow our [Code of Conduct][coc].
 
-[coc]: https://github.com/georust/geo/blob/master/CODE_OF_CONDUCT.md
+[coc]: https://github.com/georust/geo/blob/main/CODE_OF_CONDUCT.md
 
 ## Feature Requests
 [feature-requests]: #feature-requests
 
 `geo` aims to provide a broad suite of functionality. If
-you're in any doubt as to whether a feature can be included,
+you're in any doubt whether a feature can be included,
 simply open an issue and ask. It's a good idea to check open
 issues and pull requests first, in order to check whether a
 requested feature is already in progress.
@@ -39,7 +39,7 @@ always work, and sometimes it's hard to know what to search for, so consider thi
 extra credit. We won't mind if you accidentally file a duplicate report.
 
 Similarly, to help others who encountered the bug find your
-issue, consider filing an issue with with a descriptive
+issue, consider filing an issue with a descriptive
 title, which contains information that might be unique to
 it. This can be the language or compiler feature used, the
 conditions that trigger the bug, or part of the error
@@ -94,7 +94,7 @@ those changes into the source repository.
 [about-pull-requests]: https://help.github.com/articles/about-pull-requests/
 [development-models]: https://help.github.com/articles/about-collaborative-development-models/
 
-Please make pull requests against the `master` branch.
+Please make pull requests against the `main` branch.
 
 All pull requests are reviewed by another person.
 
@@ -108,17 +108,16 @@ This tells @bors, our lovable integration bot, that your
 pull request has been approved. The PR then enters the merge
 queue, where @bors will run all the tests on every platform
 we support. If it all works out, @bors will merge your code
-into `master` and close the pull request.
+into `main` and close the pull request.
 
 ## Writing Tests and Documentation
-[writing-documentation]: #writing-documentation
 
 Documentation improvements are very welcome. Standard API
 documentation is generated from the source code itself. If
 you're adding a new feature, you **must** document its use,
 and write tests, preferably covering 100% of the added
 functionality. [Several
-geometries](geo/src/algorithm/test_fixtures) are provided as
+geometries](geo-test-fixtures) are provided as
 test fixtures. If you need help with the format or content
 of docs, or help writing some tests, don't hesitate to ask.
 
@@ -138,7 +137,7 @@ releases may involve all three.  If publishing more than one,
    that, a breaking change should be released with a change
    in the major version number.
 
-1. If there is a dependency on the other sub-crates (eg.
+1. If there is a dependency on the other sub-crates (e.g.
    `geo` depends on `geo-types`), ensure the major version
    matches the latest release, and the minor the minimum
    version needed to compile.

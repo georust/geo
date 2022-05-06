@@ -6,7 +6,7 @@ use crate::utils::partial_min;
 use crate::{
     GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
-use geo_types::{CoordNum, Coordinate};
+use geo_types::{coord, CoordNum, Coordinate};
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
 
@@ -124,7 +124,7 @@ where
     let two = T::add(T::one(), T::one());
     let search_dist = T::div(T::sqrt(T::powi(w, 2) + T::powi(h, 2)), two);
     let centroid = line.centroid();
-    let centroid_coord = Coordinate {
+    let centroid_coord = coord! {
         x: centroid.x(),
         y: centroid.y(),
     };
@@ -150,6 +150,11 @@ where
                 .locate_within_distance(closest_point, search_dist)
                 .peekable();
             let peeked_edge = edges_nearby_point.peek();
+
+            // Clippy is having an issue here. It might be a valid suggestion,
+            // but the automatic clippy fix breaks the code, so may need to be done by hand.
+            // See https://github.com/rust-lang/rust/issues/94241
+            #[allow(clippy::manual_map)]
             let closest_edge_option = match peeked_edge {
                 None => None,
                 Some(&edge) => Some(edges_nearby_point.fold(*edge, |acc, candidate| {
@@ -170,7 +175,7 @@ where
                 let far_enough = edge_length / decision_distance > concavity;
                 let are_edges_equal = closest_edge == line;
                 if far_enough && are_edges_equal {
-                    Some(Coordinate {
+                    Some(coord! {
                         x: closest_point.x(),
                         y: closest_point.y(),
                     })
@@ -252,16 +257,15 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Point;
     use crate::{line_string, polygon};
     use geo_types::Coordinate;
 
     #[test]
     fn triangle_test() {
         let mut triangle = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 0.0 },
-            Coordinate { x: 2.0, y: 2.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 2.0, y: 2.0 },
         ];
 
         let correct = line_string![
@@ -279,10 +283,10 @@ mod test {
     #[test]
     fn square_test() {
         let mut square = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 4.0 },
-            Coordinate { x: 0.0, y: 4.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 4.0, y: 4.0 },
+            coord! { x: 0.0, y: 4.0 },
         ];
 
         let correct = line_string![
@@ -301,11 +305,11 @@ mod test {
     #[test]
     fn one_flex_test() {
         let mut v = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 2.0, y: 1.0 },
-            Coordinate { x: 4.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 4.0 },
-            Coordinate { x: 0.0, y: 4.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 2.0, y: 1.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 4.0, y: 4.0 },
+            coord! { x: 0.0, y: 4.0 },
         ];
         let correct = line_string![
             (x: 4.0, y: 0.0),
@@ -323,14 +327,14 @@ mod test {
     #[test]
     fn four_flex_test() {
         let mut v = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 2.0, y: 1.0 },
-            Coordinate { x: 4.0, y: 0.0 },
-            Coordinate { x: 3.0, y: 2.0 },
-            Coordinate { x: 4.0, y: 4.0 },
-            Coordinate { x: 2.0, y: 3.0 },
-            Coordinate { x: 0.0, y: 4.0 },
-            Coordinate { x: 1.0, y: 2.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 2.0, y: 1.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 3.0, y: 2.0 },
+            coord! { x: 4.0, y: 4.0 },
+            coord! { x: 2.0, y: 3.0 },
+            coord! { x: 0.0, y: 4.0 },
+            coord! { x: 1.0, y: 2.0 },
         ];
         let correct = line_string![
             (x: 4.0, y: 0.0),
@@ -351,11 +355,11 @@ mod test {
     #[test]
     fn consecutive_flex_test() {
         let mut v = vec![
-            Coordinate { x: 0.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 0.0 },
-            Coordinate { x: 4.0, y: 4.0 },
-            Coordinate { x: 3.0, y: 1.0 },
-            Coordinate { x: 3.0, y: 2.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 4.0, y: 4.0 },
+            coord! { x: 3.0, y: 1.0 },
+            coord! { x: 3.0, y: 2.0 },
         ];
         let correct = line_string![
             (x: 4.0, y: 0.0),
@@ -372,16 +376,8 @@ mod test {
 
     #[test]
     fn concave_hull_norway_test() {
-        let loaded_norway = include!("test_fixtures/norway_main.rs");
-        let norway: MultiPoint<f64> = loaded_norway
-            .iter()
-            .map(|tuple| Point::new(tuple[0], tuple[1]))
-            .collect();
-        let loaded_norway_concave_hull = include!("test_fixtures/norway_concave_hull.rs");
-        let norway_concave_hull_points = loaded_norway_concave_hull
-            .iter()
-            .map(|tuple| Point::new(tuple[0], tuple[1]));
-        let norway_concave_hull: LineString<f64> = norway_concave_hull_points.collect();
+        let norway = geo_test_fixtures::norway_main::<f64>();
+        let norway_concave_hull: LineString<f64> = geo_test_fixtures::norway_concave_hull::<f64>();
         let res = norway.concave_hull(2.0);
         assert_eq!(res.exterior(), &norway_concave_hull);
     }
@@ -418,7 +414,7 @@ mod test {
              (x: 3.0, y: 1.0),
              (x: 3.0, y: 2.0)
         ];
-        let mls = MultiLineString(vec![v1, v2]);
+        let mls = MultiLineString::new(vec![v1, v2]);
         let correct = vec![
             Coordinate::from((4.0, 0.0)),
             Coordinate::from((4.0, 4.0)),
@@ -442,7 +438,7 @@ mod test {
              (x: 3.0, y: 1.0),
              (x: 3.0, y: 2.0)
         ];
-        let multipolygon = MultiPolygon(vec![v1, v2]);
+        let multipolygon = MultiPolygon::new(vec![v1, v2]);
         let res = multipolygon.concave_hull(2.0);
         let correct = vec![
             Coordinate::from((4.0, 0.0)),

@@ -221,7 +221,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
 
     fn centroid(&self) -> Option<Point<T>> {
         self.0.as_ref().map(|weighted_centroid| {
-            Point(weighted_centroid.accumulated / weighted_centroid.weight)
+            Point::from(weighted_centroid.accumulated / weighted_centroid.weight)
         })
     }
 
@@ -395,7 +395,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
 
         let accumulated_coord = ring.lines().fold(Coordinate::zero(), |accum, line| {
             use crate::algorithm::map_coords::MapCoords;
-            let line = line.map_coords(|&(x, y)| (x - shift.x, y - shift.y));
+            let line = line.map_coords(|(x, y)| (x - shift.x, y - shift.y));
             let tmp = line.determinant();
             accum + (line.end + line.start) * tmp
         });
@@ -466,16 +466,16 @@ impl<T: GeoFloat> WeightedCentroid<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{line_string, point, polygon};
+    use crate::{coord, line_string, point, polygon};
 
     /// small helper to create a coordinate
     fn c<T: GeoFloat>(x: T, y: T) -> Coordinate<T> {
-        Coordinate { x, y }
+        coord! { x: x, y: y }
     }
 
     /// small helper to create a point
     fn p<T: GeoFloat>(x: T, y: T) -> Point<T> {
-        Point(c(x, y))
+        point! { x: x, y: y }
     }
 
     // Tests: Centroid of LineString
@@ -487,13 +487,13 @@ mod test {
     }
     #[test]
     fn linestring_one_point_test() {
-        let coord = Coordinate {
+        let coord = coord! {
             x: 40.02f64,
             y: 116.34,
         };
         let linestring = line_string![coord];
         let centroid = linestring.centroid();
-        assert_eq!(centroid, Some(Point(coord)));
+        assert_eq!(centroid, Some(Point::from(coord)));
     }
     #[test]
     fn linestring_test() {
@@ -513,34 +513,34 @@ mod test {
         assert_eq!(l1.centroid(), Some(p(1., 1.)));
 
         let l2 = LineString::from(vec![p(2., 2.), p(2., 2.), p(2., 2.)]);
-        let mls = MultiLineString(vec![l1, l2]);
+        let mls = MultiLineString::new(vec![l1, l2]);
         assert_eq!(mls.centroid(), Some(p(1.5, 1.5)));
     }
     // Tests: Centroid of MultiLineString
     #[test]
     fn empty_multilinestring_test() {
-        let mls: MultiLineString<f64> = MultiLineString(vec![]);
+        let mls: MultiLineString<f64> = MultiLineString::new(vec![]);
         let centroid = mls.centroid();
         assert!(centroid.is_none());
     }
     #[test]
     fn multilinestring_with_empty_line_test() {
-        let mls: MultiLineString<f64> = MultiLineString(vec![line_string![]]);
+        let mls: MultiLineString<f64> = MultiLineString::new(vec![line_string![]]);
         let centroid = mls.centroid();
         assert!(centroid.is_none());
     }
     #[test]
     fn multilinestring_length_0_test() {
-        let coord = Coordinate {
+        let coord = coord! {
             x: 40.02f64,
             y: 116.34,
         };
-        let mls: MultiLineString<f64> = MultiLineString(vec![
+        let mls: MultiLineString<f64> = MultiLineString::new(vec![
             line_string![coord],
             line_string![coord],
             line_string![coord],
         ]);
-        assert_relative_eq!(mls.centroid().unwrap(), Point(coord));
+        assert_relative_eq!(mls.centroid().unwrap(), Point::from(coord));
     }
     #[test]
     fn multilinestring_one_line_test() {
@@ -552,15 +552,15 @@ mod test {
             (x: 10., y: 1.),
             (x: 11., y: 1.)
         ];
-        let mls: MultiLineString<f64> = MultiLineString(vec![linestring]);
-        assert_relative_eq!(mls.centroid().unwrap(), Point(Coordinate { x: 6., y: 1. }));
+        let mls: MultiLineString<f64> = MultiLineString::new(vec![linestring]);
+        assert_relative_eq!(mls.centroid().unwrap(), point! { x: 6., y: 1. });
     }
     #[test]
     fn multilinestring_test() {
         let v1 = line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0)];
         let v2 = line_string![(x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 3.0, y: 1.0)];
         let v3 = line_string![(x: -12.0, y: -100.0), (x: 7.0, y: 8.0)];
-        let mls = MultiLineString(vec![v1, v2, v3]);
+        let mls = MultiLineString::new(vec![v1, v2, v3]);
         assert_relative_eq!(
             mls.centroid().unwrap(),
             point![x: -1.9097834383655845, y: -37.683866439745714]
@@ -592,7 +592,7 @@ mod test {
                 (0..NUM_VERTICES)
                     .map(|i| {
                         let angle = i as f64 * ANGLE_INC;
-                        Coordinate {
+                        coord! {
                             x: angle.cos(),
                             y: angle.sin(),
                         }
@@ -609,12 +609,12 @@ mod test {
         let shift_y = 1.5e8;
 
         use crate::map_coords::MapCoords;
-        let polygon = polygon.map_coords(|&(x, y)| (x + shift_x, y + shift_y));
+        let polygon = polygon.map_coords(|(x, y)| (x + shift_x, y + shift_y));
 
         let new_centroid = polygon
             .centroid()
             .unwrap()
-            .map_coords(|&(x, y)| (x - shift_x, y - shift_y));
+            .map_coords(|(x, y)| (x - shift_x, y - shift_y));
         debug!("centroid {:?}", centroid.0);
         debug!("new_centroid {:?}", new_centroid.0);
         assert_relative_eq!(centroid.0.x, new_centroid.0.x, max_relative = 0.0001);
@@ -669,7 +669,7 @@ mod test {
             LineString::from(vec![p(0., 0.), p(1., 0.), p(0., 0.)]),
             vec![],
         );
-        let multipoly = MultiPolygon(vec![poly]);
+        let multipoly = MultiPolygon::new(vec![poly]);
         assert_eq!(multipoly.centroid(), Some(p(0.5, 0.)));
     }
     #[test]
@@ -682,7 +682,7 @@ mod test {
             LineString::from(vec![p(2., 2.), p(6., 2.), p(2., 2.)]),
             vec![],
         );
-        let multipoly = MultiPolygon(vec![p1, p2]);
+        let multipoly = MultiPolygon::new(vec![p1, p2]);
         assert_eq!(multipoly.centroid(), Some(p(3., 2.)));
     }
     #[test]
@@ -696,7 +696,7 @@ mod test {
             LineString::from(vec![p(2., 2.), p(2., 2.), p(2., 2.)]),
             vec![],
         );
-        let multipoly = MultiPolygon(vec![p1, p2]);
+        let multipoly = MultiPolygon::new(vec![p1, p2]);
         assert_eq!(multipoly.centroid(), Some(p(1.5, 1.5)));
     }
     #[test]
@@ -712,7 +712,7 @@ mod test {
             LineString::from(vec![p(2., 2.), p(6., 2.), p(2., 2.)]),
             vec![],
         );
-        let multipoly = MultiPolygon(vec![normal.clone(), flat]);
+        let multipoly = MultiPolygon::new(vec![normal.clone(), flat]);
         assert_eq!(multipoly.centroid(), normal.centroid());
     }
     #[test]
@@ -727,7 +727,7 @@ mod test {
     fn empty_interior_polygon_test() {
         let poly = Polygon::new(
             LineString::from(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
-            vec![LineString(vec![])],
+            vec![LineString::new(vec![])],
         );
         assert_eq!(poly.centroid(), Some(p(0.5, 0.5)));
     }
@@ -750,14 +750,14 @@ mod test {
     // Tests: Centroid of MultiPolygon
     #[test]
     fn empty_multipolygon_polygon_test() {
-        assert!(MultiPolygon::<f64>(Vec::new()).centroid().is_none());
+        assert!(MultiPolygon::<f64>::new(Vec::new()).centroid().is_none());
     }
     #[test]
     fn multipolygon_one_polygon_test() {
         let linestring =
             LineString::from(vec![p(0., 0.), p(2., 0.), p(2., 2.), p(0., 2.), p(0., 0.)]);
         let poly = Polygon::new(linestring, Vec::new());
-        assert_eq!(MultiPolygon(vec![poly]).centroid(), Some(p(1., 1.)));
+        assert_eq!(MultiPolygon::new(vec![poly]).centroid(), Some(p(1., 1.)));
     }
     #[test]
     fn multipolygon_two_polygons_test() {
@@ -767,7 +767,7 @@ mod test {
         let linestring =
             LineString::from(vec![p(7., 1.), p(8., 1.), p(8., 2.), p(7., 2.), p(7., 1.)]);
         let poly2 = Polygon::new(linestring, Vec::new());
-        let centroid = MultiPolygon(vec![poly1, poly2]).centroid().unwrap();
+        let centroid = MultiPolygon::new(vec![poly1, poly2]).centroid().unwrap();
         assert_relative_eq!(
             centroid,
             point![x: 4.071428571428571, y: 1.9285714285714286]
@@ -780,13 +780,13 @@ mod test {
         let linestring = LineString::from(vec![(0., 0.), (-2., 0.), (-2., 2.), (0., 2.), (0., 0.)]);
         let poly2 = Polygon::new(linestring, Vec::new());
         assert_relative_eq!(
-            MultiPolygon(vec![poly1, poly2]).centroid().unwrap(),
+            MultiPolygon::new(vec![poly1, poly2]).centroid().unwrap(),
             point![x: 0., y: 1.]
         );
     }
     #[test]
     fn bounding_rect_test() {
-        let bounding_rect = Rect::new(Coordinate { x: 0., y: 50. }, Coordinate { x: 4., y: 100. });
+        let bounding_rect = Rect::new(coord! { x: 0., y: 50. }, coord! { x: 4., y: 100. });
         let point = point![x: 2., y: 75.];
         assert_eq!(point, bounding_rect.centroid());
     }
@@ -802,10 +802,11 @@ mod test {
         let p2 = point!(x: 2.0, y: 2.0);
         let p3 = point!(x: 0.0, y: 2.0);
 
-        let multi_point = MultiPoint(vec![p0, p1, p2, p3]);
+        let multi_point = MultiPoint::new(vec![p0, p1, p2, p3]);
         assert_eq!(multi_point.centroid().unwrap(), point!(x: 1.0, y: 1.0));
 
-        let collection = GeometryCollection(vec![MultiPoint(vec![p1, p2, p3]).into(), p0.into()]);
+        let collection =
+            GeometryCollection::new_from(vec![MultiPoint::new(vec![p1, p2, p3]).into(), p0.into()]);
 
         assert_eq!(collection.centroid().unwrap(), point!(x: 1.0, y: 1.0));
     }
@@ -813,44 +814,44 @@ mod test {
     fn triangles() {
         // boring triangle
         assert_eq!(
-            Triangle(c(0., 0.), c(3., 0.), c(1.5, 3.)).centroid(),
+            Triangle::new(c(0., 0.), c(3., 0.), c(1.5, 3.)).centroid(),
             point!(x: 1.5, y: 1.0)
         );
 
         // flat triangle
         assert_eq!(
-            Triangle(c(0., 0.), c(3., 0.), c(1., 0.)).centroid(),
+            Triangle::new(c(0., 0.), c(3., 0.), c(1., 0.)).centroid(),
             point!(x: 1.5, y: 0.0)
         );
 
         // flat triangle that's not axis-aligned
         assert_eq!(
-            Triangle(c(0., 0.), c(3., 3.), c(1., 1.)).centroid(),
+            Triangle::new(c(0., 0.), c(3., 3.), c(1., 1.)).centroid(),
             point!(x: 1.5, y: 1.5)
         );
 
         // triangle with some repeated points
         assert_eq!(
-            Triangle(c(0., 0.), c(0., 0.), c(1., 0.)).centroid(),
+            Triangle::new(c(0., 0.), c(0., 0.), c(1., 0.)).centroid(),
             point!(x: 0.5, y: 0.0)
         );
 
         // triangle with all repeated points
         assert_eq!(
-            Triangle(c(0., 0.5), c(0., 0.5), c(0., 0.5)).centroid(),
+            Triangle::new(c(0., 0.5), c(0., 0.5), c(0., 0.5)).centroid(),
             point!(x: 0., y: 0.5)
         )
     }
 
     #[test]
     fn degenerate_triangle_like_ring() {
-        let triangle = Triangle(c(0., 0.), c(1., 1.), c(2., 2.));
+        let triangle = Triangle::new(c(0., 0.), c(1., 1.), c(2., 2.));
         let poly: Polygon<_> = triangle.into();
 
         let line = Line::new(c(0., 1.), c(1., 3.));
 
-        let g1 = GeometryCollection(vec![triangle.into(), line.into()]);
-        let g2 = GeometryCollection(vec![poly.into(), line.into()]);
+        let g1 = GeometryCollection::new_from(vec![triangle.into(), line.into()]);
+        let g2 = GeometryCollection::new_from(vec![poly.into(), line.into()]);
         assert_eq!(g1.centroid(), g2.centroid());
     }
 
@@ -861,8 +862,8 @@ mod test {
 
         let line = Line::new(c(0., 1.), c(1., 3.));
 
-        let g1 = GeometryCollection(vec![rect.into(), line.into()]);
-        let g2 = GeometryCollection(vec![poly.into(), line.into()]);
+        let g1 = GeometryCollection::new_from(vec![rect.into(), line.into()]);
+        let g2 = GeometryCollection::new_from(vec![poly.into(), line.into()]);
         assert_eq!(g1.centroid(), g2.centroid());
     }
 
@@ -887,8 +888,11 @@ mod test {
         );
 
         // collection with rect
-        let mut collection =
-            GeometryCollection(vec![p(0., 0.).into(), p(6., 0.).into(), p(6., 6.).into()]);
+        let mut collection = GeometryCollection::new_from(vec![
+            p(0., 0.).into(),
+            p(6., 0.).into(),
+            p(6., 6.).into(),
+        ]);
         // sanity check
         assert_eq!(collection.centroid().unwrap(), point!(x: 4., y: 2.));
 

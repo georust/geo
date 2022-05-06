@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use crate::{
-    CoordNum, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+    coord, CoordNum, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
@@ -22,16 +22,16 @@ pub trait CoordsIter<'a> {
     /// ```
     /// use geo::coords_iter::CoordsIter;
     ///
-    /// let multi_point = geo::MultiPoint(vec![
+    /// let multi_point = geo::MultiPoint::new(vec![
     ///     geo::point!(x: -10., y: 0.),
     ///     geo::point!(x: 20., y: 20.),
     ///     geo::point!(x: 30., y: 40.),
     /// ]);
     ///
     /// let mut iter = multi_point.coords_iter();
-    /// assert_eq!(Some(geo::Coordinate { x: -10., y: 0. }), iter.next());
-    /// assert_eq!(Some(geo::Coordinate { x: 20., y: 20. }), iter.next());
-    /// assert_eq!(Some(geo::Coordinate { x: 30., y: 40. }), iter.next());
+    /// assert_eq!(Some(geo::coord! { x: -10., y: 0. }), iter.next());
+    /// assert_eq!(Some(geo::coord! { x: 20., y: 20. }), iter.next());
+    /// assert_eq!(Some(geo::coord! { x: 30., y: 40. }), iter.next());
     /// assert_eq!(None, iter.next());
     /// ```
     fn coords_iter(&'a self) -> Self::Iter;
@@ -83,11 +83,11 @@ pub trait CoordsIter<'a> {
     /// ];
     ///
     /// let mut iter = polygon.exterior_coords_iter();
-    /// assert_eq!(Some(geo::Coordinate { x: 1., y: 0. }), iter.next());
-    /// assert_eq!(Some(geo::Coordinate { x: 2., y: 1. }), iter.next());
-    /// assert_eq!(Some(geo::Coordinate { x: 1., y: 2. }), iter.next());
-    /// assert_eq!(Some(geo::Coordinate { x: 0., y: 1. }), iter.next());
-    /// assert_eq!(Some(geo::Coordinate { x: 1., y: 0. }), iter.next());
+    /// assert_eq!(Some(geo::coord! { x: 1., y: 0. }), iter.next());
+    /// assert_eq!(Some(geo::coord! { x: 2., y: 1. }), iter.next());
+    /// assert_eq!(Some(geo::coord! { x: 1., y: 2. }), iter.next());
+    /// assert_eq!(Some(geo::coord! { x: 0., y: 1. }), iter.next());
+    /// assert_eq!(Some(geo::coord! { x: 1., y: 0. }), iter.next());
     /// assert_eq!(None, iter.next());
     /// ```
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter;
@@ -314,19 +314,19 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Rect<T> {
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        iter::once(Coordinate {
+        iter::once(coord! {
             x: self.min().x,
             y: self.min().y,
         })
-        .chain(iter::once(Coordinate {
+        .chain(iter::once(coord! {
             x: self.min().x,
             y: self.max().y,
         }))
-        .chain(iter::once(Coordinate {
+        .chain(iter::once(coord! {
             x: self.max().x,
             y: self.max().y,
         }))
-        .chain(iter::once(Coordinate {
+        .chain(iter::once(coord! {
             x: self.max().x,
             y: self.min().y,
         }))
@@ -634,8 +634,8 @@ impl<'a, T: CoordNum + Debug> fmt::Debug for GeometryExteriorCoordsIter<'a, T> {
 mod test {
     use super::CoordsIter;
     use crate::{
-        line_string, point, polygon, Coordinate, Geometry, GeometryCollection, Line, LineString,
-        MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+        coord, line_string, point, polygon, Coordinate, Geometry, GeometryCollection, Line,
+        LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
     };
 
     #[test]
@@ -649,12 +649,12 @@ mod test {
 
     #[test]
     fn test_line() {
-        let line = Line::new(Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 3. });
+        let line = Line::new(coord! { x: 1., y: 2. }, coord! { x: 2., y: 3. });
 
         let coords = line.coords_iter().collect::<Vec<_>>();
 
         assert_eq!(
-            vec![Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 3. },],
+            vec![coord! { x: 1., y: 2. }, coord! { x: 2., y: 3. },],
             coords
         );
     }
@@ -684,7 +684,7 @@ mod test {
         expected_coords.append(&mut coords.clone());
         expected_coords.append(&mut coords);
 
-        let actual_coords = MultiPoint(vec![point, point])
+        let actual_coords = MultiPoint::new(vec![point, point])
             .coords_iter()
             .collect::<Vec<_>>();
 
@@ -698,7 +698,7 @@ mod test {
         expected_coords.append(&mut coords.clone());
         expected_coords.append(&mut coords);
 
-        let actual_coords = MultiLineString(vec![line_string.clone(), line_string])
+        let actual_coords = MultiLineString::new(vec![line_string.clone(), line_string])
             .coords_iter()
             .collect::<Vec<_>>();
 
@@ -712,7 +712,7 @@ mod test {
         expected_coords.append(&mut coords.clone());
         expected_coords.append(&mut coords);
 
-        let actual_coords = MultiPolygon(vec![polygon.clone(), polygon])
+        let actual_coords = MultiPolygon::new(vec![polygon.clone(), polygon])
             .coords_iter()
             .collect::<Vec<_>>();
 
@@ -756,7 +756,7 @@ mod test {
         let (polygon, mut coords) = create_polygon();
         expected_coords.append(&mut coords);
 
-        let actual_coords = GeometryCollection(vec![
+        let actual_coords = GeometryCollection::new_from(vec![
             Geometry::LineString(line_string),
             Geometry::Polygon(polygon),
         ])
@@ -767,32 +767,32 @@ mod test {
     }
 
     fn create_point() -> (Point<f64>, Vec<Coordinate<f64>>) {
-        (point!(x: 1., y: 2.), vec![Coordinate { x: 1., y: 2. }])
+        (point!(x: 1., y: 2.), vec![coord! { x: 1., y: 2. }])
     }
 
     fn create_triangle() -> (Triangle<f64>, Vec<Coordinate<f64>>) {
         (
-            Triangle(
-                Coordinate { x: 1., y: 2. },
-                Coordinate { x: 3., y: 4. },
-                Coordinate { x: 5., y: 6. },
+            Triangle::new(
+                coord! { x: 1., y: 2. },
+                coord! { x: 3., y: 4. },
+                coord! { x: 5., y: 6. },
             ),
             vec![
-                Coordinate { x: 1., y: 2. },
-                Coordinate { x: 3., y: 4. },
-                Coordinate { x: 5., y: 6. },
+                coord! { x: 1., y: 2. },
+                coord! { x: 3., y: 4. },
+                coord! { x: 5., y: 6. },
             ],
         )
     }
 
     fn create_rect() -> (Rect<f64>, Vec<Coordinate<f64>>) {
         (
-            Rect::new(Coordinate { x: 1., y: 2. }, Coordinate { x: 3., y: 4. }),
+            Rect::new(coord! { x: 1., y: 2. }, coord! { x: 3., y: 4. }),
             vec![
-                Coordinate { x: 1., y: 2. },
-                Coordinate { x: 1., y: 4. },
-                Coordinate { x: 3., y: 4. },
-                Coordinate { x: 3., y: 2. },
+                coord! { x: 1., y: 2. },
+                coord! { x: 1., y: 4. },
+                coord! { x: 3., y: 4. },
+                coord! { x: 3., y: 2. },
             ],
         )
     }
@@ -803,7 +803,7 @@ mod test {
                 (x: 1., y: 2.),
                 (x: 2., y: 3.),
             ],
-            vec![Coordinate { x: 1., y: 2. }, Coordinate { x: 2., y: 3. }],
+            vec![coord! { x: 1., y: 2. }, coord! { x: 2., y: 3. }],
         )
     }
 
@@ -814,14 +814,14 @@ mod test {
                 interiors: [[(x: 1., y: 1.), (x: 9., y: 1.), (x: 5., y: 9.), (x: 1., y: 1.)]],
             ),
             vec![
-                Coordinate { x: 0.0, y: 0.0 },
-                Coordinate { x: 5.0, y: 10.0 },
-                Coordinate { x: 10.0, y: 0.0 },
-                Coordinate { x: 0.0, y: 0.0 },
-                Coordinate { x: 1.0, y: 1.0 },
-                Coordinate { x: 9.0, y: 1.0 },
-                Coordinate { x: 5.0, y: 9.0 },
-                Coordinate { x: 1.0, y: 1.0 }
+                coord! { x: 0.0, y: 0.0 },
+                coord! { x: 5.0, y: 10.0 },
+                coord! { x: 10.0, y: 0.0 },
+                coord! { x: 0.0, y: 0.0 },
+                coord! { x: 1.0, y: 1.0 },
+                coord! { x: 9.0, y: 1.0 },
+                coord! { x: 5.0, y: 9.0 },
+                coord! { x: 1.0, y: 1.0 },
             ],
         )
     }

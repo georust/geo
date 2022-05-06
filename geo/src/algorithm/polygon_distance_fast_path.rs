@@ -16,15 +16,13 @@ where
 {
     let poly1_extremes = poly1.extremes().unwrap();
     let poly2_extremes = poly2.extremes().unwrap();
-    let ymin1 = Point(poly1.exterior().0[poly1_extremes.y_min.index]);
-    let ymax2 = Point(poly2.exterior().0[poly2_extremes.y_max.index]);
+    let ymin1 = Point::from(poly1.exterior().0[poly1_extremes.y_min.index]);
+    let ymax2 = Point::from(poly2.exterior().0[poly2_extremes.y_max.index]);
 
     let mut state = Polydist {
         poly1,
         poly2,
         dist: T::infinity(),
-        ymin1,
-        ymax2,
         // initial polygon 1 min y idx
         p1_idx: poly1_extremes.y_min.index,
         // initial polygon 2 max y idx
@@ -40,15 +38,20 @@ where
         ap1: T::zero(),
         aq2: T::zero(),
         start: None,
-        finished: false,
         ip1: false,
         iq2: false,
         slope: T::zero(),
         vertical: false,
+        // minimum distance can be calculated in at most this many iterations
+        // we only need to spin the calipers equal to the total number of vertices in both polygons
+        // alternatively, we could accumulate the total rotation angle and stop when it exceeds 2pi
+        max_iterations: poly1.exterior().0.len() + poly2.exterior().0.len(),
     };
-    while !state.finished {
+    let mut iterations = 0usize;
+    while iterations <= state.max_iterations {
         nextpoints(&mut state);
         computemin(&mut state);
+        iterations += 1;
     }
     state.dist
 }
@@ -94,9 +97,7 @@ where
     poly1: &'a Polygon<T>,
     poly2: &'a Polygon<T>,
     dist: T,
-    ymin1: Point<T>,
     p1_idx: usize,
-    ymax2: Point<T>,
     q2_idx: usize,
     p1: Point<T>,
     q2: Point<T>,
@@ -108,11 +109,11 @@ where
     ap1: T,
     aq2: T,
     start: Option<bool>,
-    finished: bool,
     ip1: bool,
     iq2: bool,
     slope: T,
     vertical: bool,
+    max_iterations: usize,
 }
 
 // much of the following code is ported from Java, copyright 1999 Hormoz Pirzadeh, available at:
@@ -128,7 +129,7 @@ where
     let mut sin;
     let pnext = poly.exterior().0[next_vertex(poly, idx)];
     let pprev = poly.exterior().0[prev_vertex(poly, idx)];
-    let clockwise = Point(pprev).cross_prod(Point(p.0), Point(pnext)) < T::zero();
+    let clockwise = Point::from(pprev).cross_prod(Point::from(p.0), Point::from(pnext)) < T::zero();
     let slope_prev;
     let slope_next;
     // Slope isn't 0, things are complicated
@@ -322,7 +323,7 @@ where
     let hundred = T::from(100).unwrap();
     let pnext = poly.exterior().0[next_vertex(poly, idx)];
     let pprev = poly.exterior().0[prev_vertex(poly, idx)];
-    let clockwise = Point(pprev).cross_prod(Point(p.0), Point(pnext)) < T::zero();
+    let clockwise = Point::from(pprev).cross_prod(Point::from(p.0), Point::from(pnext)) < T::zero();
     let punit;
     if !vertical {
         punit = unitvector(m, poly, p, idx);
@@ -359,8 +360,8 @@ where
         // implies p.x() < pprev.x()
         punit = Point::new(p.x(), p.y() - hundred);
     }
-    let triarea = Triangle::from([p, punit, Point(pnext)]).signed_area();
-    let edgelen = p.euclidean_distance(&Point(pnext));
+    let triarea = Triangle::from([p, punit, Point::from(pnext)]).signed_area();
+    let edgelen = p.euclidean_distance(&Point::from(pnext));
     let mut sine = triarea / (T::from(0.5).unwrap() * T::from(100).unwrap() * edgelen);
     if sine < -T::one() || sine > T::one() {
         sine = T::one();
@@ -368,7 +369,7 @@ where
     let angle;
     let perpunit = unitpvector(p, punit);
     let mut obtuse = false;
-    let left = leftturn(p, perpunit, Point(pnext));
+    let left = leftturn(p, perpunit, Point::from(pnext));
     if left == 0 {
         obtuse = true;
     }
@@ -411,7 +412,7 @@ fn nextpoints<T>(state: &mut Polydist<T>)
 where
     T: GeoFloat + FloatConst + Signed,
 {
-    state.alignment = None;
+    state.alignment = Some(AlignedEdge::VertexP);
     state.ip1 = false;
     state.iq2 = false;
     state.ap1 = vertex_line_angle(
@@ -452,19 +453,19 @@ where
     if (state.ap1 - minangle).abs() < T::from(0.002).unwrap() {
         state.ip1 = true;
         let p1next = next_vertex(state.poly1, state.p1_idx);
-        state.p1next = Point(state.poly1.exterior().0[p1next]);
+        state.p1next = Point::from(state.poly1.exterior().0[p1next]);
         state.p1_idx = p1next;
         state.alignment = Some(AlignedEdge::VertexP);
     }
     if (state.aq2 - minangle).abs() < T::from(0.002).unwrap() {
         state.iq2 = true;
         let q2next = next_vertex(state.poly2, state.q2_idx);
-        state.q2next = Point(state.poly2.exterior().0[q2next]);
+        state.q2next = Point::from(state.poly2.exterior().0[q2next]);
         state.q2_idx = q2next;
         state.alignment = match state.alignment {
             None => Some(AlignedEdge::VertexQ),
             Some(_) => Some(AlignedEdge::Edge),
-        }
+        };
     }
     if state.ip1 {
         if state.p1.x() == state.p1next.x() {
@@ -473,28 +474,29 @@ where
             state.slope = T::zero();
         } else {
             state.vertical = false;
-            state.slope = Line::new(state.p1next.0, state.p1.0).slope();
+            if state.p1.x() > state.p1next.x() {
+                state.slope = (state.p1.y() - state.p1next.y()) / (state.p1.x() - state.p1next.x());
+            } else {
+                state.slope = (state.p1next.y() - state.p1.y()) / (state.p1next.x() - state.p1.x());
+            }
         }
-    }
-    if state.iq2 {
+    } else if state.iq2 {
         if state.q2.x() == state.q2next.x() {
             // The Q line of support is vertical
             state.vertical = true;
             state.slope = T::zero();
         } else {
             state.vertical = false;
-            state.slope = Line::new(state.q2next.0, state.q2.0).slope();
+            if state.q2.x() > state.q2next.x() {
+                state.slope = (state.q2.y() - state.q2next.y()) / (state.q2.x() - state.q2next.x());
+            } else {
+                state.slope = (state.q2next.y() - state.q2.y()) / (state.q2next.x() - state.q2.x());
+            }
         }
     }
-    // A start value's been set, and both polygon indices are in their initial
-    // positions -- we're finished, so return the minimum distance
-    if state.p1 == state.ymin1 && state.q2 == state.ymax2 && state.start.is_some() {
-        state.finished = true;
-    } else {
-        state.start = Some(false);
-        state.p1 = state.p1next;
-        state.q2 = state.q2next;
-    }
+    state.start = Some(false);
+    state.p1 = state.p1next;
+    state.q2 = state.q2next;
 }
 
 /// compute the minimum distance between entities (edges or vertices)
@@ -567,6 +569,11 @@ where
         }
         Some(AlignedEdge::Edge) => {
             // both lines of support coincide with edges (i.e. they're parallel)
+            newdist = state.p1.euclidean_distance(&state.q2);
+            if newdist <= state.dist {
+                // New minimum distance is between p1 and q2
+                state.dist = newdist;
+            }
             newdist = state.p1.euclidean_distance(&state.q2prev);
             if newdist <= state.dist {
                 // New minimum distance is between p1 and q2prev

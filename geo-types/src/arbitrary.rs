@@ -4,29 +4,38 @@ use crate::{
 };
 use std::mem;
 
-impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for Coordinate<T> {
+impl<'a, T> arbitrary::Arbitrary<'a> for Coordinate<T>
+where
+    T: arbitrary::Arbitrary<'a> + CoordFloat,
+{
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        let x = u.arbitrary::<T>()?;
-        let y = u.arbitrary::<T>()?;
-        Ok(Coordinate { x, y })
+        Ok(coord! {
+            x: u.arbitrary::<T>()?,
+            y: u.arbitrary::<T>()?,
+        })
     }
 }
 
-impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for Point<T> {
+impl<'a, T> arbitrary::Arbitrary<'a> for Point<T>
+where
+    T: arbitrary::Arbitrary<'a> + CoordFloat,
+{
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Coordinate<T>>().map(Point)
+        u.arbitrary::<Coordinate<T>>().map(Self)
     }
 }
 
-impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for LineString<T> {
+impl<'a, T> arbitrary::Arbitrary<'a> for LineString<T>
+where
+    T: arbitrary::Arbitrary<'a> + CoordFloat,
+{
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         let coords = u.arbitrary::<Vec<Coordinate<T>>>()?;
-
         if coords.len() < 2 {
-            return Err(arbitrary::Error::IncorrectFormat);
+            Err(arbitrary::Error::IncorrectFormat)
+        } else {
+            Ok(Self(coords))
         }
-
-        Ok(LineString(coords))
     }
 
     fn size_hint(_depth: usize) -> (usize, Option<usize>) {
@@ -34,53 +43,72 @@ impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for 
     }
 }
 
-impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for Polygon<T> {
+impl<'a, T> arbitrary::Arbitrary<'a> for Polygon<T>
+where
+    T: arbitrary::Arbitrary<'a> + CoordFloat,
+{
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Polygon::new(
+        Ok(Self::new(
             u.arbitrary::<LineString<T>>()?,
             u.arbitrary::<Vec<LineString<T>>>()?,
         ))
     }
 }
 
-impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for MultiPoint<T> {
+impl<'a, T> arbitrary::Arbitrary<'a> for MultiPoint<T>
+where
+    T: arbitrary::Arbitrary<'a> + CoordFloat,
+{
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Vec<Point<T>>>().map(MultiPoint)
+        u.arbitrary::<Vec<Point<T>>>().map(Self)
     }
 }
 
-impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for MultiLineString<T> {
+impl<'a, T> arbitrary::Arbitrary<'a> for MultiLineString<T>
+where
+    T: arbitrary::Arbitrary<'a> + CoordFloat,
+{
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Vec<LineString<T>>>().map(MultiLineString)
+        u.arbitrary::<Vec<LineString<T>>>().map(Self)
     }
 }
 
-impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for MultiPolygon<T> {
+impl<'a, T> arbitrary::Arbitrary<'a> for MultiPolygon<T>
+where
+    T: arbitrary::Arbitrary<'a> + CoordFloat,
+{
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Vec<Polygon<T>>>().map(MultiPolygon)
+        u.arbitrary::<Vec<Polygon<T>>>().map(Self)
     }
 }
 
-impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a>
-    for GeometryCollection<T>
+impl<'a, T> arbitrary::Arbitrary<'a> for GeometryCollection<T>
+where
+    T: arbitrary::Arbitrary<'a> + CoordFloat,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         u.arbitrary()
     }
 }
 
-impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for Rect<T> {
+impl<'a, T> arbitrary::Arbitrary<'a> for Rect<T>
+where
+    T: arbitrary::Arbitrary<'a> + CoordFloat,
+{
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Rect::new(
+        Ok(Self::new(
             u.arbitrary::<Coordinate<T>>()?,
             u.arbitrary::<Coordinate<T>>()?,
         ))
     }
 }
 
-impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for Triangle<T> {
+impl<'a, T> arbitrary::Arbitrary<'a> for Triangle<T>
+where
+    T: arbitrary::Arbitrary<'a> + CoordFloat,
+{
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Triangle(
+        Ok(Self(
             u.arbitrary::<Coordinate<T>>()?,
             u.arbitrary::<Coordinate<T>>()?,
             u.arbitrary::<Coordinate<T>>()?,
@@ -88,20 +116,23 @@ impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for 
     }
 }
 
-impl<'a, T: arbitrary::Arbitrary<'a> + CoordFloat> arbitrary::Arbitrary<'a> for Geometry<T> {
+impl<'a, T> arbitrary::Arbitrary<'a> for Geometry<T>
+where
+    T: arbitrary::Arbitrary<'a> + CoordFloat,
+{
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         let n = u.int_in_range(0..=8)?;
 
         Ok(match n {
-            0 => Geometry::Point(u.arbitrary()?),
-            1 => Geometry::LineString(u.arbitrary()?),
-            2 => Geometry::Polygon(u.arbitrary()?),
-            3 => Geometry::MultiPoint(u.arbitrary()?),
-            4 => Geometry::MultiLineString(u.arbitrary()?),
-            5 => Geometry::MultiPolygon(u.arbitrary()?),
-            6 => Geometry::GeometryCollection(u.arbitrary()?),
-            7 => Geometry::Triangle(u.arbitrary()?),
-            8 => Geometry::Rect(u.arbitrary()?),
+            0 => Self::Point(u.arbitrary()?),
+            1 => Self::LineString(u.arbitrary()?),
+            2 => Self::Polygon(u.arbitrary()?),
+            3 => Self::MultiPoint(u.arbitrary()?),
+            4 => Self::MultiLineString(u.arbitrary()?),
+            5 => Self::MultiPolygon(u.arbitrary()?),
+            6 => Self::GeometryCollection(u.arbitrary()?),
+            7 => Self::Triangle(u.arbitrary()?),
+            8 => Self::Rect(u.arbitrary()?),
             _ => unreachable!(),
         })
     }

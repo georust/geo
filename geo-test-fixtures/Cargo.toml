@@ -1,0 +1,9 @@
+[package]
+name = "geo-test-fixtures"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+wkt = { version = "0.10.0", default-features = false }
+geo-types = { path = "../geo-types" }

@@ -11,35 +11,29 @@ use approx::{AbsDiffEq, RelativeEq};
 /// `LineString` with the two end points.
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Line<T>
-where
-    T: CoordNum,
-{
+pub struct Line<T: CoordNum> {
     pub start: Coordinate<T>,
     pub end: Coordinate<T>,
 }
 
-impl<T> Line<T>
-where
-    T: CoordNum,
-{
+impl<T: CoordNum> Line<T> {
     /// Creates a new line segment.
     ///
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, Line};
+    /// use geo_types::{coord, Line};
     ///
-    /// let line = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 2. });
+    /// let line = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 2. });
     ///
-    /// assert_eq!(line.start, Coordinate { x: 0., y: 0. });
-    /// assert_eq!(line.end, Coordinate { x: 1., y: 2. });
+    /// assert_eq!(line.start, coord! { x: 0., y: 0. });
+    /// assert_eq!(line.end, coord! { x: 1., y: 2. });
     /// ```
-    pub fn new<C>(start: C, end: C) -> Line<T>
+    pub fn new<C>(start: C, end: C) -> Self
     where
         C: Into<Coordinate<T>>,
     {
-        Line {
+        Self {
             start: start.into(),
             end: end.into(),
         }
@@ -55,10 +49,10 @@ where
     /// Equivalent to:
     ///
     /// ```rust
-    /// # use geo_types::{Line, Coordinate, Point};
+    /// # use geo_types::{Line, point};
     /// # let line = Line::new(
-    /// #     Point(Coordinate { x: 4., y: -12. }),
-    /// #     Point(Coordinate { x: 0., y: 9. }),
+    /// #     point! { x: 4., y: -12. },
+    /// #     point! { x: 0., y: 9. },
     /// # );
     /// # assert_eq!(
     /// #     line.dx(),
@@ -74,10 +68,10 @@ where
     /// Equivalent to:
     ///
     /// ```rust
-    /// # use geo_types::{Line, Coordinate, Point};
+    /// # use geo_types::{Line, point};
     /// # let line = Line::new(
-    /// #     Point(Coordinate { x: 4., y: -12. }),
-    /// #     Point(Coordinate { x: 0., y: 9. }),
+    /// #     point! { x: 4., y: -12. },
+    /// #     point! { x: 0., y: 9. },
     /// # );
     /// # assert_eq!(
     /// #     line.dy(),
@@ -93,10 +87,10 @@ where
     /// Equivalent to:
     ///
     /// ```rust
-    /// # use geo_types::{Line, Coordinate, Point};
+    /// # use geo_types::{Line, point};
     /// # let line = Line::new(
-    /// #     Point(Coordinate { x: 4., y: -12. }),
-    /// #     Point(Coordinate { x: 0., y: 9. }),
+    /// #     point! { x: 4., y: -12. },
+    /// #     point! { x: 0., y: 9. },
     /// # );
     /// # assert_eq!(
     /// #     line.slope(),
@@ -107,9 +101,9 @@ where
     /// Note that:
     ///
     /// ```rust
-    /// # use geo_types::{Line, Coordinate, Point};
-    /// # let a = Point(Coordinate { x: 4., y: -12. });
-    /// # let b = Point(Coordinate { x: 0., y: 9. });
+    /// # use geo_types::{Line, point};
+    /// # let a = point! { x: 4., y: -12. };
+    /// # let b = point! { x: 0., y: 9. };
     /// # assert!(
     /// Line::new(a, b).slope() == Line::new(b, a).slope()
     /// # );
@@ -123,10 +117,10 @@ where
     /// Equivalent to:
     ///
     /// ```rust
-    /// # use geo_types::{Line, Coordinate, Point};
+    /// # use geo_types::{Line, point};
     /// # let line = Line::new(
-    /// #     Point(Coordinate { x: 4., y: -12. }),
-    /// #     Point(Coordinate { x: 0., y: 9. }),
+    /// #     point! { x: 4., y: -12. },
+    /// #     point! { x: 0., y: 9. },
     /// # );
     /// # assert_eq!(
     /// #     line.determinant(),
@@ -137,9 +131,9 @@ where
     /// Note that:
     ///
     /// ```rust
-    /// # use geo_types::{Line, Coordinate, Point};
-    /// # let a = Point(Coordinate { x: 4., y: -12. });
-    /// # let b = Point(Coordinate { x: 0., y: 9. });
+    /// # use geo_types::{Line, point};
+    /// # let a = point! { x: 4., y: -12. };
+    /// # let b = point! { x: 0., y: 9. };
     /// # assert!(
     /// Line::new(a, b).determinant() == -Line::new(b, a).determinant()
     /// # );
@@ -149,11 +143,11 @@ where
     }
 
     pub fn start_point(&self) -> Point<T> {
-        Point(self.start)
+        Point::from(self.start)
     }
 
     pub fn end_point(&self) -> Point<T> {
-        Point(self.end)
+        Point::from(self.end)
     }
 
     pub fn points(&self) -> (Point<T>, Point<T>) {
@@ -162,7 +156,7 @@ where
 }
 
 impl<T: CoordNum> From<[(T, T); 2]> for Line<T> {
-    fn from(coord: [(T, T); 2]) -> Line<T> {
+    fn from(coord: [(T, T); 2]) -> Self {
         Line::new(coord[0], coord[1])
     }
 }
@@ -181,10 +175,10 @@ where
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, Line};
+    /// use geo_types::{coord, Line};
     ///
-    /// let a = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. });
-    /// let b = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1.001, y: 1. });
+    /// let a = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. });
+    /// let b = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1.001, y: 1. });
     ///
     /// approx::assert_relative_eq!(a, b, max_relative=0.1);
     /// ```
@@ -214,10 +208,10 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Line<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{Coordinate, Line};
+    /// use geo_types::{coord, Line};
     ///
-    /// let a = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. });
-    /// let b = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1.001, y: 1. });
+    /// let a = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. });
+    /// let b = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1.001, y: 1. });
     ///
     /// approx::assert_abs_diff_eq!(a, b, epsilon=0.1);
     /// ```
@@ -227,6 +221,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Line<T> {
     }
 }
 
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
 macro_rules! impl_rstar_line {
     ($rstar:ident) => {
         impl<T> ::$rstar::RTreeObject for Line<T>
@@ -253,8 +248,8 @@ macro_rules! impl_rstar_line {
     };
 }
 
-#[cfg(feature = "rstar")]
-impl_rstar_line!(rstar);
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_line!(rstar_0_8);
 
 #[cfg(feature = "rstar_0_9")]
 impl_rstar_line!(rstar_0_9);
@@ -262,34 +257,35 @@ impl_rstar_line!(rstar_0_9);
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::{coord, point};
 
     #[test]
     fn test_abs_diff_eq() {
         let delta = 1e-6;
-        let line = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. });
+        let line = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. });
         let line_start_x = Line::new(
-            Point(Coordinate {
+            point! {
                 x: 0. + delta,
                 y: 0.,
-            }),
-            Point(Coordinate { x: 1., y: 1. }),
+            },
+            point! { x: 1., y: 1. },
         );
         assert!(line.abs_diff_eq(&line_start_x, 1e-2));
         assert!(line.abs_diff_ne(&line_start_x, 1e-12));
 
         let line_start_y = Line::new(
-            Coordinate {
+            coord! {
                 x: 0.,
                 y: 0. + delta,
             },
-            Coordinate { x: 1., y: 1. },
+            coord! { x: 1., y: 1. },
         );
         assert!(line.abs_diff_eq(&line_start_y, 1e-2));
         assert!(line.abs_diff_ne(&line_start_y, 1e-12));
 
         let line_end_x = Line::new(
-            Coordinate { x: 0., y: 0. },
-            Coordinate {
+            coord! { x: 0., y: 0. },
+            coord! {
                 x: 1. + delta,
                 y: 1.,
             },
@@ -299,8 +295,8 @@ mod test {
         assert!(line.abs_diff_ne(&line_end_x, 1e-12));
 
         let line_end_y = Line::new(
-            Coordinate { x: 0., y: 0. },
-            Coordinate {
+            coord! { x: 0., y: 0. },
+            coord! {
                 x: 1.,
                 y: 1. + delta,
             },
@@ -314,20 +310,20 @@ mod test {
     fn test_relative_eq() {
         let delta = 1e-6;
 
-        let line = Line::new(Coordinate { x: 0., y: 0. }, Coordinate { x: 1., y: 1. });
+        let line = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. });
         let line_start_x = Line::new(
-            Point(Coordinate {
+            point! {
                 x: 0. + delta,
                 y: 0.,
-            }),
-            Point(Coordinate { x: 1., y: 1. }),
+            },
+            point! { x: 1., y: 1. },
         );
         let line_start_y = Line::new(
-            Coordinate {
+            coord! {
                 x: 0.,
                 y: 0. + delta,
             },
-            Coordinate { x: 1., y: 1. },
+            coord! { x: 1., y: 1. },
         );
 
         assert!(line.relative_eq(&line_start_x, 1e-2, 1e-2));

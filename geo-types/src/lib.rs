@@ -37,7 +37,7 @@
 //! - `approx`: Allows geometry types to be checked for approximate equality with [approx]
 //! - `arbitrary`: Allows geometry types to be created from unstructured input with [arbitrary]
 //! - `serde`: Allows geometry types to be serialized and deserialized with [Serde]
-//! - `use-rstar`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.8`)
+//! - `use-rstar_0_8`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.8`)
 //! - `use-rstar_0_9`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.9`)
 //!
 //! [approx]: https://github.com/brendanzab/approx
@@ -57,8 +57,8 @@ use std::fmt::Debug;
 #[macro_use]
 extern crate serde;
 
-#[cfg(feature = "rstar")]
-extern crate rstar;
+#[cfg(feature = "rstar_0_8")]
+extern crate rstar_0_8;
 
 #[cfg(test)]
 #[macro_use]
@@ -129,7 +129,7 @@ mod macros;
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
 
-#[cfg(feature = "rstar")]
+#[cfg(feature = "rstar_0_8")]
 #[doc(hidden)]
 pub mod private_utils;
 
@@ -140,12 +140,12 @@ mod tests {
 
     #[test]
     fn type_test() {
-        let c = Coordinate {
+        let c = coord! {
             x: 40.02f64,
             y: 116.34,
         };
 
-        let p = Point(c);
+        let p = Point::from(c);
 
         let Point(c2) = p;
         assert_eq!(c, c2);
@@ -168,17 +168,17 @@ mod tests {
 
     #[test]
     fn polygon_new_test() {
-        let exterior = LineString(vec![
-            Coordinate { x: 0., y: 0. },
-            Coordinate { x: 1., y: 1. },
-            Coordinate { x: 1., y: 0. },
-            Coordinate { x: 0., y: 0. },
+        let exterior = LineString::new(vec![
+            coord! { x: 0., y: 0. },
+            coord! { x: 1., y: 1. },
+            coord! { x: 1., y: 0. },
+            coord! { x: 0., y: 0. },
         ]);
-        let interiors = vec![LineString(vec![
-            Coordinate { x: 0.1, y: 0.1 },
-            Coordinate { x: 0.9, y: 0.9 },
-            Coordinate { x: 0.9, y: 0.1 },
-            Coordinate { x: 0.1, y: 0.1 },
+        let interiors = vec![LineString::new(vec![
+            coord! { x: 0.1, y: 0.1 },
+            coord! { x: 0.9, y: 0.9 },
+            coord! { x: 0.9, y: 0.1 },
+            coord! { x: 0.1, y: 0.1 },
         ])];
         let p = Polygon::new(exterior.clone(), interiors.clone());
 
@@ -192,11 +192,11 @@ mod tests {
         let _: MultiPoint<_> = vec![(0., 0.), (1., 2.)].into_iter().collect();
 
         let mut l1: LineString<_> = vec![(0., 0.), (1., 2.)].into();
-        assert_eq!(l1[1], Coordinate { x: 1., y: 2. }); // index into linestring
+        assert_eq!(l1[1], coord! { x: 1., y: 2. }); // index into linestring
         let _: LineString<_> = vec![(0., 0.), (1., 2.)].into_iter().collect();
 
         // index mutably into a linestring
-        l1[0] = Coordinate { x: 1., y: 1. };
+        l1[0] = coord! { x: 1., y: 1. };
         assert_eq!(l1, vec![(1., 1.), (1., 2.)].into());
     }
 
@@ -209,15 +209,15 @@ mod tests {
         assert_eq!(p.x(), 1_000_000i64);
     }
 
-    #[cfg(feature = "rstar")]
+    #[cfg(feature = "rstar_0_8")]
     #[test]
     /// ensure Line's SpatialObject impl is correct
     fn line_test() {
-        use rstar::primitives::Line as RStarLine;
-        use rstar::{PointDistance, RTreeObject};
+        use rstar_0_8::primitives::Line as RStarLine;
+        use rstar_0_8::{PointDistance, RTreeObject};
 
         let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
-        let l = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 5., y: 5. });
+        let l = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 5., y: 5. });
         assert_eq!(rl.envelope(), l.envelope());
         // difference in 15th decimal place
         assert_relative_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
@@ -232,7 +232,7 @@ mod tests {
         use rstar_0_9::{PointDistance, RTreeObject};
 
         let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
-        let l = Line::new(Coordinate { x: 0.0, y: 0.0 }, Coordinate { x: 5., y: 5. });
+        let l = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 5., y: 5. });
         assert_eq!(rl.envelope(), l.envelope());
         // difference in 15th decimal place
         assert_relative_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
@@ -241,7 +241,7 @@ mod tests {
 
     #[test]
     fn test_rects() {
-        let r = Rect::new(Coordinate { x: -1., y: -1. }, Coordinate { x: 1., y: 1. });
+        let r = Rect::new(coord! { x: -1., y: -1. }, coord! { x: 1., y: 1. });
         let p: Polygon<_> = r.into();
         assert_eq!(
             p,
