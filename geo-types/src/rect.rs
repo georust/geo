@@ -170,7 +170,7 @@ impl<T: CoordNum> Rect<T> {
     /// assert_eq!(rect.width(), 10.);
     /// ```
     pub fn width(self) -> T {
-        self.max().x - self.min().x
+        self.clone().max().x - self.min().x
     }
 
     /// Returns the height of the `Rect`.
@@ -188,7 +188,7 @@ impl<T: CoordNum> Rect<T> {
     /// assert_eq!(rect.height(), 10.);
     /// ```
     pub fn height(self) -> T {
-        self.max().y - self.min().y
+        self.clone().max().y - self.min().y
     }
 
     /// Create a `Polygon` from the `Rect`.
@@ -216,10 +216,10 @@ impl<T: CoordNum> Rect<T> {
     /// ```
     pub fn to_polygon(self) -> Polygon<T> {
         polygon![
-            (x: self.min.x, y: self.min.y),
-            (x: self.min.x, y: self.max.y),
-            (x: self.max.x, y: self.max.y),
-            (x: self.max.x, y: self.min.y),
+            (x: self.min.clone().x, y: self.min.clone().y),
+            (x: self.min.clone().x, y: self.max.clone().y),
+            (x: self.max.clone().x, y: self.max.clone().y),
+            (x: self.max.clone().x, y: self.min.clone().y),
             (x: self.min.x, y: self.min.y),
         ]
     }
@@ -228,42 +228,42 @@ impl<T: CoordNum> Rect<T> {
         [
             Line::new(
                 coord! {
-                    x: self.min.x,
-                    y: self.min.y,
+                    x: self.min.clone().x,
+                    y: self.min.clone().y,
                 },
                 coord! {
-                    x: self.min.x,
-                    y: self.max.y,
-                },
-            ),
-            Line::new(
-                coord! {
-                    x: self.min.x,
-                    y: self.max.y,
-                },
-                coord! {
-                    x: self.max.x,
-                    y: self.max.y,
+                    x: self.min.clone().x,
+                    y: self.max.clone().y,
                 },
             ),
             Line::new(
                 coord! {
-                    x: self.max.x,
-                    y: self.max.y,
+                    x: self.min.clone().x,
+                    y: self.max.clone().y,
                 },
                 coord! {
-                    x: self.max.x,
-                    y: self.min.y,
+                    x: self.max.clone().x,
+                    y: self.max.clone().y,
                 },
             ),
             Line::new(
                 coord! {
-                    x: self.max.x,
-                    y: self.min.y,
+                    x: self.max.clone().x,
+                    y: self.max.clone().y,
                 },
                 coord! {
-                    x: self.min.x,
-                    y: self.min.y,
+                    x: self.max.clone().x,
+                    y: self.min.clone().y,
+                },
+            ),
+            Line::new(
+                coord! {
+                    x: self.max.clone().x,
+                    y: self.min.clone().y,
+                },
+                coord! {
+                    x: self.min.clone().x,
+                    y: self.min.clone().y,
                 },
             ),
         ]
@@ -336,7 +336,7 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        if !self.min.relative_eq(&other.min, epsilon, max_relative) {
+        if !self.min.relative_eq(&other.min, epsilon.clone(), max_relative.clone()) {
             return false;
         }
 
@@ -352,7 +352,6 @@ where
 impl<T> AbsDiffEq for Rect<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordNum,
-    T::Epsilon: Copy,
 {
     type Epsilon = T;
 
@@ -376,7 +375,7 @@ where
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        if !self.min.abs_diff_eq(&other.min, epsilon) {
+        if !self.min.abs_diff_eq(&other.min, epsilon.clone()) {
             return false;
         }
 

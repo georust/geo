@@ -60,7 +60,7 @@ where
         let mut aggregated: Vec<_> = self
             .0
             .iter()
-            .flat_map(|elem| elem.exterior().0.iter().copied())
+            .flat_map(|elem| elem.exterior().0.iter().cloned())
             .collect();
         Polygon::new(quick_hull(&mut aggregated), vec![])
     }

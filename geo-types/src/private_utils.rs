@@ -26,8 +26,8 @@ where
 {
     let mut iter = collection.into_iter();
     if let Some(pnt) = iter.next() {
-        let mut xrange = (pnt.x, pnt.x);
-        let mut yrange = (pnt.y, pnt.y);
+        let mut xrange = (pnt.clone().x, pnt.clone().x);
+        let mut yrange = (pnt.clone().y, pnt.y);
         for pnt in iter {
             let (px, py) = pnt.x_y();
             xrange = get_min_max(px, xrange.0, xrange.1);

@@ -143,7 +143,7 @@ impl<'a, T: CoordNum> CoordsIter<'a> for Line<T> {
 // │ Implementation for LineString │
 // └───────────────────────────────┘
 
-type LineStringIter<'a, T> = iter::Copied<slice::Iter<'a, Coordinate<T>>>;
+type LineStringIter<'a, T> = iter::Cloned<slice::Iter<'a, Coordinate<T>>>;
 
 impl<'a, T: CoordNum + 'a> CoordsIter<'a> for LineString<T> {
     type Iter = LineStringIter<'a, T>;
@@ -151,7 +151,7 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for LineString<T> {
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        self.0.iter().copied()
+        self.0.iter().cloned()
     }
 
     /// Return the number of coordinates in the `LineString`.

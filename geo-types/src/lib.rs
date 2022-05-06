@@ -65,9 +65,9 @@ extern crate rstar_0_8;
 extern crate approx;
 
 #[deprecated(since = "0.7.0", note = "use `CoordFloat` or `CoordNum` instead")]
-pub trait CoordinateType: Num + Copy + NumCast + PartialOrd + Debug {}
+pub trait CoordinateType: Num + Clone + NumCast + PartialOrd + Debug {}
 #[allow(deprecated)]
-impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordinateType for T {}
+impl<T: Num + Clone + NumCast + PartialOrd + Debug> CoordinateType for T {}
 
 /// The type of an x or y value of a point/coordinate.
 ///

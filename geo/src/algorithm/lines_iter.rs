@@ -47,10 +47,10 @@ pub trait LinesIter<'a> {
 
 impl<'a, T: CoordNum + 'a> LinesIter<'a> for Line<T> {
     type Scalar = T;
-    type Iter = iter::Copied<iter::Once<&'a Line<Self::Scalar>>>;
+    type Iter = iter::Cloned<iter::Once<&'a Line<Self::Scalar>>>;
 
     fn lines_iter(&'a self) -> Self::Iter {
-        iter::once(self).copied()
+        iter::once(self).cloned()
     }
 }
 

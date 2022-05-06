@@ -443,13 +443,15 @@ impl<T: CoordFloat + Signed> Polygon<T> {
 
 impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
     fn from(r: Rect<T>) -> Self {
+        let (min_x, min_y) = r.clone().min().x_y();
+        let (max_x, max_y) = r.max().x_y();
         Polygon::new(
             vec![
-                (r.min().x, r.min().y),
-                (r.max().x, r.min().y),
-                (r.max().x, r.max().y),
-                (r.min().x, r.max().y),
-                (r.min().x, r.min().y),
+                (min_x.clone(), min_y.clone()),
+                (max_x.clone(), min_y.clone()),
+                (max_x, max_y.clone()),
+                (min_x.clone(), max_y),
+                (min_x, min_y),
             ]
             .into(),
             Vec::new(),
@@ -459,7 +461,7 @@ impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
 
 impl<T: CoordNum> From<Triangle<T>> for Polygon<T> {
     fn from(t: Triangle<T>) -> Self {
-        Polygon::new(vec![t.0, t.1, t.2, t.0].into(), Vec::new())
+        Polygon::new(vec![t.0.clone(), t.1, t.2, t.0].into(), Vec::new())
     }
 }
 
@@ -495,7 +497,7 @@ where
     ) -> bool {
         if !self
             .exterior
-            .relative_eq(&other.exterior, epsilon, max_relative)
+            .relative_eq(&other.exterior, epsilon.clone(), max_relative.clone())
         {
             return false;
         }
@@ -504,7 +506,7 @@ where
             return false;
         }
         let mut zipper = self.interiors.iter().zip(other.interiors.iter());
-        zipper.all(|(lhs, rhs)| lhs.relative_eq(rhs, epsilon, max_relative))
+        zipper.all(|(lhs, rhs)| lhs.relative_eq(rhs, epsilon.clone(), max_relative.clone()))
     }
 }
 
@@ -531,7 +533,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Polygon<T> {
     /// approx::assert_abs_diff_ne!(a, b, epsilon=0.001);
     /// ```
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        if !self.exterior.abs_diff_eq(&other.exterior, epsilon) {
+        if !self.exterior.abs_diff_eq(&other.exterior, epsilon.clone()) {
             return false;
         }
 
@@ -539,6 +541,6 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Polygon<T> {
             return false;
         }
         let mut zipper = self.interiors.iter().zip(other.interiors.iter());
-        zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(rhs, epsilon))
+        zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(rhs, epsilon.clone()))
     }
 }

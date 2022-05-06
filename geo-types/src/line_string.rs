@@ -142,7 +142,7 @@ impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
     type Item = Point<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|c| Point::from(*c))
+        self.0.next().map(|c| Point::from(c.clone()))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -158,7 +158,7 @@ impl<'a, T: CoordNum> ExactSizeIterator for PointsIter<'a, T> {
 
 impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.0.next_back().map(|c| Point::from(*c))
+        self.0.next_back().map(|c| Point::from(c.clone()))
     }
 }
 
@@ -258,7 +258,7 @@ impl<T: CoordNum> LineString<T> {
     pub fn lines(&'_ self) -> impl ExactSizeIterator + Iterator<Item = Line<T>> + '_ {
         self.0.windows(2).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
-            unsafe { Line::new(*w.get_unchecked(0), *w.get_unchecked(1)) }
+            unsafe { Line::new(w.get_unchecked(0).clone(), w.get_unchecked(1).clone()) }
         })
     }
 
@@ -268,9 +268,9 @@ impl<T: CoordNum> LineString<T> {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe {
                 Triangle::new(
-                    *w.get_unchecked(0),
-                    *w.get_unchecked(1),
-                    *w.get_unchecked(2),
+                    w.get_unchecked(0).clone(),
+                    w.get_unchecked(1).clone(),
+                    w.get_unchecked(2).clone(),
                 )
             }
         })
@@ -283,7 +283,7 @@ impl<T: CoordNum> LineString<T> {
         if !self.is_closed() {
             // by definition, we treat empty LineString's as closed.
             debug_assert!(!self.0.is_empty());
-            self.0.push(self.0[0]);
+            self.0.push(self.0[0].clone());
         }
     }
 
@@ -436,7 +436,7 @@ where
 
         let points_zipper = self.points().zip(other.points());
         for (lhs, rhs) in points_zipper {
-            if lhs.relative_ne(&rhs, epsilon, max_relative) {
+            if lhs.relative_ne(&rhs, epsilon.clone(), max_relative.clone()) {
                 return false;
             }
         }
@@ -474,7 +474,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
             return false;
         }
         let mut points_zipper = self.points().zip(other.points());
-        points_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(&rhs, epsilon))
+        points_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(&rhs, epsilon.clone()))
     }
 }
 

@@ -62,7 +62,7 @@ mod modern {
         ///
         /// assert_relative_eq!(p2, Point::new(10.0f64, 20.0f64), epsilon = 1e-6);
         /// ```
-        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output
+        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Clone) -> Self::Output
         where
             T: CoordNum,
             NT: CoordNum;
@@ -134,7 +134,7 @@ mod modern {
         ///
         /// assert_relative_eq!(p, Point::new(1010., 40.), epsilon = 1e-6);
         /// ```
-        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Copy)
+        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Clone)
         where
             T: CoordNum;
 
@@ -178,7 +178,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Point<T> {
         type Output = Point<NT>;
 
-        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
+        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Clone) -> Self::Output {
             let new_point = func((self.0.x, self.0.y));
             Point::new(new_point.0, new_point.1)
         }
@@ -218,7 +218,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Line<T> {
         type Output = Line<NT>;
 
-        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
+        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Clone) -> Self::Output {
             Line::new(
                 self.start_point().map_coords(func).0,
                 self.end_point().map_coords(func).0,
@@ -270,7 +270,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for LineString<T> {
         type Output = LineString<NT>;
 
-        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
+        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Clone) -> Self::Output {
             LineString::from(
                 self.points()
                     .map(|p| p.map_coords(func))
@@ -319,7 +319,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Polygon<T> {
         type Output = Polygon<NT>;
 
-        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
+        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Clone) -> Self::Output {
             Polygon::new(
                 self.exterior().map_coords(func),
                 self.interiors()
@@ -344,7 +344,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for Polygon<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Copy) {
+        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Clone) {
             self.exterior_mut(|line_string| {
                 line_string.map_coords_in_place(func);
             });
@@ -390,7 +390,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPoint<T> {
         type Output = MultiPoint<NT>;
 
-        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
+        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Clone) -> Self::Output {
             MultiPoint::new(self.iter().map(|p| p.map_coords(func)).collect())
         }
 
@@ -408,7 +408,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for MultiPoint<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Copy) {
+        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Clone) {
             for p in &mut self.0 {
                 p.map_coords_in_place(func);
             }
@@ -432,7 +432,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiLineString<T> {
         type Output = MultiLineString<NT>;
 
-        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
+        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Clone) -> Self::Output {
             MultiLineString::new(self.iter().map(|l| l.map_coords(func)).collect())
         }
 
@@ -450,7 +450,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for MultiLineString<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Copy) {
+        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Clone) {
             for p in &mut self.0 {
                 p.map_coords_in_place(func);
             }
@@ -474,7 +474,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPolygon<T> {
         type Output = MultiPolygon<NT>;
 
-        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
+        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Clone) -> Self::Output {
             MultiPolygon::new(self.iter().map(|p| p.map_coords(func)).collect())
         }
 
@@ -492,7 +492,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for MultiPolygon<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Copy) {
+        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Clone) {
             for p in &mut self.0 {
                 p.map_coords_in_place(func);
             }
@@ -516,7 +516,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Geometry<T> {
         type Output = Geometry<NT>;
 
-        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
+        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Clone) -> Self::Output {
             match *self {
                 Geometry::Point(ref x) => Geometry::Point(x.map_coords(func)),
                 Geometry::Line(ref x) => Geometry::Line(x.map_coords(func)),
@@ -559,7 +559,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for Geometry<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Copy) {
+        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Clone) {
             match *self {
                 Geometry::Point(ref mut x) => x.map_coords_in_place(func),
                 Geometry::Line(ref mut x) => x.map_coords_in_place(func),
@@ -600,7 +600,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for GeometryCollection<T> {
         type Output = GeometryCollection<NT>;
 
-        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
+        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Clone) -> Self::Output {
             GeometryCollection::new_from(self.iter().map(|g| g.map_coords(func)).collect())
         }
 
@@ -618,7 +618,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for GeometryCollection<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Copy) {
+        fn map_coords_in_place(&mut self, func: impl Fn((T, T)) -> (T, T) + Clone) {
             for p in &mut self.0 {
                 p.map_coords_in_place(func);
             }
@@ -642,7 +642,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Rect<T> {
         type Output = Rect<NT>;
 
-        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
+        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Clone) -> Self::Output {
             Rect::new(func(self.min().x_y()), func(self.max().x_y()))
         }
 
@@ -677,7 +677,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Triangle<T> {
         type Output = Triangle<NT>;
 
-        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Copy) -> Self::Output {
+        fn map_coords(&self, func: impl Fn((T, T)) -> (NT, NT) + Clone) -> Self::Output {
             let p1 = func(self.0.x_y());
             let p2 = func(self.1.x_y());
             let p3 = func(self.2.x_y());

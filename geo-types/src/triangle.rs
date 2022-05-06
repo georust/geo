@@ -18,14 +18,14 @@ impl<T: CoordNum> Triangle<T> {
     }
 
     pub fn to_array(&self) -> [Coordinate<T>; 3] {
-        [self.0, self.1, self.2]
+        [self.0.clone(), self.1.clone(), self.2.clone()]
     }
 
     pub fn to_lines(&self) -> [Line<T>; 3] {
         [
-            Line::new(self.0, self.1),
-            Line::new(self.1, self.2),
-            Line::new(self.2, self.0),
+            Line::new(self.0.clone(), self.1.clone()),
+            Line::new(self.1.clone(), self.2.clone()),
+            Line::new(self.2.clone(), self.0.clone()),
         ]
     }
 
@@ -53,7 +53,7 @@ impl<T: CoordNum> Triangle<T> {
     /// );
     /// ```
     pub fn to_polygon(self) -> Polygon<T> {
-        polygon![self.0, self.1, self.2, self.0]
+        polygon![self.0.clone(), self.1, self.2, self.0]
     }
 }
 
@@ -93,10 +93,10 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        if !self.0.relative_eq(&other.0, epsilon, max_relative) {
+        if !self.0.relative_eq(&other.0, epsilon.clone(), max_relative.clone()) {
             return false;
         }
-        if !self.1.relative_eq(&other.1, epsilon, max_relative) {
+        if !self.1.relative_eq(&other.1, epsilon.clone(), max_relative.clone()) {
             return false;
         }
         if !self.2.relative_eq(&other.2, epsilon, max_relative) {
@@ -111,7 +111,6 @@ where
 impl<T> AbsDiffEq for Triangle<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordNum,
-    T::Epsilon: Copy,
 {
     type Epsilon = T;
 
@@ -135,10 +134,10 @@ where
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        if !self.0.abs_diff_eq(&other.0, epsilon) {
+        if !self.0.abs_diff_eq(&other.0, epsilon.clone()) {
             return false;
         }
-        if !self.1.abs_diff_eq(&other.1, epsilon) {
+        if !self.1.abs_diff_eq(&other.1, epsilon.clone()) {
             return false;
         }
         if !self.2.abs_diff_eq(&other.2, epsilon) {

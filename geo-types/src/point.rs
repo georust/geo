@@ -44,7 +44,7 @@ impl<T: CoordNum> From<(T, T)> for Point<T> {
 
 impl<T: CoordNum> From<[T; 2]> for Point<T> {
     fn from(coords: [T; 2]) -> Self {
-        Point::new(coords[0], coords[1])
+        Point::new(coords[0].clone(), coords[1].clone())
     }
 }
 
@@ -88,8 +88,8 @@ impl<T: CoordNum> Point<T> {
     ///
     /// assert_eq!(p.x(), 1.234);
     /// ```
-    pub fn x(self) -> T {
-        self.0.x
+    pub fn x(&self) -> T {
+        self.0.x.clone()
     }
 
     /// Sets the x/horizontal component of the point.
@@ -120,8 +120,8 @@ impl<T: CoordNum> Point<T> {
     ///
     /// assert_eq!(p.y(), 2.345);
     /// ```
-    pub fn y(self) -> T {
-        self.0.y
+    pub fn y(&self) -> T {
+        self.0.y.clone()
     }
 
     /// Sets the y/vertical component of the point.
@@ -154,8 +154,8 @@ impl<T: CoordNum> Point<T> {
     /// assert_eq!(y, 2.345);
     /// assert_eq!(x, 1.234);
     /// ```
-    pub fn x_y(self) -> (T, T) {
-        (self.0.x, self.0.y)
+    pub fn x_y(&self) -> (T, T) {
+        (self.0.x.clone(), self.0.y.clone())
     }
     /// Returns the longitude/horizontal component of the point.
     ///
@@ -169,7 +169,7 @@ impl<T: CoordNum> Point<T> {
     /// assert_eq!(p.x(), 1.234);
     /// ```
     #[deprecated = "use `Point::x` instead, it's less ambiguous"]
-    pub fn lng(self) -> T {
+    pub fn lng(&self) -> T {
         self.x()
     }
 
@@ -203,7 +203,7 @@ impl<T: CoordNum> Point<T> {
     /// assert_eq!(p.y(), 2.345);
     /// ```
     #[deprecated = "use `Point::y` instead, it's less ambiguous"]
-    pub fn lat(self) -> T {
+    pub fn lat(&self) -> T {
         self.y()
     }
     /// Sets the latitude/vertical component of the point.
@@ -239,7 +239,7 @@ impl<T: CoordNum> Point<T> {
     ///
     /// assert_eq!(dot, 5.25);
     /// ```
-    pub fn dot(self, other: Self) -> T {
+    pub fn dot(&self, other: Self) -> T {
         self.x() * other.x() + self.y() * other.y()
     }
 
@@ -260,7 +260,7 @@ impl<T: CoordNum> Point<T> {
     ///
     /// assert_eq!(cross, 2.0)
     /// ```
-    pub fn cross_prod(self, point_b: Self, point_c: Self) -> T {
+    pub fn cross_prod(&self, point_b: Self, point_c: Self) -> T {
         (point_b.x() - self.x()) * (point_c.y() - self.y())
             - (point_b.y() - self.y()) * (point_c.x() - self.x())
     }
@@ -362,7 +362,7 @@ impl<T: CoordNum> AddAssign for Point<T> {
     /// assert_eq!(p.y(), 5.0);
     /// ```
     fn add_assign(&mut self, rhs: Self) {
-        self.0 = self.0 + rhs.0;
+        self.0 = self.0.clone() + rhs.0;
     }
 }
 
@@ -401,7 +401,7 @@ impl<T: CoordNum> SubAssign for Point<T> {
     /// assert_eq!(p.y(), 0.0);
     /// ```
     fn sub_assign(&mut self, rhs: Self) {
-        self.0 = self.0 - rhs.0;
+        self.0 = self.0.clone() - rhs.0;
     }
 }
 
@@ -440,7 +440,7 @@ impl<T: CoordNum> MulAssign<T> for Point<T> {
     /// assert_eq!(p.y(), 6.0);
     /// ```
     fn mul_assign(&mut self, rhs: T) {
-        self.0 = self.0 * rhs
+        self.0 = self.0.clone() * rhs
     }
 }
 
@@ -479,7 +479,7 @@ impl<T: CoordNum> DivAssign<T> for Point<T> {
     /// assert_eq!(p.y(), 1.5);
     /// ```
     fn div_assign(&mut self, rhs: T) {
-        self.0 = self.0 / rhs
+        self.0 = self.0.clone() / rhs
     }
 }
 
@@ -520,7 +520,6 @@ where
 impl<T> AbsDiffEq for Point<T>
 where
     T: AbsDiffEq<Epsilon = T> + CoordNum,
-    T::Epsilon: Copy,
 {
     type Epsilon = T::Epsilon;
 

@@ -44,8 +44,8 @@ impl<T: CoordNum> From<[T; 2]> for Coordinate<T> {
     #[inline]
     fn from(coords: [T; 2]) -> Self {
         coord! {
-            x: coords[0],
-            y: coords[1],
+            x: coords[0].clone(),
+            y: coords[1].clone(),
         }
     }
 }
@@ -93,7 +93,7 @@ impl<T: CoordNum> Coordinate<T> {
     /// ```
     #[inline]
     pub fn x_y(&self) -> (T, T) {
-        (self.x, self.y)
+        (self.x.clone(), self.y.clone())
     }
 }
 
@@ -198,7 +198,7 @@ impl<T: CoordNum> Mul<T> for Coordinate<T> {
     #[inline]
     fn mul(self, rhs: T) -> Self {
         coord! {
-            x: self.x * rhs,
+            x: self.x * rhs.clone(),
             y: self.y * rhs,
         }
     }
@@ -223,7 +223,7 @@ impl<T: CoordNum> Div<T> for Coordinate<T> {
     #[inline]
     fn div(self, rhs: T) -> Self {
         coord! {
-            x: self.x / rhs,
+            x: self.x / rhs.clone(),
             y: self.y / rhs,
         }
     }
@@ -267,7 +267,7 @@ impl<T: CoordNum> Zero for Coordinate<T> {
 #[cfg(any(feature = "approx", test))]
 impl<T: CoordNum + AbsDiffEq> AbsDiffEq for Coordinate<T>
 where
-    T::Epsilon: Copy,
+    T::Epsilon: Clone,
 {
     type Epsilon = T::Epsilon;
 
@@ -278,14 +278,14 @@ where
 
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: T::Epsilon) -> bool {
-        T::abs_diff_eq(&self.x, &other.x, epsilon) && T::abs_diff_eq(&self.y, &other.y, epsilon)
+        T::abs_diff_eq(&self.x, &other.x, epsilon.clone()) && T::abs_diff_eq(&self.y, &other.y, epsilon)
     }
 }
 
 #[cfg(any(feature = "approx", test))]
 impl<T: CoordNum + RelativeEq> RelativeEq for Coordinate<T>
 where
-    T::Epsilon: Copy,
+    T::Epsilon: Clone,
 {
     #[inline]
     fn default_max_relative() -> T::Epsilon {
@@ -294,7 +294,7 @@ where
 
     #[inline]
     fn relative_eq(&self, other: &Self, epsilon: T::Epsilon, max_relative: T::Epsilon) -> bool {
-        T::relative_eq(&self.x, &other.x, epsilon, max_relative)
+        T::relative_eq(&self.x, &other.x, epsilon.clone(), max_relative.clone())
             && T::relative_eq(&self.y, &other.y, epsilon, max_relative)
     }
 }
@@ -302,7 +302,7 @@ where
 #[cfg(any(feature = "approx", test))]
 impl<T: CoordNum + UlpsEq> UlpsEq for Coordinate<T>
 where
-    T::Epsilon: Copy,
+    T::Epsilon: Clone,
 {
     #[inline]
     fn default_max_ulps() -> u32 {
@@ -311,7 +311,7 @@ where
 
     #[inline]
     fn ulps_eq(&self, other: &Self, epsilon: T::Epsilon, max_ulps: u32) -> bool {
-        T::ulps_eq(&self.x, &other.x, epsilon, max_ulps)
+        T::ulps_eq(&self.x, &other.x, epsilon.clone(), max_ulps)
             && T::ulps_eq(&self.y, &other.y, epsilon, max_ulps)
     }
 }

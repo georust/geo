@@ -40,12 +40,16 @@ where
     // Sort rest of the points by angle it makes with head
     // point. If two points are collinear with head, we sort
     // by distance. We use kernel predicates here.
-    let cmp = |q: &Coordinate<T>, r: &Coordinate<T>| match T::Ker::orient2d(*q, *head, *r) {
+    let cmp = |q: &Coordinate<T>, r: &Coordinate<T>| match T::Ker::orient2d(
+        q.clone(),
+        head.clone(),
+        r.clone(),
+    ) {
         Orientation::CounterClockwise => Ordering::Greater,
         Orientation::Clockwise => Ordering::Less,
         Orientation::Collinear => {
-            let dist1 = T::Ker::square_euclidean_distance(*head, *q);
-            let dist2 = T::Ker::square_euclidean_distance(*head, *r);
+            let dist1 = T::Ker::square_euclidean_distance(head.clone(), q.clone());
+            let dist2 = T::Ker::square_euclidean_distance(head.clone(), r.clone());
             dist1.partial_cmp(&dist2).unwrap()
         }
     };

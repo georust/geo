@@ -41,7 +41,7 @@ impl<T: CoordNum> Line<T> {
 
     /// Calculate the difference in coordinates (Δx, Δy).
     pub fn delta(&self) -> Coordinate<T> {
-        self.end - self.start
+        self.end.clone() - self.start.clone()
     }
 
     /// Calculate the difference in ‘x’ components (Δx).
@@ -139,15 +139,15 @@ impl<T: CoordNum> Line<T> {
     /// # );
     /// ```
     pub fn determinant(&self) -> T {
-        self.start.x * self.end.y - self.start.y * self.end.x
+        self.start.clone().x * self.end.clone().y - self.start.clone().y * self.end.clone().x
     }
 
     pub fn start_point(&self) -> Point<T> {
-        Point::from(self.start)
+        Point::from(self.start.clone())
     }
 
     pub fn end_point(&self) -> Point<T> {
-        Point::from(self.end)
+        Point::from(self.end.clone())
     }
 
     pub fn points(&self) -> (Point<T>, Point<T>) {
@@ -157,7 +157,7 @@ impl<T: CoordNum> Line<T> {
 
 impl<T: CoordNum> From<[(T, T); 2]> for Line<T> {
     fn from(coord: [(T, T); 2]) -> Self {
-        Line::new(coord[0], coord[1])
+        Line::new(coord[0].clone(), coord[1].clone())
     }
 }
 #[cfg(any(feature = "approx", test))]
@@ -189,7 +189,8 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        self.start.relative_eq(&other.start, epsilon, max_relative)
+        self.start
+            .relative_eq(&other.start, epsilon.clone(), max_relative.clone())
             && self.end.relative_eq(&other.end, epsilon, max_relative)
     }
 }
@@ -217,7 +218,8 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Line<T> {
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        self.start.abs_diff_eq(&other.start, epsilon) && self.end.abs_diff_eq(&other.end, epsilon)
+        self.start.abs_diff_eq(&other.start, epsilon.clone())
+            && self.end.abs_diff_eq(&other.end, epsilon)
     }
 }
 
