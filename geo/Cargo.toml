@@ -50,6 +50,10 @@ name = "concave_hull"
 harness = false
 
 [[bench]]
+name = "intersection"
+harness = false
+
+[[bench]]
 name = "vincenty_distance"
 harness = false
 
