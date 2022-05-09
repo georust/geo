@@ -1,13 +1,13 @@
 use crate::utils::{partial_max, partial_min};
 use crate::{
-    coord, CoordNum, Geometry, GeometryCollection, GeometryCow, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+    coord, CoordNum, Coordinate, Geometry, GeometryCollection, GeometryCow, Line, LineString,
+    MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 
 /// Calculation of the bounding rectangle of a geometry.
 pub trait BoundingRect<T: CoordNum> {
-    type Output;
+    type Output: Into<Option<Rect<T>>>;
 
     /// Return the bounding rectangle of a geometry
     ///
@@ -31,6 +31,19 @@ pub trait BoundingRect<T: CoordNum> {
     /// assert_eq!(118.34, bounding_rect.max().y);
     /// ```
     fn bounding_rect(&self) -> Self::Output;
+}
+
+impl<T> BoundingRect<T> for Coordinate<T>
+where
+    T: CoordNum,
+{
+    type Output = Rect<T>;
+
+    /// Return the bounding rectangle for a `Coordinate`. It will have zero width
+    /// and zero height.
+    fn bounding_rect(&self) -> Self::Output {
+        Rect::new(*self, *self)
+    }
 }
 
 impl<T> BoundingRect<T> for Point<T>

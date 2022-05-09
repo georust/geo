@@ -3,6 +3,7 @@
 
 ## Unreleased
 
+* Speed up intersection checks by using a preliminary bbox check
 * Remove unneeded reference for `*MapCoords*` closure parameter.
   * <https://github.com/georust/geo/pull/810>
 * BREAKING: Bump proj dependency to 0.26 which uses proj lib 9.0

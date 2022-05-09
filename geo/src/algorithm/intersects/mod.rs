@@ -1,3 +1,4 @@
+use crate::bounding_rect::BoundingRect;
 use crate::*;
 
 /// Checks if the geometry Self intersects the geometry Rhs.
@@ -105,6 +106,24 @@ where
 {
     value_in_between(value.x, bound_1.x, bound_2.x)
         && value_in_between(value.y, bound_1.y, bound_2.y)
+}
+
+// A cheap bbox check to see if we can skip the more expensive intersection computation
+fn has_disjoint_bboxes<T, A, B>(a: &A, b: &B) -> bool
+where
+    T: CoordNum,
+    A: BoundingRect<T>,
+    B: BoundingRect<T>,
+{
+    let mut disjoint_bbox = false;
+    if let Some(a_bbox) = a.bounding_rect().into() {
+        if let Some(b_bbox) = b.bounding_rect().into() {
+            if !a_bbox.intersects(&b_bbox) {
+                disjoint_bbox = true;
+            }
+        }
+    }
+    disjoint_bbox
 }
 
 #[cfg(test)]
