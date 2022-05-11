@@ -1,5 +1,5 @@
-use crate::algorithm::extremes::Extremes;
 use crate::prelude::*;
+use crate::Extremes;
 use crate::{GeoFloat, Line, Point, Polygon, Triangle};
 use num_traits::float::FloatConst;
 use num_traits::Signed;

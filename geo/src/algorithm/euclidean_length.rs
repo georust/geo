@@ -10,7 +10,7 @@ pub trait EuclideanLength<T, RHS = Self> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::euclidean_length::EuclideanLength;
+    /// use geo::EuclideanLength;
     /// use geo::line_string;
     ///
     /// let line_string = line_string![
@@ -57,8 +57,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::algorithm::euclidean_length::EuclideanLength;
     use crate::line_string;
+    use crate::EuclideanLength;
     use crate::{coord, Line, MultiLineString};
 
     #[test]

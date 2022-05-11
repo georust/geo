@@ -5,7 +5,7 @@
 //! // activate the [use-proj] feature in cargo.toml in order to access proj functions
 //! use approx::assert_relative_eq;
 //! use geo::{Coordinate, Point};
-//! use geo::algorithm::map_coords::MapCoords;
+//! use geo::MapCoords;
 //! use proj::{Coord, Proj, ProjError};
 //! // GeoJSON uses the WGS 84 coordinate system
 //! let from = "EPSG:4326";
@@ -40,7 +40,7 @@ mod modern {
         /// # Examples
         ///
         /// ```
-        /// use geo::algorithm::map_coords::MapCoords;
+        /// use geo::MapCoords;
         /// use geo::Point;
         /// use approx::assert_relative_eq;
         ///
@@ -54,7 +54,7 @@ mod modern {
         ///
         /// ```
         /// # use geo::Point;
-        /// # use geo::algorithm::map_coords::MapCoords;
+        /// # use geo::MapCoords;
         /// # use approx::assert_relative_eq;
         ///
         /// let p1: Point<f32> = Point::new(10.0f32, 20.0f32);
@@ -73,7 +73,7 @@ mod modern {
         ///
         /// ```
         /// use approx::assert_relative_eq;
-        /// use geo::algorithm::map_coords::MapCoords;
+        /// use geo::MapCoords;
         /// use geo::Point;
         ///
         /// let p1 = Point::new(10., 20.);
@@ -125,7 +125,7 @@ mod modern {
         /// # Examples
         ///
         /// ```
-        /// use geo::algorithm::map_coords::MapCoordsInPlace;
+        /// use geo::MapCoordsInPlace;
         /// use geo::Point;
         /// use approx::assert_relative_eq;
         ///
@@ -146,7 +146,7 @@ mod modern {
         /// # Examples
         ///
         /// ```
-        /// use geo::algorithm::map_coords::MapCoordsInPlace;
+        /// use geo::MapCoordsInPlace;
         ///
         /// let mut p1 = geo::point!{x: 10u32, y: 20u32};
         ///
@@ -756,7 +756,7 @@ pub(crate) mod deprecated {
         /// ```
         /// use approx::assert_relative_eq;
         /// #[allow(deprecated)]
-        /// use geo::algorithm::map_coords::TryMapCoords;
+        /// use geo::TryMapCoords;
         /// use geo::Point;
         ///
         /// let p1 = Point::new(10., 20.);
@@ -777,7 +777,7 @@ pub(crate) mod deprecated {
         /// // activate the [use-proj] feature in cargo.toml in order to access proj functions
         /// use geo::{Coordinate, Point};
         /// #[allow(deprecated)]
-        /// use geo::algorithm::map_coords::TryMapCoords;
+        /// use geo::TryMapCoords;
         /// use proj::{Coord, Proj, ProjError};
         /// // GeoJSON uses the WGS 84 coordinate system
         /// let from = "EPSG:4326";
@@ -820,7 +820,7 @@ pub(crate) mod deprecated {
         ///
         /// ```
         /// #[allow(deprecated)]
-        /// use geo::algorithm::map_coords::TryMapCoordsInplace;
+        /// use geo::TryMapCoordsInplace;
         ///
         /// let mut p1 = geo::point!{x: 10u32, y: 20u32};
         ///
@@ -858,7 +858,7 @@ pub(crate) mod deprecated {
         ///
         /// ```
         /// #[allow(deprecated)]
-        /// use geo::algorithm::map_coords::MapCoordsInplace;
+        /// use geo::MapCoordsInplace;
         /// use geo::Point;
         /// use approx::assert_relative_eq;
         ///
@@ -905,7 +905,7 @@ pub(crate) mod deprecated {
                 ///
                 /// ```
                 /// #[allow(deprecated)]
-                /// use geo::algorithm::map_coords::MapCoordsInplace;
+                /// use geo::MapCoordsInplace;
                 /// use geo::Point;
                 /// use approx::assert_relative_eq;
                 ///

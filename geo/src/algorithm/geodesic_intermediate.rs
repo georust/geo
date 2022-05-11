@@ -11,7 +11,7 @@ pub trait GeodesicIntermediate<T: CoordFloat> {
     /// ```
     /// # #[macro_use] extern crate approx;
     /// #
-    /// use geo::algorithm::geodesic_intermediate::GeodesicIntermediate;
+    /// use geo::GeodesicIntermediate;
     /// use geo::Point;
     ///
     /// let p1 = Point::<f64>::new(10.0, 20.0);

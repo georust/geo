@@ -16,7 +16,7 @@ pub trait HaversineDestination<T: CoordFloat> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::haversine_destination::HaversineDestination;
+    /// use geo::HaversineDestination;
     /// use geo::Point;
     ///
     /// let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
@@ -51,7 +51,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::algorithm::haversine_distance::HaversineDistance;
+    use crate::HaversineDistance;
     use num_traits::pow;
 
     #[test]

@@ -75,7 +75,7 @@ pub fn partial_min<T: PartialOrd>(a: T, b: T) -> T {
 }
 
 // Moved to their own module, but we re-export to avoid breaking the API.
-pub use crate::algorithm::coordinate_position::{coord_pos_relative_to_ring, CoordPos};
+pub use crate::coordinate_position::{coord_pos_relative_to_ring, CoordPos};
 
 use std::cmp::Ordering;
 

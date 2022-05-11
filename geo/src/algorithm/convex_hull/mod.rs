@@ -10,7 +10,7 @@ use crate::{Coordinate, GeoNum, LineString, MultiLineString, MultiPoint, MultiPo
 ///
 /// ```
 /// use geo::{line_string, polygon};
-/// use geo::algorithm::convex_hull::ConvexHull;
+/// use geo::ConvexHull;
 ///
 /// // an L shape
 /// let poly = polygon![

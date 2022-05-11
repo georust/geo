@@ -1,5 +1,5 @@
 use super::Contains;
-use crate::intersects::Intersects;
+use crate::Intersects;
 use crate::{CoordNum, Coordinate, GeoNum, Line, LineString, MultiLineString, Point};
 
 // ┌────────────────────────────────┐

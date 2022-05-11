@@ -1,8 +1,6 @@
-use crate::algorithm::{
-    bounding_rect::BoundingRect, dimensions::HasDimensions, intersects::Intersects,
-};
 use crate::{
-    coord, Coordinate, GeoNum, Geometry, GeometryCollection, GeometryCow, Line, LineString,
+    bounding_rect::BoundingRect, coord, dimensions::HasDimensions, intersects::Intersects,
+    Coordinate, GeoNum, Geometry, GeometryCollection, GeometryCow, Line, LineString,
     MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 

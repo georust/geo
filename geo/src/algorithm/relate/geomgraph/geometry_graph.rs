@@ -3,7 +3,7 @@ use super::{
     CoordNode, CoordPos, Direction, Edge, Label, LineIntersector, PlanarGraph, TopologyPosition,
 };
 
-use crate::algorithm::dimensions::HasDimensions;
+use crate::HasDimensions;
 use crate::{Coordinate, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
 
 use std::cell::RefCell;
@@ -176,7 +176,7 @@ where
         }
         let first_point = coords[0];
 
-        use crate::algorithm::winding_order::{Winding, WindingOrder};
+        use crate::winding_order::{Winding, WindingOrder};
         let (left, right) = match linear_ring.winding_order() {
             Some(WindingOrder::Clockwise) => (cw_left, cw_right),
             Some(WindingOrder::CounterClockwise) => (cw_right, cw_left),

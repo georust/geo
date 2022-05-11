@@ -16,7 +16,7 @@ use std::iter;
 /// Drawn on paper, the point on the line which is closest to `(0, 100)` is the origin (0, 0).
 ///
 /// ```rust
-/// # use geo::algorithm::closest_point::ClosestPoint;
+/// # use geo::ClosestPoint;
 /// # use geo::{Point, Line, Closest};
 /// let p: Point<f32> = Point::new(0.0, 100.0);
 /// let horizontal_line: Line<f32> = Line::new(Point::new(-50.0, 0.0), Point::new(50.0, 0.0));
@@ -333,7 +333,7 @@ mod tests {
             (x: 1.0, y: 1.0),
             (x: 0.0, y: 1.0)
         ];
-        use crate::translate::Translate;
+        use crate::Translate;
         let square_10 = square_1.translate(10.0, 10.0);
         let square_50 = square_1.translate(50.0, 50.0);
 

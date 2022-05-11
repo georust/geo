@@ -3,7 +3,7 @@ extern crate criterion;
 extern crate geo;
 
 use criterion::Criterion;
-use geo::algorithm::concave_hull::ConcaveHull;
+use geo::ConcaveHull;
 use geo::{CoordNum, Coordinate};
 
 use num_traits::Signed;

@@ -1,6 +1,6 @@
 use crate::{GeoNum, MultiPolygon, Polygon};
 
-use crate::algorithm::winding_order::{Winding, WindingOrder};
+use crate::winding_order::{Winding, WindingOrder};
 
 pub trait Orient {
     /// Orients a Polygon's exterior and interior rings according to convention

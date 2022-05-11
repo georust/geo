@@ -1,4 +1,4 @@
-pub(crate) use crate::algorithm::line_intersection::LineIntersection;
+pub(crate) use crate::LineIntersection;
 use crate::{Coordinate, GeoFloat, Line};
 
 pub(crate) trait LineIntersector<F: GeoFloat> {

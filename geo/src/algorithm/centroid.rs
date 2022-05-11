@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
 
-use crate::algorithm::area::{get_linestring_area, Area};
-use crate::algorithm::dimensions::{Dimensions, Dimensions::*, HasDimensions};
-use crate::algorithm::euclidean_length::EuclideanLength;
+use crate::area::{get_linestring_area, Area};
+use crate::dimensions::{Dimensions, Dimensions::*, HasDimensions};
+use crate::EuclideanLength;
 use crate::{
     Coordinate, GeoFloat, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
@@ -18,7 +18,7 @@ use crate::{
 /// # Examples
 ///
 /// ```
-/// use geo::algorithm::centroid::Centroid;
+/// use geo::Centroid;
 /// use geo::{point, polygon};
 ///
 /// // rhombus shaped polygon
@@ -43,7 +43,7 @@ pub trait Centroid {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::centroid::Centroid;
+    /// use geo::Centroid;
     /// use geo::{line_string, point};
     ///
     /// let line_string = line_string![
@@ -151,7 +151,7 @@ where
 
 ///
 /// ```
-/// use geo::algorithm::centroid::Centroid;
+/// use geo::Centroid;
 /// use geo::{MultiPoint, Point};
 ///
 /// let empty: Vec<Point<f64>> = Vec::new();
@@ -394,7 +394,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
         let shift = ring.0[0];
 
         let accumulated_coord = ring.lines().fold(Coordinate::zero(), |accum, line| {
-            use crate::algorithm::map_coords::MapCoords;
+            use crate::MapCoords;
             let line = line.map_coords(|(x, y)| (x - shift.x, y - shift.y));
             let tmp = line.determinant();
             accum + (line.end + line.start) * tmp

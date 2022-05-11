@@ -14,7 +14,7 @@ pub trait BoundingRect<T: CoordNum> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::bounding_rect::BoundingRect;
+    /// use geo::BoundingRect;
     /// use geo::line_string;
     ///
     /// let line_string = line_string![
@@ -219,8 +219,8 @@ fn bounding_rect_merge<T: CoordNum>(a: Rect<T>, b: Rect<T>) -> Rect<T> {
 #[cfg(test)]
 mod test {
     use super::bounding_rect_merge;
-    use crate::algorithm::bounding_rect::BoundingRect;
     use crate::line_string;
+    use crate::BoundingRect;
     use crate::{
         coord, point, polygon, Geometry, GeometryCollection, Line, LineString, MultiLineString,
         MultiPoint, MultiPolygon, Polygon, Rect,
