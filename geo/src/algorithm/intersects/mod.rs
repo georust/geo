@@ -1,4 +1,4 @@
-use crate::bounding_rect::BoundingRect;
+use crate::BoundingRect;
 use crate::*;
 
 /// Checks if the geometry Self intersects the geometry Rhs.

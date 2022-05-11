@@ -226,41 +226,7 @@ const EARTH_FLATTENING: f64 =
 /// A prelude which re-exports the traits for manipulating objects in this
 /// crate. Typically imported with `use geo::prelude::*`.
 pub mod prelude {
-    #[cfg(feature = "use-proj")]
-    pub use crate::proj::Transform;
-    pub use crate::rotate::{Rotate, RotatePoint};
-    pub use crate::Area;
-    pub use crate::Bearing;
-    pub use crate::BoundingRect;
-    pub use crate::Centroid;
-    pub use crate::ChaikinSmoothing;
-    pub use crate::ChamberlainDuquetteArea;
-    pub use crate::ClosestPoint;
-    pub use crate::Contains;
-    pub use crate::ConvexHull;
-    pub use crate::EuclideanDistance;
-    pub use crate::EuclideanLength;
-    pub use crate::Extremes;
-    pub use crate::FrechetDistance;
-    pub use crate::GeodesicDistance;
-    pub use crate::GeodesicIntermediate;
-    pub use crate::GeodesicLength;
-    pub use crate::HasDimensions;
-    pub use crate::HaversineDestination;
-    pub use crate::HaversineDistance;
-    pub use crate::HaversineIntermediate;
-    pub use crate::HaversineLength;
-    pub use crate::Intersects;
-    pub use crate::IsConvex;
-    pub use crate::MapCoords;
-    pub use crate::Orient;
-    #[cfg(feature = "use-proj")]
-    pub use crate::Proj;
-    pub use crate::Simplify;
-    pub use crate::SimplifyVW;
-    pub use crate::Translate;
-    pub use crate::VincentyDistance;
-    pub use crate::VincentyLength;
+    pub use crate::algorithm::*;
 }
 
 /// A common numeric trait used for geo algorithms.

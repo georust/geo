@@ -1,6 +1,6 @@
 use super::{has_disjoint_bboxes, Intersects};
-use crate::bounding_rect::BoundingRect;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
+use crate::BoundingRect;
 use crate::{
     CoordNum, Coordinate, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
     Rect,

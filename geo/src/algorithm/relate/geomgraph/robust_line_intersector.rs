@@ -1,9 +1,7 @@
 use super::{LineIntersection, LineIntersector};
-use crate::bounding_rect::BoundingRect;
 use crate::kernels::{Kernel, Orientation, RobustKernel};
 use crate::num_traits::Zero;
-use crate::Contains;
-use crate::Intersects;
+use crate::{BoundingRect, Contains, Intersects};
 use crate::{Coordinate, GeoFloat, Line, Rect};
 
 /// A robust version of [LineIntersector](traits.LineIntersector).

@@ -110,11 +110,8 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::geo_types::coord;
-    use crate::{
-        point,
-        {closest_point::ClosestPoint, line_locate_point::LineLocatePoint},
-    };
+    use crate::{coord, point};
+    use crate::{ClosestPoint, LineLocatePoint};
     use num_traits::Float;
 
     #[test]

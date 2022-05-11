@@ -27,10 +27,10 @@ The primitive types also provide the basis for other functionality in the `Geo` 
 ## Example
 
 ```rust
-// The primitives
+// primitives
 use geo::{line_string, polygon};
 
-// The algorithms
+// algorithms
 use geo::ConvexHull;
 
 // An L shape

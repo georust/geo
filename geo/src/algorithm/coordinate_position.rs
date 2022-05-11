@@ -1,8 +1,8 @@
 use crate::{
-    bounding_rect::BoundingRect, coord, dimensions::HasDimensions, intersects::Intersects,
-    Coordinate, GeoNum, Geometry, GeometryCollection, GeometryCow, Line, LineString,
+    coord, Coordinate, GeoNum, Geometry, GeometryCollection, GeometryCow, Line, LineString,
     MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
+use crate::{BoundingRect, HasDimensions, Intersects};
 
 /// The position of a `Coordinate` relative to a `Geometry`
 #[derive(PartialEq, Clone, Copy, Debug)]
