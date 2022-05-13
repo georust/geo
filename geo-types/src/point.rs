@@ -28,7 +28,7 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T: CoordNum>(pub Coordinate<T>);
+pub struct Point<T: CoordNum = f64>(pub Coordinate<T>);
 
 impl<T: CoordNum> From<Coordinate<T>> for Point<T> {
     fn from(x: Coordinate<T>) -> Self {

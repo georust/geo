@@ -27,7 +27,7 @@ use std::iter::FromIterator;
 /// predicates that operate on it.
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MultiPolygon<T: CoordNum>(pub Vec<Polygon<T>>);
+pub struct MultiPolygon<T: CoordNum = f64>(pub Vec<Polygon<T>>);
 
 impl<T: CoordNum, IP: Into<Polygon<T>>> From<IP> for MultiPolygon<T> {
     fn from(x: IP) -> Self {

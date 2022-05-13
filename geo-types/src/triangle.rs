@@ -9,7 +9,7 @@ use approx::{AbsDiffEq, RelativeEq};
 /// vertices must not be collinear and they must be distinct.
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Triangle<T: CoordNum>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);
+pub struct Triangle<T: CoordNum = f64>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);
 
 impl<T: CoordNum> Triangle<T> {
     /// Instantiate Self from the raw content value

@@ -25,7 +25,7 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Coordinate<T: CoordNum> {
+pub struct Coordinate<T: CoordNum = f64> {
     pub x: T,
     pub y: T,
 }

@@ -26,7 +26,7 @@ use std::convert::TryFrom;
 ///
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Geometry<T: CoordNum> {
+pub enum Geometry<T: CoordNum = f64> {
     Point(Point<T>),
     Line(Line<T>),
     LineString(LineString<T>),
