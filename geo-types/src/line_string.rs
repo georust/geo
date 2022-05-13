@@ -63,7 +63,7 @@ use std::ops::{Index, IndexMut};
 /// ```
 /// use geo_types::LineString;
 ///
-/// let line_string: LineString<f64> = vec![[0., 0.], [10., 0.]].into();
+/// let line_string: LineString = vec![[0., 0.], [10., 0.]].into();
 /// ```
 //
 /// Or by `collect`ing from a [`Coordinate`] iterator

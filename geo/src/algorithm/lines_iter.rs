@@ -178,8 +178,8 @@ mod test {
 
     #[test]
     fn test_empty_line_string() {
-        let ls: LineString<f64> = line_string![];
-        assert_eq!(Vec::<Line<f64>>::new(), ls.lines_iter().collect::<Vec<_>>());
+        let ls: LineString = line_string![];
+        assert_eq!(Vec::<Line>::new(), ls.lines_iter().collect::<Vec<_>>());
     }
 
     #[test]

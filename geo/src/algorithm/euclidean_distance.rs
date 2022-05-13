@@ -844,7 +844,7 @@ mod test {
     #[test]
     fn distance1_test() {
         assert_relative_eq!(
-            Point::<f64>::new(0., 0.).euclidean_distance(&Point::<f64>::new(1., 0.)),
+            Point::new(0., 0.).euclidean_distance(&Point::new(1., 0.)),
             1.
         );
     }

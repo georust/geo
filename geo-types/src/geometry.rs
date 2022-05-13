@@ -20,7 +20,7 @@ use std::convert::TryFrom;
 /// use std::convert::TryFrom;
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
 /// let p = point!(x: 1.0, y: 1.0);
-/// let pe: Geometry<f64> = p.into();
+/// let pe: Geometry = p.into();
 /// let pn = Point::try_from(pe).unwrap();
 /// ```
 ///

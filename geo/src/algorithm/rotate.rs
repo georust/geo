@@ -584,7 +584,7 @@ mod test {
             (x: 20., y: 20.),
             (x: 40., y: 20.)
         ];
-        let multi_line_string: MultiLineString<f64> = MultiLineString::new(vec![ls1, ls2]);
+        let multi_line_string: MultiLineString = MultiLineString::new(vec![ls1, ls2]);
 
         // Results match with Shapely for `centroid`
         let expected_around_centroid = MultiLineString::new(vec![
@@ -606,7 +606,7 @@ mod test {
         );
 
         // Results match with Shapely for `center`
-        let expected_around_center: MultiLineString<f64> = MultiLineString::new(vec![
+        let expected_around_center: MultiLineString = MultiLineString::new(vec![
             line_string![
                 (x: -1.213203435596426, y: 17.07106781186548),
                 (x: 0.2010101267766693, y: 17.07106781186548),
@@ -635,7 +635,7 @@ mod test {
 
     #[test]
     fn test_rotate_multipolygon_around_centroid() {
-        let multipolygon: MultiPolygon<f64> = vec![
+        let multipolygon: MultiPolygon = vec![
             polygon![
                 (x: 0., y: 0.),
                 (x: 10., y: 0.),
@@ -653,7 +653,7 @@ mod test {
         ]
         .into();
 
-        let expected_centroid: MultiPolygon<f64> = vec![
+        let expected_centroid: MultiPolygon = vec![
             polygon![
                 (x: 0., y: 0.),
                 (x: 7.0710678118654755, y: 7.071067811865475),
@@ -682,7 +682,7 @@ mod test {
 
     #[test]
     fn test_rotate_multipolygons() {
-        let multipolygon: MultiPolygon<f64> = vec![
+        let multipolygon: MultiPolygon = vec![
             polygon![
                (x: 1., y: 1. ),
                (x: 2., y: 1. ),
@@ -700,7 +700,7 @@ mod test {
         ]
         .into();
 
-        let expected_center: MultiPolygon<f64> = vec![
+        let expected_center: MultiPolygon = vec![
             polygon![
                 (x: -0.2360967926537398, y: 2.610912703473988),
                 (x: 0.7298290336353284, y: 2.352093658371467),
@@ -718,7 +718,7 @@ mod test {
         ]
         .into();
 
-        let expected_centroid: MultiPolygon<f64> = vec![
+        let expected_centroid: MultiPolygon = vec![
             polygon![
                 (x: -0.1016007672888048, y: 3.05186627999456),
                 (x: 0.8643250590002634, y: 2.793047234892039),
@@ -752,12 +752,12 @@ mod test {
     #[test]
     fn test_rotate_empty_geometries_error_gracefully() {
         // line string
-        let empty_linestring: LineString<f64> = line_string![];
+        let empty_linestring: LineString = line_string![];
         let rotated_empty_linestring = empty_linestring.rotate_around_centroid(90.);
         assert_eq!(empty_linestring, rotated_empty_linestring);
 
         // multi line string
-        let empty_multilinestring: MultiLineString<f64> = MultiLineString::<f64>::new(vec![]);
+        let empty_multilinestring: MultiLineString = MultiLineString::new(vec![]);
         let rotated_empty_multilinestring = empty_multilinestring.rotate_around_centroid(90.);
         assert_eq!(empty_multilinestring, rotated_empty_multilinestring);
 
@@ -767,7 +767,7 @@ mod test {
         assert_eq!(empty_polygon, rotated_empty_polygon);
 
         // multi polygon
-        let empty_multipolygon: MultiPolygon<f64> = Vec::<Polygon<f64>>::new().into();
+        let empty_multipolygon: MultiPolygon = Vec::<Polygon<f64>>::new().into();
         let rotated_empty_multipolygon = empty_multipolygon.rotate_around_centroid(90.);
         assert_eq!(empty_multipolygon, rotated_empty_multipolygon);
     }

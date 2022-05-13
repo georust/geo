@@ -183,8 +183,8 @@ mod test {
 
     #[test]
     fn test_vincenty_distance_1() {
-        let a = Point::<f64>::new(17.072561, 48.154563);
-        let b = Point::<f64>::new(17.072562, 48.154564);
+        let a = Point::new(17.072561, 48.154563);
+        let b = Point::new(17.072562, 48.154564);
         assert_relative_eq!(
             a.vincenty_distance(&b).unwrap(),
             0.13378944117648012,
@@ -194,8 +194,8 @@ mod test {
 
     #[test]
     fn test_vincenty_distance_2() {
-        let a = Point::<f64>::new(17.072561, 48.154563);
-        let b = Point::<f64>::new(17.064064, 48.158800);
+        let a = Point::new(17.072561, 48.154563);
+        let b = Point::new(17.064064, 48.158800);
         assert_relative_eq!(
             a.vincenty_distance(&b).unwrap(),
             788.4148295236967,
@@ -205,8 +205,8 @@ mod test {
 
     #[test]
     fn test_vincenty_distance_3() {
-        let a = Point::<f64>::new(17.107558, 48.148636);
-        let b = Point::<f64>::new(16.372477, 48.208810);
+        let a = Point::new(17.107558, 48.148636);
+        let b = Point::new(16.372477, 48.208810);
         assert_relative_eq!(
             a.vincenty_distance(&b).unwrap(),
             55073.68246366003,
@@ -216,8 +216,8 @@ mod test {
 
     #[test]
     fn test_vincenty_distance_equatorial() {
-        let a = Point::<f64>::new(0.0, 0.0);
-        let b = Point::<f64>::new(100.0, 0.0);
+        let a = Point::new(0.0, 0.0);
+        let b = Point::new(100.0, 0.0);
         assert_relative_eq!(
             a.vincenty_distance(&b).unwrap(),
             11131949.079,
@@ -227,15 +227,15 @@ mod test {
 
     #[test]
     fn test_vincenty_distance_coincident() {
-        let a = Point::<f64>::new(12.3, 4.56);
-        let b = Point::<f64>::new(12.3, 4.56);
+        let a = Point::new(12.3, 4.56);
+        let b = Point::new(12.3, 4.56);
         assert_relative_eq!(a.vincenty_distance(&b).unwrap(), 0.0, epsilon = 1.0e-3);
     }
 
     #[test]
     fn test_vincenty_distance_antipodal() {
-        let a = Point::<f64>::new(2.0, 4.0);
-        let b = Point::<f64>::new(-178.0, -4.0);
+        let a = Point::new(2.0, 4.0);
+        let b = Point::new(-178.0, -4.0);
         assert_eq!(a.vincenty_distance(&b), Err(FailedToConvergeError))
     }
 }

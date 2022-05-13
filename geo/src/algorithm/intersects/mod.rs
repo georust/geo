@@ -147,7 +147,7 @@ mod test {
     }
     #[test]
     fn empty_all_linestring_test() {
-        let empty: LineString<f64> = line_string![];
+        let empty: LineString = line_string![];
         assert!(!empty.intersects(&empty));
     }
     #[test]
@@ -550,8 +550,8 @@ mod test {
     #[test]
     fn exhaustive_compile_test() {
         use geo_types::{GeometryCollection, Triangle};
-        let pt: Point<f64> = Point::new(0., 0.);
-        let ln: Line<f64> = Line::new((0., 0.), (1., 1.));
+        let pt: Point = Point::new(0., 0.);
+        let ln: Line = Line::new((0., 0.), (1., 1.));
         let ls = line_string![(0., 0.).into(), (1., 1.).into()];
         let poly = Polygon::new(LineString::from(vec![(0., 0.), (1., 1.), (1., 0.)]), vec![]);
         let rect = Rect::new(coord! { x: 10., y: 20. }, coord! { x: 30., y: 10. });

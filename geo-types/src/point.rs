@@ -22,9 +22,9 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 ///
 /// ```
 /// use geo_types::{coord, Point};
-/// let p1: Point<f64> = (0., 1.).into();
+/// let p1: Point = (0., 1.).into();
 /// let c = coord! { x: 10., y: 20. };
-/// let p2: Point<f64> = c.into();
+/// let p2: Point = c.into();
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

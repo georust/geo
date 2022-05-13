@@ -154,7 +154,7 @@ where
 /// use geo::Centroid;
 /// use geo::{MultiPoint, Point};
 ///
-/// let empty: Vec<Point<f64>> = Vec::new();
+/// let empty: Vec<Point> = Vec::new();
 /// let empty_multi_points: MultiPoint<_> = empty.into();
 /// assert_eq!(empty_multi_points.centroid(), None);
 ///
@@ -519,13 +519,13 @@ mod test {
     // Tests: Centroid of MultiLineString
     #[test]
     fn empty_multilinestring_test() {
-        let mls: MultiLineString<f64> = MultiLineString::new(vec![]);
+        let mls: MultiLineString = MultiLineString::new(vec![]);
         let centroid = mls.centroid();
         assert!(centroid.is_none());
     }
     #[test]
     fn multilinestring_with_empty_line_test() {
-        let mls: MultiLineString<f64> = MultiLineString::new(vec![line_string![]]);
+        let mls: MultiLineString = MultiLineString::new(vec![line_string![]]);
         let centroid = mls.centroid();
         assert!(centroid.is_none());
     }
@@ -535,7 +535,7 @@ mod test {
             x: 40.02f64,
             y: 116.34,
         };
-        let mls: MultiLineString<f64> = MultiLineString::new(vec![
+        let mls: MultiLineString = MultiLineString::new(vec![
             line_string![coord],
             line_string![coord],
             line_string![coord],
@@ -552,7 +552,7 @@ mod test {
             (x: 10., y: 1.),
             (x: 11., y: 1.)
         ];
-        let mls: MultiLineString<f64> = MultiLineString::new(vec![linestring]);
+        let mls: MultiLineString = MultiLineString::new(vec![linestring]);
         assert_relative_eq!(mls.centroid().unwrap(), point! { x: 6., y: 1. });
     }
     #[test]
@@ -748,6 +748,7 @@ mod test {
     fn empty_multipolygon_polygon_test() {
         assert!(MultiPolygon::<f64>::new(Vec::new()).centroid().is_none());
     }
+
     #[test]
     fn multipolygon_one_polygon_test() {
         let linestring =

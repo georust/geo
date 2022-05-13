@@ -238,7 +238,7 @@ use num_traits::Zero;
 /// use geo_types::Coordinate;
 /// use num_traits::Zero;
 ///
-/// let p: Coordinate<f64> = Zero::zero();
+/// let p: Coordinate = Zero::zero();
 ///
 /// assert_eq!(p.x, 0.);
 /// assert_eq!(p.y, 0.);
