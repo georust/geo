@@ -40,7 +40,6 @@ pub use contains::Contains;
 
 /// Calculate the convex hull of a `Geometry`.
 pub mod convex_hull;
-// REVIEW: use qhull, etc?
 pub use convex_hull::ConvexHull;
 
 /// Determine whether a `Coordinate` lies inside, outside, or on the boundary of a geometry.
@@ -49,7 +48,6 @@ pub use coordinate_position::CoordinatePosition;
 
 /// Iterate over geometry coordinates.
 pub mod coords_iter;
-// REVIEW: MapCoordsIter, MapExteriorCoordsIter?
 pub use coords_iter::CoordsIter;
 
 /// Dimensionality of a geometry and its boundary, based on OGC-SFA.
@@ -66,8 +64,6 @@ pub use euclidean_length::EuclideanLength;
 
 /// Calculate the extreme coordinates and indices of a geometry.
 pub mod extremes;
-// REVIEW
-// pub use extremes::{Extreme, Extremes, Outcome};
 pub use extremes::Extremes;
 
 /// Calculate the Frechet distance between two `LineStrings`.
@@ -127,7 +123,6 @@ pub mod line_locate_point;
 pub use line_locate_point::LineLocatePoint;
 
 /// Iterate over the lines in a geometry.
-/// REVIEW: include LineStringIter/MapLinesIter?
 pub mod lines_iter;
 pub use lines_iter::LinesIter;
 
@@ -139,7 +134,6 @@ pub use map_coords::{MapCoordsInplace, TryMapCoords, TryMapCoordsInplace};
 
 /// Orient a `Polygon`'s exterior and interior rings.
 pub mod orient;
-// REVIEW: Direction?
 pub use orient::Orient;
 
 /// Helper functions for the "fast path" variant of the Polygon-Polygon Euclidean distance method.
