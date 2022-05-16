@@ -4,7 +4,7 @@
 ## Unreleased
 
 * Flatten algorithm namespace. For example:
-  ```
+  ```rust
   # Before
   use geo::algorithm::area::Area;
   use geo::algorithm::bounding_rect::BoundingRect;
