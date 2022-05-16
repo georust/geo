@@ -14,6 +14,9 @@
   - rename MapCoordsInplace::map_coords_inplace -> MapCoordsInPlace::map_coords_in_place
   - rename TryMapCoordsInplace::try_map_coords_inplace -> TryMapCoordsInPlace::try_map_coords_in_place
   - Consolidate traits `TryMapCoords` into `MapCoords` and `TryMapCoordsInplace` into `MapCoordsInPlace`
+* Implement `ChamberlainDuquetteArea` for all geo types.
+  * <https://github.com/georust/geo/pull/833>
+
 ## 0.20.1
 
 * FIX: update to proper minimum geo-types version
