@@ -1,4 +1,4 @@
-use crate::bounding_rect::BoundingRect;
+use crate::BoundingRect;
 use crate::*;
 
 /// Checks if the geometry Self intersects the geometry Rhs.
@@ -15,7 +15,7 @@ use crate::*;
 /// # Examples
 ///
 /// ```
-/// use geo::algorithm::intersects::Intersects;
+/// use geo::Intersects;
 /// use geo::line_string;
 ///
 /// let line_string_a = line_string![
@@ -52,9 +52,9 @@ pub trait Intersects<Rhs = Self> {
 // the reverse (where Self is "simpler" than Rhs).
 macro_rules! symmetric_intersects_impl {
     ($t:ty, $k:ty) => {
-        impl<T> $crate::algorithm::intersects::Intersects<$k> for $t
+        impl<T> $crate::Intersects<$k> for $t
         where
-            $k: $crate::algorithm::intersects::Intersects<$t>,
+            $k: $crate::Intersects<$t>,
             T: CoordNum,
         {
             fn intersects(&self, rhs: &$k) -> bool {
@@ -128,7 +128,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::algorithm::intersects::Intersects;
+    use crate::Intersects;
     use crate::{
         coord, line_string, polygon, Geometry, Line, LineString, MultiLineString, MultiPoint,
         MultiPolygon, Point, Polygon, Rect,

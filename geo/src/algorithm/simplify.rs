@@ -1,6 +1,5 @@
-use crate::algorithm::coords_iter::CoordsIter;
-use crate::algorithm::euclidean_distance::EuclideanDistance;
 use crate::{Coordinate, GeoFloat, Line, LineString, MultiLineString, MultiPolygon, Polygon};
+use crate::{CoordsIter, EuclideanDistance};
 
 // Because the RDP algorithm is recursive, we can't assign an index to a point inside the loop
 // instead, we wrap a simple struct around index and point in a wrapper function,
@@ -115,7 +114,7 @@ pub trait Simplify<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::simplify::Simplify;
+    /// use geo::Simplify;
     /// use geo::line_string;
     ///
     /// let line_string = line_string![
@@ -154,7 +153,7 @@ pub trait SimplifyIdx<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::simplify::SimplifyIdx;
+    /// use geo::SimplifyIdx;
     /// use geo::line_string;
     ///
     /// let line_string = line_string![

@@ -125,7 +125,7 @@ where
             (Some(q1), Some(q2)) if q1 > q2 => Ordering::Greater,
             (Some(q1), Some(q2)) if q1 < q2 => Ordering::Less,
             _ => {
-                use crate::algorithm::kernels::{Kernel, Orientation};
+                use crate::kernels::{Kernel, Orientation};
                 match F::Ker::orient2d(other.coord_0, other.coord_1, self.coord_1) {
                     Orientation::Clockwise => Ordering::Less,
                     Orientation::CounterClockwise => Ordering::Greater,

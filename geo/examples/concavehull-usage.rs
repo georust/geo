@@ -1,5 +1,5 @@
-use geo::algorithm::concave_hull::ConcaveHull;
-use geo::algorithm::convex_hull::ConvexHull;
+use geo::ConcaveHull;
+use geo::ConvexHull;
 use geo::{Coordinate, Point};
 use geo_types::MultiPoint;
 use std::fs::File;

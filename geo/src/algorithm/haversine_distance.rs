@@ -58,7 +58,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::algorithm::haversine_distance::HaversineDistance;
+    use crate::HaversineDistance;
     use crate::Point;
 
     #[test]

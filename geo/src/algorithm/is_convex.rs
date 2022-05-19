@@ -37,8 +37,8 @@ use crate::{Coordinate, LineString};
 ///
 /// [convex combination]: //en.wikipedia.org/wiki/Convex_combination
 /// [convex set]: //en.wikipedia.org/wiki/Convex_set
-/// [`ConvexHull`]: crate::algorithm::convex_hull::ConvexHull
-/// [`graham_hull`]: crate::algorithm::convex_hull::graham_hull
+/// [`ConvexHull`]: crate::ConvexHull
+/// [`graham_hull`]: crate::convex_hull::graham_hull
 pub trait IsConvex {
     /// Test and get the orientation if the shape is convex.
     /// Tests for strict convexity if `allow_collinear`, and

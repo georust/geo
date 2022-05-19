@@ -10,7 +10,7 @@
 /// # Examples
 ///
 /// ```
-/// use geo::algorithm::contains::Contains;
+/// use geo::Contains;
 /// use geo::{line_string, point, Polygon};
 ///
 /// let line_string = line_string![
@@ -50,8 +50,8 @@ mod triangle;
 
 #[cfg(test)]
 mod test {
-    use crate::algorithm::contains::Contains;
     use crate::line_string;
+    use crate::Contains;
     use crate::{
         coord, Coordinate, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle,
     };

@@ -53,7 +53,7 @@ pub trait HasKernel: CoordNum {
 // parameter that is `T`.
 macro_rules! has_kernel {
     ($t:ident, $k:ident) => {
-        impl $crate::algorithm::kernels::HasKernel for $t {
+        impl $crate::HasKernel for $t {
             type Ker = $k;
         }
     };

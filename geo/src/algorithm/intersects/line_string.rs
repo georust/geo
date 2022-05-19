@@ -1,5 +1,5 @@
 use super::{has_disjoint_bboxes, Intersects};
-use crate::bounding_rect::BoundingRect;
+use crate::BoundingRect;
 use crate::*;
 
 // Blanket implementation using self.lines().any().

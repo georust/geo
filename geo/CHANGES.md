@@ -3,8 +3,17 @@
 
 ## Unreleased
 
-* Speed up intersection checks by using a preliminary bbox check
-* Remove unneeded reference for `*MapCoords*` closure parameter.
+* Flatten algorithm namespace. For example:
+  ```rust
+  # Before
+  use geo::algorithm::area::Area;
+  use geo::algorithm::bounding_rect::BoundingRect;
+  # After
+  use geo::{Area, BoundingRect};
+  ```
+* Speed up `intersects` checks by using a preliminary bbox check
+  * <https://github.com/georust/geo/pull/828>
+* BREAKING: Remove unneeded reference for `*MapCoords*` closure parameter.
   * <https://github.com/georust/geo/pull/810>
 * BREAKING: Bump proj dependency to 0.26 which uses proj lib 9.0
   * <https://github.com/georust/geo/pull/813>

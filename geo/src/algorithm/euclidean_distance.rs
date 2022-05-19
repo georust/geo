@@ -1,7 +1,7 @@
-use crate::algorithm::euclidean_length::EuclideanLength;
-use crate::algorithm::intersects::Intersects;
-use crate::algorithm::polygon_distance_fast_path::*;
+use crate::polygon_distance_fast_path::*;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
+use crate::EuclideanLength;
+use crate::Intersects;
 use crate::{
     Coordinate, GeoFloat, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
     Point, Polygon, Triangle,
@@ -30,7 +30,7 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     ///
     /// ```
     /// use approx::assert_relative_eq;
-    /// use geo::algorithm::euclidean_distance::EuclideanDistance;
+    /// use geo::EuclideanDistance;
     /// use geo::point;
     ///
     /// let p1 = point!(x: -72.1235, y: 42.3521);
@@ -45,7 +45,7 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     ///
     /// ```
     /// use approx::assert_relative_eq;
-    /// use geo::algorithm::euclidean_distance::EuclideanDistance;
+    /// use geo::EuclideanDistance;
     /// use geo::{point, polygon};
     ///
     /// let polygon = polygon![
@@ -71,7 +71,7 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     ///
     /// ```
     /// use approx::assert_relative_eq;
-    /// use geo::algorithm::euclidean_distance::EuclideanDistance;
+    /// use geo::EuclideanDistance;
     /// use geo::{point, line_string};
     ///
     /// let line_string = line_string![
@@ -576,8 +576,8 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::algorithm::convex_hull::ConvexHull;
-    use crate::algorithm::euclidean_distance::EuclideanDistance;
+    use crate::ConvexHull;
+    use crate::EuclideanDistance;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
     use geo_types::Rect;
     use geo_types::{coord, polygon, private_utils::line_segment_distance};

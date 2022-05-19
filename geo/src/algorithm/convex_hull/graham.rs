@@ -1,5 +1,5 @@
 use super::{swap_remove_to_first, trivial_hull};
-use crate::algorithm::kernels::*;
+use crate::kernels::*;
 use crate::{Coordinate, GeoNum, LineString};
 
 /// The [Graham's scan] algorithm to compute the convex hull
@@ -88,7 +88,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::algorithm::is_convex::IsConvex;
+    use crate::IsConvex;
     fn test_convexity<T: GeoNum>(mut initial: Vec<Coordinate<T>>) {
         let hull = graham_hull(&mut initial, false);
         assert!(hull.is_strictly_ccw_convex());

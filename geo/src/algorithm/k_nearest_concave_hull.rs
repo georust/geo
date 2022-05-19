@@ -1,7 +1,7 @@
-use crate::algorithm::contains::Contains;
-use crate::algorithm::convex_hull::ConvexHull;
-use crate::algorithm::intersects::Intersects;
-use crate::{CoordNum, Coordinate, GeoFloat, LineString, MultiPoint, Point, Polygon};
+use crate::{
+    Contains, ConvexHull, CoordNum, Coordinate, GeoFloat, Intersects, LineString, MultiPoint,
+    Point, Polygon,
+};
 use num_traits::Float;
 use rstar::RTreeNum;
 use std::cmp::max;

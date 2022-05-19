@@ -33,104 +33,104 @@
 //!
 //! ## Area
 //!
-//! - **[`Area`](algorithm::area::Area)**: Calculate the planar area of a geometry
-//! - **[`ChamberlainDuquetteArea`](algorithm::chamberlain_duquette_area::ChamberlainDuquetteArea)**: Calculate the geodesic area of a geometry
+//! - **[`Area`](Area)**: Calculate the planar area of a geometry
+//! - **[`ChamberlainDuquetteArea`](ChamberlainDuquetteArea)**: Calculate the geodesic area of a geometry
 //!
 //! ## Distance
 //!
-//! - **[`EuclideanDistance`](algorithm::euclidean_distance::EuclideanDistance)**: Calculate the minimum euclidean distance between geometries
-//! - **[`GeodesicDistance`](algorithm::geodesic_distance::GeodesicDistance)**: Calculate the minimum geodesic distance between geometries using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
-//! - **[`HaversineDistance`](algorithm::haversine_distance::HaversineDistance)**: Calculate the minimum geodesic distance between geometries using the haversine formula
-//! - **[`VincentyDistance`](algorithm::vincenty_distance::VincentyDistance)**: Calculate the minimum geodesic distance between geometries using Vincenty’s formula
+//! - **[`EuclideanDistance`](EuclideanDistance)**: Calculate the minimum euclidean distance between geometries
+//! - **[`GeodesicDistance`](GeodesicDistance)**: Calculate the minimum geodesic distance between geometries using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
+//! - **[`HaversineDistance`](HaversineDistance)**: Calculate the minimum geodesic distance between geometries using the haversine formula
+//! - **[`VincentyDistance`](VincentyDistance)**: Calculate the minimum geodesic distance between geometries using Vincenty’s formula
 //!
 //! ## Length
 //!
-//! - **[`EuclideanLength`](algorithm::euclidean_length::EuclideanLength)**: Calculate the euclidean length of a geometry
-//! - **[`GeodesicLength`](algorithm::geodesic_length::GeodesicLength)**: Calculate the geodesic length of a geometry using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
-//! - **[`HaversineLength`](algorithm::haversine_length::HaversineLength)**: Calculate the geodesic length of a geometry using the haversine formula
-//! - **[`VincentyLength`](algorithm::vincenty_length::VincentyLength)**: Calculate the geodesic length of a geometry using Vincenty’s formula
+//! - **[`EuclideanLength`](EuclideanLength)**: Calculate the euclidean length of a geometry
+//! - **[`GeodesicLength`](GeodesicLength)**: Calculate the geodesic length of a geometry using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
+//! - **[`HaversineLength`](HaversineLength)**: Calculate the geodesic length of a geometry using the haversine formula
+//! - **[`VincentyLength`](VincentyLength)**: Calculate the geodesic length of a geometry using Vincenty’s formula
 //!
 //! ## Simplification
 //!
-//! - **[`Simplify`](algorithm::simplify::Simplify)**: Simplify a geometry using the Ramer–Douglas–Peucker algorithm
-//! - **[`SimplifyIdx`](algorithm::simplify::SimplifyIdx)**: Calculate a simplified geometry using the Ramer–Douglas–Peucker algorithm, returning coordinate indices
-//! - **[`SimplifyVW`](algorithm::simplifyvw::SimplifyVW)**: Simplify a geometry using the Visvalingam-Whyatt algorithm
-//! - **[`SimplifyVWPreserve`](algorithm::simplifyvw::SimplifyVWPreserve)**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
-//! - **[`SimplifyVwIdx`](algorithm::simplifyvw::SimplifyVwIdx)**: Calculate a simplified geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm, returning coordinate indices
+//! - **[`Simplify`](Simplify)**: Simplify a geometry using the Ramer–Douglas–Peucker algorithm
+//! - **[`SimplifyIdx`](SimplifyIdx)**: Calculate a simplified geometry using the Ramer–Douglas–Peucker algorithm, returning coordinate indices
+//! - **[`SimplifyVW`](SimplifyVW)**: Simplify a geometry using the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVWPreserve`](SimplifyVWPreserve)**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVwIdx`](SimplifyVwIdx)**: Calculate a simplified geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm, returning coordinate indices
 //!
 //! ## Query
 //!
-//! - **[`Bearing`](algorithm::bearing::Bearing)**: Calculate the bearing between points
-//! - **[`ClosestPoint`](algorithm::closest_point::ClosestPoint)**: Find the point on a geometry
+//! - **[`Bearing`](Bearing)**: Calculate the bearing between points
+//! - **[`ClosestPoint`](ClosestPoint)**: Find the point on a geometry
 //!   closest to a given point
-//! - **[`IsConvex`](algorithm::is_convex::IsConvex)**: Calculate the convexity of a
+//! - **[`IsConvex`](IsConvex)**: Calculate the convexity of a
 //!   [`LineString`]
-//! - **[`LineInterpolatePoint`](algorithm::line_interpolate_point::LineInterpolatePoint)**:
+//! - **[`LineInterpolatePoint`](LineInterpolatePoint)**:
 //!   Generates a point that lies a given fraction along the line
-//! - **[`LineLocatePoint`](algorithm::line_locate_point::LineLocatePoint)**: Calculate the
+//! - **[`LineLocatePoint`](LineLocatePoint)**: Calculate the
 //!   fraction of a line’s total length representing the location of the closest point on the
 //!   line to the given point
 //!
 //! ## Similarity
 //!
-//! - **[`FrechetDistance`](algorithm::frechet_distance::FrechetDistance)**: Calculate the similarity between [`LineString`]s using the Fréchet distance
+//! - **[`FrechetDistance`](FrechetDistance)**: Calculate the similarity between [`LineString`]s using the Fréchet distance
 //!
 //! ## Topology
 //!
-//! - **[`Contains`](algorithm::contains::Contains)**: Calculate if a geometry contains another
+//! - **[`Contains`](Contains)**: Calculate if a geometry contains another
 //!   geometry
-//! - **[`CoordinatePosition`](algorithm::coordinate_position::CoordinatePosition)**: Calculate
+//! - **[`CoordinatePosition`](CoordinatePosition)**: Calculate
 //!   the position of a coordinate relative to a geometry
-//! - **[`HasDimensions`](algorithm::dimensions::HasDimensions)**: Determine the dimensions of a geometry
-//! - **[`Intersects`](algorithm::intersects::Intersects)**: Calculate if a geometry intersects
+//! - **[`HasDimensions`](HasDimensions)**: Determine the dimensions of a geometry
+//! - **[`Intersects`](Intersects)**: Calculate if a geometry intersects
 //!   another geometry
-//! - **[`line_intersection`](algorithm::line_intersection::line_intersection)**: Calculates the
+//! - **[`line_intersection`](line_intersection::line_intersection)**: Calculates the
 //!   intersection, if any, between two lines.
-//! - **[`Relate`](algorithm::relate::Relate)**: Topologically relate two geometries based on
+//! - **[`Relate`](Relate)**: Topologically relate two geometries based on
 //!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
 //!
 //! ## Winding
 //!
-//! - **[`Orient`](algorithm::orient::Orient)**: Apply a specified [`Winding`](algorithm::winding_order::Winding) to a [`Polygon`]’s interior and exterior rings
-//! - **[`Winding`](algorithm::winding_order::Winding)**: Calculate and manipulate the winding order of a [`LineString`]
+//! - **[`Orient`](Orient)**: Apply a specified [`Winding`](Winding) to a [`Polygon`]’s interior and exterior rings
+//! - **[`Winding`](Winding)**: Calculate and manipulate the winding order of a [`LineString`]
 //!
 //! ## Iteration
 //!
-//! - **[`CoordsIter`](algorithm::coords_iter::CoordsIter)**: Iterate over the coordinates of a geometry
-//! - **[`MapCoords`](algorithm::map_coords::MapCoords)**: Map a function over all the coordinates
+//! - **[`CoordsIter`](CoordsIter)**: Iterate over the coordinates of a geometry
+//! - **[`MapCoords`](MapCoords)**: Map a function over all the coordinates
 //!   in a geometry, returning a new geometry
-//! - **[`MapCoordsInplace`](algorithm::map_coords::MapCoordsInplace)**: Map a function over all the
+//! - **[`MapCoordsInplace`](MapCoordsInplace)**: Map a function over all the
 //!   coordinates in a geometry in-place
-//! - **[`TryMapCoords`](algorithm::map_coords::TryMapCoords)**: Map a fallible function over all
+//! - **[`TryMapCoords`](TryMapCoords)**: Map a fallible function over all
 //!   the coordinates in a geometry, returning a new geometry wrapped in a `Result`
-//! - **[`TryMapCoordsInplace`](algorithm::map_coords::TryMapCoordsInplace)**: Map a fallible function over all
+//! - **[`TryMapCoordsInplace`](TryMapCoordsInplace)**: Map a fallible function over all
 //!   the coordinates in a geometry in-place
-//! - **[`LinesIter`](algorithm::lines_iter::LinesIter)**: Iterate over lines of a geometry
+//! - **[`LinesIter`](LinesIter)**: Iterate over lines of a geometry
 //!
 //! ## Boundary
 //!
-//! - **[`BoundingRect`](algorithm::bounding_rect::BoundingRect)**: Calculate the axis-aligned
+//! - **[`BoundingRect`](BoundingRect)**: Calculate the axis-aligned
 //!   bounding rectangle of a geometry
-//! - **[`ConcaveHull`](algorithm::concave_hull::ConcaveHull)**: Calculate the concave hull of a
+//! - **[`ConcaveHull`](ConcaveHull)**: Calculate the concave hull of a
 //!   geometry
-//! - **[`ConvexHull`](algorithm::convex_hull::ConvexHull)**: Calculate the convex hull of a
+//! - **[`ConvexHull`](ConvexHull)**: Calculate the convex hull of a
 //!   geometry
-//! - **[`Extremes`](algorithm::extremes::Extremes)**: Calculate the extreme coordinates and
+//! - **[`Extremes`](Extremes)**: Calculate the extreme coordinates and
 //!   indices of a geometry
 //!
 //! ## Affine transformations
 //!
-//! - **[`Rotate`](algorithm::rotate::Rotate)**: Rotate a geometry around its centroid
-//! - **[`RotatePoint`](algorithm::rotate::RotatePoint)**: Rotate a geometry around a point
-//! - **[`Translate`](algorithm::translate::Translate)**: Translate a geometry along its axis
+//! - **[`Rotate`](Rotate)**: Rotate a geometry around its centroid
+//! - **[`RotatePoint`](RotatePoint)**: Rotate a geometry around a point
+//! - **[`Translate`](Translate)**: Translate a geometry along its axis
 //!
 //! ## Miscellaneous
 //!
-//! - **[`Centroid`](algorithm::centroid::Centroid)**: Calculate the centroid of a geometry
-//! - **[`HaversineDestination`](algorithm::haversine_destination::HaversineDestination)**:
-//! - **[`HaversineIntermediate`](algorithm::haversine_intermediate::HaversineIntermediate)**:
-//! - **[`Proj`](algorithm::proj::Proj)**: Project geometries with the `proj` crate (requires the `use-proj` feature)
-//! - **[`ChaikinSmoothing`](algorithm::chaikin_smoothing::ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
+//! - **[`Centroid`](Centroid)**: Calculate the centroid of a geometry
+//! - **[`HaversineDestination`](HaversineDestination)**:
+//! - **[`HaversineIntermediate`](HaversineIntermediate)**:
+//! - **[`Proj`](Proj)**: Project geometries with the `proj` crate (requires the `use-proj` feature)
+//! - **[`ChaikinSmoothing`](ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 //!
 //! # Features
 //!
@@ -226,41 +226,7 @@ const EARTH_FLATTENING: f64 =
 /// A prelude which re-exports the traits for manipulating objects in this
 /// crate. Typically imported with `use geo::prelude::*`.
 pub mod prelude {
-    pub use crate::algorithm::area::Area;
-    pub use crate::algorithm::bearing::Bearing;
-    pub use crate::algorithm::bounding_rect::BoundingRect;
-    pub use crate::algorithm::centroid::Centroid;
-    pub use crate::algorithm::chaikin_smoothing::ChaikinSmoothing;
-    pub use crate::algorithm::chamberlain_duquette_area::ChamberlainDuquetteArea;
-    pub use crate::algorithm::closest_point::ClosestPoint;
-    pub use crate::algorithm::contains::Contains;
-    pub use crate::algorithm::convex_hull::ConvexHull;
-    pub use crate::algorithm::dimensions::HasDimensions;
-    pub use crate::algorithm::euclidean_distance::EuclideanDistance;
-    pub use crate::algorithm::euclidean_length::EuclideanLength;
-    pub use crate::algorithm::extremes::Extremes;
-    pub use crate::algorithm::frechet_distance::FrechetDistance;
-    pub use crate::algorithm::geodesic_distance::GeodesicDistance;
-    pub use crate::algorithm::geodesic_intermediate::GeodesicIntermediate;
-    pub use crate::algorithm::geodesic_length::GeodesicLength;
-    pub use crate::algorithm::haversine_destination::HaversineDestination;
-    pub use crate::algorithm::haversine_distance::HaversineDistance;
-    pub use crate::algorithm::haversine_intermediate::HaversineIntermediate;
-    pub use crate::algorithm::haversine_length::HaversineLength;
-    pub use crate::algorithm::intersects::Intersects;
-    pub use crate::algorithm::is_convex::IsConvex;
-    pub use crate::algorithm::map_coords::MapCoords;
-    pub use crate::algorithm::orient::Orient;
-    #[cfg(feature = "use-proj")]
-    pub use crate::algorithm::proj::Proj;
-    pub use crate::algorithm::rotate::{Rotate, RotatePoint};
-    pub use crate::algorithm::simplify::Simplify;
-    pub use crate::algorithm::simplifyvw::SimplifyVW;
-    pub use crate::algorithm::translate::Translate;
-    pub use crate::algorithm::vincenty_distance::VincentyDistance;
-    pub use crate::algorithm::vincenty_length::VincentyLength;
-    #[cfg(feature = "use-proj")]
-    pub use crate::proj::Transform;
+    pub use crate::algorithm::*;
 }
 
 /// A common numeric trait used for geo algorithms.
@@ -282,7 +248,7 @@ pub mod prelude {
 ///         match accum {
 ///             None => Some(next),
 ///             Some(farthest) => {
-///                 use geo::algorithm::{euclidean_distance::EuclideanDistance};
+///                 use geo::{euclidean_distance::EuclideanDistance};
 ///                 if next.euclidean_distance(point) > farthest.euclidean_distance(point) {
 ///                     Some(next)
 ///                 } else {
@@ -296,5 +262,5 @@ pub mod prelude {
 pub trait GeoFloat: num_traits::Float + GeoNum {}
 impl<T> GeoFloat for T where T: num_traits::Float + GeoNum {}
 
-pub trait GeoNum: CoordNum + algorithm::kernels::HasKernel {}
-impl<T> GeoNum for T where T: CoordNum + algorithm::kernels::HasKernel {}
+pub trait GeoNum: CoordNum + HasKernel {}
+impl<T> GeoNum for T where T: CoordNum + HasKernel {}
