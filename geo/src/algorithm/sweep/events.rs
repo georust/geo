@@ -6,8 +6,8 @@ use super::SweepPoint;
 /// Events generated during a sweep.
 #[derive(Debug)]
 pub(crate) struct Event<T: GeoNum, P> {
-    pub point: SweepPoint<T>,
-    pub ty: EventType,
+    point: SweepPoint<T>,
+    ty: EventType,
     payload: P,
 }
 
@@ -51,7 +51,7 @@ impl<T: GeoNum, P> Ord for Event<T, P> {
 ///
 /// The ordering of the variants is important for the algorithm. We require the
 /// right end points to be ordered before the left end points to ensure the
-/// active-segments of the sweep are always totally ordered. A point segment are
+/// active-segments of the sweep are always totally ordered. A point segment is
 /// interpreted as infinitesimal vertical segment around the point, and thus its
 /// left and right events are before and after the line variants respectively.
 #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Clone, Copy)]
