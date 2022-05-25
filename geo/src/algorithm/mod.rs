@@ -180,3 +180,6 @@ pub use vincenty_length::VincentyLength;
 /// Calculate and work with the winding order of `Linestring`s.
 pub mod winding_order;
 pub use winding_order::WindingOrder;
+
+/// Planar sweep algorithm and related utils
+pub mod sweep;
