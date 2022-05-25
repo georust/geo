@@ -1,11 +1,25 @@
-use crate::{coord, CoordNum, Coordinate};
+use std::cmp::Ordering;
 use num_traits::Zero;
+
+use crate::{coord, CoordNum, Coordinate};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum Orientation {
     CounterClockwise,
     Clockwise,
     Collinear,
+}
+
+impl Orientation {
+    /// Helper to convert orientation-2d into an ordering.
+    #[inline]
+    pub(crate) fn as_ordering(&self) -> Ordering {
+        match self {
+            Orientation::CounterClockwise => Ordering::Less,
+            Orientation::Clockwise => Ordering::Greater,
+            Orientation::Collinear => Ordering::Equal,
+        }
+    }
 }
 
 /// Kernel trait to provide predicates to operate on

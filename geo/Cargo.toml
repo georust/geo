@@ -16,6 +16,7 @@ proj-network = ["use-proj", "proj/network"]
 use-serde = ["serde", "geo-types/serde"]
 
 [dependencies]
+float_next_after = "0.1.5"
 geo-types = { version = "0.7.4", features = ["approx", "use-rstar"] }
 geographiclib-rs = "0.2"
 log = "0.4.11"
