@@ -79,6 +79,11 @@ impl<T: GeoNum> LineOrPoint<T> {
         self.left
     }
 
+    #[inline]
+    pub fn right(&self) -> SweepPoint<T> {
+        self.right
+    }
+
     #[cfg(test)]
     pub fn coords_equal(&self, other: &LineOrPoint<T>) -> bool {
         self.is_line() == other.is_line() && self.end_points() == other.end_points()

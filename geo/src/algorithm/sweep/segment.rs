@@ -1,25 +1,26 @@
-use crate::GeoFloat;
-
 use super::*;
-use std::{cmp::Ordering, fmt::Debug, rc::Rc};
+use crate::GeoFloat;
+use std::{cell::UnsafeCell, cmp::Ordering, fmt::Debug, rc::Rc};
 
 /// A segment of input [`LineOrPoint`] generated during the sweep.
 #[derive(Clone)]
 pub(super) struct Segment<C: Cross> {
-    geom: LineOrPoint<C::Scalar>,
-    cross: C,
+    pub(super) geom: LineOrPoint<C::Scalar>,
+    pub(super) cross: C,
     first_segment: bool,
     left_event_done: bool,
-    overlapping: Option<Rc<Segment<C>>>,
-    is_overlapping: bool,
+    pub(super) overlapping: Option<IMSegment<C>>,
+    pub(super) is_overlapping: bool,
 }
 
 impl<C: Cross> Segment<C> {
-    pub fn create_simple(cross: C) -> Self {
+    pub fn new(cross: C, geom: Option<LineOrPoint<C::Scalar>>) -> Self {
+        let first_segment = geom.is_none();
+        let geom = geom.unwrap_or_else(|| cross.line());
         Self {
-            geom: cross.line(),
+            geom,
             cross,
-            first_segment: true,
+            first_segment,
             left_event_done: false,
             overlapping: None,
             is_overlapping: false,
@@ -195,7 +196,7 @@ mod tests {
             ((10., 10.).into(), (5., 5.).into()).into(),
         ]
         .into_iter()
-        .map(|lp| Segment::create_simple(lp))
+        .map(|lp| Segment::new(lp, None))
         .collect();
 
         struct TestCase {

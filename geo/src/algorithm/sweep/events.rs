@@ -6,9 +6,9 @@ use crate::GeoNum;
 /// Events generated during a sweep.
 #[derive(Debug)]
 pub(crate) struct Event<T: GeoNum, P> {
-    point: SweepPoint<T>,
-    ty: EventType,
-    payload: P,
+    pub point: SweepPoint<T>,
+    pub ty: EventType,
+    pub payload: P,
 }
 
 /// Equality check for usage in ordered sets. Note that it ignores
