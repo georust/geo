@@ -17,25 +17,37 @@ pub(crate) struct LineOrPoint<T: GeoNum> {
     right: SweepPoint<T>,
 }
 
-/// Convert from a [`Line`] ensuring end point ordering.
-impl<T: GeoNum> From<Line<T>> for LineOrPoint<T> {
-    fn from(l: Line<T>) -> Self {
-        let start: SweepPoint<T> = l.start.into();
-        let end = l.end.into();
+impl<T: GeoNum> From<SweepPoint<T>> for LineOrPoint<T> {
+    fn from(pt: SweepPoint<T>) -> Self {
+        Self {
+            left: pt,
+            right: pt,
+        }
+    }
+}
+
+impl<T: GeoNum> From<(SweepPoint<T>, SweepPoint<T>)> for LineOrPoint<T> {
+    fn from(pt: (SweepPoint<T>, SweepPoint<T>)) -> Self {
+        let (start, end) = pt;
         match start.cmp(&end) {
             Ordering::Less => Self {
                 left: start,
                 right: end,
             },
-            Ordering::Equal => Self {
-                left: start,
-                right: start,
-            },
-            Ordering::Greater => Self {
+            _ => Self {
                 left: end,
                 right: start,
             },
         }
+    }
+}
+
+/// Convert from a [`Line`] ensuring end point ordering.
+impl<T: GeoNum> From<Line<T>> for LineOrPoint<T> {
+    fn from(l: Line<T>) -> Self {
+        let start: SweepPoint<T> = l.start.into();
+        let end = l.end.into();
+        (start, end).into()
     }
 }
 
@@ -60,6 +72,16 @@ impl<T: GeoNum> LineOrPoint<T> {
     #[inline]
     pub fn line(&self) -> Line<T> {
         Line::new(*self.left, *self.right)
+    }
+
+    #[inline]
+    pub fn left(&self) -> SweepPoint<T> {
+        self.left
+    }
+
+    #[cfg(test)]
+    pub fn coords_equal(&self, other: &LineOrPoint<T>) -> bool {
+        self.is_line() == other.is_line() && self.end_points() == other.end_points()
     }
 
     #[inline]
