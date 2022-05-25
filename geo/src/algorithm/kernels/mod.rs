@@ -1,5 +1,5 @@
-use std::cmp::Ordering;
 use num_traits::Zero;
+use std::cmp::Ordering;
 
 use crate::{coord, CoordNum, Coordinate};
 

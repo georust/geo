@@ -1,4 +1,7 @@
-use std::{cmp::Ordering, ops::{Deref, DerefMut}};
+use std::{
+    cmp::Ordering,
+    ops::{Deref, DerefMut},
+};
 
 use geo_types::Coordinate;
 

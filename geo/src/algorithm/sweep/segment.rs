@@ -1,7 +1,7 @@
 use crate::GeoFloat;
 
 use super::*;
-use std::{fmt::Debug, rc::Rc, cmp::Ordering};
+use std::{cmp::Ordering, fmt::Debug, rc::Rc};
 
 /// A segment of input [`LineOrPoint`] generated during the sweep.
 #[derive(Clone)]
@@ -25,6 +25,7 @@ impl<C: Cross> Segment<C> {
             is_overlapping: false,
         }
     }
+
     /// Split a line segment into pieces at points of intersection.
     ///
     /// The initial segment is mutated in place, and extra-segment(s) are
@@ -53,7 +54,7 @@ impl<C: Cross> Segment<C> {
                 // If the intersection is at the end point, the
                 // segment doesn't need to be split.
                 Unchanged { overlap: false }
-            }  else {
+            } else {
                 // Otherwise, split it. Mutate `self` to be the
                 // first part, and return the second part.
                 self.geom = (p, r).into();
@@ -91,7 +92,9 @@ impl<C: Cross> Segment<C> {
             } else {
                 self.geom = (p, r1).into();
                 self.first_segment = false;
-                SplitTwice { right: (r2, q).into() }
+                SplitTwice {
+                    right: (r2, q).into(),
+                }
             }
         }
     }
@@ -131,8 +134,7 @@ impl<C: Cross> PartialEq for Segment<C> {
 /// This is requires the same pre-conditions as for [`LineOrPoint`].
 impl<C: Cross> PartialOrd for Segment<C> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.geom
-            .partial_cmp(&other.geom)
+        self.geom.partial_cmp(&other.geom)
     }
 }
 
@@ -191,7 +193,10 @@ mod tests {
             ((0., 0.).into(), (0., 10.).into()).into(),
             ((0., 0.).into(), (5., 5.).into()).into(),
             ((10., 10.).into(), (5., 5.).into()).into(),
-        ].into_iter().map(|lp| Segment::create_simple(lp)).collect();
+        ]
+        .into_iter()
+        .map(|lp| Segment::create_simple(lp))
+        .collect();
 
         struct TestCase {
             a: usize,
@@ -202,7 +207,9 @@ mod tests {
 
         impl TestCase {
             fn assert_equality(&self, lines: &Vec<Segment<LineOrPoint<f64>>>) {
-                let isec = lines[self.a].geom.intersect_line_ordered(&lines[self.b].geom);
+                let isec = lines[self.a]
+                    .geom
+                    .intersect_line_ordered(&lines[self.b].geom);
                 assert_eq!(isec, self.isec);
 
                 if isec.is_none() {

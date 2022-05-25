@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
-use crate::GeoNum;
 use super::SweepPoint;
+use crate::GeoNum;
 
 /// Events generated during a sweep.
 #[derive(Debug)]

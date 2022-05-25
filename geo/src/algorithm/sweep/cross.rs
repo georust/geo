@@ -1,7 +1,7 @@
 use std::{fmt::Debug, rc::Rc, sync::Arc};
 
-use crate::GeoFloat;
 use super::*;
+use crate::GeoFloat;
 
 /// Interface for types that can be processed to detect crossings.
 ///

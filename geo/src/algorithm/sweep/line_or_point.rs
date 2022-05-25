@@ -238,7 +238,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
                     lp4 = other.right,
                 );
                 Some((*pt).into())
-            },
+            }
             e => e,
         }
     }
