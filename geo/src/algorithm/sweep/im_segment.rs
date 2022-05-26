@@ -1,10 +1,25 @@
-use std::{cell::UnsafeCell, cmp::Ordering, fmt::Debug, rc::Rc};
+use std::{cell::UnsafeCell, cmp::Ordering, fmt::Debug, rc::Rc, borrow::Borrow, ops::Deref};
 
 use super::*;
 
 /// A wrapped segment that allows interior mutability.
 pub(super) struct IMSegment<C: Cross> {
     inner: Rc<UnsafeCell<Segment<C>>>,
+}
+
+impl<C: Cross> Borrow<Segment<C>> for IMSegment<C> {
+    fn borrow(&self) -> &Segment<C> {
+        unsafe { self.get() }
+    }
+}
+
+// Unfortunately, a generic impl<U, T: Borrow<U>> Borrow<U> for Active<T>
+// doesn't work for some complicated reasons. AsRef is another trait with this
+// issue.
+impl<C: Cross> Borrow<Active<Segment<C>>> for Active<IMSegment<C>> {
+    fn borrow(&self) -> &Active<Segment<C>> {
+        Active::active_ref( unsafe { self.deref().get() } )
+    }
 }
 
 impl<C: Cross> Clone for IMSegment<C> {
@@ -38,6 +53,22 @@ impl<C: Cross> IMSegment<C> {
         &mut *self.inner.get()
     }
 
+    pub fn overlapping(&self) -> Option<&Self> {
+        unsafe { self.get() }.overlapping.as_ref()
+    }
+
+    pub fn cross(&self) -> &C {
+        &unsafe { self.get() }.cross
+    }
+
+    pub fn set_left_event_done(&self) {
+        unsafe { self.get_mut() }.left_event_done = true;
+    }
+
+    pub fn geom(&self) -> LineOrPoint<<C as Cross>::Scalar> {
+        unsafe { self.get() }.geom
+    }
+
     pub fn left_event(&self) -> Event<C::Scalar, Self> {
         let inner = unsafe { self.get() };
         let geom = inner.geom;
@@ -68,7 +99,7 @@ impl<C: Cross> IMSegment<C> {
         }
     }
 
-    pub fn chain_overlap(&self, mut child: Self) {
+    pub fn chain_overlap(&self, child: Self) {
         let mut this = self;
         loop {
             let inner = unsafe { this.get() };
@@ -91,17 +122,17 @@ impl<C: Cross> IMSegment<C> {
     ) -> SplitSegments<C::Scalar> {
         let (adjust_output, new_geom) = {
             let segment = unsafe { self.get_mut() };
+            trace!(
+                "adjust_for_intersection: {:?}\n\twith: {:?}",
+                segment,
+                adj_intersection
+            );
             (
                 segment.adjust_for_intersection(adj_intersection),
                 segment.geom,
             )
         };
-
-        use SplitSegments::*;
-        if matches!(adjust_output, SplitOnce { .. } | SplitTwice { .. }) {
-            todo!("move cb to call-site");
-            // cb(self.right_event());
-        }
+        trace!("adjust_output: {:?}", adjust_output);
 
         let mut this = self;
         loop {
@@ -119,17 +150,17 @@ impl<C: Cross> IMSegment<C> {
 }
 
 impl<C: Cross + Clone> IMSegment<C> {
-    fn create_segment(
+    pub(super) fn create_segment<F: FnMut(Event<C::Scalar, Self>)>(
         crossable: C,
         geom: Option<LineOrPoint<C::Scalar>>,
         parent: Option<&Self>,
+        mut cb: F,
     ) -> Self {
         let segment: Self = Segment::new(crossable, geom).into();
 
         // Push events to process the created segment.
         for e in [segment.left_event(), segment.right_event()] {
-            todo!();
-            // self.events.push(e);
+            cb(e)
         }
 
         if let Some(parent) = parent {
@@ -156,14 +187,19 @@ impl<C: Cross + Clone> IMSegment<C> {
         segment
     }
 
-    pub fn adjust_one_segment(&self, adj_intersection: LineOrPoint<C::Scalar>) -> Option<Self> {
+    pub fn adjust_one_segment<F: FnMut(Event<C::Scalar, Self>)>(
+        &self,
+        adj_intersection: LineOrPoint<C::Scalar>,
+        mut cb: F,
+    ) -> Option<Self> {
         let adj_segment = &mut unsafe { self.get() };
         let adj_cross = adj_segment.cross.clone();
         use SplitSegments::*;
         match self.adjust_for_intersection(adj_intersection) {
             Unchanged { overlap } => overlap.then(|| self.clone()),
             SplitOnce { overlap, right } => {
-                let new_key = Self::create_segment(adj_cross, Some(right), Some(self));
+                cb(self.right_event());
+                let new_key = Self::create_segment(adj_cross, Some(right), Some(self), &mut cb);
                 match overlap {
                     Some(false) => Some(self.clone()),
                     Some(true) => Some(new_key),
@@ -171,39 +207,38 @@ impl<C: Cross + Clone> IMSegment<C> {
                 }
             }
             SplitTwice { right } => {
-                Self::create_segment(adj_cross.clone(), Some(right), Some(self));
-                let middle = Self::create_segment(adj_cross, Some(adj_intersection), Some(self));
+                cb(self.right_event());
+                Self::create_segment(adj_cross.clone(), Some(right), Some(self), &mut cb);
+                let middle = Self::create_segment(adj_cross, Some(adj_intersection), Some(self), &mut cb);
                 Some(middle)
             }
         }
     }
 
-    pub fn for_event(event: &Event<C::Scalar, IMSegment<C>>) -> Option<&Segment<C>> {
+    pub fn is_correct(event: &Event<C::Scalar, IMSegment<C>>) -> bool {
         use EventType::*;
-        Some({
-            let segment = unsafe { event.payload.get() };
-            if let LineRight = event.ty {
-                debug_assert!(segment.geom.is_line());
-                if !segment.is_overlapping && segment.geom.right() == event.point {
-                    segment
-                } else {
-                    return None;
-                }
+        let segment = unsafe { event.payload.get() };
+        if let LineRight = event.ty {
+            debug_assert!(segment.geom.is_line());
+            if !segment.is_overlapping && segment.geom.right() == event.point {
+                true
             } else {
-                match event.ty {
-                    LineLeft => {
-                        debug_assert!(segment.geom.is_line());
-                        debug_assert_eq!(segment.geom.left(), event.point);
-                    }
-                    PointLeft | PointRight => {
-                        debug_assert!(!segment.geom.is_line());
-                        debug_assert_eq!(segment.geom.left(), event.point);
-                    }
-                    _ => unreachable!(),
-                }
-                segment
+                false
             }
-        })
+        } else {
+            match event.ty {
+                LineLeft => {
+                    debug_assert!(segment.geom.is_line());
+                    debug_assert_eq!(segment.geom.left(), event.point);
+                }
+                PointLeft | PointRight => {
+                    debug_assert!(!segment.geom.is_line());
+                    debug_assert_eq!(segment.geom.left(), event.point);
+                }
+                _ => unreachable!(),
+            }
+            true
+        }
     }
 }
 

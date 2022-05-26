@@ -11,10 +11,19 @@ use crate::{
 /// The coordinates are ordered (see [`SweepPoint`]) and a line
 /// segment must have distinct points (use the `Point` variant if the
 /// coordinates are the equal).
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct LineOrPoint<T: GeoNum> {
+#[derive(Clone, Copy)]
+pub struct LineOrPoint<T: GeoNum> {
     left: SweepPoint<T>,
     right: SweepPoint<T>,
+}
+
+impl<T: GeoNum> std::fmt::Debug for LineOrPoint<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple(if self.is_line() { "LPt" } else { "Pt" })
+            .field(&self.left.0.x_y())
+            .field(&self.right.0.x_y())
+            .finish()
+    }
 }
 
 impl<T: GeoNum> From<SweepPoint<T>> for LineOrPoint<T> {

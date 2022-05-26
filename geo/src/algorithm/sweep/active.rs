@@ -63,8 +63,8 @@ pub(super) trait ActiveSet: Default {
     type Seg;
     fn previous(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>>;
     fn next(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>>;
-    fn insert(&mut self, segment: Self::Seg);
-    fn remove(&mut self, segment: &Self::Seg);
+    fn insert_active(&mut self, segment: Self::Seg);
+    fn remove_active(&mut self, segment: &Self::Seg);
 }
 
 impl<T: PartialOrd> ActiveSet for BTreeSet<Active<T>> {
@@ -86,12 +86,12 @@ impl<T: PartialOrd> ActiveSet for BTreeSet<Active<T>> {
         .next()
     }
 
-    fn insert(&mut self, segment: Self::Seg) {
+    fn insert_active(&mut self, segment: Self::Seg) {
         let result = self.insert(Active(segment));
         debug_assert!(result);
     }
 
-    fn remove(&mut self, segment: &Self::Seg) {
+    fn remove_active(&mut self, segment: &Self::Seg) {
         let result = self.remove(Active::active_ref(segment));
         debug_assert!(result);
     }

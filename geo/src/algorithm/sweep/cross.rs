@@ -1,5 +1,7 @@
 use std::{fmt::Debug, rc::Rc, sync::Arc};
 
+use geo_types::Line;
+
 use super::*;
 use crate::GeoFloat;
 
@@ -15,7 +17,7 @@ use crate::GeoFloat;
 /// also impl. `Clone`. If the custom type is not cheap to clone, use
 /// either a reference to the type, a [`Rc`] or an [`Arc`]. All these
 /// are supported via blanket trait implementations.
-pub(crate) trait Cross: Sized + Debug {
+pub trait Cross: Sized + Debug {
     /// Scalar used the coordinates.
     type Scalar: GeoFloat;
 
@@ -37,6 +39,14 @@ impl<T: GeoFloat> Cross for LineOrPoint<T> {
 
     fn line(&self) -> LineOrPoint<Self::Scalar> {
         *self
+    }
+}
+
+impl<T: GeoFloat> Cross for Line<T> {
+    type Scalar = T;
+
+    fn line(&self) -> LineOrPoint<Self::Scalar> {
+        (*self).into()
     }
 }
 

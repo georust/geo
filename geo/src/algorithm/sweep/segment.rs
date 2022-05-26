@@ -7,8 +7,8 @@ use std::{cell::UnsafeCell, cmp::Ordering, fmt::Debug, rc::Rc};
 pub(super) struct Segment<C: Cross> {
     pub(super) geom: LineOrPoint<C::Scalar>,
     pub(super) cross: C,
-    first_segment: bool,
-    left_event_done: bool,
+    pub(super) first_segment: bool,
+    pub(super) left_event_done: bool,
     pub(super) overlapping: Option<IMSegment<C>>,
     pub(super) is_overlapping: bool,
 }
@@ -106,7 +106,7 @@ impl<C: Cross> Debug for Segment<C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Segment{{ {geom:?} of {c:?} {first} [{has}/{ovl}] }}",
+            "Segment{{ {geom:?}\n\tof {c:?}\n\t{first} [{has}/{ovl}] }}",
             c = self.cross,
             geom = self.geom,
             first = if self.first_segment { "[1st]" } else { "" },
