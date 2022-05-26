@@ -1,8 +1,8 @@
 use crate::{Coordinate, GeoFloat, Line};
 use geo_types::coord;
 
-use crate::algorithm::bounding_rect::BoundingRect;
-use crate::algorithm::intersects::Intersects;
+use crate::BoundingRect;
+use crate::Intersects;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum LineIntersection<F: GeoFloat> {
@@ -48,7 +48,7 @@ impl<F: GeoFloat> LineIntersection<F> {
 /// ```
 /// use geo_types::coord;
 /// use geo::{Line, Coordinate};
-/// use geo::algorithm::line_intersection::{line_intersection, LineIntersection};
+/// use geo::line_intersection::{line_intersection, LineIntersection};
 ///
 /// let line_1 = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 5.0, y: 5.0 } );
 /// let line_2 = Line::new(coord! {x: 0.0, y: 5.0}, coord! { x: 5.0, y: 0.0 } );

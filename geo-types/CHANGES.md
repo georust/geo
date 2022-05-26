@@ -4,6 +4,8 @@
 
 * Add `split_x` and `split_y` methods on `Rect`
   * <https://github.com/georust/geo/pull/823>
+* Add support for `Polygon` in `RTree`
+  * <https://github.com/georust/geo/pull/351>
 
 ## 0.7.4
 

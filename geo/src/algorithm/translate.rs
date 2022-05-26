@@ -1,4 +1,4 @@
-use crate::algorithm::map_coords::{MapCoords, MapCoordsInPlace};
+use crate::map_coords::{MapCoords, MapCoordsInPlace};
 use crate::CoordNum;
 
 pub trait Translate<T> {
@@ -7,7 +7,7 @@ pub trait Translate<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::translate::Translate;
+    /// use geo::Translate;
     /// use geo::line_string;
     ///
     /// let ls = line_string![

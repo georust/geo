@@ -542,3 +542,25 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Polygon<T> {
         zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(rhs, epsilon))
     }
 }
+
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+macro_rules! impl_rstar_polygon {
+    ($rstar:ident) => {
+        impl<T> $rstar::RTreeObject for Polygon<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            type Envelope = ::$rstar::AABB<Point<T>>;
+
+            fn envelope(&self) -> Self::Envelope {
+                self.exterior.envelope()
+            }
+        }
+    };
+}
+
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_polygon!(rstar_0_8);
+
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_polygon!(rstar_0_9);

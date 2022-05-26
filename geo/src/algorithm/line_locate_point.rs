@@ -1,6 +1,6 @@
 use crate::{
-    algorithm::{euclidean_distance::EuclideanDistance, euclidean_length::EuclideanLength},
     CoordFloat, Line, LineString, Point,
+    {euclidean_distance::EuclideanDistance, euclidean_length::EuclideanLength},
 };
 use std::ops::AddAssign;
 
@@ -17,7 +17,7 @@ use std::ops::AddAssign;
 ///
 /// ```
 /// use geo::{LineString, point};
-/// use geo::algorithm::line_locate_point::LineLocatePoint;
+/// use geo::LineLocatePoint;
 ///
 /// let linestring: LineString<f64> = vec![
 ///     [-1.0, 0.0],

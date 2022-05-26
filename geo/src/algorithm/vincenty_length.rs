@@ -1,6 +1,6 @@
 use num_traits::FromPrimitive;
 
-use crate::algorithm::vincenty_distance::{FailedToConvergeError, VincentyDistance};
+use crate::vincenty_distance::{FailedToConvergeError, VincentyDistance};
 use crate::{CoordFloat, Line, LineString, MultiLineString};
 
 /// Determine the length of a geometry using [Vincenty’s formulae].

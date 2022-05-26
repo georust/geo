@@ -1,4 +1,7 @@
-use crate::{CoordNum, LineString, Polygon, EQUATORIAL_EARTH_RADIUS};
+use crate::{
+    CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    MultiPolygon, Point, Polygon, Rect, Triangle, EQUATORIAL_EARTH_RADIUS,
+};
 use num_traits::Float;
 
 /// Calculate the signed approximate geodesic area of a `Geometry`.
@@ -101,6 +104,86 @@ where
             / T::from(-2).unwrap();
     }
     total
+}
+
+/// Generate a `ChamberlainDuquetteArea` implementation where the result is zero.
+macro_rules! zero_impl {
+    ($type:ident) => {
+        impl<T> ChamberlainDuquetteArea<T> for $type<T>
+        where
+            T: Float + CoordNum,
+        {
+            fn chamberlain_duquette_signed_area(&self) -> T {
+                T::zero()
+            }
+
+            fn chamberlain_duquette_unsigned_area(&self) -> T {
+                T::zero()
+            }
+        }
+    };
+}
+
+/// Generate a `ChamberlainDuquetteArea` implementation which delegates to the `Polygon`
+/// implementation.
+macro_rules! to_polygon_impl {
+    ($type:ident) => {
+        impl<T> ChamberlainDuquetteArea<T> for $type<T>
+        where
+            T: Float + CoordNum,
+        {
+            fn chamberlain_duquette_signed_area(&self) -> T {
+                self.to_polygon().chamberlain_duquette_signed_area()
+            }
+
+            fn chamberlain_duquette_unsigned_area(&self) -> T {
+                self.to_polygon().chamberlain_duquette_unsigned_area()
+            }
+        }
+    };
+}
+
+/// Generate a `ChamberlainDuquetteArea` implementation which calculates the area for each of its
+/// sub-components and sums them up.
+macro_rules! sum_impl {
+    ($type:ident) => {
+        impl<T> ChamberlainDuquetteArea<T> for $type<T>
+        where
+            T: Float + CoordNum,
+        {
+            fn chamberlain_duquette_signed_area(&self) -> T {
+                self.iter().fold(T::zero(), |total, next| {
+                    total + next.chamberlain_duquette_signed_area()
+                })
+            }
+
+            fn chamberlain_duquette_unsigned_area(&self) -> T {
+                self.iter().fold(T::zero(), |total, next| {
+                    total + next.chamberlain_duquette_unsigned_area()
+                })
+            }
+        }
+    };
+}
+
+zero_impl!(Point);
+zero_impl!(Line);
+zero_impl!(LineString);
+zero_impl!(MultiPoint);
+zero_impl!(MultiLineString);
+to_polygon_impl!(Rect);
+to_polygon_impl!(Triangle);
+sum_impl!(GeometryCollection);
+sum_impl!(MultiPolygon);
+
+impl<T> ChamberlainDuquetteArea<T> for Geometry<T>
+where
+    T: Float + CoordNum,
+{
+    crate::geometry_delegate_impl! {
+        fn chamberlain_duquette_signed_area(&self) -> T;
+        fn chamberlain_duquette_unsigned_area(&self) -> T;
+    }
 }
 
 #[cfg(test)]

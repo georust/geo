@@ -15,7 +15,7 @@ pub trait FrechetDistance<T, Rhs = Self> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::frechet_distance::FrechetDistance;
+    /// use geo::FrechetDistance;
     /// use geo::line_string;
     ///
     /// let line_string_a = line_string![
@@ -90,8 +90,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::algorithm::frechet_distance::FrechetDistance;
     use crate::euclidean_distance::EuclideanDistance;
+    use crate::FrechetDistance;
     use crate::LineString;
 
     #[test]

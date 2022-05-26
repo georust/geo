@@ -109,7 +109,7 @@ impl TestRunner {
                     target,
                     expected,
                 } => {
-                    use geo::algorithm::relate::Relate;
+                    use geo::Relate;
                     let relate_actual = subject.relate(target).is_contains();
 
                     // TODO: impl `Contains` for `Geometry` in geo and check that result here too
@@ -383,7 +383,7 @@ impl TestRunner {
                     clip,
                     expected,
                 } => {
-                    use geo::algorithm::relate::Relate;
+                    use geo::Relate;
                     let direct_actual = subject.intersects(clip);
                     let relate_actual = subject.relate(clip).is_intersects();
 
@@ -413,7 +413,7 @@ impl TestRunner {
                     }
                 }
                 Operation::Relate { a, b, expected } => {
-                    use geo::algorithm::relate::Relate;
+                    use geo::Relate;
                     let actual = a.relate(b);
                     if actual == *expected {
                         debug!("Relate success: actual == expected");

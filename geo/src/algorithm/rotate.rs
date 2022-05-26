@@ -1,6 +1,6 @@
-use crate::algorithm::centroid::Centroid;
-use crate::algorithm::map_coords::MapCoords;
-use crate::prelude::BoundingRect;
+use crate::BoundingRect;
+use crate::Centroid;
+use crate::MapCoords;
 use crate::{
     CoordFloat, GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
     Polygon,
@@ -46,7 +46,7 @@ pub trait Rotate<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::rotate::Rotate;
+    /// use geo::Rotate;
     /// use geo::line_string;
     ///
     /// let line_string = line_string![
@@ -104,7 +104,7 @@ pub trait RotatePoint<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::rotate::RotatePoint;
+    /// use geo::RotatePoint;
     /// use geo::{line_string, point};
     ///
     /// let ls = line_string![

@@ -429,7 +429,7 @@ pub trait SimplifyVW<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::simplifyvw::SimplifyVW;
+    /// use geo::SimplifyVW;
     /// use geo::line_string;
     ///
     /// let line_string = line_string![
@@ -469,7 +469,7 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::simplifyvw::SimplifyVwIdx;
+    /// use geo::SimplifyVwIdx;
     /// use geo::line_string;
     ///
     /// let line_string = line_string![
@@ -525,7 +525,7 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     ///
     /// ```
     /// use approx::assert_relative_eq;
-    /// use geo::algorithm::simplifyvw::SimplifyVWPreserve;
+    /// use geo::SimplifyVWPreserve;
     /// use geo::line_string;
     ///
     /// let line_string = line_string![

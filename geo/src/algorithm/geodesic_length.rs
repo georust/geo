@@ -1,4 +1,4 @@
-use crate::algorithm::geodesic_distance::GeodesicDistance;
+use crate::GeodesicDistance;
 use crate::{Line, LineString, MultiLineString};
 
 /// Determine the length of a geometry on an ellipsoidal model of the earth.

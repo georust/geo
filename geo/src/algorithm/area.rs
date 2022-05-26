@@ -33,7 +33,7 @@ where
 
     let mut tmp = T::zero();
     for line in linestring.lines() {
-        use crate::algorithm::map_coords::MapCoords;
+        use crate::MapCoords;
         let line = line.map_coords(|(x, y)| (x - shift.x, y - shift.y));
         tmp = tmp + line.determinant();
     }
@@ -47,7 +47,7 @@ where
 ///
 /// ```
 /// use geo::polygon;
-/// use geo::algorithm::area::Area;
+/// use geo::Area;
 ///
 /// let mut polygon = polygon![
 ///     (x: 0., y: 0.),
@@ -263,7 +263,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::algorithm::area::Area;
+    use crate::Area;
     use crate::{coord, line_string, polygon, Line, MultiPolygon, Polygon, Rect, Triangle};
 
     // Area of the polygon

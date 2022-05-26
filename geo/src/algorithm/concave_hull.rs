@@ -1,12 +1,9 @@
-use crate::algorithm::convex_hull::qhull;
-use crate::algorithm::euclidean_distance::EuclideanDistance;
-use crate::algorithm::euclidean_length::EuclideanLength;
-use crate::prelude::Centroid;
+use crate::convex_hull::qhull;
 use crate::utils::partial_min;
 use crate::{
-    GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    coord, Centroid, CoordNum, Coordinate, EuclideanDistance, EuclideanLength, GeoFloat, Line,
+    LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
-use geo_types::{coord, CoordNum, Coordinate};
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
 
@@ -22,7 +19,7 @@ use std::collections::VecDeque;
 /// # Examples
 /// ```
 /// use geo::{line_string, polygon};
-/// use geo::algorithm::concave_hull::ConcaveHull;
+/// use geo::ConcaveHull;
 ///
 /// // a square shape
 /// let poly = polygon![

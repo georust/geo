@@ -1,7 +1,7 @@
 #![no_main]
 
-use geo::algorithm::euclidean_length::EuclideanLength;
-use geo::algorithm::simplify::Simplify;
+use geo::EuclideanLength;
+use geo::Simplify;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|tuple: (geo_types::Polygon<f32>, f32)| {

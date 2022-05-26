@@ -1,4 +1,4 @@
-use geo::algorithm::relate::IntersectionMatrix;
+use geo::relate::IntersectionMatrix;
 use geo::{Geometry, Point};
 use serde::{Deserialize, Deserializer};
 

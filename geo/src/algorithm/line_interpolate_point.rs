@@ -1,7 +1,7 @@
 use crate::coords_iter::CoordsIter;
 use std::ops::AddAssign;
 
-use crate::{algorithm::euclidean_length::EuclideanLength, CoordFloat, Line, LineString, Point};
+use crate::{CoordFloat, EuclideanLength, Line, LineString, Point};
 
 /// Returns an option of the point that lies a given fraction along the line.
 ///
@@ -17,7 +17,7 @@ use crate::{algorithm::euclidean_length::EuclideanLength, CoordFloat, Line, Line
 ///
 /// ```
 /// use geo::{LineString, point};
-/// use geo::algorithm::line_interpolate_point::LineInterpolatePoint;
+/// use geo::LineInterpolatePoint;
 ///
 /// let linestring: LineString<f64> = vec![
 ///     [-1.0, 0.0],
@@ -110,11 +110,8 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::geo_types::coord;
-    use crate::{
-        algorithm::{closest_point::ClosestPoint, line_locate_point::LineLocatePoint},
-        point,
-    };
+    use crate::{coord, point};
+    use crate::{ClosestPoint, LineLocatePoint};
     use num_traits::Float;
 
     #[test]

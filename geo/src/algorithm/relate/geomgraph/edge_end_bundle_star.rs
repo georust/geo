@@ -2,7 +2,7 @@ use super::{
     Dimensions, Direction, EdgeEnd, EdgeEndBundle, EdgeEndKey, GeometryGraph, IntersectionMatrix,
     LabeledEdgeEndBundle,
 };
-use crate::algorithm::coordinate_position::{CoordPos, CoordinatePosition};
+use crate::coordinate_position::{CoordPos, CoordinatePosition};
 use crate::{Coordinate, GeoFloat, GeometryCow};
 
 /// An ordered list of [`EdgeEndBundle`]s around a [`RelateNodeFactory::Node`].
@@ -68,7 +68,7 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
                             1 => graph_b.geometry(),
                             _ => unreachable!("invalid geom_index"),
                         };
-                        use crate::algorithm::dimensions::HasDimensions;
+                        use crate::HasDimensions;
                         if geometry.dimensions() == Dimensions::TwoDimensional {
                             geometry.coordinate_position(&coord)
                         } else {

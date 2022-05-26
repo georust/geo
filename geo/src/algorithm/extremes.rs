@@ -1,4 +1,4 @@
-use crate::algorithm::coords_iter::CoordsIter;
+use crate::CoordsIter;
 use crate::{CoordNum, Coordinate};
 
 /// Find the extreme coordinates and indices of a geometry.

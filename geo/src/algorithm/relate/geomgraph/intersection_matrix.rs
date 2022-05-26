@@ -1,4 +1,4 @@
-use crate::algorithm::{coordinate_position::CoordPos, dimensions::Dimensions};
+use crate::{coordinate_position::CoordPos, dimensions::Dimensions};
 
 /// Models a *Dimensionally Extended Nine-Intersection Model (DE-9IM)* matrix.
 ///
@@ -224,7 +224,7 @@ impl IntersectionMatrix {
     ///
     /// ```
     /// use geo_types::{LineString, Rect, line_string};
-    /// use geo::algorithm::{coordinate_position::CoordPos, dimensions::Dimensions, relate::Relate};
+    /// use geo::{coordinate_position::CoordPos, dimensions::Dimensions, relate::Relate};
     ///
     /// let line_string: LineString<f64> = line_string![(x: 0.0, y: 0.0), (x: 10.0, y: 0.0), (x: 5.0, y: 5.0)];
     /// let rect = Rect::new((0.0, 0.0), (5.0, 5.0));
