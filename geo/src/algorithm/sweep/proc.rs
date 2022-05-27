@@ -1,4 +1,8 @@
-use std::{collections::{BinaryHeap, BTreeSet}, ops::Deref, borrow::Borrow};
+use std::{
+    borrow::Borrow,
+    collections::{BTreeSet, BinaryHeap},
+    ops::Deref,
+};
 
 use super::*;
 
@@ -73,7 +77,8 @@ impl<C: Cross + Clone> Sweep<C> {
                     {
                         trace!("Found intersection (LL):\n\tsegment1: {:?}\n\tsegment2: {:?}\n\tintersection: {:?}", segment, adj_segment, adj_intersection);
                         // 1. Split adj_segment, and extra splits to storage
-                        let adj_overlap = adj_segment.adjust_one_segment(adj_intersection, |e| self.events.push(e));
+                        let adj_overlap = adj_segment
+                            .adjust_one_segment(adj_intersection, |e| self.events.push(e));
 
                         // A special case is if adj_segment was split, and the
                         // intersection is at the start of this segment. In this
@@ -84,8 +89,7 @@ impl<C: Cross + Clone> Sweep<C> {
                             let int_pt = adj_intersection.left();
                             // Check its not first point of the adjusted, but is
                             // first point of current segment
-                            int_pt != adj_segment.geom().left()
-                                && int_pt == segment.geom().left()
+                            int_pt != adj_segment.geom().left() && int_pt == segment.geom().left()
                         };
                         if handle_end_event {
                             let event = self.events.pop().unwrap();
@@ -170,12 +174,11 @@ impl<C: Cross + Clone> Sweep<C> {
             PointLeft => {
                 for adj_segment in prev.into_iter().chain(next.into_iter()) {
                     let geom = adj_segment.geom();
-                    if let Some(adj_intersection) =
-                        segment.geom().intersect_line_ordered(&geom)
-                    {
+                    if let Some(adj_intersection) = segment.geom().intersect_line_ordered(&geom) {
                         trace!("Found intersection:\n\tsegment1: {:?}\n\tsegment2: {:?}\n\tintersection: {:?}", segment, adj_segment, adj_intersection);
                         // 1. Split adj_segment, and extra splits to storage
-                        let adj_overlap = adj_segment.adjust_one_segment(adj_intersection, |e| self.events.push(e));
+                        let adj_overlap = adj_segment
+                            .adjust_one_segment(adj_intersection, |e| self.events.push(e));
 
                         // Can't have overlap with a point
                         debug_assert!(adj_overlap.is_none());
@@ -197,17 +200,14 @@ impl<C: Cross + Clone> Sweep<C> {
     #[inline]
     pub(super) fn prev_active(&self, c: &Crossing<C>) -> Option<&Segment<C>> {
         debug_assert!(c.at_left);
-        self.active_segments
-            .previous(&c.segment)
-            .map(|aseg| {
-                let im: &IMSegment<_> = aseg.borrow();
-                im.borrow()
-            })
+        self.active_segments.previous(&c.segment).map(|aseg| {
+            let im: &IMSegment<_> = aseg.borrow();
+            im.borrow()
+        })
     }
 
     #[inline]
     pub fn peek_point(&self) -> Option<SweepPoint<C::Scalar>> {
         self.events.peek().map(|e| e.point)
     }
-
 }

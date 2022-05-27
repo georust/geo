@@ -33,6 +33,7 @@ geo-test-fixtures = { path = "../geo-test-fixtures" }
 jts-test-runner = { path = "../jts-test-runner" }
 pretty_env_logger = "0.4"
 rand = "0.8.0"
+rand_distr = "0.4.3"
 
 [[bench]]
 name = "area"
@@ -88,4 +89,8 @@ harness = false
 
 [[bench]]
 name = "frechet_distance"
+harness = false
+
+[[bench]]
+name = "rand_line_crossings"
 harness = false

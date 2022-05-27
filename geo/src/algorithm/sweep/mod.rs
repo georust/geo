@@ -25,4 +25,5 @@ mod proc;
 use proc::Sweep;
 
 mod iter;
+pub use iter::Intersections;
 pub(crate) use iter::*;

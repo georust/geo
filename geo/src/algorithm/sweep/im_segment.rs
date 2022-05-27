@@ -1,4 +1,4 @@
-use std::{cell::UnsafeCell, cmp::Ordering, fmt::Debug, rc::Rc, borrow::Borrow, ops::Deref};
+use std::{borrow::Borrow, cell::UnsafeCell, cmp::Ordering, fmt::Debug, ops::Deref, rc::Rc};
 
 use super::*;
 
@@ -18,7 +18,7 @@ impl<C: Cross> Borrow<Segment<C>> for IMSegment<C> {
 // issue.
 impl<C: Cross> Borrow<Active<Segment<C>>> for Active<IMSegment<C>> {
     fn borrow(&self) -> &Active<Segment<C>> {
-        Active::active_ref( unsafe { self.deref().get() } )
+        Active::active_ref(unsafe { self.deref().get() })
     }
 }
 
@@ -209,7 +209,8 @@ impl<C: Cross + Clone> IMSegment<C> {
             SplitTwice { right } => {
                 cb(self.right_event());
                 Self::create_segment(adj_cross.clone(), Some(right), Some(self), &mut cb);
-                let middle = Self::create_segment(adj_cross, Some(adj_intersection), Some(self), &mut cb);
+                let middle =
+                    Self::create_segment(adj_cross, Some(adj_intersection), Some(self), &mut cb);
                 Some(middle)
             }
         }

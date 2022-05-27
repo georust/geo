@@ -1,7 +1,7 @@
 use std::borrow::Borrow;
 
 use super::*;
-use crate::{Coordinate, LineIntersection, line_intersection::line_intersection};
+use crate::{line_intersection::line_intersection, Coordinate, LineIntersection};
 
 /// A segment of a input [`Crossable`] type.
 ///
@@ -349,7 +349,9 @@ pub(crate) mod tests {
         let mut verify = 0;
         for (i, l1) in input.iter().enumerate() {
             for (j, l2) in input.iter().enumerate() {
-                if j <= i { continue; }
+                if j <= i {
+                    continue;
+                }
                 if line_intersection(*l1, *l2).is_some() {
                     eprintln!("{} intersects {}", pp_line(l1), pp_line(l2));
                     verify += 1;
@@ -363,9 +365,7 @@ pub(crate) mod tests {
             .inspect(|(a, b, int)| {
                 let lp_a = LineOrPoint::from(**a);
                 let lp_b = LineOrPoint::from(**b);
-                eprintln!(
-                    "{lp_a:?} intersects {lp_b:?}",
-                );
+                eprintln!("{lp_a:?} intersects {lp_b:?}",);
             })
             .count();
         assert_eq!(count, 9);
