@@ -20,7 +20,7 @@ use crate::{coordinate_position::CoordPos, dimensions::Dimensions};
 /// - Wikipedia article on [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM)
 ///
 /// This implementation is heavily based on that from the [JTS project](https://github.com/locationtech/jts/blob/master/modules/core/src/main/java/org/locationtech/jts/geom/IntersectionMatrix.java).
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct IntersectionMatrix(LocationArray<LocationArray<Dimensions>>);
 
 /// Helper struct so we can index IntersectionMatrix by CoordPos

@@ -142,7 +142,7 @@ where
             .0
             .iter()
             .map(|p| self.euclidean_distance(p))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+            .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
     }
 }
 
@@ -175,7 +175,7 @@ where
         mls.0
             .iter()
             .map(|ls| self.euclidean_distance(ls))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+            .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
     }
 }
 
@@ -195,7 +195,7 @@ where
             .interiors()
             .iter()
             .map(|ring| self.euclidean_distance(ring))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+            .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
             .min(
                 polygon
                     .exterior()
@@ -205,7 +205,7 @@ where
                             self.0, line.start, line.end,
                         )
                     })
-                    .fold(T::max_value(), |accum, val| accum.min(val)),
+                    .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val)),
             )
     }
 }
@@ -220,7 +220,7 @@ where
             .0
             .iter()
             .map(|p| self.euclidean_distance(p))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+            .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
     }
 }
 
@@ -530,7 +530,7 @@ where
         [(self.0, self.1), (self.1, self.2), (self.2, self.0)]
             .iter()
             .map(|edge| ::geo_types::private_utils::line_segment_distance(point.0, edge.0, edge.1))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+            .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
     }
 }
 

@@ -259,8 +259,9 @@ pub mod prelude {
 ///     })
 /// }
 /// ```
-pub trait GeoFloat: num_traits::Float + GeoNum {}
-impl<T> GeoFloat for T where T: num_traits::Float + GeoNum {}
+pub trait GeoFloat: num_traits::Float + num_traits::Signed + num_traits::Bounded + GeoNum {}
+impl<T> GeoFloat for T where T: num_traits::Float + num_traits::Signed + num_traits::Bounded + GeoNum
+{}
 
 pub trait GeoNum: CoordNum + HasKernel {}
 impl<T> GeoNum for T where T: CoordNum + HasKernel {}

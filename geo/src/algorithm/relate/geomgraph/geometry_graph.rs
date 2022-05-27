@@ -1,5 +1,7 @@
 use super::{
-    index::{EdgeSetIntersector, SegmentIntersector, SimpleEdgeSetIntersector},
+    index::{
+        EdgeSetIntersector, RstarEdgeSetIntersector, SegmentIntersector, SimpleEdgeSetIntersector,
+    },
     CoordNode, CoordPos, Direction, Edge, Label, LineIntersector, PlanarGraph, TopologyPosition,
 };
 
@@ -97,7 +99,12 @@ where
     fn create_edge_set_intersector() -> Box<dyn EdgeSetIntersector<F>> {
         // PERF: faster algorithms exist. This one was chosen for simplicity of implementation and
         //       debugging
-        Box::new(SimpleEdgeSetIntersector::new())
+        // Slow, but simple and good for debugging
+        // Box::new(SimpleEdgeSetIntersector::new())
+
+        // Should be much faster for sparse intersections, while not much slower than
+        // SimpleEdgeSetIntersector in the dense case
+        Box::new(RstarEdgeSetIntersector::new())
     }
 
     fn boundary_nodes(&self) -> impl Iterator<Item = &CoordNode<F>> {
