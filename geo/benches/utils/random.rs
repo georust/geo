@@ -68,8 +68,7 @@ pub fn circular_polygon<R: Rng>(mut rng: R, steps: usize) -> Polygon<f64> {
         angle += ang_step;
     });
 
-    let poly = Polygon::new(LineString(ring), vec![]);
-    poly
+    Polygon::new(LineString(ring), vec![])
 }
 
 pub fn steppy_polygon<R: Rng>(mut rng: R, steps: usize) -> Polygon<f64> {

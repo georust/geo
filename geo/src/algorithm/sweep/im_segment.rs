@@ -49,6 +49,7 @@ impl<C: Cross> IMSegment<C> {
         &*self.inner.get()
     }
 
+    #[allow(clippy::mut_from_ref)]
     unsafe fn get_mut(&self) -> &mut Segment<C> {
         &mut *self.inner.get()
     }
@@ -221,11 +222,7 @@ impl<C: Cross + Clone> IMSegment<C> {
         let segment = unsafe { event.payload.get() };
         if let LineRight = event.ty {
             debug_assert!(segment.geom.is_line());
-            if !segment.is_overlapping && segment.geom.right() == event.point {
-                true
-            } else {
-                false
-            }
+            !segment.is_overlapping && segment.geom.right() == event.point
         } else {
             match event.ty {
                 LineLeft => {

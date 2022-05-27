@@ -59,7 +59,7 @@ impl<C: Cross> Segment<C> {
                 // Otherwise, split it. Mutate `self` to be the
                 // first part, and return the second part.
                 self.geom = (p, r).into();
-                self.first_segment = false;
+                // self.first_segment = false;
                 SplitOnce {
                     overlap: None,
                     right: (r, q).into(),
@@ -77,7 +77,7 @@ impl<C: Cross> Segment<C> {
                     Unchanged { overlap: true }
                 } else {
                     self.geom = (p, r2).into();
-                    self.first_segment = false;
+                    // self.first_segment = false;
                     SplitOnce {
                         overlap: Some(false),
                         right: (r2, q).into(),
@@ -85,14 +85,14 @@ impl<C: Cross> Segment<C> {
                 }
             } else if r2 == q {
                 self.geom = (p, r1).into();
-                self.first_segment = false;
+                // self.first_segment = false;
                 SplitOnce {
                     overlap: Some(true),
                     right: (r1, q).into(),
                 }
             } else {
                 self.geom = (p, r1).into();
-                self.first_segment = false;
+                // self.first_segment = false;
                 SplitTwice {
                     right: (r2, q).into(),
                 }
@@ -207,7 +207,7 @@ mod tests {
         }
 
         impl TestCase {
-            fn assert_equality(&self, lines: &Vec<Segment<LineOrPoint<f64>>>) {
+            fn assert_equality(&self, lines: &[Segment<LineOrPoint<f64>>]) {
                 let isec = lines[self.a]
                     .geom
                     .intersect_line_ordered(&lines[self.b].geom);

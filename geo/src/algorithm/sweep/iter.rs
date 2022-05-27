@@ -11,7 +11,7 @@ use crate::{line_intersection::line_intersection, Coordinate, LineIntersection};
 #[derive(Debug, Clone)]
 pub(crate) struct Crossing<C: Cross> {
     /// The input associated with this segment.
-    pub crossable: C,
+    pub cross: C,
 
     /// The geometry of this segment.
     ///
@@ -47,7 +47,7 @@ impl<C: Cross + Clone> Crossing<C> {
     pub(super) fn from_segment(segment: &IMSegment<C>, event_ty: EventType) -> Crossing<C> {
         let seg: &Segment<_> = segment.borrow();
         Crossing {
-            crossable: seg.cross.clone(),
+            cross: seg.cross.clone(),
             line: seg.geom,
             first_segment: seg.first_segment,
             has_overlap: seg.overlapping.is_some(),
@@ -144,12 +144,12 @@ where
 
         segments.clear();
         let mut last_point = self.sweep.peek_point();
-        trace!("pt: {last_point:?}");
+        debug!("pt: {last_point:?}");
         while last_point == self.sweep.peek_point() && self.sweep.peek_point().is_some() {
             last_point = self.sweep.next_event(|seg, ty| {
                 trace!(
                     "cb: {seg:?} {ty:?} (crossable = {cross:?})",
-                    cross = LineOrPoint::from(seg.cross().line())
+                    cross = seg.cross().line()
                 );
                 segments.push(Crossing::from_segment(seg, ty))
             });
@@ -226,22 +226,35 @@ where
 {
     fn intersection(&mut self) -> Option<(C, C, LineIntersection<C::Scalar>)> {
         let (si, sj) = {
-            let segments = self.inner.intersections_mut();
+            let segments = self.inner.intersections();
             (&segments[self.idx], &segments[self.jdx])
         };
+        debug!(
+            "comparing intersection: [{iso}]",
+            iso = if self.is_overlap { "OVL" } else { "" }
+        );
+        for i in [si, sj] {
+            debug!(
+                "\t{geom:?} ({at_left}) [{ovl}] [{first}]",
+                geom = i.cross.line(),
+                first = if i.first_segment { "FIRST" } else { "" },
+                at_left = if i.at_left { "S" } else { "E" },
+                ovl = if i.has_overlap { "OVL" } else { "" },
+            );
+        }
         // Ignore intersections that have already been processed
         let should_compute = if self.is_overlap {
-            // For overlap, we only return intersection if at least
-            // one segment is the first, and both are at left
+            // For overlap, we only return intersection if both segments are the
+            // first, and both are at left.
             debug_assert_eq!(si.at_left, sj.at_left);
-            si.at_left && (si.first_segment || sj.first_segment)
+            si.at_left && (si.first_segment && sj.first_segment)
         } else {
             (!si.at_left || si.first_segment) && (!sj.at_left || sj.first_segment)
         };
 
         if should_compute {
-            let si = si.crossable.clone();
-            let sj = sj.crossable.clone();
+            let si = si.cross.clone();
+            let sj = sj.cross.clone();
 
             let int = line_intersection(si.line().line(), sj.line().line())
                 .expect("line_intersection returned `None` disagreeing with `CrossingsIter`");
@@ -290,8 +303,9 @@ where
             if !self.step() {
                 return None;
             }
-
-            if let Some(result) = self.intersection() {
+            let it = self.intersection();
+            debug!("\t{it:?}", it = it.is_some());
+            if let Some(result) = it {
                 return Some(result);
             }
         }
@@ -353,12 +367,13 @@ pub(crate) mod tests {
                     continue;
                 }
                 if line_intersection(*l1, *l2).is_some() {
-                    eprintln!("{} intersects {}", pp_line(l1), pp_line(l2));
+                    let lp_a = LineOrPoint::from(*l1);
+                    let lp_b = LineOrPoint::from(*l2);
+                    eprintln!("{lp_a:?} intersects {lp_b:?}",);
                     verify += 1;
                 }
             }
         }
-        eprintln!("{verify}");
 
         let iter: Intersections<_> = input.iter().collect();
         let count = iter
@@ -368,7 +383,7 @@ pub(crate) mod tests {
                 eprintln!("{lp_a:?} intersects {lp_b:?}",);
             })
             .count();
-        assert_eq!(count, 9);
+        assert_eq!(count, verify);
     }
 
     #[test]
@@ -394,10 +409,10 @@ pub(crate) mod tests {
         let mut iter: CrossingsIter<_> = input.into_iter().collect();
         while let Some(pt) = iter.next() {
             info!("pt: {pt:?}");
-            iter.intersections_mut().iter().for_each(|i| {
+            iter.intersections().iter().for_each(|i| {
                 info!(
                     "\t{geom:?} ({at_left}) {ovl}",
-                    geom = LineOrPoint::from(i.line),
+                    geom = i.line,
                     at_left = if i.at_left { "S" } else { "E" },
                     ovl = if i.has_overlap { "[OVL] " } else { "" },
                 );
