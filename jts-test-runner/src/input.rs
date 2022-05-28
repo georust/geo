@@ -119,7 +119,7 @@ pub(crate) enum OperationInput {
     Unsupported,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Operation {
     Centroid {
         subject: Geometry<f64>,

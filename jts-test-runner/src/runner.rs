@@ -9,23 +9,24 @@ use geo::{intersects::Intersects, prelude::Contains, Coordinate, Geometry, LineS
 
 const GENERAL_TEST_XML: Dir = include_dir!("resources/testxml/general");
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct TestRunner {
     filename_filter: Option<String>,
     desc_filter: Option<String>,
+    cases: Option<Vec<TestCase>>,
     failures: Vec<TestFailure>,
     unsupported: Vec<TestCase>,
     successes: Vec<TestCase>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TestCase {
     test_file_name: String,
     description: String,
     operation: Operation,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TestFailure {
     error_description: String,
     test_case: TestCase,
@@ -65,8 +66,18 @@ impl TestRunner {
         self
     }
 
+    pub fn prepare_cases(&mut self) -> Result<()> {
+        self.cases = Some(self.parse_cases()?);
+        Ok(())
+    }
+
     pub fn run(&mut self) -> Result<()> {
-        let cases = self.parse_cases()?;
+        let cases = if let Some(cases) = self.cases.take() {
+            cases
+        } else {
+            self.parse_cases()?
+        };
+
         debug!("cases.len(): {}", cases.len());
 
         for test_case in cases {
