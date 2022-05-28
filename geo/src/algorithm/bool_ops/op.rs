@@ -3,7 +3,7 @@ use std::{cell::Cell, cmp::Ordering, fmt::Debug};
 use super::*;
 use crate::{
     sweep::{Cross, Crossing, CrossingsIter, LineOrPoint},
-    CoordsIter, GeoFloat as Float, Line, LineString, Polygon, WindingOrder,
+    CoordsIter, GeoFloat as Float, LineString, Polygon, WindingOrder,
 };
 
 #[derive(Debug, Clone)]
@@ -65,8 +65,8 @@ impl<T: Float> Op<T> {
             );
             fn compare_crossings<X: Cross>(a: &Crossing<X>, b: &Crossing<X>) -> Ordering {
                 a.at_left.cmp(&b.at_left).then_with(|| {
-                    let ord = LineOrPoint::from(a.line)
-                        .partial_cmp(&b.line.into())
+                    let ord = a.line
+                        .partial_cmp(&b.line)
                         .unwrap();
                     if a.at_left {
                         ord
@@ -92,7 +92,7 @@ impl<T: Float> Op<T> {
                     trace!(
                         "get_region: {geom:?}: {next_region:?}",
                         next_region = next_region.unwrap(),
-                        geom = LineOrPoint::from(c.line),
+                        geom = c.line,
                     );
                 }
                 next_region.as_mut().unwrap().cross(cross.is_first);
@@ -102,7 +102,7 @@ impl<T: Float> Op<T> {
                     let prev_region = cross.get_region(c.line);
                     trace!(
                         "check_add: {geom:?}: {prev_region:?} -> {next_region:?}",
-                        geom = LineOrPoint::from(c.line),
+                        geom = c.line,
                         next_region = next_region.unwrap()
                     );
                     let next_is_ty = next_region.unwrap().is_ty(self.ty);
@@ -130,7 +130,7 @@ impl<T: Float> Op<T> {
 
             trace!(
                 "Bottom most start-edge: {botmost:?}",
-                botmost = LineOrPoint::from(botmost_start_segment.line),
+                botmost = botmost_start_segment.line,
             );
 
             let prev = iter.prev_active(&botmost_start_segment);
@@ -161,7 +161,7 @@ impl<T: Float> Op<T> {
                 trace!(
                     "set_region: {geom:?} / {geom2:?} => {region:?} ({c} counts)",
                     geom2 = c.cross.geom,
-                    geom = LineOrPoint::from(iter.intersections_mut()[jdx].line),
+                    geom = iter.intersections_mut()[jdx].line,
                     c = idx - jdx + 1,
                 );
                 while jdx <= idx {

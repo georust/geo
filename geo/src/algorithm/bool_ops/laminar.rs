@@ -1,7 +1,7 @@
 use std::{cell::Cell, cmp::Ordering, iter::FromIterator};
 
 use crate::GeoFloat as Float;
-use crate::{GeoFloat, Line, Polygon};
+use crate::{GeoFloat, Polygon};
 use log::trace;
 
 use crate::sweep::{Cross, Crossing, CrossingsIter, LineOrPoint};
@@ -31,8 +31,8 @@ pub fn assemble<T: Float>(rings: Vec<Ring<T>>) -> Vec<Polygon<T>> {
                 if !a.at_left {
                     Ordering::Equal
                 } else {
-                    LineOrPoint::from(a.line)
-                        .partial_cmp(&b.line.into())
+                    a.line
+                        .partial_cmp(&b.line)
                         .unwrap()
                 }
             })
@@ -95,14 +95,12 @@ pub fn assemble<T: Float>(rings: Vec<Ring<T>>) -> Vec<Polygon<T>> {
                 .as_mut()
                 .unwrap()
                 .interiors_push(r.coords().clone());
-        } else {
-            if polygons[idx].is_none() {
-                polygons[idx] = Some(Polygon::new(rings[idx].coords().clone(), vec![]));
-            }
+        } else if polygons[idx].is_none() {
+            polygons[idx] = Some(Polygon::new(rings[idx].coords().clone(), vec![]));
         }
     });
 
-    polygons.into_iter().filter_map(|p| p).collect()
+    polygons.into_iter().flatten().collect()
 }
 
 #[derive(Debug, Clone)]

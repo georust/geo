@@ -1,18 +1,18 @@
-use crate::{dimensions::HasDimensions, prelude::Area, Geometry, MultiPolygon, Polygon, Rect};
+use crate::{dimensions::HasDimensions, prelude::Area, Geometry, MultiPolygon, Polygon};
 use anyhow::{bail, Context, Result};
 use geo_booleanop::boolean::BooleanOp as OtherBOp;
 use geojson::{Feature, GeoJson};
 use glob::glob;
 use log::{error, info};
-use rand::thread_rng;
+
 use serde_derive::Serialize;
 use std::{
-    convert::{TryFrom, TryInto},
+    convert::TryInto,
     error::Error,
     fs::{read_to_string, File},
-    io::{stdout, BufWriter},
+    io::BufWriter,
     panic::{catch_unwind, resume_unwind},
-    path::{Path, PathBuf},
+    path::Path,
 };
 use wkt::{ToWkt, TryFromWkt};
 
@@ -73,10 +73,10 @@ fn test_invalid_loops() -> Result<(), Box<dyn Error>> {
 fn check_sweep(wkt1: &str, wkt2: &str, ty: OpType) -> Result<MultiPolygon<f64>> {
     init_log();
     let poly1 = MultiPolygon::<f64>::try_from_wkt_str(wkt1)
-        .or_else(|_| Polygon::<f64>::try_from_wkt_str(wkt1).map(|p| MultiPolygon::from(p)))
+        .or_else(|_| Polygon::<f64>::try_from_wkt_str(wkt1).map(MultiPolygon::from))
         .unwrap();
     let poly2 = MultiPolygon::try_from_wkt_str(wkt2)
-        .or_else(|_| Polygon::<f64>::try_from_wkt_str(wkt2).map(|p| MultiPolygon::from(p)))
+        .or_else(|_| Polygon::<f64>::try_from_wkt_str(wkt2).map(MultiPolygon::from))
         .unwrap();
     let mut bop = Op::new(ty, 0);
     bop.add_multi_polygon(&poly1, true);
@@ -105,8 +105,8 @@ fn test_complex_rects() -> Result<(), Box<dyn Error>> {
     let wkt1 = "MULTIPOLYGON(((-1 -2,-1.0000000000000002 2,-0.8823529411764707 2,-0.8823529411764706 -2,-1 -2)),((-0.7647058823529411 -2,-0.7647058823529412 2,-0.6470588235294118 2,-0.6470588235294118 -2,-0.7647058823529411 -2)),((-0.5294117647058824 -2,-0.5294117647058825 2,-0.41176470588235287 2,-0.4117647058823529 -2,-0.5294117647058824 -2)),((-0.2941176470588236 -2,-0.2941176470588236 2,-0.17647058823529418 2,-0.17647058823529416 -2,-0.2941176470588236 -2)),((-0.05882352941176472 -2,-0.05882352941176472 2,0.05882352941176472 2,0.05882352941176472 -2,-0.05882352941176472 -2)),((0.17647058823529416 -2,0.17647058823529416 2,0.29411764705882365 2,0.2941176470588236 -2,0.17647058823529416 -2)),((0.4117647058823528 -2,0.41176470588235287 2,0.5294117647058821 2,0.5294117647058822 -2,0.4117647058823528 -2)),((0.6470588235294117 -2,0.6470588235294118 2,0.7647058823529411 2,0.7647058823529411 -2,0.6470588235294117 -2)),((0.8823529411764706 -2,0.8823529411764707 2,1.0000000000000002 2,1 -2,0.8823529411764706 -2)))";
     let wkt2 = "MULTIPOLYGON(((-2 -1,2 -1.0000000000000002,2 -0.8823529411764707,-2 -0.8823529411764706,-2 -1)),((-2 -0.7647058823529411,2 -0.7647058823529412,2 -0.6470588235294118,-2 -0.6470588235294118,-2 -0.7647058823529411)),((-2 -0.5294117647058824,2 -0.5294117647058825,2 -0.41176470588235287,-2 -0.4117647058823529,-2 -0.5294117647058824)),((-2 -0.2941176470588236,2 -0.2941176470588236,2 -0.17647058823529418,-2 -0.17647058823529416,-2 -0.2941176470588236)),((-2 -0.05882352941176472,2 -0.05882352941176472,2 0.05882352941176472,-2 0.05882352941176472,-2 -0.05882352941176472)),((-2 0.17647058823529416,2 0.17647058823529416,2 0.29411764705882365,-2 0.2941176470588236,-2 0.17647058823529416)),((-2 0.4117647058823528,2 0.41176470588235287,2 0.5294117647058821,-2 0.5294117647058822,-2 0.4117647058823528)),((-2 0.6470588235294117,2 0.6470588235294118,2 0.7647058823529411,-2 0.7647058823529411,-2 0.6470588235294117)),((-2 0.8823529411764706,2 0.8823529411764707,2 1.0000000000000002,-2 1,-2 0.8823529411764706)))";
 
-    let mp1 = MultiPolygon::<f64>::try_from_wkt_str(&wkt1)?;
-    let mp2 = MultiPolygon::<f64>::try_from_wkt_str(&wkt2)?;
+    let mp1 = MultiPolygon::<f64>::try_from_wkt_str(wkt1)?;
+    let mp2 = MultiPolygon::<f64>::try_from_wkt_str(wkt2)?;
 
     for p1 in mp1.0.iter() {
         let p1 = MultiPolygon::from(p1.clone());
@@ -116,10 +116,10 @@ fn test_complex_rects() -> Result<(), Box<dyn Error>> {
                 check_sweep(&p1.wkt_string(), &p2.wkt_string(), OpType::Union)?;
                 Ok(())
             });
-            if result.is_err() {
+            if let Err(ee) = result {
                 error!("p1: {wkt}", wkt = p1.wkt_string());
                 error!("p2: {wkt}", wkt = p2.wkt_string());
-                resume_unwind(result.unwrap_err());
+                resume_unwind(ee);
             }
         }
     }
@@ -239,7 +239,7 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
                         info!("theirs: {wkt}");
                         wkt
                     });
-                    let theirs = their_result.unwrap_or_else(|e| {
+                    let theirs = their_result.unwrap_or_else(|_e| {
                         error!("theirs panicked");
                         "pannik".to_string()
                     });

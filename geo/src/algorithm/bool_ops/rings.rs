@@ -34,7 +34,7 @@ impl<T: GeoFloat> Rings<T> {
         let mut history = BTreeMap::new();
         while curr_chain_idx > 0 {
             curr_chain_idx -= 1;
-            if self.chains[curr_chain_idx].items.len() == 0 {
+            if self.chains[curr_chain_idx].items.is_empty() {
                 continue;
             }
 
@@ -46,7 +46,7 @@ impl<T: GeoFloat> Rings<T> {
 
             // re-use btree-map
             history.clear();
-            let winding = self.chains[curr_chain_idx].winding.clone();
+            let winding = self.chains[curr_chain_idx].winding;
 
             loop {
                 trace!("traversing chain: {loop_link:?}");
