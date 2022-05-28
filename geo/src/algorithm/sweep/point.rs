@@ -17,7 +17,7 @@ use crate::GeoNum;
 /// Thus, it is a logical error to construct this struct unless the coords are
 /// guaranteed to be orderable.
 #[derive(PartialEq, Clone, Copy)]
-pub struct SweepPoint<T: GeoNum>(pub(super) Coordinate<T>);
+pub struct SweepPoint<T: GeoNum>(Coordinate<T>);
 
 impl<T: GeoNum> std::fmt::Debug for SweepPoint<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

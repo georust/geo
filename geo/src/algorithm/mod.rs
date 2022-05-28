@@ -183,3 +183,6 @@ pub use winding_order::WindingOrder;
 
 /// Planar sweep algorithm and related utils
 pub mod sweep;
+
+/// Boolean Ops;
+pub mod bool_ops;

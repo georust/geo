@@ -74,9 +74,9 @@ impl<C: Cross + Clone> Crossing<C> {
 /// method to access all segments that start or end at the last
 /// yielded point.
 ///
-/// ```rust
+/// ```rust,ignore
 /// use geo::Line;
-/// use geo_crossings::CrossingsIter;
+/// use geo::sweep::CrossingsIter;
 /// use std::iter::FromIterator;
 /// let input = vec![
 ///     Line::from([(1., 0.), (0., 1.)]),
@@ -158,7 +158,7 @@ where
         if segments.is_empty() {
             None
         } else {
-            last_point.map(|p| p.0)
+            last_point.map(|p| *p)
         }
     }
 }
@@ -183,7 +183,7 @@ where
 ///
 /// ```rust
 /// use geo::Line;
-/// use geo_crossings::Intersections;
+/// use geo::sweep::Intersections;
 /// use std::iter::FromIterator;
 /// let input = vec![
 ///     Line::from([(1., 0.), (0., 1.)]),
@@ -313,7 +313,7 @@ where
 }
 
 #[cfg(test)]
-pub(crate) mod tests {
+pub(super) mod tests {
     use crate::{Line, Polygon, Rect};
     use log::info;
     use pretty_env_logger::env_logger;
@@ -321,7 +321,7 @@ pub(crate) mod tests {
 
     use super::*;
 
-    pub(crate) fn init_log() {
+    pub(super) fn init_log() {
         let _ = env_logger::builder()
             .format(|buf, record| writeln!(buf, "{} - {}", record.level(), record.args()))
             .try_init();
@@ -390,12 +390,6 @@ pub(crate) mod tests {
     #[ignore]
     fn check_adhoc_crossings() {
         init_log();
-
-        // let mut input = vec![];
-        // let poly1: Polygon<_> = Rect::new((0., 0.), (1., 1.)).into();
-        // let poly2: Polygon<_> = Rect::new((0.5, 1.), (2., 2.)).into();
-        // input.extend(poly1.exterior().lines());
-        // input.extend(poly2.exterior().lines());
 
         let input = vec![
             Line::from([(0., 0.), (1., 1.)]),

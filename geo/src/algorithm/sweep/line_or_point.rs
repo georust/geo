@@ -20,8 +20,8 @@ pub struct LineOrPoint<T: GeoNum> {
 impl<T: GeoNum> std::fmt::Debug for LineOrPoint<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple(if self.is_line() { "LPt" } else { "Pt" })
-            .field(&self.left.0.x_y())
-            .field(&self.right.0.x_y())
+            .field(&self.left.x_y())
+            .field(&self.right.x_y())
             .finish()
     }
 }

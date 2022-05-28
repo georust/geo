@@ -1,16 +1,16 @@
 #![allow(unused)]
 
 mod point;
-use point::SweepPoint;
+pub use point::SweepPoint;
 
 mod events;
-use events::{Event, EventType};
+pub(crate) use events::{Event, EventType};
 
 mod line_or_point;
-use line_or_point::LineOrPoint;
+pub use line_or_point::LineOrPoint;
 
 mod cross;
-use cross::Cross;
+pub use cross::Cross;
 
 mod segment;
 use segment::{Segment, SplitSegments};
@@ -26,4 +26,4 @@ use proc::Sweep;
 
 mod iter;
 pub use iter::Intersections;
-pub(crate) use iter::*;
+pub(crate) use iter::{Crossing, CrossingsIter};
