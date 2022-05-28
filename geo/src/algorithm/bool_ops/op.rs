@@ -65,9 +65,7 @@ impl<T: Float> Op<T> {
             );
             fn compare_crossings<X: Cross>(a: &Crossing<X>, b: &Crossing<X>) -> Ordering {
                 a.at_left.cmp(&b.at_left).then_with(|| {
-                    let ord = a.line
-                        .partial_cmp(&b.line)
-                        .unwrap();
+                    let ord = a.line.partial_cmp(&b.line).unwrap();
                     if a.at_left {
                         ord
                     } else {

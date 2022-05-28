@@ -31,9 +31,7 @@ pub fn assemble<T: Float>(rings: Vec<Ring<T>>) -> Vec<Polygon<T>> {
                 if !a.at_left {
                     Ordering::Equal
                 } else {
-                    a.line
-                        .partial_cmp(&b.line)
-                        .unwrap()
+                    a.line.partial_cmp(&b.line).unwrap()
                 }
             })
         }

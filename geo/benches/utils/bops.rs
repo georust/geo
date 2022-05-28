@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use geo_types::{Coordinate, LineString, MultiPolygon, Polygon};
 
 pub fn convert_poly(poly: &Polygon<f64>) -> gt_prev::Polygon<f64> {
