@@ -1,7 +1,10 @@
-use std::{fmt::Debug, cell::Cell, cmp::Ordering};
+use std::{cell::Cell, cmp::Ordering, fmt::Debug};
 
-use crate::{GeoFloat as Float, sweep::{LineOrPoint, Cross, Crossing, CrossingsIter}, Line, Polygon, LineString, CoordsIter, WindingOrder};
 use super::*;
+use crate::{
+    sweep::{Cross, Crossing, CrossingsIter, LineOrPoint},
+    CoordsIter, GeoFloat as Float, Line, LineString, Polygon, WindingOrder,
+};
 
 #[derive(Debug, Clone)]
 pub struct Op<T: Float> {
@@ -173,7 +176,6 @@ impl<T: Float> Op<T> {
         rings.finish()
     }
 }
-
 
 #[derive(Clone, Copy)]
 struct Region {

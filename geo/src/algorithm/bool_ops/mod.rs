@@ -1,6 +1,6 @@
 use geo_types::MultiPolygon;
 
-use crate::{GeoNum, GeoFloat, CoordsIter, Polygon};
+use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
 
 pub trait BooleanOps: Sized {
     type Scalar: GeoNum;
@@ -50,7 +50,6 @@ impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
         assemble(rings).into()
     }
 }
-
 
 mod op;
 use op::*;

@@ -1,4 +1,4 @@
-use geo_types::{MultiPolygon, Polygon, Coordinate, LineString};
+use geo_types::{Coordinate, LineString, MultiPolygon, Polygon};
 
 pub fn convert_poly(poly: &Polygon<f64>) -> gt_prev::Polygon<f64> {
     let ext: Vec<_> = poly

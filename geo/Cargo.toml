@@ -105,3 +105,7 @@ harness = false
 [[bench]]
 name = "rand_line_crossings"
 harness = false
+
+[[bench]]
+name = "boolean_ops"
+harness = false

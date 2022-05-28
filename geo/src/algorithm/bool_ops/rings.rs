@@ -1,7 +1,13 @@
-use crate::{Coordinate, GeoFloat, GeoNum, LineString, winding_order::{WindingOrder, Winding}};
 use crate::utils::EitherIter as Either;
-use log::{trace, debug};
-use std::{collections::{BTreeMap, VecDeque}, ops::Deref};
+use crate::{
+    winding_order::{Winding, WindingOrder},
+    Coordinate, GeoFloat, GeoNum, LineString,
+};
+use log::{debug, trace};
+use std::{
+    collections::{BTreeMap, VecDeque},
+    ops::Deref,
+};
 
 use crate::sweep::{LineOrPoint, SweepPoint};
 
@@ -134,7 +140,6 @@ impl<T: GeoFloat> Rings<T> {
                 self.end_points.remove(&left).unwrap();
                 self.end_points.insert(right, i);
                 trace!("\tadded to {i:?}: {right:?}");
-
             }
             (Some(i), Some(j)) => {
                 // Since both end points matched, we don't
@@ -183,7 +188,6 @@ pub struct Ring<T: GeoNum> {
 }
 
 impl<T: GeoNum> Ring<T> {
-
     fn from_coords(coords: Vec<Coordinate<T>>, region_winding: &WindingOrder) -> Self {
         debug!("new ring:");
         debug!("\tregion_winding: {region_winding:?}");
@@ -197,7 +201,6 @@ impl<T: GeoNum> Ring<T> {
         }
     }
 
-
     /// Get the ring's is hole.
     #[must_use]
     pub fn is_hole(&self) -> bool {
@@ -210,8 +213,6 @@ impl<T: GeoNum> Ring<T> {
         &self.coords
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 struct Chain<T: GeoNum> {

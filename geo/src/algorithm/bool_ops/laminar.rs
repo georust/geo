@@ -1,7 +1,7 @@
 use std::{cell::Cell, cmp::Ordering, iter::FromIterator};
 
-use crate::{GeoFloat, Polygon, Line};
 use crate::GeoFloat as Float;
+use crate::{GeoFloat, Line, Polygon};
 use log::trace;
 
 use crate::sweep::{Cross, Crossing, CrossingsIter, LineOrPoint};
@@ -45,10 +45,11 @@ pub fn assemble<T: Float>(rings: Vec<Ring<T>>) -> Vec<Polygon<T>> {
                 continue;
             }
             let active = sweep.prev_active(first);
-            trace!("active of {first_geom:?}: {active:?}", first_geom = first.cross.geom);
-            active.map(|(_, b)| {
-                b.region.get()
-            }).unwrap_or(None)
+            trace!(
+                "active of {first_geom:?}: {active:?}",
+                first_geom = first.cross.geom
+            );
+            active.map(|(_, b)| b.region.get()).unwrap_or(None)
         };
         trace!("pt: {pt:?}\n\tbelow: {below:?}");
 
@@ -74,7 +75,7 @@ pub fn assemble<T: Float>(rings: Vec<Ring<T>>) -> Vec<Polygon<T>> {
                     } else {
                         Some(ring_idx)
                     }
-                },
+                }
             };
             trace!("setting: {geom:?} -> {below:?}", geom = edge.cross.geom);
             edge.cross.region.set(below);
@@ -90,7 +91,10 @@ pub fn assemble<T: Float>(rings: Vec<Ring<T>>) -> Vec<Polygon<T>> {
             if polygons[p_idx].is_none() {
                 polygons[p_idx] = Some(Polygon::new(rings[p_idx].coords().clone(), vec![]));
             }
-            polygons[p_idx].as_mut().unwrap().interiors_push(r.coords().clone());
+            polygons[p_idx]
+                .as_mut()
+                .unwrap()
+                .interiors_push(r.coords().clone());
         } else {
             if polygons[idx].is_none() {
                 polygons[idx] = Some(Polygon::new(rings[idx].coords().clone(), vec![]));
