@@ -23,8 +23,9 @@ pub trait Convert<T, U> {
     fn convert(&self) -> Self::Output;
 }
 impl<G, T: CoordNum, U: CoordNum> Convert<T, U> for G
-where G: MapCoords<T, U>,
-    U: From<T>
+where
+    G: MapCoords<T, U>,
+    U: From<T>,
 {
     type Output = <Self as crate::algorithm::MapCoords<T, U>>::Output;
 
@@ -56,13 +57,12 @@ pub trait TryConvert<T, U> {
     fn try_convert(&self) -> Self::Output;
 }
 impl<G, T: CoordNum, U: CoordNum> TryConvert<T, U> for G
-where G: MapCoords<T, U>,
-    U: TryFrom<T>
+where
+    G: MapCoords<T, U>,
+    U: TryFrom<T>,
 {
-    type Output = Result<
-        <Self as crate::algorithm::MapCoords<T, U>>::Output,
-        <U as TryFrom<T>>::Error
-    >;
+    type Output =
+        Result<<Self as crate::algorithm::MapCoords<T, U>>::Output, <U as TryFrom<T>>::Error>;
 
     fn try_convert(&self) -> Self::Output {
         self.try_map_coords(|(n1, n2)| Ok((n1.try_into()?, n2.try_into()?)))
