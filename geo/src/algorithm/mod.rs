@@ -38,6 +38,9 @@ pub use concave_hull::ConcaveHull;
 pub mod contains;
 pub use contains::Contains;
 
+pub mod convert;
+pub use convert::{Convert, TryConvert};
+
 /// Calculate the convex hull of a `Geometry`.
 pub mod convex_hull;
 pub use convex_hull::ConvexHull;
