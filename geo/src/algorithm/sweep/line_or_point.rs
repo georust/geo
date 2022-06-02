@@ -152,7 +152,7 @@ impl<T: GeoNum> PartialOrd for LineOrPoint<T> {
                 if p1 > p2 {
                     return other.partial_cmp(self).map(Ordering::reverse);
                 }
-                if p1 >= q2 || p2 >= q2 {
+                if p1 >= q2 || p2 >= q1 {
                     return None;
                 }
 
@@ -171,22 +171,17 @@ impl<T: GeoNum> PartialOrd for LineOrPoint<T> {
 impl<T: GeoFloat> LineOrPoint<T> {
     /// Intersect a line with self and return a point, a overlapping segment or `None`.
     ///
-    /// The `other` argument must be a line variant (panics otherwise).
+    /// The `other` argument must be a line variant (debug builds will panic otherwise).
     pub fn intersect_line(&self, other: &Self) -> Option<Self> {
         debug_assert!(other.is_line(), "tried to intersect with a point variant!");
 
         let line = other.line();
         if !self.is_line() {
             let p = self.left;
-            if <T as HasKernel>::Ker::orient2d(line.start, *p, line.end) == Orientation::Collinear {
-                let ls = line.start.into();
-                let le = line.end.into();
-                if p >= ls && p <= le {
-                    Some(*self)
-                } else {
-                    None
-                }
-            } else {
+            use crate::Intersects;
+            if line.intersects(&*p) {
+                Some(*self)
+            }  else {
                 None
             }
         } else {

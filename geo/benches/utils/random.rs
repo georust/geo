@@ -52,14 +52,14 @@ pub fn scaled_generator(dims: Coordinate<f64>, scale: usize) -> impl Fn() -> Lin
 pub fn circular_polygon<R: Rng>(mut rng: R, steps: usize) -> Polygon<f64> {
     let mut ring = Vec::with_capacity(steps);
     let ang_step = 2. * PI / steps as f64;
-    let ang_nudge = ang_step / 100.;
+    // let ang_nudge = ang_step / 100.;
 
     let sn = Normal::<f64>::new(0.0, 1.0).unwrap();
     let mut angle: f64 = 0.0;
     (0..steps).for_each(|_| {
         let r: f64 = sn.sample(&mut rng).abs() + 0.1;
 
-        let ang_nudge = sn.sample(&mut rng) * ang_nudge;
+        // let ang_nudge = sn.sample(&mut rng) * ang_nudge;
         // angle += ang_nudge;
 
         let (sin, cos) = angle.sin_cos();

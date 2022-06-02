@@ -48,7 +48,6 @@ impl<T: PartialEq> Eq for Active<T> {}
 impl<T: PartialOrd> Ord for Active<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         T::partial_cmp(self, other).unwrap()
-        // self.partial_cmp(other).unwrap()
     }
 }
 
