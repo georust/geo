@@ -2,6 +2,25 @@ use geo_types::MultiPolygon;
 
 use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
 
+/// Boolean Operations on geometry.
+///
+/// Boolean operations are set operations on geometries considered as a subset
+/// of the 2-D plane. The operations supported are: intersection, union, xor or
+/// symmetric difference, and set-difference.
+///
+/// These operations are implemented on [`Polygon`] and the [`MultiPolygon`]
+/// geometries.
+///
+/// # Validity
+///
+/// Note that the operations are strictly well-defined only on *valid*
+/// geometries. However, the implementation generally works well as long as the
+/// interiors of polygons are contained within their corresponding exteriors.
+///
+/// Degenerate 2-d geoms with 0 area are handled, and ignored by the algorithm.
+/// In particular, taking `union` with an empty geom should remove degeneracies
+/// are fix invalid polygons as long the interior-exterior requirement above is
+/// satisfied.
 pub trait BooleanOps: Sized {
     type Scalar: GeoNum;
 
