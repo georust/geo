@@ -3,9 +3,10 @@
 
 ## Unreleased
 
-* POSSIBLY BREAKING: MSRV is now 1.58
 * Geo Boolean Ops for polygons and multipolygons: intersect, union, xor,
   and difference. Refer trait `bool_ops::BooleanOps` for more info.
+* POSSIBLY BREAKING: MSRV is now 1.58
+* BREAKING: rstar version upgraded to 0.9.x
   * <https://github.com/georust/geo/pull/835>
 
 * POSSIBLY BREAKING: `GeoFloat` types must now implement `num_traits::Signed` and `num_traits::Bounded`. This shouldn't

@@ -129,7 +129,7 @@ mod macros;
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
 
-#[cfg(feature = "rstar_0_8")]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
 #[doc(hidden)]
 pub mod private_utils;
 
