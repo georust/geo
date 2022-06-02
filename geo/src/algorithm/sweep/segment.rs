@@ -1,6 +1,6 @@
 use super::*;
 use crate::GeoFloat;
-use std::{cell::UnsafeCell, cmp::Ordering, fmt::Debug, rc::Rc};
+use std::{cmp::Ordering, fmt::Debug};
 
 /// A segment of input [`LineOrPoint`] generated during the sweep.
 #[derive(Clone)]
@@ -157,7 +157,6 @@ pub(super) enum SplitSegments<T: GeoFloat> {
 
 #[cfg(test)]
 mod tests {
-    use crate::Line;
 
     use super::*;
 

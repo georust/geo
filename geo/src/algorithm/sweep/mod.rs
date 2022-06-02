@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 mod point;
 pub use point::SweepPoint;
 

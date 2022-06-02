@@ -7,7 +7,7 @@ use geo_booleanop::boolean::BooleanOp as OtherBooleanOp;
 use rand::{thread_rng, Rng};
 use rand_distr::Standard;
 
-#[path = "utils/random.rs"]
+#[path = "../../geo/benches/utils/random.rs"]
 mod random;
 use random::Samples;
 

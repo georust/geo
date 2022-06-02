@@ -2,8 +2,8 @@ use std::cmp::Ordering;
 
 use super::SweepPoint;
 use crate::{
-    line_intersection::line_intersection, Coordinate, GeoFloat, GeoNum, HasKernel, Kernel, Line,
-    LineIntersection, Orientation,
+    line_intersection::line_intersection, Coordinate, GeoFloat, GeoNum, Kernel, Line,
+    LineIntersection,
 };
 
 /// Either a line segment or a point.
@@ -77,7 +77,7 @@ impl<T: GeoNum> LineOrPoint<T> {
         self.left != self.right
     }
 
-    /// Return a [`Line`] if it is one, otherwise `None`.
+    /// Return a [`Line`] representation of self.
     #[inline]
     pub fn line(&self) -> Line<T> {
         Line::new(*self.left, *self.right)
@@ -116,7 +116,7 @@ impl<T: GeoNum> PartialEq for LineOrPoint<T> {
 ///
 /// Requires the following conditions:
 ///
-/// 1. If comparing two lines, the both left ends must be strictly
+/// 1. If comparing two lines, both the left ends must be strictly
 /// smaller than both right ends.
 ///
 /// 2. A point is treated as a infinitesimal small vertical segment
@@ -181,7 +181,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
             use crate::Intersects;
             if line.intersects(&*p) {
                 Some(*self)
-            }  else {
+            } else {
                 None
             }
         } else {

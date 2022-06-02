@@ -1,7 +1,6 @@
 use std::{
     borrow::Borrow,
     collections::{BTreeSet, BinaryHeap},
-    ops::Deref,
 };
 
 use super::*;
@@ -54,7 +53,7 @@ impl<C: Cross + Clone> Sweep<C> {
         F: for<'a> FnMut(&'a IMSegment<C>, EventType),
     {
         use EventType::*;
-        let mut segment = match IMSegment::is_correct(&event) {
+        let segment = match IMSegment::is_correct(&event) {
             false => return false,
             _ => event.payload,
         };

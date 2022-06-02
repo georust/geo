@@ -186,3 +186,4 @@ pub mod sweep;
 
 /// Boolean Ops;
 pub mod bool_ops;
+pub use bool_ops::{BooleanOps, OpType};

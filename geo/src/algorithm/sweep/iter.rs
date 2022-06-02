@@ -314,7 +314,7 @@ where
 
 #[cfg(test)]
 pub(super) mod tests {
-    use crate::{Line, Polygon, Rect};
+    use crate::Line;
     use log::info;
     use pretty_env_logger::env_logger;
     use std::{io::Write, rc::Rc};
@@ -340,13 +340,6 @@ pub(super) mod tests {
     #[test]
     fn overlap_intersect() {
         init_log();
-
-        fn pp_line(line: &Line<f64>) -> String {
-            format!(
-                "Line {{({}, {}) - ({}, {})}}",
-                line.start.x, line.start.y, line.end.x, line.end.y
-            )
-        }
 
         let input = vec![
             Line::from([(0., 0.), (1., 1.)]),
@@ -377,7 +370,7 @@ pub(super) mod tests {
 
         let iter: Intersections<_> = input.iter().collect();
         let count = iter
-            .inspect(|(a, b, int)| {
+            .inspect(|(a, b, _int)| {
                 let lp_a = LineOrPoint::from(**a);
                 let lp_b = LineOrPoint::from(**b);
                 eprintln!("{lp_a:?} intersects {lp_b:?}",);

@@ -1,7 +1,4 @@
-use std::{
-    cmp::Ordering,
-    ops::{Deref, DerefMut},
-};
+use std::{cmp::Ordering, ops::Deref};
 
 use geo_types::Coordinate;
 
@@ -28,7 +25,7 @@ impl<T: GeoNum> std::fmt::Debug for SweepPoint<T> {
     }
 }
 
-/// Implememnt lexicographic ordering by `x` and then by `y`
+/// Implement lexicographic ordering by `x` and then by `y`
 /// coordinate.
 impl<T: GeoNum> PartialOrd for SweepPoint<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
