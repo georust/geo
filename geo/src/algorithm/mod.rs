@@ -38,6 +38,7 @@ pub use concave_hull::ConcaveHull;
 pub mod contains;
 pub use contains::Contains;
 
+/// Convert the type of a geometry’s coordinate value.
 pub mod convert;
 pub use convert::{Convert, TryConvert};
 
