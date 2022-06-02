@@ -8,7 +8,7 @@ use crate::{CoordNum, MapCoords};
  * ```rust
  * use geo::{Convert, LineString, line_string};
  *
- * let line_string_64: LineString<f32> = line_string![
+ * let line_string_64: LineString<f64> = line_string![
  *     (x: 5., y: 10.),
  *     (x: 3., y: 1.),
  *     (x: 8., y: 9.),
