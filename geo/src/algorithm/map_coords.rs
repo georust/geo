@@ -50,18 +50,29 @@ mod modern {
         /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon = 1e-6);
         /// ```
         ///
-        /// You can convert the coordinate type this way as well
+        /// Note that the input and output numeric types need not match.
+        ///
+        /// For example, consider OpenStreetMap's coordinate encoding scheme, which, to save space,
+        /// encodes latitude/longitude as 32bit signed integers from the floating point values
+        /// to six decimal places (eg. lat/lon * 1000000).
         ///
         /// ```
         /// # use geo::{Coordinate, Point};
         /// # use geo::MapCoords;
         /// # use approx::assert_relative_eq;
         ///
-        /// let p1: Point<f32> = Point::new(10.0f32, 20.0f32);
-        /// let p2: Point<f64> = p1.map_coords(|Coordinate { x, y }| Coordinate { x: x as f64, y: y as f64 });
+        /// let SCALE_FACTOR: f64 = 1000000.0;
         ///
-        /// assert_relative_eq!(p2, Point::new(10.0f64, 20.0f64), epsilon = 1e-6);
+        /// let floating_point_geom: Point<f64> = Point::new(10.15f64, 20.05f64);
+        /// let fixed_point_geom: Point<i32> = floating_point_geom.map_coords(|Coordinate { x, y }| {
+        ///     Coordinate { x: (x * SCALE_FACTOR) as i32, y: (y * SCALE_FACTOR) as i32 }
+        /// });
+        ///
+        /// assert_eq!(fixed_point_geom.x(), 10150000);
         /// ```
+        ///
+        /// If you want *only* to convert between numeric types (i32 -> f64) without further
+        /// transformation, consider using [`Convert].
         fn map_coords(&self, func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy) -> Self::Output
         where
             T: CoordNum,
