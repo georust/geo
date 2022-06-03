@@ -31,6 +31,8 @@
   * <https://github.com/georust/geo/pull/833>
 * Add `{Convert,TryConvert}` traits for coordinate value type conversion.
   * <https://github.com/georust/geo/pull/836>
+* BREAKING: MapCoords/MapCoordsInPlace now map `Coordinate`s rather than `(x,y)` tuples
+  * <https://github.com/georust/geo/pull/837>
 
 ## 0.20.1
 
