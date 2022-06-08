@@ -118,7 +118,7 @@ fn hull_set<T>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::algorithm::is_convex::IsConvex;
+    use crate::IsConvex;
 
     #[test]
     fn quick_hull_test1() {

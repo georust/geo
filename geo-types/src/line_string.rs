@@ -312,7 +312,7 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> LineString<T, Z, M> {
             self.0.push(self.0[0]);
         }
     }
-
+    
     /// Checks if the linestring is closed; i.e. it is
     /// either empty or, the first and last points are the
     /// same.

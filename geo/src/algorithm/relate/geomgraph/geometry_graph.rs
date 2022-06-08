@@ -1,9 +1,11 @@
 use super::{
-    index::{EdgeSetIntersector, SegmentIntersector, SimpleEdgeSetIntersector},
+    index::{
+        EdgeSetIntersector, RstarEdgeSetIntersector, SegmentIntersector, SimpleEdgeSetIntersector,
+    },
     CoordNode, CoordPos, Direction, Edge, Label, LineIntersector, PlanarGraph, TopologyPosition,
 };
 
-use crate::algorithm::dimensions::HasDimensions;
+use crate::HasDimensions;
 use crate::{Coordinate, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
 
 use std::cell::RefCell;
@@ -97,7 +99,12 @@ where
     fn create_edge_set_intersector() -> Box<dyn EdgeSetIntersector<F>> {
         // PERF: faster algorithms exist. This one was chosen for simplicity of implementation and
         //       debugging
-        Box::new(SimpleEdgeSetIntersector::new())
+        // Slow, but simple and good for debugging
+        // Box::new(SimpleEdgeSetIntersector::new())
+
+        // Should be much faster for sparse intersections, while not much slower than
+        // SimpleEdgeSetIntersector in the dense case
+        Box::new(RstarEdgeSetIntersector::new())
     }
 
     fn boundary_nodes(&self) -> impl Iterator<Item = &CoordNode<F>> {
@@ -176,7 +183,7 @@ where
         }
         let first_point = coords[0];
 
-        use crate::algorithm::winding_order::{Winding, WindingOrder};
+        use crate::winding_order::{Winding, WindingOrder};
         let (left, right) = match linear_ring.winding_order() {
             Some(WindingOrder::Clockwise) => (cw_left, cw_right),
             Some(WindingOrder::CounterClockwise) => (cw_right, cw_left),

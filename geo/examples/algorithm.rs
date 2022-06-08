@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate geo;
 
-use geo::algorithm::centroid::Centroid;
+use geo::Centroid;
 
 fn main() {
     let linestring = geo::line_string![

@@ -1,4 +1,4 @@
-use crate::algorithm::kernels::Orientation::Collinear;
+use crate::Orientation::Collinear;
 use crate::{
     CoordNum, GeoNum, Geometry, GeometryCollection, GeometryCow, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
@@ -11,7 +11,7 @@ use crate::{
 ///
 /// ```
 /// use geo_types::{Point, Rect, line_string};
-/// use geo::algorithm::dimensions::{HasDimensions, Dimensions};
+/// use geo::dimensions::{HasDimensions, Dimensions};
 ///
 /// let point = Point::new(0.0, 5.0);
 /// let line_string = line_string![(x: 0.0, y: 0.0), (x: 5.0, y: 5.0), (x: 0.0, y: 5.0)];
@@ -44,7 +44,7 @@ pub trait HasDimensions {
     /// never be considered empty.
     /// ```
     /// use geo_types::{Point, coord, LineString};
-    /// use geo::algorithm::dimensions::HasDimensions;
+    /// use geo::HasDimensions;
     ///
     /// let line_string = LineString::new(vec![
     ///     coord! { x: 0., y: 0. },
@@ -69,7 +69,7 @@ pub trait HasDimensions {
     ///
     /// ```
     /// use geo_types::{GeometryCollection, Rect, Point};
-    /// use geo::algorithm::dimensions::{Dimensions, HasDimensions};
+    /// use geo::dimensions::{Dimensions, HasDimensions};
     ///
     /// // normal rectangle
     /// let rect = Rect::new((0.0, 0.0), (10.0, 10.0));
@@ -103,7 +103,7 @@ pub trait HasDimensions {
     ///
     /// ```
     /// use geo_types::{GeometryCollection, Rect, Point};
-    /// use geo::algorithm::dimensions::{Dimensions, HasDimensions};
+    /// use geo::dimensions::{Dimensions, HasDimensions};
     ///
     /// // a point has no boundary
     /// let point = Point::new(10.0, 10.0);
@@ -207,7 +207,7 @@ impl<C: CoordNum> HasDimensions for LineString<C> {
 
     /// ```
     /// use geo_types::line_string;
-    /// use geo::algorithm::dimensions::{HasDimensions, Dimensions};
+    /// use geo::dimensions::{HasDimensions, Dimensions};
     ///
     /// let ls = line_string![(x: 0.,  y: 0.), (x: 0., y: 1.), (x: 1., y: 1.)];
     /// assert_eq!(Dimensions::ZeroDimensional, ls.boundary_dimensions());
@@ -234,7 +234,7 @@ impl<C: CoordNum> HasDimensions for Polygon<C> {
     }
 
     fn dimensions(&self) -> Dimensions {
-        use crate::algorithm::coords_iter::CoordsIter;
+        use crate::CoordsIter;
         let mut coords = self.exterior_coords_iter();
         match coords.next() {
             None => Dimensions::Empty,
@@ -401,7 +401,7 @@ impl<C: crate::GeoNum> HasDimensions for Triangle<C> {
     }
 
     fn dimensions(&self) -> Dimensions {
-        use crate::algorithm::kernels::Kernel;
+        use crate::Kernel;
         if Collinear == C::Ker::orient2d(self.0, self.1, self.2) {
             if self.0 == self.1 && self.1 == self.2 {
                 // degenerate triangle is a point

@@ -79,6 +79,13 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<MultiPolygon<T, Z, M>> for Geom
     }
 }
 
+// Disabled until we remove the deprecated GeometryCollection::from(single_geom) impl.
+impl<T: CoordNum> From<GeometryCollection<T>> for Geometry<T> {
+    fn from(x: GeometryCollection<T>) -> Self {
+        Self::GeometryCollection(x)
+    }
+}
+
 impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Rect<T, Z, M>> for Geometry<T, Z, M> {
     fn from(x: Rect<T, Z, M>) -> Self {
         Self::Rect(x)
@@ -122,6 +129,8 @@ try_from_geometry_impl!(
     MultiPoint,
     MultiLineString,
     MultiPolygon,
+    // Disabled until we remove the deprecated GeometryCollection::from(single_geom) impl.
+    // GeometryCollection,
     Rect,
     Triangle,
 );

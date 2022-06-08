@@ -1,4 +1,4 @@
-use geo::algorithm::relate::IntersectionMatrix;
+use geo::relate::IntersectionMatrix;
 use geo::{Geometry, Point};
 use serde::{Deserialize, Deserializer};
 
@@ -119,7 +119,7 @@ pub(crate) enum OperationInput {
     Unsupported,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Operation {
     Centroid {
         subject: Geometry<f64>,

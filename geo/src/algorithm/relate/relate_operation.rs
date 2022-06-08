@@ -1,12 +1,12 @@
 use super::{EdgeEndBuilder, IntersectionMatrix};
-use crate::algorithm::coordinate_position::CoordinatePosition;
-use crate::algorithm::dimensions::{Dimensions, HasDimensions};
-use crate::algorithm::relate::geomgraph::{
+use crate::dimensions::{Dimensions, HasDimensions};
+use crate::relate::geomgraph::{
     index::SegmentIntersector,
     node_map::{NodeFactory, NodeMap},
     CoordNode, CoordPos, Edge, EdgeEnd, EdgeEndBundleStar, GeometryGraph, LabeledEdgeEndBundleStar,
     RobustLineIntersector,
 };
+use crate::CoordinatePosition;
 use crate::{Coordinate, GeoFloat, GeometryCow};
 
 use std::cell::RefCell;
@@ -70,8 +70,8 @@ where
             Dimensions::TwoDimensional,
         );
 
-        use crate::algorithm::bounding_rect::BoundingRect;
-        use crate::algorithm::intersects::Intersects;
+        use crate::BoundingRect;
+        use crate::Intersects;
         match (
             self.graph_a.geometry().bounding_rect(),
             self.graph_b.geometry().bounding_rect(),

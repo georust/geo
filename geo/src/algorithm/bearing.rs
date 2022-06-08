@@ -13,7 +13,7 @@ pub trait Bearing<T: CoordFloat> {
     /// ```
     /// # #[macro_use] extern crate approx;
     /// #
-    /// use geo::algorithm::bearing::Bearing;
+    /// use geo::Bearing;
     /// use geo::Point;
     ///
     /// let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
@@ -41,9 +41,9 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::algorithm::bearing::Bearing;
-    use crate::algorithm::haversine_destination::HaversineDestination;
     use crate::point;
+    use crate::Bearing;
+    use crate::HaversineDestination;
 
     #[test]
     fn returns_the_proper_bearing_to_another_point() {

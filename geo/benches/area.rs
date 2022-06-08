@@ -3,7 +3,7 @@ extern crate criterion;
 extern crate geo;
 
 use criterion::Criterion;
-use geo::algorithm::area::Area;
+use geo::Area;
 use geo::Polygon;
 
 fn criterion_benchmark(c: &mut Criterion) {

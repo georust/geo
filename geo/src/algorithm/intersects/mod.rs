@@ -1,3 +1,4 @@
+use crate::BoundingRect;
 use crate::*;
 
 /// Checks if the geometry Self intersects the geometry Rhs.
@@ -14,7 +15,7 @@ use crate::*;
 /// # Examples
 ///
 /// ```
-/// use geo::algorithm::intersects::Intersects;
+/// use geo::Intersects;
 /// use geo::line_string;
 ///
 /// let line_string_a = line_string![
@@ -51,9 +52,9 @@ pub trait Intersects<Rhs = Self> {
 // the reverse (where Self is "simpler" than Rhs).
 macro_rules! symmetric_intersects_impl {
     ($t:ty, $k:ty) => {
-        impl<T> $crate::algorithm::intersects::Intersects<$k> for $t
+        impl<T> $crate::Intersects<$k> for $t
         where
-            $k: $crate::algorithm::intersects::Intersects<$t>,
+            $k: $crate::Intersects<$t>,
             T: CoordNum,
         {
             fn intersects(&self, rhs: &$k) -> bool {
@@ -107,9 +108,27 @@ where
         && value_in_between(value.y, bound_1.y, bound_2.y)
 }
 
+// A cheap bbox check to see if we can skip the more expensive intersection computation
+fn has_disjoint_bboxes<T, A, B>(a: &A, b: &B) -> bool
+where
+    T: CoordNum,
+    A: BoundingRect<T>,
+    B: BoundingRect<T>,
+{
+    let mut disjoint_bbox = false;
+    if let Some(a_bbox) = a.bounding_rect().into() {
+        if let Some(b_bbox) = b.bounding_rect().into() {
+            if !a_bbox.intersects(&b_bbox) {
+                disjoint_bbox = true;
+            }
+        }
+    }
+    disjoint_bbox
+}
+
 #[cfg(test)]
 mod test {
-    use crate::algorithm::intersects::Intersects;
+    use crate::Intersects;
     use crate::{
         coord, line_string, polygon, Geometry, Line, LineString, MultiLineString, MultiPoint,
         MultiPolygon, Point, Polygon, Rect,

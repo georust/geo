@@ -1,9 +1,7 @@
 use super::{LineIntersection, LineIntersector};
-use crate::algorithm::kernels::{Kernel, Orientation, RobustKernel};
-use crate::bounding_rect::BoundingRect;
-use crate::contains::Contains;
-use crate::intersects::Intersects;
+use crate::kernels::{Kernel, Orientation, RobustKernel};
 use crate::num_traits::Zero;
+use crate::{BoundingRect, Contains, Intersects};
 use crate::{Coordinate, GeoFloat, Line, Rect};
 
 /// A robust version of [LineIntersector](traits.LineIntersector).
@@ -18,7 +16,7 @@ impl RobustLineIntersector {
 
 impl<F: GeoFloat> LineIntersector<F> for RobustLineIntersector {
     fn compute_intersection(&mut self, p: Line<F>, q: Line<F>) -> Option<LineIntersection<F>> {
-        crate::algorithm::line_intersection::line_intersection(p, q)
+        crate::line_intersection::line_intersection(p, q)
     }
 }
 

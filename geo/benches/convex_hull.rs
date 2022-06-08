@@ -38,7 +38,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("convex hull with collinear random i64", |bencher| {
         let mut points = uniform_points_in_range(10_000_i64, 1_000_000, &mut rand::thread_rng());
-        use geo::algorithm::convex_hull::graham_hull;
+        use geo::convex_hull::graham_hull;
         bencher.iter(|| {
             criterion::black_box(graham_hull(
                 criterion::black_box(&mut points),

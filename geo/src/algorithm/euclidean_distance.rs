@@ -1,8 +1,7 @@
-use crate::algorithm::contains::Contains;
-use crate::algorithm::euclidean_length::EuclideanLength;
-use crate::algorithm::intersects::Intersects;
-use crate::algorithm::polygon_distance_fast_path::*;
+use crate::polygon_distance_fast_path::*;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
+use crate::EuclideanLength;
+use crate::Intersects;
 use crate::{
     Coordinate, GeoFloat, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
     Point, Polygon, Triangle,
@@ -31,7 +30,7 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     ///
     /// ```
     /// use approx::assert_relative_eq;
-    /// use geo::algorithm::euclidean_distance::EuclideanDistance;
+    /// use geo::EuclideanDistance;
     /// use geo::point;
     ///
     /// let p1 = point!(x: -72.1235, y: 42.3521);
@@ -46,7 +45,7 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     ///
     /// ```
     /// use approx::assert_relative_eq;
-    /// use geo::algorithm::euclidean_distance::EuclideanDistance;
+    /// use geo::EuclideanDistance;
     /// use geo::{point, polygon};
     ///
     /// let polygon = polygon![
@@ -72,7 +71,7 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     ///
     /// ```
     /// use approx::assert_relative_eq;
-    /// use geo::algorithm::euclidean_distance::EuclideanDistance;
+    /// use geo::EuclideanDistance;
     /// use geo::{point, line_string};
     ///
     /// let line_string = line_string![
@@ -143,7 +142,7 @@ where
             .0
             .iter()
             .map(|p| self.euclidean_distance(p))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+            .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
     }
 }
 
@@ -176,7 +175,7 @@ where
         mls.0
             .iter()
             .map(|ls| self.euclidean_distance(ls))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+            .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
     }
 }
 
@@ -186,8 +185,8 @@ where
 {
     /// Minimum distance from a Point to a Polygon
     fn euclidean_distance(&self, polygon: &Polygon<T>) -> T {
-        // No need to continue if the polygon contains the point, or is zero-length
-        if polygon.contains(self) || polygon.exterior().0.is_empty() {
+        // No need to continue if the polygon intersects the point, or is zero-length
+        if polygon.exterior().0.is_empty() || polygon.intersects(self) {
             return T::zero();
         }
         // fold the minimum interior ring distance if any, followed by the exterior
@@ -196,7 +195,7 @@ where
             .interiors()
             .iter()
             .map(|ring| self.euclidean_distance(ring))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+            .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
             .min(
                 polygon
                     .exterior()
@@ -206,7 +205,7 @@ where
                             self.0, line.start, line.end,
                         )
                     })
-                    .fold(T::max_value(), |accum, val| accum.min(val)),
+                    .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val)),
             )
     }
 }
@@ -221,7 +220,7 @@ where
             .0
             .iter()
             .map(|p| self.euclidean_distance(p))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+            .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
     }
 }
 
@@ -269,7 +268,7 @@ where
     T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
-        if self.intersects(other) || self.contains(other) {
+        if self.intersects(other) {
             return T::zero();
         }
         // minimum of all Point-Line distances
@@ -297,7 +296,7 @@ where
     T: GeoFloat + Signed + RTreeNum + FloatConst,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
-        if other.contains(self) || self.intersects(other) {
+        if self.intersects(other) {
             return T::zero();
         }
         // line-line distance between each exterior polygon segment and the line
@@ -385,7 +384,7 @@ where
     T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
-        if self.intersects(other) || other.contains(self) {
+        if self.intersects(other) {
             T::zero()
         } else if !other.interiors().is_empty()
             && ring_contains_point(other, Point::from(self.0[0]))
@@ -524,14 +523,14 @@ where
     T: GeoFloat,
 {
     fn euclidean_distance(&self, point: &Point<T>) -> T {
-        if self.contains(point) {
+        if self.intersects(point) {
             return T::zero();
         }
 
         [(self.0, self.1), (self.1, self.2), (self.2, self.0)]
             .iter()
             .map(|edge| ::geo_types::private_utils::line_segment_distance(point.0, edge.0, edge.1))
-            .fold(T::max_value(), |accum, val| accum.min(val))
+            .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
     }
 }
 
@@ -577,8 +576,8 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::algorithm::convex_hull::ConvexHull;
-    use crate::algorithm::euclidean_distance::EuclideanDistance;
+    use crate::ConvexHull;
+    use crate::EuclideanDistance;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
     use geo_types::Rect;
     use geo_types::{coord, polygon, private_utils::line_segment_distance};

@@ -1,5 +1,5 @@
-use crate::algorithm::map_coords::{MapCoords, MapCoordsInPlace};
-use crate::CoordNum;
+use crate::map_coords::{MapCoords, MapCoordsInPlace};
+use crate::{CoordNum, Coordinate};
 
 pub trait Translate<T> {
     /// Translate a Geometry along its axes by the given offsets
@@ -7,7 +7,7 @@ pub trait Translate<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::translate::Translate;
+    /// use geo::Translate;
     /// use geo::line_string;
     ///
     /// let ls = line_string![
@@ -46,11 +46,17 @@ where
     G: MapCoords<T, T, Output = G> + MapCoordsInPlace<T>,
 {
     fn translate(&self, xoff: T, yoff: T) -> Self {
-        self.map_coords(|(x, y)| (x + xoff, y + yoff))
+        self.map_coords(|Coordinate { x, y }| Coordinate {
+            x: x + xoff,
+            y: y + yoff,
+        })
     }
 
     fn translate_in_place(&mut self, xoff: T, yoff: T) {
-        self.map_coords_in_place(|(x, y)| (x + xoff, y + yoff))
+        self.map_coords_in_place(|Coordinate { x, y }| Coordinate {
+            x: x + xoff,
+            y: y + yoff,
+        })
     }
 
     fn translate_inplace(&mut self, xoff: T, yoff: T) {

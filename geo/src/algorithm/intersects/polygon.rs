@@ -1,5 +1,6 @@
-use super::Intersects;
+use super::{has_disjoint_bboxes, Intersects};
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
+use crate::BoundingRect;
 use crate::{
     CoordNum, Coordinate, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
     Rect,
@@ -50,6 +51,10 @@ where
     T: GeoNum,
 {
     fn intersects(&self, polygon: &Polygon<T>) -> bool {
+        if has_disjoint_bboxes(self, polygon) {
+            return false;
+        }
+
         // self intersects (or contains) any line in polygon
         self.intersects(polygon.exterior()) ||
             polygon.interiors().iter().any(|inner_line_string| self.intersects(inner_line_string)) ||
@@ -64,8 +69,12 @@ impl<G, T> Intersects<G> for MultiPolygon<T>
 where
     T: GeoNum,
     Polygon<T>: Intersects<G>,
+    G: BoundingRect<T>,
 {
     fn intersects(&self, rhs: &G) -> bool {
+        if has_disjoint_bboxes(self, rhs) {
+            return false;
+        }
         self.iter().any(|p| p.intersects(rhs))
     }
 }

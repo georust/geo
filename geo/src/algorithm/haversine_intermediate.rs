@@ -11,7 +11,7 @@ pub trait HaversineIntermediate<T: CoordFloat> {
     /// ```
     /// # #[macro_use] extern crate approx;
     /// #
-    /// use geo::algorithm::haversine_intermediate::HaversineIntermediate;
+    /// use geo::HaversineIntermediate;
     /// use geo::Point;
     ///
     /// let p1 = Point::<f64>::new(10.0, 20.0);
@@ -165,7 +165,7 @@ fn get_params<T: CoordFloat + FromPrimitive>(p1: &Point<T>, p2: &Point<T>) -> Ha
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::algorithm::haversine_intermediate::HaversineIntermediate;
+    use crate::HaversineIntermediate;
 
     #[test]
     fn f_is_zero_or_one_test() {

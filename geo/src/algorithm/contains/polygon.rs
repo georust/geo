@@ -1,5 +1,5 @@
 use super::Contains;
-use crate::relate::Relate;
+use crate::Relate;
 use crate::{
     Coordinate, GeoFloat, GeoNum, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
@@ -13,7 +13,7 @@ where
     T: GeoNum,
 {
     fn contains(&self, coord: &Coordinate<T>) -> bool {
-        use crate::algorithm::coordinate_position::{CoordPos, CoordinatePosition};
+        use crate::coordinate_position::{CoordPos, CoordinatePosition};
 
         self.coordinate_position(coord) == CoordPos::Inside
     }

@@ -1,9 +1,9 @@
-use crate::algorithm::centroid::Centroid;
-use crate::algorithm::map_coords::MapCoords;
-use crate::prelude::BoundingRect;
+use crate::BoundingRect;
+use crate::Centroid;
+use crate::MapCoords;
 use crate::{
-    CoordFloat, GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
-    Polygon,
+    CoordFloat, Coordinate, GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
+    Point, Polygon,
 };
 
 #[inline]
@@ -46,7 +46,7 @@ pub trait Rotate<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::rotate::Rotate;
+    /// use geo::Rotate;
     /// use geo::line_string;
     ///
     /// let line_string = line_string![
@@ -104,7 +104,7 @@ pub trait RotatePoint<T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::algorithm::rotate::RotatePoint;
+    /// use geo::RotatePoint;
     /// use geo::{line_string, point};
     ///
     /// let ls = line_string![
@@ -137,7 +137,7 @@ where
     fn rotate_around_point(&self, angle: T, point: Point<T>) -> Self {
         let (sin_theta, cos_theta) = angle.to_radians().sin_cos();
         let (x0, y0) = point.x_y();
-        self.map_coords(|(x, y)| rotate_inner(x, y, x0, y0, sin_theta, cos_theta).x_y())
+        self.map_coords(|Coordinate { x, y }| rotate_inner(x, y, x0, y0, sin_theta, cos_theta).0)
     }
 }
 

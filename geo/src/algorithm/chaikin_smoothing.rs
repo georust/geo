@@ -133,7 +133,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::algorithm::chaikin_smoothing::ChaikinSmoothing;
+    use crate::ChaikinSmoothing;
     use crate::{LineString, Polygon};
 
     #[test]
