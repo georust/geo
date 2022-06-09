@@ -124,6 +124,11 @@
 //! - **[`RotatePoint`](RotatePoint)**: Rotate a geometry around a point
 //! - **[`Translate`](Translate)**: Translate a geometry along its axis
 //!
+//! ## Conversion
+//!
+//! - **[`Convert`]**: Convert (infalliby) the type of a geometry’s coordinate value
+//! - **[`TryConvert`]**: Convert (falliby) the type of a geometry’s coordinate value
+//!
 //! ## Miscellaneous
 //!
 //! - **[`Centroid`](Centroid)**: Calculate the centroid of a geometry

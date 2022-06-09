@@ -395,7 +395,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
 
         let accumulated_coord = ring.lines().fold(Coordinate::zero(), |accum, line| {
             use crate::MapCoords;
-            let line = line.map_coords(|(x, y)| (x - shift.x, y - shift.y));
+            let line = line.map_coords(|c| c - shift);
             let tmp = line.determinant();
             accum + (line.end + line.start) * tmp
         });
@@ -605,16 +605,12 @@ mod test {
 
         let centroid = polygon.centroid().unwrap();
 
-        let shift_x = 1.5e8;
-        let shift_y = 1.5e8;
+        let shift = coord! { x: 1.5e8, y: 1.5e8 };
 
         use crate::map_coords::MapCoords;
-        let polygon = polygon.map_coords(|(x, y)| (x + shift_x, y + shift_y));
+        let polygon = polygon.map_coords(|c| c + shift);
 
-        let new_centroid = polygon
-            .centroid()
-            .unwrap()
-            .map_coords(|(x, y)| (x - shift_x, y - shift_y));
+        let new_centroid = polygon.centroid().unwrap().map_coords(|c| c - shift);
         debug!("centroid {:?}", centroid.0);
         debug!("new_centroid {:?}", new_centroid.0);
         assert_relative_eq!(centroid.0.x, new_centroid.0.x, max_relative = 0.0001);

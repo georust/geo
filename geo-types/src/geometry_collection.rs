@@ -108,11 +108,17 @@ impl<T: CoordNum> GeometryCollection<T> {
     }
 }
 
-/// Convert any Geometry (or anything that can be converted to a Geometry) into a
-/// GeometryCollection
+#[deprecated(since = 0.7.5, note = "Use `GeometryCollection::from(vec![geom])` instead.")]
 impl<T: CoordNum, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
     fn from(x: IG) -> Self {
         Self(vec![x.into()])
+    }
+}
+
+impl<T: CoordNum, IG: Into<Geometry<T>>> From<Vec<IG>> for GeometryCollection<T> {
+    fn from(geoms: Vec<IG>) -> Self {
+        let geoms: Vec<Geometry<_>> = geoms.into_iter().map(Into::into).collect();
+        Self(geoms)
     }
 }
 
@@ -310,5 +316,17 @@ where
 
         let mut mp_zipper = self.into_iter().zip(other.into_iter());
         mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(rhs, epsilon))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{GeometryCollection, Point};
+
+    #[test]
+    fn from_vec() {
+        let gc = GeometryCollection::from(vec![Point::new(1i32, 2)]);
+        let p = Point::try_from(gc[0].clone()).unwrap();
+        assert_eq!(p.y(), 2);
     }
 }
