@@ -19,7 +19,7 @@ use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
 ///
 /// Degenerate 2-d geoms with 0 area are handled, and ignored by the algorithm.
 /// In particular, taking `union` with an empty geom should remove degeneracies
-/// are fix invalid polygons as long the interior-exterior requirement above is
+/// and fix invalid polygons as long the interior-exterior requirement above is
 /// satisfied.
 pub trait BooleanOps: Sized {
     type Scalar: GeoNum;

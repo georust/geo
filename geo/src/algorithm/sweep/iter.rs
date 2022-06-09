@@ -3,7 +3,7 @@ use std::borrow::Borrow;
 use super::*;
 use crate::{line_intersection::line_intersection, Coordinate, LineIntersection};
 
-/// A segment of a input [`Crossable`] type.
+/// A segment of a input [`Cross`] type.
 ///
 /// This type is used to convey the part of the input geometry that is
 /// intersecting at a given intersection. This is returned by the
@@ -61,7 +61,7 @@ impl<C: Cross + Clone> Crossing<C> {
 ///
 /// Yields all end points, intersections and overlaps of a set of
 /// line-segments and points. Construct it by `collect`-ing an
-/// iterator of [`Crossable`]. The implementation uses the
+/// iterator of [`Cross`]. The implementation uses the
 /// [Bentley-Ottman] algorithm and runs in time O((n + k) log n) time;
 /// this is faster than a brute-force search for intersections across
 /// all pairs of input segments if k --- the number of intersections
@@ -70,7 +70,7 @@ impl<C: Cross + Clone> Crossing<C> {
 /// ## Usage
 ///
 /// Construct from an iterator of any type implementing the
-/// [`Crossable`] trait. Use the [`CrossingsIter::intersections`]
+/// [`Cross`] trait. Use the [`CrossingsIter::intersections`]
 /// method to access all segments that start or end at the last
 /// yielded point.
 ///
@@ -177,7 +177,7 @@ where
 /// ## Usage
 ///
 /// Construct from an iterator of any type implementing the
-/// [`Crossable`] trait. The geo-type [`Line`] implements this trait.
+/// [`Cross`] trait. The geo-type [`Line`] implements this trait.
 /// See the trait documentation for more information on usage with
 /// custom types.
 ///

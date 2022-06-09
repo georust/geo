@@ -20,16 +20,20 @@ impl<T: Float> Op<T> {
         }
     }
 
+    // is_first -> whether it is from first input or second input
     pub(crate) fn add_multi_polygon(&mut self, mp: &MultiPolygon<T>, is_first: bool) {
         mp.0.iter().for_each(|p| self.add_polygon(p, is_first));
     }
 
+    // is_first -> whether it is from first input or second input
     pub(crate) fn add_polygon(&mut self, poly: &Polygon<T>, is_first: bool) {
         self.add_closed_ring(poly.exterior(), is_first, false);
         for hole in poly.interiors() {
             self.add_closed_ring(hole, is_first, true);
         }
     }
+    // is_first -> whether it is from first input or second input
+    // _is_hole is not used rn; remove it once we fully handle fp issues
     fn add_closed_ring(&mut self, ring: &LineString<T>, is_first: bool, _is_hole: bool) {
         assert!(ring.is_closed());
         if ring.coords_count() <= 3 {
