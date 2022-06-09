@@ -45,7 +45,11 @@ pub fn scaled_generator(dims: Coordinate<f64>, scale: usize) -> impl Fn() -> Lin
 
     move || {
         let shift = uniform_point(&mut thread_rng(), shift_bounds);
-        uniform_line(&mut thread_rng(), bounds).map_coords(|(x, y)| (x + shift.x, y + shift.y))
+        uniform_line(&mut thread_rng(), bounds).map_coords(|mut c| {
+            c.x += shift.x;
+            c.y += shift.y;
+            c
+        })
     }
 }
 
