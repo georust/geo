@@ -372,7 +372,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn concave_hull_norway_test() {
         let norway = geo_test_fixtures::norway_main::<f64>();
         let norway_concave_hull: LineString<f64> = geo_test_fixtures::norway_concave_hull::<f64>();
