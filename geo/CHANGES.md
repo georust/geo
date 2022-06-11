@@ -39,6 +39,8 @@
   * <https://github.com/georust/geo/pull/836>
 * BREAKING: MapCoords/MapCoordsInPlace now map `Coordinate`s rather than `(x,y)` tuples
   * <https://github.com/georust/geo/pull/837>
+* Tidy fast-path distance algorithm
+  * <https://github.com/georust/geo/pull/754>
 
 ## 0.20.1
 
