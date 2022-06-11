@@ -1,0 +1,66 @@
+{
+  "features": [
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              [384, 0],
+              [416, 0],
+              [448, 0],
+              [448, 32],
+              [416, 32],
+              [384, 32],
+              [384, 0]
+            ]
+          ]
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {},
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              [400, 32],
+              [416, 32],
+              [416, 48],
+              [400, 32]
+            ]
+          ]
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {},
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              [384, 0],
+              [416, 0],
+              [448, 0],
+              [448, 32],
+              [416, 32],
+              [416, 48],
+              [400, 32],
+              [384, 32],
+              [384, 0]
+            ]
+          ]
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {
+        "operation": "union"
+      },
+      "type": "Feature"
+    }
+  ],
+  "type": "FeatureCollection"
+}

@@ -3,7 +3,13 @@
 
 ## Unreleased
 
-* POSSIBLY BREAKING: `GeoFloat` types must now implement `num_traits::Signed` and `num_traits::Bounded`. This shouldn't 
+* Geo Boolean Ops for polygons and multipolygons: intersect, union, xor,
+  and difference. Refer trait `bool_ops::BooleanOps` for more info.
+* POSSIBLY BREAKING: MSRV is now 1.58
+* BREAKING: rstar version upgraded to 0.9.x
+  * <https://github.com/georust/geo/pull/835>
+
+* POSSIBLY BREAKING: `GeoFloat` types must now implement `num_traits::Signed` and `num_traits::Bounded`. This shouldn't
   affect you if you are using a standard `Geometry<f64>` or `Geometry<f32>` or `geo::GeoFloat` generically.
 * Speed up `Relate` and `Contains` traits for large LineStrings and Polygons by using an RTree to more efficiently
   inspect edges in our topology graph.

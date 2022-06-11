@@ -1,0 +1,94 @@
+{
+  "features": [
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [0, 0],
+            [3, 0],
+            [3, 3],
+            [0, 3],
+            [0, 0]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "properties": {},
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [3, 1],
+            [4, 1],
+            [4, 2],
+            [3, 2],
+            [3, 1]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "properties": {},
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {
+        "operation": "intersection"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              [0, 0],
+              [3, 0],
+              [3, 1],
+              [4, 1],
+              [4, 2],
+              [3, 2],
+              [3, 3],
+              [0, 3],
+              [0, 0]
+            ]
+          ]
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {
+        "operation": "union"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              [0, 0],
+              [3, 0],
+              [3, 1],
+              [3, 2],
+              [3, 3],
+              [0, 3],
+              [0, 0]
+            ]
+          ]
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {
+        "operation": "diff"
+      },
+      "type": "Feature"
+    }
+  ],
+  "type": "FeatureCollection"
+}

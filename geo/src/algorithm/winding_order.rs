@@ -25,10 +25,19 @@ where
 }
 
 /// How a linestring is wound, clockwise or counter-clockwise
-#[derive(PartialEq, Clone, Debug, Eq)]
+#[derive(PartialEq, Clone, Debug, Eq, Copy)]
 pub enum WindingOrder {
     Clockwise,
     CounterClockwise,
+}
+
+impl WindingOrder {
+    pub(crate) fn inverse(&self) -> Self {
+        match self {
+            WindingOrder::Clockwise => WindingOrder::CounterClockwise,
+            WindingOrder::CounterClockwise => WindingOrder::Clockwise,
+        }
+    }
 }
 
 /// Determine and operate on how a [`LineString`] is
