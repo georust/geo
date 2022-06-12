@@ -1,12 +1,12 @@
 # Changes
 
-## Unreleased
+## 0.7.5
 
 * Add `split_x` and `split_y` methods on `Rect`
   * <https://github.com/georust/geo/pull/823>
 * Add support for `Polygon` in `RTree`
   * <https://github.com/georust/geo/pull/351>
-* Deprecate GeometryCollection::from(single_geom) in favor of GeometryCollection::from(vec![single_geom])
+* Deprecate `GeometryCollection::from(single_geom)` in favor of `GeometryCollection::from(vec![single_geom])`
   * <https://github.com/georust/geo/pull/821>
 
 ## 0.7.4
