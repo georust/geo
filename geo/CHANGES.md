@@ -1,19 +1,19 @@
 # Changes
 
+## 0.21.0
 
-## Unreleased
-
-* Geo Boolean Ops for polygons and multipolygons: intersect, union, xor,
+* Boolean operations for `Polygon`s and `MultiPolygon`s: intersect, union, xor,
   and difference. Refer trait `bool_ops::BooleanOps` for more info.
-* POSSIBLY BREAKING: MSRV is now 1.58
+* POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.58
 * BREAKING: rstar version upgraded to 0.9.x
   * <https://github.com/georust/geo/pull/835>
 
 * POSSIBLY BREAKING: `GeoFloat` types must now implement `num_traits::Signed` and `num_traits::Bounded`. This shouldn't
   affect you if you are using a standard `Geometry<f64>` or `Geometry<f32>` or `geo::GeoFloat` generically.
-* Speed up `Relate` and `Contains` traits for large LineStrings and Polygons by using an RTree to more efficiently
+* Speed up `Relate` and `Contains` traits for large `LineStrings` and `Polygons` by using an RTree to more efficiently
   inspect edges in our topology graph.
 * Flatten algorithm namespace. For example:
+
   ```rust
   # Before
   use geo::algorithm::area::Area;
@@ -21,23 +21,24 @@
   # After
   use geo::{Area, BoundingRect};
   ```
+
 * Speed up `intersects` checks by using a preliminary bbox check
   * <https://github.com/georust/geo/pull/828>
 * BREAKING: Remove unneeded reference for `*MapCoords*` closure parameter.
   * <https://github.com/georust/geo/pull/810>
-* BREAKING: Bump proj dependency to 0.26 which uses proj lib 9.0
+* BREAKING: Bump `proj` dependency to 0.26 which uses PROJ version 9.0
   * <https://github.com/georust/geo/pull/813>
-* rename Translate::translate_inplace -> Translate::translate_in_place
+* rename `Translate::translate_inplace` -> `Translate::translate_in_place`
   * <https://github.com/georust/geo/pull/811>
-* MapCoords restructuring: <https://github.com/georust/geo/pull/811>
-  - rename MapCoordsInplace::map_coords_inplace -> MapCoordsInPlace::map_coords_in_place
-  - rename TryMapCoordsInplace::try_map_coords_inplace -> TryMapCoordsInPlace::try_map_coords_in_place
-  - Consolidate traits `TryMapCoords` into `MapCoords` and `TryMapCoordsInplace` into `MapCoordsInPlace`
+* `MapCoords` restructuring: <https://github.com/georust/geo/pull/811>
+  * rename `MapCoordsInplace::map_coords_inplace` -> `MapCoordsInPlace::map_coords_in_place`
+  * rename `TryMapCoordsInplace::try_map_coords_inplace` -> `TryMapCoordsInPlace::try_map_coords_in_place`
+  * Consolidate traits `TryMapCoords` into `MapCoords` and `TryMapCoordsInplace` into `MapCoordsInPlace`
 * Implement `ChamberlainDuquetteArea` for all geo types.
   * <https://github.com/georust/geo/pull/833>
 * Add `{Convert,TryConvert}` traits for coordinate value type conversion.
   * <https://github.com/georust/geo/pull/836>
-* BREAKING: MapCoords/MapCoordsInPlace now map `Coordinate`s rather than `(x,y)` tuples
+* BREAKING: `MapCoords`/`MapCoordsInPlace` now map `Coordinate`s rather than `(x,y)` tuples
   * <https://github.com/georust/geo/pull/837>
 * Tidy fast-path distance algorithm
   * <https://github.com/georust/geo/pull/754>
