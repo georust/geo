@@ -103,6 +103,8 @@ jobs:
       - run: cargo check --all-targets --no-default-features
       # we don't want to test `proj-network` because it only enables the `proj` feature
       - run: cargo test --features "use-proj use-serde"
+      # Ensure we are able to publish
+      - run: cargo publish --dry-run
 
   geo_postgis:
     name: geo-postgis
