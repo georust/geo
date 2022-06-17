@@ -11,7 +11,7 @@ use crate::{
 /// # Examples
 /// ```
 /// use geo::{coord, Line, LineString};
-/// use geo::line_interpolate_point::Densify;
+/// use geo::Densify;
 ///
 /// let line: Line<f64> = Line::new(coord! {x: 0.0, y: 6.0}, coord! {x: 1.0, y: 8.0});
 /// let correct: LineString<f64> = vec![[0.0, 6.0], [0.5, 7.0], [1.0, 8.0]].into();
