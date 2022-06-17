@@ -1,7 +1,137 @@
+use geo_types::{MultiLineString, MultiPolygon};
+
 use crate::coords_iter::CoordsIter;
 use std::ops::AddAssign;
 
-use crate::{CoordFloat, EuclideanLength, Line, LineString, Point};
+use crate::{CoordFloat, EuclideanLength, Line, LineString, Point, Polygon};
+
+/// Return a new linear geometry containing both existing and new interpolated coordinates with
+/// a maximum distance of `max_distance` between them.
+///
+/// # Examples
+/// ```
+/// use geo::{coord, Line, LineString};
+/// use geo::line_interpolate_point::Densify;
+///
+/// let line: Line<f64> = Line::new(coord! {x: 0.0, y: 6.0}, coord! {x: 1.0, y: 8.0});
+/// let correct: LineString<f64> = vec![[0.0, 6.0], [0.5, 7.0], [1.0, 8.0]].into();
+/// let max_dist = 2.0;
+/// let densified = line.densify(max_dist);
+/// assert_eq!(densified, correct);
+///```
+pub trait Densify<F: CoordFloat> {
+    type Output;
+
+    fn densify(&self, max_distance: F) -> Self::Output;
+}
+
+// Helper for densification trait
+fn densify_line<T: CoordFloat>(line: Line<T>, container: &mut Vec<Point<T>>, max_distance: T) {
+    container.push(line.start_point());
+    let num_segments = (line.euclidean_length() / max_distance).ceil() - T::one();
+    if num_segments > T::zero() {
+        // distance "unit" for this line segment
+        let frac = T::one() / (T::from(num_segments).unwrap() + T::one());
+        // conversion to int should be OK because we've already called ceil
+        (0..num_segments.to_u32().unwrap())
+            .enumerate()
+            .for_each(|(seg, _)| {
+                // multiply distance unit by 1-indexed segment number to get correct offset
+                let np = line
+                    .line_interpolate_point(frac * (T::from(seg).unwrap() + T::one()))
+                    .unwrap();
+                container.push(np);
+            })
+    }
+}
+
+impl<T> Densify<T> for MultiPolygon<T>
+where
+    T: CoordFloat,
+    Line<T>: EuclideanLength<T>,
+    LineString<T>: EuclideanLength<T>,
+{
+    type Output = MultiPolygon<T>;
+
+    fn densify(&self, max_distance: T) -> Self::Output {
+        MultiPolygon::new(
+            self.iter()
+                .map(|polygon| polygon.densify(max_distance))
+                .collect(),
+        )
+    }
+}
+
+impl<T> Densify<T> for Polygon<T>
+where
+    T: CoordFloat,
+    Line<T>: EuclideanLength<T>,
+    LineString<T>: EuclideanLength<T>,
+{
+    type Output = Polygon<T>;
+
+    fn densify(&self, max_distance: T) -> Self::Output {
+        let densified_exterior = self.exterior().densify(max_distance);
+        let densified_interiors = self
+            .interiors()
+            .iter()
+            .map(|ring| ring.densify(max_distance))
+            .collect();
+        Polygon::new(densified_exterior, densified_interiors)
+    }
+}
+
+impl<T> Densify<T> for MultiLineString<T>
+where
+    T: CoordFloat,
+    Line<T>: EuclideanLength<T>,
+    LineString<T>: EuclideanLength<T>,
+{
+    type Output = MultiLineString<T>;
+
+    fn densify(&self, max_distance: T) -> Self::Output {
+        MultiLineString::new(
+            self.iter()
+                .map(|linestring| linestring.densify(max_distance))
+                .collect(),
+        )
+    }
+}
+
+impl<T> Densify<T> for LineString<T>
+where
+    T: CoordFloat,
+    Line<T>: EuclideanLength<T>,
+    LineString<T>: EuclideanLength<T>,
+{
+    type Output = LineString<T>;
+
+    fn densify(&self, max_distance: T) -> Self::Output {
+        let mut new_line = vec![];
+        self.lines()
+            .for_each(|line| densify_line(line, &mut new_line, max_distance));
+        // we're done, push the last coordinate on to finish
+        new_line.push(self.points().last().unwrap());
+        LineString::from(new_line)
+    }
+}
+
+impl<T> Densify<T> for Line<T>
+where
+    T: CoordFloat,
+    Line<T>: EuclideanLength<T>,
+    LineString<T>: EuclideanLength<T>,
+{
+    type Output = LineString<T>;
+
+    fn densify(&self, max_distance: T) -> Self::Output {
+        let mut new_line = vec![];
+        densify_line(*self, &mut new_line, max_distance);
+        // we're done, push the last coordinate on to finish
+        new_line.push(self.end_point());
+        LineString::from(new_line)
+    }
+}
 
 /// Returns an option of the point that lies a given fraction along the line.
 ///
@@ -109,6 +239,7 @@ where
 
 #[cfg(test)]
 mod test {
+
     use super::*;
     use crate::{coord, point};
     use crate::{ClosestPoint, LineLocatePoint};
@@ -294,5 +425,32 @@ mod test {
             crate::Closest::SinglePoint(p) => assert_eq!(interpolated_point, p),
             _ => panic!("The closest point should be a SinglePoint"), // example chosen to not be an intersection
         };
+    }
+    #[test]
+    fn test_linestring_densify() {
+        let linestring: LineString<f64> =
+            vec![[-1.0, 0.0], [0.0, 0.0], [0.0, 6.0], [1.0, 8.0]].into();
+        let correct: LineString<f64> = vec![
+            [-1.0, 0.0],
+            [0.0, 0.0],
+            [0.0, 2.0],
+            [0.0, 4.0],
+            [0.0, 6.0],
+            [0.5, 7.0],
+            [1.0, 8.0],
+        ]
+        .into();
+        let max_dist = 2.0;
+        let densified = linestring.densify(max_dist);
+        assert_eq!(densified, correct);
+    }
+
+    #[test]
+    fn test_line_densify() {
+        let line: Line<f64> = Line::new(coord! {x: 0.0, y: 6.0}, coord! {x: 1.0, y: 8.0});
+        let correct: LineString<f64> = vec![[0.0, 6.0], [0.5, 7.0], [1.0, 8.0]].into();
+        let max_dist = 2.0;
+        let densified = line.densify(max_dist);
+        assert_eq!(densified, correct);
     }
 }
