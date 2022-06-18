@@ -1193,7 +1193,7 @@ mod test {
         );
         assert_eq!(
             min_convex_poly_dist(&first_polygon, &second_polygon),
-            nearest_neighbour_distance(&first_polygon.exterior(), second_polygon.exterior())
+            nearest_neighbour_distance(first_polygon.exterior(), second_polygon.exterior())
         );
     }
 }
