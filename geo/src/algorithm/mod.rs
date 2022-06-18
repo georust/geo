@@ -191,3 +191,7 @@ pub mod sweep;
 /// Boolean Ops;
 pub mod bool_ops;
 pub use bool_ops::{BooleanOps, OpType};
+
+/// Densify linear geometry components
+pub mod densify;
+pub use densify::Densify;

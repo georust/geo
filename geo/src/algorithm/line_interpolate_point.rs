@@ -1,7 +1,6 @@
 use crate::coords_iter::CoordsIter;
-use std::ops::AddAssign;
-
 use crate::{CoordFloat, EuclideanLength, Line, LineString, Point};
+use std::ops::AddAssign;
 
 /// Returns an option of the point that lies a given fraction along the line.
 ///
@@ -109,6 +108,7 @@ where
 
 #[cfg(test)]
 mod test {
+
     use super::*;
     use crate::{coord, point};
     use crate::{ClosestPoint, LineLocatePoint};

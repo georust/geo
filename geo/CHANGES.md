@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+* Add densification algorithm for linear geometry components
+  * <https://github.com/georust/geo/pull/847>
+
 ## 0.21.0
 
 * Boolean operations for `Polygon`s and `MultiPolygon`s: intersect, union, xor,
