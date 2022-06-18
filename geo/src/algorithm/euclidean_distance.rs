@@ -1165,4 +1165,35 @@ mod test {
         let point = Point::new(1.0, 0.5);
         assert_relative_eq!(triangle.euclidean_distance(&point), 0.0);
     }
+
+    #[test]
+    fn convex_and_nearest_neighbour_comparison() {
+        let ls1: LineString<f64> = vec![
+            Coordinate::from((57.39453770777941, 307.60533608924663)),
+            Coordinate::from((67.1800355576469, 309.6654408997451)),
+            Coordinate::from((84.89693692793338, 225.5101593908847)),
+            Coordinate::from((75.1114390780659, 223.45005458038628)),
+            Coordinate::from((57.39453770777941, 307.60533608924663)),
+        ]
+        .into();
+        let first_polygon: Polygon<f64> = Polygon::new(ls1, vec![]);
+        let ls2: LineString<f64> = vec![
+            Coordinate::from((138.11769866645008, -45.75134112915392)),
+            Coordinate::from((130.50230476949187, -39.270154833870336)),
+            Coordinate::from((184.94426964987397, 24.699153900578573)),
+            Coordinate::from((192.55966354683218, 18.217967605294987)),
+            Coordinate::from((138.11769866645008, -45.75134112915392)),
+        ]
+        .into();
+        let second_polygon = Polygon::new(ls2, vec![]);
+
+        assert_relative_eq!(
+            first_polygon.euclidean_distance(&second_polygon),
+            224.35357967013238
+        );
+        assert_eq!(
+            min_convex_poly_dist(&first_polygon, &second_polygon),
+            nearest_neighbour_distance(&first_polygon.exterior(), second_polygon.exterior())
+        );
+    }
 }

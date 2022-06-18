@@ -3,6 +3,8 @@
 ## Unreleased
 * Add densification algorithm for linear geometry components
   * <https://github.com/georust/geo/pull/847>
+* Fix fast path euclidean distance
+  * <https://github.com/georust/pull/848>
 
 ## 0.21.0
 

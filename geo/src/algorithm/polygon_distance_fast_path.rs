@@ -46,12 +46,13 @@ where
         // we need to spin the calipers equal to the total number of vertices in both polygons
         // alternatively, we can accumulate the total rotation angle and stop when it = 2pi radians
         angle: T::zero(),
+        max_iterations: poly1.exterior().0.len() + poly2.exterior().0.len(),
     };
-    // recall that 360 degrees == 2pi radians
-    let max_angle = T::from(360.0f64.to_radians()).unwrap();
-    while state.angle < max_angle {
+    let mut iterations = 0usize;
+    while iterations <= state.max_iterations {
         nextpoints(&mut state);
         computemin(&mut state);
+        iterations += 1;
     }
     state.dist
 }
@@ -113,6 +114,7 @@ where
     slope: T,
     vertical: bool,
     angle: T,
+    max_iterations: usize,
 }
 
 // much of the following code is ported from Java, copyright 1999 Hormoz Pirzadeh, available at:
