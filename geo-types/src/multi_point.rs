@@ -36,17 +36,17 @@ pub struct MultiPoint<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue>
 
 /// A collection of points with a measurement value in 2D space.
 ///
-/// See [MultiPoint]
+/// See [`MultiPoint`]
 pub type MultiPointM<T> = MultiPoint<T, NoValue, T>;
 
 /// A collection of points in 3D space.
 ///
-/// See [MultiPoint]
+/// See [`MultiPoint`]
 pub type MultiPoint3D<T> = MultiPoint<T, T, NoValue>;
 
 /// A collection of points with a measurement value in 3D space.
 ///
-/// See [MultiPoint]
+/// See [`MultiPoint`]
 pub type MultiPoint3DM<T> = MultiPoint<T, T, T>;
 
 impl<T: CoordNum, Z: CoordNum, M: CoordNum, IP: Into<Point<T, Z, M>>> From<IP>

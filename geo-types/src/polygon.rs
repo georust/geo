@@ -69,17 +69,17 @@ pub struct Polygon<T: CoordNum, Z: CoordNum = NoValue, M: CoordNum = NoValue> {
 
 /// A bounded area with a measurement value in 2D space.
 ///
-/// See [Polygon]
+/// See [`Polygon`]
 pub type PolygonM<T> = Polygon<T, NoValue, T>;
 
 /// A bounded area in 3D space.
 ///
-/// See [Polygon]
+/// See [`Polygon`]
 pub type Polygon3D<T> = Polygon<T, T, NoValue>;
 
 /// A bounded area with a measurement value in 3D space.
 ///
-/// See [Polygon]
+/// See [`Polygon`]
 pub type Polygon3DM<T> = Polygon<T, T, T>;
 
 impl<T: CoordNum, Z: CoordNum, M: CoordNum> Polygon<T, Z, M> {
