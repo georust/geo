@@ -109,42 +109,13 @@ impl<T: CoordinateType + Debug> CoordNum for T {}
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}
 
-mod coordinate;
-pub use crate::coordinate::Coordinate;
+pub mod geometry;
+pub use geometry::*;
 
-mod point;
-pub use crate::point::Point;
+pub use geometry::line_string::PointsIter;
 
-mod multi_point;
-pub use crate::multi_point::MultiPoint;
-
-mod line;
-pub use crate::line::Line;
-
-mod line_string;
-pub use crate::line_string::{LineString, PointsIter};
-
-mod multi_line_string;
-pub use crate::multi_line_string::MultiLineString;
-
-mod polygon;
-pub use crate::polygon::Polygon;
-
-mod multi_polygon;
-pub use crate::multi_polygon::MultiPolygon;
-
-mod geometry;
-pub use crate::geometry::Geometry;
-
-mod geometry_collection;
-pub use crate::geometry_collection::GeometryCollection;
-
-mod triangle;
-pub use crate::triangle::Triangle;
-
-mod rect;
 #[allow(deprecated)]
-pub use crate::rect::{InvalidRectCoordinatesError, Rect};
+pub use geometry::rect::InvalidRectCoordinatesError;
 
 mod error;
 pub use error::Error;
