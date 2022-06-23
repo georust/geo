@@ -1,8 +1,8 @@
-use crate::prelude::*;
-use crate::{
-    Closest, Coordinate, GeoFloat, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
-};
+use crate::algorithm::{EuclideanLength, Intersects};
+use crate::geometry::*;
+use crate::Closest;
+use crate::GeoFloat;
+
 use std::iter;
 
 /// Find the closest `Point` between a given geometry and an input `Point`.
@@ -185,6 +185,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Geometry<F> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::algorithm::{Contains, Translate};
     use crate::{point, polygon};
 
     /// Create a test which checks that we get `$should_be` when trying to find

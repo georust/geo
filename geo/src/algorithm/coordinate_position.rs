@@ -1,7 +1,5 @@
-use crate::{
-    coord, Coordinate, GeoNum, Geometry, GeometryCollection, GeometryCow, Line, LineString,
-    MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
-};
+use crate::geometry::*;
+use crate::{coord, GeoNum, GeometryCow};
 use crate::{BoundingRect, HasDimensions, Intersects};
 
 /// The position of a `Coordinate` relative to a `Geometry`

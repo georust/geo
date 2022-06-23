@@ -1,8 +1,5 @@
 use crate::utils::{partial_max, partial_min};
-use crate::{
-    coord, CoordNum, Coordinate, Geometry, GeometryCollection, GeometryCow, Line, LineString,
-    MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
-};
+use crate::{coord, geometry::*, CoordNum, GeometryCow};
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 
 /// Calculation of the bounding rectangle of a geometry.

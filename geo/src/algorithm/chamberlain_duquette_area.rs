@@ -1,8 +1,5 @@
-use crate::{
-    CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon, Rect, Triangle, EQUATORIAL_EARTH_RADIUS,
-};
-use num_traits::Float;
+use crate::geometry::*;
+use crate::{CoordFloat, EQUATORIAL_EARTH_RADIUS};
 
 /// Calculate the signed approximate geodesic area of a `Geometry`.
 ///

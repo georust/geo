@@ -1,6 +1,8 @@
 use super::{has_disjoint_bboxes, Intersects};
+use crate::geometry::*;
+use crate::geometry_delegate_impl;
 use crate::BoundingRect;
-use crate::*;
+use crate::CoordNum;
 
 impl<T, G> Intersects<G> for Geometry<T>
 where

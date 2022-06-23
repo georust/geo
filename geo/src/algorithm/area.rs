@@ -1,7 +1,5 @@
-use crate::{
-    CoordFloat, CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
-};
+use crate::geometry::*;
+use crate::{CoordFloat, CoordNum};
 
 pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
 where
