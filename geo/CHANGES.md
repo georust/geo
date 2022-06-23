@@ -5,6 +5,8 @@
   * <https://github.com/georust/geo/pull/847>
 * Fix fast path euclidean distance
   * <https://github.com/georust/pull/848>
+* Use robust predicates everywhere in geo
+  * <https://github.com/georust/geo/pull/852>
 
 ## 0.21.0
 
