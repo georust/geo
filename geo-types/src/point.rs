@@ -247,6 +247,14 @@ impl<T: CoordNum> Point<T> {
     /// `self` → `point_b` → `point_c` is counter-clockwise, negative implies
     /// clockwise.
     ///
+    /// # Note on Robustness
+    ///
+    /// This function is **not** robust against floating-point errors.
+    /// The [`geo`](https://docs.rs/geo) crate
+    /// offers robust predicates for standard numeric types using the
+    /// [`Kernel`](https://docs.rs/geo/algorithm/kernels/trait.Kernel.html)
+    /// trait, and these should be preferred if possible.
+    ///
     /// # Examples
     ///
     /// ```

@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use crate::{
-    CoordFloat, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
-    Triangle,
+    CoordFloat, Coordinate, HasKernel, Line, LineString, MultiLineString, MultiPolygon, Point,
+    Polygon, Triangle,
 };
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
@@ -207,7 +207,7 @@ fn vwp_wrapper<T>(
     epsilon: &T,
 ) -> Vec<Vec<Coordinate<T>>>
 where
-    T: CoordFloat + RTreeNum,
+    T: CoordFloat + RTreeNum + HasKernel,
 {
     let mut rings = vec![];
     // Populate R* tree with exterior and interior samples, if any
@@ -243,7 +243,7 @@ fn visvalingam_preserve<T>(
     tree: &mut RTree<Line<T>>,
 ) -> Vec<Coordinate<T>>
 where
-    T: CoordFloat + RTreeNum,
+    T: CoordFloat + RTreeNum + HasKernel,
 {
     if orig.0.len() < 3 || *epsilon <= T::zero() {
         return orig.0.to_vec();
@@ -368,17 +368,19 @@ where
 }
 
 /// is p1 -> p2 -> p3 wound counterclockwise?
+#[inline]
 fn ccw<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>) -> bool
 where
-    T: CoordFloat,
+    T: CoordFloat + HasKernel,
 {
-    (p3.y() - p1.y()) * (p2.x() - p1.x()) > (p2.y() - p1.y()) * (p3.x() - p1.x())
+    let o = <T as HasKernel>::Ker::orient2d(p1.into(), p2.into(), p3.into());
+    o == Orientation::CounterClockwise
 }
 
 /// checks whether line segments with p1-p4 as their start and endpoints touch or cross
 fn cartesian_intersect<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>, p4: Point<T>) -> bool
 where
-    T: CoordFloat,
+    T: CoordFloat + HasKernel,
 {
     (ccw(p1, p3, p4) ^ ccw(p2, p3, p4)) & (ccw(p1, p2, p3) ^ ccw(p1, p2, p4))
 }
@@ -390,7 +392,7 @@ fn tree_intersect<T>(
     orig: &[Coordinate<T>],
 ) -> bool
 where
-    T: CoordFloat + RTreeNum,
+    T: CoordFloat + RTreeNum + HasKernel,
 {
     let point_a = orig[triangle.left];
     let point_c = orig[triangle.right];
@@ -559,7 +561,7 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
 
 impl<T> SimplifyVWPreserve<T> for LineString<T>
 where
-    T: CoordFloat + RTreeNum,
+    T: CoordFloat + RTreeNum + HasKernel,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> LineString<T> {
         let gt = GeomSettings {
@@ -573,7 +575,7 @@ where
 
 impl<T> SimplifyVWPreserve<T> for MultiLineString<T>
 where
-    T: CoordFloat + RTreeNum,
+    T: CoordFloat + RTreeNum + HasKernel,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> MultiLineString<T> {
         MultiLineString::new(
@@ -587,7 +589,7 @@ where
 
 impl<T> SimplifyVWPreserve<T> for Polygon<T>
 where
-    T: CoordFloat + RTreeNum,
+    T: CoordFloat + RTreeNum + HasKernel,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> Polygon<T> {
         let gt = GeomSettings {
@@ -603,7 +605,7 @@ where
 
 impl<T> SimplifyVWPreserve<T> for MultiPolygon<T>
 where
-    T: CoordFloat + RTreeNum,
+    T: CoordFloat + RTreeNum + HasKernel,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> MultiPolygon<T> {
         MultiPolygon::new(
