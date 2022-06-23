@@ -2,6 +2,7 @@ use crate::prelude::*;
 use crate::Extremes;
 use crate::{GeoFloat, Line, Point, Polygon, Triangle};
 use geo_types::CoordFloat;
+use geo_types::Coordinate;
 use num_traits::float::FloatConst;
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance
@@ -84,11 +85,11 @@ where
 
 /// is p1 -> p2 -> p3 wound clockwise?
 #[inline]
-fn cw<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>) -> bool
+fn clockwise<T>(c1: Coordinate<T>, c2: Coordinate<T>, c3: Coordinate<T>) -> bool
 where
     T: CoordFloat + HasKernel,
 {
-    let o = <T as HasKernel>::Ker::orient2d(p1.into(), p2.into(), p3.into());
+    let o = <T as HasKernel>::Ker::orient2d(c1, c2, c3);
     o == Orientation::Clockwise
 }
 
@@ -141,7 +142,7 @@ where
     let mut sin;
     let pnext = poly.exterior().0[next_vertex(poly, idx)];
     let pprev = poly.exterior().0[prev_vertex(poly, idx)];
-    let clockwise = cw(Point::from(pprev), Point::from(p.0), Point::from(pnext));
+    let clockwise = clockwise(pprev, p.0, pnext);
     let slope_prev;
     let slope_next;
     // Slope isn't 0, things are complicated
@@ -335,7 +336,7 @@ where
     let hundred = T::from::<i32>(100).unwrap();
     let pnext = poly.exterior().0[next_vertex(poly, idx)];
     let pprev = poly.exterior().0[prev_vertex(poly, idx)];
-    let clockwise = cw(Point::from(pprev), Point::from(p.0), Point::from(pnext));
+    let clockwise = clockwise(pprev, p.0, pnext);
     let punit;
     if !vertical {
         punit = unitvector(m, poly, p, idx);
