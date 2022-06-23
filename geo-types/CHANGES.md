@@ -1,5 +1,14 @@
 # Changes
 
+## Unreleased
+
+* You may now specify `Geometry` rather than `Geometry<f64>` since we've added
+  a default trait implementation. You may still explicitly declare the numeric
+  type as f64, or any other implementation of `CoordNum`, but this should save
+  you some typing if you're using f64. The same change applies to `Coordinates`
+  and all the geometry variants, like `Point`, `LineString`, etc.
+  * <https://github.com/georust/geo/pull/832>
+
 ## 0.7.5
 
 * Add `split_x` and `split_y` methods on `Rect`
