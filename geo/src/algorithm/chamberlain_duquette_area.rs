@@ -46,7 +46,7 @@ use crate::{CoordFloat, EQUATORIAL_EARTH_RADIUS};
 /// ```
 pub trait ChamberlainDuquetteArea<T>
 where
-    T: Float + CoordNum,
+    T: CoordFloat,
 {
     fn chamberlain_duquette_signed_area(&self) -> T;
 
@@ -55,7 +55,7 @@ where
 
 impl<T> ChamberlainDuquetteArea<T> for Polygon<T>
 where
-    T: Float + CoordNum,
+    T: CoordFloat,
 {
     fn chamberlain_duquette_signed_area(&self) -> T {
         self.interiors()
@@ -72,7 +72,7 @@ where
 
 fn ring_area<T>(coords: &LineString<T>) -> T
 where
-    T: Float + CoordNum,
+    T: CoordFloat,
 {
     let mut total = T::zero();
     let coords_len = coords.0.len();
@@ -108,7 +108,7 @@ macro_rules! zero_impl {
     ($type:ident) => {
         impl<T> ChamberlainDuquetteArea<T> for $type<T>
         where
-            T: Float + CoordNum,
+            T: CoordFloat,
         {
             fn chamberlain_duquette_signed_area(&self) -> T {
                 T::zero()
@@ -127,7 +127,7 @@ macro_rules! to_polygon_impl {
     ($type:ident) => {
         impl<T> ChamberlainDuquetteArea<T> for $type<T>
         where
-            T: Float + CoordNum,
+            T: CoordFloat,
         {
             fn chamberlain_duquette_signed_area(&self) -> T {
                 self.to_polygon().chamberlain_duquette_signed_area()
@@ -146,7 +146,7 @@ macro_rules! sum_impl {
     ($type:ident) => {
         impl<T> ChamberlainDuquetteArea<T> for $type<T>
         where
-            T: Float + CoordNum,
+            T: CoordFloat,
         {
             fn chamberlain_duquette_signed_area(&self) -> T {
                 self.iter().fold(T::zero(), |total, next| {
@@ -175,7 +175,7 @@ sum_impl!(MultiPolygon);
 
 impl<T> ChamberlainDuquetteArea<T> for Geometry<T>
 where
-    T: Float + CoordNum,
+    T: CoordFloat,
 {
     crate::geometry_delegate_impl! {
         fn chamberlain_duquette_signed_area(&self) -> T;
