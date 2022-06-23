@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* the `geometry` module now re-exports all the inner geometry variants, so you
+  can `use geo_types::geometry::*` to concisely include `Point`, `LineString`, etc.
+  * <https://github.com/georust/geo/pull/853>
 * You may now specify `Geometry` rather than `Geometry<f64>` since we've added
   a default trait implementation. You may still explicitly declare the numeric
   type as f64, or any other implementation of `CoordNum`, but this should save

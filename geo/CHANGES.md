@@ -4,6 +4,9 @@
 
 * Reexport everything from the `proj` crate
   * <https://github.com/georust/geo/pull/839>
+* Added a `geometry` module which re-exports all the inner geometry variants, so you
+  can `use geo::geometry::*` to concisely include `Point`, `LineString`, etc.
+  * <https://github.com/georust/geo/pull/853>
 * Add densification algorithm for linear geometry components
   * <https://github.com/georust/geo/pull/847>
 * Fix fast path euclidean distance
