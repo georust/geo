@@ -52,7 +52,7 @@ pub trait HasDimensions {
     /// ]);
     /// assert!(!line_string.is_empty());
     ///
-    /// let empty_line_string: LineString<f64> = LineString::new(vec![]);
+    /// let empty_line_string: LineString = LineString::new(vec![]);
     /// assert!(empty_line_string.is_empty());
     ///
     /// let point = Point::new(0.0, 0.0);

@@ -19,9 +19,9 @@ pub trait HaversineDestination<T: CoordFloat> {
     /// use geo::HaversineDestination;
     /// use geo::Point;
     ///
-    /// let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
+    /// let p_1 = Point::new(9.177789688110352, 48.776781529534965);
     /// let p_2 = p_1.haversine_destination(45., 10000.);
-    /// assert_eq!(p_2, Point::<f64>::new(9.274409949623548, 48.84033274015048))
+    /// assert_eq!(p_2, Point::new(9.274409949623548, 48.84033274015048))
     /// ```
     fn haversine_destination(&self, bearing: T, distance: T) -> Point<T>;
 }
@@ -56,16 +56,16 @@ mod test {
 
     #[test]
     fn returns_a_new_point() {
-        let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
+        let p_1 = Point::new(9.177789688110352, 48.776781529534965);
         let p_2 = p_1.haversine_destination(45., 10000.);
-        assert_eq!(p_2, Point::<f64>::new(9.274409949623548, 48.84033274015048));
+        assert_eq!(p_2, Point::new(9.274409949623548, 48.84033274015048));
         let distance = p_1.haversine_distance(&p_2);
         assert_relative_eq!(distance, 10000., epsilon = 1.0e-6)
     }
 
     #[test]
     fn direct_and_indirect_destinations_are_close() {
-        let p_1 = Point::<f64>::new(9.177789688110352, 48.776781529534965);
+        let p_1 = Point::new(9.177789688110352, 48.776781529534965);
         let p_2 = p_1.haversine_destination(45., 10000.);
         let square_edge = { pow(10000., 2) / 2f64 }.sqrt();
         let p_3 = p_1.haversine_destination(0., square_edge);

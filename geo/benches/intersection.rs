@@ -8,8 +8,8 @@ use geo::intersects::Intersects;
 use geo::MultiPolygon;
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let plot_polygons: MultiPolygon<f64> = geo_test_fixtures::nl_plots();
-    let zone_polygons: MultiPolygon<f64> = geo_test_fixtures::nl_zones();
+    let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots();
+    let zone_polygons: MultiPolygon = geo_test_fixtures::nl_zones();
 
     c.bench_function("intersection", |bencher| {
         bencher.iter(|| {

@@ -437,7 +437,7 @@ mod test {
 
     #[test]
     fn test_disjoint() {
-        let square_a: Geometry<f64> = polygon![
+        let square_a: Geometry = polygon![
             (x: 0., y: 0.),
             (x: 0., y: 20.),
             (x: 20., y: 20.),
@@ -446,7 +446,7 @@ mod test {
         ]
         .into();
 
-        let square_b: Geometry<f64> = polygon![
+        let square_b: Geometry = polygon![
             (x: 55., y: 55.),
             (x: 50., y: 60.),
             (x: 60., y: 60.),
@@ -467,7 +467,7 @@ mod test {
 
     #[test]
     fn test_a_contains_b() {
-        let square_a: Geometry<f64> = polygon![
+        let square_a: Geometry = polygon![
             (x: 0., y: 0.),
             (x: 0., y: 20.),
             (x: 20., y: 20.),
@@ -476,7 +476,7 @@ mod test {
         ]
         .into();
 
-        let square_b: Geometry<f64> = polygon![
+        let square_b: Geometry = polygon![
             (x: 5., y: 5.),
             (x: 5., y: 10.),
             (x: 10., y: 10.),
@@ -497,7 +497,7 @@ mod test {
 
     #[test]
     fn test_a_overlaps_b() {
-        let square_a: Geometry<f64> = polygon![
+        let square_a: Geometry = polygon![
             (x: 0., y: 0.),
             (x: 0., y: 20.),
             (x: 20., y: 20.),
@@ -506,7 +506,7 @@ mod test {
         ]
         .into();
 
-        let square_b: Geometry<f64> = polygon![
+        let square_b: Geometry = polygon![
             (x: 5., y: 5.),
             (x: 5., y: 30.),
             (x: 30., y: 30.),

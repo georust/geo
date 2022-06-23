@@ -19,18 +19,18 @@ pub trait ToPostgis<T> {
     }
 }
 
-impl ToPostgis<ewkb::Point> for Coordinate<f64> {
+impl ToPostgis<ewkb::Point> for Coordinate {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Point {
         ewkb::Point::new(self.x, self.y, srid)
     }
 }
 
-impl ToPostgis<ewkb::Point> for Point<f64> {
+impl ToPostgis<ewkb::Point> for Point {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Point {
         ewkb::Point::new(self.x(), self.y(), srid)
     }
 }
-impl ToPostgis<ewkb::LineString> for Line<f64> {
+impl ToPostgis<ewkb::LineString> for Line {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::LineString {
         let points = vec![
             self.start_point().to_postgis_with_srid(srid),
@@ -67,7 +67,7 @@ to_postgis_impl!(MultiPolygon, ewkb::MultiPolygon, polygons);
 to_postgis_impl!(MultiLineString, ewkb::MultiLineString, lines);
 to_postgis_impl!(MultiPoint, ewkb::MultiPoint, points);
 to_postgis_impl!(LineString, ewkb::LineString, points);
-impl ToPostgis<ewkb::Geometry> for Geometry<f64> {
+impl ToPostgis<ewkb::Geometry> for Geometry {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Geometry {
         match *self {
             Geometry::Point(ref p) => ewkb::GeometryT::Point(p.to_postgis_with_srid(srid)),

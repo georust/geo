@@ -766,11 +766,11 @@ mod test {
         assert_eq!(expected_coords, actual_coords);
     }
 
-    fn create_point() -> (Point<f64>, Vec<Coordinate<f64>>) {
+    fn create_point() -> (Point, Vec<Coordinate>) {
         (point!(x: 1., y: 2.), vec![coord! { x: 1., y: 2. }])
     }
 
-    fn create_triangle() -> (Triangle<f64>, Vec<Coordinate<f64>>) {
+    fn create_triangle() -> (Triangle, Vec<Coordinate>) {
         (
             Triangle::new(
                 coord! { x: 1., y: 2. },
@@ -785,7 +785,7 @@ mod test {
         )
     }
 
-    fn create_rect() -> (Rect<f64>, Vec<Coordinate<f64>>) {
+    fn create_rect() -> (Rect, Vec<Coordinate>) {
         (
             Rect::new(coord! { x: 1., y: 2. }, coord! { x: 3., y: 4. }),
             vec![
@@ -797,7 +797,7 @@ mod test {
         )
     }
 
-    fn create_line_string() -> (LineString<f64>, Vec<Coordinate<f64>>) {
+    fn create_line_string() -> (LineString, Vec<Coordinate>) {
         (
             line_string![
                 (x: 1., y: 2.),
@@ -807,7 +807,7 @@ mod test {
         )
     }
 
-    fn create_polygon() -> (Polygon<f64>, Vec<Coordinate<f64>>) {
+    fn create_polygon() -> (Polygon<f64>, Vec<Coordinate>) {
         (
             polygon!(
                 exterior: [(x: 0., y: 0.), (x: 5., y: 10.), (x: 10., y: 0.), (x: 0., y: 0.)],

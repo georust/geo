@@ -24,7 +24,7 @@ pub trait GeodesicLength<T, RHS = Self> {
     /// use geo::prelude::*;
     /// use geo::LineString;
     ///
-    /// let linestring = LineString::<f64>::from(vec![
+    /// let linestring = LineString::from(vec![
     ///     // New York City
     ///     (-74.006, 40.7128),
     ///     // London
@@ -45,7 +45,7 @@ pub trait GeodesicLength<T, RHS = Self> {
     fn geodesic_length(&self) -> T;
 }
 
-impl GeodesicLength<f64> for Line<f64> {
+impl GeodesicLength<f64> for Line {
     /// The units of the returned value is meters.
     fn geodesic_length(&self) -> f64 {
         let (start, end) = self.points();
@@ -53,7 +53,7 @@ impl GeodesicLength<f64> for Line<f64> {
     }
 }
 
-impl GeodesicLength<f64> for LineString<f64> {
+impl GeodesicLength<f64> for LineString {
     fn geodesic_length(&self) -> f64 {
         let mut length = 0.0;
         for line in self.lines() {
@@ -63,7 +63,7 @@ impl GeodesicLength<f64> for LineString<f64> {
     }
 }
 
-impl GeodesicLength<f64> for MultiLineString<f64> {
+impl GeodesicLength<f64> for MultiLineString {
     fn geodesic_length(&self) -> f64 {
         let mut length = 0.0;
         for line_string in &self.0 {

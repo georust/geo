@@ -30,7 +30,7 @@ use std::iter::FromIterator;
 /// ```
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MultiPoint<T: CoordNum>(pub Vec<Point<T>>);
+pub struct MultiPoint<T: CoordNum = f64>(pub Vec<Point<T>>);
 
 impl<T: CoordNum, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
     /// Convert a single `Point` (or something which can be converted to a `Point`) into a

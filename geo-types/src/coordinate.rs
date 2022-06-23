@@ -25,7 +25,7 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Coordinate<T: CoordNum> {
+pub struct Coordinate<T: CoordNum = f64> {
     pub x: T,
     pub y: T,
 }
@@ -238,7 +238,7 @@ use num_traits::Zero;
 /// use geo_types::Coordinate;
 /// use num_traits::Zero;
 ///
-/// let p: Coordinate<f64> = Zero::zero();
+/// let p: Coordinate = Zero::zero();
 ///
 /// assert_eq!(p.x, 0.);
 /// assert_eq!(p.y, 0.);

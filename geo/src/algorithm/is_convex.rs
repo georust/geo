@@ -211,7 +211,7 @@ mod tests {
     fn test_corner_cases() {
         // This is just tested to ensure there is no panic
         // due to out-of-index access
-        let empty: LineString<f64> = line_string!();
+        let empty: LineString = line_string!();
         assert!(empty.is_collinear());
         assert!(!empty.is_convex());
         assert!(!empty.is_strictly_ccw_convex());

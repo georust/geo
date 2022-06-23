@@ -5,7 +5,7 @@ use geo_types::MultiPoint;
 use std::fs::File;
 use std::io::Write;
 
-fn generate_polygon_str(coords: &[Coordinate<f64>]) -> String {
+fn generate_polygon_str(coords: &[Coordinate]) -> String {
     let mut points_str = String::from("");
     for coord in coords {
         points_str.push_str(format!("{},{} ", coord.x, coord.y).as_ref());
@@ -16,7 +16,7 @@ fn generate_polygon_str(coords: &[Coordinate<f64>]) -> String {
     );
 }
 
-fn generate_consecutive_circles(coords: &[Coordinate<f64>]) -> String {
+fn generate_consecutive_circles(coords: &[Coordinate]) -> String {
     let mut circles_str = String::from("");
     for coord in coords {
         circles_str.push_str(
@@ -34,7 +34,7 @@ fn produce_file_content(start_str: &str, mid_str: &str) -> String {
 }
 
 //Move the points such that they're clustered around the center of the image
-fn move_points_in_viewbox(width: f64, height: f64, points: Vec<Point<f64>>) -> Vec<Point<f64>> {
+fn move_points_in_viewbox(width: f64, height: f64, points: Vec<Point>) -> Vec<Point> {
     let mut new_points = vec![];
     for point in points {
         new_points.push(Point::new(
@@ -45,7 +45,7 @@ fn move_points_in_viewbox(width: f64, height: f64, points: Vec<Point<f64>>) -> V
     new_points
 }
 
-fn map_points_to_coords(points: Vec<Point<f64>>) -> Vec<Coordinate<f64>> {
+fn map_points_to_coords(points: Vec<Point>) -> Vec<Coordinate> {
     points.iter().map(|point| point.0).collect()
 }
 

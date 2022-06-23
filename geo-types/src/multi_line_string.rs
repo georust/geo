@@ -33,7 +33,7 @@ use std::iter::FromIterator;
 /// of a closed `MultiLineString` is always empty.
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MultiLineString<T: CoordNum>(pub Vec<LineString<T>>);
+pub struct MultiLineString<T: CoordNum = f64>(pub Vec<LineString<T>>);
 
 impl<T: CoordNum> MultiLineString<T> {
     /// Instantiate Self from the raw content value

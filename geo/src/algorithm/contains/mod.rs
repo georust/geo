@@ -501,17 +501,17 @@ mod test {
     #[test]
     // https://github.com/georust/geo/issues/473
     fn triangle_contains_collinear_points() {
-        let origin: Coordinate<f64> = (0., 0.).into();
+        let origin: Coordinate = (0., 0.).into();
         let tri = Triangle::new(origin, origin, origin);
-        let pt: Point<f64> = (0., 1.23456).into();
+        let pt: Point = (0., 1.23456).into();
         assert!(!tri.contains(&pt));
-        let pt: Point<f64> = (0., 0.).into();
+        let pt: Point = (0., 0.).into();
         assert!(!tri.contains(&pt));
-        let origin: Coordinate<f64> = (0., 0.).into();
+        let origin: Coordinate = (0., 0.).into();
         let tri = Triangle::new((1., 1.).into(), origin, origin);
-        let pt: Point<f64> = (1., 1.).into();
+        let pt: Point = (1., 1.).into();
         assert!(!tri.contains(&pt));
-        let pt: Point<f64> = (0.5, 0.5).into();
+        let pt: Point = (0.5, 0.5).into();
         assert!(!tri.contains(&pt));
     }
 }
