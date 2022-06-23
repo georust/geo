@@ -32,9 +32,9 @@ use std::convert::TryFrom;
 
 /// An enum representing any possible geometry type.
 ///
-/// All `Geo` types can be converted to a `Geometry` member using `.into()` (as part of the
-/// `std::convert::Into` pattern), and `Geo` types implement the `TryFrom` trait in order to
-/// convert _back_ from enum members.
+/// All geometry variants ([`Point`], [`LineString`], etc.) can be converted to a `Geometry` using
+/// [`Into::into`]. Conversely, [`TryFrom::try_from`] can be used to convert a [`Geometry`]
+/// _back_ to one of it's specific enum members.
 ///
 /// # Example
 ///
