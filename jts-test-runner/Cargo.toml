@@ -10,7 +10,7 @@ include_dir = { version = "0.6.0", features = ["glob"] }
 log = "0.4.14"
 serde =  { version = "1.0.105", features = ["derive"] }
 serde-xml-rs = "0.5.0"
-wkt = { version = "0.10.0", features = ["geo-types", "serde"] }
+wkt = { version = "0.10.3", features = ["geo-types", "serde"] }
 
 [dev-dependencies]
 pretty_env_logger = "0.4.0"

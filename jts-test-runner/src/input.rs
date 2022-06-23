@@ -38,7 +38,7 @@ pub(crate) struct Case {
     #[serde(default)]
     pub(crate) desc: String,
 
-    #[serde(deserialize_with = "wkt::deserialize_geometry")]
+    #[serde(deserialize_with = "wkt::deserialize_wkt")]
     pub(crate) a: Geometry<f64>,
 
     #[serde(deserialize_with = "deserialize_opt_geometry", default)]
@@ -66,7 +66,7 @@ pub struct CentroidInput {
 pub struct ConvexHullInput {
     pub(crate) arg1: String,
 
-    #[serde(rename = "$value", deserialize_with = "wkt::deserialize_geometry")]
+    #[serde(rename = "$value", deserialize_with = "wkt::deserialize_wkt")]
     pub(crate) expected: geo::Geometry<f64>,
 }
 
@@ -215,7 +215,7 @@ where
     D: Deserializer<'de>,
 {
     #[derive(Debug, Deserialize)]
-    struct Wrapper(#[serde(deserialize_with = "wkt::deserialize_geometry")] Geometry<f64>);
+    struct Wrapper(#[serde(deserialize_with = "wkt::deserialize_wkt")] Geometry<f64>);
 
     Option::<Wrapper>::deserialize(deserializer).map(|opt_wrapped| opt_wrapped.map(|w| w.0))
 }
