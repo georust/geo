@@ -1,24 +1,24 @@
 # Changes
 
-## Unreleased
+## 0.22.0
 
-* Reexport everything from the `proj` crate
-  * <https://github.com/georust/geo/pull/839>
-* Added a `geometry` module which re-exports all the inner geometry variants, so you
-  can `use geo::geometry::*` to concisely include `Point`, `LineString`, etc.
-  * <https://github.com/georust/geo/pull/853>
 * Add densification algorithm for linear geometry components
   * <https://github.com/georust/geo/pull/847>
-* Fix fast path euclidean distance
-  * <https://github.com/georust/pull/848>
-* Use robust predicates everywhere in geo
-  * <https://github.com/georust/geo/pull/852>
 * You may now specify `Geometry` rather than `Geometry<f64>` since we've added
   a default trait implementation. You may still explicitly declare the numeric
   type as f64, or any other implementation of `CoordNum`, but this should save
   you some typing if you're using f64. The same change applies to `Coordinates`
   and all the geometry variants, like `Point`, `LineString`, etc.
   * <https://github.com/georust/geo/pull/832>
+* Fix fast path euclidean distance
+  * <https://github.com/georust/pull/848>
+* Reexport everything from the `proj` crate
+  * <https://github.com/georust/geo/pull/839>
+* Added a `geometry` module which re-exports all the inner geometry variants, so you
+  can `use geo::geometry::*` to concisely include `Point`, `LineString`, etc.
+  * <https://github.com/georust/geo/pull/853>
+* Use robust predicates everywhere in geo
+  * <https://github.com/georust/geo/pull/852>
 * `Winding` trait is rexported under geo::algorithm::Winding (and thus
   geo::Winding and geo::prelude::Winding)
   * <https://github.com/georust/geo/pull/855/files>
