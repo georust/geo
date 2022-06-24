@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-approx = "0.4.0"
+approx = ">= 0.4.0, < 0.6.0"
 geo = { path = "../geo" }
 include_dir = { version = "0.7.2", features = ["glob"] }
 log = "0.4.14"
