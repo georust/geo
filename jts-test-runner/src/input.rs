@@ -38,11 +38,11 @@ pub(crate) struct Case {
     #[serde(default)]
     pub(crate) desc: String,
 
-    #[serde(deserialize_with = "wkt::deserialize_geometry")]
-    pub(crate) a: Geometry<f64>,
+    #[serde(deserialize_with = "wkt::deserialize_wkt")]
+    pub(crate) a: Geometry,
 
     #[serde(deserialize_with = "deserialize_opt_geometry", default)]
-    pub(crate) b: Option<Geometry<f64>>,
+    pub(crate) b: Option<Geometry>,
 
     #[serde(rename = "test", default)]
     pub(crate) tests: Vec<Test>,
@@ -59,15 +59,15 @@ pub struct CentroidInput {
     pub(crate) arg1: String,
 
     #[serde(rename = "$value", deserialize_with = "wkt::deserialize_point")]
-    pub(crate) expected: Option<geo::Point<f64>>,
+    pub(crate) expected: Option<geo::Point>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ConvexHullInput {
     pub(crate) arg1: String,
 
-    #[serde(rename = "$value", deserialize_with = "wkt::deserialize_geometry")]
-    pub(crate) expected: geo::Geometry<f64>,
+    #[serde(rename = "$value", deserialize_with = "wkt::deserialize_wkt")]
+    pub(crate) expected: geo::Geometry,
 }
 
 #[derive(Debug, Deserialize)]
@@ -122,26 +122,26 @@ pub(crate) enum OperationInput {
 #[derive(Debug, Clone)]
 pub(crate) enum Operation {
     Centroid {
-        subject: Geometry<f64>,
-        expected: Option<Point<f64>>,
+        subject: Geometry,
+        expected: Option<Point>,
     },
     Contains {
-        subject: Geometry<f64>,
-        target: Geometry<f64>,
+        subject: Geometry,
+        target: Geometry,
         expected: bool,
     },
     ConvexHull {
-        subject: Geometry<f64>,
-        expected: Geometry<f64>,
+        subject: Geometry,
+        expected: Geometry,
     },
     Intersects {
-        subject: Geometry<f64>,
-        clip: Geometry<f64>,
+        subject: Geometry,
+        clip: Geometry,
         expected: bool,
     },
     Relate {
-        a: Geometry<f64>,
-        b: Geometry<f64>,
+        a: Geometry,
+        b: Geometry,
         expected: IntersectionMatrix,
     },
 }
@@ -210,12 +210,12 @@ impl OperationInput {
 
 pub fn deserialize_opt_geometry<'de, D>(
     deserializer: D,
-) -> std::result::Result<Option<Geometry<f64>>, D::Error>
+) -> std::result::Result<Option<Geometry>, D::Error>
 where
     D: Deserializer<'de>,
 {
     #[derive(Debug, Deserialize)]
-    struct Wrapper(#[serde(deserialize_with = "wkt::deserialize_geometry")] Geometry<f64>);
+    struct Wrapper(#[serde(deserialize_with = "wkt::deserialize_wkt")] Geometry);
 
     Option::<Wrapper>::deserialize(deserializer).map(|opt_wrapped| opt_wrapped.map(|w| w.0))
 }

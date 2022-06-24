@@ -63,8 +63,8 @@ mod test {
 
     #[test]
     fn distance1_test() {
-        let a = Point::<f64>::new(0., 0.);
-        let b = Point::<f64>::new(1., 0.);
+        let a = Point::new(0., 0.);
+        let b = Point::new(1., 0.);
         assert_relative_eq!(
             a.haversine_distance(&b),
             111195.0802335329_f64,
@@ -86,8 +86,8 @@ mod test {
     #[test]
     fn distance3_test() {
         // this input comes from issue #100
-        let a = Point::<f64>::new(-77.036585, 38.897448);
-        let b = Point::<f64>::new(-77.009080, 38.889825);
+        let a = Point::new(-77.036585, 38.897448);
+        let b = Point::new(-77.009080, 38.889825);
         assert_relative_eq!(
             a.haversine_distance(&b),
             2526.823504306046_f64,

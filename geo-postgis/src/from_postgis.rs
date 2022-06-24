@@ -15,7 +15,7 @@ pub trait FromPostgis<T> {
     fn from_postgis(_: T) -> Self;
 }
 
-impl<'a, T> FromPostgis<&'a T> for Point<f64>
+impl<'a, T> FromPostgis<&'a T> for Point
 where
     T: postgis::Point,
 {
@@ -23,12 +23,12 @@ where
         Point::new(pt.x(), pt.y())
     }
 }
-impl<'a, T> FromPostgis<&'a T> for LineString<f64>
+impl<'a, T> FromPostgis<&'a T> for LineString
 where
     T: postgis::LineString<'a>,
 {
     fn from_postgis(ls: &'a T) -> Self {
-        let ret: Vec<Point<f64>> = ls.points().map(Point::from_postgis).collect();
+        let ret: Vec<Point> = ls.points().map(Point::from_postgis).collect();
         LineString::from(ret)
     }
 }
@@ -50,7 +50,7 @@ where
         Some(Polygon::new(exterior, rings))
     }
 }
-impl<'a, T> FromPostgis<&'a T> for MultiPoint<f64>
+impl<'a, T> FromPostgis<&'a T> for MultiPoint
 where
     T: postgis::MultiPoint<'a>,
 {
@@ -59,7 +59,7 @@ where
         MultiPoint::new(ret)
     }
 }
-impl<'a, T> FromPostgis<&'a T> for MultiLineString<f64>
+impl<'a, T> FromPostgis<&'a T> for MultiLineString
 where
     T: postgis::MultiLineString<'a>,
 {
@@ -68,7 +68,7 @@ where
         MultiLineString::new(ret)
     }
 }
-impl<'a, T> FromPostgis<&'a T> for MultiPolygon<f64>
+impl<'a, T> FromPostgis<&'a T> for MultiPolygon
 where
     T: postgis::MultiPolygon<'a>,
 {
@@ -79,7 +79,7 @@ where
         MultiPolygon::new(ret)
     }
 }
-impl<'a, T> FromPostgis<&'a GeometryCollectionT<T>> for GeometryCollection<f64>
+impl<'a, T> FromPostgis<&'a GeometryCollectionT<T>> for GeometryCollection
 where
     T: postgis::Point + postgis::ewkb::EwkbRead,
 {
@@ -94,7 +94,7 @@ where
         GeometryCollection::new_from(geoms)
     }
 }
-impl<'a, T> FromPostgis<&'a GeometryT<T>> for Option<Geometry<f64>>
+impl<'a, T> FromPostgis<&'a GeometryT<T>> for Option<Geometry>
 where
     T: postgis::Point + postgis::ewkb::EwkbRead,
 {

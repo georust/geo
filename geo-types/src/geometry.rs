@@ -20,13 +20,13 @@ use std::convert::TryFrom;
 /// use std::convert::TryFrom;
 /// use geo_types::{Point, point, Geometry, GeometryCollection};
 /// let p = point!(x: 1.0, y: 1.0);
-/// let pe: Geometry<f64> = p.into();
+/// let pe: Geometry = p.into();
 /// let pn = Point::try_from(pe).unwrap();
 /// ```
 ///
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Geometry<T: CoordNum> {
+pub enum Geometry<T: CoordNum = f64> {
     Point(Point<T>),
     Line(Line<T>),
     LineString(LineString<T>),

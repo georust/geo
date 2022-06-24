@@ -19,7 +19,7 @@ use std::ops::AddAssign;
 /// use geo::{LineString, point};
 /// use geo::LineLocatePoint;
 ///
-/// let linestring: LineString<f64> = vec![
+/// let linestring: LineString = vec![
 ///     [-1.0, 0.0],
 ///     [0.0, 0.0],
 ///     [0.0, 1.0]
@@ -174,12 +174,12 @@ mod test {
         assert_eq!(line.line_locate_point(&point), None);
 
         // zero length line
-        let line: Line<f64> = Line::new(coord! { x: 1.0, y: 1.0 }, coord! { x: 1.0, y: 1.0 });
+        let line: Line = Line::new(coord! { x: 1.0, y: 1.0 }, coord! { x: 1.0, y: 1.0 });
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), Some(0.0));
 
         // another concrete example
-        let line: Line<f64> = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 10.0, y: 0.0 });
+        let line: Line = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 10.0, y: 0.0 });
         let pt = Point::new(555.0, 555.0);
         assert_eq!(line.line_locate_point(&pt), Some(1.0));
         let pt = Point::new(10.0000001, 0.0);
@@ -191,7 +191,7 @@ mod test {
     #[test]
     fn test_line_locate_point_linestring() {
         // finite example using the ring
-        let ring: LineString<f64> = geo_test_fixtures::ring::<f64>();
+        let ring: LineString = geo_test_fixtures::ring::<f64>();
         let pt = point!(x: 10.0, y: 1.0);
         assert_eq!(ring.line_locate_point(&pt), Some(0.0));
 
@@ -212,7 +212,7 @@ mod test {
         assert_eq!(ring.line_locate_point(&pt), None);
 
         // point is equidistant to two line segments - return the fraction from the first closest
-        let line: LineString<f64> = LineString::new(vec![
+        let line: LineString = LineString::new(vec![
             (0.0, 0.0).into(),
             (1.0, 0.0).into(),
             (1.0, 1.0).into(),
@@ -221,7 +221,7 @@ mod test {
         let pt = point!(x: 0.0, y: 0.5);
         assert_eq!(line.line_locate_point(&pt), Some(0.0));
 
-        let line: LineString<f64> = LineString::new(vec![
+        let line: LineString = LineString::new(vec![
             (1.0, 1.0).into(),
             (1.0, 1.0).into(),
             (1.0, 1.0).into(),
@@ -230,7 +230,7 @@ mod test {
         assert_eq!(line.line_locate_point(&pt), Some(0.0));
 
         // line contains inf or nan
-        let line: LineString<f64> = LineString::new(vec![
+        let line: LineString = LineString::new(vec![
             coord! { x: 1.0, y: 1.0 },
             coord! {
                 x: Float::nan(),
@@ -241,7 +241,7 @@ mod test {
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), None);
 
-        let line: LineString<f64> = LineString::new(vec![
+        let line: LineString = LineString::new(vec![
             coord! { x: 1.0, y: 1.0 },
             coord! {
                 x: Float::infinity(),
@@ -251,7 +251,7 @@ mod test {
         ]);
         let pt = point!(x: 2.0, y: 2.0);
         assert_eq!(line.line_locate_point(&pt), None);
-        let line: LineString<f64> = LineString::new(vec![
+        let line: LineString = LineString::new(vec![
             coord! { x: 1.0, y: 1.0 },
             coord! {
                 x: Float::neg_infinity(),

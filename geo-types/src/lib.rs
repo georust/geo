@@ -1,14 +1,40 @@
 #![warn(missing_debug_implementations)]
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
-//! The `geo-types` library provides geospatial primitive types for the [GeoRust] ecosystem.
+//! The `geo-types` library defines geometric types for the [GeoRust] ecosystem.
 //!
 //! In most cases, you will only need to use this crate if you’re a crate author and want
 //! compatibility with other GeoRust crates. Otherwise, the [`geo`](https://crates.io/crates/geo)
-//! crate re-exports these types and provides geospatial algorithms.
+//! crate re-exports these types and additionally provides geospatial algorithms.
 //!
 //! # Types
 //!
 //! - **[`Coordinate`]**: A two-dimensional coordinate. All geometry types are composed of [`Coordinate`]s, though [`Coordinate`] itself is not a [`Geometry`] type.
+//!
+//! By default, coordinates are 64-bit floating point numbers, but this is generic, and you may specify any numeric type that implements [`CoordNum`] or [`CoordFloat`]. As well as f64, this includes common numeric types like f32, i32, i64, etc.
+//!
+//! ```rust
+//! use geo_types::Point;
+//!
+//! // Geometries are f64 by default
+//! let point: Point = Point::new(1.0, 2.0);
+//! assert_eq!(std::mem::size_of::<Point>(), 64 * 2 / 8);
+//!
+//! // You can be explicit about the numeric type.
+//! let f64_point: Point<f64> = Point::new(1.0, 2.0);
+//! assert_eq!(std::mem::size_of::<Point<f64>>(), 64 * 2 / 8);
+//!
+//! // Or specify some non-default numeric type
+//! let f32_point: Point<f32> = Point::new(1.0, 2.0);
+//! assert_eq!(std::mem::size_of::<Point<f32>>(), 32 * 2 / 8);
+//!
+//! // Integer geometries are supported too, though not all
+//! // algorithms will be implemented for all numeric types.
+//! let i32_point: Point<i32> = Point::new(1, 2);
+//! assert_eq!(std::mem::size_of::<Point<i32>>(), 32 * 2 / 8);
+//! ```
+//!
+//! ## Geometries
+//!
 //! - **[`Point`]**: A single point represented by one [`Coordinate`]
 //! - **[`MultiPoint`]**: A collection of [`Point`]s
 //! - **[`Line`]**: A line segment represented by two [`Coordinate`]s

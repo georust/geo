@@ -62,7 +62,6 @@ mod modern {
         /// # use approx::assert_relative_eq;
         ///
         /// let SCALE_FACTOR: f64 = 1000000.0;
-        ///
         /// let floating_point_geom: Point<f64> = Point::new(10.15f64, 20.05f64);
         /// let fixed_point_geom: Point<i32> = floating_point_geom.map_coords(|Coordinate { x, y }| {
         ///     Coordinate { x: (x * SCALE_FACTOR) as i32, y: (y * SCALE_FACTOR) as i32 }

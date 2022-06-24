@@ -1,7 +1,6 @@
 use crate::coords_iter::CoordsIter;
-use std::ops::AddAssign;
-
 use crate::{CoordFloat, EuclideanLength, Line, LineString, Point};
+use std::ops::AddAssign;
 
 /// Returns an option of the point that lies a given fraction along the line.
 ///
@@ -19,7 +18,7 @@ use crate::{CoordFloat, EuclideanLength, Line, LineString, Point};
 /// use geo::{LineString, point};
 /// use geo::LineInterpolatePoint;
 ///
-/// let linestring: LineString<f64> = vec![
+/// let linestring: LineString = vec![
 ///     [-1.0, 0.0],
 ///     [0.0, 0.0],
 ///     [0.0, 1.0]
@@ -109,6 +108,7 @@ where
 
 #[cfg(test)]
 mod test {
+
     use super::*;
     use crate::{coord, point};
     use crate::{ClosestPoint, LineLocatePoint};
@@ -210,7 +210,7 @@ mod test {
     #[test]
     fn test_line_interpolate_point_linestring() {
         // some finite examples
-        let linestring: LineString<f64> = vec![[-1.0, 0.0], [0.0, 0.0], [1.0, 0.0]].into();
+        let linestring: LineString = vec![[-1.0, 0.0], [0.0, 0.0], [1.0, 0.0]].into();
         assert_eq!(
             linestring.line_interpolate_point(0.0),
             Some(point!(x: -1.0, y: 0.0))
@@ -243,7 +243,7 @@ mod test {
         );
         assert_eq!(linestring.line_interpolate_point(Float::nan()), None);
 
-        let linestring: LineString<f64> = vec![[-1.0, 0.0], [0.0, 0.0], [0.0, 1.0]].into();
+        let linestring: LineString = vec![[-1.0, 0.0], [0.0, 0.0], [0.0, 1.0]].into();
         assert_eq!(
             linestring.line_interpolate_point(0.5),
             Some(point!(x: 0.0, y: 0.0))
@@ -254,26 +254,25 @@ mod test {
         );
 
         // linestrings with nans/infs
-        let linestring: LineString<f64> = vec![[-1.0, 0.0], [0.0, Float::nan()], [0.0, 1.0]].into();
+        let linestring: LineString = vec![[-1.0, 0.0], [0.0, Float::nan()], [0.0, 1.0]].into();
         assert_eq!(linestring.line_interpolate_point(0.5), None);
         assert_eq!(linestring.line_interpolate_point(1.5), None);
         assert_eq!(linestring.line_interpolate_point(-1.0), None);
 
-        let linestring: LineString<f64> =
-            vec![[-1.0, 0.0], [0.0, Float::infinity()], [0.0, 1.0]].into();
+        let linestring: LineString = vec![[-1.0, 0.0], [0.0, Float::infinity()], [0.0, 1.0]].into();
         assert_eq!(linestring.line_interpolate_point(0.5), None);
         assert_eq!(linestring.line_interpolate_point(1.5), None);
         assert_eq!(linestring.line_interpolate_point(-1.0), None);
 
-        let linestring: LineString<f64> =
+        let linestring: LineString =
             vec![[-1.0, 0.0], [0.0, Float::neg_infinity()], [0.0, 1.0]].into();
         assert_eq!(linestring.line_interpolate_point(0.5), None);
         assert_eq!(linestring.line_interpolate_point(1.5), None);
         assert_eq!(linestring.line_interpolate_point(-1.0), None);
 
         // Empty line
-        let coords: Vec<Point<f64>> = Vec::new();
-        let linestring: LineString<f64> = coords.into();
+        let coords: Vec<Point> = Vec::new();
+        let linestring: LineString = coords.into();
         assert_eq!(linestring.line_interpolate_point(0.5), None);
     }
 
@@ -281,7 +280,7 @@ mod test {
     fn test_matches_closest_point() {
         // line_locate_point should return the fraction to the closest point,
         // so interpolating the line with that fraction should yield the closest point
-        let linestring: LineString<f64> = vec![[-1.0, 0.0], [0.5, 1.0], [1.0, 2.0]].into();
+        let linestring: LineString = vec![[-1.0, 0.0], [0.5, 1.0], [1.0, 2.0]].into();
         let pt = point!(x: 0.7, y: 0.7);
         let frac = linestring
             .line_locate_point(&pt)

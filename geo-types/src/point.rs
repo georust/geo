@@ -22,13 +22,13 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 ///
 /// ```
 /// use geo_types::{coord, Point};
-/// let p1: Point<f64> = (0., 1.).into();
+/// let p1: Point = (0., 1.).into();
 /// let c = coord! { x: 10., y: 20. };
-/// let p2: Point<f64> = c.into();
+/// let p2: Point = c.into();
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T: CoordNum>(pub Coordinate<T>);
+pub struct Point<T: CoordNum = f64>(pub Coordinate<T>);
 
 impl<T: CoordNum> From<Coordinate<T>> for Point<T> {
     fn from(x: Coordinate<T>) -> Self {
@@ -246,6 +246,14 @@ impl<T: CoordNum> Point<T> {
     /// Returns the cross product of 3 points. A positive value implies
     /// `self` → `point_b` → `point_c` is counter-clockwise, negative implies
     /// clockwise.
+    ///
+    /// # Note on Robustness
+    ///
+    /// This function is **not** robust against floating-point errors.
+    /// The [`geo`](https://docs.rs/geo) crate
+    /// offers robust predicates for standard numeric types using the
+    /// [`Kernel`](https://docs.rs/geo/algorithm/kernels/trait.Kernel.html)
+    /// trait, and these should be preferred if possible.
     ///
     /// # Examples
     ///

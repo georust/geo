@@ -400,8 +400,8 @@ mod test {
     /// > Succeeds using DD and Shewchuk orientation
     #[test]
     fn test_tomas_fa_1() {
-        let line_1 = Line::<f64>::new(coord! { x: -42.0, y: 163.2 }, coord! { x: 21.2, y: 265.2 });
-        let line_2 = Line::<f64>::new(coord! { x: -26.2, y: 188.7 }, coord! { x: 37.0, y: 290.7 });
+        let line_1 = Line::new(coord! { x: -42.0, y: 163.2 }, coord! { x: 21.2, y: 265.2 });
+        let line_2 = Line::new(coord! { x: -26.2, y: 188.7 }, coord! { x: 37.0, y: 290.7 });
         let actual = line_intersection(line_1, line_2);
         let expected = None;
         assert_eq!(actual, expected);
@@ -414,8 +414,8 @@ mod test {
     /// > Fails using original JTS DeVillers determine orientation test.
     #[test]
     fn test_tomas_fa_2() {
-        let line_1 = Line::<f64>::new(coord! { x: -5.9, y: 163.1 }, coord! { x: 76.1, y: 250.7 });
-        let line_2 = Line::<f64>::new(coord! { x: 14.6, y: 185.0 }, coord! { x: 96.6, y: 272.6 });
+        let line_1 = Line::new(coord! { x: -5.9, y: 163.1 }, coord! { x: 76.1, y: 250.7 });
+        let line_2 = Line::new(coord! { x: 14.6, y: 185.0 }, coord! { x: 96.6, y: 272.6 });
         let actual = line_intersection(line_1, line_2);
         let expected = None;
         assert_eq!(actual, expected);

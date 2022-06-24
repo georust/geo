@@ -1,6 +1,8 @@
 use crate::prelude::*;
 use crate::Extremes;
 use crate::{GeoFloat, Line, Point, Polygon, Triangle};
+use geo_types::CoordFloat;
+use geo_types::Coordinate;
 use num_traits::float::FloatConst;
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance
@@ -46,12 +48,13 @@ where
         // we need to spin the calipers equal to the total number of vertices in both polygons
         // alternatively, we can accumulate the total rotation angle and stop when it = 2pi radians
         angle: T::zero(),
+        max_iterations: poly1.exterior().0.len() + poly2.exterior().0.len(),
     };
-    // recall that 360 degrees == 2pi radians
-    let max_angle = T::from(360.0f64.to_radians()).unwrap();
-    while state.angle < max_angle {
+    let mut iterations = 0usize;
+    while iterations <= state.max_iterations {
         nextpoints(&mut state);
         computemin(&mut state);
+        iterations += 1;
     }
     state.dist
 }
@@ -78,6 +81,16 @@ where
     T: GeoFloat,
 {
     (current_vertex + 1) % (poly.exterior().0.len() - 1)
+}
+
+/// is p1 -> p2 -> p3 wound clockwise?
+#[inline]
+fn clockwise<T>(c1: Coordinate<T>, c2: Coordinate<T>, c3: Coordinate<T>) -> bool
+where
+    T: CoordFloat + HasKernel,
+{
+    let o = <T as HasKernel>::Ker::orient2d(c1, c2, c3);
+    o == Orientation::Clockwise
 }
 
 #[derive(Debug)]
@@ -113,6 +126,7 @@ where
     slope: T,
     vertical: bool,
     angle: T,
+    max_iterations: usize,
 }
 
 // much of the following code is ported from Java, copyright 1999 Hormoz Pirzadeh, available at:
@@ -128,7 +142,7 @@ where
     let mut sin;
     let pnext = poly.exterior().0[next_vertex(poly, idx)];
     let pprev = poly.exterior().0[prev_vertex(poly, idx)];
-    let clockwise = Point::from(pprev).cross_prod(Point::from(p.0), Point::from(pnext)) < T::zero();
+    let clockwise = clockwise(pprev, p.0, pnext);
     let slope_prev;
     let slope_next;
     // Slope isn't 0, things are complicated
@@ -322,7 +336,7 @@ where
     let hundred = T::from::<i32>(100).unwrap();
     let pnext = poly.exterior().0[next_vertex(poly, idx)];
     let pprev = poly.exterior().0[prev_vertex(poly, idx)];
-    let clockwise = Point::from(pprev).cross_prod(Point::from(p.0), Point::from(pnext)) < T::zero();
+    let clockwise = clockwise(pprev, p.0, pnext);
     let punit;
     if !vertical {
         punit = unitvector(m, poly, p, idx);
@@ -368,19 +382,19 @@ where
     }
     let perpunit = unitpvector(p, punit);
     let mut obtuse = false;
-    let left = p.cross_prod(perpunit, Point(pnext));
-    if left < T::zero() {
+    let left = <T as HasKernel>::Ker::orient2d(p.into(), perpunit.into(), pnext);
+    if left == Orientation::Clockwise {
         obtuse = true;
     }
     if clockwise {
-        if left == T::zero() {
+        if left == Orientation::Collinear {
             T::PI() / (T::one() + T::one())
         } else if !obtuse {
             (-sine).asin()
         } else {
             T::PI() - (-sine).asin()
         }
-    } else if left == T::zero() {
+    } else if left == Orientation::Collinear {
         T::PI() / (T::one() + T::one())
     } else if !obtuse {
         sine.asin()
@@ -512,9 +526,14 @@ where
             } else {
                 u = unitvector(&T::zero(), state.poly2, state.q2, state.q2_idx);
             }
-            let line_1 = u.cross_prod(state.q2, state.p1);
-            let line_2 = u.cross_prod(state.q2, state.p1prev);
-            if line_1 != line_2 && line_1 != T::zero() && line_2 != T::zero() {
+            let line_1 =
+                <T as HasKernel>::Ker::orient2d(u.into(), state.q2.into(), state.p1.into());
+            let line_2 =
+                <T as HasKernel>::Ker::orient2d(u.into(), state.q2.into(), state.p1prev.into());
+            if line_1 != line_2
+                && line_1 != Orientation::Collinear
+                && line_2 != Orientation::Collinear
+            {
                 // an orthogonal intersection exists
                 newdist = vertex_line_distance(state.q2, state.p1prev, state.p1);
                 if newdist <= state.dist {
@@ -539,9 +558,14 @@ where
             } else {
                 u = unitvector(&T::zero(), state.poly1, state.p1, state.p1_idx);
             }
-            let line_1 = u.cross_prod(state.p1, state.q2);
-            let line_2 = u.cross_prod(state.p1, state.q2prev);
-            if line_1 != line_2 && line_1 != T::zero() && line_2 != T::zero() {
+            let line_1 =
+                <T as HasKernel>::Ker::orient2d(u.into(), state.p1.into(), state.q2.into());
+            let line_2 =
+                <T as HasKernel>::Ker::orient2d(u.into(), state.p1.into(), state.q2prev.into());
+            if line_1 != line_2
+                && line_1 != Orientation::Collinear
+                && line_2 != Orientation::Collinear
+            {
                 // an orthogonal intersection exists
                 newdist = vertex_line_distance(state.p1, state.q2prev, state.q2);
                 if newdist <= state.dist {
@@ -589,12 +613,23 @@ where
                 u1 = unitvector(&T::zero(), state.poly1, state.p1prev, state.p1_idx);
                 u2 = unitvector(&T::zero(), state.poly1, state.p1, state.p1_idx);
             }
-            let line_1a = u1.cross_prod(state.p1prev, state.q2prev);
-            let line_1b = u1.cross_prod(state.p1prev, state.q2);
-            let line_2a = u2.cross_prod(state.p1, state.q2prev);
-            let line_2b = u2.cross_prod(state.p1, state.q2);
-            if line_1a != line_1b && line_1a != T::zero() && line_1b != T::zero()
-                || line_2a != line_2b && line_2a != T::zero() && line_2b != T::zero()
+            let line_1a = <T as HasKernel>::Ker::orient2d(
+                u1.into(),
+                state.p1prev.into(),
+                state.q2prev.into(),
+            );
+            let line_1b =
+                <T as HasKernel>::Ker::orient2d(u1.into(), state.p1prev.into(), state.q2.into());
+            let line_2a =
+                <T as HasKernel>::Ker::orient2d(u2.into(), state.p1.into(), state.q2prev.into());
+            let line_2b =
+                <T as HasKernel>::Ker::orient2d(u2.into(), state.p1.into(), state.q2.into());
+            if line_1a != line_1b
+                && line_1a != Orientation::Collinear
+                && line_1b != Orientation::Collinear
+                || line_2a != line_2b
+                    && line_2a != Orientation::Collinear
+                    && line_2b != Orientation::Collinear
             {
                 // an orthogonal intersection exists
                 newdist = vertex_line_distance(state.p1, state.q2prev, state.q2);
