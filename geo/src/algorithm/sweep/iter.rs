@@ -177,7 +177,7 @@ where
 /// ## Usage
 ///
 /// Construct from an iterator of any type implementing the
-/// [`Cross`] trait. The geo-type [`Line`] implements this trait.
+/// [`Cross`] trait. The geo-type [`Line`](crate::Line) implements this trait.
 /// See the trait documentation for more information on usage with
 /// custom types.
 ///

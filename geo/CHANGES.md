@@ -19,6 +19,13 @@
   you some typing if you're using f64. The same change applies to `Coordinates`
   and all the geometry variants, like `Point`, `LineString`, etc.
   * <https://github.com/georust/geo/pull/832>
+* `Winding` trait is rexported under geo::algorithm::Winding (and thus
+  geo::Winding and geo::prelude::Winding)
+  * <https://github.com/georust/geo/pull/855/files>
+* BREAKING: de-exported `WindingOrder` from `geo::WindingOrder`/`geo::algorithms::WindingOrder`. 
+  Instead, go back to `use geo::winding_order::WindingOrder` - it was briefly rexported as
+  `geo::WindingOrder` and `geo::algorithms::WindingOrder`.
+  * <https://github.com/georust/geo/pull/855/files>
 
 ## 0.21.0
 

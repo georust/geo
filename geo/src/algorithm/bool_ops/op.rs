@@ -3,7 +3,8 @@ use std::{cell::Cell, cmp::Ordering, fmt::Debug};
 use super::*;
 use crate::{
     sweep::{Cross, Crossing, CrossingsIter, LineOrPoint},
-    CoordsIter, GeoFloat as Float, LineString, Polygon, WindingOrder,
+    winding_order::WindingOrder,
+    CoordsIter, GeoFloat as Float, LineString, Polygon,
 };
 
 #[derive(Debug, Clone)]
