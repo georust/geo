@@ -91,8 +91,8 @@
 //!
 //! ## Winding
 //!
-//! - **[`Orient`](Orient)**: Apply a specified [`Winding`](Winding) to a [`Polygon`]’s interior and exterior rings
-//! - **[`Winding`](Winding)**: Calculate and manipulate the winding order of a [`LineString`]
+//! - **[`Orient`](Orient)**: Apply a specified winding [`Direction`](orient::Direction) to a [`Polygon`]’s interior and exterior rings
+//! - **[`Winding`](Winding)**: Calculate and manipulate the [`WindingOrder`](winding_order::WindingOrder) of a [`LineString`]
 //!
 //! ## Iteration
 //!

@@ -69,7 +69,7 @@ mod modern {
         /// ```
         ///
         /// If you want *only* to convert between numeric types (i32 -> f64) without further
-        /// transformation, consider using [`Convert].
+        /// transformation, consider using [`Convert`](crate::Convert).
         fn map_coords(&self, func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy) -> Self::Output
         where
             T: CoordNum,
