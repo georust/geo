@@ -1,8 +1,6 @@
+use crate::geometry::*;
 use crate::Orientation::Collinear;
-use crate::{
-    CoordNum, GeoNum, Geometry, GeometryCollection, GeometryCow, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
-};
+use crate::{CoordNum, GeoNum, GeometryCow};
 
 /// Geometries can have 0, 1, or two dimensions. Or, in the case of an [`empty`](#is_empty)
 /// geometry, a special `Empty` dimensionality.

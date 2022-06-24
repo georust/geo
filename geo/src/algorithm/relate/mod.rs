@@ -1,10 +1,8 @@
 pub(crate) use edge_end_builder::EdgeEndBuilder;
 pub use geomgraph::intersection_matrix::IntersectionMatrix;
 
-use crate::{
-    GeoFloat, Geometry, GeometryCollection, GeometryCow, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
-};
+use crate::geometry::*;
+use crate::{GeoFloat, GeometryCow};
 
 mod edge_end_builder;
 mod geomgraph;

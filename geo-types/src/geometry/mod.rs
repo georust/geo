@@ -1,7 +1,29 @@
-use crate::{
-    CoordNum, Error, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
-    MultiPolygon, Point, Polygon, Rect, Triangle,
-};
+pub(crate) mod coordinate;
+pub(crate) mod geometry_collection;
+pub(crate) mod line;
+pub(crate) mod line_string;
+pub(crate) mod multi_line_string;
+pub(crate) mod multi_point;
+pub(crate) mod multi_polygon;
+pub(crate) mod point;
+pub(crate) mod polygon;
+pub(crate) mod rect;
+pub(crate) mod triangle;
+
+// re-export all the geometry variants:
+pub use coordinate::Coordinate;
+pub use geometry_collection::GeometryCollection;
+pub use line::Line;
+pub use line_string::LineString;
+pub use multi_line_string::MultiLineString;
+pub use multi_point::MultiPoint;
+pub use multi_polygon::MultiPolygon;
+pub use point::Point;
+pub use polygon::Polygon;
+pub use rect::Rect;
+pub use triangle::Triangle;
+
+use crate::{CoordNum, Error};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -10,9 +32,9 @@ use std::convert::TryFrom;
 
 /// An enum representing any possible geometry type.
 ///
-/// All `Geo` types can be converted to a `Geometry` member using `.into()` (as part of the
-/// `std::convert::Into` pattern), and `Geo` types implement the `TryFrom` trait in order to
-/// convert _back_ from enum members.
+/// All geometry variants ([`Point`], [`LineString`], etc.) can be converted to a `Geometry` using
+/// [`Into::into`]. Conversely, [`TryFrom::try_from`] can be used to convert a [`Geometry`]
+/// _back_ to one of it's specific enum members.
 ///
 /// # Example
 ///

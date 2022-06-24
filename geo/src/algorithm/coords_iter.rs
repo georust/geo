@@ -1,9 +1,7 @@
 use std::fmt::Debug;
 
-use crate::{
-    coord, CoordNum, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
-};
+use crate::geometry::*;
+use crate::{coord, CoordNum};
 
 use std::{fmt, iter, marker, slice};
 

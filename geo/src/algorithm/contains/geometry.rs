@@ -1,5 +1,7 @@
 use super::Contains;
-use crate::*;
+use crate::geometry::{Coordinate, Geometry, GeometryCollection, Point};
+use crate::geometry_delegate_impl;
+use crate::GeoNum;
 
 // ┌──────────────────────────────┐
 // │ Implementations for Geometry │

@@ -6,11 +6,28 @@
 //! compatibility with other GeoRust crates. Otherwise, the [`geo`](https://crates.io/crates/geo)
 //! crate re-exports these types and additionally provides geospatial algorithms.
 //!
-//! # Types
+//! ## Geometries
 //!
-//! - **[`Coordinate`]**: A two-dimensional coordinate. All geometry types are composed of [`Coordinate`]s, though [`Coordinate`] itself is not a [`Geometry`] type.
+//! - **[`Point`]**: A single point represented by one [`Coordinate`]
+//! - **[`MultiPoint`]**: A collection of [`Point`]s
+//! - **[`Line`]**: A line segment represented by two [`Coordinate`]s
+//! - **[`LineString`]**: A series of contiguous line segments represented by two or more
+//!   [`Coordinate`]s
+//! - **[`MultiLineString`]**: A collection of [`LineString`]s
+//! - **[`Polygon`]**: A bounded area represented by one [`LineString`] exterior ring, and zero or
+//!   more [`LineString`] interior rings
+//! - **[`MultiPolygon`]**: A collection of [`Polygon`]s
+//! - **[`Rect`]**: An axis-aligned bounded rectangle represented by minimum and maximum
+//!   [`Coordinate`]s
+//! - **[`Triangle`]**: A bounded area represented by three [`Coordinate`] vertices
+//! - **[`GeometryCollection`]**: A collection of [`Geometry`]s
+//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coordinate`]
 //!
-//! By default, coordinates are 64-bit floating point numbers, but this is generic, and you may specify any numeric type that implements [`CoordNum`] or [`CoordFloat`]. As well as f64, this includes common numeric types like f32, i32, i64, etc.
+//! ## Coordinates and Numeric Types
+//!
+//! - **[`Coordinate`]**: A two-dimensional coordinate. All geometry types are composed of [`Coordinate`]s, though [`Coordinate`] itself is not a [`Geometry`] type. See [`Point`] for a single coordinate geometry.
+//!
+//! By default, coordinates are 64-bit floating point numbers, but this is generic, and you may specify any numeric type that implements [`CoordNum`] or [`CoordFloat`]. As well as [`f64`], this includes common numeric types like [`f32`], [`i32`], [`i64`], etc.
 //!
 //! ```rust
 //! use geo_types::Point;
@@ -32,23 +49,6 @@
 //! let i32_point: Point<i32> = Point::new(1, 2);
 //! assert_eq!(std::mem::size_of::<Point<i32>>(), 32 * 2 / 8);
 //! ```
-//!
-//! ## Geometries
-//!
-//! - **[`Point`]**: A single point represented by one [`Coordinate`]
-//! - **[`MultiPoint`]**: A collection of [`Point`]s
-//! - **[`Line`]**: A line segment represented by two [`Coordinate`]s
-//! - **[`LineString`]**: A series of contiguous line segments represented by two or more
-//!   [`Coordinate`]s
-//! - **[`MultiLineString`]**: A collection of [`LineString`]s
-//! - **[`Polygon`]**: A bounded area represented by one [`LineString`] exterior ring, and zero or
-//!   more [`LineString`] interior rings
-//! - **[`MultiPolygon`]**: A collection of [`Polygon`]s
-//! - **[`Rect`]**: An axis-aligned bounded rectangle represented by minimum and maximum
-//!   [`Coordinate`]s
-//! - **[`Triangle`]**: A bounded area represented by three [`Coordinate`] vertices
-//! - **[`GeometryCollection`]**: A collection of [`Geometry`]s
-//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coordinate`]
 //!
 //! # Semantics
 //!
@@ -109,42 +109,13 @@ impl<T: CoordinateType + Debug> CoordNum for T {}
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}
 
-mod coordinate;
-pub use crate::coordinate::Coordinate;
+pub mod geometry;
+pub use geometry::*;
 
-mod point;
-pub use crate::point::Point;
+pub use geometry::line_string::PointsIter;
 
-mod multi_point;
-pub use crate::multi_point::MultiPoint;
-
-mod line;
-pub use crate::line::Line;
-
-mod line_string;
-pub use crate::line_string::{LineString, PointsIter};
-
-mod multi_line_string;
-pub use crate::multi_line_string::MultiLineString;
-
-mod polygon;
-pub use crate::polygon::Polygon;
-
-mod multi_polygon;
-pub use crate::multi_polygon::MultiPolygon;
-
-mod geometry;
-pub use crate::geometry::Geometry;
-
-mod geometry_collection;
-pub use crate::geometry_collection::GeometryCollection;
-
-mod triangle;
-pub use crate::triangle::Triangle;
-
-mod rect;
 #[allow(deprecated)]
-pub use crate::rect::{InvalidRectCoordinatesError, Rect};
+pub use geometry::rect::InvalidRectCoordinatesError;
 
 mod error;
 pub use error::Error;

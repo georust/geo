@@ -38,7 +38,7 @@ mod test {
         let failure = Point::try_from(rect_geometry).unwrap_err();
         assert_eq!(
             failure.to_string(),
-            "Expected a geo_types::point::Point, but found a geo_types::rect::Rect"
+            "Expected a geo_types::geometry::point::Point, but found a geo_types::geometry::rect::Rect"
         );
     }
 }

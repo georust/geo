@@ -26,10 +26,8 @@
 
 pub use modern::*;
 mod modern {
-    pub(crate) use crate::{
-        CoordNum, Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-        MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
-    };
+    pub(crate) use crate::geometry::*;
+    pub(crate) use crate::CoordNum;
 
     /// Map a function over all the coordinates in an object, returning a new one
     pub trait MapCoords<T, NT> {
