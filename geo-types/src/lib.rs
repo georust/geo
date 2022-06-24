@@ -95,7 +95,7 @@ pub trait CoordinateType: Num + Copy + NumCast + PartialOrd + Debug {}
 #[allow(deprecated)]
 impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordinateType for T {}
 
-/// The type of an x or y value of a point/coordinate.
+/// For algorithms which can use both integer **and** floating point `Point`s/`Coordinate`s
 ///
 /// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
 ///
@@ -106,6 +106,7 @@ pub trait CoordNum: CoordinateType + Debug {}
 #[allow(deprecated)]
 impl<T: CoordinateType + Debug> CoordNum for T {}
 
+/// For algorithms which can only use floating point `Point`s/`Coordinate`s, like area or length calculations
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}
 

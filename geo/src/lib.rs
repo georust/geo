@@ -238,11 +238,11 @@ pub mod prelude {
     pub use crate::algorithm::*;
 }
 
-/// A common numeric trait used for geo algorithms.
+/// A common numeric trait used for geo algorithms
 ///
 /// Different numeric types have different tradeoffs. `geo` strives to utilize generics to allow
 /// users to choose their numeric types. If you are writing a function which you'd like to be
-/// generic over all the numeric types supported by geo, you probably want to constraint
+/// generic over all the numeric types supported by geo, you probably want to constrain
 /// your function input to `GeoFloat`. For methods which work for integers, and not just floating
 /// point, see [`GeoNum`].
 ///
@@ -285,5 +285,6 @@ impl<T> GeoFloat for T where
 {
 }
 
+/// A trait for methods which work for both integers **and** floating point
 pub trait GeoNum: CoordNum + HasKernel {}
 impl<T> GeoNum for T where T: CoordNum + HasKernel {}
