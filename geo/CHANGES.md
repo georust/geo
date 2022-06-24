@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+* Reexport everything from the `proj` crate
+  * <https://github.com/georust/geo/pull/839>
+
 ## 0.21.0
 
 * Boolean operations for `Polygon`s and `MultiPolygon`s: intersect, union, xor,
