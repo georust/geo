@@ -188,7 +188,7 @@ pub use winding_order::Winding;
 /// Planar sweep algorithm and related utils
 pub mod sweep;
 
-/// Boolean Ops;
+/// Boolean Ops such as union, xor, difference;
 pub mod bool_ops;
 pub use bool_ops::{BooleanOps, OpType};
 

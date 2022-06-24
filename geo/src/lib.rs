@@ -36,6 +36,10 @@
 //! - **[`Area`](Area)**: Calculate the planar area of a geometry
 //! - **[`ChamberlainDuquetteArea`](ChamberlainDuquetteArea)**: Calculate the geodesic area of a geometry
 //!
+//! ## Boolean Operations
+//!
+//! - **[`BooleanOps`](BooleanOps)**: combine or split (Multi)Polygons using intersecton, union, xor, or difference operations
+//!
 //! ## Distance
 //!
 //! - **[`EuclideanDistance`](EuclideanDistance)**: Calculate the minimum euclidean distance between geometries
