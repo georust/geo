@@ -7,7 +7,7 @@ use log::{debug, info};
 use super::{input, Operation, Result};
 use geo::{intersects::Intersects, prelude::Contains, Coordinate, Geometry, LineString, Polygon};
 
-const GENERAL_TEST_XML: Dir = include_dir!("resources/testxml/general");
+const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/general");
 
 #[derive(Debug, Default, Clone)]
 pub struct TestRunner {
