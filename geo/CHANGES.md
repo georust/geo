@@ -1,6 +1,9 @@
 # Changes
 
 ## Unreleased
+
+* Reexport everything from the `proj` crate
+  * <https://github.com/georust/geo/pull/839>
 * Add densification algorithm for linear geometry components
   * <https://github.com/georust/geo/pull/847>
 * Fix fast path euclidean distance
