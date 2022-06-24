@@ -1,4 +1,4 @@
-pub use proj::{Area, Coord, Info, Proj, ProjBuilder, ProjError, Projinfo, Transform};
+pub use proj::{Area, Coord, Info, Proj, ProjBuilder, ProjError, ProjInfo, Transform};
 
 #[cfg(test)]
 mod tests {
