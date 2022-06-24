@@ -10,6 +10,12 @@
   * <https://github.com/georust/pull/848>
 * Use robust predicates everywhere in geo
   * <https://github.com/georust/geo/pull/852>
+* You may now specify `Geometry` rather than `Geometry<f64>` since we've added
+  a default trait implementation. You may still explicitly declare the numeric
+  type as f64, or any other implementation of `CoordNum`, but this should save
+  you some typing if you're using f64. The same change applies to `Coordinates`
+  and all the geometry variants, like `Point`, `LineString`, etc.
+  * <https://github.com/georust/geo/pull/832>
 
 ## 0.21.0
 
