@@ -264,9 +264,22 @@ pub mod prelude {
 ///     })
 /// }
 /// ```
-pub trait GeoFloat: num_traits::Float + num_traits::Signed + num_traits::Bounded + GeoNum {}
-impl<T> GeoFloat for T where T: num_traits::Float + num_traits::Signed + num_traits::Bounded + GeoNum
-{}
+pub trait GeoFloat:
+    GeoNum
+    + num_traits::Float
+    + num_traits::Signed
+    + num_traits::Bounded
+    + float_next_after::NextAfter<Self>
+{
+}
+impl<T> GeoFloat for T where
+    T: GeoNum
+        + num_traits::Float
+        + num_traits::Signed
+        + num_traits::Bounded
+        + float_next_after::NextAfter<Self>
+{
+}
 
 pub trait GeoNum: CoordNum + HasKernel {}
 impl<T> GeoNum for T where T: CoordNum + HasKernel {}

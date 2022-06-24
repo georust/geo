@@ -485,7 +485,7 @@ where
             // fall back to R* nearest neighbour method
             nearest_neighbour_distance(self.exterior(), poly2.exterior())
         } else {
-            min_poly_dist(self, poly2)
+            min_convex_poly_dist(self, poly2)
         }
     }
 }
@@ -958,7 +958,7 @@ mod test {
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString::from(points2), vec![]);
-        let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
+        let dist = min_convex_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
         let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
         assert_relative_eq!(dist, 21.0);
         assert_relative_eq!(dist2, 21.0);
@@ -991,7 +991,7 @@ mod test {
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString::from(points2), vec![]);
-        let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
+        let dist = min_convex_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
         let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
         assert_relative_eq!(dist, 29.274562336608895);
         assert_relative_eq!(dist2, 29.274562336608895);
@@ -1024,7 +1024,7 @@ mod test {
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString::from(points2), vec![]);
-        let dist = min_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
+        let dist = min_convex_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
         let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
         assert_relative_eq!(dist, 12.0);
         assert_relative_eq!(dist2, 12.0);
@@ -1034,7 +1034,7 @@ mod test {
     fn test_minimum_polygon_distance_4() {
         let poly1 = Rect::new((0., 0.), (1., 1.)).to_polygon();
         let poly2 = Rect::new((2., 2.), (3., 3.)).to_polygon();
-        let dist = min_poly_dist(&poly1, &poly2);
+        let dist = min_convex_poly_dist(&poly1, &poly2);
         let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
         assert_eq!(dist, dist2);
     }
@@ -1063,7 +1063,7 @@ mod test {
                 ],
                 interiors: []
             );
-        let dist = min_poly_dist(&poly1, &poly2);
+        let dist = min_convex_poly_dist(&poly1, &poly2);
         let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
         assert_eq!(dist, dist2);
     }

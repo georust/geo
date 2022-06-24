@@ -182,7 +182,8 @@ where
             dataset.insert(first_coord);
         }
 
-        let mut nearest_coords = get_nearest_coords(&dataset, &current_coord, k_adjusted).collect();
+        let mut nearest_coords: Vec<_> =
+            get_nearest_coords(&dataset, &current_coord, k_adjusted).collect();
         sort_by_angle(&mut nearest_coords, &current_coord, &prev_coord);
 
         let selected = nearest_coords
@@ -263,7 +264,7 @@ where
 }
 
 fn sort_by_angle<T>(
-    coords: &mut Vec<&Coordinate<T>>,
+    coords: &mut [&Coordinate<T>],
     curr_coord: &Coordinate<T>,
     prev_coord: &Coordinate<T>,
 ) where

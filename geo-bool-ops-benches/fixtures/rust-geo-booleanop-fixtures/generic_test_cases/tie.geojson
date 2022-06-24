@@ -1,0 +1,73 @@
+{
+  "features": [
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [-1, -1],
+            [-1, 1],
+            [0, 0],
+            [-1, -1]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "properties": {},
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [0, 0],
+            [1, 1],
+            [1, -1],
+            [0, 0]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "properties": {},
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {
+        "operation": "intersection"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              [-1, -1],
+              [0, 0],
+              [-1, 1],
+              [-1, -1]
+            ]
+          ],
+          [
+            [
+              [0, 0],
+              [1, -1],
+              [1, 1],
+              [0, 0]
+            ]
+          ]
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {
+        "operation": "union"
+      },
+      "type": "Feature"
+    }
+  ],
+  "type": "FeatureCollection"
+}
