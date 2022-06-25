@@ -1,37 +1,26 @@
+use crate::AffineTransform;
 use crate::BoundingRect;
 use crate::Centroid;
 use crate::MapCoords;
+use crate::MapCoordsInPlace;
 use crate::{
     CoordFloat, Coordinate, GeoFloat, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
     Point, Polygon,
 };
 
-#[inline]
-fn rotate_inner<T>(x: T, y: T, x0: T, y0: T, sin_theta: T, cos_theta: T) -> Point<T>
-where
-    T: CoordFloat,
-{
-    let x = x - x0;
-    let y = y - y0;
-    Point::new(
-        x * cos_theta - y * sin_theta + x0,
-        x * sin_theta + y * cos_theta + y0,
-    )
-}
-
 // Rotate an iterator of points "angle" degrees about an origin. Origin can be
 // an arbitrary point. Pass Point::new(0., 0.) for the actual origin.
-fn rotate_many<T>(
+fn rotate_many<'a, T>(
     angle: T,
     origin: Point<T>,
-    points: impl Iterator<Item = Point<T>>,
-) -> impl Iterator<Item = Point<T>>
+    points: impl Iterator<Item = &'a Coordinate<T>> + 'a,
+) -> impl Iterator<Item = Coordinate<T>> + 'a
 where
     T: CoordFloat,
+    T: 'a,
 {
-    let (sin_theta, cos_theta) = angle.to_radians().sin_cos();
-    let (x0, y0) = origin.x_y();
-    points.map(move |point| rotate_inner(point.x(), point.y(), x0, y0, sin_theta, cos_theta))
+    let affineop = AffineTransform::rotate(angle, origin);
+    points.map(move |coord| affineop.apply(*coord))
 }
 
 pub trait Rotate<T> {
@@ -48,6 +37,7 @@ pub trait Rotate<T> {
     /// ```
     /// use geo::Rotate;
     /// use geo::line_string;
+    /// use approx::assert_relative_eq;
     ///
     /// let line_string = line_string![
     ///     (x: 0.0, y: 0.0),
@@ -58,12 +48,12 @@ pub trait Rotate<T> {
     /// let rotated = line_string.rotate_around_centroid(-45.0);
     ///
     /// let expected = line_string![
-    ///     (x: -2.0710678118654755, y: 5.0),
+    ///     (x: -2.071067811865475, y: 5.0),
     ///     (x: 5.0, y: 5.0),
     ///     (x: 12.071067811865476, y: 5.0),
     /// ];
     ///
-    /// assert_eq!(expected, rotated);
+    /// assert_relative_eq!(expected, rotated);
     /// ```
     fn rotate_around_centroid(&self, angle: T) -> Self
     where
@@ -132,12 +122,11 @@ pub trait RotatePoint<T> {
 impl<T, G> RotatePoint<T> for G
 where
     T: CoordFloat,
-    G: MapCoords<T, T, Output = G>,
+    G: MapCoords<T, T, Output = G> + MapCoordsInPlace<T>,
 {
     fn rotate_around_point(&self, angle: T, point: Point<T>) -> Self {
-        let (sin_theta, cos_theta) = angle.to_radians().sin_cos();
-        let (x0, y0) = point.x_y();
-        self.map_coords(|Coordinate { x, y }| rotate_inner(x, y, x0, y0, sin_theta, cos_theta).0)
+        let affineop = AffineTransform::rotate(angle, point);
+        self.map_coords(|coord| affineop.apply(coord))
     }
 }
 
@@ -238,10 +227,10 @@ where
         // return a rotated polygon, or a clone if no centroid is computable
         if let Some(centroid) = centroid {
             Polygon::new(
-                rotate_many(angle, centroid, self.exterior().points()).collect(),
+                rotate_many(angle, centroid, self.exterior().coords()).collect(),
                 self.interiors()
                     .iter()
-                    .map(|ring| rotate_many(angle, centroid, ring.points()).collect())
+                    .map(|ring| rotate_many(angle, centroid, ring.coords()).collect())
                     .collect(),
             )
         } else {
@@ -430,15 +419,15 @@ mod test {
         ];
         let rotated = poly1.rotate_around_centroid(-15.0);
         let correct = polygon![
-            (x: 4.628808519201685, y: 1.1805207831176578),
+            (x: 4.6288085192016855, y: 1.1805207831176578),
             (x: 3.921701738015137, y: 2.405265654509247),
-            (x: 4.180520783117657, y: 3.3711914807983154),
+            (x: 4.180520783117659, y: 3.3711914807983154),
             (x: 5.405265654509247, y: 4.0782982619848624),
-            (x: 6.371191480798315, y: 3.819479216882342),
+            (x: 6.371191480798316, y: 3.819479216882342),
             (x: 7.0782982619848624, y: 2.594734345490753),
             (x: 6.819479216882343, y: 1.6288085192016848),
-            (x: 5.594734345490753, y: 0.9217017380151371),
-            (x: 4.628808519201685, y: 1.1805207831176578)
+            (x: 5.594734345490753, y: 0.9217017380151372),
+            (x: 4.6288085192016855, y: 1.1805207831176578)
         ];
         // results agree with Shapely / GEOS
         assert_eq!(rotated, correct);
@@ -475,21 +464,33 @@ mod test {
         #[allow(deprecated)]
         let rotated = poly1.rotate(-15.0);
         let correct_outside = vec![
-            Coordinate::from((4.628808519201685, 1.180520783117658)),
-            Coordinate::from((3.921701738015137, 2.4052656545092472)),
-            Coordinate::from((4.180520783117657, 3.3711914807983154)),
-            Coordinate::from((5.405265654509247, 4.078298261984863)),
-            Coordinate::from((6.371191480798315, 3.8194792168823426)),
-            Coordinate::from((7.0782982619848624, 2.594734345490753)),
-            Coordinate::from((6.819479216882343, 1.628808519201685)),
-            Coordinate::from((5.594734345490753, 0.9217017380151373)),
-            Coordinate::from((4.628808519201685, 1.180520783117658)),
+            Coordinate { x: 4.6288085192016855, y: 1.1805207831176583 },
+            Coordinate { x: 3.921701738015137, y: 2.4052656545092477 },
+            Coordinate { x: 4.180520783117659, y: 3.371191480798316 },
+            Coordinate { x: 5.405265654509247, y: 4.078298261984863 },
+            Coordinate { x: 6.371191480798316, y: 3.8194792168823426 },
+            Coordinate { x: 7.0782982619848624, y: 2.5947343454907537 },
+            Coordinate { x: 6.819479216882343, y: 1.6288085192016852 },
+            Coordinate { x: 5.594734345490753, y: 0.9217017380151377 },
+            Coordinate { x: 4.6288085192016855, y: 1.1805207831176583 }
         ];
         let correct_inside = vec![
-            Coordinate::from((4.706454232732441, 1.4702985310043786)),
-            Coordinate::from((5.37059047744874, 2.017037086855466)),
-            Coordinate::from((5.672380059021509, 1.2114794859018578)),
-            Coordinate::from((4.706454232732441, 1.4702985310043786)),
+            Coordinate {
+                x: 4.706454232732442,
+                y: 1.470298531004379,
+            },
+            Coordinate {
+                x: 5.37059047744874,
+                y: 2.017037086855466,
+            },
+            Coordinate {
+                x: 5.67238005902151,
+                y: 1.2114794859018583,
+            },
+            Coordinate {
+                x: 4.706454232732442,
+                y: 1.470298531004379,
+            },
         ];
         assert_eq!(rotated.exterior().0, correct_outside);
         assert_eq!(rotated.interiors()[0].0, correct_inside);
