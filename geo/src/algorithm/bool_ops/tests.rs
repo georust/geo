@@ -1,5 +1,8 @@
+use crate::line_intersection::line_intersection;
 use crate::{MultiPolygon, Polygon};
 
+use crate::Intersects;
+use geo_types::{Line, coord, LineString, Coordinate};
 use log::{error, info};
 
 use std::{
@@ -117,5 +120,44 @@ fn test_complex_rects1() -> Result<()> {
     let wkt1 = "MULTIPOLYGON(((-1 -2,-1.0000000000000002 2,-0.8823529411764707 2,-0.8823529411764706 -2,-1 -2)))";
     let wkt2 = "MULTIPOLYGON(((-2 -1,2 -1.0000000000000002,2 -0.8823529411764707,-2 -0.8823529411764706,-2 -1)))";
     check_sweep(wkt1, wkt2, OpType::Union)?;
+    Ok(())
+}
+
+#[test]
+fn test_overlap_issue_867() -> Result<()> {
+    let wkt1 = "POLYGON ((17.724912058920285 -16.37118892052372, 18.06452454246989 -17.693907532504, 19.09389292605319 -17.924001641855178, 17.724912058920285 -16.37118892052372))";
+    let wkt2 = "POLYGON ((17.576085274796423 -15.791540153598898, 17.19432983818328 -17.499393422066746, 18.06452454246989 -17.693907532504, 17.576085274796423 -15.791540153598898))";
+    check_sweep(wkt1, wkt2, OpType::Intersection)?;
+    Ok(())
+}
+
+#[test]
+fn line_isect() {
+    // TODO: Dummy test do not push to main
+    let l1 = Line::new(
+        coord!(x: 17.576085274796423, y: -15.791540153598898),
+        coord!(x: 18.06452454246989, y: -17.693907532504),
+    );
+
+    let l2 = Line::new(
+        coord!(x: 17.724912058920285, y: -16.37118892052372),
+        coord!(x: 18.06452454246989, y: -17.693907532504),
+    );
+    let l3 = Line::new(
+        coord!(x: 17.724912058920285, y: -16.37118892052372),
+        coord!(x: 19.09389292605319, y: -17.924001641855178),
+    );
+
+    let i12 = line_intersection(l1, l2);
+    eprintln!("l1 x l2 = {i12:?}");
+    let i13 = line_intersection(l1, l3);
+    eprintln!("l1 x l3 = {i13:?}");
+}
+
+#[test]
+fn test_issue_865() -> Result<()> {
+    let wkt1 = "POLYGON((-640 -360,640 -360,640 360,-640 360,-640 -360))";
+    let wkt2 = "POLYGON((313.276 359.999,213.319 359.999,50 60,-50 60,-50 110,-8.817 360,-93.151 360,-85.597 225.618,-114.48 359.999,-117.017 360,-85 215,-85 155,-115 155,-154.161 360,-640 360,-640 -360,640 -360,640 360,313.277 360,313.276 359.999))";
+    check_sweep(wkt1, wkt2, OpType::Difference)?;
     Ok(())
 }
