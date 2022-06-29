@@ -1,5 +1,58 @@
-use crate::{CoordFloat, CoordNum, Coordinate, Point};
+use crate::{CoordFloat, CoordNum, Coordinate, MapCoords, MapCoordsInPlace};
 use std::fmt;
+
+/// Apply an [`AffineTransform`] like [`scale`](AffineTransform::scale),
+/// [`skew`](AffineTransform::skew), or [`rotate`](AffineTransform::rotate) to a
+/// [`Geometry`](crate::geometry::Geometry).
+///
+/// Multiple transformations can be composed in order to be efficiently applied in a single
+/// operation. See [`AffineTransform`] for more on how to build up a transformation.
+///
+/// If you are not composing operations, traits that leverage this same machinery exist which might
+/// be more readable. See: [`Scale`](crate::algorithm::Scale),
+/// [`Translate`](crate::algorithm::Translate), [`Rotate`](crate::algorithm::Rotate),
+/// and [`Skew`](crate::algorithm::Skew).
+///
+/// # Examples
+/// ## Build up transforms by beginning with a constructor, then chaining mutation operations
+/// ```
+/// use geo::{AffineOps, AffineTransform};
+/// use geo::{line_string, BoundingRect, Point, LineString};
+/// use approx::assert_relative_eq;
+///
+/// let ls: LineString = line_string![
+///     (x: 0.0f64, y: 0.0f64),
+///     (x: 0.0f64, y: 10.0f64),
+/// ];
+/// let center = ls.bounding_rect().unwrap().center();
+///
+/// let transform = AffineTransform::skew(40.0, 40.0, center).rotated(45.0, center);
+///
+/// let skewed_rotated = ls.affine_transform(&transform);
+///
+/// assert_relative_eq!(skewed_rotated, line_string![
+///     (x: 0.5688687f64, y: 4.4311312),
+///     (x: -0.5688687, y: 5.5688687)
+/// ], max_relative = 1.0);
+/// ```
+pub trait AffineOps<T: CoordNum> {
+    /// Apply `transform` to mutate `self`.
+    fn affine_transform_mut(&mut self, transform: &AffineTransform<T>);
+
+    /// Apply `transform` immutably, outputting a new geometry.
+    #[must_use]
+    fn affine_transform(&self, transform: &AffineTransform<T>) -> Self;
+}
+
+impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> AffineOps<T> for M {
+    fn affine_transform_mut(&mut self, transform: &AffineTransform<T>) {
+        self.map_coords_in_place(|c| transform.apply(c))
+    }
+
+    fn affine_transform(&self, transform: &AffineTransform<T>) -> Self {
+        self.map_coords(|c| transform.apply(c))
+    }
+}
 
 /// A general affine transformation matrix, and associated operations.
 ///
@@ -13,7 +66,7 @@ use std::fmt;
 /// `AffineTransform` is a row-major matrix.
 /// 2D affine transforms require six matrix parameters:
 ///
-/// `[a, b, d, e, xoff, yoff]`
+/// `[a, b, xoff, d, e, yoff]`
 ///
 /// these map onto the `AffineTransform` rows as follows:
 /// ```ignore
@@ -38,7 +91,7 @@ use std::fmt;
 /// # Examples
 /// ## Build up transforms by beginning with a constructor, then chaining mutation operations
 /// ```
-/// use geo::{MapCoords, AffineTransform};
+/// use geo::{AffineOps, AffineTransform};
 /// use geo::{line_string, BoundingRect, Point, LineString};
 /// use approx::assert_relative_eq;
 ///
@@ -46,17 +99,19 @@ use std::fmt;
 ///     (x: 0.0f64, y: 0.0f64),
 ///     (x: 0.0f64, y: 10.0f64),
 /// ];
-/// let origin: Point<_> = ls.bounding_rect().unwrap().center().into();
-/// let op = AffineTransform::skew(40.0, 40.0, origin).rotated(45.0, origin);
-/// let skewed_rotated = ls.map_coords(|coord| op.apply(coord));
+/// let center = ls.bounding_rect().unwrap().center();
+///
+/// let transform = AffineTransform::skew(40.0, 40.0, center).rotated(45.0, center);
+///
+/// let skewed_rotated = ls.affine_transform(&transform);
 ///
 /// assert_relative_eq!(skewed_rotated, line_string![
 ///     (x: 0.5688687f64, y: 4.4311312),
 ///     (x: -0.5688687, y: 5.5688687)
 /// ], max_relative = 1.0);
 /// ```
-#[derive(Copy, Clone)]
-pub struct AffineTransform<T: CoordNum>([[T; 3]; 3]);
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub struct AffineTransform<T: CoordNum = f64>([[T; 3]; 3]);
 
 impl<T: CoordNum> Default for AffineTransform<T> {
     fn default() -> Self {
@@ -69,6 +124,7 @@ impl<T: CoordNum> AffineTransform<T> {
     /// Create a new affine transformation by composing two `AffineTransform`s.
     ///
     /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
+    #[must_use]
     pub fn compose(&self, other: &Self) -> Self {
         // lol
         Self([
@@ -127,6 +183,26 @@ impl<T: CoordNum> AffineTransform<T> {
         )
     }
 
+    /// Whether the transformation is equivalent to the [identity matrix](Self::identity),
+    /// that is, whether it's application will be a a no-op.
+    ///
+    /// ```
+    /// use geo::AffineTransform;
+    /// let mut transform = AffineTransform::identity();
+    /// assert!(transform.is_identity());
+    ///
+    /// // mutate the transform a bit
+    /// transform = transform.translated(1.0, 2.0);
+    /// assert!(!transform.is_identity());
+    ///
+    /// // put it back
+    /// transform = transform.translated(-1.0, -2.0);
+    /// assert!(transform.is_identity());
+    /// ```
+    pub fn is_identity(&self) -> bool {
+        self == &Self::identity()
+    }
+
     /// **Create** a new affine transform for scaling, scaled by factors along the `x` and `y` dimensions.
     /// The point of origin is *usually* given as the 2D bounding box centre of the geometry, but
     /// any coordinate may be specified.
@@ -141,8 +217,8 @@ impl<T: CoordNum> AffineTransform<T> {
     /// xoff = origin.x - (origin.x * xfact)
     /// yoff = origin.y - (origin.y * yfact)
     /// ```
-    pub fn scale(xfact: T, yfact: T, origin: Point<T>) -> Self {
-        let (x0, y0) = origin.x_y();
+    pub fn scale(xfact: T, yfact: T, origin: impl Into<Coordinate<T>>) -> Self {
+        let (x0, y0) = origin.into().x_y();
         let xoff = x0 - (x0 * xfact);
         let yoff = y0 - (y0 * yfact);
         Self::new(xfact, T::zero(), xoff, T::zero(), yfact, yoff)
@@ -153,7 +229,8 @@ impl<T: CoordNum> AffineTransform<T> {
     /// any coordinate may be specified.
     /// Negative scale factors will mirror or reflect coordinates.
     /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
-    pub fn scaled(mut self, xfact: T, yfact: T, origin: Point<T>) -> Self {
+    #[must_use]
+    pub fn scaled(mut self, xfact: T, yfact: T, origin: impl Into<Coordinate<T>>) -> Self {
         self.0 = self.compose(&Self::scale(xfact, yfact, origin)).0;
         self
     }
@@ -173,6 +250,7 @@ impl<T: CoordNum> AffineTransform<T> {
     /// **Add** an affine transform for translation, shifted by offsets along the `x` and `y` dimensions
     ///
     /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
+    #[must_use]
     pub fn translated(mut self, xoff: T, yoff: T) -> Self {
         self.0 = self.compose(&Self::translate(xoff, yoff)).0;
         self
@@ -240,9 +318,9 @@ impl<U: CoordFloat> AffineTransform<U> {
     /// xoff = origin.x - (origin.x * cos(theta)) + (origin.y * sin(theta))
     /// yoff = origin.y - (origin.x * sin(theta)) + (origin.y * cos(theta))
     /// ```
-    pub fn rotate(angle: U, origin: Point<U>) -> Self {
+    pub fn rotate(angle: U, origin: impl Into<Coordinate<U>>) -> Self {
         let (sin_theta, cos_theta) = angle.to_radians().sin_cos();
-        let (x0, y0) = origin.x_y();
+        let (x0, y0) = origin.into().x_y();
         let xoff = x0 - (x0 * cos_theta) + (y0 * sin_theta);
         let yoff = y0 - (x0 * sin_theta) - (y0 * cos_theta);
         Self::new(cos_theta, -sin_theta, xoff, sin_theta, cos_theta, yoff)
@@ -255,7 +333,8 @@ impl<U: CoordFloat> AffineTransform<U> {
     /// `angle` is given in **degrees**.
     ///
     /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
-    pub fn rotated(mut self, angle: U, origin: Point<U>) -> Self {
+    #[must_use]
+    pub fn rotated(mut self, angle: U, origin: impl Into<Coordinate<U>>) -> Self {
         self.0 = self.compose(&Self::rotate(angle, origin)).0;
         self
     }
@@ -276,8 +355,8 @@ impl<U: CoordFloat> AffineTransform<U> {
     /// xoff = -origin.y * tan(xs)
     /// yoff = -origin.x * tan(ys)
     /// ```
-    pub fn skew(xs: U, ys: U, origin: Point<U>) -> Self {
-        let (x0, y0) = origin.x_y();
+    pub fn skew(xs: U, ys: U, origin: impl Into<Coordinate<U>>) -> Self {
+        let Coordinate { x: x0, y: y0 } = origin.into();
         let mut tanx = xs.to_radians().tan();
         let mut tany = ys.to_radians().tan();
         // These checks are stolen from Shapely's implementation -- may not be necessary
@@ -301,7 +380,8 @@ impl<U: CoordFloat> AffineTransform<U> {
     /// any coordinate may be specified. Angles are given in **degrees**.
     ///
     /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
-    pub fn skewed(mut self, xs: U, ys: U, origin: Point<U>) -> Self {
+    #[must_use]
+    pub fn skewed(mut self, xs: U, ys: U, origin: impl Into<Coordinate<U>>) -> Self {
         self.0 = self.compose(&Self::skew(xs, ys, origin)).0;
         self
     }
@@ -310,6 +390,7 @@ impl<U: CoordFloat> AffineTransform<U> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{polygon, Point};
 
     // given a matrix with the shape
     // [[a, b, xoff],
@@ -344,5 +425,15 @@ mod tests {
         let scale_c = AffineTransform::default().scaled(4.0, 4.0, p0);
         assert_ne!(&scale_a.0, &scale_b.0);
         assert_eq!(&scale_a.0, &scale_c.0);
+    }
+
+    #[test]
+    fn affine_transformed() {
+        let transform = AffineTransform::translate(1.0, 1.0).scaled(2.0, 2.0, (0.0, 0.0));
+        let mut poly = polygon![(x: 0.0, y: 0.0), (x: 0.0, y: 2.0), (x: 1.0, y: 2.0)];
+        poly.affine_transform_mut(&transform);
+
+        let expected = polygon![(x: 1.0, y: 1.0), (x: 1.0, y: 5.0), (x: 3.0, y: 5.0)];
+        assert_eq!(expected, poly);
     }
 }

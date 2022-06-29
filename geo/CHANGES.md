@@ -6,6 +6,7 @@
 * Add `AffineOps` trait allowing the definition and composition of all 2D affine transforms
 * Implement existing affine transform traits using new `AffineOps` trait
   * <https://github.com/georust/geo/pull/866>
+  * <https://github.com/georust/geo/pull/871>
 
 ## 0.22.0
 

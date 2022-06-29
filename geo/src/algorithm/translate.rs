@@ -4,6 +4,13 @@ use crate::{AffineTransform, CoordNum};
 pub trait Translate<T> {
     /// Translate a Geometry along its axes by the given offsets
     ///
+    /// ## Performance
+    ///
+    /// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
+    /// [`Skew`](crate::Skew), [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
+    /// efficient to compose the transformations and apply them as a single operation using the
+    /// [`AffineOps`](crate::AffineOps) trait.
+    ///
     /// # Examples
     ///
     /// ```
