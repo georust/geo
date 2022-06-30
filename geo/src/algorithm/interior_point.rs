@@ -1,12 +1,12 @@
-use std::cmp::Ordering;
+use std::cmp::{Ordering, Reverse};
 
 use crate::algorithm::{
     bounding_rect::BoundingRect, centroid::Centroid, coords_iter::CoordsIter,
-    euclidean_distance::EuclideanDistance, line_intersection::LineIntersection,
-    lines_iter::LinesIter, relate::Relate,
+    dimensions::HasDimensions, euclidean_distance::EuclideanDistance,
+    line_intersection::LineIntersection, lines_iter::LinesIter, relate::Relate,
 };
 use crate::geometry::*;
-use crate::sweep::*;
+use crate::sweep::{Intersections, SweepPoint};
 use crate::GeoFloat;
 
 /// Calculation of interior points.
@@ -50,7 +50,7 @@ use crate::GeoFloat;
 pub trait InteriorPoint {
     type Output;
 
-    /// See: <https://en.wikipedia.org/wiki/InteriorPoint>
+    /// Calculates a representative point inside the `Geometry`
     ///
     /// # Examples
     ///
@@ -209,7 +209,7 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
     let mut intersections_iter = intersections.iter().peekable();
     while let (Some(start), Some(end)) = (intersections_iter.next(), intersections_iter.peek()) {
         let length = end.x - start.x;
-        let midpoint = Point::new((start.x + end.x) / two, start.y);
+        let midpoint = Point::new((start.x + end.x) / two, y_mid);
         segments.push((midpoint, length));
     }
     segments.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(Ordering::Less));
@@ -336,8 +336,13 @@ where
         if let Some(centroid) = self.centroid() {
             self.iter()
                 .filter_map(|geom| {
-                    geom.interior_point()
-                        .map(|pt| (pt, pt.euclidean_distance(&centroid)))
+                    geom.interior_point().map(|pt| {
+                        (
+                            pt,
+                            // maximize dimensions, minimize distance
+                            (Reverse(geom.dimensions()), pt.euclidean_distance(&centroid)),
+                        )
+                    })
                 })
                 .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less))
                 .map(|(pt, _distance)| pt)
@@ -354,9 +359,7 @@ where
     type Output = Point<T>;
 
     fn interior_point(&self) -> Self::Output {
-        self.to_polygon()
-            .interior_point()
-            .expect("triangle cannot have an empty interior_point")
+        self.centroid()
     }
 }
 
@@ -574,7 +577,9 @@ mod test {
             vec![],
         );
         let multipoly = MultiPolygon::new(vec![p1, p2]);
-        assert!(multipoly.intersects(&multipoly.interior_point().unwrap()));
+        let interior_point = multipoly.interior_point().unwrap();
+        assert_eq!(multipoly.interior_point(), Some(p(1.0, 1.0)));
+        assert!(multipoly.intersects(&interior_point));
     }
     #[test]
     fn multi_poly_with_one_ring_and_one_real_poly() {
@@ -700,17 +705,44 @@ mod test {
         );
     }
     #[test]
+    fn mixed_collection_test() {
+        let linestring =
+            LineString::from(vec![p(0., 1.), p(0., 0.), p(1., 0.), p(1., 1.), p(0., 1.)]);
+        let poly1 = Polygon::new(linestring, Vec::new());
+        let linestring = LineString::from(vec![
+            p(10., 1.),
+            p(10., 0.),
+            p(11., 0.),
+            p(11., 1.),
+            p(10., 1.),
+        ]);
+        let poly2 = Polygon::new(linestring, Vec::new());
+
+        let high_dimension_shapes = GeometryCollection::new_from(vec![poly1.into(), poly2.into()]);
+
+        let mut mixed_shapes = high_dimension_shapes.clone();
+        mixed_shapes.0.push(Point::new(5. as f64, 0. as f64).into());
+        mixed_shapes.0.push(Point::new(5. as f64, 1. as f64).into());
+
+        // lower-dimensional shapes shouldn't affect interior point if higher-dimensional shapes
+        // are present, even if the low-d ones are closer to the centroid
+        assert_eq!(
+            high_dimension_shapes.interior_point().unwrap(),
+            mixed_shapes.interior_point().unwrap()
+        )
+    }
+    #[test]
     fn triangles() {
         // boring triangle
         assert_eq!(
             Triangle::new(c(0., 0.), c(3., 0.), c(1.5, 3.)).interior_point(),
-            point!(x: 1.5, y: 1.5)
+            point!(x: 1.5, y: 1.0)
         );
 
         // flat triangle
         assert_eq!(
             Triangle::new(c(0., 0.), c(3., 0.), c(1., 0.)).interior_point(),
-            point!(x: 2.0, y: 0.0)
+            point!(x: 1.5, y: 0.0)
         );
 
         // flat triangle that's not axis-aligned
@@ -741,7 +773,16 @@ mod test {
 
         let g1 = GeometryCollection::new_from(vec![triangle.into(), line.into()]);
         let g2 = GeometryCollection::new_from(vec![poly.into(), line.into()]);
-        assert_eq!(g1.interior_point(), g2.interior_point());
+
+        let pt1 = g1.interior_point().unwrap();
+        let pt2 = g2.interior_point().unwrap();
+        // triangle and polygon have differing interior-point implementations, so we won't get the
+        // same point with both approaches, but both should produce points that are interior to
+        // either representation
+        assert!(g1.intersects(&pt1));
+        assert!(g1.intersects(&pt2));
+        assert!(g2.intersects(&pt1));
+        assert!(g2.intersects(&pt2));
     }
 
     #[test]
