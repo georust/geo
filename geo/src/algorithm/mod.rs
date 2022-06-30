@@ -102,6 +102,7 @@ pub use haversine_intermediate::HaversineIntermediate;
 pub mod haversine_length;
 pub use haversine_length::HaversineLength;
 
+/// Calculate a representative `Point` inside a `Geometry`
 pub mod interior_point;
 pub use interior_point::InteriorPoint;
 
