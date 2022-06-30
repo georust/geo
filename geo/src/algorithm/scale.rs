@@ -1,4 +1,4 @@
-use crate::{AffineTransform, CoordNum, MapCoords, MapCoordsInPlace, Point};
+use crate::{AffineOps, AffineTransform, CoordNum, Point};
 
 /// An affine transformation which scales a geometry up or down by a factor.
 ///
@@ -31,19 +31,24 @@ use crate::{AffineTransform, CoordNum, MapCoords, MapCoordsInPlace, Point};
 /// ]);
 /// ```
 ///
-pub trait Scale<T> {
-    fn scale(&self, x: T, y: T, origin: Point<T>) -> Self
-    where
-        T: CoordNum;
+pub trait Scale<T: CoordNum> {
+    #[must_use]
+    fn scale(&self, x: T, y: T, origin: Point<T>) -> Self;
+    fn scale_mut(&mut self, x: T, y: T, origin: Point<T>);
 }
 
 impl<T, G> Scale<T> for G
 where
     T: CoordNum,
-    G: MapCoords<T, T, Output = G> + MapCoordsInPlace<T>,
+    G: AffineOps<T>,
 {
     fn scale(&self, x: T, y: T, origin: Point<T>) -> Self {
         let affineop = AffineTransform::scale(x, y, origin);
-        self.map_coords(|coord| affineop.apply(coord))
+        self.affine_transform(&affineop)
+    }
+
+    fn scale_mut(&mut self, x: T, y: T, origin: Point<T>) {
+        let affineop = AffineTransform::scale(x, y, origin);
+        self.affine_transform_mut(&affineop)
     }
 }

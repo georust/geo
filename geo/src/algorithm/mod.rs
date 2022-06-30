@@ -151,9 +151,12 @@ pub mod proj;
 pub mod relate;
 pub use relate::Relate;
 
-/// Rotate a `Geometry` around either its centroid or a `Point` by an angle given in degrees.
+/// Rotate a `Geometry` by an angle given in degrees.
 pub mod rotate;
-pub use rotate::{Rotate, RotatePoint};
+pub use rotate::Rotate;
+#[doc(hidden)]
+#[allow(deprecated)]
+pub use rotate::RotatePoint;
 
 /// Scale a `Geometry` up or down by a factor
 pub mod scale;

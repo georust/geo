@@ -125,7 +125,6 @@
 //! ## Affine transformations
 //!
 //! - **[`Rotate`](Rotate)**: Rotate a geometry around its centroid
-//! - **[`RotatePoint`](RotatePoint)**: Rotate a geometry around a point
 //! - **[`Scale`](Scale)**: Scale a geometry up or down by a factor
 //! - **[`Skew`](Skew)**: Skew a geometry by shearing angles along the `x` and `y` dimension
 //! - **[`Translate`](Translate)**: Translate a geometry along its axis

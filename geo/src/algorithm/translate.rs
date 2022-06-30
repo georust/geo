@@ -1,7 +1,6 @@
-use crate::map_coords::{MapCoords, MapCoordsInPlace};
-use crate::{AffineTransform, CoordNum};
+use crate::{AffineOps, AffineTransform, CoordNum};
 
-pub trait Translate<T> {
+pub trait Translate<T: CoordNum> {
     /// Translate a Geometry along its axes by the given offsets
     ///
     /// ## Performance
@@ -31,39 +30,41 @@ pub trait Translate<T> {
     ///     (x: 11.5, y: 13.5),
     /// ]);
     /// ```
-    fn translate(&self, xoff: T, yoff: T) -> Self
-    where
-        T: CoordNum;
+    #[must_use]
+    fn translate(&self, x_offset: T, y_offset: T) -> Self;
 
     /// Translate a Geometry along its axes, but in place.
-    fn translate_in_place(&mut self, xoff: T, yoff: T)
-    where
-        T: CoordNum;
+    fn translate_mut(&mut self, x_offset: T, y_offset: T);
 
     /// Translate a Geometry along its axes, but in place.
-    #[deprecated(since = "0.20.1", note = "renamed to `translate_in_place`")]
-    fn translate_inplace(&mut self, xoff: T, yoff: T)
-    where
-        T: CoordNum;
+    #[deprecated(since = "0.20.1", note = "renamed to `translate_mut`")]
+    fn translate_in_place(&mut self, x_offset: T, y_offset: T);
+
+    #[deprecated(since = "0.20.1", note = "renamed to `translate_mut`")]
+    fn translate_inplace(&mut self, x_offset: T, y_offset: T);
 }
 
 impl<T, G> Translate<T> for G
 where
     T: CoordNum,
-    G: MapCoords<T, T, Output = G> + MapCoordsInPlace<T>,
+    G: AffineOps<T>,
 {
-    fn translate(&self, xoff: T, yoff: T) -> Self {
-        let affineop = AffineTransform::translate(xoff, yoff);
-        self.map_coords(|coord| affineop.apply(coord))
+    fn translate(&self, x_offset: T, y_offset: T) -> Self {
+        let transform = AffineTransform::translate(x_offset, y_offset);
+        self.affine_transform(&transform)
     }
 
-    fn translate_in_place(&mut self, xoff: T, yoff: T) {
-        let affineop = AffineTransform::translate(xoff, yoff);
-        self.map_coords_in_place(|coord| affineop.apply(coord))
+    fn translate_mut(&mut self, x_offset: T, y_offset: T) {
+        let transform = AffineTransform::translate(x_offset, y_offset);
+        self.affine_transform_mut(&transform)
     }
 
-    fn translate_inplace(&mut self, xoff: T, yoff: T) {
-        self.translate_in_place(xoff, yoff)
+    fn translate_in_place(&mut self, x_offset: T, y_offset: T) {
+        self.translate_mut(x_offset, y_offset)
+    }
+
+    fn translate_inplace(&mut self, x_offset: T, y_offset: T) {
+        self.translate_mut(x_offset, y_offset)
     }
 }
 
@@ -81,7 +82,7 @@ mod test {
     #[test]
     fn test_translate_point_in_place() {
         let mut p = point!(x: 1.0, y: 5.0);
-        p.translate_in_place(30.0, 20.0);
+        p.translate_mut(30.0, 20.0);
         assert_eq!(p, point!(x: 31.0, y: 25.0));
     }
     #[test]

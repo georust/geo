@@ -1,4 +1,4 @@
-use crate::{AffineTransform, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace, Point};
+use crate::{AffineOps, AffineTransform, CoordFloat, CoordNum, Point};
 
 /// An affine transformation which skews a geometry, sheared by angles along x and y dimensions.
 ///
@@ -32,20 +32,25 @@ use crate::{AffineTransform, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace, 
 ///     (x: 4.99f64, y: 10.0f64)
 /// ], max_relative = 1.0);
 /// ```
-pub trait Skew<T> {
-    fn skew(&self, xs: T, ys: T, origin: Point<T>) -> Self
-    where
-        T: CoordNum;
+pub trait Skew<T: CoordNum> {
+    #[must_use]
+    fn skew(&self, xs: T, ys: T, origin: Point<T>) -> Self;
+    fn skew_mut(&mut self, xs: T, ys: T, origin: Point<T>);
 }
 
 impl<T, G> Skew<T> for G
 where
     T: CoordFloat,
-    G: MapCoords<T, T, Output = G> + MapCoordsInPlace<T>,
+    G: AffineOps<T>,
 {
     fn skew(&self, xs: T, ys: T, origin: Point<T>) -> Self {
-        let affineop = AffineTransform::skew(xs, ys, origin);
-        self.map_coords(|coord| affineop.apply(coord))
+        let transform = AffineTransform::skew(xs, ys, origin);
+        self.affine_transform(&transform)
+    }
+
+    fn skew_mut(&mut self, xs: T, ys: T, origin: Point<T>) {
+        let transform = AffineTransform::skew(xs, ys, origin);
+        self.affine_transform_mut(&transform)
     }
 }
 

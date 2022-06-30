@@ -1,12 +1,20 @@
 # Changes
 
 ## Unreleased
+
 * Add `Scale` affine transform
 * Add `Skew` affine transform
 * Add `AffineOps` trait allowing the definition and composition of all 2D affine transforms
 * Implement existing affine transform traits using new `AffineOps` trait
   * <https://github.com/georust/geo/pull/866>
   * <https://github.com/georust/geo/pull/871>
+* Moved `RotatePoint::rotate_around_point` method onto
+  `Rotate::rotate_around_point` and removed `RotatePoint` trait.
+* Removed deprecated `Rotate::rotate` method, use
+  `Rotate::rotate_around_center` or `Rotate::roate_around_centroid` instead.
+* Deprecated `Translate::translate_in_place` in favor of
+  `Translate::translate_mut` to line up with naming elsewhere in the crate.
+  * <https://github.com/georust/geo/pull/872>
 
 ## 0.22.0
 
