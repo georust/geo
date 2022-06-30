@@ -155,6 +155,18 @@ pub use relate::Relate;
 pub mod rotate;
 pub use rotate::{Rotate, RotatePoint};
 
+/// Scale a `Geometry` up or down by a factor
+pub mod scale;
+pub use scale::Scale;
+
+/// Skew a `Geometry` by shearing it at angles along the x and y dimensions
+pub mod skew;
+pub use skew::Skew;
+
+/// Composable affine operations such as rotate, scale, skew, and translate
+pub mod affine_ops;
+pub use affine_ops::AffineTransform;
+
 /// Simplify `Geometries` using the Ramer-Douglas-Peucker algorithm.
 pub mod simplify;
 pub use simplify::{Simplify, SimplifyIdx};

@@ -1,5 +1,5 @@
 use crate::map_coords::{MapCoords, MapCoordsInPlace};
-use crate::{CoordNum, Coordinate};
+use crate::{AffineTransform, CoordNum};
 
 pub trait Translate<T> {
     /// Translate a Geometry along its axes by the given offsets
@@ -46,17 +46,13 @@ where
     G: MapCoords<T, T, Output = G> + MapCoordsInPlace<T>,
 {
     fn translate(&self, xoff: T, yoff: T) -> Self {
-        self.map_coords(|Coordinate { x, y }| Coordinate {
-            x: x + xoff,
-            y: y + yoff,
-        })
+        let affineop = AffineTransform::translate(xoff, yoff);
+        self.map_coords(|coord| affineop.apply(coord))
     }
 
     fn translate_in_place(&mut self, xoff: T, yoff: T) {
-        self.map_coords_in_place(|Coordinate { x, y }| Coordinate {
-            x: x + xoff,
-            y: y + yoff,
-        })
+        let affineop = AffineTransform::translate(xoff, yoff);
+        self.map_coords_in_place(|coord| affineop.apply(coord))
     }
 
     fn translate_inplace(&mut self, xoff: T, yoff: T) {

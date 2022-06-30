@@ -1,5 +1,12 @@
 # Changes
 
+## Unreleased
+* Add `Scale` affine transform
+* Add `Skew` affine transform
+* Add `AffineOps` trait allowing the definition and composition of all 2D affine transforms
+* Implement existing affine transform traits using new `AffineOps` trait
+  * <https://github.com/georust/geo/pull/866>
+
 ## 0.22.0
 
 * Add densification algorithm for linear geometry components
