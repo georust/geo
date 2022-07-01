@@ -36,10 +36,12 @@ pub trait Translate<T: CoordNum> {
     /// Translate a Geometry along its axes, but in place.
     fn translate_mut(&mut self, x_offset: T, y_offset: T);
 
+    #[doc(hidden)]
     /// Translate a Geometry along its axes, but in place.
     #[deprecated(since = "0.20.1", note = "renamed to `translate_mut`")]
     fn translate_in_place(&mut self, x_offset: T, y_offset: T);
 
+    #[doc(hidden)]
     #[deprecated(since = "0.20.1", note = "renamed to `translate_mut`")]
     fn translate_inplace(&mut self, x_offset: T, y_offset: T);
 }
