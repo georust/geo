@@ -186,7 +186,10 @@ impl<T: GeoFloat> LineOrPoint<T> {
             }
         } else {
             line_intersection(self.line(), line).map(|l| match l {
-                LineIntersection::SinglePoint { intersection, is_proper } => {
+                LineIntersection::SinglePoint {
+                    intersection,
+                    is_proper,
+                } => {
                     let mut pt = intersection;
                     if is_proper && (&pt == self.left.deref()) {
                         if self.left.x == self.right.x {
@@ -196,7 +199,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
                         }
                     }
                     pt.into()
-                },
+                }
                 LineIntersection::Collinear { intersection } => intersection.into(),
             })
         }

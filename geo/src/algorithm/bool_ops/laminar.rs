@@ -62,9 +62,7 @@ pub fn assemble<T: Float>(rings: Vec<Ring<T>>) -> Vec<Polygon<T>> {
                     parents[ring_idx] = ext_idx;
                     None
                 }
-                None => {
-                    Some(parents[ring_idx])
-                }
+                None => Some(parents[ring_idx]),
             };
             trace!("setting: {geom:?} -> {below:?}", geom = edge.cross.geom);
             edge.cross.region.set(below);

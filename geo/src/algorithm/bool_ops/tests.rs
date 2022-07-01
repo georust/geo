@@ -1,7 +1,5 @@
-use crate::line_intersection::line_intersection;
 use crate::{MultiPolygon, Polygon};
 
-use geo_types::{Line, coord, LineString, Coordinate};
 use log::{error, info};
 
 use std::{
@@ -74,11 +72,7 @@ fn check_sweep(wkt1: &str, wkt2: &str, ty: OpType) -> Result<MultiPolygon<f64>> 
     let rings = bop.sweep();
     info!("Got {n} rings", n = rings.len());
     for ring in rings.iter() {
-        info!(
-            "\t{hole}: {wkt}",
-            wkt = ring.coords().to_wkt(),
-            hole = if ring.is_hole() { "HOLE" } else { "EXTR" }
-        );
+        info!("\t{wkt}", wkt = ring.coords().to_wkt(),);
     }
 
     let polygons = assemble(rings);
@@ -128,29 +122,26 @@ fn test_overlap_issue_867() -> Result<()> {
     let wkt2 = "POLYGON ((17.576085274796423 -15.791540153598898, 17.19432983818328 -17.499393422066746, 18.06452454246989 -17.693907532504, 17.576085274796423 -15.791540153598898))";
     check_sweep(wkt1, wkt2, OpType::Intersection)?;
     Ok(())
-}
 
-#[test]
-#[ignore]
-fn line_isect() {
-    let l1 = Line::new(
-        coord!(x: 17.576085274796423, y: -15.791540153598898),
-        coord!(x: 18.06452454246989, y: -17.693907532504),
-    );
+    // Instructive example of line-intersection fp considerations.
+    //     let l1 = Line::new(
+    //         coord!(x: 17.576085274796423, y: -15.791540153598898),
+    //         coord!(x: 18.06452454246989, y: -17.693907532504),
+    //     );
 
-    let l2 = Line::new(
-        coord!(x: 17.724912058920285, y: -16.37118892052372),
-        coord!(x: 18.06452454246989, y: -17.693907532504),
-    );
-    let l3 = Line::new(
-        coord!(x: 17.724912058920285, y: -16.37118892052372),
-        coord!(x: 19.09389292605319, y: -17.924001641855178),
-    );
+    //     let l2 = Line::new(
+    //         coord!(x: 17.724912058920285, y: -16.37118892052372),
+    //         coord!(x: 18.06452454246989, y: -17.693907532504),
+    //     );
+    //     let l3 = Line::new(
+    //         coord!(x: 17.724912058920285, y: -16.37118892052372),
+    //         coord!(x: 19.09389292605319, y: -17.924001641855178),
+    //     );
 
-    let i12 = line_intersection(l1, l2);
-    eprintln!("l1 x l2 = {i12:?}");
-    let i13 = line_intersection(l1, l3);
-    eprintln!("l1 x l3 = {i13:?}");
+    //     let i12 = line_intersection(l1, l2);
+    //     eprintln!("l1 x l2 = {i12:?}");
+    //     let i13 = line_intersection(l1, l3);
+    //     eprintln!("l1 x l3 = {i13:?}");
 }
 
 #[test]
