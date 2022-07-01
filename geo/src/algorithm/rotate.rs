@@ -32,6 +32,13 @@ pub trait Rotate<T> {
     ///
     /// - `angle`: degrees
     ///
+    /// ## Performance
+    ///
+    /// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
+    /// [`Skew`](crate::Skew), [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
+    /// efficient to compose the transformations and apply them as a single operation using the
+    /// [`AffineOps`](crate::AffineOps) trait.
+    ///
     /// # Examples
     ///
     /// ```
@@ -64,6 +71,13 @@ pub trait Rotate<T> {
     ///
     /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
     ///
+    /// ## Performance
+    ///
+    /// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
+    /// [`Skew`](crate::Skew), [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
+    /// efficient to compose the transformations and apply them as a single operation using the
+    /// [`AffineOps`](crate::AffineOps) trait.
+    ///
     /// # Units
     ///
     /// - `angle`: degrees
@@ -86,6 +100,13 @@ pub trait RotatePoint<T> {
     /// Rotate a Geometry around an arbitrary point by an angle, given in degrees
     ///
     /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
+    ///
+    /// ## Performance
+    ///
+    /// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
+    /// [`Skew`](crate::Skew), [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
+    /// efficient to compose the transformations and apply them as a single operation using the
+    /// [`AffineOps`](crate::AffineOps) trait.
     ///
     /// # Units
     ///

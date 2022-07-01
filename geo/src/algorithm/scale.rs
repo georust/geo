@@ -5,6 +5,13 @@ use crate::{AffineTransform, CoordNum, MapCoords, MapCoordsInPlace, Point};
 /// The point of origin is *usually* given as the 2D bounding box centre of the geometry, but
 /// any coordinate may be specified.
 ///
+/// ## Performance
+///
+/// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
+/// [`Skew`](crate::Skew), [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
+/// efficient to compose the transformations and apply them as a single operation using the
+/// [`AffineOps`](crate::AffineOps) trait.
+///
 /// # Examples
 ///
 /// ```
@@ -23,6 +30,7 @@ use crate::{AffineTransform, CoordNum, MapCoords, MapCoordsInPlace, Point};
 ///     (x: 55.0f64, y: 55.0f64)
 /// ]);
 /// ```
+///
 pub trait Scale<T> {
     fn scale(&self, x: T, y: T, origin: Point<T>) -> Self
     where
