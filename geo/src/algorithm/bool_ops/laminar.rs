@@ -9,7 +9,7 @@ use crate::sweep::{Cross, Crossing, CrossingsIter, LineOrPoint};
 use super::Ring;
 
 pub fn assemble<T: Float>(rings: Vec<Ring<T>>) -> Vec<Polygon<T>> {
-    let mut parents = vec![0; rings.len()];
+    let mut parents: Vec<usize> = (0..rings.len()).collect();
     let edges: Vec<Edge<_>> = rings
         .iter()
         .enumerate()
@@ -57,22 +57,13 @@ pub fn assemble<T: Float>(rings: Vec<Ring<T>>) -> Vec<Polygon<T>> {
             }
             debug_assert!(!edge.has_overlap, "laminar are non-overlapping");
             let ring_idx = edge.cross.ring_idx;
-            let ring = &rings[ring_idx];
             below = match below {
                 Some(ext_idx) => {
-                    if ring.is_hole() {
-                        parents[ring_idx] = ext_idx;
-                    } else {
-                        debug_assert_eq!(ring_idx, ext_idx, "matching idx");
-                    }
+                    parents[ring_idx] = ext_idx;
                     None
                 }
                 None => {
-                    if ring.is_hole() {
-                        Some(parents[ring_idx])
-                    } else {
-                        Some(ring_idx)
-                    }
+                    Some(parents[ring_idx])
                 }
             };
             trace!("setting: {geom:?} -> {below:?}", geom = edge.cross.geom);
@@ -82,9 +73,10 @@ pub fn assemble<T: Float>(rings: Vec<Ring<T>>) -> Vec<Polygon<T>> {
         });
     }
 
+    trace!("parents: {parents:?}");
     let mut polygons = vec![None; rings.len()];
     rings.iter().enumerate().for_each(|(idx, r)| {
-        if r.is_hole() {
+        if parents[idx] != idx {
             let p_idx = parents[idx];
             if polygons[p_idx].is_none() {
                 polygons[p_idx] = Some(Polygon::new(rings[p_idx].coords().clone(), vec![]));

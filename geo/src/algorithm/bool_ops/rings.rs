@@ -156,27 +156,27 @@ impl<T: GeoFloat> Rings<T> {
     fn push_link(&mut self, l: Link, pt: SweepPoint<T>, winding: WindingOrder) {
         if l.to_front {
             self.chains[l.idx].push_front(pt);
-            debug_assert_eq!(self.chains[l.idx].winding, winding.inverse());
+            // debug_assert_eq!(self.chains[l.idx].winding, winding.inverse());
         } else {
             self.chains[l.idx].push_back(pt);
-            debug_assert_eq!(self.chains[l.idx].winding, winding);
+            // debug_assert_eq!(self.chains[l.idx].winding, winding);
         }
     }
 
     fn link_chains(&mut self, i: Link, j: Link, winding: WindingOrder) {
         if i.to_front {
             self.chains[i.idx].link_front(j);
-            debug_assert_eq!(self.chains[i.idx].winding, winding.inverse());
+            // debug_assert_eq!(self.chains[i.idx].winding, winding.inverse());
         } else {
             self.chains[i.idx].link_back(j);
-            debug_assert_eq!(self.chains[i.idx].winding, winding);
+            // debug_assert_eq!(self.chains[i.idx].winding, winding);
         }
         if j.to_front {
             self.chains[j.idx].link_front(i);
-            debug_assert_eq!(self.chains[j.idx].winding, winding);
+            // debug_assert_eq!(self.chains[j.idx].winding, winding);
         } else {
             self.chains[j.idx].link_back(i);
-            debug_assert_eq!(self.chains[j.idx].winding, winding.inverse());
+            // debug_assert_eq!(self.chains[j.idx].winding, winding.inverse());
         }
     }
 }

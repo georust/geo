@@ -1,7 +1,6 @@
 use crate::line_intersection::line_intersection;
 use crate::{MultiPolygon, Polygon};
 
-use crate::Intersects;
 use geo_types::{Line, coord, LineString, Coordinate};
 use log::{error, info};
 
@@ -132,8 +131,8 @@ fn test_overlap_issue_867() -> Result<()> {
 }
 
 #[test]
+#[ignore]
 fn line_isect() {
-    // TODO: Dummy test do not push to main
     let l1 = Line::new(
         coord!(x: 17.576085274796423, y: -15.791540153598898),
         coord!(x: 18.06452454246989, y: -17.693907532504),
@@ -156,6 +155,14 @@ fn line_isect() {
 
 #[test]
 fn test_issue_865() -> Result<()> {
+    // Simplified example
+    let wkt1 = "POLYGON((0 0, 1 1, 10 0, 0 0))";
+    let wkt2 = "POLYGON((1 1, 8 2, 4 1, 1 1))";
+    let wkt2d = "POLYGON((1 1, 4 2, 8 1, 1 1))";
+    check_sweep(wkt1, wkt2, OpType::Union)?;
+    check_sweep(wkt1, wkt2d, OpType::Union)?;
+
+    // Original Example
     let wkt1 = "POLYGON((-640 -360,640 -360,640 360,-640 360,-640 -360))";
     let wkt2 = "POLYGON((313.276 359.999,213.319 359.999,50 60,-50 60,-50 110,-8.817 360,-93.151 360,-85.597 225.618,-114.48 359.999,-117.017 360,-85 215,-85 155,-115 155,-154.161 360,-640 360,-640 -360,640 -360,640 360,313.277 360,313.276 359.999))";
     check_sweep(wkt1, wkt2, OpType::Difference)?;
