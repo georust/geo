@@ -237,7 +237,11 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
             ));
         }
     }
-    None
+    // if we've gotten this far with no luck, return any vertex point, if there are any
+    polygon
+        .coords_iter()
+        .next()
+        .map(|coord| (coord.into(), T::zero()))
 }
 
 impl<T> InteriorPoint for Polygon<T>
@@ -527,6 +531,22 @@ mod test {
             vec![],
         );
         assert_eq!(poly.interior_point(), Some(p(0.5, 1.)));
+    }
+    #[test]
+    fn diagonal_flat_polygon_test() {
+        // the regular intersection approach happens to not produce a point that intersects the
+        // polygon given these particular start values, so this tests falling back to a vertex
+        let start: Coordinate<f64> = Coordinate {
+            x: 0.632690318327692,
+            y: 0.08104532928154995,
+        };
+        let end: Coordinate<f64> = Coordinate {
+            x: 0.4685039949468325,
+            y: 0.31750332644855794,
+        };
+        let poly = Polygon::new(LineString::new(vec![start, end, start]), vec![]);
+
+        assert_eq!(poly.interior_point(), Some(start.into()));
     }
     #[test]
     fn polygon_vertex_on_median() {
