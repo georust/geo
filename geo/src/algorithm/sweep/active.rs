@@ -45,13 +45,20 @@ impl<T> Deref for Active<T> {
 impl<T: PartialEq> Eq for Active<T> {}
 
 /// Assert total ordering of active segments.
-impl<T: PartialOrd> Ord for Active<T> {
+impl<T: PartialOrd + Debug> Ord for Active<T> {
     fn cmp(&self, other: &Self) -> Ordering {
-        T::partial_cmp(self, other).unwrap()
+        if let Some(c) = T::partial_cmp(self, other) {
+            c
+        } else {
+            warn!("could not compare segments:\n\t{self:?}\n\t{other:?}");
+            panic!("unable to compare active segments!");
+        }
+        // T::partial_cmp(self, other).unwrap()
+        // T::partial_cmp(self, other).unwrap()
     }
 }
 
-impl<T: PartialOrd> PartialOrd for Active<T> {
+impl<T: PartialOrd + Debug> PartialOrd for Active<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
@@ -66,7 +73,7 @@ pub(super) trait ActiveSet: Default {
     fn remove_active(&mut self, segment: &Self::Seg);
 }
 
-impl<T: PartialOrd> ActiveSet for BTreeSet<Active<T>> {
+impl<T: PartialOrd + Debug> ActiveSet for BTreeSet<Active<T>> {
     type Seg = T;
 
     fn previous(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>> {

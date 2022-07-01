@@ -129,7 +129,7 @@
 //! - **[`Scale`](Scale)**: Scale a geometry up or down by a factor
 //! - **[`Skew`](Skew)**: Skew a geometry by shearing angles along the `x` and `y` dimension
 //! - **[`Translate`](Translate)**: Translate a geometry along its axis
-//! - **[`AffineTransform`](AffineTransform)**: generalised composable affine operations
+//! - **[`AffineOps`](AffineOps)**: generalised composable affine operations
 //!
 //! ## Conversion
 //!

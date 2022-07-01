@@ -169,7 +169,7 @@ pub use skew::Skew;
 
 /// Composable affine operations such as rotate, scale, skew, and translate
 pub mod affine_ops;
-pub use affine_ops::AffineTransform;
+pub use affine_ops::{AffineOps, AffineTransform};
 
 /// Simplify `Geometries` using the Ramer-Douglas-Peucker algorithm.
 pub mod simplify;
