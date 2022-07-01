@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, ops::Deref};
 
 use super::SweepPoint;
 use crate::{
@@ -186,7 +186,20 @@ impl<T: GeoFloat> LineOrPoint<T> {
             }
         } else {
             line_intersection(self.line(), line).map(|l| match l {
-                LineIntersection::SinglePoint { intersection, .. } => intersection.into(),
+                LineIntersection::SinglePoint {
+                    intersection,
+                    is_proper,
+                } => {
+                    let mut pt = intersection;
+                    if is_proper && (&pt == self.left.deref()) {
+                        if self.left.x == self.right.x {
+                            pt.y = pt.y.next_after(T::infinity());
+                        } else {
+                            pt.x = pt.x.next_after(T::infinity());
+                        }
+                    }
+                    pt.into()
+                }
                 LineIntersection::Collinear { intersection } => intersection.into(),
             })
         }
