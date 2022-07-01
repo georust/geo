@@ -79,6 +79,8 @@ where
     type Output = Point<T>;
 
     fn interior_point(&self) -> Self::Output {
+        // the midpoint of the line isn't guaranteed to actually have an `intersects()`
+        // relationship with the line due to floating point rounding, so just use the start point
         self.start_point()
     }
 }
@@ -94,6 +96,8 @@ where
     fn interior_point(&self) -> Self::Output {
         match self.0.len() {
             0 => None,
+            // for linestrings of length 2, as with lines, the calculated midpoint might not lie
+            // on the line, so just use the start point
             1 | 2 => Some(self.0[0].into()),
             _ => {
                 let centroid = self
