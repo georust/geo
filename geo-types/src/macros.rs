@@ -216,7 +216,7 @@ macro_rules! line_string {
 /// [`Polygon`]: ./struct.Polygon.html
 #[macro_export]
 macro_rules! polygon {
-    () => { $crate::Polygon::new(line_string![], vec![]) };
+    () => { $crate::Polygon::new($crate::line_string![], vec![]) };
     (
         exterior: [
             $(( $($exterior_tag:tt : $exterior_val:expr),* $(,)? )),*
