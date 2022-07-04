@@ -150,11 +150,7 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
 
     let two = T::one() + T::one();
 
-    let bounds = if let Some(maybe_bounds) = polygon.bounding_rect() {
-        maybe_bounds
-    } else {
-        return None;
-    };
+    let bounds = polygon.bounding_rect()?;
 
     // use the midpoint of the bounds to scan, unless that happens to match any vertices from
     // polygon; if it does, perturb the line a bit by averaging with the Y coordinate of the
@@ -190,7 +186,7 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
 
     let lines = polygon
         .lines_iter()
-        .chain(std::iter::once(scan_line.clone()));
+        .chain(std::iter::once(scan_line));
 
     let mut intersections: Vec<SweepPoint<T>> = Vec::new();
     for (l1, l2, inter) in Intersections::from_iter(lines) {
@@ -745,8 +741,8 @@ mod test {
         let high_dimension_shapes = GeometryCollection::new_from(vec![poly1.into(), poly2.into()]);
 
         let mut mixed_shapes = high_dimension_shapes.clone();
-        mixed_shapes.0.push(Point::new(5. as f64, 0. as f64).into());
-        mixed_shapes.0.push(Point::new(5. as f64, 1. as f64).into());
+        mixed_shapes.0.push(Point::new(5_f64, 0_f64).into());
+        mixed_shapes.0.push(Point::new(5_f64, 1_f64).into());
 
         // lower-dimensional shapes shouldn't affect interior point if higher-dimensional shapes
         // are present, even if the low-d ones are closer to the centroid
