@@ -8,6 +8,11 @@
   * <https://github.com/georust/geo/pull/866>
   * <https://github.com/georust/geo/pull/871>
 
+## 0.22.1
+
+* Fix some floating point issues with `BoolOps`
+  * <https://github.com/georust/geo/pull/869>
+
 ## 0.22.0
 
 * Add densification algorithm for linear geometry components
