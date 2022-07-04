@@ -184,9 +184,7 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
         },
     );
 
-    let lines = polygon
-        .lines_iter()
-        .chain(std::iter::once(scan_line));
+    let lines = polygon.lines_iter().chain(std::iter::once(scan_line));
 
     let mut intersections: Vec<SweepPoint<T>> = Vec::new();
     for (l1, l2, inter) in Intersections::from_iter(lines) {
