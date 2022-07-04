@@ -7,6 +7,9 @@
 * Implement existing affine transform traits using new `AffineOps` trait
   * <https://github.com/georust/geo/pull/866>
   * <https://github.com/georust/geo/pull/871>
+* Add `InteriorPoint` trait allowing calculation of a representative point inside
+  a `Geometry`
+  * <https://github.com/georust/geo/pull/870>
 
 ## 0.22.1
 
@@ -35,7 +38,7 @@
 * `Winding` trait is rexported under geo::algorithm::Winding (and thus
   geo::Winding and geo::prelude::Winding)
   * <https://github.com/georust/geo/pull/855/files>
-* BREAKING: de-exported `WindingOrder` from `geo::WindingOrder`/`geo::algorithms::WindingOrder`. 
+* BREAKING: de-exported `WindingOrder` from `geo::WindingOrder`/`geo::algorithms::WindingOrder`.
   Instead, go back to `use geo::winding_order::WindingOrder` - it was briefly rexported as
   `geo::WindingOrder` and `geo::algorithms::WindingOrder`.
   * <https://github.com/georust/geo/pull/855/files>
