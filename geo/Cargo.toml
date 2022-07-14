@@ -84,6 +84,10 @@ name = "euclidean_distance"
 harness = false
 
 [[bench]]
+name = "prepared_geometry"
+harness = false
+
+[[bench]]
 name = "rotate"
 harness = false
 
