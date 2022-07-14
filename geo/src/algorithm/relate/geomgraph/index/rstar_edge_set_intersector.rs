@@ -1,4 +1,4 @@
-use super::super::Edge;
+use super::super::{Edge, GeometryGraph};
 use super::{EdgeSetIntersector, SegmentIntersector};
 use crate::{Coord, GeoFloat};
 
@@ -51,11 +51,12 @@ where
     F: GeoFloat + rstar::RTreeNum,
 {
     fn compute_intersections_within_set(
-        &mut self,
-        edges: &[Rc<RefCell<Edge<F>>>],
+        &self,
+        graph: &GeometryGraph<F>,
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
+        let edges: &[Rc<RefCell<Edge<F>>>] = graph.edges();
         let segments: Vec<Segment<F>> = edges
             .iter()
             .enumerate()
@@ -87,11 +88,13 @@ where
     }
 
     fn compute_intersections_between_sets(
-        &mut self,
-        edges_0: &[Rc<RefCell<Edge<F>>>],
-        edges_1: &[Rc<RefCell<Edge<F>>>],
+        &self,
+        graph_0: &GeometryGraph<F>,
+        graph_1: &GeometryGraph<F>,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
+        let edges_0: &[Rc<RefCell<Edge<F>>>] = graph_0.edges();
+        let edges_1: &[Rc<RefCell<Edge<F>>>] = graph_1.edges();
         let segments0: Vec<Segment<F>> = edges_0
             .iter()
             .enumerate()

@@ -291,7 +291,7 @@ where
         let check_for_self_intersecting_edges = !is_rings;
 
         edge_set_intersector.compute_intersections_within_set(
-            self.edges(),
+            self,
             check_for_self_intersecting_edges,
             &mut segment_intersector,
         );
@@ -314,8 +314,8 @@ where
 
         let mut edge_set_intersector = Self::create_edge_set_intersector();
         edge_set_intersector.compute_intersections_between_sets(
-            self.edges(),
-            other.edges(),
+            self,
+            other,
             &mut segment_intersector,
         );
 
