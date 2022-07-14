@@ -1,6 +1,6 @@
 use super::{
     index::{
-        EdgeSetIntersector, RstarEdgeSetIntersector, SegmentIntersector, SimpleEdgeSetIntersector,
+        EdgeSetIntersector, RStarEdgeSetIntersector, SegmentIntersector, SimpleEdgeSetIntersector,
     },
     CoordNode, CoordPos, Direction, Edge, Label, LineIntersector, PlanarGraph, TopologyPosition,
 };
@@ -104,7 +104,7 @@ where
 
         // Should be much faster for sparse intersections, while not much slower than
         // SimpleEdgeSetIntersector in the dense case
-        Box::new(RstarEdgeSetIntersector::new())
+        Box::new(RStarEdgeSetIntersector::new())
     }
 
     fn boundary_nodes(&self) -> impl Iterator<Item = &CoordNode<F>> {

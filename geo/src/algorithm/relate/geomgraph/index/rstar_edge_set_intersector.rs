@@ -7,11 +7,11 @@ use std::rc::Rc;
 
 use rstar::RTree;
 
-pub(crate) struct RstarEdgeSetIntersector;
+pub(crate) struct RStarEdgeSetIntersector;
 
-impl RstarEdgeSetIntersector {
+impl RStarEdgeSetIntersector {
     pub fn new() -> Self {
-        RstarEdgeSetIntersector
+        RStarEdgeSetIntersector
     }
 }
 
@@ -48,7 +48,7 @@ where
     }
 }
 
-impl<F> EdgeSetIntersector<F> for RstarEdgeSetIntersector
+impl<F> EdgeSetIntersector<F> for RStarEdgeSetIntersector
 where
     F: GeoFloat + rstar::RTreeNum,
 {
