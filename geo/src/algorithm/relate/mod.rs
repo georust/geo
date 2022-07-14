@@ -1,7 +1,10 @@
 pub(crate) use edge_end_builder::EdgeEndBuilder;
 pub use geomgraph::intersection_matrix::IntersectionMatrix;
+use relate_operation::RelateOperation;
 
 use crate::geometry::*;
+pub use crate::relate::geomgraph::index::PreparedGeometry;
+pub use crate::relate::geomgraph::GeometryGraph;
 use crate::{GeoFloat, GeometryCow};
 
 mod edge_end_builder;
@@ -51,66 +54,38 @@ mod relate_operation;
 /// ```
 ///
 /// Note: `Relate` must not be called on geometries containing `NaN` coordinates.
-pub trait Relate<F, T> {
-    fn relate(&self, other: &T) -> IntersectionMatrix;
-}
+pub trait Relate<F: GeoFloat> {
+    /// Construct a [`GeometryGraph`]
+    fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<F>;
 
-impl<F: GeoFloat> Relate<F, GeometryCow<'_, F>> for GeometryCow<'_, F> {
-    fn relate(&self, other: &GeometryCow<F>) -> IntersectionMatrix {
-        let mut relate_computer = relate_operation::RelateOperation::new(self, other);
-        relate_computer.compute_intersection_matrix()
+    fn relate(&self, other: &impl Relate<F>) -> IntersectionMatrix {
+        RelateOperation::new(self.geometry_graph(0), other.geometry_graph(1))
+            .compute_intersection_matrix()
     }
 }
 
 macro_rules! relate_impl {
-    ($k:ty, $t:ty) => {
-        relate_impl![($k, $t),];
-    };
-    ($(($k:ty, $t:ty),)*) => {
+    ($($t:ty ,)*) => {
         $(
-            impl<F: GeoFloat> Relate<F, $t> for $k {
-                fn relate(&self, other: &$t) -> IntersectionMatrix {
-                    GeometryCow::from(self).relate(&GeometryCow::from(other))
+            impl<F: GeoFloat> Relate<F> for $t {
+                fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<F> {
+                    GeometryGraph::new(arg_index, GeometryCow::from(self))
                 }
             }
         )*
     };
 }
 
-/// Call the given macro with every pair of inputs
-///
-/// # Examples
-///
-/// ```ignore
-/// cartesian_pairs!(foo, [Bar, Baz, Qux]);
-/// ```
-/// Is akin to calling:
-/// ```ignore
-/// foo![(Bar, Bar), (Bar, Baz), (Bar, Qux), (Baz, Bar), (Baz, Baz), (Baz, Qux), (Qux, Bar), (Qux, Baz), (Qux, Qux)];
-/// ```
-macro_rules! cartesian_pairs {
-    ($macro_name:ident, [$($a:ty),*]) => {
-        cartesian_pairs_helper! { [] [$($a,)*] [$($a,)*] [$($a,)*] $macro_name}
-    };
-}
-
-macro_rules! cartesian_pairs_helper {
-    // popped all a's - we're done. Use the accumulated output as the input to relate macro.
-    ([$($out_pairs:tt)*] [] [$($b:ty,)*] $init_b:tt $macro_name:ident) => {
-        $macro_name!{$($out_pairs)*}
-    };
-    // finished one loop of b, pop next a and reset b
-    ($out_pairs:tt [$a_car:ty, $($a_cdr:ty,)*] [] $init_b:tt $macro_name:ident) => {
-        cartesian_pairs_helper!{$out_pairs [$($a_cdr,)*] $init_b $init_b $macro_name}
-    };
-    // pop b through all of b with head of a
-    ([$($out_pairs:tt)*] [$a_car:ty, $($a_cdr:ty,)*] [$b_car:ty, $($b_cdr:ty,)*] $init_b:tt $macro_name:ident) => {
-        cartesian_pairs_helper!{[$($out_pairs)* ($a_car, $b_car),] [$a_car, $($a_cdr,)*] [$($b_cdr,)*] $init_b $macro_name}
-    };
-}
-
-// Implement Relate for every combination of Geometry. Alternatively we could do something like
-// `impl Relate<Into<GeometryCow>> for Into<GeometryCow> { }`
-// but I don't know that we want to make GeometryCow public (yet?).
-cartesian_pairs!(relate_impl, [Point<F>, Line<F>, LineString<F>, Polygon<F>, MultiPoint<F>, MultiLineString<F>, MultiPolygon<F>, Rect<F>, Triangle<F>, GeometryCollection<F>]);
-relate_impl!(Geometry<F>, Geometry<F>);
+relate_impl![
+    Point<F>,
+    Line<F>,
+    LineString<F>,
+    Polygon<F>,
+    MultiPoint<F>,
+    MultiLineString<F>,
+    MultiPolygon<F>,
+    Rect<F>,
+    Triangle<F>,
+    GeometryCollection<F>,
+    Geometry<F>,
+];

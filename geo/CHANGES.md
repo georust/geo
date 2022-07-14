@@ -10,6 +10,8 @@
   * <https://github.com/georust/geo/pull/1192>
 * Fix `AffineTransform::compose` ordering to be conventional - such that the argument is applied *after* self.
   * <https://github.com/georust/geo/pull/1196>
+* Add `PreparedGeometry` to speed up repeated `Relate` operations.
+  * <https://github.com/georust/geo/pull/1197>
 
 ## 0.28.0
 
