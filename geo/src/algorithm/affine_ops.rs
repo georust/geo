@@ -36,21 +36,21 @@ use std::fmt;
 /// ], max_relative = 1.0);
 /// ```
 pub trait AffineOps<T: CoordNum> {
-    /// Apply `transform` to mutate `self`.
-    fn affine_transform_mut(&mut self, transform: &AffineTransform<T>);
-
     /// Apply `transform` immutably, outputting a new geometry.
     #[must_use]
     fn affine_transform(&self, transform: &AffineTransform<T>) -> Self;
+
+    /// Apply `transform` to mutate `self`.
+    fn affine_transform_mut(&mut self, transform: &AffineTransform<T>);
 }
 
 impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> AffineOps<T> for M {
-    fn affine_transform_mut(&mut self, transform: &AffineTransform<T>) {
-        self.map_coords_in_place(|c| transform.apply(c))
-    }
-
     fn affine_transform(&self, transform: &AffineTransform<T>) -> Self {
         self.map_coords(|c| transform.apply(c))
+    }
+
+    fn affine_transform_mut(&mut self, transform: &AffineTransform<T>) {
+        self.map_coords_in_place(|c| transform.apply(c))
     }
 }
 
@@ -318,8 +318,8 @@ impl<U: CoordFloat> AffineTransform<U> {
     /// xoff = origin.x - (origin.x * cos(theta)) + (origin.y * sin(theta))
     /// yoff = origin.y - (origin.x * sin(theta)) + (origin.y * cos(theta))
     /// ```
-    pub fn rotate(angle: U, origin: impl Into<Coordinate<U>>) -> Self {
-        let (sin_theta, cos_theta) = angle.to_radians().sin_cos();
+    pub fn rotate(degrees: U, origin: impl Into<Coordinate<U>>) -> Self {
+        let (sin_theta, cos_theta) = degrees.to_radians().sin_cos();
         let (x0, y0) = origin.into().x_y();
         let xoff = x0 - (x0 * cos_theta) + (y0 * sin_theta);
         let yoff = y0 - (x0 * sin_theta) - (y0 * cos_theta);

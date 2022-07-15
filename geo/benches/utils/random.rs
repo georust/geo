@@ -1,10 +1,8 @@
 #![allow(unused)]
 use std::f64::consts::PI;
 
-use geo::{
-    concave_hull::ConcaveHull, map_coords::MapCoords, prelude::ConvexHull, rotate::RotatePoint,
-    Coordinate, Line, LineString, Polygon, Rect,
-};
+use geo::algorithm::{ConcaveHull, ConvexHull, MapCoords, Rotate};
+use geo::geometry::*;
 
 use rand::{thread_rng, Rng};
 use rand_distr::{Distribution, Normal, Standard};
