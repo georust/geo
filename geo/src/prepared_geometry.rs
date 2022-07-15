@@ -1,29 +1,39 @@
-use crate::geometry::Polygon;
+use crate::geometry::{Geometry, Polygon};
 use crate::relate::{IntersectionMatrix, Relate};
-use crate::{GeoFloat, GeoNum};
-use std::marker::PhantomData;
+use crate::GeoFloat;
 
-pub struct PreparedPolygon<F: GeoFloat = f64> {
-    _marker: PhantomData<F>,
+impl<F: GeoFloat> From<Polygon<F>> for PreparedGeometry<F> {
+    fn from(polygon: Polygon<F>) -> Self {
+        // TODO: build tree
+        // TODO: from GeometryCoW?
+        Self {
+            geometry: Geometry::from(polygon),
+        }
+    }
 }
 
-impl<F: GeoFloat> From<Polygon<F>> for PreparedPolygon<F> {
-    fn from(_: Polygon<F>) -> Self {
+#[derive(PartialEq, Debug, Hash)]
+pub struct PreparedGeometry<F: GeoFloat = f64> {
+    geometry: Geometry<F>,
+}
+
+impl<F: GeoFloat> Relate<F, PreparedGeometry<F>> for PreparedGeometry<F> {
+    fn relate(&self, other: &PreparedGeometry<F>) -> IntersectionMatrix {
         todo!()
     }
 }
 
-trait PreparedGeometry<F: GeoFloat = f64> {}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::polygon;
 
-impl<F: GeoFloat> PreparedGeometry<F> for PreparedPolygon<F> {}
-
-impl<F, G1, G2> Relate<F, G2> for G1
-where
-    G1: PreparedGeometry<F>,
-    F: GeoFloat,
-    G2: PreparedGeometry<F>,
-{
-    fn relate(&self, other: &G2) -> IntersectionMatrix {
-        todo!()
+    #[test]
+    fn relate() {
+        let p1 = polygon![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0), (x: 1.0, y: 1.0)];
+        let p2 = polygon![(x: 0.5, y: 0.0), (x: 2.0, y: 0.0), (x: 1.0, y: 1.0)];
+        let prepared_1 = PreparedGeometry::from(p1);
+        let prepared_2 = PreparedGeometry::from(p2);
+        assert!(prepared_1.relate(&prepared_2).is_contains())
     }
 }
