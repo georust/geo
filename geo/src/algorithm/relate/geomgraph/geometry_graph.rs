@@ -32,6 +32,7 @@ where
 {
     arg_index: usize,
     parent_geometry: &'a GeometryCow<'a, F>,
+    edge_set_intersector: Box<dyn EdgeSetIntersector<F>>,
     use_boundary_determination_rule: bool,
     planar_graph: PlanarGraph<F>,
 }
@@ -74,6 +75,7 @@ where
             arg_index,
             parent_geometry,
             use_boundary_determination_rule: true,
+            edge_set_intersector: Self::create_unprepared_edge_set_intersector(),
             planar_graph: PlanarGraph::new(),
         };
         graph.add_geometry(parent_geometry);
@@ -96,7 +98,7 @@ where
         }
     }
 
-    fn create_edge_set_intersector() -> Box<dyn EdgeSetIntersector<F>> {
+    fn create_unprepared_edge_set_intersector() -> Box<dyn EdgeSetIntersector<F>> {
         // PERF: faster algorithms exist. This one was chosen for simplicity of implementation and
         //       debugging
         // Slow, but simple and good for debugging
@@ -279,9 +281,6 @@ where
     ) -> SegmentIntersector<F> {
         let mut segment_intersector = SegmentIntersector::new(line_intersector, true);
 
-        // cache this on hgeometry graph? maybe it holds a tree?
-        let edge_set_intersector = Self::create_edge_set_intersector();
-
         // optimize intersection search for valid Polygons and LinearRings
         let is_rings = match self.geometry() {
             GeometryCow::LineString(ls) => ls.is_closed(),
@@ -291,7 +290,7 @@ where
         };
         let check_for_self_intersecting_edges = !is_rings;
 
-        edge_set_intersector.compute_intersections_within_set(
+        self.edge_set_intersector.compute_intersections_within_set(
             self,
             check_for_self_intersecting_edges,
             &mut segment_intersector,
@@ -313,12 +312,8 @@ where
             other.boundary_nodes().cloned().collect(),
         );
 
-        let mut edge_set_intersector = Self::create_edge_set_intersector();
-        edge_set_intersector.compute_intersections_between_sets(
-            self,
-            other,
-            &mut segment_intersector,
-        );
+        self.edge_set_intersector
+            .compute_intersections_between_sets(self, other, &mut segment_intersector);
 
         segment_intersector
     }
