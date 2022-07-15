@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+* Fixed: using empty `polygon![]` macro no longer requires including `line_string!` macro
+
 ## 0.7.6
 
 * You may now specify `Geometry` rather than `Geometry<f64>` since we've added

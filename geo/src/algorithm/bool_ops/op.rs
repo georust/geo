@@ -3,7 +3,6 @@ use std::{cell::Cell, cmp::Ordering, fmt::Debug};
 use super::*;
 use crate::{
     sweep::{Cross, Crossing, CrossingsIter, LineOrPoint},
-    winding_order::WindingOrder,
     CoordsIter, GeoFloat as Float, LineString, Polygon,
 };
 
@@ -111,14 +110,7 @@ impl<T: Float> Op<T> {
                     let next_is_ty = next_region.unwrap().is_ty(self.ty);
                     if prev_region.is_ty(self.ty) ^ next_is_ty {
                         trace!("\tfull_geom: {geom:?}", geom = c.cross.geom);
-                        rings.add_edge(
-                            c.line,
-                            if !next_is_ty {
-                                WindingOrder::CounterClockwise
-                            } else {
-                                WindingOrder::Clockwise
-                            },
-                        )
+                        rings.add_edge(c.line)
                     }
                     next_region = None;
                 }

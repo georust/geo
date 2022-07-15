@@ -262,7 +262,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::Area;
-    use crate::{coord, line_string, polygon, Line, MultiPolygon, Polygon, Rect, Triangle};
+    use crate::{coord, polygon, Line, MultiPolygon, Polygon, Rect, Triangle};
 
     // Area of the polygon
     #[test]
