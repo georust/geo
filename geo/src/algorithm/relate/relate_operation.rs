@@ -6,7 +6,7 @@ use crate::relate::geomgraph::{
     CoordNode, CoordPos, Edge, EdgeEnd, EdgeEndBundleStar, GeometryGraph, LabeledEdgeEndBundleStar,
     RobustLineIntersector,
 };
-use crate::CoordinatePosition;
+use crate::{CoordinatePosition, PreparedGeometry};
 use crate::{Coord, GeoFloat, GeometryCow};
 
 use std::cell::RefCell;
@@ -47,14 +47,28 @@ impl<'a, F> RelateOperation<'a, F>
 where
     F: GeoFloat,
 {
-    pub(crate) fn new(
+    pub(crate) fn from_geoms(
         geom_a: &'a GeometryCow<'a, F>,
         geom_b: &'a GeometryCow<'a, F>,
-    ) -> RelateOperation<'a, F> {
+    ) -> Self {
+        let graph_a = GeometryGraph::new(0, geom_a);
+        let graph_b = GeometryGraph::new(1, geom_b);
+        Self::new(graph_a, graph_b)
+    }
+
+    pub(crate) fn from_prepared_geoms(
+        geom_a: &'a PreparedGeometry<F>,
+        geom_b: &'a PreparedGeometry<F>,
+    ) -> Self {
+        let graph_a = GeometryGraph::new(0, geom_a.geometry());
+        let graph_b = GeometryGraph::new(1, geom_b.geometry());
+        Self::new(graph_a, graph_b)
+    }
+
+    pub(crate) fn new(graph_a: GeometryGraph<'a, F>, graph_b: GeometryGraph<'a, F>) -> Self {
         Self {
-            // should graph has an edge set intersector?
-            graph_a: GeometryGraph::new(0, geom_a),
-            graph_b: GeometryGraph::new(1, geom_b),
+            graph_a,
+            graph_b,
             nodes: NodeMap::new(),
             isolated_edges: vec![],
             line_intersector: RobustLineIntersector::new(),
@@ -458,7 +472,7 @@ mod test {
 
         let gc1 = GeometryCow::from(&square_a);
         let gc2 = GeometryCow::from(&square_b);
-        let mut relate_computer = RelateOperation::new(&gc1, &gc2);
+        let mut relate_computer = RelateOperation::from_geoms(&gc1, &gc2);
         let intersection_matrix = relate_computer.compute_intersection_matrix();
         assert_eq!(
             intersection_matrix,
@@ -488,7 +502,7 @@ mod test {
 
         let gca = GeometryCow::from(&square_a);
         let gcb = GeometryCow::from(&square_b);
-        let mut relate_computer = RelateOperation::new(&gca, &gcb);
+        let mut relate_computer = RelateOperation::from_geoms(&gca, &gcb);
         let intersection_matrix = relate_computer.compute_intersection_matrix();
         assert_eq!(
             intersection_matrix,
@@ -518,7 +532,7 @@ mod test {
 
         let gca = &GeometryCow::from(&square_a);
         let gcb = &GeometryCow::from(&square_b);
-        let mut relate_computer = RelateOperation::new(gca, gcb);
+        let mut relate_computer = RelateOperation::from_geoms(gca, gcb);
         let intersection_matrix = relate_computer.compute_intersection_matrix();
         assert_eq!(
             intersection_matrix,

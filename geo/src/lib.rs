@@ -222,6 +222,7 @@ mod types;
 mod utils;
 
 pub(crate) use geometry_cow::GeometryCow;
+pub use prepared_geometry::PreparedGeometry;
 
 #[cfg(test)]
 #[macro_use]

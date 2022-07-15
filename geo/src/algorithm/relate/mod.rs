@@ -1,8 +1,9 @@
 pub(crate) use edge_end_builder::EdgeEndBuilder;
 pub use geomgraph::intersection_matrix::IntersectionMatrix;
+use relate_operation::RelateOperation;
 
 use crate::geometry::*;
-use crate::{GeoFloat, GeometryCow};
+use crate::{GeoFloat, GeometryCow, PreparedGeometry};
 
 mod edge_end_builder;
 mod geomgraph;
@@ -57,7 +58,14 @@ pub trait Relate<F, T> {
 
 impl<F: GeoFloat> Relate<F, GeometryCow<'_, F>> for GeometryCow<'_, F> {
     fn relate(&self, other: &GeometryCow<F>) -> IntersectionMatrix {
-        let mut relate_computer = relate_operation::RelateOperation::new(self, other);
+        let mut relate_computer = RelateOperation::from_geoms(self, other);
+        relate_computer.compute_intersection_matrix()
+    }
+}
+
+impl<'a, F: GeoFloat> Relate<F, PreparedGeometry<'a, F>> for PreparedGeometry<'a, F> {
+    fn relate(&self, other: &PreparedGeometry<'a, F>) -> IntersectionMatrix {
+        let mut relate_computer = RelateOperation::from_prepared_geoms(self, other);
         relate_computer.compute_intersection_matrix()
     }
 }
