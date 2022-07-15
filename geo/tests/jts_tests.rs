@@ -13,7 +13,7 @@ fn init_logging() {
 fn test_all_general() {
     init_logging();
 
-    let mut runner = TestRunner::new();
+    let mut runner = TestRunner::new().with_precision_floating();
     runner.run().expect("test cases failed");
 
     // sanity check that *something* was run

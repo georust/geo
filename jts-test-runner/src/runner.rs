@@ -3,9 +3,13 @@ use std::collections::BTreeSet;
 use approx::relative_eq;
 use include_dir::{include_dir, Dir, DirEntry};
 use log::{debug, info};
+use wkt::ToWkt;
 
 use super::{input, Operation, Result};
-use geo::{intersects::Intersects, prelude::Contains, Coordinate, Geometry, LineString, Polygon};
+use geo::{
+    BooleanOps, Contains, Coordinate, GeoNum, Geometry, HasDimensions, Intersects, LineString,
+    MultiPolygon, Polygon,
+};
 
 const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/general");
 
@@ -13,6 +17,7 @@ const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxm
 pub struct TestRunner {
     filename_filter: Option<String>,
     desc_filter: Option<String>,
+    check_precision: bool,
     cases: Option<Vec<TestCase>>,
     failures: Vec<TestFailure>,
     unsupported: Vec<TestCase>,
@@ -63,6 +68,11 @@ impl TestRunner {
 
     pub fn matching_filename_glob(mut self, filename: &str) -> Self {
         self.filename_filter = Some(filename.to_string());
+        self
+    }
+
+    pub fn with_precision_floating(mut self) -> Self {
+        self.check_precision = true;
         self
     }
 
@@ -363,9 +373,7 @@ impl TestRunner {
                             continue;
                         }
                     };
-                    if is_polygon_rotated_eq(&actual_polygon, &expected, |c1, c2| {
-                        relative_eq!(c1, c2)
-                    }) {
+                    if actual_polygon.is_rotated_eq(&expected, |c1, c2| relative_eq!(c1, c2)) {
                         debug!("ConvexHull success: actual == expected");
                         self.successes.push(test_case);
                     } else {
@@ -428,6 +436,43 @@ impl TestRunner {
                         });
                     }
                 }
+                Operation::BooleanOp { a, b, op, expected } => {
+                    let expected = match expected {
+                        Geometry::MultiPolygon(multi) => multi.clone(),
+                        Geometry::Polygon(poly) => MultiPolygon(vec![poly.clone()]),
+                        _ => {
+                            info!("skipping unsupported Union expectation: {:?}", expected);
+                            continue;
+                        }
+                    };
+
+                    let actual = match (a, b) {
+                        (Geometry::Polygon(a), Geometry::Polygon(b)) => a.boolean_op(b, *op),
+                        (Geometry::MultiPolygon(a), Geometry::MultiPolygon(b)) => {
+                            a.boolean_op(b, *op)
+                        }
+                        _ => {
+                            info!("skipping unsupported Union combination: {:?}, {:?}", a, b);
+                            continue;
+                        }
+                    };
+
+                    if actual.is_rotated_eq(&expected, |c1, c2| relative_eq!(c1, c2)) {
+                        debug!("Union success - expected: {:?}", expected.wkt_string());
+                        self.successes.push(test_case);
+                    } else {
+                        let error_description = format!(
+                            "op: {:?}, expected {:?}, actual: {:?}",
+                            op,
+                            expected.wkt_string(),
+                            actual.wkt_string()
+                        );
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    }
+                }
             }
         }
         info!(
@@ -468,6 +513,17 @@ impl TestRunner {
                     continue;
                 }
             };
+            if self.check_precision
+                && run.precision_model.is_some()
+                && &run.precision_model.as_ref().unwrap().ty != "FLOATING"
+            {
+                debug!(
+                    "skipping test input: {:?} with unsupported precision model: {prec:?}",
+                    file.path(),
+                    prec = run.precision_model,
+                );
+                continue;
+            }
             for mut case in run.cases {
                 if let Some(desc_filter) = &self.desc_filter {
                     if case.desc.as_str().contains(desc_filter) {
@@ -510,48 +566,84 @@ impl TestRunner {
     }
 }
 
+trait RotatedEq<T: GeoNum> {
+    fn is_rotated_eq<F>(&self, other: &Self, coord_matcher: F) -> bool
+    where
+        F: Fn(&Coordinate<T>, &Coordinate<T>) -> bool;
+}
+
+impl<T: GeoNum> RotatedEq<T> for MultiPolygon<T> {
+    fn is_rotated_eq<F>(&self, other: &Self, coord_matcher: F) -> bool
+    where
+        F: Fn(&Coordinate<T>, &Coordinate<T>) -> bool,
+    {
+        if self.0.len() != other.0.len() {
+            // We have some discrepancies about having a multipolygon with nothing in it vs a multipolygon with an empty polygon.
+            return self.is_empty() && other.is_empty();
+        }
+        let mut matched_in_other: BTreeSet<usize> = BTreeSet::new();
+
+        for self_poly in self {
+            let did_match = other.iter().enumerate().find(|(j, other_poly)| {
+                !matched_in_other.contains(j) && self_poly.is_rotated_eq(other_poly, &coord_matcher)
+            });
+            if let Some((j, _)) = did_match {
+                matched_in_other.insert(j);
+            } else {
+                return false;
+            }
+        }
+        true
+    }
+}
+
 /// Test if two polygons are equal upto rotation, and
 /// permutation of interiors.
-pub fn is_polygon_rotated_eq<T, F>(p1: &Polygon<T>, p2: &Polygon<T>, coord_matcher: F) -> bool
-where
-    T: geo::GeoNum,
-    F: Fn(&Coordinate<T>, &Coordinate<T>) -> bool,
-{
-    if p1.interiors().len() != p2.interiors().len() {
-        return false;
-    }
-    if !is_ring_rotated_eq(p1.exterior(), p2.exterior(), &coord_matcher) {
-        return false;
-    }
-
-    let mut matched_in_p2: BTreeSet<usize> = BTreeSet::new();
-    for r1 in p1.interiors().iter() {
-        let did_match = p2.interiors().iter().enumerate().find(|(j, r2)| {
-            !matched_in_p2.contains(j) && is_ring_rotated_eq(r1, r2, &coord_matcher)
-        });
-        if let Some((j, _)) = did_match {
-            matched_in_p2.insert(j);
-        } else {
+impl<T: GeoNum> RotatedEq<T> for Polygon<T> {
+    fn is_rotated_eq<F>(&self, other: &Self, coord_matcher: F) -> bool
+    where
+        F: Fn(&Coordinate<T>, &Coordinate<T>) -> bool,
+    {
+        if self.interiors().len() != other.interiors().len() {
             return false;
         }
+        if !self
+            .exterior()
+            .is_rotated_eq(other.exterior(), &coord_matcher)
+        {
+            return false;
+        }
+
+        let mut matched_in_other: BTreeSet<usize> = BTreeSet::new();
+        for r1 in self.interiors().iter() {
+            let did_match = other.interiors().iter().enumerate().find(|(j, other)| {
+                !matched_in_other.contains(j) && r1.is_rotated_eq(other, &coord_matcher)
+            });
+            if let Some((j, _)) = did_match {
+                matched_in_other.insert(j);
+            } else {
+                return false;
+            }
+        }
+        true
     }
-    true
 }
 
 /// Test if two rings are equal upto rotation / reversal
-pub fn is_ring_rotated_eq<T, F>(r1: &LineString<T>, r2: &LineString<T>, coord_matcher: F) -> bool
-where
-    T: geo::GeoNum,
-    F: Fn(&Coordinate<T>, &Coordinate<T>) -> bool,
-{
-    assert!(r1.is_closed(), "r1 is not closed");
-    assert!(r2.is_closed(), "r2 is not closed");
-    if r1.0.len() != r2.0.len() {
-        return false;
+impl<T: GeoNum> RotatedEq<T> for LineString<T> {
+    fn is_rotated_eq<F>(&self, other: &Self, coord_matcher: F) -> bool
+    where
+        F: Fn(&Coordinate<T>, &Coordinate<T>) -> bool,
+    {
+        assert!(self.is_closed(), "self is not closed");
+        assert!(other.is_closed(), "other is not closed");
+        if self.0.len() != other.0.len() {
+            return false;
+        }
+        let len = self.0.len() - 1;
+        (0..len).any(|shift| {
+            (0..len).all(|i| coord_matcher(&self.0[i], &other.0[(i + shift) % len]))
+                || (0..len).all(|i| coord_matcher(&self.0[len - i], &other.0[(i + shift) % len]))
+        })
     }
-    let len = r1.0.len() - 1;
-    (0..len).any(|shift| {
-        (0..len).all(|i| coord_matcher(&r1.0[i], &r2.0[(i + shift) % len]))
-            || (0..len).all(|i| coord_matcher(&r1.0[len - i], &r2.0[(i + shift) % len]))
-    })
 }
