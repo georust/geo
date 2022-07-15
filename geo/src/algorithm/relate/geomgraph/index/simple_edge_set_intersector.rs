@@ -1,4 +1,4 @@
-use super::super::{GeometryGraph, Edge};
+use super::super::{Edge, GeometryGraph};
 use super::{EdgeSetIntersector, SegmentIntersector};
 use crate::GeoFloat;
 

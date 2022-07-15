@@ -52,6 +52,7 @@ where
         geom_b: &'a GeometryCow<'a, F>,
     ) -> RelateOperation<'a, F> {
         Self {
+            // should graph has an edge set intersector?
             graph_a: GeometryGraph::new(0, geom_a),
             graph_b: GeometryGraph::new(1, geom_b),
             nodes: NodeMap::new(),

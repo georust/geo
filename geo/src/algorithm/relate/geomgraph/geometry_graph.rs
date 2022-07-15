@@ -279,7 +279,8 @@ where
     ) -> SegmentIntersector<F> {
         let mut segment_intersector = SegmentIntersector::new(line_intersector, true);
 
-        let mut edge_set_intersector = Self::create_edge_set_intersector();
+        // cache this on hgeometry graph? maybe it holds a tree?
+        let edge_set_intersector = Self::create_edge_set_intersector();
 
         // optimize intersection search for valid Polygons and LinearRings
         let is_rings = match self.geometry() {
