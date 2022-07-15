@@ -81,11 +81,11 @@ macro_rules! relate_impl {
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// cartesian_pairs!(foo, [Bar, Baz, Qux]);
 /// ```
 /// Is akin to calling:
-/// ```no_run
+/// ```ignore
 /// foo![(Bar, Bar), (Bar, Baz), (Bar, Qux), (Baz, Bar), (Baz, Baz), (Baz, Qux), (Qux, Bar), (Qux, Baz), (Qux, Qux)];
 /// ```
 macro_rules! cartesian_pairs {
