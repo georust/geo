@@ -1,6 +1,6 @@
 use std::{cell::Cell, cmp::Ordering, fmt::Debug};
 
-use super::*;
+use super::{assembly::Assembly, *};
 use crate::{
     sweep::{Cross, Crossing, CrossingsIter, LineOrPoint},
     CoordsIter, GeoFloat as Float, LineString, Polygon,
@@ -58,25 +58,15 @@ impl<T: Float> Op<T> {
         }
     }
 
-    pub fn sweep(&self) -> Vec<Ring<T>> {
+    pub fn sweep(&self) -> MultiPolygon<T> {
         let mut iter = CrossingsIter::from_iter(self.edges.iter());
-        let mut rings = Rings::default();
+        let mut output = Assembly::default();
 
         while let Some(pt) = iter.next() {
             trace!(
                 "\n\nSweep point: {pt:?}, {n} intersection segments",
                 n = iter.intersections_mut().len()
             );
-            fn compare_crossings<X: Cross>(a: &Crossing<X>, b: &Crossing<X>) -> Ordering {
-                a.at_left.cmp(&b.at_left).then_with(|| {
-                    let ord = a.line.partial_cmp(&b.line).unwrap();
-                    if a.at_left {
-                        ord
-                    } else {
-                        ord.reverse()
-                    }
-                })
-            }
             iter.intersections_mut().sort_unstable_by(compare_crossings);
 
             // Process all end-segments.
@@ -110,7 +100,7 @@ impl<T: Float> Op<T> {
                     let next_is_ty = next_region.unwrap().is_ty(self.ty);
                     if prev_region.is_ty(self.ty) ^ next_is_ty {
                         trace!("\tfull_geom: {geom:?}", geom = c.cross.geom);
-                        rings.add_edge(c.line)
+                        output.add_edge(c.line)
                     }
                     next_region = None;
                 }
@@ -168,7 +158,7 @@ impl<T: Float> Op<T> {
             }
         }
 
-        rings.finish()
+        output.finish()
     }
 }
 
@@ -275,4 +265,15 @@ impl<T: Float> Cross for Edge<T> {
     fn line(&self) -> LineOrPoint<Self::Scalar> {
         self.geom
     }
+}
+
+pub(super) fn compare_crossings<X: Cross>(a: &Crossing<X>, b: &Crossing<X>) -> Ordering {
+    a.at_left.cmp(&b.at_left).then_with(|| {
+        let ord = a.line.partial_cmp(&b.line).unwrap();
+        if a.at_left {
+            ord
+        } else {
+            ord.reverse()
+        }
+    })
 }

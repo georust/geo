@@ -102,6 +102,10 @@ impl<T: GeoNum> LineOrPoint<T> {
     pub fn end_points(&self) -> (SweepPoint<T>, SweepPoint<T>) {
         (self.left, self.right)
     }
+
+    pub fn new(left: SweepPoint<T>, right: SweepPoint<T>) -> Self {
+        Self { left, right }
+    }
 }
 
 /// Equality based on ordering defined for segments as per algorithm.

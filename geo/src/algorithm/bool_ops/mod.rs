@@ -54,8 +54,7 @@ impl<T: GeoFloat> BooleanOps for Polygon<T> {
         let mut bop = Op::new(op, self.coords_count() + other.coords_count());
         bop.add_polygon(self, true);
         bop.add_polygon(other, false);
-        let rings = bop.sweep();
-        assemble(rings).into()
+        bop.sweep()
     }
 }
 impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
@@ -65,19 +64,13 @@ impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
         let mut bop = Op::new(op, self.coords_count() + other.coords_count());
         bop.add_multi_polygon(self, true);
         bop.add_multi_polygon(other, false);
-        let rings = bop.sweep();
-        assemble(rings).into()
+        bop.sweep()
     }
 }
 
 mod op;
 use op::*;
-
-mod rings;
-use rings::{Ring, Rings};
-
-mod laminar;
-use laminar::*;
+mod assembly;
 
 #[cfg(test)]
 mod tests;
