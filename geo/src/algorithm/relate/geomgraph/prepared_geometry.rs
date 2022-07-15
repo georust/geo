@@ -1,11 +1,12 @@
-use crate::geometry::{Geometry, Polygon};
+use crate::geometry::Polygon;
+use crate::relate::geomgraph::GeometryGraph;
 use crate::GeoFloat;
 use crate::GeometryCow;
 
 impl<'a, F: GeoFloat> From<&'a Polygon<F>> for PreparedGeometry<'a, F> {
     fn from(polygon: &'a Polygon<F>) -> Self {
         // TODO: build tree
-        // TODO: from GeometryCoW?
+        // TODO: other types
         Self {
             geometry: GeometryCow::from(polygon),
         }
@@ -18,8 +19,12 @@ pub struct PreparedGeometry<'a, F: GeoFloat = f64> {
 }
 
 impl<'a, F: GeoFloat> PreparedGeometry<'a, F> {
-    pub(crate) fn geometry(&self) -> &GeometryCow<'a, F> {
-        &self.geometry
+    pub(crate) fn geometry_graph(&'a self, arg_index: usize) -> GeometryGraph<'a, F> {
+        GeometryGraph::new(
+            arg_index,
+            &self.geometry,
+            GeometryGraph::create_unprepared_edge_set_intersector(),
+        )
     }
 }
 

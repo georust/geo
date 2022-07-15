@@ -1,12 +1,15 @@
 use super::{EdgeEndBuilder, IntersectionMatrix};
 use crate::dimensions::{Dimensions, HasDimensions};
 use crate::relate::geomgraph::{
-    index::SegmentIntersector,
+    index::{
+        EdgeSetIntersector, PreparedRStarEdgeSetIntersector, RStarEdgeSetIntersector,
+        SegmentIntersector,
+    },
     node_map::{NodeFactory, NodeMap},
     CoordNode, CoordPos, Edge, EdgeEnd, EdgeEndBundleStar, GeometryGraph, LabeledEdgeEndBundleStar,
-    RobustLineIntersector,
+    PreparedGeometry, RobustLineIntersector,
 };
-use crate::{CoordinatePosition, PreparedGeometry};
+use crate::CoordinatePosition;
 use crate::{Coord, GeoFloat, GeometryCow};
 
 use std::cell::RefCell;
@@ -51,8 +54,16 @@ where
         geom_a: &'a GeometryCow<'a, F>,
         geom_b: &'a GeometryCow<'a, F>,
     ) -> Self {
-        let graph_a = GeometryGraph::new(0, geom_a);
-        let graph_b = GeometryGraph::new(1, geom_b);
+        let graph_a = GeometryGraph::new(
+            0,
+            geom_a,
+            GeometryGraph::create_unprepared_edge_set_intersector(),
+        );
+        let graph_b = GeometryGraph::new(
+            1,
+            geom_b,
+            GeometryGraph::create_unprepared_edge_set_intersector(),
+        );
         Self::new(graph_a, graph_b)
     }
 
@@ -60,8 +71,8 @@ where
         geom_a: &'a PreparedGeometry<F>,
         geom_b: &'a PreparedGeometry<F>,
     ) -> Self {
-        let graph_a = GeometryGraph::new(0, geom_a.geometry());
-        let graph_b = GeometryGraph::new(1, geom_b.geometry());
+        let graph_a = geom_a.geometry_graph(0);
+        let graph_b = geom_b.geometry_graph(1);
         Self::new(graph_a, graph_b)
     }
 

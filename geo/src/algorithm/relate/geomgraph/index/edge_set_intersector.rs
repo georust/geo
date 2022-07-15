@@ -14,7 +14,7 @@ pub(crate) trait EdgeSetIntersector<F: GeoFloat> {
     /// `segment_intersector`: the SegmentIntersector to use
     fn compute_intersections_within_set(
         &self,
-        graph: &GeometryGraph<F>,
+        edges: &[Rc<RefCell<Edge<F>>>],
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     );
@@ -23,8 +23,8 @@ pub(crate) trait EdgeSetIntersector<F: GeoFloat> {
     /// the intersecting edges.
     fn compute_intersections_between_sets(
         &self,
-        graph0: &GeometryGraph<F>,
-        graph1: &GeometryGraph<F>,
+        edges_0: &[Rc<RefCell<Edge<F>>>],
+        edges_1: &[Rc<RefCell<Edge<F>>>],
         segment_intersector: &mut SegmentIntersector<F>,
     );
 }

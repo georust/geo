@@ -70,16 +70,24 @@ impl<'a, F> GeometryGraph<'a, F>
 where
     F: GeoFloat,
 {
-    pub fn new(arg_index: usize, parent_geometry: &'a GeometryCow<F>) -> Self {
+    pub fn new(
+        arg_index: usize,
+        parent_geometry: &'a GeometryCow<F>,
+        edge_set_intersector: Box<dyn EdgeSetIntersector<F>>,
+    ) -> Self {
         let mut graph = GeometryGraph {
             arg_index,
             parent_geometry,
             use_boundary_determination_rule: true,
-            edge_set_intersector: Self::create_unprepared_edge_set_intersector(),
+            edge_set_intersector,
             planar_graph: PlanarGraph::new(),
         };
         graph.add_geometry(parent_geometry);
         graph
+    }
+
+    fn set_edge_set_intersector(&mut self, edge_set_intersector: Box<dyn EdgeSetIntersector<F>>) {
+        self.edge_set_intersector = edge_set_intersector;
     }
 
     pub fn geometry(&self) -> &GeometryCow<F> {
@@ -98,7 +106,7 @@ where
         }
     }
 
-    fn create_unprepared_edge_set_intersector() -> Box<dyn EdgeSetIntersector<F>> {
+    pub(crate) fn create_unprepared_edge_set_intersector() -> Box<dyn EdgeSetIntersector<F>> {
         // PERF: faster algorithms exist. This one was chosen for simplicity of implementation and
         //       debugging
         // Slow, but simple and good for debugging
@@ -291,7 +299,7 @@ where
         let check_for_self_intersecting_edges = !is_rings;
 
         self.edge_set_intersector.compute_intersections_within_set(
-            self,
+            self.edges(),
             check_for_self_intersecting_edges,
             &mut segment_intersector,
         );
@@ -313,7 +321,11 @@ where
         );
 
         self.edge_set_intersector
-            .compute_intersections_between_sets(self, other, &mut segment_intersector);
+            .compute_intersections_between_sets(
+                self.edges(),
+                other.edges(),
+                &mut segment_intersector,
+            );
 
         segment_intersector
     }

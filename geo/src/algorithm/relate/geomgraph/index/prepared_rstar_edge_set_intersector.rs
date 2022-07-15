@@ -1,31 +1,53 @@
-use super::super::{Edge, GeometryGraph};
+use super::super::{Edge, PlanarGraph};
 use super::{EdgeSetIntersector, SegmentIntersector};
-use crate::{Coord, GeoFloat};
+use crate::{Coordinate, GeoFloat};
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use rstar::RTree;
 
-pub(crate) struct RStarEdgeSetIntersector;
+pub(crate) struct PreparedRStarEdgeSetIntersector<F>
+where
+    F: GeoFloat + rstar::RTreeNum,
+{
+    tree: RTree<Segment<F>>,
+}
 
-impl RStarEdgeSetIntersector {
-    pub fn new() -> Self {
-        RStarEdgeSetIntersector
+impl<F: GeoFloat> PreparedRStarEdgeSetIntersector<F> {
+    pub fn new(graph: &PlanarGraph<F>) -> Self {
+        let edges: &[Rc<RefCell<Edge<F>>>] = graph.edges();
+        let segments: Vec<Segment<F>> = edges
+            .iter()
+            .enumerate()
+            .flat_map(|(edge_idx, edge)| {
+                let edge = RefCell::borrow(edge);
+                let start_of_final_segment: usize = edge.coords().len() - 1;
+                (0..start_of_final_segment).map(move |segment_idx| {
+                    let p1 = edge.coords()[segment_idx];
+                    let p2 = edge.coords()[segment_idx + 1];
+                    Segment::new(edge_idx, segment_idx, p1, p2)
+                })
+            })
+            .collect();
+
+        let tree = RTree::bulk_load(segments);
+
+        PreparedRStarEdgeSetIntersector { tree }
     }
 }
 
 struct Segment<F: GeoFloat + rstar::RTreeNum> {
     edge_idx: usize,
     segment_idx: usize,
-    envelope: rstar::AABB<Coord<F>>,
+    envelope: rstar::AABB<Coordinate<F>>,
 }
 
 impl<F> Segment<F>
 where
     F: GeoFloat + rstar::RTreeNum,
 {
-    fn new(edge_idx: usize, segment_idx: usize, p1: Coord<F>, p2: Coord<F>) -> Self {
+    fn new(edge_idx: usize, segment_idx: usize, p1: Coordinate<F>, p2: Coordinate<F>) -> Self {
         use crate::rstar::RTreeObject;
         Self {
             edge_idx,
@@ -39,14 +61,14 @@ impl<'a, F> rstar::RTreeObject for Segment<F>
 where
     F: GeoFloat + rstar::RTreeNum,
 {
-    type Envelope = rstar::AABB<Coord<F>>;
+    type Envelope = rstar::AABB<Coordinate<F>>;
 
     fn envelope(&self) -> Self::Envelope {
         self.envelope
     }
 }
 
-impl<F> EdgeSetIntersector<F> for RStarEdgeSetIntersector
+impl<F> EdgeSetIntersector<F> for PreparedRStarEdgeSetIntersector<F>
 where
     F: GeoFloat + rstar::RTreeNum,
 {
@@ -133,13 +155,6 @@ where
             );
         }
     }
-}
-
-pub(crate) struct PreparedRStarEdgeSetIntersector<F>
-where
-    F: GeoFloat + rstar::RTreeNum,
-{
-    tree: RTree<Segment<F>>,
 }
 
 // impl<F> EdgeSetIntersector<F> for PreparedRStarEdgeSetIntersector<F>
