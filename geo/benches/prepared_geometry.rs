@@ -1,20 +1,22 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use geo::algorithm::Relate;
-use geo::geometry::Polygon;
-use geo::prepared_geometry::PreparedGeometry;
-use geo::relate::IntersectionMatrix;
-use geo::GeoFloat;
+use geo::PreparedGeometry;
+use geo_types::MultiPolygon;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("relate prepared polygon", |bencher| {
-        let plot_polygons: Vec<PreparedGeometry> = geo_test_fixtures::nl_plots()
-            .into_iter()
+        let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots();
+        let plot_polygons = plot_polygons
+            .iter()
             .map(PreparedGeometry::from)
-            .collect();
-        let zone_polygons: Vec<PreparedGeometry> = geo_test_fixtures::nl_zones()
-            .into_iter()
+            .collect::<Vec<_>>();
+
+        let zone_polygons = geo_test_fixtures::nl_zones();
+        let zone_polygons = zone_polygons
+            .iter()
             .map(PreparedGeometry::from)
-            .collect();
+            .collect::<Vec<_>>();
+
         bencher.iter(|| {
             let mut intersects = 0;
             let mut non_intersects = 0;

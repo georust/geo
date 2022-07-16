@@ -1,13 +1,10 @@
 use super::{EdgeEndBuilder, IntersectionMatrix};
 use crate::dimensions::{Dimensions, HasDimensions};
 use crate::relate::geomgraph::{
-    index::{
-        EdgeSetIntersector, PreparedRStarEdgeSetIntersector, RStarEdgeSetIntersector,
-        SegmentIntersector,
-    },
+    index::{PreparedGeometry, SegmentIntersector},
     node_map::{NodeFactory, NodeMap},
     CoordNode, CoordPos, Edge, EdgeEnd, EdgeEndBundleStar, GeometryGraph, LabeledEdgeEndBundleStar,
-    PreparedGeometry, RobustLineIntersector,
+    RobustLineIntersector,
 };
 use crate::CoordinatePosition;
 use crate::{Coord, GeoFloat, GeometryCow};

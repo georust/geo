@@ -32,10 +32,8 @@ mod label;
 mod node;
 pub(crate) mod node_map;
 mod planar_graph;
-pub(crate) mod prepared_geometry;
 mod quadrant;
 mod topology_position;
-pub(crate) use prepared_geometry::PreparedGeometry;
 
 pub(crate) mod intersection_matrix;
 mod line_intersector;

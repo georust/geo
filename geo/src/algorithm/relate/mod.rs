@@ -3,8 +3,8 @@ pub use geomgraph::intersection_matrix::IntersectionMatrix;
 use relate_operation::RelateOperation;
 
 use crate::geometry::*;
+pub use crate::relate::geomgraph::index::PreparedGeometry;
 use crate::{GeoFloat, GeometryCow};
-use geomgraph::prepared_geometry::PreparedGeometry;
 
 mod edge_end_builder;
 mod geomgraph;

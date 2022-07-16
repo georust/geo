@@ -1,21 +1,26 @@
+use super::Segment;
 use crate::geometry::Polygon;
 use crate::relate::geomgraph::GeometryGraph;
 use crate::GeoFloat;
 use crate::GeometryCow;
+use rstar::RTree;
 
+// TODO: other types
 impl<'a, F: GeoFloat> From<&'a Polygon<F>> for PreparedGeometry<'a, F> {
     fn from(polygon: &'a Polygon<F>) -> Self {
         // TODO: build tree
-        // TODO: other types
+        let tree: RTree<Segment<F>> = todo!();
         Self {
             geometry: GeometryCow::from(polygon),
+            tree,
         }
     }
 }
 
-#[derive(PartialEq, Debug, Hash)]
+#[derive(Debug)]
 pub struct PreparedGeometry<'a, F: GeoFloat = f64> {
     geometry: GeometryCow<'a, F>,
+    tree: RTree<Segment<F>>,
 }
 
 impl<'a, F: GeoFloat> PreparedGeometry<'a, F> {

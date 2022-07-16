@@ -209,6 +209,7 @@ extern crate rstar;
 pub use crate::algorithm::*;
 pub use crate::types::Closest;
 
+pub use crate::relate::PreparedGeometry;
 pub use geo_types::{coord, line_string, point, polygon, CoordFloat, CoordNum};
 
 pub mod geometry;

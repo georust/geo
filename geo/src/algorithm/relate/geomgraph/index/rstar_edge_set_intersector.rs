@@ -1,6 +1,6 @@
 use super::super::{Edge, GeometryGraph};
-use super::{EdgeSetIntersector, SegmentIntersector};
-use crate::{Coord, GeoFloat};
+use super::{EdgeSetIntersector, Segment, SegmentIntersector};
+use crate::GeoFloat;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -12,37 +12,6 @@ pub(crate) struct RStarEdgeSetIntersector;
 impl RStarEdgeSetIntersector {
     pub fn new() -> Self {
         RStarEdgeSetIntersector
-    }
-}
-
-struct Segment<F: GeoFloat + rstar::RTreeNum> {
-    edge_idx: usize,
-    segment_idx: usize,
-    envelope: rstar::AABB<Coord<F>>,
-}
-
-impl<F> Segment<F>
-where
-    F: GeoFloat + rstar::RTreeNum,
-{
-    fn new(edge_idx: usize, segment_idx: usize, p1: Coord<F>, p2: Coord<F>) -> Self {
-        use crate::rstar::RTreeObject;
-        Self {
-            edge_idx,
-            segment_idx,
-            envelope: rstar::AABB::from_corners(p1, p2),
-        }
-    }
-}
-
-impl<'a, F> rstar::RTreeObject for Segment<F>
-where
-    F: GeoFloat + rstar::RTreeNum,
-{
-    type Envelope = rstar::AABB<Coord<F>>;
-
-    fn envelope(&self) -> Self::Envelope {
-        self.envelope
     }
 }
 
@@ -141,27 +110,3 @@ where
 {
     tree: RTree<Segment<F>>,
 }
-
-// impl<F> EdgeSetIntersector<F> for PreparedRStarEdgeSetIntersector<F>
-//     where
-//         F: GeoFloat + rstar::RTreeNum,
-// {
-//     fn compute_intersections_within_set(&mut self, edges: &[Rc<RefCell<Edge<F>>>], check_for_self_intersecting_edges: bool, segment_intersector: &mut SegmentIntersector<F>) {
-//         for (segment_0, segment_1) in self.tree.intersection_candidates_with_other_tree(&self.tree) {
-//             if check_for_self_intersecting_edges || segment_0.edge_idx != segment_1.edge_idx {
-//                 let edge_0 = &edges[segment_0.edge_idx];
-//                 let edge_1 = &edges[segment_1.edge_idx];
-//                 segment_intersector.add_intersections(
-//                     edge_0,
-//                     segment_0.segment_idx,
-//                     edge_1,
-//                     segment_1.segment_idx,
-//                 );
-//             }
-//         }
-//     }
-//
-//     fn compute_intersections_between_sets(&mut self, edges0: &[Rc<RefCell<Edge<F>>>], edges1: &[Rc<RefCell<Edge<F>>>], segment_intersector: &mut SegmentIntersector<F>) {
-//         todo!()
-//     }
-// }
