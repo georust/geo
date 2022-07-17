@@ -4,7 +4,7 @@ use geo::PreparedGeometry;
 use geo_types::MultiPolygon;
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("relate prepared polygon", |bencher| {
+    c.bench_function("relate prepared polygons", |bencher| {
         let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots();
         let zone_polygons = geo_test_fixtures::nl_zones();
 
@@ -37,7 +37,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         });
     });
 
-    c.bench_function("relate unprepared polygon", |bencher| {
+    c.bench_function("relate unprepared polygons", |bencher| {
         let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots();
         let zone_polygons = geo_test_fixtures::nl_zones();
 
