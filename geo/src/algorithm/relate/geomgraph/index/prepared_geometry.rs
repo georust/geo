@@ -1,35 +1,57 @@
 use super::Segment;
 use crate::geometry::Polygon;
+use crate::relate::geomgraph::index::PreparedRStarEdgeSetIntersector;
 use crate::relate::geomgraph::GeometryGraph;
 use crate::GeoFloat;
 use crate::GeometryCow;
-use rstar::RTree;
+use rstar::{RTree, RTreeNum};
 
 // TODO: other types
 impl<'a, F: GeoFloat> From<&'a Polygon<F>> for PreparedGeometry<'a, F> {
     fn from(polygon: &'a Polygon<F>) -> Self {
-        // TODO: build tree
-        let tree: RTree<Segment<F>> = todo!();
-        Self {
-            geometry: GeometryCow::from(polygon),
-            tree,
-        }
+        use std::cell::RefCell;
+        let geometry = GeometryCow::from(polygon);
+        let geometry_graph = GeometryGraph::new(
+            0,
+            &geometry,
+            GeometryGraph::create_unprepared_edge_set_intersector(),
+        );
+        let segments: Vec<Segment<F>> = geometry_graph
+            .edges()
+            .iter()
+            .enumerate()
+            .flat_map(|(edge_idx, edge)| {
+                let edge = RefCell::borrow(edge);
+                let start_of_final_segment: usize = edge.coords().len() - 1;
+                (0..start_of_final_segment).map(move |segment_idx| {
+                    let p1 = edge.coords()[segment_idx];
+                    let p2 = edge.coords()[segment_idx + 1];
+                    Segment::new(edge_idx, segment_idx, p1, p2)
+                })
+            })
+            .collect();
+        let tree = RTree::bulk_load(segments);
+        Self { geometry, tree }
     }
 }
 
 #[derive(Debug)]
-pub struct PreparedGeometry<'a, F: GeoFloat = f64> {
+pub struct PreparedGeometry<'a, F: GeoFloat + RTreeNum = f64> {
     geometry: GeometryCow<'a, F>,
     tree: RTree<Segment<F>>,
 }
 
-impl<'a, F: GeoFloat> PreparedGeometry<'a, F> {
+impl<'a, F> PreparedGeometry<'a, F>
+where
+    F: GeoFloat + RTreeNum,
+{
     pub(crate) fn geometry_graph(&'a self, arg_index: usize) -> GeometryGraph<'a, F> {
-        GeometryGraph::new(
-            arg_index,
-            &self.geometry,
-            GeometryGraph::create_unprepared_edge_set_intersector(),
-        )
+        // let tree = self.tree.clone();
+        //let edge_set_intersector = Box::new(PreparedRStarEdgeSetIntersector::new(tree));
+        let edge_set_intersector = GeometryGraph::create_unprepared_edge_set_intersector();
+        let mut graph = GeometryGraph::new(arg_index, &self.geometry, edge_set_intersector);
+        graph.set_tree(self.tree.clone());
+        graph
     }
 }
 

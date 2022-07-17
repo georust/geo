@@ -103,10 +103,3 @@ where
         }
     }
 }
-
-pub(crate) struct PreparedRStarEdgeSetIntersector<F>
-where
-    F: GeoFloat + rstar::RTreeNum,
-{
-    tree: RTree<Segment<F>>,
-}

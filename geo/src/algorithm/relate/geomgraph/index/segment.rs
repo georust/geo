@@ -1,7 +1,7 @@
 use crate::Coordinate;
 use crate::GeoFloat;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Segment<F: GeoFloat + rstar::RTreeNum> {
     pub edge_idx: usize,
     pub segment_idx: usize,

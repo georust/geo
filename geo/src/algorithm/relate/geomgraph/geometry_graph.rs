@@ -1,6 +1,7 @@
 use super::{
     index::{
-        EdgeSetIntersector, RStarEdgeSetIntersector, SegmentIntersector, SimpleEdgeSetIntersector,
+        EdgeSetIntersector, RStarEdgeSetIntersector, Segment, SegmentIntersector,
+        SimpleEdgeSetIntersector,
     },
     CoordNode, CoordPos, Direction, Edge, Label, LineIntersector, PlanarGraph, TopologyPosition,
 };
@@ -8,6 +9,8 @@ use super::{
 use crate::HasDimensions;
 use crate::{Coord, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
 
+use crate::relate::geomgraph::index::PreparedRStarEdgeSetIntersector;
+use rstar::{RTree, RTreeNum};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -33,6 +36,7 @@ where
     arg_index: usize,
     parent_geometry: &'a GeometryCow<'a, F>,
     edge_set_intersector: Box<dyn EdgeSetIntersector<F>>,
+    tree: Option<RTree<Segment<F>>>,
     use_boundary_determination_rule: bool,
     planar_graph: PlanarGraph<F>,
 }
@@ -45,6 +49,10 @@ impl<F> GeometryGraph<'_, F>
 where
     F: GeoFloat,
 {
+    pub fn set_tree(&mut self, tree: RTree<Segment<F>>) {
+        self.tree = Some(tree);
+    }
+
     pub fn edges(&self) -> &[Rc<RefCell<Edge<F>>>] {
         self.planar_graph.edges()
     }
@@ -68,7 +76,7 @@ where
 
 impl<'a, F> GeometryGraph<'a, F>
 where
-    F: GeoFloat,
+    F: GeoFloat + RTreeNum,
 {
     pub fn new(
         arg_index: usize,
@@ -80,6 +88,7 @@ where
             parent_geometry,
             use_boundary_determination_rule: true,
             edge_set_intersector,
+            tree: None,
             planar_graph: PlanarGraph::new(),
         };
         graph.add_geometry(parent_geometry);
@@ -298,11 +307,20 @@ where
         };
         let check_for_self_intersecting_edges = !is_rings;
 
-        self.edge_set_intersector.compute_intersections_within_set(
-            self.edges(),
-            check_for_self_intersecting_edges,
-            &mut segment_intersector,
-        );
+        if let Some(tree) = &self.tree {
+            let edge_set_intersector = PreparedRStarEdgeSetIntersector::new(tree.clone());
+            edge_set_intersector.compute_intersections_within_set(
+                self.edges(),
+                check_for_self_intersecting_edges,
+                &mut segment_intersector,
+            );
+        } else {
+            self.edge_set_intersector.compute_intersections_within_set(
+                self.edges(),
+                check_for_self_intersecting_edges,
+                &mut segment_intersector,
+            );
+        }
 
         self.add_self_intersection_nodes();
 
@@ -320,12 +338,21 @@ where
             other.boundary_nodes().cloned().collect(),
         );
 
-        self.edge_set_intersector
-            .compute_intersections_between_sets(
+        if let Some(tree) = &self.tree {
+            let edge_set_intersector = PreparedRStarEdgeSetIntersector::new(tree.clone());
+            edge_set_intersector.compute_intersections_between_sets(
                 self.edges(),
                 other.edges(),
                 &mut segment_intersector,
             );
+        } else {
+            self.edge_set_intersector
+                .compute_intersections_between_sets(
+                    self.edges(),
+                    other.edges(),
+                    &mut segment_intersector,
+                );
+        }
 
         segment_intersector
     }
