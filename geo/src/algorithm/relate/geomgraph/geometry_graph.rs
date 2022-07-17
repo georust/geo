@@ -38,6 +38,7 @@ where
     parent_geometry: GeometryCow<'a, F>,
     tree: Option<RTree<Segment<F>>>,
     use_boundary_determination_rule: bool,
+    has_computed_self_nodes: bool,
     planar_graph: PlanarGraph<F>,
 }
 
@@ -72,12 +73,18 @@ where
         self.planar_graph.swap_labels()
     }
 
-    pub fn clone_for_arg_index(&self, arg_index: usize) -> Self {
+    pub(crate) fn clone_for_arg_index(&self, arg_index: usize) -> Self {
+        assert!(
+            self.has_computed_self_nodes,
+            "should only be called after computing self nodes"
+        );
+
         Self {
             arg_index,
             parent_geometry: self.parent_geometry.clone(),
             tree: self.tree.clone(),
             use_boundary_determination_rule: self.use_boundary_determination_rule,
+            has_computed_self_nodes: true,
             planar_graph: self.planar_graph.clone_for_arg_index(arg_index),
         }
     }
@@ -113,6 +120,7 @@ where
             parent_geometry,
             use_boundary_determination_rule: true,
             tree: None,
+            has_computed_self_nodes: false,
             planar_graph: PlanarGraph::new(),
         };
         graph.add_geometry(&graph.parent_geometry.clone());
@@ -312,10 +320,12 @@ where
     /// assumed to be valid).
     ///
     /// `line_intersector` the [`LineIntersector`] to use to determine intersection
-    pub fn compute_self_nodes(
-        &mut self,
-        line_intersector: Box<dyn LineIntersector<F>>,
-    ) -> SegmentIntersector<F> {
+    pub fn compute_self_nodes(&mut self, line_intersector: Box<dyn LineIntersector<F>>) {
+        if self.has_computed_self_nodes {
+            return;
+        }
+        self.has_computed_self_nodes = true;
+
         let mut segment_intersector = SegmentIntersector::new(line_intersector, true);
 
         // optimize intersection search for valid Polygons and LinearRings
@@ -344,8 +354,6 @@ where
         }
 
         self.add_self_intersection_nodes();
-
-        segment_intersector
     }
 
     pub fn compute_edge_intersections(

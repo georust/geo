@@ -1,9 +1,10 @@
 use super::Segment;
 use crate::geometry::Polygon;
 use crate::relate::geomgraph::index::PreparedRStarEdgeSetIntersector;
-use crate::relate::geomgraph::GeometryGraph;
+use crate::relate::geomgraph::{GeometryGraph, RobustLineIntersector};
 use crate::GeoFloat;
 use crate::GeometryCow;
+
 use rstar::{RTree, RTreeNum};
 
 // TODO: other types
@@ -28,6 +29,11 @@ impl<'a, F: GeoFloat> From<&'a Polygon<F>> for PreparedGeometry<'a, F> {
             .collect();
         let tree = RTree::bulk_load(segments);
         geometry_graph.set_tree(tree);
+
+        // TODO: don't pass in line intersector here - in theory we'll want pluggable line intersectors
+        // and the type (Robust) shouldn't be hard coded here.
+        geometry_graph.compute_self_nodes(Box::new(RobustLineIntersector::new()));
+
         Self { geometry_graph }
     }
 }
