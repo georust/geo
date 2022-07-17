@@ -6,16 +6,16 @@ use geo_types::MultiPolygon;
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("relate prepared polygon", |bencher| {
         let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots();
-        // let plot_polygons = plot_polygons
-        //     .iter()
-        //     // .map(PreparedGeometry::from)
-        //     .collect::<Vec<_>>();
+        let plot_polygons = plot_polygons
+            .iter()
+            .map(PreparedGeometry::from)
+            .collect::<Vec<_>>();
 
         let zone_polygons = geo_test_fixtures::nl_zones();
-        // let zone_polygons = zone_polygons
-        //     .iter()
-        //     .map(PreparedGeometry::from)
-        //     .collect::<Vec<_>>();
+        let zone_polygons = zone_polygons
+            .iter()
+            .map(PreparedGeometry::from)
+            .collect::<Vec<_>>();
 
         bencher.iter(|| {
             let mut intersects = 0;
