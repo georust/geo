@@ -36,7 +36,7 @@ where
 {
     arg_index: usize,
     parent_geometry: GeometryCow<'a, F>,
-    tree: Option<RTree<Segment<F>>>,
+    tree: Option<Rc<RTree<Segment<F>>>>,
     use_boundary_determination_rule: bool,
     has_computed_self_nodes: bool,
     planar_graph: PlanarGraph<F>,
@@ -50,10 +50,11 @@ impl<F> GeometryGraph<'_, F>
 where
     F: GeoFloat,
 {
-    pub fn tree(&self) -> Option<&RTree<Segment<F>>> {
+    pub fn tree(&self) -> Option<&Rc<RTree<Segment<F>>>> {
         self.tree.as_ref()
     }
-    pub fn set_tree(&mut self, tree: RTree<Segment<F>>) {
+
+    pub fn set_tree<'a>(&mut self, tree: Rc<RTree<Segment<F>>>) {
         self.tree = Some(tree);
     }
 
@@ -340,8 +341,8 @@ where
         };
         let check_for_self_intersecting_edges = !is_rings;
 
-        if let Some(tree) = &self.tree {
-            let edge_set_intersector = PreparedRStarEdgeSetIntersector::new(tree.clone());
+        if self.tree.is_some() {
+            let edge_set_intersector = PreparedRStarEdgeSetIntersector;
             edge_set_intersector.compute_intersections_within_set(
                 self,
                 check_for_self_intersecting_edges,
@@ -370,8 +371,8 @@ where
             other.boundary_nodes().cloned().collect(),
         );
 
-        if let Some(tree) = &self.tree {
-            let edge_set_intersector = PreparedRStarEdgeSetIntersector::new(tree.clone());
+        if self.tree.is_some() {
+            let edge_set_intersector = PreparedRStarEdgeSetIntersector;
             edge_set_intersector.compute_intersections_between_sets(
                 self,
                 other,

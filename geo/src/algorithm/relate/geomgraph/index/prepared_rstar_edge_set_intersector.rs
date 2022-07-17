@@ -7,23 +7,9 @@ use std::rc::Rc;
 
 use rstar::RTree;
 
-pub(crate) struct PreparedRStarEdgeSetIntersector<F>
-where
-    F: GeoFloat + rstar::RTreeNum,
-{
-    tree: RTree<Segment<F>>,
-}
+pub(crate) struct PreparedRStarEdgeSetIntersector;
 
-impl<F> PreparedRStarEdgeSetIntersector<F>
-where
-    F: GeoFloat + rstar::RTreeNum,
-{
-    pub(crate) fn new(tree: RTree<Segment<F>>) -> Self {
-        PreparedRStarEdgeSetIntersector { tree }
-    }
-}
-
-impl<F> EdgeSetIntersector<F> for PreparedRStarEdgeSetIntersector<F>
+impl<F> EdgeSetIntersector<F> for PreparedRStarEdgeSetIntersector
 where
     F: GeoFloat + rstar::RTreeNum,
 {
@@ -35,9 +21,10 @@ where
     ) {
         let edges = graph.edges();
 
-        for (segment_0, segment_1) in self
-            .tree
-            .intersection_candidates_with_other_tree(&self.tree)
+        for (segment_0, segment_1) in graph
+            .tree()
+            .unwrap()
+            .intersection_candidates_with_other_tree(&graph.tree().unwrap())
         {
             if check_for_self_intersecting_edges || segment_0.edge_idx != segment_1.edge_idx {
                 let edge_0 = &edges[segment_0.edge_idx];
