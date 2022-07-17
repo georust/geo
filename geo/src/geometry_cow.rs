@@ -27,6 +27,23 @@ where
     Triangle(Cow<'a, Triangle<T>>),
 }
 
+impl<'a, T: CoordNum> GeometryCow<'a, T> {
+    pub fn is_borrowed(&self) -> bool {
+        match self {
+            GeometryCow::Point(g) => matches!(g, Cow::Borrowed(_)),
+            GeometryCow::Line(g) => matches!(g, Cow::Borrowed(_)),
+            GeometryCow::LineString(g) => matches!(g, Cow::Borrowed(_)),
+            GeometryCow::Polygon(g) => matches!(g, Cow::Borrowed(_)),
+            GeometryCow::MultiPoint(g) => matches!(g, Cow::Borrowed(_)),
+            GeometryCow::MultiLineString(g) => matches!(g, Cow::Borrowed(_)),
+            GeometryCow::MultiPolygon(g) => matches!(g, Cow::Borrowed(_)),
+            GeometryCow::GeometryCollection(g) => matches!(g, Cow::Borrowed(_)),
+            GeometryCow::Rect(g) => matches!(g, Cow::Borrowed(_)),
+            GeometryCow::Triangle(g) => matches!(g, Cow::Borrowed(_)),
+        }
+    }
+}
+
 impl<'a, T: CoordNum> From<&'a Geometry<T>> for GeometryCow<'a, T> {
     fn from(geometry: &'a Geometry<T>) -> Self {
         match geometry {

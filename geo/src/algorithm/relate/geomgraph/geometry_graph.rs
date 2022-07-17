@@ -79,14 +79,17 @@ where
             "should only be called after computing self nodes"
         );
 
-        Self {
+        let graph = Self {
             arg_index,
             parent_geometry: self.parent_geometry.clone(),
             tree: self.tree.clone(),
             use_boundary_determination_rule: self.use_boundary_determination_rule,
             has_computed_self_nodes: true,
             planar_graph: self.planar_graph.clone_for_arg_index(arg_index),
-        }
+        };
+
+        assert!(graph.parent_geometry.is_borrowed());
+        graph
     }
 
     pub fn edges(&self) -> &[Rc<RefCell<Edge<F>>>] {
