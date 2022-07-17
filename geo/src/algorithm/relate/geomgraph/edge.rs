@@ -7,7 +7,7 @@ use std::collections::BTreeSet;
 /// An `Edge` represents a one dimensional line in a geometry.
 ///
 /// This is based on [JTS's `Edge` as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/Edge.java)
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub(crate) struct Edge<F: GeoFloat> {
     /// `coordinates` of the line geometry
     coords: Vec<Coord<F>>,

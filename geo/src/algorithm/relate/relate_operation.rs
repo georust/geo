@@ -32,6 +32,7 @@ where
     isolated_edges: Vec<Rc<RefCell<Edge<F>>>>,
 }
 
+#[derive(PartialEq)]
 pub(crate) struct RelateNodeFactory;
 impl<F> NodeFactory<F> for RelateNodeFactory
 where

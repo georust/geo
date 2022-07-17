@@ -6,7 +6,7 @@ use crate::{Coord, GeoFloat};
 /// the start of the line segment) The intersection point must be precise.
 ///
 /// This is based on [JTS's EdgeIntersection as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/EdgeIntersection.java)
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct EdgeIntersection<F: GeoFloat> {
     coord: Coord<F>,
     segment_index: usize,
@@ -37,6 +37,7 @@ impl<F: GeoFloat> EdgeIntersection<F> {
 
 impl<F: GeoFloat> std::cmp::PartialEq for EdgeIntersection<F> {
     fn eq(&self, other: &EdgeIntersection<F>) -> bool {
+        // MJK: why don't we compare coord? Is this just for perf?
         self.segment_index == other.segment_index && self.dist == other.dist
     }
 }

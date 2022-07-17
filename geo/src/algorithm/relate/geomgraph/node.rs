@@ -1,7 +1,7 @@
 use super::{CoordPos, Dimensions, EdgeEnd, EdgeEndBundleStar, IntersectionMatrix, Label};
 use crate::{Coord, GeoFloat};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct CoordNode<F>
 where
     F: GeoFloat,

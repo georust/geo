@@ -56,10 +56,30 @@ where
         self.tree = Some(tree);
     }
 
+    pub fn assert_eq_graph(&self, other: &Self) {
+        assert_eq!(self.arg_index, other.arg_index);
+        assert_eq!(
+            self.use_boundary_determination_rule,
+            other.use_boundary_determination_rule
+        );
+        assert_eq!(self.parent_geometry, other.parent_geometry);
+        self.planar_graph.assert_eq_graph(&other.planar_graph);
+    }
+
     pub fn swap_arg_index(&mut self) {
         assert_eq!(self.arg_index, 0);
         self.arg_index = 1;
         self.planar_graph.swap_labels()
+    }
+
+    pub fn clone_for_arg_index(&self, arg_index: usize) -> Self {
+        Self {
+            arg_index,
+            parent_geometry: self.parent_geometry.clone(),
+            tree: self.tree.clone(),
+            use_boundary_determination_rule: self.use_boundary_determination_rule,
+            planar_graph: self.planar_graph.clone_for_arg_index(arg_index),
+        }
     }
 
     pub fn edges(&self) -> &[Rc<RefCell<Edge<F>>>] {

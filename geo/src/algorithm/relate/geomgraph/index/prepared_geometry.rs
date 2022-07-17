@@ -41,11 +41,7 @@ where
     F: GeoFloat + RTreeNum,
 {
     pub(crate) fn geometry_graph(&'a self, arg_index: usize) -> GeometryGraph<'a, F> {
-        let mut graph = self.geometry_graph.clone();
-        if arg_index == 1 {
-            graph.swap_arg_index();
-        }
-        graph
+        self.geometry_graph.clone_for_arg_index(arg_index)
     }
 }
 
@@ -61,6 +57,23 @@ mod tests {
         let p2 = polygon![(x: 0.5, y: 0.0), (x: 2.0, y: 0.0), (x: 1.0, y: 1.0)];
         let prepared_1 = PreparedGeometry::from(&p1);
         let prepared_2 = PreparedGeometry::from(&p2);
-        assert!(prepared_1.relate(&prepared_2).is_contains())
+        assert!(prepared_1.relate(&prepared_2).is_contains());
+        assert!(prepared_2.relate(&prepared_1).is_within());
+    }
+
+    #[test]
+    fn swap_arg_index() {
+        let poly = polygon![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0), (x: 1.0, y: 1.0)];
+        let prepared_geom = PreparedGeometry::from(&poly);
+
+        let poly_cow = GeometryCow::from(&poly);
+
+        let cached_graph = prepared_geom.geometry_graph(0);
+        let fresh_graph = GeometryGraph::new(0, poly_cow.clone());
+        cached_graph.assert_eq_graph(&fresh_graph);
+
+        let cached_graph = prepared_geom.geometry_graph(1);
+        let fresh_graph = GeometryGraph::new(1, poly_cow);
+        cached_graph.assert_eq_graph(&fresh_graph);
     }
 }

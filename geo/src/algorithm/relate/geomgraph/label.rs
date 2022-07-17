@@ -13,7 +13,7 @@ use std::fmt;
 ///
 /// If the component has *no* incidence with one of the geometries, than the `Label`'s
 /// `TopologyPosition` for that geometry is called `empty`.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub(crate) struct Label {
     geometry_topologies: [TopologyPosition; 2],
 }
