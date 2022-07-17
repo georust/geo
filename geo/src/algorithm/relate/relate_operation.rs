@@ -55,11 +55,11 @@ where
     }
 
     pub(crate) fn from_prepared_geoms(
-        geom_a: &'a PreparedGeometry<F>,
-        geom_b: &'a PreparedGeometry<F>,
+        prepared_geom_a: &'a PreparedGeometry<F>,
+        prepared_geom_b: &'a PreparedGeometry<F>,
     ) -> Self {
-        let graph_a = geom_a.geometry_graph(0);
-        let graph_b = geom_b.geometry_graph(1);
+        let graph_a = prepared_geom_a.geometry_graph(0);
+        let graph_b = prepared_geom_b.geometry_graph(1);
         Self::new(graph_a, graph_b)
     }
 
@@ -74,14 +74,7 @@ where
     }
 
     pub(crate) fn compute_intersection_matrix(&mut self) -> IntersectionMatrix {
-        let mut intersection_matrix = IntersectionMatrix::empty();
-        // since Geometries are finite and embedded in a 2-D space,
-        // the `(Outside, Outside)` element must always be 2-D
-        intersection_matrix.set(
-            CoordPos::Outside,
-            CoordPos::Outside,
-            Dimensions::TwoDimensional,
-        );
+        let mut intersection_matrix = IntersectionMatrix::default();
 
         use crate::BoundingRect;
         use crate::Intersects;
@@ -93,7 +86,8 @@ where
                 if bounding_rect_a.intersects(&bounding_rect_b) => {}
             _ => {
                 // since Geometries don't overlap, we can skip most of the work
-                self.compute_disjoint_intersection_matrix(&mut intersection_matrix);
+                intersection_matrix
+                    .compute_disjoint(self.graph_a.geometry(), self.graph_b.geometry());
                 return intersection_matrix;
             }
         }
@@ -301,44 +295,6 @@ where
                     new_node.set_label_boundary(geom_index);
                 } else if new_node.label().is_empty(geom_index) {
                     new_node.set_label_on_position(geom_index, CoordPos::Inside);
-                }
-            }
-        }
-    }
-
-    /// If the Geometries are disjoint, we need to enter their dimension and boundary dimension in
-    /// the `Outside` rows in the IM
-    fn compute_disjoint_intersection_matrix(&self, intersection_matrix: &mut IntersectionMatrix) {
-        {
-            let geometry_a = self.graph_a.geometry();
-            let dimensions = geometry_a.dimensions();
-            if dimensions != Dimensions::Empty {
-                intersection_matrix.set(CoordPos::Inside, CoordPos::Outside, dimensions);
-
-                let boundary_dimensions = geometry_a.boundary_dimensions();
-                if boundary_dimensions != Dimensions::Empty {
-                    intersection_matrix.set(
-                        CoordPos::OnBoundary,
-                        CoordPos::Outside,
-                        boundary_dimensions,
-                    );
-                }
-            }
-        }
-
-        {
-            let geometry_b = self.graph_b.geometry();
-            let dimensions = geometry_b.dimensions();
-            if dimensions != Dimensions::Empty {
-                intersection_matrix.set(CoordPos::Outside, CoordPos::Inside, dimensions);
-
-                let boundary_dimensions = geometry_b.boundary_dimensions();
-                if boundary_dimensions != Dimensions::Empty {
-                    intersection_matrix.set(
-                        CoordPos::Outside,
-                        CoordPos::OnBoundary,
-                        boundary_dimensions,
-                    );
                 }
             }
         }

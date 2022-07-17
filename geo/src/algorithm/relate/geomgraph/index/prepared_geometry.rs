@@ -46,6 +46,10 @@ impl<'a, F> PreparedGeometry<'a, F>
 where
     F: GeoFloat + RTreeNum,
 {
+    pub(crate) fn geometry(&self) -> &GeometryCow<F> {
+        self.geometry_graph.geometry()
+    }
+
     pub(crate) fn geometry_graph(&'a self, arg_index: usize) -> GeometryGraph<'a, F> {
         self.geometry_graph.clone_for_arg_index(arg_index)
     }

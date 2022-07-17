@@ -66,6 +66,22 @@ impl<F: GeoFloat> Relate<F, GeometryCow<'_, F>> for GeometryCow<'_, F> {
 
 impl<'a, F: GeoFloat> Relate<F, PreparedGeometry<'a, F>> for PreparedGeometry<'a, F> {
     fn relate(&self, other: &PreparedGeometry<'a, F>) -> IntersectionMatrix {
+        use crate::BoundingRect;
+        use crate::Intersects;
+
+        let geom_a = self.geometry();
+        let geom_b = other.geometry();
+        match (geom_a.bounding_rect(), geom_b.bounding_rect()) {
+            (Some(bounding_rect_a), Some(bounding_rect_b))
+                if bounding_rect_a.intersects(&bounding_rect_b) => {}
+            _ => {
+                let mut intersection_matrix = IntersectionMatrix::default();
+                // since Geometries don't overlap, we can skip most of the work
+                intersection_matrix.compute_disjoint(geom_a, geom_b);
+                return intersection_matrix;
+            }
+        }
+
         let mut relate_computer = RelateOperation::from_prepared_geoms(self, other);
         relate_computer.compute_intersection_matrix()
     }
