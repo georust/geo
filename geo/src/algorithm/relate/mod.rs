@@ -59,7 +59,7 @@ pub trait Relate<F, T> {
 
 impl<F: GeoFloat> Relate<F, GeometryCow<'_, F>> for GeometryCow<'_, F> {
     fn relate(&self, other: &GeometryCow<F>) -> IntersectionMatrix {
-        let mut relate_computer = RelateOperation::from_geoms(self, other);
+        let mut relate_computer = RelateOperation::from_geoms(self.clone(), other.clone());
         relate_computer.compute_intersection_matrix()
     }
 }

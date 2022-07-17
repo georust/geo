@@ -11,6 +11,10 @@ where
 }
 
 impl<F: GeoFloat> CoordNode<F> {
+    pub fn swap_label_args(&mut self) {
+        self.label.swap_args()
+    }
+
     pub(crate) fn label(&self) -> &Label {
         &self.label
     }

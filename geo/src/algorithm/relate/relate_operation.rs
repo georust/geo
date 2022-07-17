@@ -47,20 +47,9 @@ impl<'a, F> RelateOperation<'a, F>
 where
     F: GeoFloat,
 {
-    pub(crate) fn from_geoms(
-        geom_a: &'a GeometryCow<'a, F>,
-        geom_b: &'a GeometryCow<'a, F>,
-    ) -> Self {
-        let graph_a = GeometryGraph::new(
-            0,
-            geom_a,
-            GeometryGraph::create_unprepared_edge_set_intersector(),
-        );
-        let graph_b = GeometryGraph::new(
-            1,
-            geom_b,
-            GeometryGraph::create_unprepared_edge_set_intersector(),
-        );
+    pub(crate) fn from_geoms(geom_a: GeometryCow<'a, F>, geom_b: GeometryCow<'a, F>) -> Self {
+        let graph_a = GeometryGraph::new(0, geom_a);
+        let graph_b = GeometryGraph::new(1, geom_b);
         Self::new(graph_a, graph_b)
     }
 
@@ -480,7 +469,7 @@ mod test {
 
         let gc1 = GeometryCow::from(&square_a);
         let gc2 = GeometryCow::from(&square_b);
-        let mut relate_computer = RelateOperation::from_geoms(&gc1, &gc2);
+        let mut relate_computer = RelateOperation::from_geoms(gc1, gc2);
         let intersection_matrix = relate_computer.compute_intersection_matrix();
         assert_eq!(
             intersection_matrix,
@@ -510,7 +499,7 @@ mod test {
 
         let gca = GeometryCow::from(&square_a);
         let gcb = GeometryCow::from(&square_b);
-        let mut relate_computer = RelateOperation::from_geoms(&gca, &gcb);
+        let mut relate_computer = RelateOperation::from_geoms(gca, gcb);
         let intersection_matrix = relate_computer.compute_intersection_matrix();
         assert_eq!(
             intersection_matrix,
@@ -538,8 +527,8 @@ mod test {
         ]
         .into();
 
-        let gca = &GeometryCow::from(&square_a);
-        let gcb = &GeometryCow::from(&square_b);
+        let gca = GeometryCow::from(&square_a);
+        let gcb = GeometryCow::from(&square_b);
         let mut relate_computer = RelateOperation::from_geoms(gca, gcb);
         let intersection_matrix = relate_computer.compute_intersection_matrix();
         assert_eq!(

@@ -7,6 +7,7 @@ use crate::{Coord, GeoFloat};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[derive(Clone)]
 pub(crate) struct PlanarGraphNode;
 
 /// The basic node constructor does not allow for incident edges
@@ -20,12 +21,22 @@ where
     }
 }
 
+#[derive(Clone)]
 pub(crate) struct PlanarGraph<F: GeoFloat> {
     pub(crate) nodes: NodeMap<F, PlanarGraphNode>,
     edges: Vec<Rc<RefCell<Edge<F>>>>,
 }
 
 impl<F: GeoFloat> PlanarGraph<F> {
+    pub fn swap_labels(&mut self) {
+        for node in self.nodes.iter_mut() {
+            node.swap_label_args();
+        }
+        for edge in &mut self.edges {
+            edge.borrow_mut().swap_label_args();
+        }
+    }
+
     pub fn edges(&self) -> &[Rc<RefCell<Edge<F>>>] {
         &self.edges
     }

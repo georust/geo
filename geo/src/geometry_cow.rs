@@ -10,7 +10,7 @@ use std::borrow::Cow;
 /// This is a way to "upgrade" an inner type to something like a `Geometry` without `moving` it.
 ///
 /// As an example, see the [`Relate`] trait which uses `GeometryCow`.
-#[derive(PartialEq, Debug, Hash)]
+#[derive(PartialEq, Debug, Hash, Clone)]
 pub(crate) enum GeometryCow<'a, T>
 where
     T: CoordNum,

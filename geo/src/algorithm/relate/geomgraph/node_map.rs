@@ -6,6 +6,7 @@ use std::fmt;
 use std::marker::PhantomData;
 
 /// A map of nodes, indexed by the coordinate of the node
+#[derive(Clone)]
 pub(crate) struct NodeMap<F, NF>
 where
     F: GeoFloat,

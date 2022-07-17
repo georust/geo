@@ -29,13 +29,13 @@ use std::rc::Rc;
 ///   - Computing the intersections between the edges and nodes of two different graphs
 ///
 /// GeometryGraph is based on [JTS's `GeomGraph` as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/GeometryGraph.java)
+#[derive(Clone)]
 pub(crate) struct GeometryGraph<'a, F>
 where
     F: GeoFloat,
 {
     arg_index: usize,
-    parent_geometry: &'a GeometryCow<'a, F>,
-    edge_set_intersector: Box<dyn EdgeSetIntersector<F>>,
+    parent_geometry: GeometryCow<'a, F>,
     tree: Option<RTree<Segment<F>>>,
     use_boundary_determination_rule: bool,
     planar_graph: PlanarGraph<F>,
@@ -54,6 +54,12 @@ where
     }
     pub fn set_tree(&mut self, tree: RTree<Segment<F>>) {
         self.tree = Some(tree);
+    }
+
+    pub fn swap_arg_index(&mut self) {
+        assert_eq!(self.arg_index, 0);
+        self.arg_index = 1;
+        self.planar_graph.swap_labels()
     }
 
     pub fn edges(&self) -> &[Rc<RefCell<Edge<F>>>] {
@@ -81,29 +87,20 @@ impl<'a, F> GeometryGraph<'a, F>
 where
     F: GeoFloat + RTreeNum,
 {
-    pub fn new(
-        arg_index: usize,
-        parent_geometry: &'a GeometryCow<F>,
-        edge_set_intersector: Box<dyn EdgeSetIntersector<F>>,
-    ) -> Self {
+    pub fn new(arg_index: usize, parent_geometry: GeometryCow<'a, F>) -> Self {
         let mut graph = GeometryGraph {
             arg_index,
             parent_geometry,
             use_boundary_determination_rule: true,
-            edge_set_intersector,
             tree: None,
             planar_graph: PlanarGraph::new(),
         };
-        graph.add_geometry(parent_geometry);
+        graph.add_geometry(&graph.parent_geometry.clone());
         graph
     }
 
-    fn set_edge_set_intersector(&mut self, edge_set_intersector: Box<dyn EdgeSetIntersector<F>>) {
-        self.edge_set_intersector = edge_set_intersector;
-    }
-
     pub fn geometry(&self) -> &GeometryCow<F> {
-        self.parent_geometry
+        &self.parent_geometry
     }
 
     /// Determine whether a component (node or edge) that appears multiple times in elements
@@ -118,7 +115,7 @@ where
         }
     }
 
-    pub(crate) fn create_unprepared_edge_set_intersector() -> Box<dyn EdgeSetIntersector<F>> {
+    pub(crate) fn create_unprepared_edge_set_intersector() -> RStarEdgeSetIntersector {
         // PERF: faster algorithms exist. This one was chosen for simplicity of implementation and
         //       debugging
         // Slow, but simple and good for debugging
@@ -126,7 +123,7 @@ where
 
         // Should be much faster for sparse intersections, while not much slower than
         // SimpleEdgeSetIntersector in the dense case
-        Box::new(RStarEdgeSetIntersector::new())
+        RStarEdgeSetIntersector::new()
     }
 
     fn boundary_nodes(&self) -> impl Iterator<Item = &CoordNode<F>> {
@@ -318,7 +315,8 @@ where
                 &mut segment_intersector,
             );
         } else {
-            self.edge_set_intersector.compute_intersections_within_set(
+            let edge_set_intersector = RStarEdgeSetIntersector::new();
+            edge_set_intersector.compute_intersections_within_set(
                 self,
                 check_for_self_intersecting_edges,
                 &mut segment_intersector,
@@ -349,8 +347,12 @@ where
                 &mut segment_intersector,
             );
         } else {
-            self.edge_set_intersector
-                .compute_intersections_between_sets(self, other, &mut segment_intersector);
+            let edge_set_intersector = RStarEdgeSetIntersector::new();
+            edge_set_intersector.compute_intersections_between_sets(
+                self,
+                other,
+                &mut segment_intersector,
+            );
         }
 
         segment_intersector

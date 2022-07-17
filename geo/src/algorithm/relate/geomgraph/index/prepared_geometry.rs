@@ -11,11 +11,7 @@ impl<'a, F: GeoFloat> From<&'a Polygon<F>> for PreparedGeometry<'a, F> {
     fn from(polygon: &'a Polygon<F>) -> Self {
         use std::cell::RefCell;
         let geometry = GeometryCow::from(polygon);
-        let geometry_graph = GeometryGraph::new(
-            0,
-            &geometry,
-            GeometryGraph::create_unprepared_edge_set_intersector(),
-        );
+        let mut geometry_graph = GeometryGraph::new(0, geometry);
         let segments: Vec<Segment<F>> = geometry_graph
             .edges()
             .iter()
@@ -31,14 +27,13 @@ impl<'a, F: GeoFloat> From<&'a Polygon<F>> for PreparedGeometry<'a, F> {
             })
             .collect();
         let tree = RTree::bulk_load(segments);
-        Self { geometry, tree }
+        geometry_graph.set_tree(tree);
+        Self { geometry_graph }
     }
 }
 
-#[derive(Debug)]
 pub struct PreparedGeometry<'a, F: GeoFloat + RTreeNum = f64> {
-    geometry: GeometryCow<'a, F>,
-    tree: RTree<Segment<F>>,
+    geometry_graph: GeometryGraph<'a, F>,
 }
 
 impl<'a, F> PreparedGeometry<'a, F>
@@ -46,11 +41,10 @@ where
     F: GeoFloat + RTreeNum,
 {
     pub(crate) fn geometry_graph(&'a self, arg_index: usize) -> GeometryGraph<'a, F> {
-        // let tree = self.tree.clone();
-        //let edge_set_intersector = Box::new(PreparedRStarEdgeSetIntersector::new(tree));
-        let edge_set_intersector = GeometryGraph::create_unprepared_edge_set_intersector();
-        let mut graph = GeometryGraph::new(arg_index, &self.geometry, edge_set_intersector);
-        graph.set_tree(self.tree.clone());
+        let mut graph = self.geometry_graph.clone();
+        if arg_index == 1 {
+            graph.swap_arg_index();
+        }
         graph
     }
 }

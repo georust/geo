@@ -29,6 +29,10 @@ impl fmt::Debug for Label {
 }
 
 impl Label {
+    pub fn swap_args(&mut self) {
+        self.geometry_topologies.swap(0, 1)
+    }
+
     /// Construct an empty `Label` for relating a 1-D line or 0-D point to both geometries.
     pub fn empty_line_or_point() -> Label {
         Label {
