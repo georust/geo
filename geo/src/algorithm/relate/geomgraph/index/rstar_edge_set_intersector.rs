@@ -19,12 +19,13 @@ impl<F> EdgeSetIntersector<F> for RStarEdgeSetIntersector
 where
     F: GeoFloat + rstar::RTreeNum,
 {
-    fn compute_intersections_within_set(
+    fn compute_intersections_within_set<'a>(
         &self,
-        edges: &[Rc<RefCell<Edge<F>>>],
+        graph: &GeometryGraph<'a, F>,
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
+        let edges = graph.edges();
         let segments: Vec<Segment<F>> = edges
             .iter()
             .enumerate()
@@ -55,12 +56,15 @@ where
         }
     }
 
-    fn compute_intersections_between_sets(
+    fn compute_intersections_between_sets<'a>(
         &self,
-        edges_0: &[Rc<RefCell<Edge<F>>>],
-        edges_1: &[Rc<RefCell<Edge<F>>>],
+        graph_0: &GeometryGraph<'a, F>,
+        graph_1: &GeometryGraph<'a, F>,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
+        let edges_0 = graph_0.edges();
+        let edges_1 = graph_1.edges();
+
         let segments0: Vec<Segment<F>> = edges_0
             .iter()
             .enumerate()

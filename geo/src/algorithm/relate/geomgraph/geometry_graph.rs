@@ -49,6 +49,9 @@ impl<F> GeometryGraph<'_, F>
 where
     F: GeoFloat,
 {
+    pub fn tree(&self) -> Option<&RTree<Segment<F>>> {
+        self.tree.as_ref()
+    }
     pub fn set_tree(&mut self, tree: RTree<Segment<F>>) {
         self.tree = Some(tree);
     }
@@ -310,13 +313,13 @@ where
         if let Some(tree) = &self.tree {
             let edge_set_intersector = PreparedRStarEdgeSetIntersector::new(tree.clone());
             edge_set_intersector.compute_intersections_within_set(
-                self.edges(),
+                self,
                 check_for_self_intersecting_edges,
                 &mut segment_intersector,
             );
         } else {
             self.edge_set_intersector.compute_intersections_within_set(
-                self.edges(),
+                self,
                 check_for_self_intersecting_edges,
                 &mut segment_intersector,
             );
@@ -341,17 +344,13 @@ where
         if let Some(tree) = &self.tree {
             let edge_set_intersector = PreparedRStarEdgeSetIntersector::new(tree.clone());
             edge_set_intersector.compute_intersections_between_sets(
-                self.edges(),
-                other.edges(),
+                self,
+                other,
                 &mut segment_intersector,
             );
         } else {
             self.edge_set_intersector
-                .compute_intersections_between_sets(
-                    self.edges(),
-                    other.edges(),
-                    &mut segment_intersector,
-                );
+                .compute_intersections_between_sets(self, other, &mut segment_intersector);
         }
 
         segment_intersector

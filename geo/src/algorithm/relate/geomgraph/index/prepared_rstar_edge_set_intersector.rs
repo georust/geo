@@ -1,4 +1,4 @@
-use super::super::{Edge, PlanarGraph};
+use super::super::{Edge, GeometryGraph, PlanarGraph};
 use super::{EdgeSetIntersector, Segment, SegmentIntersector};
 use crate::{Coordinate, GeoFloat};
 
@@ -27,12 +27,14 @@ impl<F> EdgeSetIntersector<F> for PreparedRStarEdgeSetIntersector<F>
 where
     F: GeoFloat + rstar::RTreeNum,
 {
-    fn compute_intersections_within_set(
+    fn compute_intersections_within_set<'a>(
         &self,
-        edges: &[Rc<RefCell<Edge<F>>>],
+        graph: &GeometryGraph<'a, F>,
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
+        let edges = graph.edges();
+
         for (segment_0, segment_1) in self
             .tree
             .intersection_candidates_with_other_tree(&self.tree)
@@ -50,30 +52,17 @@ where
         }
     }
 
-    fn compute_intersections_between_sets(
+    fn compute_intersections_between_sets<'a>(
         &self,
-        edges_0: &[Rc<RefCell<Edge<F>>>],
-        edges_1: &[Rc<RefCell<Edge<F>>>],
+        graph_0: &GeometryGraph<'a, F>,
+        graph_1: &GeometryGraph<'a, F>,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
-        let tree_0 = &self.tree;
+        let tree_0 = graph_0.tree().unwrap();
+        let tree_1 = graph_1.tree().unwrap();
 
-        // TODO: figure out how to get a tree from *another* prepared geometry. It seems like
-        // this will require re-working the EdgeSetIntersector trait signature.
-        let segments1: Vec<Segment<F>> = edges_1
-            .iter()
-            .enumerate()
-            .flat_map(|(edge_idx, edge)| {
-                let edge = RefCell::borrow(edge);
-                let start_of_final_segment: usize = edge.coords().len() - 1;
-                (0..start_of_final_segment).map(move |segment_idx| {
-                    let p1 = edge.coords()[segment_idx];
-                    let p2 = edge.coords()[segment_idx + 1];
-                    Segment::new(edge_idx, segment_idx, p1, p2)
-                })
-            })
-            .collect();
-        let tree_1 = RTree::bulk_load(segments1);
+        let edges_0 = graph_0.edges();
+        let edges_1 = graph_1.edges();
 
         for (segment_0, segment_1) in tree_0.intersection_candidates_with_other_tree(&tree_1) {
             let edge_0 = &edges_0[segment_0.edge_idx];

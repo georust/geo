@@ -29,12 +29,13 @@ impl SimpleEdgeSetIntersector {
 }
 
 impl<F: GeoFloat> EdgeSetIntersector<F> for SimpleEdgeSetIntersector {
-    fn compute_intersections_within_set(
+    fn compute_intersections_within_set<'a>(
         &self,
-        edges: &[Rc<RefCell<Edge<F>>>],
+        graph: &GeometryGraph<'a, F>,
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
+        let edges = graph.edges();
         for edge0 in edges.iter() {
             for edge1 in edges.iter() {
                 if check_for_self_intersecting_edges || edge0.as_ptr() != edge1.as_ptr() {
@@ -44,12 +45,15 @@ impl<F: GeoFloat> EdgeSetIntersector<F> for SimpleEdgeSetIntersector {
         }
     }
 
-    fn compute_intersections_between_sets(
+    fn compute_intersections_between_sets<'a>(
         &self,
-        edges_0: &[Rc<RefCell<Edge<F>>>],
-        edges_1: &[Rc<RefCell<Edge<F>>>],
+        graph_0: &GeometryGraph<'a, F>,
+        graph_1: &GeometryGraph<'a, F>,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
+        let edges_0 = graph_0.edges();
+        let edges_1 = graph_1.edges();
+
         for edge0 in edges_0 {
             for edge1 in edges_1 {
                 self.compute_intersects(edge0, edge1, segment_intersector);
