@@ -1,6 +1,7 @@
-use super::Contains;
-use crate::Intersects;
-use crate::{Coordinate, GeoNum, Line, LineString, Point};
+use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use crate::algorithm::Intersects;
+use crate::geometry::*;
+use crate::{GeoFloat, GeoNum};
 
 // ┌──────────────────────────┐
 // │ Implementations for Line │
@@ -81,3 +82,6 @@ where
         all_intersects && (!all_equal || self.contains(first))
     }
 }
+
+impl_contains_from_relate!(Line<T>, [Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_geometry_for!(Line<T>);

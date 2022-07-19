@@ -1,9 +1,7 @@
-use super::Contains;
+use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use crate::geometry::*;
 use crate::Relate;
-use crate::{
-    Coordinate, GeoFloat, GeoNum, GeometryCollection, Line, LineString, MultiLineString,
-    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
-};
+use crate::{GeoFloat, GeoNum};
 
 // ┌─────────────────────────────┐
 // │ Implementations for Polygon │
@@ -28,32 +26,8 @@ where
     }
 }
 
-impl<T> Contains<Line<T>> for Polygon<T>
-where
-    T: GeoFloat,
-{
-    fn contains(&self, line: &Line<T>) -> bool {
-        self.relate(line).is_contains()
-    }
-}
-
-impl<T> Contains<Polygon<T>> for Polygon<T>
-where
-    T: GeoFloat,
-{
-    fn contains(&self, poly: &Polygon<T>) -> bool {
-        self.relate(poly).is_contains()
-    }
-}
-
-impl<T> Contains<LineString<T>> for Polygon<T>
-where
-    T: GeoFloat,
-{
-    fn contains(&self, linestring: &LineString<T>) -> bool {
-        self.relate(linestring).is_contains()
-    }
-}
+impl_contains_from_relate!(Polygon<T>, [Line<T>, LineString<T>, Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_geometry_for!(Polygon<T>);
 
 // ┌──────────────────────────────────┐
 // │ Implementations for MultiPolygon │

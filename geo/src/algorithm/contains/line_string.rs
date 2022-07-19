@@ -1,6 +1,7 @@
-use super::Contains;
-use crate::Intersects;
-use crate::{CoordNum, Coordinate, GeoNum, Line, LineString, MultiLineString, Point};
+use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use crate::algorithm::Intersects;
+use crate::geometry::*;
+use crate::{CoordNum, GeoFloat, GeoNum};
 
 // ┌────────────────────────────────┐
 // │ Implementations for LineString │
@@ -113,15 +114,22 @@ where
     }
 }
 
+impl_contains_from_relate!(LineString<T>, [Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_geometry_for!(LineString<T>);
+
 // ┌─────────────────────────────────────┐
 // │ Implementations for MultiLineString │
 // └─────────────────────────────────────┘
-impl<G, T> Contains<G> for MultiLineString<T>
+
+impl_contains_from_relate!(MultiLineString<T>, [Line<T>, LineString<T>, Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_geometry_for!(MultiLineString<T>);
+
+impl<T> Contains<Point<T>> for MultiLineString<T>
 where
     T: CoordNum,
-    LineString<T>: Contains<G>,
+    LineString<T>: Contains<Point<T>>,
 {
-    fn contains(&self, rhs: &G) -> bool {
-        self.iter().any(|p| p.contains(rhs))
+    fn contains(&self, rhs: &Point<T>) -> bool {
+        self.iter().any(|ls| ls.contains(rhs))
     }
 }

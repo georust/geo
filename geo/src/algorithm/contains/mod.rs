@@ -37,12 +37,55 @@ pub trait Contains<Rhs = Self> {
 }
 
 mod geometry;
+mod geometry_collection;
 mod line;
 mod line_string;
 mod point;
 mod polygon;
 mod rect;
 mod triangle;
+
+macro_rules! impl_contains_from_relate {
+    ($for:ty,  [$($target:ty),*]) => {
+        $(
+            impl<T> Contains<$target> for $for
+            where
+                T: GeoFloat
+            {
+                fn contains(&self, target: &$target) -> bool {
+                    use $crate::algorithm::Relate;
+                    self.relate(target).is_contains()
+                }
+            }
+        )*
+    };
+}
+pub(crate) use impl_contains_from_relate;
+
+macro_rules! impl_contains_geometry_for {
+    ($geom_type: ty) => {
+        impl<T> Contains<Geometry<T>> for $geom_type
+        where
+            T: GeoFloat,
+        {
+            fn contains(&self, geometry: &Geometry<T>) -> bool {
+                match geometry {
+                    Geometry::Point(g) => self.contains(g),
+                    Geometry::Line(g) => self.contains(g),
+                    Geometry::LineString(g) => self.contains(g),
+                    Geometry::Polygon(g) => self.contains(g),
+                    Geometry::MultiPoint(g) => self.contains(g),
+                    Geometry::MultiLineString(g) => self.contains(g),
+                    Geometry::MultiPolygon(g) => self.contains(g),
+                    Geometry::GeometryCollection(g) => self.contains(g),
+                    Geometry::Rect(g) => self.contains(g),
+                    Geometry::Triangle(g) => self.contains(g),
+                }
+            }
+        }
+    };
+}
+pub(crate) use impl_contains_geometry_for;
 
 // ┌───────┐
 // │ Tests │

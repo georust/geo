@@ -1,5 +1,6 @@
-use super::Contains;
-use crate::{Coordinate, GeoNum, LineString, Point, Triangle};
+use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use crate::geometry::*;
+use crate::{GeoFloat, GeoNum};
 
 // ┌──────────────────────────────┐
 // │ Implementations for Triangle │
@@ -24,3 +25,6 @@ where
         self.contains(&point.0)
     }
 }
+
+impl_contains_from_relate!(Triangle<T>, [Line<T>, LineString<T>, Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_geometry_for!(Triangle<T>);
