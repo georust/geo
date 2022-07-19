@@ -52,14 +52,14 @@ mod tests {
     // several of the ConvexHull tests are currently failing
     fn test_all_general() {
         init_logging();
-        let mut runner = TestRunner::new().with_precision_floating();
+        let mut runner = TestRunner::new().with_overlay_precision_floating();
         runner.run().expect("test cases failed");
 
         // sanity check that the expected number of tests were run.
         //
         // We'll need to increase this number as more tests are added, but it should never be
         // decreased.
-        let expected_test_count: usize = 227;
+        let expected_test_count: usize = 274;
         let actual_test_count = runner.failures().len() + runner.successes().len();
         match actual_test_count.cmp(&expected_test_count) {
             Ordering::Less => {
@@ -98,7 +98,7 @@ mod tests {
         init_logging();
         let mut runner = TestRunner::new()
             .matching_filename_glob("*Overlay*.xml")
-            .with_precision_floating();
+            .with_overlay_precision_floating();
         runner.run().expect("test cases failed");
 
         // sanity check that *something* was run

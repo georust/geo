@@ -17,7 +17,7 @@ const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxm
 pub struct TestRunner {
     filename_filter: Option<String>,
     desc_filter: Option<String>,
-    check_precision: bool,
+    check_overlay_precision: bool,
     cases: Option<Vec<TestCase>>,
     failures: Vec<TestFailure>,
     unsupported: Vec<TestCase>,
@@ -71,8 +71,8 @@ impl TestRunner {
         self
     }
 
-    pub fn with_precision_floating(mut self) -> Self {
-        self.check_precision = true;
+    pub fn with_overlay_precision_floating(mut self) -> Self {
+        self.check_overlay_precision = true;
         self
     }
 
@@ -513,17 +513,7 @@ impl TestRunner {
                     continue;
                 }
             };
-            if self.check_precision
-                && run.precision_model.is_some()
-                && &run.precision_model.as_ref().unwrap().ty != "FLOATING"
-            {
-                debug!(
-                    "skipping test input: {:?} with unsupported precision model: {prec:?}",
-                    file.path(),
-                    prec = run.precision_model,
-                );
-                continue;
-            }
+
             for mut case in run.cases {
                 if let Some(desc_filter) = &self.desc_filter {
                     if case.desc.as_str().contains(desc_filter) {
@@ -548,6 +538,18 @@ impl TestRunner {
 
                     match test.operation_input.into_operation(&case) {
                         Ok(operation) => {
+                            if matches!(operation, Operation::BooleanOp { .. })
+                                && self.check_overlay_precision
+                                && run.precision_model.is_some()
+                                && &run.precision_model.as_ref().unwrap().ty != "FLOATING"
+                            {
+                                debug!(
+                    "skipping test input: {:?} with unsupported precision model: {prec:?}",
+                    file.path(),
+                    prec = run.precision_model,
+                );
+                                continue;
+                            }
                             cases.push(TestCase {
                                 description,
                                 test_file_name,
