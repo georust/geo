@@ -10,6 +10,7 @@ type Result<T> = std::result::Result<T, Error>;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cmp::Ordering;
 
     fn init_logging() {
         use std::sync::Once;
@@ -54,11 +55,27 @@ mod tests {
         let mut runner = TestRunner::new().with_precision_floating();
         runner.run().expect("test cases failed");
 
-        // sanity check that *something* was run
-        assert!(
-            runner.failures().len() + runner.successes().len() > 0,
-            "No tests were run."
-        );
+        // sanity check that the expected number of tests were run.
+        //
+        // We'll need to increase this number as more tests are added, but it should never be
+        // decreased.
+        let expected_test_count: usize = 227;
+        let actual_test_count = runner.failures().len() + runner.successes().len();
+        match actual_test_count.cmp(&expected_test_count) {
+            Ordering::Less => {
+                panic!(
+                    "We're running {} less test cases than before. What happened to them?",
+                    expected_test_count - actual_test_count
+                );
+            }
+            Ordering::Equal => {}
+            Ordering::Greater => {
+                panic!(
+                    "Great, looks like we're running new tests. Just increase `expected_test_count` to {}",
+                    actual_test_count
+                );
+            }
+        }
 
         if !runner.failures().is_empty() {
             let failure_text = runner
