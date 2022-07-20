@@ -12,39 +12,56 @@ on 2D geometries based on the algorithm of [Martinez-Rueda-Feito].
 
 The algorithm consists of:
 
-1. planar sweep: the classic algorithm of [Bentley-Ottman] which
-   efficiently computes all intersections of a set of lines.
-2. ring construction: compute the borders of the output region as disjoint
-   set of rings.
-3. stitching: construct the output polygons by detecting exterior rings,
-   and assigning hole rings to its parent ext. ring.
+1. idenfifying border of the output region: this uses the [Bentley-Ottman]
+   planar sweep algorithm.
+1. stitching: construct the output polygon(s) by forming exterior and
+   interior rings from the line-segments.
 
 ## Planar Sweep
 
-Here, we use ideas from [Martinez-Rueda-Feito] to combine overlapping
-line-segments. This helps us simplify many edge-cases. The implementation
-is in `geo/src/algorithm/sweep`.
+This is a classical comp. geom. algorithm and may be of independent use. In
+fact, the boolean op. implementation uses the sweep twice: once for
+identifying the border regions, and a second time to identify line-segments
+to pair-up together to form the rings.
 
-## Ring Construction
+The current implementation uses the vanilla `BTreeSet` but a tailored
+version of `BTreeSet` should improve performance here. Pls. check out
+[rmanoka/sweep-tree] for a working poc that gives some decent speed-up
+(requires a nightly compiler).
 
-This is essentially as in [Martinez-Rueda-Feito]. The region of each
-intersection-point is inferred from the sweep data-structure, and this is
-used to compute whether each segment starting at the point belongs to the
-border of the region of interest (which is the output of the bool. op).
-Pls. ref. `geo/src/algorithm/bool_ops`.
+The implementation is not tied specifically to the boolean op. algorithm.
+However, we use the idea of merging overlapping line-segments from the work
+of [Martinez-Rueda-Feito]. This may be different from typical
+implementation of this algorithm, but provides the same functionality.
 
-The border regions are then connected greedily into a set of rings. Ref.
-`geo/src/algorithm/bool_ops/rings.rs`.
+Pls. refer `geo/src/algorithm/sweep` for the implementation.
 
-## Stitching Rings
+## Identifying Borders
 
-The region enclosed by the rings form a [Laminar Set]. We re-use the
-planar-sweep to again detect the inclusion relations of the rings, and
-assemble as polygons.  Ref `geo/src/algorithm/bool_ops/laminar.rs`.
+This is the crux of the boolean op. logic. The sweep splits the input
+segments into segments that do not intersect in interiors. The sweep also
+provides a list of "active segments" which are ordered list of segments
+intersecting the current sweep line. This ordering allows us to infer the
+region above/below each segment, and thus the segments belong in the output
+goemetry. Specifically, the outputs segments are whose either side have
+different parity with the output region (i.e. one side of the segment
+belongs to the output, and the other does not). These are collected and
+used to assemble the final geometry.
+
+Pls. refer `geo/src/algorithm/bool_ops/op.rs`.
+
+## Output Construction
+
+Here, we construct a final geometry by assembling the segments obtained
+from the previous section. These segments are guaranteed to represent a
+bounded region, and thus can be decomposed into a set of cycles (the
+eulerian graph condition). The only constraint is the ensure the output
+satisfies the validity constraints of the OGC SFS.
+
+Pls. ref `geo/src/algorithm/bool_ops/assembly.rs`.
 
 # Ideas for Future Work
 
-1. JTS test suites for boolean ops.
 1. Custom b-tree to optimize sweep ops.
 1. Robust sweep to handle all fixed-precision issues.
 
@@ -52,3 +69,4 @@ assemble as polygons.  Ref `geo/src/algorithm/bool_ops/laminar.rs`.
 [Bentley-Ottman]: //en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm
 [Feature PR]: //github.com/georust/geo/pull/835
 [Laminar Set]: //en.wikipedia.org/wiki/Laminar_set_family
+[rmanoka/sweep-tree]: //github.com/rmanoka/sweep-tree
