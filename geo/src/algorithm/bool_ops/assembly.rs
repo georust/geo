@@ -201,7 +201,6 @@ fn split_ring<T: GeoFloat, F: FnMut(LineString<T>)>(
         pts_map.insert(SweepPoint::from(coord), exterior.len());
         exterior.push(coord);
     }
-    pts_map.clear();
     LineString::from(exterior)
 }
 
