@@ -1,3 +1,4 @@
+use geo::bool_ops::OpType as BoolOp;
 use geo::relate::IntersectionMatrix;
 use geo::{Geometry, Point};
 use serde::{Deserialize, Deserializer};
@@ -29,8 +30,17 @@ use super::Result;
 /// ```
 #[derive(Debug, Deserialize)]
 pub(crate) struct Run {
+    #[serde(rename = "precisionModel", default)]
+    pub precision_model: Option<PrecisionModel>,
+
     #[serde(rename = "case")]
     pub cases: Vec<Case>,
+}
+
+#[derive(Debug, Deserialize)]
+pub(crate) struct PrecisionModel {
+    #[serde(rename = "type", default)]
+    pub ty: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -98,6 +108,15 @@ pub struct ContainsInput {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct OverlayInput {
+    pub(crate) arg1: String,
+    pub(crate) arg2: String,
+
+    #[serde(rename = "$value", deserialize_with = "wkt::deserialize_wkt")]
+    pub(crate) expected: geo::Geometry<f64>,
+}
+
+#[derive(Debug, Deserialize)]
 #[serde(tag = "name")]
 pub(crate) enum OperationInput {
     #[serde(rename = "getCentroid")]
@@ -114,6 +133,18 @@ pub(crate) enum OperationInput {
 
     #[serde(rename = "contains")]
     ContainsInput(ContainsInput),
+
+    #[serde(rename = "union")]
+    UnionInput(OverlayInput),
+
+    #[serde(rename = "intersection")]
+    IntersectionInput(OverlayInput),
+
+    #[serde(rename = "difference")]
+    DifferenceInput(OverlayInput),
+
+    #[serde(rename = "symdifference")]
+    SymDifferenceInput(OverlayInput),
 
     #[serde(other)]
     Unsupported,
@@ -143,6 +174,12 @@ pub(crate) enum Operation {
         a: Geometry,
         b: Geometry,
         expected: IntersectionMatrix,
+    },
+    BooleanOp {
+        a: Geometry<f64>,
+        b: Geometry<f64>,
+        op: BoolOp,
+        expected: Geometry<f64>,
     },
 }
 
@@ -203,9 +240,81 @@ impl OperationInput {
                     expected: input.expected,
                 })
             }
+            Self::UnionInput(input) => {
+                validate_boolean_op(
+                    &input.arg1,
+                    &input.arg2,
+                    geometry,
+                    case.b.as_ref().expect("no geometry b in case"),
+                )?;
+                Ok(Operation::BooleanOp {
+                    a: geometry.clone(),
+                    b: case.b.clone().expect("no geometry b in case"),
+                    op: BoolOp::Union,
+                    expected: input.expected,
+                })
+            }
+            Self::IntersectionInput(input) => {
+                validate_boolean_op(
+                    &input.arg1,
+                    &input.arg2,
+                    geometry,
+                    case.b.as_ref().expect("no geometry b in case"),
+                )?;
+                Ok(Operation::BooleanOp {
+                    a: geometry.clone(),
+                    b: case.b.clone().expect("no geometry b in case"),
+                    op: BoolOp::Intersection,
+                    expected: input.expected,
+                })
+            }
+            Self::DifferenceInput(input) => {
+                validate_boolean_op(
+                    &input.arg1,
+                    &input.arg2,
+                    geometry,
+                    case.b.as_ref().expect("no geometry b in case"),
+                )?;
+                Ok(Operation::BooleanOp {
+                    a: geometry.clone(),
+                    b: case.b.clone().expect("no geometry b in case"),
+                    op: BoolOp::Difference,
+                    expected: input.expected,
+                })
+            }
+            Self::SymDifferenceInput(input) => {
+                validate_boolean_op(
+                    &input.arg1,
+                    &input.arg2,
+                    geometry,
+                    case.b.as_ref().expect("no geometry b in case"),
+                )?;
+                Ok(Operation::BooleanOp {
+                    a: geometry.clone(),
+                    b: case.b.clone().expect("no geometry b in case"),
+                    op: BoolOp::Xor,
+                    expected: input.expected,
+                })
+            }
             Self::Unsupported => Err("This OperationInput not supported".into()),
         }
     }
+}
+
+fn validate_boolean_op(arg1: &str, arg2: &str, a: &Geometry<f64>, b: &Geometry<f64>) -> Result<()> {
+    assert_eq!("A", arg1);
+    assert_eq!("B", arg2);
+    for arg in &[a, b] {
+        if matches!(arg, Geometry::LineString(_)) {
+            log::warn!("skipping `line_string.union` we don't support");
+            return Err("`line_string.union` is not supported".into());
+        }
+        if matches!(arg, Geometry::MultiPoint(_)) {
+            log::warn!("skipping `line_string.union` we don't support");
+            return Err("`line_string.union` is not supported".into());
+        }
+    }
+    Ok(())
 }
 
 pub fn deserialize_opt_geometry<'de, D>(

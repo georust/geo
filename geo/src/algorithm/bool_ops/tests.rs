@@ -19,13 +19,40 @@ pub(super) fn init_log() {
 use super::*;
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
+fn check_sweep(wkt1: &str, wkt2: &str, ty: OpType) -> Result<MultiPolygon<f64>> {
+    init_log();
+    let poly1 = MultiPolygon::<f64>::try_from_wkt_str(wkt1)
+        .or_else(|_| Polygon::<f64>::try_from_wkt_str(wkt1).map(MultiPolygon::from))
+        .unwrap();
+    let poly2 = MultiPolygon::try_from_wkt_str(wkt2)
+        .or_else(|_| Polygon::<f64>::try_from_wkt_str(wkt2).map(MultiPolygon::from))
+        .unwrap();
+    let mut bop = Op::new(ty, 0);
+    bop.add_multi_polygon(&poly1, true);
+    bop.add_multi_polygon(&poly2, false);
+
+    let geom = bop.sweep();
+
+    info!("Got {n} rings", n = geom.0.len());
+    info!("{wkt}", wkt = geom.to_wkt());
+
+    Ok(geom)
+
+    // let polygons = assemble(rings);
+    // info!("got {n} output polygons", n = polygons.len());
+    // for p in polygons.iter() {
+    //     info!("\t{wkt}", wkt = p.to_wkt());
+    // }
+    // Ok(MultiPolygon::new(polygons))
+}
+
 #[test]
 fn test_rect_overlapping() -> Result<()> {
     // Two rects that overlap
     let wkt1 = "POLYGON((0 0,1 0,1 1,0 1,0 0))";
     let wkt2 = "POLYGON((0.5 1,2 1,2 2,0.5 2,0.5 1))";
 
-    let wkt_union = "MULTIPOLYGON(((2 1,1 1,1 0,0 0,0 1,0.5 1,0.5 2,2 2,2 1)))";
+    let wkt_union = "MULTIPOLYGON(((1 0,1 1,2 1,2 2,0.5 2,0.5 1,0 1,0 0,1 0)))";
     let output = check_sweep(wkt1, wkt2, OpType::Union)?;
     assert_eq!(output, MultiPolygon::try_from_wkt_str(wkt_union).unwrap());
     Ok(())
@@ -56,33 +83,6 @@ fn test_invalid_loops() -> Result<()> {
     check_sweep(wkt1, wkt2, OpType::Union)?;
     Ok(())
 }
-
-fn check_sweep(wkt1: &str, wkt2: &str, ty: OpType) -> Result<MultiPolygon<f64>> {
-    init_log();
-    let poly1 = MultiPolygon::<f64>::try_from_wkt_str(wkt1)
-        .or_else(|_| Polygon::<f64>::try_from_wkt_str(wkt1).map(MultiPolygon::from))
-        .unwrap();
-    let poly2 = MultiPolygon::try_from_wkt_str(wkt2)
-        .or_else(|_| Polygon::<f64>::try_from_wkt_str(wkt2).map(MultiPolygon::from))
-        .unwrap();
-    let mut bop = Op::new(ty, 0);
-    bop.add_multi_polygon(&poly1, true);
-    bop.add_multi_polygon(&poly2, false);
-
-    let rings = bop.sweep();
-    info!("Got {n} rings", n = rings.len());
-    for ring in rings.iter() {
-        info!("\t{wkt}", wkt = ring.coords().to_wkt(),);
-    }
-
-    let polygons = assemble(rings);
-    info!("got {n} output polygons", n = polygons.len());
-    for p in polygons.iter() {
-        info!("\t{wkt}", wkt = p.to_wkt());
-    }
-    Ok(MultiPolygon::new(polygons))
-}
-
 #[test]
 fn test_complex_rects() -> Result<()> {
     let wkt1 = "MULTIPOLYGON(((-1 -2,-1.0000000000000002 2,-0.8823529411764707 2,-0.8823529411764706 -2,-1 -2)),((-0.7647058823529411 -2,-0.7647058823529412 2,-0.6470588235294118 2,-0.6470588235294118 -2,-0.7647058823529411 -2)),((-0.5294117647058824 -2,-0.5294117647058825 2,-0.41176470588235287 2,-0.4117647058823529 -2,-0.5294117647058824 -2)),((-0.2941176470588236 -2,-0.2941176470588236 2,-0.17647058823529418 2,-0.17647058823529416 -2,-0.2941176470588236 -2)),((-0.05882352941176472 -2,-0.05882352941176472 2,0.05882352941176472 2,0.05882352941176472 -2,-0.05882352941176472 -2)),((0.17647058823529416 -2,0.17647058823529416 2,0.29411764705882365 2,0.2941176470588236 -2,0.17647058823529416 -2)),((0.4117647058823528 -2,0.41176470588235287 2,0.5294117647058821 2,0.5294117647058822 -2,0.4117647058823528 -2)),((0.6470588235294117 -2,0.6470588235294118 2,0.7647058823529411 2,0.7647058823529411 -2,0.6470588235294117 -2)),((0.8823529411764706 -2,0.8823529411764707 2,1.0000000000000002 2,1 -2,0.8823529411764706 -2)))";
@@ -157,5 +157,14 @@ fn test_issue_865() -> Result<()> {
     let wkt1 = "POLYGON((-640 -360,640 -360,640 360,-640 360,-640 -360))";
     let wkt2 = "POLYGON((313.276 359.999,213.319 359.999,50 60,-50 60,-50 110,-8.817 360,-93.151 360,-85.597 225.618,-114.48 359.999,-117.017 360,-85 215,-85 155,-115 155,-154.161 360,-640 360,-640 -360,640 -360,640 360,313.277 360,313.276 359.999))";
     check_sweep(wkt1, wkt2, OpType::Difference)?;
+    Ok(())
+}
+
+#[test]
+fn test_jts_adhoc() -> Result<()> {
+    let wkt1 = "POLYGON ((20 0, 20 160, 200 160, 200 0, 20 0))";
+    let wkt2 = "POLYGON ((220 80, 0 80, 0 240, 220 240, 220 80),	(100 80, 120 120, 80 120, 100 80))";
+
+    check_sweep(wkt1, wkt2, OpType::Intersection)?;
     Ok(())
 }
