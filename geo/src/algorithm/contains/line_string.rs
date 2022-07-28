@@ -16,8 +16,8 @@ where
             return false;
         }
 
-        if self.is_closed() && coord == &self.0[0] {
-            return true;
+        if coord == &self.0[0] || coord == self.0.last().unwrap() {
+            return self.is_closed();
         }
 
         self.lines()
