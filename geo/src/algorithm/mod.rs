@@ -212,5 +212,9 @@ pub use vincenty_length::VincentyLength;
 pub mod winding_order;
 pub use winding_order::Winding;
 
+/// Determine whether `Geometry` `A` is completely within by `Geometry` `B`.
+pub mod within;
+pub use within::Within;
+
 /// Planar sweep algorithm and related utils
 pub mod sweep;

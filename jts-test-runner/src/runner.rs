@@ -6,7 +6,7 @@ use log::{debug, info};
 use wkt::ToWkt;
 
 use super::{input, Operation, Result};
-use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects};
+use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects, Within};
 use geo::geometry::*;
 use geo::GeoNum;
 
@@ -147,6 +147,40 @@ impl TestRunner {
                         });
                     } else {
                         debug!("Contains success: actual == expected");
+                        self.successes.push(test_case);
+                    }
+                }
+                Operation::Within {
+                    subject,
+                    target,
+                    expected,
+                } => {
+                    use geo::Relate;
+                    let relate_within_result = subject.relate(target).is_within();
+                    let within_trait_result = subject.is_within(target);
+
+                    if relate_within_result != *expected {
+                        debug!("Within failure: Relate doesn't match expected");
+                        let error_description = format!(
+                            "Within failure: expected {:?}, relate: {:?}",
+                            expected, relate_within_result
+                        );
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    } else if relate_within_result != within_trait_result {
+                        debug!("Within failure: Relate doesn't match Within trait implementation");
+                        let error_description = format!(
+                            "Within failure: Relate: {:?}, Within trait: {:?}",
+                            expected, within_trait_result
+                        );
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    } else {
+                        debug!("Within success: actual == expected");
                         self.successes.push(test_case);
                     }
                 }
