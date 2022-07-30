@@ -102,6 +102,12 @@ impl<C> CrossingsIter<C>
 where
     C: Cross + Clone,
 {
+    /// Faster sweep when input goemetries are known to not intersect except at
+    /// end-points.
+    pub fn new_simple<I: IntoIterator<Item = C>>(iter: I) -> Self {
+        Self::new_ex(iter, true)
+    }
+
     /// Returns the segments that intersect the last point yielded by
     /// the iterator.
     pub fn intersections_mut(&mut self) -> &mut [Crossing<C>] {
@@ -115,6 +121,17 @@ where
     pub(crate) fn prev_active(&self, c: &Crossing<C>) -> Option<(LineOrPoint<C::Scalar>, &C)> {
         self.sweep.prev_active(c).map(|s| (s.geom, &s.cross))
     }
+
+    fn new_ex<T: IntoIterator<Item = C>>(iter: T, is_simple: bool) -> Self {
+        let iter = iter.into_iter();
+        let size = {
+            let (min_size, max_size) = iter.size_hint();
+            max_size.unwrap_or(min_size)
+        };
+        let sweep = Sweep::new(iter, is_simple);
+        let segments = Vec::with_capacity(4 * size);
+        Self { sweep, segments }
+    }
 }
 
 impl<C> FromIterator<C> for CrossingsIter<C>
@@ -122,14 +139,7 @@ where
     C: Cross + Clone,
 {
     fn from_iter<T: IntoIterator<Item = C>>(iter: T) -> Self {
-        let iter = iter.into_iter();
-        let size = {
-            let (min_size, max_size) = iter.size_hint();
-            max_size.unwrap_or(min_size)
-        };
-        let sweep = Sweep::new(iter);
-        let segments = Vec::with_capacity(4 * size);
-        Self { sweep, segments }
+        Self::new_ex(iter, false)
     }
 }
 

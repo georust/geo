@@ -1,7 +1,10 @@
 use std::f64::consts::PI;
 
 use criterion::{measurement::Measurement, *};
-use geo::{algorithm::{BooleanOps, Intersects, Rotate}, Relate};
+use geo::{
+    algorithm::{BooleanOps, Rotate},
+    Relate,
+};
 
 use geo_booleanop::boolean::BooleanOp as OtherBooleanOp;
 use rand::{thread_rng, Rng};

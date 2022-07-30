@@ -1,36 +1,31 @@
+use geo_types::{MultiLineString, MultiPolygon};
 use std::fmt::Debug;
 
-use geo_types::MultiPolygon;
-
+use super::*;
 use crate::{sweep::LineOrPoint, GeoFloat, OpType};
-
-use super::assembly::Assembly;
 
 pub trait Spec<T: GeoFloat> {
     type Region: Copy + Debug;
     type Output;
 
     fn infinity(&self) -> Self::Region;
-    fn cross(&self, prev_region: Self::Region, is_first: bool) -> Self::Region;
-    fn output(&mut self, regions: [Self::Region; 2], geom: LineOrPoint<T>);
+    fn cross(&self, prev_region: Self::Region, idx: usize) -> Self::Region;
+    fn output(&mut self, regions: [Self::Region; 2], geom: LineOrPoint<T>, idx: usize);
     fn finish(self) -> Self::Output;
 }
 
 pub struct BoolOp<T: GeoFloat> {
     ty: OpType,
-    assembly: Assembly<T>,
+    assembly: RegionAssembly<T>,
 }
-
-impl<T: GeoFloat> From<OpType> for  BoolOp<T> {
+impl<T: GeoFloat> From<OpType> for BoolOp<T> {
     fn from(ty: OpType) -> Self {
         Self {
             ty,
-            assembly: Assembly::default(),
+            assembly: RegionAssembly::default(),
         }
     }
 }
-
-
 impl<T: GeoFloat> Spec<T> for BoolOp<T> {
     type Region = Region;
     type Output = MultiPolygon<T>;
@@ -42,12 +37,12 @@ impl<T: GeoFloat> Spec<T> for BoolOp<T> {
         }
     }
 
-    fn cross(&self, mut prev_region: Self::Region, is_first: bool) -> Self::Region {
-        prev_region.cross(is_first);
+    fn cross(&self, mut prev_region: Self::Region, idx: usize) -> Self::Region {
+        prev_region.cross(idx == 0);
         prev_region
     }
 
-    fn output(&mut self, regions: [Self::Region; 2], geom: LineOrPoint<T>) {
+    fn output(&mut self, regions: [Self::Region; 2], geom: LineOrPoint<T>, idx: usize) {
         if regions[0].is_ty(self.ty) ^ regions[1].is_ty(self.ty) {
             self.assembly.add_edge(geom)
         }
@@ -55,6 +50,47 @@ impl<T: GeoFloat> Spec<T> for BoolOp<T> {
 
     fn finish(self) -> Self::Output {
         self.assembly.finish()
+    }
+}
+
+pub struct ClipOp<T: GeoFloat> {
+    output: LineAssembly<T>,
+}
+
+impl<T: GeoFloat> Spec<T> for ClipOp<T> {
+    type Region = Region;
+    type Output = MultiLineString<T>;
+
+    fn infinity(&self) -> Self::Region {
+        Region {
+            is_first: false,
+            is_second: false,
+        }
+    }
+
+    fn cross(&self, mut prev_region: Self::Region, idx: usize) -> Self::Region {
+        if idx == 0 {
+            prev_region.cross(true);
+        }
+        prev_region
+    }
+
+    fn output(&mut self, regions: [Self::Region; 2], geom: LineOrPoint<T>, idx: usize) {
+        if idx > 0 && regions[0].is_first && regions[1].is_first {
+            self.output.add_edge(geom, idx);
+        }
+    }
+
+    fn finish(self) -> Self::Output {
+        MultiLineString::new(self.output.finish())
+    }
+}
+
+impl<T: GeoFloat> Default for ClipOp<T> {
+    fn default() -> Self {
+        Self {
+            output: Default::default(),
+        }
     }
 }
 

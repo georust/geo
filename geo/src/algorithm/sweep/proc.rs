@@ -6,12 +6,13 @@ use std::{
 use super::*;
 
 pub(crate) struct Sweep<C: Cross> {
+    is_simple: bool,
     events: BinaryHeap<Event<C::Scalar, IMSegment<C>>>,
     active_segments: BTreeSet<Active<IMSegment<C>>>,
 }
 
 impl<C: Cross + Clone> Sweep<C> {
-    pub(crate) fn new<I>(iter: I) -> Self
+    pub(crate) fn new<I>(iter: I, is_simple: bool) -> Self
     where
         I: IntoIterator<Item = C>,
     {
@@ -24,6 +25,7 @@ impl<C: Cross + Clone> Sweep<C> {
         let mut sweep = Sweep {
             events: BinaryHeap::with_capacity(size),
             active_segments: Default::default(),
+            is_simple,
         };
         for cr in iter {
             IMSegment::create_segment(cr, None, None, |ev| sweep.events.push(ev));
@@ -70,58 +72,61 @@ impl<C: Cross + Clone> Sweep<C> {
         match &event.ty {
             LineLeft => {
                 let mut should_add = true;
-                for adj_segment in prev.into_iter().chain(next.into_iter()) {
-                    if let Some(adj_intersection) =
-                        segment.geom().intersect_line_ordered(&adj_segment.geom())
-                    {
-                        trace!("Found intersection (LL):\n\tsegment1: {:?}\n\tsegment2: {:?}\n\tintersection: {:?}", segment, adj_segment, adj_intersection);
-                        // 1. Split adj_segment, and extra splits to storage
-                        let adj_overlap = adj_segment
-                            .adjust_one_segment(adj_intersection, |e| self.events.push(e));
+                if !self.is_simple {
+                    for adj_segment in prev.into_iter().chain(next.into_iter()) {
+                        if let Some(adj_intersection) =
+                            segment.geom().intersect_line_ordered(&adj_segment.geom())
+                        {
+                            trace!("Found intersection (LL):\n\tsegment1: {:?}\n\tsegment2: {:?}\n\tintersection: {:?}", segment, adj_segment, adj_intersection);
+                            // 1. Split adj_segment, and extra splits to storage
+                            let adj_overlap = adj_segment
+                                .adjust_one_segment(adj_intersection, |e| self.events.push(e));
 
-                        // A special case is if adj_segment was split, and the
-                        // intersection is at the start of this segment. In this
-                        // case, there is an right-end event in the heap, that
-                        // needs to be handled before finishing up this event.
-                        let handle_end_event = {
-                            // Get first point of intersection
-                            let int_pt = adj_intersection.left();
-                            // Check its not first point of the adjusted, but is
-                            // first point of current segment
-                            int_pt != adj_segment.geom().left() && int_pt == segment.geom().left()
-                        };
-                        if handle_end_event {
-                            let event = self.events.pop().unwrap();
-                            let done = self.handle_event(event, cb);
-                            debug_assert!(done, "special right-end event handling failed")
-                        }
+                            // A special case is if adj_segment was split, and the
+                            // intersection is at the start of this segment. In this
+                            // case, there is an right-end event in the heap, that
+                            // needs to be handled before finishing up this event.
+                            let handle_end_event = {
+                                // Get first point of intersection
+                                let int_pt = adj_intersection.left();
+                                // Check its not first point of the adjusted, but is
+                                // first point of current segment
+                                int_pt != adj_segment.geom().left()
+                                    && int_pt == segment.geom().left()
+                            };
+                            if handle_end_event {
+                                let event = self.events.pop().unwrap();
+                                let done = self.handle_event(event, cb);
+                                debug_assert!(done, "special right-end event handling failed")
+                            }
 
-                        // 2. Split segment, adding extra segments as needed.
-                        let seg_overlap_key =
-                            segment.adjust_one_segment(adj_intersection, |e| self.events.push(e));
+                            // 2. Split segment, adding extra segments as needed.
+                            let seg_overlap_key = segment
+                                .adjust_one_segment(adj_intersection, |e| self.events.push(e));
 
-                        assert_eq!(
-                            adj_overlap.is_some(),
-                            seg_overlap_key.is_some(),
-                            "one of the intersecting segments had an overlap, but not the other!"
-                        );
-                        if let Some(adj_ovl) = adj_overlap {
-                            let tgt = seg_overlap_key.unwrap();
-                            trace!("setting overlap: {adj_ovl:?} -> {tgt:?}");
-                            adj_ovl.chain_overlap(tgt.clone());
+                            assert_eq!(
+                                adj_overlap.is_some(),
+                                seg_overlap_key.is_some(),
+                                "one of the intersecting segments had an overlap, but not the other!"
+                            );
+                            if let Some(adj_ovl) = adj_overlap {
+                                let tgt = seg_overlap_key.unwrap();
+                                trace!("setting overlap: {adj_ovl:?} -> {tgt:?}");
+                                adj_ovl.chain_overlap(tgt.clone());
 
-                            if tgt == segment {
-                                // The whole event segment is now overlapping
-                                // some other active segment.
-                                //
-                                // We do not need to continue iteration, but
-                                // should callback if the left event of the
-                                // now-parent has already been processed.
-                                if Borrow::<Segment<_>>::borrow(&adj_ovl).left_event_done {
-                                    should_add = false;
-                                    break;
+                                if tgt == segment {
+                                    // The whole event segment is now overlapping
+                                    // some other active segment.
+                                    //
+                                    // We do not need to continue iteration, but
+                                    // should callback if the left event of the
+                                    // now-parent has already been processed.
+                                    if Borrow::<Segment<_>>::borrow(&adj_ovl).left_event_done {
+                                        should_add = false;
+                                        break;
+                                    }
+                                    return true;
                                 }
-                                return true;
                             }
                         }
                     }
@@ -152,35 +157,41 @@ impl<C: Cross + Clone> Sweep<C> {
                     cb_seg = seg.overlapping().cloned();
                 }
 
-                if let (Some(prev), Some(next)) = (prev, next) {
-                    let prev_geom = prev.geom();
-                    let next_geom = next.geom();
-                    if let Some(adj_intersection) = prev_geom.intersect_line_ordered(&next_geom) {
-                        // 1. Split prev_segment, and extra splits to storage
-                        let first = prev
-                            .adjust_one_segment(adj_intersection, |e| self.events.push(e))
-                            .is_none();
-                        let second = next
-                            .adjust_one_segment(adj_intersection, |e| self.events.push(e))
-                            .is_none();
-                        debug_assert!(
-                            first && second,
-                            "adjacent segments @ removal can't overlap!"
-                        );
+                if !self.is_simple {
+                    if let (Some(prev), Some(next)) = (prev, next) {
+                        let prev_geom = prev.geom();
+                        let next_geom = next.geom();
+                        if let Some(adj_intersection) = prev_geom.intersect_line_ordered(&next_geom)
+                        {
+                            // 1. Split prev_segment, and extra splits to storage
+                            let first = prev
+                                .adjust_one_segment(adj_intersection, |e| self.events.push(e))
+                                .is_none();
+                            let second = next
+                                .adjust_one_segment(adj_intersection, |e| self.events.push(e))
+                                .is_none();
+                            debug_assert!(
+                                first && second,
+                                "adjacent segments @ removal can't overlap!"
+                            );
+                        }
                     }
                 }
             }
             PointLeft => {
-                for adj_segment in prev.into_iter().chain(next.into_iter()) {
-                    let geom = adj_segment.geom();
-                    if let Some(adj_intersection) = segment.geom().intersect_line_ordered(&geom) {
-                        trace!("Found intersection:\n\tsegment1: {:?}\n\tsegment2: {:?}\n\tintersection: {:?}", segment, adj_segment, adj_intersection);
-                        // 1. Split adj_segment, and extra splits to storage
-                        let adj_overlap = adj_segment
-                            .adjust_one_segment(adj_intersection, |e| self.events.push(e));
+                if !self.is_simple {
+                    for adj_segment in prev.into_iter().chain(next.into_iter()) {
+                        let geom = adj_segment.geom();
+                        if let Some(adj_intersection) = segment.geom().intersect_line_ordered(&geom)
+                        {
+                            trace!("Found intersection:\n\tsegment1: {:?}\n\tsegment2: {:?}\n\tintersection: {:?}", segment, adj_segment, adj_intersection);
+                            // 1. Split adj_segment, and extra splits to storage
+                            let adj_overlap = adj_segment
+                                .adjust_one_segment(adj_intersection, |e| self.events.push(e));
 
-                        // Can't have overlap with a point
-                        debug_assert!(adj_overlap.is_none());
+                            // Can't have overlap with a point
+                            debug_assert!(adj_overlap.is_none());
+                        }
                     }
                 }
 

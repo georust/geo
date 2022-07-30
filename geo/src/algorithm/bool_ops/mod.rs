@@ -1,4 +1,4 @@
-use geo_types::MultiPolygon;
+use geo_types::{MultiPolygon, LineString, MultiLineString};
 
 use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
 
@@ -6,7 +6,8 @@ use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
 ///
 /// Boolean operations are set operations on geometries considered as a subset
 /// of the 2-D plane. The operations supported are: intersection, union, xor or
-/// symmetric difference, and set-difference.
+/// symmetric difference, and set-difference on pairs of 2-D geometries and
+/// clipping a 1-D geometry with self.
 ///
 /// These operations are implemented on [`Polygon`] and the [`MultiPolygon`]
 /// geometries.
@@ -37,6 +38,7 @@ pub trait BooleanOps: Sized {
     fn difference(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Difference)
     }
+    fn clip(&self, ls: &MultiLineString<Self::Scalar>) -> MultiLineString<Self::Scalar>;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -53,10 +55,22 @@ impl<T: GeoFloat> BooleanOps for Polygon<T> {
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
         let spec = BoolOp::from(op);
         let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
-        bop.add_polygon(self, true);
-        bop.add_polygon(other, false);
+        bop.add_polygon(self, 0);
+        bop.add_polygon(other, 1);
         bop.sweep()
     }
+
+    fn clip(&self, ls: &MultiLineString<Self::Scalar>) -> MultiLineString<Self::Scalar> {
+        let spec = ClipOp::default();
+        let mut bop = Proc::new(spec, self.coords_count() + ls.coords_count());
+        bop.add_polygon(self, 0);
+        ls.0.iter().enumerate().for_each(|(idx, l)| {
+            bop.add_line_string(l, idx + 1);
+        });
+        bop.sweep()
+    }
+
+
 }
 impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
     type Scalar = T;
@@ -64,8 +78,18 @@ impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
         let spec = BoolOp::from(op);
         let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
-        bop.add_multi_polygon(self, true);
-        bop.add_multi_polygon(other, false);
+        bop.add_multi_polygon(self, 0);
+        bop.add_multi_polygon(other, 1);
+        bop.sweep()
+    }
+
+    fn clip(&self, ls: &MultiLineString<Self::Scalar>) -> MultiLineString<Self::Scalar> {
+        let spec = ClipOp::default();
+        let mut bop = Proc::new(spec, self.coords_count() + ls.coords_count());
+        bop.add_multi_polygon(self, 0);
+        ls.0.iter().enumerate().for_each(|(idx, l)| {
+            bop.add_line_string(l, idx + 1);
+        });
         bop.sweep()
     }
 }
@@ -73,9 +97,9 @@ impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
 mod op;
 use op::*;
 mod assembly;
+use assembly::*;
 mod spec;
-use spec::{Spec, BoolOp};
-
+use spec::*;
 
 #[cfg(test)]
 mod tests;
