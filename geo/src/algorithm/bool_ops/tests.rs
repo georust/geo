@@ -27,7 +27,7 @@ fn check_sweep(wkt1: &str, wkt2: &str, ty: OpType) -> Result<MultiPolygon<f64>> 
     let poly2 = MultiPolygon::try_from_wkt_str(wkt2)
         .or_else(|_| Polygon::<f64>::try_from_wkt_str(wkt2).map(MultiPolygon::from))
         .unwrap();
-    let mut bop = Op::new(ty, 0);
+    let mut bop = Proc::new(BoolOp::from(ty), 0);
     bop.add_multi_polygon(&poly1, true);
     bop.add_multi_polygon(&poly2, false);
 
@@ -37,13 +37,6 @@ fn check_sweep(wkt1: &str, wkt2: &str, ty: OpType) -> Result<MultiPolygon<f64>> 
     info!("{wkt}", wkt = geom.to_wkt());
 
     Ok(geom)
-
-    // let polygons = assemble(rings);
-    // info!("got {n} output polygons", n = polygons.len());
-    // for p in polygons.iter() {
-    //     info!("\t{wkt}", wkt = p.to_wkt());
-    // }
-    // Ok(MultiPolygon::new(polygons))
 }
 
 #[test]

@@ -51,7 +51,8 @@ impl<T: GeoFloat> BooleanOps for Polygon<T> {
     type Scalar = T;
 
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        let mut bop = Op::new(op, self.coords_count() + other.coords_count());
+        let spec = BoolOp::from(op);
+        let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
         bop.add_polygon(self, true);
         bop.add_polygon(other, false);
         bop.sweep()
@@ -61,7 +62,8 @@ impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
     type Scalar = T;
 
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        let mut bop = Op::new(op, self.coords_count() + other.coords_count());
+        let spec = BoolOp::from(op);
+        let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
         bop.add_multi_polygon(self, true);
         bop.add_multi_polygon(other, false);
         bop.sweep()
@@ -71,6 +73,9 @@ impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
 mod op;
 use op::*;
 mod assembly;
+mod spec;
+use spec::{Spec, BoolOp};
+
 
 #[cfg(test)]
 mod tests;
