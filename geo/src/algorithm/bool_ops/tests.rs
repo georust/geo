@@ -1,5 +1,6 @@
 use crate::{MultiPolygon, Polygon};
 
+use geo_types::LineString;
 use log::{error, info};
 
 use std::{
@@ -156,7 +157,7 @@ fn test_issue_865() -> Result<()> {
 #[test]
 fn test_clip_adhoc() -> Result<()> {
     let wkt1 = "POLYGON ((20 0, 20 160, 200 160, 200 0, 20 0))";
-    let wkt2 = "LINESTRING (0 0, 200 200)";
+    let wkt2 = "LINESTRING (0 0, 100 100, 240 100)";
 
     let poly1 = MultiPolygon::<f64>::try_from_wkt_str(wkt1)
         .or_else(|_| Polygon::<f64>::try_from_wkt_str(wkt1).map(MultiPolygon::from))

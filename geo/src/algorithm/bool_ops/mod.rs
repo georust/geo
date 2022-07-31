@@ -1,4 +1,4 @@
-use geo_types::{MultiPolygon, LineString, MultiLineString};
+use geo_types::{MultiLineString, MultiPolygon};
 
 use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
 
@@ -69,8 +69,6 @@ impl<T: GeoFloat> BooleanOps for Polygon<T> {
         });
         bop.sweep()
     }
-
-
 }
 impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
     type Scalar = T;

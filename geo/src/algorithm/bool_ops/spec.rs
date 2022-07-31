@@ -42,7 +42,7 @@ impl<T: GeoFloat> Spec<T> for BoolOp<T> {
         prev_region
     }
 
-    fn output(&mut self, regions: [Self::Region; 2], geom: LineOrPoint<T>, idx: usize) {
+    fn output(&mut self, regions: [Self::Region; 2], geom: LineOrPoint<T>, _idx: usize) {
         if regions[0].is_ty(self.ty) ^ regions[1].is_ty(self.ty) {
             self.assembly.add_edge(geom)
         }
