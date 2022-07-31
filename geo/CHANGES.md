@@ -20,6 +20,8 @@
 * Add `InteriorPoint` trait allowing calculation of a representative point inside
   a `Geometry`
   * <https://github.com/georust/geo/pull/870>
+* Add `ConvexHull` implementation for all remaining geometries.
+  * <https://github.com/georust/geo/pull/889>
 
 ## 0.22.1
 
