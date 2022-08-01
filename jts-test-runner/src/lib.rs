@@ -55,11 +55,26 @@ mod tests {
         let mut runner = TestRunner::new().with_overlay_precision_floating();
         runner.run().expect("test cases failed");
 
+        if !runner.failures().is_empty() {
+            let failure_text = runner
+                .failures()
+                .iter()
+                .map(|failure| format!("{}", failure))
+                .collect::<Vec<String>>()
+                .join("\n");
+            panic!(
+                "{} failures / {} successes in JTS test suite:\n{}",
+                runner.failures().len(),
+                runner.successes().len(),
+                failure_text
+            );
+        }
+
         // sanity check that the expected number of tests were run.
         //
         // We'll need to increase this number as more tests are added, but it should never be
         // decreased.
-        let expected_test_count: usize = 274;
+        let expected_test_count: usize = 1728;
         let actual_test_count = runner.failures().len() + runner.successes().len();
         match actual_test_count.cmp(&expected_test_count) {
             Ordering::Less => {
@@ -75,21 +90,6 @@ mod tests {
                     actual_test_count
                 );
             }
-        }
-
-        if !runner.failures().is_empty() {
-            let failure_text = runner
-                .failures()
-                .iter()
-                .map(|failure| format!("{}", failure))
-                .collect::<Vec<String>>()
-                .join("\n");
-            panic!(
-                "{} failures / {} successes in JTS test suite:\n{}",
-                runner.failures().len(),
-                runner.successes().len(),
-                failure_text
-            );
         }
     }
 

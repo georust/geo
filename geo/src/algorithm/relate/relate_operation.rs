@@ -344,10 +344,10 @@ where
             let edge = isolated_edge.borrow();
             Edge::<F>::update_intersection_matrix(edge.label(), intersection_matrix);
             debug!(
-                "after updated_intersection_matrix(isolated_edge: {:?}, label: {:?}): {:?}",
+                "after isolated_edge update_intersection_matrix: {:?}, (isolated_edge: {:?}, label: {:?})",
+                intersection_matrix,
                 edge,
-                edge.label(),
-                intersection_matrix
+                edge.label()
             );
         }
 

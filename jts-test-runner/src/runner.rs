@@ -6,12 +6,12 @@ use log::{debug, info};
 use wkt::ToWkt;
 
 use super::{input, Operation, Result};
-use geo::{
-    BooleanOps, Contains, Coordinate, GeoNum, Geometry, HasDimensions, Intersects, LineString,
-    MultiPolygon, Polygon,
-};
+use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects};
+use geo::geometry::*;
+use geo::GeoNum;
 
 const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/general");
+const VALIDATE_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/validate");
 
 #[derive(Debug, Default, Clone)]
 pub struct TestRunner {
@@ -492,7 +492,10 @@ impl TestRunner {
             "**/*.xml".to_string()
         };
 
-        for entry in GENERAL_TEST_XML.find(&filename_filter)? {
+        for entry in GENERAL_TEST_XML
+            .find(&filename_filter)?
+            .chain(VALIDATE_TEST_XML.find(&filename_filter)?)
+        {
             let file = match entry {
                 DirEntry::Dir(_) => {
                     debug_assert!(false, "unexpectedly found dir.xml");

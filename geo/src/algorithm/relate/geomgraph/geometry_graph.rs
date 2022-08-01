@@ -229,11 +229,11 @@ where
         }
 
         if coords.len() < 2 {
-            // TODO: we could return an Err here, but this has ramifications for how we can
-            // use this code in other operations - do we want all our methods, like `contains` to
-            // return a Result?
-            warn!("encountered invalid linestring, which has undefined results");
+            warn!("Treating invalid linestring as point, which has undefined results");
+            self.add_point(&coords[0].into());
+            return;
         }
+
         self.insert_boundary_point(*coords.first().unwrap());
         self.insert_boundary_point(*coords.last().unwrap());
 
