@@ -77,19 +77,19 @@ impl<T: GeoFloat> Spec<T> for ClipOp<T> {
 
     fn output(&mut self, regions: [Self::Region; 2], geom: LineOrPoint<T>, idx: usize) {
         if idx > 0 && regions[0].is_first && regions[1].is_first {
-            self.output.add_edge(geom, idx);
+            self.assembly.add_edge(geom, idx);
         }
     }
 
     fn finish(self) -> Self::Output {
-        MultiLineString::new(self.output.finish())
+        MultiLineString::new(self.assembly.finish())
     }
 }
 
 impl<T: GeoFloat> Default for ClipOp<T> {
     fn default() -> Self {
         Self {
-            output: Default::default(),
+            assembly: Default::default(),
         }
     }
 }
