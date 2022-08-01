@@ -1,5 +1,6 @@
-use super::Contains;
-use crate::*;
+use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use crate::geometry::*;
+use crate::{CoordNum, GeoFloat};
 
 // ┌──────────────────────────┐
 // │ Implementations for Rect │
@@ -39,3 +40,6 @@ where
             && self.max().y >= other.max().y
     }
 }
+
+impl_contains_from_relate!(Rect<T>, [Line<T>, LineString<T>, Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Triangle<T>]);
+impl_contains_geometry_for!(Rect<T>);

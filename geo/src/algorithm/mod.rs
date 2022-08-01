@@ -10,6 +10,10 @@ pub use area::Area;
 pub mod bearing;
 pub use bearing::Bearing;
 
+/// Boolean Ops such as union, xor, difference;
+pub mod bool_ops;
+pub use bool_ops::{BooleanOps, OpType};
+
 /// Calculate the bounding rectangle of a `Geometry`.
 pub mod bounding_rect;
 pub use bounding_rect::BoundingRect;
@@ -34,7 +38,7 @@ pub use closest_point::ClosestPoint;
 pub mod concave_hull;
 pub use concave_hull::ConcaveHull;
 
-/// Determine whether `Geometry` `A` is completely enclosed by `Geometry` `B`.
+/// Determine whether `Geometry` `A` completely encloses `Geometry` `B`.
 pub mod contains;
 pub use contains::Contains;
 
@@ -53,6 +57,10 @@ pub use coordinate_position::CoordinatePosition;
 /// Iterate over geometry coordinates.
 pub mod coords_iter;
 pub use coords_iter::CoordsIter;
+
+/// Densify linear geometry components
+pub mod densify;
+pub use densify::Densify;
 
 /// Dimensionality of a geometry and its boundary, based on OGC-SFA.
 pub mod dimensions;
@@ -206,11 +214,3 @@ pub use winding_order::Winding;
 
 /// Planar sweep algorithm and related utils
 pub mod sweep;
-
-/// Boolean Ops such as union, xor, difference;
-pub mod bool_ops;
-pub use bool_ops::{BooleanOps, OpType};
-
-/// Densify linear geometry components
-pub mod densify;
-pub use densify::Densify;
