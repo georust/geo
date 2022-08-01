@@ -20,12 +20,12 @@ impl<T: Float, S: Spec<T>> Proc<T, S> {
         }
     }
 
-    // is_first -> whether it is from first input or second input
+    // idx: whether it is from first input or second input
     pub(crate) fn add_multi_polygon(&mut self, mp: &MultiPolygon<T>, idx: usize) {
         mp.0.iter().for_each(|p| self.add_polygon(p, idx));
     }
 
-    // is_first -> whether it is from first input or second input
+    // idx: whether it is from first input or second input
     pub(crate) fn add_polygon(&mut self, poly: &Polygon<T>, idx: usize) {
         self.add_closed_ring(poly.exterior(), idx, false);
         for hole in poly.interiors() {
@@ -51,7 +51,7 @@ impl<T: Float, S: Spec<T>> Proc<T, S> {
         }
     }
 
-    // is_first -> whether it is from first input or second input
+    // idx: whether it is from first input or second input
     // _is_hole is not used rn; remove it once we fully handle fp issues
     fn add_closed_ring(&mut self, ring: &LineString<T>, idx: usize, _is_hole: bool) {
         assert!(ring.is_closed());

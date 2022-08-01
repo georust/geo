@@ -51,7 +51,7 @@ Pls. refer `geo/src/algorithm/bool_ops/op.rs`.
 
 ## Operation Specification
 
-The initial implementation focussed on operation between two 2-d
+The initial implementation focused on operation between two 2-d
 geometries. However, the core logic to use the sweep to split segments, and
 calculate regions based on segment arrangement lends itself to perform
 boolean operations in multiple flavours.
@@ -79,10 +79,10 @@ Pls. ref `geo/src/algorithm/bool_ops/spec.rs`.
 Here, we construct a final geometry by assembling the segments obtained
 from the previous section. For `BoolOp`, these segments are guaranteed to
 represent a bounded region, and thus can be decomposed into a set of cycles
-(the eulerian graph condition). The only constraint is the ensure the
+(the eulerian graph condition). The only constraint is to ensure the
 output satisfies the validity constraints of the OGC SFS.
 
-For `ClipOp`, we simply assembly segments that belonged to the same
+For `ClipOp`, we simply assemble segments that belonged to the same
 original `LineString` via a greedy algorithm to assemble a final list of 1D
 geometries.
 

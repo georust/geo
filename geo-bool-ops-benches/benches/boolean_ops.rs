@@ -80,7 +80,7 @@ fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
             },
         );
 
-        group.bench_with_input(BenchmarkId::new("geo::intersects", steps), &(), |b, _| {
+        group.bench_with_input(BenchmarkId::new("geo::relate", steps), &(), |b, _| {
             b.iter_batched(
                 polys.sampler(),
                 |&(ref poly, ref poly2, _, _)| poly.relate(poly2).is_intersects(),

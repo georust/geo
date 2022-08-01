@@ -54,7 +54,7 @@ impl<T: GeoFloat> Spec<T> for BoolOp<T> {
 }
 
 pub struct ClipOp<T: GeoFloat> {
-    output: LineAssembly<T>,
+    assembly: LineAssembly<T>,
 }
 
 impl<T: GeoFloat> Spec<T> for ClipOp<T> {
