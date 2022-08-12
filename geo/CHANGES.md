@@ -22,6 +22,8 @@
   * <https://github.com/georust/geo/pull/870>
 * Add `ConvexHull` implementation for all remaining geometries.
   * <https://github.com/georust/geo/pull/889>
+* Remove deprecated ToGeo trait. Use `std::convert::TryFrom<$geometry>` instead.
+  * <https://github.com/georust/geo/pull/892>
 
 ## 0.22.1
 
