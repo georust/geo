@@ -1,5 +1,6 @@
-use super::ConvexHull;
-use crate::*;
+use super::*;
+use crate::geometry::*;
+use crate::{coord, line_string, polygon};
 
 #[test]
 fn convex_hull_multipoint_test() {
@@ -77,4 +78,27 @@ fn convex_hull_multipolygon_test() {
     ];
     let res = mp.convex_hull();
     assert_eq!(res.exterior().0, correct);
+}
+
+#[test]
+fn collection() {
+    let collection = GeometryCollection(vec![
+        Point::new(0.0, 0.0).into(),
+        Triangle::new(
+            coord! { x: 1.0, y: 0.0},
+            coord! { x: 4.0, y: 0.0},
+            coord! { x: 4.0, y: 4.0 },
+        )
+        .into(),
+    ]);
+
+    let convex_hull = collection.convex_hull();
+    assert_eq!(
+        convex_hull,
+        polygon![
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 4.0, y: 4.0 },
+            coord! { x: 0.0, y: 0.0 }
+        ]
+    );
 }

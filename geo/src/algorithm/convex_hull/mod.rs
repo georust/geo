@@ -1,4 +1,5 @@
-use crate::{Coordinate, GeoNum, LineString, MultiLineString, MultiPoint, MultiPolygon, Polygon};
+use crate::geometry::{Coordinate, LineString, Polygon};
+use crate::GeoNum;
 
 /// Returns the convex hull of a Polygon. The hull is always oriented counter-clockwise.
 ///
@@ -36,65 +37,23 @@ use crate::{Coordinate, GeoNum, LineString, MultiLineString, MultiPoint, MultiPo
 /// let res = poly.convex_hull();
 /// assert_eq!(res.exterior(), &correct_hull);
 /// ```
-pub trait ConvexHull {
+pub trait ConvexHull<'a, T> {
     type Scalar: GeoNum;
-    fn convex_hull(&self) -> Polygon<Self::Scalar>;
+    fn convex_hull(&'a self) -> Polygon<Self::Scalar>;
 }
 
-impl<T> ConvexHull for Polygon<T>
-where
-    T: GeoNum,
-{
-    type Scalar = T;
-    fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(quick_hull(&mut self.exterior().0.clone()), vec![])
-    }
-}
+use crate::algorithm::CoordsIter;
 
-impl<T> ConvexHull for MultiPolygon<T>
+impl<'a, T, G> ConvexHull<'a, T> for G
 where
     T: GeoNum,
+    G: CoordsIter<'a, Scalar = T>,
 {
     type Scalar = T;
-    fn convex_hull(&self) -> Polygon<T> {
-        let mut aggregated: Vec<_> = self
-            .0
-            .iter()
-            .flat_map(|elem| elem.exterior().0.iter().copied())
-            .collect();
-        Polygon::new(quick_hull(&mut aggregated), vec![])
-    }
-}
 
-impl<T> ConvexHull for LineString<T>
-where
-    T: GeoNum,
-{
-    type Scalar = T;
-    fn convex_hull(&self) -> Polygon<T> {
-        Polygon::new(quick_hull(&mut self.0.clone()), vec![])
-    }
-}
-
-impl<T> ConvexHull for MultiLineString<T>
-where
-    T: GeoNum,
-{
-    type Scalar = T;
-    fn convex_hull(&self) -> Polygon<T> {
-        let mut aggregated: Vec<_> = self.iter().flat_map(|elem| elem.clone().0).collect();
-        Polygon::new(quick_hull(&mut aggregated), vec![])
-    }
-}
-
-impl<T> ConvexHull for MultiPoint<T>
-where
-    T: GeoNum,
-{
-    type Scalar = T;
-    fn convex_hull(&self) -> Polygon<T> {
-        let mut aggregated: Vec<_> = self.iter().map(|p| p.0).collect();
-        Polygon::new(quick_hull(&mut aggregated), vec![])
+    fn convex_hull(&'a self) -> Polygon<T> {
+        let mut exterior: Vec<_> = self.exterior_coords_iter().collect();
+        Polygon::new(quick_hull(&mut exterior), vec![])
     }
 }
 
