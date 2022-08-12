@@ -191,8 +191,6 @@ extern crate proj;
 extern crate rstar;
 
 pub use crate::algorithm::*;
-#[allow(deprecated)]
-pub use crate::traits::ToGeo;
 pub use crate::types::Closest;
 
 pub use geo_types::{coord, line_string, point, polygon, CoordFloat, CoordNum};
@@ -203,7 +201,6 @@ pub use geometry::*;
 /// This module includes all the functions of geometric calculations
 pub mod algorithm;
 mod geometry_cow;
-mod traits;
 mod types;
 mod utils;
 pub(crate) use geometry_cow::GeometryCow;
