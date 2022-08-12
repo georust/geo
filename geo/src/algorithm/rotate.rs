@@ -92,7 +92,7 @@ pub trait Rotate<T: CoordFloat> {
 }
 
 #[doc(hidden)]
-#[deprecated(note = "Use `Rotate::rotate_around_point` instead.")]
+#[deprecated(since = "0.23.0", note = "Use `Rotate::rotate_around_point` instead.")]
 pub trait RotatePoint<T: CoordFloat> {
     fn rotate_around_point(&self, degrees: T, point: Point<T>) -> Self;
 }
