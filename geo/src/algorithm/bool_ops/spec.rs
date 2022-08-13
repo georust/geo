@@ -86,7 +86,7 @@ impl<T: GeoFloat> Spec<T> for ClipOp<T> {
     }
 
     fn output(&mut self, regions: [Self::Region; 2], geom: LineOrPoint<T>, idx: usize) {
-        if idx > 0 && (regions[0].is_first && regions[1].is_first) == !self.invert {
+        if idx > 0 && (regions[0].is_first && regions[1].is_first) != self.invert {
             self.assembly.add_edge(geom, idx);
         }
     }

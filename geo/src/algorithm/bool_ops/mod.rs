@@ -43,7 +43,11 @@ pub trait BooleanOps: Sized {
     ///
     /// Returns the set-theoeretic intersection of `self` and `ls` if `invert`
     /// is false, and the difference (`ls - self`) otherwise.
-    fn clip(&self, ls: &MultiLineString<Self::Scalar>, invert: bool) -> MultiLineString<Self::Scalar>;
+    fn clip(
+        &self,
+        ls: &MultiLineString<Self::Scalar>,
+        invert: bool,
+    ) -> MultiLineString<Self::Scalar>;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -65,7 +69,11 @@ impl<T: GeoFloat> BooleanOps for Polygon<T> {
         bop.sweep()
     }
 
-    fn clip(&self, ls: &MultiLineString<Self::Scalar>, invert: bool) -> MultiLineString<Self::Scalar> {
+    fn clip(
+        &self,
+        ls: &MultiLineString<Self::Scalar>,
+        invert: bool,
+    ) -> MultiLineString<Self::Scalar> {
         let spec = ClipOp::new(invert);
         let mut bop = Proc::new(spec, self.coords_count() + ls.coords_count());
         bop.add_polygon(self, 0);
@@ -86,7 +94,11 @@ impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
         bop.sweep()
     }
 
-    fn clip(&self, ls: &MultiLineString<Self::Scalar>, invert: bool) -> MultiLineString<Self::Scalar> {
+    fn clip(
+        &self,
+        ls: &MultiLineString<Self::Scalar>,
+        invert: bool,
+    ) -> MultiLineString<Self::Scalar> {
         let spec = ClipOp::new(invert);
         let mut bop = Proc::new(spec, self.coords_count() + ls.coords_count());
         bop.add_multi_polygon(self, 0);
