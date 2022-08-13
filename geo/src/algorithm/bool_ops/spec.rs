@@ -54,7 +54,17 @@ impl<T: GeoFloat> Spec<T> for BoolOp<T> {
 }
 
 pub struct ClipOp<T: GeoFloat> {
+    invert: bool,
     assembly: LineAssembly<T>,
+}
+
+impl<T: GeoFloat> ClipOp<T> {
+    pub fn new(invert: bool) -> Self {
+        Self {
+            invert,
+            assembly: Default::default(),
+        }
+    }
 }
 
 impl<T: GeoFloat> Spec<T> for ClipOp<T> {
@@ -76,21 +86,13 @@ impl<T: GeoFloat> Spec<T> for ClipOp<T> {
     }
 
     fn output(&mut self, regions: [Self::Region; 2], geom: LineOrPoint<T>, idx: usize) {
-        if idx > 0 && regions[0].is_first && regions[1].is_first {
+        if idx > 0 && (regions[0].is_first && regions[1].is_first) == !self.invert {
             self.assembly.add_edge(geom, idx);
         }
     }
 
     fn finish(self) -> Self::Output {
         MultiLineString::new(self.assembly.finish())
-    }
-}
-
-impl<T: GeoFloat> Default for ClipOp<T> {
-    fn default() -> Self {
-        Self {
-            assembly: Default::default(),
-        }
     }
 }
 

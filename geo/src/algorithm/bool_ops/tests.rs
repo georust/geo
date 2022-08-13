@@ -165,7 +165,7 @@ fn test_clip_adhoc() -> Result<()> {
     let mls = MultiLineString::try_from_wkt_str(wkt2)
         .or_else(|_| LineString::<f64>::try_from_wkt_str(wkt2).map(MultiLineString::from))
         .unwrap();
-    let output = poly1.clip(&mls);
+    let output = poly1.clip(&mls, true);
     eprintln!("{wkt}", wkt = output.to_wkt());
     Ok(())
 }

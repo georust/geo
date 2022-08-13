@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Add `clip` boolean op. to clip a 1-D geometry with a 2-D geometry.
+  * <https://github.com/georust/geo/pull/886>
 * Add `Scale` affine transform
 * Add `Skew` affine transform
 * Add `AffineOps` trait allowing the definition and composition of all 2D affine transforms
