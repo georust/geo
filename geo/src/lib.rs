@@ -92,6 +92,7 @@
 //!   intersection, if any, between two lines.
 //! - **[`Relate`](Relate)**: Topologically relate two geometries based on
 //!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
+//! - **[`Within`]**: Calculate if a geometry lies completely within another geometry.
 //!
 //! ## Winding
 //!

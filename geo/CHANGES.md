@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Add `Within` trait to determine if Geometry A is completely within Geometry B
+  * <https://github.com/georust/geo/pull/884>
 * Add `Contains` impl for all remaining geometry types.
   * <https://github.com/georust/geo/pull/880>
 * Add `Scale` affine transform

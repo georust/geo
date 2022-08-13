@@ -108,6 +108,15 @@ pub struct ContainsInput {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct WithinInput {
+    pub(crate) arg1: String,
+    pub(crate) arg2: String,
+
+    #[serde(rename = "$value", deserialize_with = "deserialize_from_str")]
+    pub(crate) expected: bool,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct OverlayInput {
     pub(crate) arg1: String,
     pub(crate) arg2: String,
@@ -119,6 +128,9 @@ pub struct OverlayInput {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "name")]
 pub(crate) enum OperationInput {
+    #[serde(rename = "contains")]
+    ContainsInput(ContainsInput),
+
     #[serde(rename = "getCentroid")]
     CentroidInput(CentroidInput),
 
@@ -130,9 +142,6 @@ pub(crate) enum OperationInput {
 
     #[serde(rename = "relate")]
     RelateInput(RelateInput),
-
-    #[serde(rename = "contains")]
-    ContainsInput(ContainsInput),
 
     #[serde(rename = "union")]
     UnionInput(OverlayInput),
@@ -146,6 +155,9 @@ pub(crate) enum OperationInput {
     #[serde(rename = "symdifference")]
     SymDifferenceInput(OverlayInput),
 
+    #[serde(rename = "within")]
+    WithinInput(WithinInput),
+
     #[serde(other)]
     Unsupported,
 }
@@ -157,6 +169,11 @@ pub(crate) enum Operation {
         expected: Option<Point>,
     },
     Contains {
+        subject: Geometry,
+        target: Geometry,
+        expected: bool,
+    },
+    Within {
         subject: Geometry,
         target: Geometry,
         expected: bool,
@@ -230,11 +247,16 @@ impl OperationInput {
             Self::ContainsInput(input) => {
                 assert_eq!("A", input.arg1);
                 assert_eq!("B", input.arg2);
-                assert!(
-                    case.b.is_some(),
-                    "intersects test case must contain geometry b"
-                );
                 Ok(Operation::Contains {
+                    subject: geometry.clone(),
+                    target: case.b.clone().expect("no geometry b in case"),
+                    expected: input.expected,
+                })
+            }
+            Self::WithinInput(input) => {
+                assert_eq!("A", input.arg1);
+                assert_eq!("B", input.arg2);
+                Ok(Operation::Within {
                     subject: geometry.clone(),
                     target: case.b.clone().expect("no geometry b in case"),
                     expected: input.expected,
