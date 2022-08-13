@@ -83,3 +83,14 @@ symmetric_intersects_impl!(Point<T>, MultiPolygon<T>);
 symmetric_intersects_impl!(Line<T>, MultiPolygon<T>);
 symmetric_intersects_impl!(Rect<T>, MultiPolygon<T>);
 symmetric_intersects_impl!(Polygon<T>, MultiPolygon<T>);
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+    #[test]
+    fn geom_intersects_geom() {
+        let a = Geometry::<f64>::from(polygon![]);
+        let b = Geometry::from(polygon![]);
+        assert!(!a.intersects(&b));
+    }
+}

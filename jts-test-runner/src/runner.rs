@@ -6,12 +6,12 @@ use log::{debug, info};
 use wkt::ToWkt;
 
 use super::{input, Operation, Result};
-use geo::{
-    BooleanOps, Contains, Coordinate, GeoNum, Geometry, HasDimensions, Intersects, LineString,
-    MultiPolygon, Polygon,
-};
+use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects, Within};
+use geo::geometry::*;
+use geo::GeoNum;
 
 const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/general");
+const VALIDATE_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/validate");
 
 #[derive(Debug, Default, Clone)]
 pub struct TestRunner {
@@ -121,186 +121,25 @@ impl TestRunner {
                 } => {
                     use geo::Relate;
                     let relate_actual = subject.relate(target).is_contains();
-
-                    // TODO: impl `Contains` for `Geometry` in geo and check that result here too
-                    // let direct_actual = subject.contains(target);
-                    let verify_contains_trait = match (subject, target) {
-                        (Geometry::Point(subject), Geometry::Point(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        // (Geometry::Point(subject), Geometry::Line(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Point(subject), Geometry::LineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Point(subject), Geometry::Polygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Point(subject), Geometry::MultiPoint(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Point(subject), Geometry::MultiLineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Point(subject), Geometry::MultiPolygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Point(subject), Geometry::GeometryCollection(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Point(subject), Geometry::Rect(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Point(subject), Geometry::Triangle(target)) => { subject.contains(target) == relate_actual }
-                        (Geometry::Line(subject), Geometry::Point(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::Line(subject), Geometry::Line(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::Line(subject), Geometry::LineString(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        // (Geometry::Line(subject), Geometry::Polygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Line(subject), Geometry::MultiPoint(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Line(subject), Geometry::MultiLineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Line(subject), Geometry::MultiPolygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Line(subject), Geometry::GeometryCollection(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Line(subject), Geometry::Rect(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Line(subject), Geometry::Triangle(target)) => { subject.contains(target) == relate_actual }
-                        (Geometry::LineString(subject), Geometry::Point(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::LineString(subject), Geometry::Line(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::LineString(subject), Geometry::LineString(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        // (Geometry::LineString(subject), Geometry::Polygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::LineString(subject), Geometry::MultiPoint(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::LineString(subject), Geometry::MultiLineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::LineString(subject), Geometry::MultiPolygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::LineString(subject), Geometry::GeometryCollection(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::LineString(subject), Geometry::Rect(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::LineString(subject), Geometry::Triangle(target)) => { subject.contains(target) == relate_actual }
-                        (Geometry::Polygon(subject), Geometry::Point(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::Polygon(subject), Geometry::Line(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::Polygon(subject), Geometry::LineString(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::Polygon(subject), Geometry::Polygon(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        // (Geometry::Polygon(subject), Geometry::MultiPoint(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Polygon(subject), Geometry::MultiLineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Polygon(subject), Geometry::MultiPolygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Polygon(subject), Geometry::GeometryCollection(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Polygon(subject), Geometry::Rect(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Polygon(subject), Geometry::Triangle(target)) => { subject.contains(target) == relate_actual }
-                        (Geometry::MultiPoint(subject), Geometry::Point(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        // (Geometry::MultiPoint(subject), Geometry::Line(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiPoint(subject), Geometry::LineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiPoint(subject), Geometry::Polygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiPoint(subject), Geometry::MultiPoint(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiPoint(subject), Geometry::MultiLineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiPoint(subject), Geometry::MultiPolygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiPoint(subject), Geometry::GeometryCollection(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiPoint(subject), Geometry::Rect(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiPoint(subject), Geometry::Triangle(target)) => { subject.contains(target) == relate_actual }
-                        (Geometry::MultiLineString(subject), Geometry::Point(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::MultiLineString(subject), Geometry::Line(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::MultiLineString(subject), Geometry::LineString(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        // (Geometry::MultiLineString(subject), Geometry::Polygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiLineString(subject), Geometry::MultiPoint(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiLineString(subject), Geometry::MultiLineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiLineString(subject), Geometry::MultiPolygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiLineString(subject), Geometry::GeometryCollection(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiLineString(subject), Geometry::Rect(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::MultiLineString(subject), Geometry::Triangle(target)) => { subject.contains(target) == relate_actual }
-                        (Geometry::MultiPolygon(subject), Geometry::Point(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::MultiPolygon(subject), Geometry::Line(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::MultiPolygon(subject), Geometry::LineString(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::MultiPolygon(subject), Geometry::Polygon(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::MultiPolygon(subject), Geometry::MultiPoint(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::MultiPolygon(subject), Geometry::MultiLineString(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::MultiPolygon(subject), Geometry::MultiPolygon(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::MultiPolygon(subject), Geometry::GeometryCollection(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::MultiPolygon(subject), Geometry::Rect(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::MultiPolygon(subject), Geometry::Triangle(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        (Geometry::GeometryCollection(subject), Geometry::Point(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        // (Geometry::GeometryCollection(subject), Geometry::Line(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::GeometryCollection(subject), Geometry::LineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::GeometryCollection(subject), Geometry::Polygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::GeometryCollection(subject), Geometry::MultiPoint(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::GeometryCollection(subject), Geometry::MultiLineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::GeometryCollection(subject), Geometry::MultiPolygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::GeometryCollection(subject), Geometry::GeometryCollection(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::GeometryCollection(subject), Geometry::Rect(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::GeometryCollection(subject), Geometry::Triangle(target)) => { subject.contains(target) == relate_actual }
-                        (Geometry::Rect(subject), Geometry::Point(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        // (Geometry::Rect(subject), Geometry::Line(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Rect(subject), Geometry::LineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Rect(subject), Geometry::Polygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Rect(subject), Geometry::MultiPoint(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Rect(subject), Geometry::MultiLineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Rect(subject), Geometry::MultiPolygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Rect(subject), Geometry::GeometryCollection(target)) => { subject.contains(target) == relate_actual }
-                        (Geometry::Rect(subject), Geometry::Rect(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        // (Geometry::Rect(subject), Geometry::Triangle(target)) => { subject.contains(target) == relate_actual }
-                        (Geometry::Triangle(subject), Geometry::Point(target)) => {
-                            subject.contains(target) == relate_actual
-                        }
-                        // (Geometry::Triangle(subject), Geometry::Line(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Triangle(subject), Geometry::LineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Triangle(subject), Geometry::Polygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Triangle(subject), Geometry::MultiPoint(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Triangle(subject), Geometry::MultiLineString(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Triangle(subject), Geometry::MultiPolygon(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Triangle(subject), Geometry::GeometryCollection(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Triangle(subject), Geometry::Rect(target)) => { subject.contains(target) == relate_actual }
-                        // (Geometry::Triangle(subject), Geometry::Triangle(target)) => { subject.contains(target) == relate_actual }
-                        _ => true,
-                    };
+                    let direct_actual = subject.contains(target);
 
                     if relate_actual != *expected {
-                        debug!("Contains failure: relate_actual != expected");
+                        debug!("Contains failure: Relate doesn't match expected");
                         let error_description = format!(
-                            "expected {:?}, relate_actual: {:?}",
+                            "Contains failure: expected {:?}, relate: {:?}",
                             expected, relate_actual
                         );
                         self.failures.push(TestFailure {
                             test_case,
                             error_description,
                         });
-                    } else if !verify_contains_trait {
-                        debug!("Contains failure: relate_actual != contains_trait_impl");
+                    } else if relate_actual != direct_actual {
+                        debug!(
+                            "Contains failure: Relate doesn't match Contains trait implementation"
+                        );
                         let error_description = format!(
-                            "expected {:?}, contains_trait_impl: {:?}",
-                            expected, !relate_actual
+                            "Contains failure - Relate.is_contains: {:?} doesn't match Contains trait: {:?}",
+                            expected, direct_actual
                         );
                         self.failures.push(TestFailure {
                             test_case,
@@ -308,6 +147,40 @@ impl TestRunner {
                         });
                     } else {
                         debug!("Contains success: actual == expected");
+                        self.successes.push(test_case);
+                    }
+                }
+                Operation::Within {
+                    subject,
+                    target,
+                    expected,
+                } => {
+                    use geo::Relate;
+                    let relate_within_result = subject.relate(target).is_within();
+                    let within_trait_result = subject.is_within(target);
+
+                    if relate_within_result != *expected {
+                        debug!("Within failure: Relate doesn't match expected");
+                        let error_description = format!(
+                            "Within failure: expected {:?}, relate: {:?}",
+                            expected, relate_within_result
+                        );
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    } else if relate_within_result != within_trait_result {
+                        debug!("Within failure: Relate doesn't match Within trait implementation");
+                        let error_description = format!(
+                            "Within failure: Relate: {:?}, Within trait: {:?}",
+                            expected, within_trait_result
+                        );
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    } else {
+                        debug!("Within success: actual == expected");
                         self.successes.push(test_case);
                     }
                 }
@@ -492,7 +365,10 @@ impl TestRunner {
             "**/*.xml".to_string()
         };
 
-        for entry in GENERAL_TEST_XML.find(&filename_filter)? {
+        for entry in GENERAL_TEST_XML
+            .find(&filename_filter)?
+            .chain(VALIDATE_TEST_XML.find(&filename_filter)?)
+        {
             let file = match entry {
                 DirEntry::Dir(_) => {
                     debug_assert!(false, "unexpectedly found dir.xml");

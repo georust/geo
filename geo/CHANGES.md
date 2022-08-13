@@ -4,6 +4,10 @@
 
 * Add `clip` boolean op. to clip a 1-D geometry with a 2-D geometry.
   * <https://github.com/georust/geo/pull/886>
+* Add `Within` trait to determine if Geometry A is completely within Geometry B
+  * <https://github.com/georust/geo/pull/884>
+* Add `Contains` impl for all remaining geometry types.
+  * <https://github.com/georust/geo/pull/880>
 * Add `Scale` affine transform
 * Add `Skew` affine transform
 * Add `AffineOps` trait allowing the definition and composition of all 2D affine transforms
@@ -20,6 +24,10 @@
 * Add `InteriorPoint` trait allowing calculation of a representative point inside
   a `Geometry`
   * <https://github.com/georust/geo/pull/870>
+* Add `ConvexHull` implementation for all remaining geometries.
+  * <https://github.com/georust/geo/pull/889>
+* Remove deprecated ToGeo trait. Use `std::convert::TryFrom<$geometry>` instead.
+  * <https://github.com/georust/geo/pull/892>
 
 ## 0.22.1
 

@@ -92,6 +92,7 @@
 //!   intersection, if any, between two lines.
 //! - **[`Relate`](Relate)**: Topologically relate two geometries based on
 //!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
+//! - **[`Within`]**: Calculate if a geometry lies completely within another geometry.
 //!
 //! ## Winding
 //!
@@ -191,8 +192,6 @@ extern crate proj;
 extern crate rstar;
 
 pub use crate::algorithm::*;
-#[allow(deprecated)]
-pub use crate::traits::ToGeo;
 pub use crate::types::Closest;
 
 pub use geo_types::{coord, line_string, point, polygon, CoordFloat, CoordNum};
@@ -203,7 +202,6 @@ pub use geometry::*;
 /// This module includes all the functions of geometric calculations
 pub mod algorithm;
 mod geometry_cow;
-mod traits;
 mod types;
 mod utils;
 pub(crate) use geometry_cow::GeometryCow;

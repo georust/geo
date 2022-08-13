@@ -1,5 +1,9 @@
 # Changes
 
+## 0.2.2
+
+* Update `postgis` to allow 0.9.0
+
 ## 0.2.1
 
 * Update `postgis` to allow 0.8.0
