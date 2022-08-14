@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Add `clip` boolean op. to clip a 1-D geometry with a 2-D geometry.
+  * <https://github.com/georust/geo/pull/886>
 * Add `Within` trait to determine if Geometry A is completely within Geometry B
   * <https://github.com/georust/geo/pull/884>
 * Add `Contains` impl for all remaining geometry types.

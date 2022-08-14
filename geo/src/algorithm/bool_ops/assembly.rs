@@ -1,6 +1,6 @@
 use std::{
     cell::Cell,
-    collections::{BTreeMap, HashMap},
+    collections::{BTreeMap, HashMap, VecDeque},
 };
 
 use crate::{
@@ -20,11 +20,11 @@ use super::op::compare_crossings;
 /// describe a bounded region, do not intersect in their interior, and are not
 /// degenerate (not a point).
 #[derive(Debug)]
-pub struct Assembly<T: GeoFloat> {
+pub struct RegionAssembly<T: GeoFloat> {
     segments: Vec<Segment<T>>,
 }
 
-impl<T: GeoFloat> Default for Assembly<T> {
+impl<T: GeoFloat> Default for RegionAssembly<T> {
     fn default() -> Self {
         Self {
             segments: Default::default(),
@@ -32,13 +32,13 @@ impl<T: GeoFloat> Default for Assembly<T> {
     }
 }
 
-impl<T: GeoFloat> Assembly<T> {
+impl<T: GeoFloat> RegionAssembly<T> {
     pub fn add_edge(&mut self, edge: LineOrPoint<T>) {
         debug_assert!(edge.is_line());
         self.segments.push(edge.into());
     }
     pub fn finish(self) -> MultiPolygon<T> {
-        let mut iter = CrossingsIter::from_iter(self.segments.iter());
+        let mut iter = CrossingsIter::new_simple(self.segments.iter());
         let mut snakes = vec![];
 
         while let Some(pt) = iter.next() {
@@ -172,6 +172,58 @@ impl<T: GeoFloat> Assembly<T> {
         }
 
         polygons.into()
+    }
+}
+
+#[derive(Debug)]
+pub struct LineAssembly<T: GeoFloat> {
+    segments: Vec<VecDeque<SweepPoint<T>>>,
+    end_points: BTreeMap<(usize, SweepPoint<T>), (usize, bool)>,
+}
+
+impl<T: GeoFloat> LineAssembly<T> {
+    pub fn add_edge(&mut self, geom: LineOrPoint<T>, geom_idx: usize) {
+        // Try to find a line-string with either end-point
+        if let Some((seg_idx, at_front)) = self.end_points.remove(&(geom_idx, geom.left())) {
+            if at_front {
+                self.segments[seg_idx].push_front(geom.right());
+            } else {
+                self.segments[seg_idx].push_back(geom.right());
+            }
+            self.end_points
+                .insert((geom_idx, geom.right()), (seg_idx, at_front));
+        } else if let Some((seg_idx, at_front)) = self.end_points.remove(&(geom_idx, geom.right()))
+        {
+            if at_front {
+                self.segments[seg_idx].push_front(geom.left());
+            } else {
+                self.segments[seg_idx].push_back(geom.left());
+            }
+            self.end_points
+                .insert((geom_idx, geom.left()), (seg_idx, at_front));
+        } else {
+            let idx = self.segments.len();
+            self.segments
+                .push(VecDeque::from_iter([geom.left(), geom.right()]));
+            self.end_points.insert((geom_idx, geom.left()), (idx, true));
+            self.end_points
+                .insert((geom_idx, geom.right()), (idx, false));
+        }
+    }
+    pub fn finish(self) -> Vec<LineString<T>> {
+        self.segments
+            .into_iter()
+            .map(|pts| LineString::from_iter(pts.into_iter().map(|pt| *pt)))
+            .collect()
+    }
+}
+
+impl<T: GeoFloat> Default for LineAssembly<T> {
+    fn default() -> Self {
+        Self {
+            segments: Default::default(),
+            end_points: Default::default(),
+        }
     }
 }
 

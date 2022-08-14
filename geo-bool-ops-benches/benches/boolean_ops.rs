@@ -1,7 +1,10 @@
 use std::f64::consts::PI;
 
 use criterion::{measurement::Measurement, *};
-use geo::algorithm::{BooleanOps, Intersects, Rotate};
+use geo::{
+    algorithm::{BooleanOps, Rotate},
+    Relate,
+};
 
 use geo_booleanop::boolean::BooleanOp as OtherBooleanOp;
 use rand::{thread_rng, Rng};
@@ -77,10 +80,10 @@ fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
             },
         );
 
-        group.bench_with_input(BenchmarkId::new("geo::intersects", steps), &(), |b, _| {
+        group.bench_with_input(BenchmarkId::new("geo::relate", steps), &(), |b, _| {
             b.iter_batched(
                 polys.sampler(),
-                |&(ref poly, ref poly2, _, _)| poly.intersects(poly2),
+                |&(ref poly, ref poly2, _, _)| poly.relate(poly2).is_intersects(),
                 BatchSize::SmallInput,
             );
         });

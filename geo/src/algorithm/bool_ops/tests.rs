@@ -1,5 +1,6 @@
 use crate::{MultiPolygon, Polygon};
 
+use geo_types::LineString;
 use log::{error, info};
 
 use std::{
@@ -27,9 +28,9 @@ fn check_sweep(wkt1: &str, wkt2: &str, ty: OpType) -> Result<MultiPolygon<f64>> 
     let poly2 = MultiPolygon::try_from_wkt_str(wkt2)
         .or_else(|_| Polygon::<f64>::try_from_wkt_str(wkt2).map(MultiPolygon::from))
         .unwrap();
-    let mut bop = Op::new(ty, 0);
-    bop.add_multi_polygon(&poly1, true);
-    bop.add_multi_polygon(&poly2, false);
+    let mut bop = Proc::new(BoolOp::from(ty), 0);
+    bop.add_multi_polygon(&poly1, 0);
+    bop.add_multi_polygon(&poly2, 1);
 
     let geom = bop.sweep();
 
@@ -37,13 +38,6 @@ fn check_sweep(wkt1: &str, wkt2: &str, ty: OpType) -> Result<MultiPolygon<f64>> 
     info!("{wkt}", wkt = geom.to_wkt());
 
     Ok(geom)
-
-    // let polygons = assemble(rings);
-    // info!("got {n} output polygons", n = polygons.len());
-    // for p in polygons.iter() {
-    //     info!("\t{wkt}", wkt = p.to_wkt());
-    // }
-    // Ok(MultiPolygon::new(polygons))
 }
 
 #[test]
@@ -161,10 +155,17 @@ fn test_issue_865() -> Result<()> {
 }
 
 #[test]
-fn test_jts_adhoc() -> Result<()> {
+fn test_clip_adhoc() -> Result<()> {
     let wkt1 = "POLYGON ((20 0, 20 160, 200 160, 200 0, 20 0))";
-    let wkt2 = "POLYGON ((220 80, 0 80, 0 240, 220 240, 220 80),	(100 80, 120 120, 80 120, 100 80))";
+    let wkt2 = "LINESTRING (0 0, 100 100, 240 100)";
 
-    check_sweep(wkt1, wkt2, OpType::Intersection)?;
+    let poly1 = MultiPolygon::<f64>::try_from_wkt_str(wkt1)
+        .or_else(|_| Polygon::<f64>::try_from_wkt_str(wkt1).map(MultiPolygon::from))
+        .unwrap();
+    let mls = MultiLineString::try_from_wkt_str(wkt2)
+        .or_else(|_| LineString::<f64>::try_from_wkt_str(wkt2).map(MultiLineString::from))
+        .unwrap();
+    let output = poly1.clip(&mls, true);
+    eprintln!("{wkt}", wkt = output.to_wkt());
     Ok(())
 }
