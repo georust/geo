@@ -9,7 +9,7 @@ use crate::GeoNum;
 ///        SW ┃ SE
 ///          (-)
 /// ```
-#[derive(Debug, Clone, Copy, PartialOrd, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Eq)]
 pub enum Quadrant {
     NE,
     NW,
