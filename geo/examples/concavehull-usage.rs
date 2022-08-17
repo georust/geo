@@ -10,10 +10,10 @@ fn generate_polygon_str(coords: &[Coordinate]) -> String {
     for coord in coords {
         points_str.push_str(format!("{},{} ", coord.x, coord.y).as_ref());
     }
-    return format!(
+    format!(
         "    <polygon points=\"{}\" fill=\"none\" stroke=\"black\"/>\n",
         points_str
-    );
+    )
 }
 
 fn generate_consecutive_circles(coords: &[Coordinate]) -> String {

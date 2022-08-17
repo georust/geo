@@ -3,7 +3,7 @@ use crate::{coord, GeoNum, GeometryCow};
 use crate::{BoundingRect, HasDimensions, Intersects};
 
 /// The position of a `Coordinate` relative to a `Geometry`
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum CoordPos {
     OnBoundary,
     Inside,

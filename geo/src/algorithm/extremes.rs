@@ -28,13 +28,13 @@ pub trait Extremes<'a, T: CoordNum> {
     fn extremes(&'a self) -> Option<Outcome<T>>;
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Extreme<T: CoordNum> {
     pub index: usize,
     pub coord: Coordinate<T>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Outcome<T: CoordNum> {
     pub x_min: Extreme<T>,
     pub y_min: Extreme<T>,

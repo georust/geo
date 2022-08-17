@@ -87,9 +87,9 @@ where
     if farthest_distance > *epsilon {
         // The farthest index was larger than epsilon, so we will recursively simplify subsegments
         // split by the farthest index.
-        let mut intermediate = compute_rdp(&rdp_indices[..=farthest_index], &*epsilon);
+        let mut intermediate = compute_rdp(&rdp_indices[..=farthest_index], epsilon);
         intermediate.pop(); // Don't include the farthest index twice
-        intermediate.extend_from_slice(&compute_rdp(&rdp_indices[farthest_index..], &*epsilon));
+        intermediate.extend_from_slice(&compute_rdp(&rdp_indices[farthest_index..], epsilon));
         intermediate
     } else {
         // The farthest index was less than or equal to epsilon, so we will retain only the first
