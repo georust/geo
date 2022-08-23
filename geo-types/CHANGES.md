@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.7.7
 
 * Fixed: using empty `polygon![]` macro no longer requires including `line_string!` macro
 
