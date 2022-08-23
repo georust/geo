@@ -1,32 +1,37 @@
 # Changes
 
-## Unreleased
+## 0.23.0
 
-* Add `clip` boolean op. to clip a 1-D geometry with a 2-D geometry.
+* Added `AffineOps`, `Scale`, and `Skew` traits allowing the definition and
+  composition of 2-D affine transforms.
+  * Related Cleanup:
+    * Existing `Rotate` and `Translate` traits leverage this new `AffineOps`
+      trait.
+    * Moved `RotatePoint::rotate_around_point` method onto
+    * `Rotate::rotate_around_point` and removed `RotatePoint` trait.
+    * Removed deprecated `Rotate::rotate` method, use
+      `Rotate::rotate_around_center` or `Rotate::roate_around_centroid`
+      instead.
+    * Deprecated `Translate::translate_in_place` in favor of
+      `Translate::translate_mut` to line up with naming elsewhere in the crate.
+  * Implemented across several PR's:
+    * <https://github.com/georust/geo/pull/866>
+    * <https://github.com/georust/geo/pull/871>
+    * <https://github.com/georust/geo/pull/872>
+* Added `BooleanOps::clip` to clip a 1-D geometry with a 2-D geometry.
   * <https://github.com/georust/geo/pull/886>
-* Add `Within` trait to determine if Geometry A is completely within Geometry B
-  * <https://github.com/georust/geo/pull/884>
-* Add `Contains` impl for all remaining geometry types.
-  * <https://github.com/georust/geo/pull/880>
-* Add `Scale` affine transform
-* Add `Skew` affine transform
-* Add `AffineOps` trait allowing the definition and composition of all 2D affine transforms
-* Implement existing affine transform traits using new `AffineOps` trait
-  * <https://github.com/georust/geo/pull/866>
-  * <https://github.com/georust/geo/pull/871>
-* Moved `RotatePoint::rotate_around_point` method onto
-  `Rotate::rotate_around_point` and removed `RotatePoint` trait.
-* Removed deprecated `Rotate::rotate` method, use
-  `Rotate::rotate_around_center` or `Rotate::roate_around_centroid` instead.
-* Deprecated `Translate::translate_in_place` in favor of
-  `Translate::translate_mut` to line up with naming elsewhere in the crate.
-  * <https://github.com/georust/geo/pull/872>
-* Add `InteriorPoint` trait allowing calculation of a representative point inside
-  a `Geometry`
+* Added `InteriorPoint` trait to calculate a representative point inside a
+  `Geometry`.
   * <https://github.com/georust/geo/pull/870>
-* Add `ConvexHull` implementation for all remaining geometries.
+* Added `Within` trait to determine if one Geometry is completely within
+  another.
+  * <https://github.com/georust/geo/pull/884>
+* Added `ConvexHull` implementation for all remaining geometries.
   * <https://github.com/georust/geo/pull/889>
-* Remove deprecated ToGeo trait. Use `std::convert::TryFrom<$geometry>` instead.
+* Added `Contains` implementation for all remaining geometries.
+  * <https://github.com/georust/geo/pull/880>
+* Removed deprecated `ToGeo` trait. Use `std::convert::TryFrom<$geometry>`
+  instead.
   * <https://github.com/georust/geo/pull/892>
 
 ## 0.22.1
