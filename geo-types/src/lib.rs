@@ -113,49 +113,6 @@ impl<T: CoordNum + Float> CoordFloat for T {}
 mod no_value;
 pub use crate::no_value::NoValue;
 
-mod coordinate;
-pub use crate::coordinate::{Coordinate, Coordinate3D, Coordinate3DM, CoordinateM};
-
-mod point;
-pub use crate::point::{Point, Point3D, Point3DM, PointM};
-
-mod multi_point;
-pub use crate::multi_point::{MultiPoint, MultiPoint3D, MultiPoint3DM, MultiPointM};
-
-mod line;
-pub use crate::line::{Line, Line3D, Line3DM, LineM};
-
-mod line_string;
-pub use crate::line_string::{
-    LineString, LineString3D, LineString3DM, LineStringM, PointsIter, PointsIter3D, PointsIter3DM,
-    PointsIterM,
-};
-
-mod multi_line_string;
-pub use crate::multi_line_string::{
-    MultiLineString, MultiLineString3D, MultiLineString3DM, MultiLineStringM,
-};
-
-mod polygon;
-pub use crate::polygon::{Polygon, Polygon3D, Polygon3DM, PolygonM};
-
-mod multi_polygon;
-pub use crate::multi_polygon::{MultiPolygon, MultiPolygon3D, MultiPolygon3DM, MultiPolygonM};
-
-mod geometry;
-pub use crate::geometry::{Geometry, Geometry3D, Geometry3DM, GeometryM};
-
-mod geometry_collection;
-pub use crate::geometry_collection::{
-    GeometryCollection, GeometryCollection3D, GeometryCollection3DM, GeometryCollectionM,
-};
-
-mod triangle;
-pub use crate::triangle::{Triangle, Triangle3D, Triangle3DM, TriangleM};
-
-mod rect;
-pub use crate::rect::{Rect, Rect3D, Rect3DM, RectM};
-
 pub mod geometry;
 pub use geometry::*;
 
