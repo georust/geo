@@ -1,6 +1,6 @@
 # Changes
 
-## 0.7.8
+## Unreleased
 
 * Add `point.x_mut()` and `point.y_mut()` methods on `Points`
 
