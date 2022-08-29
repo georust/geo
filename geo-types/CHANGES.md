@@ -1,5 +1,9 @@
 # Changes
 
+## 0.7.8
+
+* Add `point.x_mut()` and `point.y_mut()` methods on `Points`
+
 ## 0.7.7
 
 * Fixed: using empty `polygon![]` macro no longer requires including `line_string!` macro
