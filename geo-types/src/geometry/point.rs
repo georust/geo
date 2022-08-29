@@ -109,6 +109,21 @@ impl<T: CoordNum> Point<T> {
         self
     }
 
+    /// Returns a mutable reference to the x/horizontal component of the point
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use approx::assert_relative_eq;
+    /// use geo_types::Point;
+    /// let mut p = Point::new(1.234, 2.345);
+    /// let mut p_x = p.mut_x();
+    /// *p_x += 1.0;
+    /// assert_relative_eq!(p.x(), 2.234);
+    /// ```
+    pub fn mut_x(&mut self) -> &mut T {
+        &mut self.0.x
+    }
     /// Returns the y/vertical component of the point.
     ///
     /// # Examples
@@ -139,6 +154,22 @@ impl<T: CoordNum> Point<T> {
     pub fn set_y(&mut self, y: T) -> &mut Self {
         self.0.y = y;
         self
+    }
+
+    /// Returns a mutable reference to the x/horizontal component of the point
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use approx::assert_relative_eq;
+    /// use geo_types::Point;
+    /// let mut p = Point::new(1.234, 2.345);
+    /// let mut p_y = p.mut_y();
+    /// *p_y += 1.0;
+    /// assert_relative_eq!(p.y(), 3.345);
+    /// ```
+    pub fn mut_y(&mut self) -> &mut T {
+        &mut self.0.y
     }
 
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the point.
