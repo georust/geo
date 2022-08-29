@@ -130,7 +130,7 @@ use std::ops::{Index, IndexMut};
 /// ```
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct LineString<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoValue>(
+pub struct LineString<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue>(
     pub Vec<Coordinate<T, Z, M>>,
 );
 
@@ -226,6 +226,12 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> LineString<T, Z, M> {
     /// Instantiate Self from the raw content value
     pub fn new(value: Vec<Coordinate<T, Z, M>>) -> Self {
         Self(value)
+    }
+
+    /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
+    #[deprecated(note = "Use points() instead")]
+    pub fn points_iter(&self) -> PointsIter<T, Z, M> {
+        PointsIter(self.0.iter())
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s

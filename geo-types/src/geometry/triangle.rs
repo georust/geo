@@ -12,7 +12,7 @@ use approx::{AbsDiffEq, RelativeEq};
 /// `Triangle`s are 2D by default, but optionally support 3D and Measure values.
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Triangle<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoValue>(
+pub struct Triangle<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue>(
     pub Coordinate<T, Z, M>,
     pub Coordinate<T, Z, M>,
     pub Coordinate<T, Z, M>,

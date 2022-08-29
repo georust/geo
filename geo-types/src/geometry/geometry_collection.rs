@@ -126,10 +126,9 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> GeometryCollection<T, Z, M> {
     }
 }
 
-/// Convert any Geometry (or anything that can be converted to a Geometry) into a
-/// GeometryCollection
-[deprecated(since = 0.7.5, note = "Use `GeometryCollection::from(vec![geom])` instead.")]
-impl<T: CoordNum, Z: ZCoord, M: Measure, IG: Into<Geometry<T, Z, M>>> From<IG>
+/// Convert any Geometry (or anything that can be converted to a Geometry) into a GeometryCollection
+#[deprecated(since = 0.7.5, note = "Use `GeometryCollection::from(vec![geom])` instead.")]
+impl<T: CoordNum, Z: CoordNum, M: CoordNum, IG: Into<Geometry<T, Z, M>>> From<IG>
     for GeometryCollection<T, Z, M>
 {
     fn from(x: IG) -> Self {

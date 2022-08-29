@@ -91,14 +91,7 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Point<T, Z, M>> for Coordinate<
     }
 }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Point<T, Z, M>> for Coordinate<T, Z, M> {
-    #[inline]
-    fn from(point: Point<T, Z, M>) -> Self {
-        point.0
-    }
-}
-
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Coordinate<T, Z, M>> for (T, T) {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Coordinate<T, Z, M>> for (T, T) {
     #[inline]
     fn from(coord: Coordinate<T, Z, M>) -> Self {
         (coord.x, coord.y)

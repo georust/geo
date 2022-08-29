@@ -30,7 +30,7 @@ use std::iter::FromIterator;
 /// ```
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MultiPoint<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoValue>(
+pub struct MultiPoint<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue>(
     pub Vec<Point<T, Z, M>>,
 );
 

@@ -42,7 +42,7 @@ use num_traits::{NumOps, One};
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoValue> {
+pub struct Rect<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue> {
     min: Coordinate<T, Z, M>,
     max: Coordinate<T, Z, M>,
 }
@@ -455,6 +455,13 @@ where
         true
     }
 }
+
+#[deprecated(
+    since = "0.6.2",
+    note = "Use `Rect::new` instead, since `Rect::try_new` will never Error"
+)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct InvalidRectCoordinatesError;
 
 #[cfg(any(feature = "approx", test))]
 impl<T> AbsDiffEq for Rect<T>

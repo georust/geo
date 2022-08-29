@@ -23,7 +23,7 @@ pub use polygon::Polygon;
 pub use rect::Rect;
 pub use triangle::Triangle;
 
-use crate::{CoordNum, Error};
+use crate::{CoordNum, Error, NoValue};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -48,7 +48,7 @@ use std::convert::TryFrom;
 /// ```
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Geometry<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoValue> {
+pub enum Geometry<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue> {
     Point(Point<T, Z, M>),
     Line(Line<T, Z, M>),
     LineString(LineString<T, Z, M>),
@@ -108,7 +108,7 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<MultiPolygon<T, Z, M>> for Geom
 //     }
 // }
 
-impl<T: CoordNum, Z: ZCoord, M: Measure> From<Rect<T, Z, M>> for Geometry<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<Rect<T, Z, M>> for Geometry<T, Z, M> {
     fn from(x: Rect<T, Z, M>) -> Self {
         Self::Rect(x)
     }

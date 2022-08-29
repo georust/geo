@@ -1,4 +1,4 @@
-use crate::{CoordNum, LineString, NoValue, Rect, Triangle};
+use crate::{CoordNum, LineString, NoValue, Point, Rect, Triangle};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
@@ -62,7 +62,7 @@ use approx::{AbsDiffEq, RelativeEq};
 /// the first `Coordinate`.
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Polygon<T: CoordNum = f64, Z: ZCoord = NoValue, M: Measure = NoValue> {
+pub struct Polygon<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue> {
     exterior: LineString<T, Z, M>,
     interiors: Vec<LineString<T, Z, M>>,
 }
