@@ -71,13 +71,14 @@ impl<T: GeoNum> Deref for SweepPoint<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::coord;
 
     #[test]
     fn test_sweep_point_ordering() {
-        let p1 = SweepPoint::from(Coordinate { x: 0., y: 0. });
-        let p2 = SweepPoint::from(Coordinate { x: 1., y: 0. });
-        let p3 = SweepPoint::from(Coordinate { x: 1., y: 1. });
-        let p4 = SweepPoint::from(Coordinate { x: 1., y: 1. });
+        let p1 = SweepPoint::from(coord! { x: 0., y: 0. });
+        let p2 = SweepPoint::from(coord! { x: 1., y: 0. });
+        let p3 = SweepPoint::from(coord! { x: 1., y: 1. });
+        let p4 = SweepPoint::from(coord! { x: 1., y: 1. });
 
         assert!(p1 < p2);
         assert!(p1 < p3);

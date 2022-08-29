@@ -1,4 +1,4 @@
-use crate::{CoordNum, Coordinate, MapCoords};
+use crate::{coord, CoordNum, MapCoords};
 
 /// Convert (infalliby) the type of a geometry’s coordinate value.
 ///
@@ -29,9 +29,11 @@ where
     type Output = <Self as MapCoords<T, U>>::Output;
 
     fn convert(&self) -> Self::Output {
-        self.map_coords(|Coordinate { x, y }| Coordinate {
-            x: x.into(),
-            y: y.into(),
+        self.map_coords(|c| {
+            coord! {
+                x: c.x.into(),
+                y: c.y.into(),
+            }
         })
     }
 }
@@ -65,10 +67,10 @@ where
     type Output = Result<<Self as MapCoords<T, U>>::Output, <U as TryFrom<T>>::Error>;
 
     fn try_convert(&self) -> Self::Output {
-        self.try_map_coords(|Coordinate { x, y }| {
-            Ok(Coordinate {
-                x: x.try_into()?,
-                y: y.try_into()?,
+        self.try_map_coords(|c| {
+            Ok(coord! {
+                x: c.x.try_into()?,
+                y: c.y.try_into()?,
             })
         })
     }

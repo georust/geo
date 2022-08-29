@@ -12,15 +12,30 @@ pub(crate) mod triangle;
 
 // re-export all the geometry variants:
 pub use coordinate::Coordinate;
+pub use coordinate::Coordinate3D;
+pub use coordinate::Coordinate3DM;
+pub use coordinate::CoordinateM;
 pub use geometry_collection::GeometryCollection;
 pub use line::Line;
+pub use line::Line3D;
+pub use line::Line3DM;
+pub use line::LineM;
 pub use line_string::LineString;
 pub use multi_line_string::MultiLineString;
 pub use multi_point::MultiPoint;
 pub use multi_polygon::MultiPolygon;
 pub use point::Point;
+pub use point::Point3D;
+pub use point::Point3DM;
+pub use point::PointM;
 pub use polygon::Polygon;
+pub use polygon::Polygon3D;
+pub use polygon::Polygon3DM;
+pub use polygon::PolygonM;
 pub use rect::Rect;
+pub use rect::Rect3D;
+pub use rect::Rect3DM;
+pub use rect::RectM;
 pub use triangle::Triangle;
 
 use crate::{CoordNum, Error, NoValue};

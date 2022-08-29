@@ -1,5 +1,7 @@
 use std::cmp::{Ordering, Reverse};
 
+use crate::coord;
+
 use crate::algorithm::{
     bounding_rect::BoundingRect, centroid::Centroid, coords_iter::CoordsIter,
     dimensions::HasDimensions, euclidean_distance::EuclideanDistance,
@@ -174,11 +176,11 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
     };
 
     let scan_line = Line::new(
-        Coordinate {
+        coord! {
             x: bounds.min().x,
             y: y_mid,
         },
-        Coordinate {
+        coord! {
             x: bounds.max().x,
             y: y_mid,
         },
@@ -530,11 +532,11 @@ mod test {
     fn diagonal_flat_polygon_test() {
         // the regular intersection approach happens to not produce a point that intersects the
         // polygon given these particular start values, so this tests falling back to a vertex
-        let start: Coordinate<f64> = Coordinate {
+        let start: Coordinate<f64> = coord! {
             x: 0.632690318327692,
             y: 0.08104532928154995,
         };
-        let end: Coordinate<f64> = Coordinate {
+        let end: Coordinate<f64> = coord! {
             x: 0.4685039949468325,
             y: 0.31750332644855794,
         };
@@ -736,7 +738,7 @@ mod test {
         ]);
         let poly2 = Polygon::new(linestring, Vec::new());
 
-        let high_dimension_shapes = GeometryCollection::new_from(vec![poly1.into(), poly2.into()]);
+        let high_dimension_shapes = GeometryCollection::new(vec![poly1.into(), poly2.into()]);
 
         let mut mixed_shapes = high_dimension_shapes.clone();
         mixed_shapes.0.push(Point::new(5_f64, 0_f64).into());
@@ -789,8 +791,8 @@ mod test {
 
         let line = Line::new(c(0., 1.), c(1., 3.));
 
-        let g1 = GeometryCollection::new_from(vec![triangle.into(), line.into()]);
-        let g2 = GeometryCollection::new_from(vec![poly.into(), line.into()]);
+        let g1 = GeometryCollection::new(vec![triangle.into(), line.into()]);
+        let g2 = GeometryCollection::new(vec![poly.into(), line.into()]);
 
         let pt1 = g1.interior_point().unwrap();
         let pt2 = g2.interior_point().unwrap();
@@ -810,8 +812,8 @@ mod test {
 
         let line = Line::new(c(0., 1.), c(1., 3.));
 
-        let g1 = GeometryCollection::new_from(vec![rect.into(), line.into()]);
-        let g2 = GeometryCollection::new_from(vec![poly.into(), line.into()]);
+        let g1 = GeometryCollection::new(vec![rect.into(), line.into()]);
+        let g2 = GeometryCollection::new(vec![poly.into(), line.into()]);
         assert_eq!(g1.interior_point(), g2.interior_point());
     }
 
@@ -836,11 +838,8 @@ mod test {
         );
 
         // collection with rect
-        let collection = GeometryCollection::new_from(vec![
-            p(0., 0.).into(),
-            p(6., 0.).into(),
-            p(6., 6.).into(),
-        ]);
+        let collection =
+            GeometryCollection::new(vec![p(0., 0.).into(), p(6., 0.).into(), p(6., 6.).into()]);
         // check collection
         assert_eq!(collection.interior_point().unwrap(), point!(x: 6., y: 0.));
     }

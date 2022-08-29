@@ -1,4 +1,4 @@
-use crate::{CoordFloat, CoordNum, Coordinate, MapCoords, MapCoordsInPlace};
+use crate::{coord, CoordFloat, CoordNum, Coordinate, MapCoords, MapCoordsInPlace};
 use std::fmt;
 
 /// Apply an [`AffineTransform`] like [`scale`](AffineTransform::scale),
@@ -258,9 +258,9 @@ impl<T: CoordNum> AffineTransform<T> {
 
     /// Apply the current transform to a coordinate
     pub fn apply(&self, coord: Coordinate<T>) -> Coordinate<T> {
-        Coordinate {
-            x: (self.0[0][0] * coord.x + self.0[0][1] * coord.y + self.0[0][2]),
-            y: (self.0[1][0] * coord.x + self.0[1][1] * coord.y + self.0[1][2]),
+        coord! {
+            x: self.0[0][0] * coord.x + self.0[0][1] * coord.y + self.0[0][2],
+            y: self.0[1][0] * coord.x + self.0[1][1] * coord.y + self.0[1][2],
         }
     }
 
@@ -356,7 +356,7 @@ impl<U: CoordFloat> AffineTransform<U> {
     /// yoff = -origin.x * tan(ys)
     /// ```
     pub fn skew(xs: U, ys: U, origin: impl Into<Coordinate<U>>) -> Self {
-        let Coordinate { x: x0, y: y0 } = origin.into();
+        let Coordinate { x: x0, y: y0, .. } = origin.into();
         let mut tanx = xs.to_radians().tan();
         let mut tany = ys.to_radians().tan();
         // These checks are stolen from Shapely's implementation -- may not be necessary
