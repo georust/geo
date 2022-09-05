@@ -99,7 +99,7 @@ where
         return T::zero();
     }
     l.lines()
-        .map(|line| line_segment_distance(p.0, line.start, line.end))
+        .map(|line| line_segment_distance(p.coord, line.start, line.end))
         .fold(T::max_value(), |accum, val| accum.min(val))
 }
 
@@ -132,7 +132,7 @@ where
         return point_contains_point(Point::from(line_string[0]), point);
     }
     // check if point is a vertex
-    if line_string.0.contains(&point.0) {
+    if line_string.0.contains(&point.coord) {
         return true;
     }
     for line in line_string.lines() {
@@ -150,7 +150,7 @@ where
         let contains = match (tx, ty) {
             (None, None) => {
                 // Degenerate line
-                point.0 == line.start
+                point.coord == line.start
             }
             (Some(t), None) => {
                 // Horizontal line

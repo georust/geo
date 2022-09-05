@@ -143,9 +143,9 @@ mod tests {
             y: 116.34,
         };
 
-        let p = Point::from(c);
+        let p = Point::<f64, ()>::from(c);
 
-        let Point(c2) = p;
+        let Point { coord: c2, .. } = p;
         assert_eq!(c, c2);
         assert_relative_eq!(c.x, c2.x);
         assert_relative_eq!(c.y, c2.y);

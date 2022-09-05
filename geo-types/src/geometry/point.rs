@@ -28,11 +28,17 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T: CoordNum = f64>(pub Coordinate<T>);
+pub struct Point<T: CoordNum = f64, Ext: Default = ()> {
+    pub coord: Coordinate<T>,
+    ext: Ext,
+}
 
-impl<T: CoordNum> From<Coordinate<T>> for Point<T> {
+impl<T: CoordNum, Ext: Default> From<Coordinate<T>> for Point<T, Ext> {
     fn from(x: Coordinate<T>) -> Self {
-        Point(x)
+        Point {
+            coord: x,
+            ext: Default::default(),
+        }
     }
 }
 
@@ -50,13 +56,13 @@ impl<T: CoordNum> From<[T; 2]> for Point<T> {
 
 impl<T: CoordNum> From<Point<T>> for (T, T) {
     fn from(point: Point<T>) -> Self {
-        point.0.into()
+        point.coord.into()
     }
 }
 
 impl<T: CoordNum> From<Point<T>> for [T; 2] {
     fn from(point: Point<T>) -> Self {
-        point.0.into()
+        point.coord.into()
     }
 }
 
@@ -89,7 +95,7 @@ impl<T: CoordNum> Point<T> {
     /// assert_eq!(p.x(), 1.234);
     /// ```
     pub fn x(self) -> T {
-        self.0.x
+        self.coord.x
     }
 
     /// Sets the x/horizontal component of the point.
@@ -105,7 +111,7 @@ impl<T: CoordNum> Point<T> {
     /// assert_eq!(p.x(), 9.876);
     /// ```
     pub fn set_x(&mut self, x: T) -> &mut Self {
-        self.0.x = x;
+        self.coord.x = x;
         self
     }
 
@@ -122,7 +128,7 @@ impl<T: CoordNum> Point<T> {
     /// assert_relative_eq!(p.x(), 2.234);
     /// ```
     pub fn mut_x(&mut self) -> &mut T {
-        &mut self.0.x
+        &mut self.coord.x
     }
     /// Returns the y/vertical component of the point.
     ///
@@ -136,7 +142,7 @@ impl<T: CoordNum> Point<T> {
     /// assert_eq!(p.y(), 2.345);
     /// ```
     pub fn y(self) -> T {
-        self.0.y
+        self.coord.y
     }
 
     /// Sets the y/vertical component of the point.
@@ -152,7 +158,7 @@ impl<T: CoordNum> Point<T> {
     /// assert_eq!(p.y(), 9.876);
     /// ```
     pub fn set_y(&mut self, y: T) -> &mut Self {
-        self.0.y = y;
+        self.coord.y = y;
         self
     }
 
@@ -165,11 +171,11 @@ impl<T: CoordNum> Point<T> {
     /// use geo_types::Point;
     /// let mut p = Point::new(1.234, 2.345);
     /// let mut p_y = p.mut_y();
-    /// *p_y += 1.0;
+    /// *p_y += 1.coord;
     /// assert_relative_eq!(p.y(), 3.345);
     /// ```
     pub fn mut_y(&mut self) -> &mut T {
-        &mut self.0.y
+        &mut self.coord.y
     }
 
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the point.
@@ -186,7 +192,7 @@ impl<T: CoordNum> Point<T> {
     /// assert_eq!(x, 1.234);
     /// ```
     pub fn x_y(self) -> (T, T) {
-        (self.0.x, self.0.y)
+        (self.coord.x, self.coord.y)
     }
     /// Returns the longitude/horizontal component of the point.
     ///
@@ -362,7 +368,7 @@ where
     /// assert_eq!(p.y(), -2.5);
     /// ```
     fn neg(self) -> Self::Output {
-        Point::from(-self.0)
+        Point::from(-self.coord)
     }
 }
 
@@ -382,7 +388,7 @@ impl<T: CoordNum> Add for Point<T> {
     /// assert_eq!(p.y(), 5.0);
     /// ```
     fn add(self, rhs: Self) -> Self::Output {
-        Point::from(self.0 + rhs.0)
+        Point::from(self.coord + rhs.coord)
     }
 }
 
@@ -401,7 +407,7 @@ impl<T: CoordNum> AddAssign for Point<T> {
     /// assert_eq!(p.y(), 5.0);
     /// ```
     fn add_assign(&mut self, rhs: Self) {
-        self.0 = self.0 + rhs.0;
+        self.coord = self.coord + rhs.coord;
     }
 }
 
@@ -421,7 +427,7 @@ impl<T: CoordNum> Sub for Point<T> {
     /// assert_eq!(p.y(), 0.5);
     /// ```
     fn sub(self, rhs: Self) -> Self::Output {
-        Point::from(self.0 - rhs.0)
+        Point::from(self.coord - rhs.coord)
     }
 }
 
@@ -440,7 +446,7 @@ impl<T: CoordNum> SubAssign for Point<T> {
     /// assert_eq!(p.y(), 0.0);
     /// ```
     fn sub_assign(&mut self, rhs: Self) {
-        self.0 = self.0 - rhs.0;
+        self.coord = self.coord - rhs.coord;
     }
 }
 
@@ -460,7 +466,7 @@ impl<T: CoordNum> Mul<T> for Point<T> {
     /// assert_eq!(p.y(), 6.0);
     /// ```
     fn mul(self, rhs: T) -> Self::Output {
-        Point::from(self.0 * rhs)
+        Point::from(self.coord * rhs)
     }
 }
 
@@ -479,7 +485,7 @@ impl<T: CoordNum> MulAssign<T> for Point<T> {
     /// assert_eq!(p.y(), 6.0);
     /// ```
     fn mul_assign(&mut self, rhs: T) {
-        self.0 = self.0 * rhs
+        self.coord = self.coord * rhs
     }
 }
 
@@ -499,7 +505,7 @@ impl<T: CoordNum> Div<T> for Point<T> {
     /// assert_eq!(p.y(), 1.5);
     /// ```
     fn div(self, rhs: T) -> Self::Output {
-        Point::from(self.0 / rhs)
+        Point::from(self.coord / rhs)
     }
 }
 
@@ -518,7 +524,7 @@ impl<T: CoordNum> DivAssign<T> for Point<T> {
     /// assert_eq!(p.y(), 1.5);
     /// ```
     fn div_assign(&mut self, rhs: T) {
-        self.0 = self.0 / rhs
+        self.coord = self.coord / rhs
     }
 }
 
@@ -551,7 +557,7 @@ where
         epsilon: Self::Epsilon,
         max_relative: Self::Epsilon,
     ) -> bool {
-        self.0.relative_eq(&other.0, epsilon, max_relative)
+        self.coord.relative_eq(&other.coord, epsilon, max_relative)
     }
 }
 
@@ -582,7 +588,7 @@ where
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        self.0.abs_diff_eq(&other.0, epsilon)
+        self.coord.abs_diff_eq(&other.coord, epsilon)
     }
 }
 
@@ -602,15 +608,15 @@ where
 
     fn nth(&self, index: usize) -> Self::Scalar {
         match index {
-            0 => self.0.x,
-            1 => self.0.y,
+            0 => self.coord.x,
+            1 => self.coord.y,
             _ => unreachable!(),
         }
     }
     fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
         match index {
-            0 => &mut self.0.x,
-            1 => &mut self.0.y,
+            0 => &mut self.coord.x,
+            1 => &mut self.coord.y,
             _ => unreachable!(),
         }
     }
@@ -631,15 +637,15 @@ where
 
     fn nth(&self, index: usize) -> Self::Scalar {
         match index {
-            0 => self.0.x,
-            1 => self.0.y,
+            0 => self.coord.x,
+            1 => self.coord.y,
             _ => unreachable!(),
         }
     }
     fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
         match index {
-            0 => &mut self.0.x,
-            1 => &mut self.0.y,
+            0 => &mut self.coord.x,
+            1 => &mut self.coord.y,
             _ => unreachable!(),
         }
     }

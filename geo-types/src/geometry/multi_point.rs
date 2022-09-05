@@ -209,13 +209,13 @@ mod test {
         let mut multi = MultiPoint::new(vec![point![x: 0, y: 0], point![x: 10, y: 10]]);
 
         for point in &mut multi {
-            point.0.x += 1;
-            point.0.y += 1;
+            point.coord.x += 1;
+            point.coord.y += 1;
         }
 
         for point in multi.iter_mut() {
-            point.0.x += 1;
-            point.0.y += 1;
+            point.coord.x += 1;
+            point.coord.y += 1;
         }
 
         let mut first = true;
