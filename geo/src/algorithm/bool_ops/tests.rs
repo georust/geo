@@ -1,6 +1,4 @@
-use crate::{MultiPolygon, Polygon};
-
-use geo_types::LineString;
+use crate::{Coordinate, LineString, MultiPolygon, Polygon};
 use log::{error, info};
 
 use std::{
@@ -13,7 +11,7 @@ pub(super) fn init_log() {
     use pretty_env_logger::env_logger;
     use std::io::Write;
     let _ = env_logger::builder()
-        .format(|buf, record| writeln!(buf, "{} - {}", record.level(), record.args()))
+        .format(|buf, record| writeln!(buf, "[{}] {} - {}", record.level(), record.module_path().unwrap(), record.args()))
         .try_init();
 }
 
@@ -167,5 +165,66 @@ fn test_clip_adhoc() -> Result<()> {
         .unwrap();
     let output = poly1.clip(&mls, true);
     eprintln!("{wkt}", wkt = output.to_wkt());
+    Ok(())
+}
+
+#[test]
+fn test_issue_885() -> Result<()> {
+    init_log();
+    type Polygon = geo_types::Polygon<f32>;
+    let p1 = Polygon::new(
+        LineString(vec![
+            Coordinate {
+                x: 8055.658,
+                y: 7977.5537,
+            },
+            Coordinate {
+                x: 8010.734,
+                y: 7999.9697,
+            },
+            Coordinate {
+                x: 8032.9717,
+                y: 8044.537,
+            },
+            Coordinate {
+                x: 8077.896,
+                y: 8022.121,
+            },
+            Coordinate {
+                x: 8055.658,
+                y: 7977.5537,
+            },
+        ]),
+        vec![],
+    );
+    let p2 = Polygon::new(
+        LineString(vec![
+            Coordinate {
+                x: 8055.805,
+                y: 7977.847,
+            },
+            Coordinate {
+                x: 8010.871,
+                y: 8000.2676,
+            },
+            Coordinate {
+                x: 8033.105,
+                y: 8044.8286,
+            },
+            Coordinate {
+                x: 8078.039,
+                y: 8022.408,
+            },
+            Coordinate {
+                x: 8055.805,
+                y: 7977.847,
+            },
+        ]),
+        vec![],
+    );
+    eprintln!("{p1}", p1 = p1.to_wkt());
+    eprintln!("{p2}", p2 = p2.to_wkt());
+    let union = p1.union(&p2);
+    eprintln!("{wkt}", wkt = union.to_wkt());
     Ok(())
 }
