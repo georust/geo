@@ -5,6 +5,8 @@
 * Fixed an issues where calculating the convex hull of 3 collinear points
   would include all 3.
   * <https://github.com/georust/geo/pull/907>
+* Added outlier detection algorithm using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
+  * <https://github.com/georust/geo/pull/904>
 
 ## 0.23.0
 
