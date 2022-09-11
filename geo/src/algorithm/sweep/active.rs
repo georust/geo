@@ -67,8 +67,22 @@ impl<T: PartialOrd + Debug> PartialOrd for Active<T> {
 /// Trait abstracting a container of active segments.
 pub(super) trait ActiveSet: Default {
     type Seg;
-    fn previous(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>>;
-    fn next(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>>;
+    fn previous_find<F: FnMut(&Active<Self::Seg>) -> bool>(
+        &self,
+        segment: &Self::Seg,
+        f: F,
+    ) -> Option<&Active<Self::Seg>>;
+    fn previous(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>> {
+        self.previous_find(segment, |_| true)
+    }
+    fn next_find<F: FnMut(&Active<Self::Seg>) -> bool>(
+        &self,
+        segment: &Self::Seg,
+        f: F,
+    ) -> Option<&Active<Self::Seg>>;
+    fn next(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>> {
+        self.next_find(segment, |_| true)
+    }
     fn insert_active(&mut self, segment: Self::Seg);
     fn remove_active(&mut self, segment: &Self::Seg);
 }
@@ -76,20 +90,28 @@ pub(super) trait ActiveSet: Default {
 impl<T: PartialOrd + Debug> ActiveSet for BTreeSet<Active<T>> {
     type Seg = T;
 
-    fn previous(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>> {
+    fn previous_find<F: FnMut(&Active<Self::Seg>) -> bool>(
+        &self,
+        segment: &Self::Seg,
+        mut f: F,
+    ) -> Option<&Active<Self::Seg>> {
         self.range::<Active<_>, _>((
             Bound::Unbounded,
             Bound::Excluded(Active::active_ref(segment)),
         ))
-        .next_back()
+        .rev()
+        .find(|&a| f(a))
     }
-
-    fn next(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>> {
+    fn next_find<F: FnMut(&Active<Self::Seg>) -> bool>(
+        &self,
+        segment: &Self::Seg,
+        mut f: F,
+    ) -> Option<&Active<Self::Seg>> {
         self.range::<Active<_>, _>((
             Bound::Excluded(Active::active_ref(segment)),
             Bound::Unbounded,
         ))
-        .next()
+        .find(|&a| f(a))
     }
 
     fn insert_active(&mut self, segment: Self::Seg) {

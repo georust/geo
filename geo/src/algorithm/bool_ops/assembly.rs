@@ -35,6 +35,7 @@ impl<T: GeoFloat> Default for RegionAssembly<T> {
 impl<T: GeoFloat> RegionAssembly<T> {
     pub fn add_edge(&mut self, edge: LineOrPoint<T>) {
         debug_assert!(edge.is_line());
+        trace!("add_edge: {edge:?}");
         self.segments.push(edge.into());
     }
     pub fn finish(self) -> MultiPolygon<T> {

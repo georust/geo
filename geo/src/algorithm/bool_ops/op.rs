@@ -2,7 +2,7 @@ use std::{cell::Cell, cmp::Ordering, fmt::Debug};
 
 use super::{MultiPolygon, Spec};
 use crate::{
-    sweep::{Cross, Crossing, CrossingsIter, LineOrPoint},
+    sweep::{Cross, Crossing, CrossingsIter, LineOrPoint, SweepPoint},
     CoordsIter, GeoFloat as Float, LineString, Polygon,
 };
 
@@ -66,21 +66,29 @@ impl<T: Float, S: Spec<T>> Proc<T, S> {
         let mut iter = CrossingsIter::from_iter(self.edges.iter());
 
         while let Some(pt) = iter.next() {
-            trace!(
+            debug!(
                 "\n\nSweep point: {pt:?}, {n} intersection segments",
-                n = iter.intersections_mut().len()
+                n = iter.intersections_mut().len(),
+                pt = SweepPoint::from(pt),
             );
             iter.intersections_mut().sort_unstable_by(compare_crossings);
+
+            for (idx, it) in iter.intersections().iter().enumerate() {
+                let it: &Crossing<_> = it;
+                trace!("{idx}: {geom:?} of {cr:?}", geom = it.line, cr = it.cross);
+            }
 
             // Process all end-segments.
             let mut idx = 0;
             let mut next_region = None;
+            trace!("end segments:");
             while idx < iter.intersections().len() {
                 let c = &iter.intersections()[idx];
                 // If we hit a start-segment, we are done.
                 if c.at_left {
                     break;
                 }
+                trace!("{idx}: {geom:?}", geom = c.line);
                 let cross = c.cross;
                 if next_region.is_none() {
                     next_region = Some(cross.get_region(c.line));
@@ -91,11 +99,12 @@ impl<T: Float, S: Spec<T>> Proc<T, S> {
                     );
                 }
                 next_region = Some(self.spec.cross(next_region.unwrap(), cross.idx));
+                trace!("next_region: {reg:?}", reg = next_region.unwrap());
                 let has_overlap = (idx + 1) < iter.intersections().len()
                     && compare_crossings(c, &iter.intersections()[idx + 1]) == Ordering::Equal;
                 if !has_overlap {
                     let prev_region = cross.get_region(c.line);
-                    trace!(
+                    debug!(
                         "check_add: {geom:?}: {prev_region:?} -> {next_region:?}",
                         geom = c.line,
                         next_region = next_region.unwrap()
@@ -209,7 +218,7 @@ impl<T: Float, S: Spec<T>> std::fmt::Debug for Edge<T, S> {
             .field(
                 "geom",
                 &format!(
-                    "({:?},{:?}) <-> ({:?},{:?})",
+                    "({:?}, {:?}) <-> ({:?}, {:?})",
                     line.start.x, line.start.y, line.end.x, line.end.y
                 ),
             )

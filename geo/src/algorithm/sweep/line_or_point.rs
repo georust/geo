@@ -269,3 +269,26 @@ impl<T: GeoFloat> LineOrPoint<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use geo_types::{coord, Coordinate};
+
+    use super::LineOrPoint;
+
+
+    #[test]
+    fn check_ordering() {
+	      let pt_8 = Coordinate::from((-36.11348070978957,237.7989220287436));
+        let pt_14 = Coordinate::from((-36.48784219165816, 237.424560546875));
+	      let pt_15 = Coordinate::from((4.4929199218750036,196.44379843334184));
+	      let pt_16 = Coordinate::from((-36.048578439260666,237.8638242992725));
+	      let pt_17 = Coordinate::from((3.545624214480127,197.39109414073673));
+
+        let l1 = LineOrPoint::from((pt_14.into(), pt_17.into()));
+        let l2 = LineOrPoint::from((pt_14.into(), pt_16.into()));
+        let l3 = LineOrPoint::from((pt_8.into(), pt_16.into()));
+        eprintln!("14-17 {cmp:?} 14-16", cmp = l1.partial_cmp(&l2).unwrap());
+        eprintln!("8-16 {cmp:?} 14-16", cmp = l3.partial_cmp(&l2).unwrap());
+    }
+}

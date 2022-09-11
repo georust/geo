@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use super::*;
 use crate::{line_intersection::line_intersection, Coordinate, LineIntersection};
 
@@ -45,12 +43,11 @@ pub(crate) struct Crossing<C: Cross> {
 impl<C: Cross + Clone> Crossing<C> {
     /// Convert `self` into a `Crossing` to return to user.
     pub(super) fn from_segment(segment: &IMSegment<C>, event_ty: EventType) -> Crossing<C> {
-        let seg: &Segment<_> = segment.borrow();
         Crossing {
-            cross: seg.cross.clone(),
-            line: seg.geom,
-            first_segment: seg.first_segment,
-            has_overlap: seg.overlapping.is_some(),
+            cross: segment.cross_cloned(),
+            line: segment.geom(),
+            first_segment: segment.is_first_segment(),
+            has_overlap: segment.is_overlapping(),
             at_left: event_ty == EventType::LineLeft,
             segment: segment.clone(),
         }
@@ -118,8 +115,9 @@ where
         &self.segments
     }
 
-    pub(crate) fn prev_active(&self, c: &Crossing<C>) -> Option<(LineOrPoint<C::Scalar>, &C)> {
-        self.sweep.prev_active(c).map(|s| (s.geom, &s.cross))
+    pub(crate) fn prev_active(&self, c: &Crossing<C>) -> Option<(LineOrPoint<C::Scalar>, C)> {
+        self.sweep
+            .with_prev_active(c, |s| (s.geom, s.cross.clone()))
     }
 
     fn new_ex<T: IntoIterator<Item = C>>(iter: T, is_simple: bool) -> Self {
@@ -159,7 +157,7 @@ where
             last_point = self.sweep.next_event(|seg, ty| {
                 trace!(
                     "cb: {seg:?} {ty:?} (crossable = {cross:?})",
-                    cross = seg.cross().line()
+                    cross = seg.cross_cloned().line()
                 );
                 segments.push(Crossing::from_segment(seg, ty))
             });

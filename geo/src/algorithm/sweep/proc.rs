@@ -1,5 +1,5 @@
 use std::{
-    borrow::Borrow,
+    cmp::Ordering,
     collections::{BTreeSet, BinaryHeap},
 };
 
@@ -121,7 +121,7 @@ impl<C: Cross + Clone> Sweep<C> {
                                     // We do not need to continue iteration, but
                                     // should callback if the left event of the
                                     // now-parent has already been processed.
-                                    if Borrow::<Segment<_>>::borrow(&adj_ovl).left_event_done {
+                                    if adj_ovl.is_left_event_done() {
                                         should_add = false;
                                         break;
                                     }
@@ -136,6 +136,7 @@ impl<C: Cross + Clone> Sweep<C> {
                     // Add current segment as active
                     // Safety: `self.segments` is a `Box` that is not
                     // de-allocated until `self` is dropped.
+                    debug!("insert_active: {segment:?}");
                     self.active_segments.insert_active(segment.clone());
                 }
 
@@ -143,18 +144,19 @@ impl<C: Cross + Clone> Sweep<C> {
                 while let Some(seg) = cb_seg {
                     cb(&seg, event.ty);
                     seg.set_left_event_done();
-                    cb_seg = seg.overlapping().cloned();
+                    cb_seg = seg.overlap();
                 }
             }
             LineRight => {
                 // Safety: `self.segments` is a `Box` that is not
                 // de-allocated until `self` is dropped.
+                debug!("remove_active: {segment:?}");
                 self.active_segments.remove_active(&segment);
 
                 let mut cb_seg = Some(segment);
                 while let Some(seg) = cb_seg {
                     cb(&seg, event.ty);
-                    cb_seg = seg.overlapping().cloned();
+                    cb_seg = seg.overlap();
                 }
 
                 if !self.is_simple {
@@ -208,12 +210,39 @@ impl<C: Cross + Clone> Sweep<C> {
     }
 
     #[inline]
-    pub(super) fn prev_active(&self, c: &Crossing<C>) -> Option<&Segment<C>> {
+    pub(super) fn with_prev_active<F: FnOnce(&Segment<C>) -> R, R>(
+        &self,
+        c: &Crossing<C>,
+        f: F,
+    ) -> Option<R> {
         debug_assert!(c.at_left);
-        self.active_segments.previous(&c.segment).map(|aseg| {
-            let im: &IMSegment<_> = aseg.borrow();
-            im.borrow()
-        })
+        {
+            debug!("with_prev_active: {c:?}");
+            debug!("previous:");
+            self.active_segments.previous_find(&c.segment, |aseg| {
+                debug!("\t{geom:?}", geom = aseg.0.geom());
+                false
+            });
+            debug!("next:");
+            self.active_segments.next_find(&c.segment, |aseg| {
+                debug!("\t{geom:?}", geom = aseg.0.geom());
+                false
+            });
+
+        }
+        self.active_segments
+            .previous_find(&c.segment, |aseg| {
+                let is_ovl = aseg.0.geom().partial_cmp(&c.line) == Some(Ordering::Equal);
+                if is_ovl {
+                    debug!(
+                        "prev_active: found overlap: {l1:?} - {l2:?}",
+                        l1 = aseg.0.geom(),
+                        l2 = c.line,
+                    )
+                }
+                !is_ovl
+            })
+            .map(|aseg| aseg.with_segment(f))
     }
 
     #[inline]
