@@ -210,6 +210,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
     }
 
     pub fn intersect_line_ordered(&self, other: &Self) -> Option<Self> {
+        let ord = self.partial_cmp(other);
         match self.intersect_line(other) {
             Some(lp) if !lp.is_line() => {
                 // NOTE: A key issue with using non-exact numbers (f64, etc.) in
@@ -263,6 +264,32 @@ impl<T: GeoFloat> LineOrPoint<T> {
                     lp3 = other.left,
                     lp4 = other.right,
                 );
+
+                if let Some(ord) = ord {
+                    let l1 = LineOrPoint::from((self.left, pt));
+                    let l2 = LineOrPoint {
+                        left: other.left,
+                        right: pt,
+                    };
+                    let cmp = l1.partial_cmp(&l2).unwrap();
+                    if l1.is_line() && l2.is_line() && cmp.then(ord) != ord {
+                        debug!(
+                            "ordering changed by intersection: {l1:?} {ord:?} {l2:?}",
+                            l1 = self,
+                            l2 = other
+                        );
+                        debug!("\tparts: {l1:?}, {l2:?}");
+                        debug!("\tintersection: {pt:?} {cmp:?}");
+
+                        // RM: This is a complicated intersection that is changing the topology.
+                        // Heuristic: approximate with a trivial intersection point that preserves the topology.
+                        return Some(if self.left > other.left {
+                            self.left.into()
+                        } else {
+                            other.left.into()
+                        });
+                    }
+                }
                 Some((*pt).into())
             }
             e => e,
