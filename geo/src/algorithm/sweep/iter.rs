@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use super::*;
 use crate::{line_intersection::line_intersection, Coordinate, LineIntersection};
 
@@ -38,6 +40,17 @@ pub(crate) struct Crossing<C: Cross> {
     pub at_left: bool,
 
     pub(super) segment: IMSegment<C>,
+}
+
+pub(crate) fn compare_crossings<X: Cross>(a: &Crossing<X>, b: &Crossing<X>) -> Ordering {
+    a.at_left.cmp(&b.at_left).then_with(|| {
+        let ord = a.segment.partial_cmp(&b.segment).unwrap();
+        if a.at_left {
+            ord
+        } else {
+            ord.reverse()
+        }
+    })
 }
 
 impl<C: Cross + Clone> Crossing<C> {

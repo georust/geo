@@ -1,11 +1,13 @@
-use crate::{Coordinate, LineString, MultiPolygon, Polygon};
+use crate::{LineString, MultiPolygon, Polygon};
 use log::{error, info};
 
 use std::{
     error::Error,
-    panic::{catch_unwind, resume_unwind}, str::FromStr, fmt::Display,
+    fmt::Display,
+    panic::{catch_unwind, resume_unwind},
+    str::FromStr,
 };
-use wkt::{ToWkt, TryFromWkt, WktFloat};
+use wkt::{ToWkt, TryFromWkt};
 
 pub(super) fn init_log() {
     use pretty_env_logger::env_logger;
@@ -26,7 +28,11 @@ pub(super) fn init_log() {
 use super::*;
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
-fn check_sweep<T: GeoFloat + FromStr + Default + Display>(wkt1: &str, wkt2: &str, ty: OpType) -> Result<MultiPolygon<T>> {
+fn check_sweep<T: GeoFloat + FromStr + Default + Display>(
+    wkt1: &str,
+    wkt2: &str,
+    ty: OpType,
+) -> Result<MultiPolygon<T>> {
     init_log();
     eprintln!("input: 1: {wkt1}");
     eprintln!("input: 2: {wkt2}");
@@ -201,5 +207,3 @@ fn test_issue_885_big_simplified() -> Result<()> {
     check_sweep::<f64>(wkt1, wkt2, OpType::Difference)?;
     Ok(())
 }
-
-mod simplify;

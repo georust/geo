@@ -1,7 +1,4 @@
-use std::{
-    cmp::Ordering,
-    collections::{BTreeSet, BinaryHeap},
-};
+use std::collections::{BTreeSet, BinaryHeap};
 
 use super::*;
 
@@ -73,7 +70,11 @@ impl<C: Cross + Clone> Sweep<C> {
             LineLeft => {
                 let mut should_add = true;
                 if !self.is_simple {
-                    for adj_segment in prev.into_iter().chain(next.into_iter()) {
+                    for adj_segment in prev
+                        .into_iter()
+                        .chain(next.into_iter())
+                        .flat_map(|s| [s.clone(), s])
+                    {
                         if let Some(adj_intersection) =
                             segment.geom().intersect_line_ordered(&adj_segment.geom())
                         {
@@ -228,20 +229,20 @@ impl<C: Cross + Clone> Sweep<C> {
                 debug!("\t{geom:?}", geom = aseg.0.geom());
                 false
             });
-
         }
         self.active_segments
-            .previous_find(&c.segment, |aseg| {
-                let is_ovl = aseg.0.geom().partial_cmp(&c.line) == Some(Ordering::Equal);
-                if is_ovl {
-                    debug!(
-                        "prev_active: found overlap: {l1:?} - {l2:?}",
-                        l1 = aseg.0.geom(),
-                        l2 = c.line,
-                    )
-                }
-                !is_ovl
-            })
+            .previous(&c.segment)
+            // .previous_find(&c.segment, |aseg| {
+            //     let is_ovl = aseg.0.geom().partial_cmp(&c.line) == Some(Ordering::Equal);
+            //     if is_ovl {
+            //         debug!(
+            //             "prev_active: found overlap: {l1:?} - {l2:?}",
+            //             l1 = aseg.0.geom(),
+            //             l2 = c.line,
+            //         )
+            //     }
+            //     !is_ovl
+            // })
             .map(|aseg| aseg.with_segment(f))
     }
 

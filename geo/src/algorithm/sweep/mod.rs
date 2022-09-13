@@ -24,4 +24,4 @@ use proc::Sweep;
 
 mod iter;
 pub use iter::Intersections;
-pub(crate) use iter::{Crossing, CrossingsIter};
+pub(crate) use iter::{compare_crossings, Crossing, CrossingsIter};

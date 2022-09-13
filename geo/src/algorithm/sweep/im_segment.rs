@@ -240,6 +240,7 @@ impl<C: Cross> PartialOrd for IMSegment<C> {
                     let addr_self = Rc::as_ptr(&self.inner) as usize;
                     let addr_other = Rc::as_ptr(&other.inner) as usize;
                     addr_self.cmp(&addr_other)
+                    // .reverse()
                 })
             })
     }
