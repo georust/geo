@@ -47,6 +47,87 @@ impl<C: Cross + Clone> Sweep<C> {
         })
     }
 
+    fn process_adjacent_segments<F>(
+        &mut self,
+        active: Active<IMSegment<C>>,
+        other: &IMSegment<C>,
+        cb: &mut F,
+    ) -> AdjSegmentProcOutput
+    where
+        F: for<'a> FnMut(&'a IMSegment<C>, EventType),
+    {
+        // NOTE: The below logic is a loop instead of a
+        // conditional due to FP issues. Specifically,
+        // sometimes, two non-overlapping lines may become
+        // overlapping once broken at the point of intersection!
+
+        // EXAMPLE:
+        // let pt_7 = Coordinate::from((-32.57812499999999, 241.33427773853316));
+        // let pt_8 = Coordinate::from((-36.11348070978957, 237.7989220287436));
+        // let pt_13 = Coordinate::from((-25.507080078124993, 248.40532266040816));
+        // let pt_14 = Coordinate::from((-36.48784219165816, 237.424560546875));
+        // 7-8 and 13-14 intersect at 16 such that 8-16 and 14-16 overlap !
+
+        // We handle this by repeatedly intersecting the
+        // segments until the intersection is trivial (nothing needs to be split).
+        while let Some(isec) = other.geom().intersect_line_ordered(&active.geom()) {
+            trace!("Found intersection (LL):\n\tsegment1: {:?}\n\tsegment2: {:?}\n\tintersection: {:?}", other, active, isec);
+            // 1. Split adj_segment, and extra splits to storage
+            let adj_overlap = active.adjust_one_segment(isec, |e| self.events.push(e));
+
+            // A special case is if adj_segment was split, and the
+            // intersection is at the start of this segment. In this
+            // case, there is an right-end event in the heap, that
+            // needs to be handled before finishing up this event.
+            let handle_end_event = {
+                // Get first point of intersection
+                let int_pt = isec.left();
+                // Check its not first point of the adjusted, but is
+                // first point of current segment
+                int_pt != active.geom().left() && int_pt == other.geom().left()
+            };
+            if handle_end_event {
+                let event = self.events.pop().unwrap();
+                let done = self.handle_event(event, cb);
+                debug_assert!(done, "special right-end event handling failed")
+            }
+
+            // 2. Split segment, adding extra segments as needed.
+            let seg_overlap = other.adjust_one_segment(isec, |e| self.events.push(e));
+
+            assert_eq!(
+                adj_overlap.is_some(),
+                seg_overlap.is_some(),
+                "one of the intersecting segments had an overlap, but not the other!"
+            );
+            if let Some(adj_ovl) = adj_overlap {
+                let tgt = seg_overlap.unwrap();
+                trace!("setting overlap: {adj_ovl:?} -> {tgt:?}");
+                adj_ovl.chain_overlap(tgt.clone());
+
+                if &tgt == other {
+                    // The whole event segment is now overlapping
+                    // some other active segment.
+                    //
+                    // We do not need to continue iteration, but
+                    // should callback if the left event of the
+                    // now-parent has already been processed.
+                    return AdjSegmentProcOutput::Done {
+                        do_callback: adj_ovl.is_left_event_done(),
+                    };
+                }
+
+                // TODO: add below optimization once fp errors
+                // stabilize / when you feel courageous.
+                //
+                // // Overlaps are exact compute, so we do not need
+                // // to re-run the loop.
+                // break;
+            }
+        }
+        AdjSegmentProcOutput::Continue
+    }
+
     fn handle_event<F>(&mut self, event: Event<C::Scalar, IMSegment<C>>, cb: &mut F) -> bool
     where
         F: for<'a> FnMut(&'a IMSegment<C>, EventType),
@@ -70,65 +151,15 @@ impl<C: Cross + Clone> Sweep<C> {
             LineLeft => {
                 let mut should_add = true;
                 if !self.is_simple {
-                    for adj_segment in prev
-                        .into_iter()
-                        .chain(next.into_iter())
-                        .flat_map(|s| [s.clone(), s])
-                    {
-                        if let Some(adj_intersection) =
-                            segment.geom().intersect_line_ordered(&adj_segment.geom())
+                    for adj_segment in prev.into_iter().chain(next.into_iter()) {
+                        if let AdjSegmentProcOutput::Done { do_callback } =
+                            self.process_adjacent_segments(adj_segment, &segment, cb)
                         {
-                            trace!("Found intersection (LL):\n\tsegment1: {:?}\n\tsegment2: {:?}\n\tintersection: {:?}", segment, adj_segment, adj_intersection);
-                            // 1. Split adj_segment, and extra splits to storage
-                            let adj_overlap = adj_segment
-                                .adjust_one_segment(adj_intersection, |e| self.events.push(e));
-
-                            // A special case is if adj_segment was split, and the
-                            // intersection is at the start of this segment. In this
-                            // case, there is an right-end event in the heap, that
-                            // needs to be handled before finishing up this event.
-                            let handle_end_event = {
-                                // Get first point of intersection
-                                let int_pt = adj_intersection.left();
-                                // Check its not first point of the adjusted, but is
-                                // first point of current segment
-                                int_pt != adj_segment.geom().left()
-                                    && int_pt == segment.geom().left()
-                            };
-                            if handle_end_event {
-                                let event = self.events.pop().unwrap();
-                                let done = self.handle_event(event, cb);
-                                debug_assert!(done, "special right-end event handling failed")
+                            if !do_callback {
+                                return true;
                             }
-
-                            // 2. Split segment, adding extra segments as needed.
-                            let seg_overlap_key = segment
-                                .adjust_one_segment(adj_intersection, |e| self.events.push(e));
-
-                            assert_eq!(
-                                adj_overlap.is_some(),
-                                seg_overlap_key.is_some(),
-                                "one of the intersecting segments had an overlap, but not the other!"
-                            );
-                            if let Some(adj_ovl) = adj_overlap {
-                                let tgt = seg_overlap_key.unwrap();
-                                trace!("setting overlap: {adj_ovl:?} -> {tgt:?}");
-                                adj_ovl.chain_overlap(tgt.clone());
-
-                                if tgt == segment {
-                                    // The whole event segment is now overlapping
-                                    // some other active segment.
-                                    //
-                                    // We do not need to continue iteration, but
-                                    // should callback if the left event of the
-                                    // now-parent has already been processed.
-                                    if adj_ovl.is_left_event_done() {
-                                        should_add = false;
-                                        break;
-                                    }
-                                    return true;
-                                }
-                            }
+                            should_add = false;
+                            break;
                         }
                     }
                 }
@@ -187,7 +218,7 @@ impl<C: Cross + Clone> Sweep<C> {
                         let geom = adj_segment.geom();
                         if let Some(adj_intersection) = segment.geom().intersect_line_ordered(&geom)
                         {
-                            trace!("Found intersection:\n\tsegment1: {:?}\n\tsegment2: {:?}\n\tintersection: {:?}", segment, adj_segment, adj_intersection);
+                            trace!("Found intersection (PL):\n\tsegment1: {:?}\n\tsegment2: {:?}\n\tintersection: {:?}", segment, adj_segment, adj_intersection);
                             // 1. Split adj_segment, and extra splits to storage
                             let adj_overlap = adj_segment
                                 .adjust_one_segment(adj_intersection, |e| self.events.push(e));
@@ -217,19 +248,20 @@ impl<C: Cross + Clone> Sweep<C> {
         f: F,
     ) -> Option<R> {
         debug_assert!(c.at_left);
-        {
-            debug!("with_prev_active: {c:?}");
-            debug!("previous:");
-            self.active_segments.previous_find(&c.segment, |aseg| {
-                debug!("\t{geom:?}", geom = aseg.0.geom());
-                false
-            });
-            debug!("next:");
-            self.active_segments.next_find(&c.segment, |aseg| {
-                debug!("\t{geom:?}", geom = aseg.0.geom());
-                false
-            });
-        }
+        // {
+        //     // Expensive debug block
+        //     debug!("with_prev_active: {c:?}");
+        //     debug!("previous:");
+        //     self.active_segments.previous_find(&c.segment, |aseg| {
+        //         debug!("\t{geom:?}", geom = aseg.0.geom());
+        //         false
+        //     });
+        //     debug!("next:");
+        //     self.active_segments.next_find(&c.segment, |aseg| {
+        //         debug!("\t{geom:?}", geom = aseg.0.geom());
+        //         false
+        //     });
+        // }
         self.active_segments
             .previous(&c.segment)
             // .previous_find(&c.segment, |aseg| {
@@ -250,4 +282,10 @@ impl<C: Cross + Clone> Sweep<C> {
     pub fn peek_point(&self) -> Option<SweepPoint<C::Scalar>> {
         self.events.peek().map(|e| e.point)
     }
+}
+
+/// Internal enum to communicate result from `process_adjacent_segments`
+enum AdjSegmentProcOutput {
+    Continue,
+    Done { do_callback: bool },
 }
