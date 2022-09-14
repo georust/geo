@@ -46,6 +46,7 @@ pub trait ConvexHull<'a, T> {
 }
 
 use crate::algorithm::CoordsIter;
+use crate::utils::lex_cmp;
 
 impl<'a, T, G> ConvexHull<'a, T> for G
 where
@@ -80,17 +81,7 @@ where
     // are to be included.
     let mut ls: Vec<Coordinate<T>> = points.to_vec();
     if !include_on_hull {
-        fn coord_compare<T: GeoNum>(c1: &Coordinate<T>, c2: &Coordinate<T>) -> Ordering {
-            match c1.x.partial_cmp(&c2.x) {
-                None | Some(Ordering::Equal) => match c1.y.partial_cmp(&c2.y) {
-                    Some(ordering) => ordering,
-                    None => Ordering::Equal,
-                },
-                Some(ordering) => ordering,
-            }
-        }
-
-        ls.sort_by(coord_compare);
+        ls.sort_unstable_by(lex_cmp);
         ls.dedup();
         if ls.len() == 3 && T::Ker::orient2d(ls[0], ls[1], ls[2]) == Orientation::Collinear {
             ls.remove(1);
