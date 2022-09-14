@@ -144,7 +144,7 @@ where
     }
 }
 
-fn polygon<T>(name: &str) -> Polygon<T>
+pub fn polygon<T>(name: &str) -> Polygon<T>
 where
     T: WktFloat + Default + FromStr,
 {
@@ -155,7 +155,7 @@ where
     }
 }
 
-fn multi_polygon<T>(name: &str) -> MultiPolygon<T>
+pub fn multi_polygon<T>(name: &str) -> MultiPolygon<T>
 where
     T: WktFloat + Default + FromStr,
 {
@@ -191,7 +191,7 @@ where
     MultiPolygon(polygons)
 }
 
-fn file(name: &str) -> String {
+pub fn file(name: &str) -> String {
     let mut res = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     res.push("fixtures");
     res.push(name);
