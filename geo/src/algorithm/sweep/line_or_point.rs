@@ -239,16 +239,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
                 // specifically for this algo., that can track the neighbors of
                 // tree-nodes, and fix / report this issue. The crate
                 // `btree-slab` seems like a great starting point.
-
-                // First, check and ignore a trivial case where the intersection
-                // is at one of the end-points of _both_ the lines. In this
-                // case, for our use-case, we act like there was no intersection.
                 let pt = lp.left;
-                if (pt == self.left || pt == self.right) && (pt == other.left || pt == other.right)
-                {
-                    return None;
-                }
-
                 let (mut x, y) = pt.x_y();
 
                 let c = self.left;
@@ -290,7 +281,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
                         debug!("\tparts: {l1:?}, {l2:?}");
                         debug!("\tintersection: {pt:?} {cmp:?}");
 
-                        // RM: This is a complicated intersection that is changing the topology.
+                        // RM: This is a complicated intersection that is changing the ordering.
                         // Heuristic: approximate with a trivial intersection point that preserves the topology.
                         return Some(if self.left > other.left {
                             self.left.into()

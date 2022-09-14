@@ -1,11 +1,11 @@
-use std::collections::{BTreeSet, BinaryHeap};
+use std::{collections::{BTreeSet, BinaryHeap}, cmp::Ordering};
 
 use super::*;
 
 pub(crate) struct Sweep<C: Cross> {
     is_simple: bool,
     events: BinaryHeap<Event<C::Scalar, IMSegment<C>>>,
-    active_segments: BTreeSet<Active<IMSegment<C>>>,
+    active_segments: VecSet<Active<IMSegment<C>>>,
 }
 
 impl<C: Cross + Clone> Sweep<C> {
@@ -68,8 +68,8 @@ impl<C: Cross + Clone> Sweep<C> {
         // let pt_14 = Coordinate::from((-36.48784219165816, 237.424560546875));
         // 7-8 and 13-14 intersect at 16 such that 8-16 and 14-16 overlap !
 
-        // We handle this by repeatedly intersecting the
-        // segments until the intersection is trivial (nothing needs to be split).
+        // We handle this by repeatedly intersecting the segments until the
+        // intersection is trivial (nothing needs to be split).
         while let Some(isec) = other.geom().intersect_line_ordered(&active.geom()) {
             trace!("Found intersection (LL):\n\tsegment1: {:?}\n\tsegment2: {:?}\n\tintersection: {:?}", other, active, isec);
             // 1. Split adj_segment, and extra splits to storage
@@ -117,13 +117,17 @@ impl<C: Cross + Clone> Sweep<C> {
                     };
                 }
 
-                // TODO: add below optimization once fp errors
-                // stabilize / when you feel courageous.
-                //
-                // // Overlaps are exact compute, so we do not need
-                // // to re-run the loop.
-                // break;
+                // Overlaps are exact compute, so we do not need
+                // to re-run the loop.
+                break;
             }
+
+            if active.geom().partial_cmp(&other.geom()) == Some(Ordering::Equal) {
+                continue;
+            } else {
+                break;
+            }
+
         }
         AdjSegmentProcOutput::Continue
     }

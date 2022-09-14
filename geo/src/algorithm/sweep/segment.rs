@@ -241,7 +241,7 @@ mod tests {
             TestCase {
                 a: 0,
                 b: 2,
-                isec: None,
+                isec: Some(LineOrPoint::from(SweepPoint::from((0., 0.)))),
                 split: Some(SplitSegments::Unchanged { overlap: false }),
             },
             TestCase {

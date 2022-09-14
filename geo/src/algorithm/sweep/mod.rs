@@ -19,6 +19,9 @@ use active::{Active, ActiveSet};
 mod im_segment;
 use im_segment::IMSegment;
 
+mod vec_set;
+pub(crate) use vec_set::VecSet;
+
 mod proc;
 use proc::Sweep;
 
