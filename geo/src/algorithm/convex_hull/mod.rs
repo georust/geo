@@ -82,7 +82,6 @@ where
     let mut ls: Vec<Coordinate<T>> = points.to_vec();
     if !include_on_hull {
         ls.sort_unstable_by(lex_cmp);
-        ls.dedup();
         if ls.len() == 3 && T::Ker::orient2d(ls[0], ls[1], ls[2]) == Orientation::Collinear {
             ls.remove(1);
         }
