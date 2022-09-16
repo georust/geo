@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 use crate::geometry::{Coordinate, LineString, Polygon};
 use crate::kernels::*;
 use crate::GeoNum;
