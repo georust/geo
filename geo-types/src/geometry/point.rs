@@ -117,11 +117,11 @@ impl<T: CoordNum> Point<T> {
     /// use approx::assert_relative_eq;
     /// use geo_types::Point;
     /// let mut p = Point::new(1.234, 2.345);
-    /// let mut p_x = p.mut_x();
+    /// let mut p_x = p.x_mut();
     /// *p_x += 1.0;
     /// assert_relative_eq!(p.x(), 2.234);
     /// ```
-    pub fn mut_x(&mut self) -> &mut T {
+    pub fn x_mut(&mut self) -> &mut T {
         &mut self.0.x
     }
     /// Returns the y/vertical component of the point.
@@ -164,11 +164,11 @@ impl<T: CoordNum> Point<T> {
     /// use approx::assert_relative_eq;
     /// use geo_types::Point;
     /// let mut p = Point::new(1.234, 2.345);
-    /// let mut p_y = p.mut_y();
+    /// let mut p_y = p.y_mut();
     /// *p_y += 1.0;
     /// assert_relative_eq!(p.y(), 3.345);
     /// ```
-    pub fn mut_y(&mut self) -> &mut T {
+    pub fn y_mut(&mut self) -> &mut T {
         &mut self.0.y
     }
 
