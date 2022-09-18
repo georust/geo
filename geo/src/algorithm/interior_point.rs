@@ -154,7 +154,7 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
 
     // use the midpoint of the bounds to scan, unless that happens to match any vertices from
     // polygon; if it does, perturb the line a bit by averaging with the Y coordinate of the
-    // next-closest-to-center vertex if possible, to reduce the likelihood of colinear
+    // next-closest-to-center vertex if possible, to reduce the likelihood of collinear
     // intersections
     let mut y_mid = (bounds.min().y + bounds.max().y) / two;
     if polygon.coords_iter().any(|coord| coord.y == y_mid) {

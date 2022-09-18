@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-*
+* Fixed an issues where calculating the convex hull of 3 collinear points
+  would include all 3.
+  * <https://github.com/georust/geo/pull/907>
 
 ## 0.23.0
 
