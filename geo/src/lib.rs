@@ -54,6 +54,10 @@
 //! - **[`HaversineLength`](HaversineLength)**: Calculate the geodesic length of a geometry using the haversine formula
 //! - **[`VincentyLength`](VincentyLength)**: Calculate the geodesic length of a geometry using Vincenty’s formula
 //!
+//! ## Outlier Detection
+//!
+//! - **[`OutlierDetection`](OutlierDetection)**: Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
+//!
 //! ## Simplification
 //!
 //! - **[`Simplify`](Simplify)**: Simplify a geometry using the Ramer–Douglas–Peucker algorithm
