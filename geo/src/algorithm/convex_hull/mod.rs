@@ -282,7 +282,7 @@ mod test {
     }
 
     #[test]
-    fn test_three_colinear_points() {
+    fn test_three_collinear_points() {
         let mut v = vec![
             coord! { x: 0, y: 0 },
             coord! { x: 1, y: 1 },
@@ -298,7 +298,7 @@ mod test {
     }
 
     #[test]
-    fn test_three_colinear_points_include_on_hull() {
+    fn test_three_collinear_points_include_on_hull() {
         let mut v = vec![
             coord! { x: 0, y: 0 },
             coord! { x: 1, y: 1 },
