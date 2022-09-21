@@ -1,25 +1,10 @@
-use std::{borrow::Borrow, cell::UnsafeCell, cmp::Ordering, fmt::Debug, ops::Deref, rc::Rc};
+use std::{cell::RefCell, cmp::Ordering, fmt::Debug, rc::Rc};
 
 use super::*;
 
 /// A wrapped segment that allows interior mutability.
 pub(super) struct IMSegment<C: Cross> {
-    inner: Rc<UnsafeCell<Segment<C>>>,
-}
-
-impl<C: Cross> Borrow<Segment<C>> for IMSegment<C> {
-    fn borrow(&self) -> &Segment<C> {
-        unsafe { self.get() }
-    }
-}
-
-// Unfortunately, a generic impl<U, T: Borrow<U>> Borrow<U> for Active<T>
-// doesn't work for some complicated reasons. AsRef is another trait with this
-// issue.
-impl<C: Cross> Borrow<Active<Segment<C>>> for Active<IMSegment<C>> {
-    fn borrow(&self) -> &Active<Segment<C>> {
-        Active::active_ref(unsafe { self.deref().get() })
-    }
+    inner: Rc<RefCell<Segment<C>>>,
 }
 
 impl<C: Cross> Clone for IMSegment<C> {
@@ -40,39 +25,34 @@ impl<C: Cross> From<Segment<C>> for IMSegment<C> {
 
 impl<C: Cross> Debug for IMSegment<C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        unsafe { self.get() }.fmt(f)
+        RefCell::borrow(&self.inner).fmt(f)
     }
 }
 
 impl<C: Cross> IMSegment<C> {
-    unsafe fn get(&self) -> &Segment<C> {
-        &*self.inner.get()
+    pub fn is_overlapping(&self) -> bool {
+        RefCell::borrow(&self.inner).overlapping.is_some()
     }
-
-    #[allow(clippy::mut_from_ref)]
-    unsafe fn get_mut(&self) -> &mut Segment<C> {
-        &mut *self.inner.get()
+    pub fn overlap(&self) -> Option<Self> {
+        RefCell::borrow(&self.inner).overlapping.as_ref().cloned()
     }
-
-    pub fn overlapping(&self) -> Option<&Self> {
-        unsafe { self.get() }.overlapping.as_ref()
-    }
-
-    pub fn cross(&self) -> &C {
-        &unsafe { self.get() }.cross
+    pub fn is_first_segment(&self) -> bool {
+        RefCell::borrow(&self.inner).first_segment
     }
 
     pub fn set_left_event_done(&self) {
-        unsafe { self.get_mut() }.left_event_done = true;
+        RefCell::borrow_mut(&self.inner).left_event_done = true;
+    }
+    pub fn is_left_event_done(&self) -> bool {
+        RefCell::borrow(&self.inner).left_event_done
     }
 
     pub fn geom(&self) -> LineOrPoint<<C as Cross>::Scalar> {
-        unsafe { self.get() }.geom
+        RefCell::borrow(&self.inner).geom
     }
 
     pub fn left_event(&self) -> Event<C::Scalar, Self> {
-        let inner = unsafe { self.get() };
-        let geom = inner.geom;
+        let geom = self.geom();
         let left = geom.left();
         Event {
             point: left,
@@ -86,8 +66,7 @@ impl<C: Cross> IMSegment<C> {
     }
 
     pub fn right_event(&self) -> Event<C::Scalar, Self> {
-        let inner = unsafe { self.get() };
-        let geom = inner.geom;
+        let geom = self.geom();
         let right = geom.right();
         Event {
             point: right,
@@ -101,20 +80,17 @@ impl<C: Cross> IMSegment<C> {
     }
 
     pub fn chain_overlap(&self, child: Self) {
-        let mut this = self;
-        loop {
-            let inner = unsafe { this.get() };
-            match inner.overlapping.as_ref() {
-                Some(ovl) => {
-                    this = ovl;
-                }
-                _ => break,
-            }
+        let mut this = self.clone();
+        while let Some(ovl) = this.overlap() {
+            this = ovl;
         }
-
-        let this = unsafe { this.get_mut() };
-        unsafe { child.get_mut() }.is_overlapping = true;
-        this.overlapping = Some(child);
+        {
+            RefCell::borrow_mut(&child.inner).is_overlapping = true;
+        }
+        {
+            let mut this_mut = RefCell::borrow_mut(&this.inner);
+            this_mut.overlapping = Some(child);
+        }
     }
 
     pub fn adjust_for_intersection(
@@ -122,7 +98,7 @@ impl<C: Cross> IMSegment<C> {
         adj_intersection: LineOrPoint<C::Scalar>,
     ) -> SplitSegments<C::Scalar> {
         let (adjust_output, new_geom) = {
-            let segment = unsafe { self.get_mut() };
+            let mut segment = RefCell::borrow_mut(&self.inner);
             trace!(
                 "adjust_for_intersection: {:?}\n\twith: {:?}",
                 segment,
@@ -135,18 +111,19 @@ impl<C: Cross> IMSegment<C> {
         };
         trace!("adjust_output: {:?}", adjust_output);
 
-        let mut this = self;
-        loop {
-            let inner = unsafe { this.get() };
-            match inner.overlapping.as_ref() {
-                Some(ovl) => {
-                    this = ovl;
-                }
-                _ => break,
+        let mut this = self.clone();
+        while let Some(ovl) = this.overlap() {
+            this = ovl;
+            {
+                let mut this_mut = RefCell::borrow_mut(&this.inner);
+                this_mut.geom = new_geom;
             }
-            unsafe { this.get_mut() }.geom = new_geom;
         }
         adjust_output
+    }
+
+    pub fn with_segment<F: FnOnce(&Segment<C>) -> R, R>(&self, f: F) -> R {
+        f(&RefCell::borrow(&self.inner))
     }
 }
 
@@ -165,24 +142,28 @@ impl<C: Cross + Clone> IMSegment<C> {
         }
 
         if let Some(parent) = parent {
-            let segment_geom = unsafe { segment.get() }.geom;
+            let segment_geom = RefCell::borrow(&segment.inner).geom;
 
-            let mut child = &unsafe { parent.get() }.overlapping;
+            let mut child = RefCell::borrow(&parent.inner).overlapping.as_ref().cloned();
             let mut tgt = segment.clone();
 
             while let Some(child_seg) = child {
-                let child_inner_seg = unsafe { child_seg.get() };
+                let child_inner_seg = RefCell::borrow(&child_seg.inner);
 
                 let child_overlapping = &child_inner_seg.overlapping;
                 let child_crossable = child_inner_seg.cross.clone();
 
                 let new_segment: Self = Segment::new(child_crossable, Some(segment_geom)).into();
 
-                unsafe { tgt.get_mut() }.overlapping = Some(new_segment.clone());
-                unsafe { new_segment.get_mut() }.is_overlapping = true;
+                {
+                    RefCell::borrow_mut(&tgt.inner).overlapping = Some(new_segment.clone());
+                }
+                {
+                    RefCell::borrow_mut(&new_segment.inner).is_overlapping = true;
+                }
 
                 tgt = new_segment;
-                child = child_overlapping;
+                child = child_overlapping.as_ref().cloned();
             }
         }
         segment
@@ -193,8 +174,7 @@ impl<C: Cross + Clone> IMSegment<C> {
         adj_intersection: LineOrPoint<C::Scalar>,
         mut cb: F,
     ) -> Option<Self> {
-        let adj_segment = &mut unsafe { self.get() };
-        let adj_cross = adj_segment.cross.clone();
+        let adj_cross = self.cross_cloned();
         use SplitSegments::*;
         match self.adjust_for_intersection(adj_intersection) {
             Unchanged { overlap } => overlap.then(|| self.clone()),
@@ -219,7 +199,7 @@ impl<C: Cross + Clone> IMSegment<C> {
 
     pub fn is_correct(event: &Event<C::Scalar, IMSegment<C>>) -> bool {
         use EventType::*;
-        let segment = unsafe { event.payload.get() };
+        let segment = RefCell::borrow(&event.payload.inner);
         if let LineRight = event.ty {
             debug_assert!(segment.geom.is_line());
             !segment.is_overlapping && segment.geom.right() == event.point
@@ -238,6 +218,11 @@ impl<C: Cross + Clone> IMSegment<C> {
             true
         }
     }
+
+    pub fn cross_cloned(&self) -> C {
+        let inner = RefCell::borrow(&self.inner);
+        inner.cross.clone()
+    }
 }
 
 impl<C: Cross> PartialEq for IMSegment<C> {
@@ -248,13 +233,14 @@ impl<C: Cross> PartialEq for IMSegment<C> {
 
 impl<C: Cross> PartialOrd for IMSegment<C> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        unsafe { self.get() }
-            .partial_cmp(unsafe { other.get() })
+        RefCell::borrow(&self.inner)
+            .partial_cmp(&RefCell::borrow(&other.inner))
             .map(|o| {
                 o.then_with(|| {
                     let addr_self = Rc::as_ptr(&self.inner) as usize;
                     let addr_other = Rc::as_ptr(&other.inner) as usize;
                     addr_self.cmp(&addr_other)
+                    // .reverse()
                 })
             })
     }

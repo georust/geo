@@ -210,6 +210,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
     }
 
     pub fn intersect_line_ordered(&self, other: &Self) -> Option<Self> {
+        let ord = self.partial_cmp(other);
         match self.intersect_line(other) {
             Some(lp) if !lp.is_line() => {
                 // NOTE: A key issue with using non-exact numbers (f64, etc.) in
@@ -263,9 +264,105 @@ impl<T: GeoFloat> LineOrPoint<T> {
                     lp3 = other.left,
                     lp4 = other.right,
                 );
+
+                if let Some(ord) = ord {
+                    let l1 = LineOrPoint::from((self.left, pt));
+                    let l2 = LineOrPoint {
+                        left: other.left,
+                        right: pt,
+                    };
+                    let cmp = l1.partial_cmp(&l2).unwrap();
+                    if l1.is_line() && l2.is_line() && cmp.then(ord) != ord {
+                        debug!(
+                            "ordering changed by intersection: {l1:?} {ord:?} {l2:?}",
+                            l1 = self,
+                            l2 = other
+                        );
+                        debug!("\tparts: {l1:?}, {l2:?}");
+                        debug!("\tintersection: {pt:?} {cmp:?}");
+
+                        // RM: This is a complicated intersection that is changing the ordering.
+                        // Heuristic: approximate with a trivial intersection point that preserves the topology.
+                        return Some(if self.left > other.left {
+                            self.left.into()
+                        } else {
+                            other.left.into()
+                        });
+                    }
+                }
                 Some((*pt).into())
             }
             e => e,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cmp::Ordering;
+
+    use geo_types::{Coordinate, LineString};
+    use wkt::ToWkt;
+
+    use crate::{GeoFloat, GeoNum, HasKernel, Kernel};
+
+    use super::LineOrPoint;
+
+    // Used for debugging sweep fp issues
+    #[test]
+    #[ignore]
+    fn check_ordering() {
+        let pt_7 = Coordinate::from((-32.57812499999999, 241.33427773853316));
+        let pt_8 = Coordinate::from((-36.11348070978957, 237.7989220287436));
+        let pt_13 = Coordinate::from((-25.507080078124993, 248.40532266040816));
+        let pt_14 = Coordinate::from((-36.48784219165816, 237.424560546875));
+        let _pt_15 = Coordinate::from((4.4929199218750036, 196.44379843334184));
+        let pt_16 = Coordinate::from((-36.048578439260666, 237.8638242992725));
+        let pt_17 = Coordinate::from((3.545624214480127, 197.39109414073673));
+
+        fn check_isection<T: GeoFloat>(abcd: [Coordinate<T>; 4]) -> Option<LineOrPoint<T>> {
+            let l1 = LineOrPoint::from((abcd[0].into(), abcd[1].into()));
+            let l2 = LineOrPoint::from((abcd[2].into(), abcd[3].into()));
+            l1.intersect_line_ordered(&l2)
+        }
+        fn check_lines<T: GeoNum>(abcd: [Coordinate<T>; 4]) -> Ordering {
+            let l1 = LineOrPoint::from((abcd[0].into(), abcd[1].into()));
+            let l2 = LineOrPoint::from((abcd[2].into(), abcd[3].into()));
+            l1.partial_cmp(&l2).unwrap()
+        }
+
+        eprintln!(
+            "(14-17) {cmp:?} (14-16)",
+            cmp = check_lines([pt_14, pt_17, pt_14, pt_16])
+        );
+        eprintln!(
+            "(8-16) {cmp:?} (14-16)",
+            cmp = check_lines([pt_8, pt_16, pt_14, pt_16]),
+        );
+        eprintln!(
+            "(8-7) {cmp:?} (14-16)",
+            cmp = check_lines([pt_8, pt_7, pt_14, pt_16]),
+        );
+        eprintln!(
+            "(8-7) {cmp:?} (14-13)",
+            cmp = check_lines([pt_8, pt_7, pt_14, pt_13]),
+        );
+        eprintln!(
+            "(8-7) {isect:?} (14-13)",
+            isect = check_isection([pt_8, pt_7, pt_14, pt_13]),
+        );
+        let l87 = LineString::new(vec![pt_8, pt_16, pt_7]);
+        let lo = LineString::new(vec![pt_14, pt_16, pt_13]);
+        eprintln!("l1: {}", l87.to_wkt());
+        eprintln!("lo: {}", lo.to_wkt());
+
+        eprintln!(
+            "pred: {:?}",
+            <f64 as HasKernel>::Ker::orient2d(pt_8, pt_7, pt_17)
+        );
+        eprintln!(
+            "pred: {:?}",
+            <f64 as HasKernel>::Ker::orient2d(pt_8, pt_14, pt_16)
+        );
     }
 }
