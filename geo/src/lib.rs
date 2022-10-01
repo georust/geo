@@ -148,6 +148,7 @@
 //! - **[`proj`](proj)**: Project geometries with the `proj` crate (requires the `use-proj` feature)
 //! - **[`ChaikinSmoothing`](ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 //! - **[`Densify`](Densify)**: Densify linear geometry components by interpolating points
+//! - **[`Transform`](Transform)**: Transform a geometry using Proj.
 //!
 //! # Features
 //!
