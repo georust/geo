@@ -13,11 +13,34 @@ fuzz_target!(|tuple: (geo_types::Polygon<f32>, f32)| {
 });
 
 fn check_result(original: geo_types::Polygon<f32>, simplified: geo_types::Polygon<f32>) {
-    assert!(simplified.exterior().0.len() <= original.exterior().0.len());
-    assert!(simplified.exterior().euclidean_length() <= original.exterior().euclidean_length());
+    check_ring(original.exterior(), simplified.exterior());
 
-    for interior in simplified.interiors() {
-        assert!(simplified.exterior().0.len() <= interior.0.len());
-        assert!(simplified.exterior().euclidean_length() <= interior.euclidean_length());
+    for (original_interior, simplified_interior) in
+        original.interiors().iter().zip(simplified.interiors())
+    {
+        check_ring(original_interior, simplified_interior);
     }
+}
+
+fn check_ring(original: &geo_types::LineString<f32>, simplified: &geo_types::LineString<f32>) {
+    assert!(
+        simplified.0.len() <= original.0.len(),
+        "Simplified ring has more coordinates than the original exterior ring ({:?} <= {:?})",
+        simplified.0.len(),
+        original.0.len(),
+    );
+
+    let simplified_length = simplified.euclidean_length();
+    let original_length = simplified.euclidean_length();
+
+    if simplified_length.is_nan() || original_length.is_nan() {
+        return;
+    }
+
+    assert!(
+        simplified_length <= original_length,
+        "Simplified ring is longer than the original exterior ring ({:?} <= {:?})",
+        simplified_length,
+        original_length,
+    );
 }

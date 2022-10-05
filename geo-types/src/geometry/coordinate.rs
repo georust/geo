@@ -95,6 +95,41 @@ impl<T: CoordNum> Coordinate<T> {
     pub fn x_y(&self) -> (T, T) {
         (self.x, self.y)
     }
+
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use geo_types::coord;
+    ///
+    /// let c1 = coord! {
+    ///     x: 40.02f64,
+    ///     y: f64::NAN,
+    /// };
+    /// let c2 = coord! {
+    ///     x: 40.02f64,
+    ///     y: f64::NAN,
+    /// };
+    ///
+    /// assert!(c1 != c2);
+    /// assert!(c1.partial_eq_ignoring_nan(c2));
+    /// ```
+    pub(crate) fn partial_eq_ignoring_nan(&self, other: &Coordinate<T>) -> bool {
+        match (is_nan(self.x), is_nan(other.x)) {
+            (false, false) if self.x != other.x => return false,
+            (true, false) | (false, true) => return false,
+            _ => (),
+        }
+        match (is_nan(self.y), is_nan(other.y)) {
+            (false, false) if self.y != other.y => return false,
+            (true, false) | (false, true) => return false,
+            _ => (),
+        }
+        true
+    }
+}
+
+fn is_nan<T: CoordNum>(t: T) -> bool {
+    t + T::zero() != t
 }
 
 use std::ops::{Add, Div, Mul, Neg, Sub};

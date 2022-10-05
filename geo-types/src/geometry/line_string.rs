@@ -331,7 +331,11 @@ impl<T: CoordNum> LineString<T> {
     /// seems to be no reason to maintain the separate behavior for [`LineString`]s used in
     /// non-`LinearRing` contexts.
     pub fn is_closed(&self) -> bool {
-        self.0.first() == self.0.last()
+        match (self.0.first(), self.0.last()) {
+            (Some(first), Some(last)) => first.partial_eq_ignoring_nan(last),
+            (None, None) => true,
+            _ => false,
+        }
     }
 }
 
@@ -616,5 +620,15 @@ mod test {
         let expected = LineString::new(vec![start, end]);
 
         assert_eq!(expected, LineString::from(line));
+    }
+
+    #[test]
+    fn test_close_with_nan() {
+        let start = coord! { x: 0., y: f32::NAN };
+        let end = coord! { x: 0., y: f32::NAN };
+        let mut line_string = LineString::new(vec![start, end]);
+        assert_eq!(2, line_string.0.len());
+        line_string.close();
+        assert_eq!(2, line_string.0.len());
     }
 }
