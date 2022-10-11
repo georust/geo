@@ -152,9 +152,6 @@ pub use map_coords::{MapCoordsInplace, TryMapCoords, TryMapCoordsInplace};
 pub mod orient;
 pub use orient::Orient;
 
-/// Helper functions for the "fast path" variant of the Polygon-Polygon Euclidean distance method.
-pub(crate) mod polygon_distance_fast_path;
-
 /// Coordinate projections and transformations using the current stable version of [PROJ](http://proj.org).
 #[cfg(feature = "use-proj")]
 pub mod proj;
