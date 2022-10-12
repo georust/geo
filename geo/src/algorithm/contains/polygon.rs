@@ -128,3 +128,26 @@ where
         rhs.relate(self).is_within()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn gh_issue_921() {
+        use crate::algorithm::{Contains, Intersects};
+        use crate::geometry::{Point, Polygon};
+        use crate::{point, polygon};
+
+        // > Just wanted to note that the contains functions shows some really weird behaviour for i32 types close to i32 max.
+        // > crashes
+        let poly_32: Polygon<i32> = polygon![(x: 107374182, y: 107374182), (x: 207374182, y: 107374182) , (x: 207374182, y: 207374182) , (x: 107374182, y: 207374182)];
+        let point: Point<i32> = point!(x: 107374182, y: 107374182);
+
+        // Note that polygons DO NOT contain points that are on their boundary - otherwise it would be a synonym for `intersects`.
+        // For the point to be `contained` it must be within the polygons interior.
+        // See: http://lin-ear-th-inking.blogspot.be/2007/06/subtleties-of-ogc-covers-spatial.html
+        assert!(!poly_32.contains(&point));
+
+        // they do intersect though
+        assert!(poly_32.intersects(&point));
+    }
+}
