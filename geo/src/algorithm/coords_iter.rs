@@ -3,14 +3,12 @@ use std::fmt::Debug;
 use crate::geometry::*;
 use crate::{coord, CoordNum};
 
-use std::{fmt, iter, marker, slice};
-
-type CoordinateChainOnce<T> = iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>;
+use std::{fmt, iter, marker};
 
 /// Iterate over geometry coordinates.
 pub trait CoordsIter<'a> {
-    type Iter: Iterator<Item = Coordinate<Self::Scalar>>;
-    type ExteriorIter: Iterator<Item = Coordinate<Self::Scalar>>;
+    type Iter: Iterator<Item = Coordinate<Self::Scalar>> + Clone;
+    type ExteriorIter: Iterator<Item = Coordinate<Self::Scalar>> + Clone;
     type Scalar: CoordNum;
 
     /// Iterate over all exterior and (if any) interior coordinates of a geometry.
@@ -96,8 +94,8 @@ pub trait CoordsIter<'a> {
 // └──────────────────────────┘
 
 impl<'a, T: CoordNum> CoordsIter<'a> for Point<T> {
-    type Iter = iter::Once<Coordinate<T>>;
-    type ExteriorIter = Self::Iter;
+    type Iter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
+    type ExteriorIter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -110,7 +108,7 @@ impl<'a, T: CoordNum> CoordsIter<'a> for Point<T> {
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
-        self.coords_iter()
+        iter::once(self.0)
     }
 }
 
@@ -119,8 +117,8 @@ impl<'a, T: CoordNum> CoordsIter<'a> for Point<T> {
 // └─────────────────────────┘
 
 impl<'a, T: CoordNum> CoordsIter<'a> for Line<T> {
-    type Iter = iter::Chain<iter::Once<Coordinate<T>>, iter::Once<Coordinate<T>>>;
-    type ExteriorIter = Self::Iter;
+    type Iter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
+    type ExteriorIter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -133,7 +131,7 @@ impl<'a, T: CoordNum> CoordsIter<'a> for Line<T> {
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
-        self.coords_iter()
+        iter::once(self.start).chain(iter::once(self.end))
     }
 }
 
@@ -141,11 +139,9 @@ impl<'a, T: CoordNum> CoordsIter<'a> for Line<T> {
 // │ Implementation for LineString │
 // └───────────────────────────────┘
 
-type LineStringIter<'a, T> = iter::Copied<slice::Iter<'a, Coordinate<T>>>;
-
 impl<'a, T: CoordNum + 'a> CoordsIter<'a> for LineString<T> {
-    type Iter = LineStringIter<'a, T>;
-    type ExteriorIter = Self::Iter;
+    type Iter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
+    type ExteriorIter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -158,7 +154,7 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for LineString<T> {
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
-        self.coords_iter()
+        self.0.iter().copied()
     }
 }
 
@@ -166,20 +162,15 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for LineString<T> {
 // │ Implementation for Polygon │
 // └────────────────────────────┘
 
-type PolygonIter<'a, T> = iter::Chain<
-    LineStringIter<'a, T>,
-    iter::Flatten<MapCoordsIter<'a, T, slice::Iter<'a, LineString<T>>, LineString<T>>>,
->;
-
 impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Polygon<T> {
-    type Iter = PolygonIter<'a, T>;
-    type ExteriorIter = LineStringIter<'a, T>;
+    type Iter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
+    type ExteriorIter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
         self.exterior()
             .coords_iter()
-            .chain(MapCoordsIter(self.interiors().iter(), marker::PhantomData).flatten())
+            .chain(MapCoordsIter(self.interiors().iter(), marker::PhantomData::<T>).flatten())
     }
 
     /// Return the number of coordinates in the `Polygon`.
@@ -202,12 +193,12 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Polygon<T> {
 // └───────────────────────────────┘
 
 impl<'a, T: CoordNum + 'a> CoordsIter<'a> for MultiPoint<T> {
-    type Iter = iter::Flatten<MapCoordsIter<'a, T, slice::Iter<'a, Point<T>>, Point<T>>>;
-    type ExteriorIter = Self::Iter;
+    type Iter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
+    type ExteriorIter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
+        MapCoordsIter(self.0.iter(), marker::PhantomData::<T>).flatten()
     }
 
     /// Return the number of coordinates in the `MultiPoint`.
@@ -216,7 +207,7 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for MultiPoint<T> {
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
-        self.coords_iter()
+        MapCoordsIter(self.0.iter(), marker::PhantomData::<T>).flatten()
     }
 }
 
@@ -225,12 +216,12 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for MultiPoint<T> {
 // └────────────────────────────────────┘
 
 impl<'a, T: CoordNum + 'a> CoordsIter<'a> for MultiLineString<T> {
-    type Iter = iter::Flatten<MapCoordsIter<'a, T, slice::Iter<'a, LineString<T>>, LineString<T>>>;
-    type ExteriorIter = Self::Iter;
+    type Iter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
+    type ExteriorIter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
+        MapCoordsIter(self.0.iter(), marker::PhantomData::<T>).flatten()
     }
 
     /// Return the number of coordinates in the `MultiLineString`.
@@ -242,7 +233,7 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for MultiLineString<T> {
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
-        self.coords_iter()
+        MapCoordsIter(self.0.iter(), marker::PhantomData::<T>).flatten()
     }
 }
 
@@ -251,13 +242,12 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for MultiLineString<T> {
 // └─────────────────────────────────┘
 
 impl<'a, T: CoordNum + 'a> CoordsIter<'a> for MultiPolygon<T> {
-    type Iter = iter::Flatten<MapCoordsIter<'a, T, slice::Iter<'a, Polygon<T>>, Polygon<T>>>;
-    type ExteriorIter =
-        iter::Flatten<MapExteriorCoordsIter<'a, T, slice::Iter<'a, Polygon<T>>, Polygon<T>>>;
+    type Iter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
+    type ExteriorIter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
+        MapCoordsIter(self.0.iter(), marker::PhantomData::<T>).flatten()
     }
 
     /// Return the number of coordinates in the `MultiPolygon`.
@@ -266,7 +256,7 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for MultiPolygon<T> {
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
-        MapExteriorCoordsIter(self.0.iter(), marker::PhantomData).flatten()
+        MapExteriorCoordsIter(self.0.iter(), marker::PhantomData::<T>).flatten()
     }
 }
 
@@ -275,12 +265,12 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for MultiPolygon<T> {
 // └───────────────────────────────────────┘
 
 impl<'a, T: CoordNum + 'a> CoordsIter<'a> for GeometryCollection<T> {
-    type Iter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
-    type ExteriorIter = Box<dyn Iterator<Item = Coordinate<T>> + 'a>;
+    type Iter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
+    type ExteriorIter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        Box::new(self.0.iter().flat_map(|geometry| geometry.coords_iter()))
+        self.0.iter().flat_map(|geometry| geometry.coords_iter())
     }
 
     /// Return the number of coordinates in the `GeometryCollection`.
@@ -289,11 +279,9 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for GeometryCollection<T> {
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
-        Box::new(
-            self.0
-                .iter()
-                .flat_map(|geometry| geometry.exterior_coords_iter()),
-        )
+        self.0
+            .iter()
+            .flat_map(|geometry| geometry.exterior_coords_iter())
     }
 }
 
@@ -301,14 +289,9 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for GeometryCollection<T> {
 // │ Implementation for Rect │
 // └─────────────────────────┘
 
-type RectIter<T> = iter::Chain<
-    iter::Chain<CoordinateChainOnce<T>, iter::Once<Coordinate<T>>>,
-    iter::Once<Coordinate<T>>,
->;
-
 impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Rect<T> {
-    type Iter = RectIter<T>;
-    type ExteriorIter = Self::Iter;
+    type Iter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
+    type ExteriorIter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -339,7 +322,22 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Rect<T> {
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
-        self.coords_iter()
+        iter::once(coord! {
+            x: self.min().x,
+            y: self.min().y,
+        })
+        .chain(iter::once(coord! {
+            x: self.min().x,
+            y: self.max().y,
+        }))
+        .chain(iter::once(coord! {
+            x: self.max().x,
+            y: self.max().y,
+        }))
+        .chain(iter::once(coord! {
+            x: self.max().x,
+            y: self.min().y,
+        }))
     }
 }
 
@@ -348,8 +346,8 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Rect<T> {
 // └─────────────────────────────┘
 
 impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Triangle<T> {
-    type Iter = iter::Chain<CoordinateChainOnce<T>, iter::Once<Coordinate<T>>>;
-    type ExteriorIter = Self::Iter;
+    type Iter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
+    type ExteriorIter = impl Iterator<Item = Coordinate<T>> + Clone + Debug;
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
@@ -364,7 +362,9 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Triangle<T> {
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
-        self.coords_iter()
+        iter::once(self.0)
+            .chain(iter::once(self.1))
+            .chain(iter::once(self.2))
     }
 }
 
@@ -373,12 +373,12 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Triangle<T> {
 // └─────────────────────────────┘
 
 impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Geometry<T> {
-    type Iter = GeometryCoordsIter<'a, T>;
-    type ExteriorIter = GeometryExteriorCoordsIter<'a, T>;
+    type Iter = Box<impl Iterator<Item = Coordinate<T>> + Clone + Debug>;
+    type ExteriorIter = Box<impl Iterator<Item = Coordinate<T>> + Clone + Debug>;
     type Scalar = T;
 
     fn coords_iter(&'a self) -> Self::Iter {
-        match self {
+        Box::new(match self {
             Geometry::Point(g) => GeometryCoordsIter::Point(g.coords_iter()),
             Geometry::Line(g) => GeometryCoordsIter::Line(g.coords_iter()),
             Geometry::LineString(g) => GeometryCoordsIter::LineString(g.coords_iter()),
@@ -391,7 +391,7 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Geometry<T> {
             }
             Geometry::Rect(g) => GeometryCoordsIter::Rect(g.coords_iter()),
             Geometry::Triangle(g) => GeometryCoordsIter::Triangle(g.coords_iter()),
-        }
+        })
     }
     crate::geometry_delegate_impl! {
         /// Return the number of coordinates in the `Geometry`.
@@ -399,7 +399,7 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Geometry<T> {
     }
 
     fn exterior_coords_iter(&'a self) -> Self::ExteriorIter {
-        match self {
+        Box::new(match self {
             Geometry::Point(g) => GeometryExteriorCoordsIter::Point(g.exterior_coords_iter()),
             Geometry::Line(g) => GeometryExteriorCoordsIter::Line(g.exterior_coords_iter()),
             Geometry::LineString(g) => {
@@ -420,7 +420,7 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Geometry<T> {
             }
             Geometry::Rect(g) => GeometryExteriorCoordsIter::Rect(g.exterior_coords_iter()),
             Geometry::Triangle(g) => GeometryExteriorCoordsIter::Triangle(g.exterior_coords_iter()),
-        }
+        })
     }
 }
 
@@ -430,7 +430,7 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Geometry<T> {
 
 // Utility to transform Iterator<CoordsIter> into Iterator<Iterator<Coordinate>>
 #[doc(hidden)]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct MapCoordsIter<
     'a,
     T: 'a + CoordNum,
@@ -454,7 +454,7 @@ impl<'a, T: 'a + CoordNum, Iter1: Iterator<Item = &'a Iter2>, Iter2: CoordsIter<
 
 // Utility to transform Iterator<CoordsIter> into Iterator<Iterator<Coordinate>>
 #[doc(hidden)]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct MapExteriorCoordsIter<
     'a,
     T: 'a + CoordNum,
@@ -478,6 +478,7 @@ impl<'a, T: 'a + CoordNum, Iter1: Iterator<Item = &'a Iter2>, Iter2: CoordsIter<
 
 // Utility to transform Geometry into Iterator<Coordinate>
 #[doc(hidden)]
+#[derive(Clone)]
 pub enum GeometryCoordsIter<'a, T: CoordNum + 'a> {
     Point(<Point<T> as CoordsIter<'a>>::Iter),
     Line(<Line<T> as CoordsIter<'a>>::Iter),
@@ -539,10 +540,13 @@ impl<'a, T: CoordNum + Debug> fmt::Debug for GeometryCoordsIter<'a, T> {
             GeometryCoordsIter::MultiPolygon(i) => {
                 fmt.debug_tuple("MultiPolygon").field(i).finish()
             }
-            GeometryCoordsIter::GeometryCollection(_) => fmt
-                .debug_tuple("GeometryCollection")
-                .field(&String::from("..."))
-                .finish(),
+            GeometryCoordsIter::GeometryCollection(geometry_collection) => {
+                let mut fmt_debug_tuple = fmt.debug_tuple("GeometryCollection");
+                for geometry in geometry_collection.clone() {
+                    fmt_debug_tuple.field(&geometry);
+                }
+                fmt_debug_tuple.finish()
+            }
             GeometryCoordsIter::Rect(i) => fmt.debug_tuple("Rect").field(i).finish(),
             GeometryCoordsIter::Triangle(i) => fmt.debug_tuple("Triangle").field(i).finish(),
         }
@@ -551,6 +555,7 @@ impl<'a, T: CoordNum + Debug> fmt::Debug for GeometryCoordsIter<'a, T> {
 
 // Utility to transform Geometry into Iterator<Coordinate>
 #[doc(hidden)]
+#[derive(Clone)]
 pub enum GeometryExteriorCoordsIter<'a, T: CoordNum + 'a> {
     Point(<Point<T> as CoordsIter<'a>>::ExteriorIter),
     Line(<Line<T> as CoordsIter<'a>>::ExteriorIter),
@@ -616,10 +621,13 @@ impl<'a, T: CoordNum + Debug> fmt::Debug for GeometryExteriorCoordsIter<'a, T> {
             GeometryExteriorCoordsIter::MultiPolygon(i) => {
                 fmt.debug_tuple("MultiPolygon").field(i).finish()
             }
-            GeometryExteriorCoordsIter::GeometryCollection(_) => fmt
-                .debug_tuple("GeometryCollection")
-                .field(&String::from("..."))
-                .finish(),
+            GeometryExteriorCoordsIter::GeometryCollection(geometry_collection) => {
+                let mut fmt_debug_tuple = fmt.debug_tuple("GeometryCollection");
+                for geometry in geometry_collection.clone() {
+                    fmt_debug_tuple.field(&geometry);
+                }
+                fmt_debug_tuple.finish()
+            }
             GeometryExteriorCoordsIter::Rect(i) => fmt.debug_tuple("Rect").field(i).finish(),
             GeometryExteriorCoordsIter::Triangle(i) => {
                 fmt.debug_tuple("Triangle").field(i).finish()
@@ -762,6 +770,19 @@ mod test {
         .collect::<Vec<_>>();
 
         assert_eq!(expected_coords, actual_coords);
+    }
+
+    #[test]
+    fn test_geometry_geometry_collection_debug() {
+        let (line_string, mut _coords) = create_line_string();
+        let (polygon, mut _coords) = create_polygon();
+
+        let geometry = Geometry::GeometryCollection(GeometryCollection::new_from(vec![
+            Geometry::LineString(line_string),
+            Geometry::Polygon(polygon),
+        ]));
+
+        assert_eq!("", format!("{:?}", geometry.coords_iter()));
     }
 
     fn create_point() -> (Point, Vec<Coordinate>) {

@@ -1,5 +1,7 @@
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
 
+#![feature(type_alias_impl_trait)]
+
 //! The `geo` crate provides geospatial primitive types and algorithms.
 //!
 //! # Types
