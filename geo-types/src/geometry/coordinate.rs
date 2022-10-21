@@ -25,10 +25,13 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Coordinate<T: CoordNum = f64> {
+pub struct Coord<T: CoordNum = f64> {
     pub x: T,
     pub y: T,
 }
+
+#[deprecated(note = "Renamed to `geo_types::Coord` (or `geo::Coord`)")]
+pub type Coordinate<T: CoordNum = f64> = Coord<T>;
 
 impl<T: CoordNum> From<(T, T)> for Coordinate<T> {
     #[inline]
