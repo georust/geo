@@ -2,15 +2,15 @@ use super::{has_disjoint_bboxes, Intersects};
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
 use crate::BoundingRect;
 use crate::{
-    CoordNum, Coordinate, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
+    CoordNum, Coord, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
     Rect,
 };
 
-impl<T> Intersects<Coordinate<T>> for Polygon<T>
+impl<T> Intersects<Coord<T>> for Polygon<T>
 where
     T: GeoNum,
 {
-    fn intersects(&self, p: &Coordinate<T>) -> bool {
+    fn intersects(&self, p: &Coord<T>) -> bool {
         coord_pos_relative_to_ring(*p, self.exterior()) != CoordPos::Outside
             && self
                 .interiors()
@@ -18,7 +18,7 @@ where
                 .all(|int| coord_pos_relative_to_ring(*p, int) != CoordPos::Inside)
     }
 }
-symmetric_intersects_impl!(Coordinate<T>, Polygon<T>);
+symmetric_intersects_impl!(Coord<T>, Polygon<T>);
 symmetric_intersects_impl!(Polygon<T>, Point<T>);
 
 impl<T> Intersects<Line<T>> for Polygon<T>

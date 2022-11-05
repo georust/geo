@@ -2,7 +2,7 @@ use std::ops::Mul;
 
 use num_traits::FromPrimitive;
 
-use crate::{coord, CoordFloat, Coordinate, LineString, MultiLineString, MultiPolygon, Polygon};
+use crate::{coord, CoordFloat, Coord, LineString, MultiLineString, MultiPolygon, Polygon};
 
 /// Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 ///
@@ -116,7 +116,7 @@ where
     out_coords.into()
 }
 
-fn smoothen_coordinates<T>(c0: Coordinate<T>, c1: Coordinate<T>) -> (Coordinate<T>, Coordinate<T>)
+fn smoothen_coordinates<T>(c0: Coord<T>, c1: Coord<T>) -> (Coord<T>, Coord<T>)
 where
     T: CoordFloat + Mul<T> + FromPrimitive,
 {

@@ -1,4 +1,4 @@
-use crate::{polygon, CoordNum, Coordinate, Line, Polygon};
+use crate::{polygon, CoordNum, Coord, Line, Polygon};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -9,15 +9,15 @@ use approx::{AbsDiffEq, RelativeEq};
 /// vertices must not be collinear and they must be distinct.
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Triangle<T: CoordNum = f64>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);
+pub struct Triangle<T: CoordNum = f64>(pub Coord<T>, pub Coord<T>, pub Coord<T>);
 
 impl<T: CoordNum> Triangle<T> {
     /// Instantiate Self from the raw content value
-    pub fn new(v1: Coordinate<T>, v2: Coordinate<T>, v3: Coordinate<T>) -> Self {
+    pub fn new(v1: Coord<T>, v2: Coord<T>, v3: Coord<T>) -> Self {
         Self(v1, v2, v3)
     }
 
-    pub fn to_array(&self) -> [Coordinate<T>; 3] {
+    pub fn to_array(&self) -> [Coord<T>; 3] {
         [self.0, self.1, self.2]
     }
 
@@ -57,7 +57,7 @@ impl<T: CoordNum> Triangle<T> {
     }
 }
 
-impl<IC: Into<Coordinate<T>> + Copy, T: CoordNum> From<[IC; 3]> for Triangle<T> {
+impl<IC: Into<Coord<T>> + Copy, T: CoordNum> From<[IC; 3]> for Triangle<T> {
     fn from(array: [IC; 3]) -> Self {
         Self(array[0].into(), array[1].into(), array[2].into())
     }

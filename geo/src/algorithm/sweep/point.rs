@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, ops::Deref};
 
-use geo_types::Coordinate;
+use geo_types::Coord;
 
 use crate::GeoNum;
 
@@ -14,7 +14,7 @@ use crate::GeoNum;
 /// Thus, it is a logical error to construct this struct unless the coords are
 /// guaranteed to be orderable.
 #[derive(PartialEq, Clone, Copy)]
-pub struct SweepPoint<T: GeoNum>(Coordinate<T>);
+pub struct SweepPoint<T: GeoNum>(Coord<T>);
 
 impl<T: GeoNum> std::fmt::Debug for SweepPoint<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -47,14 +47,14 @@ impl<T: GeoNum> Ord for SweepPoint<T> {
 impl<T: GeoNum> Eq for SweepPoint<T> {}
 
 /// Conversion from type that can be converted to a `Coordinate`.
-impl<T: GeoNum, X: Into<Coordinate<T>>> From<X> for SweepPoint<T> {
+impl<T: GeoNum, X: Into<Coord<T>>> From<X> for SweepPoint<T> {
     fn from(pt: X) -> Self {
         SweepPoint(pt.into())
     }
 }
 
 impl<T: GeoNum> Deref for SweepPoint<T> {
-    type Target = Coordinate<T>;
+    type Target = Coord<T>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -74,10 +74,10 @@ mod tests {
 
     #[test]
     fn test_sweep_point_ordering() {
-        let p1 = SweepPoint::from(Coordinate { x: 0., y: 0. });
-        let p2 = SweepPoint::from(Coordinate { x: 1., y: 0. });
-        let p3 = SweepPoint::from(Coordinate { x: 1., y: 1. });
-        let p4 = SweepPoint::from(Coordinate { x: 1., y: 1. });
+        let p1 = SweepPoint::from(Coord { x: 0., y: 0. });
+        let p2 = SweepPoint::from(Coord { x: 1., y: 0. });
+        let p3 = SweepPoint::from(Coord { x: 1., y: 1. });
+        let p4 = SweepPoint::from(Coord { x: 1., y: 1. });
 
         assert!(p1 < p2);
         assert!(p1 < p3);

@@ -1,5 +1,5 @@
 use super::{CoordNode, Edge, Label, Quadrant};
-use crate::{coord, Coordinate, GeoFloat};
+use crate::{coord, Coord, GeoFloat};
 
 use std::cell::RefCell;
 use std::fmt;
@@ -29,9 +29,9 @@ pub(crate) struct EdgeEndKey<F>
 where
     F: GeoFloat,
 {
-    coord_0: Coordinate<F>,
-    coord_1: Coordinate<F>,
-    delta: Coordinate<F>,
+    coord_0: Coord<F>,
+    coord_1: Coord<F>,
+    delta: Coord<F>,
     quadrant: Option<Quadrant>,
 }
 
@@ -51,7 +51,7 @@ impl<F> EdgeEnd<F>
 where
     F: GeoFloat,
 {
-    pub fn new(coord_0: Coordinate<F>, coord_1: Coordinate<F>, label: Label) -> EdgeEnd<F> {
+    pub fn new(coord_0: Coord<F>, coord_1: Coord<F>, label: Label) -> EdgeEnd<F> {
         let delta = coord_1 - coord_0;
         let quadrant = Quadrant::new(delta.x, delta.y);
         EdgeEnd {
@@ -73,7 +73,7 @@ where
         &mut self.label
     }
 
-    pub fn coordinate(&self) -> &Coordinate<F> {
+    pub fn coordinate(&self) -> &Coord<F> {
         &self.key.coord_0
     }
 
@@ -144,12 +144,12 @@ mod test {
     fn test_ord() {
         let fake_label = Label::empty_line_or_point();
         let edge_end_1 = EdgeEnd::new(
-            Coordinate::zero(),
+            Coord::zero(),
             coord! { x: 1.0, y: 1.0 },
             fake_label.clone(),
         );
         let edge_end_2 = EdgeEnd::new(
-            Coordinate::zero(),
+            Coord::zero(),
             coord! { x: 1.0, y: 1.0 },
             fake_label.clone(),
         );
@@ -159,7 +159,7 @@ mod test {
         );
 
         // edge_end_3 is clockwise from edge_end_1
-        let edge_end_3 = EdgeEnd::new(Coordinate::zero(), coord! { x: 1.0, y: -1.0 }, fake_label);
+        let edge_end_3 = EdgeEnd::new(Coord::zero(), coord! { x: 1.0, y: -1.0 }, fake_label);
         assert_eq!(
             edge_end_1.key().cmp(edge_end_3.key()),
             std::cmp::Ordering::Less

@@ -11,7 +11,7 @@ pub(crate) mod rect;
 pub(crate) mod triangle;
 
 // re-export all the geometry variants:
-pub use coordinate::Coordinate;
+pub use coordinate::{Coord, Coordinate};
 pub use geometry_collection::GeometryCollection;
 pub use line::Line;
 pub use line_string::LineString;

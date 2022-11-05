@@ -3,11 +3,11 @@ use crate::geometry::*;
 use crate::geometry_delegate_impl;
 use crate::{GeoFloat, GeoNum};
 
-impl<T> Contains<Coordinate<T>> for Geometry<T>
+impl<T> Contains<Coord<T>> for Geometry<T>
 where
     T: GeoNum,
 {
-    fn contains(&self, coord: &Coordinate<T>) -> bool {
+    fn contains(&self, coord: &Coord<T>) -> bool {
         self.contains(&Point::from(*coord))
     }
 }

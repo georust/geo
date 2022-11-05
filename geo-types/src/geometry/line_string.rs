@@ -1,7 +1,7 @@
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use crate::{CoordNum, Coordinate, Line, Point, Triangle};
+use crate::{CoordNum, Coord, Line, Point, Triangle};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
@@ -132,11 +132,11 @@ use std::ops::{Index, IndexMut};
 
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct LineString<T: CoordNum = f64>(pub Vec<Coordinate<T>>);
+pub struct LineString<T: CoordNum = f64>(pub Vec<Coord<T>>);
 
 /// A [`Point`] iterator returned by the `points` method
 #[derive(Debug)]
-pub struct PointsIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
+pub struct PointsIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coord<T>>);
 
 impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
     type Item = Point<T>;
@@ -164,10 +164,10 @@ impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
 
 /// A [`Coordinate`] iterator used by the `into_iter` method on a [`LineString`]
 #[derive(Debug)]
-pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
+pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coord<T>>);
 
 impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
-    type Item = &'a Coordinate<T>;
+    type Item = &'a Coord<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
@@ -192,7 +192,7 @@ impl<'a, T: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T> {
 
 impl<T: CoordNum> LineString<T> {
     /// Instantiate Self from the raw content value
-    pub fn new(value: Vec<Coordinate<T>>) -> Self {
+    pub fn new(value: Vec<Coord<T>>) -> Self {
         Self(value)
     }
 
@@ -208,12 +208,12 @@ impl<T: CoordNum> LineString<T> {
     }
 
     /// Return an iterator yielding the members of a [`LineString`] as [`Coordinate`]s
-    pub fn coords(&self) -> impl Iterator<Item = &Coordinate<T>> {
+    pub fn coords(&self) -> impl Iterator<Item = &Coord<T>> {
         self.0.iter()
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as mutable [`Coordinate`]s
-    pub fn coords_mut(&mut self) -> impl Iterator<Item = &mut Coordinate<T>> {
+    pub fn coords_mut(&mut self) -> impl Iterator<Item = &mut Coord<T>> {
         self.0.iter_mut()
     }
 
@@ -223,7 +223,7 @@ impl<T: CoordNum> LineString<T> {
     }
 
     /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Coordinate`]s
-    pub fn into_inner(self) -> Vec<Coordinate<T>> {
+    pub fn into_inner(self) -> Vec<Coord<T>> {
         self.0
     }
 
@@ -336,7 +336,7 @@ impl<T: CoordNum> LineString<T> {
 }
 
 /// Turn a [`Vec`] of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T> {
+impl<T: CoordNum, IC: Into<Coord<T>>> From<Vec<IC>> for LineString<T> {
     fn from(v: Vec<IC>) -> Self {
         Self(v.into_iter().map(|c| c.into()).collect())
     }
@@ -349,7 +349,7 @@ impl<T: CoordNum> From<Line<T>> for LineString<T> {
 }
 
 /// Turn an iterator of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, IC: Into<Coordinate<T>>> FromIterator<IC> for LineString<T> {
+impl<T: CoordNum, IC: Into<Coord<T>>> FromIterator<IC> for LineString<T> {
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {
         Self(iter.into_iter().map(|c| c.into()).collect())
     }
@@ -357,8 +357,8 @@ impl<T: CoordNum, IC: Into<Coordinate<T>>> FromIterator<IC> for LineString<T> {
 
 /// Iterate over all the [`Coordinate`]s in this [`LineString`].
 impl<T: CoordNum> IntoIterator for LineString<T> {
-    type Item = Coordinate<T>;
-    type IntoIter = ::std::vec::IntoIter<Coordinate<T>>;
+    type Item = Coord<T>;
+    type IntoIter = ::std::vec::IntoIter<Coord<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -366,7 +366,7 @@ impl<T: CoordNum> IntoIterator for LineString<T> {
 }
 
 impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
-    type Item = &'a Coordinate<T>;
+    type Item = &'a Coord<T>;
     type IntoIter = CoordinatesIter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -376,24 +376,24 @@ impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
 
 /// Mutably iterate over all the [`Coordinate`]s in this [`LineString`]
 impl<'a, T: CoordNum> IntoIterator for &'a mut LineString<T> {
-    type Item = &'a mut Coordinate<T>;
-    type IntoIter = ::std::slice::IterMut<'a, Coordinate<T>>;
+    type Item = &'a mut Coord<T>;
+    type IntoIter = ::std::slice::IterMut<'a, Coord<T>>;
 
-    fn into_iter(self) -> ::std::slice::IterMut<'a, Coordinate<T>> {
+    fn into_iter(self) -> ::std::slice::IterMut<'a, Coord<T>> {
         self.0.iter_mut()
     }
 }
 
 impl<T: CoordNum> Index<usize> for LineString<T> {
-    type Output = Coordinate<T>;
+    type Output = Coord<T>;
 
-    fn index(&self, index: usize) -> &Coordinate<T> {
+    fn index(&self, index: usize) -> &Coord<T> {
         self.0.index(index)
     }
 }
 
 impl<T: CoordNum> IndexMut<usize> for LineString<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Coordinate<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Coord<T> {
         self.0.index_mut(index)
     }
 }

@@ -7,11 +7,11 @@ use crate::{GeoFloat, GeoNum};
 // │ Implementations for Line │
 // └──────────────────────────┘
 
-impl<T> Contains<Coordinate<T>> for Line<T>
+impl<T> Contains<Coord<T>> for Line<T>
 where
     T: GeoNum,
 {
-    fn contains(&self, coord: &Coordinate<T>) -> bool {
+    fn contains(&self, coord: &Coord<T>) -> bool {
         if self.start == self.end {
             &self.start == coord
         } else {

@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use crate::{
-    CoordFloat, Coordinate, HasKernel, Line, LineString, MultiLineString, MultiPolygon, Point,
+    CoordFloat, Coord, HasKernel, Line, LineString, MultiLineString, MultiPolygon, Point,
     Polygon, Triangle,
 };
 use std::cmp::Ordering;
@@ -179,7 +179,7 @@ where
 }
 
 // Wrapper for visvalingam_indices, mapping indices back to points
-fn visvalingam<T>(orig: &LineString<T>, epsilon: &T) -> Vec<Coordinate<T>>
+fn visvalingam<T>(orig: &LineString<T>, epsilon: &T) -> Vec<Coord<T>>
 where
     T: CoordFloat,
 {
@@ -205,7 +205,7 @@ fn vwp_wrapper<T>(
     exterior: &LineString<T>,
     interiors: Option<&[LineString<T>]>,
     epsilon: &T,
-) -> Vec<Vec<Coordinate<T>>>
+) -> Vec<Vec<Coord<T>>>
 where
     T: CoordFloat + RTreeNum + HasKernel,
 {
@@ -241,7 +241,7 @@ fn visvalingam_preserve<T>(
     orig: &LineString<T>,
     epsilon: &T,
     tree: &mut RTree<Line<T>>,
-) -> Vec<Coordinate<T>>
+) -> Vec<Coord<T>>
 where
     T: CoordFloat + RTreeNum + HasKernel,
 {
@@ -389,7 +389,7 @@ where
 fn tree_intersect<T>(
     tree: &RTree<Line<T>>,
     triangle: &VScore<T, bool>,
-    orig: &[Coordinate<T>],
+    orig: &[Coord<T>],
 ) -> bool
 where
     T: CoordFloat + RTreeNum + HasKernel,
@@ -674,7 +674,7 @@ mod test {
         cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, SimplifyVW, SimplifyVWPreserve,
     };
     use crate::{
-        line_string, point, polygon, Coordinate, LineString, MultiLineString, MultiPolygon, Point,
+        line_string, point, polygon, Coord, LineString, MultiLineString, MultiPolygon, Point,
         Polygon,
     };
 
@@ -692,7 +692,7 @@ mod test {
         let correct = vec![(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
         let correct_ls: Vec<_> = correct
             .iter()
-            .map(|e| Coordinate::from((e.0, e.1)))
+            .map(|e| Coord::from((e.0, e.1)))
             .collect();
 
         let simplified = visvalingam(&ls, &30.);
@@ -748,7 +748,7 @@ mod test {
         ];
         let correct_ls: Vec<_> = correct
             .iter()
-            .map(|e| Coordinate::from((e.0, e.1)))
+            .map(|e| Coord::from((e.0, e.1)))
             .collect();
         assert_eq!(simplified[0], correct_ls);
     }
@@ -846,7 +846,7 @@ mod test {
     #[test]
     fn visvalingam_test_two_point_linestring() {
         let vec = vec![Point::new(0.0, 0.0), Point::new(27.8, 0.1)];
-        let compare = vec![Coordinate::from((0.0, 0.0)), Coordinate::from((27.8, 0.1))];
+        let compare = vec![Coord::from((0.0, 0.0)), Coord::from((27.8, 0.1))];
         let simplified = visvalingam(&LineString::from(vec), &1.0);
         assert_eq!(simplified, compare);
     }

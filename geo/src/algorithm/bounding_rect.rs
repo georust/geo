@@ -30,7 +30,7 @@ pub trait BoundingRect<T: CoordNum> {
     fn bounding_rect(&self) -> Self::Output;
 }
 
-impl<T> BoundingRect<T> for Coordinate<T>
+impl<T> BoundingRect<T> for Coord<T>
 where
     T: CoordNum,
 {

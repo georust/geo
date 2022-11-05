@@ -22,7 +22,7 @@ where
         fn intersects(&self, rhs: &G) -> bool;
     }
 }
-symmetric_intersects_impl!(Coordinate<T>, Geometry<T>);
+symmetric_intersects_impl!(Coord<T>, Geometry<T>);
 symmetric_intersects_impl!(Line<T>, Geometry<T>);
 symmetric_intersects_impl!(Rect<T>, Geometry<T>);
 symmetric_intersects_impl!(Polygon<T>, Geometry<T>);
@@ -40,7 +40,7 @@ where
         self.iter().any(|geom| geom.intersects(rhs))
     }
 }
-symmetric_intersects_impl!(Coordinate<T>, GeometryCollection<T>);
+symmetric_intersects_impl!(Coord<T>, GeometryCollection<T>);
 symmetric_intersects_impl!(Line<T>, GeometryCollection<T>);
 symmetric_intersects_impl!(Rect<T>, GeometryCollection<T>);
 symmetric_intersects_impl!(Polygon<T>, GeometryCollection<T>);

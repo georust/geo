@@ -1,4 +1,4 @@
-use crate::{CoordNum, Coordinate, Point};
+use crate::{CoordNum, Coord, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
@@ -12,8 +12,8 @@ use approx::{AbsDiffEq, RelativeEq};
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T: CoordNum = f64> {
-    pub start: Coordinate<T>,
-    pub end: Coordinate<T>,
+    pub start: Coord<T>,
+    pub end: Coord<T>,
 }
 
 impl<T: CoordNum> Line<T> {
@@ -31,7 +31,7 @@ impl<T: CoordNum> Line<T> {
     /// ```
     pub fn new<C>(start: C, end: C) -> Self
     where
-        C: Into<Coordinate<T>>,
+        C: Into<Coord<T>>,
     {
         Self {
             start: start.into(),
@@ -40,7 +40,7 @@ impl<T: CoordNum> Line<T> {
     }
 
     /// Calculate the difference in coordinates (Δx, Δy).
-    pub fn delta(&self) -> Coordinate<T> {
+    pub fn delta(&self) -> Coord<T> {
         self.end - self.start
     }
 

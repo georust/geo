@@ -1,4 +1,4 @@
-use crate::{point, CoordFloat, CoordNum, Coordinate};
+use crate::{point, CoordFloat, CoordNum, Coord};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -28,10 +28,10 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T: CoordNum = f64>(pub Coordinate<T>);
+pub struct Point<T: CoordNum = f64>(pub Coord<T>);
 
-impl<T: CoordNum> From<Coordinate<T>> for Point<T> {
-    fn from(x: Coordinate<T>) -> Self {
+impl<T: CoordNum> From<Coord<T>> for Point<T> {
+    fn from(x: Coord<T>) -> Self {
         Point(x)
     }
 }

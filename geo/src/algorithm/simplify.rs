@@ -1,4 +1,4 @@
-use crate::{Coordinate, GeoFloat, Line, LineString, MultiLineString, MultiPolygon, Polygon};
+use crate::{Coord, GeoFloat, Line, LineString, MultiLineString, MultiPolygon, Polygon};
 use crate::{CoordsIter, EuclideanDistance};
 
 // Because the RDP algorithm is recursive, we can't assign an index to a point inside the loop
@@ -10,17 +10,17 @@ where
     T: GeoFloat,
 {
     index: usize,
-    coord: Coordinate<T>,
+    coord: Coord<T>,
 }
 
 // Wrapper for the RDP algorithm, returning simplified points
-fn rdp<T>(coords: impl Iterator<Item = Coordinate<T>>, epsilon: &T) -> Vec<Coordinate<T>>
+fn rdp<T>(coords: impl Iterator<Item = Coord<T>>, epsilon: &T) -> Vec<Coord<T>>
 where
     T: GeoFloat,
 {
     // Epsilon must be greater than zero for any meaningful simplification to happen
     if *epsilon <= T::zero() {
-        return coords.collect::<Vec<Coordinate<T>>>();
+        return coords.collect::<Vec<Coord<T>>>();
     }
     compute_rdp(
         &coords

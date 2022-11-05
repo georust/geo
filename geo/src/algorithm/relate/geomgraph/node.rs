@@ -1,12 +1,12 @@
 use super::{CoordPos, Dimensions, EdgeEnd, EdgeEndBundleStar, IntersectionMatrix, Label};
-use crate::{Coordinate, GeoFloat};
+use crate::{Coord, GeoFloat};
 
 #[derive(Debug, Clone)]
 pub(crate) struct CoordNode<F>
 where
     F: GeoFloat,
 {
-    coordinate: Coordinate<F>,
+    coordinate: Coord<F>,
     label: Label,
 }
 
@@ -28,14 +28,14 @@ impl<F> CoordNode<F>
 where
     F: GeoFloat,
 {
-    pub fn new(coordinate: Coordinate<F>) -> CoordNode<F> {
+    pub fn new(coordinate: Coord<F>) -> CoordNode<F> {
         CoordNode {
             coordinate,
             label: Label::empty_line_or_point(),
         }
     }
 
-    pub fn coordinate(&self) -> &Coordinate<F> {
+    pub fn coordinate(&self) -> &Coord<F> {
         &self.coordinate
     }
 

@@ -31,7 +31,7 @@ pub enum CoordPos {
 /// ```
 pub trait CoordinatePosition {
     type Scalar: GeoNum;
-    fn coordinate_position(&self, coord: &Coordinate<Self::Scalar>) -> CoordPos {
+    fn coordinate_position(&self, coord: &Coord<Self::Scalar>) -> CoordPos {
         let mut is_inside = false;
         let mut boundary_count = 0;
 
@@ -56,20 +56,20 @@ pub trait CoordinatePosition {
     //  2. increment `boundary_count` for each component whose Boundary contains `coord`.
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<Self::Scalar>,
+        coord: &Coord<Self::Scalar>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     );
 }
 
-impl<T> CoordinatePosition for Coordinate<T>
+impl<T> CoordinatePosition for Coord<T>
 where
     T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
@@ -86,7 +86,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
@@ -103,7 +103,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -129,7 +129,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -178,7 +178,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -195,7 +195,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -212,7 +212,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
@@ -229,7 +229,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -274,7 +274,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -291,7 +291,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -308,7 +308,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -326,7 +326,7 @@ where
     crate::geometry_delegate_impl! {
         fn calculate_coordinate_position(
             &self,
-            coord: &Coordinate<T>,
+            coord: &Coord<T>,
             is_inside: &mut bool,
             boundary_count: &mut usize) -> ();
     }
@@ -337,7 +337,7 @@ impl<'a, T: GeoNum> CoordinatePosition for GeometryCow<'a, T> {
     crate::geometry_cow_delegate_impl! {
         fn calculate_coordinate_position(
             &self,
-            coord: &Coordinate<T>,
+            coord: &Coord<T>,
             is_inside: &mut bool,
             boundary_count: &mut usize) -> ();
     }
@@ -345,7 +345,7 @@ impl<'a, T: GeoNum> CoordinatePosition for GeometryCow<'a, T> {
 
 /// Calculate the position of a `Coordinate` relative to a
 /// closed `LineString`.
-pub fn coord_pos_relative_to_ring<T>(coord: Coordinate<T>, linestring: &LineString<T>) -> CoordPos
+pub fn coord_pos_relative_to_ring<T>(coord: Coord<T>, linestring: &LineString<T>) -> CoordPos
 where
     T: GeoNum,
 {
@@ -442,7 +442,7 @@ mod test {
     fn test_empty_poly() {
         let square_poly: Polygon<f64> = Polygon::new(LineString::new(vec![]), vec![]);
         assert_eq!(
-            square_poly.coordinate_position(&Coordinate::zero()),
+            square_poly.coordinate_position(&Coord::zero()),
             CoordPos::Outside
         );
     }
@@ -567,7 +567,7 @@ mod test {
         let line_string =
             line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 1.0), (x: 2.0, y: 0.0), (x: 3.0, y: 0.0)];
 
-        let start = Coordinate::zero();
+        let start = Coord::zero();
         assert_eq!(
             line_string.coordinate_position(&start),
             CoordPos::OnBoundary
@@ -590,12 +590,12 @@ mod test {
     fn test_degenerate_line_strings() {
         let line_string = line_string![(x: 0.0, y: 0.0), (x: 0.0, y: 0.0)];
 
-        let start = Coordinate::zero();
+        let start = Coord::zero();
         assert_eq!(line_string.coordinate_position(&start), CoordPos::Inside);
 
         let line_string = line_string![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0)];
 
-        let start = Coordinate::zero();
+        let start = Coord::zero();
         assert_eq!(
             line_string.coordinate_position(&start),
             CoordPos::OnBoundary
@@ -610,7 +610,7 @@ mod test {
         assert!(line_string.is_closed());
 
         // closed line strings have no boundary
-        let start = Coordinate::zero();
+        let start = Coord::zero();
         assert_eq!(line_string.coordinate_position(&start), CoordPos::Inside);
 
         let midpoint = coord! { x: 0.5, y: 0.5 };
@@ -647,7 +647,7 @@ mod test {
         );
 
         // in boundary of first and second, so considered *not* in the boundary by mod 2 rule
-        let shared_start = Coordinate::zero();
+        let shared_start = Coord::zero();
         assert_eq!(
             multi_line_string.coordinate_position(&shared_start),
             CoordPos::Outside

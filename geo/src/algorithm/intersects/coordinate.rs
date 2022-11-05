@@ -1,17 +1,17 @@
 use super::Intersects;
 use crate::*;
 
-impl<T> Intersects<Coordinate<T>> for Coordinate<T>
+impl<T> Intersects<Coord<T>> for Coord<T>
 where
     T: CoordNum,
 {
-    fn intersects(&self, rhs: &Coordinate<T>) -> bool {
+    fn intersects(&self, rhs: &Coord<T>) -> bool {
         self == rhs
     }
 }
 
 // The other side of this is handled via a blanket impl.
-impl<T> Intersects<Point<T>> for Coordinate<T>
+impl<T> Intersects<Point<T>> for Coord<T>
 where
     T: CoordNum,
 {

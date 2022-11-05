@@ -1,5 +1,5 @@
 use crate::CoordsIter;
-use crate::{CoordNum, Coordinate};
+use crate::{CoordNum, Coord};
 
 /// Find the extreme coordinates and indices of a geometry.
 ///
@@ -31,7 +31,7 @@ pub trait Extremes<'a, T: CoordNum> {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Extreme<T: CoordNum> {
     pub index: usize,
-    pub coord: Coordinate<T>,
+    pub coord: Coord<T>,
 }
 
 #[derive(Debug, PartialEq, Eq)]

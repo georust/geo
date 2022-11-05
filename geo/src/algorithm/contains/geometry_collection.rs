@@ -2,11 +2,11 @@ use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
 use crate::geometry::*;
 use crate::{GeoFloat, GeoNum};
 
-impl<T> Contains<Coordinate<T>> for GeometryCollection<T>
+impl<T> Contains<Coord<T>> for GeometryCollection<T>
 where
     T: GeoNum,
 {
-    fn contains(&self, coord: &Coordinate<T>) -> bool {
+    fn contains(&self, coord: &Coord<T>) -> bool {
         self.iter().any(|geometry| geometry.contains(coord))
     }
 }

@@ -1,4 +1,4 @@
-use crate::{Coordinate, GeoFloat, Line};
+use crate::{Coord, GeoFloat, Line};
 use geo_types::coord;
 
 use crate::BoundingRect;
@@ -8,7 +8,7 @@ use crate::Intersects;
 pub enum LineIntersection<F: GeoFloat> {
     /// Lines intersect in a single point
     SinglePoint {
-        intersection: Coordinate<F>,
+        intersection: Coord<F>,
         /// For Lines which intersect in a single point, that point may be either an endpoint
         /// or in the interior of each Line.
         /// If the point lies in the interior of both Lines, we call it a _proper_ intersection.
@@ -127,7 +127,7 @@ where
         //
         // which used to produce the INCORRECT result: (20.31970698357233, 46.76654261437082, NaN)
 
-        let intersection: Coordinate<F>;
+        let intersection: Coord<F>;
         // false positives for this overzealous clippy https://github.com/rust-lang/rust-clippy/issues/6747
         #[allow(clippy::suspicious_operation_groupings)]
         if p.start == q.start || p.start == q.end {
@@ -163,7 +163,7 @@ fn collinear_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<LineInt
         LineIntersection::Collinear { intersection }
     }
 
-    fn improper<F: GeoFloat>(intersection: Coordinate<F>) -> LineIntersection<F> {
+    fn improper<F: GeoFloat>(intersection: Coord<F>) -> LineIntersection<F> {
         LineIntersection::SinglePoint {
             intersection,
             is_proper: false,
@@ -204,7 +204,7 @@ fn collinear_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<LineInt
 /// segment.
 ///
 /// `returns` the nearest endpoint to the other segment
-fn nearest_endpoint<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coordinate<F> {
+fn nearest_endpoint<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coord<F> {
     use geo_types::private_utils::point_line_euclidean_distance;
 
     let mut nearest_pt = p.start;
@@ -227,7 +227,7 @@ fn nearest_endpoint<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coordinate<F> {
     nearest_pt
 }
 
-fn raw_line_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<Coordinate<F>> {
+fn raw_line_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<Coord<F>> {
     let p_min_x = p.start.x.min(p.end.x);
     let p_min_y = p.start.y.min(p.end.y);
     let p_max_x = p.start.x.max(p.end.x);
@@ -291,7 +291,7 @@ fn raw_line_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<Coordina
 /// ordinate values (in absolute value).  This has the effect of
 /// removing common significant digits from the calculation to
 /// maintain more bits of precision.
-fn proper_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coordinate<F> {
+fn proper_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coord<F> {
     // Computes a segment intersection using homogeneous coordinates.
     // Round-off error can cause the raw computation to fail,
     // (usually due to the segments being approximately parallel).

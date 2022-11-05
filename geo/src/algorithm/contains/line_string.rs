@@ -7,11 +7,11 @@ use crate::{CoordNum, GeoFloat, GeoNum};
 // │ Implementations for LineString │
 // └────────────────────────────────┘
 
-impl<T> Contains<Coordinate<T>> for LineString<T>
+impl<T> Contains<Coord<T>> for LineString<T>
 where
     T: GeoNum,
 {
-    fn contains(&self, coord: &Coordinate<T>) -> bool {
+    fn contains(&self, coord: &Coord<T>) -> bool {
         if self.0.is_empty() {
             return false;
         }

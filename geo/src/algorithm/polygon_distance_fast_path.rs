@@ -2,7 +2,7 @@ use crate::prelude::*;
 use crate::Extremes;
 use crate::{GeoFloat, Line, Point, Polygon, Triangle};
 use geo_types::CoordFloat;
-use geo_types::Coordinate;
+use geo_types::Coord;
 use num_traits::float::FloatConst;
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance
@@ -85,7 +85,7 @@ where
 
 /// is p1 -> p2 -> p3 wound clockwise?
 #[inline]
-fn clockwise<T>(c1: Coordinate<T>, c2: Coordinate<T>, c3: Coordinate<T>) -> bool
+fn clockwise<T>(c1: Coord<T>, c2: Coord<T>, c3: Coord<T>) -> bool
 where
     T: CoordFloat + HasKernel,
 {

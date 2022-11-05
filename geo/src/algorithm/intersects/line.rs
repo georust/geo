@@ -2,11 +2,11 @@ use super::{point_in_rect, Intersects};
 use crate::kernels::*;
 use crate::*;
 
-impl<T> Intersects<Coordinate<T>> for Line<T>
+impl<T> Intersects<Coord<T>> for Line<T>
 where
     T: GeoNum,
 {
-    fn intersects(&self, rhs: &Coordinate<T>) -> bool {
+    fn intersects(&self, rhs: &Coord<T>) -> bool {
         // First we check if the point is collinear with the line.
         T::Ker::orient2d(self.start, self.end, *rhs) == Orientation::Collinear
         // In addition, the point must have _both_ coordinates
@@ -14,7 +14,7 @@ where
             && point_in_rect(*rhs, self.start, self.end)
     }
 }
-symmetric_intersects_impl!(Coordinate<T>, Line<T>);
+symmetric_intersects_impl!(Coord<T>, Line<T>);
 symmetric_intersects_impl!(Line<T>, Point<T>);
 
 impl<T> Intersects<Line<T>> for Line<T>

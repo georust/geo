@@ -5,7 +5,7 @@ use crate::*;
 impl<T, G> Intersects<G> for Point<T>
 where
     T: CoordNum,
-    Coordinate<T>: Intersects<G>,
+    Coord<T>: Intersects<G>,
 {
     fn intersects(&self, rhs: &G) -> bool {
         self.0.intersects(rhs)
@@ -23,6 +23,6 @@ where
     }
 }
 
-symmetric_intersects_impl!(Coordinate<T>, MultiPoint<T>);
+symmetric_intersects_impl!(Coord<T>, MultiPoint<T>);
 symmetric_intersects_impl!(Line<T>, MultiPoint<T>);
 symmetric_intersects_impl!(Polygon<T>, MultiPoint<T>);

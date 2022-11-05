@@ -2,7 +2,7 @@ use std::{cmp::Ordering, ops::Deref};
 
 use super::SweepPoint;
 use crate::{
-    line_intersection::line_intersection, Coordinate, GeoFloat, GeoNum, Kernel, Line,
+    line_intersection::line_intersection, Coord, GeoFloat, GeoNum, Kernel, Line,
     LineIntersection,
 };
 
@@ -61,8 +61,8 @@ impl<T: GeoNum> From<Line<T>> for LineOrPoint<T> {
 }
 
 /// Convert from a [`Coordinate`]
-impl<T: GeoNum> From<Coordinate<T>> for LineOrPoint<T> {
-    fn from(c: Coordinate<T>) -> Self {
+impl<T: GeoNum> From<Coord<T>> for LineOrPoint<T> {
+    fn from(c: Coord<T>) -> Self {
         Self {
             left: c.into(),
             right: c.into(),
@@ -247,7 +247,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
                     x = x.next_after(T::infinity());
                 }
 
-                let pt: SweepPoint<_> = Coordinate { x, y }.into();
+                let pt: SweepPoint<_> = Coord { x, y }.into();
                 debug_assert!(
                     pt >= self.left,
                     "line intersection before first line: {pt:?}\n\tLine({lp1:?} - {lp2:?}) X Line({lp3:?} - {lp4:?})",
@@ -301,7 +301,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
 mod tests {
     use std::cmp::Ordering;
 
-    use geo_types::{Coordinate, LineString};
+    use geo_types::{Coord, LineString};
     use wkt::ToWkt;
 
     use crate::{GeoFloat, GeoNum, HasKernel, Kernel};
@@ -312,20 +312,20 @@ mod tests {
     #[test]
     #[ignore]
     fn check_ordering() {
-        let pt_7 = Coordinate::from((-32.57812499999999, 241.33427773853316));
-        let pt_8 = Coordinate::from((-36.11348070978957, 237.7989220287436));
-        let pt_13 = Coordinate::from((-25.507080078124993, 248.40532266040816));
-        let pt_14 = Coordinate::from((-36.48784219165816, 237.424560546875));
-        let _pt_15 = Coordinate::from((4.4929199218750036, 196.44379843334184));
-        let pt_16 = Coordinate::from((-36.048578439260666, 237.8638242992725));
-        let pt_17 = Coordinate::from((3.545624214480127, 197.39109414073673));
+        let pt_7 = Coord::from((-32.57812499999999, 241.33427773853316));
+        let pt_8 = Coord::from((-36.11348070978957, 237.7989220287436));
+        let pt_13 = Coord::from((-25.507080078124993, 248.40532266040816));
+        let pt_14 = Coord::from((-36.48784219165816, 237.424560546875));
+        let _pt_15 = Coord::from((4.4929199218750036, 196.44379843334184));
+        let pt_16 = Coord::from((-36.048578439260666, 237.8638242992725));
+        let pt_17 = Coord::from((3.545624214480127, 197.39109414073673));
 
-        fn check_isection<T: GeoFloat>(abcd: [Coordinate<T>; 4]) -> Option<LineOrPoint<T>> {
+        fn check_isection<T: GeoFloat>(abcd: [Coord<T>; 4]) -> Option<LineOrPoint<T>> {
             let l1 = LineOrPoint::from((abcd[0].into(), abcd[1].into()));
             let l2 = LineOrPoint::from((abcd[2].into(), abcd[3].into()));
             l1.intersect_line_ordered(&l2)
         }
-        fn check_lines<T: GeoNum>(abcd: [Coordinate<T>; 4]) -> Ordering {
+        fn check_lines<T: GeoNum>(abcd: [Coord<T>; 4]) -> Ordering {
             let l1 = LineOrPoint::from((abcd[0].into(), abcd[1].into()));
             let l2 = LineOrPoint::from((abcd[2].into(), abcd[3].into()));
             l1.partial_cmp(&l2).unwrap()

@@ -1,6 +1,6 @@
 use super::super::Edge;
 use super::SegmentIntersector;
-use crate::{Coordinate, GeoFloat};
+use crate::{Coord, GeoFloat};
 
 use std::cell::RefCell;
 use std::rc::Rc;

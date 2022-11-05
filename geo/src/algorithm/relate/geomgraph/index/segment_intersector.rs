@@ -1,5 +1,5 @@
 use super::super::{CoordNode, Edge, LineIntersection, LineIntersector};
-use crate::{Coordinate, GeoFloat, Line};
+use crate::{Coord, GeoFloat, Line};
 
 use std::cell::{Ref, RefCell};
 
@@ -12,7 +12,7 @@ where
     // Though JTS leaves this abstract - we might consider hard coding it to a RobustLineIntersector
     line_intersector: Box<dyn LineIntersector<F>>,
     edges_are_from_same_geometry: bool,
-    proper_intersection_point: Option<Coordinate<F>>,
+    proper_intersection_point: Option<Coord<F>>,
     has_proper_interior_intersection: bool,
     boundary_nodes: Option<[Vec<CoordNode<F>>; 2]>,
 }
@@ -161,7 +161,7 @@ where
 
     fn is_boundary_point(
         &self,
-        intersection: &Coordinate<F>,
+        intersection: &Coord<F>,
         boundary_nodes: &Option<[Vec<CoordNode<F>>; 2]>,
     ) -> bool {
         match &boundary_nodes {

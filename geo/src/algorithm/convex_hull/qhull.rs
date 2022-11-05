@@ -1,7 +1,7 @@
 use super::{swap_remove_to_first, trivial_hull};
 use crate::kernels::{HasKernel, Kernel, Orientation};
 use crate::utils::partition_slice;
-use crate::{coord, Coordinate, GeoNum, LineString};
+use crate::{coord, Coord, GeoNum, LineString};
 
 // Determines if `p_c` lies on the positive side of the
 // segment `p_a` to `p_b`. In other words, whether segment
@@ -9,7 +9,7 @@ use crate::{coord, Coordinate, GeoNum, LineString};
 // segment. We use kernels to ensure this predicate is
 // exact.
 #[inline]
-fn is_ccw<T>(p_a: Coordinate<T>, p_b: Coordinate<T>, p_c: Coordinate<T>) -> bool
+fn is_ccw<T>(p_a: Coord<T>, p_b: Coord<T>, p_c: Coord<T>) -> bool
 where
     T: GeoNum,
 {
@@ -18,7 +18,7 @@ where
 }
 
 // Adapted from https://web.archive.org/web/20180409175413/http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
-pub fn quick_hull<T>(mut points: &mut [Coordinate<T>]) -> LineString<T>
+pub fn quick_hull<T>(mut points: &mut [Coord<T>]) -> LineString<T>
 where
     T: GeoNum,
 {
@@ -65,10 +65,10 @@ where
 
 // recursively calculate the convex hull of a subset of points
 fn hull_set<T>(
-    p_a: Coordinate<T>,
-    p_b: Coordinate<T>,
-    mut set: &mut [Coordinate<T>],
-    hull: &mut Vec<Coordinate<T>>,
+    p_a: Coord<T>,
+    p_b: Coord<T>,
+    mut set: &mut [Coord<T>],
+    hull: &mut Vec<Coord<T>>,
 ) where
     T: GeoNum,
 {

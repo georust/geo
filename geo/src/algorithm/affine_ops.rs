@@ -1,4 +1,4 @@
-use crate::{CoordFloat, CoordNum, Coordinate, MapCoords, MapCoordsInPlace};
+use crate::{CoordFloat, CoordNum, Coord, MapCoords, MapCoordsInPlace};
 use std::fmt;
 
 /// Apply an [`AffineTransform`] like [`scale`](AffineTransform::scale),
@@ -217,7 +217,7 @@ impl<T: CoordNum> AffineTransform<T> {
     /// xoff = origin.x - (origin.x * xfact)
     /// yoff = origin.y - (origin.y * yfact)
     /// ```
-    pub fn scale(xfact: T, yfact: T, origin: impl Into<Coordinate<T>>) -> Self {
+    pub fn scale(xfact: T, yfact: T, origin: impl Into<Coord<T>>) -> Self {
         let (x0, y0) = origin.into().x_y();
         let xoff = x0 - (x0 * xfact);
         let yoff = y0 - (y0 * yfact);
@@ -230,7 +230,7 @@ impl<T: CoordNum> AffineTransform<T> {
     /// Negative scale factors will mirror or reflect coordinates.
     /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
     #[must_use]
-    pub fn scaled(mut self, xfact: T, yfact: T, origin: impl Into<Coordinate<T>>) -> Self {
+    pub fn scaled(mut self, xfact: T, yfact: T, origin: impl Into<Coord<T>>) -> Self {
         self.0 = self.compose(&Self::scale(xfact, yfact, origin)).0;
         self
     }
@@ -257,8 +257,8 @@ impl<T: CoordNum> AffineTransform<T> {
     }
 
     /// Apply the current transform to a coordinate
-    pub fn apply(&self, coord: Coordinate<T>) -> Coordinate<T> {
-        Coordinate {
+    pub fn apply(&self, coord: Coord<T>) -> Coord<T> {
+        Coord {
             x: (self.0[0][0] * coord.x + self.0[0][1] * coord.y + self.0[0][2]),
             y: (self.0[1][0] * coord.x + self.0[1][1] * coord.y + self.0[1][2]),
         }
@@ -318,7 +318,7 @@ impl<U: CoordFloat> AffineTransform<U> {
     /// xoff = origin.x - (origin.x * cos(theta)) + (origin.y * sin(theta))
     /// yoff = origin.y - (origin.x * sin(theta)) + (origin.y * cos(theta))
     /// ```
-    pub fn rotate(degrees: U, origin: impl Into<Coordinate<U>>) -> Self {
+    pub fn rotate(degrees: U, origin: impl Into<Coord<U>>) -> Self {
         let (sin_theta, cos_theta) = degrees.to_radians().sin_cos();
         let (x0, y0) = origin.into().x_y();
         let xoff = x0 - (x0 * cos_theta) + (y0 * sin_theta);
@@ -334,7 +334,7 @@ impl<U: CoordFloat> AffineTransform<U> {
     ///
     /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
     #[must_use]
-    pub fn rotated(mut self, angle: U, origin: impl Into<Coordinate<U>>) -> Self {
+    pub fn rotated(mut self, angle: U, origin: impl Into<Coord<U>>) -> Self {
         self.0 = self.compose(&Self::rotate(angle, origin)).0;
         self
     }
@@ -355,8 +355,8 @@ impl<U: CoordFloat> AffineTransform<U> {
     /// xoff = -origin.y * tan(xs)
     /// yoff = -origin.x * tan(ys)
     /// ```
-    pub fn skew(xs: U, ys: U, origin: impl Into<Coordinate<U>>) -> Self {
-        let Coordinate { x: x0, y: y0 } = origin.into();
+    pub fn skew(xs: U, ys: U, origin: impl Into<Coord<U>>) -> Self {
+        let Coord { x: x0, y: y0 } = origin.into();
         let mut tanx = xs.to_radians().tan();
         let mut tany = ys.to_radians().tan();
         // These checks are stolen from Shapely's implementation -- may not be necessary
@@ -381,7 +381,7 @@ impl<U: CoordFloat> AffineTransform<U> {
     ///
     /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
     #[must_use]
-    pub fn skewed(mut self, xs: U, ys: U, origin: impl Into<Coordinate<U>>) -> Self {
+    pub fn skewed(mut self, xs: U, ys: U, origin: impl Into<Coord<U>>) -> Self {
         self.0 = self.compose(&Self::skew(xs, ys, origin)).0;
         self
     }

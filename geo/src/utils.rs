@@ -1,6 +1,6 @@
 //! Internal utility functions, types, and data structures.
 
-use geo_types::{CoordNum, Coordinate};
+use geo_types::{CoordNum, Coord};
 
 /// Partition a mutable slice in-place so that it contains all elements for
 /// which `predicate(e)` is `true`, followed by all elements for which
@@ -83,7 +83,7 @@ use std::cmp::Ordering;
 /// x coordinate, and break ties with the y coordinate.
 /// Expects none of coordinates to be uncomparable (eg. nan)
 #[inline]
-pub fn lex_cmp<T: CoordNum>(p: &Coordinate<T>, q: &Coordinate<T>) -> Ordering {
+pub fn lex_cmp<T: CoordNum>(p: &Coord<T>, q: &Coord<T>) -> Ordering {
     p.x.partial_cmp(&q.x)
         .unwrap()
         .then(p.y.partial_cmp(&q.y).unwrap())
@@ -94,7 +94,7 @@ pub fn lex_cmp<T: CoordNum>(p: &Coordinate<T>, q: &Coordinate<T>) -> Ordering {
 ///
 /// Should only be called on a non-empty slice with no `nan`
 /// coordinates.
-pub fn least_index<T: CoordNum>(pts: &[Coordinate<T>]) -> usize {
+pub fn least_index<T: CoordNum>(pts: &[Coord<T>]) -> usize {
     pts.iter()
         .enumerate()
         .min_by(|(_, p), (_, q)| lex_cmp(p, q))
@@ -107,7 +107,7 @@ pub fn least_index<T: CoordNum>(pts: &[Coordinate<T>]) -> usize {
 ///
 /// Should only be called on a non-empty slice with no `nan`
 /// coordinates.
-pub fn least_and_greatest_index<T: CoordNum>(pts: &[Coordinate<T>]) -> (usize, usize) {
+pub fn least_and_greatest_index<T: CoordNum>(pts: &[Coord<T>]) -> (usize, usize) {
     assert_ne!(pts.len(), 0);
     let (min, max) = pts
         .iter()

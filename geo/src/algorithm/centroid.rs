@@ -230,7 +230,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
             .unwrap_or(Empty)
     }
 
-    fn add_coord(&mut self, coord: Coordinate<T>) {
+    fn add_coord(&mut self, coord: Coord<T>) {
         self.add_centroid(ZeroDimensional, coord, T::one());
     }
 
@@ -391,7 +391,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
         // Since area is non-zero, we know the ring has at least one point
         let shift = ring.0[0];
 
-        let accumulated_coord = ring.lines().fold(Coordinate::zero(), |accum, line| {
+        let accumulated_coord = ring.lines().fold(Coord::zero(), |accum, line| {
             use crate::MapCoords;
             let line = line.map_coords(|c| c - shift);
             let tmp = line.determinant();
@@ -403,7 +403,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
         self.add_centroid(TwoDimensional, centroid, weight);
     }
 
-    fn add_centroid(&mut self, dimensions: Dimensions, centroid: Coordinate<T>, weight: T) {
+    fn add_centroid(&mut self, dimensions: Dimensions, centroid: Coord<T>, weight: T) {
         let weighted_centroid = WeightedCentroid {
             dimensions,
             weight,
@@ -423,7 +423,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
 // Aggregated state for accumulating the centroid of a geometry or collection of geometries.
 struct WeightedCentroid<T: GeoFloat> {
     weight: T,
-    accumulated: Coordinate<T>,
+    accumulated: Coord<T>,
     /// Collections of Geometries can have different dimensionality. Centroids must be considered
     /// separately by dimensionality.
     ///
@@ -467,7 +467,7 @@ mod test {
     use crate::{coord, line_string, point, polygon};
 
     /// small helper to create a coordinate
-    fn c<T: GeoFloat>(x: T, y: T) -> Coordinate<T> {
+    fn c<T: GeoFloat>(x: T, y: T) -> Coord<T> {
         coord! { x: x, y: y }
     }
 

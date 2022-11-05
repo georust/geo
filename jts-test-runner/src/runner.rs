@@ -447,13 +447,13 @@ impl TestRunner {
 trait RotatedEq<T: GeoNum> {
     fn is_rotated_eq<F>(&self, other: &Self, coord_matcher: F) -> bool
     where
-        F: Fn(&Coordinate<T>, &Coordinate<T>) -> bool;
+        F: Fn(&Coord<T>, &Coord<T>) -> bool;
 }
 
 impl<T: GeoNum> RotatedEq<T> for MultiPolygon<T> {
     fn is_rotated_eq<F>(&self, other: &Self, coord_matcher: F) -> bool
     where
-        F: Fn(&Coordinate<T>, &Coordinate<T>) -> bool,
+        F: Fn(&Coord<T>, &Coord<T>) -> bool,
     {
         if self.0.len() != other.0.len() {
             // We have some discrepancies about having a multipolygon with nothing in it vs a multipolygon with an empty polygon.
@@ -480,7 +480,7 @@ impl<T: GeoNum> RotatedEq<T> for MultiPolygon<T> {
 impl<T: GeoNum> RotatedEq<T> for Polygon<T> {
     fn is_rotated_eq<F>(&self, other: &Self, coord_matcher: F) -> bool
     where
-        F: Fn(&Coordinate<T>, &Coordinate<T>) -> bool,
+        F: Fn(&Coord<T>, &Coord<T>) -> bool,
     {
         if self.interiors().len() != other.interiors().len() {
             return false;
@@ -511,7 +511,7 @@ impl<T: GeoNum> RotatedEq<T> for Polygon<T> {
 impl<T: GeoNum> RotatedEq<T> for LineString<T> {
     fn is_rotated_eq<F>(&self, other: &Self, coord_matcher: F) -> bool
     where
-        F: Fn(&Coordinate<T>, &Coordinate<T>) -> bool,
+        F: Fn(&Coord<T>, &Coord<T>) -> bool,
     {
         assert!(self.is_closed(), "self is not closed");
         assert!(other.is_closed(), "other is not closed");
