@@ -1,7 +1,7 @@
 use crate::convex_hull::qhull;
 use crate::utils::partial_min;
 use crate::{
-    coord, Centroid, CoordNum, Coord, EuclideanDistance, EuclideanLength, GeoFloat, Line,
+    coord, Centroid, Coord, CoordNum, EuclideanDistance, EuclideanLength, GeoFloat, Line,
     LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
 use rstar::{RTree, RTreeNum};
@@ -88,8 +88,7 @@ where
 {
     type Scalar = T;
     fn concave_hull(&self, concavity: T) -> Polygon<T> {
-        let mut aggregated: Vec<Coord<T>> =
-            self.iter().flat_map(|elem| elem.0.clone()).collect();
+        let mut aggregated: Vec<Coord<T>> = self.iter().flat_map(|elem| elem.0.clone()).collect();
         Polygon::new(concave_hull(&mut aggregated, concavity), vec![])
     }
 }

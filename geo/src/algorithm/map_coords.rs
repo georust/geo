@@ -187,10 +187,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Point<T> {
         type Output = Point<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coord<T>) -> Coord<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             Point(func(self.0))
         }
 
@@ -223,10 +220,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Line<T> {
         type Output = Line<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coord<T>) -> Coord<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             Line::new(
                 self.start_point().map_coords(func).0,
                 self.end_point().map_coords(func).0,
@@ -268,10 +262,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for LineString<T> {
         type Output = LineString<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coord<T>) -> Coord<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             LineString::from(
                 self.points()
                     .map(|p| p.map_coords(func))
@@ -316,10 +307,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Polygon<T> {
         type Output = Polygon<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coord<T>) -> Coord<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             Polygon::new(
                 self.exterior().map_coords(func),
                 self.interiors()
@@ -390,10 +378,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPoint<T> {
         type Output = MultiPoint<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coord<T>) -> Coord<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             MultiPoint::new(self.iter().map(|p| p.map_coords(func)).collect())
         }
 
@@ -435,10 +420,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiLineString<T> {
         type Output = MultiLineString<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coord<T>) -> Coord<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             MultiLineString::new(self.iter().map(|l| l.map_coords(func)).collect())
         }
 
@@ -480,10 +462,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPolygon<T> {
         type Output = MultiPolygon<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coord<T>) -> Coord<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             MultiPolygon::new(self.iter().map(|p| p.map_coords(func)).collect())
         }
 
@@ -525,10 +504,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Geometry<T> {
         type Output = Geometry<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coord<T>) -> Coord<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             match *self {
                 Geometry::Point(ref x) => Geometry::Point(x.map_coords(func)),
                 Geometry::Line(ref x) => Geometry::Line(x.map_coords(func)),
@@ -612,10 +588,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for GeometryCollection<T> {
         type Output = GeometryCollection<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coord<T>) -> Coord<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             GeometryCollection::new_from(self.iter().map(|g| g.map_coords(func)).collect())
         }
 
@@ -657,10 +630,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Rect<T> {
         type Output = Rect<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coord<T>) -> Coord<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             Rect::new(func(self.min()), func(self.max()))
         }
 
@@ -695,10 +665,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Triangle<T> {
         type Output = Triangle<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coord<T>) -> Coord<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             Triangle::new(func(self.0), func(self.1), func(self.2))
         }
 
@@ -934,8 +901,8 @@ pub(crate) mod deprecated {
 mod test {
     use super::{MapCoords, MapCoordsInPlace};
     use crate::{
-        coord, polygon, Coord, Geometry, GeometryCollection, Line, LineString,
-        MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect,
+        coord, polygon, Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+        MultiPoint, MultiPolygon, Point, Polygon, Rect,
     };
 
     #[test]

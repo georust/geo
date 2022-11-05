@@ -95,9 +95,7 @@ pub(crate) use impl_contains_geometry_for;
 mod test {
     use crate::line_string;
     use crate::Contains;
-    use crate::{
-        coord, Coord, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle,
-    };
+    use crate::{coord, Coord, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
 
     #[test]
     // see https://github.com/georust/geo/issues/452

@@ -1,7 +1,7 @@
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use crate::{CoordNum, Coord, Line, Point, Triangle};
+use crate::{Coord, CoordNum, Line, Point, Triangle};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 

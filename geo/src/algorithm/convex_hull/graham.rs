@@ -106,10 +106,7 @@ mod test {
             (0.0, 1.0),
             (1.0, 0.0),
         ];
-        let initial = initial
-            .iter()
-            .map(|e| Coord::from((e.0, e.1)))
-            .collect();
+        let initial = initial.iter().map(|e| Coord::from((e.0, e.1))).collect();
         test_convexity(initial);
     }
 

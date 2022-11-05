@@ -4,7 +4,7 @@ extern crate geo;
 
 use criterion::Criterion;
 use geo::ConcaveHull;
-use geo::{CoordNum, Coord};
+use geo::{Coord, CoordNum};
 
 use num_traits::Signed;
 use rand::distributions::uniform::SampleUniform;

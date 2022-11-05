@@ -1,6 +1,6 @@
 //! Internal utility functions, types, and data structures.
 
-use geo_types::{CoordNum, Coord};
+use geo_types::{Coord, CoordNum};
 
 /// Partition a mutable slice in-place so that it contains all elements for
 /// which `predicate(e)` is `true`, followed by all elements for which

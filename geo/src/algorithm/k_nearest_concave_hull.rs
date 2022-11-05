@@ -1,6 +1,6 @@
 use crate::{
-    Contains, ConvexHull, CoordNum, Coord, GeoFloat, Intersects, LineString, MultiPoint,
-    Point, Polygon,
+    Contains, ConvexHull, Coord, CoordNum, GeoFloat, Intersects, LineString, MultiPoint, Point,
+    Polygon,
 };
 use num_traits::Float;
 use rstar::RTreeNum;
@@ -99,9 +99,7 @@ where
 const DELTA: f32 = 0.000000001;
 
 /// Removes duplicate coords from the dataset.
-fn prepare_dataset<'a, T: 'a>(
-    coords: impl Iterator<Item = &'a Coord<T>>,
-) -> rstar::RTree<Coord<T>>
+fn prepare_dataset<'a, T: 'a>(coords: impl Iterator<Item = &'a Coord<T>>) -> rstar::RTree<Coord<T>>
 where
     T: GeoFloat + RTreeNum,
 {
@@ -263,11 +261,8 @@ where
         .take(candidate_no as usize)
 }
 
-fn sort_by_angle<T>(
-    coords: &mut [&Coord<T>],
-    curr_coord: &Coord<T>,
-    prev_coord: &Coord<T>,
-) where
+fn sort_by_angle<T>(coords: &mut [&Coord<T>], curr_coord: &Coord<T>, prev_coord: &Coord<T>)
+where
     T: GeoFloat,
 {
     let base_angle = pseudo_angle(prev_coord.x - curr_coord.x, prev_coord.y - curr_coord.y);

@@ -1,7 +1,7 @@
 use num_traits::Zero;
 use std::cmp::Ordering;
 
-use crate::{coord, CoordNum, Coord};
+use crate::{coord, Coord, CoordNum};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum Orientation {

@@ -3,7 +3,7 @@
 // hidden module is public so the geo crate can reuse these algorithms to
 // prevent duplication. These functions are _not_ meant for public consumption.
 
-use crate::{CoordFloat, CoordNum, Coord, Line, LineString, Point, Rect};
+use crate::{Coord, CoordFloat, CoordNum, Line, LineString, Point, Rect};
 
 pub fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<T>>
 where

@@ -1,4 +1,4 @@
-use crate::{CoordFloat, CoordNum, Coord, MapCoords, MapCoordsInPlace};
+use crate::{Coord, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace};
 use std::fmt;
 
 /// Apply an [`AffineTransform`] like [`scale`](AffineTransform::scale),

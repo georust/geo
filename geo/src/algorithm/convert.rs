@@ -1,4 +1,4 @@
-use crate::{CoordNum, Coord, MapCoords};
+use crate::{Coord, CoordNum, MapCoords};
 
 /// Convert (infalliby) the type of a geometry’s coordinate value.
 ///

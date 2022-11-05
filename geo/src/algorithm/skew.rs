@@ -1,4 +1,4 @@
-use crate::{AffineOps, AffineTransform, BoundingRect, CoordFloat, CoordNum, Coord, Rect};
+use crate::{AffineOps, AffineTransform, BoundingRect, Coord, CoordFloat, CoordNum, Rect};
 
 /// An affine transformation which skews a geometry, sheared by angles along x and y dimensions.
 ///
@@ -105,20 +105,10 @@ pub trait Skew<T: CoordNum> {
     /// approx::assert_relative_eq!(skewed, expected_output, epsilon = 1e-2);
     /// ```
     #[must_use]
-    fn skew_around_point(
-        &self,
-        degrees_x: T,
-        degrees_y: T,
-        origin: impl Into<Coord<T>>,
-    ) -> Self;
+    fn skew_around_point(&self, degrees_x: T, degrees_y: T, origin: impl Into<Coord<T>>) -> Self;
 
     /// Mutable version of [`skew_around_point`](Self::skew_around_point).
-    fn skew_around_point_mut(
-        &mut self,
-        degrees_x: T,
-        degrees_y: T,
-        origin: impl Into<Coord<T>>,
-    );
+    fn skew_around_point_mut(&mut self, degrees_x: T, degrees_y: T, origin: impl Into<Coord<T>>);
 }
 
 impl<T, IR, G> Skew<T> for G

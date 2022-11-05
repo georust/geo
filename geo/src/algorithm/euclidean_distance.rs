@@ -3,8 +3,8 @@ use crate::utils::{coord_pos_relative_to_ring, CoordPos};
 use crate::EuclideanLength;
 use crate::Intersects;
 use crate::{
-    Coord, GeoFloat, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
-    Point, Polygon, Triangle,
+    Coord, GeoFloat, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
+    Polygon, Triangle,
 };
 use num_traits::{float::FloatConst, Bounded, Float, Signed};
 

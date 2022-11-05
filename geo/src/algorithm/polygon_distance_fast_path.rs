@@ -1,8 +1,8 @@
 use crate::prelude::*;
 use crate::Extremes;
 use crate::{GeoFloat, Line, Point, Polygon, Triangle};
-use geo_types::CoordFloat;
 use geo_types::Coord;
+use geo_types::CoordFloat;
 use num_traits::float::FloatConst;
 
 // These are helper functions for the "fast path" of Polygon-Polygon distance

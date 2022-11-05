@@ -143,16 +143,8 @@ mod test {
     #[test]
     fn test_ord() {
         let fake_label = Label::empty_line_or_point();
-        let edge_end_1 = EdgeEnd::new(
-            Coord::zero(),
-            coord! { x: 1.0, y: 1.0 },
-            fake_label.clone(),
-        );
-        let edge_end_2 = EdgeEnd::new(
-            Coord::zero(),
-            coord! { x: 1.0, y: 1.0 },
-            fake_label.clone(),
-        );
+        let edge_end_1 = EdgeEnd::new(Coord::zero(), coord! { x: 1.0, y: 1.0 }, fake_label.clone());
+        let edge_end_2 = EdgeEnd::new(Coord::zero(), coord! { x: 1.0, y: 1.0 }, fake_label.clone());
         assert_eq!(
             edge_end_1.key().cmp(edge_end_2.key()),
             std::cmp::Ordering::Equal

@@ -1,4 +1,4 @@
-use crate::{CoordNum, Coord, Point};
+use crate::{Coord, CoordNum, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 

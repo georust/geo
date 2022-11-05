@@ -2,8 +2,7 @@ use super::{has_disjoint_bboxes, Intersects};
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
 use crate::BoundingRect;
 use crate::{
-    CoordNum, Coord, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
-    Rect,
+    Coord, CoordNum, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect,
 };
 
 impl<T> Intersects<Coord<T>> for Polygon<T>

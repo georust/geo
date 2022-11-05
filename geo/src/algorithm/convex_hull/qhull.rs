@@ -64,12 +64,8 @@ where
 }
 
 // recursively calculate the convex hull of a subset of points
-fn hull_set<T>(
-    p_a: Coord<T>,
-    p_b: Coord<T>,
-    mut set: &mut [Coord<T>],
-    hull: &mut Vec<Coord<T>>,
-) where
+fn hull_set<T>(p_a: Coord<T>, p_b: Coord<T>, mut set: &mut [Coord<T>], hull: &mut Vec<Coord<T>>)
+where
     T: GeoNum,
 {
     if set.is_empty() {

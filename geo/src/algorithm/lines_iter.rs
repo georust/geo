@@ -1,5 +1,5 @@
 use crate::{
-    CoordNum, Coord, Line, LineString, MultiLineString, MultiPolygon, Polygon, Rect, Triangle,
+    Coord, CoordNum, Line, LineString, MultiLineString, MultiPolygon, Polygon, Rect, Triangle,
 };
 use core::slice;
 use std::fmt::Debug;

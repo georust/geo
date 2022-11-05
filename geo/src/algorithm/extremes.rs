@@ -1,5 +1,5 @@
 use crate::CoordsIter;
-use crate::{CoordNum, Coord};
+use crate::{Coord, CoordNum};
 
 /// Find the extreme coordinates and indices of a geometry.
 ///

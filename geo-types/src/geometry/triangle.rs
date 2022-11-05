@@ -1,4 +1,4 @@
-use crate::{polygon, CoordNum, Coord, Line, Polygon};
+use crate::{polygon, Coord, CoordNum, Line, Polygon};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};

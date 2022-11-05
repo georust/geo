@@ -301,10 +301,8 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for GeometryCollection<T> {
 // │ Implementation for Rect │
 // └─────────────────────────┘
 
-type RectIter<T> = iter::Chain<
-    iter::Chain<CoordinateChainOnce<T>, iter::Once<Coord<T>>>,
-    iter::Once<Coord<T>>,
->;
+type RectIter<T> =
+    iter::Chain<iter::Chain<CoordinateChainOnce<T>, iter::Once<Coord<T>>>, iter::Once<Coord<T>>>;
 
 impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Rect<T> {
     type Iter = RectIter<T>;
@@ -632,8 +630,8 @@ impl<'a, T: CoordNum + Debug> fmt::Debug for GeometryExteriorCoordsIter<'a, T> {
 mod test {
     use super::CoordsIter;
     use crate::{
-        coord, line_string, point, polygon, Coord, Geometry, GeometryCollection, Line,
-        LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+        coord, line_string, point, polygon, Coord, Geometry, GeometryCollection, Line, LineString,
+        MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
     };
 
     #[test]

@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use crate::{
-    CoordFloat, Coord, HasKernel, Line, LineString, MultiLineString, MultiPolygon, Point,
-    Polygon, Triangle,
+    Coord, CoordFloat, HasKernel, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
+    Triangle,
 };
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
@@ -386,11 +386,7 @@ where
 }
 
 /// check whether a triangle's edges intersect with any other edges of the LineString
-fn tree_intersect<T>(
-    tree: &RTree<Line<T>>,
-    triangle: &VScore<T, bool>,
-    orig: &[Coord<T>],
-) -> bool
+fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T, bool>, orig: &[Coord<T>]) -> bool
 where
     T: CoordFloat + RTreeNum + HasKernel,
 {
@@ -690,10 +686,7 @@ mod test {
         ];
 
         let correct = vec![(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
-        let correct_ls: Vec<_> = correct
-            .iter()
-            .map(|e| Coord::from((e.0, e.1)))
-            .collect();
+        let correct_ls: Vec<_> = correct.iter().map(|e| Coord::from((e.0, e.1))).collect();
 
         let simplified = visvalingam(&ls, &30.);
         assert_eq!(simplified, correct_ls);
@@ -746,10 +739,7 @@ mod test {
             (300., 40.),
             (301., 10.),
         ];
-        let correct_ls: Vec<_> = correct
-            .iter()
-            .map(|e| Coord::from((e.0, e.1)))
-            .collect();
+        let correct_ls: Vec<_> = correct.iter().map(|e| Coord::from((e.0, e.1))).collect();
         assert_eq!(simplified[0], correct_ls);
     }
     #[test]
