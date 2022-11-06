@@ -1,5 +1,5 @@
 use crate::{
-    CoordFloat, Coord, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint,
+    Coord, CoordFloat, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use std::mem;
