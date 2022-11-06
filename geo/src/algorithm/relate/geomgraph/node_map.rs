@@ -75,9 +75,9 @@ where
             _node_factory: PhantomData,
         }
     }
-    /// Adds a `NF::Node` with the given `Coordinate`.
+    /// Adds a `NF::Node` with the given `Coord`.
     ///
-    /// Note: Coordinates must be non-NaN.
+    /// Note: Coords must be non-NaN.
     pub fn insert_node_with_coordinate(&mut self, coord: Coord<F>) -> &mut NF::Node {
         debug_assert!(
             !coord.x.is_nan() && !coord.y.is_nan(),
@@ -94,17 +94,17 @@ where
         self.map.get(&NodeKey(coord))
     }
 
-    /// Iterates across `NF::Node`s in lexical order of their `Coordinate`
+    /// Iterates across `NF::Node`s in lexical order of their `Coord`
     pub fn iter(&self) -> impl Iterator<Item = &NF::Node> {
         self.map.values()
     }
 
-    /// Iterates across `NF::Node`s in lexical order of their `Coordinate`
+    /// Iterates across `NF::Node`s in lexical order of their `Coord`
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut NF::Node> {
         self.map.values_mut()
     }
 
-    /// Iterates across `NF::Node`s in lexical order of their `Coordinate`
+    /// Iterates across `NF::Node`s in lexical order of their `Coord`
     pub fn into_iter(self) -> impl Iterator<Item = NF::Node> {
         self.map.into_iter().map(|(_k, v)| v)
     }

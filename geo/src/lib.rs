@@ -4,21 +4,21 @@
 //!
 //! # Types
 //!
-//! - **[`Coordinate`]**: A two-dimensional coordinate. All geometry types are composed of [`Coordinate`]s, though [`Coordinate`] itself is not a [`Geometry`] type.
-//! - **[`Point`]**: A single point represented by one [`Coordinate`]
+//! - **[`Coord`]**: A two-dimensional coordinate. All geometry types are composed of [`Coord`]s, though [`Coord`] itself is not a [`Geometry`] type.
+//! - **[`Point`]**: A single point represented by one [`Coord`]
 //! - **[`MultiPoint`]**: A collection of [`Point`]s
-//! - **[`Line`]**: A line segment represented by two [`Coordinate`]s
+//! - **[`Line`]**: A line segment represented by two [`Coord`]s
 //! - **[`LineString`]**: A series of contiguous line segments represented by two or more
-//!   [`Coordinate`]s
+//!   [`Coord`]s
 //! - **[`MultiLineString`]**: A collection of [`LineString`]s
 //! - **[`Polygon`]**: A bounded area represented by one [`LineString`] exterior ring, and zero or
 //!   more [`LineString`] interior rings
 //! - **[`MultiPolygon`]**: A collection of [`Polygon`]s
 //! - **[`Rect`]**: An axis-aligned bounded rectangle represented by minimum and maximum
-//!   [`Coordinate`]s
-//! - **[`Triangle`]**: A bounded area represented by three [`Coordinate`] vertices
+//!   [`Coord`]s
+//! - **[`Triangle`]**: A bounded area represented by three [`Coord`] vertices
 //! - **[`GeometryCollection`]**: A collection of [`Geometry`]s
-//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coordinate`]
+//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coord`]
 //!
 //! The preceding types are reexported from the [`geo-types`] crate. Consider using that crate
 //! if you only need access to these types and no other `geo` functionality.

@@ -8,7 +8,7 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 ///
 /// Unlike `Point` (which in the future may contain additional information such
 /// as an envelope, a precision model, and spatial reference system
-/// information), a `Coordinate` only contains ordinate values and accessor
+/// information), a `Coord` only contains ordinate values and accessor
 /// methods.
 ///
 /// This type implements the [vector space] operations:

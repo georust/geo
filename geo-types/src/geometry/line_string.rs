@@ -5,7 +5,7 @@ use crate::{Coord, CoordNum, Line, Point, Triangle};
 use std::iter::FromIterator;
 use std::ops::{Index, IndexMut};
 
-/// An ordered collection of two or more [`Coordinate`]s, representing a
+/// An ordered collection of two or more [`Coord`]s, representing a
 /// path between locations.
 ///
 /// # Semantics
@@ -66,7 +66,7 @@ use std::ops::{Index, IndexMut};
 /// let line_string: LineString = vec![[0., 0.], [10., 0.]].into();
 /// ```
 //
-/// Or by `collect`ing from a [`Coordinate`] iterator
+/// Or by `collect`ing from a [`Coord`] iterator
 ///
 /// ```
 /// use geo_types::{coord, LineString};
@@ -95,7 +95,7 @@ use std::ops::{Index, IndexMut};
 /// }
 /// ```
 ///
-/// Note that its [`IntoIterator`] impl yields [`Coordinate`]s when looping:
+/// Note that its [`IntoIterator`] impl yields [`Coord`]s when looping:
 ///
 /// ```
 /// use geo_types::{coord, LineString};
@@ -116,7 +116,7 @@ use std::ops::{Index, IndexMut};
 /// ```
 /// ## Decomposition
 ///
-/// You can decompose a [`LineString`] into a [`Vec`] of [`Coordinate`]s or [`Point`]s:
+/// You can decompose a [`LineString`] into a [`Vec`] of [`Coord`]s or [`Point`]s:
 /// ```
 /// use geo_types::{coord, LineString, Point};
 ///
@@ -162,7 +162,7 @@ impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
     }
 }
 
-/// A [`Coordinate`] iterator used by the `into_iter` method on a [`LineString`]
+/// A [`Coord`] iterator used by the `into_iter` method on a [`LineString`]
 #[derive(Debug)]
 pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coord<T>>);
 
@@ -207,12 +207,12 @@ impl<T: CoordNum> LineString<T> {
         PointsIter(self.0.iter())
     }
 
-    /// Return an iterator yielding the members of a [`LineString`] as [`Coordinate`]s
+    /// Return an iterator yielding the members of a [`LineString`] as [`Coord`]s
     pub fn coords(&self) -> impl Iterator<Item = &Coord<T>> {
         self.0.iter()
     }
 
-    /// Return an iterator yielding the coordinates of a [`LineString`] as mutable [`Coordinate`]s
+    /// Return an iterator yielding the coordinates of a [`LineString`] as mutable [`Coord`]s
     pub fn coords_mut(&mut self) -> impl Iterator<Item = &mut Coord<T>> {
         self.0.iter_mut()
     }
@@ -222,7 +222,7 @@ impl<T: CoordNum> LineString<T> {
         self.0.into_iter().map(Point::from).collect()
     }
 
-    /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Coordinate`]s
+    /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Coord`]s
     pub fn into_inner(self) -> Vec<Coord<T>> {
         self.0
     }
@@ -276,9 +276,9 @@ impl<T: CoordNum> LineString<T> {
         })
     }
 
-    /// Close the [`LineString`]. Specifically, if the [`LineString`] has at least one [`Coordinate`], and
-    /// the value of the first [`Coordinate`] **does not** equal the value of the last [`Coordinate`], then a
-    /// new [`Coordinate`] is added to the end with the value of the first [`Coordinate`].
+    /// Close the [`LineString`]. Specifically, if the [`LineString`] has at least one [`Coord`], and
+    /// the value of the first [`Coord`] **does not** equal the value of the last [`Coord`], then a
+    /// new [`Coord`] is added to the end with the value of the first [`Coord`].
     pub fn close(&mut self) {
         if !self.is_closed() {
             // by definition, we treat empty LineString's as closed.
@@ -355,7 +355,7 @@ impl<T: CoordNum, IC: Into<Coord<T>>> FromIterator<IC> for LineString<T> {
     }
 }
 
-/// Iterate over all the [`Coordinate`]s in this [`LineString`].
+/// Iterate over all the [`Coord`]s in this [`LineString`].
 impl<T: CoordNum> IntoIterator for LineString<T> {
     type Item = Coord<T>;
     type IntoIter = ::std::vec::IntoIter<Coord<T>>;

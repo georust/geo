@@ -34,7 +34,7 @@ macro_rules! point {
     };
 }
 
-/// Creates a [`Coordinate`] from the given scalars.
+/// Creates a [`Coord`] from the given scalars.
 ///
 /// ```txt
 /// coord! { x: <number>, y: <number> }
@@ -42,7 +42,7 @@ macro_rules! point {
 ///
 /// # Examples
 ///
-/// Creating a [`Coordinate`], supplying x/y values:
+/// Creating a [`Coord`], supplying x/y values:
 ///
 /// ```
 /// use geo_types::coord;
@@ -51,8 +51,6 @@ macro_rules! point {
 ///
 /// assert_eq!(c, geo_types::coord! { x: 181.2, y: 51.79 });
 /// ```
-///
-/// [`Coordinate`]: ./struct.Point.html
 #[macro_export]
 macro_rules! coord {
     (x: $x:expr, y: $y:expr $(,)* ) => {
@@ -63,7 +61,7 @@ macro_rules! coord {
 /// Creates a [`LineString`] containing the given coordinates.
 ///
 /// ```txt
-/// line_string![Coordinate OR (x: <number>, y: <number>), …]
+/// line_string![Coord OR (x: <number>, y: <number>), …]
 /// ```
 ///
 /// # Examples
@@ -86,7 +84,7 @@ macro_rules! coord {
 /// });
 /// ```
 ///
-/// Creating a [`LineString`], supplying [`Coordinate`]s:
+/// Creating a [`LineString`], supplying [`Coord`]s:
 ///
 /// ```
 /// use geo_types::line_string;
@@ -119,7 +117,7 @@ macro_rules! coord {
 /// );
 /// ```
 ///
-/// [`Coordinate`]: ./struct.Coordinate.html
+/// [`Coord`]: ./struct.Coord.html
 /// [`LineString`]: ./line_string/struct.LineString.html
 #[macro_export]
 macro_rules! line_string {
@@ -151,14 +149,14 @@ macro_rules! line_string {
 /// Creates a [`Polygon`] containing the given coordinates.
 ///
 /// ```txt
-/// polygon![Coordinate OR (x: <number>, y: <number>), …]
+/// polygon![Coord OR (x: <number>, y: <number>), …]
 ///
 /// // or
 ///
 /// polygon!(
-///     exterior: [Coordinate OR (x: <number>, y: <number>), …],
+///     exterior: [Coord OR (x: <number>, y: <number>), …],
 ///     interiors: [
-///         [Coordinate OR (x: <number>, y: <number>), …],
+///         [Coord OR (x: <number>, y: <number>), …],
 ///         …
 ///     ],
 /// )
@@ -212,7 +210,7 @@ macro_rules! line_string {
 /// );
 /// ```
 ///
-/// [`Coordinate`]: ./struct.Coordinate.html
+/// [`Coord`]: ./struct.Coord.html
 /// [`Polygon`]: ./struct.Polygon.html
 #[macro_export]
 macro_rules! polygon {

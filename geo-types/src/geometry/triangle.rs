@@ -4,7 +4,7 @@ use crate::{polygon, Coord, CoordNum, Line, Polygon};
 use approx::{AbsDiffEq, RelativeEq};
 
 /// A bounded 2D area whose three vertices are defined by
-/// `Coordinate`s. The semantics and validity are that of
+/// `Coord`s. The semantics and validity are that of
 /// the equivalent [`Polygon`]; in addition, the three
 /// vertices must not be collinear and they must be distinct.
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]

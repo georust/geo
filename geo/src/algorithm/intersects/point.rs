@@ -1,7 +1,7 @@
 use super::Intersects;
 use crate::*;
 
-// Blanket implementation from Coordinate<T>
+// Blanket implementation from Coord<T>
 impl<T, G> Intersects<G> for Point<T>
 where
     T: CoordNum,

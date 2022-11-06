@@ -2,7 +2,7 @@ use crate::geometry::*;
 use crate::{coord, GeoNum, GeometryCow};
 use crate::{BoundingRect, HasDimensions, Intersects};
 
-/// The position of a `Coordinate` relative to a `Geometry`
+/// The position of a `Coord` relative to a `Geometry`
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum CoordPos {
     OnBoundary,
@@ -10,7 +10,7 @@ pub enum CoordPos {
     Outside,
 }
 
-/// Determine whether a `Coordinate` lies inside, outside, or on the boundary of a geometry.
+/// Determine whether a `Coord` lies inside, outside, or on the boundary of a geometry.
 ///
 /// # Examples
 ///
@@ -343,7 +343,7 @@ impl<'a, T: GeoNum> CoordinatePosition for GeometryCow<'a, T> {
     }
 }
 
-/// Calculate the position of a `Coordinate` relative to a
+/// Calculate the position of a `Coord` relative to a
 /// closed `LineString`.
 pub fn coord_pos_relative_to_ring<T>(coord: Coord<T>, linestring: &LineString<T>) -> CoordPos
 where

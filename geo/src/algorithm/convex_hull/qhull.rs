@@ -98,7 +98,7 @@ where
         .unwrap()
         .0;
 
-    // move Coordinate at furthest_point from set into hull
+    // move Coord at furthest_point from set into hull
     let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
     // points over PB
     {

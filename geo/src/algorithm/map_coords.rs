@@ -4,7 +4,7 @@
 #![cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
 //! // activate the [use-proj] feature in cargo.toml in order to access proj functions
 //! use approx::assert_relative_eq;
-//! use geo::{Coordinate, Point};
+//! use geo::{Coord, Point};
 //! use geo::MapCoords;
 //! use proj::{Coord, Proj, ProjError};
 //! // GeoJSON uses the WGS 84 coordinate system
@@ -12,8 +12,8 @@
 //! // The NAD83 / California zone 6 (ftUS) coordinate system
 //! let to = "EPSG:2230";
 //! let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
-//! let transform = |c: Coordinate<f64>| -> Result<_, ProjError> {
-//!     // proj can accept Point, Coordinate, Tuple, and array values, returning a Result
+//! let transform = |c: Coord<f64>| -> Result<_, ProjError> {
+//!     // proj can accept Point, Coord, Tuple, and array values, returning a Result
 //!     let shifted = to_feet.convert(c)?;
 //!     Ok(shifted)
 //! };
@@ -39,7 +39,7 @@ mod modern {
         ///
         /// ```
         /// use geo::MapCoords;
-        /// use geo::{Coordinate, Point};
+        /// use geo::{Coord, Point};
         /// use approx::assert_relative_eq;
         ///
         /// let p1 = Point::new(10., 20.);
@@ -55,7 +55,7 @@ mod modern {
         /// to six decimal places (eg. lat/lon * 1000000).
         ///
         /// ```
-        /// # use geo::{Coordinate, Point};
+        /// # use geo::{Coord, Point};
         /// # use geo::MapCoords;
         /// # use approx::assert_relative_eq;
         ///
@@ -82,7 +82,7 @@ mod modern {
         /// ```
         /// use approx::assert_relative_eq;
         /// use geo::MapCoords;
-        /// use geo::{Coordinate, Point};
+        /// use geo::{Coord, Point};
         ///
         /// let p1 = Point::new(10., 20.);
         /// let p2 = p1
@@ -99,7 +99,7 @@ mod modern {
         #[cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
         /// use approx::assert_relative_eq;
         /// // activate the [use-proj] feature in cargo.toml in order to access proj functions
-        /// use geo::{Coordinate, Point};
+        /// use geo::{Coord, Point};
         /// use geo::map_coords::MapCoords;
         /// use proj::{Coord, Proj, ProjError};
         /// // GeoJSON uses the WGS 84 coordinate system
@@ -107,8 +107,8 @@ mod modern {
         /// // The NAD83 / California zone 6 (ftUS) coordinate system
         /// let to = "EPSG:2230";
         /// let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
-        /// let transform = |c: Coordinate<f64>| -> Result<_, ProjError> {
-        ///     // proj can accept Point, Coordinate, Tuple, and array values, returning a Result
+        /// let transform = |c: Coord<f64>| -> Result<_, ProjError> {
+        ///     // proj can accept Point, Coord, Tuple, and array values, returning a Result
         ///     let shifted = to_feet.convert(c)?;
         ///     Ok(shifted)
         /// };
@@ -134,7 +134,7 @@ mod modern {
         ///
         /// ```
         /// use geo::MapCoordsInPlace;
-        /// use geo::{Coordinate, Point};
+        /// use geo::{Coord, Point};
         /// use approx::assert_relative_eq;
         ///
         /// let mut p = Point::new(10., 20.);
@@ -155,7 +155,7 @@ mod modern {
         ///
         /// ```
         /// use geo::MapCoordsInPlace;
-        /// use geo::Coordinate;
+        /// use geo::Coord;
         ///
         /// let mut p1 = geo::point!{x: 10u32, y: 20u32};
         ///
@@ -703,7 +703,7 @@ pub(crate) mod deprecated {
     /// Map a fallible function over all the coordinates in a geometry, returning a Result
     #[deprecated(
         since = "0.21.0",
-        note = "use `MapCoords::try_map_coords` which takes a `Coordinate` instead of an (x,y) tuple"
+        note = "use `MapCoords::try_map_coords` which takes a `Coord` instead of an (x,y) tuple"
     )]
     pub trait TryMapCoords<T, NT, E> {
         type Output;
@@ -734,7 +734,7 @@ pub(crate) mod deprecated {
         #[cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
         /// use approx::assert_relative_eq;
         /// // activate the [use-proj] feature in cargo.toml in order to access proj functions
-        /// use geo::{Coordinate, Point};
+        /// use geo::{Coord, Point};
         /// #[allow(deprecated)]
         /// use geo::TryMapCoords;
         /// use proj::{Coord, Proj, ProjError};
@@ -744,7 +744,7 @@ pub(crate) mod deprecated {
         /// let to = "EPSG:2230";
         /// let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
         /// let f = |x: f64, y: f64| -> Result<_, ProjError> {
-        ///     // proj can accept Point, Coordinate, Tuple, and array values, returning a Result
+        ///     // proj can accept Point, Coord, Tuple, and array values, returning a Result
         ///     let shifted = to_feet.convert((x, y))?;
         ///     Ok((shifted.x(), shifted.y()))
         /// };
@@ -767,7 +767,7 @@ pub(crate) mod deprecated {
 
     #[deprecated(
         since = "0.21.0",
-        note = "use `MapCoordsInPlace::try_map_coords_in_place` which takes a `Coordinate` instead of an (x,y) tuple"
+        note = "use `MapCoordsInPlace::try_map_coords_in_place` which takes a `Coord` instead of an (x,y) tuple"
     )]
     pub trait TryMapCoordsInplace<T, E> {
         /// Map a fallible function over all the coordinates in a geometry, in place, returning a `Result`.
@@ -808,7 +808,7 @@ pub(crate) mod deprecated {
     /// Map a function over all the coordinates in an object in place
     #[deprecated(
         since = "0.21.0",
-        note = "use `MapCoordsInPlace::map_coords_in_place` instead which takes a `Coordinate` instead of an (x,y) tuple"
+        note = "use `MapCoordsInPlace::map_coords_in_place` instead which takes a `Coord` instead of an (x,y) tuple"
     )]
     pub trait MapCoordsInplace<T>: MapCoordsInPlace<T> {
         /// Apply a function to all the coordinates in a geometric object, in place
@@ -842,7 +842,7 @@ pub(crate) mod deprecated {
                     &self,
                     func: impl Fn((T, T)) -> Result<(NT, NT), E> + Copy,
                 ) -> Result<Self::Output, E> {
-                    MapCoords::try_map_coords(self, |c| Ok(Coordinate::from(func(c.x_y())?)))
+                    MapCoords::try_map_coords(self, |c| Ok(Coord::from(func(c.x_y())?)))
                 }
             }
 

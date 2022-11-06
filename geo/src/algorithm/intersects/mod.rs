@@ -48,7 +48,7 @@ pub trait Intersects<Rhs = Self> {
 // whenever the Rhs is a "simpler geometry" than the target
 // type, and use the macro for the reverse impl. However,
 // when there is a blanket implementations (eg. Point from
-// Coordinate, MultiPoint from Point), we need to provide
+// Coord, MultiPoint from Point), we need to provide
 // the reverse (where Self is "simpler" than Rhs).
 macro_rules! symmetric_intersects_impl {
     ($t:ty, $k:ty) => {

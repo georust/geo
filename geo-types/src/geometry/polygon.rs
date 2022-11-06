@@ -20,7 +20,7 @@ use approx::{AbsDiffEq, RelativeEq};
 /// boundary).
 ///
 /// The `Polygon` structure guarantees that all exterior and interior rings will
-/// be _closed_, such that the first and last `Coordinate` of each ring has
+/// be _closed_, such that the first and last `Coord` of each ring has
 /// the same value.
 ///
 /// # Validity
@@ -59,9 +59,9 @@ use approx::{AbsDiffEq, RelativeEq};
 /// Some APIs on `Polygon` result in a closing operation on a `LineString`. The
 /// operation is as follows:
 ///
-/// If a `LineString`’s first and last `Coordinate` have different values, a
-/// new `Coordinate` will be appended to the `LineString` with a value equal to
-/// the first `Coordinate`.
+/// If a `LineString`’s first and last `Coord` have different values, a
+/// new `Coord` will be appended to the `LineString` with a value equal to
+/// the first `Coord`.
 ///
 /// [`LineString`]: line_string/struct.LineString.html
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
@@ -109,7 +109,7 @@ impl<T: CoordNum> Polygon<T> {
     /// );
     /// ```
     ///
-    /// If the first and last `Coordinate`s of the exterior or interior
+    /// If the first and last `Coord`s of the exterior or interior
     /// `LineString`s no longer match, those `LineString`s [will be closed]:
     ///
     /// ```
@@ -214,7 +214,7 @@ impl<T: CoordNum> Polygon<T> {
     /// );
     /// ```
     ///
-    /// If the first and last `Coordinate`s of the exterior `LineString` no
+    /// If the first and last `Coord`s of the exterior `LineString` no
     /// longer match, the `LineString` [will be closed]:
     ///
     /// ```
@@ -305,7 +305,7 @@ impl<T: CoordNum> Polygon<T> {
     /// );
     /// ```
     ///
-    /// If the first and last `Coordinate`s of any interior `LineString` no
+    /// If the first and last `Coord`s of any interior `LineString` no
     /// longer match, those `LineString`s [will be closed]:
     ///
     /// ```

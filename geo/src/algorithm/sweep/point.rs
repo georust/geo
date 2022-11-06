@@ -6,7 +6,7 @@ use crate::GeoNum;
 
 /// A lexicographically ordered point.
 ///
-/// A wrapper around [`Coordinate`] to order the point by `x`, and then by `y`.
+/// A wrapper around [`Coord`] to order the point by `x`, and then by `y`.
 /// Implements `Ord` and `Eq`, allowing usage in ordered collections such as
 /// `BinaryHeap`.
 ///
@@ -46,7 +46,7 @@ impl<T: GeoNum> Ord for SweepPoint<T> {
 /// We derive `Eq` manually to not require `T: Eq`.
 impl<T: GeoNum> Eq for SweepPoint<T> {}
 
-/// Conversion from type that can be converted to a `Coordinate`.
+/// Conversion from type that can be converted to a `Coord`.
 impl<T: GeoNum, X: Into<Coord<T>>> From<X> for SweepPoint<T> {
     fn from(pt: X) -> Self {
         SweepPoint(pt.into())

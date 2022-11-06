@@ -50,7 +50,7 @@ pub use convert::{Convert, TryConvert};
 pub mod convex_hull;
 pub use convex_hull::ConvexHull;
 
-/// Determine whether a `Coordinate` lies inside, outside, or on the boundary of a geometry.
+/// Determine whether a `Coord` lies inside, outside, or on the boundary of a geometry.
 pub mod coordinate_position;
 pub use coordinate_position::CoordinatePosition;
 
@@ -142,7 +142,7 @@ pub use line_locate_point::LineLocatePoint;
 pub mod lines_iter;
 pub use lines_iter::LinesIter;
 
-/// Apply a function to all `Coordinates` of a `Geometry`.
+/// Apply a function to all `Coord`s of a `Geometry`.
 pub mod map_coords;
 pub use map_coords::{MapCoords, MapCoordsInPlace};
 #[allow(deprecated)]

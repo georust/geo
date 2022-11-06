@@ -4,10 +4,10 @@ use crate::{coord, polygon, Coord, CoordFloat, CoordNum, Line, Polygon};
 use approx::{AbsDiffEq, RelativeEq};
 
 /// An _axis-aligned_ bounded 2D rectangle whose area is
-/// defined by minimum and maximum `Coordinate`s.
+/// defined by minimum and maximum `Coord`s.
 ///
 /// The constructors and setters ensure the maximum
-/// `Coordinate` is greater than or equal to the minimum.
+/// `Coord` is greater than or equal to the minimum.
 /// Thus, a `Rect`s width, height, and area is guaranteed to
 /// be greater than or equal to zero.
 ///
@@ -93,7 +93,7 @@ impl<T: CoordNum> Rect<T> {
         Ok(Rect::new(c1, c2))
     }
 
-    /// Returns the minimum `Coordinate` of the `Rect`.
+    /// Returns the minimum `Coord` of the `Rect`.
     ///
     /// # Examples
     ///
@@ -124,7 +124,7 @@ impl<T: CoordNum> Rect<T> {
         self.assert_valid_bounds();
     }
 
-    /// Returns the maximum `Coordinate` of the `Rect`.
+    /// Returns the maximum `Coord` of the `Rect`.
     ///
     /// # Examples
     ///
@@ -353,7 +353,7 @@ impl<T: CoordNum> Rect<T> {
 }
 
 impl<T: CoordFloat> Rect<T> {
-    /// Returns the center `Coordinate` of the `Rect`.
+    /// Returns the center `Coord` of the `Rect`.
     ///
     /// # Examples
     ///

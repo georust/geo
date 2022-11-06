@@ -8,7 +8,7 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 /// A single point in 2D space.
 ///
 /// Points can be created using the [`Point::new`] constructor,
-/// the [`point!`] macro, or from a `Coordinate`, two-element
+/// the [`point!`] macro, or from a `Coord`, two-element
 /// tuples, or arrays – see the `From` impl section for a
 /// complete list.
 ///
@@ -16,7 +16,7 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 ///
 /// The _interior_ of the point is itself (a singleton set),
 /// and its _boundary_ is empty. A point is _valid_ if and
-/// only if the `Coordinate` is valid.
+/// only if the `Coord` is valid.
 ///
 /// # Examples
 ///

@@ -25,7 +25,7 @@ pub(crate) struct Edge<F: GeoFloat> {
 impl<F: GeoFloat> Edge<F> {
     /// Create a new Edge.
     ///
-    /// - `coords` a *non-empty* Vec of Coordinates
+    /// - `coords` a *non-empty* Vec of Coords
     /// - `label` an appropriately dimensioned topology label for the Edge. See [`TopologyPosition`]
     ///    for details
     pub(crate) fn new(mut coords: Vec<Coord<F>>, label: Label) -> Edge<F> {

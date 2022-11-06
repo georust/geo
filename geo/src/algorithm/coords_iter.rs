@@ -426,7 +426,7 @@ impl<'a, T: CoordNum + 'a> CoordsIter<'a> for Geometry<T> {
 // │ Utilities │
 // └───────────┘
 
-// Utility to transform Iterator<CoordsIter> into Iterator<Iterator<Coordinate>>
+// Utility to transform Iterator<CoordsIter> into Iterator<Iterator<Coord>>
 #[doc(hidden)]
 #[derive(Debug)]
 pub struct MapCoordsIter<
@@ -450,7 +450,7 @@ impl<'a, T: 'a + CoordNum, Iter1: Iterator<Item = &'a Iter2>, Iter2: CoordsIter<
     }
 }
 
-// Utility to transform Iterator<CoordsIter> into Iterator<Iterator<Coordinate>>
+// Utility to transform Iterator<CoordsIter> into Iterator<Iterator<Coord>>
 #[doc(hidden)]
 #[derive(Debug)]
 pub struct MapExteriorCoordsIter<
@@ -474,7 +474,7 @@ impl<'a, T: 'a + CoordNum, Iter1: Iterator<Item = &'a Iter2>, Iter2: CoordsIter<
     }
 }
 
-// Utility to transform Geometry into Iterator<Coordinate>
+// Utility to transform Geometry into Iterator<Coord>
 #[doc(hidden)]
 pub enum GeometryCoordsIter<'a, T: CoordNum + 'a> {
     Point(<Point<T> as CoordsIter<'a>>::Iter),
@@ -547,7 +547,7 @@ impl<'a, T: CoordNum + Debug> fmt::Debug for GeometryCoordsIter<'a, T> {
     }
 }
 
-// Utility to transform Geometry into Iterator<Coordinate>
+// Utility to transform Geometry into Iterator<Coord>
 #[doc(hidden)]
 pub enum GeometryExteriorCoordsIter<'a, T: CoordNum + 'a> {
     Point(<Point<T> as CoordsIter<'a>>::ExteriorIter),

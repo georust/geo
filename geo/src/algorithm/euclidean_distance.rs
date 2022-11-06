@@ -94,15 +94,15 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     fn euclidean_distance(&self, rhs: &Rhs) -> T;
 }
 
-// ┌────────────────────────────────┐
-// │ Implementations for Coordinate │
-// └────────────────────────────────┘
+// ┌───────────────────────────┐
+// │ Implementations for Coord │
+// └───────────────────────────┘
 
 impl<T> EuclideanDistance<T, Coord<T>> for Coord<T>
 where
     T: GeoFloat,
 {
-    /// Minimum distance between two `Coordinate`s
+    /// Minimum distance between two `Coord`s
     fn euclidean_distance(&self, c: &Coord<T>) -> T {
         Line::new(*self, *c).euclidean_length()
     }
@@ -112,7 +112,7 @@ impl<T> EuclideanDistance<T, Line<T>> for Coord<T>
 where
     T: GeoFloat,
 {
-    /// Minimum distance from a `Coordinate` to a `Line`
+    /// Minimum distance from a `Coord` to a `Line`
     fn euclidean_distance(&self, line: &Line<T>) -> T {
         line.euclidean_distance(self)
     }
@@ -246,7 +246,7 @@ impl<T> EuclideanDistance<T, Coord<T>> for Line<T>
 where
     T: GeoFloat,
 {
-    /// Minimum distance from a `Line` to a `Coordinate`
+    /// Minimum distance from a `Line` to a `Coord`
     fn euclidean_distance(&self, coord: &Coord<T>) -> T {
         ::geo_types::private_utils::point_line_euclidean_distance(Point::from(*coord), *self)
     }

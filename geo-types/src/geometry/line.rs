@@ -3,7 +3,7 @@ use crate::{Coord, CoordNum, Point};
 use approx::{AbsDiffEq, RelativeEq};
 
 /// A line segment made up of exactly two
-/// [`Coordinate`s](struct.Coordinate.html).
+/// [`Coord`]s.
 ///
 /// # Semantics
 ///

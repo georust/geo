@@ -59,7 +59,7 @@ impl<T: GeoNum> From<Line<T>> for LineOrPoint<T> {
     }
 }
 
-/// Convert from a [`Coordinate`]
+/// Convert from a [`Coord`]
 impl<T: GeoNum> From<Coord<T>> for LineOrPoint<T> {
     fn from(c: Coord<T>) -> Self {
         Self {

@@ -47,7 +47,7 @@ impl<F: GeoFloat> LineIntersection<F> {
 ///
 /// ```
 /// use geo_types::coord;
-/// use geo::{Line, Coordinate};
+/// use geo::{Line, Coord};
 /// use geo::line_intersection::{line_intersection, LineIntersection};
 ///
 /// let line_1 = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 5.0, y: 5.0 } );
