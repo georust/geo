@@ -31,7 +31,7 @@ pub struct Coord<T: CoordNum = f64> {
 }
 
 #[deprecated(note = "Renamed to `geo_types::Coord` (or `geo::Coord`)")]
-pub type Coordinate<T: CoordNum = f64> = Coord<T>;
+pub type Coordinate<T> = Coord<T>;
 
 impl<T: CoordNum> From<(T, T)> for Coord<T> {
     #[inline]
