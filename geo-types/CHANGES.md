@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Rename `Coordinate` to `Coord`; add deprecated `Coordinate` that is an alias for `Coord`
 * Pin `arbitrary` version to 1.1.3 until our MSRV catches up with its latest release 
 * Add `point.x_mut()` and `point.y_mut()` methods on `Points`
 
