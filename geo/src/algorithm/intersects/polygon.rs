@@ -1,10 +1,12 @@
 use super::{has_disjoint_bboxes, Intersects};
+use crate::geometry::*;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
 use crate::BoundingRect;
-use crate::{
-    CoordNum, Coordinate, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
-    Rect,
-};
+use crate::{CoordNum, GeoNum};
+use rstar::{RTree, RTreeObject};
+// the largest total number of segments geometries can have before the algorithm switches
+// to using an R*-tree for queries
+const MAX_NAIVE_SEGMENTS: usize = 10000;
 
 impl<T> Intersects<Coordinate<T>> for Polygon<T>
 where
@@ -24,6 +26,7 @@ symmetric_intersects_impl!(Polygon<T>, Point<T>);
 impl<T> Intersects<Line<T>> for Polygon<T>
 where
     T: GeoNum,
+    Line<T>: RTreeObject,
 {
     fn intersects(&self, line: &Line<T>) -> bool {
         self.exterior().intersects(line)
@@ -32,13 +35,42 @@ where
             || self.intersects(&line.end)
     }
 }
+
+impl<T> Intersects<LineString<T>> for Polygon<T>
+where
+    T: GeoNum,
+    Line<T>: RTreeObject,
+{
+    fn intersects(&self, linestring: &LineString<T>) -> bool {
+        if (self.exterior().0.len() + self.interiors().iter().map(|ls| ls.0.len()).sum::<usize>())
+            * linestring.0.len()
+            > MAX_NAIVE_SEGMENTS
+        {
+            let lines_a: Vec<_> = self
+                .exterior()
+                .lines()
+                .chain(self.interiors().iter().flat_map(|ls| ls.lines()))
+                .collect();
+            let tree_a = RTree::bulk_load(lines_a);
+            let lines_b: Vec<_> = linestring.lines().collect();
+            let tree_b = RTree::bulk_load(lines_b);
+            let mut candidates = tree_a.intersection_candidates_with_other_tree(&tree_b);
+            candidates.any(|line_pair| {
+                dbg!("{:?}", line_pair);
+                line_pair.0.intersects(line_pair.1)
+            })
+        } else {
+            linestring.lines().any(|line| self.intersects(&line))
+        }
+    }
+}
 symmetric_intersects_impl!(Line<T>, Polygon<T>);
-symmetric_intersects_impl!(Polygon<T>, LineString<T>);
 symmetric_intersects_impl!(Polygon<T>, MultiLineString<T>);
 
 impl<T> Intersects<Rect<T>> for Polygon<T>
 where
     T: GeoNum,
+    Line<T>: RTreeObject,
 {
     fn intersects(&self, rect: &Rect<T>) -> bool {
         self.intersects(&rect.to_polygon())
@@ -49,17 +81,43 @@ symmetric_intersects_impl!(Rect<T>, Polygon<T>);
 impl<T> Intersects<Polygon<T>> for Polygon<T>
 where
     T: GeoNum,
+    Line<T>: RTreeObject,
 {
     fn intersects(&self, polygon: &Polygon<T>) -> bool {
         if has_disjoint_bboxes(self, polygon) {
             return false;
         }
+        // switch to querying trees above some threshold x: polygons' combined segment count is higher than x
+        if (self.exterior().0.len() + self.interiors().iter().map(|ls| ls.0.len()).sum::<usize>())
+            * (polygon.exterior().0.len()
+                + polygon
+                    .interiors()
+                    .iter()
+                    .map(|ls| ls.0.len())
+                    .sum::<usize>())
+            > MAX_NAIVE_SEGMENTS
+        {
+            let lines_a: Vec<_> = self
+                .exterior()
+                .lines()
+                .chain(self.interiors().iter().flat_map(|ls| ls.lines()))
+                .collect();
+            let tree_a = RTree::bulk_load(lines_a);
 
-        // self intersects (or contains) any line in polygon
-        self.intersects(polygon.exterior()) ||
+            let lines_b: Vec<_> = polygon
+                .exterior()
+                .lines()
+                .chain(polygon.interiors().iter().flat_map(|ls| ls.lines()))
+                .collect();
+            let tree_b = RTree::bulk_load(lines_b);
+            let mut candidates = tree_a.intersection_candidates_with_other_tree(&tree_b);
+            candidates.any(|line_pair| line_pair.0.intersects(line_pair.1))
+        } else {
+            self.intersects(polygon.exterior()) ||
             polygon.interiors().iter().any(|inner_line_string| self.intersects(inner_line_string)) ||
             // self is contained inside polygon
             polygon.intersects(self.exterior())
+        }
     }
 }
 
