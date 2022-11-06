@@ -7,7 +7,7 @@ pub fn convert_poly(poly: &Polygon<f64>) -> gt_prev::Polygon<f64> {
         .exterior()
         .0
         .iter()
-        .map(|c| gt_prev::Coordinate { x: c.x, y: c.y })
+        .map(|c| gt_prev::Coord { x: c.x, y: c.y })
         .collect();
     gt_prev::Polygon::new(gt_prev::LineString(ext), vec![])
 }

@@ -43,7 +43,7 @@ mod modern {
         /// use approx::assert_relative_eq;
         ///
         /// let p1 = Point::new(10., 20.);
-        /// let p2 = p1.map_coords(|Coordinate { x, y }| Coordinate { x: x + 1000., y: y * 2. });
+        /// let p2 = p1.map_coords(|Coord { x, y }| Coord { x: x + 1000., y: y * 2. });
         ///
         /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon = 1e-6);
         /// ```
@@ -61,8 +61,8 @@ mod modern {
         ///
         /// let SCALE_FACTOR: f64 = 1000000.0;
         /// let floating_point_geom: Point<f64> = Point::new(10.15f64, 20.05f64);
-        /// let fixed_point_geom: Point<i32> = floating_point_geom.map_coords(|Coordinate { x, y }| {
-        ///     Coordinate { x: (x * SCALE_FACTOR) as i32, y: (y * SCALE_FACTOR) as i32 }
+        /// let fixed_point_geom: Point<i32> = floating_point_geom.map_coords(|Coord { x, y }| {
+        ///     Coord { x: (x * SCALE_FACTOR) as i32, y: (y * SCALE_FACTOR) as i32 }
         /// });
         ///
         /// assert_eq!(fixed_point_geom.x(), 10150000);
@@ -86,8 +86,8 @@ mod modern {
         ///
         /// let p1 = Point::new(10., 20.);
         /// let p2 = p1
-        ///     .try_map_coords(|Coordinate { x, y }| -> Result<_, std::convert::Infallible> {
-        ///         Ok(Coordinate { x: x + 1000., y: y * 2. })
+        ///     .try_map_coords(|Coord { x, y }| -> Result<_, std::convert::Infallible> {
+        ///         Ok(Coord { x: x + 1000., y: y * 2. })
         ///     }).unwrap();
         ///
         /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon = 1e-6);
@@ -138,7 +138,7 @@ mod modern {
         /// use approx::assert_relative_eq;
         ///
         /// let mut p = Point::new(10., 20.);
-        /// p.map_coords_in_place(|Coordinate { x, y }| Coordinate { x: x + 1000., y: y * 2. });
+        /// p.map_coords_in_place(|Coord { x, y }| Coord { x: x + 1000., y: y * 2. });
         ///
         /// assert_relative_eq!(p, Point::new(1010., 40.), epsilon = 1e-6);
         /// ```
@@ -159,8 +159,8 @@ mod modern {
         ///
         /// let mut p1 = geo::point!{x: 10u32, y: 20u32};
         ///
-        /// p1.try_map_coords_in_place(|Coordinate { x, y }| -> Result<_, &str> {
-        ///     Ok(Coordinate {
+        /// p1.try_map_coords_in_place(|Coord { x, y }| -> Result<_, &str> {
+        ///     Ok(Coord {
         ///         x: x.checked_add(1000).ok_or("Overflow")?,
         ///         y: y.checked_mul(2).ok_or("Overflow")?,
         ///     })
