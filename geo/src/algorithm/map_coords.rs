@@ -101,7 +101,7 @@ mod modern {
         /// // activate the [use-proj] feature in cargo.toml in order to access proj functions
         /// use geo::{Coord, Point};
         /// use geo::map_coords::MapCoords;
-        /// use proj::{Coord, Proj, ProjError};
+        /// use proj::{Coord as ProjCoord, Proj, ProjError};
         /// // GeoJSON uses the WGS 84 coordinate system
         /// let from = "EPSG:4326";
         /// // The NAD83 / California zone 6 (ftUS) coordinate system
@@ -737,7 +737,7 @@ pub(crate) mod deprecated {
         /// use geo::{Coord, Point};
         /// #[allow(deprecated)]
         /// use geo::TryMapCoords;
-        /// use proj::{Coord, Proj, ProjError};
+        /// use proj::{Coord as ProjCoord, Proj, ProjError};
         /// // GeoJSON uses the WGS 84 coordinate system
         /// let from = "EPSG:4326";
         /// // The NAD83 / California zone 6 (ftUS) coordinate system
