@@ -6,7 +6,7 @@
 //! use approx::assert_relative_eq;
 //! use geo::{Coord, Point};
 //! use geo::MapCoords;
-//! use proj::{Coord, Proj, ProjError};
+//! use proj::{Coord as ProjCoord, Proj, ProjError};
 //! // GeoJSON uses the WGS 84 coordinate system
 //! let from = "EPSG:4326";
 //! // The NAD83 / California zone 6 (ftUS) coordinate system
