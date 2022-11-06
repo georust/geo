@@ -238,10 +238,10 @@ use num_traits::Zero;
 /// # Examples
 ///
 /// ```
-/// use geo_types::Coordinate;
+/// use geo_types::Coord;
 /// use num_traits::Zero;
 ///
-/// let p: Coordinate = Zero::zero();
+/// let p: Coord = Zero::zero();
 ///
 /// assert_eq!(p.x, 0.);
 /// assert_eq!(p.y, 0.);
