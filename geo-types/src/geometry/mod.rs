@@ -1,4 +1,4 @@
-pub(crate) mod coordinate;
+pub(crate) mod coord;
 pub(crate) mod geometry_collection;
 pub(crate) mod line;
 pub(crate) mod line_string;
@@ -12,7 +12,7 @@ pub(crate) mod triangle;
 
 // re-export all the geometry variants:
 #[allow(deprecated)]
-pub use coordinate::{Coord, Coordinate};
+pub use coord::{Coord, Coordinate};
 pub use geometry_collection::GeometryCollection;
 pub use line::Line;
 pub use line_string::LineString;
