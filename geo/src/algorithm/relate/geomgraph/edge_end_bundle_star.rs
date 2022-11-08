@@ -3,7 +3,7 @@ use super::{
     LabeledEdgeEndBundle,
 };
 use crate::coordinate_position::{CoordPos, CoordinatePosition};
-use crate::{Coordinate, GeoFloat, GeometryCow};
+use crate::{Coord, GeoFloat, GeometryCow};
 
 /// An ordered list of [`EdgeEndBundle`]s around a [`RelateNodeFactory::Node`].
 ///

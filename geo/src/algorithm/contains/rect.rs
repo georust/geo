@@ -6,11 +6,11 @@ use crate::{CoordNum, GeoFloat};
 // │ Implementations for Rect │
 // └──────────────────────────┘
 
-impl<T> Contains<Coordinate<T>> for Rect<T>
+impl<T> Contains<Coord<T>> for Rect<T>
 where
     T: CoordNum,
 {
-    fn contains(&self, coord: &Coordinate<T>) -> bool {
+    fn contains(&self, coord: &Coord<T>) -> bool {
         coord.x > self.min().x
             && coord.x < self.max().x
             && coord.y > self.min().y

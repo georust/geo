@@ -4,16 +4,16 @@
 #![cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
 //! // activate the [use-proj] feature in cargo.toml in order to access proj functions
 //! use approx::assert_relative_eq;
-//! use geo::{Coordinate, Point};
+//! use geo::{Coord, Point};
 //! use geo::MapCoords;
-//! use proj::{Coord, Proj, ProjError};
+//! use proj::{Coord as ProjCoord, Proj, ProjError};
 //! // GeoJSON uses the WGS 84 coordinate system
 //! let from = "EPSG:4326";
 //! // The NAD83 / California zone 6 (ftUS) coordinate system
 //! let to = "EPSG:2230";
 //! let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
-//! let transform = |c: Coordinate<f64>| -> Result<_, ProjError> {
-//!     // proj can accept Point, Coordinate, Tuple, and array values, returning a Result
+//! let transform = |c: Coord<f64>| -> Result<_, ProjError> {
+//!     // proj can accept Point, Coord, Tuple, and array values, returning a Result
 //!     let shifted = to_feet.convert(c)?;
 //!     Ok(shifted)
 //! };
@@ -39,11 +39,11 @@ mod modern {
         ///
         /// ```
         /// use geo::MapCoords;
-        /// use geo::{Coordinate, Point};
+        /// use geo::{Coord, Point};
         /// use approx::assert_relative_eq;
         ///
         /// let p1 = Point::new(10., 20.);
-        /// let p2 = p1.map_coords(|Coordinate { x, y }| Coordinate { x: x + 1000., y: y * 2. });
+        /// let p2 = p1.map_coords(|Coord { x, y }| Coord { x: x + 1000., y: y * 2. });
         ///
         /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon = 1e-6);
         /// ```
@@ -55,14 +55,14 @@ mod modern {
         /// to six decimal places (eg. lat/lon * 1000000).
         ///
         /// ```
-        /// # use geo::{Coordinate, Point};
+        /// # use geo::{Coord, Point};
         /// # use geo::MapCoords;
         /// # use approx::assert_relative_eq;
         ///
         /// let SCALE_FACTOR: f64 = 1000000.0;
         /// let floating_point_geom: Point<f64> = Point::new(10.15f64, 20.05f64);
-        /// let fixed_point_geom: Point<i32> = floating_point_geom.map_coords(|Coordinate { x, y }| {
-        ///     Coordinate { x: (x * SCALE_FACTOR) as i32, y: (y * SCALE_FACTOR) as i32 }
+        /// let fixed_point_geom: Point<i32> = floating_point_geom.map_coords(|Coord { x, y }| {
+        ///     Coord { x: (x * SCALE_FACTOR) as i32, y: (y * SCALE_FACTOR) as i32 }
         /// });
         ///
         /// assert_eq!(fixed_point_geom.x(), 10150000);
@@ -70,7 +70,7 @@ mod modern {
         ///
         /// If you want *only* to convert between numeric types (i32 -> f64) without further
         /// transformation, consider using [`Convert`](crate::Convert).
-        fn map_coords(&self, func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy) -> Self::Output
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output
         where
             T: CoordNum,
             NT: CoordNum;
@@ -82,12 +82,12 @@ mod modern {
         /// ```
         /// use approx::assert_relative_eq;
         /// use geo::MapCoords;
-        /// use geo::{Coordinate, Point};
+        /// use geo::{Coord, Point};
         ///
         /// let p1 = Point::new(10., 20.);
         /// let p2 = p1
-        ///     .try_map_coords(|Coordinate { x, y }| -> Result<_, std::convert::Infallible> {
-        ///         Ok(Coordinate { x: x + 1000., y: y * 2. })
+        ///     .try_map_coords(|Coord { x, y }| -> Result<_, std::convert::Infallible> {
+        ///         Ok(Coord { x: x + 1000., y: y * 2. })
         ///     }).unwrap();
         ///
         /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon = 1e-6);
@@ -99,16 +99,16 @@ mod modern {
         #[cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
         /// use approx::assert_relative_eq;
         /// // activate the [use-proj] feature in cargo.toml in order to access proj functions
-        /// use geo::{Coordinate, Point};
+        /// use geo::{Coord, Point};
         /// use geo::map_coords::MapCoords;
-        /// use proj::{Coord, Proj, ProjError};
+        /// use proj::{Coord as ProjCoord, Proj, ProjError};
         /// // GeoJSON uses the WGS 84 coordinate system
         /// let from = "EPSG:4326";
         /// // The NAD83 / California zone 6 (ftUS) coordinate system
         /// let to = "EPSG:2230";
         /// let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
-        /// let transform = |c: Coordinate<f64>| -> Result<_, ProjError> {
-        ///     // proj can accept Point, Coordinate, Tuple, and array values, returning a Result
+        /// let transform = |c: Coord<f64>| -> Result<_, ProjError> {
+        ///     // proj can accept Point, Coord, Tuple, and array values, returning a Result
         ///     let shifted = to_feet.convert(c)?;
         ///     Ok(shifted)
         /// };
@@ -120,7 +120,7 @@ mod modern {
         /// ```
         fn try_map_coords<E>(
             &self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<NT>, E> + Copy,
+            func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
         ) -> Result<Self::Output, E>
         where
             T: CoordNum,
@@ -134,15 +134,15 @@ mod modern {
         ///
         /// ```
         /// use geo::MapCoordsInPlace;
-        /// use geo::{Coordinate, Point};
+        /// use geo::{Coord, Point};
         /// use approx::assert_relative_eq;
         ///
         /// let mut p = Point::new(10., 20.);
-        /// p.map_coords_in_place(|Coordinate { x, y }| Coordinate { x: x + 1000., y: y * 2. });
+        /// p.map_coords_in_place(|Coord { x, y }| Coord { x: x + 1000., y: y * 2. });
         ///
         /// assert_relative_eq!(p, Point::new(1010., 40.), epsilon = 1e-6);
         /// ```
-        fn map_coords_in_place(&mut self, func: impl Fn(Coordinate<T>) -> Coordinate<T> + Copy)
+        fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T> + Copy)
         where
             T: CoordNum;
 
@@ -155,12 +155,12 @@ mod modern {
         ///
         /// ```
         /// use geo::MapCoordsInPlace;
-        /// use geo::Coordinate;
+        /// use geo::Coord;
         ///
         /// let mut p1 = geo::point!{x: 10u32, y: 20u32};
         ///
-        /// p1.try_map_coords_in_place(|Coordinate { x, y }| -> Result<_, &str> {
-        ///     Ok(Coordinate {
+        /// p1.try_map_coords_in_place(|Coord { x, y }| -> Result<_, &str> {
+        ///     Ok(Coord {
         ///         x: x.checked_add(1000).ok_or("Overflow")?,
         ///         y: y.checked_mul(2).ok_or("Overflow")?,
         ///     })
@@ -174,7 +174,7 @@ mod modern {
         /// ```
         fn try_map_coords_in_place<E>(
             &mut self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<T>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
         ) -> Result<(), E>
         where
             T: CoordNum;
@@ -187,29 +187,26 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Point<T> {
         type Output = Point<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             Point(func(self.0))
         }
 
         fn try_map_coords<E>(
             &self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<NT>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<NT>, E>,
         ) -> Result<Self::Output, E> {
             Ok(Point(func(self.0)?))
         }
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for Point<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn(Coordinate<T>) -> Coordinate<T>) {
+        fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T>) {
             self.0 = func(self.0);
         }
 
         fn try_map_coords_in_place<E>(
             &mut self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<T>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
         ) -> Result<(), E> {
             self.0 = func(self.0)?;
             Ok(())
@@ -223,10 +220,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Line<T> {
         type Output = Line<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             Line::new(
                 self.start_point().map_coords(func).0,
                 self.end_point().map_coords(func).0,
@@ -235,7 +229,7 @@ mod modern {
 
         fn try_map_coords<E>(
             &self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<NT>, E> + Copy,
+            func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
         ) -> Result<Self::Output, E> {
             Ok(Line::new(
                 self.start_point().try_map_coords(func)?.0,
@@ -245,14 +239,14 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for Line<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn(Coordinate<T>) -> Coordinate<T>) {
+        fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T>) {
             self.start = func(self.start);
             self.end = func(self.end);
         }
 
         fn try_map_coords_in_place<E>(
             &mut self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<T>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
         ) -> Result<(), E> {
             self.start = func(self.start)?;
             self.end = func(self.end)?;
@@ -268,10 +262,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for LineString<T> {
         type Output = LineString<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             LineString::from(
                 self.points()
                     .map(|p| p.map_coords(func))
@@ -281,7 +272,7 @@ mod modern {
 
         fn try_map_coords<E>(
             &self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<NT>, E> + Copy,
+            func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
         ) -> Result<Self::Output, E> {
             Ok(LineString::from(
                 self.points()
@@ -292,7 +283,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for LineString<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn(Coordinate<T>) -> Coordinate<T>) {
+        fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T>) {
             for p in &mut self.0 {
                 *p = func(*p);
             }
@@ -300,7 +291,7 @@ mod modern {
 
         fn try_map_coords_in_place<E>(
             &mut self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<T>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
         ) -> Result<(), E> {
             for p in &mut self.0 {
                 *p = func(*p)?;
@@ -316,10 +307,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Polygon<T> {
         type Output = Polygon<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             Polygon::new(
                 self.exterior().map_coords(func),
                 self.interiors()
@@ -331,7 +319,7 @@ mod modern {
 
         fn try_map_coords<E>(
             &self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<NT>, E> + Copy,
+            func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
         ) -> Result<Self::Output, E> {
             Ok(Polygon::new(
                 self.exterior().try_map_coords(func)?,
@@ -344,7 +332,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for Polygon<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn(Coordinate<T>) -> Coordinate<T> + Copy) {
+        fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T> + Copy) {
             self.exterior_mut(|line_string| {
                 line_string.map_coords_in_place(func);
             });
@@ -358,7 +346,7 @@ mod modern {
 
         fn try_map_coords_in_place<E>(
             &mut self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<T>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
         ) -> Result<(), E> {
             let mut result = Ok(());
 
@@ -390,16 +378,13 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPoint<T> {
         type Output = MultiPoint<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             MultiPoint::new(self.iter().map(|p| p.map_coords(func)).collect())
         }
 
         fn try_map_coords<E>(
             &self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<NT>, E> + Copy,
+            func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
         ) -> Result<Self::Output, E> {
             Ok(MultiPoint::new(
                 self.0
@@ -411,7 +396,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for MultiPoint<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn(Coordinate<T>) -> Coordinate<T> + Copy) {
+        fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T> + Copy) {
             for p in &mut self.0 {
                 p.map_coords_in_place(func);
             }
@@ -419,7 +404,7 @@ mod modern {
 
         fn try_map_coords_in_place<E>(
             &mut self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<T>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
         ) -> Result<(), E> {
             for p in &mut self.0 {
                 p.try_map_coords_in_place(&func)?;
@@ -435,16 +420,13 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiLineString<T> {
         type Output = MultiLineString<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             MultiLineString::new(self.iter().map(|l| l.map_coords(func)).collect())
         }
 
         fn try_map_coords<E>(
             &self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<NT>, E> + Copy,
+            func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
         ) -> Result<Self::Output, E> {
             Ok(MultiLineString::new(
                 self.0
@@ -456,7 +438,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for MultiLineString<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn(Coordinate<T>) -> Coordinate<T> + Copy) {
+        fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T> + Copy) {
             for p in &mut self.0 {
                 p.map_coords_in_place(func);
             }
@@ -464,7 +446,7 @@ mod modern {
 
         fn try_map_coords_in_place<E>(
             &mut self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<T>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
         ) -> Result<(), E> {
             for p in &mut self.0 {
                 p.try_map_coords_in_place(&func)?;
@@ -480,16 +462,13 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPolygon<T> {
         type Output = MultiPolygon<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             MultiPolygon::new(self.iter().map(|p| p.map_coords(func)).collect())
         }
 
         fn try_map_coords<E>(
             &self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<NT>, E> + Copy,
+            func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
         ) -> Result<Self::Output, E> {
             Ok(MultiPolygon::new(
                 self.0
@@ -501,7 +480,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for MultiPolygon<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn(Coordinate<T>) -> Coordinate<T> + Copy) {
+        fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T> + Copy) {
             for p in &mut self.0 {
                 p.map_coords_in_place(func);
             }
@@ -509,7 +488,7 @@ mod modern {
 
         fn try_map_coords_in_place<E>(
             &mut self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<T>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
         ) -> Result<(), E> {
             for p in &mut self.0 {
                 p.try_map_coords_in_place(&func)?;
@@ -525,10 +504,7 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Geometry<T> {
         type Output = Geometry<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             match *self {
                 Geometry::Point(ref x) => Geometry::Point(x.map_coords(func)),
                 Geometry::Line(ref x) => Geometry::Line(x.map_coords(func)),
@@ -547,7 +523,7 @@ mod modern {
 
         fn try_map_coords<E>(
             &self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<NT>, E> + Copy,
+            func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
         ) -> Result<Self::Output, E> {
             match *self {
                 Geometry::Point(ref x) => Ok(Geometry::Point(x.try_map_coords(func)?)),
@@ -571,7 +547,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for Geometry<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn(Coordinate<T>) -> Coordinate<T> + Copy) {
+        fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T> + Copy) {
             match *self {
                 Geometry::Point(ref mut x) => x.map_coords_in_place(func),
                 Geometry::Line(ref mut x) => x.map_coords_in_place(func),
@@ -588,7 +564,7 @@ mod modern {
 
         fn try_map_coords_in_place<E>(
             &mut self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<T>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
         ) -> Result<(), E> {
             match *self {
                 Geometry::Point(ref mut x) => x.try_map_coords_in_place(func),
@@ -612,16 +588,13 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for GeometryCollection<T> {
         type Output = GeometryCollection<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             GeometryCollection::new_from(self.iter().map(|g| g.map_coords(func)).collect())
         }
 
         fn try_map_coords<E>(
             &self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<NT>, E> + Copy,
+            func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
         ) -> Result<Self::Output, E> {
             Ok(GeometryCollection::new_from(
                 self.0
@@ -633,7 +606,7 @@ mod modern {
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for GeometryCollection<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn(Coordinate<T>) -> Coordinate<T> + Copy) {
+        fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T> + Copy) {
             for p in &mut self.0 {
                 p.map_coords_in_place(func);
             }
@@ -641,7 +614,7 @@ mod modern {
 
         fn try_map_coords_in_place<E>(
             &mut self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<T>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
         ) -> Result<(), E> {
             for p in &mut self.0 {
                 p.try_map_coords_in_place(&func)?;
@@ -657,30 +630,27 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Rect<T> {
         type Output = Rect<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             Rect::new(func(self.min()), func(self.max()))
         }
 
         fn try_map_coords<E>(
             &self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<NT>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<NT>, E>,
         ) -> Result<Self::Output, E> {
             Ok(Rect::new(func(self.min())?, func(self.max())?))
         }
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for Rect<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn(Coordinate<T>) -> Coordinate<T>) {
+        fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T>) {
             let mut new_rect = Rect::new(func(self.min()), func(self.max()));
             ::std::mem::swap(self, &mut new_rect);
         }
 
         fn try_map_coords_in_place<E>(
             &mut self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<T>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
         ) -> Result<(), E> {
             let mut new_rect = Rect::new(func(self.min())?, func(self.max())?);
             ::std::mem::swap(self, &mut new_rect);
@@ -695,23 +665,20 @@ mod modern {
     impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Triangle<T> {
         type Output = Triangle<NT>;
 
-        fn map_coords(
-            &self,
-            func: impl Fn(Coordinate<T>) -> Coordinate<NT> + Copy,
-        ) -> Self::Output {
+        fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
             Triangle::new(func(self.0), func(self.1), func(self.2))
         }
 
         fn try_map_coords<E>(
             &self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<NT>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<NT>, E>,
         ) -> Result<Self::Output, E> {
             Ok(Triangle::new(func(self.0)?, func(self.1)?, func(self.2)?))
         }
     }
 
     impl<T: CoordNum> MapCoordsInPlace<T> for Triangle<T> {
-        fn map_coords_in_place(&mut self, func: impl Fn(Coordinate<T>) -> Coordinate<T>) {
+        fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T>) {
             let mut new_triangle = Triangle::new(func(self.0), func(self.1), func(self.2));
 
             ::std::mem::swap(self, &mut new_triangle);
@@ -719,7 +686,7 @@ mod modern {
 
         fn try_map_coords_in_place<E>(
             &mut self,
-            func: impl Fn(Coordinate<T>) -> Result<Coordinate<T>, E>,
+            func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
         ) -> Result<(), E> {
             let mut new_triangle = Triangle::new(func(self.0)?, func(self.1)?, func(self.2)?);
 
@@ -736,7 +703,7 @@ pub(crate) mod deprecated {
     /// Map a fallible function over all the coordinates in a geometry, returning a Result
     #[deprecated(
         since = "0.21.0",
-        note = "use `MapCoords::try_map_coords` which takes a `Coordinate` instead of an (x,y) tuple"
+        note = "use `MapCoords::try_map_coords` which takes a `Coord` instead of an (x,y) tuple"
     )]
     pub trait TryMapCoords<T, NT, E> {
         type Output;
@@ -767,17 +734,17 @@ pub(crate) mod deprecated {
         #[cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
         /// use approx::assert_relative_eq;
         /// // activate the [use-proj] feature in cargo.toml in order to access proj functions
-        /// use geo::{Coordinate, Point};
+        /// use geo::{Coord, Point};
         /// #[allow(deprecated)]
         /// use geo::TryMapCoords;
-        /// use proj::{Coord, Proj, ProjError};
+        /// use proj::{Coord as ProjCoord, Proj, ProjError};
         /// // GeoJSON uses the WGS 84 coordinate system
         /// let from = "EPSG:4326";
         /// // The NAD83 / California zone 6 (ftUS) coordinate system
         /// let to = "EPSG:2230";
         /// let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
         /// let f = |x: f64, y: f64| -> Result<_, ProjError> {
-        ///     // proj can accept Point, Coordinate, Tuple, and array values, returning a Result
+        ///     // proj can accept Point, Coord, Tuple, and array values, returning a Result
         ///     let shifted = to_feet.convert((x, y))?;
         ///     Ok((shifted.x(), shifted.y()))
         /// };
@@ -800,7 +767,7 @@ pub(crate) mod deprecated {
 
     #[deprecated(
         since = "0.21.0",
-        note = "use `MapCoordsInPlace::try_map_coords_in_place` which takes a `Coordinate` instead of an (x,y) tuple"
+        note = "use `MapCoordsInPlace::try_map_coords_in_place` which takes a `Coord` instead of an (x,y) tuple"
     )]
     pub trait TryMapCoordsInplace<T, E> {
         /// Map a fallible function over all the coordinates in a geometry, in place, returning a `Result`.
@@ -841,7 +808,7 @@ pub(crate) mod deprecated {
     /// Map a function over all the coordinates in an object in place
     #[deprecated(
         since = "0.21.0",
-        note = "use `MapCoordsInPlace::map_coords_in_place` instead which takes a `Coordinate` instead of an (x,y) tuple"
+        note = "use `MapCoordsInPlace::map_coords_in_place` instead which takes a `Coord` instead of an (x,y) tuple"
     )]
     pub trait MapCoordsInplace<T>: MapCoordsInPlace<T> {
         /// Apply a function to all the coordinates in a geometric object, in place
@@ -875,7 +842,7 @@ pub(crate) mod deprecated {
                     &self,
                     func: impl Fn((T, T)) -> Result<(NT, NT), E> + Copy,
                 ) -> Result<Self::Output, E> {
-                    MapCoords::try_map_coords(self, |c| Ok(Coordinate::from(func(c.x_y())?)))
+                    MapCoords::try_map_coords(self, |c| Ok(Coord::from(func(c.x_y())?)))
                 }
             }
 
@@ -934,14 +901,14 @@ pub(crate) mod deprecated {
 mod test {
     use super::{MapCoords, MapCoordsInPlace};
     use crate::{
-        coord, polygon, Coordinate, Geometry, GeometryCollection, Line, LineString,
-        MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect,
+        coord, polygon, Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString,
+        MultiPoint, MultiPolygon, Point, Polygon, Rect,
     };
 
     #[test]
     fn point() {
         let p = Point::new(10., 10.);
-        let new_p = p.map_coords(|Coordinate { x, y }| (x + 10., y + 100.).into());
+        let new_p = p.map_coords(|Coord { x, y }| (x + 10., y + 100.).into());
         assert_relative_eq!(new_p.x(), 20.);
         assert_relative_eq!(new_p.y(), 110.);
     }
@@ -949,7 +916,7 @@ mod test {
     #[test]
     fn point_inplace() {
         let mut p2 = Point::new(10f32, 10f32);
-        p2.map_coords_in_place(|Coordinate { x, y }| (x + 10., y + 100.).into());
+        p2.map_coords_in_place(|Coord { x, y }| (x + 10., y + 100.).into());
         assert_relative_eq!(p2.x(), 20.);
         assert_relative_eq!(p2.y(), 110.);
     }
@@ -957,7 +924,7 @@ mod test {
     #[test]
     fn rect_inplace() {
         let mut rect = Rect::new((10, 10), (20, 20));
-        rect.map_coords_in_place(|Coordinate { x, y }| (x + 10, y + 20).into());
+        rect.map_coords_in_place(|Coord { x, y }| (x + 10, y + 20).into());
         assert_eq!(rect.min(), coord! { x: 20, y: 30 });
         assert_eq!(rect.max(), coord! { x: 30, y: 40 });
     }
@@ -984,7 +951,7 @@ mod test {
     #[test]
     fn rect_map_coords() {
         let rect = Rect::new((10, 10), (20, 20));
-        let another_rect = rect.map_coords(|Coordinate { x, y }| (x + 10, y + 20).into());
+        let another_rect = rect.map_coords(|Coord { x, y }| (x + 10, y + 20).into());
         assert_eq!(another_rect.min(), coord! { x: 20, y: 30 });
         assert_eq!(another_rect.max(), coord! { x: 30, y: 40 });
     }
@@ -992,7 +959,7 @@ mod test {
     #[test]
     fn rect_try_map_coords() {
         let rect = Rect::new((10i32, 10), (20, 20));
-        let result = rect.try_map_coords(|Coordinate { x, y }| -> Result<_, &'static str> {
+        let result = rect.try_map_coords(|Coord { x, y }| -> Result<_, &'static str> {
             Ok((
                 x.checked_add(10).ok_or("overflow")?,
                 y.checked_add(20).ok_or("overflow")?,
@@ -1025,7 +992,7 @@ mod test {
     fn line() {
         let line = Line::from([(0., 0.), (1., 2.)]);
         assert_relative_eq!(
-            line.map_coords(|Coordinate { x, y }| (x * 2., y).into()),
+            line.map_coords(|Coord { x, y }| (x * 2., y).into()),
             Line::from([(0., 0.), (2., 2.)]),
             epsilon = 1e-6
         );
@@ -1034,9 +1001,9 @@ mod test {
     #[test]
     fn linestring() {
         let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
-        let line2 = line1.map_coords(|Coordinate { x, y }| (x + 10., y - 100.).into());
-        assert_relative_eq!(line2.0[0], Coordinate::from((10., -100.)), epsilon = 1e-6);
-        assert_relative_eq!(line2.0[1], Coordinate::from((11., -98.)), epsilon = 1e-6);
+        let line2 = line1.map_coords(|Coord { x, y }| (x + 10., y - 100.).into());
+        assert_relative_eq!(line2.0[0], Coord::from((10., -100.)), epsilon = 1e-6);
+        assert_relative_eq!(line2.0[1], Coord::from((11., -98.)), epsilon = 1e-6);
     }
 
     #[test]
@@ -1050,7 +1017,7 @@ mod test {
         ])];
         let p = Polygon::new(exterior, interiors);
 
-        let p2 = p.map_coords(|Coordinate { x, y }| (x + 10., y - 100.).into());
+        let p2 = p.map_coords(|Coord { x, y }| (x + 10., y - 100.).into());
 
         let exterior2 =
             LineString::from(vec![(10., -100.), (11., -99.), (11., -100.), (10., -100.)]);
@@ -1072,7 +1039,7 @@ mod test {
         let mp = MultiPoint::new(vec![p1, p2]);
 
         assert_eq!(
-            mp.map_coords(|Coordinate { x, y }| (x + 10., y + 100.).into()),
+            mp.map_coords(|Coord { x, y }| (x + 10., y + 100.).into()),
             MultiPoint::new(vec![Point::new(20., 110.), Point::new(10., 0.)])
         );
     }
@@ -1082,7 +1049,7 @@ mod test {
         let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
         let line2: LineString<f32> = LineString::from(vec![(-1., 0.), (0., 0.), (1., 2.)]);
         let mline = MultiLineString::new(vec![line1, line2]);
-        let mline2 = mline.map_coords(|Coordinate { x, y }| (x + 10., y - 100.).into());
+        let mline2 = mline.map_coords(|Coord { x, y }| (x + 10., y - 100.).into());
         assert_relative_eq!(
             mline2,
             MultiLineString::new(vec![
@@ -1122,7 +1089,7 @@ mod test {
         ];
 
         let mp = MultiPolygon::new(vec![poly1, poly2]);
-        let mp2 = mp.map_coords(|Coordinate { x, y }| (x * 2., y + 100.).into());
+        let mp2 = mp.map_coords(|Coord { x, y }| (x * 2., y + 100.).into());
         assert_eq!(mp2.0.len(), 2);
         assert_relative_eq!(
             mp2.0[0],
@@ -1165,7 +1132,7 @@ mod test {
         let gc = GeometryCollection::new_from(vec![p1, line1]);
 
         assert_eq!(
-            gc.map_coords(|Coordinate { x, y }| (x + 10., y + 100.).into()),
+            gc.map_coords(|Coord { x, y }| (x + 10., y + 100.).into()),
             GeometryCollection::new_from(vec![
                 Geometry::Point(Point::new(20., 110.)),
                 Geometry::LineString(LineString::from(vec![(10., 100.), (11., 102.)])),
@@ -1176,7 +1143,7 @@ mod test {
     #[test]
     fn convert_type() {
         let p1: Point<f64> = Point::new(1., 2.);
-        let p2: Point<f32> = p1.map_coords(|Coordinate { x, y }| (x as f32, y as f32).into());
+        let p2: Point<f32> = p1.map_coords(|Coord { x, y }| (x as f32, y as f32).into());
         assert_relative_eq!(p2.x(), 1f32);
         assert_relative_eq!(p2.y(), 2f32);
     }
@@ -1202,7 +1169,7 @@ mod test {
 
     #[test]
     fn test_fallible() {
-        let f = |Coordinate { x, y }| -> Result<_, &'static str> {
+        let f = |Coord { x, y }| -> Result<_, &'static str> {
             if relative_ne!(x, 2.0) {
                 Ok((x * 2., y + 100.).into())
             } else {
@@ -1244,6 +1211,6 @@ mod test {
 
         // This call should not panic even though Rect::new
         // constructor panics if min coords > max coords
-        rect.map_coords(|Coordinate { x, y }| (-x, -y).into());
+        rect.map_coords(|Coord { x, y }| (-x, -y).into());
     }
 }

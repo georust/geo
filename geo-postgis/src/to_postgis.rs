@@ -1,5 +1,5 @@
 use geo_types::{
-    Coordinate, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon,
 };
 use postgis::ewkb;
@@ -19,7 +19,7 @@ pub trait ToPostgis<T> {
     }
 }
 
-impl ToPostgis<ewkb::Point> for Coordinate {
+impl ToPostgis<ewkb::Point> for Coord {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Point {
         ewkb::Point::new(self.x, self.y, srid)
     }

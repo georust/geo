@@ -1,4 +1,4 @@
-use crate::{Coordinate, GeoFloat};
+use crate::{Coord, GeoFloat};
 
 /// Represents a point on an edge which intersects with another edge.
 ///
@@ -8,13 +8,13 @@ use crate::{Coordinate, GeoFloat};
 /// This is based on [JTS's EdgeIntersection as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/EdgeIntersection.java)
 #[derive(Debug)]
 pub(crate) struct EdgeIntersection<F: GeoFloat> {
-    coord: Coordinate<F>,
+    coord: Coord<F>,
     segment_index: usize,
     dist: F,
 }
 
 impl<F: GeoFloat> EdgeIntersection<F> {
-    pub fn new(coord: Coordinate<F>, segment_index: usize, dist: F) -> EdgeIntersection<F> {
+    pub fn new(coord: Coord<F>, segment_index: usize, dist: F) -> EdgeIntersection<F> {
         EdgeIntersection {
             coord,
             segment_index,
@@ -22,7 +22,7 @@ impl<F: GeoFloat> EdgeIntersection<F> {
         }
     }
 
-    pub fn coordinate(&self) -> Coordinate<F> {
+    pub fn coordinate(&self) -> Coord<F> {
         self.coord
     }
 

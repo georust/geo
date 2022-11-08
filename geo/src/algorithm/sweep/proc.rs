@@ -64,11 +64,11 @@ impl<C: Cross + Clone> Sweep<C> {
         // overlapping once broken at the point of intersection!
 
         // EXAMPLE:
-        // let pt_7 = Coordinate::from((-32.57812499999999, 241.33427773853316));
-        // let pt_8 = Coordinate::from((-36.11348070978957, 237.7989220287436));
-        // let pt_13 = Coordinate::from((-25.507080078124993, 248.40532266040816));
-        // let pt_14 = Coordinate::from((-36.48784219165816, 237.424560546875));
-        // let pt_16 = Coordinate::from((-36.048578439260666, 237.8638242992725));
+        // let pt_7 = Coord::from((-32.57812499999999, 241.33427773853316));
+        // let pt_8 = Coord::from((-36.11348070978957, 237.7989220287436));
+        // let pt_13 = Coord::from((-25.507080078124993, 248.40532266040816));
+        // let pt_14 = Coord::from((-36.48784219165816, 237.424560546875));
+        // let pt_16 = Coord::from((-36.048578439260666, 237.8638242992725));
         // 7-8 and 13-14 intersect at 16 such that 8-16 and 14-16 overlap !
 
         // We handle this by intersecting twice if the segments overlap after adjustment.

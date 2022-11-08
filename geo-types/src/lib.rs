@@ -8,24 +8,24 @@
 //!
 //! ## Geometries
 //!
-//! - **[`Point`]**: A single point represented by one [`Coordinate`]
+//! - **[`Point`]**: A single point represented by one [`Coord`]
 //! - **[`MultiPoint`]**: A collection of [`Point`]s
-//! - **[`Line`]**: A line segment represented by two [`Coordinate`]s
+//! - **[`Line`]**: A line segment represented by two [`Coord`]s
 //! - **[`LineString`]**: A series of contiguous line segments represented by two or more
-//!   [`Coordinate`]s
+//!   [`Coord`]s
 //! - **[`MultiLineString`]**: A collection of [`LineString`]s
 //! - **[`Polygon`]**: A bounded area represented by one [`LineString`] exterior ring, and zero or
 //!   more [`LineString`] interior rings
 //! - **[`MultiPolygon`]**: A collection of [`Polygon`]s
 //! - **[`Rect`]**: An axis-aligned bounded rectangle represented by minimum and maximum
-//!   [`Coordinate`]s
-//! - **[`Triangle`]**: A bounded area represented by three [`Coordinate`] vertices
+//!   [`Coord`]s
+//! - **[`Triangle`]**: A bounded area represented by three [`Coord`] vertices
 //! - **[`GeometryCollection`]**: A collection of [`Geometry`]s
-//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coordinate`]
+//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coord`]
 //!
 //! ## Coordinates and Numeric Types
 //!
-//! - **[`Coordinate`]**: A two-dimensional coordinate. All geometry types are composed of [`Coordinate`]s, though [`Coordinate`] itself is not a [`Geometry`] type. See [`Point`] for a single coordinate geometry.
+//! - **[`Coord`]**: A two-dimensional coordinate. All geometry types are composed of [`Coord`]s, though [`Coord`] itself is not a [`Geometry`] type. See [`Point`] for a single coordinate geometry.
 //!
 //! By default, coordinates are 64-bit floating point numbers, but this is generic, and you may specify any numeric type that implements [`CoordNum`] or [`CoordFloat`]. As well as [`f64`], this includes common numeric types like [`f32`], [`i32`], [`i64`], etc.
 //!
@@ -95,7 +95,7 @@ pub trait CoordinateType: Num + Copy + NumCast + PartialOrd + Debug {}
 #[allow(deprecated)]
 impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordinateType for T {}
 
-/// For algorithms which can use both integer **and** floating point `Point`s/`Coordinate`s
+/// For algorithms which can use both integer **and** floating point `Point`s/`Coord`s
 ///
 /// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
 ///
@@ -106,7 +106,7 @@ pub trait CoordNum: CoordinateType + Debug {}
 #[allow(deprecated)]
 impl<T: CoordinateType + Debug> CoordNum for T {}
 
-/// For algorithms which can only use floating point `Point`s/`Coordinate`s, like area or length calculations
+/// For algorithms which can only use floating point `Point`s/`Coord`s, like area or length calculations
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}
 

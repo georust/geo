@@ -3,8 +3,8 @@ use crate::utils::{coord_pos_relative_to_ring, CoordPos};
 use crate::EuclideanLength;
 use crate::Intersects;
 use crate::{
-    Coordinate, GeoFloat, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
-    Point, Polygon, Triangle,
+    Coord, GeoFloat, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
+    Polygon, Triangle,
 };
 use num_traits::{float::FloatConst, Bounded, Float, Signed};
 
@@ -94,25 +94,25 @@ pub trait EuclideanDistance<T, Rhs = Self> {
     fn euclidean_distance(&self, rhs: &Rhs) -> T;
 }
 
-// ┌────────────────────────────────┐
-// │ Implementations for Coordinate │
-// └────────────────────────────────┘
+// ┌───────────────────────────┐
+// │ Implementations for Coord │
+// └───────────────────────────┘
 
-impl<T> EuclideanDistance<T, Coordinate<T>> for Coordinate<T>
+impl<T> EuclideanDistance<T, Coord<T>> for Coord<T>
 where
     T: GeoFloat,
 {
-    /// Minimum distance between two `Coordinate`s
-    fn euclidean_distance(&self, c: &Coordinate<T>) -> T {
+    /// Minimum distance between two `Coord`s
+    fn euclidean_distance(&self, c: &Coord<T>) -> T {
         Line::new(*self, *c).euclidean_length()
     }
 }
 
-impl<T> EuclideanDistance<T, Line<T>> for Coordinate<T>
+impl<T> EuclideanDistance<T, Line<T>> for Coord<T>
 where
     T: GeoFloat,
 {
-    /// Minimum distance from a `Coordinate` to a `Line`
+    /// Minimum distance from a `Coord` to a `Line`
     fn euclidean_distance(&self, line: &Line<T>) -> T {
         line.euclidean_distance(self)
     }
@@ -242,12 +242,12 @@ where
 // │ Implementations for Line │
 // └──────────────────────────┘
 
-impl<T> EuclideanDistance<T, Coordinate<T>> for Line<T>
+impl<T> EuclideanDistance<T, Coord<T>> for Line<T>
 where
     T: GeoFloat,
 {
-    /// Minimum distance from a `Line` to a `Coordinate`
-    fn euclidean_distance(&self, coord: &Coordinate<T>) -> T {
+    /// Minimum distance from a `Line` to a `Coord`
+    fn euclidean_distance(&self, coord: &Coord<T>) -> T {
         ::geo_types::private_utils::point_line_euclidean_distance(Point::from(*coord), *self)
     }
 }
@@ -1169,20 +1169,20 @@ mod test {
     #[test]
     fn convex_and_nearest_neighbour_comparison() {
         let ls1: LineString<f64> = vec![
-            Coordinate::from((57.39453770777941, 307.60533608924663)),
-            Coordinate::from((67.1800355576469, 309.6654408997451)),
-            Coordinate::from((84.89693692793338, 225.5101593908847)),
-            Coordinate::from((75.1114390780659, 223.45005458038628)),
-            Coordinate::from((57.39453770777941, 307.60533608924663)),
+            Coord::from((57.39453770777941, 307.60533608924663)),
+            Coord::from((67.1800355576469, 309.6654408997451)),
+            Coord::from((84.89693692793338, 225.5101593908847)),
+            Coord::from((75.1114390780659, 223.45005458038628)),
+            Coord::from((57.39453770777941, 307.60533608924663)),
         ]
         .into();
         let first_polygon: Polygon<f64> = Polygon::new(ls1, vec![]);
         let ls2: LineString<f64> = vec![
-            Coordinate::from((138.11769866645008, -45.75134112915392)),
-            Coordinate::from((130.50230476949187, -39.270154833870336)),
-            Coordinate::from((184.94426964987397, 24.699153900578573)),
-            Coordinate::from((192.55966354683218, 18.217967605294987)),
-            Coordinate::from((138.11769866645008, -45.75134112915392)),
+            Coord::from((138.11769866645008, -45.75134112915392)),
+            Coord::from((130.50230476949187, -39.270154833870336)),
+            Coord::from((184.94426964987397, 24.699153900578573)),
+            Coord::from((192.55966354683218, 18.217967605294987)),
+            Coord::from((138.11769866645008, -45.75134112915392)),
         ]
         .into();
         let second_polygon = Polygon::new(ls2, vec![]);

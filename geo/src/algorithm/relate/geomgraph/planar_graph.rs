@@ -2,7 +2,7 @@ use super::{
     node_map::{NodeFactory, NodeMap},
     CoordNode, CoordPos, Edge, Label,
 };
-use crate::{Coordinate, GeoFloat};
+use crate::{Coord, GeoFloat};
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -15,7 +15,7 @@ where
     F: GeoFloat,
 {
     type Node = CoordNode<F>;
-    fn create_node(coordinate: Coordinate<F>) -> Self::Node {
+    fn create_node(coordinate: Coord<F>) -> Self::Node {
         CoordNode::new(coordinate)
     }
 }
@@ -37,7 +37,7 @@ impl<F: GeoFloat> PlanarGraph<F> {
         }
     }
 
-    pub fn is_boundary_node(&self, geom_index: usize, coord: Coordinate<F>) -> bool {
+    pub fn is_boundary_node(&self, geom_index: usize, coord: Coord<F>) -> bool {
         self.nodes
             .find(coord)
             .and_then(|node| node.label().on_position(geom_index))
@@ -49,7 +49,7 @@ impl<F: GeoFloat> PlanarGraph<F> {
         self.edges.push(Rc::new(RefCell::new(edge)));
     }
 
-    pub fn add_node_with_coordinate(&mut self, coord: Coordinate<F>) -> &mut CoordNode<F> {
+    pub fn add_node_with_coordinate(&mut self, coord: Coord<F>) -> &mut CoordNode<F> {
         self.nodes.insert_node_with_coordinate(coord)
     }
 

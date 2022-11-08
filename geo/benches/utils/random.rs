@@ -14,10 +14,10 @@ use rand_distr::{Distribution, Normal, Standard};
 // feature-flag too.
 
 #[inline]
-pub fn uniform_point<R: Rng>(rng: &mut R, bounds: Rect<f64>) -> Coordinate<f64> {
+pub fn uniform_point<R: Rng>(rng: &mut R, bounds: Rect<f64>) -> Coord<f64> {
     let coords: [f64; 2] = rng.sample(Standard);
     let dims = bounds.max() - bounds.min();
-    Coordinate {
+    Coord {
         x: bounds.min().x + dims.x * coords[0],
         y: bounds.min().y + dims.y * coords[1],
     }
@@ -36,7 +36,7 @@ pub fn uniform_line_with_length<R: Rng>(rng: &mut R, bounds: Rect<f64>, length: 
     line.rotate_around_point(angle, start.into())
 }
 
-pub fn scaled_generator(dims: Coordinate<f64>, scale: usize) -> impl Fn() -> Line<f64> {
+pub fn scaled_generator(dims: Coord<f64>, scale: usize) -> impl Fn() -> Line<f64> {
     let scaling: f64 = (1 << scale) as f64;
     let bounds = Rect::new([0., 0.].into(), dims / scaling);
     let shift_bounds = Rect::new([0., 0.].into(), dims - (dims / scaling));

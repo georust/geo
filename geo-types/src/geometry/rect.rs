@@ -1,13 +1,13 @@
-use crate::{coord, polygon, CoordFloat, CoordNum, Coordinate, Line, Polygon};
+use crate::{coord, polygon, Coord, CoordFloat, CoordNum, Line, Polygon};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
 /// An _axis-aligned_ bounded 2D rectangle whose area is
-/// defined by minimum and maximum `Coordinate`s.
+/// defined by minimum and maximum `Coord`s.
 ///
 /// The constructors and setters ensure the maximum
-/// `Coordinate` is greater than or equal to the minimum.
+/// `Coord` is greater than or equal to the minimum.
 /// Thus, a `Rect`s width, height, and area is guaranteed to
 /// be greater than or equal to zero.
 ///
@@ -40,8 +40,8 @@ use approx::{AbsDiffEq, RelativeEq};
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect<T: CoordNum = f64> {
-    min: Coordinate<T>,
-    max: Coordinate<T>,
+    min: Coord<T>,
+    max: Coord<T>,
 }
 
 impl<T: CoordNum> Rect<T> {
@@ -61,7 +61,7 @@ impl<T: CoordNum> Rect<T> {
     /// ```
     pub fn new<C>(c1: C, c2: C) -> Self
     where
-        C: Into<Coordinate<T>>,
+        C: Into<Coord<T>>,
     {
         let c1 = c1.into();
         let c2 = c2.into();
@@ -88,12 +88,12 @@ impl<T: CoordNum> Rect<T> {
     #[allow(deprecated)]
     pub fn try_new<C>(c1: C, c2: C) -> Result<Rect<T>, InvalidRectCoordinatesError>
     where
-        C: Into<Coordinate<T>>,
+        C: Into<Coord<T>>,
     {
         Ok(Rect::new(c1, c2))
     }
 
-    /// Returns the minimum `Coordinate` of the `Rect`.
+    /// Returns the minimum `Coord` of the `Rect`.
     ///
     /// # Examples
     ///
@@ -107,7 +107,7 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// assert_eq!(rect.min(), coord! { x: 5., y: 5. });
     /// ```
-    pub fn min(self) -> Coordinate<T> {
+    pub fn min(self) -> Coord<T> {
         self.min
     }
 
@@ -118,13 +118,13 @@ impl<T: CoordNum> Rect<T> {
     /// Panics if `min`’s x/y is greater than the maximum coordinate’s x/y.
     pub fn set_min<C>(&mut self, min: C)
     where
-        C: Into<Coordinate<T>>,
+        C: Into<Coord<T>>,
     {
         self.min = min.into();
         self.assert_valid_bounds();
     }
 
-    /// Returns the maximum `Coordinate` of the `Rect`.
+    /// Returns the maximum `Coord` of the `Rect`.
     ///
     /// # Examples
     ///
@@ -138,7 +138,7 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// assert_eq!(rect.max(), coord! { x: 15., y: 15. });
     /// ```
-    pub fn max(self) -> Coordinate<T> {
+    pub fn max(self) -> Coord<T> {
         self.max
     }
 
@@ -149,7 +149,7 @@ impl<T: CoordNum> Rect<T> {
     /// Panics if `max`’s x/y is less than the minimum coordinate’s x/y.
     pub fn set_max<C>(&mut self, max: C)
     where
-        C: Into<Coordinate<T>>,
+        C: Into<Coord<T>>,
     {
         self.max = max.into();
         self.assert_valid_bounds();
@@ -353,7 +353,7 @@ impl<T: CoordNum> Rect<T> {
 }
 
 impl<T: CoordFloat> Rect<T> {
-    /// Returns the center `Coordinate` of the `Rect`.
+    /// Returns the center `Coord` of the `Rect`.
     ///
     /// # Examples
     ///
@@ -367,7 +367,7 @@ impl<T: CoordFloat> Rect<T> {
     ///
     /// assert_eq!(rect.center(), coord! { x: 10., y: 10. });
     /// ```
-    pub fn center(self) -> Coordinate<T> {
+    pub fn center(self) -> Coord<T> {
         let two = T::one() + T::one();
         coord! {
             x: (self.max.x + self.min.x) / two,
@@ -513,15 +513,15 @@ mod test {
     fn rect_center() {
         assert_relative_eq!(
             Rect::new((0., 10.), (10., 90.)).center(),
-            Coordinate::from((5., 50.))
+            Coord::from((5., 50.))
         );
         assert_relative_eq!(
             Rect::new((-42., -42.), (42., 42.)).center(),
-            Coordinate::from((0., 0.))
+            Coord::from((0., 0.))
         );
         assert_relative_eq!(
             Rect::new((0., 0.), (0., 0.)).center(),
-            Coordinate::from((0., 0.))
+            Coord::from((0., 0.))
         );
     }
 }

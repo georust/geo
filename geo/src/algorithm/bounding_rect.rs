@@ -30,13 +30,13 @@ pub trait BoundingRect<T: CoordNum> {
     fn bounding_rect(&self) -> Self::Output;
 }
 
-impl<T> BoundingRect<T> for Coordinate<T>
+impl<T> BoundingRect<T> for Coord<T>
 where
     T: CoordNum,
 {
     type Output = Rect<T>;
 
-    /// Return the bounding rectangle for a `Coordinate`. It will have zero width
+    /// Return the bounding rectangle for a `Coord`. It will have zero width
     /// and zero height.
     fn bounding_rect(&self) -> Self::Output {
         Rect::new(*self, *self)

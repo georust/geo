@@ -73,7 +73,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{line_string, point, polygon, Coordinate, LineString, Polygon};
+    use crate::{line_string, point, polygon, Coord, LineString, Polygon};
 
     #[test]
     fn test_translate_point() {
@@ -151,21 +151,21 @@ mod test {
         let poly1 = Polygon::new(ls1, vec![ls2]);
         let rotated = poly1.translate(17.0, 18.0);
         let correct_outside = vec![
-            Coordinate::from((22.0, 19.0)),
-            Coordinate::from((21.0, 20.0)),
-            Coordinate::from((21.0, 21.0)),
-            Coordinate::from((22.0, 22.0)),
-            Coordinate::from((23.0, 22.0)),
-            Coordinate::from((24.0, 21.0)),
-            Coordinate::from((24.0, 20.0)),
-            Coordinate::from((23.0, 19.0)),
-            Coordinate::from((22.0, 19.0)),
+            Coord::from((22.0, 19.0)),
+            Coord::from((21.0, 20.0)),
+            Coord::from((21.0, 21.0)),
+            Coord::from((22.0, 22.0)),
+            Coord::from((23.0, 22.0)),
+            Coord::from((24.0, 21.0)),
+            Coord::from((24.0, 20.0)),
+            Coord::from((23.0, 19.0)),
+            Coord::from((22.0, 19.0)),
         ];
         let correct_inside = vec![
-            Coordinate::from((22.0, 19.3)),
-            Coordinate::from((22.5, 20.0)),
-            Coordinate::from((23.0, 19.3)),
-            Coordinate::from((22.0, 19.3)),
+            Coord::from((22.0, 19.3)),
+            Coord::from((22.5, 20.0)),
+            Coord::from((23.0, 19.3)),
+            Coord::from((22.0, 19.3)),
         ];
         assert_eq!(rotated.exterior().0, correct_outside);
         assert_eq!(rotated.interiors()[0].0, correct_inside);

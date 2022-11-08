@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
 use super::*;
-use crate::{line_intersection::line_intersection, Coordinate, LineIntersection};
+use crate::{line_intersection::line_intersection, Coord, LineIntersection};
 
 /// A segment of a input [`Cross`] type.
 ///
@@ -158,7 +158,7 @@ impl<C> Iterator for CrossingsIter<C>
 where
     C: Cross + Clone,
 {
-    type Item = Coordinate<C::Scalar>;
+    type Item = Coord<C::Scalar>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let segments = &mut self.segments;
@@ -223,7 +223,7 @@ pub struct Intersections<C: Cross + Clone> {
     idx: usize,
     jdx: usize,
     is_overlap: bool,
-    pt: Option<Coordinate<C::Scalar>>,
+    pt: Option<Coord<C::Scalar>>,
 }
 
 impl<C> FromIterator<C> for Intersections<C>

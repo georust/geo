@@ -4,7 +4,7 @@ extern crate geo;
 
 use criterion::Criterion;
 use geo::ConcaveHull;
-use geo::{CoordNum, Coordinate};
+use geo::{Coord, CoordNum};
 
 use num_traits::Signed;
 use rand::distributions::uniform::SampleUniform;
@@ -14,7 +14,7 @@ pub fn uniform_points_in_range<S: CoordNum + SampleUniform + Signed, R: Rng>(
     range: S,
     size: usize,
     rng: &mut R,
-) -> Vec<Coordinate<S>> {
+) -> Vec<Coord<S>> {
     (0..size)
         .map(|_| (rng.gen_range(-range..=range), rng.gen_range(-range..=range)).into())
         .collect()

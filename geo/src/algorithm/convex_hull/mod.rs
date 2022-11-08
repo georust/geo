@@ -1,4 +1,4 @@
-use crate::geometry::{Coordinate, LineString, Polygon};
+use crate::geometry::{Coord, LineString, Polygon};
 use crate::kernels::*;
 use crate::GeoNum;
 
@@ -69,7 +69,7 @@ pub use graham::graham_hull;
 // trivial case: input with at most 3 points. It ensures the
 // output is ccw, and does not repeat points unless
 // required.
-fn trivial_hull<T>(points: &mut [Coordinate<T>], include_on_hull: bool) -> LineString<T>
+fn trivial_hull<T>(points: &mut [Coord<T>], include_on_hull: bool) -> LineString<T>
 where
     T: GeoNum,
 {
@@ -77,7 +77,7 @@ where
 
     // Remove repeated points unless collinear points
     // are to be included.
-    let mut ls: Vec<Coordinate<T>> = points.to_vec();
+    let mut ls: Vec<Coord<T>> = points.to_vec();
     if !include_on_hull {
         ls.sort_unstable_by(lex_cmp);
         if ls.len() == 3 && T::Ker::orient2d(ls[0], ls[1], ls[2]) == Orientation::Collinear {
@@ -117,7 +117,7 @@ mod test {
 
     #[test]
     fn test_zero_points() {
-        let mut v: Vec<Coordinate<i64>> = vec![];
+        let mut v: Vec<Coord<i64>> = vec![];
         let correct = vec![];
         let res = trivial_hull(&mut v, false);
         assert_eq!(res.0, correct);
@@ -125,7 +125,7 @@ mod test {
 
     #[test]
     fn test_zero_points_include_on_hull() {
-        let mut v: Vec<Coordinate<i64>> = vec![];
+        let mut v: Vec<Coord<i64>> = vec![];
         let correct = vec![];
         let res = trivial_hull(&mut v, true);
         assert_eq!(res.0, correct);

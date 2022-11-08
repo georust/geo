@@ -10,7 +10,7 @@ where
         self.to_polygon().intersects(rhs)
     }
 }
-symmetric_intersects_impl!(Coordinate<T>, Triangle<T>);
+symmetric_intersects_impl!(Coord<T>, Triangle<T>);
 symmetric_intersects_impl!(Line<T>, Triangle<T>);
 symmetric_intersects_impl!(Rect<T>, Triangle<T>);
 symmetric_intersects_impl!(Polygon<T>, Triangle<T>);

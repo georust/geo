@@ -129,7 +129,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Polygon<F> {
     }
 }
 
-impl<F: GeoFloat> ClosestPoint<F> for Coordinate<F> {
+impl<F: GeoFloat> ClosestPoint<F> for Coord<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         Point::from(*self).closest_point(p)
     }

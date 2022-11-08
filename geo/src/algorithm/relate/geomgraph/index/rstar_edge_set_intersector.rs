@@ -18,7 +18,7 @@ impl RstarEdgeSetIntersector {
 struct Segment<'a, F: GeoFloat + rstar::RTreeNum> {
     i: usize,
     edge: &'a RefCell<Edge<F>>,
-    envelope: rstar::AABB<crate::Coordinate<F>>,
+    envelope: rstar::AABB<crate::Coord<F>>,
 }
 
 impl<'a, F> Segment<'a, F>
@@ -41,7 +41,7 @@ impl<'a, F> rstar::RTreeObject for Segment<'a, F>
 where
     F: GeoFloat + rstar::RTreeNum,
 {
-    type Envelope = rstar::AABB<crate::Coordinate<F>>;
+    type Envelope = rstar::AABB<crate::Coord<F>>;
 
     fn envelope(&self) -> Self::Envelope {
         self.envelope
