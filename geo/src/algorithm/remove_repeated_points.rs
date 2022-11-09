@@ -7,12 +7,16 @@ use num_traits::FromPrimitive;
 
 /// Remove repeated points from a `MultiPoint` and repeated consecutive coordinates
 /// from `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon`.
+///
+/// For `GeometryCollection` it individually removes the repeated points
+/// of each geometry in the collection.
+///
+/// For `Point`, `Line`, `Rect` and `Triangle` it returns a clone of the geometry.
 pub trait RemoveRepeatedPoints<T>
 where
     T: CoordNum + FromPrimitive,
 {
-    /// Create a new geometry with (consecutive) repeated points removed
-    /// (only applies to `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon`).
+    /// Create a new geometry with (consecutive) repeated points removed.
     fn remove_repeated_points(&self) -> Self;
 }
 
@@ -113,7 +117,8 @@ impl<T> RemoveRepeatedPoints<T> for GeometryCollection<T>
 where
     T: CoordNum + FromPrimitive,
 {
-    /// Create a GeometryCollection with consecutive repeated points removed.
+    /// Create a GeometryCollection with (consecutive) repeated points
+    /// of its geometries removed.
     fn remove_repeated_points(&self) -> Self {
         GeometryCollection::new_from(self.0.iter().map(|g| g.remove_repeated_points()).collect())
     }
