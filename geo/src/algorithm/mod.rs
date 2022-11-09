@@ -163,6 +163,10 @@ pub mod proj;
 pub mod relate;
 pub use relate::Relate;
 
+/// Remove (consecutive) repeated points
+pub mod remove_repeated_points;
+pub use remove_repeated_points::RemoveRepeatedPoints;
+
 /// Rotate a `Geometry` by an angle given in degrees.
 pub mod rotate;
 pub use rotate::Rotate;
