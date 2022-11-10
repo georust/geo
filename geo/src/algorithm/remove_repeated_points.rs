@@ -18,7 +18,7 @@ where
 {
     /// Create a new geometry with (consecutive) repeated points removed.
     fn remove_repeated_points(&self) -> Self;
-    /// Returns the geometry with (consecutive) repeated points removed inplace.
+    /// Remove (consecutive) repeated points inplace.
     fn remove_repeated_points_mut(&mut self);
 }
 
