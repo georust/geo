@@ -42,12 +42,8 @@ where
 {
     /// Create a LineString with consecutive repeated points removed.
     fn remove_repeated_points(&self) -> Self {
-        let mut coords = vec![];
-        for c in self.0.iter() {
-            if coords.last().map_or(true, |last| last != c) {
-                coords.push(*c);
-            }
-        }
+        let mut coords = self.0.clone();
+        coords.dedup();
         LineString(coords)
     }
 }
