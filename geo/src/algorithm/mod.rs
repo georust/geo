@@ -148,6 +148,9 @@ pub use map_coords::{MapCoords, MapCoordsInPlace};
 #[allow(deprecated)]
 pub use map_coords::{MapCoordsInplace, TryMapCoords, TryMapCoordsInplace};
 
+/// Apply a simple signed offset azzuming cartesian
+pub mod offset_signed_cartesian;
+
 /// Orient a `Polygon`'s exterior and interior rings.
 pub mod orient;
 pub use orient::Orient;
