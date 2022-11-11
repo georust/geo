@@ -414,7 +414,7 @@ mod test {
     #[test]
     fn test_remove_repeated_points_geometrycollection() {
         let gc = GeometryCollection::new_from(vec![
-            make_result_mp1().into(),
+            make_test_mp1().into(),
             make_test_line1().into(),
             make_test_poly1().into(),
         ]);
@@ -485,7 +485,7 @@ mod test {
     #[test]
     fn test_remove_repeated_points_mut_geometrycollection() {
         let mut gc = GeometryCollection::new_from(vec![
-            make_result_mp1().into(),
+            make_test_mp1().into(),
             make_test_line1().into(),
             make_test_poly1().into(),
         ]);
