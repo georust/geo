@@ -108,7 +108,9 @@ impl<T: CoordNum> GeometryCollection<T> {
     }
 }
 
-#[deprecated(since = 0.7.5, note = "Use `GeometryCollection::from(vec![geom])` instead.")]
+/// **DO NOT USE!** Deprecated since 0.7.5.
+///
+/// Use `GeometryCollection::from(vec![geom])` instead.
 impl<T: CoordNum, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
     fn from(x: IG) -> Self {
         Self(vec![x.into()])
