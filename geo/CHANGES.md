@@ -11,6 +11,7 @@
   * <https://github.com/georust/geo/pull/928>
 * Added `RemoveRepeatedPoints` trait allowing the removal of (consecutive)
   repeated points.
+* Added very basic `Offset` trait and implemented it for `Line` and `LineString`
 
 ## 0.23.0
 
