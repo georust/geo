@@ -1,7 +1,7 @@
 use crate::CoordFloat;
 use geo_types::Coord;
 
-/// 2D "Cross Product"
+/// The signed magnitude of the 3D "Cross Product" assuming z ordinates are zero
 ///
 /// > Note: `cross_prod` is already defined on `Point`... but that it seems to be
 /// >       some other operation on 3 points
@@ -40,7 +40,7 @@ use geo_types::Coord;
 ///         = |               (a_x·b_y       - a_y·b_x)·k |
 ///         =                  a_x·b_y       - a_y·b_x
 /// ```
-pub(super) fn cross_product<T>(left: Coord<T>, right: Coord<T>) -> T
+pub(super) fn cross_product_2d<T>(left: Coord<T>, right: Coord<T>) -> T
 where
     T: CoordFloat,
 {
@@ -53,7 +53,7 @@ mod test {
     use crate::Coord;
 
     // private imports
-    use super::cross_product;
+    use super::cross_product_2d;
 
     #[test]
     fn test_cross_product() {
@@ -65,9 +65,9 @@ mod test {
         let ac = c - a;
 
         // expect the area of the parallelogram
-        assert_eq!(cross_product(ac, ab), 1f64);
+        assert_eq!(cross_product_2d(ac, ab), 1f64);
         // expect swapping will result in negative
-        assert_eq!(cross_product(ab, ac), -1f64);
+        assert_eq!(cross_product_2d(ab, ac), -1f64);
 
         // Add skew
         let a = Coord { x: 0f64, y: 0f64 };
@@ -78,8 +78,8 @@ mod test {
         let ac = c - a;
 
         // expect the area of the parallelogram
-        assert_eq!(cross_product(ac, ab), 1f64);
+        assert_eq!(cross_product_2d(ac, ab), 1f64);
         // expect swapping will result in negative
-        assert_eq!(cross_product(ab, ac), -1f64);
+        assert_eq!(cross_product_2d(ab, ac), -1f64);
     }
 }

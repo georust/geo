@@ -1,7 +1,7 @@
-mod cross_product;
-mod line_intersection;
-mod offset_trait;
 
-use cross_product::cross_product;
-use line_intersection::{line_intersection_with_parameter, LineIntersectionWithParameterResult};
+mod cross_product;
+mod slice_itertools;
+mod line_intersection;
+
+mod offset_trait;
 pub use offset_trait::Offset;
