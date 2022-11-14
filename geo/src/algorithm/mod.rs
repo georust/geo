@@ -148,7 +148,7 @@ pub use map_coords::{MapCoords, MapCoordsInPlace};
 #[allow(deprecated)]
 pub use map_coords::{MapCoordsInplace, TryMapCoords, TryMapCoordsInplace};
 
-/// Apply a simple signed offset azzuming cartesian
+/// Apply a simple signed offset
 pub mod offset;
 pub use offset::Offset;
 

@@ -1,26 +1,25 @@
-
+use super::{cross_product, line_intersection_with_parameter, LineIntersectionWithParameterResult};
 use crate::{
-    //kernels::RobustKernel,
-    //Orientation
     CoordFloat,
-    CoordNum,
+    // Kernel,
+    // Orientation,
     Line,
     LineString,
+    MultiLineString,
 };
 use geo_types::Coord;
-use super::{cross_product,line_intersection_with_parameter,LineIntersectionWithParameterResult};
 
 /// # Offset Trait
-/// 
+///
 /// Signed offset of Geometry assuming cartesian coordinate system.
 ///
 /// This is a cheap offset algorithm that is suitable for flat coordinate systems
 /// (or if your lat/lon data is near the equator)
 ///
 /// My Priority for implementing the trait is as follows:
-/// - Line<impl CoordFloat>
-/// - LineString<impl CoordFloat>
-/// - MultiLineString<impl CoordFloat>
+/// - [X] Line<impl CoordFloat>
+/// - [X] LineString<impl CoordFloat>
+/// - [X] MultiLineString<impl CoordFloat>
 /// - ... maybe some closed shapes like triangle, polygon?
 ///
 /// The following are a list of known limitations,
@@ -39,6 +38,27 @@ pub trait Offset<T>
 where
     T: CoordFloat,
 {
+    /// Offset the edges of the geometry by `distance`, where `distance` may be
+    /// negative.
+    ///
+    /// Negative `distance` values will offset the edges of the geometry to the
+    /// left, when facing the direction of increasing coordinate index.
+    ///
+    /// ```
+    /// #use crate::{line_string, Coord};
+    /// let input = line_string![
+    ///     Coord { x: 0f64, y: 0f64 },
+    ///     Coord { x: 0f64, y: 2f64 },
+    ///     Coord { x: 2f64, y: 2f64 },
+    /// ];
+    /// let output_expected = line_string![
+    ///     Coord { x: 1f64, y: 0f64 },
+    ///     Coord { x: 1f64, y: 1f64 },
+    ///     Coord { x: 2f64, y: 1f64 },
+    /// ];
+    /// let output_actual = input.offset(1f64);
+    /// assert_eq!(output_actual, output_expected);
+    /// ```
     fn offset(&self, distance: T) -> Self;
 }
 
@@ -57,6 +77,14 @@ where
     }
 }
 
+/// Iterate over a slice in overlapping pairs
+///
+/// ```ignore
+/// let items = vec![1, 2, 3, 4, 5];
+/// let actual_result: Vec<(i32, i32)> = pairwise(&items[..]).map(|(a, b)| (*a, *b)).collect();
+/// let expected_result = vec![(1, 2), (2, 3), (3, 4), (4, 5)];
+/// assert_eq!(actual_result, expected_result);
+/// ```
 fn pairwise<T>(iterable: &[T]) -> std::iter::Zip<std::slice::Iter<T>, std::slice::Iter<T>> {
     iterable.iter().zip(iterable[1..].iter())
 }
@@ -67,7 +95,7 @@ where
 {
     fn offset(&self, distance: T) -> Self {
         if self.0.len() < 2 {
-            // TODO: Fail on invalid input
+            // TODO: How should it fail on invalid input?
             return self.clone();
         }
 
@@ -87,15 +115,25 @@ where
                 let ab = *b - *a;
                 let cd = *d - *c;
                 let ab_cross_cd = cross_product(ab, cd);
-                // check for colinear case; this is a flakey check with a
-                // possible panic type cast :/
-                // TODO: Could use RobustKernel for this? The simple kernel impl seems to be blank?
-                //       I don't need the accuracy, need speed :)
-                // if RobustKernel::orient2d(a, b, c) == Orientation::Collinear {
-                if <f64 as num_traits::NumCast>::from(ab_cross_cd).unwrap().abs() < num_traits::cast(0.0000001f64).unwrap() {
+                // TODO: I'm still confused about how to use Kernel / RobustKernel;
+                //       the following did not work. I need to read more code
+                //       from the rest of this repo to understand.
+                // if Kernel::orient2d(*a, *b, *d) == Orientation::Collinear {
+                //       note that it is sufficient to check that only one of
+                //       c or d are colinear with ab because of how they are
+                //       related by the original line string.
+                // TODO: The following line
+                //       - Does not use the Kernel
+                //       - uses an arbitrary threshold value which needs more thought
+                if <f64 as num_traits::NumCast>::from(ab_cross_cd)
+                    .unwrap()
+                    .abs()
+                    < num_traits::cast(0.0000001f64).unwrap()
+                {
                     vec![*b]
                 } else {
-                    // TODO: if we can inline this function we only need to calculate ab_cross_cd once
+                    // TODO: if we can inline this function we only need to
+                    //       calculate `ab_cross_cd` once
                     let LineIntersectionWithParameterResult {
                         t_ab,
                         t_cd,
@@ -103,10 +141,10 @@ where
                     } = line_intersection_with_parameter(a, b, c, d);
 
                     let zero = num_traits::zero::<T>();
-                    let one  = num_traits::one::<T>();
+                    let one = num_traits::one::<T>();
 
-                    let tip_ab  = zero <= t_ab && t_ab <= one;
-                    let fip_ab  = !tip_ab;
+                    let tip_ab = zero <= t_ab && t_ab <= one;
+                    let fip_ab = !tip_ab;
                     let pfip_ab = fip_ab && t_ab > zero;
 
                     let tip_cd = zero <= t_cd && t_cd <= one;
@@ -125,20 +163,40 @@ where
             },
         ));
         result.push(last_point);
+        // TODO: there are more steps to this algorithm which are not yet
+        //       implemented. See rfcs\2022-11-11-offset.md
         result.into()
+    }
+}
+
+impl<T> Offset<T> for MultiLineString<T>
+where
+    T: CoordFloat,
+{
+    fn offset(&self, distance: T) -> Self {
+        self.iter().map(|item| item.offset(distance)).collect()
     }
 }
 
 #[cfg(test)]
 mod test {
+
     // crate dependencies
-    use crate::{line_string, Coord, Line};
+    use crate::{line_string, Coord, Line, MultiLineString, Offset};
 
     // private imports
-    use super::{Offset};
+    use super::pairwise;
 
     #[test]
-    fn offset_line_test() {
+    fn test_pairwise() {
+        let items = vec![1, 2, 3, 4, 5];
+        let actual_result: Vec<(i32, i32)> = pairwise(&items[..]).map(|(a, b)| (*a, *b)).collect();
+        let expected_result = vec![(1, 2), (2, 3), (3, 4), (4, 5)];
+        assert_eq!(actual_result, expected_result);
+    }
+
+    #[test]
+    fn test_offset_line() {
         let input = Line::new(Coord { x: 1f64, y: 1f64 }, Coord { x: 1f64, y: 2f64 });
         let actual_result = input.offset(1.0);
         assert_eq!(
@@ -147,7 +205,7 @@ mod test {
         );
     }
     #[test]
-    fn offset_line_test_negative() {
+    fn test_offset_line_negative() {
         let input = Line::new(Coord { x: 1f64, y: 1f64 }, Coord { x: 1f64, y: 2f64 });
         let output_actual = input.offset(-1.0);
         let output_expected = Line::new(Coord { x: 0f64, y: 1f64 }, Coord { x: 0f64, y: 2f64 });
@@ -155,7 +213,7 @@ mod test {
     }
 
     #[test]
-    fn offset_linestring_basic() {
+    fn test_offset_line_string() {
         let input = line_string![
             Coord { x: 0f64, y: 0f64 },
             Coord { x: 0f64, y: 2f64 },
@@ -166,6 +224,36 @@ mod test {
             Coord { x: 1f64, y: 1f64 },
             Coord { x: 2f64, y: 1f64 },
         ];
+        let output_actual = input.offset(1f64);
+        assert_eq!(output_actual, output_expected);
+    }
+
+    #[test]
+    fn test_offset_multi_line_string() {
+        let input = MultiLineString::new(vec![
+            line_string![
+                Coord { x: 0f64, y: 0f64 },
+                Coord { x: 0f64, y: 2f64 },
+                Coord { x: 2f64, y: 2f64 },
+            ],
+            line_string![
+                Coord { x: 0f64, y: 0f64 },
+                Coord { x: 0f64, y: -2f64 },
+                Coord { x: -2f64, y: -2f64 },
+            ],
+        ]);
+        let output_expected = MultiLineString::new(vec![
+            line_string![
+                Coord { x: 1f64, y: 0f64 },
+                Coord { x: 1f64, y: 1f64 },
+                Coord { x: 2f64, y: 1f64 },
+            ],
+            line_string![
+                Coord { x: -1f64, y: 0f64 },
+                Coord { x: -1f64, y: -1f64 },
+                Coord { x: -2f64, y: -1f64 },
+            ],
+        ]);
         let output_actual = input.offset(1f64);
         assert_eq!(output_actual, output_expected);
     }

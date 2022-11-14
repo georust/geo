@@ -1,12 +1,9 @@
-use crate::{
-    CoordFloat,
-    CoordNum,
-};
 use super::cross_product;
+use crate::{CoordFloat, CoordNum};
 use geo_types::Coord;
 
 /// Struct to contain the result for [line_intersection_with_parameter]
-pub (super) struct LineIntersectionWithParameterResult<T>
+pub(super) struct LineIntersectionWithParameterResult<T>
 where
     T: CoordNum,
 {
@@ -17,6 +14,11 @@ where
 
 /// Computes the intersection between two line segments;
 /// a to b (`ab`), and c to d (`cd`)
+///
+/// > note: looks like there is already `cartesian_intersect` as a private
+/// > method in simplifyvw.rs. It is nice because it uses the orient2d method
+/// > of the Kernel, however it only gives a true/false answer and does not
+/// > return the intersection point or parameters needed.
 ///
 /// We already have LineIntersection trait BUT we need a function that also
 /// returns the parameters for both lines described below. The LineIntersection
@@ -98,7 +100,7 @@ where
 /// [t_cd] = [ - ab×ac / ab×cd ]
 /// ```
 
-pub (super) fn line_intersection_with_parameter<T>(
+pub(super) fn line_intersection_with_parameter<T>(
     a: &Coord<T>,
     b: &Coord<T>,
     c: &Coord<T>,
@@ -122,8 +124,8 @@ where
         todo!("")
     }
 
-    let t_ab =   cross_product(ac, cd) / ab_cross_cd;
-    let t_cd = - cross_product(ab, ac) / ab_cross_cd;
+    let t_ab = cross_product(ac, cd) / ab_cross_cd;
+    let t_cd = -cross_product(ab, ac) / ab_cross_cd;
     let intersection = *a + ab * t_ab;
     LineIntersectionWithParameterResult {
         t_ab,
@@ -134,17 +136,27 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::{Coord};
     use super::*;
+    use crate::Coord;
     #[test]
-    fn test_intersection(){
-        let a = Coord{x:0f64, y:0f64};
-        let b = Coord{x:2f64, y:2f64};
-        let c = Coord{x:0f64, y:1f64};
-        let d = Coord{x:1f64, y:0f64};
-        let LineIntersectionWithParameterResult{t_ab, t_cd, intersection} = line_intersection_with_parameter(&a, &b, &c, &d);
+    fn test_intersection() {
+        let a = Coord { x: 0f64, y: 0f64 };
+        let b = Coord { x: 2f64, y: 2f64 };
+        let c = Coord { x: 0f64, y: 1f64 };
+        let d = Coord { x: 1f64, y: 0f64 };
+        let LineIntersectionWithParameterResult {
+            t_ab,
+            t_cd,
+            intersection,
+        } = line_intersection_with_parameter(&a, &b, &c, &d);
         assert_eq!(t_ab, 0.25f64);
         assert_eq!(t_cd, 0.5f64);
-        assert_eq!(intersection, Coord{x:0.5f64, y:0.5f64});
+        assert_eq!(
+            intersection,
+            Coord {
+                x: 0.5f64,
+                y: 0.5f64
+            }
+        );
     }
 }

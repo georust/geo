@@ -1,16 +1,19 @@
-use crate::{
-    CoordFloat,
-};
+use crate::CoordFloat;
 use geo_types::Coord;
 
 /// 2D "Cross Product"
-/// 
-/// > Note: `cross_prod` is already defined on Point... but that it seems to be
+///
+/// > Note: `cross_prod` is already defined on `Point`... but that it seems to be
 /// >       some other operation on 3 points
+///
+/// > Note: Elsewhere in this project the cross product seems to be done inline
+/// >       and is referred to as 'determinant' since it is the same as the
+/// >       determinant of a 2x2 matrix.
 ///
 /// If we pretend the `z` ordinate is zero we can still use the 3D cross product
 /// on 2D vectors and various useful properties still hold (e.g. it is still the
-/// area of the parallelogram formed by the two input vectors)
+/// signed area of the parallelogram formed by the two input vectors, with the
+/// sign being dependant on the order and properties of the inputs)
 ///
 /// From basis vectors `i`,`j`,`k` and the axioms on wikipedia
 /// [Cross product](https://en.wikipedia.org/wiki/Cross_product#Computing);
@@ -47,10 +50,10 @@ where
 #[cfg(test)]
 mod test {
     // crate dependencies
-    use crate::{Coord};
+    use crate::Coord;
 
     // private imports
-    use super::{cross_product};
+    use super::cross_product;
 
     #[test]
     fn test_cross_product() {
