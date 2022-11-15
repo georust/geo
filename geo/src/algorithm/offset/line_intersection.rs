@@ -2,13 +2,46 @@ use super::cross_product::cross_product_2d;
 use crate::{CoordFloat, CoordNum};
 use geo_types::Coord;
 
+// No nested enums :( Goes into the enum below
+#[derive(PartialEq,  Eq, Debug)]
+pub(super) enum FalseIntersectionPointType{
+    /// The intersection point is 'false' or 'virtual': it lies on the infinite
+    /// ray defined by the line segment, but before the start of the line segment.
+    /// 
+    /// Abbreviated to `NFIP` in original paper (Negative)
+    BeforeStart,
+    /// The intersection point is 'false' or 'virtual': it lies on the infinite
+    /// ray defined by the line segment, but after the end of the line segment.
+    /// 
+    /// Abbreviated to `PFIP` in original paper (Positive)
+    AfterEnd
+}
+
+/// Used to encode the relationship between a segment (e.g. between [Coord] `a` and `b`)
+/// and an intersection point ([Coord] `p`)
+#[derive(PartialEq, Eq, Debug)]
+pub(super) enum LineSegmentIntersectionType {
+    /// The intersection point lies between the start and end of the line segment.
+    /// 
+    /// Abbreviated to `TIP` in original paper
+    TrueIntersectionPoint,
+    /// The intersection point is 'false' or 'virtual': it lies on the infinite
+    /// ray defined by the line segment, but not between the start and end points
+    /// 
+    /// Abbreviated to `FIP` in original paper
+    FalseIntersectionPoint(FalseIntersectionPointType)
+}
+
+use LineSegmentIntersectionType::{FalseIntersectionPoint, TrueIntersectionPoint};
+use FalseIntersectionPointType::{BeforeStart, AfterEnd};
+
 /// Struct to contain the result for [line_intersection_with_parameter]
 pub(super) struct LineIntersectionWithParameterResult<T>
 where
     T: CoordNum,
 {
-    pub t_ab: T,
-    pub t_cd: T,
+    pub ab: LineSegmentIntersectionType,
+    pub cd: LineSegmentIntersectionType,
     pub intersection: Coord<T>,
 }
 
@@ -135,13 +168,31 @@ where
         let t_ab = cross_product_2d(ac, cd) / ab_cross_cd;
         let t_cd = -cross_product_2d(ab, ac) / ab_cross_cd;
         let intersection = *a + ab * t_ab;
+
+        let zero = num_traits::zero::<T>();
+        let one = num_traits::one::<T>();
+        
         Some(LineIntersectionWithParameterResult {
-            t_ab,
-            t_cd,
+            ab: if zero <= t_ab && t_ab <= one {
+                TrueIntersectionPoint
+            }else if t_ab < zero {
+                FalseIntersectionPoint(BeforeStart)
+            }else{
+                FalseIntersectionPoint(AfterEnd)
+            },
+            cd: if zero <= t_cd && t_cd <= one {
+                TrueIntersectionPoint
+            }else if t_cd < zero {
+                FalseIntersectionPoint(BeforeStart)
+            }else{
+                FalseIntersectionPoint(AfterEnd)
+            },
             intersection,
         })
     }
 }
+
+// TODO: add more relationship tests;
 
 #[cfg(test)]
 mod test {
@@ -154,13 +205,13 @@ mod test {
         let c = Coord { x: 0f64, y: 1f64 };
         let d = Coord { x: 1f64, y: 0f64 };
         if let Some(LineIntersectionWithParameterResult {
-            t_ab,
-            t_cd,
+            ab: t_ab,
+            cd: t_cd,
             intersection,
         }) = line_intersection_with_parameter(&a, &b, &c, &d)
         {
-            assert_eq!(t_ab, 0.25f64);
-            assert_eq!(t_cd, 0.5f64);
+            assert_eq!(t_ab, TrueIntersectionPoint);
+            assert_eq!(t_cd, TrueIntersectionPoint);
             assert_eq!(
                 intersection,
                 Coord {
@@ -180,13 +231,13 @@ mod test {
         let c = Coord { x: 7f64, y: 7f64 };
         let d = Coord { x: 10f64, y: 9f64 };
         if let Some(LineIntersectionWithParameterResult {
-            t_ab,
-            t_cd,
+            ab: t_ab,
+            cd: t_cd,
             intersection,
         }) = line_intersection_with_parameter(&a, &b, &c, &d)
         {
-            assert_eq!(t_ab, 0.25f64);
-            assert_eq!(t_cd, 0.5f64);
+            assert_eq!(t_ab, TrueIntersectionPoint);
+            assert_eq!(t_cd, TrueIntersectionPoint);
             assert_eq!(
                 intersection,
                 Coord {
