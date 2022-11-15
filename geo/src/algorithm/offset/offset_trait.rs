@@ -115,6 +115,7 @@ where
                         // we are potentially creating a redundant point in the
                         // output here. Colinear segments should maybe get
                         // removed before or after this algorithm
+                        //println!("CASE 0 - colinear");
                         vec![*b]
                     }, 
                     Some(LineIntersectionWithParameterResult {
@@ -122,12 +123,20 @@ where
                         cd,
                         intersection,
                     }) => match (ab, cd) {
-                        (TrueIntersectionPoint, TrueIntersectionPoint) => vec![intersection],
+                        (TrueIntersectionPoint, TrueIntersectionPoint) => {
+                            //println!("CASE 1 - extend");
+                            vec![intersection]
+                        },
                         (FalseIntersectionPoint(AfterEnd), FalseIntersectionPoint(_)) => {
                             // TODO: Mitre limit logic goes here
+                            //println!("CASE 2 - extend");
                             vec![intersection]
                         }
-                        _ => vec![*b, *c],
+                        _ => {
+                            println!("CASE 3 - bridge");
+                            vec![*b, *c]
+                        },
+
                     },
                 }
             },
@@ -282,7 +291,7 @@ mod test {
                 x: 5.279039119779313f64,
                 y: 2.516847170273373f64
             },
-            Coord { x: 5f64, y: 2f64 },
+            Coord { x: 5.20f64, y: 2.36f64 },
             Coord {
                 x: 3.2388869474813826f64,
                 y: 4.489952088082639f64
