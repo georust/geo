@@ -1,4 +1,7 @@
-use super::line_intersection::FalseIntersectionPointType::AfterEnd;
+use super::line_intersection::FalseIntersectionPointType::{
+    BeforeStart,
+    AfterEnd,
+};
 use super::line_intersection::LineSegmentIntersectionType::{
     FalseIntersectionPoint, TrueIntersectionPoint,
 };
@@ -51,7 +54,9 @@ where
     /// negative.
     ///
     /// Negative `distance` values will offset the edges of the geometry to the
-    /// left, when facing the direction of increasing coordinate index.
+    /// left, when facing the direction of increasing coordinate index. For a
+    /// polygon with clockwise winding order, a positive 'offset' corresponds with
+    /// an 'inset'.
     ///
     /// ```
     /// #use crate::{line_string, Coord};
@@ -86,6 +91,13 @@ where
     }
 }
 
+
+/// # Offset for LineString
+/// ## Algorithm
+/// Loosely follows the algorithm described by
+/// [Xu-Zheng Liu, Jun-Hai Yong, Guo-Qin Zheng, Jia-Guang Sun. An offset algorithm for polyline curves. Computers in Industry, Elsevier, 2007, 15p. inria-00518005]
+/// (https://hal.inria.fr/inria-00518005/document)
+/// This was the first google result for 'line offset algorithm'
 impl<T> Offset<T> for LineString<T>
 where
     T: CoordFloat,
@@ -102,6 +114,7 @@ where
         if offset_segments.len() == 1 {
             return offset_segments[0].into();
         }
+        // First and last will always work:
         let first_point = offset_segments.first().unwrap().start;
         let last_point = offset_segments.last().unwrap().end;
 
@@ -127,13 +140,23 @@ where
                             //println!("CASE 1 - extend");
                             vec![intersection]
                         },
-                        (FalseIntersectionPoint(AfterEnd), FalseIntersectionPoint(_)) => {
+                        
+                        (TrueIntersectionPoint, FalseIntersectionPoint(_)) => {
+                            //println!("CASE 1 - extend");
+                            vec![intersection]
+                        },
+                        (FalseIntersectionPoint(_), TrueIntersectionPoint) => {
+                            //println!("CASE 1 - extend");
+                            vec![intersection]
+                        },
+                        (FalseIntersectionPoint(BeforeStart), FalseIntersectionPoint(_)) => {
                             // TODO: Mitre limit logic goes here
                             //println!("CASE 2 - extend");
                             vec![intersection]
-                        }
+                        },
                         _ => {
-                            println!("CASE 3 - bridge");
+                            //println!("CASE 3 - bridge");
+                            //vec![intersection]
                             vec![*b, *c]
                         },
 
