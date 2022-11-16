@@ -2,7 +2,8 @@
 ///
 /// ```ignore
 /// let items = vec![1, 2, 3, 4, 5];
-/// let actual_result: Vec<(i32, i32)> = pairwise(&items[..]).map(|(a, b)| (*a, *b)).collect();
+/// let actual_result: Vec<(i32, i32)> = 
+///     pairwise(&items[..]).map(|(a, b)| (*a, *b)).collect();
 /// let expected_result = vec![(1, 2), (2, 3), (3, 4), (4, 5)];
 /// ```
 pub(super) fn pairwise<T>(slice: &[T]) -> std::iter::Zip<std::slice::Iter<T>, std::slice::Iter<T>> {

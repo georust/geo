@@ -140,7 +140,6 @@ where
                             //println!("CASE 1 - extend");
                             vec![intersection]
                         },
-                        
                         (TrueIntersectionPoint, FalseIntersectionPoint(_)) => {
                             //println!("CASE 1 - extend");
                             vec![intersection]
@@ -149,7 +148,7 @@ where
                             //println!("CASE 1 - extend");
                             vec![intersection]
                         },
-                        (FalseIntersectionPoint(BeforeStart), FalseIntersectionPoint(_)) => {
+                        (FalseIntersectionPoint(AfterEnd), FalseIntersectionPoint(_)) => {
                             // TODO: Mitre limit logic goes here
                             //println!("CASE 2 - extend");
                             vec![intersection]
