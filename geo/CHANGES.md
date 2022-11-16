@@ -9,7 +9,8 @@
   * <https://github.com/georust/geo/pull/904>
 * Changed license field to [SPDX 2.1 license expression](https://spdx.dev/spdx-specification-21-web-version/#h.jxpfx0ykyb60)
   * <https://github.com/georust/geo/pull/928>
-
+* Added `RemoveRepeatedPoints` trait allowing the removal of (consecutive)
+  repeated points.
 
 ## 0.23.0
 

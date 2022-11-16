@@ -149,6 +149,7 @@
 //! - **[`ChaikinSmoothing`](ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 //! - **[`Densify`](Densify)**: Densify linear geometry components by interpolating points
 //! - **[`Transform`](Transform)**: Transform a geometry using Proj.
+//! - **[`RemoveRepeatedPoints`](RemoveRepeatedPoints)**: Remove repeated points from a geometry.
 //!
 //! # Features
 //!
