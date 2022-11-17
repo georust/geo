@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_debug_implementations)]
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
 //! The `geo-types` library defines geometric types for the [GeoRust] ecosystem.
@@ -75,9 +76,11 @@
 //! [OGC-SFA]: https://www.ogc.org/standards/sfa
 //! [rstar]: https://github.com/Stoeoef/rstar
 //! [Serde]: https://serde.rs/
+extern crate alloc;
 extern crate num_traits;
+
+use core::fmt::Debug;
 use num_traits::{Float, Num, NumCast};
-use std::fmt::Debug;
 
 #[cfg(feature = "serde")]
 #[macro_use]
@@ -131,10 +134,22 @@ mod arbitrary;
 #[doc(hidden)]
 pub mod private_utils;
 
+#[doc(hidden)]
+pub mod _alloc {
+    //! Needed to access these types from `alloc` in macros when the std feature is
+    //! disabled and the calling context is missing `extern crate alloc`. These are
+    //! _not_ meant for public use.
+
+    pub use ::alloc::boxed::Box;
+    pub use ::alloc::vec;
+}
+
 #[cfg(test)]
 mod tests {
+    use alloc::vec;
+
     use super::*;
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
 
     #[test]
     fn type_test() {

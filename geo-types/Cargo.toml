@@ -11,6 +11,8 @@ rust-version = "1.63"
 edition = "2021"
 
 [features]
+default = ["std"]
+std = []
 # Prefer `use-rstar` feature rather than enabling rstar directly.
 # rstar integration relies on the optional approx crate, but implicit features cannot yet enable other features.
 # See: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#namespaced-features

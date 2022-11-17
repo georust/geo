@@ -100,7 +100,7 @@ impl<T: CoordNum> Coord<T> {
     }
 }
 
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use core::ops::{Add, Div, Mul, Neg, Sub};
 
 /// Negate a coordinate.
 ///
