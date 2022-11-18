@@ -1,4 +1,3 @@
-use crate::polygon_distance_fast_path::*;
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
 use crate::EuclideanLength;
 use crate::Intersects;
@@ -454,9 +453,6 @@ impl<T> EuclideanDistance<T, Polygon<T>> for Polygon<T>
 where
     T: GeoFloat + FloatConst + RTreeNum,
 {
-    /// This implementation has a "fast path" in cases where both input polygons are convex:
-    /// it switches to an implementation of the "rotating calipers" method described in [Pirzadeh (1999), pp24—30](http://digitool.library.mcgill.ca/R/?func=dbin-jump-full&object_id=21623&local_base=GEN01-MCG02),
-    ///  which is approximately an order of magnitude faster than the standard method.
     fn euclidean_distance(&self, poly2: &Polygon<T>) -> T {
         if self.intersects(poly2) {
             return T::zero();
@@ -480,13 +476,7 @@ where
             }
             return mindist;
         }
-        use super::is_convex::IsConvex;
-        if !poly2.exterior().is_convex() || !self.exterior().is_convex() {
-            // fall back to R* nearest neighbour method
-            nearest_neighbour_distance(self.exterior(), poly2.exterior())
-        } else {
-            min_convex_poly_dist(self, poly2)
-        }
+        nearest_neighbour_distance(self.exterior(), poly2.exterior())
     }
 }
 
@@ -560,7 +550,7 @@ where
 {
     let tree_a: RTree<Line<_>> = RTree::bulk_load(geom1.lines().collect::<Vec<_>>());
     let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect::<Vec<_>>());
-    // Return minimum distance between all geom a points and all geom b points
+    // Return minimum distance between all geom a points and geom b lines, and all geom b points and geom a lines
     geom2
         .points()
         .fold(<T as Bounded>::max_value(), |acc, point| {
@@ -576,10 +566,9 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::ConvexHull;
-    use crate::EuclideanDistance;
+    use crate::orient::Direction;
+    use crate::{EuclideanDistance, Orient};
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
-    use geo_types::Rect;
     use geo_types::{coord, polygon, private_utils::line_segment_distance};
 
     #[test]
@@ -958,10 +947,8 @@ mod test {
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString::from(points2), vec![]);
-        let dist = min_convex_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
-        let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
+        let dist = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
         assert_relative_eq!(dist, 21.0);
-        assert_relative_eq!(dist2, 21.0);
     }
     #[test]
     // test vertex-vertex minimum distance
@@ -991,10 +978,8 @@ mod test {
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString::from(points2), vec![]);
-        let dist = min_convex_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
-        let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
+        let dist = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
         assert_relative_eq!(dist, 29.274562336608895);
-        assert_relative_eq!(dist2, 29.274562336608895);
     }
     #[test]
     // test edge-edge minimum distance
@@ -1024,48 +1009,8 @@ mod test {
             .map(|e| Point::new(e.0, e.1))
             .collect::<Vec<_>>();
         let poly2 = Polygon::new(LineString::from(points2), vec![]);
-        let dist = min_convex_poly_dist(&poly1.convex_hull(), &poly2.convex_hull());
-        let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
+        let dist = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
         assert_relative_eq!(dist, 12.0);
-        assert_relative_eq!(dist2, 12.0);
-    }
-    #[test]
-    // test vertex-vertex minimum distance
-    fn test_minimum_polygon_distance_4() {
-        let poly1 = Rect::new((0., 0.), (1., 1.)).to_polygon();
-        let poly2 = Rect::new((2., 2.), (3., 3.)).to_polygon();
-        let dist = min_convex_poly_dist(&poly1, &poly2);
-        let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
-        assert_eq!(dist, dist2);
-    }
-    #[test]
-    fn test_minimum_polygon_distance_5() {
-        let poly1 = polygon!(
-                exterior: [
-                    (x: -1.5350399, y: -0.18596762),
-                    (x: -0.33726108, y: 0.2206358),
-                    (x: -0.13836576, y: 0.42173427),
-                    (x: -0.33946428, y: 0.6206298),
-                    (x: -1.1405537, y: 0.8162205),
-                    (x: -1.3405507, y: 0.81511897),
-                    (x: -1.5372429, y: 0.21402647),
-                ],
-                interiors: []
-            );
-
-        let poly2 = polygon!(
-                exterior: [
-                    (x: 0.6649223, y: -0.17384565),
-                    (x: 0.8649193, y: -0.1727441),
-                    (x: 1.0616114, y: 0.4283484),
-                    (x: 0.8616146, y: 0.4272468),
-                    (x: 0.66271913, y: 0.22614834),
-                ],
-                interiors: []
-            );
-        let dist = min_convex_poly_dist(&poly1, &poly2);
-        let dist2 = nearest_neighbour_distance(poly1.exterior(), poly2.exterior());
-        assert_eq!(dist, dist2);
     }
     #[test]
     fn test_large_polygon_distance() {
@@ -1191,9 +1136,39 @@ mod test {
             first_polygon.euclidean_distance(&second_polygon),
             224.35357967013238
         );
-        assert_eq!(
-            min_convex_poly_dist(&first_polygon, &second_polygon),
-            nearest_neighbour_distance(first_polygon.exterior(), second_polygon.exterior())
-        );
+    }
+    #[test]
+    fn fast_path_regression() {
+        // this test will fail if the fast path algorithm is reintroduced without being fixed
+        let p1 = polygon!(
+            (x: 0_f64, y: 0_f64),
+            (x: 300_f64, y: 0_f64),
+            (x: 300_f64, y: 100_f64),
+            (x: 0_f64, y: 100_f64),
+        )
+        .orient(Direction::Default);
+        let p2 = polygon!(
+            (x: 100_f64, y: 150_f64),
+            (x: 150_f64, y: 200_f64),
+            (x: 50_f64, y: 200_f64),
+        )
+        .orient(Direction::Default);
+        let p3 = polygon!(
+            (x: 0_f64, y: 0_f64),
+            (x: 300_f64, y: 0_f64),
+            (x: 300_f64, y: 100_f64),
+            (x: 0_f64, y: 100_f64),
+        )
+        .orient(Direction::Reversed);
+        let p4 = polygon!(
+            (x: 100_f64, y: 150_f64),
+            (x: 150_f64, y: 200_f64),
+            (x: 50_f64, y: 200_f64),
+        )
+        .orient(Direction::Reversed);
+        assert_eq!(p1.euclidean_distance(&p2), 50.0f64);
+        assert_eq!(p3.euclidean_distance(&p4), 50.0f64);
+        assert_eq!(p1.euclidean_distance(&p4), 50.0f64);
+        assert_eq!(p2.euclidean_distance(&p3), 50.0f64);
     }
 }

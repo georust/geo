@@ -11,6 +11,9 @@
   * <https://github.com/georust/geo/pull/928>
 * Added `RemoveRepeatedPoints` trait allowing the removal of (consecutive)
   repeated points.
+* Remove polygon-polygon fast path due to ongoing lack of reliability
+  * <https://github.com/georust/geo/pull/920>
+
 
 ## 0.23.0
 
