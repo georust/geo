@@ -1,6 +1,7 @@
 # Changes
 
-## Unreleased
+## 0.23.1
+
 * Added doc for Transform trait to root docs index.
 * Fixed an issues where calculating the convex hull of 3 collinear points
   would include all 3.
