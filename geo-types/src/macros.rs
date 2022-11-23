@@ -51,6 +51,8 @@ macro_rules! point {
 ///
 /// assert_eq!(c, geo_types::coord! { x: 181.2, y: 51.79 });
 /// ```
+///
+/// [`Coord`]: ./struct.Coord.html
 #[macro_export]
 macro_rules! coord {
     (x: $x:expr, y: $y:expr $(,)* ) => {
