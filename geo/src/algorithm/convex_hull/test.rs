@@ -4,7 +4,7 @@ use crate::{coord, line_string, polygon};
 
 #[test]
 fn test_zero_points() {
-    let mut v: Vec<Coordinate<i64>> = vec![];
+    let mut v: Vec<Coord<i64>> = vec![];
     let correct = vec![];
     let res = trivial_hull(&mut v, false);
     assert_eq!(res.0, correct);
@@ -12,7 +12,7 @@ fn test_zero_points() {
 
 #[test]
 fn test_zero_points_include_on_hull() {
-    let mut v: Vec<Coordinate<i64>> = vec![];
+    let mut v: Vec<Coord<i64>> = vec![];
     let correct = vec![];
     let res = trivial_hull(&mut v, true);
     assert_eq!(res.0, correct);
