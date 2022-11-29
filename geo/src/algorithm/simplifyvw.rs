@@ -669,9 +669,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::{
-        cartesian_intersect, visvalingam, vwp_wrapper, SimplifyVW, SimplifyVWPreserve,
-    };
+    use super::{cartesian_intersect, visvalingam, vwp_wrapper, SimplifyVW, SimplifyVWPreserve};
     use crate::{
         line_string, point, polygon, Coord, LineString, MultiLineString, MultiPolygon, Point,
         Polygon,
