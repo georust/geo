@@ -14,7 +14,10 @@ where
 }
 
 // Wrapper for the RDP algorithm, returning simplified points
-fn rdp<T>(coords: impl Iterator<Item = Coord<T>>, epsilon: &T) -> Vec<Coord<T>>
+fn rdp<T>(
+    coords: impl Iterator<Item = Coord<T>>,
+    epsilon: &T,
+) -> Vec<Coord<T>>
 where
     T: GeoFloat,
 {

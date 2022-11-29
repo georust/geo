@@ -56,18 +56,6 @@ where
     }
 }
 
-/// Settings for Ring and Line geometries
-// initial min: if we ever have fewer than these, stop immediately
-// min_points: if we detect a self-intersection before point removal, and we only
-// have min_points left, stop: since a self-intersection causes removal of the spatially previous
-// point, THAT could lead to a further self-intersection without the possibility of removing
-// more points, potentially leaving the geometry in an invalid state.
-#[derive(Debug, Clone, Copy)]
-struct GeomSettings {
-    initial_min: usize,
-    min_points: usize,
-}
-
 /// Simplify a line using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
 //
 // This method returns the **indices** of the simplified line
@@ -197,11 +185,20 @@ where
         .collect()
 }
 
-/// Wrap the actual VW function so the R* Tree can be shared.
+// Wrap the actual VW function so the R* Tree can be shared.
 // this ensures that shell and rings have access to all segments, so
 // intersections between outer and inner rings are detected
-fn vwp_wrapper<T>(
-    geomtype: &GeomSettings,
+//
+// Constants:
+//
+// * `INITIAL_MIN`
+//   * If we ever have fewer than these, stop immediately
+// * `MIN_POINTS`
+//   * If we detect a self-intersection before point removal, and we only have `MIN_POINTS` left,
+//     stop: since a self-intersection causes removal of the spatially previous point, THAT could
+//     lead to a further self-intersection without the possibility of removing more points,
+//     potentially leaving the geometry in an invalid state.
+fn vwp_wrapper<const INITIAL_MIN: usize, const MIN_POINTS: usize, T>(
     exterior: &LineString<T>,
     interiors: Option<&[LineString<T>]>,
     epsilon: &T,
@@ -224,11 +221,15 @@ where
     );
 
     // Simplify shell
-    rings.push(visvalingam_preserve(geomtype, exterior, epsilon, &mut tree));
+    rings.push(visvalingam_preserve::<INITIAL_MIN, MIN_POINTS, _>(
+        exterior, epsilon, &mut tree,
+    ));
     // Simplify interior rings, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
-            rings.push(visvalingam_preserve(geomtype, ring, epsilon, &mut tree))
+            rings.push(visvalingam_preserve::<INITIAL_MIN, MIN_POINTS, _>(
+                ring, epsilon, &mut tree,
+            ))
         }
     }
     rings
@@ -236,8 +237,17 @@ where
 
 /// Visvalingam-Whyatt with self-intersection detection to preserve topologies
 /// this is a port of the technique at https://www.jasondavies.com/simplify/
-fn visvalingam_preserve<T>(
-    geomtype: &GeomSettings,
+//
+// Constants:
+//
+// * `INITIAL_MIN`
+//   * If we ever have fewer than these, stop immediately
+// * `MIN_POINTS`
+//   * If we detect a self-intersection before point removal, and we only have `MIN_POINTS` left,
+//     stop: since a self-intersection causes removal of the spatially previous point, THAT could
+//     lead to a further self-intersection without the possibility of removing more points,
+//     potentially leaving the geometry in an invalid state.
+fn visvalingam_preserve<const INITIAL_MIN: usize, const MIN_POINTS: usize, T>(
     orig: &LineString<T>,
     epsilon: &T,
     tree: &mut RTree<Line<T>>,
@@ -288,7 +298,7 @@ where
         if smallest.area > *epsilon {
             continue;
         }
-        if counter <= geomtype.initial_min {
+        if counter <= INITIAL_MIN {
             // we can't remove any more points no matter what
             break;
         }
@@ -304,7 +314,7 @@ where
         // because we could then no longer form a valid geometry if removal of next also caused an intersection.
         // The simplification process is thus over.
         smallest.intersector = tree_intersect(tree, &smallest, &orig.0);
-        if smallest.intersector && counter <= geomtype.min_points {
+        if smallest.intersector && counter <= MIN_POINTS {
             break;
         }
         // We've got a valid triangle, and its area is smaller than epsilon, so
@@ -560,11 +570,7 @@ where
     T: CoordFloat + RTreeNum + HasKernel,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> LineString<T> {
-        let gt = GeomSettings {
-            initial_min: 2,
-            min_points: 4,
-        };
-        let mut simplified = vwp_wrapper(&gt, self, None, epsilon);
+        let mut simplified = vwp_wrapper::<2, 4, _>(self, None, epsilon);
         LineString::from(simplified.pop().unwrap())
     }
 }
@@ -588,11 +594,8 @@ where
     T: CoordFloat + RTreeNum + HasKernel,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> Polygon<T> {
-        let gt = GeomSettings {
-            initial_min: 4,
-            min_points: 6,
-        };
-        let mut simplified = vwp_wrapper(&gt, self.exterior(), Some(self.interiors()), epsilon);
+        let mut simplified =
+            vwp_wrapper::<4, 6, _>(self.exterior(), Some(self.interiors()), epsilon);
         let exterior = LineString::from(simplified.remove(0));
         let interiors = simplified.into_iter().map(LineString::from).collect();
         Polygon::new(exterior, interiors)
@@ -667,7 +670,7 @@ where
 #[cfg(test)]
 mod test {
     use super::{
-        cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, SimplifyVW, SimplifyVWPreserve,
+        cartesian_intersect, visvalingam, vwp_wrapper, SimplifyVW, SimplifyVWPreserve,
     };
     use crate::{
         line_string, point, polygon, Coord, LineString, MultiLineString, MultiPolygon, Point,
@@ -725,11 +728,7 @@ mod test {
             (x: 300., y: 40.),
             (x: 301., y: 10.)
         ];
-        let gt = &GeomSettings {
-            initial_min: 2,
-            min_points: 4,
-        };
-        let simplified = vwp_wrapper(gt, &ls, None, &668.6);
+        let simplified = vwp_wrapper::<2, 4, _>(&ls, None, &668.6);
         // this is the correct, non-intersecting LineString
         let correct = vec![
             (10., 60.),
@@ -802,11 +801,7 @@ mod test {
     fn very_long_vwp_test() {
         // simplify an 8k-point LineString, eliminating self-intersections
         let points_ls = geo_test_fixtures::norway_main::<f64>();
-        let gt = &GeomSettings {
-            initial_min: 2,
-            min_points: 4,
-        };
-        let simplified = vwp_wrapper(gt, &points_ls, None, &0.0005);
+        let simplified = vwp_wrapper::<2, 4, _>(&points_ls, None, &0.0005);
         assert_eq!(simplified[0].len(), 3278);
     }
 
