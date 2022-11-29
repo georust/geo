@@ -76,7 +76,7 @@ where
         .fold(
             (0usize, T::zero()),
             |(farthest_index, farthest_distance), (index, distance)| {
-                if distance > farthest_distance {
+                if distance >= farthest_distance {
                     (index, distance)
                 } else {
                     (farthest_index, farthest_distance)

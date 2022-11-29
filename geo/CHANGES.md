@@ -13,6 +13,8 @@
   repeated points.
 * Remove polygon-polygon fast path due to ongoing lack of reliability
   * <https://github.com/georust/geo/pull/920>
+* Fix RDP recursion bug
+  * <https://github.com/georust/geo/pull/941>
 
 
 ## 0.23.0
