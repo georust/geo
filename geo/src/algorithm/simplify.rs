@@ -1,6 +1,9 @@
 use crate::{Coord, GeoFloat, Line, LineString, MultiLineString, MultiPolygon, Polygon};
 use crate::{CoordsIter, EuclideanDistance};
 
+const LINE_STRING_INITIAL_MIN: usize = 2;
+const POLYGON_INITIAL_MIN: usize = 4;
+
 // Because the RDP algorithm is recursive, we can't assign an index to a point inside the loop
 // instead, we wrap a simple struct around index and point in a wrapper function,
 // passing that around instead, extracting either points or indices on the way back out
@@ -14,7 +17,10 @@ where
 }
 
 // Wrapper for the RDP algorithm, returning simplified points
-fn rdp<T>(coords: impl Iterator<Item = Coord<T>>, epsilon: &T) -> Vec<Coord<T>>
+fn rdp<T, I: Iterator<Item = Coord<T>>, const INITIAL_MIN: usize>(
+    coords: I,
+    epsilon: &T,
+) -> Vec<Coord<T>>
 where
     T: GeoFloat,
 {
@@ -22,20 +28,21 @@ where
     if *epsilon <= T::zero() {
         return coords.collect::<Vec<Coord<T>>>();
     }
-    compute_rdp(
-        &coords
-            .enumerate()
-            .map(|(idx, coord)| RdpIndex { index: idx, coord })
-            .collect::<Vec<RdpIndex<T>>>(),
-        epsilon,
-    )
-    .into_iter()
-    .map(|rdpindex| rdpindex.coord)
-    .collect()
+    let rdp_indices = &coords
+        .enumerate()
+        .map(|(idx, coord)| RdpIndex { index: idx, coord })
+        .collect::<Vec<RdpIndex<T>>>();
+    compute_rdp::<T, INITIAL_MIN>(rdp_indices, &mut rdp_indices.len(), epsilon)
+        .into_iter()
+        .map(|rdpindex| rdpindex.coord)
+        .collect()
 }
 
 // Wrapper for the RDP algorithm, returning simplified point indices
-fn calculate_rdp_indices<T>(rdp_indices: &[RdpIndex<T>], epsilon: &T) -> Vec<usize>
+fn calculate_rdp_indices<T, const INITIAL_MIN: usize>(
+    rdp_indices: &[RdpIndex<T>],
+    epsilon: &T,
+) -> Vec<usize>
 where
     T: GeoFloat,
 {
@@ -45,7 +52,7 @@ where
             .map(|rdp_index| rdp_index.index)
             .collect();
     }
-    compute_rdp(rdp_indices, epsilon)
+    compute_rdp::<T, INITIAL_MIN>(rdp_indices, &mut rdp_indices.len(), epsilon)
         .into_iter()
         .map(|rdpindex| rdpindex.index)
         .collect::<Vec<usize>>()
@@ -54,7 +61,11 @@ where
 // Ramer–Douglas-Peucker line simplification algorithm
 // This function returns both the retained points, and their indices in the original geometry,
 // for more flexible use by FFI implementers
-fn compute_rdp<T>(rdp_indices: &[RdpIndex<T>], epsilon: &T) -> Vec<RdpIndex<T>>
+fn compute_rdp<T, const INITIAL_MIN: usize>(
+    rdp_indices: &[RdpIndex<T>],
+    simplified_len: &mut usize,
+    epsilon: &T,
+) -> Vec<RdpIndex<T>>
 where
     T: GeoFloat,
 {
@@ -87,15 +98,34 @@ where
     if farthest_distance > *epsilon {
         // The farthest index was larger than epsilon, so we will recursively simplify subsegments
         // split by the farthest index.
-        let mut intermediate = compute_rdp(&rdp_indices[..=farthest_index], epsilon);
+        let mut intermediate =
+            compute_rdp::<T, INITIAL_MIN>(&rdp_indices[..=farthest_index], simplified_len, epsilon);
+
         intermediate.pop(); // Don't include the farthest index twice
-        intermediate.extend_from_slice(&compute_rdp(&rdp_indices[farthest_index..], epsilon));
-        intermediate
-    } else {
-        // The farthest index was less than or equal to epsilon, so we will retain only the first
-        // and last indices, resulting in the indices inbetween getting culled.
-        vec![first, last]
+
+        intermediate.extend_from_slice(&compute_rdp::<T, INITIAL_MIN>(
+            &rdp_indices[farthest_index..],
+            simplified_len,
+            epsilon,
+        ));
+        return intermediate;
     }
+
+    // The farthest index was less than or equal to epsilon, so we will retain only the first
+    // and last indices, resulting in the indices inbetween getting culled.
+
+    // Update `simplified_len` to reflect the new number of indices by subtracting the number
+    // of indices we're culling.
+    *simplified_len -= rdp_indices.len() - 2;
+
+    // If `simplified_len` is now lower than the minimum number of indices needed, then don't
+    // perform the culling and return the original input.
+    if *simplified_len <= INITIAL_MIN {
+        return rdp_indices.to_owned();
+    }
+
+    // Cull indices between `first` and `last`.
+    vec![first, last]
 }
 
 /// Simplifies a geometry.
@@ -185,7 +215,10 @@ where
     T: GeoFloat,
 {
     fn simplify(&self, epsilon: &T) -> Self {
-        LineString::from(rdp(self.coords_iter(), epsilon))
+        LineString::from(rdp::<_, _, LINE_STRING_INITIAL_MIN>(
+            self.coords_iter(),
+            epsilon,
+        ))
     }
 }
 
@@ -194,7 +227,7 @@ where
     T: GeoFloat,
 {
     fn simplify_idx(&self, epsilon: &T) -> Vec<usize> {
-        calculate_rdp_indices(
+        calculate_rdp_indices::<_, LINE_STRING_INITIAL_MIN>(
             &self
                 .0
                 .iter()
@@ -224,10 +257,15 @@ where
 {
     fn simplify(&self, epsilon: &T) -> Self {
         Polygon::new(
-            self.exterior().simplify(epsilon),
+            LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(
+                self.exterior().coords_iter(),
+                epsilon,
+            )),
             self.interiors()
                 .iter()
-                .map(|l| l.simplify(epsilon))
+                .map(|l| {
+                    LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(l.coords_iter(), epsilon))
+                })
                 .collect(),
         )
     }
@@ -263,21 +301,21 @@ mod test {
             coord! { x: 11.0, y: 5.5 },
             coord! { x: 27.8, y: 0.1 },
         ];
-        let simplified = rdp(vec.into_iter(), &1.0);
+        let simplified = rdp::<_, 2>(vec.into_iter(), &1.0);
         assert_eq!(simplified, compare);
     }
     #[test]
     fn rdp_test_empty_linestring() {
         let vec = Vec::new();
         let compare = Vec::new();
-        let simplified = rdp(vec.into_iter(), &1.0);
+        let simplified = rdp::<_, 2>(vec.into_iter(), &1.0);
         assert_eq!(simplified, compare);
     }
     #[test]
     fn rdp_test_two_point_linestring() {
         let vec = vec![coord! { x: 0.0, y: 0.0 }, coord! { x: 27.8, y: 0.1 }];
         let compare = vec![coord! { x: 0.0, y: 0.0 }, coord! { x: 27.8, y: 0.1 }];
-        let simplified = rdp(vec.into_iter(), &1.0);
+        let simplified = rdp::<_, 2>(vec.into_iter(), &1.0);
         assert_eq!(simplified, compare);
     }
 
@@ -378,5 +416,40 @@ mod test {
         ];
         let indices = ls.simplify_idx(&-1.0);
         assert_eq!(vec![0usize, 1, 2, 3, 4], indices);
+    }
+
+    // https://github.com/georust/geo/issues/142
+    #[test]
+    fn simplify_line_string_polygon_initial_min() {
+        let ls = line_string![
+            ( x: 1.4324054e-16, y: 1.4324054e-16 ),
+            ( x: 1.4324054e-16, y: 1.4324054e-16 ),
+            ( x: -5.9730447e26, y: 1.5590374e-27 ),
+            ( x: 1.4324054e-16, y: 1.4324054e-16 ),
+        ];
+        let epsilon: f64 = 3.46e-43;
+
+        // LineString result should be three coordinates
+        let result = ls.simplify(&epsilon);
+        assert_eq!(
+            line_string![
+                ( x: 1.4324054e-16, y: 1.4324054e-16 ),
+                ( x: -5.9730447e26, y: 1.5590374e-27 ),
+                ( x: 1.4324054e-16, y: 1.4324054e-16 ),
+            ],
+            result
+        );
+
+        // Polygon result should be five coordinates
+        let result = Polygon::new(ls, vec![]).simplify(&epsilon);
+        assert_eq!(
+            polygon![
+                ( x: 1.4324054e-16, y: 1.4324054e-16 ),
+                ( x: 1.4324054e-16, y: 1.4324054e-16 ),
+                ( x: -5.9730447e26, y: 1.5590374e-27 ),
+                ( x: 1.4324054e-16, y: 1.4324054e-16 ),
+            ],
+            result,
+        );
     }
 }
