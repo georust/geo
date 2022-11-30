@@ -198,7 +198,7 @@ where
 //     stop: since a self-intersection causes removal of the spatially previous point, THAT could
 //     lead to a further self-intersection without the possibility of removing more points,
 //     potentially leaving the geometry in an invalid state.
-fn vwp_wrapper<const INITIAL_MIN: usize, const MIN_POINTS: usize, T>(
+fn vwp_wrapper<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     exterior: &LineString<T>,
     interiors: Option<&[LineString<T>]>,
     epsilon: &T,
@@ -221,13 +221,13 @@ where
     );
 
     // Simplify shell
-    rings.push(visvalingam_preserve::<INITIAL_MIN, MIN_POINTS, _>(
+    rings.push(visvalingam_preserve::<T, INITIAL_MIN, MIN_POINTS>(
         exterior, epsilon, &mut tree,
     ));
     // Simplify interior rings, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
-            rings.push(visvalingam_preserve::<INITIAL_MIN, MIN_POINTS, _>(
+            rings.push(visvalingam_preserve::<T, INITIAL_MIN, MIN_POINTS>(
                 ring, epsilon, &mut tree,
             ))
         }
@@ -247,7 +247,7 @@ where
 //     stop: since a self-intersection causes removal of the spatially previous point, THAT could
 //     lead to a further self-intersection without the possibility of removing more points,
 //     potentially leaving the geometry in an invalid state.
-fn visvalingam_preserve<const INITIAL_MIN: usize, const MIN_POINTS: usize, T>(
+fn visvalingam_preserve<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     orig: &LineString<T>,
     epsilon: &T,
     tree: &mut RTree<Line<T>>,
@@ -570,7 +570,7 @@ where
     T: CoordFloat + RTreeNum + HasKernel,
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> LineString<T> {
-        let mut simplified = vwp_wrapper::<2, 4, _>(self, None, epsilon);
+        let mut simplified = vwp_wrapper::<_, 2, 4>(self, None, epsilon);
         LineString::from(simplified.pop().unwrap())
     }
 }
@@ -595,7 +595,7 @@ where
 {
     fn simplifyvw_preserve(&self, epsilon: &T) -> Polygon<T> {
         let mut simplified =
-            vwp_wrapper::<4, 6, _>(self.exterior(), Some(self.interiors()), epsilon);
+            vwp_wrapper::<_, 4, 6>(self.exterior(), Some(self.interiors()), epsilon);
         let exterior = LineString::from(simplified.remove(0));
         let interiors = simplified.into_iter().map(LineString::from).collect();
         Polygon::new(exterior, interiors)
@@ -726,7 +726,7 @@ mod test {
             (x: 300., y: 40.),
             (x: 301., y: 10.)
         ];
-        let simplified = vwp_wrapper::<2, 4, _>(&ls, None, &668.6);
+        let simplified = vwp_wrapper::<_, 2, 4>(&ls, None, &668.6);
         // this is the correct, non-intersecting LineString
         let correct = vec![
             (10., 60.),
@@ -799,7 +799,7 @@ mod test {
     fn very_long_vwp_test() {
         // simplify an 8k-point LineString, eliminating self-intersections
         let points_ls = geo_test_fixtures::norway_main::<f64>();
-        let simplified = vwp_wrapper::<2, 4, _>(&points_ls, None, &0.0005);
+        let simplified = vwp_wrapper::<_, 2, 4>(&points_ls, None, &0.0005);
         assert_eq!(simplified[0].len(), 3278);
     }
 
