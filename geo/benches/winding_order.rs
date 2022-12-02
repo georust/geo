@@ -39,7 +39,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
     });
 
     c.bench_function("winding order: points_cw (f64)", |bencher| {
-        let ls = geo_test_fixtures::louisiana::<f32>();
+        let ls = geo_test_fixtures::louisiana::<f64>();
 
         bencher.iter(|| {
             let points_iter = criterion::black_box(
