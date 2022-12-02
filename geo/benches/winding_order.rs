@@ -32,7 +32,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
             let points_iter = criterion::black_box(
                 criterion::black_box(&ls).points_cw(),
             );
-            for point in points_iter.0 {
+            for point in points_iter {
                 criterion::black_box(point);
             }
         });
@@ -45,7 +45,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
             let points_iter = criterion::black_box(
                 criterion::black_box(&ls).points_cw(),
             );
-            for point in points_iter.0 {
+            for point in points_iter {
                 criterion::black_box(point);
             }
         });
@@ -58,7 +58,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
             let points_iter = criterion::black_box(
                 criterion::black_box(&ls).points_ccw(),
             );
-            for point in points_iter.0 {
+            for point in points_iter {
                 criterion::black_box(point);
             }
         });
@@ -71,7 +71,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
             let points_iter = criterion::black_box(
                 criterion::black_box(&ls).points_ccw(),
             );
-            for point in points_iter.0 {
+            for point in points_iter {
                 criterion::black_box(point);
             }
         });
