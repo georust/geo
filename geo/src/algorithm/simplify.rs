@@ -83,6 +83,7 @@ where
                 }
             },
         );
+    debug_assert_ne!(farthest_index, 0);
 
     if farthest_distance > *epsilon {
         // The farthest index was larger than epsilon, so we will recursively simplify subsegments
@@ -247,6 +248,18 @@ mod test {
     use super::*;
     use crate::geo_types::coord;
     use crate::{line_string, polygon};
+
+    #[test]
+    fn recursion_test() {
+        let vec = [
+            coord! { x: 8.0, y: 100.0 },
+            coord! { x: 9.0, y: 100.0 },
+            coord! { x: 12.0, y: 100.0 },
+        ];
+        let compare = vec![coord! {x: 8.0, y: 100.0}, coord! {x: 12.0, y: 100.0}];
+        let simplified = rdp(vec.into_iter(), &1.0);
+        assert_eq!(simplified, compare);
+    }
 
     #[test]
     fn rdp_test() {
