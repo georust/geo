@@ -9,9 +9,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         let ls = geo_test_fixtures::louisiana::<f32>();
 
         bencher.iter(|| {
-            let _ = criterion::black_box(
-                criterion::black_box(&ls).winding_order(),
-            );
+            let _ = criterion::black_box(criterion::black_box(&ls).winding_order());
         });
     });
 
@@ -19,9 +17,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         let ls = geo_test_fixtures::louisiana::<f64>();
 
         bencher.iter(|| {
-            let _ = criterion::black_box(
-                criterion::black_box(&ls).winding_order(),
-            );
+            let _ = criterion::black_box(criterion::black_box(&ls).winding_order());
         });
     });
 
@@ -29,9 +25,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         let ls = geo_test_fixtures::louisiana::<f32>();
 
         bencher.iter(|| {
-            let points_iter = criterion::black_box(
-                criterion::black_box(&ls).points_cw(),
-            );
+            let points_iter = criterion::black_box(criterion::black_box(&ls).points_cw());
             for point in points_iter {
                 criterion::black_box(point);
             }
@@ -42,9 +36,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         let ls = geo_test_fixtures::louisiana::<f64>();
 
         bencher.iter(|| {
-            let points_iter = criterion::black_box(
-                criterion::black_box(&ls).points_cw(),
-            );
+            let points_iter = criterion::black_box(criterion::black_box(&ls).points_cw());
             for point in points_iter {
                 criterion::black_box(point);
             }
@@ -55,9 +47,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         let ls = geo_test_fixtures::louisiana::<f32>();
 
         bencher.iter(|| {
-            let points_iter = criterion::black_box(
-                criterion::black_box(&ls).points_ccw(),
-            );
+            let points_iter = criterion::black_box(criterion::black_box(&ls).points_ccw());
             for point in points_iter {
                 criterion::black_box(point);
             }
@@ -68,9 +58,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         let ls = geo_test_fixtures::louisiana::<f64>();
 
         bencher.iter(|| {
-            let points_iter = criterion::black_box(
-                criterion::black_box(&ls).points_ccw(),
-            );
+            let points_iter = criterion::black_box(criterion::black_box(&ls).points_ccw());
             for point in points_iter {
                 criterion::black_box(point);
             }
