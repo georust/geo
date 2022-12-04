@@ -98,3 +98,7 @@ harness = false
 [[bench]]
 name = "rand_line_crossings"
 harness = false
+
+[[bench]]
+name = "winding_order"
+harness = false
