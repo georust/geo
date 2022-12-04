@@ -7,9 +7,7 @@ use std::iter::Rev;
 
 /// Iterates through a list of `Point`s
 #[allow(missing_debug_implementations)]
-pub struct Points<'a, T>(
-    pub(crate) EitherIter<PointsIter<'a, T>, Rev<PointsIter<'a, T>>>,
-)
+pub struct Points<'a, T>(pub(crate) EitherIter<PointsIter<'a, T>, Rev<PointsIter<'a, T>>>)
 where
     T: CoordNum + 'a;
 
