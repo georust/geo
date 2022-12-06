@@ -64,6 +64,10 @@ where
 
     let first = rdp_indices[0];
     let last = rdp_indices[rdp_indices.len() - 1];
+    if rdp_indices.len() == 2 {
+        return vec![first, last];
+    }
+
     let first_last_line = Line::new(first.coord, last.coord);
 
     // Find the farthest `RdpIndex` from `first_last_line`
