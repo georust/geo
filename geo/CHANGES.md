@@ -1,6 +1,11 @@
 # Changes
 
-## Unreleased
+## unreleased
+
+## 0.23.1
+
+* Update to geo-types-0.7.8 which deprecated `Coordinate` in favor of `Coord`.
+  <https://github.com/georust/geo/pull/924>
 * Added doc for Transform trait to root docs index.
 * Fixed an issues where calculating the convex hull of 3 collinear points
   would include all 3.
