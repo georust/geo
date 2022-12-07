@@ -208,12 +208,12 @@ impl<T: CoordNum> LineString<T> {
     }
 
     /// Return an iterator yielding the members of a [`LineString`] as [`Coord`]s
-    pub fn coords(&self) -> impl Iterator<Item = &Coord<T>> {
+    pub fn coords(&self) -> impl DoubleEndedIterator<Item = &Coord<T>> {
         self.0.iter()
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as mutable [`Coord`]s
-    pub fn coords_mut(&mut self) -> impl Iterator<Item = &mut Coord<T>> {
+    pub fn coords_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut Coord<T>> {
         self.0.iter_mut()
     }
 
