@@ -2,7 +2,7 @@
 
 ## unreleased
 
-* Return DoubleEndedIterator from points and points_mut
+* Return `DoubleEndedIterator` from `LineString::points` and `LineString::points_mut`
   * <https://github.com/georust/geo/pull/951>
 
 ## 0.7.8
