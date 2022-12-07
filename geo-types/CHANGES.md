@@ -2,6 +2,9 @@
 
 ## unreleased
 
+* Return `DoubleEndedIterator` from `LineString::points` and `LineString::points_mut`
+  * <https://github.com/georust/geo/pull/951>
+
 ## 0.7.8
 
 * Rename `Coordinate` to `Coord`; add deprecated `Coordinate` that is an alias for `Coord`
