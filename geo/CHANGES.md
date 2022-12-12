@@ -2,6 +2,9 @@
 
 ## unreleased
 
+* Update the `Polygon` implementation of the `Simplify` to always return `Polygon`s with at least four coordinates.
+  * <https://github.com/georust/geo/pull/943>
+
 ## 0.23.1
 
 * Update to geo-types-0.7.8 which deprecated `Coordinate` in favor of `Coord`.
