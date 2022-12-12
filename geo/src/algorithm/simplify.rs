@@ -75,6 +75,10 @@ where
 
     let first = rdp_indices[0];
     let last = rdp_indices[rdp_indices.len() - 1];
+    if rdp_indices.len() == 2 {
+        return vec![first, last];
+    }
+
     let first_last_line = Line::new(first.coord, last.coord);
 
     // Find the farthest `RdpIndex` from `first_last_line`
@@ -87,13 +91,14 @@ where
         .fold(
             (0usize, T::zero()),
             |(farthest_index, farthest_distance), (index, distance)| {
-                if distance > farthest_distance {
+                if distance >= farthest_distance {
                     (index, distance)
                 } else {
                     (farthest_index, farthest_distance)
                 }
             },
         );
+    debug_assert_ne!(farthest_index, 0);
 
     if farthest_distance > *epsilon {
         // The farthest index was larger than epsilon, so we will recursively simplify subsegments
@@ -285,6 +290,18 @@ mod test {
     use super::*;
     use crate::geo_types::coord;
     use crate::{line_string, polygon};
+
+    #[test]
+    fn recursion_test() {
+        let vec = [
+            coord! { x: 8.0, y: 100.0 },
+            coord! { x: 9.0, y: 100.0 },
+            coord! { x: 12.0, y: 100.0 },
+        ];
+        let compare = vec![coord! {x: 8.0, y: 100.0}, coord! {x: 12.0, y: 100.0}];
+        let simplified = rdp(vec.into_iter(), &1.0);
+        assert_eq!(simplified, compare);
+    }
 
     #[test]
     fn rdp_test() {

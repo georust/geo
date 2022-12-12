@@ -31,27 +31,45 @@ where
     }
 }
 
-/// Enumeration that allows for two distinct iterator types that yield the same type.
-pub enum EitherIter<T, I1, I2>
-where
-    I1: Iterator<Item = T>,
-    I2: Iterator<Item = T>,
-{
+pub enum EitherIter<I1, I2> {
     A(I1),
     B(I2),
 }
 
-impl<T, I1, I2> Iterator for EitherIter<T, I1, I2>
+impl<I1, I2> ExactSizeIterator for EitherIter<I1, I2>
+where
+    I1: ExactSizeIterator,
+    I2: ExactSizeIterator<Item = I1::Item>,
+{
+    #[inline]
+    fn len(&self) -> usize {
+        match self {
+            EitherIter::A(i1) => i1.len(),
+            EitherIter::B(i2) => i2.len(),
+        }
+    }
+}
+
+impl<T, I1, I2> Iterator for EitherIter<I1, I2>
 where
     I1: Iterator<Item = T>,
     I2: Iterator<Item = T>,
 {
     type Item = T;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             EitherIter::A(iter) => iter.next(),
             EitherIter::B(iter) => iter.next(),
+        }
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            EitherIter::A(iter) => iter.size_hint(),
+            EitherIter::B(iter) => iter.size_hint(),
         }
     }
 }
