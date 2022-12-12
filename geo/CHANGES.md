@@ -2,7 +2,7 @@
 
 ## unreleased
 
-* Update the `Polygon` implementation of the `Simplify` to always return `Polygon`s with at least four coordinates.
+* Update the `Polygon` implementation of the `Simplify` algorithm to always return `Polygon`s with at least four coordinates.
   * <https://github.com/georust/geo/pull/943>
 
 ## 0.23.1
