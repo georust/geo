@@ -298,9 +298,8 @@ mod test {
             coord! { x: 9.0, y: 100.0 },
             coord! { x: 12.0, y: 100.0 },
         ];
-        let compare = vec![coord! {x: 8.0, y: 100.0}, coord! {x: 12.0, y: 100.0}];
         let simplified = rdp::<_, _, 2>(vec.into_iter(), &1.0);
-        assert_eq!(simplified, compare);
+        assert_eq!(simplified, vec);
     }
 
     #[test]
