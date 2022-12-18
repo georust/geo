@@ -2,8 +2,10 @@
 
 ## unreleased
 
+* BREAKING: Make `SimplifyVw` naming consistent
+  * <https://github.com/georust/geo/pull/957>
 * BREAKING: Update to float_next_after-1.0.0
-  <https://github.com/georust/geo/pull/952>
+  * <https://github.com/georust/geo/pull/952>
 
 ## 0.23.1
 
