@@ -110,6 +110,10 @@ pub use haversine_intermediate::HaversineIntermediate;
 pub mod haversine_length;
 pub use haversine_length::HaversineLength;
 
+/// Calculate the closest point on a Great Circle arc geometry to a given point.
+pub mod haversine_closest_point;
+pub use haversine_closest_point::HaversineClosestPoint;
+
 /// Calculate a representative `Point` inside a `Geometry`
 pub mod interior_point;
 pub use interior_point::InteriorPoint;
