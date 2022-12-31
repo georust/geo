@@ -132,11 +132,11 @@ mod test {
         let line = Line::new(p_2, p_1);
 
         let p_from = Point::new(-84.75625, 31.81056);
-
-        assert_eq!(
-            line.haversine_closest_point(&p_from),
-            Some(Point::new(-85.13337428852164, 32.45365659858937))
-        );
+        if let Some(pt) = line.haversine_closest_point(&p_from) {
+            assert!(pt.approx_eq(&Point::new(-85.13337428852164, 32.45365659858937)));
+        } else {
+            assert!(false);
+        }
 
         let p_from = Point::new(-85.67211, 32.39774);
         if let Some(pt) = line.haversine_closest_point(&p_from) {
