@@ -4,7 +4,7 @@
 
 * BREAKING: Update to float_next_after-1.0.0
   <https://github.com/georust/geo/pull/952>
-* Implement "Closest Point" from a `Point` on a `Geometry` using spherical geometry.
+* Implement "Closest Point" from a `Point` on a `Geometry` using spherical geometry. <https://github.com/georust/geo/pull/958>
 
 ## 0.23.1
 
