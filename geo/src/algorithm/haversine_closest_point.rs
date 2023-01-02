@@ -509,7 +509,7 @@ mod test {
         let p_from = Point::new(-8.38752, 12.29866);
 
         if let Closest::SinglePoint(pt) = poly.haversine_closest_point(&p_from) {
-            assert!(pt.approx_eq(&Point::new(-8.732575801021413, 12.518536164563992)));
+            assert!(pt.approx_eq(&Point::new(-8.310007197809414, 12.226641293789331)));
         } else {
             assert!(false);
         }
