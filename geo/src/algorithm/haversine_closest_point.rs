@@ -1,42 +1,85 @@
 use crate::{haversine_distance::HaversineDistance, Bearing};
-use crate::{HaversineDestination, Point, MEAN_EARTH_RADIUS, CoordsIter};
-use geo_types::{CoordFloat, Line, LineString};
+use crate::{Closest, Contains};
+use crate::{CoordsIter, GeoFloat, HaversineDestination, Point, MEAN_EARTH_RADIUS};
+use geo_types::{
+    Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    MultiPolygon, Polygon, Rect, Triangle,
+};
+
 use num_traits::FromPrimitive;
 
-/// Closest point between two geometries using great circles.
+/// Closest point on a geometry from a point using great circles.
 ///
 /// https://edwilliams.org/avform147.htm#XTE
 ///
-/// For a great circle segment that crosses the pole
-pub trait HaversineClosestPoint<T, Pt = Self>
+pub trait HaversineClosestPoint<T>
 where
-    T: CoordFloat + FromPrimitive,
+    T: GeoFloat + FromPrimitive,
 {
-    fn haversine_closest_point(&self, from: &Pt) -> Option<Point<T>>;
+    fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T>;
 }
 
-impl<T> HaversineClosestPoint<T, Point<T>> for Point<T>
+// Implement for references as well as types
+impl<'a, T, G> HaversineClosestPoint<T> for &'a G
 where
-    T: CoordFloat + FromPrimitive,
+    G: HaversineClosestPoint<T>,
+    T: GeoFloat + FromPrimitive,
 {
-    fn haversine_closest_point(&self, pt: &Point<T>) -> Option<Point<T>> {
-        return Some(*pt);
+    fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T> {
+        (*self).haversine_closest_point(from)
     }
 }
 
-impl<T> HaversineClosestPoint<T, Point<T>> for Line<T>
+impl<T> HaversineClosestPoint<T> for Point<T>
 where
-    T: CoordFloat + FromPrimitive,
+    T: GeoFloat + FromPrimitive,
 {
-    fn haversine_closest_point(&self, from: &Point<T>) -> Option<Point<T>> {
+    fn haversine_closest_point(&self, pt: &Point<T>) -> Closest<T> {
+        if self == pt {
+            Closest::Intersection(*self)
+        } else {
+            Closest::SinglePoint(*pt)
+        }
+    }
+}
+
+impl<T> HaversineClosestPoint<T> for Coord<T>
+where
+    T: GeoFloat + FromPrimitive,
+{
+    fn haversine_closest_point(&self, pt: &Point<T>) -> Closest<T> {
+        Point::from(*self).haversine_closest_point(pt)
+    }
+}
+
+impl<T> HaversineClosestPoint<T> for Line<T>
+where
+    T: GeoFloat + FromPrimitive,
+{
+    fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T> {
+        // There is a question how small this distance should be. This is really tiny (~10e-7 meters or smaller),
+        // when working on earth, but it is arbitrary.
+        const DISTANCE_EPSILON: f64 = 1e-12;
         let p1 = self.start_point();
         let p2 = self.end_point();
+
+        // Optimization if the point s exactly one of the ends of the arc.
+        if p1 == *from {
+            return Closest::Intersection(p1);
+        }
+
+        if p2 == *from {
+            return Closest::Intersection(p2);
+        }
 
         // This can probably be done cheaper
         let d3 = p2.haversine_distance(&p1);
         if d3 <= T::epsilon() {
-            // "Degenerate" segment, return either p1 or p2
-            return Some(p1);
+            // I think here it should be return Closest::SinglePoint(p1)
+            // If the line segment is degenerated to a point, that point is still the closest
+            // (instead of indeterminate as in the Cartesian case).
+
+            return Closest::SinglePoint(p1);
         }
 
         let pi = T::from(std::f64::consts::PI).unwrap();
@@ -61,43 +104,224 @@ where
             let earth_radius = T::from(MEAN_EARTH_RADIUS).unwrap();
             let xtd = (((d1 / earth_radius).sin() * d_crs1.sin()).asin()).abs();
             let atd = earth_radius * (((d1 / earth_radius).cos() / xtd.cos()).acos()).abs();
-            return Some(p1.haversine_destination(crs_ab.to_degrees(), atd));
+
+            if xtd < T::from(DISTANCE_EPSILON).unwrap() {
+                return Closest::Intersection(p1.haversine_destination(crs_ab.to_degrees(), atd));
+            } else {
+                return Closest::SinglePoint(p1.haversine_destination(crs_ab.to_degrees(), atd));
+            }
         }
 
         // Projected falls outside the GC Arc
         // Return shortest distance pt, project either on point sp1 or sp2
         let d2 = p2.haversine_distance(from);
         if d1 < d2 {
-            return Some(p1);
+            return Closest::SinglePoint(p1);
         }
-        return Some(p2);
+        return Closest::SinglePoint(p2);
     }
 }
 
-impl<T> HaversineClosestPoint<T, Point<T>> for LineString<T>
+impl<T> HaversineClosestPoint<T> for LineString<T>
 where
-    T: CoordFloat + FromPrimitive,
+    T: GeoFloat + FromPrimitive,
 {
     // This is a naive implementation
-    fn haversine_closest_point(&self, from: &Point<T>) -> Option<Point<T>> {
+    fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T> {
         if self.coords_count() == 0 {
-            return None
+            return Closest::Indeterminate; // Empty LineString
         }
 
-        let mut min_distance = T::max_value();
-        let mut rv: Option<Point<T>> = None;
+        let mut min_distance = num_traits::Float::max_value();
+        let mut rv = Closest::Indeterminate;
         for line in self.lines() {
-            if let Some(pt) = line.haversine_closest_point(from) {
-                let dist = pt.haversine_distance(from);
-
-                if dist < min_distance {
-                    min_distance = dist;
-                    rv = Some(pt);
+            match line.haversine_closest_point(from) {
+                Closest::Intersection(_) => todo!(), // For the time being this does not happen.
+                Closest::SinglePoint(pt) => {
+                    let dist = pt.haversine_distance(from);
+                    if dist < min_distance {
+                        min_distance = dist;
+                        rv = Closest::SinglePoint(pt);
+                    }
                 }
+                // If there is a case where we cannot figure out the closest,
+                // Then it needs to be intereminate, instead of skipping
+                Closest::Indeterminate => return Closest::Indeterminate,
             }
         }
 
         rv
+    }
+}
+
+fn closest_closed_simple_poly<T, I>(lines: I, from: &Point<T>) -> (Closest<T>, T)
+where
+    T: GeoFloat + FromPrimitive,
+    I: IntoIterator<Item = Line<T>>,
+{
+    let mut min_distance = num_traits::Float::max_value();
+    let mut rv = Closest::Indeterminate;
+    for line in lines {
+        match line.haversine_closest_point(from) {
+            Closest::Intersection(_) => todo!(), // For the time being this does not happen.
+            Closest::SinglePoint(pt) => {
+                let dist = pt.haversine_distance(from);
+                if dist < min_distance {
+                    min_distance = dist;
+                    rv = Closest::SinglePoint(pt);
+                }
+            }
+
+            // If there is a case where we cannot figure out the closest,
+            // Then it needs to be intereminate, instead of skipping
+            // This however never happens for a Line/Point, which is the case here
+            Closest::Indeterminate => return (Closest::Indeterminate, T::zero()),
+        }
+    }
+
+    (rv, min_distance)
+}
+
+impl<T> HaversineClosestPoint<T> for Triangle<T>
+where
+    T: GeoFloat + FromPrimitive,
+{
+    fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T> {
+        if self.contains(from) {
+            return Closest::Intersection(*from);
+        }
+
+        closest_closed_simple_poly(self.to_lines(), from).0
+    }
+}
+
+impl<T> HaversineClosestPoint<T> for Rect<T>
+where
+    T: GeoFloat + FromPrimitive,
+{
+    fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T> {
+        if self.contains(from) {
+            return Closest::Intersection(*from);
+        }
+
+        closest_closed_simple_poly(self.to_lines(), from).0
+    }
+}
+
+impl<T> HaversineClosestPoint<T> for Polygon<T>
+where
+    T: GeoFloat + FromPrimitive,
+{
+    #[warn(unused_assignments)]
+    fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T> {
+        if self.contains(from) {
+            return Closest::Intersection(*from);
+        }
+
+        if self.exterior_coords_iter().count() < 3 {
+            // Not really a polygon
+            return Closest::Indeterminate;
+        }
+
+        let (mut rv, mut min_distance) = closest_closed_simple_poly(self.exterior().lines(), from);
+
+        match rv {
+            // Would not happen as it should be caught at the beginning of the function
+            Closest::Intersection(_) => return rv,
+            Closest::SinglePoint(_) => {}
+            // Would not happen either. See other geometries for an explanation.
+            // This is for future proof
+            Closest::Indeterminate => return rv,
+        }
+
+        // Could be inside a inner ring
+        for ls in self.interiors() {
+            match closest_closed_simple_poly(ls.lines(), from) {
+                // Would not happen as it should be caught at the beginning of the function
+                (Closest::Intersection(pt), _) => return Closest::Intersection(pt),
+                (Closest::SinglePoint(pt), dist) => {
+                    if min_distance > dist {
+                        min_distance = dist;
+                        rv = Closest::SinglePoint(pt);
+                    }
+                }
+                // Would not happen either.
+                (Closest::Indeterminate, _) => unreachable!(),
+            }
+        }
+
+        rv
+    }
+}
+
+fn multi_geometry_nearest<G, I, T>(iter: I, from: &Point<T>) -> Closest<T>
+where
+    T: GeoFloat + FromPrimitive,
+    G: HaversineClosestPoint<T>,
+    I: IntoIterator<Item = G>,
+{
+    let mut min_distance = <T as num_traits::Float>::max_value();
+    let mut rv = Closest::Indeterminate;
+
+    for c in iter {
+        match c.haversine_closest_point(from) {
+            // This mean on top of the line.
+            Closest::Intersection(pt) => return Closest::Intersection(pt),
+            Closest::SinglePoint(pt) => {
+                let dist = pt.haversine_distance(from);
+                if dist < min_distance {
+                    min_distance = dist;
+                    rv = Closest::SinglePoint(pt);
+                }
+            }
+            Closest::Indeterminate => return Closest::Indeterminate,
+        }
+    }
+    rv
+}
+
+impl<T> HaversineClosestPoint<T> for MultiPoint<T>
+where
+    T: GeoFloat + FromPrimitive,
+{
+    fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T> {
+        multi_geometry_nearest(self, from)
+    }
+}
+
+impl<T> HaversineClosestPoint<T> for MultiLineString<T>
+where
+    T: GeoFloat + FromPrimitive,
+{
+    fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T> {
+        multi_geometry_nearest(self, from)
+    }
+}
+
+impl<T> HaversineClosestPoint<T> for MultiPolygon<T>
+where
+    T: GeoFloat + FromPrimitive,
+{
+    fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T> {
+        multi_geometry_nearest(self, from)
+    }
+}
+
+impl<T> HaversineClosestPoint<T> for Geometry<T>
+where
+    T: GeoFloat + FromPrimitive,
+{
+    crate::geometry_delegate_impl! {
+        fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T>;
+    }
+}
+
+impl<T> HaversineClosestPoint<T> for GeometryCollection<T>
+where
+    T: GeoFloat + FromPrimitive,
+{
+    fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T> {
+        multi_geometry_nearest(self, from)
     }
 }
 
@@ -107,7 +331,7 @@ mod test {
         fn approx_eq(&self, other: &Self) -> bool;
     }
 
-    impl<T: CoordFloat + FromPrimitive + approx::RelativeEq> ApproxEq<T> for Point<T> {
+    impl<T: GeoFloat + FromPrimitive + approx::RelativeEq> ApproxEq<T> for Point<T> {
         fn approx_eq(&self, other: &Self) -> bool {
             relative_eq!(self.x(), other.x()) && relative_eq!(self.y(), other.y())
         }
@@ -121,8 +345,12 @@ mod test {
     fn point_to_point() {
         let p_1 = Point::new(-84.74905, 32.61454);
         let p_2 = Point::new(-85.93942, 32.11055);
-        assert_eq!(p_1.haversine_closest_point(&p_2), Some(p_2));
-        assert_eq!(p_2.haversine_closest_point(&p_1), Some(p_1));
+        assert_eq!(p_1.haversine_closest_point(&p_2), Closest::SinglePoint(p_2));
+        assert_eq!(p_2.haversine_closest_point(&p_1), Closest::SinglePoint(p_1));
+        assert_eq!(
+            p_2.haversine_closest_point(&p_2),
+            Closest::Intersection(p_2)
+        );
     }
 
     #[test]
@@ -132,15 +360,42 @@ mod test {
         let line = Line::new(p_2, p_1);
 
         let p_from = Point::new(-84.75625, 31.81056);
-        if let Some(pt) = line.haversine_closest_point(&p_from) {
+        if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
             assert!(pt.approx_eq(&Point::new(-85.13337428852164, 32.45365659858937)));
         } else {
             assert!(false);
         }
 
         let p_from = Point::new(-85.67211, 32.39774);
-        if let Some(pt) = line.haversine_closest_point(&p_from) {
+        if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
             assert!(pt.approx_eq(&Point::new(-85.58999680564376, 32.26023534389268)));
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn point_to_line_intersection() {
+        let p_1 = Point::new(-84.74905, 32.61454);
+        let p_2 = Point::new(-85.93942, 32.11055);
+        let line = Line::new(p_2, p_1);
+
+        if let Closest::Intersection(pt) = line.haversine_closest_point(&p_1) {
+            assert!(pt == p_1);
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn point_to_line_intersection_2() {
+        let p_1 = Point::new(-84.74905, 32.61454);
+        let p_2 = Point::new(-85.93942, 32.11055);
+        let line = Line::new(p_2, p_1);
+
+        let p_from = Point::new(-85.13337428852164, 32.45365659858937);
+        if let Closest::Intersection(pt) = line.haversine_closest_point(&p_from) {
+            assert!(pt.approx_eq(&p_from));
         } else {
             assert!(false);
         }
@@ -154,7 +409,7 @@ mod test {
         let line = Line::new(p_2, p_1);
         let p_from = Point::new(-25.86062, -87.32053);
 
-        if let Some(pt) = line.haversine_closest_point(&p_from) {
+        if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
             assert!(pt.approx_eq(&Point::new(-28.60871282051286357, -85.27805769230766941)));
         } else {
             assert!(false)
@@ -168,9 +423,10 @@ mod test {
         let line = Line::new(p_2, p_1);
         let p_from = Point::new(8.15172, 77.40041);
 
-        match line.haversine_closest_point(&p_from) {
-            Some(pt) => assert!(pt.approx_eq(&Point::new(5.48109492316554, 82.99828098761533))),
-            None => assert!(false),
+        if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
+            assert!(pt.approx_eq(&Point::new(5.48109492316554, 82.99828098761533)));
+        } else {
+            assert!(false);
         }
     }
 
@@ -189,9 +445,10 @@ mod test {
 
         let p_from = Point::new(17.02374, 10.57037);
 
-        match linestring.haversine_closest_point(&p_from) {
-            Some(pt) => assert!(pt.approx_eq(&Point::new(15.611386947136054, 10.006831648991811))),
-            None => assert!(false),
+        if let Closest::SinglePoint(pt) = linestring.haversine_closest_point(&p_from) {
+            assert!(pt.approx_eq(&Point::new(15.611386947136054, 10.006831648991811)));
+        } else {
+            assert!(false);
         }
     }
 
@@ -201,9 +458,122 @@ mod test {
 
         let p_from = Point::new(17.02374, 10.57037);
 
-        match linestring.haversine_closest_point(&p_from) {
-            Some(_) => assert!(false),
-            None => {},
+        assert!(linestring.haversine_closest_point(&p_from) == Closest::Indeterminate);
+    }
+
+    #[test]
+    fn point_to_poly_outside() {
+        let wkt = "Polygon ((-10.99779296875000156 13.36373945312502087, -11.05049804687500092 13.85565351562501846, \
+            -10.21600097656250128 13.9171427734375186, -9.63624511718750121 14.47054609375001988, \
+            -8.2307763671875005 14.32121503906251903, -7.50168945312500135 13.65361738281252002, -7.50168945312500135 12.80155195312502059, \
+            -7.61588378906250085 13.50428632812501917, -7.76521484375000171 13.71510664062502016, -8.11658203125000099 13.87322187500002002, \
+            -8.27469726562500085 13.23197675781251981, -7.78278320312500149 12.7049259765625191, -8.25712890625000107 11.76501875000002073, \
+            -9.03892089843750135 11.91434980468751981, -10.33897949218750156 11.51906171875002016, \
+            -11.02414550781250213 12.46775312500001931, -9.0037841796875 12.33599042968752002, -8.46794921875000028 12.69614179687502009, \
+            -8.67876953125000128 13.39009199218751966, -8.44159667968750149 13.88200605468751903, -9.12676269531250028 14.10161054687501903, \
+            -9.68016601562500156 13.51307050781251995, -10.18964843750000071 13.02994062500001959, -10.99779296875000156 13.36373945312502087),\
+            (-8.59092773437500057 12.32720625000001924, -8.48551757812500185 12.0461125000000191, \
+                -8.16928710937500213 12.37112714843751959, -8.09022949218750043 12.74884687500001945, -8.59092773437500057 12.32720625000001924),\
+            (-10.42682128906250227 13.5569914062500203, -10.26870605468750242 13.38130781250001888, \
+                -9.8822021484375 13.58334394531252087, -9.84706542968750043 13.79416425781252009, -10.42682128906250227 13.5569914062500203))";
+
+        let poly = Polygon::try_from_wkt_str(wkt).unwrap();
+
+        let p_from = Point::new(-8.95108, 12.82790);
+
+        if let Closest::SinglePoint(pt) = poly.haversine_closest_point(&p_from) {
+            assert!(pt.approx_eq(&Point::new(-8.732575801021413, 12.518536164563992)));
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn point_to_poly_outside_in_inner_ring() {
+        let wkt = "Polygon ((-10.99779296875000156 13.36373945312502087, -11.05049804687500092 13.85565351562501846, \
+            -10.21600097656250128 13.9171427734375186, -9.63624511718750121 14.47054609375001988, \
+            -8.2307763671875005 14.32121503906251903, -7.50168945312500135 13.65361738281252002, -7.50168945312500135 12.80155195312502059, \
+            -7.61588378906250085 13.50428632812501917, -7.76521484375000171 13.71510664062502016, -8.11658203125000099 13.87322187500002002, \
+            -8.27469726562500085 13.23197675781251981, -7.78278320312500149 12.7049259765625191, -8.25712890625000107 11.76501875000002073, \
+            -9.03892089843750135 11.91434980468751981, -10.33897949218750156 11.51906171875002016, \
+            -11.02414550781250213 12.46775312500001931, -9.0037841796875 12.33599042968752002, -8.46794921875000028 12.69614179687502009, \
+            -8.67876953125000128 13.39009199218751966, -8.44159667968750149 13.88200605468751903, -9.12676269531250028 14.10161054687501903, \
+            -9.68016601562500156 13.51307050781251995, -10.18964843750000071 13.02994062500001959, -10.99779296875000156 13.36373945312502087),\
+            (-8.59092773437500057 12.32720625000001924, -8.48551757812500185 12.0461125000000191, \
+                -8.16928710937500213 12.37112714843751959, -8.09022949218750043 12.74884687500001945, -8.59092773437500057 12.32720625000001924),\
+            (-10.42682128906250227 13.5569914062500203, -10.26870605468750242 13.38130781250001888, \
+                -9.8822021484375 13.58334394531252087, -9.84706542968750043 13.79416425781252009, -10.42682128906250227 13.5569914062500203))";
+
+        let poly = Polygon::try_from_wkt_str(wkt).unwrap();
+
+        let p_from = Point::new(-8.38752, 12.29866);
+
+        if let Closest::SinglePoint(pt) = poly.haversine_closest_point(&p_from) {
+            assert!(pt.approx_eq(&Point::new(-8.732575801021413, 12.518536164563992)));
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn point_to_poly_inside() {
+        let wkt = "Polygon ((-10.99779296875000156 13.36373945312502087, -11.05049804687500092 13.85565351562501846, \
+            -10.21600097656250128 13.9171427734375186, -9.63624511718750121 14.47054609375001988, \
+            -8.2307763671875005 14.32121503906251903, -7.50168945312500135 13.65361738281252002, -7.50168945312500135 12.80155195312502059, \
+            -7.61588378906250085 13.50428632812501917, -7.76521484375000171 13.71510664062502016, -8.11658203125000099 13.87322187500002002, \
+            -8.27469726562500085 13.23197675781251981, -7.78278320312500149 12.7049259765625191, -8.25712890625000107 11.76501875000002073, \
+            -9.03892089843750135 11.91434980468751981, -10.33897949218750156 11.51906171875002016, \
+            -11.02414550781250213 12.46775312500001931, -9.0037841796875 12.33599042968752002, -8.46794921875000028 12.69614179687502009, \
+            -8.67876953125000128 13.39009199218751966, -8.44159667968750149 13.88200605468751903, -9.12676269531250028 14.10161054687501903, \
+            -9.68016601562500156 13.51307050781251995, -10.18964843750000071 13.02994062500001959, -10.99779296875000156 13.36373945312502087),\
+            (-8.59092773437500057 12.32720625000001924, -8.48551757812500185 12.0461125000000191, \
+                -8.16928710937500213 12.37112714843751959, -8.09022949218750043 12.74884687500001945, -8.59092773437500057 12.32720625000001924),\
+            (-10.42682128906250227 13.5569914062500203, -10.26870605468750242 13.38130781250001888, \
+                -9.8822021484375 13.58334394531252087, -9.84706542968750043 13.79416425781252009, -10.42682128906250227 13.5569914062500203))";
+
+        let poly = Polygon::try_from_wkt_str(wkt).unwrap();
+
+        let p_from = Point::new(-10.08341, 11.98792);
+
+        if let Closest::Intersection(pt) = poly.haversine_closest_point(&p_from) {
+            assert!(pt.approx_eq(&p_from));
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn point_to_multi_polygon() {
+        let wkt = "MultiPolygon (((-10.99779296875000156 13.36373945312502087, -11.05049804687500092 13.85565351562501846, \
+            -10.21600097656250128 13.9171427734375186, -9.63624511718750121 14.47054609375001988, -8.2307763671875005 14.32121503906251903, \
+            -7.50168945312500135 13.65361738281252002, -7.50168945312500135 12.80155195312502059, \
+            -7.61588378906250085 13.50428632812501917, -7.76521484375000171 13.71510664062502016, -8.11658203125000099 13.87322187500002002, \
+            -8.27469726562500085 13.23197675781251981, -7.78278320312500149 12.7049259765625191, -8.25712890625000107 11.76501875000002073, \
+            -9.03892089843750135 11.91434980468751981, -10.33897949218750156 11.51906171875002016, \
+            -11.02414550781250213 12.46775312500001931, -9.0037841796875 12.33599042968752002, \
+            -8.46794921875000028 12.69614179687502009, -8.67876953125000128 13.39009199218751966, -8.44159667968750149 13.88200605468751903, \
+            -9.12676269531250028 14.10161054687501903, -9.68016601562500156 13.51307050781251995, \
+            -10.18964843750000071 13.02994062500001959, -10.99779296875000156 13.36373945312502087),\
+            (-8.59092773437500057 12.32720625000001924, -8.48551757812500185 12.0461125000000191, -8.16928710937500213 12.37112714843751959, \
+                -8.09022949218750043 12.74884687500001945, -8.59092773437500057 12.32720625000001924),\
+            (-10.42682128906250227 13.5569914062500203, -10.26870605468750242 13.38130781250001888, -9.8822021484375 13.58334394531252087, \
+                -9.84706542968750043 13.79416425781252009, -10.42682128906250227 13.5569914062500203)),\
+            ((-8.99417648315430007 12.71261213378908828, -9.08641036987305029 12.51057600097658806, \
+                -8.83606124877929844 12.48861555175783877, -8.69990646362304787 12.6818675048828382, \
+                -8.74382736206055 12.77410139160158842, -8.86680587768555029 12.87951154785158892, \
+                -8.99417648315430007 12.71261213378908828)),((-8.99856857299804958 13.68326398925784027, \
+                -9.45095382690429986 13.16499738769534034, -9.48609054565430121 13.45926740722659076, \
+                -9.34993576049805064 13.7403611572265909, -8.91511886596680014 13.90726057128909154, \
+                -8.99856857299804958 13.68326398925784027)))";
+
+        let poly = MultiPolygon::try_from_wkt_str(wkt).unwrap();
+
+        let p_from = Point::new(-8.95108, 12.82790);
+
+        if let Closest::SinglePoint(pt) = poly.haversine_closest_point(&p_from) {
+            assert!(pt.approx_eq(&Point::new(-8.922208260289914, 12.806949983368323)));
+        } else {
+            assert!(false);
         }
     }
 }
