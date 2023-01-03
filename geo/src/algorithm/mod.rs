@@ -18,6 +18,10 @@ pub use bool_ops::{BooleanOps, OpType};
 pub mod bounding_rect;
 pub use bounding_rect::BoundingRect;
 
+/// Calculate the bounding rectangle of a `Geometry`.
+pub mod mbr;
+pub use mbr::Mbr;
+
 /// Calculate the centroid of a `Geometry`.
 pub mod centroid;
 pub use centroid::Centroid;
