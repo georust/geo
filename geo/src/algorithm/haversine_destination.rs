@@ -10,12 +10,12 @@ pub trait HaversineDestination<T: CoordFloat> {
     ///
     /// # Units
     ///
-    /// - `bearing`: degrees
+    /// - `bearing`: degrees, zero degrees is north
     /// - `distance`: meters
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust
     /// use geo::HaversineDestination;
     /// use geo::Point;
     ///
@@ -71,5 +71,13 @@ mod test {
         let p_3 = p_1.haversine_destination(0., square_edge);
         let p_4 = p_3.haversine_destination(90., square_edge);
         assert_relative_eq!(p_4, p_2, epsilon = 1.0e-6);
+    }
+
+    #[test]
+    fn bearing_zero_is_north() {
+        let p_1 = Point::new(9.177789688110352, 48.776781529534965);
+        let p_2 = p_1.haversine_destination(0., 1000.);
+        assert_relative_eq!(p_1.x(), p_2.x(), epsilon = 1.0e-6);
+        assert!(p_2.y() > p_1.y())
     }
 }
