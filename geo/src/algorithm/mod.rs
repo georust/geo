@@ -18,9 +18,9 @@ pub use bool_ops::{BooleanOps, OpType};
 pub mod bounding_rect;
 pub use bounding_rect::BoundingRect;
 
-/// Calculate the bounding rectangle of a `Geometry`.
-pub mod mbr;
-pub use mbr::Mbr;
+/// Calculate the minimum rotated rectangle of a `Geometry`.
+pub mod minimun_rotated_rect;
+pub use minimun_rotated_rect::MinimunRotatedRect;
 
 /// Calculate the centroid of a `Geometry`.
 pub mod centroid;
