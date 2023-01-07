@@ -23,6 +23,7 @@
   * <https://github.com/georust/geo/pull/920>
 * Fix RDP recursion bug
   * <https://github.com/georust/geo/pull/941>
+* Clarify documentation of bearing on the HaversineDestination
 
 
 ## 0.23.0
