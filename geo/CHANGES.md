@@ -59,6 +59,8 @@
 * Removed deprecated `ToGeo` trait. Use `std::convert::TryFrom<$geometry>`
   instead.
   * <https://github.com/georust/geo/pull/892>
+* Added `CrossTrackDistance` trait to calculate the distance from a point
+  to the nearest point on a line
 
 ## 0.22.1
 
