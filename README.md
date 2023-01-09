@@ -3,7 +3,7 @@
 [![geo on Crates.io](https://img.shields.io/crates/v/geo.svg)](https://crates.io/crates/geo)
 [![Coverage Status](https://coveralls.io/repos/github/georust/geo/badge.svg?branch=trying)](https://coveralls.io/github/georust/geo?branch=trying)
 [![Documentation](https://docs.rs/geo/badge.svg)](https://docs.rs/geo)
-![Discord](https://img.shields.io/discord/598002550221963289)
+[![Discord](https://img.shields.io/discord/598002550221963289)](https://discord.gg/Fp2aape)
 
 # geo
 
