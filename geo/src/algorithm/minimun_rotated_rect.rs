@@ -1,6 +1,6 @@
 use crate::{
     algorithm::{centroid::Centroid, rotate::Rotate, BoundingRect, CoordsIter},
-    coords_iter, Area, ConvexHull, CoordFloat, GeoFloat, GeoNum, Point, Polygon,
+    Area, ConvexHull, CoordFloat, GeoFloat, GeoNum, Point, Polygon,
 };
 /// Returns the minimun bounding rect of polygon.
 ///
