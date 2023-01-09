@@ -2,31 +2,27 @@ use crate::{
     algorithm::{centroid::Centroid, rotate::Rotate, BoundingRect, CoordsIter},
     Area, ConvexHull, CoordFloat, GeoFloat, GeoNum, Point, Polygon,
 };
-/// Returns the minimun bounding rect of polygon.
-///
-
 /// Return the minimun bounding rectangle of polygon
 ///
 /// # Examples
 ///
 /// ```
-/// # #[macro_use] extern crate approx;
-/// #
+/// use geo_types::{line_string, polygon, LineString, Polygon};
 /// use geo::MinimunRotatedRect;
-/// use geo::line_string;
-///
-/// let poly: Polygon<f64> = polygon![(x: 3.3, y: 30.4), (x: 1.7, y: 24.6), (x: 13.4, y: 25.1), (x: 14.4, y: 31.0),(x:3.3,y:30.4)];
-/// let mbr = MinimunRotatedRect::minimun_rotated_rect(&poly).unwrap();
-/// assert_eq!(
-///     mbr.exterior(),
-///     &LineString::from(vec![
-///         (1.7000000000000006, 24.6),
-///         (1.4501458363715918, 30.446587428904767),
-///         (14.4, 31.0),
-///         (14.649854163628408, 25.153412571095235),
-///         (1.7000000000000006, 24.6),
-///     ])
-/// );
+/// fn returns_polygon_mbr() {
+///     let poly: Polygon<f64> = polygon![(x: 3.3, y: 30.4), (x: 1.7, y: 24.6), (x: 13.4, y: 25.1), (x: 14.4, y: 31.0),(x:3.3,y:30.4)];
+///     let mbr = MinimunRotatedRect::minimun_rotated_rect(&poly).unwrap();
+///     assert_eq!(
+///         mbr.exterior(),
+///         &LineString::from(vec![
+///             (1.7000000000000006, 24.6),
+///             (1.4501458363715918, 30.446587428904767),
+///             (14.4, 31.0),
+///             (14.649854163628408, 25.153412571095235),
+///             (1.7000000000000006, 24.6),
+///         ])
+///     );
+/// }
 /// ```
 pub trait MinimunRotatedRect<'a, T> {
     type Scalar: GeoNum;
