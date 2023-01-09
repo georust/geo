@@ -4,6 +4,8 @@
 
 * Update the `Polygon` implementation of the `Simplify` algorithm to always return `Polygon`s with at least four coordinates.
   * <https://github.com/georust/geo/pull/943>
+* BREAKING: Update to float_next_after-1.0.0
+  <https://github.com/georust/geo/pull/952>
 
 ## 0.23.1
 
@@ -23,6 +25,7 @@
   * <https://github.com/georust/geo/pull/920>
 * Fix RDP recursion bug
   * <https://github.com/georust/geo/pull/941>
+* Clarify documentation of bearing on the HaversineDestination
 
 
 ## 0.23.0
