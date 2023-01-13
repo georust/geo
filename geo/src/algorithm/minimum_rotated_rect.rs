@@ -1,17 +1,23 @@
+use num_traits::Float;
+
 use crate::{
     algorithm::{centroid::Centroid, rotate::Rotate, BoundingRect, CoordsIter},
-    Area, ConvexHull, CoordFloat, GeoFloat, GeoNum, Point, Polygon,
+    Area, ConvexHull, CoordFloat, GeoFloat, GeoNum, LinesIter, Polygon,
 };
-/// Return the minimun bounding rectangle of polygon
+/// Return the minimum bounding rectangle(MBR) of geometry
+/// reference: https://en.wikipedia.org/wiki/Minimum_bounding_box
+/// minimum rotated rect is the rectangle that can enclose all points given
+/// and have smallest area of all enclosing rectangles
+/// the rect can be any-oriented, not only axis-aligned.
 ///
 /// # Examples
 ///
 /// ```
 /// use geo_types::{line_string, polygon, LineString, Polygon};
-/// use geo::MinimunRotatedRect;
+/// use geo::MinimumRotatedRect;
 /// fn returns_polygon_mbr() {
 ///     let poly: Polygon<f64> = polygon![(x: 3.3, y: 30.4), (x: 1.7, y: 24.6), (x: 13.4, y: 25.1), (x: 14.4, y: 31.0),(x:3.3,y:30.4)];
-///     let mbr = MinimunRotatedRect::minimun_rotated_rect(&poly).unwrap();
+///     let mbr = MinimumRotatedRect::minimum_rotated_rect(&poly).unwrap();
 ///     assert_eq!(
 ///         mbr.exterior(),
 ///         &LineString::from(vec![
@@ -24,37 +30,34 @@ use crate::{
 ///     );
 /// }
 /// ```
-pub trait MinimunRotatedRect<'a, T> {
+pub trait MinimumRotatedRect<'a, T> {
     type Scalar: GeoNum;
-    fn minimun_rotated_rect(&'a self) -> Option<Polygon<Self::Scalar>>;
+    fn minimum_rotated_rect(&'a self) -> Option<Polygon<Self::Scalar>>;
 }
 
-impl<'a, T, G> MinimunRotatedRect<'a, T> for G
+impl<'a, T, G> MinimumRotatedRect<'a, T> for G
 where
     T: CoordFloat + GeoFloat + GeoNum,
     G: CoordsIter<'a, Scalar = T>,
-    f64: From<T>,
 {
     type Scalar = T;
-    fn minimun_rotated_rect(&'a self) -> Option<Polygon<Self::Scalar>> {
+
+    fn minimum_rotated_rect(&'a self) -> Option<Polygon<Self::Scalar>> {
         let convex_poly = ConvexHull::convex_hull(self);
-        let mut min_area = f64::MAX;
+        let mut min_area: T = Float::max_value();
         let mut min_angle: T = T::zero();
-        let points = convex_poly.exterior().clone().into_points();
         let mut rect_poly: Option<Polygon<T>> = None;
-        let mut rotate_point: Option<Point<T>> = None;
-        for i in 0..points.len() - 1 {
-            let ci = points[i];
-            let cii = points[i + 1];
+        let rotate_point = convex_poly.centroid();
+        for line in convex_poly.exterior().lines_iter() {
+            let (ci, cii) = line.points();
             let angle = (cii.y() - ci.y()).atan2(cii.x() - ci.x()).to_degrees();
-            let rotated_poly = Rotate::rotate_around_centroid(&convex_poly, -angle);
+            let rotated_poly = Rotate::rotate_around_point(&convex_poly, -angle, rotate_point?);
             let tmp_poly = rotated_poly.bounding_rect()?.to_polygon();
-            let area = f64::from(tmp_poly.unsigned_area());
+            let area = tmp_poly.unsigned_area();
             if area < min_area {
                 min_area = area;
                 min_angle = angle;
                 rect_poly = Some(tmp_poly);
-                rotate_point = convex_poly.centroid();
             }
         }
         Some(rect_poly?.rotate_around_point(min_angle, rotate_point?))
@@ -65,12 +68,12 @@ where
 mod test {
     use geo_types::{line_string, polygon, LineString, Polygon};
 
-    use crate::MinimunRotatedRect;
+    use crate::MinimumRotatedRect;
 
     #[test]
     fn returns_polygon_mbr() {
         let poly: Polygon<f64> = polygon![(x: 3.3, y: 30.4), (x: 1.7, y: 24.6), (x: 13.4, y: 25.1), (x: 14.4, y: 31.0),(x:3.3,y:30.4)];
-        let mbr = MinimunRotatedRect::minimun_rotated_rect(&poly).unwrap();
+        let mbr = MinimumRotatedRect::minimum_rotated_rect(&poly).unwrap();
         assert_eq!(
             mbr.exterior(),
             &LineString::from(vec![
@@ -85,7 +88,7 @@ mod test {
     #[test]
     fn returns_linestring_mbr() {
         let poly: LineString<f64> = line_string![(x: 3.3, y: 30.4), (x: 1.7, y: 24.6), (x: 13.4, y: 25.1), (x: 14.4, y: 31.0)];
-        let mbr = MinimunRotatedRect::minimun_rotated_rect(&poly).unwrap();
+        let mbr = MinimumRotatedRect::minimum_rotated_rect(&poly).unwrap();
         assert_eq!(
             mbr.exterior(),
             &LineString::from(vec![

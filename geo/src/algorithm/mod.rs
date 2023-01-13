@@ -19,8 +19,8 @@ pub mod bounding_rect;
 pub use bounding_rect::BoundingRect;
 
 /// Calculate the minimum rotated rectangle of a `Geometry`.
-pub mod minimun_rotated_rect;
-pub use minimun_rotated_rect::MinimunRotatedRect;
+pub mod minimum_rotated_rect;
+pub use minimum_rotated_rect::MinimumRotatedRect;
 
 /// Calculate the centroid of a `Geometry`.
 pub mod centroid;
