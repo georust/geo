@@ -61,7 +61,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a MultiPolygon<T> {
     type IntoIter = ::std::slice::Iter<'a, Polygon<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&self.0).iter()
+        (self.0).iter()
     }
 }
 
@@ -70,7 +70,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPolygon<T> {
     type IntoIter = ::std::slice::IterMut<'a, Polygon<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&mut self.0).iter_mut()
+        (self.0).iter_mut()
     }
 }
 

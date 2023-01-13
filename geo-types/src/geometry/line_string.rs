@@ -540,7 +540,7 @@ mod test {
         for c in (&ls).into_iter().rev().skip(1).rev() {
             println!("{:?}", c);
         }
-        for p in (&ls).points().rev().skip(1).rev() {
+        for p in ls.points().rev().skip(1).rev() {
             println!("{:?}", p);
         }
     }
