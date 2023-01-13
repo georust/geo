@@ -140,7 +140,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Triangle<F> {
         if self.intersects(p) {
             return Closest::Intersection(*p);
         }
-        closest_of(&self.to_lines(), *p)
+        closest_of(self.to_lines(), *p)
     }
 }
 
@@ -149,7 +149,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Rect<F> {
         if self.intersects(p) {
             return Closest::Intersection(*p);
         }
-        closest_of(&self.to_lines(), *p)
+        closest_of(self.to_lines(), *p)
     }
 }
 
