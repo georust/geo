@@ -5,13 +5,16 @@
 * Return `DoubleEndedIterator` from `LineString::points` and `LineString::points_mut`
   * <https://github.com/georust/geo/pull/951>
 * POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.63
-* Features: removed "use-rstar_0_8" and "use-rstar_0_9", simplified to a new feature "use-rstar" 
-  now that support for rust version 1.59 has been dropped.
+
+## 0.7.9
+ * Now that rust version 1.59 is no longer supported.
+   Features "use-rstar", "use-rstar_0_8", and "use-rstar_0_9" are deprecated.
+   Migration Guide: Use feature "rstar" as a direct replacement.
 
 ## 0.7.8
 
 * Rename `Coordinate` to `Coord`; add deprecated `Coordinate` that is an alias for `Coord`
-* Pin `arbitrary` version to 1.1.3 until our MSRV catches up with its latest release 
+* Pin `arbitrary` version to 1.1.3 until our MSRV catches up with its latest release
 * Add `point.x_mut()` and `point.y_mut()` methods on `Points`
 * Changed license field to [SPDX 2.1 license expression](https://spdx.dev/spdx-specification-21-web-version/#h.jxpfx0ykyb60)
   * <https://github.com/georust/geo/pull/928>

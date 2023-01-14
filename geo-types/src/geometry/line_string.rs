@@ -478,7 +478,9 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
     }
 }
 
-#[cfg(feature = "rstar")]
+// TODO: rstar_0_9 is deprecated.
+// This test be should be adjusted before the release of version 0.8.0
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
 macro_rules! impl_rstar_line_string {
     ($rstar:ident) => {
         impl<T> ::$rstar::RTreeObject for LineString<T>
@@ -519,8 +521,15 @@ macro_rules! impl_rstar_line_string {
     };
 }
 
-#[cfg(feature = "rstar")]
-impl_rstar_line_string!(rstar);
+// TODO: rstar_0_9 is deprecated.
+// This line should be removed before the release of version 0.8.0
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_line_string!(rstar_0_8);
+
+// TODO: rstar_0_9 is deprecated.
+// This line should be updated before the release of version 0.8.0
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_line_string!(rstar_0_9);
 
 #[cfg(test)]
 mod test {

@@ -543,7 +543,9 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Polygon<T> {
     }
 }
 
-#[cfg(feature = "rstar")]
+// TODO: rstar_0_8 and rstar_0.9 are deprecated.
+// This line should be updated before the release of version 0.8.0
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
 macro_rules! impl_rstar_polygon {
     ($rstar:ident) => {
         impl<T> $rstar::RTreeObject for Polygon<T>
@@ -559,5 +561,12 @@ macro_rules! impl_rstar_polygon {
     };
 }
 
-#[cfg(feature = "rstar")]
-impl_rstar_polygon!(rstar);
+// TODO: rstar_0_8 is deprecated.
+// This line should be removed before the release of version 0.8.0
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_polygon!(rstar_0_8);
+
+// TODO: rstar_0_9 is deprecated.
+// This line should be updated before the release of version 0.8.0
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_polygon!(rstar_0_9);
