@@ -63,7 +63,7 @@ where
 {
     type Output = Point<T>;
 
-    /// The Centroid of a [`Line`] is it's middle point
+    /// The Centroid of a [`Line`] is its middle point
     ///
     /// # Examples
     ///
@@ -162,7 +162,7 @@ where
 {
     type Output = Option<Point<T>>;
 
-    /// The Centroid of a [`Polygon`] is the mean of it's points
+    /// The Centroid of a [`Polygon`] is the mean of its points
     ///
     /// # Examples
     ///
@@ -195,7 +195,7 @@ where
 {
     type Output = Option<Point<T>>;
 
-    /// The Centroid of a [`MultiPolygon`] is the mean of the centroids of it's polygons, weighted
+    /// The Centroid of a [`MultiPolygon`] is the mean of the centroids of its polygons, weighted
     /// by the area of the polygons
     ///
     /// # Examples
@@ -392,6 +392,46 @@ where
 {
     type Output = Option<Point<T>>;
 
+    /// The Centroid of a [`GeometryCollection`] is the mean of the centroids of elements, weighted
+    /// by the area of its elements.
+    ///
+    /// Note that this means, that elements which have no area are not considered when calculating
+    /// the centroid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Centroid;
+    /// use geo::{Geometry, GeometryCollection, Rect, Triangle, point, coord};
+    ///
+    /// let rect_geometry = Geometry::from(Rect::new(
+    ///   point!(x: 0.0f32, y: 0.0),
+    ///   point!(x: 1.0, y: 1.0),
+    /// ));
+    ///
+    /// let triangle_geometry = Geometry::from(Triangle::new(
+    ///     coord!(x: 0.0f32, y: -1.0),
+    ///     coord!(x: 3.0, y: 0.0),
+    ///     coord!(x: 0.0, y: 1.0),
+    /// ));
+    ///
+    /// let point_geometry = Geometry::from(
+    ///   point!(x: 12351.0, y: 129815.0)
+    /// );
+    ///
+    /// let geometry_collection = GeometryCollection::new_from(
+    ///   vec![
+    ///     rect_geometry,
+    ///     triangle_geometry,
+    ///     point_geometry
+    ///   ]
+    /// );
+    ///
+    /// assert_eq!(
+    ///     Some(point!(x: 0.875, y: 0.125)),
+    ///     geometry_collection.centroid(),
+    /// );
+    /// ```
     fn centroid(&self) -> Self::Output {
         let mut operation = CentroidOperation::new();
         operation.add_geometry_collection(self);
@@ -1084,11 +1124,11 @@ mod test {
         assert_eq!(collection.centroid().unwrap(), point!(x: 3., y: 3.));
 
         // 1-d rect treated like line. Since a line has higher dimensions than the rest of the
-        // collection, it's centroid clobbers everything else in the collection.
+        // collection, its centroid clobbers everything else in the collection.
         collection.0.push(Rect::new(c(0., 0.), c(0., 2.)).into());
         assert_eq!(collection.centroid().unwrap(), point!(x: 0., y: 1.));
 
-        // 2-d has higher dimensions than the rest of the collection, so it's centroid clobbers
+        // 2-d has higher dimensions than the rest of the collection, so its centroid clobbers
         // everything else in the collection.
         collection
             .0
