@@ -118,7 +118,7 @@ where
         if d1 < d2 {
             return Closest::SinglePoint(p1);
         }
-        return Closest::SinglePoint(p2);
+        Closest::SinglePoint(p2)
     }
 }
 
