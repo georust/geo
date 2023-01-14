@@ -363,14 +363,14 @@ mod test {
         if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
             assert!(pt.approx_eq(&Point::new(-85.13337428852164, 32.45365659858937)));
         } else {
-            assert!(false);
+            panic!("Did not get Closest::SinglePoint!");
         }
 
         let p_from = Point::new(-85.67211, 32.39774);
         if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
             assert!(pt.approx_eq(&Point::new(-85.58999680564376, 32.26023534389268)));
         } else {
-            assert!(false);
+            panic!("Did not get Closest::SinglePoint!");
         }
     }
 
@@ -383,7 +383,7 @@ mod test {
         if let Closest::Intersection(pt) = line.haversine_closest_point(&p_1) {
             assert!(pt == p_1);
         } else {
-            assert!(false);
+            panic!("Did not get Closest::Intersection!");
         }
     }
 
@@ -397,36 +397,36 @@ mod test {
         if let Closest::Intersection(pt) = line.haversine_closest_point(&p_from) {
             assert!(pt.approx_eq(&p_from));
         } else {
-            assert!(false);
+            panic!("Did not get Closest::Intersection!");
         }
     }
 
     // Across the pole
     #[test]
     fn point_to_line_across_equator() {
-        let p_1 = Point::new(-38.42479487179491571, 75.13738846153847817);
-        let p_2 = Point::new(-28.60871282051286357, -85.27805769230766941);
+        let p_1 = Point::new(-38.424_794_871_794_916, 75.137_388_461_538_48);
+        let p_2 = Point::new(-28.608_712_820_512_863, -85.278_057_692_307_67);
         let line = Line::new(p_2, p_1);
         let p_from = Point::new(-25.86062, -87.32053);
 
         if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
-            assert!(pt.approx_eq(&Point::new(-28.60871282051286357, -85.27805769230766941)));
+            assert!(pt.approx_eq(&Point::new(-28.608_712_820_512_864, -85.278_057_692_307_67)));
         } else {
-            assert!(false)
+            panic!("Did not get Closest::SinglePoint!");
         }
     }
 
     #[test]
     fn point_to_line_across_close_to_north_pole() {
-        let p_1 = Point::new(-37.24492187499998863, 79.50861250000002656);
-        let p_2 = Point::new(50.59687500000001137, 81.05462812500002201);
+        let p_1 = Point::new(-37.244_921_874_999_99, 79.508_612_500_000_03);
+        let p_2 = Point::new(50.596_875_000_000_01, 81.054_628_125_000_02);
         let line = Line::new(p_2, p_1);
         let p_from = Point::new(8.15172, 77.40041);
 
         if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
-            assert!(pt.approx_eq(&Point::new(5.48109492316554, 82.99828098761533)));
+            assert!(pt.approx_eq(&Point::new(5.481_094_923_165_54, 82.998_280_987_615_33)));
         } else {
-            assert!(false);
+            panic!("Did not get Closest::SinglePoint!");
         }
     }
 
@@ -448,7 +448,7 @@ mod test {
         if let Closest::SinglePoint(pt) = linestring.haversine_closest_point(&p_from) {
             assert!(pt.approx_eq(&Point::new(15.611386947136054, 10.006831648991811)));
         } else {
-            assert!(false);
+            panic!("Did not get Closest::SinglePoint!");
         }
     }
 
@@ -484,7 +484,7 @@ mod test {
         if let Closest::SinglePoint(pt) = poly.haversine_closest_point(&p_from) {
             assert!(pt.approx_eq(&Point::new(-8.732575801021413, 12.518536164563992)));
         } else {
-            assert!(false);
+            panic!("Did not get Closest::SinglePoint!");
         }
     }
 
@@ -511,7 +511,7 @@ mod test {
         if let Closest::SinglePoint(pt) = poly.haversine_closest_point(&p_from) {
             assert!(pt.approx_eq(&Point::new(-8.310007197809414, 12.226641293789331)));
         } else {
-            assert!(false);
+            panic!("Did not get Closest::SinglePoint!");
         }
     }
 
@@ -538,7 +538,7 @@ mod test {
         if let Closest::Intersection(pt) = poly.haversine_closest_point(&p_from) {
             assert!(pt.approx_eq(&p_from));
         } else {
-            assert!(false);
+            panic!("Did not get Closest::Intersection!");
         }
     }
 
@@ -573,7 +573,7 @@ mod test {
         if let Closest::SinglePoint(pt) = poly.haversine_closest_point(&p_from) {
             assert!(pt.approx_eq(&Point::new(-8.922208260289914, 12.806949983368323)));
         } else {
-            assert!(false);
+            panic!("Did not get Closest::SinglePoint!");
         }
     }
 }
