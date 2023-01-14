@@ -319,46 +319,10 @@ where
     }
 }
 
-#[cfg(feature = "rstar_0_8")]
-impl<T> ::rstar_0_8::Point for Coord<T>
+#[cfg(feature = "rstar")]
+impl<T> ::rstar::Point for Coord<T>
 where
-    T: ::num_traits::Float + ::rstar_0_8::RTreeNum,
-{
-    type Scalar = T;
-
-    const DIMENSIONS: usize = 2;
-
-    #[inline]
-    fn generate(generator: impl Fn(usize) -> Self::Scalar) -> Self {
-        coord! {
-            x: generator(0),
-            y: generator(1),
-        }
-    }
-
-    #[inline]
-    fn nth(&self, index: usize) -> Self::Scalar {
-        match index {
-            0 => self.x,
-            1 => self.y,
-            _ => unreachable!(),
-        }
-    }
-
-    #[inline]
-    fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
-        match index {
-            0 => &mut self.x,
-            1 => &mut self.y,
-            _ => unreachable!(),
-        }
-    }
-}
-
-#[cfg(feature = "rstar_0_9")]
-impl<T> ::rstar_0_9::Point for Coord<T>
-where
-    T: ::num_traits::Float + ::rstar_0_9::RTreeNum,
+    T: ::num_traits::Float + ::rstar::RTreeNum,
 {
     type Scalar = T;
 

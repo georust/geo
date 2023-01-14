@@ -63,8 +63,7 @@
 //! - `approx`: Allows geometry types to be checked for approximate equality with [approx]
 //! - `arbitrary`: Allows geometry types to be created from unstructured input with [arbitrary]
 //! - `serde`: Allows geometry types to be serialized and deserialized with [Serde]
-//! - `use-rstar_0_8`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.8`)
-//! - `use-rstar_0_9`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.9`)
+//! - `use-rstar`: Allows geometry types to be inserted into [rstar] R*-trees
 //!
 //! [approx]: https://github.com/brendanzab/approx
 //! [arbitrary]: https://github.com/rust-fuzz/arbitrary
@@ -82,9 +81,6 @@ use std::fmt::Debug;
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;
-
-#[cfg(feature = "rstar_0_8")]
-extern crate rstar_0_8;
 
 #[cfg(test)]
 #[macro_use]
@@ -127,7 +123,7 @@ mod macros;
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(feature = "rstar")]
 #[doc(hidden)]
 pub mod private_utils;
 
@@ -207,27 +203,12 @@ mod tests {
         assert_eq!(p.x(), 1_000_000i64);
     }
 
-    #[cfg(feature = "rstar_0_8")]
-    #[test]
-    /// ensure Line's SpatialObject impl is correct
-    fn line_test() {
-        use rstar_0_8::primitives::Line as RStarLine;
-        use rstar_0_8::{PointDistance, RTreeObject};
-
-        let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
-        let l = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 5., y: 5. });
-        assert_eq!(rl.envelope(), l.envelope());
-        // difference in 15th decimal place
-        assert_relative_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
-        assert_relative_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
-    }
-
-    #[cfg(feature = "rstar_0_9")]
+    #[cfg(feature = "rstar")]
     #[test]
     /// ensure Line's SpatialObject impl is correct
     fn line_test_0_9() {
-        use rstar_0_9::primitives::Line as RStarLine;
-        use rstar_0_9::{PointDistance, RTreeObject};
+        use rstar::primitives::Line as RStarLine;
+        use rstar::{PointDistance, RTreeObject};
 
         let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
         let l = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 5., y: 5. });
