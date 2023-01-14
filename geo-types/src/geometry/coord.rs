@@ -320,7 +320,7 @@ where
 }
 
 // TODO: rstar_0_8 is deprecated.
-// this test should be deleted  before the release of version 0.8.0
+// This test should be deleted  before the release of version 0.8.0
 #[cfg(feature = "rstar_0_8")]
 impl<T> ::rstar_0_8::Point for Coord<T>
 where
@@ -358,7 +358,7 @@ where
 }
 
 // TODO: rstar_0_9 is deprecated.
-// this test be adjusted before the release of version 0.8.0
+// This test showld be adjusted before the release of version 0.8.0
 #[cfg(feature = "rstar_0_9")]
 impl<T> ::rstar_0_9::Point for Coord<T>
 where

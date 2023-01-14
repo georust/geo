@@ -212,7 +212,7 @@ mod tests {
         assert_eq!(p.x(), 1_000_000i64);
     }
 
-    // Deprecation rstar_0_8 is deprecated.
+    // TODO: rstar_0_8 is deprecated.
     // This test should be removed before the release of version 0.8.0.
     #[cfg(feature = "rstar_0_8")]
     #[test]
@@ -229,6 +229,8 @@ mod tests {
         assert_relative_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
     }
 
+    // TODO: rstar_0_9 is deprecated.
+    // This test should be updated before the release of version 0.8.0.
     #[cfg(any(feature = "rstar_0_9", feature = "rstar"))]
     #[test]
     /// ensure Line's SpatialObject impl is correct
