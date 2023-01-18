@@ -71,6 +71,8 @@
 //! - **[`Bearing`](Bearing)**: Calculate the bearing between points
 //! - **[`ClosestPoint`](ClosestPoint)**: Find the point on a geometry
 //!   closest to a given point
+//! - **[`HaversineClosestPoint`](HaversineClosestPoint)**: Find the point on a geometry 
+//!   closest to a given point on a sphere using spherical coordinates and lines being great arcs.
 //! - **[`IsConvex`](IsConvex)**: Calculate the convexity of a
 //!   [`LineString`]
 //! - **[`LineInterpolatePoint`](LineInterpolatePoint)**:
