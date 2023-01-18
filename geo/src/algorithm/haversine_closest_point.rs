@@ -118,7 +118,7 @@ where
             let atd = earth_radius * (((d1 / earth_radius).cos() / xtd.cos()).acos()).abs();
 
             if xtd < T::epsilon() {
-                return Closest::Intersection(p1.haversine_destination(crs_ab.to_degrees(), atd));
+                return Closest::Intersection(*from);
             } else {
                 return Closest::SinglePoint(p1.haversine_destination(crs_ab.to_degrees(), atd));
             }
@@ -408,6 +408,20 @@ mod test {
         let line = Line::new(p_2, p_1);
 
         let p_from = Point::new(-85.13337428852164, 32.45365659858937);
+        if let Closest::Intersection(pt) = line.haversine_closest_point(&p_from) {
+            assert_relative_eq!(pt, p_from);
+        } else {
+            panic!("Did not get Closest::Intersection!");
+        }
+    }
+
+    #[test]
+    fn point_to_line_intersection_2_f32() {
+        let p_1 = Point::new(-84.74905f32, 32.61454f32);
+        let p_2 = Point::new(-85.93942f32, 32.11055f32);
+        let line = Line::new(p_2, p_1);
+
+        let p_from = Point::new(-85.13337f32, 32.4536566f32);
         if let Closest::Intersection(pt) = line.haversine_closest_point(&p_from) {
             assert_relative_eq!(pt, p_from);
         } else {
