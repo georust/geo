@@ -336,6 +336,7 @@ where
 
         // determine the current location for the point (if any)
         let boundary_count = {
+            #[allow(clippy::bool_to_int_with_if)]
             let prev_boundary_count =
                 if Some(CoordPos::OnBoundary) == label.position(arg_index, Direction::On) {
                     1

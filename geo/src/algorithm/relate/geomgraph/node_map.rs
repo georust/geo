@@ -106,6 +106,6 @@ where
 
     /// Iterates across `NF::Node`s in lexical order of their `Coord`
     pub fn into_iter(self) -> impl Iterator<Item = NF::Node> {
-        self.map.into_iter().map(|(_k, v)| v)
+        self.map.into_values()
     }
 }

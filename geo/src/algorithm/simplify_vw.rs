@@ -124,7 +124,7 @@ where
         let (left, right) = adjacent[smallest.current];
         // A point in this triangle has been removed since this VScore
         // was created, so skip it
-        if left as i32 != smallest.left as i32 || right as i32 != smallest.right as i32 {
+        if left != smallest.left as i32 || right != smallest.right as i32 {
             continue;
         }
         // We've got a valid triangle, and its area is smaller than epsilon, so
@@ -133,7 +133,7 @@ where
         let (_, rr) = adjacent[right as usize];
         adjacent[left as usize] = (ll, right);
         adjacent[right as usize] = (left, rr);
-        adjacent[smallest.current as usize] = (0, 0);
+        adjacent[smallest.current] = (0, 0);
 
         // Now recompute the adjacent triangle(s), using left and right adjacent points
         let choices = [(ll, left, right), (left, right, rr)];
@@ -305,7 +305,7 @@ where
         let (left, right) = adjacent[smallest.current];
         // A point in this triangle has been removed since this VScore
         // was created, so skip it
-        if left as i32 != smallest.left as i32 || right as i32 != smallest.right as i32 {
+        if left != smallest.left as i32 || right != smallest.right as i32 {
             continue;
         }
         // if removal of this point causes a self-intersection, we also remove the previous point
@@ -319,7 +319,7 @@ where
         }
         // We've got a valid triangle, and its area is smaller than epsilon, so
         // remove it from the simulated "linked list"
-        adjacent[smallest.current as usize] = (0, 0);
+        adjacent[smallest.current] = (0, 0);
         counter -= 1;
         // Remove stale segments from R* tree
         let left_point = Point::from(orig.0[left as usize]);

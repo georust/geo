@@ -4,6 +4,7 @@
 
 * Return `DoubleEndedIterator` from `LineString::points` and `LineString::points_mut`
   * <https://github.com/georust/geo/pull/951>
+* POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.63
 
 ## 0.7.8
 
