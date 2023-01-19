@@ -62,8 +62,8 @@
 //!
 //! - **[`Simplify`](Simplify)**: Simplify a geometry using the Ramer–Douglas–Peucker algorithm
 //! - **[`SimplifyIdx`](SimplifyIdx)**: Calculate a simplified geometry using the Ramer–Douglas–Peucker algorithm, returning coordinate indices
-//! - **[`SimplifyVW`](SimplifyVW)**: Simplify a geometry using the Visvalingam-Whyatt algorithm
-//! - **[`SimplifyVWPreserve`](SimplifyVWPreserve)**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVw`](SimplifyVw)**: Simplify a geometry using the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVwPreserve`](SimplifyVwPreserve)**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
 //! - **[`SimplifyVwIdx`](SimplifyVwIdx)**: Calculate a simplified geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm, returning coordinate indices
 //!
 //! ## Query
