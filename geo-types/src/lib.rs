@@ -61,11 +61,16 @@
 //!
 //! The following optional [Cargo features] are available:
 //!
+//! - `std`: Enables use of the full `std` library. Enabled by default.
 //! - `approx`: Allows geometry types to be checked for approximate equality with [approx]
 //! - `arbitrary`: Allows geometry types to be created from unstructured input with [arbitrary]
 //! - `serde`: Allows geometry types to be serialized and deserialized with [Serde]
 //! - `use-rstar_0_8`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.8`)
 //! - `use-rstar_0_9`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.9`)
+//!
+//! This library can be used in `#![no_std]` environments if the default `std` feature is disabled. At
+//! the moment, the `arbitrary` and `use-rstar_0_8` features cannot be used without `std`. This may
+//! change in a future release.
 //!
 //! [approx]: https://github.com/brendanzab/approx
 //! [arbitrary]: https://github.com/rust-fuzz/arbitrary
