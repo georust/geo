@@ -41,7 +41,7 @@ use std::ops::{Index, IndexMut};
 /// ]);
 /// ```
 ///
-/// Create a [`LineString`] with the [`line_string!`] macro:
+/// Create a [`LineString`] with the [`line_string!`][`crate::line_string!`] macro:
 ///
 /// ```
 /// use geo_types::line_string;
@@ -374,7 +374,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
     }
 }
 
-/// Mutably iterate over all the [`Coordinate`]s in this [`LineString`]
+/// Mutably iterate over all the [`Coord`]s in this [`LineString`]
 impl<'a, T: CoordNum> IntoIterator for &'a mut LineString<T> {
     type Item = &'a mut Coord<T>;
     type IntoIter = ::std::slice::IterMut<'a, Coord<T>>;

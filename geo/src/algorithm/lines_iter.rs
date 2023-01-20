@@ -146,7 +146,7 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Triangle<T> {
     }
 }
 
-/// Utility to transform Iterator<LinesIter> into Iterator<Iterator<Line>>.
+/// Utility to transform `Iterator<LinesIter>` into `Iterator<Iterator<Line>>`.
 #[derive(Debug)]
 pub struct MapLinesIter<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: 'a + LinesIter<'a>>(Iter1);
 
