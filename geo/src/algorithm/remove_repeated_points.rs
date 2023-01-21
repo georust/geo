@@ -83,8 +83,8 @@ where
 
     /// Remove consecutive repeated points from a Polygon inplace.
     fn remove_repeated_points_mut(&mut self) {
-        self.exterior_mut(|exterior| exterior.remove_repeated_points_mut());
-        self.interiors_mut(|interiors| {
+        self.exterior_mut_ref(|exterior| exterior.remove_repeated_points_mut());
+        self.interiors_mut_ref(|interiors| {
             for interior in interiors {
                 interior.remove_repeated_points_mut();
             }

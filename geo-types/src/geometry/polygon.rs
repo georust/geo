@@ -236,7 +236,63 @@ impl<T: CoordNum> Polygon<T> {
     /// ```
     ///
     /// [will be closed]: #linestring-closing-operation
+    #[deprecated(note = "Renamed to `exterior_mut_ref`. In a future release, `exterior_mut` will be passed an owned `LineString`.")]
     pub fn exterior_mut<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut LineString<T>),
+    {
+        f(&mut self.exterior);
+        self.exterior.close();
+    }
+
+    /// Execute the provided closure `f`, which is provided with a mutable
+    /// reference to the exterior `LineString` ring.
+    ///
+    /// After the closure executes, the exterior `LineString` [will be closed].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{coord, LineString, Polygon};
+    ///
+    /// let mut polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![],
+    /// );
+    ///
+    /// polygon.exterior_mut_ref(|exterior| {
+    ///     exterior.0[1] = coord! { x: 1., y: 2. };
+    /// });
+    ///
+    /// assert_eq!(
+    ///     polygon.exterior(),
+    ///     &LineString::from(vec![(0., 0.), (1., 2.), (1., 0.), (0., 0.),])
+    /// );
+    /// ```
+    ///
+    /// If the first and last `Coord`s of the exterior `LineString` no
+    /// longer match, the `LineString` [will be closed]:
+    ///
+    /// ```
+    /// use geo_types::{coord, LineString, Polygon};
+    ///
+    /// let mut polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![],
+    /// );
+    ///
+    /// polygon.exterior_mut_ref(|exterior| {
+    ///     exterior.0[0] = coord! { x: 0., y: 1. };
+    /// });
+    ///
+    /// assert_eq!(
+    ///     polygon.exterior(),
+    ///     &LineString::from(vec![(0., 1.), (1., 1.), (1., 0.), (0., 0.), (0., 1.),])
+    /// );
+    /// ```
+    ///
+    /// [will be closed]: #linestring-closing-operation
+    pub fn exterior_mut_ref<F>(&mut self, f: F)
     where
         F: FnOnce(&mut LineString<T>),
     {
@@ -338,7 +394,87 @@ impl<T: CoordNum> Polygon<T> {
     /// ```
     ///
     /// [will be closed]: #linestring-closing-operation
+    #[deprecated(note = "Renamed to `exterior_mut_ref`. In a future release, `interiors_mut` will be passed an owned `Vec<LineString>`.")]
     pub fn interiors_mut<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut [LineString<T>]),
+    {
+        f(&mut self.interiors);
+        for interior in &mut self.interiors {
+            interior.close();
+        }
+    }
+
+    /// Execute the provided closure `f`, which is provided with a mutable
+    /// reference to the interior `LineString` rings.
+    ///
+    /// After the closure executes, each of the interior `LineString`s [will be
+    /// closed].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{coord, LineString, Polygon};
+    ///
+    /// let mut polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![LineString::from(vec![
+    ///         (0.1, 0.1),
+    ///         (0.9, 0.9),
+    ///         (0.9, 0.1),
+    ///         (0.1, 0.1),
+    ///     ])],
+    /// );
+    ///
+    /// polygon.interiors_mut_ref(|interiors| {
+    ///     interiors[0].0[1] = coord! { x: 0.8, y: 0.8 };
+    /// });
+    ///
+    /// assert_eq!(
+    ///     polygon.interiors(),
+    ///     &[LineString::from(vec![
+    ///         (0.1, 0.1),
+    ///         (0.8, 0.8),
+    ///         (0.9, 0.1),
+    ///         (0.1, 0.1),
+    ///     ])]
+    /// );
+    /// ```
+    ///
+    /// If the first and last `Coord`s of any interior `LineString` no
+    /// longer match, those `LineString`s [will be closed]:
+    ///
+    /// ```
+    /// use geo_types::{coord, LineString, Polygon};
+    ///
+    /// let mut polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![LineString::from(vec![
+    ///         (0.1, 0.1),
+    ///         (0.9, 0.9),
+    ///         (0.9, 0.1),
+    ///         (0.1, 0.1),
+    ///     ])],
+    /// );
+    ///
+    /// polygon.interiors_mut_ref(|interiors| {
+    ///     interiors[0].0[0] = coord! { x: 0.1, y: 0.2 };
+    /// });
+    ///
+    /// assert_eq!(
+    ///     polygon.interiors(),
+    ///     &[LineString::from(vec![
+    ///         (0.1, 0.2),
+    ///         (0.9, 0.9),
+    ///         (0.9, 0.1),
+    ///         (0.1, 0.1),
+    ///         (0.1, 0.2),
+    ///     ])]
+    /// );
+    /// ```
+    ///
+    /// [will be closed]: #linestring-closing-operation
+    pub fn interiors_mut_ref<F>(&mut self, f: F)
     where
         F: FnOnce(&mut [LineString<T>]),
     {

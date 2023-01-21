@@ -333,11 +333,11 @@ mod modern {
 
     impl<T: CoordNum> MapCoordsInPlace<T> for Polygon<T> {
         fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T> + Copy) {
-            self.exterior_mut(|line_string| {
+            self.exterior_mut_ref(|line_string| {
                 line_string.map_coords_in_place(func);
             });
 
-            self.interiors_mut(|line_strings| {
+            self.interiors_mut_ref(|line_strings| {
                 for line_string in line_strings {
                     line_string.map_coords_in_place(func);
                 }
@@ -350,14 +350,14 @@ mod modern {
         ) -> Result<(), E> {
             let mut result = Ok(());
 
-            self.exterior_mut(|line_string| {
+            self.exterior_mut_ref(|line_string| {
                 if let Err(e) = line_string.try_map_coords_in_place(&func) {
                     result = Err(e);
                 }
             });
 
             if result.is_ok() {
-                self.interiors_mut(|line_strings| {
+                self.interiors_mut_ref(|line_strings| {
                     for line_string in line_strings {
                         if let Err(e) = line_string.try_map_coords_in_place(&func) {
                             result = Err(e);

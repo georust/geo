@@ -223,7 +223,7 @@ mod test {
         ]);
 
         for poly in &mut multi {
-            poly.exterior_mut(|exterior| {
+            poly.exterior_mut_ref(|exterior| {
                 for coord in exterior {
                     coord.x += 1;
                     coord.y += 1;
@@ -232,7 +232,7 @@ mod test {
         }
 
         for poly in multi.iter_mut() {
-            poly.exterior_mut(|exterior| {
+            poly.exterior_mut_ref(|exterior| {
                 for coord in exterior {
                     coord.x += 1;
                     coord.y += 1;
