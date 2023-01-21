@@ -236,7 +236,9 @@ impl<T: CoordNum> Polygon<T> {
     /// ```
     ///
     /// [will be closed]: #linestring-closing-operation
-    #[deprecated(note = "Renamed to `exterior_mut_ref`. In a future release, `exterior_mut` will be passed an owned `LineString`.")]
+    #[deprecated(
+        note = "Renamed to `exterior_mut_ref`. In a future release, `exterior_mut` will be passed an owned `LineString`."
+    )]
     pub fn exterior_mut<F>(&mut self, f: F)
     where
         F: FnOnce(&mut LineString<T>),
@@ -394,7 +396,9 @@ impl<T: CoordNum> Polygon<T> {
     /// ```
     ///
     /// [will be closed]: #linestring-closing-operation
-    #[deprecated(note = "Renamed to `exterior_mut_ref`. In a future release, `interiors_mut` will be passed an owned `Vec<LineString>`.")]
+    #[deprecated(
+        note = "Renamed to `exterior_mut_ref`. In a future release, `interiors_mut` will be passed an owned `Vec<LineString>`."
+    )]
     pub fn interiors_mut<F>(&mut self, f: F)
     where
         F: FnOnce(&mut [LineString<T>]),
