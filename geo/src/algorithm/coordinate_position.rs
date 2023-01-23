@@ -358,7 +358,7 @@ where
     where
         T: GeoNum,
     {
-        ((l.end.x - l.start.x) * (c.y - l.start.y)) - ((c.x - l.start.x) * (l.end.y - c.y))
+        ((l.end.x - l.start.x) * (c.y - l.start.y)) - ((c.x - l.start.x) * (l.end.y - l.start.y))
     }
 
     // LineString without points
