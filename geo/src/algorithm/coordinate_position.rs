@@ -1,7 +1,7 @@
 use crate::geometry::*;
 use crate::intersects::point_in_rect;
 use crate::kernels::*;
-use crate::{coord, GeoNum, GeometryCow};
+use crate::{GeoNum, GeometryCow};
 use crate::{BoundingRect, HasDimensions, Intersects};
 
 /// The position of a `Coord` relative to a `Geometry`
