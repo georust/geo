@@ -1,6 +1,6 @@
 use crate::geometry::*;
-use crate::kernels::*;
 use crate::intersects::point_in_rect;
+use crate::kernels::*;
 use crate::{coord, GeoNum, GeometryCow};
 use crate::{BoundingRect, HasDimensions, Intersects};
 
@@ -373,13 +373,17 @@ where
     for line in linestring.lines() {
         if line.start.y <= coord.y {
             let o = T::Ker::orient2d(line.start, line.end, coord);
-            if o == Orientation::Collinear && point_in_rect(coord, line.start, line.end) { return CoordPos::OnBoundary; }
+            if o == Orientation::Collinear && point_in_rect(coord, line.start, line.end) {
+                return CoordPos::OnBoundary;
+            }
             if line.end.y > coord.y && o == Orientation::CounterClockwise {
                 wn += 1;
             }
         } else if line.end.y <= coord.y {
             let o = T::Ker::orient2d(line.start, line.end, coord);
-            if o == Orientation::Collinear && point_in_rect(coord, line.start, line.end) { return CoordPos::OnBoundary; }
+            if o == Orientation::Collinear && point_in_rect(coord, line.start, line.end) {
+                return CoordPos::OnBoundary;
+            }
             if o == Orientation::Clockwise {
                 wn -= 1;
             }
