@@ -373,7 +373,6 @@ where
     for line in linestring.lines() {
         if line.start.y <= coord.y {
             let o = T::Ker::orient2d(line.start, line.end, coord);
-            //let is_left = is_left(&line, &coord);
             if o == Orientation::Collinear && point_in_rect(coord, line.start, line.end) { return CoordPos::OnBoundary; }
             if line.end.y > coord.y && o == Orientation::CounterClockwise {
                 wn += 1;
