@@ -1,6 +1,6 @@
-use num_traits::Zero;
-
 use crate::geometry::*;
+use crate::kernels::*;
+use crate::intersects::point_in_rect;
 use crate::{coord, GeoNum, GeometryCow};
 use crate::{BoundingRect, HasDimensions, Intersects};
 
@@ -353,14 +353,6 @@ where
 {
     debug_assert!(linestring.is_closed());
 
-    #[inline]
-    fn is_left<T>(l: &Line<T>, c: &Coord<T>) -> T
-    where
-        T: GeoNum,
-    {
-        ((l.end.x - l.start.x) * (c.y - l.start.y)) - ((c.x - l.start.x) * (l.end.y - l.start.y))
-    }
-
     // LineString without points
     if linestring.0.is_empty() {
         return CoordPos::Outside;
@@ -379,16 +371,19 @@ where
     // See: https://en.wikipedia.org/wiki/Point_in_polygon#Winding_number_algorithm
     let mut wn = 0;
     for line in linestring.lines() {
-        // Check if coord lies on the line
-        if line.intersects(&coord) {
-            return CoordPos::OnBoundary;
-        }
         if line.start.y <= coord.y {
-            if line.end.y > coord.y && is_left(&line, &coord) > Zero::zero() {
+            let o = T::Ker::orient2d(line.start, line.end, coord);
+            //let is_left = is_left(&line, &coord);
+            if o == Orientation::Collinear && point_in_rect(coord, line.start, line.end) { return CoordPos::OnBoundary; }
+            if line.end.y > coord.y && o == Orientation::CounterClockwise {
                 wn += 1;
             }
-        } else if line.end.y <= coord.y && is_left(&line, &coord) < Zero::zero() {
-            wn -= 1;
+        } else if line.end.y <= coord.y {
+            let o = T::Ker::orient2d(line.start, line.end, coord);
+            if o == Orientation::Collinear && point_in_rect(coord, line.start, line.end) { return CoordPos::OnBoundary; }
+            if o == Orientation::Clockwise {
+                wn -= 1;
+            }
         }
     }
     if wn != 0 {
