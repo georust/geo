@@ -1,8 +1,8 @@
 use crate::geometry::*;
 use crate::intersects::point_in_rect;
 use crate::kernels::*;
-use crate::{GeoNum, GeometryCow};
 use crate::{BoundingRect, HasDimensions, Intersects};
+use crate::{GeoNum, GeometryCow};
 
 /// The position of a `Coord` relative to a `Geometry`
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
