@@ -353,6 +353,14 @@ where
 {
     debug_assert!(linestring.is_closed());
 
+    #[inline]
+    fn is_left<T>(l: &Line<T>, c: &Coord<T>) -> T
+    where
+        T: GeoNum,
+    {
+        ((l.end.x - l.start.x) * (c.y - l.start.y)) - ((c.x - l.start.x) * (l.end.y - c.y))
+    }
+
     // LineString without points
     if linestring.0.is_empty() {
         return CoordPos::Outside;
@@ -376,10 +384,10 @@ where
             return CoordPos::OnBoundary;
         }
         if line.start.y <= coord.y {
-            if line.end.y > coord.y && line.is_left(&coord) > Zero::zero() {
+            if line.end.y > coord.y && is_left(&line, &coord) > Zero::zero() {
                 wn += 1;
             }
-        } else if line.end.y <= coord.y && line.is_left(&coord) < Zero::zero() {
+        } else if line.end.y <= coord.y && is_left(&line, &coord) < Zero::zero() {
             wn -= 1;
         }
     }
