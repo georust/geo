@@ -142,6 +142,11 @@ impl<T: CoordNum> Line<T> {
         self.start.x * self.end.y - self.start.y * self.end.x
     }
 
+    pub fn is_left(&self, c: &Coord<T>) -> T
+    {
+        ((self.end.x - self.start.x) * (c.y - self.start.y)) - ((c.x - self.start.x) * (self.end.y - c.y))
+    }
+
     pub fn start_point(&self) -> Point<T> {
         Point::from(self.start)
     }
