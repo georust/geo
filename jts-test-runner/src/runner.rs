@@ -17,7 +17,6 @@ const VALIDATE_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testx
 pub struct TestRunner {
     filename_filter: Option<String>,
     desc_filter: Option<String>,
-    check_overlay_precision: bool,
     cases: Option<Vec<TestCase>>,
     failures: Vec<TestFailure>,
     unsupported: Vec<TestCase>,
@@ -68,11 +67,6 @@ impl TestRunner {
 
     pub fn matching_filename_glob(mut self, filename: &str) -> Self {
         self.filename_filter = Some(filename.to_string());
-        self
-    }
-
-    pub fn with_overlay_precision_floating(mut self) -> Self {
-        self.check_overlay_precision = true;
         self
     }
 
@@ -415,7 +409,6 @@ impl TestRunner {
                     match test.operation_input.into_operation(&case) {
                         Ok(operation) => {
                             if matches!(operation, Operation::BooleanOp { .. })
-                                && self.check_overlay_precision
                                 && run.precision_model.is_some()
                                 && &run.precision_model.as_ref().unwrap().ty != "FLOATING"
                             {
