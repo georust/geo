@@ -369,7 +369,7 @@ where
 
     // Use winding number algorithm with on boundary short-cicuit
     // See: https://en.wikipedia.org/wiki/Point_in_polygon#Winding_number_algorithm
-    let mut wn = 0;
+    let mut winding_number = 0;
     for line in linestring.lines() {
         if line.start.y <= coord.y {
             let o = T::Ker::orient2d(line.start, line.end, coord);
@@ -377,7 +377,7 @@ where
                 return CoordPos::OnBoundary;
             }
             if line.end.y > coord.y && o == Orientation::CounterClockwise {
-                wn += 1;
+                winding_number += 1;
             }
         } else if line.end.y <= coord.y {
             let o = T::Ker::orient2d(line.start, line.end, coord);
@@ -385,14 +385,14 @@ where
                 return CoordPos::OnBoundary;
             }
             if o == Orientation::Clockwise {
-                wn -= 1;
+                winding_number -= 1;
             }
         }
     }
-    if wn != 0 {
-        CoordPos::Inside
-    } else {
+    if winding_number == 0 {
         CoordPos::Outside
+    } else {
+        CoordPos::Inside
     }
 }
 
