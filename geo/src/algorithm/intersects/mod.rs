@@ -100,7 +100,7 @@ where
 // Helper function to check point lies inside rect given by
 // bounds.  The first bound need not be min.
 #[inline]
-fn point_in_rect<T>(value: Coord<T>, bound_1: Coord<T>, bound_2: Coord<T>) -> bool
+pub fn point_in_rect<T>(value: Coord<T>, bound_1: Coord<T>, bound_2: Coord<T>) -> bool
 where
     T: CoordNum,
 {
