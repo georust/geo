@@ -105,16 +105,12 @@
 //!
 //! ## Iteration
 //!
-//! - **[`CoordsIter`](CoordsIter)**: Iterate over the coordinates of a geometry
-//! - **[`MapCoords`](MapCoords)**: Map a function over all the coordinates
+//! - **[`CoordsIter`]**: Iterate over the coordinates of a geometry
+//! - **[`MapCoords`]**: Map a function over all the coordinates
 //!   in a geometry, returning a new geometry
-//! - **[`MapCoordsInplace`](MapCoordsInplace)**: Map a function over all the
+//! - **[`MapCoordsInPlace`]**: Map a function over all the
 //!   coordinates in a geometry in-place
-//! - **[`TryMapCoords`](TryMapCoords)**: Map a fallible function over all
-//!   the coordinates in a geometry, returning a new geometry wrapped in a `Result`
-//! - **[`TryMapCoordsInplace`](TryMapCoordsInplace)**: Map a fallible function over all
-//!   the coordinates in a geometry in-place
-//! - **[`LinesIter`](LinesIter)**: Iterate over lines of a geometry
+//! - **[`LinesIter`]**: Iterate over lines of a geometry
 //!
 //! ## Boundary
 //!
