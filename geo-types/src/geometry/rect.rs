@@ -474,7 +474,7 @@ impl std::error::Error for InvalidRectCoordinatesError {}
 #[allow(deprecated)]
 impl core::fmt::Display for InvalidRectCoordinatesError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", RECT_INVALID_BOUNDS_ERROR)
+        write!(f, "{RECT_INVALID_BOUNDS_ERROR}")
     }
 }
 

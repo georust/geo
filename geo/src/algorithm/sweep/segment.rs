@@ -49,7 +49,6 @@ impl<C: Cross> Segment<C> {
             debug_assert!(
                 p <= r,
                 "intersection point was not ordered within the line: {p:?} <= {r:?} <=> {q:?}",
-                p = p
             );
             if p == r || q == r {
                 // If the intersection is at the end point, the

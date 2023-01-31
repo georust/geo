@@ -184,8 +184,8 @@ impl TopologyPosition {
     pub fn set_locations(&mut self, new_on: CoordPos, new_left: CoordPos, new_right: CoordPos) {
         match self {
             Self::LineOrPoint { .. } => {
-                error!("invalid assignment dimensions for {:?}", self);
-                debug_assert!(false, "invalid assignment dimensions for {:?}", self);
+                error!("invalid assignment dimensions for {self:?}");
+                debug_assert!(false, "invalid assignment dimensions for {self:?}");
             }
             Self::Area { on, left, right } => {
                 *on = Some(new_on);
