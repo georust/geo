@@ -69,8 +69,8 @@
 //! - `use-rstar_0_9`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.9`)
 //!
 //! This library can be used in `#![no_std]` environments if the default `std` feature is disabled. At
-//! the moment, the `arbitrary` and `use-rstar_0_8` features cannot be used without `std`. This may
-//! change in a future release.
+//! the moment, the `arbitrary` and `use-rstar_0_8` features require `std`. This may change in a
+//! future release.
 //!
 //! [approx]: https://github.com/brendanzab/approx
 //! [arbitrary]: https://github.com/rust-fuzz/arbitrary
