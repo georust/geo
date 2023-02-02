@@ -1,4 +1,4 @@
-use std::fmt;
+use core::fmt;
 
 #[derive(Debug)]
 pub enum Error {
@@ -8,6 +8,7 @@ pub enum Error {
     },
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for Error {}
 
 impl fmt::Display for Error {
@@ -23,7 +24,8 @@ impl fmt::Display for Error {
 #[cfg(test)]
 mod test {
     use crate::{Geometry, Point, Rect};
-    use std::convert::TryFrom;
+    use alloc::string::ToString;
+    use core::convert::TryFrom;
 
     #[test]
     fn error_output() {

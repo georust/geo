@@ -1,4 +1,6 @@
 use crate::{CoordFloat, CoordNum, LineString, Point, Rect, Triangle};
+use alloc::vec;
+use alloc::vec::Vec;
 use num_traits::{Float, Signed};
 
 #[cfg(any(feature = "approx", test))]

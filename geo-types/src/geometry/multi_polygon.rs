@@ -1,8 +1,10 @@
 use crate::{CoordNum, Polygon};
 
+use alloc::vec;
+use alloc::vec::Vec;
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
-use std::iter::FromIterator;
+use core::iter::FromIterator;
 
 /// A collection of [`Polygon`s](struct.Polygon.html). Can
 /// be created from a `Vec` of `Polygon`s, or from an
@@ -49,7 +51,7 @@ impl<T: CoordNum, IP: Into<Polygon<T>>> FromIterator<IP> for MultiPolygon<T> {
 
 impl<T: CoordNum> IntoIterator for MultiPolygon<T> {
     type Item = Polygon<T>;
-    type IntoIter = ::std::vec::IntoIter<Polygon<T>>;
+    type IntoIter = ::alloc::vec::IntoIter<Polygon<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -58,7 +60,7 @@ impl<T: CoordNum> IntoIterator for MultiPolygon<T> {
 
 impl<'a, T: CoordNum> IntoIterator for &'a MultiPolygon<T> {
     type Item = &'a Polygon<T>;
-    type IntoIter = ::std::slice::Iter<'a, Polygon<T>>;
+    type IntoIter = ::alloc::slice::Iter<'a, Polygon<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         (self.0).iter()
@@ -67,7 +69,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a MultiPolygon<T> {
 
 impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPolygon<T> {
     type Item = &'a mut Polygon<T>;
-    type IntoIter = ::std::slice::IterMut<'a, Polygon<T>>;
+    type IntoIter = ::alloc::slice::IterMut<'a, Polygon<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         (self.0).iter_mut()
