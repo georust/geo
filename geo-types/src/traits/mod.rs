@@ -1,5 +1,6 @@
 pub use coord::CoordTrait;
 pub use geometry::GeometryTrait;
+pub use geometry_collection::GeometryCollectionTrait;
 pub use line_string::LineStringTrait;
 pub use multi_line_string::MultiLineStringTrait;
 pub use multi_point::MultiPointTrait;
@@ -9,7 +10,7 @@ pub use polygon::PolygonTrait;
 
 mod coord;
 mod geometry;
-// mod geometry_collection;
+mod geometry_collection;
 mod line_string;
 mod multi_line_string;
 mod multi_point;

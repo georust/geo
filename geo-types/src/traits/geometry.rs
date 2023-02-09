@@ -1,12 +1,14 @@
 use crate::{
-    CoordNum, Geometry, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    CoordNum, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon,
+    Point, Polygon,
 };
 
 use super::{
-    LineStringTrait, MultiLineStringTrait, MultiPointTrait, MultiPolygonTrait, PointTrait,
-    PolygonTrait,
+    GeometryCollectionTrait, LineStringTrait, MultiLineStringTrait, MultiPointTrait,
+    MultiPolygonTrait, PointTrait, PolygonTrait,
 };
 
+#[allow(clippy::type_complexity)]
 pub trait GeometryTrait<'a>: Send + Sync {
     type Point: 'a + PointTrait;
     type LineString: 'a + LineStringTrait<'a>;
@@ -14,7 +16,7 @@ pub trait GeometryTrait<'a>: Send + Sync {
     type MultiPoint: 'a + MultiPointTrait<'a>;
     type MultiLineString: 'a + MultiLineStringTrait<'a>;
     type MultiPolygon: 'a + MultiPolygonTrait<'a>;
-    // type GeometryCollection: 'a + GeometryCollection<'a>;
+    type GeometryCollection: 'a + GeometryCollectionTrait<'a>;
     fn as_type(
         &'a self,
     ) -> GeometryType<
@@ -25,11 +27,12 @@ pub trait GeometryTrait<'a>: Send + Sync {
         Self::MultiPoint,
         Self::MultiLineString,
         Self::MultiPolygon,
-        // Self::GeometryCollection,
+        Self::GeometryCollection,
     >;
 }
 
-pub enum GeometryType<'a, P, L, Y, MP, ML, MY>
+#[derive(Debug)]
+pub enum GeometryType<'a, P, L, Y, MP, ML, MY, GC>
 where
     P: 'a + PointTrait,
     L: 'a + LineStringTrait<'a>,
@@ -37,7 +40,7 @@ where
     MP: 'a + MultiPointTrait<'a>,
     ML: 'a + MultiLineStringTrait<'a>,
     MY: 'a + MultiPolygonTrait<'a>,
-    // GC: 'a + GeometryCollection<'a>,
+    GC: 'a + GeometryCollectionTrait<'a>,
 {
     Point(&'a P),
     LineString(&'a L),
@@ -45,7 +48,7 @@ where
     MultiPoint(&'a MP),
     MultiLineString(&'a ML),
     MultiPolygon(&'a MY),
-    // GeometryCollection(&'a GC),
+    GeometryCollection(&'a GC),
 }
 
 impl<'a, T: CoordNum + Send + Sync + 'a> GeometryTrait<'a> for Geometry<T> {
@@ -55,6 +58,7 @@ impl<'a, T: CoordNum + Send + Sync + 'a> GeometryTrait<'a> for Geometry<T> {
     type MultiPoint = MultiPoint<T>;
     type MultiLineString = MultiLineString<T>;
     type MultiPolygon = MultiPolygon<T>;
+    type GeometryCollection = GeometryCollection<T>;
 
     fn as_type(
         &'a self,
@@ -67,6 +71,7 @@ impl<'a, T: CoordNum + Send + Sync + 'a> GeometryTrait<'a> for Geometry<T> {
         <Geometry<T> as GeometryTrait>::MultiPoint,
         <Geometry<T> as GeometryTrait>::MultiLineString,
         <Geometry<T> as GeometryTrait>::MultiPolygon,
+        <Geometry<T> as GeometryTrait>::GeometryCollection,
         // Self::GeometryCollection,
     > {
         match self {
@@ -76,6 +81,7 @@ impl<'a, T: CoordNum + Send + Sync + 'a> GeometryTrait<'a> for Geometry<T> {
             Geometry::MultiPoint(p) => GeometryType::MultiPoint(p),
             Geometry::MultiLineString(p) => GeometryType::MultiLineString(p),
             Geometry::MultiPolygon(p) => GeometryType::MultiPolygon(p),
+            Geometry::GeometryCollection(p) => GeometryType::GeometryCollection(p),
             _ => todo!(),
         }
     }
