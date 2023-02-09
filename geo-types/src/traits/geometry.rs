@@ -17,6 +17,7 @@ pub trait GeometryTrait<'a>: Send + Sync {
     type MultiLineString: 'a + MultiLineStringTrait<'a>;
     type MultiPolygon: 'a + MultiPolygonTrait<'a>;
     type GeometryCollection: 'a + GeometryCollectionTrait<'a>;
+
     fn as_type(
         &'a self,
     ) -> GeometryType<
@@ -64,13 +65,13 @@ impl<'a, T: CoordNum + Send + Sync + 'a> GeometryTrait<'a> for Geometry<T> {
         &'a self,
     ) -> GeometryType<
         'a,
-        <Geometry<T> as GeometryTrait>::Point,
-        <Geometry<T> as GeometryTrait>::LineString,
-        <Geometry<T> as GeometryTrait>::Polygon,
-        <Geometry<T> as GeometryTrait>::MultiPoint,
-        <Geometry<T> as GeometryTrait>::MultiLineString,
-        <Geometry<T> as GeometryTrait>::MultiPolygon,
-        <Geometry<T> as GeometryTrait>::GeometryCollection,
+        Point<T>,
+        LineString<T>,
+        Polygon<T>,
+        MultiPoint<T>,
+        MultiLineString<T>,
+        MultiPolygon<T>,
+        GeometryCollection<T>,
     > {
         match self {
             Geometry::Point(p) => GeometryType::Point(p),
