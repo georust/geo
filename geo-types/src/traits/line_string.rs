@@ -6,7 +6,6 @@ use std::iter::Cloned;
 use std::slice::Iter;
 
 pub trait LineStringTrait<'a>: Send + Sync {
-    type T: CoordNum + Send + Sync;
     type ItemType: 'a + PointTrait;
     type Iter: Iterator<Item = Self::ItemType>;
 
@@ -22,7 +21,6 @@ pub trait LineStringTrait<'a>: Send + Sync {
 }
 
 impl<'a, T: CoordNum + Send + Sync + 'a> LineStringTrait<'a> for LineString<T> {
-    type T = T;
     type ItemType = Coord<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
@@ -40,7 +38,6 @@ impl<'a, T: CoordNum + Send + Sync + 'a> LineStringTrait<'a> for LineString<T> {
 }
 
 impl<'a, T: CoordNum + Send + Sync + 'a> LineStringTrait<'a> for &LineString<T> {
-    type T = T;
     type ItemType = Coord<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 

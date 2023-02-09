@@ -1,5 +1,5 @@
 pub use coord::CoordTrait;
-pub use geometry::GeometryTrait;
+pub use geometry::{GeometryTrait, GeometryType};
 pub use geometry_collection::GeometryCollectionTrait;
 pub use line_string::LineStringTrait;
 pub use multi_line_string::MultiLineStringTrait;
