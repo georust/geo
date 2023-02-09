@@ -64,7 +64,6 @@ impl<'a, T: CoordNum + Send + Sync + 'a> GeometryTrait<'a> for Geometry<T> {
         &'a self,
     ) -> GeometryType<
         'a,
-        // Self::Point,
         <Geometry<T> as GeometryTrait>::Point,
         <Geometry<T> as GeometryTrait>::LineString,
         <Geometry<T> as GeometryTrait>::Polygon,
@@ -72,7 +71,6 @@ impl<'a, T: CoordNum + Send + Sync + 'a> GeometryTrait<'a> for Geometry<T> {
         <Geometry<T> as GeometryTrait>::MultiLineString,
         <Geometry<T> as GeometryTrait>::MultiPolygon,
         <Geometry<T> as GeometryTrait>::GeometryCollection,
-        // Self::GeometryCollection,
     > {
         match self {
             Geometry::Point(p) => GeometryType::Point(p),
