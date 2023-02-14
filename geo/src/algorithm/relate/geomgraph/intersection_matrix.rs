@@ -175,7 +175,7 @@ impl IntersectionMatrix {
                     '2' => self.0[*a][*b] = self.0[*a][*b].max(Dimensions::TwoDimensional),
                     'F' => {}
                     other => {
-                        let message = format!("expected '0', '1', '2', or 'F'. Found: {}", other);
+                        let message = format!("expected '0', '1', '2', or 'F'. Found: {other}");
                         return Err(InvalidInputError::new(message));
                     }
                 }

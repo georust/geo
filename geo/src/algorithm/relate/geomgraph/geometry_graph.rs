@@ -308,8 +308,8 @@ where
     ) -> SegmentIntersector<F> {
         let mut segment_intersector = SegmentIntersector::new(line_intersector, false);
         segment_intersector.set_boundary_nodes(
-            self.boundary_nodes().into_iter().cloned().collect(),
-            other.boundary_nodes().into_iter().cloned().collect(),
+            self.boundary_nodes().cloned().collect(),
+            other.boundary_nodes().cloned().collect(),
         );
 
         let mut edge_set_intersector = Self::create_edge_set_intersector();
