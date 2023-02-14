@@ -1,4 +1,8 @@
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+use crate::{coord, Point, Rect};
 use crate::{CoordNum, Geometry};
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+use num_traits::Bounded;
 
 use alloc::vec;
 use alloc::vec::Vec;
@@ -246,6 +250,58 @@ impl<'a, T: CoordNum> GeometryCollection<T> {
         self.into_iter()
     }
 }
+
+// Return a new rectangle that encompasses the provided rectangles
+fn bounding_rect_merge<T: CoordNum>(a: Rect<T>, b: Rect<T>) -> Rect<T> {
+    Rect::new(
+        coord! {
+            x: crate::private_utils::partial_min(a.min().x, b.min().x),
+            y: crate::private_utils::partial_min(a.min().y, b.min().y),
+        },
+        coord! {
+            x: crate::private_utils::partial_max(a.max().x, b.max().x),
+            y: crate::private_utils::partial_max(a.max().y, b.max().y),
+        },
+    )
+}
+
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+macro_rules! impl_rstar_geometry_collection {
+    ($rstar:ident) => {
+        impl<T> $rstar::RTreeObject for GeometryCollection<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            type Envelope = ::$rstar::AABB<Point<T>>;
+
+            fn envelope(&self) -> Self::Envelope {
+                let bounding_rect = self.iter().fold(None, |acc, next| {
+                    let next_bounding_rect = next.envelope();
+                    let lower = next_bounding_rect.lower();
+                    let upper = next_bounding_rect.upper();
+                    let rect = Rect::new(lower, upper);
+                    Some(bounding_rect_merge(acc.unwrap(), rect))
+                });
+                match bounding_rect {
+                    None => ::$rstar::AABB::from_corners(
+                        Point::new(Bounded::min_value(), Bounded::min_value()),
+                        Point::new(Bounded::max_value(), Bounded::max_value()),
+                    ),
+                    Some(b) => ::$rstar::AABB::from_corners(
+                        Point::new(b.min().x, b.min().y),
+                        Point::new(b.max().x, b.max().y),
+                    ),
+                }
+            }
+        }
+    };
+}
+
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_geometry_collection!(rstar_0_8);
+
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_geometry_collection!(rstar_0_9);
 
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for GeometryCollection<T>

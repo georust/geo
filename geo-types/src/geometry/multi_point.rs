@@ -1,7 +1,8 @@
 use crate::{CoordNum, Point};
-
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+use num_traits::Bounded;
 
 use alloc::vec;
 use alloc::vec::Vec;
@@ -98,6 +99,39 @@ impl<T: CoordNum> MultiPoint<T> {
         self.0.iter_mut()
     }
 }
+
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+macro_rules! impl_rstar_multi_point {
+    ($rstar:ident) => {
+        impl<T> $rstar::RTreeObject for MultiPoint<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            type Envelope = ::$rstar::AABB<Point<T>>;
+
+            fn envelope(&self) -> Self::Envelope {
+                let bounding_rect =
+                    crate::private_utils::get_bounding_rect(self.0.iter().map(|p| p.0));
+                match bounding_rect {
+                    None => ::$rstar::AABB::from_corners(
+                        Point::new(Bounded::min_value(), Bounded::min_value()),
+                        Point::new(Bounded::max_value(), Bounded::max_value()),
+                    ),
+                    Some(b) => ::$rstar::AABB::from_corners(
+                        Point::new(b.min().x, b.min().y),
+                        Point::new(b.max().x, b.max().y),
+                    ),
+                }
+            }
+        }
+    };
+}
+
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_multi_point!(rstar_0_8);
+
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_multi_point!(rstar_0_9);
 
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for MultiPoint<T>

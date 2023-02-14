@@ -1,4 +1,11 @@
 use crate::{polygon, Coord, CoordNum, Line, Polygon};
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+use num_traits::Bounded;
+
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+use crate::private_utils::get_bounding_rect;
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+use crate::Point;
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -62,6 +69,38 @@ impl<IC: Into<Coord<T>> + Copy, T: CoordNum> From<[IC; 3]> for Triangle<T> {
         Self(array[0].into(), array[1].into(), array[2].into())
     }
 }
+
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+macro_rules! impl_rstar_triangle {
+    ($rstar:ident) => {
+        impl<T> $rstar::RTreeObject for Triangle<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            type Envelope = ::$rstar::AABB<Point<T>>;
+
+            fn envelope(&self) -> Self::Envelope {
+                let bounding_rect = get_bounding_rect(self.to_array());
+                match bounding_rect {
+                    None => ::$rstar::AABB::from_corners(
+                        Point::new(Bounded::min_value(), Bounded::min_value()),
+                        Point::new(Bounded::max_value(), Bounded::max_value()),
+                    ),
+                    Some(b) => ::$rstar::AABB::from_corners(
+                        Point::new(b.min().x, b.min().y),
+                        Point::new(b.max().x, b.max().y),
+                    ),
+                }
+            }
+        }
+    };
+}
+
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_triangle!(rstar_0_8);
+
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_triangle!(rstar_0_9);
 
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for Triangle<T>

@@ -269,6 +269,39 @@ where
     }
 }
 
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+macro_rules! impl_rstar_geometry {
+    ($rstar:ident) => {
+        impl<T> $rstar::RTreeObject for Geometry<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            type Envelope = ::$rstar::AABB<Point<T>>;
+
+            fn envelope(&self) -> Self::Envelope {
+                match self {
+                    Self::Point(x) => x.envelope(),
+                    Self::Line(x) => x.envelope(),
+                    Self::LineString(x) => x.envelope(),
+                    Self::Polygon(x) => x.envelope(),
+                    Self::Rect(x) => x.envelope(),
+                    Self::Triangle(x) => x.envelope(),
+                    Self::MultiPoint(x) => x.envelope(),
+                    Self::MultiLineString(x) => x.envelope(),
+                    Self::MultiPolygon(x) => x.envelope(),
+                    Self::GeometryCollection(x) => x.envelope(),
+                }
+            }
+        }
+    };
+}
+
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_geometry!(rstar_0_8);
+
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_geometry!(rstar_0_9);
+
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for Geometry<T>
 where
