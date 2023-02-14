@@ -1,6 +1,6 @@
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
-use crate::{coord, Point, Rect};
 use crate::{CoordNum, Geometry};
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+use crate::{Point, Rect};
 #[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
 use num_traits::Bounded;
 
@@ -251,20 +251,6 @@ impl<'a, T: CoordNum> GeometryCollection<T> {
     }
 }
 
-// Return a new rectangle that encompasses the provided rectangles
-fn bounding_rect_merge<T: CoordNum>(a: Rect<T>, b: Rect<T>) -> Rect<T> {
-    Rect::new(
-        coord! {
-            x: crate::private_utils::partial_min(a.min().x, b.min().x),
-            y: crate::private_utils::partial_min(a.min().y, b.min().y),
-        },
-        coord! {
-            x: crate::private_utils::partial_max(a.max().x, b.max().x),
-            y: crate::private_utils::partial_max(a.max().y, b.max().y),
-        },
-    )
-}
-
 #[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
 macro_rules! impl_rstar_geometry_collection {
     ($rstar:ident) => {
@@ -280,7 +266,10 @@ macro_rules! impl_rstar_geometry_collection {
                     let lower = next_bounding_rect.lower();
                     let upper = next_bounding_rect.upper();
                     let rect = Rect::new(lower, upper);
-                    Some(bounding_rect_merge(acc.unwrap(), rect))
+                    Some(crate::private_utils::bounding_rect_merge(
+                        acc.unwrap(),
+                        rect,
+                    ))
                 });
                 match bounding_rect {
                     None => ::$rstar::AABB::from_corners(
