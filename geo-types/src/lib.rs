@@ -134,6 +134,9 @@ pub use error::Error;
 #[macro_use]
 mod macros;
 
+#[cfg(feature = "bounding_rect")]
+pub mod bounding_rect;
+
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
 

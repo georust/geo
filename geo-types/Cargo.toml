@@ -16,6 +16,7 @@ std = ["approx?/std", "num-traits/std", "serde?/std"]
 # Prefer `use-rstar` feature rather than enabling rstar directly.
 # rstar integration relies on the optional approx crate, but implicit features cannot yet enable other features.
 # See: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#namespaced-features
+bounding_rect = []
 rstar = ["rstar_0_8"]
 use-rstar = ["use-rstar_0_8"]
 use-rstar_0_8 = ["rstar_0_8", "approx"]

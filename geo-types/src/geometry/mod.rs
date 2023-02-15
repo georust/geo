@@ -404,3 +404,123 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Geometry<T> {
         }
     }
 }
+
+/// Implements the common pattern where a Geometry enum simply delegates its trait impl to it's inner type.
+///
+/// ```
+/// # use geo_types::{CoordNum, Coord, Point, Line, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, GeometryCollection, Rect, Triangle, Geometry};
+///
+/// trait Foo<T: CoordNum> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool;
+///     fn foo_2(&self) -> i32;
+/// }
+///
+/// // Assuming we have an impl for all the inner types like this:
+/// impl<T: CoordNum> Foo<T> for Point<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 1 }
+/// }
+/// impl<T: CoordNum> Foo<T> for Line<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { false }
+///     fn foo_2(&self)  -> i32 { 2 }
+/// }
+/// impl<T: CoordNum> Foo<T> for LineString<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 3 }
+/// }
+/// impl<T: CoordNum> Foo<T> for Polygon<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { false }
+///     fn foo_2(&self)  -> i32 { 4 }
+/// }
+/// impl<T: CoordNum> Foo<T> for MultiPoint<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 5 }
+/// }
+/// impl<T: CoordNum> Foo<T> for MultiLineString<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { false }
+///     fn foo_2(&self)  -> i32 { 6 }
+/// }
+/// impl<T: CoordNum> Foo<T> for MultiPolygon<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 7 }
+/// }
+/// impl<T: CoordNum> Foo<T> for GeometryCollection<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { false }
+///     fn foo_2(&self)  -> i32 { 8 }
+/// }
+/// impl<T: CoordNum> Foo<T> for Rect<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 9 }
+/// }
+/// impl<T: CoordNum> Foo<T> for Triangle<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 10 }
+/// }
+///
+/// // If we want the impl for Geometry to simply delegate to it's
+/// // inner case...
+/// impl<T: CoordNum> Foo<T> for Geometry<T> {
+///     // Instead of writing out this trivial enum delegation...
+///     // fn foo_1(&self, coord: Coord<T>)  -> bool {
+///     //     match self {
+///     //        Geometry::Point(g) => g.foo_1(coord),
+///     //        Geometry::LineString(g) => g.foo_1(coord),
+///     //        _ => unimplemented!("...etc for other cases")
+///     //     }
+///     // }
+///     //
+///     // fn foo_2(&self)  -> i32 {
+///     //     match self {
+///     //        Geometry::Point(g) => g.foo_2(),
+///     //        Geometry::LineString(g) => g.foo_2(),
+///     //        _ => unimplemented!("...etc for other cases")
+///     //     }
+///     // }
+///
+///     // we can equivalently write:
+///     geo_types::geometry_delegate_impl! {
+///         fn foo_1(&self, coord: Coord<T>) -> bool;
+///         fn foo_2(&self) -> i32;
+///     }
+/// }
+/// ```
+#[macro_export]
+macro_rules! geometry_delegate_impl {
+    ($($a:tt)*) => { $crate::__geometry_delegate_impl_helper!{ Geometry, $($a)* } }
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! geometry_cow_delegate_impl {
+    ($($a:tt)*) => { $crate::__geometry_delegate_impl_helper!{ GeometryCow, $($a)* } }
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __geometry_delegate_impl_helper {
+    (
+        $enum:ident,
+        $(
+            $(#[$outer:meta])*
+            fn $func_name: ident(&$($self_life:lifetime)?self $(, $arg_name: ident: $arg_type: ty)*) -> $return: ty;
+         )+
+    ) => {
+            $(
+                $(#[$outer])*
+                fn $func_name(&$($self_life)? self, $($arg_name: $arg_type),*) -> $return {
+                    match self {
+                        $enum::Point(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::Line(g) =>  g.$func_name($($arg_name),*).into(),
+                        $enum::LineString(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::Polygon(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::MultiPoint(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::MultiLineString(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::MultiPolygon(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::GeometryCollection(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::Rect(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::Triangle(g) => g.$func_name($($arg_name),*).into(),
+                    }
+                }
+            )+
+        };
+}

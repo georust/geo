@@ -1,9 +1,9 @@
 use crate::convex_hull::qhull;
-use crate::utils::partial_min;
 use crate::{
     coord, Centroid, Coord, CoordNum, EuclideanDistance, EuclideanLength, GeoFloat, Line,
     LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
+use geo_types::private_utils::partial_min;
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
 
