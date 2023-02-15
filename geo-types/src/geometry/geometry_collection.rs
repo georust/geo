@@ -1,17 +1,14 @@
 #[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
 use crate::Point;
 use crate::{CoordNum, Geometry};
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
-use num_traits::Bounded;
-// #[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
-// use rstar_0_9::Envelope;
-
 use alloc::vec;
 use alloc::vec::Vec;
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+use num_traits::Bounded;
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
 ///
@@ -256,8 +253,6 @@ impl<'a, T: CoordNum> GeometryCollection<T> {
 #[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
 macro_rules! impl_rstar_geometry_collection {
     ($rstar:ident) => {
-        // we have to put the use statement here bc we don't know which rstar version is in use outside the macro
-        use $rstar::Envelope as Env;
         impl<T> $rstar::RTreeObject for GeometryCollection<T>
         where
             T: ::num_traits::Float + ::$rstar::RTreeNum,
@@ -265,13 +260,17 @@ macro_rules! impl_rstar_geometry_collection {
             type Envelope = ::$rstar::AABB<Point<T>>;
 
             fn envelope(&self) -> Self::Envelope {
-                let bounding_rect =
-                    self.iter()
-                        .fold(Env::new_empty(), |acc: ::$rstar::AABB<Point<T>>, next| {
-                            let next_bounding_rect = next.envelope();
-                            acc.merged(&next_bounding_rect)
-                        });
-                if bounding_rect == Env::new_empty() {
+                let bounding_rect = self.iter().fold(
+                    <::$rstar::AABB<Point<T>> as ::$rstar::Envelope>::new_empty(),
+                    |acc: ::$rstar::AABB<Point<T>>, next| {
+                        let next_bounding_rect = next.envelope();
+                        <::$rstar::AABB<Point<T>> as ::$rstar::Envelope>::merged(
+                            &acc,
+                            &next_bounding_rect,
+                        )
+                    },
+                );
+                if bounding_rect == <::$rstar::AABB<Point<T>> as ::$rstar::Envelope>::new_empty() {
                     ::$rstar::AABB::from_corners(
                         Point::new(Bounded::min_value(), Bounded::min_value()),
                         Point::new(Bounded::max_value(), Bounded::max_value()),
