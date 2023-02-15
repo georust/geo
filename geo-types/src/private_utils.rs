@@ -5,39 +5,6 @@
 
 use crate::{Coord, CoordFloat, CoordNum, Line, LineString, Point, Rect};
 
-// The Rust standard library has `max` for `Ord`, but not for `PartialOrd`
-fn partial_max<T: PartialOrd>(a: T, b: T) -> T {
-    if a > b {
-        a
-    } else {
-        b
-    }
-}
-
-// The Rust standard library has `min` for `Ord`, but not for `PartialOrd`
-fn partial_min<T: PartialOrd>(a: T, b: T) -> T {
-    if a < b {
-        a
-    } else {
-        b
-    }
-}
-
-/// Return a new rectangle that encompasses the provided rectangles
-// copy-pasted from geo's bounding_rect implementation
-pub fn bounding_rect_merge<T: CoordNum>(a: Rect<T>, b: Rect<T>) -> Rect<T> {
-    Rect::new(
-        coord! {
-            x: partial_min(a.min().x, b.min().x),
-            y: partial_min(a.min().y, b.min().y),
-        },
-        coord! {
-            x: partial_max(a.max().x, b.max().x),
-            y: partial_max(a.max().y, b.max().y),
-        },
-    )
-}
-
 pub fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<T>>
 where
     T: CoordNum,
