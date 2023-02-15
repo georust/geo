@@ -12,7 +12,7 @@ pub trait BoundingRect<T: CoordNum> {
     /// # Examples
     ///
     /// ```
-    /// use geo_types::BoundingRect;
+    /// use geo_types::bounding_rect::BoundingRect;
     /// use geo_types::line_string;
     ///
     /// let line_string = line_string![
