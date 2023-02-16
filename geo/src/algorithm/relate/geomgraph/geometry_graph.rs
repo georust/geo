@@ -308,8 +308,8 @@ where
     ) -> SegmentIntersector<F> {
         let mut segment_intersector = SegmentIntersector::new(line_intersector, false);
         segment_intersector.set_boundary_nodes(
-            self.boundary_nodes().into_iter().cloned().collect(),
-            other.boundary_nodes().into_iter().cloned().collect(),
+            self.boundary_nodes().cloned().collect(),
+            other.boundary_nodes().cloned().collect(),
         );
 
         let mut edge_set_intersector = Self::create_edge_set_intersector();
@@ -336,6 +336,7 @@ where
 
         // determine the current location for the point (if any)
         let boundary_count = {
+            #[allow(clippy::bool_to_int_with_if)]
             let prev_boundary_count =
                 if Some(CoordPos::OnBoundary) == label.position(arg_index, Direction::On) {
                     1

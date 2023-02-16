@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_debug_implementations)]
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
 //! The `geo-types` library defines geometric types for the [GeoRust] ecosystem.
@@ -60,11 +61,16 @@
 //!
 //! The following optional [Cargo features] are available:
 //!
+//! - `std`: Enables use of the full `std` library. Enabled by default.
 //! - `approx`: Allows geometry types to be checked for approximate equality with [approx]
 //! - `arbitrary`: Allows geometry types to be created from unstructured input with [arbitrary]
 //! - `serde`: Allows geometry types to be serialized and deserialized with [Serde]
 //! - `use-rstar_0_8`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.8`)
 //! - `use-rstar_0_9`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.9`)
+//!
+//! This library can be used in `#![no_std]` environments if the default `std` feature is disabled. At
+//! the moment, the `arbitrary` and `use-rstar_0_8` features require `std`. This may change in a
+//! future release.
 //!
 //! [approx]: https://github.com/brendanzab/approx
 //! [arbitrary]: https://github.com/rust-fuzz/arbitrary
@@ -75,9 +81,11 @@
 //! [OGC-SFA]: https://www.ogc.org/standards/sfa
 //! [rstar]: https://github.com/Stoeoef/rstar
 //! [Serde]: https://serde.rs/
+extern crate alloc;
 extern crate num_traits;
+
+use core::fmt::Debug;
 use num_traits::{Float, Num, NumCast};
-use std::fmt::Debug;
 
 #[cfg(feature = "serde")]
 #[macro_use]
@@ -131,10 +139,22 @@ mod arbitrary;
 #[doc(hidden)]
 pub mod private_utils;
 
+#[doc(hidden)]
+pub mod _alloc {
+    //! Needed to access these types from `alloc` in macros when the std feature is
+    //! disabled and the calling context is missing `extern crate alloc`. These are
+    //! _not_ meant for public use.
+
+    pub use ::alloc::boxed::Box;
+    pub use ::alloc::vec;
+}
+
 #[cfg(test)]
 mod tests {
+    use alloc::vec;
+
     use super::*;
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
 
     #[test]
     fn type_test() {

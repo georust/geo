@@ -467,13 +467,14 @@ where
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct InvalidRectCoordinatesError;
 
+#[cfg(feature = "std")]
 #[allow(deprecated)]
 impl std::error::Error for InvalidRectCoordinatesError {}
 
 #[allow(deprecated)]
-impl std::fmt::Display for InvalidRectCoordinatesError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", RECT_INVALID_BOUNDS_ERROR)
+impl core::fmt::Display for InvalidRectCoordinatesError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{RECT_INVALID_BOUNDS_ERROR}")
     }
 }
 

@@ -4,14 +4,14 @@ extern crate geo;
 
 use criterion::Criterion;
 use geo::prelude::*;
-use geo::simplifyvw::SimplifyVWPreserve;
+use geo::simplify_vw::SimplifyVwPreserve;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("simplify vw simple f32", |bencher| {
         let ls = geo_test_fixtures::louisiana::<f32>();
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&ls).simplifyvw(criterion::black_box(&0.0005)),
+                criterion::black_box(&ls).simplify_vw(criterion::black_box(&0.0005)),
             );
         });
     });
@@ -20,7 +20,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let ls = geo_test_fixtures::louisiana::<f64>();
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&ls).simplifyvw(criterion::black_box(&0.0005)),
+                criterion::black_box(&ls).simplify_vw(criterion::black_box(&0.0005)),
             );
         });
     });
@@ -29,7 +29,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let ls = geo_test_fixtures::louisiana::<f32>();
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&ls).simplifyvw_preserve(criterion::black_box(&0.0005)),
+                criterion::black_box(&ls).simplify_vw_preserve(criterion::black_box(&0.0005)),
             );
         });
     });
@@ -38,7 +38,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let ls = geo_test_fixtures::louisiana::<f64>();
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&ls).simplifyvw_preserve(criterion::black_box(&0.0005)),
+                criterion::black_box(&ls).simplify_vw_preserve(criterion::black_box(&0.0005)),
             );
         });
     });

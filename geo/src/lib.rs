@@ -62,8 +62,8 @@
 //!
 //! - **[`Simplify`](Simplify)**: Simplify a geometry using the Ramer–Douglas–Peucker algorithm
 //! - **[`SimplifyIdx`](SimplifyIdx)**: Calculate a simplified geometry using the Ramer–Douglas–Peucker algorithm, returning coordinate indices
-//! - **[`SimplifyVW`](SimplifyVW)**: Simplify a geometry using the Visvalingam-Whyatt algorithm
-//! - **[`SimplifyVWPreserve`](SimplifyVWPreserve)**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVw`](SimplifyVw)**: Simplify a geometry using the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVwPreserve`](SimplifyVwPreserve)**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
 //! - **[`SimplifyVwIdx`](SimplifyVwIdx)**: Calculate a simplified geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm, returning coordinate indices
 //!
 //! ## Query
@@ -105,16 +105,12 @@
 //!
 //! ## Iteration
 //!
-//! - **[`CoordsIter`](CoordsIter)**: Iterate over the coordinates of a geometry
-//! - **[`MapCoords`](MapCoords)**: Map a function over all the coordinates
+//! - **[`CoordsIter`]**: Iterate over the coordinates of a geometry
+//! - **[`MapCoords`]**: Map a function over all the coordinates
 //!   in a geometry, returning a new geometry
-//! - **[`MapCoordsInplace`](MapCoordsInplace)**: Map a function over all the
+//! - **[`MapCoordsInPlace`]**: Map a function over all the
 //!   coordinates in a geometry in-place
-//! - **[`TryMapCoords`](TryMapCoords)**: Map a fallible function over all
-//!   the coordinates in a geometry, returning a new geometry wrapped in a `Result`
-//! - **[`TryMapCoordsInplace`](TryMapCoordsInplace)**: Map a fallible function over all
-//!   the coordinates in a geometry in-place
-//! - **[`LinesIter`](LinesIter)**: Iterate over lines of a geometry
+//! - **[`LinesIter`]**: Iterate over lines of a geometry
 //!
 //! ## Boundary
 //!

@@ -57,6 +57,7 @@ impl<T: GeoFloat> RegionAssembly<T> {
             };
 
             // Connect consecutive segments
+            #[allow(clippy::bool_to_int_with_if)]
             let mut idx = if prev_region { 1 } else { 0 };
 
             while idx < iter.intersections().len() {
@@ -149,7 +150,7 @@ impl<T: GeoFloat> RegionAssembly<T> {
                     }
                     parent_snake_idx = parent.parent_snake_idx;
                 }
-                let this_children = children.entry(parent_ring_idx).or_insert(vec![]);
+                let this_children: &mut Vec<_> = children.entry(parent_ring_idx).or_default();
                 this_children.push(ring_idx);
             } else {
                 continue;

@@ -8,6 +8,7 @@ documentation = "https://docs.rs/geo-postgis/"
 readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial", "postgis"]
 description = "Conversion between `geo-types` and `postgis` types."
+rust-version = "1.63"
 edition = "2021"
 
 [dependencies]
