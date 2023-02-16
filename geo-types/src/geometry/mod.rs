@@ -524,3 +524,31 @@ macro_rules! __geometry_delegate_impl_helper {
             )+
         };
 }
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "rstar_0_9")]
+    use super::*;
+    #[cfg(feature = "rstar_0_9")]
+    use crate::point;
+    #[cfg(feature = "rstar_0_9")]
+    use rstar_0_9::{RTree, AABB};
+
+    #[test]
+    #[cfg(feature = "rstar_0_9")]
+    fn test_geometry_enum_rstar() {
+        let mut tree = RTree::new();
+        let p1 = point!(x: 1.0, y: 1.0);
+        let p2 = point!(x: 2.0, y: 2.0);
+        let p3 = point!(x: 3.0, y: 3.0);
+        let pg1: Geometry = p1.into();
+        let pg2: Geometry = p2.into();
+        let pg3: Geometry = p3.into();
+        tree.insert(pg1);
+        tree.insert(pg2);
+        tree.insert(pg3);
+        let qp = point!(x: 2.0, y: 2.0);
+        let found = tree.locate_in_envelope(&AABB::from_point(qp)).next();
+        assert_eq!(found.unwrap(), &point!(x: 2.0, y: 2.0).into());
+    }
+}
