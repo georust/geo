@@ -116,6 +116,8 @@
 //!
 //! - **[`BoundingRect`](BoundingRect)**: Calculate the axis-aligned
 //!   bounding rectangle of a geometry
+//! - **[`MinimumRotatedRect`](MinimumRotatedRect)**: Calculate the
+//!   minimum bounding box of a geometry
 //! - **[`ConcaveHull`](ConcaveHull)**: Calculate the concave hull of a
 //!   geometry
 //! - **[`ConvexHull`](ConvexHull)**: Calculate the convex hull of a
