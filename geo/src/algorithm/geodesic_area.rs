@@ -368,6 +368,9 @@ mod test {
             (x: 125., y: -15.),
         ];
         assert_relative_eq!(-7786102826806.07, polygon.geodesic_area_signed());
+
+        let geoid = geographiclib_rs::Geodesic::wgs84();
+        assert_relative_eq!(geoid.area() -7786102826806.07, polygon.geodesic_area_unsigned());
     }
 
     #[test]
@@ -383,6 +386,7 @@ mod test {
             (x: 125., y: -15.),
         ];
         assert_relative_eq!(7786102826806.07, polygon.geodesic_area_signed());
+        assert_relative_eq!(7786102826806.07, polygon.geodesic_area_unsigned());
     }
 
     #[test]
@@ -415,6 +419,17 @@ mod test {
         
         assert_relative_eq!(1203317999173.7063, poly.geodesic_area_signed());
         assert_relative_eq!(1203317999173.7063, poly.geodesic_area_unsigned());
+        assert_relative_eq!(5307742.446635911, poly.geodesic_perimeter());
+
+        let (perimeter, area) = poly.geodesic_perimeter_area_signed();
+
+        assert_relative_eq!(5307742.446635911, perimeter);
+        assert_relative_eq!(1203317999173.7063, area);
+
+        let (perimeter, area) = poly.geodesic_perimeter_area_unsigned();
+
+        assert_relative_eq!(5307742.446635911, perimeter);
+        assert_relative_eq!(1203317999173.7063, area);
     }
 
     #[test]
@@ -474,6 +489,16 @@ mod test {
             ],
         ];
         assert_relative_eq!(18462065880.09138, diamond.geodesic_area_unsigned());
+        assert_relative_eq!(18462065880.09138, diamond.geodesic_area_signed());
+        assert_relative_eq!(941333.0085011568, diamond.geodesic_perimeter());
+
+        let (perimeter, area) = diamond.geodesic_perimeter_area_signed();
+        assert_relative_eq!(941333.0085011568, perimeter);
+        assert_relative_eq!(18462065880.09138, area);
+
+        let (perimeter, area) = diamond.geodesic_perimeter_area_unsigned();
+        assert_relative_eq!(941333.0085011568, perimeter);
+        assert_relative_eq!(18462065880.09138, area);
     }
     
 }
