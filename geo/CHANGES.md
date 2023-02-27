@@ -11,6 +11,8 @@
 - POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.63
 - Added `MinimumRotatedRect` trait to calculate the MBR of geometry
   <https://github.com/georust/geo/pull/959>
+- Added `GeodesicArea` trait to support geodesic area and perimeter calculations from `geographlib-rs`
+  <https://github.com/georust/geo/pull/988>
 
 ## 0.23.1
 
