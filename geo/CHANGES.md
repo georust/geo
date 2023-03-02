@@ -9,6 +9,8 @@
 - BREAKING: Update to float_next_after-1.0.0
   <https://github.com/georust/geo/pull/952>
 - POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.63
+- BREAKING: Update `rstar` dependency to `0.10.0` and enable `use-rstar_0_10` feature for `geo-types.
+  <https://github.com/georust/geo/pull/987>
 - Added `MinimumRotatedRect` trait to calculate the MBR of geometry
   <https://github.com/georust/geo/pull/959>
 - Added `GeodesicArea` trait to support geodesic area and perimeter calculations from `geographlib-rs`
