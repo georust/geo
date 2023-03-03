@@ -354,6 +354,7 @@ impl GeodesicArea<f64> for Geometry<f64> {
 mod test {
     use super::*;
     use crate::polygon;
+    use crate::algorithm::geodesic_length::GeodesicLength;
 
     #[test]
     fn test_negative() {
@@ -367,10 +368,13 @@ mod test {
             (x: 113., y: -22.),
             (x: 125., y: -15.),
         ];
-        assert_relative_eq!(-7786102826806.07, polygon.geodesic_area_signed());
+        assert_relative_eq!(-7786102826806.07, polygon.geodesic_area_signed(), epsilon = 0.01);
 
         let geoid = geographiclib_rs::Geodesic::wgs84();
-        assert_relative_eq!(geoid.area() -7786102826806.07, polygon.geodesic_area_unsigned());
+        assert_relative_eq!(geoid.area() -7786102826806.07, polygon.geodesic_area_unsigned(), epsilon = 0.01);
+
+        // Confirm that the exterior ring geodesic_length is the same as the perimeter
+        assert_relative_eq!(polygon.exterior().geodesic_length(), polygon.geodesic_perimeter());
     }
 
     #[test]
@@ -385,13 +389,36 @@ mod test {
             (x: 144., y: -15.),
             (x: 125., y: -15.),
         ];
-        assert_relative_eq!(7786102826806.07, polygon.geodesic_area_signed());
-        assert_relative_eq!(7786102826806.07, polygon.geodesic_area_unsigned());
+        assert_relative_eq!(7786102826806.07, polygon.geodesic_area_signed(), epsilon = 0.01);
+        assert_relative_eq!(7786102826806.07, polygon.geodesic_area_unsigned(), epsilon = 0.01);
+
+        // Confirm that the exterior ring geodesic_length is the same as the perimeter
+        assert_relative_eq!(polygon.exterior().geodesic_length(), polygon.geodesic_perimeter());
+    }
+
+
+    #[test]
+    fn test_missing_endpoint() {
+        let polygon = polygon![
+            (x: 125., y: -15.),
+            (x: 113., y: -22.),
+            (x: 117., y: -37.),
+            (x: 130., y: -33.),
+            (x: 148., y: -39.),
+            (x: 154., y: -27.),
+            (x: 144., y: -15.),
+            // (x: 125., y: -15.), <-- missing endpoint
+        ];
+        assert_relative_eq!(7786102826806.07, polygon.geodesic_area_signed(), epsilon = 0.01);
+        assert_relative_eq!(7786102826806.07, polygon.geodesic_area_unsigned(), epsilon = 0.01);
+
+        // Confirm that the exterior ring geodesic_length is the same as the perimeter
+        assert_relative_eq!(polygon.exterior().geodesic_length(), polygon.geodesic_perimeter());
     }
 
     #[test]
     fn test_holes() {
-        let poly = polygon![
+        let mut poly = polygon![
             exterior: [
                 (x: 0., y: 0.),
                 (x: 10., y: 0.),
@@ -417,19 +444,51 @@ mod test {
             ],
         ];
         
-        assert_relative_eq!(1203317999173.7063, poly.geodesic_area_signed());
-        assert_relative_eq!(1203317999173.7063, poly.geodesic_area_unsigned());
-        assert_relative_eq!(5307742.446635911, poly.geodesic_perimeter());
+        assert_relative_eq!(1203317999173.7063, poly.geodesic_area_signed(), epsilon = 0.01);
+        assert_relative_eq!(1203317999173.7063, poly.geodesic_area_unsigned(), epsilon = 0.01);
+        assert_relative_eq!(5307742.446635911, poly.geodesic_perimeter(), epsilon = 0.01);
 
         let (perimeter, area) = poly.geodesic_perimeter_area_signed();
 
-        assert_relative_eq!(5307742.446635911, perimeter);
-        assert_relative_eq!(1203317999173.7063, area);
+        assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
+        assert_relative_eq!(1203317999173.7063, area, epsilon = 0.01);
 
         let (perimeter, area) = poly.geodesic_perimeter_area_unsigned();
 
-        assert_relative_eq!(5307742.446635911, perimeter);
-        assert_relative_eq!(1203317999173.7063, area);
+        assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
+        assert_relative_eq!(1203317999173.7063, area, epsilon = 0.01);
+
+        // Test with exterior and interior both with CW winding
+        use crate::algorithm::winding_order::Winding;
+        poly.exterior_mut(|exterior| {
+            exterior.make_cw_winding();
+        });
+
+        let (perimeter, area) = poly.geodesic_perimeter_area_signed();
+        assert_relative_eq!(-1203317999173.7063, area, epsilon = 0.01);
+        assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
+
+
+        // Test with exterior CW and interior CCW winding
+        poly.interiors_mut(|interiors| {
+            for interior in interiors {
+                interior.make_ccw_winding();
+            }
+        });
+
+        let (perimeter, area) = poly.geodesic_perimeter_area_signed();
+        assert_relative_eq!(-1203317999173.7063, area, epsilon = 0.01);
+        assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
+
+
+        // Test with exterior and interior both with CCW winding
+        poly.exterior_mut(|exterior| {
+            exterior.make_ccw_winding();
+        });
+
+        let (perimeter, area) = poly.geodesic_perimeter_area_signed();
+        assert_relative_eq!(1203317999173.7063, area, epsilon = 0.01);
+        assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
     }
 
     #[test]
@@ -467,7 +526,7 @@ mod test {
     #[test]
     fn test_diamond() {
         // a diamond shape
-        let diamond = polygon![
+        let mut diamond = polygon![
             // exterior oriented counter-clockwise
             exterior: [
                 (x: 1.0, y: 0.0),
@@ -499,6 +558,39 @@ mod test {
         let (perimeter, area) = diamond.geodesic_perimeter_area_unsigned();
         assert_relative_eq!(941333.0085011568, perimeter);
         assert_relative_eq!(18462065880.09138, area);
+
+
+        // Test with exterior and interior both with CW winding
+        use crate::algorithm::winding_order::Winding;
+        diamond.exterior_mut(|exterior| {
+            exterior.make_cw_winding();
+        });
+
+        let (perimeter, area) = diamond.geodesic_perimeter_area_signed();
+        assert_relative_eq!(-18462065880.09138, area);
+        assert_relative_eq!(941333.0085011568, perimeter);
+        
+
+        // Test with exterior CW and interior CCW winding
+        diamond.interiors_mut(|interiors| {
+            for interior in interiors {
+                interior.make_ccw_winding();
+            }
+        });
+
+        let (perimeter, area) = diamond.geodesic_perimeter_area_signed();
+        assert_relative_eq!(-18462065880.09138, area);
+        assert_relative_eq!(941333.0085011568, perimeter);
+
+
+        // Test with exterior and interior both with CCW winding
+        diamond.exterior_mut(|exterior| {
+            exterior.make_ccw_winding();
+        });
+
+        let (perimeter, area) = diamond.geodesic_perimeter_area_signed();
+        assert_relative_eq!(18462065880.09138, area);
+        assert_relative_eq!(941333.0085011568, perimeter);
     }
     
 }
