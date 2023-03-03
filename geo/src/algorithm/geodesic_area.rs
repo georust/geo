@@ -593,4 +593,47 @@ mod test {
         assert_relative_eq!(941333.0085011568, perimeter);
     }
     
+    #[test]
+    fn test_very_large_polygon() {
+        // Describe a polygon that covers all of the earth EXCEPT this small square.
+        // The outside of the polygon is in this square, the inside of the polygon is the rest of the earth.
+        let polygon_large: Polygon<f64> = polygon![
+            (x: 0.0, y: 0.0),
+            (x: 0.0, y: 1.0),
+            (x: 1.0, y: 1.0),
+            (x: 1.0, y: 0.0),
+        ];
+
+        let area = polygon_large.geodesic_area_unsigned();
+        assert_eq!(area, 510053312945726.94);
+
+        // A very large polygon that covers nearly all the earth, and then a hole that also covers nearly all the earth as well.
+        // This is a neat polygon because signed and unsigned areas are the same, regardless of the winding order.
+        let polygon_large_with_hole: Polygon<f64> = polygon![
+            exterior: [
+                (x: 0.5, y: 0.5),
+                (x: 0.5, y: 1.0),
+                (x: 1.0, y: 1.0),
+                (x: 1.0, y: 0.5),
+                (x: 0.5, y: 0.5),
+            ],
+            interiors: [
+                [
+                    (x: 0.0, y: 0.0),
+                    (x: 2.0, y: 0.0),
+                    (x: 2.0, y: 2.0),
+                    (x: 0.0, y: 2.0),
+                    (x: 0.0, y: 0.0),
+                ],
+            ],
+        ];
+
+        let area = polygon_large_with_hole.geodesic_area_signed();
+        assert_relative_eq!(area, 46154562709.8, epsilon = 0.1);
+
+        let area = polygon_large_with_hole.geodesic_area_unsigned();
+        assert_relative_eq!(area, 46154562709.8, epsilon = 0.1);
+
+    }
+
 }
