@@ -82,10 +82,10 @@ pub trait GeodesicArea<T, Rhs = Self> {
     /// // Describe a polygon that covers all of the earth EXCEPT this small square.
     /// // The outside of the polygon is in this square, the inside of the polygon is the rest of the earth.
     /// let mut polygon: Polygon<f64> = polygon![
-    /// (x: 0.0, y: 0.0),
-    /// (x: 0.0, y: 1.0),
-    /// (x: 1.0, y: 1.0),
-    /// (x: 1.0, y: 0.0),
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 0.0, y: 1.0),
+    ///     (x: 1.0, y: 1.0),
+    ///     (x: 1.0, y: 0.0),
     /// ];
     ///
     /// let area = polygon.geodesic_area_unsigned();
