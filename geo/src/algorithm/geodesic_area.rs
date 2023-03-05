@@ -6,7 +6,7 @@ use geographiclib_rs::{Geodesic, PolygonArea, Winding};
 /// This uses the geodesic measurement methods given by [Karney (2013)].
 ///
 /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
-pub trait GeodesicArea<T, Rhs = Self> {
+pub trait GeodesicArea<T> {
     /// Determine the area of a geometry on an ellipsoidal model of the earth.
     ///
     /// This uses the geodesic measurement methods given by [Karney (2013)].
