@@ -1,6 +1,6 @@
 # Changes
 
-## unreleased
+## 0.24.0
 
 - BREAKING: Make `SimplifyVw` naming consistent
   - <https://github.com/georust/geo/pull/957>
