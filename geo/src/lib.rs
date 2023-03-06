@@ -34,7 +34,8 @@
 //! ## Area
 //!
 //! - **[`Area`](Area)**: Calculate the planar area of a geometry
-//! - **[`ChamberlainDuquetteArea`](ChamberlainDuquetteArea)**: Calculate the geodesic area of a geometry
+//! - **[`ChamberlainDuquetteArea`](ChamberlainDuquetteArea)**: Calculate the geodesic area of a geometry on a sphere using the algorithm presented in _Some Algorithms for Polygons on a Sphere_ by Chamberlain and Duquette (2007)
+//! - **[`GeodesicArea`](GeodesicArea)**: Calculate the geodesic area and perimeter of a geometry on an ellipsoid using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
 //!
 //! ## Boolean Operations
 //!

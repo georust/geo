@@ -90,6 +90,10 @@ pub use frechet_distance::FrechetDistance;
 pub mod geodesic_distance;
 pub use geodesic_distance::GeodesicDistance;
 
+/// Calculate the Geodesic area and perimeter of polygons
+pub mod geodesic_area;
+pub use geodesic_area::GeodesicArea;
+
 /// Calculate a new `Point` lying on a Geodesic arc between two `Point`s.
 pub mod geodesic_intermediate;
 pub use geodesic_intermediate::GeodesicIntermediate;
