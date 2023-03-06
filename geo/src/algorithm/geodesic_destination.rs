@@ -2,13 +2,13 @@ use crate::Point;
 use geographiclib_rs::{Geodesic, DirectGeodesic};
 use geo_types::CoordNum;
 
-/// Returns a new Point using the distance to the existing Point and a bearing for the direction on a geodesic
+/// Returns a new Point using the distance to the existing Point and a bearing for the direction on a geodesic.
 ///
 /// This uses the geodesic methods given by [Karney (2013)].
 /// 
 /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
 pub trait GeodesicDestination<T: CoordNum> {
-    /// Returns a new Point using distance to the existing Point and a bearing for the direction
+    /// Returns a new Point using distance to the existing Point and a bearing for the direction.
     ///
     /// # Units
     ///

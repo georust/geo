@@ -70,6 +70,7 @@
 //! ## Query
 //!
 //! - **[`Bearing`](Bearing)**: Calculate the bearing between points
+//! - **[`GeodesicBearing`](GeodesicBearing)**: Calculate the bearing between points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`ClosestPoint`](ClosestPoint)**: Find the point on a geometry
 //!   closest to a given point
 //! - **[`IsConvex`](IsConvex)**: Calculate the convexity of a
@@ -142,8 +143,10 @@
 //! ## Miscellaneous
 //!
 //! - **[`Centroid`](Centroid)**: Calculate the centroid of a geometry
-//! - **[`HaversineDestination`](HaversineDestination)**:
-//! - **[`HaversineIntermediate`](HaversineIntermediate)**:
+//! - **[`GeodesicDestination`](GeodesicDestination)**: Given a start point, bearing, and distance, calculate the destination point on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
+//! - **[`GeodesicIntermediate`](GeodesicIntermediate)**: Calculate intermediate points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
+//! - **[`HaversineDestination`](HaversineDestination)**: Given a start point, bearing, and distance, calculate the destination point on a sphere
+//! - **[`HaversineIntermediate`](HaversineIntermediate)**: Calculate intermediate points on a sphere
 //! - **[`proj`](proj)**: Project geometries with the `proj` crate (requires the `use-proj` feature)
 //! - **[`ChaikinSmoothing`](ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 //! - **[`Densify`](Densify)**: Densify linear geometry components by interpolating points
