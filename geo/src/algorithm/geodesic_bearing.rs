@@ -1,6 +1,6 @@
-use crate::{Point};
-use geographiclib_rs::{Geodesic, InverseGeodesic};
+use crate::Point;
 use geo_types::CoordNum;
+use geographiclib_rs::{Geodesic, InverseGeodesic};
 
 /// Returns the bearing to another Point in degrees on a geodesic.
 ///
@@ -26,7 +26,7 @@ pub trait GeodesicBearing<T: CoordNum> {
     fn geodesic_bearing(&self, point: Point<T>) -> T;
 
     /// Returns the bearing and distance to another Point in a (bearing, distance) tuple.
-    /// 
+    ///
     /// # Units
     ///
     /// - `bearing`: degrees, zero degrees is north. East is 90°.
@@ -56,7 +56,8 @@ impl GeodesicBearing<f64> for Point<f64> {
     }
 
     fn geodesic_bearing_distance(&self, rhs: Point<f64>) -> (f64, f64) {
-        let (distance, azi1, _, _) = Geodesic::wgs84().inverse(self.y(), self.x(), rhs.y(), rhs.x());
+        let (distance, azi1, _, _) =
+            Geodesic::wgs84().inverse(self.y(), self.x(), rhs.y(), rhs.x());
         (azi1, distance)
     }
 }
@@ -72,7 +73,7 @@ mod test {
         let p_1 = point!(x: 9.177789688110352f64, y: 48.776781529534965);
         let p_2 = p_1.geodesic_destination(45., 10000.);
         let (b_1, d_1) = p_1.geodesic_bearing_distance(p_2);
-        assert_relative_eq!(b_1, 45., epsilon =1.0e-6);
+        assert_relative_eq!(b_1, 45., epsilon = 1.0e-6);
         assert_relative_eq!(d_1, 10000.0, epsilon = 1.0e-6);
 
         let p_3 = point!(x: 9., y: 47.);
