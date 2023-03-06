@@ -1,6 +1,6 @@
 # Changes
 
-## unreleased
+## 0.7.9
 
 * Return `DoubleEndedIterator` from `LineString::points` and `LineString::points_mut`
   * <https://github.com/georust/geo/pull/951>
