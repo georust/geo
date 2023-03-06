@@ -4,8 +4,9 @@ use geo_types::CoordNum;
 
 /// Returns a new Point using the distance to the existing Point and a bearing for the direction on a geodesic
 ///
-/// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
-/// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
+/// This uses the geodesic methods given by [Karney (2013)].
+/// 
+/// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
 pub trait GeodesicDestination<T: CoordNum> {
     /// Returns a new Point using distance to the existing Point and a bearing for the direction
     ///
@@ -20,7 +21,7 @@ pub trait GeodesicDestination<T: CoordNum> {
     /// use geo::GeodesicDestination;
     /// use geo::Point;
     /// 
-    /// // Determine the point 10000 km NE of JFK - the "direct" geodesic calculation.
+    /// // Determine the point 10000 km NE of JFK.
     /// let jfk = Point::new(-73.78, 40.64);
     /// let northeast_bearing = 45.0;
     /// let distance = 10e6;
@@ -60,5 +61,13 @@ mod test {
         let p_2 = p_1.geodesic_destination(0., 1000.);
         assert_relative_eq!(p_1.x(), p_2.x(), epsilon = 1.0e-6);
         assert!(p_2.y() > p_1.y())
+    }
+
+    #[test]
+    fn bearing_90_is_east() {
+        let p_1 = Point::new(9.177789688110352, 48.776781529534965);
+        let p_2 = p_1.geodesic_destination(90., 1000.);
+        assert_relative_eq!(p_1.y(), p_2.y(), epsilon = 1.0e-6);
+        assert!(p_2.x() > p_1.x())
     }
 }
