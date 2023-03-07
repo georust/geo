@@ -15,6 +15,10 @@
   <https://github.com/georust/geo/pull/959>
 - Added `GeodesicArea` trait to support geodesic area and perimeter calculations from `geographlib-rs`
   <https://github.com/georust/geo/pull/988>
+- Added `GeodesicDestination` trait to support geodesic destination calculations
+  <https://github.com/georust/geo/pull/991>
+- Added `GeodesicBearing` trait to support geodesic bearing calculations
+  <https://github.com/georust/geo/pull/991>
 
 ## 0.23.1
 

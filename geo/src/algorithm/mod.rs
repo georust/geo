@@ -86,11 +86,19 @@ pub use extremes::Extremes;
 pub mod frechet_distance;
 pub use frechet_distance::FrechetDistance;
 
+/// Calculate the bearing to another `Point` on a geodesic.
+pub mod geodesic_bearing;
+pub use geodesic_bearing::GeodesicBearing;
+
+/// Returns a new Point using a distance and bearing on a geodesic.
+pub mod geodesic_destination;
+pub use geodesic_destination::GeodesicDestination;
+
 /// Calculate the Geodesic distance between two `Point`s.
 pub mod geodesic_distance;
 pub use geodesic_distance::GeodesicDistance;
 
-/// Calculate the Geodesic area and perimeter of polygons
+/// Calculate the Geodesic area and perimeter of polygons.
 pub mod geodesic_area;
 pub use geodesic_area::GeodesicArea;
 
