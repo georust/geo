@@ -50,8 +50,12 @@ mod test {
     fn returns_a_new_point() {
         let p_1 = Point::new(9.177789688110352, 48.776781529534965);
         let p_2 = p_1.geodesic_destination(45., 10000.);
-        
-        assert_relative_eq!(p_2, Point::new(9.27411867078536, 48.8403266058781), epsilon = 1.0e-6);
+
+        assert_relative_eq!(
+            p_2,
+            Point::new(9.27411867078536, 48.8403266058781),
+            epsilon = 1.0e-6
+        );
 
         let distance = p_1.geodesic_distance(&p_2);
         assert_relative_eq!(distance, 10000., epsilon = 1.0e-6)
