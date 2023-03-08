@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+- Add new changes here.
+
 ## 0.7.9
 
 * Return `DoubleEndedIterator` from `LineString::points` and `LineString::points_mut`

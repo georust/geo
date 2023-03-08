@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+- Add new changes here.
+
 ## 0.24.0
 
 - BREAKING: Make `SimplifyVw` naming consistent
