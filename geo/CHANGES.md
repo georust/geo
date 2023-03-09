@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Add new changes here.
+- Speed up intersection checks
+  <https://github.com/georust/geo/pull/993>
 
 ## 0.24.0
 
