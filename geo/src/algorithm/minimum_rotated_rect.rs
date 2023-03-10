@@ -5,7 +5,7 @@ use crate::{
     Area, ConvexHull, CoordFloat, GeoFloat, GeoNum, LinesIter, Polygon,
 };
 /// Return the minimum bounding rectangle(MBR) of geometry
-/// reference: https://en.wikipedia.org/wiki/Minimum_bounding_box
+/// reference: <https://en.wikipedia.org/wiki/Minimum_bounding_box>
 /// minimum rotated rect is the rectangle that can enclose all points given
 /// and have smallest area of all enclosing rectangles
 /// the rect can be any-oriented, not only axis-aligned.
