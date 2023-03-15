@@ -39,7 +39,7 @@ where
             .map(|rdpindex| rdpindex.coord)
             .collect();
     debug_assert_eq!(simplified_coords.len(), simplified_len);
-    return simplified_coords;
+    simplified_coords
 }
 
 // Wrapper for the RDP algorithm, returning simplified point indices
@@ -64,7 +64,7 @@ where
             .map(|rdpindex| rdpindex.index)
             .collect::<Vec<usize>>();
     debug_assert_eq!(simplified_len, simplified_coords.len());
-    return simplified_coords;
+    simplified_coords
 }
 
 // Ramer–Douglas-Peucker line simplification algorithm
