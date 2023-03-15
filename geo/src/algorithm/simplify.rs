@@ -32,10 +32,14 @@ where
         .enumerate()
         .map(|(idx, coord)| RdpIndex { index: idx, coord })
         .collect::<Vec<RdpIndex<T>>>();
-    compute_rdp::<T, INITIAL_MIN>(rdp_indices, &mut rdp_indices.len(), epsilon)
-        .into_iter()
-        .map(|rdpindex| rdpindex.coord)
-        .collect()
+    let mut simplified_len = rdp_indices.len();
+    let simplified_coords: Vec<_> =
+        compute_rdp::<T, INITIAL_MIN>(rdp_indices, &mut simplified_len, epsilon)
+            .into_iter()
+            .map(|rdpindex| rdpindex.coord)
+            .collect();
+    debug_assert_eq!(simplified_coords.len(), simplified_len);
+    return simplified_coords;
 }
 
 // Wrapper for the RDP algorithm, returning simplified point indices
@@ -52,10 +56,15 @@ where
             .map(|rdp_index| rdp_index.index)
             .collect();
     }
-    compute_rdp::<T, INITIAL_MIN>(rdp_indices, &mut rdp_indices.len(), epsilon)
-        .into_iter()
-        .map(|rdpindex| rdpindex.index)
-        .collect::<Vec<usize>>()
+
+    let mut simplified_len = rdp_indices.len();
+    let simplified_coords =
+        compute_rdp::<T, INITIAL_MIN>(rdp_indices, &mut simplified_len, epsilon)
+            .into_iter()
+            .map(|rdpindex| rdpindex.index)
+            .collect::<Vec<usize>>();
+    debug_assert_eq!(simplified_len, simplified_coords.len());
+    return simplified_coords;
 }
 
 // Ramer–Douglas-Peucker line simplification algorithm
