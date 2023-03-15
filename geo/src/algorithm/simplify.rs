@@ -130,13 +130,15 @@ where
 
     // Update `simplified_len` to reflect the new number of indices by subtracting the number
     // of indices we're culling.
-    *simplified_len -= rdp_indices.len() - 2;
+    let number_culled = rdp_indices.len() - 2;
+    let new_length = *simplified_len - number_culled;
 
     // If `simplified_len` is now lower than the minimum number of indices needed, then don't
     // perform the culling and return the original input.
-    if *simplified_len <= INITIAL_MIN {
+    if new_length < INITIAL_MIN {
         return rdp_indices.to_owned();
     }
+    *simplified_len = new_length;
 
     // Cull indices between `first` and `last`.
     vec![first, last]
@@ -302,13 +304,14 @@ mod test {
 
     #[test]
     fn recursion_test() {
-        let vec = [
+        let input = [
             coord! { x: 8.0, y: 100.0 },
             coord! { x: 9.0, y: 100.0 },
             coord! { x: 12.0, y: 100.0 },
         ];
-        let simplified = rdp::<_, _, 2>(vec.into_iter(), &1.0);
-        assert_eq!(simplified, vec);
+        let actual = rdp::<_, _, 2>(input.into_iter(), &1.0);
+        let expected = [coord! { x: 8.0, y: 100.0 }, coord! { x: 12.0, y: 100.0 }];
+        assert_eq!(actual, expected);
     }
 
     #[test]
