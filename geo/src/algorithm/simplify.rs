@@ -468,4 +468,22 @@ mod test {
             result,
         );
     }
+
+    // https://github.com/georust/geo/issues/995
+    #[test]
+    fn dont_oversimplify() {
+        let unsimplified = line_string![
+            (x: 0.0, y: 0.0),
+            (x: 5.0, y: 4.0),
+            (x: 11.0, y: 5.5),
+            (x: 17.3, y: 3.2),
+            (x: 27.8, y: 0.1)
+        ];
+        let actual = unsimplified.simplify(&30.0);
+        let expected = line_string![
+            (x: 0.0, y: 0.0),
+            (x: 27.8, y: 0.1)
+        ];
+        assert_eq!(actual, expected);
+    }
 }
