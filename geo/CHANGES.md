@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Add new changes here.
+- FIX: Simplify no longer skips simplifying minimally sized Polygons and LineString
+  - <https://github.com/georust/geo/pull/996>
 
 ## 0.24.0
 
