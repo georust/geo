@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Rename Bearing::bearing to HaversineBearing::haversine_bearing to clarify it uses great circle calculations.
+  - <https://github.com/georust/geo/pull/999>
 - FIX: Simplify no longer skips simplifying minimally sized Polygons and LineString
   - <https://github.com/georust/geo/pull/996>
 
