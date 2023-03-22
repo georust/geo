@@ -69,7 +69,7 @@
 //!
 //! ## Query
 //!
-//! - **[`Bearing`](Bearing)**: Calculate the bearing between points
+//! - **[`HaversineBearing`]**: Calculate the bearing between points using great circle calculations.
 //! - **[`GeodesicBearing`](GeodesicBearing)**: Calculate the bearing between points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`ClosestPoint`](ClosestPoint)**: Find the point on a geometry
 //!   closest to a given point
@@ -145,7 +145,7 @@
 //! - **[`Centroid`](Centroid)**: Calculate the centroid of a geometry
 //! - **[`GeodesicDestination`](GeodesicDestination)**: Given a start point, bearing, and distance, calculate the destination point on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`GeodesicIntermediate`](GeodesicIntermediate)**: Calculate intermediate points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
-//! - **[`HaversineDestination`](HaversineDestination)**: Given a start point, bearing, and distance, calculate the destination point on a sphere
+//! - **[`HaversineDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere
 //! - **[`HaversineIntermediate`](HaversineIntermediate)**: Calculate intermediate points on a sphere
 //! - **[`proj`](proj)**: Project geometries with the `proj` crate (requires the `use-proj` feature)
 //! - **[`ChaikinSmoothing`](ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.

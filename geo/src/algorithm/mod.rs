@@ -7,8 +7,8 @@ pub mod area;
 pub use area::Area;
 
 /// Calculate the bearing to another `Point`, in degrees.
-pub mod bearing;
-pub use bearing::Bearing;
+pub mod haversine_bearing;
+pub use haversine_bearing::HaversineBearing;
 
 /// Boolean Ops such as union, xor, difference;
 pub mod bool_ops;
