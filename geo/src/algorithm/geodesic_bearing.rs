@@ -64,21 +64,40 @@ impl GeodesicBearing<f64> for Point<f64> {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use crate::point;
-    use crate::GeodesicBearing;
-    use crate::GeodesicDestination;
 
     #[test]
-    fn geodesic_bearing() {
-        let p_1 = point!(x: 9.177789688110352f64, y: 48.776781529534965);
-        let p_2 = p_1.geodesic_destination(45., 10000.);
-        let (b_1, d_1) = p_1.geodesic_bearing_distance(p_2);
-        assert_relative_eq!(b_1, 45., epsilon = 1.0e-6);
-        assert_relative_eq!(d_1, 10000.0, epsilon = 1.0e-6);
+    fn north_bearing() {
+        let p_1 = point!(x: 9., y: 47.);
+        let p_2 = point!(x: 9., y: 48.);
+        let bearing = p_1.geodesic_bearing(p_2);
+        assert_relative_eq!(bearing, 0.);
+    }
 
-        let p_3 = point!(x: 9., y: 47.);
-        let p_4 = point!(x: 9., y: 48.);
-        let b_2 = p_3.geodesic_bearing(p_4);
-        assert_relative_eq!(b_2, 0., epsilon = 1.0e-6);
+    #[test]
+    fn east_bearing() {
+        let p_1 = point!(x: 9., y: 10.);
+        let p_2 = point!(x: 18.118501133357412, y: 9.875322179340463);
+        let bearing = p_1.geodesic_bearing(p_2);
+        assert_relative_eq!(bearing, 90.);
+    }
+
+    #[test]
+    fn northeast_bearing() {
+        let p_1 = point!(x: 9.177789688110352f64, y: 48.776781529534965);
+        let p_2 = point!(x: 9.27411867078536, y: 48.8403266058781);
+        let bearing = p_1.geodesic_bearing(p_2);
+        assert_relative_eq!(bearing, 45., epsilon = 1.0e-11);
+    }
+
+    #[test]
+    fn consistent_with_destination() {
+        use crate::algorithm::GeodesicDestination;
+        let p_1 = point!(x: 9.177789688110352, y: 48.776781529534965);
+        let p_2 = p_1.geodesic_destination(45., 10000.);
+        let (bearing, distance) = p_1.geodesic_bearing_distance(p_2);
+        assert_relative_eq!(bearing, 45., epsilon = 1.0e-11);
+        assert_relative_eq!(distance, 10000.0, epsilon = 1.0e-9);
     }
 }
