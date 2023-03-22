@@ -3,7 +3,9 @@
 ## Unreleased
 
 - Speed up intersection checks
-  <https://github.com/georust/geo/pull/993>
+  - <https://github.com/georust/geo/pull/993>
+- FIX: Simplify no longer skips simplifying minimally sized Polygons and LineString
+  - <https://github.com/georust/geo/pull/996>
 
 ## 0.24.0
 
