@@ -7,7 +7,13 @@ pub mod area;
 pub use area::Area;
 
 /// Calculate the bearing to another `Point`, in degrees.
+#[deprecated(
+    since = "0.24.1",
+    note = "renamed to `haversine_bearing::HaversineBearing`"
+)]
 pub mod bearing;
+#[allow(deprecated)]
+#[deprecated(since = "0.24.1", note = "renamed to `HaversineBearing`")]
 pub use bearing::Bearing;
 
 /// Boolean Ops such as union, xor, difference;
@@ -109,6 +115,10 @@ pub use geodesic_intermediate::GeodesicIntermediate;
 /// Calculate the Geodesic length of a line.
 pub mod geodesic_length;
 pub use geodesic_length::GeodesicLength;
+
+/// Calculate the bearing to another `Point`, in degrees.
+pub mod haversine_bearing;
+pub use haversine_bearing::HaversineBearing;
 
 /// Calculate a destination `Point`, given a distance and a bearing.
 pub mod haversine_destination;
