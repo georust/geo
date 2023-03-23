@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.24.1
 
 - Rename Bearing::bearing to HaversineBearing::haversine_bearing to clarify it uses great circle calculations.
   - <https://github.com/georust/geo/pull/999>
