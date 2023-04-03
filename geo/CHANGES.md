@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `TriangulateEarcut` algorithm trait to triangulate polygons with the earcut algorithm.
+
 ## 0.25.0
 
 - Added `CrossTrackDistance` trait to calculate the distance from a point

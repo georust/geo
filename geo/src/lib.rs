@@ -100,6 +100,10 @@
 //!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
 //! - **[`Within`]**: Calculate if a geometry lies completely within another geometry.
 //!
+//! ## Triangulation
+//!
+//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm (requires the `earcutr` feature).
+//!
 //! ## Winding
 //!
 //! - **[`Orient`](Orient)**: Apply a specified winding [`Direction`](orient::Direction) to a [`Polygon`]’s interior and exterior rings

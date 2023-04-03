@@ -226,6 +226,12 @@ pub use transform::Transform;
 pub mod translate;
 pub use translate::Translate;
 
+/// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
+#[cfg(feature = "earcutr")]
+pub mod triangulate_earcut;
+#[cfg(feature = "earcutr")]
+pub use triangulate_earcut::TriangulateEarcut;
+
 /// Calculate the Vincenty distance between two `Point`s.
 pub mod vincenty_distance;
 pub use vincenty_distance::VincentyDistance;
