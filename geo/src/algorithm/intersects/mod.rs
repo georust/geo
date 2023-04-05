@@ -86,7 +86,7 @@ where
 // Helper function to check value lies between two bounds,
 // where the ordering of the bounds is not known
 #[inline]
-fn value_in_between<T>(value: T, bound_1: T, bound_2: T) -> bool
+pub(crate) fn value_in_between<T>(value: T, bound_1: T, bound_2: T) -> bool
 where
     T: std::cmp::PartialOrd,
 {
