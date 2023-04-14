@@ -269,7 +269,7 @@ where
     }
 }
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 macro_rules! impl_rstar_geometry {
     ($rstar:ident) => {
         impl<T> $rstar::RTreeObject for Geometry<T>
@@ -301,6 +301,9 @@ impl_rstar_geometry!(rstar_0_8);
 
 #[cfg(feature = "rstar_0_9")]
 impl_rstar_geometry!(rstar_0_9);
+
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_geometry!(rstar_0_10);
 
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for Geometry<T>

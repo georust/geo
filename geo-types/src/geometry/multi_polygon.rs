@@ -1,7 +1,7 @@
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 use crate::Point;
 use crate::{CoordNum, Polygon};
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 use num_traits::Bounded;
 
 use alloc::vec;
@@ -95,7 +95,7 @@ impl<T: CoordNum> MultiPolygon<T> {
     }
 }
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 macro_rules! impl_rstar_multi_polygon {
     ($rstar:ident) => {
         impl<T> $rstar::RTreeObject for MultiPolygon<T>
@@ -129,6 +129,9 @@ impl_rstar_multi_polygon!(rstar_0_8);
 
 #[cfg(feature = "rstar_0_9")]
 impl_rstar_multi_polygon!(rstar_0_9);
+
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_multi_polygon!(rstar_0_10);
 
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for MultiPolygon<T>

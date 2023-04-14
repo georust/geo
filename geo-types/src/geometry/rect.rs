@@ -1,6 +1,6 @@
 use crate::{coord, polygon, Coord, CoordFloat, CoordNum, Line, Polygon};
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 use crate::Point;
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -380,7 +380,7 @@ impl<T: CoordFloat> Rect<T> {
 
 static RECT_INVALID_BOUNDS_ERROR: &str = "Failed to create Rect: 'min' coordinate's x/y value must be smaller or equal to the 'max' x/y value";
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 macro_rules! impl_rstar_rect {
     ($rstar:ident) => {
         impl<T> $rstar::RTreeObject for Rect<T>
@@ -404,6 +404,9 @@ impl_rstar_rect!(rstar_0_8);
 
 #[cfg(feature = "rstar_0_9")]
 impl_rstar_rect!(rstar_0_9);
+
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_rect!(rstar_0_10);
 
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for Rect<T>

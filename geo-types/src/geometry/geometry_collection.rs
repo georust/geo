@@ -1,4 +1,4 @@
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 use crate::Point;
 use crate::{CoordNum, Geometry};
 use alloc::vec;
@@ -7,7 +7,7 @@ use alloc::vec::Vec;
 use approx::{AbsDiffEq, RelativeEq};
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 use num_traits::Bounded;
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
@@ -250,7 +250,7 @@ impl<'a, T: CoordNum> GeometryCollection<T> {
     }
 }
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 macro_rules! impl_rstar_geometry_collection {
     ($rstar:ident) => {
         impl<T> $rstar::RTreeObject for GeometryCollection<T>
@@ -288,6 +288,9 @@ impl_rstar_geometry_collection!(rstar_0_8);
 
 #[cfg(feature = "rstar_0_9")]
 impl_rstar_geometry_collection!(rstar_0_9);
+
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_geometry_collection!(rstar_0_10);
 
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for GeometryCollection<T>

@@ -1,6 +1,6 @@
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 use crate::Point;
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 use num_traits::Bounded;
 
 use crate::{CoordNum, LineString};
@@ -123,7 +123,7 @@ impl<T: CoordNum> MultiLineString<T> {
     }
 }
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 macro_rules! impl_rstar_multi_linestring {
     ($rstar:ident) => {
         impl<T> $rstar::RTreeObject for MultiLineString<T>
@@ -156,6 +156,9 @@ impl_rstar_multi_linestring!(rstar_0_8);
 
 #[cfg(feature = "rstar_0_9")]
 impl_rstar_multi_linestring!(rstar_0_9);
+
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_multi_linestring!(rstar_0_10);
 
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for MultiLineString<T>
