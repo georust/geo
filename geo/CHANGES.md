@@ -1,5 +1,9 @@
 # Changes
 
+## UNRELEASED
+
+- BREAKING: Remove deprecated `map_coords_inplace` (use `map_coords_in_place` instead)
+
 ## 0.24.1
 
 - Rename Bearing::bearing to HaversineBearing::haversine_bearing to clarify it uses great circle calculations.

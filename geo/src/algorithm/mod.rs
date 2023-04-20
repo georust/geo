@@ -171,8 +171,6 @@ pub use lines_iter::LinesIter;
 /// Apply a function to all `Coord`s of a `Geometry`.
 pub mod map_coords;
 pub use map_coords::{MapCoords, MapCoordsInPlace};
-#[allow(deprecated)]
-pub use map_coords::{MapCoordsInplace, TryMapCoords, TryMapCoordsInplace};
 
 /// Orient a `Polygon`'s exterior and interior rings.
 pub mod orient;
