@@ -40,30 +40,22 @@ fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
         });
 
         group.sample_size(10);
-        group.bench_with_input(BenchmarkId::new("bops::union", steps), &(), |b, _| {
-            b.iter_batched(
-                polys.sampler(),
-                |&(ref poly, ref poly2, _, _)| poly.intersection(poly2),
-                BatchSize::SmallInput,
-            );
-        });
-
         group.bench_with_input(
             BenchmarkId::new("bops::intersection", steps),
             &(),
             |b, _| {
                 b.iter_batched(
                     polys.sampler(),
-                    |&(ref poly, ref poly2, _, _)| poly.union(poly2),
+                    |&(ref poly, ref poly2, _, _)| poly.intersection(poly2),
                     BatchSize::SmallInput,
                 );
             },
         );
 
-        group.bench_with_input(BenchmarkId::new("rgbops::union", steps), &(), |b, _| {
+        group.bench_with_input(BenchmarkId::new("bops::union", steps), &(), |b, _| {
             b.iter_batched(
                 polys.sampler(),
-                |&(_, _, ref poly, ref poly2)| poly.intersection(poly2),
+                |&(ref poly, ref poly2, _, _)| poly.union(poly2),
                 BatchSize::SmallInput,
             );
         });
@@ -74,11 +66,19 @@ fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
             |b, _| {
                 b.iter_batched(
                     polys.sampler(),
-                    |&(_, _, ref poly, ref poly2)| poly.union(poly2),
+                    |&(_, _, ref poly, ref poly2)| OtherBooleanOp::intersection(poly, poly2),
                     BatchSize::SmallInput,
                 );
             },
         );
+
+        group.bench_with_input(BenchmarkId::new("rgbops::union", steps), &(), |b, _| {
+            b.iter_batched(
+                polys.sampler(),
+                |&(_, _, ref poly, ref poly2)| OtherBooleanOp::union(poly, poly2),
+                BatchSize::SmallInput,
+            );
+        });
 
         group.bench_with_input(BenchmarkId::new("geo::relate", steps), &(), |b, _| {
             b.iter_batched(

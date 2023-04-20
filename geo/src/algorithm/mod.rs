@@ -7,7 +7,13 @@ pub mod area;
 pub use area::Area;
 
 /// Calculate the bearing to another `Point`, in degrees.
+#[deprecated(
+    since = "0.24.1",
+    note = "renamed to `haversine_bearing::HaversineBearing`"
+)]
 pub mod bearing;
+#[allow(deprecated)]
+#[deprecated(since = "0.24.1", note = "renamed to `HaversineBearing`")]
 pub use bearing::Bearing;
 
 /// Boolean Ops such as union, xor, difference;
@@ -17,6 +23,10 @@ pub use bool_ops::{BooleanOps, OpType};
 /// Calculate the bounding rectangle of a `Geometry`.
 pub mod bounding_rect;
 pub use bounding_rect::BoundingRect;
+
+/// Calculate the minimum rotated rectangle of a `Geometry`.
+pub mod minimum_rotated_rect;
+pub use minimum_rotated_rect::MinimumRotatedRect;
 
 /// Calculate the centroid of a `Geometry`.
 pub mod centroid;
@@ -82,9 +92,21 @@ pub use extremes::Extremes;
 pub mod frechet_distance;
 pub use frechet_distance::FrechetDistance;
 
+/// Calculate the bearing to another `Point` on a geodesic.
+pub mod geodesic_bearing;
+pub use geodesic_bearing::GeodesicBearing;
+
+/// Returns a new Point using a distance and bearing on a geodesic.
+pub mod geodesic_destination;
+pub use geodesic_destination::GeodesicDestination;
+
 /// Calculate the Geodesic distance between two `Point`s.
 pub mod geodesic_distance;
 pub use geodesic_distance::GeodesicDistance;
+
+/// Calculate the Geodesic area and perimeter of polygons.
+pub mod geodesic_area;
+pub use geodesic_area::GeodesicArea;
 
 /// Calculate a new `Point` lying on a Geodesic arc between two `Point`s.
 pub mod geodesic_intermediate;
@@ -93,6 +115,10 @@ pub use geodesic_intermediate::GeodesicIntermediate;
 /// Calculate the Geodesic length of a line.
 pub mod geodesic_length;
 pub use geodesic_length::GeodesicLength;
+
+/// Calculate the bearing to another `Point`, in degrees.
+pub mod haversine_bearing;
+pub use haversine_bearing::HaversineBearing;
 
 /// Calculate a destination `Point`, given a distance and a bearing.
 pub mod haversine_destination;

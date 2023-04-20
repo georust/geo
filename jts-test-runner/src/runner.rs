@@ -17,7 +17,6 @@ const VALIDATE_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testx
 pub struct TestRunner {
     filename_filter: Option<String>,
     desc_filter: Option<String>,
-    check_overlay_precision: bool,
     cases: Option<Vec<TestCase>>,
     failures: Vec<TestFailure>,
     unsupported: Vec<TestCase>,
@@ -71,11 +70,6 @@ impl TestRunner {
         self
     }
 
-    pub fn with_overlay_precision_floating(mut self) -> Self {
-        self.check_overlay_precision = true;
-        self
-    }
-
     pub fn prepare_cases(&mut self) -> Result<()> {
         self.cases = Some(self.parse_cases()?);
         Ok(())
@@ -106,7 +100,7 @@ impl TestRunner {
                         (actual, expected) => {
                             debug!("Centroid failure: actual != expected");
                             let error_description =
-                                format!("expected {:?}, actual: {:?}", expected, actual);
+                                format!("expected {expected:?}, actual: {actual:?}");
                             self.failures.push(TestFailure {
                                 test_case,
                                 error_description,
@@ -126,8 +120,7 @@ impl TestRunner {
                     if relate_actual != *expected {
                         debug!("Contains failure: Relate doesn't match expected");
                         let error_description = format!(
-                            "Contains failure: expected {:?}, relate: {:?}",
-                            expected, relate_actual
+                            "Contains failure: expected {expected:?}, relate: {relate_actual:?}"
                         );
                         self.failures.push(TestFailure {
                             test_case,
@@ -138,8 +131,7 @@ impl TestRunner {
                             "Contains failure: Relate doesn't match Contains trait implementation"
                         );
                         let error_description = format!(
-                            "Contains failure - Relate.is_contains: {:?} doesn't match Contains trait: {:?}",
-                            expected, direct_actual
+                            "Contains failure - Relate.is_contains: {expected:?} doesn't match Contains trait: {direct_actual:?}"
                         );
                         self.failures.push(TestFailure {
                             test_case,
@@ -162,8 +154,7 @@ impl TestRunner {
                     if relate_within_result != *expected {
                         debug!("Within failure: Relate doesn't match expected");
                         let error_description = format!(
-                            "Within failure: expected {:?}, relate: {:?}",
-                            expected, relate_within_result
+                            "Within failure: expected {expected:?}, relate: {relate_within_result:?}"
                         );
                         self.failures.push(TestFailure {
                             test_case,
@@ -172,8 +163,7 @@ impl TestRunner {
                     } else if relate_within_result != within_trait_result {
                         debug!("Within failure: Relate doesn't match Within trait implementation");
                         let error_description = format!(
-                            "Within failure: Relate: {:?}, Within trait: {:?}",
-                            expected, within_trait_result
+                            "Within failure: Relate: {expected:?}, Within trait: {within_trait_result:?}"
                         );
                         self.failures.push(TestFailure {
                             test_case,
@@ -238,7 +228,7 @@ impl TestRunner {
                         Geometry::LineString(ext) => Polygon::new(ext.clone(), vec![]),
                         Geometry::Polygon(p) => p.clone(),
                         _ => {
-                            let error_description = format!("expected result for convex hull is not a polygon or a linestring: {:?}", expected);
+                            let error_description = format!("expected result for convex hull is not a polygon or a linestring: {expected:?}" );
                             self.failures.push(TestFailure {
                                 test_case,
                                 error_description,
@@ -252,7 +242,7 @@ impl TestRunner {
                     } else {
                         debug!("ConvexHull failure: actual != expected");
                         let error_description =
-                            format!("expected {:?}, actual: {:?}", expected, actual_polygon);
+                            format!("expected {expected:?}, actual: {actual_polygon:?}");
                         self.failures.push(TestFailure {
                             test_case,
                             error_description,
@@ -270,20 +260,16 @@ impl TestRunner {
 
                     if direct_actual != *expected {
                         debug!("Intersects failure: direct_actual != expected");
-                        let error_description = format!(
-                            "expected {:?}, direct_actual: {:?}",
-                            expected, direct_actual
-                        );
+                        let error_description =
+                            format!("expected {expected:?}, direct_actual: {direct_actual:?}",);
                         self.failures.push(TestFailure {
                             test_case,
                             error_description,
                         });
                     } else if relate_actual != *expected {
                         debug!("Intersects failure: relate_actual != expected");
-                        let error_description = format!(
-                            "expected {:?}, relate_actual: {:?}",
-                            expected, relate_actual
-                        );
+                        let error_description =
+                            format!("expected {expected:?}, relate_actual: {relate_actual:?}",);
                         self.failures.push(TestFailure {
                             test_case,
                             error_description,
@@ -302,7 +288,7 @@ impl TestRunner {
                     } else {
                         debug!("Relate failure: actual != expected");
                         let error_description =
-                            format!("expected {:?}, actual: {:?}", expected, actual);
+                            format!("expected {expected:?}, actual: {actual:?}");
                         self.failures.push(TestFailure {
                             test_case,
                             error_description,
@@ -415,7 +401,6 @@ impl TestRunner {
                     match test.operation_input.into_operation(&case) {
                         Ok(operation) => {
                             if matches!(operation, Operation::BooleanOp { .. })
-                                && self.check_overlay_precision
                                 && run.precision_model.is_some()
                                 && &run.precision_model.as_ref().unwrap().ty != "FLOATING"
                             {

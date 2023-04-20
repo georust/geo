@@ -15,7 +15,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::MismatchedGeometry { expected, found } => {
-                write!(f, "Expected a {}, but found a {}", expected, found)
+                write!(f, "Expected a {expected}, but found a {found}")
             }
         }
     }

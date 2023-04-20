@@ -1,5 +1,5 @@
 use crate::geometry::*;
-use crate::intersects::point_in_rect;
+use crate::intersects::value_in_between;
 use crate::kernels::*;
 use crate::{BoundingRect, HasDimensions, Intersects};
 use crate::{GeoNum, GeometryCow};
@@ -239,11 +239,6 @@ where
             return;
         }
 
-        // Ok to `unwrap` since we know `self` is non-empty, so bounding-rect is non-null
-        if !self.bounding_rect().unwrap().intersects(coord) {
-            return;
-        }
-
         match coord_pos_relative_to_ring(*coord, self.exterior()) {
             CoordPos::Outside => {}
             CoordPos::OnBoundary => {
@@ -371,21 +366,30 @@ where
     // See: https://en.wikipedia.org/wiki/Point_in_polygon#Winding_number_algorithm
     let mut winding_number = 0;
     for line in linestring.lines() {
+        // Edge Crossing Rules:
+        //   1. an upward edge includes its starting endpoint, and excludes its final endpoint;
+        //   2. a downward edge excludes its starting endpoint, and includes its final endpoint;
+        //   3. horizontal edges are excluded
+        //   4. the edge-ray intersection point must be strictly right of the coord.
         if line.start.y <= coord.y {
-            let o = T::Ker::orient2d(line.start, line.end, coord);
-            if o == Orientation::Collinear && point_in_rect(coord, line.start, line.end) {
-                return CoordPos::OnBoundary;
-            }
-            if line.end.y > coord.y && o == Orientation::CounterClockwise {
-                winding_number += 1;
-            }
+            if line.end.y >= coord.y {
+                let o = T::Ker::orient2d(line.start, line.end, coord);
+                if o == Orientation::CounterClockwise && line.end.y != coord.y {
+                    winding_number += 1
+                } else if o == Orientation::Collinear
+                    && value_in_between(coord.x, line.start.x, line.end.x)
+                {
+                    return CoordPos::OnBoundary;
+                }
+            };
         } else if line.end.y <= coord.y {
             let o = T::Ker::orient2d(line.start, line.end, coord);
-            if o == Orientation::Collinear && point_in_rect(coord, line.start, line.end) {
-                return CoordPos::OnBoundary;
-            }
             if o == Orientation::Clockwise {
-                winding_number -= 1;
+                winding_number -= 1
+            } else if o == Orientation::Collinear
+                && value_in_between(coord.x, line.start.x, line.end.x)
+            {
+                return CoordPos::OnBoundary;
             }
         }
     }
