@@ -1,5 +1,4 @@
-use crate::CoordNum;
-use crate::{Coord, LineString};
+use geo_types::{Coord, CoordNum, LineString};
 
 use super::point::PointTrait;
 use std::iter::Cloned;

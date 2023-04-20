@@ -1,5 +1,5 @@
 use super::GeometryTrait;
-use crate::{CoordNum, Geometry, GeometryCollection};
+use geo_types::{CoordNum, Geometry, GeometryCollection};
 use std::iter::Cloned;
 use std::slice::Iter;
 

@@ -1,6 +1,6 @@
-use crate::{Coord, CoordNum, Point};
+use geo_types::{Coord, CoordNum, Point};
 
-pub trait CoordTrait: Send + Sync {
+pub trait PointTrait: Send + Sync {
     type T: CoordNum + Send + Sync;
 
     /// x component of this coord
@@ -13,7 +13,7 @@ pub trait CoordTrait: Send + Sync {
     fn x_y(&self) -> (Self::T, Self::T);
 }
 
-impl<T: CoordNum + Send + Sync> CoordTrait for Point<T> {
+impl<T: CoordNum + Send + Sync> PointTrait for Point<T> {
     type T = T;
 
     fn x(&self) -> T {
@@ -29,7 +29,7 @@ impl<T: CoordNum + Send + Sync> CoordTrait for Point<T> {
     }
 }
 
-impl<T: CoordNum + Send + Sync> CoordTrait for &Point<T> {
+impl<T: CoordNum + Send + Sync> PointTrait for &Point<T> {
     type T = T;
 
     fn x(&self) -> T {
@@ -45,7 +45,7 @@ impl<T: CoordNum + Send + Sync> CoordTrait for &Point<T> {
     }
 }
 
-impl<T: CoordNum + Send + Sync> CoordTrait for Coord<T> {
+impl<T: CoordNum + Send + Sync> PointTrait for Coord<T> {
     type T = T;
 
     fn x(&self) -> T {
@@ -61,7 +61,7 @@ impl<T: CoordNum + Send + Sync> CoordTrait for Coord<T> {
     }
 }
 
-impl<T: CoordNum + Send + Sync> CoordTrait for &Coord<T> {
+impl<T: CoordNum + Send + Sync> PointTrait for &Coord<T> {
     type T = T;
 
     fn x(&self) -> T {

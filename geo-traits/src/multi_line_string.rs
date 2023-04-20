@@ -1,5 +1,5 @@
 use super::line_string::LineStringTrait;
-use crate::{CoordNum, LineString, MultiLineString};
+use geo_types::{CoordNum, LineString, MultiLineString};
 use std::iter::Cloned;
 use std::slice::Iter;
 

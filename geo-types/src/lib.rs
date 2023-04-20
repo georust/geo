@@ -127,9 +127,6 @@ pub use geometry::line_string::PointsIter;
 #[allow(deprecated)]
 pub use geometry::rect::InvalidRectCoordinatesError;
 
-pub mod traits;
-// pub use traits::*;
-
 mod error;
 pub use error::Error;
 

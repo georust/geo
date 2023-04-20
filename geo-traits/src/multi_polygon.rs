@@ -1,5 +1,5 @@
 use super::polygon::PolygonTrait;
-use crate::{CoordNum, MultiPolygon, Polygon};
+use geo_types::{CoordNum, MultiPolygon, Polygon};
 use std::iter::Cloned;
 use std::slice::Iter;
 

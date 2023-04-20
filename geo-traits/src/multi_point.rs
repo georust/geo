@@ -1,5 +1,5 @@
 use super::point::PointTrait;
-use crate::{CoordNum, MultiPoint, Point};
+use geo_types::{CoordNum, MultiPoint, Point};
 use std::iter::Cloned;
 use std::slice::Iter;
 
