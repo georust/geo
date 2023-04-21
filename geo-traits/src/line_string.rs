@@ -1,11 +1,11 @@
 use geo_types::{Coord, CoordNum, LineString};
 
-use super::point::PointTrait;
+use super::CoordTrait;
 use std::iter::Cloned;
 use std::slice::Iter;
 
 pub trait LineStringTrait<'a>: Send + Sync {
-    type ItemType: 'a + PointTrait;
+    type ItemType: 'a + CoordTrait;
     type Iter: Iterator<Item = Self::ItemType>;
 
     /// An iterator over the coords in this LineString
