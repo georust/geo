@@ -10,7 +10,9 @@ pub trait CoordTrait: Send + Sync {
     fn y(&self) -> Self::T;
 
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the coord.
-    fn x_y(&self) -> (Self::T, Self::T);
+    fn x_y(&self) -> (Self::T, Self::T) {
+        (self.x(), self.y())
+    }
 }
 
 impl<T: CoordNum + Send + Sync> CoordTrait for Point<T> {
@@ -22,10 +24,6 @@ impl<T: CoordNum + Send + Sync> CoordTrait for Point<T> {
 
     fn y(&self) -> T {
         self.0.y
-    }
-
-    fn x_y(&self) -> (T, T) {
-        (self.0.x, self.0.y)
     }
 }
 
@@ -39,10 +37,6 @@ impl<T: CoordNum + Send + Sync> CoordTrait for &Point<T> {
     fn y(&self) -> T {
         self.0.y
     }
-
-    fn x_y(&self) -> (T, T) {
-        (self.0.x, self.0.y)
-    }
 }
 
 impl<T: CoordNum + Send + Sync> CoordTrait for Coord<T> {
@@ -55,10 +49,6 @@ impl<T: CoordNum + Send + Sync> CoordTrait for Coord<T> {
     fn y(&self) -> T {
         self.y
     }
-
-    fn x_y(&self) -> (T, T) {
-        (self.x, self.y)
-    }
 }
 
 impl<T: CoordNum + Send + Sync> CoordTrait for &Coord<T> {
@@ -70,9 +60,5 @@ impl<T: CoordNum + Send + Sync> CoordTrait for &Coord<T> {
 
     fn y(&self) -> T {
         self.y
-    }
-
-    fn x_y(&self) -> (T, T) {
-        (self.x, self.y)
     }
 }
