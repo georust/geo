@@ -171,8 +171,6 @@ pub use lines_iter::LinesIter;
 /// Apply a function to all `Coord`s of a `Geometry`.
 pub mod map_coords;
 pub use map_coords::{MapCoords, MapCoordsInPlace};
-#[allow(deprecated)]
-pub use map_coords::{MapCoordsInplace, TryMapCoords, TryMapCoordsInplace};
 
 /// Orient a `Polygon`'s exterior and interior rings.
 pub mod orient;
@@ -193,9 +191,6 @@ pub use remove_repeated_points::RemoveRepeatedPoints;
 /// Rotate a `Geometry` by an angle given in degrees.
 pub mod rotate;
 pub use rotate::Rotate;
-#[doc(hidden)]
-#[allow(deprecated)]
-pub use rotate::RotatePoint;
 
 /// Scale a `Geometry` up or down by a factor
 pub mod scale;
