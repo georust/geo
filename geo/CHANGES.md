@@ -4,6 +4,7 @@
 
 - BREAKING: Remove deprecated `map_coords_inplace` (use `map_coords_in_place` instead)
 - BREAKING: Remove deprecated `RotatePoint` trait (use `Rotate` instead)
+- BREAKING: Remove deprecated `Translate#translate_inplace` trait (use `Translate#translate_mut` instead)
 
 ## 0.24.1
 
