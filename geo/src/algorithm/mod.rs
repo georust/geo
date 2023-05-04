@@ -191,9 +191,6 @@ pub use remove_repeated_points::RemoveRepeatedPoints;
 /// Rotate a `Geometry` by an angle given in degrees.
 pub mod rotate;
 pub use rotate::Rotate;
-#[doc(hidden)]
-#[allow(deprecated)]
-pub use rotate::RotatePoint;
 
 /// Scale a `Geometry` up or down by a factor
 pub mod scale;

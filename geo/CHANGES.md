@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - BREAKING: Remove deprecated `map_coords_inplace` (use `map_coords_in_place` instead)
+- BREAKING: Remove deprecated `RotatePoint` trait (use `Rotate` instead)
 
 ## 0.24.1
 
