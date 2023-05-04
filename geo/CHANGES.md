@@ -2,9 +2,11 @@
 
 ## UNRELEASED
 
-- BREAKING: Remove deprecated `map_coords_inplace` (use `map_coords_in_place` instead)
-- BREAKING: Remove deprecated `RotatePoint` trait (use `Rotate` instead)
-- BREAKING: Remove deprecated `Translate#translate_inplace` trait (use `Translate#translate_mut` instead)
+- BREAKING: Remove deprecated methods
+  - <https://github.com/georust/geo/pull/1012>
+  - Instead of `map_coords_inplace` use `map_coords_in_place`
+  - Instead of `RotatePoint` use `Rotate`
+  - Instead of `Translate#translate_inplace` use `Translate#translate_mut`
 
 ## 0.24.1
 
