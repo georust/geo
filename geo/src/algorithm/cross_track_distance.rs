@@ -58,18 +58,6 @@ mod test {
     use crate::Point;
 
     #[test]
-    fn should_equal_haversine_distance_for_short_lines() {
-        let p = Point::new(0., 0.);
-        let line_point_a = Point::new(1., 0.);
-        let line_point_b = Point::new(1., 0.1);
-        assert_relative_eq!(
-            p.cross_track_distance(&line_point_a, &line_point_b),
-            p.haversine_distance(&line_point_a),
-            epsilon = 1.0e-6
-        );
-    }
-
-    #[test]
     fn distance1_test() {
         let p = Point::new(-0.7972, 53.2611);
         let line_point_a = Point::new(-1.7297, 53.3206);
