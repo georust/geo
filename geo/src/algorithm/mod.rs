@@ -60,6 +60,10 @@ pub use convert::{Convert, TryConvert};
 pub mod convex_hull;
 pub use convex_hull::ConvexHull;
 
+/// Cross track distance
+pub mod cross_track_distance;
+pub use cross_track_distance::CrossTrackDistance;
+
 /// Determine whether a `Coord` lies inside, outside, or on the boundary of a geometry.
 pub mod coordinate_position;
 pub use coordinate_position::CoordinatePosition;
@@ -243,4 +247,6 @@ pub mod sweep;
 
 /// Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
 pub mod outlier_detection;
+
+
 pub use outlier_detection::OutlierDetection;

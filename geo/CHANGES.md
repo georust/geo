@@ -2,6 +2,9 @@
 
 ## UNRELEASED
 
+- Added `CrossTrackDistance` trait to calculate the distance from a point
+  to the nearest point on a line
+  - <https://github.com/georust/geo/pull/961>
 - BREAKING: Remove deprecated methods
   - <https://github.com/georust/geo/pull/1012>
   - Instead of `map_coords_inplace` use `map_coords_in_place`
@@ -89,7 +92,7 @@
   - <https://github.com/georust/geo/pull/880>
 - Removed deprecated `ToGeo` trait. Use `std::convert::TryFrom<$geometry>`
   instead.
-  - <https://github.com/georust/geo/pull/892>
+  * <https://github.com/georust/geo/pull/892>
 
 ## 0.22.1
 
