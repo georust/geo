@@ -1,6 +1,6 @@
-use num_traits::FromPrimitive;
-use geo_types::{CoordFloat, Point};
 use crate::{Bearing, HaversineDistance, MEAN_EARTH_RADIUS};
+use geo_types::{CoordFloat, Point};
+use num_traits::FromPrimitive;
 
 /// Determine the cross track distance (also known as the cross track error) which is the shortest
 /// distance between a point and a continuous line.
@@ -38,8 +38,8 @@ pub trait CrossTrackDistance<T, Rhs = Self> {
 }
 
 impl<T> CrossTrackDistance<T, Point<T>> for Point<T>
-    where
-        T: CoordFloat + FromPrimitive,
+where
+    T: CoordFloat + FromPrimitive,
 {
     fn cross_track_distance(&self, line_point_a: &Point<T>, line_point_b: &Point<T>) -> T {
         let mean_earth_radius = T::from(MEAN_EARTH_RADIUS).unwrap();
