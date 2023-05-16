@@ -5,6 +5,8 @@
 - Added `CrossTrackDistance` trait to calculate the distance from a point
   to the nearest point on a line
   - <https://github.com/georust/geo/pull/961>
+- Performance improvements for CoordinatePosition
+  - <https://github.com/georust/geo/pull/1004>
 - BREAKING: Remove deprecated methods
   - <https://github.com/georust/geo/pull/1012>
   - Instead of `map_coords_inplace` use `map_coords_in_place`
