@@ -1,6 +1,6 @@
 # Changes
 
-## UNRELEASED
+## 0.25.0
 
 - Added `CrossTrackDistance` trait to calculate the distance from a point
   to the nearest point on a line
