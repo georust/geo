@@ -32,10 +32,14 @@ where
         .enumerate()
         .map(|(idx, coord)| RdpIndex { index: idx, coord })
         .collect::<Vec<RdpIndex<T>>>();
-    compute_rdp::<T, INITIAL_MIN>(rdp_indices, &mut rdp_indices.len(), epsilon)
-        .into_iter()
-        .map(|rdpindex| rdpindex.coord)
-        .collect()
+    let mut simplified_len = rdp_indices.len();
+    let simplified_coords: Vec<_> =
+        compute_rdp::<T, INITIAL_MIN>(rdp_indices, &mut simplified_len, epsilon)
+            .into_iter()
+            .map(|rdpindex| rdpindex.coord)
+            .collect();
+    debug_assert_eq!(simplified_coords.len(), simplified_len);
+    simplified_coords
 }
 
 // Wrapper for the RDP algorithm, returning simplified point indices
@@ -52,10 +56,15 @@ where
             .map(|rdp_index| rdp_index.index)
             .collect();
     }
-    compute_rdp::<T, INITIAL_MIN>(rdp_indices, &mut rdp_indices.len(), epsilon)
-        .into_iter()
-        .map(|rdpindex| rdpindex.index)
-        .collect::<Vec<usize>>()
+
+    let mut simplified_len = rdp_indices.len();
+    let simplified_coords =
+        compute_rdp::<T, INITIAL_MIN>(rdp_indices, &mut simplified_len, epsilon)
+            .into_iter()
+            .map(|rdpindex| rdpindex.index)
+            .collect::<Vec<usize>>();
+    debug_assert_eq!(simplified_len, simplified_coords.len());
+    simplified_coords
 }
 
 // Ramer–Douglas-Peucker line simplification algorithm
@@ -121,13 +130,15 @@ where
 
     // Update `simplified_len` to reflect the new number of indices by subtracting the number
     // of indices we're culling.
-    *simplified_len -= rdp_indices.len() - 2;
+    let number_culled = rdp_indices.len() - 2;
+    let new_length = *simplified_len - number_culled;
 
     // If `simplified_len` is now lower than the minimum number of indices needed, then don't
     // perform the culling and return the original input.
-    if *simplified_len <= INITIAL_MIN {
+    if new_length < INITIAL_MIN {
         return rdp_indices.to_owned();
     }
+    *simplified_len = new_length;
 
     // Cull indices between `first` and `last`.
     vec![first, last]
@@ -293,13 +304,14 @@ mod test {
 
     #[test]
     fn recursion_test() {
-        let vec = [
+        let input = [
             coord! { x: 8.0, y: 100.0 },
             coord! { x: 9.0, y: 100.0 },
             coord! { x: 12.0, y: 100.0 },
         ];
-        let simplified = rdp::<_, _, 2>(vec.into_iter(), &1.0);
-        assert_eq!(simplified, vec);
+        let actual = rdp::<_, _, 2>(input.into_iter(), &1.0);
+        let expected = [coord! { x: 8.0, y: 100.0 }, coord! { x: 12.0, y: 100.0 }];
+        assert_eq!(actual, expected);
     }
 
     #[test]
@@ -467,5 +479,23 @@ mod test {
             ],
             result,
         );
+    }
+
+    // https://github.com/georust/geo/issues/995
+    #[test]
+    fn dont_oversimplify() {
+        let unsimplified = line_string![
+            (x: 0.0, y: 0.0),
+            (x: 5.0, y: 4.0),
+            (x: 11.0, y: 5.5),
+            (x: 17.3, y: 3.2),
+            (x: 27.8, y: 0.1)
+        ];
+        let actual = unsimplified.simplify(&30.0);
+        let expected = line_string![
+            (x: 0.0, y: 0.0),
+            (x: 27.8, y: 0.1)
+        ];
+        assert_eq!(actual, expected);
     }
 }

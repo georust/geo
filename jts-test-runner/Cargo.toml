@@ -8,8 +8,8 @@ approx = ">= 0.4.0, < 0.6.0"
 geo = { path = "../geo" }
 include_dir = { version = "0.7.2", features = ["glob"] }
 log = "0.4.14"
-serde =  { version = "1.0.105", features = ["derive"] }
-serde-xml-rs = "0.5.0"
+serde = { version = "1.0.105", features = ["derive"] }
+serde-xml-rs = "0.6.0"
 wkt = { version = "0.10.3", features = ["geo-types", "serde"] }
 
 [dev-dependencies]

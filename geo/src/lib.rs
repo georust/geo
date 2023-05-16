@@ -34,7 +34,8 @@
 //! ## Area
 //!
 //! - **[`Area`](Area)**: Calculate the planar area of a geometry
-//! - **[`ChamberlainDuquetteArea`](ChamberlainDuquetteArea)**: Calculate the geodesic area of a geometry
+//! - **[`ChamberlainDuquetteArea`](ChamberlainDuquetteArea)**: Calculate the geodesic area of a geometry on a sphere using the algorithm presented in _Some Algorithms for Polygons on a Sphere_ by Chamberlain and Duquette (2007)
+//! - **[`GeodesicArea`](GeodesicArea)**: Calculate the geodesic area and perimeter of a geometry on an ellipsoid using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
 //!
 //! ## Boolean Operations
 //!
@@ -62,13 +63,14 @@
 //!
 //! - **[`Simplify`](Simplify)**: Simplify a geometry using the Ramer–Douglas–Peucker algorithm
 //! - **[`SimplifyIdx`](SimplifyIdx)**: Calculate a simplified geometry using the Ramer–Douglas–Peucker algorithm, returning coordinate indices
-//! - **[`SimplifyVW`](SimplifyVW)**: Simplify a geometry using the Visvalingam-Whyatt algorithm
-//! - **[`SimplifyVWPreserve`](SimplifyVWPreserve)**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVw`](SimplifyVw)**: Simplify a geometry using the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVwPreserve`](SimplifyVwPreserve)**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
 //! - **[`SimplifyVwIdx`](SimplifyVwIdx)**: Calculate a simplified geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm, returning coordinate indices
 //!
 //! ## Query
 //!
-//! - **[`Bearing`](Bearing)**: Calculate the bearing between points
+//! - **[`HaversineBearing`]**: Calculate the bearing between points using great circle calculations.
+//! - **[`GeodesicBearing`](GeodesicBearing)**: Calculate the bearing between points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`ClosestPoint`](ClosestPoint)**: Find the point on a geometry
 //!   closest to a given point
 //! - **[`IsConvex`](IsConvex)**: Calculate the convexity of a
@@ -105,21 +107,19 @@
 //!
 //! ## Iteration
 //!
-//! - **[`CoordsIter`](CoordsIter)**: Iterate over the coordinates of a geometry
-//! - **[`MapCoords`](MapCoords)**: Map a function over all the coordinates
+//! - **[`CoordsIter`]**: Iterate over the coordinates of a geometry
+//! - **[`MapCoords`]**: Map a function over all the coordinates
 //!   in a geometry, returning a new geometry
-//! - **[`MapCoordsInplace`](MapCoordsInplace)**: Map a function over all the
+//! - **[`MapCoordsInPlace`]**: Map a function over all the
 //!   coordinates in a geometry in-place
-//! - **[`TryMapCoords`](TryMapCoords)**: Map a fallible function over all
-//!   the coordinates in a geometry, returning a new geometry wrapped in a `Result`
-//! - **[`TryMapCoordsInplace`](TryMapCoordsInplace)**: Map a fallible function over all
-//!   the coordinates in a geometry in-place
-//! - **[`LinesIter`](LinesIter)**: Iterate over lines of a geometry
+//! - **[`LinesIter`]**: Iterate over lines of a geometry
 //!
 //! ## Boundary
 //!
 //! - **[`BoundingRect`](BoundingRect)**: Calculate the axis-aligned
 //!   bounding rectangle of a geometry
+//! - **[`MinimumRotatedRect`](MinimumRotatedRect)**: Calculate the
+//!   minimum bounding box of a geometry
 //! - **[`ConcaveHull`](ConcaveHull)**: Calculate the concave hull of a
 //!   geometry
 //! - **[`ConvexHull`](ConvexHull)**: Calculate the convex hull of a
@@ -143,8 +143,10 @@
 //! ## Miscellaneous
 //!
 //! - **[`Centroid`](Centroid)**: Calculate the centroid of a geometry
-//! - **[`HaversineDestination`](HaversineDestination)**:
-//! - **[`HaversineIntermediate`](HaversineIntermediate)**:
+//! - **[`GeodesicDestination`](GeodesicDestination)**: Given a start point, bearing, and distance, calculate the destination point on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
+//! - **[`GeodesicIntermediate`](GeodesicIntermediate)**: Calculate intermediate points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
+//! - **[`HaversineDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere
+//! - **[`HaversineIntermediate`](HaversineIntermediate)**: Calculate intermediate points on a sphere
 //! - **[`proj`](proj)**: Project geometries with the `proj` crate (requires the `use-proj` feature)
 //! - **[`ChaikinSmoothing`](ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 //! - **[`Densify`](Densify)**: Densify linear geometry components by interpolating points

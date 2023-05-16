@@ -86,7 +86,7 @@ where
 // Helper function to check value lies between two bounds,
 // where the ordering of the bounds is not known
 #[inline]
-fn value_in_between<T>(value: T, bound_1: T, bound_2: T) -> bool
+pub(crate) fn value_in_between<T>(value: T, bound_1: T, bound_2: T) -> bool
 where
     T: std::cmp::PartialOrd,
 {
@@ -100,7 +100,7 @@ where
 // Helper function to check point lies inside rect given by
 // bounds.  The first bound need not be min.
 #[inline]
-fn point_in_rect<T>(value: Coord<T>, bound_1: Coord<T>, bound_2: Coord<T>) -> bool
+pub(crate) fn point_in_rect<T>(value: Coord<T>, bound_1: Coord<T>, bound_2: Coord<T>) -> bool
 where
     T: CoordNum,
 {

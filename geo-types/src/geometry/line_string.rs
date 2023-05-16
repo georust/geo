@@ -2,8 +2,10 @@
 use approx::{AbsDiffEq, RelativeEq};
 
 use crate::{Coord, CoordNum, Line, Point, Triangle};
-use std::iter::FromIterator;
-use std::ops::{Index, IndexMut};
+use alloc::vec;
+use alloc::vec::Vec;
+use core::iter::FromIterator;
+use core::ops::{Index, IndexMut};
 
 /// An ordered collection of two or more [`Coord`]s, representing a
 /// path between locations.
@@ -41,7 +43,7 @@ use std::ops::{Index, IndexMut};
 /// ]);
 /// ```
 ///
-/// Create a [`LineString`] with the [`line_string!`] macro:
+/// Create a [`LineString`] with the [`line_string!`][`crate::line_string!`] macro:
 ///
 /// ```
 /// use geo_types::line_string;
@@ -136,7 +138,7 @@ pub struct LineString<T: CoordNum = f64>(pub Vec<Coord<T>>);
 
 /// A [`Point`] iterator returned by the `points` method
 #[derive(Debug)]
-pub struct PointsIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coord<T>>);
+pub struct PointsIter<'a, T: CoordNum + 'a>(::core::slice::Iter<'a, Coord<T>>);
 
 impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
     type Item = Point<T>;
@@ -164,7 +166,7 @@ impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
 
 /// A [`Coord`] iterator used by the `into_iter` method on a [`LineString`]
 #[derive(Debug)]
-pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coord<T>>);
+pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::core::slice::Iter<'a, Coord<T>>);
 
 impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
     type Item = &'a Coord<T>;
@@ -358,7 +360,7 @@ impl<T: CoordNum, IC: Into<Coord<T>>> FromIterator<IC> for LineString<T> {
 /// Iterate over all the [`Coord`]s in this [`LineString`].
 impl<T: CoordNum> IntoIterator for LineString<T> {
     type Item = Coord<T>;
-    type IntoIter = ::std::vec::IntoIter<Coord<T>>;
+    type IntoIter = ::alloc::vec::IntoIter<Coord<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -374,12 +376,12 @@ impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
     }
 }
 
-/// Mutably iterate over all the [`Coordinate`]s in this [`LineString`]
+/// Mutably iterate over all the [`Coord`]s in this [`LineString`]
 impl<'a, T: CoordNum> IntoIterator for &'a mut LineString<T> {
     type Item = &'a mut Coord<T>;
-    type IntoIter = ::std::slice::IterMut<'a, Coord<T>>;
+    type IntoIter = ::core::slice::IterMut<'a, Coord<T>>;
 
-    fn into_iter(self) -> ::std::slice::IterMut<'a, Coord<T>> {
+    fn into_iter(self) -> ::core::slice::IterMut<'a, Coord<T>> {
         self.0.iter_mut()
     }
 }
@@ -478,7 +480,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
     }
 }
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 macro_rules! impl_rstar_line_string {
     ($rstar:ident) => {
         impl<T> ::$rstar::RTreeObject for LineString<T>
@@ -525,6 +527,9 @@ impl_rstar_line_string!(rstar_0_8);
 #[cfg(feature = "rstar_0_9")]
 impl_rstar_line_string!(rstar_0_9);
 
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_line_string!(rstar_0_10);
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -534,14 +539,15 @@ mod test {
     #[test]
     fn test_exact_size() {
         // see https://github.com/georust/geo/issues/762
-        let ls = LineString::new(vec![coord! { x: 0., y: 0. }, coord! { x: 10., y: 0. }]);
+        let first = coord! { x: 0., y: 0. };
+        let ls = LineString::new(vec![first, coord! { x: 10., y: 0. }]);
 
         // reference to force the `impl IntoIterator for &LineString` impl, giving a `CoordinatesIter`
         for c in (&ls).into_iter().rev().skip(1).rev() {
-            println!("{:?}", c);
+            assert_eq!(&first, c);
         }
-        for p in (&ls).points().rev().skip(1).rev() {
-            println!("{:?}", p);
+        for p in ls.points().rev().skip(1).rev() {
+            assert_eq!(Point::from(first), p);
         }
     }
 

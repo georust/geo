@@ -43,7 +43,7 @@ jobs:
       matrix:
         container_image:
           # Use the latest stable version. No need for older versions.
-          - "georust/geo-ci:rust-1.63"
+          - "georust/geo-ci:rust-1.66"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -67,16 +67,18 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:proj-9.0.0-rust-1.58"
-          # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:rust-1.62"
           - "georust/geo-ci:rust-1.63"
+          # Two most recent releases - we omit older ones for expedient CI
+          - "georust/geo-ci:rust-1.65"
+          - "georust/geo-ci:rust-1.66"
     container:
       image: ${{ matrix.container_image }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+      - run: rustup target add thumbv7em-none-eabihf
       - run: cargo check --all-targets --no-default-features
+      - run: cargo check --lib --target thumbv7em-none-eabihf --no-default-features -F use-rstar_0_9,serde
       - run: cargo test --all-features
 
   geo:
@@ -93,10 +95,10 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:proj-9.0.0-rust-1.58"
-          # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:rust-1.62"
           - "georust/geo-ci:rust-1.63"
+          # Two most recent releases - we omit older ones for expedient CI
+          - "georust/geo-ci:rust-1.65"
+          - "georust/geo-ci:rust-1.66"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -120,10 +122,10 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:proj-9.0.0-rust-1.58"
-          # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:rust-1.62"
           - "georust/geo-ci:rust-1.63"
+          # Two most recent releases - we omit older ones for expedient CI
+          - "georust/geo-ci:rust-1.65"
+          - "georust/geo-ci:rust-1.66"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -143,7 +145,7 @@ jobs:
       matrix:
         container_image:
           # Fuzz only on latest
-          - "georust/geo-ci:rust-1.63"
+          - "georust/geo-ci:rust-1.66"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -156,7 +158,7 @@ jobs:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     container:
-      image: georust/geo-ci:rust-1.63
+      image: georust/geo-ci:rust-1.66
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2

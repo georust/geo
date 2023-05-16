@@ -140,7 +140,7 @@ macro_rules! line_string {
     ) => {
         $crate::LineString::new(
             <[_]>::into_vec(
-                ::std::boxed::Box::new(
+                $crate::_alloc::Box::new(
                     [$($coord), *]
                 )
             )
@@ -263,7 +263,7 @@ macro_rules! polygon {
                 $($exterior_coord), *
             ],
             <[_]>::into_vec(
-                ::std::boxed::Box::new(
+                $crate::_alloc::Box::new(
                     [
                         $(
                             $crate::line_string![$($interior_coord),*]
@@ -287,7 +287,7 @@ macro_rules! polygon {
     ) => {
         $crate::Polygon::new(
             $crate::line_string![$($coord,)*],
-            vec![],
+            $crate::_alloc::vec![],
         )
     };
 }

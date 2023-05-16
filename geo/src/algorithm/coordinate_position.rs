@@ -1,6 +1,8 @@
 use crate::geometry::*;
-use crate::{coord, GeoNum, GeometryCow};
+use crate::intersects::value_in_between;
+use crate::kernels::*;
 use crate::{BoundingRect, HasDimensions, Intersects};
+use crate::{GeoNum, GeometryCow};
 
 /// The position of a `Coord` relative to a `Geometry`
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -237,11 +239,6 @@ where
             return;
         }
 
-        // Ok to `unwrap` since we know `self` is non-empty, so bounding-rect is non-null
-        if !self.bounding_rect().unwrap().intersects(coord) {
-            return;
-        }
-
         match coord_pos_relative_to_ring(*coord, self.exterior()) {
             CoordPos::Outside => {}
             CoordPos::OnBoundary => {
@@ -349,11 +346,6 @@ pub fn coord_pos_relative_to_ring<T>(coord: Coord<T>, linestring: &LineString<T>
 where
     T: GeoNum,
 {
-    // Use the ray-tracing algorithm: count #times a
-    // horizontal ray from point (to positive infinity).
-    //
-    // See: https://en.wikipedia.org/wiki/Point_in_polygon
-
     debug_assert!(linestring.is_closed());
 
     // LineString without points
@@ -370,71 +362,48 @@ where
         };
     }
 
-    let mut crossings = 0;
+    // Use winding number algorithm with on boundary short-cicuit
+    // See: https://en.wikipedia.org/wiki/Point_in_polygon#Winding_number_algorithm
+    let mut winding_number = 0;
     for line in linestring.lines() {
-        // Check if coord lies on the line
-        if line.intersects(&coord) {
-            return CoordPos::OnBoundary;
-        }
-
-        // Ignore if the line is strictly to the left of the coord.
-        let max_x = if line.start.x < line.end.x {
-            line.end.x
-        } else {
-            line.start.x
-        };
-        if max_x < coord.x {
-            continue;
-        }
-
-        // Ignore if line is horizontal. This includes an
-        // edge case where the ray would intersect a
-        // horizontal segment of the ring infinitely many
-        // times, and is irrelevant for the calculation.
-        if line.start.y == line.end.y {
-            continue;
-        }
-
-        // Ignore if the intersection of the line is
-        // possibly at the beginning/end of the line, and
-        // the line lies below the ray. This is to
-        // prevent a double counting when the ray passes
-        // through a vertex of the polygon.
-        //
-        // The below logic handles two cases:
-        //   1. if the ray enters/exits the polygon
-        //      at the point of intersection
-        //   2. if the ray touches a vertex,
-        //      but doesn't enter/exit at that point
-        if (line.start.y == coord.y && line.end.y < coord.y)
-            || (line.end.y == coord.y && line.start.y < coord.y)
-        {
-            continue;
-        }
-
-        // Otherwise, check if ray intersects the line
-        // segment. Enough to consider ray upto the max_x
-        // coordinate of the current segment.
-        let ray = Line::new(
-            coord,
-            coord! {
-                x: max_x,
-                y: coord.y,
-            },
-        );
-        if ray.intersects(&line) {
-            crossings += 1;
+        // Edge Crossing Rules:
+        //   1. an upward edge includes its starting endpoint, and excludes its final endpoint;
+        //   2. a downward edge excludes its starting endpoint, and includes its final endpoint;
+        //   3. horizontal edges are excluded
+        //   4. the edge-ray intersection point must be strictly right of the coord.
+        if line.start.y <= coord.y {
+            if line.end.y >= coord.y {
+                let o = T::Ker::orient2d(line.start, line.end, coord);
+                if o == Orientation::CounterClockwise && line.end.y != coord.y {
+                    winding_number += 1
+                } else if o == Orientation::Collinear
+                    && value_in_between(coord.x, line.start.x, line.end.x)
+                {
+                    return CoordPos::OnBoundary;
+                }
+            };
+        } else if line.end.y <= coord.y {
+            let o = T::Ker::orient2d(line.start, line.end, coord);
+            if o == Orientation::Clockwise {
+                winding_number -= 1
+            } else if o == Orientation::Collinear
+                && value_in_between(coord.x, line.start.x, line.end.x)
+            {
+                return CoordPos::OnBoundary;
+            }
         }
     }
-    if crossings % 2 == 1 {
-        CoordPos::Inside
-    } else {
+    if winding_number == 0 {
         CoordPos::Outside
+    } else {
+        CoordPos::Inside
     }
 }
 
 #[cfg(test)]
 mod test {
+    use geo_types::coord;
+
     use super::*;
     use crate::{line_string, point, polygon};
 
