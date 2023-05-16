@@ -1,4 +1,4 @@
-use crate::{Bearing, HaversineDistance, MEAN_EARTH_RADIUS};
+use crate::{HaversineBearing, HaversineDistance, MEAN_EARTH_RADIUS};
 use geo_types::{CoordFloat, Point};
 use num_traits::FromPrimitive;
 
@@ -44,8 +44,8 @@ where
     fn cross_track_distance(&self, line_point_a: &Point<T>, line_point_b: &Point<T>) -> T {
         let mean_earth_radius = T::from(MEAN_EARTH_RADIUS).unwrap();
         let l_delta_13: T = line_point_a.haversine_distance(self) / mean_earth_radius;
-        let theta_13: T = line_point_a.bearing(*self).to_radians();
-        let theta_12: T = line_point_a.bearing(*line_point_b).to_radians();
+        let theta_13: T = line_point_a.haversine_bearing(*self).to_radians();
+        let theta_12: T = line_point_a.haversine_bearing(*line_point_b).to_radians();
         let l_delta_xt: T = (l_delta_13.sin() * (theta_12 - theta_13).sin()).asin();
         mean_earth_radius * l_delta_xt.abs()
     }
