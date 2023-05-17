@@ -1,5 +1,7 @@
 # Changes
 
+## Unreleased
+
 ## 0.25.0
 
 - Added `CrossTrackDistance` trait to calculate the distance from a point
