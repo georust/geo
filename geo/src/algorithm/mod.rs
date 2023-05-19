@@ -60,9 +60,13 @@ pub use convert::{Convert, TryConvert};
 pub mod convex_hull;
 pub use convex_hull::ConvexHull;
 
-/// Cross track distance
+/// Determine the shortest distance between this point and a line which passes through line_point_a and line_point_b
 pub mod cross_track_distance;
 pub use cross_track_distance::CrossTrackDistance;
+
+/// Haversine distance from a point to the nearest point on a line
+pub mod haversine_distance_to_line;
+pub use haversine_distance_to_line::HaversineDistanceToLine;
 
 /// Determine whether a `Coord` lies inside, outside, or on the boundary of a geometry.
 pub mod coordinate_position;
