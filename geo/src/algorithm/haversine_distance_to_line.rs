@@ -13,9 +13,9 @@ impl<T: CoordFloat + FromPrimitive> HaversineDistanceToLine<T, Line<T>> for Poin
         let lines_start = Point::from(line.start);
         let lines_end = Point::from(line.end);
 
-        if is_inner_angle_between_points_obtuse(&self, &lines_start, &lines_end) {
+        if is_inner_angle_between_points_obtuse(self, &lines_start, &lines_end) {
             self.haversine_distance(&lines_start)
-        } else if is_inner_angle_between_points_obtuse(&self, &lines_end, &lines_start) {
+        } else if is_inner_angle_between_points_obtuse(self, &lines_end, &lines_start) {
             self.haversine_distance(&lines_end)
         } else {
             self.cross_track_distance(&lines_start, &lines_end)
@@ -47,13 +47,11 @@ fn inner_angle_between_three_points<T: CoordFloat + FromPrimitive>(
 
     let angle = (bearing_bc - bearing_ba).abs();
 
-    let inner_angle = if angle <= angle_180 {
+    if angle <= angle_180 {
         angle
     } else {
         angle_360 - angle
-    };
-
-    inner_angle
+    }
 }
 
 #[cfg(test)]
