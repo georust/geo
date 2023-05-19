@@ -4,14 +4,12 @@ use geo_types::{CoordFloat, Line, Point};
 
 use crate::{CrossTrackDistance, HaversineBearing, HaversineDistance};
 
-pub trait HaversineDistanceToLine<T, Rhs>
-{
+pub trait HaversineDistanceToLine<T, Rhs> {
     fn haversine_distance_to_line(&self, line: &Rhs) -> T;
 }
 
-impl<T: CoordFloat + FromPrimitive> HaversineDistanceToLine<T, Line<T>> for Point<T>
-{
-    fn haversine_distance_to_line(&self, line: &Line<T>) -> T{
+impl<T: CoordFloat + FromPrimitive> HaversineDistanceToLine<T, Line<T>> for Point<T> {
+    fn haversine_distance_to_line(&self, line: &Line<T>) -> T {
         let lines_start = Point::from(line.start);
         let lines_end = Point::from(line.end);
 
@@ -25,18 +23,23 @@ impl<T: CoordFloat + FromPrimitive> HaversineDistanceToLine<T, Line<T>> for Poin
     }
 }
 
-fn is_inner_angle_between_points_obtuse<T: CoordFloat + FromPrimitive>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> bool
-{
+fn is_inner_angle_between_points_obtuse<T: CoordFloat + FromPrimitive>(
+    a: &Point<T>,
+    b: &Point<T>,
+    c: &Point<T>,
+) -> bool {
     is_angle_obtuse(inner_angle_between_three_points(a, b, c))
 }
 
-fn is_angle_obtuse<T: CoordFloat + FromPrimitive>(angle: T) -> bool
-{
+fn is_angle_obtuse<T: CoordFloat + FromPrimitive>(angle: T) -> bool {
     angle > T::from(90.).unwrap()
 }
 
-fn inner_angle_between_three_points<T: CoordFloat + FromPrimitive>(a: &Point<T>, b: &Point<T>, c: &Point<T>) -> T
-{
+fn inner_angle_between_three_points<T: CoordFloat + FromPrimitive>(
+    a: &Point<T>,
+    b: &Point<T>,
+    c: &Point<T>,
+) -> T {
     let angle_180 = T::from(180.).unwrap();
     let angle_360 = T::from(360.).unwrap();
     let bearing_bc = b.haversine_bearing(*c);
@@ -44,7 +47,11 @@ fn inner_angle_between_three_points<T: CoordFloat + FromPrimitive>(a: &Point<T>,
 
     let angle = (bearing_bc - bearing_ba).abs();
 
-    let inner_angle = if angle <= angle_180 { angle } else { angle_360 - angle };
+    let inner_angle = if angle <= angle_180 {
+        angle
+    } else {
+        angle_360 - angle
+    };
 
     inner_angle
 }
@@ -115,5 +122,3 @@ mod test {
         );
     }
 }
-
-
