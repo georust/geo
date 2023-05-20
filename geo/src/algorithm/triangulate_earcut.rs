@@ -133,7 +133,7 @@ impl<T: CoordFloat> TriangulateEarcut<T> for Polygon<T> {
 /// The raw result of triangulating a polygon from `earcutr`.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Raw<T: CoordFloat> {
-    /// One-dimensional vector of polygon vertices (in XY order).
+    /// Flattened one-dimensional vector of polygon vertices (in XY order).
     pub vertices: Vec<T>,
 
     /// Indices of the triangles within the vertices vector.
