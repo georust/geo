@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add `TriangulateEarcut` algorithm trait to triangulate polygons with the earcut algorithm.
+  - <https://github.com/georust/geo/pull/1007>
+
 ## 0.25.0
 
 - Added `CrossTrackDistance` trait to calculate the distance from a point

@@ -12,11 +12,13 @@ edition = "2021"
 rust-version = "1.63"
 
 [features]
+default = ["earcutr"]
 use-proj = ["proj"]
 proj-network = ["use-proj", "proj/network"]
 use-serde = ["serde", "geo-types/serde"]
 
 [dependencies]
+earcutr = { version = "0.4.2", optional = true }
 float_next_after = "1.0.0"
 geo-types = { version = "0.7.9", features = ["approx", "use-rstar_0_10"] }
 geographiclib-rs = { version = "0.2.3", default-features = false }
