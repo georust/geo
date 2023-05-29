@@ -122,9 +122,9 @@ impl<T: CoordFloat> TriangulateEarcut<T> for Polygon<T> {
     fn earcut_traingles_raw(&self) -> RawTriangulation<T> {
         let input = polygon_to_earcutr_input(self);
         let triangle_indices =
-            earcutr::earcut(&input.vertexes, &input.interior_indexes, 2).unwrap();
+            earcutr::earcut(&input.vertices, &input.interior_indexes, 2).unwrap();
         RawTriangulation {
-            vertices: input.vertexes,
+            vertices: input.vertices,
             triangle_indices,
         }
     }
@@ -168,36 +168,36 @@ impl<T: CoordFloat> Iter<T> {
 }
 
 struct EarcutrInput<T: CoordFloat> {
-    pub vertexes: Vec<T>,
+    pub vertices: Vec<T>,
     pub interior_indexes: Vec<usize>,
 }
 
 fn polygon_to_earcutr_input<T: CoordFloat>(polygon: &crate::Polygon<T>) -> EarcutrInput<T> {
-    let mut vertexes = Vec::with_capacity(polygon.coords_count() * 2);
+    let mut vertices = Vec::with_capacity(polygon.coords_count() * 2);
     let mut interior_indexes = Vec::with_capacity(polygon.interiors().len());
     debug_assert!(polygon.exterior().0.len() >= 4);
 
-    flat_line_string_coords_2(polygon.exterior(), &mut vertexes);
+    flat_line_string_coords_2(polygon.exterior(), &mut vertices);
 
     for interior in polygon.interiors() {
         debug_assert!(interior.0.len() >= 4);
-        interior_indexes.push(vertexes.len() / 2);
-        flat_line_string_coords_2(interior, &mut vertexes);
+        interior_indexes.push(vertices.len() / 2);
+        flat_line_string_coords_2(interior, &mut vertices);
     }
 
     EarcutrInput {
-        vertexes,
+        vertices,
         interior_indexes,
     }
 }
 
 fn flat_line_string_coords_2<T: CoordFloat>(
     line_string: &crate::LineString<T>,
-    vertexes: &mut Vec<T>,
+    vertices: &mut Vec<T>,
 ) {
     for coord in &line_string.0 {
-        vertexes.push(coord.x);
-        vertexes.push(coord.y);
+        vertices.push(coord.x);
+        vertices.push(coord.y);
     }
 }
 
