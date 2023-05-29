@@ -86,7 +86,7 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///
     /// ```
     /// use geo::{coord, polygon, Triangle, TriangulateEarcut};
-    /// use geo::triangulate_earcut::Raw;
+    /// use geo::triangulate_earcut::RawTriangulation;
     ///
     /// let square_polygon = polygon![
     ///     (x: 0., y: 0.), // SW
@@ -99,7 +99,7 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     /// let mut triangles_raw = square_polygon.earcut_traingles_raw();
     ///
     /// assert_eq!(
-    ///     Raw {
+    ///     RawTriangulation {
     ///         vertices: vec![
     ///             0., 0., // SW
     ///             10., 0., // SE
@@ -115,15 +115,15 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///     triangles_raw,
     /// );
     /// ```
-    fn earcut_traingles_raw(&self) -> Raw<T>;
+    fn earcut_traingles_raw(&self) -> RawTriangulation<T>;
 }
 
 impl<T: CoordFloat> TriangulateEarcut<T> for Polygon<T> {
-    fn earcut_traingles_raw(&self) -> Raw<T> {
+    fn earcut_traingles_raw(&self) -> RawTriangulation<T> {
         let input = polygon_to_earcutr_input(self);
         let triangle_indices =
             earcutr::earcut(&input.vertexes, &input.interior_indexes, 2).unwrap();
-        Raw {
+        RawTriangulation {
             vertices: input.vertexes,
             triangle_indices,
         }
@@ -132,7 +132,7 @@ impl<T: CoordFloat> TriangulateEarcut<T> for Polygon<T> {
 
 /// The raw result of triangulating a polygon from `earcutr`.
 #[derive(Debug, PartialEq, Clone)]
-pub struct Raw<T: CoordFloat> {
+pub struct RawTriangulation<T: CoordFloat> {
     /// Flattened one-dimensional vector of polygon vertices (in XY order).
     pub vertices: Vec<T>,
 
@@ -141,7 +141,7 @@ pub struct Raw<T: CoordFloat> {
 }
 
 #[derive(Debug)]
-pub struct Iter<T: CoordFloat>(Raw<T>);
+pub struct Iter<T: CoordFloat>(RawTriangulation<T>);
 
 impl<T: CoordFloat> Iterator for Iter<T> {
     type Item = Triangle<T>;
