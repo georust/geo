@@ -255,3 +255,6 @@ pub mod sweep;
 pub mod outlier_detection;
 
 pub use outlier_detection::OutlierDetection;
+
+/// Monotone Polygon Decomposition
+pub mod monotone;
