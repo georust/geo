@@ -15,7 +15,7 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///     (x: 0., y: 0.), // SW
     /// ];
     ///
-    /// let triangles = square_polygon.earcut_traingles();
+    /// let triangles = square_polygon.earcut_triangles();
     ///
     /// assert_eq!(
     ///     vec![
@@ -33,8 +33,8 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///     triangles,
     /// );
     /// ```
-    fn earcut_traingles(&self) -> Vec<Triangle<T>> {
-        self.earcut_traingles_iter().collect()
+    fn earcut_triangles(&self) -> Vec<Triangle<T>> {
+        self.earcut_triangles_iter().collect()
     }
 
     /// # Examples
@@ -50,7 +50,7 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///     (x: 0., y: 0.), // SW
     /// ];
     ///
-    /// let mut triangles_iter = square_polygon.earcut_traingles_iter();
+    /// let mut triangles_iter = square_polygon.earcut_triangles_iter();
     ///
     /// assert_eq!(
     ///     Some(Triangle(
@@ -72,13 +72,13 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///
     /// assert!(triangles_iter.next().is_none());
     /// ```
-    fn earcut_traingles_iter(&self) -> Iter<T> {
-        Iter(self.earcut_traingles_raw())
+    fn earcut_triangles_iter(&self) -> Iter<T> {
+        Iter(self.earcut_triangles_raw())
     }
 
     /// Return the raw result from the `earcutr` library: a one-dimensional vector of polygon
     /// vertices (in XY order), and the indicies of the triangles within the vertices vector. This
-    /// method is less ergonomic than the `earcut_traingles` and `earcut_traingles_iter`
+    /// method is less ergonomic than the `earcut_triangles` and `earcut_triangles_iter`
     /// methods, but can be helpful when working in graphics contexts that expect flat vectors of
     /// data.
     ///
@@ -96,7 +96,7 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///     (x: 0., y: 0.), // SW
     /// ];
     ///
-    /// let mut triangles_raw = square_polygon.earcut_traingles_raw();
+    /// let mut triangles_raw = square_polygon.earcut_triangles_raw();
     ///
     /// assert_eq!(
     ///     RawTriangulation {
@@ -115,11 +115,11 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///     triangles_raw,
     /// );
     /// ```
-    fn earcut_traingles_raw(&self) -> RawTriangulation<T>;
+    fn earcut_triangles_raw(&self) -> RawTriangulation<T>;
 }
 
 impl<T: CoordFloat> TriangulateEarcut<T> for Polygon<T> {
-    fn earcut_traingles_raw(&self) -> RawTriangulation<T> {
+    fn earcut_triangles_raw(&self) -> RawTriangulation<T> {
         let input = polygon_to_earcutr_input(self);
         let triangle_indices =
             earcutr::earcut(&input.vertices, &input.interior_indexes, 2).unwrap();
@@ -215,7 +215,7 @@ mod test {
             (x: 0., y: 0.),
         ];
 
-        let triangles = triangle_polygon.earcut_traingles();
+        let triangles = triangle_polygon.earcut_triangles();
 
         assert_eq!(
             &[Triangle(
@@ -237,7 +237,7 @@ mod test {
             (x: 0., y: 0.),
         ];
 
-        let mut triangles = square_polygon.earcut_traingles();
+        let mut triangles = square_polygon.earcut_triangles();
         triangles.sort_by(|t1, t2| t1.1.x.partial_cmp(&t2.2.x).unwrap());
 
         assert_eq!(
