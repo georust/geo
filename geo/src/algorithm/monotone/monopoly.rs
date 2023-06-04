@@ -1,8 +1,8 @@
 use geo_types::Line;
 
 use crate::{
-    coordinate_position::CoordPos, sweep::SweepPoint, BoundingRect, Coord, CoordinatePosition,
-    GeoNum, HasKernel, Kernel, LineString, Orientation, Polygon, Rect,
+    sweep::SweepPoint, BoundingRect, Coord, CoordinatePosition, GeoNum, HasKernel, Kernel,
+    LineString, Orientation, Polygon, Rect,
 };
 
 /// Monotone polygon
@@ -82,14 +82,14 @@ impl<T: GeoNum> MonoPoly<T> {
     }
 
     /// Get the pair of segments in the chain that intersect the Y-axis at the given x-coordinate.
-    pub fn bounding_segment(&self, x: T) -> Option<(Line<T>, Line<T>)> {
+    pub fn bounding_segment(&self, pt: Coord<T>) -> Option<(Line<T>, Line<T>)> {
         // binary search for the segment that contains the x coordinate.
 
-        let tl_idx = match self
-            .top
-            .0
-            .binary_search_by(|coord| coord.x.partial_cmp(&x).unwrap())
-        {
+        let tl_idx = match self.top.0.binary_search_by(|coord| {
+            SweepPoint::from(pt)
+                .partial_cmp(&SweepPoint::from(*coord))
+                .unwrap()
+        }) {
             Ok(idx) => {
                 if idx == self.top.0.len() - 1 {
                     idx - 1
@@ -105,11 +105,11 @@ impl<T: GeoNum> MonoPoly<T> {
                 }
             }
         };
-        let bl_idx = match self
-            .bot
-            .0
-            .binary_search_by(|coord| coord.x.partial_cmp(&x).unwrap())
-        {
+        let bl_idx = match self.bot.0.binary_search_by(|coord| {
+            SweepPoint::from(pt)
+                .partial_cmp(&SweepPoint::from(*coord))
+                .unwrap()
+        }) {
             Ok(idx) => {
                 if idx == self.bot.0.len() - 1 {
                     idx - 1
@@ -153,7 +153,7 @@ impl<T: GeoNum> CoordinatePosition for MonoPoly<T> {
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        let (top, bot) = if let Some(t) = self.bounding_segment(coord.x) {
+        let (top, bot) = if let Some(t) = self.bounding_segment(*coord) {
             t
         } else {
             return;
