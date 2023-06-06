@@ -1,24 +1,58 @@
-use geo_types::polygon;
-use wkt::ToWkt;
+use std::{fmt::Display, str::FromStr};
 
-use crate::monotone::monotone_subdivision;
+use geo_types::Polygon;
+use num_traits::Signed;
+use wkt::{ToWkt, TryFromWkt};
+
+use crate::{area::twice_signed_ring_area, monotone::monotone_subdivision, GeoNum};
+
+pub(super) fn init_log() {
+    use pretty_env_logger::env_logger;
+    use std::io::Write;
+    let _ = env_logger::builder()
+        .format(|buf, record| writeln!(buf, "[{}] - {}", record.level(), record.args()))
+        // .filter_level(log::LevelFilter::Info)
+        .is_test(true)
+        .try_init();
+}
+
+fn twice_polygon_area<T: GeoNum + Signed>(poly: &Polygon<T>) -> T {
+    let mut area = twice_signed_ring_area(&poly.exterior()).abs();
+    for interior in poly.interiors() {
+        area = area - twice_signed_ring_area(interior).abs();
+    }
+    area
+}
+
+fn check_monotone_subdivision<T: GeoNum + Signed + Display + FromStr + Default>(wkt: &str) {
+    init_log();
+
+    let input = Polygon::<T>::try_from_wkt_str(wkt).unwrap();
+    let area = twice_polygon_area(&input);
+    let subdivisions = monotone_subdivision(input);
+    eprintln!("Got {} subdivisions", subdivisions.len());
+
+    let mut sub_area = T::zero();
+    for div in subdivisions {
+        sub_area = sub_area + twice_polygon_area(&div.clone().into_polygon());
+        let (top, bot) = div.into_ls_pair();
+        eprintln!("top: {}", top.to_wkt());
+        eprintln!("bot: {}", bot.to_wkt());
+    }
+
+    assert_eq!(area, sub_area);
+}
 
 #[test]
 fn test_monotone_subdivision_simple() {
-    let input = polygon!(
-        exterior: [
-            (x: 0, y: 0),
-            (x: 5, y: 5),
-            (x: 3, y: 0),
-            (x: 5, y: -5),
-        ],
-        interiors: [],
-    );
-    eprintln!("input: {}", input.to_wkt());
+    let input = "POLYGON((0 0,5 5,3 0,5 -5,0 0))";
+    eprintln!("input: {}", input);
+    check_monotone_subdivision::<i64>(&input);
+}
 
-    let subdivisions = monotone_subdivision(input);
-    eprintln!("Got {} subdivisions", subdivisions.len());
-    for div in subdivisions {
-        eprintln!("subdivision: {:?}", div);
-    }
+#[test]
+fn test_monotone_subdivision_merge_split() {
+    let input = "POLYGON((-5 -5, -3 0, -5 5, 5 5,3 0,5 -5))";
+    eprintln!("input: {}", input);
+    check_monotone_subdivision::<i64>(&input);
 }

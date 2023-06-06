@@ -10,6 +10,7 @@ use crate::{
 /// A monotone polygon is a polygon that can be decomposed into two
 /// monotone chains (along the X-axis). This implies any vertical line
 /// intersects the polygon at most twice (or not at all).
+#[derive(Clone, PartialEq)]
 pub struct MonoPoly<T: GeoNum> {
     top: LineString<T>,
     bot: LineString<T>,

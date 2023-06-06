@@ -4,7 +4,6 @@ use std::ops::Bound;
 use std::{
     collections::{BTreeSet, BinaryHeap},
     fmt::Debug,
-    rc::Rc,
 };
 
 use super::{RcSegment, Segment};

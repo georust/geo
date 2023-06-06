@@ -10,7 +10,7 @@
 
 use super::{MonoPoly, SimpleSweep};
 use crate::{
-    sweep::{EventType, LineOrPoint, SweepPoint},
+    sweep::{EventType, LineOrPoint},
     *,
 };
 use std::{cell::Cell, mem::replace};
@@ -73,6 +73,8 @@ impl<T: GeoNum> Builder<T> {
         incoming.sort_by(|a, b| a.partial_cmp(b).unwrap());
         outgoing.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
+        info!("processing point {:?}", pt);
+
         // Step 2. Calculate region below the point, and if any previous point
         // registered a help.
         let bot_segment = self.sweep.prev_active_from_geom(pt.into());
@@ -103,12 +105,14 @@ impl<T: GeoNum> Builder<T> {
                 // Any help registered on the first segment should be considered.
                 if let Some(help) = first.payload().help.get() {
                     first.payload().help.set(None);
-                    let fhc = self.chains[help[0]].take().unwrap();
-                    let shc = self.chains[help[1]].take().unwrap();
-                    self.outputs.push(fc.finish_with(fhc, *pt));
-                    self.outputs.push(shc.finish_with(sc, *pt));
+                    let mut fhc = self.chains[help[0]].take().unwrap();
+                    let mut shc = self.chains[help[1]].take().unwrap();
+                    fhc.push(*pt);
+                    shc.push(*pt);
+                    self.outputs.push(fc.finish_with(fhc));
+                    self.outputs.push(shc.finish_with(sc));
                 } else {
-                    self.outputs.push(fc.finish_with(sc, *pt));
+                    self.outputs.push(fc.finish_with(sc));
                 }
             }
         }
@@ -121,14 +125,17 @@ impl<T: GeoNum> Builder<T> {
                 let sc = self.chains[incoming[0].payload().chain_idx.get()]
                     .take()
                     .unwrap();
-                let shc = self.chains[h[1]].take().unwrap();
-                self.outputs.push(shc.finish_with(sc, *pt));
+                let mut shc = self.chains[h[1]].take().unwrap();
+                shc.push(*pt);
+                self.outputs.push(shc.finish_with(sc));
                 if incoming.len() == 1 {
                     (Some(h[0]), None)
                 } else {
                     (Some(h[0]), Some(incoming[1].payload().chain_idx.get()))
                 }
             } else {
+                self.chains[h[0]].as_mut().unwrap().push(*pt);
+                self.chains[h[1]].as_mut().unwrap().push(*pt);
                 (Some(h[0]), Some(h[1]))
             }
         } else {
@@ -167,13 +174,6 @@ impl<T: GeoNum> Builder<T> {
         }
         debug_assert!(outgoing.len() <= 2);
 
-        // TODO: This is not needed; the below should handle setting regions.
-        let mut curr_region = bot_region;
-        outgoing.iter().for_each(|seg| {
-            curr_region = !curr_region;
-            seg.payload().next_is_inside.set(curr_region);
-        });
-
         // Step 5. Tie up incoming and outgoing as applicable
         match in_chains {
             (None, None) => {
@@ -192,7 +192,9 @@ impl<T: GeoNum> Builder<T> {
                         .helper_chain
                         .get()
                         .unwrap_or_else(|| bot_segment.payload().chain_idx.get());
-                    let new_chains = self.chains[idx].as_mut().unwrap().swap_at_top(*pt);
+                    let mut new_chains = self.chains[idx].as_mut().unwrap().swap_at_top(*pt);
+                    new_chains[0].push(*first.line().right());
+                    new_chains[1].push(*second.line().right());
                     self.chains.extend(new_chains.map(Some));
                     first.payload().next_is_inside.set(false);
                     second.payload().next_is_inside.set(true);
@@ -219,6 +221,8 @@ impl<T: GeoNum> Builder<T> {
                     self.chains[jdx].as_mut().unwrap().push(*top);
                     first.payload().next_is_inside.set(true);
                     second.payload().next_is_inside.set(false);
+                    first.payload().chain_idx.set(idx);
+                    second.payload().chain_idx.set(jdx);
                 } else {
                     bot_segment.unwrap().payload().help.set(Some([idx, jdx]));
                 }
@@ -234,6 +238,7 @@ pub(super) struct Chain<T: GeoNum>(LineString<T>);
 
 impl<T: GeoNum> Chain<T> {
     pub fn from_segment_pair(start: Coord<T>, first: Coord<T>, second: Coord<T>) -> [Self; 2] {
+        info!("Creating chain from {:?} {:?} {:?}", start, first, second);
         [
             Chain(line_string![start, first]),
             Chain(line_string![start, second]),
@@ -258,13 +263,17 @@ impl<T: GeoNum> Chain<T> {
     }
 
     pub fn push(&mut self, pt: Coord<T>) {
+        info!("chain push: {:?} -> {:?}", self.0 .0.last().unwrap(), pt);
         self.0 .0.push(pt);
     }
 
-    pub fn finish_with(mut self, mut other: Self, pt: Coord<T>) -> MonoPoly<T> {
+    pub fn finish_with(self, other: Self) -> MonoPoly<T> {
         assert!(self.0 .0[0] == other.0 .0[0]);
-        self.0 .0.push(pt);
-        other.0 .0.push(pt);
+        if self.0 .0.last() != other.0 .0.last() {
+            eprintln!("assertion failed!");
+            eprintln!("self: {:?}", self.0 .0);
+            eprintln!("other: {:?}", other.0 .0);
+        }
         MonoPoly::new(other.0, self.0)
     }
 }
