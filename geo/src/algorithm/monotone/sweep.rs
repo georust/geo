@@ -1,4 +1,4 @@
-use crate::sweep::{Active, Event, EventType, SweepPoint};
+use crate::sweep::{Active, Event, EventType, LineOrPoint, SweepPoint};
 use crate::GeoNum;
 use std::ops::Bound;
 use std::{
@@ -7,7 +7,7 @@ use std::{
     rc::Rc,
 };
 
-use super::Segment;
+use super::{RcSegment, Segment};
 
 /// Simple planar sweep algorithm.
 ///
@@ -30,8 +30,8 @@ use super::Segment;
 /// maintain a fixed ordering along all common sweep lines, ties broken
 /// arbitrarily.
 pub(crate) struct SimpleSweep<T: GeoNum, P: Debug> {
-    events: BinaryHeap<Event<T, Rc<Segment<T, P>>>>,
-    active_segments: BTreeSet<Active<Rc<Segment<T, P>>>>,
+    events: BinaryHeap<Event<T, RcSegment<T, P>>>,
+    active_segments: BTreeSet<Active<RcSegment<T, P>>>,
 }
 
 impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
@@ -49,7 +49,7 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
         let active_segments = BTreeSet::new();
 
         for cr in iter {
-            let segment = Rc::new(cr.into());
+            let segment = RcSegment::from(cr.into());
             events.extend(segment.events());
         }
 
@@ -67,7 +67,7 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
     /// before the ones starting at the current sweep point.  The idx of the
     /// first segment starting at the current sweep point is returned in the
     /// `split_idx` parameter.
-    pub(crate) fn next_point<F: FnMut(Rc<Segment<T, P>>, EventType)>(
+    pub(crate) fn next_point<F: FnMut(RcSegment<T, P>, EventType)>(
         &mut self,
         mut f: F,
     ) -> Option<SweepPoint<T>> {
@@ -89,14 +89,14 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
 
     /// Process the next event in heap.
     #[inline]
-    pub(super) fn next_event(&mut self) -> Option<Event<T, Rc<Segment<T, P>>>> {
+    pub(super) fn next_event(&mut self) -> Option<Event<T, RcSegment<T, P>>> {
         self.events.pop().map(|event| {
             let _segment = self.handle_event(&event);
             event
         })
     }
 
-    fn handle_event(&mut self, event: &Event<T, Rc<Segment<T, P>>>) {
+    fn handle_event(&mut self, event: &Event<T, RcSegment<T, P>>) {
         use EventType::*;
         let segment = &event.payload;
         trace!(
@@ -122,21 +122,11 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
         self.events.peek().map(|e| e.point)
     }
 
-    /// Returns the active segment, strictly before the current segment.
-    pub(super) fn prev_active_segments(
-        &self,
-        segment: &Rc<Segment<T, P>>,
-    ) -> impl Iterator<Item = Rc<Segment<T, P>>> + '_ {
+    pub(super) fn prev_active_from_geom(&self, geom: LineOrPoint<T>) -> Option<RcSegment<T, P>> {
         self.active_segments
-            .range::<Active<_>, _>((
-                Bound::Unbounded,
-                Bound::Excluded(Active::active_ref(segment)),
-            ))
+            .range::<Active<_>, _>((Bound::Unbounded, Bound::Excluded(Active::active_ref(&geom))))
             .rev()
             .map(|a| a.0.clone())
-    }
-
-    pub(crate) fn prev_active(&self, segment: &Rc<Segment<T, P>>) -> Option<Rc<Segment<T, P>>> {
-        self.prev_active_segments(segment).next()
+            .next()
     }
 }

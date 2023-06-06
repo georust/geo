@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, fmt::Debug, rc::Rc};
 
-use crate::sweep::{Event, EventType, LineOrPoint};
+use crate::sweep::{Active, Event, EventType, LineOrPoint};
 use crate::GeoNum;
 
 /// A segment in the sweep line algorithm.
@@ -12,41 +12,7 @@ pub(crate) struct Segment<T: GeoNum, P> {
     payload: P,
 }
 
-impl<T: GeoNum, P> Segment<T, P> {
-    pub fn events(self: Rc<Self>) -> [Event<T, Rc<Segment<T, P>>>; 2] {
-        let geom = self.line;
-        let left = geom.left();
-        let right = geom.right();
-        [
-            Event {
-                point: left,
-                ty: if geom.is_line() {
-                    EventType::LineLeft
-                } else {
-                    EventType::PointLeft
-                },
-                payload: self.clone(),
-            },
-            Event {
-                point: right,
-                ty: if geom.is_line() {
-                    EventType::LineRight
-                } else {
-                    EventType::PointRight
-                },
-                payload: self.clone(),
-            },
-        ]
-    }
-
-    pub(crate) fn payload(&self) -> &P {
-        &self.payload
-    }
-
-    pub(crate) fn line(&self) -> LineOrPoint<T> {
-        self.line
-    }
-}
+impl<T: GeoNum, P> Segment<T, P> {}
 
 impl<T: GeoNum, P> PartialOrd for Segment<T, P> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
@@ -72,7 +38,56 @@ impl<T: GeoNum, P> From<(LineOrPoint<T>, P)> for Segment<T, P> {
     }
 }
 
-pub(super) struct RcSegment<T: GeoNum, P>(Rc<Segment<T, P>>);
+#[derive(Debug)]
+pub(crate) struct RcSegment<T: GeoNum, P>(Rc<Segment<T, P>>);
+
+impl<T: GeoNum, P> Clone for RcSegment<T, P> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+impl<T: GeoNum, P> RcSegment<T, P> {
+    pub(crate) fn payload(&self) -> &P {
+        &self.0.payload
+    }
+
+    pub(crate) fn line(&self) -> LineOrPoint<T> {
+        self.0.line
+    }
+
+    pub fn events(&self) -> [Event<T, RcSegment<T, P>>; 2] {
+        let geom = self.0.line;
+        let left = geom.left();
+        let right = geom.right();
+        [
+            Event {
+                point: left,
+                ty: if geom.is_line() {
+                    EventType::LineLeft
+                } else {
+                    EventType::PointLeft
+                },
+                payload: self.clone(),
+            },
+            Event {
+                point: right,
+                ty: if geom.is_line() {
+                    EventType::LineRight
+                } else {
+                    EventType::PointRight
+                },
+                payload: self.clone(),
+            },
+        ]
+    }
+}
+
+impl<T: GeoNum, P> From<Segment<T, P>> for RcSegment<T, P> {
+    fn from(value: Segment<T, P>) -> Self {
+        RcSegment(Rc::new(value))
+    }
+}
 
 // Implement partial eq, parital ord, and eq for RcSegment
 impl<T: GeoNum, P> PartialEq for RcSegment<T, P> {
@@ -93,5 +108,11 @@ use std::borrow::Borrow;
 impl<T: GeoNum, P> Borrow<LineOrPoint<T>> for RcSegment<T, P> {
     fn borrow(&self) -> &LineOrPoint<T> {
         &self.0.line
+    }
+}
+
+impl<T: GeoNum, P> Borrow<Active<LineOrPoint<T>>> for Active<RcSegment<T, P>> {
+    fn borrow(&self) -> &Active<LineOrPoint<T>> {
+        Active::active_ref(self.0.borrow())
     }
 }
