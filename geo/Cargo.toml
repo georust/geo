@@ -104,3 +104,7 @@ harness = false
 [[bench]]
 name = "winding_order"
 harness = false
+
+[[bench]]
+name = "monotone_subdiv"
+harness = false

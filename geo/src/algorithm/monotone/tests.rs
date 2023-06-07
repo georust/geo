@@ -26,7 +26,7 @@ fn twice_polygon_area<T: GeoNum + Signed>(poly: &Polygon<T>) -> T {
 
 fn check_monotone_subdivision<T: GeoNum + Signed + Display + FromStr + Default>(wkt: &str) {
     init_log();
-
+    eprintln!("input: {wkt}");
     let input = Polygon::<T>::try_from_wkt_str(wkt).unwrap();
     let area = twice_polygon_area(&input);
     let subdivisions = monotone_subdivision(input);
@@ -46,13 +46,18 @@ fn check_monotone_subdivision<T: GeoNum + Signed + Display + FromStr + Default>(
 #[test]
 fn test_monotone_subdivision_simple() {
     let input = "POLYGON((0 0,5 5,3 0,5 -5,0 0))";
-    eprintln!("input: {}", input);
     check_monotone_subdivision::<i64>(&input);
 }
 
 #[test]
 fn test_monotone_subdivision_merge_split() {
     let input = "POLYGON((-5 -5, -3 0, -5 5, 5 5,3 0,5 -5))";
-    eprintln!("input: {}", input);
+    check_monotone_subdivision::<i64>(&input);
+}
+
+#[test]
+fn test_complex() {
+    let input = "POLYGON ((140 300, 140 100, 140 70, 340 220, 187 235, 191 285, 140 300), 
+        (140 100, 150 100, 150 110, 140 100))";
     check_monotone_subdivision::<i64>(&input);
 }

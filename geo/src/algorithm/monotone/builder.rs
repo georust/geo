@@ -2,8 +2,7 @@
 //!
 //! This implementation is based on these awesome [lecture notes] by David
 //! Mount.  The broad idea is to run a left-right planar sweep the segments of the
-//! polygon and try to iteratively extend parallel chains of montone segments
-//! along sweep points.  
+//! polygon and try to iteratively extend parallel monotone chains.  
 //!
 //! [lecture notes]:
 //! //www.cs.umd.edu/class/spring2020/cmsc754/Lects/lect05-triangulate.pdf
@@ -37,7 +36,9 @@ impl<T: GeoNum> Builder<T> {
                 if line.start == line.end {
                     None
                 } else {
-                    Some((LineOrPoint::from(line), Default::default()))
+                    let line = LineOrPoint::from(line);
+                    debug!("adding line {:?}", line);
+                    Some((line, Default::default()))
                 }
             });
         Self {
@@ -73,7 +74,12 @@ impl<T: GeoNum> Builder<T> {
         incoming.sort_by(|a, b| a.partial_cmp(b).unwrap());
         outgoing.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        info!("processing point {:?}", pt);
+        info!(
+            "\nprocessing point {:?}, #in={}, #out={}",
+            pt,
+            incoming.len(),
+            outgoing.len()
+        );
 
         // Step 2. Calculate region below the point, and if any previous point
         // registered a help.
@@ -82,7 +88,8 @@ impl<T: GeoNum> Builder<T> {
             .as_ref()
             .map(|seg| (seg.payload().next_is_inside.get(), seg.payload().help.get()))
             .unwrap_or((false, None));
-
+        debug!("bot region: {:?}", bot_region);
+        debug!("bot segment: {:?}", bot_segment.as_ref().map(|s| s.line()));
         // Step 3. Reduce incoming segments.  Any two consecutive incoming
         // segment that encloses the input region should not complete a
         // mono-polygon; so we `finish` their chains.  Thus, we should be left
@@ -92,6 +99,7 @@ impl<T: GeoNum> Builder<T> {
 
             let start_idx = if bot_region { 1 } else { 0 };
             let ub_idx = n - (n - start_idx) % 2;
+            debug!("reducing incoming segments: {n} -> {start_idx}..{ub_idx}");
 
             let mut iter = incoming.drain(start_idx..ub_idx);
             while let Some(first) = iter.next() {
@@ -158,6 +166,7 @@ impl<T: GeoNum> Builder<T> {
             let n = outgoing.len();
             let start_idx = if bot_region { 1 } else { 0 };
             let ub_idx = n - (n - start_idx) % 2;
+            debug!("reducing outgoing segments: {n} -> {start_idx}..{ub_idx}");
             let mut iter = outgoing.drain(start_idx..ub_idx);
             while let Some(first) = iter.next() {
                 let second = iter.next().unwrap();
@@ -175,6 +184,7 @@ impl<T: GeoNum> Builder<T> {
         debug_assert!(outgoing.len() <= 2);
 
         // Step 5. Tie up incoming and outgoing as applicable
+        debug!("in_chains: {in_chains:?}");
         match in_chains {
             (None, None) => {
                 // No incoming segments left after reduction.  Since we have
@@ -219,11 +229,12 @@ impl<T: GeoNum> Builder<T> {
                     let top = second.line().right();
                     self.chains[idx].as_mut().unwrap().push(*bot);
                     self.chains[jdx].as_mut().unwrap().push(*top);
-                    first.payload().next_is_inside.set(true);
-                    second.payload().next_is_inside.set(false);
+                    first.payload().next_is_inside.set(false);
+                    second.payload().next_is_inside.set(true);
                     first.payload().chain_idx.set(idx);
                     second.payload().chain_idx.set(jdx);
                 } else {
+                    debug!("registering help: [{}, {}]", idx, jdx);
                     bot_segment.unwrap().payload().help.set(Some([idx, jdx]));
                 }
             }
@@ -238,7 +249,7 @@ pub(super) struct Chain<T: GeoNum>(LineString<T>);
 
 impl<T: GeoNum> Chain<T> {
     pub fn from_segment_pair(start: Coord<T>, first: Coord<T>, second: Coord<T>) -> [Self; 2] {
-        info!("Creating chain from {:?} {:?} {:?}", start, first, second);
+        debug!("Creating chain from {:?} {:?} {:?}", start, first, second);
         [
             Chain(line_string![start, first]),
             Chain(line_string![start, second]),
@@ -263,17 +274,16 @@ impl<T: GeoNum> Chain<T> {
     }
 
     pub fn push(&mut self, pt: Coord<T>) {
-        info!("chain push: {:?} -> {:?}", self.0 .0.last().unwrap(), pt);
+        debug!("chain push: {:?} -> {:?}", self.0 .0.last().unwrap(), pt);
         self.0 .0.push(pt);
     }
 
     pub fn finish_with(self, other: Self) -> MonoPoly<T> {
-        assert!(self.0 .0[0] == other.0 .0[0]);
-        if self.0 .0.last() != other.0 .0.last() {
-            eprintln!("assertion failed!");
-            eprintln!("self: {:?}", self.0 .0);
-            eprintln!("other: {:?}", other.0 .0);
-        }
+        assert!(
+            self.0 .0[0] == other.0 .0[0]
+                && self.0 .0.last().unwrap() == other.0 .0.last().unwrap(),
+            "chains must finish with same start/end points"
+        );
         MonoPoly::new(other.0, self.0)
     }
 }
