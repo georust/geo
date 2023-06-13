@@ -21,7 +21,7 @@ impl<T: GeoNum> BoundingRect<T> for MonoPoly<T> {
     type Output = Rect<T>;
 
     fn bounding_rect(&self) -> Self::Output {
-        self.bounds.clone()
+        self.bounds
     }
 }
 impl<T: GeoNum> std::fmt::Debug for MonoPoly<T> {
@@ -158,7 +158,7 @@ impl<T: GeoNum> CoordinatePosition for MonoPoly<T> {
             _ => {}
         }
         match <T as HasKernel>::Ker::orient2d(bot.start, *coord, bot.end) {
-            Orientation::CounterClockwise => return,
+            Orientation::CounterClockwise => (),
             Orientation::Collinear => {
                 *is_inside = true;
                 *boundary_count += 1;

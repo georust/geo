@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use geo_types::{LineString, MultiLineString, Polygon};
+use geo_types::Polygon;
 use num_traits::Signed;
 use wkt::{ToWkt, TryFromWkt};
 

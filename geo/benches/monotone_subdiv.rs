@@ -21,13 +21,18 @@ use random::*;
 
 fn criterion_benchmark(c: &mut Criterion) {
     for size in [16, 64, 512, 1024, 2048] {
-        let mut grp = c.benchmark_group(format!("rand pt-in-poly steppy-polygon (worst case)"));
+        let mut grp = c.benchmark_group("rand pt-in-poly steppy-polygon (worst case)".to_string());
         let poly = steppy_polygon(&mut thread_rng(), size);
         bench_algos(&mut grp, poly, 512, size)
     }
     for size in [16, 64, 512, 1024, 2048] {
-        let mut grp = c.benchmark_group(format!("rand pt-in-poly steppy-polygon (best case)"));
+        let mut grp = c.benchmark_group("rand pt-in-poly steppy-polygon (best case)".to_string());
         let poly = steppy_polygon(&mut thread_rng(), size).map_coords(|c| (c.y, c.x).into());
+        bench_algos(&mut grp, poly, 512, size)
+    }
+    for size in [16, 64, 512, 1024, 2048] {
+        let mut grp = c.benchmark_group("rand pt-in-poly circular-polygon".to_string());
+        let poly = circular_polygon(&mut thread_rng(), size);
         bench_algos(&mut grp, poly, 512, size)
     }
 }
@@ -58,7 +63,7 @@ where
             b.iter_batched(
                 samples.sampler(),
                 |pt| {
-                    polygon.coordinate_position(&pt);
+                    polygon.coordinate_position(pt);
                 },
                 BatchSize::SmallInput,
             );
@@ -71,7 +76,7 @@ where
             b.iter_batched(
                 samples.sampler(),
                 |pt| {
-                    mon.iter().map(|mp| mp.coordinate_position(&pt)).count();
+                    mon.iter().map(|mp| mp.coordinate_position(pt)).count();
                 },
                 BatchSize::SmallInput,
             );

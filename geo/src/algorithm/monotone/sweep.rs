@@ -88,7 +88,7 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
     #[inline]
     pub(super) fn next_event(&mut self) -> Option<Event<T, RcSegment<T, P>>> {
         self.events.pop().map(|event| {
-            let _segment = self.handle_event(&event);
+            self.handle_event(&event);
             event
         })
     }

@@ -7,13 +7,18 @@
 //! [lecture notes]:
 //! //www.cs.umd.edu/class/spring2020/cmsc754/Lects/lect05-triangulate.pdf
 
-use super::{segment::RcSegment, MonoPoly, SimpleSweep};
+use super::{MonoPoly, SimpleSweep};
 use crate::{
     sweep::{EventType, LineOrPoint, SweepPoint},
     *,
 };
 use std::{cell::Cell, mem::replace};
 
+/// Construct a monotone subdivision of a polygon along the X-axis.
+///
+/// Returns the set of monotone polygons that make up the subdivision.  The
+/// input polygon must be valid, and must not have any self-intersections except
+/// at vertices.
 pub fn monotone_subdivision<T: GeoNum>(polygon: Polygon<T>) -> Vec<MonoPoly<T>> {
     Builder::from_polygon(polygon).build()
 }
@@ -161,28 +166,26 @@ impl<T: GeoNum> Builder<T> {
                 self.chains[h[1]].as_mut().unwrap().push(*pt);
                 (Some(h[0]), Some(h[1]))
             }
+        } else if incoming.is_empty() {
+            (None, None)
         } else {
-            if incoming.is_empty() {
-                (None, None)
+            let last_incoming = incoming.last().unwrap();
+            let last_idx = if let Some(h) = last_incoming.payload().help.get() {
+                let mut fhc = self.chains[h[0]].take().unwrap();
+                let fc = self.chains[last_incoming.payload().chain_idx.get()]
+                    .take()
+                    .unwrap();
+                fhc.push(*pt);
+                self.chains[h[1]].as_mut().unwrap().push(*pt);
+                self.outputs.push(fc.finish_with(fhc));
+                h[1]
             } else {
-                let last_incoming = incoming.last().unwrap();
-                let last_idx = if let Some(h) = last_incoming.payload().help.get() {
-                    let mut fhc = self.chains[h[0]].take().unwrap();
-                    let fc = self.chains[last_incoming.payload().chain_idx.get()]
-                        .take()
-                        .unwrap();
-                    fhc.push(*pt);
-                    self.chains[h[1]].as_mut().unwrap().push(*pt);
-                    self.outputs.push(fc.finish_with(fhc));
-                    h[1]
-                } else {
-                    last_incoming.payload().chain_idx.get()
-                };
-                if incoming.len() == 1 {
-                    (Some(last_idx), None)
-                } else {
-                    (Some(incoming[0].payload().chain_idx.get()), Some(last_idx))
-                }
+                last_incoming.payload().chain_idx.get()
+            };
+            if incoming.len() == 1 {
+                (Some(last_idx), None)
+            } else {
+                (Some(incoming[0].payload().chain_idx.get()), Some(last_idx))
             }
         };
 
@@ -253,7 +256,7 @@ impl<T: GeoNum> Builder<T> {
                 self.chains[idx].as_mut().unwrap().push(*bot);
                 first.payload().next_is_inside.set(!bot_region);
                 first.payload().chain_idx.set(idx);
-                bot_segment.map(|b| b.payload().helper_chain.set(Some(idx)));
+                if let Some(b) = bot_segment { b.payload().helper_chain.set(Some(idx)) }
             }
             (Some(idx), Some(jdx)) => {
                 if !outgoing.is_empty() {
@@ -277,7 +280,7 @@ impl<T: GeoNum> Builder<T> {
                         .help
                         .set(Some([idx, jdx]));
                 }
-                bot_segment.map(|b| b.payload().helper_chain.set(Some(idx)));
+                if let Some(b) = bot_segment { b.payload().helper_chain.set(Some(idx)) }
             }
             _ => unreachable!(),
         }
@@ -346,6 +349,7 @@ impl<T: GeoNum> Chain<T> {
 }
 
 #[derive(Debug)]
+#[derive(Default)]
 struct Info {
     next_is_inside: Cell<bool>,
     helper_chain: Cell<Option<usize>>,
@@ -353,13 +357,4 @@ struct Info {
     chain_idx: Cell<usize>,
 }
 
-impl Default for Info {
-    fn default() -> Self {
-        Self {
-            next_is_inside: Default::default(),
-            helper_chain: Default::default(),
-            help: Default::default(),
-            chain_idx: Default::default(),
-        }
-    }
-}
+
