@@ -1,8 +1,8 @@
-use geo_types::Line;
+use geo_types::{private_utils::get_bounding_rect, Line};
 
 use crate::{
-    sweep::SweepPoint, BoundingRect, Coord, CoordinatePosition, GeoNum, HasKernel, Kernel,
-    LineString, Orientation, Polygon, Rect,
+    sweep::SweepPoint, BoundingRect, Coord, CoordinatePosition, GeoNum, HasKernel, Intersects,
+    Kernel, LineString, Orientation, Polygon, Rect,
 };
 
 /// Monotone polygon
@@ -14,30 +14,14 @@ use crate::{
 pub struct MonoPoly<T: GeoNum> {
     top: LineString<T>,
     bot: LineString<T>,
+    bounds: Rect<T>,
 }
 
 impl<T: GeoNum> BoundingRect<T> for MonoPoly<T> {
     type Output = Rect<T>;
 
     fn bounding_rect(&self) -> Self::Output {
-        let min_x = self.top.0[0].x;
-        let max_x = self.top.0.last().unwrap().x;
-
-        let mut max_y = self.top.0[0].y;
-        for coord in self.top.0.iter() {
-            if coord.y > max_y {
-                max_y = coord.y;
-            }
-        }
-        let mut min_y = max_y;
-        for coord in self.bot.0.iter() {
-            if coord.y < min_y {
-                min_y = coord.y;
-            }
-        }
-        assert!(min_x < max_x);
-        assert!(min_y < max_y);
-        Rect::new((min_x, min_y), (max_x, max_y))
+        self.bounds.clone()
     }
 }
 impl<T: GeoNum> std::fmt::Debug for MonoPoly<T> {
@@ -62,7 +46,8 @@ impl<T: GeoNum> MonoPoly<T> {
         assert_eq!(top.0.first(), bot.0.first());
         assert_eq!(top.0.last(), bot.0.last());
         assert_ne!(top.0.first(), top.0.last());
-        Self { top, bot }
+        let bounds = get_bounding_rect(top.0.iter().chain(bot.0.iter()).cloned()).unwrap();
+        Self { top, bot, bounds }
     }
 
     /// Get a reference to the mono poly's top chain.
@@ -86,6 +71,9 @@ impl<T: GeoNum> MonoPoly<T> {
     pub fn bounding_segment(&self, pt: Coord<T>) -> Option<(Line<T>, Line<T>)> {
         // binary search for the segment that contains the x coordinate.
 
+        if !self.bounds.intersects(&pt) {
+            return None;
+        }
         let tl_idx = match self.top.0.binary_search_by(|coord| {
             SweepPoint::from(pt)
                 .partial_cmp(&SweepPoint::from(*coord))

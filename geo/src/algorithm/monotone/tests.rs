@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use geo_types::Polygon;
+use geo_types::{LineString, MultiLineString, Polygon};
 use num_traits::Signed;
 use wkt::{ToWkt, TryFromWkt};
 
@@ -11,7 +11,7 @@ pub(super) fn init_log() {
     use std::io::Write;
     let _ = env_logger::builder()
         .format(|buf, record| writeln!(buf, "[{}] - {}", record.level(), record.args()))
-        // .filter_level(log::LevelFilter::Info)
+        .filter_level(log::LevelFilter::Debug)
         .is_test(true)
         .try_init();
 }
@@ -34,12 +34,17 @@ fn check_monotone_subdivision<T: GeoNum + Signed + Display + FromStr + Default>(
 
     let mut sub_area = T::zero();
     for div in subdivisions {
-        sub_area = sub_area + twice_polygon_area(&div.clone().into_polygon());
-        let (top, bot) = div.into_ls_pair();
-        eprintln!("top: {}", top.to_wkt());
-        eprintln!("bot: {}", bot.to_wkt());
+        let (mut top, bot) = div.into_ls_pair();
+        top.0.extend(bot.0.into_iter().rev().skip(1));
+        if !top.is_closed() {
+            error!("Got an unclosed line string");
+            error!("{}", top.to_wkt());
+        } else {
+            let poly = Polygon::new(top, vec![]);
+            sub_area = sub_area + twice_polygon_area(&poly);
+            info!("{}", poly.to_wkt());
+        }
     }
-
     assert_eq!(area, sub_area);
 }
 
@@ -60,4 +65,22 @@ fn test_complex() {
     let input = "POLYGON ((140 300, 140 100, 140 70, 340 220, 187 235, 191 285, 140 300), 
         (140 100, 150 100, 150 110, 140 100))";
     check_monotone_subdivision::<i64>(&input);
+}
+
+#[test]
+fn test_complex2() {
+    let input = "POLYGON ((100 100, 200 150, 100 200, 200 250, 100 300, 400 300,
+       300 200, 400 100, 100 100))";
+    check_monotone_subdivision::<i64>(&input);
+}
+
+#[test]
+fn test_complex3() {
+    let input = "POLYGON((0 0,11.9 1,5.1 2,6.6 3,13.3 4,
+        20.4 5,11.5 6,1.3 7,19.4 8,15.4 9,2.8 10,7.0 11,
+        13.7 12,24.0 13,2.6 14,9.6 15,0.2 16,250 16,
+        67.1 15,66.1 14,61.2 13,76.4 12,75.1 11,88.3 10,
+        75.3 9,63.8 8,84.2 7,77.5 6,95.9 5,83.8 4,
+        86.9 3,64.5 2,68.3 1,99.6 0,0 0))";
+    check_monotone_subdivision::<f64>(&input);
 }

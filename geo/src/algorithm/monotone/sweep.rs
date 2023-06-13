@@ -71,8 +71,6 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
         mut f: F,
     ) -> Option<SweepPoint<T>> {
         let point = self.peek_point();
-        debug!("pt: {point:?}");
-
         while let Some(pt) = point {
             self.next_event().map(|ev| {
                 let segment = ev.payload;

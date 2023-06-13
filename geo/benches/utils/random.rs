@@ -76,27 +76,24 @@ pub fn circular_polygon<R: Rng>(mut rng: R, steps: usize) -> Polygon<f64> {
 pub fn steppy_polygon<R: Rng>(mut rng: R, steps: usize) -> Polygon<f64> {
     let mut ring = Vec::with_capacity(2 * steps);
 
-    let ystep = 1.0;
-    let nudge_std = ystep / 1000.0;
+    let y_step = 1.0;
+    let nudge_std = y_step / 1000.0;
     let mut y = 0.0;
     let normal = Normal::new(0.0, nudge_std * nudge_std).unwrap();
-    let shift = 50.0;
+    let x_shift = 50.0;
 
     ring.push((0.0, 0.0).into());
     (0..steps).for_each(|_| {
-        let x: f64 = rng.sample::<f64, _>(Standard) * shift / 2.;
-        let x = (x * 10.) as i64 as f64 / 10.;
-        y += ystep;
-        // y += normal.sample(&mut rng);
+        let x: f64 = rng.sample::<f64, _>(Standard) * x_shift / 2.;
+        y += y_step;
         ring.push((x, y).into());
     });
-    ring.push((shift, y).into());
+    ring.push((5. * x_shift, y).into());
     (0..steps).for_each(|_| {
-        let x: f64 = rng.sample::<f64, _>(Standard) * shift;
-        let x = (x * 10.) as i64 as f64 / 10.;
-        y -= ystep;
+        let x: f64 = rng.sample::<f64, _>(Standard) * x_shift;
+        y -= y_step;
         // y += normal.sample(&mut rng);
-        ring.push((shift + x, y).into());
+        ring.push((x_shift + x, y).into());
     });
 
     Polygon::new(LineString(ring), vec![])
