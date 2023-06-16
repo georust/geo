@@ -5,7 +5,7 @@ use std::slice::Iter;
 
 pub trait PolygonTrait<'a>: Send + Sync {
     type ItemType: 'a + LineStringTrait<'a>;
-    type Iter: Iterator<Item = Self::ItemType>;
+    type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
     /// The exterior ring of the polygon
     fn exterior(&'a self) -> Self::ItemType;

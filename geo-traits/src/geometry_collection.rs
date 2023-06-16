@@ -5,7 +5,7 @@ use std::slice::Iter;
 
 pub trait GeometryCollectionTrait<'a>: Send + Sync {
     type ItemType: 'a + GeometryTrait<'a>;
-    type Iter: Iterator<Item = Self::ItemType>;
+    type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
     /// An iterator over the geometries in this GeometryCollection
     fn geometries(&'a self) -> Self::Iter;

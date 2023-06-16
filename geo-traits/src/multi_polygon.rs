@@ -5,7 +5,7 @@ use std::slice::Iter;
 
 pub trait MultiPolygonTrait<'a>: Send + Sync {
     type ItemType: 'a + PolygonTrait<'a>;
-    type Iter: Iterator<Item = Self::ItemType>;
+    type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
     /// An iterator over the Polygons in this MultiPolygon
     fn polygons(&'a self) -> Self::Iter;

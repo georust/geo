@@ -5,7 +5,7 @@ use std::slice::Iter;
 
 pub trait MultiPointTrait<'a>: Send + Sync {
     type ItemType: 'a + PointTrait;
-    type Iter: Iterator<Item = Self::ItemType>;
+    type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
     /// An iterator over the points in this MultiPoint
     fn points(&'a self) -> Self::Iter;

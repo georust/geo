@@ -6,7 +6,7 @@ use std::slice::Iter;
 
 pub trait LineStringTrait<'a>: Send + Sync {
     type ItemType: 'a + CoordTrait;
-    type Iter: Iterator<Item = Self::ItemType>;
+    type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
     /// An iterator over the coords in this LineString
     fn coords(&'a self) -> Self::Iter;

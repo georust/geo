@@ -5,7 +5,7 @@ use std::slice::Iter;
 
 pub trait MultiLineStringTrait<'a>: Send + Sync {
     type ItemType: 'a + LineStringTrait<'a>;
-    type Iter: Iterator<Item = Self::ItemType>;
+    type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
     /// An iterator over the LineStrings in this MultiLineString
     fn lines(&'a self) -> Self::Iter;
