@@ -60,6 +60,10 @@ pub use convert::{Convert, TryConvert};
 pub mod convex_hull;
 pub use convex_hull::ConvexHull;
 
+/// Cross track distance
+pub mod cross_track_distance;
+pub use cross_track_distance::CrossTrackDistance;
+
 /// Determine whether a `Coord` lies inside, outside, or on the boundary of a geometry.
 pub mod coordinate_position;
 pub use coordinate_position::CoordinatePosition;
@@ -171,8 +175,6 @@ pub use lines_iter::LinesIter;
 /// Apply a function to all `Coord`s of a `Geometry`.
 pub mod map_coords;
 pub use map_coords::{MapCoords, MapCoordsInPlace};
-#[allow(deprecated)]
-pub use map_coords::{MapCoordsInplace, TryMapCoords, TryMapCoordsInplace};
 
 /// Orient a `Polygon`'s exterior and interior rings.
 pub mod orient;
@@ -193,9 +195,6 @@ pub use remove_repeated_points::RemoveRepeatedPoints;
 /// Rotate a `Geometry` by an angle given in degrees.
 pub mod rotate;
 pub use rotate::Rotate;
-#[doc(hidden)]
-#[allow(deprecated)]
-pub use rotate::RotatePoint;
 
 /// Scale a `Geometry` up or down by a factor
 pub mod scale;
@@ -227,6 +226,12 @@ pub use transform::Transform;
 pub mod translate;
 pub use translate::Translate;
 
+/// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
+#[cfg(feature = "earcutr")]
+pub mod triangulate_earcut;
+#[cfg(feature = "earcutr")]
+pub use triangulate_earcut::TriangulateEarcut;
+
 /// Calculate the Vincenty distance between two `Point`s.
 pub mod vincenty_distance;
 pub use vincenty_distance::VincentyDistance;
@@ -248,4 +253,5 @@ pub mod sweep;
 
 /// Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
 pub mod outlier_detection;
+
 pub use outlier_detection::OutlierDetection;

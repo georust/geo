@@ -91,24 +91,6 @@ pub trait Rotate<T: CoordFloat> {
     fn rotate_around_point_mut(&mut self, degrees: T, point: Point<T>);
 }
 
-#[doc(hidden)]
-#[deprecated(since = "0.23.0", note = "Use `Rotate::rotate_around_point` instead.")]
-pub trait RotatePoint<T: CoordFloat> {
-    fn rotate_around_point(&self, degrees: T, point: Point<T>) -> Self;
-}
-
-#[doc(hidden)]
-#[allow(deprecated)]
-impl<T, G> RotatePoint<T> for G
-where
-    T: CoordFloat,
-    G: Rotate<T>,
-{
-    fn rotate_around_point(&self, degrees: T, point: Point<T>) -> Self {
-        Rotate::rotate_around_point(self, degrees, point)
-    }
-}
-
 impl<G, IP, IR, T> Rotate<T> for G
 where
     T: CoordFloat,

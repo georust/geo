@@ -1,5 +1,23 @@
 # Changes
 
+## Unreleased
+
+- Add `TriangulateEarcut` algorithm trait to triangulate polygons with the earcut algorithm.
+  - <https://github.com/georust/geo/pull/1007>
+
+## 0.25.0
+
+- Added `CrossTrackDistance` trait to calculate the distance from a point
+  to the nearest point on a line
+  - <https://github.com/georust/geo/pull/961>
+- Performance improvements for CoordinatePosition
+  - <https://github.com/georust/geo/pull/1004>
+- BREAKING: Remove deprecated methods
+  - <https://github.com/georust/geo/pull/1012>
+  - Instead of `map_coords_inplace` use `map_coords_in_place`
+  - Instead of `RotatePoint` use `Rotate`
+  - Instead of `Translate#translate_inplace` use `Translate#translate_mut`
+
 ## 0.24.1
 
 - Rename Bearing::bearing to HaversineBearing::haversine_bearing to clarify it uses great circle calculations.
@@ -81,7 +99,7 @@
   - <https://github.com/georust/geo/pull/880>
 - Removed deprecated `ToGeo` trait. Use `std::convert::TryFrom<$geometry>`
   instead.
-  - <https://github.com/georust/geo/pull/892>
+  * <https://github.com/georust/geo/pull/892>
 
 ## 0.22.1
 
