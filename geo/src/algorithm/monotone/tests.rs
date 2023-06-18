@@ -51,27 +51,27 @@ fn check_monotone_subdivision<T: GeoNum + Signed + Display + FromStr + Default>(
 #[test]
 fn test_monotone_subdivision_simple() {
     let input = "POLYGON((0 0,5 5,3 0,5 -5,0 0))";
-    check_monotone_subdivision::<i64>(&input);
+    check_monotone_subdivision::<i64>(input);
 }
 
 #[test]
 fn test_monotone_subdivision_merge_split() {
     let input = "POLYGON((-5 -5, -3 0, -5 5, 5 5,3 0,5 -5))";
-    check_monotone_subdivision::<i64>(&input);
+    check_monotone_subdivision::<i64>(input);
 }
 
 #[test]
 fn test_complex() {
     let input = "POLYGON ((140 300, 140 100, 140 70, 340 220, 187 235, 191 285, 140 300), 
         (140 100, 150 100, 150 110, 140 100))";
-    check_monotone_subdivision::<i64>(&input);
+    check_monotone_subdivision::<i64>(input);
 }
 
 #[test]
 fn test_complex2() {
     let input = "POLYGON ((100 100, 200 150, 100 200, 200 250, 100 300, 400 300,
        300 200, 400 100, 100 100))";
-    check_monotone_subdivision::<i64>(&input);
+    check_monotone_subdivision::<i64>(input);
 }
 
 #[test]
@@ -82,5 +82,12 @@ fn test_complex3() {
         67.1 15,66.1 14,61.2 13,76.4 12,75.1 11,88.3 10,
         75.3 9,63.8 8,84.2 7,77.5 6,95.9 5,83.8 4,
         86.9 3,64.5 2,68.3 1,99.6 0,0 0))";
-    check_monotone_subdivision::<f64>(&input);
+    check_monotone_subdivision::<f64>(input);
+}
+
+#[test]
+fn test_tangent() {
+    let input = "POLYGON ((60 60, 60 200, 240 200, 240 60, 60 60), 
+    (60 140, 110 170, 110 100, 80 100, 60 140))";
+    check_monotone_subdivision::<i64>(input);
 }

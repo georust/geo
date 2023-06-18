@@ -67,13 +67,10 @@ impl<T: GeoNum> MonoPoly<T> {
         (self.top, self.bot)
     }
 
-    /// Get the pair of segments in the chain that intersect the Y-axis at the given x-coordinate.
+    /// Get the pair of segments in the chain that intersects the line parallel
+    /// to the Y-axis at the given x-coordinate.
     pub fn bounding_segment(&self, pt: Coord<T>) -> Option<(Line<T>, Line<T>)> {
         // binary search for the segment that contains the x coordinate.
-
-        if !self.bounds.intersects(&pt) {
-            return None;
-        }
         let tl_idx = match self.top.0.binary_search_by(|coord| {
             SweepPoint::from(pt)
                 .partial_cmp(&SweepPoint::from(*coord))
@@ -142,6 +139,9 @@ impl<T: GeoNum> CoordinatePosition for MonoPoly<T> {
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
+        if !self.bounds.intersects(coord) {
+            return;
+        }
         let (top, bot) = if let Some(t) = self.bounding_segment(*coord) {
             t
         } else {

@@ -1,8 +1,8 @@
 //! Polygon monotone subdivision algorithm
 //!
 //! This implementation is based on these awesome [lecture notes] by David
-//! Mount.  The broad idea is to run a left-right planar sweep the segments of the
-//! polygon and try to iteratively extend parallel monotone chains.  
+//! Mount.  The broad idea is to run a left-right planar sweep on the segments
+//! of the polygon and try to iteratively extend parallel monotone chains.  
 //!
 //! [lecture notes]:
 //! //www.cs.umd.edu/class/spring2020/cmsc754/Lects/lect05-triangulate.pdf
@@ -256,7 +256,9 @@ impl<T: GeoNum> Builder<T> {
                 self.chains[idx].as_mut().unwrap().push(*bot);
                 first.payload().next_is_inside.set(!bot_region);
                 first.payload().chain_idx.set(idx);
-                if let Some(b) = bot_segment { b.payload().helper_chain.set(Some(idx)) }
+                if let Some(b) = bot_segment {
+                    b.payload().helper_chain.set(Some(idx))
+                }
             }
             (Some(idx), Some(jdx)) => {
                 if !outgoing.is_empty() {
@@ -280,7 +282,9 @@ impl<T: GeoNum> Builder<T> {
                         .help
                         .set(Some([idx, jdx]));
                 }
-                if let Some(b) = bot_segment { b.payload().helper_chain.set(Some(idx)) }
+                if let Some(b) = bot_segment {
+                    b.payload().helper_chain.set(Some(idx))
+                }
             }
             _ => unreachable!(),
         }
@@ -348,13 +352,10 @@ impl<T: GeoNum> Chain<T> {
     }
 }
 
-#[derive(Debug)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct Info {
     next_is_inside: Cell<bool>,
     helper_chain: Cell<Option<usize>>,
     help: Cell<Option<[usize; 2]>>,
     chain_idx: Cell<usize>,
 }
-
-
