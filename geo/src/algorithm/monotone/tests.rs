@@ -4,7 +4,10 @@ use geo_types::Polygon;
 use num_traits::Signed;
 use wkt::{ToWkt, TryFromWkt};
 
-use crate::{area::twice_signed_ring_area, monotone::monotone_subdivision, GeoNum};
+use crate::{
+    area::twice_signed_ring_area, coordinate_position::CoordPos, dimensions::Dimensions,
+    monotone::monotone_subdivision, GeoFloat, GeoNum, Relate,
+};
 
 pub(super) fn init_log() {
     use pretty_env_logger::env_logger;
@@ -24,25 +27,42 @@ fn twice_polygon_area<T: GeoNum + Signed>(poly: &Polygon<T>) -> T {
     area
 }
 
-fn check_monotone_subdivision<T: GeoNum + Signed + Display + FromStr + Default>(wkt: &str) {
+fn check_monotone_subdivision<T: GeoFloat + FromStr + Default + Display>(wkt: &str) {
     init_log();
     eprintln!("input: {wkt}");
     let input = Polygon::<T>::try_from_wkt_str(wkt).unwrap();
     let area = twice_polygon_area(&input);
-    let subdivisions = monotone_subdivision(input);
+    let subdivisions = monotone_subdivision(input.clone());
     eprintln!("Got {} subdivisions", subdivisions.len());
 
     let mut sub_area = T::zero();
+    for (i, d1) in subdivisions.iter().enumerate() {
+        for (j, d2) in subdivisions.iter().enumerate() {
+            if i >= j {
+                continue;
+            }
+            let p1 = d1.clone().into_polygon();
+            let p2 = d2.clone().into_polygon();
+            let im = p1.relate(&p2);
+            let intin = im.get(CoordPos::Inside, CoordPos::Inside);
+            assert!(intin == Dimensions::Empty);
+        }
+    }
     for div in subdivisions {
         let (mut top, bot) = div.into_ls_pair();
         top.0.extend(bot.0.into_iter().rev().skip(1));
         if !top.is_closed() {
+            // This branch is for debugging
+            // It will never be reached unless assertions elsewhere are commented.
             error!("Got an unclosed line string");
             error!("{}", top.to_wkt());
         } else {
             let poly = Polygon::new(top, vec![]);
             sub_area = sub_area + twice_polygon_area(&poly);
             info!("{}", poly.to_wkt());
+
+            let im = poly.relate(&input);
+            assert!(im.is_within());
         }
     }
     assert_eq!(area, sub_area);
@@ -51,27 +71,27 @@ fn check_monotone_subdivision<T: GeoNum + Signed + Display + FromStr + Default>(
 #[test]
 fn test_monotone_subdivision_simple() {
     let input = "POLYGON((0 0,5 5,3 0,5 -5,0 0))";
-    check_monotone_subdivision::<i64>(input);
+    check_monotone_subdivision::<f64>(input);
 }
 
 #[test]
 fn test_monotone_subdivision_merge_split() {
     let input = "POLYGON((-5 -5, -3 0, -5 5, 5 5,3 0,5 -5))";
-    check_monotone_subdivision::<i64>(input);
+    check_monotone_subdivision::<f64>(input);
 }
 
 #[test]
 fn test_complex() {
     let input = "POLYGON ((140 300, 140 100, 140 70, 340 220, 187 235, 191 285, 140 300), 
         (140 100, 150 100, 150 110, 140 100))";
-    check_monotone_subdivision::<i64>(input);
+    check_monotone_subdivision::<f64>(input);
 }
 
 #[test]
 fn test_complex2() {
     let input = "POLYGON ((100 100, 200 150, 100 200, 200 250, 100 300, 400 300,
        300 200, 400 100, 100 100))";
-    check_monotone_subdivision::<i64>(input);
+    check_monotone_subdivision::<f64>(input);
 }
 
 #[test]
@@ -89,5 +109,5 @@ fn test_complex3() {
 fn test_tangent() {
     let input = "POLYGON ((60 60, 60 200, 240 200, 240 60, 60 60), 
     (60 140, 110 170, 110 100, 80 100, 60 140))";
-    check_monotone_subdivision::<i64>(input);
+    check_monotone_subdivision::<f64>(input);
 }
