@@ -256,5 +256,6 @@ pub mod outlier_detection;
 
 pub use outlier_detection::OutlierDetection;
 
-/// Monotone Polygon Decomposition
+/// Monotonic polygon subdivision
 pub mod monotone;
+pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};

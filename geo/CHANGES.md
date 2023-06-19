@@ -5,6 +5,11 @@
 - Add `TriangulateEarcut` algorithm trait to triangulate polygons with the earcut algorithm.
   - <https://github.com/georust/geo/pull/1007>
 
+- Add a fast point-in-polygon query datastructure that pre-processes a `Polygon` as a set of monotone polygons. Ref. `crate::algorithm::MonotonicPolygons`.
+  - <https://github.com/georust/geo/pull/1018>
+
+
+
 ## 0.25.0
 
 - Added `CrossTrackDistance` trait to calculate the distance from a point

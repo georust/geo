@@ -7,9 +7,16 @@ use crate::{
 
 /// Monotone polygon
 ///
-/// A monotone polygon is a polygon that can be decomposed into two
-/// monotone chains (along the X-axis). This implies any vertical line
-/// intersects the polygon at most twice (or not at all).
+/// A monotone polygon is a polygon that can be decomposed into two monotone
+/// chains (along the X-axis). This implies any vertical line intersects the
+/// polygon at most twice (or not at all).  These polygons support
+/// point-in-polygon queries in `O(log n)` time; use the `Intersects<Coord>`
+/// trait to query.
+///
+/// This structure cannot be directly constructed.  Use
+/// `crate::algorithm::monotone_subdivision` algorithm to obtain a
+/// `Vec<MonoPoly>`.  Consider using `MonotonicPolygons` instead if you are not
+/// interested in the individual monotone polygons.
 #[derive(Clone, PartialEq)]
 pub struct MonoPoly<T: GeoNum> {
     top: LineString<T>,
@@ -69,46 +76,20 @@ impl<T: GeoNum> MonoPoly<T> {
     }
 
     /// Get the pair of segments in the chain that intersects the line parallel
-    /// to the Y-axis at the given x-coordinate.
-    pub fn bounding_segment(&self, pt: Coord<T>) -> Option<(Line<T>, Line<T>)> {
+    /// to the Y-axis at the given x-coordinate.  Ties are broken by picking the
+    /// segment with smaller x coordinates.
+    pub fn bounding_segment(&self, x: T) -> Option<(Line<T>, Line<T>)> {
         // binary search for the segment that contains the x coordinate.
-        let tl_idx = match self.top.0.binary_search_by(|coord| {
-            SweepPoint::from(pt)
-                .partial_cmp(&SweepPoint::from(*coord))
-                .unwrap()
-        }) {
-            Ok(idx) => {
-                if idx == self.top.0.len() - 1 {
-                    idx - 1
-                } else {
-                    idx
-                }
-            }
-            Err(idx) => {
-                if idx == 0 || idx == self.top.0.len() {
-                    return None;
-                } else {
-                    idx - 1
-                }
-            }
-        };
-        let bl_idx = match self.bot.0.binary_search_by(|coord| {
-            SweepPoint::from(pt)
-                .partial_cmp(&SweepPoint::from(*coord))
-                .unwrap()
-        }) {
-            Ok(idx) => {
-                if idx == self.bot.0.len() - 1 {
-                    idx - 1
-                } else {
-                    idx
-                }
-            }
-            Err(idx) => {
-                debug_assert!(idx > 0 && idx < self.bot.0.len());
-                idx - 1
-            }
-        };
+        let tl_idx = self.top.0.partition_point(|c| c.x < x);
+        if tl_idx == 0 && self.top.0[0].x != x {
+            return None;
+        }
+        let bl_idx = self.bot.0.partition_point(|c| c.x < x);
+        if bl_idx == 0 {
+            debug_assert_eq!(tl_idx, 0);
+            debug_assert_eq!(self.bot.0[0].x, x);
+        }
+
         Some((
             Line::new(self.top.0[tl_idx], self.top.0[tl_idx + 1]),
             Line::new(self.bot.0[bl_idx], self.bot.0[bl_idx + 1]),
@@ -143,7 +124,7 @@ impl<T: GeoNum> CoordinatePosition for MonoPoly<T> {
         if !self.bounds.intersects(coord) {
             return;
         }
-        let (top, bot) = if let Some(t) = self.bounding_segment(*coord) {
+        let (top, bot) = if let Some(t) = self.bounding_segment(coord.x) {
             t
         } else {
             return;

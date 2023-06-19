@@ -17,8 +17,9 @@ use std::{cell::Cell, mem::replace};
 /// Construct a monotone subdivision of a polygon along the X-axis.
 ///
 /// Returns the set of monotone polygons that make up the subdivision.  The
-/// input polygon must be valid, and must not have any self-intersections except
-/// at vertices.  Further, all coordinates must be finite.
+/// input polygon must be valid (see the validity section in [`Polygon`]).  In
+/// particular, the polygon must not self-intersect, and contain only finite
+/// coordinates.
 pub fn monotone_subdivision<T: GeoNum>(polygon: Polygon<T>) -> Vec<MonoPoly<T>> {
     Builder::from_polygon(polygon).build()
 }
