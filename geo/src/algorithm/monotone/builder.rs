@@ -65,7 +65,10 @@ impl<T: GeoNum> Builder<T> {
 
         let pt = if let Some(pt) = self.sweep.next_point(|seg, ev| match ev {
             EventType::LineRight => {
+                let rt = seg.line().right();
                 incoming.push(seg);
+                let chain_idx = incoming.last().unwrap().payload().chain_idx.get();
+                self.chains[chain_idx].as_mut().unwrap().fix_top(*rt);
             }
             EventType::LineLeft => {
                 outgoing.push(seg);
@@ -313,6 +316,10 @@ impl<T: GeoNum> Chain<T> {
         ]
     }
 
+    pub fn fix_top(&mut self, pt: Coord<T>) {
+        *self.0 .0.last_mut().unwrap() = pt;
+    }
+
     pub fn swap_at_top(&mut self, pt: Coord<T>) -> [Self; 2] {
         let top = self.0 .0.pop().unwrap();
         let prev = *self.0 .0.last().unwrap();
@@ -352,7 +359,7 @@ impl<T: GeoNum> Chain<T> {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 struct Info {
     next_is_inside: Cell<bool>,
     helper_chain: Cell<Option<usize>>,

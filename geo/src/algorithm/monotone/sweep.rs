@@ -1,5 +1,5 @@
 use crate::sweep::{Active, Event, EventType, LineOrPoint, SweepPoint, VecSet};
-use crate::GeoNum;
+use crate::{GeoNum, Orient, Orientation};
 use std::{collections::BinaryHeap, fmt::Debug};
 
 use super::{RcSegment, Segment};
@@ -29,7 +29,7 @@ pub(crate) struct SimpleSweep<T: GeoNum, P: Debug> {
     active_segments: VecSet<Active<RcSegment<T, P>>>,
 }
 
-impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
+impl<T: GeoNum, P: Debug + Clone> SimpleSweep<T, P> {
     pub(crate) fn new<I, D>(iter: I) -> Self
     where
         I: IntoIterator<Item = D>,
@@ -68,7 +68,8 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
     ) -> Option<SweepPoint<T>> {
         let point = self.peek_point();
         while let Some(pt) = point {
-            self.next_event().map(|ev| {
+            let ev = self.events.pop().unwrap();
+            self.handle_event(ev, &mut |ev| {
                 let segment = ev.payload;
                 let ty = ev.ty;
                 f(segment, ty);
@@ -80,16 +81,16 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
         point
     }
 
-    /// Process the next event in heap.
-    #[inline]
-    pub(super) fn next_event(&mut self) -> Option<Event<T, RcSegment<T, P>>> {
-        self.events.pop().map(|event| {
-            self.handle_event(&event);
-            event
-        })
-    }
+    fn handle_event<F>(&mut self, event: Event<T, RcSegment<T, P>>, cb: &mut F)
+    where
+        F: FnMut(Event<T, RcSegment<T, P>>),
+    {
+        // We may get spurious events from adjusting the line segment.  Ignore.
+        if event.point != event.payload.line().left() && event.point != event.payload.line().right()
+        {
+            return;
+        }
 
-    fn handle_event(&mut self, event: &Event<T, RcSegment<T, P>>) {
         use EventType::*;
         let segment = &event.payload;
         trace!(
@@ -101,15 +102,72 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
 
         match &event.ty {
             LineLeft => {
-                let idx = self.active_segments.index_not_of(&segment);
+                let mut idx = self.active_segments.index_not_of(&segment);
+                for is_next in [false, true] {
+                    let (active, split) = if !is_next {
+                        if idx > 0 {
+                            let active = &self.active_segments[idx - 1];
+                            (active, self.check_interior_intersection(active, segment))
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        if idx < self.active_segments.len() {
+                            let active = &self.active_segments[idx];
+                            (active, self.check_interior_intersection(active, segment))
+                        } else {
+                            continue;
+                        }
+                    };
+
+                    match split {
+                        SplitResult::SplitA(pt) => {
+                            let new_seg = active.split_at(pt);
+                            let [_, ev] = active.events();
+                            self.events.push(ev);
+                            self.events.extend(new_seg.events());
+                        }
+                        SplitResult::SplitB(pt) => {
+                            let new_seg = segment.split_at(pt);
+                            let [_, ev] = segment.events();
+                            self.events.push(ev);
+                            self.events.extend(new_seg.events());
+                        }
+                        SplitResult::None => {}
+                    }
+
+                    // Special case:  if we split at the current event point, then
+                    // we have LineRight events in the queue that have to be
+                    // processed before this.
+
+                    // There's always a top as this is a left event.
+                    while self.events.peek().unwrap() > &event {
+                        debug_assert_eq!(self.events.peek().unwrap().ty, LineRight);
+                        debug_assert_eq!(self.events.peek().unwrap().point, event.point);
+
+                        let ev = self.events.pop().unwrap();
+                        self.handle_event(ev, cb);
+                        if !is_next {
+                            idx -= 1;
+                        }
+                    }
+                }
+
                 self.active_segments.insert_at(idx, segment.clone());
             }
             LineRight => {
                 let idx = self.active_segments.index_of(&segment);
                 self.active_segments.remove_at(idx);
+
+                if idx > 0 && idx < self.active_segments.len() {
+                    let prev = &self.active_segments[idx - 1];
+                    let next = &self.active_segments[idx];
+                    self.check_interior_intersection(prev, next);
+                }
             }
             _ => {}
         }
+        cb(event);
     }
 
     #[inline]
@@ -125,4 +183,38 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
             Some(self.active_segments[part_idx - 1].0.clone())
         }
     }
+
+    /// Check if the two segments intersect at a point interior to one of them.
+    fn check_interior_intersection(
+        &self,
+        a: &RcSegment<T, P>,
+        b: &RcSegment<T, P>,
+    ) -> SplitResult<T> {
+        let la = a.line();
+        let lb = b.line();
+
+        let lal = la.left();
+        let lar = la.right();
+
+        let lbl = lb.left();
+        let lbr = lb.right();
+
+        if lal < lbl && lbl < lar && la.orient2d(*lbl) == Orientation::Collinear {
+            SplitResult::SplitA(lbl)
+        } else if lal < lbr && lbr < lar && la.orient2d(*lbr) == Orientation::Collinear {
+            SplitResult::SplitA(lbr)
+        } else if lbl < lal && lal < lbr && lb.orient2d(*lal) == Orientation::Collinear {
+            SplitResult::SplitB(lal)
+        } else if lbl < lar && lar < lbr && lb.orient2d(*lar) == Orientation::Collinear {
+            SplitResult::SplitB(lar)
+        } else {
+            SplitResult::None
+        }
+    }
+}
+
+enum SplitResult<T: GeoNum> {
+    SplitA(SweepPoint<T>),
+    SplitB(SweepPoint<T>),
+    None,
 }
