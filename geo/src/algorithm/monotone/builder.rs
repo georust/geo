@@ -106,6 +106,7 @@ impl<T: GeoNum> Builder<T> {
         if !incoming.is_empty() {
             let n = incoming.len();
 
+            #[allow(clippy::bool_to_int_with_if)]
             let start_idx = if bot_region { 1 } else { 0 };
             let ub_idx = n - (n - start_idx) % 2;
             debug!("reducing incoming segments: {n} -> {start_idx}..{ub_idx}");
@@ -197,6 +198,7 @@ impl<T: GeoNum> Builder<T> {
         // region.  This again reduces the outgoing list to atmost two segments.
         if !outgoing.is_empty() {
             let n = outgoing.len();
+            #[allow(clippy::bool_to_int_with_if)]
             let start_idx = if bot_region { 1 } else { 0 };
             let ub_idx = n - (n - start_idx) % 2;
             debug!("reducing outgoing segments: {n} -> {start_idx}..{ub_idx}");

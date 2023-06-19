@@ -21,7 +21,7 @@ pub(super) fn init_log() {
 }
 
 fn twice_polygon_area<T: GeoNum + Signed>(poly: &Polygon<T>) -> T {
-    let mut area = twice_signed_ring_area(&poly.exterior()).abs();
+    let mut area = twice_signed_ring_area(poly.exterior()).abs();
     for interior in poly.interiors() {
         area = area - twice_signed_ring_area(interior).abs();
     }

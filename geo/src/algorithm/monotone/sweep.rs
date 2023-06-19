@@ -102,7 +102,7 @@ impl<T: GeoNum, P: Debug + Clone> SimpleSweep<T, P> {
 
         match &event.ty {
             LineLeft => {
-                let mut idx = self.active_segments.index_not_of(&segment);
+                let mut idx = self.active_segments.index_not_of(segment);
                 for is_next in [false, true] {
                     let (active, split) = if !is_next {
                         if idx > 0 {
@@ -111,13 +111,11 @@ impl<T: GeoNum, P: Debug + Clone> SimpleSweep<T, P> {
                         } else {
                             continue;
                         }
+                    } else if idx < self.active_segments.len() {
+                        let active = &self.active_segments[idx];
+                        (active, self.check_interior_intersection(active, segment))
                     } else {
-                        if idx < self.active_segments.len() {
-                            let active = &self.active_segments[idx];
-                            (active, self.check_interior_intersection(active, segment))
-                        } else {
-                            continue;
-                        }
+                        continue;
                     };
 
                     match split {
@@ -156,7 +154,7 @@ impl<T: GeoNum, P: Debug + Clone> SimpleSweep<T, P> {
                 self.active_segments.insert_at(idx, segment.clone());
             }
             LineRight => {
-                let idx = self.active_segments.index_of(&segment);
+                let idx = self.active_segments.index_of(segment);
                 self.active_segments.remove_at(idx);
 
                 if idx > 0 && idx < self.active_segments.len() {
