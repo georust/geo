@@ -1,10 +1,6 @@
-use crate::sweep::{Active, Event, EventType, LineOrPoint, SweepPoint};
+use crate::sweep::{Active, Event, EventType, LineOrPoint, SweepPoint, VecSet};
 use crate::GeoNum;
-use std::ops::Bound;
-use std::{
-    collections::{BTreeSet, BinaryHeap},
-    fmt::Debug,
-};
+use std::{collections::BinaryHeap, fmt::Debug};
 
 use super::{RcSegment, Segment};
 
@@ -30,7 +26,7 @@ use super::{RcSegment, Segment};
 /// arbitrarily.
 pub(crate) struct SimpleSweep<T: GeoNum, P: Debug> {
     events: BinaryHeap<Event<T, RcSegment<T, P>>>,
-    active_segments: BTreeSet<Active<RcSegment<T, P>>>,
+    active_segments: VecSet<Active<RcSegment<T, P>>>,
 }
 
 impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
@@ -45,7 +41,7 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
             max_size.unwrap_or(min_size)
         };
         let mut events = BinaryHeap::with_capacity(size);
-        let active_segments = BTreeSet::new();
+        let active_segments = VecSet::default();
 
         for cr in iter {
             let segment = RcSegment::from(cr.into());
@@ -105,10 +101,12 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
 
         match &event.ty {
             LineLeft => {
-                self.active_segments.insert(Active(segment.clone()));
+                let idx = self.active_segments.index_not_of(&segment);
+                self.active_segments.insert_at(idx, segment.clone());
             }
             LineRight => {
-                self.active_segments.remove(Active::active_ref(segment));
+                let idx = self.active_segments.index_of(&segment);
+                self.active_segments.remove_at(idx);
             }
             _ => {}
         }
@@ -120,10 +118,11 @@ impl<T: GeoNum, P: Debug> SimpleSweep<T, P> {
     }
 
     pub(super) fn prev_active_from_geom(&self, geom: LineOrPoint<T>) -> Option<RcSegment<T, P>> {
-        self.active_segments
-            .range::<Active<_>, _>((Bound::Unbounded, Bound::Excluded(Active::active_ref(&geom))))
-            .rev()
-            .map(|a| a.0.clone())
-            .next()
+        let part_idx = self.active_segments.partition_point(|s| s.line() < geom);
+        if part_idx == 0 {
+            None
+        } else {
+            Some(self.active_segments[part_idx - 1].0.clone())
+        }
     }
 }

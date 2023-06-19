@@ -1,3 +1,4 @@
+use std::cell::{Ref, RefCell};
 use std::{cmp::Ordering, fmt::Debug, rc::Rc};
 
 use crate::sweep::{Active, Event, EventType, LineOrPoint};
@@ -39,7 +40,7 @@ impl<T: GeoNum, P> From<(LineOrPoint<T>, P)> for Segment<T, P> {
 }
 
 #[derive(Debug)]
-pub(crate) struct RcSegment<T: GeoNum, P>(Rc<Segment<T, P>>);
+pub(crate) struct RcSegment<T: GeoNum, P>(Rc<RefCell<Segment<T, P>>>);
 
 impl<T: GeoNum, P> Clone for RcSegment<T, P> {
     fn clone(&self) -> Self {
@@ -48,16 +49,19 @@ impl<T: GeoNum, P> Clone for RcSegment<T, P> {
 }
 
 impl<T: GeoNum, P> RcSegment<T, P> {
-    pub(crate) fn payload(&self) -> &P {
-        &self.0.payload
+    pub(crate) fn payload(&self) -> Ref<P> {
+        let borrow = RefCell::borrow(&self.0);
+        Ref::map(borrow, |s| &s.payload)
     }
+}
 
+impl<T: GeoNum, P> RcSegment<T, P> {
     pub(crate) fn line(&self) -> LineOrPoint<T> {
-        self.0.line
+        RefCell::borrow(&self.0).line
     }
 
     pub fn events(&self) -> [Event<T, RcSegment<T, P>>; 2] {
-        let geom = self.0.line;
+        let geom = RefCell::borrow(&self.0).line;
         let left = geom.left();
         let right = geom.right();
         [
@@ -85,7 +89,7 @@ impl<T: GeoNum, P> RcSegment<T, P> {
 
 impl<T: GeoNum, P> From<Segment<T, P>> for RcSegment<T, P> {
     fn from(value: Segment<T, P>) -> Self {
-        RcSegment(Rc::new(value))
+        RcSegment(Rc::new(value.into()))
     }
 }
 
@@ -99,20 +103,5 @@ impl<T: GeoNum, P> PartialEq for RcSegment<T, P> {
 impl<T: GeoNum, P> PartialOrd for RcSegment<T, P> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.0.partial_cmp(&other.0)
-    }
-}
-
-// Implement borrow for RcSegment as a line-or-point.
-// This is hack to allow querying the active segments for any line-or-point.
-use std::borrow::Borrow;
-impl<T: GeoNum, P> Borrow<LineOrPoint<T>> for RcSegment<T, P> {
-    fn borrow(&self) -> &LineOrPoint<T> {
-        &self.0.line
-    }
-}
-
-impl<T: GeoNum, P> Borrow<Active<LineOrPoint<T>>> for Active<RcSegment<T, P>> {
-    fn borrow(&self) -> &Active<LineOrPoint<T>> {
-        Active::active_ref(self.0.borrow())
     }
 }
