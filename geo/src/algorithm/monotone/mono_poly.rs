@@ -1,8 +1,8 @@
 use geo_types::{private_utils::get_bounding_rect, Line};
 
 use crate::{
-    sweep::SweepPoint, BoundingRect, Coord, CoordinatePosition, GeoNum, HasKernel, Intersects,
-    Kernel, LineString, Orientation, Polygon, Rect,
+    coordinate_position::CoordPos, sweep::SweepPoint, BoundingRect, Coord, CoordinatePosition,
+    GeoNum, HasKernel, Intersects, Kernel, LineString, Orientation, Polygon, Rect,
 };
 
 /// Monotone polygon
@@ -38,9 +38,10 @@ impl<T: GeoNum> std::fmt::Debug for MonoPoly<T> {
 impl<T: GeoNum> MonoPoly<T> {
     /// Create a monotone polygon from the top and bottom chains.
     ///
-    /// Note: each chain must be a strictly increasing sequence (in the lexigraphic order),
-    /// with the same start and end points.  Further, the top chain must be strictly above
-    /// the bottom chain except at the end-points.
+    /// Note: each chain must be a strictly increasing sequence (in the lexigraphic
+    /// order), with the same start and end points.  Further, the top chain must be
+    /// strictly above the bottom chain except at the end-points.  Not all these
+    /// conditions are checked, and the algorithm may panic if they are not met.
     pub(super) fn new(top: LineString<T>, bot: LineString<T>) -> Self {
         // TODO: move these to debug-only asserts
         assert_eq!(top.0.first(), bot.0.first());
@@ -167,5 +168,10 @@ impl<T: GeoNum> CoordinatePosition for MonoPoly<T> {
                 *is_inside = true;
             }
         }
+    }
+}
+impl<T: GeoNum> Intersects<Coord<T>> for MonoPoly<T> {
+    fn intersects(&self, other: &Coord<T>) -> bool {
+        self.coordinate_position(other) != CoordPos::Outside
     }
 }

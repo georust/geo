@@ -1,5 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
+use approx::RelativeEq;
 use geo_types::Polygon;
 use num_traits::Signed;
 use wkt::{ToWkt, TryFromWkt};
@@ -27,7 +28,7 @@ fn twice_polygon_area<T: GeoNum + Signed>(poly: &Polygon<T>) -> T {
     area
 }
 
-fn check_monotone_subdivision<T: GeoFloat + FromStr + Default + Display>(wkt: &str) {
+fn check_monotone_subdivision<T: GeoFloat + FromStr + Default + Display + RelativeEq>(wkt: &str) {
     init_log();
     eprintln!("input: {wkt}");
     let input = Polygon::<T>::try_from_wkt_str(wkt).unwrap();
@@ -65,7 +66,7 @@ fn check_monotone_subdivision<T: GeoFloat + FromStr + Default + Display>(wkt: &s
             assert!(im.is_within());
         }
     }
-    assert_eq!(area, sub_area);
+    assert_relative_eq!(area, sub_area);
 }
 
 #[test]
