@@ -9,57 +9,55 @@ use crate::{Coord, CoordFloat};
 /// - [VectorExtensions::left],
 /// - [VectorExtensions::right],
 ///
-/// > Note: I implemented these functions here because I am trying to localize
-/// > my changes to the [crate::algorithm::offset] module for the time being.
+/// TODO: I implemented these functions here because I am trying to localize
+/// my changes to the [crate::algorithm::offset_curve] module at the moment.
 ///
-/// > I think I remember seeing some open issues and pull requests that will
-/// > hopefully make this trait unnecessary.
-///
-/// TODO: make a list
-///
-/// > Also there is the [crate::algorithm::Kernel] trait which has some default
-/// > implementations very similar to this trait. This is definitely a
-/// > re-invented wheel,
-///
-/// > Probably better to try to contribute to the existing structure of the code
-/// > though rather than suggest disruptive changes.... buuuuut I'm still
-/// > feeling this way of implementing [VectorExtensions] on the [Coord] struct
-/// > is not entirely indefensible...? Perhaps there could be a
-/// > `VectorExtensionsRobust`?
-/// > Just thinking aloud.
+/// The [crate::algorithm::Kernel] trait has some functions which overlap with
+/// this trait. I have realized I am re-inventing the wheel here.
 
 pub(super) trait VectorExtensions<Rhs = Self>
 where
     Self: Copy,
 {
     type NumericType;
-    /// The signed magnitude of the 3D "Cross Product" assuming z ordinates are
-    /// zero
+    /// The 2D cross product is the signed magnitude of the 3D "Cross Product"
+    /// assuming z ordinates are zero.
+    /// 
+    /// ## Other names for this function:
+    /// 
+    /// - In exterior algebra, it is called the wedge product.
+    /// - If the inputs are packed into a 2x2 matrix, this is the determinant.
     ///
-    /// > Note: [geo_types::Point::cross_prod()] is already defined on
-    /// >       [geo_types::Point]... but that it seems to be some other
-    /// >       operation on 3 points??
+    /// ## Other appearances in this library
+    /// 
+    /// 1. [geo_types::Point::cross_prod()] is already defined on
+    ///    [geo_types::Point]... but that it seems to be some other
+    ///    operation on 3 points??
     ///
-    /// > Note: Elsewhere in this project the cross product seems to be done
-    /// >       inline and is referred to as 'determinant' since it is the same
-    /// >       as the determinant of a 2x2 matrix.
+    /// 2. Note: The [geo_types::Line] struct also has a
+    ///    [geo_types::Line::determinant()] function which is the same as
+    ///    `cross_product_2d(line.start, line.end)`
+    /// 
+    /// 3. The [crate::algorithm::Kernel::orient2d()] trait default
+    ///    implementation uses cross product to compute orientation. It returns
+    ///    an enum, not the numeric value which is needed for line segment
+    ///    intersection.
     ///
-    /// > Note: The [geo_types::Line] struct also has a
-    /// > [geo_types::Line::determinant()] function which is the same as
-    /// > `cross_product_2d(line.start, line.end)`
     ///
+    /// ## Properties
     ///
-    /// If we pretend the `z` ordinate is zero we can still use the 3D cross
-    /// product on 2D vectors and various useful properties still hold:
+    /// - The absolute value of the cross product is the area of the
+    ///   parallelogram formed by the operands
+    /// - The sign of the output is reversed if the operands are reversed
+    /// - The sign can be used to check if the operands are clockwise /
+    ///   anti-clockwise orientation with respect to the origin;
+    ///   or phrased differently "is b to the left or right of the line between
+    ///   the origin and a"?
+    /// - If the operands are colinear with the origin, the magnitude is zero
     ///
-    /// - the magnitude is the signed area of the parallelogram formed by the
-    ///   two input vectors;
-    /// - the sign depends on the order of the operands and their clockwise /
-    ///   anti-clockwise orientation with respect to the origin (is b to the
-    ///   left or right of the line between the origin and a)
-    /// - if the two input points are colinear with the origin, the magnitude is
-    ///   zero
-    ///
+    /// 
+    /// ## Derivation
+    /// 
     /// From basis vectors `i`,`j`,`k` and the axioms on wikipedia
     /// [Cross product](https://en.wikipedia.org/wiki/Cross_product#Computing);
     ///
@@ -75,8 +73,8 @@ where
     /// i×i = j×j = k×k = 0
     /// ```
     ///
-    /// We can define the 2D cross product as the magnitude of the 3D cross product
-    /// as follows
+    /// We can define the 2D cross product as the magnitude of the 3D cross
+    /// product as follows
     ///
     /// ```text
     /// |a × b| = |(a_x·i + a_y·j + 0·k) × (b_x·i + b_y·j + 0·k)|
@@ -109,10 +107,12 @@ where
     /// ```
     fn magnitude_squared(self) -> Self::NumericType;
 
+    /// In a coordinate system where positive is up and to the right;
     /// Rotate this coordinate around the origin in the xy plane 90 degrees
     /// anti-clockwise (Consistent with [crate::algorithm::rotate::Rotate]).
     fn left(self) -> Self;
 
+    /// In a coordinate system where positive is up and to the right;
     /// Rotate this coordinate around the origin in the xy plane 90 degrees
     /// clockwise (Consistent with [crate::algorithm::rotate::Rotate]).
     fn right(self) -> Self;

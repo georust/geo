@@ -9,7 +9,7 @@ use crate::{
 };
 
 // No nested enums :( Goes into the enum below
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub(super) enum FalseIntersectionPointType {
     /// The intersection point is 'false' or 'virtual': it lies on the infinite
     /// ray defined by the line segment, but before the start of the line segment.
@@ -27,7 +27,7 @@ pub(super) enum FalseIntersectionPointType {
 
 /// Used to encode the relationship between a segment (e.g. between [Coord] `a` and `b`)
 /// and an intersection point ([Coord] `p`)
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub(super) enum LineSegmentIntersectionType {
     /// The intersection point lies between the start and end of the line segment.
     ///
@@ -44,6 +44,7 @@ use FalseIntersectionPointType::{AfterEnd, BeforeStart};
 use LineSegmentIntersectionType::{FalseIntersectionPoint, TrueIntersectionPoint};
 
 /// Struct to contain the result for [line_segment_intersection_with_relationships]
+#[derive(Clone)]
 pub(super) struct LineIntersectionResultWithRelationships<T>
 where
     T: CoordNum,

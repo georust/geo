@@ -8,7 +8,7 @@ use super::line_intersection::{
 };
 
 use super::offset_line_raw::{offset_line_raw, OffsetLineRawResult};
-use super::{slice_itertools::pairwise};
+use super::slice_itertools::pairwise;
 
 // TODO: Should I be doing `use crate ::{...}` or `use geo_types::{...}`
 use crate::{Coord, CoordFloat, Line, LineString, MultiLineString};
@@ -23,7 +23,7 @@ use crate::{Coord, CoordFloat, Line, LineString, MultiLineString};
 /// directionality.
 ///
 /// The [OffsetCurve::offset()] function is different to a `buffer` operation.
-/// A buffer (or inset / outset operation) would normally produce an enclosed 
+/// A buffer (or inset / outset operation) would normally produce an enclosed
 /// shape; For example a [geo_types::Point] would become a circular
 /// [geo_types::Polygon], a [geo_types::Line] would become a capsule shaped
 /// [geo_types::Polygon].
@@ -37,7 +37,7 @@ where
     ///
     /// In a coordinate system where positive is up and to the right;
     /// when facing the direction of increasing coordinate index:
-    /// 
+    ///
     /// - Positive `distance` will offset the edges of a geometry to the left
     /// - Negative `distance` will offset the edges of a geometry to the right
     ///
@@ -74,13 +74,11 @@ where
             Some(self.clone())
         } else {
             let Line { start: a, end: b } = *self;
-            match offset_line_raw(a,b,distance){
-                Some(OffsetLineRawResult{
-                    a_offset,
-                    b_offset,
-                    ..
-                })=>Some(Line::new(a_offset,b_offset)),
-                _=>None
+            match offset_line_raw(a, b, distance) {
+                Some(OffsetLineRawResult {
+                    a_offset, b_offset, ..
+                }) => Some(Line::new(a_offset, b_offset)),
+                _ => None,
             }
         }
     }
@@ -128,11 +126,14 @@ where
         //         this work for nothing
         //       However I haven't been able to get a nice lazy pairwise
         //       iterator working.. I suspect it requires unsafe code :/
-        let offset_segments: Vec<Line<T>> =
-            match self.lines().map(|item| item.offset_curve(distance)).collect() {
-                Some(a) => a,
-                _ => return None, // bail out if any segment fails
-            };
+        let offset_segments: Vec<Line<T>> = match self
+            .lines()
+            .map(|item| item.offset_curve(distance))
+            .collect()
+        {
+            Some(a) => a,
+            _ => return None, // bail out if any segment fails
+        };
 
         if offset_segments.len() == 1 {
             return Some(offset_segments[0].into());
@@ -223,7 +224,9 @@ where
     T: CoordFloat,
 {
     fn offset_curve(&self, distance: T) -> Option<Self> {
-        self.iter().map(|item| item.offset_curve(distance)).collect()
+        self.iter()
+            .map(|item| item.offset_curve(distance))
+            .collect()
     }
 }
 
