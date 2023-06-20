@@ -3,12 +3,15 @@ use geo_types::Coord;
 
 /// The signed magnitude of the 3D "Cross Product" assuming z ordinates are zero
 ///
-/// > Note: `cross_prod` is already defined on `Point`... but that it seems to be
+/// > Note: [geo_types::Point::cross_prod] is already defined on [geo_types::Point]... but that it seems to be
 /// >       some other operation on 3 points
 ///
 /// > Note: Elsewhere in this project the cross product seems to be done inline
 /// >       and is referred to as 'determinant' since it is the same as the
 /// >       determinant of a 2x2 matrix.
+/// 
+/// > Note: The [geo_types::Line] struct also has a [geo_types::Line::determinant()] function 
+/// > which has the same
 ///
 /// If we pretend the `z` ordinate is zero we can still use the 3D cross product
 /// on 2D vectors and various useful properties still hold (e.g. it is still the

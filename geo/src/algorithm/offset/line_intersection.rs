@@ -1,5 +1,12 @@
 use super::cross_product::cross_product_2d;
-use crate::{Coord, CoordFloat, CoordNum};
+use crate::{
+    Coord,
+    CoordFloat,
+    CoordNum,
+    algorithm::kernels::Kernel,
+    algorithm::kernels::RobustKernel,
+    Orientation
+};
 
 // No nested enums :( Goes into the enum below
 #[derive(PartialEq, Eq, Debug)]
@@ -36,8 +43,8 @@ pub(super) enum LineSegmentIntersectionType {
 use FalseIntersectionPointType::{AfterEnd, BeforeStart};
 use LineSegmentIntersectionType::{FalseIntersectionPoint, TrueIntersectionPoint};
 
-/// Struct to contain the result for [line_intersection_with_parameter]
-pub(super) struct LineIntersectionWithParameterResult<T>
+/// Struct to contain the result for [line_segment_intersection_with_relationships]
+pub(super) struct LineIntersectionResultWithRelationships<T>
 where
     T: CoordNum,
 {
@@ -157,15 +164,19 @@ where
     // TODO: The following line
     //       - Does not use the Kernel
     //       - uses an arbitrary threshold value which needs more thought
+
+    match RobustKernel::orient2d(*a, *b, *d) {
+        Orientation::Collinear => (),
+        _ => ()
+    }
+
     let ab_cross_cd = cross_product_2d(ab, cd);
-    if <f64 as num_traits::NumCast>::from(ab_cross_cd)
-        .unwrap()
-        .abs()
-        < num_traits::cast(0.0000001f64).unwrap()
-    {
-        // Segments are parallel or colinear
+    if T::is_zero(&ab_cross_cd) {
+        // Segments are exactly parallel or colinear
         None
     } else {
+        // Division my zero is prevented, but testing is needed to see what
+        // happens for near-parallel sections of line.
         let t_ab = cross_product_2d(ac, cd) / ab_cross_cd;
         let t_cd = -cross_product_2d(ab, ac) / ab_cross_cd;
         let intersection = *a + ab * t_ab;
@@ -174,24 +185,25 @@ where
     }
 }
 
-/// Return the intersection point as well as the relationship between the point
+/// This is a simple wrapper for [line_segment_intersection_with_parameters];
+/// Returns the intersection point as well as the relationship between the point
 /// and each of the input line segments. See [LineSegmentIntersectionType]
 pub(super) fn line_segment_intersection_with_relationships<T>(
     a: &Coord<T>,
     b: &Coord<T>,
     c: &Coord<T>,
     d: &Coord<T>,
-) -> Option<LineIntersectionWithParameterResult<T>>
+) -> Option<LineIntersectionResultWithRelationships<T>>
 where
     T: CoordFloat,
 {
     line_segment_intersection_with_parameters(a, b, c, d).map(|(t_ab, t_cd, intersection)| {
         let zero = num_traits::zero::<T>();
         let one = num_traits::one::<T>();
-        LineIntersectionWithParameterResult {
-            ab: if zero <= t_ab && t_ab <= one {
+        LineIntersectionResultWithRelationships {
+            ab: if T::zero() <= t_ab && t_ab <= T::one() {
                 TrueIntersectionPoint
-            } else if t_ab < zero {
+            } else if t_ab < T::zero() {
                 FalseIntersectionPoint(BeforeStart)
             } else {
                 FalseIntersectionPoint(AfterEnd)
@@ -208,13 +220,11 @@ where
     })
 }
 
-// TODO: add more relationship tests;
-
 #[cfg(test)]
 mod test {
     use super::{
         line_segment_intersection_with_parameters, line_segment_intersection_with_relationships,
-        FalseIntersectionPointType, LineIntersectionWithParameterResult,
+        FalseIntersectionPointType, LineIntersectionResultWithRelationships,
         LineSegmentIntersectionType,
     };
     use crate::{Coord, coord};
@@ -279,7 +289,7 @@ mod test {
             assert!(diff.x * diff.x + diff.y * diff.y < 0.00000000001f64);
         }
 
-        if let Some(LineIntersectionWithParameterResult {
+        if let Some(LineIntersectionResultWithRelationships {
             ab,
             cd,
             intersection,
@@ -292,7 +302,7 @@ mod test {
             assert!(false);
         }
 
-        if let Some(LineIntersectionWithParameterResult {
+        if let Some(LineIntersectionResultWithRelationships {
             ab,
             cd,
             intersection,
@@ -305,7 +315,7 @@ mod test {
             assert!(false);
         }
 
-        if let Some(LineIntersectionWithParameterResult {
+        if let Some(LineIntersectionResultWithRelationships {
             ab,
             cd,
             intersection,

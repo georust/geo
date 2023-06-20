@@ -1,12 +1,9 @@
-use super::line_intersection::FalseIntersectionPointType::{
-    BeforeStart,
-    AfterEnd,
-};
+use super::line_intersection::FalseIntersectionPointType::{AfterEnd, BeforeStart};
 use super::line_intersection::LineSegmentIntersectionType::{
     FalseIntersectionPoint, TrueIntersectionPoint,
 };
 use super::line_intersection::{
-    line_segment_intersection_with_relationships, LineIntersectionWithParameterResult,
+    line_segment_intersection_with_relationships, LineIntersectionResultWithRelationships,
 };
 use super::slice_itertools::pairwise;
 
@@ -23,16 +20,19 @@ use crate::{
 
 /// # Offset Trait
 ///
-/// Signed offset of Geometry assuming cartesian coordinate system.
+/// The offset trait is implemented for geometries where the edges of the
+/// geometry can be offset perpendicular to the direction of the edges by some
+/// positive or negative distance. For example, an offset [Line] will become a
+/// [Line], and an offset [LineString] will become a [LineString].
+/// [geo_types::Point] cannot be offset as it has no directionality.
 ///
-/// This is a cheap offset algorithm that is suitable for flat coordinate systems
-/// (or if your lat/lon data is near the equator)
+/// This the [Offset::offset()] function is a more primitive operation than a
+/// 'buffer()' operation. A buffer or inset/outset operation will normally
+/// produce an enclosed shape; For example a [geo_types::Point] would become a
+/// circular [geo_types::Polygon], a [geo_types::Line] would be come a capsule
+/// shaped [geo_types::Polygon].
 ///
-/// My Priority for implementing the trait is as follows:
-/// - [X] Line<impl CoordFloat>
-/// - [X] LineString<impl CoordFloat>
-/// - [X] MultiLineString<impl CoordFloat>
-/// - ... maybe some closed shapes like triangle, polygon?
+///
 ///
 /// The following are a list of known limitations,
 /// some may be removed during development,
@@ -49,14 +49,34 @@ use crate::{
 pub trait Offset<T>
 where
     T: CoordFloat,
+    Self: Sized,
 {
-    /// Offset the edges of the geometry by `distance`, where `distance` may be
-    /// negative.
+    /// Offset the edges of the geometry by `distance`.
     ///
-    /// Negative `distance` values will offset the edges of the geometry to the
-    /// left, when facing the direction of increasing coordinate index. For a
-    /// polygon with clockwise winding order, a positive 'offset' corresponds with
-    /// an 'inset'.
+    ///
+    /// `distance` may also be negative. Negative `distance` values will offset
+    /// the edges of the geometry to the left, when facing the direction of
+    /// increasing coordinate index.
+    ///
+    /// For a polygon with clockwise winding order, where the y axis is
+    /// northward positive, a positive 'distance' corresponds with an 'inset'.
+    /// This direction has been flagged as counter-intuitive in the PR comments.
+    /// I will double check this later once I get the polygon offset working and
+    /// possibly change the choice of direction.
+    ///
+    /// If you are using 'screen coordinates' where the y axis is often downward
+    /// positive then the offset direction described above will be reversed.
+    ///
+    /// # TODO
+    ///
+    /// - [ ] PR comment suggested name change to
+    ///       `OffsetCurve::offset_curve(...)` ?
+    /// - [ ] check if any other part of Geo sets the northward-positive
+    ///       assumption.
+    /// - [ ] Consider a `Result` type with a message explaining the reason for
+    ///       failure?
+    ///
+    /// # Examples
     ///
     /// ```
     /// #use crate::{line_string, Coord};
@@ -70,51 +90,80 @@ where
     ///     Coord { x: 1f64, y: 1f64 },
     ///     Coord { x: 2f64, y: 1f64 },
     /// ];
-    /// let output_actual = input.offset(1f64);
+    /// let output_actual = input.offset(1f64).unwrap();
     /// assert_eq!(output_actual, output_expected);
     /// ```
-    fn offset(&self, distance: T) -> Self;
+    fn offset(&self, distance: T) -> Option<Self>;
 }
 
 impl<T> Offset<T> for Line<T>
 where
     T: CoordFloat,
 {
-    fn offset(&self, distance: T) -> Self {
+    fn offset(&self, distance: T) -> Option<Self> {
         let delta = self.delta();
         let len = (delta.x * delta.x + delta.y * delta.y).sqrt();
-        let delta = Coord {
-            x: delta.y / len,
-            y: -delta.x / len,
-        };
-        Line::new(self.start + delta * distance, self.end + delta * distance)
+        if T::is_zero(&len) {
+            // Cannot offset a zero length Line
+            None
+        } else {
+            // TODO: Is it worth adding a branch to check if the `distance`
+            //       argument is 0 to prevent further computation? The branch
+            //       might hurt performance more than this tiny bit of math?
+            let delta_norm = delta / len;
+            // Rotate 90 degrees clockwise (right normal)
+            // Note that the "rotation direction" depends on the direction of
+            // the y coordinate: Geographic systems normally have the y axis
+            // northward positive (like a conventional axes in math). But screen
+            // coordinates are sometimes downward positive in which case this is
+            // the left_normal and everything gets reversed.
+            let delta_norm_right = Coord {
+                x: delta_norm.y,
+                y: -delta_norm.x,
+            };
+            Some(Line::new(
+                self.start + delta_norm_right * distance,
+                self.end + delta_norm_right * distance,
+            ))
+        }
     }
 }
 
-
-/// # Offset for LineString
-/// ## Algorithm
-/// Loosely follows the algorithm described by
-/// [Xu-Zheng Liu, Jun-Hai Yong, Guo-Qin Zheng, Jia-Guang Sun. An offset algorithm for polyline curves. Computers in Industry, Elsevier, 2007, 15p. inria-00518005]
-/// (https://hal.inria.fr/inria-00518005/document)
-/// This was the first google result for 'line offset algorithm'
 impl<T> Offset<T> for LineString<T>
 where
     T: CoordFloat,
 {
-    fn offset(&self, distance: T) -> Self {
+    fn offset(&self, distance: T) -> Option<Self> {
+        // Loosely follows the algorithm described by
+        // [Xu-Zheng Liu, Jun-Hai Yong, Guo-Qin Zheng, Jia-Guang Sun. An offset algorithm for polyline curves. Computers in Industry, Elsevier, 2007, 15p. inria-00518005]
+        // (https://hal.inria.fr/inria-00518005/document)
+
+        // TODO: is `self.into_inner()` rather than `self.0` preferred? The
+        //       contents of the tuple struct are public.
         if self.0.len() < 2 {
-            // TODO: How should it fail on invalid input?
-            return self.clone();
+            // The docs say "operations and predicates are undefined on invalid
+            // LineStrings." and a LineString is valid "if it is either empty or
+            // contains 2 or more coordinates"
+
+            return None;
+        }
+
+        if T::is_zero(&distance) {
+            // Prevent unnecessary work when offset distance is zero
+            return Some(self.clone());
         }
 
         let offset_segments: Vec<Line<T>> =
-            self.lines().map(|item| item.offset(distance)).collect();
+            match self.lines().map(|item| item.offset(distance)).collect() {
+                Some(a) => a,
+                _ => return None, // bail out if any line segment fails
+            };
 
         if offset_segments.len() == 1 {
-            return offset_segments[0].into();
+            return Some(offset_segments[0].into());
         }
-        // First and last will always work:
+        // First and last will always work, checked length above:
+        // TODO: try to eliminate unwrap anyway?
         let first_point = offset_segments.first().unwrap().start;
         let last_point = offset_segments.last().unwrap().end;
 
@@ -125,13 +174,13 @@ where
                 match line_segment_intersection_with_relationships(a, b, c, d) {
                     None => {
                         // TODO: this is the colinear case;
-                        // we are potentially creating a redundant point in the
+                        // we are creating a redundant point in the
                         // output here. Colinear segments should maybe get
                         // removed before or after this algorithm
                         //println!("CASE 0 - colinear");
                         vec![*b]
-                    }, 
-                    Some(LineIntersectionWithParameterResult {
+                    }
+                    Some(LineIntersectionResultWithRelationships {
                         ab,
                         cd,
                         intersection,
@@ -139,26 +188,25 @@ where
                         (TrueIntersectionPoint, TrueIntersectionPoint) => {
                             //println!("CASE 1 - extend");
                             vec![intersection]
-                        },
+                        }
                         (TrueIntersectionPoint, FalseIntersectionPoint(_)) => {
                             //println!("CASE 1 - extend");
                             vec![intersection]
-                        },
+                        }
                         (FalseIntersectionPoint(_), TrueIntersectionPoint) => {
                             //println!("CASE 1 - extend");
                             vec![intersection]
-                        },
+                        }
                         (FalseIntersectionPoint(AfterEnd), FalseIntersectionPoint(_)) => {
                             // TODO: Mitre limit logic goes here
                             //println!("CASE 2 - extend");
                             vec![intersection]
-                        },
+                        }
                         _ => {
                             //println!("CASE 3 - bridge");
                             //vec![intersection]
                             vec![*b, *c]
-                        },
-
+                        }
                     },
                 }
             },
@@ -166,7 +214,7 @@ where
         result.push(last_point);
         // TODO: there are more steps to this algorithm which are not yet
         //       implemented. See rfcs\2022-11-11-offset.md
-        result.into()
+        Some(result.into())
     }
 }
 
@@ -174,7 +222,7 @@ impl<T> Offset<T> for MultiLineString<T>
 where
     T: CoordFloat,
 {
-    fn offset(&self, distance: T) -> Self {
+    fn offset(&self, distance: T) -> Option<Self> {
         self.iter().map(|item| item.offset(distance)).collect()
     }
 }
@@ -202,17 +250,21 @@ mod test {
     #[test]
     fn test_offset_line() {
         let input = Line::new(Coord { x: 1f64, y: 1f64 }, Coord { x: 1f64, y: 2f64 });
-        let actual_result = input.offset(1.0);
-        assert_eq!(
-            actual_result,
-            Line::new(Coord { x: 2f64, y: 1f64 }, Coord { x: 2f64, y: 2f64 },)
-        );
+        let output_actual = input.offset(1.0);
+        let output_expected = Some(Line::new(
+            Coord { x: 2f64, y: 1f64 },
+            Coord { x: 2f64, y: 2f64 },
+        ));
+        assert_eq!(output_actual, output_expected);
     }
     #[test]
     fn test_offset_line_negative() {
         let input = Line::new(Coord { x: 1f64, y: 1f64 }, Coord { x: 1f64, y: 2f64 });
         let output_actual = input.offset(-1.0);
-        let output_expected = Line::new(Coord { x: 0f64, y: 1f64 }, Coord { x: 0f64, y: 2f64 });
+        let output_expected = Some(Line::new(
+            Coord { x: 0f64, y: 1f64 },
+            Coord { x: 0f64, y: 2f64 },
+        ));
         assert_eq!(output_actual, output_expected);
     }
 
@@ -223,12 +275,20 @@ mod test {
             Coord { x: 0f64, y: 2f64 },
             Coord { x: 2f64, y: 2f64 },
         ];
-        let output_expected = line_string![
+        let output_actual = input.offset(1f64);
+        let output_expected = Some(line_string![
             Coord { x: 1f64, y: 0f64 },
             Coord { x: 1f64, y: 1f64 },
             Coord { x: 2f64, y: 1f64 },
-        ];
+        ]);
+        assert_eq!(output_actual, output_expected);
+    }
+
+    #[test]
+    fn test_offset_line_string_invalid() {
+        let input = line_string![Coord { x: 0f64, y: 0f64 },];
         let output_actual = input.offset(1f64);
+        let output_expected = None;
         assert_eq!(output_actual, output_expected);
     }
 
@@ -246,7 +306,8 @@ mod test {
                 Coord { x: -2f64, y: -2f64 },
             ],
         ]);
-        let output_expected = MultiLineString::new(vec![
+        let output_actual = input.offset(1f64);
+        let output_expected = Some(MultiLineString::new(vec![
             line_string![
                 Coord { x: 1f64, y: 0f64 },
                 Coord { x: 1f64, y: 1f64 },
@@ -257,80 +318,8 @@ mod test {
                 Coord { x: -1f64, y: -1f64 },
                 Coord { x: -2f64, y: -1f64 },
             ],
-        ]);
-        let output_actual = input.offset(1f64);
+        ]));
         assert_eq!(output_actual, output_expected);
     }
 
-    /// Function to draw test output to geogebra.org for inspection
-    ///
-    /// Paste the output  into the javascript console on geogebra.org to
-    /// visualize the result
-    ///
-    /// The following snippet will extract existing (points and vectors) from geogebra:
-    ///
-    /// ```javascript
-    /// console.log([
-    ///     "line_string![",
-    ///     ...ggbApplet.getAllObjectNames().filter(item=>item==item.toUpperCase()).map(name=>`    Coord{x:${ggbApplet.getXcoord(name)}f64, y:${ggbApplet.getYcoord(name)}f64},`),
-    ///     "]",
-    /// ].join("\n"))
-    /// ```
-    ///
-    fn print_geogebra_draw_commands(input: &LineString, prefix: &str, r: u8, g: u8, b: u8) {
-        let prefix_upper = prefix.to_uppercase();
-        let prefix_lower = prefix.to_lowercase();
-        input
-            .coords()
-            .enumerate()
-            .for_each(|(index, Coord { x, y })| {
-                println!(r#"ggbApplet.evalCommand("{prefix_upper}_{{{index}}} = ({x:?},{y:?})")"#)
-            });
-        let x: Vec<_> = input.coords().enumerate().collect();
-        pairwise(&x[..]).for_each(|((a, _), (b, _))|{
-            println!(r#"ggbApplet.evalCommand("{prefix_lower}_{{{a},{b}}} = Vector({prefix_upper}_{a},{prefix_upper}_{b})")"#);
-            ()
-        });
-        let (dim_r, dim_g, dim_b) = (r / 2, g / 2, b / 2);
-        println!(
-            r#"ggbApplet.getAllObjectNames().filter(item=>item.startsWith("{prefix_upper}_")).forEach(item=>ggbApplet.setColor(item,{r},{g},{b}))"#
-        );
-        println!(
-            r#"ggbApplet.getAllObjectNames().filter(item=>item.startsWith("{prefix_lower}_")).forEach(item=>ggbApplet.setColor(item,{dim_r},{dim_g},{dim_b}))"#
-        );
-    }
-
-    #[test]
-    fn test_offset_line_string_all_branch() {
-        // attempts to hit all branches of the line extension / cropping test
-        let input = line_string![
-            Coord { x: 3f64, y: 2f64 },
-            Coord {
-                x: 2.740821628422733f64,
-                y: 2.2582363315313816f64
-            },
-            Coord {
-                x: 5.279039119779313f64,
-                y: 2.516847170273373f64
-            },
-            Coord { x: 5.20f64, y: 2.36f64 },
-            Coord {
-                x: 3.2388869474813826f64,
-                y: 4.489952088082639f64
-            },
-            Coord { x: 3f64, y: 4f64 },
-            Coord { x: 4f64, y: 4f64 },
-            Coord { x: 5.5f64, y: 4f64 },
-            Coord {
-                x: 5.240726402928647f64,
-                y: 4.250497607765981f64
-            },
-        ];
-        print_geogebra_draw_commands(&input, "I", 90, 90, 90);
-        print_geogebra_draw_commands(&input.offset(-0.1f64), "L", 0, 200, 0);
-        print_geogebra_draw_commands(&input.offset(0.1f64), "R", 200, 0, 0);
-
-        // TODO: test always fails
-        assert!(false);
-    }
 }
