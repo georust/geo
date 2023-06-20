@@ -51,8 +51,8 @@ where
     /// - The sign of the output is reversed if the operands are reversed
     /// - The sign can be used to check if the operands are clockwise /
     ///   anti-clockwise orientation with respect to the origin;
-    ///   or phrased differently "is b to the left or right of the line between
-    ///   the origin and a"?
+    ///   or phrased differently:
+    ///   "is b to the left of the line between the origin and a"?
     /// - If the operands are colinear with the origin, the magnitude is zero
     ///
     /// 
@@ -260,7 +260,7 @@ mod test {
         // (eg screen coordinates in a HTML canvas), then rotation directions
         // will be different to those described in the documentation.
 
-        // the documentation for the Rotate trait says: 'Positive angles are
+        // The documentation for the Rotate trait says: 'Positive angles are
         // counter-clockwise, and negative angles are clockwise rotations'
         
         let counter_clockwise_rotation_degrees = 90.0;
