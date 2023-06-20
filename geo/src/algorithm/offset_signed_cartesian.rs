@@ -1,21 +1,19 @@
+use crate::{kernels::RobustKernel, CoordFloat, CoordNum, Kernel, Line, LineString, Orientation};
 /// # Offset - Signed Cartesian
-/// 
+///
 ///  ## Utility Functions
-/// 
-/// This module starts by defining a heap of private utility functions 
+///
+/// This module starts by defining a heap of private utility functions
 /// [dot_product], [cross_product], [magnitude], [normalize], [rescale]
 ///
-/// It looks like some of these are already implemented on  stuff implemented 
+/// It looks like some of these are already implemented on  stuff implemented
 /// on the Point struct; but that feels misplaced to me?
-/// 
+///
 /// Looks like they might eventually belong in the Kernel trait??
-/// 
+///
 /// For my first pull request I'll just implement them functional style and keep
 /// the damage to one module ;)
-
 use geo_types::Coord;
-use crate::{kernels::RobustKernel, CoordFloat, CoordNum, Kernel, Line, LineString, Orientation};
-
 
 /// 2D Dot Product
 fn dot_product<T>(left: Coord<T>, right: Coord<T>) -> T
@@ -26,29 +24,29 @@ where
 }
 
 /// 2D "Cross Product"
-/// 
+///
 /// If we pretend the `z` ordinate is zero we can still use the 3D cross product
 /// on 2D vectors and various useful properties still hold (e.g. it is still the
 /// area of the parallelogram formed by the two input vectors)
-/// 
+///
 /// From basis vectors `i`,`j`,`k` and the axioms on wikipedia
 /// [Cross product](https://en.wikipedia.org/wiki/Cross_product#Computing);
-/// 
+///
 /// ```text
 /// i×j = k
 /// j×k = i
 /// k×i = j
-/// 
+///
 /// j×i = -k
 /// k×j = -i
 /// i×k = -j
-/// 
+///
 /// i×i = j×j = k×k = 0
 /// ```
-/// 
+///
 /// We can define the 2D cross product as the magnitude of the 3D cross product
 /// as follows
-/// 
+///
 /// ```text
 /// |a × b| = |(a_x·i + a_y·j + 0·k) × (b_x·i + b_y·j + 0·k)|
 ///         = |a_x·b_x·(i×i) + a_x·b_y·(i×j) + a_y·b_x·(j×i) + a_y·b_y·(j×j)|
@@ -56,7 +54,7 @@ where
 ///         = |               (a_x·b_y       - a_y·b_x)·k |
 ///         =                  a_x·b_y       - a_y·b_x
 /// ```
-/// 
+///
 /// Note: `cross_prod` is already defined on Point... but that it seems to be
 /// some other operation on 3 points
 fn cross_product<T>(left: Coord<T>, right: Coord<T>) -> T
@@ -66,7 +64,7 @@ where
     left.x * right.y - left.y * right.x
 }
 
-/// Compute the magnitude of a Coord<T> as if it was a vector
+/// Compute the magnitude of a Coord<T>
 fn magnitude<T>(a: Coord<T>) -> T
 where
     T: CoordFloat,
@@ -106,10 +104,10 @@ where
 
 /// Computes the intersection between two line segments;
 /// a to b (`ab`), and c to d (`cd`)
-/// 
+///
 /// We already have LineIntersection trait BUT we need a function that also
 /// returns the parameters for both lines described below. The LineIntersection
-/// trait uses some fancy unrolled code it seems unlikely it could be adapted 
+/// trait uses some fancy unrolled code it seems unlikely it could be adapted
 /// for this purpose.
 ///
 /// Returns the intersection point **and** parameters `t_ab` and `t_cd`
@@ -188,18 +186,17 @@ where
 /// ```
 
 fn line_intersection_with_parameter<T>(
-    a:Coord<T>,
-    b:Coord<T>,
-    c:Coord<T>,
-    d:Coord<T>,
+    a: &Coord<T>,
+    b: &Coord<T>,
+    c: &Coord<T>,
+    d: &Coord<T>,
 ) -> LineIntersectionWithParameterResult<T>
 where
     T: CoordFloat,
 {
-
-    let ab = b - a;
-    let cd = d - c;
-    let ac = c - a;
+    let ab = *b - *a;
+    let cd = *d - *c;
+    let ac = *c - *a;
 
     let ab_cross_cd = cross_product(ab, cd);
 
@@ -212,12 +209,16 @@ where
 
     let t_ab = cross_product(ac, cd) / ab_cross_cd;
     let t_cd = cross_product(ac, cd) / ab_cross_cd;
-    let intersection = a + rescale(ab, t_ab);
-    LineIntersectionWithParameterResult { t_ab, t_cd, intersection }
+    let intersection = *a + rescale(ab, t_ab);
+    LineIntersectionWithParameterResult {
+        t_ab,
+        t_cd,
+        intersection,
+    }
 }
 
 /// Signed offset of Geometry assuming cartesian coordinate system.
-/// 
+///
 /// This is a cheap offset algorithm that is suitable for flat coordinate systems
 /// (or if your lat/lon data is near the equator)
 ///
@@ -261,6 +262,10 @@ where
     }
 }
 
+fn pairwise<T>(iterable: &[T]) -> std::iter::Zip<std::slice::Iter<T>, std::slice::Iter<T>> {
+    iterable.iter().zip(iterable[1..].iter())
+}
+
 impl<T> OffsetSignedCartesian<T> for LineString<T>
 where
     T: CoordFloat,
@@ -276,73 +281,67 @@ where
             return offset_segments[0].into();
         }
         let x = offset_segments[0];
-        // Guess that the output has the same number of vertices as the input.
-        // It is a safe bet for inputs with oblique bends and long segments;
-        let mut raw_offset_ls: Vec<Coord<T>> = Vec::with_capacity(self.0.len());
-        raw_offset_ls.push(offset_segments[0].start.clone());
-        // safe, non-copy `pairwise` iterator is not a thing in rust because
-        // the borrow checker is triggered by too much fun.
-        // The itertools crate has a `tuple_windows` function
-        // (it does a clone of every element which is probably fine?)
-        // Extra dependencies are naff so we sacrifice the readability of
-        // iterators and go for an old style for loop;
-        for i in 0..offset_segments.len() - 1usize {
-            let line_ab = offset_segments[i];
-            let line_cd = offset_segments[i + 1usize];
+        
+        
+        std::iter::once(offset_segments[0].start)
+        .chain(
+            pairwise(&offset_segments[..])
+            .flat_map(|(Line { start:a, end:b }, Line{start:c, end:d})| {
 
-            let a = line_ab.start;
-            let b = line_ab.end;
-            let c = line_cd.start;
-            let d = line_cd.end;
+                let ab = *b - *a;
+                let cd = *d - *c;
 
-            let ab = b-a;
-            let cd = d-c;
-
-            // check for colinear case
-            // This is a flakey check with potentially unsafe type cast :/
-            if <f64 as num_traits::NumCast>::from(cross_product(ab, cd)).unwrap() < 0.0000001f64 { 
-                raw_offset_ls.push(b);
-                continue;
-            }
-            // TODO: Do we need the full overhead of RobustKernel for this?
-            //       The simple kernel impl seems to be blank?
-            // if RobustKernel::orient2d(ab.start, ab.end, cd.end) == Orientation::Collinear {
-            //     raw_offset_ls.push(ab.end);
-            //     continue;
-            // }
-
-            let LineIntersectionWithParameterResult{t_ab, t_cd, intersection} = line_intersection_with_parameter(a, b, c, d);
-
-            let TIP_ab  = num_traits::zero::<T>() <= t_ab && t_ab <= num_traits::one();
-			let FIP_ab  = ! TIP_ab;
-			let PFIP_ab = FIP_ab && t_ab > num_traits::zero();
-			
-			
-			let TIP_cd = num_traits::zero::<T>() <= t_cd && t_cd <= num_traits::one();
-			let FIP_cd = ! TIP_cd;
-			
-			
-			if TIP_ab && TIP_cd {
-				// Case 2a
-				// TODO: test for mitre limit
-				raw_offset_ls.push(intersection);
-            } else if FIP_ab && FIP_cd{
-				// Case 2b.
-				if PFIP_ab {
-					// TODO: test for mitre limit
-					raw_offset_ls.push(intersection);
+                let mut raw_offset_ls:Vec<Coord<T>> = Vec::new();
+                // check for colinear case; this is a flakey check with a
+                // possible panic type cast :/
+                // TODO: Could use RobustKernel for this? The simple kernel impl seems to be blank?
+                //       I don't need the accuracy, need speed :)
+                // Alternative implementation:
+                // if RobustKernel::orient2d(a, b, c) == Orientation::Collinear {
+                //     raw_offset_ls.push(b);
+                // }else {...
+                if <f64 as num_traits::NumCast>::from(cross_product(ab, cd)).unwrap() < 0.0000001f64 {
+                    raw_offset_ls.push(*b);
                 } else {
-					raw_offset_ls.push(b);
-					raw_offset_ls.push(c);
+
+                    let LineIntersectionWithParameterResult {
+                        t_ab,
+                        t_cd,
+                        intersection,
+                    } = line_intersection_with_parameter(a, b, c, d);
+
+                    let tip_ab = num_traits::zero::<T>() <= t_ab && t_ab <= num_traits::one();
+                    let fip_ab = !tip_ab;
+                    let pfip_ab = fip_ab && t_ab > num_traits::zero();
+
+                    let tip_cd = num_traits::zero::<T>() <= t_cd && t_cd <= num_traits::one();
+                    let fip_cd = !tip_cd;
+
+                    if tip_ab && tip_cd {
+                        // Case 2a
+                        // TODO: test for mitre limit
+                        raw_offset_ls.push(intersection);
+                    } else if fip_ab && fip_cd {
+                        // Case 2b.
+                        if pfip_ab {
+                            // TODO: test for mitre limit
+                            raw_offset_ls.push(intersection);
+                        } else {
+                            raw_offset_ls.push(*b);
+                            raw_offset_ls.push(*c);
+                        }
+                    } else {
+                        // Case 2c.
+                        // TODO: this is a repetition of the branch above.
+                        //       we can probably tidy up the branches to avoid repeated code
+                        raw_offset_ls.push(*b);
+                        raw_offset_ls.push(*c);
+                    }
+                    raw_offset_ls.push(*d);
                 }
-            } else {
-				// Case 2c. (either ab or cd
-                raw_offset_ls.push(b);
-                raw_offset_ls.push(c);
-            }
-	        raw_offset_ls.push(d)  
-        }
-        todo!("Not done yet.")
+                raw_offset_ls
+            })
+        ).collect()
     }
 }
 
@@ -352,50 +351,34 @@ mod test {
     use crate::{line_string, Coord, Line};
 
     // private imports
-    use super::{
-        cross_product,
-        OffsetSignedCartesian
-    };
+    use super::{cross_product, OffsetSignedCartesian};
 
     #[test]
-    fn test_cross_product(){
-        let a = Coord{x:0f64, y:0f64};
-        let b = Coord{x:0f64, y:1f64};
-        let c = Coord{x:1f64, y:0f64};
+    fn test_cross_product() {
+        let a = Coord { x: 0f64, y: 0f64 };
+        let b = Coord { x: 0f64, y: 1f64 };
+        let c = Coord { x: 1f64, y: 0f64 };
 
         let ab = b - a;
         let ac = c - a;
 
-        
         // expect the area of the parallelogram
-        assert_eq!(
-            cross_product(ac, ab),
-            1f64
-        );
+        assert_eq!(cross_product(ac, ab), 1f64);
         // expect swapping will result in negative
-        assert_eq!(
-            cross_product(ab, ac),
-            -1f64
-        );
+        assert_eq!(cross_product(ab, ac), -1f64);
 
         // Add skew
-        let a = Coord{x:0f64, y:0f64};
-        let b = Coord{x:0f64, y:1f64};
-        let c = Coord{x:1f64, y:1f64};
+        let a = Coord { x: 0f64, y: 0f64 };
+        let b = Coord { x: 0f64, y: 1f64 };
+        let c = Coord { x: 1f64, y: 1f64 };
 
         let ab = b - a;
         let ac = c - a;
 
         // expect the area of the parallelogram
-        assert_eq!(
-            cross_product(ac, ab),
-            1f64
-        );
+        assert_eq!(cross_product(ac, ab), 1f64);
         // expect swapping will result in negative
-        assert_eq!(
-            cross_product(ab, ac),
-            -1f64
-        );
+        assert_eq!(cross_product(ab, ac), -1f64);
     }
 
     #[test]
