@@ -3,9 +3,9 @@ use crate::{
     Coord,
     CoordFloat,
     CoordNum,
-    algorithm::kernels::Kernel,
-    algorithm::kernels::RobustKernel,
-    Orientation
+    // algorithm::kernels::Kernel,
+    // algorithm::kernels::RobustKernel,
+    // Orientation
 };
 
 // No nested enums :( Goes into the enum below
@@ -42,6 +42,7 @@ pub(super) enum LineSegmentIntersectionType {
 
 use FalseIntersectionPointType::{AfterEnd, BeforeStart};
 use LineSegmentIntersectionType::{FalseIntersectionPoint, TrueIntersectionPoint};
+use geo_types::{Line, line_string};
 
 /// Struct to contain the result for [line_segment_intersection_with_relationships]
 pub(super) struct LineIntersectionResultWithRelationships<T>
@@ -157,18 +158,9 @@ where
     // TODO: I'm still confused about how to use Kernel / RobustKernel;
     //       the following did not work. I need to read more code
     //       from the rest of this repo to understand.
-    // if Kernel::orient2d(*a, *b, *d) == Orientation::Collinear {
-    //       note that it is sufficient to check that only one of
-    //       c or d are colinear with ab because of how they are
-    //       related by the original line string.
-    // TODO: The following line
-    //       - Does not use the Kernel
-    //       - uses an arbitrary threshold value which needs more thought
+    
 
-    match RobustKernel::orient2d(*a, *b, *d) {
-        Orientation::Collinear => (),
-        _ => ()
-    }
+    
 
     let ab_cross_cd = cross_product_2d(ab, cd);
     if T::is_zero(&ab_cross_cd) {
@@ -183,6 +175,18 @@ where
 
         Some((t_ab, t_cd, intersection))
     }
+
+    // OR
+
+    // match RobustKernel::orient2d(*a, *b, *d) {
+    //     Orientation::Collinear => None,
+    //     _ => {
+    //         let t_ab = cross_product_2d(ac, cd) / ab_cross_cd;
+    //         let t_cd = -cross_product_2d(ab, ac) / ab_cross_cd;
+    //         let intersection = *a + ab * t_ab;
+    //         Some((t_ab, t_cd, intersection))
+    //     }
+    // }
 }
 
 /// This is a simple wrapper for [line_segment_intersection_with_parameters];
