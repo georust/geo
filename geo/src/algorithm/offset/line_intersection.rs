@@ -8,6 +8,8 @@ pub(super) enum FalseIntersectionPointType {
     /// ray defined by the line segment, but before the start of the line segment.
     ///
     /// Abbreviated to `NFIP` in original paper (Negative)
+    /// (also referred to as `FFIP` in Figure 6, but i think this is an 
+    ///  error?)
     BeforeStart,
     /// The intersection point is 'false' or 'virtual': it lies on the infinite
     /// ray defined by the line segment, but after the end of the line segment.
@@ -172,6 +174,8 @@ where
     }
 }
 
+/// Return the intersection point as well as the relationship between the point
+/// and each of the input line segments. See [LineSegmentIntersectionType]
 pub(super) fn line_segment_intersection_with_relationships<T>(
     a: &Coord<T>,
     b: &Coord<T>,
