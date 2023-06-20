@@ -1,6 +1,6 @@
 use crate::{Coord, CoordFloat};
 
-/// Extends the `Coord` struct with more vector operations;
+/// Extends the `Coord` struct with some common vector operations;
 ///
 /// - [VectorExtensions::cross_product_2d],
 /// - [VectorExtensions::magnitude],
@@ -200,7 +200,7 @@ mod test {
         // Parallel, same direction
         let a = Coord { x: 1f64, y: 0f64 };
         let b = Coord { x: 2f64, y: 0f64 };
-        // expect + product of magnitudes
+        // expect +ive product of magnitudes
         assert_eq!(a.dot_product(b), 2f64);
         // expect swapping will have same result
         assert_eq!(b.dot_product(a), 2f64);
@@ -208,7 +208,7 @@ mod test {
         // Parallel, opposite direction
         let a = Coord { x: 3f64, y: 4f64 };
         let b = Coord { x: -3f64, y: -4f64 };
-        // expect - product of magnitudes
+        // expect -ive product of magnitudes
         assert_eq!(a.dot_product(b), -25f64);
         // expect swapping will have same result
         assert_eq!(b.dot_product(a), -25f64);
@@ -246,28 +246,39 @@ mod test {
 
         assert_eq!(a.left(), a_left);
         assert_eq!(a.right(), a_right);
+        assert_eq!(a.left(), -a.right());
     }
 
     #[test]
     fn test_left_right_match_rotate() {
         use crate::algorithm::rotate::Rotate;
         use crate::Point;
+        // The aim of this test is to confirm that wording in documentation is
+        // consistent.
+
+        // when the user is in a coordinate system where the y axis is flipped
+        // (eg screen coordinates in a HTML canvas), then rotation directions
+        // will be different to those described in the documentation.
+
         // the documentation for the Rotate trait says: 'Positive angles are
         // counter-clockwise, and negative angles are clockwise rotations'
-        // left is anti-clockwise and right is clockwise: check that the results
-        // match:
+        
+        let counter_clockwise_rotation_degrees = 90.0;
+        let clockwise_rotation_degrees = -counter_clockwise_rotation_degrees;
 
-        let a: Point = Coord { x: 1f64, y: 0f64 }.into();
+        let a: Point = Coord { x: 1.0, y: 0.0 }.into();
+        let origin:Point = Coord::<f64>::zero().into();
 
+        // left is anti-clockwise
         assert_relative_eq!(
-            a.0.right(),
-            a.rotate_around_point(-90.0, Coord { x: 0.0, y: 0.0 }.into())
-                .0
+            Point::from(a.0.left()),
+            a.rotate_around_point(counter_clockwise_rotation_degrees, origin),
         );
+        // right is clockwise
         assert_relative_eq!(
-            a.0.left(),
-            a.rotate_around_point(90.0, Coord { x: 0.0, y: 0.0 }.into())
-                .0
+            Point::from(a.0.right()),
+            a.rotate_around_point(clockwise_rotation_degrees, origin),
         );
+        
     }
 }
