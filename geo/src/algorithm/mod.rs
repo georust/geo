@@ -176,7 +176,7 @@ pub use lines_iter::LinesIter;
 pub mod map_coords;
 pub use map_coords::{MapCoords, MapCoordsInPlace};
 
-/// Apply a simple signed offset azzuming cartesian
+/// Apply a simple signed offset
 pub mod offset;
 pub use offset::Offset;
 
