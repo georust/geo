@@ -1,4 +1,6 @@
-use super::{cross_product, line_intersection_with_parameter, LineIntersectionWithParameterResult};
+use super::line_intersection::{line_intersection_with_parameter, LineIntersectionWithParameterResult};
+use super::slice_itertools::pairwise;
+
 use crate::{
     CoordFloat,
     // Kernel,
@@ -6,6 +8,7 @@ use crate::{
     Line,
     LineString,
     MultiLineString,
+    Polygon
 };
 use geo_types::Coord;
 
@@ -77,17 +80,6 @@ where
     }
 }
 
-/// Iterate over a slice in overlapping pairs
-///
-/// ```ignore
-/// let items = vec![1, 2, 3, 4, 5];
-/// let actual_result: Vec<(i32, i32)> = pairwise(&items[..]).map(|(a, b)| (*a, *b)).collect();
-/// let expected_result = vec![(1, 2), (2, 3), (3, 4), (4, 5)];
-/// assert_eq!(actual_result, expected_result);
-/// ```
-fn pairwise<T>(iterable: &[T]) -> std::iter::Zip<std::slice::Iter<T>, std::slice::Iter<T>> {
-    iterable.iter().zip(iterable[1..].iter())
-}
 
 impl<T> Offset<T> for LineString<T>
 where
@@ -112,52 +104,32 @@ where
         result.push(first_point);
         result.extend(pairwise(&offset_segments[..]).flat_map(
             |(Line { start: a, end: b }, Line { start: c, end: d })| {
-                let ab = *b - *a;
-                let cd = *d - *c;
-                let ab_cross_cd = cross_product(ab, cd);
-                // TODO: I'm still confused about how to use Kernel / RobustKernel;
-                //       the following did not work. I need to read more code
-                //       from the rest of this repo to understand.
-                // if Kernel::orient2d(*a, *b, *d) == Orientation::Collinear {
-                //       note that it is sufficient to check that only one of
-                //       c or d are colinear with ab because of how they are
-                //       related by the original line string.
-                // TODO: The following line
-                //       - Does not use the Kernel
-                //       - uses an arbitrary threshold value which needs more thought
-                if <f64 as num_traits::NumCast>::from(ab_cross_cd)
-                    .unwrap()
-                    .abs()
-                    < num_traits::cast(0.0000001f64).unwrap()
-                {
-                    vec![*b]
-                } else {
-                    // TODO: if we can inline this function we only need to
-                    //       calculate `ab_cross_cd` once
-                    let LineIntersectionWithParameterResult {
+                match line_intersection_with_parameter(a, b, c, d) {
+                    None => vec![*b], // colinear
+                    Some(LineIntersectionWithParameterResult {
                         t_ab,
                         t_cd,
                         intersection,
-                    } = line_intersection_with_parameter(a, b, c, d);
+                    }) => {
+                        let zero = num_traits::zero::<T>();
+                        let one = num_traits::one::<T>();
 
-                    let zero = num_traits::zero::<T>();
-                    let one = num_traits::one::<T>();
+                        let tip_ab = zero <= t_ab && t_ab <= one;
+                        let fip_ab = !tip_ab;
+                        let pfip_ab = fip_ab && t_ab > zero;
 
-                    let tip_ab = zero <= t_ab && t_ab <= one;
-                    let fip_ab = !tip_ab;
-                    let pfip_ab = fip_ab && t_ab > zero;
+                        let tip_cd = zero <= t_cd && t_cd <= one;
+                        let fip_cd = !tip_cd;
 
-                    let tip_cd = zero <= t_cd && t_cd <= one;
-                    let fip_cd = !tip_cd;
-
-                    if tip_ab && tip_cd {
-                        // TODO: test for mitre limit
-                        vec![intersection]
-                    } else if fip_ab && fip_cd && pfip_ab {
-                        // TODO: test for mitre limit
-                        vec![intersection]
-                    } else {
-                        vec![*b, *c]
+                        if tip_ab && tip_cd {
+                            // TODO: test for mitre limit
+                            vec![intersection]
+                        } else if fip_ab && fip_cd && pfip_ab {
+                            // TODO: test for mitre limit
+                            vec![intersection]
+                        } else {
+                            vec![*b, *c]
+                        }
                     }
                 }
             },
@@ -178,22 +150,24 @@ where
     }
 }
 
+
+// impl<T> Offset<T> for Polygon<T>
+// where
+//     T: CoordFloat,
+// {
+//     fn offset(&self, distance: T) -> Self {
+//         // TODO: not finished yet... need to do interiors
+//         // self.interiors()
+//         // TODO: is the winding order configurable?
+//         self.exterior();
+//         todo!("Not finished")
+//     }
+// }
+
 #[cfg(test)]
 mod test {
 
-    // crate dependencies
     use crate::{line_string, Coord, Line, MultiLineString, Offset};
-
-    // private imports
-    use super::pairwise;
-
-    #[test]
-    fn test_pairwise() {
-        let items = vec![1, 2, 3, 4, 5];
-        let actual_result: Vec<(i32, i32)> = pairwise(&items[..]).map(|(a, b)| (*a, *b)).collect();
-        let expected_result = vec![(1, 2), (2, 3), (3, 4), (4, 5)];
-        assert_eq!(actual_result, expected_result);
-    }
 
     #[test]
     fn test_offset_line() {
