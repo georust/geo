@@ -27,7 +27,7 @@
 /// let some_slice:&[i64] = &some_vector[..];
 /// let some_result:Vec<i64> = some_slice
 ///     .windows(2)
-///     .map(|&[a, b]| a + b)
+///     .map(|&[a, b]| a + b) // <-- error
 ///     .collect();
 /// ```
 ///

@@ -176,9 +176,10 @@ pub use lines_iter::LinesIter;
 pub mod map_coords;
 pub use map_coords::{MapCoords, MapCoordsInPlace};
 
-/// Apply a simple signed offset
-pub mod offset;
-pub use offset::Offset;
+/// Offset the edges of a geometry perpendicular to the edge direction, either
+/// to the left or to the right depending on the sign of the specified distance.
+pub mod offset_curve;
+pub use offset_curve::OffsetCurve;
 
 /// Orient a `Polygon`'s exterior and interior rings.
 pub mod orient;

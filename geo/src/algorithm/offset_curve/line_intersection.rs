@@ -1,4 +1,4 @@
-use super::cross_product::cross_product_2d;
+use super::vector_extensions::VectorExtensions;
 use crate::{
     Coord,
     CoordFloat,
@@ -42,7 +42,6 @@ pub(super) enum LineSegmentIntersectionType {
 
 use FalseIntersectionPointType::{AfterEnd, BeforeStart};
 use LineSegmentIntersectionType::{FalseIntersectionPoint, TrueIntersectionPoint};
-use geo_types::{Line, line_string};
 
 /// Struct to contain the result for [line_segment_intersection_with_relationships]
 pub(super) struct LineIntersectionResultWithRelationships<T>
@@ -155,28 +154,22 @@ where
     let cd = *d - *c;
     let ac = *c - *a;
 
-    // TODO: I'm still confused about how to use Kernel / RobustKernel;
-    //       the following did not work. I need to read more code
-    //       from the rest of this repo to understand.
-    
-
-    
-
-    let ab_cross_cd = cross_product_2d(ab, cd);
+    let ab_cross_cd = ab.cross_product_2d(cd);
     if T::is_zero(&ab_cross_cd) {
         // Segments are exactly parallel or colinear
         None
     } else {
         // Division my zero is prevented, but testing is needed to see what
         // happens for near-parallel sections of line.
-        let t_ab = cross_product_2d(ac, cd) / ab_cross_cd;
-        let t_cd = -cross_product_2d(ab, ac) / ab_cross_cd;
+        let t_ab =  ac.cross_product_2d(cd) / ab_cross_cd;
+        let t_cd = -ab.cross_product_2d(ac) / ab_cross_cd;
         let intersection = *a + ab * t_ab;
 
         Some((t_ab, t_cd, intersection))
     }
 
-    // OR
+    // TODO:
+    // The above could be replaced with the following.
 
     // match RobustKernel::orient2d(*a, *b, *d) {
     //     Orientation::Collinear => None,
@@ -231,7 +224,7 @@ mod test {
         FalseIntersectionPointType, LineIntersectionResultWithRelationships,
         LineSegmentIntersectionType,
     };
-    use crate::{Coord, coord};
+    use crate::{Coord};
     use FalseIntersectionPointType::{AfterEnd, BeforeStart};
     use LineSegmentIntersectionType::{FalseIntersectionPoint, TrueIntersectionPoint};
 
@@ -288,10 +281,7 @@ mod test {
         let c = Coord { x: 0f64, y: 2f64 };
         let d = Coord { x: -2f64, y: 6f64 };
 
-        fn check_intersection(intersection:Coord<f64>){
-            let diff = intersection - Coord { x: 1f64 / 3f64, y: 4f64 / 3f64 };
-            assert!(diff.x * diff.x + diff.y * diff.y < 0.00000000001f64);
-        }
+        let expected_intersection_point = Coord { x: 1f64 / 3f64, y: 4f64 / 3f64 };
 
         if let Some(LineIntersectionResultWithRelationships {
             ab,
@@ -301,7 +291,7 @@ mod test {
         {
             assert_eq!(ab, FalseIntersectionPoint(BeforeStart));
             assert_eq!(cd, FalseIntersectionPoint(BeforeStart));
-            check_intersection(intersection);
+            assert_relative_eq!(intersection, expected_intersection_point);
         } else {
             assert!(false);
         }
@@ -314,7 +304,7 @@ mod test {
         {
             assert_eq!(ab, FalseIntersectionPoint(AfterEnd));
             assert_eq!(cd, FalseIntersectionPoint(BeforeStart));
-            check_intersection(intersection);
+            assert_relative_eq!(intersection, expected_intersection_point);
         } else {
             assert!(false);
         }
@@ -327,7 +317,30 @@ mod test {
         {
             assert_eq!(ab, FalseIntersectionPoint(BeforeStart));
             assert_eq!(cd, FalseIntersectionPoint(AfterEnd));
-            check_intersection(intersection);
+            assert_relative_eq!(intersection, expected_intersection_point);
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn test_line_segment_intersection_with_relationships_true() {
+        let a = Coord { x: 0f64, y: 1f64 };
+        let b = Coord { x: 2f64, y: 3f64 };
+        let c = Coord { x: 0f64, y: 2f64 };
+        let d = Coord { x: -2f64, y: 6f64 };
+
+        let expected_intersection_point = Coord { x: 1f64 / 3f64, y: 4f64 / 3f64 };
+
+        if let Some(LineIntersectionResultWithRelationships {
+            ab,
+            cd,
+            intersection,
+        }) = line_segment_intersection_with_relationships(&a, &b, &c, &d)
+        {
+            assert_eq!(ab, TrueIntersectionPoint);
+            assert_eq!(cd, FalseIntersectionPoint(BeforeStart));
+            assert_relative_eq!(intersection, expected_intersection_point);
         } else {
             assert!(false);
         }
