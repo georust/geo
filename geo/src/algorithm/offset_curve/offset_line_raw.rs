@@ -1,14 +1,14 @@
-use crate::{Coord, CoordFloat};
-use super::vector_extensions::VectorExtensions;
+use crate::{Coord, CoordFloat, Line};
+use super::{vector_extensions::VectorExtensions, line_measured::LineMeasured};
 
 
 /// The result of the [offset_line_raw()] function
-#[derive(Clone)]
-pub(super) struct OffsetLineRawResult<T> where T:CoordFloat {
-    pub a_offset:Coord<T>,
-    pub b_offset:Coord<T>,
-    pub ab_len:T,
-}
+// #[derive(Clone)]
+// pub(super) struct OffsetLineRawResult<T> where T:CoordFloat {
+//     pub a_offset:Coord<T>,
+//     pub b_offset:Coord<T>,
+//     pub ab_len:T,
+// }
 
 
 /// Offset a line defined by [Coord]s `a` and `b` by `distance`.
@@ -38,20 +38,47 @@ pub(super) fn offset_line_raw<T>(
     a: Coord<T>,
     b: Coord<T>,
     distance: T,
-) -> Option<OffsetLineRawResult<T>>
+) -> Option<LineMeasured<T>>
 where
     T: CoordFloat,
 {
     let ab = b - a;
-    let ab_len = ab.magnitude();
-    if ab_len == T::zero() {
+    let length = ab.magnitude();
+    if length == T::zero() {
         return None;
     }
-    let ab_offset = ab.left() / ab_len * distance;
+    let ab_offset = ab.left() / length * distance;
 
-    Some(OffsetLineRawResult {
-        a_offset: a + ab_offset,
-        b_offset: b + ab_offset,
-        ab_len,
+    Some(LineMeasured {
+        line: Line{
+            start:a + ab_offset,
+            end: b  + ab_offset
+        },
+        length,
     })
+}
+
+
+// TODO: test
+
+#[cfg(test)]
+mod test {
+
+    use crate::{
+        Coord,
+        Line,
+        offset_curve::{offset_line_raw::offset_line_raw, line_measured::LineMeasured},
+    };
+
+    #[test]
+    fn test_offset_line_raw() {
+        let a = Coord { x: 0f64, y: 0f64 };
+        let b = Coord { x: 0f64, y: 1f64 };
+        let output_actual = offset_line_raw(a, b, 1f64);
+        let output_expected = Some(LineMeasured{
+            line:Line { start: Coord { x: 1f64, y: 0f64 }, end: Coord { x: 1f64, y: 1f64 } },
+            length:1f64,
+        });
+        assert_eq!(output_actual, output_expected);
+    }
 }

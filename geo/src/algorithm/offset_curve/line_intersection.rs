@@ -9,7 +9,7 @@ use crate::{
 };
 
 // No nested enums :( Goes into the enum below
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub(super) enum FalseIntersectionPointType {
     /// The intersection point is 'false' or 'virtual': it lies on the infinite
     /// ray defined by the line segment, but before the start of the line segment.
@@ -27,7 +27,7 @@ pub(super) enum FalseIntersectionPointType {
 
 /// Used to encode the relationship between a segment (e.g. between [Coord] `a` and `b`)
 /// and an intersection point ([Coord] `p`)
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub(super) enum LineSegmentIntersectionType {
     /// The intersection point lies between the start and end of the line segment.
     ///
@@ -43,7 +43,7 @@ pub(super) enum LineSegmentIntersectionType {
 
 
 /// Struct to contain the result for [line_segment_intersection_with_relationships]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(super) struct LineIntersectionResultWithRelationships<T>
 where
     T: CoordNum,
@@ -142,17 +142,17 @@ where
 /// ```
 
 fn line_segment_intersection_with_parameters<T>(
-    a: &Coord<T>,
-    b: &Coord<T>,
-    c: &Coord<T>,
-    d: &Coord<T>,
+    a: Coord<T>,
+    b: Coord<T>,
+    c: Coord<T>,
+    d: Coord<T>,
 ) -> Option<(T, T, Coord<T>)>
 where
     T: CoordFloat,
 {
-    let ab = *b - *a;
-    let cd = *d - *c;
-    let ac = *c - *a;
+    let ab = b - a;
+    let cd = d - c;
+    let ac = c - a;
 
     let ab_cross_cd = ab.cross_product_2d(cd);
     if T::is_zero(&ab_cross_cd) {
@@ -163,7 +163,7 @@ where
         // happens for near-parallel sections of line.
         let t_ab =  ac.cross_product_2d(cd) / ab_cross_cd;
         let t_cd = -ab.cross_product_2d(ac) / ab_cross_cd;
-        let intersection = *a + ab * t_ab;
+        let intersection = a + ab * t_ab;
 
         Some((t_ab, t_cd, intersection))
     }
@@ -186,10 +186,10 @@ where
 /// Returns the intersection point as well as the relationship between the point
 /// and each of the input line segments. See [LineSegmentIntersectionType]
 pub(super) fn line_segment_intersection_with_relationships<T>(
-    a: &Coord<T>,
-    b: &Coord<T>,
-    c: &Coord<T>,
-    d: &Coord<T>,
+    a: Coord<T>,
+    b: Coord<T>,
+    c: Coord<T>,
+    d: Coord<T>,
 ) -> Option<LineIntersectionResultWithRelationships<T>>
 where
     T: CoordFloat,
@@ -235,7 +235,7 @@ mod test {
         let c = Coord { x: 0f64, y: 1f64 };
         let d = Coord { x: 1f64, y: 0f64 };
         if let Some((t_ab, t_cd, intersection)) =
-            line_segment_intersection_with_parameters(&a, &b, &c, &d)
+            line_segment_intersection_with_parameters(a, b, c, d)
         {
             assert_eq!(t_ab, 0.25f64);
             assert_eq!(t_cd, 0.50f64);
@@ -258,7 +258,7 @@ mod test {
         let c = Coord { x: 9f64, y: 9f64 };
         let d = Coord { x: 12f64, y: 13f64 };
         assert_eq!(
-            line_segment_intersection_with_parameters(&a, &b, &c, &d),
+            line_segment_intersection_with_parameters(a, b, c, d),
             None
         )
     }
@@ -269,7 +269,7 @@ mod test {
         let c = Coord { x: 3f64, y: 6f64 };
         let d = Coord { x: 5f64, y: 10f64 };
         assert_eq!(
-            line_segment_intersection_with_parameters(&a, &b, &c, &d),
+            line_segment_intersection_with_parameters(a, b, c, d),
             None
         )
     }
@@ -287,7 +287,7 @@ mod test {
             ab,
             cd,
             intersection,
-        }) = line_segment_intersection_with_relationships(&a, &b, &c, &d)
+        }) = line_segment_intersection_with_relationships(a, b, c, d)
         {
             assert_eq!(ab, FalseIntersectionPoint(BeforeStart));
             assert_eq!(cd, FalseIntersectionPoint(BeforeStart));
@@ -300,7 +300,7 @@ mod test {
             ab,
             cd,
             intersection,
-        }) = line_segment_intersection_with_relationships(&b, &a, &c, &d)
+        }) = line_segment_intersection_with_relationships(b, a, c, d)
         {
             assert_eq!(ab, FalseIntersectionPoint(AfterEnd));
             assert_eq!(cd, FalseIntersectionPoint(BeforeStart));
@@ -313,7 +313,7 @@ mod test {
             ab,
             cd,
             intersection,
-        }) = line_segment_intersection_with_relationships(&a, &b, &d, &c)
+        }) = line_segment_intersection_with_relationships(a, b, d, c)
         {
             assert_eq!(ab, FalseIntersectionPoint(BeforeStart));
             assert_eq!(cd, FalseIntersectionPoint(AfterEnd));
@@ -336,7 +336,7 @@ mod test {
             ab,
             cd,
             intersection,
-        }) = line_segment_intersection_with_relationships(&a, &b, &c, &d)
+        }) = line_segment_intersection_with_relationships(a, b, c, d)
         {
             assert_eq!(ab, TrueIntersectionPoint);
             assert_eq!(cd, FalseIntersectionPoint(BeforeStart));

@@ -1,20 +1,19 @@
-use super::line_intersection::FalseIntersectionPointType::AfterEnd;
-use super::line_intersection::LineSegmentIntersectionType::{
-    FalseIntersectionPoint, TrueIntersectionPoint,
+// TODO: Should I be doing `use crate ::{...}` or `use geo_types::{...}`
+use crate::{Coord, CoordFloat, Line, LineString, MultiLineString};
+
+use super::line_intersection::{
+    FalseIntersectionPointType::AfterEnd,
+    LineIntersectionResultWithRelationships,
+    LineSegmentIntersectionType::{FalseIntersectionPoint, TrueIntersectionPoint},
 };
+
+use super::line_measured::LineMeasured;
 
 use super::vector_extensions::VectorExtensions;
 
-use super::line_intersection::{
-    line_segment_intersection_with_relationships, LineIntersectionResultWithRelationships,
-};
+use super::offset_line_raw::offset_line_raw;
 
-use super::offset_line_raw::{offset_line_raw, OffsetLineRawResult};
 use super::offset_segments_iterator::{LineStringOffsetSegmentPairs, OffsetSegmentsIteratorItem};
-use super::slice_itertools::pairwise;
-
-// TODO: Should I be doing `use crate ::{...}` or `use geo_types::{...}`
-use crate::{Coord, CoordFloat, Line, LineString, MultiLineString};
 
 /// # Offset Trait
 ///
@@ -78,9 +77,7 @@ where
         } else {
             let Line { start: a, end: b } = *self;
             match offset_line_raw(a, b, distance) {
-                Some(OffsetLineRawResult {
-                    a_offset, b_offset, ..
-                }) => Some(Line::new(a_offset, b_offset)),
+                Some(LineMeasured { line, .. }) => Some(line),
                 _ => None,
             }
         }
@@ -127,33 +124,42 @@ where
         let mitre_limit_distance = distance.abs() * mitre_limit_factor;
         let mitre_limit_distance_squared = mitre_limit_distance * mitre_limit_distance;
 
-        // TODO: Unforeseen problem: I want to use flat_map here,
-        // but I also want to do the fancy collect() trick;
-        // we can collect Option<Vec<T>> from Iter<Option<T>>
-        let offset_points: Option<Vec<Vec<Coord<T>>>> = self
-            .iter_offset_segment_pairs(distance)
-            .map(|item| match item {
-                Some(OffsetSegmentsIteratorItem {
-                    a,
-                    b,
-                    c,
-                    m,
-                    n,
-                    o,
-                    p,
-                    ab_len,
-                    bc_len,
+        let mut offset_points = Vec::with_capacity(self.0.len());
+
+        for item in self.iter_offset_segment_pairs(distance) {
+            println!("{item:?}");
+            if let OffsetSegmentsIteratorItem {
+                ab_offset: Some(LineMeasured { line, .. }),
+                first: true,
+                ..
+            } = item
+            {
+                offset_points.push(line.start)
+            };
+            match item {
+                OffsetSegmentsIteratorItem {
+                    ab_offset:
+                        Some(LineMeasured {
+                            line: Line { start: m, end: n },
+                            length: ab_len,
+                        }),
+                    bc_offset:
+                        Some(LineMeasured {
+                            line: Line { start: o, end: p },
+                            length: bc_len,
+                        }),
                     i:
                         Some(LineIntersectionResultWithRelationships {
                             ab,
                             cd,
                             intersection,
                         }),
-                }) => match (ab, cd) {
+                    ..
+                } => match (ab, cd) {
                     (TrueIntersectionPoint, TrueIntersectionPoint) => {
                         // Inside elbow
                         // No mitre limit needed
-                        Some(vec![intersection])
+                        offset_points.push(intersection)
                     }
                     (FalseIntersectionPoint(AfterEnd), FalseIntersectionPoint(_)) => {
                         // Outside elbow
@@ -163,134 +169,55 @@ where
                             // Mitre Limited / Truncated Corner
                             let mn: Coord<T> = n - m;
                             let op: Coord<T> = p - o;
-                            Some(vec![
-                                n + mn / ab_len * mitre_limit_distance,
-                                o - op / bc_len * mitre_limit_distance,
-                            ])
+                            offset_points.push(n + mn / ab_len * mitre_limit_distance);
+                            offset_points.push(o - op / bc_len * mitre_limit_distance);
                         } else {
                             // Sharp Corner
-                            Some(vec![intersection])
+                            offset_points.push(intersection)
                         }
                     }
                     _ => {
                         // Inside pinched elbow
                         // (ie forearm curled back through bicep 🙃)
                         //println!("CASE 3 - bridge");
-                        Some(vec![n, o])
+                        offset_points.push(n);
+                        offset_points.push(o);
                     }
                 },
-                Some(OffsetSegmentsIteratorItem { i: None, n, .. }) => {
+                OffsetSegmentsIteratorItem {
+                    ab_offset:
+                        Some(LineMeasured {
+                            line: Line { end: n, .. },
+                            ..
+                        }),
+                    i: None,
+                    ..
+                } => {
                     // Collinear
-                    Some(vec![n])
+                    // TODO: this is not an elegant way to handle colinear
+                    // input: in some (all?) cases this produces a redundant
+                    // colinear point in the output. It might be easier to
+                    // eliminate this redundant point in a pre-processing step
+                    // rather than try do it here.
+                    offset_points.push(n)
                 }
                 _ => {
-                    // One of the segments could not be offset
-                    None
+                    // Several ways to end up here... probably one of the
+                    // segments could not be offset
+                    return None;
                 }
-            })
-            .collect();
-
-        if let Some(item) = offset_points {
-            let res: _ = item.iter().flat_map(|item| item).collect();
+            }
+            if let OffsetSegmentsIteratorItem {
+                bc_offset: Some(LineMeasured { line, .. }),
+                last: true,
+                ..
+            } = item
+            {
+                offset_points.push(line.end)
+            };
         }
 
-        // TODO: I feel like offset_segments should be lazily computed as part
-        //       of the main iterator below if possible;
-        //       - so we don't need to keep all this in memory at once
-        //       - and so that if we have to bail out later we didn't do all
-        //         this work for nothing
-        //       However I haven't been able to get a nice lazy pairwise
-        //       iterator working.. I suspect it requires unsafe code :/
-        let offset_segments: Vec<Line<T>> = match self
-            .lines()
-            .map(|item| item.offset_curve(distance))
-            .collect()
-        {
-            Some(a) => a,
-            _ => return None, // bail out if any segment fails
-        };
-
-        if offset_segments.len() == 1 {
-            return Some(offset_segments[0].into());
-        }
-        // First and last will always work, checked length above:
-        // TODO: try to eliminate unwrap anyway?
-        let first_point = offset_segments.first().unwrap().start;
-        let last_point = offset_segments.last().unwrap().end;
-
-        let mut result = Vec::with_capacity(self.0.len());
-        result.push(first_point);
-        result.extend(pairwise(&offset_segments[..]).flat_map(
-            |(Line { start: a, end: b }, Line { start: c, end: d })| {
-                match line_segment_intersection_with_relationships(&a, &b, &c, &d) {
-                    None => {
-                        // TODO: this is the colinear case;
-                        // (In some cases?) this creates a redundant point in the
-                        // output. Colinear segments should maybe get
-                        // merged before or after this algorithm. Not easy
-                        // to fix here.
-                        //println!("CASE 0 - colinear");
-                        vec![*b]
-                    }
-                    Some(LineIntersectionResultWithRelationships {
-                        ab,
-                        cd,
-                        intersection,
-                    }) => match (ab, cd) {
-                        (TrueIntersectionPoint, TrueIntersectionPoint) => {
-                            // Inside elbow
-                            // No mitre limit needed
-                            vec![intersection]
-                        }
-                        (FalseIntersectionPoint(AfterEnd), FalseIntersectionPoint(_)) => {
-                            // Outside elbow
-                            // Check for Mitre Limit
-                            // TODO: Mitre limit code below is awful;
-                            //       - Some values calculated here were
-                            //         previously calculated in
-                            //         [line_segment_intersection_with_parameters()]
-                            //       - Various optimizations are possible;
-                            //         Check against magnitude squared
-                            //       - Magnitude function to be moved somewhere
-                            //         else
-                            //
-                            fn magnitude<T>(coord: Coord<T>) -> T
-                            where
-                                T: CoordFloat,
-                            {
-                                (coord.x * coord.x + coord.y * coord.y).sqrt()
-                            }
-                            let mitre_limit_factor = T::from(2.0).unwrap();
-                            let mitre_limit_distance = distance.abs() * mitre_limit_factor;
-                            let elbow_length = magnitude(intersection - *b);
-                            if elbow_length > mitre_limit_distance {
-                                // Mitre Limited / Truncated Corner
-                                let ab: Coord<T> = *b - *a;
-                                let cd: Coord<T> = *d - *c;
-                                vec![
-                                    *b + ab / magnitude(ab) * mitre_limit_distance,
-                                    *c - cd / magnitude(cd) * mitre_limit_distance,
-                                ]
-                            } else {
-                                // Sharp Corner
-                                vec![intersection]
-                            }
-                        }
-
-                        _ => {
-                            // Inside pinched elbow
-                            // (ie forearm curled back through bicep 🙃)
-                            //println!("CASE 3 - bridge");
-                            vec![*b, *c]
-                        }
-                    },
-                }
-            },
-        ));
-        result.push(last_point);
-        // TODO: there are more steps to this algorithm which are not yet
-        //       implemented. See rfcs\2022-11-11-offset.md
-        Some(result.into())
+        Some(offset_points.into())
     }
 }
 

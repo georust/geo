@@ -9,7 +9,8 @@ use super::line_intersection::{
     line_segment_intersection_with_relationships, LineIntersectionResultWithRelationships,
 };
 
-use super::offset_line_raw::{offset_line_raw, OffsetLineRawResult};
+use super::offset_line_raw::{offset_line_raw};
+use super::line_measured::LineMeasured;
 use super::slice_itertools::pairwise;
 
 // TODO: Should I be doing `use crate ::{...}` or `use geo_types::{...}`
@@ -30,6 +31,7 @@ use crate::{Coord, CoordFloat, Line, LineString, MultiLineString};
 /// [geo_types::Polygon], a [geo_types::Line] would become a capsule shaped
 /// [geo_types::Polygon].
 
+#[deprecated]
 pub trait OffsetCurveOld<T>
 where
     T: CoordFloat,
@@ -77,9 +79,9 @@ where
         } else {
             let Line { start: a, end: b } = *self;
             match offset_line_raw(a, b, distance) {
-                Some(OffsetLineRawResult {
-                    a_offset, b_offset, ..
-                }) => Some(Line::new(a_offset, b_offset)),
+                Some(LineMeasured {
+                    line, ..
+                }) => Some(line),
                 _ => None,
             }
         }
@@ -149,7 +151,7 @@ where
         result.push(first_point);
         result.extend(pairwise(&offset_segments[..]).flat_map(
             |(Line { start: a, end: b }, Line { start: c, end: d })| {
-                match line_segment_intersection_with_relationships(&a, &b, &c, &d) {
+                match line_segment_intersection_with_relationships(*a, *b, *c, *d) {
                     None => {
                         // TODO: this is the colinear case;
                         // (In some cases?) this creates a redundant point in the
@@ -235,7 +237,9 @@ mod test {
         Line,
         //LineString,
         MultiLineString,
-        OffsetCurveOld,
+    };
+    use super::{
+        OffsetCurveOld
     };
 
     #[test]

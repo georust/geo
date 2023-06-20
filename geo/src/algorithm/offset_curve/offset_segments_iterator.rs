@@ -19,10 +19,13 @@
 ///
 use crate::{Coord, CoordFloat, CoordNum, LineString};
 
-use super::line_intersection::{
-    line_segment_intersection_with_relationships, LineIntersectionResultWithRelationships,
+use super::{
+    line_intersection::{
+        line_segment_intersection_with_relationships, LineIntersectionResultWithRelationships,
+    },
+    line_measured::LineMeasured,
+    offset_line_raw::offset_line_raw,
 };
-use super::offset_line_raw::{offset_line_raw, OffsetLineRawResult};
 
 /// Bring this into scope to imbue [LineString] with
 /// [LineStringOffsetSegmentPairIterable::iter_offset_segment_pairs()]
@@ -32,7 +35,7 @@ where
 {
     /// Loop over the segments of a [LineString] in a pairwise fashion,
     /// offsetting and intersecting them as we go.
-    /// 
+    ///
     /// Returns an [OffsetSegmentsIterator]
     fn iter_offset_segment_pairs(&self, distance: T) -> OffsetSegmentsIterator<T>;
 }
@@ -43,7 +46,7 @@ where
 {
     line_string: &'a LineString<T>,
     distance: T,
-    previous_offset_segment: Option<OffsetLineRawResult<T>>,
+    previous_offset_segment: Option<LineMeasured<T>>,
     index: usize,
 }
 
@@ -81,36 +84,38 @@ where
 
 ///
 /// The following diagram illustrates the meaning of the struct members.
-/// The `LineString` `abc` is offset to form the `Line`s `mn` and `op`.
-/// `i` is the intersection point.
+///
+///  - `LineString` `a---b---c` is offset to form
+///  - [LineMeasured] `ab_offset` (`a'---b'`) and
+///  - [LineMeasured] `bc_offset` (`b'---c'`)
+///  - [LineIntersectionResultWithRelationships] `i` is the intersection point.
 ///
 /// ```text
 ///          a
-///  m        \
+///  a'       \
 ///   \        \
 ///    \        b---------c
-///     n
+///     b'
 ///
-///        i    o---------p
+///        i    b'--------c'
 /// ```
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(super) struct OffsetSegmentsIteratorItem<T>
 where
     T: CoordNum,
 {
+    /// This is true for the first result
+    pub first: bool,
+
+    // this is true for the last result
+    pub last: bool,
+
     pub a: Coord<T>,
     pub b: Coord<T>,
     pub c: Coord<T>,
 
-    pub m: Coord<T>,
-    pub n: Coord<T>,
-    pub o: Coord<T>,
-    pub p: Coord<T>,
-
-    /// Distance between `a` and `b` (same as distance between `m` and `n`)
-    pub ab_len: T,
-    /// Distance between `b` and `c` (same as distance between `o` and `p`)
-    pub bc_len: T,
+    pub ab_offset: Option<LineMeasured<T>>,
+    pub bc_offset: Option<LineMeasured<T>>,
 
     /// Intersection [Coord] between segments `mn` and `op`
     pub i: Option<LineIntersectionResultWithRelationships<T>>,
@@ -121,17 +126,19 @@ where
     T: CoordFloat,
 {
     /// Option since each step of the iteration may fail.
-    type Item = Option<OffsetSegmentsIteratorItem<T>>;
+    type Item = OffsetSegmentsIteratorItem<T>;
 
     /// Return type is confusing; `Option<Option<OffsetSegmentsIteratorItem<T>>>`
-    /// 
+    ///
+    /// TODO: Revise
+    ///
     /// The outer Option is required by the Iterator trait, and indicates if
     /// iteration is finished, (When this iterator is used via `.map()` or
     /// similar the user does not see the outer Option.)
     /// The inner Option indicates if the result of each iteration is valid.
     /// Returning None will halt iteration, returning Some(None) will not,
     /// but the user should stop iterating.
-    /// 
+    ///
     fn next(&mut self) -> Option<Self::Item> {
         if self.index + 3 > self.line_string.0.len() {
             // Iteration is complete
@@ -146,38 +153,31 @@ where
             self.index += 1;
 
             // Fetch previous offset segment
-            let Some(OffsetLineRawResult{
-                a_offset:m,
-                b_offset:n,
-                ab_len,
-            }) = self.previous_offset_segment else {
-                return None
-            };
+            let ab_offset = self.previous_offset_segment.clone();
 
             // Compute next offset segment
             self.previous_offset_segment = offset_line_raw(b, c, self.distance);
-            let Some(OffsetLineRawResult{
-                a_offset:o,
-                b_offset:p,
-                ab_len:bc_len,
-            }) = self.previous_offset_segment else {
-                return Some(None);
-            };
 
-            Some(Some(
-                OffsetSegmentsIteratorItem {
-                    a,
-                    b,
-                    c,
-                    m, // TODO < replace mnop and ab_len and bc_len with two optional OffsetLineRawResult and remove the Option form Self::Item
-                    n,#
-                    o,
-                    p,
-                    ab_len,
-                    bc_len,
-                    i:line_segment_intersection_with_relationships(&m, &n, &o, &p),
-                }
-            ))
+            Some(OffsetSegmentsIteratorItem {
+                first: self.index == 1,
+                last: self.index + 3 > self.line_string.0.len(),
+                a,
+                b,
+                c,
+                i: match (&ab_offset, &self.previous_offset_segment) {
+                    (Some(ab_offset), Some(bc_offset)) => {
+                        line_segment_intersection_with_relationships(
+                            ab_offset.line.start,
+                            ab_offset.line.end,
+                            bc_offset.line.start,
+                            bc_offset.line.end,
+                        )
+                    }
+                    _ => None,
+                },
+                ab_offset,
+                bc_offset: self.previous_offset_segment.clone(),
+            })
         }
     }
 }
@@ -186,7 +186,10 @@ where
 mod test {
     use super::{LineStringOffsetSegmentPairs, OffsetSegmentsIteratorItem};
     use crate::{
-        line_string, offset_curve::line_intersection::LineIntersectionResultWithRelationships,
+        line_string,
+        offset_curve::{
+            line_intersection::LineIntersectionResultWithRelationships, line_measured::LineMeasured,
+        },
         Coord,
     };
 
@@ -198,32 +201,24 @@ mod test {
             Coord { x: 2f64, y: 1f64 },
         ];
 
+        // TODO: this test is a bit useless after recent changes
         let result: Option<Vec<()>> = input
             .iter_offset_segment_pairs(1f64)
             .map(|item| match item {
-                Some(OffsetSegmentsIteratorItem {
-                    a,
-                    b,
-                    c,
-
-                    m,
-                    n,
-                    o,
-                    p,
-
-                    ab_len,
-                    bc_len,
-
-                    i:
-                        Some(LineIntersectionResultWithRelationships {
-                            ab,
-                            cd,
-                            intersection,
+                OffsetSegmentsIteratorItem {
+                    ab_offset: Some(LineMeasured { .. }),
+                    bc_offset:
+                        Some(LineMeasured {
+                            line: bc_offset,
+                            length: bc_len,
                         }),
-                }) => Some(()),
+
+                    i: Some(LineIntersectionResultWithRelationships { .. }),
+                    ..
+                } => Some(()),
                 _ => None,
             })
             .collect();
-        assert!(result.unwrap().len()==1);
+        assert!(result.unwrap().len() == 1);
     }
 }
