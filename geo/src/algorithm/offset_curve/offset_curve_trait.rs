@@ -15,8 +15,7 @@ use super::offset_line_raw::offset_line_raw;
 
 use super::offset_segments_iterator::{LineStringOffsetSegmentPairs, OffsetSegmentsIteratorItem};
 
-/// # Offset Trait
-///
+
 /// The OffsetCurve trait is implemented for geometries where the edges of the
 /// geometry can be offset perpendicular to the direction of the edges by some
 /// positive or negative distance. For example, an offset [Line] will become a
@@ -24,11 +23,11 @@ use super::offset_segments_iterator::{LineStringOffsetSegmentPairs, OffsetSegmen
 /// Geometry with no length ([geo_types::Point]) cannot be offset as it has no
 /// directionality.
 ///
-/// The [OffsetCurve::offset()] function is different to a `buffer` operation.
-/// A buffer (or inset / outset operation) would normally produce an enclosed
-/// shape; For example a [geo_types::Point] would become a circular
-/// [geo_types::Polygon], a [geo_types::Line] would become a capsule shaped
-/// [geo_types::Polygon].
+/// > NOTE: The [OffsetCurve::offset_curve()] function is different to a `buffer` operation.
+/// > A buffer (or inset / outset operation) would normally produce an enclosed
+/// > shape; For example a [geo_types::Point] would become a circular
+/// > [geo_types::Polygon], a [geo_types::Line] would become a capsule shaped
+/// > [geo_types::Polygon].
 
 pub trait OffsetCurve<T>
 where
@@ -72,8 +71,12 @@ where
 {
     fn offset_curve(&self, distance: T) -> Option<Self> {
         if distance == T::zero() {
-            // prevent unnecessary work
+            // prevent unnecessary work;
             Some(self.clone())
+            // TODO: for typical use cases the offset would rarely be zero;
+            // This check may add unnecessary branching when there are a lot of
+            // Lines. It makes more sense to do this performance check for
+            // LineStrings...
         } else {
             let Line { start: a, end: b } = *self;
             match offset_line_raw(a, b, distance) {
@@ -119,7 +122,7 @@ where
             return Some(self.clone());
         }
 
-        // TODO: Consider adding parameters for miter limit method and factor
+        // TODO: Parameterize miter limit, and miter limit distance / factor.
         let mitre_limit_factor = T::from(2.0).unwrap();
         let mitre_limit_distance = distance.abs() * mitre_limit_factor;
         let mitre_limit_distance_squared = mitre_limit_distance * mitre_limit_distance;
