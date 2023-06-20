@@ -213,7 +213,7 @@ mod test {
         FalseIntersectionPointType, LineIntersectionWithParameterResult,
         LineSegmentIntersectionType,
     };
-    use crate::Coord;
+    use crate::{Coord, coord};
     use FalseIntersectionPointType::{AfterEnd, BeforeStart};
     use LineSegmentIntersectionType::{FalseIntersectionPoint, TrueIntersectionPoint};
 
@@ -269,6 +269,12 @@ mod test {
         let b = Coord { x: 2f64, y: 3f64 };
         let c = Coord { x: 0f64, y: 2f64 };
         let d = Coord { x: -2f64, y: 6f64 };
+
+        fn check_intersection(intersection:Coord<f64>){
+            let diff = intersection - Coord { x: 1f64 / 3f64, y: 4f64 / 3f64 };
+            assert!(diff.x * diff.x + diff.y * diff.y < 0.00000000001f64);
+        }
+
         if let Some(LineIntersectionWithParameterResult {
             ab,
             cd,
@@ -277,14 +283,7 @@ mod test {
         {
             assert_eq!(ab, FalseIntersectionPoint(BeforeStart));
             assert_eq!(cd, FalseIntersectionPoint(BeforeStart));
-            println!("{intersection:?}");
-            let diff = intersection
-                - Coord {
-                    x: 1.0 / 3.0f64,
-                    y: 4.0 / 3.0f64,
-                };
-            println!("{diff:?}");
-            assert!(diff.x * diff.x + diff.y * diff.y < 0.00000000001f64);
+            check_intersection(intersection);
         } else {
             assert!(false);
         }
@@ -297,14 +296,7 @@ mod test {
         {
             assert_eq!(ab, FalseIntersectionPoint(AfterEnd));
             assert_eq!(cd, FalseIntersectionPoint(BeforeStart));
-            println!("{intersection:?}");
-            let diff = intersection
-                - Coord {
-                    x: 1.0 / 3.0f64,
-                    y: 4.0 / 3.0f64,
-                };
-            println!("{diff:?}");
-            assert!(diff.x * diff.x + diff.y * diff.y < 0.00000000001f64);
+            check_intersection(intersection);
         } else {
             assert!(false);
         }
@@ -317,14 +309,7 @@ mod test {
         {
             assert_eq!(ab, FalseIntersectionPoint(BeforeStart));
             assert_eq!(cd, FalseIntersectionPoint(AfterEnd));
-            println!("{intersection:?}");
-            let diff = intersection
-                - Coord {
-                    x: 1.0 / 3.0f64,
-                    y: 4.0 / 3.0f64,
-                };
-            println!("{diff:?}");
-            assert!(diff.x * diff.x + diff.y * diff.y < 0.00000000001f64);
+            check_intersection(intersection);
         } else {
             assert!(false);
         }

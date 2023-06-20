@@ -69,7 +69,7 @@ mod test {
         // expect swapping will result in negative
         assert_eq!(cross_product_2d(ab, ac), -1f64);
 
-        // Add skew
+        // Add skew; results should be the same
         let a = Coord { x: 0f64, y: 0f64 };
         let b = Coord { x: 0f64, y: 1f64 };
         let c = Coord { x: 1f64, y: 1f64 };
