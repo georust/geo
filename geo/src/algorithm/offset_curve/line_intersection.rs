@@ -1,3 +1,21 @@
+/// Definitions used in documentation for this module;
+/// 
+/// - **line**:
+///   - The straight path on a plane that
+///   - extends infinitely in both directions.
+///   - defined by two distinct points `a` and `b` and
+///   - has the direction of the vector from `a` to `b`
+/// 
+/// - **segment**:
+///   - A finite portion of a `line` which
+///   - lies between the points `a` and `b`
+///   - has the direction of the vector from `a` to `b`
+/// 
+/// - **ray**:
+///   - A segment which extends infinitely in the forward direction
+/// 
+/// - `Line`: the type [crate::Line] which is actually a **segment**.
+
 use super::vector_extensions::VectorExtensions;
 use crate::{
     Coord,
@@ -8,38 +26,41 @@ use crate::{
     // Orientation
 };
 
-// No nested enums :( Goes into the enum below
+/// Used to encode the relationship between a **segment** and an intersection
+/// point. See documentation for [LineIntersectionResultWithRelationships]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
+pub(super) enum LineSegmentIntersectionType {
+    /// The intersection point lies between the start and end of the **segment**
+    ///
+    /// Abbreviated to `TIP` in original paper
+    TrueIntersectionPoint,
+    /// The intersection point is 'false' or 'virtual': it lies on the same
+    /// **line** as the **segment**, but not between the start and end points of
+    /// the **segment**.
+    ///
+    /// Abbreviated to `FIP` in original paper
+    
+    // Note: Rust does not permit nested enum declaration, so
+    // FalseIntersectionPointType has to be declared below. 
+    FalseIntersectionPoint(FalseIntersectionPointType),
+}
+
+/// These are the variants of [LineSegmentIntersectionType::FalseIntersectionPoint]
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub(super) enum FalseIntersectionPointType {
-    /// The intersection point is 'false' or 'virtual': it lies on the infinite
-    /// ray defined by the line segment, but before the start of the line segment.
+    /// The intersection point is 'false' or 'virtual': it lies on the same
+    /// **line** as the **segment**, and before the start of the **segment**.
     ///
     /// Abbreviated to `NFIP` in original paper (Negative)
     /// (also referred to as `FFIP` in Figure 6, but i think this is an 
     ///  error?)
     BeforeStart,
-    /// The intersection point is 'false' or 'virtual': it lies on the infinite
-    /// ray defined by the line segment, but after the end of the line segment.
+    /// The intersection point is 'false' or 'virtual': it lies on the same
+    /// **line** as the **segment**,  and after the end of the **segment**.
     ///
     /// Abbreviated to `PFIP` in original paper (Positive)
     AfterEnd,
 }
-
-/// Used to encode the relationship between a segment (e.g. between [Coord] `a` and `b`)
-/// and an intersection point ([Coord] `p`)
-#[derive(PartialEq, Eq, Debug, Clone, Copy)]
-pub(super) enum LineSegmentIntersectionType {
-    /// The intersection point lies between the start and end of the line segment.
-    ///
-    /// Abbreviated to `TIP` in original paper
-    TrueIntersectionPoint,
-    /// The intersection point is 'false' or 'virtual': it lies on the infinite
-    /// ray defined by the line segment, but not between the start and end points
-    ///
-    /// Abbreviated to `FIP` in original paper
-    FalseIntersectionPoint(FalseIntersectionPointType),
-}
-
 
 
 /// Struct to contain the result for [line_segment_intersection_with_relationships]
@@ -169,7 +190,8 @@ where
     }
 
     // TODO:
-    // The above could be replaced with the following.
+    // The above could be replaced with the following, but at the cost of
+    // repeating some computation.
 
     // match RobustKernel::orient2d(*a, *b, *d) {
     //     Orientation::Collinear => None,
