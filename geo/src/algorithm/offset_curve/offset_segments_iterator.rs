@@ -1,7 +1,3 @@
-/// I am trying to get a custom iterator working to replace the
-/// [super::slice_itertools::pairwise()] function.
-///
-/// It is turning out to be very complicated :(
 ///
 ///  My requirements are
 ///
@@ -28,7 +24,7 @@ use super::{
 };
 
 /// Bring this into scope to imbue [LineString] with
-/// [LineStringOffsetSegmentPairIterable::iter_offset_segment_pairs()]
+/// [iter_offset_segment_pairs()]
 pub(super) trait LineStringOffsetSegmentPairs<T>
 where
     T: CoordFloat,
@@ -82,10 +78,8 @@ where
     }
 }
 
-///
-/// The following diagram illustrates the meaning of the struct members.
-///
-///  - `LineString` `a---b---c` is offset to form
+
+///  - [LineString] `a---b---c` is offset to form
 ///  - [LineMeasured] `ab_offset` (`a'---b'`) and
 ///  - [LineMeasured] `bc_offset` (`b'---c'`)
 ///  - [LineIntersectionResultWithRelationships] `i` is the intersection point.
@@ -110,6 +104,7 @@ where
     // this is true for the last result
     pub last: bool,
 
+    // TODO: seems a,b,c are unused...
     pub a: Coord<T>,
     pub b: Coord<T>,
     pub c: Coord<T>,
@@ -207,12 +202,7 @@ mod test {
             .map(|item| match item {
                 OffsetSegmentsIteratorItem {
                     ab_offset: Some(LineMeasured { .. }),
-                    bc_offset:
-                        Some(LineMeasured {
-                            line: bc_offset,
-                            length: bc_len,
-                        }),
-
+                    bc_offset: Some(LineMeasured { .. }),
                     i: Some(LineIntersectionResultWithRelationships { .. }),
                     ..
                 } => Some(()),
