@@ -1,20 +1,19 @@
 use super::cross_product::cross_product_2d;
-use crate::{CoordFloat, CoordNum};
-use geo_types::Coord;
+use crate::{Coord, CoordFloat, CoordNum};
 
 // No nested enums :( Goes into the enum below
-#[derive(PartialEq,  Eq, Debug)]
-pub(super) enum FalseIntersectionPointType{
+#[derive(PartialEq, Eq, Debug)]
+pub(super) enum FalseIntersectionPointType {
     /// The intersection point is 'false' or 'virtual': it lies on the infinite
     /// ray defined by the line segment, but before the start of the line segment.
-    /// 
+    ///
     /// Abbreviated to `NFIP` in original paper (Negative)
     BeforeStart,
     /// The intersection point is 'false' or 'virtual': it lies on the infinite
     /// ray defined by the line segment, but after the end of the line segment.
-    /// 
+    ///
     /// Abbreviated to `PFIP` in original paper (Positive)
-    AfterEnd
+    AfterEnd,
 }
 
 /// Used to encode the relationship between a segment (e.g. between [Coord] `a` and `b`)
@@ -22,18 +21,18 @@ pub(super) enum FalseIntersectionPointType{
 #[derive(PartialEq, Eq, Debug)]
 pub(super) enum LineSegmentIntersectionType {
     /// The intersection point lies between the start and end of the line segment.
-    /// 
+    ///
     /// Abbreviated to `TIP` in original paper
     TrueIntersectionPoint,
     /// The intersection point is 'false' or 'virtual': it lies on the infinite
     /// ray defined by the line segment, but not between the start and end points
-    /// 
+    ///
     /// Abbreviated to `FIP` in original paper
-    FalseIntersectionPoint(FalseIntersectionPointType)
+    FalseIntersectionPoint(FalseIntersectionPointType),
 }
 
+use FalseIntersectionPointType::{AfterEnd, BeforeStart};
 use LineSegmentIntersectionType::{FalseIntersectionPoint, TrueIntersectionPoint};
-use FalseIntersectionPointType::{BeforeStart, AfterEnd};
 
 /// Struct to contain the result for [line_intersection_with_parameter]
 pub(super) struct LineIntersectionWithParameterResult<T>
@@ -133,12 +132,12 @@ where
 /// [t_cd] = [ - ab×ac / ab×cd ]
 /// ```
 
-pub(super) fn line_intersection_with_parameter<T>(
+fn line_segment_intersection_with_parameters<T>(
     a: &Coord<T>,
     b: &Coord<T>,
     c: &Coord<T>,
     d: &Coord<T>,
-) -> Option<LineIntersectionWithParameterResult<T>>
+) -> Option<(T, T, Coord<T>)>
 where
     T: CoordFloat,
 {
@@ -169,49 +168,66 @@ where
         let t_cd = -cross_product_2d(ab, ac) / ab_cross_cd;
         let intersection = *a + ab * t_ab;
 
+        Some((t_ab, t_cd, intersection))
+    }
+}
+
+pub(super) fn line_segment_intersection_with_relationships<T>(
+    a: &Coord<T>,
+    b: &Coord<T>,
+    c: &Coord<T>,
+    d: &Coord<T>,
+) -> Option<LineIntersectionWithParameterResult<T>>
+where
+    T: CoordFloat,
+{
+    line_segment_intersection_with_parameters(a, b, c, d).map(|(t_ab, t_cd, intersection)| {
         let zero = num_traits::zero::<T>();
         let one = num_traits::one::<T>();
-        
-        Some(LineIntersectionWithParameterResult {
+        LineIntersectionWithParameterResult {
             ab: if zero <= t_ab && t_ab <= one {
                 TrueIntersectionPoint
-            }else if t_ab < zero {
+            } else if t_ab < zero {
                 FalseIntersectionPoint(BeforeStart)
-            }else{
+            } else {
                 FalseIntersectionPoint(AfterEnd)
             },
             cd: if zero <= t_cd && t_cd <= one {
                 TrueIntersectionPoint
-            }else if t_cd < zero {
+            } else if t_cd < zero {
                 FalseIntersectionPoint(BeforeStart)
-            }else{
+            } else {
                 FalseIntersectionPoint(AfterEnd)
             },
             intersection,
-        })
-    }
+        }
+    })
 }
 
 // TODO: add more relationship tests;
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use super::{
+        line_segment_intersection_with_parameters, line_segment_intersection_with_relationships,
+        FalseIntersectionPointType, LineIntersectionWithParameterResult,
+        LineSegmentIntersectionType,
+    };
     use crate::Coord;
+    use FalseIntersectionPointType::{AfterEnd, BeforeStart};
+    use LineSegmentIntersectionType::{FalseIntersectionPoint, TrueIntersectionPoint};
+
     #[test]
-    fn test_intersection() {
+    fn test_line_segment_intersection_with_parameters() {
         let a = Coord { x: 0f64, y: 0f64 };
         let b = Coord { x: 2f64, y: 2f64 };
         let c = Coord { x: 0f64, y: 1f64 };
         let d = Coord { x: 1f64, y: 0f64 };
-        if let Some(LineIntersectionWithParameterResult {
-            ab: t_ab,
-            cd: t_cd,
-            intersection,
-        }) = line_intersection_with_parameter(&a, &b, &c, &d)
+        if let Some((t_ab, t_cd, intersection)) =
+            line_segment_intersection_with_parameters(&a, &b, &c, &d)
         {
-            assert_eq!(t_ab, TrueIntersectionPoint);
-            assert_eq!(t_cd, TrueIntersectionPoint);
+            assert_eq!(t_ab, 0.25f64);
+            assert_eq!(t_cd, 0.50f64);
             assert_eq!(
                 intersection,
                 Coord {
@@ -225,28 +241,92 @@ mod test {
     }
 
     #[test]
-    fn test_intersection_colinear() {
+    fn test_line_segment_intersection_with_parameters_parallel() {
         let a = Coord { x: 3f64, y: 4f64 };
         let b = Coord { x: 6f64, y: 8f64 };
-        let c = Coord { x: 7f64, y: 7f64 };
-        let d = Coord { x: 10f64, y: 9f64 };
+        let c = Coord { x: 9f64, y: 9f64 };
+        let d = Coord { x: 12f64, y: 13f64 };
+        assert_eq!(
+            line_segment_intersection_with_parameters(&a, &b, &c, &d),
+            None
+        )
+    }
+    #[test]
+    fn test_line_segment_intersection_with_parameters_colinear() {
+        let a = Coord { x: 1f64, y: 2f64 };
+        let b = Coord { x: 2f64, y: 4f64 };
+        let c = Coord { x: 3f64, y: 6f64 };
+        let d = Coord { x: 5f64, y: 10f64 };
+        assert_eq!(
+            line_segment_intersection_with_parameters(&a, &b, &c, &d),
+            None
+        )
+    }
+
+    #[test]
+    fn test_line_segment_intersection_with_relationships() {
+        let a = Coord { x: 1f64, y: 2f64 };
+        let b = Coord { x: 2f64, y: 3f64 };
+        let c = Coord { x: 0f64, y: 2f64 };
+        let d = Coord { x: -2f64, y: 6f64 };
         if let Some(LineIntersectionWithParameterResult {
-            ab: t_ab,
-            cd: t_cd,
+            ab,
+            cd,
             intersection,
-        }) = line_intersection_with_parameter(&a, &b, &c, &d)
+        }) = line_segment_intersection_with_relationships(&a, &b, &c, &d)
         {
-            assert_eq!(t_ab, TrueIntersectionPoint);
-            assert_eq!(t_cd, TrueIntersectionPoint);
-            assert_eq!(
-                intersection,
-                Coord {
-                    x: 0.5f64,
-                    y: 0.5f64
-                }
-            );
+            assert_eq!(ab, FalseIntersectionPoint(BeforeStart));
+            assert_eq!(cd, FalseIntersectionPoint(BeforeStart));
+            println!("{intersection:?}");
+            let diff = intersection
+                - Coord {
+                    x: 1.0 / 3.0f64,
+                    y: 4.0 / 3.0f64,
+                };
+            println!("{diff:?}");
+            assert!(diff.x * diff.x + diff.y * diff.y < 0.00000000001f64);
         } else {
-            assert!(false)
+            assert!(false);
+        }
+
+        if let Some(LineIntersectionWithParameterResult {
+            ab,
+            cd,
+            intersection,
+        }) = line_segment_intersection_with_relationships(&b, &a, &c, &d)
+        {
+            assert_eq!(ab, FalseIntersectionPoint(AfterEnd));
+            assert_eq!(cd, FalseIntersectionPoint(BeforeStart));
+            println!("{intersection:?}");
+            let diff = intersection
+                - Coord {
+                    x: 1.0 / 3.0f64,
+                    y: 4.0 / 3.0f64,
+                };
+            println!("{diff:?}");
+            assert!(diff.x * diff.x + diff.y * diff.y < 0.00000000001f64);
+        } else {
+            assert!(false);
+        }
+
+        if let Some(LineIntersectionWithParameterResult {
+            ab,
+            cd,
+            intersection,
+        }) = line_segment_intersection_with_relationships(&a, &b, &d, &c)
+        {
+            assert_eq!(ab, FalseIntersectionPoint(BeforeStart));
+            assert_eq!(cd, FalseIntersectionPoint(AfterEnd));
+            println!("{intersection:?}");
+            let diff = intersection
+                - Coord {
+                    x: 1.0 / 3.0f64,
+                    y: 4.0 / 3.0f64,
+                };
+            println!("{diff:?}");
+            assert!(diff.x * diff.x + diff.y * diff.y < 0.00000000001f64);
+        } else {
+            assert!(false);
         }
     }
 }

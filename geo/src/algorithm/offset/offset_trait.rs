@@ -3,7 +3,7 @@ use super::line_intersection::LineSegmentIntersectionType::{
     FalseIntersectionPoint, TrueIntersectionPoint,
 };
 use super::line_intersection::{
-    line_intersection_with_parameter, LineIntersectionWithParameterResult,
+    line_segment_intersection_with_relationships, LineIntersectionWithParameterResult,
 };
 use super::slice_itertools::pairwise;
 
@@ -109,7 +109,7 @@ where
         result.push(first_point);
         result.extend(pairwise(&offset_segments[..]).flat_map(
             |(Line { start: a, end: b }, Line { start: c, end: d })| {
-                match line_intersection_with_parameter(a, b, c, d) {
+                match line_segment_intersection_with_relationships(a, b, c, d) {
                     None => {
                         // TODO: this is the colinear case;
                         // we are potentially creating a redundant point in the
