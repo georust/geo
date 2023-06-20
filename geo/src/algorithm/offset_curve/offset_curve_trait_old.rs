@@ -10,7 +10,6 @@ use super::line_intersection::{
 };
 
 use super::offset_line_raw::{offset_line_raw, OffsetLineRawResult};
-use super::offset_segments_iterator::{LineStringOffsetSegmentPairs, OffsetSegmentsIteratorItem};
 use super::slice_itertools::pairwise;
 
 // TODO: Should I be doing `use crate ::{...}` or `use geo_types::{...}`
@@ -31,7 +30,7 @@ use crate::{Coord, CoordFloat, Line, LineString, MultiLineString};
 /// [geo_types::Polygon], a [geo_types::Line] would become a capsule shaped
 /// [geo_types::Polygon].
 
-pub trait OffsetCurve<T>
+pub trait OffsetCurveOld<T>
 where
     T: CoordFloat,
     Self: Sized,
@@ -64,14 +63,14 @@ where
     /// let output_actual = input.offset_curve(-1f64).unwrap();
     /// assert_eq!(output_actual, output_expected);
     /// ```
-    fn offset_curve(&self, distance: T) -> Option<Self>;
+    fn offset_curve_old(&self, distance: T) -> Option<Self>;
 }
 
-impl<T> OffsetCurve<T> for Line<T>
+impl<T> OffsetCurveOld<T> for Line<T>
 where
     T: CoordFloat,
 {
-    fn offset_curve(&self, distance: T) -> Option<Self> {
+    fn offset_curve_old(&self, distance: T) -> Option<Self> {
         if distance == T::zero() {
             // prevent unnecessary work
             Some(self.clone())
@@ -87,11 +86,11 @@ where
     }
 }
 
-impl<T> OffsetCurve<T> for LineString<T>
+impl<T> OffsetCurveOld<T> for LineString<T>
 where
     T: CoordFloat,
 {
-    fn offset_curve(&self, distance: T) -> Option<Self> {
+    fn offset_curve_old(&self, distance: T) -> Option<Self> {
         // Loosely follows the algorithm described by
         // [Xu-Zheng Liu, Jun-Hai Yong, Guo-Qin Zheng, Jia-Guang Sun. An offset
         // algorithm for polyline curves. Computers in Industry, Elsevier, 2007,
@@ -109,7 +108,7 @@ where
             0 => return Some(self.clone()),
             1 => return None,
             2 => {
-                return match Line::new(self.0[0], self.0[1]).offset_curve(distance) {
+                return match Line::new(self.0[0], self.0[1]).offset_curve_old(distance) {
                     Some(line) => Some(line.into()),
                     None => None,
                 }
@@ -122,78 +121,6 @@ where
             return Some(self.clone());
         }
 
-        // TODO: Consider adding parameters for miter limit method and factor
-        let mitre_limit_factor = T::from(2.0).unwrap();
-        let mitre_limit_distance = distance.abs() * mitre_limit_factor;
-        let mitre_limit_distance_squared = mitre_limit_distance * mitre_limit_distance;
-
-        // TODO: Unforeseen problem: I want to use flat_map here,
-        // but I also want to do the fancy collect() trick;
-        // we can collect Option<Vec<T>> from Iter<Option<T>>
-        let offset_points: Option<Vec<Vec<Coord<T>>>> = self
-            .iter_offset_segment_pairs(distance)
-            .map(|item| match item {
-                Some(OffsetSegmentsIteratorItem {
-                    a,
-                    b,
-                    c,
-                    m,
-                    n,
-                    o,
-                    p,
-                    ab_len,
-                    bc_len,
-                    i:
-                        Some(LineIntersectionResultWithRelationships {
-                            ab,
-                            cd,
-                            intersection,
-                        }),
-                }) => match (ab, cd) {
-                    (TrueIntersectionPoint, TrueIntersectionPoint) => {
-                        // Inside elbow
-                        // No mitre limit needed
-                        Some(vec![intersection])
-                    }
-                    (FalseIntersectionPoint(AfterEnd), FalseIntersectionPoint(_)) => {
-                        // Outside elbow
-                        // Check for Mitre Limit
-                        let elbow_length_squared = (intersection - n).magnitude_squared();
-                        if elbow_length_squared > mitre_limit_distance_squared {
-                            // Mitre Limited / Truncated Corner
-                            let mn: Coord<T> = n - m;
-                            let op: Coord<T> = p - o;
-                            Some(vec![
-                                n + mn / ab_len * mitre_limit_distance,
-                                o - op / bc_len * mitre_limit_distance,
-                            ])
-                        } else {
-                            // Sharp Corner
-                            Some(vec![intersection])
-                        }
-                    }
-                    _ => {
-                        // Inside pinched elbow
-                        // (ie forearm curled back through bicep 🙃)
-                        //println!("CASE 3 - bridge");
-                        Some(vec![n, o])
-                    }
-                },
-                Some(OffsetSegmentsIteratorItem { i: None, n, .. }) => {
-                    // Collinear
-                    Some(vec![n])
-                }
-                _ => {
-                    // One of the segments could not be offset
-                    None
-                }
-            })
-            .collect();
-
-        if let Some(item) = offset_points {
-            let res: _ = item.iter().flat_map(|item| item).collect();
-        }
-
         // TODO: I feel like offset_segments should be lazily computed as part
         //       of the main iterator below if possible;
         //       - so we don't need to keep all this in memory at once
@@ -203,7 +130,7 @@ where
         //       iterator working.. I suspect it requires unsafe code :/
         let offset_segments: Vec<Line<T>> = match self
             .lines()
-            .map(|item| item.offset_curve(distance))
+            .map(|item| item.offset_curve_old(distance))
             .collect()
         {
             Some(a) => a,
@@ -254,22 +181,16 @@ where
                             //       - Magnitude function to be moved somewhere
                             //         else
                             //
-                            fn magnitude<T>(coord: Coord<T>) -> T
-                            where
-                                T: CoordFloat,
-                            {
-                                (coord.x * coord.x + coord.y * coord.y).sqrt()
-                            }
                             let mitre_limit_factor = T::from(2.0).unwrap();
                             let mitre_limit_distance = distance.abs() * mitre_limit_factor;
-                            let elbow_length = magnitude(intersection - *b);
+                            let elbow_length = (intersection - *b).magnitude();
                             if elbow_length > mitre_limit_distance {
                                 // Mitre Limited / Truncated Corner
                                 let ab: Coord<T> = *b - *a;
                                 let cd: Coord<T> = *d - *c;
                                 vec![
-                                    *b + ab / magnitude(ab) * mitre_limit_distance,
-                                    *c - cd / magnitude(cd) * mitre_limit_distance,
+                                    *b + ab / ab.magnitude() * mitre_limit_distance,
+                                    *c - cd / cd.magnitude() * mitre_limit_distance,
                                 ]
                             } else {
                                 // Sharp Corner
@@ -294,13 +215,13 @@ where
     }
 }
 
-impl<T> OffsetCurve<T> for MultiLineString<T>
+impl<T> OffsetCurveOld<T> for MultiLineString<T>
 where
     T: CoordFloat,
 {
-    fn offset_curve(&self, distance: T) -> Option<Self> {
+    fn offset_curve_old(&self, distance: T) -> Option<Self> {
         self.iter()
-            .map(|item| item.offset_curve(distance))
+            .map(|item| item.offset_curve_old(distance))
             .collect()
     }
 }
@@ -314,13 +235,13 @@ mod test {
         Line,
         //LineString,
         MultiLineString,
-        OffsetCurve,
+        OffsetCurveOld,
     };
 
     #[test]
     fn test_offset_line() {
         let input = Line::new(Coord { x: 1f64, y: 1f64 }, Coord { x: 1f64, y: 2f64 });
-        let output_actual = input.offset_curve(-1.0);
+        let output_actual = input.offset_curve_old(-1.0);
         let output_expected = Some(Line::new(
             Coord { x: 2f64, y: 1f64 },
             Coord { x: 2f64, y: 2f64 },
@@ -330,7 +251,7 @@ mod test {
     #[test]
     fn test_offset_line_negative() {
         let input = Line::new(Coord { x: 1f64, y: 1f64 }, Coord { x: 1f64, y: 2f64 });
-        let output_actual = input.offset_curve(1.0);
+        let output_actual = input.offset_curve_old(1.0);
         let output_expected = Some(Line::new(
             Coord { x: 0f64, y: 1f64 },
             Coord { x: 0f64, y: 2f64 },
@@ -345,7 +266,7 @@ mod test {
             Coord { x: 0f64, y: 2f64 },
             Coord { x: 2f64, y: 2f64 },
         ];
-        let output_actual = input.offset_curve(-1f64);
+        let output_actual = input.offset_curve_old(-1f64);
         let output_expected = Some(line_string![
             Coord { x: 1f64, y: 0f64 },
             Coord { x: 1f64, y: 1f64 },
@@ -357,7 +278,7 @@ mod test {
     #[test]
     fn test_offset_line_string_invalid() {
         let input = line_string![Coord { x: 0f64, y: 0f64 },];
-        let output_actual = input.offset_curve(-1f64);
+        let output_actual = input.offset_curve_old(-1f64);
         let output_expected = None;
         assert_eq!(output_actual, output_expected);
     }
@@ -376,7 +297,7 @@ mod test {
                 Coord { x: -2f64, y: -2f64 },
             ],
         ]);
-        let output_actual = input.offset_curve(-1f64);
+        let output_actual = input.offset_curve_old(-1f64);
         let output_expected = Some(MultiLineString::new(vec![
             line_string![
                 Coord { x: 1f64, y: 0f64 },

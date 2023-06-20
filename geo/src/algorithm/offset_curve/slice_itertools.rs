@@ -34,13 +34,18 @@
 pub(super) fn pairwise<T>(
     slice: &[T],
 ) -> std::iter::Zip<std::slice::Iter<T>, std::slice::Iter<T>> {
-    if slice.len() == 0 {
-        // The following nonsense is needed because slice[1..] would panic
-        // and because std::iter::empty returns a new type which is super annoying
-        // fingers crossed the compiler will optimize this out anyway
-        [].iter().zip([].iter())
-    } else {
-        slice.iter().zip(slice[1..].iter())
+    match slice.split_first() {
+        None=>{
+            // The following nonsense is needed because std::iter::empty returns
+            // a new and therefore incompatible type which is unexpected and
+            // super annoying. I think empty iterators need special treatment by
+            // the rust compiler in future to fix this. Stack Overflow
+            // recommends a boxed iterator trait object to avoid this problem, 
+            // but then there are unnecessary heap allocations? Not sure if the
+            // current method uses the heap anyway?
+            [].iter().zip([].iter())
+        }
+        Some((_, rest)) => slice.iter().zip(rest.iter())
     }
 }
 

@@ -40,8 +40,7 @@ pub(super) enum LineSegmentIntersectionType {
     FalseIntersectionPoint(FalseIntersectionPointType),
 }
 
-use FalseIntersectionPointType::{AfterEnd, BeforeStart};
-use LineSegmentIntersectionType::{FalseIntersectionPoint, TrueIntersectionPoint};
+
 
 /// Struct to contain the result for [line_segment_intersection_with_relationships]
 #[derive(Clone)]
@@ -58,9 +57,9 @@ where
 /// a to b (`ab`), and c to d (`cd`)
 ///
 /// > note: looks like there is already `cartesian_intersect` as a private
-/// > method in simplifyvw.rs. It is nice because it uses the orient2d method
-/// > of the Kernel, however it only gives a true/false answer and does not
-/// > return the intersection point or parameters needed.
+/// > method in simplifyvw.rs. It uses the orient2d method of [Kernel],
+/// > however it only gives a true/false answer and does not return the
+/// > intersection point or parameters needed.
 ///
 /// We already have LineIntersection trait BUT we need a function that also
 /// returns the parameters for both lines described below. The LineIntersection
@@ -160,7 +159,7 @@ where
         // Segments are exactly parallel or colinear
         None
     } else {
-        // Division my zero is prevented, but testing is needed to see what
+        // Division by zero is prevented, but testing is needed to see what
         // happens for near-parallel sections of line.
         let t_ab =  ac.cross_product_2d(cd) / ab_cross_cd;
         let t_cd = -ab.cross_product_2d(ac) / ab_cross_cd;
@@ -196,8 +195,8 @@ where
     T: CoordFloat,
 {
     line_segment_intersection_with_parameters(a, b, c, d).map(|(t_ab, t_cd, intersection)| {
-        let zero = num_traits::zero::<T>();
-        let one = num_traits::one::<T>();
+        use FalseIntersectionPointType::{AfterEnd, BeforeStart};
+        use LineSegmentIntersectionType::{FalseIntersectionPoint, TrueIntersectionPoint};
         LineIntersectionResultWithRelationships {
             ab: if T::zero() <= t_ab && t_ab <= T::one() {
                 TrueIntersectionPoint
@@ -206,9 +205,9 @@ where
             } else {
                 FalseIntersectionPoint(AfterEnd)
             },
-            cd: if zero <= t_cd && t_cd <= one {
+            cd: if T::zero() <= t_cd && t_cd <= T::one() {
                 TrueIntersectionPoint
-            } else if t_cd < zero {
+            } else if t_cd < T::zero() {
                 FalseIntersectionPoint(BeforeStart)
             } else {
                 FalseIntersectionPoint(AfterEnd)

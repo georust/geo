@@ -31,9 +31,9 @@ where
     T: CoordFloat,
 {
     /// Loop over the segments of a [LineString] in a pairwise fashion,
-    /// offsetting and intersecting them as we go
-    /// Returns an Option<[OffsetSegmentsIterator]> since if the LineString has
-    /// less than 3 vertices this operation is impossible.
+    /// offsetting and intersecting them as we go.
+    /// 
+    /// Returns an [OffsetSegmentsIterator]
     fn iter_offset_segment_pairs(&self, distance: T) -> OffsetSegmentsIterator<T>;
 }
 
@@ -56,7 +56,8 @@ where
         T: CoordNum,
     {
         if self.0.len() < 3 {
-            // return an iterator that will return None as first result
+            // LineString is not long enough, therefore return an iterator that
+            // will return None as first result
             OffsetSegmentsIterator {
                 line_string: self,
                 distance,
@@ -81,6 +82,7 @@ where
 ///
 /// The following diagram illustrates the meaning of the struct members.
 /// The `LineString` `abc` is offset to form the `Line`s `mn` and `op`.
+/// `i` is the intersection point.
 ///
 /// ```text
 ///          a
@@ -96,35 +98,40 @@ pub(super) struct OffsetSegmentsIteratorItem<T>
 where
     T: CoordNum,
 {
-    a: Coord<T>,
-    b: Coord<T>,
-    c: Coord<T>,
+    pub a: Coord<T>,
+    pub b: Coord<T>,
+    pub c: Coord<T>,
 
-    m: Coord<T>,
-    n: Coord<T>,
-    o: Coord<T>,
-    p: Coord<T>,
+    pub m: Coord<T>,
+    pub n: Coord<T>,
+    pub o: Coord<T>,
+    pub p: Coord<T>,
 
     /// Distance between `a` and `b` (same as distance between `m` and `n`)
-    ab_len: T,
+    pub ab_len: T,
     /// Distance between `b` and `c` (same as distance between `o` and `p`)
-    bc_len: T,
+    pub bc_len: T,
 
     /// Intersection [Coord] between segments `mn` and `op`
-    i: LineIntersectionResultWithRelationships<T>,
+    pub i: Option<LineIntersectionResultWithRelationships<T>>,
 }
 
 impl<'a, T> Iterator for OffsetSegmentsIterator<'a, T>
 where
     T: CoordFloat,
 {
-    /// The result item is optional since each step of the iteration may fail.
+    /// Option since each step of the iteration may fail.
     type Item = Option<OffsetSegmentsIteratorItem<T>>;
 
-    /// The nested Option type here is confusing. The outer Option indicates if
-    /// iteration is finished. The inner Option indicates if the result of each
-    /// iteration is valid. The user could, but should not, continue iterating
-    /// if `Some(None)` is returned.
+    /// Return type is confusing; `Option<Option<OffsetSegmentsIteratorItem<T>>>`
+    /// 
+    /// The outer Option is required by the Iterator trait, and indicates if
+    /// iteration is finished, (When this iterator is used via `.map()` or
+    /// similar the user does not see the outer Option.)
+    /// The inner Option indicates if the result of each iteration is valid.
+    /// Returning None will halt iteration, returning Some(None) will not,
+    /// but the user should stop iterating.
+    /// 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index + 3 > self.line_string.0.len() {
             // Iteration is complete
@@ -157,23 +164,20 @@ where
                 return Some(None);
             };
 
-            Some(
-                match line_segment_intersection_with_relationships(&m, &n, &o, &p) {
-                    Some(i) => Some(OffsetSegmentsIteratorItem {
-                        a,
-                        b,
-                        c,
-                        m,
-                        n,
-                        o,
-                        p,
-                        ab_len,
-                        bc_len,
-                        i,
-                    }),
-                    _ => None,
-                },
-            )
+            Some(Some(
+                OffsetSegmentsIteratorItem {
+                    a,
+                    b,
+                    c,
+                    m, // TODO < replace mnop and ab_len and bc_len with two optional OffsetLineRawResult and remove the Option form Self::Item
+                    n,#
+                    o,
+                    p,
+                    ab_len,
+                    bc_len,
+                    i:line_segment_intersection_with_relationships(&m, &n, &o, &p),
+                }
+            ))
         }
     }
 }
@@ -211,11 +215,11 @@ mod test {
                     bc_len,
 
                     i:
-                        LineIntersectionResultWithRelationships {
+                        Some(LineIntersectionResultWithRelationships {
                             ab,
                             cd,
                             intersection,
-                        },
+                        }),
                 }) => Some(()),
                 _ => None,
             })

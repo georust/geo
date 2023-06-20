@@ -5,5 +5,8 @@ mod line_intersection;
 mod offset_segments_iterator;
 mod offset_line_raw;
 
+mod offset_curve_trait_old;
+pub use offset_curve_trait_old::OffsetCurveOld;
+
 mod offset_curve_trait;
 pub use offset_curve_trait::OffsetCurve;
