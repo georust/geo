@@ -101,30 +101,32 @@ where
     T: CoordFloat,
 {
     fn offset(&self, distance: T) -> Option<Self> {
-        let delta = self.delta();
-        let len = (delta.x * delta.x + delta.y * delta.y).sqrt();
-        if T::is_zero(&len) {
-            // Cannot offset a zero length Line
-            None
+        if distance == T::zero() {
+            // prevent unnecessary work
+            Some(self.clone())
         } else {
-            // TODO: Is it worth adding a branch to check if the `distance`
-            //       argument is 0 to prevent further computation? The branch
-            //       might hurt performance more than this tiny bit of math?
-            let delta_norm = delta / len;
-            // Rotate 90 degrees clockwise (right normal)
-            // Note that the "rotation direction" depends on the direction of
-            // the y coordinate: Geographic systems normally have the y axis
-            // northward positive (like a conventional axes in math). But screen
-            // coordinates are sometimes downward positive in which case this is
-            // the left_normal and everything gets reversed.
-            let delta_norm_right = Coord {
-                x: delta_norm.y,
-                y: -delta_norm.x,
-            };
-            Some(Line::new(
-                self.start + delta_norm_right * distance,
-                self.end + delta_norm_right * distance,
-            ))
+            let delta = self.delta();
+            let len = (delta.x * delta.x + delta.y * delta.y).sqrt();
+            if T::is_zero(&len) {
+                // Cannot offset a zero length Line
+                None
+            } else {
+                let delta_norm = delta / len;
+                // Rotate 90 degrees clockwise (right normal)
+                // Note that the "rotation direction" depends on the direction of
+                // the y coordinate: Geographic systems normally have the y axis
+                // northward positive (like a conventional axes in math). But screen
+                // coordinates are sometimes downward positive in which case this is
+                // the left_normal and everything gets reversed.
+                let delta_norm_right = Coord {
+                    x: delta_norm.y,
+                    y: -delta_norm.x,
+                };
+                Some(Line::new(
+                    self.start + delta_norm_right * distance,
+                    self.end + delta_norm_right * distance,
+                ))
+            }
         }
     }
 }
@@ -153,6 +155,11 @@ where
             return Some(self.clone());
         }
 
+        // TODO: I feel like offset_segments should be lazily computed as part
+        //       of the main iterator below if possible;
+        //       - so we don't need to keep all this in memory at once
+        //       - and so that if we have to bail out later we didn't do all this
+        //         work for nothing
         let offset_segments: Vec<Line<T>> =
             match self.lines().map(|item| item.offset(distance)).collect() {
                 Some(a) => a,
@@ -186,25 +193,38 @@ where
                         intersection,
                     }) => match (ab, cd) {
                         (TrueIntersectionPoint, TrueIntersectionPoint) => {
-                            //println!("CASE 1 - extend");
-                            vec![intersection]
-                        }
-                        (TrueIntersectionPoint, FalseIntersectionPoint(_)) => {
-                            //println!("CASE 1 - extend");
-                            vec![intersection]
-                        }
-                        (FalseIntersectionPoint(_), TrueIntersectionPoint) => {
-                            //println!("CASE 1 - extend");
+                            // Inside elbow
+                            // No mitre limit needed
                             vec![intersection]
                         }
                         (FalseIntersectionPoint(AfterEnd), FalseIntersectionPoint(_)) => {
+                            // Outside elbow
                             // TODO: Mitre limit logic goes here
-                            //println!("CASE 2 - extend");
+                            //       Need to calculate how far out the corner is
+                            //       projected relative to the offset `distance`
+                            //
+                            // Pseudocode:
+                            //
+                            // let mitre_limit_config = distance*2; // 200% requested offset distance
+                            // if magnitude(intersection - original_bc) > mitre_limit_config {
+                            //     ...
+                            // }
                             vec![intersection]
                         }
+
+                        // Not needed I think?
+                        // (TrueIntersectionPoint, FalseIntersectionPoint(_)) => {
+                        //     //println!("CASE 1 - extend");
+                        //     vec![*b, *c]
+                        // }
+                        // (FalseIntersectionPoint(_), TrueIntersectionPoint) => {
+                        //     //println!("CASE 1 - extend");
+                        //     vec![*b, *c]
+                        // }
                         _ => {
+                            //Inside pinched elbow (forearm curled back through
+                            //                      bicep 🙃)
                             //println!("CASE 3 - bridge");
-                            //vec![intersection]
                             vec![*b, *c]
                         }
                     },
@@ -321,5 +341,4 @@ mod test {
         ]));
         assert_eq!(output_actual, output_expected);
     }
-
 }
