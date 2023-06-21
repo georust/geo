@@ -76,7 +76,7 @@ pub(crate) fn twice_signed_ring_area_trait<'a>(linestring: &'a impl LineStringTr
         c1.0 -= shift.x();
         c1.1 -= shift.y();
 
-        let mut c2 = linestring.coord(i).unwrap().x_y();
+        let mut c2 = linestring.coord(i + 1).unwrap().x_y();
         c2.0 -= shift.x();
         c2.1 -= shift.y();
 
