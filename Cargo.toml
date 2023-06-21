@@ -1,5 +1,5 @@
 [workspace]
-members = ["geo", "geo-types", "geo-postgis", "geo-test-fixtures", "jts-test-runner", "geo-bool-ops-benches"]
+members = ["geo", "geo-types", "geo-traits", "geo-postgis", "geo-test-fixtures", "jts-test-runner", "geo-bool-ops-benches"]
 
 [patch.crates-io]
 
