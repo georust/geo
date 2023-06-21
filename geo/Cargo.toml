@@ -21,6 +21,7 @@ use-serde = ["serde", "geo-types/serde"]
 earcutr = { version = "0.4.2", optional = true }
 float_next_after = "1.0.0"
 geo-types = { version = "0.7.9", features = ["approx", "use-rstar_0_10"] }
+geo-traits = { path = "../geo-traits" }
 geographiclib-rs = { version = "0.2.3", default-features = false }
 log = "0.4.11"
 num-traits = "0.2"

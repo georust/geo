@@ -1,7 +1,9 @@
+use std::ops::{AddAssign, SubAssign};
+
 use geo_types::{Coord, CoordNum, Point};
 
 pub trait CoordTrait: Send + Sync {
-    type T: CoordNum + Send + Sync;
+    type T: CoordNum + Send + Sync; // + AddAssign + SubAssign;
 
     /// x component of this coord
     fn x(&self) -> Self::T;

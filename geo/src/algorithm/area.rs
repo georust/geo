@@ -1,5 +1,7 @@
 use crate::geometry::*;
+use crate::num_traits::{One, Zero};
 use crate::{CoordFloat, CoordNum};
+use geo_traits::{CoordTrait, LineStringTrait, PolygonTrait};
 
 pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
 where
@@ -34,6 +36,52 @@ where
         use crate::MapCoords;
         let line = line.map_coords(|c| c - shift);
         tmp = tmp + line.determinant();
+    }
+
+    tmp
+}
+
+pub(crate) fn twice_signed_ring_area_trait<'a>(linestring: &'a impl LineStringTrait<'a>) -> f64 {
+    // LineString with less than 3 points is empty, or a
+    // single point, or is not closed.
+    if linestring.num_coords() < 3 {
+        return f64::zero();
+    }
+
+    // Above test ensures the vector has at least 2 elements.
+    // We check if linestring is closed, and return 0 otherwise.
+    // TODO: should the trait require Eq?
+    let p1 = linestring.coord(0).unwrap();
+    let p2 = linestring.coord(linestring.num_coords() - 1).unwrap();
+    let closed = p1.x() == p2.x() && p1.y() == p2.y();
+    if !closed {
+        return 0_f64;
+    }
+
+    // Use a reasonable shift for the line-string coords
+    // to avoid numerical-errors when summing the
+    // determinants.
+    //
+    // Note: we can't use the `Centroid` trait as it
+    // requires `T: Float` and in fact computes area in the
+    // implementation. Another option is to use the average
+    // of the coordinates, but it is not fool-proof to
+    // divide by the length of the linestring (eg. a long
+    // line-string with T = u8)
+    let shift = linestring.coord(0).unwrap();
+
+    let mut tmp = 0_f64;
+    for i in (0..linestring.num_coords()).step_by(2) {
+        let mut c1 = linestring.coord(i).unwrap().x_y();
+        c1.0 -= shift.x();
+        c1.1 -= shift.y();
+
+        let mut c2 = linestring.coord(i).unwrap().x_y();
+        c2.0 -= shift.x();
+        c2.1 -= shift.y();
+
+        let line = Line::from([c1, c2]);
+        tmp += line.determinant();
     }
 
     tmp
@@ -80,6 +128,11 @@ where
     T: CoordFloat,
 {
     twice_signed_ring_area(linestring) / (T::one() + T::one())
+}
+
+// Calculation of simple (no interior holes) Polygon area
+pub(crate) fn get_linestring_area_trait<'a>(linestring: &'a impl LineStringTrait<'a>) -> f64 {
+    twice_signed_ring_area_trait(linestring) / (f64::one() + f64::one())
 }
 
 impl<T> Area<T> for Point<T>
@@ -149,6 +202,29 @@ where
     fn unsigned_area(&self) -> T {
         self.signed_area().abs()
     }
+}
+
+pub fn unsigned_area_polygon<'a>(geom: &'a impl PolygonTrait<'a>) -> f64 {
+    let area = get_linestring_area_trait(&geom.exterior());
+    area.abs()
+
+    // // We could use winding order here, but that would
+    // // result in computing the shoelace formula twice.
+    // let is_negative = area < 0_f64;
+
+    // for i in geom.num_interiors() {
+
+    // }
+
+    // let area = geom.interiors().iter().fold(area.abs(), |total, next| {
+    //     total - get_linestring_area(next).abs()
+    // });
+
+    // if is_negative {
+    //     -area
+    // } else {
+    //     area
+    // }
 }
 
 impl<T> Area<T> for MultiPoint<T>
