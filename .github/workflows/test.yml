@@ -26,6 +26,7 @@ jobs:
       - geo
       - geo_postgis
       - geo_fuzz
+      - geo_traits
       - bench
     steps:
       - name: Mark the job as a success
@@ -107,6 +108,32 @@ jobs:
       - run: cargo check --all-targets --no-default-features
       # we don't want to test `proj-network` because it only enables the `proj` feature
       - run: cargo test --features "use-proj use-serde"
+
+  geo_traits:
+    name: geo-traits
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    defaults:
+      run:
+        working-directory: geo-traits
+    strategy:
+      matrix:
+        container_image:
+          # We aim to support rust-stable plus (at least) the prior 3 releases,
+          # giving us about 6 months of coverage.
+          #
+          # Minimum supported rust version (MSRV)
+          - "georust/geo-ci:rust-1.63"
+          # Two most recent releases - we omit older ones for expedient CI
+          - "georust/geo-ci:rust-1.65"
+          - "georust/geo-ci:rust-1.66"
+    container:
+      image: ${{ matrix.container_image }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - run: cargo check --all-targets --no-default-features
+      - run: cargo test
 
   geo_postgis:
     name: geo-postgis
