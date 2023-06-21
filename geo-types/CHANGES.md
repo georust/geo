@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Add new changes here.
+* Implement `From<&Line>` for `LineString`
 
 ## 0.7.9
 
