@@ -346,6 +346,12 @@ impl<T: CoordNum, IC: Into<Coord<T>>> From<Vec<IC>> for LineString<T> {
 
 impl<T: CoordNum> From<Line<T>> for LineString<T> {
     fn from(line: Line<T>) -> Self {
+        LineString::from(&line)
+    }
+}
+
+impl<T: CoordNum> From<&Line<T>> for LineString<T> {
+    fn from(line: &Line<T>) -> Self {
         Self(vec![line.start, line.end])
     }
 }
