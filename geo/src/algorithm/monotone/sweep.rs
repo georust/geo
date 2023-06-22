@@ -20,10 +20,11 @@ use super::{RcSegment, Segment};
 ///
 /// # Note
 ///
-/// This is a simpler version, which does not support intersections except at
-/// end-points.  Specifically, the algorithm expects any pair of segments to
-/// maintain a fixed ordering along all common sweep lines, ties broken
-/// arbitrarily.
+/// This is a simpler version, which does not support intersections that are
+/// interior to both segments.  That is, every intersection between two segments
+/// should be at the end point of at least one of them.  In particular, overlaps
+/// are also not supported (will panic).
+
 pub(crate) struct SimpleSweep<T: GeoNum, P: Debug> {
     events: BinaryHeap<Event<T, RcSegment<T, P>>>,
     active_segments: VecSet<Active<RcSegment<T, P>>>,

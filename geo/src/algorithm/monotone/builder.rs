@@ -14,14 +14,18 @@ use crate::{
 };
 use std::{cell::Cell, mem::replace};
 
-/// Construct a monotone subdivision of a polygon along the X-axis.
+/// Construct a monotone subdivision (along the X-axis) of an iterator of polygons.
 ///
 /// Returns the set of monotone polygons that make up the subdivision.  The
-/// input polygon must be valid (see the validity section in [`Polygon`]).  In
-/// particular, the polygon must not self-intersect, and contain only finite
-/// coordinates.
-pub fn monotone_subdivision<T: GeoNum>(polygon: Polygon<T>) -> Vec<MonoPoly<T>> {
-    Builder::from_polygon(polygon).build()
+/// input polygon(s) must be a valid `MultiPolygon` (see the validity section in
+/// [`MultiPolygon`]).  In particular, each polygon must be simple, not
+/// self-intersect, and contain only finite coordinates;  further, the polygons
+/// must have distinct interiors, and their boundaries may only intersect at
+/// finite points.
+pub fn monotone_subdivision<T: GeoNum, I: IntoIterator<Item = Polygon<T>>>(
+    iter: I,
+) -> Vec<MonoPoly<T>> {
+    Builder::from_polygons_iter(iter).build()
 }
 
 pub(super) struct Builder<T: GeoNum> {
@@ -32,21 +36,23 @@ pub(super) struct Builder<T: GeoNum> {
 
 impl<T: GeoNum> Builder<T> {
     /// Create a new builder from a polygon.
-    pub fn from_polygon(polygon: Polygon<T>) -> Self {
-        let (ext, ints) = polygon.into_inner();
-        let iter = Some(ext)
-            .into_iter()
-            .chain(ints.into_iter())
-            .flat_map(|ls| -> Vec<_> { ls.lines().collect() })
-            .filter_map(|line| {
-                if line.start == line.end {
-                    None
-                } else {
-                    let line = LineOrPoint::from(line);
-                    debug!("adding line {:?}", line);
-                    Some((line, Default::default()))
-                }
-            });
+    pub fn from_polygons_iter<I: IntoIterator<Item = Polygon<T>>>(iter: I) -> Self {
+        let iter = iter.into_iter().flat_map(|polygon| {
+            let (ext, ints) = polygon.into_inner();
+            Some(ext)
+                .into_iter()
+                .chain(ints.into_iter())
+                .flat_map(|ls| -> Vec<_> { ls.lines().collect() })
+                .filter_map(|line| {
+                    if line.start == line.end {
+                        None
+                    } else {
+                        let line = LineOrPoint::from(line);
+                        debug!("adding line {:?}", line);
+                        Some((line, Default::default()))
+                    }
+                })
+        });
         Self {
             sweep: SimpleSweep::new(iter),
             chains: Vec::new(),

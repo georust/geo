@@ -51,7 +51,7 @@ fn bench_pt_in_poly<T, I>(
     T: Measurement,
     I: Display + Copy,
 {
-    let mon = match catch_unwind(|| monotone_subdivision(polygon.clone())) {
+    let mon = match catch_unwind(|| monotone_subdivision([polygon.clone()])) {
         Ok(m) => m,
         Err(_) => {
             panic!(
@@ -123,7 +123,7 @@ where
             b.iter_batched(
                 samples.sampler(),
                 |pt| {
-                    let mon = monotone_subdivision(pt.clone());
+                    let mon = monotone_subdivision([pt.clone()]);
                     mon.len();
                 },
                 BatchSize::SmallInput,

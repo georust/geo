@@ -1,5 +1,5 @@
 mod mono_poly;
-use crate::{Coord, GeoNum, Intersects, Polygon};
+use crate::{Coord, GeoNum, Intersects, MultiPolygon, Polygon};
 pub use mono_poly::MonoPoly;
 
 mod segment;
@@ -12,7 +12,7 @@ pub(crate) use sweep::SimpleSweep;
 mod builder;
 pub use builder::monotone_subdivision;
 
-/// A polygon represented as a collection of (disjoint) monotone polygons.
+/// A multi-polygon represented as a collection of (disjoint) monotone polygons.
 ///
 /// This structure is optimized for point-in-polygon queries, and is typically
 /// much faster than the equivalent method on `Polygon`.  This is because a
@@ -24,8 +24,9 @@ pub use builder::monotone_subdivision;
 ///
 /// # Example
 ///
-///Construct a `MonotonicPolygons` from a `Polygon` using `From<Polygon>`, and
-///query point intersection via the `Intersects<Coord>` trait.
+/// Construct a `MonotonicPolygons` from a `Polygon`, or a `MultiPolygon` using
+/// `MontonicPolygons::from`, and` query point intersection via the
+/// `Intersects<Coord>` trait.
 ///
 /// ```rust
 /// use geo::prelude::*;
@@ -57,7 +58,13 @@ impl<T: GeoNum> MonotonicPolygons<T> {
 }
 impl<T: GeoNum> From<Polygon<T>> for MonotonicPolygons<T> {
     fn from(poly: Polygon<T>) -> Self {
-        Self(monotone_subdivision(poly))
+        Self(monotone_subdivision([poly]))
+    }
+}
+
+impl<T: GeoNum> From<MultiPolygon<T>> for MonotonicPolygons<T> {
+    fn from(mp: MultiPolygon<T>) -> Self {
+        Self(monotone_subdivision(mp.0))
     }
 }
 

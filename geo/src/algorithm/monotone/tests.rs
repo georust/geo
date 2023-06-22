@@ -33,7 +33,7 @@ fn check_monotone_subdivision<T: GeoFloat + FromStr + Default + Display + Relati
     eprintln!("input: {wkt}");
     let input = Polygon::<T>::try_from_wkt_str(wkt).unwrap();
     let area = twice_polygon_area(&input);
-    let subdivisions = monotone_subdivision(input.clone());
+    let subdivisions = monotone_subdivision([input.clone()]);
     eprintln!("Got {} subdivisions", subdivisions.len());
 
     let mut sub_area = T::zero();

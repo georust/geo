@@ -1,4 +1,4 @@
-use std::{cell::RefCell, cmp::Ordering, fmt::Debug, rc::Rc};
+use std::{borrow::Cow, cell::RefCell, cmp::Ordering, fmt::Debug, rc::Rc};
 
 use super::*;
 
@@ -145,7 +145,7 @@ impl<C: Cross + Clone> IMSegment<C> {
             let segment_geom = RefCell::borrow(&segment.inner).geom;
 
             let mut child = RefCell::borrow(&parent.inner).overlapping.as_ref().cloned();
-            let mut tgt = segment.clone();
+            let mut tgt = Cow::Borrowed(&segment);
 
             while let Some(child_seg) = child {
                 let child_inner_seg = RefCell::borrow(&child_seg.inner);
@@ -162,7 +162,7 @@ impl<C: Cross + Clone> IMSegment<C> {
                     RefCell::borrow_mut(&new_segment.inner).is_overlapping = true;
                 }
 
-                tgt = new_segment;
+                tgt = Cow::Owned(new_segment);
                 child = child_overlapping.as_ref().cloned();
             }
         }
