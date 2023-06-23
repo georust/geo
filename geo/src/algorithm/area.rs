@@ -72,13 +72,13 @@ pub(crate) fn twice_signed_ring_area_trait<'a>(linestring: &'a impl LineStringTr
 
     let mut tmp = 0_f64;
     for i in (0..linestring.num_coords()).step_by(2) {
-        let mut c1 = linestring.coord(i).unwrap().x_y();
-        c1.0 -= shift.x();
-        c1.1 -= shift.y();
+        let mut c1 = Coord { x: linestring.coord(i).unwrap().x(), y: linestring.coord(i).unwrap().y() };
+        c1.x -= shift.x();
+        c1.y -= shift.y();
 
-        let mut c2 = linestring.coord(i + 1).unwrap().x_y();
-        c2.0 -= shift.x();
-        c2.1 -= shift.y();
+        let mut c2 = Coord { x: linestring.coord(i + 1).unwrap().x(), y: linestring.coord(i + 1).unwrap().y() };
+        c2.x -= shift.x();
+        c2.y -= shift.y();
 
         let line = Line::from([c1, c2]);
         tmp += line.determinant();
