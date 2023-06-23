@@ -2,10 +2,12 @@ use geo_types::{Coord, CoordNum, LineString};
 
 use super::CoordTrait;
 use std::iter::Cloned;
+use std::ops::SubAssign;
 use std::slice::Iter;
 
 pub trait LineStringTrait<'a>: Send + Sync {
-    type ItemType: 'a + CoordTrait;
+    type T: CoordNum + Send + Sync + SubAssign;
+    type ItemType: 'a + CoordTrait<T = Self::T>;
     type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
     /// An iterator over the coords in this LineString
@@ -19,7 +21,8 @@ pub trait LineStringTrait<'a>: Send + Sync {
     fn coord(&'a self, i: usize) -> Option<Self::ItemType>;
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> LineStringTrait<'a> for LineString<T> {
+impl<'a, T: CoordNum + Send + Sync + SubAssign + 'a> LineStringTrait<'a> for LineString<T> {
+    type T = T;
     type ItemType = Coord<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
@@ -36,7 +39,8 @@ impl<'a, T: CoordNum + Send + Sync + 'a> LineStringTrait<'a> for LineString<T> {
     }
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> LineStringTrait<'a> for &LineString<T> {
+impl<'a, T: CoordNum + Send + Sync + SubAssign + 'a> LineStringTrait<'a> for &LineString<T> {
+    type T = T;
     type ItemType = Coord<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 

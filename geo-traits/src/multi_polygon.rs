@@ -1,6 +1,7 @@
 use super::polygon::PolygonTrait;
 use geo_types::{CoordNum, MultiPolygon, Polygon};
 use std::iter::Cloned;
+use std::ops::SubAssign;
 use std::slice::Iter;
 
 pub trait MultiPolygonTrait<'a>: Send + Sync {
@@ -18,7 +19,7 @@ pub trait MultiPolygonTrait<'a>: Send + Sync {
     fn polygon(&'a self, i: usize) -> Option<Self::ItemType>;
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> MultiPolygonTrait<'a> for MultiPolygon<T> {
+impl<'a, T: CoordNum + Send + Sync + SubAssign + 'a> MultiPolygonTrait<'a> for MultiPolygon<T> {
     type ItemType = Polygon<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
@@ -35,7 +36,7 @@ impl<'a, T: CoordNum + Send + Sync + 'a> MultiPolygonTrait<'a> for MultiPolygon<
     }
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> MultiPolygonTrait<'a> for &MultiPolygon<T> {
+impl<'a, T: CoordNum + Send + Sync + SubAssign + 'a> MultiPolygonTrait<'a> for &MultiPolygon<T> {
     type ItemType = Polygon<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 

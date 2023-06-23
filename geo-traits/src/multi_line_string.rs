@@ -1,6 +1,7 @@
 use super::line_string::LineStringTrait;
 use geo_types::{CoordNum, LineString, MultiLineString};
 use std::iter::Cloned;
+use std::ops::SubAssign;
 use std::slice::Iter;
 
 pub trait MultiLineStringTrait<'a>: Send + Sync {
@@ -18,7 +19,9 @@ pub trait MultiLineStringTrait<'a>: Send + Sync {
     fn line(&'a self, i: usize) -> Option<Self::ItemType>;
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> MultiLineStringTrait<'a> for MultiLineString<T> {
+impl<'a, T: CoordNum + Send + Sync + SubAssign + 'a> MultiLineStringTrait<'a>
+    for MultiLineString<T>
+{
     type ItemType = LineString<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
@@ -35,7 +38,9 @@ impl<'a, T: CoordNum + Send + Sync + 'a> MultiLineStringTrait<'a> for MultiLineS
     }
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> MultiLineStringTrait<'a> for &MultiLineString<T> {
+impl<'a, T: CoordNum + Send + Sync + SubAssign + 'a> MultiLineStringTrait<'a>
+    for &MultiLineString<T>
+{
     type ItemType = LineString<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
