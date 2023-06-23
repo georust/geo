@@ -1,11 +1,11 @@
 use super::polygon::PolygonTrait;
 use geo_types::{CoordNum, MultiPolygon, Polygon};
 use std::iter::Cloned;
-use std::ops::SubAssign;
 use std::slice::Iter;
 
 pub trait MultiPolygonTrait<'a>: Send + Sync {
-    type ItemType: 'a + PolygonTrait<'a>;
+    type T: CoordNum + Send + Sync;
+    type ItemType: 'a + PolygonTrait<'a, T = Self::T>;
     type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
     /// An iterator over the Polygons in this MultiPolygon
@@ -19,7 +19,8 @@ pub trait MultiPolygonTrait<'a>: Send + Sync {
     fn polygon(&'a self, i: usize) -> Option<Self::ItemType>;
 }
 
-impl<'a, T: CoordNum + Send + Sync + SubAssign + 'a> MultiPolygonTrait<'a> for MultiPolygon<T> {
+impl<'a, T: CoordNum + Send + Sync + 'a> MultiPolygonTrait<'a> for MultiPolygon<T> {
+    type T = T;
     type ItemType = Polygon<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
@@ -36,7 +37,8 @@ impl<'a, T: CoordNum + Send + Sync + SubAssign + 'a> MultiPolygonTrait<'a> for M
     }
 }
 
-impl<'a, T: CoordNum + Send + Sync + SubAssign + 'a> MultiPolygonTrait<'a> for &MultiPolygon<T> {
+impl<'a, T: CoordNum + Send + Sync + 'a> MultiPolygonTrait<'a> for &MultiPolygon<T> {
+    type T = T;
     type ItemType = Polygon<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 

@@ -1,5 +1,3 @@
-use std::ops::SubAssign;
-
 use geo_types::{
     CoordNum, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon,
     Point, Polygon,
@@ -54,7 +52,7 @@ where
     GeometryCollection(&'a GC),
 }
 
-impl<'a, T: CoordNum + Send + Sync + SubAssign + 'a> GeometryTrait<'a> for Geometry<T> {
+impl<'a, T: CoordNum + Send + Sync + 'a> GeometryTrait<'a> for Geometry<T> {
     type Point = Point<T>;
     type LineString = LineString<T>;
     type Polygon = Polygon<T>;
