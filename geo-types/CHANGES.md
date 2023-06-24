@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.7.10
 
 * Implement `From<&Line>` for `LineString`
 
