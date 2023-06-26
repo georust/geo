@@ -3,7 +3,7 @@ use geo_types::{CoordNum, Geometry, GeometryCollection};
 use std::iter::Cloned;
 use std::slice::Iter;
 
-pub trait GeometryCollectionTrait<'a>: Send + Sync {
+pub trait GeometryCollectionTrait<'a> {
     type ItemType: 'a + GeometryTrait<'a>;
     type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
@@ -18,7 +18,7 @@ pub trait GeometryCollectionTrait<'a>: Send + Sync {
     fn geometry(&'a self, i: usize) -> Option<Self::ItemType>;
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> GeometryCollectionTrait<'a> for GeometryCollection<T> {
+impl<'a, T: CoordNum + 'a> GeometryCollectionTrait<'a> for GeometryCollection<T> {
     type ItemType = Geometry<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
@@ -35,7 +35,7 @@ impl<'a, T: CoordNum + Send + Sync + 'a> GeometryCollectionTrait<'a> for Geometr
     }
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> GeometryCollectionTrait<'a> for &GeometryCollection<T> {
+impl<'a, T: CoordNum + 'a> GeometryCollectionTrait<'a> for &GeometryCollection<T> {
     type ItemType = Geometry<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 

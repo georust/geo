@@ -3,8 +3,8 @@ use geo_types::{CoordNum, LineString, Polygon};
 use std::iter::Cloned;
 use std::slice::Iter;
 
-pub trait PolygonTrait<'a>: Send + Sync {
-    type T: CoordNum + Send + Sync;
+pub trait PolygonTrait<'a> {
+    type T: CoordNum;
     type ItemType: 'a + LineStringTrait<'a, T = Self::T>;
     type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
@@ -22,7 +22,7 @@ pub trait PolygonTrait<'a>: Send + Sync {
     fn interior(&'a self, i: usize) -> Option<Self::ItemType>;
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> PolygonTrait<'a> for Polygon<T> {
+impl<'a, T: CoordNum + 'a> PolygonTrait<'a> for Polygon<T> {
     type T = T;
     type ItemType = LineString<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
@@ -44,7 +44,7 @@ impl<'a, T: CoordNum + Send + Sync + 'a> PolygonTrait<'a> for Polygon<T> {
     }
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> PolygonTrait<'a> for &Polygon<T> {
+impl<'a, T: CoordNum + 'a> PolygonTrait<'a> for &Polygon<T> {
     type T = T;
     type ItemType = LineString<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;

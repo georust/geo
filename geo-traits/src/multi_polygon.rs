@@ -3,8 +3,8 @@ use geo_types::{CoordNum, MultiPolygon, Polygon};
 use std::iter::Cloned;
 use std::slice::Iter;
 
-pub trait MultiPolygonTrait<'a>: Send + Sync {
-    type T: CoordNum + Send + Sync;
+pub trait MultiPolygonTrait<'a> {
+    type T: CoordNum;
     type ItemType: 'a + PolygonTrait<'a, T = Self::T>;
     type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
@@ -19,7 +19,7 @@ pub trait MultiPolygonTrait<'a>: Send + Sync {
     fn polygon(&'a self, i: usize) -> Option<Self::ItemType>;
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> MultiPolygonTrait<'a> for MultiPolygon<T> {
+impl<'a, T: CoordNum + 'a> MultiPolygonTrait<'a> for MultiPolygon<T> {
     type T = T;
     type ItemType = Polygon<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
@@ -37,7 +37,7 @@ impl<'a, T: CoordNum + Send + Sync + 'a> MultiPolygonTrait<'a> for MultiPolygon<
     }
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> MultiPolygonTrait<'a> for &MultiPolygon<T> {
+impl<'a, T: CoordNum + 'a> MultiPolygonTrait<'a> for &MultiPolygon<T> {
     type T = T;
     type ItemType = Polygon<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;

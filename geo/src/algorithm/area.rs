@@ -42,11 +42,9 @@ where
     tmp
 }
 
-pub(crate) fn twice_signed_ring_area_trait<'a, T>(
-    linestring: &'a impl LineStringTrait<'a, T = T>,
-) -> T
+pub(crate) fn twice_signed_ring_area_trait<'a, T>(linestring: &impl LineStringTrait<'a, T = T>) -> T
 where
-    T: CoordNum + SubAssign + AddAssign,
+    T: CoordNum,
 {
     // LineString with less than 3 points is empty, or a
     // single point, or is not closed.
@@ -82,18 +80,18 @@ where
             x: linestring.coord(i).unwrap().x(),
             y: linestring.coord(i).unwrap().y(),
         };
-        c1.x -= shift.x();
-        c1.y -= shift.y();
+        c1.x = c1.x - shift.x();
+        c1.y = c1.y - shift.y();
 
         let mut c2 = Coord {
             x: linestring.coord(i + 1).unwrap().x(),
             y: linestring.coord(i + 1).unwrap().y(),
         };
-        c2.x -= shift.x();
-        c2.y -= shift.y();
+        c2.x = c2.x - shift.x();
+        c2.y = c2.y - shift.y();
 
         let line = Line::new(c1, c2);
-        tmp += line.determinant();
+        tmp = tmp + line.determinant();
     }
 
     tmp
@@ -143,9 +141,9 @@ where
 }
 
 // Calculation of simple (no interior holes) Polygon area
-pub(crate) fn get_linestring_area_trait<'a, T>(linestring: &'a impl LineStringTrait<'a, T = T>) -> T
+pub(crate) fn get_linestring_area_trait<'a, T>(linestring: &impl LineStringTrait<'a, T = T>) -> T
 where
-    T: CoordFloat + SubAssign + AddAssign,
+    T: CoordFloat,
 {
     twice_signed_ring_area_trait(linestring) / (T::one() + T::one())
 }
@@ -197,7 +195,7 @@ where
     T: CoordFloat,
 {
     fn signed_area(&self) -> T {
-        let area = get_linestring_area(self.exterior());
+        let area = get_linestring_area_trait(self.exterior());
 
         // We could use winding order here, but that would
         // result in computing the shoelace formula twice.

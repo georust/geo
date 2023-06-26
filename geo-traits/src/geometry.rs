@@ -9,7 +9,7 @@ use super::{
 };
 
 #[allow(clippy::type_complexity)]
-pub trait GeometryTrait<'a>: Send + Sync {
+pub trait GeometryTrait<'a> {
     type Point: 'a + PointTrait;
     type LineString: 'a + LineStringTrait<'a>;
     type Polygon: 'a + PolygonTrait<'a>;
@@ -52,7 +52,7 @@ where
     GeometryCollection(&'a GC),
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> GeometryTrait<'a> for Geometry<T> {
+impl<'a, T: CoordNum + 'a> GeometryTrait<'a> for Geometry<T> {
     type Point = Point<T>;
     type LineString = LineString<T>;
     type Polygon = Polygon<T>;

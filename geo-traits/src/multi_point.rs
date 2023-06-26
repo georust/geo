@@ -3,7 +3,7 @@ use geo_types::{CoordNum, MultiPoint, Point};
 use std::iter::Cloned;
 use std::slice::Iter;
 
-pub trait MultiPointTrait<'a>: Send + Sync {
+pub trait MultiPointTrait<'a> {
     type ItemType: 'a + PointTrait;
     type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
@@ -18,7 +18,7 @@ pub trait MultiPointTrait<'a>: Send + Sync {
     fn point(&'a self, i: usize) -> Option<Self::ItemType>;
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> MultiPointTrait<'a> for MultiPoint<T> {
+impl<'a, T: CoordNum + 'a> MultiPointTrait<'a> for MultiPoint<T> {
     type ItemType = Point<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
@@ -35,7 +35,7 @@ impl<'a, T: CoordNum + Send + Sync + 'a> MultiPointTrait<'a> for MultiPoint<T> {
     }
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> MultiPointTrait<'a> for &MultiPoint<T> {
+impl<'a, T: CoordNum + 'a> MultiPointTrait<'a> for &MultiPoint<T> {
     type ItemType = Point<T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
