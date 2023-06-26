@@ -29,7 +29,7 @@ use crate::{CoordNum, Error};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 use core::any::type_name;
-use std::convert::TryFrom;
+use core::convert::TryFrom;
 
 /// An enum representing any possible geometry type.
 ///

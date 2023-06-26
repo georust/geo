@@ -7,7 +7,13 @@ pub mod area;
 pub use area::Area;
 
 /// Calculate the bearing to another `Point`, in degrees.
+#[deprecated(
+    since = "0.24.1",
+    note = "renamed to `haversine_bearing::HaversineBearing`"
+)]
 pub mod bearing;
+#[allow(deprecated)]
+#[deprecated(since = "0.24.1", note = "renamed to `HaversineBearing`")]
 pub use bearing::Bearing;
 
 /// Boolean Ops such as union, xor, difference;
@@ -17,6 +23,10 @@ pub use bool_ops::{BooleanOps, OpType};
 /// Calculate the bounding rectangle of a `Geometry`.
 pub mod bounding_rect;
 pub use bounding_rect::BoundingRect;
+
+/// Calculate the minimum rotated rectangle of a `Geometry`.
+pub mod minimum_rotated_rect;
+pub use minimum_rotated_rect::MinimumRotatedRect;
 
 /// Calculate the centroid of a `Geometry`.
 pub mod centroid;
@@ -50,6 +60,10 @@ pub use convert::{Convert, TryConvert};
 pub mod convex_hull;
 pub use convex_hull::ConvexHull;
 
+/// Cross track distance
+pub mod cross_track_distance;
+pub use cross_track_distance::CrossTrackDistance;
+
 /// Determine whether a `Coord` lies inside, outside, or on the boundary of a geometry.
 pub mod coordinate_position;
 pub use coordinate_position::CoordinatePosition;
@@ -82,9 +96,21 @@ pub use extremes::Extremes;
 pub mod frechet_distance;
 pub use frechet_distance::FrechetDistance;
 
+/// Calculate the bearing to another `Point` on a geodesic.
+pub mod geodesic_bearing;
+pub use geodesic_bearing::GeodesicBearing;
+
+/// Returns a new Point using a distance and bearing on a geodesic.
+pub mod geodesic_destination;
+pub use geodesic_destination::GeodesicDestination;
+
 /// Calculate the Geodesic distance between two `Point`s.
 pub mod geodesic_distance;
 pub use geodesic_distance::GeodesicDistance;
+
+/// Calculate the Geodesic area and perimeter of polygons.
+pub mod geodesic_area;
+pub use geodesic_area::GeodesicArea;
 
 /// Calculate a new `Point` lying on a Geodesic arc between two `Point`s.
 pub mod geodesic_intermediate;
@@ -93,6 +119,10 @@ pub use geodesic_intermediate::GeodesicIntermediate;
 /// Calculate the Geodesic length of a line.
 pub mod geodesic_length;
 pub use geodesic_length::GeodesicLength;
+
+/// Calculate the bearing to another `Point`, in degrees.
+pub mod haversine_bearing;
+pub use haversine_bearing::HaversineBearing;
 
 /// Calculate a destination `Point`, given a distance and a bearing.
 pub mod haversine_destination;
@@ -149,8 +179,6 @@ pub use lines_iter::LinesIter;
 /// Apply a function to all `Coord`s of a `Geometry`.
 pub mod map_coords;
 pub use map_coords::{MapCoords, MapCoordsInPlace};
-#[allow(deprecated)]
-pub use map_coords::{MapCoordsInplace, TryMapCoords, TryMapCoordsInplace};
 
 /// Orient a `Polygon`'s exterior and interior rings.
 pub mod orient;
@@ -171,9 +199,6 @@ pub use remove_repeated_points::RemoveRepeatedPoints;
 /// Rotate a `Geometry` by an angle given in degrees.
 pub mod rotate;
 pub use rotate::Rotate;
-#[doc(hidden)]
-#[allow(deprecated)]
-pub use rotate::RotatePoint;
 
 /// Scale a `Geometry` up or down by a factor
 pub mod scale;
@@ -192,8 +217,8 @@ pub mod simplify;
 pub use simplify::{Simplify, SimplifyIdx};
 
 /// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
-pub mod simplifyvw;
-pub use simplifyvw::{SimplifyVW, SimplifyVWPreserve, SimplifyVwIdx};
+pub mod simplify_vw;
+pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve};
 
 /// Transform a geometry using PROJ.
 #[cfg(feature = "use-proj")]
@@ -204,6 +229,12 @@ pub use transform::Transform;
 /// Translate a `Geometry` along the given offsets.
 pub mod translate;
 pub use translate::Translate;
+
+/// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
+#[cfg(feature = "earcutr")]
+pub mod triangulate_earcut;
+#[cfg(feature = "earcutr")]
+pub use triangulate_earcut::TriangulateEarcut;
 
 /// Calculate the Vincenty distance between two `Point`s.
 pub mod vincenty_distance;
@@ -226,4 +257,5 @@ pub mod sweep;
 
 /// Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
 pub mod outlier_detection;
+
 pub use outlier_detection::OutlierDetection;

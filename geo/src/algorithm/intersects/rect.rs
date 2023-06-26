@@ -22,13 +22,23 @@ where
     T: CoordNum,
 {
     fn intersects(&self, other: &Rect<T>) -> bool {
-        let x_overlap = value_in_range(self.min().x, other.min().x, other.max().x)
-            || value_in_range(other.min().x, self.min().x, self.max().x);
+        if self.max().x < other.min().x {
+            return false;
+        }
 
-        let y_overlap = value_in_range(self.min().y, other.min().y, other.max().y)
-            || value_in_range(other.min().y, self.min().y, self.max().y);
+        if self.max().y < other.min().y {
+            return false;
+        }
 
-        x_overlap && y_overlap
+        if self.min().x > other.max().x {
+            return false;
+        }
+
+        if self.min().y > other.max().y {
+            return false;
+        }
+
+        true
     }
 }
 

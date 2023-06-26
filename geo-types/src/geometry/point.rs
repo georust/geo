@@ -3,7 +3,7 @@ use crate::{point, Coord, CoordFloat, CoordNum};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// A single point in 2D space.
 ///
@@ -620,6 +620,35 @@ where
 impl<T> ::rstar_0_9::Point for Point<T>
 where
     T: ::num_traits::Float + ::rstar_0_9::RTreeNum,
+{
+    type Scalar = T;
+
+    const DIMENSIONS: usize = 2;
+
+    fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
+        Point::new(generator(0), generator(1))
+    }
+
+    fn nth(&self, index: usize) -> Self::Scalar {
+        match index {
+            0 => self.0.x,
+            1 => self.0.y,
+            _ => unreachable!(),
+        }
+    }
+    fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
+        match index {
+            0 => &mut self.0.x,
+            1 => &mut self.0.y,
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[cfg(feature = "rstar_0_10")]
+impl<T> ::rstar_0_10::Point for Point<T>
+where
+    T: ::num_traits::Float + ::rstar_0_10::RTreeNum,
 {
     type Scalar = T;
 

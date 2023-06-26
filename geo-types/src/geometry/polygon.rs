@@ -1,4 +1,6 @@
 use crate::{CoordFloat, CoordNum, LineString, Point, Rect, Triangle};
+use alloc::vec;
+use alloc::vec::Vec;
 use num_traits::{Float, Signed};
 
 #[cfg(any(feature = "approx", test))]
@@ -10,7 +12,7 @@ use approx::{AbsDiffEq, RelativeEq};
 /// [`LineString`]. It may contain zero or more holes (_interior rings_), also
 /// represented by `LineString`s.
 ///
-/// A `Polygon` can be created with the [`Polygon::new`] constructor or the [`polygon!`] macro.
+/// A `Polygon` can be created with the [`Polygon::new`] constructor or the [`polygon!`][`crate::polygon!`] macro.
 ///
 /// # Semantics
 ///
@@ -543,7 +545,7 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Polygon<T> {
     }
 }
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
 macro_rules! impl_rstar_polygon {
     ($rstar:ident) => {
         impl<T> $rstar::RTreeObject for Polygon<T>
@@ -564,3 +566,6 @@ impl_rstar_polygon!(rstar_0_8);
 
 #[cfg(feature = "rstar_0_9")]
 impl_rstar_polygon!(rstar_0_9);
+
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_polygon!(rstar_0_10);

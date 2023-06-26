@@ -52,7 +52,7 @@ mod tests {
     // several of the ConvexHull tests are currently failing
     fn test_all_general() {
         init_logging();
-        let mut runner = TestRunner::new().with_overlay_precision_floating();
+        let mut runner = TestRunner::new();
         runner.run().expect("test cases failed");
 
         if !runner.failures().is_empty() {
@@ -96,9 +96,7 @@ mod tests {
     #[test]
     fn test_boolean_ops() {
         init_logging();
-        let mut runner = TestRunner::new()
-            .matching_filename_glob("*Overlay*.xml")
-            .with_overlay_precision_floating();
+        let mut runner = TestRunner::new().matching_filename_glob("*Overlay*.xml");
         runner.run().expect("test cases failed");
 
         // sanity check that *something* was run

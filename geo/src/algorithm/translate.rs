@@ -35,15 +35,6 @@ pub trait Translate<T: CoordNum> {
 
     /// Translate a Geometry along its axes, but in place.
     fn translate_mut(&mut self, x_offset: T, y_offset: T);
-
-    #[doc(hidden)]
-    /// Translate a Geometry along its axes, but in place.
-    #[deprecated(since = "0.23.0", note = "renamed to `translate_mut`")]
-    fn translate_in_place(&mut self, x_offset: T, y_offset: T);
-
-    #[doc(hidden)]
-    #[deprecated(since = "0.21.0", note = "renamed to `translate_mut`")]
-    fn translate_inplace(&mut self, x_offset: T, y_offset: T);
 }
 
 impl<T, G> Translate<T> for G
@@ -59,14 +50,6 @@ where
     fn translate_mut(&mut self, x_offset: T, y_offset: T) {
         let transform = AffineTransform::translate(x_offset, y_offset);
         self.affine_transform_mut(&transform)
-    }
-
-    fn translate_in_place(&mut self, x_offset: T, y_offset: T) {
-        self.translate_mut(x_offset, y_offset)
-    }
-
-    fn translate_inplace(&mut self, x_offset: T, y_offset: T) {
-        self.translate_mut(x_offset, y_offset)
     }
 }
 

@@ -1,10 +1,17 @@
 # Changes
 
-## unreleased
+## 0.7.10
+
+* Implement `From<&Line>` for `LineString`
+
+## 0.7.9
 
 * Return `DoubleEndedIterator` from `LineString::points` and `LineString::points_mut`
   * <https://github.com/georust/geo/pull/951>
 * POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.63
+* Add `no_std` compatibility when the new default `std` feature is disabled
+  * <https://github.com/georust/geo/pull/936>
+* Support `rstar` version `0.10` in feature `use-rstar_0_10`.
 
 ## 0.7.8
 

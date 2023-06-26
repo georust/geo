@@ -76,7 +76,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+      - run: rustup target add thumbv7em-none-eabihf
       - run: cargo check --all-targets --no-default-features
+      - run: cargo check --lib --target thumbv7em-none-eabihf --no-default-features -F use-rstar_0_9,serde
       - run: cargo test --all-features
 
   geo:
