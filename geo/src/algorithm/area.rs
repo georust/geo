@@ -1,6 +1,9 @@
 use crate::geometry::*;
 use crate::{CoordFloat, CoordNum};
-use geo_traits::{CoordTrait, LineStringTrait, PolygonTrait};
+use geo_traits::{
+    CoordTrait, GeometryCollectionTrait, GeometryTrait, GeometryType, LineStringTrait,
+    MultiPolygonTrait, PointTrait, PolygonTrait,
+};
 
 pub(crate) fn twice_signed_ring_area<'a, T>(linestring: &impl LineStringTrait<'a, T = T>) -> T
 where
@@ -100,17 +103,45 @@ where
     twice_signed_ring_area(linestring) / (T::one() + T::one())
 }
 
+pub fn unsigned_area_point<T>(_geom: &impl PointTrait<T = T>) -> T
+where
+    T: CoordNum,
+{
+    T::zero()
+}
+
+pub fn signed_area_point<T>(_geom: &impl PointTrait<T = T>) -> T
+where
+    T: CoordNum,
+{
+    T::zero()
+}
+
 impl<T> Area<T> for Point<T>
 where
     T: CoordNum,
 {
     fn signed_area(&self) -> T {
-        T::zero()
+        signed_area_point(self)
     }
 
     fn unsigned_area(&self) -> T {
-        T::zero()
+        unsigned_area_point(self)
     }
+}
+
+pub fn unsigned_area_line_string<'a, T>(_geom: &impl LineStringTrait<'a, T = T>) -> T
+where
+    T: CoordNum,
+{
+    T::zero()
+}
+
+pub fn signed_area_line_string<'a, T>(_geom: &impl LineStringTrait<'a, T = T>) -> T
+where
+    T: CoordNum,
+{
+    T::zero()
 }
 
 impl<T> Area<T> for LineString<T>
@@ -118,11 +149,11 @@ where
     T: CoordNum,
 {
     fn signed_area(&self) -> T {
-        T::zero()
+        signed_area_line_string(self)
     }
 
     fn unsigned_area(&self) -> T {
-        T::zero()
+        unsigned_area_line_string(self)
     }
 }
 
@@ -209,6 +240,23 @@ where
     }
 }
 
+pub fn unsigned_area_multi_polygon<'a, T>(geom: &'a impl MultiPolygonTrait<'a, T = T>) -> T
+where
+    T: CoordFloat,
+{
+    geom.polygons().fold(T::zero(), |total, next| {
+        total + unsigned_area_polygon(&next)
+    })
+}
+
+pub fn signed_area_multi_polygon<'a, T>(geom: &'a impl MultiPolygonTrait<'a, T = T>) -> T
+where
+    T: CoordFloat,
+{
+    geom.polygons()
+        .fold(T::zero(), |total, next| total + signed_area_polygon(&next))
+}
+
 /// **Note.** The implementation is a straight-forward
 /// summation of the signed areas of the individual
 /// polygons. In particular, `unsigned_area` is not
@@ -259,6 +307,42 @@ where
 
     fn unsigned_area(&self) -> T {
         self.signed_area().abs()
+    }
+}
+
+pub fn unsigned_area_geometry<'a, T, G>(geom: &'a G) -> T
+where
+    T: CoordFloat,
+    G: GeometryTrait<'a, T = T>,
+{
+    match geom.as_type() {
+        GeometryType::Point(g) => unsigned_area_point(g),
+        GeometryType::MultiPoint(g) => T::zero(),
+        GeometryType::LineString(g) => T::zero(),
+        GeometryType::MultiLineString(g) => T::zero(),
+        GeometryType::Polygon(g) => signed_area_polygon(g).abs(),
+        GeometryType::MultiPolygon(g) => todo!(),
+        GeometryType::GeometryCollection(g) => g.geometries().fold(T::zero(), |total, next| {
+            total + unsigned_area_geometry(&next)
+        }),
+    }
+}
+
+pub fn signed_area_geometry<'a, T, G>(geom: &'a G) -> T
+where
+    T: CoordFloat,
+    G: GeometryTrait<'a, T = T>,
+{
+    match geom.as_type() {
+        GeometryType::Point(g) => signed_area_point(g),
+        GeometryType::MultiPoint(g) => T::zero(),
+        GeometryType::LineString(g) => T::zero(),
+        GeometryType::MultiLineString(g) => T::zero(),
+        GeometryType::Polygon(g) => signed_area_polygon(g),
+        GeometryType::MultiPolygon(g) => todo!(),
+        GeometryType::GeometryCollection(g) => g.geometries().fold(T::zero(), |total, next| {
+            total + signed_area_geometry(&next)
+        }),
     }
 }
 
