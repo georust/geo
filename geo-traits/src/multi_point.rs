@@ -12,11 +12,11 @@ pub trait MultiPointTrait<'a> {
     fn points(&'a self) -> Self::Iter;
 
     /// The number of points in this MultiPoint
-    fn num_points(&'a self) -> usize;
+    fn num_points(&self) -> usize;
 
     /// Access to a specified point in this MultiPoint
     /// Will return None if the provided index is out of bounds
-    fn point(&'a self, i: usize) -> Option<Self::ItemType>;
+    fn point(&self, i: usize) -> Option<Self::ItemType>;
 }
 
 impl<'a, T: CoordNum + 'a> MultiPointTrait<'a> for MultiPoint<T> {
@@ -32,7 +32,7 @@ impl<'a, T: CoordNum + 'a> MultiPointTrait<'a> for MultiPoint<T> {
         self.0.len()
     }
 
-    fn point(&'a self, i: usize) -> Option<Self::ItemType> {
+    fn point(&self, i: usize) -> Option<Self::ItemType> {
         self.0.get(i).cloned()
     }
 }
@@ -50,7 +50,7 @@ impl<'a, T: CoordNum + 'a> MultiPointTrait<'a> for &MultiPoint<T> {
         self.0.len()
     }
 
-    fn point(&'a self, i: usize) -> Option<Self::ItemType> {
+    fn point(&self, i: usize) -> Option<Self::ItemType> {
         self.0.get(i).cloned()
     }
 }

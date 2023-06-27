@@ -36,13 +36,13 @@ pub trait GeometryTrait<'a> {
 #[derive(Debug)]
 pub enum GeometryType<'a, P, L, Y, MP, ML, MY, GC>
 where
-    P: 'a + PointTrait,
-    L: 'a + LineStringTrait<'a>,
-    Y: 'a + PolygonTrait<'a>,
-    MP: 'a + MultiPointTrait<'a>,
-    ML: 'a + MultiLineStringTrait<'a>,
-    MY: 'a + MultiPolygonTrait<'a>,
-    GC: 'a + GeometryCollectionTrait<'a>,
+    P: PointTrait,
+    L: LineStringTrait<'a>,
+    Y: PolygonTrait<'a>,
+    MP: MultiPointTrait<'a>,
+    ML: MultiLineStringTrait<'a>,
+    MY: MultiPolygonTrait<'a>,
+    GC: GeometryCollectionTrait<'a>,
 {
     Point(&'a P),
     LineString(&'a L),

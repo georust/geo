@@ -12,11 +12,11 @@ pub trait GeometryCollectionTrait<'a> {
     fn geometries(&'a self) -> Self::Iter;
 
     /// The number of geometries in this GeometryCollection
-    fn num_geometries(&'a self) -> usize;
+    fn num_geometries(&self) -> usize;
 
     /// Access to a specified geometry in this GeometryCollection
     /// Will return None if the provided index is out of bounds
-    fn geometry(&'a self, i: usize) -> Option<Self::ItemType>;
+    fn geometry(&self, i: usize) -> Option<Self::ItemType>;
 }
 
 impl<'a, T: CoordNum + 'a> GeometryCollectionTrait<'a> for GeometryCollection<T> {
@@ -28,11 +28,11 @@ impl<'a, T: CoordNum + 'a> GeometryCollectionTrait<'a> for GeometryCollection<T>
         self.0.iter().cloned()
     }
 
-    fn num_geometries(&'a self) -> usize {
+    fn num_geometries(&self) -> usize {
         self.0.len()
     }
 
-    fn geometry(&'a self, i: usize) -> Option<Self::ItemType> {
+    fn geometry(&self, i: usize) -> Option<Self::ItemType> {
         self.0.get(i).cloned()
     }
 }
@@ -46,11 +46,11 @@ impl<'a, T: CoordNum + 'a> GeometryCollectionTrait<'a> for &GeometryCollection<T
         self.0.iter().cloned()
     }
 
-    fn num_geometries(&'a self) -> usize {
+    fn num_geometries(&self) -> usize {
         self.0.len()
     }
 
-    fn geometry(&'a self, i: usize) -> Option<Self::ItemType> {
+    fn geometry(&self, i: usize) -> Option<Self::ItemType> {
         self.0.get(i).cloned()
     }
 }
