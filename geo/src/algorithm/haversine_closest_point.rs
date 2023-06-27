@@ -10,13 +10,16 @@ use num_traits::FromPrimitive;
 
 /// Calculates the closest `Point` on a geometry from a given `Point` in sperical coordinates.
 ///
-/// Similar to `ClosestPoint` but for spherical coordinates:
+/// Similar to [`ClosestPoint`] but for spherical coordinates:
 /// * Longitude (x) in the [-180; 180] degrees range.
 /// * Latitude (y) in the [-90; 90] degrees range.
-///  
+///
 /// The implemetation is based on <https://edwilliams.org/avform147.htm#XTE>.
 ///
 /// See [Closest<F>] for a description of the return states.
+///
+/// Note: This may return `Closest::Intersection` even for non-intersecting geometies if they are
+/// very close to the input.
 ///
 /// Example:
 /// ```
