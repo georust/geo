@@ -232,6 +232,11 @@ pub mod triangulate_earcut;
 #[cfg(feature = "earcutr")]
 pub use triangulate_earcut::TriangulateEarcut;
 
+/// # Vector Operations for 2D coordinates
+/// 
+mod vector_ops;
+pub(crate) use vector_ops::Vector2DOps;
+
 /// Calculate the Vincenty distance between two `Point`s.
 pub mod vincenty_distance;
 pub use vincenty_distance::VincentyDistance;
