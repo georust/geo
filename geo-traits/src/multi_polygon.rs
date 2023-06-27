@@ -21,7 +21,7 @@ pub trait MultiPolygonTrait<'a> {
 
 impl<'a, T: CoordNum + 'a> MultiPolygonTrait<'a> for MultiPolygon<T> {
     type T = T;
-    type ItemType = Polygon<T>;
+    type ItemType = Polygon<Self::T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
     fn polygons(&'a self) -> Self::Iter {
@@ -39,7 +39,7 @@ impl<'a, T: CoordNum + 'a> MultiPolygonTrait<'a> for MultiPolygon<T> {
 
 impl<'a, T: CoordNum + 'a> MultiPolygonTrait<'a> for &MultiPolygon<T> {
     type T = T;
-    type ItemType = Polygon<T>;
+    type ItemType = Polygon<Self::T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
     fn polygons(&'a self) -> Self::Iter {

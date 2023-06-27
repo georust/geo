@@ -24,7 +24,7 @@ pub trait PolygonTrait<'a> {
 
 impl<'a, T: CoordNum + 'a> PolygonTrait<'a> for Polygon<T> {
     type T = T;
-    type ItemType = LineString<T>;
+    type ItemType = LineString<Self::T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
     fn exterior(&'a self) -> Self::ItemType {
@@ -46,7 +46,7 @@ impl<'a, T: CoordNum + 'a> PolygonTrait<'a> for Polygon<T> {
 
 impl<'a, T: CoordNum + 'a> PolygonTrait<'a> for &Polygon<T> {
     type T = T;
-    type ItemType = LineString<T>;
+    type ItemType = LineString<Self::T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
     fn exterior(&'a self) -> Self::ItemType {

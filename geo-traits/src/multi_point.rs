@@ -4,7 +4,8 @@ use std::iter::Cloned;
 use std::slice::Iter;
 
 pub trait MultiPointTrait<'a> {
-    type ItemType: 'a + PointTrait;
+    type T: CoordNum;
+    type ItemType: 'a + PointTrait<T = Self::T>;
     type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
     /// An iterator over the points in this MultiPoint
@@ -19,7 +20,8 @@ pub trait MultiPointTrait<'a> {
 }
 
 impl<'a, T: CoordNum + 'a> MultiPointTrait<'a> for MultiPoint<T> {
-    type ItemType = Point<T>;
+    type T = T;
+    type ItemType = Point<Self::T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
     fn points(&'a self) -> Self::Iter {
@@ -36,7 +38,8 @@ impl<'a, T: CoordNum + 'a> MultiPointTrait<'a> for MultiPoint<T> {
 }
 
 impl<'a, T: CoordNum + 'a> MultiPointTrait<'a> for &MultiPoint<T> {
-    type ItemType = Point<T>;
+    type T = T;
+    type ItemType = Point<Self::T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
     fn points(&'a self) -> Self::Iter {

@@ -4,7 +4,8 @@ use std::iter::Cloned;
 use std::slice::Iter;
 
 pub trait GeometryCollectionTrait<'a> {
-    type ItemType: 'a + GeometryTrait<'a>;
+    type T: CoordNum;
+    type ItemType: 'a + GeometryTrait<'a, T = Self::T>;
     type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
     /// An iterator over the geometries in this GeometryCollection
@@ -19,7 +20,8 @@ pub trait GeometryCollectionTrait<'a> {
 }
 
 impl<'a, T: CoordNum + 'a> GeometryCollectionTrait<'a> for GeometryCollection<T> {
-    type ItemType = Geometry<T>;
+    type T = T;
+    type ItemType = Geometry<Self::T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
     fn geometries(&'a self) -> Self::Iter {
@@ -36,7 +38,8 @@ impl<'a, T: CoordNum + 'a> GeometryCollectionTrait<'a> for GeometryCollection<T>
 }
 
 impl<'a, T: CoordNum + 'a> GeometryCollectionTrait<'a> for &GeometryCollection<T> {
-    type ItemType = Geometry<T>;
+    type T = T;
+    type ItemType = Geometry<Self::T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
     fn geometries(&'a self) -> Self::Iter {

@@ -18,11 +18,11 @@ pub trait CoordTrait {
 impl<T: CoordNum> CoordTrait for Point<T> {
     type T = T;
 
-    fn x(&self) -> T {
+    fn x(&self) -> Self::T {
         self.0.x
     }
 
-    fn y(&self) -> T {
+    fn y(&self) -> Self::T {
         self.0.y
     }
 }
@@ -30,11 +30,11 @@ impl<T: CoordNum> CoordTrait for Point<T> {
 impl<T: CoordNum> CoordTrait for &Point<T> {
     type T = T;
 
-    fn x(&self) -> T {
+    fn x(&self) -> Self::T {
         self.0.x
     }
 
-    fn y(&self) -> T {
+    fn y(&self) -> Self::T {
         self.0.y
     }
 }
@@ -42,11 +42,11 @@ impl<T: CoordNum> CoordTrait for &Point<T> {
 impl<T: CoordNum> CoordTrait for Coord<T> {
     type T = T;
 
-    fn x(&self) -> T {
+    fn x(&self) -> Self::T {
         self.x
     }
 
-    fn y(&self) -> T {
+    fn y(&self) -> Self::T {
         self.y
     }
 }
@@ -54,11 +54,11 @@ impl<T: CoordNum> CoordTrait for Coord<T> {
 impl<T: CoordNum> CoordTrait for &Coord<T> {
     type T = T;
 
-    fn x(&self) -> T {
+    fn x(&self) -> Self::T {
         self.x
     }
 
-    fn y(&self) -> T {
+    fn y(&self) -> Self::T {
         self.y
     }
 }

@@ -4,7 +4,8 @@ use std::iter::Cloned;
 use std::slice::Iter;
 
 pub trait MultiLineStringTrait<'a> {
-    type ItemType: 'a + LineStringTrait<'a>;
+    type T: CoordNum;
+    type ItemType: 'a + LineStringTrait<'a, T = Self::T>;
     type Iter: ExactSizeIterator<Item = Self::ItemType>;
 
     /// An iterator over the LineStrings in this MultiLineString
@@ -19,7 +20,8 @@ pub trait MultiLineStringTrait<'a> {
 }
 
 impl<'a, T: CoordNum + 'a> MultiLineStringTrait<'a> for MultiLineString<T> {
-    type ItemType = LineString<T>;
+    type T = T;
+    type ItemType = LineString<Self::T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
     fn lines(&'a self) -> Self::Iter {
@@ -36,7 +38,8 @@ impl<'a, T: CoordNum + 'a> MultiLineStringTrait<'a> for MultiLineString<T> {
 }
 
 impl<'a, T: CoordNum + 'a> MultiLineStringTrait<'a> for &MultiLineString<T> {
-    type ItemType = LineString<T>;
+    type T = T;
+    type ItemType = LineString<Self::T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
     fn lines(&'a self) -> Self::Iter {

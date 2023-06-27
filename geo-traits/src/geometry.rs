@@ -10,13 +10,14 @@ use super::{
 
 #[allow(clippy::type_complexity)]
 pub trait GeometryTrait<'a> {
-    type Point: 'a + PointTrait;
-    type LineString: 'a + LineStringTrait<'a>;
-    type Polygon: 'a + PolygonTrait<'a>;
-    type MultiPoint: 'a + MultiPointTrait<'a>;
-    type MultiLineString: 'a + MultiLineStringTrait<'a>;
-    type MultiPolygon: 'a + MultiPolygonTrait<'a>;
-    type GeometryCollection: 'a + GeometryCollectionTrait<'a>;
+    type T: CoordNum;
+    type Point: 'a + PointTrait<T = Self::T>;
+    type LineString: 'a + LineStringTrait<'a, T = Self::T>;
+    type Polygon: 'a + PolygonTrait<'a, T = Self::T>;
+    type MultiPoint: 'a + MultiPointTrait<'a, T = Self::T>;
+    type MultiLineString: 'a + MultiLineStringTrait<'a, T = Self::T>;
+    type MultiPolygon: 'a + MultiPolygonTrait<'a, T = Self::T>;
+    type GeometryCollection: 'a + GeometryCollectionTrait<'a, T = Self::T>;
 
     fn as_type(
         &'a self,
@@ -53,13 +54,14 @@ where
 }
 
 impl<'a, T: CoordNum + 'a> GeometryTrait<'a> for Geometry<T> {
-    type Point = Point<T>;
-    type LineString = LineString<T>;
-    type Polygon = Polygon<T>;
-    type MultiPoint = MultiPoint<T>;
-    type MultiLineString = MultiLineString<T>;
-    type MultiPolygon = MultiPolygon<T>;
-    type GeometryCollection = GeometryCollection<T>;
+    type T = T;
+    type Point = Point<Self::T>;
+    type LineString = LineString<Self::T>;
+    type Polygon = Polygon<Self::T>;
+    type MultiPoint = MultiPoint<Self::T>;
+    type MultiLineString = MultiLineString<Self::T>;
+    type MultiPolygon = MultiPolygon<Self::T>;
+    type GeometryCollection = GeometryCollection<Self::T>;
 
     fn as_type(
         &'a self,

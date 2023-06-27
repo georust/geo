@@ -22,7 +22,7 @@ pub trait LineStringTrait<'a> {
 
 impl<'a, T: CoordNum + 'a> LineStringTrait<'a> for LineString<T> {
     type T = T;
-    type ItemType = Coord<T>;
+    type ItemType = Coord<Self::T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
     fn coords(&'a self) -> Self::Iter {
@@ -40,7 +40,7 @@ impl<'a, T: CoordNum + 'a> LineStringTrait<'a> for LineString<T> {
 
 impl<'a, T: CoordNum + 'a> LineStringTrait<'a> for &LineString<T> {
     type T = T;
-    type ItemType = Coord<T>;
+    type ItemType = Coord<Self::T>;
     type Iter = Cloned<Iter<'a, Self::ItemType>>;
 
     fn coords(&'a self) -> Self::Iter {
