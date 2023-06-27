@@ -151,7 +151,7 @@ where
     }
 
     fn unsigned_area(&self) -> T {
-        unsigned_area_polygon(self)
+        self.signed_area().abs()
     }
 }
 
