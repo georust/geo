@@ -75,7 +75,7 @@ where
     let shift = linestring.coord(0).unwrap();
 
     let mut tmp = T::zero();
-    for i in (0..linestring.num_coords()).step_by(2) {
+    for i in 0..linestring.num_coords() - 1 {
         let mut c1 = Coord {
             x: linestring.coord(i).unwrap().x(),
             y: linestring.coord(i).unwrap().y(),
