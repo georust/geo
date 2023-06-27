@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Implement "Closest Point" from a `Point` on a `Geometry` using spherical geometry. <https://github.com/georust/geo/pull/958>
+* Bump CI containers to use libproj 9.2.1
 
 ## 0.25.1
 
