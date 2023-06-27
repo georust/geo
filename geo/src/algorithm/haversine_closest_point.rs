@@ -1,4 +1,4 @@
-use crate::{haversine_distance::HaversineDistance, Bearing};
+use crate::{haversine_distance::HaversineDistance, HaversineBearing};
 use crate::{Closest, Contains};
 use crate::{CoordsIter, GeoFloat, HaversineDestination, Point, MEAN_EARTH_RADIUS};
 use geo_types::{
@@ -98,14 +98,14 @@ where
         }
 
         let pi = T::from(std::f64::consts::PI).unwrap();
-        let crs_ad = p1.bearing(*from).to_radians();
-        let crs_ab = p1.bearing(p2).to_radians();
+        let crs_ad = p1.haversine_bearing(*from).to_radians();
+        let crs_ab = p1.haversine_bearing(p2).to_radians();
         let crs_ba = if crs_ab > T::zero() {
             crs_ab - pi
         } else {
             crs_ab + pi
         };
-        let crs_bd = p2.bearing(*from).to_radians();
+        let crs_bd = p2.haversine_bearing(*from).to_radians();
         let d_crs1 = crs_ad - crs_ab;
         let d_crs2 = crs_bd - crs_ba;
 
@@ -424,7 +424,7 @@ mod test {
         let p_2 = Point::new(-85.93942f32, 32.11055f32);
         let line = Line::new(p_2, p_1);
 
-        let p_from = Point::new(-85.13337f32, 32.4536566f32);
+        let p_from = Point::new(-85.13337f32, 32.453656f32);
         if let Closest::Intersection(pt) = line.haversine_closest_point(&p_from) {
             assert_relative_eq!(pt, p_from);
         } else {

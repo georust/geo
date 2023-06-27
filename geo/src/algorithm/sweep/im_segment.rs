@@ -145,6 +145,10 @@ impl<C: Cross + Clone> IMSegment<C> {
             let segment_geom = RefCell::borrow(&segment.inner).geom;
 
             let mut child = RefCell::borrow(&parent.inner).overlapping.as_ref().cloned();
+            // This seems to be a spurious warning - without this clone,
+            // we get a "use of moved value" error.
+            // (On at least rust 1.70.0)
+            #[allow(clippy::redundant_clone)]
             let mut tgt = segment.clone();
 
             while let Some(child_seg) = child {

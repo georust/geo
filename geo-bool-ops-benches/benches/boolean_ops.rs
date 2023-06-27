@@ -46,7 +46,7 @@ fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
             |b, _| {
                 b.iter_batched(
                     polys.sampler(),
-                    |&(ref poly, ref poly2, _, _)| poly.intersection(poly2),
+                    |(poly, poly2, _, _)| poly.intersection(poly2),
                     BatchSize::SmallInput,
                 );
             },
@@ -55,7 +55,7 @@ fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
         group.bench_with_input(BenchmarkId::new("bops::union", steps), &(), |b, _| {
             b.iter_batched(
                 polys.sampler(),
-                |&(ref poly, ref poly2, _, _)| poly.union(poly2),
+                |(poly, poly2, _, _)| poly.union(poly2),
                 BatchSize::SmallInput,
             );
         });
@@ -66,7 +66,7 @@ fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
             |b, _| {
                 b.iter_batched(
                     polys.sampler(),
-                    |&(_, _, ref poly, ref poly2)| OtherBooleanOp::intersection(poly, poly2),
+                    |(_, _, poly, poly2)| OtherBooleanOp::intersection(poly, poly2),
                     BatchSize::SmallInput,
                 );
             },
@@ -75,7 +75,7 @@ fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
         group.bench_with_input(BenchmarkId::new("rgbops::union", steps), &(), |b, _| {
             b.iter_batched(
                 polys.sampler(),
-                |&(_, _, ref poly, ref poly2)| OtherBooleanOp::union(poly, poly2),
+                |(_, _, poly, poly2)| OtherBooleanOp::union(poly, poly2),
                 BatchSize::SmallInput,
             );
         });
@@ -83,7 +83,7 @@ fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
         group.bench_with_input(BenchmarkId::new("geo::relate", steps), &(), |b, _| {
             b.iter_batched(
                 polys.sampler(),
-                |&(ref poly, ref poly2, _, _)| poly.relate(poly2).is_intersects(),
+                |(poly, poly2, _, _)| poly.relate(poly2).is_intersects(),
                 BatchSize::SmallInput,
             );
         });
