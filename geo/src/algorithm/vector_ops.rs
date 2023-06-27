@@ -138,21 +138,21 @@ where
     /// `minimum_magnitude` or the magnitude is not finite.
     ///  - For f32 the minimum_magnitude can be set to about 1e-30f32.
     ///  - For F64 the minimum_magnitude can be set to about 2e-301f64.
-    /// 
+    ///
     /// These values should avoid overflowing to Infinity for coordinate values
     /// in the range typically relevant for spatial data (+-40e6) which is the
     /// approximate length of the earth's great circle in metres.
     ///
-    /// > Note to Reviewer: it may be annoying to have to provide a value for 
+    /// > Note to Reviewer: it may be annoying to have to provide a value for
     /// > minimum_magnitude, but that seems to be what `nalgebra` does
     /// > (See https://docs.rs/nalgebra/latest/src/nalgebra/base/norm.rs.html#301-307).
-    /// > Some other parts of the api do not require the user to specify a 
+    /// > Some other parts of the api do not require the user to specify a
     /// > value, but I haven't yet figured out how those work because it is
     /// > wrapped up in the simba SIMD crate in complicated macros.
-    /// > 
+    /// >
     /// > Open to suggestions about how this can be better handled, or the
     /// > try_normalize function can just be removed for now.
-    fn try_normalize(self, minimum_magnitude:Self::NumericType) -> Option<Self>;
+    fn try_normalize(self, minimum_magnitude: Self::NumericType) -> Option<Self>;
 }
 
 impl<T> Vector2DOps for Coord<T>
@@ -195,7 +195,7 @@ where
         let magnitude = self.magnitude();
         if magnitude.is_finite() && magnitude.abs() > minimum_magnitude {
             Some(self / magnitude)
-        }else{
+        } else {
             None
         }
     }
@@ -336,11 +336,12 @@ mod test {
         assert_relative_eq!(a.try_normalize(2e-301f64).unwrap(), a);
 
         let a = coord! { x: -10.0, y: 8.0 };
-        assert_relative_eq!(a.try_normalize(2e-301f64).unwrap(), a/f64::sqrt(10.0*10.0+8.0*8.0));
+        assert_relative_eq!(
+            a.try_normalize(2e-301f64).unwrap(),
+            a / f64::sqrt(10.0 * 10.0 + 8.0 * 8.0)
+        );
 
         let a = coord! { x: 0.0, y: 1e-301f64 };
         assert_eq!(a.try_normalize(2e-301f64), None);
     }
-    
-
 }
