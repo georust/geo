@@ -68,7 +68,7 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:rust-1.63"
+          # - "georust/geo-ci:rust-1.63"
           # Two most recent releases - we omit older ones for expedient CI
           - "georust/geo-ci:rust-1.65"
           - "georust/geo-ci:rust-1.66"
@@ -96,7 +96,7 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:rust-1.63"
+          # - "georust/geo-ci:rust-1.63"
           # Two most recent releases - we omit older ones for expedient CI
           - "georust/geo-ci:rust-1.65"
           - "georust/geo-ci:rust-1.66"
@@ -123,7 +123,7 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:rust-1.63"
+          # - "georust/geo-ci:rust-1.63"
           # Two most recent releases - we omit older ones for expedient CI
           - "georust/geo-ci:rust-1.65"
           - "georust/geo-ci:rust-1.66"
@@ -149,7 +149,7 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:rust-1.63"
+          # - "georust/geo-ci:rust-1.63"
           # Two most recent releases - we omit older ones for expedient CI
           - "georust/geo-ci:rust-1.65"
           - "georust/geo-ci:rust-1.66"
