@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+* Implement "Closest Point" from a `Point` on a `Geometry` using spherical geometry. <https://github.com/georust/geo/pull/958>
+
 ## 0.25.1
 
 - Add `TriangulateEarcut` algorithm trait to triangulate polygons with the earcut algorithm.
