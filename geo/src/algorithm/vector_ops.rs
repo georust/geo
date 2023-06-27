@@ -329,14 +329,17 @@ mod test {
 
     #[test]
     fn test_normalize() {
-        let a = coord! { x: 1f64, y: 0f64 };
-        assert_eq!(a.try_normalize(2e-301f64), Some(a));
+        let a = coord! { x: 1.0, y: 0.0 };
+        assert_relative_eq!(a.try_normalize(2e-301f64).unwrap(), a);
 
         let a = coord! { x: 1.0 / f64::sqrt(2.0), y: -1.0 / f64::sqrt(2.0) };
-        assert_eq!(a.try_normalize(2e-301f64), Some(a));
+        assert_relative_eq!(a.try_normalize(2e-301f64).unwrap(), a);
 
         let a = coord! { x: -10.0, y: 8.0 };
-        assert_eq!(a.try_normalize(2e-301f64), Some(a/f64::sqrt(10.0*10.0+8.0*8.0)));
+        assert_relative_eq!(a.try_normalize(2e-301f64).unwrap(), a/f64::sqrt(10.0*10.0+8.0*8.0));
+
+        let a = coord! { x: 0.0, y: 1e-301f64 };
+        assert_eq!(a.try_normalize(2e-301f64), None);
     }
     
 
