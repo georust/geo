@@ -43,7 +43,7 @@ jobs:
       matrix:
         container_image:
           # Use the latest stable version. No need for older versions.
-          - "georust/geo-ci:rust-1.66"
+          - "georust/geo-ci:proj-9.1.0-rust-1.70"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -69,8 +69,8 @@ jobs:
           # Minimum supported rust version (MSRV)
           - "georust/geo-ci:rust-1.63"
           # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:rust-1.65"
-          - "georust/geo-ci:rust-1.66"
+          - "georust/geo-ci:proj-9.1.0-rust-1.69"
+          - "georust/geo-ci:proj-9.1.0-rust-1.70"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -97,8 +97,8 @@ jobs:
           # Minimum supported rust version (MSRV)
           - "georust/geo-ci:rust-1.63"
           # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:rust-1.65"
-          - "georust/geo-ci:rust-1.66"
+          - "georust/geo-ci:proj-9.1.0-rust-1.69"
+          - "georust/geo-ci:proj-9.1.0-rust-1.70"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -124,8 +124,8 @@ jobs:
           # Minimum supported rust version (MSRV)
           - "georust/geo-ci:rust-1.63"
           # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:rust-1.65"
-          - "georust/geo-ci:rust-1.66"
+          - "georust/geo-ci:proj-9.1.0-rust-1.69"
+          - "georust/geo-ci:proj-9.1.0-rust-1.70"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -145,7 +145,7 @@ jobs:
       matrix:
         container_image:
           # Fuzz only on latest
-          - "georust/geo-ci:rust-1.66"
+          - "georust/geo-ci:proj-9.1.0-rust-1.70"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -158,7 +158,7 @@ jobs:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     container:
-      image: georust/geo-ci:rust-1.66
+      image: georust/geo-ci:proj-9.1.0-rust-1.70
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
