@@ -186,14 +186,14 @@ where
     }
 }
 
-pub fn unsigned_area_polygon<'a, T>(geom: &'a impl PolygonTrait<'a, T = T>) -> T
+pub fn unsigned_area_polygon<'a, T>(geom: &impl PolygonTrait<'a, T = T>) -> T
 where
     T: CoordFloat,
 {
     get_linestring_area(&geom.exterior()).abs()
 }
 
-pub fn signed_area_polygon<'a, T>(geom: &'a impl PolygonTrait<'a, T = T>) -> T
+pub fn signed_area_polygon<'a, T>(geom: &impl PolygonTrait<'a, T = T>) -> T
 where
     T: CoordFloat,
 {
@@ -203,14 +203,16 @@ where
     // result in computing the shoelace formula twice.
     let is_negative = area < T::zero();
 
-    let area = geom.interiors().fold(area.abs(), |total, next| {
-        total - get_linestring_area(&next).abs()
-    });
+    let mut total = area.abs();
+    for interior_i in 0..geom.num_interiors() {
+        let interior_geom = geom.interior(interior_i).unwrap();
+        total = total - get_linestring_area(&interior_geom).abs();
+    }
 
     if is_negative {
-        -area
+        -total
     } else {
-        area
+        total
     }
 }
 
@@ -240,21 +242,30 @@ where
     }
 }
 
-pub fn unsigned_area_multi_polygon<'a, T>(geom: &'a impl MultiPolygonTrait<'a, T = T>) -> T
+pub fn unsigned_area_multi_polygon<'a, T>(geom: &impl MultiPolygonTrait<'a, T = T>) -> T
 where
     T: CoordFloat,
 {
-    geom.polygons().fold(T::zero(), |total, next| {
-        total + unsigned_area_polygon(&next)
-    })
+    let mut total = T::zero();
+    for polygon_idx in 0..geom.num_polygons() {
+        let polygon = geom.polygon(polygon_idx).unwrap();
+        total = total + signed_area_polygon(&polygon).abs();
+    }
+
+    total
 }
 
-pub fn signed_area_multi_polygon<'a, T>(geom: &'a impl MultiPolygonTrait<'a, T = T>) -> T
+pub fn signed_area_multi_polygon<'a, T>(geom: &impl MultiPolygonTrait<'a, T = T>) -> T
 where
     T: CoordFloat,
 {
-    geom.polygons()
-        .fold(T::zero(), |total, next| total + signed_area_polygon(&next))
+    let mut total = T::zero();
+    for polygon_idx in 0..geom.num_polygons() {
+        let polygon = geom.polygon(polygon_idx).unwrap();
+        total = total + signed_area_polygon(&polygon);
+    }
+
+    total
 }
 
 /// **Note.** The implementation is a straight-forward
@@ -310,7 +321,7 @@ where
     }
 }
 
-pub fn unsigned_area_geometry<'a, T, G>(geom: &'a G) -> T
+pub fn unsigned_area_geometry<'a, T, G>(geom: &G) -> T
 where
     T: CoordFloat,
     G: GeometryTrait<'a, T = T>,
@@ -340,9 +351,9 @@ where
         GeometryType::MultiLineString(g) => T::zero(),
         GeometryType::Polygon(g) => signed_area_polygon(g),
         GeometryType::MultiPolygon(g) => todo!(),
-        GeometryType::GeometryCollection(g) => g.geometries().fold(T::zero(), |total, next| {
-            total + signed_area_geometry(&next)
-        }),
+        GeometryType::GeometryCollection(g) => g
+            .geometries()
+            .fold(T::zero(), |total, next| total + signed_area_geometry(&next)),
     }
 }
 
