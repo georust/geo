@@ -5,6 +5,7 @@ use std::{
 
 use crate::{
     sweep::{compare_crossings, Cross, CrossingsIter, LineOrPoint, SweepPoint},
+    types::GeoError,
     utils::EitherIter,
     winding_order::WindingOrder,
     GeoFloat,
@@ -36,7 +37,12 @@ impl<T: GeoFloat> RegionAssembly<T> {
         trace!("add_edge: {edge:?}");
         self.segments.push(edge.into());
     }
+
     pub fn finish(self) -> MultiPolygon<T> {
+        self.try_finish().unwrap()
+    }
+
+    pub fn try_finish(self) -> Result<MultiPolygon<T>, GeoError> {
         let mut iter = CrossingsIter::new_simple(self.segments.iter());
         let mut snakes = vec![];
 
@@ -171,7 +177,7 @@ impl<T: GeoFloat> RegionAssembly<T> {
             polygons.push(Polygon::new(exterior, holes));
         }
 
-        polygons.into()
+        Ok(polygons.into())
     }
 }
 
