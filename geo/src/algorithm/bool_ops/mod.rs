@@ -1,5 +1,6 @@
 use geo_types::{MultiLineString, MultiPolygon};
 
+use crate::types::GeoError;
 use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
 
 /// Boolean Operations on geometry.
@@ -39,6 +40,12 @@ pub trait BooleanOps: Sized {
         self.boolean_op(other, OpType::Difference)
     }
 
+    fn try_boolean_op(
+        &self,
+        other: &Self,
+        op: OpType,
+    ) -> Result<MultiPolygon<Self::Scalar>, GeoError>;
+
     /// Clip a 1-D geometry with self.
     ///
     /// Returns the set-theoeretic intersection of `self` and `ls` if `invert`
@@ -62,11 +69,7 @@ impl<T: GeoFloat> BooleanOps for Polygon<T> {
     type Scalar = T;
 
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        let spec = BoolOp::from(op);
-        let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
-        bop.add_polygon(self, 0);
-        bop.add_polygon(other, 1);
-        bop.sweep()
+        self.try_boolean_op(other, op).unwrap()
     }
 
     fn clip(
@@ -81,17 +84,25 @@ impl<T: GeoFloat> BooleanOps for Polygon<T> {
             bop.add_line_string(l, idx + 1);
         });
         bop.sweep()
+    }
+    fn try_boolean_op(
+        &self,
+        other: &Self,
+        op: OpType,
+    ) -> Result<MultiPolygon<Self::Scalar>, GeoError> {
+        let spec = BoolOp::from(op);
+        let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
+        bop.add_polygon(self, 0);
+        bop.add_polygon(other, 1);
+        let res = bop.sweep();
+        Ok(res)
     }
 }
 impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
     type Scalar = T;
 
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        let spec = BoolOp::from(op);
-        let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
-        bop.add_multi_polygon(self, 0);
-        bop.add_multi_polygon(other, 1);
-        bop.sweep()
+        self.try_boolean_op(other, op).unwrap()
     }
 
     fn clip(
@@ -106,6 +117,19 @@ impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
             bop.add_line_string(l, idx + 1);
         });
         bop.sweep()
+    }
+
+    fn try_boolean_op(
+        &self,
+        other: &Self,
+        op: OpType,
+    ) -> Result<MultiPolygon<Self::Scalar>, GeoError> {
+        let spec = BoolOp::from(op);
+        let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
+        bop.add_multi_polygon(self, 0);
+        bop.add_multi_polygon(other, 1);
+        let res = bop.sweep();
+        Ok(res)
     }
 }
 

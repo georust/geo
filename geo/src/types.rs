@@ -37,6 +37,9 @@ impl<F: GeoFloat> Closest<F> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GeoError {}
+
 /// Implements the common pattern where a Geometry enum simply delegates its trait impl to it's inner type.
 ///
 /// ```

@@ -2,3 +2,5 @@
 **/Cargo.lock
 .idea
 .dir-locals.el
+**/vendor
+**/.cargo
