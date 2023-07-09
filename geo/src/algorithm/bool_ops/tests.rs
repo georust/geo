@@ -46,7 +46,7 @@ fn check_sweep<T: GeoFloat + FromStr + Default + Display>(
     bop.add_multi_polygon(&poly1, 0);
     bop.add_multi_polygon(&poly2, 1);
 
-    let geom = bop.sweep().unwrap();
+    let geom = bop.sweep();
 
     info!("Got {n} rings", n = geom.0.len());
     info!("{wkt}", wkt = geom.to_wkt());

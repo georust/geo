@@ -83,7 +83,7 @@ impl<T: GeoFloat> BooleanOps for Polygon<T> {
         ls.0.iter().enumerate().for_each(|(idx, l)| {
             bop.add_line_string(l, idx + 1);
         });
-        bop.sweep().unwrap()
+        bop.sweep()
     }
     fn try_boolean_op(
         &self,
@@ -94,7 +94,7 @@ impl<T: GeoFloat> BooleanOps for Polygon<T> {
         let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
         bop.add_polygon(self, 0);
         bop.add_polygon(other, 1);
-        let res = bop.sweep()?;
+        let res = bop.try_sweep()?;
         Ok(res)
     }
 }
@@ -116,7 +116,7 @@ impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
         ls.0.iter().enumerate().for_each(|(idx, l)| {
             bop.add_line_string(l, idx + 1);
         });
-        bop.sweep().unwrap()
+        bop.sweep()
     }
 
     fn try_boolean_op(
@@ -128,7 +128,7 @@ impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
         let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
         bop.add_multi_polygon(self, 0);
         bop.add_multi_polygon(other, 1);
-        let res = bop.sweep()?;
+        let res = bop.try_sweep()?;
         Ok(res)
     }
 }

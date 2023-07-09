@@ -63,7 +63,11 @@ impl<T: Float, S: Spec<T>> Proc<T, S> {
         self.add_line_string(ring, idx);
     }
 
-    pub fn sweep(mut self) -> Result<S::Output, GeoError> {
+    pub fn sweep(self) -> S::Output {
+        self.try_sweep().unwrap()
+    }
+
+    pub fn try_sweep(mut self) -> Result<S::Output, GeoError> {
         let mut iter = CrossingsIter::from_iter(self.edges.iter());
 
         while let Some(pt) = iter.next() {
