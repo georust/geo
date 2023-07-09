@@ -3,6 +3,7 @@ use std::{cell::Cell, cmp::Ordering, fmt::Debug};
 use super::{MultiPolygon, Spec};
 use crate::{
     sweep::{compare_crossings, Cross, Crossing, CrossingsIter, LineOrPoint, SweepPoint},
+    types::GeoError,
     CoordsIter, GeoFloat as Float, LineString, Polygon,
 };
 
@@ -62,7 +63,7 @@ impl<T: Float, S: Spec<T>> Proc<T, S> {
         self.add_line_string(ring, idx);
     }
 
-    pub fn sweep(mut self) -> S::Output {
+    pub fn sweep(mut self) -> Result<S::Output, GeoError> {
         let mut iter = CrossingsIter::from_iter(self.edges.iter());
 
         while let Some(pt) = iter.next() {
@@ -169,7 +170,7 @@ impl<T: Float, S: Spec<T>> Proc<T, S> {
                 idx += 1;
             }
         }
-        self.spec.finish()
+        Ok(self.spec.finish())
     }
 }
 
