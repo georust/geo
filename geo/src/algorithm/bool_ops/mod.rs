@@ -26,7 +26,10 @@ use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
 pub trait BooleanOps: Sized {
     type Scalar: GeoNum;
 
-    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar>;
+    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
+        self.try_boolean_op(other, op).unwrap()
+    }
+
     fn intersection(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Intersection)
     }
@@ -45,6 +48,18 @@ pub trait BooleanOps: Sized {
         other: &Self,
         op: OpType,
     ) -> Result<MultiPolygon<Self::Scalar>, GeoError>;
+    fn try_intersection(&self, other: &Self) -> Result<MultiPolygon<Self::Scalar>, GeoError> {
+        self.try_boolean_op(other, OpType::Intersection)
+    }
+    fn try_union(&self, other: &Self) -> Result<MultiPolygon<Self::Scalar>, GeoError> {
+        self.try_boolean_op(other, OpType::Union)
+    }
+    fn try_xor(&self, other: &Self) -> Result<MultiPolygon<Self::Scalar>, GeoError> {
+        self.try_boolean_op(other, OpType::Xor)
+    }
+    fn try_difference(&self, other: &Self) -> Result<MultiPolygon<Self::Scalar>, GeoError> {
+        self.try_boolean_op(other, OpType::Difference)
+    }
 
     /// Clip a 1-D geometry with self.
     ///
@@ -67,10 +82,6 @@ pub enum OpType {
 
 impl<T: GeoFloat> BooleanOps for Polygon<T> {
     type Scalar = T;
-
-    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        self.try_boolean_op(other, op).unwrap()
-    }
 
     fn clip(
         &self,
@@ -100,10 +111,6 @@ impl<T: GeoFloat> BooleanOps for Polygon<T> {
 }
 impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
     type Scalar = T;
-
-    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        self.try_boolean_op(other, op).unwrap()
-    }
 
     fn clip(
         &self,
