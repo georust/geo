@@ -12,6 +12,7 @@ pub trait Spec<T: GeoFloat> {
     fn cross(&self, prev_region: Self::Region, idx: usize) -> Self::Region;
     fn output(&mut self, regions: [Self::Region; 2], geom: LineOrPoint<T>, idx: usize);
     fn finish(self) -> Self::Output;
+    fn try_finish(self) -> Result<Self::Output, GeoError>;
 }
 
 pub struct BoolOp<T: GeoFloat> {
@@ -50,6 +51,10 @@ impl<T: GeoFloat> Spec<T> for BoolOp<T> {
 
     fn finish(self) -> Self::Output {
         self.assembly.finish()
+    }
+
+    fn try_finish(self) -> Result<Self::Output, GeoError> {
+        self.assembly.try_finish()
     }
 }
 
@@ -93,6 +98,10 @@ impl<T: GeoFloat> Spec<T> for ClipOp<T> {
 
     fn finish(self) -> Self::Output {
         MultiLineString::new(self.assembly.finish())
+    }
+
+    fn try_finish(self) -> Result<Self::Output, GeoError> {
+        Ok(MultiLineString::new(self.assembly.finish()))
     }
 }
 

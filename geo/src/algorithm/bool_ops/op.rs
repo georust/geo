@@ -173,7 +173,7 @@ impl<T: Float, S: Spec<T>> Proc<T, S> {
                 idx += 1;
             }
         }
-        Ok(self.spec.finish())
+        self.spec.try_finish()
     }
 }
 

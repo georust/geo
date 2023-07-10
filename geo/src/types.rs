@@ -43,6 +43,7 @@ pub enum GeoError {
     SegmentNotFoundInActiveSet(usize),
     SegmentAlreadyFoundInActiveSet(usize),
     ExpectedNonemptyEvents,
+    NotEulierian(usize),
     Unreachable(&'static str),
 }
 

@@ -48,7 +48,10 @@ impl<T: GeoFloat> RegionAssembly<T> {
 
         while let Some(pt) = iter.next().transpose()? {
             let num_segments = iter.intersections().len();
-            debug_assert!(num_segments % 2 == 0, "assembly segments must be eulierian");
+            let is_eulierian = num_segments % 2 == 0;
+            if !is_eulierian {
+                return Err(GeoError::NotEulierian(num_segments));
+            }
             iter.intersections_mut().sort_unstable_by(compare_crossings);
 
             let first = &iter.intersections()[0];
