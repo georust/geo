@@ -1,5 +1,6 @@
 use std::{cmp::Ordering, collections::BinaryHeap};
 
+use crate::types::GeoError;
 use crate::GeoFloat;
 
 use super::*;
@@ -37,16 +38,21 @@ impl<C: Cross + Clone> Sweep<C> {
     ///
     /// Calls the callback unless the event is spurious.
     #[inline]
-    pub(super) fn next_event<F>(&mut self, mut cb: F) -> Option<SweepPoint<C::Scalar>>
+    pub(super) fn next_event<F>(
+        &mut self,
+        mut cb: F,
+    ) -> Result<Option<SweepPoint<C::Scalar>>, GeoError>
     where
         F: for<'a> FnMut(&'a IMSegment<C>, EventType),
     {
-        self.events.pop().map(|event| {
+        if let Some(event) = self.events.pop() {
             let pt = event.point;
-            self.handle_event(event, &mut cb);
+            self.handle_event(event, &mut cb)?;
 
-            pt
-        })
+            Ok(Some(pt))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Process two adjacent segments.
@@ -122,13 +128,17 @@ impl<C: Cross + Clone> Sweep<C> {
         out
     }
 
-    fn handle_event<F>(&mut self, event: Event<C::Scalar, IMSegment<C>>, cb: &mut F) -> bool
+    fn handle_event<F>(
+        &mut self,
+        event: Event<C::Scalar, IMSegment<C>>,
+        cb: &mut F,
+    ) -> Result<bool, GeoError>
     where
         F: for<'a> FnMut(&'a IMSegment<C>, EventType),
     {
         use EventType::*;
         let segment = match IMSegment::is_correct(&event) {
-            false => return false,
+            false => return Ok(false),
             _ => event.payload,
         };
         trace!(
@@ -180,7 +190,7 @@ impl<C: Cross + Clone> Sweep<C> {
                         };
                         if handle_end_event {
                             let event = self.events.pop().unwrap();
-                            let done = self.handle_event(event, cb);
+                            let done = self.handle_event(event, cb)?;
                             debug_assert!(done, "special right-end event handling failed");
                             if !is_next {
                                 // The prev-segment is now removed
@@ -191,7 +201,7 @@ impl<C: Cross + Clone> Sweep<C> {
                         if !should_continue {
                             should_add = false;
                             if !should_callback {
-                                return true;
+                                return Ok(true);
                             }
                             break;
                         }
@@ -294,7 +304,7 @@ impl<C: Cross + Clone> Sweep<C> {
                 // are confident about the logic.
             }
         }
-        true
+        Ok(true)
     }
 
     #[inline]

@@ -95,15 +95,8 @@ impl<T: Float, S: Spec<T>> Proc<T, S> {
                 }
                 trace!("{idx}: {geom:?}", geom = c.line);
                 let cross = c.cross;
-                if next_region.is_none() {
-                    next_region = Some(cross.get_region(c.line));
-                    trace!(
-                        "get_region: {geom:?}: {next_region:?}",
-                        next_region = next_region.unwrap(),
-                        geom = c.line,
-                    );
-                }
-                next_region = Some(self.spec.cross(next_region.unwrap(), cross.idx));
+                let region = next_region.unwrap_or_else(|| cross.get_region(c.line));
+                next_region.replace(self.spec.cross(region, cross.idx));
                 trace!("next_region: {reg:?}", reg = next_region.unwrap());
                 let has_overlap = (idx + 1) < iter.intersections().len()
                     && c.line.partial_cmp(&iter.intersections()[idx + 1].line)
@@ -115,8 +108,14 @@ impl<T: Float, S: Spec<T>> Proc<T, S> {
                         geom = c.line,
                         next_region = next_region.unwrap()
                     );
-                    self.spec
-                        .output([prev_region, next_region.unwrap()], c.line, c.cross.idx);
+                    self.spec.output(
+                        [
+                            prev_region,
+                            next_region.expect("region is always set, see code above"),
+                        ],
+                        c.line,
+                        c.cross.idx,
+                    );
                     next_region = None;
                 }
                 idx += 1;

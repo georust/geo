@@ -168,13 +168,16 @@ where
         let mut last_point = self.sweep.peek_point();
         debug!("pt: {last_point:?}");
         while last_point == self.sweep.peek_point() && self.sweep.peek_point().is_some() {
-            last_point = self.sweep.next_event(|seg, ty| {
+            last_point = match self.sweep.next_event(|seg, ty| {
                 trace!(
                     "cb: {seg:?} {ty:?} (crossable = {cross:?})",
                     cross = seg.cross_cloned().line()
                 );
                 segments.push(Crossing::from_segment(seg, ty))
-            });
+            }) {
+                Ok(maybe_point) => maybe_point,
+                Err(e) => return Some(Err(e)),
+            }
         }
 
         if segments.is_empty() {
