@@ -140,7 +140,7 @@ impl<T: GeoFloat> RegionAssembly<T> {
             }
         }
 
-        let (rings, snakes_idx_map) = rings_from_snakes(&mut snakes[..]);
+        let (rings, snakes_idx_map) = rings_from_snakes(&mut snakes[..])?;
 
         let mut polygons = vec![];
         let mut children = HashMap::new();
@@ -264,17 +264,17 @@ fn split_ring<T: GeoFloat, F: FnMut(LineString<T>)>(
 
 fn rings_from_snakes<T: GeoFloat>(
     snakes: &mut [Snake<T>],
-) -> (Vec<Ring<T>>, HashMap<usize, usize>) {
+) -> Result<(Vec<Ring<T>>, HashMap<usize, usize>), GeoError> {
     let mut snake_idx_map = HashMap::new();
     let mut rings = vec![];
     for idx in 0..snakes.len() {
         if let Some(ls) = Snake::into_ring(snakes, idx, |midx| {
             snake_idx_map.insert(midx, rings.len());
-        }) {
+        })? {
             rings.push(ls);
         }
     }
-    (rings, snake_idx_map)
+    Ok((rings, snake_idx_map))
 }
 
 #[derive(Debug, Clone)]
@@ -314,7 +314,7 @@ impl<T: GeoFloat> Snake<T> {
         slice: &mut [Self],
         start_idx: usize,
         mut idx_cb: F,
-    ) -> Option<Ring<T>> {
+    ) -> Result<Option<Ring<T>>, GeoError> {
         let mut output = vec![];
 
         let mut idx = start_idx;
@@ -322,7 +322,7 @@ impl<T: GeoFloat> Snake<T> {
         let (parent_snake_idx, is_hole) = {
             let el = &slice[idx];
             if el.points.is_empty() {
-                return None;
+                return Ok(None);
             }
             let last_el = &slice[el.start_pair];
 
@@ -332,7 +332,7 @@ impl<T: GeoFloat> Snake<T> {
             let ls_winding = match start_l.partial_cmp(&end_l).unwrap() {
                 Ordering::Less => WindingOrder::CounterClockwise,
                 Ordering::Greater => WindingOrder::Clockwise,
-                _ => unreachable!(),
+                _ => return Err(GeoError::Other("unreachable code segment")),
             };
             (el.parent_snake_idx, el.region != ls_winding)
         };
@@ -358,11 +358,11 @@ impl<T: GeoFloat> Snake<T> {
         }
 
         let ls = LineString::new(output);
-        Some(Ring {
+        Ok(Some(Ring {
             ls,
             is_hole,
             parent_snake_idx,
-        })
+        }))
     }
 }
 

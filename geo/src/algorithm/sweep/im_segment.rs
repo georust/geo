@@ -1,5 +1,7 @@
 use std::{cell::RefCell, cmp::Ordering, fmt::Debug, rc::Rc};
 
+use crate::types::GeoError;
+
 use super::*;
 
 /// A wrapped segment that allows interior mutability.
@@ -201,12 +203,12 @@ impl<C: Cross + Clone> IMSegment<C> {
         }
     }
 
-    pub fn is_correct(event: &Event<C::Scalar, IMSegment<C>>) -> bool {
+    pub fn is_correct(event: &Event<C::Scalar, IMSegment<C>>) -> Result<bool, GeoError> {
         use EventType::*;
         let segment = RefCell::borrow(&event.payload.inner);
         if let LineRight = event.ty {
             debug_assert!(segment.geom.is_line());
-            !segment.is_overlapping && segment.geom.right() == event.point
+            Ok(!segment.is_overlapping && segment.geom.right() == event.point)
         } else {
             match event.ty {
                 LineLeft => {
@@ -217,9 +219,9 @@ impl<C: Cross + Clone> IMSegment<C> {
                     debug_assert!(!segment.geom.is_line());
                     debug_assert_eq!(segment.geom.left(), event.point);
                 }
-                _ => unreachable!(),
+                _ => return Err(GeoError::Other("entered unreachable code branch")),
             }
-            true
+            Ok(true)
         }
     }
 

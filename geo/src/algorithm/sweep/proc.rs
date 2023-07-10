@@ -136,7 +136,7 @@ impl<C: Cross + Clone> Sweep<C> {
         F: for<'a> FnMut(&'a IMSegment<C>, EventType),
     {
         use EventType::*;
-        let segment = match IMSegment::is_correct(&event) {
+        let segment = match IMSegment::is_correct(&event)? {
             false => return Ok(false),
             _ => event.payload,
         };
