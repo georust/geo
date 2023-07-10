@@ -6,6 +6,8 @@ use std::{
     ops::{Bound, Deref},
 };
 
+use crate::types::GeoError;
+
 /// A segment currently active in the sweep.
 ///
 /// As the sweep-line progresses from left to right, it intersects a subset of
@@ -83,8 +85,8 @@ pub(super) trait ActiveSet: Default {
     fn next(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>> {
         self.next_find(segment, |_| true)
     }
-    fn insert_active(&mut self, segment: Self::Seg);
-    fn remove_active(&mut self, segment: &Self::Seg);
+    fn insert_active(&mut self, segment: Self::Seg) -> Result<(), GeoError>;
+    fn remove_active(&mut self, segment: &Self::Seg) -> Result<(), GeoError>;
 }
 
 impl<T: PartialOrd + Debug> ActiveSet for BTreeSet<Active<T>> {
@@ -114,13 +116,15 @@ impl<T: PartialOrd + Debug> ActiveSet for BTreeSet<Active<T>> {
         .find(|&a| f(a))
     }
 
-    fn insert_active(&mut self, segment: Self::Seg) {
+    fn insert_active(&mut self, segment: Self::Seg) -> Result<(), GeoError> {
         let result = self.insert(Active(segment));
         debug_assert!(result);
+        Ok(())
     }
 
-    fn remove_active(&mut self, segment: &Self::Seg) {
+    fn remove_active(&mut self, segment: &Self::Seg) -> Result<(), GeoError> {
         let result = self.remove(Active::active_ref(segment));
         debug_assert!(result);
+        Ok(())
     }
 }

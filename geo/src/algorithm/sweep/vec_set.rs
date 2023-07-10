@@ -91,22 +91,17 @@ impl<T: PartialOrd + Debug> ActiveSet for VecSet<Active<T>> {
         self.data[start..].iter().find(|s| f(s))
     }
 
-    fn insert_active(&mut self, segment: Self::Seg) {
-        let idx = {
-            let segment = Active::active_ref(&segment);
-            self.data
-                .binary_search(segment)
-                .expect_err("element already in active-vec-set")
-        };
+    fn insert_active(&mut self, segment: Self::Seg) -> Result<(), GeoError> {
+        let new_segment = Active::active_ref(&segment);
+        let idx = self.index_not_of(new_segment)?;
         self.data.insert(idx, Active(segment));
+        Ok(())
     }
 
-    fn remove_active(&mut self, segment: &Self::Seg) {
+    fn remove_active(&mut self, segment: &Self::Seg) -> Result<(), GeoError> {
         let segment = Active::active_ref(segment);
-        let idx = self
-            .data
-            .binary_search(segment)
-            .expect("element not found in active-vec-set");
+        let idx = self.index_of(segment)?;
         self.data.remove(idx);
+        Ok(())
     }
 }

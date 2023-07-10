@@ -42,6 +42,7 @@ pub enum GeoError {
     MissingOverlap,
     SegmentNotFoundInActiveSet(usize),
     SegmentAlreadyFoundInActiveSet(usize),
+    ExpectedNonemptyEvents,
     Other(&'static str),
 }
 

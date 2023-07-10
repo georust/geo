@@ -188,7 +188,8 @@ impl<C: Cross + Clone> Sweep<C> {
                             int_pt != active.geom().left() && int_pt == segment.geom().left()
                         };
                         if handle_end_event {
-                            let event = self.events.pop().unwrap();
+                            let event =
+                                self.events.pop().ok_or(GeoError::ExpectedNonemptyEvents)?;
                             let done = self.handle_event(event, cb)?;
                             debug_assert!(done, "special right-end event handling failed");
                             if !is_next {
