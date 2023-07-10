@@ -1,5 +1,9 @@
 # Changes
 
+## 0.27.0
+
+* Create falliable versions for all the trait methods in `BooleanOps`. <https://github.com/georust/geo/pull/1032>
+
 ## 0.26.0
 
 * Implement "Closest Point" from a `Point` on a `Geometry` using spherical geometry. <https://github.com/georust/geo/pull/958>
