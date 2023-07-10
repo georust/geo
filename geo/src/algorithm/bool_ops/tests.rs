@@ -232,11 +232,56 @@ fn test_issue_buffer_box() {
 }
 
 #[test]
-fn falliable_boolops_on_976() {
+fn falliable_boolops_on_976_1() {
     init_log();
     const DATA : &'static str = "
 [{\"exterior\":[{\"x\":-9911.954,\"y\":-8725.639},{\"x\":-9915.633,\"y\":9687.057},{\"x\":-4963.603,\"y\":-45.043945},{\"x\":-9911.954,\"y\":-8725.639}],\"interiors\":[]},{\"exterior\":[{\"x\":-9007.182,\"y\":9094.508},{\"x\":-2687.1802,\"y\":-8199.999},{\"x\":-9915.442,\"y\":8069.0723},{\"x\":-9007.182,\"y\":9094.508}],\"interiors\":[]}]
 ";
     let [a, b]: [Polygon<f32>; 2] = serde_json::from_str(&DATA).unwrap();
-    matches!(a.try_intersection(&b), Err(GeoError::NotEulierian(_)));
+    let err = a.try_intersection(&b).expect_err("should fail");
+    assert_eq!(err, GeoError::NotEulierian(1));
+}
+
+#[test]
+fn falliable_boolops_on_976_2() {
+    init_log();
+    const DATA : &'static str = "
+[{\"exterior\":[{\"x\":-5201.7114,\"y\":-8303.499},{\"x\":-5659.4683,\"y\":772.75977},{\"x\":-6016.6597,\"y\":7854.8574},{\"x\":-5201.7114,\"y\":-8303.499}],\"interiors\":[]},{\"exterior\":[{\"x\":5620.463,\"y\":-6589.673},{\"x\":-8996.825,\"y\":7323.99},{\"x\":8552.832,\"y\":8266.936},{\"x\":5620.463,\"y\":-6589.673}],\"interiors\":[]}]
+";
+    let [a, b]: [Polygon<f32>; 2] = serde_json::from_str(&DATA).unwrap();
+    let err = a.try_intersection(&b).expect_err("should fail");
+    assert_eq!(err, GeoError::SegmentNotFoundInActiveSet(2));
+}
+
+#[test]
+fn falliable_boolops_on_976_3() {
+    init_log();
+    const DATA : &'static str = "
+[{\"exterior\":[{\"x\":7145.463,\"y\":-9308.827},{\"x\":-5928.4663,\"y\":-9830.61},{\"x\":-6159.425,\"y\":6376.1953},{\"x\":7145.463,\"y\":-9308.827}],\"interiors\":[]},{\"exterior\":[{\"x\":-1481.9834,\"y\":-6507.6855},{\"x\":-5929.4414,\"y\":-9778.573},{\"x\":579.1953,\"y\":-4847.679},{\"x\":-1481.9834,\"y\":-6507.6855}],\"interiors\":[]}]
+";
+    let [a, b]: [Polygon<f32>; 2] = serde_json::from_str(&DATA).unwrap();
+    let err = a.try_intersection(&b).expect_err("should fail");
+    assert_eq!(err, GeoError::NotEulierian(1));
+}
+
+#[test]
+fn falliable_boolops_on_976_4() {
+    init_log();
+    const DATA : &'static str = "
+[{\"exterior\":[{\"x\":-5693.004,\"y\":2876.4512},{\"x\":-1425.9932,\"y\":-4538.469},{\"x\":7075.2715,\"y\":3801.1094},{\"x\":-5693.004,\"y\":2876.4512}],\"interiors\":[]},{\"exterior\":[{\"x\":-5696.2515,\"y\":5549.1904},{\"x\":4502.6426,\"y\":7662.08},{\"x\":-5677.376,\"y\":-9651.773},{\"x\":-5696.2515,\"y\":5549.1904}],\"interiors\":[]}]
+";
+    let [a, b]: [Polygon<f32>; 2] = serde_json::from_str(&DATA).unwrap();
+    let err = a.try_union(&b).expect_err("should fail");
+    assert_eq!(err, GeoError::NotEulierian(1));
+}
+
+#[test]
+fn falliable_boolops_on_976_5() {
+    init_log();
+    const DATA : &'static str = "
+[{\"exterior\":[{\"x\":9305.908,\"y\":-6702.5806},{\"x\":-4249.9185,\"y\":-5210.8096},{\"x\":-4326.806,\"y\":-5202.899},{\"x\":9305.908,\"y\":-6702.5806}],\"interiors\":[]},{\"exterior\":[{\"x\":5041.3135,\"y\":179.65332},{\"x\":8421.762,\"y\":8643.844},{\"x\":9279.895,\"y\":-8269.728},{\"x\":5041.3135,\"y\":179.65332}],\"interiors\":[]}]
+";
+    let [a, b]: [Polygon<f32>; 2] = serde_json::from_str(&DATA).unwrap();
+    let err = a.try_intersection(&b).expect_err("should fail");
+    assert_eq!(err, GeoError::NotEulierian(1));
 }
