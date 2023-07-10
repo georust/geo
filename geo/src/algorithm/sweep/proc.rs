@@ -48,7 +48,6 @@ impl<C: Cross + Clone> Sweep<C> {
         if let Some(event) = self.events.pop() {
             let pt = event.point;
             self.handle_event(event, &mut cb)?;
-
             Ok(Some(pt))
         } else {
             Ok(None)
@@ -63,7 +62,7 @@ impl<C: Cross + Clone> Sweep<C> {
         &mut self,
         active: Active<IMSegment<C>>,
         other: &IMSegment<C>,
-    ) -> AdjProcOutput<C::Scalar> {
+    ) -> Result<AdjProcOutput<C::Scalar>, GeoError> {
         // NOTE: The below logic is a loop instead of a
         // conditional due to FP issues. Specifically,
         // sometimes, two non-overlapping lines may become
@@ -99,7 +98,7 @@ impl<C: Cross + Clone> Sweep<C> {
                 "one of the intersecting segments had an overlap, but not the other!"
             );
             if let Some(adj_ovl) = adj_overlap {
-                let tgt = seg_overlap.unwrap();
+                let tgt = seg_overlap.ok_or(GeoError::MissingOverlap)?;
                 trace!("setting overlap: {adj_ovl:?} -> {tgt:?}");
                 adj_ovl.chain_overlap(tgt.clone());
 
@@ -116,7 +115,7 @@ impl<C: Cross + Clone> Sweep<C> {
 
                 // Overlaps are exact compute, so we do not need
                 // to re-run the loop.
-                return out;
+                return Ok(out);
             }
 
             if active.geom().partial_cmp(&other.geom()) == Some(Ordering::Equal) {
@@ -125,7 +124,7 @@ impl<C: Cross + Clone> Sweep<C> {
                 break;
             }
         }
-        out
+        Ok(out)
     }
 
     fn handle_event<F>(
@@ -154,7 +153,7 @@ impl<C: Cross + Clone> Sweep<C> {
         match &event.ty {
             LineLeft => {
                 let mut should_add = true;
-                let mut insert_idx = self.active_segments.index_not_of(&segment);
+                let mut insert_idx = self.active_segments.index_not_of(&segment)?;
                 if !self.is_simple {
                     for is_next in [true, false].into_iter() {
                         let active = if is_next {
@@ -172,7 +171,7 @@ impl<C: Cross + Clone> Sweep<C> {
                             isec,
                             should_continue,
                             should_callback,
-                        } = self.process_adjacent_segments(active.clone(), &segment);
+                        } = self.process_adjacent_segments(active.clone(), &segment)?;
                         let isec = match isec {
                             Some(isec) => isec,
                             None => continue,
@@ -239,7 +238,7 @@ impl<C: Cross + Clone> Sweep<C> {
                 // Safety: `self.segments` is a `Box` that is not
                 // de-allocated until `self` is dropped.
                 debug!("remove_active: {segment:?}");
-                let el_idx = self.active_segments.index_of(&segment);
+                let el_idx = self.active_segments.index_of(&segment)?;
                 let prev = (el_idx > 0).then(|| self.active_segments[el_idx - 1].clone());
                 let next = (1 + el_idx < self.active_segments.len())
                     .then(|| self.active_segments[el_idx + 1].clone());
@@ -274,7 +273,7 @@ impl<C: Cross + Clone> Sweep<C> {
             }
             PointLeft => {
                 if !self.is_simple {
-                    let insert_idx = self.active_segments.index_not_of(&segment);
+                    let insert_idx = self.active_segments.index_not_of(&segment)?;
                     let prev =
                         (insert_idx > 0).then(|| self.active_segments[insert_idx - 1].clone());
                     let next = (insert_idx < self.active_segments.len())

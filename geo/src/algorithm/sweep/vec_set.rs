@@ -1,3 +1,5 @@
+use crate::types::GeoError;
+
 use super::{Active, ActiveSet};
 use std::{cmp::Ordering, fmt::Debug, ops::Index};
 
@@ -16,16 +18,17 @@ impl<T: Ord> Default for VecSet<T> {
 }
 
 impl<T: PartialOrd + Debug> VecSet<Active<T>> {
-    pub fn index_of(&self, segment: &T) -> usize {
+    pub fn index_of(&self, segment: &T) -> Result<usize, GeoError> {
         self.data
             .binary_search(Active::active_ref(segment))
-            .expect("segment not found in active-vec-set")
+            .map_err(GeoError::SegmentNotFoundInActiveSet)
     }
 
-    pub fn index_not_of(&self, segment: &T) -> usize {
-        self.data
-            .binary_search(Active::active_ref(segment))
-            .expect_err("segment already found in active-vec-set")
+    pub fn index_not_of(&self, segment: &T) -> Result<usize, GeoError> {
+        match self.data.binary_search(Active::active_ref(segment)) {
+            Ok(v) => Err(GeoError::SegmentAlreadyFoundInActiveSet(v)),
+            Err(v) => Ok(v),
+        }
     }
     pub fn len(&self) -> usize {
         self.data.len()

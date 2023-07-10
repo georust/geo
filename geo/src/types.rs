@@ -37,8 +37,13 @@ impl<F: GeoFloat> Closest<F> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GeoError {}
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum GeoError {
+    MissingOverlap,
+    SegmentNotFoundInActiveSet(usize),
+    SegmentAlreadyFoundInActiveSet(usize),
+    Other(&'static str),
+}
 
 /// Implements the common pattern where a Geometry enum simply delegates its trait impl to it's inner type.
 ///
