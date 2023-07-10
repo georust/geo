@@ -70,7 +70,7 @@ impl<T: Float, S: Spec<T>> Proc<T, S> {
     pub fn try_sweep(mut self) -> Result<S::Output, GeoError> {
         let mut iter = CrossingsIter::from_iter(self.edges.iter());
 
-        while let Some(pt) = iter.next() {
+        while let Some(pt) = iter.next().transpose()? {
             debug!(
                 "\n\nSweep point: {pt:?}, {n} intersection segments",
                 n = iter.intersections_mut().len(),

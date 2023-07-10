@@ -159,7 +159,7 @@ impl<C> Iterator for CrossingsIter<C>
 where
     C: Cross + Clone,
 {
-    type Item = Coord<C::Scalar>;
+    type Item = Result<Coord<C::Scalar>, GeoError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let segments = &mut self.segments;
@@ -180,7 +180,7 @@ where
         if segments.is_empty() {
             None
         } else {
-            last_point.map(|p| *p)
+            Ok(last_point.map(|p| *p)).transpose()
         }
     }
 }
@@ -287,7 +287,7 @@ where
         }
     }
 
-    fn step(&mut self) -> bool {
+    fn step(&mut self) -> Result<bool, GeoError> {
         let seg_len = self.inner.intersections_mut().len();
         if 1 + self.jdx < seg_len {
             self.is_overlap =
@@ -297,9 +297,9 @@ where
             self.idx += 1;
             if 1 + self.idx >= seg_len {
                 loop {
-                    self.pt = self.inner.next();
+                    self.pt = self.inner.next().transpose()?;
                     if self.pt.is_none() {
-                        return false;
+                        return Ok(false);
                     }
                     if self.inner.intersections_mut().len() > 1 {
                         break;
@@ -310,7 +310,7 @@ where
             self.is_overlap = self.inner.intersections_mut()[self.idx].has_overlap;
             self.jdx = self.idx + 1;
         }
-        true
+        Ok(true)
     }
 }
 
@@ -322,8 +322,10 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            if !self.step() {
-                return None;
+            match self.step() {
+                Ok(false) => return None,
+                Err(e) => return Some(Err(e)),
+                Ok(true) => { /* ok, do nothing */ }
             }
             let it = self.intersection();
             debug!("\t{it:?}", it = it.is_some());

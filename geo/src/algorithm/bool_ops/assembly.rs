@@ -46,7 +46,7 @@ impl<T: GeoFloat> RegionAssembly<T> {
         let mut iter = CrossingsIter::new_simple(self.segments.iter());
         let mut snakes = vec![];
 
-        while let Some(pt) = iter.next() {
+        while let Some(pt) = iter.next().transpose()? {
             let num_segments = iter.intersections().len();
             debug_assert!(num_segments % 2 == 0, "assembly segments must be eulierian");
             iter.intersections_mut().sort_unstable_by(compare_crossings);
