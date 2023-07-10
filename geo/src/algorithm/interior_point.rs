@@ -7,6 +7,7 @@ use crate::algorithm::{
 };
 use crate::geometry::*;
 use crate::sweep::{Intersections, SweepPoint};
+use crate::types::GeoError;
 use crate::GeoFloat;
 
 /// Calculation of interior points.
@@ -69,7 +70,11 @@ pub trait InteriorPoint {
     ///     line_string.interior_point(),
     /// );
     /// ```
-    fn interior_point(&self) -> Self::Output;
+    fn interior_point(&self) -> Self::Output {
+        self.try_interior_point().unwrap()
+    }
+
+    fn try_interior_point(&self) -> Result<Self::Output, GeoError>;
 }
 
 impl<T> InteriorPoint for Line<T>
@@ -78,10 +83,10 @@ where
 {
     type Output = Point<T>;
 
-    fn interior_point(&self) -> Self::Output {
+    fn try_interior_point(&self) -> Result<Self::Output, GeoError> {
         // the midpoint of the line isn't guaranteed to actually have an `intersects()`
         // relationship with the line due to floating point rounding, so just use the start point
-        self.start_point()
+        Ok(self.start_point())
     }
 }
 
@@ -93,24 +98,24 @@ where
 
     // The interior point of a LineString the non-endpoint vertex closest to the centroid if any,
     // or the start point if there are no non-endpoint vertices
-    fn interior_point(&self) -> Self::Output {
+    fn try_interior_point(&self) -> Result<Self::Output, GeoError> {
         match self.0.len() {
-            0 => None,
+            0 => Ok(None),
             // for linestrings of length 2, as with lines, the calculated midpoint might not lie
             // on the line, so just use the start point
-            1 | 2 => Some(self.0[0].into()),
+            1 | 2 => Ok(Some(self.0[0].into())),
             _ => {
                 let centroid = self
                     .centroid()
                     .expect("expected centroid for non-empty linestring");
-                self.0[1..(self.0.len() - 1)]
+                Ok(self.0[1..(self.0.len() - 1)]
                     .iter()
                     .map(|coord| {
                         let pt = Point::from(*coord);
                         (pt, pt.euclidean_distance(&centroid))
                     })
                     .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less))
-                    .map(|(pt, _distance)| pt)
+                    .map(|(pt, _distance)| pt))
             }
         }
     }
@@ -124,33 +129,36 @@ where
 
     /// The interior point of a MultiLineString is, of the interior points of all the constituent
     /// LineStrings, the one closest to the centroid of the MultiLineString
-    fn interior_point(&self) -> Self::Output {
-        if let Some(centroid) = self.centroid() {
-            self.iter()
-                .filter_map(|linestring| {
-                    linestring
-                        .interior_point()
-                        .map(|pt| (pt, pt.euclidean_distance(&centroid)))
-                })
-                .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less))
-                .map(|(pt, _distance)| pt)
-        } else {
-            None
-        }
+    fn try_interior_point(&self) -> Result<Self::Output, GeoError> {
+        self.centroid()
+            .and_then(|centroid| {
+                self.iter()
+                    .filter_map(|linestring| {
+                        linestring
+                            .interior_point()
+                            .map(|pt| (pt, pt.euclidean_distance(&centroid)))
+                    })
+                    .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less))
+                    .map(|(pt, _distance)| Ok(pt))
+            })
+            .transpose()
     }
 }
 
 fn polygon_interior_point_with_segment_length<T: GeoFloat>(
     polygon: &Polygon<T>,
-) -> Option<(Point<T>, T)> {
+) -> Result<Option<(Point<T>, T)>, GeoError> {
     // special-case a one-point polygon since this algorithm won't otherwise support it
     if polygon.exterior().0.len() == 1 {
-        return Some((polygon.exterior().0[0].into(), T::zero()));
+        return Ok(Some((polygon.exterior().0[0].into(), T::zero())));
     }
 
     let two = T::one() + T::one();
 
-    let bounds = polygon.bounding_rect()?;
+    let bounds = polygon.bounding_rect();
+    let Some(bounds) = bounds else {
+        return Ok(None);
+    };
 
     // use the midpoint of the bounds to scan, unless that happens to match any vertices from
     // polygon; if it does, perturb the line a bit by averaging with the Y coordinate of the
@@ -187,7 +195,8 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
     let lines = polygon.lines_iter().chain(std::iter::once(scan_line));
 
     let mut intersections: Vec<SweepPoint<T>> = Vec::new();
-    for (l1, l2, inter) in Intersections::from_iter(lines) {
+    let mut iter = Intersections::from_iter(lines);
+    while let Some((l1, l2, inter)) = iter.next().transpose()? {
         if !(l1 == scan_line || l2 == scan_line) {
             continue;
         }
@@ -217,7 +226,7 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
         // polygon, and some outside; confirm that this is the former
         let relation = polygon.relate(&midpoint);
         if relation.is_intersects() {
-            return Some((
+            return Ok(Some((
                 midpoint,
                 if relation.is_contains() {
                     segment_length
@@ -228,14 +237,14 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
                     // non-zero area
                     T::zero()
                 },
-            ));
+            )));
         }
     }
     // if we've gotten this far with no luck, return any vertex point, if there are any
-    polygon
+    Ok(polygon
         .coords_iter()
         .next()
-        .map(|coord| (coord.into(), T::zero()))
+        .map(|coord| (coord.into(), T::zero())))
 }
 
 impl<T> InteriorPoint for Polygon<T>
@@ -244,8 +253,8 @@ where
 {
     type Output = Option<Point<T>>;
 
-    fn interior_point(&self) -> Self::Output {
-        polygon_interior_point_with_segment_length(self).map(|(point, _length)| point)
+    fn try_interior_point(&self) -> Result<Self::Output, GeoError> {
+        polygon_interior_point_with_segment_length(self).map(|p| p.map(|(point, _length)| point))
     }
 }
 
@@ -255,13 +264,12 @@ where
 {
     type Output = Option<Point<T>>;
 
-    fn interior_point(&self) -> Self::Output {
-        let segments = self
+    fn try_interior_point(&self) -> Result<Self::Output, GeoError> {
+        Ok(self
             .iter()
-            .filter_map(polygon_interior_point_with_segment_length);
-        segments
+            .filter_map(|p| polygon_interior_point_with_segment_length(p).ok().flatten())
             .min_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(Ordering::Less))
-            .map(|(point, _length)| point)
+            .map(|(point, _length)| point))
     }
 }
 
@@ -271,8 +279,8 @@ where
 {
     type Output = Point<T>;
 
-    fn interior_point(&self) -> Self::Output {
-        self.center().into()
+    fn try_interior_point(&self) -> Result<Self::Output, GeoError> {
+        Ok(self.center().into())
     }
 }
 
@@ -282,8 +290,8 @@ where
 {
     type Output = Point<T>;
 
-    fn interior_point(&self) -> Self::Output {
-        *self
+    fn try_interior_point(&self) -> Result<Self::Output, GeoError> {
+        Ok(*self)
     }
 }
 
@@ -305,15 +313,13 @@ where
 {
     type Output = Option<Point<T>>;
 
-    fn interior_point(&self) -> Self::Output {
-        if let Some(centroid) = self.centroid() {
+    fn try_interior_point(&self) -> Result<Self::Output, GeoError> {
+        Ok(self.centroid().and_then(|centroid| {
             self.iter()
                 .map(|pt| (pt, pt.euclidean_distance(&centroid)))
                 .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less))
                 .map(|(pt, _distance)| *pt)
-        } else {
-            None
-        }
+        }))
     }
 }
 
@@ -323,8 +329,19 @@ where
 {
     type Output = Option<Point<T>>;
 
-    crate::geometry_delegate_impl! {
-        fn interior_point(&self) -> Self::Output;
+    fn try_interior_point(&self) -> Result<Self::Output, GeoError> {
+        match self {
+            Geometry::Point(g) => g.try_interior_point().map(|p| Some(p)),
+            Geometry::Line(g) => g.try_interior_point().map(|p| Some(p)),
+            Geometry::LineString(g) => g.try_interior_point(),
+            Geometry::Polygon(g) => g.try_interior_point(),
+            Geometry::MultiPoint(g) => g.try_interior_point(),
+            Geometry::MultiLineString(g) => g.try_interior_point(),
+            Geometry::MultiPolygon(g) => g.try_interior_point(),
+            Geometry::GeometryCollection(g) => g.try_interior_point(),
+            Geometry::Rect(g) => g.try_interior_point().map(|p| Some(p)),
+            Geometry::Triangle(g) => g.try_interior_point().map(|p| Some(p)),
+        }
     }
 }
 
@@ -334,8 +351,8 @@ where
 {
     type Output = Option<Point<T>>;
 
-    fn interior_point(&self) -> Self::Output {
-        if let Some(centroid) = self.centroid() {
+    fn try_interior_point(&self) -> Result<Self::Output, GeoError> {
+        Ok(self.centroid().and_then(|centroid| {
             self.iter()
                 .filter_map(|geom| {
                     geom.interior_point().map(|pt| {
@@ -348,9 +365,7 @@ where
                 })
                 .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less))
                 .map(|(pt, _distance)| pt)
-        } else {
-            None
-        }
+        }))
     }
 }
 
@@ -360,8 +375,8 @@ where
 {
     type Output = Point<T>;
 
-    fn interior_point(&self) -> Self::Output {
-        self.centroid()
+    fn try_interior_point(&self) -> Result<Self::Output, GeoError> {
+        Ok(self.centroid())
     }
 }
 

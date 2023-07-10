@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 
 use super::*;
+use crate::types::GeoError;
 use crate::{line_intersection::line_intersection, Coord, LineIntersection};
 
 /// A segment of a input [`Cross`] type.
@@ -317,7 +318,7 @@ impl<C> Iterator for Intersections<C>
 where
     C: Cross + Clone,
 {
-    type Item = (C, C, LineIntersection<C::Scalar>);
+    type Item = Result<(C, C, LineIntersection<C::Scalar>), GeoError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -327,7 +328,7 @@ where
             let it = self.intersection();
             debug!("\t{it:?}", it = it.is_some());
             if let Some(result) = it {
-                return Some(result);
+                return Some(Ok(result));
             }
         }
     }
@@ -391,10 +392,13 @@ pub(super) mod tests {
 
         let iter: Intersections<_> = input.iter().collect();
         let count = iter
-            .inspect(|(a, b, _int)| {
-                let lp_a = LineOrPoint::from(**a);
-                let lp_b = LineOrPoint::from(**b);
-                eprintln!("{lp_a:?} intersects {lp_b:?}",);
+            .inspect(|res| match res {
+                Ok((a, b, _int)) => {
+                    let lp_a = LineOrPoint::from(**a);
+                    let lp_b = LineOrPoint::from(**b);
+                    eprintln!("{lp_a:?} intersects {lp_b:?}",);
+                }
+                Err(e) => eprintln!("{e:?}"),
             })
             .count();
         assert_eq!(count, verify);
