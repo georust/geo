@@ -332,7 +332,7 @@ impl<T: GeoFloat> Snake<T> {
             let ls_winding = match start_l.partial_cmp(&end_l).unwrap() {
                 Ordering::Less => WindingOrder::CounterClockwise,
                 Ordering::Greater => WindingOrder::Clockwise,
-                _ => return Err(GeoError::Other("unreachable code segment")),
+                _ => return Err(GeoError::Unreachable("unreachable code segment")),
             };
             (el.parent_snake_idx, el.region != ls_winding)
         };

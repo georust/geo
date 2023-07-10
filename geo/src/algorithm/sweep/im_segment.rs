@@ -219,7 +219,7 @@ impl<C: Cross + Clone> IMSegment<C> {
                     debug_assert!(!segment.geom.is_line());
                     debug_assert_eq!(segment.geom.left(), event.point);
                 }
-                _ => return Err(GeoError::Other("entered unreachable code branch")),
+                _ => return Err(GeoError::Unreachable("entered unreachable code branch")),
             }
             Ok(true)
         }

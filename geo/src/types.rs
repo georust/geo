@@ -43,7 +43,7 @@ pub enum GeoError {
     SegmentNotFoundInActiveSet(usize),
     SegmentAlreadyFoundInActiveSet(usize),
     ExpectedNonemptyEvents,
-    Other(&'static str),
+    Unreachable(&'static str),
 }
 
 /// Implements the common pattern where a Geometry enum simply delegates its trait impl to it's inner type.
