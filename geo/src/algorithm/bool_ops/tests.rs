@@ -1,4 +1,4 @@
-use crate::{LineString, MultiPolygon, Polygon};
+use crate::{LineString, MapCoords, MultiPolygon, Polygon};
 use log::{error, info};
 
 use std::{
@@ -284,4 +284,28 @@ fn falliable_boolops_on_976_5() {
     let [a, b]: [Polygon<f32>; 2] = serde_json::from_str(&DATA).unwrap();
     let err = a.try_intersection(&b).expect_err("should fail");
     assert_eq!(err, GeoError::NotEulierian(1));
+}
+
+#[test]
+fn falliable_boolops_on_976_1_usecase() {
+    init_log();
+    const DATA : &'static str = "
+[{\"exterior\":[{\"x\":-9911.954,\"y\":-8725.639},{\"x\":-9915.633,\"y\":9687.057},{\"x\":-4963.603,\"y\":-45.043945},{\"x\":-9911.954,\"y\":-8725.639}],\"interiors\":[]},{\"exterior\":[{\"x\":-9007.182,\"y\":9094.508},{\"x\":-2687.1802,\"y\":-8199.999},{\"x\":-9915.442,\"y\":8069.0723},{\"x\":-9007.182,\"y\":9094.508}],\"interiors\":[]}]
+";
+    let [a, b]: [Polygon<f32>; 2] = serde_json::from_str(&DATA).unwrap();
+    let err = a.try_intersection(&b).expect_err("should fail");
+    assert_eq!(err, GeoError::NotEulierian(1));
+
+    let a = a.map_coords(|c| geo_types::Coord {
+        x: c.x as f64,
+        y: c.y as f64,
+    });
+    let b = b.map_coords(|c| geo_types::Coord {
+        x: c.x as f64,
+        y: c.y as f64,
+    });
+    assert!(
+        a.try_intersection(&b).is_ok(),
+        "shouldnt fail anymore + program didn't crash"
+    );
 }
