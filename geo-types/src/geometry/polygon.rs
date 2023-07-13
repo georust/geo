@@ -545,7 +545,12 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Polygon<T> {
     }
 }
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
 macro_rules! impl_rstar_polygon {
     ($rstar:ident) => {
         impl<T> $rstar::RTreeObject for Polygon<T>
@@ -569,3 +574,6 @@ impl_rstar_polygon!(rstar_0_9);
 
 #[cfg(feature = "rstar_0_10")]
 impl_rstar_polygon!(rstar_0_10);
+
+#[cfg(feature = "rstar_0_11")]
+impl_rstar_polygon!(rstar_0_11);
