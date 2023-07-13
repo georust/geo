@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.7.11
 * Bump rstar dependency
   <https://github.com/georust/geo/pull/1030>
 
