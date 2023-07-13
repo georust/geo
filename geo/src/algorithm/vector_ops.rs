@@ -289,19 +289,59 @@ mod test {
 
     #[test]
     fn test_normalize() {
-        let a = coord! { x: 1.0, y: 0.0 };
-        assert_relative_eq!(a.try_normalize(2e-301f64).unwrap(), a);
+        let f64_minimum_threshold = 2e-301f64;
+        // Already Normalized
+        let a = coord! {
+            x: 1.0,
+            y: 0.0
+        };
+        assert_relative_eq!(a.try_normalize(f64_minimum_threshold).unwrap(), a);
 
-        let a = coord! { x: 1.0 / f64::sqrt(2.0), y: -1.0 / f64::sqrt(2.0) };
-        assert_relative_eq!(a.try_normalize(2e-301f64).unwrap(), a);
+        // Already Normalized
+        let a = coord! {
+            x: 1.0 / f64::sqrt(2.0),
+            y: -1.0 / f64::sqrt(2.0)
+        };
+        assert_relative_eq!(a.try_normalize(f64_minimum_threshold).unwrap(), a);
 
+        // Non trivial example
         let a = coord! { x: -10.0, y: 8.0 };
         assert_relative_eq!(
-            a.try_normalize(2e-301f64).unwrap(),
-            a / f64::sqrt(10.0 * 10.0 + 8.0 * 8.0)
+            a.try_normalize(f64_minimum_threshold).unwrap(),
+            coord! { x: -10.0, y: 8.0 } / f64::sqrt(10.0 * 10.0 + 8.0 * 8.0)
         );
 
-        let a = coord! { x: 0.0, y: 1e-301f64 };
-        assert_eq!(a.try_normalize(2e-301f64), None);
+        // Very Small Input - Fails because below threshold
+        let a = coord! {
+            x: 0.0,
+            y: f64_minimum_threshold / 2.0
+        };
+        assert_eq!(a.try_normalize(f64_minimum_threshold), None);
+
+        // Zero vector - Fails because below threshold
+        let a = coord! { x: 0.0, y: 0.0 };
+        assert_eq!(a.try_normalize(f64_minimum_threshold), None);
+
+        // Large vector Pass;
+        // Note: this fails because the magnitude calculation overflows to infinity
+        //       this could be avoided my modifying the implementation to use scaling be avoided using scaling
+        let a = coord! {
+            x: f64::sqrt(f64::MAX/2.0),
+            y: f64::sqrt(f64::MAX/2.0)
+        };
+        assert!(a.try_normalize(f64_minimum_threshold).is_some());
+
+        // Large Vector Fail;
+        // Note: This test uses the unstable float_next_up_down feature
+        // let a = coord! { x: f64::sqrt(f64::MAX/2.0), y: f64::next_up(f64::sqrt(f64::MAX/2.0)) };
+        // assert!(a.try_normalize(1e-10f64).is_none());
+
+        // NaN
+        let a = coord! { x: f64::NAN, y: 0.0 };
+        assert_eq!(a.try_normalize(f64_minimum_threshold), None);
+
+        // Infinite
+        let a = coord! { x: f64::INFINITY, y: 0.0 };
+        assert_eq!(a.try_normalize(f64_minimum_threshold), None);
     }
 }
