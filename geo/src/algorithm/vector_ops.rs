@@ -1,35 +1,5 @@
 //! This module defines the [Vector2DOps] trait and implements it for the
 //! [Coord] struct.
-//!
-//! In the future [Vector2DOps] might be implemented on other types:
-//!
-//! - Based on community discussions it seems like the existing struct
-//!   [crate::Coord] is just one of many future data structures which may hold
-//!   coordinate information. For example future data structures may also hold Z
-//!   and/or M ordinates, or other arbitrary data.
-//! - [geotraits::CoordTrait] is a future trait defining accessor methods
-//!   `.x()` and `.y()` which will facilitate these generic data structures.
-//!
-//! > Note: [Vector2DOps] is not implemented for [crate::Point] because users
-//! > probably expect to see more familiar geospatial functions like
-//! > `a.euclidean_distance(b)` at that level and generally not linear algebra
-//! > like `a.dot(b)`.
-//!
-//! For now, it is assumed that users of [Vector2DOps] are satisfied to upcast
-//! everything to [CoordFloat]. In future it might make sense to split this
-//! trait into 3 flavors supporting progressively more functions:
-//!
-//! - `trait Vector2DOpsCoordNum` for [CoordNum]
-//!     - Supports magnitude_squared, dot
-//! - `trait Vector2DOpsCoordNumSigned:Vector2DOpsCoordNum` for [CoordNum] + [Signed]
-//!     - Supports left, right, wedge_product
-//! - `trait Vector2DOpsCoordFloat:Vector2DOpsCoordNumSigned` for [CoordFloat]
-//!     - Supports magnitude, normalize, etc
-//!
-//! Maybe if these traits were restricted to the future [geotraits::CoordTrait]
-//! then they could provide default implementations using the accessors `.x()`
-//! and `.y()`?
-//!
 
 use crate::{Coord, CoordFloat, CoordNum};
 
@@ -142,16 +112,6 @@ where
     /// These values should avoid overflowing to Infinity for coordinate values
     /// in the range typically relevant for spatial data (+-40e6) which is the
     /// approximate length of the earth's great circle in metres.
-    ///
-    /// > Note to Reviewer: it may be annoying to have to provide a value for
-    /// > minimum_magnitude, but that seems to be what `nalgebra` does
-    /// > (See https://docs.rs/nalgebra/latest/src/nalgebra/base/norm.rs.html#301-307).
-    /// > Some other parts of the api do not require the user to specify a
-    /// > value, but I haven't yet figured out how those work because it is
-    /// > wrapped up in the simba SIMD crate in complicated macros.
-    /// >
-    /// > Open to suggestions about how this can be better handled, or the
-    /// > try_normalize function can just be removed for now.
     fn try_normalize(self, minimum_magnitude: Self::Scalar) -> Option<Self>;
 }
 
