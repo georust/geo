@@ -45,20 +45,20 @@ pub trait Vector2DOps<Rhs = Self>
 where
     Self: Sized,
 {
-    type NumericType: CoordNum + Send + Sync;
+    type Scalar: CoordNum + Send + Sync;
 
     /// The euclidean distance between this coordinate and the origin
     ///
     /// `sqrt(x² + y²)`
     ///
-    fn magnitude(self) -> Self::NumericType;
+    fn magnitude(self) -> Self::Scalar;
 
     /// The squared distance between this coordinate and the origin.
     /// (Avoids the square root calculation when it is not needed)
     ///
     /// `x² + y²`
     ///
-    fn magnitude_squared(self) -> Self::NumericType;
+    fn magnitude_squared(self) -> Self::Scalar;
 
     /// Rotate this coordinate around the origin by 90 degrees clockwise.
     ///
@@ -82,7 +82,7 @@ where
     ///
     /// `a · b = a.x * b.x + a.y * b.y`
     ///
-    fn dot_product(self, other: Rhs) -> Self::NumericType;
+    fn dot_product(self, other: Rhs) -> Self::Scalar;
 
     /// The calculates the `wedge product` between two vectors.
     ///
@@ -129,7 +129,7 @@ where
     ///   - If this is what you are using it for, then please use
     ///     [crate::algorithm::Kernel::orient2d()] instead as this is more
     ///     explicit and has a `RobustKernel` option for extra precision.
-    fn wedge_product(self, other: Rhs) -> Self::NumericType;
+    fn wedge_product(self, other: Rhs) -> Self::Scalar;
 
     /// Try to find a vector of unit length in the same direction as this
     /// vector.
@@ -152,28 +152,28 @@ where
     /// >
     /// > Open to suggestions about how this can be better handled, or the
     /// > try_normalize function can just be removed for now.
-    fn try_normalize(self, minimum_magnitude: Self::NumericType) -> Option<Self>;
+    fn try_normalize(self, minimum_magnitude: Self::Scalar) -> Option<Self>;
 }
 
 impl<T> Vector2DOps for Coord<T>
 where
     T: CoordFloat + Send + Sync,
 {
-    type NumericType = T;
+    type Scalar = T;
 
-    fn wedge_product(self, right: Coord<T>) -> Self::NumericType {
+    fn wedge_product(self, right: Coord<T>) -> Self::Scalar {
         self.x * right.y - self.y * right.x
     }
 
-    fn dot_product(self, other: Self) -> Self::NumericType {
+    fn dot_product(self, other: Self) -> Self::Scalar {
         self.x * other.x + self.y * other.y
     }
 
-    fn magnitude(self) -> Self::NumericType {
+    fn magnitude(self) -> Self::Scalar {
         (self.x * self.x + self.y * self.y).sqrt()
     }
 
-    fn magnitude_squared(self) -> Self::NumericType {
+    fn magnitude_squared(self) -> Self::Scalar {
         self.x * self.x + self.y * self.y
     }
 
@@ -191,7 +191,7 @@ where
         }
     }
 
-    fn try_normalize(self, minimum_magnitude: Self::NumericType) -> Option<Self> {
+    fn try_normalize(self, minimum_magnitude: Self::Scalar) -> Option<Self> {
         let magnitude = self.magnitude();
         if magnitude.is_finite() && magnitude.abs() > minimum_magnitude {
             Some(self / magnitude)
