@@ -106,8 +106,8 @@ where
     ///
     /// Returns `None` if the magnitude of this vector is less than
     /// `minimum_magnitude` or the magnitude is not finite.
-    ///  - For f32 the minimum_magnitude can be set to about 1e-30f32.
-    ///  - For F64 the minimum_magnitude can be set to about 2e-301f64.
+    ///  - For f32 the minimum_magnitude can be set to about `1e-30_f32`
+    ///  - For F64 the minimum_magnitude can be set to about `2e-301_f64`
     ///
     /// These values should avoid overflowing to Infinity for coordinate values
     /// in the range typically relevant for spatial data (+-40e6) which is the
