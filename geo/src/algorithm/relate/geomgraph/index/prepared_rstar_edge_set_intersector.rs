@@ -1,6 +1,6 @@
 use super::super::{Edge, GeometryGraph, PlanarGraph};
 use super::{EdgeSetIntersector, Segment, SegmentIntersector};
-use crate::{Coordinate, GeoFloat};
+use crate::GeoFloat;
 
 use std::cell::RefCell;
 use std::rc::Rc;
