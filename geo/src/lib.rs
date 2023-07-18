@@ -73,6 +73,8 @@
 //! - **[`GeodesicBearing`](GeodesicBearing)**: Calculate the bearing between points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`ClosestPoint`](ClosestPoint)**: Find the point on a geometry
 //!   closest to a given point
+//! - **[`HaversineClosestPoint`](HaversineClosestPoint)**: Find the point on a geometry
+//!   closest to a given point on a sphere using spherical coordinates and lines being great arcs.
 //! - **[`IsConvex`](IsConvex)**: Calculate the convexity of a
 //!   [`LineString`]
 //! - **[`LineInterpolatePoint`](LineInterpolatePoint)**:

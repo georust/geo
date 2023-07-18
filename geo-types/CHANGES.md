@@ -1,8 +1,12 @@
 # Changes
 
-## Unreleased
+## 0.7.11
+* Bump rstar dependency
+  <https://github.com/georust/geo/pull/1030>
 
-- Add new changes here.
+## 0.7.10
+
+* Implement `From<&Line>` for `LineString`
 
 ## 0.7.9
 
