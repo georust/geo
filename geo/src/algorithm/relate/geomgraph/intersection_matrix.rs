@@ -108,7 +108,7 @@ impl IntersectionMatrix {
         IntersectionMatrix(LocationArray([LocationArray([Dimensions::Empty; 3]); 3]))
     }
 
-    pub fn default() -> Self {
+    pub(crate) fn disjoint() -> Self {
         let mut intersection_matrix =
             IntersectionMatrix(LocationArray([LocationArray([Dimensions::Empty; 3]); 3]));
 

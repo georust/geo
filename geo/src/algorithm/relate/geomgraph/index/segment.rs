@@ -22,7 +22,7 @@ where
     }
 }
 
-impl<'a, F> rstar::RTreeObject for Segment<F>
+impl<F> rstar::RTreeObject for Segment<F>
 where
     F: GeoFloat + rstar::RTreeNum,
 {

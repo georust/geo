@@ -75,7 +75,7 @@ impl<'a, F: GeoFloat> Relate<F, PreparedGeometry<'a, F>> for PreparedGeometry<'a
             (Some(bounding_rect_a), Some(bounding_rect_b))
                 if bounding_rect_a.intersects(&bounding_rect_b) => {}
             _ => {
-                let mut intersection_matrix = IntersectionMatrix::default();
+                let mut intersection_matrix = IntersectionMatrix::disjoint();
                 // since Geometries don't overlap, we can skip most of the work
                 intersection_matrix.compute_disjoint(geom_a, geom_b);
                 return intersection_matrix;

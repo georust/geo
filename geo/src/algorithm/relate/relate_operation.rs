@@ -74,7 +74,7 @@ where
     }
 
     pub(crate) fn compute_intersection_matrix(&mut self) -> IntersectionMatrix {
-        let mut intersection_matrix = IntersectionMatrix::default();
+        let mut intersection_matrix = IntersectionMatrix::disjoint();
 
         use crate::BoundingRect;
         use crate::Intersects;

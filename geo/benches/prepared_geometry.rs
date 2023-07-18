@@ -24,7 +24,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
             for a in &plot_polygons {
                 for b in &zone_polygons {
-                    if criterion::black_box(a.relate(&b).is_intersects()) {
+                    if criterion::black_box(a.relate(b).is_intersects()) {
                         intersects += 1;
                     } else {
                         non_intersects += 1;

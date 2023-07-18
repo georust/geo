@@ -54,7 +54,7 @@ where
         self.tree.as_ref()
     }
 
-    pub fn set_tree<'a>(&mut self, tree: Rc<RTree<Segment<F>>>) {
+    pub fn set_tree(&mut self, tree: Rc<RTree<Segment<F>>>) {
         self.tree = Some(tree);
     }
 

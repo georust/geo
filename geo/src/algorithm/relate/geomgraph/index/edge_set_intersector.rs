@@ -12,9 +12,9 @@ pub(crate) trait EdgeSetIntersector<F: GeoFloat> {
     /// `edges`: the set of edges to check. Mutated to record any intersections.
     /// `check_for_self_intersecting_edges`: if false, an edge is not checked for intersections with itself.
     /// `segment_intersector`: the SegmentIntersector to use
-    fn compute_intersections_within_set<'a>(
+    fn compute_intersections_within_set(
         &self,
-        graph: &GeometryGraph<'a, F>,
+        graph: &GeometryGraph<F>,
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     );

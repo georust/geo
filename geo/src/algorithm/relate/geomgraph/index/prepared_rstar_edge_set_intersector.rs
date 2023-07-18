@@ -13,9 +13,9 @@ impl<F> EdgeSetIntersector<F> for PreparedRStarEdgeSetIntersector
 where
     F: GeoFloat + rstar::RTreeNum,
 {
-    fn compute_intersections_within_set<'a>(
+    fn compute_intersections_within_set(
         &self,
-        graph: &GeometryGraph<'a, F>,
+        graph: &GeometryGraph<F>,
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
@@ -24,7 +24,7 @@ where
         for (segment_0, segment_1) in graph
             .tree()
             .unwrap()
-            .intersection_candidates_with_other_tree(&graph.tree().unwrap())
+            .intersection_candidates_with_other_tree(graph.tree().unwrap())
         {
             if check_for_self_intersecting_edges || segment_0.edge_idx != segment_1.edge_idx {
                 let edge_0 = &edges[segment_0.edge_idx];
@@ -51,7 +51,7 @@ where
         let edges_0 = graph_0.edges();
         let edges_1 = graph_1.edges();
 
-        for (segment_0, segment_1) in tree_0.intersection_candidates_with_other_tree(&tree_1) {
+        for (segment_0, segment_1) in tree_0.intersection_candidates_with_other_tree(tree_1) {
             let edge_0 = &edges_0[segment_0.edge_idx];
             let edge_1 = &edges_1[segment_1.edge_idx];
             segment_intersector.add_intersections(
