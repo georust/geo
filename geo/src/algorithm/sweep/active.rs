@@ -1,10 +1,4 @@
-use std::{
-    borrow::Borrow,
-    cmp::Ordering,
-    collections::BTreeSet,
-    fmt::Debug,
-    ops::{Bound, Deref},
-};
+use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, ops::Deref};
 
 use crate::types::GeoError;
 
@@ -87,44 +81,4 @@ pub(super) trait ActiveSet: Default {
     }
     fn insert_active(&mut self, segment: Self::Seg) -> Result<(), GeoError>;
     fn remove_active(&mut self, segment: &Self::Seg) -> Result<(), GeoError>;
-}
-
-impl<T: PartialOrd + Debug> ActiveSet for BTreeSet<Active<T>> {
-    type Seg = T;
-
-    fn previous_find<F: FnMut(&Active<Self::Seg>) -> bool>(
-        &self,
-        segment: &Self::Seg,
-        mut f: F,
-    ) -> Option<&Active<Self::Seg>> {
-        self.range::<Active<_>, _>((
-            Bound::Unbounded,
-            Bound::Excluded(Active::active_ref(segment)),
-        ))
-        .rev()
-        .find(|&a| f(a))
-    }
-    fn next_find<F: FnMut(&Active<Self::Seg>) -> bool>(
-        &self,
-        segment: &Self::Seg,
-        mut f: F,
-    ) -> Option<&Active<Self::Seg>> {
-        self.range::<Active<_>, _>((
-            Bound::Excluded(Active::active_ref(segment)),
-            Bound::Unbounded,
-        ))
-        .find(|&a| f(a))
-    }
-
-    fn insert_active(&mut self, segment: Self::Seg) -> Result<(), GeoError> {
-        let result = self.insert(Active(segment));
-        debug_assert!(result);
-        Ok(())
-    }
-
-    fn remove_active(&mut self, segment: &Self::Seg) -> Result<(), GeoError> {
-        let result = self.remove(Active::active_ref(segment));
-        debug_assert!(result);
-        Ok(())
-    }
 }
