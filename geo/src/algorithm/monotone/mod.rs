@@ -25,7 +25,7 @@ pub use builder::monotone_subdivision;
 /// # Example
 ///
 /// Construct a `MonotonicPolygons` from a `Polygon`, or a `MultiPolygon` using
-/// `MontonicPolygons::from`, and` query point intersection via the
+/// `MontonicPolygons::from`, and query point intersection via the
 /// `Intersects<Coord>` trait.
 ///
 /// ```rust

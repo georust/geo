@@ -358,11 +358,11 @@ impl<T: GeoNum> Chain<T> {
     }
 
     pub fn finish_with(self, other: Self) -> MonoPoly<T> {
-        // assert!(
-        //     self.0 .0[0] == other.0 .0[0]
-        //         && self.0 .0.last().unwrap() == other.0 .0.last().unwrap(),
-        //     "chains must finish with same start/end points"
-        // );
+        assert!(
+            self.0 .0[0] == other.0 .0[0]
+                && self.0 .0.last().unwrap() == other.0 .0.last().unwrap(),
+            "chains must finish with same start/end points"
+        );
         debug!("finishing {self:?} with {other:?}");
         MonoPoly::new(other.0, self.0)
     }

@@ -50,10 +50,9 @@ impl<T: GeoNum> MonoPoly<T> {
     /// strictly above the bottom chain except at the end-points.  Not all these
     /// conditions are checked, and the algorithm may panic if they are not met.
     pub(super) fn new(top: LineString<T>, bot: LineString<T>) -> Self {
-        // TODO: move these to debug-only asserts
-        assert_eq!(top.0.first(), bot.0.first());
-        assert_eq!(top.0.last(), bot.0.last());
-        assert_ne!(top.0.first(), top.0.last());
+        debug_assert_eq!(top.0.first(), bot.0.first());
+        debug_assert_eq!(top.0.last(), bot.0.last());
+        debug_assert_ne!(top.0.first(), top.0.last());
         let bounds = get_bounding_rect(top.0.iter().chain(bot.0.iter()).cloned()).unwrap();
         Self { top, bot, bounds }
     }
@@ -77,7 +76,8 @@ impl<T: GeoNum> MonoPoly<T> {
 
     /// Get the pair of segments in the chain that intersects the line parallel
     /// to the Y-axis at the given x-coordinate.  Ties are broken by picking the
-    /// segment with smaller x coordinates.
+    /// segment with lower index, i.e. the segment closer to the start of the
+    /// chains.
     pub fn bounding_segment(&self, x: T) -> Option<(Line<T>, Line<T>)> {
         // binary search for the segment that contains the x coordinate.
         let tl_idx = self.top.0.partition_point(|c| c.x < x);
@@ -88,11 +88,17 @@ impl<T: GeoNum> MonoPoly<T> {
         if bl_idx == 0 {
             debug_assert_eq!(tl_idx, 0);
             debug_assert_eq!(self.bot.0[0].x, x);
+            return Some((
+                Line::new(self.top.0[0], self.top.0[1]),
+                Line::new(self.bot.0[0], self.bot.0[1]),
+            ));
+        } else {
+            debug_assert_ne!(tl_idx, 0);
         }
 
         Some((
-            Line::new(self.top.0[tl_idx], self.top.0[tl_idx + 1]),
-            Line::new(self.bot.0[bl_idx], self.bot.0[bl_idx + 1]),
+            Line::new(self.top.0[tl_idx - 1], self.top.0[tl_idx]),
+            Line::new(self.bot.0[bl_idx - 1], self.bot.0[bl_idx]),
         ))
     }
 

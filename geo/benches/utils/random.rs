@@ -1,7 +1,7 @@
 #![allow(unused)]
 use std::f64::consts::PI;
 
-use geo::algorithm::{ConcaveHull, ConvexHull, MapCoords, Rotate};
+use geo::algorithm::{BoundingRect, ConcaveHull, ConvexHull, MapCoords, Rotate};
 use geo::geometry::*;
 
 use rand::{thread_rng, Rng};
@@ -76,29 +76,50 @@ pub fn circular_polygon<R: Rng>(mut rng: R, steps: usize) -> Polygon<f64> {
 pub fn steppy_polygon<R: Rng>(mut rng: R, steps: usize) -> Polygon<f64> {
     let mut ring = Vec::with_capacity(2 * steps);
 
-    let y_step = 1.0;
+    let y_step = 10.0;
     let nudge_std = y_step / 1000.0;
     let mut y = 0.0;
     let normal = Normal::new(0.0, nudge_std * nudge_std).unwrap();
-    let x_shift = 50.0;
+    let x_shift = 100.0;
 
     ring.push((0.0, 0.0).into());
     (0..steps).for_each(|_| {
-        let x: f64 = rng.sample::<f64, _>(Standard) * x_shift / 2.;
+        let x: f64 = rng.sample::<f64, _>(Standard);
         y += y_step;
         ring.push((x, y).into());
     });
-    ring.push((5. * x_shift, y).into());
+    ring.push((x_shift, y).into());
     (0..steps).for_each(|_| {
-        let x: f64 = rng.sample::<f64, _>(Standard) * x_shift;
+        let x: f64 = rng.sample::<f64, _>(Standard);
         y -= y_step;
         // y += normal.sample(&mut rng);
         ring.push((x_shift + x, y).into());
     });
 
-    Polygon::new(LineString(ring), vec![])
+    normalize_polygon(Polygon::new(LineString(ring), vec![]))
 }
 
+/// Normalizes polygon to fit and fill `[-1, 1] X [-1, 1]` square.
+///
+/// Uses `MapCoord` and `BoundingRect`
+pub fn normalize_polygon(poly: Polygon<f64>) -> Polygon<f64> {
+    let bounds = poly.bounding_rect().unwrap();
+    let dims = bounds.max() - bounds.min();
+    let x_scale = 2. / dims.x;
+    let y_scale = 2. / dims.y;
+
+    let x_shift = -bounds.min().x * x_scale - 1.;
+    let y_shift = -bounds.min().y * y_scale - 1.;
+    poly.map_coords(|mut c| {
+        c.x *= x_scale;
+        c.x += x_shift;
+        c.y *= y_scale;
+        c.y += y_shift;
+        c
+    })
+}
+
+#[derive(Debug, Clone)]
 pub struct Samples<T>(Vec<T>);
 impl<T> Samples<T> {
     pub fn sampler<'a>(&'a self) -> impl FnMut() -> &'a T {
@@ -112,5 +133,9 @@ impl<T> Samples<T> {
     }
     pub fn from_fn<F: FnMut() -> T>(size: usize, mut proc: F) -> Self {
         Self((0..size).map(|_| proc()).collect())
+    }
+
+    pub fn map<U, F: FnMut(T) -> U>(self, mut proc: F) -> Samples<U> {
+        Samples(self.0.into_iter().map(proc).collect())
     }
 }
