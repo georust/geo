@@ -120,3 +120,82 @@ impl<'a, T: CoordNum> From<&'a Triangle<T>> for GeometryCow<'a, T> {
         GeometryCow::Triangle(Cow::Borrowed(triangle))
     }
 }
+
+impl<'a, T: CoordNum> From<Point<T>> for GeometryCow<'a, T> {
+    fn from(point: Point<T>) -> Self {
+        GeometryCow::Point(Cow::Owned(point))
+    }
+}
+
+impl<'a, T: CoordNum> From<LineString<T>> for GeometryCow<'a, T> {
+    fn from(line_string: LineString<T>) -> Self {
+        GeometryCow::LineString(Cow::Owned(line_string))
+    }
+}
+
+impl<'a, T: CoordNum> From<Line<T>> for GeometryCow<'a, T> {
+    fn from(line: Line<T>) -> Self {
+        GeometryCow::Line(Cow::Owned(line))
+    }
+}
+
+impl<'a, T: CoordNum> From<Polygon<T>> for GeometryCow<'a, T> {
+    fn from(polygon: Polygon<T>) -> Self {
+        GeometryCow::Polygon(Cow::Owned(polygon))
+    }
+}
+
+impl<'a, T: CoordNum> From<MultiPoint<T>> for GeometryCow<'a, T> {
+    fn from(multi_point: MultiPoint<T>) -> GeometryCow<'a, T> {
+        GeometryCow::MultiPoint(Cow::Owned(multi_point))
+    }
+}
+
+impl<'a, T: CoordNum> From<MultiLineString<T>> for GeometryCow<'a, T> {
+    fn from(multi_line_string: MultiLineString<T>) -> Self {
+        GeometryCow::MultiLineString(Cow::Owned(multi_line_string))
+    }
+}
+
+impl<'a, T: CoordNum> From<MultiPolygon<T>> for GeometryCow<'a, T> {
+    fn from(multi_polygon: MultiPolygon<T>) -> Self {
+        GeometryCow::MultiPolygon(Cow::Owned(multi_polygon))
+    }
+}
+
+impl<'a, T: CoordNum> From<GeometryCollection<T>> for GeometryCow<'a, T> {
+    fn from(geometry_collection: GeometryCollection<T>) -> Self {
+        GeometryCow::GeometryCollection(Cow::Owned(geometry_collection))
+    }
+}
+
+impl<'a, T: CoordNum> From<Rect<T>> for GeometryCow<'a, T> {
+    fn from(rect: Rect<T>) -> Self {
+        GeometryCow::Rect(Cow::Owned(rect))
+    }
+}
+
+impl<'a, T: CoordNum> From<Triangle<T>> for GeometryCow<'a, T> {
+    fn from(triangle: Triangle<T>) -> Self {
+        GeometryCow::Triangle(Cow::Owned(triangle))
+    }
+}
+
+impl<'a, T: CoordNum> From<Geometry<T>> for GeometryCow<'a, T> {
+    fn from(geometry: Geometry<T>) -> Self {
+        match geometry {
+            Geometry::Point(point) => GeometryCow::from(point),
+            Geometry::Line(line) => GeometryCow::from(line),
+            Geometry::LineString(line_string) => GeometryCow::from(line_string),
+            Geometry::Polygon(polygon) => GeometryCow::from(polygon),
+            Geometry::MultiPoint(multi_point) => GeometryCow::from(multi_point),
+            Geometry::MultiLineString(multi_line_string) => GeometryCow::from(multi_line_string),
+            Geometry::MultiPolygon(multi_polygon) => GeometryCow::from(multi_polygon),
+            Geometry::GeometryCollection(geometry_collection) => {
+                GeometryCow::from(geometry_collection)
+            }
+            Geometry::Rect(rect) => GeometryCow::from(rect),
+            Geometry::Triangle(triangle) => GeometryCow::from(triangle),
+        }
+    }
+}

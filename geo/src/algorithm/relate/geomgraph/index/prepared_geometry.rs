@@ -1,18 +1,129 @@
 use super::Segment;
-use crate::geometry::Polygon;
+use crate::geometry::*;
 use crate::relate::geomgraph::index::PreparedRStarEdgeSetIntersector;
 use crate::relate::geomgraph::{GeometryGraph, RobustLineIntersector};
 use crate::GeoFloat;
 use crate::GeometryCow;
+
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use rstar::{RTree, RTreeNum};
 
-// TODO: other types
+impl<'a, F: GeoFloat> From<Point<F>> for PreparedGeometry<'a, F> {
+    fn from(point: Point<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(point))
+    }
+}
+impl<'a, F: GeoFloat> From<Line<F>> for PreparedGeometry<'a, F> {
+    fn from(line: Line<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(line))
+    }
+}
+impl<'a, F: GeoFloat> From<LineString<F>> for PreparedGeometry<'a, F> {
+    fn from(line_string: LineString<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(line_string))
+    }
+}
+impl<'a, F: GeoFloat> From<Polygon<F>> for PreparedGeometry<'a, F> {
+    fn from(polygon: Polygon<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(polygon))
+    }
+}
+impl<'a, F: GeoFloat> From<MultiPoint<F>> for PreparedGeometry<'a, F> {
+    fn from(multi_point: MultiPoint<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(multi_point))
+    }
+}
+impl<'a, F: GeoFloat> From<MultiLineString<F>> for PreparedGeometry<'a, F> {
+    fn from(multi_line_string: MultiLineString<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(multi_line_string))
+    }
+}
+impl<'a, F: GeoFloat> From<MultiPolygon<F>> for PreparedGeometry<'a, F> {
+    fn from(multi_polygon: MultiPolygon<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(multi_polygon))
+    }
+}
+impl<'a, F: GeoFloat> From<Rect<F>> for PreparedGeometry<'a, F> {
+    fn from(rect: Rect<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(rect))
+    }
+}
+impl<'a, F: GeoFloat> From<Triangle<F>> for PreparedGeometry<'a, F> {
+    fn from(triangle: Triangle<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(triangle))
+    }
+}
+impl<'a, F: GeoFloat> From<GeometryCollection<F>> for PreparedGeometry<'a, F> {
+    fn from(geometry_collection: GeometryCollection<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(geometry_collection))
+    }
+}
+impl<'a, F: GeoFloat> From<Geometry<F>> for PreparedGeometry<'a, F> {
+    fn from(geometry: Geometry<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(geometry))
+    }
+}
+
+impl<'a, F: GeoFloat> From<&'a Point<F>> for PreparedGeometry<'a, F> {
+    fn from(point: &'a Point<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(point))
+    }
+}
+impl<'a, F: GeoFloat> From<&'a Line<F>> for PreparedGeometry<'a, F> {
+    fn from(line: &'a Line<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(line))
+    }
+}
+impl<'a, F: GeoFloat> From<&'a LineString<F>> for PreparedGeometry<'a, F> {
+    fn from(line_string: &'a LineString<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(line_string))
+    }
+}
 impl<'a, F: GeoFloat> From<&'a Polygon<F>> for PreparedGeometry<'a, F> {
     fn from(polygon: &'a Polygon<F>) -> Self {
-        use std::cell::RefCell;
-        let geometry = GeometryCow::from(polygon);
+        PreparedGeometry::from(GeometryCow::from(polygon))
+    }
+}
+impl<'a, F: GeoFloat> From<&'a MultiPoint<F>> for PreparedGeometry<'a, F> {
+    fn from(multi_point: &'a MultiPoint<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(multi_point))
+    }
+}
+impl<'a, F: GeoFloat> From<&'a MultiLineString<F>> for PreparedGeometry<'a, F> {
+    fn from(multi_line_string: &'a MultiLineString<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(multi_line_string))
+    }
+}
+impl<'a, F: GeoFloat> From<&'a MultiPolygon<F>> for PreparedGeometry<'a, F> {
+    fn from(multi_polygon: &'a MultiPolygon<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(multi_polygon))
+    }
+}
+impl<'a, F: GeoFloat> From<&'a GeometryCollection<F>> for PreparedGeometry<'a, F> {
+    fn from(geometry_collection: &'a GeometryCollection<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(geometry_collection))
+    }
+}
+impl<'a, F: GeoFloat> From<&'a Rect<F>> for PreparedGeometry<'a, F> {
+    fn from(rect: &'a Rect<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(rect))
+    }
+}
+impl<'a, F: GeoFloat> From<&'a Triangle<F>> for PreparedGeometry<'a, F> {
+    fn from(triangle: &'a Triangle<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(triangle))
+    }
+}
+impl<'a, F: GeoFloat> From<&'a Geometry<F>> for PreparedGeometry<'a, F> {
+    fn from(geometry: &'a Geometry<F>) -> Self {
+        PreparedGeometry::from(GeometryCow::from(geometry))
+    }
+}
+
+impl<'a, F: GeoFloat> From<GeometryCow<'a, F>> for PreparedGeometry<'a, F> {
+    fn from(geometry: GeometryCow<'a, F>) -> Self {
         let mut geometry_graph = GeometryGraph::new(0, geometry);
         let segments: Vec<Segment<F>> = geometry_graph
             .edges()
