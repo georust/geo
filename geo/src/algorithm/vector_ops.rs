@@ -104,15 +104,17 @@ where
     /// Try to find a vector of unit length in the same direction as this
     /// vector.
     ///
-    /// Returns `None` if the magnitude of this vector is less than
-    /// `minimum_magnitude` or the magnitude is not finite.
-    ///  - For f32 the minimum_magnitude can be set to about `1e-30_f32`
-    ///  - For F64 the minimum_magnitude can be set to about `2e-301_f64`
-    ///
-    /// These values should avoid overflowing to Infinity for coordinate values
-    /// in the range typically relevant for spatial data (+-40e6) which is the
-    /// approximate length of the earth's great circle in metres.
-    fn try_normalize(self, minimum_magnitude: Self::Scalar) -> Option<Self>;
+    /// Returns `None` if the result is not finite. This can happen when
+    /// 
+    /// - the vector is really small (or zero length) and the `.magnitude()`
+    ///   calculation has rounded-down to `0.0`
+    /// - the vector is really large and the `.magnitude()` has rounded-up
+    ///   or 'overflowed' to `f64::INFINITY`
+    /// - Either x or y are `f64::NAN` or `f64::INFINITY`
+    fn try_normalize(self) -> Option<Self>;
+
+    /// Returns true if both the x and y components are finite
+    fn is_finite(self) -> bool;
 }
 
 impl<T> Vector2DOps for Coord<T>
@@ -151,23 +153,30 @@ where
         }
     }
 
-    fn try_normalize(self, minimum_magnitude: Self::Scalar) -> Option<Self> {
+    fn try_normalize(self) -> Option<Self> {
         let magnitude = self.magnitude();
-        if magnitude.is_finite() && magnitude.abs() > minimum_magnitude {
-            Some(self / magnitude)
+        let result = self / magnitude;
+        // Both the result AND the magnitude must be finite they are finite
+        // Otherwise very large vectors overflow magnitude to Infinity,
+        // and the after the division the result would be coord!{x:0.0,y:0.0}
+        // Note we don't need to check if magnitude is zero, because after the division
+        // that would have made result non-finite or NaN anyway.
+        if result.is_finite() && magnitude.is_finite() {
+            Some(result)
         } else {
             None
         }
+    }
+
+    fn is_finite(self) -> bool {
+        self.x.is_finite() && self.y.is_finite()
     }
 }
 
 #[cfg(test)]
 mod test {
-    // crate dependencies
-    use crate::coord;
-
-    // private imports
     use super::Vector2DOps;
+    use crate::coord;
 
     #[test]
     fn test_cross_product() {
@@ -288,60 +297,71 @@ mod test {
     }
 
     #[test]
-    fn test_normalize() {
-        let f64_minimum_threshold = 2e-301f64;
+    fn test_try_normalize() {
+        
         // Already Normalized
         let a = coord! {
             x: 1.0,
             y: 0.0
         };
-        assert_relative_eq!(a.try_normalize(f64_minimum_threshold).unwrap(), a);
+        assert_relative_eq!(a.try_normalize().unwrap(), a);
 
         // Already Normalized
         let a = coord! {
             x: 1.0 / f64::sqrt(2.0),
             y: -1.0 / f64::sqrt(2.0)
         };
-        assert_relative_eq!(a.try_normalize(f64_minimum_threshold).unwrap(), a);
+        assert_relative_eq!(a.try_normalize().unwrap(), a);
 
         // Non trivial example
         let a = coord! { x: -10.0, y: 8.0 };
         assert_relative_eq!(
-            a.try_normalize(f64_minimum_threshold).unwrap(),
+            a.try_normalize().unwrap(),
             coord! { x: -10.0, y: 8.0 } / f64::sqrt(10.0 * 10.0 + 8.0 * 8.0)
         );
+    }
 
-        // Very Small Input - Fails because below threshold
+    #[test]
+    fn test_try_normalize_edge_cases() {
+        use float_next_after::NextAfter;
+
+        // The following tests demonstrate some of the floating point
+        // edge cases that can cause try_normalize to return None.
+
+        // Zero vector - Normalize returns None
+        let a = coord! { x: 0.0, y: 0.0 };
+        assert_eq!(a.try_normalize(), None);
+
+        // Very Small Input - Normalize returns None because of
+        // rounding-down to zero in the .magnitude() calculation
         let a = coord! {
             x: 0.0,
-            y: f64_minimum_threshold / 2.0
+            y: 1e-301_f64
         };
-        assert_eq!(a.try_normalize(f64_minimum_threshold), None);
+        assert_eq!(a.try_normalize(), None);
 
-        // Zero vector - Fails because below threshold
-        let a = coord! { x: 0.0, y: 0.0 };
-        assert_eq!(a.try_normalize(f64_minimum_threshold), None);
-
-        // Large vector Pass;
-        // Note: this fails because the magnitude calculation overflows to infinity
-        //       this could be avoided my modifying the implementation to use scaling be avoided using scaling
+        // A large vector where try_normalize returns Some
+        // Because the magnitude is f64::MAX (Just before overflow to f64::INFINITY)
         let a = coord! {
             x: f64::sqrt(f64::MAX/2.0),
             y: f64::sqrt(f64::MAX/2.0)
         };
-        assert!(a.try_normalize(f64_minimum_threshold).is_some());
+        assert!(a.try_normalize().is_some());
 
-        // Large Vector Fail;
-        // Note: This test uses the unstable float_next_up_down feature
-        // let a = coord! { x: f64::sqrt(f64::MAX/2.0), y: f64::next_up(f64::sqrt(f64::MAX/2.0)) };
-        // assert!(a.try_normalize(1e-10f64).is_none());
+        // A large vector where try_normalize returns None
+        // because the magnitude is just above f64::MAX
+        let a = coord! {
+            x: f64::sqrt(f64::MAX / 2.0),
+            y: f64::sqrt(f64::MAX / 2.0).next_after(f64::INFINITY)
+        };
+        assert_eq!(a.try_normalize(), None);
 
-        // NaN
+        // Where one of the components is NaN try_normalize returns None
         let a = coord! { x: f64::NAN, y: 0.0 };
-        assert_eq!(a.try_normalize(f64_minimum_threshold), None);
+        assert_eq!(a.try_normalize(), None);
 
-        // Infinite
+        // Where one of the components is Infinite try_normalize returns None
         let a = coord! { x: f64::INFINITY, y: 0.0 };
-        assert_eq!(a.try_normalize(f64_minimum_threshold), None);
+        assert_eq!(a.try_normalize(), None);
     }
 }
