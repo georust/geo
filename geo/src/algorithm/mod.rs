@@ -120,6 +120,10 @@ pub use geodesic_intermediate::GeodesicIntermediate;
 pub mod geodesic_length;
 pub use geodesic_length::GeodesicLength;
 
+/// Calculate the Hausdorff distance between two geometries.
+pub mod hausdorff_distance;
+pub use hausdorff_distance::HausdorffDistance;
+
 /// Calculate the bearing to another `Point`, in degrees.
 pub mod haversine_bearing;
 pub use haversine_bearing::HaversineBearing;
