@@ -6,7 +6,11 @@ use geo_types::*;
 
 /// Determine the distance between two geometries using the [Hausdorff distance formula].
 ///
-/// [haversine formula]: https://en.wikipedia.org/wiki/Hausdorff_distance
+/// Hausdorff distance is used to compare two point sets. It measures the maximum euclidean 
+/// distance of a point in one set to the nearest point in another set. Hausdorff distance
+/// is often used to measure the amount of mismatch between two sets. ` 
+/// 
+/// [Hausdorff distance formula]: https://en.wikipedia.org/wiki/Hausdorff_distance
 pub trait HausdorffDistance<T, Rhs = Self> {
     fn hausdorff_distance(&self, rhs: &Rhs) -> T;
 }
