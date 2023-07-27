@@ -6,6 +6,7 @@ on:
       - trying
       - release/**
   pull_request:
+  merge_group:
   schedule: [cron: "45 6 * * *"]
 
 name: Run tests
