@@ -79,8 +79,7 @@ impl_hausdorff_distance_coord_iter! {
 }
 
 impl_hausdorff_distance_coord_iter! {
-    Rect,
-    [
+    Rect, [
         Line, Rect, Triangle, Point, MultiPoint,
         LineString, MultiLineString,
         Polygon, MultiPolygon,
