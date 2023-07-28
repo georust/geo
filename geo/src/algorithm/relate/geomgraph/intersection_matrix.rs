@@ -263,6 +263,15 @@ impl IntersectionMatrix {
     }
 }
 
+/// Build an IntersectionMatrix based on a string specification.
+/// ```
+/// use geo::algorithm::relate::IntersectionMatrix;
+/// use std::str::FromStr;
+///
+/// let intersection_matrix = IntersectionMatrix::from_str("212101212").expect("valid de-9im specification");
+/// assert!(intersection_matrix.is_intersects());
+/// assert!(!intersection_matrix.is_contains());
+/// ```
 impl std::str::FromStr for IntersectionMatrix {
     type Err = InvalidInputError;
     fn from_str(str: &str) -> Result<Self, Self::Err> {
