@@ -1,5 +1,11 @@
 # Changes
 
+## Unreleased
+
+* Add `matches` method to IntersectionMatrix for ergonomic de-9im comparisons.
+  <https://github.com/georust/geo/pull/1043>
+
+
 ## 0.26.0
 
 * Implement "Closest Point" from a `Point` on a `Geometry` using spherical geometry. <https://github.com/georust/geo/pull/958>

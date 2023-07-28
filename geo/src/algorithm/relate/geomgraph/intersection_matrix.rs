@@ -1,5 +1,8 @@
 use crate::{coordinate_position::CoordPos, dimensions::Dimensions};
 
+use crate::geometry_cow::GeometryCow::Point;
+use std::str::FromStr;
+
 /// Models a *Dimensionally Extended Nine-Intersection Model (DE-9IM)* matrix.
 ///
 /// DE-9IM matrix values (such as "212FF1FF2") specify the topological relationship between
@@ -261,6 +264,52 @@ impl IntersectionMatrix {
     pub fn get(&self, lhs: CoordPos, rhs: CoordPos) -> Dimensions {
         self.0[lhs][rhs]
     }
+
+    /// Does the intersection matrix match the provided de-9im specification string?
+    ///
+    /// A de-9im spec string must be 9 characters long, and each character
+    /// must be one of the following:
+    ///
+    /// - 0: matches a 0-dimensional (point) intersection
+    /// - 1: matches a 1-dimensional (line) intersection
+    /// - 2: matches a 2-dimensional (area) intersection
+    /// - f or F: matches only empty dimensions
+    /// - t or T: matches anything non-empty
+    /// - *: matches anything
+    ///
+    /// ```
+    /// use geo::algorithm::Relate;
+    /// use geo::geometry::Polygon;
+    /// use wkt::TryFromWkt;
+    ///
+    /// let a = Polygon::<f64>::try_from_wkt_str("POLYGON((0 0,4 0,4 4,0 4,0 0))").expect("valid WKT");
+    /// let b = Polygon::<f64>::try_from_wkt_str("POLYGON((1 1,4 0,4 4,0 4,1 1))").expect("valid WKT");
+    /// let im = a.relate(&b);
+    /// assert!(im.matches("212F11FF2").expect("valid de-9im spec"));
+    /// assert!(im.matches("TTT***FF2").expect("valid de-9im spec"));
+    /// assert!(!im.matches("TTT***FFF").expect("valid de-9im spec"));
+    /// ```
+    pub fn matches(&self, spec: &str) -> Result<bool, InvalidInputError> {
+        if spec.len() != 9 {
+            return Err(InvalidInputError::new(format!(
+                "de-9im specification must be exactly 9 characters. Got {len}",
+                len = spec.len()
+            )));
+        }
+
+        let mut chars = spec.chars();
+        for a in &[CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside] {
+            for b in &[CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside] {
+                let dim_spec = dimension_matcher::DimensionMatcher::try_from(
+                    chars.next().expect("already validated length is 9"),
+                )?;
+                if !dim_spec.matches(self.0[*a][*b]) {
+                    return Ok(false);
+                }
+            }
+        }
+        Ok(true)
+    }
 }
 
 /// Build an IntersectionMatrix based on a string specification.
@@ -272,11 +321,83 @@ impl IntersectionMatrix {
 /// assert!(intersection_matrix.is_intersects());
 /// assert!(!intersection_matrix.is_contains());
 /// ```
-impl std::str::FromStr for IntersectionMatrix {
+impl FromStr for IntersectionMatrix {
     type Err = InvalidInputError;
     fn from_str(str: &str) -> Result<Self, Self::Err> {
         let mut im = IntersectionMatrix::empty();
         im.set_at_least_from_string(str)?;
         Ok(im)
+    }
+}
+
+pub(crate) mod dimension_matcher {
+    use super::Dimensions;
+    use super::InvalidInputError;
+
+    /// A single letter from a de-9im matching specification like "1*T**FFF*"
+    pub(crate) enum DimensionMatcher {
+        Anything,
+        NonEmpty,
+        Exact(Dimensions),
+    }
+
+    impl DimensionMatcher {
+        pub fn matches(&self, dim: Dimensions) -> bool {
+            match (self, dim) {
+                (Self::Anything, _) => true,
+                (DimensionMatcher::NonEmpty, d) => d != Dimensions::Empty,
+                (DimensionMatcher::Exact(a), b) => a == &b,
+            }
+        }
+    }
+
+    impl TryFrom<char> for DimensionMatcher {
+        type Error = InvalidInputError;
+
+        fn try_from(value: char) -> Result<Self, Self::Error> {
+            Ok(match value {
+                '*' => Self::Anything,
+                't' | 'T' => Self::NonEmpty,
+                'f' | 'F' => Self::Exact(Dimensions::Empty),
+                '0' => Self::Exact(Dimensions::ZeroDimensional),
+                '1' => Self::Exact(Dimensions::OneDimensional),
+                '2' => Self::Exact(Dimensions::TwoDimensional),
+                _ => {
+                    return Err(InvalidInputError::new(format!(
+                        "invalid de-9im specification character: {value}"
+                    )))
+                }
+            })
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn subject() -> IntersectionMatrix {
+        // Topologically, this is a nonsense IM
+        IntersectionMatrix::from_str("F00111222").unwrap()
+    }
+
+    #[test]
+    fn matches_exactly() {
+        assert!(subject().matches("F00111222").unwrap());
+    }
+
+    #[test]
+    fn doesnt_match() {
+        assert!(!subject().matches("222222222").unwrap());
+    }
+
+    #[test]
+    fn matches_truthy() {
+        assert!(subject().matches("FTTTTTTTT").unwrap());
+    }
+
+    #[test]
+    fn matches_wildcard() {
+        assert!(subject().matches("F0011122*").unwrap());
     }
 }
