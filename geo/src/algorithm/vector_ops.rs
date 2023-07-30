@@ -8,9 +8,6 @@ use crate::{Coord, CoordFloat, CoordNum};
 /// This trait is intended for internal use within the geo crate as a way to
 /// bring together the various hand-crafted linear algebra operations used
 /// throughout other algorithms and attached to various structs.
-///
-///
-
 pub trait Vector2DOps<Rhs = Self>
 where
     Self: Sized,
@@ -105,7 +102,7 @@ where
     /// vector.
     ///
     /// Returns `None` if the result is not finite. This can happen when
-    /// 
+    ///
     /// - the vector is really small (or zero length) and the `.magnitude()`
     ///   calculation has rounded-down to `0.0`
     /// - the vector is really large and the `.magnitude()` has rounded-up
@@ -298,7 +295,6 @@ mod test {
 
     #[test]
     fn test_try_normalize() {
-        
         // Already Normalized
         let a = coord! {
             x: 1.0,
