@@ -1,5 +1,9 @@
 # Changes
 
+## Development version
+
+* Add `HausdorffDistance` algorithm trait to calculate the Hausdorff distance between any two geometries. <https://github.com/georust/geo/pull/1041>
+
 ## 0.26.0
 
 * Implement "Closest Point" from a `Point` on a `Geometry` using spherical geometry. <https://github.com/georust/geo/pull/958>
