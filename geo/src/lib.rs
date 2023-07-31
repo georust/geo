@@ -65,7 +65,7 @@
 //! - **[`SimplifyIdx`](SimplifyIdx)**: Calculate a simplified geometry using the Ramer–Douglas–Peucker algorithm, returning coordinate indices
 //! - **[`SimplifyVw`](SimplifyVw)**: Simplify a geometry using the Visvalingam-Whyatt algorithm
 //! - **[`SimplifyVwPreserve`](SimplifyVwPreserve)**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
-//! - **[`SimplifyVwIdx`](SimplifyVwIdx)**: Calculate a simplified geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm, returning coordinate indices
+//! - **[`SimplifyVwIdx`](SimplifyVwIdx)**: Calculate a simplified geometry using the Visvalingam-Whyatt algorithm, returning coordinate indices
 //!
 //! ## Query
 //!
@@ -73,6 +73,8 @@
 //! - **[`GeodesicBearing`](GeodesicBearing)**: Calculate the bearing between points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`ClosestPoint`](ClosestPoint)**: Find the point on a geometry
 //!   closest to a given point
+//! - **[`HaversineClosestPoint`](HaversineClosestPoint)**: Find the point on a geometry
+//!   closest to a given point on a sphere using spherical coordinates and lines being great arcs.
 //! - **[`IsConvex`](IsConvex)**: Calculate the convexity of a
 //!   [`LineString`]
 //! - **[`LineInterpolatePoint`](LineInterpolatePoint)**:

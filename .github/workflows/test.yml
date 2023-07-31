@@ -43,12 +43,12 @@ jobs:
       matrix:
         container_image:
           # Use the latest stable version. No need for older versions.
-          - "georust/geo-ci:rust-1.66"
+          - "georust/geo-ci:proj-9.2.1-rust-1.70"
     container:
       image: ${{ matrix.container_image }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - run: rustup component add rustfmt clippy
       - run: cargo fmt --all -- --check
       - run: cargo clippy --all-features --all-targets -- -Dwarnings
@@ -67,15 +67,15 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:rust-1.63"
+          - "georust/geo-ci:proj-9.2.1-rust-1.63"
           # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:rust-1.65"
-          - "georust/geo-ci:rust-1.66"
+          - "georust/geo-ci:proj-9.2.1-rust-1.69"
+          - "georust/geo-ci:proj-9.2.1-rust-1.70"
     container:
       image: ${{ matrix.container_image }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - run: rustup target add thumbv7em-none-eabihf
       - run: cargo check --all-targets --no-default-features
       - run: cargo check --lib --target thumbv7em-none-eabihf --no-default-features -F use-rstar_0_9,serde
@@ -95,15 +95,15 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:rust-1.63"
+          - "georust/geo-ci:proj-9.2.1-rust-1.63"
           # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:rust-1.65"
-          - "georust/geo-ci:rust-1.66"
+          - "georust/geo-ci:proj-9.2.1-rust-1.69"
+          - "georust/geo-ci:proj-9.2.1-rust-1.70"
     container:
       image: ${{ matrix.container_image }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - run: cargo check --all-targets --no-default-features
       # we don't want to test `proj-network` because it only enables the `proj` feature
       - run: cargo test --features "use-proj use-serde"
@@ -122,15 +122,15 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:rust-1.63"
+          - "georust/geo-ci:proj-9.2.1-rust-1.63"
           # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:rust-1.65"
-          - "georust/geo-ci:rust-1.66"
+          - "georust/geo-ci:proj-9.2.1-rust-1.69"
+          - "georust/geo-ci:proj-9.2.1-rust-1.70"
     container:
       image: ${{ matrix.container_image }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - run: cargo check --all-targets
       - run: cargo test
 
@@ -145,12 +145,12 @@ jobs:
       matrix:
         container_image:
           # Fuzz only on latest
-          - "georust/geo-ci:rust-1.66"
+          - "georust/geo-ci:proj-9.2.1-rust-1.70"
     container:
       image: ${{ matrix.container_image }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - run: cargo build --bins
 
   bench:
@@ -158,8 +158,8 @@ jobs:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     container:
-      image: georust/geo-ci:rust-1.66
+      image: georust/geo-ci:proj-9.2.1-rust-1.70
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - run: cargo bench --no-run

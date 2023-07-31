@@ -1,6 +1,13 @@
 # Changes
 
-## Unreleased
+## 0.26.0
+
+* Implement "Closest Point" from a `Point` on a `Geometry` using spherical geometry. <https://github.com/georust/geo/pull/958>
+* Bump CI containers to use libproj 9.2.1
+* **BREAKING**: Bump rstar and robust dependencies
+  <https://github.com/georust/geo/pull/1030>
+
+## 0.25.1
 
 - Add `TriangulateEarcut` algorithm trait to triangulate polygons with the earcut algorithm.
   - <https://github.com/georust/geo/pull/1007>
