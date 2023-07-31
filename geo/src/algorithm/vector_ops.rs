@@ -111,6 +111,9 @@ where
     fn try_normalize(self) -> Option<Self>;
 
     /// Returns true if both the x and y components are finite
+    // Annotation to disable bad clippy lint; It is not good to use
+    // `&self` as clippy suggests since Coord is Copy
+    #[allow(clippy::wrong_self_convention)]
     fn is_finite(self) -> bool;
 }
 
