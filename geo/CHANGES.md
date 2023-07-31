@@ -11,6 +11,8 @@
 
 - Add `TriangulateEarcut` algorithm trait to triangulate polygons with the earcut algorithm.
   - <https://github.com/georust/geo/pull/1007>
+- Add `Vector2DOps` trait to algorithims module and implemented it for `Coord<T::CoordFloat>`
+  - <https://github.com/georust/geo/pull/1025>
 
 ## 0.25.0
 
