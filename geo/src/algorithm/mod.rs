@@ -267,3 +267,7 @@ pub mod sweep;
 pub mod outlier_detection;
 
 pub use outlier_detection::OutlierDetection;
+
+/// Monotonic polygon subdivision
+pub mod monotone;
+pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};

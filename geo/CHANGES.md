@@ -18,6 +18,11 @@
 - Add `Vector2DOps` trait to algorithims module and implemented it for `Coord<T::CoordFloat>`
   - <https://github.com/georust/geo/pull/1025>
 
+- Add a fast point-in-polygon query datastructure that pre-processes a `Polygon` as a set of monotone polygons. Ref. `crate::algorithm::MonotonicPolygons`.
+  - <https://github.com/georust/geo/pull/1018>
+
+
+
 ## 0.25.0
 
 - Added `CrossTrackDistance` trait to calculate the distance from a point

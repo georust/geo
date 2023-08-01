@@ -19,10 +19,10 @@ use std::{
 /// compiler?).
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(transparent)]
-pub(super) struct Active<T>(pub(super) T);
+pub(in crate::algorithm) struct Active<T>(pub(in crate::algorithm) T);
 
 impl<T> Active<T> {
-    pub(super) fn active_ref(t: &T) -> &Active<T> {
+    pub(in crate::algorithm) fn active_ref(t: &T) -> &Active<T> {
         unsafe { std::mem::transmute(t) }
     }
 }
@@ -65,7 +65,7 @@ impl<T: PartialOrd + Debug> PartialOrd for Active<T> {
 }
 
 /// Trait abstracting a container of active segments.
-pub(super) trait ActiveSet: Default {
+pub(in crate::algorithm) trait ActiveSet: Default {
     type Seg;
     fn previous_find<F: FnMut(&Active<Self::Seg>) -> bool>(
         &self,

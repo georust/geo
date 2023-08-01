@@ -526,6 +526,10 @@ mod test {
             ],
         ];
         // Value from shapely
-        assert_relative_eq!(poly.unsigned_area(), 0.006547948219252177, max_relative = 0.0001);
+        assert_relative_eq!(
+            poly.unsigned_area(),
+            0.006547948219252177,
+            max_relative = 0.0001
+        );
     }
 }

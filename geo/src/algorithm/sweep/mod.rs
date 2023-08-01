@@ -14,7 +14,7 @@ mod segment;
 use segment::{Segment, SplitSegments};
 
 mod active;
-use active::{Active, ActiveSet};
+pub(super) use active::{Active, ActiveSet};
 
 mod im_segment;
 use im_segment::IMSegment;

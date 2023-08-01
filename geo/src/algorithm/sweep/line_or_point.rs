@@ -3,6 +3,7 @@ use std::{cmp::Ordering, ops::Deref};
 use super::SweepPoint;
 use crate::{
     line_intersection::line_intersection, Coord, GeoFloat, GeoNum, Kernel, Line, LineIntersection,
+    Orientation,
 };
 
 /// Either a line segment or a point.
@@ -104,6 +105,10 @@ impl<T: GeoNum> LineOrPoint<T> {
 
     pub fn new(left: SweepPoint<T>, right: SweepPoint<T>) -> Self {
         Self { left, right }
+    }
+
+    pub fn orient2d(&self, other: Coord<T>) -> Orientation {
+        T::Ker::orient2d(*self.left, *self.right, other)
     }
 }
 
