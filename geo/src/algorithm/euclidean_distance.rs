@@ -397,18 +397,117 @@ where
     }
 }
 
-// ┌─────────────────────────────┐
-// │ Shared implementations      │
-// └─────────────────────────────┘
+// ┌────────────────────────────────────────┐
+// │ Implementations for Rect and Triangle  │
+// └────────────────────────────────────────┘
 
-/// Implements EuclideanDistance between Geometry<T> and specific geometry types
-/// by using the Geometry's inner type's implementation.
-macro_rules! impl_euclidean_distance_to_geometry {
+/// Implements Euclidean distance for Triangles and Rects by converting them to polygons.
+macro_rules! impl_euclidean_distance_for_polygonlike_geometry {
+  ($for:ty,  [$($target:ty),*]) => {
+      $(
+          impl<T> EuclideanDistance<T, $target> for $for
+          where
+              T: GeoFloat + Signed + RTreeNum + FloatConst,
+          {
+              fn euclidean_distance(&self, other: &$target) -> T {
+                  other.euclidean_distance(&self.to_polygon())
+              }
+          }
+      )*
+  };
+}
+
+impl_euclidean_distance_for_polygonlike_geometry!(Triangle<T>,  [Point<T>, MultiPoint<T>, Line<T>, LineString<T>, MultiLineString<T>, Polygon<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_euclidean_distance_for_polygonlike_geometry!(Rect<T>,      [Point<T>, MultiPoint<T>, Line<T>, LineString<T>, MultiLineString<T>, Polygon<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+
+/// Implements Euclidean distance for other geometry types to Triangles and Rects by converting the Triangle or Rect to a polygon.
+macro_rules! impl_euclidean_distance_to_polygonlike_geometry {
+  ($for:ty,  [$($target:ty),*]) => {
+      $(
+          impl<T> EuclideanDistance<T, $target> for $for
+          where
+              T: GeoFloat + Signed + RTreeNum + FloatConst,
+          {
+              fn euclidean_distance(&self, other: &$target) -> T {
+                  other.to_polygon().euclidean_distance(self)
+              }
+          }
+      )*
+  };
+}
+
+impl_euclidean_distance_to_polygonlike_geometry!(Point<T>,               [Rect<T>, Triangle<T>]);
+impl_euclidean_distance_to_polygonlike_geometry!(MultiPoint<T>,          [Rect<T>, Triangle<T>]);
+impl_euclidean_distance_to_polygonlike_geometry!(Line<T>,                [Rect<T>, Triangle<T>]);
+impl_euclidean_distance_to_polygonlike_geometry!(LineString<T>,          [Rect<T>, Triangle<T>]);
+impl_euclidean_distance_to_polygonlike_geometry!(MultiLineString<T>,     [Rect<T>, Triangle<T>]);
+impl_euclidean_distance_to_polygonlike_geometry!(Polygon<T>,             [Rect<T>, Triangle<T>]);
+impl_euclidean_distance_to_polygonlike_geometry!(MultiPolygon<T>,        [Rect<T>, Triangle<T>]);
+impl_euclidean_distance_to_polygonlike_geometry!(GeometryCollection<T>,  [Rect<T>, Triangle<T>]);
+
+// ┌───────────────────────────────────────────┐
+// │ Implementations for multi geometry types  │
+// └───────────────────────────────────────────┘
+
+/// Euclidean distance implementation for multi geometry types.
+macro_rules! impl_euclidean_distance_for_iter_geometry {
+  ($for:ty,  [$($target:ty),*]) => {
+      $(
+          impl<T> EuclideanDistance<T, $target> for $for
+          where
+              T: GeoFloat + FloatConst + RTreeNum,
+          {
+              fn euclidean_distance(&self, target: &$target) -> T {
+                  self
+                    .iter()
+                    .map(|g| g.euclidean_distance(target))
+                    .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
+              }
+          }
+      )*
+  };
+}
+
+impl_euclidean_distance_for_iter_geometry!(MultiPoint<T>,         [Point<T>, MultiPoint<T>, Line<T>, LineString<T>, MultiLineString<T>, Polygon<T>, MultiPolygon<T>, GeometryCollection<T>]);
+impl_euclidean_distance_for_iter_geometry!(MultiLineString<T>,    [Point<T>, MultiPoint<T>, Line<T>, LineString<T>, MultiLineString<T>, Polygon<T>, MultiPolygon<T>, GeometryCollection<T>]);
+impl_euclidean_distance_for_iter_geometry!(MultiPolygon<T>,       [Point<T>, MultiPoint<T>, Line<T>, LineString<T>, MultiLineString<T>, Polygon<T>, MultiPolygon<T>, GeometryCollection<T>]);
+impl_euclidean_distance_for_iter_geometry!(GeometryCollection<T>, [Point<T>, MultiPoint<T>, Line<T>, LineString<T>, MultiLineString<T>, Polygon<T>, MultiPolygon<T>, GeometryCollection<T>]);
+
+/// Euclidean distance implementation for other geometry types to multi geometry types,
+/// using the multi geometry type's implementation.
+macro_rules! impl_euclidean_distance_from_iter_geometry {
+  ($for:ty,  [$($target:ty),*]) => {
+      $(
+        impl<T> EuclideanDistance<T, $target> for $for
+        where
+            T: GeoFloat + FloatConst + RTreeNum
+        {
+          fn euclidean_distance(&self, target: &$target) -> T {
+            target.euclidean_distance(self)
+          }
+        }
+      )*
+  };
+}
+
+// This macro is used to implement EuclideanDistance to multi geometry types for non-multi geometry types.
+// Rect and Triangle are omitted here because those implementations are included in the Rect and Triangle section above.
+impl_euclidean_distance_from_iter_geometry!(Point<T>,         [MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>]);
+impl_euclidean_distance_from_iter_geometry!(Line<T>,          [MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>]);
+impl_euclidean_distance_from_iter_geometry!(LineString<T>,    [MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>]);
+impl_euclidean_distance_from_iter_geometry!(Polygon<T>,       [MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>]);
+
+// ┌─────────────────────────────────────────────────────────┐
+// │ Implementation to Geometry<T> for every geometry type   │
+// └─────────────────────────────────────────────────────────┘
+
+/// Euclidean distance implementation for every specific Geometry type to Geometry<T>.
+macro_rules! impl_euclidean_distance_to_geometry_for_specific {
   ([$($for:ty),*]) => {
       $(
           impl<T> EuclideanDistance<T, Geometry<T>> for $for
           where
-              T: GeoFloat + FloatConst + RTreeNum + FloatConst,
+              T: GeoFloat + FloatConst + RTreeNum,
           {
               fn euclidean_distance(&self, geom: &Geometry<T>) -> T {
                   match geom {
@@ -425,220 +524,40 @@ macro_rules! impl_euclidean_distance_to_geometry {
                   }
               }
           }
-
-          impl<T> EuclideanDistance<T, $for> for Geometry<T>
-          where
-              T: GeoFloat + FloatConst + RTreeNum + FloatConst,
-          {
-              fn euclidean_distance(&self, other: &$for) -> T {
-                  match self {
-                      Geometry::Point(p) => p.euclidean_distance(other),
-                      Geometry::Line(l) => l.euclidean_distance(other),
-                      Geometry::LineString(ls) => ls.euclidean_distance(other),
-                      Geometry::Polygon(p) => p.euclidean_distance(other),
-                      Geometry::MultiPoint(mp) => mp.euclidean_distance(other),
-                      Geometry::MultiLineString(mls) => mls.euclidean_distance(other),
-                      Geometry::MultiPolygon(mp) => mp.euclidean_distance(other),
-                      Geometry::GeometryCollection(gc) => gc.euclidean_distance(other),
-                      Geometry::Rect(r) => r.euclidean_distance(other),
-                      Geometry::Triangle(t) => t.euclidean_distance(other),
-                  }
-              }
-          }
       )*
   };
 }
 
-impl_euclidean_distance_to_geometry!([Point<T>, Line<T>, LineString<T>, Polygon<T>, MultiPolygon<T>, Triangle<T>, Rect<T>, GeometryCollection<T>]);
-
-/// Euclidean distance implementation for multi geometry types.
-macro_rules! impl_euclidean_distance_for_iter_geometry {
-  ($for:ty,  [$($target:ty),*]) => {
-      $(
-          impl<T> EuclideanDistance<T, $target> for $for
-          where
-              T: GeoFloat + FloatConst + RTreeNum + FloatConst,
-          {
-              fn euclidean_distance(&self, target: &$target) -> T {
-                  self
-                    .iter()
-                    .map(|g| g.euclidean_distance(target))
-                    .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
-              }
-          }
-
-          impl<T> EuclideanDistance<T, $for> for $target
-          where
-              T: GeoFloat + FloatConst + RTreeNum + FloatConst,
-          {
-              fn euclidean_distance(&self, other: &$for) -> T {
-                  other.euclidean_distance(self)
-              }
-          }
-      )*
-  };
-  ($for:ty) => {
-    impl<T> EuclideanDistance<T, $for> for $for
-    where
-        T: GeoFloat + FloatConst + RTreeNum + FloatConst,
-    {
-        fn euclidean_distance(&self, other: &$for) -> T {
-            self
-              .iter()
-              .map(|g| g.euclidean_distance(other))
-              .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
-        }
-    }
-  };
-}
-
-impl_euclidean_distance_for_iter_geometry!(MultiPoint<T>, [Point<T>, Line<T>, LineString<T>, MultiLineString<T>, Polygon<T>, MultiPolygon<T>, GeometryCollection<T>]);
-impl_euclidean_distance_for_iter_geometry!(MultiLineString<T>, [Point<T>, Line<T>, LineString<T>, Polygon<T>, MultiPolygon<T>, GeometryCollection<T>]);
-impl_euclidean_distance_for_iter_geometry!(MultiPolygon<T>, [Point<T>, Line<T>, LineString<T>, Polygon<T>, GeometryCollection<T>]);
-impl_euclidean_distance_for_iter_geometry!(GeometryCollection<T>, [Point<T>, Line<T>, LineString<T>, Polygon<T>]);
-impl_euclidean_distance_for_iter_geometry!(MultiPoint<T>);
-impl_euclidean_distance_for_iter_geometry!(MultiLineString<T>);
-impl_euclidean_distance_for_iter_geometry!(MultiPolygon<T>);
-impl_euclidean_distance_for_iter_geometry!(GeometryCollection<T>);
-
-/// Implements Euclidean distance for Triangles and Rects by converting them to polygons.
-macro_rules! impl_euclidean_distance_for_polygonlike_geometry {
-  ($for:ty,  [$($target:ty),*]) => {
-      $(
-          impl<T> EuclideanDistance<T, $target> for $for
-          where
-              T: GeoFloat + Signed + RTreeNum + FloatConst,
-          {
-              fn euclidean_distance(&self, other: &$target) -> T {
-                  other.euclidean_distance(&self.to_polygon())
-              }
-          }
-
-          impl<T> EuclideanDistance<T, $for> for $target
-          where
-              T: GeoFloat + Signed + RTreeNum + FloatConst,
-          {
-              fn euclidean_distance(&self, other: &$for) -> T {
-                  self.euclidean_distance(&other.to_polygon())
-              }
-          }
-      )*
-  };
-  ($for:ty) => {
-    impl<T> EuclideanDistance<T, $for> for $for
-    where
-        T: GeoFloat + FloatConst + RTreeNum + FloatConst,
-    {
-        fn euclidean_distance(&self, other: &$for) -> T {
-            other.euclidean_distance(&self.to_polygon())
-        }
-    }
-  };
-}
-
-impl_euclidean_distance_for_polygonlike_geometry!(Triangle<T>, [Point<T>, MultiPoint<T>, Line<T>, LineString<T>, MultiLineString<T>, Polygon<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>]);
-impl_euclidean_distance_for_polygonlike_geometry!(Rect<T>, [Point<T>, MultiPoint<T>, Line<T>, LineString<T>, MultiLineString<T>, Polygon<T>, MultiPolygon<T>, GeometryCollection<T>]);
-impl_euclidean_distance_for_polygonlike_geometry!(Triangle<T>);
-impl_euclidean_distance_for_polygonlike_geometry!(Rect<T>);
+impl_euclidean_distance_to_geometry_for_specific!([Point<T>, MultiPoint<T>, Line<T>, LineString<T>, MultiLineString<T>, Polygon<T>, MultiPolygon<T>, Triangle<T>, Rect<T>, GeometryCollection<T>]);
 
 // ┌──────────────────────────────┐
 // │ Implementation for Geometry  │
 // └──────────────────────────────┘
 
+/// Euclidean distance implementation for Geometry<T> to every specific Geometry type.
+macro_rules! impl_euclidean_distance_to_specific_for_geometry {
+  ([$($for:ty),*]) => {
+      $(
+          impl<T> EuclideanDistance<T, $for> for Geometry<T>
+          where
+              T: GeoFloat + FloatConst + RTreeNum
+          {
+              crate::geometry_delegate_impl! {
+                  fn euclidean_distance(&self, other: &$for) -> T;
+              }
+          }
+      )*
+  };
+}
+
+impl_euclidean_distance_to_specific_for_geometry!([Point<T>, MultiPoint<T>, Line<T>, LineString<T>, MultiLineString<T>, Polygon<T>, MultiPolygon<T>, Triangle<T>, Rect<T>, GeometryCollection<T>]);
+
 impl<T> EuclideanDistance<T> for Geometry<T>
 where
     T: GeoFloat + FloatConst,
 {
-    fn euclidean_distance(&self, other: &Geometry<T>) -> T {
-        match (self, other) {
-            (Geometry::GeometryCollection(a), b) | (b, Geometry::GeometryCollection(a)) => {
-                a.euclidean_distance(b)
-            }
-            (Geometry::Point(a), Geometry::Point(b)) => a.euclidean_distance(b),
-            (Geometry::Point(a), Geometry::Line(b)) | (Geometry::Line(b), Geometry::Point(a)) => {
-                a.euclidean_distance(b)
-            }
-            (Geometry::Point(a), Geometry::LineString(b))
-            | (Geometry::LineString(b), Geometry::Point(a)) => a.euclidean_distance(b),
-            (Geometry::Point(a), Geometry::Polygon(b))
-            | (Geometry::Polygon(b), Geometry::Point(a)) => a.euclidean_distance(b),
-            (Geometry::Point(a), Geometry::MultiPoint(b))
-            | (Geometry::MultiPoint(b), Geometry::Point(a)) => a.euclidean_distance(b),
-            (Geometry::Point(a), Geometry::MultiLineString(b))
-            | (Geometry::MultiLineString(b), Geometry::Point(a)) => a.euclidean_distance(b),
-            (Geometry::Point(a), Geometry::MultiPolygon(b))
-            | (Geometry::MultiPolygon(b), Geometry::Point(a)) => a.euclidean_distance(b),
-            (Geometry::Point(a), Geometry::Rect(b)) | (Geometry::Rect(b), Geometry::Point(a)) => {
-                a.euclidean_distance(b)
-            }
-            (Geometry::Point(a), Geometry::Triangle(b))
-            | (Geometry::Triangle(b), Geometry::Point(a)) => a.euclidean_distance(b),
-            (Geometry::Line(a), Geometry::Line(b)) => a.euclidean_distance(b),
-            (Geometry::Line(a), Geometry::LineString(b))
-            | (Geometry::LineString(b), Geometry::Line(a)) => a.euclidean_distance(b),
-            (Geometry::Line(a), Geometry::Polygon(b))
-            | (Geometry::Polygon(b), Geometry::Line(a)) => a.euclidean_distance(b),
-            (Geometry::Line(a), Geometry::MultiPoint(b))
-            | (Geometry::MultiPoint(b), Geometry::Line(a)) => a.euclidean_distance(b),
-            (Geometry::Line(a), Geometry::MultiLineString(b))
-            | (Geometry::MultiLineString(b), Geometry::Line(a)) => a.euclidean_distance(b),
-            (Geometry::Line(a), Geometry::MultiPolygon(b))
-            | (Geometry::MultiPolygon(b), Geometry::Line(a)) => a.euclidean_distance(b),
-            (Geometry::Line(a), Geometry::Rect(b)) | (Geometry::Rect(b), Geometry::Line(a)) => {
-                a.euclidean_distance(b)
-            }
-            (Geometry::Line(a), Geometry::Triangle(b))
-            | (Geometry::Triangle(b), Geometry::Line(a)) => a.euclidean_distance(b),
-            (Geometry::LineString(a), Geometry::LineString(b)) => a.euclidean_distance(b),
-            (Geometry::LineString(a), Geometry::Polygon(b))
-            | (Geometry::Polygon(b), Geometry::LineString(a)) => a.euclidean_distance(b),
-            (Geometry::LineString(a), Geometry::MultiPoint(b))
-            | (Geometry::MultiPoint(b), Geometry::LineString(a)) => a.euclidean_distance(b),
-            (Geometry::LineString(a), Geometry::MultiLineString(b))
-            | (Geometry::MultiLineString(b), Geometry::LineString(a)) => a.euclidean_distance(b),
-            (Geometry::LineString(a), Geometry::MultiPolygon(b))
-            | (Geometry::MultiPolygon(b), Geometry::LineString(a)) => a.euclidean_distance(b),
-            (Geometry::LineString(a), Geometry::Rect(b))
-            | (Geometry::Rect(b), Geometry::LineString(a)) => a.euclidean_distance(b),
-            (Geometry::LineString(a), Geometry::Triangle(b))
-            | (Geometry::Triangle(b), Geometry::LineString(a)) => a.euclidean_distance(b),
-            (Geometry::Polygon(a), Geometry::Polygon(b)) => a.euclidean_distance(b),
-            (Geometry::Polygon(a), Geometry::MultiPoint(b))
-            | (Geometry::MultiPoint(b), Geometry::Polygon(a)) => a.euclidean_distance(b),
-            (Geometry::Polygon(a), Geometry::MultiLineString(b))
-            | (Geometry::MultiLineString(b), Geometry::Polygon(a)) => a.euclidean_distance(b),
-            (Geometry::Polygon(a), Geometry::MultiPolygon(b))
-            | (Geometry::MultiPolygon(b), Geometry::Polygon(a)) => a.euclidean_distance(b),
-            (Geometry::Polygon(a), Geometry::Rect(b))
-            | (Geometry::Rect(b), Geometry::Polygon(a)) => a.euclidean_distance(b),
-            (Geometry::Polygon(a), Geometry::Triangle(b))
-            | (Geometry::Triangle(b), Geometry::Polygon(a)) => a.euclidean_distance(b),
-            (Geometry::MultiPoint(a), Geometry::MultiPoint(b)) => a.euclidean_distance(b),
-            (Geometry::MultiPoint(a), Geometry::MultiLineString(b))
-            | (Geometry::MultiLineString(b), Geometry::MultiPoint(a)) => a.euclidean_distance(b),
-            (Geometry::MultiPoint(a), Geometry::MultiPolygon(b))
-            | (Geometry::MultiPolygon(b), Geometry::MultiPoint(a)) => a.euclidean_distance(b),
-            (Geometry::MultiPoint(a), Geometry::Rect(b))
-            | (Geometry::Rect(b), Geometry::MultiPoint(a)) => a.euclidean_distance(b),
-            (Geometry::MultiPoint(a), Geometry::Triangle(b))
-            | (Geometry::Triangle(b), Geometry::MultiPoint(a)) => a.euclidean_distance(b),
-            (Geometry::MultiLineString(a), Geometry::MultiLineString(b)) => a.euclidean_distance(b),
-            (Geometry::MultiLineString(a), Geometry::MultiPolygon(b))
-            | (Geometry::MultiPolygon(b), Geometry::MultiLineString(a)) => a.euclidean_distance(b),
-            (Geometry::MultiLineString(a), Geometry::Rect(b))
-            | (Geometry::Rect(b), Geometry::MultiLineString(a)) => a.euclidean_distance(b),
-            (Geometry::MultiLineString(a), Geometry::Triangle(b))
-            | (Geometry::Triangle(b), Geometry::MultiLineString(a)) => a.euclidean_distance(b),
-            (Geometry::MultiPolygon(a), Geometry::MultiPolygon(b)) => a.euclidean_distance(b),
-            (Geometry::MultiPolygon(a), Geometry::Rect(b))
-            | (Geometry::Rect(b), Geometry::MultiPolygon(a)) => a.euclidean_distance(b),
-            (Geometry::MultiPolygon(a), Geometry::Triangle(b))
-            | (Geometry::Triangle(b), Geometry::MultiPolygon(a)) => a.euclidean_distance(b),
-            (Geometry::Rect(a), Geometry::Rect(b)) => a.euclidean_distance(b),
-            (Geometry::Rect(a), Geometry::Triangle(b))
-            | (Geometry::Triangle(b), Geometry::Rect(a)) => a.euclidean_distance(b),
-            (Geometry::Triangle(a), Geometry::Triangle(b)) => a.euclidean_distance(b),
-        }
+    crate::geometry_delegate_impl! {
+        fn euclidean_distance(&self, other: &Geometry<T>) -> T;
     }
 }
 
