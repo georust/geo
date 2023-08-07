@@ -377,7 +377,10 @@ where
         .collect()
 }
 
-/// check whether a triangle's edges intersect with any other edges of the LineString
+/// Check whether the new candidate line segment intersects with any existing geometry line segments
+///
+/// In order to do this efficiently, the rtree is queried for any existing segments which fall within
+/// the bounding box of the new triangle created by the candidate segment
 fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T, bool>, orig: &[Coord<T>]) -> bool
 where
     T: CoordFloat + RTreeNum + HasKernel,
