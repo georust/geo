@@ -2,9 +2,10 @@
 
 ## Unreleased
 
+* Add `HausdorffDistance` algorithm trait to calculate the Hausdorff distance between any two geometries. <https://github.com/georust/geo/pull/1041>
+  * <https://github.com/georust/geo/pull/1041>
 * Add `matches` method to IntersectionMatrix for ergonomic de-9im comparisons.
-  <https://github.com/georust/geo/pull/1043>
-
+  * <https://github.com/georust/geo/pull/1043>
 
 ## 0.26.0
 
@@ -17,6 +18,13 @@
 
 - Add `TriangulateEarcut` algorithm trait to triangulate polygons with the earcut algorithm.
   - <https://github.com/georust/geo/pull/1007>
+- Add `Vector2DOps` trait to algorithims module and implemented it for `Coord<T::CoordFloat>`
+  - <https://github.com/georust/geo/pull/1025>
+
+- Add a fast point-in-polygon query datastructure that pre-processes a `Polygon` as a set of monotone polygons. Ref. `crate::algorithm::MonotonicPolygons`.
+  - <https://github.com/georust/geo/pull/1018>
+
+
 
 ## 0.25.0
 

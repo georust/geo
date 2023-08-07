@@ -120,6 +120,10 @@ pub use geodesic_intermediate::GeodesicIntermediate;
 pub mod geodesic_length;
 pub use geodesic_length::GeodesicLength;
 
+/// Calculate the Hausdorff distance between two geometries.
+pub mod hausdorff_distance;
+pub use hausdorff_distance::HausdorffDistance;
+
 /// Calculate the bearing to another `Point`, in degrees.
 pub mod haversine_bearing;
 pub use haversine_bearing::HaversineBearing;
@@ -236,6 +240,10 @@ pub mod triangulate_earcut;
 #[cfg(feature = "earcutr")]
 pub use triangulate_earcut::TriangulateEarcut;
 
+/// Vector Operations for 2D coordinates
+mod vector_ops;
+pub use vector_ops::Vector2DOps;
+
 /// Calculate the Vincenty distance between two `Point`s.
 pub mod vincenty_distance;
 pub use vincenty_distance::VincentyDistance;
@@ -259,3 +267,7 @@ pub mod sweep;
 pub mod outlier_detection;
 
 pub use outlier_detection::OutlierDetection;
+
+/// Monotonic polygon subdivision
+pub mod monotone;
+pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
