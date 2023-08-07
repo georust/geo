@@ -310,7 +310,7 @@ where
         }
         // if removal of this point causes a self-intersection, we also remove the previous point
         // that removal alters the geometry, removing the self-intersection
-        // HOWEVER if we're within 2 points of the absolute minimum, we can't remove this point or the next
+        // HOWEVER if we're within 1 point of the absolute minimum, we can't remove this point or the next
         // because we could then no longer form a valid geometry if removal of next also caused an intersection.
         // The simplification process is thus over.
         smallest.intersector = tree_intersect(tree, &smallest, &orig.0);
@@ -377,24 +377,6 @@ where
         .collect()
 }
 
-/// is p1 -> p2 -> p3 wound counterclockwise?
-#[inline]
-fn ccw<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>) -> bool
-where
-    T: CoordFloat + HasKernel,
-{
-    let o = <T as HasKernel>::Ker::orient2d(p1.into(), p2.into(), p3.into());
-    o == Orientation::CounterClockwise
-}
-
-/// checks whether line segments with p1-p4 as their start and endpoints touch or cross
-fn cartesian_intersect<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>, p4: Point<T>) -> bool
-where
-    T: CoordFloat + HasKernel,
-{
-    (ccw(p1, p3, p4) ^ ccw(p2, p3, p4)) & (ccw(p1, p2, p3) ^ ccw(p1, p2, p4))
-}
-
 /// check whether a triangle's edges intersect with any other edges of the LineString
 fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T, bool>, orig: &[Coord<T>]) -> bool
 where
@@ -402,6 +384,8 @@ where
 {
     let point_a = orig[triangle.left];
     let point_c = orig[triangle.right];
+    // created by candidate point removal
+    let new_segment = Line::new(Point::from(point_a), Point::from(point_c));
     let bounding_rect = Triangle::new(
         orig[triangle.left],
         orig[triangle.current],
@@ -412,13 +396,14 @@ where
     let tl = Point::new(bounding_rect.max().x, bounding_rect.max().y);
     tree.locate_in_envelope_intersecting(&rstar::AABB::from_corners(br, tl))
         .any(|c| {
-            // triangle start point, end point
+            // line start point, end point
             let (ca, cb) = c.points();
+            let existing_candidate = Line::new(ca, cb);
             ca.0 != point_a
                 && ca.0 != point_c
                 && cb.0 != point_a
                 && cb.0 != point_c
-                && cartesian_intersect(ca, cb, Point::from(point_a), Point::from(point_c))
+                && new_segment.intersects(&existing_candidate)
         })
 }
 
@@ -595,7 +580,8 @@ where
 {
     fn simplify_vw_preserve(&self, epsilon: &T) -> Polygon<T> {
         let mut simplified =
-            vwp_wrapper::<_, 4, 6>(self.exterior(), Some(self.interiors()), epsilon);
+        // min_points was formerly 6, but that's too conservative for small polygons
+            vwp_wrapper::<_, 4, 5>(self.exterior(), Some(self.interiors()), epsilon);
         let exterior = LineString::from(simplified.remove(0));
         let interiors = simplified.into_iter().map(LineString::from).collect();
         Polygon::new(exterior, interiors)
@@ -669,11 +655,37 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::{cartesian_intersect, visvalingam, vwp_wrapper, SimplifyVw, SimplifyVwPreserve};
+    use super::{visvalingam, vwp_wrapper, SimplifyVw, SimplifyVwPreserve};
     use crate::{
-        line_string, point, polygon, Coord, LineString, MultiLineString, MultiPolygon, Point,
-        Polygon,
+        line_string, polygon, Coord, LineString, MultiLineString, MultiPolygon, Point, Polygon,
     };
+
+    // See https://github.com/georust/geo/issues/1049
+    #[test]
+    #[should_panic]
+    fn vwp_bug() {
+        let pol = polygon![
+            (x: 1., y: 4.),
+            (x: 3., y: 4.),
+            (x: 1., y: 1.),
+            (x: 7., y: 0.),
+            (x: 1., y: 0.),
+            (x: 0., y: 1.),
+            (x: 1., y: 4.),
+        ];
+        let simplified = pol.simplify_vw_preserve(&2.25);
+        assert_eq!(
+            simplified,
+            polygon![
+                (x: 1., y: 4.),
+                (x: 3., y: 4.),
+                (x: 1., y: 1.),
+                (x: 7., y: 0.),
+                (x: 1., y: 0.),
+                (x: 1., y: 4.),
+            ]
+        );
+    }
 
     #[test]
     fn visvalingam_test() {
@@ -691,22 +703,6 @@ mod test {
 
         let simplified = visvalingam(&ls, &30.);
         assert_eq!(simplified, correct_ls);
-    }
-    #[test]
-    fn vwp_intersection_test() {
-        // does the intersection check always work
-        let a = point!(x: 1., y: 3.);
-        let b = point!(x: 3., y: 1.);
-        let c = point!(x: 3., y: 3.);
-        let d = point!(x: 1., y: 1.);
-        // cw + ccw
-        assert!(cartesian_intersect(a, b, c, d));
-        // ccw + ccw
-        assert!(cartesian_intersect(b, a, c, d));
-        // cw + cw
-        assert!(cartesian_intersect(a, b, d, c));
-        // ccw + cw
-        assert!(cartesian_intersect(b, a, d, c));
     }
     #[test]
     fn simple_vwp_test() {
