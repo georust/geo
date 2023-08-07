@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-* Add `HausdorffDistance` algorithm trait to calculate the Hausdorff distance between any two geometries. <https://github.com/georust/geo/pull/1041>
+* Add `EuclideanDistance` implementations for all remaining geometries.
+  * <https://github.com/georust/geo/pull/1029>
+* Add `HausdorffDistance` algorithm trait to calculate the Hausdorff distance between any two geometries.
   * <https://github.com/georust/geo/pull/1041>
 * Add `matches` method to IntersectionMatrix for ergonomic de-9im comparisons.
   * <https://github.com/georust/geo/pull/1043>
