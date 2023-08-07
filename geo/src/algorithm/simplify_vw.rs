@@ -382,29 +382,32 @@ fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T, bool>, orig: &[
 where
     T: CoordFloat + RTreeNum + HasKernel,
 {
-    let point_a = orig[triangle.left];
-    let point_c = orig[triangle.right];
+    let new_segment_start = orig[triangle.left];
+    let new_segment_end = orig[triangle.right];
     // created by candidate point removal
-    let new_segment = Line::new(Point::from(point_a), Point::from(point_c));
+    let new_segment = Line::new(
+        Point::from(orig[triangle.left]),
+        Point::from(orig[triangle.right]),
+    );
     let bounding_rect = Triangle::new(
         orig[triangle.left],
         orig[triangle.current],
         orig[triangle.right],
     )
     .bounding_rect();
-    let br = Point::new(bounding_rect.min().x, bounding_rect.min().y);
-    let tl = Point::new(bounding_rect.max().x, bounding_rect.max().y);
-    tree.locate_in_envelope_intersecting(&rstar::AABB::from_corners(br, tl))
-        .any(|c| {
-            // line start point, end point
-            let (ca, cb) = c.points();
-            let existing_candidate = Line::new(ca, cb);
-            ca.0 != point_a
-                && ca.0 != point_c
-                && cb.0 != point_a
-                && cb.0 != point_c
-                && new_segment.intersects(&existing_candidate)
-        })
+    tree.locate_in_envelope_intersecting(&rstar::AABB::from_corners(
+        bounding_rect.min().into(),
+        bounding_rect.max().into(),
+    ))
+    .any(|candidate| {
+        // line start point, end point
+        let (candidate_start, candidate_end) = candidate.points();
+        candidate_start.0 != new_segment_start
+            && candidate_start.0 != new_segment_end
+            && candidate_end.0 != new_segment_start
+            && candidate_end.0 != new_segment_end
+            && new_segment.intersects(candidate)
+    })
 }
 
 /// Simplifies a geometry.
