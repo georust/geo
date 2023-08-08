@@ -123,8 +123,8 @@ where
 {
     type Scalar = T;
 
-    fn wedge_product(self, right: Coord<T>) -> Self::Scalar {
-        self.x * right.y - self.y * right.x
+    fn wedge_product(self, other: Coord<T>) -> Self::Scalar {
+        self.x * other.y - self.y * other.x
     }
 
     fn dot_product(self, other: Self) -> Self::Scalar {
@@ -321,7 +321,7 @@ mod test {
             coord! { x: -10.0, y: 8.0 } / f64::sqrt(10.0 * 10.0 + 8.0 * 8.0)
         );
     }
-
+    
     #[test]
     /// Tests edge cases that were previously failing before switching to cmath::hypot
     fn test_try_normalize_edge_cases_1(){
