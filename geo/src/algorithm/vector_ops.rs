@@ -12,7 +12,7 @@ pub trait Vector2DOps<Rhs = Self>
 where
     Self: Sized,
 {
-    type Scalar: CoordNum + Send + Sync;
+    type Scalar: CoordNum;
 
     /// The euclidean distance between this coordinate and the origin
     ///
@@ -119,7 +119,7 @@ where
 
 impl<T> Vector2DOps for Coord<T>
 where
-    T: CoordFloat + Send + Sync,
+    T: CoordFloat,
 {
     type Scalar = T;
 
