@@ -321,10 +321,10 @@ mod test {
             coord! { x: -10.0, y: 8.0 } / f64::sqrt(10.0 * 10.0 + 8.0 * 8.0)
         );
     }
-    
+
     #[test]
     /// Tests edge cases that were previously failing before switching to cmath::hypot
-    fn test_try_normalize_edge_cases_1(){
+    fn test_try_normalize_edge_cases_1() {
         use float_next_after::NextAfter;
         // Very Small Input - Normalize returns None because of
         // rounding-down to zero in the .magnitude() calculation
@@ -377,8 +377,6 @@ mod test {
         // Zero vector - Normalize returns None
         let a = coord! { x: 0.0, y: 0.0 };
         assert_eq!(a.try_normalize(), None);
-
-        
 
         // Where one of the components is NaN try_normalize returns None
         let a = coord! { x: f64::NAN, y: 0.0 };
