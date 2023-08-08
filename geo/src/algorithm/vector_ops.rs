@@ -323,23 +323,22 @@ mod test {
     }
 
     #[test]
-    fn test_try_normalize_edge_cases() {
+    /// Tests edge cases that were previously failing before switching to cmath::hypot
+    fn test_try_normalize_edge_cases_1(){
         use float_next_after::NextAfter;
-
-        // The following tests demonstrate some of the floating point
-        // edge cases that can cause try_normalize to return None.
-
-        // Zero vector - Normalize returns None
-        let a = coord! { x: 0.0, y: 0.0 };
-        assert_eq!(a.try_normalize(), None);
-
         // Very Small Input - Normalize returns None because of
         // rounding-down to zero in the .magnitude() calculation
         let a = coord! {
             x: 0.0,
             y: 1e-301_f64
         };
-        assert_eq!(a.try_normalize(), None);
+        assert_eq!(
+            a.try_normalize(),
+            Some(coord! {
+                x: 0.0,
+                y: 1.0,
+            })
+        );
 
         // A large vector where try_normalize returns Some
         // Because the magnitude is f64::MAX (Just before overflow to f64::INFINITY)
@@ -347,15 +346,39 @@ mod test {
             x: f64::sqrt(f64::MAX/2.0),
             y: f64::sqrt(f64::MAX/2.0)
         };
-        assert!(a.try_normalize().is_some());
+        assert_relative_eq!(
+            a.try_normalize().unwrap(),
+            coord! {
+                x: 1.0 / f64::sqrt(2.0),
+                y: 1.0 / f64::sqrt(2.0),
+            }
+        );
 
-        // A large vector where try_normalize returns None
+        // A large vector where try_normalize still returns Some because we are using cmath::hypot
         // because the magnitude is just above f64::MAX
         let a = coord! {
             x: f64::sqrt(f64::MAX / 2.0),
             y: f64::sqrt(f64::MAX / 2.0).next_after(f64::INFINITY)
         };
+        assert_relative_eq!(
+            a.try_normalize().unwrap(),
+            coord! {
+                x: 1.0 / f64::sqrt(2.0),
+                y: 1.0 / f64::sqrt(2.0),
+            }
+        );
+    }
+
+    #[test]
+    fn test_try_normalize_edge_cases_2() {
+        // The following tests demonstrate some of the floating point
+        // edge cases that can cause try_normalize to return None.
+
+        // Zero vector - Normalize returns None
+        let a = coord! { x: 0.0, y: 0.0 };
         assert_eq!(a.try_normalize(), None);
+
+        
 
         // Where one of the components is NaN try_normalize returns None
         let a = coord! { x: f64::NAN, y: 0.0 };
