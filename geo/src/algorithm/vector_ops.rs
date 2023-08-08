@@ -132,7 +132,9 @@ where
     }
 
     fn magnitude(self) -> Self::Scalar {
-        (self.x * self.x + self.y * self.y).sqrt()
+        // Note uses cmath::hypot which avoids 'undue overflow and underflow'
+        // This also increases the range of values for which `.try_normalize()` works
+        Self::Scalar::hypot(self.x, self.y)
     }
 
     fn magnitude_squared(self) -> Self::Scalar {
