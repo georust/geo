@@ -323,11 +323,11 @@ mod test {
     }
 
     #[test]
-    /// Tests edge cases that were previously failing before switching to cmath::hypot
+    /// Tests edge cases that were previously returning None
+    /// before switching to cmath::hypot
     fn test_try_normalize_edge_cases_1() {
         use float_next_after::NextAfter;
-        // Very Small Input - Normalize returns None because of
-        // rounding-down to zero in the .magnitude() calculation
+        // Very Small Input still returns a value thanks to cmath::hypot
         let a = coord! {
             x: 0.0,
             y: 1e-301_f64
@@ -355,7 +355,7 @@ mod test {
         );
 
         // A large vector where try_normalize still returns Some because we are using cmath::hypot
-        // because the magnitude is just above f64::MAX
+        // even though the magnitude would be just above f64::MAX
         let a = coord! {
             x: f64::sqrt(f64::MAX / 2.0),
             y: f64::sqrt(f64::MAX / 2.0).next_after(f64::INFINITY)
