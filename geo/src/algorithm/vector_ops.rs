@@ -12,7 +12,7 @@ pub trait Vector2DOps<Rhs = Self>
 where
     Self: Sized,
 {
-    type Scalar: CoordNum + Send + Sync;
+    type Scalar: CoordNum;
 
     /// The euclidean distance between this coordinate and the origin
     ///
@@ -119,12 +119,12 @@ where
 
 impl<T> Vector2DOps for Coord<T>
 where
-    T: CoordFloat + Send + Sync,
+    T: CoordFloat,
 {
     type Scalar = T;
 
-    fn wedge_product(self, right: Coord<T>) -> Self::Scalar {
-        self.x * right.y - self.y * right.x
+    fn wedge_product(self, other: Coord<T>) -> Self::Scalar {
+        self.x * other.y - self.y * other.x
     }
 
     fn dot_product(self, other: Self) -> Self::Scalar {
@@ -132,7 +132,9 @@ where
     }
 
     fn magnitude(self) -> Self::Scalar {
-        (self.x * self.x + self.y * self.y).sqrt()
+        // Note uses cmath::hypot which avoids 'undue overflow and underflow'
+        // This also increases the range of values for which `.try_normalize()` works
+        Self::Scalar::hypot(self.x, self.y)
     }
 
     fn magnitude_squared(self) -> Self::Scalar {
@@ -321,23 +323,22 @@ mod test {
     }
 
     #[test]
-    fn test_try_normalize_edge_cases() {
+    /// Tests edge cases that were previously returning None
+    /// before switching to cmath::hypot
+    fn test_try_normalize_edge_cases_1() {
         use float_next_after::NextAfter;
-
-        // The following tests demonstrate some of the floating point
-        // edge cases that can cause try_normalize to return None.
-
-        // Zero vector - Normalize returns None
-        let a = coord! { x: 0.0, y: 0.0 };
-        assert_eq!(a.try_normalize(), None);
-
-        // Very Small Input - Normalize returns None because of
-        // rounding-down to zero in the .magnitude() calculation
+        // Very Small Input still returns a value thanks to cmath::hypot
         let a = coord! {
             x: 0.0,
             y: 1e-301_f64
         };
-        assert_eq!(a.try_normalize(), None);
+        assert_eq!(
+            a.try_normalize(),
+            Some(coord! {
+                x: 0.0,
+                y: 1.0,
+            })
+        );
 
         // A large vector where try_normalize returns Some
         // Because the magnitude is f64::MAX (Just before overflow to f64::INFINITY)
@@ -345,14 +346,36 @@ mod test {
             x: f64::sqrt(f64::MAX/2.0),
             y: f64::sqrt(f64::MAX/2.0)
         };
-        assert!(a.try_normalize().is_some());
+        assert_relative_eq!(
+            a.try_normalize().unwrap(),
+            coord! {
+                x: 1.0 / f64::sqrt(2.0),
+                y: 1.0 / f64::sqrt(2.0),
+            }
+        );
 
-        // A large vector where try_normalize returns None
-        // because the magnitude is just above f64::MAX
+        // A large vector where try_normalize still returns Some because we are using cmath::hypot
+        // even though the magnitude would be just above f64::MAX
         let a = coord! {
             x: f64::sqrt(f64::MAX / 2.0),
             y: f64::sqrt(f64::MAX / 2.0).next_after(f64::INFINITY)
         };
+        assert_relative_eq!(
+            a.try_normalize().unwrap(),
+            coord! {
+                x: 1.0 / f64::sqrt(2.0),
+                y: 1.0 / f64::sqrt(2.0),
+            }
+        );
+    }
+
+    #[test]
+    fn test_try_normalize_edge_cases_2() {
+        // The following tests demonstrate some of the floating point
+        // edge cases that can cause try_normalize to return None.
+
+        // Zero vector - Normalize returns None
+        let a = coord! { x: 0.0, y: 0.0 };
         assert_eq!(a.try_normalize(), None);
 
         // Where one of the components is NaN try_normalize returns None
