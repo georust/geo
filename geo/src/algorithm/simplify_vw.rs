@@ -8,18 +8,18 @@ use std::collections::BinaryHeap;
 
 use rstar::{RTree, RTreeNum};
 
-/// Store triangle information
-// current is the candidate point for removal
+/// Store triangle information. Area is used for ranking in the priority queue and determining removal
 #[derive(Debug)]
 struct VScore<T, I>
 where
     T: CoordFloat,
 {
     left: usize,
+    /// The current [Point] index in the original [LineString]: The candidate for removal
     current: usize,
     right: usize,
     area: T,
-    // `visvalingam_preserve` uses `intersector`, `visvalingam` does not
+    // `visvalingam_preserve` uses `intersector`, `visvalingam` does not, so it's always false
     intersector: I,
 }
 
@@ -180,6 +180,7 @@ fn recompute_triangles<T>(
         )
         .unsigned_area();
 
+        // This logic only applies to VW-Preserve
         // The current point causes a self-intersection, and this point precedes it
         // we ensure it gets removed next by demoting its area to negative epsilon
         // we check that current_point is less than smallest.current because
