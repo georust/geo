@@ -289,6 +289,9 @@ where
                     Some(x) =>x,
                     None=> return None
                 };
+                println!("length_total: {:?}", length_total);
+                println!("length_segments: {:?}", length_segments);
+
                 if ! Scalar::is_finite(length_total) || Scalar::is_zero(&length_total) {
                     // TODO: Does this cover a linestring with zero or one points?
                     return None
@@ -296,6 +299,7 @@ where
 
                 // Find the length of the first part of the line string before the split;
                 let length_fraction = fraction * length_total;
+                println!("length_fraction: {:?}", length_fraction);
                 // Set up some variables to track state in the for-loop
                 let mut length_accumulated = Scalar::zero();
                 // TODO: unwrap used; but should be safe since we check the length above
@@ -311,28 +315,37 @@ where
                     let length_accumulated_before_segment = length_accumulated;
                     length_accumulated                    = length_accumulated + length_segment;
                     let length_accumulated_after_segment  = length_accumulated;
-                    if length_accumulated_after_segment < length_fraction {
-                        coords_first_part.push(b);
-                    } else if length_accumulated_before_segment > length_fraction {
+                    if length_fraction < length_accumulated_before_segment {
+                        println!("---{length_accumulated_before_segment:?}-----{length_accumulated_after_segment:?}--X");
                         coords_second_part.push(b);
+                    }else if length_fraction >= length_accumulated_after_segment {
+                        println!("X--{length_accumulated_before_segment:?}-----{length_accumulated_after_segment:?}---");
+                        coords_first_part.push(b);
                     } else {
                         // TODO: check for divide by zero
-                        let fraction_to_split_segment = (length_fraction - length_accumulated_before_segment) / length_segment;
+                        let fraction_to_split_segment = (
+                              length_fraction
+                            - length_accumulated_before_segment
+                        ) / length_segment;
+                        println!("---{length_accumulated_before_segment:?}-{fraction_to_split_segment:?}-{length_accumulated_after_segment:?}---");
                         match Line::new(a, b).line_split(fraction_to_split_segment) {
                             Some(FirstSecond(line1, _line2)) => {
-                                coords_first_part.push(line1.end);
+                                println!("AAA");
+                                coords_first_part .push(line1.end);
                                 coords_second_part.push(line1.end);
                                 coords_second_part.push(b);
                             },
                             Some(First      (_line1       )) => {
-                                coords_first_part.push(b);
+                                println!("BBB");
+                                coords_first_part .push(b);
                                 coords_second_part.push(b);
                             },
                             Some(Second     (       _line2)) => {
+                                println!("CCC");
                                 coords_second_part.push(a);
                                 coords_second_part.push(b);
                             },
-                            None => return None
+                            None => return None // probably never?
                         }
                     }
                 }
@@ -349,6 +362,9 @@ mod test {
 
     use super::*;
 
+    // =============================================================================================
+    // measure_line_string(LineString)
+    // =============================================================================================
 
     #[test]
     fn test_measure_line_string() {
@@ -406,8 +422,12 @@ mod test {
         assert!(measure_line_string(&line_string).is_none());
     }
 
+    // =============================================================================================
+    // Line::line_split()
+    // =============================================================================================
+
     #[test]
-    fn test_measure_line_split_first_second() {
+    fn test_line_split_first_second() {
         // simple x-axis aligned check
         let line = Line::new(
             coord!{x: 0.0_f32, y:0.0_f32},
@@ -462,7 +482,7 @@ mod test {
     }
 
     #[test]
-    fn test_measure_line_split_first() {
+    fn test_line_split_first() {
         // test one
         let line = Line::new(
             coord!{x: 0.0_f32, y:0.0_f32},
@@ -480,7 +500,7 @@ mod test {
         assert_eq!(result, Some(LineSplitResult::First(line)));
     }
     #[test]
-    fn test_measure_line_split_second() {
+    fn test_line_split_second() {
         // test zero
         let line = Line::new(
             coord!{x: 0.0_f32, y:0.0_f32},
@@ -498,9 +518,12 @@ mod test {
         assert_eq!(result, Some(LineSplitResult::Second(line)));
     }
 
+    // =============================================================================================
+    // LineString::line_split()
+    // =============================================================================================
 
     #[test]
-    fn test_measure_linestring_split() {
+    fn test_linestring_split() {
         let line_string:LineString<f32> = line_string![
             (x:0.0, y:0.0),
             (x:1.0, y:0.0),
@@ -517,8 +540,62 @@ mod test {
             ))
         );
     }
+    
     #[test]
-    fn test_measure_linestring_split_first() {
+    fn test_linestring_split_on_point() {
+        let line_string:LineString<f32> = line_string![
+            (x:0.0, y:0.0),
+            (x:1.0, y:0.0),
+            (x:1.0, y:1.0),
+            (x:2.0, y:1.0),
+            (x:2.0, y:2.0),
+        ];
+        let slice_point = coord! {x:1.0, y:1.0};
+        assert_eq!(
+            line_string.line_split(0.5),
+            Some(LineSplitResult::FirstSecond(
+                LineString::new(vec![line_string.0[0],line_string.0[1], slice_point]),
+                LineString::new(vec![slice_point, line_string.0[3], line_string.0[4]])
+            ))
+        );
+    }
+
+    #[test]
+    fn test_linestring_split_half_way_through_last_segment() {
+        let line_string:LineString<f32> = line_string![
+            (x:0.0, y:0.0),
+            (x:1.0, y:0.0),
+            (x:1.0, y:1.0),
+        ];
+        let slice_point = coord! {x:1.0, y:0.5};
+        assert_eq!(
+            line_string.line_split(0.75),
+            Some(LineSplitResult::FirstSecond(
+                LineString::new(vec![line_string.0[0], line_string.0[1], slice_point]),
+                LineString::new(vec![slice_point, line_string.0[2]])
+            ))
+        );
+    }
+
+    #[test]
+    fn test_linestring_split_half_way_through_first_segment() {
+        let line_string:LineString<f32> = line_string![
+            (x:0.0, y:0.0),
+            (x:1.0, y:0.0),
+            (x:1.0, y:1.0),
+        ];
+        let slice_point = coord! {x:0.5, y:0.0};
+        assert_eq!(
+            line_string.line_split(0.25),
+            Some(LineSplitResult::FirstSecond(
+                LineString::new(vec![line_string.0[0], slice_point]),
+                LineString::new(vec![slice_point, line_string.0[1], line_string.0[2]])
+            ))
+        );
+    }
+
+    #[test]
+    fn test_linestring_split_first() {
         let line_string:LineString<f32> = line_string![
             (x:0.0, y:0.0),
             (x:1.0, y:0.0),
@@ -530,7 +607,7 @@ mod test {
     }
 
     #[test]
-    fn test_measure_linestring_split_second() {
+    fn test_linestring_split_second() {
         let line_string:LineString<f32> = line_string![
             (x:0.0, y:0.0),
             (x:1.0, y:0.0),
@@ -541,7 +618,83 @@ mod test {
         );
     }
 
+    // =============================================================================================
+    // Line::line_split_twice()
+    // =============================================================================================
+    
+    macro_rules! test_line_split_twice_helper{
+        ($a:expr, $b:expr, $enum_variant:ident, $(($x1:expr, $x2:expr)),*)=>{{
+            let line = Line::new(
+                coord!{x: 0.0_f32, y:0.0_f32},
+                coord!{x:10.0_f32, y:0.0_f32},
+            );
+            let result = line.line_split_twice($a, $b).unwrap();
+            // println!("{result:?}");
+            assert_eq!(
+                result,
+                LineSplitTwiceResult::$enum_variant(
+                    $(
+                        Line::new(
+                            coord!{x: $x1, y:0.0_f32},
+                            coord!{x: $x2, y:0.0_f32},
+                        ),
+                    )*
+                )
+            );
+        }}
+    }
 
+    #[test]
+    fn test_line_split_twice(){
+        test_line_split_twice_helper!(0.6, 0.8, FirstSecondThird, (0.0, 6.0), (6.0, 8.0), (8.0, 10.0));
+        test_line_split_twice_helper!(0.6, 1.0, FirstSecond, (0.0, 6.0), (6.0, 10.0));
+        test_line_split_twice_helper!(0.6, 0.6, FirstThird, (0.0, 6.0), (6.0, 10.0));
+        test_line_split_twice_helper!(0.0, 0.6, SecondThird, (0.0, 6.0), (6.0, 10.0));
+        test_line_split_twice_helper!(1.0, 1.0, First, (0.0, 10.0));
+        test_line_split_twice_helper!(0.0, 1.0, Second, (0.0, 10.0));
+        test_line_split_twice_helper!(0.0, 0.0, Third, (0.0, 10.0));
+    }
+
+    // =============================================================================================
+    // LineString::line_split_twice()
+    // =============================================================================================
+    #[test]
+    fn test_line_string_split_twice(){
+        // I haven't done a formal proof 🤓,
+        // but if we exhaustively check
+        // - `Line::line_split_twice()` and
+        // - `LineString::line_split()`
+        // then because the implementation for line_split_twice is shared
+        // we don't need an exhaustive check for `LineString::line_split_twice()`
+        // So i will just to a spot check for the most common use case
+
+        let line_string:LineString<f32> = line_string![
+            (x:0.0, y:0.0),
+            (x:1.0, y:0.0),
+            (x:1.0, y:1.0),
+            (x:2.0, y:1.0),
+            (x:2.0, y:2.0),
+        ];
+        let result = line_string.line_split_twice(0.25, 0.5).unwrap();
+        assert_eq!(
+            result,
+            LineSplitTwiceResult::FirstSecondThird(
+                line_string![
+                    (x: 0.0, y:0.0_f32),
+                    (x: 1.0, y:0.0_f32),
+                ],
+                line_string![
+                    (x: 1.0, y:0.0_f32),
+                    (x: 1.0, y:1.0_f32),
+                ],
+                line_string![
+                    (x: 1.0, y:1.0_f32),
+                    (x: 2.0, y:1.0_f32),
+                    (x: 2.0, y:2.0_f32),
+                ],
+            )
+        );
+    }
 }
 
 
