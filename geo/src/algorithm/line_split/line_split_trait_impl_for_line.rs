@@ -173,4 +173,18 @@ mod test {
         test_line_split_twice_helper!(0.0, 1.0, Second, (0.0, 10.0));
         test_line_split_twice_helper!(0.0, 0.0, Third, (0.0, 10.0));
     }
+
+    // =============================================================================================
+    // Line::line_split_many()
+    // =============================================================================================
+
+    #[test]
+    fn test_line_split_many(){
+        let line = Line::new(
+            coord!{x: 0.0_f32, y:0.0_f32},
+            coord!{x:10.0_f32, y:0.0_f32},
+        );
+        let result = line.line_split_many(vec![0.1, 0.2, 0.5]).unwrap();
+        println!(result);
+    }
 }

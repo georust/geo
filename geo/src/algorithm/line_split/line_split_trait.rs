@@ -8,11 +8,11 @@ where
     Scalar: CoordFloat,
 {
     /// Split a line or linestring at some fraction of its length.
-    /// 
+    ///
     /// Returns `None` when
     /// - The provided fraction is nan (infinite values are allowed and saturate to 0.0 or 1.0)
     /// - The `Line` or `LineString` include nan or infinite values
-    /// 
+    ///
     /// Note on choice of return type:
     ///
     /// You may wonder why this does not return `Option<(Option<Line>, Option<Line>)>`?
@@ -25,6 +25,60 @@ where
     ///
     ///
     fn line_split(&self, fraction: Scalar) -> Option<LineSplitResult<Self>>;
+
+    /// This default implementation is inefficient because it uses repeated application of
+    /// the line_split function. Implementing types should override this with a more efficient
+    /// algorithm if possible.
+    fn line_split_many(&self, mut fractions: &Vec<Scalar>) -> Option<Vec<Self>> where Self: Clone {
+        match fractions.len() {
+            0 => None,
+            1 => self.line_split(fractions[0]).map(|item| {
+                let (a, b) = item.into_tuple();
+                vec![a, b]
+            }),
+            _ => {
+                let mut fractions:Vec<Scalar> = fractions
+                    .iter()
+                    .map(|item| item.min(Scalar::one()).max(Scalar::zero()))
+                    .collect();
+                fractions.sort_unstable();
+
+                if fractions.last().unwrap() != Scalar::one() {
+                    fractions.push(Scalar::one());
+                } else{
+                    return None;
+                }
+                let fractions = fractions; // remove mutability
+                let output = Vec::new();
+                let mut remaining_self = self.clone();
+                // TODO handel case where fractions is len 1 or 0
+                for fraction in fractions.windows(2) {
+                    if let &[a, b] = fraction {
+                        let fraction_interval = b - a;
+                        let fraction_to_end = Scalar::one() - a;
+                        let next_fraction =  fraction_interval / fraction_to_end;
+                        remaining_self = match remaining_self.line_split(next_fraction) {
+                            Some(LineSplitResult::FirstSecond(line1, line2)) => {
+                                output.push(Some(line1));
+                                line2
+                            },
+                            Some(LineSplitResult::First(line1))=>{
+                                output.push(Some(line1));
+                                break
+                            },
+                            Some(LineSplitResult::Second(_))=>{
+                                output.push(None);
+                                break
+                            },
+                            None=>break
+                        }
+                    }
+                }
+                output
+            }
+        }
+        
+    }
 
     /// Note on choice of return type:
     /// 
