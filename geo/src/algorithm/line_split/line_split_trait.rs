@@ -7,6 +7,12 @@ where
     Self: Sized,
     Scalar: CoordFloat,
 {
+    /// Split a line or linestring at some fraction of its length.
+    /// 
+    /// Returns `None` when
+    /// - The provided fraction is nan (infinite values are allowed and saturate to 0.0 or 1.0)
+    /// - The `Line` or `LineString` include nan or infinite values
+    /// 
     /// Note on choice of return type:
     ///
     /// You may wonder why this does not return `Option<(Option<Line>, Option<Line>)>`?

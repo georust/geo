@@ -16,7 +16,7 @@ where
             (false, true) => Some(First(self.clone())),
             (true, false) => Some(Second(self.clone())),
             _ => {
-                // find the total length, and at the same time the length of each segment
+                // Find the total length and the lengths of each segment at the same time;
                 // TODO: consider the possibility of a `LineStringMeasured` datatype in the future
                 //       as this will be a common requirement in several algorithms, and would be a big
                 //       performance boost when repeatedly slicing portions from the same LineStrings
@@ -29,8 +29,8 @@ where
                     None => return None,
                 };
 
+                // Reject line strings with zero length, nan values, or infinite values;
                 if !Scalar::is_finite(length_total) || Scalar::is_zero(&length_total) {
-                    // TODO: Does this cover a linestring with zero or one points?
                     return None;
                 }
 
