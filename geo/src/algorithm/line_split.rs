@@ -289,8 +289,6 @@ where
                     Some(x) =>x,
                     None=> return None
                 };
-                println!("length_total: {:?}", length_total);
-                println!("length_segments: {:?}", length_segments);
 
                 if ! Scalar::is_finite(length_total) || Scalar::is_zero(&length_total) {
                     // TODO: Does this cover a linestring with zero or one points?
@@ -299,7 +297,6 @@ where
 
                 // Find the length of the first part of the line string before the split;
                 let length_fraction = fraction * length_total;
-                println!("length_fraction: {:?}", length_fraction);
                 // Set up some variables to track state in the for-loop
                 let mut length_accumulated = Scalar::zero();
                 // TODO: unwrap used; but should be safe since we check the length above
@@ -316,10 +313,8 @@ where
                     length_accumulated                    = length_accumulated + length_segment;
                     let length_accumulated_after_segment  = length_accumulated;
                     if length_fraction < length_accumulated_before_segment {
-                        println!("---{length_accumulated_before_segment:?}-----{length_accumulated_after_segment:?}--X");
                         coords_second_part.push(b);
                     }else if length_fraction >= length_accumulated_after_segment {
-                        println!("X--{length_accumulated_before_segment:?}-----{length_accumulated_after_segment:?}---");
                         coords_first_part.push(b);
                     } else {
                         // TODO: check for divide by zero
@@ -327,21 +322,17 @@ where
                               length_fraction
                             - length_accumulated_before_segment
                         ) / length_segment;
-                        println!("---{length_accumulated_before_segment:?}-{fraction_to_split_segment:?}-{length_accumulated_after_segment:?}---");
                         match Line::new(a, b).line_split(fraction_to_split_segment) {
                             Some(FirstSecond(line1, _line2)) => {
-                                println!("AAA");
                                 coords_first_part .push(line1.end);
                                 coords_second_part.push(line1.end);
                                 coords_second_part.push(b);
                             },
                             Some(First      (_line1       )) => {
-                                println!("BBB");
                                 coords_first_part .push(b);
                                 coords_second_part.push(b);
                             },
                             Some(Second     (       _line2)) => {
-                                println!("CCC");
                                 coords_second_part.push(a);
                                 coords_second_part.push(b);
                             },
