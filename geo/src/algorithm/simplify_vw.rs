@@ -110,15 +110,17 @@ where
             current: i + 1,
             left: i,
             right: i + 2,
-            intersector: (),
+            intersector: false,
         })
-        .collect::<BinaryHeap<VScore<T, ()>>>();
+        .collect::<BinaryHeap<VScore<T, bool>>>();
     // While there are still points for which the associated triangle
     // has an area below the epsilon
     while let Some(smallest) = pq.pop() {
         // This triangle's area is above epsilon, so skip it
         if smallest.area > *epsilon {
-            continue;
+            // no need to keep trying: the min-heap ensures that we process triangles in order
+            // so if we see one that exceeds the tolerance we're done: everything else is too big
+            break;
         }
         //  This triangle's area is below epsilon: eliminate the associated point
         let (left, right) = adjacent[smallest.current];
@@ -135,27 +137,9 @@ where
         adjacent[right as usize] = (left, rr);
         adjacent[smallest.current] = (0, 0);
 
-        // Now recompute the adjacent triangle(s), using left and right adjacent points
-        let choices = [(ll, left, right), (left, right, rr)];
-        for &(ai, current_point, bi) in &choices {
-            if ai as usize >= max || bi as usize >= max {
-                // Out of bounds, i.e. we're on one edge
-                continue;
-            }
-            let area = Triangle::new(
-                orig.0[ai as usize],
-                orig.0[current_point as usize],
-                orig.0[bi as usize],
-            )
-            .unsigned_area();
-            pq.push(VScore {
-                area,
-                current: current_point as usize,
-                left: ai as usize,
-                right: bi as usize,
-                intersector: (),
-            });
-        }
+        // Recompute the adjacent triangle(s), using left and right adjacent points
+        // this may add new triangles to the heap
+        recompute_triangles(&smallest, orig, &mut pq, ll, left, right, rr, max, epsilon);
     }
     // Filter out the points that have been deleted, returning remaining point indices
     orig.0
@@ -164,6 +148,58 @@ where
         .zip(adjacent.iter())
         .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(tup.0) } else { None })
         .collect::<Vec<usize>>()
+}
+
+/// Recompute adjacent triangle(s) using left and right adjacent points, and push onto heap
+///
+/// This is used for both standard and topology-preserving variants.
+#[allow(clippy::too_many_arguments)]
+fn recompute_triangles<T>(
+    smallest: &VScore<T, bool>,
+    orig: &LineString<T>,
+    pq: &mut BinaryHeap<VScore<T, bool>>,
+    ll: i32,
+    left: i32,
+    right: i32,
+    rr: i32,
+    max: usize,
+    epsilon: &T,
+) where
+    T: CoordFloat,
+{
+    let choices = [(ll, left, right), (left, right, rr)];
+    for &(ai, current_point, bi) in &choices {
+        if ai as usize >= max || bi as usize >= max {
+            // Out of bounds, i.e. we're on one edge
+            continue;
+        }
+        let area = Triangle::new(
+            orig.0[ai as usize],
+            orig.0[current_point as usize],
+            orig.0[bi as usize],
+        )
+        .unsigned_area();
+
+        // The current point causes a self-intersection, and this point precedes it
+        // we ensure it gets removed next by demoting its area to negative epsilon
+        // we check that current_point is less than smallest.current because
+        // if it's larger the point in question comes AFTER smallest.current: we only want to remove
+        // the point that comes BEFORE
+        let area = if smallest.intersector && (current_point as usize) < smallest.current {
+            -*epsilon
+        } else {
+            area
+        };
+
+        let v = VScore {
+            area,
+            current: current_point as usize,
+            left: ai as usize,
+            right: bi as usize,
+            intersector: false,
+        };
+        pq.push(v)
+    }
 }
 
 // Wrapper for visvalingam_indices, mapping indices back to points
@@ -296,7 +332,9 @@ where
     // has an area below the epsilon
     while let Some(mut smallest) = pq.pop() {
         if smallest.area > *epsilon {
-            continue;
+            // No need to continue: we've already seen all the candidate triangles;
+            // the min-heap guarantees it
+            break;
         }
         if counter <= INITIAL_MIN {
             // we can't remove any more points no matter what
@@ -317,6 +355,10 @@ where
         if smallest.intersector && counter <= MIN_POINTS {
             break;
         }
+        let (ll, _) = adjacent[left as usize];
+        let (_, rr) = adjacent[right as usize];
+        adjacent[left as usize] = (ll, right);
+        adjacent[right as usize] = (left, rr);
         // We've got a valid triangle, and its area is smaller than epsilon, so
         // remove it from the simulated "linked list"
         adjacent[smallest.current] = (0, 0);
@@ -334,40 +376,9 @@ where
         // Restore continuous line segment
         tree.insert(Line::new(left_point, right_point));
 
-        // Now recompute the adjacent triangle(s), using left and right adjacent points
-        let (ll, _) = adjacent[left as usize];
-        let (_, rr) = adjacent[right as usize];
-        adjacent[left as usize] = (ll, right);
-        adjacent[right as usize] = (left, rr);
-        let choices = [(ll, left, right), (left, right, rr)];
-        for &(ai, current_point, bi) in &choices {
-            if ai as usize >= max || bi as usize >= max {
-                // Out of bounds, i.e. we're on one edge
-                continue;
-            }
-            let new = Triangle::new(
-                orig.0[ai as usize],
-                orig.0[current_point as usize],
-                orig.0[bi as usize],
-            );
-            // The current point causes a self-intersection, and this point precedes it
-            // we ensure it gets removed next by demoting its area to negative epsilon
-            let temp_area = if smallest.intersector && (current_point as usize) < smallest.current {
-                -*epsilon
-            } else {
-                new.unsigned_area()
-            };
-            let new_triangle = VScore {
-                area: temp_area,
-                current: current_point as usize,
-                left: ai as usize,
-                right: bi as usize,
-                intersector: false,
-            };
-
-            // push re-computed triangle onto heap
-            pq.push(new_triangle);
-        }
+        // Recompute the adjacent triangle(s), using left and right adjacent points
+        // this may add new triangles to the heap
+        recompute_triangles(&smallest, orig, &mut pq, ll, left, right, rr, max, epsilon);
     }
     // Filter out the points that have been deleted, returning remaining points
     orig.0
@@ -415,7 +426,7 @@ where
 
 /// Simplifies a geometry.
 ///
-/// Polygons are simplified by running the algorithm on all their constituent rings.  This may
+/// Polygons are simplified by running the algorithm on all their constituent rings. This may
 /// result in invalid Polygons, and has no guarantee of preserving topology. Multi* objects are
 /// simplified by simplifying all their constituent geometries individually.
 ///
@@ -424,6 +435,9 @@ pub trait SimplifyVw<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
     ///
     /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation
+    ///
+    /// # Note
+    /// The tolerance used to remove a point is `epsilon`, in keeping with GEOS. JTS uses `epsilon ^ 2`.
     ///
     /// # Examples
     ///
@@ -496,7 +510,7 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
 
 /// Simplifies a geometry, preserving its topology by removing self-intersections
 ///
-/// An epsilon less than or equal to zero will return an unaltered version of the geometry.
+/// An epsilon less than or equal to zero will return an unaltered version of the geometry
 pub trait SimplifyVwPreserve<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using a topology-preserving variant of the
     /// [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm.
@@ -515,10 +529,13 @@ pub trait SimplifyVwPreserve<T, Epsilon = T> {
     ///
     /// **Note**: it is possible for the simplification algorithm to displace a Polygon's interior ring outside its shell.
     ///
-    /// **Note**: if removal of a point causes a self-intersection, but the geometry only has `n + 2`
-    /// points remaining (4 for a `LineString`, 6 for a `Polygon`), the point is retained and the
+    /// **Note**: if removal of a point causes a self-intersection, but the geometry only has `n + 1`
+    /// points remaining (4 for a `LineString`, 5 for a `Polygon`), the point is retained and the
     /// simplification process ends. This is because there is no guarantee that removal of two points will remove
     /// the intersection, but removal of further points would leave too few points to form a valid geometry.
+    ///
+    /// # Note
+    /// The tolerance used to remove a point is `epsilon`, in keeping with GEOS. JTS uses `epsilon ^ 2`
     ///
     /// # Examples
     ///
