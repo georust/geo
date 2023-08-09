@@ -1,5 +1,5 @@
 use geo_types::{CoordFloat, Line};
-
+use crate::Vector2DOps;
 use super::{LineSplit, LineSplitResult};
 
 impl<Scalar> LineSplit<Scalar> for Line<Scalar>
@@ -16,10 +16,14 @@ where
             Some(LineSplitResult::First(*self))
         } else {
             let new_midpoint = self.start + self.delta() * fraction;
-            Some(LineSplitResult::FirstSecond(
-                Line::new(self.start, new_midpoint),
-                Line::new(new_midpoint, self.end),
-            ))
+            if new_midpoint.is_finite() {
+                Some(LineSplitResult::FirstSecond(
+                    Line::new(self.start, new_midpoint),
+                    Line::new(new_midpoint, self.end),
+                ))
+            } else {
+                None
+            }
         }
     }
 }
