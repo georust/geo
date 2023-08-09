@@ -1,6 +1,6 @@
-use geo_types::{CoordFloat, Line};
-use crate::Vector2DOps;
 use super::{LineSplit, LineSplitResult};
+use crate::Vector2DOps;
+use geo_types::{CoordFloat, Line};
 
 impl<Scalar> LineSplit<Scalar> for Line<Scalar>
 where
@@ -179,12 +179,59 @@ mod test {
     // =============================================================================================
 
     #[test]
-    fn test_line_split_many(){
+    fn test_line_split_many() {
         let line = Line::new(
-            coord!{x: 0.0_f32, y:0.0_f32},
-            coord!{x:10.0_f32, y:0.0_f32},
+            coord! {x: 0.0_f32, y:0.0_f32},
+            coord! {x:10.0_f32, y:0.0_f32},
         );
-        let result = line.line_split_many(vec![0.1, 0.2, 0.5]).unwrap();
-        println!(result);
+        let result = line.line_split_many(&vec![0.1, 0.2, 0.5]);
+        assert_eq!(
+            result,
+            Some(vec![
+                Some(Line::new(
+                    coord! { x: 0.0, y: 0.0 },
+                    coord! { x: 1.0, y: 0.0 },
+                )),
+                Some(Line::new(
+                    coord! { x: 1.0, y: 0.0 },
+                    coord! { x: 2.0, y: 0.0 },
+                )),
+                Some(Line::new(
+                    coord! { x: 2.0, y: 0.0 },
+                    coord! { x: 5.0, y: 0.0 },
+                )),
+                Some(Line::new(
+                    coord! { x: 5.0, y: 0.0 },
+                    coord! { x: 10.0, y: 0.0 },
+                ))
+            ])
+        );
+    }
+
+    #[test]
+    fn test_line_split_many_edge() {
+        let line = Line::new(
+            coord! {x: 0.0_f32, y:0.0_f32},
+            coord! {x:10.0_f32, y:0.0_f32},
+        );
+        let result = line.line_split_many(&vec![0.1, 0.2, 2.0]);
+        assert_eq!(
+            result,
+            Some(vec![
+                Some(Line::new(
+                    coord! { x: 0.0, y: 0.0 },
+                    coord! { x: 1.0, y: 0.0 },
+                )),
+                Some(Line::new(
+                    coord! { x: 1.0, y: 0.0 },
+                    coord! { x: 2.0, y: 0.0 },
+                )),
+                Some(Line::new(
+                    coord! { x: 2.0, y: 0.0 },
+                    coord! { x:10.0, y: 0.0 },
+                )),
+                None
+            ])
+        );
     }
 }

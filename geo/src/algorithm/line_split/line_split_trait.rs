@@ -29,7 +29,10 @@ where
     /// This default implementation is inefficient because it uses repeated application of
     /// the line_split function. Implementing types should override this with a more efficient
     /// algorithm if possible.
-    fn line_split_many(&self, mut fractions: &Vec<Scalar>) -> Option<Vec<Self>> where Self: Clone {
+    fn line_split_many(&self, fractions: &Vec<Scalar>) -> Option<Vec<Option<Self>>>
+    where
+        Self: Clone,
+    {
         match fractions.len() {
             0 => None,
             1 => self.line_split(fractions[0]).map(|item| {
@@ -37,47 +40,47 @@ where
                 vec![a, b]
             }),
             _ => {
-                let mut fractions:Vec<Scalar> = fractions
+                let mut fractions: Vec<Scalar> = fractions
                     .iter()
                     .map(|item| item.min(Scalar::one()).max(Scalar::zero()))
                     .collect();
-                fractions.sort_unstable();
-
-                if fractions.last().unwrap() != Scalar::one() {
-                    fractions.push(Scalar::one());
-                } else{
-                    return None;
-                }
+                fractions
+                    .sort_unstable_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+                fractions.insert(0, Scalar::zero());
+                fractions.push(Scalar::one());
                 let fractions = fractions; // remove mutability
-                let output = Vec::new();
-                let mut remaining_self = self.clone();
-                // TODO handel case where fractions is len 1 or 0
+                let mut output: Vec<Option<Self>> = Vec::new();
+                let mut remaining_self = Some(self.clone());
                 for fraction in fractions.windows(2) {
                     if let &[a, b] = fraction {
                         let fraction_interval = b - a;
                         let fraction_to_end = Scalar::one() - a;
-                        let next_fraction =  fraction_interval / fraction_to_end;
-                        remaining_self = match remaining_self.line_split(next_fraction) {
-                            Some(LineSplitResult::FirstSecond(line1, line2)) => {
-                                output.push(Some(line1));
-                                line2
-                            },
-                            Some(LineSplitResult::First(line1))=>{
-                                output.push(Some(line1));
-                                break
-                            },
-                            Some(LineSplitResult::Second(_))=>{
-                                output.push(None);
-                                break
-                            },
-                            None=>break
+                        let next_fraction = fraction_interval / fraction_to_end;
+                        remaining_self = if let Some(remaining_self) = remaining_self {
+                            match remaining_self.line_split(next_fraction) {
+                                Some(LineSplitResult::FirstSecond(line1, line2)) => {
+                                    output.push(Some(line1));
+                                    Some(line2)
+                                }
+                                Some(LineSplitResult::First(line1)) => {
+                                    output.push(Some(line1));
+                                    None
+                                }
+                                Some(LineSplitResult::Second(_)) => {
+                                    output.push(None);
+                                    None
+                                }
+                                None => return None,
+                            }
+                        } else {
+                            output.push(None);
+                            None
                         }
                     }
                 }
-                output
+                Some(output)
             }
         }
-        
     }
 
     /// Note on choice of return type:
