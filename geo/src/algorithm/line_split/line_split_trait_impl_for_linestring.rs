@@ -24,7 +24,7 @@ where
                 let LineStringMeasurements {
                     length_total,
                     length_segments,
-                } = match measure_line_string(&self) {
+                } = match measure_line_string(self) {
                     Some(x) => x,
                     None => return None,
                 };
@@ -88,7 +88,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use geo_types::{line_string, coord};
+    use geo_types::{coord, line_string};
 
     use super::super::LineSplitTwiceResult;
 
@@ -99,7 +99,7 @@ mod test {
 
     #[test]
     fn split() {
-        let line_string:LineString<f32> = line_string![
+        let line_string: LineString<f32> = line_string![
             (x:0.0, y:0.0),
             (x:1.0, y:0.0),
             (x:1.0, y:1.0),
@@ -110,15 +110,15 @@ mod test {
         assert_eq!(
             line_string.line_split(0.5),
             Some(LineSplitResult::FirstSecond(
-                LineString::new(vec![line_string.0[0],line_string.0[1], slice_point]),
-                LineString::new(vec![slice_point, line_string.0[2],line_string.0[3]])
+                LineString::new(vec![line_string.0[0], line_string.0[1], slice_point]),
+                LineString::new(vec![slice_point, line_string.0[2], line_string.0[3]])
             ))
         );
     }
-    
+
     #[test]
     fn split_on_point() {
-        let line_string:LineString<f32> = line_string![
+        let line_string: LineString<f32> = line_string![
             (x:0.0, y:0.0),
             (x:1.0, y:0.0),
             (x:1.0, y:1.0),
@@ -129,7 +129,7 @@ mod test {
         assert_eq!(
             line_string.line_split(0.5),
             Some(LineSplitResult::FirstSecond(
-                LineString::new(vec![line_string.0[0],line_string.0[1], slice_point]),
+                LineString::new(vec![line_string.0[0], line_string.0[1], slice_point]),
                 LineString::new(vec![slice_point, line_string.0[3], line_string.0[4]])
             ))
         );
@@ -137,7 +137,7 @@ mod test {
 
     #[test]
     fn split_half_way_through_last_segment() {
-        let line_string:LineString<f32> = line_string![
+        let line_string: LineString<f32> = line_string![
             (x:0.0, y:0.0),
             (x:1.0, y:0.0),
             (x:1.0, y:1.0),
@@ -154,7 +154,7 @@ mod test {
 
     #[test]
     fn split_half_way_through_first_segment() {
-        let line_string:LineString<f32> = line_string![
+        let line_string: LineString<f32> = line_string![
             (x:0.0, y:0.0),
             (x:1.0, y:0.0),
             (x:1.0, y:1.0),
@@ -171,7 +171,7 @@ mod test {
 
     #[test]
     fn split_first() {
-        let line_string:LineString<f32> = line_string![
+        let line_string: LineString<f32> = line_string![
             (x:0.0, y:0.0),
             (x:1.0, y:0.0),
         ];
@@ -183,7 +183,7 @@ mod test {
 
     #[test]
     fn split_second() {
-        let line_string:LineString<f32> = line_string![
+        let line_string: LineString<f32> = line_string![
             (x:0.0, y:0.0),
             (x:1.0, y:0.0),
         ];
@@ -193,13 +193,11 @@ mod test {
         );
     }
 
-    
-
     // =============================================================================================
     // LineString::line_split_twice()
     // =============================================================================================
     #[test]
-    fn split_twice_typical(){
+    fn split_twice_typical() {
         // I think  if we exhaustively check
         // - `Line::line_split_twice()` and
         // - `LineString::line_split()`
@@ -207,7 +205,7 @@ mod test {
         // we don't need an exhaustive check for `LineString::line_split_twice()`
         // So I will just do a spot check for a typical case
 
-        let line_string:LineString<f32> = line_string![
+        let line_string: LineString<f32> = line_string![
             (x:0.0, y:0.0),
             (x:1.0, y:0.0),
             (x:1.0, y:1.0),

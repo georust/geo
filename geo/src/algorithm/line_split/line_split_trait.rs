@@ -2,20 +2,22 @@ use geo_types::CoordFloat;
 
 use super::{LineSplitResult, LineSplitTwiceResult};
 
-
-pub trait LineSplit<Scalar> where Self:Sized, Scalar: CoordFloat {
-
+pub trait LineSplit<Scalar>
+where
+    Self: Sized,
+    Scalar: CoordFloat,
+{
     /// Note on choice of return type:
-    /// 
+    ///
     /// You may wonder why this does not return `Option<(Option<Line>, Option<Line>)>`?
     /// It is because then the return type causes uncertainty; The user may expect to possibly
     /// receive `Some((None, None))` which is never possible, this would lead to clutter in match
     /// statements.
-    /// 
+    ///
     /// To make it easier to 'just get the first' or 'just get the second' you can use
     /// `LineSplitResult::first()` and `LineSplitResult::second()` which return `Option<T>`
-    /// 
-    /// 
+    ///
+    ///
     fn line_split(&self, fraction: Scalar) -> Option<LineSplitResult<Self>>;
 
     /// Note on choice of return type:
@@ -57,7 +59,7 @@ pub trait LineSplit<Scalar> where Self:Sized, Scalar: CoordFloat {
             },
             Some(LineSplitResult::First (line1)) => Some(First(line1)),
             Some(LineSplitResult::Second(line2)) => match line2.line_split(second_fraction) {
-                Some(LineSplitResult::FirstSecond(line2, line3)) => Some(SecondThird     (       line2, line3)), 
+                Some(LineSplitResult::FirstSecond(line2, line3)) => Some(SecondThird     (       line2, line3)),
                 Some(LineSplitResult::First      (line2       )) => Some(Second          (       line2       )),
                 Some(LineSplitResult::Second     (       line3)) => Some(Third           (              line3)),
                 None => None,
