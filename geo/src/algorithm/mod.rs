@@ -178,7 +178,7 @@ pub use line_locate_point::LineLocatePoint;
 
 /// Split a `Line` or `LineString` at a given fraction of its length.
 pub mod line_split;
-pub use line_split::LineSplit;
+pub use line_split::{LineSplit, LineSplitResult, LineSplitTwiceResult};
 
 /// Iterate over the lines in a geometry.
 pub mod lines_iter;

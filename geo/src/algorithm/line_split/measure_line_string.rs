@@ -14,7 +14,6 @@ pub struct LineStringMeasurements<Scalar> {
 ///
 /// - The `LineString` has less than two coords
 /// - The resulting total_length is not finite
-// TODO: consider re-implementing as a trait?
 pub fn measure_line_string<Scalar>(
     line_string: &LineString<Scalar>,
 ) -> Option<LineStringMeasurements<Scalar>>

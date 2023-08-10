@@ -2,33 +2,67 @@ use geo_types::CoordFloat;
 
 use super::{LineSplitResult, LineSplitTwiceResult};
 
+/// Defines functions to split a [Line](crate::Line) or [LineString](crate::LineString)
 pub trait LineSplit<Scalar>
 where
     Self: Sized,
     Scalar: CoordFloat,
 {
-    /// Split a line or linestring at some fraction of its length.
+    /// Split a [Line](crate::Line) or [LineString](crate::LineString) at some `fraction` of its length.
+    ///
+    /// `fraction` is any real number. Only values between 0.0 and 1.0 will split the line.
+    /// Values outside of this range (including infinite values) will be clamped to 0.0 or 1.0.
     ///
     /// Returns `None` when
-    /// - The provided fraction is nan (infinite values are allowed and saturate to 0.0 or 1.0)
-    /// - The `Line` or `LineString` include nan or infinite values
+    /// - The provided `fraction` is NAN
+    /// - The the object being sliced includes NAN or infinite coordinates
     ///
-    /// Note on choice of return type:
+    /// Otherwise returns [`Some(LineSplitResult)`](crate::algorithm::LineSplitResult)
     ///
-    /// You may wonder why this does not return `Option<(Option<Line>, Option<Line>)>`?
-    /// It is because then the return type causes uncertainty; The user may expect to possibly
-    /// receive `Some((None, None))` which is never possible, this would lead to clutter in match
-    /// statements.
+    /// example
     ///
-    /// To make it easier to 'just get the first' or 'just get the second' you can use
-    /// `LineSplitResult::first()` and `LineSplitResult::second()` which return `Option<T>`
+    /// ```
+    /// use geo::{Line, coord};
+    /// use geo::algorithm::{LineSplit, LineSplitResult};
+    /// let line = Line::new(
+    ///     coord! {x: 0.0_f32, y:0.0_f32},
+    ///     coord! {x:10.0_f32, y:0.0_f32},
+    /// );
+    /// let result = line.line_split(0.6);
+    /// assert_eq!(
+    ///     result,
+    ///     Some(LineSplitResult::FirstSecond(
+    ///         Line::new(
+    ///             coord! {x: 0.0_f32, y:0.0_f32},
+    ///             coord! {x: 6.0_f32, y:0.0_f32},
+    ///         ),
+    ///         Line::new(
+    ///             coord! {x: 6.0_f32, y:0.0_f32},
+    ///             coord! {x:10.0_f32, y:0.0_f32},
+    ///         )
+    ///     ))
+    /// );
     ///
-    ///
+    /// match result {
+    ///     Some(LineSplitResult::First(line1))=>todo!(),
+    ///     Some(LineSplitResult::Second(line2))=>todo!(),
+    ///     Some(LineSplitResult::FirstSecond(line1, line2))=>todo!(),
+    ///     None=>todo!(),
+    /// }
+    /// ```
     fn line_split(&self, fraction: Scalar) -> Option<LineSplitResult<Self>>;
 
-    /// This default implementation is inefficient because it uses repeated application of
-    /// the line_split function. Implementing types should override this with a more efficient
-    /// algorithm if possible.
+    ///
+    ///
+    /// example
+    ///
+    /// ```
+    ///
+    /// ```
+    /// > Note: Currently the default implementation of this function provided by the trait is
+    /// > inefficient because it uses repeated application of the
+    /// > [.line_split()](LineSplit::line_split) function. In future, types implementing this trait
+    /// > should override this with a more efficient algorithm if possible.
     fn line_split_many(&self, fractions: &Vec<Scalar>) -> Option<Vec<Option<Self>>>
     where
         Self: Clone,
@@ -52,66 +86,105 @@ where
                 let mut output: Vec<Option<Self>> = Vec::new();
                 let mut remaining_self = Some(self.clone());
                 for fraction in fractions.windows(2) {
-                    if let &[a, b] = fraction {
-                        let fraction_interval = b - a;
-                        let fraction_to_end = Scalar::one() - a;
-                        let next_fraction = fraction_interval / fraction_to_end;
-                        remaining_self = if let Some(remaining_self) = remaining_self {
-                            match remaining_self.line_split(next_fraction) {
-                                Some(LineSplitResult::FirstSecond(line1, line2)) => {
-                                    output.push(Some(line1));
-                                    Some(line2)
-                                }
-                                Some(LineSplitResult::First(line1)) => {
-                                    output.push(Some(line1));
-                                    None
-                                }
-                                Some(LineSplitResult::Second(_)) => {
-                                    output.push(None);
-                                    None
-                                }
-                                None => return None,
+                    // cannot be irrefutably unwrapped in for loop *sad crab noises*:
+                    let (a, b) = match fraction {
+                        &[a, b] => (a, b),
+                        _ => return None,
+                    };
+                    let fraction_interval = b - a;
+                    let fraction_to_end = Scalar::one() - a;
+                    let next_fraction = fraction_interval / fraction_to_end;
+                    remaining_self = if let Some(remaining_self) = remaining_self {
+                        match remaining_self.line_split(next_fraction) {
+                            Some(LineSplitResult::FirstSecond(line1, line2)) => {
+                                output.push(Some(line1));
+                                Some(line2)
                             }
-                        } else {
-                            output.push(None);
-                            None
+                            Some(LineSplitResult::First(line1)) => {
+                                output.push(Some(line1));
+                                None
+                            }
+                            Some(LineSplitResult::Second(line2)) => {
+                                output.push(None);
+                                Some(line2)
+                            }
+                            None => return None,
                         }
+                    } else {
+                        output.push(None);
+                        None
                     }
                 }
+
                 Some(output)
             }
         }
     }
 
-    /// Note on choice of return type:
+    /// Split a [Line](crate::Line) or [LineString](crate::LineString)
+    /// at `fraction_start` and at `fraction_end`.
     /// 
-    /// You may wonder why this does not return `Option<(Option<Line>,Option<Line>,Option<Line>)>`?
-    /// It is because then the return type causes uncertainty; The user may expect to possibly
-    /// receive `Some((None, None, None))` which is never possible.
-    /// The user would have a hard time writing an exhaustive match statement.
+    /// `fraction_start`/`fraction_end` are any real numbers. Only values between 0.0 and 1.0 will
+    /// split the line. Values outside of this range (including infinite values) will be clamped to
+    /// 0.0 or 1.0.
     /// 
-    /// To make it easier to 'just get the second' the `LineSplitResult` has a function called `first()->Option<T>`
+    /// If `fraction_start > fraction_end`, then the values will be swapped prior to
+    /// executing the splits.
     /// 
-    // TODO: I only want to skip formatting the match block, but because attributes on expressions
-    //       are experimental we are forced to put it on the function to avoid an error message.
+    /// Returns `None` when
+    /// - Either`fraction_start` or `fraction_end` are NAN
+    /// - The the object being sliced includes NAN or infinite coordinates
+    ///
+    /// Otherwise Returns a [Some(LineSplitTwiceResult)](LineSplitTwiceResult)
+    /// 
+    /// A [LineSplitTwiceResult]: LineSplitTwiceResult can contain between one and
+    /// three [Line](crate::Line) or [LineString](crate::LineString) objects. Please see the docs
+    /// for that type as it provides various helper methods to get the desired part(s) of the
+    /// output.
+    /// 
+    /// The following example shows how to always obtain the "middle" part between the two splits
+    /// using the [`.into_second()`](LineSplitTwiceResult#method.into_second) method:
+    /// ```
+    /// use geo::{LineString};
+    /// use geo::algorithm::{LineSplit, EuclideanLength};
+    /// // get the road section between chainage_from and chaingage_to
+    /// // (gets the second of the three result parts)
+    /// let my_road_line_string:LineString = todo!();
+    /// let chainage_from = 20.0;
+    /// let chainage_to   = 150.0;
+    /// let my_road_len = my_road_line_string.euclidean_length();
+    /// let my_road_section:Option<LineString> = my_road_line_string
+    ///     .split_twice(chainage_from / road_len, chaingage_to / road_len)
+    ///     .into_second();
+    /// ```
+    /// 
     #[rustfmt::skip]
     fn line_split_twice(
         &self,
-        start_fraction: Scalar,
-        end_fraction: Scalar,
+        fraction_start: Scalar,
+        fraction_end: Scalar,
     ) -> Option<LineSplitTwiceResult<Self>> {
         // import enum variants
         use LineSplitTwiceResult::*;
+        // reject nan fractions
+        if fraction_start.is_nan() || fraction_end.is_nan() {
+            return None;
+        }
+        // clamp
+        let fraction_start = fraction_start.min(Scalar::one()).max(Scalar::zero());
+        let fraction_end = fraction_end.min(Scalar::one()).max(Scalar::zero());
 
-        // forgive the user for passing in the wrong order
-        // because it simplifies the interface of the output type
-        let (start_fraction, end_fraction) = if start_fraction > end_fraction {
-            (end_fraction, start_fraction)
+        // swap interval if incorrectly ordered
+        let (start_fraction, end_fraction) = if fraction_start > fraction_end {
+            (fraction_end, fraction_start)
         } else {
-            (start_fraction, end_fraction)
+            (fraction_start, fraction_end)
         };
-        // TODO: check for nan
-        let second_fraction = (end_fraction - start_fraction) / (Scalar::one() - start_fraction);
+
+        // find the fraction to split the second portion of the line
+        let second_fraction =
+            (end_fraction - start_fraction)
+            / (Scalar::one() - start_fraction);
 
         match self.line_split(start_fraction) {
             Some(LineSplitResult::FirstSecond(line1, line2)) => match line2.line_split(second_fraction) {

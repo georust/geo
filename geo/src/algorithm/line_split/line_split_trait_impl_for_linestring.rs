@@ -42,12 +42,14 @@ where
                 let mut coords_first_part = vec![*self.0.first().unwrap()];
                 let mut coords_second_part = Vec::new();
 
-                // Convert window slices to tuples because destructuring slices of unknown length is not
-                // possible
-                // TODO: the itertools crate has a pairwise function which returns tuples
-                let pairs = self.0.as_slice().windows(2).map(|item| (item[0], item[1]));
-
-                for ((a, b), &length_segment) in pairs.zip(length_segments.iter()) {
+                for (fractions, &length_segment) in
+                    self.0.as_slice().windows(2).zip(length_segments.iter())
+                {
+                    // cannot be irrefutably unwrapped in for loop *sad crab noises*:
+                    let (a, b) = match fractions {
+                        &[a, b] => (a, b),
+                        _ => return None,
+                    };
                     let length_accumulated_before_segment = length_accumulated;
                     length_accumulated = length_accumulated + length_segment;
                     let length_accumulated_after_segment = length_accumulated;
@@ -230,6 +232,52 @@ mod test {
                     (x: 2.0, y:2.0_f32),
                 ],
             )
+        );
+    }
+
+    // =============================================================================================
+    // LineString::line_split_many()
+    // =============================================================================================
+    #[test]
+    fn test_line_split_many() {
+        // I think  if we exhaustively check
+        // - `Line::line_split_many()` and
+        // - `LineString::line_split()`
+        // then because the implementation for `line_split_many` is shared
+        // we don't need an exhaustive check for `LineString::line_split_many()`
+        // So I will just do a spot check for a typical case
+
+        let line_string: LineString<f32> = line_string![
+            (x:0.0, y:0.0),
+            (x:1.0, y:0.0),
+            (x:1.0, y:1.0),
+            (x:2.0, y:1.0),
+            (x:2.0, y:2.0),
+        ];
+        let result = line_string
+            .line_split_many(&vec![0.25, 0.5, 0.625])
+            .unwrap();
+        assert_eq!(
+            result,
+            vec![
+                Some(line_string![
+                    (x: 0.0, y:0.0_f32),
+                    (x: 1.0, y:0.0_f32),
+                ]),
+                Some(line_string![
+                    (x: 1.0, y:0.0_f32),
+                    (x: 1.0, y:1.0_f32),
+                ]),
+                Some(line_string![
+                    (x: 1.0, y:1.0_f32),
+                    (x: 1.5, y:1.0_f32),
+                ]),
+                Some(line_string![
+                    (x: 1.5, y:1.0_f32),
+                    (x: 2.0, y:1.0_f32),
+                    (x: 2.0, y:2.0_f32),
+                ]),
+            ]
         );
     }
 }

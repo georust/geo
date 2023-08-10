@@ -1,3 +1,31 @@
+/// The result of splitting a line twice using
+/// [LineSplit::line_split_twice()](crate::algorithm::LineSplit::line_split_twice) method.
+/// It can contain between one and three [Line](crate::Line)s / [LineString](crate::LineString)s.
+/// 
+/// Note that it may not be desireable to use a `match` statement directly on this type if you only
+/// ever want one part of the split. For this please see the helper functions;
+/// [.first()](LineSplitTwiceResult#method.first),
+/// [.second()](LineSplitTwiceResult#method.second),
+/// [.third()](LineSplitTwiceResult#method.third),
+/// [.into_first()](LineSplitTwiceResult#method.into_first),
+/// [.into_second()](LineSplitTwiceResult#method.into_second), and
+/// [.into_third()](LineSplitTwiceResult#method.into_third).
+/// 
+/// ```
+/// if let Some(second) = my_line.line_split_twice(...).into_second() {
+///     // got the part between the two splits
+/// }
+/// ```
+/// 
+/// To get more than one part, consider using consider using
+/// [.into_tuple()](LineSplitTwiceResult#method.into_tuple):
+/// 
+/// ```
+/// match my_line.line_split_twice(...).into_tuple() {
+///     (Some(first), Some(second), _) => todo!(),
+///     _ => None
+/// }
+/// ```
 #[derive(PartialEq, Debug)]
 #[rustfmt::skip]
 pub enum LineSplitTwiceResult<T> {
@@ -12,6 +40,8 @@ pub enum LineSplitTwiceResult<T> {
 
 #[rustfmt::skip]
 impl<T> LineSplitTwiceResult<T> {
+
+    /// Return only the first of three split line parts, if it exists.
     pub fn first(&self) -> Option<&T> {
         match self {
             Self::First           (x      ) => Some(x),
@@ -23,6 +53,7 @@ impl<T> LineSplitTwiceResult<T> {
             Self::FirstSecondThird(x, _, _) => Some(x),
         }
     }
+    /// Return only the first of three split line parts, if it exists, consuming the result
     pub fn into_first(self) -> Option<T> {
         match self {
             Self::First           (x      ) => Some(x),
@@ -34,6 +65,7 @@ impl<T> LineSplitTwiceResult<T> {
             Self::FirstSecondThird(x, _, _) => Some(x),
         }
     }
+    /// Return only the second  of three split line parts, if it exists
     pub fn second(&self) -> Option<&T> {
         match self {
             Self::First           (_      ) => None,
@@ -45,6 +77,7 @@ impl<T> LineSplitTwiceResult<T> {
             Self::FirstSecondThird(_, x, _) => Some(x),
         }
     }
+    /// Return only the second  of three split line parts, if it exists, consuming the result
     pub fn into_second(self) -> Option<T> {
         match self {
             Self::First           (_      ) => None,
@@ -56,6 +89,7 @@ impl<T> LineSplitTwiceResult<T> {
             Self::FirstSecondThird(_, x, _) => Some(x),
         }
     }
+    /// Return only the third of three split line parts, if it exists
     pub fn third(&self) -> Option<&T> {
         match self {
             Self::First           (_      ) => None,
@@ -67,6 +101,7 @@ impl<T> LineSplitTwiceResult<T> {
             Self::FirstSecondThird(_, _, x) => Some(x),
         }
     }
+    /// Return only the third of three split line parts, if it exists, consuming the result
     pub fn into_third(self) -> Option<T> {
         match self {
             Self::First           (_      ) => None,
@@ -78,7 +113,8 @@ impl<T> LineSplitTwiceResult<T> {
             Self::FirstSecondThird(_, _, x) => Some(x),
         }
     }
-    pub fn into_tuple(self) -> (Option<T>, Option<T>, Option<T>) {
+    /// Return all three parts of the split line, if they exist
+    pub fn as_tuple(&self) -> (Option<&T>, Option<&T>, Option<&T>) {
         match self {
             Self::First           (a      ) => (Some(a), None   , None   ),
             Self::Second          (   b   ) => (None   , Some(b), None   ),
@@ -89,7 +125,8 @@ impl<T> LineSplitTwiceResult<T> {
             Self::FirstSecondThird(a, b, c) => (Some(a), Some(b), Some(c)),
         }
     }
-    pub fn as_tuple(&self) -> (Option<&T>, Option<&T>, Option<&T>) {
+    /// Return all three parts of the split line, if they exist, consuming the result
+    pub fn into_tuple(self) -> (Option<T>, Option<T>, Option<T>) {
         match self {
             Self::First           (a      ) => (Some(a), None   , None   ),
             Self::Second          (   b   ) => (None   , Some(b), None   ),
