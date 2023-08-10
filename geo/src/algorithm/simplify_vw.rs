@@ -116,13 +116,12 @@ where
     // While there are still points for which the associated triangle
     // has an area below the epsilon
     while let Some(smallest) = pq.pop() {
-        // This triangle's area is above epsilon, so skip it
         if smallest.area > *epsilon {
             // no need to keep trying: the min-heap ensures that we process triangles in order
             // so if we see one that exceeds the tolerance we're done: everything else is too big
             break;
         }
-        //  This triangle's area is below epsilon: eliminate the associated point
+        //  This triangle's area is below epsilon: the associated point is a candidate for removal
         let (left, right) = adjacent[smallest.current];
         // A point in this triangle has been removed since this VScore
         // was created, so skip it
@@ -181,11 +180,11 @@ fn recompute_triangles<T>(
         .unsigned_area();
 
         // This logic only applies to VW-Preserve
-        // The current point causes a self-intersection, and this point precedes it
+        // smallest.current's removal causes a self-intersection, and this point precedes it
         // we ensure it gets removed next by demoting its area to negative epsilon
         // we check that current_point is less than smallest.current because
         // if it's larger the point in question comes AFTER smallest.current: we only want to remove
-        // the point that comes BEFORE
+        // the point that comes BEFORE smallest.current
         let area = if smallest.intersector && (current_point as usize) < smallest.current {
             -*epsilon
         } else {
@@ -360,7 +359,7 @@ where
         let (_, rr) = adjacent[right as usize];
         adjacent[left as usize] = (ll, right);
         adjacent[right as usize] = (left, rr);
-        // We've got a valid triangle, and its area is smaller than epsilon, so
+        // We've got a valid triangle, and its area is smaller than the tolerance, so
         // remove it from the simulated "linked list"
         adjacent[smallest.current] = (0, 0);
         counter -= 1;
