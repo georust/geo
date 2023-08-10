@@ -509,7 +509,7 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
         T: CoordFloat;
 }
 
-/// Simplifies a geometry, preserving its topology by removing self-intersections
+/// Simplifies a geometry, attempting to preserve its topology by removing self-intersections
 ///
 /// An epsilon less than or equal to zero will return an unaltered version of the geometry
 pub trait SimplifyVwPreserve<T, Epsilon = T> {
@@ -528,15 +528,15 @@ pub trait SimplifyVwPreserve<T, Epsilon = T> {
     /// (117.0, 48.0)` and `(117.0, 48.0), (300,0, 40.0)`. By removing it,
     /// a new triangle with indices `(0, 3, 4)` is formed, which does not cause a self-intersection.
     ///
-    /// **Note**: it is possible for the simplification algorithm to displace a Polygon's interior ring outside its shell.
+    /// # Notes
     ///
-    /// **Note**: if removal of a point causes a self-intersection, but the geometry only has `n + 1`
-    /// points remaining (4 for a `LineString`, 5 for a `Polygon`), the point is retained and the
+    /// - It is possible for the simplification algorithm to displace a Polygon's interior ring outside its shell.
+    /// - The algorithm does **not** guarantee a valid output geometry, especially on smaller geometries.
+    /// - If removal of a point causes a self-intersection, but the geometry only has `n + 1`
+    /// points remaining (3 for a `LineString`, 5 for a `Polygon`), the point is retained and the
     /// simplification process ends. This is because there is no guarantee that removal of two points will remove
     /// the intersection, but removal of further points would leave too few points to form a valid geometry.
-    ///
-    /// # Note
-    /// The tolerance used to remove a point is `epsilon`, in keeping with GEOS. JTS uses `epsilon ^ 2`
+    /// - The tolerance used to remove a point is `epsilon`, in keeping with GEOS. JTS uses `epsilon ^ 2`
     ///
     /// # Examples
     ///
