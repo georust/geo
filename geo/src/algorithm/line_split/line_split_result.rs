@@ -10,8 +10,15 @@
 /// [.into_second()](LineSplitResult#method.into_second).
 /// 
 /// ```
-/// if let Some(second) = my_line.line_split_twice(0.2, 0.5).into_second() {
-///     // got the part between the two splits
+/// # use geo::{LineString, coord};
+/// # use geo::LineSplit;
+/// 
+/// # let my_line = LineString::from(vec![coord! {x: 0., y: 0.},coord! {x: 1., y: 0.},]);
+/// if let Some(result) = my_line.line_split_twice(0.2, 0.5) {
+///     if let Some(second) = result.into_second() {
+///         // got the 'second' part of the split line
+///         // between the points 20% and 50% along its length
+///     }
 /// }
 /// ```
 #[rustfmt::skip]

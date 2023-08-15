@@ -12,16 +12,15 @@
 /// [.into_third()](LineSplitTwiceResult#method.into_third).
 /// 
 /// ```
-/// if let Some(second) = my_line.line_split_twice(...).into_second() {
-///     // got the part between the two splits
-/// }
+/// // get the second part between splits;
+/// let mid_part = my_line.line_split_twice(0.2, 0.5).unwrap().into_second().unwrap();
 /// ```
 /// 
 /// To get more than one part, consider using consider using
 /// [.into_tuple()](LineSplitTwiceResult#method.into_tuple):
 /// 
 /// ```
-/// match my_line.line_split_twice(...).into_tuple() {
+/// match my_line.line_split_twice(0.2, 0.5).unwrap().into_tuple() {
 ///     (Some(first), Some(second), _) => todo!(),
 ///     _ => None
 /// }

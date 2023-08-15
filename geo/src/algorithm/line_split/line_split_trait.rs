@@ -25,29 +25,29 @@ where
     /// use geo::{Line, coord};
     /// use geo::algorithm::{LineSplit, LineSplitResult};
     /// let line = Line::new(
-    ///     coord! {x: 0.0_f32, y:0.0_f32},
-    ///     coord! {x:10.0_f32, y:0.0_f32},
+    ///     coord! {x: 0.0, y:0.0},
+    ///     coord! {x:10.0, y:0.0},
     /// );
     /// let result = line.line_split(0.6);
     /// assert_eq!(
     ///     result,
     ///     Some(LineSplitResult::FirstSecond(
     ///         Line::new(
-    ///             coord! {x: 0.0_f32, y:0.0_f32},
-    ///             coord! {x: 6.0_f32, y:0.0_f32},
+    ///             coord! {x: 0.0, y:0.0},
+    ///             coord! {x: 6.0, y:0.0},
     ///         ),
     ///         Line::new(
-    ///             coord! {x: 6.0_f32, y:0.0_f32},
-    ///             coord! {x:10.0_f32, y:0.0_f32},
+    ///             coord! {x: 6.0, y:0.0},
+    ///             coord! {x:10.0, y:0.0},
     ///         )
     ///     ))
     /// );
     ///
     /// match result {
-    ///     Some(LineSplitResult::First(line1))=>todo!(),
-    ///     Some(LineSplitResult::Second(line2))=>todo!(),
-    ///     Some(LineSplitResult::FirstSecond(line1, line2))=>todo!(),
-    ///     None=>todo!(),
+    ///     Some(LineSplitResult::First(line1))=>{},
+    ///     Some(LineSplitResult::Second(line2))=>{},
+    ///     Some(LineSplitResult::FirstSecond(line1, line2))=>{},
+    ///     None=>{},
     /// }
     /// ```
     fn line_split(&self, fraction: Scalar) -> Option<LineSplitResult<Self>>;
@@ -128,34 +128,48 @@ where
     /// split the line. Values outside of this range (including infinite values) will be clamped to
     /// 0.0 or 1.0.
     /// 
-    /// If `fraction_start > fraction_end`, then the values will be swapped prior to
-    /// executing the splits.
+    /// If `fraction_start > fraction_end`, then the values will be swapped prior splitting.
     /// 
-    /// Returns `None` when
+    /// Returns [None] when
     /// - Either`fraction_start` or `fraction_end` are NAN
     /// - The the object being sliced includes NAN or infinite coordinates
     ///
-    /// Otherwise Returns a [Some(LineSplitTwiceResult)](LineSplitTwiceResult)
+    /// Otherwise Returns a [`Some(LineSplitTwiceResult<T>)`](LineSplitTwiceResult)
     /// 
-    /// A [LineSplitTwiceResult]: LineSplitTwiceResult can contain between one and
-    /// three [Line](crate::Line) or [LineString](crate::LineString) objects. Please see the docs
-    /// for that type as it provides various helper methods to get the desired part(s) of the
-    /// output.
+    /// A [`LineSplitTwiceResult<T>`](LineSplitTwiceResult) can contain between one and three
+    /// line parts where `T` is either [Line](crate::Line) or [LineString](crate::LineString).
+    /// 
+    /// Note that [LineSplitTwiceResult] provides various helper methods to get the desired part(s)
+    /// of the output.
     /// 
     /// The following example shows how to always obtain the "middle" part between the two splits
     /// using the [`.into_second()`](LineSplitTwiceResult#method.into_second) method:
+    /// 
     /// ```
-    /// use geo::{LineString};
+    /// use geo::{LineString, line_string};
     /// use geo::algorithm::{LineSplit, EuclideanLength};
-    /// // get the road section between chainage_from and chaingage_to
-    /// // (gets the second of the three result parts)
-    /// let my_road_line_string:LineString = todo!();
-    /// let chainage_from = 20.0;
-    /// let chainage_to   = 150.0;
+    /// use approx::assert_relative_eq;
+    /// let my_road_line_string:LineString<f32> = line_string![
+    ///     (x: 0.0,y: 0.0),
+    ///     (x:10.0,y: 0.0),
+    ///     (x:10.0,y:10.0),
+    /// ];
     /// let my_road_len = my_road_line_string.euclidean_length();
-    /// let my_road_section:Option<LineString> = my_road_line_string
-    ///     .split_twice(chainage_from / road_len, chaingage_to / road_len)
-    ///     .into_second();
+    /// let fraction_from =  5.0 / my_road_len;
+    /// let fraction_to   = 12.0 / my_road_len;
+    /// // Extract the road section between `fraction_from` and `fraction_to` using `.into_second()`
+    /// let my_road_section = match my_road_line_string.line_split_twice(fraction_from, fraction_to) {
+    ///     Some(result) => match result.into_second() { // get the second part of the result
+    ///         Some(linestring)=>Some(linestring),
+    ///         _=>None
+    ///     },
+    ///     _=>None
+    /// };
+    /// assert_relative_eq!(my_road_section.unwrap(), line_string![
+    ///     (x: 5.0,y: 0.0),
+    ///     (x:10.0,y: 0.0),
+    ///     (x:10.0,y: 2.0),
+    /// ]);
     /// ```
     /// 
     #[rustfmt::skip]

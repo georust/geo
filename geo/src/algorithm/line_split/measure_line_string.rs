@@ -3,17 +3,22 @@ use crate::EuclideanLength;
 use crate::Line;
 use crate::LineString;
 
+/// The result of the [measure_line_string] function
 #[derive(PartialEq, Debug)]
 pub struct LineStringMeasurements<Scalar> {
+    /// Total length of the [LineString]
     pub length_total: Scalar,
+    /// The length of each segment ([Line]) in the [LineString]
     pub length_segments: Vec<Scalar>,
 }
 
-/// Simultaneously measure the total length of a line and the length of each segment
-/// Returns `None` when
-///
-/// - The `LineString` has less than two coords
-/// - The resulting total_length is not finite
+/// Measure a [LineString] and return [`Option<LineStringMeasurements>`](LineStringMeasurements);
+/// The result contains both the `total_length` and the `length_segments` (the length
+/// of each segment or [Line])
+/// 
+/// Returns [None] 
+/// - if the [LineString] has less than two [coords](crate::Coord)
+/// - if total_length is not finite
 pub fn measure_line_string<Scalar>(
     line_string: &LineString<Scalar>,
 ) -> Option<LineStringMeasurements<Scalar>>
@@ -21,6 +26,9 @@ where
     Scalar: CoordFloat,
     Line<Scalar>: EuclideanLength<Scalar>,
 {
+    if line_string.0.len() < 2 {
+        return None;
+    }
     let result = line_string.lines().fold(
         LineStringMeasurements {
             length_total: Scalar::zero(),
@@ -39,7 +47,7 @@ where
             }
         },
     );
-    if result.length_total == Scalar::zero() || !result.length_total.is_finite() {
+    if !result.length_total.is_finite() {
         None
     } else {
         Some(result)

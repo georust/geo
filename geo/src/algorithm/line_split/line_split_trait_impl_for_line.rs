@@ -12,11 +12,11 @@ where
     /// Only values between 0.0 and 1.0 will split the line.
     /// Values outside of this range (including infinite values) will be clamped to 0.0 or 1.0.
     ///
-    /// Returns `None` when
+    /// Returns [None] when
     /// - The provided `fraction` is NAN
     /// - The the object being sliced includes NAN or infinite coordinates
     ///
-    /// Otherwise Returns a [Some(LineSplitResult)](LineSplitResult)
+    /// Otherwise Returns a [`Some(LineSplitResult<Line>)`](LineSplitResult)
     ///
     /// example
     ///
@@ -24,20 +24,20 @@ where
     /// use geo::{Line, coord};
     /// use geo::algorithm::{LineSplit, LineSplitResult};
     /// let line = Line::new(
-    ///     coord! {x: 0.0_f32, y:0.0_f32},
-    ///     coord! {x:10.0_f32, y:0.0_f32},
+    ///     coord! {x: 0.0, y:0.0},
+    ///     coord! {x:10.0, y:0.0},
     /// );
     /// let result = line.line_split(0.6);
     /// assert_eq!(
     ///     result,
     ///     Some(LineSplitResult::FirstSecond(
     ///         Line::new(
-    ///             coord! {x: 0.0_f32, y:0.0_f32},
-    ///             coord! {x: 6.0_f32, y:0.0_f32},
+    ///             coord! {x: 0.0, y:0.0},
+    ///             coord! {x: 6.0, y:0.0},
     ///         ),
     ///         Line::new(
-    ///             coord! {x: 6.0_f32, y:0.0_f32},
-    ///             coord! {x:10.0_f32, y:0.0_f32},
+    ///             coord! {x: 6.0, y:0.0},
+    ///             coord! {x:10.0, y:0.0},
     ///         )
     ///     ))
     /// );
@@ -217,8 +217,8 @@ mod test {
     #[test]
     fn test_line_split_many() {
         let line = Line::new(
-            coord! {x: 0.0_f32, y:0.0_f32},
-            coord! {x:10.0_f32, y:0.0_f32},
+            coord! {x: 0.0, y:0.0},
+            coord! {x:10.0, y:0.0},
         );
         let result = line.line_split_many(&vec![0.1, 0.2, 0.5]);
         assert_eq!(
@@ -247,8 +247,8 @@ mod test {
     #[test]
     fn test_line_split_many_edge_right() {
         let line = Line::new(
-            coord! {x: 0.0_f32, y:0.0_f32},
-            coord! {x:10.0_f32, y:0.0_f32},
+            coord! {x: 0.0, y:0.0},
+            coord! {x:10.0, y:0.0},
         );
         let result = line.line_split_many(&vec![0.1, 0.2, 2.0]);
         assert_eq!(
@@ -274,8 +274,8 @@ mod test {
     #[test]
     fn test_line_split_many_double_edge_right() {
         let line = Line::new(
-            coord! {x: 0.0_f32, y:0.0_f32},
-            coord! {x:10.0_f32, y:0.0_f32},
+            coord! {x: 0.0, y:0.0},
+            coord! {x:10.0, y:0.0},
         );
         let result = line.line_split_many(&vec![0.1, 1.2, 2.0]);
         assert_eq!(
@@ -298,8 +298,8 @@ mod test {
     #[test]
     fn test_line_split_many_edge_left() {
         let line = Line::new(
-            coord! {x: 0.0_f32, y:0.0_f32},
-            coord! {x:10.0_f32, y:0.0_f32},
+            coord! {x: 0.0, y:0.0},
+            coord! {x:10.0, y:0.0},
         );
         let result = line.line_split_many(&vec![-1.0, 0.2, 0.5]);
         assert_eq!(
@@ -325,8 +325,8 @@ mod test {
     #[test]
     fn test_line_split_many_double_edge_left() {
         let line = Line::new(
-            coord! {x: 0.0_f32, y:0.0_f32},
-            coord! {x:10.0_f32, y:0.0_f32},
+            coord! {x: 0.0, y:0.0},
+            coord! {x:10.0, y:0.0},
         );
         let result = line.line_split_many(&vec![-1.0, -0.5, 0.5]);
         assert_eq!(
@@ -349,8 +349,8 @@ mod test {
     #[test]
     fn test_line_split_many_same_value() {
         let line = Line::new(
-            coord! {x: 0.0_f32, y:0.0_f32},
-            coord! {x:10.0_f32, y:0.0_f32},
+            coord! {x: 0.0, y:0.0},
+            coord! {x:10.0, y:0.0},
         );
         let result = line.line_split_many(&vec![0.2, 0.2, 0.5]);
         assert_eq!(
