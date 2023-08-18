@@ -125,7 +125,11 @@ impl<T: GeoNum> LineOrPoint<T> {
     }
 
     pub fn orient2d(&self, other: Coord<T>) -> Orientation {
-        T::Ker::orient2d(*self.left, *self.right, other)
+        let (left, right) = match self {
+            LineOrPoint::Point(p) => (**p, **p),
+            LineOrPoint::Line { left, right } => (**left, **right),
+        };
+        T::Ker::orient2d(left, right, other)
     }
 }
 
