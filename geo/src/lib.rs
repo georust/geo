@@ -150,13 +150,14 @@
 //! ## Miscellaneous
 //!
 //! - **[`Centroid`](Centroid)**: Calculate the centroid of a geometry
+//! - **[`ChaikinSmoothing`](ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
+//! - **[`Densify`](Densify)**: Densify linear geometry components by interpolating points
 //! - **[`GeodesicDestination`](GeodesicDestination)**: Given a start point, bearing, and distance, calculate the destination point on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`GeodesicIntermediate`](GeodesicIntermediate)**: Calculate intermediate points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`HaversineDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere
 //! - **[`HaversineIntermediate`](HaversineIntermediate)**: Calculate intermediate points on a sphere
 //! - **[`proj`](proj)**: Project geometries with the `proj` crate (requires the `use-proj` feature)
-//! - **[`ChaikinSmoothing`](ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
-//! - **[`Densify`](Densify)**: Densify linear geometry components by interpolating points
+//! - **[`LineStringSegmentize`](LineStringSegmentize)**: Segment a LineString into `n` segments.
 //! - **[`Transform`](Transform)**: Transform a geometry using Proj.
 //! - **[`RemoveRepeatedPoints`](RemoveRepeatedPoints)**: Remove repeated points from a geometry.
 //!
