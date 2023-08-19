@@ -176,7 +176,11 @@ mod test {
         let linestring: LineString = vec![[0.0, 0.0], [1.0, 1.0], [1.0, 2.0], [3.0, 3.0]].into();
         let segments = linestring.line_segmentize(2).unwrap();
 
-        assert_relative_eq!(linestring.euclidean_length(), segments.euclidean_length(), epsilon = f64::EPSILON)
+        assert_relative_eq!(
+            linestring.euclidean_length(),
+            segments.euclidean_length(),
+            epsilon = f64::EPSILON
+        )
     }
 
     #[test]
