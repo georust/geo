@@ -136,14 +136,14 @@ mod test {
     fn n_is_zero() {
         let linestring: LineString = vec![[-1.0, 0.0], [0.5, 1.0], [1.0, 2.0]].into();
         let segments = linestring.line_segmentize(0);
-        assert_eq!(segments.is_none(), true)
+        assert!(segments.is_none())
     }
 
     #[test]
     fn n_is_max() {
         let linestring: LineString = vec![[-1.0, 0.0], [0.5, 1.0], [1.0, 2.0]].into();
         let segments = linestring.line_segmentize(usize::MAX);
-        assert_eq!(segments.is_none(), true)
+        assert!(segments.is_none())
     }
 
     #[test]
@@ -151,7 +151,7 @@ mod test {
     fn n_greater_than_lines() {
         let linestring: LineString = vec![[-1.0, 0.0], [0.5, 1.0], [1.0, 2.0]].into();
         let segments = linestring.line_segmentize(3);
-        assert_eq!(segments.is_none(), true)
+        assert!(segments.is_none())
     }
 
     #[test]
@@ -161,7 +161,7 @@ mod test {
 
         let segments = linestring.line_segmentize(3).unwrap();
 
-        assert_eq!(linestring.lines_iter().eq(segments.lines_iter()), true)
+        assert!(linestring.lines_iter().eq(segments.lines_iter()))
     }
 
     #[test]
