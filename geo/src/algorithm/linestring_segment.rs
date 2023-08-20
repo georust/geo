@@ -81,9 +81,7 @@ impl LineStringSegmentize for LineString {
             if (cum_length >= segment_length) && (i != (n_lines - 1)) {
                 let remainder = cum_length - segment_length;
                 // if we get None, we exit the function and return None
-                let Some(endpoint) =  segment.line_interpolate_point((length - remainder) / length) else {
-                    return None
-                };
+                let endpoint = segment.line_interpolate_point((length - remainder) / length)?;
 
                 // add final coord to ln_vec
                 ln_vec.push(endpoint.into());
