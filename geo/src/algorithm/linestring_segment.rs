@@ -14,18 +14,14 @@ impl LineStringSegmentize for LineString {
         let n_lines = self.lines().count();
 
         // Return None if n is 0 or the maximum usize
-        if n == usize::MIN || n == usize::MAX {
-            return None;
-        } else if n_lines < n {
-            // if n is greater than the number of Lines in the
-            // LineString return None
+        if (n == usize::MIN) || (n == usize::MAX) || (n_lines < n) {
             return None;
         } else if n_lines == n {
             // if the number of line segments equals n then return the
             // lines as LineStrings
             let lns = self
                 .lines_iter()
-                .map(|l| LineString::from(l))
+                .map(LineString::from)
                 .collect::<Vec<LineString>>();
 
             return Some(MultiLineString::new(lns));
@@ -119,7 +115,7 @@ impl LineStringSegmentize for LineString {
         // a multi linestring
         let res_lines = res_coords
             .into_iter()
-            .map(|xi| LineString::new(xi))
+            .map(LineString::new)
             .collect::<Vec<LineString>>();
 
         Some(MultiLineString::new(res_lines))
