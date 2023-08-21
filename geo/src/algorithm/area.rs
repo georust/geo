@@ -532,9 +532,4 @@ mod test {
             max_relative = 0.0001
         );
     }
-
-    #[test]
-    fn failing_test() {
-        panic!("This intentionally panics to test that CI won't allow it to be merged");
-    }
 }
