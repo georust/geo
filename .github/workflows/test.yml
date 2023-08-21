@@ -12,13 +12,11 @@ on:
 name: Run tests
 jobs:
   # The `ci-result` job doesn't actually test anything - it just aggregates the
-  # overall build status for bors, otherwise our bors.toml would need an entry
+  # overall build status, otherwise the merge queue would need an entry
   # for each individual job produced by the job-matrix.
   #
-  # Ref: https://github.com/rust-lang/crater/blob/9ab6f9697c901c4a44025cf0a39b73ad5b37d198/.github/workflows/bors.yml#L125-L149
-  #
-  # ALL THE SUBSEQUENT JOBS NEED THEIR `name` ADDED TO THE `needs` SECTION OF THIS JOB!
-  ci-result:
+  # ALL THE SUBSEQUENT JOBS NEED THEIR `name` ADDED TO THE `needs` SECTION OF both "ci result" JOBS!
+  ci-success:
     name: ci result
     runs-on: ubuntu-latest
     needs:
@@ -28,12 +26,23 @@ jobs:
       - geo_postgis
       - geo_fuzz
       - bench
+    if: success()
     steps:
       - name: Mark the job as a success
-        if: success()
         run: exit 0
+  ci-failure:
+    name: ci result
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - geo_types
+      - geo
+      - geo_postgis
+      - geo_fuzz
+      - bench
+    if: failure()
+    steps:
       - name: Mark the job as a failure
-        if: "!success()"
         run: exit 1
 
   lint:
