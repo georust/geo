@@ -1,9 +1,8 @@
 use crate::line_interpolate_point::LineInterpolatePoint;
-use crate::{Coord, EuclideanLength, LineString, LinesIter, MultiLineString};
+use crate::{Coord, Densify, EuclideanLength, LineString, LinesIter, MultiLineString};
 
-/// Segments a LineString into `n` LineStrings as a MultiLineString.
-/// `None` will be returned when `n` is equal to 0, `n` is larger than the
-///  number of `Line`s that make up the `LineString`, or when a point
+/// Segments a LineString into `n` equal length LineStrings as a MultiLineString.
+/// `None` will be returned when `n` is equal to 0 or when a point
 /// cannot be interpolated on a `Line` segment.
 pub trait LineStringSegmentize {
     fn line_segmentize(&self, n: usize) -> Option<MultiLineString>;
@@ -14,8 +13,13 @@ impl LineStringSegmentize for LineString {
         let n_lines = self.lines().count();
 
         // Return None if n is 0 or the maximum usize
-        if (n == usize::MIN) || (n == usize::MAX) || (n_lines < n) {
+        if (n == usize::MIN) || (n == usize::MAX) {
             return None;
+        } else if n > n_lines {
+            let total_len = self.euclidean_length();
+            let densified = self.densify(total_len / (n as f64));
+            return densified.line_segmentize(n);
+            // return Some(MultiLineString::new(vec![densified]))
         } else if n_lines == n {
             // if the number of line segments equals n then return the
             // lines as LineStrings
@@ -45,22 +49,11 @@ impl LineStringSegmentize for LineString {
 
         // calculate the target fraction for the first iteration
         // fraction will change based on each iteration
-        // let mut fraction = (1_f64 / (n as f64)) * (idx as f64);
         let segment_prop = (1_f64) / (n as f64);
         let segment_length = total_length * segment_prop;
-        // let mut fraction = segment_prop;
-
-        // // fractional length will change dependent upon which `n` we're on.
-        // let mut fractional_length = total_length * fraction;
 
         // instantiate the first Vec<Coord>
         let mut ln_vec: Vec<Coord> = Vec::new();
-
-        // push the first coord in
-        // each subsequent coord will be the end point
-        // let c1 = lns.peek();
-        // ln_vec.push(c1.unwrap().start);
-        //ln_vec.push(lns.nth(0).clone().unwrap().start);
 
         // iterate through each line segment in the LineString
         for (i, segment) in lns.enumerate() {
@@ -92,14 +85,10 @@ impl LineStringSegmentize for LineString {
 
                 // now add the last endpoint as the first coord
                 // and the endpoint of the linesegment as well only
-                // if i != n_lines
                 if i != n_lines {
                     ln_vec.push(endpoint.into());
                 }
 
-                // // we need to adjust our fraction and fractional length
-                // fraction += segment_prop;
-                // fractional_length = total_length * fraction;
                 cum_length = remainder;
             }
 
@@ -122,12 +111,10 @@ impl LineStringSegmentize for LineString {
     }
 }
 
-// rather than calculating the sum up until 1, i should calculate
-// the amount per segment. Once we exceed that, we take the remainder
-// of cum_length - segment prop
-
 #[cfg(test)]
 mod test {
+    use approx::RelativeEq;
+
     use super::*;
     use crate::{EuclideanLength, LineString};
 
@@ -147,11 +134,24 @@ mod test {
     }
 
     #[test]
-    // test that n > n_lines returns None
     fn n_greater_than_lines() {
         let linestring: LineString = vec![[-1.0, 0.0], [0.5, 1.0], [1.0, 2.0]].into();
-        let segments = linestring.line_segmentize(3);
-        assert!(segments.is_none())
+        let segments = linestring.line_segmentize(5).unwrap();
+
+        // assert that there are n linestring segments
+        assert_eq!(segments.clone().0.len(), 5);
+
+        // assert that the lines are equal length
+        let lens = segments
+            .into_iter()
+            .map(|x| x.euclidean_length())
+            .collect::<Vec<f64>>();
+
+        let first = lens[0];
+
+        assert!(lens
+            .iter()
+            .all(|x| first.relative_eq(x, f64::EPSILON, 1e-10)))
     }
 
     #[test]
