@@ -139,7 +139,7 @@ mod test {
         let segments = linestring.line_segmentize(5).unwrap();
 
         // assert that there are n linestring segments
-        assert_eq!(segments.clone().0.len(), 5);
+        assert_eq!(segments.0.len(), 5);
 
         // assert that the lines are equal length
         let lens = segments
