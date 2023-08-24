@@ -47,6 +47,10 @@ name = "area"
 harness = false
 
 [[bench]]
+name = "coordinate_position"
+harness = false
+
+[[bench]]
 name = "contains"
 harness = false
 
