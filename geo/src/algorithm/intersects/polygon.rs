@@ -3,6 +3,7 @@ use crate::utils::{coord_pos_relative_to_ring, CoordPos};
 use crate::BoundingRect;
 use crate::{
     Coord, CoordNum, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect,
+    Triangle,
 };
 
 impl<T> Intersects<Coord<T>> for Polygon<T>
@@ -45,6 +46,16 @@ where
 }
 symmetric_intersects_impl!(Rect<T>, Polygon<T>);
 
+impl<T> Intersects<Triangle<T>> for Polygon<T>
+where
+    T: GeoNum,
+{
+    fn intersects(&self, rect: &Triangle<T>) -> bool {
+        self.intersects(&rect.to_polygon())
+    }
+}
+symmetric_intersects_impl!(Triangle<T>, Polygon<T>);
+
 impl<T> Intersects<Polygon<T>> for Polygon<T>
 where
     T: GeoNum,
@@ -81,6 +92,7 @@ where
 symmetric_intersects_impl!(Point<T>, MultiPolygon<T>);
 symmetric_intersects_impl!(Line<T>, MultiPolygon<T>);
 symmetric_intersects_impl!(Rect<T>, MultiPolygon<T>);
+symmetric_intersects_impl!(Triangle<T>, MultiPolygon<T>);
 symmetric_intersects_impl!(Polygon<T>, MultiPolygon<T>);
 
 #[cfg(test)]
