@@ -2,7 +2,7 @@
 //!
 //! This implementation is based on these awesome [lecture notes] by David
 //! Mount.  The broad idea is to run a left-right planar sweep on the segments
-//! of the polygon and try to iteratively extend parallel monotone chains.  
+//! of the polygon and try to iteratively extend parallel monotone chains.
 //!
 //! [lecture notes]:
 //! //www.cs.umd.edu/class/spring2020/cmsc754/Lects/lect05-triangulate.pdf
@@ -41,7 +41,7 @@ impl<T: GeoNum> Builder<T> {
             let (ext, ints) = polygon.into_inner();
             Some(ext)
                 .into_iter()
-                .chain(ints.into_iter())
+                .chain(ints)
                 .flat_map(|ls| -> Vec<_> { ls.lines().collect() })
                 .filter_map(|line| {
                     if line.start == line.end {
