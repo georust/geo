@@ -1,10 +1,4 @@
-use std::{
-    borrow::Borrow,
-    cmp::Ordering,
-    collections::BTreeSet,
-    fmt::Debug,
-    ops::{Bound, Deref},
-};
+use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, ops::Deref};
 
 /// A segment currently active in the sweep.
 ///
@@ -85,42 +79,4 @@ pub(in crate::algorithm) trait ActiveSet: Default {
     }
     fn insert_active(&mut self, segment: Self::Seg);
     fn remove_active(&mut self, segment: &Self::Seg);
-}
-
-impl<T: PartialOrd + Debug> ActiveSet for BTreeSet<Active<T>> {
-    type Seg = T;
-
-    fn previous_find<F: FnMut(&Active<Self::Seg>) -> bool>(
-        &self,
-        segment: &Self::Seg,
-        mut f: F,
-    ) -> Option<&Active<Self::Seg>> {
-        self.range::<Active<_>, _>((
-            Bound::Unbounded,
-            Bound::Excluded(Active::active_ref(segment)),
-        ))
-        .rev()
-        .find(|&a| f(a))
-    }
-    fn next_find<F: FnMut(&Active<Self::Seg>) -> bool>(
-        &self,
-        segment: &Self::Seg,
-        mut f: F,
-    ) -> Option<&Active<Self::Seg>> {
-        self.range::<Active<_>, _>((
-            Bound::Excluded(Active::active_ref(segment)),
-            Bound::Unbounded,
-        ))
-        .find(|&a| f(a))
-    }
-
-    fn insert_active(&mut self, segment: Self::Seg) {
-        let result = self.insert(Active(segment));
-        debug_assert!(result);
-    }
-
-    fn remove_active(&mut self, segment: &Self::Seg) {
-        let result = self.remove(Active::active_ref(segment));
-        debug_assert!(result);
-    }
 }
