@@ -166,7 +166,7 @@ where
             return false;
         }
 
-        let mut mp_zipper = self.into_iter().zip(other.into_iter());
+        let mut mp_zipper = self.into_iter().zip(other);
         mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(rhs, epsilon))
     }
 }
