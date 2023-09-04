@@ -1,7 +1,12 @@
 use crate::{CoordNum, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
 use num_traits::Bounded;
 
 use alloc::vec;
@@ -100,7 +105,12 @@ impl<T: CoordNum> MultiPoint<T> {
     }
 }
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
 macro_rules! impl_rstar_multi_point {
     ($rstar:ident) => {
         impl<T> $rstar::RTreeObject for MultiPoint<T>

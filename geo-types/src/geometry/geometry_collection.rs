@@ -1,4 +1,9 @@
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
 use crate::Point;
 use crate::{CoordNum, Geometry};
 use alloc::vec;
@@ -7,7 +12,12 @@ use alloc::vec::Vec;
 use approx::{AbsDiffEq, RelativeEq};
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
 use num_traits::Bounded;
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
@@ -250,7 +260,12 @@ impl<'a, T: CoordNum> GeometryCollection<T> {
     }
 }
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
 macro_rules! impl_rstar_geometry_collection {
     ($rstar:ident) => {
         impl<T> $rstar::RTreeObject for GeometryCollection<T>
