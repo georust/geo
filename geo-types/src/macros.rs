@@ -71,10 +71,10 @@ macro_rules! coord {
 /// Creating a [`LineString`] with WKT-like syntax:
 /// 
 /// ```
-/// use geo_types::{line_string, coord};
+/// use geo_types::line_string;
 /// let ls = line_string![76.9454 43.2497, 76.9636 43.2308, 77.0591 43.1575, 77.1108 43.1131];
 ///
-/// assert_eq!(ls[1], coord! {
+/// assert_eq!(ls[1], geo_types::coord! {
 ///     x: 76.9636,
 ///     y: 43.2308
 /// });
@@ -83,7 +83,7 @@ macro_rules! coord {
 /// Creating a [`LineString`], supplying x/y values:
 ///
 /// ```
-/// use geo_types::{line_string, coord};
+/// use geo_types::line_string;
 ///
 /// let ls = line_string![
 ///     (x: -21.95156, y: 64.1446),
@@ -92,7 +92,7 @@ macro_rules! coord {
 ///     (x: -21.951445, y: 64.145508),
 /// ];
 ///
-/// assert_eq!(ls[1], coord! {
+/// assert_eq!(ls[1], geo_types::coord! {
 ///     x: -21.951,
 ///     y: 64.14479
 /// });
@@ -101,9 +101,9 @@ macro_rules! coord {
 /// Creating a [`LineString`], supplying [`Coord`]s:
 ///
 /// ```
-/// use geo_types::{line_string, coord};
+/// use geo_types::line_string;
 ///
-/// let coord1 = coord! {
+/// let coord1 = geo_types::coord! {
 ///     x: -21.95156,
 ///     y: 64.1446,
 /// };
@@ -124,7 +124,7 @@ macro_rules! coord {
 ///
 /// assert_eq!(
 ///     ls[1],
-///     coord! {
+///     geo_types::coord! {
 ///         x: -21.951,
 ///         y: 64.14479
 ///     }
@@ -184,7 +184,7 @@ macro_rules! line_string {
 /// Creating a [`Polygon'] with WKT-like syntax:
 /// 
 /// ```
-/// use geo_types::{polygon, coord};
+/// use geo_types::polygon;
 /// 
 /// let simple_poly = polygon!(0.0 0.0, 30.0 0.0, 30.0 30.0, 0.0 30.0, 0.0 0.0);
 /// assert_eq!(simple_poly.exterior()[1], geo_types::coord!{ x: 30.0, y: 0.0 });
@@ -246,14 +246,14 @@ macro_rules! line_string {
 macro_rules! polygon {
     () => { $crate::Polygon::new($crate::line_string![], vec![]) };
     ($($x:literal $y:literal),+) => {
-        polygon!($(coord! { x: $x, y: $y }),+)
+        polygon!($($crate::coord! { x: $x, y: $y }),+)
     };
     ([$($xi:literal $yi:literal),+ $(,)?], $([$($xo:literal $yo:literal),+ $(,)?]),*) => {
         polygon!(
-            exterior: [$(coord!(x: $xi, y: $yi)),+],
+            exterior: [$($crate::coord!(x: $xi, y: $yi)),+],
             interiors: [
                 $([
-                    $(coord!(x: $xo, y: $yo),)+
+                    $($crate::coord!(x: $xo, y: $yo),)+
                 ]),*
             ]
         )
