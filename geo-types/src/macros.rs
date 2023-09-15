@@ -67,9 +67,9 @@ macro_rules! coord {
 /// ```
 ///
 /// # Examples
-/// 
+///
 /// Creating a [`LineString`] with WKT-like syntax:
-/// 
+///
 /// ```
 /// use geo_types::line_string;
 /// let ls = line_string![76.9454 43.2497, 76.9636 43.2308, 77.0591 43.1575, 77.1108 43.1131];
@@ -180,25 +180,25 @@ macro_rules! line_string {
 /// ```
 ///
 /// # Examples
-/// 
+///
 /// Creating a [`Polygon'] with WKT-like syntax:
-/// 
+///
 /// ```
 /// use geo_types::polygon;
-/// 
+///
 /// let simple_poly = polygon!(0.0 0.0, 30.0 0.0, 30.0 30.0, 0.0 30.0, 0.0 0.0);
 /// assert_eq!(simple_poly.exterior()[1], geo_types::coord!{ x: 30.0, y: 0.0 });
 /// assert_eq!(simple_poly.interiors().len(), 0);
-/// 
+///
 /// let poly_with_hole = polygon!([0.0 0.0, 30.0 0.0, 30.0 30.0, 0.0 30.0, 0.0 0.0], [10.0 10.0, 20.0 10.0, 20.0 20.0, 10.0 20.0, 10.0 10.0]);
 /// assert_eq!(poly_with_hole.interiors()[0][1], geo_types::coord!{ x: 20.0, y: 10.0 });
 /// ```
-/// 
+///
 /// Creating a [`Polygon`] without interior rings, supplying x/y values:
 ///
 /// ```
 /// use geo_types::polygon;
-/// 
+///
 /// let poly = polygon![
 ///     (x: -111., y: 45.),
 ///     (x: -111., y: 41.),
@@ -423,9 +423,12 @@ mod test {
         assert_eq!(p.interiors()[0][0], coord! { x: 3, y: 4 });
 
         let simple_poly = polygon!(0.0 0.0, 30.0 0.0, 30.0 30.0, 0.0 30.0, 0.0 0.0);
-        assert_eq!(simple_poly.exterior()[1], coord!{ x: 30.0, y: 0.0 });
+        assert_eq!(simple_poly.exterior()[1], coord! { x: 30.0, y: 0.0 });
 
         let poly_with_hole = polygon!([0.0 0.0, 30.0 0.0, 30.0 30.0, 0.0 30.0, 0.0 0.0], [10.0 10.0, 20.0 10.0, 20.0 20.0, 10.0 20.0, 10.0 10.0]);
-        assert_eq!(poly_with_hole.interiors()[0][1], coord!{ x: 20.0, y: 10.0 });
+        assert_eq!(
+            poly_with_hole.interiors()[0][1],
+            coord! { x: 20.0, y: 10.0 }
+        );
     }
 }
