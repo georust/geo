@@ -107,15 +107,15 @@ macro_rules! coord {
 ///     x: -21.95156,
 ///     y: 64.1446,
 /// };
-/// let coord2 = coord! {
+/// let coord2 = geo_types::coord! {
 ///     x: -21.951,
 ///     y: 64.14479,
 /// };
-/// let coord3 = coord! {
+/// let coord3 = geo_types::coord! {
 ///     x: -21.95044,
 ///     y: 64.14527,
 /// };
-/// let coord4 = coord! {
+/// let coord4 = geo_types::coord! {
 ///     x: -21.951445,
 ///     y: 64.145508,
 /// };
