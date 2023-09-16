@@ -1,5 +1,10 @@
 # Changes
 
+## 0.7.12
+
+* Simpler syntax for `line_string` and `polygon` macros, like in WKT format.
+  * <https://github.com/georust/geo/pull/1061>
+
 ## 0.7.11
 * Bump rstar dependency
   <https://github.com/georust/geo/pull/1030>
