@@ -692,7 +692,7 @@ impl<T: GeoFloat> WeightedCentroid<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{coord, line_string, point, polygon};
+    use crate::{coord, line_string, point, polygon, wkt};
 
     /// small helper to create a coordinate
     fn c<T: GeoFloat>(x: T, y: T) -> Coord<T> {
@@ -783,10 +783,13 @@ mod test {
     }
     #[test]
     fn multilinestring_test() {
-        let v1 = line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0)];
-        let v2 = line_string![(x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 3.0, y: 1.0)];
-        let v3 = line_string![(x: -12.0, y: -100.0), (x: 7.0, y: 8.0)];
-        let mls = MultiLineString::new(vec![v1, v2, v3]);
+        let mls = wkt! {
+            MULTILINESTRING(
+                (0.0 0.0,1.0 10.0),
+                (1.0 10.0,2.0 0.0,3.0 1.0),
+                (-12.0 -100.0,7.0 8.0)
+            )
+        };
         assert_relative_eq!(
             mls.centroid().unwrap(),
             point![x: -1.9097834383655845, y: -37.683866439745714]
@@ -801,9 +804,7 @@ mod test {
     #[test]
     fn polygon_one_point_test() {
         let p = point![ x: 2., y: 1. ];
-        let v = Vec::new();
-        let linestring = line_string![p.0];
-        let poly = Polygon::new(linestring, v);
+        let poly = polygon![p.0];
         assert_relative_eq!(poly.centroid().unwrap(), p);
     }
 
@@ -857,68 +858,42 @@ mod test {
     #[test]
     fn polygon_hole_test() {
         // hexagon
-        let ls1 = LineString::from(vec![
-            (5.0, 1.0),
-            (4.0, 2.0),
-            (4.0, 3.0),
-            (5.0, 4.0),
-            (6.0, 4.0),
-            (7.0, 3.0),
-            (7.0, 2.0),
-            (6.0, 1.0),
-            (5.0, 1.0),
-        ]);
-
-        let ls2 = LineString::from(vec![(5.0, 1.3), (5.5, 2.0), (6.0, 1.3), (5.0, 1.3)]);
-
-        let ls3 = LineString::from(vec![(5., 2.3), (5.5, 3.0), (6., 2.3), (5., 2.3)]);
-
-        let p1 = Polygon::new(ls1, vec![ls2, ls3]);
+        let p1 = wkt! { POLYGON(
+            (5.0 1.0,4.0 2.0,4.0 3.0,5.0 4.0,6.0 4.0,7.0 3.0,7.0 2.0,6.0 1.0,5.0 1.0),
+            (5.0 1.3,5.5 2.0,6.0 1.3,5.0 1.3),
+            (5.0 2.3,5.5 3.0,6.0 2.3,5.0 2.3)
+        ) };
         let centroid = p1.centroid().unwrap();
         assert_relative_eq!(centroid, point!(x: 5.5, y: 2.5518518518518523));
     }
     #[test]
     fn flat_polygon_test() {
-        let poly = Polygon::new(
-            LineString::from(vec![p(0., 1.), p(1., 1.), p(0., 1.)]),
-            vec![],
-        );
+        let poly = wkt! { POLYGON((0. 1.,1. 1.,0. 1.)) };
         assert_eq!(poly.centroid(), Some(p(0.5, 1.)));
     }
     #[test]
     fn multi_poly_with_flat_polygon_test() {
-        let poly = Polygon::new(
-            LineString::from(vec![p(0., 0.), p(1., 0.), p(0., 0.)]),
-            vec![],
-        );
-        let multipoly = MultiPolygon::new(vec![poly]);
+        let multipoly = wkt! { MULTIPOLYGON(((0. 0.,1. 0.,0. 0.))) };
         assert_eq!(multipoly.centroid(), Some(p(0.5, 0.)));
     }
     #[test]
     fn multi_poly_with_multiple_flat_polygon_test() {
-        let p1 = Polygon::new(
-            LineString::from(vec![p(1., 1.), p(1., 3.), p(1., 1.)]),
-            vec![],
-        );
-        let p2 = Polygon::new(
-            LineString::from(vec![p(2., 2.), p(6., 2.), p(2., 2.)]),
-            vec![],
-        );
-        let multipoly = MultiPolygon::new(vec![p1, p2]);
+        let multipoly = wkt! { MULTIPOLYGON(
+            ((1. 1.,1. 3.,1. 1.)),
+            ((2. 2.,6. 2.,2. 2.))
+        )};
+
         assert_eq!(multipoly.centroid(), Some(p(3., 2.)));
     }
     #[test]
     fn multi_poly_with_only_points_test() {
-        let p1 = Polygon::new(
-            LineString::from(vec![p(1., 1.), p(1., 1.), p(1., 1.)]),
-            vec![],
-        );
+        let p1 = wkt! { POLYGON((1. 1.,1. 1.,1. 1.)) };
         assert_eq!(p1.centroid(), Some(p(1., 1.)));
-        let p2 = Polygon::new(
-            LineString::from(vec![p(2., 2.), p(2., 2.), p(2., 2.)]),
-            vec![],
-        );
-        let multipoly = MultiPolygon::new(vec![p1, p2]);
+
+        let multipoly = wkt! { MULTIPOLYGON(
+            ((1. 1.,1. 1.,1. 1.)),
+            ((2. 2., 2. 2.,2. 2.))
+        ) };
         assert_eq!(multipoly.centroid(), Some(p(1.5, 1.5)));
     }
     #[test]

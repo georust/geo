@@ -390,7 +390,7 @@ impl<U: CoordFloat> AffineTransform<U> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{polygon, Point};
+    use crate::{wkt, Point};
 
     // given a matrix with the shape
     // [[a, b, xoff],
@@ -430,10 +430,10 @@ mod tests {
     #[test]
     fn affine_transformed() {
         let transform = AffineTransform::translate(1.0, 1.0).scaled(2.0, 2.0, (0.0, 0.0));
-        let mut poly = polygon![(x: 0.0, y: 0.0), (x: 0.0, y: 2.0), (x: 1.0, y: 2.0)];
+        let mut poly = wkt! { POLYGON((0.0 0.0,0.0 2.0,1.0 2.0)) };
         poly.affine_transform_mut(&transform);
 
-        let expected = polygon![(x: 1.0, y: 1.0), (x: 1.0, y: 5.0), (x: 3.0, y: 5.0)];
+        let expected = wkt! { POLYGON((1.0 1.0,1.0 5.0,3.0 5.0)) };
         assert_eq!(expected, poly);
     }
 }
