@@ -134,6 +134,9 @@ pub use error::Error;
 #[macro_use]
 mod macros;
 
+#[macro_use]
+mod wkt_macro;
+
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
 

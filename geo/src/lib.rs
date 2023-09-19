@@ -209,7 +209,7 @@ extern crate rstar;
 pub use crate::algorithm::*;
 pub use crate::types::Closest;
 
-pub use geo_types::{coord, line_string, point, polygon, CoordFloat, CoordNum};
+pub use geo_types::{coord, line_string, point, polygon, wkt, CoordFloat, CoordNum};
 
 pub mod geometry;
 pub use geometry::*;
