@@ -69,8 +69,8 @@ use approx::{AbsDiffEq, RelativeEq};
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Polygon<T: CoordNum = f64> {
-    exterior: LineString<T>,
-    interiors: Vec<LineString<T>>,
+    pub exterior: LineString<T>,
+    pub interiors: Vec<LineString<T>>,
 }
 
 impl<T: CoordNum> Polygon<T> {

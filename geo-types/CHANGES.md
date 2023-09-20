@@ -1,5 +1,9 @@
 # Changes
 
+## 0.7.12 (Unrealeased)
+
+* Make `Polygon` fields public.
+
 ## 0.7.11
 * Bump rstar dependency
   <https://github.com/georust/geo/pull/1030>
