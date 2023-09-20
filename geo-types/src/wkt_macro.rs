@@ -141,6 +141,7 @@ macro_rules! wkt_internal {
 #[cfg(test)]
 mod test {
     use crate::geometry::*;
+    use alloc::vec;
 
     #[test]
     fn point() {
