@@ -10,6 +10,7 @@ pub(crate) mod polygon;
 pub(crate) mod rect;
 pub(crate) mod triangle;
 
+pub mod to_degrees;
 pub mod to_radians;
 
 // re-export all the geometry variants:
