@@ -9,8 +9,7 @@ pub trait Bearing<T: CoordFloat> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use] extern crate approx;
-    /// #
+    /// # use approx::assert_relative_eq;
     /// use geo::Bearing;
     /// use geo::Point;
     ///

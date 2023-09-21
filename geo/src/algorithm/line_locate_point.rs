@@ -109,8 +109,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::geo_types::coord;
-    use crate::point;
+    use crate::{coord, point};
     use num_traits::Float;
 
     #[test]

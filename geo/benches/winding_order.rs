@@ -1,8 +1,5 @@
-#[macro_use]
-extern crate criterion;
-extern crate geo;
-
-use geo::prelude::*;
+use criterion::{criterion_group, criterion_main};
+use geo::algorithm::Winding;
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {
     c.bench_function("winding order: winding_order (f32)", |bencher| {
