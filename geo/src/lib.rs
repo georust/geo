@@ -197,14 +197,9 @@
 //! [proj crate file download]: https://docs.rs/proj/*/proj/#grid-file-download
 //! [Serde]: https://serde.rs/
 
-extern crate geo_types;
-extern crate num_traits;
 #[cfg(feature = "use-serde")]
 #[macro_use]
 extern crate serde;
-#[cfg(feature = "use-proj")]
-extern crate proj;
-extern crate rstar;
 
 pub use crate::algorithm::*;
 pub use crate::types::Closest;
