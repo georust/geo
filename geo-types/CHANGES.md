@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+* Add `ToRadians` and `ToDegrees` traits. Previous struct methods `Point::to_degrees(self)` and `Point::to_radians(self)` are now behind the respective traits.
+  * <https://github.com/georust/geo/pull/1066>
+
 ## 0.7.11
 * Bump rstar dependency
   <https://github.com/georust/geo/pull/1030>
