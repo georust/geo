@@ -323,24 +323,6 @@ impl<T: CoordFloat> Point<T> {
         let y = y.to_degrees();
         Point::new(x, y)
     }
-
-    /// Converts the (x,y) components of Point to radians
-    ///
-    /// # Example
-    /// ```
-    /// use geo_types::Point;
-    ///
-    /// let p = Point::new(180.0, 341.5);
-    /// let (x, y): (f32, f32) = p.to_radians().x_y();
-    /// assert_eq!(x.round(), 3.0);
-    /// assert_eq!(y.round(), 6.0);
-    /// ```
-    pub fn to_radians(self) -> Self {
-        let (x, y) = self.x_y();
-        let x = x.to_radians();
-        let y = y.to_radians();
-        Point::new(x, y)
-    }
 }
 
 impl<T> Neg for Point<T>
