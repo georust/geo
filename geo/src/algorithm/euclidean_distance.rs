@@ -954,7 +954,7 @@ mod test {
     #[test]
     // test edge-vertex minimum distance
     fn test_minimum_polygon_distance() {
-        let points_raw = vec![
+        let points_raw = [
             (126., 232.),
             (126., 212.),
             (112., 202.),
@@ -970,7 +970,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString::from(points), vec![]);
 
-        let points_raw_2 = vec![
+        let points_raw_2 = [
             (188., 231.),
             (189., 207.),
             (174., 196.),
@@ -990,7 +990,7 @@ mod test {
     #[test]
     // test vertex-vertex minimum distance
     fn test_minimum_polygon_distance_2() {
-        let points_raw = vec![
+        let points_raw = [
             (118., 200.),
             (153., 179.),
             (106., 155.),
@@ -1003,7 +1003,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString::from(points), vec![]);
 
-        let points_raw_2 = vec![
+        let points_raw_2 = [
             (242., 186.),
             (260., 146.),
             (182., 175.),
@@ -1021,7 +1021,7 @@ mod test {
     #[test]
     // test edge-edge minimum distance
     fn test_minimum_polygon_distance_3() {
-        let points_raw = vec![
+        let points_raw = [
             (182., 182.),
             (182., 168.),
             (138., 160.),
@@ -1034,7 +1034,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString::from(points), vec![]);
 
-        let points_raw_2 = vec![
+        let points_raw_2 = [
             (232., 196.),
             (234., 150.),
             (194., 165.),

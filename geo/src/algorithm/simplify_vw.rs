@@ -686,7 +686,7 @@ mod test {
             (x: 10.0, y: 10.0)
         ];
 
-        let correct = vec![(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
+        let correct = [(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
         let correct_ls: Vec<_> = correct.iter().map(|e| Coord::from((e.0, e.1))).collect();
 
         let simplified = visvalingam(&ls, &30.);
@@ -728,7 +728,7 @@ mod test {
         ];
         let simplified = vwp_wrapper::<_, 2, 4>(&ls, None, &668.6);
         // this is the correct, non-intersecting LineString
-        let correct = vec![
+        let correct = [
             (10., 60.),
             (126., 31.),
             (280., 19.),
@@ -837,7 +837,7 @@ mod test {
     #[test]
     fn multilinestring() {
         // this is the PostGIS example
-        let points = vec![
+        let points = [
             (5.0, 2.0),
             (3.0, 8.0),
             (6.0, 20.0),
@@ -846,7 +846,7 @@ mod test {
         ];
         let points_ls: Vec<_> = points.iter().map(|e| Point::new(e.0, e.1)).collect();
 
-        let correct = vec![(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
+        let correct = [(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
         let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
 
         let mline = MultiLineString::new(vec![LineString::from(points_ls)]);
