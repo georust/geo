@@ -19,7 +19,6 @@ impl LineStringSegmentize for LineString {
             let total_len = self.euclidean_length();
             let densified = self.densify(total_len / (n as f64));
             return densified.line_segmentize(n);
-            // return Some(MultiLineString::new(vec![densified]))
         } else if n_lines == n {
             // if the number of line segments equals n then return the
             // lines as LineStrings
@@ -57,7 +56,10 @@ impl LineStringSegmentize for LineString {
 
         // iterate through each line segment in the LineString
         for (i, segment) in lns.enumerate() {
-            // first line string push the first coord immediately
+            // All iterations only keep track of the second coordinate
+            // in the Line. We need to push the first coordinate in the 
+            // first line string to ensure the linestring starts at the 
+            // correct place
             if i == 0 {
                 ln_vec.push(segment.start)
             }
