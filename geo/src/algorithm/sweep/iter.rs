@@ -362,7 +362,7 @@ pub(super) mod tests {
     fn overlap_intersect() {
         init_log();
 
-        let input = vec![
+        let input = [
             Line::from([(0., 0.), (1., 1.)]),
             [(1., 0.), (0., 1.)].into(),
             [(0., 0.5), (1., 0.5)].into(),
