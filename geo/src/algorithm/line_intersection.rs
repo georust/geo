@@ -312,7 +312,7 @@ fn proper_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coord<F> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::geo_types::coord;
+    use geo_types::coord;
 
     /// Based on JTS test `testCentralEndpointHeuristicFailure`
     /// > Following cases were failures when using the CentralEndpointIntersector heuristic.

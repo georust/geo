@@ -11,8 +11,7 @@ pub trait HaversineBearing<T: CoordFloat> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use] extern crate approx;
-    /// #
+    /// # use approx::assert_relative_eq;
     /// use geo::HaversineBearing;
     /// use geo::Point;
     ///
