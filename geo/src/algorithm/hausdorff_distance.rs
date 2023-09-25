@@ -18,17 +18,17 @@ where
 {
     fn hausdorff_distance<Rhs>(&self, rhs: &Rhs) -> T
     where
-        Rhs: for<'a> CoordsIter<'a, Scalar = T>;
+        Rhs: CoordsIter<Scalar = T>;
 }
 
 impl<T, G> HausdorffDistance<T> for G
 where
     T: GeoFloat,
-    G: for<'a> CoordsIter<'a, Scalar = T>,
+    G: CoordsIter<Scalar = T>,
 {
     fn hausdorff_distance<Rhs>(&self, rhs: &Rhs) -> T
     where
-        Rhs: for<'a> CoordsIter<'a, Scalar = T>,
+        Rhs: CoordsIter<Scalar = T>,
     {
         // calculate from A -> B
         let hd1 = self
@@ -65,7 +65,7 @@ where
 {
     fn hausdorff_distance<Rhs>(&self, rhs: &Rhs) -> T
     where
-        Rhs: for<'a> CoordsIter<'a, Scalar = T>,
+        Rhs: CoordsIter<Scalar = T>,
     {
         Point::from(*self).hausdorff_distance(rhs)
     }
