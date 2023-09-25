@@ -16,7 +16,7 @@ where
         self.lines().any(|l| l.intersects(geom))
     }
 }
-symmetric_intersects_impl!(Coordinate<T>, LineString<T>);
+symmetric_intersects_impl!(Coord<T>, LineString<T>);
 symmetric_intersects_impl!(Line<T>, LineString<T>);
 symmetric_intersects_impl!(Rect<T>, LineString<T>);
 

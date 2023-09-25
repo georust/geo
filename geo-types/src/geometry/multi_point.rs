@@ -3,7 +3,9 @@ use crate::{CoordNum, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use std::iter::FromIterator;
+use alloc::vec;
+use alloc::vec::Vec;
+use core::iter::FromIterator;
 
 /// A collection of [`Point`s](struct.Point.html). Can
 /// be created from a `Vec` of `Point`s, or from an
@@ -58,7 +60,7 @@ impl<T: CoordNum, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
 /// Iterate over the `Point`s in this `MultiPoint`.
 impl<T: CoordNum> IntoIterator for MultiPoint<T> {
     type Item = Point<T>;
-    type IntoIter = ::std::vec::IntoIter<Point<T>>;
+    type IntoIter = ::alloc::vec::IntoIter<Point<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -67,19 +69,19 @@ impl<T: CoordNum> IntoIterator for MultiPoint<T> {
 
 impl<'a, T: CoordNum> IntoIterator for &'a MultiPoint<T> {
     type Item = &'a Point<T>;
-    type IntoIter = ::std::slice::Iter<'a, Point<T>>;
+    type IntoIter = ::alloc::slice::Iter<'a, Point<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&self.0).iter()
+        (self.0).iter()
     }
 }
 
 impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPoint<T> {
     type Item = &'a mut Point<T>;
-    type IntoIter = ::std::slice::IterMut<'a, Point<T>>;
+    type IntoIter = ::alloc::slice::IterMut<'a, Point<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&mut self.0).iter_mut()
+        (self.0).iter_mut()
     }
 }
 
@@ -168,7 +170,7 @@ where
             return false;
         }
 
-        let mut mp_zipper = self.into_iter().zip(other.into_iter());
+        let mut mp_zipper = self.into_iter().zip(other);
         mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(rhs, epsilon))
     }
 }

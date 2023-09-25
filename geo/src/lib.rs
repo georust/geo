@@ -4,21 +4,21 @@
 //!
 //! # Types
 //!
-//! - **[`Coordinate`]**: A two-dimensional coordinate. All geometry types are composed of [`Coordinate`]s, though [`Coordinate`] itself is not a [`Geometry`] type.
-//! - **[`Point`]**: A single point represented by one [`Coordinate`]
+//! - **[`Coord`]**: A two-dimensional coordinate. All geometry types are composed of [`Coord`]s, though [`Coord`] itself is not a [`Geometry`] type.
+//! - **[`Point`]**: A single point represented by one [`Coord`]
 //! - **[`MultiPoint`]**: A collection of [`Point`]s
-//! - **[`Line`]**: A line segment represented by two [`Coordinate`]s
+//! - **[`Line`]**: A line segment represented by two [`Coord`]s
 //! - **[`LineString`]**: A series of contiguous line segments represented by two or more
-//!   [`Coordinate`]s
+//!   [`Coord`]s
 //! - **[`MultiLineString`]**: A collection of [`LineString`]s
 //! - **[`Polygon`]**: A bounded area represented by one [`LineString`] exterior ring, and zero or
 //!   more [`LineString`] interior rings
 //! - **[`MultiPolygon`]**: A collection of [`Polygon`]s
 //! - **[`Rect`]**: An axis-aligned bounded rectangle represented by minimum and maximum
-//!   [`Coordinate`]s
-//! - **[`Triangle`]**: A bounded area represented by three [`Coordinate`] vertices
+//!   [`Coord`]s
+//! - **[`Triangle`]**: A bounded area represented by three [`Coord`] vertices
 //! - **[`GeometryCollection`]**: A collection of [`Geometry`]s
-//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coordinate`]
+//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coord`]
 //!
 //! The preceding types are reexported from the [`geo-types`] crate. Consider using that crate
 //! if you only need access to these types and no other `geo` functionality.
@@ -34,7 +34,8 @@
 //! ## Area
 //!
 //! - **[`Area`](Area)**: Calculate the planar area of a geometry
-//! - **[`ChamberlainDuquetteArea`](ChamberlainDuquetteArea)**: Calculate the geodesic area of a geometry
+//! - **[`ChamberlainDuquetteArea`](ChamberlainDuquetteArea)**: Calculate the geodesic area of a geometry on a sphere using the algorithm presented in _Some Algorithms for Polygons on a Sphere_ by Chamberlain and Duquette (2007)
+//! - **[`GeodesicArea`](GeodesicArea)**: Calculate the geodesic area and perimeter of a geometry on an ellipsoid using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
 //!
 //! ## Boolean Operations
 //!
@@ -44,6 +45,7 @@
 //!
 //! - **[`EuclideanDistance`](EuclideanDistance)**: Calculate the minimum euclidean distance between geometries
 //! - **[`GeodesicDistance`](GeodesicDistance)**: Calculate the minimum geodesic distance between geometries using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
+//! - **[`HausdorffDistance`](HausdorffDistance)**: Calculate "the maximum of the distances from a point in any of the sets to the nearest point in the other set." (Rote, 1991)
 //! - **[`HaversineDistance`](HaversineDistance)**: Calculate the minimum geodesic distance between geometries using the haversine formula
 //! - **[`VincentyDistance`](VincentyDistance)**: Calculate the minimum geodesic distance between geometries using Vincenty’s formula
 //!
@@ -54,19 +56,26 @@
 //! - **[`HaversineLength`](HaversineLength)**: Calculate the geodesic length of a geometry using the haversine formula
 //! - **[`VincentyLength`](VincentyLength)**: Calculate the geodesic length of a geometry using Vincenty’s formula
 //!
+//! ## Outlier Detection
+//!
+//! - **[`OutlierDetection`](OutlierDetection)**: Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
+//!
 //! ## Simplification
 //!
 //! - **[`Simplify`](Simplify)**: Simplify a geometry using the Ramer–Douglas–Peucker algorithm
 //! - **[`SimplifyIdx`](SimplifyIdx)**: Calculate a simplified geometry using the Ramer–Douglas–Peucker algorithm, returning coordinate indices
-//! - **[`SimplifyVW`](SimplifyVW)**: Simplify a geometry using the Visvalingam-Whyatt algorithm
-//! - **[`SimplifyVWPreserve`](SimplifyVWPreserve)**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
-//! - **[`SimplifyVwIdx`](SimplifyVwIdx)**: Calculate a simplified geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm, returning coordinate indices
+//! - **[`SimplifyVw`](SimplifyVw)**: Simplify a geometry using the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVwPreserve`](SimplifyVwPreserve)**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVwIdx`](SimplifyVwIdx)**: Calculate a simplified geometry using the Visvalingam-Whyatt algorithm, returning coordinate indices
 //!
 //! ## Query
 //!
-//! - **[`Bearing`](Bearing)**: Calculate the bearing between points
+//! - **[`HaversineBearing`]**: Calculate the bearing between points using great circle calculations.
+//! - **[`GeodesicBearing`](GeodesicBearing)**: Calculate the bearing between points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`ClosestPoint`](ClosestPoint)**: Find the point on a geometry
 //!   closest to a given point
+//! - **[`HaversineClosestPoint`](HaversineClosestPoint)**: Find the point on a geometry
+//!   closest to a given point on a sphere using spherical coordinates and lines being great arcs.
 //! - **[`IsConvex`](IsConvex)**: Calculate the convexity of a
 //!   [`LineString`]
 //! - **[`LineInterpolatePoint`](LineInterpolatePoint)**:
@@ -94,6 +103,10 @@
 //!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
 //! - **[`Within`]**: Calculate if a geometry lies completely within another geometry.
 //!
+//! ## Triangulation
+//!
+//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm (requires the `earcutr` feature).
+//!
 //! ## Winding
 //!
 //! - **[`Orient`](Orient)**: Apply a specified winding [`Direction`](orient::Direction) to a [`Polygon`]’s interior and exterior rings
@@ -101,21 +114,19 @@
 //!
 //! ## Iteration
 //!
-//! - **[`CoordsIter`](CoordsIter)**: Iterate over the coordinates of a geometry
-//! - **[`MapCoords`](MapCoords)**: Map a function over all the coordinates
+//! - **[`CoordsIter`]**: Iterate over the coordinates of a geometry
+//! - **[`MapCoords`]**: Map a function over all the coordinates
 //!   in a geometry, returning a new geometry
-//! - **[`MapCoordsInplace`](MapCoordsInplace)**: Map a function over all the
+//! - **[`MapCoordsInPlace`]**: Map a function over all the
 //!   coordinates in a geometry in-place
-//! - **[`TryMapCoords`](TryMapCoords)**: Map a fallible function over all
-//!   the coordinates in a geometry, returning a new geometry wrapped in a `Result`
-//! - **[`TryMapCoordsInplace`](TryMapCoordsInplace)**: Map a fallible function over all
-//!   the coordinates in a geometry in-place
-//! - **[`LinesIter`](LinesIter)**: Iterate over lines of a geometry
+//! - **[`LinesIter`]**: Iterate over lines of a geometry
 //!
 //! ## Boundary
 //!
 //! - **[`BoundingRect`](BoundingRect)**: Calculate the axis-aligned
 //!   bounding rectangle of a geometry
+//! - **[`MinimumRotatedRect`](MinimumRotatedRect)**: Calculate the
+//!   minimum bounding box of a geometry
 //! - **[`ConcaveHull`](ConcaveHull)**: Calculate the concave hull of a
 //!   geometry
 //! - **[`ConvexHull`](ConvexHull)**: Calculate the convex hull of a
@@ -139,11 +150,15 @@
 //! ## Miscellaneous
 //!
 //! - **[`Centroid`](Centroid)**: Calculate the centroid of a geometry
-//! - **[`HaversineDestination`](HaversineDestination)**:
-//! - **[`HaversineIntermediate`](HaversineIntermediate)**:
+//! - **[`GeodesicDestination`](GeodesicDestination)**: Given a start point, bearing, and distance, calculate the destination point on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
+//! - **[`GeodesicIntermediate`](GeodesicIntermediate)**: Calculate intermediate points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
+//! - **[`HaversineDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere
+//! - **[`HaversineIntermediate`](HaversineIntermediate)**: Calculate intermediate points on a sphere
 //! - **[`proj`](proj)**: Project geometries with the `proj` crate (requires the `use-proj` feature)
 //! - **[`ChaikinSmoothing`](ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 //! - **[`Densify`](Densify)**: Densify linear geometry components by interpolating points
+//! - **[`Transform`](Transform)**: Transform a geometry using Proj.
+//! - **[`RemoveRepeatedPoints`](RemoveRepeatedPoints)**: Remove repeated points from a geometry.
 //!
 //! # Features
 //!
@@ -182,14 +197,9 @@
 //! [proj crate file download]: https://docs.rs/proj/*/proj/#grid-file-download
 //! [Serde]: https://serde.rs/
 
-extern crate geo_types;
-extern crate num_traits;
 #[cfg(feature = "use-serde")]
 #[macro_use]
 extern crate serde;
-#[cfg(feature = "use-proj")]
-extern crate proj;
-extern crate rstar;
 
 pub use crate::algorithm::*;
 pub use crate::types::Closest;
@@ -269,11 +279,7 @@ pub mod prelude {
 /// }
 /// ```
 pub trait GeoFloat:
-    GeoNum
-    + num_traits::Float
-    + num_traits::Signed
-    + num_traits::Bounded
-    + float_next_after::NextAfter<Self>
+    GeoNum + num_traits::Float + num_traits::Signed + num_traits::Bounded + float_next_after::NextAfter
 {
 }
 impl<T> GeoFloat for T where
@@ -281,7 +287,7 @@ impl<T> GeoFloat for T where
         + num_traits::Float
         + num_traits::Signed
         + num_traits::Bounded
-        + float_next_after::NextAfter<Self>
+        + float_next_after::NextAfter
 {
 }
 

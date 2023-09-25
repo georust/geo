@@ -1,10 +1,10 @@
 use crate::{
-    CoordFloat, Coordinate, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint,
+    Coord, CoordFloat, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use std::mem;
 
-impl<'a, T> arbitrary::Arbitrary<'a> for Coordinate<T>
+impl<'a, T> arbitrary::Arbitrary<'a> for Coord<T>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
 {
@@ -21,7 +21,7 @@ where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        u.arbitrary::<Coordinate<T>>().map(Self)
+        u.arbitrary::<Coord<T>>().map(Self)
     }
 }
 
@@ -30,7 +30,7 @@ where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        let coords = u.arbitrary::<Vec<Coordinate<T>>>()?;
+        let coords = u.arbitrary::<Vec<Coord<T>>>()?;
         if coords.len() < 2 {
             Err(arbitrary::Error::IncorrectFormat)
         } else {
@@ -97,8 +97,8 @@ where
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self::new(
-            u.arbitrary::<Coordinate<T>>()?,
-            u.arbitrary::<Coordinate<T>>()?,
+            u.arbitrary::<Coord<T>>()?,
+            u.arbitrary::<Coord<T>>()?,
         ))
     }
 }
@@ -109,9 +109,9 @@ where
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self(
-            u.arbitrary::<Coordinate<T>>()?,
-            u.arbitrary::<Coordinate<T>>()?,
-            u.arbitrary::<Coordinate<T>>()?,
+            u.arbitrary::<Coord<T>>()?,
+            u.arbitrary::<Coord<T>>()?,
+            u.arbitrary::<Coord<T>>()?,
         ))
     }
 }

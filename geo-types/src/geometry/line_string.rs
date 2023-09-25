@@ -1,11 +1,13 @@
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use crate::{CoordNum, Coordinate, Line, Point, Triangle};
-use std::iter::FromIterator;
-use std::ops::{Index, IndexMut};
+use crate::{Coord, CoordNum, Line, Point, Triangle};
+use alloc::vec;
+use alloc::vec::Vec;
+use core::iter::FromIterator;
+use core::ops::{Index, IndexMut};
 
-/// An ordered collection of two or more [`Coordinate`]s, representing a
+/// An ordered collection of two or more [`Coord`]s, representing a
 /// path between locations.
 ///
 /// # Semantics
@@ -41,7 +43,7 @@ use std::ops::{Index, IndexMut};
 /// ]);
 /// ```
 ///
-/// Create a [`LineString`] with the [`line_string!`] macro:
+/// Create a [`LineString`] with the [`line_string!`][`crate::line_string!`] macro:
 ///
 /// ```
 /// use geo_types::line_string;
@@ -66,7 +68,7 @@ use std::ops::{Index, IndexMut};
 /// let line_string: LineString = vec![[0., 0.], [10., 0.]].into();
 /// ```
 //
-/// Or by `collect`ing from a [`Coordinate`] iterator
+/// Or by `collect`ing from a [`Coord`] iterator
 ///
 /// ```
 /// use geo_types::{coord, LineString};
@@ -95,7 +97,7 @@ use std::ops::{Index, IndexMut};
 /// }
 /// ```
 ///
-/// Note that its [`IntoIterator`] impl yields [`Coordinate`]s when looping:
+/// Note that its [`IntoIterator`] impl yields [`Coord`]s when looping:
 ///
 /// ```
 /// use geo_types::{coord, LineString};
@@ -116,7 +118,7 @@ use std::ops::{Index, IndexMut};
 /// ```
 /// ## Decomposition
 ///
-/// You can decompose a [`LineString`] into a [`Vec`] of [`Coordinate`]s or [`Point`]s:
+/// You can decompose a [`LineString`] into a [`Vec`] of [`Coord`]s or [`Point`]s:
 /// ```
 /// use geo_types::{coord, LineString, Point};
 ///
@@ -132,11 +134,11 @@ use std::ops::{Index, IndexMut};
 
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct LineString<T: CoordNum = f64>(pub Vec<Coordinate<T>>);
+pub struct LineString<T: CoordNum = f64>(pub Vec<Coord<T>>);
 
 /// A [`Point`] iterator returned by the `points` method
 #[derive(Debug)]
-pub struct PointsIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
+pub struct PointsIter<'a, T: CoordNum + 'a>(::core::slice::Iter<'a, Coord<T>>);
 
 impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
     type Item = Point<T>;
@@ -162,12 +164,12 @@ impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
     }
 }
 
-/// A [`Coordinate`] iterator used by the `into_iter` method on a [`LineString`]
+/// A [`Coord`] iterator used by the `into_iter` method on a [`LineString`]
 #[derive(Debug)]
-pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::std::slice::Iter<'a, Coordinate<T>>);
+pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::core::slice::Iter<'a, Coord<T>>);
 
 impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
-    type Item = &'a Coordinate<T>;
+    type Item = &'a Coord<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
@@ -192,7 +194,7 @@ impl<'a, T: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T> {
 
 impl<T: CoordNum> LineString<T> {
     /// Instantiate Self from the raw content value
-    pub fn new(value: Vec<Coordinate<T>>) -> Self {
+    pub fn new(value: Vec<Coord<T>>) -> Self {
         Self(value)
     }
 
@@ -207,13 +209,13 @@ impl<T: CoordNum> LineString<T> {
         PointsIter(self.0.iter())
     }
 
-    /// Return an iterator yielding the members of a [`LineString`] as [`Coordinate`]s
-    pub fn coords(&self) -> impl Iterator<Item = &Coordinate<T>> {
+    /// Return an iterator yielding the members of a [`LineString`] as [`Coord`]s
+    pub fn coords(&self) -> impl DoubleEndedIterator<Item = &Coord<T>> {
         self.0.iter()
     }
 
-    /// Return an iterator yielding the coordinates of a [`LineString`] as mutable [`Coordinate`]s
-    pub fn coords_mut(&mut self) -> impl Iterator<Item = &mut Coordinate<T>> {
+    /// Return an iterator yielding the coordinates of a [`LineString`] as mutable [`Coord`]s
+    pub fn coords_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut Coord<T>> {
         self.0.iter_mut()
     }
 
@@ -222,8 +224,8 @@ impl<T: CoordNum> LineString<T> {
         self.0.into_iter().map(Point::from).collect()
     }
 
-    /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Coordinate`]s
-    pub fn into_inner(self) -> Vec<Coordinate<T>> {
+    /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Coord`]s
+    pub fn into_inner(self) -> Vec<Coord<T>> {
         self.0
     }
 
@@ -276,9 +278,9 @@ impl<T: CoordNum> LineString<T> {
         })
     }
 
-    /// Close the [`LineString`]. Specifically, if the [`LineString`] has at least one [`Coordinate`], and
-    /// the value of the first [`Coordinate`] **does not** equal the value of the last [`Coordinate`], then a
-    /// new [`Coordinate`] is added to the end with the value of the first [`Coordinate`].
+    /// Close the [`LineString`]. Specifically, if the [`LineString`] has at least one [`Coord`], and
+    /// the value of the first [`Coord`] **does not** equal the value of the last [`Coord`], then a
+    /// new [`Coord`] is added to the end with the value of the first [`Coord`].
     pub fn close(&mut self) {
         if !self.is_closed() {
             // by definition, we treat empty LineString's as closed.
@@ -336,7 +338,7 @@ impl<T: CoordNum> LineString<T> {
 }
 
 /// Turn a [`Vec`] of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T> {
+impl<T: CoordNum, IC: Into<Coord<T>>> From<Vec<IC>> for LineString<T> {
     fn from(v: Vec<IC>) -> Self {
         Self(v.into_iter().map(|c| c.into()).collect())
     }
@@ -344,21 +346,27 @@ impl<T: CoordNum, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T> {
 
 impl<T: CoordNum> From<Line<T>> for LineString<T> {
     fn from(line: Line<T>) -> Self {
+        LineString::from(&line)
+    }
+}
+
+impl<T: CoordNum> From<&Line<T>> for LineString<T> {
+    fn from(line: &Line<T>) -> Self {
         Self(vec![line.start, line.end])
     }
 }
 
 /// Turn an iterator of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, IC: Into<Coordinate<T>>> FromIterator<IC> for LineString<T> {
+impl<T: CoordNum, IC: Into<Coord<T>>> FromIterator<IC> for LineString<T> {
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {
         Self(iter.into_iter().map(|c| c.into()).collect())
     }
 }
 
-/// Iterate over all the [`Coordinate`]s in this [`LineString`].
+/// Iterate over all the [`Coord`]s in this [`LineString`].
 impl<T: CoordNum> IntoIterator for LineString<T> {
-    type Item = Coordinate<T>;
-    type IntoIter = ::std::vec::IntoIter<Coordinate<T>>;
+    type Item = Coord<T>;
+    type IntoIter = ::alloc::vec::IntoIter<Coord<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -366,7 +374,7 @@ impl<T: CoordNum> IntoIterator for LineString<T> {
 }
 
 impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
-    type Item = &'a Coordinate<T>;
+    type Item = &'a Coord<T>;
     type IntoIter = CoordinatesIter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -374,26 +382,26 @@ impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
     }
 }
 
-/// Mutably iterate over all the [`Coordinate`]s in this [`LineString`]
+/// Mutably iterate over all the [`Coord`]s in this [`LineString`]
 impl<'a, T: CoordNum> IntoIterator for &'a mut LineString<T> {
-    type Item = &'a mut Coordinate<T>;
-    type IntoIter = ::std::slice::IterMut<'a, Coordinate<T>>;
+    type Item = &'a mut Coord<T>;
+    type IntoIter = ::core::slice::IterMut<'a, Coord<T>>;
 
-    fn into_iter(self) -> ::std::slice::IterMut<'a, Coordinate<T>> {
+    fn into_iter(self) -> ::core::slice::IterMut<'a, Coord<T>> {
         self.0.iter_mut()
     }
 }
 
 impl<T: CoordNum> Index<usize> for LineString<T> {
-    type Output = Coordinate<T>;
+    type Output = Coord<T>;
 
-    fn index(&self, index: usize) -> &Coordinate<T> {
+    fn index(&self, index: usize) -> &Coord<T> {
         self.0.index(index)
     }
 }
 
 impl<T: CoordNum> IndexMut<usize> for LineString<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Coordinate<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Coord<T> {
         self.0.index_mut(index)
     }
 }
@@ -478,7 +486,12 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
     }
 }
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
 macro_rules! impl_rstar_line_string {
     ($rstar:ident) => {
         impl<T> ::$rstar::RTreeObject for LineString<T>
@@ -525,6 +538,12 @@ impl_rstar_line_string!(rstar_0_8);
 #[cfg(feature = "rstar_0_9")]
 impl_rstar_line_string!(rstar_0_9);
 
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_line_string!(rstar_0_10);
+
+#[cfg(feature = "rstar_0_11")]
+impl_rstar_line_string!(rstar_0_11);
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -534,14 +553,15 @@ mod test {
     #[test]
     fn test_exact_size() {
         // see https://github.com/georust/geo/issues/762
-        let ls = LineString::new(vec![coord! { x: 0., y: 0. }, coord! { x: 10., y: 0. }]);
+        let first = coord! { x: 0., y: 0. };
+        let ls = LineString::new(vec![first, coord! { x: 10., y: 0. }]);
 
         // reference to force the `impl IntoIterator for &LineString` impl, giving a `CoordinatesIter`
         for c in (&ls).into_iter().rev().skip(1).rev() {
-            println!("{:?}", c);
+            assert_eq!(&first, c);
         }
-        for p in (&ls).points().rev().skip(1).rev() {
-            println!("{:?}", p);
+        for p in ls.points().rev().skip(1).rev() {
+            assert_eq!(Point::from(first), p);
         }
     }
 

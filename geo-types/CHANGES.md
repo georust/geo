@@ -1,8 +1,31 @@
 # Changes
 
-## Unreleased
+## 0.7.11
+* Bump rstar dependency
+  <https://github.com/georust/geo/pull/1030>
 
+## 0.7.10
+
+* Implement `From<&Line>` for `LineString`
+
+## 0.7.9
+
+* Return `DoubleEndedIterator` from `LineString::points` and `LineString::points_mut`
+  * <https://github.com/georust/geo/pull/951>
+* POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.63
+* Add `no_std` compatibility when the new default `std` feature is disabled
+  * <https://github.com/georust/geo/pull/936>
+* Support `rstar` version `0.10` in feature `use-rstar_0_10`.
+
+## 0.7.8
+
+* Rename `Coordinate` to `Coord`; add deprecated `Coordinate` that is an alias for `Coord`
+* Pin `arbitrary` version to 1.1.3 until our MSRV catches up with its latest release 
 * Add `point.x_mut()` and `point.y_mut()` methods on `Points`
+* Changed license field to [SPDX 2.1 license expression](https://spdx.dev/spdx-specification-21-web-version/#h.jxpfx0ykyb60)
+  * <https://github.com/georust/geo/pull/928>
+* Fix typo in deprecated attribute, which will become a compiler error in a future version of rustc.
+  * <https://github.com/georust/geo/pull/932>
 
 ## 0.7.7
 

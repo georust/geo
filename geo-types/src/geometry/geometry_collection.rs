@@ -1,9 +1,11 @@
 use crate::{CoordNum, Geometry};
 
+use alloc::vec;
+use alloc::vec::Vec;
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
-use std::iter::FromIterator;
-use std::ops::{Index, IndexMut};
+use core::iter::FromIterator;
+use core::ops::{Index, IndexMut};
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
 ///
@@ -108,7 +110,9 @@ impl<T: CoordNum> GeometryCollection<T> {
     }
 }
 
-#[deprecated(since = 0.7.5, note = "Use `GeometryCollection::from(vec![geom])` instead.")]
+/// **DO NOT USE!** Deprecated since 0.7.5.
+///
+/// Use `GeometryCollection::from(vec![geom])` instead.
 impl<T: CoordNum, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
     fn from(x: IG) -> Self {
         Self(vec![x.into()])
@@ -146,7 +150,7 @@ impl<T: CoordNum> IndexMut<usize> for GeometryCollection<T> {
 // structure helper for consuming iterator
 #[derive(Debug)]
 pub struct IntoIteratorHelper<T: CoordNum> {
-    iter: ::std::vec::IntoIter<Geometry<T>>,
+    iter: ::alloc::vec::IntoIter<Geometry<T>>,
 }
 
 // implement the IntoIterator trait for a consuming iterator. Iteration will
@@ -176,7 +180,7 @@ impl<T: CoordNum> Iterator for IntoIteratorHelper<T> {
 // structure helper for non-consuming iterator
 #[derive(Debug)]
 pub struct IterHelper<'a, T: CoordNum> {
-    iter: ::std::slice::Iter<'a, Geometry<T>>,
+    iter: ::core::slice::Iter<'a, Geometry<T>>,
 }
 
 // implement the IntoIterator trait for a non-consuming iterator. Iteration will
@@ -206,7 +210,7 @@ impl<'a, T: CoordNum> Iterator for IterHelper<'a, T> {
 // structure helper for mutable non-consuming iterator
 #[derive(Debug)]
 pub struct IterMutHelper<'a, T: CoordNum> {
-    iter: ::std::slice::IterMut<'a, Geometry<T>>,
+    iter: ::core::slice::IterMut<'a, Geometry<T>>,
 }
 
 // implement the IntoIterator trait for a mutable non-consuming iterator. Iteration will
@@ -314,13 +318,15 @@ where
             return false;
         }
 
-        let mut mp_zipper = self.into_iter().zip(other.into_iter());
+        let mut mp_zipper = self.into_iter().zip(other);
         mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(rhs, epsilon))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec;
+
     use crate::{GeometryCollection, Point};
 
     #[test]

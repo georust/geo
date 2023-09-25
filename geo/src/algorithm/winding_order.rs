@@ -7,9 +7,7 @@ use std::iter::Rev;
 
 /// Iterates through a list of `Point`s
 #[allow(missing_debug_implementations)]
-pub struct Points<'a, T>(
-    pub(crate) EitherIter<Point<T>, PointsIter<'a, T>, Rev<PointsIter<'a, T>>>,
-)
+pub struct Points<'a, T>(pub(crate) EitherIter<PointsIter<'a, T>, Rev<PointsIter<'a, T>>>)
 where
     T: CoordNum + 'a;
 
@@ -19,8 +17,24 @@ where
 {
     type Item = Point<T>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+}
+
+impl<'a, T> ExactSizeIterator for Points<'a, T>
+where
+    T: CoordNum,
+{
+    #[inline]
+    fn len(&self) -> usize {
+        self.0.len()
     }
 }
 

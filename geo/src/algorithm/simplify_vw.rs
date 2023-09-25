@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use crate::{
-    CoordFloat, Coordinate, HasKernel, Line, LineString, MultiLineString, MultiPolygon, Point,
-    Polygon, Triangle,
+    Coord, CoordFloat, HasKernel, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
+    Triangle,
 };
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
@@ -54,18 +54,6 @@ where
     {
         self.area == other.area
     }
-}
-
-/// Settings for Ring and Line geometries
-// initial min: if we ever have fewer than these, stop immediately
-// min_points: if we detect a self-intersection before point removal, and we only
-// have min_points left, stop: since a self-intersection causes removal of the spatially previous
-// point, THAT could lead to a further self-intersection without the possibility of removing
-// more points, potentially leaving the geometry in an invalid state.
-#[derive(Debug, Clone, Copy)]
-struct GeomSettings {
-    initial_min: usize,
-    min_points: usize,
 }
 
 /// Simplify a line using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
@@ -136,7 +124,7 @@ where
         let (left, right) = adjacent[smallest.current];
         // A point in this triangle has been removed since this VScore
         // was created, so skip it
-        if left as i32 != smallest.left as i32 || right as i32 != smallest.right as i32 {
+        if left != smallest.left as i32 || right != smallest.right as i32 {
             continue;
         }
         // We've got a valid triangle, and its area is smaller than epsilon, so
@@ -145,7 +133,7 @@ where
         let (_, rr) = adjacent[right as usize];
         adjacent[left as usize] = (ll, right);
         adjacent[right as usize] = (left, rr);
-        adjacent[smallest.current as usize] = (0, 0);
+        adjacent[smallest.current] = (0, 0);
 
         // Now recompute the adjacent triangle(s), using left and right adjacent points
         let choices = [(ll, left, right), (left, right, rr)];
@@ -179,7 +167,7 @@ where
 }
 
 // Wrapper for visvalingam_indices, mapping indices back to points
-fn visvalingam<T>(orig: &LineString<T>, epsilon: &T) -> Vec<Coordinate<T>>
+fn visvalingam<T>(orig: &LineString<T>, epsilon: &T) -> Vec<Coord<T>>
 where
     T: CoordFloat,
 {
@@ -197,15 +185,24 @@ where
         .collect()
 }
 
-/// Wrap the actual VW function so the R* Tree can be shared.
+// Wrap the actual VW function so the R* Tree can be shared.
 // this ensures that shell and rings have access to all segments, so
 // intersections between outer and inner rings are detected
-fn vwp_wrapper<T>(
-    geomtype: &GeomSettings,
+//
+// Constants:
+//
+// * `INITIAL_MIN`
+//   * If we ever have fewer than these, stop immediately
+// * `MIN_POINTS`
+//   * If we detect a self-intersection before point removal, and we only have `MIN_POINTS` left,
+//     stop: since a self-intersection causes removal of the spatially previous point, THAT could
+//     lead to a further self-intersection without the possibility of removing more points,
+//     potentially leaving the geometry in an invalid state.
+fn vwp_wrapper<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     exterior: &LineString<T>,
     interiors: Option<&[LineString<T>]>,
     epsilon: &T,
-) -> Vec<Vec<Coordinate<T>>>
+) -> Vec<Vec<Coord<T>>>
 where
     T: CoordFloat + RTreeNum + HasKernel,
 {
@@ -224,11 +221,15 @@ where
     );
 
     // Simplify shell
-    rings.push(visvalingam_preserve(geomtype, exterior, epsilon, &mut tree));
+    rings.push(visvalingam_preserve::<T, INITIAL_MIN, MIN_POINTS>(
+        exterior, epsilon, &mut tree,
+    ));
     // Simplify interior rings, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
-            rings.push(visvalingam_preserve(geomtype, ring, epsilon, &mut tree))
+            rings.push(visvalingam_preserve::<T, INITIAL_MIN, MIN_POINTS>(
+                ring, epsilon, &mut tree,
+            ))
         }
     }
     rings
@@ -236,12 +237,21 @@ where
 
 /// Visvalingam-Whyatt with self-intersection detection to preserve topologies
 /// this is a port of the technique at https://www.jasondavies.com/simplify/
-fn visvalingam_preserve<T>(
-    geomtype: &GeomSettings,
+//
+// Constants:
+//
+// * `INITIAL_MIN`
+//   * If we ever have fewer than these, stop immediately
+// * `MIN_POINTS`
+//   * If we detect a self-intersection before point removal, and we only have `MIN_POINTS` left,
+//     stop: since a self-intersection causes removal of the spatially previous point, THAT could
+//     lead to a further self-intersection without the possibility of removing more points,
+//     potentially leaving the geometry in an invalid state.
+fn visvalingam_preserve<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     orig: &LineString<T>,
     epsilon: &T,
     tree: &mut RTree<Line<T>>,
-) -> Vec<Coordinate<T>>
+) -> Vec<Coord<T>>
 where
     T: CoordFloat + RTreeNum + HasKernel,
 {
@@ -288,14 +298,14 @@ where
         if smallest.area > *epsilon {
             continue;
         }
-        if counter <= geomtype.initial_min {
+        if counter <= INITIAL_MIN {
             // we can't remove any more points no matter what
             break;
         }
         let (left, right) = adjacent[smallest.current];
         // A point in this triangle has been removed since this VScore
         // was created, so skip it
-        if left as i32 != smallest.left as i32 || right as i32 != smallest.right as i32 {
+        if left != smallest.left as i32 || right != smallest.right as i32 {
             continue;
         }
         // if removal of this point causes a self-intersection, we also remove the previous point
@@ -304,12 +314,12 @@ where
         // because we could then no longer form a valid geometry if removal of next also caused an intersection.
         // The simplification process is thus over.
         smallest.intersector = tree_intersect(tree, &smallest, &orig.0);
-        if smallest.intersector && counter <= geomtype.min_points {
+        if smallest.intersector && counter <= MIN_POINTS {
             break;
         }
         // We've got a valid triangle, and its area is smaller than epsilon, so
         // remove it from the simulated "linked list"
-        adjacent[smallest.current as usize] = (0, 0);
+        adjacent[smallest.current] = (0, 0);
         counter -= 1;
         // Remove stale segments from R* tree
         let left_point = Point::from(orig.0[left as usize]);
@@ -386,11 +396,7 @@ where
 }
 
 /// check whether a triangle's edges intersect with any other edges of the LineString
-fn tree_intersect<T>(
-    tree: &RTree<Line<T>>,
-    triangle: &VScore<T, bool>,
-    orig: &[Coordinate<T>],
-) -> bool
+fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T, bool>, orig: &[Coord<T>]) -> bool
 where
     T: CoordFloat + RTreeNum + HasKernel,
 {
@@ -423,7 +429,7 @@ where
 /// simplified by simplifying all their constituent geometries individually.
 ///
 /// An epsilon less than or equal to zero will return an unaltered version of the geometry.
-pub trait SimplifyVW<T, Epsilon = T> {
+pub trait SimplifyVw<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
     ///
     /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation
@@ -431,7 +437,7 @@ pub trait SimplifyVW<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
-    /// use geo::SimplifyVW;
+    /// use geo::SimplifyVw;
     /// use geo::line_string;
     ///
     /// let line_string = line_string![
@@ -442,7 +448,7 @@ pub trait SimplifyVW<T, Epsilon = T> {
     ///     (x: 10.0, y: 10.0),
     /// ];
     ///
-    /// let simplified = line_string.simplifyvw(&30.0);
+    /// let simplified = line_string.simplify_vw(&30.0);
     ///
     /// let expected = line_string![
     ///     (x: 5.0, y: 2.0),
@@ -452,7 +458,7 @@ pub trait SimplifyVW<T, Epsilon = T> {
     ///
     /// assert_eq!(expected, simplified);
     /// ```
-    fn simplifyvw(&self, epsilon: &T) -> Self
+    fn simplify_vw(&self, epsilon: &T) -> Self
     where
         T: CoordFloat;
 }
@@ -482,7 +488,7 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
     ///     (x: 10.0, y: 10.0),
     /// ];
     ///
-    /// let simplified = line_string.simplifyvw_idx(&30.0);
+    /// let simplified = line_string.simplify_vw_idx(&30.0);
     ///
     /// let expected = vec![
     ///     0_usize,
@@ -492,7 +498,7 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
     ///
     /// assert_eq!(expected, simplified);
     /// ```
-    fn simplifyvw_idx(&self, epsilon: &T) -> Vec<usize>
+    fn simplify_vw_idx(&self, epsilon: &T) -> Vec<usize>
     where
         T: CoordFloat;
 }
@@ -500,7 +506,7 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
 /// Simplifies a geometry, preserving its topology by removing self-intersections
 ///
 /// An epsilon less than or equal to zero will return an unaltered version of the geometry.
-pub trait SimplifyVWPreserve<T, Epsilon = T> {
+pub trait SimplifyVwPreserve<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using a topology-preserving variant of the
     /// [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm.
     ///
@@ -527,7 +533,7 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     ///
     /// ```
     /// use approx::assert_relative_eq;
-    /// use geo::SimplifyVWPreserve;
+    /// use geo::SimplifyVwPreserve;
     /// use geo::line_string;
     ///
     /// let line_string = line_string![
@@ -541,7 +547,7 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     ///     (x: 301., y: 10.),
     /// ];
     ///
-    /// let simplified = line_string.simplifyvw_preserve(&668.6);
+    /// let simplified = line_string.simplify_vw_preserve(&668.6);
     ///
     /// let expected = line_string![
     ///     (x: 10., y: 60.),
@@ -554,74 +560,67 @@ pub trait SimplifyVWPreserve<T, Epsilon = T> {
     ///
     /// assert_relative_eq!(expected, simplified, epsilon = 1e-6);
     /// ```
-    fn simplifyvw_preserve(&self, epsilon: &T) -> Self
+    fn simplify_vw_preserve(&self, epsilon: &T) -> Self
     where
         T: CoordFloat + RTreeNum;
 }
 
-impl<T> SimplifyVWPreserve<T> for LineString<T>
+impl<T> SimplifyVwPreserve<T> for LineString<T>
 where
     T: CoordFloat + RTreeNum + HasKernel,
 {
-    fn simplifyvw_preserve(&self, epsilon: &T) -> LineString<T> {
-        let gt = GeomSettings {
-            initial_min: 2,
-            min_points: 4,
-        };
-        let mut simplified = vwp_wrapper(&gt, self, None, epsilon);
+    fn simplify_vw_preserve(&self, epsilon: &T) -> LineString<T> {
+        let mut simplified = vwp_wrapper::<_, 2, 4>(self, None, epsilon);
         LineString::from(simplified.pop().unwrap())
     }
 }
 
-impl<T> SimplifyVWPreserve<T> for MultiLineString<T>
+impl<T> SimplifyVwPreserve<T> for MultiLineString<T>
 where
     T: CoordFloat + RTreeNum + HasKernel,
 {
-    fn simplifyvw_preserve(&self, epsilon: &T) -> MultiLineString<T> {
+    fn simplify_vw_preserve(&self, epsilon: &T) -> MultiLineString<T> {
         MultiLineString::new(
             self.0
                 .iter()
-                .map(|l| l.simplifyvw_preserve(epsilon))
+                .map(|l| l.simplify_vw_preserve(epsilon))
                 .collect(),
         )
     }
 }
 
-impl<T> SimplifyVWPreserve<T> for Polygon<T>
+impl<T> SimplifyVwPreserve<T> for Polygon<T>
 where
     T: CoordFloat + RTreeNum + HasKernel,
 {
-    fn simplifyvw_preserve(&self, epsilon: &T) -> Polygon<T> {
-        let gt = GeomSettings {
-            initial_min: 4,
-            min_points: 6,
-        };
-        let mut simplified = vwp_wrapper(&gt, self.exterior(), Some(self.interiors()), epsilon);
+    fn simplify_vw_preserve(&self, epsilon: &T) -> Polygon<T> {
+        let mut simplified =
+            vwp_wrapper::<_, 4, 6>(self.exterior(), Some(self.interiors()), epsilon);
         let exterior = LineString::from(simplified.remove(0));
         let interiors = simplified.into_iter().map(LineString::from).collect();
         Polygon::new(exterior, interiors)
     }
 }
 
-impl<T> SimplifyVWPreserve<T> for MultiPolygon<T>
+impl<T> SimplifyVwPreserve<T> for MultiPolygon<T>
 where
     T: CoordFloat + RTreeNum + HasKernel,
 {
-    fn simplifyvw_preserve(&self, epsilon: &T) -> MultiPolygon<T> {
+    fn simplify_vw_preserve(&self, epsilon: &T) -> MultiPolygon<T> {
         MultiPolygon::new(
             self.0
                 .iter()
-                .map(|p| p.simplifyvw_preserve(epsilon))
+                .map(|p| p.simplify_vw_preserve(epsilon))
                 .collect(),
         )
     }
 }
 
-impl<T> SimplifyVW<T> for LineString<T>
+impl<T> SimplifyVw<T> for LineString<T>
 where
     T: CoordFloat,
 {
-    fn simplifyvw(&self, epsilon: &T) -> LineString<T> {
+    fn simplify_vw(&self, epsilon: &T) -> LineString<T> {
         LineString::from(visvalingam(self, epsilon))
     }
 }
@@ -630,51 +629,49 @@ impl<T> SimplifyVwIdx<T> for LineString<T>
 where
     T: CoordFloat,
 {
-    fn simplifyvw_idx(&self, epsilon: &T) -> Vec<usize> {
+    fn simplify_vw_idx(&self, epsilon: &T) -> Vec<usize> {
         visvalingam_indices(self, epsilon)
     }
 }
 
-impl<T> SimplifyVW<T> for MultiLineString<T>
+impl<T> SimplifyVw<T> for MultiLineString<T>
 where
     T: CoordFloat,
 {
-    fn simplifyvw(&self, epsilon: &T) -> MultiLineString<T> {
-        MultiLineString::new(self.iter().map(|l| l.simplifyvw(epsilon)).collect())
+    fn simplify_vw(&self, epsilon: &T) -> MultiLineString<T> {
+        MultiLineString::new(self.iter().map(|l| l.simplify_vw(epsilon)).collect())
     }
 }
 
-impl<T> SimplifyVW<T> for Polygon<T>
+impl<T> SimplifyVw<T> for Polygon<T>
 where
     T: CoordFloat,
 {
-    fn simplifyvw(&self, epsilon: &T) -> Polygon<T> {
+    fn simplify_vw(&self, epsilon: &T) -> Polygon<T> {
         Polygon::new(
-            self.exterior().simplifyvw(epsilon),
+            self.exterior().simplify_vw(epsilon),
             self.interiors()
                 .iter()
-                .map(|l| l.simplifyvw(epsilon))
+                .map(|l| l.simplify_vw(epsilon))
                 .collect(),
         )
     }
 }
 
-impl<T> SimplifyVW<T> for MultiPolygon<T>
+impl<T> SimplifyVw<T> for MultiPolygon<T>
 where
     T: CoordFloat,
 {
-    fn simplifyvw(&self, epsilon: &T) -> MultiPolygon<T> {
-        MultiPolygon::new(self.iter().map(|p| p.simplifyvw(epsilon)).collect())
+    fn simplify_vw(&self, epsilon: &T) -> MultiPolygon<T> {
+        MultiPolygon::new(self.iter().map(|p| p.simplify_vw(epsilon)).collect())
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{
-        cartesian_intersect, visvalingam, vwp_wrapper, GeomSettings, SimplifyVW, SimplifyVWPreserve,
-    };
+    use super::{cartesian_intersect, visvalingam, vwp_wrapper, SimplifyVw, SimplifyVwPreserve};
     use crate::{
-        line_string, point, polygon, Coordinate, LineString, MultiLineString, MultiPolygon, Point,
+        line_string, point, polygon, Coord, LineString, MultiLineString, MultiPolygon, Point,
         Polygon,
     };
 
@@ -689,11 +686,8 @@ mod test {
             (x: 10.0, y: 10.0)
         ];
 
-        let correct = vec![(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
-        let correct_ls: Vec<_> = correct
-            .iter()
-            .map(|e| Coordinate::from((e.0, e.1)))
-            .collect();
+        let correct = [(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
+        let correct_ls: Vec<_> = correct.iter().map(|e| Coord::from((e.0, e.1))).collect();
 
         let simplified = visvalingam(&ls, &30.);
         assert_eq!(simplified, correct_ls);
@@ -732,13 +726,9 @@ mod test {
             (x: 300., y: 40.),
             (x: 301., y: 10.)
         ];
-        let gt = &GeomSettings {
-            initial_min: 2,
-            min_points: 4,
-        };
-        let simplified = vwp_wrapper(gt, &ls, None, &668.6);
+        let simplified = vwp_wrapper::<_, 2, 4>(&ls, None, &668.6);
         // this is the correct, non-intersecting LineString
-        let correct = vec![
+        let correct = [
             (10., 60.),
             (126., 31.),
             (280., 19.),
@@ -746,10 +736,7 @@ mod test {
             (300., 40.),
             (301., 10.),
         ];
-        let correct_ls: Vec<_> = correct
-            .iter()
-            .map(|e| Coordinate::from((e.0, e.1)))
-            .collect();
+        let correct_ls: Vec<_> = correct.iter().map(|e| Coord::from((e.0, e.1))).collect();
         assert_eq!(simplified[0], correct_ls);
     }
     #[test]
@@ -773,7 +760,7 @@ mod test {
             (x: -24.451171875, y: 35.266685523707665)
         ];
         let poly = Polygon::new(outer.clone(), vec![inner]);
-        let simplified = poly.simplifyvw_preserve(&95.4);
+        let simplified = poly.simplify_vw_preserve(&95.4);
         assert_relative_eq!(simplified.exterior(), &outer, epsilon = 1e-6);
     }
     #[test]
@@ -804,7 +791,7 @@ mod test {
             (x: -24.451171875, y: 35.266685523707665)
         ];
         let poly = Polygon::new(outer.clone(), vec![inner]);
-        let simplified = poly.simplifyvw_preserve(&95.4);
+        let simplified = poly.simplify_vw_preserve(&95.4);
         assert_eq!(simplified.exterior(), &outer);
         assert_eq!(simplified.interiors()[0], correct_inner);
     }
@@ -812,11 +799,7 @@ mod test {
     fn very_long_vwp_test() {
         // simplify an 8k-point LineString, eliminating self-intersections
         let points_ls = geo_test_fixtures::norway_main::<f64>();
-        let gt = &GeomSettings {
-            initial_min: 2,
-            min_points: 4,
-        };
-        let simplified = vwp_wrapper(gt, &points_ls, None, &0.0005);
+        let simplified = vwp_wrapper::<_, 2, 4>(&points_ls, None, &0.0005);
         assert_eq!(simplified[0].len(), 3278);
     }
 
@@ -833,7 +816,7 @@ mod test {
         // simplify a longer LineString using the preserve variant
         let points_ls = geo_test_fixtures::vw_orig::<f64>();
         let correct_ls = geo_test_fixtures::vw_simplified::<f64>();
-        let simplified = points_ls.simplifyvw_preserve(&0.0005);
+        let simplified = points_ls.simplify_vw_preserve(&0.0005);
         assert_relative_eq!(simplified, correct_ls, epsilon = 1e-6);
     }
     #[test]
@@ -846,7 +829,7 @@ mod test {
     #[test]
     fn visvalingam_test_two_point_linestring() {
         let vec = vec![Point::new(0.0, 0.0), Point::new(27.8, 0.1)];
-        let compare = vec![Coordinate::from((0.0, 0.0)), Coordinate::from((27.8, 0.1))];
+        let compare = vec![Coord::from((0.0, 0.0)), Coord::from((27.8, 0.1))];
         let simplified = visvalingam(&LineString::from(vec), &1.0);
         assert_eq!(simplified, compare);
     }
@@ -854,7 +837,7 @@ mod test {
     #[test]
     fn multilinestring() {
         // this is the PostGIS example
-        let points = vec![
+        let points = [
             (5.0, 2.0),
             (3.0, 8.0),
             (6.0, 20.0),
@@ -863,12 +846,12 @@ mod test {
         ];
         let points_ls: Vec<_> = points.iter().map(|e| Point::new(e.0, e.1)).collect();
 
-        let correct = vec![(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
+        let correct = [(5.0, 2.0), (7.0, 25.0), (10.0, 10.0)];
         let correct_ls: Vec<_> = correct.iter().map(|e| Point::new(e.0, e.1)).collect();
 
         let mline = MultiLineString::new(vec![LineString::from(points_ls)]);
         assert_relative_eq!(
-            mline.simplifyvw(&30.),
+            mline.simplify_vw(&30.),
             MultiLineString::new(vec![LineString::from(correct_ls)]),
             epsilon = 1e-6
         );
@@ -885,7 +868,7 @@ mod test {
             (x: 0., y: 0.),
         ];
 
-        let poly2 = poly.simplifyvw(&10.);
+        let poly2 = poly.simplify_vw(&10.);
 
         assert_relative_eq!(
             poly2,
@@ -914,7 +897,7 @@ mod test {
             vec![],
         )]);
 
-        let mpoly2 = mpoly.simplifyvw(&10.);
+        let mpoly2 = mpoly.simplify_vw(&10.);
 
         assert_relative_eq!(
             mpoly2,

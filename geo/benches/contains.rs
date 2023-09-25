@@ -1,12 +1,6 @@
-#[macro_use]
-extern crate criterion;
-#[macro_use]
-extern crate geo;
-
+use criterion::{criterion_group, criterion_main, Criterion};
 use geo::contains::Contains;
-use geo::{polygon, Line, Point, Polygon};
-
-use criterion::Criterion;
+use geo::{point, polygon, Line, Point, Polygon};
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("point in simple polygon", |bencher| {
@@ -43,14 +37,56 @@ fn criterion_benchmark(c: &mut Criterion) {
         });
     });
 
-    c.bench_function("point outside complex polygon", |bencher| {
+    c.bench_function(
+        "point outside, but within bbox, of complex polygon",
+        |bencher| {
+            let polygon = Polygon::<f64>::new(geo_test_fixtures::louisiana(), vec![]);
+            // lake borgne - near and mostly surrounded by, but not inside of, Louisiana
+            let point = point!(x: -89.641854, y: 30.026283);
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&polygon).contains(criterion::black_box(&point)));
+            });
+        },
+    );
+
+    c.bench_function("point outside bbox of complex polygon", |bencher| {
         let polygon = Polygon::<f64>::new(geo_test_fixtures::louisiana(), vec![]);
-        // lake borgne - near and mostly surrounded by, but not inside of, Louisiana
-        let point = point!(x: -89.641854, y: 30.026283);
+        let point = point!(x: 2.3522, y: 48.8566);
         bencher.iter(|| {
             assert!(!criterion::black_box(&polygon).contains(criterion::black_box(&point)));
         });
     });
+
+    c.bench_function(
+        "point horizontal to comb teeth aka bart's haircut",
+        |bencher| {
+            // Testing a pathological case where the point is horizontal to lots of edges.
+            //
+            // comb teeth -> |\/\/\/\/\/\/|      *  <---point
+            //               |____________|
+            let polygon = polygon!(
+                (x: 0 ,y: 0),
+                (x: 0 ,y: 10),
+                (x: 1 ,y: 5),
+                (x: 2 ,y: 10),
+                (x: 3 ,y: 5),
+                (x: 4 ,y: 10),
+                (x: 5 ,y: 5),
+                (x: 6 ,y: 10),
+                (x: 7 ,y: 5),
+                (x: 8 ,y: 10),
+                (x: 9 ,y: 10),
+                (x: 10,y:  10),
+                (x: 10,y:  0),
+                (x: 0 ,y: 0)
+            );
+            let point = point!(x: 20, y: 7);
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&polygon).contains(criterion::black_box(&point)));
+            })
+        },
+    );
 
     c.bench_function("line across complex polygon", |bencher| {
         let polygon = Polygon::<f64>::new(geo_test_fixtures::louisiana(), vec![]);

@@ -1,9 +1,9 @@
-use crate::{CoordNum, Coordinate, Point};
+use crate::{Coord, CoordNum, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
 /// A line segment made up of exactly two
-/// [`Coordinate`s](struct.Coordinate.html).
+/// [`Coord`]s.
 ///
 /// # Semantics
 ///
@@ -12,8 +12,8 @@ use approx::{AbsDiffEq, RelativeEq};
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T: CoordNum = f64> {
-    pub start: Coordinate<T>,
-    pub end: Coordinate<T>,
+    pub start: Coord<T>,
+    pub end: Coord<T>,
 }
 
 impl<T: CoordNum> Line<T> {
@@ -31,7 +31,7 @@ impl<T: CoordNum> Line<T> {
     /// ```
     pub fn new<C>(start: C, end: C) -> Self
     where
-        C: Into<Coordinate<T>>,
+        C: Into<Coord<T>>,
     {
         Self {
             start: start.into(),
@@ -40,7 +40,7 @@ impl<T: CoordNum> Line<T> {
     }
 
     /// Calculate the difference in coordinates (Δx, Δy).
-    pub fn delta(&self) -> Coordinate<T> {
+    pub fn delta(&self) -> Coord<T> {
         self.end - self.start
     }
 
@@ -221,7 +221,12 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Line<T> {
     }
 }
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
 macro_rules! impl_rstar_line {
     ($rstar:ident) => {
         impl<T> ::$rstar::RTreeObject for Line<T>
@@ -253,6 +258,12 @@ impl_rstar_line!(rstar_0_8);
 
 #[cfg(feature = "rstar_0_9")]
 impl_rstar_line!(rstar_0_9);
+
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_line!(rstar_0_10);
+
+#[cfg(feature = "rstar_0_11")]
+impl_rstar_line!(rstar_0_11);
 
 #[cfg(test)]
 mod test {

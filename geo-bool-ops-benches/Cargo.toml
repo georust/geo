@@ -12,7 +12,7 @@ log = "0.4.11"
 
 [dev-dependencies]
 approx = ">= 0.4.0, < 0.6.0"
-criterion = { version = "0.3", features = ["html_reports"] }
+criterion = { version = "0.4", features = ["html_reports"] }
 geo-test-fixtures = { path = "../geo-test-fixtures" }
 jts-test-runner = { path = "../jts-test-runner" }
 pretty_env_logger = "0.4"
@@ -25,10 +25,10 @@ serde = "1.0.137"
 serde_json = "1.0.81"
 serde_derive = "1.0.137"
 glob = "0.3.0"
-gt_prev = { version = "0.6.2" , package = "geo-types" }
+gt_prev = { version = "0.6.2", package = "geo-types" }
 geo-booleanop = "0.3.2"
 wkt = "0.10.1"
-geojson = { version = "0.23.0", features = [ "geo-types" ] }
+geojson = { version = "0.24.0", features = ["geo-types"] }
 
 [[bench]]
 name = "boolean_ops"

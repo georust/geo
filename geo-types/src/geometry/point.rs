@@ -1,14 +1,14 @@
-use crate::{point, CoordFloat, CoordNum, Coordinate};
+use crate::{point, Coord, CoordFloat, CoordNum};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// A single point in 2D space.
 ///
 /// Points can be created using the [`Point::new`] constructor,
-/// the [`point!`] macro, or from a `Coordinate`, two-element
+/// the [`point!`] macro, or from a `Coord`, two-element
 /// tuples, or arrays – see the `From` impl section for a
 /// complete list.
 ///
@@ -16,7 +16,7 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 ///
 /// The _interior_ of the point is itself (a singleton set),
 /// and its _boundary_ is empty. A point is _valid_ if and
-/// only if the `Coordinate` is valid.
+/// only if the `Coord` is valid.
 ///
 /// # Examples
 ///
@@ -28,10 +28,10 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T: CoordNum = f64>(pub Coordinate<T>);
+pub struct Point<T: CoordNum = f64>(pub Coord<T>);
 
-impl<T: CoordNum> From<Coordinate<T>> for Point<T> {
-    fn from(x: Coordinate<T>) -> Self {
+impl<T: CoordNum> From<Coord<T>> for Point<T> {
+    fn from(x: Coord<T>) -> Self {
         Point(x)
     }
 }
@@ -117,11 +117,11 @@ impl<T: CoordNum> Point<T> {
     /// use approx::assert_relative_eq;
     /// use geo_types::Point;
     /// let mut p = Point::new(1.234, 2.345);
-    /// let mut p_x = p.mut_x();
+    /// let mut p_x = p.x_mut();
     /// *p_x += 1.0;
     /// assert_relative_eq!(p.x(), 2.234);
     /// ```
-    pub fn mut_x(&mut self) -> &mut T {
+    pub fn x_mut(&mut self) -> &mut T {
         &mut self.0.x
     }
     /// Returns the y/vertical component of the point.
@@ -164,11 +164,11 @@ impl<T: CoordNum> Point<T> {
     /// use approx::assert_relative_eq;
     /// use geo_types::Point;
     /// let mut p = Point::new(1.234, 2.345);
-    /// let mut p_y = p.mut_y();
+    /// let mut p_y = p.y_mut();
     /// *p_y += 1.0;
     /// assert_relative_eq!(p.y(), 3.345);
     /// ```
-    pub fn mut_y(&mut self) -> &mut T {
+    pub fn y_mut(&mut self) -> &mut T {
         &mut self.0.y
     }
 
@@ -620,6 +620,64 @@ where
 impl<T> ::rstar_0_9::Point for Point<T>
 where
     T: ::num_traits::Float + ::rstar_0_9::RTreeNum,
+{
+    type Scalar = T;
+
+    const DIMENSIONS: usize = 2;
+
+    fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
+        Point::new(generator(0), generator(1))
+    }
+
+    fn nth(&self, index: usize) -> Self::Scalar {
+        match index {
+            0 => self.0.x,
+            1 => self.0.y,
+            _ => unreachable!(),
+        }
+    }
+    fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
+        match index {
+            0 => &mut self.0.x,
+            1 => &mut self.0.y,
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[cfg(feature = "rstar_0_10")]
+impl<T> ::rstar_0_10::Point for Point<T>
+where
+    T: ::num_traits::Float + ::rstar_0_10::RTreeNum,
+{
+    type Scalar = T;
+
+    const DIMENSIONS: usize = 2;
+
+    fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
+        Point::new(generator(0), generator(1))
+    }
+
+    fn nth(&self, index: usize) -> Self::Scalar {
+        match index {
+            0 => self.0.x,
+            1 => self.0.y,
+            _ => unreachable!(),
+        }
+    }
+    fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
+        match index {
+            0 => &mut self.0.x,
+            1 => &mut self.0.y,
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[cfg(feature = "rstar_0_11")]
+impl<T> ::rstar_0_11::Point for Point<T>
+where
+    T: ::num_traits::Float + ::rstar_0_11::RTreeNum,
 {
     type Scalar = T;
 

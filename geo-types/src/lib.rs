@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_debug_implementations)]
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
 //! The `geo-types` library defines geometric types for the [GeoRust] ecosystem.
@@ -8,24 +9,24 @@
 //!
 //! ## Geometries
 //!
-//! - **[`Point`]**: A single point represented by one [`Coordinate`]
+//! - **[`Point`]**: A single point represented by one [`Coord`]
 //! - **[`MultiPoint`]**: A collection of [`Point`]s
-//! - **[`Line`]**: A line segment represented by two [`Coordinate`]s
+//! - **[`Line`]**: A line segment represented by two [`Coord`]s
 //! - **[`LineString`]**: A series of contiguous line segments represented by two or more
-//!   [`Coordinate`]s
+//!   [`Coord`]s
 //! - **[`MultiLineString`]**: A collection of [`LineString`]s
 //! - **[`Polygon`]**: A bounded area represented by one [`LineString`] exterior ring, and zero or
 //!   more [`LineString`] interior rings
 //! - **[`MultiPolygon`]**: A collection of [`Polygon`]s
 //! - **[`Rect`]**: An axis-aligned bounded rectangle represented by minimum and maximum
-//!   [`Coordinate`]s
-//! - **[`Triangle`]**: A bounded area represented by three [`Coordinate`] vertices
+//!   [`Coord`]s
+//! - **[`Triangle`]**: A bounded area represented by three [`Coord`] vertices
 //! - **[`GeometryCollection`]**: A collection of [`Geometry`]s
-//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coordinate`]
+//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coord`]
 //!
 //! ## Coordinates and Numeric Types
 //!
-//! - **[`Coordinate`]**: A two-dimensional coordinate. All geometry types are composed of [`Coordinate`]s, though [`Coordinate`] itself is not a [`Geometry`] type. See [`Point`] for a single coordinate geometry.
+//! - **[`Coord`]**: A two-dimensional coordinate. All geometry types are composed of [`Coord`]s, though [`Coord`] itself is not a [`Geometry`] type. See [`Point`] for a single coordinate geometry.
 //!
 //! By default, coordinates are 64-bit floating point numbers, but this is generic, and you may specify any numeric type that implements [`CoordNum`] or [`CoordFloat`]. As well as [`f64`], this includes common numeric types like [`f32`], [`i32`], [`i64`], etc.
 //!
@@ -60,11 +61,18 @@
 //!
 //! The following optional [Cargo features] are available:
 //!
+//! - `std`: Enables use of the full `std` library. Enabled by default.
 //! - `approx`: Allows geometry types to be checked for approximate equality with [approx]
 //! - `arbitrary`: Allows geometry types to be created from unstructured input with [arbitrary]
 //! - `serde`: Allows geometry types to be serialized and deserialized with [Serde]
 //! - `use-rstar_0_8`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.8`)
 //! - `use-rstar_0_9`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.9`)
+//! - `use-rstar_0_10`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.10`)
+//! - `use-rstar_0_11`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.11`)
+//!
+//! This library can be used in `#![no_std]` environments if the default `std` feature is disabled. At
+//! the moment, the `arbitrary` and `use-rstar_0_8` features require `std`. This may change in a
+//! future release.
 //!
 //! [approx]: https://github.com/brendanzab/approx
 //! [arbitrary]: https://github.com/rust-fuzz/arbitrary
@@ -75,16 +83,14 @@
 //! [OGC-SFA]: https://www.ogc.org/standards/sfa
 //! [rstar]: https://github.com/Stoeoef/rstar
 //! [Serde]: https://serde.rs/
-extern crate num_traits;
+extern crate alloc;
+
+use core::fmt::Debug;
 use num_traits::{Float, Num, NumCast};
-use std::fmt::Debug;
 
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;
-
-#[cfg(feature = "rstar_0_8")]
-extern crate rstar_0_8;
 
 #[cfg(test)]
 #[macro_use]
@@ -95,7 +101,7 @@ pub trait CoordinateType: Num + Copy + NumCast + PartialOrd + Debug {}
 #[allow(deprecated)]
 impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordinateType for T {}
 
-/// For algorithms which can use both integer **and** floating point `Point`s/`Coordinate`s
+/// For algorithms which can use both integer **and** floating point `Point`s/`Coord`s
 ///
 /// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
 ///
@@ -106,7 +112,7 @@ pub trait CoordNum: CoordinateType + Debug {}
 #[allow(deprecated)]
 impl<T: CoordinateType + Debug> CoordNum for T {}
 
-/// For algorithms which can only use floating point `Point`s/`Coordinate`s, like area or length calculations
+/// For algorithms which can only use floating point `Point`s/`Coord`s, like area or length calculations
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}
 
@@ -127,14 +133,31 @@ mod macros;
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9"))]
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
 #[doc(hidden)]
 pub mod private_utils;
 
+#[doc(hidden)]
+pub mod _alloc {
+    //! Needed to access these types from `alloc` in macros when the std feature is
+    //! disabled and the calling context is missing `extern crate alloc`. These are
+    //! _not_ meant for public use.
+
+    pub use ::alloc::boxed::Box;
+    pub use ::alloc::vec;
+}
+
 #[cfg(test)]
 mod tests {
+    use alloc::vec;
+
     use super::*;
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
 
     #[test]
     fn type_test() {
@@ -228,6 +251,36 @@ mod tests {
     fn line_test_0_9() {
         use rstar_0_9::primitives::Line as RStarLine;
         use rstar_0_9::{PointDistance, RTreeObject};
+
+        let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
+        let l = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 5., y: 5. });
+        assert_eq!(rl.envelope(), l.envelope());
+        // difference in 15th decimal place
+        assert_relative_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
+        assert_relative_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
+    }
+
+    #[cfg(feature = "rstar_0_10")]
+    #[test]
+    /// ensure Line's SpatialObject impl is correct
+    fn line_test_0_10() {
+        use rstar_0_10::primitives::Line as RStarLine;
+        use rstar_0_10::{PointDistance, RTreeObject};
+
+        let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
+        let l = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 5., y: 5. });
+        assert_eq!(rl.envelope(), l.envelope());
+        // difference in 15th decimal place
+        assert_relative_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
+        assert_relative_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
+    }
+
+    #[cfg(feature = "rstar_0_11")]
+    #[test]
+    /// ensure Line's SpatialObject impl is correct
+    fn line_test_0_11() {
+        use rstar_0_11::primitives::Line as RStarLine;
+        use rstar_0_11::{PointDistance, RTreeObject};
 
         let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
         let l = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 5., y: 5. });

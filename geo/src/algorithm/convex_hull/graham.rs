@@ -1,6 +1,6 @@
 use super::{swap_remove_to_first, trivial_hull};
 use crate::kernels::*;
-use crate::{Coordinate, GeoNum, LineString};
+use crate::{Coord, GeoNum, LineString};
 
 /// The [Graham's scan] algorithm to compute the convex hull
 /// of a collection of points. This algorithm is less
@@ -18,7 +18,7 @@ use crate::{Coordinate, GeoNum, LineString};
 /// [doi:10.1016/0020-0190(72)90045-2](https://doi.org/10.1016%2F0020-0190%2872%2990045-2)
 ///
 /// [Graham's scan]: //en.wikipedia.org/wiki/Graham_scan
-pub fn graham_hull<T>(mut points: &mut [Coordinate<T>], include_on_hull: bool) -> LineString<T>
+pub fn graham_hull<T>(mut points: &mut [Coord<T>], include_on_hull: bool) -> LineString<T>
 where
     T: GeoNum,
 {
@@ -40,7 +40,7 @@ where
     // Sort rest of the points by angle it makes with head
     // point. If two points are collinear with head, we sort
     // by distance. We use kernel predicates here.
-    let cmp = |q: &Coordinate<T>, r: &Coordinate<T>| match T::Ker::orient2d(*q, *head, *r) {
+    let cmp = |q: &Coord<T>, r: &Coord<T>| match T::Ker::orient2d(*q, *head, *r) {
         Orientation::CounterClockwise => Ordering::Greater,
         Orientation::Clockwise => Ordering::Less,
         Orientation::Collinear => {
@@ -89,7 +89,7 @@ where
 mod test {
     use super::*;
     use crate::IsConvex;
-    fn test_convexity<T: GeoNum>(mut initial: Vec<Coordinate<T>>) {
+    fn test_convexity<T: GeoNum>(mut initial: Vec<Coord<T>>) {
         let hull = graham_hull(&mut initial, false);
         assert!(hull.is_strictly_ccw_convex());
         let hull = graham_hull(&mut initial, true);
@@ -98,7 +98,7 @@ mod test {
 
     #[test]
     fn test_graham_hull_ccw() {
-        let initial = vec![
+        let initial = [
             (1.0, 0.0),
             (2.0, 1.0),
             (1.75, 1.1),
@@ -106,23 +106,20 @@ mod test {
             (0.0, 1.0),
             (1.0, 0.0),
         ];
-        let initial = initial
-            .iter()
-            .map(|e| Coordinate::from((e.0, e.1)))
-            .collect();
+        let initial = initial.iter().map(|e| Coord::from((e.0, e.1))).collect();
         test_convexity(initial);
     }
 
     #[test]
     fn graham_hull_test1() {
         let v: Vec<_> = vec![(0, 0), (4, 0), (4, 1), (1, 1), (1, 4), (0, 4), (0, 0)];
-        let initial = v.iter().map(|e| Coordinate::from((e.0, e.1))).collect();
+        let initial = v.iter().map(|e| Coord::from((e.0, e.1))).collect();
         test_convexity(initial);
     }
 
     #[test]
     fn graham_hull_test2() {
-        let v = vec![
+        let v = [
             (0, 10),
             (1, 1),
             (10, 0),
@@ -133,7 +130,7 @@ mod test {
             (-1, 1),
             (0, 10),
         ];
-        let initial = v.iter().map(|e| Coordinate::from((e.0, e.1))).collect();
+        let initial = v.iter().map(|e| Coord::from((e.0, e.1))).collect();
         test_convexity(initial);
     }
 

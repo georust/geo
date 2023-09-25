@@ -6,7 +6,7 @@ use super::{
 };
 
 use crate::HasDimensions;
-use crate::{Coordinate, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
+use crate::{Coord, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -52,11 +52,11 @@ where
         self.planar_graph.insert_edge(edge)
     }
 
-    pub fn is_boundary_node(&self, coord: Coordinate<F>) -> bool {
+    pub fn is_boundary_node(&self, coord: Coord<F>) -> bool {
         self.planar_graph.is_boundary_node(self.arg_index, coord)
     }
 
-    pub fn add_node_with_coordinate(&mut self, coord: Coordinate<F>) -> &mut CoordNode<F> {
+    pub fn add_node_with_coordinate(&mut self, coord: Coord<F>) -> &mut CoordNode<F> {
         self.planar_graph.add_node_with_coordinate(coord)
     }
 
@@ -167,7 +167,7 @@ where
             return;
         }
 
-        let mut coords: Vec<Coordinate<F>> = Vec::with_capacity(linear_ring.0.len());
+        let mut coords: Vec<Coord<F>> = Vec::with_capacity(linear_ring.0.len());
         // remove repeated coords
         for coord in &linear_ring.0 {
             if coords.last() != Some(coord) {
@@ -221,7 +221,7 @@ where
             return;
         }
 
-        let mut coords: Vec<Coordinate<F>> = Vec::with_capacity(line_string.0.len());
+        let mut coords: Vec<Coord<F>> = Vec::with_capacity(line_string.0.len());
         for coord in &line_string.0 {
             if coords.last() != Some(coord) {
                 coords.push(*coord)
@@ -308,8 +308,8 @@ where
     ) -> SegmentIntersector<F> {
         let mut segment_intersector = SegmentIntersector::new(line_intersector, false);
         segment_intersector.set_boundary_nodes(
-            self.boundary_nodes().into_iter().cloned().collect(),
-            other.boundary_nodes().into_iter().cloned().collect(),
+            self.boundary_nodes().cloned().collect(),
+            other.boundary_nodes().cloned().collect(),
         );
 
         let mut edge_set_intersector = Self::create_edge_set_intersector();
@@ -322,13 +322,13 @@ where
         segment_intersector
     }
 
-    fn insert_point(&mut self, arg_index: usize, coord: Coordinate<F>, position: CoordPos) {
+    fn insert_point(&mut self, arg_index: usize, coord: Coord<F>, position: CoordPos) {
         let node: &mut CoordNode<F> = self.add_node_with_coordinate(coord);
         node.label_mut().set_on_position(arg_index, position);
     }
 
     /// Add the boundary points of 1-dim (line) geometries.
-    fn insert_boundary_point(&mut self, coord: Coordinate<F>) {
+    fn insert_boundary_point(&mut self, coord: Coord<F>) {
         let arg_index = self.arg_index;
         let node: &mut CoordNode<F> = self.add_node_with_coordinate(coord);
 
@@ -336,6 +336,7 @@ where
 
         // determine the current location for the point (if any)
         let boundary_count = {
+            #[allow(clippy::bool_to_int_with_if)]
             let prev_boundary_count =
                 if Some(CoordPos::OnBoundary) == label.position(arg_index, Direction::On) {
                     1
@@ -350,7 +351,7 @@ where
     }
 
     fn add_self_intersection_nodes(&mut self) {
-        let positions_and_intersections: Vec<(CoordPos, Vec<Coordinate<F>>)> = self
+        let positions_and_intersections: Vec<(CoordPos, Vec<Coord<F>>)> = self
             .edges()
             .iter()
             .map(|cell| cell.borrow())
@@ -379,7 +380,7 @@ where
     ///
     /// If the node is a potential boundary node (e.g. came from an edge which is a boundary), then
     /// insert it as a potential boundary node.  Otherwise, just add it as a regular node.
-    fn add_self_intersection_node(&mut self, coord: Coordinate<F>, position: CoordPos) {
+    fn add_self_intersection_node(&mut self, coord: Coord<F>, position: CoordPos) {
         // if this node is already a boundary node, don't change it
         if self.is_boundary_node(coord) {
             return;

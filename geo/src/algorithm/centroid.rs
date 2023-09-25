@@ -63,6 +63,24 @@ where
 {
     type Output = Point<T>;
 
+    /// The Centroid of a [`Line`] is its middle point
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Centroid;
+    /// use geo::{Line, point};
+    ///
+    /// let line = Line::new(
+    ///     point!(x: 1.0f64, y: 3.0),
+    ///     point!(x: 2.0f64, y: 4.0),
+    /// );
+    ///
+    /// assert_eq!(
+    ///     point!(x: 1.5, y: 3.5),
+    ///     line.centroid(),
+    /// );
+    /// ```
     fn centroid(&self) -> Self::Output {
         let two = T::one() + T::one();
         (self.start_point() + self.end_point()) / two
@@ -75,8 +93,27 @@ where
 {
     type Output = Option<Point<T>>;
 
-    // The Centroid of a LineString is the mean of the middle of the segment
+    // The Centroid of a [`LineString`] is the mean of the middle of the segment
     // weighted by the length of the segments.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Centroid;
+    /// use geo::{line_string, point};
+    ///
+    /// let line_string = line_string![
+    ///   (x: 1.0f32, y: 1.0),
+    ///   (x: 2.0, y: 2.0),
+    ///   (x: 4.0, y: 4.0)
+    ///   ];
+    ///
+    /// assert_eq!(
+    ///     // (1.0 * (1.5, 1.5) + 2.0 * (3.0, 3.0)) / 3.0
+    ///     Some(point!(x: 2.5, y: 2.5)),
+    ///     line_string.centroid(),
+    /// );
+    /// ```
     fn centroid(&self) -> Self::Output {
         let mut operation = CentroidOperation::new();
         operation.add_line_string(self);
@@ -90,8 +127,28 @@ where
 {
     type Output = Option<Point<T>>;
 
-    /// The Centroid of a MultiLineString is the mean of the centroids of all the constituent linestrings,
+    /// The Centroid of a [`MultiLineString`] is the mean of the centroids of all the constituent linestrings,
     /// weighted by the length of each linestring
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Centroid;
+    /// use geo::{MultiLineString, line_string, point};
+    ///
+    /// let multi_line_string = MultiLineString::new(vec![
+    ///     // centroid: (2.5, 2.5)
+    ///     line_string![(x: 1.0f32, y: 1.0), (x: 2.0, y: 2.0), (x: 4.0, y: 4.0)],
+    ///     // centroid: (4.0, 4.0)
+    ///     line_string![(x: 1.0, y: 1.0), (x: 3.0, y: 3.0), (x: 7.0, y: 7.0)],
+    /// ]);
+    ///
+    /// assert_eq!(
+    ///     // ( 3.0 * (2.5, 2.5) + 6.0 * (4.0, 4.0) ) / 9.0
+    ///     Some(point!(x: 3.5, y: 3.5)),
+    ///     multi_line_string.centroid(),
+    /// );
+    /// ```
     fn centroid(&self) -> Self::Output {
         let mut operation = CentroidOperation::new();
         operation.add_multi_line_string(self);
@@ -105,6 +162,26 @@ where
 {
     type Output = Option<Point<T>>;
 
+    /// The Centroid of a [`Polygon`] is the mean of its points
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Centroid;
+    /// use geo::{polygon, point};
+    ///
+    /// let polygon = polygon![
+    ///     (x: 0.0f32, y: 0.0),
+    ///     (x: 2.0, y: 0.0),
+    ///     (x: 2.0, y: 1.0),
+    ///     (x: 0.0, y: 1.0),
+    /// ];
+    ///
+    /// assert_eq!(
+    ///     Some(point!(x: 1.0, y: 0.5)),
+    ///     polygon.centroid(),
+    /// );
+    /// ```
     fn centroid(&self) -> Self::Output {
         let mut operation = CentroidOperation::new();
         operation.add_polygon(self);
@@ -118,6 +195,38 @@ where
 {
     type Output = Option<Point<T>>;
 
+    /// The Centroid of a [`MultiPolygon`] is the mean of the centroids of its polygons, weighted
+    /// by the area of the polygons
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Centroid;
+    /// use geo::{MultiPolygon, polygon, point};
+    ///
+    /// let multi_polygon = MultiPolygon::new(vec![
+    ///   // centroid (1.0, 0.5)
+    ///   polygon![
+    ///     (x: 0.0f32, y: 0.0),
+    ///     (x: 2.0, y: 0.0),
+    ///     (x: 2.0, y: 1.0),
+    ///     (x: 0.0, y: 1.0),
+    ///   ],
+    ///   // centroid (-0.5, 0.0)
+    ///   polygon![
+    ///     (x: 1.0, y: 1.0),
+    ///     (x: -2.0, y: 1.0),
+    ///     (x: -2.0, y: -1.0),
+    ///     (x: 1.0, y: -1.0),
+    ///   ]
+    /// ]);
+    ///
+    /// assert_eq!(
+    ///     // ( 2.0 * (1.0, 0.5) + 6.0 * (-0.5, 0.0) ) / 8.0
+    ///     Some(point!(x: -0.125, y: 0.125)),
+    ///     multi_polygon.centroid(),
+    /// );
+    /// ```
     fn centroid(&self) -> Self::Output {
         let mut operation = CentroidOperation::new();
         operation.add_multi_polygon(self);
@@ -131,8 +240,60 @@ where
 {
     type Output = Point<T>;
 
+    /// The Centroid of a [`Rect`] is the mean of its [`Point`]s
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Centroid;
+    /// use geo::{Rect, point};
+    ///
+    /// let rect = Rect::new(
+    ///   point!(x: 0.0f32, y: 0.0),
+    ///   point!(x: 1.0, y: 1.0),
+    /// );
+    ///
+    /// assert_eq!(
+    ///     point!(x: 0.5, y: 0.5),
+    ///     rect.centroid(),
+    /// );
+    /// ```
     fn centroid(&self) -> Self::Output {
         self.center().into()
+    }
+}
+
+impl<T> Centroid for Triangle<T>
+where
+    T: GeoFloat,
+{
+    type Output = Point<T>;
+
+    /// The Centroid of a [`Triangle`] is the mean of its [`Point`]s
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Centroid;
+    /// use geo::{Triangle, coord, point};
+    ///
+    /// let triangle = Triangle::new(
+    ///   coord!(x: 0.0f32, y: -1.0),
+    ///   coord!(x: 3.0, y: 0.0),
+    ///   coord!(x: 0.0, y: 1.0),
+    /// );
+    ///
+    /// assert_eq!(
+    ///     point!(x: 1.0, y: 0.0),
+    ///     triangle.centroid(),
+    /// );
+    /// ```
+    fn centroid(&self) -> Self::Output {
+        let mut operation = CentroidOperation::new();
+        operation.add_triangle(self);
+        operation
+            .centroid()
+            .expect("triangle cannot have an empty centroid")
     }
 }
 
@@ -142,29 +303,47 @@ where
 {
     type Output = Point<T>;
 
+    /// The Centroid of a [`Point`] is the point itself
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Centroid;
+    /// use geo::point;
+    ///
+    /// let point = point!(x: 1.0f32, y: 2.0);
+    ///
+    /// assert_eq!(
+    ///     point!(x: 1.0f32, y: 2.0),
+    ///     point.centroid(),
+    /// );
+    /// ```
     fn centroid(&self) -> Self::Output {
         *self
     }
 }
 
-///
-/// ```
-/// use geo::Centroid;
-/// use geo::{MultiPoint, Point};
-///
-/// let empty: Vec<Point> = Vec::new();
-/// let empty_multi_points: MultiPoint<_> = empty.into();
-/// assert_eq!(empty_multi_points.centroid(), None);
-///
-/// let points: MultiPoint<_> = vec![(5., 1.), (1., 3.), (3., 2.)].into();
-/// assert_eq!(points.centroid(), Some(Point::new(3., 2.)));
-/// ```
 impl<T> Centroid for MultiPoint<T>
 where
     T: GeoFloat,
 {
     type Output = Option<Point<T>>;
 
+    /// The Centroid of a [`MultiPoint`] is the mean of all [`Point`]s
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use geo::Centroid;
+    /// use geo::{MultiPoint, Point};
+    ///
+    /// let empty: Vec<Point> = Vec::new();
+    /// let empty_multi_points: MultiPoint<_> = empty.into();
+    /// assert_eq!(empty_multi_points.centroid(), None);
+    ///
+    /// let points: MultiPoint<_> = vec![(5., 1.), (1., 3.), (3., 2.)].into();
+    /// assert_eq!(points.centroid(), Some(Point::new(3., 2.)));
+    /// ```
     fn centroid(&self) -> Self::Output {
         let mut operation = CentroidOperation::new();
         operation.add_multi_point(self);
@@ -179,6 +358,30 @@ where
     type Output = Option<Point<T>>;
 
     crate::geometry_delegate_impl! {
+        /// The Centroid of a [`Geometry`] is the centroid of its enum variant
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use geo::Centroid;
+        /// use geo::{Geometry, Rect, point};
+        ///
+        /// let rect = Rect::new(
+        ///   point!(x: 0.0f32, y: 0.0),
+        ///   point!(x: 1.0, y: 1.0),
+        /// );
+        /// let geometry = Geometry::from(rect.clone());
+        ///
+        /// assert_eq!(
+        ///     Some(rect.centroid()),
+        ///     geometry.centroid(),
+        /// );
+        ///
+        /// assert_eq!(
+        ///     Some(point!(x: 0.5, y: 0.5)),
+        ///     geometry.centroid(),
+        /// );
+        /// ```
         fn centroid(&self) -> Self::Output;
     }
 }
@@ -189,25 +392,50 @@ where
 {
     type Output = Option<Point<T>>;
 
+    /// The Centroid of a [`GeometryCollection`] is the mean of the centroids of elements, weighted
+    /// by the area of its elements.
+    ///
+    /// Note that this means, that elements which have no area are not considered when calculating
+    /// the centroid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Centroid;
+    /// use geo::{Geometry, GeometryCollection, Rect, Triangle, point, coord};
+    ///
+    /// let rect_geometry = Geometry::from(Rect::new(
+    ///   point!(x: 0.0f32, y: 0.0),
+    ///   point!(x: 1.0, y: 1.0),
+    /// ));
+    ///
+    /// let triangle_geometry = Geometry::from(Triangle::new(
+    ///     coord!(x: 0.0f32, y: -1.0),
+    ///     coord!(x: 3.0, y: 0.0),
+    ///     coord!(x: 0.0, y: 1.0),
+    /// ));
+    ///
+    /// let point_geometry = Geometry::from(
+    ///   point!(x: 12351.0, y: 129815.0)
+    /// );
+    ///
+    /// let geometry_collection = GeometryCollection::new_from(
+    ///   vec![
+    ///     rect_geometry,
+    ///     triangle_geometry,
+    ///     point_geometry
+    ///   ]
+    /// );
+    ///
+    /// assert_eq!(
+    ///     Some(point!(x: 0.875, y: 0.125)),
+    ///     geometry_collection.centroid(),
+    /// );
+    /// ```
     fn centroid(&self) -> Self::Output {
         let mut operation = CentroidOperation::new();
         operation.add_geometry_collection(self);
         operation.centroid()
-    }
-}
-
-impl<T> Centroid for Triangle<T>
-where
-    T: GeoFloat,
-{
-    type Output = Point<T>;
-
-    fn centroid(&self) -> Self::Output {
-        let mut operation = CentroidOperation::new();
-        operation.add_triangle(self);
-        operation
-            .centroid()
-            .expect("triangle cannot have an empty centroid")
     }
 }
 
@@ -230,7 +458,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
             .unwrap_or(Empty)
     }
 
-    fn add_coord(&mut self, coord: Coordinate<T>) {
+    fn add_coord(&mut self, coord: Coord<T>) {
         self.add_centroid(ZeroDimensional, coord, T::one());
     }
 
@@ -391,7 +619,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
         // Since area is non-zero, we know the ring has at least one point
         let shift = ring.0[0];
 
-        let accumulated_coord = ring.lines().fold(Coordinate::zero(), |accum, line| {
+        let accumulated_coord = ring.lines().fold(Coord::zero(), |accum, line| {
             use crate::MapCoords;
             let line = line.map_coords(|c| c - shift);
             let tmp = line.determinant();
@@ -403,7 +631,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
         self.add_centroid(TwoDimensional, centroid, weight);
     }
 
-    fn add_centroid(&mut self, dimensions: Dimensions, centroid: Coordinate<T>, weight: T) {
+    fn add_centroid(&mut self, dimensions: Dimensions, centroid: Coord<T>, weight: T) {
         let weighted_centroid = WeightedCentroid {
             dimensions,
             weight,
@@ -423,7 +651,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
 // Aggregated state for accumulating the centroid of a geometry or collection of geometries.
 struct WeightedCentroid<T: GeoFloat> {
     weight: T,
-    accumulated: Coordinate<T>,
+    accumulated: Coord<T>,
     /// Collections of Geometries can have different dimensionality. Centroids must be considered
     /// separately by dimensionality.
     ///
@@ -467,7 +695,7 @@ mod test {
     use crate::{coord, line_string, point, polygon};
 
     /// small helper to create a coordinate
-    fn c<T: GeoFloat>(x: T, y: T) -> Coordinate<T> {
+    fn c<T: GeoFloat>(x: T, y: T) -> Coord<T> {
         coord! { x: x, y: y }
     }
 
@@ -896,11 +1124,11 @@ mod test {
         assert_eq!(collection.centroid().unwrap(), point!(x: 3., y: 3.));
 
         // 1-d rect treated like line. Since a line has higher dimensions than the rest of the
-        // collection, it's centroid clobbers everything else in the collection.
+        // collection, its centroid clobbers everything else in the collection.
         collection.0.push(Rect::new(c(0., 0.), c(0., 2.)).into());
         assert_eq!(collection.centroid().unwrap(), point!(x: 0., y: 1.));
 
-        // 2-d has higher dimensions than the rest of the collection, so it's centroid clobbers
+        // 2-d has higher dimensions than the rest of the collection, so its centroid clobbers
         // everything else in the collection.
         collection
             .0

@@ -1,5 +1,5 @@
 use crate::{
-    CoordNum, Coordinate, Line, LineString, MultiLineString, MultiPolygon, Polygon, Rect, Triangle,
+    Coord, CoordNum, Line, LineString, MultiLineString, MultiPolygon, Polygon, Rect, Triangle,
 };
 use core::slice;
 use std::fmt::Debug;
@@ -65,7 +65,7 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for LineString<T> {
 
 /// Iterator over lines in a [LineString].
 #[derive(Debug)]
-pub struct LineStringIter<'a, T: CoordNum>(slice::Windows<'a, Coordinate<T>>);
+pub struct LineStringIter<'a, T: CoordNum>(slice::Windows<'a, Coord<T>>);
 
 impl<'a, T: CoordNum> LineStringIter<'a, T> {
     fn new(line_string: &'a LineString<T>) -> Self {
@@ -146,7 +146,7 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Triangle<T> {
     }
 }
 
-/// Utility to transform Iterator<LinesIter> into Iterator<Iterator<Line>>.
+/// Utility to transform `Iterator<LinesIter>` into `Iterator<Iterator<Line>>`.
 #[derive(Debug)]
 pub struct MapLinesIter<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: 'a + LinesIter<'a>>(Iter1);
 

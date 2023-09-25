@@ -1,8 +1,10 @@
 use crate::geometry::*;
-use crate::{coord, GeoNum, GeometryCow};
+use crate::intersects::value_in_between;
+use crate::kernels::*;
 use crate::{BoundingRect, HasDimensions, Intersects};
+use crate::{GeoNum, GeometryCow};
 
-/// The position of a `Coordinate` relative to a `Geometry`
+/// The position of a `Coord` relative to a `Geometry`
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum CoordPos {
     OnBoundary,
@@ -10,7 +12,7 @@ pub enum CoordPos {
     Outside,
 }
 
-/// Determine whether a `Coordinate` lies inside, outside, or on the boundary of a geometry.
+/// Determine whether a `Coord` lies inside, outside, or on the boundary of a geometry.
 ///
 /// # Examples
 ///
@@ -31,7 +33,7 @@ pub enum CoordPos {
 /// ```
 pub trait CoordinatePosition {
     type Scalar: GeoNum;
-    fn coordinate_position(&self, coord: &Coordinate<Self::Scalar>) -> CoordPos {
+    fn coordinate_position(&self, coord: &Coord<Self::Scalar>) -> CoordPos {
         let mut is_inside = false;
         let mut boundary_count = 0;
 
@@ -56,20 +58,20 @@ pub trait CoordinatePosition {
     //  2. increment `boundary_count` for each component whose Boundary contains `coord`.
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<Self::Scalar>,
+        coord: &Coord<Self::Scalar>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     );
 }
 
-impl<T> CoordinatePosition for Coordinate<T>
+impl<T> CoordinatePosition for Coord<T>
 where
     T: GeoNum,
 {
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
@@ -86,7 +88,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
@@ -103,7 +105,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -129,7 +131,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -178,7 +180,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -195,7 +197,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -212,7 +214,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
@@ -229,16 +231,11 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
         if self.is_empty() {
-            return;
-        }
-
-        // Ok to `unwrap` since we know `self` is non-empty, so bounding-rect is non-null
-        if !self.bounding_rect().unwrap().intersects(coord) {
             return;
         }
 
@@ -274,7 +271,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -291,7 +288,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -308,7 +305,7 @@ where
     type Scalar = T;
     fn calculate_coordinate_position(
         &self,
-        coord: &Coordinate<T>,
+        coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
@@ -326,7 +323,7 @@ where
     crate::geometry_delegate_impl! {
         fn calculate_coordinate_position(
             &self,
-            coord: &Coordinate<T>,
+            coord: &Coord<T>,
             is_inside: &mut bool,
             boundary_count: &mut usize) -> ();
     }
@@ -337,23 +334,18 @@ impl<'a, T: GeoNum> CoordinatePosition for GeometryCow<'a, T> {
     crate::geometry_cow_delegate_impl! {
         fn calculate_coordinate_position(
             &self,
-            coord: &Coordinate<T>,
+            coord: &Coord<T>,
             is_inside: &mut bool,
             boundary_count: &mut usize) -> ();
     }
 }
 
-/// Calculate the position of a `Coordinate` relative to a
+/// Calculate the position of a `Coord` relative to a
 /// closed `LineString`.
-pub fn coord_pos_relative_to_ring<T>(coord: Coordinate<T>, linestring: &LineString<T>) -> CoordPos
+pub fn coord_pos_relative_to_ring<T>(coord: Coord<T>, linestring: &LineString<T>) -> CoordPos
 where
     T: GeoNum,
 {
-    // Use the ray-tracing algorithm: count #times a
-    // horizontal ray from point (to positive infinity).
-    //
-    // See: https://en.wikipedia.org/wiki/Point_in_polygon
-
     debug_assert!(linestring.is_closed());
 
     // LineString without points
@@ -370,71 +362,48 @@ where
         };
     }
 
-    let mut crossings = 0;
+    // Use winding number algorithm with on boundary short-cicuit
+    // See: https://en.wikipedia.org/wiki/Point_in_polygon#Winding_number_algorithm
+    let mut winding_number = 0;
     for line in linestring.lines() {
-        // Check if coord lies on the line
-        if line.intersects(&coord) {
-            return CoordPos::OnBoundary;
-        }
-
-        // Ignore if the line is strictly to the left of the coord.
-        let max_x = if line.start.x < line.end.x {
-            line.end.x
-        } else {
-            line.start.x
-        };
-        if max_x < coord.x {
-            continue;
-        }
-
-        // Ignore if line is horizontal. This includes an
-        // edge case where the ray would intersect a
-        // horizontal segment of the ring infinitely many
-        // times, and is irrelevant for the calculation.
-        if line.start.y == line.end.y {
-            continue;
-        }
-
-        // Ignore if the intersection of the line is
-        // possibly at the beginning/end of the line, and
-        // the line lies below the ray. This is to
-        // prevent a double counting when the ray passes
-        // through a vertex of the polygon.
-        //
-        // The below logic handles two cases:
-        //   1. if the ray enters/exits the polygon
-        //      at the point of intersection
-        //   2. if the ray touches a vertex,
-        //      but doesn't enter/exit at that point
-        if (line.start.y == coord.y && line.end.y < coord.y)
-            || (line.end.y == coord.y && line.start.y < coord.y)
-        {
-            continue;
-        }
-
-        // Otherwise, check if ray intersects the line
-        // segment. Enough to consider ray upto the max_x
-        // coordinate of the current segment.
-        let ray = Line::new(
-            coord,
-            coord! {
-                x: max_x,
-                y: coord.y,
-            },
-        );
-        if ray.intersects(&line) {
-            crossings += 1;
+        // Edge Crossing Rules:
+        //   1. an upward edge includes its starting endpoint, and excludes its final endpoint;
+        //   2. a downward edge excludes its starting endpoint, and includes its final endpoint;
+        //   3. horizontal edges are excluded
+        //   4. the edge-ray intersection point must be strictly right of the coord.
+        if line.start.y <= coord.y {
+            if line.end.y >= coord.y {
+                let o = T::Ker::orient2d(line.start, line.end, coord);
+                if o == Orientation::CounterClockwise && line.end.y != coord.y {
+                    winding_number += 1
+                } else if o == Orientation::Collinear
+                    && value_in_between(coord.x, line.start.x, line.end.x)
+                {
+                    return CoordPos::OnBoundary;
+                }
+            };
+        } else if line.end.y <= coord.y {
+            let o = T::Ker::orient2d(line.start, line.end, coord);
+            if o == Orientation::Clockwise {
+                winding_number -= 1
+            } else if o == Orientation::Collinear
+                && value_in_between(coord.x, line.start.x, line.end.x)
+            {
+                return CoordPos::OnBoundary;
+            }
         }
     }
-    if crossings % 2 == 1 {
-        CoordPos::Inside
-    } else {
+    if winding_number == 0 {
         CoordPos::Outside
+    } else {
+        CoordPos::Inside
     }
 }
 
 #[cfg(test)]
 mod test {
+    use geo_types::coord;
+
     use super::*;
     use crate::{line_string, point, polygon};
 
@@ -442,7 +411,7 @@ mod test {
     fn test_empty_poly() {
         let square_poly: Polygon<f64> = Polygon::new(LineString::new(vec![]), vec![]);
         assert_eq!(
-            square_poly.coordinate_position(&Coordinate::zero()),
+            square_poly.coordinate_position(&Coord::zero()),
             CoordPos::Outside
         );
     }
@@ -567,7 +536,7 @@ mod test {
         let line_string =
             line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 1.0), (x: 2.0, y: 0.0), (x: 3.0, y: 0.0)];
 
-        let start = Coordinate::zero();
+        let start = Coord::zero();
         assert_eq!(
             line_string.coordinate_position(&start),
             CoordPos::OnBoundary
@@ -590,12 +559,12 @@ mod test {
     fn test_degenerate_line_strings() {
         let line_string = line_string![(x: 0.0, y: 0.0), (x: 0.0, y: 0.0)];
 
-        let start = Coordinate::zero();
+        let start = Coord::zero();
         assert_eq!(line_string.coordinate_position(&start), CoordPos::Inside);
 
         let line_string = line_string![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0)];
 
-        let start = Coordinate::zero();
+        let start = Coord::zero();
         assert_eq!(
             line_string.coordinate_position(&start),
             CoordPos::OnBoundary
@@ -610,7 +579,7 @@ mod test {
         assert!(line_string.is_closed());
 
         // closed line strings have no boundary
-        let start = Coordinate::zero();
+        let start = Coord::zero();
         assert_eq!(line_string.coordinate_position(&start), CoordPos::Inside);
 
         let midpoint = coord! { x: 0.5, y: 0.5 };
@@ -647,7 +616,7 @@ mod test {
         );
 
         // in boundary of first and second, so considered *not* in the boundary by mod 2 rule
-        let shared_start = Coordinate::zero();
+        let shared_start = Coord::zero();
         assert_eq!(
             multi_line_string.coordinate_position(&shared_start),
             CoordPos::Outside

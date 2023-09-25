@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use geo_types::{Coordinate, LineString, MultiPolygon, Polygon};
+use geo_types::{Coord, LineString, MultiPolygon, Polygon};
 
 pub fn convert_poly(poly: &Polygon<f64>) -> gt_prev::Polygon<f64> {
     let ext: Vec<_> = poly
@@ -21,7 +21,7 @@ pub fn convert_back_poly(poly: &gt_prev::Polygon<f64>) -> Polygon<f64> {
         .exterior()
         .0
         .iter()
-        .map(|c| Coordinate { x: c.x, y: c.y })
+        .map(|c| Coord { x: c.x, y: c.y })
         .collect();
     Polygon::new(LineString(ext), vec![])
 }

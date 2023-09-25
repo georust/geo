@@ -1,6 +1,6 @@
 use crate::{
-    Contains, ConvexHull, CoordNum, Coordinate, GeoFloat, Intersects, LineString, MultiPoint,
-    Point, Polygon,
+    Contains, ConvexHull, Coord, CoordNum, GeoFloat, Intersects, LineString, MultiPoint, Point,
+    Polygon,
 };
 use num_traits::Float;
 use rstar::RTreeNum;
@@ -58,7 +58,7 @@ where
     }
 }
 
-impl<T> KNearestConcaveHull for Vec<Coordinate<T>>
+impl<T> KNearestConcaveHull for Vec<Coord<T>>
 where
     T: GeoFloat + RTreeNum,
 {
@@ -68,7 +68,7 @@ where
     }
 }
 
-impl<T> KNearestConcaveHull for [Coordinate<T>]
+impl<T> KNearestConcaveHull for [Coord<T>]
 where
     T: GeoFloat + RTreeNum,
 {
@@ -88,7 +88,7 @@ where
     }
 }
 
-fn concave_hull<'a, T: 'a>(coords: impl Iterator<Item = &'a Coordinate<T>>, k: u32) -> Polygon<T>
+fn concave_hull<'a, T: 'a>(coords: impl Iterator<Item = &'a Coord<T>>, k: u32) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
@@ -99,13 +99,11 @@ where
 const DELTA: f32 = 0.000000001;
 
 /// Removes duplicate coords from the dataset.
-fn prepare_dataset<'a, T: 'a>(
-    coords: impl Iterator<Item = &'a Coordinate<T>>,
-) -> rstar::RTree<Coordinate<T>>
+fn prepare_dataset<'a, T: 'a>(coords: impl Iterator<Item = &'a Coord<T>>) -> rstar::RTree<Coord<T>>
 where
     T: GeoFloat + RTreeNum,
 {
-    let mut dataset: rstar::RTree<Coordinate<T>> = rstar::RTree::new();
+    let mut dataset: rstar::RTree<Coord<T>> = rstar::RTree::new();
     for coord in coords {
         let closest = dataset.nearest_neighbor(coord);
         if let Some(closest) = closest {
@@ -122,7 +120,7 @@ where
 
 /// The points are considered equal, if both coordinate values are same with 0.0000001% range
 /// (see the value of DELTA constant).
-fn coords_are_equal<T>(c1: &Coordinate<T>, c2: &Coordinate<T>) -> bool
+fn coords_are_equal<T>(c1: &Coord<T>, c2: &Coord<T>) -> bool
 where
     T: GeoFloat + RTreeNum,
 {
@@ -139,13 +137,13 @@ where
     b > (a - da) && b < (a + da)
 }
 
-fn polygon_from_tree<T>(dataset: &rstar::RTree<Coordinate<T>>) -> Polygon<T>
+fn polygon_from_tree<T>(dataset: &rstar::RTree<Coord<T>>) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
     assert!(dataset.size() <= 3);
 
-    let mut coords: Vec<Coordinate<T>> = dataset.iter().cloned().collect();
+    let mut coords: Vec<Coord<T>> = dataset.iter().cloned().collect();
     if !coords.is_empty() {
         // close the linestring provided it's not empty
         coords.push(coords[0]);
@@ -154,7 +152,7 @@ where
     Polygon::new(LineString::from(coords), vec![])
 }
 
-fn concave_hull_inner<T>(original_dataset: rstar::RTree<Coordinate<T>>, k: u32) -> Polygon<T>
+fn concave_hull_inner<T>(original_dataset: rstar::RTree<Coord<T>>, k: u32) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
@@ -214,11 +212,11 @@ where
     poly
 }
 
-fn fall_back_hull<T>(dataset: &rstar::RTree<Coordinate<T>>) -> Polygon<T>
+fn fall_back_hull<T>(dataset: &rstar::RTree<Coord<T>>) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
-    let multipoint = MultiPoint::from(dataset.iter().cloned().collect::<Vec<Coordinate<T>>>());
+    let multipoint = MultiPoint::from(dataset.iter().cloned().collect::<Vec<Coord<T>>>());
     multipoint.convex_hull()
 }
 
@@ -230,7 +228,7 @@ fn adjust_k(k: u32) -> u32 {
     max(k, 3)
 }
 
-fn get_first_coord<T>(coord_set: &rstar::RTree<Coordinate<T>>) -> Coordinate<T>
+fn get_first_coord<T>(coord_set: &rstar::RTree<Coord<T>>) -> Coord<T>
 where
     T: GeoFloat + RTreeNum,
 {
@@ -251,10 +249,10 @@ where
 }
 
 fn get_nearest_coords<'a, T>(
-    dataset: &'a rstar::RTree<Coordinate<T>>,
-    base_coord: &Coordinate<T>,
+    dataset: &'a rstar::RTree<Coord<T>>,
+    base_coord: &Coord<T>,
     candidate_no: u32,
-) -> impl Iterator<Item = &'a Coordinate<T>>
+) -> impl Iterator<Item = &'a Coord<T>>
 where
     T: GeoFloat + RTreeNum,
 {
@@ -263,11 +261,8 @@ where
         .take(candidate_no as usize)
 }
 
-fn sort_by_angle<T>(
-    coords: &mut [&Coordinate<T>],
-    curr_coord: &Coordinate<T>,
-    prev_coord: &Coordinate<T>,
-) where
+fn sort_by_angle<T>(coords: &mut [&Coord<T>], curr_coord: &Coord<T>, prev_coord: &Coord<T>)
+where
     T: GeoFloat,
 {
     let base_angle = pseudo_angle(prev_coord.x - curr_coord.x, prev_coord.y - curr_coord.y);
@@ -302,7 +297,7 @@ where
     }
 }
 
-fn intersects<T>(hull: &[Coordinate<T>], line: &[&Coordinate<T>; 2]) -> bool
+fn intersects<T>(hull: &[Coord<T>], line: &[&Coord<T>; 2]) -> bool
 where
     T: GeoFloat,
 {
@@ -317,7 +312,7 @@ where
     linestring.intersects(&line)
 }
 
-fn coord_inside<T>(coord: &Coordinate<T>, poly: &Polygon<T>) -> bool
+fn coord_inside<T>(coord: &Coord<T>, poly: &Polygon<T>) -> bool
 where
     T: GeoFloat,
 {
@@ -328,18 +323,18 @@ where
 mod tests {
     use super::*;
     use crate::coords_iter::CoordsIter;
-    use crate::geo_types::coord;
+    use geo_types::coord;
 
     #[test]
     fn coord_ordering() {
-        let coords = vec![
+        let coords = [
             coord!(x: 1.0, y: 1.0),
             coord!(x: -1.0, y: 0.0),
             coord!(x: 0.0, y: 1.0),
             coord!(x: 1.0, y: 0.0),
         ];
 
-        let mut coords_mapped: Vec<&Coordinate<f32>> = coords.iter().collect();
+        let mut coords_mapped: Vec<&Coord<f32>> = coords.iter().collect();
 
         let center = coord!(x: 0.0, y: 0.0);
         let prev_coord = coord!(x: 1.0, y: 1.0);
@@ -392,7 +387,7 @@ mod tests {
         let poly = concave_hull(coords.iter(), 3);
         assert_eq!(poly.exterior().coords_count(), 12);
 
-        let must_not_be_in = vec![&coords[6]];
+        let must_not_be_in = [&coords[6]];
         for coord in poly.exterior().coords_iter() {
             for not_coord in must_not_be_in.iter() {
                 assert_ne!(&coord, *not_coord);
@@ -402,7 +397,7 @@ mod tests {
 
     #[test]
     fn empty_hull() {
-        let actual: Polygon<f64> = concave_hull(vec![].iter(), 3);
+        let actual: Polygon<f64> = concave_hull([].iter(), 3);
         let expected = Polygon::new(LineString::new(vec![]), vec![]);
         assert_eq!(actual, expected);
     }

@@ -1,5 +1,5 @@
 use super::{CoordNum, Kernel, Orientation};
-use crate::Coordinate;
+use crate::Coord;
 
 use num_traits::{Float, NumCast};
 
@@ -15,7 +15,7 @@ impl<T> Kernel<T> for RobustKernel
 where
     T: CoordNum + Float,
 {
-    fn orient2d(p: Coordinate<T>, q: Coordinate<T>, r: Coordinate<T>) -> Orientation {
+    fn orient2d(p: Coord<T>, q: Coord<T>, r: Coord<T>) -> Orientation {
         use robust::{orient2d, Coord};
 
         let orientation = orient2d(

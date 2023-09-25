@@ -1,4 +1,4 @@
-pub(crate) mod coordinate;
+pub(crate) mod coord;
 pub(crate) mod geometry_collection;
 pub(crate) mod line;
 pub(crate) mod line_string;
@@ -11,7 +11,8 @@ pub(crate) mod rect;
 pub(crate) mod triangle;
 
 // re-export all the geometry variants:
-pub use coordinate::Coordinate;
+#[allow(deprecated)]
+pub use coord::{Coord, Coordinate};
 pub use geometry_collection::GeometryCollection;
 pub use line::Line;
 pub use line_string::LineString;
@@ -28,7 +29,7 @@ use crate::{CoordNum, Error};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 use core::any::type_name;
-use std::convert::TryFrom;
+use core::convert::TryFrom;
 
 /// An enum representing any possible geometry type.
 ///

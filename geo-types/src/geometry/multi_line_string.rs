@@ -1,8 +1,10 @@
 use crate::{CoordNum, LineString};
 
+use alloc::vec;
+use alloc::vec::Vec;
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
-use std::iter::FromIterator;
+use core::iter::FromIterator;
 
 /// A collection of
 /// [`LineString`s](line_string/struct.LineString.html). Can
@@ -81,7 +83,7 @@ impl<T: CoordNum, ILS: Into<LineString<T>>> FromIterator<ILS> for MultiLineStrin
 
 impl<T: CoordNum> IntoIterator for MultiLineString<T> {
     type Item = LineString<T>;
-    type IntoIter = ::std::vec::IntoIter<LineString<T>>;
+    type IntoIter = ::alloc::vec::IntoIter<LineString<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -90,19 +92,19 @@ impl<T: CoordNum> IntoIterator for MultiLineString<T> {
 
 impl<'a, T: CoordNum> IntoIterator for &'a MultiLineString<T> {
     type Item = &'a LineString<T>;
-    type IntoIter = ::std::slice::Iter<'a, LineString<T>>;
+    type IntoIter = ::alloc::slice::Iter<'a, LineString<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&self.0).iter()
+        (self.0).iter()
     }
 }
 
 impl<'a, T: CoordNum> IntoIterator for &'a mut MultiLineString<T> {
     type Item = &'a mut LineString<T>;
-    type IntoIter = ::std::slice::IterMut<'a, LineString<T>>;
+    type IntoIter = ::alloc::slice::IterMut<'a, LineString<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
-        (&mut self.0).iter_mut()
+        (self.0).iter_mut()
     }
 }
 
@@ -187,7 +189,7 @@ where
             return false;
         }
 
-        let mut mp_zipper = self.into_iter().zip(other.into_iter());
+        let mut mp_zipper = self.into_iter().zip(other);
         mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(rhs, epsilon))
     }
 }

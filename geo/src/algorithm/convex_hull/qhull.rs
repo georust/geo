@@ -1,7 +1,7 @@
 use super::{swap_remove_to_first, trivial_hull};
 use crate::kernels::{HasKernel, Kernel, Orientation};
 use crate::utils::partition_slice;
-use crate::{coord, Coordinate, GeoNum, LineString};
+use crate::{coord, Coord, GeoNum, LineString};
 
 // Determines if `p_c` lies on the positive side of the
 // segment `p_a` to `p_b`. In other words, whether segment
@@ -9,7 +9,7 @@ use crate::{coord, Coordinate, GeoNum, LineString};
 // segment. We use kernels to ensure this predicate is
 // exact.
 #[inline]
-fn is_ccw<T>(p_a: Coordinate<T>, p_b: Coordinate<T>, p_c: Coordinate<T>) -> bool
+fn is_ccw<T>(p_a: Coord<T>, p_b: Coord<T>, p_c: Coord<T>) -> bool
 where
     T: GeoNum,
 {
@@ -18,7 +18,7 @@ where
 }
 
 // Adapted from https://web.archive.org/web/20180409175413/http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
-pub fn quick_hull<T>(mut points: &mut [Coordinate<T>]) -> LineString<T>
+pub fn quick_hull<T>(mut points: &mut [Coord<T>]) -> LineString<T>
 where
     T: GeoNum,
 {
@@ -42,9 +42,8 @@ where
         // (2) max_idx = min_idx: then any point could be
         // chosen as max. But from case (1), it could now be
         // 0, and we should not decrement it.
-        if max_idx > 0 {
-            max_idx -= 1;
-        }
+        max_idx = max_idx.saturating_sub(1);
+
         let max = swap_remove_to_first(&mut points, max_idx);
         (min, max)
     };
@@ -64,12 +63,8 @@ where
 }
 
 // recursively calculate the convex hull of a subset of points
-fn hull_set<T>(
-    p_a: Coordinate<T>,
-    p_b: Coordinate<T>,
-    mut set: &mut [Coordinate<T>],
-    hull: &mut Vec<Coordinate<T>>,
-) where
+fn hull_set<T>(p_a: Coord<T>, p_b: Coord<T>, mut set: &mut [Coord<T>], hull: &mut Vec<Coord<T>>)
+where
     T: GeoNum,
 {
     if set.is_empty() {
@@ -102,7 +97,7 @@ fn hull_set<T>(
         .unwrap()
         .0;
 
-    // move Coordinate at furthest_point from set into hull
+    // move Coord at furthest_point from set into hull
     let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
     // points over PB
     {
@@ -162,7 +157,7 @@ mod test {
     #[test]
     // test whether output is ccw
     fn quick_hull_test_ccw() {
-        let initial = vec![
+        let initial = [
             (1.0, 0.0),
             (2.0, 1.0),
             (1.75, 1.1),
@@ -171,7 +166,7 @@ mod test {
             (1.0, 0.0),
         ];
         let mut v: Vec<_> = initial.iter().map(|e| coord! { x: e.0, y: e.1 }).collect();
-        let correct = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
+        let correct = [(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
         let v_correct: Vec<_> = correct.iter().map(|e| coord! { x: e.0, y: e.1 }).collect();
         let res = quick_hull(&mut v);
         assert_eq!(res.0, v_correct);
@@ -180,7 +175,7 @@ mod test {
     #[test]
     fn quick_hull_test_ccw_maintain() {
         // initial input begins at min y, is oriented ccw
-        let initial = vec![
+        let initial = [
             (0., 0.),
             (2., 0.),
             (2.5, 1.75),
@@ -216,7 +211,7 @@ mod test {
         // Initial input begins at min x, but not min y
         // There are three points with same x.
         // Output should not contain the middle point.
-        let initial = vec![
+        let initial = [
             (-1., 0.),
             (-1., -1.),
             (-1., 1.),

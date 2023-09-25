@@ -129,7 +129,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Polygon<F> {
     }
 }
 
-impl<F: GeoFloat> ClosestPoint<F> for Coordinate<F> {
+impl<F: GeoFloat> ClosestPoint<F> for Coord<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         Point::from(*self).closest_point(p)
     }
@@ -140,7 +140,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Triangle<F> {
         if self.intersects(p) {
             return Closest::Intersection(*p);
         }
-        closest_of(&self.to_lines(), *p)
+        closest_of(self.to_lines(), *p)
     }
 }
 
@@ -149,7 +149,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Rect<F> {
         if self.intersects(p) {
             return Closest::Intersection(*p);
         }
-        closest_of(&self.to_lines(), *p)
+        closest_of(self.to_lines(), *p)
     }
 }
 

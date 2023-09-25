@@ -3,7 +3,7 @@
 // hidden module is public so the geo crate can reuse these algorithms to
 // prevent duplication. These functions are _not_ meant for public consumption.
 
-use crate::{CoordFloat, CoordNum, Coordinate, Line, LineString, Point, Rect};
+use crate::{Coord, CoordFloat, CoordNum, Line, LineString, Point, Rect};
 
 pub fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<T>>
 where
@@ -22,7 +22,7 @@ where
 pub fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>
 where
     T: CoordNum,
-    I: IntoIterator<Item = Coordinate<T>>,
+    I: IntoIterator<Item = Coord<T>>,
 {
     let mut iter = collection.into_iter();
     if let Some(pnt) = iter.next() {
@@ -61,7 +61,7 @@ fn get_min_max<T: PartialOrd>(p: T, min: T, max: T) -> (T, T) {
 pub fn line_segment_distance<T, C>(point: C, start: C, end: C) -> T
 where
     T: CoordFloat,
-    C: Into<Coordinate<T>>,
+    C: Into<Coord<T>>,
 {
     let point = point.into();
     let start = start.into();
@@ -106,7 +106,7 @@ where
 pub fn point_line_euclidean_distance<C, T>(p: C, l: Line<T>) -> T
 where
     T: CoordFloat,
-    C: Into<Coordinate<T>>,
+    C: Into<Coord<T>>,
 {
     line_segment_distance(p.into(), l.start, l.end)
 }

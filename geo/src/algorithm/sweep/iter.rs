@@ -1,7 +1,7 @@
-use std::borrow::Borrow;
+use std::cmp::Ordering;
 
 use super::*;
-use crate::{line_intersection::line_intersection, Coordinate, LineIntersection};
+use crate::{line_intersection::line_intersection, Coord, LineIntersection};
 
 /// A segment of a input [`Cross`] type.
 ///
@@ -42,15 +42,25 @@ pub(crate) struct Crossing<C: Cross> {
     pub(super) segment: IMSegment<C>,
 }
 
+pub(crate) fn compare_crossings<X: Cross>(a: &Crossing<X>, b: &Crossing<X>) -> Ordering {
+    a.at_left.cmp(&b.at_left).then_with(|| {
+        let ord = a.segment.partial_cmp(&b.segment).unwrap();
+        if a.at_left {
+            ord
+        } else {
+            ord.reverse()
+        }
+    })
+}
+
 impl<C: Cross + Clone> Crossing<C> {
     /// Convert `self` into a `Crossing` to return to user.
     pub(super) fn from_segment(segment: &IMSegment<C>, event_ty: EventType) -> Crossing<C> {
-        let seg: &Segment<_> = segment.borrow();
         Crossing {
-            cross: seg.cross.clone(),
-            line: seg.geom,
-            first_segment: seg.first_segment,
-            has_overlap: seg.overlapping.is_some(),
+            cross: segment.cross_cloned(),
+            line: segment.geom(),
+            first_segment: segment.is_first_segment(),
+            has_overlap: segment.is_overlapping(),
             at_left: event_ty == EventType::LineLeft,
             segment: segment.clone(),
         }
@@ -118,8 +128,9 @@ where
         &self.segments
     }
 
-    pub(crate) fn prev_active(&self, c: &Crossing<C>) -> Option<(LineOrPoint<C::Scalar>, &C)> {
-        self.sweep.prev_active(c).map(|s| (s.geom, &s.cross))
+    pub(crate) fn prev_active(&self, c: &Crossing<C>) -> Option<(LineOrPoint<C::Scalar>, C)> {
+        self.sweep
+            .with_prev_active(c, |s| (s.geom, s.cross.clone()))
     }
 
     fn new_ex<T: IntoIterator<Item = C>>(iter: T, is_simple: bool) -> Self {
@@ -147,7 +158,7 @@ impl<C> Iterator for CrossingsIter<C>
 where
     C: Cross + Clone,
 {
-    type Item = Coordinate<C::Scalar>;
+    type Item = Coord<C::Scalar>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let segments = &mut self.segments;
@@ -159,7 +170,7 @@ where
             last_point = self.sweep.next_event(|seg, ty| {
                 trace!(
                     "cb: {seg:?} {ty:?} (crossable = {cross:?})",
-                    cross = seg.cross().line()
+                    cross = seg.cross_cloned().line()
                 );
                 segments.push(Crossing::from_segment(seg, ty))
             });
@@ -212,7 +223,7 @@ pub struct Intersections<C: Cross + Clone> {
     idx: usize,
     jdx: usize,
     is_overlap: bool,
-    pt: Option<Coordinate<C::Scalar>>,
+    pt: Option<Coord<C::Scalar>>,
 }
 
 impl<C> FromIterator<C> for Intersections<C>
@@ -351,7 +362,7 @@ pub(super) mod tests {
     fn overlap_intersect() {
         init_log();
 
-        let input = vec![
+        let input = [
             Line::from([(0., 0.), (1., 1.)]),
             [(1., 0.), (0., 1.)].into(),
             [(0., 0.5), (1., 0.5)].into(),

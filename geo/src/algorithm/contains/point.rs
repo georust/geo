@@ -7,11 +7,11 @@ use crate::{CoordNum, GeoFloat};
 // │ Implementations for Point      │
 // └────────────────────────────────┘
 
-impl<T> Contains<Coordinate<T>> for Point<T>
+impl<T> Contains<Coord<T>> for Point<T>
 where
     T: CoordNum,
 {
-    fn contains(&self, coord: &Coordinate<T>) -> bool {
+    fn contains(&self, coord: &Coord<T>) -> bool {
         &self.0 == coord
     }
 }
@@ -147,11 +147,11 @@ impl_contains_geometry_for!(Point<T>);
 
 impl_contains_from_relate!(MultiPoint<T>, [Line<T>, LineString<T>, Polygon<T>, MultiLineString<T>, MultiPolygon<T>, MultiPoint<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
 
-impl<T> Contains<Coordinate<T>> for MultiPoint<T>
+impl<T> Contains<Coord<T>> for MultiPoint<T>
 where
     T: CoordNum,
 {
-    fn contains(&self, coord: &Coordinate<T>) -> bool {
+    fn contains(&self, coord: &Coord<T>) -> bool {
         self.iter().any(|c| &c.0 == coord)
     }
 }

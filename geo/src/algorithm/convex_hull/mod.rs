@@ -1,4 +1,5 @@
-use crate::geometry::{Coordinate, LineString, Polygon};
+use crate::geometry::{Coord, LineString, Polygon};
+use crate::kernels::*;
 use crate::GeoNum;
 
 /// Returns the convex hull of a Polygon. The hull is always oriented counter-clockwise.
@@ -43,6 +44,7 @@ pub trait ConvexHull<'a, T> {
 }
 
 use crate::algorithm::CoordsIter;
+use crate::utils::lex_cmp;
 
 impl<'a, T, G> ConvexHull<'a, T> for G
 where
@@ -67,7 +69,7 @@ pub use graham::graham_hull;
 // trivial case: input with at most 3 points. It ensures the
 // output is ccw, and does not repeat points unless
 // required.
-fn trivial_hull<T>(points: &mut [Coordinate<T>], include_on_hull: bool) -> LineString<T>
+fn trivial_hull<T>(points: &mut [Coord<T>], include_on_hull: bool) -> LineString<T>
 where
     T: GeoNum,
 {
@@ -75,9 +77,12 @@ where
 
     // Remove repeated points unless collinear points
     // are to be included.
-    let mut ls: Vec<Coordinate<T>> = points.to_vec();
+    let mut ls: Vec<Coord<T>> = points.to_vec();
     if !include_on_hull {
-        ls.dedup();
+        ls.sort_unstable_by(lex_cmp);
+        if ls.len() == 3 && T::Ker::orient2d(ls[0], ls[1], ls[2]) == Orientation::Collinear {
+            ls.remove(1);
+        }
     }
 
     // A linestring with a single point is invalid.

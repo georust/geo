@@ -154,7 +154,7 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
 
     // use the midpoint of the bounds to scan, unless that happens to match any vertices from
     // polygon; if it does, perturb the line a bit by averaging with the Y coordinate of the
-    // next-closest-to-center vertex if possible, to reduce the likelihood of colinear
+    // next-closest-to-center vertex if possible, to reduce the likelihood of collinear
     // intersections
     let mut y_mid = (bounds.min().y + bounds.max().y) / two;
     if polygon.coords_iter().any(|coord| coord.y == y_mid) {
@@ -174,11 +174,11 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
     };
 
     let scan_line = Line::new(
-        Coordinate {
+        Coord {
             x: bounds.min().x,
             y: y_mid,
         },
-        Coordinate {
+        Coord {
             x: bounds.max().x,
             y: y_mid,
         },
@@ -374,7 +374,7 @@ mod test {
     };
 
     /// small helper to create a coordinate
-    fn c<T: GeoFloat>(x: T, y: T) -> Coordinate<T> {
+    fn c<T: GeoFloat>(x: T, y: T) -> Coord<T> {
         coord! { x: x, y: y }
     }
 
@@ -530,11 +530,11 @@ mod test {
     fn diagonal_flat_polygon_test() {
         // the regular intersection approach happens to not produce a point that intersects the
         // polygon given these particular start values, so this tests falling back to a vertex
-        let start: Coordinate<f64> = Coordinate {
+        let start: Coord<f64> = Coord {
             x: 0.632690318327692,
             y: 0.08104532928154995,
         };
-        let end: Coordinate<f64> = Coordinate {
+        let end: Coord<f64> = Coord {
             x: 0.4685039949468325,
             y: 0.31750332644855794,
         };

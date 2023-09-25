@@ -3,7 +3,7 @@ use super::{
     LabeledEdgeEndBundle,
 };
 use crate::coordinate_position::{CoordPos, CoordinatePosition};
-use crate::{Coordinate, GeoFloat, GeometryCow};
+use crate::{Coord, GeoFloat, GeometryCow};
 
 /// An ordered list of [`EdgeEndBundle`]s around a [`RelateNodeFactory::Node`].
 ///
@@ -192,8 +192,8 @@ where
         debug!("edge_end_bundle_star: {:?}", self);
         let labeled_edges = self
             .edge_map
-            .into_iter()
-            .map(|(_k, v)| v.into_labeled())
+            .into_values()
+            .map(|edge_end_bundle| edge_end_bundle.into_labeled())
             .collect();
         LabeledEdgeEndBundleStar::new(labeled_edges, graph_a, graph_b)
     }

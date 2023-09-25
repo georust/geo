@@ -6,11 +6,11 @@ use crate::{GeoFloat, GeoNum};
 // │ Implementations for Triangle │
 // └──────────────────────────────┘
 
-impl<T> Contains<Coordinate<T>> for Triangle<T>
+impl<T> Contains<Coord<T>> for Triangle<T>
 where
     T: GeoNum,
 {
-    fn contains(&self, coord: &Coordinate<T>) -> bool {
+    fn contains(&self, coord: &Coord<T>) -> bool {
         let ls = LineString::new(vec![self.0, self.1, self.2, self.0]);
         use crate::utils::{coord_pos_relative_to_ring, CoordPos};
         coord_pos_relative_to_ring(*coord, &ls) == CoordPos::Inside

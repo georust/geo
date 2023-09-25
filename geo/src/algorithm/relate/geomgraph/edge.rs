@@ -1,6 +1,6 @@
 use super::{Dimensions, Direction, EdgeIntersection, IntersectionMatrix, Label};
 use super::{LineIntersection, LineIntersector, RobustLineIntersector};
-use crate::{Coordinate, GeoFloat, Line};
+use crate::{Coord, GeoFloat, Line};
 
 use std::collections::BTreeSet;
 
@@ -10,7 +10,7 @@ use std::collections::BTreeSet;
 #[derive(Debug)]
 pub(crate) struct Edge<F: GeoFloat> {
     /// `coordinates` of the line geometry
-    coords: Vec<Coordinate<F>>,
+    coords: Vec<Coord<F>>,
 
     /// an edge is "isolated" if no other edge touches it
     is_isolated: bool,
@@ -25,10 +25,10 @@ pub(crate) struct Edge<F: GeoFloat> {
 impl<F: GeoFloat> Edge<F> {
     /// Create a new Edge.
     ///
-    /// - `coords` a *non-empty* Vec of Coordinates
+    /// - `coords` a *non-empty* Vec of Coords
     /// - `label` an appropriately dimensioned topology label for the Edge. See [`TopologyPosition`]
     ///    for details
-    pub(crate) fn new(mut coords: Vec<Coordinate<F>>, label: Label) -> Edge<F> {
+    pub(crate) fn new(mut coords: Vec<Coord<F>>, label: Label) -> Edge<F> {
         assert!(!coords.is_empty(), "Can't add empty edge");
         // Once set, `edge.coords` never changes length.
         coords.shrink_to_fit();
@@ -48,7 +48,7 @@ impl<F: GeoFloat> Edge<F> {
         &mut self.label
     }
 
-    pub fn coords(&self) -> &[Coordinate<F>] {
+    pub fn coords(&self) -> &[Coord<F>] {
         &self.coords
     }
 
@@ -109,7 +109,7 @@ impl<F: GeoFloat> Edge<F> {
     /// of the two possible `segment_index`
     pub fn add_intersection(
         &mut self,
-        intersection_coord: Coordinate<F>,
+        intersection_coord: Coord<F>,
         line: Line<F>,
         segment_index: usize,
     ) {

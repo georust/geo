@@ -1,10 +1,4 @@
-use std::{
-    borrow::Borrow,
-    cmp::Ordering,
-    collections::BTreeSet,
-    fmt::Debug,
-    ops::{Bound, Deref},
-};
+use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, ops::Deref};
 
 /// A segment currently active in the sweep.
 ///
@@ -19,10 +13,10 @@ use std::{
 /// compiler?).
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(transparent)]
-pub(super) struct Active<T>(pub(super) T);
+pub(in crate::algorithm) struct Active<T>(pub(in crate::algorithm) T);
 
 impl<T> Active<T> {
-    pub(super) fn active_ref(t: &T) -> &Active<T> {
+    pub(in crate::algorithm) fn active_ref(t: &T) -> &Active<T> {
         unsafe { std::mem::transmute(t) }
     }
 }
@@ -65,40 +59,24 @@ impl<T: PartialOrd + Debug> PartialOrd for Active<T> {
 }
 
 /// Trait abstracting a container of active segments.
-pub(super) trait ActiveSet: Default {
+pub(in crate::algorithm) trait ActiveSet: Default {
     type Seg;
-    fn previous(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>>;
-    fn next(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>>;
+    fn previous_find<F: FnMut(&Active<Self::Seg>) -> bool>(
+        &self,
+        segment: &Self::Seg,
+        f: F,
+    ) -> Option<&Active<Self::Seg>>;
+    fn previous(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>> {
+        self.previous_find(segment, |_| true)
+    }
+    fn next_find<F: FnMut(&Active<Self::Seg>) -> bool>(
+        &self,
+        segment: &Self::Seg,
+        f: F,
+    ) -> Option<&Active<Self::Seg>>;
+    fn next(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>> {
+        self.next_find(segment, |_| true)
+    }
     fn insert_active(&mut self, segment: Self::Seg);
     fn remove_active(&mut self, segment: &Self::Seg);
-}
-
-impl<T: PartialOrd + Debug> ActiveSet for BTreeSet<Active<T>> {
-    type Seg = T;
-
-    fn previous(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>> {
-        self.range::<Active<_>, _>((
-            Bound::Unbounded,
-            Bound::Excluded(Active::active_ref(segment)),
-        ))
-        .next_back()
-    }
-
-    fn next(&self, segment: &Self::Seg) -> Option<&Active<Self::Seg>> {
-        self.range::<Active<_>, _>((
-            Bound::Excluded(Active::active_ref(segment)),
-            Bound::Unbounded,
-        ))
-        .next()
-    }
-
-    fn insert_active(&mut self, segment: Self::Seg) {
-        let result = self.insert(Active(segment));
-        debug_assert!(result);
-    }
-
-    fn remove_active(&mut self, segment: &Self::Seg) {
-        let result = self.remove(Active::active_ref(segment));
-        debug_assert!(result);
-    }
 }
