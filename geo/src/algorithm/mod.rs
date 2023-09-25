@@ -56,6 +56,10 @@ pub use contains::Contains;
 pub mod convert;
 pub use convert::{Convert, TryConvert};
 
+/// Convert coordinate angle units between radians and degrees.
+pub mod convert_angle_unit;
+pub use convert_angle_unit::{ToDegrees, ToRadians};
+
 /// Calculate the convex hull of a `Geometry`.
 pub mod convex_hull;
 pub use convex_hull::ConvexHull;
