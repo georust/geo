@@ -1,5 +1,10 @@
 # Changes
 
+## Unrealeased
+
+* Add `Polygon::try_exterior_mut` and `Polygon::try_interiors_mut`.
+  <https://github.com/georust/geo/pull/1071>
+
 ## 0.7.11
 * Bump rstar dependency
   <https://github.com/georust/geo/pull/1030>
