@@ -2,6 +2,7 @@ use geo_types::{MultiLineString, MultiPolygon};
 
 use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
 
+
 /// Boolean Operations on geometry.
 ///
 /// Boolean operations are set operations on geometries considered as a subset
@@ -115,6 +116,7 @@ mod assembly;
 use assembly::*;
 mod spec;
 use spec::*;
+mod safe;
 
 #[cfg(test)]
 mod tests;

@@ -41,6 +41,7 @@ rand_distr = "0.4.3"
 
 ### boolean-ops test deps
 wkt = "0.10.1"
+geo-svg = "0.5.0"
 
 [[bench]]
 name = "area"
