@@ -8,6 +8,8 @@
   * <https://github.com/georust/geo/pull/1041>
 * Add `matches` method to IntersectionMatrix for ergonomic de-9im comparisons.
   * <https://github.com/georust/geo/pull/1043>
+* Simplify `CoordsIter` and `MinimumRotatedRect` `trait`s with GATs by removing an unneeded trait lifetime
+  * <https://github.com/georust/geo/pull/908>
 
 ## 0.26.0
 
