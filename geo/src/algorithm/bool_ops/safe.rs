@@ -15,6 +15,47 @@ pub(super) mod sealed {
     use geo_types::Point;
     use geo_types::Polygon;
 
+    /// The preprocess trait for safer boolean operations
+    ///
+    /// # The Problem
+    ///
+    /// The goal of the implemented preprocess function is to fix problems with the current
+    /// implementation of the boolean operations algorithm. It had notable difficulties in some
+    /// situations. If
+    ///
+    /// - `boolop(A,B)` was called
+    /// - `B` had some points in its geometry which are located near or directly on lines of geometry A
+    ///
+    /// then in on cases the boolop algo could panic in an unrecoverable way.
+    ///
+    /// # Related issues
+    ///
+    /// - https://github.com/georust/geo/issues/913
+    /// - https://github.com/georust/geo/issues/976
+    /// - https://github.com/georust/geo/issues/1053
+    /// - https://github.com/georust/geo/issues/1064
+    ///
+    /// # The Solution
+    ///
+    /// The preprocess trait simply fixes the problem mentioned above by slightly adjusting each point
+    /// that might cause trouble. These points are slightly relocated to a place which is considered
+    /// "safe". This, of course, causes some inaccuracies which turned out to be negligible in all
+    /// currently conducted test cases
+    ///
+    /// # Limitations
+    ///
+    /// Some observed limitations are:
+    ///
+    /// - The preprocessing will probably have non trivial performance implications and you should test
+    /// whether it's feasible for you to use this "fix"
+    /// - It seems that if the scales of the arguments `A` and `B` are orders of magnitude apart, the
+    /// new safe implementation can potentially fail to find intersection (possibly also other ops).
+    /// This was observed in the test case 1064 and it's not clear how the "unsafe" algo would respond
+    /// in similar cases
+    /// - The algorithm only works on a specific scale around `0.0`. If the coordinate values grow too
+    /// big or too small then this algorithm can still run into issues. It's recommended to use the
+    /// `Scale` trait to scale arguments to reasonable sizes around `0.0` and then scale the result
+    /// back up/down again
     pub trait PreprocessBoolops: BooleanOps {
         fn preprocess(&self, other: &Self) -> Self;
     }
@@ -42,9 +83,22 @@ pub(super) mod sealed {
         }
     }
 
+    // creates hitboxes for each line of the given geometry and returns the hitbox polygon together
+    // with the respective line
     fn create_line_hitboxes<T: GeoFloat>(
         poly: &Polygon<T>,
     ) -> impl Iterator<Item = (Polygon<T>, Line<T>)> + '_ {
+        // The line hitbox is basically a line with some epsilon padding applied. The value of
+        // epsilon was carefully chosen to make all known test cases work. It might be of need to
+        // change it again in the future. Here's a picture of the hitbox:
+        //
+        // ┌───▲───┐
+        // │   │   │
+        // │   │   │
+        // │   │   │
+        // │   │   │
+        // └───┴───┘
+        //  eps eps
         const MAGIC_NUMBER: i32 = 13;
         let eps = T::epsilon() * (T::one() + T::one()).powi(MAGIC_NUMBER);
         poly.exterior()
@@ -92,6 +146,8 @@ pub(super) mod sealed {
         Polygon::new(ext, ints)
     }
 
+    // checks if a point is located within on of the hitboxes and if so, it relocated
+    // the point. Otherwise it is left unchanged
     fn apply_min_distance<T: GeoFloat>(
         const_lines: &[(Polygon<T>, Line<T>)],
         point: Point<T>,
@@ -101,28 +157,29 @@ pub(super) mod sealed {
             .any(|(hitbox, line)| {
                 point != line.start_point() && point != line.end_point() && hitbox.contains(&point)
             })
-            .then(|| find_possible_point(const_lines, &point))
-            .map(|p| {
-                info!("old: {point:?} new: {p:?}");
-                p
-            })
+            .then(|| relocate_point_outside_hitboxes(const_lines, &point))
             .unwrap_or(point.0)
     }
 
-    fn find_possible_point<T: GeoFloat>(
+    // relocates a point to a place outside of all of the given hitboxes
+    fn relocate_point_outside_hitboxes<T: GeoFloat>(
         const_lines: &[(Polygon<T>, Line<T>)],
         center: &Point<T>,
     ) -> Coord<T> {
-        (0..)
+        // This is an iterator that spirals around the given center coordinate in 1/16th turns and
+        // with increasing radius of T::epsilon every turn
+        let mut spiral_iter = (0..)
             .map(|i| T::from(i).unwrap())
             .map(|i: T| {
-                let phi: T = i * T::from(2.0 * PI * 0.125).unwrap();
+                let phi: T = i * T::from(PI * 0.125).unwrap();
                 let r: T = i * T::epsilon();
-                let x = phi.sin();
-                let y = phi.cos();
-                geo_types::Coord { x, y } * r
+                let x = phi.sin() * r;
+                let y = phi.cos() * r;
+                geo_types::Coord { x, y }
             })
-            .map(|offset| offset + center.0)
+            .map(|offset| offset + center.0);
+        // find the first point in the iterator that is not located in any of the hitboxes
+        spiral_iter
             .find(|p| !const_lines.iter().any(|(hitbox, _)| hitbox.contains(p)))
             .unwrap()
     }
