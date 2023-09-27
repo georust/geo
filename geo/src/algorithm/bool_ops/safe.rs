@@ -1,16 +1,135 @@
-use std::f64::consts::PI;
-
-use geo_types::Coord;
-use geo_types::Line;
-use geo_types::LineString;
-use geo_types::Point;
-use geo_types::Polygon;
-
-use crate::BooleanOps;
-use crate::Contains;
-use crate::GeoFloat;
 use crate::MultiPolygon;
 use crate::OpType;
+
+pub(super) mod sealed {
+    use crate::bool_ops::safe::SafeBooleanOps;
+    use crate::BooleanOps;
+    use crate::Contains;
+    use crate::GeoFloat;
+    use std::f64::consts::PI;
+
+    use geo_types::Coord;
+    use geo_types::Line;
+    use geo_types::LineString;
+    use geo_types::MultiPolygon;
+    use geo_types::Point;
+    use geo_types::Polygon;
+
+    pub trait PreprocessBoolops: BooleanOps {
+        fn preprocess(&self, other: &Self) -> Self;
+    }
+
+    impl<T: GeoFloat> PreprocessBoolops for Polygon<T> {
+        fn preprocess(&self, other: &Self) -> Self {
+            let const_lines = create_line_hitboxes(self).collect::<Vec<_>>();
+            adjust_other(&const_lines, other)
+        }
+    }
+
+    impl<T: GeoFloat> PreprocessBoolops for MultiPolygon<T> {
+        fn preprocess(&self, other: &Self) -> Self {
+            let const_lines = self
+                .iter()
+                .flat_map(|p| create_line_hitboxes(p))
+                .collect::<Vec<_>>();
+
+            let others = other
+                .iter()
+                .map(|other| adjust_other(&const_lines, other))
+                .collect::<Vec<_>>();
+
+            MultiPolygon::new(others)
+        }
+    }
+
+    fn create_line_hitboxes<T: GeoFloat>(
+        poly: &Polygon<T>,
+    ) -> impl Iterator<Item = (Polygon<T>, Line<T>)> + '_ {
+        const MAGIC_NUMBER: i32 = 13;
+        let eps = T::epsilon() * (T::one() + T::one()).powi(MAGIC_NUMBER);
+        poly.exterior()
+            .lines()
+            .chain(poly.interiors().iter().flat_map(|ls| ls.lines()))
+            .map(move |line| {
+                let perp = {
+                    let dir = line.delta();
+                    geo_types::coord! {x: -dir.y, y: dir.x}
+                };
+                let ext = geo_types::LineString::new(vec![
+                    line.start + perp * eps,
+                    line.end + perp * eps,
+                    line.end - perp * eps,
+                    line.start - perp * eps,
+                ]);
+                (Polygon::new(ext, vec![]), line)
+            })
+    }
+
+    fn adjust_other<T: GeoFloat>(
+        const_lines: &[(Polygon<T>, Line<T>)],
+        other: &Polygon<T>,
+    ) -> Polygon<T> {
+        let ext = LineString::new(
+            other
+                .exterior()
+                .points()
+                .map(|point| apply_min_distance(const_lines, point))
+                .collect::<Vec<_>>(),
+        );
+
+        let ints = other
+            .interiors()
+            .iter()
+            .map(|ls| {
+                LineString::new(
+                    ls.points()
+                        .map(|point| apply_min_distance(const_lines, point))
+                        .collect::<Vec<_>>(),
+                )
+            })
+            .collect::<Vec<_>>();
+
+        Polygon::new(ext, ints)
+    }
+
+    fn apply_min_distance<T: GeoFloat>(
+        const_lines: &[(Polygon<T>, Line<T>)],
+        point: Point<T>,
+    ) -> Coord<T> {
+        const_lines
+            .iter()
+            .any(|(hitbox, line)| {
+                point != line.start_point() && point != line.end_point() && hitbox.contains(&point)
+            })
+            .then(|| find_possible_point(const_lines, &point))
+            .map(|p| {
+                info!("old: {point:?} new: {p:?}");
+                p
+            })
+            .unwrap_or(point.0)
+    }
+
+    fn find_possible_point<T: GeoFloat>(
+        const_lines: &[(Polygon<T>, Line<T>)],
+        center: &Point<T>,
+    ) -> Coord<T> {
+        (0..)
+            .map(|i| T::from(i).unwrap())
+            .map(|i: T| {
+                let phi: T = i * T::from(2.0 * PI * 0.125).unwrap();
+                let r: T = i * T::epsilon();
+                let x = phi.sin();
+                let y = phi.cos();
+                geo_types::Coord { x, y } * r
+            })
+            .map(|offset| offset + center.0)
+            .find(|p| !const_lines.iter().any(|(hitbox, _)| hitbox.contains(p)))
+            .unwrap()
+    }
+
+    impl<T: PreprocessBoolops> SafeBooleanOps for T {}
+}
+
 /// Boolean operations are set operations on geometries considered as a subset
 /// of the 2-D plane. The operations supported are: intersection, union, xor or
 /// symmetric difference, and set-difference on pairs of 2-D geometries and
@@ -29,9 +148,7 @@ use crate::OpType;
 /// In particular, taking `union` with an empty geom should remove degeneracies
 /// and fix invalid polygons as long the interior-exterior requirement above is
 /// satisfied.
-pub trait SafeBooleanOps: Sized + BooleanOps {
-    fn preprocess(&self, other: &Self) -> Self;
-
+pub trait SafeBooleanOps: sealed::PreprocessBoolops {
     fn safe_boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
         let safe_other = self.preprocess(other);
         self.boolean_op(&safe_other, op)
@@ -48,114 +165,6 @@ pub trait SafeBooleanOps: Sized + BooleanOps {
     fn safe_difference(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
         self.safe_boolean_op(other, OpType::Difference)
     }
-}
-
-impl<T: GeoFloat> SafeBooleanOps for Polygon<T> {
-    fn preprocess(&self, other: &Self) -> Self {
-        let const_lines = create_line_hitboxes(self).collect::<Vec<_>>();
-        adjust_other(&const_lines, other)
-    }
-}
-
-impl<T: GeoFloat> SafeBooleanOps for MultiPolygon<T> {
-    fn preprocess(&self, other: &Self) -> Self {
-        let const_lines = self
-            .iter()
-            .flat_map(|p| create_line_hitboxes(p))
-            .collect::<Vec<_>>();
-
-        let others = other
-            .iter()
-            .map(|other| adjust_other(&const_lines, other))
-            .collect::<Vec<_>>();
-
-        MultiPolygon::new(others)
-    }
-}
-
-fn create_line_hitboxes<T: GeoFloat>(
-    poly: &Polygon<T>,
-) -> impl Iterator<Item = (Polygon<T>, Line<T>)> + '_ {
-    const MAGIC_NUMBER: i32 = 13;
-    let eps = T::epsilon() * (T::one() + T::one()).powi(MAGIC_NUMBER);
-    poly.exterior()
-        .lines()
-        .chain(poly.interiors().iter().flat_map(|ls| ls.lines()))
-        .map(move |line| {
-            let perp = {
-                let dir = line.delta();
-                geo_types::coord! {x: -dir.y, y: dir.x}
-            };
-            let ext = geo_types::LineString::new(vec![
-                line.start + perp * eps,
-                line.end + perp * eps,
-                line.end - perp * eps,
-                line.start - perp * eps,
-            ]);
-            (Polygon::new(ext, vec![]), line)
-        })
-}
-
-fn adjust_other<T: GeoFloat>(
-    const_lines: &[(Polygon<T>, Line<T>)],
-    other: &Polygon<T>,
-) -> Polygon<T> {
-    let ext = LineString::new(
-        other
-            .exterior()
-            .points()
-            .map(|point| apply_min_distance(const_lines, point))
-            .collect::<Vec<_>>(),
-    );
-
-    let ints = other
-        .interiors()
-        .iter()
-        .map(|ls| {
-            LineString::new(
-                ls.points()
-                    .map(|point| apply_min_distance(const_lines, point))
-                    .collect::<Vec<_>>(),
-            )
-        })
-        .collect::<Vec<_>>();
-
-    Polygon::new(ext, ints)
-}
-
-fn apply_min_distance<T: GeoFloat>(
-    const_lines: &[(Polygon<T>, Line<T>)],
-    point: Point<T>,
-) -> Coord<T> {
-    const_lines
-        .iter()
-        .any(|(hitbox, line)| {
-            point != line.start_point() && point != line.end_point() && hitbox.contains(&point)
-        })
-        .then(|| find_possible_point(const_lines, &point))
-        .map(|p| {
-            info!("old: {point:?} new: {p:?}");
-            p
-        })
-        .unwrap_or(point.0)
-}
-
-fn find_possible_point<T: GeoFloat>(
-    const_lines: &[(Polygon<T>, Line<T>)],
-    center: &Point<T>,
-) -> Coord<T> {
-    (0..)
-        .map(|i| T::from(i).unwrap())
-        .map(|i: T| {
-            let phi: T = i * T::from(2.0 * PI * 0.125).unwrap();
-            let r: T = i * T::epsilon();
-            let x = phi.sin();
-            let y = phi.cos();
-            geo_types::Coord { x, y } * r
-        })
-        .map(|offset| offset + center.0)
-        .find(|p| !const_lines.iter().any(|(hitbox, _)| hitbox.contains(p)))
-        .unwrap()
 }
 
 #[cfg(test)]
