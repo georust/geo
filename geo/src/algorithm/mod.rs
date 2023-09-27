@@ -184,6 +184,10 @@ pub use line_locate_point::LineLocatePoint;
 pub mod lines_iter;
 pub use lines_iter::LinesIter;
 
+/// Split a LineString into n segments
+pub mod linestring_segment;
+pub use linestring_segment::LineStringSegmentize;
+
 /// Apply a function to all `Coord`s of a `Geometry`.
 pub mod map_coords;
 pub use map_coords::{MapCoords, MapCoordsInPlace};

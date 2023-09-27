@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Add `LineStringSegmentize` trait to split a single `LineString` into `n` `LineStrings` as a `MultiLineString`
 * Add `EuclideanDistance` implementations for all remaining geometries.
   * <https://github.com/georust/geo/pull/1029>
 * Add `HausdorffDistance` algorithm trait to calculate the Hausdorff distance between any two geometries.
