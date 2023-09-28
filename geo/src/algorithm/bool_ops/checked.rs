@@ -1,7 +1,7 @@
 use crate::MultiPolygon;
 use crate::OpType;
 
-pub(super) mod sealed {
+pub(crate) mod sealed {
     use crate::bool_ops::checked::CheckedBooleanOps;
     use crate::BooleanOps;
     use crate::Contains;
@@ -99,8 +99,10 @@ pub(super) mod sealed {
         // │   │   │
         // └───┴───┘
         //  eps eps
-        const MAGIC_NUMBER: i32 = 13;
-        let eps = T::epsilon() * (T::one() + T::one()).powi(MAGIC_NUMBER);
+        //
+        // use f32 epsilon here since f64 epsilon is too forgiving in certain scenarios (too small)
+        const MAGIC_NUMBER: f32 = f32::EPSILON * 100.0;
+        let eps = T::from(MAGIC_NUMBER).unwrap();
         poly.exterior()
             .lines()
             .chain(poly.interiors().iter().flat_map(|ls| ls.lines()))
@@ -166,13 +168,16 @@ pub(super) mod sealed {
         const_lines: &[(Polygon<T>, Line<T>)],
         center: &Point<T>,
     ) -> Coord<T> {
+        // use f32 epsilon here since f64 epsilon grows to slow leading to a needlessly fine
+        // grained search
+        let eps = T::from(f32::EPSILON).unwrap();
         // This is an iterator that spirals around the given center coordinate in 1/16th turns and
         // with increasing radius of T::epsilon every turn
-        let mut spiral_iter = (0..)
-            .map(|i| T::from(i).unwrap())
-            .map(|i: T| {
-                let phi: T = i * T::from(PI * 0.125).unwrap();
-                let r: T = i * T::epsilon();
+        let mut spiral_iter = (1..)
+            .map(|i| {
+                let i_t = T::from(i).unwrap();
+                let phi = i_t * T::from(PI * 0.125).unwrap();
+                let r = eps * i_t;
                 let x = phi.sin() * r;
                 let y = phi.cos() * r;
                 geo_types::Coord { x, y }
@@ -181,7 +186,7 @@ pub(super) mod sealed {
         // find the first point in the iterator that is not located in any of the hitboxes
         spiral_iter
             .find(|p| !const_lines.iter().any(|(hitbox, _)| hitbox.contains(p)))
-            .unwrap()
+            .expect("safe unwrap since we try indefinitely")
     }
 
     impl<T: PreprocessBoolops> CheckedBooleanOps for T {}
@@ -211,8 +216,9 @@ pub trait CheckedBooleanOps: sealed::PreprocessBoolops {
         other: &Self,
         op: OpType,
     ) -> Result<MultiPolygon<Self::Scalar>, CheckedBoolopsError> {
+        let checked_self = other.preprocess(self);
         let checked_other = self.preprocess(other);
-        Ok(self.boolean_op(&checked_other, op))
+        Ok(checked_self.boolean_op(&checked_other, op))
     }
     fn checked_intersection(
         &self,
@@ -243,9 +249,10 @@ pub enum CheckedBoolopsError {}
 
 #[cfg(test)]
 mod test {
-    use geo_svg::{Color, ToSvg};
+    use geo_svg::{Color, ToSvg, ToSvgStr};
     use wkt::TryFromWkt;
 
+    use super::sealed::PreprocessBoolops;
     use crate::bool_ops::checked::CheckedBooleanOps;
     use crate::*;
 
@@ -254,8 +261,18 @@ mod test {
             .to_svg()
             .with_color(Color::Named("#ff000044"))
             .and(b.to_svg().with_color(Color::Named("#0000ff44")))
-            .and(c.to_svg().with_color(Color::Named("#88888888")));
+            .and(c.to_svg().with_color(Color::Named("#88888888")))
+            .with_stroke_width(0.001);
         info!("\n\n\n{svg}\n\n\n");
+    }
+
+    fn info_log_preprocess_difference<T: PreprocessBoolops + ToSvg + ToSvgStr>(a: &T, b: &T) {
+        let preprocessed = a.preprocess(b);
+        info_log_svgs(
+            b,
+            &preprocessed,
+            &geo_types::MultiPolygon::<T::Scalar>::new(vec![]),
+        );
     }
 
     #[test]
@@ -298,6 +315,7 @@ mod test {
         );
         let intersection = geo1.checked_intersection(&geo2).unwrap();
         info_log_svgs(&geo1, &geo2, &intersection);
+        info_log_preprocess_difference(&geo1, &geo2);
     }
 
     #[test]
@@ -314,6 +332,7 @@ mod test {
             .unwrap()
             .scale(0.01_f64.recip());
         info_log_svgs(&a, &b, &intersection);
+        info_log_preprocess_difference(&a, &b);
     }
 
     #[test]
@@ -364,8 +383,10 @@ mod test {
 
         let intersection = p2.checked_intersection(&p1).unwrap();
         info_log_svgs(&p1, &p2, &intersection);
+        info_log_preprocess_difference(&p1, &p2);
         let difference = p1.checked_difference(&intersection).unwrap();
         info_log_svgs(&p1, &intersection, &difference);
+        info_log_preprocess_difference(&p1, &intersection);
     }
 
     #[test]
@@ -440,7 +461,8 @@ mod test {
         );
 
         let union = pg1.checked_union(&pg2).unwrap();
-        info_log_svgs(&pg1, &pg2, &union)
+        info_log_svgs(&pg1, &pg2, &union);
+        info_log_preprocess_difference(&pg1, &pg2);
     }
 
     #[test]
@@ -449,20 +471,20 @@ mod test {
         let p1: MultiPolygon<f32> = MultiPolygon::new(vec![Polygon::new(
             LineString::from(vec![
                 Coord {
-                    x: 142.50143433,
-                    y: 61.44324493,
+                    x: 142.501_43,
+                    y: 61.443_245,
                 },
                 Coord {
-                    x: 142.05662537,
-                    y: 61.54975128,
+                    x: 142.056_63,
+                    y: 61.549_75,
                 },
                 Coord {
-                    x: 140.07255554,
-                    y: 62.33781433,
+                    x: 140.072_56,
+                    y: 62.337_814,
                 },
                 Coord {
-                    x: 142.50143433,
-                    y: 61.44324493,
+                    x: 142.501_43,
+                    y: 61.443_245,
                 },
             ]),
             vec![],
@@ -470,20 +492,20 @@ mod test {
         let p2: MultiPolygon<f32> = MultiPolygon::new(vec![Polygon::new(
             LineString::from(vec![
                 Coord {
-                    x: 140.50358582,
-                    y: 62.23768616,
+                    x: 140.503_59,
+                    y: 62.237_686,
                 },
                 Coord {
-                    x: 140.07255554,
-                    y: 62.33781433,
+                    x: 140.072_56,
+                    y: 62.337_814,
                 },
                 Coord {
-                    x: 136.93997192,
-                    y: 63.05339432,
+                    x: 136.939_97,
+                    y: 63.053_394,
                 },
                 Coord {
-                    x: 140.50358582,
-                    y: 62.23768616,
+                    x: 140.503_59,
+                    y: 62.237_686,
                 },
             ]),
             vec![],
@@ -491,8 +513,10 @@ mod test {
 
         let intersection = p1.checked_intersection(&p2).unwrap();
         info_log_svgs(&p1, &p2, &intersection);
+        info_log_preprocess_difference(&p1, &p2);
         let difference = p1.checked_difference(&intersection).unwrap();
         info_log_svgs(&p1, &p2, &difference);
+        info_log_preprocess_difference(&p1, &intersection);
     }
 
     #[test]
@@ -504,6 +528,7 @@ mod test {
 
         let union = poly1.checked_union(&poly2).unwrap();
         info_log_svgs(&poly1, &poly2, &union);
+        info_log_preprocess_difference(&poly1, &poly2);
     }
 
     #[test]
@@ -539,6 +564,9 @@ mod test {
         );
         let mut left = MultiPolygon::new(vec![geo1]);
         let mut right = MultiPolygon::new(vec![geo2]);
+        let difference = left.checked_difference(&right).unwrap();
+        info_log_svgs(&left, &right, &difference);
+        info_log_preprocess_difference(&left, &right);
         let shift = |c: Coord| Coord {
             x: c.x + 931230.,
             y: c.y + 412600.,
@@ -547,5 +575,6 @@ mod test {
         right.map_coords_in_place(shift);
         let difference = left.checked_difference(&right).unwrap();
         info_log_svgs(&left, &right, &difference);
+        info_log_preprocess_difference(&left, &right);
     }
 }
