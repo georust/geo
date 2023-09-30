@@ -11,6 +11,8 @@
   * <https://github.com/georust/geo/pull/1043>
 * Simplify `CoordsIter` and `MinimumRotatedRect` `trait`s with GATs by removing an unneeded trait lifetime
   * <https://github.com/georust/geo/pull/908>
+* Add `ToDegrees` and `ToRadians` traits.
+  * <https://github.com/georust/geo/pull/1070>
 
 ## 0.26.0
 

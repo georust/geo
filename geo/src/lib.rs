@@ -146,6 +146,8 @@
 //!
 //! - **[`Convert`]**: Convert (infalliby) the type of a geometry’s coordinate value
 //! - **[`TryConvert`]**: Convert (falliby) the type of a geometry’s coordinate value
+//! - **[`ToDegrees`]**: Radians to degrees coordinate transforms for a given geometry.
+//! - **[`ToRadians`]**: Degrees to radians coordinate transforms for a given geometry.
 //!
 //! ## Miscellaneous
 //!
