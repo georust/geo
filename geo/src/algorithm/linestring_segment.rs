@@ -76,6 +76,7 @@ impl LineStringSegmentize for LineString {
         // calculate the target fraction for the first iteration
         // fraction will change based on each iteration
         let segment_prop = (1_f64) / (n as f64);
+
         let segment_length = total_length * segment_prop;
 
         // instantiate the first Vec<Coord>
@@ -96,7 +97,9 @@ impl LineStringSegmentize for LineString {
             // update cumulative length
             cum_length += length;
 
-            if (cum_length >= segment_length) && (i != (n_lines - 1)) {
+            // if the cumulative lenght is greater than or equal to the segment length we
+            // must cut the line in the middle and push the coords
+            if (cum_length >= segment_length) || (cum_length == segment_length) {
                 let remainder = cum_length - segment_length;
                 // if we get None, we exit the function and return None
                 let endpoint = segment.line_interpolate_point((length - remainder) / length)?;
@@ -126,8 +129,13 @@ impl LineStringSegmentize for LineString {
             ln_vec.push(segment.end);
         }
 
-        // push the last linestring vector which isn't done by the for loop
-        res_coords.push(ln_vec);
+        // if the for loop & if statement pushed the last coord & vec we do not
+        // need to push again outside of the loop. This handles the (majority)
+        // case where the last iteration does not push into the linestring vec
+        if ln_vec.len() < n {
+            // push the last linestring vector which isn't done by the for loop
+            res_coords.push(ln_vec);
+        }
 
         // collect the coords into vectors of LineStrings so we can createa
         // a multi linestring
@@ -147,6 +155,30 @@ mod test {
     use super::*;
     use crate::{EuclideanLength, LineString};
 
+    #[test]
+    fn n_elems_bug() {
+        // Test for an edge case that seems to fail:
+        // https://github.com/georust/geo/issues/1075
+        // https://github.com/JosiahParry/rsgeo/issues/28
+
+        let linestring: LineString = vec![
+            [324957.69921197, 673670.123131518],
+            [324957.873557727, 673680.139281405],
+            [324959.863123514, 673686.784106964],
+            [324961.852683597, 673693.428933452],
+            [324963.822867622, 673698.960855279],
+            [324969.636546456, 673709.992098018],
+            [324976.718443977, 673722.114520549],
+            [324996.443964294, 673742.922904206],
+        ]
+        .into();
+        let segments = linestring.line_segmentize(2).unwrap();
+        assert_eq!(segments.0.len(), 2);
+        let segments = linestring.line_segmentize(3).unwrap();
+        assert_eq!(segments.0.len(), 3);
+        let segments = linestring.line_segmentize(4).unwrap();
+        assert_eq!(segments.0.len(), 4);
+    }
     #[test]
     // that 0 returns None and that usize::MAX returns None
     fn n_is_zero() {
