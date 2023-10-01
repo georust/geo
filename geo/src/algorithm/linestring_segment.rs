@@ -65,7 +65,7 @@ impl LineStringSegmentize for LineString {
         // Line more than once.
         let densified = self.densify(segment_length);
 
-        // if the densified lines is exactly equal to the number of requested
+        // if the densified line is exactly equal to the number of requested
         // segments, return early. This will happen when a LineString has
         // exactly 2 coordinates
         if densified.lines().count() == n {
