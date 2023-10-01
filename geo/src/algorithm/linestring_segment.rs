@@ -71,7 +71,7 @@ impl LineStringSegmentize for LineString {
         if densified.lines().count() == n {
             let linestrings = densified
                 .lines()
-                .map(|xi| LineString::from(xi))
+                .map(LineString::from)
                 .collect::<Vec<LineString>>();
 
             return Some(MultiLineString::new(linestrings));
@@ -192,7 +192,11 @@ mod test {
 
         let segments = linestring.line_segmentize(5).unwrap();
         assert_eq!(segments.0.len(), 5);
-        assert_eq!(segments.euclidean_length(), linestring.euclidean_length());
+        assert_relative_eq!(
+            linestring.euclidean_length(),
+            segments.euclidean_length(),
+            epsilon = f64::EPSILON
+        );
     }
 
     #[test]
@@ -201,7 +205,11 @@ mod test {
 
         let segments = linestring.line_segmentize(5).unwrap();
         assert_eq!(segments.0.len(), 5);
-        assert_eq!(segments.euclidean_length(), linestring.euclidean_length());
+        assert_relative_eq!(
+            linestring.euclidean_length(),
+            segments.euclidean_length(),
+            epsilon = f64::EPSILON
+        );
     }
 
     #[test]
