@@ -212,7 +212,8 @@ mod test {
         let segments = linestring.line_segmentize(2).unwrap();
         assert_eq!(segments.0.len(), 2);
 
-        // Test for an edge case that seems to fail,
+        // Test for an edge case that seems to fail:
+        // https://github.com/JosiahParry/rsgeo/issues/28
         // With the following coordinates:
         // 324957.69921197, 324957.873557727, 
         // 324959.863123514, 324961.852683597, 324963.822867622, 324969.636546456, 
