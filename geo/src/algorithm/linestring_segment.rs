@@ -178,6 +178,9 @@ mod test {
         assert_eq!(segments.0.len(), 3);
         let segments = linestring.line_segmentize(4).unwrap();
         assert_eq!(segments.0.len(), 4);
+
+        assert_eq!(segments.euclidean_length(), linestring.euclidean_length());
+        
     }
     #[test]
     // that 0 returns None and that usize::MAX returns None
