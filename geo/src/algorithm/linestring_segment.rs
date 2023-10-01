@@ -37,31 +37,13 @@ pub trait LineStringSegmentize {
 
 impl LineStringSegmentize for LineString {
     fn line_segmentize(&self, n: usize) -> Option<MultiLineString> {
-        let n_lines = self.lines().count();
-
         // Return None if n is 0 or the maximum usize
         if (n == usize::MIN) || (n == usize::MAX) {
             return None;
-        } else if n > n_lines {
-            let total_len = self.euclidean_length();
-            let densified = self.densify(total_len / (n as f64));
-            return densified.line_segmentize(n);
-        } else if n_lines == n {
-            // if the number of line segments equals n then return the
-            // lines as LineStrings
-            let lns = self
-                .lines_iter()
-                .map(LineString::from)
-                .collect::<Vec<LineString>>();
-
-            return Some(MultiLineString::new(lns));
         } else if n == 1 {
             let mlns = MultiLineString::from(self.clone());
             return Some(mlns);
         }
-
-        // Convert X into an iterator of `Lines`
-        let lns = self.lines_iter().peekable();
 
         // Vec to allocate the  new LineString segments Coord Vec
         // will be iterated over at end to create new vecs
@@ -78,6 +60,27 @@ impl LineStringSegmentize for LineString {
         let segment_prop = (1_f64) / (n as f64);
         let segment_length = total_length * segment_prop;
 
+        // densify the LineString so that each `Line` segment is not longer
+        // than the segment length ensuring that we will never partition one
+        // Line more than once.
+        let densified = self.densify(segment_length);
+
+        // if the densified line is exactly equal to the number of requested
+        // segments, return early. This will happen when a LineString has
+        // exactly 2 coordinates
+        if densified.lines().count() == n {
+            let linestrings = densified
+                .lines()
+                .map(LineString::from)
+                .collect::<Vec<LineString>>();
+
+            return Some(MultiLineString::new(linestrings));
+        };
+
+        // count the number of lines that will be iterated through
+        let n_lines = densified.lines().count();
+
+        let lns = densified.lines_iter();
         // instantiate the first Vec<Coord>
         let mut ln_vec: Vec<Coord> = Vec::new();
 
@@ -86,7 +89,7 @@ impl LineStringSegmentize for LineString {
             // All iterations only keep track of the second coordinate
             // in the Line. We need to push the first coordinate in the
             // first line string to ensure the linestring starts at the
-            // correct place`
+            // correct place
             if i == 0 {
                 ln_vec.push(segment.start)
             }
@@ -148,6 +151,106 @@ mod test {
     use crate::{EuclideanLength, LineString};
 
     #[test]
+    fn n_elems_bug() {
+        // Test for an edge case that seems to fail:
+        // https://github.com/georust/geo/issues/1075
+        // https://github.com/JosiahParry/rsgeo/issues/28
+
+        let linestring: LineString = vec![
+            [324957.69921197, 673670.123131518],
+            [324957.873557727, 673680.139281405],
+            [324959.863123514, 673686.784106964],
+            [324961.852683597, 673693.428933452],
+            [324963.822867622, 673698.960855279],
+            [324969.636546456, 673709.992098018],
+            [324976.718443977, 673722.114520549],
+            [324996.443964294, 673742.922904206],
+        ]
+        .into();
+        let segments = linestring.line_segmentize(2).unwrap();
+        assert_eq!(segments.0.len(), 2);
+        let segments = linestring.line_segmentize(3).unwrap();
+        assert_eq!(segments.0.len(), 3);
+        let segments = linestring.line_segmentize(4).unwrap();
+        assert_eq!(segments.0.len(), 4);
+
+        assert_eq!(segments.euclidean_length(), linestring.euclidean_length());
+    }
+
+    #[test]
+    fn long_end_segment() {
+        let linestring: LineString = vec![
+            [325581.792390628, 674398.495901267],
+            [325585.576868499, 674400.657039341],
+            [325589.966469742, 674401.694493658],
+            [325593.750940609, 674403.855638851],
+            [325599.389217394, 674404.871546368],
+            [325604.422360924, 674407.011146146],
+            [325665.309662534, 674424.885671739],
+        ]
+        .into();
+
+        let segments = linestring.line_segmentize(5).unwrap();
+        assert_eq!(segments.0.len(), 5);
+        assert_relative_eq!(
+            linestring.euclidean_length(),
+            segments.euclidean_length(),
+            epsilon = f64::EPSILON
+        );
+    }
+
+    #[test]
+    fn two_coords() {
+        let linestring: LineString = vec![[0.0, 0.0], [0.0, 1.0]].into();
+
+        let segments = linestring.line_segmentize(5).unwrap();
+        assert_eq!(segments.0.len(), 5);
+        assert_relative_eq!(
+            linestring.euclidean_length(),
+            segments.euclidean_length(),
+            epsilon = f64::EPSILON
+        );
+    }
+
+    #[test]
+    fn long_middle_segments() {
+        let linestring: LineString = vec![
+            [325403.816883668, 673966.295402012],
+            [325410.280933752, 673942.805501254],
+            [325410.280933752, 673942.805501254],
+            [325439.782082601, 673951.201057316],
+            [325439.782082601, 673951.201057316],
+            [325446.064640793, 673953.318876004],
+            [325446.064640793, 673953.318876004],
+            [325466.14184472, 673958.537886844],
+            [325466.14184472, 673958.537886844],
+            [325471.799973648, 673960.666539074],
+            [325471.799973648, 673960.666539074],
+            [325518.255916084, 673974.335722824],
+            [325518.255916084, 673974.335722824],
+            [325517.669972133, 673976.572326305],
+            [325517.669972133, 673976.572326305],
+            [325517.084028835, 673978.808929878],
+            [325517.084028835, 673978.808929878],
+            [325515.306972763, 673984.405833764],
+            [325515.306972763, 673984.405833764],
+            [325513.549152184, 673991.115645844],
+            [325513.549152184, 673991.115645844],
+            [325511.772106396, 673996.712551354],
+        ]
+        .into();
+
+        let segments = linestring.line_segmentize(5).unwrap();
+        assert_eq!(segments.0.len(), 5);
+
+        assert_relative_eq!(
+            linestring.euclidean_length(),
+            segments.euclidean_length(),
+            epsilon = f64::EPSILON
+        );
+    }
+
+    #[test]
     // that 0 returns None and that usize::MAX returns None
     fn n_is_zero() {
         let linestring: LineString = vec![[-1.0, 0.0], [0.5, 1.0], [1.0, 2.0]].into();
@@ -181,16 +284,6 @@ mod test {
         assert!(lens
             .iter()
             .all(|x| first.relative_eq(x, f64::EPSILON, 1e-10)))
-    }
-
-    #[test]
-    // identical line_iter to original
-    fn line_iter() {
-        let linestring: LineString = vec![[-1.0, 0.0], [0.5, 1.0], [1.0, 2.0], [1.0, 3.0]].into();
-
-        let segments = linestring.line_segmentize(3).unwrap();
-
-        assert!(linestring.lines_iter().eq(segments.lines_iter()))
     }
 
     #[test]
