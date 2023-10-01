@@ -180,7 +180,6 @@ mod test {
         assert_eq!(segments.0.len(), 4);
 
         assert_eq!(segments.euclidean_length(), linestring.euclidean_length());
-        
     }
     #[test]
     // that 0 returns None and that usize::MAX returns None
