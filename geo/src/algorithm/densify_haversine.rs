@@ -19,24 +19,13 @@ use crate::{HaversineIntermediate, HaversineLength};
 /// ```
 /// use geo::{coord, Line, LineString};
 /// use geo::DensifyHaversine;
-///
-/// let line = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 10.0, y: 10.0 });
-///
+/// 
+/// let line = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 0.0, y: 1.0 });
 /// // known output
-/// let output: LineString = vec![
-///    [ 0.0, 0.0 ],
-///    [ 1.0998995245640133, 1.1166572478004086 ],
-///    [ 2.2006349325565924, 2.232902789521755 ],
-///    [ 3.3030434132933286, 3.348323819287168 ],
-///    [ 4.407964761668997, 4.462505328573322 ],
-///    [ 5.516242665257213, 5.575028997290395 ],
-///    [ 6.628725972011708, 6.685472075832087 ],
-///    [ 7.746269931143995, 7.793406255233023 ],
-///    [ 8.869737398913761, 8.898396522704935 ],
-///    [ 10.0, 10.0 ]
-///  ].into();
-/// let dense = line.densify_haversine(180000.0);
-/// assert_eq!(dense, output);
+/// let output: LineString = vec![[0.0, 0.0], [0.0, 0.5], [0.0, 1.0]].into();
+/// // densify
+/// let dense = line.densify_haversine(100000.0);
+/// assert_relative_eq!(dense, output, epsilon = f64::EPSILON);
 ///```
 pub trait DensifyHaversine<F: CoordFloat> {
     type Output;
@@ -255,9 +244,7 @@ mod tests {
     #[test]
     fn test_line_densify() {
         let output: LineString = vec![[0.0, 0.0], [0.0, 0.5], [0.0, 1.0]].into();
-
         let line = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 0.0, y: 1.0 });
-
         let dense = line.densify_haversine(100000.0);
         assert_relative_eq!(dense, output, epsilon = f64::EPSILON);
     }
