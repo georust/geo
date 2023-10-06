@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Add `DensifyHaversine` trait to densify spherical line geometry
 * Add `LineStringSegmentize` trait to split a single `LineString` into `n` `LineStrings` as a `MultiLineString`
 * Add `EuclideanDistance` implementations for all remaining geometries.
   * <https://github.com/georust/geo/pull/1029>
