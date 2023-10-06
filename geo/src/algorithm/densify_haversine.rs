@@ -1,7 +1,8 @@
 use num_traits::FromPrimitive;
 
 use crate::{
-    CoordFloat, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect, Triangle,
+    CoordFloat, CoordsIter, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect,
+    Triangle,
 };
 
 use crate::{HaversineIntermediate, HaversineLength};
@@ -119,6 +120,10 @@ where
     type Output = LineString<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
+        if self.coords_count() == 0 {
+            return LineString::new(vec![]);
+        }
+
         let mut new_line = vec![];
         self.lines()
             .for_each(|line| densify_line(line, &mut new_line, max_distance));
@@ -247,5 +252,12 @@ mod tests {
         let line = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 0.0, y: 1.0 });
         let dense = line.densify_haversine(100000.0);
         assert_relative_eq!(dense, output);
+    }
+
+    #[test]
+    fn test_empty_linestring() {
+        let linestring: LineString<f64> = LineString::new(vec![]);
+        let dense = linestring.densify_haversine(10.0);
+        assert_eq!(0, dense.coords_count());
     }
 }
