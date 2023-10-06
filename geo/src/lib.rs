@@ -154,6 +154,7 @@
 //! - **[`Centroid`](Centroid)**: Calculate the centroid of a geometry
 //! - **[`ChaikinSmoothing`](ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikin's algorithm.
 //! - **[`Densify`](Densify)**: Densify linear geometry components by interpolating points
+//! - **[`DensifyHaversine`](DensifyHaversine)**: Densify spherical geometry by interpolating points on a sphere
 //! - **[`GeodesicDestination`](GeodesicDestination)**: Given a start point, bearing, and distance, calculate the destination point on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`GeodesicIntermediate`](GeodesicIntermediate)**: Calculate intermediate points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`HaversineDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere

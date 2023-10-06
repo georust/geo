@@ -80,6 +80,10 @@ pub use coords_iter::CoordsIter;
 pub mod densify;
 pub use densify::Densify;
 
+/// Densify spherical geometry components
+pub mod densify_haversine;
+pub use densify_haversine::DensifyHaversine;
+
 /// Dimensionality of a geometry and its boundary, based on OGC-SFA.
 pub mod dimensions;
 pub use dimensions::HasDimensions;
