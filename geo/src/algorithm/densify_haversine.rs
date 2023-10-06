@@ -254,12 +254,7 @@ mod tests {
 
     #[test]
     fn test_line_densify() {
-        let output: LineString = vec![
-            [0.0, 0.0],
-            [0.0, 0.5],
-            [0.0, 1.0],
-        ]
-        .into();
+        let output: LineString = vec![[0.0, 0.0], [0.0, 0.5], [0.0, 1.0]].into();
 
         let line = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 0.0, y: 1.0 });
 
