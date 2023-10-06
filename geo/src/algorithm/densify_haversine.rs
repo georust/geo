@@ -206,7 +206,7 @@ mod tests {
         .into();
 
         let dense = polygon.densify_haversine(50000.0);
-        assert_relative_eq!(dense.exterior(), &output_exterior, epsilon = f64::EPSILON);
+        assert_relative_eq!(dense.exterior(), &output_exterior);
     }
 
     #[test]
@@ -238,7 +238,7 @@ mod tests {
         .into();
 
         let dense = linestring.densify_haversine(110.0);
-        assert_relative_eq!(dense, output, epsilon = f64::EPSILON);
+        assert_relative_eq!(dense, output);
     }
 
     #[test]
@@ -246,6 +246,6 @@ mod tests {
         let output: LineString = vec![[0.0, 0.0], [0.0, 0.5], [0.0, 1.0]].into();
         let line = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 0.0, y: 1.0 });
         let dense = line.densify_haversine(100000.0);
-        assert_relative_eq!(dense, output, epsilon = f64::EPSILON);
+        assert_relative_eq!(dense, output);
     }
 }
