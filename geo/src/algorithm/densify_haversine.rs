@@ -185,7 +185,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coord, Coord};
+    use crate::coord;
 
     #[test]
     fn test_polygon_densify() {
