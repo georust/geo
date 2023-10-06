@@ -19,13 +19,13 @@ use crate::{HaversineIntermediate, HaversineLength};
 /// ```
 /// use geo::{coord, Line, LineString};
 /// use geo::DensifyHaversine;
-/// 
+///
 /// let line = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 0.0, y: 1.0 });
 /// // known output
 /// let output: LineString = vec![[0.0, 0.0], [0.0, 0.5], [0.0, 1.0]].into();
 /// // densify
 /// let dense = line.densify_haversine(100000.0);
-/// assert_relative_eq!(dense, output, epsilon = f64::EPSILON);
+/// assert_eq!(dense, output);
 ///```
 pub trait DensifyHaversine<F: CoordFloat> {
     type Output;
