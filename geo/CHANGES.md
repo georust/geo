@@ -2,15 +2,19 @@
 
 ## Unreleased
 
-* Add `DensifyHaversine` trait to densify spherical line geometry
-* Add `LineStringSegmentize` trait to split a single `LineString` into `n` `LineStrings` as a `MultiLineString`
+* Fix `Densify` trait to avoid panic with empty line string.
+  * <https://github.com/georust/geo/pull/1082>
+* Add `DensifyHaversine` trait to densify spherical line geometry.
+  * <https://github.com/georust/geo/pull/1081>
+* Add `LineStringSegmentize` trait to split a single `LineString` into `n` `LineStrings` as a `MultiLineString`.
+  * <https://github.com/georust/geo/pull/1055>
 * Add `EuclideanDistance` implementations for all remaining geometries.
   * <https://github.com/georust/geo/pull/1029>
 * Add `HausdorffDistance` algorithm trait to calculate the Hausdorff distance between any two geometries.
   * <https://github.com/georust/geo/pull/1041>
 * Add `matches` method to IntersectionMatrix for ergonomic de-9im comparisons.
   * <https://github.com/georust/geo/pull/1043>
-* Simplify `CoordsIter` and `MinimumRotatedRect` `trait`s with GATs by removing an unneeded trait lifetime
+* Simplify `CoordsIter` and `MinimumRotatedRect` `trait`s with GATs by removing an unneeded trait lifetime.
   * <https://github.com/georust/geo/pull/908>
 * Add `ToDegrees` and `ToRadians` traits.
   * <https://github.com/georust/geo/pull/1070>

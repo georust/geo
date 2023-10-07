@@ -106,7 +106,12 @@ where
     type Output = LineString<T>;
 
     fn densify(&self, max_distance: T) -> Self::Output {
+        if self.0.is_empty() {
+            return LineString::new(vec![]);
+        }
+
         let mut new_line = vec![];
+
         self.lines()
             .for_each(|line| densify_line(line, &mut new_line, max_distance));
         // we're done, push the last coordinate on to finish
@@ -205,6 +210,14 @@ mod tests {
         let max_dist = 2.0;
         let densified = polygon.densify(max_dist);
         assert_eq!(densified, correct_polygon);
+    }
+
+    #[test]
+    fn test_empty_linestring_densify() {
+        let linestring = LineString::<f64>::new(vec![]);
+        let max_dist = 2.0;
+        let densified = linestring.densify(max_dist);
+        assert!(densified.0.is_empty());
     }
 
     #[test]
