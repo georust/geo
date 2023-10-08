@@ -6,6 +6,7 @@ use crate::{
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
+use rstar::primitives::CachedEnvelope;
 use rstar::{RTree, RTreeNum};
 
 /// Store triangle information. Area is used for ranking in the priority queue and determining removal
@@ -244,7 +245,7 @@ where
 {
     let mut rings = vec![];
     // Populate R* tree with exterior and interior samples, if any
-    let mut tree: RTree<Line<_>> = RTree::bulk_load(
+    let mut tree: RTree<CachedEnvelope<_>> = RTree::bulk_load(
         exterior
             .lines()
             .chain(
@@ -253,6 +254,7 @@ where
                     .flat_map(|ring| *ring)
                     .flat_map(|line_string| line_string.lines()),
             )
+            .map(|line| CachedEnvelope::new(line))
             .collect::<Vec<_>>(),
     );
 
@@ -286,7 +288,7 @@ where
 fn visvalingam_preserve<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     orig: &LineString<T>,
     epsilon: &T,
-    tree: &mut RTree<Line<T>>,
+    tree: &mut RTree<CachedEnvelope<Line<T>>>,
 ) -> Vec<Coord<T>>
 where
     T: CoordFloat + RTreeNum + HasKernel,
@@ -368,13 +370,13 @@ where
         let middle_point = Point::from(orig.0[smallest.current]);
         let right_point = Point::from(orig.0[right as usize]);
 
-        let line_1 = Line::new(left_point, middle_point);
-        let line_2 = Line::new(middle_point, right_point);
+        let line_1 = CachedEnvelope::new(Line::new(left_point, middle_point));
+        let line_2 = CachedEnvelope::new(Line::new(middle_point, right_point));
         assert!(tree.remove(&line_1).is_some());
         assert!(tree.remove(&line_2).is_some());
 
         // Restore continuous line segment
-        tree.insert(Line::new(left_point, right_point));
+        tree.insert(CachedEnvelope::new(Line::new(left_point, right_point)));
 
         // Recompute the adjacent triangle(s), using left and right adjacent points
         // this may add new triangles to the heap
@@ -392,17 +394,21 @@ where
 ///
 /// In order to do this efficiently, the rtree is queried for any existing segments which fall within
 /// the bounding box of the new triangle created by the candidate segment
-fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T, bool>, orig: &[Coord<T>]) -> bool
+fn tree_intersect<T>(
+    tree: &RTree<CachedEnvelope<Line<T>>>,
+    triangle: &VScore<T, bool>,
+    orig: &[Coord<T>],
+) -> bool
 where
     T: CoordFloat + RTreeNum + HasKernel,
 {
     let new_segment_start = orig[triangle.left];
     let new_segment_end = orig[triangle.right];
     // created by candidate point removal
-    let new_segment = Line::new(
+    let new_segment = CachedEnvelope::new(Line::new(
         Point::from(orig[triangle.left]),
         Point::from(orig[triangle.right]),
-    );
+    ));
     let bounding_rect = Triangle::new(
         orig[triangle.left],
         orig[triangle.current],
@@ -420,7 +426,7 @@ where
             && candidate_start.0 != new_segment_end
             && candidate_end.0 != new_segment_start
             && candidate_end.0 != new_segment_end
-            && new_segment.intersects(candidate)
+            && new_segment.intersects(&**candidate)
     })
 }
 
