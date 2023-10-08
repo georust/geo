@@ -254,7 +254,7 @@ where
                     .flat_map(|ring| *ring)
                     .flat_map(|line_string| line_string.lines()),
             )
-            .map(|line| CachedEnvelope::new(line))
+            .map(CachedEnvelope::new)
             .collect::<Vec<_>>(),
     );
 
