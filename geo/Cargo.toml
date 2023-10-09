@@ -13,7 +13,7 @@ rust-version = "1.65"
 categories = ["science::geo"]
 
 [features]
-default = ["earcutr"]
+default = ["earcutr", "spade"]
 use-proj = ["proj"]
 proj-network = ["use-proj", "proj/network"]
 use-serde = ["serde", "geo-types/serde"]

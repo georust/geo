@@ -252,6 +252,12 @@ pub mod triangulate_earcut;
 #[cfg(feature = "earcutr")]
 pub use triangulate_earcut::TriangulateEarcut;
 
+/// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
+#[cfg(feature = "spade")]
+pub mod triangulate_spade;
+#[cfg(feature = "spade")]
+pub use triangulate_spade::TriangulateSpade;
+
 /// Vector Operations for 2D coordinates
 mod vector_ops;
 pub use vector_ops::Vector2DOps;
