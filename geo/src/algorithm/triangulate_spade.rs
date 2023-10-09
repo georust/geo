@@ -93,19 +93,21 @@ where
     /// This outer triangulation also contains triangles that are not included in the input
     /// geometry if it wasn't convex. Here's an example:
     ///
-    ///     ┌──────────────────┐
-    ///     │\              __/│
-    ///     │ \          __/ / │
-    ///     │  \      __/   /  │
-    ///     │   \  __/     /   │
-    ///     │    \/       /    │
-    ///     │     ┌──────┐     │
-    ///     │    /│\:::::│\    │
-    ///     │   / │:\::::│ \   │
-    ///     │  /  │::\:::│  \  │
-    ///     │ /   │:::\::│   \ │
-    ///     │/    │::::\:│    \│
-    ///     └─────┘______└─────┘
+    /// ```ignore
+    /// ┌──────────────────┐
+    /// │\              __/│
+    /// │ \          __/ / │
+    /// │  \      __/   /  │
+    /// │   \  __/     /   │
+    /// │    \/       /    │
+    /// │     ┌──────┐     │
+    /// │    /│\:::::│\    │
+    /// │   / │:\::::│ \   │
+    /// │  /  │::\:::│  \  │
+    /// │ /   │:::\::│   \ │
+    /// │/    │::::\:│    \│
+    /// └─────┘______└─────┘
+    /// ```
     ///
     /// The outer triangulation of the top down U-shape contains extra triangles marked
     /// with ":". If you want to exclude those, take a look at `constrained_triangulation`
@@ -139,19 +141,21 @@ where
     /// This triangulation only contains triangles that are included in the input geometry.
     /// Here's an example:
     ///
-    ///     ┌──────────────────┐
-    ///     │\              __/│
-    ///     │ \          __/ / │
-    ///     │  \      __/   /  │
-    ///     │   \  __/     /   │
-    ///     │    \/       /    │
-    ///     │     ┌──────┐     │
-    ///     │    /│      │\    │
-    ///     │   / │      │ \   │
-    ///     │  /  │      │  \  │
-    ///     │ /   │      │   \ │
-    ///     │/    │      │    \│
-    ///     └─────┘      └─────┘
+    /// ```ignore
+    /// ┌──────────────────┐
+    /// │\              __/│
+    /// │ \          __/ / │
+    /// │  \      __/   /  │
+    /// │   \  __/     /   │
+    /// │    \/       /    │
+    /// │     ┌──────┐     │
+    /// │    /│      │\    │
+    /// │   / │      │ \   │
+    /// │  /  │      │  \  │
+    /// │ /   │      │   \ │
+    /// │/    │      │    \│
+    /// └─────┘      └─────┘
+    /// ```
     ///
     /// Compared to the `constrained_outer_triangulation` it only includes the triangles
     /// inside of the input geometry
