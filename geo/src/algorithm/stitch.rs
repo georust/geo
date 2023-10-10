@@ -214,6 +214,7 @@ pub fn stitch_multipolygon_from_lines<F: GeoFloat>(
         // missing
         if parent_count % 2 == 0 {
             polygons_idxs.entry(*ring_index).or_default();
+            continue;
         }
 
         // if it has an odd number of parents, it's an inner ring
@@ -221,12 +222,16 @@ pub fn stitch_multipolygon_from_lines<F: GeoFloat>(
         // to find the specific outer ring it is related to, we search for the direct parent. The
         // direct parent of the current ring has itself the most parents from all available
         // parents, so find it by max
-        if let Some(direct_parent) = parent_idxs.iter().max_by_key(|parent_idx| {
-            parents
-                .get(parent_idx)
-                .map(|grandparents| grandparents.len())
-                .unwrap_or_default()
-        }) {
+        if let Some(direct_parent) = parent_idxs
+            .iter()
+            .filter_map(|parent_idx| {
+                parents
+                    .get(parent_idx)
+                    .map(|grandparents| (parent_idx, grandparents))
+            })
+            .max_by_key(|(_, grandparents)| grandparents.len())
+            .map(|(idx, _)| idx)
+        {
             polygons_idxs
                 .entry(*direct_parent)
                 .or_default()
@@ -301,4 +306,44 @@ fn try_stitch<F: GeoFloat>(a: &[Coord<F>], b: &[Coord<F>]) -> Option<Vec<Coord<F
         .or_else(|| (a_last == b_first).then(|| a().chain(b().skip(1)).cloned().collect()))
         // _ -> X  |  _ -> X
         .or_else(|| (a_last == b_last).then(|| a().chain(b().rev().skip(1)).cloned().collect()))
+}
+
+// ============= Tests ===========
+
+#[cfg(test)]
+mod polygon_stitching_tests {
+
+    use crate::TriangulateEarcut;
+
+    use super::*;
+    use geo_types::*;
+
+    #[test]
+    fn poly_inside_a_donut() {
+        _ = pretty_env_logger::try_init();
+        let zero = Coord::zero();
+        let one = Point::new(1.0, 1.0).0;
+        let outer_outer = Rect::new(zero, one * 5.0);
+        let inner_outer = Rect::new(one, one * 4.0);
+        let outer = Polygon::new(
+            outer_outer.to_polygon().exterior().clone(),
+            vec![inner_outer.to_polygon().exterior().clone()],
+        );
+        let inner = Rect::new(one * 2.0, one * 3.0).to_polygon();
+
+        let mp = MultiPolygon::new(vec![outer.clone(), inner.clone()]);
+
+        let tris = [inner, outer]
+            .map(|p| p.earcut_triangles())
+            .map(|tris| {
+                tris.into_iter()
+                    .map(|tri| tri.to_polygon())
+                    .collect::<Vec<_>>()
+            })
+            .concat();
+
+        let result = stitch_multipolygon_from_parts(&tris).unwrap();
+
+        assert!(mp.contains(&result) && result.contains(&mp));
+    }
 }
