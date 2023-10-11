@@ -240,6 +240,10 @@ pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve};
 pub mod stitch;
 pub use stitch::Stitch;
 
+/// Boolean Operations based on constrained triangulation
+pub mod spade_boolops;
+pub use spade_boolops::SpadeBoolops;
+
 /// Transform a geometry using PROJ.
 #[cfg(feature = "use-proj")]
 pub mod transform;
