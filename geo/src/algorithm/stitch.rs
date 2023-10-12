@@ -313,7 +313,7 @@ fn try_stitch<F: GeoFloat>(a: &[Coord<F>], b: &[Coord<F>]) -> Option<Vec<Coord<F
 #[cfg(test)]
 mod polygon_stitching_tests {
 
-    use crate::TriangulateEarcut;
+    use crate::{Area, TriangulateEarcut};
 
     use super::*;
     use geo_types::*;
@@ -342,8 +342,68 @@ mod polygon_stitching_tests {
             })
             .concat();
 
-        let result = stitch_multipolygon_from_parts(&tris).unwrap();
+        let result = tris.stitch_together().unwrap();
 
         assert!(mp.contains(&result) && result.contains(&mp));
+    }
+
+    #[test]
+    fn stitch_triangles_at_point() {
+        _ = pretty_env_logger::try_init();
+        let tri1 = Triangle::from([
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 1.0, y: 0.0 },
+            Coord { x: 0.0, y: 1.0 },
+        ]);
+        let tri2 = Triangle::from([
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: -1.0, y: 0.0 },
+            Coord { x: 0.0, y: -1.0 },
+        ]);
+
+        let result_1 = vec![tri1, tri2].stitch_together().unwrap();
+
+        let tri1 = Triangle::from([
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 0.0, y: 1.0 },
+            Coord { x: 1.0, y: 0.0 },
+        ]);
+        let tri2 = Triangle::from([
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: -1.0, y: 0.0 },
+            Coord { x: 0.0, y: -1.0 },
+        ]);
+
+        let result_2 = vec![tri1, tri2].stitch_together().unwrap();
+
+        let tri1 = Triangle::from([
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 0.0, y: 1.0 },
+            Coord { x: 1.0, y: 0.0 },
+        ]);
+        let tri2 = Triangle::from([
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 0.0, y: -1.0 },
+            Coord { x: -1.0, y: 0.0 },
+        ]);
+
+        let result_3 = vec![tri1, tri2].stitch_together().unwrap();
+
+        let tri1 = Triangle::from([
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 1.0, y: 0.0 },
+            Coord { x: 0.0, y: 1.0 },
+        ]);
+        let tri2 = Triangle::from([
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 0.0, y: -1.0 },
+            Coord { x: -1.0, y: 0.0 },
+        ]);
+
+        let result_4 = vec![tri1, tri2].stitch_together().unwrap();
+
+        assert_eq!(result_1.unsigned_area(), result_2.unsigned_area());
+        assert_eq!(result_2.unsigned_area(), result_3.unsigned_area());
+        assert_eq!(result_3.unsigned_area(), result_4.unsigned_area());
     }
 }
