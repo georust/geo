@@ -269,6 +269,47 @@ where
     }
 }
 
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
+macro_rules! impl_rstar_geometry {
+    ($rstar:ident) => {
+        impl<T> $rstar::RTreeObject for Geometry<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            type Envelope = ::$rstar::AABB<Point<T>>;
+
+            fn envelope(&self) -> Self::Envelope {
+                match self {
+                    Self::Point(x) => x.envelope(),
+                    Self::Line(x) => x.envelope(),
+                    Self::LineString(x) => x.envelope(),
+                    Self::Polygon(x) => x.envelope(),
+                    Self::Rect(x) => x.envelope(),
+                    Self::Triangle(x) => x.envelope(),
+                    Self::MultiPoint(x) => x.envelope(),
+                    Self::MultiLineString(x) => x.envelope(),
+                    Self::MultiPolygon(x) => x.envelope(),
+                    Self::GeometryCollection(x) => x.envelope(),
+                }
+            }
+        }
+    };
+}
+
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_geometry!(rstar_0_8);
+
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_geometry!(rstar_0_9);
+
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_geometry!(rstar_0_10);
+
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for Geometry<T>
 where
@@ -369,5 +410,153 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Geometry<T> {
             (Geometry::Triangle(g1), Geometry::Triangle(g2)) => g1.abs_diff_eq(g2, epsilon),
             (_, _) => false,
         }
+    }
+}
+
+/// Implements the common pattern where a Geometry enum simply delegates its trait impl to it's inner type.
+///
+/// ```
+/// # use geo_types::{CoordNum, Coord, Point, Line, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, GeometryCollection, Rect, Triangle, Geometry};
+///
+/// trait Foo<T: CoordNum> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool;
+///     fn foo_2(&self) -> i32;
+/// }
+///
+/// // Assuming we have an impl for all the inner types like this:
+/// impl<T: CoordNum> Foo<T> for Point<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 1 }
+/// }
+/// impl<T: CoordNum> Foo<T> for Line<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { false }
+///     fn foo_2(&self)  -> i32 { 2 }
+/// }
+/// impl<T: CoordNum> Foo<T> for LineString<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 3 }
+/// }
+/// impl<T: CoordNum> Foo<T> for Polygon<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { false }
+///     fn foo_2(&self)  -> i32 { 4 }
+/// }
+/// impl<T: CoordNum> Foo<T> for MultiPoint<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 5 }
+/// }
+/// impl<T: CoordNum> Foo<T> for MultiLineString<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { false }
+///     fn foo_2(&self)  -> i32 { 6 }
+/// }
+/// impl<T: CoordNum> Foo<T> for MultiPolygon<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 7 }
+/// }
+/// impl<T: CoordNum> Foo<T> for GeometryCollection<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { false }
+///     fn foo_2(&self)  -> i32 { 8 }
+/// }
+/// impl<T: CoordNum> Foo<T> for Rect<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 9 }
+/// }
+/// impl<T: CoordNum> Foo<T> for Triangle<T> {
+///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
+///     fn foo_2(&self)  -> i32 { 10 }
+/// }
+///
+/// // If we want the impl for Geometry to simply delegate to it's
+/// // inner case...
+/// impl<T: CoordNum> Foo<T> for Geometry<T> {
+///     // Instead of writing out this trivial enum delegation...
+///     // fn foo_1(&self, coord: Coord<T>)  -> bool {
+///     //     match self {
+///     //        Geometry::Point(g) => g.foo_1(coord),
+///     //        Geometry::LineString(g) => g.foo_1(coord),
+///     //        _ => unimplemented!("...etc for other cases")
+///     //     }
+///     // }
+///     //
+///     // fn foo_2(&self)  -> i32 {
+///     //     match self {
+///     //        Geometry::Point(g) => g.foo_2(),
+///     //        Geometry::LineString(g) => g.foo_2(),
+///     //        _ => unimplemented!("...etc for other cases")
+///     //     }
+///     // }
+///
+///     // we can equivalently write:
+///     geo_types::geometry_delegate_impl! {
+///         fn foo_1(&self, coord: Coord<T>) -> bool;
+///         fn foo_2(&self) -> i32;
+///     }
+/// }
+/// ```
+#[macro_export]
+macro_rules! geometry_delegate_impl {
+    ($($a:tt)*) => { $crate::__geometry_delegate_impl_helper!{ Geometry, $($a)* } }
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! geometry_cow_delegate_impl {
+    ($($a:tt)*) => { $crate::__geometry_delegate_impl_helper!{ GeometryCow, $($a)* } }
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __geometry_delegate_impl_helper {
+    (
+        $enum:ident,
+        $(
+            $(#[$outer:meta])*
+            fn $func_name: ident(&$($self_life:lifetime)?self $(, $arg_name: ident: $arg_type: ty)*) -> $return: ty;
+         )+
+    ) => {
+            $(
+                $(#[$outer])*
+                fn $func_name(&$($self_life)? self, $($arg_name: $arg_type),*) -> $return {
+                    match self {
+                        $enum::Point(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::Line(g) =>  g.$func_name($($arg_name),*).into(),
+                        $enum::LineString(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::Polygon(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::MultiPoint(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::MultiLineString(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::MultiPolygon(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::GeometryCollection(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::Rect(g) => g.$func_name($($arg_name),*).into(),
+                        $enum::Triangle(g) => g.$func_name($($arg_name),*).into(),
+                    }
+                }
+            )+
+        };
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "rstar_0_9")]
+    use super::*;
+    #[cfg(feature = "rstar_0_9")]
+    use crate::point;
+    #[cfg(feature = "rstar_0_9")]
+    use rstar_0_9::{RTree, AABB};
+
+    #[test]
+    #[cfg(feature = "rstar_0_9")]
+    fn test_geometry_enum_rstar() {
+        let mut tree = RTree::new();
+        let p1 = point!(x: 1.0, y: 1.0);
+        let p2 = point!(x: 2.0, y: 2.0);
+        let p3 = point!(x: 3.0, y: 3.0);
+        let pg1: Geometry = p1.into();
+        let pg2: Geometry = p2.into();
+        let pg3: Geometry = p3.into();
+        tree.insert(pg1);
+        tree.insert(pg2);
+        tree.insert(pg3);
+        let qp = point!(x: 2.0, y: 2.0);
+        let found = tree.locate_in_envelope(&AABB::from_point(qp)).next();
+        assert_eq!(found.unwrap(), &point!(x: 2.0, y: 2.0).into());
     }
 }

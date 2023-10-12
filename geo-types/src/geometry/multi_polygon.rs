@@ -1,4 +1,18 @@
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
+use crate::Point;
 use crate::{CoordNum, Polygon};
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
+use num_traits::Bounded;
 
 use alloc::vec;
 use alloc::vec::Vec;
@@ -90,6 +104,49 @@ impl<T: CoordNum> MultiPolygon<T> {
         self.0.iter_mut()
     }
 }
+
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
+macro_rules! impl_rstar_multi_polygon {
+    ($rstar:ident) => {
+        impl<T> $rstar::RTreeObject for MultiPolygon<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            type Envelope = ::$rstar::AABB<Point<T>>;
+
+            fn envelope(&self) -> Self::Envelope {
+                let bounding_rect = crate::private_utils::get_bounding_rect(
+                    self.iter()
+                        .flat_map(|poly| poly.exterior().0.iter().cloned()),
+                );
+                match bounding_rect {
+                    None => ::$rstar::AABB::from_corners(
+                        Point::new(Bounded::min_value(), Bounded::min_value()),
+                        Point::new(Bounded::max_value(), Bounded::max_value()),
+                    ),
+                    Some(b) => ::$rstar::AABB::from_corners(
+                        Point::new(b.min().x, b.min().y),
+                        Point::new(b.max().x, b.max().y),
+                    ),
+                }
+            }
+        }
+    };
+}
+
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_multi_polygon!(rstar_0_8);
+
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_multi_polygon!(rstar_0_9);
+
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_multi_polygon!(rstar_0_10);
 
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for MultiPolygon<T>

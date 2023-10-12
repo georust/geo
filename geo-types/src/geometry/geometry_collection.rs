@@ -1,11 +1,24 @@
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
+use crate::Point;
 use crate::{CoordNum, Geometry};
-
 use alloc::vec;
 use alloc::vec::Vec;
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
+use num_traits::Bounded;
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
 ///
@@ -246,6 +259,53 @@ impl<'a, T: CoordNum> GeometryCollection<T> {
         self.into_iter()
     }
 }
+
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
+macro_rules! impl_rstar_geometry_collection {
+    ($rstar:ident) => {
+        impl<T> $rstar::RTreeObject for GeometryCollection<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            type Envelope = ::$rstar::AABB<Point<T>>;
+
+            fn envelope(&self) -> Self::Envelope {
+                let bounding_rect = self.iter().fold(
+                    <::$rstar::AABB<Point<T>> as ::$rstar::Envelope>::new_empty(),
+                    |acc: ::$rstar::AABB<Point<T>>, next| {
+                        let next_bounding_rect = next.envelope();
+                        <::$rstar::AABB<Point<T>> as ::$rstar::Envelope>::merged(
+                            &acc,
+                            &next_bounding_rect,
+                        )
+                    },
+                );
+                if bounding_rect == <::$rstar::AABB<Point<T>> as ::$rstar::Envelope>::new_empty() {
+                    ::$rstar::AABB::from_corners(
+                        Point::new(Bounded::min_value(), Bounded::min_value()),
+                        Point::new(Bounded::max_value(), Bounded::max_value()),
+                    )
+                } else {
+                    bounding_rect
+                }
+            }
+        }
+    };
+}
+
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_geometry_collection!(rstar_0_8);
+
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_geometry_collection!(rstar_0_9);
+
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_geometry_collection!(rstar_0_10);
 
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for GeometryCollection<T>
