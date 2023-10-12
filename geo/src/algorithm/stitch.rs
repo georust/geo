@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use geo_types::{Coord, Line, LineString, MultiPolygon, Polygon};
+use geo_types::{Coord, Line, LineString, MultiPolygon, Polygon, Triangle};
 
-use crate::{Contains, CoordsIter, GeoFloat, LinesIter};
+use crate::{Contains, CoordsIter, GeoFloat, LinesIter, Winding};
 
 // ========= Error Type ============
 
@@ -26,18 +26,23 @@ pub(crate) type PolygonStitchingResult<T> = Result<T, LineStitchingError>;
 
 // ========= Main Algo ============
 
-pub trait Stitch<'a, T: GeoFloat> {
-    fn stitch_together(&'a self) -> PolygonStitchingResult<MultiPolygon<T>>;
+pub trait Stitch<T: GeoFloat> {
+    fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>>;
 }
 
-impl<'a, 'b, T, G> Stitch<'a, T> for Vec<G>
+impl<T> Stitch<T> for Vec<&Polygon<T>>
 where
-    'b: 'a,
     T: GeoFloat,
-    G: LinesIter<'a, Scalar = T>,
 {
-    fn stitch_together(&'a self) -> PolygonStitchingResult<MultiPolygon<T>> {
-        let lines = self
+    fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
+        // 🚧🚧 TODO 🚧🚧 : it might make sense to have a separate method in this trait which
+        // doesn't do the fixup and instead assumes that the polygon is well formed to prevent
+        // extensive cloning
+        let polys = self
+            .iter()
+            .map(|&poly| fix_orientation(poly.clone()))
+            .collect::<Vec<_>>();
+        let lines = polys
             .iter()
             .flat_map(|part| part.lines_iter())
             .collect::<Vec<_>>();
@@ -54,28 +59,41 @@ where
     }
 }
 
-impl<'a, 'b, T, G> Stitch<'a, T> for &[G]
+impl<T> Stitch<T> for Vec<Polygon<T>>
 where
-    'b: 'a,
     T: GeoFloat,
-    G: LinesIter<'a, Scalar = T>,
 {
-    fn stitch_together(&'a self) -> PolygonStitchingResult<MultiPolygon<T>> {
-        let lines = self
-            .iter()
-            .flat_map(|part| part.lines_iter())
-            .collect::<Vec<_>>();
-
-        let boundary_lines = find_boundary_lines(lines);
-        let stitched_multipolygon = stitch_multipolygon_from_lines(boundary_lines)?;
-
-        let polys = stitched_multipolygon
-            .into_iter()
-            .map(find_and_fix_holes_in_exterior)
-            .collect::<Vec<_>>();
-
-        Ok(MultiPolygon::new(polys))
+    fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
+        self.iter().collect::<Vec<_>>().stitch_together()
     }
+}
+
+impl<T> Stitch<T> for Vec<Triangle<T>>
+where
+    T: GeoFloat,
+{
+    fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
+        self.iter()
+            .map(|tri| tri.to_polygon())
+            .collect::<Vec<_>>()
+            .stitch_together()
+    }
+}
+
+impl<T> Stitch<T> for Vec<MultiPolygon<T>>
+where
+    T: GeoFloat,
+{
+    fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
+        self.iter().flatten().collect::<Vec<_>>().stitch_together()
+    }
+}
+
+/// makes interiors and exteriors of polygon have ccw orientation
+fn fix_orientation<T: GeoFloat>(mut poly: Polygon<T>) -> Polygon<T> {
+    poly.exterior_mut(|ls| ls.make_ccw_winding());
+    poly.interiors_mut(|ls| ls.iter_mut().for_each(|ls| ls.make_ccw_winding()));
+    poly
 }
 
 /// checks whether the to lines are equal or inverted forms of each other
@@ -297,15 +315,11 @@ fn try_stitch<F: GeoFloat>(a: &[Coord<F>], b: &[Coord<F>]) -> Option<Vec<Coord<F
     let a = || a.iter();
     let b = || b.iter();
 
-    // X -> _  |  X -> _
-    (a_first == b_first)
-        .then(|| a().rev().chain(b().skip(1)).cloned().collect())
+    // _ -> X  |  X -> _
+    (a_last == b_first)
+        .then(|| a().chain(b().skip(1)).cloned().collect())
         // X -> _  |  _ -> X
         .or_else(|| (a_first == b_last).then(|| b().chain(a().skip(1)).cloned().collect()))
-        // _ -> X  |  X -> _
-        .or_else(|| (a_last == b_first).then(|| a().chain(b().skip(1)).cloned().collect()))
-        // _ -> X  |  _ -> X
-        .or_else(|| (a_last == b_last).then(|| a().chain(b().rev().skip(1)).cloned().collect()))
 }
 
 // ============= Tests ===========
