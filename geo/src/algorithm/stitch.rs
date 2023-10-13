@@ -458,4 +458,46 @@ mod polygon_stitching_tests {
         assert_eq!(result.0.len(), 1);
         assert_eq!(result.0[0].interiors().len(), 1);
     }
+
+    #[test]
+    fn inner_banana_produces_hole() {
+        let poly = Polygon::new(
+            LineString::new(vec![
+                Coord { x: 0.0, y: 0.0 },
+                Coord { x: 4.0, y: 0.0 },
+                Coord { x: 3.0, y: 2.0 },
+                Coord { x: 5.0, y: 2.0 },
+                Coord { x: 4.0, y: 0.0 },
+                Coord { x: 8.0, y: 0.0 },
+                Coord { x: 4.0, y: 4.0 },
+            ]),
+            vec![],
+        );
+
+        let result = vec![poly].stitch_together().unwrap();
+
+        assert_eq!(result.0.len(), 1);
+        assert_eq!(result.0[0].interiors().len(), 1);
+    }
+
+    #[test]
+    fn outer_banana_doesnt_produce_hole() {
+        let poly = Polygon::new(
+            LineString::new(vec![
+                Coord { x: 0.0, y: 0.0 },
+                Coord { x: 4.0, y: 0.0 },
+                Coord { x: 3.0, y: -2.0 },
+                Coord { x: 5.0, y: -2.0 },
+                Coord { x: 4.0, y: 0.0 },
+                Coord { x: 8.0, y: 0.0 },
+                Coord { x: 4.0, y: 4.0 },
+            ]),
+            vec![],
+        );
+
+        let result = vec![poly].stitch_together().unwrap();
+
+        assert_eq!(result.0.len(), 1);
+        assert_eq!(result.0[0].interiors().len(), 0);
+    }
 }
