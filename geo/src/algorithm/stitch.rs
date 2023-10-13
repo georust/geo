@@ -146,30 +146,11 @@ fn find_boundary_lines<T: GeoFloat>(lines: Vec<Line<T>>) -> Vec<Line<T>> {
         .collect::<Vec<_>>()
 }
 
-/// Inputs to this function is a unordered set of polygons have been split from a multipolygon
-/// This function will return an invalid multipolygon if the provided parts were not a result of splitting
-pub fn stitch_multipolygon_from_parts<T: GeoFloat>(
-    parts: &[Polygon<T>],
-) -> PolygonStitchingResult<MultiPolygon<T>> {
-    let lines = parts
-        .iter()
-        .flat_map(|part| part.lines_iter())
-        .collect::<Vec<Line<T>>>();
-
-    let boundary_lines = find_boundary_lines(lines);
-    stitch_multipolygon_from_lines(boundary_lines).map(|mut mp| {
-        mp.iter_mut().for_each(|poly| {
-            *poly = find_and_fix_holes_in_exterior(poly.clone());
-        });
-        mp
-    })
-}
-
 /// finds holes in polygon exterior and fixes them
 ///
 /// This is important for scenarios like the banana polygon. Which is considered invalid
 /// https://www.postgis.net/workshops/postgis-intro/validity.html#repairing-invalidity
-pub fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<F> {
+fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<F> {
     // find rings
     let mut rings = vec![];
     let mut points = vec![];
@@ -224,7 +205,7 @@ pub fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Poly
 }
 
 /// Inputs to this function is a unordered set of lines that must form a valid multipolygon
-pub fn stitch_multipolygon_from_lines<F: GeoFloat>(
+fn stitch_multipolygon_from_lines<F: GeoFloat>(
     lines: Vec<Line<F>>,
 ) -> PolygonStitchingResult<MultiPolygon<F>> {
     let rings = stitch_rings_from_lines(lines)?;
@@ -304,7 +285,7 @@ pub fn stitch_multipolygon_from_lines<F: GeoFloat>(
 
 // ============== Helpers ================
 
-pub fn stitch_rings_from_lines<F: GeoFloat>(
+fn stitch_rings_from_lines<F: GeoFloat>(
     lines: Vec<Line<F>>,
 ) -> PolygonStitchingResult<Vec<LineString<F>>> {
     let mut ring_parts: Vec<Vec<Coord<F>>> = lines
