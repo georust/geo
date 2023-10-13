@@ -362,62 +362,72 @@ mod polygon_stitching_tests {
     }
 
     #[test]
-    fn stitch_triangles_at_point() {
+    fn stitch_independent_of_orientation() {
         _ = pretty_env_logger::try_init();
-        let tri1 = Triangle::from([
+        let mut tri1 = Triangle::from([
             Coord { x: 0.0, y: 0.0 },
             Coord { x: 1.0, y: 0.0 },
             Coord { x: 0.0, y: 1.0 },
-        ]);
-        let tri2 = Triangle::from([
+        ])
+        .to_polygon();
+        let mut tri2 = Triangle::from([
             Coord { x: 0.0, y: 0.0 },
             Coord { x: -1.0, y: 0.0 },
             Coord { x: 0.0, y: -1.0 },
-        ]);
+        ])
+        .to_polygon();
 
-        let result_1 = vec![tri1, tri2].stitch_together().unwrap();
+        tri1.exterior_mut(|ls| ls.make_ccw_winding());
+        tri2.exterior_mut(|ls| ls.make_ccw_winding());
+        let result_1 = vec![&tri1, &tri2].stitch_together().unwrap();
 
-        let tri1 = Triangle::from([
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: 0.0, y: 1.0 },
-            Coord { x: 1.0, y: 0.0 },
-        ]);
-        let tri2 = Triangle::from([
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: -1.0, y: 0.0 },
-            Coord { x: 0.0, y: -1.0 },
-        ]);
+        tri1.exterior_mut(|ls| ls.make_cw_winding());
+        tri2.exterior_mut(|ls| ls.make_ccw_winding());
+        let result_2 = vec![&tri1, &tri2].stitch_together().unwrap();
 
-        let result_2 = vec![tri1, tri2].stitch_together().unwrap();
+        tri1.exterior_mut(|ls| ls.make_cw_winding());
+        tri2.exterior_mut(|ls| ls.make_cw_winding());
+        let result_3 = vec![&tri1, &tri2].stitch_together().unwrap();
 
-        let tri1 = Triangle::from([
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: 0.0, y: 1.0 },
-            Coord { x: 1.0, y: 0.0 },
-        ]);
-        let tri2 = Triangle::from([
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: 0.0, y: -1.0 },
-            Coord { x: -1.0, y: 0.0 },
-        ]);
-
-        let result_3 = vec![tri1, tri2].stitch_together().unwrap();
-
-        let tri1 = Triangle::from([
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: 1.0, y: 0.0 },
-            Coord { x: 0.0, y: 1.0 },
-        ]);
-        let tri2 = Triangle::from([
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: 0.0, y: -1.0 },
-            Coord { x: -1.0, y: 0.0 },
-        ]);
-
-        let result_4 = vec![tri1, tri2].stitch_together().unwrap();
+        tri1.exterior_mut(|ls| ls.make_ccw_winding());
+        tri2.exterior_mut(|ls| ls.make_cw_winding());
+        let result_4 = vec![&tri1, &tri2].stitch_together().unwrap();
 
         assert_eq!(result_1.unsigned_area(), result_2.unsigned_area());
         assert_eq!(result_2.unsigned_area(), result_3.unsigned_area());
         assert_eq!(result_3.unsigned_area(), result_4.unsigned_area());
+    }
+
+    #[test]
+    fn stitch_creating_hole() {
+        let poly1 = Polygon::new(
+            LineString::new(vec![
+                Coord { x: 0.0, y: 0.0 },
+                Coord { x: 1.0, y: 0.0 },
+                Coord { x: 1.0, y: 1.0 },
+                Coord { x: 1.0, y: 2.0 },
+                Coord { x: 2.0, y: 2.0 },
+                Coord { x: 2.0, y: 1.0 },
+                Coord { x: 2.0, y: 0.0 },
+                Coord { x: 3.0, y: 0.0 },
+                Coord { x: 3.0, y: 3.0 },
+                Coord { x: 0.0, y: 3.0 },
+            ]),
+            vec![],
+        );
+        let poly2 = Polygon::new(
+            LineString::new(vec![
+                Coord { x: 1.0, y: 0.0 },
+                Coord { x: 2.0, y: 0.0 },
+                Coord { x: 2.0, y: 1.0 },
+                Coord { x: 1.0, y: 1.0 },
+            ]),
+            vec![],
+        );
+
+        let result = vec![poly1, poly2].stitch_together().unwrap();
+
+        assert_eq!(result.0.len(), 1);
+        assert_eq!(result.0[0].interiors().len(), 1);
     }
 }
