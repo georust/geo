@@ -30,10 +30,51 @@ pub trait Stitch<T: GeoFloat> {
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>>;
 }
 
-impl<T> Stitch<T> for Vec<&Polygon<T>>
-where
-    T: GeoFloat,
-{
+macro_rules! impl_stitch {
+    ($type:ty => $self:ident
+     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
+         $($impls:tt)*
+     }) => {
+       impl<T> Stitch<T> for &[&$type]
+       where
+           T: GeoFloat,
+       {
+           fn stitch_together(&$self) -> PolygonStitchingResult<MultiPolygon<T>> {
+                $($impls)*
+           }
+       }
+
+       impl<T> Stitch<T> for Vec<&$type>
+       where
+           T: GeoFloat,
+       {
+           fn stitch_together(&$self) -> PolygonStitchingResult<MultiPolygon<T>> {
+               $self.as_slice().stitch_together()
+           }
+       }
+
+       impl<T> Stitch<T> for &[$type]
+       where
+           T: GeoFloat,
+       {
+           fn stitch_together(&$self) -> PolygonStitchingResult<MultiPolygon<T>> {
+               $self.iter().collect::<Vec<_>>().stitch_together()
+           }
+       }
+
+       impl<T> Stitch<T> for Vec<$type>
+       where
+           T: GeoFloat,
+       {
+           fn stitch_together(&$self) -> PolygonStitchingResult<MultiPolygon<T>> {
+               $self.iter().collect::<Vec<_>>().stitch_together()
+           }
+       }
+     };
+}
+
+impl_stitch! {
+    Polygon<T> => self
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
         // 🚧🚧 TODO 🚧🚧 : it might make sense to have a separate method in this trait which
         // doesn't do the fixup and instead assumes that the polygon is well formed to prevent
@@ -59,19 +100,8 @@ where
     }
 }
 
-impl<T> Stitch<T> for Vec<Polygon<T>>
-where
-    T: GeoFloat,
-{
-    fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
-        self.iter().collect::<Vec<_>>().stitch_together()
-    }
-}
-
-impl<T> Stitch<T> for Vec<Triangle<T>>
-where
-    T: GeoFloat,
-{
+impl_stitch! {
+    Triangle<T> => self
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
         self.iter()
             .map(|tri| tri.to_polygon())
@@ -80,12 +110,10 @@ where
     }
 }
 
-impl<T> Stitch<T> for Vec<MultiPolygon<T>>
-where
-    T: GeoFloat,
-{
+impl_stitch! {
+    MultiPolygon<T> => self
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
-        self.iter().flatten().collect::<Vec<_>>().stitch_together()
+        self.iter().flat_map(|mp| mp.0.iter()).collect::<Vec<_>>().stitch_together()
     }
 }
 
