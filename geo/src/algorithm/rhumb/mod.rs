@@ -1,3 +1,11 @@
+//! This module provides rhumb-line (a.k.a. loxodrome) geometry operations.
+//! The distance, destination, and bearing implementations are adapted in part
+//! from their equivalents in [Turf.js](https://turfjs.org/), which in turn are
+//! adapted from the Movable Type
+//! [spherical geodesy tools](https://www.movable-type.co.uk/scripts/latlong.html).
+//! Turf.js is copyright its authors and the geodesy tools are copyright Chris
+//! Veness; both are available under an MIT license.
+
 use crate::{point, utils::normalize_longitude, CoordFloat, Point};
 use num_traits::FromPrimitive;
 
