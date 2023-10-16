@@ -18,6 +18,8 @@
   * <https://github.com/georust/geo/pull/908>
 * Add `ToDegrees` and `ToRadians` traits.
   * <https://github.com/georust/geo/pull/1070>
+* Fix coordinate wrapping in `HaversineDestination`
+  * <https://github.com/georust/geo/pull/1091>
 
 ## 0.26.0
 
