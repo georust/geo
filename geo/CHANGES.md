@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Add an `inverse` method to `AffineTransform`
+  * <https://github.com/georust/geo/pull/1092>
 * Fix `Densify` trait to avoid panic with empty line string.
   * <https://github.com/georust/geo/pull/1082>
 * Add `DensifyHaversine` trait to densify spherical line geometry.

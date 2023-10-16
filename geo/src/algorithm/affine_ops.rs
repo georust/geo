@@ -1,5 +1,7 @@
+use num_traits::ToPrimitive;
+
 use crate::{Coord, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace};
-use std::fmt;
+use std::{fmt, ops::Mul, ops::Neg};
 
 /// Apply an [`AffineTransform`] like [`scale`](AffineTransform::scale),
 /// [`skew`](AffineTransform::skew), or [`rotate`](AffineTransform::rotate) to a
@@ -35,7 +37,7 @@ use std::fmt;
 ///     (x: -0.5688687, y: 5.5688687)
 /// ], max_relative = 1.0);
 /// ```
-pub trait AffineOps<T: CoordNum> {
+pub trait AffineOps<T: CoordNum + Neg> {
     /// Apply `transform` immutably, outputting a new geometry.
     #[must_use]
     fn affine_transform(&self, transform: &AffineTransform<T>) -> Self;
@@ -44,7 +46,9 @@ pub trait AffineOps<T: CoordNum> {
     fn affine_transform_mut(&mut self, transform: &AffineTransform<T>);
 }
 
-impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> AffineOps<T> for M {
+impl<T: CoordNum + Neg, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> AffineOps<T>
+    for M
+{
     fn affine_transform(&self, transform: &AffineTransform<T>) -> Self {
         self.map_coords(|c| transform.apply(c))
     }
@@ -111,16 +115,16 @@ impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> Affin
 /// ], max_relative = 1.0);
 /// ```
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct AffineTransform<T: CoordNum = f64>([[T; 3]; 3]);
+pub struct AffineTransform<T: CoordNum + Neg = f64>([[T; 3]; 3]);
 
-impl<T: CoordNum> Default for AffineTransform<T> {
+impl<T: CoordNum + Neg> Default for AffineTransform<T> {
     fn default() -> Self {
         // identity matrix
         Self::identity()
     }
 }
 
-impl<T: CoordNum> AffineTransform<T> {
+impl<T: CoordNum + Neg> AffineTransform<T> {
     /// Create a new affine transformation by composing two `AffineTransform`s.
     ///
     /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
@@ -181,6 +185,37 @@ impl<T: CoordNum> AffineTransform<T> {
             T::one(),
             T::zero(),
         )
+    }
+
+    /// Return the inverse of a given transform. Composing a transform with its inverse yields
+    /// the [identity matrix](Self::identity)
+    pub fn inverse(&self) -> Option<Self>
+    where
+        <T as Neg>::Output: Mul<T>,
+        <<T as Neg>::Output as Mul<T>>::Output: ToPrimitive,
+    {
+        let a = self.0[0][0];
+        let b = self.0[0][1];
+        let xoff = self.0[0][2];
+        let d = self.0[1][0];
+        let e = self.0[1][1];
+        let yoff = self.0[1][2];
+
+        let determinant = a * e - b * d;
+
+        if determinant == T::zero() {
+            return None; // The matrix is not invertible
+        }
+
+        let inv_det = T::one() / determinant;
+        Some(Self::new(
+            e * inv_det,
+            T::from(-b * inv_det).unwrap(),
+            (b * yoff - e * xoff) * inv_det,
+            T::from(-d * inv_det).unwrap(),
+            a * inv_det,
+            (d * xoff - a * yoff) * inv_det,
+        ))
     }
 
     /// Whether the transformation is equivalent to the [identity matrix](Self::identity),
@@ -277,7 +312,7 @@ impl<T: CoordNum> AffineTransform<T> {
     }
 }
 
-impl<T: CoordNum> fmt::Debug for AffineTransform<T> {
+impl<T: CoordNum + Neg + Mul> fmt::Debug for AffineTransform<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AffineTransform")
             .field("a", &self.0[0][0])
@@ -290,13 +325,13 @@ impl<T: CoordNum> fmt::Debug for AffineTransform<T> {
     }
 }
 
-impl<T: CoordNum> From<[T; 6]> for AffineTransform<T> {
+impl<T: CoordNum + Neg + Mul> From<[T; 6]> for AffineTransform<T> {
     fn from(arr: [T; 6]) -> Self {
         Self::new(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5])
     }
 }
 
-impl<T: CoordNum> From<(T, T, T, T, T, T)> for AffineTransform<T> {
+impl<T: CoordNum + Neg + Mul> From<(T, T, T, T, T, T)> for AffineTransform<T> {
     fn from(tup: (T, T, T, T, T, T)) -> Self {
         Self::new(tup.0, tup.1, tup.2, tup.3, tup.4, tup.5)
     }
@@ -434,6 +469,19 @@ mod tests {
         poly.affine_transform_mut(&transform);
 
         let expected = polygon![(x: 1.0, y: 1.0), (x: 1.0, y: 5.0), (x: 3.0, y: 5.0)];
+        assert_eq!(expected, poly);
+    }
+    #[test]
+    fn affine_transformed_inverse() {
+        let transform = AffineTransform::translate(1.0, 1.0).scaled(2.0, 2.0, (0.0, 0.0));
+        let tinv = transform.inverse().unwrap();
+        let identity = transform.compose(&tinv);
+        // test really only needs this, but let's be sure
+        assert!(identity.is_identity());
+
+        let mut poly = polygon![(x: 0.0, y: 0.0), (x: 0.0, y: 2.0), (x: 1.0, y: 2.0)];
+        let expected = poly.clone();
+        poly.affine_transform_mut(&identity);
         assert_eq!(expected, poly);
     }
 }
