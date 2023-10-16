@@ -18,6 +18,8 @@
   * <https://github.com/georust/geo/pull/908>
 * Add `ToDegrees` and `ToRadians` traits.
   * <https://github.com/georust/geo/pull/1070>
+* Add rhumb-line operations analogous to several current haversine operations: `RhumbBearing`, `RhumbDestination`, `RhumbDistance`, `RhumbIntermediate`, `RhumbLength`.
+  * <https://github.com/georust/geo/pull/1090>
 
 ## 0.26.0
 

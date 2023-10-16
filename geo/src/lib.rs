@@ -47,6 +47,7 @@
 //! - **[`GeodesicDistance`](GeodesicDistance)**: Calculate the minimum geodesic distance between geometries using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
 //! - **[`HausdorffDistance`](HausdorffDistance)**: Calculate "the maximum of the distances from a point in any of the sets to the nearest point in the other set." (Rote, 1991)
 //! - **[`HaversineDistance`](HaversineDistance)**: Calculate the minimum geodesic distance between geometries using the haversine formula
+//! - **[`RhumbDistance`](RhumbDistance)**: Calculate the length of a rhumb line connecting the two geometries
 //! - **[`VincentyDistance`](VincentyDistance)**: Calculate the minimum geodesic distance between geometries using Vincenty’s formula
 //!
 //! ## Length
@@ -54,6 +55,7 @@
 //! - **[`EuclideanLength`](EuclideanLength)**: Calculate the euclidean length of a geometry
 //! - **[`GeodesicLength`](GeodesicLength)**: Calculate the geodesic length of a geometry using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
 //! - **[`HaversineLength`](HaversineLength)**: Calculate the geodesic length of a geometry using the haversine formula
+//! - **[`RhumbLength`](RhumbLength)**: Calculate the length of a geometry assuming it's composed of rhumb lines
 //! - **[`VincentyLength`](VincentyLength)**: Calculate the geodesic length of a geometry using Vincenty’s formula
 //!
 //! ## Outlier Detection
@@ -72,6 +74,7 @@
 //!
 //! - **[`HaversineBearing`]**: Calculate the bearing between points using great circle calculations.
 //! - **[`GeodesicBearing`](GeodesicBearing)**: Calculate the bearing between points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
+//! - **[`RhumbBearing`]**: Calculate the angle from north of the rhumb line connecting two points.
 //! - **[`ClosestPoint`](ClosestPoint)**: Find the point on a geometry
 //!   closest to a given point
 //! - **[`HaversineClosestPoint`](HaversineClosestPoint)**: Find the point on a geometry
@@ -157,8 +160,10 @@
 //! - **[`DensifyHaversine`](DensifyHaversine)**: Densify spherical geometry by interpolating points on a sphere
 //! - **[`GeodesicDestination`](GeodesicDestination)**: Given a start point, bearing, and distance, calculate the destination point on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`GeodesicIntermediate`](GeodesicIntermediate)**: Calculate intermediate points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
-//! - **[`HaversineDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere
-//! - **[`HaversineIntermediate`](HaversineIntermediate)**: Calculate intermediate points on a sphere
+//! - **[`HaversineDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere assuming travel on a great circle
+//! - **[`HaversineIntermediate`](HaversineIntermediate)**: Calculate intermediate points on a sphere along a great-circle line
+//! - **[`RhumbDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere assuming travel along a rhumb line
+//! - **[`RhumbIntermediate`](HaversineIntermediate)**: Calculate intermediate points on a sphere along a rhumb line
 //! - **[`proj`](proj)**: Project geometries with the `proj` crate (requires the `use-proj` feature)
 //! - **[`LineStringSegmentize`](LineStringSegmentize)**: Segment a LineString into `n` segments.
 //! - **[`Transform`](Transform)**: Transform a geometry using Proj.
