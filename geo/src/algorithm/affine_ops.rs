@@ -312,7 +312,7 @@ impl<T: CoordNum + Neg> AffineTransform<T> {
     }
 }
 
-impl<T: CoordNum + Neg + Mul> fmt::Debug for AffineTransform<T> {
+impl<T: CoordNum + Neg> fmt::Debug for AffineTransform<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AffineTransform")
             .field("a", &self.0[0][0])
@@ -325,13 +325,13 @@ impl<T: CoordNum + Neg + Mul> fmt::Debug for AffineTransform<T> {
     }
 }
 
-impl<T: CoordNum + Neg + Mul> From<[T; 6]> for AffineTransform<T> {
+impl<T: CoordNum + Neg> From<[T; 6]> for AffineTransform<T> {
     fn from(arr: [T; 6]) -> Self {
         Self::new(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5])
     }
 }
 
-impl<T: CoordNum + Neg + Mul> From<(T, T, T, T, T, T)> for AffineTransform<T> {
+impl<T: CoordNum + Neg> From<(T, T, T, T, T, T)> for AffineTransform<T> {
     fn from(tup: (T, T, T, T, T, T)) -> Self {
         Self::new(tup.0, tup.1, tup.2, tup.3, tup.4, tup.5)
     }
