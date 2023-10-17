@@ -163,7 +163,7 @@
 //! - **[`HaversineDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere assuming travel on a great circle
 //! - **[`HaversineIntermediate`](HaversineIntermediate)**: Calculate intermediate points on a sphere along a great-circle line
 //! - **[`RhumbDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere assuming travel along a rhumb line
-//! - **[`RhumbIntermediate`](HaversineIntermediate)**: Calculate intermediate points on a sphere along a rhumb line
+//! - **[`RhumbIntermediate`](RhumbIntermediate)**: Calculate intermediate points on a sphere along a rhumb line
 //! - **[`proj`](proj)**: Project geometries with the `proj` crate (requires the `use-proj` feature)
 //! - **[`LineStringSegmentize`](LineStringSegmentize)**: Segment a LineString into `n` segments.
 //! - **[`Transform`](Transform)**: Transform a geometry using Proj.
