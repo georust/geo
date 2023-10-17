@@ -283,3 +283,7 @@ pub use outlier_detection::OutlierDetection;
 /// Monotonic polygon subdivision
 pub mod monotone;
 pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
+
+/// Rhumb-line-related algorithms and utils
+pub mod rhumb;
+pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate, RhumbLength};
