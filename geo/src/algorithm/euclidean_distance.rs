@@ -7,6 +7,7 @@ use crate::{
 };
 use num_traits::{float::FloatConst, Bounded, Float, Signed};
 
+use rstar::primitives::CachedEnvelope;
 use rstar::RTree;
 use rstar::RTreeNum;
 
@@ -585,8 +586,18 @@ pub fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T
 where
     T: GeoFloat + RTreeNum,
 {
-    let tree_a: RTree<Line<_>> = RTree::bulk_load(geom1.lines().collect::<Vec<_>>());
-    let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect::<Vec<_>>());
+    let tree_a: RTree<CachedEnvelope<Line<_>>> = RTree::bulk_load(
+        geom1
+            .lines()
+            .map(|line| CachedEnvelope::new(line))
+            .collect::<Vec<_>>(),
+    );
+    let tree_b: RTree<CachedEnvelope<Line<_>>> = RTree::bulk_load(
+        geom2
+            .lines()
+            .map(|line| CachedEnvelope::new(line))
+            .collect::<Vec<_>>(),
+    );
     // Return minimum distance between all geom a points and geom b lines, and all geom b points and geom a lines
     geom2
         .points()
