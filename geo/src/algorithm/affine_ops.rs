@@ -303,17 +303,14 @@ impl<T: CoordNum + Neg> AffineTransform<T> {
         let inv_det = T::one() / determinant;
 
         // If conversion of either the b or d matrix value fails, bail out
-        match (T::from(-b * inv_det), T::from(-d * inv_det)) {
-            (Some(inv_b), Some(inv_d)) => Some(Self::new(
-                e * inv_det,
-                inv_b,
-                (b * yoff - e * xoff) * inv_det,
-                inv_d,
-                a * inv_det,
-                (d * xoff - a * yoff) * inv_det,
-            )),
-            _ => None,
-        }
+        Some(Self::new(
+            e * inv_det,
+            T::from(-b * inv_det)?,
+            (b * yoff - e * xoff) * inv_det,
+            T::from(-d * inv_det)?,
+            a * inv_det,
+            (d * xoff - a * yoff) * inv_det,
+        ))
     }
 }
 
