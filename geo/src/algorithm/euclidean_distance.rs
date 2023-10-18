@@ -590,7 +590,7 @@ where
         geom1
             .lines()
             .map(CachedEnvelope::new)
-            .collect::<Vec<_>>(),
+            .collect(),
     );
     let tree_b = RTree::bulk_load(
         geom2
