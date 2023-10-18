@@ -37,7 +37,7 @@ use std::{fmt, ops::Mul, ops::Neg};
 ///     (x: -0.5688687, y: 5.5688687)
 /// ], max_relative = 1.0);
 /// ```
-pub trait AffineOps<T: CoordNum + Neg> {
+pub trait AffineOps<T: CoordNum> {
     /// Apply `transform` immutably, outputting a new geometry.
     #[must_use]
     fn affine_transform(&self, transform: &AffineTransform<T>) -> Self;
@@ -46,9 +46,7 @@ pub trait AffineOps<T: CoordNum + Neg> {
     fn affine_transform_mut(&mut self, transform: &AffineTransform<T>);
 }
 
-impl<T: CoordNum + Neg, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> AffineOps<T>
-    for M
-{
+impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> AffineOps<T> for M {
     fn affine_transform(&self, transform: &AffineTransform<T>) -> Self {
         self.map_coords(|c| transform.apply(c))
     }
@@ -115,16 +113,16 @@ impl<T: CoordNum + Neg, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>>
 /// ], max_relative = 1.0);
 /// ```
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct AffineTransform<T: CoordNum + Neg = f64>([[T; 3]; 3]);
+pub struct AffineTransform<T: CoordNum = f64>([[T; 3]; 3]);
 
-impl<T: CoordNum + Neg> Default for AffineTransform<T> {
+impl<T: CoordNum> Default for AffineTransform<T> {
     fn default() -> Self {
         // identity matrix
         Self::identity()
     }
 }
 
-impl<T: CoordNum + Neg> AffineTransform<T> {
+impl<T: CoordNum> AffineTransform<T> {
     /// Create a new affine transformation by composing two `AffineTransform`s.
     ///
     /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
@@ -185,37 +183,6 @@ impl<T: CoordNum + Neg> AffineTransform<T> {
             T::one(),
             T::zero(),
         )
-    }
-
-    /// Return the inverse of a given transform. Composing a transform with its inverse yields
-    /// the [identity matrix](Self::identity)
-    pub fn inverse(&self) -> Option<Self>
-    where
-        <T as Neg>::Output: Mul<T>,
-        <<T as Neg>::Output as Mul<T>>::Output: ToPrimitive,
-    {
-        let a = self.0[0][0];
-        let b = self.0[0][1];
-        let xoff = self.0[0][2];
-        let d = self.0[1][0];
-        let e = self.0[1][1];
-        let yoff = self.0[1][2];
-
-        let determinant = a * e - b * d;
-
-        if determinant == T::zero() {
-            return None; // The matrix is not invertible
-        }
-
-        let inv_det = T::one() / determinant;
-        Some(Self::new(
-            e * inv_det,
-            T::from(-b * inv_det).unwrap(),
-            (b * yoff - e * xoff) * inv_det,
-            T::from(-d * inv_det).unwrap(),
-            a * inv_det,
-            (d * xoff - a * yoff) * inv_det,
-        ))
     }
 
     /// Whether the transformation is equivalent to the [identity matrix](Self::identity),
@@ -312,7 +279,41 @@ impl<T: CoordNum + Neg> AffineTransform<T> {
     }
 }
 
-impl<T: CoordNum + Neg> fmt::Debug for AffineTransform<T> {
+impl<T: CoordNum + Neg<Output = T>> AffineTransform<T> {
+    /// Return the inverse of a given transform. Composing a transform with its inverse yields
+    /// the [identity matrix](Self::identity)
+    #[must_use]
+    pub fn inverse(&self) -> Option<Self>
+    where
+        <T as Neg>::Output: Mul<T>,
+        <<T as Neg>::Output as Mul<T>>::Output: ToPrimitive,
+    {
+        let a = self.0[0][0];
+        let b = self.0[0][1];
+        let xoff = self.0[0][2];
+        let d = self.0[1][0];
+        let e = self.0[1][1];
+        let yoff = self.0[1][2];
+
+        let determinant = a * e - b * d;
+
+        if determinant == T::zero() {
+            return None; // The matrix is not invertible
+        }
+
+        let inv_det = T::one() / determinant;
+        Some(Self::new(
+            e * inv_det,
+            -b * inv_det,
+            (b * yoff - e * xoff) * inv_det,
+            -d * inv_det,
+            a * inv_det,
+            (d * xoff - a * yoff) * inv_det,
+        ))
+    }
+}
+
+impl<T: CoordNum> fmt::Debug for AffineTransform<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AffineTransform")
             .field("a", &self.0[0][0])
@@ -325,13 +326,13 @@ impl<T: CoordNum + Neg> fmt::Debug for AffineTransform<T> {
     }
 }
 
-impl<T: CoordNum + Neg> From<[T; 6]> for AffineTransform<T> {
+impl<T: CoordNum> From<[T; 6]> for AffineTransform<T> {
     fn from(arr: [T; 6]) -> Self {
         Self::new(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5])
     }
 }
 
-impl<T: CoordNum + Neg> From<(T, T, T, T, T, T)> for AffineTransform<T> {
+impl<T: CoordNum> From<(T, T, T, T, T, T)> for AffineTransform<T> {
     fn from(tup: (T, T, T, T, T, T)) -> Self {
         Self::new(tup.0, tup.1, tup.2, tup.3, tup.4, tup.5)
     }

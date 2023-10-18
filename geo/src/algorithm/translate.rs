@@ -39,7 +39,7 @@ pub trait Translate<T: CoordNum> {
 
 impl<T, G> Translate<T> for G
 where
-    T: CoordNum + std::ops::Neg,
+    T: CoordNum,
     G: AffineOps<T>,
 {
     fn translate(&self, x_offset: T, y_offset: T) -> Self {
