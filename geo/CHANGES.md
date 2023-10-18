@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Use `CachedEnvelope` in R-Trees when computing euclidean distance between polygons
+  * <https://github.com/georust/geo/pull/1093>
 * Add an `inverse` method to `AffineTransform`
   * <https://github.com/georust/geo/pull/1092>
 * Fix `Densify` trait to avoid panic with empty line string.
