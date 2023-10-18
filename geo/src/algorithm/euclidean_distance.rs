@@ -586,13 +586,13 @@ pub fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T
 where
     T: GeoFloat + RTreeNum,
 {
-    let tree_a: RTree<CachedEnvelope<Line<_>>> = RTree::bulk_load(
+    let tree_a = RTree::bulk_load(
         geom1
             .lines()
             .map(|line| CachedEnvelope::new(line))
             .collect::<Vec<_>>(),
     );
-    let tree_b: RTree<CachedEnvelope<Line<_>>> = RTree::bulk_load(
+    let tree_b = RTree::bulk_load(
         geom2
             .lines()
             .map(|line| CachedEnvelope::new(line))
