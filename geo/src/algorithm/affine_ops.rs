@@ -1,5 +1,7 @@
+use num_traits::ToPrimitive;
+
 use crate::{Coord, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace};
-use std::fmt;
+use std::{fmt, ops::Mul, ops::Neg};
 
 /// Apply an [`AffineTransform`] like [`scale`](AffineTransform::scale),
 /// [`skew`](AffineTransform::skew), or [`rotate`](AffineTransform::rotate) to a
@@ -277,6 +279,41 @@ impl<T: CoordNum> AffineTransform<T> {
     }
 }
 
+impl<T: CoordNum + Neg> AffineTransform<T> {
+    /// Return the inverse of a given transform. Composing a transform with its inverse yields
+    /// the [identity matrix](Self::identity)
+    #[must_use]
+    pub fn inverse(&self) -> Option<Self>
+    where
+        <T as Neg>::Output: Mul<T>,
+        <<T as Neg>::Output as Mul<T>>::Output: ToPrimitive,
+    {
+        let a = self.0[0][0];
+        let b = self.0[0][1];
+        let xoff = self.0[0][2];
+        let d = self.0[1][0];
+        let e = self.0[1][1];
+        let yoff = self.0[1][2];
+
+        let determinant = a * e - b * d;
+
+        if determinant == T::zero() {
+            return None; // The matrix is not invertible
+        }
+        let inv_det = T::one() / determinant;
+
+        // If conversion of either the b or d matrix value fails, bail out
+        Some(Self::new(
+            e * inv_det,
+            T::from(-b * inv_det)?,
+            (b * yoff - e * xoff) * inv_det,
+            T::from(-d * inv_det)?,
+            a * inv_det,
+            (d * xoff - a * yoff) * inv_det,
+        ))
+    }
+}
+
 impl<T: CoordNum> fmt::Debug for AffineTransform<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AffineTransform")
@@ -434,6 +471,19 @@ mod tests {
         poly.affine_transform_mut(&transform);
 
         let expected = polygon![(x: 1.0, y: 1.0), (x: 1.0, y: 5.0), (x: 3.0, y: 5.0)];
+        assert_eq!(expected, poly);
+    }
+    #[test]
+    fn affine_transformed_inverse() {
+        let transform = AffineTransform::translate(1.0, 1.0).scaled(2.0, 2.0, (0.0, 0.0));
+        let tinv = transform.inverse().unwrap();
+        let identity = transform.compose(&tinv);
+        // test really only needs this, but let's be sure
+        assert!(identity.is_identity());
+
+        let mut poly = polygon![(x: 0.0, y: 0.0), (x: 0.0, y: 2.0), (x: 1.0, y: 2.0)];
+        let expected = poly.clone();
+        poly.affine_transform_mut(&identity);
         assert_eq!(expected, poly);
     }
 }
