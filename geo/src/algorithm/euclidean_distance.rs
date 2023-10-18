@@ -589,13 +589,13 @@ where
     let tree_a = RTree::bulk_load(
         geom1
             .lines()
-            .map(|line| CachedEnvelope::new(line))
+            .map(CachedEnvelope::new)
             .collect::<Vec<_>>(),
     );
     let tree_b = RTree::bulk_load(
         geom2
             .lines()
-            .map(|line| CachedEnvelope::new(line))
+            .map(CachedEnvelope::new)
             .collect::<Vec<_>>(),
     );
     // Return minimum distance between all geom a points and geom b lines, and all geom b points and geom a lines
