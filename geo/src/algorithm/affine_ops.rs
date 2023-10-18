@@ -279,7 +279,7 @@ impl<T: CoordNum> AffineTransform<T> {
     }
 }
 
-impl<T: CoordNum + Neg<Output = T>> AffineTransform<T> {
+impl<T: CoordNum + Neg> AffineTransform<T> {
     /// Return the inverse of a given transform. Composing a transform with its inverse yields
     /// the [identity matrix](Self::identity)
     #[must_use]
@@ -300,16 +300,20 @@ impl<T: CoordNum + Neg<Output = T>> AffineTransform<T> {
         if determinant == T::zero() {
             return None; // The matrix is not invertible
         }
-
         let inv_det = T::one() / determinant;
-        Some(Self::new(
-            e * inv_det,
-            -b * inv_det,
-            (b * yoff - e * xoff) * inv_det,
-            -d * inv_det,
-            a * inv_det,
-            (d * xoff - a * yoff) * inv_det,
-        ))
+
+        // If conversion of either the b or d matrix value fails, bail out
+        match (T::from(-b * inv_det), T::from(-d * inv_det)) {
+            (Some(inv_b), Some(inv_d)) => Some(Self::new(
+                e * inv_det,
+                inv_b,
+                (b * yoff - e * xoff) * inv_det,
+                inv_d,
+                a * inv_det,
+                (d * xoff - a * yoff) * inv_det,
+            )),
+            _ => None,
+        }
     }
 }
 
