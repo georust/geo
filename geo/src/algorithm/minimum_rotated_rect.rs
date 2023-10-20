@@ -19,8 +19,8 @@ use crate::{algorithm::CoordsIter, ConvexHull, CoordFloat, GeoFloat, GeoNum, Pol
 ///     mbr.exterior(),
 ///     &LineString::from(vec![
 ///         (1.7000000000000004, 24.600000000000005),
-///         (14.649854163628412, 25.153412571095238),
-///         (14.400000000000002, 31.000000000000007),
+///         (14.64985416362841, 25.153412571095235),
+///         (14.400000000000002, 31.000000000000004),
 ///         (1.4501458363715916, 30.446587428904774),
 ///         (1.7000000000000004, 24.600000000000005),
 ///     ])
@@ -62,8 +62,8 @@ where
             let (mut min_x, mut max_x) = (<T as Bounded>::max_value(), <T as Bounded>::min_value());
             let (mut min_y, mut max_y) = (<T as Bounded>::max_value(), <T as Bounded>::min_value());
             for point in hull.exterior().points() {
-                let x = point.y() * edge.1 + point.x() * edge.0;
-                let y = point.y() * edge.0 - point.x() * edge.1;
+                let x = point.x().mul_add(edge.0, point.y() * edge.1);
+                let y = point.x().mul_add(-edge.1, point.y() * edge.0);
 
                 min_x = min_x.min(x);
                 max_x = max_x.max(x);
@@ -84,20 +84,20 @@ where
 
         if let Some(e) = best_edge {
             let p1 = (
-                best_min_x * e.0 - best_min_y * e.1,
-                best_min_x * e.1 + best_min_y * e.0,
+                best_min_x.mul_add(e.0, -best_min_y * e.1),
+                best_min_x.mul_add(e.1, best_min_y * e.0),
             );
             let p2 = (
-                best_max_x * e.0 - best_min_y * e.1,
-                best_max_x * e.1 + best_min_y * e.0,
+                best_max_x.mul_add(e.0, -best_min_y * e.1),
+                best_max_x.mul_add(e.1, best_min_y * e.0),
             );
             let p3 = (
-                best_max_x * e.0 - best_max_y * e.1,
-                best_max_x * e.1 + best_max_y * e.0,
+                best_max_x.mul_add(e.0, -best_max_y * e.1),
+                best_max_x.mul_add(e.1, best_max_y * e.0),
             );
             let p4 = (
-                best_min_x * e.0 - best_max_y * e.1,
-                best_min_x * e.1 + best_max_y * e.0,
+                best_min_x.mul_add(e.0, -best_max_y * e.1),
+                best_min_x.mul_add(e.1, best_max_y * e.0),
             );
             let rectangle = Polygon::new(
                 LineString(vec![p1.into(), p2.into(), p3.into(), p4.into(), p1.into()]),
@@ -124,8 +124,8 @@ mod test {
             mbr.exterior(),
             &LineString::from(vec![
                 (1.7000000000000004, 24.600000000000005),
-                (14.649854163628412, 25.153412571095238),
-                (14.400000000000002, 31.000000000000007),
+                (14.64985416362841, 25.153412571095235),
+                (14.400000000000002, 31.000000000000004),
                 (1.4501458363715916, 30.446587428904774),
                 (1.7000000000000004, 24.600000000000005),
             ])
@@ -139,8 +139,8 @@ mod test {
             mbr.exterior(),
             &LineString::from(vec![
                 (1.7000000000000004, 24.600000000000005),
-                (14.649854163628412, 25.153412571095238),
-                (14.400000000000002, 31.000000000000007),
+                (14.64985416362841, 25.153412571095235),
+                (14.400000000000002, 31.000000000000004),
                 (1.4501458363715916, 30.446587428904774),
                 (1.7000000000000004, 24.600000000000005),
             ])
