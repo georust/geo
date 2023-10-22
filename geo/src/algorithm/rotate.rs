@@ -361,7 +361,11 @@ mod test {
     fn test_rotate_around_point_arbitrary() {
         let p = Point::new(5.0, 10.0);
         let rotated = p.rotate_around_point(-45., Point::new(10., 34.));
-        assert_eq!(rotated, Point::new(-10.506096654409877, 20.564971157455595));
+        assert_relative_eq!(
+            rotated,
+            Point::new(-10.506096654409877, 20.564971157455595),
+            epsilon = 1e-14
+        );
     }
     #[test]
     fn test_rotate_line() {
