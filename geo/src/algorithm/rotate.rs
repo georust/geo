@@ -78,7 +78,7 @@ pub trait Rotate<T: CoordFloat> {
     ///     point!(x: 10.0, y: 0.0),
     /// );
     ///
-    /// assert_eq!(rotated, line_string![
+    /// approx::assert_relative_eq!(rotated, line_string![
     ///     (x: 2.9289321881345245, y: 7.071067811865475),
     ///     (x: 10.0, y: 7.0710678118654755),
     ///     (x: 17.071067811865476, y: 7.0710678118654755)
