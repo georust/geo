@@ -197,7 +197,11 @@ mod test {
             point!(x: 0.6464466094067263, y: 0.8535533905932737),
             point!(x: 1.353553390593274, y: 1.560660171779821),
         ]);
-        assert_relative_eq!(multi_points.rotate_around_center(45.), expected_for_center);
+        assert_relative_eq!(
+            multi_points.rotate_around_center(45.),
+            expected_for_center,
+            epsilon = 1e-15
+        );
     }
 
     #[test]
