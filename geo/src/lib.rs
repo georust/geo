@@ -166,7 +166,7 @@
 //! - **[`RhumbIntermediate`]**: Calculate intermediate points on a sphere along a rhumb line
 //! - **[`proj`]**: Project geometries with the `proj` crate (requires the `use-proj` feature)
 //! - **[`LineStringSegmentize`]**: Segment a LineString into `n` segments.
-//! - **[`Transform`](crate::Transform)**: Transform a geometry using Proj.
+//! - **[`Transform`]**: Transform a geometry using Proj.
 //! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry.
 //!
 //! # Features
