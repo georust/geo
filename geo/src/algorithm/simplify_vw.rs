@@ -11,7 +11,7 @@ use rstar::{RTree, RTreeNum};
 
 /// Store triangle information. Area is used for ranking in the priority queue and determining removal
 #[derive(Debug)]
-struct VScore<T, I>
+struct VScore<T>
 where
     T: CoordFloat,
 {
@@ -21,35 +21,35 @@ where
     right: usize,
     area: T,
     // `visvalingam_preserve` uses `intersector`, `visvalingam` does not, so it's always false
-    intersector: I,
+    intersector: bool,
 }
 
 // These impls give us a min-heap
-impl<T, I> Ord for VScore<T, I>
+impl<T> Ord for VScore<T>
 where
     T: CoordFloat,
 {
-    fn cmp(&self, other: &VScore<T, I>) -> Ordering {
+    fn cmp(&self, other: &VScore<T>) -> Ordering {
         other.area.partial_cmp(&self.area).unwrap()
     }
 }
 
-impl<T, I> PartialOrd for VScore<T, I>
+impl<T> PartialOrd for VScore<T>
 where
     T: CoordFloat,
 {
-    fn partial_cmp(&self, other: &VScore<T, I>) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &VScore<T>) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<T, I> Eq for VScore<T, I> where T: CoordFloat {}
+impl<T> Eq for VScore<T> where T: CoordFloat {}
 
-impl<T, I> PartialEq for VScore<T, I>
+impl<T> PartialEq for VScore<T>
 where
     T: CoordFloat,
 {
-    fn eq(&self, other: &VScore<T, I>) -> bool
+    fn eq(&self, other: &VScore<T>) -> bool
     where
         T: CoordFloat,
     {
@@ -113,7 +113,7 @@ where
             right: i + 2,
             intersector: false,
         })
-        .collect::<BinaryHeap<VScore<T, bool>>>();
+        .collect::<BinaryHeap<VScore<T>>>();
     // While there are still points for which the associated triangle
     // has an area below the epsilon
     while let Some(smallest) = pq.pop() {
@@ -155,9 +155,9 @@ where
 /// This is used for both standard and topology-preserving variants.
 #[allow(clippy::too_many_arguments)]
 fn recompute_triangles<T>(
-    smallest: &VScore<T, bool>,
+    smallest: &VScore<T>,
     orig: &LineString<T>,
-    pq: &mut BinaryHeap<VScore<T, bool>>,
+    pq: &mut BinaryHeap<VScore<T>>,
     ll: i32,
     left: i32,
     right: i32,
@@ -328,7 +328,7 @@ where
             right: i + 2,
             intersector: false,
         })
-        .collect::<BinaryHeap<VScore<T, bool>>>();
+        .collect::<BinaryHeap<VScore<T>>>();
 
     // While there are still points for which the associated triangle
     // has an area below the epsilon
@@ -396,7 +396,7 @@ where
 /// the bounding box of the new triangle created by the candidate segment
 fn tree_intersect<T>(
     tree: &RTree<CachedEnvelope<Line<T>>>,
-    triangle: &VScore<T, bool>,
+    triangle: &VScore<T>,
     orig: &[Coord<T>],
 ) -> bool
 where
