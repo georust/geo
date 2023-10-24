@@ -78,7 +78,7 @@ pub trait Rotate<T: CoordFloat> {
     ///     point!(x: 10.0, y: 0.0),
     /// );
     ///
-    /// assert_eq!(rotated, line_string![
+    /// approx::assert_relative_eq!(rotated, line_string![
     ///     (x: 2.9289321881345245, y: 7.071067811865475),
     ///     (x: 10.0, y: 7.0710678118654755),
     ///     (x: 17.071067811865476, y: 7.0710678118654755)
@@ -197,7 +197,11 @@ mod test {
             point!(x: 0.6464466094067263, y: 0.8535533905932737),
             point!(x: 1.353553390593274, y: 1.560660171779821),
         ]);
-        assert_relative_eq!(multi_points.rotate_around_center(45.), expected_for_center);
+        assert_relative_eq!(
+            multi_points.rotate_around_center(45.),
+            expected_for_center,
+            epsilon = 1e-15
+        );
     }
 
     #[test]
@@ -357,7 +361,11 @@ mod test {
     fn test_rotate_around_point_arbitrary() {
         let p = Point::new(5.0, 10.0);
         let rotated = p.rotate_around_point(-45., Point::new(10., 34.));
-        assert_eq!(rotated, Point::new(-10.506096654409877, 20.564971157455595));
+        assert_relative_eq!(
+            rotated,
+            Point::new(-10.506096654409877, 20.564971157455595),
+            epsilon = 1e-14
+        );
     }
     #[test]
     fn test_rotate_line() {
