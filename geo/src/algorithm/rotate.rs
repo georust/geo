@@ -9,7 +9,7 @@ use crate::CoordFloat;
 /// ## Performance
 ///
 /// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
-/// [`Skew`](crate::Skew), [`Translate`], or [`Rotate`], it is more
+/// [`Skew`], [`Translate`], or [`Rotate`], it is more
 /// efficient to compose the transformations and apply them as a single operation using the
 /// [`AffineOps`] trait.
 pub trait Rotate<T: CoordFloat> {
