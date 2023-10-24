@@ -24,6 +24,8 @@
   * <https://github.com/georust/geo/pull/1070>
 * Add rhumb-line operations analogous to several current haversine operations: `RhumbBearing`, `RhumbDestination`, `RhumbDistance`, `RhumbIntermediate`, `RhumbLength`.
   * <https://github.com/georust/geo/pull/1090>
+* Fix coordinate wrapping in `HaversineDestination`
+  * <https://github.com/georust/geo/pull/1091>
 
 ## 0.26.0
 
