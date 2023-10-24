@@ -63,8 +63,8 @@ impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> Affin
 ///
 /// Note that affine ops are **already implemented** on most `geo-types` primitives, using this module.
 ///
-/// Affine transforms using the same numeric type (e.g. [`CoordFloat`](crate::CoordFloat)) can be **composed**,
-/// and the result can be applied to geometries using e.g. [`MapCoords`](crate::MapCoords). This allows the
+/// Affine transforms using the same numeric type (e.g. [`CoordFloat`]) can be **composed**,
+/// and the result can be applied to geometries using e.g. [`MapCoords`]. This allows the
 /// efficient application of transforms: an arbitrary number of operations can be chained.
 /// These are then composed, producing a final transformation matrix which is applied to the geometry coordinates.
 ///

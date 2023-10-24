@@ -6,9 +6,9 @@ pub trait Translate<T: CoordNum> {
     /// ## Performance
     ///
     /// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
-    /// [`Skew`](crate::Skew), [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
+    /// [`Skew`](crate::Skew), [`Translate`], or [`Rotate`](crate::Rotate), it is more
     /// efficient to compose the transformations and apply them as a single operation using the
-    /// [`AffineOps`](crate::AffineOps) trait.
+    /// [`AffineOps`] trait.
     ///
     /// # Examples
     ///

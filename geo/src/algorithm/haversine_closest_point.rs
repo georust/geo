@@ -16,7 +16,7 @@ use num_traits::FromPrimitive;
 ///
 /// The implemetation is based on <https://edwilliams.org/avform147.htm#XTE>.
 ///
-/// See [Closest<F>] for a description of the return states.
+/// See [`Closest<F>`] for a description of the return states.
 ///
 /// Note: This may return `Closest::Intersection` even for non-intersecting geometies if they are
 /// very close to the input.
