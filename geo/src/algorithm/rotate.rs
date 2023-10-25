@@ -9,9 +9,9 @@ use crate::CoordFloat;
 /// ## Performance
 ///
 /// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
-/// [`Skew`](crate::Skew), [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
+/// [`Skew`], [`Translate`], or [`Rotate`], it is more
 /// efficient to compose the transformations and apply them as a single operation using the
-/// [`AffineOps`](crate::AffineOps) trait.
+/// [`AffineOps`] trait.
 pub trait Rotate<T: CoordFloat> {
     /// Rotate a geometry around its [centroid](Centroid) by an angle, in degrees
     ///
