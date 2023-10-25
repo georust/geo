@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use geo::contains::Contains;
-use geo::{polygon, Line, Point, Polygon, Triangle};
+use geo::{point, polygon, Line, Point, Polygon, Triangle};
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("point in simple polygon", |bencher| {
