@@ -56,6 +56,10 @@ pub use contains::Contains;
 pub mod convert;
 pub use convert::{Convert, TryConvert};
 
+/// Convert coordinate angle units between radians and degrees.
+pub mod convert_angle_unit;
+pub use convert_angle_unit::{ToDegrees, ToRadians};
+
 /// Calculate the convex hull of a `Geometry`.
 pub mod convex_hull;
 pub use convex_hull::ConvexHull;
@@ -75,6 +79,10 @@ pub use coords_iter::CoordsIter;
 /// Densify linear geometry components
 pub mod densify;
 pub use densify::Densify;
+
+/// Densify spherical geometry components
+pub mod densify_haversine;
+pub use densify_haversine::DensifyHaversine;
 
 /// Dimensionality of a geometry and its boundary, based on OGC-SFA.
 pub mod dimensions;
@@ -180,6 +188,10 @@ pub use line_locate_point::LineLocatePoint;
 pub mod lines_iter;
 pub use lines_iter::LinesIter;
 
+/// Split a LineString into n segments
+pub mod linestring_segment;
+pub use linestring_segment::LineStringSegmentize;
+
 /// Apply a function to all `Coord`s of a `Geometry`.
 pub mod map_coords;
 pub use map_coords::{MapCoords, MapCoordsInPlace};
@@ -271,3 +283,7 @@ pub use outlier_detection::OutlierDetection;
 /// Monotonic polygon subdivision
 pub mod monotone;
 pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
+
+/// Rhumb-line-related algorithms and utils
+pub mod rhumb;
+pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate, RhumbLength};

@@ -246,6 +246,16 @@ impl<T: CoordNum> Polygon<T> {
         self.exterior.close();
     }
 
+    /// Fallible alternative to [`exterior_mut`](Polygon::exterior_mut).
+    pub fn try_exterior_mut<F, E>(&mut self, f: F) -> Result<(), E>
+    where
+        F: FnOnce(&mut LineString<T>) -> Result<(), E>,
+    {
+        f(&mut self.exterior)?;
+        self.exterior.close();
+        Ok(())
+    }
+
     /// Return a slice of the interior `LineString` rings.
     ///
     /// # Examples
@@ -348,6 +358,18 @@ impl<T: CoordNum> Polygon<T> {
         for interior in &mut self.interiors {
             interior.close();
         }
+    }
+
+    /// Fallible alternative to [`interiors_mut`](Self::interiors_mut).
+    pub fn try_interiors_mut<F, E>(&mut self, f: F) -> Result<(), E>
+    where
+        F: FnOnce(&mut [LineString<T>]) -> Result<(), E>,
+    {
+        f(&mut self.interiors)?;
+        for interior in &mut self.interiors {
+            interior.close();
+        }
+        Ok(())
     }
 
     /// Add an interior ring to the `Polygon`.

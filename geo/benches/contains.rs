@@ -1,12 +1,6 @@
-#[macro_use]
-extern crate criterion;
-#[macro_use]
-extern crate geo;
-
+use criterion::{criterion_group, criterion_main, Criterion};
 use geo::contains::Contains;
 use geo::{polygon, Line, Point, Polygon, Triangle};
-
-use criterion::Criterion;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("point in simple polygon", |bencher| {

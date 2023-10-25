@@ -26,7 +26,7 @@ where
     F: GeoFloat + rstar::RTreeNum,
 {
     fn new(i: usize, edge: &'a RefCell<Edge<F>>) -> Self {
-        use crate::rstar::RTreeObject;
+        use rstar::RTreeObject;
         let p1 = edge.borrow().coords()[i];
         let p2 = edge.borrow().coords()[i + 1];
         Self {

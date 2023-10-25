@@ -299,8 +299,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::geo_types::coord;
-    use crate::{line_string, polygon};
+    use crate::{coord, line_string, polygon};
 
     #[test]
     fn recursion_test() {

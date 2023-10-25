@@ -16,7 +16,7 @@ use num_traits::FromPrimitive;
 ///
 /// The implemetation is based on <https://edwilliams.org/avform147.htm#XTE>.
 ///
-/// See [Closest<F>] for a description of the return states.
+/// See [`Closest<F>`] for a description of the return states.
 ///
 /// Note: This may return `Closest::Intersection` even for non-intersecting geometies if they are
 /// very close to the input.
@@ -25,10 +25,14 @@ use num_traits::FromPrimitive;
 /// ```
 /// # use geo::HaversineClosestPoint;
 /// # use geo::{Point, Line, Closest};
+/// use approx::assert_relative_eq;
 /// let line = Line::new(Point::new(-85.93942, 32.11055), Point::new(-84.74905, 32.61454));
 /// let p_from = Point::new(-84.75625, 31.81056);
-/// assert_eq!(line.haversine_closest_point(&p_from),
-///         Closest::SinglePoint(Point::new(-85.13337428852164, 32.45365659858937)));
+/// if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
+///     assert_relative_eq!(pt, Point::new(-85.13337428852164, 32.45365659858937), epsilon = 1e-6);
+/// } else {
+///     panic!("Closest::SinglePoint expected");
+/// }
 /// ```
 pub trait HaversineClosestPoint<T>
 where
@@ -458,7 +462,11 @@ mod test {
         let p_from = Point::new(8.15172, 77.40041);
 
         if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
-            assert_relative_eq!(pt, Point::new(5.481_094_923_165_54, 82.998_280_987_615_33));
+            assert_relative_eq!(
+                pt,
+                Point::new(5.481_094_923_165_54, 82.998_280_987_615_33),
+                epsilon = 1.0e-6
+            );
         } else {
             panic!("Did not get Closest::SinglePoint!");
         }
@@ -480,7 +488,11 @@ mod test {
         let p_from = Point::new(17.02374, 10.57037);
 
         if let Closest::SinglePoint(pt) = linestring.haversine_closest_point(&p_from) {
-            assert_relative_eq!(pt, Point::new(15.611386947136054, 10.006831648991811));
+            assert_relative_eq!(
+                pt,
+                Point::new(15.611386947136054, 10.006831648991811),
+                epsilon = 1.0e-6
+            );
         } else {
             panic!("Did not get Closest::SinglePoint!");
         }
@@ -516,7 +528,11 @@ mod test {
         let p_from = Point::new(-8.95108, 12.82790);
 
         if let Closest::SinglePoint(pt) = poly.haversine_closest_point(&p_from) {
-            assert_relative_eq!(pt, Point::new(-8.732575801021413, 12.518536164563992));
+            assert_relative_eq!(
+                pt,
+                Point::new(-8.732575801021413, 12.518536164563992),
+                epsilon = 1.0e-6
+            );
         } else {
             panic!("Did not get Closest::SinglePoint!");
         }
@@ -543,7 +559,11 @@ mod test {
         let p_from = Point::new(-8.38752, 12.29866);
 
         if let Closest::SinglePoint(pt) = poly.haversine_closest_point(&p_from) {
-            assert_relative_eq!(pt, Point::new(-8.310007197809414, 12.226641293789331));
+            assert_relative_eq!(
+                pt,
+                Point::new(-8.310007197809414, 12.226641293789331),
+                epsilon = 1.0e-6
+            );
         } else {
             panic!("Did not get Closest::SinglePoint!");
         }
@@ -605,7 +625,11 @@ mod test {
         let p_from = Point::new(-8.95108, 12.82790);
 
         if let Closest::SinglePoint(pt) = poly.haversine_closest_point(&p_from) {
-            assert_relative_eq!(pt, Point::new(-8.922208260289914, 12.806949983368323));
+            assert_relative_eq!(
+                pt,
+                Point::new(-8.922208260289914, 12.806949983368323),
+                epsilon = 1.0e-6
+            );
         } else {
             panic!("Did not get Closest::SinglePoint!");
         }

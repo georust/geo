@@ -1,4 +1,4 @@
-use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
+use crate::{utils::normalize_longitude, CoordFloat, Point, MEAN_EARTH_RADIUS};
 use num_traits::FromPrimitive;
 
 /// Returns a new Point using the distance to the existing Point and a bearing for the direction
@@ -18,10 +18,11 @@ pub trait HaversineDestination<T: CoordFloat> {
     /// ```rust
     /// use geo::HaversineDestination;
     /// use geo::Point;
+    /// use approx::assert_relative_eq;
     ///
     /// let p_1 = Point::new(9.177789688110352, 48.776781529534965);
     /// let p_2 = p_1.haversine_destination(45., 10000.);
-    /// assert_eq!(p_2, Point::new(9.274409949623548, 48.84033274015048))
+    /// assert_relative_eq!(p_2, Point::new(9.274409949623548, 48.84033274015048), epsilon = 1e-6)
     /// ```
     fn haversine_destination(&self, bearing: T, distance: T) -> Point<T>;
 }
@@ -44,21 +45,25 @@ where
             .atan2(rad.cos() - center_lat.sin() * lat.sin())
             + center_lng;
 
-        Point::new(lng.to_degrees(), lat.to_degrees())
+        Point::new(normalize_longitude(lng.to_degrees()), lat.to_degrees())
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::HaversineDistance;
+    use crate::{HaversineBearing, HaversineDistance};
     use num_traits::pow;
 
     #[test]
     fn returns_a_new_point() {
         let p_1 = Point::new(9.177789688110352, 48.776781529534965);
         let p_2 = p_1.haversine_destination(45., 10000.);
-        assert_eq!(p_2, Point::new(9.274409949623548, 48.84033274015048));
+        assert_relative_eq!(
+            p_2,
+            Point::new(9.274409949623548, 48.84033274015048),
+            epsilon = 1.0e-6
+        );
         let distance = p_1.haversine_distance(&p_2);
         assert_relative_eq!(distance, 10000., epsilon = 1.0e-6)
     }
@@ -79,5 +84,19 @@ mod test {
         let p_2 = p_1.haversine_destination(0., 1000.);
         assert_relative_eq!(p_1.x(), p_2.x(), epsilon = 1.0e-6);
         assert!(p_2.y() > p_1.y())
+    }
+
+    #[test]
+    fn should_wrap_correctly() {
+        let pt1 = Point::new(170.0, -30.0);
+        let pt2 = Point::new(-170.0, -30.0);
+
+        for (start, end) in [(pt1, pt2), (pt2, pt1)] {
+            let bearing = start.haversine_bearing(end);
+            let results: Vec<_> = (0..8)
+                .map(|n| start.haversine_destination(bearing, n as f64 * 250_000.))
+                .collect();
+            assert!(results.iter().all(|pt| pt.x() >= -180.0 && pt.x() <= 180.0));
+        }
     }
 }

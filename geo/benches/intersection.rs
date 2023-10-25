@@ -1,9 +1,4 @@
-#[macro_use]
-extern crate criterion;
-extern crate geo;
-extern crate geo_test_fixtures;
-
-use criterion::Criterion;
+use criterion::{criterion_group, criterion_main, Criterion};
 use geo::intersects::Intersects;
 use geo::MultiPolygon;
 
