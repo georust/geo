@@ -84,7 +84,6 @@
 //! [rstar]: https://github.com/Stoeoef/rstar
 //! [Serde]: https://serde.rs/
 extern crate alloc;
-extern crate num_traits;
 
 use core::fmt::Debug;
 use num_traits::{Float, Num, NumCast};
@@ -92,9 +91,6 @@ use num_traits::{Float, Num, NumCast};
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;
-
-#[cfg(feature = "rstar_0_8")]
-extern crate rstar_0_8;
 
 #[cfg(test)]
 #[macro_use]

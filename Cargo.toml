@@ -1,5 +1,13 @@
 [workspace]
-members = ["geo", "geo-types", "geo-postgis", "geo-test-fixtures", "jts-test-runner", "geo-bool-ops-benches"]
+resolver = "2"
+members = [
+  "geo",
+  "geo-types",
+  "geo-postgis",
+  "geo-test-fixtures",
+  "jts-test-runner",
+  "geo-bool-ops-benches",
+]
 
 [patch.crates-io]
 

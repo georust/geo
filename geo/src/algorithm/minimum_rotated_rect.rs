@@ -28,19 +28,19 @@ use crate::{
 ///     ])
 /// );
 /// ```
-pub trait MinimumRotatedRect<'a, T> {
+pub trait MinimumRotatedRect<T> {
     type Scalar: GeoNum;
-    fn minimum_rotated_rect(&'a self) -> Option<Polygon<Self::Scalar>>;
+    fn minimum_rotated_rect(&self) -> Option<Polygon<Self::Scalar>>;
 }
 
-impl<'a, T, G> MinimumRotatedRect<'a, T> for G
+impl<T, G> MinimumRotatedRect<T> for G
 where
     T: CoordFloat + GeoFloat + GeoNum,
-    G: CoordsIter<'a, Scalar = T>,
+    G: CoordsIter<Scalar = T>,
 {
     type Scalar = T;
 
-    fn minimum_rotated_rect(&'a self) -> Option<Polygon<Self::Scalar>> {
+    fn minimum_rotated_rect(&self) -> Option<Polygon<Self::Scalar>> {
         let convex_poly = ConvexHull::convex_hull(self);
         let mut min_area: T = Float::max_value();
         let mut min_angle: T = T::zero();

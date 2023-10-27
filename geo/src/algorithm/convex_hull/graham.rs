@@ -98,7 +98,7 @@ mod test {
 
     #[test]
     fn test_graham_hull_ccw() {
-        let initial = vec![
+        let initial = [
             (1.0, 0.0),
             (2.0, 1.0),
             (1.75, 1.1),
@@ -119,7 +119,7 @@ mod test {
 
     #[test]
     fn graham_hull_test2() {
-        let v = vec![
+        let v = [
             (0, 10),
             (1, 1),
             (10, 0),

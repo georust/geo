@@ -7,6 +7,7 @@ use crate::{
 };
 use num_traits::{float::FloatConst, Bounded, Float, Signed};
 
+use rstar::primitives::CachedEnvelope;
 use rstar::RTree;
 use rstar::RTreeNum;
 
@@ -585,8 +586,8 @@ pub fn nearest_neighbour_distance<T>(geom1: &LineString<T>, geom2: &LineString<T
 where
     T: GeoFloat + RTreeNum,
 {
-    let tree_a: RTree<Line<_>> = RTree::bulk_load(geom1.lines().collect::<Vec<_>>());
-    let tree_b: RTree<Line<_>> = RTree::bulk_load(geom2.lines().collect::<Vec<_>>());
+    let tree_a = RTree::bulk_load(geom1.lines().map(CachedEnvelope::new).collect());
+    let tree_b = RTree::bulk_load(geom2.lines().map(CachedEnvelope::new).collect());
     // Return minimum distance between all geom a points and geom b lines, and all geom b points and geom a lines
     geom2
         .points()
@@ -954,7 +955,7 @@ mod test {
     #[test]
     // test edge-vertex minimum distance
     fn test_minimum_polygon_distance() {
-        let points_raw = vec![
+        let points_raw = [
             (126., 232.),
             (126., 212.),
             (112., 202.),
@@ -970,7 +971,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString::from(points), vec![]);
 
-        let points_raw_2 = vec![
+        let points_raw_2 = [
             (188., 231.),
             (189., 207.),
             (174., 196.),
@@ -990,7 +991,7 @@ mod test {
     #[test]
     // test vertex-vertex minimum distance
     fn test_minimum_polygon_distance_2() {
-        let points_raw = vec![
+        let points_raw = [
             (118., 200.),
             (153., 179.),
             (106., 155.),
@@ -1003,7 +1004,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString::from(points), vec![]);
 
-        let points_raw_2 = vec![
+        let points_raw_2 = [
             (242., 186.),
             (260., 146.),
             (182., 175.),
@@ -1021,7 +1022,7 @@ mod test {
     #[test]
     // test edge-edge minimum distance
     fn test_minimum_polygon_distance_3() {
-        let points_raw = vec![
+        let points_raw = [
             (182., 182.),
             (182., 168.),
             (138., 160.),
@@ -1034,7 +1035,7 @@ mod test {
             .collect::<Vec<_>>();
         let poly1 = Polygon::new(LineString::from(points), vec![]);
 
-        let points_raw_2 = vec![
+        let points_raw_2 = [
             (232., 196.),
             (234., 150.),
             (194., 165.),

@@ -9,8 +9,7 @@ pub trait GeodesicIntermediate<T: CoordFloat> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use] extern crate approx;
-    /// #
+    /// # use approx::assert_relative_eq;
     /// use geo::GeodesicIntermediate;
     /// use geo::Point;
     ///

@@ -157,7 +157,7 @@ mod test {
     #[test]
     // test whether output is ccw
     fn quick_hull_test_ccw() {
-        let initial = vec![
+        let initial = [
             (1.0, 0.0),
             (2.0, 1.0),
             (1.75, 1.1),
@@ -166,7 +166,7 @@ mod test {
             (1.0, 0.0),
         ];
         let mut v: Vec<_> = initial.iter().map(|e| coord! { x: e.0, y: e.1 }).collect();
-        let correct = vec![(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
+        let correct = [(1.0, 0.0), (2.0, 1.0), (1.0, 2.0), (0.0, 1.0), (1.0, 0.0)];
         let v_correct: Vec<_> = correct.iter().map(|e| coord! { x: e.0, y: e.1 }).collect();
         let res = quick_hull(&mut v);
         assert_eq!(res.0, v_correct);
@@ -175,7 +175,7 @@ mod test {
     #[test]
     fn quick_hull_test_ccw_maintain() {
         // initial input begins at min y, is oriented ccw
-        let initial = vec![
+        let initial = [
             (0., 0.),
             (2., 0.),
             (2.5, 1.75),
@@ -211,7 +211,7 @@ mod test {
         // Initial input begins at min x, but not min y
         // There are three points with same x.
         // Output should not contain the middle point.
-        let initial = vec![
+        let initial = [
             (-1., 0.),
             (-1., -1.),
             (-1., 1.),
