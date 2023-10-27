@@ -10,7 +10,7 @@ use num_traits::FromPrimitive;
 
 /// Calculates the closest `Point` on a geometry from a given `Point` in sperical coordinates.
 ///
-/// Similar to [`ClosestPoint`] but for spherical coordinates:
+/// Similar to [`ClosestPoint`](crate::ClosestPoint) but for spherical coordinates:
 /// * Longitude (x) in the [-180; 180] degrees range.
 /// * Latitude (y) in the [-90; 90] degrees range.
 ///
