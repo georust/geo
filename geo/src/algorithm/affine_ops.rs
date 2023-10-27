@@ -554,7 +554,7 @@ mod tests {
         // test really only needs this, but let's be sure
         assert!(identity.is_identity());
 
-        let mut poly = polygon![(x: 0.0, y: 0.0), (x: 0.0, y: 2.0), (x: 1.0, y: 2.0)];
+        let mut poly = wkt! { POLYGON((0.0 0.0,0.0 2.0,1.0 2.0)) };
         let expected = poly.clone();
         poly.affine_transform_mut(&identity);
         assert_eq!(expected, poly);
