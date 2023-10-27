@@ -197,29 +197,21 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::line_string;
+    use crate::{line_string, wkt};
 
     #[test]
     fn test_iter() {
-        let multi: Vec<LineString<i32>> = vec![
-            line_string![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
-            line_string![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)],
-        ];
-        let multi: MultiLineString<i32> = MultiLineString::new(multi);
+        let multi: MultiLineString<i32> = wkt! {
+            MULTILINESTRING((0 0,2 0,1 2,0 0), (10 10,12 10,11 12,10 10))
+        };
 
         let mut first = true;
         for p in &multi {
             if first {
-                assert_eq!(
-                    p,
-                    &line_string![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)]
-                );
+                assert_eq!(p, &wkt! { LINESTRING(0 0,2 0,1 2,0 0) });
                 first = false;
             } else {
-                assert_eq!(
-                    p,
-                    &line_string![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)]
-                );
+                assert_eq!(p, &wkt! { LINESTRING(10 10,12 10,11 12,10 10) });
             }
         }
 
@@ -227,16 +219,10 @@ mod test {
         first = true;
         for p in &multi {
             if first {
-                assert_eq!(
-                    p,
-                    &line_string![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)]
-                );
+                assert_eq!(p, &wkt! { LINESTRING(0 0,2 0,1 2,0 0) });
                 first = false;
             } else {
-                assert_eq!(
-                    p,
-                    &line_string![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)]
-                );
+                assert_eq!(p, &wkt! { LINESTRING(10 10,12 10,11 12,10 10) });
             }
         }
     }

@@ -178,11 +178,11 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::point;
+    use crate::{point, wkt};
 
     #[test]
     fn test_iter() {
-        let multi = MultiPoint::new(vec![point![x: 0, y: 0], point![x: 10, y: 10]]);
+        let multi = wkt! { MULTIPOINT(0 0,10 10) };
 
         let mut first = true;
         for p in &multi {
@@ -208,7 +208,7 @@ mod test {
 
     #[test]
     fn test_iter_mut() {
-        let mut multi = MultiPoint::new(vec![point![x: 0, y: 0], point![x: 10, y: 10]]);
+        let mut multi = wkt! { MULTIPOINT(0 0,10 10) };
 
         for point in &mut multi {
             point.0.x += 1;
@@ -235,26 +235,25 @@ mod test {
     fn test_relative_eq() {
         let delta = 1e-6;
 
-        let multi = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+        let multi = wkt! { MULTIPOINT(0. 0.,10. 10.) };
 
-        let multi_x = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10.+delta, y: 10.]]);
+        let mut multi_x = multi.clone();
+        *multi_x.0[0].x_mut() += delta;
+
         assert!(multi.relative_eq(&multi_x, 1e-2, 1e-2));
         assert!(multi.relative_ne(&multi_x, 1e-12, 1e-12));
 
-        let multi_y = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10., y: 10.+delta]]);
+        let mut multi_y = multi.clone();
+        *multi_y.0[0].y_mut() += delta;
         assert!(multi.relative_eq(&multi_y, 1e-2, 1e-2));
         assert!(multi.relative_ne(&multi_y, 1e-12, 1e-12));
 
         // Under-sized but otherwise equal.
-        let multi_undersized = MultiPoint::new(vec![point![x: 0., y: 0.]]);
+        let multi_undersized = wkt! { MULTIPOINT(0. 0.) };
         assert!(multi.relative_ne(&multi_undersized, 1., 1.));
 
         // Over-sized but otherwise equal.
-        let multi_oversized = MultiPoint::new(vec![
-            point![x: 0., y: 0.],
-            point![x: 10., y: 10.],
-            point![x: 10., y:100.],
-        ]);
+        let multi_oversized = wkt! { MULTIPOINT(0. 0.,10. 10.,10. 100.) };
         assert!(multi.relative_ne(&multi_oversized, 1., 1.));
     }
 
@@ -262,26 +261,24 @@ mod test {
     fn test_abs_diff_eq() {
         let delta = 1e-6;
 
-        let multi = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10., y: 10.]]);
+        let multi = wkt! { MULTIPOINT(0. 0.,10. 10.) };
 
-        let multi_x = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10.+delta, y: 10.]]);
+        let mut multi_x = multi.clone();
+        *multi_x.0[0].x_mut() += delta;
         assert!(multi.abs_diff_eq(&multi_x, 1e-2));
         assert!(multi.abs_diff_ne(&multi_x, 1e-12));
 
-        let multi_y = MultiPoint::new(vec![point![x: 0., y: 0.], point![x: 10., y: 10.+delta]]);
+        let mut multi_y = multi.clone();
+        *multi_y.0[0].y_mut() += delta;
         assert!(multi.abs_diff_eq(&multi_y, 1e-2));
         assert!(multi.abs_diff_ne(&multi_y, 1e-12));
 
         // Under-sized but otherwise equal.
-        let multi_undersized = MultiPoint::new(vec![point![x: 0., y: 0.]]);
+        let multi_undersized = wkt! { MULTIPOINT(0. 0.) };
         assert!(multi.abs_diff_ne(&multi_undersized, 1.));
 
         // Over-sized but otherwise equal.
-        let multi_oversized = MultiPoint::new(vec![
-            point![x: 0., y: 0.],
-            point![x: 10., y: 10.],
-            point![x: 10., y:100.],
-        ]);
+        let multi_oversized = wkt! { MULTIPOINT(0. 0.,10. 10.,10. 100.) };
         assert!(multi.abs_diff_ne(&multi_oversized, 1.));
     }
 }

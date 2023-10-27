@@ -4,6 +4,8 @@
 
 * Add `Polygon::try_exterior_mut` and `Polygon::try_interiors_mut`.
   <https://github.com/georust/geo/pull/1071>
+* Add `wkt!` macro to define geometries at compile time.
+  <https://github.com/georust/geo/pull/1063>
 
 ## 0.7.11
 * Bump rstar dependency
