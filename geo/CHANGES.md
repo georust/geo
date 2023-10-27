@@ -26,6 +26,8 @@
   * <https://github.com/georust/geo/pull/1090>
 * Fix coordinate wrapping in `HaversineDestination`
   * <https://github.com/georust/geo/pull/1091>
+* Add `wkt!` macro to define geometries at compile time.
+  <https://github.com/georust/geo/pull/1063>
 
 ## 0.26.0
 
