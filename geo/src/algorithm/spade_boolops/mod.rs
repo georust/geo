@@ -7,4 +7,4 @@ pub use error::SpadeBoolopsError;
 pub use trait_def::SpadeBoolops;
 
 #[cfg(test)]
-pub mod spade_boolops_tests;
+pub mod tests;
