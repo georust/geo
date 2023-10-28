@@ -94,6 +94,7 @@ fn star_intersects_self_properly() {
     is_multipolygon_nonempty(&intersection);
     has_num_polygons(&intersection, 1);
     has_num_holes(&intersection, 0);
+    has_num_vertices(&intersection, 23);
 }
 
 #[test]
@@ -115,4 +116,5 @@ fn star_shape_slightly_offset_difference() {
     is_multipolygon_nonempty(&difference);
     has_num_polygons(&difference, 1);
     has_num_holes(&difference, 0);
+    has_num_vertices(&difference, 4);
 }
