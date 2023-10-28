@@ -16,7 +16,7 @@ where
         op_pred: F,
     ) -> SpadeBoolopsResult<T> {
         vec![p1.clone(), p2.clone()]
-            .unconstrained_triangulation()
+            .constrained_outer_triangulation()
             .map_err(SpadeBoolopsError::TriangulationError)?
             .into_iter()
             .filter(|tri| op_pred(tri))
@@ -37,7 +37,7 @@ where
         op_pred: F,
     ) -> SpadeBoolopsResult<T> {
         vec![p1.clone(), p2.clone()]
-            .unconstrained_triangulation()
+            .constrained_outer_triangulation()
             .map_err(SpadeBoolopsError::TriangulationError)?
             .into_iter()
             .filter(|tri| op_pred(tri))
