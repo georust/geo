@@ -173,3 +173,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - run: cargo bench --no-run
+
+  docs:
+    name: build documentation
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    container:
+      image: georust/geo-ci:proj-9.2.1-rust-1.72
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - run: RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
+
