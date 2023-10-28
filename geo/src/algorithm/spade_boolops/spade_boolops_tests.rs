@@ -82,39 +82,82 @@ fn basic_intersection_compiles() {
     SpadeBoolops::intersection(&rect1.to_polygon(), &rect2.to_polygon()).unwrap();
 }
 
-#[test]
-fn star_intersects_self_properly() {
-    _ = pretty_env_logger::try_init();
-    let data = include_str!("./data/star.wkt");
-    let data = load_wkt(data).unwrap();
-    let poly1 = &data[0];
+macro_rules! define_test {
+    (
+        name      = $test_name:ident,
+        path      = $path:expr,
+        operation = $op:expr,
+        results: 
+        empty     = $empty:expr,
+        num_polys = $num_polys:expr,
+        num_holes = $num_holes:expr,
+        num_verts = $num_verts:expr,
+     ) => {
+        #[test]
+        fn $test_name() {
+            _ = pretty_env_logger::try_init();
+            let data = include_str!($path);
+            let data = load_wkt(data).unwrap();
 
-    let intersection = Polygon::intersection(poly1, poly1).unwrap();
+            let f = $op;
+            let res = f(data);
 
-    is_multipolygon_nonempty(&intersection);
-    has_num_polygons(&intersection, 1);
-    has_num_holes(&intersection, 0);
-    has_num_vertices(&intersection, 23);
+            if $empty {
+                is_multipolygon_empty(&res);
+            } else {
+                is_multipolygon_nonempty(&res);
+            }
+            has_num_polygons(&res, $num_polys);
+            has_num_holes(&res, $num_holes);
+            has_num_vertices(&res, $num_verts);
+        }
+    };
 }
 
-#[test]
-fn star_shape_slightly_offset_difference() {
-    _ = pretty_env_logger::try_init();
-    let data = include_str!("./data/star.wkt");
-    let data = load_wkt(data).unwrap();
-    let poly1 = &data[0];
-
-    let mut poly2 = poly1.clone();
-    poly2.exterior_mut(|ext| {
-        ext.coords_mut().skip(1).take(1).for_each(|coord| {
-            *coord = *coord + Coord { x: 0.1, y: 0.1 };
+define_test!(
+    name      = star_shape_slightly_offset_difference,
+    path      = "./data/star.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let poly1 = &data[0];
+        let mut poly2 = poly1.clone();
+        poly2.exterior_mut(|ext| {
+            ext.coords_mut().skip(1).take(1).for_each(|coord| {
+                *coord = *coord + Coord { x: 0.1, y: 0.1 };
+            });
         });
-    });
+        Polygon::difference(poly1, &poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 0,
+    num_verts = 4,
+);
 
-    let difference = Polygon::difference(poly1, &poly2).unwrap();
+define_test!(
+    name      = star_intersects_self_properly,
+    path      = "./data/star.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let poly1 = &data[0];
+        Polygon::intersection(poly1, poly1).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 0,
+    num_verts = 23,
+);
 
-    is_multipolygon_nonempty(&difference);
-    has_num_polygons(&difference, 1);
-    has_num_holes(&difference, 0);
-    has_num_vertices(&difference, 4);
-}
+define_test!(
+    name      = duplicate_points_intersect_works_1,
+    path      = "./data/duplicate_points_case_1.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::intersection(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 0,
+    num_verts = 5,
+);
