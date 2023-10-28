@@ -6,9 +6,13 @@ use geo_types::*;
 use wkt::TryFromWkt;
 
 // helper
-//
+
 pub fn multipolygon_from<F: SpadeTriangulationFloat>(v: Vec<Polygon<F>>) -> MultiPolygon<F> {
     MultiPolygon::new(v)
+}
+
+pub fn empty_poly<F: SpadeTriangulationFloat>() -> Polygon<F> {
+    Polygon::new(LineString::new(vec![]), vec![])
 }
 
 pub fn is_multipolygon_nonempty<F: SpadeTriangulationFloat>(multipolygon: &MultiPolygon<F>) {
@@ -45,7 +49,7 @@ pub fn has_num_vertices<F: SpadeTriangulationFloat>(
 ) {
     let false_num_vertices = multipolygon
         .iter()
-        .map(|poly| poly.exterior().coords().count())
+        .map(|poly| poly.exterior().coords().count() + poly.interiors().iter().map(|i| i.coords().count()).sum::<usize>())
         .find(|&num_vertices| num_vertices != expected_num_vertices);
     assert!(false_num_vertices.is_none(), "A polygon had not the expected number of vertices ({expected_num_vertices}), but {} vertices instead", false_num_vertices.unwrap());
 }
@@ -115,7 +119,7 @@ macro_rules! define_test {
 }
 
 define_test!(
-    name      = star_shape_slightly_offset_difference,
+    name      = star_shape_slightly_offset_difference_1,
     path      = "./data/star.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let poly1 = &data[0];
@@ -126,6 +130,26 @@ define_test!(
             });
         });
         Polygon::difference(poly1, &poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 0,
+    num_verts = 4,
+);
+
+define_test!(
+    name      = star_shape_slightly_offset_difference_2,
+    path      = "./data/star.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let poly1 = &data[0];
+        let mut poly2 = poly1.clone();
+        poly2.exterior_mut(|ext| {
+            ext.coords_mut().skip(1).take(1).for_each(|coord| {
+                *coord = *coord + Coord { x: 0.1, y: 0.1 };
+            });
+        });
+        Polygon::difference(&poly2, poly1).unwrap()
     },
     results: 
     empty     = false,
@@ -149,7 +173,7 @@ define_test!(
 );
 
 define_test!(
-    name      = duplicate_points_intersect_works_1,
+    name      = duplicate_points_intersection_works_1,
     path      = "./data/duplicate_points_case_1.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
@@ -160,4 +184,256 @@ define_test!(
     num_polys = 1,
     num_holes = 0,
     num_verts = 5,
+);
+
+define_test!(
+    name      = duplicate_points_intersection_works_2,
+    path      = "./data/duplicate_points_case_2.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::intersection(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 0,
+    num_verts = 6,
+);
+
+define_test!(
+    name      = duplicate_points_difference_works_1,
+    path      = "./data/duplicate_points_case_3.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::difference(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 1,
+    num_verts = 9,
+);
+
+define_test!(
+    name      = collinear_outline_parts_intersection_works,
+    path      = "./data/collinear_outline_parts.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::intersection(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 0,
+    num_verts = 5,
+);
+
+define_test!(
+    name      = missing_triangle_intersection_works_1,
+    path      = "./data/missing_triangle_case_1.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::intersection(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 0,
+    num_verts = 5,
+);
+
+define_test!(
+    name      = missing_triangle_intersection_empty,
+    path      = "./data/missing_triangle_case_2.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::intersection(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = true,
+    num_polys = 0,
+    num_holes = 0,
+    num_verts = 0,
+);
+
+define_test!(
+    name      = missing_triangle_intersection_works_2,
+    path      = "./data/missing_triangle_case_3.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::intersection(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 0,
+    num_verts = 7,
+);
+
+define_test!(
+    name      = intersection_at_address_works_1,
+    path      = "./data/intersection_address_001.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::intersection(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 0,
+    num_verts = 5,
+);
+
+define_test!(
+    name      = difference_at_address_works_1,
+    path      = "./data/intersection_address_001.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::difference(poly2, poly1).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 1,
+    num_verts = 10,
+);
+
+define_test!(
+    name      = intersection_at_address_works_2,
+    path      = "./data/intersection_address_002.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::intersection(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 0,
+    num_verts = 9,
+);
+
+define_test!(
+    name      = difference_at_address_works_2,
+    path      = "./data/intersection_address_002.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::difference(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 1,
+    num_verts = 18,
+);
+
+define_test!(
+    name      = intersection_doesnt_fail_after_union_fix_1,
+    path      = "./data/intersection_fail_after_union_fix_1.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::intersection(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 0,
+    num_verts = 5,
+);
+
+define_test!(
+    name      = difference_doesnt_fail_after_union_fix_1,
+    path      = "./data/intersection_fail_after_union_fix_1.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::difference(poly2, poly1).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 1,
+    num_verts = 10,
+);
+
+define_test!(
+    name      = intersection_doesnt_fail_after_union_fix_2,
+    path      = "./data/intersection_fail_after_union_fix_2.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::intersection(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 0,
+    num_verts = 5,
+);
+
+define_test!(
+    name      = holes_are_preserved_by_union,
+    path      = "./data/holes_are_preserved.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let poly1 = &data[0];
+        Polygon::union(poly1, poly1).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 1,
+    num_verts = 10,
+);
+
+define_test!(
+    name      = holes_are_preserved_by_intersection,
+    path      = "./data/holes_are_preserved.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let poly1 = &data[0];
+        Polygon::intersection(poly1, poly1).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 1,
+    num_verts = 10,
+);
+
+define_test!(
+    name      = holes_are_preserved_by_difference,
+    path      = "./data/holes_are_preserved.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let poly1 = &data[0];
+        Polygon::difference(poly1, &empty_poly()).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 1,
+    num_verts = 10,
+);
+
+define_test!(
+    name      = one_hole_after_union,
+    path      = "./data/hole_after_union.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::union(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 1,
+    num_verts = 14,
+);
+
+define_test!(
+    name      = two_holes_after_union,
+    path      = "./data/two_holes_after_union.wkt",
+    operation = |data: Vec<Polygon<f32>>| {
+        let [poly1, poly2] = [&data[0], &data[1]];
+        Polygon::union(poly1, poly2).unwrap()
+    },
+    results: 
+    empty     = false,
+    num_polys = 1,
+    num_holes = 2,
+    num_verts = 21,
 );
