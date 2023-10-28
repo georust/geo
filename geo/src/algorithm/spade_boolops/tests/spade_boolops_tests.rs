@@ -48,7 +48,7 @@ macro_rules! define_test {
 
 define_test!(
     name      = star_shape_slightly_offset_difference_1,
-    path      = "../data/star.wkt",
+    path      = "../test_data/star.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let poly1 = &data[0];
         let mut poly2 = poly1.clone();
@@ -68,7 +68,7 @@ define_test!(
 
 define_test!(
     name      = star_shape_slightly_offset_difference_2,
-    path      = "../data/star.wkt",
+    path      = "../test_data/star.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let poly1 = &data[0];
         let mut poly2 = poly1.clone();
@@ -88,7 +88,7 @@ define_test!(
 
 define_test!(
     name      = star_intersects_self_properly,
-    path      = "../data/star.wkt",
+    path      = "../test_data/star.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let poly1 = &data[0];
         Polygon::intersection(poly1, poly1).unwrap()
@@ -102,7 +102,7 @@ define_test!(
 
 define_test!(
     name      = duplicate_points_intersection_works_1,
-    path      = "../data/duplicate_points_case_1.wkt",
+    path      = "../test_data/duplicate_points_case_1.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
@@ -116,7 +116,7 @@ define_test!(
 
 define_test!(
     name      = duplicate_points_intersection_works_2,
-    path      = "../data/duplicate_points_case_2.wkt",
+    path      = "../test_data/duplicate_points_case_2.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
@@ -130,7 +130,7 @@ define_test!(
 
 define_test!(
     name      = duplicate_points_difference_works_1,
-    path      = "../data/duplicate_points_case_3.wkt",
+    path      = "../test_data/duplicate_points_case_3.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::difference(poly1, poly2).unwrap()
@@ -144,7 +144,7 @@ define_test!(
 
 define_test!(
     name      = collinear_outline_parts_intersection_works,
-    path      = "../data/collinear_outline_parts.wkt",
+    path      = "../test_data/collinear_outline_parts.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
@@ -158,7 +158,7 @@ define_test!(
 
 define_test!(
     name      = missing_triangle_intersection_works_1,
-    path      = "../data/missing_triangle_case_1.wkt",
+    path      = "../test_data/missing_triangle_case_1.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
@@ -172,7 +172,7 @@ define_test!(
 
 define_test!(
     name      = missing_triangle_intersection_empty,
-    path      = "../data/missing_triangle_case_2.wkt",
+    path      = "../test_data/missing_triangle_case_2.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
@@ -186,7 +186,7 @@ define_test!(
 
 define_test!(
     name      = missing_triangle_intersection_works_2,
-    path      = "../data/missing_triangle_case_3.wkt",
+    path      = "../test_data/missing_triangle_case_3.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
@@ -200,7 +200,7 @@ define_test!(
 
 define_test!(
     name      = intersection_at_address_works_1,
-    path      = "../data/intersection_address_001.wkt",
+    path      = "../test_data/intersection_address_001.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
@@ -214,7 +214,7 @@ define_test!(
 
 define_test!(
     name      = difference_at_address_works_1,
-    path      = "../data/intersection_address_001.wkt",
+    path      = "../test_data/intersection_address_001.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::difference(poly2, poly1).unwrap()
@@ -228,7 +228,7 @@ define_test!(
 
 define_test!(
     name      = intersection_at_address_works_2,
-    path      = "../data/intersection_address_002.wkt",
+    path      = "../test_data/intersection_address_002.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
@@ -242,7 +242,7 @@ define_test!(
 
 define_test!(
     name      = difference_at_address_works_2,
-    path      = "../data/intersection_address_002.wkt",
+    path      = "../test_data/intersection_address_002.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::difference(poly1, poly2).unwrap()
@@ -256,7 +256,7 @@ define_test!(
 
 define_test!(
     name      = intersection_doesnt_fail_after_union_fix_1,
-    path      = "../data/intersection_fail_after_union_fix_1.wkt",
+    path      = "../test_data/intersection_fail_after_union_fix_1.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
@@ -270,7 +270,7 @@ define_test!(
 
 define_test!(
     name      = difference_doesnt_fail_after_union_fix_1,
-    path      = "../data/intersection_fail_after_union_fix_1.wkt",
+    path      = "../test_data/intersection_fail_after_union_fix_1.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::difference(poly2, poly1).unwrap()
@@ -284,7 +284,7 @@ define_test!(
 
 define_test!(
     name      = intersection_doesnt_fail_after_union_fix_2,
-    path      = "../data/intersection_fail_after_union_fix_2.wkt",
+    path      = "../test_data/intersection_fail_after_union_fix_2.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
@@ -298,7 +298,7 @@ define_test!(
 
 define_test!(
     name      = holes_are_preserved_by_union,
-    path      = "../data/holes_are_preserved.wkt",
+    path      = "../test_data/holes_are_preserved.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let poly1 = &data[0];
         Polygon::union(poly1, poly1).unwrap()
@@ -312,7 +312,7 @@ define_test!(
 
 define_test!(
     name      = holes_are_preserved_by_intersection,
-    path      = "../data/holes_are_preserved.wkt",
+    path      = "../test_data/holes_are_preserved.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let poly1 = &data[0];
         Polygon::intersection(poly1, poly1).unwrap()
@@ -326,7 +326,7 @@ define_test!(
 
 define_test!(
     name      = holes_are_preserved_by_difference,
-    path      = "../data/holes_are_preserved.wkt",
+    path      = "../test_data/holes_are_preserved.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let poly1 = &data[0];
         Polygon::difference(poly1, &empty_poly()).unwrap()
@@ -340,7 +340,7 @@ define_test!(
 
 define_test!(
     name      = one_hole_after_union,
-    path      = "../data/hole_after_union.wkt",
+    path      = "../test_data/hole_after_union.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::union(poly1, poly2).unwrap()
@@ -354,7 +354,7 @@ define_test!(
 
 define_test!(
     name      = two_holes_after_union,
-    path      = "../data/two_holes_after_union.wkt",
+    path      = "../test_data/two_holes_after_union.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::union(poly1, poly2).unwrap()
@@ -368,7 +368,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_13_works,
-    path      = "../data/union_address_013.wkt",
+    path      = "../test_data/union_address_013.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         // imprecise inputs lead to hole
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
@@ -382,7 +382,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_14_works,
-    path      = "../data/union_address_014.wkt",
+    path      = "../test_data/union_address_014.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -395,7 +395,7 @@ define_test!(
 
 define_test!(
     name      = simple_union,
-    path      = "../data/simple_union.wkt",
+    path      = "../test_data/simple_union.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -408,7 +408,7 @@ define_test!(
 
 define_test!(
     name      = multiple_unions,
-    path      = "../data/multiple_unions.wkt",
+    path      = "../test_data/multiple_unions.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -421,7 +421,7 @@ define_test!(
 
 define_test!(
     name      = union_preserved_intermediate_points_1,
-    path      = "../data/union_both_intermediate_points_stay.wkt",
+    path      = "../test_data/union_both_intermediate_points_stay.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -434,7 +434,7 @@ define_test!(
 
 define_test!(
     name      = union_preserved_intermediate_points_2,
-    path      = "../data/union_one_intermediate_point_stays.wkt",
+    path      = "../test_data/union_one_intermediate_point_stays.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -447,7 +447,7 @@ define_test!(
 
 define_test!(
     name      = union_not_completely_shared_line,
-    path      = "../data/union_not_completely_shared_line.wkt",
+    path      = "../test_data/union_not_completely_shared_line.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -460,7 +460,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_015_works,
-    path      = "../data/union_address_015.wkt",
+    path      = "../test_data/union_address_015.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -473,7 +473,7 @@ define_test!(
 
 define_test!(
     name      = union_works_on_overlap_1,
-    path      = "../data/union_fails_overlap.wkt",
+    path      = "../test_data/union_fails_overlap.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -486,7 +486,7 @@ define_test!(
 
 define_test!(
     name      = union_works_on_overlap_2,
-    path      = "../data/union_still_fails_overlap.wkt",
+    path      = "../test_data/union_still_fails_overlap.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -499,7 +499,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_1_works,
-    path      = "../data/union_address_001.wkt",
+    path      = "../test_data/union_address_001.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -512,7 +512,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_2_works,
-    path      = "../data/union_address_002.wkt",
+    path      = "../test_data/union_address_002.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -525,7 +525,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_3_works,
-    path      = "../data/union_address_003.wkt",
+    path      = "../test_data/union_address_003.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -538,7 +538,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_4_works,
-    path      = "../data/union_address_004.wkt",
+    path      = "../test_data/union_address_004.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -551,7 +551,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_5_works,
-    path      = "../data/union_address_005.wkt",
+    path      = "../test_data/union_address_005.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -564,7 +564,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_6_works,
-    path      = "../data/union_address_006.wkt",
+    path      = "../test_data/union_address_006.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -577,7 +577,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_7_works,
-    path      = "../data/union_address_007.wkt",
+    path      = "../test_data/union_address_007.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -590,7 +590,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_8_works,
-    path      = "../data/union_address_008.wkt",
+    path      = "../test_data/union_address_008.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -603,7 +603,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_9_works,
-    path      = "../data/union_address_009.wkt",
+    path      = "../test_data/union_address_009.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -616,7 +616,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_10_works,
-    path      = "../data/union_address_010.wkt",
+    path      = "../test_data/union_address_010.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -629,7 +629,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_11_works,
-    path      = "../data/union_address_011.wkt",
+    path      = "../test_data/union_address_011.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
@@ -642,7 +642,7 @@ define_test!(
 
 define_test!(
     name      = union_at_address_12_works,
-    path      = "../data/union_address_012.wkt",
+    path      = "../test_data/union_address_012.wkt",
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
