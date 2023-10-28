@@ -95,3 +95,24 @@ fn star_intersects_self_properly() {
     has_num_polygons(&intersection, 1);
     has_num_holes(&intersection, 0);
 }
+
+#[test]
+fn star_shape_slightly_offset_difference() {
+    _ = pretty_env_logger::try_init();
+    let data = include_str!("./data/star.wkt");
+    let data = load_wkt(data).unwrap();
+    let poly1 = &data[0];
+
+    let mut poly2 = poly1.clone();
+    poly2.exterior_mut(|ext| {
+        ext.coords_mut().skip(1).take(1).for_each(|coord| {
+            *coord = *coord + Coord { x: 0.1, y: 0.1 };
+        });
+    });
+
+    let difference = Polygon::difference(poly1, &poly2).unwrap();
+
+    is_multipolygon_nonempty(&difference);
+    has_num_polygons(&difference, 1);
+    has_num_holes(&difference, 0);
+}
