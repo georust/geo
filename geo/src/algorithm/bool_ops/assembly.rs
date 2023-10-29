@@ -49,17 +49,26 @@ impl<T: GeoFloat> RegionAssembly<T> {
             iter.intersections_mut().sort_unstable_by(compare_crossings);
 
             let first = &iter.intersections()[0];
+            // We need to determine the previous region (to know whether this set of
+            // crossings are part of holes or shell) and the previous snake if one exists.
             let (prev_region, mut parent_snake_idx) = if first.at_left {
-                // No segment ends here.
-                // We should read prev_region via `prev_active`
+                // If the first crossing is a left crossing, that means no segments end here
+                // (since right crossings are ordered before left crossings). We should read
+                // prev_region and parent snake via `prev_active`, to know whether these edges
+                // are part of a hole or a shell.
                 iter.prev_active(first)
                     .map(|(_, seg)| (seg.region.get(), Some(seg.snake_idx.get())))
+                    // TODO: Figure out why this should be defaulted to 0.
                     .unwrap_or_else(|| (false, Some(0)))
             } else {
+                // The first crossing is on the right. Since crossings are ordered from
+                // left-to-right, its region must already have been set, so use that region to
+                // determine whether these crossings are part of holes or shells.
                 (first.cross.region.get(), None)
             };
 
-            // Connect consecutive segments
+            // Offset the order of intersections based on prev_region so the bottom-most
+            // region matches prev_region.
             #[allow(clippy::bool_to_int_with_if)]
             let mut idx = if prev_region { 1 } else { 0 };
 
@@ -78,6 +87,7 @@ impl<T: GeoFloat> RegionAssembly<T> {
                         parent_snake_idx = Some(
                             iter.prev_active(c)
                                 .map(|(_, seg)| seg.snake_idx.get())
+                                // TODO
                                 .unwrap_or(0),
                         );
                     }
@@ -88,6 +98,7 @@ impl<T: GeoFloat> RegionAssembly<T> {
                         parent_snake_idx = Some(
                             iter.prev_active(d)
                                 .map(|(_, seg)| seg.snake_idx.get())
+                                // TODO
                                 .unwrap_or(0),
                         );
                     }
@@ -95,7 +106,7 @@ impl<T: GeoFloat> RegionAssembly<T> {
 
                 match (c.at_left, d.at_left) {
                     (true, true) => {
-                        // Create new snakes
+                        // Create new snakes, one following edge `c`, and one following edge `d`.
                         let l = snakes.len();
                         snakes.push(Snake::new(
                             pt.into(),
@@ -115,18 +126,19 @@ impl<T: GeoFloat> RegionAssembly<T> {
                         d.cross.snake_idx.set(l + 1);
                     }
                     (true, false) => {
-                        // Connect d -> c
+                        // Edge `d` is already part of a snake. Extend that snake with edge `c`.
                         let s_idx = d.cross.snake_idx.get();
                         snakes[s_idx].push(c.line.right());
                         c.cross.snake_idx.set(s_idx);
                     }
                     (false, true) => {
-                        // Connect c -> d
+                        // Edge `c` is already part of a snake. Extend that snake with edge `d`.
                         let s_idx = c.cross.snake_idx.get();
                         snakes[s_idx].push(d.line.right());
                         d.cross.snake_idx.set(s_idx);
                     }
                     (false, false) => {
+                        // Both snakes meet at a point, so finish the snakes with each other.
                         let c_idx = c.cross.snake_idx.get();
                         let d_idx = d.cross.snake_idx.get();
                         debug_assert_ne!(c_idx, d_idx);
@@ -141,10 +153,12 @@ impl<T: GeoFloat> RegionAssembly<T> {
 
         let mut polygons = vec![];
         let mut children = HashMap::new();
+        // Assign each hole ring to a shell.
         for (ring_idx, ring) in rings.iter().enumerate() {
             if ring.is_hole {
                 let mut parent_ring_idx;
                 let mut parent_snake_idx = ring.parent_snake_idx;
+                // Keep following the parent ring until a shell is found.
                 loop {
                     parent_ring_idx = snakes_idx_map[&parent_snake_idx];
                     let parent = &rings[parent_ring_idx];
@@ -160,6 +174,7 @@ impl<T: GeoFloat> RegionAssembly<T> {
             }
         }
 
+        // Create a polygon from each shell ring.
         for (ring_idx, ring) in rings.iter().enumerate() {
             if ring.is_hole {
                 continue;
@@ -216,6 +231,7 @@ impl<T: GeoFloat> LineAssembly<T> {
             self.end_points
                 .insert((geom_idx, geom.left()), (seg_idx, at_front));
         } else {
+            // Otherwise, create a new line-string.
             let idx = self.segments.len();
             self.segments
                 .push(VecDeque::from_iter([geom.left(), geom.right()]));
@@ -358,8 +374,10 @@ impl<T: GeoFloat> Snake<T> {
 
         let mut idx = start_idx;
         let mut at_start = true;
+        // Determine the parent snake, and whether this snake is part of a hole.
         let (parent_snake_idx, is_hole) = {
             let el = &slice[idx];
+            // This snake was already used to form another ring, so skip it.
             if el.points.is_empty() {
                 return None;
             }
@@ -375,8 +393,11 @@ impl<T: GeoFloat> Snake<T> {
             };
             (el.parent_snake_idx, el.region != ls_winding)
         };
+        // Follow the snake at the endpoint of `slice[idx]`.
         loop {
             let el = &mut slice[idx];
+            // A snake can only be part of one ring, so this snake cannot have been used to
+            // form another ring.
             debug_assert!(!el.points.is_empty());
             idx_cb(idx);
 
