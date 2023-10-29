@@ -19,6 +19,7 @@ use geo_types::{LineString, MultiPolygon, Polygon};
 /// degenerate (not a point).
 #[derive(Debug)]
 pub struct RegionAssembly<T: GeoFloat> {
+    /// The segments previously added to the assembly.
     segments: Vec<Segment<T>>,
 }
 
@@ -31,11 +32,13 @@ impl<T: GeoFloat> Default for RegionAssembly<T> {
 }
 
 impl<T: GeoFloat> RegionAssembly<T> {
+    /// Adds the `edge` geometry to the assembly.
     pub fn add_edge(&mut self, edge: LineOrPoint<T>) {
         debug_assert!(edge.is_line());
         trace!("add_edge: {edge:?}");
         self.segments.push(edge.into());
     }
+    /// Creates the final `MultiPolygon` from the edges previously added.
     pub fn finish(self) -> MultiPolygon<T> {
         let mut iter = CrossingsIter::new_simple(self.segments.iter());
         let mut snakes = vec![];
@@ -175,13 +178,24 @@ impl<T: GeoFloat> RegionAssembly<T> {
     }
 }
 
+/// Assemble `LineString`s from a set of line segments.
+///
+/// The line segments must be guaranteed to not intersect in their interior, and
+/// edges must be added on to the ends of pre-existing line-strings (the order
+/// of edges must be "middle-out", not arbitrary).
 #[derive(Debug)]
 pub struct LineAssembly<T: GeoFloat> {
+    /// The current set of incomplete line-strings.
     segments: Vec<VecDeque<SweepPoint<T>>>,
+    /// A map from the geometry index and line-string endpoint to the index of
+    /// that line-string and the "sided"-ness (whether the endpoint is on the
+    /// left or the right of the line-string).
     end_points: BTreeMap<(usize, SweepPoint<T>), (usize, bool)>,
 }
 
 impl<T: GeoFloat> LineAssembly<T> {
+    /// Adds  `geom` to the assembly, specifying the index of the geometry
+    /// (i.e., the shape).
     pub fn add_edge(&mut self, geom: LineOrPoint<T>, geom_idx: usize) {
         // Try to find a line-string with either end-point
         if let Some((seg_idx, at_front)) = self.end_points.remove(&(geom_idx, geom.left())) {
@@ -210,6 +224,7 @@ impl<T: GeoFloat> LineAssembly<T> {
                 .insert((geom_idx, geom.right()), (idx, false));
         }
     }
+    /// Creates the `LineString`s from the previously added edges.
     pub fn finish(self) -> Vec<LineString<T>> {
         self.segments
             .into_iter()
@@ -227,13 +242,23 @@ impl<T: GeoFloat> Default for LineAssembly<T> {
     }
 }
 
+/// A ring of points.
 #[derive(Debug, Clone)]
 struct Ring<T: GeoFloat> {
+    /// The points making up the ring.
     ls: LineString<T>,
+    /// Whether this ring describes a hole in the output polygon.
     is_hole: bool,
+    /// The index of the `Snake` "under" this hole. Used to determine which
+    /// shell a hole belongs to.
     parent_snake_idx: usize,
 }
 
+/// Splits a ring `ls` that possibly includes self intersections into
+/// "well-behaved" rings (no self intersections). `cb` is called on "extra"
+/// rings. The returned ring is the ring starting from the first vertex (so if
+/// this vertex is guaranteed to be on the exterior, the returned ring will also
+/// be the exterior).
 fn split_ring<T: GeoFloat, F: FnMut(LineString<T>)>(
     ls: &LineString<T>,
     mut cb: F,
@@ -256,6 +281,9 @@ fn split_ring<T: GeoFloat, F: FnMut(LineString<T>)>(
     LineString::from(exterior)
 }
 
+/// Turns every snake in `snakes` into its corresponding ring. Returns the
+/// computed rings (with possible self intersections), and a map from the snake
+/// index to the index of the ring it belongs to.
 fn rings_from_snakes<T: GeoFloat>(
     snakes: &mut [Snake<T>],
 ) -> (Vec<Ring<T>>, HashMap<usize, usize>) {
@@ -271,16 +299,29 @@ fn rings_from_snakes<T: GeoFloat>(
     (rings, snake_idx_map)
 }
 
+/// A line of vertices that "consumes" edges until it is "finished" (hits
+/// another snake).
 #[derive(Debug, Clone)]
 struct Snake<T: GeoFloat> {
+    /// The points making up the snake. These edges are a contiguous line of
+    /// edges, and if the snake is "finished", there is an implicit edge from
+    /// the last point to the first.
     points: Vec<SweepPoint<T>>,
+    /// The ID of the snake that starts at the same point as this snake (and
+    /// goes in the other direction).
     start_pair: usize,
+    /// The ID of the snake that this snake "ran into". None until the snake is
+    /// finished.
     end_pair: Option<usize>,
+    /// The "direction" this snake is traveling.
     region: WindingOrder,
+    /// The index of the `Snake` "under" this snake. Used to determine which
+    /// shell a hole belongs to.
     parent_snake_idx: usize,
 }
 
 impl<T: GeoFloat> Snake<T> {
+    /// Creates a snake from the initial edge.
     pub fn new(
         start: SweepPoint<T>,
         end: SweepPoint<T>,
@@ -296,14 +337,18 @@ impl<T: GeoFloat> Snake<T> {
             parent_snake_idx,
         }
     }
+    /// Adds a vertex to the "head" of the snake.
     pub fn push(&mut self, right: SweepPoint<T>) {
         debug_assert!(self.end_pair.is_none());
         self.points.push(right)
     }
+    /// Finishes the snake, meaning that the snake forms a loop.
     pub fn finish(&mut self, other: usize) {
         self.end_pair = Some(other)
     }
 
+    /// Turns the Snake in `slice` at `start_idx` into a ring by following the
+    /// snakes at its start and end. Calls `idx_cb` for each snake id traversed.
     pub fn into_ring<F: FnMut(usize)>(
         slice: &mut [Self],
         start_idx: usize,
@@ -360,10 +405,15 @@ impl<T: GeoFloat> Snake<T> {
     }
 }
 
+// A line segment in the `RegionAssembly` or `LineAssembly`.
 #[derive(Debug, Clone)]
 struct Segment<T: GeoFloat> {
+    /// The geometry of the segment.
     geom: LineOrPoint<T>,
+    /// The "region" this segment belongs to. Unused by `LineAssembly`. TODO
     region: Cell<bool>,
+    /// The index of the `Snake` that this segment belongs to. Initially 0 as an
+    /// "invalid" value. Unused by `LineAssembly`.
     snake_idx: Cell<usize>,
 }
 
