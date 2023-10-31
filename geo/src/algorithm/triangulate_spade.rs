@@ -37,7 +37,7 @@ impl<T: GeoFloat + SpadeNum> SpadeTriangulationFloat for T {}
 
 pub type Triangles<T> = Vec<Triangle<T>>;
 
-/// Triangulate polygons using a [denlauny triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation)
+/// Triangulate polygons using a [Denlauny Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation)
 pub trait TriangulateSpade<'a, T>
 where
     T: SpadeTriangulationFloat,

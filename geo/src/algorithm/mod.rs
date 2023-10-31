@@ -252,7 +252,7 @@ pub mod triangulate_earcut;
 #[cfg(feature = "earcutr")]
 pub use triangulate_earcut::TriangulateEarcut;
 
-/// Triangulate polygons using an (un)constrained [delaunay triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
+/// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
 #[cfg(feature = "spade")]
 pub mod triangulate_spade;
 #[cfg(feature = "spade")]

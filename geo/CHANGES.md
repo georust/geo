@@ -28,7 +28,7 @@
   * <https://github.com/georust/geo/pull/1091>
 * Add `wkt!` macro to define geometries at compile time.
   <https://github.com/georust/geo/pull/1063>
-* Add `TriangulateSpade` trait which provides (un)constrained delaunay triangulations for all `geo_types` via the `spade` crate
+* Add `TriangulateSpade` trait which provides (un)constrained Delaunay Triangulations for all `geo_types` via the `spade` crate
   * <https://github.com/georust/geo/pull/1083>
 
 ## 0.26.0
