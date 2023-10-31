@@ -37,22 +37,32 @@ impl<T: GeoFloat + SpadeNum> SpadeTriangulationFloat for T {}
 
 pub type Triangles<T> = Vec<Triangle<T>>;
 
+// seal the trait that needs to be implemented for TriangulateSpade to be implemented. This is done
+// so that we don't leak these weird methods on the public interface.
+mod private {
+    use super::*;
+    pub trait TriangulationRequirementTrait<'a, T>
+    where
+        T: SpadeTriangulationFloat,
+    {
+        /// collect all the lines that are relevant for triangulations from the geometric object that
+        /// should be triangulated.
+        ///
+        /// intersecting lines are allowed
+        fn get_lines(&'a self) -> Vec<Line<T>>;
+        /// collect all the points that are relevant for triangulations from the geometric object that
+        /// should be triangulated
+        fn get_points(&'a self) -> Vec<Coord<T>>;
+        /// define a predicate that decides if a point is inside of the object (used for constrained triangulation)
+        fn contains_point(&'a self, p: Point<T>) -> bool;
+    }
+}
+
 /// Triangulate polygons using a [Denlauny Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation)
-pub trait TriangulateSpade<'a, T>
+pub trait TriangulateSpade<'a, T>: private::TriangulationRequirementTrait<'a, T>
 where
     T: SpadeTriangulationFloat,
 {
-    /// collect all the lines that are relevant for triangulations from the geometric object that
-    /// should be triangulated.
-    ///
-    /// intersecting lines are allowed
-    fn get_lines(&'a self) -> Vec<Line<T>>;
-    /// collect all the points that are relevant for triangulations from the geometric object that
-    /// should be triangulated
-    fn get_points(&'a self) -> Vec<Coord<T>>;
-    /// define a predicate that decides if a point is inside of the object (used for constrained triangulation)
-    fn contains_point(&'a self, p: Point<T>) -> bool;
-
     // processing of the lines that prepare the lines for triangulation.
     //
     // `spade` has the general
@@ -188,7 +198,15 @@ where
 
 // ========== Triangulation trait impls ============
 
-impl<'a, 'l, T, G> TriangulateSpade<'a, T> for G
+// everything that satisfies the requirement methods automatically implements the triangulation
+impl<'a, T, G> TriangulateSpade<'a, T> for G
+where
+    T: SpadeTriangulationFloat,
+    G: private::TriangulationRequirementTrait<'a, T>,
+{
+}
+
+impl<'a, 'l, T, G> private::TriangulationRequirementTrait<'a, T> for G
 where
     'a: 'l,
     T: SpadeTriangulationFloat,
@@ -210,7 +228,7 @@ where
 // it would be cool to impl the trait for GS: AsRef<[G]> but I wasn't able to get this to compile
 // (yet)
 
-impl<'a, T, G> TriangulateSpade<'a, T> for Vec<G>
+impl<'a, T, G> private::TriangulationRequirementTrait<'a, T> for Vec<G>
 where
     T: SpadeTriangulationFloat,
     G: TriangulateSpade<'a, T>,
@@ -228,7 +246,7 @@ where
     }
 }
 
-impl<'a, T, G> TriangulateSpade<'a, T> for &[G]
+impl<'a, T, G> private::TriangulationRequirementTrait<'a, T> for &[G]
 where
     T: SpadeTriangulationFloat,
     G: TriangulateSpade<'a, T>,
