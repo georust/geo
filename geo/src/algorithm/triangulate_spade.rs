@@ -55,6 +55,19 @@ mod private {
         fn get_points(&'a self) -> Vec<Coord<T>>;
         /// define a predicate that decides if a point is inside of the object (used for constrained triangulation)
         fn contains_point(&'a self, p: Point<T>) -> bool;
+
+        // processing of the lines that prepare the lines for triangulation.
+        //
+        // `spade` has the general
+        // limitation that constraint lines cannot intersect or else it will panic. This is why we need
+        // to manually split up the lines into smaller parts at the intersection point
+        //
+        // there's also a preprocessing step which tries to minimize the risk of failure of the algo
+        // through edge cases (thin/flat triangles are prevented as much as possible & lines are deduped, ...)
+        fn cleanup_lines(lines: Vec<Line<T>>) -> TriangulationResult<Vec<Line<T>>> {
+            let (known_points, lines) = preprocess_lines(lines);
+            prepare_intersection_contraint(lines, known_points)
+        }
     }
 }
 
@@ -63,26 +76,35 @@ pub trait TriangulateSpade<'a, T>: private::TriangulationRequirementTrait<'a, T>
 where
     T: SpadeTriangulationFloat,
 {
-    // processing of the lines that prepare the lines for triangulation.
-    //
-    // `spade` has the general
-    // limitation that constraint lines cannot intersect or else it will panic. This is why we need
-    // to manually split up the lines into smaller parts at the intersection point
-    //
-    // there's also a preprocessing step which tries to minimize the risk of failure of the algo
-    // through edge cases (thin/flat triangles are prevented as much as possible & lines are deduped, ...)
-    fn cleanup_lines(lines: Vec<Line<T>>) -> TriangulationResult<Vec<Line<T>>> {
-        let (known_points, lines) = preprocess_lines(lines);
-        prepare_intersection_contraint(lines, known_points)
-    }
-
     /// returns a triangulation that's solely based on the points of the geometric object
     ///
     /// The triangulation is guaranteed to be Delaunay
     ///
     /// Note that the lines of the triangulation don't necessarily follow the lines of the input
     /// geometry. If you wish to achieve that take a look at the `constrained_triangulation` and the
-    /// `constrained_outer_triangulation` functions
+    /// `constrained_outer_triangulation` functions.
+    ///
+    /// ```rust
+    /// use geo::TriangulateSpade;
+    /// use geo::{Polygon, LineString, Coord};
+    /// let u_shape = Polygon::new(
+    ///     LineString::new(vec![
+    ///         Coord { x: 0.0, y: 0.0 },
+    ///         Coord { x: 1.0, y: 0.0 },
+    ///         Coord { x: 1.0, y: 1.0 },
+    ///         Coord { x: 2.0, y: 1.0 },
+    ///         Coord { x: 2.0, y: 0.0 },
+    ///         Coord { x: 3.0, y: 0.0 },
+    ///         Coord { x: 3.0, y: 3.0 },
+    ///         Coord { x: 0.0, y: 3.0 },
+    ///     ]),
+    ///     vec![],
+    /// );
+    /// let unconstrained_triangulation = u_shape.unconstrained_triangulation().unwrap();
+    /// let num_triangles = unconstrained_triangulation.len();
+    /// assert_eq!(num_triangles, 8);
+    /// ```
+    ///
     fn unconstrained_triangulation(&'a self) -> TriangulationResult<Triangles<T>> {
         let points = self.get_points();
         points
@@ -117,6 +139,27 @@ where
     /// │ /   │:::\::│   \ │
     /// │/    │::::\:│    \│
     /// └─────┘______└─────┘
+    /// ```
+    ///
+    /// ```rust
+    /// use geo::TriangulateSpade;
+    /// use geo::{Polygon, LineString, Coord};
+    /// let u_shape = Polygon::new(
+    ///     LineString::new(vec![
+    ///         Coord { x: 0.0, y: 0.0 },
+    ///         Coord { x: 1.0, y: 0.0 },
+    ///         Coord { x: 1.0, y: 1.0 },
+    ///         Coord { x: 2.0, y: 1.0 },
+    ///         Coord { x: 2.0, y: 0.0 },
+    ///         Coord { x: 3.0, y: 0.0 },
+    ///         Coord { x: 3.0, y: 3.0 },
+    ///         Coord { x: 0.0, y: 3.0 },
+    ///     ]),
+    ///     vec![],
+    /// );
+    /// let constrained_outer_triangulation = u_shape.constrained_outer_triangulation().unwrap();
+    /// let num_triangles = constrained_outer_triangulation.len();
+    /// assert_eq!(num_triangles, 8);
     /// ```
     ///
     /// The outer triangulation of the top down U-shape contains extra triangles marked
@@ -165,6 +208,27 @@ where
     /// │ /   │      │   \ │
     /// │/    │      │    \│
     /// └─────┘      └─────┘
+    /// ```
+    ///
+    /// ```rust
+    /// use geo::TriangulateSpade;
+    /// use geo::{Polygon, LineString, Coord};
+    /// let u_shape = Polygon::new(
+    ///     LineString::new(vec![
+    ///         Coord { x: 0.0, y: 0.0 },
+    ///         Coord { x: 1.0, y: 0.0 },
+    ///         Coord { x: 1.0, y: 1.0 },
+    ///         Coord { x: 2.0, y: 1.0 },
+    ///         Coord { x: 2.0, y: 0.0 },
+    ///         Coord { x: 3.0, y: 0.0 },
+    ///         Coord { x: 3.0, y: 3.0 },
+    ///         Coord { x: 0.0, y: 3.0 },
+    ///     ]),
+    ///     vec![],
+    /// );
+    /// let constrained_triangulation = u_shape.constrained_triangulation().unwrap();
+    /// let num_triangles = constrained_triangulation.len();
+    /// assert_eq!(num_triangles, 6);
     /// ```
     ///
     /// Compared to the `constrained_outer_triangulation` it only includes the triangles
