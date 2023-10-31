@@ -583,4 +583,64 @@ mod spade_triangulation {
         let constrained_outer_triangulation = triangles.constrained_triangulation();
         assert_num_triangles(&constrained_outer_triangulation, 6);
     }
+
+    #[test]
+    fn u_shaped_polygon_triangulates_unconstrained() {
+        let u_shape = Polygon::new(
+            LineString::new(vec![
+                Coord { x: 0.0, y: 0.0 },
+                Coord { x: 1.0, y: 0.0 },
+                Coord { x: 1.0, y: 1.0 },
+                Coord { x: 2.0, y: 1.0 },
+                Coord { x: 2.0, y: 0.0 },
+                Coord { x: 3.0, y: 0.0 },
+                Coord { x: 3.0, y: 3.0 },
+                Coord { x: 0.0, y: 3.0 },
+            ]),
+            vec![],
+        );
+
+        let unconstrained_triangulation = u_shape.unconstrained_triangulation();
+        assert_num_triangles(&unconstrained_triangulation, 8);
+    }
+
+    #[test]
+    fn u_shaped_polygon_triangulates_constrained_outer() {
+        let u_shape = Polygon::new(
+            LineString::new(vec![
+                Coord { x: 0.0, y: 0.0 },
+                Coord { x: 1.0, y: 0.0 },
+                Coord { x: 1.0, y: 1.0 },
+                Coord { x: 2.0, y: 1.0 },
+                Coord { x: 2.0, y: 0.0 },
+                Coord { x: 3.0, y: 0.0 },
+                Coord { x: 3.0, y: 3.0 },
+                Coord { x: 0.0, y: 3.0 },
+            ]),
+            vec![],
+        );
+
+        let constrained_outer_triangulation = u_shape.constrained_outer_triangulation();
+        assert_num_triangles(&constrained_outer_triangulation, 8);
+    }
+
+    #[test]
+    fn u_shaped_polygon_triangulates_constrained_inner() {
+        let u_shape = Polygon::new(
+            LineString::new(vec![
+                Coord { x: 0.0, y: 0.0 },
+                Coord { x: 1.0, y: 0.0 },
+                Coord { x: 1.0, y: 1.0 },
+                Coord { x: 2.0, y: 1.0 },
+                Coord { x: 2.0, y: 0.0 },
+                Coord { x: 3.0, y: 0.0 },
+                Coord { x: 3.0, y: 3.0 },
+                Coord { x: 0.0, y: 3.0 },
+            ]),
+            vec![],
+        );
+
+        let constrained_triangulation = u_shape.constrained_triangulation();
+        assert_num_triangles(&constrained_triangulation, 6);
+    }
 }
