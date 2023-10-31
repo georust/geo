@@ -93,7 +93,7 @@ where
     /// This outer triangulation also contains triangles that are not included in the input
     /// geometry if it wasn't convex. Here's an example:
     ///
-    /// ```ignore
+    /// ```text
     /// ┌──────────────────┐
     /// │\              __/│
     /// │ \          __/ / │
@@ -141,7 +141,7 @@ where
     /// This triangulation only contains triangles that are included in the input geometry.
     /// Here's an example:
     ///
-    /// ```ignore
+    /// ```text
     /// ┌──────────────────┐
     /// │\              __/│
     /// │ \          __/ / │
