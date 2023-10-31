@@ -444,12 +444,12 @@ fn preprocess_lines<T: SpadeTriangulationFloat>(
     (known_points, lines)
 }
 
-/// convertes Line to something somewhat similar in the spade world
+/// converts Line to something somewhat similar in the spade world
 fn to_spade_line<T: SpadeTriangulationFloat>(line: Line<T>) -> [Point2<T>; 2] {
     [to_spade_point(line.start), to_spade_point(line.end)]
 }
 
-/// convertes Coord to something somewhat similar in the spade world
+/// converts Coord to something somewhat similar in the spade world
 fn to_spade_point<T: SpadeTriangulationFloat>(coord: Coord<T>) -> Point2<T> {
     Point2::new(coord.x, coord.y)
 }
