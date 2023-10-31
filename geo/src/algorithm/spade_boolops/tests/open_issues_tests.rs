@@ -222,3 +222,44 @@ fn no_1103_union_for_f64_polys() {
         multi = MultiPolygon::union(&multi, &MultiPolygon::new(vec![poly])).unwrap();
     }
 }
+
+#[test]
+fn no_1053_intersection_for_f32_polys() {
+    // Reproduction occurs when intersecting Polygon<f32> types, but Polygon<f64> does not reproduce.
+    let geo1 = Polygon::<f32>::new(
+        LineString(vec![
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 0.0, y: 200.0 },
+            Coord { x: 200.0, y: 200.0 },
+            Coord { x: 200.0, y: 0.0 },
+            Coord { x: 0.0, y: 0.0 },
+        ]),
+        vec![],
+    );
+    let geo2 = Polygon::<f32>::new(
+        LineString(vec![
+            Coord {
+                x: -0.17588139,
+                y: 0.0015348792,
+            },
+            Coord {
+                x: 1.5845897,
+                y: 201.73154,
+            },
+            Coord {
+                x: 200.1759,
+                y: 199.99846,
+            },
+            Coord {
+                x: 198.41544,
+                y: -1.7315454,
+            },
+            Coord {
+                x: -0.17588139,
+                y: 0.0015348792,
+            },
+        ]),
+        vec![],
+    );
+    let _valid_result = Polygon::intersection(&geo1, &geo2).unwrap();
+}
