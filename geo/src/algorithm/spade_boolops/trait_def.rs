@@ -5,6 +5,24 @@ use geo_types::{Point, Triangle};
 use crate::triangulate_spade::SpadeTriangulationFloat;
 use crate::{Contains, Scale};
 
+/// Boolean Operations on geometry.
+///
+/// Boolean operations are set operations on geometries considered as a
+/// subset of the 2-D plane. The operations supported are: intersection,
+/// union and set-difference on pairs of 2-D geometries.
+///
+/// These operations are implemented on any existing geo type that
+/// implements [`crate::LinesIter`] and [`crate::CoordsIter`] as well
+/// as [`crate::Contains`] for a [`crate::Point`]. Further, if the
+/// operations exist for a type T, they also exist for Vec<T> and &[T]
+///
+/// # Performance
+///
+/// Note that the algorithm is based on a somewhat non-trivial Delaunay
+/// Triangulation which can create performance hits if you use the
+/// operations on huge geometries (~ 1000 vertices per geometry).
+/// On a smaller scale, the algorithm works reasonably fast and can even
+/// be used for some real-time applications
 pub trait SpadeBoolops<T>
 where
     T: SpadeTriangulationFloat,
