@@ -71,7 +71,7 @@ where
     /// The triangulation is guaranteed to be Delaunay
     ///
     /// Note that the lines of the triangulation don't necessarily follow the lines of the input
-    /// geometry. If you wish to achive that take a look at the `constrained_triangulation` and the
+    /// geometry. If you wish to achieve that take a look at the `constrained_triangulation` and the
     /// `constrained_outer_triangulation` functions
     fn unconstrained_triangulation(&'a self) -> TriangulationResult<Triangles<T>> {
         let points = self.get_points();
