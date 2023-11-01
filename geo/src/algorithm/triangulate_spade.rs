@@ -71,7 +71,7 @@ mod private {
     }
 }
 
-/// Triangulate polygons using a [Denlauny Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation)
+/// Triangulate polygons using a [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation)
 pub trait TriangulateSpade<'a, T>: private::TriangulationRequirementTrait<'a, T>
 where
     T: SpadeTriangulationFloat,
