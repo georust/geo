@@ -334,11 +334,11 @@ fn prepare_intersection_contraint<T: SpadeTriangulationFloat>(
     mut lines: Vec<Line<T>>,
     mut known_points: Vec<Coord<T>>,
 ) -> Result<Vec<Line<T>>, TriangulationError> {
+    // Rule 2 of "Power of 10" rules (NASA)
     // safety net. We can't prove that the `while let` loop isn't going to run infinitely, so
-    // we abort after a fixed amount of iterations
+    // we abort after a fixed amount of iterations. In case that the iteration seems to loop
+    // indefinitely this check will return an Error indicating the infinite loop.
     let mut loop_count = 1000;
-    // in case of an error we have something to return (the scenario that triggered the infinite
-    // loop)
     let mut loop_check = || {
         loop_count -= 1;
         (loop_count != 0)
