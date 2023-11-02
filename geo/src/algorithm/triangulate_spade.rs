@@ -58,9 +58,9 @@ mod private {
 
         // processing of the lines that prepare the lines for triangulation.
         //
-        // `spade` has the general
-        // limitation that constraint lines cannot intersect or else it will panic. This is why we need
-        // to manually split up the lines into smaller parts at the intersection point
+        // `spade` has the general limitation that constraint lines cannot intersect or else it
+        // will panic. This is why we need to manually split up the lines into smaller parts at the
+        // intersection point
         //
         // there's also a preprocessing step which tries to minimize the risk of failure of the algo
         // through edge cases (thin/flat triangles are prevented as much as possible & lines are deduped, ...)
