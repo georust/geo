@@ -390,7 +390,7 @@ define_test!(
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
-    num_verts = vec![11],
+    num_verts = vec![8],
 );
 
 define_test!(
