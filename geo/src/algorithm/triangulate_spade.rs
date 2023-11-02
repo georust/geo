@@ -49,10 +49,10 @@ mod private {
         /// should be triangulated.
         ///
         /// intersecting lines are allowed
-        fn get_lines(&'a self) -> Vec<Line<T>>;
+        fn lines(&'a self) -> Vec<Line<T>>;
         /// collect all the points that are relevant for triangulations from the geometric object that
         /// should be triangulated
-        fn get_points(&'a self) -> Vec<Coord<T>>;
+        fn points(&'a self) -> Vec<Coord<T>>;
         /// define a predicate that decides if a point is inside of the object (used for constrained triangulation)
         fn contains_point(&'a self, p: Point<T>) -> bool;
 
@@ -106,7 +106,7 @@ where
     /// ```
     ///
     fn unconstrained_triangulation(&'a self) -> TriangulationResult<Triangles<T>> {
-        let points = self.get_points();
+        let points = self.points();
         points
             .into_iter()
             .map(to_spade_point)
@@ -165,7 +165,7 @@ where
     /// The outer triangulation of the top down U-shape contains extra triangles marked
     /// with ":". If you want to exclude those, take a look at `constrained_triangulation`
     fn constrained_outer_triangulation(&'a self) -> TriangulationResult<Triangles<T>> {
-        let lines = self.get_lines();
+        let lines = self.lines();
         let lines = Self::cleanup_lines(lines)?;
         lines
             .into_iter()
@@ -276,11 +276,11 @@ where
     T: SpadeTriangulationFloat,
     G: LinesIter<'l, Scalar = T> + CoordsIter<Scalar = T> + Contains<Point<T>>,
 {
-    fn get_points(&'a self) -> Vec<Coord<T>> {
+    fn points(&'a self) -> Vec<Coord<T>> {
         self.coords_iter().collect::<Vec<_>>()
     }
 
-    fn get_lines(&'a self) -> Vec<Line<T>> {
+    fn lines(&'a self) -> Vec<Line<T>> {
         self.lines_iter().collect()
     }
 
@@ -297,12 +297,12 @@ where
     T: SpadeTriangulationFloat,
     G: TriangulateSpade<'a, T>,
 {
-    fn get_points(&'a self) -> Vec<Coord<T>> {
-        self.iter().flat_map(|g| g.get_points()).collect::<Vec<_>>()
+    fn points(&'a self) -> Vec<Coord<T>> {
+        self.iter().flat_map(|g| g.points()).collect::<Vec<_>>()
     }
 
-    fn get_lines(&'a self) -> Vec<Line<T>> {
-        self.iter().flat_map(|g| g.get_lines()).collect::<Vec<_>>()
+    fn lines(&'a self) -> Vec<Line<T>> {
+        self.iter().flat_map(|g| g.lines()).collect::<Vec<_>>()
     }
 
     fn contains_point(&'a self, p: Point<T>) -> bool {
@@ -315,12 +315,12 @@ where
     T: SpadeTriangulationFloat,
     G: TriangulateSpade<'a, T>,
 {
-    fn get_points(&'a self) -> Vec<Coord<T>> {
-        self.iter().flat_map(|g| g.get_points()).collect::<Vec<_>>()
+    fn points(&'a self) -> Vec<Coord<T>> {
+        self.iter().flat_map(|g| g.points()).collect::<Vec<_>>()
     }
 
-    fn get_lines(&'a self) -> Vec<Line<T>> {
-        self.iter().flat_map(|g| g.get_lines()).collect::<Vec<_>>()
+    fn lines(&'a self) -> Vec<Line<T>> {
+        self.iter().flat_map(|g| g.lines()).collect::<Vec<_>>()
     }
 
     fn contains_point(&'a self, p: Point<T>) -> bool {
