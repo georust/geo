@@ -28,6 +28,8 @@
   * <https://github.com/georust/geo/pull/1091>
 * Add `wkt!` macro to define geometries at compile time.
   <https://github.com/georust/geo/pull/1063>
+* Allow affine transforms to be constructed from borrowed arrays.
+  <https://github.com/georust/geo/pull/1105>
 
 ## 0.26.0
 
