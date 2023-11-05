@@ -63,7 +63,9 @@ impl LineStringSegmentize for LineString {
         // densify the LineString so that each `Line` segment is not longer
         // than the segment length ensuring that we will never partition one
         // Line more than once.
-        let densified = self.densify(segment_length);
+        // in the case of super small distances floating point errors can arise
+        // the solution is to subtract by f64::EPSILON for these edge cases.
+        let densified = self.densify(segment_length - f64::EPSILON);
 
         // if the densified line is exactly equal to the number of requested
         // segments, return early. This will happen when a LineString has
@@ -304,5 +306,18 @@ mod test {
         let linestring: LineString = vec![[0.0, 0.0], [1.0, 1.0], [1.0, 2.0], [3.0, 3.0]].into();
         let segments = linestring.line_segmentize(2).unwrap();
         assert_eq!(segments.0.len(), 2)
+    }
+
+    #[test]
+    fn tiny_distances() {
+        // this test is to ensure that at super small distances
+        // the number of units is still the specified one.
+        let linestring: LineString = vec![
+            [ -3.19416, 55.95524 ],
+            [ -3.19352, 55.95535 ],
+            [ -3.19288, 55.95546 ]
+          ].into();
+        let segments = linestring.line_segmentize(6).unwrap();
+        assert_eq!(segments.0.len(), 6)
     }
 }
