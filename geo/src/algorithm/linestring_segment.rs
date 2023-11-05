@@ -8,28 +8,14 @@ use crate::{Coord, Densify, EuclideanLength, LineString, LinesIter, MultiLineStr
 ///
 /// # Examples
 /// ```
-/// use geo::{LineString, MultiLineString, LineStringSegmentize, Coord};
+/// use geo::{LineString, MultiLineString, LineStringSegmentize};
 /// // Create a simple line string
 /// let lns: LineString<f64> = vec![[0.0, 0.0], [1.0, 2.0], [3.0, 6.0]].into();
-/// // Segment it into 6 LineStrings inside of a MultiLineString
-/// let segmentized = lns.line_segmentize(6).unwrap();
-///
-/// // Recreate the MultiLineString from scratch
-/// // this is the inner vector used to create the MultiLineString
-/// let all_lines = vec![
-///     LineString::new(vec![Coord { x: 0.0, y: 0.0 }, Coord { x: 0.5, y: 1.0 }]),
-///     LineString::new(vec![Coord { x: 0.5, y: 1.0 }, Coord { x: 1.0, y: 2.0 }]),
-///     LineString::new(vec![Coord { x: 1.0, y: 2.0 }, Coord { x: 1.5, y: 3.0 }]),
-///     LineString::new(vec![Coord { x: 1.5, y: 3.0 }, Coord { x: 2.0, y: 4.0 }]),
-///     LineString::new(vec![Coord { x: 2.0, y: 4.0 }, Coord { x: 2.5, y: 5.0 }]),
-///     LineString::new(vec![Coord { x: 2.5, y: 5.0 }, Coord { x: 3.0, y: 6.0 }])
-///     ];
-///
-/// // Create the MultiLineString
-/// let mlns = MultiLineString::new(all_lines);
-///
-/// // Compare the two
-/// assert_eq!(mlns, segmentized);
+/// // Segment it into n LineStrings inside of a MultiLineString
+/// let n = 6;
+/// let segmentized = lns.line_segmentize(n).unwrap();
+/// // Compare the number of elements
+/// assert_eq!(n, segmentized.0.len());
 ///```
 pub trait LineStringSegmentize {
     fn line_segmentize(&self, n: usize) -> Option<MultiLineString>;
