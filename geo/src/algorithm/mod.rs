@@ -190,7 +190,7 @@ pub use lines_iter::LinesIter;
 
 /// Split a LineString into n segments
 pub mod linestring_segment;
-pub use linestring_segment::LineStringSegmentize;
+pub use linestring_segment::{LineStringSegmentize, LineStringSegmentizeHaversine};
 
 /// Apply a function to all `Coord`s of a `Geometry`.
 pub mod map_coords;
