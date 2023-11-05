@@ -313,11 +313,14 @@ mod test {
         // this test is to ensure that at super small distances
         // the number of units is still the specified one.
         let linestring: LineString = vec![
-            [ -3.19416, 55.95524 ],
-            [ -3.19352, 55.95535 ],
-            [ -3.19288, 55.95546 ]
-          ].into();
-        let segments = linestring.line_segmentize(6).unwrap();
-        assert_eq!(segments.0.len(), 6)
+            [-3.19416, 55.95524],
+            [-3.19352, 55.95535],
+            [-3.19288, 55.95546],
+        ]
+        .into();
+
+        let n = 8;
+        let segments = linestring.line_segmentize(n).unwrap();
+        assert_eq!(segments.0.len(), n)
     }
 }
