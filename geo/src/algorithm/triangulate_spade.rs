@@ -749,4 +749,29 @@ mod spade_triangulation {
         let constrained_triangulation = u_shape.constrained_triangulation(Default::default());
         assert_num_triangles(&constrained_triangulation, 6);
     }
+
+    #[test]
+    fn various_snap_radius_works() {
+        let u_shape = Polygon::new(
+            LineString::new(vec![
+                Coord { x: 0.0, y: 0.0 },
+                Coord { x: 1.0, y: 0.0 },
+                Coord { x: 1.0, y: 1.0 },
+                Coord { x: 2.0, y: 1.0 },
+                Coord { x: 2.0, y: 0.0 },
+                Coord { x: 3.0, y: 0.0 },
+                Coord { x: 3.0, y: 3.0 },
+                Coord { x: 0.0, y: 3.0 },
+            ]),
+            vec![],
+        );
+
+        for snap_with in (1..6).map(|pow| 0.1_f64.powi(pow)) {
+            let constrained_triangulation =
+                u_shape.constrained_triangulation(SpadeTriangulationConfig {
+                    snap_radius: snap_with,
+                });
+            assert_num_triangles(&constrained_triangulation, 6);
+        }
+    }
 }
