@@ -18,7 +18,7 @@ where
         op_pred: F,
     ) -> SpadeBoolopsResult<T> {
         vec![p1.clone(), p2.clone()]
-            .constrained_outer_triangulation()
+            .constrained_outer_triangulation(Default::default())
             .map_err(SpadeBoolopsError::TriangulationError)?
             .into_iter()
             .filter(|tri| op_pred(tri))
@@ -65,7 +65,7 @@ where
 
         // do the real boolean operation only on the intersecting parts
         let boolop_result = vec![MultiPolygon::new(p1_inter), MultiPolygon::new(p2_inter)]
-            .constrained_outer_triangulation()
+            .constrained_outer_triangulation(Default::default())
             .map_err(SpadeBoolopsError::TriangulationError)?
             .into_iter()
             .filter(|tri| op_pred(tri))
@@ -94,7 +94,7 @@ where
         // gets confused otherwise in some edge case tests
         [boolop_result, p1_non_inter, p2_non_inter]
             .concat()
-            .constrained_triangulation()
+            .constrained_triangulation(Default::default())
             .map_err(SpadeBoolopsError::TriangulationError)?
             .stitch_together()
             .map_err(SpadeBoolopsError::StitchError)
