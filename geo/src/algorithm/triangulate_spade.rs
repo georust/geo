@@ -9,6 +9,30 @@ use crate::{
 };
 use crate::{Centroid, Contains};
 
+// ======== Config ============
+
+/// Collection of parameters that influence the precision of the algorithm in some sense (see
+/// explanations on fields of this struct)
+///
+/// This implements the `Default` trait and you can just use it most of the time
+#[derive(Debug, Clone)]
+pub struct SpadeTriangulationConfig<T: SpadeTriangulationFloat> {
+    /// Coordinates within this radius are snapped to the same position. For any two `Coords` there's
+    /// no real way to influence the decision when choosing the snapper and the snappee
+    snap_radius: T,
+}
+
+impl<T> Default for SpadeTriangulationConfig<T>
+where
+    T: SpadeTriangulationFloat,
+{
+    fn default() -> Self {
+        Self {
+            snap_radius: <T as std::convert::From<f32>>::from(0.000_1),
+        }
+    }
+}
+
 // ====== Error ========
 
 #[derive(Debug)]
@@ -50,9 +74,9 @@ mod private {
         ///
         /// intersecting lines are allowed
         fn lines(&'a self) -> Vec<Line<T>>;
-        /// collect all the points that are relevant for triangulations from the geometric object that
+        /// collect all the coords that are relevant for triangulations from the geometric object that
         /// should be triangulated
-        fn points(&'a self) -> Vec<Coord<T>>;
+        fn coords(&'a self) -> Vec<Coord<T>>;
         /// define a predicate that decides if a point is inside of the object (used for constrained triangulation)
         fn contains_point(&'a self, p: Point<T>) -> bool;
 
@@ -64,9 +88,9 @@ mod private {
         //
         // there's also a preprocessing step which tries to minimize the risk of failure of the algo
         // through edge cases (thin/flat triangles are prevented as much as possible & lines are deduped, ...)
-        fn cleanup_lines(lines: Vec<Line<T>>) -> TriangulationResult<Vec<Line<T>>> {
-            let (known_points, lines) = preprocess_lines(lines);
-            prepare_intersection_contraint(lines, known_points)
+        fn cleanup_lines(lines: Vec<Line<T>>, snap_radius: T) -> TriangulationResult<Vec<Line<T>>> {
+            let (known_coords, lines) = preprocess_lines(lines, snap_radius);
+            prepare_intersection_contraint(lines, known_coords, snap_radius)
         }
     }
 }
@@ -106,7 +130,7 @@ where
     /// ```
     ///
     fn unconstrained_triangulation(&'a self) -> TriangulationResult<Triangles<T>> {
-        let points = self.points();
+        let points = self.coords();
         points
             .into_iter()
             .map(to_spade_point)
@@ -157,16 +181,21 @@ where
     ///     ]),
     ///     vec![],
     /// );
-    /// let constrained_outer_triangulation = u_shape.constrained_outer_triangulation().unwrap();
+    /// // we use the default [`SpadeTriangulationConfig`] here
+    /// let constrained_outer_triangulation =
+    /// u_shape.constrained_outer_triangulation(Default::default()).unwrap();
     /// let num_triangles = constrained_outer_triangulation.len();
     /// assert_eq!(num_triangles, 8);
     /// ```
     ///
     /// The outer triangulation of the top down U-shape contains extra triangles marked
     /// with ":". If you want to exclude those, take a look at `constrained_triangulation`
-    fn constrained_outer_triangulation(&'a self) -> TriangulationResult<Triangles<T>> {
+    fn constrained_outer_triangulation(
+        &'a self,
+        config: SpadeTriangulationConfig<T>,
+    ) -> TriangulationResult<Triangles<T>> {
         let lines = self.lines();
-        let lines = Self::cleanup_lines(lines)?;
+        let lines = Self::cleanup_lines(lines, config.snap_radius)?;
         lines
             .into_iter()
             .map(to_spade_line)
@@ -226,23 +255,28 @@ where
     ///     ]),
     ///     vec![],
     /// );
-    /// let constrained_triangulation = u_shape.constrained_triangulation().unwrap();
+    /// // we use the default [`SpadeTriangulationConfig`] here
+    /// let constrained_triangulation = u_shape.constrained_triangulation(Default::default()).unwrap();
     /// let num_triangles = constrained_triangulation.len();
     /// assert_eq!(num_triangles, 6);
     /// ```
     ///
     /// Compared to the `constrained_outer_triangulation` it only includes the triangles
     /// inside of the input geometry
-    fn constrained_triangulation(&'a self) -> TriangulationResult<Triangles<T>> {
-        self.constrained_outer_triangulation().map(|triangles| {
-            triangles
-                .into_iter()
-                .filter(|triangle| {
-                    let center = triangle.centroid();
-                    self.contains_point(center)
-                })
-                .collect::<Vec<_>>()
-        })
+    fn constrained_triangulation(
+        &'a self,
+        config: SpadeTriangulationConfig<T>,
+    ) -> TriangulationResult<Triangles<T>> {
+        self.constrained_outer_triangulation(config)
+            .map(|triangles| {
+                triangles
+                    .into_iter()
+                    .filter(|triangle| {
+                        let center = triangle.centroid();
+                        self.contains_point(center)
+                    })
+                    .collect::<Vec<_>>()
+            })
     }
 }
 
@@ -276,7 +310,7 @@ where
     T: SpadeTriangulationFloat,
     G: LinesIter<'l, Scalar = T> + CoordsIter<Scalar = T> + Contains<Point<T>>,
 {
-    fn points(&'a self) -> Vec<Coord<T>> {
+    fn coords(&'a self) -> Vec<Coord<T>> {
         self.coords_iter().collect::<Vec<_>>()
     }
 
@@ -297,8 +331,8 @@ where
     T: SpadeTriangulationFloat,
     G: TriangulateSpade<'a, T>,
 {
-    fn points(&'a self) -> Vec<Coord<T>> {
-        self.iter().flat_map(|g| g.points()).collect::<Vec<_>>()
+    fn coords(&'a self) -> Vec<Coord<T>> {
+        self.iter().flat_map(|g| g.coords()).collect::<Vec<_>>()
     }
 
     fn lines(&'a self) -> Vec<Line<T>> {
@@ -315,8 +349,8 @@ where
     T: SpadeTriangulationFloat,
     G: TriangulateSpade<'a, T>,
 {
-    fn points(&'a self) -> Vec<Coord<T>> {
-        self.iter().flat_map(|g| g.points()).collect::<Vec<_>>()
+    fn coords(&'a self) -> Vec<Coord<T>> {
+        self.iter().flat_map(|g| g.coords()).collect::<Vec<_>>()
     }
 
     fn lines(&'a self) -> Vec<Line<T>> {
@@ -333,6 +367,7 @@ where
 fn prepare_intersection_contraint<T: SpadeTriangulationFloat>(
     mut lines: Vec<Line<T>>,
     mut known_points: Vec<Coord<T>>,
+    snap_radius: T,
 ) -> Result<Vec<Line<T>>, TriangulationError> {
     // Rule 2 of "Power of 10" rules (NASA)
     // safety net. We can't prove that the `while let` loop isn't going to run infinitely, so
@@ -353,7 +388,7 @@ fn prepare_intersection_contraint<T: SpadeTriangulationFloat>(
         loop_check()?;
         let [l0, l1] = remove_lines_by_index(indices, &mut lines);
         let new_lines = split_lines([l0, l1], intersection);
-        let new_lines = cleanup_filter_lines(new_lines, &lines, &mut known_points);
+        let new_lines = cleanup_filter_lines(new_lines, &lines, &mut known_points, snap_radius);
 
         lines.extend(new_lines);
     }
@@ -459,12 +494,13 @@ fn cleanup_filter_lines<T: SpadeTriangulationFloat>(
     lines_need_check: Vec<Line<T>>,
     existing_lines: &[Line<T>],
     known_points: &mut Vec<Coord<T>>,
+    snap_radius: T,
 ) -> Vec<Line<T>> {
     lines_need_check
         .into_iter()
         .map(|mut line| {
-            line.start = snap_or_register_point(line.start, known_points);
-            line.end = snap_or_register_point(line.end, known_points);
+            line.start = snap_or_register_point(line.start, known_points, snap_radius);
+            line.end = snap_or_register_point(line.end, known_points, snap_radius);
             line
         })
         .filter(|l| l.start != l.end)
@@ -474,11 +510,13 @@ fn cleanup_filter_lines<T: SpadeTriangulationFloat>(
 }
 
 /// snap point to the nearest existing point if it's close enough
+///
+/// snap_radius can be configured via the third parameter of this function
 fn snap_or_register_point<T: SpadeTriangulationFloat>(
     point: Coord<T>,
     known_points: &mut Vec<Coord<T>>,
+    snap_radius: T,
 ) -> Coord<T> {
-    let epsilon_range = <T as std::convert::From<f32>>::from(0.0001);
     known_points
         .iter()
         // find closest
@@ -488,7 +526,7 @@ fn snap_or_register_point<T: SpadeTriangulationFloat>(
                 .expect("Couldn't compare coordinate distances")
         })
         // only snap if closest is within epsilone range
-        .filter(|nearest_point| nearest_point.euclidean_distance(&point) < epsilon_range)
+        .filter(|nearest_point| nearest_point.euclidean_distance(&point) < snap_radius)
         .cloned()
         // otherwise register and use input point
         .unwrap_or_else(|| {
@@ -500,17 +538,18 @@ fn snap_or_register_point<T: SpadeTriangulationFloat>(
 /// preprocesses lines so that we're less likely to hit issues when using the spade triangulation
 fn preprocess_lines<T: SpadeTriangulationFloat>(
     lines: Vec<Line<T>>,
+    snap_radius: T,
 ) -> (Vec<Coord<T>>, Vec<Line<T>>) {
-    let mut known_points: Vec<Coord<T>> = vec![];
+    let mut known_coords: Vec<Coord<T>> = vec![];
     let capacity = lines.len();
     let lines = lines
         .into_iter()
         .fold(Vec::with_capacity(capacity), |mut lines, mut line| {
             // deduplicating:
 
-            // 1. snap points of lines to existing points
-            line.start = snap_or_register_point(line.start, &mut known_points);
-            line.end = snap_or_register_point(line.end, &mut known_points);
+            // 1. snap coords of lines to existing coords
+            line.start = snap_or_register_point(line.start, &mut known_coords, snap_radius);
+            line.end = snap_or_register_point(line.end, &mut known_coords, snap_radius);
             if
             // 2. make sure line isn't degenerate (no length when start == end)
             line.start != line.end
@@ -523,7 +562,7 @@ fn preprocess_lines<T: SpadeTriangulationFloat>(
 
             lines
         });
-    (known_points, lines)
+    (known_coords, lines)
 }
 
 /// converts Line to something somewhat similar in the spade world
@@ -625,7 +664,8 @@ mod spade_triangulation {
             ),
         ];
 
-        let constrained_outer_triangulation = triangles.constrained_outer_triangulation();
+        let constrained_outer_triangulation =
+            triangles.constrained_outer_triangulation(Default::default());
         assert_num_triangles(&constrained_outer_triangulation, 8);
     }
 
@@ -644,7 +684,8 @@ mod spade_triangulation {
             ),
         ];
 
-        let constrained_outer_triangulation = triangles.constrained_triangulation();
+        let constrained_outer_triangulation =
+            triangles.constrained_triangulation(Default::default());
         assert_num_triangles(&constrained_outer_triangulation, 6);
     }
 
@@ -684,7 +725,8 @@ mod spade_triangulation {
             vec![],
         );
 
-        let constrained_outer_triangulation = u_shape.constrained_outer_triangulation();
+        let constrained_outer_triangulation =
+            u_shape.constrained_outer_triangulation(Default::default());
         assert_num_triangles(&constrained_outer_triangulation, 8);
     }
 
@@ -704,7 +746,7 @@ mod spade_triangulation {
             vec![],
         );
 
-        let constrained_triangulation = u_shape.constrained_triangulation();
+        let constrained_triangulation = u_shape.constrained_triangulation(Default::default());
         assert_num_triangles(&constrained_triangulation, 6);
     }
 }
