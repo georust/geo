@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.27.0
 
 * Use `CachedEnvelope` in R-Trees when computing euclidean distance between polygons
   * <https://github.com/georust/geo/pull/1093>
