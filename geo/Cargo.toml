@@ -13,10 +13,12 @@ rust-version = "1.65"
 categories = ["science::geo"]
 
 [features]
-default = ["earcutr"]
-use-proj = ["proj"]
+default = ["earcutr", "delaunay", "voronoi"]
+delaunay = []
 proj-network = ["use-proj", "proj/network"]
+use-proj = ["proj"]
 use-serde = ["serde", "geo-types/serde"]
+voronoi = ["delaunay"]
 
 [dependencies]
 earcutr = { version = "0.4.2", optional = true }
