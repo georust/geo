@@ -94,6 +94,10 @@ impl<T: CoordNum> MultiPoint<T> {
         self.0.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &Point<T>> {
         self.0.iter()
     }
