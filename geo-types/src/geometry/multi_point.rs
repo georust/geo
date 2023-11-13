@@ -35,16 +35,16 @@ use core::iter::FromIterator;
 pub struct MultiPoint<T: CoordNum = f64>(pub Vec<Point<T>>);
 
 impl<T: CoordNum, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
-    /// Convert a single `Point` (or something which can be converted to a `Point`) into a
-    /// one-member `MultiPoint`
+    /// Convert a single `Point` (or something which can be converted to a
+    /// `Point`) into a one-member `MultiPoint`
     fn from(x: IP) -> Self {
         Self(vec![x.into()])
     }
 }
 
 impl<T: CoordNum, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
-    /// Convert a `Vec` of `Points` (or `Vec` of things which can be converted to a `Point`) into a
-    /// `MultiPoint`.
+    /// Convert a `Vec` of `Points` (or `Vec` of things which can be converted
+    /// to a `Point`) into a `MultiPoint`.
     fn from(v: Vec<IP>) -> Self {
         Self(v.into_iter().map(|p| p.into()).collect())
     }
@@ -88,6 +88,10 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPoint<T> {
 impl<T: CoordNum> MultiPoint<T> {
     pub fn new(value: Vec<Point<T>>) -> Self {
         Self(value)
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Point<T>> {
