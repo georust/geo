@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use geo_types::{Coord, Line, LineString, MultiPolygon, Polygon, Triangle};
 
-use crate::{Contains, CoordsIter, GeoFloat, LinesIter, Winding};
+use crate::{Contains, GeoFloat, LinesIter, Winding};
 
 // ========= Error Type ============
 
@@ -161,44 +161,57 @@ fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<
     // find rings
     let mut rings = vec![];
     let mut points = vec![];
-    for p in poly.exterior() {
-        if let Some(i) = points.iter().position(|&c| c == p) {
-            rings.push(
-                points
-                    .drain(i..)
-                    .chain(std::iter::once(p))
-                    .cloned()
-                    .collect::<Vec<_>>(),
-            );
-        }
-        points.push(p);
+
+    fn detect_if_rings_closed_with_point<F: GeoFloat>(
+        points: &mut Vec<&Coord<F>>,
+        p: &Coord<F>,
+    ) -> Option<Vec<Coord<F>>> {
+        let pos = points.iter().position(|&c| c == p)?;
+        let ring = points
+            .drain(pos..)
+            .chain(std::iter::once(p))
+            .cloned()
+            .collect::<Vec<_>>();
+        Some(ring)
     }
-    rings.push(points.into_iter().cloned().collect::<Vec<_>>());
+
+    poly.exterior().into_iter().for_each(|coord| {
+        if let Some(ring) = detect_if_rings_closed_with_point(&mut points, coord) {
+            rings.push(ring);
+        }
+        points.push(coord);
+    });
+
+    let last_ring = points.into_iter().cloned().collect::<Vec<_>>();
+    rings.push(last_ring);
 
     let mut rings = rings
         .into_iter()
-        .map(|cs| Polygon::new(LineString::new(cs), vec![]))
         // filter out degenerate polygons which may be produced from the code above
-        .filter(|p| p.coords_count() >= 3)
+        .filter(|cs| cs.len() >= 3)
+        .map(|cs| Polygon::new(LineString::new(cs), vec![]))
         .collect::<Vec<_>>();
+
+    fn find_outmost_ring<F: GeoFloat>(rings: &[Polygon<F>]) -> Option<usize> {
+        rings
+            .iter()
+            .enumerate()
+            .find(|(i, ring)| {
+                rings
+                    .iter()
+                    .enumerate()
+                    .filter(|(j, _)| i != j)
+                    .all(|(_, other)| ring.contains(other))
+            })
+            .map(|(i, _)| i)
+    }
 
     // if exterior ring exists that contains all other rings, recreate the poly with:
     //
     // - exterior ring as exterior
     // - other rings are counted to interiors
     // - previously existing interiors are preserved
-    if let Some(outer_index) = rings
-        .iter()
-        .enumerate()
-        .find(|(i, ring)| {
-            rings
-                .iter()
-                .enumerate()
-                .filter(|(j, _)| i != j)
-                .all(|(_, other)| ring.contains(other))
-        })
-        .map(|(i, _)| i)
-    {
+    if let Some(outer_index) = find_outmost_ring(&rings) {
         let exterior = rings.remove(outer_index).exterior().clone();
         let interiors = poly
             .interiors()
@@ -217,22 +230,32 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
 ) -> PolygonStitchingResult<MultiPolygon<F>> {
     let rings = stitch_rings_from_lines(lines)?;
 
-    // Associates every ring with its parents (the rings that contain it)
-    let mut parents: HashMap<usize, Vec<usize>> = HashMap::default();
-
-    for (current_ring_idx, ring) in rings.iter().enumerate() {
-        let parent_idxs = rings
+    fn find_parent_idxs<F: GeoFloat>(
+        ring_idx: usize,
+        ring: &LineString<F>,
+        all_rings: &[LineString<F>],
+    ) -> Vec<usize> {
+        all_rings
             .iter()
             .enumerate()
-            .filter(|(other_idx, _)| current_ring_idx != *other_idx)
+            .filter(|(other_idx, _)| ring_idx != *other_idx)
             .filter_map(|(idx, maybe_parent)| {
                 Polygon::new(maybe_parent.clone(), vec![])
                     .contains(ring)
                     .then_some(idx)
             })
-            .collect::<Vec<_>>();
-        parents.insert(current_ring_idx, parent_idxs);
+            .collect()
     }
+
+    // Associates every ring with its parents (the rings that contain it)
+    let parents: HashMap<usize, Vec<usize>> = rings
+        .iter()
+        .enumerate()
+        .map(|(ring_idx, ring)| {
+            let parent_idxs = find_parent_idxs(ring_idx, ring, &rings);
+            (ring_idx, parent_idxs)
+        })
+        .collect();
 
     // Associates outer rings with their inner rings
     let mut polygons_idxs: HashMap<usize, Vec<usize>> = HashMap::default();
@@ -251,23 +274,29 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
             continue;
         }
 
+        // the direct parent is the parent which has itself the most parents
+        fn find_direct_parents(
+            parents_indexs: &[usize],
+            parents: &HashMap<usize, Vec<usize>>,
+        ) -> Option<usize> {
+            parents_indexs
+                .iter()
+                .filter_map(|parent_idx| {
+                    parents
+                        .get(parent_idx)
+                        .map(|grandparents| (parent_idx, grandparents))
+                })
+                .max_by_key(|(_, grandparents)| grandparents.len())
+                .map(|(idx, _)| idx)
+                .copied()
+        }
+
         // if it has an odd number of parents, it's an inner ring
         //
-        // to find the specific outer ring it is related to, we search for the direct parent. The
-        // direct parent of the current ring has itself the most parents from all available
-        // parents, so find it by max
-        if let Some(direct_parent) = parent_idxs
-            .iter()
-            .filter_map(|parent_idx| {
-                parents
-                    .get(parent_idx)
-                    .map(|grandparents| (parent_idx, grandparents))
-            })
-            .max_by_key(|(_, grandparents)| grandparents.len())
-            .map(|(idx, _)| idx)
-        {
+        // to find the specific outer ring it is related to, we search for the direct parent.
+        if let Some(direct_parent) = find_direct_parents(parent_idxs, &parents) {
             polygons_idxs
-                .entry(*direct_parent)
+                .entry(direct_parent)
                 .or_default()
                 .push(*ring_index);
         }
@@ -302,17 +331,20 @@ fn stitch_rings_from_lines<F: GeoFloat>(
 
     let mut rings: Vec<LineString<F>> = vec![];
     while !ring_parts.is_empty() {
-        let (j, res) = ring_parts
+        let (j, stitch_result) = ring_parts
             .iter()
             .enumerate()
             .skip(1)
             .find_map(|(j, part)| try_stitch(&ring_parts[0], part).map(|res| (j, res)))
             .ok_or(LineStitchingError::IncompleteRing)?;
 
-        if res.first() == res.last() && !res.is_empty() {
-            rings.push(LineString::new(res));
+        let is_stitch_result_valid =
+            stitch_result.first() == stitch_result.last() && !stitch_result.is_empty();
+
+        if is_stitch_result_valid {
+            rings.push(LineString::new(stitch_result));
         } else {
-            ring_parts.push(res);
+            ring_parts.push(stitch_result);
         }
 
         ring_parts.remove(j);
