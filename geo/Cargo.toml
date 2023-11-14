@@ -13,7 +13,7 @@ rust-version = "1.65"
 categories = ["science::geo"]
 
 [features]
-default = ["earcutr", "delaunay", "voronoi"]
+default = ["earcutr", "spade", "delaunay", "voronoi"]
 delaunay = []
 proj-network = ["use-proj", "proj/network"]
 use-proj = ["proj"]
@@ -22,6 +22,7 @@ voronoi = ["delaunay"]
 
 [dependencies]
 earcutr = { version = "0.4.2", optional = true }
+spade = { version = "2.2.0", optional = true }
 float_next_after = "1.0.0"
 geo-types = { version = "0.7.9", features = ["approx", "use-rstar_0_11"] }
 geographiclib-rs = { version = "0.2.3", default-features = false }
