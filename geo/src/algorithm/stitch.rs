@@ -26,7 +26,17 @@ pub(crate) type PolygonStitchingResult<T> = Result<T, LineStitchingError>;
 
 // ========= Main Algo ============
 
+/// Trait to stitch together split up polygons.
 pub trait Stitch<T: GeoFloat> {
+    // 🚧🚧 TODO 🚧🚧 : it might make sense to have a separate method in this trait which
+    // doesn't do the fixup and instead assumes that the polygon is well formed to prevent
+    // extensive cloning
+    //
+    /// This stitching only happens along identical edges which are located in two separate
+    /// geometries. This also means that if you want to do something more general like a
+    /// [`Boolean Operation Union`](https://en.wikipedia.org/wiki/Boolean_operations_on_polygons)
+    /// you should use the trait `BooleanOps` or `SpadeBoolops`. In contrast, the `stitch_together`
+    /// trait method has a comparatively smaller footprint than those other boolean operation traits.
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>>;
 }
 
@@ -76,9 +86,6 @@ macro_rules! impl_stitch {
 impl_stitch! {
     Polygon<T> => self
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
-        // 🚧🚧 TODO 🚧🚧 : it might make sense to have a separate method in this trait which
-        // doesn't do the fixup and instead assumes that the polygon is well formed to prevent
-        // extensive cloning
         let polys = self
             .iter()
             .map(|&poly| fix_orientation(poly.clone()))
