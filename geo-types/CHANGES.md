@@ -1,6 +1,6 @@
 # Changes
 
-## Unrealeased
+## 0.7.12
 
 * Add `Polygon::try_exterior_mut` and `Polygon::try_interiors_mut`.
   <https://github.com/georust/geo/pull/1071>

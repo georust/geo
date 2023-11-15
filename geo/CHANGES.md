@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.27.0
 
 * Use `CachedEnvelope` in R-Trees when computing euclidean distance between polygons
   * <https://github.com/georust/geo/pull/1093>
@@ -27,6 +27,11 @@
 * Fix coordinate wrapping in `HaversineDestination`
   * <https://github.com/georust/geo/pull/1091>
 * Add `wkt!` macro to define geometries at compile time.
+  * <https://github.com/georust/geo/pull/1063>
+* Add `TriangulateSpade` trait which provides (un)constrained Delaunay Triangulations for all `geo_types` via the `spade` crate
+  * <https://github.com/georust/geo/pull/1083>
+* Add `len()` and `is_empty()` to `MultiPoint`
+  * <https://github.com/georust/geo/pull/1109>
   <https://github.com/georust/geo/pull/1063>
 * Add `TriangulateSpade` trait which provides (un)constrained Delaunay Triangulations for all `geo_types` via the `spade` crate
   * <https://github.com/georust/geo/pull/1083>
