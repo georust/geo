@@ -1,13 +1,37 @@
 # Changes
 
-## Unreleased
+## 0.27.0
 
+* Use `CachedEnvelope` in R-Trees when computing euclidean distance between polygons
+  * <https://github.com/georust/geo/pull/1093>
+* Add an `inverse` method to `AffineTransform`
+  * <https://github.com/georust/geo/pull/1092>
+* Fix `Densify` trait to avoid panic with empty line string.
+  * <https://github.com/georust/geo/pull/1082>
+* Add `DensifyHaversine` trait to densify spherical line geometry.
+  * <https://github.com/georust/geo/pull/1081>
+* Add `LineStringSegmentize` trait to split a single `LineString` into `n` `LineStrings` as a `MultiLineString`.
+  * <https://github.com/georust/geo/pull/1055>
 * Add `EuclideanDistance` implementations for all remaining geometries.
   * <https://github.com/georust/geo/pull/1029>
 * Add `HausdorffDistance` algorithm trait to calculate the Hausdorff distance between any two geometries.
   * <https://github.com/georust/geo/pull/1041>
 * Add `matches` method to IntersectionMatrix for ergonomic de-9im comparisons.
   * <https://github.com/georust/geo/pull/1043>
+* Simplify `CoordsIter` and `MinimumRotatedRect` `trait`s with GATs by removing an unneeded trait lifetime.
+  * <https://github.com/georust/geo/pull/908>
+* Add `ToDegrees` and `ToRadians` traits.
+  * <https://github.com/georust/geo/pull/1070>
+* Add rhumb-line operations analogous to several current haversine operations: `RhumbBearing`, `RhumbDestination`, `RhumbDistance`, `RhumbIntermediate`, `RhumbLength`.
+  * <https://github.com/georust/geo/pull/1090>
+* Fix coordinate wrapping in `HaversineDestination`
+  * <https://github.com/georust/geo/pull/1091>
+* Add `wkt!` macro to define geometries at compile time.
+  * <https://github.com/georust/geo/pull/1063>
+* Add `TriangulateSpade` trait which provides (un)constrained Delaunay Triangulations for all `geo_types` via the `spade` crate
+  * <https://github.com/georust/geo/pull/1083>
+* Add `len()` and `is_empty()` to `MultiPoint`
+  * <https://github.com/georust/geo/pull/1109>
 
 ## 0.26.0
 

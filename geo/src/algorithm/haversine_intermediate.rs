@@ -9,8 +9,7 @@ pub trait HaversineIntermediate<T: CoordFloat> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use] extern crate approx;
-    /// #
+    /// # use approx::assert_relative_eq;
     /// use geo::HaversineIntermediate;
     /// use geo::Point;
     ///

@@ -84,7 +84,6 @@
 //! [rstar]: https://github.com/Stoeoef/rstar
 //! [Serde]: https://serde.rs/
 extern crate alloc;
-extern crate num_traits;
 
 use core::fmt::Debug;
 use num_traits::{Float, Num, NumCast};
@@ -92,9 +91,6 @@ use num_traits::{Float, Num, NumCast};
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;
-
-#[cfg(feature = "rstar_0_8")]
-extern crate rstar_0_8;
 
 #[cfg(test)]
 #[macro_use]
@@ -134,6 +130,9 @@ pub use error::Error;
 #[macro_use]
 mod macros;
 
+#[macro_use]
+mod wkt_macro;
+
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
 
@@ -151,8 +150,6 @@ pub mod _alloc {
     //! Needed to access these types from `alloc` in macros when the std feature is
     //! disabled and the calling context is missing `extern crate alloc`. These are
     //! _not_ meant for public use.
-
-    pub use ::alloc::boxed::Box;
     pub use ::alloc::vec;
 }
 

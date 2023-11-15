@@ -1,8 +1,3 @@
-#[macro_use]
-extern crate criterion;
-
-extern crate geo;
-
 use std::fmt::Display;
 use std::panic::catch_unwind;
 
@@ -11,7 +6,9 @@ use geo::coordinate_position::CoordPos;
 use geo::monotone::monotone_subdivision;
 use geo::{CoordinatePosition, MapCoords, Polygon};
 
-use criterion::{BatchSize, BenchmarkGroup, BenchmarkId, Criterion};
+use criterion::{
+    criterion_group, criterion_main, BatchSize, BenchmarkGroup, BenchmarkId, Criterion,
+};
 use geo_types::{Coord, Rect};
 use wkt::ToWkt;
 

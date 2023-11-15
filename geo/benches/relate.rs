@@ -1,12 +1,6 @@
-#[macro_use]
-extern crate criterion;
-extern crate geo;
-
-use crate::geo::relate::Relate;
-use crate::geo::rotate::Rotate;
-use crate::geo::translate::Translate;
-use criterion::{BatchSize, Criterion};
-use geo::{LineString, Polygon};
+use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
+use geo::algorithm::{Relate, Rotate, Translate};
+use geo::geometry::{LineString, Polygon};
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("relate overlapping 50-point polygons", |bencher| {

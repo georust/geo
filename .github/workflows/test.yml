@@ -6,18 +6,17 @@ on:
       - trying
       - release/**
   pull_request:
+  merge_group:
   schedule: [cron: "45 6 * * *"]
 
 name: Run tests
 jobs:
   # The `ci-result` job doesn't actually test anything - it just aggregates the
-  # overall build status for bors, otherwise our bors.toml would need an entry
+  # overall build status, otherwise the merge queue would need an entry
   # for each individual job produced by the job-matrix.
   #
-  # Ref: https://github.com/rust-lang/crater/blob/9ab6f9697c901c4a44025cf0a39b73ad5b37d198/.github/workflows/bors.yml#L125-L149
-  #
-  # ALL THE SUBSEQUENT JOBS NEED THEIR `name` ADDED TO THE `needs` SECTION OF THIS JOB!
-  ci-result:
+  # ALL THE SUBSEQUENT JOBS NEED THEIR `name` ADDED TO THE `needs` SECTION OF both "ci result" JOBS!
+  ci-success:
     name: ci result
     runs-on: ubuntu-latest
     needs:
@@ -27,12 +26,23 @@ jobs:
       - geo_postgis
       - geo_fuzz
       - bench
+    if: success()
     steps:
       - name: Mark the job as a success
-        if: success()
         run: exit 0
+  ci-failure:
+    name: ci result
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - geo_types
+      - geo
+      - geo_postgis
+      - geo_fuzz
+      - bench
+    if: failure()
+    steps:
       - name: Mark the job as a failure
-        if: "!success()"
         run: exit 1
 
   lint:
@@ -43,7 +53,7 @@ jobs:
       matrix:
         container_image:
           # Use the latest stable version. No need for older versions.
-          - "georust/geo-ci:proj-9.2.1-rust-1.70"
+          - "georust/geo-ci:proj-9.2.1-rust-1.72"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -67,10 +77,10 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:proj-9.2.1-rust-1.63"
+          - "georust/geo-ci:proj-9.2.1-rust-1.65"
           # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:proj-9.2.1-rust-1.69"
-          - "georust/geo-ci:proj-9.2.1-rust-1.70"
+          - "georust/geo-ci:proj-9.2.1-rust-1.71"
+          - "georust/geo-ci:proj-9.2.1-rust-1.72"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -95,10 +105,10 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:proj-9.2.1-rust-1.63"
+          - "georust/geo-ci:proj-9.2.1-rust-1.65"
           # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:proj-9.2.1-rust-1.69"
-          - "georust/geo-ci:proj-9.2.1-rust-1.70"
+          - "georust/geo-ci:proj-9.2.1-rust-1.71"
+          - "georust/geo-ci:proj-9.2.1-rust-1.72"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -122,10 +132,10 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "georust/geo-ci:proj-9.2.1-rust-1.63"
+          - "georust/geo-ci:proj-9.2.1-rust-1.65"
           # Two most recent releases - we omit older ones for expedient CI
-          - "georust/geo-ci:proj-9.2.1-rust-1.69"
-          - "georust/geo-ci:proj-9.2.1-rust-1.70"
+          - "georust/geo-ci:proj-9.2.1-rust-1.71"
+          - "georust/geo-ci:proj-9.2.1-rust-1.72"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -145,7 +155,7 @@ jobs:
       matrix:
         container_image:
           # Fuzz only on latest
-          - "georust/geo-ci:proj-9.2.1-rust-1.70"
+          - "georust/geo-ci:proj-9.2.1-rust-1.72"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -158,8 +168,20 @@ jobs:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     container:
-      image: georust/geo-ci:proj-9.2.1-rust-1.70
+      image: georust/geo-ci:proj-9.2.1-rust-1.72
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
       - run: cargo bench --no-run
+
+  docs:
+    name: build documentation
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    container:
+      image: georust/geo-ci:proj-9.2.1-rust-1.72
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - run: RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
+

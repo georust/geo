@@ -1,7 +1,4 @@
-#[macro_use]
-extern crate geo;
-
-use geo::Centroid;
+use geo::{line_string, Centroid};
 
 fn main() {
     let linestring = geo::line_string![
