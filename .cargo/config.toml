@@ -1,0 +1,2 @@
+[registries]
+franklin-ai-geo = { index = "https://dl.cloudsmith.io/basic/franklin-ai/geo/cargo/index.git" }
