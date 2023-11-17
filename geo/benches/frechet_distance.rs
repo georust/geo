@@ -1,6 +1,4 @@
-#[macro_use]
-extern crate criterion;
-extern crate geo;
+use criterion::{criterion_group, criterion_main};
 use geo::frechet_distance::FrechetDistance;
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {

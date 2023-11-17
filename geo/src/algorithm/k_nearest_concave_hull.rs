@@ -323,11 +323,11 @@ where
 mod tests {
     use super::*;
     use crate::coords_iter::CoordsIter;
-    use crate::geo_types::coord;
+    use geo_types::coord;
 
     #[test]
     fn coord_ordering() {
-        let coords = vec![
+        let coords = [
             coord!(x: 1.0, y: 1.0),
             coord!(x: -1.0, y: 0.0),
             coord!(x: 0.0, y: 1.0),
@@ -387,7 +387,7 @@ mod tests {
         let poly = concave_hull(coords.iter(), 3);
         assert_eq!(poly.exterior().coords_count(), 12);
 
-        let must_not_be_in = vec![&coords[6]];
+        let must_not_be_in = [&coords[6]];
         for coord in poly.exterior().coords_iter() {
             for not_coord in must_not_be_in.iter() {
                 assert_ne!(&coord, *not_coord);
@@ -397,7 +397,7 @@ mod tests {
 
     #[test]
     fn empty_hull() {
-        let actual: Polygon<f64> = concave_hull(vec![].iter(), 3);
+        let actual: Polygon<f64> = concave_hull([].iter(), 3);
         let expected = Polygon::new(LineString::new(vec![]), vec![]);
         assert_eq!(actual, expected);
     }

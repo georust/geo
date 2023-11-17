@@ -4,10 +4,10 @@ use crate::{AffineOps, AffineTransform, BoundingRect, Coord, CoordFloat, CoordNu
 ///
 /// ## Performance
 ///
-/// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
+/// If you will be performing multiple transformations, like [`Scale`],
 /// [`Skew`](crate::Skew), [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
 /// efficient to compose the transformations and apply them as a single operation using the
-/// [`AffineOps`](crate::AffineOps) trait.
+/// [`AffineOps`] trait.
 pub trait Scale<T: CoordNum> {
     /// Scale a geometry from it's bounding box center.
     ///
@@ -66,15 +66,15 @@ pub trait Scale<T: CoordNum> {
     ///
     /// ```
     /// use geo::Scale;
-    /// use geo::{LineString, line_string};
+    /// use geo::{LineString, line_string, Coord};
     ///
     /// let ls: LineString = line_string![(x: 0., y: 0.), (x: 10., y: 10.)];
     ///
-    /// let scaled = ls.scale_xy(2., 4.);
+    /// let scaled = ls.scale_around_point(2., 4., Coord { x: 100., y: 100. });
     ///
     /// assert_eq!(scaled, line_string![
-    ///     (x: -5., y: -15.),
-    ///     (x: 15., y: 25.)
+    ///     (x: -100., y: -300.),
+    ///     (x: -80., y: -260.)
     /// ]);
     /// ```
     #[must_use]

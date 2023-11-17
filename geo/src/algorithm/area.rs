@@ -262,7 +262,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::Area;
-    use crate::{coord, polygon, Line, MultiPolygon, Polygon, Rect, Triangle};
+    use crate::{coord, polygon, wkt, Line, MultiPolygon, Polygon, Rect, Triangle};
 
     // Area of the polygon
     #[test]
@@ -273,18 +273,12 @@ mod test {
 
     #[test]
     fn area_one_point_polygon_test() {
-        let poly = polygon![(x: 1., y: 0.)];
+        let poly = wkt! { POLYGON((1. 0.)) };
         assert_relative_eq!(poly.signed_area(), 0.);
     }
     #[test]
     fn area_polygon_test() {
-        let polygon = polygon![
-            (x: 0., y: 0.),
-            (x: 5., y: 0.),
-            (x: 5., y: 6.),
-            (x: 0., y: 6.),
-            (x: 0., y: 0.)
-        ];
+        let polygon = wkt! { POLYGON((0. 0.,5. 0.,5. 6.,0. 6.,0. 0.)) };
         assert_relative_eq!(polygon.signed_area(), 30.);
     }
     #[test]
@@ -526,6 +520,10 @@ mod test {
             ],
         ];
         // Value from shapely
-        assert_relative_eq!(poly.unsigned_area(), 0.006547948219252177, max_relative = 0.0001);
+        assert_relative_eq!(
+            poly.unsigned_area(),
+            0.006547948219252177,
+            max_relative = 0.0001
+        );
     }
 }
