@@ -1,5 +1,6 @@
 use num_traits::Float;
 
+use crate::area::AreaPolygon;
 use crate::{
     algorithm::{centroid::Centroid, rotate::Rotate, BoundingRect, CoordsIter},
     Area, ConvexHull, CoordFloat, GeoFloat, GeoNum, LinesIter, Polygon,
