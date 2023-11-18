@@ -1,4 +1,5 @@
 use anyhow::{bail, Context, Result};
+use geo::area::AreaMultiPolygon;
 use geo::prelude::*;
 use geo_booleanop::boolean::BooleanOp as OtherBOp;
 use geo_types::*;

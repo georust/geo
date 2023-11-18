@@ -341,7 +341,7 @@ mod tests {
     #[test]
     fn test_lof() {
         // third point is an outlier
-        let v = vec![
+        let v = [
             Point::new(0.0, 0.0),
             Point::new(0.0, 1.0),
             Point::new(3.0, 0.0),
@@ -354,7 +354,7 @@ mod tests {
     #[test]
     fn test_lof2() {
         // fourth point is an outlier
-        let v = vec![
+        let v = [
             Point::new(0.0, 0.0),
             Point::new(1.0, 0.0),
             Point::new(1.0, 1.0),
@@ -366,7 +366,7 @@ mod tests {
     #[test]
     fn test_lof3() {
         // second point is an outlier, sort and reverse so scores are in descending order
-        let v = vec![
+        let v = [
             Point::new(0.0, 0.0),
             Point::new(0.0, 3.0),
             Point::new(1.0, 0.0),
@@ -430,7 +430,7 @@ mod tests {
     #[test]
     fn test_lof5() {
         // third point is an outlier
-        let v = vec![
+        let v = [
             Point::new(0.0, 0.0),
             Point::new(0.0, 1.0),
             Point::new(3.0, 0.0),

@@ -13,8 +13,7 @@ pub trait GeodesicBearing<T: CoordNum> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use] extern crate approx;
-    /// #
+    /// # use approx::assert_relative_eq;
     /// use geo::GeodesicBearing;
     /// use geo::Point;
     ///
@@ -35,8 +34,7 @@ pub trait GeodesicBearing<T: CoordNum> {
     /// # Examples
     ///
     /// ```
-    /// # #[macro_use] extern crate approx;
-    /// #
+    /// # use approx::assert_relative_eq;
     /// use geo::GeodesicBearing;
     /// use geo::Point;
     ///

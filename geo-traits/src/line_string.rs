@@ -4,26 +4,33 @@ use super::CoordTrait;
 use std::iter::Cloned;
 use std::slice::Iter;
 
-pub trait LineStringTrait<'a>: Send + Sync {
-    type ItemType: 'a + CoordTrait;
-    type Iter: ExactSizeIterator<Item = Self::ItemType>;
+pub trait LineStringTrait {
+    type T: CoordNum;
+    type ItemType<'a>: 'a + CoordTrait<T = Self::T>
+    where
+        Self: 'a;
+    type Iter<'a>: ExactSizeIterator<Item = Self::ItemType<'a>>
+    where
+        Self: 'a;
 
     /// An iterator over the coords in this LineString
-    fn coords(&'a self) -> Self::Iter;
+    fn coords(&self) -> Self::Iter<'_>;
 
     /// The number of coords in this LineString
-    fn num_coords(&'a self) -> usize;
+    fn num_coords(&self) -> usize;
 
     /// Access to a specified point in this LineString
     /// Will return None if the provided index is out of bounds
-    fn coord(&'a self, i: usize) -> Option<Self::ItemType>;
+    fn coord(&self, i: usize) -> Option<Self::ItemType<'_>>;
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> LineStringTrait<'a> for LineString<T> {
-    type ItemType = Coord<T>;
-    type Iter = Cloned<Iter<'a, Self::ItemType>>;
+impl<T: CoordNum> LineStringTrait for LineString<T> {
+    type T = T;
+    type ItemType<'a> = Coord<Self::T> where Self: 'a;
+    type Iter<'a> = Cloned<Iter<'a, Self::ItemType<'a>>> where T: 'a;
 
-    fn coords(&'a self) -> Self::Iter {
+    fn coords(&self) -> Self::Iter<'_> {
+        // TODO: remove cloned
         self.0.iter().cloned()
     }
 
@@ -31,16 +38,17 @@ impl<'a, T: CoordNum + Send + Sync + 'a> LineStringTrait<'a> for LineString<T> {
         self.0.len()
     }
 
-    fn coord(&'a self, i: usize) -> Option<Self::ItemType> {
+    fn coord(&self, i: usize) -> Option<Self::ItemType<'_>> {
         self.0.get(i).cloned()
     }
 }
 
-impl<'a, T: CoordNum + Send + Sync + 'a> LineStringTrait<'a> for &LineString<T> {
-    type ItemType = Coord<T>;
-    type Iter = Cloned<Iter<'a, Self::ItemType>>;
+impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
+    type T = T;
+    type ItemType<'b> = Coord<Self::T> where Self: 'b;
+    type Iter<'b> = Cloned<Iter<'a, Self::ItemType<'a>>> where Self: 'b;
 
-    fn coords(&'a self) -> Self::Iter {
+    fn coords(&self) -> Self::Iter<'_> {
         self.0.iter().cloned()
     }
 
@@ -48,7 +56,7 @@ impl<'a, T: CoordNum + Send + Sync + 'a> LineStringTrait<'a> for &LineString<T> 
         self.0.len()
     }
 
-    fn coord(&'a self, i: usize) -> Option<Self::ItemType> {
+    fn coord(&self, i: usize) -> Option<Self::ItemType<'_>> {
         self.0.get(i).cloned()
     }
 }

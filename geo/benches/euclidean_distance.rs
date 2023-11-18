@@ -1,8 +1,5 @@
-#[macro_use]
-extern crate criterion;
-extern crate geo;
-use geo::convex_hull::ConvexHull;
-use geo::euclidean_distance::EuclideanDistance;
+use criterion::{criterion_group, criterion_main};
+use geo::algorithm::{ConvexHull, EuclideanDistance};
 use geo::{polygon, Polygon};
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {

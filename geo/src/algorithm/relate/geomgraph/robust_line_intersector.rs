@@ -1,8 +1,8 @@
 use super::{LineIntersection, LineIntersector};
 use crate::kernels::{Kernel, Orientation, RobustKernel};
-use crate::num_traits::Zero;
 use crate::{BoundingRect, Contains, Intersects};
 use crate::{Coord, GeoFloat, Line, Rect};
+use num_traits::Zero;
 
 /// A robust version of [LineIntersector](traits.LineIntersector).
 #[derive(Clone)]

@@ -16,6 +16,13 @@ impl<T: Ord> Default for VecSet<T> {
 }
 
 impl<T: PartialOrd + Debug> VecSet<Active<T>> {
+    pub fn partition_point<P>(&self, mut pred: P) -> usize
+    where
+        P: FnMut(&T) -> bool,
+    {
+        self.data.partition_point(|s| pred(&s.0))
+    }
+
     pub fn index_of(&self, segment: &T) -> usize {
         self.data
             .binary_search(Active::active_ref(segment))
@@ -31,7 +38,6 @@ impl<T: PartialOrd + Debug> VecSet<Active<T>> {
         self.data.len()
     }
 
-    #[allow(unused)]
     pub fn insert_at(&mut self, idx: usize, segment: T) {
         self.data.insert(idx, Active(segment))
     }

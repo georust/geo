@@ -1,8 +1,4 @@
-#[macro_use]
-extern crate criterion;
-extern crate geo;
-
-use criterion::Criterion;
+use criterion::{criterion_group, criterion_main, Criterion};
 use geo::ConcaveHull;
 use geo::{Coord, CoordNum};
 
