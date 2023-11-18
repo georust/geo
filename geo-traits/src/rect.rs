@@ -46,7 +46,6 @@ pub trait RectTrait {
     fn height(&self) -> Self::T {
         self.upper().y() - self.lower().y()
     }
-
 }
 
 impl<'a, T: CoordNum + 'a> RectTrait for Rect<T> {

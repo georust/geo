@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
+use geo::area::AreaPolygon;
 use geo::Area;
 use geo::Polygon;
-use geo::area::AreaPolygon;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("area", |bencher| {

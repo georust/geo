@@ -321,8 +321,8 @@ impl<T: CoordFloat, P: GeometryCollectionTrait<T = T>> AreaGeometryCollection<T>
 
 #[cfg(test)]
 mod test {
+    use crate::area::{AreaMultiPolygon, AreaPolygon, AreaRect};
     use crate::Area;
-    use crate::area::{AreaPolygon, AreaRect, AreaMultiPolygon};
     use crate::{coord, polygon, wkt, Line, MultiPolygon, Polygon, Rect, Triangle};
 
     // Area of the polygon
