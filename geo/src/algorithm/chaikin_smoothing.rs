@@ -2,7 +2,7 @@ use std::ops::Mul;
 
 use num_traits::FromPrimitive;
 
-use crate::{coord, Coord, CoordFloat, LineString, MultiLineString, MultiPolygon, Polygon};
+use crate::{coord, Coord, CoordFloat, LineString, MultiLineString, MultiPolygon, Polygon, Geometry};
 
 /// Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 ///
@@ -83,6 +83,29 @@ where
     }
 }
 
+macro_rules! blanket_run_chaikin_smoothing {
+    ($geo:expr, $n_iter:expr) => {{
+        let smooth = $geo.chaikin_smoothing($n_iter);
+        let geo: Geometry<T> = smooth.into();
+        geo
+    }};
+}
+
+impl<T> ChaikinSmoothing<T> for Geometry<T>
+    where
+        T: CoordFloat + FromPrimitive,
+{
+    fn chaikin_smoothing(&self, n_iterations: usize) -> Geometry<T> {
+        match self {
+            Geometry::LineString(child) => blanket_run_chaikin_smoothing!(child, n_iterations),
+            Geometry::MultiLineString(child) => blanket_run_chaikin_smoothing!(child, n_iterations),
+            Geometry::Polygon(child) => blanket_run_chaikin_smoothing!(child, n_iterations),
+            Geometry::MultiPolygon(child) => blanket_run_chaikin_smoothing!(child, n_iterations),
+            _ => self.clone()
+        }
+    }
+}
+
 fn smoothen_linestring<T>(linestring: &LineString<T>) -> LineString<T>
 where
     T: CoordFloat + Mul<T> + FromPrimitive,
@@ -134,7 +157,39 @@ where
 #[cfg(test)]
 mod test {
     use crate::ChaikinSmoothing;
-    use crate::{LineString, Polygon};
+    use crate::{LineString, Polygon, Geometry, Point};
+
+    #[test]
+    fn geometry() {
+        // Test implemented geometry
+        let ls = LineString::from(vec![(3.0, 0.0), (6.0, 3.0), (3.0, 6.0), (0.0, 3.0)]);
+        let ls_geo: Geometry = ls.into();
+        let ls_geo_out = ls_geo.chaikin_smoothing(1);
+        let ls_out: LineString = ls_geo_out.try_into().unwrap();
+        assert_eq!(
+            ls_out,
+            LineString::from(vec![
+                (3.0, 0.0),
+                (3.75, 0.75),
+                (5.25, 2.25),
+                (5.25, 3.75),
+                (3.75, 5.25),
+                (2.25, 5.25),
+                (0.75, 3.75),
+                (0.0, 3.0),
+            ])
+        );
+
+        // Test unimplemented geometry
+        let pt = Point::from((3.0, 0.0));
+        let pt_geo: Geometry = pt.into();
+        let pt_geo_out = pt_geo.chaikin_smoothing(1);
+        let pt_out: Point = pt_geo_out.try_into().unwrap();
+        assert_eq!(
+            pt_out,
+            Point::from((3.0, 0.0))
+        );
+    }
 
     #[test]
     fn linestring_open() {
