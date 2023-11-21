@@ -1,7 +1,7 @@
 [package]
 name = "geo"
 description = "Geospatial primitives and algorithms"
-version = "0.28.0-alpha1"
+version = "0.28.0-alpha2"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/georust/geo"
 documentation = "https://docs.rs/geo/"
@@ -13,7 +13,7 @@ rust-version = "1.65"
 categories = ["science::geo"]
 
 [features]
-default = ["earcutr", "spade"]
+default = ["earcutr", "spade", "voronoi"]
 proj-network = ["use-proj", "proj/network"]
 use-proj = ["proj"]
 use-serde = ["serde", "geo-types/serde"]

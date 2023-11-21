@@ -1,0 +1,537 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'geo'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "geo",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'concavehull-usage'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=concavehull-usage",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "concavehull-usage",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'concavehull-usage'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=concavehull-usage",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "concavehull-usage",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'algorithm'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=algorithm",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "algorithm",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'algorithm'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=algorithm",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "algorithm",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'types'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=types",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "types",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'types'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=types",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "types",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'area'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=area",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "area",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'contains'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=contains",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "contains",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'convex_hull'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=convex_hull",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "convex_hull",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'concave_hull'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=concave_hull",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "concave_hull",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'intersection'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=intersection",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "intersection",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'vincenty_distance'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=vincenty_distance",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "vincenty_distance",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'geodesic_distance'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=geodesic_distance",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "geodesic_distance",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'extremes'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=extremes",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "extremes",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'euclidean_distance'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=euclidean_distance",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "euclidean_distance",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'rotate'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=rotate",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "rotate",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'relate'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=relate",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "relate",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'simplify'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=simplify",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "simplify",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'simplifyvw'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=simplifyvw",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "simplifyvw",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'frechet_distance'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=frechet_distance",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "frechet_distance",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'rand_line_crossings'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=rand_line_crossings",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "rand_line_crossings",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'winding_order'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=winding_order",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "winding_order",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'monotone_subdiv'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=monotone_subdiv",
+                    "--package=geo"
+                ],
+                "filter": {
+                    "name": "monotone_subdiv",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'geo-test-fixtures'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=geo-test-fixtures"
+                ],
+                "filter": {
+                    "name": "geo-test-fixtures",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'jts-test-runner'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=jts-test-runner"
+                ],
+                "filter": {
+                    "name": "jts-test-runner",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'geo-types'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=geo-types"
+                ],
+                "filter": {
+                    "name": "geo-types",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'geo-postgis'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=geo-postgis"
+                ],
+                "filter": {
+                    "name": "geo-postgis",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
