@@ -6,7 +6,7 @@ members = [
   "geo-postgis",
   "geo-test-fixtures",
   "jts-test-runner",
-  "geo-bool-ops-benches",
+  # "geo-bool-ops-benches",
 ]
 
 [patch.crates-io]

@@ -1,6 +1,8 @@
 use std::{fmt, result};
 
-use crate::{coord, Coord, GeoFloat, Line, MultiPoint, Point, Polygon, Rect, Triangle};
+use crate::{
+    coord, Coord, EuclideanLength, GeoFloat, Line, MultiPoint, Point, Polygon, Rect, Triangle,
+};
 
 use crate::triangulate_delaunay::{
     DelaunayTriangle, DelaunayTriangulationError, DEFAULT_SUPER_TRIANGLE_EXPANSION,
@@ -298,10 +300,10 @@ enum GuidingDirection {
 impl GuidingDirection {
     // The common point is the end co-ordinate of both lines
     fn from_midpoints<T: GeoFloat>(line_a: &Line<T>, line_b: &Line<T>) -> Self {
-        let dx_a = line_a.dx().is_sign_positive();
-        let dy_a = line_a.dy().is_sign_positive();
-        let dx_b = line_b.dx().is_sign_positive();
-        let dy_b = line_b.dy().is_sign_positive();
+        let dx_a = line_a.dx().is_positive();
+        let dy_a = line_a.dy().is_positive();
+        let dx_b = line_b.dx().is_positive();
+        let dy_b = line_b.dy().is_positive();
 
         // In a triangle a midpoint must either be
         // to the left or right of the other midpoints, or
@@ -364,14 +366,14 @@ where
 
         // It is a vertical line so we need to ensure it moves up or down correctly
         let end = if slope.is_infinite() {
-            match guiding_direction {
-                GuidingDirection::Up => {
-                    coord! {x: circumcenter.x, y: circumcenter.y + line.dy().abs() * height_factor}
-                }
-                GuidingDirection::Down => {
-                    coord! {x: circumcenter.x, y: circumcenter.y - line.dy().abs() * height_factor}
-                }
-                _ => return Err(VoronoiDiagramError::UnexpectedDirectionForInfinityVertex),
+            // Up
+            if rel_to_midpoint[0].dy().is_positive() && rel_to_midpoint[1].dy().is_positive() {
+                coord! {x: circumcenter.x, y: circumcenter.y + line.dy().abs() * height_factor}
+            } else if rel_to_midpoint[0].dy().is_negative() && rel_to_midpoint[1].dy().is_negative()
+            {
+                coord! {x: circumcenter.x, y: circumcenter.y - line.dy().abs() * height_factor}
+            } else {
+                return Err(VoronoiDiagramError::UnexpectedDirectionForInfinityVertex);
             }
         } else {
             let intercept = circumcenter.y - line.slope() * circumcenter.x;
@@ -453,8 +455,6 @@ where
     let clipping_bounds = clipping_mask
         .bounding_rect()
         .ok_or(VoronoiDiagramError::CannotDetermineBoundsFromClipppingMask)?;
-    let clipping_min = clipping_bounds.min();
-    let clipping_max = clipping_bounds.max();
 
     // Get the vertices with connections to infinity
     let mut inf_lines: Vec<Line<T>> = Vec::new();
@@ -477,27 +477,39 @@ where
                 .map(|x| trim_line_to_intersection(&inf_edge, &x))
                 .filter(|x| x.is_some())
                 .flatten()
-                // A line can intersect and be outside of the bounding box
-                // filter those out
-                .filter(|x| {
-                    x.end.x >= clipping_min.x
-                        && x.end.x <= clipping_max.x
-                        && x.end.y >= clipping_min.y
-                        && x.end.y <= clipping_max.y
-                })
+                .collect();
+            let intersection_lines: Vec<Line<T>> = intersection_lines
+                .iter()
                 // Get the lines going in the same direction as the inf_edge
                 .filter(|x| {
-                    x.dx().is_sign_positive() == inf_edge_dx_sign
-                        && x.dy().is_sign_positive() == inf_edge_dy_sign
+                    if inf_edge.slope().is_infinite() {
+                        x.dy().is_sign_positive() == inf_edge_dy_sign
+                    } else if inf_edge.slope().is_zero() {
+                        x.dx().is_sign_positive() == inf_edge_dx_sign
+                    } else {
+                        x.dy().is_sign_positive() == inf_edge_dy_sign
+                            && x.dx().is_sign_positive() == inf_edge_dx_sign
+                    }
                 })
+                .cloned()
                 .collect();
-
-            if intersection_lines.len() > 1 {
-                eprintln!("Warning: multiple intersection lines with clipping mask found. Using the first intersection");
-            }
-
+            let line_idx = if intersection_lines.len() > 1 {
+                // get the shortest line
+                let mut min_length: f64 = f64::INFINITY;
+                let mut line_idx = 0;
+                for (idx, line) in intersection_lines.iter().enumerate() {
+                    let length = f64::from(line.euclidean_length());
+                    if length < min_length {
+                        min_length = length;
+                        line_idx = idx;
+                    }
+                }
+                line_idx
+            } else {
+                0
+            };
             let intersection_line = intersection_lines
-                .get(0)
+                .get(line_idx)
                 .ok_or(VoronoiDiagramError::InvalidClippingMaskNoIntersections)?;
 
             inf_lines.push(*intersection_line);
@@ -976,6 +988,39 @@ mod test {
                 coord! {x: 306.875, y: 231.964},
                 coord! {x: 3080., y: -2145.},
             ),
+        ];
+
+        for (line, expected) in voronoi.lines.iter().zip(expected_lines) {
+            approx::assert_relative_eq!(
+                *line,
+                expected,
+                max_relative = 0.3 // epsilon = 1e-3
+            );
+        }
+    }
+
+    #[test]
+    fn test_rhombus() {
+        let rhombus =
+            polygon![(x: 10., y: 10.), (x: 11., y: 20.), (x: 20., y: 20.), (x: 19., y: 10.)];
+
+        let voronoi = rhombus.compute_voronoi_components(None).unwrap();
+
+        let expected_vertices = [coord! { x: 14.5, y: 14.6}, coord! { x: 15.5, y: 15.4}];
+        for (vertex, expected) in voronoi.vertices.iter().zip(expected_vertices) {
+            approx::assert_relative_eq!(
+                *vertex,
+                expected,
+                max_relative = 0.3 // epsilon = 1e-3
+            );
+        }
+
+        let expected_lines = [
+            Line::new(coord! {x: 14.5, y: 14.6}, coord! {x: 15.5, y: 15.4}),
+            Line::new(coord! {x: 14.5, y: 14.6}, coord! {x: -190., y: 35.05}),
+            Line::new(coord! {x: 14.5, y: 14.6}, coord! {x: 14.5, y: -190.0}),
+            Line::new(coord! {x: 15.5, y: 15.4}, coord! {x: 15.5, y: 210.0}),
+            Line::new(coord! {x: 15.5, y: 15.4}, coord! {x: 210., y: -4.05}),
         ];
 
         for (line, expected) in voronoi.lines.iter().zip(expected_lines) {
