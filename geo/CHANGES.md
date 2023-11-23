@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+* Fix a panic when calculating the haversine closest point to a point intersecting the geometry
+  * <https://github.com/georust/geo/pull/1119>
+
 ## 0.27.0
 
 * Use `CachedEnvelope` in R-Trees when computing euclidean distance between polygons
