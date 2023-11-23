@@ -134,7 +134,7 @@ where
     }
 
     // Find the shared edges
-    let mut shared = find_shared_edges(&delaunay_triangles);
+    let mut shared = find_shared_edges(&delaunay_triangles)?;
 
     // Create the lines joining the vertices
     let mut voronoi_lines: Vec<Line<T>> = Vec::new();
@@ -194,7 +194,7 @@ struct SharedEdgesData<T: GeoFloat> {
     shared_edges: Vec<Line<T>>,
 }
 
-fn find_shared_edges<T: GeoFloat>(triangles: &[DelaunayTriangle<T>]) -> SharedEdgesData<T>
+fn find_shared_edges<T: GeoFloat>(triangles: &[DelaunayTriangle<T>]) -> Result<SharedEdgesData<T>>
 where
     f64: From<T>,
 {
@@ -228,7 +228,7 @@ where
     // diagram require connections to infinity to ensure separation of points between
     // voronoi cells. Voronoi cells on the borders can have 2 connections to infinity.
     // These connections to infinity will be bounded later, for now add the connections from infinity.
-    let mut num_neighbours: Vec<usize> = triangles.iter().map(|_| 0).collect();
+    let mut num_neighbours: Vec<usize> = vec![0; triangles.len()];
     for x in &neighbours {
         // unwrap here is safe as neighbours do not contain None values yet
         for n in [x.0.unwrap(), x.1.unwrap()] {
@@ -236,16 +236,19 @@ where
         }
     }
 
-    num_neighbours.iter().enumerate().for_each(|(idx, val)| {
+    for (idx, val) in num_neighbours.iter().enumerate() {
+        if *val > 3 {
+            return Err(VoronoiDiagramError::InvalidTriangulation);
+        }
         for _ in 0..3 - val {
             neighbours.push((None, Some(idx)));
         }
-    });
+    }
 
-    SharedEdgesData {
+    Ok(SharedEdgesData {
         neighbours,
         shared_edges,
-    }
+    })
 }
 
 fn get_perpendicular_line<T: GeoFloat>(line: &Line<T>) -> Result<Line<T>>
@@ -526,6 +529,7 @@ pub enum VoronoiDiagramError {
     CannotComputeExpectedInfinityVertex,
     InvalidClippingMaskMultipleIntersections,
     InvalidClippingMaskNoIntersections,
+    InvalidTriangulation,
     UnexpectedDirectionForInfinityVertex,
 }
 
@@ -554,6 +558,13 @@ impl fmt::Display for VoronoiDiagramError {
                 write!(
                     f,
                     "An edge to infinity does not intersect with the clipping mask"
+                )
+            }
+            VoronoiDiagramError::InvalidTriangulation => {
+                write!(
+                    f,
+                    "The provided triangles are not valid Delaunay Triangles. \
+                    More than 3 connections have been found for a triangle vertex."
                 )
             }
             VoronoiDiagramError::UnexpectedDirectionForInfinityVertex => {
@@ -585,7 +596,7 @@ mod test {
             .into(),
         ];
 
-        let shared = find_shared_edges(&triangles);
+        let shared = find_shared_edges(&triangles).unwrap();
 
         assert_eq!(
             shared.neighbours,
@@ -624,7 +635,7 @@ mod test {
             .into(),
         ];
 
-        let shared = find_shared_edges(&triangles);
+        let shared = find_shared_edges(&triangles).unwrap();
 
         assert_eq!(
             shared.neighbours,

@@ -64,8 +64,14 @@ where
         let super_triangle = DelaunayTriangle(create_super_triangle(self)?);
 
         let mut triangles: Vec<DelaunayTriangle<T>> = vec![super_triangle.clone()];
+        let mut processed_points: Vec<Coord<T>> = Vec::new();
         for pt in self.exterior().coords() {
-            add_coordinate(&mut triangles, pt);
+            // If we have already added the point, do not process again
+            // to avoid producing intersecting triangles
+            if !processed_points.contains(pt) {
+                add_coordinate(&mut triangles, pt);
+                processed_points.push(*pt);
+            }
         }
         let triangles = remove_super_triangle(&triangles, &super_triangle);
         Ok(triangles.iter().map(|x| x.0).collect())
@@ -623,6 +629,42 @@ mod test {
         ];
 
         let delaunay_triangles = points.delaunay_triangulation().unwrap();
+
+        assert_eq!(delaunay_triangles.len(), expected_triangles.len());
+        for tri in delaunay_triangles.iter() {
+            assert!(expected_triangles.contains(tri));
+        }
+    }
+
+    #[test]
+    fn test_polyon_that_visits_same_point_twice() {
+        let points = MultiPoint::new(vec![
+            Point::new(23., 3.1),
+            Point::new(22., 3.1),
+            Point::new(22., 2.),
+            Point::new(22., 4.2),
+            Point::new(23., 2.),
+        ]);
+
+        let delaunay_triangles = points.delaunay_triangulation().unwrap();
+
+        let expected_triangles = vec![
+            Triangle::new(
+                coord! {x: 22., y: 3.1},
+                coord! {x: 23., y: 3.1},
+                coord! {x: 22., y: 4.2},
+            ),
+            Triangle::new(
+                coord! {x: 23., y: 3.1},
+                coord! {x: 22., y: 3.1},
+                coord! {x: 23., y: 2.},
+            ),
+            Triangle::new(
+                coord! {x: 22., y: 3.1},
+                coord! {x: 22., y: 2.0},
+                coord! {x: 23., y: 2.0},
+            ),
+        ];
 
         assert_eq!(delaunay_triangles.len(), expected_triangles.len());
         for tri in delaunay_triangles.iter() {
