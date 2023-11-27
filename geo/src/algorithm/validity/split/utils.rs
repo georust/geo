@@ -163,11 +163,13 @@ pub(crate) fn exclude_points_forming_invalid_lines<F: GeoFloat>(
         let new_line = Line::new(p.0, point_in_hole.0).scale(F::from(0.99).unwrap());
         !lines.iter().any(|old_line| {
             let maybe_intersection = line_intersection(*old_line, new_line);
-            maybe_intersection.is_some_and(|kind| match kind {
-                // is_proper ensures they don't intersect in endpoints only
-                LineIntersection::SinglePoint { is_proper, .. } => is_proper,
-                LineIntersection::Collinear { .. } => true,
-            })
+            maybe_intersection
+                .filter(|kind| match kind {
+                    // is_proper ensures they don't intersect in endpoints only
+                    LineIntersection::SinglePoint { is_proper, .. } => *is_proper,
+                    LineIntersection::Collinear { .. } => true,
+                })
+                .is_some()
         })
     }
 }
