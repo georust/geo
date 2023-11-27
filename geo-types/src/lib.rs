@@ -68,6 +68,7 @@
 //! - `use-rstar_0_8`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.8`)
 //! - `use-rstar_0_9`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.9`)
 //! - `use-rstar_0_10`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.10`)
+//! - `use-rstar_0_11`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.11`)
 //!
 //! This library can be used in `#![no_std]` environments if the default `std` feature is disabled. At
 //! the moment, the `arbitrary` and `use-rstar_0_8` features require `std`. This may change in a
@@ -83,7 +84,6 @@
 //! [rstar]: https://github.com/Stoeoef/rstar
 //! [Serde]: https://serde.rs/
 extern crate alloc;
-extern crate num_traits;
 
 use core::fmt::Debug;
 use num_traits::{Float, Num, NumCast};
@@ -91,9 +91,6 @@ use num_traits::{Float, Num, NumCast};
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;
-
-#[cfg(feature = "rstar_0_8")]
-extern crate rstar_0_8;
 
 #[cfg(test)]
 #[macro_use]
@@ -133,10 +130,18 @@ pub use error::Error;
 #[macro_use]
 mod macros;
 
+#[macro_use]
+mod wkt_macro;
+
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
 
-#[cfg(any(feature = "rstar_0_8", feature = "rstar_0_9", feature = "rstar_0_10"))]
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11"
+))]
 #[doc(hidden)]
 pub mod private_utils;
 
@@ -145,8 +150,6 @@ pub mod _alloc {
     //! Needed to access these types from `alloc` in macros when the std feature is
     //! disabled and the calling context is missing `extern crate alloc`. These are
     //! _not_ meant for public use.
-
-    pub use ::alloc::boxed::Box;
     pub use ::alloc::vec;
 }
 
@@ -264,6 +267,21 @@ mod tests {
     fn line_test_0_10() {
         use rstar_0_10::primitives::Line as RStarLine;
         use rstar_0_10::{PointDistance, RTreeObject};
+
+        let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
+        let l = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 5., y: 5. });
+        assert_eq!(rl.envelope(), l.envelope());
+        // difference in 15th decimal place
+        assert_relative_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
+        assert_relative_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
+    }
+
+    #[cfg(feature = "rstar_0_11")]
+    #[test]
+    /// ensure Line's SpatialObject impl is correct
+    fn line_test_0_11() {
+        use rstar_0_11::primitives::Line as RStarLine;
+        use rstar_0_11::{PointDistance, RTreeObject};
 
         let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
         let l = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 5., y: 5. });

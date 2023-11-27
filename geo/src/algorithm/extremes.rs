@@ -44,7 +44,7 @@ pub struct Outcome<T: CoordNum> {
 
 impl<'a, T, G> Extremes<'a, T> for G
 where
-    G: CoordsIter<'a, Scalar = T>,
+    G: CoordsIter<Scalar = T>,
     T: CoordNum,
 {
     fn extremes(&'a self) -> Option<Outcome<T>> {

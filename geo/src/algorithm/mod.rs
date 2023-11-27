@@ -56,6 +56,10 @@ pub use contains::Contains;
 pub mod convert;
 pub use convert::{Convert, TryConvert};
 
+/// Convert coordinate angle units between radians and degrees.
+pub mod convert_angle_unit;
+pub use convert_angle_unit::{ToDegrees, ToRadians};
+
 /// Calculate the convex hull of a `Geometry`.
 pub mod convex_hull;
 pub use convex_hull::ConvexHull;
@@ -75,6 +79,10 @@ pub use coords_iter::CoordsIter;
 /// Densify linear geometry components
 pub mod densify;
 pub use densify::Densify;
+
+/// Densify spherical geometry components
+pub mod densify_haversine;
+pub use densify_haversine::DensifyHaversine;
 
 /// Dimensionality of a geometry and its boundary, based on OGC-SFA.
 pub mod dimensions;
@@ -120,6 +128,10 @@ pub use geodesic_intermediate::GeodesicIntermediate;
 pub mod geodesic_length;
 pub use geodesic_length::GeodesicLength;
 
+/// Calculate the Hausdorff distance between two geometries.
+pub mod hausdorff_distance;
+pub use hausdorff_distance::HausdorffDistance;
+
 /// Calculate the bearing to another `Point`, in degrees.
 pub mod haversine_bearing;
 pub use haversine_bearing::HaversineBearing;
@@ -139,6 +151,10 @@ pub use haversine_intermediate::HaversineIntermediate;
 /// Calculate the Haversine length of a Line.
 pub mod haversine_length;
 pub use haversine_length::HaversineLength;
+
+/// Calculate the closest point on a Great Circle arc geometry to a given point.
+pub mod haversine_closest_point;
+pub use haversine_closest_point::HaversineClosestPoint;
 
 /// Calculate a representative `Point` inside a `Geometry`
 pub mod interior_point;
@@ -171,6 +187,10 @@ pub use line_locate_point::LineLocatePoint;
 /// Iterate over the lines in a geometry.
 pub mod lines_iter;
 pub use lines_iter::LinesIter;
+
+/// Split a LineString into n segments
+pub mod linestring_segment;
+pub use linestring_segment::LineStringSegmentize;
 
 /// Apply a function to all `Coord`s of a `Geometry`.
 pub mod map_coords;
@@ -232,6 +252,16 @@ pub mod triangulate_earcut;
 #[cfg(feature = "earcutr")]
 pub use triangulate_earcut::TriangulateEarcut;
 
+/// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
+#[cfg(feature = "spade")]
+pub mod triangulate_spade;
+#[cfg(feature = "spade")]
+pub use triangulate_spade::TriangulateSpade;
+
+/// Vector Operations for 2D coordinates
+mod vector_ops;
+pub use vector_ops::Vector2DOps;
+
 /// Calculate the Vincenty distance between two `Point`s.
 pub mod vincenty_distance;
 pub use vincenty_distance::VincentyDistance;
@@ -255,3 +285,11 @@ pub mod sweep;
 pub mod outlier_detection;
 
 pub use outlier_detection::OutlierDetection;
+
+/// Monotonic polygon subdivision
+pub mod monotone;
+pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
+
+/// Rhumb-line-related algorithms and utils
+pub mod rhumb;
+pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate, RhumbLength};

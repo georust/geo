@@ -3,6 +3,7 @@ use std::{cmp::Ordering, ops::Deref};
 use super::SweepPoint;
 use crate::{
     line_intersection::line_intersection, Coord, GeoFloat, GeoNum, Kernel, Line, LineIntersection,
+    Orientation,
 };
 
 /// Either a line segment or a point.
@@ -11,38 +12,42 @@ use crate::{
 /// segment must have distinct points (use the `Point` variant if the
 /// coordinates are the equal).
 #[derive(Clone, Copy)]
-pub struct LineOrPoint<T: GeoNum> {
-    left: SweepPoint<T>,
-    right: SweepPoint<T>,
+pub enum LineOrPoint<T: GeoNum> {
+    Point(SweepPoint<T>),
+    Line {
+        left: SweepPoint<T>,
+        right: SweepPoint<T>,
+    },
 }
 
 impl<T: GeoNum> std::fmt::Debug for LineOrPoint<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple(if self.is_line() { "LPt" } else { "Pt" })
-            .field(&self.left.x_y())
-            .field(&self.right.x_y())
-            .finish()
+        match self {
+            LineOrPoint::Point(p) => f.debug_tuple("Pt").field(&p.x_y()).finish(),
+            LineOrPoint::Line { left, right } => f
+                .debug_tuple("LPt")
+                .field(&left.x_y())
+                .field(&right.x_y())
+                .finish(),
+        }
     }
 }
 
 impl<T: GeoNum> From<SweepPoint<T>> for LineOrPoint<T> {
     fn from(pt: SweepPoint<T>) -> Self {
-        Self {
-            left: pt,
-            right: pt,
-        }
+        Self::Point(pt)
     }
 }
 
 impl<T: GeoNum> From<(SweepPoint<T>, SweepPoint<T>)> for LineOrPoint<T> {
-    fn from(pt: (SweepPoint<T>, SweepPoint<T>)) -> Self {
-        let (start, end) = pt;
+    fn from((start, end): (SweepPoint<T>, SweepPoint<T>)) -> Self {
         match start.cmp(&end) {
-            Ordering::Less => Self {
+            Ordering::Less => Self::Line {
                 left: start,
                 right: end,
             },
-            _ => Self {
+            Ordering::Equal => Self::Point(start),
+            Ordering::Greater => Self::Line {
                 left: end,
                 right: start,
             },
@@ -62,10 +67,7 @@ impl<T: GeoNum> From<Line<T>> for LineOrPoint<T> {
 /// Convert from a [`Coord`]
 impl<T: GeoNum> From<Coord<T>> for LineOrPoint<T> {
     fn from(c: Coord<T>) -> Self {
-        Self {
-            left: c.into(),
-            right: c.into(),
-        }
+        Self::Point(c.into())
     }
 }
 
@@ -73,23 +75,32 @@ impl<T: GeoNum> LineOrPoint<T> {
     /// Checks if the variant is a line.
     #[inline]
     pub fn is_line(&self) -> bool {
-        self.left != self.right
+        matches!(self, Self::Line { .. })
     }
 
     /// Return a [`Line`] representation of self.
     #[inline]
     pub fn line(&self) -> Line<T> {
-        Line::new(*self.left, *self.right)
+        match self {
+            LineOrPoint::Point(p) => Line::new(**p, **p),
+            LineOrPoint::Line { left, right } => Line::new(**left, **right),
+        }
     }
 
     #[inline]
     pub fn left(&self) -> SweepPoint<T> {
-        self.left
+        match self {
+            LineOrPoint::Point(p) => *p,
+            LineOrPoint::Line { left, .. } => *left,
+        }
     }
 
     #[inline]
     pub fn right(&self) -> SweepPoint<T> {
-        self.right
+        match self {
+            LineOrPoint::Point(p) => *p,
+            LineOrPoint::Line { right, .. } => *right,
+        }
     }
 
     #[cfg(test)]
@@ -99,11 +110,26 @@ impl<T: GeoNum> LineOrPoint<T> {
 
     #[inline]
     pub fn end_points(&self) -> (SweepPoint<T>, SweepPoint<T>) {
-        (self.left, self.right)
+        match self {
+            LineOrPoint::Point(p) => (*p, *p),
+            LineOrPoint::Line { left, right } => (*left, *right),
+        }
     }
 
     pub fn new(left: SweepPoint<T>, right: SweepPoint<T>) -> Self {
-        Self { left, right }
+        if left == right {
+            Self::Point(left)
+        } else {
+            Self::Line { left, right }
+        }
+    }
+
+    pub fn orient2d(&self, other: Coord<T>) -> Orientation {
+        let (left, right) = match self {
+            LineOrPoint::Point(p) => (**p, **p),
+            LineOrPoint::Line { left, right } => (**left, **right),
+        };
+        T::Ker::orient2d(left, right, other)
     }
 }
 
@@ -126,9 +152,9 @@ impl<T: GeoNum> PartialEq for LineOrPoint<T> {
 /// centered at its coordinates.
 impl<T: GeoNum> PartialOrd for LineOrPoint<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match (self.is_line(), other.is_line()) {
-            (false, false) => {
-                if self.left == other.left {
+        match (self, other) {
+            (LineOrPoint::Point(p), LineOrPoint::Point(o)) => {
+                if p == o {
                     Some(Ordering::Equal)
                 } else {
                     // Unequal points do not satisfy pre-condition and
@@ -136,35 +162,44 @@ impl<T: GeoNum> PartialOrd for LineOrPoint<T> {
                     None
                 }
             }
-            (false, true) => other.partial_cmp(self).map(Ordering::reverse),
-            (true, false) => {
-                let (p, q) = self.end_points();
-                let r = other.left;
-                if r > q || p > r {
+            (LineOrPoint::Point(_), LineOrPoint::Line { .. }) => {
+                other.partial_cmp(self).map(Ordering::reverse)
+            }
+            (LineOrPoint::Line { left, right }, LineOrPoint::Point(p)) => {
+                if p > right || left > p {
                     return None;
                 }
                 Some(
-                    T::Ker::orient2d(*p, *q, *r)
+                    T::Ker::orient2d(**left, **right, **p)
                         .as_ordering()
                         .then(Ordering::Greater),
                 )
             }
-            (true, true) => {
-                let (p1, q1) = self.end_points();
-                let (p2, q2) = other.end_points();
-                if p1 > p2 {
+            (
+                LineOrPoint::Line {
+                    left: left_a,
+                    right: right_a,
+                },
+                LineOrPoint::Line {
+                    left: left_b,
+                    right: right_b,
+                },
+            ) => {
+                if left_a > left_b {
                     return other.partial_cmp(self).map(Ordering::reverse);
                 }
-                if p1 >= q2 || p2 >= q1 {
+                if left_a >= right_b || left_b >= right_a {
                     return None;
                 }
 
                 // Assertion: p1 <= p2
                 // Assertion: pi < q_j
                 Some(
-                    T::Ker::orient2d(*p1, *q1, *p2)
+                    T::Ker::orient2d(**left_a, **right_a, **left_b)
                         .as_ordering()
-                        .then_with(|| T::Ker::orient2d(*p1, *q1, *q2).as_ordering()),
+                        .then_with(|| {
+                            T::Ker::orient2d(**left_a, **right_a, **right_b).as_ordering()
+                        }),
                 )
             }
         }
@@ -179,39 +214,41 @@ impl<T: GeoFloat> LineOrPoint<T> {
         debug_assert!(other.is_line(), "tried to intersect with a point variant!");
 
         let line = other.line();
-        if !self.is_line() {
-            let p = self.left;
-            use crate::Intersects;
-            if line.intersects(&*p) {
-                Some(*self)
-            } else {
-                None
-            }
-        } else {
-            line_intersection(self.line(), line).map(|l| match l {
-                LineIntersection::SinglePoint {
-                    intersection,
-                    is_proper,
-                } => {
-                    let mut pt = intersection;
-                    if is_proper && (&pt == self.left.deref()) {
-                        if self.left.x == self.right.x {
-                            pt.y = pt.y.next_after(T::infinity());
-                        } else {
-                            pt.x = pt.x.next_after(T::infinity());
-                        }
-                    }
-                    pt.into()
+        match self {
+            LineOrPoint::Point(p) => {
+                use crate::Intersects;
+                if line.intersects(&**p) {
+                    Some(*self)
+                } else {
+                    None
                 }
-                LineIntersection::Collinear { intersection } => intersection.into(),
-            })
+            }
+            LineOrPoint::Line { left, right } => {
+                line_intersection(self.line(), line).map(|l| match l {
+                    LineIntersection::SinglePoint {
+                        intersection,
+                        is_proper,
+                    } => {
+                        let mut pt = intersection;
+                        if is_proper && (&pt == left.deref()) {
+                            if left.x == right.x {
+                                pt.y = pt.y.next_after(T::infinity());
+                            } else {
+                                pt.x = pt.x.next_after(T::infinity());
+                            }
+                        }
+                        pt.into()
+                    }
+                    LineIntersection::Collinear { intersection } => intersection.into(),
+                })
+            }
         }
     }
 
     pub fn intersect_line_ordered(&self, other: &Self) -> Option<Self> {
         let ord = self.partial_cmp(other);
         match self.intersect_line(other) {
-            Some(lp) if !lp.is_line() => {
+            Some(Self::Point(p)) => {
                 // NOTE: A key issue with using non-exact numbers (f64, etc.) in
                 // this algo. is that line-intersection may return
                 // counter-intuitive points.
@@ -238,38 +275,34 @@ impl<T: GeoFloat> LineOrPoint<T> {
                 // specifically for this algo., that can track the neighbors of
                 // tree-nodes, and fix / report this issue. The crate
                 // `btree-slab` seems like a great starting point.
-                let pt = lp.left;
-                let (mut x, y) = pt.x_y();
+                let (mut x, y) = p.x_y();
 
-                let c = self.left;
+                let c = self.left();
                 if x == c.x && y < c.y {
                     x = x.next_after(T::infinity());
                 }
 
-                let pt: SweepPoint<_> = Coord { x, y }.into();
+                let p = Coord { x, y }.into();
                 debug_assert!(
-                    pt >= self.left,
-                    "line intersection before first line: {pt:?}\n\tLine({lp1:?} - {lp2:?}) X Line({lp3:?} - {lp4:?})",
-                    lp1 = self.left,
-                    lp2 = self.right,
-                    lp3 = other.left,
-                    lp4 = other.right,
+                    p >= self.left(),
+                    "line intersection before first line: {p:?}\n\tLine({lp1:?} - {lp2:?}) X Line({lp3:?} - {lp4:?})",
+                    lp1 = self.left(),
+                    lp2 = self.right(),
+                    lp3 = other.left(),
+                    lp4 = other.right(),
                 );
                 debug_assert!(
-                    pt >= other.left,
-                    "line intersection before second line: {pt:?}\n\tLine({lp1:?} - {lp2:?}) X Line({lp3:?} - {lp4:?})",
-                    lp1 = self.left,
-                    lp2 = self.right,
-                    lp3 = other.left,
-                    lp4 = other.right,
+                    p >= other.left(),
+                    "line intersection before second line: {p:?}\n\tLine({lp1:?} - {lp2:?}) X Line({lp3:?} - {lp4:?})",
+                    lp1 = self.left(),
+                    lp2 = self.right(),
+                    lp3 = other.left(),
+                    lp4 = other.right(),
                 );
 
                 if let Some(ord) = ord {
-                    let l1 = LineOrPoint::from((self.left, pt));
-                    let l2 = LineOrPoint {
-                        left: other.left,
-                        right: pt,
-                    };
+                    let l1 = LineOrPoint::from((self.left(), p));
+                    let l2 = LineOrPoint::from((other.left(), p));
                     let cmp = l1.partial_cmp(&l2).unwrap();
                     if l1.is_line() && l2.is_line() && cmp.then(ord) != ord {
                         debug!(
@@ -278,18 +311,18 @@ impl<T: GeoFloat> LineOrPoint<T> {
                             l2 = other
                         );
                         debug!("\tparts: {l1:?}, {l2:?}");
-                        debug!("\tintersection: {pt:?} {cmp:?}");
+                        debug!("\tintersection: {p:?} {cmp:?}");
 
                         // RM: This is a complicated intersection that is changing the ordering.
                         // Heuristic: approximate with a trivial intersection point that preserves the topology.
-                        return Some(if self.left > other.left {
-                            self.left.into()
+                        return Some(if self.left() > other.left() {
+                            self.left().into()
                         } else {
-                            other.left.into()
+                            other.left().into()
                         });
                     }
                 }
-                Some((*pt).into())
+                Some(Self::Point(p))
             }
             e => e,
         }

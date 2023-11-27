@@ -1,5 +1,3 @@
-extern crate geo;
-
 use geo::Point;
 use geo_types::point;
 

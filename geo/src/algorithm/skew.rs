@@ -5,9 +5,9 @@ use crate::{AffineOps, AffineTransform, BoundingRect, Coord, CoordFloat, CoordNu
 /// ## Performance
 ///
 /// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
-/// [`Skew`](crate::Skew), [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
+/// [`Skew`], [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
 /// efficient to compose the transformations and apply them as a single operation using the
-/// [`AffineOps`](crate::AffineOps) trait.
+/// [`AffineOps`] trait.
 ///
 pub trait Skew<T: CoordNum> {
     /// An affine transformation which skews a geometry, sheared by a uniform angle along the x and
