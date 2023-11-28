@@ -1,6 +1,5 @@
 use super::point::PointTrait;
 use geo_types::{CoordNum, MultiPoint, Point};
-use std::iter::Cloned;
 use std::slice::Iter;
 
 pub trait MultiPointTrait {
@@ -25,11 +24,11 @@ pub trait MultiPointTrait {
 
 impl<T: CoordNum> MultiPointTrait for MultiPoint<T> {
     type T = T;
-    type ItemType<'a> = Point<Self::T> where Self: 'a;
-    type Iter<'a> = Cloned<Iter<'a, Self::ItemType<'a>>> where T: 'a;
+    type ItemType<'a> = &'a Point<Self::T> where Self: 'a;
+    type Iter<'a> = Iter<'a, Point<Self::T>> where T: 'a;
 
     fn points(&self) -> Self::Iter<'_> {
-        self.0.iter().cloned()
+        self.0.iter()
     }
 
     fn num_points(&self) -> usize {
@@ -37,17 +36,17 @@ impl<T: CoordNum> MultiPointTrait for MultiPoint<T> {
     }
 
     fn point(&self, i: usize) -> Option<Self::ItemType<'_>> {
-        self.0.get(i).cloned()
+        self.0.get(i)
     }
 }
 
 impl<'a, T: CoordNum> MultiPointTrait for &'a MultiPoint<T> {
     type T = T;
-    type ItemType<'b> = Point<Self::T> where Self: 'b;
-    type Iter<'b> = Cloned<Iter<'a, Self::ItemType<'a>>> where Self: 'b;
+    type ItemType<'b> = &'a Point<Self::T> where Self: 'b;
+    type Iter<'b> = Iter<'a, Point<Self::T>> where Self: 'b;
 
     fn points(&self) -> Self::Iter<'_> {
-        self.0.iter().cloned()
+        self.0.iter()
     }
 
     fn num_points(&self) -> usize {
@@ -55,6 +54,6 @@ impl<'a, T: CoordNum> MultiPointTrait for &'a MultiPoint<T> {
     }
 
     fn point(&self, i: usize) -> Option<Self::ItemType<'_>> {
-        self.0.get(i).cloned()
+        self.0.get(i)
     }
 }

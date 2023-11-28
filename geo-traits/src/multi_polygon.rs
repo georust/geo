@@ -1,6 +1,5 @@
 use super::polygon::PolygonTrait;
 use geo_types::{CoordNum, MultiPolygon, Polygon};
-use std::iter::Cloned;
 use std::slice::Iter;
 
 pub trait MultiPolygonTrait {
@@ -25,11 +24,11 @@ pub trait MultiPolygonTrait {
 
 impl<T: CoordNum> MultiPolygonTrait for MultiPolygon<T> {
     type T = T;
-    type ItemType<'a> = Polygon<Self::T> where Self: 'a;
-    type Iter<'a> = Cloned<Iter<'a, Self::ItemType<'a>>> where T: 'a;
+    type ItemType<'a> = &'a Polygon<Self::T> where Self: 'a;
+    type Iter<'a> = Iter<'a, Polygon<Self::T>> where T: 'a;
 
     fn polygons(&self) -> Self::Iter<'_> {
-        self.0.iter().cloned()
+        self.0.iter()
     }
 
     fn num_polygons(&self) -> usize {
@@ -37,17 +36,17 @@ impl<T: CoordNum> MultiPolygonTrait for MultiPolygon<T> {
     }
 
     fn polygon(&self, i: usize) -> Option<Self::ItemType<'_>> {
-        self.0.get(i).cloned()
+        self.0.get(i)
     }
 }
 
 impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
     type T = T;
-    type ItemType<'b> = Polygon<Self::T> where Self: 'b;
-    type Iter<'b> = Cloned<Iter<'a, Self::ItemType<'a>>> where Self: 'b;
+    type ItemType<'b> = &'a Polygon<Self::T> where Self: 'b;
+    type Iter<'b> = Iter<'a, Polygon<Self::T>> where Self: 'b;
 
     fn polygons(&self) -> Self::Iter<'_> {
-        self.0.iter().cloned()
+        self.0.iter()
     }
 
     fn num_polygons(&self) -> usize {
@@ -55,6 +54,6 @@ impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
     }
 
     fn polygon(&self, i: usize) -> Option<Self::ItemType<'_>> {
-        self.0.get(i).cloned()
+        self.0.get(i)
     }
 }

@@ -1,6 +1,5 @@
 use super::line_string::LineStringTrait;
 use geo_types::{CoordNum, LineString, Polygon};
-use std::iter::Cloned;
 use std::slice::Iter;
 
 pub trait PolygonTrait {
@@ -28,16 +27,16 @@ pub trait PolygonTrait {
 
 impl<T: CoordNum> PolygonTrait for Polygon<T> {
     type T = T;
-    type ItemType<'a> = LineString<Self::T> where Self: 'a;
-    type Iter<'a> = Cloned<Iter<'a, Self::ItemType<'a>>> where T: 'a;
+    type ItemType<'a> = &'a LineString<Self::T> where Self: 'a;
+    type Iter<'a> = Iter<'a, LineString<Self::T>> where T: 'a;
 
     fn exterior(&self) -> Option<Self::ItemType<'_>> {
         // geo-types doesn't really have a way to describe an empty polygon
-        Some(Polygon::exterior(self).clone())
+        Some(Polygon::exterior(self))
     }
 
     fn interiors(&self) -> Self::Iter<'_> {
-        Polygon::interiors(self).iter().cloned()
+        Polygon::interiors(self).iter()
     }
 
     fn num_interiors(&self) -> usize {
@@ -45,23 +44,23 @@ impl<T: CoordNum> PolygonTrait for Polygon<T> {
     }
 
     fn interior(&self, i: usize) -> Option<Self::ItemType<'_>> {
-        Polygon::interiors(self).get(i).cloned()
+        Polygon::interiors(self).get(i)
     }
 }
 
 impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
     type T = T;
-    type ItemType<'b> = LineString<Self::T> where
+    type ItemType<'b> = &'a LineString<Self::T> where
         Self: 'b;
-    type Iter<'b> = Cloned<Iter<'a, Self::ItemType<'a>>>  where
+    type Iter<'b> = Iter<'a, LineString<Self::T>>  where
         Self: 'b;
 
     fn exterior(&self) -> Option<Self::ItemType<'_>> {
-        Some(Polygon::exterior(self).clone())
+        Some(Polygon::exterior(self))
     }
 
     fn interiors(&self) -> Self::Iter<'_> {
-        Polygon::interiors(self).iter().cloned()
+        Polygon::interiors(self).iter()
     }
 
     fn num_interiors(&self) -> usize {
@@ -69,6 +68,6 @@ impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
     }
 
     fn interior(&self, i: usize) -> Option<Self::ItemType<'_>> {
-        Polygon::interiors(self).get(i).cloned()
+        Polygon::interiors(self).get(i)
     }
 }

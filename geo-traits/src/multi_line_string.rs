@@ -1,6 +1,5 @@
 use super::line_string::LineStringTrait;
 use geo_types::{CoordNum, LineString, MultiLineString};
-use std::iter::Cloned;
 use std::slice::Iter;
 
 pub trait MultiLineStringTrait {
@@ -25,11 +24,11 @@ pub trait MultiLineStringTrait {
 
 impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
     type T = T;
-    type ItemType<'a> = LineString<Self::T> where Self: 'a;
-    type Iter<'a> = Cloned<Iter<'a, Self::ItemType<'a>>> where T: 'a;
+    type ItemType<'a> = &'a LineString<Self::T> where Self: 'a;
+    type Iter<'a> = Iter<'a, LineString<Self::T>> where T: 'a;
 
     fn lines(&self) -> Self::Iter<'_> {
-        self.0.iter().cloned()
+        self.0.iter()
     }
 
     fn num_lines(&self) -> usize {
@@ -37,17 +36,17 @@ impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
     }
 
     fn line(&self, i: usize) -> Option<Self::ItemType<'_>> {
-        self.0.get(i).cloned()
+        self.0.get(i)
     }
 }
 
 impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
     type T = T;
-    type ItemType<'b> = LineString<Self::T> where Self: 'b;
-    type Iter<'b> = Cloned<Iter<'a, Self::ItemType<'a>>> where Self: 'b;
+    type ItemType<'b> = &'a LineString<Self::T> where Self: 'b;
+    type Iter<'b> = Iter<'a, LineString<Self::T>> where Self: 'b;
 
     fn lines(&self) -> Self::Iter<'_> {
-        self.0.iter().cloned()
+        self.0.iter()
     }
 
     fn num_lines(&self) -> usize {
@@ -55,6 +54,6 @@ impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
     }
 
     fn line(&self, i: usize) -> Option<Self::ItemType<'_>> {
-        self.0.get(i).cloned()
+        self.0.get(i)
     }
 }

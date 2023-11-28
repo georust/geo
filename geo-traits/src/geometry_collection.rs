@@ -1,6 +1,5 @@
 use super::GeometryTrait;
 use geo_types::{CoordNum, Geometry, GeometryCollection};
-use std::iter::Cloned;
 use std::slice::Iter;
 
 pub trait GeometryCollectionTrait {
@@ -25,14 +24,14 @@ pub trait GeometryCollectionTrait {
 
 impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
     type T = T;
-    type ItemType<'a> = Geometry<Self::T>
+    type ItemType<'a> = &'a Geometry<Self::T>
     where
         Self: 'a;
-    type Iter<'a> = Cloned<Iter<'a, Self::ItemType<'a>>>
+    type Iter<'a> = Iter<'a, Geometry<Self::T>>
     where T: 'a;
 
     fn geometries(&self) -> Self::Iter<'_> {
-        self.0.iter().cloned()
+        self.0.iter()
     }
 
     fn num_geometries(&self) -> usize {
@@ -40,19 +39,19 @@ impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
     }
 
     fn geometry(&self, i: usize) -> Option<Self::ItemType<'_>> {
-        self.0.get(i).cloned()
+        self.0.get(i)
     }
 }
 
 impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
     type T = T;
-    type ItemType<'b> = Geometry<Self::T>     where
+    type ItemType<'b> = &'a Geometry<Self::T> where
         Self: 'b;
-    type Iter<'b> = Cloned<Iter<'a, Self::ItemType<'a>>> where
+    type Iter<'b> = Iter<'a, Geometry<Self::T>> where
         Self: 'b;
 
     fn geometries(&self) -> Self::Iter<'_> {
-        self.0.iter().cloned()
+        self.0.iter()
     }
 
     fn num_geometries(&self) -> usize {
@@ -60,6 +59,6 @@ impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
     }
 
     fn geometry(&self, i: usize) -> Option<Self::ItemType<'_>> {
-        self.0.get(i).cloned()
+        self.0.get(i)
     }
 }
