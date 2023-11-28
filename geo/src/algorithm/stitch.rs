@@ -127,46 +127,49 @@ impl_stitch! {
 /// makes interiors and exteriors of polygon have ccw orientation
 fn fix_orientation<T: GeoFloat>(mut poly: Polygon<T>) -> Polygon<T> {
     poly.exterior_mut(|ls| ls.make_ccw_winding());
-    poly.interiors_mut(|ls| ls.iter_mut().for_each(|ls| ls.make_ccw_winding()));
+
+    // just commenting this out for the moment. The algorithm only works on exteriors so this
+    // shouldn't be needed
+    //
+    //poly.interiors_mut(|ls| ls.iter_mut().for_each(|ls| ls.make_ccw_winding()));
+
     poly
 }
 
 /// checks whether the to lines are equal or inverted forms of each other
 fn same_line<T: GeoFloat>(l1: &Line<T>, l2: &Line<T>) -> bool {
-    l1 == l2 || l1 == &Line::new(l2.end, l2.start)
+    let flipped_l2 = Line::new(l2.end, l2.start);
+    l1 == l2 || l1 == &flipped_l2
 }
 
 /// given a collection of lines from multiple polygons, this returns all but the shared lines
 fn find_boundary_lines<T: GeoFloat>(lines: Vec<Line<T>>) -> Vec<Line<T>> {
-    lines
-        .iter()
-        .enumerate()
+    let enumerated_lines = || lines.iter().enumerate();
+    enumerated_lines()
         // only collect lines that don't have a duplicate in the set
         .filter_map(|(i, line)| {
-            (!lines
-                .iter()
-                .enumerate()
+            let same_line_exists = enumerated_lines()
                 .filter(|&(j, _)| j != i)
-                .any(|(_, l)| same_line(line, l)))
-            .then_some(*line)
+                .any(|(_, l)| same_line(line, l));
+            (!same_line_exists).then_some(*line)
         })
         .collect::<Vec<_>>()
 }
 
+// Notes for future: This probably belongs into a `Validify` trait or something
 /// finds holes in polygon exterior and fixes them
 ///
 /// This is important for scenarios like the banana polygon. Which is considered invalid
 /// https://www.postgis.net/workshops/postgis-intro/validity.html#repairing-invalidity
 fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<F> {
-    // find rings
-    let mut rings = vec![];
-    let mut points = vec![];
-
     fn detect_if_rings_closed_with_point<F: GeoFloat>(
         points: &mut Vec<&Coord<F>>,
         p: &Coord<F>,
     ) -> Option<Vec<Coord<F>>> {
+        // early return here if nothing was found
         let pos = points.iter().position(|&c| c == p)?;
+
+        // create ring by collecting the points if something was found
         let ring = points
             .drain(pos..)
             .chain(std::iter::once(p))
@@ -175,16 +178,27 @@ fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<
         Some(ring)
     }
 
-    poly.exterior().into_iter().for_each(|coord| {
-        if let Some(ring) = detect_if_rings_closed_with_point(&mut points, coord) {
-            rings.push(ring);
-        }
-        points.push(coord);
-    });
+    // find rings
+    let rings = {
+        let (points, mut rings) =
+            poly.exterior()
+                .into_iter()
+                .fold((vec![], vec![]), |(mut points, mut rings), coord| {
+                    if let Some(ring) = detect_if_rings_closed_with_point(&mut points, coord) {
+                        rings.push(ring);
+                    }
+                    points.push(coord);
+                    (points, rings)
+                });
 
-    let last_ring = points.into_iter().cloned().collect::<Vec<_>>();
-    rings.push(last_ring);
+        // add leftover coords as last ring
+        let last_ring = points.into_iter().cloned().collect::<Vec<_>>();
+        rings.push(last_ring);
 
+        rings
+    };
+
+    // convert to polygons for containment checks
     let mut rings = rings
         .into_iter()
         // filter out degenerate polygons which may be produced from the code above
@@ -193,13 +207,10 @@ fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<
         .collect::<Vec<_>>();
 
     fn find_outmost_ring<F: GeoFloat>(rings: &[Polygon<F>]) -> Option<usize> {
-        rings
-            .iter()
-            .enumerate()
+        let enumerated_rings = || rings.iter().enumerate();
+        enumerated_rings()
             .find(|(i, ring)| {
-                rings
-                    .iter()
-                    .enumerate()
+                enumerated_rings()
                     .filter(|(j, _)| i != j)
                     .all(|(_, other)| ring.contains(other))
             })
@@ -305,14 +316,13 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
     // lookup rings by index and create polygons
     let polygons = polygons_idxs
         .into_iter()
-        .map(|(parent, children)| {
-            (
-                rings[parent].clone(),
-                children
-                    .into_iter()
-                    .map(|child| rings[child].clone())
-                    .collect::<Vec<_>>(),
-            )
+        .map(|(parent_idx, children_idxs)| {
+            let exterior = rings[parent_idx].clone();
+            let interiors = children_idxs
+                .into_iter()
+                .map(|child_idx| rings[child_idx].clone())
+                .collect::<Vec<_>>();
+            (exterior, interiors)
         })
         .map(|(exterior, interiors)| Polygon::new(exterior, interiors));
 
@@ -324,31 +334,34 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
 fn stitch_rings_from_lines<F: GeoFloat>(
     lines: Vec<Line<F>>,
 ) -> PolygonStitchingResult<Vec<LineString<F>>> {
+    // initial ring parts are just lines which will be stitch together progressively
     let mut ring_parts: Vec<Vec<Coord<F>>> = lines
         .iter()
         .map(|line| vec![line.start, line.end])
         .collect();
 
     let mut rings: Vec<LineString<F>> = vec![];
-    while !ring_parts.is_empty() {
-        let (j, stitch_result) = ring_parts
+    // terminates since every loop we'll merge two elements into one so the total number of
+    // elements decreases each loop by 1
+    while let Some(last_part) = ring_parts.pop() {
+        let (j, compound_part) = ring_parts
             .iter()
             .enumerate()
-            .skip(1)
-            .find_map(|(j, part)| try_stitch(&ring_parts[0], part).map(|res| (j, res)))
+            .find_map(|(j, other_part)| {
+                let new_part = try_stitch(&last_part, other_part)?;
+                Some((j, new_part))
+            })
             .ok_or(LineStitchingError::IncompleteRing)?;
-
-        let is_stitch_result_valid =
-            stitch_result.first() == stitch_result.last() && !stitch_result.is_empty();
-
-        if is_stitch_result_valid {
-            rings.push(LineString::new(stitch_result));
-        } else {
-            ring_parts.push(stitch_result);
-        }
-
         ring_parts.remove(j);
-        ring_parts.remove(0);
+
+        let is_ring = compound_part.first() == compound_part.last() && !compound_part.is_empty();
+
+        if is_ring {
+            let new_ring = LineString::new(compound_part);
+            rings.push(new_ring);
+        } else {
+            ring_parts.push(compound_part);
+        }
     }
 
     Ok(rings)
