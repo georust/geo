@@ -43,7 +43,7 @@ pub trait Stitch<T: GeoFloat> {
     ///
     /// ```
     /// use geo::Stitch;
-    /// use geo::{Coord, Triangle, Rect};
+    /// use geo::{Coord, Triangle, polygon};
     ///
     /// let tri1 = Triangle::from([
     ///     Coord { x: 0.0, y: 0.0 },
@@ -68,7 +68,12 @@ pub trait Stitch<T: GeoFloat> {
     /// // 4 coords + 1 duplicate for closed-ness
     /// assert_eq!(poly.exterior().0.len(), 4 + 1);
     ///
-    /// let expected = Rect::new(Coord { x: 0.0, y: 0.0 }, Coord { x: 1.0, y: 1.0 }).to_polygon();
+    /// let expected = polygon![
+    ///     Coord { x: 0.0, y: 1.0 },
+    ///     Coord { x: 0.0, y: 0.0 },
+    ///     Coord { x: 1.0, y: 0.0 },
+    ///     Coord { x: 1.0, y: 1.0 },
+    /// ];
     ///
     /// assert_eq!(poly, expected);
     /// ```
