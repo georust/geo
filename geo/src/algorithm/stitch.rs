@@ -28,15 +28,41 @@ pub(crate) type PolygonStitchingResult<T> = Result<T, LineStitchingError>;
 
 /// Trait to stitch together split up polygons.
 pub trait Stitch<T: GeoFloat> {
-    // 🚧🚧 TODO 🚧🚧 : it might make sense to have a separate method in this trait which
-    // doesn't do the fixup and instead assumes that the polygon is well formed to prevent
-    // extensive cloning
-    //
     /// This stitching only happens along identical edges which are located in two separate
     /// geometries. This also means that if you want to do something more general like a
     /// [`Boolean Operation Union`](https://en.wikipedia.org/wiki/Boolean_operations_on_polygons)
     /// you should use the trait `BooleanOps` or `SpadeBoolops`. In contrast, the `stitch_together`
     /// trait method has a comparatively smaller footprint than those other boolean operation traits.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Stitch;
+    /// use geo::{Coord, Triangle};
+    ///
+    /// let tri1 = Triangle::from([
+    ///     Coord { x: 0.0, y: 0.0 },
+    ///     Coord { x: 1.0, y: 0.0 },
+    ///     Coord { x: 0.0, y: 1.0 },
+    /// ]);
+    /// let tri2 = Triangle::from([
+    ///     Coord { x: 1.0, y: 1.0 },
+    ///     Coord { x: 1.0, y: 0.0 },
+    ///     Coord { x: 0.0, y: 1.0 },
+    /// ]);
+    ///
+    /// let result = vec![tri1, tri2].stitch_together();
+    ///
+    /// assert!(result.is_ok());
+    ///
+    /// let mp = result.unwrap();
+    ///
+    /// assert_eq!(mp.0.len(), 1);
+    ///
+    /// let poly = mp.0[0].clone();
+    /// // 4 coords + 1 duplicate for closed-ness
+    /// assert_eq!(poly.exterior().0.len(), 4 + 1);
+    /// ```
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>>;
 }
 
@@ -432,9 +458,9 @@ mod polygon_stitching_tests {
         ])
         .to_polygon();
         let mut tri2 = Triangle::from([
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: -1.0, y: 0.0 },
-            Coord { x: 0.0, y: -1.0 },
+            Coord { x: 1.0, y: 1.0 },
+            Coord { x: 1.0, y: 0.0 },
+            Coord { x: 0.0, y: 1.0 },
         ])
         .to_polygon();
 
