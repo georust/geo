@@ -110,3 +110,41 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for Geometry<T> {
         }
     }
 }
+
+impl<'a, T: CoordNum + 'a> GeometryTrait for &'a Geometry<T> {
+    type T = T;
+    type Point<'b> = Point<Self::T> where Self: 'b;
+    type LineString<'b> = LineString<Self::T> where Self: 'b;
+    type Polygon<'b> = Polygon<Self::T> where Self: 'b;
+    type MultiPoint<'b> = MultiPoint<Self::T> where Self: 'b;
+    type MultiLineString<'b> = MultiLineString<Self::T> where Self: 'b;
+    type MultiPolygon<'b> = MultiPolygon<Self::T> where Self: 'b;
+    type GeometryCollection<'b> = GeometryCollection<Self::T> where Self: 'b;
+    type Rect<'b> = Rect<Self::T> where Self: 'b;
+
+    fn as_type(
+        &self,
+    ) -> GeometryType<
+        '_,
+        Point<T>,
+        LineString<T>,
+        Polygon<T>,
+        MultiPoint<T>,
+        MultiLineString<T>,
+        MultiPolygon<T>,
+        GeometryCollection<T>,
+        Rect<T>,
+    > {
+        match self {
+            Geometry::Point(p) => GeometryType::Point(p),
+            Geometry::LineString(p) => GeometryType::LineString(p),
+            Geometry::Polygon(p) => GeometryType::Polygon(p),
+            Geometry::MultiPoint(p) => GeometryType::MultiPoint(p),
+            Geometry::MultiLineString(p) => GeometryType::MultiLineString(p),
+            Geometry::MultiPolygon(p) => GeometryType::MultiPolygon(p),
+            Geometry::GeometryCollection(p) => GeometryType::GeometryCollection(p),
+            Geometry::Rect(p) => GeometryType::Rect(p),
+            _ => todo!(),
+        }
+    }
+}
