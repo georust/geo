@@ -29,16 +29,21 @@ pub(crate) type PolygonStitchingResult<T> = Result<T, LineStitchingError>;
 /// Trait to stitch together split up polygons.
 pub trait Stitch<T: GeoFloat> {
     /// This stitching only happens along identical edges which are located in two separate
-    /// geometries. This also means that if you want to do something more general like a
-    /// [`Boolean Operation Union`](https://en.wikipedia.org/wiki/Boolean_operations_on_polygons)
-    /// you should use the trait `BooleanOps` or `SpadeBoolops`. In contrast, the `stitch_together`
-    /// trait method has a comparatively smaller footprint than those other boolean operation traits.
+    /// geometries.
+    ///
+    /// ┌─────x        ┌─────┐
+    /// │    /│        │     │
+    /// │   / │        │     │
+    /// │  /  │  ───►  │     │
+    /// │ /   │        │     │
+    /// │/    │        │     │
+    /// x─────┘        └─────┘
     ///
     /// # Examples
     ///
     /// ```
     /// use geo::Stitch;
-    /// use geo::{Coord, Triangle};
+    /// use geo::{Coord, Triangle, Rect};
     ///
     /// let tri1 = Triangle::from([
     ///     Coord { x: 0.0, y: 0.0 },
@@ -62,7 +67,17 @@ pub trait Stitch<T: GeoFloat> {
     /// let poly = mp.0[0].clone();
     /// // 4 coords + 1 duplicate for closed-ness
     /// assert_eq!(poly.exterior().0.len(), 4 + 1);
+    ///
+    /// let expected = Rect::new(Coord { x: 0.0, y: 0.0 }, Coord { x: 1.0, y: 1.0 }).to_polygon();
+    ///
+    /// assert_eq!(poly, expected);
     /// ```
+    ///
+    /// # Additional Notes
+    ///
+    /// If you want to do something more general like a
+    /// [`Boolean Operation Union`](https://en.wikipedia.org/wiki/Boolean_operations_on_polygons)
+    /// you should use the trait `BooleanOps` or `SpadeBoolops`.
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>>;
 }
 
