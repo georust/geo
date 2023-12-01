@@ -1,8 +1,8 @@
-use std::{fmt, result};
+use std::{f64::consts::FRAC_PI_2, fmt, result};
 
-use crate::{
-    coord, Coord, EuclideanLength, GeoFloat, Line, MultiPoint, Point, Polygon, Rect, Triangle,
-};
+use geo_types::coord;
+
+use crate::{Coord, EuclideanLength, GeoFloat, Line, MultiPoint, Point, Polygon, Rect, Triangle};
 
 use crate::triangulate_delaunay::{
     DelaunayTriangle, DelaunayTriangulationError, DEFAULT_SUPER_TRIANGLE_EXPANSION,
@@ -10,6 +10,8 @@ use crate::triangulate_delaunay::{
 use crate::{BoundingRect, TriangulateDelaunay};
 
 type Result<T> = result::Result<T, VoronoiDiagramError>;
+
+pub const DEFAULT_SLOPE_THRESHOLD: f64 = 1e3;
 
 #[derive(Debug, Clone)]
 pub struct VoronoiComponents<T: GeoFloat> {
@@ -28,10 +30,12 @@ where
     fn compute_voronoi_components(
         &self,
         clipping_mask: Option<&ClippingMask<T>>,
+        slope_threshold: Option<T>,
     ) -> Result<VoronoiComponents<T>>;
     fn compute_voronoi_diagram(
         &self,
         clipping_mask: Option<&ClippingMask<T>>,
+        slope_threshold: Option<T>,
     ) -> Result<Vec<Polygon>>;
 }
 
@@ -42,13 +46,15 @@ where
     fn compute_voronoi_components(
         &self,
         clipping_mask: Option<&ClippingMask<T>>,
+        slope_threshold: Option<T>,
     ) -> Result<VoronoiComponents<T>> {
-        compute_voronoi_components(self, clipping_mask)
+        compute_voronoi_components(self, clipping_mask, slope_threshold)
     }
 
     fn compute_voronoi_diagram(
         &self,
         _clipping_mask: Option<&ClippingMask<T>>,
+        _slope_threshold: Option<T>,
     ) -> Result<Vec<Polygon>> {
         todo!("Need to map the components to voronoi cells");
     }
@@ -60,13 +66,15 @@ where
     fn compute_voronoi_components(
         &self,
         clipping_mask: Option<&ClippingMask<T>>,
+        slope_threshold: Option<T>,
     ) -> Result<VoronoiComponents<T>> {
-        compute_voronoi_components(self, clipping_mask)
+        compute_voronoi_components(self, clipping_mask, slope_threshold)
     }
 
     fn compute_voronoi_diagram(
         &self,
         _clipping_mask: Option<&ClippingMask<T>>,
+        _slope_threshold: Option<T>,
     ) -> Result<Vec<Polygon>> {
         todo!("Need to map the components to voronoi cells");
     }
@@ -75,6 +83,7 @@ where
 fn compute_voronoi_components<T: GeoFloat, U: TriangulateDelaunay<T>>(
     polygon: &U,
     clipping_mask: Option<&ClippingMask<T>>,
+    slope_threshold: Option<T>,
 ) -> Result<VoronoiComponents<T>>
 where
     f64: From<T>,
@@ -92,7 +101,7 @@ where
         });
     }
 
-    compute_voronoi_components_from_delaunay(&triangles, clipping_mask)
+    compute_voronoi_components_from_delaunay(&triangles, clipping_mask, slope_threshold)
 }
 
 /// Compute the Voronoi Diagram from Delaunay Triangles.
@@ -102,6 +111,7 @@ where
 pub fn compute_voronoi_components_from_delaunay<T: GeoFloat>(
     triangles: &[Triangle<T>],
     clipping_mask: Option<&Polygon<T>>,
+    slope_threshold: Option<T>,
 ) -> Result<VoronoiComponents<T>>
 where
     f64: From<T>,
@@ -127,10 +137,10 @@ where
     // voronoi diagram
     let mut vertices: Vec<Coord<T>> = Vec::new();
     for tri in &delaunay_triangles {
-        vertices.push(
-            tri.get_circumcircle_center()
-                .map_err(VoronoiDiagramError::DelaunayError)?,
-        );
+        let vertex = tri
+            .get_circumcircle_center()
+            .map_err(VoronoiDiagramError::DelaunayError)?;
+        vertices.push(vertex);
     }
 
     // Find the shared edges
@@ -150,6 +160,7 @@ where
         &mut shared.shared_edges,
         &shared.neighbours,
         &clipping_mask,
+        slope_threshold,
     )?);
 
     Ok(VoronoiComponents {
@@ -164,6 +175,9 @@ fn create_clipping_mask<T: GeoFloat>(triangles: &[Triangle<T>]) -> Result<Polygo
 where
     f64: From<T>,
 {
+    let expand_factor = T::from(DEFAULT_SUPER_TRIANGLE_EXPANSION)
+        .ok_or(VoronoiDiagramError::CannotConvertBetweenGeoGenerics)?;
+
     let mut pts: Vec<Point<T>> = Vec::new();
     for tri in triangles {
         pts.extend(tri.to_array().iter().map(|x| Point::from(*x)));
@@ -171,9 +185,6 @@ where
     let bounds = MultiPoint::new(pts)
         .bounding_rect()
         .ok_or(VoronoiDiagramError::CannotDetermineBoundsFromClipppingMask)?;
-
-    let expand_factor = T::from(DEFAULT_SUPER_TRIANGLE_EXPANSION)
-        .ok_or(VoronoiDiagramError::CannotConvertBetweenGeoGenerics)?;
 
     let width = bounds.width() * expand_factor;
     let height = bounds.height() * expand_factor;
@@ -255,7 +266,9 @@ fn get_perpendicular_line<T: GeoFloat>(line: &Line<T>) -> Result<Line<T>>
 where
     f64: From<T>,
 {
-    let slope = f64::from(line.slope());
+    let two = T::from(2.).ok_or(VoronoiDiagramError::CannotConvertBetweenGeoGenerics)?;
+    let minus_one = T::from(-1.).ok_or(VoronoiDiagramError::CannotConvertBetweenGeoGenerics)?;
+    let slope = line.slope();
 
     // Vertical line
     if slope.is_infinite() {
@@ -263,63 +276,243 @@ where
             coord! {x: line.start.x, y: line.start.y},
             coord! {x: line.start.x - line.dy(), y: line.start.y},
         ))
-    } else if slope == 0. {
+    } else if slope.is_zero() {
         Ok(Line::new(
             coord! {x: line.start.x, y: line.start.y},
             coord! {x: line.start.x, y: line.start.y + line.dx()},
         ))
     } else {
         let midpoint = coord! {
-            x: f64::from(line.start.x) + f64::from(line.dx()) / 2.,
-            y: f64::from(line.start.y) + f64::from(line.dy()) / 2.,
+            x: line.start.x + line.dx() / two,
+            y: line.start.y + line.dy() / two,
         };
         // y = mx + b
-        let m = -1. / slope;
+        let m = minus_one / slope;
         let b = m.mul_add(-midpoint.x, midpoint.y);
-        let x = midpoint.x + f64::from(line.dx());
-        let y = m.mul_add(x, b);
+        let end_x = midpoint.x + line.dx();
+        let end_y = m.mul_add(end_x, b);
 
-        let end_x = T::from(x).ok_or(VoronoiDiagramError::CannotConvertBetweenGeoGenerics)?;
-        let end_y = T::from(y).ok_or(VoronoiDiagramError::CannotConvertBetweenGeoGenerics)?;
-        let start_x =
-            T::from(midpoint.x).ok_or(VoronoiDiagramError::CannotConvertBetweenGeoGenerics)?;
-        let start_y =
-            T::from(midpoint.y).ok_or(VoronoiDiagramError::CannotConvertBetweenGeoGenerics)?;
-        Ok(Line::new(
-            coord! {x: start_x, y: start_y},
-            coord! {x: end_x, y: end_y},
-        ))
+        Ok(Line::new(midpoint, coord! {x: end_x, y: end_y}))
     }
 }
 
-#[derive(Debug, Clone)]
-enum GuidingDirection {
-    Left,
-    Right,
-    Up,
-    Down,
+fn cosine_rule<T: GeoFloat>(line_a: &Line<T>, line_b: &Line<T>, line_c: &Line<T>) -> Result<f64>
+where
+    f64: From<T>,
+{
+    let two = T::from(2.).ok_or(VoronoiDiagramError::CannotConvertBetweenGeoGenerics)?;
+    let a = line_a.euclidean_length();
+    let b = line_b.euclidean_length();
+    let c = line_c.euclidean_length();
+
+    let arg = ((a * a) + (b * b) - (c * c)) / (two * a * b);
+    let arg: f64 = arg.into();
+    let ang = arg.acos();
+    Ok(ang)
 }
 
-impl GuidingDirection {
-    // The common point is the end co-ordinate of both lines
-    fn from_midpoints<T: GeoFloat>(line_a: &Line<T>, line_b: &Line<T>) -> Self {
-        let dx_a = line_a.dx().is_positive();
-        let dy_a = line_a.dy().is_positive();
-        let dx_b = line_b.dx().is_positive();
-        let dy_b = line_b.dy().is_positive();
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum CircumCenterLocation {
+    Inside,
+    Outside,
+    On,
+}
 
-        // In a triangle a midpoint must either be
-        // to the left or right of the other midpoints, or
-        // above of below the other midpoints
-        if (dx_a == dx_b) && dx_a {
-            Self::Right
-        } else if (dx_a == dx_b) && !dx_a {
-            Self::Left
-        } else if (dy_a == dy_b) && dy_a {
-            Self::Up
+impl CircumCenterLocation {
+    pub fn from_triangle<T: GeoFloat>(triangle: &Triangle<T>) -> Result<CircumCenterLocation>
+    where
+        f64: From<T>,
+    {
+        // Determine if the triangle contains its circumcenter
+        // https://en.wikipedia.org/wiki/Circumcircle#Location_relative_to_the_triangle
+        // Use the cosine rule to determine the angles
+        let corners = triangle.to_array();
+        // Need to ensure the order of the lines is correct for
+        // getting the angle between the lines
+        let lines = [
+            Line::new(corners[0], corners[1]),
+            Line::new(corners[0], corners[2]),
+            Line::new(corners[1], corners[2]),
+        ];
+        let angles = [
+            cosine_rule(&lines[0], &lines[1], &lines[2])?,
+            cosine_rule(&lines[1], &lines[2], &lines[0])?,
+            cosine_rule(&lines[0], &lines[2], &lines[1])?,
+        ];
+        let is_obtuse_triangle = angles.iter().any(|x| *x > FRAC_PI_2);
+        let is_acute_triangle = angles.iter().all(|x| *x < FRAC_PI_2);
+        let is_right_triangle = angles.iter().any(|x| ((*x) - FRAC_PI_2).abs() < 0.00001);
+
+        Ok(if is_right_triangle {
+            CircumCenterLocation::On
+        } else if is_acute_triangle {
+            CircumCenterLocation::Inside
+        } else if is_obtuse_triangle {
+            CircumCenterLocation::Outside
         } else {
-            Self::Down
+            return Err(VoronoiDiagramError::CannotDetermineCircumcenterPosition);
+        })
+    }
+}
+
+fn get_inf_line_in_out_triangle<T: GeoFloat>(tmp_line: Line<T>, circumcenter: &Coord<T>) -> Line<T>
+where
+    f64: From<T>,
+{
+    let slope = tmp_line.slope();
+    let end = if slope.is_infinite() {
+        let end_x = circumcenter.x;
+        let end_y = circumcenter.y + tmp_line.dy();
+        coord! {x: end_x, y: end_y}
+    } else {
+        let intercept = circumcenter.y - slope * circumcenter.x;
+        let end_x = circumcenter.x + tmp_line.dx();
+        let end_y = slope * end_x + intercept;
+        coord! {x: end_x, y: end_y}
+    };
+    Line::new(*circumcenter, end)
+}
+
+fn is_slope_near_zero_or_inf<T: GeoFloat>(
+    line: &Line<T>,
+    slope_threshold: Option<T>,
+) -> Result<(bool, bool)>
+where
+    f64: From<T>,
+{
+    let default_thresh = T::from(DEFAULT_SLOPE_THRESHOLD)
+        .ok_or(VoronoiDiagramError::CannotConvertBetweenGeoGenerics)?;
+
+    let threshold = slope_threshold.unwrap_or(default_thresh);
+
+    let slope_near_infinite = line.slope().is_infinite() || line.slope().abs() > threshold;
+    let slope_near_zero = line.slope().is_zero() || line.slope().abs() < threshold.powi(-1);
+
+    Ok((slope_near_zero, slope_near_infinite))
+}
+
+fn get_inf_outside_triangle<T: GeoFloat>(
+    triangle: &Triangle<T>,
+    circumcenter: &Coord<T>,
+    midpoint: &Coord<T>,
+    slope_threshold: Option<T>,
+) -> Result<Line<T>>
+where
+    f64: From<T>,
+{
+    let two = T::from(2.).ok_or(VoronoiDiagramError::CannotConvertBetweenGeoGenerics)?;
+    let tmp_line = Line::new(*midpoint, *circumcenter);
+    let (slope_near_zero, slope_near_infinite) =
+        is_slope_near_zero_or_inf(&tmp_line, slope_threshold)?;
+
+    // If the infinity line crosses one of the other lines of the triangle
+    // the tmp_line needs to be flipped.
+    // Get the other lines of the triangle
+    let mut other_lines: Vec<_> = Vec::new();
+    for line in triangle.to_lines() {
+        let x = line.start + coord! {x: line.dx() / two, y: line.dy() / two};
+        if x != *midpoint {
+            other_lines.push(line);
         }
+    }
+
+    let mut intersections: Vec<_> = Vec::new();
+
+    for line in other_lines {
+        if let Some(inter) = trim_line_to_intersection(&tmp_line, &line) {
+            let x_point = inter.end;
+            // If the intersection point is lies within the bounds of the
+            // tmp_line and the other line then it intersects the triangle
+            let tmp_line_between_x = x_point.x > tmp_line.start.x && x_point.x < tmp_line.end.x
+                || x_point.x > tmp_line.end.x && x_point.x < tmp_line.start.x;
+            let tmp_line_between_y = x_point.y > tmp_line.start.y && x_point.y < tmp_line.end.y
+                || x_point.y > tmp_line.end.y && x_point.y < tmp_line.start.y;
+            let line_between_x = x_point.x > line.start.x && x_point.x < line.end.x
+                || x_point.x > line.end.x && x_point.x < line.start.x;
+            let line_between_y = x_point.y > line.start.y && x_point.y < line.end.y
+                || x_point.y > line.end.y && x_point.y < line.start.y;
+
+            let intersects_tmp = if slope_near_zero {
+                tmp_line_between_x
+            } else if slope_near_infinite {
+                tmp_line_between_y
+            } else {
+                tmp_line_between_x && tmp_line_between_y
+            };
+            let intersects_line = line_between_x && line_between_y;
+
+            intersections.push(intersects_line && intersects_tmp);
+        }
+    }
+
+    let tmp_line = if intersections.contains(&true) {
+        Line::new(*circumcenter, *midpoint)
+    } else {
+        tmp_line
+    };
+
+    Ok(get_inf_line_in_out_triangle(tmp_line, circumcenter))
+}
+
+fn get_inf_inside_triangle<T: GeoFloat>(circumcenter: &Coord<T>, midpoint: &Coord<T>) -> Line<T>
+where
+    f64: From<T>,
+{
+    get_inf_line_in_out_triangle(Line::new(*circumcenter, *midpoint), circumcenter)
+}
+
+fn get_incenter<T: GeoFloat>(triangle: &Triangle<T>) -> Coord<T>
+where
+    f64: From<T>,
+{
+    let pt_a = triangle.0;
+    let line_a = Line::new(triangle.1, triangle.2);
+    let len_a = line_a.euclidean_length();
+    let pt_b = triangle.1;
+    let line_b = Line::new(triangle.0, triangle.2);
+    let len_b = line_b.euclidean_length();
+    let pt_c = triangle.2;
+    let line_c = Line::new(triangle.0, triangle.1);
+    let len_c = line_c.euclidean_length();
+
+    let x = (len_a * pt_a.x + len_b * pt_b.x + len_c * pt_c.x) / (len_a + len_b + len_c);
+    let y = (len_a * pt_a.y + len_b * pt_b.y + len_c * pt_c.y) / (len_a + len_b + len_c);
+
+    coord! {x: x, y: y}
+}
+
+fn get_inf_on_midpoint_triangle<T: GeoFloat>(
+    triangle: &Triangle<T>,
+    edge: &Line<T>,
+    circumcenter: &Coord<T>,
+    midpoint: &Coord<T>,
+) -> Result<Line<T>>
+where
+    f64: From<T>,
+{
+    // The midpoint is on the circumcenter so we need to use the other midpoints to determine direction
+    if midpoint == circumcenter {
+        // Construct the perpendicular line
+        let line: Line<T> = get_perpendicular_line(edge)?;
+        let incenter = get_incenter(triangle);
+        let guiding_line = Line::new(incenter, *circumcenter);
+        let end_x = if guiding_line.dx().is_negative() {
+            circumcenter.x - line.dx().abs()
+        } else {
+            circumcenter.x + line.dx().abs()
+        };
+        let end_y = if guiding_line.dy().is_negative() {
+            circumcenter.y - line.dy().abs()
+        } else {
+            circumcenter.y + line.dy().abs()
+        };
+        Ok(Line::new(*circumcenter, coord! {x: end_x, y: end_y}))
+        // The midpoint is not on the circumcenter so we can use the standard in triangle method
+    } else {
+        Ok(get_inf_line_in_out_triangle(
+            Line::new(*circumcenter, *midpoint),
+            circumcenter,
+        ))
     }
 }
 
@@ -327,7 +520,7 @@ fn define_edge_to_infinity<T: GeoFloat>(
     triangle: &DelaunayTriangle<T>,
     circumcenter: &Coord<T>,
     shared_edges: &mut Vec<Line<T>>,
-    clipping_mask: &Rect<T>,
+    slope_threshold: Option<T>,
 ) -> Result<Option<Line<T>>>
 where
     f64: From<T>,
@@ -340,78 +533,28 @@ where
         .iter()
         .map(|edge| edge.start + coord! {x: edge.dx() / two, y: edge.dy() / two})
         .collect();
+
     for (edge, midpoint) in tri.to_lines().iter().zip(&midpoints) {
         let flipped_edge = Line::new(edge.end, edge.start);
         if shared_edges.contains(edge) || shared_edges.contains(&flipped_edge) {
             continue;
         }
 
-        // Get the line that passes from the circumcenter and is perpendicular to
-        // the edge without a 3rd vertex
-        let line: Line<T> = get_perpendicular_line(edge)?;
-        let slope = line.slope();
+        let circumcenter_location = CircumCenterLocation::from_triangle(&tri)?;
 
-        // Get the width and height of the clipping mask to ensure intersection with
-        // the lines of infinity. 2 x the width or height should be sufficient.
-        // Add the values to each other to prevent the need for another trait
-        let width_factor = clipping_mask.width() + clipping_mask.width();
-        let height_factor = clipping_mask.height() + clipping_mask.height();
-
-        // We want to move away from the other two edges of the triangle towards infinity.
-        // We will compare the three midpoints of the triangle to determine the correct direction.
-        let rel_to_midpoint: Vec<_> = midpoints
-            .iter()
-            .filter(|x| *x != midpoint)
-            .map(|x| Line::new(*x, *midpoint))
-            .collect();
-        let guiding_direction =
-            GuidingDirection::from_midpoints(&rel_to_midpoint[0], &rel_to_midpoint[1]);
-
-        // It is a vertical line so we need to ensure it moves up or down correctly
-        let end = if slope.is_infinite() {
-            // Up
-            if rel_to_midpoint[0].dy().is_positive() && rel_to_midpoint[1].dy().is_positive() {
-                coord! {x: circumcenter.x, y: circumcenter.y + line.dy().abs() * height_factor}
-            } else if rel_to_midpoint[0].dy().is_negative() && rel_to_midpoint[1].dy().is_negative()
-            {
-                coord! {x: circumcenter.x, y: circumcenter.y - line.dy().abs() * height_factor}
-            } else {
-                return Err(VoronoiDiagramError::UnexpectedDirectionForInfinityVertex);
+        let inf_line = match circumcenter_location {
+            CircumCenterLocation::Inside => get_inf_inside_triangle(circumcenter, midpoint),
+            CircumCenterLocation::Outside => {
+                get_inf_outside_triangle(&tri, circumcenter, midpoint, slope_threshold)?
             }
-        } else {
-            let intercept = circumcenter.y - line.slope() * circumcenter.x;
-            let end_x_neg = circumcenter.x - line.dx().abs() * width_factor;
-            let end_y_neg = line.slope() * end_x_neg + intercept;
-            let end_x_pos = circumcenter.x + line.dx().abs() * width_factor;
-            let end_y_pos = line.slope() * end_x_pos + intercept;
-
-            match guiding_direction {
-                GuidingDirection::Left => {
-                    coord! {x: end_x_neg, y: end_y_neg}
-                }
-                GuidingDirection::Right => {
-                    coord! {x: end_x_pos, y: end_y_pos}
-                }
-                GuidingDirection::Up => {
-                    if end_y_neg.is_positive() {
-                        coord! {x: end_x_neg, y: end_y_neg}
-                    } else {
-                        coord! {x: end_x_pos, y: end_y_pos}
-                    }
-                }
-                GuidingDirection::Down => {
-                    if end_y_neg.is_negative() {
-                        coord! {x: end_x_neg, y: end_y_neg}
-                    } else {
-                        coord! {x: end_x_pos, y: end_y_pos}
-                    }
-                }
+            CircumCenterLocation::On => {
+                get_inf_on_midpoint_triangle(&tri, edge, circumcenter, midpoint)?
             }
         };
 
         shared_edges.push(*edge);
 
-        return Ok(Some(Line::new(*circumcenter, end)));
+        return Ok(Some(inf_line));
     }
     Ok(None)
 }
@@ -449,16 +592,11 @@ fn construct_edges_to_inf<T: GeoFloat>(
     edges: &mut Vec<Line<T>>,
     neighbours: &[(Option<usize>, Option<usize>)],
     clipping_mask: &Polygon<T>,
+    slope_threshold: Option<T>,
 ) -> Result<Vec<Line<T>>>
 where
     f64: From<T>,
 {
-    // Find the mean vertex to determine the direction
-    // of edges going to infinity.
-    let clipping_bounds = clipping_mask
-        .bounding_rect()
-        .ok_or(VoronoiDiagramError::CannotDetermineBoundsFromClipppingMask)?;
-
     // Get the vertices with connections to infinity
     let mut inf_lines: Vec<Line<T>> = Vec::new();
     for neighbour in neighbours {
@@ -467,35 +605,28 @@ where
                 &triangles[tri_idx],
                 &vertices[tri_idx],
                 edges,
-                &clipping_bounds,
+                slope_threshold,
             )?
             .ok_or(VoronoiDiagramError::CannotComputeExpectedInfinityVertex)?;
-            let inf_edge_dx_sign = inf_edge.dx().is_sign_positive();
-            let inf_edge_dy_sign = inf_edge.dy().is_sign_positive();
+            let inf_edge_dx_sign = inf_edge.dx().is_positive();
+            let inf_edge_dy_sign = inf_edge.dy().is_positive();
+            let (inf_edge_slope_near_zero, inf_edge_slope_near_inf) =
+                is_slope_near_zero_or_inf(&inf_edge, slope_threshold)?;
 
             // Get the clipping mask line where the inf_vertex intersects
-            let intersection_lines: Vec<Line<T>> = clipping_mask
-                .exterior()
-                .lines()
-                .map(|x| trim_line_to_intersection(&inf_edge, &x))
-                .filter(|x| x.is_some())
-                .flatten()
-                .collect();
-            let intersection_lines: Vec<Line<T>> = intersection_lines
-                .iter()
-                // Get the lines going in the same direction as the inf_edge
-                .filter(|x| {
-                    if inf_edge.slope().is_infinite() {
-                        x.dy().is_sign_positive() == inf_edge_dy_sign
-                    } else if inf_edge.slope().is_zero() {
-                        x.dx().is_sign_positive() == inf_edge_dx_sign
-                    } else {
-                        x.dy().is_sign_positive() == inf_edge_dy_sign
-                            && x.dx().is_sign_positive() == inf_edge_dx_sign
+            let mut intersection_lines: Vec<Line<T>> = Vec::new();
+            for line in clipping_mask.exterior().lines() {
+                if let Some(inf_line) = trim_line_to_intersection(&inf_edge, &line) {
+                    let same_dx = inf_line.dx().is_positive() == inf_edge_dx_sign;
+                    let same_dy = inf_line.dy().is_positive() == inf_edge_dy_sign;
+                    if (inf_edge_slope_near_zero && same_dx)
+                        || (inf_edge_slope_near_inf && same_dy)
+                        || (same_dx && same_dy)
+                    {
+                        intersection_lines.push(inf_line);
                     }
-                })
-                .cloned()
-                .collect();
+                }
+            }
             let line_idx = if intersection_lines.len() > 1 {
                 // get the shortest line
                 let mut min_length: f64 = f64::INFINITY;
@@ -511,11 +642,14 @@ where
             } else {
                 0
             };
-            let intersection_line = intersection_lines
-                .get(line_idx)
-                .ok_or(VoronoiDiagramError::InvalidClippingMaskNoIntersections)?;
 
-            inf_lines.push(*intersection_line);
+            if let Some(line) = intersection_lines.get(line_idx) {
+                inf_lines.push(*line);
+            } else {
+                // There is no intersection, the infinity line could be
+                // outside the bounds of the clipping mask
+                inf_lines.push(inf_edge);
+            }
         }
     }
     Ok(inf_lines)
@@ -527,10 +661,8 @@ pub enum VoronoiDiagramError {
     CannotConvertBetweenGeoGenerics,
     CannotDetermineBoundsFromClipppingMask,
     CannotComputeExpectedInfinityVertex,
-    InvalidClippingMaskMultipleIntersections,
-    InvalidClippingMaskNoIntersections,
+    CannotDetermineCircumcenterPosition,
     InvalidTriangulation,
-    UnexpectedDirectionForInfinityVertex,
 }
 
 impl fmt::Display for VoronoiDiagramError {
@@ -548,16 +680,10 @@ impl fmt::Display for VoronoiDiagramError {
             VoronoiDiagramError::CannotComputeExpectedInfinityVertex => {
                 write!(f, "Cannot compute expected boundary to infinity")
             }
-            VoronoiDiagramError::InvalidClippingMaskMultipleIntersections => {
+            VoronoiDiagramError::CannotDetermineCircumcenterPosition => {
                 write!(
                     f,
-                    "An edge to infinity intersects with multiple lines in the clipping mask"
-                )
-            }
-            VoronoiDiagramError::InvalidClippingMaskNoIntersections => {
-                write!(
-                    f,
-                    "An edge to infinity does not intersect with the clipping mask"
+                    "Cannot compute if the circumcenter is inside, outside or on the triangle"
                 )
             }
             VoronoiDiagramError::InvalidTriangulation => {
@@ -567,9 +693,6 @@ impl fmt::Display for VoronoiDiagramError {
                     More than 3 connections have been found for a triangle vertex."
                 )
             }
-            VoronoiDiagramError::UnexpectedDirectionForInfinityVertex => {
-                write!(f, "The direction of the infinity vertex is unexpected")
-            }
         }
     }
 }
@@ -577,7 +700,30 @@ impl fmt::Display for VoronoiDiagramError {
 #[cfg(test)]
 mod test {
     use super::*;
-    use geo_types::polygon;
+    use geo_types::{polygon, LineString};
+
+    fn relative_voronoi_compare(
+        voronoi: &VoronoiComponents<f64>,
+        expected_vertices: &[Coord<f64>],
+        expected_lines: &[Line<f64>],
+    ) {
+        assert_eq!(voronoi.vertices.len(), expected_vertices.len());
+        for (vertex, expected) in voronoi.vertices.iter().zip(expected_vertices) {
+            approx::assert_relative_eq!(
+                *vertex,
+                expected,
+                max_relative = 0.3 // epsilon = 1e-3
+            );
+        }
+
+        assert_eq!(voronoi.lines.len(), expected_lines.len());
+        for (line, expected) in voronoi.lines.iter().zip(expected_lines) {
+            let flipped_line = Line::new(line.end, line.start);
+            let orig_eq = approx::relative_eq!(*line, expected, max_relative = 0.3);
+            let flip_eq = approx::relative_eq!(flipped_line, expected, max_relative = 0.3);
+            assert!(orig_eq || flip_eq);
+        }
+    }
 
     #[test]
     fn test_find_shared_edge() {
@@ -660,6 +806,283 @@ mod test {
     }
 
     #[test]
+    fn test_get_circumcircle_location() {
+        // Acute triangle
+        let triangle = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: 3., y: 3.},
+            coord! {x: 4., y: 0.},
+        );
+
+        assert_eq!(
+            CircumCenterLocation::from_triangle(&triangle).unwrap(),
+            CircumCenterLocation::Inside
+        );
+
+        // Obtuse triangle
+        let triangle = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: 3., y: 1.},
+            coord! {x: 6., y: 0.},
+        );
+
+        assert_eq!(
+            CircumCenterLocation::from_triangle(&triangle).unwrap(),
+            CircumCenterLocation::Outside
+        );
+
+        // Right triangle
+        let triangle = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: 0., y: 3.},
+            coord! {x: 4., y: 0.},
+        );
+
+        assert_eq!(
+            CircumCenterLocation::from_triangle(&triangle).unwrap(),
+            CircumCenterLocation::On
+        );
+    }
+
+    #[test]
+    fn test_get_inf_inside_triangle() {
+        //Acute triangle pointing down
+        let triangle: DelaunayTriangle<_> = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: 3., y: 3.},
+            coord! {x: 4., y: 0.},
+        )
+        .into();
+
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 2., y: 0.};
+
+        let inf_line = get_inf_inside_triangle(&circumcenter, &midpoint);
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 2., y: 0.}));
+
+        //Acute triangle pointing up
+        let triangle: DelaunayTriangle<_> = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: 3., y: -3.},
+            coord! {x: 4., y: 0.},
+        )
+        .into();
+
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 2., y: 0.};
+
+        let inf_line = get_inf_inside_triangle(&circumcenter, &midpoint);
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 2., y: 0.}));
+
+        //Acute triangle pointing left
+        let triangle: DelaunayTriangle<_> = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: 3., y: -3.},
+            coord! {x: 0., y: 4.},
+        )
+        .into();
+
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 0., y: 2.};
+
+        let inf_line = get_inf_inside_triangle(&circumcenter, &midpoint);
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 0., y: 2.}));
+
+        //Acute triangle pointing right
+        let triangle: DelaunayTriangle<_> = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: -4., y: 2.},
+            coord! {x: 0., y: 4.},
+        )
+        .into();
+
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 0., y: 2.};
+
+        let inf_line = get_inf_inside_triangle(&circumcenter, &midpoint);
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 0., y: 2.}));
+
+        //Acute triangle angle right
+        let triangle: DelaunayTriangle<_> = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: -1., y: 1.},
+            coord! {x: 2., y: 2.},
+        )
+        .into();
+
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 1., y: 1.};
+
+        let inf_line = get_inf_inside_triangle(&circumcenter, &midpoint);
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 1.0, y: 1.0}));
+
+        //Acute triangle angle left
+        let triangle: DelaunayTriangle<_> = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: 3., y: 1.},
+            coord! {x: 2., y: 2.},
+        )
+        .into();
+
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 1., y: 1.};
+
+        let inf_line = get_inf_inside_triangle(&circumcenter, &midpoint);
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 1.0, y: 1.0}));
+    }
+
+    #[test]
+    fn test_get_inf_outside_triangle() {
+        // Obtuse triangle inf line pointing down
+        let triangle = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: 3., y: 1.},
+            coord! {x: 6., y: 0.},
+        );
+
+        assert_eq!(
+            CircumCenterLocation::from_triangle(&triangle).unwrap(),
+            CircumCenterLocation::Outside
+        );
+
+        let triangle: DelaunayTriangle<_> = triangle.into();
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 3., y: 0.};
+        let inf_line =
+            get_inf_outside_triangle(&triangle.into(), &circumcenter, &midpoint, None).unwrap();
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 3., y: -8.}));
+
+        // Obtuse triangle inf line pointing up
+        let triangle = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: -3., y: 1.},
+            coord! {x: 3., y: 1.},
+        );
+        assert_eq!(
+            CircumCenterLocation::from_triangle(&triangle).unwrap(),
+            CircumCenterLocation::Outside
+        );
+
+        let triangle: DelaunayTriangle<_> = triangle.into();
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 0., y: 1.};
+        let inf_line =
+            get_inf_outside_triangle(&triangle.into(), &circumcenter, &midpoint, None).unwrap();
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 0., y: 9.0}));
+
+        // Obtuse triangle inf line pointing left
+        let triangle = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: 0., y: 6.},
+            coord! {x: 1., y: 3.},
+        );
+        assert_eq!(
+            CircumCenterLocation::from_triangle(&triangle).unwrap(),
+            CircumCenterLocation::Outside
+        );
+
+        let triangle: DelaunayTriangle<_> = triangle.into();
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 0., y: 3.};
+        let inf_line =
+            get_inf_outside_triangle(&triangle.into(), &circumcenter, &midpoint, None).unwrap();
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: -8., y: 3.}));
+
+        // Obtuse triangle at an angle pointing down
+        let triangle = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: 6., y: 6.},
+            coord! {x: -1., y: 3.},
+        );
+        assert_eq!(
+            CircumCenterLocation::from_triangle(&triangle).unwrap(),
+            CircumCenterLocation::Outside
+        );
+
+        let triangle: DelaunayTriangle<_> = triangle.into();
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 3., y: 3.};
+        let inf_line =
+            get_inf_outside_triangle(&triangle.into(), &circumcenter, &midpoint, None).unwrap();
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 3.5, y: 2.5}));
+
+        // Obtuse triangle at an angle pointing up
+        let triangle = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: 6., y: 6.},
+            coord! {x: 7., y: 3.},
+        );
+        assert_eq!(
+            CircumCenterLocation::from_triangle(&triangle).unwrap(),
+            CircumCenterLocation::Outside
+        );
+
+        let triangle: DelaunayTriangle<_> = triangle.into();
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 3., y: 3.};
+        let inf_line =
+            get_inf_outside_triangle(&triangle.into(), &circumcenter, &midpoint, None).unwrap();
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 2.5, y: 3.5}));
+
+        // Circumcenter is outside triangle but infinity line
+        // needs to pass across the triangle.
+        let triangle = Triangle::new(
+            coord! {x: 15., y:19.},
+            coord! {x: 17., y: 19.},
+            coord! {x: 19., y: 17.},
+        );
+        assert_eq!(
+            CircumCenterLocation::from_triangle(&triangle).unwrap(),
+            CircumCenterLocation::Outside
+        );
+
+        let triangle: DelaunayTriangle<_> = triangle.into();
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 18., y: 18.};
+        let inf_line =
+            get_inf_outside_triangle(&triangle.into(), &circumcenter, &midpoint, None).unwrap();
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 18., y: 18.}));
+    }
+
+    #[test]
+    fn test_inf_on_midpoint_triangle() {
+        // The midpoint falls on the circumcenter for
+        // right triangles
+        // Triangle facing left
+        let triangle = Triangle::new(
+            coord! {x: 0., y:0.},
+            coord! {x: 0., y: 3.},
+            coord! {x: 4., y: 0.},
+        );
+        let tri = triangle.clone();
+
+        let triangle: DelaunayTriangle<_> = triangle.into();
+
+        let edge = Line::new(coord! {x: 4., y: 0.}, coord! {x: 0., y: 3.});
+        let circumcenter = triangle.get_circumcircle_center().unwrap();
+        let midpoint = coord! {x: 2., y: 1.5};
+        assert_eq!(circumcenter, midpoint);
+        let inf_line = get_inf_on_midpoint_triangle(&tri, &edge, &circumcenter, &midpoint).unwrap();
+        approx::assert_relative_eq!(
+            inf_line,
+            Line::new(circumcenter, coord! {x: 6., y: 6.8333}),
+            max_relative = 0.3
+        );
+
+        // Left edge
+        let edge = Line::new(coord! {x: 0., y: 0.}, coord! {x: 0., y: 3.});
+        let midpoint = coord! {x: 0., y: 1.5};
+        let inf_line = get_inf_on_midpoint_triangle(&tri, &edge, &circumcenter, &midpoint).unwrap();
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 0., y: 1.5}));
+
+        // Edge facing down
+        let edge = Line::new(coord! {x: 0., y: 0.}, coord! {x: 4., y: 0.});
+        let midpoint = coord! {x: 2., y: 0.};
+        let inf_line = get_inf_on_midpoint_triangle(&tri, &edge, &circumcenter, &midpoint).unwrap();
+        assert_eq!(inf_line, Line::new(circumcenter, coord! {x: 2., y: 0.}));
+    }
+
+    #[test]
     fn test_get_perpendicular_line() {
         // Vertical line
         let line = Line::new(coord! {x: 0., y: 0.}, coord! {x: 0., y: 1.});
@@ -709,36 +1132,35 @@ mod test {
         )
         .into();
 
-        let bounds = Rect::new(coord! {x: -2., y: -2.}, coord! {x: 2., y: 2.});
+        let triangles = [tri, tri2, tri3];
 
-        let circumcenter = tri.get_circumcircle_center().unwrap();
+        let circumcenters: Vec<_> = triangles
+            .iter()
+            .map(|x| x.get_circumcircle_center().unwrap())
+            .collect();
+
         let mut shared_edges = vec![
             Line::new(coord! {x: 0., y: 0.}, coord! {x: 0., y: 1. }),
             Line::new(coord! {x: 0., y: 1.}, coord! {x: 1., y: 1. }),
             Line::new(coord! {x: 0., y: 1.}, coord! {x: -1., y: 2. }),
         ];
-        let perpendicular_line =
-            define_edge_to_infinity(&tri, &circumcenter, &mut shared_edges, &bounds).unwrap();
-        assert_eq!(
-            perpendicular_line.unwrap(),
-            Line::new(coord! {x: 0.5, y: 0.5}, coord! {x: 8.5, y: -7.5},)
-        );
 
-        let circumcenter = tri2.get_circumcircle_center().unwrap();
-        let perpendicular_line =
-            define_edge_to_infinity(&tri2, &circumcenter, &mut shared_edges, &bounds).unwrap();
-        assert_eq!(
-            perpendicular_line.unwrap(),
-            Line::new(coord! {x: -1.5, y: 0.5}, coord! {x: -9.5, y: -3.5},)
-        );
+        let expected_infintity_lines = [
+            Line::new(coord! {x: 0.5, y: 0.5}, coord! {x: 1.5, y: -0.5}),
+            Line::new(coord! {x: -1.5, y: 0.5}, coord! {x: -2.5, y: 0.}),
+            Line::new(coord! {x: 0.5, y: 2.5}, coord! {x: 1.0, y: 3.5}),
+        ];
 
-        let circumcenter = tri3.get_circumcircle_center().unwrap();
-        let perpendicular_line =
-            define_edge_to_infinity(&tri3, &circumcenter, &mut shared_edges, &bounds).unwrap();
-        assert_eq!(
-            perpendicular_line.unwrap(),
-            Line::new(coord! {x: 0.5, y: 2.5}, coord! {x: 16.5, y: 34.5},)
-        );
+        for idx in 0..3 {
+            let perpendicular_line = define_edge_to_infinity(
+                &triangles[idx],
+                &circumcenters[idx],
+                &mut shared_edges,
+                None,
+            )
+            .unwrap();
+            assert_eq!(perpendicular_line.unwrap(), expected_infintity_lines[idx]);
+        }
     }
 
     #[test]
@@ -769,116 +1191,101 @@ mod test {
         assert!(trimmed_inf.is_none());
     }
 
-    fn compare_voronoi(voronoi_vertices: Vec<Coord>, voronoi_lines: Vec<Line>) {
+    #[test]
+    fn test_compute_voronoi_from_delaunay() {
+        let poly: Polygon<_> = polygon![
+            (x: 0., y: 0.),
+            (x: 1., y: 1.),
+            (x: 0., y: 1.),
+            (x: -1., y: 2.),
+        ];
+
+        let delaunay_triangles = poly.delaunay_triangulation().unwrap();
+
+        let voronoi =
+            compute_voronoi_components_from_delaunay(&delaunay_triangles, None, None).unwrap();
+
         let expected_lines = vec![
-            Line::new(coord! {x: 0.5, y: 0.5}, coord! {x: -1.5, y: 0.5}),
             Line::new(coord! {x: 0.5, y: 0.5}, coord! {x: 0.5, y: 2.5}),
-            Line::new(coord! {x: -1.5, y: 0.5}, coord! {x: 0.5, y: 2.5}),
+            Line::new(coord! {x: 0.5, y: 0.5}, coord! {x: -1.5, y: 0.5}),
+            Line::new(coord! {x: 0.5, y: 2.5}, coord! {x: -1.5, y: 0.5}),
             Line::new(coord! {x: 0.5, y: 0.5}, coord! {x: 39., y: -38.}),
-            Line::new(coord! {x: -1.5, y: 0.5}, coord! {x: -41., y: -19.25}),
             Line::new(coord! {x: 0.5, y: 2.5}, coord! {x: 19.25, y: 40.}),
+            Line::new(coord! {x: -1.5, y: 0.5}, coord! {x: -41., y: -19.25}),
         ];
 
         let expected_vertices = vec![
             coord! { x: 0.5, y: 0.5},
-            coord! {x: -1.5, y: 0.5},
             coord! {x: 0.5, y: 2.5},
+            coord! {x: -1.5, y: 0.5},
         ];
 
-        assert_eq!(expected_vertices.len(), voronoi_vertices.len());
-        assert_eq!(expected_lines.len(), voronoi_lines.len());
-
-        for vertex in expected_vertices.iter() {
-            assert!(expected_vertices.contains(vertex));
-        }
-
-        for line in expected_lines.iter() {
-            assert!(voronoi_lines.contains(line));
-        }
+        relative_voronoi_compare(&voronoi, &expected_vertices, &expected_lines);
     }
-
-    #[test]
-    fn test_compute_voronoi_from_delaunay() {
-        let triangles: Vec<Triangle<_>> = vec![
-            Triangle::new(
-                coord! {x: 0., y: 0.},
-                coord! {x: 0., y: 1.},
-                coord! {x: 1., y: 1.},
-            ),
-            Triangle::new(
-                coord! {x: 0., y: 0.},
-                coord! {x: 0., y: 1.},
-                coord! {x: -1., y: 2.},
-            ),
-            Triangle::new(
-                coord! {x: 0., y: 1.},
-                coord! {x: -1., y: 2.},
-                coord! {x: 1., y: 1.},
-            ),
-        ];
-
-        let voronoi = compute_voronoi_components_from_delaunay(&triangles, None).unwrap();
-
-        compare_voronoi(voronoi.vertices, voronoi.lines);
-    }
-
     #[test]
     fn test_compute_voronoi_twin_inf_edges() {
-        let triangles: Vec<Triangle<_>> = vec![
-            Triangle::new(
-                coord! {x: 0., y: 0.},
-                coord! {x: 1., y: 1.},
-                coord! {x: 2., y: 0.},
-            ),
-            Triangle::new(
-                coord! {x: 1., y: 1.},
-                coord! {x: 2., y: 0.},
-                coord! {x: 3., y: 1.},
-            ),
-            Triangle::new(
-                coord! {x: 2., y: 0.},
-                coord! {x: 3., y: 1.},
-                coord! {x: 3., y: 0.},
-            ),
+        let poly: Polygon<_> = polygon![
+            (x: 0., y: 0.),
+            (x: 1., y: 1.),
+            (x: 3., y: 1.),
+            (x: 3., y: 0.),
+            (x: 2., y: 0.),
         ];
 
-        let voronoi = compute_voronoi_components_from_delaunay(&triangles, None).unwrap();
+        let triangles = poly.delaunay_triangulation().unwrap();
+        let voronoi = compute_voronoi_components_from_delaunay(&triangles, None, None).unwrap();
 
-        assert_eq!(
-            voronoi.vertices,
-            vec![
-                coord! {x: 1.0, y: 0.0},
-                coord! {x: 2.0, y: 1.0},
-                coord! {x: 2.5, y: 0.5}
-            ]
-        );
-        assert_eq!(
-            voronoi.lines,
-            vec![
-                Line::new(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
-                Line::new(coord! {x: 2.0, y: 1.0}, coord! {x: 2.5, y: 0.5}),
-                Line::new(coord! {x: 1.0, y: 0.0}, coord! {x: -19., y: 20.0}),
-                Line::new(coord! {x: 1.0, y: 0.0}, coord! {x: 1., y: -20.0}),
-                Line::new(coord! {x: 2.0, y: 1.0}, coord! {x: 2., y: 20.0}),
-                Line::new(coord! {x: 2.5, y: 0.5}, coord! {x: 60., y: 0.5}),
-                Line::new(coord! {x: 2.5, y: 0.5}, coord! {x: 2.5, y: -20.}),
-            ]
-        );
+        let expected_vertices = [
+            coord! {x: 1.0, y: 0.0},
+            coord! {x: 2.0, y: 1.0},
+            coord! {x: 2.5, y: 0.5},
+        ];
+        let expected_lines = [
+            Line::new(coord! {x: 1.0, y: 0.0}, coord! {x: 2.0, y: 1.0}),
+            Line::new(coord! {x: 2.0, y: 1.0}, coord! {x: 2.5, y: 0.5}),
+            Line::new(coord! {x: 1.0, y: 0.0}, coord! {x: -19., y: 20.0}),
+            Line::new(coord! {x: 1.0, y: 0.0}, coord! {x: 1., y: -20.0}),
+            Line::new(coord! {x: 2.0, y: 1.0}, coord! {x: 2., y: 20.0}),
+            Line::new(coord! {x: 2.5, y: 0.5}, coord! {x: 60., y: 0.5}),
+            Line::new(coord! {x: 2.5, y: 0.5}, coord! {x: 2.5, y: -20.}),
+        ];
+        relative_voronoi_compare(&voronoi, &expected_vertices, &expected_lines);
     }
 
     #[test]
     fn test_voronoi_from_polygon() {
-        let poly = polygon![(x: 0., y: 0.), (x: 0., y: 1.), (x: 1., y: 1.), (x: -1., y: 2.)];
+        let poly: Polygon<_> = polygon![
+            (x: 0., y: 0.),
+            (x: 1., y: 1.),
+            (x: 0., y: 1.),
+            (x: -1., y: 2.),
+        ];
 
-        let voronoi = poly.compute_voronoi_components(None).unwrap();
-        compare_voronoi(voronoi.vertices, voronoi.lines);
+        let voronoi = poly.compute_voronoi_components(None, None).unwrap();
+
+        let expected_lines = vec![
+            Line::new(coord! {x: 0.5, y: 0.5}, coord! {x: 0.5, y: 2.5}),
+            Line::new(coord! {x: 0.5, y: 0.5}, coord! {x: -1.5, y: 0.5}),
+            Line::new(coord! {x: 0.5, y: 2.5}, coord! {x: -1.5, y: 0.5}),
+            Line::new(coord! {x: 0.5, y: 0.5}, coord! {x: 39., y: -38.}),
+            Line::new(coord! {x: 0.5, y: 2.5}, coord! {x: 19.25, y: 40.}),
+            Line::new(coord! {x: -1.5, y: 0.5}, coord! {x: -41., y: -19.25}),
+        ];
+
+        let expected_vertices = vec![
+            coord! { x: 0.5, y: 0.5},
+            coord! {x: 0.5, y: 2.5},
+            coord! {x: -1.5, y: 0.5},
+        ];
+
+        relative_voronoi_compare(&voronoi, &expected_vertices, &expected_lines);
     }
 
     // https://github.com/libgeos/geos/blob/d51982c6da5b7adb63ca0933ae7b53828cc8d72e/tests/unit/triangulate/VoronoiTest.cpp#L154
     #[test]
     fn test_single_point() {
         let poly = polygon![(x: 150., y: 200.)];
-        let voronoi = poly.compute_voronoi_components(None).unwrap();
+        let voronoi = poly.compute_voronoi_components(None, None).unwrap();
 
         assert!(voronoi.vertices.is_empty());
         assert!(voronoi.lines.is_empty());
@@ -889,47 +1296,34 @@ mod test {
     fn test_simple() {
         let points = polygon![(x: 150., y: 200.), (x: 180., y: 270.), (x: 275., y: 163.)];
 
-        let voronoi = points.compute_voronoi_components(None).unwrap();
+        let voronoi = points.compute_voronoi_components(None, None).unwrap();
 
-        let expected_vertex = coord! {x: 211.205, y: 210.911};
-
-        approx::assert_relative_eq!(
-            voronoi.vertices[0],
-            expected_vertex,
-            max_relative = 0.3 // epsilon = 1e-3
-        );
+        let expected_vertices = [coord! {x: 211.205, y: 210.911}];
 
         let expected_lines = vec![
-            Line::new(expected_vertex, coord! {x: -2350.0, y: 1312.857}),
-            Line::new(expected_vertex, coord! {x: -426.416, y: -1977.0}),
-            Line::new(expected_vertex, coord! {x: 2577.558, y: 2303.0}),
+            Line::new(expected_vertices[0], coord! {x: -2350.0, y: 1312.857}),
+            Line::new(expected_vertices[0], coord! {x: -426.416, y: -1977.0}),
+            Line::new(expected_vertices[0], coord! {x: 2577.558, y: 2303.0}),
         ];
 
-        for (line, expected) in voronoi.lines.iter().zip(expected_lines) {
-            approx::assert_relative_eq!(*line, expected, max_relative = 0.3);
-        }
+        relative_voronoi_compare(&voronoi, &expected_vertices, &expected_lines);
     }
-
     // https://github.com/libgeos/geos/blob/d51982c6da5b7adb63ca0933ae7b53828cc8d72e/tests/unit/triangulate/VoronoiTest.cpp#L174
     #[test]
     fn test_four_points() {
-        let points: MultiPoint<_> =
-            vec![(280., 300.), (420., 330.), (380., 230.), (320., 160.)].into();
+        let points = polygon![
+            (x: 280., y: 300.),
+            (x: 420., y: 330.),
+            (x: 380., y: 230.),
+            (x: 320., y: 160.)
+        ];
 
-        let voronoi = points.compute_voronoi_components(None).unwrap();
+        let voronoi = points.compute_voronoi_components(None, None).unwrap();
 
         let expected_vertices = [
             coord! {x: 353.516, y: 298.594},
             coord! {x: 306.875, y: 231.964},
         ];
-
-        for (vertex, expected) in voronoi.vertices.iter().zip(expected_vertices) {
-            approx::assert_relative_eq!(
-                *vertex,
-                expected,
-                max_relative = 0.3 // epsilon = 1e-3
-            );
-        }
 
         let expected_lines = [
             Line::new(
@@ -951,63 +1345,70 @@ mod test {
             ),
         ];
 
-        for (line, expected) in voronoi.lines.iter().zip(expected_lines) {
-            approx::assert_relative_eq!(
-                *line,
-                expected,
-                max_relative = 0.3 // epsilon = 1e-3
-            );
-        }
+        relative_voronoi_compare(&voronoi, &expected_vertices, &expected_lines);
     }
 
-    //https://github.com/libgeos/geos/blob/d51982c6da5b7adb63ca0933ae7b53828cc8d72e/tests/unit/triangulate/VoronoiTest.cpp#L174
+    //https://github.com/libgeos/geos/blob/d51982c6da5b7adb63ca0933ae7b53828cc8d72e/tests/unit/triangulate/VoronoiTest.cpp#L189
     #[test]
-    fn test_five_points() {
-        let points: MultiPoint<_> =
-            vec![(280., 300.), (420., 330.), (380., 230.), (320., 160.)].into();
-
-        let voronoi = points.compute_voronoi_components(None).unwrap();
-
-        let expected_vertices = [
-            coord! {x: 353.516, y: 298.594},
-            coord! {x: 306.875, y: 231.964},
+    fn test_six_points() {
+        let points = polygon![
+            (x: 320., y: 170.),
+            (x: 366., y: 246.),
+            (x: 530., y: 230.),
+            (x: 530., y: 300.),
+            (x: 455., y: 277.),
+            (x: 490., y: 160.)
         ];
 
-        for (vertex, expected) in voronoi.vertices.iter().zip(expected_vertices) {
-            approx::assert_relative_eq!(
-                *vertex,
-                expected,
-                max_relative = 0.3 // epsilon = 1e-3
-            );
-        }
+        let voronoi = points.compute_voronoi_components(None, None).unwrap();
+
+        let expected_vertices = [
+            coord! {x: 499.707, y: 265.},
+            coord! {x: 470.121, y: 217.788},
+            coord! {x: 429.915, y: 205.761},
+            coord! {x: 405.311, y: 170.286},
+        ];
 
         let expected_lines = [
             Line::new(
-                coord! {x: 353.516, y: 298.594},
-                coord! {x: 306.875, y: 231.964},
+                coord! {x: 499.70666666666665, y: 265.0 },
+                coord! { x: 470.12061711079946, y: 217.7882187938289 },
             ),
             Line::new(
-                coord! {x: 353.516, y: 298.594},
-                coord! {x: -345.571, y: 3556.0},
-            ),
-            Line::new(coord! {x: 353.516, y: 298.594}, coord! {x: 3080., y: -792.}),
-            Line::new(
-                coord! {x: 306.875, y: 231.964},
-                coord! {x: -2520., y: -575.714},
+                coord! {x: 405.31091180866963, y: 170.28550074738416 },
+                coord! { x: 429.9147677857019, y: 205.76082797008175 },
             ),
             Line::new(
-                coord! {x: 306.875, y: 231.964},
-                coord! {x: 3080., y: -2145.},
+                coord! {x: 470.12061711079946, y: 217.7882187938289 },
+                coord! { x: 429.9147677857019, y: 205.76082797008175 },
+            ),
+            Line::new(
+                coord! {x: 499.70666666666665, y: 265.0 },
+                coord! { x: 4519.999999999999, y: 264.99999999999994 },
+            ),
+            Line::new(
+                coord! {x: 499.70666666666665, y: 265.0 },
+                coord! { x: -326.7599999999982, y: 2960.0 },
+            ),
+            Line::new(
+                coord! {x: 405.31091180866963, y: 170.28550074738416 },
+                coord! { x: -3880.0000000000005, y: 2764.0263157894765 },
+            ),
+            Line::new(
+                coord! {x: 405.31091180866963, y: 170.28550074738416 },
+                coord! { x: 239.99999999998627, y: -2640.0 },
+            ),
+            Line::new(
+                coord! {x: 470.12061711079946, y: 217.7882187938289 },
+                coord! { x: 4520.0, y: -2096.428571428572 },
+            ),
+            Line::new(
+                coord! {x: 429.9147677857019, y: 205.76082797008175 },
+                coord! { x: -529.42696629214, y: 2960.0 },
             ),
         ];
 
-        for (line, expected) in voronoi.lines.iter().zip(expected_lines) {
-            approx::assert_relative_eq!(
-                *line,
-                expected,
-                max_relative = 0.3 // epsilon = 1e-3
-            );
-        }
+        relative_voronoi_compare(&voronoi, &expected_vertices, &expected_lines);
     }
 
     #[test]
@@ -1015,17 +1416,9 @@ mod test {
         let rhombus =
             polygon![(x: 10., y: 10.), (x: 11., y: 20.), (x: 20., y: 20.), (x: 19., y: 10.)];
 
-        let voronoi = rhombus.compute_voronoi_components(None).unwrap();
+        let voronoi = rhombus.compute_voronoi_components(None, None).unwrap();
 
         let expected_vertices = [coord! { x: 14.5, y: 14.6}, coord! { x: 15.5, y: 15.4}];
-        for (vertex, expected) in voronoi.vertices.iter().zip(expected_vertices) {
-            approx::assert_relative_eq!(
-                *vertex,
-                expected,
-                max_relative = 0.3 // epsilon = 1e-3
-            );
-        }
-
         let expected_lines = [
             Line::new(coord! {x: 14.5, y: 14.6}, coord! {x: 15.5, y: 15.4}),
             Line::new(coord! {x: 14.5, y: 14.6}, coord! {x: -190., y: 35.05}),
@@ -1034,12 +1427,710 @@ mod test {
             Line::new(coord! {x: 15.5, y: 15.4}, coord! {x: 210., y: -4.05}),
         ];
 
-        for (line, expected) in voronoi.lines.iter().zip(expected_lines) {
-            approx::assert_relative_eq!(
-                *line,
-                expected,
-                max_relative = 0.3 // epsilon = 1e-3
-            );
-        }
+        relative_voronoi_compare(&voronoi, &expected_vertices, &expected_lines);
+    }
+
+    #[test]
+    fn test_rotated_rhombus_lines() {
+        let poly = Polygon::new(
+            LineString::from(vec![
+                coord! {x: 10., y: 10. },
+                coord! {x: 10., y: 12. },
+                coord! {x: 10., y: 14. },
+                coord! {x: 10., y: 16. },
+                coord! {x: 10., y: 18. },
+                coord! {x: 10., y: 20. },
+                coord! {x: 11.8, y: 19.8 },
+                coord! {x: 13.6, y: 19.6 },
+                coord! {x: 15.4, y: 19.4 },
+                coord! {x: 17.2, y: 19.2 },
+                coord! {x: 19., y: 19. },
+                coord! {x: 19., y: 17. },
+                coord! {x: 19., y: 15. },
+                coord! {x: 19., y: 13. },
+                coord! {x: 19., y: 11. },
+                coord! {x: 17.2, y: 10.8 },
+                coord! {x: 15.4, y: 10.6 },
+                coord! {x: 13.6, y: 10.4 },
+                coord! {x: 11.8, y: 10.2 },
+                coord! {x: 10., y: 10. },
+            ]),
+            vec![],
+        );
+
+        let voronoi = poly.compute_voronoi_components(None, None).unwrap();
+
+        let expected_vertices = [
+            coord! { x: 10.8, y: 19.0 },
+            coord! { x: 12.600000000000001, y: 17.0 },
+            coord! { x: 12.440000000000001, y: 17.36 },
+            coord! { x: 14.399999999999999, y: 15.0 },
+            coord! { x: 14.059999999999995, y: 15.540000000000006 },
+            coord! { x: 15.973333333333334, y: 16.36 },
+            coord! { x: 17.977777777777778, y: 18.0 },
+            coord! { x: 15.733333333333334, y: 16.0 },
+            coord! { x: 17.977777777777778, y: 12.0 },
+            coord! { x: 14.399999999999999, y: 15.0 },
+            coord! { x: 14.511111111111113, y: 14.999999999999998 },
+            coord! { x: 15.733333333333333, y: 14.0 },
+            coord! { x: 15.973333333333331, y: 13.640000000000004 },
+            coord! { x: 12.6, y: 13.0 },
+            coord! { x: 14.060000000000002, y: 14.46 },
+            coord! { x: 10.8, y: 11.0 },
+            coord! { x: 12.44, y: 12.639999999999997 },
+        ];
+        let expected_lines = [
+            Line::new(
+                coord! { x: 10.8, y: 19.0 },
+                coord! { x: 12.440000000000001, y: 17.36 },
+            ),
+            Line::new(
+                coord! { x: 12.600000000000001, y: 17.0 },
+                coord! { x: 12.440000000000001, y: 17.36 },
+            ),
+            Line::new(
+                coord! { x: 12.600000000000001, y: 17.0 },
+                coord! { x: 14.059999999999995, y: 15.540000000000006 },
+            ),
+            Line::new(
+                coord! { x: 14.399999999999999, y: 15.0 },
+                coord! { x: 14.059999999999995, y: 15.540000000000006 },
+            ),
+            Line::new(
+                coord! { x: 14.399999999999999, y: 15.0 },
+                coord! { x: 14.399999999999999, y: 15.0 },
+            ),
+            Line::new(
+                coord! { x: 15.973333333333334, y: 16.36 },
+                coord! { x: 17.977777777777778, y: 18.0 },
+            ),
+            Line::new(
+                coord! { x: 15.973333333333334, y: 16.36 },
+                coord! { x: 15.733333333333334, y: 16.0 },
+            ),
+            Line::new(
+                coord! { x: 15.733333333333334, y: 16.0 },
+                coord! { x: 14.511111111111113, y: 14.999999999999998 },
+            ),
+            Line::new(
+                coord! { x: 17.977777777777778, y: 12.0 },
+                coord! { x: 15.973333333333331, y: 13.640000000000004 },
+            ),
+            Line::new(
+                coord! { x: 14.399999999999999, y: 15.0 },
+                coord! { x: 14.511111111111113, y: 14.999999999999998 },
+            ),
+            Line::new(
+                coord! { x: 14.399999999999999, y: 15.0 },
+                coord! { x: 14.060000000000002, y: 14.46 },
+            ),
+            Line::new(
+                coord! { x: 14.511111111111113, y: 14.999999999999998 },
+                coord! { x: 15.733333333333333, y: 14.0 },
+            ),
+            Line::new(
+                coord! { x: 15.733333333333333, y: 14.0 },
+                coord! { x: 15.973333333333331, y: 13.640000000000004 },
+            ),
+            Line::new(
+                coord! { x: 12.6, y: 13.0 },
+                coord! { x: 14.060000000000002, y: 14.46 },
+            ),
+            Line::new(
+                coord! { x: 12.6, y: 13.0 },
+                coord! { x: 12.44, y: 12.639999999999997 },
+            ),
+            Line::new(
+                coord! { x: 10.8, y: 11.0 },
+                coord! { x: 12.44, y: 12.639999999999997 },
+            ),
+            Line::new(
+                coord! { x: 10.8, y: 19.0 },
+                coord! { x: -170.0, y: 19.000000000000007 },
+            ),
+            Line::new(
+                coord! { x: 10.8, y: 19.0 },
+                coord! { x: 32.02222222222237, y: 210.0 },
+            ),
+            Line::new(
+                coord! { x: 12.600000000000001, y: 17.0 },
+                coord! { x: -170.0, y: 17.0 },
+            ),
+            Line::new(
+                coord! { x: 12.440000000000001, y: 17.36 },
+                coord! { x: 33.84444444444426, y: 210.0 },
+            ),
+            Line::new(
+                coord! { x: 14.399999999999999, y: 15.0 },
+                coord! { x: -169.99999999999997, y: 14.999999999999998 },
+            ),
+            Line::new(
+                coord! { x: 14.059999999999995, y: 15.540000000000006 },
+                coord! { x: 35.666666666666934, y: 210.00000000000003 },
+            ),
+            Line::new(
+                coord! { x: 15.973333333333334, y: 16.36 },
+                coord! { x: 37.48888888888888, y: 210.0 },
+            ),
+            Line::new(
+                coord! { x: 17.977777777777778, y: 18.0 },
+                coord! { x: 39.311111111111494, y: 209.99999999999997 },
+            ),
+            Line::new(
+                coord! { x: 17.977777777777778, y: 18.0 },
+                coord! { x: 189.99999999999997, y: 17.99999999999998 },
+            ),
+            Line::new(
+                coord! { x: 15.733333333333334, y: 16.0 },
+                coord! { x: 190.0, y: 16.0 },
+            ),
+            Line::new(
+                coord! { x: 17.977777777777778, y: 12.0 },
+                coord! { x: 189.99999999999997, y: 11.999999999999986 },
+            ),
+            Line::new(
+                coord! { x: 17.977777777777778, y: 12.0 },
+                coord! { x: 40.42222222222257, y: -190.0 },
+            ),
+            Line::new(
+                coord! { x: 15.733333333333333, y: 14.0 },
+                coord! { x: 190.0, y: 14.000000000000002 },
+            ),
+            Line::new(
+                coord! { x: 15.973333333333331, y: 13.640000000000004 },
+                coord! { x: 38.600000000000314, y: -190.00000000000003 },
+            ),
+            Line::new(
+                coord! { x: 12.6, y: 13.0 },
+                coord! { x: -170.0, y: 12.999999999999996 },
+            ),
+            Line::new(
+                coord! { x: 14.060000000000002, y: 14.46 },
+                coord! { x: 36.77777777777766, y: -190.0 },
+            ),
+            Line::new(
+                coord! { x: 10.8, y: 11.0 },
+                coord! { x: -170.0, y: 11.000000000000004 },
+            ),
+            Line::new(
+                coord! { x: 10.8, y: 11.0 },
+                coord! { x: 33.13333333333312, y: -190.0 },
+            ),
+            Line::new(
+                coord! { x: 12.44, y: 12.639999999999997 },
+                coord! { x: 34.95555555555567, y: -189.99999999999997 },
+            ),
+        ];
+
+        relative_voronoi_compare(&voronoi, &expected_vertices, &expected_lines);
+    }
+
+    #[test]
+    fn test_rhombus_lines() {
+        let poly = Polygon::new(
+            LineString::from(vec![
+                coord! { x: 10.0, y: 10.0 },
+                coord! { x: 10.166666666666666, y: 11.666666666666666 },
+                coord! { x: 10.333333333333334, y: 13.333333333333332 },
+                coord! { x: 10.5, y: 15.0 },
+                coord! { x: 10.666666666666666, y: 16.666666666666664 },
+                coord! { x: 10.833333333333334, y: 18.333333333333332 },
+                coord! { x: 11.0, y: 20.0 },
+                coord! { x: 12.8, y: 20.0 },
+                coord! { x: 14.6, y: 20.0 },
+                coord! { x: 16.4, y: 20.0 },
+                coord! { x: 18.2, y: 20.0 },
+                coord! { x: 20.0, y: 20.0 },
+                coord! { x: 19.833333333333332, y: 18.333333333333332 },
+                coord! { x: 19.666666666666668, y: 16.666666666666668 },
+                coord! { x: 19.5, y: 15.0 },
+                coord! { x: 19.333333333333332, y: 13.333333333333334 },
+                coord! { x: 19.166666666666668, y: 11.666666666666668 },
+                coord! { x: 19.0, y: 10.0 },
+                coord! { x: 17.2, y: 10.0 },
+                coord! { x: 15.4, y: 10.0 },
+                coord! { x: 13.6, y: 10.0 },
+                coord! { x: 11.8, y: 10.0 },
+                coord! { x: 10.0, y: 10.0 },
+            ]),
+            vec![],
+        );
+
+        let voronoi = poly.compute_voronoi_components(None, None).unwrap();
+
+        let expected_vertices = [
+            coord! { x: 13.458641975308646, y: 17.22913580246913 },
+            coord! { x: 11.9, y: 19.06833333333333 },
+            coord! { x: 13.7, y: 17.074666666666666 },
+            coord! { x: 19.1, y: 19.248333333333335 },
+            coord! { x: 17.299999999999997, y: 17.614666666666665 },
+            coord! { x: 17.541358024691355, y: 17.72086419753086 },
+            coord! { x: 15.0, y: 15.391666666666666 },
+            coord! { x: 15.022993827160494, y: 15.513533950617283 },
+            coord! { x: 15.5, y: 15.980999999999998 },
+            coord! { x: 15.862037037037041, y: 16.205462962962965 },
+            coord! { x: 15.0, y: 14.608333333333336 },
+            coord! { x: 16.541358024691363, y: 12.77086419753086 },
+            coord! { x: 18.1, y: 10.931666666666668 },
+            coord! { x: 14.977006172839506, y: 14.486466049382715 },
+            coord! { x: 16.3, y: 12.925333333333333 },
+            coord! { x: 14.137962962962964, y: 13.794537037037038 },
+            coord! { x: 14.5, y: 14.019 },
+            coord! { x: 12.458641975308637, y: 12.279135802469133 },
+            coord! { x: 12.700000000000001, y: 12.385333333333334 },
+            coord! { x: 10.9, y: 10.751666666666667 },
+        ];
+        let expected_lines = [
+            Line::new(
+                coord! { x: 13.458641975308646, y: 17.22913580246913 },
+                coord! { x: 11.9, y: 19.06833333333333 },
+            ),
+            Line::new(
+                coord! { x: 13.458641975308646, y: 17.22913580246913 },
+                coord! { x: 13.7, y: 17.074666666666666 },
+            ),
+            Line::new(
+                coord! { x: 13.7, y: 17.074666666666666 },
+                coord! { x: 15.022993827160494, y: 15.513533950617283 },
+            ),
+            Line::new(
+                coord! { x: 19.1, y: 19.248333333333335 },
+                coord! { x: 17.541358024691355, y: 17.72086419753086 },
+            ),
+            Line::new(
+                coord! { x: 17.299999999999997, y: 17.614666666666665 },
+                coord! { x: 17.541358024691355, y: 17.72086419753086 },
+            ),
+            Line::new(
+                coord! { x: 17.299999999999997, y: 17.614666666666665 },
+                coord! { x: 15.862037037037041, y: 16.205462962962965 },
+            ),
+            Line::new(
+                coord! { x: 15.0, y: 15.391666666666666 },
+                coord! { x: 15.022993827160494, y: 15.513533950617283 },
+            ),
+            Line::new(
+                coord! { x: 15.0, y: 15.391666666666666 },
+                coord! { x: 15.0, y: 14.608333333333336 },
+            ),
+            Line::new(
+                coord! { x: 15.022993827160494, y: 15.513533950617283 },
+                coord! { x: 15.5, y: 15.980999999999998 },
+            ),
+            Line::new(
+                coord! { x: 15.5, y: 15.980999999999998 },
+                coord! { x: 15.862037037037041, y: 16.205462962962965 },
+            ),
+            Line::new(
+                coord! { x: 15.0, y: 14.608333333333336 },
+                coord! { x: 14.977006172839506, y: 14.486466049382715 },
+            ),
+            Line::new(
+                coord! { x: 16.541358024691363, y: 12.77086419753086 },
+                coord! { x: 18.1, y: 10.931666666666668 },
+            ),
+            Line::new(
+                coord! { x: 16.541358024691363, y: 12.77086419753086 },
+                coord! { x: 16.3, y: 12.925333333333333 },
+            ),
+            Line::new(
+                coord! { x: 14.977006172839506, y: 14.486466049382715 },
+                coord! { x: 16.3, y: 12.925333333333333 },
+            ),
+            Line::new(
+                coord! { x: 14.977006172839506, y: 14.486466049382715 },
+                coord! { x: 14.5, y: 14.019 },
+            ),
+            Line::new(
+                coord! { x: 14.137962962962964, y: 13.794537037037038 },
+                coord! { x: 14.5, y: 14.019 },
+            ),
+            Line::new(
+                coord! { x: 14.137962962962964, y: 13.794537037037038 },
+                coord! { x: 12.700000000000001, y: 12.385333333333334 },
+            ),
+            Line::new(
+                coord! { x: 12.458641975308637, y: 12.279135802469133 },
+                coord! { x: 12.700000000000001, y: 12.385333333333334 },
+            ),
+            Line::new(
+                coord! { x: 12.458641975308637, y: 12.279135802469133 },
+                coord! { x: 10.9, y: 10.751666666666667 },
+            ),
+            Line::new(
+                coord! { x: 13.458641975308646, y: 17.22913580246913 },
+                coord! { x: -189.99999999999997, y: 37.57500000000035 },
+            ),
+            Line::new(
+                coord! { x: 11.9, y: 19.06833333333333 },
+                coord! { x: -190.0, y: 39.25833333333322 },
+            ),
+            Line::new(
+                coord! { x: 11.9, y: 19.06833333333333 },
+                coord! { x: 11.89999999999999, y: 210.0 },
+            ),
+            Line::new(
+                coord! { x: 13.7, y: 17.074666666666666 },
+                coord! { x: 13.700000000000006, y: 210.00000000000003 },
+            ),
+            Line::new(
+                coord! { x: 19.1, y: 19.248333333333335 },
+                coord! { x: 19.099999999999955, y: 210.0 },
+            ),
+            Line::new(
+                coord! { x: 19.1, y: 19.248333333333335 },
+                coord! { x: 210.0, y: 0.1583333333323135 },
+            ),
+            Line::new(
+                coord! { x: 17.299999999999997, y: 17.614666666666665 },
+                coord! { x: 17.299999999999997, y: 210.0 },
+            ),
+            Line::new(
+                coord! { x: 17.541358024691355, y: 17.72086419753086 },
+                coord! { x: 210.00000000000003, y: -1.5249999999997563 },
+            ),
+            Line::new(
+                coord! { x: 15.0, y: 15.391666666666666 },
+                coord! { x: -190.0, y: 35.89166666666673 },
+            ),
+            Line::new(
+                coord! { x: 15.5, y: 15.980999999999998 },
+                coord! { x: 15.499999999999998, y: 210.0 },
+            ),
+            Line::new(
+                coord! { x: 15.862037037037041, y: 16.205462962962965 },
+                coord! { x: 210.00000000000003, y: -3.2083333333333326 },
+            ),
+            Line::new(
+                coord! { x: 15.0, y: 14.608333333333336 },
+                coord! { x: 210.00000000000003, y: -4.891666666666753 },
+            ),
+            Line::new(
+                coord! { x: 16.541358024691363, y: 12.77086419753086 },
+                coord! { x: 210.0, y: -6.574999999999776 },
+            ),
+            Line::new(
+                coord! { x: 18.1, y: 10.931666666666668 },
+                coord! { x: 209.99999999999997, y: -8.258333333333566 },
+            ),
+            Line::new(
+                coord! { x: 18.1, y: 10.931666666666668 },
+                coord! { x: 18.1, y: -190.0 },
+            ),
+            Line::new(
+                coord! { x: 16.3, y: 12.925333333333333 },
+                coord! { x: 16.3, y: -190.00000000000003 },
+            ),
+            Line::new(
+                coord! { x: 14.137962962962964, y: 13.794537037037038 },
+                coord! { x: -190.0, y: 34.208333333333215 },
+            ),
+            Line::new(
+                coord! { x: 14.5, y: 14.019 },
+                coord! { x: 14.499999999999996, y: -189.99999999999997 },
+            ),
+            Line::new(
+                coord! { x: 12.458641975308637, y: 12.279135802469133 },
+                coord! { x: -190.0, y: 32.52500000000029 },
+            ),
+            Line::new(
+                coord! { x: 12.700000000000001, y: 12.385333333333334 },
+                coord! { x: 12.699999999999852, y: -190.0 },
+            ),
+            Line::new(
+                coord! { x: 10.9, y: 10.751666666666667 },
+                coord! { x: -189.99999999999997, y: 30.841666666666274 },
+            ),
+            Line::new(
+                coord! { x: 10.9, y: 10.751666666666667 },
+                coord! { x: 10.900000000000002, y: -190.00000000000003 },
+            ),
+        ];
+
+        relative_voronoi_compare(&voronoi, &expected_vertices, &expected_lines);
+    }
+
+    #[test]
+    fn test_polygon_self_intersecting() {
+        let poly = Polygon::new(
+            LineString::from(vec![
+                coord! { x: 0.0, y: 0.0 },
+                coord! { x: 5.0, y: 0.0 },
+                coord! { x: 10.0, y: 0.0 },
+                coord! { x: 15.0, y: 0.0 },
+                coord! { x: 20.0, y: 0.0 },
+                coord! { x: 25.0, y: 0.0 },
+                coord! { x: 30.0, y: 0.0 },
+                coord! { x: 35.0, y: 0.0 },
+                coord! { x: 40.0, y: 0.0 },
+                coord! { x: 40.0, y: 5.0 },
+                coord! { x: 40.0, y: 10.0 },
+                coord! { x: 35.0, y: 10.0 },
+                coord! { x: 30.0, y: 10.0 },
+                coord! { x: 25.0, y: 10.0 },
+                coord! { x: 20.0, y: 10.0 },
+                coord! {
+                    x: 15.000000000000004,
+                    y: 10.0
+                },
+                coord! { x: 10.0, y: 10.0 },
+                coord! { x: 10.0, y: 5.0 },
+                coord! { x: 10.0, y: 0.0 },
+                coord! {
+                    x: 10.0,
+                    y: -5.000000000000002
+                },
+                coord! { x: 10.0, y: -10.0 },
+                coord! { x: 10.0, y: -15.0 },
+                coord! {
+                    x: 10.0,
+                    y: -20.000000000000004
+                },
+                coord! { x: 10.0, y: -25.0 },
+                coord! { x: 10.0, y: -30.0 },
+                coord! { x: 10.0, y: -35.0 },
+                coord! { x: 10.0, y: -40.0 },
+                coord! { x: 5.0, y: -40.0 },
+                coord! { x: 0.0, y: -40.0 },
+                coord! { x: 0.0, y: -35.0 },
+                coord! { x: 0.0, y: -30.0 },
+                coord! { x: 0.0, y: -25.0 },
+                coord! { x: 0.0, y: -20.0 },
+                coord! { x: 0.0, y: -15.0 },
+                coord! { x: 0.0, y: -10.0 },
+                coord! { x: 0.0, y: -5.0 },
+                coord! { x: 0.0, y: 0.0 },
+            ]),
+            vec![],
+        );
+
+        let expected_vertices = [
+            coord! { x: 37.5, y: 2.5 },
+            coord! { x: 32.5, y: 5.0 },
+            coord! { x: 35.0, y: 5.0 },
+            coord! { x: 37.5, y: 7.5 },
+            coord! { x: 27.5, y: 5.0 },
+            coord! { x: 32.5, y: 5.0 },
+            coord! { x: 22.5, y: 5.0 },
+            coord! { x: 27.5, y: 5.0 },
+            coord! { x: 17.5, y: 5.0 },
+            coord! { x: 22.5, y: 5.0 },
+            coord! { x: 17.5, y: 4.999999999999999 },
+            coord! { x: 2.5, y: 7.5 },
+            coord! { x: 7.5, y: 2.5 },
+            coord! { x: 2.5, y: 7.5 },
+            coord! { x: 12.5, y: 2.5 },
+            coord! { x: 15.0, y: 5.0 },
+            coord! { x: 12.500000000000002, y: 7.5 },
+            coord! { x: 7.5, y: -2.500000000000001 },
+            coord! { x: 12.5, y: -2.5000000000000004 },
+            coord! { x: 17.5, y: -7.5 },
+            coord! { x: 22.5, y: -12.5 },
+            coord! { x: 17.5, y: -7.5 },
+            coord! { x: 22.5, y: -12.5 },
+            coord! { x: 27.5, y: -17.500000000000004 },
+            coord! { x: 27.50000000000001, y: -17.50000000000001 },
+            coord! { x: 32.5, y: -22.5 },
+            coord! { x: 37.5, y: -27.5 },
+            coord! { x: 32.499999999999986, y: -22.499999999999993 },
+            coord! { x: 37.5, y: -27.5 },
+            coord! { x: 42.5, y: -32.5 },
+            coord! { x: 48.333333333333336, y: -37.5 },
+            coord! { x: 7.5, y: -37.5 },
+            coord! { x: 5.0, y: -32.5 },
+            coord! { x: 5.0, y: -35.0 },
+            coord! { x: 2.5, y: -37.5 },
+            coord! { x: 5.0, y: -27.5 },
+            coord! { x: 5.0, y: -32.5 },
+            coord! { x: 5.0, y: -22.5 },
+            coord! { x: 5.0, y: -27.5 },
+            coord! { x: 5.000000000000001, y: -17.5 },
+            coord! { x: 5.0, y: -22.5 },
+            coord! { x: 5.0, y: -12.5 },
+            coord! { x: 5.0, y: -17.5 },
+            coord! { x: 5.0, y: -7.500000000000001 },
+            coord! { x: 5.0, y: -12.5 },
+            coord! { x: 2.5, y: -2.5 },
+            coord! { x: 5.0, y: -5.000000000000001 },
+            coord! { x: 4.999999999999999, y: -7.5 },
+        ];
+        let expected_lines = [
+            Line::new(coord! { x: 37.5, y: 2.5 }, coord! { x: 35.0, y: 5.0 }),
+            Line::new(coord! { x: 37.5, y: 2.5 }, coord! { x: 37.5, y: -27.5 }),
+            Line::new(coord! { x: 32.5, y: 5.0 }, coord! { x: 35.0, y: 5.0 }),
+            Line::new(coord! { x: 32.5, y: 5.0 }, coord! { x: 32.5, y: 5.0 }),
+            Line::new(coord! { x: 32.5, y: 5.0 }, coord! { x: 32.5, y: -22.5 }),
+            Line::new(coord! { x: 35.0, y: 5.0 }, coord! { x: 37.5, y: 7.5 }),
+            Line::new(coord! { x: 27.5, y: 5.0 }, coord! { x: 32.5, y: 5.0 }),
+            Line::new(coord! { x: 27.5, y: 5.0 }, coord! { x: 27.5, y: 5.0 }),
+            Line::new(
+                coord! { x: 27.5, y: 5.0 },
+                coord! { x: 27.5, y: -17.500000000000004 },
+            ),
+            Line::new(coord! { x: 22.5, y: 5.0 }, coord! { x: 27.5, y: 5.0 }),
+            Line::new(coord! { x: 22.5, y: 5.0 }, coord! { x: 22.5, y: 5.0 }),
+            Line::new(coord! { x: 22.5, y: 5.0 }, coord! { x: 22.5, y: -12.5 }),
+            Line::new(coord! { x: 17.5, y: 5.0 }, coord! { x: 22.5, y: 5.0 }),
+            Line::new(
+                coord! { x: 17.5, y: 5.0 },
+                coord! { x: 17.5, y: 4.999999999999999 },
+            ),
+            Line::new(coord! { x: 17.5, y: 5.0 }, coord! { x: 17.5, y: -7.5 }),
+            Line::new(
+                coord! { x: 17.5, y: 4.999999999999999 },
+                coord! { x: 15.0, y: 5.0 },
+            ),
+            Line::new(coord! { x: 2.5, y: 7.5 }, coord! { x: 2.5, y: 7.5 }),
+            Line::new(coord! { x: 2.5, y: 7.5 }, coord! { x: 2.5, y: -2.5 }),
+            Line::new(coord! { x: 7.5, y: 2.5 }, coord! { x: 2.5, y: 7.5 }),
+            Line::new(coord! { x: 7.5, y: 2.5 }, coord! { x: 12.5, y: 2.5 }),
+            Line::new(
+                coord! { x: 7.5, y: 2.5 },
+                coord! { x: 7.5, y: -2.500000000000001 },
+            ),
+            Line::new(
+                coord! { x: 2.5, y: 7.5 },
+                coord! { x: 12.500000000000002, y: 7.5 },
+            ),
+            Line::new(coord! { x: 12.5, y: 2.5 }, coord! { x: 15.0, y: 5.0 }),
+            Line::new(
+                coord! { x: 12.5, y: 2.5 },
+                coord! { x: 12.5, y: -2.5000000000000004 },
+            ),
+            Line::new(
+                coord! { x: 15.0, y: 5.0 },
+                coord! { x: 12.500000000000002, y: 7.5 },
+            ),
+            Line::new(
+                coord! { x: 7.5, y: -2.500000000000001 },
+                coord! { x: 12.5, y: -2.5000000000000004 },
+            ),
+            Line::new(
+                coord! { x: 7.5, y: -2.500000000000001 },
+                coord! { x: 5.0, y: -5.000000000000001 },
+            ),
+            Line::new(
+                coord! { x: 12.5, y: -2.5000000000000004 },
+                coord! { x: 17.5, y: -7.5 },
+            ),
+            Line::new(coord! { x: 17.5, y: -7.5 }, coord! { x: 17.5, y: -7.5 }),
+            Line::new(coord! { x: 22.5, y: -12.5 }, coord! { x: 17.5, y: -7.5 }),
+            Line::new(coord! { x: 22.5, y: -12.5 }, coord! { x: 22.5, y: -12.5 }),
+            Line::new(
+                coord! { x: 17.5, y: -7.5 },
+                coord! { x: 5.0, y: -7.500000000000001 },
+            ),
+            Line::new(
+                coord! { x: 22.5, y: -12.5 },
+                coord! { x: 27.50000000000001, y: -17.50000000000001 },
+            ),
+            Line::new(coord! { x: 22.5, y: -12.5 }, coord! { x: 5.0, y: -12.5 }),
+            Line::new(
+                coord! { x: 27.5, y: -17.500000000000004 },
+                coord! { x: 27.50000000000001, y: -17.50000000000001 },
+            ),
+            Line::new(
+                coord! { x: 27.5, y: -17.500000000000004 },
+                coord! { x: 32.5, y: -22.5 },
+            ),
+            Line::new(
+                coord! { x: 27.50000000000001, y: -17.50000000000001 },
+                coord! { x: 5.000000000000001, y: -17.5 },
+            ),
+            Line::new(
+                coord! { x: 32.5, y: -22.5 },
+                coord! { x: 32.499999999999986, y: -22.499999999999993 },
+            ),
+            Line::new(
+                coord! { x: 37.5, y: -27.5 },
+                coord! { x: 32.499999999999986, y: -22.499999999999993 },
+            ),
+            Line::new(coord! { x: 37.5, y: -27.5 }, coord! { x: 37.5, y: -27.5 }),
+            Line::new(
+                coord! { x: 32.499999999999986, y: -22.499999999999993 },
+                coord! { x: 5.0, y: -22.5 },
+            ),
+            Line::new(coord! { x: 37.5, y: -27.5 }, coord! { x: 42.5, y: -32.5 }),
+            Line::new(coord! { x: 37.5, y: -27.5 }, coord! { x: 5.0, y: -27.5 }),
+            Line::new(
+                coord! { x: 42.5, y: -32.5 },
+                coord! { x: 48.333333333333336, y: -37.5 },
+            ),
+            Line::new(coord! { x: 42.5, y: -32.5 }, coord! { x: 5.0, y: -32.5 }),
+            Line::new(
+                coord! { x: 48.333333333333336, y: -37.5 },
+                coord! { x: 7.5, y: -37.5 },
+            ),
+            Line::new(coord! { x: 7.5, y: -37.5 }, coord! { x: 5.0, y: -35.0 }),
+            Line::new(coord! { x: 5.0, y: -32.5 }, coord! { x: 5.0, y: -35.0 }),
+            Line::new(coord! { x: 5.0, y: -32.5 }, coord! { x: 5.0, y: -32.5 }),
+            Line::new(coord! { x: 5.0, y: -35.0 }, coord! { x: 2.5, y: -37.5 }),
+            Line::new(coord! { x: 5.0, y: -27.5 }, coord! { x: 5.0, y: -32.5 }),
+            Line::new(coord! { x: 5.0, y: -27.5 }, coord! { x: 5.0, y: -27.5 }),
+            Line::new(coord! { x: 5.0, y: -22.5 }, coord! { x: 5.0, y: -27.5 }),
+            Line::new(coord! { x: 5.0, y: -22.5 }, coord! { x: 5.0, y: -22.5 }),
+            Line::new(
+                coord! { x: 5.000000000000001, y: -17.5 },
+                coord! { x: 5.0, y: -22.5 },
+            ),
+            Line::new(
+                coord! { x: 5.000000000000001, y: -17.5 },
+                coord! { x: 5.0, y: -17.5 },
+            ),
+            Line::new(coord! { x: 5.0, y: -12.5 }, coord! { x: 5.0, y: -17.5 }),
+            Line::new(coord! { x: 5.0, y: -12.5 }, coord! { x: 5.0, y: -12.5 }),
+            Line::new(
+                coord! { x: 5.0, y: -7.500000000000001 },
+                coord! { x: 5.0, y: -12.5 },
+            ),
+            Line::new(
+                coord! { x: 5.0, y: -7.500000000000001 },
+                coord! { x: 4.999999999999999, y: -7.5 },
+            ),
+            Line::new(
+                coord! { x: 2.5, y: -2.5 },
+                coord! { x: 5.0, y: -5.000000000000001 },
+            ),
+            Line::new(
+                coord! { x: 5.0, y: -5.000000000000001 },
+                coord! { x: 4.999999999999999, y: -7.5 },
+            ),
+            Line::new(coord! { x: 37.5, y: 2.5 }, coord! { x: 800.0, y: 2.5 }),
+            Line::new(coord! { x: 37.5, y: 7.5 }, coord! { x: 800.0, y: 7.5 }),
+            Line::new(coord! { x: 37.5, y: 7.5 }, coord! { x: 37.5, y: 960.0 }),
+            Line::new(coord! { x: 32.5, y: 5.0 }, coord! { x: 32.5, y: 960.0 }),
+            Line::new(coord! { x: 27.5, y: 5.0 }, coord! { x: 27.5, y: 960.0 }),
+            Line::new(coord! { x: 22.5, y: 5.0 }, coord! { x: 22.5, y: 960.0 }),
+            Line::new(
+                coord! { x: 17.5, y: 4.999999999999999 },
+                coord! { x: 17.5, y: 959.9999999999999 },
+            ),
+            Line::new(coord! { x: 2.5, y: 7.5 }, coord! { x: -800.0, y: 810.0 }),
+            Line::new(
+                coord! { x: 12.500000000000002, y: 7.5 },
+                coord! { x: 12.5, y: 960.0 },
+            ),
+            Line::new(
+                coord! { x: 48.333333333333336, y: -37.5 },
+                coord! { x: 800.0, y: -601.2499999999999 },
+            ),
+            Line::new(coord! { x: 7.5, y: -37.5 }, coord! { x: 7.5, y: -1040.0 }),
+            Line::new(coord! { x: 2.5, y: -37.5 }, coord! { x: 2.5, y: -1040.0 }),
+            Line::new(coord! { x: 2.5, y: -37.5 }, coord! { x: -800.0, y: -37.5 }),
+            Line::new(coord! { x: 5.0, y: -32.5 }, coord! { x: -800.0, y: -32.5 }),
+            Line::new(coord! { x: 5.0, y: -27.5 }, coord! { x: -800.0, y: -27.5 }),
+            Line::new(coord! { x: 5.0, y: -22.5 }, coord! { x: -800.0, y: -22.5 }),
+            Line::new(coord! { x: 5.0, y: -17.5 }, coord! { x: -800.0, y: -17.5 }),
+            Line::new(coord! { x: 5.0, y: -12.5 }, coord! { x: -800.0, y: -12.5 }),
+            Line::new(coord! { x: 2.5, y: -2.5 }, coord! { x: -800.0, y: -2.5 }),
+            Line::new(
+                coord! { x: 4.999999999999999, y: -7.5 },
+                coord! { x: -800.0, y: -7.5 },
+            ),
+        ];
+
+        let voronoi = poly.compute_voronoi_components(None, None).unwrap();
+
+        relative_voronoi_compare(&voronoi, &expected_vertices, &expected_lines);
     }
 }

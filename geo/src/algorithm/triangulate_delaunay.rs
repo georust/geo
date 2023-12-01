@@ -671,4 +671,10 @@ mod test {
             assert!(expected_triangles.contains(tri));
         }
     }
+
+    #[test]
+    fn test_neg_0() {
+        let zero: f64 = num_traits::Zero::zero();
+        assert!(zero.is_finite());
+    }
 }
