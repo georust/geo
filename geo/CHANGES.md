@@ -9,6 +9,8 @@
   * <https://github.com/georust/geo/pull/1107>
 * Make `SpadeTriangulationConfig` actually configurable
   * <https://github.com/georust/geo/pull/1123>
+* PERF: small improvements to TriangulateSpade trait
+  * <https://github.com/georust/geo/pull/1122>
 
 ## 0.27.0
 
