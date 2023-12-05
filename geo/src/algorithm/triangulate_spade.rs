@@ -65,6 +65,9 @@ pub type Triangles<T> = Vec<Triangle<T>>;
 // so that we don't leak these weird methods on the public interface.
 mod private {
     use super::*;
+
+    pub(crate) type CoordsIter<'a, T> = Box<dyn Iterator<Item = Coord<T>> + 'a>;
+
     pub trait TriangulationRequirementTrait<'a, T>
     where
         T: SpadeTriangulationFloat,
@@ -76,7 +79,7 @@ mod private {
         fn lines(&'a self) -> Vec<Line<T>>;
         /// collect all the coords that are relevant for triangulations from the geometric object that
         /// should be triangulated
-        fn coords(&'a self) -> Vec<Coord<T>>;
+        fn coords(&'a self) -> CoordsIter<T>;
         /// define a predicate that decides if a point is inside of the object (used for constrained triangulation)
         fn contains_point(&'a self, p: Point<T>) -> bool;
 
@@ -315,8 +318,8 @@ where
     T: SpadeTriangulationFloat,
     G: LinesIter<'l, Scalar = T> + CoordsIter<Scalar = T> + Contains<Point<T>>,
 {
-    fn coords(&'a self) -> Vec<Coord<T>> {
-        self.coords_iter().collect::<Vec<_>>()
+    fn coords(&'a self) -> private::CoordsIter<T> {
+        Box::new(self.coords_iter())
     }
 
     fn lines(&'a self) -> Vec<Line<T>> {
@@ -333,11 +336,11 @@ where
 
 impl<'a, T, G> private::TriangulationRequirementTrait<'a, T> for Vec<G>
 where
-    T: SpadeTriangulationFloat,
+    T: SpadeTriangulationFloat + 'a,
     G: TriangulateSpade<'a, T>,
 {
-    fn coords(&'a self) -> Vec<Coord<T>> {
-        self.iter().flat_map(|g| g.coords()).collect::<Vec<_>>()
+    fn coords(&'a self) -> private::CoordsIter<T> {
+        Box::new(self.iter().flat_map(|g| g.coords()))
     }
 
     fn lines(&'a self) -> Vec<Line<T>> {
@@ -351,11 +354,11 @@ where
 
 impl<'a, T, G> private::TriangulationRequirementTrait<'a, T> for &[G]
 where
-    T: SpadeTriangulationFloat,
+    T: SpadeTriangulationFloat + 'a,
     G: TriangulateSpade<'a, T>,
 {
-    fn coords(&'a self) -> Vec<Coord<T>> {
-        self.iter().flat_map(|g| g.coords()).collect::<Vec<_>>()
+    fn coords(&'a self) -> private::CoordsIter<T> {
+        Box::new(self.iter().flat_map(|g| g.coords()))
     }
 
     fn lines(&'a self) -> Vec<Line<T>> {
