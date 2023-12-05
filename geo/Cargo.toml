@@ -110,3 +110,7 @@ harness = false
 [[bench]]
 name = "monotone_subdiv"
 harness = false
+
+[[bench]]
+name = "triangulate"
+harness = false
