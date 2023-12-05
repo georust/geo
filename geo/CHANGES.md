@@ -3,6 +3,8 @@
 ## Unreleased
 * Fix a panic when calculating the haversine closest point to a point intersecting the geometry
   * <https://github.com/georust/geo/pull/1119>
+* Add `LineStringSegmentizeHaversine` trait as a an alternative to `LineStringSegmentize` for geographic coordinates.
+  * <https://github.com/georust/geo/pull/1107>
 
 ## 0.27.0
 
@@ -16,8 +18,6 @@
   * <https://github.com/georust/geo/pull/1081>
 * Add `LineStringSegmentize` trait to split a single `LineString` into `n` `LineStrings` as a `MultiLineString`.
   * <https://github.com/georust/geo/pull/1055>
-* Add `LineStringSegmentizeHaversine` trait as a an alternative to `LineStringSegmentize` for geographic coordinates.
-  * <https://github.com/georust/geo/pull/1107>
 * Add `EuclideanDistance` implementations for all remaining geometries.
   * <https://github.com/georust/geo/pull/1029>
 * Add `HausdorffDistance` algorithm trait to calculate the Hausdorff distance between any two geometries.
