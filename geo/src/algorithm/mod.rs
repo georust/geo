@@ -80,6 +80,10 @@ pub use coords_iter::CoordsIter;
 pub mod densify;
 pub use densify::Densify;
 
+/// Densify spherical geometry components
+pub mod densify_haversine;
+pub use densify_haversine::DensifyHaversine;
+
 /// Dimensionality of a geometry and its boundary, based on OGC-SFA.
 pub mod dimensions;
 pub use dimensions::HasDimensions;
@@ -186,7 +190,7 @@ pub use lines_iter::LinesIter;
 
 /// Split a LineString into n segments
 pub mod linestring_segment;
-pub use linestring_segment::LineStringSegmentize;
+pub use linestring_segment::{LineStringSegmentize, LineStringSegmentizeHaversine};
 
 /// Apply a function to all `Coord`s of a `Geometry`.
 pub mod map_coords;
@@ -248,6 +252,12 @@ pub mod triangulate_earcut;
 #[cfg(feature = "earcutr")]
 pub use triangulate_earcut::TriangulateEarcut;
 
+/// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
+#[cfg(feature = "spade")]
+pub mod triangulate_spade;
+#[cfg(feature = "spade")]
+pub use triangulate_spade::TriangulateSpade;
+
 /// Vector Operations for 2D coordinates
 mod vector_ops;
 pub use vector_ops::Vector2DOps;
@@ -279,3 +289,7 @@ pub use outlier_detection::OutlierDetection;
 /// Monotonic polygon subdivision
 pub mod monotone;
 pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
+
+/// Rhumb-line-related algorithms and utils
+pub mod rhumb;
+pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate, RhumbLength};

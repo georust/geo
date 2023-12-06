@@ -33,73 +33,76 @@
 //!
 //! ## Area
 //!
-//! - **[`Area`](Area)**: Calculate the planar area of a geometry
-//! - **[`ChamberlainDuquetteArea`](ChamberlainDuquetteArea)**: Calculate the geodesic area of a geometry on a sphere using the algorithm presented in _Some Algorithms for Polygons on a Sphere_ by Chamberlain and Duquette (2007)
-//! - **[`GeodesicArea`](GeodesicArea)**: Calculate the geodesic area and perimeter of a geometry on an ellipsoid using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
+//! - **[`Area`]**: Calculate the planar area of a geometry
+//! - **[`ChamberlainDuquetteArea`]**: Calculate the geodesic area of a geometry on a sphere using the algorithm presented in _Some Algorithms for Polygons on a Sphere_ by Chamberlain and Duquette (2007)
+//! - **[`GeodesicArea`]**: Calculate the geodesic area and perimeter of a geometry on an ellipsoid using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
 //!
 //! ## Boolean Operations
 //!
-//! - **[`BooleanOps`](BooleanOps)**: combine or split (Multi)Polygons using intersecton, union, xor, or difference operations
+//! - **[`BooleanOps`]**: combine or split (Multi)Polygons using intersecton, union, xor, or difference operations
 //!
 //! ## Distance
 //!
-//! - **[`EuclideanDistance`](EuclideanDistance)**: Calculate the minimum euclidean distance between geometries
-//! - **[`GeodesicDistance`](GeodesicDistance)**: Calculate the minimum geodesic distance between geometries using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
-//! - **[`HausdorffDistance`](HausdorffDistance)**: Calculate "the maximum of the distances from a point in any of the sets to the nearest point in the other set." (Rote, 1991)
-//! - **[`HaversineDistance`](HaversineDistance)**: Calculate the minimum geodesic distance between geometries using the haversine formula
-//! - **[`VincentyDistance`](VincentyDistance)**: Calculate the minimum geodesic distance between geometries using Vincenty’s formula
+//! - **[`EuclideanDistance`]**: Calculate the minimum euclidean distance between geometries
+//! - **[`GeodesicDistance`]**: Calculate the minimum geodesic distance between geometries using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
+//! - **[`HausdorffDistance`]**: Calculate "the maximum of the distances from a point in any of the sets to the nearest point in the other set." (Rote, 1991)
+//! - **[`HaversineDistance`]**: Calculate the minimum geodesic distance between geometries using the haversine formula
+//! - **[`RhumbDistance`]**: Calculate the length of a rhumb line connecting the two geometries
+//! - **[`VincentyDistance`]**: Calculate the minimum geodesic distance between geometries using Vincenty’s formula
 //!
 //! ## Length
 //!
-//! - **[`EuclideanLength`](EuclideanLength)**: Calculate the euclidean length of a geometry
-//! - **[`GeodesicLength`](GeodesicLength)**: Calculate the geodesic length of a geometry using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
-//! - **[`HaversineLength`](HaversineLength)**: Calculate the geodesic length of a geometry using the haversine formula
-//! - **[`VincentyLength`](VincentyLength)**: Calculate the geodesic length of a geometry using Vincenty’s formula
+//! - **[`EuclideanLength`]**: Calculate the euclidean length of a geometry
+//! - **[`GeodesicLength`]**: Calculate the geodesic length of a geometry using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
+//! - **[`HaversineLength`]**: Calculate the geodesic length of a geometry using the haversine formula
+//! - **[`RhumbLength`]**: Calculate the length of a geometry assuming it's composed of rhumb lines
+//! - **[`VincentyLength`]**: Calculate the geodesic length of a geometry using Vincenty’s formula
 //!
 //! ## Outlier Detection
 //!
-//! - **[`OutlierDetection`](OutlierDetection)**: Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
+//! - **[`OutlierDetection`]**: Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
 //!
 //! ## Simplification
 //!
-//! - **[`Simplify`](Simplify)**: Simplify a geometry using the Ramer–Douglas–Peucker algorithm
-//! - **[`SimplifyIdx`](SimplifyIdx)**: Calculate a simplified geometry using the Ramer–Douglas–Peucker algorithm, returning coordinate indices
-//! - **[`SimplifyVw`](SimplifyVw)**: Simplify a geometry using the Visvalingam-Whyatt algorithm
-//! - **[`SimplifyVwPreserve`](SimplifyVwPreserve)**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
-//! - **[`SimplifyVwIdx`](SimplifyVwIdx)**: Calculate a simplified geometry using the Visvalingam-Whyatt algorithm, returning coordinate indices
+//! - **[`Simplify`]**: Simplify a geometry using the Ramer–Douglas–Peucker algorithm
+//! - **[`SimplifyIdx`]**: Calculate a simplified geometry using the Ramer–Douglas–Peucker algorithm, returning coordinate indices
+//! - **[`SimplifyVw`]**: Simplify a geometry using the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVwPreserve`]**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
+//! - **[`SimplifyVwIdx`]**: Calculate a simplified geometry using the Visvalingam-Whyatt algorithm, returning coordinate indices
 //!
 //! ## Query
 //!
 //! - **[`HaversineBearing`]**: Calculate the bearing between points using great circle calculations.
-//! - **[`GeodesicBearing`](GeodesicBearing)**: Calculate the bearing between points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
-//! - **[`ClosestPoint`](ClosestPoint)**: Find the point on a geometry
+//! - **[`GeodesicBearing`]**: Calculate the bearing between points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
+//! - **[`RhumbBearing`]**: Calculate the angle from north of the rhumb line connecting two points.
+//! - **[`ClosestPoint`]**: Find the point on a geometry
 //!   closest to a given point
-//! - **[`HaversineClosestPoint`](HaversineClosestPoint)**: Find the point on a geometry
+//! - **[`HaversineClosestPoint`]**: Find the point on a geometry
 //!   closest to a given point on a sphere using spherical coordinates and lines being great arcs.
-//! - **[`IsConvex`](IsConvex)**: Calculate the convexity of a
+//! - **[`IsConvex`]**: Calculate the convexity of a
 //!   [`LineString`]
-//! - **[`LineInterpolatePoint`](LineInterpolatePoint)**:
+//! - **[`LineInterpolatePoint`]**:
 //!   Generates a point that lies a given fraction along the line
-//! - **[`LineLocatePoint`](LineLocatePoint)**: Calculate the
+//! - **[`LineLocatePoint`]**: Calculate the
 //!   fraction of a line’s total length representing the location of the closest point on the
 //!   line to the given point
 //!
 //! ## Similarity
 //!
-//! - **[`FrechetDistance`](FrechetDistance)**: Calculate the similarity between [`LineString`]s using the Fréchet distance
+//! - **[`FrechetDistance`]**: Calculate the similarity between [`LineString`]s using the Fréchet distance
 //!
 //! ## Topology
 //!
-//! - **[`Contains`](Contains)**: Calculate if a geometry contains another
+//! - **[`Contains`]**: Calculate if a geometry contains another
 //!   geometry
-//! - **[`CoordinatePosition`](CoordinatePosition)**: Calculate
+//! - **[`CoordinatePosition`]**: Calculate
 //!   the position of a coordinate relative to a geometry
-//! - **[`HasDimensions`](HasDimensions)**: Determine the dimensions of a geometry
-//! - **[`Intersects`](Intersects)**: Calculate if a geometry intersects
+//! - **[`HasDimensions`]**: Determine the dimensions of a geometry
+//! - **[`Intersects`]**: Calculate if a geometry intersects
 //!   another geometry
-//! - **[`line_intersection`](line_intersection::line_intersection)**: Calculates the
+//! - **[`line_intersection`]**: Calculates the
 //!   intersection, if any, between two lines.
-//! - **[`Relate`](Relate)**: Topologically relate two geometries based on
+//! - **[`Relate`]**: Topologically relate two geometries based on
 //!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
 //! - **[`Within`]**: Calculate if a geometry lies completely within another geometry.
 //!
@@ -109,8 +112,8 @@
 //!
 //! ## Winding
 //!
-//! - **[`Orient`](Orient)**: Apply a specified winding [`Direction`](orient::Direction) to a [`Polygon`]’s interior and exterior rings
-//! - **[`Winding`](Winding)**: Calculate and manipulate the [`WindingOrder`](winding_order::WindingOrder) of a [`LineString`]
+//! - **[`Orient`]**: Apply a specified winding [`Direction`](orient::Direction) to a [`Polygon`]’s interior and exterior rings
+//! - **[`Winding`]**: Calculate and manipulate the [`WindingOrder`](winding_order::WindingOrder) of a [`LineString`]
 //!
 //! ## Iteration
 //!
@@ -123,24 +126,24 @@
 //!
 //! ## Boundary
 //!
-//! - **[`BoundingRect`](BoundingRect)**: Calculate the axis-aligned
+//! - **[`BoundingRect`]**: Calculate the axis-aligned
 //!   bounding rectangle of a geometry
-//! - **[`MinimumRotatedRect`](MinimumRotatedRect)**: Calculate the
+//! - **[`MinimumRotatedRect`]**: Calculate the
 //!   minimum bounding box of a geometry
-//! - **[`ConcaveHull`](ConcaveHull)**: Calculate the concave hull of a
+//! - **[`ConcaveHull`]**: Calculate the concave hull of a
 //!   geometry
-//! - **[`ConvexHull`](ConvexHull)**: Calculate the convex hull of a
+//! - **[`ConvexHull`]**: Calculate the convex hull of a
 //!   geometry
-//! - **[`Extremes`](Extremes)**: Calculate the extreme coordinates and
+//! - **[`Extremes`]**: Calculate the extreme coordinates and
 //!   indices of a geometry
 //!
 //! ## Affine transformations
 //!
-//! - **[`Rotate`](Rotate)**: Rotate a geometry around its centroid
-//! - **[`Scale`](Scale)**: Scale a geometry up or down by a factor
-//! - **[`Skew`](Skew)**: Skew a geometry by shearing angles along the `x` and `y` dimension
-//! - **[`Translate`](Translate)**: Translate a geometry along its axis
-//! - **[`AffineOps`](AffineOps)**: generalised composable affine operations
+//! - **[`Rotate`]**: Rotate a geometry around its centroid
+//! - **[`Scale`]**: Scale a geometry up or down by a factor
+//! - **[`Skew`]**: Skew a geometry by shearing angles along the `x` and `y` dimension
+//! - **[`Translate`]**: Translate a geometry along its axis
+//! - **[`AffineOps`]**: generalised composable affine operations
 //!
 //! ## Conversion
 //!
@@ -151,17 +154,21 @@
 //!
 //! ## Miscellaneous
 //!
-//! - **[`Centroid`](Centroid)**: Calculate the centroid of a geometry
-//! - **[`ChaikinSmoothing`](ChaikinSmoothing)**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikin's algorithm.
-//! - **[`Densify`](Densify)**: Densify linear geometry components by interpolating points
-//! - **[`GeodesicDestination`](GeodesicDestination)**: Given a start point, bearing, and distance, calculate the destination point on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
-//! - **[`GeodesicIntermediate`](GeodesicIntermediate)**: Calculate intermediate points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
-//! - **[`HaversineDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere
-//! - **[`HaversineIntermediate`](HaversineIntermediate)**: Calculate intermediate points on a sphere
-//! - **[`proj`](proj)**: Project geometries with the `proj` crate (requires the `use-proj` feature)
-//! - **[`LineStringSegmentize`](LineStringSegmentize)**: Segment a LineString into `n` segments.
-//! - **[`Transform`](Transform)**: Transform a geometry using Proj.
-//! - **[`RemoveRepeatedPoints`](RemoveRepeatedPoints)**: Remove repeated points from a geometry.
+//! - **[`Centroid`]**: Calculate the centroid of a geometry
+//! - **[`ChaikinSmoothing`]**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikin's algorithm.
+//! - **[`Densify`]**: Densify linear geometry components by interpolating points
+//! - **[`DensifyHaversine`]**: Densify spherical geometry by interpolating points on a sphere
+//! - **[`GeodesicDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
+//! - **[`GeodesicIntermediate`]**: Calculate intermediate points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
+//! - **[`HaversineDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere assuming travel on a great circle
+//! - **[`HaversineIntermediate`]**: Calculate intermediate points on a sphere along a great-circle line
+//! - **[`RhumbDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere assuming travel along a rhumb line
+//! - **[`RhumbIntermediate`]**: Calculate intermediate points on a sphere along a rhumb line
+//! - **[`proj`]**: Project geometries with the `proj` crate (requires the `use-proj` feature)
+//! - **[`LineStringSegmentize`]**: Segment a LineString into `n` segments.
+//! - **[`LineStringSegmentizeHaversine`]**: Segment a LineString using Haversine distance.
+//! - **[`Transform`]**: Transform a geometry using Proj.
+//! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry.
 //!
 //! # Features
 //!
@@ -207,7 +214,7 @@ extern crate serde;
 pub use crate::algorithm::*;
 pub use crate::types::Closest;
 
-pub use geo_types::{coord, line_string, point, polygon, CoordFloat, CoordNum};
+pub use geo_types::{coord, line_string, point, polygon, wkt, CoordFloat, CoordNum};
 
 pub mod geometry;
 pub use geometry::*;
