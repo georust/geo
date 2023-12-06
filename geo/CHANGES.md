@@ -7,6 +7,8 @@
   * <https://github.com/georust/geo/pull/1119>
 * Add `LineStringSegmentizeHaversine` trait as a an alternative to `LineStringSegmentize` for geographic coordinates.
   * <https://github.com/georust/geo/pull/1107>
+* Make `SpadeTriangulationConfig` actually configurable
+  * <https://github.com/georust/geo/pull/1123>
 
 ## 0.27.0
 
