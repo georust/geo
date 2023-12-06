@@ -19,7 +19,7 @@ use crate::{Centroid, Contains};
 pub struct SpadeTriangulationConfig<T: SpadeTriangulationFloat> {
     /// Coordinates within this radius are snapped to the same position. For any two `Coords` there's
     /// no real way to influence the decision when choosing the snapper and the snappee
-    snap_radius: T,
+    pub snap_radius: T,
 }
 
 impl<T> Default for SpadeTriangulationConfig<T>
