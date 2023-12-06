@@ -1,6 +1,8 @@
 # Changes
 
 ## Unreleased
+* Implement ChaikinSmoothing to work on Geometry types
+  * <https://github.com/georust/geo/pull/1116>
 * Fix a panic when calculating the haversine closest point to a point intersecting the geometry
   * <https://github.com/georust/geo/pull/1119>
 * Add `LineStringSegmentizeHaversine` trait as a an alternative to `LineStringSegmentize` for geographic coordinates.
