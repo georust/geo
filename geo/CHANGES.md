@@ -1,5 +1,11 @@
 # Changes
 
+## Unreleased
+* Fix a panic when calculating the haversine closest point to a point intersecting the geometry
+  * <https://github.com/georust/geo/pull/1119>
+* Add `LineStringSegmentizeHaversine` trait as a an alternative to `LineStringSegmentize` for geographic coordinates.
+  * <https://github.com/georust/geo/pull/1107>
+
 ## 0.27.0
 
 * Use `CachedEnvelope` in R-Trees when computing euclidean distance between polygons
