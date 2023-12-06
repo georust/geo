@@ -2,7 +2,9 @@ use std::ops::Mul;
 
 use num_traits::FromPrimitive;
 
-use crate::{coord, Coord, CoordFloat, LineString, MultiLineString, MultiPolygon, Polygon, Geometry};
+use crate::{
+    coord, Coord, CoordFloat, Geometry, LineString, MultiLineString, MultiPolygon, Polygon,
+};
 
 /// Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
 ///
@@ -92,8 +94,8 @@ macro_rules! blanket_run_chaikin_smoothing {
 }
 
 impl<T> ChaikinSmoothing<T> for Geometry<T>
-    where
-        T: CoordFloat + FromPrimitive,
+where
+    T: CoordFloat + FromPrimitive,
 {
     fn chaikin_smoothing(&self, n_iterations: usize) -> Geometry<T> {
         match self {
@@ -101,7 +103,7 @@ impl<T> ChaikinSmoothing<T> for Geometry<T>
             Geometry::MultiLineString(child) => blanket_run_chaikin_smoothing!(child, n_iterations),
             Geometry::Polygon(child) => blanket_run_chaikin_smoothing!(child, n_iterations),
             Geometry::MultiPolygon(child) => blanket_run_chaikin_smoothing!(child, n_iterations),
-            _ => self.clone()
+            _ => self.clone(),
         }
     }
 }
@@ -157,7 +159,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::ChaikinSmoothing;
-    use crate::{LineString, Polygon, Geometry, Point};
+    use crate::{Geometry, LineString, Point, Polygon};
 
     #[test]
     fn geometry() {
@@ -185,10 +187,7 @@ mod test {
         let pt_geo: Geometry = pt.into();
         let pt_geo_out = pt_geo.chaikin_smoothing(1);
         let pt_out: Point = pt_geo_out.try_into().unwrap();
-        assert_eq!(
-            pt_out,
-            Point::from((3.0, 0.0))
-        );
+        assert_eq!(pt_out, Point::from((3.0, 0.0)));
     }
 
     #[test]
