@@ -4,8 +4,8 @@ use std::fmt::Debug;
 use super::*;
 use crate::{sweep::LineOrPoint, GeoFloat, OpType};
 
-/// A trait to compute the final shape of a collection of edges by tracking the
-/// regions formed by those edges.
+/// A trait to compute the final shape of a collection of non-intersecting edges
+/// by tracking the regions formed by those edges.
 pub trait Spec<T: GeoFloat> {
     // Region is an associated type rather than the concrete `Region` type to
     // support possible future implementations (e.g., union of a Vec of polygons).

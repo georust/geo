@@ -6,8 +6,8 @@ use crate::{
     CoordsIter, GeoFloat as Float, LineString, Polygon,
 };
 
-/// The state for computing the output shape of a collection of shapes after
-/// applying `S`.
+/// The state for computing the output shape of a collection of shapes (with
+/// possibly intersecting geometry) by applying `S`.
 #[derive(Debug, Clone)]
 pub struct Proc<T: Float, S: Spec<T>> {
     spec: S,
