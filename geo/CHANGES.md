@@ -48,21 +48,6 @@
   * <https://github.com/georust/geo/pull/1123>
 * PERF: small improvements to TriangulateSpade trait
   * <https://github.com/georust/geo/pull/1122>
-* POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
-  * <https://github.com/georust/geo/pull/1134>
-* Add topological equality comparison method:
-  * <https://github.com/georust/geo/pull/1133>
-* Add docs to Relate trait
-  * <https://github.com/georust/geo/pull/1135>
-* Add remaining Relate predicates
-  * <https://github.com/georust/geo/pull/1136>
-* Update rstar to v0.12.0
-* Implement `CoordsIter` for arrays and slices. This is useful when you'd like to use traits
-  implemented for `CoordsIter` without re-allocating (e.g., creating a `MultiPoint`).
-* Add `compose_many` method to `AffineOps`
-  * <https://github.com/georust/geo/pull/1148>
-* Point in `Triangle` and `Rect` performance improvemnets
-  * <https://github.com/georust/geo/pull/1057>
 
 ## 0.27.0
 
