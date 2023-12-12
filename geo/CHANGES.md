@@ -11,6 +11,8 @@
   * <https://github.com/georust/geo/pull/1123>
 * PERF: small improvements to TriangulateSpade trait
   * <https://github.com/georust/geo/pull/1122>
+* Add `Stitch` trait which implements a new kind of combining algorithm for geometries
+  * <https://github.com/georust/geo/pull/1087>
 
 ## 0.27.0
 
@@ -44,8 +46,6 @@
   * <https://github.com/georust/geo/pull/1083>
 * Add `len()` and `is_empty()` to `MultiPoint`
   * <https://github.com/georust/geo/pull/1109>
-* Add `Stitch` trait which implements a new kind of combining algorithm for geometries
-  * <https://github.com/georust/geo/pull/1087>
 
 ## 0.26.0
 
