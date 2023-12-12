@@ -40,7 +40,7 @@ use std::{fmt, ops::Mul, ops::Neg};
 ///     (x: -0.5688687, y: 5.5688687)
 /// ], max_relative = 1.0);
 /// ```
-pub trait AffineOps<T: CoordNum> {
+pub trait AffineOps<T: CoordNum + Neg> {
     /// Apply `transform` immutably, outputting a new geometry.
     #[must_use]
     fn affine_transform(&self, transform: &AffineTransform<T>) -> Self;
@@ -49,7 +49,9 @@ pub trait AffineOps<T: CoordNum> {
     fn affine_transform_mut(&mut self, transform: &AffineTransform<T>);
 }
 
-impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> AffineOps<T> for M {
+impl<T: CoordNum + Neg, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> AffineOps<T>
+    for M
+{
     fn affine_transform(&self, transform: &AffineTransform<T>) -> Self {
         self.map_coords(|c| transform.apply(c))
     }
@@ -116,16 +118,16 @@ impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> Affin
 /// ], max_relative = 1.0);
 /// ```
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct AffineTransform<T: CoordNum = f64>([[T; 3]; 3]);
+pub struct AffineTransform<T: CoordNum + Neg = f64>([[T; 3]; 3]);
 
-impl<T: CoordNum> Default for AffineTransform<T> {
+impl<T: CoordNum + Neg> Default for AffineTransform<T> {
     fn default() -> Self {
         // identity matrix
         Self::identity()
     }
 }
 
-impl<T: CoordNum> AffineTransform<T> {
+impl<T: CoordNum + Neg> AffineTransform<T> {
     /// Create a new affine transformation by composing two `AffineTransform`s.
     ///
     /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
@@ -317,7 +319,7 @@ impl<T: CoordNum + Neg> AffineTransform<T> {
     }
 }
 
-impl<T: CoordNum> fmt::Debug for AffineTransform<T> {
+impl<T: CoordNum + Neg> fmt::Debug for AffineTransform<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AffineTransform")
             .field("a", &self.0[0][0])
@@ -330,13 +332,13 @@ impl<T: CoordNum> fmt::Debug for AffineTransform<T> {
     }
 }
 
-impl<T: CoordNum> From<[T; 6]> for AffineTransform<T> {
+impl<T: CoordNum + Neg + Mul> From<[T; 6]> for AffineTransform<T> {
     fn from(arr: [T; 6]) -> Self {
         Self::new(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5])
     }
 }
 
-impl<T: CoordNum> From<(T, T, T, T, T, T)> for AffineTransform<T> {
+impl<T: CoordNum + Neg + Mul> From<(T, T, T, T, T, T)> for AffineTransform<T> {
     fn from(tup: (T, T, T, T, T, T)) -> Self {
         Self::new(tup.0, tup.1, tup.2, tup.3, tup.4, tup.5)
     }
@@ -430,7 +432,7 @@ impl<U: CoordFloat> AffineTransform<U> {
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for AffineTransform<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq + Neg,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
@@ -466,7 +468,7 @@ where
 #[cfg(any(feature = "approx", test))]
 impl<T> AbsDiffEq for AffineTransform<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordNum,
+    T: AbsDiffEq<Epsilon = T> + CoordNum + Neg,
     T::Epsilon: Copy,
 {
     type Epsilon = T;
