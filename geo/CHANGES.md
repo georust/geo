@@ -16,6 +16,8 @@
   * <https://github.com/georust/geo/pull/1199>
 * Bump `geo` MSRV to 1.74 and update CI
   * <https://github.com/georust/geo/pull/1201>
+* Add `Stitch` trait which implements a new kind of combining algorithm for geometries
+  * <https://github.com/georust/geo/pull/1087>
 
 ## 0.28.0
 
@@ -94,8 +96,6 @@
   * <https://github.com/georust/geo/pull/1083>
 * Add `len()` and `is_empty()` to `MultiPoint`
   * <https://github.com/georust/geo/pull/1109>
-* Add `Stitch` trait which implements a new kind of combining algorithm for geometries
-  * <https://github.com/georust/geo/pull/1087>
 
 ## 0.26.0
 
