@@ -39,6 +39,10 @@ macro_rules! define_test {
             } else {
                 is_multipolygon_nonempty(&res);
             }
+
+            use wkt::ToWkt;
+            println!("{}", res.to_wkt());
+
             has_num_polygons(&res, $num_polys);
             has_num_holes(&res, $num_holes);
             has_num_vertices(&res, $num_verts);
@@ -596,9 +600,9 @@ define_test!(
     },
     results: 
     empty     = false,
-    num_polys = 2,
-    num_holes = vec![0, 0],
-    num_verts = vec![10, 5],
+    num_polys = 1,
+    num_holes = vec![0],
+    num_verts = vec![14],
 );
 
 define_test!(

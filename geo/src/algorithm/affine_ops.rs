@@ -224,37 +224,6 @@ impl<T: CoordNum + Neg> AffineTransform<T> {
         )
     }
 
-    /// Return the inverse of a given transform. Composing a transform with its inverse yields
-    /// the [identity matrix](Self::identity)
-    pub fn inverse(&self) -> Option<Self>
-    where
-        <T as Neg>::Output: Mul<T>,
-        <<T as Neg>::Output as Mul<T>>::Output: ToPrimitive,
-    {
-        let a = self.0[0][0];
-        let b = self.0[0][1];
-        let xoff = self.0[0][2];
-        let d = self.0[1][0];
-        let e = self.0[1][1];
-        let yoff = self.0[1][2];
-
-        let determinant = a * e - b * d;
-
-        if determinant == T::zero() {
-            return None; // The matrix is not invertible
-        }
-
-        let inv_det = T::one() / determinant;
-        Some(Self::new(
-            e * inv_det,
-            T::from(-b * inv_det).unwrap(),
-            (b * yoff - e * xoff) * inv_det,
-            T::from(-d * inv_det).unwrap(),
-            a * inv_det,
-            (d * xoff - a * yoff) * inv_det,
-        ))
-    }
-
     /// Whether the transformation is equivalent to the [identity matrix](Self::identity),
     /// that is, whether it's application will be a a no-op.
     ///
@@ -409,7 +378,7 @@ impl<T: CoordNum + Neg> AffineTransform<T> {
     }
 }
 
-impl<T: CoordNum> fmt::Debug for AffineTransform<T> {
+impl<T: CoordNum + Neg> fmt::Debug for AffineTransform<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AffineTransform")
             .field("a", &self.0[0][0])
@@ -522,7 +491,7 @@ impl<U: CoordFloat> AffineTransform<U> {
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for AffineTransform<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq + Neg,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
@@ -558,7 +527,7 @@ where
 #[cfg(any(feature = "approx", test))]
 impl<T> AbsDiffEq for AffineTransform<T>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordNum,
+    T: AbsDiffEq<Epsilon = T> + CoordNum + Neg,
     T::Epsilon: Copy,
 {
     type Epsilon = T;

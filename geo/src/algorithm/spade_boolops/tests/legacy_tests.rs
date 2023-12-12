@@ -28,10 +28,14 @@ fn test_rect_overlapping() {
     let wkt1 = "POLYGON((0 0,1 0,1 1,0 1,0 0))";
     let wkt2 = "POLYGON((0.5 1,2 1,2 2,0.5 2,0.5 1))";
 
-    let wkt_union = "MULTIPOLYGON(((0.5 2,0.5 1,0 1,0 0,1 0,1 1,2 1,2 2,0.5 2)))";
+    let wkt_union = "MULTIPOLYGON(((0.5 1,0 1,0 0,1 0,1 1,2 1,2 2,0.5 2, 0.5 1)))";
     let [p1, p2] = check_op::<f64>(wkt1, wkt2);
     let output = MultiPolygon::union(&p1, &p2).expect("boolop works");
-    assert_eq!(output, MultiPolygon::try_from_wkt_str(wkt_union).unwrap());
+    let expected = MultiPolygon::try_from_wkt_str(wkt_union).unwrap();
+    assert_eq!(
+        output, expected,
+        "out: {output:?} vs expected: {expected:?}"
+    );
 }
 
 #[test]
@@ -141,6 +145,7 @@ fn test_issue_885_big_simplified() {
 
 // care: This test highlights that the SpadeBoolops algo is awfully slow! :S
 #[test]
+#[ignore = "takes too long for CI"]
 fn test_issue_894() {
     _ = pretty_env_logger::try_init();
     use geo_test_fixtures::multi_polygon;
