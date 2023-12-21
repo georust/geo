@@ -11,6 +11,7 @@
   * <https://github.com/georust/geo/pull/1123>
 * PERF: small improvements to TriangulateSpade trait
   * <https://github.com/georust/geo/pull/1122>
+* Add regression test to reproduce a panic in RegionAssembly
 
 ## 0.27.0
 

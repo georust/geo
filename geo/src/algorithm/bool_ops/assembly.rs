@@ -3,12 +3,7 @@ use std::{
     collections::{BTreeMap, HashMap, VecDeque},
 };
 
-use crate::{
-    sweep::{compare_crossings, Cross, CrossingsIter, LineOrPoint, SweepPoint},
-    utils::EitherIter,
-    winding_order::WindingOrder,
-    GeoFloat,
-};
+use crate::{sweep::{compare_crossings, Cross, CrossingsIter, LineOrPoint, SweepPoint}, utils::EitherIter, winding_order::WindingOrder, GeoFloat, HasDimensions};
 use geo_types::{LineString, MultiPolygon, Polygon};
 
 /// Assemble polygons from boundary segments of the output region.
@@ -40,9 +35,19 @@ impl<T: GeoFloat> RegionAssembly<T> {
         let mut iter = CrossingsIter::new_simple(self.segments.iter());
         let mut snakes = vec![];
 
+        // keep a duplicate for println in case the algorithm panics
+        let segments = self.segments.clone();
+
         while let Some(pt) = iter.next() {
             let num_segments = iter.intersections().len();
+            if num_segments % 2 != 0 { 
+                // print the segments to console causing the panic
+                for seg in segments.iter() {
+                    trace!("{:?}", seg);
+                }
+            }
             debug_assert!(num_segments % 2 == 0, "assembly segments must be eulierian");
+
             iter.intersections_mut().sort_unstable_by(compare_crossings);
 
             let first = &iter.intersections()[0];
@@ -383,4 +388,29 @@ impl<T: GeoFloat> Cross for Segment<T> {
     fn line(&self) -> LineOrPoint<Self::Scalar> {
         self.geom
     }
+}
+
+use geo_types::coord;
+
+#[test]
+fn test_assembly_union() {
+    fn segment(c11: f64, c12: f64, c21: f64, c22: f64) -> Segment<f64> {
+        let c1 = coord! {x:c11, y:c12};
+        let c2 = coord! {x: c21, y: c22};
+        let line = LineOrPoint::Line {
+            left: SweepPoint::from(c1),
+            right: SweepPoint::from(c2),
+        };
+        let region = Cell::new(false);
+
+        Segment { geom: line, region: region, snake_idx: Cell::new(0_usize) }
+    }
+
+    let segments = include!("assembly_test_data.in");
+
+    let mut assembly: RegionAssembly<f64> = RegionAssembly { segments: segments };
+
+    // must not panic!!   
+    let mpoly = assembly.finish();
+    assert!(!mpoly.is_empty());
 }
