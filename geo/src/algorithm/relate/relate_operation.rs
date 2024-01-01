@@ -550,7 +550,7 @@ mod test {
         let lsrelation = ls1.relate(&ls2);
 
         let de9im_eq = "T*F**FFF*";
-        assert!(polyrelation.matches(&de9im_eq).unwrap());
-        assert!(lsrelation.matches(&de9im_eq).unwrap());
+        assert!(polyrelation.matches(de9im_eq).unwrap());
+        assert!(lsrelation.matches(de9im_eq).unwrap());
     }
 }
