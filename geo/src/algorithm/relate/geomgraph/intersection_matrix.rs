@@ -223,6 +223,16 @@ impl IntersectionMatrix {
             && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
     }
 
+    /// Tests whether this matrix matches `[T*F**FFF*]`.
+    ///
+    /// returns `true` if the first geometry is *topologically* equal to the second.
+    pub fn is_equal_topo(&self) -> bool {
+        self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
+            && self.0[CoordPos::Inside][CoordPos::Outside] == Dimensions::Empty
+            && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
+            && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
+    }
+
     /// Directly accesses this matrix
     ///
     /// ```
