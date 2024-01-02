@@ -11,6 +11,8 @@
   * <https://github.com/georust/geo/pull/1123>
 * PERF: small improvements to TriangulateSpade trait
   * <https://github.com/georust/geo/pull/1122>
+* POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
+  * <https://github.com/georust/geo/pull/1134>
 
 ## 0.27.0
 

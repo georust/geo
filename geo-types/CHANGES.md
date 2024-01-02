@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+* POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
+  * <https://github.com/georust/geo/pull/1134>
+
 ## 0.7.12
 
 * Add `Polygon::try_exterior_mut` and `Polygon::try_interiors_mut`.
