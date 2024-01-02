@@ -13,6 +13,8 @@
   * <https://github.com/georust/geo/pull/1122>
 * Add `StitchTriangles` trait which implements a new kind of combining algorithm for `Triangle`s
   * <https://github.com/georust/geo/pull/1087>
+* POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
+  * <https://github.com/georust/geo/pull/1134>
 
 ## 0.27.0
 
