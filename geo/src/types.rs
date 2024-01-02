@@ -156,3 +156,75 @@ macro_rules! __geometry_delegate_impl_helper {
             )+
         };
 }
+
+use std::cmp::Ordering;
+/// Return the ordering between self and other.
+///
+/// For integers, this should behave just like [`Ord`].
+///
+/// For floating point numbers, unlike the standard partial comparison between floating point numbers, this comparison
+/// always produces an ordering.
+///
+/// See [f64::total_cmp](https://doc.rust-lang.org/src/core/num/f64.rs.html#1432) for details.
+pub trait TotalOrd {
+    fn total_cmp(&self, other: &Self) -> Ordering;
+}
+
+macro_rules! impl_total_ord_for_float {
+    ($t: ident) => {
+        impl TotalOrd for $t {
+            fn total_cmp(&self, other: &Self) -> Ordering {
+                self.total_cmp(other)
+            }
+        }
+    };
+}
+
+macro_rules! impl_total_ord_for_int {
+    ($t: ident) => {
+        impl TotalOrd for $t {
+            fn total_cmp(&self, other: &Self) -> Ordering {
+                self.cmp(other)
+            }
+        }
+    };
+}
+
+impl_total_ord_for_float!(f32);
+impl_total_ord_for_float!(f64);
+
+impl_total_ord_for_int!(u8);
+impl_total_ord_for_int!(u16);
+impl_total_ord_for_int!(u32);
+impl_total_ord_for_int!(u64);
+impl_total_ord_for_int!(u128);
+impl_total_ord_for_int!(i8);
+impl_total_ord_for_int!(i16);
+impl_total_ord_for_int!(i32);
+impl_total_ord_for_int!(i64);
+impl_total_ord_for_int!(i128);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn total_ord_float() {
+        assert_eq!(TotalOrd::total_cmp(&3.0f64, &2.0f64), Ordering::Greater);
+        assert_eq!(TotalOrd::total_cmp(&2.0f64, &2.0f64), Ordering::Equal);
+        assert_eq!(TotalOrd::total_cmp(&1.0f64, &2.0f64), Ordering::Less);
+        assert_eq!(TotalOrd::total_cmp(&1.0f64, &f64::NAN), Ordering::Less);
+        assert_eq!(TotalOrd::total_cmp(&f64::NAN, &f64::NAN), Ordering::Equal);
+        assert_eq!(
+            TotalOrd::total_cmp(&f64::INFINITY, &f64::NAN),
+            Ordering::Less
+        );
+    }
+
+    #[test]
+    fn total_ord_int() {
+        assert_eq!(TotalOrd::total_cmp(&3i32, &2i32), Ordering::Greater);
+        assert_eq!(TotalOrd::total_cmp(&2i32, &2i32), Ordering::Equal);
+        assert_eq!(TotalOrd::total_cmp(&1i32, &2i32), Ordering::Less);
+    }
+}
