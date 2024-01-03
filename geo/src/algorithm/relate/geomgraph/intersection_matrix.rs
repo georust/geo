@@ -231,6 +231,7 @@ impl IntersectionMatrix {
             && self.0[CoordPos::Inside][CoordPos::Outside] == Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
+            && self.0[CoordPos::OnBoundary][CoordPos::Outside] == Dimensions::Empty
     }
 
     /// Directly accesses this matrix
