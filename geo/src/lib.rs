@@ -224,7 +224,7 @@ pub mod algorithm;
 mod geometry_cow;
 mod types;
 mod utils;
-use crate::types::TotalOrd;
+// use crate::types::TotalOrd;
 pub(crate) use geometry_cow::GeometryCow;
 
 #[cfg(test)]
@@ -303,5 +303,5 @@ impl<T> GeoFloat for T where
 }
 
 /// A trait for methods which work for both integers **and** floating point
-pub trait GeoNum: CoordNum + HasKernel + TotalOrd {}
-impl<T> GeoNum for T where T: CoordNum + HasKernel + TotalOrd {}
+pub trait GeoNum: CoordNum + HasKernel {}
+impl<T> GeoNum for T where T: CoordNum + HasKernel {}
