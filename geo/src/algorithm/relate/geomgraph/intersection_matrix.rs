@@ -192,7 +192,7 @@ impl IntersectionMatrix {
     // See https://en.wikipedia.org/wiki/DE-9IM#Spatial_predicates for a mapping between predicates and matrices
     // The number of constraints in your relation function MUST match the number of NON-MASK (T or F) matrix entries
 
-    // CoordPos relations map onto the matrix positions as follows:
+    // Indexes of the IntersectionMatrix map to indexes of a DE-9IM specification string as follows:
     // ==================================================================
     // self.0[CoordPos::Inside][CoordPos::Inside]: 0
     // self.0[CoordPos::Inside][CoordPos::OnBoundary]: 1
