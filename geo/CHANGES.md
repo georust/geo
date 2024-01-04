@@ -1,17 +1,23 @@
 # Changes
 
 ## Unreleased
-* POSSIBLY BREAKING: New `TotalOrd` trait is required for our base numeric
-  trait GeoNum, this avoids some potential crashes when working with geometries
-  that contain NaN points. This shouldn't break for any common numeric types,
-  but if you are using something exotic you'll need to manually implement
-  TotalOrd for your numeric type.
+* BREAKING: The `HasKernel` trait was removed and it's functionality was merged
+  into `GeoNum`. If you are using common scalars for your geometry (f32, f64,
+  i64, i32, i16, isize), this should have no effect on you. If you are using an
+  exotic scalar type, you'll need to implement `GeoNum` for it instead of
+  `HasKernel`. If you had functionality defined in terms of `HasKernel` before,
+  define it in terms of `GeoNum` instead.
   * <https://github.com/georust/geo/pull/1134>
-* POSSIBLY BREAKING: Visvalingam trait implementation moved from
-  `geo_types::CoordNum` to `geo::GeoNum` as fallout of introducing the
-  `TotalOrd` constraint. This shouldn't break anything for common numeric
+* BREAKING: Added a new `total_cmp` method to `GeoNum`. This avoids some
+  potential crashes when working with geometries that contain NaN points. This
+  shouldn't break for any common numeric types, but if you are using something
+  exotic you'll need to manually implement `GeoNum` for your numeric type.
+  * <https://github.com/georust/geo/pull/1134>
+* POSSIBLY BREAKING: `SimplifyVwPreserve` trait implementation moved from
+  `geo_types::CoordNum` to `geo::GeoNum` as a consequence of introducing the
+  `GeoNum::total_cmp`. This shouldn't break anything for common numeric
   types, but if you are using something exotic you'll need to manually
-  implement TotalOrd for your numeric type.
+  implement `GeoNum` for your numeric type.
 * Implement ChaikinSmoothing to work on Geometry types
   * <https://github.com/georust/geo/pull/1116>
 * Fix a panic when calculating the haversine closest point to a point intersecting the geometry
