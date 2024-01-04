@@ -211,9 +211,9 @@
 #[macro_use]
 extern crate serde;
 
-use std::cmp::Ordering;
 pub use crate::algorithm::*;
 pub use crate::types::Closest;
+use std::cmp::Ordering;
 
 pub use geo_types::{coord, line_string, point, polygon, wkt, CoordFloat, CoordNum};
 
@@ -225,6 +225,7 @@ pub mod algorithm;
 mod geometry_cow;
 mod types;
 mod utils;
+use crate::kernels::{RobustKernel, SimpleKernel};
 pub(crate) use geometry_cow::GeometryCow;
 
 #[cfg(test)]
@@ -303,7 +304,8 @@ impl<T> GeoFloat for T where
 }
 
 /// A trait for methods which work for both integers **and** floating point
-pub trait GeoNum: CoordNum + HasKernel {
+pub trait GeoNum: CoordNum {
+    type Ker: Kernel<Self>;
 
     /// Return the ordering between self and other.
     ///
@@ -319,6 +321,7 @@ pub trait GeoNum: CoordNum + HasKernel {
 macro_rules! impl_geo_num_for_float {
     ($t: ident) => {
         impl GeoNum for $t {
+            type Ker = RobustKernel;
             fn total_cmp(&self, other: &Self) -> Ordering {
                 self.total_cmp(other)
             }
@@ -328,6 +331,7 @@ macro_rules! impl_geo_num_for_float {
 macro_rules! impl_geo_num_for_int {
     ($t: ident) => {
         impl GeoNum for $t {
+            type Ker = SimpleKernel;
             fn total_cmp(&self, other: &Self) -> Ordering {
                 self.cmp(other)
             }
@@ -357,10 +361,7 @@ mod tests {
         assert_eq!(GeoNum::total_cmp(&1.0f64, &2.0f64), Ordering::Less);
         assert_eq!(GeoNum::total_cmp(&1.0f64, &f64::NAN), Ordering::Less);
         assert_eq!(GeoNum::total_cmp(&f64::NAN, &f64::NAN), Ordering::Equal);
-        assert_eq!(
-            GeoNum::total_cmp(&f64::INFINITY, &f64::NAN),
-            Ordering::Less
-        );
+        assert_eq!(GeoNum::total_cmp(&f64::INFINITY, &f64::NAN), Ordering::Less);
     }
 
     #[test]
@@ -370,4 +371,3 @@ mod tests {
         assert_eq!(GeoNum::total_cmp(&1i32, &2i32), Ordering::Less);
     }
 }
-
