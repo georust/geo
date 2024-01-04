@@ -56,35 +56,8 @@ pub trait Kernel<T: CoordNum> {
     }
 }
 
-/// Marker trait to assign Kernel for scalars
-pub trait HasKernel: CoordNum {
-    type Ker: Kernel<Self>;
-}
-
-// Helper macro to implement `HasKernel` on a a scalar type
-// `T` (first arg.) by assigning the second arg. It expects
-// the second arg. to be a type that takes one generic
-// parameter that is `T`.
-macro_rules! has_kernel {
-    ($t:ident, $k:ident) => {
-        impl $crate::HasKernel for $t {
-            type Ker = $k;
-        }
-    };
-}
-
 pub mod robust;
 pub use self::robust::RobustKernel;
-has_kernel!(f64, RobustKernel);
-has_kernel!(f32, RobustKernel);
 
 pub mod simple;
 pub use self::simple::SimpleKernel;
-
-has_kernel!(i64, SimpleKernel);
-has_kernel!(i32, SimpleKernel);
-has_kernel!(i16, SimpleKernel);
-has_kernel!(isize, SimpleKernel);
-
-#[cfg(has_i128)]
-has_kernel!(i128, SimpleKernel);

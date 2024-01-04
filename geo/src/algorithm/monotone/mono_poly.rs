@@ -2,7 +2,7 @@ use geo_types::{private_utils::get_bounding_rect, Line};
 
 use crate::{
     coordinate_position::CoordPos, sweep::SweepPoint, BoundingRect, Coord, CoordinatePosition,
-    GeoNum, HasKernel, Intersects, Kernel, LineString, Orientation, Polygon, Rect,
+    GeoNum, Intersects, Kernel, LineString, Orientation, Polygon, Rect,
 };
 
 /// Monotone polygon
@@ -136,7 +136,7 @@ impl<T: GeoNum> CoordinatePosition for MonoPoly<T> {
             return;
         };
 
-        match <T as HasKernel>::Ker::orient2d(top.start, *coord, top.end) {
+        match T::Ker::orient2d(top.start, *coord, top.end) {
             Orientation::Clockwise => return,
             Orientation::Collinear => {
                 *is_inside = true;
@@ -145,7 +145,7 @@ impl<T: GeoNum> CoordinatePosition for MonoPoly<T> {
             }
             _ => {}
         }
-        match <T as HasKernel>::Ker::orient2d(bot.start, *coord, bot.end) {
+        match T::Ker::orient2d(bot.start, *coord, bot.end) {
             Orientation::CounterClockwise => (),
             Orientation::Collinear => {
                 *is_inside = true;
