@@ -59,73 +59,32 @@ pub trait Kernel<T: CoordNum> {
 /// Marker trait to assign Kernel for scalars
 pub trait HasKernel: CoordNum {
     type Ker: Kernel<Self>;
-
-    fn total_cmp(&self, other: &Self) -> Ordering;
 }
 
-// Helper macro to implement `HasKernel` for float types
-macro_rules! has_robust_kernel {
-    ($t:ident) => {
+// Helper macro to implement `HasKernel` on a a scalar type
+// `T` (first arg.) by assigning the second arg. It expects
+// the second arg. to be a type that takes one generic
+// parameter that is `T`.
+macro_rules! has_kernel {
+    ($t:ident, $k:ident) => {
         impl $crate::HasKernel for $t {
-            type Ker = RobustKernel;
-
-            fn total_cmp(&self, other: &Self) -> Ordering {
-                self.total_cmp(other)
-            }
-        }
-    };
-}
-
-// Helper macro to implement `HasKernel` for integer types
-macro_rules! has_simple_kernel {
-    ($t:ident) => {
-        impl $crate::HasKernel for $t {
-            type Ker = SimpleKernel;
-
-            fn total_cmp(&self, other: &Self) -> Ordering {
-                self.cmp(other)
-            }
+            type Ker = $k;
         }
     };
 }
 
 pub mod robust;
 pub use self::robust::RobustKernel;
-has_robust_kernel!(f64);
-has_robust_kernel!(f32);
+has_kernel!(f64, RobustKernel);
+has_kernel!(f32, RobustKernel);
 
 pub mod simple;
 pub use self::simple::SimpleKernel;
 
-has_simple_kernel!(i64);
-has_simple_kernel!(i32);
-has_simple_kernel!(i16);
-has_simple_kernel!(isize);
+has_kernel!(i64, SimpleKernel);
+has_kernel!(i32, SimpleKernel);
+has_kernel!(i16, SimpleKernel);
+has_kernel!(isize, SimpleKernel);
 
 #[cfg(has_i128)]
-has_simple_kernel!(i128, SimpleKernel);
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn total_ord_float() {
-        assert_eq!(HasKernel::total_cmp(&3.0f64, &2.0f64), Ordering::Greater);
-        assert_eq!(HasKernel::total_cmp(&2.0f64, &2.0f64), Ordering::Equal);
-        assert_eq!(HasKernel::total_cmp(&1.0f64, &2.0f64), Ordering::Less);
-        assert_eq!(HasKernel::total_cmp(&1.0f64, &f64::NAN), Ordering::Less);
-        assert_eq!(HasKernel::total_cmp(&f64::NAN, &f64::NAN), Ordering::Equal);
-        assert_eq!(
-            HasKernel::total_cmp(&f64::INFINITY, &f64::NAN),
-            Ordering::Less
-        );
-    }
-
-    #[test]
-    fn total_ord_int() {
-        assert_eq!(HasKernel::total_cmp(&3i32, &2i32), Ordering::Greater);
-        assert_eq!(HasKernel::total_cmp(&2i32, &2i32), Ordering::Equal);
-        assert_eq!(HasKernel::total_cmp(&1i32, &2i32), Ordering::Less);
-    }
-}
+has_kernel!(i128, SimpleKernel);
