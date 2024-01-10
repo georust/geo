@@ -32,6 +32,8 @@
   * <https://github.com/georust/geo/pull/1087>
 * POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
   * <https://github.com/georust/geo/pull/1134>
+* Add topological equality comparison method:
+  * <https://github.com/georust/geo/pull/1133>
 
 ## 0.27.0
 
