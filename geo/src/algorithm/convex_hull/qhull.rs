@@ -1,5 +1,5 @@
 use super::{swap_remove_to_first, trivial_hull};
-use crate::kernels::{HasKernel, Kernel, Orientation};
+use crate::kernels::{Kernel, Orientation};
 use crate::utils::partition_slice;
 use crate::{coord, Coord, GeoNum, LineString};
 
@@ -13,7 +13,7 @@ fn is_ccw<T>(p_a: Coord<T>, p_b: Coord<T>, p_c: Coord<T>) -> bool
 where
     T: GeoNum,
 {
-    let o = <T as HasKernel>::Ker::orient2d(p_a, p_b, p_c);
+    let o = T::Ker::orient2d(p_a, p_b, p_c);
     o == Orientation::CounterClockwise
 }
 
