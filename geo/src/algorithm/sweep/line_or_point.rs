@@ -336,7 +336,7 @@ mod tests {
     use geo_types::{Coord, LineString};
     use wkt::ToWkt;
 
-    use crate::{GeoFloat, GeoNum, HasKernel, Kernel};
+    use crate::{GeoFloat, GeoNum, Kernel};
 
     use super::LineOrPoint;
 
@@ -390,11 +390,11 @@ mod tests {
 
         eprintln!(
             "pred: {:?}",
-            <f64 as HasKernel>::Ker::orient2d(pt_8, pt_7, pt_17)
+            <f64 as GeoNum>::Ker::orient2d(pt_8, pt_7, pt_17)
         );
         eprintln!(
             "pred: {:?}",
-            <f64 as HasKernel>::Ker::orient2d(pt_8, pt_14, pt_16)
+            <f64 as GeoNum>::Ker::orient2d(pt_8, pt_14, pt_16)
         );
     }
 }
