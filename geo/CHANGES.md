@@ -32,6 +32,8 @@
   * <https://github.com/georust/geo/pull/1134>
 * Add topological equality comparison method:
   * <https://github.com/georust/geo/pull/1133>
+* Add docs to Relate trait
+  * <https://github.com/georust/geo/pull/1135>
 
 ## 0.27.0
 
