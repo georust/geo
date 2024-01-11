@@ -330,10 +330,10 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
 
         // the direct parent is the parent which has itself the most parents
         fn find_direct_parents(
-            parents_indexs: &[usize],
+            parent_idxs: &[usize],
             parents: &HashMap<usize, Vec<usize>>,
         ) -> Option<usize> {
-            parents_indexs
+            parent_idxs
                 .iter()
                 .filter_map(|parent_idx| {
                     parents
