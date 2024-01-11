@@ -192,16 +192,15 @@ fn same_line<T: GeoFloat>(l1: &Line<T>, l2: &Line<T>) -> bool {
 
 /// given a collection of lines from multiple polygons, this returns all but the shared lines
 fn find_boundary_lines<T: GeoFloat>(lines: Vec<Line<T>>) -> Vec<Line<T>> {
-    let enumerated_lines = || lines.iter().enumerate();
-    enumerated_lines()
-        // only collect lines that don't have a duplicate in the set
-        .filter_map(|(i, line)| {
-            let same_line_exists = enumerated_lines()
-                .filter(|&(j, _)| j != i)
-                .any(|(_, l)| same_line(line, l));
-            (!same_line_exists).then_some(*line)
-        })
-        .collect::<Vec<_>>()
+    let init = Vec::with_capacity(lines.len());
+    lines.into_iter().fold(init, |mut lines, new_line| {
+        if let Some(idx) = lines.iter().position(|line| same_line(line, &new_line)) {
+            lines.remove(idx);
+        } else {
+            lines.push(new_line);
+        }
+        lines
+    })
 }
 
 // Notes for future: This probably belongs into a `Validify` trait or something
