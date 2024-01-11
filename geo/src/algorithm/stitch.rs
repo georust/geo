@@ -249,6 +249,7 @@ fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<
         .map(|cs| Polygon::new(LineString::new(cs), vec![]))
         .collect::<Vec<_>>();
 
+    // PERF: O(n^2) maybe someone can reduce this. Please benchmark!
     fn find_outmost_ring<F: GeoFloat>(rings: &[Polygon<F>]) -> Option<usize> {
         let enumerated_rings = || rings.iter().enumerate();
         enumerated_rings()
@@ -360,6 +361,7 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
     let polygons = polygons_idxs
         .into_iter()
         .map(|(parent_idx, children_idxs)| {
+            // PERF: extensive cloning here, maybe someone can improve this. Please benchmark!
             let exterior = rings[parent_idx].clone();
             let interiors = children_idxs
                 .into_iter()
