@@ -122,3 +122,7 @@ harness = false
 [[bench]]
 name = "triangulate"
 harness = false
+
+[[bench]]
+name = "stitch"
+harness = false
