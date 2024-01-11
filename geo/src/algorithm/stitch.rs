@@ -231,9 +231,7 @@ fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<
             poly.exterior()
                 .into_iter()
                 .fold((vec![], vec![]), |(mut points, mut rings), coord| {
-                    if let Some(ring) = detect_if_rings_closed_with_point(&mut points, coord) {
-                        rings.push(ring);
-                    }
+                    rings.extend(detect_if_rings_closed_with_point(&mut points, coord));
                     points.push(coord);
                     (points, rings)
                 });
