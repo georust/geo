@@ -58,7 +58,8 @@ impl<T: GeoFloat> RegionAssembly<T> {
                 // are part of a hole or a shell.
                 iter.prev_active(first)
                     .map(|(_, seg)| (seg.region.get(), Some(seg.snake_idx.get())))
-                    // TODO: Figure out why this should be defaulted to 0.
+                    // If the expression is not Some, the snake will complete to an exterior ring
+                    // anyway. Therefore we can set an arbitrary value for the parent snake index.
                     .unwrap_or_else(|| (false, Some(0)))
             } else {
                 // The first crossing is on the right. Since crossings are ordered from
@@ -87,7 +88,9 @@ impl<T: GeoFloat> RegionAssembly<T> {
                         parent_snake_idx = Some(
                             iter.prev_active(c)
                                 .map(|(_, seg)| seg.snake_idx.get())
-                                // TODO
+                                // If the expression is not Some, the snake will complete to an
+                                // exterior ring anyway. Therefore can set an arbitrary value for
+                                // the parent snake index.
                                 .unwrap_or(0),
                         );
                     }
@@ -98,7 +101,9 @@ impl<T: GeoFloat> RegionAssembly<T> {
                         parent_snake_idx = Some(
                             iter.prev_active(d)
                                 .map(|(_, seg)| seg.snake_idx.get())
-                                // TODO
+                                // If the expression is not Some, the snake will complete to an
+                                // exterior ring anyway. Therefore can set an arbitrary value for
+                                // the parent snake index.
                                 .unwrap_or(0),
                         );
                     }
@@ -431,7 +436,7 @@ impl<T: GeoFloat> Snake<T> {
 struct Segment<T: GeoFloat> {
     /// The geometry of the segment.
     geom: LineOrPoint<T>,
-    /// The "region" this segment belongs to. Unused by `LineAssembly`. TODO
+    /// The "region" this segment belongs to. Unused by `LineAssembly`.
     region: Cell<bool>,
     /// The index of the `Snake` that this segment belongs to. Initially 0 as an
     /// "invalid" value. Unused by `LineAssembly`.
