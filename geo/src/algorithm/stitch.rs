@@ -31,6 +31,7 @@ pub trait Stitch<T: GeoFloat> {
     /// This stitching only happens along identical edges which are located in two separate
     /// geometries.
     ///
+    /// ```text
     /// ┌─────x        ┌─────┐
     /// │    /│        │     │
     /// │   / │        │     │
@@ -38,6 +39,7 @@ pub trait Stitch<T: GeoFloat> {
     /// │ /   │        │     │
     /// │/    │        │     │
     /// x─────┘        └─────┘
+    /// ```
     ///
     /// # Examples
     ///
