@@ -210,8 +210,8 @@ fn find_boundary_lines<T: GeoFloat>(lines: Vec<Line<T>>) -> Vec<Line<T>> {
 /// https://www.postgis.net/workshops/postgis-intro/validity.html#repairing-invalidity
 fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<F> {
     fn detect_if_rings_closed_with_point<F: GeoFloat>(
-        points: &mut Vec<&Coord<F>>,
-        p: &Coord<F>,
+        points: &mut Vec<Coord<F>>,
+        p: Coord<F>,
     ) -> Option<Vec<Coord<F>>> {
         // early return here if nothing was found
         let pos = points.iter().position(|&c| c == p)?;
@@ -220,7 +220,6 @@ fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<
         let ring = points
             .drain(pos..)
             .chain(std::iter::once(p))
-            .cloned()
             .collect::<Vec<_>>();
         Some(ring)
     }
@@ -231,14 +230,13 @@ fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<
             poly.exterior()
                 .into_iter()
                 .fold((vec![], vec![]), |(mut points, mut rings), coord| {
-                    rings.extend(detect_if_rings_closed_with_point(&mut points, coord));
-                    points.push(coord);
+                    rings.extend(detect_if_rings_closed_with_point(&mut points, *coord));
+                    points.push(*coord);
                     (points, rings)
                 });
 
         // add leftover coords as last ring
-        let last_ring = points.into_iter().cloned().collect::<Vec<_>>();
-        rings.push(last_ring);
+        rings.push(points);
 
         rings
     };
