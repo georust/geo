@@ -185,9 +185,9 @@ fn fix_orientation<T: GeoFloat>(mut poly: Polygon<T>) -> Polygon<T> {
 }
 
 /// checks whether the to lines are equal or inverted forms of each other
+#[inline]
 fn same_line<T: GeoFloat>(l1: &Line<T>, l2: &Line<T>) -> bool {
-    let flipped_l2 = Line::new(l2.end, l2.start);
-    l1 == l2 || l1 == &flipped_l2
+    (l1.start == l2.start && l1.end == l2.end) || (l1.start == l2.end && l2.start == l1.end)
 }
 
 /// given a collection of lines from multiple polygons, this returns all but the shared lines
