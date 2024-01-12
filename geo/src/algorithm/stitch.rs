@@ -8,8 +8,8 @@ use crate::{Contains, GeoFloat, LinesIter, Winding};
 
 #[derive(Debug)]
 pub enum LineStitchingError {
-    IncompleteRing,
-    InvalidGeometry,
+    IncompleteRing(&'static str),
+    InvalidGeometry(&'static str),
     MissingParent,
     NoExtremum,
 }
@@ -29,7 +29,7 @@ pub(crate) type PolygonStitchingResult<T> = Result<T, LineStitchingError>;
 /// Trait to stitch together split up polygons.
 pub trait Stitch<T: GeoFloat> {
     /// This stitching only happens along identical edges which are located in two separate
-    /// geometries.
+    /// geometries. Please read about the required pre conditions of the inputs!
     ///
     /// ```text
     /// ┌─────x        ┌─────┐
@@ -40,6 +40,13 @@ pub trait Stitch<T: GeoFloat> {
     /// │/    │        │     │
     /// x─────┘        └─────┘
     /// ```
+    ///
+    /// # Pre Conditions
+    ///
+    /// - All the given polygons must be unique. If you're not sure about that, deduplicate before
+    ///   calling the algorithm!
+    /// - Input polygons should be valid polygons. For a definition of validity
+    ///   c.f. https://www.postgis.net/workshops/postgis-intro/validity.html
     ///
     /// # Examples
     ///
@@ -136,8 +143,7 @@ impl_stitch! {
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
         let polys = self
             .iter()
-            .map(|&poly| poly.clone())
-            .map(fix_orientation);
+            .map(|&poly| poly.clone());
         stitch_polygons(polys)
     }
 }
@@ -147,7 +153,7 @@ impl_stitch! {
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
         let polys = self
             .iter()
-            .map(|tri| fix_orientation(tri.to_polygon()));
+            .map(|tri| tri.to_polygon());
         stitch_polygons(polys)
     }
 }
@@ -158,16 +164,17 @@ impl_stitch! {
         let polys = self
             .iter()
             .flat_map(|mp| mp.0.iter())
-            .cloned()
-            .map(fix_orientation);
+            .cloned();
         stitch_polygons(polys)
     }
 }
 
+// main stitching algorithm
 fn stitch_polygons<T: GeoFloat>(
     polys: impl Iterator<Item = Polygon<T>>,
 ) -> PolygonStitchingResult<MultiPolygon<T>> {
     let lines = polys
+        .map(fix_orientation)
         .flat_map(|part| part.lines_iter().collect::<Vec<_>>())
         .collect::<Vec<_>>();
 
@@ -415,7 +422,7 @@ fn stitch_rings_from_lines<F: GeoFloat>(
 
     let mut rings: Vec<LineString<F>> = vec![];
     // terminates since every loop we'll merge two elements into one so the total number of
-    // elements decreases each loop by 1
+    // elements decreases each loop by one
     while let Some(last_part) = ring_parts.pop() {
         let (j, compound_part) = ring_parts
             .iter()
@@ -424,7 +431,7 @@ fn stitch_rings_from_lines<F: GeoFloat>(
                 let new_part = try_stitch(&last_part, other_part)?;
                 Some((j, new_part))
             })
-            .ok_or(LineStitchingError::IncompleteRing)?;
+            .ok_or(LineStitchingError::IncompleteRing("Couldn't reconstruct polygons from the inputs. Please check them for invalidities."))?;
         ring_parts.remove(j);
 
         let is_ring = compound_part.first() == compound_part.last() && !compound_part.is_empty();
