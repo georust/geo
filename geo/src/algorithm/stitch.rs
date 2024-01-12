@@ -136,40 +136,50 @@ impl_stitch! {
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
         let polys = self
             .iter()
-            .map(|&poly| fix_orientation(poly.clone()))
-            .collect::<Vec<_>>();
-        let lines = polys
-            .iter()
-            .flat_map(|part| part.lines_iter())
-            .collect::<Vec<_>>();
-
-        let boundary_lines = find_boundary_lines(lines);
-        let stitched_multipolygon = stitch_multipolygon_from_lines(boundary_lines)?;
-
-        let polys = stitched_multipolygon
-            .into_iter()
-            .map(find_and_fix_holes_in_exterior)
-            .collect::<Vec<_>>();
-
-        Ok(MultiPolygon::new(polys))
+            .map(|&poly| poly.clone())
+            .map(fix_orientation);
+        stitch_polygons(polys)
     }
 }
 
 impl_stitch! {
     Triangle<T> => self
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
-        self.iter()
-            .map(|tri| tri.to_polygon())
-            .collect::<Vec<_>>()
-            .stitch_together()
+        let polys = self
+            .iter()
+            .map(|tri| fix_orientation(tri.to_polygon()));
+        stitch_polygons(polys)
     }
 }
 
 impl_stitch! {
     MultiPolygon<T> => self
     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
-        self.iter().flat_map(|mp| mp.0.iter()).collect::<Vec<_>>().stitch_together()
+        let polys = self
+            .iter()
+            .flat_map(|mp| mp.0.iter())
+            .cloned()
+            .map(fix_orientation);
+        stitch_polygons(polys)
     }
+}
+
+fn stitch_polygons<T: GeoFloat>(
+    polys: impl Iterator<Item = Polygon<T>>,
+) -> PolygonStitchingResult<MultiPolygon<T>> {
+    let lines = polys
+        .flat_map(|part| part.lines_iter().collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+
+    let boundary_lines = find_boundary_lines(lines);
+    let stitched_multipolygon = stitch_multipolygon_from_lines(boundary_lines)?;
+
+    let polys = stitched_multipolygon
+        .into_iter()
+        .map(find_and_fix_holes_in_exterior)
+        .collect::<Vec<_>>();
+
+    Ok(MultiPolygon::new(polys))
 }
 
 /// makes interiors and exteriors of polygon have ccw orientation
