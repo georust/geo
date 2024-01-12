@@ -303,7 +303,7 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
     }
 
     // Associates every ring with its parents (the rings that contain it)
-    let parents: HashMap<usize, Vec<usize>> = rings
+    let parents_of: HashMap<usize, Vec<usize>> = rings
         .iter()
         .enumerate()
         .map(|(ring_idx, ring)| {
@@ -315,11 +315,28 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
     // Associates outer rings with their inner rings
     let mut polygons_idxs: HashMap<usize, Vec<usize>> = HashMap::default();
 
+    // the direct parent is the parent ring which has itself the most parent rings
+    fn find_direct_parents(
+        parent_rings: &[usize],
+        parents_of: &HashMap<usize, Vec<usize>>,
+    ) -> Option<usize> {
+        parent_rings
+            .iter()
+            .filter_map(|ring_idx| {
+                parents_of
+                    .get(ring_idx)
+                    .map(|grandparent_rings| (ring_idx, grandparent_rings))
+            })
+            .max_by_key(|(_, grandparent_rings)| grandparent_rings.len())
+            .map(|(idx, _)| idx)
+            .copied()
+    }
+
     // For each ring, we check how many parents it has  otherwise it's an outer ring
     //
     // This is important in the scenarios of "donuts" where you have an outer donut shaped
     // polygon which completely contains a smaller polygon inside its hole
-    for (ring_index, parent_idxs) in parents.iter() {
+    for (ring_index, parent_idxs) in parents_of.iter() {
         let parent_count = parent_idxs.len();
 
         // if it has an even number of parents, it's an outer ring so we can just add it if it's
@@ -329,27 +346,22 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
             continue;
         }
 
-        // the direct parent is the parent which has itself the most parents
-        fn find_direct_parents(
-            parent_idxs: &[usize],
-            parents: &HashMap<usize, Vec<usize>>,
-        ) -> Option<usize> {
-            parent_idxs
-                .iter()
-                .filter_map(|parent_idx| {
-                    parents
-                        .get(parent_idx)
-                        .map(|grandparents| (parent_idx, grandparents))
-                })
-                .max_by_key(|(_, grandparents)| grandparents.len())
-                .map(|(idx, _)| idx)
-                .copied()
-        }
-
         // if it has an odd number of parents, it's an inner ring
-        //
+
         // to find the specific outer ring it is related to, we search for the direct parent.
-        if let Some(direct_parent) = find_direct_parents(parent_idxs, &parents) {
+        let maybe_direct_parent = find_direct_parents(parent_idxs, &parents_of);
+
+        // As stated above the amount of parents here is odd, so it's at least one.
+        // Since every ring is registered in the `parents` hashmap, we find at least one element
+        // while iterating. Hence the `max_by_key` will always return `Some` since the iterator
+        // is never empty
+        debug_assert!(
+            maybe_direct_parent.is_some(),
+            "A direct parent has to exist"
+        );
+
+        // I'm not unwrapping here since I'm scared of panics
+        if let Some(direct_parent) = maybe_direct_parent {
             polygons_idxs
                 .entry(direct_parent)
                 .or_default()
