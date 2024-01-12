@@ -190,7 +190,13 @@ fn same_line<T: GeoFloat>(l1: &Line<T>, l2: &Line<T>) -> bool {
     (l1.start == l2.start && l1.end == l2.end) || (l1.start == l2.end && l2.start == l1.end)
 }
 
-/// given a collection of lines from multiple polygons, this returns all but the shared lines
+/// given a collection of lines from multiple polygons which partition an area we can have two
+/// kinds of lines:
+///
+/// - boundary lines: these are the unique lines on the boundary of the compound shape which is
+/// formed by the collection of polygons
+/// - inner lines: these are all non-boundary lines. They are not unique and have exactly one
+/// duplicate on one adjacent polygon in the collection (as long as the input is valid!)
 fn find_boundary_lines<T: GeoFloat>(lines: Vec<Line<T>>) -> Vec<Line<T>> {
     let init = Vec::with_capacity(lines.len());
     lines.into_iter().fold(init, |mut lines, new_line| {
