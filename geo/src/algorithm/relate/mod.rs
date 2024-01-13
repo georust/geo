@@ -10,7 +10,7 @@ mod relate_operation;
 
 /// Topologically relate two geometries based on [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
 ///
-/// See [`IntersectionMatrix`] for details.
+/// See [`IntersectionMatrix`] for details. All predicates are available on the calculated matrix.
 ///
 /// # Examples
 ///
