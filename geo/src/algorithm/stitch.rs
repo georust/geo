@@ -2,7 +2,8 @@ use std::collections::HashMap;
 
 use geo_types::{Coord, Line, LineString, MultiPolygon, Polygon, Triangle};
 
-use crate::{Contains, GeoFloat, LinesIter, Winding};
+use crate::winding_order::WindingOrder;
+use crate::{Contains, GeoFloat};
 
 // ========= Error Type ============
 
@@ -22,12 +23,12 @@ impl std::fmt::Display for LineStitchingError {
 
 impl std::error::Error for LineStitchingError {}
 
-pub(crate) type PolygonStitchingResult<T> = Result<T, LineStitchingError>;
+pub(crate) type TriangleStitchingResult<T> = Result<T, LineStitchingError>;
 
 // ========= Main Algo ============
 
-/// Trait to stitch together split up polygons.
-pub trait Stitch<T: GeoFloat> {
+/// Trait to stitch together split up triangles.
+pub trait StitchTriangles<T: GeoFloat> {
     /// This stitching only happens along identical edges which are located in two separate
     /// geometries. Please read about the required pre conditions of the inputs!
     ///
@@ -43,9 +44,9 @@ pub trait Stitch<T: GeoFloat> {
     ///
     /// # Pre Conditions
     ///
-    /// - All the given polygons must be unique. If you're not sure about that, deduplicate before
+    /// - All the given triangles must be unique. If you're not sure about that, deduplicate before
     ///   calling the algorithm!
-    /// - Input polygons should be valid polygons. For a definition of validity
+    /// - Input triangles should be valid polygons. For a definition of validity
     ///   c.f. https://www.postgis.net/workshops/postgis-intro/validity.html
     ///
     /// # Examples
@@ -92,91 +93,26 @@ pub trait Stitch<T: GeoFloat> {
     /// If you want to do something more general like a
     /// [`Boolean Operation Union`](https://en.wikipedia.org/wiki/Boolean_operations_on_polygons)
     /// you should use the trait `BooleanOps` or `SpadeBoolops`.
-    fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>>;
+    fn stitch_triangulation(&self) -> TriangleStitchingResult<MultiPolygon<T>>;
 }
 
-macro_rules! impl_stitch {
-    ($type:ty => $self:ident
-     fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
-         $($impls:tt)*
-     }) => {
-       impl<T> Stitch<T> for &[&$type]
-       where
-           T: GeoFloat,
-       {
-           fn stitch_together(&$self) -> PolygonStitchingResult<MultiPolygon<T>> {
-                $($impls)*
-           }
-       }
-
-       impl<T> Stitch<T> for Vec<&$type>
-       where
-           T: GeoFloat,
-       {
-           fn stitch_together(&$self) -> PolygonStitchingResult<MultiPolygon<T>> {
-               $self.as_slice().stitch_together()
-           }
-       }
-
-       impl<T> Stitch<T> for &[$type]
-       where
-           T: GeoFloat,
-       {
-           fn stitch_together(&$self) -> PolygonStitchingResult<MultiPolygon<T>> {
-               $self.iter().collect::<Vec<_>>().stitch_together()
-           }
-       }
-
-       impl<T> Stitch<T> for Vec<$type>
-       where
-           T: GeoFloat,
-       {
-           fn stitch_together(&$self) -> PolygonStitchingResult<MultiPolygon<T>> {
-               $self.iter().collect::<Vec<_>>().stitch_together()
-           }
-       }
-     };
-}
-
-impl_stitch! {
-    Polygon<T> => self
-    fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
-        let polys = self
-            .iter()
-            .map(|&poly| poly.clone());
-        stitch_polygons(polys)
-    }
-}
-
-impl_stitch! {
-    Triangle<T> => self
-    fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
-        let polys = self
-            .iter()
-            .map(|tri| tri.to_polygon());
-        stitch_polygons(polys)
-    }
-}
-
-impl_stitch! {
-    MultiPolygon<T> => self
-    fn stitch_together(&self) -> PolygonStitchingResult<MultiPolygon<T>> {
-        let polys = self
-            .iter()
-            .flat_map(|mp| mp.0.iter())
-            .cloned();
-        stitch_polygons(polys)
+impl<S, T> StitchTriangles<T> for S
+where
+    S: AsRef<[Triangle<T>]>,
+    T: GeoFloat,
+{
+    fn stitch_triangulation(&self) -> TriangleStitchingResult<MultiPolygon<T>> {
+        stitch_triangles(self.as_ref().iter())
     }
 }
 
 // main stitching algorithm
-fn stitch_polygons<T: GeoFloat>(
-    polys: impl Iterator<Item = Polygon<T>>,
-) -> PolygonStitchingResult<MultiPolygon<T>> {
-    let lines = polys
-        .map(fix_orientation)
-        .flat_map(|part| part.lines_iter().collect::<Vec<_>>())
-        .collect::<Vec<_>>();
+fn stitch_triangles<'a, T, S>(triangles: S) -> TriangleStitchingResult<MultiPolygon<T>>
+where
+    T: GeoFloat + 'a,
+    S: Iterator<Item = &'a Triangle<T>>,
+{
+    let lines = triangles.flat_map(ccw_lines).collect::<Vec<_>>();
 
     let boundary_lines = find_boundary_lines(lines);
     let stitched_multipolygon = stitch_multipolygon_from_lines(boundary_lines)?;
@@ -189,16 +125,33 @@ fn stitch_polygons<T: GeoFloat>(
     Ok(MultiPolygon::new(polys))
 }
 
-/// makes interiors and exteriors of polygon have ccw orientation
-fn fix_orientation<T: GeoFloat>(mut poly: Polygon<T>) -> Polygon<T> {
-    poly.exterior_mut(|ls| ls.make_ccw_winding());
+/// special cased algorithm for finding the winding of a triangle
+///
+/// note that we assume the triangle is valid, i.e. it's not three points on a flat line
+fn triangle_winding_order<T: GeoFloat>(tri: &Triangle<T>) -> WindingOrder {
+    let [a, b, c] = tri.to_array();
+    let ab = b - a;
+    let ac = c - a;
 
-    // just commenting this out for the moment. The algorithm only works on exteriors so this
-    // shouldn't be needed
-    //
-    //poly.interiors_mut(|ls| ls.iter_mut().for_each(|ls| ls.make_ccw_winding()));
+    let cross_prod = ab.x * ac.y - ab.y * ac.x;
 
-    poly
+    if cross_prod > T::zero() {
+        WindingOrder::CounterClockwise
+    } else {
+        WindingOrder::Clockwise
+    }
+}
+
+/// returns the triangle's lines with ccw orientation
+fn ccw_lines<T: GeoFloat>(tri: &Triangle<T>) -> [Line<T>; 3] {
+    // maybe there's
+    match triangle_winding_order(tri) {
+        WindingOrder::CounterClockwise => tri.to_lines(),
+        WindingOrder::Clockwise => {
+            let [a, b, c] = tri.to_array();
+            [(b, a), (a, c), (c, b)].map(|(start, end)| Line::new(start, end))
+        }
+    }
 }
 
 /// checks whether the to lines are equal or inverted forms of each other
@@ -305,7 +258,7 @@ fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<
 /// Inputs to this function is a unordered set of lines that must form a valid multipolygon
 fn stitch_multipolygon_from_lines<F: GeoFloat>(
     lines: Vec<Line<F>>,
-) -> PolygonStitchingResult<MultiPolygon<F>> {
+) -> TriangleStitchingResult<MultiPolygon<F>> {
     let rings = stitch_rings_from_lines(lines)?;
 
     fn find_parent_idxs<F: GeoFloat>(
@@ -413,7 +366,7 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
 
 fn stitch_rings_from_lines<F: GeoFloat>(
     lines: Vec<Line<F>>,
-) -> PolygonStitchingResult<Vec<LineString<F>>> {
+) -> TriangleStitchingResult<Vec<LineString<F>>> {
     // initial ring parts are just lines which will be stitch together progressively
     let mut ring_parts: Vec<Vec<Coord<F>>> = lines
         .iter()
@@ -468,7 +421,7 @@ fn try_stitch<F: GeoFloat>(a: &[Coord<F>], b: &[Coord<F>]) -> Option<Vec<Coord<F
 #[cfg(test)]
 mod polygon_stitching_tests {
 
-    use crate::{Area, TriangulateEarcut};
+    use crate::{Area, TriangulateEarcut, Winding};
 
     use super::*;
     use geo_types::*;
@@ -488,16 +441,9 @@ mod polygon_stitching_tests {
 
         let mp = MultiPolygon::new(vec![outer.clone(), inner.clone()]);
 
-        let tris = [inner, outer]
-            .map(|p| p.earcut_triangles())
-            .map(|tris| {
-                tris.into_iter()
-                    .map(|tri| tri.to_polygon())
-                    .collect::<Vec<_>>()
-            })
-            .concat();
+        let tris = [inner, outer].map(|p| p.earcut_triangles()).concat();
 
-        let result = tris.stitch_together().unwrap();
+        let result = tris.stitch_triangulation().unwrap();
 
         assert!(mp.contains(&result) && result.contains(&mp));
     }
@@ -520,19 +466,35 @@ mod polygon_stitching_tests {
 
         tri1.exterior_mut(|ls| ls.make_ccw_winding());
         tri2.exterior_mut(|ls| ls.make_ccw_winding());
-        let result_1 = vec![&tri1, &tri2].stitch_together().unwrap();
+        let result_1 = [tri1.clone(), tri2.clone()]
+            .map(|tri| tri.earcut_triangles())
+            .concat()
+            .stitch_triangulation()
+            .unwrap();
 
         tri1.exterior_mut(|ls| ls.make_cw_winding());
         tri2.exterior_mut(|ls| ls.make_ccw_winding());
-        let result_2 = vec![&tri1, &tri2].stitch_together().unwrap();
+        let result_2 = [tri1.clone(), tri2.clone()]
+            .map(|tri| tri.earcut_triangles())
+            .concat()
+            .stitch_triangulation()
+            .unwrap();
 
         tri1.exterior_mut(|ls| ls.make_cw_winding());
         tri2.exterior_mut(|ls| ls.make_cw_winding());
-        let result_3 = vec![&tri1, &tri2].stitch_together().unwrap();
+        let result_3 = [tri1.clone(), tri2.clone()]
+            .map(|tri| tri.earcut_triangles())
+            .concat()
+            .stitch_triangulation()
+            .unwrap();
 
         tri1.exterior_mut(|ls| ls.make_ccw_winding());
         tri2.exterior_mut(|ls| ls.make_cw_winding());
-        let result_4 = vec![&tri1, &tri2].stitch_together().unwrap();
+        let result_4 = [tri1, tri2]
+            .map(|tri| tri.earcut_triangles())
+            .concat()
+            .stitch_triangulation()
+            .unwrap();
 
         assert_eq!(result_1.unsigned_area(), result_2.unsigned_area());
         assert_eq!(result_2.unsigned_area(), result_3.unsigned_area());
@@ -566,7 +528,11 @@ mod polygon_stitching_tests {
             vec![],
         );
 
-        let result = vec![poly1, poly2].stitch_together().unwrap();
+        let result = [poly1, poly2]
+            .map(|p| p.earcut_triangles())
+            .concat()
+            .stitch_triangulation()
+            .unwrap();
 
         assert_eq!(result.0.len(), 1);
         assert_eq!(result.0[0].interiors().len(), 1);
@@ -587,7 +553,11 @@ mod polygon_stitching_tests {
             vec![],
         );
 
-        let result = vec![poly].stitch_together().unwrap();
+        let result = [poly]
+            .map(|p| p.earcut_triangles())
+            .concat()
+            .stitch_triangulation()
+            .unwrap();
 
         assert_eq!(result.0.len(), 1);
         assert_eq!(result.0[0].interiors().len(), 1);
@@ -608,9 +578,13 @@ mod polygon_stitching_tests {
             vec![],
         );
 
-        let result = vec![poly].stitch_together().unwrap();
+        let result = [poly]
+            .map(|p| p.earcut_triangles())
+            .concat()
+            .stitch_triangulation()
+            .unwrap();
 
-        assert_eq!(result.0.len(), 1);
+        assert_eq!(result.0.len(), 2);
         assert_eq!(result.0[0].interiors().len(), 0);
     }
 }

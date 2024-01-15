@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use geo::stitch::Stitch;
+use geo::stitch::StitchTriangles;
 use geo::TriangulateSpade;
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -8,7 +8,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let tris = p.unconstrained_triangulation().unwrap();
 
         bencher.iter(|| {
-            criterion::black_box(criterion::black_box(&tris).stitch_together().unwrap());
+            criterion::black_box(criterion::black_box(&tris).stitch_triangulation().unwrap());
         });
     });
 }

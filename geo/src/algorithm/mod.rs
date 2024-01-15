@@ -238,7 +238,7 @@ pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve};
 
 /// Stitch together geometries with adjacent sides. Alternative to unioning geometries.
 pub mod stitch;
-pub use stitch::Stitch;
+pub use stitch::StitchTriangles;
 
 /// Transform a geometry using PROJ.
 #[cfg(feature = "use-proj")]
