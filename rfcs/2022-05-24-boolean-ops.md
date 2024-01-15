@@ -69,7 +69,7 @@ captured in the `BoolOp` struct that implements the above trait.
 We also support clipping of a 1D geometry by a 2D geometry. This is the
 same as intersection but between geometries of different dimensions. In
 this case, we calculate region solely from the 2D geometry, and only output
-segments from the 1D geomtries. These are then assembled to output a
+segments from the 1D geometries. These are then assembled to output a
 `MultiLineString` in this case.  This is captured in the `ClipOp` struct.
 
 Pls. ref `geo/src/algorithm/bool_ops/spec.rs`.

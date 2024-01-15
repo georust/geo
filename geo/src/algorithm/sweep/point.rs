@@ -61,7 +61,7 @@ impl<T: GeoNum> Deref for SweepPoint<T> {
     }
 }
 
-// Note: We keep it immutable for now, for better hygeine.
+// Note: We keep it immutable for now, for better hygiene.
 // impl<T: GeoNum> DerefMut for SweepPoint<T> {
 //     fn deref_mut(&mut self) -> &mut Self::Target {
 //         &mut self.0

@@ -45,7 +45,7 @@ impl<T: GeoNum> std::fmt::Debug for MonoPoly<T> {
 impl<T: GeoNum> MonoPoly<T> {
     /// Create a monotone polygon from the top and bottom chains.
     ///
-    /// Note: each chain must be a strictly increasing sequence (in the lexigraphic
+    /// Note: each chain must be a strictly increasing sequence (in the lexicographic
     /// order), with the same start and end points.  Further, the top chain must be
     /// strictly above the bottom chain except at the end-points.  Not all these
     /// conditions are checked, and the algorithm may panic if they are not met.
