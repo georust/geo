@@ -112,7 +112,7 @@ impl<C> CrossingsIter<C>
 where
     C: Cross + Clone,
 {
-    /// Faster sweep when input goemetries are known to not intersect except at
+    /// Faster sweep when input geometries are known to not intersect except at
     /// end-points.
     pub fn new_simple<I: IntoIterator<Item = C>>(iter: I) -> Self {
         Self::new_ex(iter, true)
