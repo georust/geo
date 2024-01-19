@@ -4,7 +4,7 @@
 
 * Implement getter methods on `AffineTransform` to access internal elements.
   * <https://github.com/georust/geo/pull/1159>
-* Add `Stitch` trait which implements a new kind of combining algorithm for geometries
+* Add `StitchTriangles` trait which implements a new kind of combining algorithm for `Triangle`s
   * <https://github.com/georust/geo/pull/1087>
 
 ## 0.28.0
