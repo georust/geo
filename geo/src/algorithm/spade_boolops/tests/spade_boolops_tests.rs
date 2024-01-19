@@ -1,5 +1,5 @@
-use super::*;
 use super::test_helper::*;
+use super::*;
 use geo_types::*;
 
 // helper
@@ -19,7 +19,7 @@ macro_rules! define_test {
         name      = $test_name:ident,
         path      = $path:expr,
         operation = $op:expr,
-        results: 
+        results:
         empty     = $empty:expr,
         num_polys = $num_polys:expr,
         num_holes = $num_holes:expr,
@@ -63,7 +63,7 @@ define_test!(
         });
         Polygon::difference(poly1, &poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -83,7 +83,7 @@ define_test!(
         });
         Polygon::difference(&poly2, poly1).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -97,7 +97,7 @@ define_test!(
         let poly1 = &data[0];
         Polygon::intersection(poly1, poly1).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -111,7 +111,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -125,7 +125,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -139,7 +139,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::difference(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![1],
@@ -153,7 +153,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -167,7 +167,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -181,7 +181,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = true,
     num_polys = 0,
     num_holes = vec![],
@@ -195,7 +195,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -209,7 +209,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -223,7 +223,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::difference(poly2, poly1).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![1],
@@ -237,7 +237,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -251,7 +251,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::difference(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![1],
@@ -265,7 +265,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -279,7 +279,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::difference(poly2, poly1).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![1],
@@ -293,7 +293,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::intersection(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -307,7 +307,7 @@ define_test!(
         let poly1 = &data[0];
         Polygon::union(poly1, poly1).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![1],
@@ -321,7 +321,7 @@ define_test!(
         let poly1 = &data[0];
         Polygon::intersection(poly1, poly1).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![1],
@@ -335,7 +335,7 @@ define_test!(
         let poly1 = &data[0];
         Polygon::difference(poly1, &empty_poly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![1],
@@ -349,7 +349,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::union(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![1],
@@ -363,7 +363,7 @@ define_test!(
         let [poly1, poly2] = [&data[0], &data[1]];
         Polygon::union(poly1, poly2).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![2],
@@ -377,7 +377,7 @@ define_test!(
         // imprecise inputs lead to hole
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![1],
@@ -390,7 +390,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -403,7 +403,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -416,7 +416,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 2,
     num_holes = vec![0, 0],
@@ -429,7 +429,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -442,7 +442,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -455,7 +455,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -468,7 +468,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -481,7 +481,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -494,7 +494,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -507,7 +507,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -520,7 +520,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -533,7 +533,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 2,
     num_holes = vec![0, 0],
@@ -546,7 +546,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 2,
     num_holes = vec![0, 0],
@@ -559,7 +559,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 2,
     num_holes = vec![0, 0],
@@ -572,7 +572,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 2,
     num_holes = vec![0, 0],
@@ -585,7 +585,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -598,7 +598,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -611,7 +611,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 2,
     num_holes = vec![0, 0],
@@ -624,7 +624,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -637,7 +637,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],
@@ -650,7 +650,7 @@ define_test!(
     operation = |data: Vec<Polygon<f32>>| {
         MultiPolygon::union(&multipolygon_from(data), &empty_multipoly()).unwrap()
     },
-    results: 
+    results:
     empty     = false,
     num_polys = 1,
     num_holes = vec![0],

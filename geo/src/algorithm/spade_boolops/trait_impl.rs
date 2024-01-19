@@ -1,5 +1,5 @@
 use crate::algorithm::intersects::Intersects;
-use crate::algorithm::stitch::Stitch;
+use crate::algorithm::stitch::StitchTriangles;
 pub use crate::spade_boolops::error::{SpadeBoolopsError, SpadeBoolopsResult};
 use crate::spade_boolops::trait_def::SpadeBoolops;
 use geo_types::{MultiPolygon, Polygon, Triangle};
@@ -22,9 +22,8 @@ where
             .map_err(SpadeBoolopsError::TriangulationError)?
             .into_iter()
             .filter(|tri| op_pred(tri))
-            .map(|tri| tri.to_polygon())
             .collect::<Vec<_>>()
-            .stitch_together()
+            .stitch_triangulation()
             .map_err(SpadeBoolopsError::StitchError)
     }
 }
@@ -96,7 +95,7 @@ where
             .concat()
             .constrained_triangulation(Default::default())
             .map_err(SpadeBoolopsError::TriangulationError)?
-            .stitch_together()
+            .stitch_triangulation()
             .map_err(SpadeBoolopsError::StitchError)
     }
 }
