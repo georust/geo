@@ -236,7 +236,7 @@ pub use simplify::{Simplify, SimplifyIdx};
 pub mod simplify_vw;
 pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve};
 
-/// Stitch together geometries with adjacent sides. Alternative to unioning geometries.
+/// Stitch together triangles with adjacent sides. Alternative to unioning triangles via BooleanOps.
 pub mod stitch;
 pub use stitch::StitchTriangles;
 

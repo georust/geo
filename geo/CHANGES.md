@@ -16,7 +16,7 @@
   * <https://github.com/georust/geo/pull/1199>
 * Bump `geo` MSRV to 1.74 and update CI
   * <https://github.com/georust/geo/pull/1201>
-* Add `Stitch` trait which implements a new kind of combining algorithm for geometries
+* Add `StitchTriangles` trait which implements a new kind of combining algorithm for `Triangle`s
   * <https://github.com/georust/geo/pull/1087>
 
 ## 0.28.0
