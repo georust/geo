@@ -11,7 +11,7 @@
   * <https://github.com/georust/geo/pull/1123>
 * PERF: small improvements to TriangulateSpade trait
   * <https://github.com/georust/geo/pull/1122>
-* Add `Stitch` trait which implements a new kind of combining algorithm for geometries
+* Add `StitchTriangles` trait which implements a new kind of combining algorithm for `Triangle`s
   * <https://github.com/georust/geo/pull/1087>
 
 ## 0.27.0
