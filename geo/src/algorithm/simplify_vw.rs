@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use crate::{
-    Coord, CoordFloat, HasKernel, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
+    Coord, CoordFloat, GeoFloat, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
     Triangle,
 };
 use std::cmp::Ordering;
@@ -241,7 +241,7 @@ fn vwp_wrapper<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     epsilon: &T,
 ) -> Vec<Vec<Coord<T>>>
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     let mut rings = vec![];
     // Populate R* tree with exterior and interior samples, if any
@@ -291,7 +291,7 @@ fn visvalingam_preserve<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     tree: &mut RTree<CachedEnvelope<Line<T>>>,
 ) -> Vec<Coord<T>>
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     if orig.0.len() < 3 || *epsilon <= T::zero() {
         return orig.0.to_vec();
@@ -400,7 +400,7 @@ fn tree_intersect<T>(
     orig: &[Coord<T>],
 ) -> bool
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     let new_segment_start = orig[triangle.left];
     let new_segment_end = orig[triangle.right];
@@ -581,7 +581,7 @@ pub trait SimplifyVwPreserve<T, Epsilon = T> {
 
 impl<T> SimplifyVwPreserve<T> for LineString<T>
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     fn simplify_vw_preserve(&self, epsilon: &T) -> LineString<T> {
         let mut simplified = vwp_wrapper::<_, 2, 4>(self, None, epsilon);
@@ -591,7 +591,7 @@ where
 
 impl<T> SimplifyVwPreserve<T> for MultiLineString<T>
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     fn simplify_vw_preserve(&self, epsilon: &T) -> MultiLineString<T> {
         MultiLineString::new(
@@ -605,7 +605,7 @@ where
 
 impl<T> SimplifyVwPreserve<T> for Polygon<T>
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     fn simplify_vw_preserve(&self, epsilon: &T) -> Polygon<T> {
         let mut simplified =
@@ -619,7 +619,7 @@ where
 
 impl<T> SimplifyVwPreserve<T> for MultiPolygon<T>
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     fn simplify_vw_preserve(&self, epsilon: &T) -> MultiPolygon<T> {
         MultiPolygon::new(

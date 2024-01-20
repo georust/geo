@@ -431,8 +431,10 @@ where
 
 #[cfg(test)]
 mod test {
+    use crate::Relate;
+
     use super::*;
-    use geo_types::{polygon, Geometry};
+    use geo_types::{line_string, polygon, Geometry};
     use std::str::FromStr;
 
     #[test]
@@ -523,5 +525,32 @@ mod test {
             intersection_matrix,
             IntersectionMatrix::from_str("212101212").unwrap()
         );
+    }
+    #[test]
+    fn equals() {
+        let square_a = polygon![
+            (x: 0., y: 0.),
+            (x: 0., y: 20.),
+            (x: 20., y: 20.),
+            (x: 20., y: 0.),
+            (x: 0., y: 0.),
+        ];
+        let square_b = polygon![
+            (x: 0., y: 0.),
+            (x: 0., y: 20.),
+            (x: 20., y: 20.),
+            (x: 20., y: 0.),
+            (x: 0., y: 0.),
+        ];
+        let polyrelation = square_a.relate(&square_b);
+
+        // same, but different coordinate order
+        let ls1 = line_string![(x: 1.0, y: 1.0), (x: 2.0, y: 2.0)];
+        let ls2 = line_string![(x: 2.0, y: 2.0), (x: 1.0, y: 1.0)];
+        let lsrelation = ls1.relate(&ls2);
+
+        let de9im_eq = "T*F**FFF*";
+        assert!(polyrelation.matches(de9im_eq).unwrap());
+        assert!(lsrelation.matches(de9im_eq).unwrap());
     }
 }

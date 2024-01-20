@@ -14,7 +14,7 @@ use num_traits::FromPrimitive;
 /// * Longitude (x) in the [-180; 180] degrees range.
 /// * Latitude (y) in the [-90; 90] degrees range.
 ///
-/// The implemetation is based on <https://edwilliams.org/avform147.htm#XTE>.
+/// The implementation is based on <https://edwilliams.org/avform147.htm#XTE>.
 ///
 /// See [`Closest<F>`] for a description of the return states.
 ///

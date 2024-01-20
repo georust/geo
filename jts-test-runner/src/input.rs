@@ -198,6 +198,10 @@ pub(crate) enum Operation {
         op: BoolOp,
         expected: Geometry<f64>,
     },
+    Unsupported {
+        #[allow(dead_code)]
+        reason: String,
+    },
 }
 
 impl OperationInput {

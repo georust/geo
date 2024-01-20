@@ -1,6 +1,6 @@
 /// Kernels to compute various predicates
 pub mod kernels;
-pub use kernels::{HasKernel, Kernel, Orientation};
+pub use kernels::{Kernel, Orientation};
 
 /// Calculate the area of the surface of a `Geometry`.
 pub mod area;
