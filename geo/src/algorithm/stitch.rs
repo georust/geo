@@ -47,7 +47,7 @@ pub trait StitchTriangles<T: GeoFloat> {
     /// - All the given triangles must be unique. If you're not sure about that, deduplicate before
     ///   calling the algorithm!
     /// - Input triangles should be valid polygons. For a definition of validity
-    ///   c.f. https://www.postgis.net/workshops/postgis-intro/validity.html
+    ///   c.f. <https://www.postgis.net/workshops/postgis-intro/validity.html>
     ///
     /// # Examples
     ///
