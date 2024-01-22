@@ -130,6 +130,9 @@ pub use error::Error;
 #[macro_use]
 mod macros;
 
+#[macro_use]
+mod wkt_macro;
+
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
 
@@ -147,8 +150,6 @@ pub mod _alloc {
     //! Needed to access these types from `alloc` in macros when the std feature is
     //! disabled and the calling context is missing `extern crate alloc`. These are
     //! _not_ meant for public use.
-
-    pub use ::alloc::boxed::Box;
     pub use ::alloc::vec;
 }
 

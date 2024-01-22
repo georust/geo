@@ -301,6 +301,7 @@ impl TestRunner {
                         Geometry::Polygon(poly) => MultiPolygon(vec![poly.clone()]),
                         _ => {
                             info!("skipping unsupported Union expectation: {:?}", expected);
+                            self.unsupported.push(test_case);
                             continue;
                         }
                     };
@@ -312,6 +313,7 @@ impl TestRunner {
                         }
                         _ => {
                             info!("skipping unsupported Union combination: {:?}, {:?}", a, b);
+                            self.unsupported.push(test_case);
                             continue;
                         }
                     };
@@ -332,13 +334,17 @@ impl TestRunner {
                         });
                     }
                 }
+                Operation::Unsupported { reason: _ } => self.unsupported.push(test_case),
             }
         }
+        debug!("unsupported: {:?}", self.unsupported);
         info!(
-            "successes: {}, failures: {}",
+            "run summary: successes: {}, failures: {}, unsupported: {}",
             self.successes.len(),
-            self.failures.len()
+            self.failures.len(),
+            self.unsupported.len(),
         );
+
         Ok(())
     }
 
@@ -404,18 +410,20 @@ impl TestRunner {
                                 && run.precision_model.is_some()
                                 && &run.precision_model.as_ref().unwrap().ty != "FLOATING"
                             {
-                                debug!(
-                    "skipping test input: {:?} with unsupported precision model: {prec:?}",
-                    file.path(),
-                    prec = run.precision_model,
-                );
-                                continue;
+                                cases.push(TestCase {
+                                    description,
+                                    test_file_name,
+                                    operation: Operation::Unsupported {
+                                        reason: "unsupported BooleanOp precision model".to_string(),
+                                    },
+                                });
+                            } else {
+                                cases.push(TestCase {
+                                    description,
+                                    test_file_name,
+                                    operation,
+                                });
                             }
-                            cases.push(TestCase {
-                                description,
-                                test_file_name,
-                                operation,
-                            });
                         }
                         Err(e) => {
                             debug!("skipping unsupported operation: {}", e);

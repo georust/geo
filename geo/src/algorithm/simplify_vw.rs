@@ -1,54 +1,55 @@
 use crate::prelude::*;
 use crate::{
-    Coord, CoordFloat, HasKernel, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
+    Coord, CoordFloat, GeoFloat, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon,
     Triangle,
 };
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
+use rstar::primitives::CachedEnvelope;
 use rstar::{RTree, RTreeNum};
 
-/// Store triangle information
-// current is the candidate point for removal
+/// Store triangle information. Area is used for ranking in the priority queue and determining removal
 #[derive(Debug)]
-struct VScore<T, I>
+struct VScore<T>
 where
     T: CoordFloat,
 {
     left: usize,
+    /// The current [Point] index in the original [LineString]: The candidate for removal
     current: usize,
     right: usize,
     area: T,
-    // `visvalingam_preserve` uses `intersector`, `visvalingam` does not
-    intersector: I,
+    // `visvalingam_preserve` uses `intersector`, `visvalingam` does not, so it's always false
+    intersector: bool,
 }
 
 // These impls give us a min-heap
-impl<T, I> Ord for VScore<T, I>
+impl<T> Ord for VScore<T>
 where
     T: CoordFloat,
 {
-    fn cmp(&self, other: &VScore<T, I>) -> Ordering {
+    fn cmp(&self, other: &VScore<T>) -> Ordering {
         other.area.partial_cmp(&self.area).unwrap()
     }
 }
 
-impl<T, I> PartialOrd for VScore<T, I>
+impl<T> PartialOrd for VScore<T>
 where
     T: CoordFloat,
 {
-    fn partial_cmp(&self, other: &VScore<T, I>) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &VScore<T>) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<T, I> Eq for VScore<T, I> where T: CoordFloat {}
+impl<T> Eq for VScore<T> where T: CoordFloat {}
 
-impl<T, I> PartialEq for VScore<T, I>
+impl<T> PartialEq for VScore<T>
 where
     T: CoordFloat,
 {
-    fn eq(&self, other: &VScore<T, I>) -> bool
+    fn eq(&self, other: &VScore<T>) -> bool
     where
         T: CoordFloat,
     {
@@ -110,17 +111,18 @@ where
             current: i + 1,
             left: i,
             right: i + 2,
-            intersector: (),
+            intersector: false,
         })
-        .collect::<BinaryHeap<VScore<T, ()>>>();
+        .collect::<BinaryHeap<VScore<T>>>();
     // While there are still points for which the associated triangle
     // has an area below the epsilon
     while let Some(smallest) = pq.pop() {
-        // This triangle's area is above epsilon, so skip it
         if smallest.area > *epsilon {
-            continue;
+            // no need to keep trying: the min-heap ensures that we process triangles in order
+            // so if we see one that exceeds the tolerance we're done: everything else is too big
+            break;
         }
-        //  This triangle's area is below epsilon: eliminate the associated point
+        //  This triangle's area is below epsilon: the associated point is a candidate for removal
         let (left, right) = adjacent[smallest.current];
         // A point in this triangle has been removed since this VScore
         // was created, so skip it
@@ -135,27 +137,9 @@ where
         adjacent[right as usize] = (left, rr);
         adjacent[smallest.current] = (0, 0);
 
-        // Now recompute the adjacent triangle(s), using left and right adjacent points
-        let choices = [(ll, left, right), (left, right, rr)];
-        for &(ai, current_point, bi) in &choices {
-            if ai as usize >= max || bi as usize >= max {
-                // Out of bounds, i.e. we're on one edge
-                continue;
-            }
-            let area = Triangle::new(
-                orig.0[ai as usize],
-                orig.0[current_point as usize],
-                orig.0[bi as usize],
-            )
-            .unsigned_area();
-            pq.push(VScore {
-                area,
-                current: current_point as usize,
-                left: ai as usize,
-                right: bi as usize,
-                intersector: (),
-            });
-        }
+        // Recompute the adjacent triangle(s), using left and right adjacent points
+        // this may add new triangles to the heap
+        recompute_triangles(&smallest, orig, &mut pq, ll, left, right, rr, max, epsilon);
     }
     // Filter out the points that have been deleted, returning remaining point indices
     orig.0
@@ -164,6 +148,59 @@ where
         .zip(adjacent.iter())
         .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(tup.0) } else { None })
         .collect::<Vec<usize>>()
+}
+
+/// Recompute adjacent triangle(s) using left and right adjacent points, and push onto heap
+///
+/// This is used for both standard and topology-preserving variants.
+#[allow(clippy::too_many_arguments)]
+fn recompute_triangles<T>(
+    smallest: &VScore<T>,
+    orig: &LineString<T>,
+    pq: &mut BinaryHeap<VScore<T>>,
+    ll: i32,
+    left: i32,
+    right: i32,
+    rr: i32,
+    max: usize,
+    epsilon: &T,
+) where
+    T: CoordFloat,
+{
+    let choices = [(ll, left, right), (left, right, rr)];
+    for &(ai, current_point, bi) in &choices {
+        if ai as usize >= max || bi as usize >= max {
+            // Out of bounds, i.e. we're on one edge
+            continue;
+        }
+        let area = Triangle::new(
+            orig.0[ai as usize],
+            orig.0[current_point as usize],
+            orig.0[bi as usize],
+        )
+        .unsigned_area();
+
+        // This logic only applies to VW-Preserve
+        // smallest.current's removal causes a self-intersection, and this point precedes it
+        // we ensure it gets removed next by demoting its area to negative epsilon
+        // we check that current_point is less than smallest.current because
+        // if it's larger the point in question comes AFTER smallest.current: we only want to remove
+        // the point that comes BEFORE smallest.current
+        let area = if smallest.intersector && (current_point as usize) < smallest.current {
+            -*epsilon
+        } else {
+            area
+        };
+
+        let v = VScore {
+            area,
+            current: current_point as usize,
+            left: ai as usize,
+            right: bi as usize,
+            intersector: false,
+        };
+        pq.push(v)
+    }
 }
 
 // Wrapper for visvalingam_indices, mapping indices back to points
@@ -204,11 +241,11 @@ fn vwp_wrapper<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     epsilon: &T,
 ) -> Vec<Vec<Coord<T>>>
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     let mut rings = vec![];
     // Populate R* tree with exterior and interior samples, if any
-    let mut tree: RTree<Line<_>> = RTree::bulk_load(
+    let mut tree: RTree<CachedEnvelope<_>> = RTree::bulk_load(
         exterior
             .lines()
             .chain(
@@ -217,6 +254,7 @@ where
                     .flat_map(|ring| *ring)
                     .flat_map(|line_string| line_string.lines()),
             )
+            .map(CachedEnvelope::new)
             .collect::<Vec<_>>(),
     );
 
@@ -250,10 +288,10 @@ where
 fn visvalingam_preserve<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     orig: &LineString<T>,
     epsilon: &T,
-    tree: &mut RTree<Line<T>>,
+    tree: &mut RTree<CachedEnvelope<Line<T>>>,
 ) -> Vec<Coord<T>>
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     if orig.0.len() < 3 || *epsilon <= T::zero() {
         return orig.0.to_vec();
@@ -290,13 +328,15 @@ where
             right: i + 2,
             intersector: false,
         })
-        .collect::<BinaryHeap<VScore<T, bool>>>();
+        .collect::<BinaryHeap<VScore<T>>>();
 
     // While there are still points for which the associated triangle
     // has an area below the epsilon
     while let Some(mut smallest) = pq.pop() {
         if smallest.area > *epsilon {
-            continue;
+            // No need to continue: we've already seen all the candidate triangles;
+            // the min-heap guarantees it
+            break;
         }
         if counter <= INITIAL_MIN {
             // we can't remove any more points no matter what
@@ -310,14 +350,18 @@ where
         }
         // if removal of this point causes a self-intersection, we also remove the previous point
         // that removal alters the geometry, removing the self-intersection
-        // HOWEVER if we're within 2 points of the absolute minimum, we can't remove this point or the next
+        // HOWEVER if we're within 1 point of the absolute minimum, we can't remove this point or the next
         // because we could then no longer form a valid geometry if removal of next also caused an intersection.
         // The simplification process is thus over.
         smallest.intersector = tree_intersect(tree, &smallest, &orig.0);
         if smallest.intersector && counter <= MIN_POINTS {
             break;
         }
-        // We've got a valid triangle, and its area is smaller than epsilon, so
+        let (ll, _) = adjacent[left as usize];
+        let (_, rr) = adjacent[right as usize];
+        adjacent[left as usize] = (ll, right);
+        adjacent[right as usize] = (left, rr);
+        // We've got a valid triangle, and its area is smaller than the tolerance, so
         // remove it from the simulated "linked list"
         adjacent[smallest.current] = (0, 0);
         counter -= 1;
@@ -326,48 +370,17 @@ where
         let middle_point = Point::from(orig.0[smallest.current]);
         let right_point = Point::from(orig.0[right as usize]);
 
-        let line_1 = Line::new(left_point, middle_point);
-        let line_2 = Line::new(middle_point, right_point);
+        let line_1 = CachedEnvelope::new(Line::new(left_point, middle_point));
+        let line_2 = CachedEnvelope::new(Line::new(middle_point, right_point));
         assert!(tree.remove(&line_1).is_some());
         assert!(tree.remove(&line_2).is_some());
 
         // Restore continuous line segment
-        tree.insert(Line::new(left_point, right_point));
+        tree.insert(CachedEnvelope::new(Line::new(left_point, right_point)));
 
-        // Now recompute the adjacent triangle(s), using left and right adjacent points
-        let (ll, _) = adjacent[left as usize];
-        let (_, rr) = adjacent[right as usize];
-        adjacent[left as usize] = (ll, right);
-        adjacent[right as usize] = (left, rr);
-        let choices = [(ll, left, right), (left, right, rr)];
-        for &(ai, current_point, bi) in &choices {
-            if ai as usize >= max || bi as usize >= max {
-                // Out of bounds, i.e. we're on one edge
-                continue;
-            }
-            let new = Triangle::new(
-                orig.0[ai as usize],
-                orig.0[current_point as usize],
-                orig.0[bi as usize],
-            );
-            // The current point causes a self-intersection, and this point precedes it
-            // we ensure it gets removed next by demoting its area to negative epsilon
-            let temp_area = if smallest.intersector && (current_point as usize) < smallest.current {
-                -*epsilon
-            } else {
-                new.unsigned_area()
-            };
-            let new_triangle = VScore {
-                area: temp_area,
-                current: current_point as usize,
-                left: ai as usize,
-                right: bi as usize,
-                intersector: false,
-            };
-
-            // push re-computed triangle onto heap
-            pq.push(new_triangle);
-        }
+        // Recompute the adjacent triangle(s), using left and right adjacent points
+        // this may add new triangles to the heap
+        recompute_triangles(&smallest, orig, &mut pq, ll, left, right, rr, max, epsilon);
     }
     // Filter out the points that have been deleted, returning remaining points
     orig.0
@@ -377,54 +390,49 @@ where
         .collect()
 }
 
-/// is p1 -> p2 -> p3 wound counterclockwise?
-#[inline]
-fn ccw<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>) -> bool
+/// Check whether the new candidate line segment intersects with any existing geometry line segments
+///
+/// In order to do this efficiently, the rtree is queried for any existing segments which fall within
+/// the bounding box of the new triangle created by the candidate segment
+fn tree_intersect<T>(
+    tree: &RTree<CachedEnvelope<Line<T>>>,
+    triangle: &VScore<T>,
+    orig: &[Coord<T>],
+) -> bool
 where
-    T: CoordFloat + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
-    let o = <T as HasKernel>::Ker::orient2d(p1.into(), p2.into(), p3.into());
-    o == Orientation::CounterClockwise
-}
-
-/// checks whether line segments with p1-p4 as their start and endpoints touch or cross
-fn cartesian_intersect<T>(p1: Point<T>, p2: Point<T>, p3: Point<T>, p4: Point<T>) -> bool
-where
-    T: CoordFloat + HasKernel,
-{
-    (ccw(p1, p3, p4) ^ ccw(p2, p3, p4)) & (ccw(p1, p2, p3) ^ ccw(p1, p2, p4))
-}
-
-/// check whether a triangle's edges intersect with any other edges of the LineString
-fn tree_intersect<T>(tree: &RTree<Line<T>>, triangle: &VScore<T, bool>, orig: &[Coord<T>]) -> bool
-where
-    T: CoordFloat + RTreeNum + HasKernel,
-{
-    let point_a = orig[triangle.left];
-    let point_c = orig[triangle.right];
+    let new_segment_start = orig[triangle.left];
+    let new_segment_end = orig[triangle.right];
+    // created by candidate point removal
+    let new_segment = CachedEnvelope::new(Line::new(
+        Point::from(orig[triangle.left]),
+        Point::from(orig[triangle.right]),
+    ));
     let bounding_rect = Triangle::new(
         orig[triangle.left],
         orig[triangle.current],
         orig[triangle.right],
     )
     .bounding_rect();
-    let br = Point::new(bounding_rect.min().x, bounding_rect.min().y);
-    let tl = Point::new(bounding_rect.max().x, bounding_rect.max().y);
-    tree.locate_in_envelope_intersecting(&rstar::AABB::from_corners(br, tl))
-        .any(|c| {
-            // triangle start point, end point
-            let (ca, cb) = c.points();
-            ca.0 != point_a
-                && ca.0 != point_c
-                && cb.0 != point_a
-                && cb.0 != point_c
-                && cartesian_intersect(ca, cb, Point::from(point_a), Point::from(point_c))
-        })
+    tree.locate_in_envelope_intersecting(&rstar::AABB::from_corners(
+        bounding_rect.min().into(),
+        bounding_rect.max().into(),
+    ))
+    .any(|candidate| {
+        // line start point, end point
+        let (candidate_start, candidate_end) = candidate.points();
+        candidate_start.0 != new_segment_start
+            && candidate_start.0 != new_segment_end
+            && candidate_end.0 != new_segment_start
+            && candidate_end.0 != new_segment_end
+            && new_segment.intersects(&**candidate)
+    })
 }
 
 /// Simplifies a geometry.
 ///
-/// Polygons are simplified by running the algorithm on all their constituent rings.  This may
+/// Polygons are simplified by running the algorithm on all their constituent rings. This may
 /// result in invalid Polygons, and has no guarantee of preserving topology. Multi* objects are
 /// simplified by simplifying all their constituent geometries individually.
 ///
@@ -433,6 +441,9 @@ pub trait SimplifyVw<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
     ///
     /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation
+    ///
+    /// # Note
+    /// The tolerance used to remove a point is `epsilon`, in keeping with GEOS. JTS uses `epsilon ^ 2`.
     ///
     /// # Examples
     ///
@@ -503,9 +514,9 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
         T: CoordFloat;
 }
 
-/// Simplifies a geometry, preserving its topology by removing self-intersections
+/// Simplifies a geometry, attempting to preserve its topology by removing self-intersections
 ///
-/// An epsilon less than or equal to zero will return an unaltered version of the geometry.
+/// An epsilon less than or equal to zero will return an unaltered version of the geometry
 pub trait SimplifyVwPreserve<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using a topology-preserving variant of the
     /// [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm.
@@ -522,12 +533,15 @@ pub trait SimplifyVwPreserve<T, Epsilon = T> {
     /// (117.0, 48.0)` and `(117.0, 48.0), (300,0, 40.0)`. By removing it,
     /// a new triangle with indices `(0, 3, 4)` is formed, which does not cause a self-intersection.
     ///
-    /// **Note**: it is possible for the simplification algorithm to displace a Polygon's interior ring outside its shell.
+    /// # Notes
     ///
-    /// **Note**: if removal of a point causes a self-intersection, but the geometry only has `n + 2`
-    /// points remaining (4 for a `LineString`, 6 for a `Polygon`), the point is retained and the
+    /// - It is possible for the simplification algorithm to displace a Polygon's interior ring outside its shell.
+    /// - The algorithm does **not** guarantee a valid output geometry, especially on smaller geometries.
+    /// - If removal of a point causes a self-intersection, but the geometry only has `n + 1`
+    /// points remaining (3 for a `LineString`, 5 for a `Polygon`), the point is retained and the
     /// simplification process ends. This is because there is no guarantee that removal of two points will remove
     /// the intersection, but removal of further points would leave too few points to form a valid geometry.
+    /// - The tolerance used to remove a point is `epsilon`, in keeping with GEOS. JTS uses `epsilon ^ 2`
     ///
     /// # Examples
     ///
@@ -567,7 +581,7 @@ pub trait SimplifyVwPreserve<T, Epsilon = T> {
 
 impl<T> SimplifyVwPreserve<T> for LineString<T>
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     fn simplify_vw_preserve(&self, epsilon: &T) -> LineString<T> {
         let mut simplified = vwp_wrapper::<_, 2, 4>(self, None, epsilon);
@@ -577,7 +591,7 @@ where
 
 impl<T> SimplifyVwPreserve<T> for MultiLineString<T>
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     fn simplify_vw_preserve(&self, epsilon: &T) -> MultiLineString<T> {
         MultiLineString::new(
@@ -591,11 +605,12 @@ where
 
 impl<T> SimplifyVwPreserve<T> for Polygon<T>
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     fn simplify_vw_preserve(&self, epsilon: &T) -> Polygon<T> {
         let mut simplified =
-            vwp_wrapper::<_, 4, 6>(self.exterior(), Some(self.interiors()), epsilon);
+        // min_points was formerly 6, but that's too conservative for small polygons
+            vwp_wrapper::<_, 4, 5>(self.exterior(), Some(self.interiors()), epsilon);
         let exterior = LineString::from(simplified.remove(0));
         let interiors = simplified.into_iter().map(LineString::from).collect();
         Polygon::new(exterior, interiors)
@@ -604,7 +619,7 @@ where
 
 impl<T> SimplifyVwPreserve<T> for MultiPolygon<T>
 where
-    T: CoordFloat + RTreeNum + HasKernel,
+    T: GeoFloat + RTreeNum,
 {
     fn simplify_vw_preserve(&self, epsilon: &T) -> MultiPolygon<T> {
         MultiPolygon::new(
@@ -669,11 +684,37 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::{cartesian_intersect, visvalingam, vwp_wrapper, SimplifyVw, SimplifyVwPreserve};
+    use super::{visvalingam, vwp_wrapper, SimplifyVw, SimplifyVwPreserve};
     use crate::{
-        line_string, point, polygon, Coord, LineString, MultiLineString, MultiPolygon, Point,
-        Polygon,
+        line_string, polygon, Coord, LineString, MultiLineString, MultiPolygon, Point, Polygon,
     };
+
+    // See https://github.com/georust/geo/issues/1049
+    #[test]
+    #[should_panic]
+    fn vwp_bug() {
+        let pol = polygon![
+            (x: 1., y: 4.),
+            (x: 3., y: 4.),
+            (x: 1., y: 1.),
+            (x: 7., y: 0.),
+            (x: 1., y: 0.),
+            (x: 0., y: 1.),
+            (x: 1., y: 4.),
+        ];
+        let simplified = pol.simplify_vw_preserve(&2.25);
+        assert_eq!(
+            simplified,
+            polygon![
+                (x: 1., y: 4.),
+                (x: 3., y: 4.),
+                (x: 1., y: 1.),
+                (x: 7., y: 0.),
+                (x: 1., y: 0.),
+                (x: 1., y: 4.),
+            ]
+        );
+    }
 
     #[test]
     fn visvalingam_test() {
@@ -691,22 +732,6 @@ mod test {
 
         let simplified = visvalingam(&ls, &30.);
         assert_eq!(simplified, correct_ls);
-    }
-    #[test]
-    fn vwp_intersection_test() {
-        // does the intersection check always work
-        let a = point!(x: 1., y: 3.);
-        let b = point!(x: 3., y: 1.);
-        let c = point!(x: 3., y: 3.);
-        let d = point!(x: 1., y: 1.);
-        // cw + ccw
-        assert!(cartesian_intersect(a, b, c, d));
-        // ccw + ccw
-        assert!(cartesian_intersect(b, a, c, d));
-        // cw + cw
-        assert!(cartesian_intersect(a, b, d, c));
-        // ccw + cw
-        assert!(cartesian_intersect(b, a, d, c));
     }
     #[test]
     fn simple_vwp_test() {

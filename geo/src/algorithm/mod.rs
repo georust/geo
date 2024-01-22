@@ -1,6 +1,6 @@
 /// Kernels to compute various predicates
 pub mod kernels;
-pub use kernels::{HasKernel, Kernel, Orientation};
+pub use kernels::{Kernel, Orientation};
 
 /// Calculate the area of the surface of a `Geometry`.
 pub mod area;
@@ -190,7 +190,7 @@ pub use lines_iter::LinesIter;
 
 /// Split a LineString into n segments
 pub mod linestring_segment;
-pub use linestring_segment::LineStringSegmentize;
+pub use linestring_segment::{LineStringSegmentize, LineStringSegmentizeHaversine};
 
 /// Apply a function to all `Coord`s of a `Geometry`.
 pub mod map_coords;
@@ -251,6 +251,12 @@ pub use translate::Translate;
 pub mod triangulate_earcut;
 #[cfg(feature = "earcutr")]
 pub use triangulate_earcut::TriangulateEarcut;
+
+/// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
+#[cfg(feature = "spade")]
+pub mod triangulate_spade;
+#[cfg(feature = "spade")]
+pub use triangulate_spade::TriangulateSpade;
 
 /// Vector Operations for 2D coordinates
 mod vector_ops;

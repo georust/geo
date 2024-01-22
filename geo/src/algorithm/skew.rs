@@ -4,8 +4,8 @@ use crate::{AffineOps, AffineTransform, BoundingRect, Coord, CoordFloat, CoordNu
 ///
 /// ## Performance
 ///
-/// If you will be performing multiple transformations, like [`Scale`],
-/// [`Skew`], [`Translate`], or [`Rotate`], it is more
+/// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
+/// [`Skew`], [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
 /// efficient to compose the transformations and apply them as a single operation using the
 /// [`AffineOps`] trait.
 ///

@@ -10,11 +10,11 @@ use num_traits::FromPrimitive;
 
 /// Calculates the closest `Point` on a geometry from a given `Point` in sperical coordinates.
 ///
-/// Similar to [`ClosestPoint`] but for spherical coordinates:
+/// Similar to [`ClosestPoint`](crate::ClosestPoint) but for spherical coordinates:
 /// * Longitude (x) in the [-180; 180] degrees range.
 /// * Latitude (y) in the [-90; 90] degrees range.
 ///
-/// The implemetation is based on <https://edwilliams.org/avform147.htm#XTE>.
+/// The implementation is based on <https://edwilliams.org/avform147.htm#XTE>.
 ///
 /// See [`Closest<F>`] for a description of the return states.
 ///
@@ -153,9 +153,18 @@ where
 
         let mut min_distance = num_traits::Float::max_value();
         let mut rv = Closest::Indeterminate;
+
         for line in self.lines() {
             match line.haversine_closest_point(from) {
-                Closest::Intersection(_) => todo!(), // For the time being this does not happen.
+                intersect @ Closest::Intersection(_) => {
+                    // let's investigate the situation here:
+                    // - we have discovered that the point actually intersects the linestring.
+                    // Clearly no other non-intersecting point can be closer now.
+                    // Even if the linestring is degenerate and is intersecting itself at this specific point
+                    // by definition it must be that exact point.
+                    // So instead of returning an indeterminate of exactly the same point, we just return here.
+                    return intersect;
+                }
                 Closest::SinglePoint(pt) => {
                     let dist = pt.haversine_distance(from);
                     if dist < min_distance {
@@ -182,7 +191,12 @@ where
     let mut rv = Closest::Indeterminate;
     for line in lines {
         match line.haversine_closest_point(from) {
-            Closest::Intersection(_) => todo!(), // For the time being this does not happen.
+            intersect @ Closest::Intersection(_) => {
+                // same as for the linestring, even if we detected multiple intersections,
+                // they would by definition be the same point, so we can just return it.
+                // Additionally, the distance on an intersection should be zero.
+                return (intersect, T::zero());
+            }
             Closest::SinglePoint(pt) => {
                 let dist = pt.haversine_distance(from);
                 if dist < min_distance {
@@ -632,6 +646,43 @@ mod test {
             );
         } else {
             panic!("Did not get Closest::SinglePoint!");
+        }
+    }
+
+    #[test]
+    fn haversine_closest_point_intersecting_line() {
+        // First a sensible case: the point to test just happens to be one of the points on the linestring
+        let wkt = "LineString (3.86503906250000284 11.71231367187503736, 9.48691406250000568 17.3341886718750402)";
+        let linestring = LineString::<f64>::try_from_wkt_str(wkt).unwrap();
+
+        let line = linestring.lines().next().unwrap();
+
+        let point = line.start_point();
+
+        match linestring.haversine_closest_point(&point) {
+            Closest::Intersection(_) => {
+                // this is the correct answer
+            }
+            Closest::SinglePoint(_) => {
+                panic!("unexpected: singlePoint")
+            }
+            Closest::Indeterminate => panic!("unexpected: indeterminate"),
+        }
+
+        // and now for the really degenerate case:
+        // We have a linestring with overlapping coordinates, _and_ test that point
+        let wkt = "LineString (3.86503906250000284 11.71231367187503736,
+            3.86503906250000284 11.71231367187503736,
+            9.48691406250000568 17.3341886718750402)";
+
+        let linestring = LineString::<f64>::try_from_wkt_str(wkt).unwrap();
+        let point = linestring.lines().next().unwrap().start_point();
+
+        // because the overlapping point on the degenerate linestring is the exact same, we expect to get an intersection.
+        if let Closest::Intersection(_) = linestring.haversine_closest_point(&point) {
+            // this is correct
+        } else {
+            panic!("got wrong result")
         }
     }
 }

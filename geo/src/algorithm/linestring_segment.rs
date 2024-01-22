@@ -1,5 +1,8 @@
 use crate::line_interpolate_point::LineInterpolatePoint;
-use crate::{Coord, Densify, EuclideanLength, LineString, LinesIter, MultiLineString};
+use crate::{
+    Coord, Densify, DensifyHaversine, EuclideanLength, HaversineLength, LineString, LinesIter,
+    MultiLineString,
+};
 
 /// Segments a LineString into `n` equal length LineStrings as a MultiLineString.
 /// `None` will be returned when `n` is equal to 0 or when a point
@@ -8,140 +11,120 @@ use crate::{Coord, Densify, EuclideanLength, LineString, LinesIter, MultiLineStr
 ///
 /// # Examples
 /// ```
-/// use geo::{LineString, MultiLineString, LineStringSegmentize, Coord};
+/// use geo::{LineString, MultiLineString, LineStringSegmentize};
 /// // Create a simple line string
 /// let lns: LineString<f64> = vec![[0.0, 0.0], [1.0, 2.0], [3.0, 6.0]].into();
-/// // Segment it into 6 LineStrings inside of a MultiLineString
-/// let segmentized = lns.line_segmentize(6).unwrap();
-///
-/// // Recreate the MultiLineString from scratch
-/// // this is the inner vector used to create the MultiLineString
-/// let all_lines = vec![
-///     LineString::new(vec![Coord { x: 0.0, y: 0.0 }, Coord { x: 0.5, y: 1.0 }]),
-///     LineString::new(vec![Coord { x: 0.5, y: 1.0 }, Coord { x: 1.0, y: 2.0 }]),
-///     LineString::new(vec![Coord { x: 1.0, y: 2.0 }, Coord { x: 1.5, y: 3.0 }]),
-///     LineString::new(vec![Coord { x: 1.5, y: 3.0 }, Coord { x: 2.0, y: 4.0 }]),
-///     LineString::new(vec![Coord { x: 2.0, y: 4.0 }, Coord { x: 2.5, y: 5.0 }]),
-///     LineString::new(vec![Coord { x: 2.5, y: 5.0 }, Coord { x: 3.0, y: 6.0 }])
-///     ];
-///
-/// // Create the MultiLineString
-/// let mlns = MultiLineString::new(all_lines);
-///
-/// // Compare the two
-/// assert_eq!(mlns, segmentized);
+/// // Segment it into n LineStrings inside of a MultiLineString
+/// let n = 6;
+/// let segmentized = lns.line_segmentize(n).unwrap();
+/// // Compare the number of elements
+/// assert_eq!(n, segmentized.0.len());
 ///```
 pub trait LineStringSegmentize {
     fn line_segmentize(&self, n: usize) -> Option<MultiLineString>;
 }
 
-impl LineStringSegmentize for LineString {
-    fn line_segmentize(&self, n: usize) -> Option<MultiLineString> {
-        // Return None if n is 0 or the maximum usize
-        if (n == usize::MIN) || (n == usize::MAX) {
-            return None;
-        } else if n == 1 {
-            let mlns = MultiLineString::from(self.clone());
-            return Some(mlns);
-        }
+/// Segments a LineString into `n` equal length LineStrings as a MultiLineString
+/// using Haversine distance calculations. Use this over `LineStringSegmentize`
+/// when using data from a geographic coordinate system.
+/// `None` will be returned when `n` is equal to 0 or when a point
+/// cannot be interpolated on a `Line` segment.
+///
+///
+/// # Examples
+/// ```
+/// use geo::{LineString, MultiLineString, LineStringSegmentizeHaversine};
+/// // Create a simple line string
+/// let lns: LineString<f64> = vec![[0.0, 0.0], [1.0, 2.0], [3.0, 6.0]].into();
+/// // Segment it into n LineStrings inside of a MultiLineString
+/// let n = 6;
+/// let segmentized = lns.line_segmentize_haversine(n).unwrap();
+/// // Compare the number of elements
+/// assert_eq!(n, segmentized.0.len());
+///```
+pub trait LineStringSegmentizeHaversine {
+    fn line_segmentize_haversine(&self, n: usize) -> Option<MultiLineString>;
+}
 
-        // Vec to allocate the  new LineString segments Coord Vec
-        // will be iterated over at end to create new vecs
-        let mut res_coords: Vec<Vec<Coord>> = Vec::with_capacity(n);
-
-        // calculate total length to track cumulative against
-        let total_length = self.euclidean_length().abs();
-
-        // tracks total length
-        let mut cum_length = 0_f64;
-
-        // calculate the target fraction for the first iteration
-        // fraction will change based on each iteration
-        let segment_prop = (1_f64) / (n as f64);
-        let segment_length = total_length * segment_prop;
-
-        // densify the LineString so that each `Line` segment is not longer
-        // than the segment length ensuring that we will never partition one
-        // Line more than once.
-        let densified = self.densify(segment_length);
-
-        // if the densified line is exactly equal to the number of requested
-        // segments, return early. This will happen when a LineString has
-        // exactly 2 coordinates
-        if densified.lines().count() == n {
-            let linestrings = densified
-                .lines()
-                .map(LineString::from)
-                .collect::<Vec<LineString>>();
-
-            return Some(MultiLineString::new(linestrings));
-        };
-
-        // count the number of lines that will be iterated through
-        let n_lines = densified.lines().count();
-
-        let lns = densified.lines_iter();
-        // instantiate the first Vec<Coord>
-        let mut ln_vec: Vec<Coord> = Vec::new();
-
-        // iterate through each line segment in the LineString
-        for (i, segment) in lns.enumerate() {
-            // All iterations only keep track of the second coordinate
-            // in the Line. We need to push the first coordinate in the
-            // first line string to ensure the linestring starts at the
-            // correct place
-            if i == 0 {
-                ln_vec.push(segment.start)
-            }
-
-            let length = segment.euclidean_length().abs();
-
-            // update cumulative length
-            cum_length += length;
-
-            if (cum_length >= segment_length) && (i != (n_lines - 1)) {
-                let remainder = cum_length - segment_length;
-                // if we get None, we exit the function and return None
-                let endpoint = segment.line_interpolate_point((length - remainder) / length)?;
-
-                // add final coord to ln_vec
-                ln_vec.push(endpoint.into());
-
-                // now we drain all elements from the vector into an iterator
-                // this will be collected into a vector to be pushed into the
-                // results coord vec of vec
-                let to_push = ln_vec.drain(..);
-
-                // now collect & push this vector into the results vector
-                res_coords.push(to_push.collect::<Vec<Coord>>());
-
-                // now add the last endpoint as the first coord
-                // and the endpoint of the linesegment as well only
-                if i != n_lines {
-                    ln_vec.push(endpoint.into());
+macro_rules! implement_segmentize {
+    ($trait_name:ident, $method_name:ident, $distance_method:ident, $densify_method:ident) => {
+        impl $trait_name for LineString {
+            fn $method_name(&self, n: usize) -> Option<MultiLineString> {
+                if (n == usize::MIN) || (n == usize::MAX) {
+                    return None;
+                } else if n == 1 {
+                    let mlns = MultiLineString::from(self.clone());
+                    return Some(mlns);
                 }
 
-                cum_length = remainder;
+                let mut res_coords: Vec<Vec<Coord>> = Vec::with_capacity(n);
+                let total_length = self.$distance_method().abs();
+                let mut cum_length = 0_f64;
+                let segment_prop = (1_f64) / (n as f64);
+                let segment_length = total_length * segment_prop;
+                let densified = self.$densify_method(segment_length - f64::EPSILON);
+
+                if densified.lines().count() == n {
+                    let linestrings = densified
+                        .lines()
+                        .map(LineString::from)
+                        .collect::<Vec<LineString>>();
+                    return Some(MultiLineString::new(linestrings));
+                }
+
+                let n_lines = densified.lines().count();
+                let lns = densified.lines_iter();
+                let mut ln_vec: Vec<Coord> = Vec::new();
+
+                for (i, segment) in lns.enumerate() {
+                    if i == 0 {
+                        ln_vec.push(segment.start)
+                    }
+
+                    let length = segment.$distance_method().abs();
+                    cum_length += length;
+
+                    if (cum_length >= segment_length) && (i != (n_lines - 1)) {
+                        let remainder = cum_length - segment_length;
+                        let endpoint =
+                            segment.line_interpolate_point((length - remainder) / length)?;
+
+                        ln_vec.push(endpoint.into());
+                        let to_push = ln_vec.drain(..);
+                        res_coords.push(to_push.collect::<Vec<Coord>>());
+
+                        if i != n_lines {
+                            ln_vec.push(endpoint.into());
+                        }
+                        cum_length = remainder;
+                    }
+                    ln_vec.push(segment.end);
+                }
+
+                res_coords.push(ln_vec);
+                let res_lines = res_coords
+                    .into_iter()
+                    .map(LineString::new)
+                    .collect::<Vec<LineString>>();
+                Some(MultiLineString::new(res_lines))
             }
-
-            // push the end coordinate into the Vec<Coord> to continue
-            // building the linestring
-            ln_vec.push(segment.end);
         }
-
-        // push the last linestring vector which isn't done by the for loop
-        res_coords.push(ln_vec);
-
-        // collect the coords into vectors of LineStrings so we can createa
-        // a multi linestring
-        let res_lines = res_coords
-            .into_iter()
-            .map(LineString::new)
-            .collect::<Vec<LineString>>();
-
-        Some(MultiLineString::new(res_lines))
-    }
+    };
 }
+
+implement_segmentize!(
+    LineStringSegmentize,
+    line_segmentize,
+    euclidean_length,
+    densify
+);
+
+implement_segmentize!(
+    LineStringSegmentizeHaversine,
+    line_segmentize_haversine,
+    haversine_length,
+    densify_haversine
+);
 
 #[cfg(test)]
 mod test {
@@ -304,5 +287,79 @@ mod test {
         let linestring: LineString = vec![[0.0, 0.0], [1.0, 1.0], [1.0, 2.0], [3.0, 3.0]].into();
         let segments = linestring.line_segmentize(2).unwrap();
         assert_eq!(segments.0.len(), 2)
+    }
+
+    #[test]
+    fn tiny_distances() {
+        // this test is to ensure that at super small distances
+        // the number of units is still the specified one.
+        let linestring: LineString = vec![
+            [-3.19416, 55.95524],
+            [-3.19352, 55.95535],
+            [-3.19288, 55.95546],
+        ]
+        .into();
+
+        let n = 8;
+        let segments = linestring.line_segmentize(n).unwrap();
+        assert_eq!(segments.0.len(), n)
+    }
+
+    #[test]
+    fn haversine_n_elems() {
+        let linestring: LineString = vec![
+            [-3.19416, 55.95524],
+            [-3.19352, 55.95535],
+            [-3.19288, 55.95546],
+        ]
+        .into();
+
+        let n = 8;
+
+        let segments = linestring.line_segmentize_haversine(n).unwrap();
+        assert_eq!(n, segments.0.len());
+    }
+
+    #[test]
+    fn haversine_segment_length() {
+        let linestring: LineString = vec![
+            [-3.19416, 55.95524],
+            [-3.19352, 55.95535],
+            [-3.19288, 55.95546],
+        ]
+        .into();
+
+        let n = 8;
+
+        let segments = linestring.line_segmentize_haversine(n).unwrap();
+        let lens = segments
+            .0
+            .iter()
+            .map(|li| li.haversine_length())
+            .collect::<Vec<_>>();
+
+        let epsilon = 1e-6; // 6th decimal place which is micrometers
+        assert!(lens.iter().all(|&x| (x - lens[0]).abs() < epsilon));
+    }
+
+    #[test]
+    fn haversine_total_length() {
+        let linestring: LineString = vec![
+            [-3.19416, 55.95524],
+            [-3.19352, 55.95535],
+            [-3.19288, 55.95546],
+        ]
+        .into();
+
+        let n = 8;
+
+        let segments = linestring.line_segmentize_haversine(n).unwrap();
+
+        // different at 12th decimal which is a picometer
+        assert_relative_eq!(
+            linestring.haversine_length(),
+            segments.haversine_length(),
+            epsilon = 1e-11
+        );
     }
 }
