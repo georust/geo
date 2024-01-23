@@ -1,5 +1,6 @@
-use super::{swap_remove_to_first, trivial_hull};
+use super::trivial_hull;
 use crate::kernels::*;
+use crate::utils::lex_cmp;
 use crate::{Coord, GeoNum, LineString};
 
 /// The [Graham's scan] algorithm to compute the convex hull
@@ -17,72 +18,87 @@ use crate::{Coord, GeoNum, LineString};
 /// Information Processing Letters. 1 (4): 132–133.
 /// [doi:10.1016/0020-0190(72)90045-2](https://doi.org/10.1016%2F0020-0190%2872%2990045-2)
 ///
+/// Andrew, A. M. (1979). "Another efficient algorithm for convex hulls in two dimensions".
+/// Information Processing Letters. 9 (5): 216–219.
+/// [doi:10.1016/0020-0190(79)90072-3](https://doi.org/10.1016/0020-0190(79)90072-3).
+///
 /// [Graham's scan]: //en.wikipedia.org/wiki/Graham_scan
-pub fn graham_hull<T>(mut points: &mut [Coord<T>], include_on_hull: bool) -> LineString<T>
+pub fn graham_hull<T>(points: &mut [Coord<T>], include_on_hull: bool) -> LineString<T>
 where
     T: GeoNum,
 {
+    // Nothing to build with fewer than four points.
     if points.len() < 4 {
-        // Nothing to build with fewer than four points.
         return trivial_hull(points, include_on_hull);
     }
+
+    // Sort the points lexicographically
+    points.sort_unstable_by(lex_cmp);
 
     // Allocate output vector
     let mut output = Vec::with_capacity(points.len());
 
-    // Find lexicographically least point and add to hull
-    use crate::utils::least_index;
-    use std::cmp::Ordering;
-    let min_idx = least_index(points);
-    let head = swap_remove_to_first(&mut points, min_idx);
-    output.push(*head);
+    // Compute lower hull part
+    output.extend_from_slice(&points[..2]);
 
-    // Sort rest of the points by angle it makes with head
-    // point. If two points are collinear with head, we sort
-    // by distance. We use kernel predicates here.
-    let cmp = |q: &Coord<T>, r: &Coord<T>| match T::Ker::orient2d(*q, *head, *r) {
-        Orientation::CounterClockwise => Ordering::Greater,
-        Orientation::Clockwise => Ordering::Less,
-        Orientation::Collinear => {
-            let dist1 = T::Ker::square_euclidean_distance(*head, *q);
-            let dist2 = T::Ker::square_euclidean_distance(*head, *r);
-            dist1.partial_cmp(&dist2).unwrap()
-        }
-    };
-    points.sort_unstable_by(cmp);
-
-    for pt in points.iter() {
-        while output.len() > 1 {
+    for p in &points[2..] {
+        output.push(*p);
+        loop {
             let len = output.len();
-            match T::Ker::orient2d(output[len - 2], output[len - 1], *pt) {
-                Orientation::CounterClockwise => {
-                    break;
-                }
+
+            if len < 3 {
+                break;
+            }
+
+            match T::Ker::orient2d(output[len - 3], output[len - 2], output[len - 1]) {
+                Orientation::CounterClockwise => break,
                 Orientation::Clockwise => {
-                    output.pop();
+                    output.remove(len - 2);
                 }
                 Orientation::Collinear => {
                     if include_on_hull {
                         break;
                     } else {
-                        output.pop();
+                        output.remove(len - 2);
                     }
                 }
             }
         }
-        // Corner case: if the lex. least point added before
-        // this loop is repeated, then we should not end up
-        // adding it here (because output.len() == 1 in the
-        // first iteration)
-        if include_on_hull || pt != output.last().unwrap() {
-            output.push(*pt);
+    }
+
+    // Compute upper hull part
+    let offset = output.len() - 1;
+
+    let second_last = points.len() - 2;
+    output.push(points[second_last]);
+
+    for p in points[..second_last].iter().rev() {
+        output.push(*p);
+        loop {
+            let len = output.len();
+
+            if len - offset < 3 {
+                break;
+            }
+
+            match T::Ker::orient2d(output[len - 3], output[len - 2], output[len - 1]) {
+                Orientation::CounterClockwise => break,
+                Orientation::Clockwise => {
+                    output.remove(len - 2);
+                }
+                Orientation::Collinear => {
+                    if include_on_hull {
+                        break;
+                    } else {
+                        output.remove(len - 2);
+                    }
+                }
+            }
         }
     }
 
-    // Close and output the line string
-    let mut output = LineString::new(output);
-    output.close();
-    output
+    // Output the closed ccw line string
+    LineString::new(output)
 }
 
 #[cfg(test)]
