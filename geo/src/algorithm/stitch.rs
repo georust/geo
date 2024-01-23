@@ -52,7 +52,7 @@ pub trait StitchTriangles<T: GeoFloat> {
     /// # Examples
     ///
     /// ```
-    /// use geo::Stitch;
+    /// use geo::StitchTriangles;
     /// use geo::{Coord, Triangle, polygon};
     ///
     /// let tri1 = Triangle::from([
@@ -66,7 +66,7 @@ pub trait StitchTriangles<T: GeoFloat> {
     ///     Coord { x: 0.0, y: 1.0 },
     /// ]);
     ///
-    /// let result = vec![tri1, tri2].stitch_together();
+    /// let result = vec![tri1, tri2].stitch_triangulation();
     ///
     /// assert!(result.is_ok());
     ///
@@ -79,10 +79,10 @@ pub trait StitchTriangles<T: GeoFloat> {
     /// assert_eq!(poly.exterior().0.len(), 4 + 1);
     ///
     /// let expected = polygon![
+    ///     Coord { x: 1.0, y: 1.0 },
     ///     Coord { x: 0.0, y: 1.0 },
     ///     Coord { x: 0.0, y: 0.0 },
     ///     Coord { x: 1.0, y: 0.0 },
-    ///     Coord { x: 1.0, y: 1.0 },
     /// ];
     ///
     /// assert_eq!(poly, expected);
