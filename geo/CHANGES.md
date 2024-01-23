@@ -34,6 +34,8 @@
   * <https://github.com/georust/geo/pull/1133>
 * Add docs to Relate trait
   * <https://github.com/georust/geo/pull/1135>
+* Add remaining Relate predicates
+  * <https://github.com/georust/geo/pull/1136>
 
 ## 0.27.0
 

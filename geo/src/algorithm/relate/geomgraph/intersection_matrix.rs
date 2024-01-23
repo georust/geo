@@ -222,9 +222,12 @@ impl IntersectionMatrix {
     //     && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty`
     // ==================================================================
 
-    /// Tests if this matrix matches `[FF*FF****]`.
+    /// Returns `true` if geometries `a` and `b` are disjoint: they have no point in common,
+    /// forming a set of disconnected geometries.
     ///
-    /// returns `true` if the two geometries related by this matrix are disjoint
+    /// # Notes
+    /// - Matches `[FF*FF****]`
+    /// - This predicate is **anti-reflexive**
     pub fn is_disjoint(&self) -> bool {
         self.0[CoordPos::Inside][CoordPos::Inside] == Dimensions::Empty
             && self.0[CoordPos::Inside][CoordPos::OnBoundary] == Dimensions::Empty
@@ -232,40 +235,268 @@ impl IntersectionMatrix {
             && self.0[CoordPos::OnBoundary][CoordPos::OnBoundary] == Dimensions::Empty
     }
 
-    /// Tests if `is_disjoint` returns false.
+    /// Tests if [`IntersectionMatrix::is_disjoint`] returns `false`.
     ///
-    /// returns `true` if the two geometries related by this matrix intersect.
+    /// Returns `true` if the two geometries related by this matrix intersect: they have at least one point in common.
+    ///
+    /// # Notes
+    /// - Matches any of `[T********], [*T*******], [***T*****], [****T****]`
+    /// - This predicate is **reflexive and symmetric**
     pub fn is_intersects(&self) -> bool {
         !self.is_disjoint()
     }
 
-    /// Tests whether this matrix matches `[T*F**F***]`.
+    /// Returns `true` if the first geometry is within the second: `a` lies in the interior of `b`.
     ///
-    /// returns `true` if the first geometry is within the second.
+    ///
+    /// # Notes
+    /// - Also known as **inside**
+    /// - The mask `[T*F**F***`] occurs in the definition of both [`IntersectionMatrix::is_within`] and [`IntersectionMatrix::is_coveredby`]; For **most** situations, [`IntersectionMatrix::is_coveredby`] should be used in preference to [`IntersectionMatrix::is_within`]
+    /// - This predicate is **reflexive and transitive**
     pub fn is_within(&self) -> bool {
         self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
             && self.0[CoordPos::Inside][CoordPos::Outside] == Dimensions::Empty
             && self.0[CoordPos::OnBoundary][CoordPos::Outside] == Dimensions::Empty
     }
 
-    /// Tests whether this matrix matches `[T*****FF*]`.
+    /// Returns `true` if geometry `a` contains geometry `b`.
     ///
-    /// returns `true` if the first geometry contains the second.
+    /// # Notes
+    /// - Matches `[T*****FF*]`
+    /// - This predicate is **reflexive and transitive**
     pub fn is_contains(&self) -> bool {
         self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
     }
 
-    /// Tests whether this matrix matches `[T*F**FFF*]`.
+    /// Returns `true` if the first geometry is *topologically* equal to the second.
     ///
-    /// returns `true` if the first geometry is *topologically* equal to the second.
+    /// # Notes
+    /// - Matches `[T*F**FFF*]`
+    /// - This predicate is **reflexive, symmetric, and transitive**
     pub fn is_equal_topo(&self) -> bool {
         self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
             && self.0[CoordPos::Inside][CoordPos::Outside] == Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
             && self.0[CoordPos::OnBoundary][CoordPos::Outside] == Dimensions::Empty
+    }
+
+    /// Returns true if every point in Geometry `a` lies inside (i.e. intersects the interior or boundary of) Geometry `b`.
+    ///
+    /// Equivalently, tests that no point of `a` lies outside (in the exterior of) `b`:
+    /// - `a` is covered by `b` (extends [`IntersectionMatrix::is_within`]): geometry `a` lies in `b`. OR
+    /// - At least **one** point of `a` lies in `b`, and **no** point of `a` lies in the **exterior** of `b` OR
+    /// - **Every** point of `a` is a point of (the **interior** or **boundary** of) `b`
+    ///
+    /// returns `true` if the first geometry is covered by the second.
+    ///
+    /// ```
+    /// use geo_types::{Polygon, polygon};
+    /// use geo::relate::Relate;
+    ///
+    /// let poly1 = polygon![
+    ///     (x: 125., y: 179.),
+    ///     (x: 110., y: 150.),
+    ///     (x: 160., y: 160.),
+    ///     (x: 125., y: 179.),
+    /// ];
+    /// let poly2 = polygon![
+    ///     (x: 124., y: 182.),
+    ///     (x: 106., y: 146.),
+    ///     (x: 162., y: 159.),
+    ///     (x: 124., y: 182.),
+    /// ];
+    ///
+    /// let intersection = poly1.relate(&poly2);
+    /// assert_eq!(intersection.is_coveredby(), true);
+    /// ```
+    ///
+    /// # Notes
+    /// - Matches any of `[T*F**F***], [*TF**F***], [**FT*F***], [**F*TF***]`
+    /// - This predicate is **reflexive and transitive**
+    #[allow(clippy::nonminimal_bool)]
+    pub fn is_coveredby(&self) -> bool {
+        // [T*F**F***]
+        self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
+            && self.0[CoordPos::Inside][CoordPos::Outside] == Dimensions::Empty
+            && self.0[CoordPos::OnBoundary][CoordPos::Outside] == Dimensions::Empty ||
+        // [*TF**F***]
+        self.0[CoordPos::Inside][CoordPos::OnBoundary] != Dimensions::Empty
+            && self.0[CoordPos::Inside][CoordPos::Outside] == Dimensions::Empty
+            && self.0[CoordPos::OnBoundary][CoordPos::Outside] == Dimensions::Empty ||
+        // [**FT*F***]
+        self.0[CoordPos::Inside][CoordPos::Outside] == Dimensions::Empty
+            && self.0[CoordPos::OnBoundary][CoordPos::Inside] != Dimensions::Empty
+            && self.0[CoordPos::OnBoundary][CoordPos::Outside] == Dimensions::Empty ||
+        // [**F*TF***]
+        self.0[CoordPos::Inside][CoordPos::Outside] == Dimensions::Empty
+            && self.0[CoordPos::OnBoundary][CoordPos::OnBoundary] != Dimensions::Empty
+            && self.0[CoordPos::OnBoundary][CoordPos::Outside] == Dimensions::Empty
+    }
+
+    /// Returns `true` if every point in Geometry `b` lies inside
+    /// (i.e. intersects the interior or boundary of) Geometry `a`. Equivalently,
+    /// tests that no point of `b` lies outside (in the exterior of) `a`.
+    ///
+    /// # Notes
+    /// - Unlike [`IntersectionMatrix::is_contains`], it does **not** distinguish between points in the boundary and in the interior of geometries
+    /// - For **most** situations, [`IntersectionMatrix::is_covers`] should be used in preference to [`IntersectionMatrix::is_contains`]
+    /// - Matches any of `[T*****FF*], [*T****FF*], [***T**FF*], [****T*FF*]`
+    /// - This predicate is **reflexive and transitive**
+    #[allow(clippy::nonminimal_bool)]
+    pub fn is_covers(&self) -> bool {
+        // [T*****FF*]
+        self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
+        && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
+        && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty ||
+        // [*T****FF*]
+        self.0[CoordPos::Inside][CoordPos::OnBoundary] != Dimensions::Empty
+        && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
+        && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty ||
+        // [***T**FF*]
+        self.0[CoordPos::OnBoundary][CoordPos::Inside] != Dimensions::Empty
+        && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
+        && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty ||
+        // [****T*FF*]
+        self.0[CoordPos::OnBoundary][CoordPos::OnBoundary] != Dimensions::Empty
+        && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
+        && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
+    }
+
+    /// Returns `true` if `a` touches `b`: they have at least one point in common, but their
+    /// interiors do not intersect.
+    ///
+    /// # Notes
+    /// - Matches any of `[FT*******], [F**T*****], [F***T****]`
+    /// - This predicate is **symmetric**
+    #[allow(clippy::nonminimal_bool)]
+    pub fn is_touches(&self) -> bool {
+        // [FT*******]
+        self.0[CoordPos::Inside][CoordPos::Inside] == Dimensions::Empty
+        && self.0[CoordPos::Inside][CoordPos::OnBoundary] != Dimensions::Empty ||
+        // [F**T*****]
+        self.0[CoordPos::Inside][CoordPos::Inside] == Dimensions::Empty
+        && self.0[CoordPos::OnBoundary][CoordPos::Inside] != Dimensions::Empty ||
+        // [F***T****]
+        self.0[CoordPos::Inside][CoordPos::Inside] == Dimensions::Empty
+        && self.0[CoordPos::OnBoundary][CoordPos::OnBoundary] != Dimensions::Empty
+    }
+
+    /// Compares two geometry objects and returns `true` if their intersection "spatially crosses";
+    /// that is, the geometries have some, but not all interior points in common
+    ///
+    /// ```
+    /// use geo_types::{LineString, line_string, polygon};
+    /// use geo::relate::Relate;
+    ///
+    /// let line_string: LineString = line_string![(x: 85.0, y: 194.0), (x: 162.0, y: 135.0)];
+    /// let poly = polygon![
+    ///     (x: 125., y: 179.),
+    ///     (x: 110., y: 150.),
+    ///     (x: 160., y: 160.),
+    ///     (x: 125., y: 179.),
+    /// ];
+    ///
+    /// let intersection = line_string.relate(&poly);
+    /// assert_eq!(intersection.is_crosses(), true);
+    /// ```
+    ///
+    /// # Notes
+    /// - If any of the following do not hold, the function will return `false`:
+    ///     - The intersection of the interiors of the geometries must be non-empty
+    ///     - The intersection must have dimension less than the maximum dimension of the two input geometries (two polygons cannot cross)
+    ///     - The intersection of the two geometries must not equal either geometry (two points cannot cross)
+    /// - Matches one of `[T*T******] (a < b)`, `[T*****T**] (a > b)`, `[0********] (dimensions == 1)`
+    /// - This predicate is **symmetric and irreflexive**
+    pub fn is_crosses(&self) -> bool {
+        let dims_a = self.0[CoordPos::Inside][CoordPos::Inside]
+            .max(self.0[CoordPos::Inside][CoordPos::OnBoundary])
+            .max(self.0[CoordPos::Inside][CoordPos::Outside]);
+
+        let dims_b = self.0[CoordPos::Inside][CoordPos::Inside]
+            .max(self.0[CoordPos::OnBoundary][CoordPos::Inside])
+            .max(self.0[CoordPos::Outside][CoordPos::Inside]);
+        match (dims_a, dims_b) {
+            // a < b
+            _ if dims_a < dims_b =>
+            // [T*T******]
+            {
+                self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
+                    && self.0[CoordPos::Inside][CoordPos::Outside] != Dimensions::Empty
+            }
+            // a > b
+            _ if dims_a > dims_b =>
+            // [T*****T**]
+            {
+                self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
+                    && self.0[CoordPos::Outside][CoordPos::Inside] != Dimensions::Empty
+            }
+            // a == b, only line / line permitted
+            (Dimensions::OneDimensional, Dimensions::OneDimensional) =>
+            // [0********]
+            {
+                self.0[CoordPos::Inside][CoordPos::Inside] == Dimensions::ZeroDimensional
+            }
+            _ => false,
+        }
+    }
+
+    /// Returns `true` if geometry `a` and `b` "spatially overlap". Two geometries overlap if they have the
+    /// same dimension, their interiors intersect in that dimension, and each has at least one point
+    /// inside the other (or equivalently, neither one covers the other)
+    ///
+    /// ```
+    /// use geo_types::{Polygon, polygon};
+    /// use geo::relate::Relate;
+    ///
+    /// let poly1 = polygon![
+    ///     (x: 125., y: 179.),
+    ///     (x: 110., y: 150.),
+    ///     (x: 160., y: 160.),
+    ///     (x: 125., y: 179.),
+    /// ];
+    /// let poly2 = polygon![
+    ///     (x: 126., y: 179.),
+    ///     (x: 110., y: 150.),
+    ///     (x: 161., y: 160.),
+    ///     (x: 126., y: 179.),
+    /// ];
+    ///
+    /// let intersection = poly1.relate(&poly2);
+    /// assert_eq!(intersection.is_overlaps(), true);
+    /// ```
+    ///
+    /// # Notes
+    /// - Matches one of `[1*T***T**] (dimensions == 1)`, `[T*T***T**] (dimensions == 0 OR 2)`
+    /// - This predicate is **symmetric**
+    #[allow(clippy::nonminimal_bool)]
+    pub fn is_overlaps(&self) -> bool {
+        // dimensions must be non-empty, equal, and line / line is a special case
+        let dims_a = self.0[CoordPos::Inside][CoordPos::Inside]
+            .max(self.0[CoordPos::Inside][CoordPos::OnBoundary])
+            .max(self.0[CoordPos::Inside][CoordPos::Outside]);
+
+        let dims_b = self.0[CoordPos::Inside][CoordPos::Inside]
+            .max(self.0[CoordPos::OnBoundary][CoordPos::Inside])
+            .max(self.0[CoordPos::Outside][CoordPos::Inside]);
+        match (dims_a, dims_b) {
+            // line / line: [1*T***T**]
+            (Dimensions::OneDimensional, Dimensions::OneDimensional) => {
+                self.0[CoordPos::Inside][CoordPos::Inside] == Dimensions::OneDimensional
+                    && self.0[CoordPos::Inside][CoordPos::Outside] != Dimensions::Empty
+                    && self.0[CoordPos::Outside][CoordPos::Inside] != Dimensions::Empty
+            }
+            // point / point or polygon / polygon: [T*T***T**]
+            (Dimensions::ZeroDimensional, Dimensions::ZeroDimensional)
+            | (Dimensions::TwoDimensional, Dimensions::TwoDimensional) => {
+                self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
+                    && self.0[CoordPos::Inside][CoordPos::Outside] != Dimensions::Empty
+                    && self.0[CoordPos::Outside][CoordPos::Inside] != Dimensions::Empty
+            }
+            _ => false,
+        }
     }
 
     /// Directly accesses this matrix
@@ -310,9 +541,9 @@ impl IntersectionMatrix {
         self.0[lhs][rhs]
     }
 
-    /// Does the intersection matrix match the provided de-9im specification string?
+    /// Does the intersection matrix match the provided DE-9IM specification string?
     ///
-    /// A de-9im spec string must be 9 characters long, and each character
+    /// A DE-9IM spec string must be 9 characters long, and each character
     /// must be one of the following:
     ///
     /// - 0: matches a 0-dimensional (point) intersection
@@ -330,14 +561,14 @@ impl IntersectionMatrix {
     /// let a = Polygon::<f64>::try_from_wkt_str("POLYGON((0 0,4 0,4 4,0 4,0 0))").expect("valid WKT");
     /// let b = Polygon::<f64>::try_from_wkt_str("POLYGON((1 1,4 0,4 4,0 4,1 1))").expect("valid WKT");
     /// let im = a.relate(&b);
-    /// assert!(im.matches("212F11FF2").expect("valid de-9im spec"));
-    /// assert!(im.matches("TTT***FF2").expect("valid de-9im spec"));
-    /// assert!(!im.matches("TTT***FFF").expect("valid de-9im spec"));
+    /// assert!(im.matches("212F11FF2").expect("valid DE-9IM spec"));
+    /// assert!(im.matches("TTT***FF2").expect("valid DE-9IM spec"));
+    /// assert!(!im.matches("TTT***FFF").expect("valid DE-9IM spec"));
     /// ```
     pub fn matches(&self, spec: &str) -> Result<bool, InvalidInputError> {
         if spec.len() != 9 {
             return Err(InvalidInputError::new(format!(
-                "de-9im specification must be exactly 9 characters. Got {len}",
+                "DE-9IM specification must be exactly 9 characters. Got {len}",
                 len = spec.len()
             )));
         }
@@ -362,7 +593,7 @@ impl IntersectionMatrix {
 /// use geo::algorithm::relate::IntersectionMatrix;
 /// use std::str::FromStr;
 ///
-/// let intersection_matrix = IntersectionMatrix::from_str("212101212").expect("valid de-9im specification");
+/// let intersection_matrix = IntersectionMatrix::from_str("212101212").expect("valid DE-9IM specification");
 /// assert!(intersection_matrix.is_intersects());
 /// assert!(!intersection_matrix.is_contains());
 /// ```
@@ -379,7 +610,7 @@ pub(crate) mod dimension_matcher {
     use super::Dimensions;
     use super::InvalidInputError;
 
-    /// A single letter from a de-9im matching specification like "1*T**FFF*"
+    /// A single letter from a DE-9IM matching specification like "1*T**FFF*"
     pub(crate) enum DimensionMatcher {
         Anything,
         NonEmpty,
@@ -409,7 +640,7 @@ pub(crate) mod dimension_matcher {
                 '2' => Self::Exact(Dimensions::TwoDimensional),
                 _ => {
                     return Err(InvalidInputError::new(format!(
-                        "invalid de-9im specification character: {value}"
+                        "invalid DE-9IM specification character: {value}"
                     )))
                 }
             })
@@ -419,11 +650,41 @@ pub(crate) mod dimension_matcher {
 
 #[cfg(test)]
 mod tests {
+    use crate::{Coord, Geometry, LineString, Point, Polygon};
+    use geo_types::{coord, line_string, MultiPoint};
+    use wkt::TryFromWkt;
+
+    use crate::Relate;
+
     use super::*;
 
     fn subject() -> IntersectionMatrix {
         // Topologically, this is a nonsense IM
         IntersectionMatrix::from_str("F00111222").unwrap()
+    }
+
+    #[test]
+    fn test_crosses() {
+        // these polygons look like they cross, but two polygons cannot cross
+        let a: Geometry<_> =
+            crate::wkt! { POLYGON ((3.4 15.7, 2.2 11.3, 5.8 11.4, 3.4 15.7)) }.into();
+        let b: Geometry<_> =
+            crate::wkt! { POLYGON ((5.2 13.1, 4.5 10.9, 6.3 11.1, 5.2 13.1)) }.into();
+        // this linestring is a single leg of b: it can cross polygon a
+        let c: Geometry<_> = crate::wkt! { LINESTRING (5.2 13.1, 4.5 10.9) }.into();
+        let relate_ab = a.relate(&b);
+        let relate_ca = c.relate(&a);
+        assert!(!relate_ab.is_crosses());
+        assert!(relate_ca.is_crosses());
+    }
+    #[test]
+    fn test_crosses_2() {
+        // two lines can cross
+        // same geometry as test_crosses: single legs of polygons a and b
+        let a: Geometry<_> = crate::wkt! { LINESTRING (5.2 13.1, 4.5 10.9) }.into();
+        let b: Geometry<_> = crate::wkt! { LINESTRING (3.4 15.7, 2.2 11.3, 5.8 11.4) }.into();
+        let relate_ab = a.relate(&b);
+        assert!(relate_ab.is_crosses());
     }
 
     #[test]
