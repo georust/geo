@@ -168,8 +168,7 @@ fn same_line<T: GeoFloat>(l1: &Line<T>, l2: &Line<T>) -> bool {
 /// - inner lines: these are all non-boundary lines. They are not unique and have exactly one
 /// duplicate on one adjacent polygon in the collection (as long as the input is valid!)
 fn find_boundary_lines<T: GeoFloat>(lines: Vec<Line<T>>) -> Vec<Line<T>> {
-    let init = Vec::with_capacity(lines.len());
-    lines.into_iter().fold(init, |mut lines, new_line| {
+    lines.into_iter().fold(Vec::new(), |mut lines, new_line| {
         if let Some(idx) = lines.iter().position(|line| same_line(line, &new_line)) {
             lines.remove(idx);
         } else {
