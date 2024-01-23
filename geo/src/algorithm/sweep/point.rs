@@ -29,17 +29,17 @@ impl<T: GeoNum> std::fmt::Debug for SweepPoint<T> {
 /// coordinate.
 impl<T: GeoNum> PartialOrd for SweepPoint<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match self.0.x.partial_cmp(&other.0.x) {
-            Some(Ordering::Equal) => self.0.y.partial_cmp(&other.0.y),
-            o => o,
-        }
+        Some(self.cmp(other))
     }
 }
 
 /// Derive `Ord` from `PartialOrd` and expect to not fail.
 impl<T: GeoNum> Ord for SweepPoint<T> {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).unwrap()
+        match self.0.x.total_cmp(&other.0.x) {
+            Ordering::Equal => self.0.y.total_cmp(&other.0.y),
+            o => o,
+        }
     }
 }
 
@@ -61,7 +61,7 @@ impl<T: GeoNum> Deref for SweepPoint<T> {
     }
 }
 
-// Note: We keep it immutable for now, for better hygeine.
+// Note: We keep it immutable for now, for better hygiene.
 // impl<T: GeoNum> DerefMut for SweepPoint<T> {
 //     fn deref_mut(&mut self) -> &mut Self::Target {
 //         &mut self.0

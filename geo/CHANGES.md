@@ -1,6 +1,23 @@
 # Changes
 
 ## Unreleased
+* BREAKING: The `HasKernel` trait was removed and it's functionality was merged
+  into `GeoNum`. If you are using common scalars for your geometry (f32, f64,
+  i64, i32, i16, isize), this should have no effect on you. If you are using an
+  exotic scalar type, you'll need to implement `GeoNum` for it instead of
+  `HasKernel`. If you had functionality defined in terms of `HasKernel` before,
+  define it in terms of `GeoNum` instead.
+  * <https://github.com/georust/geo/pull/1134>
+* BREAKING: Added a new `total_cmp` method to `GeoNum`. This avoids some
+  potential crashes when working with geometries that contain NaN points. This
+  shouldn't break for any common numeric types, but if you are using something
+  exotic you'll need to manually implement `GeoNum` for your numeric type.
+  * <https://github.com/georust/geo/pull/1134>
+* POSSIBLY BREAKING: `SimplifyVwPreserve` trait implementation moved from
+  `geo_types::CoordNum` to `geo::GeoNum` as a consequence of introducing the
+  `GeoNum::total_cmp`. This shouldn't break anything for common numeric
+  types, but if you are using something exotic you'll need to manually
+  implement `GeoNum` for your numeric type.
 * Implement ChaikinSmoothing to work on Geometry types
   * <https://github.com/georust/geo/pull/1116>
 * Fix a panic when calculating the haversine closest point to a point intersecting the geometry
@@ -11,6 +28,12 @@
   * <https://github.com/georust/geo/pull/1123>
 * PERF: small improvements to TriangulateSpade trait
   * <https://github.com/georust/geo/pull/1122>
+* POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
+  * <https://github.com/georust/geo/pull/1134>
+* Add topological equality comparison method:
+  * <https://github.com/georust/geo/pull/1133>
+* Add docs to Relate trait
+  * <https://github.com/georust/geo/pull/1135>
 
 ## 0.27.0
 
@@ -56,7 +79,7 @@
 
 - Add `TriangulateEarcut` algorithm trait to triangulate polygons with the earcut algorithm.
   - <https://github.com/georust/geo/pull/1007>
-- Add `Vector2DOps` trait to algorithims module and implemented it for `Coord<T::CoordFloat>`
+- Add `Vector2DOps` trait to algorithms module and implemented it for `Coord<T::CoordFloat>`
   - <https://github.com/georust/geo/pull/1025>
 
 - Add a fast point-in-polygon query datastructure that pre-processes a `Polygon` as a set of monotone polygons. Ref. `crate::algorithm::MonotonicPolygons`.

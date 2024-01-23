@@ -188,6 +188,40 @@ impl IntersectionMatrix {
         Ok(())
     }
 
+    // NOTE for implementers
+    // See https://en.wikipedia.org/wiki/DE-9IM#Spatial_predicates for a mapping between predicates and matrices
+    // The number of constraints in your relation function MUST match the number of NON-MASK (T or F) matrix entries
+
+    // Indexes of the IntersectionMatrix map to indexes of a DE-9IM specification string as follows:
+    // ==================================================================
+    // self.0[CoordPos::Inside][CoordPos::Inside]: 0
+    // self.0[CoordPos::Inside][CoordPos::OnBoundary]: 1
+    // self.0[CoordPos::Inside][CoordPos::Outside]: 2
+
+    // self.0[CoordPos::OnBoundary][CoordPos::Inside]: 3
+    // self.0[CoordPos::OnBoundary][CoordPos::OnBoundary]: 4
+    // self.0[CoordPos::OnBoundary][CoordPos::Outside]: 5
+
+    // self.0[CoordPos::Outside][CoordPos::Inside]: 6
+    // self.0[CoordPos::Outside][CoordPos::OnBoundary]: 7
+    // self.0[CoordPos::Outside][CoordPos::Outside]: 8
+    // ==================================================================
+
+    // Relationship between matrix entry and Dimensions
+    // ==================================================================
+    // A `T` entry translates to `!= Dimensions::Empty`
+    // An `F` entry translates to `== Dimensions::Empty`
+    // A `*` (mask) entry is OMITTED
+    // ==================================================================
+
+    // Examples
+    // ==================================================================
+    // `[T********]` -> `self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty`
+    // `[********F]` -> `self.0[CoordPos::Outside][CoordPos::Outside] == Dimensions::Empty`
+    // `[**T****F*]` -> `self.0[CoordPos::Inside][CoordPos::Outside] != Dimensions::Empty
+    //     && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty`
+    // ==================================================================
+
     /// Tests if this matrix matches `[FF*FF****]`.
     ///
     /// returns `true` if the two geometries related by this matrix are disjoint
@@ -221,6 +255,17 @@ impl IntersectionMatrix {
         self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
+    }
+
+    /// Tests whether this matrix matches `[T*F**FFF*]`.
+    ///
+    /// returns `true` if the first geometry is *topologically* equal to the second.
+    pub fn is_equal_topo(&self) -> bool {
+        self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
+            && self.0[CoordPos::Inside][CoordPos::Outside] == Dimensions::Empty
+            && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
+            && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
+            && self.0[CoordPos::OnBoundary][CoordPos::Outside] == Dimensions::Empty
     }
 
     /// Directly accesses this matrix

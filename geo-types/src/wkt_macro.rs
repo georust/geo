@@ -1,7 +1,7 @@
 /// Creates a [`crate::geometry`] from a
 /// [WKT](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry) literal.
 ///
-/// This is evaluated at compile time, so you don't need to worry about runtime errors from inavlid
+/// This is evaluated at compile time, so you don't need to worry about runtime errors from invalid
 /// WKT syntax.
 ///
 /// Note that `POINT EMPTY` is not accepted because it is not representable as a `geo_types::Point`.
