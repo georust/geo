@@ -1,4 +1,4 @@
-use super::{swap_remove_to_first, trivial_hull};
+use super::{swap_with_first_and_remove, trivial_hull};
 use crate::kernels::{Kernel, Orientation};
 use crate::utils::partition_slice;
 use crate::{coord, Coord, GeoNum, LineString};
@@ -31,7 +31,7 @@ where
     use crate::utils::least_and_greatest_index;
     let (min, max) = {
         let (min_idx, mut max_idx) = least_and_greatest_index(points);
-        let min = swap_remove_to_first(&mut points, min_idx);
+        let min = swap_with_first_and_remove(&mut points, min_idx);
 
         // Two special cases to consider:
         // (1) max_idx = 0, and got swapped
@@ -44,7 +44,7 @@ where
         // 0, and we should not decrement it.
         max_idx = max_idx.saturating_sub(1);
 
-        let max = swap_remove_to_first(&mut points, max_idx);
+        let max = swap_with_first_and_remove(&mut points, max_idx);
         (min, max)
     };
 
@@ -62,7 +62,7 @@ where
     hull
 }
 
-// recursively calculate the convex hull of a subset of points
+/// Recursively calculate the convex hull of a subset of points
 fn hull_set<T>(p_a: Coord<T>, p_b: Coord<T>, mut set: &mut [Coord<T>], hull: &mut Vec<Coord<T>>)
 where
     T: GeoNum,
@@ -98,7 +98,7 @@ where
         .0;
 
     // move Coord at furthest_point from set into hull
-    let furthest_point = swap_remove_to_first(&mut set, furthest_idx);
+    let furthest_point = swap_with_first_and_remove(&mut set, furthest_idx);
     // points over PB
     {
         let (points, _) = partition_slice(set, |p| is_ccw(*furthest_point, p_b, *p));

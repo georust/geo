@@ -99,9 +99,12 @@ where
     ls
 }
 
-// Utility function: swap idx to head(0th position), remove
-// head (modifies the slice), and return head as a reference
-fn swap_remove_to_first<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
+/// Utility function for convex hull ops
+///
+/// 1. _swap_ the element at `idx` with the element at `head` (0th position)
+/// 2. remove the _new_ `head` element (modifying the slice)
+/// 3. return a _mutable ref_ to the removed head element
+fn swap_with_first_and_remove<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
     // temporarily replace `slice` with an empty value
     let tmp = std::mem::take(slice);
     tmp.swap(0, idx);

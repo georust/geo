@@ -1,4 +1,4 @@
-use super::{swap_remove_to_first, trivial_hull};
+use super::{swap_with_first_and_remove, trivial_hull};
 use crate::kernels::*;
 use crate::{Coord, GeoNum, LineString};
 
@@ -34,7 +34,7 @@ where
     use crate::utils::least_index;
     use std::cmp::Ordering;
     let min_idx = least_index(points);
-    let head = swap_remove_to_first(&mut points, min_idx);
+    let head = swap_with_first_and_remove(&mut points, min_idx);
     output.push(*head);
 
     // Sort rest of the points by angle it makes with head
