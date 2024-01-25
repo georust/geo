@@ -41,8 +41,8 @@ pub(crate) trait StitchTriangles<T: GeoFloat> {
     ///
     /// # Pre Conditions
     ///
-    /// - All the given triangles must be unique. If you're not sure about that, deduplicate before
-    ///   calling the algorithm!
+    /// - The triangles in the input must not overlap! This also forbids identical triangles in the
+    ///   input set. If you want to do a union on overlapping triangles then c.f. [`SpadeBoolops`].
     /// - Input triangles should be valid polygons. For a definition of validity
     ///   c.f. <https://www.postgis.net/workshops/postgis-intro/validity.html>
     ///
