@@ -8,7 +8,7 @@ use crate::{Contains, GeoFloat};
 // ========= Error Type ============
 
 #[derive(Debug)]
-pub enum LineStitchingError {
+pub(crate) enum LineStitchingError {
     IncompleteRing(&'static str),
 }
 
@@ -25,7 +25,7 @@ pub(crate) type TriangleStitchingResult<T> = Result<T, LineStitchingError>;
 // ========= Main Algo ============
 
 /// Trait to stitch together split up triangles.
-pub trait StitchTriangles<T: GeoFloat> {
+pub(crate) trait StitchTriangles<T: GeoFloat> {
     /// This stitching only happens along identical edges which are located in two separate
     /// geometries. Please read about the required pre conditions of the inputs!
     ///
