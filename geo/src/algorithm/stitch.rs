@@ -10,9 +10,6 @@ use crate::{Contains, GeoFloat};
 #[derive(Debug)]
 pub enum LineStitchingError {
     IncompleteRing(&'static str),
-    InvalidGeometry(&'static str),
-    MissingParent,
-    NoExtremum,
 }
 
 impl std::fmt::Display for LineStitchingError {
