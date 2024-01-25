@@ -265,6 +265,8 @@ pub use triangulate_delaunay::TriangulateDelaunay;
 
 #[cfg(feature = "voronoi")]
 pub mod voronoi_diagram;
+#[cfg(feature = "voronoi")]
+pub use voronoi_diagram::VoronoiDiagram;
 
 /// Vector Operations for 2D coordinates
 mod vector_ops;

@@ -11,9 +11,9 @@ type Result<T> = std::result::Result<T, DelaunayTriangulationError>;
 /// [Bowyer](https://doi.org/10.1093%2Fcomjnl%2F24.2.162)-[Watson](https://doi.org/10.1093%2Fcomjnl%2F24.2.167)
 /// algorithm
 pub trait TriangulateDelaunay<T: GeoFloat> {
-    /// # Examples
+    /// # Example
     ///
-    /// ```
+    /// ```rust
     /// use geo::{coord, polygon, Triangle, TriangulateDelaunay};
     ///
     /// let points = polygon![
@@ -320,7 +320,8 @@ pub enum DelaunayTriangulationError {
     /// This error occurs when the `Polygon` describing the points to
     /// triangulate does not return a bounding rectangle.
     FailedToConstructSuperTriangle,
-    FailedToConvertSuperTriangleFactor,
+    /// Failed to convert value into generic type T.
+    /// This error occurs when the value 2.0 cannot be converted into T.
     GeoTypeConversionError,
 }
 
@@ -338,9 +339,6 @@ impl fmt::Display for DelaunayTriangulationError {
             }
             DelaunayTriangulationError::GeoTypeConversionError => {
                 write!(f, "Failed to convert from Geo type T")
-            }
-            DelaunayTriangulationError::FailedToConvertSuperTriangleFactor => {
-                write!(f, "Failed to convert super triangle expansion factor")
             }
         }
     }

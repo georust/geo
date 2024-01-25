@@ -112,3 +112,7 @@ harness = false
 [[bench]]
 name = "monotone_subdiv"
 harness = false
+
+[[bench]]
+name = "delaunay_diagram"
+harness = false

@@ -11,32 +11,70 @@ use crate::{BoundingRect, TriangulateDelaunay};
 
 type Result<T> = result::Result<T, VoronoiDiagramError>;
 
+/// The default value for determining if the slope of a line is
+/// near zero or near infinite.
+///
+/// A near infinite slope is greater than this value.
+///
+/// A near zero slope is less than `1 / DEFAULT_SLOPE_THRESHOLD`.
 pub const DEFAULT_SLOPE_THRESHOLD: f64 = 1e3;
 
+/// The components of a Voronoi Diagram
 #[derive(Debug, Clone)]
 pub struct VoronoiComponents<T: GeoFloat> {
+    /// The Delaunay Triangles used to construct the Voronoi Diagram
     pub delaunay_triangles: Vec<Triangle<T>>,
+    /// The vertices of the Voronoi Diagram
     pub vertices: Vec<Coord<T>>,
+    /// The lines of the Voronoi Diagram
     pub lines: Vec<Line<T>>,
+    /// This is an index of Delaunay Triangles that are / have neighours
+    /// the first value is the index of the triangle and the second value
+    /// is the index of a neighbouring triangle.
+    /// If the triangle does not have a neighbour the value is None.
     pub neighbours: Vec<(Option<usize>, Option<usize>)>,
 }
 
+/// The clipping mask used to trim the infinity lines of
+/// the Voronoi Diagram.
 pub type ClippingMask<T> = Polygon<T>;
 
+/// Compute the Voronoi Diagram for a given set of points.
+/// This method uses the property that Delaunay Triangulation
+/// [is a dual graph](https://en.wikipedia.org/wiki/Delaunay_triangulation#Relationship_with_the_Voronoi_diagram)
+/// of the Voronoi Diagram.
 pub trait VoronoiDiagram<T: GeoFloat>
 where
     f64: From<T>,
 {
+    /// Compute the Voronoi Diagram components with a clipping mask to trim infinity lines.
+    /// If `clipping_mask` is set to None, one will be computed by expanding the geometry's
+    /// bounding box.
+    ///
+    /// The `slope_threshold` is used when creating the infinity lines to determine lines with a slope
+    /// of near zero or near infinity.  If `slope_threshold` is set to None, [DEFAULT_SLOPE_THRESHOLD] will
+    /// be used.
+    ///
+    /// # Example
+    /// ```rust
+    /// use geo::{coord, polygon, VoronoiDiagram};
+    /// let poly = polygon![
+    ///     coord!{ x: 10., y: 10.},
+    ///     coord!{ x: 10., y: 20.},
+    ///     coord!{ x: 20., y: 20.},
+    ///     coord!{ x: 20., y: 10.},
+    ///     coord!{ x: 10., y: 0.},
+    ///     coord!{ x: 10., y: 0.},
+    ///     coord!{ x: 0., y: 10.},
+    ///     coord!{ x: 0., y: 20.},
+    /// ];
+    /// let voronoi = poly.compute_voronoi_components(None, None).unwrap();
+    /// ```
     fn compute_voronoi_components(
         &self,
         clipping_mask: Option<&ClippingMask<T>>,
         slope_threshold: Option<T>,
     ) -> Result<VoronoiComponents<T>>;
-    fn compute_voronoi_diagram(
-        &self,
-        clipping_mask: Option<&ClippingMask<T>>,
-        slope_threshold: Option<T>,
-    ) -> Result<Vec<Polygon>>;
 }
 
 impl<T: GeoFloat> VoronoiDiagram<T> for Polygon<T>
@@ -50,14 +88,6 @@ where
     ) -> Result<VoronoiComponents<T>> {
         compute_voronoi_components(self, clipping_mask, slope_threshold)
     }
-
-    fn compute_voronoi_diagram(
-        &self,
-        _clipping_mask: Option<&ClippingMask<T>>,
-        _slope_threshold: Option<T>,
-    ) -> Result<Vec<Polygon>> {
-        todo!("Need to map the components to voronoi cells");
-    }
 }
 impl<T: GeoFloat> VoronoiDiagram<T> for MultiPoint<T>
 where
@@ -69,14 +99,6 @@ where
         slope_threshold: Option<T>,
     ) -> Result<VoronoiComponents<T>> {
         compute_voronoi_components(self, clipping_mask, slope_threshold)
-    }
-
-    fn compute_voronoi_diagram(
-        &self,
-        _clipping_mask: Option<&ClippingMask<T>>,
-        _slope_threshold: Option<T>,
-    ) -> Result<Vec<Polygon>> {
-        todo!("Need to map the components to voronoi cells");
     }
 }
 
@@ -108,7 +130,7 @@ where
 /// The Voronoi Diagram is a [dual graph](https://en.wikipedia.org/wiki/Dual_graph)
 /// of the [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation)
 /// and thus the Voronoi Diagram can be created from the Delaunay Triangulation.
-pub fn compute_voronoi_components_from_delaunay<T: GeoFloat>(
+fn compute_voronoi_components_from_delaunay<T: GeoFloat>(
     triangles: &[Triangle<T>],
     clipping_mask: Option<&Polygon<T>>,
     slope_threshold: Option<T>,
@@ -196,12 +218,12 @@ where
     )))
 }
 
-type Neighbor = (Option<usize>, Option<usize>);
-type Neighbors = Vec<Neighbor>;
+type Neighbour = (Option<usize>, Option<usize>);
+type Neighbours = Vec<Neighbour>;
 
 #[derive(Debug, Clone)]
 struct SharedEdgesData<T: GeoFloat> {
-    neighbours: Neighbors,
+    neighbours: Neighbours,
     shared_edges: Vec<Line<T>>,
 }
 
@@ -655,13 +677,22 @@ where
     Ok(inf_lines)
 }
 
+/// Voronoi Diagram Errors
 #[derive(Debug, PartialEq, Eq)]
 pub enum VoronoiDiagramError {
+    /// An error occurred when attempting to complete Delaunay Triangulation
+    /// before computing the Voronoi Diagram
     DelaunayError(DelaunayTriangulationError),
+    /// This error occurs when a conversion from a value to a Geo Generic T fails.
     CannotConvertBetweenGeoGenerics,
+    /// This error occurs when the bounding box cannot be determined when creating
+    /// a clipping mask for the points.
     CannotDetermineBoundsFromClipppingMask,
+    /// This error occurs when a vertex to infinity is expected but cannot be computed
     CannotComputeExpectedInfinityVertex,
+    /// This error occurs when the position of a Triangle's circumcenter cannot be determined.
     CannotDetermineCircumcenterPosition,
+    /// The delaunay triangulation is invalid
     InvalidTriangulation,
 }
 
