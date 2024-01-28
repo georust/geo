@@ -48,41 +48,43 @@ pub(crate) trait StitchTriangles<T: GeoFloat> {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use geo::StitchTriangles;
-    /// use geo::{Coord, Triangle, polygon};
+    /// ```no_run
+    /// // commented this out since the trait is private and the doc test will fail
     ///
-    /// let tri1 = Triangle::from([
-    ///     Coord { x: 0.0, y: 0.0 },
-    ///     Coord { x: 1.0, y: 0.0 },
-    ///     Coord { x: 0.0, y: 1.0 },
-    /// ]);
-    /// let tri2 = Triangle::from([
-    ///     Coord { x: 1.0, y: 1.0 },
-    ///     Coord { x: 1.0, y: 0.0 },
-    ///     Coord { x: 0.0, y: 1.0 },
-    /// ]);
+    /// //use geo::StitchTriangles;
+    /// //use geo::{Coord, Triangle, polygon};
     ///
-    /// let result = vec![tri1, tri2].stitch_triangulation();
+    /// //let tri1 = Triangle::from([
+    /// //    Coord { x: 0.0, y: 0.0 },
+    /// //    Coord { x: 1.0, y: 0.0 },
+    /// //    Coord { x: 0.0, y: 1.0 },
+    /// //]);
+    /// //let tri2 = Triangle::from([
+    /// //    Coord { x: 1.0, y: 1.0 },
+    /// //    Coord { x: 1.0, y: 0.0 },
+    /// //    Coord { x: 0.0, y: 1.0 },
+    /// //]);
     ///
-    /// assert!(result.is_ok());
+    /// //let result = vec![tri1, tri2].stitch_triangulation();
     ///
-    /// let mp = result.unwrap();
+    /// //assert!(result.is_ok());
     ///
-    /// assert_eq!(mp.0.len(), 1);
+    /// //let mp = result.unwrap();
     ///
-    /// let poly = mp.0[0].clone();
-    /// // 4 coords + 1 duplicate for closed-ness
-    /// assert_eq!(poly.exterior().0.len(), 4 + 1);
+    /// //assert_eq!(mp.0.len(), 1);
     ///
-    /// let expected = polygon![
-    ///     Coord { x: 1.0, y: 1.0 },
-    ///     Coord { x: 0.0, y: 1.0 },
-    ///     Coord { x: 0.0, y: 0.0 },
-    ///     Coord { x: 1.0, y: 0.0 },
-    /// ];
+    /// //let poly = mp.0[0].clone();
+    /// //// 4 coords + 1 duplicate for closed-ness
+    /// //assert_eq!(poly.exterior().0.len(), 4 + 1);
     ///
-    /// assert_eq!(poly, expected);
+    /// //let expected = polygon![
+    /// //    Coord { x: 1.0, y: 1.0 },
+    /// //    Coord { x: 0.0, y: 1.0 },
+    /// //    Coord { x: 0.0, y: 0.0 },
+    /// //    Coord { x: 1.0, y: 0.0 },
+    /// //];
+    ///
+    /// //assert_eq!(poly, expected);
     /// ```
     ///
     /// # Additional Notes
