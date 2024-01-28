@@ -296,7 +296,7 @@ mod tests {
     #[cfg(feature = "rstar_0_12")]
     #[test]
     /// ensure Line's SpatialObject impl is correct
-    fn line_test_0_11() {
+    fn line_test_0_12() {
         use rstar_0_12::primitives::Line as RStarLine;
         use rstar_0_12::{PointDistance, RTreeObject};
 
