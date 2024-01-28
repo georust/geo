@@ -22,6 +22,7 @@ use-rstar_0_8 = ["rstar_0_8", "approx"]
 use-rstar_0_9 = ["rstar_0_9", "approx"]
 use-rstar_0_10 = ["rstar_0_10", "approx"]
 use-rstar_0_11 = ["rstar_0_11", "approx"]
+use-rstar_0_12 = ["rstar_0_12", "approx"]
 
 [dependencies]
 approx = { version = ">= 0.4.0, < 0.6.0", optional = true, default-features = false }
@@ -31,6 +32,7 @@ rstar_0_8 = { package = "rstar", version = "0.8", optional = true }
 rstar_0_9 = { package = "rstar", version = "0.9", optional = true }
 rstar_0_10 = { package = "rstar", version = "0.10", optional = true }
 rstar_0_11 = { package = "rstar", version = "0.11", optional = true }
+rstar_0_12 = { package = "rstar", version = "0.12", optional = true }
 serde = { version = "1", optional = true, default-features = false, features = ["alloc", "derive"] }
 
 [dev-dependencies]

@@ -36,6 +36,7 @@
   * <https://github.com/georust/geo/pull/1135>
 * Add remaining Relate predicates
   * <https://github.com/georust/geo/pull/1136>
+* Update rstar to v0.12.0
 
 ## 0.27.0
 

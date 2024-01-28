@@ -4,6 +4,7 @@
 
 * POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
   * <https://github.com/georust/geo/pull/1134>
+* Add feature for rstar v0.12.0
 
 ## 0.7.12
 
