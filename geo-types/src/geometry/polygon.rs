@@ -438,7 +438,7 @@ impl<T: CoordNum> Polygon<T> {
     /// assert_eq!(polygon.num_rings(), 2);
     /// ```
     pub fn num_rings(&self) -> usize {
-        self.interiors.len() + 1
+        self.num_interior_rings() + 1
     }
 
     /// Count the number of interior rings in the polygon
