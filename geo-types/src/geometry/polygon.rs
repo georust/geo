@@ -415,6 +415,56 @@ impl<T: CoordNum> Polygon<T> {
     {
         (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
     }
+
+    /// Count the total number of rings (interior and exterior) in the polygon
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{coord, LineString, Polygon};
+    ///
+    /// let polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![],
+    /// );
+    ///
+    /// assert_eq!(polygon.num_rings(), 1);
+    ///
+    /// let polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![LineString::from(vec![(0.1, 0.1), (0.9, 0.9), (0.9, 0.1)])],
+    /// );
+    ///
+    /// assert_eq!(polygon.num_rings(), 2);
+    /// ```
+    pub fn num_rings(&self) -> usize {
+        self.num_interior_rings() + 1
+    }
+
+    /// Count the number of interior rings in the polygon
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{coord, LineString, Polygon};
+    ///
+    /// let polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![],
+    /// );
+    ///
+    /// assert_eq!(polygon.num_interior_rings(), 0);
+    ///
+    /// let polygon = Polygon::new(
+    ///     LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.)]),
+    ///     vec![LineString::from(vec![(0.1, 0.1), (0.9, 0.9), (0.9, 0.1)])],
+    /// );
+    ///
+    /// assert_eq!(polygon.num_interior_rings(), 1);
+    /// ```
+    pub fn num_interior_rings(&self) -> usize {
+        self.interiors.len()
+    }
 }
 
 // used to check the sign of a vec of floats
