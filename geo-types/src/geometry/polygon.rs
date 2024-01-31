@@ -416,7 +416,7 @@ impl<T: CoordNum> Polygon<T> {
         (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
     }
 
-    /// Count the number of rings in the polygon
+    /// Count the total number of rings (interior and exterior) in the polygon
     ///
     /// # Examples
     ///
