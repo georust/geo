@@ -13,10 +13,12 @@ rust-version = "1.70"
 categories = ["science::geo"]
 
 [features]
-default = ["earcutr", "spade"]
+default = ["earcutr", "spade", "voronoi"]
 use-proj = ["proj"]
 proj-network = ["use-proj", "proj/network"]
 use-serde = ["serde", "geo-types/serde"]
+delaunay = []
+voronoi = ["delaunay"]
 
 [dependencies]
 earcutr = { version = "0.4.2", optional = true }
@@ -113,4 +115,8 @@ harness = false
 
 [[bench]]
 name = "triangulate"
+harness = false
+
+[[bench]]
+name = "delaunay_diagram"
 harness = false
