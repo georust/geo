@@ -355,7 +355,7 @@ fn stitch_rings_from_lines<F: GeoFloat>(
 
     let mut rings: Vec<LineString<F>> = vec![];
     // terminates since every loop we'll merge two elements into one so the total number of
-    // elements decreases each loop by one
+    // elements decreases each loop by at least one (two in the case of completing a ring)
     while let Some(last_part) = ring_parts.pop() {
         let (j, compound_part) = ring_parts
             .iter()
