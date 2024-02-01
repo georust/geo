@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use geo_types::{Coord, Line, LineString, MultiPolygon, Polygon, Triangle};
 
-use crate::winding_order::WindingOrder;
+use crate::winding_order::{triangle_winding_order, WindingOrder};
 use crate::{Contains, GeoFloat};
 
 // ========= Error Type ============
@@ -124,29 +124,11 @@ where
     Ok(MultiPolygon::new(polys))
 }
 
-/// special cased algorithm for finding the winding of a triangle
-///
-/// note that we assume the triangle is valid, i.e. it's not three points on a flat line
-fn triangle_winding_order<T: GeoFloat>(tri: &Triangle<T>) -> WindingOrder {
-    let [a, b, c] = tri.to_array();
-    let ab = b - a;
-    let ac = c - a;
-
-    let cross_prod = ab.x * ac.y - ab.y * ac.x;
-
-    if cross_prod > T::zero() {
-        WindingOrder::CounterClockwise
-    } else {
-        WindingOrder::Clockwise
-    }
-}
-
 /// returns the triangle's lines with ccw orientation
 fn ccw_lines<T: GeoFloat>(tri: &Triangle<T>) -> [Line<T>; 3] {
-    // maybe there's
     match triangle_winding_order(tri) {
-        WindingOrder::CounterClockwise => tri.to_lines(),
-        WindingOrder::Clockwise => {
+        Some(WindingOrder::CounterClockwise) => tri.to_lines(),
+        _ => {
             let [a, b, c] = tri.to_array();
             [(b, a), (a, c), (c, b)].map(|(start, end)| Line::new(start, end))
         }
