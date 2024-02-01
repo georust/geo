@@ -272,7 +272,7 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
     let mut polygons_idxs: HashMap<usize, Vec<usize>> = HashMap::default();
 
     // the direct parent is the parent ring which has itself the most parent rings
-    fn find_direct_parents(
+    fn find_direct_parent(
         parent_rings: &[usize],
         parents_of: &HashMap<usize, Vec<usize>>,
     ) -> Option<usize> {
@@ -305,7 +305,7 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
         // if it has an odd number of parents, it's an inner ring
 
         // to find the specific outer ring it is related to, we search for the direct parent.
-        let maybe_direct_parent = find_direct_parents(parent_idxs, &parents_of);
+        let maybe_direct_parent = find_direct_parent(parent_idxs, &parents_of);
 
         // As stated above the amount of parents here is odd, so it's at least one.
         // Since every ring is registered in the `parents` hashmap, we find at least one element
