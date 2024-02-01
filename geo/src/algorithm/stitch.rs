@@ -401,7 +401,7 @@ fn try_stitch<F: GeoFloat>(a: &[Coord<F>], b: &[Coord<F>]) -> Option<Vec<Coord<F
 #[cfg(test)]
 mod polygon_stitching_tests {
 
-    use crate::{Area, TriangulateEarcut, Winding};
+    use crate::{Relate, TriangulateEarcut, Winding};
 
     use super::*;
     use geo_types::*;
@@ -425,7 +425,7 @@ mod polygon_stitching_tests {
 
         let result = tris.stitch_triangulation().unwrap();
 
-        assert!(mp.contains(&result) && result.contains(&mp));
+        assert!(mp.relate(&result).is_equal_topo());
     }
 
     #[test]
@@ -476,9 +476,9 @@ mod polygon_stitching_tests {
             .stitch_triangulation()
             .unwrap();
 
-        assert_eq!(result_1.unsigned_area(), result_2.unsigned_area());
-        assert_eq!(result_2.unsigned_area(), result_3.unsigned_area());
-        assert_eq!(result_3.unsigned_area(), result_4.unsigned_area());
+        assert!(result_1.relate(&result_2).is_equal_topo());
+        assert!(result_2.relate(&result_3).is_equal_topo());
+        assert!(result_3.relate(&result_4).is_equal_topo());
     }
 
     #[test]
