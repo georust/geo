@@ -135,7 +135,7 @@ fn ccw_lines<T: GeoFloat>(tri: &Triangle<T>) -> [Line<T>; 3] {
     }
 }
 
-/// checks whether the to lines are equal or inverted forms of each other
+/// checks whether the two lines are equal or inverted forms of each other
 #[inline]
 fn same_line<T: GeoFloat>(l1: &Line<T>, l2: &Line<T>) -> bool {
     (l1.start == l2.start && l1.end == l2.end) || (l1.start == l2.end && l2.start == l1.end)
