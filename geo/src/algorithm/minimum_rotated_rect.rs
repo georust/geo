@@ -62,8 +62,8 @@ where
             let (mut min_x, mut max_x) = (<T as Bounded>::max_value(), <T as Bounded>::min_value());
             let (mut min_y, mut max_y) = (<T as Bounded>::max_value(), <T as Bounded>::min_value());
             for point in hull.exterior().points() {
-                let x = point.x().mul_add(edge.0, point.y() * edge.1);
-                let y = point.x().mul_add(-edge.1, point.y() * edge.0);
+                let x = point.x() * edge.0 + point.y() * edge.1;
+                let y = point.x() * -edge.1 + point.y() * edge.0;
 
                 min_x = min_x.min(x);
                 max_x = max_x.max(x);
@@ -82,22 +82,22 @@ where
             }
         }
 
-        if let Some(e) = best_edge {
+        if let Some((dx, dy)) = best_edge {
             let p1 = (
-                best_min_x.mul_add(e.0, -best_min_y * e.1),
-                best_min_x.mul_add(e.1, best_min_y * e.0),
+                best_min_x * dx + -best_min_y * dy,
+                best_min_x * dy + best_min_y * dx,
             );
             let p2 = (
-                best_max_x.mul_add(e.0, -best_min_y * e.1),
-                best_max_x.mul_add(e.1, best_min_y * e.0),
+                best_max_x * dx + -best_min_y * dy,
+                best_max_x * dy + best_min_y * dx,
             );
             let p3 = (
-                best_max_x.mul_add(e.0, -best_max_y * e.1),
-                best_max_x.mul_add(e.1, best_max_y * e.0),
+                best_max_x * dx + -best_max_y * dy,
+                best_max_x * dy + best_max_y * dx,
             );
             let p4 = (
-                best_min_x.mul_add(e.0, -best_max_y * e.1),
-                best_min_x.mul_add(e.1, best_max_y * e.0),
+                best_min_x * dx + -best_max_y * dy,
+                best_min_x * dy + best_max_y * dx,
             );
             let rectangle = Polygon::new(
                 LineString(vec![p1.into(), p2.into(), p3.into(), p4.into(), p1.into()]),

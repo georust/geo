@@ -13,6 +13,9 @@
   shouldn't break for any common numeric types, but if you are using something
   exotic you'll need to manually implement `GeoNum` for your numeric type.
   * <https://github.com/georust/geo/pull/1134>
+* POSSIBLY BREAKING: `minimum_rotated_rect` is about 33%, but might return
+  slightly different results.
+  * <https://github.com/georust/geo/pull/1094>
 * POSSIBLY BREAKING: `SimplifyVwPreserve` trait implementation moved from
   `geo_types::CoordNum` to `geo::GeoNum` as a consequence of introducing the
   `GeoNum::total_cmp`. This shouldn't break anything for common numeric
