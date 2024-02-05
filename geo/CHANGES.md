@@ -37,6 +37,8 @@
 * Add remaining Relate predicates
   * <https://github.com/georust/geo/pull/1136>
 * Update rstar to v0.12.0
+* Implement `CoordsIter` for arrays and slices. This is useful when you'd like to use traits
+  implemented for `CoordsIter` without re-allocating (e.g., creating a `MultiPoint`).
 
 ## 0.27.0
 
