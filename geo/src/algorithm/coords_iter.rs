@@ -447,6 +447,50 @@ impl<T: CoordNum> CoordsIter for Geometry<T> {
     }
 }
 
+// ┌──────────────────────────┐
+// │ Implementation for Array │
+// └──────────────────────────┘
+
+impl<const N: usize, T: CoordNum> CoordsIter for [Coord<T>; N] {
+    type Iter<'a> = iter::Copied<slice::Iter<'a, Coord<T>>> where T: 'a;
+    type ExteriorIter<'a> = Self::Iter<'a> where T: 'a;
+    type Scalar = T;
+
+    fn coords_iter(&self) -> Self::Iter<'_> {
+        self.iter().copied()
+    }
+
+    fn coords_count(&self) -> usize {
+        N
+    }
+
+    fn exterior_coords_iter(&self) -> Self::ExteriorIter<'_> {
+        self.coords_iter()
+    }
+}
+
+// ┌──────────────────────────┐
+// │ Implementation for Slice │
+// └──────────────────────────┘
+
+impl<'a, T: CoordNum> CoordsIter for &'a [Coord<T>] {
+    type Iter<'b> = iter::Copied<slice::Iter<'b, Coord<T>>> where T: 'b, 'a: 'b;
+    type ExteriorIter<'b> = Self::Iter<'b> where T: 'b, 'a: 'b;
+    type Scalar = T;
+
+    fn coords_iter(&self) -> Self::Iter<'_> {
+        self.iter().copied()
+    }
+
+    fn coords_count(&self) -> usize {
+        self.len()
+    }
+
+    fn exterior_coords_iter(&self) -> Self::ExteriorIter<'_> {
+        self.coords_iter()
+    }
+}
+
 // ┌───────────┐
 // │ Utilities │
 // └───────────┘
@@ -785,6 +829,32 @@ mod test {
         .collect::<Vec<_>>();
 
         assert_eq!(expected_coords, actual_coords);
+    }
+
+    #[test]
+    fn test_array() {
+        let coords = [
+            coord! { x: 1., y: 2. },
+            coord! { x: 3., y: 4. },
+            coord! { x: 5., y: 6. },
+        ];
+
+        let actual_coords = coords.coords_iter().collect::<Vec<_>>();
+
+        assert_eq!(coords.to_vec(), actual_coords);
+    }
+
+    #[test]
+    fn test_slice() {
+        let coords = &[
+            coord! { x: 1., y: 2. },
+            coord! { x: 3., y: 4. },
+            coord! { x: 5., y: 6. },
+        ];
+
+        let actual_coords = coords.coords_iter().collect::<Vec<_>>();
+
+        assert_eq!(coords.to_vec(), actual_coords);
     }
 
     fn create_point() -> (Point, Vec<Coord>) {
