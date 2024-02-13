@@ -1,6 +1,13 @@
 # Changes
 
-## Unrealeased
+## Unreleased
+
+* POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
+  * <https://github.com/georust/geo/pull/1134>
+* Add feature for rstar v0.12.0
+* Add num_rings and num_interior_rings methods to polygons.
+
+## 0.7.12
 
 * Add `Polygon::try_exterior_mut` and `Polygon::try_interiors_mut`.
   <https://github.com/georust/geo/pull/1071>

@@ -104,7 +104,7 @@ impl<T: GeoNum, P> From<Segment<T, P>> for RcSegment<T, P> {
     }
 }
 
-// Implement partial eq, parital ord, and eq for RcSegment
+// Implement partial eq, partial ord, and eq for RcSegment
 impl<T: GeoNum, P> PartialEq for RcSegment<T, P> {
     fn eq(&self, other: &Self) -> bool {
         self.0.eq(&other.0)

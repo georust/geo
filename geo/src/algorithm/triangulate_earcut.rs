@@ -77,7 +77,7 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     }
 
     /// Return the raw result from the `earcutr` library: a one-dimensional vector of polygon
-    /// vertices (in XY order), and the indicies of the triangles within the vertices vector. This
+    /// vertices (in XY order), and the indices of the triangles within the vertices vector. This
     /// method is less ergonomic than the `earcut_triangles` and `earcut_triangles_iter`
     /// methods, but can be helpful when working in graphics contexts that expect flat vectors of
     /// data.

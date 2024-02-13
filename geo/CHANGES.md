@@ -1,6 +1,50 @@
 # Changes
 
 ## Unreleased
+* BREAKING: The `HasKernel` trait was removed and it's functionality was merged
+  into `GeoNum`. If you are using common scalars for your geometry (f32, f64,
+  i64, i32, i16, isize), this should have no effect on you. If you are using an
+  exotic scalar type, you'll need to implement `GeoNum` for it instead of
+  `HasKernel`. If you had functionality defined in terms of `HasKernel` before,
+  define it in terms of `GeoNum` instead.
+  * <https://github.com/georust/geo/pull/1134>
+* BREAKING: Added a new `total_cmp` method to `GeoNum`. This avoids some
+  potential crashes when working with geometries that contain NaN points. This
+  shouldn't break for any common numeric types, but if you are using something
+  exotic you'll need to manually implement `GeoNum` for your numeric type.
+  * <https://github.com/georust/geo/pull/1134>
+* POSSIBLY BREAKING: `SimplifyVwPreserve` trait implementation moved from
+  `geo_types::CoordNum` to `geo::GeoNum` as a consequence of introducing the
+  `GeoNum::total_cmp`. This shouldn't break anything for common numeric
+  types, but if you are using something exotic you'll need to manually
+  implement `GeoNum` for your numeric type.
+* Implement ChaikinSmoothing to work on Geometry types
+  * <https://github.com/georust/geo/pull/1116>
+* Fix a panic when calculating the haversine closest point to a point intersecting the geometry
+  * <https://github.com/georust/geo/pull/1119>
+* Add `LineStringSegmentizeHaversine` trait as a an alternative to `LineStringSegmentize` for geographic coordinates.
+  * <https://github.com/georust/geo/pull/1107>
+* Make `SpadeTriangulationConfig` actually configurable
+  * <https://github.com/georust/geo/pull/1123>
+* PERF: small improvements to TriangulateSpade trait
+  * <https://github.com/georust/geo/pull/1122>
+* POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
+  * <https://github.com/georust/geo/pull/1134>
+* Add topological equality comparison method:
+  * <https://github.com/georust/geo/pull/1133>
+* Add docs to Relate trait
+  * <https://github.com/georust/geo/pull/1135>
+* Add remaining Relate predicates
+  * <https://github.com/georust/geo/pull/1136>
+* Update rstar to v0.12.0
+* Implement `CoordsIter` for arrays and slices. This is useful when you'd like to use traits
+  implemented for `CoordsIter` without re-allocating (e.g., creating a `MultiPoint`).
+* Add `compose_many` method to `AffineOps`
+  * <https://github.com/georust/geo/pull/1148>
+* Allow affine transforms to be constructed from borrowed arrays.
+  <https://github.com/georust/geo/pull/1105>
+
+## 0.27.0
 
 * Use `CachedEnvelope` in R-Trees when computing euclidean distance between polygons
   * <https://github.com/georust/geo/pull/1093>
@@ -27,9 +71,11 @@
 * Fix coordinate wrapping in `HaversineDestination`
   * <https://github.com/georust/geo/pull/1091>
 * Add `wkt!` macro to define geometries at compile time.
-  <https://github.com/georust/geo/pull/1063>
-* Allow affine transforms to be constructed from borrowed arrays.
-  <https://github.com/georust/geo/pull/1105>
+  * <https://github.com/georust/geo/pull/1063>
+* Add `TriangulateSpade` trait which provides (un)constrained Delaunay Triangulations for all `geo_types` via the `spade` crate
+  * <https://github.com/georust/geo/pull/1083>
+* Add `len()` and `is_empty()` to `MultiPoint`
+  * <https://github.com/georust/geo/pull/1109>
 
 ## 0.26.0
 
@@ -42,7 +88,7 @@
 
 - Add `TriangulateEarcut` algorithm trait to triangulate polygons with the earcut algorithm.
   - <https://github.com/georust/geo/pull/1007>
-- Add `Vector2DOps` trait to algorithims module and implemented it for `Coord<T::CoordFloat>`
+- Add `Vector2DOps` trait to algorithms module and implemented it for `Coord<T::CoordFloat>`
   - <https://github.com/georust/geo/pull/1025>
 
 - Add a fast point-in-polygon query datastructure that pre-processes a `Polygon` as a set of monotone polygons. Ref. `crate::algorithm::MonotonicPolygons`.

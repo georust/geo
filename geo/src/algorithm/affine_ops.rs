@@ -169,6 +169,32 @@ impl<T: CoordNum> AffineTransform<T> {
             ],
         ])
     }
+
+    /// Create a new affine transformation by composing an arbitrary number of `AffineTransform`s.
+    ///
+    /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
+    /// ```
+    /// use geo::AffineTransform;
+    /// let mut transform = AffineTransform::identity();
+    ///
+    /// // create two transforms that cancel each other
+    /// let transform1 = AffineTransform::translate(1.0, 2.0);
+    /// let transform2 = AffineTransform::translate(-1.0, -2.0);
+    /// let transforms = vec![transform1, transform2];
+    ///
+    /// // apply them
+    /// let outcome = transform.compose_many(&transforms);
+    /// // we should be back to square one
+    /// assert!(outcome.is_identity());
+    /// ```
+    #[must_use]
+    pub fn compose_many(&self, transforms: &[Self]) -> Self {
+        self.compose(&transforms.iter().fold(
+            AffineTransform::default(),
+            |acc: AffineTransform<T>, transform| acc.compose(transform),
+        ))
+    }
+
     /// Create the identity matrix
     ///
     /// The matrix is:

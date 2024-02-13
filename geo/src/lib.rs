@@ -166,6 +166,7 @@
 //! - **[`RhumbIntermediate`]**: Calculate intermediate points on a sphere along a rhumb line
 //! - **[`proj`]**: Project geometries with the `proj` crate (requires the `use-proj` feature)
 //! - **[`LineStringSegmentize`]**: Segment a LineString into `n` segments.
+//! - **[`LineStringSegmentizeHaversine`]**: Segment a LineString using Haversine distance.
 //! - **[`Transform`]**: Transform a geometry using Proj.
 //! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry.
 //!
@@ -212,6 +213,7 @@ extern crate serde;
 
 pub use crate::algorithm::*;
 pub use crate::types::Closest;
+use std::cmp::Ordering;
 
 pub use geo_types::{coord, line_string, point, polygon, wkt, CoordFloat, CoordNum};
 
@@ -223,6 +225,7 @@ pub mod algorithm;
 mod geometry_cow;
 mod types;
 mod utils;
+use crate::kernels::{RobustKernel, SimpleKernel};
 pub(crate) use geometry_cow::GeometryCow;
 
 #[cfg(test)]
@@ -301,5 +304,70 @@ impl<T> GeoFloat for T where
 }
 
 /// A trait for methods which work for both integers **and** floating point
-pub trait GeoNum: CoordNum + HasKernel {}
-impl<T> GeoNum for T where T: CoordNum + HasKernel {}
+pub trait GeoNum: CoordNum {
+    type Ker: Kernel<Self>;
+
+    /// Return the ordering between self and other.
+    ///
+    /// For integers, this should behave just like [`Ord`].
+    ///
+    /// For floating point numbers, unlike the standard partial comparison between floating point numbers, this comparison
+    /// always produces an ordering.
+    ///
+    /// See [f64::total_cmp](https://doc.rust-lang.org/src/core/num/f64.rs.html#1432) for details.
+    fn total_cmp(&self, other: &Self) -> Ordering;
+}
+
+macro_rules! impl_geo_num_for_float {
+    ($t: ident) => {
+        impl GeoNum for $t {
+            type Ker = RobustKernel;
+            fn total_cmp(&self, other: &Self) -> Ordering {
+                self.total_cmp(other)
+            }
+        }
+    };
+}
+macro_rules! impl_geo_num_for_int {
+    ($t: ident) => {
+        impl GeoNum for $t {
+            type Ker = SimpleKernel;
+            fn total_cmp(&self, other: &Self) -> Ordering {
+                self.cmp(other)
+            }
+        }
+    };
+}
+
+// This is the list of primitives that we support. It should match our set of implementations for HasKernel since GeoNum
+// depends on HasKernel.
+impl_geo_num_for_float!(f32);
+impl_geo_num_for_float!(f64);
+impl_geo_num_for_int!(i64);
+impl_geo_num_for_int!(i32);
+impl_geo_num_for_int!(i16);
+impl_geo_num_for_int!(isize);
+#[cfg(has_i128)]
+impl_geo_num_for_int!(i128);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn total_ord_float() {
+        assert_eq!(GeoNum::total_cmp(&3.0f64, &2.0f64), Ordering::Greater);
+        assert_eq!(GeoNum::total_cmp(&2.0f64, &2.0f64), Ordering::Equal);
+        assert_eq!(GeoNum::total_cmp(&1.0f64, &2.0f64), Ordering::Less);
+        assert_eq!(GeoNum::total_cmp(&1.0f64, &f64::NAN), Ordering::Less);
+        assert_eq!(GeoNum::total_cmp(&f64::NAN, &f64::NAN), Ordering::Equal);
+        assert_eq!(GeoNum::total_cmp(&f64::INFINITY, &f64::NAN), Ordering::Less);
+    }
+
+    #[test]
+    fn total_ord_int() {
+        assert_eq!(GeoNum::total_cmp(&3i32, &2i32), Ordering::Greater);
+        assert_eq!(GeoNum::total_cmp(&2i32, &2i32), Ordering::Equal);
+        assert_eq!(GeoNum::total_cmp(&1i32, &2i32), Ordering::Less);
+    }
+}
