@@ -42,7 +42,7 @@
 * Add `compose_many` method to `AffineOps`
   * <https://github.com/georust/geo/pull/1148>
 * Allow affine transforms to be constructed from borrowed arrays.
-  <https://github.com/georust/geo/pull/1105>
+  * <https://github.com/georust/geo/pull/1105>
 
 ## 0.27.0
 
