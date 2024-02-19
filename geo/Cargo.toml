@@ -22,13 +22,13 @@ use-serde = ["serde", "geo-types/serde"]
 earcutr = { version = "0.4.2", optional = true }
 spade = { version = "2.2.0", optional = true }
 float_next_after = "1.0.0"
-geo-types = { version = "0.7.12", features = ["approx", "use-rstar_0_11"] }
+geo-types = { version = "0.7.12", features = ["approx", "use-rstar_0_12"] }
 geographiclib-rs = { version = "0.2.3", default-features = false }
 log = "0.4.11"
 num-traits = "0.2"
 proj = { version = "0.27.0", optional = true }
 robust = "1.1.0"
-rstar = "0.11.0"
+rstar = "0.12.0"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 
 [dev-dependencies]

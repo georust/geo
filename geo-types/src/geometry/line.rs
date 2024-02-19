@@ -225,7 +225,8 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Line<T> {
     feature = "rstar_0_8",
     feature = "rstar_0_9",
     feature = "rstar_0_10",
-    feature = "rstar_0_11"
+    feature = "rstar_0_11",
+    feature = "rstar_0_12"
 ))]
 macro_rules! impl_rstar_line {
     ($rstar:ident) => {
@@ -264,6 +265,9 @@ impl_rstar_line!(rstar_0_10);
 
 #[cfg(feature = "rstar_0_11")]
 impl_rstar_line!(rstar_0_11);
+
+#[cfg(feature = "rstar_0_12")]
+impl_rstar_line!(rstar_0_12);
 
 #[cfg(test)]
 mod test {

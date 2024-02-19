@@ -69,6 +69,7 @@
 //! - `use-rstar_0_9`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.9`)
 //! - `use-rstar_0_10`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.10`)
 //! - `use-rstar_0_11`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.11`)
+//! - `use-rstar_0_12`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.12`)
 //!
 //! This library can be used in `#![no_std]` environments if the default `std` feature is disabled. At
 //! the moment, the `arbitrary` and `use-rstar_0_8` features require `std`. This may change in a
@@ -140,7 +141,8 @@ mod arbitrary;
     feature = "rstar_0_8",
     feature = "rstar_0_9",
     feature = "rstar_0_10",
-    feature = "rstar_0_11"
+    feature = "rstar_0_11",
+    feature = "rstar_0_12"
 ))]
 #[doc(hidden)]
 pub mod private_utils;
@@ -282,6 +284,21 @@ mod tests {
     fn line_test_0_11() {
         use rstar_0_11::primitives::Line as RStarLine;
         use rstar_0_11::{PointDistance, RTreeObject};
+
+        let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
+        let l = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 5., y: 5. });
+        assert_eq!(rl.envelope(), l.envelope());
+        // difference in 15th decimal place
+        assert_relative_eq!(26.0, rl.distance_2(&Point::new(4.0, 10.0)));
+        assert_relative_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
+    }
+
+    #[cfg(feature = "rstar_0_12")]
+    #[test]
+    /// ensure Line's SpatialObject impl is correct
+    fn line_test_0_12() {
+        use rstar_0_12::primitives::Line as RStarLine;
+        use rstar_0_12::{PointDistance, RTreeObject};
 
         let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
         let l = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 5., y: 5. });
