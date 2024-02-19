@@ -257,7 +257,7 @@ impl<T: CoordNum> LineString<T> {
     /// );
     /// assert!(lines.next().is_none());
     /// ```
-    pub fn lines(&'_ self) -> impl ExactSizeIterator + Iterator<Item = Line<T>> + '_ {
+    pub fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<T>> + '_ {
         self.0.windows(2).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe { Line::new(*w.get_unchecked(0), *w.get_unchecked(1)) }
@@ -265,7 +265,7 @@ impl<T: CoordNum> LineString<T> {
     }
 
     /// An iterator which yields the coordinates of a [`LineString`] as [Triangle]s
-    pub fn triangles(&'_ self) -> impl ExactSizeIterator + Iterator<Item = Triangle<T>> + '_ {
+    pub fn triangles(&'_ self) -> impl ExactSizeIterator<Item = Triangle<T>> + '_ {
         self.0.windows(3).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe {
