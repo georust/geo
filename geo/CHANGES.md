@@ -34,6 +34,8 @@
   * <https://github.com/georust/geo/pull/1133>
 * Add docs to Relate trait
   * <https://github.com/georust/geo/pull/1135>
+* Point in `Triangle` and `Rect` performance improvemnets
+  * <https://github.com/georust/geo/pull/1057>
 
 ## 0.27.0
 
