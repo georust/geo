@@ -154,9 +154,10 @@ where
 /// Multi* objects are simplified by simplifying all their constituent geometries individually.
 ///
 /// A larger `epsilon` means being more aggressive about removing points with less concern for
-/// maintaining the existing shape. Specifically, when you consider whether to remove a point, you
-/// can draw a triangle consisting of the candidate point and the points before and after it.
-/// If the area of this triangle is less than `epsilon`, we will remove the point.
+/// maintaining the existing shape.
+///
+/// Specifically, points closer than `epsilon` distance from the simplified output may be
+/// discarded.
 ///
 /// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
 pub trait Simplify<T, Epsilon = T> {
@@ -198,9 +199,10 @@ pub trait Simplify<T, Epsilon = T> {
 /// and does not guarantee that the returned geometry is valid.
 ///
 /// A larger `epsilon` means being more aggressive about removing points with less concern for
-/// maintaining the existing shape. Specifically, when you consider whether to remove a point, you
-/// can draw a triangle consisting of the candidate point and the points before and after it.
-/// If the area of this triangle is less than `epsilon`, we will remove the point.
+/// maintaining the existing shape.
+///
+/// Specifically, points closer than `epsilon` distance from the simplified output may be
+/// discarded.
 ///
 /// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
 pub trait SimplifyIdx<T, Epsilon = T> {
