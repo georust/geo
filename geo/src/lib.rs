@@ -242,7 +242,7 @@ extern crate log;
 /// https://link.springer.com/article/10.1007%2Fs001900050278
 /// https://sci-hub.se/https://doi.org/10.1007/s001900050278
 /// https://en.wikipedia.org/wiki/Earth_radius#Mean_radius
-const MEAN_EARTH_RADIUS: f64 = 6371008.8;
+const MEAN_EARTH_RADIUS: f64 = 6_371_008.8;
 
 // Radius of Earth at the equator in meters (derived from the WGS-84 ellipsoid)
 const EQUATORIAL_EARTH_RADIUS: f64 = 6_378_137.0;

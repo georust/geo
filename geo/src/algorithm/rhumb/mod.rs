@@ -53,7 +53,7 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
         let delta_psi = ((phi2 / two + pi / four).tan() / (phi1 / two + pi / four).tan()).ln();
         let delta_phi = phi2 - phi1;
 
-        RhumbCalculations {
+        Self {
             from: *from,
             to: *to,
             phi1,
@@ -82,7 +82,7 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
         let delta = fraction * self.delta();
         let theta = self.theta();
         let lambda1 = self.from.x().to_radians();
-        calculate_destination(delta, lambda1, self.phi1, theta)
+        calculate_destination(delta, lambda1, self.phi1, theta).unwrap()
     }
 
     fn intermediate_fill(&self, max_delta: T, include_ends: bool) -> Vec<Point<T>> {
@@ -112,7 +112,7 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
         while current_step < T::one() {
             let delta = total_delta * current_step;
             let point = calculate_destination(delta, lambda1, self.phi1, theta);
-            points.push(point);
+            points.push(point.unwrap());
             current_step = current_step + interval;
         }
 
@@ -129,22 +129,18 @@ fn calculate_destination<T: CoordFloat + FromPrimitive>(
     lambda1: T,
     phi1: T,
     theta: T,
-) -> Point<T> {
+) -> Option<Point<T>> {
     let pi = T::from(std::f64::consts::PI).unwrap();
     let two = T::one() + T::one();
     let four = two + two;
     let threshold = T::from(10.0e-12).unwrap();
 
     let delta_phi = delta * theta.cos();
-    let mut phi2 = phi1 + delta_phi;
+    let phi2 = phi1 + delta_phi;
 
     // check for some daft bugger going past the pole, normalise latitude if so
     if phi2.abs() > pi / two {
-        phi2 = if phi2 > T::zero() {
-            pi - phi2
-        } else {
-            -pi - phi2
-        };
+        return None;
     }
 
     let delta_psi = ((phi2 / two + pi / four).tan() / (phi1 / two + pi / four).tan()).ln();
@@ -158,8 +154,8 @@ fn calculate_destination<T: CoordFloat + FromPrimitive>(
     let delta_lambda = (delta * theta.sin()) / q;
     let lambda2 = lambda1 + delta_lambda;
 
-    point! {
+    Some(point! {
         x: normalize_longitude(lambda2.to_degrees()),
         y: phi2.to_degrees(),
-    }
+    })
 }

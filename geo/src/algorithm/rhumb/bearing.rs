@@ -83,7 +83,7 @@ mod test {
     #[test]
     fn consistent_with_destination() {
         let p_1 = point!(x: 9.177789688110352f64, y: 48.776781529534965);
-        let p_2 = p_1.rhumb_destination(45., 10000.);
+        let p_2 = p_1.rhumb_destination(45., 10000.).unwrap();
 
         let b_1 = p_1.rhumb_bearing(p_2);
         assert_relative_eq!(b_1, 45., epsilon = 1.0e-6);
