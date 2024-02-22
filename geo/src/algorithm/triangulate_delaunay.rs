@@ -59,10 +59,7 @@ pub trait TriangulateDelaunay<T: GeoFloat> {
     fn delaunay_triangulation(&self) -> Result<Vec<Triangle<T>>>;
 }
 
-impl<T: GeoFloat> TriangulateDelaunay<T> for Polygon<T>
-where
-    f64: From<T>,
-{
+impl<T: GeoFloat> TriangulateDelaunay<T> for Polygon<T> {
     fn delaunay_triangulation(&self) -> Result<Vec<Triangle<T>>> {
         let super_triangle = DelaunayTriangle(create_super_triangle(self)?);
 
@@ -77,24 +74,18 @@ where
             }
         }
         let triangles = remove_super_triangle(&triangles, &super_triangle);
-        Ok(triangles.iter().map(|x| x.0).collect())
+        Ok(triangles.into_iter().map(|x| x.0).collect())
     }
 }
 
-impl<T: GeoFloat> TriangulateDelaunay<T> for MultiPoint<T>
-where
-    f64: From<T>,
-{
+impl<T: GeoFloat> TriangulateDelaunay<T> for MultiPoint<T> {
     fn delaunay_triangulation(&self) -> Result<Vec<Triangle<T>>> {
         let poly = Polygon::new(self.into_iter().cloned().collect(), vec![]);
         poly.delaunay_triangulation()
     }
 }
 
-fn create_super_triangle<T: GeoFloat>(geometry: &Polygon<T>) -> Result<Triangle<T>>
-where
-    f64: From<T>,
-{
+fn create_super_triangle<T: GeoFloat>(geometry: &Polygon<T>) -> Result<Triangle<T>> {
     let expand_factor = T::from(DEFAULT_SUPER_TRIANGLE_EXPANSION)
         .ok_or(DelaunayTriangulationError::FailedToConstructSuperTriangle)?;
     let bounds = geometry
@@ -112,19 +103,7 @@ where
     ))
 }
 
-fn find_line<T: GeoFloat>(line: &Line<T>, lines: &[Line<T>]) -> Option<usize> {
-    for (idx, sample_line) in lines.iter().enumerate() {
-        if line == sample_line {
-            return Some(idx);
-        }
-    }
-    None
-}
-
-fn add_coordinate<T: GeoFloat>(triangles: &mut Vec<DelaunayTriangle<T>>, c: &Coord<T>)
-where
-    f64: From<T>,
-{
+fn add_coordinate<T: GeoFloat>(triangles: &mut Vec<DelaunayTriangle<T>>, c: &Coord<T>) {
     let mut bad_triangles: Vec<&DelaunayTriangle<T>> = Vec::new();
 
     // Check for the triangles where the point is present within the
@@ -135,47 +114,36 @@ where
         }
     }
 
-    let mut bad_triangle_edges: Vec<Line<T>> = Vec::new();
-    let mut bad_triangle_edge_count: Vec<u128> = Vec::new();
-    for x in &bad_triangles {
-        for y in x.0.to_lines() {
-            let flipped_y = Line::new(y.end, y.start);
-            let idx =
-                find_line(&y, &bad_triangle_edges).or(find_line(&flipped_y, &bad_triangle_edges));
-            if let Some(idx) = idx {
-                // The unwrap is acceptable due to the push lines below.
-                let count = bad_triangle_edge_count.get_mut(idx).unwrap();
+    let mut bad_edges_with_count: Vec<(Line<T>, usize)> = Vec::new();
+    for tri in &bad_triangles {
+        for line in tri.0.to_lines() {
+            if let Some((_, count)) = bad_edges_with_count
+                .iter_mut()
+                .find(|(other, _)| is_line_shared(&line, other))
+            {
                 *count += 1;
             } else {
-                // These two vectors must be updated at the same time
-                bad_triangle_edges.push(y);
-                bad_triangle_edge_count.push(1);
+                bad_edges_with_count.push((line, 1));
             }
         }
     }
-
     // Shared edges are those with a count of > 1
-    let polygon: Vec<Line<T>> = bad_triangle_edge_count
+    let polygon = bad_edges_with_count
         .iter()
-        .enumerate()
-        .filter(|(_, count)| **count < 2)
-        .map(|(idx, _)| bad_triangle_edges[idx])
-        .collect();
+        .filter(|(_, count)| *count < 2)
+        .map(|(line, _)| line)
+        .map(|edge| DelaunayTriangle(Triangle(edge.start, edge.end, *c)));
 
     // Remove the bad triangles
-    let mut new_triangles: Vec<DelaunayTriangle<T>> = triangles
+    let new_triangles: Vec<DelaunayTriangle<T>> = triangles
         .iter()
         .filter(|x| !bad_triangles.contains(x))
         .cloned()
+        .chain(polygon)
         .collect();
 
-    polygon
-        .iter()
-        .for_each(|x| new_triangles.push(DelaunayTriangle(Triangle(x.start, x.end, *c))));
-
     // Replace the triangles
-    triangles.clear();
-    new_triangles.iter().for_each(|x| triangles.push(x.clone()));
+    *triangles = new_triangles;
 }
 
 fn remove_super_triangle<T: GeoFloat>(
@@ -220,24 +188,18 @@ fn is_line_shared<T: GeoFloat>(a: &Line<T>, b: &Line<T>) -> bool {
 }
 
 /// Methods required for delaunay triangulation
-impl<T: GeoFloat> DelaunayTriangle<T>
-where
-    f64: From<T>,
-{
+impl<T: GeoFloat> DelaunayTriangle<T> {
     #[cfg(feature = "voronoi")]
     /// Check if a `DelaunayTriangle` is a neighbour i.e.
     /// shares an edge.
     /// If the triangles are neighbours the shared edge is returned.
     pub(crate) fn shares_edge(&self, other: &DelaunayTriangle<T>) -> Option<Line<T>> {
         let other_lines = other.0.to_lines();
-        for line in self.0.to_lines().iter() {
-            for other_line in other_lines.iter() {
-                if is_line_shared(line, other_line) {
-                    return Some(*line);
-                }
-            }
-        }
-        None
+        let binding = self.0.to_lines();
+        let shared_edge = binding
+            .iter()
+            .find(|line| other_lines.iter().any(|other| is_line_shared(line, other)));
+        shared_edge.copied()
     }
 
     /// Check if a `Coord` is in the [Circumcircle](https://en.wikipedia.org/wiki/Circumcircle)
@@ -246,12 +208,12 @@ where
     /// new point as described by [Guibas & Stolfi](https://doi.org/10.1145%2F282918.282923)
     /// and on [Wikipedia](https://en.wikipedia.org/wiki/Delaunay_triangulation#Algorithms).
     pub(crate) fn is_in_circumcircle(&self, c: &Coord<T>) -> bool {
-        let a_d_x: f64 = (self.0 .0.x - c.x).into();
-        let a_d_y: f64 = (self.0 .0.y - c.y).into();
-        let b_d_x: f64 = (self.0 .1.x - c.x).into();
-        let b_d_y: f64 = (self.0 .1.y - c.y).into();
-        let c_d_x: f64 = (self.0 .2.x - c.x).into();
-        let c_d_y: f64 = (self.0 .2.y - c.y).into();
+        let a_d_x = self.0 .0.x - c.x;
+        let a_d_y = self.0 .0.y - c.y;
+        let b_d_x = self.0 .1.x - c.x;
+        let b_d_y = self.0 .1.y - c.y;
+        let c_d_x = self.0 .2.x - c.x;
+        let c_d_y = self.0 .2.y - c.y;
         let a_d_x_d_y = a_d_x.powi(2) + a_d_y.powi(2);
         let b_d_x_d_y = b_d_x.powi(2) + b_d_y.powi(2);
         let c_d_x_d_y = c_d_x.powi(2) + c_d_y.powi(2);
@@ -267,7 +229,7 @@ where
             - a_d_y * ((b_d_x * c_d_x_d_y) - (b_d_x_d_y * c_d_x))
             + a_d_x_d_y * (b_d_x * c_d_y - b_d_y * c_d_x);
 
-        determinant > 0.0
+        determinant > T::zero()
     }
 
     #[cfg(feature = "voronoi")]
