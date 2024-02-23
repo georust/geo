@@ -35,12 +35,29 @@ struct RhumbCalculations<T: CoordFloat + FromPrimitive> {
 
 impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
     fn new(from: &Point<T>, to: &Point<T>) -> Self {
+        let ninety = T::from(90.0).unwrap();
         let pi = T::from(std::f64::consts::PI).unwrap();
         let two = T::one() + T::one();
         let four = two + two;
 
-        let phi1 = from.y().to_radians();
-        let phi2 = to.y().to_radians();
+        let phi1 = if from.y() < -ninety {
+            -ninety
+        } else if from.y() > ninety {
+            ninety
+        } else {
+            from.y()
+        };
+        let phi2 = if to.y() < -ninety {
+            -ninety
+        } else if to.y() > ninety {
+            ninety
+        } else {
+            to.y()
+        };
+        let from = Point::new(from.x(), phi1);
+        let to = Point::new(to.x(), phi2);
+        let phi1 = phi1.to_radians();
+        let phi2 = phi2.to_radians();
         let mut delta_lambda = (to.x() - from.x()).to_radians();
         // if delta_lambda is over 180° take shorter rhumb line across the anti-meridian:
         if delta_lambda > pi {
@@ -54,8 +71,8 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
         let delta_phi = phi2 - phi1;
 
         Self {
-            from: *from,
-            to: *to,
+            from: from,
+            to: to,
             phi1,
             delta_lambda,
             delta_phi,
