@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use geo::contains::Contains;
-use geo::{point, polygon, Line, Point, Polygon};
+use geo::{point, polygon, Line, Point, Polygon, Triangle};
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("point in simple polygon", |bencher| {
@@ -108,6 +108,24 @@ fn criterion_benchmark(c: &mut Criterion) {
             assert!(
                 criterion::black_box(&polygon).contains(criterion::black_box(&contained_polygon))
             );
+        });
+    });
+
+    c.bench_function("Triangle contains point", |bencher| {
+        let triangle = Triangle::from([(0., 0.), (10., 0.), (5., 10.)]);
+        let point = Point::new(5., 5.);
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&triangle).contains(criterion::black_box(&point)));
+        });
+    });
+
+    c.bench_function("Triangle contains point on edge", |bencher| {
+        let triangle = Triangle::from([(0., 0.), (10., 0.), (6., 10.)]);
+        let point = Point::new(3., 5.);
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&triangle).contains(criterion::black_box(&point)));
         });
     });
 }

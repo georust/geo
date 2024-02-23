@@ -41,6 +41,8 @@
   implemented for `CoordsIter` without re-allocating (e.g., creating a `MultiPoint`).
 * Add `compose_many` method to `AffineOps`
   * <https://github.com/georust/geo/pull/1148>
+* Point in `Triangle` and `Rect` performance improvemnets
+  * <https://github.com/georust/geo/pull/1057>
 
 ## 0.27.0
 

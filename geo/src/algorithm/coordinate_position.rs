@@ -1,5 +1,7 @@
+use std::cmp::Ordering;
+
 use crate::geometry::*;
-use crate::intersects::value_in_between;
+use crate::intersects::{point_in_rect, value_in_between};
 use crate::kernels::*;
 use crate::{BoundingRect, HasDimensions, Intersects};
 use crate::{GeoNum, GeometryCow};
@@ -184,9 +186,20 @@ where
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        // PERF TODO: I'm sure there's a better way to calculate than converting to a polygon
-        self.to_polygon()
-            .calculate_coordinate_position(coord, is_inside, boundary_count);
+        *is_inside = self
+            .to_lines()
+            .map(|l| {
+                let orientation = T::Ker::orient2d(l.start, l.end, *coord);
+                if orientation == Orientation::Collinear
+                    && point_in_rect(*coord, l.start, l.end)
+                    && coord.x != l.end.x
+                {
+                    *boundary_count += 1;
+                }
+                orientation
+            })
+            .windows(2)
+            .all(|win| win[0] == win[1] && win[0] != Orientation::Collinear);
     }
 }
 
@@ -201,9 +214,39 @@ where
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        // PERF TODO: I'm sure there's a better way to calculate than converting to a polygon
-        self.to_polygon()
-            .calculate_coordinate_position(coord, is_inside, boundary_count);
+        let mut boundary = false;
+
+        let min = self.min();
+
+        match coord.x.partial_cmp(&min.x).unwrap() {
+            Ordering::Less => return,
+            Ordering::Equal => boundary = true,
+            Ordering::Greater => {}
+        }
+        match coord.y.partial_cmp(&min.y).unwrap() {
+            Ordering::Less => return,
+            Ordering::Equal => boundary = true,
+            Ordering::Greater => {}
+        }
+
+        let max = self.max();
+
+        match max.x.partial_cmp(&coord.x).unwrap() {
+            Ordering::Less => return,
+            Ordering::Equal => boundary = true,
+            Ordering::Greater => {}
+        }
+        match max.y.partial_cmp(&coord.y).unwrap() {
+            Ordering::Less => return,
+            Ordering::Equal => boundary = true,
+            Ordering::Greater => {}
+        }
+
+        if boundary {
+            *boundary_count += 1;
+        } else {
+            *is_inside = true;
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-use super::{value_in_range, Intersects};
+use super::Intersects;
 use crate::*;
 
 impl<T> Intersects<Coord<T>> for Rect<T>
@@ -6,11 +6,10 @@ where
     T: CoordNum,
 {
     fn intersects(&self, rhs: &Coord<T>) -> bool {
-        // Funnily, we don't use point_in_rect, as we know
-        // self.min <= self.max.
-        let bound_1 = self.min();
-        let bound_2 = self.max();
-        value_in_range(rhs.x, bound_1.x, bound_2.x) && value_in_range(rhs.y, bound_1.y, bound_2.y)
+        rhs.x >= self.min().x
+            && rhs.y >= self.min().y
+            && rhs.x <= self.max().x
+            && rhs.y <= self.max().y
     }
 }
 symmetric_intersects_impl!(Coord<T>, Rect<T>);
@@ -63,3 +62,13 @@ where
     }
 }
 symmetric_intersects_impl!(Line<T>, Rect<T>);
+
+impl<T> Intersects<Triangle<T>> for Rect<T>
+where
+    T: GeoNum,
+{
+    fn intersects(&self, rhs: &Triangle<T>) -> bool {
+        self.intersects(&rhs.to_polygon())
+    }
+}
+symmetric_intersects_impl!(Triangle<T>, Rect<T>);
