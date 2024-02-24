@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.7.13
 
 * POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
   * <https://github.com/georust/geo/pull/1134>
