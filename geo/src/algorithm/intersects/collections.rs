@@ -25,6 +25,7 @@ where
 symmetric_intersects_impl!(Coord<T>, Geometry<T>);
 symmetric_intersects_impl!(Line<T>, Geometry<T>);
 symmetric_intersects_impl!(Rect<T>, Geometry<T>);
+symmetric_intersects_impl!(Triangle<T>, Geometry<T>);
 symmetric_intersects_impl!(Polygon<T>, Geometry<T>);
 
 impl<T, G> Intersects<G> for GeometryCollection<T>
@@ -43,4 +44,5 @@ where
 symmetric_intersects_impl!(Coord<T>, GeometryCollection<T>);
 symmetric_intersects_impl!(Line<T>, GeometryCollection<T>);
 symmetric_intersects_impl!(Rect<T>, GeometryCollection<T>);
+symmetric_intersects_impl!(Triangle<T>, GeometryCollection<T>);
 symmetric_intersects_impl!(Polygon<T>, GeometryCollection<T>);

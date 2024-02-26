@@ -67,3 +67,13 @@ where
         }
     }
 }
+
+impl<T> Intersects<Triangle<T>> for Line<T>
+where
+    T: GeoNum,
+{
+    fn intersects(&self, rhs: &Triangle<T>) -> bool {
+        self.intersects(&rhs.to_polygon())
+    }
+}
+symmetric_intersects_impl!(Triangle<T>, Line<T>);

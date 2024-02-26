@@ -479,7 +479,12 @@ pub trait SimplifyVw<T, Epsilon = T> {
 /// This operation uses the Visvalingam-Whyatt algorithm,
 /// and does **not** guarantee that the returned geometry is valid.
 ///
-/// An epsilon less than or equal to zero will return an unaltered version of the geometry.
+/// A larger `epsilon` means being more aggressive about removing points with less concern for
+/// maintaining the existing shape. Specifically, when you consider whether to remove a point, you
+/// can draw a triangle consisting of the candidate point and the points before and after it.
+/// If the area of this triangle is less than `epsilon`, we will remove the point.
+///
+/// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
 pub trait SimplifyVwIdx<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
     ///
@@ -516,7 +521,12 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
 
 /// Simplifies a geometry, attempting to preserve its topology by removing self-intersections
 ///
-/// An epsilon less than or equal to zero will return an unaltered version of the geometry
+/// A larger `epsilon` means being more aggressive about removing points with less concern for
+/// maintaining the existing shape. Specifically, when you consider whether to remove a point, you
+/// can draw a triangle consisting of the candidate point and the points before and after it.
+/// If the area of this triangle is less than `epsilon`, we will remove the point.
+///
+/// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
 pub trait SimplifyVwPreserve<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using a topology-preserving variant of the
     /// [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm.

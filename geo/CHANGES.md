@@ -1,6 +1,9 @@
 # Changes
 
 ## Unreleased
+
+## 0.28.0
+
 * BREAKING: The `HasKernel` trait was removed and it's functionality was merged
   into `GeoNum`. If you are using common scalars for your geometry (f32, f64,
   i64, i32, i16, isize), this should have no effect on you. If you are using an
@@ -41,8 +44,10 @@
   implemented for `CoordsIter` without re-allocating (e.g., creating a `MultiPoint`).
 * Add `compose_many` method to `AffineOps`
   * <https://github.com/georust/geo/pull/1148>
+* Point in `Triangle` and `Rect` performance improvemnets
+  * <https://github.com/georust/geo/pull/1057>
 * Add `TriangulateDelaunay` and `VoronoiDiagram` traits.
-  * <https://github.com/georust/geo/pull/1144>
+  * <https://github.com/georust/geo/pull/1144> 
 
 ## 0.27.0
 
