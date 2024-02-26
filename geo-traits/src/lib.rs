@@ -2,11 +2,8 @@
 //! traits](https://github.com/georust/geo/discussions/838).
 //!
 //! The idea is that functions should be able to operate on and consume geospatial vector data from
-//! _any_ source without overhead, not limited to just the layout defined in the [`geo`] crate.
-//!
-//! The main work for this is happening in the [`geo`] repository (see
-//! [here](https://github.com/georust/geo/pull/1019)) but that is vendored into this repository for
-//! use internally, such as in the WKB parser.
+//! _any_ source without overhead, not limited to just the layout defined in the [`geo-types`]
+//! crate.
 
 pub use coord::CoordTrait;
 pub use geometry::{GeometryTrait, GeometryType};
