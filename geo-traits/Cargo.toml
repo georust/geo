@@ -1,0 +1,17 @@
+[package]
+name = "geo-traits"
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/georust/geo"
+documentation = "https://docs.rs/geo-traits/"
+readme = "../README.md"
+keywords = ["gis", "geo", "geography", "geospatial"]
+description = "Geospatial traits"
+rust-version = "1.65"
+edition = "2021"
+
+[dependencies]
+geo-types = "0.7"
+
+[dev-dependencies]
+approx = ">= 0.4.0, < 0.6.0"
