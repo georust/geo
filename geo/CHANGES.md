@@ -46,6 +46,8 @@
   * <https://github.com/georust/geo/pull/1148>
 * Point in `Triangle` and `Rect` performance improvemnets
   * <https://github.com/georust/geo/pull/1057>
+* Add `TriangulateDelaunay` and `VoronoiDiagram` traits.
+  * <https://github.com/georust/geo/pull/1144> 
 
 ## 0.27.0
 

@@ -108,7 +108,10 @@
 //!
 //! ## Triangulation
 //!
+//! - **[`TriangulateDelaunay`](triangulate_delaunay)**: Delaunay triangulation using the [Bowyer-Watson](https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm) method.
 //! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm (requires the `earcutr` feature).
+//! - **[`TriangulateSpade`](triangulate_spade)**: Delaunay triangulation via the [spade](https://docs.rs/spade/latest/spade/) crate.
+//!
 //!
 //! ## Winding
 //!
@@ -169,6 +172,7 @@
 //! - **[`LineStringSegmentizeHaversine`]**: Segment a LineString using Haversine distance.
 //! - **[`Transform`]**: Transform a geometry using Proj.
 //! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry.
+//! - **[`VoronoiDiagram`](voronoi_diagram)**: Calculate the Voronoi diagram for a [`Polygon`] or [`MultiPolygon`].
 //!
 //! # Features
 //!

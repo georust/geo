@@ -258,6 +258,18 @@ pub mod triangulate_spade;
 #[cfg(feature = "spade")]
 pub use triangulate_spade::TriangulateSpade;
 
+/// Triangulate polygons using the [Bowyer-Watson](https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm) Delaunay Triangulation algorithm.
+#[cfg(feature = "delaunay")]
+pub mod triangulate_delaunay;
+#[cfg(feature = "delaunay")]
+pub use triangulate_delaunay::TriangulateDelaunay;
+
+/// Generate Voronoi diagrams using the [dual graph](https://en.wikipedia.org/wiki/Voronoi_diagram#Properties) property with Delaunay triangles.
+#[cfg(feature = "voronoi")]
+pub mod voronoi_diagram;
+#[cfg(feature = "voronoi")]
+pub use voronoi_diagram::VoronoiDiagram;
+
 /// Vector Operations for 2D coordinates
 mod vector_ops;
 pub use vector_ops::Vector2DOps;
