@@ -14,4 +14,3 @@ edition = "2021"
 geo-types = "0.7"
 
 [dev-dependencies]
-approx = ">= 0.4.0, < 0.6.0"
