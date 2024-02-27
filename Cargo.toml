@@ -2,11 +2,12 @@
 resolver = "2"
 members = [
   "geo",
-  "geo-types",
+  "geo-bool-ops-benches",
   "geo-postgis",
   "geo-test-fixtures",
+  "geo-traits",
+  "geo-types",
   "jts-test-runner",
-  "geo-bool-ops-benches",
 ]
 
 [patch.crates-io]
