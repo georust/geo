@@ -258,6 +258,10 @@ pub mod triangulate_spade;
 #[cfg(feature = "spade")]
 pub use triangulate_spade::TriangulateSpade;
 
+/// Operations on invalid polygons to make them valid
+mod validity;
+pub use validity::Validify;
+
 /// Vector Operations for 2D coordinates
 mod vector_ops;
 pub use vector_ops::Vector2DOps;
