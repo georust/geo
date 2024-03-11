@@ -718,7 +718,7 @@ mod test {
     fn test_collection() {
         let triangle = Triangle::new((0.0, 0.0).into(), (5.0, 10.0).into(), (10.0, 0.0).into());
         let rect = Rect::new((0.0, 0.0), (10.0, 10.0));
-        let collection = GeometryCollection::new_from(vec![triangle.into(), rect.into()]);
+        let collection = GeometryCollection::new(vec![triangle.into(), rect.into()]);
 
         //  outside of both
         assert_eq!(

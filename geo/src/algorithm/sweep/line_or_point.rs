@@ -2,8 +2,8 @@ use std::{cmp::Ordering, ops::Deref};
 
 use super::SweepPoint;
 use crate::{
-    line_intersection::line_intersection, Coord, GeoFloat, GeoNum, Kernel, Line, LineIntersection,
-    Orientation,
+    coord, line_intersection::line_intersection, Coord, GeoFloat, GeoNum, Kernel, Line,
+    LineIntersection, Orientation,
 };
 
 /// Either a line segment or a point.
@@ -282,7 +282,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
                     x = x.next_after(T::infinity());
                 }
 
-                let p = Coord { x, y }.into();
+                let p = coord! { x: x, y: y }.into();
                 debug_assert!(
                     p >= self.left(),
                     "line intersection before first line: {p:?}\n\tLine({lp1:?} - {lp2:?}) X Line({lp3:?} - {lp4:?})",

@@ -1,4 +1,4 @@
-use geo_types::{Coord, Line, Point, Triangle};
+use geo_types::{coord, Coord, Line, Point, Triangle};
 use spade::{
     ConstrainedDelaunayTriangulation, DelaunayTriangulation, Point2, SpadeNum, Triangulation,
 };
@@ -118,17 +118,17 @@ where
     ///
     /// ```rust
     /// use geo::TriangulateSpade;
-    /// use geo::{Polygon, LineString, Coord};
+    /// use geo::{coord, Polygon, LineString, Coord};
     /// let u_shape = Polygon::new(
     ///     LineString::new(vec![
-    ///         Coord { x: 0.0, y: 0.0 },
-    ///         Coord { x: 1.0, y: 0.0 },
-    ///         Coord { x: 1.0, y: 1.0 },
-    ///         Coord { x: 2.0, y: 1.0 },
-    ///         Coord { x: 2.0, y: 0.0 },
-    ///         Coord { x: 3.0, y: 0.0 },
-    ///         Coord { x: 3.0, y: 3.0 },
-    ///         Coord { x: 0.0, y: 3.0 },
+    ///         coord! { x: 0.0, y: 0.0 },
+    ///         coord! { x: 1.0, y: 0.0 },
+    ///         coord! { x: 1.0, y: 1.0 },
+    ///         coord! { x: 2.0, y: 1.0 },
+    ///         coord! { x: 2.0, y: 0.0 },
+    ///         coord! { x: 3.0, y: 0.0 },
+    ///         coord! { x: 3.0, y: 3.0 },
+    ///         coord! { x: 0.0, y: 3.0 },
     ///     ]),
     ///     vec![],
     /// );
@@ -175,17 +175,17 @@ where
     ///
     /// ```rust
     /// use geo::TriangulateSpade;
-    /// use geo::{Polygon, LineString, Coord};
+    /// use geo::{coord, Polygon, LineString, Coord};
     /// let u_shape = Polygon::new(
     ///     LineString::new(vec![
-    ///         Coord { x: 0.0, y: 0.0 },
-    ///         Coord { x: 1.0, y: 0.0 },
-    ///         Coord { x: 1.0, y: 1.0 },
-    ///         Coord { x: 2.0, y: 1.0 },
-    ///         Coord { x: 2.0, y: 0.0 },
-    ///         Coord { x: 3.0, y: 0.0 },
-    ///         Coord { x: 3.0, y: 3.0 },
-    ///         Coord { x: 0.0, y: 3.0 },
+    ///         coord! { x: 0.0, y: 0.0 },
+    ///         coord! { x: 1.0, y: 0.0 },
+    ///         coord! { x: 1.0, y: 1.0 },
+    ///         coord! { x: 2.0, y: 1.0 },
+    ///         coord! { x: 2.0, y: 0.0 },
+    ///         coord! { x: 3.0, y: 0.0 },
+    ///         coord! { x: 3.0, y: 3.0 },
+    ///         coord! { x: 0.0, y: 3.0 },
     ///     ]),
     ///     vec![],
     /// );
@@ -249,17 +249,17 @@ where
     ///
     /// ```rust
     /// use geo::TriangulateSpade;
-    /// use geo::{Polygon, LineString, Coord};
+    /// use geo::{coord, Polygon, LineString, Coord};
     /// let u_shape = Polygon::new(
     ///     LineString::new(vec![
-    ///         Coord { x: 0.0, y: 0.0 },
-    ///         Coord { x: 1.0, y: 0.0 },
-    ///         Coord { x: 1.0, y: 1.0 },
-    ///         Coord { x: 2.0, y: 1.0 },
-    ///         Coord { x: 2.0, y: 0.0 },
-    ///         Coord { x: 3.0, y: 0.0 },
-    ///         Coord { x: 3.0, y: 3.0 },
-    ///         Coord { x: 0.0, y: 3.0 },
+    ///         coord! { x: 0.0, y: 0.0 },
+    ///         coord! { x: 1.0, y: 0.0 },
+    ///         coord! { x: 1.0, y: 1.0 },
+    ///         coord! { x: 2.0, y: 1.0 },
+    ///         coord! { x: 2.0, y: 0.0 },
+    ///         coord! { x: 3.0, y: 0.0 },
+    ///         coord! { x: 3.0, y: 3.0 },
+    ///         coord! { x: 0.0, y: 3.0 },
     ///     ]),
     ///     vec![],
     /// );
@@ -297,7 +297,7 @@ where
     triangulation
         .inner_faces()
         .map(|face| face.positions())
-        .map(|points| points.map(|p| Coord::<F> { x: p.x, y: p.y }))
+        .map(|points| points.map(|p| coord! { x: p.x, y: p.y}))
         .map(Triangle::from)
         .collect::<Vec<_>>()
 }
@@ -604,9 +604,9 @@ mod spade_triangulation {
     #[test]
     fn basic_triangle_triangulates() {
         let triangulation = Triangle::new(
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: 1.0, y: 0.0 },
-            Coord { x: 0.0, y: 1.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: 0.0, y: 1.0 },
         )
         .unconstrained_triangulation();
 
@@ -615,7 +615,7 @@ mod spade_triangulation {
 
     #[test]
     fn basic_rectangle_triangulates() {
-        let triangulation = Rect::new(Coord { x: 0.0, y: 0.0 }, Coord { x: 1.0, y: 1.0 })
+        let triangulation = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 })
             .unconstrained_triangulation();
 
         assert_num_triangles(&triangulation, 2);
@@ -625,11 +625,11 @@ mod spade_triangulation {
     fn basic_polygon_triangulates() {
         let triangulation = Polygon::new(
             LineString::new(vec![
-                Coord { x: 0.0, y: 1.0 },
-                Coord { x: -1.0, y: 0.0 },
-                Coord { x: -0.5, y: -1.0 },
-                Coord { x: 0.5, y: -1.0 },
-                Coord { x: 1.0, y: 0.0 },
+                coord! { x: 0.0, y: 1.0 },
+                coord! { x: -1.0, y: 0.0 },
+                coord! { x: -0.5, y: -1.0 },
+                coord! { x: 0.5, y: -1.0 },
+                coord! { x: 1.0, y: 0.0 },
             ]),
             vec![],
         )
@@ -642,14 +642,14 @@ mod spade_triangulation {
     fn overlapping_triangles_triangulate_unconstrained() {
         let triangles = vec![
             Triangle::new(
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 0.0, y: 2.0 },
+                coord! { x: 0.0, y: 0.0 },
+                coord! { x: 2.0, y: 0.0 },
+                coord! { x: 0.0, y: 2.0 },
             ),
             Triangle::new(
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: -1.0, y: 1.0 },
-                Coord { x: 1.0, y: -1.0 },
+                coord! { x: 1.0, y: 1.0 },
+                coord! { x: -1.0, y: 1.0 },
+                coord! { x: 1.0, y: -1.0 },
             ),
         ];
 
@@ -661,14 +661,14 @@ mod spade_triangulation {
     fn overlapping_triangles_triangulate_constrained_outer() {
         let triangles = vec![
             Triangle::new(
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 0.0, y: 2.0 },
+                coord! { x: 0.0, y: 0.0 },
+                coord! { x: 2.0, y: 0.0 },
+                coord! { x: 0.0, y: 2.0 },
             ),
             Triangle::new(
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: -1.0, y: 1.0 },
-                Coord { x: 1.0, y: -1.0 },
+                coord! { x: 1.0, y: 1.0 },
+                coord! { x: -1.0, y: 1.0 },
+                coord! { x: 1.0, y: -1.0 },
             ),
         ];
 
@@ -681,14 +681,14 @@ mod spade_triangulation {
     fn overlapping_triangles_triangulate_constrained() {
         let triangles = vec![
             Triangle::new(
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 0.0, y: 2.0 },
+                coord! { x: 0.0, y: 0.0 },
+                coord! { x: 2.0, y: 0.0 },
+                coord! { x: 0.0, y: 2.0 },
             ),
             Triangle::new(
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: -1.0, y: 1.0 },
-                Coord { x: 1.0, y: -1.0 },
+                coord! { x: 1.0, y: 1.0 },
+                coord! { x: -1.0, y: 1.0 },
+                coord! { x: 1.0, y: -1.0 },
             ),
         ];
 
@@ -701,14 +701,14 @@ mod spade_triangulation {
     fn u_shaped_polygon_triangulates_unconstrained() {
         let u_shape = Polygon::new(
             LineString::new(vec![
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 1.0, y: 0.0 },
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: 2.0, y: 1.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 3.0, y: 0.0 },
-                Coord { x: 3.0, y: 3.0 },
-                Coord { x: 0.0, y: 3.0 },
+                coord! { x: 0.0, y: 0.0 },
+                coord! { x: 1.0, y: 0.0 },
+                coord! { x: 1.0, y: 1.0 },
+                coord! { x: 2.0, y: 1.0 },
+                coord! { x: 2.0, y: 0.0 },
+                coord! { x: 3.0, y: 0.0 },
+                coord! { x: 3.0, y: 3.0 },
+                coord! { x: 0.0, y: 3.0 },
             ]),
             vec![],
         );
@@ -721,14 +721,14 @@ mod spade_triangulation {
     fn u_shaped_polygon_triangulates_constrained_outer() {
         let u_shape = Polygon::new(
             LineString::new(vec![
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 1.0, y: 0.0 },
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: 2.0, y: 1.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 3.0, y: 0.0 },
-                Coord { x: 3.0, y: 3.0 },
-                Coord { x: 0.0, y: 3.0 },
+                coord! { x: 0.0, y: 0.0 },
+                coord! { x: 1.0, y: 0.0 },
+                coord! { x: 1.0, y: 1.0 },
+                coord! { x: 2.0, y: 1.0 },
+                coord! { x: 2.0, y: 0.0 },
+                coord! { x: 3.0, y: 0.0 },
+                coord! { x: 3.0, y: 3.0 },
+                coord! { x: 0.0, y: 3.0 },
             ]),
             vec![],
         );
@@ -742,14 +742,14 @@ mod spade_triangulation {
     fn u_shaped_polygon_triangulates_constrained_inner() {
         let u_shape = Polygon::new(
             LineString::new(vec![
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 1.0, y: 0.0 },
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: 2.0, y: 1.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 3.0, y: 0.0 },
-                Coord { x: 3.0, y: 3.0 },
-                Coord { x: 0.0, y: 3.0 },
+                coord! { x: 0.0, y: 0.0 },
+                coord! { x: 1.0, y: 0.0 },
+                coord! { x: 1.0, y: 1.0 },
+                coord! { x: 2.0, y: 1.0 },
+                coord! { x: 2.0, y: 0.0 },
+                coord! { x: 3.0, y: 0.0 },
+                coord! { x: 3.0, y: 3.0 },
+                coord! { x: 0.0, y: 3.0 },
             ]),
             vec![],
         );
@@ -762,14 +762,14 @@ mod spade_triangulation {
     fn various_snap_radius_works() {
         let u_shape = Polygon::new(
             LineString::new(vec![
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 1.0, y: 0.0 },
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: 2.0, y: 1.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 3.0, y: 0.0 },
-                Coord { x: 3.0, y: 3.0 },
-                Coord { x: 0.0, y: 3.0 },
+                coord! { x: 0.0, y: 0.0 },
+                coord! { x: 1.0, y: 0.0 },
+                coord! { x: 1.0, y: 1.0 },
+                coord! { x: 2.0, y: 1.0 },
+                coord! { x: 2.0, y: 0.0 },
+                coord! { x: 3.0, y: 0.0 },
+                coord! { x: 3.0, y: 3.0 },
+                coord! { x: 0.0, y: 3.0 },
             ]),
             vec![],
         );

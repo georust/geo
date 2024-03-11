@@ -1,5 +1,28 @@
 # Changes
 
+### Breaking changes
+* All geo types now support optional 3D (z coordinate) and M (measure) values. For example, `LineM` contains `x`, `y`, and `m` values, whereas `Line3D` has `x,y,z`. `Line3DM` has both `z` and `m`. When not used, `z` and `m` values are represented by the `NoValue` empty struct. `NoValue` behaves like a number.
+* Remove deprecated functions on the `Geometry<T>`:
+  * `into_point` - Switch to `std::convert::TryInto<Point>`
+  * `into_line_string` - Switch to `std::convert::TryInto<LineString>`
+  * `into_line` - Switch to `std::convert::TryInto<Line>`
+  * `into_polygon` - Switch to `std::convert::TryInto<Polygon>`
+  * `into_multi_point` - Switch to `std::convert::TryInto<MultiPoint>`
+  * `into_multi_line_string` - Switch to `std::convert::TryInto<MultiLineString>`
+  * `into_multi_polygon` - Switch to `std::convert::TryInto<MultiPolygon>`
+* Remove deprecated `CoordinateType` trait. Use `CoordFloat` or `CoordNum` instead.
+* Remove deprecated functions from `LineString<T>`
+  * Remove `points_iter()` -- use `points()` instead.
+  * Remove `num_coords()` -- use `geo::algorithm::coords_iter::CoordsIter::coords_count` instead.
+* Remove deprecated functions from `Point<T>`
+  * Remove `lng()` -- use `x()` instead.
+  * Remove `set_lng()` -- use `set_x()` instead.
+  * Remove `lat()` -- use `y()` instead.
+  * Remove `set_lat()` -- use `set_y()` instead.
+* Remove deprecated `Polygon<T>::is_convex()` -- use `geo::is_convex` on `poly.exterior()` instead.
+* Remove deprecated `Rect<T>::try_new()` -- use `Rect::new` instead, since `Rect::try_new` will never Error. Also removes corresponding `InvalidRectCoordinatesError`.
+* Replace deprecated `GeometryCollection::new()` with `GeometryCollection::new(value)`, and deprecated `GeometryCollection::new_from(value)`.
+
 ## 0.7.13
 
 * POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
