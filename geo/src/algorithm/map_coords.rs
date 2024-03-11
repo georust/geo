@@ -132,11 +132,11 @@ pub trait MapCoordsInPlace<T> {
     ///
     /// ```
     /// use geo::MapCoordsInPlace;
-    /// use geo::{Coord, Point};
+    /// use geo::{coord, Coord, Point};
     /// use approx::assert_relative_eq;
     ///
     /// let mut p = Point::new(10., 20.);
-    /// p.map_coords_in_place(|Coord { x, y }| Coord { x: x + 1000., y: y * 2. });
+    /// p.map_coords_in_place(|Coord{ x, y, z, m}| coord! { x: x + 1000., y: y * 2. });
     ///
     /// assert_relative_eq!(p, Point::new(1010., 40.), epsilon = 1e-6);
     /// ```
@@ -153,12 +153,12 @@ pub trait MapCoordsInPlace<T> {
     ///
     /// ```
     /// use geo::MapCoordsInPlace;
-    /// use geo::Coord;
+    /// use geo::{coord, Coord};
     ///
     /// let mut p1 = geo::point!{x: 10u32, y: 20u32};
     ///
-    /// p1.try_map_coords_in_place(|Coord { x, y }| -> Result<_, &str> {
-    ///     Ok(Coord {
+    /// p1.try_map_coords_in_place(|Coord { x, y, z, m }| -> Result<_, &str> {
+    ///     Ok(coord! {
     ///         x: x.checked_add(1000).ok_or("Overflow")?,
     ///         y: y.checked_mul(2).ok_or("Overflow")?,
     ///     })
@@ -583,14 +583,14 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for GeometryCollection<T> {
     type Output = GeometryCollection<NT>;
 
     fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        GeometryCollection::new_from(self.iter().map(|g| g.map_coords(func)).collect())
+        GeometryCollection::new(self.iter().map(|g| g.map_coords(func)).collect())
     }
 
     fn try_map_coords<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
     ) -> Result<Self::Output, E> {
-        Ok(GeometryCollection::new_from(
+        Ok(GeometryCollection::new(
             self.0
                 .iter()
                 .map(|g| g.try_map_coords(func))
@@ -922,11 +922,11 @@ mod test {
         let p1 = Geometry::Point(Point::new(10., 10.));
         let line1 = Geometry::LineString(LineString::from(vec![(0., 0.), (1., 2.)]));
 
-        let gc = GeometryCollection::new_from(vec![p1, line1]);
+        let gc = GeometryCollection::new(vec![p1, line1]);
 
         assert_eq!(
             gc.map_coords(|Coord { x, y }| (x + 10., y + 100.).into()),
-            GeometryCollection::new_from(vec![
+            GeometryCollection::new(vec![
                 Geometry::Point(Point::new(20., 110.)),
                 Geometry::LineString(LineString::from(vec![(10., 100.), (11., 102.)])),
             ])

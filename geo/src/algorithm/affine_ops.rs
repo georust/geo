@@ -3,7 +3,7 @@ use num_traits::ToPrimitive;
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use crate::{Coord, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace};
+use crate::{coord,Coord, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace, NoValue};
 use std::{fmt, ops::Mul, ops::Neg};
 
 /// Apply an [`AffineTransform`] like [`scale`](AffineTransform::scale),
@@ -289,7 +289,7 @@ impl<T: CoordNum> AffineTransform<T> {
 
     /// Apply the current transform to a coordinate
     pub fn apply(&self, coord: Coord<T>) -> Coord<T> {
-        Coord {
+        coord! {
             x: (self.0[0][0] * coord.x + self.0[0][1] * coord.y + self.0[0][2]),
             y: (self.0[1][0] * coord.x + self.0[1][1] * coord.y + self.0[1][2]),
         }
@@ -422,7 +422,7 @@ impl<U: CoordFloat> AffineTransform<U> {
     /// yoff = -origin.x * tan(ys)
     /// ```
     pub fn skew(xs: U, ys: U, origin: impl Into<Coord<U>>) -> Self {
-        let Coord { x: x0, y: y0 } = origin.into();
+        let Coord { x: x0, y: y0,z : NoValue, m: NoValue } = origin.into();
         let mut tanx = xs.to_radians().tan();
         let mut tany = ys.to_radians().tan();
         // These checks are stolen from Shapely's implementation -- may not be necessary
@@ -468,13 +468,13 @@ where
     /// # Examples
     ///
     /// ```
-    /// use geo_types::AffineTransform;
+    /// use geo::AffineTransform;
     /// use geo_types::point;
     ///
     /// let a = AffineTransform::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
     /// let b = AffineTransform::new(1.01, 2.02, 3.03, 4.04, 5.05, 6.06);
     ///
-    /// approx::assert_relative_eq!(a, b, max_relative=0.1)
+    /// approx::assert_relative_eq!(a, b, max_relative=0.1);
     /// approx::assert_relative_ne!(a, b, max_relative=0.055)
     /// ```
     #[inline]
@@ -507,14 +507,15 @@ where
     /// # Examples
     ///
     /// ```
+    /// use geo::AffineTransform;
     /// use geo_types::MultiPoint;
     /// use geo_types::point;
     ///
     /// let a = AffineTransform::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
     /// let b = AffineTransform::new(1.01, 2.02, 3.03, 4.04, 5.05, 6.06);
     ///
-    /// approx::abs_diff_eq!(a, b, epsilon=0.1)
-    /// approx::abs_diff_ne!(a, b, epsilon=0.055)
+    /// approx::abs_diff_eq!(a, b, epsilon=0.1);
+    /// approx::abs_diff_ne!(a, b, epsilon=0.055);
     /// ```
     #[inline]
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {

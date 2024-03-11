@@ -97,23 +97,16 @@ extern crate serde;
 #[macro_use]
 extern crate approx;
 
-#[deprecated(since = "0.7.0", note = "use `CoordFloat` or `CoordNum` instead")]
-pub trait CoordinateType: Num + Copy + NumCast + PartialOrd + Debug {}
-#[allow(deprecated)]
-impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordinateType for T {}
-
 /// For algorithms which can use both integer **and** floating point `Point`s/`Coord`s
 ///
 /// Floats (`f32` and `f64`) and Integers (`u8`, `i32` etc.) implement this.
 ///
 /// For algorithms which only make sense for floating point, like area or length calculations,
 /// see [CoordFloat](trait.CoordFloat.html).
-#[allow(deprecated)]
-pub trait CoordNum: CoordinateType + Debug {}
-#[allow(deprecated)]
-impl<T: CoordinateType + Debug> CoordNum for T {}
 
 /// For algorithms which can only use floating point `Point`s/`Coord`s, like area or length calculations
+pub trait CoordNum: Num + Copy + NumCast + PartialOrd + Debug {}
+impl<T: Num + Copy + NumCast + PartialOrd + Debug> CoordNum for T {}
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}
 
@@ -122,8 +115,6 @@ pub use geometry::*;
 
 pub use geometry::line_string::PointsIter;
 
-#[allow(deprecated)]
-pub use geometry::rect::InvalidRectCoordinatesError;
 
 mod error;
 pub use error::Error;

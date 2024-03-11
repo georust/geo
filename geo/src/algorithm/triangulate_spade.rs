@@ -1,4 +1,4 @@
-use geo_types::{Coord, Line, Point, Triangle};
+use geo_types::{coord, Coord, Line, Point, Triangle};
 use spade::{
     ConstrainedDelaunayTriangulation, DelaunayTriangulation, Point2, SpadeNum, Triangulation,
 };
@@ -118,17 +118,17 @@ where
     ///
     /// ```rust
     /// use geo::TriangulateSpade;
-    /// use geo::{Polygon, LineString, Coord};
+    /// use geo::{coord, Polygon, LineString, Coord};
     /// let u_shape = Polygon::new(
     ///     LineString::new(vec![
-    ///         Coord { x: 0.0, y: 0.0 },
-    ///         Coord { x: 1.0, y: 0.0 },
-    ///         Coord { x: 1.0, y: 1.0 },
-    ///         Coord { x: 2.0, y: 1.0 },
-    ///         Coord { x: 2.0, y: 0.0 },
-    ///         Coord { x: 3.0, y: 0.0 },
-    ///         Coord { x: 3.0, y: 3.0 },
-    ///         Coord { x: 0.0, y: 3.0 },
+    ///         coord! { x: 0.0, y: 0.0 },
+    ///         coord! { x: 1.0, y: 0.0 },
+    ///         coord! { x: 1.0, y: 1.0 },
+    ///         coord! { x: 2.0, y: 1.0 },
+    ///         coord! { x: 2.0, y: 0.0 },
+    ///         coord! { x: 3.0, y: 0.0 },
+    ///         coord! { x: 3.0, y: 3.0 },
+    ///         coord! { x: 0.0, y: 3.0 },
     ///     ]),
     ///     vec![],
     /// );
@@ -297,7 +297,7 @@ where
     triangulation
         .inner_faces()
         .map(|face| face.positions())
-        .map(|points| points.map(|p| Coord::<F> { x: p.x, y: p.y }))
+        .map(|points| points.map(|p| coord!{ x: p.x, y: p.y}))
         .map(Triangle::from)
         .collect::<Vec<_>>()
 }
