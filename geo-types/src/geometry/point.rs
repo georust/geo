@@ -4,7 +4,6 @@ use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAss
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-
 /// A generic single point in 3D space with a measurement value.
 ///
 /// Points can be created using the the [`point!`] macro,
@@ -27,7 +26,9 @@ use approx::{AbsDiffEq, RelativeEq};
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue>(pub Coord<T, Z, M>);
+pub struct Point<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue>(
+    pub Coord<T, Z, M>,
+);
 
 /// A single point in 2D space + Measure value.
 ///
@@ -290,7 +291,7 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> Point<T, Z, M> {
     pub fn set_m(&mut self, m: M) -> &mut Self {
         self.0.m = m;
         self
-        }
+    }
 }
 
 impl<T: CoordNum> Point<T> {

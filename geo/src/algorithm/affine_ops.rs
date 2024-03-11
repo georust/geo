@@ -3,7 +3,7 @@ use num_traits::ToPrimitive;
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use crate::{coord,Coord, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace, NoValue};
+use crate::{coord, Coord, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace, NoValue};
 use std::{fmt, ops::Mul, ops::Neg};
 
 /// Apply an [`AffineTransform`] like [`scale`](AffineTransform::scale),
@@ -422,7 +422,12 @@ impl<U: CoordFloat> AffineTransform<U> {
     /// yoff = -origin.x * tan(ys)
     /// ```
     pub fn skew(xs: U, ys: U, origin: impl Into<Coord<U>>) -> Self {
-        let Coord { x: x0, y: y0,z : NoValue, m: NoValue } = origin.into();
+        let Coord {
+            x: x0,
+            y: y0,
+            z: NoValue,
+            m: NoValue,
+        } = origin.into();
         let mut tanx = xs.to_radians().tan();
         let mut tany = ys.to_radians().tan();
         // These checks are stolen from Shapely's implementation -- may not be necessary

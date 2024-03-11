@@ -13,7 +13,7 @@ pub(crate) mod triangle;
 
 // re-export all the geometry variants:
 #[allow(deprecated)]
-pub use coord::{Coord, CoordM, Coord3D, Coord3DM, Coordinate};
+pub use coord::{Coord, Coord3D, Coord3DM, CoordM, Coordinate};
 pub use geometry_collection::{
     GeometryCollection, GeometryCollection3D, GeometryCollection3DM, GeometryCollectionM,
 };
@@ -29,8 +29,8 @@ pub use multi_point::{MultiPoint, MultiPoint3D, MultiPoint3DM, MultiPointM};
 pub use multi_polygon::{MultiPolygon, MultiPolygon3D, MultiPolygon3DM, MultiPolygonM};
 pub use no_value::NoValue;
 pub use point::{Point, Point3D, Point3DM, PointM};
-pub use polygon::{Polygon,Polygon3D, Polygon3DM, PolygonM};
-pub use rect::{Rect,Rect3D, Rect3DM, RectM};
+pub use polygon::{Polygon, Polygon3D, Polygon3DM, PolygonM};
+pub use rect::{Rect, Rect3D, Rect3DM, RectM};
 pub use triangle::{Triangle, Triangle3D, Triangle3DM, TriangleM};
 
 use crate::{CoordNum, Error};
@@ -166,8 +166,9 @@ try_from_geometry_impl!(
     Triangle
 );
 
-fn inner_type_name<T: CoordNum, Z: CoordNum, M: CoordNum>(geometry: Geometry<T, Z, M>) -> &'static str
-{
+fn inner_type_name<T: CoordNum, Z: CoordNum, M: CoordNum>(
+    geometry: Geometry<T, Z, M>,
+) -> &'static str {
     match geometry {
         Geometry::Point(_) => type_name::<Point<T, Z, M>>(),
         Geometry::Line(_) => type_name::<Line<T, Z, M>>(),

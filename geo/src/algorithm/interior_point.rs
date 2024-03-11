@@ -1,5 +1,5 @@
-use std::cmp::{Ordering, Reverse};
 use geo_types::coord;
+use std::cmp::{Ordering, Reverse};
 
 use crate::algorithm::{
     bounding_rect::BoundingRect, centroid::Centroid, coords_iter::CoordsIter,
@@ -837,11 +837,8 @@ mod test {
         );
 
         // collection with rect
-        let collection = GeometryCollection::new(vec![
-            p(0., 0.).into(),
-            p(6., 0.).into(),
-            p(6., 6.).into(),
-        ]);
+        let collection =
+            GeometryCollection::new(vec![p(0., 0.).into(), p(6., 0.).into(), p(6., 6.).into()]);
         // check collection
         assert_eq!(collection.interior_point().unwrap(), point!(x: 6., y: 0.));
     }

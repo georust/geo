@@ -115,7 +115,6 @@ pub use geometry::*;
 
 pub use geometry::line_string::PointsIter;
 
-
 mod error;
 pub use error::Error;
 

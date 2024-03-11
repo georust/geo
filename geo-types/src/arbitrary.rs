@@ -1,4 +1,7 @@
-use crate::{Coord, CoordFloat, CoordNum, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle};
+use crate::{
+    Coord, CoordFloat, CoordNum, Geometry, GeometryCollection, LineString, MultiLineString,
+    MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+};
 use std::mem;
 
 impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for Coord<T>
@@ -70,7 +73,6 @@ where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
     Z: arbitrary::Arbitrary<'a> + CoordNum,
     M: arbitrary::Arbitrary<'a> + CoordNum,
-
 {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         u.arbitrary::<Vec<Point<T, Z, M>>>().map(Self)

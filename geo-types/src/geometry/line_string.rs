@@ -1,8 +1,8 @@
-#[cfg(any(feature = "approx", test))]
-use approx::{AbsDiffEq, RelativeEq};
 use crate::{Coord, CoordNum, Line, NoValue, Point, Triangle};
 use alloc::vec;
 use alloc::vec::Vec;
+#[cfg(any(feature = "approx", test))]
+use approx::{AbsDiffEq, RelativeEq};
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
 
@@ -136,7 +136,7 @@ use core::ops::{Index, IndexMut};
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LineString<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue>(
-    pub Vec<Coord<T, Z, M>>
+    pub Vec<Coord<T, Z, M>>,
 );
 
 /// A line string with a measurement value in 2D space.
@@ -167,10 +167,10 @@ pub type PointsIter3D<'a, T> = PointsIter<'a, T, T, NoValue>;
 pub type PointsIter3DM<'a, T> = PointsIter<'a, T, T, T>;
 
 impl<'a, T, Z, M> Iterator for PointsIter<'a, T, Z, M>
-    where
-        T: CoordNum + 'a,
-        Z: CoordNum + 'a,
-        M: CoordNum + 'a,
+where
+    T: CoordNum + 'a,
+    Z: CoordNum + 'a,
+    M: CoordNum + 'a,
 {
     type Item = Point<T, Z, M>;
 
@@ -198,7 +198,7 @@ impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> DoubleEndedIterator for PointsIt
 /// A [`Coord`] iterator used by the `into_iter` method on a [`LineString`]
 #[derive(Debug)]
 pub struct CoordinatesIter<'a, T: CoordNum + 'a, Z: CoordNum + 'a, M: CoordNum + 'a>(
-    ::core::slice::Iter<'a, Coord<T, Z, M>>
+    ::core::slice::Iter<'a, Coord<T, Z, M>>,
 );
 
 impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> Iterator for CoordinatesIter<'a, T, Z, M> {
@@ -219,7 +219,9 @@ impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> ExactSizeIterator for Coordinate
     }
 }
 
-impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T, Z, M> {
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> DoubleEndedIterator
+    for CoordinatesIter<'a, T, Z, M>
+{
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back()
     }
@@ -346,7 +348,7 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> LineString<T, Z, M> {
 
 /// Turn a [`Vec`] of [`Point`]-like objects into a [`LineString`].
 impl<T: CoordNum, Z: CoordNum, M: CoordNum, IC: Into<Coord<T, Z, M>>> From<Vec<IC>>
-for LineString<T, Z, M>
+    for LineString<T, Z, M>
 {
     fn from(v: Vec<IC>) -> Self {
         Self(v.into_iter().map(|c| c.into()).collect())
@@ -366,8 +368,7 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> From<&Line<T, Z, M>> for LineString<
 }
 
 /// Turn an iterator of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, Z: CoordNum, M: CoordNum, IC: Into<Coord<T, Z, M>>>
-FromIterator<IC>
+impl<T: CoordNum, Z: CoordNum, M: CoordNum, IC: Into<Coord<T, Z, M>>> FromIterator<IC>
     for LineString<T, Z, M>
 {
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {

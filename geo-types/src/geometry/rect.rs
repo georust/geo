@@ -365,10 +365,10 @@ impl<T: CoordNum> Rect<T> {
 }
 
 impl<T, Z, M> Rect<T, Z, M>
-    where
-        T: CoordNum,
-        Z: CoordNum + One + NumOps,
-        M: CoordNum + One + NumOps,
+where
+    T: CoordNum,
+    Z: CoordNum + One + NumOps,
+    M: CoordNum + One + NumOps,
 {
     /// Returns the center `Coord` of the `Rect`.
     ///

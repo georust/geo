@@ -1086,11 +1086,8 @@ mod test {
         );
 
         // collection with rect
-        let mut collection = GeometryCollection::new(vec![
-            p(0., 0.).into(),
-            p(6., 0.).into(),
-            p(6., 6.).into(),
-        ]);
+        let mut collection =
+            GeometryCollection::new(vec![p(0., 0.).into(), p(6., 0.).into(), p(6., 6.).into()]);
         // sanity check
         assert_eq!(collection.centroid().unwrap(), point!(x: 4., y: 2.));
 

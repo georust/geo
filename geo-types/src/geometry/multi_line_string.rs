@@ -45,7 +45,6 @@ pub type MultiLineStringM<T> = MultiLineString<T, NoValue, T>;
 pub type MultiLineString3D<T> = MultiLineString<T, T, NoValue>;
 pub type MultiLineString3DM<T> = MultiLineString<T, T, T>;
 
-
 impl<T: CoordNum, Z: CoordNum, M: CoordNum> MultiLineString<T, Z, M> {
     /// Instantiate Self from the raw content value
     pub fn new(value: Vec<LineString<T, Z, M>>) -> Self {

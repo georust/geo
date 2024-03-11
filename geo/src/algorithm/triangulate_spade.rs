@@ -297,7 +297,7 @@ where
     triangulation
         .inner_faces()
         .map(|face| face.positions())
-        .map(|points| points.map(|p| coord!{ x: p.x, y: p.y}))
+        .map(|points| points.map(|p| coord! { x: p.x, y: p.y}))
         .map(Triangle::from)
         .collect::<Vec<_>>()
 }

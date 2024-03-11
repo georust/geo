@@ -56,19 +56,38 @@ macro_rules! point {
 #[macro_export]
 macro_rules! coord {
     (x: $x:expr, y: $y:expr $(,)* ) => {
-        $crate::Coord {x: $x, y: $y, z: $crate::NoValue, m: $crate::NoValue}
+        $crate::Coord {
+            x: $x,
+            y: $y,
+            z: $crate::NoValue,
+            m: $crate::NoValue,
+        }
     };
     (x: $x:expr, y: $y:expr, z: $z:expr $(,)* ) => {
-        $crate::Coord {x: $x, y: $y, z: $z, m: $crate::NoValue}
+        $crate::Coord {
+            x: $x,
+            y: $y,
+            z: $z,
+            m: $crate::NoValue,
+        }
     };
     (x: $x:expr, y: $y:expr, m: $m:expr $(,)* ) => {
-        $crate::Coord {x: $x, y: $y, z: $crate::NoValue, m: $m}
+        $crate::Coord {
+            x: $x,
+            y: $y,
+            z: $crate::NoValue,
+            m: $m,
+        }
     };
     (x: $x:expr, y: $y:expr, z: $z:expr, m: $m:expr $(,)* ) => {
-        $crate::Coord {x: $x, y: $y, z: $z, m: $m}
+        $crate::Coord {
+            x: $x,
+            y: $y,
+            z: $z,
+            m: $m,
+        }
     };
 }
-
 
 /// Creates a [`LineString`] containing the given coordinates.
 ///

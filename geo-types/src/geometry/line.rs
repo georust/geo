@@ -39,7 +39,6 @@ pub type Line3D<T> = Line<T, T, NoValue>;
 /// `LineString` with the two end points.
 pub type Line3DM<T> = Line<T, T, T>;
 
-
 impl<T: CoordNum, Z: CoordNum, M: CoordNum> Line<T, Z, M> {
     /// Creates a new line segment.
     ///

@@ -137,7 +137,9 @@ impl<T: CoordNum, IG: Into<Geometry<T>>> From<Vec<IG>> for GeometryCollection<T>
 }
 
 /// Collect Geometries (or what can be converted to a Geometry) into a GeometryCollection
-impl<T: CoordNum, Z: CoordNum, M: CoordNum, IG: Into<Geometry<T, Z, M>>> FromIterator<IG> for GeometryCollection<T, Z, M> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum, IG: Into<Geometry<T, Z, M>>> FromIterator<IG>
+    for GeometryCollection<T, Z, M>
+{
     fn from_iter<I: IntoIterator<Item = IG>>(iter: I) -> Self {
         Self(iter.into_iter().map(|g| g.into()).collect())
     }
@@ -225,7 +227,9 @@ pub struct IterMutHelper<'a, T: CoordNum, Z: CoordNum, M: CoordNum> {
 
 // implement the IntoIterator trait for a mutable non-consuming iterator. Iteration will
 // mutably borrow the GeometryCollection
-impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a mut GeometryCollection<T, Z, M> {
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator
+    for &'a mut GeometryCollection<T, Z, M>
+{
     type Item = &'a mut Geometry<T, Z, M>;
     type IntoIter = IterMutHelper<'a, T, Z, M>;
 

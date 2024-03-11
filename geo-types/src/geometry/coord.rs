@@ -122,7 +122,6 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> Coord<T, Z, M> {
     }
 }
 
-
 /// Negate a coordinate.
 ///
 /// # Examples
@@ -274,7 +273,6 @@ where
         }
     }
 }
-
 
 /// Create a coordinate at the origin.
 ///
