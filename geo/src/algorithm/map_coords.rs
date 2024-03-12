@@ -41,7 +41,7 @@ pub trait MapCoords<T, NT> {
     /// use approx::assert_relative_eq;
     ///
     /// let p1 = Point::new(10., 20.);
-    /// let p2 = p1.map_coords(|Coord { x, y, z, m }| coord! { x: x + 1000., y: y * 2. });
+    /// let p2 = p1.map_coords(|Coord { x, y, ..}| coord! { x: x + 1000., y: y * 2. });
     ///
     /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon = 1e-6);
     /// ```
@@ -167,7 +167,7 @@ pub trait MapCoordsInPlace<T> {
     /// assert_eq!(
     ///     p1,
     ///     geo::point!{x: 1010u32, y: 40u32},
-    /// );
+    /// )?;
     /// ```
     fn try_map_coords_in_place<E>(
         &mut self,
