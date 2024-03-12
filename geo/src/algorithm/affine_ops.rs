@@ -4,7 +4,7 @@ use num_traits::ToPrimitive;
 use approx::{AbsDiffEq, RelativeEq};
 
 use crate::{Coord, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace};
-use std::{fmt, ops::Index, ops::Mul, ops::Neg};
+use std::{fmt, ops::Mul, ops::Neg};
 
 /// Apply an [`AffineTransform`] like [`scale`](AffineTransform::scale),
 /// [`skew`](AffineTransform::skew), or [`rotate`](AffineTransform::rotate) to a
@@ -115,6 +115,19 @@ impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> Affin
 ///     (x: -0.5688687, y: 5.5688687)
 /// ], max_relative = 1.0);
 /// ```
+///
+/// ## Create affine transform manually, and access elements using getter methods
+/// ```
+/// let transform = AffineTransform::new(10.0, 0.0, 400_000.0, 0.0, -10.0, 500_000.0);
+///
+/// let a: f64 = transform.a();
+/// let b: f64 = transform.b();
+/// let c: f64 = transform.xoff();
+/// let d: f64 = transform.d();
+/// let e: f64 = transform.e();
+/// let f: f64 = transform.yoff();
+/// ```
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct AffineTransform<T: CoordNum = f64>([[T; 3]; 3]);
 
@@ -300,11 +313,36 @@ impl<T: CoordNum> AffineTransform<T> {
     /// The argument order matches that of the affine transform matrix:
     ///```ignore
     /// [[a, b, xoff],
-    /// [d, e, yoff],
-    /// [0, 0, 1]] <-- not part of the input arguments
+    ///  [d, e, yoff],
+    ///  [0, 0, 1]] <-- not part of the input arguments
     /// ```
     pub fn new(a: T, b: T, xoff: T, d: T, e: T, yoff: T) -> Self {
         Self([[a, b, xoff], [d, e, yoff], [T::zero(), T::zero(), T::one()]])
+    }
+
+    /// Get the x-resolution value.
+    pub fn a(&self) -> &T {
+        &self.0[0][0]
+    }
+    /// Get the x-rotation value.
+    pub fn b(&self) -> &T {
+        &self.0[0][1]
+    }
+    /// Get the x-offset value.
+    pub fn xoff(&self) -> &T {
+        &self.0[0][2]
+    }
+    /// Get the y-rotation value.
+    pub fn d(&self) -> &T {
+        &self.0[1][0]
+    }
+    /// Get the y-resolution value.
+    pub fn e(&self) -> &T {
+        &self.0[1][1]
+    }
+    /// Get the y-offset value.
+    pub fn yoff(&self) -> &T {
+        &self.0[1][2]
     }
 }
 
@@ -453,34 +491,6 @@ impl<U: CoordFloat> AffineTransform<U> {
     }
 }
 
-impl Index<&str> for AffineTransform {
-    type Output = f64;
-
-    /// Get elements from the AffineTransform matrix using string-based indexing.
-    ///
-    /// ```
-    /// let transform = AffineTransform::new(10.0, 0.0, 400_000.0, 0.0, -10.0, 500_000.0);
-    ///
-    /// let a: f64 = transform["a"];
-    /// let b: f64 = transform["b"];
-    /// let c: f64 = transform["xoff"];
-    /// let d: f64 = transform["d"];
-    /// let e: f64 = transform["e"];
-    /// let f: f64 = transform["yoff"];
-    /// ```
-    fn index(&self, idx: &str) -> &Self::Output {
-        match idx {
-            "a" => &self.0[0][0],
-            "b" => &self.0[0][1],
-            "xoff" => &self.0[0][2],
-            "d" => &self.0[1][0],
-            "e" => &self.0[1][1],
-            "yoff" => &self.0[1][2],
-            _ => &f64::NAN,
-        }
-    }
-}
-
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for AffineTransform<T>
 where
@@ -616,13 +626,11 @@ mod tests {
     #[test]
     fn test_affine_transform_indexing() {
         let transform = AffineTransform::new(10.0, 0.0, 400_000.0, 0.0, -10.0, 500_000.0);
-        assert_eq!(transform["a"], 10.0);
-        assert_eq!(transform["b"], 0.0);
-        assert_eq!(transform["xoff"], 400_000.0);
-        assert_eq!(transform["d"], 0.0);
-        assert_eq!(transform["e"], -10.0);
-        assert_eq!(transform["yoff"], 500_000.0);
-        // Invalid indexes return NaN
-        assert_ne!(transform["z"], f64::NAN);
+        assert_eq!(transform.a(), &10.0);
+        assert_eq!(transform.b(), &0.0);
+        assert_eq!(transform.xoff(), &400_000.0);
+        assert_eq!(transform.d(), &0.0);
+        assert_eq!(transform.e(), -&10.0);
+        assert_eq!(transform.yoff(), &500_000.0);
     }
 }
