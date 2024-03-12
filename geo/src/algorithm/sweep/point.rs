@@ -74,10 +74,10 @@ mod tests {
 
     #[test]
     fn test_sweep_point_ordering() {
-        let p1 = SweepPoint::from(Coord { x: 0., y: 0. });
-        let p2 = SweepPoint::from(Coord { x: 1., y: 0. });
-        let p3 = SweepPoint::from(Coord { x: 1., y: 1. });
-        let p4 = SweepPoint::from(Coord { x: 1., y: 1. });
+        let p1 = SweepPoint::from(coord! { x: 0., y: 0. });
+        let p2 = SweepPoint::from(coord! { x: 1., y: 0. });
+        let p3 = SweepPoint::from(coord! { x: 1., y: 1. });
+        let p4 = SweepPoint::from(coord! { x: 1., y: 1. });
 
         assert!(p1 < p2);
         assert!(p1 < p3);

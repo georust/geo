@@ -1,8 +1,8 @@
 #![allow(unused)]
-use std::f64::consts::PI;
-
 use geo::algorithm::{BoundingRect, ConcaveHull, ConvexHull, MapCoords, Rotate};
+use geo::coord;
 use geo::geometry::*;
+use std::f64::consts::PI;
 
 use rand::{thread_rng, Rng};
 use rand_distr::{Distribution, Normal, Standard};
@@ -17,7 +17,7 @@ use rand_distr::{Distribution, Normal, Standard};
 pub fn uniform_point<R: Rng>(rng: &mut R, bounds: Rect<f64>) -> Coord<f64> {
     let coords: [f64; 2] = rng.sample(Standard);
     let dims = bounds.max() - bounds.min();
-    Coord {
+    coord! {
         x: bounds.min().x + dims.x * coords[0],
         y: bounds.min().y + dims.y * coords[1],
     }

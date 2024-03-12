@@ -1,8 +1,8 @@
 #[cfg(any(feature = "approx", test))]
 use approx::AbsDiffEq;
+use core::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use num_traits::{Num, NumCast, One, ToPrimitive, Zero};
 use std::fmt::Debug;
-use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
 /// An empty placeholder type that can be used anywhere [`CoordNum`] is required.
 /// All geo types by default are 2D - (x,y) only, using `NoValue` for 3D (z) and measurement (m) values.

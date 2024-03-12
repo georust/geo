@@ -1,9 +1,9 @@
 use std::fmt::Display;
 
 use criterion::{measurement::Measurement, *};
-use geo::{Coord, Line};
+use geo::{coord, Coord, Line};
 
-const BBOX: Coord<f64> = Coord { x: 1024., y: 1024. };
+const BBOX: Coord<f64> = coord! { x: 1024., y: 1024. };
 
 #[path = "utils/random.rs"]
 mod random;

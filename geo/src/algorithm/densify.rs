@@ -1,5 +1,5 @@
 use crate::{
-    CoordFloat, EuclideanLength, Line, LineInterpolatePoint, LineString, MultiLineString,
+    coord, CoordFloat, EuclideanLength, Line, LineInterpolatePoint, LineString, MultiLineString,
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 
@@ -166,7 +166,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coord, Coord};
+    use crate::coord;
 
     #[test]
     fn test_polygon_densify() {
@@ -176,35 +176,35 @@ mod tests {
             vec![[-3.0, 0.0], [0.0, 3.0], [3.0, 0.0], [-3.0, 0.0]].into();
         let polygon = Polygon::new(linestring, vec![interior]);
         let correct_ext: LineString<f64> = LineString(vec![
-            Coord { x: -5.0, y: 0.0 },
-            Coord { x: -3.75, y: 1.25 },
-            Coord { x: -2.5, y: 2.5 },
-            Coord { x: -1.25, y: 3.75 },
-            Coord { x: 0.0, y: 5.0 },
-            Coord { x: 1.25, y: 3.75 },
-            Coord { x: 2.5, y: 2.5 },
-            Coord { x: 3.75, y: 1.25 },
-            Coord { x: 5.0, y: 0.0 },
-            Coord { x: 3.0, y: 0.0 },
-            Coord { x: 1.0, y: 0.0 },
-            Coord {
+            coord! { x: -5.0, y: 0.0 },
+            coord! { x: -3.75, y: 1.25 },
+            coord! { x: -2.5, y: 2.5 },
+            coord! { x: -1.25, y: 3.75 },
+            coord! { x: 0.0, y: 5.0 },
+            coord! { x: 1.25, y: 3.75 },
+            coord! { x: 2.5, y: 2.5 },
+            coord! { x: 3.75, y: 1.25 },
+            coord! { x: 5.0, y: 0.0 },
+            coord! { x: 3.0, y: 0.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! {
                 x: -1.0000000000000009,
                 y: 0.0,
             },
-            Coord { x: -3.0, y: 0.0 },
-            Coord { x: -5.0, y: 0.0 },
+            coord! { x: -3.0, y: 0.0 },
+            coord! { x: -5.0, y: 0.0 },
         ]);
         let correct_int: LineString<f64> = LineString(vec![
-            Coord { x: -3.0, y: 0.0 },
-            Coord { x: -2.0, y: 1.0 },
-            Coord { x: -1.0, y: 2.0 },
-            Coord { x: 0.0, y: 3.0 },
-            Coord { x: 1.0, y: 2.0 },
-            Coord { x: 2.0, y: 1.0 },
-            Coord { x: 3.0, y: 0.0 },
-            Coord { x: 1.0, y: 0.0 },
-            Coord { x: -1.0, y: 0.0 },
-            Coord { x: -3.0, y: 0.0 },
+            coord! { x: -3.0, y: 0.0 },
+            coord! { x: -2.0, y: 1.0 },
+            coord! { x: -1.0, y: 2.0 },
+            coord! { x: 0.0, y: 3.0 },
+            coord! { x: 1.0, y: 2.0 },
+            coord! { x: 2.0, y: 1.0 },
+            coord! { x: 3.0, y: 0.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: -1.0, y: 0.0 },
+            coord! { x: -3.0, y: 0.0 },
         ]);
         let correct_polygon = Polygon::new(correct_ext, vec![correct_int]);
         let max_dist = 2.0;

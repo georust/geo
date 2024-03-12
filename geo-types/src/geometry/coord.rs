@@ -2,9 +2,9 @@ use crate::{coord, CoordNum, NoValue, Point};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq, UlpsEq};
+use core::fmt::Debug;
+use core::ops::{Add, Div, Mul, Neg, Sub};
 use num_traits::Zero;
-use std::fmt::Debug;
-use std::ops::{Add, Div, Mul, Neg, Sub};
 
 /// A lightweight struct used to store coordinates on the 2-dimensional
 /// Cartesian plane (x,y) with optional 3D (z) and measurement (m) values.
