@@ -700,7 +700,7 @@ mod test {
     #[test]
     fn point() {
         let p = Point::new(10., 10.);
-        let new_p = p.map_coords(|Coord { x, y, z, m }| (x + 10., y + 100.).into());
+        let new_p = p.map_coords(|Coord { x, y, .. }| (x + 10., y + 100.).into());
         assert_relative_eq!(new_p.x(), 20.);
         assert_relative_eq!(new_p.y(), 110.);
     }
@@ -708,7 +708,7 @@ mod test {
     #[test]
     fn point_inplace() {
         let mut p2 = Point::new(10f32, 10f32);
-        p2.map_coords_in_place(|Coord { x, y, z, m }| (x + 10., y + 100.).into());
+        p2.map_coords_in_place(|Coord { x, y, .. }| (x + 10., y + 100.).into());
         assert_relative_eq!(p2.x(), 20.);
         assert_relative_eq!(p2.y(), 110.);
     }
@@ -716,7 +716,7 @@ mod test {
     #[test]
     fn rect_inplace() {
         let mut rect = Rect::new((10, 10), (20, 20));
-        rect.map_coords_in_place(|Coord { x, y, z, m }| (x + 10, y + 20).into());
+        rect.map_coords_in_place(|Coord { x, y, .. }| (x + 10, y + 20).into());
         assert_eq!(rect.min(), coord! { x: 20, y: 30 });
         assert_eq!(rect.max(), coord! { x: 30, y: 40 });
     }
@@ -743,7 +743,7 @@ mod test {
     #[test]
     fn rect_map_coords() {
         let rect = Rect::new((10, 10), (20, 20));
-        let another_rect = rect.map_coords(|Coord { x, y, z, m }| (x + 10, y + 20).into());
+        let another_rect = rect.map_coords(|Coord { x, y,.. }| (x + 10, y + 20).into());
         assert_eq!(another_rect.min(), coord! { x: 20, y: 30 });
         assert_eq!(another_rect.max(), coord! { x: 30, y: 40 });
     }
@@ -751,7 +751,7 @@ mod test {
     #[test]
     fn rect_try_map_coords() {
         let rect = Rect::new((10i32, 10), (20, 20));
-        let result = rect.try_map_coords(|Coord { x, y, z, m }| -> Result<_, &'static str> {
+        let result = rect.try_map_coords(|Coord { x, y, .. }| -> Result<_, &'static str> {
             Ok((
                 x.checked_add(10).ok_or("overflow")?,
                 y.checked_add(20).ok_or("overflow")?,
@@ -793,7 +793,7 @@ mod test {
     #[test]
     fn linestring() {
         let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
-        let line2 = line1.map_coords(|Coord { x, y, z, m }| (x + 10., y - 100.).into());
+        let line2 = line1.map_coords(|Coord { x, y,.. }| (x + 10., y - 100.).into());
         assert_relative_eq!(line2.0[0], Coord::from((10., -100.)), epsilon = 1e-6);
         assert_relative_eq!(line2.0[1], Coord::from((11., -98.)), epsilon = 1e-6);
     }
@@ -809,7 +809,7 @@ mod test {
         ])];
         let p = Polygon::new(exterior, interiors);
 
-        let p2 = p.map_coords(|Coord { x, y, z, m }| (x + 10., y - 100.).into());
+        let p2 = p.map_coords(|Coord { x, y, .. }| (x + 10., y - 100.).into());
 
         let exterior2 =
             LineString::from(vec![(10., -100.), (11., -99.), (11., -100.), (10., -100.)]);
@@ -831,7 +831,7 @@ mod test {
         let mp = MultiPoint::new(vec![p1, p2]);
 
         assert_eq!(
-            mp.map_coords(|Coord { x, y, z, m }| (x + 10., y + 100.).into()),
+            mp.map_coords(|Coord { x, y, .. }| (x + 10., y + 100.).into()),
             MultiPoint::new(vec![Point::new(20., 110.), Point::new(10., 0.)])
         );
     }
@@ -881,7 +881,7 @@ mod test {
         ];
 
         let mp = MultiPolygon::new(vec![poly1, poly2]);
-        let mp2 = mp.map_coords(|Coord { x, y, z, m }| (x * 2., y + 100.).into());
+        let mp2 = mp.map_coords(|Coord { x, y, .. }| (x * 2., y + 100.).into());
         assert_eq!(mp2.0.len(), 2);
         assert_relative_eq!(
             mp2.0[0],
@@ -924,7 +924,7 @@ mod test {
         let gc = GeometryCollection::new(vec![p1, line1]);
 
         assert_eq!(
-            gc.map_coords(|Coord { x, y, z, m }| (x + 10., y + 100.).into()),
+            gc.map_coords(|Coord { x, y, .. }| (x + 10., y + 100.).into()),
             GeometryCollection::new(vec![
                 Geometry::Point(Point::new(20., 110.)),
                 Geometry::LineString(LineString::from(vec![(10., 100.), (11., 102.)])),
@@ -935,7 +935,7 @@ mod test {
     #[test]
     fn convert_type() {
         let p1: Point<f64> = Point::new(1., 2.);
-        let p2: Point<f32> = p1.map_coords(|Coord { x, y, z, m }| (x as f32, y as f32).into());
+        let p2: Point<f32> = p1.map_coords(|Coord { x, y, .. }| (x as f32, y as f32).into());
         assert_relative_eq!(p2.x(), 1f32);
         assert_relative_eq!(p2.y(), 2f32);
     }
@@ -961,7 +961,7 @@ mod test {
 
     #[test]
     fn test_fallible() {
-        let f = |Coord { x, y, z, m }| -> Result<_, &'static str> {
+        let f = |Coord { x, y, .. }| -> Result<_, &'static str> {
             if relative_ne!(x, 2.0) {
                 Ok((x * 2., y + 100.).into())
             } else {

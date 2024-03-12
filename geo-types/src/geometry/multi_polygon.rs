@@ -78,7 +78,7 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum, IP: Into<Polygon<T, Z, M>>> FromIter
 
 impl<T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for MultiPolygon<T, Z, M> {
     type Item = Polygon<T, Z, M>;
-    type IntoIter = ::std::vec::IntoIter<Polygon<T, Z, M>>;
+    type IntoIter = vec::IntoIter<Polygon<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
