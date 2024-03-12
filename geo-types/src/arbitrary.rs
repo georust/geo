@@ -4,7 +4,7 @@ use crate::{
 };
 use std::mem;
 
-impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for Coord<T>
+impl<'a, T, Z, M> arbitrary::Arbitrary<'a> for Coord<T, Z, M>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
     Z: arbitrary::Arbitrary<'a> + CoordNum,
