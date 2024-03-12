@@ -167,7 +167,8 @@ pub trait MapCoordsInPlace<T> {
     /// assert_eq!(
     ///     p1,
     ///     geo::point!{x: 1010u32, y: 40u32},
-    /// )?;
+    /// );
+    /// # Ok::<(), &str>(())
     /// ```
     fn try_map_coords_in_place<E>(
         &mut self,
