@@ -624,13 +624,13 @@ mod tests {
         assert_eq!(expected, poly);
     }
     #[test]
-    fn test_affine_transform_indexing() {
+    fn test_affine_transform_getters() {
         let transform = AffineTransform::new(10.0, 0.0, 400_000.0, 0.0, -10.0, 500_000.0);
         assert_eq!(transform.a(), &10.0);
         assert_eq!(transform.b(), &0.0);
         assert_eq!(transform.xoff(), &400_000.0);
         assert_eq!(transform.d(), &0.0);
-        assert_eq!(transform.e(), -&10.0);
+        assert_eq!(transform.e(), &-10.0);
         assert_eq!(transform.yoff(), &500_000.0);
     }
 }
