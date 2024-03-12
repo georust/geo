@@ -57,10 +57,10 @@ pub trait MapCoords<T, NT> {
     /// # use geo::MapCoords;
     /// # use approx::assert_relative_eq;
     ///
-    /// let SCALE_FACTOR: f64 = 1000000.0;
+    /// let scale_factor: f64 = 1000000.0;
     /// let floating_point_geom: Point<f64> = Point::new(10.15f64, 20.05f64);
     /// let fixed_point_geom: Point<i32> = floating_point_geom.map_coords(|Coord { x, y, z, m }| {
-    ///     coord! { x: (x * SCALE_FACTOR) as i32, y: (y * SCALE_FACTOR) as i32 }
+    ///     coord! { x: (x * scale_factor) as i32, y: (y * scale_factor) as i32 }
     /// });
     ///
     /// assert_eq!(fixed_point_geom.x(), 10150000);
@@ -168,7 +168,6 @@ pub trait MapCoordsInPlace<T> {
     ///     p1,
     ///     geo::point!{x: 1010u32, y: 40u32},
     /// );
-    /// # Ok::<(), &str>(())
     /// ```
     fn try_map_coords_in_place<E>(
         &mut self,

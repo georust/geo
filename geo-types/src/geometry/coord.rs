@@ -36,7 +36,7 @@ pub struct Coord<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue
 }
 
 #[deprecated(note = "Renamed to `geo_types::Coord` (or `geo::Coord`)")]
-pub type Coordinate<T = f64> = Coord<T>;
+pub type Coordinate<T> = Coord<T>;
 
 /// A lightweight struct used to store coordinates on the 2-dimensional
 /// Cartesian plane together with a Measure value of the same type.
@@ -310,58 +310,6 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> Zero for Coord<T, Z, M> {
     }
 }
 
-#[cfg(any(feature = "approx", test))]
-impl<T: CoordNum + AbsDiffEq> AbsDiffEq for Coord<T>
-where
-    T::Epsilon: Copy,
-{
-    type Epsilon = T::Epsilon;
-
-    #[inline]
-    fn default_epsilon() -> T::Epsilon {
-        T::default_epsilon()
-    }
-
-    #[inline]
-    fn abs_diff_eq(&self, other: &Self, epsilon: T::Epsilon) -> bool {
-        T::abs_diff_eq(&self.x, &other.x, epsilon) && T::abs_diff_eq(&self.y, &other.y, epsilon)
-    }
-}
-
-#[cfg(any(feature = "approx", test))]
-impl<T: CoordNum + RelativeEq> RelativeEq for Coord<T>
-where
-    T::Epsilon: Copy,
-{
-    #[inline]
-    fn default_max_relative() -> T::Epsilon {
-        T::default_max_relative()
-    }
-
-    #[inline]
-    fn relative_eq(&self, other: &Self, epsilon: T::Epsilon, max_relative: T::Epsilon) -> bool {
-        T::relative_eq(&self.x, &other.x, epsilon, max_relative)
-            && T::relative_eq(&self.y, &other.y, epsilon, max_relative)
-    }
-}
-
-#[cfg(any(feature = "approx", test))]
-impl<T: CoordNum + UlpsEq> UlpsEq for Coord<T>
-where
-    T::Epsilon: Copy,
-{
-    #[inline]
-    fn default_max_ulps() -> u32 {
-        T::default_max_ulps()
-    }
-
-    #[inline]
-    fn ulps_eq(&self, other: &Self, epsilon: T::Epsilon, max_ulps: u32) -> bool {
-        T::ulps_eq(&self.x, &other.x, epsilon, max_ulps)
-            && T::ulps_eq(&self.y, &other.y, epsilon, max_ulps)
-    }
-}
-
 #[cfg(feature = "rstar_0_8")]
 impl<T> ::rstar_0_8::Point for Coord<T>
 where
@@ -397,39 +345,6 @@ where
         }
     }
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_coordinates() {
-        let p = coord! { x: 1.0, y: 2.0 };
-        assert_relative_eq!(p.x, 1.0);
-        assert_relative_eq!(p.y, 2.0);
-        assert_eq!(p.z, NoValue);
-        assert_eq!(p.m, NoValue);
-
-        let p = coord! { x: 1.0, y: 2.0, z: 3.0 };
-        assert_relative_eq!(p.x, 1.0);
-        assert_relative_eq!(p.y, 2.0);
-        assert_relative_eq!(p.z, 3.0);
-        assert_eq!(p.m, NoValue);
-
-        let p = coord! { x: 1.0, y: 2.0, m: 4_u8 };
-        assert_relative_eq!(p.x, 1.0);
-        assert_relative_eq!(p.y, 2.0);
-        assert_eq!(p.z, NoValue);
-        assert_eq!(p.m, 4_u8);
-
-        let p = coord! { x: 1_i32, y: 2_i32, z: 3_i32, m: 4.0_f64 };
-        assert_eq!(p.x, 1);
-        assert_eq!(p.y, 2);
-        assert_eq!(p.z, 3);
-        assert_relative_eq!(p.m, 4.0);
-    }
-}
-
 #[cfg(feature = "rstar_0_9")]
 impl<T> ::rstar_0_9::Point for Coord<T>
 where
@@ -571,5 +486,89 @@ where
             1 => &mut self.y,
             _ => unreachable!(),
         }
+    }
+}
+
+#[cfg(any(feature = "approx", test))]
+impl<T: CoordNum + AbsDiffEq> AbsDiffEq for Coord<T>
+where
+    T::Epsilon: Copy,
+{
+    type Epsilon = T::Epsilon;
+
+    #[inline]
+    fn default_epsilon() -> T::Epsilon {
+        T::default_epsilon()
+    }
+
+    #[inline]
+    fn abs_diff_eq(&self, other: &Self, epsilon: T::Epsilon) -> bool {
+        T::abs_diff_eq(&self.x, &other.x, epsilon) && T::abs_diff_eq(&self.y, &other.y, epsilon)
+    }
+}
+
+#[cfg(any(feature = "approx", test))]
+impl<T: CoordNum + RelativeEq> RelativeEq for Coord<T>
+where
+    T::Epsilon: Copy,
+{
+    #[inline]
+    fn default_max_relative() -> T::Epsilon {
+        T::default_max_relative()
+    }
+
+    #[inline]
+    fn relative_eq(&self, other: &Self, epsilon: T::Epsilon, max_relative: T::Epsilon) -> bool {
+        T::relative_eq(&self.x, &other.x, epsilon, max_relative)
+            && T::relative_eq(&self.y, &other.y, epsilon, max_relative)
+    }
+}
+
+#[cfg(any(feature = "approx", test))]
+impl<T: CoordNum + UlpsEq> UlpsEq for Coord<T>
+where
+    T::Epsilon: Copy,
+{
+    #[inline]
+    fn default_max_ulps() -> u32 {
+        T::default_max_ulps()
+    }
+
+    #[inline]
+    fn ulps_eq(&self, other: &Self, epsilon: T::Epsilon, max_ulps: u32) -> bool {
+        T::ulps_eq(&self.x, &other.x, epsilon, max_ulps)
+            && T::ulps_eq(&self.y, &other.y, epsilon, max_ulps)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_coordinates() {
+        let p = coord! { x: 1.0, y: 2.0 };
+        assert_relative_eq!(p.x, 1.0);
+        assert_relative_eq!(p.y, 2.0);
+        assert_eq!(p.z, NoValue);
+        assert_eq!(p.m, NoValue);
+
+        let p = coord! { x: 1.0, y: 2.0, z: 3.0 };
+        assert_relative_eq!(p.x, 1.0);
+        assert_relative_eq!(p.y, 2.0);
+        assert_relative_eq!(p.z, 3.0);
+        assert_eq!(p.m, NoValue);
+
+        let p = coord! { x: 1.0, y: 2.0, m: 4_u8 };
+        assert_relative_eq!(p.x, 1.0);
+        assert_relative_eq!(p.y, 2.0);
+        assert_eq!(p.z, NoValue);
+        assert_eq!(p.m, 4_u8);
+
+        let p = coord! { x: 1_i32, y: 2_i32, z: 3_i32, m: 4.0_f64 };
+        assert_eq!(p.x, 1);
+        assert_eq!(p.y, 2);
+        assert_eq!(p.z, 3);
+        assert_relative_eq!(p.m, 4.0);
     }
 }

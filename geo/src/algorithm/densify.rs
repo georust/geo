@@ -1,5 +1,5 @@
 use crate::{
-    coord, CoordFloat, EuclideanLength, Line, LineInterpolatePoint, LineString, MultiLineString,
+    CoordFloat, EuclideanLength, Line, LineInterpolatePoint, LineString, MultiLineString,
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 

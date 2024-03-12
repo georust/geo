@@ -95,7 +95,7 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum, ILS: Into<LineString<T, Z, M>>> From
 
 impl<T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for MultiLineString<T, Z, M> {
     type Item = LineString<T, Z, M>;
-    type IntoIter = ::std::vec::IntoIter<LineString<T, Z, M>>;
+    type IntoIter = vec::IntoIter<LineString<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
