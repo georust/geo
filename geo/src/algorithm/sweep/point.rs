@@ -71,6 +71,7 @@ impl<T: GeoNum> Deref for SweepPoint<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use geo_types::coord;
 
     #[test]
     fn test_sweep_point_ordering() {

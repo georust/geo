@@ -229,7 +229,7 @@ where
 mod test {
     use crate::RemoveRepeatedPoints;
     use crate::{
-        Coord, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
+        coord, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
         Polygon,
     };
 

@@ -1,4 +1,6 @@
-use crate::{CoordNum, LineString, NoValue, Point, Rect, Triangle};
+#[cfg(feature = "rstar_0_12")]
+use crate::Point;
+use crate::{CoordNum, LineString, NoValue, Rect, Triangle};
 use alloc::vec;
 use alloc::vec::Vec;
 

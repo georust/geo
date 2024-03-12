@@ -94,7 +94,7 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for MultiPoint<T, Z, M>
 
 impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a MultiPoint<T, Z, M> {
     type Item = &'a Point<T, Z, M>;
-    type IntoIter = ::std::slice::Iter<'a, Point<T, Z, M>>;
+    type IntoIter = ::alloc::slice::Iter<'a, Point<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         (self.0).iter()
@@ -103,7 +103,7 @@ impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a MultiPoint<
 
 impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a mut MultiPoint<T, Z, M> {
     type Item = &'a mut Point<T, Z, M>;
-    type IntoIter = ::std::slice::IterMut<'a, Point<T, Z, M>>;
+    type IntoIter = ::alloc::slice::IterMut<'a, Point<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         (self.0).iter_mut()

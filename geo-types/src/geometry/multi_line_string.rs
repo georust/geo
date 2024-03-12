@@ -104,7 +104,7 @@ impl<T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for MultiLineString<T, 
 
 impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a MultiLineString<T, Z, M> {
     type Item = &'a LineString<T, Z, M>;
-    type IntoIter = ::std::slice::Iter<'a, LineString<T, Z, M>>;
+    type IntoIter = ::alloc::slice::Iter<'a, LineString<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         (self.0).iter()
@@ -113,7 +113,7 @@ impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a MultiLineSt
 
 impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a mut MultiLineString<T, Z, M> {
     type Item = &'a mut LineString<T, Z, M>;
-    type IntoIter = ::std::slice::IterMut<'a, LineString<T, Z, M>>;
+    type IntoIter = ::alloc::slice::IterMut<'a, LineString<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         (self.0).iter_mut()
