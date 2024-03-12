@@ -4,7 +4,7 @@ use num_traits::ToPrimitive;
 use approx::{AbsDiffEq, RelativeEq};
 
 use crate::{Coord, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace};
-use std::{fmt, ops::Mul, ops::Neg};
+use std::{fmt, ops::Index, ops::Mul, ops::Neg};
 
 /// Apply an [`AffineTransform`] like [`scale`](AffineTransform::scale),
 /// [`skew`](AffineTransform::skew), or [`rotate`](AffineTransform::rotate) to a
@@ -453,6 +453,34 @@ impl<U: CoordFloat> AffineTransform<U> {
     }
 }
 
+impl Index<&str> for AffineTransform {
+    type Output = f64;
+
+    /// Get elements from the AffineTransform matrix using string-based indexing.
+    ///
+    /// ```
+    /// let transform = AffineTransform::new(10.0, 0.0, 400_000.0, 0.0, -10.0, 500_000.0);
+    ///
+    /// let a: f64 = transform["a"];
+    /// let b: f64 = transform["b"];
+    /// let c: f64 = transform["xoff"];
+    /// let d: f64 = transform["d"];
+    /// let e: f64 = transform["e"];
+    /// let f: f64 = transform["yoff"];
+    /// ```
+    fn index(&self, idx: &str) -> &Self::Output {
+        match idx {
+            "a" => &self.0[0][0],
+            "b" => &self.0[0][1],
+            "xoff" => &self.0[0][2],
+            "d" => &self.0[1][0],
+            "e" => &self.0[1][1],
+            "yoff" => &self.0[1][2],
+            _ => &f64::NAN,
+        }
+    }
+}
+
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for AffineTransform<T>
 where
@@ -584,5 +612,17 @@ mod tests {
         let expected = poly.clone();
         poly.affine_transform_mut(&identity);
         assert_eq!(expected, poly);
+    }
+    #[test]
+    fn test_affine_transform_indexing() {
+        let transform = AffineTransform::new(10.0, 0.0, 400_000.0, 0.0, -10.0, 500_000.0);
+        assert_eq!(transform["a"], 10.0);
+        assert_eq!(transform["b"], 0.0);
+        assert_eq!(transform["xoff"], 400_000.0);
+        assert_eq!(transform["d"], 0.0);
+        assert_eq!(transform["e"], -10.0);
+        assert_eq!(transform["yoff"], 500_000.0);
+        // Invalid indexes return NaN
+        assert_ne!(transform["z"], f64::NAN);
     }
 }
