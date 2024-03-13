@@ -19,19 +19,19 @@ pub struct Triangle<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoVa
 
 /// A bounded 2D area whose three vertices are defined by
 /// `Coordinate`s. The semantics and validity are that of
-/// the equivalent [`PolygonM`]; in addition, the three
+/// the equivalent [`super::PolygonM`]; in addition, the three
 /// vertices must not be collinear and they must be distinct.
 pub type TriangleM<T> = Triangle<T, NoValue, T>;
 
 /// A bounded 2D area whose three vertices are defined by
 /// `Coordinate`s. The semantics and validity are that of
-/// the equivalent [`Polygon3D`]; in addition, the three
+/// the equivalent [`super::Polygon3D`]; in addition, the three
 /// vertices must not be collinear and they must be distinct.
 pub type Triangle3D<T> = Triangle<T, T, NoValue>;
 
 /// A bounded 2D area whose three vertices are defined by
 /// `Coordinate`s. The semantics and validity are that of
-/// the equivalent [`Polygon3DM`]; in addition, the three
+/// the equivalent [`super::Polygon3DM`]; in addition, the three
 /// vertices must not be collinear and they must be distinct.
 pub type Triangle3DM<T> = Triangle<T, T, T>;
 

@@ -744,7 +744,7 @@ mod test {
     #[test]
     fn rect_map_coords() {
         let rect = Rect::new((10, 10), (20, 20));
-        let another_rect = rect.map_coords(|Coord { x, y,.. }| (x + 10, y + 20).into());
+        let another_rect = rect.map_coords(|Coord { x, y, .. }| (x + 10, y + 20).into());
         assert_eq!(another_rect.min(), coord! { x: 20, y: 30 });
         assert_eq!(another_rect.max(), coord! { x: 30, y: 40 });
     }
@@ -794,7 +794,7 @@ mod test {
     #[test]
     fn linestring() {
         let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
-        let line2 = line1.map_coords(|Coord { x, y,.. }| (x + 10., y - 100.).into());
+        let line2 = line1.map_coords(|Coord { x, y, .. }| (x + 10., y - 100.).into());
         assert_relative_eq!(line2.0[0], Coord::from((10., -100.)), epsilon = 1e-6);
         assert_relative_eq!(line2.0[1], Coord::from((11., -98.)), epsilon = 1e-6);
     }

@@ -33,7 +33,7 @@ pub struct Point<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue
 /// A single point in 2D space + Measure value.
 ///
 /// Points can be created using the the [point!] macro,
-/// or from a [`CoordM`] or other types – see the `From` implementations below.
+/// or from a [`super::CoordM`] or other types – see the `From` implementations below.
 ///
 /// # Examples
 ///
@@ -46,7 +46,7 @@ pub type PointM<T> = Point<T, NoValue, T>;
 /// A single point in 3D space.
 ///
 /// Points can be created using the the [point!] macro,
-/// or from a [`Coord3D`] or other types – see the `From` implementations below.
+/// or from a [`super::Coord3D`] or other types – see the `From` implementations below.
 ///
 /// # Examples
 ///
@@ -59,7 +59,7 @@ pub type Point3D<T> = Point<T, T, NoValue>;
 /// A single point in 3D space with a measurement value.
 ///
 /// Points can be created using the the [point!] macro,
-/// or from a [`Coord3DM`] or other types – see the `From` implementations below.
+/// or from a [`super::Coord3DM`] or other types – see the `From` implementations below.
 ///
 /// # Examples
 ///

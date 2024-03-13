@@ -1,9 +1,9 @@
 #[cfg(any(
-feature = "rstar_0_8",
-feature = "rstar_0_9",
-feature = "rstar_0_10",
-feature = "rstar_0_11",
-feature = "rstar_0_12"
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11",
+    feature = "rstar_0_12"
 ))]
 use crate::Point;
 use crate::{CoordNum, LineString, NoValue, Rect, Triangle};

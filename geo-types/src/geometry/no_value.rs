@@ -4,7 +4,7 @@ use core::fmt::Debug;
 use core::ops::{Add, Div, Mul, Neg, Rem, Sub};
 use num_traits::{Num, NumCast, One, ToPrimitive, Zero};
 
-/// An empty placeholder type that can be used anywhere [`CoordNum`] is required.
+/// An empty placeholder type that can be used anywhere [`super::CoordNum`] is required.
 /// All geo types by default are 2D - (x,y) only, using `NoValue` for 3D (z) and measurement (m) values.
 /// It is also possible to create an empty value, i.e. `POINT EMPTY` (wkt) using `Point<NoValue>`.
 #[derive(Eq, PartialEq, PartialOrd, Clone, Copy, Debug, Hash, Default)]

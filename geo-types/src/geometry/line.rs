@@ -15,7 +15,7 @@ pub struct Line<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue>
     pub start: Coord<T, Z, M>,
     pub end: Coord<T, Z, M>,
 }
-/// A line segment made up of exactly two [`CoordinateM`] values.
+/// A line segment made up of exactly two [`super::CoordM`] values.
 ///
 /// # Semantics
 ///
@@ -23,7 +23,7 @@ pub struct Line<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue>
 /// `LineString` with the two end points.
 pub type LineM<T> = Line<T, NoValue, T>;
 
-/// A line segment in 3D made up of exactly two [`Coordinate3D`] values.
+/// A line segment in 3D made up of exactly two [`super::Coord3D`] values.
 ///
 /// # Semantics
 ///
@@ -31,7 +31,7 @@ pub type LineM<T> = Line<T, NoValue, T>;
 /// `LineString` with the two end points.
 pub type Line3D<T> = Line<T, T, NoValue>;
 
-/// A line segment in 3D made up of exactly two [`Coordinate3DM`] values.
+/// A line segment in 3D made up of exactly two [`super::Coord3DM`] values.
 ///
 /// # Semantics
 ///
