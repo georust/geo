@@ -7,7 +7,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
 
-/// A collection of [`Point`s]. Can
+/// A collection of [`Point`]. Can
 /// be created from a `Vec` of `Point`s, or from an
 /// Iterator which yields `Point`s. Iterating over this
 /// object yields the component `Point`s.
