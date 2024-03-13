@@ -20,21 +20,23 @@ pub trait HaversineBearing<T: CoordFloat> {
     /// let bearing = p_1.haversine_bearing(p_2);
     /// assert_relative_eq!(bearing, 45., epsilon = 1.0e-6);
     /// ```
-    fn haversine_bearing(&self, point: Point<T>) -> T;
+    fn haversine_bearing(&self, point: Point<T>) -> Result<T, String>;
 }
 
 impl<T> HaversineBearing<T> for Point<T>
 where
     T: CoordFloat,
 {
-    fn haversine_bearing(&self, point: Point<T>) -> T {
+    fn haversine_bearing(&self, point: Point<T>) -> Result<T, String> {
+        self.check_coordinate_limits()?;
+        point.check_coordinate_limits()?;
         let (lng_a, lat_a) = (self.x().to_radians(), self.y().to_radians());
         let (lng_b, lat_b) = (point.x().to_radians(), point.y().to_radians());
         let delta_lng = lng_b - lng_a;
         let s = lat_b.cos() * delta_lng.sin();
         let c = lat_a.cos() * lat_b.sin() - lat_a.sin() * lat_b.cos() * delta_lng.cos();
 
-        T::atan2(s, c).to_degrees()
+        Ok(T::atan2(s, c).to_degrees())
     }
 }
 

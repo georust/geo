@@ -254,7 +254,45 @@ impl<T: CoordNum> Point<T> {
     pub fn set_lat(&mut self, lat: T) -> &mut Self {
         self.set_y(lat)
     }
+
+
+    /// Check whether latitude and longitude of a point are within the allowed values of
+    ///  - lat [ -90,90 ]
+    ///  - lon [-180, 180]
+    ///
+    ///
+    /// returns: Result<(), OutOfBoundsError>
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::geo_types::Point;
+    ///
+    /// let p0 = Point::new(0_f64, 45_f64);
+    /// p0.check_coordinate_limits().unwrap();
+    /// ```
+    pub fn check_coordinate_limits(&self) -> Result<(), String> {
+        self.check_y_in_limits(-90f64, 90f64)?;
+        self.check_x_in_limits(-180f64, 180f64)?;
+        Ok(())
+    }
 }
+
+impl<T: CoordNum, U: PartialOrd<T> + PartialEq<T> + Copy> Point<T> {
+    fn check_x_in_limits(&self, lower: U, upper: U) -> Result<(), String> {
+        if self.x() < lower || self.x() > upper {
+            return Err("x is out of bounds".into());
+        }
+        Ok(())
+    }
+    fn check_y_in_limits(&self, lower: U, upper: U) -> Result<(), String> {
+        if self.y() < lower || self.y() > upper {
+            return Err("y is out of bounds".into());
+        }
+        Ok(())
+    }
+}
+
 
 impl<T: CoordNum> Point<T> {
     /// Returns the dot product of the two points:

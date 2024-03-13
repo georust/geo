@@ -19,10 +19,10 @@ pub trait GeodesicBearing<T: CoordNum> {
     ///
     /// let p_1 = Point::new(9.177789688110352, 48.776781529534965);
     /// let p_2 = Point::new(9.27411867078536, 48.8403266058781);
-    /// let bearing = p_1.geodesic_bearing(p_2);
+    /// let bearing = p_1.geodesic_bearing(p_2)?;
     /// assert_relative_eq!(bearing, 45., epsilon = 1.0e-6);
     /// ```
-    fn geodesic_bearing(&self, point: Point<T>) -> T;
+    fn geodesic_bearing(&self, point: Point<T>) -> Result<T, String>;
 
     /// Returns the bearing and distance to another Point in a (bearing, distance) tuple.
     ///
@@ -48,9 +48,11 @@ pub trait GeodesicBearing<T: CoordNum> {
 }
 
 impl GeodesicBearing<f64> for Point<f64> {
-    fn geodesic_bearing(&self, rhs: Point<f64>) -> f64 {
+    fn geodesic_bearing(&self, rhs: Point<f64>) -> Result<f64, String> {
+        self.check_coordinate_limits()?;
+        rhs.check_coordinate_limits()?;
         let (azi1, _, _) = Geodesic::wgs84().inverse(self.y(), self.x(), rhs.y(), rhs.x());
-        azi1
+        Ok(azi1)
     }
 
     fn geodesic_bearing_distance(&self, rhs: Point<f64>) -> (f64, f64) {
@@ -59,6 +61,7 @@ impl GeodesicBearing<f64> for Point<f64> {
         (azi1, distance)
     }
 }
+
 
 #[cfg(test)]
 mod test {
@@ -69,7 +72,7 @@ mod test {
     fn north_bearing() {
         let p_1 = point!(x: 9., y: 47.);
         let p_2 = point!(x: 9., y: 48.);
-        let bearing = p_1.geodesic_bearing(p_2);
+        let bearing = p_1.geodesic_bearing(p_2).unwrap();
         assert_relative_eq!(bearing, 0.);
     }
 
@@ -77,7 +80,7 @@ mod test {
     fn east_bearing() {
         let p_1 = point!(x: 9., y: 10.);
         let p_2 = point!(x: 18.118501133357412, y: 9.875322179340463);
-        let bearing = p_1.geodesic_bearing(p_2);
+        let bearing = p_1.geodesic_bearing(p_2).unwrap();
         assert_relative_eq!(bearing, 90.);
     }
 
@@ -85,7 +88,7 @@ mod test {
     fn northeast_bearing() {
         let p_1 = point!(x: 9.177789688110352f64, y: 48.776781529534965);
         let p_2 = point!(x: 9.27411867078536, y: 48.8403266058781);
-        let bearing = p_1.geodesic_bearing(p_2);
+        let bearing = p_1.geodesic_bearing(p_2).unwrap();
         assert_relative_eq!(bearing, 45., epsilon = 1.0e-11);
     }
 
