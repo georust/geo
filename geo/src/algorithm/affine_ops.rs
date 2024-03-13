@@ -124,11 +124,11 @@ impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> Affin
 ///
 /// let a: f64 = transform.a();
 /// let b: f64 = transform.b();
-/// let c: f64 = transform.xoff();
+/// let xoff: f64 = transform.xoff();
 /// let d: f64 = transform.d();
 /// let e: f64 = transform.e();
-/// let f: f64 = transform.yoff();
-/// assert_eq!(transform, AffineTransform::new(a, b, c, d, e, f))
+/// let yoff: f64 = transform.yoff();
+/// assert_eq!(transform, AffineTransform::new(a, b, xoff, d, e, yoff))
 /// ```
 
 #[derive(Copy, Clone, PartialEq, Eq)]
