@@ -92,7 +92,7 @@ mod test {
         let pt2 = Point::new(-170.0, -30.0);
 
         for (start, end) in [(pt1, pt2), (pt2, pt1)] {
-            let bearing = start.haversine_bearing(end);
+            let bearing = start.haversine_bearing(end).unwrap();
             let results: Vec<_> = (0..8)
                 .map(|n| start.haversine_destination(bearing, n as f64 * 250_000.))
                 .collect();
