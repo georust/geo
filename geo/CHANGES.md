@@ -4,6 +4,8 @@
 
 ## 0.28.0
 
+* BREAKING: HaversineBearing (also Bearing) and GeodesicBearing now return `Result<T,String>` 
+  meaning that there is a need to use unwrap.
 * BREAKING: The `HasKernel` trait was removed and it's functionality was merged
   into `GeoNum`. If you are using common scalars for your geometry (f32, f64,
   i64, i32, i16, isize), this should have no effect on you. If you are using an
