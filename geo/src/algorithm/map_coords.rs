@@ -1004,6 +1004,6 @@ mod test {
 
         // This call should not panic even though Rect::new
         // constructor panics if min coords > max coords
-        rect.map_coords(|Coord { x, y, z, m }| (-x, -y).into());
+        rect.map_coords(|Coord { x, y, .. }| (-x, -y).into());
     }
 }

@@ -29,7 +29,7 @@ where
     type Output = <Self as MapCoords<T, U>>::Output;
 
     fn convert(&self) -> Self::Output {
-        self.map_coords(|Coord { x, y, z: _, m: _ }| {
+        self.map_coords(|Coord { x, y, .. }| {
             coord! {
                 x: x.into(),
                 y: y.into(),
@@ -67,7 +67,7 @@ where
     type Output = Result<<Self as MapCoords<T, U>>::Output, <U as TryFrom<T>>::Error>;
 
     fn try_convert(&self) -> Self::Output {
-        self.try_map_coords(|Coord { x, y, z: _, m: _ }| {
+        self.try_map_coords(|Coord { x, y, .. }| {
             Ok(coord! {
                 x: x.try_into()?,
                 y: y.try_into()?

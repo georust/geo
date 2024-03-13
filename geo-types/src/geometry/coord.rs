@@ -73,7 +73,7 @@ impl<T: CoordNum> From<[T; 2]> for Coord<T> {
     fn from(coords: [T; 2]) -> Self {
         coord! {
             x: coords[0],
-            y: coords[1]
+            y: coords[1],
         }
     }
 }
