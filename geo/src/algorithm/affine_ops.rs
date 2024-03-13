@@ -118,6 +118,8 @@ impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> Affin
 ///
 /// ## Create affine transform manually, and access elements using getter methods
 /// ```
+/// use geo::AffineTransform;
+///
 /// let transform = AffineTransform::new(10.0, 0.0, 400_000.0, 0.0, -10.0, 500_000.0);
 ///
 /// let a: f64 = transform.a();
@@ -126,6 +128,7 @@ impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> Affin
 /// let d: f64 = transform.d();
 /// let e: f64 = transform.e();
 /// let f: f64 = transform.yoff();
+/// assert_eq!(transform, AffineTransform::new(a, b, c, d, e, f))
 /// ```
 
 #[derive(Copy, Clone, PartialEq, Eq)]
