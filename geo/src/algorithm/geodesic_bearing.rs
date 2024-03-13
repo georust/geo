@@ -19,7 +19,7 @@ pub trait GeodesicBearing<T: CoordNum> {
     ///
     /// let p_1 = Point::new(9.177789688110352, 48.776781529534965);
     /// let p_2 = Point::new(9.27411867078536, 48.8403266058781);
-    /// let bearing = p_1.geodesic_bearing(p_2)?;
+    /// let bearing = p_1.geodesic_bearing(p_2).unwrap();
     /// assert_relative_eq!(bearing, 45., epsilon = 1.0e-6);
     /// ```
     fn geodesic_bearing(&self, point: Point<T>) -> Result<T, String>;
@@ -90,6 +90,22 @@ mod test {
         let p_2 = point!(x: 9.27411867078536, y: 48.8403266058781);
         let bearing = p_1.geodesic_bearing(p_2).unwrap();
         assert_relative_eq!(bearing, 45., epsilon = 1.0e-11);
+    }
+
+    #[test]
+    fn should_return_error_on_out_x_of_bounds() {
+        let p_1 = point!(x: -180.177789688110352f64, y: 48.776781529534965);
+        let p_2 = point!(x: 9.27411867078536, y: 9.8403266058781);
+        let err = p_1.geodesic_bearing(p_2).unwrap_err();
+        assert_eq!(err, "x is out of bounds: [ -180, 180 ]".to_string());
+    }
+
+    #[test]
+    fn should_return_error_on_out_y_of_bounds() {
+        let p_1 = point!(x: 9.177789688110352f64, y: 48.776781529534965);
+        let p_2 = point!(x: 9.27411867078536, y: 98.8403266058781);
+        let err = p_1.geodesic_bearing(p_2).unwrap_err();
+        assert_eq!(err, "y is out of bounds: [ -90, 90 ]".to_string());
     }
 
     #[test]
