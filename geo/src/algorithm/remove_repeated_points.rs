@@ -1,9 +1,11 @@
+use num_traits::FromPrimitive;
+
+use geo_types::GeometryCollection;
+
 use crate::{
     CoordNum, Geometry, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
     Polygon, Rect, Triangle,
 };
-use geo_types::GeometryCollection;
-use num_traits::FromPrimitive;
 
 /// Remove repeated points from a `MultiPoint` and repeated consecutive coordinates
 /// from `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon`.
@@ -163,7 +165,7 @@ where
     /// Create a GeometryCollection with (consecutive) repeated points
     /// of its geometries removed.
     fn remove_repeated_points(&self) -> Self {
-        GeometryCollection::new_from(self.0.iter().map(|g| g.remove_repeated_points()).collect())
+        GeometryCollection::new(self.0.iter().map(|g| g.remove_repeated_points()).collect())
     }
 
     /// Remove (consecutive) repeated points of its geometries from a GeometryCollection inplace.
@@ -227,7 +229,7 @@ where
 mod test {
     use crate::RemoveRepeatedPoints;
     use crate::{
-        Coord, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
+        coord, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
         Polygon,
     };
 
@@ -267,56 +269,56 @@ mod test {
 
     fn make_test_line1() -> LineString {
         LineString(vec![
-            Coord { x: 0., y: 0. },
-            Coord { x: 1., y: 1. },
-            Coord { x: 1., y: 1. },
-            Coord { x: 1., y: 1. },
-            Coord { x: 2., y: 2. },
-            Coord { x: 2., y: 2. },
-            Coord { x: 0., y: 0. },
+            coord! { x: 0., y: 0. },
+            coord! { x: 1., y: 1. },
+            coord! { x: 1., y: 1. },
+            coord! { x: 1., y: 1. },
+            coord! { x: 2., y: 2. },
+            coord! { x: 2., y: 2. },
+            coord! { x: 0., y: 0. },
         ])
     }
 
     fn make_result_line1() -> LineString {
         LineString(vec![
-            Coord { x: 0., y: 0. },
-            Coord { x: 1., y: 1. },
-            Coord { x: 2., y: 2. },
-            Coord { x: 0., y: 0. },
+            coord! { x: 0., y: 0. },
+            coord! { x: 1., y: 1. },
+            coord! { x: 2., y: 2. },
+            coord! { x: 0., y: 0. },
         ])
     }
 
     fn make_test_line2() -> LineString {
         LineString(vec![
-            Coord { x: 10., y: 10. },
-            Coord { x: 11., y: 11. },
-            Coord { x: 11., y: 11. },
-            Coord { x: 11., y: 11. },
-            Coord { x: 12., y: 12. },
-            Coord { x: 12., y: 12. },
-            Coord { x: 10., y: 10. },
+            coord! { x: 10., y: 10. },
+            coord! { x: 11., y: 11. },
+            coord! { x: 11., y: 11. },
+            coord! { x: 11., y: 11. },
+            coord! { x: 12., y: 12. },
+            coord! { x: 12., y: 12. },
+            coord! { x: 10., y: 10. },
         ])
     }
 
     fn make_result_line2() -> LineString {
         LineString(vec![
-            Coord { x: 10., y: 10. },
-            Coord { x: 11., y: 11. },
-            Coord { x: 12., y: 12. },
-            Coord { x: 10., y: 10. },
+            coord! { x: 10., y: 10. },
+            coord! { x: 11., y: 11. },
+            coord! { x: 12., y: 12. },
+            coord! { x: 10., y: 10. },
         ])
     }
 
     fn make_test_poly1() -> Polygon {
         Polygon::new(
             LineString(vec![
-                Coord { x: 0., y: 0. },
-                Coord { x: 1., y: 1. },
-                Coord { x: 1., y: 1. },
-                Coord { x: 1., y: 1. },
-                Coord { x: 0., y: 2. },
-                Coord { x: 0., y: 2. },
-                Coord { x: 0., y: 0. },
+                coord! { x: 0., y: 0. },
+                coord! { x: 1., y: 1. },
+                coord! { x: 1., y: 1. },
+                coord! { x: 1., y: 1. },
+                coord! { x: 0., y: 2. },
+                coord! { x: 0., y: 2. },
+                coord! { x: 0., y: 0. },
             ]),
             vec![],
         )
@@ -325,10 +327,10 @@ mod test {
     fn make_result_poly1() -> Polygon {
         Polygon::new(
             LineString(vec![
-                Coord { x: 0., y: 0. },
-                Coord { x: 1., y: 1. },
-                Coord { x: 0., y: 2. },
-                Coord { x: 0., y: 0. },
+                coord! { x: 0., y: 0. },
+                coord! { x: 1., y: 1. },
+                coord! { x: 0., y: 2. },
+                coord! { x: 0., y: 0. },
             ]),
             vec![],
         )
@@ -337,13 +339,13 @@ mod test {
     fn make_test_poly2() -> Polygon {
         Polygon::new(
             LineString(vec![
-                Coord { x: 10., y: 10. },
-                Coord { x: 11., y: 11. },
-                Coord { x: 11., y: 11. },
-                Coord { x: 11., y: 11. },
-                Coord { x: 10., y: 12. },
-                Coord { x: 10., y: 12. },
-                Coord { x: 10., y: 10. },
+                coord! { x: 10., y: 10. },
+                coord! { x: 11., y: 11. },
+                coord! { x: 11., y: 11. },
+                coord! { x: 11., y: 11. },
+                coord! { x: 10., y: 12. },
+                coord! { x: 10., y: 12. },
+                coord! { x: 10., y: 10. },
             ]),
             vec![],
         )
@@ -352,10 +354,10 @@ mod test {
     fn make_result_poly2() -> Polygon {
         Polygon::new(
             LineString(vec![
-                Coord { x: 10., y: 10. },
-                Coord { x: 11., y: 11. },
-                Coord { x: 10., y: 12. },
-                Coord { x: 10., y: 10. },
+                coord! { x: 10., y: 10. },
+                coord! { x: 11., y: 11. },
+                coord! { x: 10., y: 12. },
+                coord! { x: 10., y: 10. },
             ]),
             vec![],
         )
@@ -413,13 +415,13 @@ mod test {
 
     #[test]
     fn test_remove_repeated_points_geometrycollection() {
-        let gc = GeometryCollection::new_from(vec![
+        let gc = GeometryCollection::new(vec![
             make_test_mp1().into(),
             make_test_line1().into(),
             make_test_poly1().into(),
         ]);
 
-        let expected = GeometryCollection::new_from(vec![
+        let expected = GeometryCollection::new(vec![
             make_result_mp1().into(),
             make_result_line1().into(),
             make_result_poly1().into(),
@@ -484,14 +486,14 @@ mod test {
 
     #[test]
     fn test_remove_repeated_points_mut_geometrycollection() {
-        let mut gc = GeometryCollection::new_from(vec![
+        let mut gc = GeometryCollection::new(vec![
             make_test_mp1().into(),
             make_test_line1().into(),
             make_test_poly1().into(),
         ]);
         gc.remove_repeated_points_mut();
 
-        let expected = GeometryCollection::new_from(vec![
+        let expected = GeometryCollection::new(vec![
             make_result_mp1().into(),
             make_result_line1().into(),
             make_result_poly1().into(),
