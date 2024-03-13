@@ -321,28 +321,28 @@ impl<T: CoordNum> AffineTransform<T> {
     }
 
     /// Get the x-resolution value.
-    pub fn a(&self) -> &T {
-        &self.0[0][0]
+    pub fn a(&self) -> T {
+        self.0[0][0]
     }
     /// Get the x-rotation value.
-    pub fn b(&self) -> &T {
-        &self.0[0][1]
+    pub fn b(&self) -> T {
+        self.0[0][1]
     }
     /// Get the x-offset value.
-    pub fn xoff(&self) -> &T {
-        &self.0[0][2]
+    pub fn xoff(&self) -> T {
+        self.0[0][2]
     }
     /// Get the y-rotation value.
-    pub fn d(&self) -> &T {
-        &self.0[1][0]
+    pub fn d(&self) -> T {
+        self.0[1][0]
     }
     /// Get the y-resolution value.
-    pub fn e(&self) -> &T {
-        &self.0[1][1]
+    pub fn e(&self) -> T {
+        self.0[1][1]
     }
     /// Get the y-offset value.
-    pub fn yoff(&self) -> &T {
-        &self.0[1][2]
+    pub fn yoff(&self) -> T {
+        self.0[1][2]
     }
 }
 
@@ -626,11 +626,11 @@ mod tests {
     #[test]
     fn test_affine_transform_getters() {
         let transform = AffineTransform::new(10.0, 0.0, 400_000.0, 0.0, -10.0, 500_000.0);
-        assert_eq!(transform.a(), &10.0);
-        assert_eq!(transform.b(), &0.0);
-        assert_eq!(transform.xoff(), &400_000.0);
-        assert_eq!(transform.d(), &0.0);
-        assert_eq!(transform.e(), &-10.0);
-        assert_eq!(transform.yoff(), &500_000.0);
+        assert_eq!(transform.a(), 10.0);
+        assert_eq!(transform.b(), 0.0);
+        assert_eq!(transform.xoff(), 400_000.0);
+        assert_eq!(transform.d(), 0.0);
+        assert_eq!(transform.e(), -10.0);
+        assert_eq!(transform.yoff(), 500_000.0);
     }
 }
