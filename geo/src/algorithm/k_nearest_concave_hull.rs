@@ -88,9 +88,9 @@ where
     }
 }
 
-fn concave_hull<'a, T: 'a>(coords: impl Iterator<Item = &'a Coord<T>>, k: u32) -> Polygon<T>
+fn concave_hull<'a, T>(coords: impl Iterator<Item = &'a Coord<T>>, k: u32) -> Polygon<T>
 where
-    T: GeoFloat + RTreeNum,
+    T: 'a + GeoFloat + RTreeNum,
 {
     let dataset = prepare_dataset(coords);
     concave_hull_inner(dataset, k)
@@ -99,9 +99,9 @@ where
 const DELTA: f32 = 0.000000001;
 
 /// Removes duplicate coords from the dataset.
-fn prepare_dataset<'a, T: 'a>(coords: impl Iterator<Item = &'a Coord<T>>) -> rstar::RTree<Coord<T>>
+fn prepare_dataset<'a, T>(coords: impl Iterator<Item = &'a Coord<T>>) -> rstar::RTree<Coord<T>>
 where
-    T: GeoFloat + RTreeNum,
+    T: 'a + GeoFloat + RTreeNum,
 {
     let mut dataset: rstar::RTree<Coord<T>> = rstar::RTree::new();
     for coord in coords {
