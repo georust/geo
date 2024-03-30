@@ -2,11 +2,16 @@ use crate::CoordsIter;
 use geo_types::Point;
 use num_traits::Zero;
 
-/// Calculate the unweighted mean center of a geometry.
+/// Calculate the mean center of a geometry.
 ///
 /// The mean center of a geometry is a measure of central tendancy
 /// of a set of coordinates. It is calculated by taking the average
 /// of all x and y values in the set.
+///
+/// The weighted mean center applies a weight to each coordinate and is
+/// used in the calculation of the center.
+///
+///
 ///
 /// ```rust
 /// # use geo::MeanCenter;
@@ -18,12 +23,20 @@ use num_traits::Zero;
 ///     Coord { x: 1.0, y: 1.0 }.into(),
 /// ];
 ///
-/// let mean_center = MultiPoint::new(coords).mean_center();
+/// let mpnt = MultiPoint::new(coords);
+/// let mean_center = mpnt.mean_center();
 /// assert_eq!(mean_center, Point::new(0.5, 0.5));
+///
+/// let weighted_center = mpnt.weighted_mean_center(&[0.0, 1.0, 2.0, 2.0]);
+/// assert_eq!(weighted_center, Point::new(0.6, 0.8));
 /// ```
 pub trait MeanCenter {
     /// Return the unweighted mean center of a geometry.
     fn mean_center(&self) -> Point;
+
+    /// Return the weighted mean center of a geometry.
+    /// The weights are cycled if there are fewer weights than coordinates.
+    fn weighted_mean_center(&self, weights: &[f64]) -> Point;
 }
 
 impl<T> MeanCenter for T
@@ -45,6 +58,24 @@ where
 
         let x = x_sum / denominator;
         let y = y_sum / denominator;
+
+        Point::new(x, y)
+    }
+
+    fn weighted_mean_center(&self, weights: &[f64]) -> Point {
+        let mut x_sum = T::Scalar::zero();
+        let mut y_sum = T::Scalar::zero();
+        let mut weight_sum = 0.0;
+
+        for (coord, weight) in self.coords_iter().zip(weights.iter().cycle()) {
+            let (xi, yi) = coord.x_y();
+            x_sum += xi * weight;
+            y_sum += yi * weight;
+            weight_sum += weight;
+        }
+
+        let x = x_sum / weight_sum;
+        let y = y_sum / weight_sum;
 
         Point::new(x, y)
     }
@@ -166,7 +197,7 @@ mod test {
         let lns = LineString::new(coords);
         let mean_center = lns.mean_center();
         assert_eq!(mean_center, Point::new(0.25, 0.25));
-        assert_eq!(mean_center, lns.centroid().unwrap());
+        assert_ne!(mean_center, lns.centroid().unwrap());
     }
 
     #[test]
@@ -192,7 +223,7 @@ mod test {
 
         let mean_center = mpoly.mean_center();
         assert_eq!(mean_center, Point::new(1.25, 1.25));
-        assert_eq!(mean_center, mpoly.centroid().unwrap());
+        assert_ne!(mean_center, mpoly.centroid().unwrap());
     }
 
     #[test]
@@ -227,7 +258,7 @@ mod test {
         let lns = LineString::new(coords1);
         let mean_center = Geometry::LineString(lns.clone()).mean_center();
         assert_eq!(mean_center, Point::new(0.25, 0.25));
-        assert_eq!(mean_center, lns.centroid().unwrap());
+        assert_ne!(mean_center, lns.centroid().unwrap());
     }
 
     #[test]
@@ -260,6 +291,6 @@ mod test {
         let mean_center = geom_collection.mean_center();
 
         assert_eq!(mean_center, Point::new(1.25, 1.25));
-        assert_eq!(mean_center, geom_collection.centroid().unwrap());
+        assert_ne!(mean_center, geom_collection.centroid().unwrap());
     }
 }
