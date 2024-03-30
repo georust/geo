@@ -198,7 +198,7 @@ pub use map_coords::{MapCoords, MapCoordsInPlace};
 
 /// Calculate the mean center of a geometry
 pub mod mean_center;
-pub use mean_center::*;
+pub use mean_center::MeanCenter;
 
 /// Orient a `Polygon`'s exterior and interior rings.
 pub mod orient;
