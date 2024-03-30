@@ -7,6 +7,20 @@ use num_traits::Zero;
 /// The mean center of a geometry is a measure of central tendancy
 /// of a set of coordinates. It is calculated by taking the average
 /// of all x and y values in the set.
+///
+/// ```rust
+/// # use geo::MeanCenter;
+/// # use geo::{Point, MultiPoint, Coord};
+/// let coords: Vec<Point> = vec![
+///     Coord { x: 0.0, y: 0.0 }.into(),
+///     Coord { x: 1.0, y: 0.0 }.into(),
+///     Coord { x: 0.0, y: 1.0 }.into(),
+///     Coord { x: 1.0, y: 1.0 }.into(),
+/// ];
+///
+/// let mean_center = MultiPoint::new(coords).mean_center();
+/// assert_eq!(mean_center, Point::new(0.5, 0.5));
+/// ```
 pub trait MeanCenter {
     /// Return the unweighted mean center of a geometry.
     fn mean_center(&self) -> Point;

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `MeanCenter` trait to calculate the mean center of a geometry <>.
+
 ## 0.28.0
 
 * BREAKING: The `HasKernel` trait was removed and it's functionality was merged
