@@ -2,7 +2,13 @@ use crate::CoordsIter;
 use geo_types::Point;
 use num_traits::Zero;
 
+/// Calculate the unweighted mean center of a geometry.
+///
+/// The mean center of a geometry is a measure of central tendancy
+/// of a set of coordinates. It is calculated by taking the average
+/// of all x and y values in the set.
 pub trait MeanCenter {
+    /// Return the unweighted mean center of a geometry.
     fn mean_center(&self) -> Point;
 }
 
