@@ -196,6 +196,10 @@ pub use linestring_segment::{LineStringSegmentize, LineStringSegmentizeHaversine
 pub mod map_coords;
 pub use map_coords::{MapCoords, MapCoordsInPlace};
 
+/// Calculate the mean center of a geometry
+pub mod mean_center;
+pub use mean_center::*;
+
 /// Orient a `Polygon`'s exterior and interior rings.
 pub mod orient;
 pub use orient::Orient;
