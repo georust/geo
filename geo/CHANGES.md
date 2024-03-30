@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Add `MeanCenter` trait to calculate the mean center of a geometry <>.
+- Add `MeanCenter` trait to calculate the mean center of a geometry <https://github.com/georust/geo/pull/1166>.
 
 ## 0.28.0
 
