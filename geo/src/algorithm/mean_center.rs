@@ -37,8 +37,8 @@ where
 
         for coord in self.coords_iter() {
             let (xi, yi) = coord.x_y();
-            x_sum = xi + x_sum;
-            y_sum = yi + y_sum;
+            x_sum += xi;
+            y_sum += yi;
             n += 1_usize;
         }
 
