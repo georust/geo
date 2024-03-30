@@ -33,13 +33,12 @@ where
     fn mean_center(&self) -> Point {
         let mut x_sum = T::Scalar::zero();
         let mut y_sum = T::Scalar::zero();
-        let mut n = 0_usize;
+        let n = self.coords_count();
 
         for coord in self.coords_iter() {
             let (xi, yi) = coord.x_y();
             x_sum += xi;
             y_sum += yi;
-            n += 1_usize;
         }
 
         let denominator = n as T::Scalar;
@@ -55,6 +54,7 @@ where
 mod test {
 
     use super::*;
+    use crate::Centroid;
     use geo_types::{
         Coord, Geometry, GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon,
         Point, Polygon, Rect, Triangle,
@@ -75,8 +75,10 @@ mod test {
             Coord { x: 1.0, y: 1.0 }.into(),
         ];
 
-        let mean_center = MultiPoint::new(coords).mean_center();
+        let mpnt = MultiPoint::new(coords);
+        let mean_center = mpnt.mean_center();
         assert_eq!(mean_center, Point::new(0.5, 0.5));
+        assert_eq!(mean_center, mpnt.centroid().unwrap());
     }
 
     #[test]
@@ -91,6 +93,7 @@ mod test {
         let lns = LineString::new(coords);
         let mean_center = lns.mean_center();
         assert_eq!(mean_center, Point::new(0.5, 0.5));
+        assert_eq!(mean_center, lns.centroid().unwrap());
     }
 
     #[test]
@@ -148,6 +151,7 @@ mod test {
 
         let mean_center = mlns.mean_center();
         assert_eq!(mean_center, Point::new(1.5, 1.5));
+        assert_eq!(mean_center, mlns.centroid().unwrap());
     }
 
     #[test]
@@ -162,6 +166,7 @@ mod test {
         let lns = LineString::new(coords);
         let mean_center = lns.mean_center();
         assert_eq!(mean_center, Point::new(0.25, 0.25));
+        assert_eq!(mean_center, lns.centroid().unwrap());
     }
 
     #[test]
@@ -187,6 +192,7 @@ mod test {
 
         let mean_center = mpoly.mean_center();
         assert_eq!(mean_center, Point::new(1.25, 1.25));
+        assert_eq!(mean_center, mpoly.centroid().unwrap());
     }
 
     #[test]
@@ -198,6 +204,7 @@ mod test {
         let triangle = Triangle::new(v1, v2, v3);
         let mean_center = triangle.mean_center();
         assert_eq!(mean_center, Point::new(1.0 / 3.0, 1.0 / 3.0));
+        assert_eq!(mean_center, triangle.centroid());
     }
 
     #[test]
@@ -205,6 +212,7 @@ mod test {
         let rect = Rect::new(Coord { x: 0.0, y: 0.0 }, Coord { x: 1.0, y: 1.0 });
         let mean_center = rect.mean_center();
         assert_eq!(mean_center, Point::new(0.5, 0.5));
+        assert_eq!(mean_center, rect.centroid());
     }
 
     #[test]
@@ -217,8 +225,9 @@ mod test {
         ];
 
         let lns = LineString::new(coords1);
-        let mean_center = Geometry::LineString(lns).mean_center();
+        let mean_center = Geometry::LineString(lns.clone()).mean_center();
         assert_eq!(mean_center, Point::new(0.25, 0.25));
+        assert_eq!(mean_center, lns.centroid().unwrap());
     }
 
     #[test]
@@ -242,12 +251,15 @@ mod test {
 
         let mpoly = MultiPolygon(vec![poly1.clone(), poly2.clone()]);
 
-        let mean_center = GeometryCollection(vec![
+        let geom_collection = GeometryCollection(vec![
             Geometry::Polygon(poly1),
             Geometry::Polygon(poly2),
             Geometry::MultiPolygon(mpoly),
-        ])
-        .mean_center();
+        ]);
+
+        let mean_center = geom_collection.mean_center();
+
         assert_eq!(mean_center, Point::new(1.25, 1.25));
+        assert_eq!(mean_center, geom_collection.centroid().unwrap());
     }
 }
