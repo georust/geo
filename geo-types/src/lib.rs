@@ -137,6 +137,19 @@ mod wkt_macro;
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
 
+pub mod geo_traits {
+    pub trait Coord {
+        type Scalar: crate::CoordNum;
+
+        fn x(&self) -> Self::Scalar;
+        fn y(&self) -> Self::Scalar;
+
+        fn x_y(&self) -> (Self::Scalar, Self::Scalar) {
+            (self.x(), self.y())
+        }
+    }
+}
+
 #[cfg(any(
     feature = "rstar_0_8",
     feature = "rstar_0_9",

@@ -1,4 +1,4 @@
-use crate::{coord, CoordNum, Point};
+use crate::{coord, geo_traits, CoordNum, Point};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq, UlpsEq};
@@ -33,6 +33,18 @@ pub struct Coord<T: CoordNum = f64> {
 #[deprecated(note = "Renamed to `geo_types::Coord` (or `geo::Coord`)")]
 pub type Coordinate<T = f64> = Coord<T>;
 
+impl<T: crate::CoordNum> geo_traits::Coord for Coord<T> {
+    type Scalar = T;
+
+    fn x(&self) -> Self::Scalar {
+        self.x
+    }
+
+    fn y(&self) -> Self::Scalar {
+        self.y
+    }
+}
+
 impl<T: CoordNum> From<(T, T)> for Coord<T> {
     #[inline]
     fn from(coords: (T, T)) -> Self {
@@ -53,9 +65,9 @@ impl<T: CoordNum> From<[T; 2]> for Coord<T> {
     }
 }
 
-impl<T: CoordNum> From<Point<T>> for Coord<T> {
+impl<C: geo_traits::Coord> From<Point<C>> for Coord<C::Scalar> {
     #[inline]
-    fn from(point: Point<T>) -> Self {
+    fn from(point: Point<C>) -> Self {
         coord! {
             x: point.x(),
             y: point.y(),

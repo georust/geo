@@ -6,6 +6,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
+use crate::geo_traits;
 
 /// An ordered collection of two or more [`Coord`]s, representing a
 /// path between locations.
@@ -134,7 +135,7 @@ use core::ops::{Index, IndexMut};
 
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct LineString<T: CoordNum = f64>(pub Vec<Coord<T>>);
+pub struct LineString<C: geo_traits::Coord = Point<f64>>(pub Vec<C>);
 
 /// A [`Point`] iterator returned by the `points` method
 #[derive(Debug)]
@@ -192,20 +193,20 @@ impl<'a, T: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T> {
     }
 }
 
-impl<T: CoordNum> LineString<T> {
+impl<C: geo_traits::Coord> LineString<C> {
     /// Instantiate Self from the raw content value
-    pub fn new(value: Vec<Coord<T>>) -> Self {
+    pub fn new(value: Vec<C>) -> Self {
         Self(value)
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
     #[deprecated(note = "Use points() instead")]
-    pub fn points_iter(&self) -> PointsIter<T> {
+    pub fn points_iter(&self) -> PointsIter<C> {
         PointsIter(self.0.iter())
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
-    pub fn points(&self) -> PointsIter<T> {
+    pub fn points(&self) -> PointsIter<C> {
         PointsIter(self.0.iter())
     }
 
