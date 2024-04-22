@@ -2,11 +2,12 @@
 use approx::{AbsDiffEq, RelativeEq};
 
 use crate::{Coord, CoordNum, Line, Point, Triangle};
+use crate::geo_traits;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
-use crate::geo_traits;
+use std::fmt;
 
 /// An ordered collection of two or more [`Coord`]s, representing a
 /// path between locations.
@@ -138,14 +139,19 @@ use crate::geo_traits;
 pub struct LineString<C: geo_traits::Coord = Point<f64>>(pub Vec<C>);
 
 /// A [`Point`] iterator returned by the `points` method
-#[derive(Debug)]
-pub struct PointsIter<'a, T: CoordNum + 'a>(::core::slice::Iter<'a, Coord<T>>);
+pub struct PointsIter<'a, C: geo_traits::Coord + 'a>(::core::slice::Iter<'a, C>);
 
-impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
-    type Item = Point<T>;
+impl<'a, C: fmt::Debug + geo_traits::Coord + 'a> fmt::Debug for PointsIter<'a, C> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_tuple("PointsIter").field(&self.0.fmt(f)).finish()
+    }
+}
+
+impl<'a, C: geo_traits::Coord + 'a> Iterator for PointsIter<'a, C> {
+    type Item = C;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|c| Point::from(*c))
+        self.0.next().map(|c| C::from(c.clone()))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -153,15 +159,15 @@ impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
     }
 }
 
-impl<'a, T: CoordNum> ExactSizeIterator for PointsIter<'a, T> {
+impl<'a, C: geo_traits::Coord + 'a> ExactSizeIterator for PointsIter<'a, C> {
     fn len(&self) -> usize {
         self.0.len()
     }
 }
 
-impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
+impl<'a, C: geo_traits::Coord + 'a> DoubleEndedIterator for PointsIter<'a, C> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.0.next_back().map(|c| Point::from(*c))
+        self.0.next_back().map(|c| c.clone())
     }
 }
 
@@ -211,22 +217,22 @@ impl<C: geo_traits::Coord> LineString<C> {
     }
 
     /// Return an iterator yielding the members of a [`LineString`] as [`Coord`]s
-    pub fn coords(&self) -> impl DoubleEndedIterator<Item = &Coord<T>> {
+    pub fn coords(&self) -> impl DoubleEndedIterator<Item = &C> {
         self.0.iter()
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as mutable [`Coord`]s
-    pub fn coords_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut Coord<T>> {
+    pub fn coords_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut C> {
         self.0.iter_mut()
     }
 
     /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Point`]s
-    pub fn into_points(self) -> Vec<Point<T>> {
+    pub fn into_points(self) -> Vec<Point<C::Scalar>> {
         self.0.into_iter().map(Point::from).collect()
     }
 
     /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Coord`]s
-    pub fn into_inner(self) -> Vec<Coord<T>> {
+    pub fn into_inner(self) -> Vec<C> {
         self.0
     }
 
@@ -258,7 +264,7 @@ impl<C: geo_traits::Coord> LineString<C> {
     /// );
     /// assert!(lines.next().is_none());
     /// ```
-    pub fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<T>> + '_ {
+    pub fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<C>> + '_ {
         self.0.windows(2).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe { Line::new(*w.get_unchecked(0), *w.get_unchecked(1)) }
@@ -266,7 +272,7 @@ impl<C: geo_traits::Coord> LineString<C> {
     }
 
     /// An iterator which yields the coordinates of a [`LineString`] as [Triangle]s
-    pub fn triangles(&'_ self) -> impl ExactSizeIterator<Item = Triangle<T>> + '_ {
+    pub fn triangles(&'_ self) -> impl ExactSizeIterator<Item = Triangle<C>> + '_ {
         self.0.windows(3).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe {

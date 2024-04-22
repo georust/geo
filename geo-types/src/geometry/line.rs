@@ -1,3 +1,4 @@
+use crate::geo_traits;
 use crate::{Coord, CoordNum, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -11,12 +12,12 @@ use approx::{AbsDiffEq, RelativeEq};
 /// `LineString` with the two end points.
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Line<T: CoordNum = f64> {
-    pub start: Coord<T>,
-    pub end: Coord<T>,
+pub struct Line<C: geo_traits::Coord = Coord<f64>> {
+    pub start: C,
+    pub end: C,
 }
 
-impl<T: CoordNum> Line<T> {
+impl<C: geo_traits::Coord> Line<C> {
     /// Creates a new line segment.
     ///
     /// # Examples
@@ -29,9 +30,9 @@ impl<T: CoordNum> Line<T> {
     /// assert_eq!(line.start, coord! { x: 0., y: 0. });
     /// assert_eq!(line.end, coord! { x: 1., y: 2. });
     /// ```
-    pub fn new<C>(start: C, end: C) -> Self
+    pub fn new<I>(start: I, end: I) -> Self
     where
-        C: Into<Coord<T>>,
+        I: Into<C>,
     {
         Self {
             start: start.into(),
@@ -40,7 +41,7 @@ impl<T: CoordNum> Line<T> {
     }
 
     /// Calculate the difference in coordinates (Δx, Δy).
-    pub fn delta(&self) -> Coord<T> {
+    pub fn delta(&self) -> C {
         self.end - self.start
     }
 
@@ -59,8 +60,8 @@ impl<T: CoordNum> Line<T> {
     /// line.end.x - line.start.x
     /// # );
     /// ```
-    pub fn dx(&self) -> T {
-        self.delta().x
+    pub fn dx(&self) -> C::Scalar {
+        self.delta().x()
     }
 
     /// Calculate the difference in ‘y’ components (Δy).
@@ -78,8 +79,8 @@ impl<T: CoordNum> Line<T> {
     /// line.end.y - line.start.y
     /// # );
     /// ```
-    pub fn dy(&self) -> T {
-        self.delta().y
+    pub fn dy(&self) -> C::Scalar {
+        self.delta().y()
     }
 
     /// Calculate the slope (Δy/Δx).
@@ -108,7 +109,7 @@ impl<T: CoordNum> Line<T> {
     /// Line::new(a, b).slope() == Line::new(b, a).slope()
     /// # );
     /// ```
-    pub fn slope(&self) -> T {
+    pub fn slope(&self) -> C::Scalar {
         self.dy() / self.dx()
     }
 
@@ -138,25 +139,25 @@ impl<T: CoordNum> Line<T> {
     /// Line::new(a, b).determinant() == -Line::new(b, a).determinant()
     /// # );
     /// ```
-    pub fn determinant(&self) -> T {
-        self.start.x * self.end.y - self.start.y * self.end.x
+    pub fn determinant(&self) -> C::Scalar {
+        self.start.x() * self.end.y() - self.start.y() * self.end.x()
     }
 
-    pub fn start_point(&self) -> Point<T> {
+    pub fn start_point(&self) -> Point<C::Scalar> {
         Point::from(self.start)
     }
 
-    pub fn end_point(&self) -> Point<T> {
+    pub fn end_point(&self) -> Point<C::Scalar> {
         Point::from(self.end)
     }
 
-    pub fn points(&self) -> (Point<T>, Point<T>) {
+    pub fn points(&self) -> (Point<C::Scalar>, Point<C::Scalar>) {
         (self.start_point(), self.end_point())
     }
 }
 
-impl<T: CoordNum> From<[(T, T); 2]> for Line<T> {
-    fn from(coord: [(T, T); 2]) -> Self {
+impl<C: geo_traits::Coord> From<[(C::Scalar, C::Scalar); 2]> for Line<C> {
+    fn from(coord: [(C::Scalar, C::Scalar); 2]) -> Self {
         Line::new(coord[0], coord[1])
     }
 }

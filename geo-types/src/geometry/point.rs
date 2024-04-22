@@ -1,9 +1,9 @@
 use crate::{point, Coord, CoordFloat, CoordNum};
+use crate::geo_traits;
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use crate::geo_traits;
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// A single point in 2D space.
@@ -29,10 +29,10 @@ use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAss
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<C: geo_traits::Coord = Coord<f64>>(pub C);
+pub struct Point<T: CoordNum = f64>(pub Coord<T>);
 
-impl<C: geo_traits::Coord> geo_traits::Coord for Point<C> {
-    type Scalar = C::Scalar;
+impl<T: CoordNum> geo_traits::Coord for Point<T> {
+    type Scalar = T;
 
     fn x(&self) -> Self::Scalar {
         self.0.x()
@@ -43,37 +43,37 @@ impl<C: geo_traits::Coord> geo_traits::Coord for Point<C> {
     }
 }
 
-impl<C: geo_traits::Coord> From<C> for Point<C> {
-    fn from(x: C) -> Self {
+impl<T: CoordNum> From<Coord<T>> for Point<T> {
+    fn from(x: Coord<T>) -> Self {
         Point(x)
     }
 }
 
-impl<C: geo_traits::Coord> From<(C::Scalar, C::Scalar)> for Point<C> {
-    fn from(coords: (C::Scalar, C::Scalar)) -> Self {
+impl<T: CoordNum> From<(T, T)> for Point<T> {
+    fn from(coords: (T, T)) -> Self {
         Point::new(coords.0, coords.1)
     }
 }
 
-impl<C: geo_traits::Coord> From<[C::Scalar; 2]> for Point<C> {
-    fn from(coords: [C::Scalar; 2]) -> Self {
+impl<T: CoordNum> From<[T; 2]> for Point<T> {
+    fn from(coords: [T; 2]) -> Self {
         Point::new(coords[0], coords[1])
     }
 }
 
-impl<C: geo_traits::Coord> From<Point<C>> for (C::Scalar, C::Scalar) {
-    fn from(point: Point<C>) -> Self {
-        (point.0.x(), point.0.y())
+impl<T: CoordNum> From<Point<T>> for (T, T) {
+    fn from(point: Point<T>) -> Self {
+        point.0.into()
     }
 }
 
-impl<C: geo_traits::Coord> From<Point<C>> for [C::Scalar; 2] {
-    fn from(point: Point<C>) -> Self {
-        [point.0.x(), point.0.y()]
+impl<T: CoordNum> From<Point<T>> for [T; 2] {
+    fn from(point: Point<T>) -> Self {
+        point.0.into()
     }
 }
 
-impl<C: geo_traits::Coord> Point<C> {
+impl<T: CoordNum> Point<T> {
     /// Creates a new point.
     ///
     /// # Examples
@@ -86,7 +86,7 @@ impl<C: geo_traits::Coord> Point<C> {
     /// assert_eq!(p.x(), 1.234);
     /// assert_eq!(p.y(), 2.345);
     /// ```
-    pub fn new(x: C::Scalar, y: C::Scalar) -> Self {
+    pub fn new(x: T, y: T) -> Self {
         point! { x: x, y: y }
     }
 
@@ -101,8 +101,8 @@ impl<C: geo_traits::Coord> Point<C> {
     ///
     /// assert_eq!(p.x(), 1.234);
     /// ```
-    pub fn x(self) -> C::Scalar {
-        self.0.x()
+    pub fn x(self) -> T {
+        self.0.x
     }
 
     /// Sets the x/horizontal component of the point.
@@ -117,7 +117,7 @@ impl<C: geo_traits::Coord> Point<C> {
     ///
     /// assert_eq!(p.x(), 9.876);
     /// ```
-    pub fn set_x(&mut self, x: C::Scalar) -> &mut Self {
+    pub fn set_x(&mut self, x: T) -> &mut Self {
         self.0.x = x;
         self
     }
@@ -134,7 +134,7 @@ impl<C: geo_traits::Coord> Point<C> {
     /// *p_x += 1.0;
     /// assert_relative_eq!(p.x(), 2.234);
     /// ```
-    pub fn x_mut(&mut self) -> &mut C::Scalar {
+    pub fn x_mut(&mut self) -> &mut T {
         &mut self.0.x
     }
     /// Returns the y/vertical component of the point.
@@ -148,7 +148,7 @@ impl<C: geo_traits::Coord> Point<C> {
     ///
     /// assert_eq!(p.y(), 2.345);
     /// ```
-    pub fn y(self) -> C::Scalar {
+    pub fn y(self) -> T {
         self.0.y
     }
 
@@ -164,7 +164,7 @@ impl<C: geo_traits::Coord> Point<C> {
     ///
     /// assert_eq!(p.y(), 9.876);
     /// ```
-    pub fn set_y(&mut self, y: C::Scalar) -> &mut Self {
+    pub fn set_y(&mut self, y: T) -> &mut Self {
         self.0.y = y;
         self
     }
@@ -181,7 +181,7 @@ impl<C: geo_traits::Coord> Point<C> {
     /// *p_y += 1.0;
     /// assert_relative_eq!(p.y(), 3.345);
     /// ```
-    pub fn y_mut(&mut self) -> &mut C::Scalar {
+    pub fn y_mut(&mut self) -> &mut T {
         &mut self.0.y
     }
 
@@ -198,7 +198,7 @@ impl<C: geo_traits::Coord> Point<C> {
     /// assert_eq!(y, 2.345);
     /// assert_eq!(x, 1.234);
     /// ```
-    pub fn x_y(self) -> (C::Scalar, C::Scalar) {
+    pub fn x_y(self) -> (T, T) {
         (self.0.x, self.0.y)
     }
     /// Returns the longitude/horizontal component of the point.
@@ -213,7 +213,7 @@ impl<C: geo_traits::Coord> Point<C> {
     /// assert_eq!(p.x(), 1.234);
     /// ```
     #[deprecated = "use `Point::x` instead, it's less ambiguous"]
-    pub fn lng(self) -> C::Scalar {
+    pub fn lng(self) -> T {
         self.x()
     }
 
@@ -231,7 +231,7 @@ impl<C: geo_traits::Coord> Point<C> {
     /// assert_eq!(p.x(), 9.876);
     /// ```
     #[deprecated = "use `Point::set_x` instead, it's less ambiguous"]
-    pub fn set_lng(&mut self, lng: C::Scalar) -> &mut Self {
+    pub fn set_lng(&mut self, lng: T) -> &mut Self {
         self.set_x(lng)
     }
 
@@ -247,7 +247,7 @@ impl<C: geo_traits::Coord> Point<C> {
     /// assert_eq!(p.y(), 2.345);
     /// ```
     #[deprecated = "use `Point::y` instead, it's less ambiguous"]
-    pub fn lat(self) -> C::Scalar {
+    pub fn lat(self) -> T {
         self.y()
     }
     /// Sets the latitude/vertical component of the point.
@@ -264,10 +264,12 @@ impl<C: geo_traits::Coord> Point<C> {
     /// assert_eq!(p.y(), 9.876);
     /// ```
     #[deprecated = "use `Point::set_y` instead, it's less ambiguous"]
-    pub fn set_lat(&mut self, lat: C::Scalar) -> &mut Self {
+    pub fn set_lat(&mut self, lat: T) -> &mut Self {
         self.set_y(lat)
     }
+}
 
+impl<T: CoordNum> Point<T> {
     /// Returns the dot product of the two points:
     /// `dot = x1 * x2 + y1 * y2`
     ///
@@ -281,7 +283,7 @@ impl<C: geo_traits::Coord> Point<C> {
     ///
     /// assert_eq!(dot, 5.25);
     /// ```
-    pub fn dot(self, other: Self) -> C::Scalar {
+    pub fn dot(self, other: Self) -> T {
         self.x() * other.x() + self.y() * other.y()
     }
 
@@ -310,11 +312,13 @@ impl<C: geo_traits::Coord> Point<C> {
     ///
     /// assert_eq!(cross, 2.0)
     /// ```
-    pub fn cross_prod(self, point_b: Self, point_c: Self) -> C::Scalar {
+    pub fn cross_prod(self, point_b: Self, point_c: Self) -> T {
         (point_b.x() - self.x()) * (point_c.y() - self.y())
             - (point_b.y() - self.y()) * (point_c.x() - self.x())
     }
+}
 
+impl<T: CoordFloat> Point<T> {
     /// Converts the (x,y) components of Point to degrees
     ///
     /// # Example
