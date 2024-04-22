@@ -1,8 +1,8 @@
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use crate::{Coord, CoordNum, Line, Point, Triangle};
 use crate::geo_traits;
+use crate::{Coord, CoordNum, Line, Point, Triangle};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
@@ -143,7 +143,8 @@ pub struct PointsIter<'a, C: geo_traits::Coord + 'a>(::core::slice::Iter<'a, C>)
 
 impl<'a, C: fmt::Debug + geo_traits::Coord + 'a> fmt::Debug for PointsIter<'a, C> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_tuple("PointsIter").field(&self.0.fmt(f)).finish()
+        let formatted = self.0.fmt(f);
+        f.debug_tuple("PointsIter").field(&formatted).finish()
     }
 }
 
@@ -173,10 +174,10 @@ impl<'a, C: geo_traits::Coord + 'a> DoubleEndedIterator for PointsIter<'a, C> {
 
 /// A [`Coord`] iterator used by the `into_iter` method on a [`LineString`]
 #[derive(Debug)]
-pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::core::slice::Iter<'a, Coord<T>>);
+pub struct CoordinatesIter<'a, C: geo_traits::Coord + 'a>(::core::slice::Iter<'a, C>);
 
-impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
-    type Item = &'a Coord<T>;
+impl<'a, C: geo_traits::Coord> Iterator for CoordinatesIter<'a, C> {
+    type Item = &'a C;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
@@ -187,13 +188,13 @@ impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
     }
 }
 
-impl<'a, T: CoordNum> ExactSizeIterator for CoordinatesIter<'a, T> {
+impl<'a, C: geo_traits::Coord> ExactSizeIterator for CoordinatesIter<'a, C> {
     fn len(&self) -> usize {
         self.0.len()
     }
 }
 
-impl<'a, T: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T> {
+impl<'a, C: geo_traits::Coord> DoubleEndedIterator for CoordinatesIter<'a, C> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back()
     }
@@ -351,14 +352,14 @@ impl<T: CoordNum, IC: Into<Coord<T>>> From<Vec<IC>> for LineString<T> {
     }
 }
 
-impl<T: CoordNum> From<Line<T>> for LineString<T> {
-    fn from(line: Line<T>) -> Self {
+impl<C: geo_traits::Coord> From<Line<C>> for LineString<C> {
+    fn from(line: Line<C>) -> Self {
         LineString::from(&line)
     }
 }
 
-impl<T: CoordNum> From<&Line<T>> for LineString<T> {
-    fn from(line: &Line<T>) -> Self {
+impl<C: geo_traits::Coord> From<&Line<C>> for LineString<C> {
+    fn from(line: &Line<C>) -> Self {
         Self(vec![line.start, line.end])
     }
 }
@@ -371,18 +372,18 @@ impl<T: CoordNum, IC: Into<Coord<T>>> FromIterator<IC> for LineString<T> {
 }
 
 /// Iterate over all the [`Coord`]s in this [`LineString`].
-impl<T: CoordNum> IntoIterator for LineString<T> {
-    type Item = Coord<T>;
-    type IntoIter = ::alloc::vec::IntoIter<Coord<T>>;
+impl<C: geo_traits::Coord> IntoIterator for LineString<C> {
+    type Item = C;
+    type IntoIter = ::alloc::vec::IntoIter<C>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
 }
 
-impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
-    type Item = &'a Coord<T>;
-    type IntoIter = CoordinatesIter<'a, T>;
+impl<'a, C: geo_traits::Coord> IntoIterator for &'a LineString<C> {
+    type Item = &'a C;
+    type IntoIter = CoordinatesIter<'a, C>;
 
     fn into_iter(self) -> Self::IntoIter {
         CoordinatesIter(self.0.iter())
@@ -390,33 +391,33 @@ impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
 }
 
 /// Mutably iterate over all the [`Coord`]s in this [`LineString`]
-impl<'a, T: CoordNum> IntoIterator for &'a mut LineString<T> {
-    type Item = &'a mut Coord<T>;
-    type IntoIter = ::core::slice::IterMut<'a, Coord<T>>;
+impl<'a, C: geo_traits::Coord> IntoIterator for &'a mut LineString<C> {
+    type Item = &'a mut C;
+    type IntoIter = ::core::slice::IterMut<'a, C>;
 
-    fn into_iter(self) -> ::core::slice::IterMut<'a, Coord<T>> {
+    fn into_iter(self) -> ::core::slice::IterMut<'a, C> {
         self.0.iter_mut()
     }
 }
 
-impl<T: CoordNum> Index<usize> for LineString<T> {
-    type Output = Coord<T>;
+impl<C: geo_traits::Coord> Index<usize> for LineString<C> {
+    type Output = C;
 
-    fn index(&self, index: usize) -> &Coord<T> {
+    fn index(&self, index: usize) -> &C {
         self.0.index(index)
     }
 }
 
-impl<T: CoordNum> IndexMut<usize> for LineString<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Coord<T> {
+impl<C: geo_traits::Coord> IndexMut<usize> for LineString<C> {
+    fn index_mut(&mut self, index: usize) -> &mut C {
         self.0.index_mut(index)
     }
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T> RelativeEq for LineString<T>
+impl<C: geo_traits::Coord> RelativeEq for LineString<C>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+    C::Scalar: AbsDiffEq<Epsilon = C::Scalar> + CoordNum + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
@@ -502,11 +503,11 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
 ))]
 macro_rules! impl_rstar_line_string {
     ($rstar:ident) => {
-        impl<T> ::$rstar::RTreeObject for LineString<T>
+        impl<C: geo_traits::Coord + ::$rstar::Point> ::$rstar::RTreeObject for LineString<C>
         where
-            T: ::num_traits::Float + ::$rstar::RTreeNum,
+            <C as geo_traits::Coord>::Scalar: ::num_traits::Float + ::$rstar::RTreeNum,
         {
-            type Envelope = ::$rstar::AABB<Point<T>>;
+            type Envelope = ::$rstar::AABB<C>;
 
             fn envelope(&self) -> Self::Envelope {
                 use num_traits::Bounded;
@@ -524,7 +525,7 @@ macro_rules! impl_rstar_line_string {
             }
         }
 
-        impl<T> ::$rstar::PointDistance for LineString<T>
+        impl<T> ::$rstar::PointDistance for LineString<C>
         where
             T: ::num_traits::Float + ::$rstar::RTreeNum,
         {
@@ -581,26 +582,26 @@ mod test {
         let delta = 1e-6;
 
         let coords = vec![(0., 0.), (5., 0.), (10., 10.)];
-        let ls: LineString<f32> = coords.into_iter().collect();
+        let ls: LineString = coords.into_iter().collect();
 
         let coords_x = vec![(0., 0.), (5. + delta, 0.), (10., 10.)];
-        let ls_x: LineString<f32> = coords_x.into_iter().collect();
+        let ls_x: LineString = coords_x.into_iter().collect();
         assert!(ls.abs_diff_eq(&ls_x, 1e-2));
         assert!(ls.abs_diff_ne(&ls_x, 1e-12));
 
         let coords_y = vec![(0., 0.), (5., 0. + delta), (10., 10.)];
-        let ls_y: LineString<f32> = coords_y.into_iter().collect();
+        let ls_y: LineString = coords_y.into_iter().collect();
         assert!(ls.abs_diff_eq(&ls_y, 1e-2));
         assert!(ls.abs_diff_ne(&ls_y, 1e-12));
 
         // Undersized, but otherwise equal.
         let coords_x = vec![(0., 0.), (5., 0.)];
-        let ls_under: LineString<f32> = coords_x.into_iter().collect();
+        let ls_under: LineString = coords_x.into_iter().collect();
         assert!(ls.abs_diff_ne(&ls_under, 1.));
 
         // Oversized, but otherwise equal.
         let coords_x = vec![(0., 0.), (5., 0.), (10., 10.), (10., 100.)];
-        let ls_oversized: LineString<f32> = coords_x.into_iter().collect();
+        let ls_oversized: LineString = coords_x.into_iter().collect();
         assert!(ls.abs_diff_ne(&ls_oversized, 1.));
     }
 
@@ -609,26 +610,26 @@ mod test {
         let delta = 1e-6;
 
         let coords = vec![(0., 0.), (5., 0.), (10., 10.)];
-        let ls: LineString<f32> = coords.into_iter().collect();
+        let ls: LineString = coords.into_iter().collect();
 
         let coords_x = vec![(0., 0.), (5. + delta, 0.), (10., 10.)];
-        let ls_x: LineString<f32> = coords_x.into_iter().collect();
+        let ls_x: LineString = coords_x.into_iter().collect();
         assert!(ls.relative_eq(&ls_x, 1e-2, 1e-2));
         assert!(ls.relative_ne(&ls_x, 1e-12, 1e-12));
 
         let coords_y = vec![(0., 0.), (5., 0. + delta), (10., 10.)];
-        let ls_y: LineString<f32> = coords_y.into_iter().collect();
+        let ls_y: LineString = coords_y.into_iter().collect();
         assert!(ls.relative_eq(&ls_y, 1e-2, 1e-2));
         assert!(ls.relative_ne(&ls_y, 1e-12, 1e-12));
 
         // Undersized, but otherwise equal.
         let coords_x = vec![(0., 0.), (5., 0.)];
-        let ls_under: LineString<f32> = coords_x.into_iter().collect();
+        let ls_under: LineString = coords_x.into_iter().collect();
         assert!(ls.relative_ne(&ls_under, 1., 1.));
 
         // Oversized, but otherwise equal.
         let coords_x = vec![(0., 0.), (5., 0.), (10., 10.), (10., 100.)];
-        let ls_oversized: LineString<f32> = coords_x.into_iter().collect();
+        let ls_oversized: LineString = coords_x.into_iter().collect();
         assert!(ls.relative_ne(&ls_oversized, 1., 1.));
     }
 

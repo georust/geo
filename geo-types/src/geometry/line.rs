@@ -30,10 +30,7 @@ impl<C: geo_traits::Coord> Line<C> {
     /// assert_eq!(line.start, coord! { x: 0., y: 0. });
     /// assert_eq!(line.end, coord! { x: 1., y: 2. });
     /// ```
-    pub fn new<I>(start: I, end: I) -> Self
-    where
-        I: Into<C>,
-    {
+    pub fn new<I>(start: impl Into<C>, end: impl Into<C>) -> Self {
         Self {
             start: start.into(),
             end: end.into(),

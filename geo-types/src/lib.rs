@@ -140,13 +140,15 @@ mod arbitrary;
 pub mod geo_traits {
     use std::fmt;
 
-    pub trait Coord: Clone + Copy + fmt::Debug {
+    pub trait Coord: Clone + Copy + PartialEq + fmt::Debug {
         type Scalar: crate::CoordNum;
 
         fn x(&self) -> Self::Scalar;
         fn y(&self) -> Self::Scalar;
 
-        fn x_y(&self) -> (Self::Scalar, Self::Scalar) {
+        fn from_xy(x: Self::Scalar, y: Self::Scalar) -> Self;
+
+        fn xy(&self) -> (Self::Scalar, Self::Scalar) {
             (self.x(), self.y())
         }
     }

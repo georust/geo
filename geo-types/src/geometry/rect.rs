@@ -1,4 +1,6 @@
+use crate::geo_traits;
 use crate::{coord, polygon, Coord, CoordFloat, CoordNum, Line, Polygon};
+use num_traits::One;
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -39,12 +41,12 @@ use approx::{AbsDiffEq, RelativeEq};
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T: CoordNum = f64> {
-    min: Coord<T>,
-    max: Coord<T>,
+pub struct Rect<C: geo_traits::Coord> {
+    min: C,
+    max: C,
 }
 
-impl<T: CoordNum> Rect<T> {
+impl<C: geo_traits::Coord> Rect<C> {
     /// Creates a new rectangle from two corner coordinates.
     ///
     /// # Examples
@@ -59,21 +61,18 @@ impl<T: CoordNum> Rect<T> {
     /// assert_eq!(rect.min(), coord! { x: 10., y: 10. });
     /// assert_eq!(rect.max(), coord! { x: 30., y: 20. });
     /// ```
-    pub fn new<C>(c1: C, c2: C) -> Self
-    where
-        C: Into<Coord<T>>,
-    {
+    pub fn new(c1: impl Into<C>, c2: impl Into<C>) -> Self {
         let c1 = c1.into();
         let c2 = c2.into();
-        let (min_x, max_x) = if c1.x < c2.x {
-            (c1.x, c2.x)
+        let (min_x, max_x) = if c1.x() < c2.x() {
+            (c1.x(), c2.x())
         } else {
-            (c2.x, c1.x)
+            (c2.x(), c1.x())
         };
-        let (min_y, max_y) = if c1.y < c2.y {
-            (c1.y, c2.y)
+        let (min_y, max_y) = if c1.y() < c2.y() {
+            (c1.y(), c2.y())
         } else {
-            (c2.y, c1.y)
+            (c2.y(), c1.y())
         };
         Self {
             min: coord! { x: min_x, y: min_y },
@@ -86,10 +85,10 @@ impl<T: CoordNum> Rect<T> {
         note = "Use `Rect::new` instead, since `Rect::try_new` will never Error"
     )]
     #[allow(deprecated)]
-    pub fn try_new<C>(c1: C, c2: C) -> Result<Rect<T>, InvalidRectCoordinatesError>
-    where
-        C: Into<Coord<T>>,
-    {
+    pub fn try_new(
+        c1: impl Into<C>,
+        c2: impl Into<C>,
+    ) -> Result<Rect<C>, InvalidRectCoordinatesError> {
         Ok(Rect::new(c1, c2))
     }
 
@@ -107,7 +106,7 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// assert_eq!(rect.min(), coord! { x: 5., y: 5. });
     /// ```
-    pub fn min(self) -> Coord<T> {
+    pub fn min(self) -> C {
         self.min
     }
 
@@ -116,10 +115,7 @@ impl<T: CoordNum> Rect<T> {
     /// # Panics
     ///
     /// Panics if `min`’s x/y is greater than the maximum coordinate’s x/y.
-    pub fn set_min<C>(&mut self, min: C)
-    where
-        C: Into<Coord<T>>,
-    {
+    pub fn set_min(&mut self, min: impl Into<C>) {
         self.min = min.into();
         self.assert_valid_bounds();
     }
@@ -138,7 +134,7 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// assert_eq!(rect.max(), coord! { x: 15., y: 15. });
     /// ```
-    pub fn max(self) -> Coord<T> {
+    pub fn max(self) -> C {
         self.max
     }
 
@@ -147,10 +143,7 @@ impl<T: CoordNum> Rect<T> {
     /// # Panics
     ///
     /// Panics if `max`’s x/y is less than the minimum coordinate’s x/y.
-    pub fn set_max<C>(&mut self, max: C)
-    where
-        C: Into<Coord<T>>,
-    {
+    pub fn set_max(&mut self, max: impl Into<C>) {
         self.max = max.into();
         self.assert_valid_bounds();
     }
@@ -169,8 +162,8 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// assert_eq!(rect.width(), 10.);
     /// ```
-    pub fn width(self) -> T {
-        self.max().x - self.min().x
+    pub fn width(self) -> C::Scalar {
+        self.max().x() - self.min().x()
     }
 
     /// Returns the height of the `Rect`.
@@ -187,8 +180,8 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// assert_eq!(rect.height(), 10.);
     /// ```
-    pub fn height(self) -> T {
-        self.max().y - self.min().y
+    pub fn height(self) -> C::Scalar {
+        self.max().y() - self.min().y()
     }
 
     /// Create a `Polygon` from the `Rect`.
@@ -214,56 +207,56 @@ impl<T: CoordNum> Rect<T> {
     ///     ],
     /// );
     /// ```
-    pub fn to_polygon(self) -> Polygon<T> {
+    pub fn to_polygon(self) -> Polygon<C> {
         polygon![
-            (x: self.min.x, y: self.min.y),
-            (x: self.min.x, y: self.max.y),
-            (x: self.max.x, y: self.max.y),
-            (x: self.max.x, y: self.min.y),
-            (x: self.min.x, y: self.min.y),
+            (x: self.min.x(), y: self.min.y()),
+            (x: self.min.x(), y: self.max.y()),
+            (x: self.max.x(), y: self.max.y()),
+            (x: self.max.x(), y: self.min.y()),
+            (x: self.min.x(), y: self.min.y()),
         ]
     }
 
-    pub fn to_lines(&self) -> [Line<T>; 4] {
+    pub fn to_lines(&self) -> [Line<C>; 4] {
         [
             Line::new(
                 coord! {
-                    x: self.min.x,
-                    y: self.min.y,
+                    x: self.min.x(),
+                    y: self.min.y(),
                 },
                 coord! {
-                    x: self.min.x,
-                    y: self.max.y,
-                },
-            ),
-            Line::new(
-                coord! {
-                    x: self.min.x,
-                    y: self.max.y,
-                },
-                coord! {
-                    x: self.max.x,
-                    y: self.max.y,
+                    x: self.min.x(),
+                    y: self.max.y(),
                 },
             ),
             Line::new(
                 coord! {
-                    x: self.max.x,
-                    y: self.max.y,
+                    x: self.min.x(),
+                    y: self.max.y(),
                 },
                 coord! {
-                    x: self.max.x,
-                    y: self.min.y,
+                    x: self.max.x(),
+                    y: self.max.y(),
                 },
             ),
             Line::new(
                 coord! {
-                    x: self.max.x,
-                    y: self.min.y,
+                    x: self.max.x(),
+                    y: self.max.y(),
                 },
                 coord! {
-                    x: self.min.x,
-                    y: self.min.y,
+                    x: self.max.x(),
+                    y: self.min.y(),
+                },
+            ),
+            Line::new(
+                coord! {
+                    x: self.max.x(),
+                    y: self.min.y(),
+                },
+                coord! {
+                    x: self.min.x(),
+                    y: self.min.y(),
                 },
             ),
         ]
@@ -296,11 +289,11 @@ impl<T: CoordNum> Rect<T> {
     ///     rect2,
     /// );
     /// ```
-    pub fn split_x(self) -> [Rect<T>; 2] {
-        let two = T::one() + T::one();
-        let mid_x = self.min().x + self.width() / two;
+    pub fn split_x(self) -> [Rect<C>; 2] {
+        let two = C::Scalar::one() + C::Scalar::one();
+        let mid_x = self.min().x() + self.width() / two;
         [
-            Rect::new(self.min(), coord! { x: mid_x, y: self.max().y }),
+            Rect::new(self.min(), coord! { x: mid_x, y: self.max().y() }),
             Rect::new(coord! { x: mid_x, y: self.min().y }, self.max()),
         ]
     }
@@ -485,28 +478,28 @@ mod test {
 
     #[test]
     fn rect() {
-        let rect = Rect::new((10, 10), (20, 20));
+        let rect = Rect::<Coord<u8>>::new((10, 10), (20, 20));
         assert_eq!(rect.min, coord! { x: 10, y: 10 });
         assert_eq!(rect.max, coord! { x: 20, y: 20 });
 
-        let rect = Rect::new((20, 20), (10, 10));
+        let rect = Rect::<Coord<u8>>::new((20, 20), (10, 10));
         assert_eq!(rect.min, coord! { x: 10, y: 10 });
         assert_eq!(rect.max, coord! { x: 20, y: 20 });
 
-        let rect = Rect::new((10, 20), (20, 10));
+        let rect = Rect::<Coord<u8>>::new((10, 20), (20, 10));
         assert_eq!(rect.min, coord! { x: 10, y: 10 });
         assert_eq!(rect.max, coord! { x: 20, y: 20 });
     }
 
     #[test]
     fn rect_width() {
-        let rect = Rect::new((10, 10), (20, 20));
-        assert_eq!(rect.width(), 10);
+        let rect = Rect::<Coord>::new((10., 10.), (20., 20.));
+        assert_eq!(rect.width(), 10.);
     }
 
     #[test]
     fn rect_height() {
-        let rect = Rect::new((10., 10.), (20., 20.));
+        let rect = Rect::<Coord>::new((10., 10.), (20., 20.));
         assert_relative_eq!(rect.height(), 10.);
     }
 
