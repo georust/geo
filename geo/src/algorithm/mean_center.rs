@@ -18,9 +18,9 @@ use geo_types::{
 /// applied to the value of the coordinate used used in the calculation of the
 /// mean center.
 ///
-/// For `Line`, `Triangle`, `Rect`, `LineString`, `Polygon`, and `MultiPoint`, weights
-/// are applied  to each coordinate in the geometry. For `MultiLineString`, `MultiPolygon`,
-/// and `GeometryCollection`, the weights are applied to the centroid of each component
+/// For [`Line`], [`Triangle`], [`Rect`], [`LineString`], [`Polygon`], and [`MultiPoint`], weights
+/// are applied  to each coordinate in the geometry. For [`MultiLineString`], [`MultiPolygon`],
+/// and [`GeometryCollection`], the weights are applied to the centroid of each component
 /// geometry. If a geometry does not have a centroid, it is filtered out.
 ///
 /// The `weights` argument takes a slice which is used as an iterator which is cycled.
