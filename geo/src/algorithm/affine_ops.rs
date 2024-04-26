@@ -323,27 +323,27 @@ impl<T: CoordNum> AffineTransform<T> {
         Self([[a, b, xoff], [d, e, yoff], [T::zero(), T::zero(), T::one()]])
     }
 
-    /// Get the x-resolution value.
+    /// See [AffineTransform::new] for this value's role in the affine transformation.
     pub fn a(&self) -> T {
         self.0[0][0]
     }
-    /// Get the x-rotation value.
+    /// See [AffineTransform::new] for this value's role in the affine transformation.
     pub fn b(&self) -> T {
         self.0[0][1]
     }
-    /// Get the x-offset value.
+    /// See [AffineTransform::new] for this value's role in the affine transformation.
     pub fn xoff(&self) -> T {
         self.0[0][2]
     }
-    /// Get the y-rotation value.
+    /// See [AffineTransform::new] for this value's role in the affine transformation.
     pub fn d(&self) -> T {
         self.0[1][0]
     }
-    /// Get the y-resolution value.
+    /// See [AffineTransform::new] for this value's role in the affine transformation.
     pub fn e(&self) -> T {
         self.0[1][1]
     }
-    /// Get the y-offset value.
+    /// See [AffineTransform::new] for this value's role in the affine transformation.
     pub fn yoff(&self) -> T {
         self.0[1][2]
     }
