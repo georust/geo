@@ -1,4 +1,4 @@
-use crate::geo_traits;
+use crate::geo_traits::{self, Coord as CoordTrait};
 use crate::{Coord, CoordNum, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -141,11 +141,11 @@ impl<C: geo_traits::Coord> Line<C> {
     }
 
     pub fn start_point(&self) -> Point<C::Scalar> {
-        Point::from(self.start)
+        Point::from_coord(self.start)
     }
 
     pub fn end_point(&self) -> Point<C::Scalar> {
-        Point::from(self.end)
+        Point::from_coord(self.end)
     }
 
     pub fn points(&self) -> (Point<C::Scalar>, Point<C::Scalar>) {
@@ -155,7 +155,10 @@ impl<C: geo_traits::Coord> Line<C> {
 
 impl<C: geo_traits::Coord> From<[(C::Scalar, C::Scalar); 2]> for Line<C> {
     fn from(coord: [(C::Scalar, C::Scalar); 2]) -> Self {
-        Line::new(coord[0], coord[1])
+        Line::new(
+            C::from_xy(coord[0].0, coord[0].1),
+            C::from_xy(coord[1].0, coord[1].1),
+        )
     }
 }
 #[cfg(any(feature = "approx", test))]
