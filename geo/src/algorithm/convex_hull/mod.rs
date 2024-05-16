@@ -37,6 +37,7 @@ use crate::GeoNum;
 ///
 /// let res = poly.convex_hull();
 /// assert_eq!(res.exterior(), &correct_hull);
+/// assert_eq!(res.interiors(), &[]);
 /// ```
 pub trait ConvexHull<'a, T> {
     type Scalar: GeoNum;
