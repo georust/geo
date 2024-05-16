@@ -23,7 +23,7 @@ impl fmt::Display for Error {
 
 #[cfg(test)]
 mod test {
-    use crate::{Geometry, Point, Rect};
+    use crate::{Geometry, Point, Rect, Coord};
     use alloc::string::ToString;
     use core::convert::TryFrom;
 
@@ -32,7 +32,7 @@ mod test {
         let point = Point::new(1.0, 2.0);
         let point_geometry = Geometry::from(point);
 
-        let rect = Rect::new(Point::new(1.0, 2.0), Point::new(3.0, 4.0));
+        let rect = Rect::<Coord>::new(Point::new(1.0, 2.0), Point::new(3.0, 4.0));
         let rect_geometry = Geometry::from(rect);
 
         Point::try_from(point_geometry).expect("failed to unwrap inner enum Point");

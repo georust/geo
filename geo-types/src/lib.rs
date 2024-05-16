@@ -148,6 +148,10 @@ pub mod geo_traits {
 
         fn from_xy(x: Self::Scalar, y: Self::Scalar) -> Self;
 
+        fn from_coord<Other: Coord<Scalar = Self::Scalar>>(coord: Other) -> Self {
+            Self::from_xy(coord.x(), coord.y())
+        }
+
         fn xy(&self) -> (Self::Scalar, Self::Scalar) {
             (self.x(), self.y())
         }

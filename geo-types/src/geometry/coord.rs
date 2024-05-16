@@ -43,6 +43,10 @@ impl<T: crate::CoordNum> geo_traits::Coord for Coord<T> {
     fn y(&self) -> Self::Scalar {
         self.y
     }
+
+    fn from_xy(x: Self::Scalar, y: Self::Scalar) -> Self {
+        Coord { x, y }
+    }
 }
 
 impl<T: CoordNum> From<(T, T)> for Coord<T> {
@@ -65,9 +69,9 @@ impl<T: CoordNum> From<[T; 2]> for Coord<T> {
     }
 }
 
-impl<C: geo_traits::Coord> From<Point<C>> for Coord<C::Scalar> {
+impl<T: CoordNum> From<Point<T>> for Coord<T> {
     #[inline]
-    fn from(point: Point<C>) -> Self {
+    fn from(point: Point<T>) -> Self {
         coord! {
             x: point.x(),
             y: point.y(),

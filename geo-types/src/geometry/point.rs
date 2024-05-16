@@ -41,6 +41,10 @@ impl<T: CoordNum> geo_traits::Coord for Point<T> {
     fn y(&self) -> Self::Scalar {
         self.0.y()
     }
+
+    fn from_xy(x: Self::Scalar, y: Self::Scalar) -> Self {
+        Self(Coord::from_xy(x, y))
+    }
 }
 
 impl<T: CoordNum> From<Coord<T>> for Point<T> {

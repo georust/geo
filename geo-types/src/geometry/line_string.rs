@@ -1,8 +1,8 @@
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use crate::geo_traits;
-use crate::{Coord, CoordNum, Line, Point, Triangle};
+use crate::geo_traits::{self, Coord};
+use crate::{Line, Point, Triangle};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
@@ -149,10 +149,10 @@ impl<'a, C: fmt::Debug + geo_traits::Coord + 'a> fmt::Debug for PointsIter<'a, C
 }
 
 impl<'a, C: geo_traits::Coord + 'a> Iterator for PointsIter<'a, C> {
-    type Item = C;
+    type Item = Point<C::Scalar>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|c| C::from(c.clone()))
+        self.0.next().map(|c| Point::from_coord(*c))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -168,7 +168,7 @@ impl<'a, C: geo_traits::Coord + 'a> ExactSizeIterator for PointsIter<'a, C> {
 
 impl<'a, C: geo_traits::Coord + 'a> DoubleEndedIterator for PointsIter<'a, C> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.0.next_back().map(|c| c.clone())
+        self.0.next_back().map(|c| Point::from_coord(*c))
     }
 }
 
@@ -229,7 +229,7 @@ impl<C: geo_traits::Coord> LineString<C> {
 
     /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Point`]s
     pub fn into_points(self) -> Vec<Point<C::Scalar>> {
-        self.0.into_iter().map(Point::from).collect()
+        self.0.into_iter().map(Point::from_coord).collect()
     }
 
     /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Coord`]s
@@ -346,7 +346,7 @@ impl<C: geo_traits::Coord> LineString<C> {
 }
 
 /// Turn a [`Vec`] of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, IC: Into<Coord<T>>> From<Vec<IC>> for LineString<T> {
+impl<C: geo_traits::Coord, IC: Into<C>> From<Vec<IC>> for LineString<C> {
     fn from(v: Vec<IC>) -> Self {
         Self(v.into_iter().map(|c| c.into()).collect())
     }
@@ -365,7 +365,7 @@ impl<C: geo_traits::Coord> From<&Line<C>> for LineString<C> {
 }
 
 /// Turn an iterator of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, IC: Into<Coord<T>>> FromIterator<IC> for LineString<T> {
+impl<C: geo_traits::Coord, IC: Into<C>> FromIterator<IC> for LineString<C> {
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {
         Self(iter.into_iter().map(|c| c.into()).collect())
     }
@@ -415,13 +415,14 @@ impl<C: geo_traits::Coord> IndexMut<usize> for LineString<C> {
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<C: geo_traits::Coord> RelativeEq for LineString<C>
+impl<C> RelativeEq for LineString<C>
 where
-    C::Scalar: AbsDiffEq<Epsilon = C::Scalar> + CoordNum + RelativeEq,
+    C: geo_traits::Coord + AbsDiffEq<Epsilon = C::Scalar> + RelativeEq,
+    C::Scalar: AbsDiffEq<Epsilon = C::Scalar> + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
-        T::default_max_relative()
+        C::Scalar::default_max_relative()
     }
 
     /// Equality assertion within a relative limit.
@@ -462,12 +463,16 @@ where
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
-    type Epsilon = T;
+impl<C> AbsDiffEq for LineString<C>
+where
+    C: geo_traits::Coord + AbsDiffEq<Epsilon = C::Scalar>,
+    C::Scalar: AbsDiffEq<Epsilon = C::Scalar>,
+{
+    type Epsilon = C::Scalar;
 
     #[inline]
     fn default_epsilon() -> Self::Epsilon {
-        T::default_epsilon()
+        C::Scalar::default_epsilon()
     }
 
     /// Equality assertion with an absolute limit.
