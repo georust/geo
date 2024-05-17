@@ -1,8 +1,8 @@
-use crate::{CoordFloat, CoordNum, LineString, Point, Rect, Triangle, Coord};
+use crate::geo_traits::{self, Coord};
+use crate::{Coord, CoordFloat, CoordNum, LineString, Point, Rect, Triangle};
 use alloc::vec;
 use alloc::vec::Vec;
 use num_traits::{Float, Signed};
-use crate::geo_traits;
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -477,7 +477,10 @@ enum ListSign {
     Mixed,
 }
 
-impl<T: CoordFloat + Signed> Polygon<T> {
+impl<C: geo_traits::Coord> Polygon<C>
+where
+    C::Scalar: CoordFloat + Signed,
+{
     /// Determine whether a Polygon is convex
     // For each consecutive pair of edges of the polygon (each triplet of points),
     // compute the z-component of the cross product of the vectors defined by the
@@ -499,9 +502,9 @@ impl<T: CoordFloat + Signed> Polygon<T> {
             .map(|(idx, _)| {
                 let prev_1 = self.previous_vertex(idx);
                 let prev_2 = self.previous_vertex(prev_1);
-                Point::from(self.exterior[prev_2]).cross_prod(
-                    Point::from(self.exterior[prev_1]),
-                    Point::from(self.exterior[idx]),
+                Point::from_coord(self.exterior[prev_2]).cross_prod(
+                    Point::from_coord(self.exterior[prev_1]),
+                    Point::from_coord(self.exterior[idx]),
                 )
             })
             // accumulate and check cross-product result signs in a single pass
@@ -520,11 +523,11 @@ impl<C: geo_traits::Coord> From<Rect<C>> for Polygon<C> {
     fn from(r: Rect<C>) -> Self {
         Polygon::new(
             vec![
-                (r.min().x(), r.min().y()),
-                (r.max().x(), r.min().y()),
-                (r.max().x(), r.max().y()),
-                (r.min().x(), r.max().y()),
-                (r.min().x(), r.min().y()),
+                C::from_xy(r.min().x(), r.min().y()),
+                C::from_xy(r.max().x(), r.min().y()),
+                C::from_xy(r.max().x(), r.max().y()),
+                C::from_xy(r.min().x(), r.max().y()),
+                C::from_xy(r.min().x(), r.min().y()),
             ]
             .into(),
             Vec::new(),
@@ -539,13 +542,14 @@ impl<C: geo_traits::Coord> From<Triangle<C>> for Polygon<C> {
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T> RelativeEq for Polygon<T>
+impl<C> RelativeEq for Polygon<C>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+    C: geo_traits::Coord + AbsDiffEq<Epsilon = C::Scalar> + RelativeEq,
+    C::Scalar: AbsDiffEq<Epsilon = C::Scalar> + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
-        T::default_max_relative()
+        C::Scalar::default_max_relative()
     }
 
     /// Equality assertion within a relative limit.
@@ -584,12 +588,15 @@ where
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Polygon<T> {
-    type Epsilon = T;
+impl<C> AbsDiffEq for Polygon<C>
+where
+    C: geo_traits::Coord + AbsDiffEq<Epsilon = C::Scalar>,
+{
+    type Epsilon = C::Scalar;
 
     #[inline]
     fn default_epsilon() -> Self::Epsilon {
-        T::default_epsilon()
+        C::Scalar::default_epsilon()
     }
 
     /// Equality assertion with an absolute limit.

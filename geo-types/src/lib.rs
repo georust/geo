@@ -138,9 +138,10 @@ mod wkt_macro;
 mod arbitrary;
 
 pub mod geo_traits {
+    use core::ops;
     use std::fmt;
 
-    pub trait Coord: Clone + Copy + PartialEq + fmt::Debug {
+    pub trait Coord: Clone + Copy + PartialEq + fmt::Debug + ops::Sub<Output = Self> {
         type Scalar: crate::CoordNum;
 
         fn x(&self) -> Self::Scalar;

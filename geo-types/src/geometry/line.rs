@@ -155,16 +155,14 @@ impl<C: geo_traits::Coord> Line<C> {
 
 impl<C: geo_traits::Coord> From<[(C::Scalar, C::Scalar); 2]> for Line<C> {
     fn from(coord: [(C::Scalar, C::Scalar); 2]) -> Self {
-        Line::new(
-            C::from_xy(coord[0].0, coord[0].1),
-            C::from_xy(coord[1].0, coord[1].1),
-        )
+        Line::new(C::from_xy(coord[0].0, coord[0].1), C::from_xy(coord[1].0, coord[1].1))
     }
 }
 #[cfg(any(feature = "approx", test))]
-impl<T> RelativeEq for Line<T>
+impl<C: geo_traits::Coord> RelativeEq for Line<C>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+    C: geo_traits::Coord + AbsDiffEq<Epsilon = C::Scalar> + RelativeEq,
+    C::Scalar: AbsDiffEq<Epsilon = C::Scalar> + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
