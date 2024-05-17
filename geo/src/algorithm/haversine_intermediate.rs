@@ -29,7 +29,7 @@ pub trait HaversineIntermediate<T: CoordFloat> {
     /// assert_relative_eq!(i80.y(), i80_should.y(), epsilon = 0.2);
     /// ```
 
-    fn haversine_intermediate(&self, other: &Point<T>, f: T) -> Point<T>;
+    fn haversine_intermediate(&self, other: &Point<T>, ratio: T) -> Point<T>;
     fn haversine_intermediate_fill(
         &self,
         other: &Point<T>,
@@ -42,9 +42,9 @@ impl<T> HaversineIntermediate<T> for Point<T>
 where
     T: CoordFloat + FromPrimitive,
 {
-    fn haversine_intermediate(&self, other: &Point<T>, f: T) -> Point<T> {
+    fn haversine_intermediate(&self, other: &Point<T>, ratio: T) -> Point<T> {
         let params = get_params(self, other);
-        get_point(&params, f)
+        get_point(&params, ratio)
     }
 
     fn haversine_intermediate_fill(
@@ -98,7 +98,7 @@ struct HaversineParams<T: num_traits::Float + FromPrimitive> {
 }
 
 #[allow(clippy::many_single_char_names)]
-fn get_point<T: CoordFloat + FromPrimitive>(params: &HaversineParams<T>, f: T) -> Point<T> {
+fn get_point<T: CoordFloat + FromPrimitive>(params: &HaversineParams<T>, ratio: T) -> Point<T> {
     let one = T::one();
 
     let HaversineParams {
@@ -111,8 +111,8 @@ fn get_point<T: CoordFloat + FromPrimitive>(params: &HaversineParams<T>, f: T) -
         s,
     } = *params;
 
-    let a = ((one - f) * d).sin() / d.sin();
-    let b = (f * d).sin() / d.sin();
+    let a = ((one - ratio) * d).sin() / d.sin();
+    let b = (ratio * d).sin() / d.sin();
 
     let x = a * n + b * o;
     let y = a * p + b * q;
