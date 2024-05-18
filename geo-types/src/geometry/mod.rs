@@ -24,7 +24,7 @@ pub use polygon::Polygon;
 pub use rect::Rect;
 pub use triangle::Triangle;
 
-use crate::{CoordNum, Error};
+use crate::{CoordNum, Error, geo_traits};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -49,41 +49,41 @@ use core::convert::TryFrom;
 ///
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Geometry<T: CoordNum = f64> {
-    Point(Point<T>),
-    Line(Line<T>),
-    LineString(LineString<T>),
-    Polygon(Polygon<T>),
-    MultiPoint(MultiPoint<T>),
-    MultiLineString(MultiLineString<T>),
-    MultiPolygon(MultiPolygon<T>),
-    GeometryCollection(GeometryCollection<T>),
-    Rect(Rect<T>),
-    Triangle(Triangle<T>),
+pub enum Geometry<C: geo_traits::Coord = Coord<f64>> {
+    Point(Point<C::Scalar>),
+    Line(Line<C>),
+    LineString(LineString<C>),
+    Polygon(Polygon<C>),
+    MultiPoint(MultiPoint<C>),
+    MultiLineString(MultiLineString<C>),
+    MultiPolygon(MultiPolygon<C>),
+    GeometryCollection(GeometryCollection<C>),
+    Rect(Rect<C>),
+    Triangle(Triangle<C>),
 }
 
-impl<T: CoordNum> From<Point<T>> for Geometry<T> {
-    fn from(x: Point<T>) -> Self {
+impl<C: geo_traits::Coord> From<Point<C::Scalar>> for Geometry<C> {
+    fn from(x: Point<C::Scalar>) -> Self {
         Self::Point(x)
     }
 }
-impl<T: CoordNum> From<Line<T>> for Geometry<T> {
-    fn from(x: Line<T>) -> Self {
+impl<C: geo_traits::Coord> From<Line<C>> for Geometry<C> {
+    fn from(x: Line<C>) -> Self {
         Self::Line(x)
     }
 }
-impl<T: CoordNum> From<LineString<T>> for Geometry<T> {
-    fn from(x: LineString<T>) -> Self {
+impl<C: geo_traits::Coord> From<LineString<C>> for Geometry<C> {
+    fn from(x: LineString<C>) -> Self {
         Self::LineString(x)
     }
 }
-impl<T: CoordNum> From<Polygon<T>> for Geometry<T> {
-    fn from(x: Polygon<T>) -> Self {
+impl<C: geo_traits::Coord> From<Polygon<C>> for Geometry<C> {
+    fn from(x: Polygon<C>) -> Self {
         Self::Polygon(x)
     }
 }
-impl<T: CoordNum> From<MultiPoint<T>> for Geometry<T> {
-    fn from(x: MultiPoint<T>) -> Self {
+impl<C: geo_traits::Coord> From<MultiPoint<C>> for Geometry<C> {
+    fn from(x: MultiPoint<C>) -> Self {
         Self::MultiPoint(x)
     }
 }

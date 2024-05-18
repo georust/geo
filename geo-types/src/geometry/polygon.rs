@@ -1,5 +1,5 @@
-use crate::geo_traits::{self, Coord};
-use crate::{Coord, CoordFloat, CoordNum, LineString, Point, Rect, Triangle};
+use crate::geo_traits::{self, Coord as CoordTrait};
+use crate::{Coord, CoordFloat, LineString, Point, Rect, Triangle};
 use alloc::vec;
 use alloc::vec::Vec;
 use num_traits::{Float, Signed};
@@ -412,7 +412,7 @@ impl<C: geo_traits::Coord> Polygon<C> {
     /// Wrap-around previous-vertex
     fn previous_vertex(&self, current_vertex: usize) -> usize
     where
-        C: Float,
+        C::Scalar: Float,
     {
         (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
     }
@@ -591,6 +591,7 @@ where
 impl<C> AbsDiffEq for Polygon<C>
 where
     C: geo_traits::Coord + AbsDiffEq<Epsilon = C::Scalar>,
+    C::Scalar: AbsDiffEq<Epsilon = C::Scalar>,
 {
     type Epsilon = C::Scalar;
 
@@ -634,11 +635,12 @@ where
 ))]
 macro_rules! impl_rstar_polygon {
     ($rstar:ident) => {
-        impl<T> $rstar::RTreeObject for Polygon<T>
+        impl<C> $rstar::RTreeObject for Polygon<C>
         where
-            T: ::num_traits::Float + ::$rstar::RTreeNum,
+            C: geo_traits::Coord,
+            C::Scalar: Float + ::$rstar::RTreeNum,
         {
-            type Envelope = ::$rstar::AABB<Point<T>>;
+            type Envelope = ::$rstar::AABB<Point<C::Scalar>>;
 
             fn envelope(&self) -> Self::Envelope {
                 self.exterior.envelope()
