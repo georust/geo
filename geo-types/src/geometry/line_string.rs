@@ -7,7 +7,6 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
-use std::fmt;
 
 /// An ordered collection of two or more [`Coord`]s, representing a
 /// path between locations.
@@ -139,14 +138,8 @@ use std::fmt;
 pub struct LineString<C: geo_traits::Coord = Point<f64>>(pub Vec<C>);
 
 /// A [`Point`] iterator returned by the `points` method
+#[derive(Debug)]
 pub struct PointsIter<'a, C: geo_traits::Coord + 'a>(::core::slice::Iter<'a, C>);
-
-impl<'a, C: fmt::Debug + geo_traits::Coord + 'a> fmt::Debug for PointsIter<'a, C> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let formatted = self.0.fmt(f);
-        f.debug_tuple("PointsIter").field(&formatted).finish()
-    }
-}
 
 impl<'a, C: geo_traits::Coord + 'a> Iterator for PointsIter<'a, C> {
     type Item = Point<C::Scalar>;
