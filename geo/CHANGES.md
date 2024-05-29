@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Implement getter methods on `AffineTransform` to access internal elements.
+  * <https://github.com/georust/geo/pull/1159>
+
 ## 0.28.0
 
 * BREAKING: HaversineBearing (also Bearing) and GeodesicBearing now return `Result<T,String>` 
