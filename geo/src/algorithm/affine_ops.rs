@@ -115,6 +115,22 @@ impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> Affin
 ///     (x: -0.5688687, y: 5.5688687)
 /// ], max_relative = 1.0);
 /// ```
+///
+/// ## Create affine transform manually, and access elements using getter methods
+/// ```
+/// use geo::AffineTransform;
+///
+/// let transform = AffineTransform::new(10.0, 0.0, 400_000.0, 0.0, -10.0, 500_000.0);
+///
+/// let a: f64 = transform.a();
+/// let b: f64 = transform.b();
+/// let xoff: f64 = transform.xoff();
+/// let d: f64 = transform.d();
+/// let e: f64 = transform.e();
+/// let yoff: f64 = transform.yoff();
+/// assert_eq!(transform, AffineTransform::new(a, b, xoff, d, e, yoff))
+/// ```
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct AffineTransform<T: CoordNum = f64>([[T; 3]; 3]);
 
@@ -300,11 +316,36 @@ impl<T: CoordNum> AffineTransform<T> {
     /// The argument order matches that of the affine transform matrix:
     ///```ignore
     /// [[a, b, xoff],
-    /// [d, e, yoff],
-    /// [0, 0, 1]] <-- not part of the input arguments
+    ///  [d, e, yoff],
+    ///  [0, 0, 1]] <-- not part of the input arguments
     /// ```
     pub fn new(a: T, b: T, xoff: T, d: T, e: T, yoff: T) -> Self {
         Self([[a, b, xoff], [d, e, yoff], [T::zero(), T::zero(), T::one()]])
+    }
+
+    /// See [AffineTransform::new] for this value's role in the affine transformation.
+    pub fn a(&self) -> T {
+        self.0[0][0]
+    }
+    /// See [AffineTransform::new] for this value's role in the affine transformation.
+    pub fn b(&self) -> T {
+        self.0[0][1]
+    }
+    /// See [AffineTransform::new] for this value's role in the affine transformation.
+    pub fn xoff(&self) -> T {
+        self.0[0][2]
+    }
+    /// See [AffineTransform::new] for this value's role in the affine transformation.
+    pub fn d(&self) -> T {
+        self.0[1][0]
+    }
+    /// See [AffineTransform::new] for this value's role in the affine transformation.
+    pub fn e(&self) -> T {
+        self.0[1][1]
+    }
+    /// See [AffineTransform::new] for this value's role in the affine transformation.
+    pub fn yoff(&self) -> T {
+        self.0[1][2]
     }
 }
 
@@ -584,5 +625,15 @@ mod tests {
         let expected = poly.clone();
         poly.affine_transform_mut(&identity);
         assert_eq!(expected, poly);
+    }
+    #[test]
+    fn test_affine_transform_getters() {
+        let transform = AffineTransform::new(10.0, 0.0, 400_000.0, 0.0, -10.0, 500_000.0);
+        assert_eq!(transform.a(), 10.0);
+        assert_eq!(transform.b(), 0.0);
+        assert_eq!(transform.xoff(), 400_000.0);
+        assert_eq!(transform.d(), 0.0);
+        assert_eq!(transform.e(), -10.0);
+        assert_eq!(transform.yoff(), 500_000.0);
     }
 }
