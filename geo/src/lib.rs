@@ -170,6 +170,13 @@
 //! - **[`Transform`]**: Transform a geometry using Proj.
 //! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry.
 //!
+//! # Spatial Indexing
+//!
+//! `geo` geometries (`Point`, `Line`, `LineString`, `Polygon`) can be used with the [rstar](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#usage)
+//! R*-tree crate for fast distance and nearest-neighbour queries. Multi- geometries can be added to the tree by iterating over
+//! their members and adding them. Note in particular the availability of the [`bulk_load`](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#method.bulk_load)
+//! method and [`GeomWithData`](https://docs.rs/rstar/0.12.0/rstar/primitives/struct.GeomWithData.html) struct.
+//!
 //! # Features
 //!
 //! The following optional [Cargo features] are available:
