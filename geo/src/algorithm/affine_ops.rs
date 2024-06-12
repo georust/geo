@@ -389,7 +389,7 @@ impl<T: CoordNum> fmt::Debug for AffineTransform<T> {
         f.debug_struct("AffineTransform")
             .field("a", &self.0[0][0])
             .field("b", &self.0[0][1])
-            .field("xoff", &self.0[1][2])
+            .field("xoff", &self.0[0][2])
             .field("d", &self.0[1][0])
             .field("e", &self.0[1][1])
             .field("yoff", &self.0[1][2])

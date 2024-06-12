@@ -4,6 +4,8 @@
 
 * Implement getter methods on `AffineTransform` to access internal elements.
   * <https://github.com/georust/geo/pull/1159>
+* Fix issue in Debug impl for AffineTransform where yoff is shown instead of xoff
+  * <https://github.com/georust/geo/pull/1191>
 
 ## 0.28.0
 
