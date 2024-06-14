@@ -1,5 +1,7 @@
+use geo_types::CoordFloat;
+
 use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
-use crate::geometry::*;
+use crate::{geometry::*, Area, CoordsIter, HasDimensions};
 use crate::{CoordNum, GeoFloat};
 
 // ┌──────────────────────────┐
@@ -41,5 +43,43 @@ where
     }
 }
 
-impl_contains_from_relate!(Rect<T>, [Line<T>, LineString<T>, Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Triangle<T>]);
+impl<T> Contains<Polygon<T>> for Rect<T>
+where
+    T: CoordFloat,
+{
+    fn contains(&self, rhs: &Polygon<T>) -> bool {
+        // the polygon must not be empty
+        if rhs.is_empty() {
+            return false;
+        }
+
+        // none of the polygon's points may lie outside the rectangle
+        let mut points_inside = 0;
+        for c in rhs.exterior_coords_iter() {
+            if c.x < self.min().x || c.x > self.max().x || c.y < self.min().y || c.y > self.max().y
+            {
+                return false;
+            }
+            if c.x > self.min().x && c.x < self.max().x && c.y > self.min().y && c.y < self.max().y
+            {
+                points_inside += 1;
+            }
+        }
+
+        // The polygon must not lie completely inside the rectangle's boundary.
+        // In other words: at least one point of the interior of the polygon
+        // must lie in the interior of the rectangle. Since we know that the
+        // rectangle is convex, we just need make sure that either at least
+        // one point of the polygon lies inside the rectangle's interior or
+        // that the polygon's interior is not empty, in which case it will
+        // definitely intersect with the rectangle's interior.
+        if points_inside == 0 && rhs.signed_area().is_zero() {
+            return false;
+        }
+
+        true
+    }
+}
+
+impl_contains_from_relate!(Rect<T>, [Line<T>, LineString<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Triangle<T>]);
 impl_contains_geometry_for!(Rect<T>);

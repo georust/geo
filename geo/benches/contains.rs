@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use geo::contains::Contains;
-use geo::{point, polygon, Line, Point, Polygon, Triangle};
+use geo::{coord, point, polygon, Line, Point, Polygon, Rect, Triangle};
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("point in simple polygon", |bencher| {
@@ -126,6 +126,23 @@ fn criterion_benchmark(c: &mut Criterion) {
 
         bencher.iter(|| {
             assert!(!criterion::black_box(&triangle).contains(criterion::black_box(&point)));
+        });
+    });
+
+    c.bench_function("Rect contains polygon", |bencher| {
+        let polygon = polygon![
+            (x: 150., y: 350.),
+            (x: 100., y: 350.),
+            (x: 210., y: 160.),
+            (x: 290., y: 350.),
+            (x: 250., y: 350.),
+            (x: 200., y: 250.),
+            (x: 150., y: 350.),
+        ];
+        let rect = Rect::new(coord! { x: 90., y: 150. }, coord! { x: 300., y: 360. });
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).contains(criterion::black_box(&polygon)));
         });
     });
 }

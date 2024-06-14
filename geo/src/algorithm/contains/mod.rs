@@ -95,6 +95,7 @@ pub(crate) use impl_contains_geometry_for;
 mod test {
     use crate::line_string;
     use crate::Contains;
+    use crate::Relate;
     use crate::{coord, Coord, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
 
     #[test]
@@ -554,5 +555,149 @@ mod test {
         assert!(!tri.contains(&pt));
         let pt: Point = (0.5, 0.5).into();
         assert!(!tri.contains(&pt));
+    }
+
+    #[test]
+    fn rect_contains_polygon() {
+        let rect = Rect::new(coord! { x: 90., y: 150. }, coord! { x: 300., y: 360. });
+        let poly = Polygon::new(
+            line_string![
+                (x: 150., y: 350.),
+                (x: 100., y: 350.),
+                (x: 210., y: 160.),
+                (x: 290., y: 350.),
+                (x: 250., y: 350.),
+                (x: 200., y: 250.),
+                (x: 150., y: 350.),
+            ],
+            vec![],
+        );
+        assert_eq!(rect.contains(&poly), rect.relate(&poly).is_contains());
+    }
+
+    #[test]
+    fn rect_contains_touching_polygon() {
+        let rect = Rect::new(coord! { x: 90., y: 150. }, coord! { x: 300., y: 360. });
+        let touching_poly = Polygon::new(
+            line_string![
+                (x: 150., y: 350.),
+                (x: 90.,  y: 350.),
+                (x: 210., y: 160.),
+                (x: 290., y: 350.),
+                (x: 250., y: 350.),
+                (x: 200., y: 250.),
+                (x: 150., y: 350.),
+            ],
+            vec![],
+        );
+        assert_eq!(
+            rect.contains(&touching_poly),
+            rect.relate(&touching_poly).is_contains()
+        );
+
+        let touching_rect = Rect::new(coord! { x: 90., y: 200. }, coord! { x: 200., y: 300. });
+        assert_eq!(
+            rect.contains(&touching_rect),
+            rect.relate(&touching_rect).is_contains()
+        );
+    }
+
+    #[test]
+    fn rect_contains_empty_polygon() {
+        let rect = Rect::new(coord! { x: 90., y: 150. }, coord! { x: 300., y: 360. });
+        let empty_poly = Polygon::new(line_string![], vec![]);
+        assert_eq!(
+            rect.contains(&empty_poly),
+            rect.relate(&empty_poly).is_contains()
+        );
+    }
+
+    #[test]
+    fn rect_contains_polygon_empty_area() {
+        let rect = Rect::new(coord! { x: 90., y: 150. }, coord! { x: 300., y: 360. });
+        let empty_poly = Polygon::new(
+            line_string![
+                (x: 100., y: 200.),
+                (x: 100., y: 200.),
+                (x: 100., y: 200.),
+                (x: 100., y: 200.),
+            ],
+            vec![],
+        );
+        assert_eq!(
+            rect.contains(&empty_poly),
+            rect.relate(&empty_poly).is_contains()
+        );
+    }
+
+    #[test]
+    fn rect_contains_rect_polygon() {
+        let rect = Rect::new(coord! { x: 90., y: 150. }, coord! { x: 300., y: 360. });
+        let rect_poly = rect.clone().to_polygon();
+        assert_eq!(
+            rect.contains(&rect_poly),
+            rect.relate(&rect_poly).is_contains()
+        );
+    }
+
+    #[test]
+    fn rect_contains_polygon_in_boundary() {
+        let rect = Rect::new(coord! { x: 90. , y: 150. }, coord! { x: 300., y: 360. });
+        let poly_one_border =
+            Rect::new(coord! { x: 90. , y: 150. }, coord! { x: 90., y: 360. }).to_polygon();
+        assert_eq!(
+            rect.contains(&poly_one_border),
+            rect.relate(&poly_one_border).is_contains()
+        );
+
+        let poly_two_borders = Polygon::new(
+            line_string![
+                (x: 90., y: 150.),
+                (x: 300., y: 150.),
+                (x: 90., y: 150.),
+                (x: 90., y: 360.),
+                (x: 90., y: 150.),
+            ],
+            vec![],
+        );
+        assert_eq!(
+            rect.contains(&poly_two_borders),
+            rect.relate(&poly_two_borders).is_contains()
+        );
+    }
+
+    #[test]
+    fn rect_empty_contains_polygon() {
+        let rect = Rect::new(coord! { x: 90. , y: 150. }, coord! { x: 90., y: 150. });
+        let poly = Polygon::new(
+            line_string![
+                (x: 150., y: 350.),
+                (x: 100., y: 350.),
+                (x: 210., y: 160.),
+                (x: 290., y: 350.),
+                (x: 250., y: 350.),
+                (x: 200., y: 250.),
+                (x: 150., y: 350.),
+            ],
+            vec![],
+        );
+        assert_eq!(rect.contains(&poly), rect.relate(&poly).is_contains());
+
+        let rect_poly = rect.clone().to_polygon();
+        assert_eq!(
+            rect.contains(&rect_poly),
+            rect.relate(&rect_poly).is_contains()
+        );
+    }
+
+    #[test]
+    fn rect_contains_point() {
+        let rect = Rect::new(coord! { x: 90., y: 150. }, coord! { x: 300., y: 360. });
+
+        let point1 = Point::new(100., 200.);
+        assert_eq!(rect.contains(&point1), rect.relate(&point1).is_contains());
+
+        let point2 = Point::new(90., 200.);
+        assert_eq!(rect.contains(&point2), rect.relate(&point2).is_contains());
     }
 }
