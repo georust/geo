@@ -633,7 +633,7 @@ mod test {
     #[test]
     fn rect_contains_rect_polygon() {
         let rect = Rect::new(coord! { x: 90., y: 150. }, coord! { x: 300., y: 360. });
-        let rect_poly = rect.clone().to_polygon();
+        let rect_poly = rect.to_polygon();
         assert_eq!(
             rect.contains(&rect_poly),
             rect.relate(&rect_poly).is_contains()
@@ -721,7 +721,7 @@ mod test {
         );
         assert_eq!(rect.contains(&poly), rect.relate(&poly).is_contains());
 
-        let rect_poly = rect.clone().to_polygon();
+        let rect_poly = rect.to_polygon();
         assert_eq!(
             rect.contains(&rect_poly),
             rect.relate(&rect_poly).is_contains()
