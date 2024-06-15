@@ -1,7 +1,7 @@
 use geo_types::CoordFloat;
 
 use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
-use crate::{geometry::*, Area, CoordsIter, HasDimensions};
+use crate::{geometry::*, Area, CoordsIter, HasDimensions, Intersects};
 use crate::{CoordNum, GeoFloat};
 
 // ┌──────────────────────────┐
@@ -56,12 +56,10 @@ where
         // none of the polygon's points may lie outside the rectangle
         let mut points_inside = 0;
         for c in rhs.exterior_coords_iter() {
-            if c.x < self.min().x || c.x > self.max().x || c.y < self.min().y || c.y > self.max().y
-            {
+            if !self.intersects(&c) {
                 return false;
             }
-            if c.x > self.min().x && c.x < self.max().x && c.y > self.min().y && c.y < self.max().y
-            {
+            if self.contains(&c) {
                 points_inside += 1;
             }
         }
