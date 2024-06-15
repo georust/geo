@@ -664,6 +664,44 @@ mod test {
             rect.contains(&poly_two_borders),
             rect.relate(&poly_two_borders).is_contains()
         );
+
+        let poly_two_borders_triangle = Polygon::new(
+            line_string![
+                (x: 90., y: 150.),
+                (x: 300., y: 150.),
+                (x: 90., y: 360.),
+                (x: 90., y: 150.),
+            ],
+            vec![],
+        );
+        assert_eq!(
+            rect.contains(&poly_two_borders_triangle),
+            rect.relate(&poly_two_borders_triangle).is_contains()
+        );
+    }
+
+    #[test]
+    fn rect_contains_polygon_in_boundary_with_hole() {
+        let rect = Rect::new(coord! { x: 90. , y: 150. }, coord! { x: 300., y: 360. });
+        let poly_two_borders_triangle_with_hole = Polygon::new(
+            line_string![
+                (x: 90., y: 150.),
+                (x: 300., y: 150.),
+                (x: 90., y: 360.),
+                (x: 90., y: 150.),
+            ],
+            vec![line_string![
+                (x: 90., y: 150.),
+                (x: 300., y: 150.),
+                (x: 90., y: 360.),
+                (x: 90., y: 150.),
+            ]],
+        );
+        assert_eq!(
+            rect.contains(&poly_two_borders_triangle_with_hole),
+            rect.relate(&poly_two_borders_triangle_with_hole)
+                .is_contains()
+        );
     }
 
     #[test]
