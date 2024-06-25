@@ -22,23 +22,19 @@ use std::{fmt, ops::Mul, ops::Neg};
 /// ## Build up transforms by beginning with a constructor, then chaining mutation operations
 /// ```
 /// use geo::{AffineOps, AffineTransform};
-/// use geo::{line_string, BoundingRect, Point, LineString};
+/// use geo::{point, line_string, BoundingRect};
 /// use approx::assert_relative_eq;
 ///
-/// let ls: LineString = line_string![
-///     (x: 0.0f64, y: 0.0f64),
-///     (x: 0.0f64, y: 10.0f64),
-/// ];
-/// let center = ls.bounding_rect().unwrap().center();
+/// let line_string = line_string![(x: 0.0, y: 0.0),(x: 1.0, y: 1.0)];
 ///
-/// let transform = AffineTransform::skew(40.0, 40.0, center).rotated(45.0, center);
+/// let transform = AffineTransform::translate(1.0, 1.0).scaled(2.0, 2.0, point!(x: 0.0, y: 0.0));
 ///
-/// let skewed_rotated = ls.affine_transform(&transform);
+/// let transformed_line_string = line_string.affine_transform(&transform);
 ///
-/// assert_relative_eq!(skewed_rotated, line_string![
-///     (x: 0.5688687f64, y: 4.4311312),
-///     (x: -0.5688687, y: 5.5688687)
-/// ], max_relative = 1.0);
+/// assert_relative_eq!(
+///     transformed_line_string,
+///     line_string![(x: 2.0, y: 2.0),(x: 4.0, y: 4.0)]
+/// );
 /// ```
 pub trait AffineOps<T: CoordNum> {
     /// Apply `transform` immutably, outputting a new geometry.
@@ -97,23 +93,19 @@ impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> Affin
 /// ## Build up transforms by beginning with a constructor, then chaining mutation operations
 /// ```
 /// use geo::{AffineOps, AffineTransform};
-/// use geo::{line_string, BoundingRect, Point, LineString};
+/// use geo::{point, line_string, BoundingRect};
 /// use approx::assert_relative_eq;
 ///
-/// let ls: LineString = line_string![
-///     (x: 0.0f64, y: 0.0f64),
-///     (x: 0.0f64, y: 10.0f64),
-/// ];
-/// let center = ls.bounding_rect().unwrap().center();
+/// let line_string = line_string![(x: 0.0, y: 0.0),(x: 1.0, y: 1.0)];
 ///
-/// let transform = AffineTransform::skew(40.0, 40.0, center).rotated(45.0, center);
+/// let transform = AffineTransform::translate(1.0, 1.0).scaled(2.0, 2.0, point!(x: 0.0, y: 0.0));
 ///
-/// let skewed_rotated = ls.affine_transform(&transform);
+/// let transformed_line_string = line_string.affine_transform(&transform);
 ///
-/// assert_relative_eq!(skewed_rotated, line_string![
-///     (x: 0.5688687f64, y: 4.4311312),
-///     (x: -0.5688687, y: 5.5688687)
-/// ], max_relative = 1.0);
+/// assert_relative_eq!(
+///     transformed_line_string,
+///     line_string![(x: 2.0, y: 2.0),(x: 4.0, y: 4.0)]
+/// );
 /// ```
 ///
 /// ## Create affine transform manually, and access elements using getter methods
@@ -150,38 +142,38 @@ impl<T: CoordNum> AffineTransform<T> {
         // lol
         Self([
             [
-                (self.0[0][0] * other.0[0][0])
-                    + (self.0[0][1] * other.0[1][0])
-                    + (self.0[0][2] * other.0[2][0]),
-                (self.0[0][0] * other.0[0][1])
-                    + (self.0[0][1] * other.0[1][1])
-                    + (self.0[0][2] * other.0[2][1]),
-                (self.0[0][0] * other.0[0][2])
-                    + (self.0[0][1] * other.0[1][2])
-                    + (self.0[0][2] * other.0[2][2]),
+                (other.0[0][0] * self.0[0][0])
+                    + (other.0[0][1] * self.0[1][0])
+                    + (other.0[0][2] * self.0[2][0]),
+                (other.0[0][0] * self.0[0][1])
+                    + (other.0[0][1] * self.0[1][1])
+                    + (other.0[0][2] * self.0[2][1]),
+                (other.0[0][0] * self.0[0][2])
+                    + (other.0[0][1] * self.0[1][2])
+                    + (other.0[0][2] * self.0[2][2]),
             ],
             [
-                (self.0[1][0] * other.0[0][0])
-                    + (self.0[1][1] * other.0[1][0])
-                    + (self.0[1][2] * other.0[2][0]),
-                (self.0[1][0] * other.0[0][1])
-                    + (self.0[1][1] * other.0[1][1])
-                    + (self.0[1][2] * other.0[2][1]),
-                (self.0[1][0] * other.0[0][2])
-                    + (self.0[1][1] * other.0[1][2])
-                    + (self.0[1][2] * other.0[2][2]),
+                (other.0[1][0] * self.0[0][0])
+                    + (other.0[1][1] * self.0[1][0])
+                    + (other.0[1][2] * self.0[2][0]),
+                (other.0[1][0] * self.0[0][1])
+                    + (other.0[1][1] * self.0[1][1])
+                    + (other.0[1][2] * self.0[2][1]),
+                (other.0[1][0] * self.0[0][2])
+                    + (other.0[1][1] * self.0[1][2])
+                    + (other.0[1][2] * self.0[2][2]),
             ],
             [
                 // this section isn't technically necessary since the last row is invariant: [0, 0, 1]
-                (self.0[2][0] * other.0[0][0])
-                    + (self.0[2][1] * other.0[1][0])
-                    + (self.0[2][2] * other.0[2][0]),
-                (self.0[2][0] * other.0[0][1])
-                    + (self.0[2][1] * other.0[1][1])
-                    + (self.0[2][2] * other.0[2][1]),
-                (self.0[2][0] * other.0[0][2])
-                    + (self.0[2][1] * other.0[1][2])
-                    + (self.0[2][2] * other.0[2][2]),
+                (other.0[2][0] * self.0[0][0])
+                    + (other.0[2][1] * self.0[1][0])
+                    + (other.0[2][2] * self.0[2][0]),
+                (other.0[2][0] * self.0[0][1])
+                    + (other.0[2][1] * self.0[1][1])
+                    + (other.0[2][2] * self.0[2][1]),
+                (other.0[2][0] * self.0[0][2])
+                    + (other.0[2][1] * self.0[1][2])
+                    + (other.0[2][2] * self.0[2][2]),
             ],
         ])
     }
@@ -578,12 +570,12 @@ mod tests {
         let a = AffineTransform::new(1, 2, 5, 3, 4, 6);
         let b = AffineTransform::new(7, 8, 11, 9, 10, 12);
         let composed = a.compose(&b);
-        assert_eq!(composed.0[0][0], 25);
-        assert_eq!(composed.0[0][1], 28);
-        assert_eq!(composed.0[0][2], 40);
-        assert_eq!(composed.0[1][0], 57);
-        assert_eq!(composed.0[1][1], 64);
-        assert_eq!(composed.0[1][2], 87);
+        assert_eq!(composed.0[0][0], 31);
+        assert_eq!(composed.0[0][1], 46);
+        assert_eq!(composed.0[0][2], 94);
+        assert_eq!(composed.0[1][0], 39);
+        assert_eq!(composed.0[1][1], 58);
+        assert_eq!(composed.0[1][2], 117);
     }
     #[test]
     fn test_transform_composition() {
@@ -610,7 +602,7 @@ mod tests {
         let mut poly = wkt! { POLYGON((0.0 0.0,0.0 2.0,1.0 2.0)) };
         poly.affine_transform_mut(&transform);
 
-        let expected = wkt! { POLYGON((1.0 1.0,1.0 5.0,3.0 5.0)) };
+        let expected = wkt! { POLYGON((2.0 2.0,2.0 6.0,4.0 6.0)) };
         assert_eq!(expected, poly);
     }
     #[test]
@@ -635,5 +627,22 @@ mod tests {
         assert_eq!(transform.d(), 0.0);
         assert_eq!(transform.e(), -10.0);
         assert_eq!(transform.yoff(), 500_000.0);
+    }
+    #[test]
+    fn test_compose() {
+        let point = Point::new(1., 0.);
+
+        let translate = AffineTransform::translate(1., 0.);
+        let scale = AffineTransform::scale(4., 1., [0., 0.]);
+        let composed = translate.compose(&scale);
+
+        assert_eq!(point.affine_transform(&translate), Point::new(2., 0.));
+        assert_eq!(point.affine_transform(&scale), Point::new(4., 0.));
+        assert_eq!(
+            point.affine_transform(&translate).affine_transform(&scale),
+            Point::new(8., 0.)
+        );
+
+        assert_eq!(point.affine_transform(&composed), Point::new(8., 0.));
     }
 }
