@@ -6,6 +6,8 @@
   * <https://github.com/georust/geo/pull/1159>
 * Fix issue in Debug impl for AffineTransform where yoff is shown instead of xoff
   * <https://github.com/georust/geo/pull/1191>
+* `Polygon` in `Rect` performance improvements.
+  * <https://github.com/georust/geo/pull/1192>
 * Fix `AffineTransform::compose` ordering to be conventional - such that the argument is applied *after* self.
   * <https://github.com/georust/geo/pull/1196>
 
