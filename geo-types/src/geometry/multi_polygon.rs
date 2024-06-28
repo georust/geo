@@ -1,10 +1,11 @@
-use crate::{CoordNum, Polygon};
+use crate::{CoordNum, Polygon, Coord};
 
 use alloc::vec;
 use alloc::vec::Vec;
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 use core::iter::FromIterator;
+use crate::geo_traits;
 
 /// A collection of [`Polygon`s](struct.Polygon.html). Can
 /// be created from a `Vec` of `Polygon`s, or from an
@@ -29,7 +30,7 @@ use core::iter::FromIterator;
 /// predicates that operate on it.
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MultiPolygon<T: CoordNum = f64>(pub Vec<Polygon<T>>);
+pub struct MultiPolygon<C: geo_traits::Coord = Coord<f64>>(pub Vec<Polygon<T>>);
 
 impl<T: CoordNum, IP: Into<Polygon<T>>> From<IP> for MultiPolygon<T> {
     fn from(x: IP) -> Self {

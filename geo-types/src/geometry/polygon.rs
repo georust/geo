@@ -1,4 +1,5 @@
-use crate::{CoordFloat, CoordNum, LineString, Point, Rect, Triangle};
+use crate::geo_traits::{self, Coord as CoordTrait};
+use crate::{Coord, CoordFloat, LineString, Point, Rect, Triangle};
 use alloc::vec;
 use alloc::vec::Vec;
 use num_traits::{Float, Signed};
@@ -68,12 +69,12 @@ use approx::{AbsDiffEq, RelativeEq};
 /// [`LineString`]: line_string/struct.LineString.html
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Polygon<T: CoordNum = f64> {
-    exterior: LineString<T>,
-    interiors: Vec<LineString<T>>,
+pub struct Polygon<C: geo_traits::Coord = Coord<f64>> {
+    exterior: LineString<C>,
+    interiors: Vec<LineString<C>>,
 }
 
-impl<T: CoordNum> Polygon<T> {
+impl<C: geo_traits::Coord> Polygon<C> {
     /// Create a new `Polygon` with the provided exterior `LineString` ring and
     /// interior `LineString` rings.
     ///
@@ -124,7 +125,7 @@ impl<T: CoordNum> Polygon<T> {
     ///     &LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.),])
     /// );
     /// ```
-    pub fn new(mut exterior: LineString<T>, mut interiors: Vec<LineString<T>>) -> Self {
+    pub fn new(mut exterior: LineString<C>, mut interiors: Vec<LineString<C>>) -> Self {
         exterior.close();
         for interior in &mut interiors {
             interior.close();
@@ -170,7 +171,7 @@ impl<T: CoordNum> Polygon<T> {
     ///     ])]
     /// );
     /// ```
-    pub fn into_inner(self) -> (LineString<T>, Vec<LineString<T>>) {
+    pub fn into_inner(self) -> (LineString<C>, Vec<LineString<C>>) {
         (self.exterior, self.interiors)
     }
 
@@ -187,7 +188,7 @@ impl<T: CoordNum> Polygon<T> {
     ///
     /// assert_eq!(polygon.exterior(), &exterior);
     /// ```
-    pub fn exterior(&self) -> &LineString<T> {
+    pub fn exterior(&self) -> &LineString<C> {
         &self.exterior
     }
 
@@ -240,7 +241,7 @@ impl<T: CoordNum> Polygon<T> {
     /// [will be closed]: #linestring-closing-operation
     pub fn exterior_mut<F>(&mut self, f: F)
     where
-        F: FnOnce(&mut LineString<T>),
+        F: FnOnce(&mut LineString<C>),
     {
         f(&mut self.exterior);
         self.exterior.close();
@@ -249,7 +250,7 @@ impl<T: CoordNum> Polygon<T> {
     /// Fallible alternative to [`exterior_mut`](Polygon::exterior_mut).
     pub fn try_exterior_mut<F, E>(&mut self, f: F) -> Result<(), E>
     where
-        F: FnOnce(&mut LineString<T>) -> Result<(), E>,
+        F: FnOnce(&mut LineString<C>) -> Result<(), E>,
     {
         f(&mut self.exterior)?;
         self.exterior.close();
@@ -277,7 +278,7 @@ impl<T: CoordNum> Polygon<T> {
     ///
     /// assert_eq!(interiors, polygon.interiors());
     /// ```
-    pub fn interiors(&self) -> &[LineString<T>] {
+    pub fn interiors(&self) -> &[LineString<C>] {
         &self.interiors
     }
 
@@ -352,7 +353,7 @@ impl<T: CoordNum> Polygon<T> {
     /// [will be closed]: #linestring-closing-operation
     pub fn interiors_mut<F>(&mut self, f: F)
     where
-        F: FnOnce(&mut [LineString<T>]),
+        F: FnOnce(&mut [LineString<C>]),
     {
         f(&mut self.interiors);
         for interior in &mut self.interiors {
@@ -363,7 +364,7 @@ impl<T: CoordNum> Polygon<T> {
     /// Fallible alternative to [`interiors_mut`](Self::interiors_mut).
     pub fn try_interiors_mut<F, E>(&mut self, f: F) -> Result<(), E>
     where
-        F: FnOnce(&mut [LineString<T>]) -> Result<(), E>,
+        F: FnOnce(&mut [LineString<C>]) -> Result<(), E>,
     {
         f(&mut self.interiors)?;
         for interior in &mut self.interiors {
@@ -402,7 +403,7 @@ impl<T: CoordNum> Polygon<T> {
     /// ```
     ///
     /// [will be closed]: #linestring-closing-operation
-    pub fn interiors_push(&mut self, new_interior: impl Into<LineString<T>>) {
+    pub fn interiors_push(&mut self, new_interior: impl Into<LineString<C>>) {
         let mut new_interior = new_interior.into();
         new_interior.close();
         self.interiors.push(new_interior);
@@ -411,7 +412,7 @@ impl<T: CoordNum> Polygon<T> {
     /// Wrap-around previous-vertex
     fn previous_vertex(&self, current_vertex: usize) -> usize
     where
-        T: Float,
+        C::Scalar: Float,
     {
         (current_vertex + (self.exterior.0.len() - 1) - 1) % (self.exterior.0.len() - 1)
     }
@@ -476,7 +477,10 @@ enum ListSign {
     Mixed,
 }
 
-impl<T: CoordFloat + Signed> Polygon<T> {
+impl<C: geo_traits::Coord> Polygon<C>
+where
+    C::Scalar: CoordFloat + Signed,
+{
     /// Determine whether a Polygon is convex
     // For each consecutive pair of edges of the polygon (each triplet of points),
     // compute the z-component of the cross product of the vectors defined by the
@@ -498,9 +502,9 @@ impl<T: CoordFloat + Signed> Polygon<T> {
             .map(|(idx, _)| {
                 let prev_1 = self.previous_vertex(idx);
                 let prev_2 = self.previous_vertex(prev_1);
-                Point::from(self.exterior[prev_2]).cross_prod(
-                    Point::from(self.exterior[prev_1]),
-                    Point::from(self.exterior[idx]),
+                Point::from_coord(self.exterior[prev_2]).cross_prod(
+                    Point::from_coord(self.exterior[prev_1]),
+                    Point::from_coord(self.exterior[idx]),
                 )
             })
             // accumulate and check cross-product result signs in a single pass
@@ -515,15 +519,15 @@ impl<T: CoordFloat + Signed> Polygon<T> {
     }
 }
 
-impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
-    fn from(r: Rect<T>) -> Self {
+impl<C: geo_traits::Coord> From<Rect<C>> for Polygon<C> {
+    fn from(r: Rect<C>) -> Self {
         Polygon::new(
             vec![
-                (r.min().x, r.min().y),
-                (r.max().x, r.min().y),
-                (r.max().x, r.max().y),
-                (r.min().x, r.max().y),
-                (r.min().x, r.min().y),
+                C::from_xy(r.min().x(), r.min().y()),
+                C::from_xy(r.max().x(), r.min().y()),
+                C::from_xy(r.max().x(), r.max().y()),
+                C::from_xy(r.min().x(), r.max().y()),
+                C::from_xy(r.min().x(), r.min().y()),
             ]
             .into(),
             Vec::new(),
@@ -531,20 +535,21 @@ impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
     }
 }
 
-impl<T: CoordNum> From<Triangle<T>> for Polygon<T> {
-    fn from(t: Triangle<T>) -> Self {
+impl<C: geo_traits::Coord> From<Triangle<C>> for Polygon<C> {
+    fn from(t: Triangle<C>) -> Self {
         Polygon::new(vec![t.0, t.1, t.2, t.0].into(), Vec::new())
     }
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T> RelativeEq for Polygon<T>
+impl<C> RelativeEq for Polygon<C>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+    C: geo_traits::Coord + AbsDiffEq<Epsilon = C::Scalar> + RelativeEq,
+    C::Scalar: AbsDiffEq<Epsilon = C::Scalar> + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
-        T::default_max_relative()
+        C::Scalar::default_max_relative()
     }
 
     /// Equality assertion within a relative limit.
@@ -583,12 +588,16 @@ where
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Polygon<T> {
-    type Epsilon = T;
+impl<C> AbsDiffEq for Polygon<C>
+where
+    C: geo_traits::Coord + AbsDiffEq<Epsilon = C::Scalar>,
+    C::Scalar: AbsDiffEq<Epsilon = C::Scalar>,
+{
+    type Epsilon = C::Scalar;
 
     #[inline]
     fn default_epsilon() -> Self::Epsilon {
-        T::default_epsilon()
+        C::Scalar::default_epsilon()
     }
 
     /// Equality assertion with an absolute limit.
@@ -626,11 +635,12 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Polygon<T> {
 ))]
 macro_rules! impl_rstar_polygon {
     ($rstar:ident) => {
-        impl<T> $rstar::RTreeObject for Polygon<T>
+        impl<C> $rstar::RTreeObject for Polygon<C>
         where
-            T: ::num_traits::Float + ::$rstar::RTreeNum,
+            C: geo_traits::Coord,
+            C::Scalar: Float + ::$rstar::RTreeNum,
         {
-            type Envelope = ::$rstar::AABB<Point<T>>;
+            type Envelope = ::$rstar::AABB<Point<C::Scalar>>;
 
             fn envelope(&self) -> Self::Envelope {
                 self.exterior.envelope()

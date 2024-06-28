@@ -1,4 +1,5 @@
 use crate::{point, Coord, CoordFloat, CoordNum};
+use crate::geo_traits;
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -29,6 +30,22 @@ use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAss
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T: CoordNum = f64>(pub Coord<T>);
+
+impl<T: CoordNum> geo_traits::Coord for Point<T> {
+    type Scalar = T;
+
+    fn x(&self) -> Self::Scalar {
+        self.0.x()
+    }
+
+    fn y(&self) -> Self::Scalar {
+        self.0.y()
+    }
+
+    fn from_xy(x: Self::Scalar, y: Self::Scalar) -> Self {
+        Self(Coord::from_xy(x, y))
+    }
+}
 
 impl<T: CoordNum> From<Coord<T>> for Point<T> {
     fn from(x: Coord<T>) -> Self {

@@ -1,4 +1,5 @@
 use crate::{polygon, Coord, CoordNum, Line, Polygon};
+use crate::geo_traits;
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -9,19 +10,19 @@ use approx::{AbsDiffEq, RelativeEq};
 /// vertices must not be collinear and they must be distinct.
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Triangle<T: CoordNum = f64>(pub Coord<T>, pub Coord<T>, pub Coord<T>);
+pub struct Triangle<C: geo_traits::Coord = Coord<f64>>(pub C, pub C, pub C);
 
-impl<T: CoordNum> Triangle<T> {
+impl<C: geo_traits::Coord> Triangle<C> {
     /// Instantiate Self from the raw content value
-    pub fn new(v1: Coord<T>, v2: Coord<T>, v3: Coord<T>) -> Self {
+    pub fn new(v1: C, v2: C, v3: C) -> Self {
         Self(v1, v2, v3)
     }
 
-    pub fn to_array(&self) -> [Coord<T>; 3] {
+    pub fn to_array(&self) -> [C; 3] {
         [self.0, self.1, self.2]
     }
 
-    pub fn to_lines(&self) -> [Line<T>; 3] {
+    pub fn to_lines(&self) -> [Line<C>; 3] {
         [
             Line::new(self.0, self.1),
             Line::new(self.1, self.2),
@@ -57,20 +58,20 @@ impl<T: CoordNum> Triangle<T> {
     }
 }
 
-impl<IC: Into<Coord<T>> + Copy, T: CoordNum> From<[IC; 3]> for Triangle<T> {
+impl<C: geo_traits::Coord, IC: Into<C> + Copy> From<[IC; 3]> for Triangle<C> {
     fn from(array: [IC; 3]) -> Self {
         Self(array[0].into(), array[1].into(), array[2].into())
     }
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T> RelativeEq for Triangle<T>
+impl<C: geo_traits::Coord> RelativeEq for Triangle<C>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+    C::Scalar: AbsDiffEq<Epsilon = C::Scalar> + CoordNum + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
-        T::default_max_relative()
+        C::default_max_relative()
     }
 
     /// Equality assertion within a relative limit.
