@@ -39,7 +39,7 @@ use approx::{AbsDiffEq, RelativeEq};
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T: CoordNum = f64> {
+pub struct Rect<T = f64> {
     min: Coord<T>,
     max: Coord<T>,
 }

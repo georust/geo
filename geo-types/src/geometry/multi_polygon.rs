@@ -21,7 +21,7 @@ use core::iter::FromIterator;
 /// - The interiors of no two constituent polygons may intersect.
 ///
 /// - The boundaries of two (distinct) constituent polygons
-/// may only intersect at finitely many points.
+///     may only intersect at finitely many points.
 ///
 /// Refer to section 6.1.14 of the OGC-SFA for a formal
 /// definition of validity. Note that the validity is not

@@ -134,13 +134,13 @@ use core::ops::{Index, IndexMut};
 
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct LineString<T: CoordNum = f64>(pub Vec<Coord<T>>);
+pub struct LineString<T = f64>(pub Vec<Coord<T>>);
 
 /// A [`Point`] iterator returned by the `points` method
 #[derive(Debug)]
-pub struct PointsIter<'a, T: CoordNum + 'a>(::core::slice::Iter<'a, Coord<T>>);
+pub struct PointsIter<'a, T: 'a>(::core::slice::Iter<'a, Coord<T>>);
 
-impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
+impl<'a, T: Copy> Iterator for PointsIter<'a, T> {
     type Item = Point<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -192,7 +192,7 @@ impl<'a, T: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T> {
     }
 }
 
-impl<T: CoordNum> LineString<T> {
+impl<T> LineString<T> {
     /// Instantiate Self from the raw content value
     pub fn new(value: Vec<Coord<T>>) -> Self {
         Self(value)
@@ -229,6 +229,58 @@ impl<T: CoordNum> LineString<T> {
         self.0
     }
 
+    /// Return the number of coordinates in the [`LineString`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::LineString;
+    ///
+    /// let mut coords = vec![(0., 0.), (5., 0.), (7., 9.)];
+    /// let line_string: LineString<f32> = coords.into_iter().collect();
+    ///
+    /// # #[allow(deprecated)]
+    /// # {
+    /// assert_eq!(3, line_string.num_coords());
+    /// # }
+    /// ```
+    #[deprecated(note = "Use geo::CoordsIter::coords_count instead")]
+    pub fn num_coords(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Checks if the linestring is closed; i.e. it is
+    /// either empty or, the first and last points are the
+    /// same.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::LineString;
+    ///
+    /// let mut coords = vec![(0., 0.), (5., 0.), (0., 0.)];
+    /// let line_string: LineString<f32> = coords.into_iter().collect();
+    /// assert!(line_string.is_closed());
+    /// ```
+    ///
+    /// Note that we diverge from some libraries ([JTS](https://locationtech.github.io/jts/javadoc/org/locationtech/jts/geom/LinearRing.html) et al), which have a `LinearRing` type,
+    /// separate from [`LineString`]. Those libraries treat an empty `LinearRing` as **closed** by
+    /// definition, while treating an empty `LineString` as **open**. Since we don't have a separate
+    /// `LinearRing` type, and use a [`LineString`] in its place, we adopt the JTS `LinearRing` `is_closed`
+    /// behavior in all places: that is, **we consider an empty [`LineString`] as closed**.
+    ///
+    /// This is expected when used in the context of a [`Polygon.exterior`](crate::Polygon::exterior) and elsewhere; And there
+    /// seems to be no reason to maintain the separate behavior for [`LineString`]s used in
+    /// non-`LinearRing` contexts.
+    pub fn is_closed(&self) -> bool
+    where
+        T: PartialEq,
+    {
+        self.0.first() == self.0.last()
+    }
+}
+
+impl<T: Copy> LineString<T> {
     /// Return an iterator yielding one [Line] for each line segment
     /// in the [`LineString`].
     ///
@@ -281,59 +333,15 @@ impl<T: CoordNum> LineString<T> {
     /// Close the [`LineString`]. Specifically, if the [`LineString`] has at least one [`Coord`], and
     /// the value of the first [`Coord`] **does not** equal the value of the last [`Coord`], then a
     /// new [`Coord`] is added to the end with the value of the first [`Coord`].
-    pub fn close(&mut self) {
+    pub fn close(&mut self)
+    where
+        T: PartialEq,
+    {
         if !self.is_closed() {
             // by definition, we treat empty LineString's as closed.
             debug_assert!(!self.0.is_empty());
             self.0.push(self.0[0]);
         }
-    }
-
-    /// Return the number of coordinates in the [`LineString`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::LineString;
-    ///
-    /// let mut coords = vec![(0., 0.), (5., 0.), (7., 9.)];
-    /// let line_string: LineString<f32> = coords.into_iter().collect();
-    ///
-    /// # #[allow(deprecated)]
-    /// # {
-    /// assert_eq!(3, line_string.num_coords());
-    /// # }
-    /// ```
-    #[deprecated(note = "Use geo::CoordsIter::coords_count instead")]
-    pub fn num_coords(&self) -> usize {
-        self.0.len()
-    }
-
-    /// Checks if the linestring is closed; i.e. it is
-    /// either empty or, the first and last points are the
-    /// same.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::LineString;
-    ///
-    /// let mut coords = vec![(0., 0.), (5., 0.), (0., 0.)];
-    /// let line_string: LineString<f32> = coords.into_iter().collect();
-    /// assert!(line_string.is_closed());
-    /// ```
-    ///
-    /// Note that we diverge from some libraries ([JTS](https://locationtech.github.io/jts/javadoc/org/locationtech/jts/geom/LinearRing.html) et al), which have a `LinearRing` type,
-    /// separate from [`LineString`]. Those libraries treat an empty `LinearRing` as **closed** by
-    /// definition, while treating an empty `LineString` as **open**. Since we don't have a separate
-    /// `LinearRing` type, and use a [`LineString`] in its place, we adopt the JTS `LinearRing` `is_closed`
-    /// behavior in all places: that is, **we consider an empty [`LineString`] as closed**.
-    ///
-    /// This is expected when used in the context of a [`Polygon.exterior`](crate::Polygon::exterior) and elsewhere; And there
-    /// seems to be no reason to maintain the separate behavior for [`LineString`]s used in
-    /// non-`LinearRing` contexts.
-    pub fn is_closed(&self) -> bool {
-        self.0.first() == self.0.last()
     }
 }
 

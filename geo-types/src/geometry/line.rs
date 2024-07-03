@@ -1,3 +1,5 @@
+use core::ops::{Div, Mul, Sub};
+
 use crate::{Coord, CoordNum, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -11,12 +13,25 @@ use approx::{AbsDiffEq, RelativeEq};
 /// `LineString` with the two end points.
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Line<T: CoordNum = f64> {
+pub struct Line<T = f64> {
     pub start: Coord<T>,
     pub end: Coord<T>,
 }
 
-impl<T: CoordNum> Line<T> {
+impl<T: Copy> Line<T> {
+    pub fn start_point(&self) -> Point<T> {
+        Point::from(self.start)
+    }
+
+    pub fn end_point(&self) -> Point<T> {
+        Point::from(self.end)
+    }
+    pub fn points(&self) -> (Point<T>, Point<T>) {
+        (self.start_point(), self.end_point())
+    }
+}
+
+impl<T> Line<T> {
     /// Creates a new line segment.
     ///
     /// # Examples
@@ -39,11 +54,48 @@ impl<T: CoordNum> Line<T> {
         }
     }
 
+    /// Calculate the [determinant](https://en.wikipedia.org/wiki/Determinant) of the line.
+    ///
+    /// Equivalent to:
+    ///
+    /// ```rust
+    /// # use geo_types::{Line, point};
+    /// # let line = Line::new(
+    /// #     point! { x: 4., y: -12. },
+    /// #     point! { x: 0., y: 9. },
+    /// # );
+    /// # assert_eq!(
+    /// #     line.determinant(),
+    /// line.start.x * line.end.y - line.start.y * line.end.x
+    /// # );
+    /// ```
+    ///
+    /// Note that:
+    ///
+    /// ```rust
+    /// # use geo_types::{Line, point};
+    /// # let a = point! { x: 4., y: -12. };
+    /// # let b = point! { x: 0., y: 9. };
+    /// # assert!(
+    /// Line::new(a, b).determinant() == -Line::new(b, a).determinant()
+    /// # );
+    /// ```
+    pub fn determinant(&self) -> T
+    where
+        T: Copy + Mul<Output = T> + Sub<Output = T>,
+    {
+        self.start.x * self.end.y - self.start.y * self.end.x
+    }
+}
+
+impl<T> Line<T>
+where
+    Coord<T>: Copy + Sub<Output = Coord<T>>,
+{
     /// Calculate the difference in coordinates (Δx, Δy).
     pub fn delta(&self) -> Coord<T> {
         self.end - self.start
     }
-
     /// Calculate the difference in ‘x’ components (Δx).
     ///
     /// Equivalent to:
@@ -108,50 +160,11 @@ impl<T: CoordNum> Line<T> {
     /// Line::new(a, b).slope() == Line::new(b, a).slope()
     /// # );
     /// ```
-    pub fn slope(&self) -> T {
+    pub fn slope(&self) -> T
+    where
+        T: Div<Output = T>,
+    {
         self.dy() / self.dx()
-    }
-
-    /// Calculate the [determinant](https://en.wikipedia.org/wiki/Determinant) of the line.
-    ///
-    /// Equivalent to:
-    ///
-    /// ```rust
-    /// # use geo_types::{Line, point};
-    /// # let line = Line::new(
-    /// #     point! { x: 4., y: -12. },
-    /// #     point! { x: 0., y: 9. },
-    /// # );
-    /// # assert_eq!(
-    /// #     line.determinant(),
-    /// line.start.x * line.end.y - line.start.y * line.end.x
-    /// # );
-    /// ```
-    ///
-    /// Note that:
-    ///
-    /// ```rust
-    /// # use geo_types::{Line, point};
-    /// # let a = point! { x: 4., y: -12. };
-    /// # let b = point! { x: 0., y: 9. };
-    /// # assert!(
-    /// Line::new(a, b).determinant() == -Line::new(b, a).determinant()
-    /// # );
-    /// ```
-    pub fn determinant(&self) -> T {
-        self.start.x * self.end.y - self.start.y * self.end.x
-    }
-
-    pub fn start_point(&self) -> Point<T> {
-        Point::from(self.start)
-    }
-
-    pub fn end_point(&self) -> Point<T> {
-        Point::from(self.end)
-    }
-
-    pub fn points(&self) -> (Point<T>, Point<T>) {
-        (self.start_point(), self.end_point())
     }
 }
 
