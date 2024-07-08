@@ -20,10 +20,10 @@ impl<F: GeoFloat> EdgeEndBuilder<F> {
         }
     }
 
-    pub fn compute_ends_for_edges(&self, edges: &[Arc<RefCell<Edge<F>>>]) -> Vec<EdgeEnd<F>> {
+    pub fn compute_ends_for_edges(&self, edges: &mut [Edge<F>]) -> Vec<EdgeEnd<F>> {
         let mut list = vec![];
         for edge in edges {
-            self.compute_ends_for_edge(&mut edge.borrow_mut(), &mut list);
+            self.compute_ends_for_edge(edge, &mut list);
         }
         list
     }
