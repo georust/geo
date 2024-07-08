@@ -15,12 +15,12 @@ impl SimpleEdgeSetIntersector {
 
     fn compute_intersects<F: GeoFloat>(
         &self,
-        edge0: &Arc<RefCell<Edge<F>>>,
-        edge1: &Arc<RefCell<Edge<F>>>,
+        edge0: &mut Edge<F>,
+        edge1: &mut Edge<F>,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
-        let edge0_coords_len = edge0.borrow().coords().len() - 1;
-        let edge1_coords_len = edge1.borrow().coords().len() - 1;
+        let edge0_coords_len = edge0.coords().len() - 1;
+        let edge1_coords_len = edge1.coords().len() - 1;
         for i0 in 0..edge0_coords_len {
             for i1 in 0..edge1_coords_len {
                 segment_intersector.add_intersections(edge0, i0, edge1, i1);
@@ -36,24 +36,30 @@ impl<F: GeoFloat> EdgeSetIntersector<F> for SimpleEdgeSetIntersector {
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
-        let edges = graph.edges();
-        for edge0 in edges.iter_mut() {
-            for edge1 in edges.iter_mut() {
-                if check_for_self_intersecting_edges || edge0.as_ptr() != edge1.as_ptr() {
-                    self.compute_intersects(edge0, edge1, segment_intersector);
-                }
+        let edges = graph.edges_mut();
+        for i in 0..edges.len() {
+            let (e0, e1) = edges.split_at_mut(i+1);
+            let (e0, edge0) = e0.split_at_mut(i);
+            let edge0 = &mut edge0[0];
+
+            if check_for_self_intersecting_edges {
+                self.compute_intersects(edge0, edge0, segment_intersector);
+            }
+
+            for edge1 in e0.iter_mut().chain(e1) {
+                self.compute_intersects(edge0, edge1, segment_intersector);
             }
         }
     }
 
     fn compute_intersections_between_sets<'a>(
         &self,
-        graph_0: &GeometryGraph<'a, F>,
-        graph_1: &GeometryGraph<'a, F>,
+        graph_0: &mut GeometryGraph<'a, F>,
+        graph_1: &mut GeometryGraph<'a, F>,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
-        let edges_0 = graph_0.edges();
-        let edges_1 = graph_1.edges();
+        let edges_0 = graph_0.edges_mut();
+        let edges_1 = graph_1.edges_mut();
 
         for edge0 in edges_0 {
             for edge1 in edges_1 {

@@ -110,6 +110,10 @@ where
         self.planar_graph.edges()
     }
 
+    pub(crate) fn edges_mut(&mut self) -> &mut [Edge<F>] {
+        self.planar_graph.edges_mut()
+    }
+
     pub(crate) fn insert_edge(&mut self, edge: Edge<F>) {
         self.planar_graph.insert_edge(edge)
     }
@@ -353,8 +357,8 @@ where
     }
 
     pub(crate) fn compute_edge_intersections(
-        &self,
-        other: &GeometryGraph<F>,
+        &'a mut self,
+        other: &mut GeometryGraph<'a, F>,
         line_intersector: Box<dyn LineIntersector<F>>,
     ) -> SegmentIntersector<F> {
         let mut segment_intersector = SegmentIntersector::new(line_intersector, false);

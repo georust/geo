@@ -64,6 +64,10 @@ impl<F: GeoFloat> PlanarGraph<F> {
         &self.edges
     }
 
+    pub fn edges_mut(&mut self) -> &mut [Edge<F>] {
+        &mut self.edges
+    }
+
     pub fn new() -> Self {
         PlanarGraph {
             nodes: NodeMap::new(),
