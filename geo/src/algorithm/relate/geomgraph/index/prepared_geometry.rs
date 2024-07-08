@@ -5,7 +5,8 @@ use crate::GeometryCow;
 use crate::{GeoFloat, Relate};
 
 use std::cell::RefCell;
-use std::rc::Rc;
+// use std::rc::Rc;
+use std::sync::Arc;
 
 use rstar::{RTree, RTreeNum};
 
@@ -38,7 +39,7 @@ mod conversions {
         Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
         Point, Polygon, Rect, Triangle,
     };
-    use std::rc::Rc;
+    use std::sync::Arc;
 
     impl<'a, F: GeoFloat> From<Point<F>> for PreparedGeometry<'a, F> {
         fn from(point: Point<F>) -> Self {
@@ -156,7 +157,7 @@ mod conversions {
     impl<'a, F: GeoFloat> From<GeometryCow<'a, F>> for PreparedGeometry<'a, F> {
         fn from(geometry: GeometryCow<'a, F>) -> Self {
             let mut geometry_graph = GeometryGraph::new(0, geometry);
-            geometry_graph.set_tree(Rc::new(geometry_graph.build_tree()));
+            geometry_graph.set_tree(Arc::new(geometry_graph.build_tree()));
 
             // TODO: don't pass in line intersector here - in theory we'll want pluggable line intersectors
             // and the type (Robust) shouldn't be hard coded here.

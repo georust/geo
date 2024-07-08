@@ -64,12 +64,12 @@ where
     fn is_trivial_intersection(
         &self,
         intersection: LineIntersection<F>,
-        edge0: &RefCell<Edge<F>>,
+        edge0: &Edge<F>,
         segment_index_0: usize,
-        edge1: &RefCell<Edge<F>>,
+        edge1: &Edge<F>,
         segment_index_1: usize,
     ) -> bool {
-        if edge0.as_ptr() != edge1.as_ptr() {
+        if !std::ptr::eq(edge0, edge1) {
             return false;
         }
 
@@ -81,7 +81,6 @@ where
             return true;
         }
 
-        let edge0 = edge0.borrow();
         if edge0.is_closed() {
             // first and last coords in a ring are adjacent
             let max_segment_index = edge0.coords().len() - 1;
@@ -97,23 +96,23 @@ where
 
     pub fn add_intersections(
         &mut self,
-        edge0: &RefCell<Edge<F>>,
+        edge0: &Edge<F>,
         segment_index_0: usize,
-        edge1: &RefCell<Edge<F>>,
+        edge1: &Edge<F>,
         segment_index_1: usize,
     ) {
         // avoid a segment spuriously "intersecting" with itself
-        if edge0.as_ptr() == edge1.as_ptr() && segment_index_0 == segment_index_1 {
+        if std::ptr::eq(edge0, edge1) && segment_index_0 == segment_index_1 {
             return;
         }
 
         let line_0 = Line::new(
-            edge0.borrow().coords()[segment_index_0],
-            edge0.borrow().coords()[segment_index_0 + 1],
+            edge0.coords()[segment_index_0],
+            edge0.coords()[segment_index_0 + 1],
         );
         let line_1 = Line::new(
-            edge1.borrow().coords()[segment_index_1],
-            edge1.borrow().coords()[segment_index_1 + 1],
+            edge1.coords()[segment_index_1],
+            edge1.coords()[segment_index_1 + 1],
         );
 
         let intersection = self.line_intersector.compute_intersection(line_0, line_1);
