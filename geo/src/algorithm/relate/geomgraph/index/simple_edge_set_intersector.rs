@@ -3,7 +3,8 @@ use super::{EdgeSetIntersector, SegmentIntersector};
 use crate::GeoFloat;
 
 use std::cell::RefCell;
-use std::rc::Rc;
+// use std::rc::Rc;
+use std::sync::Arc;
 
 pub(crate) struct SimpleEdgeSetIntersector;
 
@@ -14,8 +15,8 @@ impl SimpleEdgeSetIntersector {
 
     fn compute_intersects<F: GeoFloat>(
         &self,
-        edge0: &Rc<RefCell<Edge<F>>>,
-        edge1: &Rc<RefCell<Edge<F>>>,
+        edge0: &Arc<RefCell<Edge<F>>>,
+        edge1: &Arc<RefCell<Edge<F>>>,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
         let edge0_coords_len = edge0.borrow().coords().len() - 1;
@@ -31,13 +32,13 @@ impl SimpleEdgeSetIntersector {
 impl<F: GeoFloat> EdgeSetIntersector<F> for SimpleEdgeSetIntersector {
     fn compute_intersections_within_set(
         &self,
-        graph: &GeometryGraph<F>,
+        graph: &mut GeometryGraph<F>,
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
         let edges = graph.edges();
-        for edge0 in edges.iter() {
-            for edge1 in edges.iter() {
+        for edge0 in edges.iter_mut() {
+            for edge1 in edges.iter_mut() {
                 if check_for_self_intersecting_edges || edge0.as_ptr() != edge1.as_ptr() {
                     self.compute_intersects(edge0, edge1, segment_intersector);
                 }

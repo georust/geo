@@ -10,7 +10,7 @@ use crate::CoordinatePosition;
 use crate::{Coord, GeoFloat, GeometryCow};
 
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Computes an [`IntersectionMatrix`] describing the topological relationship between two
 /// Geometries.
@@ -29,7 +29,7 @@ where
     graph_b: GeometryGraph<'a, F>,
     nodes: NodeMap<F, RelateNodeFactory>,
     line_intersector: RobustLineIntersector,
-    isolated_edges: Vec<Rc<RefCell<Edge<F>>>>,
+    isolated_edges: Vec<Arc<RefCell<Edge<F>>>>,
 }
 
 #[derive(PartialEq)]
