@@ -10,6 +10,8 @@
   * <https://github.com/georust/geo/pull/1192>
 * Fix `AffineTransform::compose` ordering to be conventional - such that the argument is applied *after* self.
   * <https://github.com/georust/geo/pull/1196>
+* Implement Frechet distance using linear algorithm to avoid `fatal runtime error: stack overflow` and improve overall performances.
+  * <https://github.com/georust/geo/pull/1199>
 
 ## 0.28.0
 

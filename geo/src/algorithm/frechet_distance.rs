@@ -47,12 +47,12 @@ where
 {
     fn frechet_distance(&self, ls: &LineString<T>) -> T {
         if self.coords_count() != 0 && ls.coords_count() != 0 {
-            let mut data = Data {
-                cache: vec![vec![T::nan(); ls.coords_count()]; self.coords_count()],
+            Data {
+                cache: vec![T::zero(); self.coords_count() * ls.coords_count()],
                 ls_a: self,
                 ls_b: ls,
-            };
-            data.compute(self.coords_count() - 1, ls.coords_count() - 1)
+            }
+            .compute_linear()
         } else {
             T::zero()
         }
@@ -63,7 +63,7 @@ struct Data<'a, T>
 where
     T: GeoFloat + FromPrimitive,
 {
-    cache: Vec<Vec<T>>,
+    cache: Vec<T>,
     ls_a: &'a LineString<T>,
     ls_b: &'a LineString<T>,
 }
@@ -72,19 +72,27 @@ impl<'a, T> Data<'a, T>
 where
     T: GeoFloat + FromPrimitive,
 {
-    fn compute(&mut self, i: usize, j: usize) -> T {
-        if self.cache[i][j].is_nan() {
-            let eucl = Point::from(self.ls_a[i]).euclidean_distance(&Point::from(self.ls_b[j]));
-            self.cache[i][j] = match (i, j) {
-                (0, 0) => eucl,
-                (_, 0) => self.compute(i - 1, 0).max(eucl),
-                (0, _) => self.compute(0, j - 1).max(eucl),
-                (_, _) => ((self.compute(i - 1, j).min(self.compute(i - 1, j - 1)))
-                    .min(self.compute(i, j - 1)))
-                .max(eucl),
-            };
+    /// [Reference implementation]: https://github.com/joaofig/discrete-frechet/tree/master
+    fn compute_linear(&mut self) -> T {
+        let columns_count = self.ls_b.coords_count();
+
+        for (i, &a) in self.ls_a.coords().enumerate() {
+            for (j, &b) in self.ls_b.coords().enumerate() {
+                let dist = Point::from(a).euclidean_distance(&Point::from(b));
+
+                self.cache[i * columns_count + j] = match (i, j) {
+                    (0, 0) => dist,
+                    (_, 0) => self.cache[(i - 1) * columns_count].max(dist),
+                    (0, _) => self.cache[j - 1].max(dist),
+                    (_, _) => self.cache[(i - 1) * columns_count + j]
+                        .min(self.cache[(i - 1) * columns_count + j - 1])
+                        .min(self.cache[i * columns_count + j - 1])
+                        .max(dist),
+                };
+            }
         }
-        self.cache[i][j]
+
+        self.cache[self.cache.len() - 1]
     }
 }
 
@@ -130,5 +138,22 @@ mod test {
         let ls_a = LineString::from(vec![(1., 1.), (2., 1.), (2., 2.)]);
         let ls_b = LineString::from(vec![(2., 2.), (0., 1.), (2., 4.)]);
         assert_relative_eq!(2., ls_a.frechet_distance(&ls_b));
+    }
+
+    #[test] // comparing long linestrings should not panic or abort due to stack overflow
+    fn test_frechet_long_linestrings() {
+        let ls: LineString = {
+            let delta = 0.01;
+
+            let mut ls = vec![(0.0, 0.0); 10_000];
+            for i in 1..ls.len() {
+                let (lat, lon) = ls[i - 1];
+                ls[i] = (lat - delta, lon + delta);
+            }
+
+            ls.into()
+        };
+
+        assert_relative_eq!(ls.frechet_distance(&ls.clone()), 0.0);
     }
 }
