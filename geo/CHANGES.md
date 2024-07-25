@@ -12,6 +12,8 @@
   * <https://github.com/georust/geo/pull/1196>
 * Add `PreparedGeometry` to speed up repeated `Relate` operations.
   * <https://github.com/georust/geo/pull/1197>
+* Implement Frechet distance using linear algorithm to avoid `fatal runtime error: stack overflow` and improve overall performances.
+  * <https://github.com/georust/geo/pull/1199>
 
 ## 0.28.0
 
