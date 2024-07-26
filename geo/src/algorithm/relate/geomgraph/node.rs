@@ -1,7 +1,7 @@
 use super::{CoordPos, Dimensions, EdgeEnd, EdgeEndBundleStar, IntersectionMatrix, Label};
 use crate::{Coord, GeoFloat};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct CoordNode<F>
 where
     F: GeoFloat,
@@ -11,6 +11,10 @@ where
 }
 
 impl<F: GeoFloat> CoordNode<F> {
+    pub fn swap_label_args(&mut self) {
+        self.label.swap_args()
+    }
+
     pub(crate) fn label(&self) -> &Label {
         &self.label
     }

@@ -7,6 +7,7 @@ use crate::{Coord, GeoFloat};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[derive(Clone, PartialEq)]
 pub(crate) struct PlanarGraphNode;
 
 /// The basic node constructor does not allow for incident edges
@@ -20,12 +21,44 @@ where
     }
 }
 
+#[derive(Clone, PartialEq)]
 pub(crate) struct PlanarGraph<F: GeoFloat> {
     pub(crate) nodes: NodeMap<F, PlanarGraphNode>,
     edges: Vec<Rc<RefCell<Edge<F>>>>,
 }
 
 impl<F: GeoFloat> PlanarGraph<F> {
+    pub fn clone_for_arg_index(&self, from_arg_index: usize, to_arg_index: usize) -> Self {
+        let mut graph = Self {
+            nodes: self.nodes.clone(),
+            // deep copy edges
+            edges: self
+                .edges
+                .iter()
+                .map(|e| Rc::new(RefCell::new(e.borrow().clone())))
+                .collect(),
+        };
+        assert_eq!(from_arg_index, 0);
+        if from_arg_index != to_arg_index {
+            graph.swap_labels();
+        }
+        graph
+    }
+
+    fn swap_labels(&mut self) {
+        for node in self.nodes.iter_mut() {
+            node.swap_label_args();
+        }
+        for edge in &mut self.edges {
+            edge.borrow_mut().swap_label_args();
+        }
+    }
+
+    pub fn assert_eq_graph(&self, other: &Self) {
+        assert_eq!(self.nodes, other.nodes);
+        assert_eq!(self.edges, other.edges);
+    }
+
     pub fn edges(&self) -> &[Rc<RefCell<Edge<F>>>] {
         &self.edges
     }

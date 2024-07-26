@@ -1,105 +1,62 @@
-use super::super::Edge;
-use super::{EdgeSetIntersector, SegmentIntersector};
+use super::super::{Edge, GeometryGraph};
+use super::{EdgeSetIntersector, Segment, SegmentIntersector};
 use crate::GeoFloat;
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use rstar::RTree;
+use rstar::{RTree, RTreeNum};
 
-pub(crate) struct RstarEdgeSetIntersector;
+pub(crate) struct RStarEdgeSetIntersector;
 
-impl RstarEdgeSetIntersector {
-    pub fn new() -> Self {
-        RstarEdgeSetIntersector
-    }
-}
-
-struct Segment<'a, F: GeoFloat + rstar::RTreeNum> {
-    i: usize,
-    edge: &'a RefCell<Edge<F>>,
-    envelope: rstar::AABB<crate::Coord<F>>,
-}
-
-impl<'a, F> Segment<'a, F>
+impl<F> EdgeSetIntersector<F> for RStarEdgeSetIntersector
 where
-    F: GeoFloat + rstar::RTreeNum,
-{
-    fn new(i: usize, edge: &'a RefCell<Edge<F>>) -> Self {
-        use rstar::RTreeObject;
-        let p1 = edge.borrow().coords()[i];
-        let p2 = edge.borrow().coords()[i + 1];
-        Self {
-            i,
-            edge,
-            envelope: rstar::AABB::from_corners(p1, p2),
-        }
-    }
-}
-
-impl<'a, F> rstar::RTreeObject for Segment<'a, F>
-where
-    F: GeoFloat + rstar::RTreeNum,
-{
-    type Envelope = rstar::AABB<crate::Coord<F>>;
-
-    fn envelope(&self) -> Self::Envelope {
-        self.envelope
-    }
-}
-
-impl<F> EdgeSetIntersector<F> for RstarEdgeSetIntersector
-where
-    F: GeoFloat + rstar::RTreeNum,
+    F: GeoFloat + RTreeNum,
 {
     fn compute_intersections_within_set(
-        &mut self,
-        edges: &[Rc<RefCell<Edge<F>>>],
+        &self,
+        graph: &GeometryGraph<F>,
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
-        let segments: Vec<Segment<F>> = edges
-            .iter()
-            .flat_map(|edge| {
-                let start_of_final_segment: usize = RefCell::borrow(edge).coords().len() - 1;
-                (0..start_of_final_segment).map(|segment_i| Segment::new(segment_i, edge))
-            })
-            .collect();
-        let tree = RTree::bulk_load(segments);
+        let edges = graph.edges();
 
-        for (edge0, edge1) in tree.intersection_candidates_with_other_tree(&tree) {
-            if check_for_self_intersecting_edges || edge0.edge.as_ptr() != edge1.edge.as_ptr() {
-                segment_intersector.add_intersections(edge0.edge, edge0.i, edge1.edge, edge1.i);
+        let tree = graph.get_or_build_tree();
+        for (segment_0, segment_1) in tree.intersection_candidates_with_other_tree(&tree) {
+            if check_for_self_intersecting_edges || segment_0.edge_idx != segment_1.edge_idx {
+                let edge_0 = &edges[segment_0.edge_idx];
+                let edge_1 = &edges[segment_1.edge_idx];
+                segment_intersector.add_intersections(
+                    edge_0,
+                    segment_0.segment_idx,
+                    edge_1,
+                    segment_1.segment_idx,
+                );
             }
         }
     }
 
-    fn compute_intersections_between_sets(
-        &mut self,
-        edges0: &[Rc<RefCell<Edge<F>>>],
-        edges1: &[Rc<RefCell<Edge<F>>>],
+    fn compute_intersections_between_sets<'a>(
+        &self,
+        graph_0: &GeometryGraph<'a, F>,
+        graph_1: &GeometryGraph<'a, F>,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
-        let segments0: Vec<Segment<F>> = edges0
-            .iter()
-            .flat_map(|edge| {
-                let start_of_final_segment: usize = RefCell::borrow(edge).coords().len() - 1;
-                (0..start_of_final_segment).map(|segment_i| Segment::new(segment_i, edge))
-            })
-            .collect();
-        let tree_0 = RTree::bulk_load(segments0);
+        let edges_0 = graph_0.edges();
+        let edges_1 = graph_1.edges();
 
-        let segments1: Vec<Segment<F>> = edges1
-            .iter()
-            .flat_map(|edge| {
-                let start_of_final_segment: usize = RefCell::borrow(edge).coords().len() - 1;
-                (0..start_of_final_segment).map(|segment_i| Segment::new(segment_i, edge))
-            })
-            .collect();
-        let tree_1 = RTree::bulk_load(segments1);
+        let tree_0 = graph_0.get_or_build_tree();
+        let tree_1 = graph_1.get_or_build_tree();
 
-        for (edge0, edge1) in tree_0.intersection_candidates_with_other_tree(&tree_1) {
-            segment_intersector.add_intersections(edge0.edge, edge0.i, edge1.edge, edge1.i);
+        for (segment_0, segment_1) in tree_0.intersection_candidates_with_other_tree(&tree_1) {
+            let edge_0 = &edges_0[segment_0.edge_idx];
+            let edge_1 = &edges_1[segment_1.edge_idx];
+            segment_intersector.add_intersections(
+                edge_0,
+                segment_0.segment_idx,
+                edge_1,
+                segment_1.segment_idx,
+            );
         }
     }
 }

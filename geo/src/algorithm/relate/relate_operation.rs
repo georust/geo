@@ -32,6 +32,7 @@ where
     isolated_edges: Vec<Rc<RefCell<Edge<F>>>>,
 }
 
+#[derive(PartialEq)]
 pub(crate) struct RelateNodeFactory;
 impl<F> NodeFactory<F> for RelateNodeFactory
 where
@@ -47,13 +48,10 @@ impl<'a, F> RelateOperation<'a, F>
 where
     F: GeoFloat,
 {
-    pub(crate) fn new(
-        geom_a: &'a GeometryCow<'a, F>,
-        geom_b: &'a GeometryCow<'a, F>,
-    ) -> RelateOperation<'a, F> {
+    pub(crate) fn new(graph_a: GeometryGraph<'a, F>, graph_b: GeometryGraph<'a, F>) -> Self {
         Self {
-            graph_a: GeometryGraph::new(0, geom_a),
-            graph_b: GeometryGraph::new(1, geom_b),
+            graph_a,
+            graph_b,
             nodes: NodeMap::new(),
             isolated_edges: vec![],
             line_intersector: RobustLineIntersector::new(),
@@ -61,14 +59,7 @@ where
     }
 
     pub(crate) fn compute_intersection_matrix(&mut self) -> IntersectionMatrix {
-        let mut intersection_matrix = IntersectionMatrix::empty();
-        // since Geometries are finite and embedded in a 2-D space,
-        // the `(Outside, Outside)` element must always be 2-D
-        intersection_matrix.set(
-            CoordPos::Outside,
-            CoordPos::Outside,
-            Dimensions::TwoDimensional,
-        );
+        let mut intersection_matrix = IntersectionMatrix::empty_disjoint();
 
         use crate::BoundingRect;
         use crate::Intersects;
@@ -80,7 +71,8 @@ where
                 if bounding_rect_a.intersects(&bounding_rect_b) => {}
             _ => {
                 // since Geometries don't overlap, we can skip most of the work
-                self.compute_disjoint_intersection_matrix(&mut intersection_matrix);
+                intersection_matrix
+                    .compute_disjoint(self.graph_a.geometry(), self.graph_b.geometry());
                 return intersection_matrix;
             }
         }
@@ -293,44 +285,6 @@ where
         }
     }
 
-    /// If the Geometries are disjoint, we need to enter their dimension and boundary dimension in
-    /// the `Outside` rows in the IM
-    fn compute_disjoint_intersection_matrix(&self, intersection_matrix: &mut IntersectionMatrix) {
-        {
-            let geometry_a = self.graph_a.geometry();
-            let dimensions = geometry_a.dimensions();
-            if dimensions != Dimensions::Empty {
-                intersection_matrix.set(CoordPos::Inside, CoordPos::Outside, dimensions);
-
-                let boundary_dimensions = geometry_a.boundary_dimensions();
-                if boundary_dimensions != Dimensions::Empty {
-                    intersection_matrix.set(
-                        CoordPos::OnBoundary,
-                        CoordPos::Outside,
-                        boundary_dimensions,
-                    );
-                }
-            }
-        }
-
-        {
-            let geometry_b = self.graph_b.geometry();
-            let dimensions = geometry_b.dimensions();
-            if dimensions != Dimensions::Empty {
-                intersection_matrix.set(CoordPos::Outside, CoordPos::Inside, dimensions);
-
-                let boundary_dimensions = geometry_b.boundary_dimensions();
-                if boundary_dimensions != Dimensions::Empty {
-                    intersection_matrix.set(
-                        CoordPos::Outside,
-                        CoordPos::OnBoundary,
-                        boundary_dimensions,
-                    );
-                }
-            }
-        }
-    }
-
     fn update_intersection_matrix(
         &self,
         labeled_node_edges: Vec<(CoordNode<F>, LabeledEdgeEndBundleStar<F>)>,
@@ -457,12 +411,8 @@ mod test {
         ]
         .into();
 
-        let gc1 = GeometryCow::from(&square_a);
-        let gc2 = GeometryCow::from(&square_b);
-        let mut relate_computer = RelateOperation::new(&gc1, &gc2);
-        let intersection_matrix = relate_computer.compute_intersection_matrix();
         assert_eq!(
-            intersection_matrix,
+            square_a.relate(&square_b),
             IntersectionMatrix::from_str("FF2FF1212").unwrap()
         );
     }
@@ -487,12 +437,8 @@ mod test {
         ]
         .into();
 
-        let gca = GeometryCow::from(&square_a);
-        let gcb = GeometryCow::from(&square_b);
-        let mut relate_computer = RelateOperation::new(&gca, &gcb);
-        let intersection_matrix = relate_computer.compute_intersection_matrix();
         assert_eq!(
-            intersection_matrix,
+            square_a.relate(&square_b),
             IntersectionMatrix::from_str("212FF1FF2").unwrap()
         );
     }
@@ -517,12 +463,8 @@ mod test {
         ]
         .into();
 
-        let gca = &GeometryCow::from(&square_a);
-        let gcb = &GeometryCow::from(&square_b);
-        let mut relate_computer = RelateOperation::new(gca, gcb);
-        let intersection_matrix = relate_computer.compute_intersection_matrix();
         assert_eq!(
-            intersection_matrix,
+            square_a.relate(&square_b),
             IntersectionMatrix::from_str("212101212").unwrap()
         );
     }

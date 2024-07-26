@@ -1,4 +1,4 @@
-use super::super::Edge;
+use super::super::{Edge, GeometryGraph};
 use super::SegmentIntersector;
 use crate::{Coord, GeoFloat};
 
@@ -13,18 +13,18 @@ pub(crate) trait EdgeSetIntersector<F: GeoFloat> {
     /// `check_for_self_intersecting_edges`: if false, an edge is not checked for intersections with itself.
     /// `segment_intersector`: the SegmentIntersector to use
     fn compute_intersections_within_set(
-        &mut self,
-        edges: &[Rc<RefCell<Edge<F>>>],
+        &self,
+        graph: &GeometryGraph<F>,
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     );
 
     /// Compute all intersections between two sets of edges, recording those intersections on
     /// the intersecting edges.
-    fn compute_intersections_between_sets(
-        &mut self,
-        edges0: &[Rc<RefCell<Edge<F>>>],
-        edges1: &[Rc<RefCell<Edge<F>>>],
+    fn compute_intersections_between_sets<'a>(
+        &self,
+        graph_0: &GeometryGraph<'a, F>,
+        graph_1: &GeometryGraph<'a, F>,
         segment_intersector: &mut SegmentIntersector<F>,
     );
 }

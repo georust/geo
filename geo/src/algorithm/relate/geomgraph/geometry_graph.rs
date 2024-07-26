@@ -1,6 +1,7 @@
 use super::{
     index::{
-        EdgeSetIntersector, RstarEdgeSetIntersector, SegmentIntersector, SimpleEdgeSetIntersector,
+        EdgeSetIntersector, RStarEdgeSetIntersector, Segment, SegmentIntersector,
+        SimpleEdgeSetIntersector,
     },
     CoordNode, CoordPos, Direction, Edge, Label, LineIntersector, PlanarGraph, TopologyPosition,
 };
@@ -8,17 +9,18 @@ use super::{
 use crate::HasDimensions;
 use crate::{Coord, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
 
+use rstar::{RTree, RTreeNum};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-/// The computation of the [`IntersectionMatrix`] relies on the use of a
-/// structure called a "topology graph". The topology graph contains [nodes](CoordNode) and
-/// [edges](Edge) corresponding to the nodes and line segments of a [`Geometry`]. Each
+/// The computation of the [`IntersectionMatrix`](crate::algorithm::relate::IntersectionMatrix) relies on the use of a
+/// structure called a "topology graph". The topology graph contains nodes (CoordNode) and
+/// edges (Edge) corresponding to the nodes and line segments of a [`Geometry`](crate::Geometry). Each
 /// node and edge in the graph is labeled with its topological location
 /// relative to the source geometry.
 ///
 /// Note that there is no requirement that points of self-intersection be a
-/// vertex. Thus to obtain a correct topology graph, [`Geometry`] must be
+/// vertex. Thus, to obtain a correct topology graph, [`Geometry`](crate::Geometry) must be
 /// self-noded before constructing their graphs.
 ///
 /// Two fundamental operations are supported by topology graphs:
@@ -26,13 +28,16 @@ use std::rc::Rc;
 ///   - Computing the intersections between the edges and nodes of two different graphs
 ///
 /// GeometryGraph is based on [JTS's `GeomGraph` as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/GeometryGraph.java)
-pub(crate) struct GeometryGraph<'a, F>
+#[derive(Clone)]
+pub struct GeometryGraph<'a, F>
 where
     F: GeoFloat,
 {
     arg_index: usize,
-    parent_geometry: &'a GeometryCow<'a, F>,
+    parent_geometry: GeometryCow<'a, F>,
+    tree: Option<Rc<RTree<Segment<F>>>>,
     use_boundary_determination_rule: bool,
+    has_computed_self_nodes: bool,
     planar_graph: PlanarGraph<F>,
 }
 
@@ -44,44 +49,102 @@ impl<F> GeometryGraph<'_, F>
 where
     F: GeoFloat,
 {
-    pub fn edges(&self) -> &[Rc<RefCell<Edge<F>>>] {
+    pub(crate) fn set_tree(&mut self, tree: Rc<RTree<Segment<F>>>) {
+        self.tree = Some(tree);
+    }
+
+    pub(crate) fn get_or_build_tree(&self) -> Rc<RTree<Segment<F>>> {
+        self.tree
+            .clone()
+            .unwrap_or_else(|| Rc::new(self.build_tree()))
+    }
+
+    pub(crate) fn build_tree(&self) -> RTree<Segment<F>> {
+        let segments: Vec<Segment<F>> = self
+            .edges()
+            .iter()
+            .enumerate()
+            .flat_map(|(edge_idx, edge)| {
+                let edge = RefCell::borrow(edge);
+                let start_of_final_segment: usize = edge.coords().len() - 1;
+                (0..start_of_final_segment).map(move |segment_idx| {
+                    let p1 = edge.coords()[segment_idx];
+                    let p2 = edge.coords()[segment_idx + 1];
+                    Segment::new(edge_idx, segment_idx, p1, p2)
+                })
+            })
+            .collect();
+        RTree::bulk_load(segments)
+    }
+
+    pub(crate) fn assert_eq_graph(&self, other: &Self) {
+        assert_eq!(self.arg_index, other.arg_index);
+        assert_eq!(
+            self.use_boundary_determination_rule,
+            other.use_boundary_determination_rule
+        );
+        assert_eq!(self.parent_geometry, other.parent_geometry);
+        self.planar_graph.assert_eq_graph(&other.planar_graph);
+    }
+
+    pub(crate) fn clone_for_arg_index(&self, arg_index: usize) -> Self {
+        debug_assert!(
+            self.has_computed_self_nodes,
+            "should only be called after computing self nodes"
+        );
+        let planar_graph = self
+            .planar_graph
+            .clone_for_arg_index(self.arg_index, arg_index);
+        Self {
+            arg_index,
+            parent_geometry: self.parent_geometry.clone(),
+            tree: self.tree.clone(),
+            use_boundary_determination_rule: self.use_boundary_determination_rule,
+            has_computed_self_nodes: true,
+            planar_graph,
+        }
+    }
+
+    pub(crate) fn edges(&self) -> &[Rc<RefCell<Edge<F>>>] {
         self.planar_graph.edges()
     }
 
-    pub fn insert_edge(&mut self, edge: Edge<F>) {
+    pub(crate) fn insert_edge(&mut self, edge: Edge<F>) {
         self.planar_graph.insert_edge(edge)
     }
 
-    pub fn is_boundary_node(&self, coord: Coord<F>) -> bool {
+    pub(crate) fn is_boundary_node(&self, coord: Coord<F>) -> bool {
         self.planar_graph.is_boundary_node(self.arg_index, coord)
     }
 
-    pub fn add_node_with_coordinate(&mut self, coord: Coord<F>) -> &mut CoordNode<F> {
+    pub(crate) fn add_node_with_coordinate(&mut self, coord: Coord<F>) -> &mut CoordNode<F> {
         self.planar_graph.add_node_with_coordinate(coord)
     }
 
-    pub fn nodes_iter(&self) -> impl Iterator<Item = &CoordNode<F>> {
+    pub(crate) fn nodes_iter(&self) -> impl Iterator<Item = &CoordNode<F>> {
         self.planar_graph.nodes.iter()
     }
 }
 
 impl<'a, F> GeometryGraph<'a, F>
 where
-    F: GeoFloat,
+    F: GeoFloat + RTreeNum,
 {
-    pub fn new(arg_index: usize, parent_geometry: &'a GeometryCow<F>) -> Self {
+    pub(crate) fn new(arg_index: usize, parent_geometry: GeometryCow<'a, F>) -> Self {
         let mut graph = GeometryGraph {
             arg_index,
             parent_geometry,
             use_boundary_determination_rule: true,
+            tree: None,
+            has_computed_self_nodes: false,
             planar_graph: PlanarGraph::new(),
         };
-        graph.add_geometry(parent_geometry);
+        graph.add_geometry(&graph.parent_geometry.clone());
         graph
     }
 
-    pub fn geometry(&self) -> &GeometryCow<F> {
-        self.parent_geometry
+    pub(crate) fn geometry(&self) -> &GeometryCow<F> {
+        &self.parent_geometry
     }
 
     /// Determine whether a component (node or edge) that appears multiple times in elements
@@ -96,22 +159,11 @@ where
         }
     }
 
-    fn create_edge_set_intersector() -> Box<dyn EdgeSetIntersector<F>> {
-        // PERF: faster algorithms exist. This one was chosen for simplicity of implementation and
-        //       debugging
-        // Slow, but simple and good for debugging
-        // Box::new(SimpleEdgeSetIntersector::new())
-
-        // Should be much faster for sparse intersections, while not much slower than
-        // SimpleEdgeSetIntersector in the dense case
-        Box::new(RstarEdgeSetIntersector::new())
-    }
-
     fn boundary_nodes(&self) -> impl Iterator<Item = &CoordNode<F>> {
         self.planar_graph.boundary_nodes(self.arg_index)
     }
 
-    pub fn add_geometry(&mut self, geometry: &GeometryCow<F>) {
+    pub(crate) fn add_geometry(&mut self, geometry: &GeometryCow<F>) {
         if geometry.is_empty() {
             return;
         }
@@ -273,13 +325,13 @@ where
     /// assumed to be valid).
     ///
     /// `line_intersector` the [`LineIntersector`] to use to determine intersection
-    pub fn compute_self_nodes(
-        &mut self,
-        line_intersector: Box<dyn LineIntersector<F>>,
-    ) -> SegmentIntersector<F> {
-        let mut segment_intersector = SegmentIntersector::new(line_intersector, true);
+    pub(crate) fn compute_self_nodes(&mut self, line_intersector: Box<dyn LineIntersector<F>>) {
+        if self.has_computed_self_nodes {
+            return;
+        }
+        self.has_computed_self_nodes = true;
 
-        let mut edge_set_intersector = Self::create_edge_set_intersector();
+        let mut segment_intersector = SegmentIntersector::new(line_intersector, true);
 
         // optimize intersection search for valid Polygons and LinearRings
         let is_rings = match self.geometry() {
@@ -290,18 +342,16 @@ where
         };
         let check_for_self_intersecting_edges = !is_rings;
 
+        let edge_set_intersector = RStarEdgeSetIntersector;
         edge_set_intersector.compute_intersections_within_set(
-            self.edges(),
+            self,
             check_for_self_intersecting_edges,
             &mut segment_intersector,
         );
-
         self.add_self_intersection_nodes();
-
-        segment_intersector
     }
 
-    pub fn compute_edge_intersections(
+    pub(crate) fn compute_edge_intersections(
         &self,
         other: &GeometryGraph<F>,
         line_intersector: Box<dyn LineIntersector<F>>,
@@ -312,10 +362,10 @@ where
             other.boundary_nodes().cloned().collect(),
         );
 
-        let mut edge_set_intersector = Self::create_edge_set_intersector();
+        let edge_set_intersector = RStarEdgeSetIntersector;
         edge_set_intersector.compute_intersections_between_sets(
-            self.edges(),
-            other.edges(),
+            self,
+            other,
             &mut segment_intersector,
         );
 
