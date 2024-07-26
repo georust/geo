@@ -59,6 +59,7 @@ impl<T: PartialOrd + Debug> PartialOrd for Active<T> {
 }
 
 /// Trait abstracting a container of active segments.
+#[allow(dead_code)]
 pub(in crate::algorithm) trait ActiveSet: Default {
     type Seg;
     fn previous_find<F: FnMut(&Active<Self::Seg>) -> bool>(

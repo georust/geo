@@ -14,6 +14,8 @@
   * <https://github.com/georust/geo/pull/1197>
 * Implement Frechet distance using linear algorithm to avoid `fatal runtime error: stack overflow` and improve overall performances.
   * <https://github.com/georust/geo/pull/1199>
+* Bump `geo` MSRV to 1.74 and update CI
+  * <https://github.com/georust/geo/pull/1201>
 
 ## 0.28.0
 
