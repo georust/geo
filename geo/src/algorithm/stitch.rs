@@ -89,9 +89,43 @@ pub(crate) trait StitchTriangles<T: GeoFloat> {
     ///
     /// # Additional Notes
     ///
+    /// Stitching triangles which result in a polygon with a hole which touches the outline
+    /// (mentioned here [banana polygon](https://postgis.net/workshops/postgis-intro/validity.html#repairing-invalidity))
+    /// will result in a single polygon without interiors instead of a polygon with a single
+    /// interior
+    ///
+    /// ```
+    /// ┌────────x────────┐
+    /// │\....../ \....../│
+    /// │.\..../   \..../.│
+    /// │..\../     \../..│
+    /// │...\/       \/...│
+    /// │...───────────...│
+    /// │../\....^..../\..│
+    /// │./..\../.\../..\.│
+    /// │/....\/...\/....\│
+    /// └─────────────────┘
+    ///                    
+    ///     │    │    │    
+    ///     ▼    ▼    ▼    
+    ///                    
+    /// ┌────────x────────┐
+    /// │       / \       │
+    /// │      /   \      │
+    /// │     /     \     │
+    /// │    /       \    │
+    /// │   ───────────   │
+    /// │                 │
+    /// │                 │
+    /// │                 │
+    /// └─────────────────┘
+    /// ```
+    ///
+    /// ---
+    ///
     /// If you want to do something more general like a
     /// [`Boolean Operation Union`](https://en.wikipedia.org/wiki/Boolean_operations_on_polygons)
-    /// you should use the trait `BooleanOps` or `SpadeBoolops`.
+    /// you should use the trait [`BooleanOps`] or [`SpadeBoolops`].
     fn stitch_triangulation(&self) -> TriangleStitchingResult<MultiPolygon<T>>;
 }
 
