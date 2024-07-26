@@ -94,7 +94,7 @@ pub(crate) trait StitchTriangles<T: GeoFloat> {
     /// will result in a single polygon without interiors instead of a polygon with a single
     /// interior
     ///
-    /// ```
+    /// ```text
     /// ┌────────x────────┐
     /// │\....../ \....../│
     /// │.\..../   \..../.│
