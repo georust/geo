@@ -10,8 +10,9 @@ use crate::HasDimensions;
 use crate::{Coord, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
 
 use rstar::{RTree, RTreeNum};
-use std::cell::RefCell;
-use std::rc::Rc;
+// use std::cell::RefCell;
+// use std::rc::Rc;
+use std::sync::Arc;
 
 /// The computation of the [`IntersectionMatrix`](crate::algorithm::relate::IntersectionMatrix) relies on the use of a
 /// structure called a "topology graph". The topology graph contains nodes (CoordNode) and
@@ -35,7 +36,7 @@ where
 {
     arg_index: usize,
     parent_geometry: GeometryCow<'a, F>,
-    tree: Option<Rc<RTree<Segment<F>>>>,
+    tree: Option<Arc<RTree<Segment<F>>>>,
     use_boundary_determination_rule: bool,
     has_computed_self_nodes: bool,
     planar_graph: PlanarGraph<F>,
@@ -49,14 +50,14 @@ impl<F> GeometryGraph<'_, F>
 where
     F: GeoFloat,
 {
-    pub(crate) fn set_tree(&mut self, tree: Rc<RTree<Segment<F>>>) {
+    pub(crate) fn set_tree(&mut self, tree: Arc<RTree<Segment<F>>>) {
         self.tree = Some(tree);
     }
 
-    pub(crate) fn get_or_build_tree(&self) -> Rc<RTree<Segment<F>>> {
+    pub(crate) fn get_or_build_tree(&self) -> Arc<RTree<Segment<F>>> {
         self.tree
             .clone()
-            .unwrap_or_else(|| Rc::new(self.build_tree()))
+            .unwrap_or_else(|| Arc::new(self.build_tree()))
     }
 
     pub(crate) fn build_tree(&self) -> RTree<Segment<F>> {
@@ -65,7 +66,7 @@ where
             .iter()
             .enumerate()
             .flat_map(|(edge_idx, edge)| {
-                let edge = RefCell::borrow(edge);
+                // let edge = RefCell::borrow(edge);
                 let start_of_final_segment: usize = edge.coords().len() - 1;
                 (0..start_of_final_segment).map(move |segment_idx| {
                     let p1 = edge.coords()[segment_idx];
@@ -105,8 +106,12 @@ where
         }
     }
 
-    pub(crate) fn edges(&self) -> &[Rc<RefCell<Edge<F>>>] {
+    pub(crate) fn edges(&self) -> &[Edge<F>] {
         self.planar_graph.edges()
+    }
+
+    pub(crate) fn edges_mut(&mut self) -> &mut [Edge<F>] {
+        self.planar_graph.edges_mut()
     }
 
     pub(crate) fn insert_edge(&mut self, edge: Edge<F>) {
@@ -352,8 +357,8 @@ where
     }
 
     pub(crate) fn compute_edge_intersections(
-        &self,
-        other: &GeometryGraph<F>,
+        &'a mut self,
+        other: &mut GeometryGraph<'a, F>,
         line_intersector: Box<dyn LineIntersector<F>>,
     ) -> SegmentIntersector<F> {
         let mut segment_intersector = SegmentIntersector::new(line_intersector, false);
@@ -404,7 +409,6 @@ where
         let positions_and_intersections: Vec<(CoordPos, Vec<Coord<F>>)> = self
             .edges()
             .iter()
-            .map(|cell| cell.borrow())
             .map(|edge| {
                 let position = edge
                     .label()
