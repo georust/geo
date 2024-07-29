@@ -4,46 +4,46 @@ use crate::{
     MultiLineString,
 };
 
-/// Segments a LineString into `n` equal length LineStrings as a MultiLineString.
-/// `None` will be returned when `n` is equal to 0 or when a point
-/// cannot be interpolated on a `Line` segment.
+/// Segments a LineString into `segment_count` equal length LineStrings as a MultiLineString
+/// using Euclidean distance calculations.  See `LineStringSegmentizeHaversine`
+/// if you are dealing with geographic coordinates (lat/lon).
 ///
+/// `None` will be returned when `segment_count` is equal to 0 or when a point
+/// cannot be interpolated on a `Line` segment.
 ///
 /// # Examples
 /// ```
 /// use geo::{LineString, MultiLineString, LineStringSegmentize};
 /// // Create a simple line string
 /// let lns: LineString<f64> = vec![[0.0, 0.0], [1.0, 2.0], [3.0, 6.0]].into();
-/// // Segment it into n LineStrings inside of a MultiLineString
-/// let n = 6;
-/// let segmentized = lns.line_segmentize(n).unwrap();
+/// // Segment it into 6 LineStrings inside of a MultiLineString
+/// let segmentized = lns.line_segmentize(6).unwrap();
 /// // Compare the number of elements
-/// assert_eq!(n, segmentized.0.len());
+/// assert_eq!(6, segmentized.0.len());
 ///```
 pub trait LineStringSegmentize {
-    fn line_segmentize(&self, n: usize) -> Option<MultiLineString>;
+    fn line_segmentize(&self, segment_count: usize) -> Option<MultiLineString>;
 }
 
-/// Segments a LineString into `n` equal length LineStrings as a MultiLineString
+/// Segments a LineString into `segment_count` equal length LineStrings as a MultiLineString
 /// using Haversine distance calculations. Use this over `LineStringSegmentize`
 /// when using data from a geographic coordinate system.
-/// `None` will be returned when `n` is equal to 0 or when a point
-/// cannot be interpolated on a `Line` segment.
 ///
+/// `None` will be returned when `segment_count` is equal to 0 or when a point
+/// cannot be interpolated on a `Line` segment.
 ///
 /// # Examples
 /// ```
 /// use geo::{LineString, MultiLineString, LineStringSegmentizeHaversine};
 /// // Create a simple line string
 /// let lns: LineString<f64> = vec![[0.0, 0.0], [1.0, 2.0], [3.0, 6.0]].into();
-/// // Segment it into n LineStrings inside of a MultiLineString
-/// let n = 6;
-/// let segmentized = lns.line_segmentize_haversine(n).unwrap();
+/// // Segment it into 6 LineStrings inside of a MultiLineString
+/// let segmentized = lns.line_segmentize_haversine(6).unwrap();
 /// // Compare the number of elements
-/// assert_eq!(n, segmentized.0.len());
+/// assert_eq!(6, segmentized.0.len());
 ///```
 pub trait LineStringSegmentizeHaversine {
-    fn line_segmentize_haversine(&self, n: usize) -> Option<MultiLineString>;
+    fn line_segmentize_haversine(&self, segment_count: usize) -> Option<MultiLineString>;
 }
 
 macro_rules! implement_segmentize {

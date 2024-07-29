@@ -13,7 +13,7 @@ use std::fmt;
 ///
 /// If the component has *no* incidence with one of the geometries, than the `Label`'s
 /// `TopologyPosition` for that geometry is called `empty`.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub(crate) struct Label {
     geometry_topologies: [TopologyPosition; 2],
 }
@@ -29,6 +29,10 @@ impl fmt::Debug for Label {
 }
 
 impl Label {
+    pub fn swap_args(&mut self) {
+        self.geometry_topologies.swap(0, 1)
+    }
+
     /// Construct an empty `Label` for relating a 1-D line or 0-D point to both geometries.
     pub fn empty_line_or_point() -> Label {
         Label {

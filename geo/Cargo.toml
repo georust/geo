@@ -9,7 +9,7 @@ readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
 autobenches = true
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.74"
 categories = ["science::geo"]
 
 [features]
@@ -81,6 +81,10 @@ harness = false
 
 [[bench]]
 name = "euclidean_distance"
+harness = false
+
+[[bench]]
+name = "prepared_geometry"
 harness = false
 
 [[bench]]

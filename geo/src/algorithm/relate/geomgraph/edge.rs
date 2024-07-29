@@ -7,7 +7,7 @@ use std::collections::BTreeSet;
 /// An `Edge` represents a one dimensional line in a geometry.
 ///
 /// This is based on [JTS's `Edge` as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/Edge.java)
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub(crate) struct Edge<F: GeoFloat> {
     /// `coordinates` of the line geometry
     coords: Vec<Coord<F>>,
@@ -48,6 +48,13 @@ impl<F: GeoFloat> Edge<F> {
         &mut self.label
     }
 
+    /// When comparing two prepared geometries, we cache each geometry's topology graph. Depending
+    /// on the order of the operation - `a.relate(b)` vs `b.relate(a)` - we may need to swap the
+    /// label.
+    pub fn swap_label_args(&mut self) {
+        self.label.swap_args()
+    }
+
     pub fn coords(&self) -> &[Coord<F>] {
         &self.coords
     }
@@ -55,6 +62,7 @@ impl<F: GeoFloat> Edge<F> {
     pub fn is_isolated(&self) -> bool {
         self.is_isolated
     }
+
     pub fn mark_as_unisolated(&mut self) {
         self.is_isolated = false;
     }

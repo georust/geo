@@ -1,4 +1,4 @@
-use super::super::Edge;
+use super::super::{Edge, GeometryGraph};
 use super::{EdgeSetIntersector, SegmentIntersector};
 use crate::GeoFloat;
 
@@ -13,7 +13,7 @@ impl SimpleEdgeSetIntersector {
     }
 
     fn compute_intersects<F: GeoFloat>(
-        &mut self,
+        &self,
         edge0: &Rc<RefCell<Edge<F>>>,
         edge1: &Rc<RefCell<Edge<F>>>,
         segment_intersector: &mut SegmentIntersector<F>,
@@ -30,11 +30,12 @@ impl SimpleEdgeSetIntersector {
 
 impl<F: GeoFloat> EdgeSetIntersector<F> for SimpleEdgeSetIntersector {
     fn compute_intersections_within_set(
-        &mut self,
-        edges: &[Rc<RefCell<Edge<F>>>],
+        &self,
+        graph: &GeometryGraph<F>,
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
+        let edges = graph.edges();
         for edge0 in edges.iter() {
             for edge1 in edges.iter() {
                 if check_for_self_intersecting_edges || edge0.as_ptr() != edge1.as_ptr() {
@@ -44,14 +45,17 @@ impl<F: GeoFloat> EdgeSetIntersector<F> for SimpleEdgeSetIntersector {
         }
     }
 
-    fn compute_intersections_between_sets(
-        &mut self,
-        edges0: &[Rc<RefCell<Edge<F>>>],
-        edges1: &[Rc<RefCell<Edge<F>>>],
+    fn compute_intersections_between_sets<'a>(
+        &self,
+        graph_0: &GeometryGraph<'a, F>,
+        graph_1: &GeometryGraph<'a, F>,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
-        for edge0 in edges0 {
-            for edge1 in edges1 {
+        let edges_0 = graph_0.edges();
+        let edges_1 = graph_1.edges();
+
+        for edge0 in edges_0 {
+            for edge1 in edges_1 {
                 self.compute_intersects(edge0, edge1, segment_intersector);
             }
         }

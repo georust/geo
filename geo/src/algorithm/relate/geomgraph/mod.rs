@@ -8,7 +8,7 @@ pub(crate) use edge_end::{EdgeEnd, EdgeEndKey};
 pub(crate) use edge_end_bundle::{EdgeEndBundle, LabeledEdgeEndBundle};
 pub(crate) use edge_end_bundle_star::{EdgeEndBundleStar, LabeledEdgeEndBundleStar};
 pub(crate) use edge_intersection::EdgeIntersection;
-pub(crate) use geometry_graph::GeometryGraph;
+pub use geometry_graph::GeometryGraph;
 pub(crate) use intersection_matrix::IntersectionMatrix;
 pub(crate) use label::Label;
 pub(crate) use line_intersector::{LineIntersection, LineIntersector};
