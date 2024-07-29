@@ -25,7 +25,7 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Coord<T: CoordNum = f64> {
+pub struct Coord<T = f64> {
     pub x: T,
     pub y: T,
 }
@@ -33,7 +33,7 @@ pub struct Coord<T: CoordNum = f64> {
 #[deprecated(note = "Renamed to `geo_types::Coord` (or `geo::Coord`)")]
 pub type Coordinate<T = f64> = Coord<T>;
 
-impl<T: CoordNum> From<(T, T)> for Coord<T> {
+impl<T> From<(T, T)> for Coord<T> {
     #[inline]
     fn from(coords: (T, T)) -> Self {
         coord! {
@@ -43,7 +43,7 @@ impl<T: CoordNum> From<(T, T)> for Coord<T> {
     }
 }
 
-impl<T: CoordNum> From<[T; 2]> for Coord<T> {
+impl<T: Copy> From<[T; 2]> for Coord<T> {
     #[inline]
     fn from(coords: [T; 2]) -> Self {
         coord! {
@@ -53,7 +53,7 @@ impl<T: CoordNum> From<[T; 2]> for Coord<T> {
     }
 }
 
-impl<T: CoordNum> From<Point<T>> for Coord<T> {
+impl<T: Copy> From<Point<T>> for Coord<T> {
     #[inline]
     fn from(point: Point<T>) -> Self {
         coord! {
@@ -63,21 +63,21 @@ impl<T: CoordNum> From<Point<T>> for Coord<T> {
     }
 }
 
-impl<T: CoordNum> From<Coord<T>> for (T, T) {
+impl<T> From<Coord<T>> for (T, T) {
     #[inline]
     fn from(coord: Coord<T>) -> Self {
         (coord.x, coord.y)
     }
 }
 
-impl<T: CoordNum> From<Coord<T>> for [T; 2] {
+impl<T> From<Coord<T>> for [T; 2] {
     #[inline]
     fn from(coord: Coord<T>) -> Self {
         [coord.x, coord.y]
     }
 }
 
-impl<T: CoordNum> Coord<T> {
+impl<T: Copy> Coord<T> {
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the coordinate.
     ///
     /// # Examples
@@ -117,7 +117,7 @@ use core::ops::{Add, Div, Mul, Neg, Sub};
 /// ```
 impl<T> Neg for Coord<T>
 where
-    T: CoordNum + Neg<Output = T>,
+    T: Neg<Output = T>,
 {
     type Output = Self;
 
@@ -144,7 +144,7 @@ where
 /// assert_eq!(sum.x, 2.75);
 /// assert_eq!(sum.y, 5.0);
 /// ```
-impl<T: CoordNum> Add for Coord<T> {
+impl<T: Add<Output = T>> Add for Coord<T> {
     type Output = Self;
 
     #[inline]
@@ -170,7 +170,7 @@ impl<T: CoordNum> Add for Coord<T> {
 /// assert_eq!(diff.x, 0.25);
 /// assert_eq!(diff.y, 0.);
 /// ```
-impl<T: CoordNum> Sub for Coord<T> {
+impl<T: Sub<Output = T>> Sub for Coord<T> {
     type Output = Self;
 
     #[inline]
@@ -195,7 +195,7 @@ impl<T: CoordNum> Sub for Coord<T> {
 /// assert_eq!(q.x, 5.0);
 /// assert_eq!(q.y, 10.0);
 /// ```
-impl<T: CoordNum> Mul<T> for Coord<T> {
+impl<T: Copy + Mul<Output = T>> Mul<T> for Coord<T> {
     type Output = Self;
 
     #[inline]
@@ -220,7 +220,7 @@ impl<T: CoordNum> Mul<T> for Coord<T> {
 /// assert_eq!(q.x, 1.25);
 /// assert_eq!(q.y, 2.5);
 /// ```
-impl<T: CoordNum> Div<T> for Coord<T> {
+impl<T: Copy + Div<Output = T>> Div<T> for Coord<T> {
     type Output = Self;
 
     #[inline]
@@ -246,7 +246,7 @@ use num_traits::Zero;
 /// assert_eq!(p.x, 0.);
 /// assert_eq!(p.y, 0.);
 /// ```
-impl<T: CoordNum> Coord<T> {
+impl<T: Zero> Coord<T> {
     #[inline]
     pub fn zero() -> Self {
         coord! {
@@ -256,7 +256,7 @@ impl<T: CoordNum> Coord<T> {
     }
 }
 
-impl<T: CoordNum> Zero for Coord<T> {
+impl<T: Zero> Zero for Coord<T> {
     #[inline]
     fn zero() -> Self {
         Self::zero()

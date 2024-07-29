@@ -28,39 +28,103 @@ use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAss
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T: CoordNum = f64>(pub Coord<T>);
+pub struct Point<T = f64>(pub Coord<T>);
 
-impl<T: CoordNum> From<Coord<T>> for Point<T> {
+impl<T> From<Coord<T>> for Point<T> {
     fn from(x: Coord<T>) -> Self {
         Point(x)
     }
 }
 
-impl<T: CoordNum> From<(T, T)> for Point<T> {
+impl<T> From<(T, T)> for Point<T> {
     fn from(coords: (T, T)) -> Self {
         Point::new(coords.0, coords.1)
     }
 }
 
-impl<T: CoordNum> From<[T; 2]> for Point<T> {
+impl<T: Copy> From<[T; 2]> for Point<T> {
     fn from(coords: [T; 2]) -> Self {
         Point::new(coords[0], coords[1])
     }
 }
 
-impl<T: CoordNum> From<Point<T>> for (T, T) {
+impl<T> From<Point<T>> for (T, T) {
     fn from(point: Point<T>) -> Self {
         point.0.into()
     }
 }
 
-impl<T: CoordNum> From<Point<T>> for [T; 2] {
+impl<T> From<Point<T>> for [T; 2] {
     fn from(point: Point<T>) -> Self {
         point.0.into()
     }
 }
 
-impl<T: CoordNum> Point<T> {
+impl<T: Copy> Point<T> {
+    /// Returns the x/horizontal component of the point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let p = Point::new(1.234, 2.345);
+    ///
+    /// assert_eq!(p.x(), 1.234);
+    /// ```
+    pub fn x(self) -> T {
+        self.0.x
+    }
+
+    /// Returns the y/vertical component of the point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let p = Point::new(1.234, 2.345);
+    ///
+    /// assert_eq!(p.y(), 2.345);
+    /// ```
+    pub fn y(self) -> T {
+        self.0.y
+    }
+
+    /// Returns the longitude/horizontal component of the point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let p = Point::new(1.234, 2.345);
+    ///
+    /// assert_eq!(p.x(), 1.234);
+    /// ```
+    #[deprecated = "use `Point::x` instead, it's less ambiguous"]
+    pub fn lng(self) -> T {
+        self.x()
+    }
+
+    /// Returns the latitude/vertical component of the point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::Point;
+    ///
+    /// let p = Point::new(1.234, 2.345);
+    ///
+    /// assert_eq!(p.y(), 2.345);
+    /// ```
+    #[deprecated = "use `Point::y` instead, it's less ambiguous"]
+    pub fn lat(self) -> T {
+        self.y()
+    }
+}
+
+impl<T> Point<T> {
     /// Creates a new point.
     ///
     /// # Examples
@@ -75,21 +139,6 @@ impl<T: CoordNum> Point<T> {
     /// ```
     pub fn new(x: T, y: T) -> Self {
         point! { x: x, y: y }
-    }
-
-    /// Returns the x/horizontal component of the point.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::Point;
-    ///
-    /// let p = Point::new(1.234, 2.345);
-    ///
-    /// assert_eq!(p.x(), 1.234);
-    /// ```
-    pub fn x(self) -> T {
-        self.0.x
     }
 
     /// Sets the x/horizontal component of the point.
@@ -123,20 +172,6 @@ impl<T: CoordNum> Point<T> {
     /// ```
     pub fn x_mut(&mut self) -> &mut T {
         &mut self.0.x
-    }
-    /// Returns the y/vertical component of the point.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::Point;
-    ///
-    /// let p = Point::new(1.234, 2.345);
-    ///
-    /// assert_eq!(p.y(), 2.345);
-    /// ```
-    pub fn y(self) -> T {
-        self.0.y
     }
 
     /// Sets the y/vertical component of the point.
@@ -188,21 +223,6 @@ impl<T: CoordNum> Point<T> {
     pub fn x_y(self) -> (T, T) {
         (self.0.x, self.0.y)
     }
-    /// Returns the longitude/horizontal component of the point.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::Point;
-    ///
-    /// let p = Point::new(1.234, 2.345);
-    ///
-    /// assert_eq!(p.x(), 1.234);
-    /// ```
-    #[deprecated = "use `Point::x` instead, it's less ambiguous"]
-    pub fn lng(self) -> T {
-        self.x()
-    }
 
     /// Sets the longitude/horizontal component of the point.
     ///
@@ -222,21 +242,6 @@ impl<T: CoordNum> Point<T> {
         self.set_x(lng)
     }
 
-    /// Returns the latitude/vertical component of the point.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::Point;
-    ///
-    /// let p = Point::new(1.234, 2.345);
-    ///
-    /// assert_eq!(p.y(), 2.345);
-    /// ```
-    #[deprecated = "use `Point::y` instead, it's less ambiguous"]
-    pub fn lat(self) -> T {
-        self.y()
-    }
     /// Sets the latitude/vertical component of the point.
     ///
     /// # Examples

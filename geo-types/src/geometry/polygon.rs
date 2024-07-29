@@ -28,23 +28,23 @@ use approx::{AbsDiffEq, RelativeEq};
 /// # Validity
 ///
 /// - The exterior and interior rings must be valid
-/// `LinearRing`s (see [`LineString`]).
+///     `LinearRing`s (see [`LineString`]).
 ///
 /// - No two rings in the boundary may cross, and may
-/// intersect at a `Point` only as a tangent. In other
-/// words, the rings must be distinct, and for every pair of
-/// common points in two of the rings, there must be a
-/// neighborhood (a topological open set) around one that
-/// does not contain the other point.
+///     intersect at a `Point` only as a tangent. In other
+///     words, the rings must be distinct, and for every pair of
+///     common points in two of the rings, there must be a
+///     neighborhood (a topological open set) around one that
+///     does not contain the other point.
 ///
 /// - The closure of the interior of the `Polygon` must
-/// equal the `Polygon` itself. For instance, the exterior
-/// may not contain a spike.
+///     equal the `Polygon` itself. For instance, the exterior
+///     may not contain a spike.
 ///
 /// - The interior of the polygon must be a connected
-/// point-set. That is, any two distinct points in the
-/// interior must admit a curve between these two that lies
-/// in the interior.
+///     point-set. That is, any two distinct points in the
+///     interior must admit a curve between these two that lies
+///     in the interior.
 ///
 /// Refer to section 6.1.11.1 of the OGC-SFA for a formal
 /// definition of validity. Besides the closed `LineString`
@@ -68,12 +68,12 @@ use approx::{AbsDiffEq, RelativeEq};
 /// [`LineString`]: line_string/struct.LineString.html
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Polygon<T: CoordNum = f64> {
+pub struct Polygon<T = f64> {
     exterior: LineString<T>,
     interiors: Vec<LineString<T>>,
 }
 
-impl<T: CoordNum> Polygon<T> {
+impl<T> Polygon<T> {
     /// Create a new `Polygon` with the provided exterior `LineString` ring and
     /// interior `LineString` rings.
     ///
@@ -124,7 +124,10 @@ impl<T: CoordNum> Polygon<T> {
     ///     &LineString::from(vec![(0., 0.), (1., 1.), (1., 0.), (0., 0.),])
     /// );
     /// ```
-    pub fn new(mut exterior: LineString<T>, mut interiors: Vec<LineString<T>>) -> Self {
+    pub fn new(mut exterior: LineString<T>, mut interiors: Vec<LineString<T>>) -> Self
+    where
+        T: Copy + PartialEq,
+    {
         exterior.close();
         for interior in &mut interiors {
             interior.close();
@@ -241,6 +244,7 @@ impl<T: CoordNum> Polygon<T> {
     pub fn exterior_mut<F>(&mut self, f: F)
     where
         F: FnOnce(&mut LineString<T>),
+        T: PartialEq + Copy,
     {
         f(&mut self.exterior);
         self.exterior.close();
@@ -250,6 +254,7 @@ impl<T: CoordNum> Polygon<T> {
     pub fn try_exterior_mut<F, E>(&mut self, f: F) -> Result<(), E>
     where
         F: FnOnce(&mut LineString<T>) -> Result<(), E>,
+        T: PartialEq + Copy,
     {
         f(&mut self.exterior)?;
         self.exterior.close();
@@ -353,6 +358,7 @@ impl<T: CoordNum> Polygon<T> {
     pub fn interiors_mut<F>(&mut self, f: F)
     where
         F: FnOnce(&mut [LineString<T>]),
+        T: PartialEq + Copy,
     {
         f(&mut self.interiors);
         for interior in &mut self.interiors {
@@ -364,6 +370,7 @@ impl<T: CoordNum> Polygon<T> {
     pub fn try_interiors_mut<F, E>(&mut self, f: F) -> Result<(), E>
     where
         F: FnOnce(&mut [LineString<T>]) -> Result<(), E>,
+        T: PartialEq + Copy,
     {
         f(&mut self.interiors)?;
         for interior in &mut self.interiors {
@@ -402,7 +409,10 @@ impl<T: CoordNum> Polygon<T> {
     /// ```
     ///
     /// [will be closed]: #linestring-closing-operation
-    pub fn interiors_push(&mut self, new_interior: impl Into<LineString<T>>) {
+    pub fn interiors_push(&mut self, new_interior: impl Into<LineString<T>>)
+    where
+        T: PartialEq + Copy,
+    {
         let mut new_interior = new_interior.into();
         new_interior.close();
         self.interiors.push(new_interior);
