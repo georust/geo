@@ -1,4 +1,4 @@
-use crate::{LineString, MultiPolygon, Polygon};
+use crate::{LineString, MultiPolygon, Polygon, Relate};
 use log::{error, info};
 
 use std::{
@@ -116,6 +116,39 @@ fn test_complex_rects() -> Result<()> {
     }
     Ok(())
 }
+
+#[test]
+fn single_and_multi() {
+    let wkt1 = "POLYGON ((110 310, 220 310, 220 210, 110 210, 110 310))";
+    // multipolygon containing a single polygon
+    let wkt2 = "MULTIPOLYGON (((80 260, 90 260, 90 250, 80 250, 80 260)))";
+    // From JTS union op
+    let res = "MULTIPOLYGON (((110 310, 220 310, 220 210, 110 210, 110 310)), ((80 260, 90 260, 90 250, 80 250, 80 260)))";
+    let poly = Polygon::<f64>::try_from_wkt_str(&wkt1).unwrap();
+    let mpoly = MultiPolygon::<f64>::try_from_wkt_str(&wkt2).unwrap();
+    let respoly = MultiPolygon::<f64>::try_from_wkt_str(&res).unwrap();
+    let union = mpoly.union(&poly);
+    let intersection_matrix = respoly.relate(&union);
+    // coords will be arranged differently, but we only care about topology
+    assert!(intersection_matrix.is_equal_topo());
+}
+
+#[test]
+fn multi_and_single() {
+    let wkt1 = "POLYGON ((110 310, 220 310, 220 210, 110 210, 110 310))";
+    // multipolygon containing a single polygon
+    let wkt2 = "MULTIPOLYGON (((80 260, 90 260, 90 250, 80 250, 80 260)))";
+    // From JTS union op
+    let res = "MULTIPOLYGON (((110 310, 220 310, 220 210, 110 210, 110 310)), ((80 260, 90 260, 90 250, 80 250, 80 260)))";
+    let poly = Polygon::<f64>::try_from_wkt_str(&wkt1).unwrap();
+    let mpoly = MultiPolygon::<f64>::try_from_wkt_str(&wkt2).unwrap();
+    let respoly = MultiPolygon::<f64>::try_from_wkt_str(&res).unwrap();
+    let union = poly.union(&mpoly);
+    let intersection_matrix = respoly.relate(&union);
+    // coords will be arranged differently, but we only care about topology
+    assert!(intersection_matrix.is_equal_topo());
+}
+
 #[test]
 fn test_complex_rects1() -> Result<()> {
     let wkt1 = "MULTIPOLYGON(((-1 -2,-1.0000000000000002 2,-0.8823529411764707 2,-0.8823529411764706 -2,-1 -2)))";
