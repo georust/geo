@@ -124,9 +124,9 @@ fn single_and_multi() {
     let wkt2 = "MULTIPOLYGON (((80 260, 90 260, 90 250, 80 250, 80 260)))";
     // From JTS union op
     let res = "MULTIPOLYGON (((110 310, 220 310, 220 210, 110 210, 110 310)), ((80 260, 90 260, 90 250, 80 250, 80 260)))";
-    let poly = Polygon::<f64>::try_from_wkt_str(&wkt1).unwrap();
-    let mpoly = MultiPolygon::<f64>::try_from_wkt_str(&wkt2).unwrap();
-    let respoly = MultiPolygon::<f64>::try_from_wkt_str(&res).unwrap();
+    let poly = Polygon::<f64>::try_from_wkt_str(wkt1).unwrap();
+    let mpoly = MultiPolygon::<f64>::try_from_wkt_str(wkt2).unwrap();
+    let respoly = MultiPolygon::<f64>::try_from_wkt_str(res).unwrap();
     let union = mpoly.union(&poly);
     let intersection_matrix = respoly.relate(&union);
     // coords will be arranged differently, but we only care about topology
@@ -140,9 +140,9 @@ fn multi_and_single() {
     let wkt2 = "MULTIPOLYGON (((80 260, 90 260, 90 250, 80 250, 80 260)))";
     // From JTS union op
     let res = "MULTIPOLYGON (((110 310, 220 310, 220 210, 110 210, 110 310)), ((80 260, 90 260, 90 250, 80 250, 80 260)))";
-    let poly = Polygon::<f64>::try_from_wkt_str(&wkt1).unwrap();
-    let mpoly = MultiPolygon::<f64>::try_from_wkt_str(&wkt2).unwrap();
-    let respoly = MultiPolygon::<f64>::try_from_wkt_str(&res).unwrap();
+    let poly = Polygon::<f64>::try_from_wkt_str(wkt1).unwrap();
+    let mpoly = MultiPolygon::<f64>::try_from_wkt_str(wkt2).unwrap();
+    let respoly = MultiPolygon::<f64>::try_from_wkt_str(res).unwrap();
     let union = poly.union(&mpoly);
     let intersection_matrix = respoly.relate(&union);
     // coords will be arranged differently, but we only care about topology
