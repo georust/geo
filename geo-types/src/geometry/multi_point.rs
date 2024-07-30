@@ -1,4 +1,4 @@
-use crate::{CoordNum, Point};
+use crate::{CoordNum, NoValue, Point};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -7,10 +7,12 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
 
-/// A collection of [`Point`s](struct.Point.html). Can
+/// A collection of [`Point`]. Can
 /// be created from a `Vec` of `Point`s, or from an
 /// Iterator which yields `Point`s. Iterating over this
 /// object yields the component `Point`s.
+///
+/// `MultiPoint`s are 2D by default, but optionally support 3D and Measure values.
 ///
 /// # Semantics
 ///
@@ -32,9 +34,28 @@ use core::iter::FromIterator;
 /// ```
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct MultiPoint<T: CoordNum = f64>(pub Vec<Point<T>>);
+pub struct MultiPoint<T: CoordNum = f64, Z: CoordNum = NoValue, M: CoordNum = NoValue>(
+    pub Vec<Point<T, Z, M>>,
+);
 
-impl<T: CoordNum, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
+/// A collection of points with a measurement value in 2D space.
+///
+/// See [`MultiPoint`]
+pub type MultiPointM<T> = MultiPoint<T, NoValue, T>;
+
+/// A collection of points in 3D space.
+///
+/// See [`MultiPoint`]
+pub type MultiPoint3D<T> = MultiPoint<T, T, NoValue>;
+
+/// A collection of points with a measurement value in 3D space.
+///
+/// See [`MultiPoint`]
+pub type MultiPoint3DM<T> = MultiPoint<T, T, T>;
+
+impl<T: CoordNum, Z: CoordNum, M: CoordNum, IP: Into<Point<T, Z, M>>> From<IP>
+    for MultiPoint<T, Z, M>
+{
     /// Convert a single `Point` (or something which can be converted to a
     /// `Point`) into a one-member `MultiPoint`
     fn from(x: IP) -> Self {
@@ -42,7 +63,9 @@ impl<T: CoordNum, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
     }
 }
 
-impl<T: CoordNum, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum, IP: Into<Point<T, Z, M>>> From<Vec<IP>>
+    for MultiPoint<T, Z, M>
+{
     /// Convert a `Vec` of `Points` (or `Vec` of things which can be converted
     /// to a `Point`) into a `MultiPoint`.
     fn from(v: Vec<IP>) -> Self {
@@ -50,7 +73,9 @@ impl<T: CoordNum, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
     }
 }
 
-impl<T: CoordNum, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum, IP: Into<Point<T, Z, M>>> FromIterator<IP>
+    for MultiPoint<T, Z, M>
+{
     /// Collect the results of a `Point` iterator into a `MultiPoint`
     fn from_iter<I: IntoIterator<Item = IP>>(iter: I) -> Self {
         Self(iter.into_iter().map(|p| p.into()).collect())
@@ -58,35 +83,35 @@ impl<T: CoordNum, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
 }
 
 /// Iterate over the `Point`s in this `MultiPoint`.
-impl<T: CoordNum> IntoIterator for MultiPoint<T> {
-    type Item = Point<T>;
-    type IntoIter = ::alloc::vec::IntoIter<Point<T>>;
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for MultiPoint<T, Z, M> {
+    type Item = Point<T, Z, M>;
+    type IntoIter = vec::IntoIter<Point<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
 }
 
-impl<'a, T: CoordNum> IntoIterator for &'a MultiPoint<T> {
-    type Item = &'a Point<T>;
-    type IntoIter = ::alloc::slice::Iter<'a, Point<T>>;
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a MultiPoint<T, Z, M> {
+    type Item = &'a Point<T, Z, M>;
+    type IntoIter = ::alloc::slice::Iter<'a, Point<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         (self.0).iter()
     }
 }
 
-impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPoint<T> {
-    type Item = &'a mut Point<T>;
-    type IntoIter = ::alloc::slice::IterMut<'a, Point<T>>;
+impl<'a, T: CoordNum, Z: CoordNum, M: CoordNum> IntoIterator for &'a mut MultiPoint<T, Z, M> {
+    type Item = &'a mut Point<T, Z, M>;
+    type IntoIter = ::alloc::slice::IterMut<'a, Point<T, Z, M>>;
 
     fn into_iter(self) -> Self::IntoIter {
         (self.0).iter_mut()
     }
 }
 
-impl<T: CoordNum> MultiPoint<T> {
-    pub fn new(value: Vec<Point<T>>) -> Self {
+impl<T: CoordNum, Z: CoordNum, M: CoordNum> MultiPoint<T, Z, M> {
+    pub fn new(value: Vec<Point<T, Z, M>>) -> Self {
         Self(value)
     }
 
@@ -98,11 +123,11 @@ impl<T: CoordNum> MultiPoint<T> {
         self.0.is_empty()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &Point<T>> {
+    pub fn iter(&self) -> impl Iterator<Item = &Point<T, Z, M>> {
         self.0.iter()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Point<T>> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Point<T, Z, M>> {
         self.0.iter_mut()
     }
 }
