@@ -11,29 +11,29 @@ use crate::{Coord, GeoNum, LineString};
 /// # Remarks
 ///
 /// - Collinearity does not require that the `LineString`
-/// be closed, but the rest of the predicates do.
+///   be closed, but the rest of the predicates do.
 ///
 /// - This definition is closely related to the notion
-/// of [convexity of polygons][convex set]. In particular, a
-/// [`Polygon`](crate::Polygon) is convex, if and only if its `exterior` is
-/// convex, and `interiors` is empty.
+///   of [convexity of polygons][convex set]. In particular, a
+///   [`Polygon`](crate::Polygon) is convex, if and only if its `exterior` is
+///   convex, and `interiors` is empty.
 ///
 /// - The [`ConvexHull`] algorithm always returns a strictly
-/// convex `LineString` unless the input is empty or
-/// collinear. The [`graham_hull`] algorithm provides an
-/// option to include collinear points, producing a
-/// (possibly non-strict) convex `LineString`.
+///   convex `LineString` unless the input is empty or
+///   collinear. The [`graham_hull`] algorithm provides an
+///   option to include collinear points, producing a
+///   (possibly non-strict) convex `LineString`.
 ///
 /// # Edge Cases
 ///
 /// - the convexity, and collinearity of an empty
-/// `LineString` is _unspecified_ and must not be relied
-/// upon.
+///   `LineString` is _unspecified_ and must not be relied
+///   upon.
 ///
 /// - A closed `LineString` with at most three coordinates
-/// (including the possibly repeated first coordinate) is
-/// both convex and collinear. However, the strict convexity
-/// is _unspecified_ and must not be relied upon.
+///   (including the possibly repeated first coordinate) is
+///   both convex and collinear. However, the strict convexity
+///   is _unspecified_ and must not be relied upon.
 ///
 /// [convex combination]: //en.wikipedia.org/wiki/Convex_combination
 /// [convex set]: //en.wikipedia.org/wiki/Convex_set

@@ -460,7 +460,7 @@ fn remove_lines_by_index<T: SpadeTriangulationFloat>(
 /// split lines based on intersection kind:
 ///
 /// - intersection point: create 4 new lines from the existing line's endpoints to the intersection
-/// point
+///   point
 /// - collinear: create 3 new lines (before overlap, overlap, after overlap)
 fn split_lines<T: SpadeTriangulationFloat>(
     [l0, l1]: [Line<T>; 2],

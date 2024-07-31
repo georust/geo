@@ -15,8 +15,8 @@ use super::{RcSegment, Segment};
 /// - iterate over all end-points of the input line or points in lex. order
 ///
 /// - query the set of active segments at the current iteration point: these are
-/// the segments currently intersecting the sweep line, and are ordered by their
-/// position on the line
+///   the segments currently intersecting the sweep line, and are ordered by their
+///    position on the line
 ///
 /// # Note
 ///
