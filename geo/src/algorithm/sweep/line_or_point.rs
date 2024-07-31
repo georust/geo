@@ -146,10 +146,10 @@ impl<T: GeoNum> PartialEq for LineOrPoint<T> {
 /// Requires the following conditions:
 ///
 /// 1. If comparing two lines, both the left ends must be strictly
-/// smaller than both right ends.
+///    smaller than both right ends.
 ///
 /// 2. A point is treated as a infinitesimal small vertical segment
-/// centered at its coordinates.
+///    centered at its coordinates.
 impl<T: GeoNum> PartialOrd for LineOrPoint<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match (self, other) {
