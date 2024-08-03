@@ -15,19 +15,19 @@ pub trait Bearing<T: CoordFloat> {
     ///
     /// let p_1 = Point::new(9.177789688110352, 48.776781529534965);
     /// let p_2 = Point::new(9.274410083250379, 48.84033282787534);
-    /// let bearing = p_1.bearing(p_2);
+    /// let bearing = p_1.bearing(p_2).unwrap();
     /// assert_relative_eq!(bearing, 45., epsilon = 1.0e-6);
     /// ```
     #[deprecated(
         since = "0.24.1",
         note = "renamed to `HaversineBearing::haversine_bearing`"
     )]
-    fn bearing(&self, point: Point<T>) -> T;
+    fn bearing(&self, point: Point<T>) -> Result<T, String>;
 }
 
 #[allow(deprecated)]
 impl<T: CoordFloat, B: HaversineBearing<T>> Bearing<T> for B {
-    fn bearing(&self, point: Point<T>) -> T {
-        self.haversine_bearing(point)
+    fn bearing(&self, point: Point<T>) -> Result<T, String> {
+        Ok(self.haversine_bearing(point)?)
     }
 }

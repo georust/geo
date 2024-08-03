@@ -6,6 +6,8 @@
   * <https://github.com/georust/geo/pull/1134>
 * Add feature for rstar v0.12.0
 * Add num_rings and num_interior_rings methods to polygons.
+* Point has a new public method `check_coordinate_limits()` that will check if latitude and longitude are within
+  their ranges, returns `Result<T,String>` - used for bearing calculations.
 
 ## 0.7.12
 
