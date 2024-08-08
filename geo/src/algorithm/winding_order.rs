@@ -1,8 +1,8 @@
 use super::kernels::*;
 use crate::coords_iter::CoordsIter;
 use crate::utils::EitherIter;
-use crate::{CoordNum, GeoNum, LineString, Point};
-use geo_types::PointsIter;
+use crate::{CoordNum, GeoFloat, GeoNum, LineString, Point};
+use geo_types::{PointsIter, Triangle};
 use std::iter::Rev;
 
 /// Iterates through a list of `Point`s
@@ -209,6 +209,23 @@ where
         if let Some(WindingOrder::Clockwise) = self.winding_order() {
             self.0.reverse();
         }
+    }
+}
+
+// This function can probably be converted into a trait implementation with a small refactoring of
+// the trait but this is not in scope of the PR it is added for.
+/// special cased algorithm for finding the winding of a triangle
+pub fn triangle_winding_order<T: GeoFloat>(tri: &Triangle<T>) -> Option<WindingOrder> {
+    let [a, b, c] = tri.to_array();
+    let ab = b - a;
+    let ac = c - a;
+
+    let cross_prod = ab.x * ac.y - ab.y * ac.x;
+
+    match cross_prod.total_cmp(&T::zero()) {
+        std::cmp::Ordering::Less => Some(WindingOrder::Clockwise),
+        std::cmp::Ordering::Equal => None,
+        std::cmp::Ordering::Greater => Some(WindingOrder::CounterClockwise),
     }
 }
 
