@@ -1,7 +1,8 @@
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-use crate::{Coord, CoordNum, Line, Point, Triangle};
+use crate::geo_traits::{self, Coord};
+use crate::{Line, Point, Triangle};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
@@ -134,17 +135,17 @@ use core::ops::{Index, IndexMut};
 
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct LineString<T: CoordNum = f64>(pub Vec<Coord<T>>);
+pub struct LineString<C: geo_traits::Coord = Point<f64>>(pub Vec<C>);
 
 /// A [`Point`] iterator returned by the `points` method
 #[derive(Debug)]
-pub struct PointsIter<'a, T: CoordNum + 'a>(::core::slice::Iter<'a, Coord<T>>);
+pub struct PointsIter<'a, C: geo_traits::Coord + 'a>(::core::slice::Iter<'a, C>);
 
-impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
-    type Item = Point<T>;
+impl<'a, C: geo_traits::Coord + 'a> Iterator for PointsIter<'a, C> {
+    type Item = Point<C::Scalar>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|c| Point::from(*c))
+        self.0.next().map(|c| Point::from_coord(*c))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -152,24 +153,24 @@ impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
     }
 }
 
-impl<'a, T: CoordNum> ExactSizeIterator for PointsIter<'a, T> {
+impl<'a, C: geo_traits::Coord + 'a> ExactSizeIterator for PointsIter<'a, C> {
     fn len(&self) -> usize {
         self.0.len()
     }
 }
 
-impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
+impl<'a, C: geo_traits::Coord + 'a> DoubleEndedIterator for PointsIter<'a, C> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.0.next_back().map(|c| Point::from(*c))
+        self.0.next_back().map(|c| Point::from_coord(*c))
     }
 }
 
 /// A [`Coord`] iterator used by the `into_iter` method on a [`LineString`]
 #[derive(Debug)]
-pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::core::slice::Iter<'a, Coord<T>>);
+pub struct CoordinatesIter<'a, C: geo_traits::Coord + 'a>(::core::slice::Iter<'a, C>);
 
-impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
-    type Item = &'a Coord<T>;
+impl<'a, C: geo_traits::Coord> Iterator for CoordinatesIter<'a, C> {
+    type Item = &'a C;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
@@ -180,52 +181,52 @@ impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
     }
 }
 
-impl<'a, T: CoordNum> ExactSizeIterator for CoordinatesIter<'a, T> {
+impl<'a, C: geo_traits::Coord> ExactSizeIterator for CoordinatesIter<'a, C> {
     fn len(&self) -> usize {
         self.0.len()
     }
 }
 
-impl<'a, T: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T> {
+impl<'a, C: geo_traits::Coord> DoubleEndedIterator for CoordinatesIter<'a, C> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back()
     }
 }
 
-impl<T: CoordNum> LineString<T> {
+impl<C: geo_traits::Coord> LineString<C> {
     /// Instantiate Self from the raw content value
-    pub fn new(value: Vec<Coord<T>>) -> Self {
+    pub fn new(value: Vec<C>) -> Self {
         Self(value)
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
     #[deprecated(note = "Use points() instead")]
-    pub fn points_iter(&self) -> PointsIter<T> {
+    pub fn points_iter(&self) -> PointsIter<C> {
         PointsIter(self.0.iter())
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
-    pub fn points(&self) -> PointsIter<T> {
+    pub fn points(&self) -> PointsIter<C> {
         PointsIter(self.0.iter())
     }
 
     /// Return an iterator yielding the members of a [`LineString`] as [`Coord`]s
-    pub fn coords(&self) -> impl DoubleEndedIterator<Item = &Coord<T>> {
+    pub fn coords(&self) -> impl DoubleEndedIterator<Item = &C> {
         self.0.iter()
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as mutable [`Coord`]s
-    pub fn coords_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut Coord<T>> {
+    pub fn coords_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut C> {
         self.0.iter_mut()
     }
 
     /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Point`]s
-    pub fn into_points(self) -> Vec<Point<T>> {
-        self.0.into_iter().map(Point::from).collect()
+    pub fn into_points(self) -> Vec<Point<C::Scalar>> {
+        self.0.into_iter().map(Point::from_coord).collect()
     }
 
     /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Coord`]s
-    pub fn into_inner(self) -> Vec<Coord<T>> {
+    pub fn into_inner(self) -> Vec<C> {
         self.0
     }
 
@@ -257,7 +258,7 @@ impl<T: CoordNum> LineString<T> {
     /// );
     /// assert!(lines.next().is_none());
     /// ```
-    pub fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<T>> + '_ {
+    pub fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<C>> + '_ {
         self.0.windows(2).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe { Line::new(*w.get_unchecked(0), *w.get_unchecked(1)) }
@@ -265,7 +266,7 @@ impl<T: CoordNum> LineString<T> {
     }
 
     /// An iterator which yields the coordinates of a [`LineString`] as [Triangle]s
-    pub fn triangles(&'_ self) -> impl ExactSizeIterator<Item = Triangle<T>> + '_ {
+    pub fn triangles(&'_ self) -> impl ExactSizeIterator<Item = Triangle<C>> + '_ {
         self.0.windows(3).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe {
@@ -338,44 +339,44 @@ impl<T: CoordNum> LineString<T> {
 }
 
 /// Turn a [`Vec`] of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, IC: Into<Coord<T>>> From<Vec<IC>> for LineString<T> {
+impl<C: geo_traits::Coord, IC: Into<C>> From<Vec<IC>> for LineString<C> {
     fn from(v: Vec<IC>) -> Self {
         Self(v.into_iter().map(|c| c.into()).collect())
     }
 }
 
-impl<T: CoordNum> From<Line<T>> for LineString<T> {
-    fn from(line: Line<T>) -> Self {
+impl<C: geo_traits::Coord> From<Line<C>> for LineString<C> {
+    fn from(line: Line<C>) -> Self {
         LineString::from(&line)
     }
 }
 
-impl<T: CoordNum> From<&Line<T>> for LineString<T> {
-    fn from(line: &Line<T>) -> Self {
+impl<C: geo_traits::Coord> From<&Line<C>> for LineString<C> {
+    fn from(line: &Line<C>) -> Self {
         Self(vec![line.start, line.end])
     }
 }
 
 /// Turn an iterator of [`Point`]-like objects into a [`LineString`].
-impl<T: CoordNum, IC: Into<Coord<T>>> FromIterator<IC> for LineString<T> {
+impl<C: geo_traits::Coord, IC: Into<C>> FromIterator<IC> for LineString<C> {
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {
         Self(iter.into_iter().map(|c| c.into()).collect())
     }
 }
 
 /// Iterate over all the [`Coord`]s in this [`LineString`].
-impl<T: CoordNum> IntoIterator for LineString<T> {
-    type Item = Coord<T>;
-    type IntoIter = ::alloc::vec::IntoIter<Coord<T>>;
+impl<C: geo_traits::Coord> IntoIterator for LineString<C> {
+    type Item = C;
+    type IntoIter = ::alloc::vec::IntoIter<C>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
 }
 
-impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
-    type Item = &'a Coord<T>;
-    type IntoIter = CoordinatesIter<'a, T>;
+impl<'a, C: geo_traits::Coord> IntoIterator for &'a LineString<C> {
+    type Item = &'a C;
+    type IntoIter = CoordinatesIter<'a, C>;
 
     fn into_iter(self) -> Self::IntoIter {
         CoordinatesIter(self.0.iter())
@@ -383,37 +384,38 @@ impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
 }
 
 /// Mutably iterate over all the [`Coord`]s in this [`LineString`]
-impl<'a, T: CoordNum> IntoIterator for &'a mut LineString<T> {
-    type Item = &'a mut Coord<T>;
-    type IntoIter = ::core::slice::IterMut<'a, Coord<T>>;
+impl<'a, C: geo_traits::Coord> IntoIterator for &'a mut LineString<C> {
+    type Item = &'a mut C;
+    type IntoIter = ::core::slice::IterMut<'a, C>;
 
-    fn into_iter(self) -> ::core::slice::IterMut<'a, Coord<T>> {
+    fn into_iter(self) -> ::core::slice::IterMut<'a, C> {
         self.0.iter_mut()
     }
 }
 
-impl<T: CoordNum> Index<usize> for LineString<T> {
-    type Output = Coord<T>;
+impl<C: geo_traits::Coord> Index<usize> for LineString<C> {
+    type Output = C;
 
-    fn index(&self, index: usize) -> &Coord<T> {
+    fn index(&self, index: usize) -> &C {
         self.0.index(index)
     }
 }
 
-impl<T: CoordNum> IndexMut<usize> for LineString<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Coord<T> {
+impl<C: geo_traits::Coord> IndexMut<usize> for LineString<C> {
+    fn index_mut(&mut self, index: usize) -> &mut C {
         self.0.index_mut(index)
     }
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T> RelativeEq for LineString<T>
+impl<C> RelativeEq for LineString<C>
 where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+    C: geo_traits::Coord + AbsDiffEq<Epsilon = C::Scalar> + RelativeEq,
+    C::Scalar: AbsDiffEq<Epsilon = C::Scalar> + RelativeEq,
 {
     #[inline]
     fn default_max_relative() -> Self::Epsilon {
-        T::default_max_relative()
+        C::Scalar::default_max_relative()
     }
 
     /// Equality assertion within a relative limit.
@@ -454,12 +456,16 @@ where
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
-    type Epsilon = T;
+impl<C> AbsDiffEq for LineString<C>
+where
+    C: geo_traits::Coord + AbsDiffEq<Epsilon = C::Scalar>,
+    C::Scalar: AbsDiffEq<Epsilon = C::Scalar>,
+{
+    type Epsilon = C::Scalar;
 
     #[inline]
     fn default_epsilon() -> Self::Epsilon {
-        T::default_epsilon()
+        C::Scalar::default_epsilon()
     }
 
     /// Equality assertion with an absolute limit.
@@ -495,11 +501,11 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
 ))]
 macro_rules! impl_rstar_line_string {
     ($rstar:ident) => {
-        impl<T> ::$rstar::RTreeObject for LineString<T>
+        impl<C: geo_traits::Coord + ::$rstar::Point> ::$rstar::RTreeObject for LineString<C>
         where
-            T: ::num_traits::Float + ::$rstar::RTreeNum,
+            <C as geo_traits::Coord>::Scalar: ::num_traits::Float + ::$rstar::RTreeNum,
         {
-            type Envelope = ::$rstar::AABB<Point<T>>;
+            type Envelope = ::$rstar::AABB<C>;
 
             fn envelope(&self) -> Self::Envelope {
                 use num_traits::Bounded;
@@ -517,7 +523,7 @@ macro_rules! impl_rstar_line_string {
             }
         }
 
-        impl<T> ::$rstar::PointDistance for LineString<T>
+        impl<T> ::$rstar::PointDistance for LineString<C>
         where
             T: ::num_traits::Float + ::$rstar::RTreeNum,
         {
@@ -574,26 +580,26 @@ mod test {
         let delta = 1e-6;
 
         let coords = vec![(0., 0.), (5., 0.), (10., 10.)];
-        let ls: LineString<f32> = coords.into_iter().collect();
+        let ls: LineString = coords.into_iter().collect();
 
         let coords_x = vec![(0., 0.), (5. + delta, 0.), (10., 10.)];
-        let ls_x: LineString<f32> = coords_x.into_iter().collect();
+        let ls_x: LineString = coords_x.into_iter().collect();
         assert!(ls.abs_diff_eq(&ls_x, 1e-2));
         assert!(ls.abs_diff_ne(&ls_x, 1e-12));
 
         let coords_y = vec![(0., 0.), (5., 0. + delta), (10., 10.)];
-        let ls_y: LineString<f32> = coords_y.into_iter().collect();
+        let ls_y: LineString = coords_y.into_iter().collect();
         assert!(ls.abs_diff_eq(&ls_y, 1e-2));
         assert!(ls.abs_diff_ne(&ls_y, 1e-12));
 
         // Undersized, but otherwise equal.
         let coords_x = vec![(0., 0.), (5., 0.)];
-        let ls_under: LineString<f32> = coords_x.into_iter().collect();
+        let ls_under: LineString = coords_x.into_iter().collect();
         assert!(ls.abs_diff_ne(&ls_under, 1.));
 
         // Oversized, but otherwise equal.
         let coords_x = vec![(0., 0.), (5., 0.), (10., 10.), (10., 100.)];
-        let ls_oversized: LineString<f32> = coords_x.into_iter().collect();
+        let ls_oversized: LineString = coords_x.into_iter().collect();
         assert!(ls.abs_diff_ne(&ls_oversized, 1.));
     }
 
@@ -602,26 +608,26 @@ mod test {
         let delta = 1e-6;
 
         let coords = vec![(0., 0.), (5., 0.), (10., 10.)];
-        let ls: LineString<f32> = coords.into_iter().collect();
+        let ls: LineString = coords.into_iter().collect();
 
         let coords_x = vec![(0., 0.), (5. + delta, 0.), (10., 10.)];
-        let ls_x: LineString<f32> = coords_x.into_iter().collect();
+        let ls_x: LineString = coords_x.into_iter().collect();
         assert!(ls.relative_eq(&ls_x, 1e-2, 1e-2));
         assert!(ls.relative_ne(&ls_x, 1e-12, 1e-12));
 
         let coords_y = vec![(0., 0.), (5., 0. + delta), (10., 10.)];
-        let ls_y: LineString<f32> = coords_y.into_iter().collect();
+        let ls_y: LineString = coords_y.into_iter().collect();
         assert!(ls.relative_eq(&ls_y, 1e-2, 1e-2));
         assert!(ls.relative_ne(&ls_y, 1e-12, 1e-12));
 
         // Undersized, but otherwise equal.
         let coords_x = vec![(0., 0.), (5., 0.)];
-        let ls_under: LineString<f32> = coords_x.into_iter().collect();
+        let ls_under: LineString = coords_x.into_iter().collect();
         assert!(ls.relative_ne(&ls_under, 1., 1.));
 
         // Oversized, but otherwise equal.
         let coords_x = vec![(0., 0.), (5., 0.), (10., 10.), (10., 100.)];
-        let ls_oversized: LineString<f32> = coords_x.into_iter().collect();
+        let ls_oversized: LineString = coords_x.into_iter().collect();
         assert!(ls.relative_ne(&ls_oversized, 1., 1.));
     }
 
