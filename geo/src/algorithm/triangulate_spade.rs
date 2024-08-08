@@ -412,6 +412,7 @@ fn iter_line_pairs<T: SpadeTriangulationFloat>(
         lines
             .iter()
             .enumerate()
+            .skip(idx0 + 1)
             .filter(move |(idx1, line1)| *idx1 != idx0 && line0 != *line1)
             .map(move |(idx1, line1)| [(idx0, line0), (idx1, line1)])
     })
