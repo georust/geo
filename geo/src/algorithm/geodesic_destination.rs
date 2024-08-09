@@ -1,5 +1,5 @@
 use crate::Point;
-use geo_types::CoordNum;
+use geo_types::{CoordFloat, CoordNum};
 use geographiclib_rs::{DirectGeodesic, Geodesic};
 
 /// Returns a new Point using the distance to the existing Point and a bearing for the direction on a geodesic.
@@ -34,10 +34,14 @@ pub trait GeodesicDestination<T: CoordNum> {
     fn geodesic_destination(&self, bearing: T, distance: T) -> Point<T>;
 }
 
-impl GeodesicDestination<f64> for Point<f64> {
-    fn geodesic_destination(&self, bearing: f64, distance: f64) -> Point<f64> {
-        let (lat, lon) = Geodesic::wgs84().direct(self.y(), self.x(), bearing, distance);
-        Point::new(lon, lat)
+impl<T: CoordFloat> GeodesicDestination<T> for Point<T> {
+    fn geodesic_destination(&self, bearing: T, distance: T) -> Point<T> {
+        let bearing = bearing.to_f64().unwrap();
+        let distance = distance.to_f64().unwrap();
+        let y = self.y().to_f64().unwrap();
+        let x = self.x().to_f64().unwrap();
+        let (lat, lon) = Geodesic::wgs84().direct(y, x, bearing, distance);
+        Point::new(T::from(lon).unwrap(), T::from(lat).unwrap())
     }
 }
 
