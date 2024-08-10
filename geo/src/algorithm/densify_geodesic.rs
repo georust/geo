@@ -1,4 +1,4 @@
-use num_traits::ToPrimitive;
+use num_traits::{FromPrimitive, ToPrimitive};
 
 use crate::{CoordFloat, CoordsIter, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect, Triangle};
 
@@ -157,5 +157,87 @@ where
 
     fn densify_geodesic(&self, max_distance: f64) -> Self::Output {
         self.to_polygon().densify_geodesic(max_distance)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::coord;
+
+    #[test]
+    fn test_polygon_densify() {
+        let exterior: LineString = vec![
+            [4.925, 45.804],
+            [4.732, 45.941],
+            [4.935, 46.513],
+            [5.821, 46.103],
+            [5.627, 45.611],
+            [5.355, 45.883],
+            [4.925, 45.804],
+        ].into();
+
+        let polygon = Polygon::new(exterior, vec![]);
+
+        let output_exterior: LineString = vec![
+            [4.925, 45.804],
+            [4.732, 45.941],
+            [4.832972865149862, 46.22705224065524],
+            [4.935, 46.513],
+            [5.379653814979939, 46.30886184400083],
+            [5.821, 46.103],
+            [5.723572275808633, 45.85704648840237],
+            [5.627, 45.611],
+            [5.355, 45.883],
+            [4.925, 45.804],
+        ].into();
+
+        let dense = polygon.densify_geodesic(50000.0);
+        assert_relative_eq!(dense.exterior(), &output_exterior, epsilon = 1.0e-6);
+    }
+
+    #[test]
+    fn test_linestring_densify() {
+        let linestring: LineString = vec![
+            [-3.202, 55.9471],
+            [-3.2012, 55.9476],
+            [-3.1994, 55.9476],
+            [-3.1977, 55.9481],
+            [-3.196, 55.9483],
+            [-3.1947, 55.9487],
+            [-3.1944, 55.9488],
+            [-3.1944, 55.949],
+        ].into();
+
+        let output: LineString = vec![
+            [-3.202, 55.9471],
+            [-3.2012, 55.9476],
+            [-3.2002999999999995, 55.94760000327935],
+            [-3.1994, 55.9476],
+            [-3.1985500054877773, 55.94785000292509],
+            [-3.1977, 55.9481],
+            [-3.196, 55.9483],
+            [-3.1947, 55.9487],
+            [-3.1944, 55.9488],
+            [-3.1944, 55.949],
+        ].into();
+
+        let dense = linestring.densify_geodesic(110.0);
+        assert_relative_eq!(dense, output, epsilon = 1.0e-6);
+    }
+
+    #[test]
+    fn test_line_densify() {
+        let output: LineString = vec![[10.0, 20.0], [65.879360, 37.722253], [125.0, 25.00]].into();
+        let line = Line::new(coord! {x: 10.0, y: 20.0}, coord! { x: 125.0, y: 25.00 });
+        let dense = line.densify_geodesic(5703861.471800622);
+        assert_relative_eq!(dense, output, epsilon = 1.0e-6);
+    }
+
+    #[test]
+    fn test_empty_linestring() {
+        let linestring: LineString<f64> = LineString::new(vec![]);
+        let dense = linestring.densify_geodesic(10.0);
+        assert_eq!(0, dense.coords_count());
     }
 }
