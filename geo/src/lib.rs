@@ -158,6 +158,7 @@
 //! - **[`ChaikinSmoothing`]**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikin's algorithm.
 //! - **[`Densify`]**: Densify linear geometry components by interpolating points
 //! - **[`DensifyHaversine`]**: Densify spherical geometry by interpolating points on a sphere
+//! - **[`DensifyGeodesic`]**: Densify geometry by interpolating points on a spheroid
 //! - **[`GeodesicDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`GeodesicIntermediate`]**: Calculate intermediate points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
 //! - **[`HaversineDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere assuming travel on a great circle
