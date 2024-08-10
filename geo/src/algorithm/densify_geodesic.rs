@@ -12,6 +12,22 @@ use crate::{GeodesicIntermediate, GeodesicLength};
 /// ## Units
 ///
 /// `max_distance`: meters
+///
+/// # Examples
+/// ```
+/// use approx::assert_relative_eq;
+///
+/// use geo::{coord, GeodesicLength, Line, LineString};
+/// use geo::DensifyGeodesic;
+///
+/// let line = Line::new(coord! {x: 10.0, y: 20.0}, coord! { x: 125.0, y: 25.00 });
+/// // known output
+/// let output: LineString = vec![[10.0, 20.0], [65.879360, 37.722253], [125.0, 25.00]].into();
+/// // densify
+/// let dense = line.densify_geodesic(5703861.471800622);
+///
+/// assert_relative_eq!(dense, output, epsilon = 1.0e-6);
+///```
 pub trait DensifyGeodesic<F: CoordFloat> {
     type Output;
 
