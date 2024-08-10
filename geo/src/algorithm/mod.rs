@@ -7,10 +7,8 @@ pub mod area;
 pub use area::Area;
 
 /// Calculate the bearing to another `Point`, in degrees.
-#[deprecated(
-    since = "0.24.1",
-    note = "renamed to `haversine_bearing::HaversineBearing`"
-)]
+#[deprecated(since = "0.24.1",
+    note = "renamed to `haversine_bearing::HaversineBearing`")]
 pub mod bearing;
 #[allow(deprecated)]
 #[deprecated(since = "0.24.1", note = "renamed to `HaversineBearing`")]
@@ -83,6 +81,10 @@ pub use densify::Densify;
 /// Densify spherical geometry components
 pub mod densify_haversine;
 pub use densify_haversine::DensifyHaversine;
+
+/// Densify geometry components on a spheroid;
+pub mod densify_geodesic;
+pub use densify_geodesic::DensifyGeodesic;
 
 /// Dimensionality of a geometry and its boundary, based on OGC-SFA.
 pub mod dimensions;
