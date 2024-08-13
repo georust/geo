@@ -1,6 +1,9 @@
-use num_traits::{FromPrimitive, ToPrimitive};
+use num_traits::ToPrimitive;
 
-use crate::{CoordFloat, CoordsIter, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect, Triangle};
+use crate::{
+    CoordFloat, CoordsIter, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect,
+    Triangle,
+};
 
 use crate::{GeodesicIntermediate, GeodesicLength};
 
