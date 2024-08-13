@@ -7,8 +7,10 @@ pub mod area;
 pub use area::Area;
 
 /// Calculate the bearing to another `Point`, in degrees.
-#[deprecated(since = "0.24.1",
-    note = "renamed to `haversine_bearing::HaversineBearing`")]
+#[deprecated(
+    since = "0.24.1",
+    note = "renamed to `haversine_bearing::HaversineBearing`"
+)]
 pub mod bearing;
 #[allow(deprecated)]
 #[deprecated(since = "0.24.1", note = "renamed to `HaversineBearing`")]
