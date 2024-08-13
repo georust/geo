@@ -8,7 +8,7 @@ use crate::{Contains, GeoFloat};
 // ========= Error Type ============
 
 #[derive(Debug)]
-pub(crate) enum LineStitchingError {
+pub enum LineStitchingError {
     IncompleteRing(&'static str),
 }
 
@@ -25,7 +25,7 @@ pub(crate) type TriangleStitchingResult<T> = Result<T, LineStitchingError>;
 // ========= Main Algo ============
 
 /// Trait to stitch together split up triangles.
-pub(crate) trait StitchTriangles<T: GeoFloat> {
+pub trait StitchTriangles<T: GeoFloat>: private::Stitchable<T> {
     /// This stitching only happens along identical edges which are located in two separate
     /// geometries. Please read about the required pre conditions of the inputs!
     ///
@@ -129,9 +129,21 @@ pub(crate) trait StitchTriangles<T: GeoFloat> {
     fn stitch_triangulation(&self) -> TriangleStitchingResult<MultiPolygon<T>>;
 }
 
+mod private {
+    use super::*;
+
+    pub trait Stitchable<T: GeoFloat>: AsRef<[Triangle<T>]> {}
+    impl<S, T> Stitchable<T> for S
+    where
+        S: AsRef<[Triangle<T>]>,
+        T: GeoFloat,
+    {
+    }
+}
+
 impl<S, T> StitchTriangles<T> for S
 where
-    S: AsRef<[Triangle<T>]>,
+    S: private::Stitchable<T>,
     T: GeoFloat,
 {
     fn stitch_triangulation(&self) -> TriangleStitchingResult<MultiPolygon<T>> {
