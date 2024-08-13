@@ -255,4 +255,14 @@ mod tests {
         let dense = linestring.densify_geodesic(10.0);
         assert_eq!(0, dense.coords_count());
     }
+
+    #[test]
+    fn test_no_op_densify() {
+        let linestring: LineString = vec![[0.0, 0.0], [1.0, 0.0], [2.0, 0.0], [3.0, 0.0]].into();
+        let output: LineString = vec![[0.0, 0.0], [1.0, 0.0], [2.0, 0.0], [3.0, 0.0]].into();
+        // Use a very large max_meters to ensure no points are added.
+        let dense = linestring.densify_geodesic(1000000.0);
+        // Check that the densified linestring is identical to the original.
+        assert_relative_eq!(dense, output, epsilon = 1.0e-6);
+    }
 }
