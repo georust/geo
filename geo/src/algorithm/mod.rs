@@ -239,6 +239,7 @@ pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve};
 /// Stitch together triangles with adjacent sides. Alternative to unioning triangles via BooleanOps.
 #[allow(dead_code)]
 pub(crate) mod stitch;
+pub use stitch::StitchTriangles;
 
 /// Transform a geometry using PROJ.
 #[cfg(feature = "use-proj")]
