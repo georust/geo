@@ -237,7 +237,8 @@ pub mod simplify_vw;
 pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve};
 
 /// Stitch together triangles with adjacent sides. Alternative to unioning triangles via BooleanOps.
-pub(crate) mod stitch;
+pub mod stitch;
+pub use stitch::StitchTriangles;
 
 /// Boolean Operations based on constrained triangulation
 pub mod spade_boolops;
