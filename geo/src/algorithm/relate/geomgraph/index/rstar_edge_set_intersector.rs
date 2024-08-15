@@ -20,7 +20,7 @@ where
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
         let tree = graph.get_or_build_tree();
-        let mut edges = graph.edges_mut();
+        let edges = graph.edges_mut();
         for (segment_0, segment_1) in tree.intersection_candidates_with_other_tree(&tree) {
             if check_for_self_intersecting_edges || segment_0.edge_idx != segment_1.edge_idx {
                 // use get_many_mut when available.

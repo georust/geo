@@ -58,7 +58,7 @@ where
         }
     }
 
-    pub(crate) fn compute_intersection_matrix(&mut self) -> IntersectionMatrix {
+    pub(crate) fn compute_intersection_matrix(&'a mut self) -> IntersectionMatrix {
         let mut intersection_matrix = IntersectionMatrix::empty_disjoint();
 
         use crate::BoundingRect;
@@ -85,18 +85,39 @@ where
             .compute_self_nodes(Box::new(self.line_intersector.clone()));
 
         // compute intersections between edges of the two input geometries
-        let segment_intersector = self
-            .graph_a
-            .compute_edge_intersections(&mut self.graph_b, Box::new(self.line_intersector.clone()));
+        // let segment_intersector = self
+        //     .graph_a
+        //     .compute_edge_intersections(&mut self.graph_b, Box::new(self.line_intersector.clone()));
+
+
+        // this is a copy of the above functionality to satisfy rust borrowing rules.
+        // from here [...
+        let mut segment_intersector = SegmentIntersector::new(Box::new(self.line_intersector.clone()), false);
+        segment_intersector.set_boundary_nodes(
+            self.graph_a.boundary_nodes().cloned().collect(),
+            self.graph_b.boundary_nodes().cloned().collect(),
+        );
+
+        use crate::relate::geomgraph::index::{EdgeSetIntersector, RStarEdgeSetIntersector};
+
+        let edge_set_intersector = RStarEdgeSetIntersector;
+        edge_set_intersector.compute_intersections_between_sets(
+            &mut self.graph_a,
+            &mut self.graph_b,
+            &mut segment_intersector,
+        );
+        // to here ..]
 
         self.compute_intersection_nodes(0);
         self.compute_intersection_nodes(1);
+
         // Copy the labelling for the nodes in the parent Geometries.  These override any labels
         // determined by intersections between the geometries.
         self.copy_nodes_and_labels(0);
         self.copy_nodes_and_labels(1);
         // complete the labelling for any nodes which only have a label for a single geometry
         self.label_isolated_nodes();
+
         // If a proper intersection was found, we can set a lower bound on the IM.
         self.compute_proper_intersection_im(&segment_intersector, &mut intersection_matrix);
         // Now process improper intersections
@@ -316,14 +337,14 @@ where
     /// not be isolated).
     fn label_isolated_edges(&mut self, this_index: usize, target_index: usize) {
         let (this_graph, target_graph) = if this_index == 0 {
-            (&self.graph_a, &self.graph_b)
+            (&mut self.graph_a, &self.graph_b)
         } else {
-            (&self.graph_b, &self.graph_a)
+            (&mut self.graph_b, &self.graph_a)
         };
 
         for edge in this_graph.edges_mut() {
             if edge.is_isolated() {
-                Self::label_isolated_edge(&mut edge, target_index, target_graph.geometry());
+                Self::label_isolated_edge(edge, target_index, target_graph.geometry());
                 self.isolated_edges.push(edge.clone());
             }
         }
