@@ -94,6 +94,66 @@ where
         false
     }
 
+    // Copy of `add_intersections` specialized for a single 'edge' against itself.
+    pub fn add_intersections_against_self(
+        &mut self,
+        edge0: &mut Edge<F>,
+        segment_index_0: usize,
+        segment_index_1: usize,
+    ) {
+        // avoid a segment spuriously "intersecting" with itself
+        if segment_index_0 == segment_index_1 {
+            return;
+        }
+
+        let line_0 = Line::new(
+            edge0.coords()[segment_index_0],
+            edge0.coords()[segment_index_0 + 1],
+        );
+        let line_1 = Line::new(
+            edge0.coords()[segment_index_1],
+            edge0.coords()[segment_index_1 + 1],
+        );
+
+        let intersection = self.line_intersector.compute_intersection(line_0, line_1);
+
+        if intersection.is_none() {
+            return;
+        }
+        let intersection = intersection.unwrap();
+
+        if !self.edges_are_from_same_geometry {
+            edge0.mark_as_unisolated();
+        }
+        if !self.is_trivial_intersection(
+            intersection,
+            edge0,
+            segment_index_0,
+            edge0,
+            segment_index_1,
+        ) {
+            if self.edges_are_from_same_geometry || !intersection.is_proper() {
+                // In the case of self-noding, `edge0` might alias `edge1`, so it's imperative that
+                // the mutable borrows are short lived and do not overlap.
+                edge0.add_intersections(intersection, line_0, segment_index_0);
+
+                // XXX: This may be a bug, but it matches the existing behavior.
+                edge0.add_intersections(intersection, line_1, segment_index_1);
+            }
+            if let LineIntersection::SinglePoint {
+                is_proper: true,
+                intersection: intersection_coord,
+            } = intersection
+            {
+                self.proper_intersection_point = Some(intersection_coord);
+
+                if !self.is_boundary_point(&intersection_coord, &self.boundary_nodes) {
+                    self.has_proper_interior_intersection = true
+                }
+            }
+        }
+    }
+
     pub fn add_intersections(
         &mut self,
         edge0: &mut Edge<F>,

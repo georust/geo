@@ -164,7 +164,7 @@ where
         }
     }
 
-    fn boundary_nodes(&self) -> impl Iterator<Item = &CoordNode<F>> {
+    pub(crate) fn boundary_nodes(&self) -> impl Iterator<Item = &CoordNode<F>> {
         self.planar_graph.boundary_nodes(self.arg_index)
     }
 
