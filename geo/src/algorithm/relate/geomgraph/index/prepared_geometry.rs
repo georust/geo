@@ -27,6 +27,7 @@ use rstar::{RTree, RTreeNum};
 /// assert!(prepared_polygon.relate(&contained_line).is_contains());
 ///
 /// ```
+#[derive(Clone)]
 pub struct PreparedGeometry<'a, F: GeoFloat + RTreeNum = f64> {
     geometry_graph: GeometryGraph<'a, F>,
 }
