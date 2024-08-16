@@ -41,7 +41,12 @@ where
 
                     let edge_0 = &mut e0[mi];
                     let edge_1 = &mut e1[mx - (mi + 1)];
-                    segment_intersector.add_intersections(edge_0, mi, edge_1, mx);
+
+                    if segment_0.edge_idx > segment_1.edge_idx {
+                        segment_intersector.add_intersections(edge_1, mx, edge_0, mi);
+                    } else {
+                        segment_intersector.add_intersections(edge_0, mi, edge_1, mx);
+                    }
                 }
             }
         }
