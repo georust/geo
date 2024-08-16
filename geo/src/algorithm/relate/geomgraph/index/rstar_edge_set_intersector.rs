@@ -23,17 +23,26 @@ where
         let edges = graph.edges_mut();
         for (segment_0, segment_1) in tree.intersection_candidates_with_other_tree(&tree) {
             if check_for_self_intersecting_edges || segment_0.edge_idx != segment_1.edge_idx {
-                // use get_many_mut when available.
-                assert!(segment_1.edge_idx > segment_0.edge_idx);
-                let (e0, e1) = edges.split_at_mut(segment_0.edge_idx+1);
-                let edge_0 = &mut e0[segment_0.edge_idx];
-                let edge_1 = &mut e1[segment_1.edge_idx-segment_0.edge_idx+1];
-                segment_intersector.add_intersections(
-                    edge_0,
-                    segment_0.segment_idx,
-                    edge_1,
-                    segment_1.segment_idx,
-                );
+                if segment_1.edge_idx == segment_0.edge_idx {
+                    let edge_0 = &mut edges[segment_0.edge_idx];
+                    segment_intersector.add_intersections_against_self(
+                        edge_0,
+                        segment_0.edge_idx,
+                        segment_1.edge_idx,
+                    );
+                } else {
+                    // XXX: use get_many_mut when available.
+                    let mi = segment_0.edge_idx.min(segment_1.edge_idx);
+                    let mx = segment_0.edge_idx.max(segment_1.edge_idx);
+
+                    assert!(mx > mi);
+
+                    let (e0, e1) = edges.split_at_mut(mi + 1);
+
+                    let edge_0 = &mut e0[mi];
+                    let edge_1 = &mut e1[mx - (mi + 1)];
+                    segment_intersector.add_intersections(edge_0, mi, edge_1, mx);
+                }
             }
         }
     }
