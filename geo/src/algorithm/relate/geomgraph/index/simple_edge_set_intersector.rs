@@ -50,9 +50,11 @@ impl<F: GeoFloat> EdgeSetIntersector<F> for SimpleEdgeSetIntersector {
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
         let edges = graph.edges_mut();
+        let mut checks = 0;
         for i in 0..edges.len() {
             let (e0, e1) = edges.split_at_mut(i + 1);
             let (e0, edge0) = e0.split_at_mut(i);
+            assert_eq!(edge0.len(), 1);
             let edge0 = &mut edge0[0];
 
             if check_for_self_intersecting_edges {
@@ -61,8 +63,12 @@ impl<F: GeoFloat> EdgeSetIntersector<F> for SimpleEdgeSetIntersector {
 
             for edge1 in e0.iter_mut().chain(e1) {
                 self.compute_intersects(edge0, edge1, segment_intersector);
+                checks += 1;
             }
         }
+
+        println!("checks: {}", checks);
+        assert_eq!(checks, edges.len()*edges.len());
     }
 
     fn compute_intersections_between_sets<'a>(
