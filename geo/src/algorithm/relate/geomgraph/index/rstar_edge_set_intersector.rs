@@ -19,8 +19,7 @@ where
         check_for_self_intersecting_edges: bool,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
-        let tree = graph.get_tree();
-        let edges = graph.edges_mut();
+        let (tree, edges) = graph.tree_and_edges_mut();
         for (segment_0, segment_1) in tree.intersection_candidates_with_other_tree(&tree) {
             if check_for_self_intersecting_edges || segment_0.edge_idx != segment_1.edge_idx {
                 if segment_1.edge_idx == segment_0.edge_idx {
@@ -58,11 +57,8 @@ where
         graph_1: &mut GeometryGraph<'a, F>,
         segment_intersector: &mut SegmentIntersector<F>,
     ) {
-        let tree_0 = graph_0.get_tree();
-        let tree_1 = graph_1.get_tree();
-
-        let edges_0 = graph_0.edges_mut();
-        let edges_1 = graph_1.edges_mut();
+        let (tree_0, edges_0) = graph_0.tree_and_edges_mut();
+        let (tree_1, edges_1) = graph_1.tree_and_edges_mut();
 
         for (segment_0, segment_1) in tree_0.intersection_candidates_with_other_tree(&tree_1) {
             let edge_0 = &mut edges_0[segment_0.edge_idx];

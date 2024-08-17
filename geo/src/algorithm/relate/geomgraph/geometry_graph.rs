@@ -36,7 +36,7 @@ where
 {
     arg_index: usize,
     parent_geometry: GeometryCow<'a, F>,
-    tree: Option<Arc<RTree<Segment<F>>>>,
+    tree: Option<RTree<Segment<F>>>,
     use_boundary_determination_rule: bool,
     has_computed_self_nodes: bool,
     planar_graph: PlanarGraph<F>,
@@ -50,11 +50,29 @@ impl<F> GeometryGraph<'_, F>
 where
     F: GeoFloat,
 {
-    pub(crate) fn get_tree(&self) -> Arc<RTree<Segment<F>>> {
-        self.tree.as_ref().map(|t| Arc::clone(t)).unwrap()
+    pub(crate) fn get_tree(&mut self) -> &RTree<Segment<F>> {
+        self.update_tree();
+        self.tree.as_ref().unwrap()
+    }
+
+    pub(crate) fn tree_and_edges_mut(&mut self) -> (&RTree<Segment<F>>, &mut [Edge<F>]) {
+        self.update_tree();
+        let edges = self.planar_graph.edges_mut();
+        (self.tree.as_ref().unwrap(), edges)
+    }
+
+    fn update_tree(&mut self) {
+        if self.tree.is_none() {
+            self.tree = Some(self.build_tree());
+        }
+    }
+
+    fn invalidate_tree(&mut self) {
+        self.tree = None;
     }
 
     fn build_tree(&self) -> RTree<Segment<F>> {
+        println!("build tree");
         let segments: Vec<Segment<F>> = self
             .edges()
             .iter()
@@ -109,6 +127,7 @@ where
     }
 
     pub(crate) fn insert_edge(&mut self, edge: Edge<F>) {
+        self.invalidate_tree();
         self.planar_graph.insert_edge(edge)
     }
 
@@ -117,6 +136,7 @@ where
     }
 
     pub(crate) fn add_node_with_coordinate(&mut self, coord: Coord<F>) -> &mut CoordNode<F> {
+        self.invalidate_tree();
         self.planar_graph.add_node_with_coordinate(coord)
     }
 
@@ -135,20 +155,6 @@ where
             parent_geometry,
             use_boundary_determination_rule: true,
             tree: None,
-            has_computed_self_nodes: false,
-            planar_graph: PlanarGraph::new(),
-        };
-        graph.add_geometry(&graph.parent_geometry.clone());
-        graph.tree = Some(Arc::new(graph.build_tree()));
-        graph
-    }
-
-    pub(crate) fn new_with_tree(arg_index: usize, parent_geometry: GeometryCow<'a, F>, tree: Arc<RTree<Segment<F>>>) -> Self {
-        let mut graph = GeometryGraph {
-            arg_index,
-            parent_geometry,
-            use_boundary_determination_rule: true,
-            tree: Some(tree),
             has_computed_self_nodes: false,
             planar_graph: PlanarGraph::new(),
         };
@@ -269,6 +275,8 @@ where
 
         // insert the endpoint as a node, to mark that it is on the boundary
         self.insert_point(self.arg_index, first_point, CoordPos::OnBoundary);
+
+        self.invalidate_tree();
     }
 
     fn add_polygon(&mut self, polygon: &Polygon<F>) {
@@ -279,9 +287,11 @@ where
         for hole in polygon.interiors() {
             self.add_polygon_ring(hole, CoordPos::Inside, CoordPos::Outside)
         }
+        self.invalidate_tree();
     }
 
     fn add_line_string(&mut self, line_string: &LineString<F>) {
+        self.invalidate_tree();
         if line_string.is_empty() {
             return;
         }
@@ -325,12 +335,14 @@ where
         );
 
         self.insert_edge(edge);
+        self.invalidate_tree();
     }
 
     /// Add a point computed externally.  The point is assumed to be a
     /// Point Geometry part, which has a location of INTERIOR.
     fn add_point(&mut self, point: &Point<F>) {
         self.insert_point(self.arg_index, (*point).into(), CoordPos::Inside);
+        self.invalidate_tree();
     }
 
     /// Compute self-nodes, taking advantage of the Geometry type to minimize the number of
@@ -362,6 +374,7 @@ where
             &mut segment_intersector,
         );
         self.add_self_intersection_nodes();
+        self.invalidate_tree();
     }
 
     pub(crate) fn compute_edge_intersections(
@@ -369,6 +382,7 @@ where
         other: &mut GeometryGraph<'a, F>,
         line_intersector: Box<dyn LineIntersector<F>>,
     ) -> SegmentIntersector<F> {
+        self.invalidate_tree();
         let mut segment_intersector = SegmentIntersector::new(line_intersector, false);
         segment_intersector.set_boundary_nodes(
             self.boundary_nodes().cloned().collect(),
@@ -388,6 +402,7 @@ where
     fn insert_point(&mut self, arg_index: usize, coord: Coord<F>, position: CoordPos) {
         let node: &mut CoordNode<F> = self.add_node_with_coordinate(coord);
         node.label_mut().set_on_position(arg_index, position);
+        self.invalidate_tree();
     }
 
     /// Add the boundary points of 1-dim (line) geometries.
@@ -411,6 +426,7 @@ where
 
         let new_position = Self::determine_boundary(boundary_count);
         label.set_on_position(arg_index, new_position);
+        self.invalidate_tree();
     }
 
     fn add_self_intersection_nodes(&mut self) {
@@ -436,6 +452,7 @@ where
                 self.add_self_intersection_node(coordinate, position)
             }
         }
+        self.invalidate_tree();
     }
 
     /// Add a node for a self-intersection.
@@ -453,5 +470,6 @@ where
         } else {
             self.insert_point(self.arg_index, coord, position)
         }
+        self.invalidate_tree();
     }
 }
