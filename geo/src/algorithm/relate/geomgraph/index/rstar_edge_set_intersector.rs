@@ -26,8 +26,8 @@ where
                     let edge_0 = &mut edges[segment_0.edge_idx];
                     segment_intersector.add_intersections_against_self(
                         edge_0,
-                        segment_0.edge_idx,
-                        segment_1.edge_idx,
+                        segment_0.segment_idx,
+                        segment_1.segment_idx,
                     );
                 } else {
                     // XXX: use get_many_mut when available.
@@ -42,9 +42,19 @@ where
                     let edge_1 = &mut e1[mx - (mi + 1)];
 
                     if segment_0.edge_idx > segment_1.edge_idx {
-                        segment_intersector.add_intersections(edge_1, mx, edge_0, mi);
+                        segment_intersector.add_intersections(
+                            edge_1,
+                            segment_0.segment_idx,
+                            edge_0,
+                            segment_1.segment_idx,
+                        );
                     } else {
-                        segment_intersector.add_intersections(edge_0, mi, edge_1, mx);
+                        segment_intersector.add_intersections(
+                            edge_0,
+                            segment_0.segment_idx,
+                            edge_1,
+                            segment_1.segment_idx,
+                        );
                     }
                 }
             }

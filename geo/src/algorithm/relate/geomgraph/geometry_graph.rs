@@ -72,7 +72,6 @@ where
     }
 
     fn build_tree(&self) -> RTree<Segment<F>> {
-        println!("build tree");
         let segments: Vec<Segment<F>> = self
             .edges()
             .iter()
