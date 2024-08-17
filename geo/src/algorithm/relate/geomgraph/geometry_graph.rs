@@ -50,17 +50,11 @@ impl<F> GeometryGraph<'_, F>
 where
     F: GeoFloat,
 {
-    pub(crate) fn set_tree(&mut self, tree: Arc<RTree<Segment<F>>>) {
-        self.tree = Some(tree);
+    pub(crate) fn get_tree(&self) -> Arc<RTree<Segment<F>>> {
+        self.tree.as_ref().map(|t| Arc::clone(t)).unwrap()
     }
 
-    pub(crate) fn get_or_build_tree(&self) -> Arc<RTree<Segment<F>>> {
-        self.tree
-            .clone()
-            .unwrap_or_else(|| Arc::new(self.build_tree()))
-    }
-
-    pub(crate) fn build_tree(&self) -> RTree<Segment<F>> {
+    fn build_tree(&self) -> RTree<Segment<F>> {
         let segments: Vec<Segment<F>> = self
             .edges()
             .iter()
@@ -141,6 +135,20 @@ where
             parent_geometry,
             use_boundary_determination_rule: true,
             tree: None,
+            has_computed_self_nodes: false,
+            planar_graph: PlanarGraph::new(),
+        };
+        graph.add_geometry(&graph.parent_geometry.clone());
+        graph.tree = Some(Arc::new(graph.build_tree()));
+        graph
+    }
+
+    pub(crate) fn new_with_tree(arg_index: usize, parent_geometry: GeometryCow<'a, F>, tree: Arc<RTree<Segment<F>>>) -> Self {
+        let mut graph = GeometryGraph {
+            arg_index,
+            parent_geometry,
+            use_boundary_determination_rule: true,
+            tree: Some(tree),
             has_computed_self_nodes: false,
             planar_graph: PlanarGraph::new(),
         };
