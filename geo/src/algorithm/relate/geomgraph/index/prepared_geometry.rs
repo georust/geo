@@ -158,6 +158,7 @@ mod conversions {
     impl<'a, F: GeoFloat> From<GeometryCow<'a, F>> for PreparedGeometry<'a, F> {
         fn from(geometry: GeometryCow<'a, F>) -> Self {
             let mut geometry_graph = GeometryGraph::new(0, geometry);
+            geometry_graph.update_tree(); // TODO: maybe unecessary
 
             // TODO: don't pass in line intersector here - in theory we'll want pluggable line intersectors
             // and the type (Robust) shouldn't be hard coded here.

@@ -61,7 +61,7 @@ where
         (self.tree.as_ref().unwrap(), edges)
     }
 
-    fn update_tree(&mut self) {
+    pub(crate) fn update_tree(&mut self) {
         if self.tree.is_none() {
             self.tree = Some(self.build_tree());
         }
