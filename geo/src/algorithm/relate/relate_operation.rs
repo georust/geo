@@ -89,10 +89,10 @@ where
         //     .graph_a
         //     .compute_edge_intersections(&mut self.graph_b, Box::new(self.line_intersector.clone()));
 
-
         // this is a copy of the above functionality to satisfy rust borrowing rules.
         // from here [...
-        let mut segment_intersector = SegmentIntersector::new(Box::new(self.line_intersector.clone()), false);
+        let mut segment_intersector =
+            SegmentIntersector::new(Box::new(self.line_intersector.clone()), false);
         segment_intersector.set_boundary_nodes(
             self.graph_a.boundary_nodes().cloned().collect(),
             self.graph_b.boundary_nodes().cloned().collect(),
