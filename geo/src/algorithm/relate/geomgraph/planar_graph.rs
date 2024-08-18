@@ -33,11 +33,7 @@ impl<F: GeoFloat> PlanarGraph<F> {
         let mut graph = Self {
             nodes: self.nodes.clone(),
             // deep copy edges
-            edges: self
-                .edges
-                .iter()
-                .map(|e| e.clone())
-                .collect(),
+            edges: self.edges.iter().map(|e| e.clone()).collect(),
         };
         assert_eq!(from_arg_index, 0);
         if from_arg_index != to_arg_index {
