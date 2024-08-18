@@ -68,12 +68,10 @@ where
     }
 
     fn invalidate_tree(&mut self) {
-        println!("invalidate tree");
         self.tree = None;
     }
 
     fn build_tree(&self) -> RTree<Segment<F>> {
-        println!("build tree: {}", self.edges().len());
         let segments: Vec<Segment<F>> = self
             .edges()
             .iter()
@@ -102,7 +100,6 @@ where
     }
 
     pub(crate) fn clone_for_arg_index(&self, arg_index: usize) -> Self {
-        println!("clone for arg");
         debug_assert!(
             self.has_computed_self_nodes,
             "should only be called after computing self nodes"
@@ -152,7 +149,6 @@ where
     F: GeoFloat + RTreeNum,
 {
     pub(crate) fn new(arg_index: usize, parent_geometry: GeometryCow<'a, F>) -> Self {
-        println!("new geom graph");
         let mut graph = GeometryGraph {
             arg_index,
             parent_geometry,
