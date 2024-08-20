@@ -8,7 +8,7 @@ use crate::{Contains, GeoFloat};
 // ========= Error Type ============
 
 #[derive(Debug)]
-pub(crate) enum LineStitchingError {
+pub enum LineStitchingError {
     IncompleteRing(&'static str),
 }
 
@@ -25,7 +25,7 @@ pub(crate) type TriangleStitchingResult<T> = Result<T, LineStitchingError>;
 // ========= Main Algo ============
 
 /// Trait to stitch together split up triangles.
-pub(crate) trait StitchTriangles<T: GeoFloat> {
+pub trait StitchTriangles<T: GeoFloat>: private::Stitchable<T> {
     /// This stitching only happens along identical edges which are located in two separate
     /// geometries. Please read about the required pre conditions of the inputs!
     ///
@@ -42,49 +42,47 @@ pub(crate) trait StitchTriangles<T: GeoFloat> {
     /// # Pre Conditions
     ///
     /// - The triangles in the input must not overlap! This also forbids identical triangles in the
-    ///   input set. If you want to do a union on overlapping triangles then c.f. [`SpadeBoolops`].
+    ///   input set. If you want to do a union on overlapping triangles then c.f. `SpadeBoolops`.
     /// - Input triangles should be valid polygons. For a definition of validity
     ///   c.f. <https://www.postgis.net/workshops/postgis-intro/validity.html>
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// // commented this out since the trait is private and the doc test will fail
+    /// ```text
+    /// use geo::StitchTriangles;
+    /// use geo::{Coord, Triangle, polygon};
     ///
-    /// //use geo::StitchTriangles;
-    /// //use geo::{Coord, Triangle, polygon};
+    /// let tri1 = Triangle::from([
+    ///     Coord { x: 0.0, y: 0.0 },
+    ///     Coord { x: 1.0, y: 0.0 },
+    ///     Coord { x: 0.0, y: 1.0 },
+    /// ]);
+    /// let tri2 = Triangle::from([
+    ///     Coord { x: 1.0, y: 1.0 },
+    ///     Coord { x: 1.0, y: 0.0 },
+    ///     Coord { x: 0.0, y: 1.0 },
+    /// ]);
     ///
-    /// //let tri1 = Triangle::from([
-    /// //    Coord { x: 0.0, y: 0.0 },
-    /// //    Coord { x: 1.0, y: 0.0 },
-    /// //    Coord { x: 0.0, y: 1.0 },
-    /// //]);
-    /// //let tri2 = Triangle::from([
-    /// //    Coord { x: 1.0, y: 1.0 },
-    /// //    Coord { x: 1.0, y: 0.0 },
-    /// //    Coord { x: 0.0, y: 1.0 },
-    /// //]);
+    /// let result = vec![tri1, tri2].stitch_triangulation();
     ///
-    /// //let result = vec![tri1, tri2].stitch_triangulation();
+    /// assert!(result.is_ok());
     ///
-    /// //assert!(result.is_ok());
+    /// let mp = result.unwrap();
     ///
-    /// //let mp = result.unwrap();
+    /// assert_eq!(mp.0.len(), 1);
     ///
-    /// //assert_eq!(mp.0.len(), 1);
+    /// let poly = mp.0[0].clone();
+    /// // 4 coords + 1 duplicate for closed-ness
+    /// assert_eq!(poly.exterior().0.len(), 4 + 1);
     ///
-    /// //let poly = mp.0[0].clone();
-    /// //// 4 coords + 1 duplicate for closed-ness
-    /// //assert_eq!(poly.exterior().0.len(), 4 + 1);
+    /// let expected = polygon![
+    ///     Coord { x: 1.0, y: 1.0 },
+    ///     Coord { x: 0.0, y: 1.0 },
+    ///     Coord { x: 0.0, y: 0.0 },
+    ///     Coord { x: 1.0, y: 0.0 },
+    /// ];
     ///
-    /// //let expected = polygon![
-    /// //    Coord { x: 1.0, y: 1.0 },
-    /// //    Coord { x: 0.0, y: 1.0 },
-    /// //    Coord { x: 0.0, y: 0.0 },
-    /// //    Coord { x: 1.0, y: 0.0 },
-    /// //];
-    ///
-    /// //assert_eq!(poly, expected);
+    /// assert_eq!(poly, expected);
     /// ```
     ///
     /// # Additional Notes
@@ -125,13 +123,25 @@ pub(crate) trait StitchTriangles<T: GeoFloat> {
     ///
     /// If you want to do something more general like a
     /// [`Boolean Operation Union`](https://en.wikipedia.org/wiki/Boolean_operations_on_polygons)
-    /// you should use the trait [`BooleanOps`] or [`SpadeBoolops`].
+    /// you should use the trait `BooleanOps` or `SpadeBoolops`.
     fn stitch_triangulation(&self) -> TriangleStitchingResult<MultiPolygon<T>>;
+}
+
+mod private {
+    use super::*;
+
+    pub trait Stitchable<T: GeoFloat>: AsRef<[Triangle<T>]> {}
+    impl<S, T> Stitchable<T> for S
+    where
+        S: AsRef<[Triangle<T>]>,
+        T: GeoFloat,
+    {
+    }
 }
 
 impl<S, T> StitchTriangles<T> for S
 where
-    S: AsRef<[Triangle<T>]>,
+    S: private::Stitchable<T>,
     T: GeoFloat,
 {
     fn stitch_triangulation(&self) -> TriangleStitchingResult<MultiPolygon<T>> {
