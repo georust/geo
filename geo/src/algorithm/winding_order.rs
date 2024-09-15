@@ -68,12 +68,12 @@ pub trait Winding {
     /// `None` otherwise.
     fn winding_order(&self) -> Option<WindingOrder>;
 
-    /// True iff this is wound clockwise
+    /// True if this is wound clockwise
     fn is_cw(&self) -> bool {
         self.winding_order() == Some(WindingOrder::Clockwise)
     }
 
-    /// True iff this is wound counterclockwise
+    /// True if this is wound counterclockwise
     fn is_ccw(&self) -> bool {
         self.winding_order() == Some(WindingOrder::CounterClockwise)
     }
