@@ -3,46 +3,48 @@
 // hidden module is public so the geo crate can reuse these algorithms to
 // prevent duplication. These functions are _not_ meant for public consumption.
 
+use crate::geo_traits;
+use num_traits::{Zero, One};
 use crate::{Coord, CoordFloat, CoordNum, Line, LineString, Point, Rect};
 
-pub fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<T>>
+pub fn line_string_bounding_rect<C>(line_string: &LineString<C>) -> Option<Rect<C>>
 where
-    T: CoordNum,
+    C: geo_traits::Coord,
 {
     get_bounding_rect(line_string.coords().cloned())
 }
 
-pub fn line_bounding_rect<T>(line: Line<T>) -> Rect<T>
+pub fn line_bounding_rect<C>(line: Line<C>) -> Rect<C>
 where
-    T: CoordNum,
+    C: geo_traits::Coord,
 {
     Rect::new(line.start, line.end)
 }
 
-pub fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>
+pub fn get_bounding_rect<I, C>(collection: I) -> Option<Rect<C>>
 where
-    T: CoordNum,
-    I: IntoIterator<Item = Coord<T>>,
+    C: geo_traits::Coord,
+    I: IntoIterator<Item = C>,
 {
     let mut iter = collection.into_iter();
     if let Some(pnt) = iter.next() {
-        let mut xrange = (pnt.x, pnt.x);
-        let mut yrange = (pnt.y, pnt.y);
+        let mut xrange = (pnt.x(), pnt.x());
+        let mut yrange = (pnt.y(), pnt.y());
         for pnt in iter {
-            let (px, py) = pnt.x_y();
+            let (px, py) = pnt.xy();
             xrange = get_min_max(px, xrange.0, xrange.1);
             yrange = get_min_max(py, yrange.0, yrange.1);
         }
 
         return Some(Rect::new(
-            coord! {
-                x: xrange.0,
-                y: yrange.0,
-            },
-            coord! {
-                x: xrange.1,
-                y: yrange.1,
-            },
+            C::from_xy(
+                xrange.0,
+                yrange.0,
+            ),
+            C::from_xy(
+                xrange.1,
+                yrange.1,
+            ),
         ));
     }
     None
@@ -58,10 +60,13 @@ fn get_min_max<T: PartialOrd>(p: T, min: T, max: T) -> (T, T) {
     }
 }
 
-pub fn line_segment_distance<T, C>(point: C, start: C, end: C) -> T
+pub fn line_segment_distance<T, C>(
+    point: impl Into<C>,
+    start: impl Into<C>,
+    end: impl Into<C>,
+) -> C::Scalar
 where
-    T: CoordFloat,
-    C: Into<Coord<T>>,
+    C: geo_traits::Coord,
 {
     let point = point.into();
     let start = start.into();
@@ -70,22 +75,23 @@ where
     if start == end {
         return line_euclidean_length(Line::new(point, start));
     }
-    let dx = end.x - start.x;
-    let dy = end.y - start.y;
-    let r = ((point.x - start.x) * dx + (point.y - start.y) * dy) / (dx.powi(2) + dy.powi(2));
-    if r <= T::zero() {
+    let dx = end.x() - start.x();
+    let dy = end.y() - start.y();
+    let r =
+        ((point.x() - start.x()) * dx + (point.y() - start.y()) * dy) / (dx.powi(2) + dy.powi(2));
+    if r <= C::Scalar::zero() {
         return line_euclidean_length(Line::new(point, start));
     }
-    if r >= T::one() {
+    if r >= C::Scalar::one() {
         return line_euclidean_length(Line::new(point, end));
     }
-    let s = ((start.y - point.y) * dx - (start.x - point.x) * dy) / (dx * dx + dy * dy);
+    let s = ((start.y() - point.y()) * dx - (start.x() - point.x()) * dy) / (dx * dx + dy * dy);
     s.abs() * dx.hypot(dy)
 }
 
-pub fn line_euclidean_length<T>(line: Line<T>) -> T
+pub fn line_euclidean_length<C>(line: Line<C>) -> C::Scalar
 where
-    T: CoordFloat,
+    C: geo_traits::Coord,
 {
     line.dx().hypot(line.dy())
 }
