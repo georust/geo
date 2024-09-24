@@ -6,16 +6,6 @@ pub use kernels::{Kernel, Orientation};
 pub mod area;
 pub use area::Area;
 
-/// Calculate the bearing to another `Point`, in degrees.
-#[deprecated(
-    since = "0.24.1",
-    note = "renamed to `haversine_bearing::HaversineBearing`"
-)]
-pub mod bearing;
-#[allow(deprecated)]
-#[deprecated(since = "0.24.1", note = "renamed to `HaversineBearing`")]
-pub use bearing::Bearing;
-
 /// Boolean Ops such as union, xor, difference;
 pub mod bool_ops;
 pub use bool_ops::{BooleanOps, OpType};
@@ -294,6 +284,10 @@ pub use outlier_detection::OutlierDetection;
 /// Monotonic polygon subdivision
 pub mod monotone;
 pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
+
+pub mod line_measures;
+pub use line_measures::metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb};
+pub use line_measures::{Bearing, Destination, Distance, InterpolatePoint};
 
 /// Rhumb-line-related algorithms and utils
 pub mod rhumb;

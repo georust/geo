@@ -18,6 +18,26 @@
   * <https://github.com/georust/geo/pull/1201>
 * Add `StitchTriangles` trait which implements a new kind of combining algorithm for `Triangle`s
   * <https://github.com/georust/geo/pull/1087>
+* BREAKING: Remove deprecated `Bearing` trait
+* Unify various line measurements under new `line_measures::{Bearing, Distance, Destination, InterpolatePoint}` traits
+  Before:
+  ```
+  use geo::{GeodesicBearing, HaversineBearing, GeodesicDistance, HaversineDistance};
+  GeodesicBearing::geodesic_bearing(p1, p2)
+  HaversineBearing::haversine_bearing(p1, p2)
+  GeodesicDistance::geodesic_distance(p1, p2)
+  HaversineDistance::haversine_distance(p1, p2)
+  ```
+
+  After:
+  ```
+  use geo::{Geodesic, Haversine, Bearing, Distance};
+  Geodesic::bearing(p1, p2)
+  Haversine::bearing(p1, p2)
+  Geodesic::distance(p1, p2)
+  Haversine::distance(p1, p2)
+  ```
+  * <https://github.com/georust/geo/pull/TBD>
 
 ## 0.28.0
 

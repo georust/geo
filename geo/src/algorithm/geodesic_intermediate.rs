@@ -2,7 +2,6 @@ use crate::{CoordFloat, Point};
 use geographiclib_rs::{DirectGeodesic, Geodesic, InverseGeodesic};
 
 /// Returns a new Point along a route between two existing points on an ellipsoidal model of the earth
-
 pub trait GeodesicIntermediate<T: CoordFloat> {
     /// Returns a new Point along a route between two existing points on an ellipsoidal model of the earth
     ///
@@ -25,7 +24,6 @@ pub trait GeodesicIntermediate<T: CoordFloat> {
     /// assert_relative_eq!(i50, i50_should, epsilon = 1.0e-6);
     /// assert_relative_eq!(i80, i80_should, epsilon = 1.0e-6);
     /// ```
-
     fn geodesic_intermediate(&self, other: &Point<T>, f: T) -> Point<T>;
     fn geodesic_intermediate_fill(
         &self,
