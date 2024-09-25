@@ -1,7 +1,7 @@
 use super::super::Distance;
 use crate::{GeoFloat, Point};
 
-/// Operations on the [Euclidean plane] measures distance with the pythagorean formula -
+/// Operations on the [Euclidean plane] measure distance with the pythagorean formula -
 /// what you'd measure with a ruler.
 ///
 /// If you have lon/lat points, use the [`Haversine`], [`Geodesic`], or other [metric spaces] -
