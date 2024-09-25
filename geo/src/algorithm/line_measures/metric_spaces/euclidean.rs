@@ -1,4 +1,4 @@
-use super::super::Distance;
+use super::super::{Distance, InterpolatePoint};
 use crate::{GeoFloat, Point};
 
 /// Operations on the [Euclidean plane] measure distance with the pythagorean formula -
@@ -17,6 +17,7 @@ use crate::{GeoFloat, Point};
 /// [metric spaces]: super
 pub struct Euclidean;
 
+// NBD - but I think this GeoFloat could be CoordFloat with a little work.
 /// Calculate the Euclidean distance (a.k.a. pythagorean distance) between two Points
 impl<F: GeoFloat> Distance<F, Point<F>, Point<F>> for Euclidean {
     /// Calculate the Euclidean distance (a.k.a. pythagorean distance) between two Points
@@ -48,6 +49,61 @@ impl<F: GeoFloat> Distance<F, Point<F>, Point<F>> for Euclidean {
     /// [metric spaces]: super
     fn distance(origin: Point<F>, destination: Point<F>) -> F {
         crate::EuclideanDistance::euclidean_distance(&origin, &destination)
+    }
+}
+
+// NBD - but I think this GeoFloat could be CoordFloat with a little work.
+impl<F: GeoFloat> InterpolatePoint<F> for Euclidean {
+    fn point_at_ratio_between(start: Point<F>, end: Point<F>, ratio_from_start: F) -> Point<F> {
+        let diff = end - start;
+        start + diff * ratio_from_start
+    }
+
+    fn points_along_line(
+        start: Point<F>,
+        end: Point<F>,
+        max_distance: F,
+        include_ends: bool,
+    ) -> impl Iterator<Item = Point<F>> {
+        let mut container = vec![];
+        Self::densify_line(start, end, &mut container, max_distance, include_ends);
+        container.into_iter()
+    }
+}
+
+impl Euclidean {
+    // TODO: This method could be moved to InterpolatePoint+Distance and apply to all MetricSpaces
+    // InterpolatePoints::points_along_line and Densify::densify have some overlap... I need to
+    // think more about how to organize these methods.
+    fn densify_line<F: GeoFloat>(
+        start: Point<F>,
+        end: Point<F>,
+        container: &mut Vec<Point<F>>,
+        max_segment_length: F,
+        include_ends: bool,
+    ) {
+        assert!(max_segment_length > F::zero());
+
+        if include_ends {
+            container.push(start);
+        }
+
+        let num_segments = (Self::distance(start, end) / max_segment_length)
+            .ceil()
+            .to_u64()
+            .expect("unreasonable number of segments");
+
+        // distance "unit" for this line segment
+        let frac = F::one() / F::from(num_segments).unwrap();
+
+        for segment_idx in 1..num_segments {
+            let ratio = frac * F::from(segment_idx).unwrap();
+            let start = start;
+            let end = end;
+
+            let interpolated_point = Self::point_at_ratio_between(start.into(), end.into(), ratio);
+            container.push(interpolated_point);
+        }
     }
 }
 
