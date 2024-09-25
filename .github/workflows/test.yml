@@ -77,7 +77,7 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.74"
+          - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.75"
           # Two most recent releases - we omit older ones for expedient CI
           - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.78"
           - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.79"
@@ -105,7 +105,7 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.74"
+          - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.75"
           # Two most recent releases - we omit older ones for expedient CI
           - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.78"
           - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.79"
@@ -132,7 +132,7 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.74"
+          - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.75"
           # Two most recent releases - we omit older ones for expedient CI
           - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.78"
           - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.79"
