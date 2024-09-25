@@ -1,11 +1,17 @@
 use super::super::Distance;
 use crate::{GeoFloat, Point};
 
-/// Euclidean space measures distance with the pythagorean formula - what you'd measure with a ruler.
+/// Operations on the [Euclidean plane] measures distance with the pythagorean formula -
+/// what you'd measure with a ruler.
 ///
-/// You must use projected coordinates with Euclidean space —
-/// for lon/lat points, use the [`Haversine`], [`Geodesic`], or other [metric spaces].
+/// If you have lon/lat points, use the [`Haversine`], [`Geodesic`], or other [metric spaces] -
+/// Euclidean methods will give nonsense results.
 ///
+/// Alternatively, you *can* use lon/lat points with Euclidean methods if you first [`Transform`]
+/// your points to an appropriate projection.
+///
+/// [Euclidean plane]: https://en.wikipedia.org/wiki/Euclidean_plane
+/// [`Transform`]: crate::Transform
 /// [`Haversine`]: super::Haversine
 /// [`Geodesic`]: super::Geodesic
 /// [metric spaces]: super
