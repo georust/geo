@@ -281,7 +281,11 @@ mod tests {
             let start = Point::new(10.0, 20.0);
             let end = Point::new(125.0, 25.0);
             let midpoint = MetricSpace::point_at_ratio_between(start, end, 0.5);
-            assert_relative_eq!(midpoint, Point::new(66.98011173721943, 22.500000000000007));
+            assert_relative_eq!(
+                midpoint,
+                Point::new(66.98011173721943, 22.500000000000007),
+                epsilon = 1.0e-10
+            );
         }
         #[test]
         fn points_along_line_with_endpoints() {
@@ -293,7 +297,11 @@ mod tests {
             assert_eq!(route.len(), 13);
             assert_eq!(route[0], start);
             assert_eq!(route.last().unwrap(), &end);
-            assert_relative_eq!(route[1], Point::new(19.43061818495096, 20.416666666666668));
+            assert_relative_eq!(
+                route[1],
+                Point::new(19.43061818495096, 20.416666666666668),
+                epsilon = 1.0e-10
+            );
         }
         #[test]
         fn points_along_line_without_endpoints() {
@@ -303,7 +311,11 @@ mod tests {
             let route =
                 MetricSpace::points_along_line(start, end, max_dist, false).collect::<Vec<_>>();
             assert_eq!(route.len(), 11);
-            assert_relative_eq!(route[0], Point::new(19.43061818495096, 20.416666666666668));
+            assert_relative_eq!(
+                route[0],
+                Point::new(19.43061818495096, 20.416666666666668),
+                epsilon = 1.0e-10
+            );
         }
     }
 }

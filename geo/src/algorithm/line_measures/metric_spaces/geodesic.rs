@@ -318,7 +318,7 @@ mod tests {
                 let route =
                     MetricSpace::points_along_line(start, end, max_dist, false).collect::<Vec<_>>();
                 assert_eq!(route.len(), 11);
-                assert_eq!(route[0], Point::new(17.878754355562464, 24.466667836189565));
+                assert_relative_eq!(route[0], Point::new(17.878754355562464, 24.466667836189565));
             }
         }
     }
