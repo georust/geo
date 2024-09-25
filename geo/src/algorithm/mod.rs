@@ -66,10 +66,6 @@ pub use coordinate_position::CoordinatePosition;
 pub mod coords_iter;
 pub use coords_iter::CoordsIter;
 
-/// Densify linear geometry components
-pub mod densify;
-pub use densify::Densify;
-
 /// Densify spherical geometry components
 pub mod densify_haversine;
 pub use densify_haversine::DensifyHaversine;
@@ -287,7 +283,7 @@ pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
 
 pub mod line_measures;
 pub use line_measures::metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb};
-pub use line_measures::{Bearing, Destination, Distance, InterpolatePoint};
+pub use line_measures::{Bearing, Densify, Destination, Distance, InterpolatePoint};
 
 /// Rhumb-line-related algorithms and utils
 pub mod rhumb;
