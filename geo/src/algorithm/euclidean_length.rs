@@ -4,6 +4,10 @@ use crate::{CoordFloat, Line, LineString, MultiLineString};
 
 /// Calculation of the length
 
+#[deprecated(
+    since = "0.29.0",
+    note = "Please use the `line.length::<Euclidean>()` via the `Length` trait instead."
+)]
 pub trait EuclideanLength<T, RHS = Self> {
     /// Calculation of the length of a Line
     ///

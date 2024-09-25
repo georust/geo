@@ -3,6 +3,10 @@ use num_traits::FromPrimitive;
 use crate::{CoordFloat, Line, LineString, MultiLineString};
 use crate::{Distance, Haversine};
 
+#[deprecated(
+    since = "0.29.0",
+    note = "Please use the `line.length::<Haversine>()` via the `Length` trait instead."
+)]
 /// Determine the length of a geometry using the [haversine formula].
 ///
 /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula

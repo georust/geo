@@ -2,6 +2,10 @@ use num_traits::FromPrimitive;
 
 use crate::{CoordFloat, Distance, Line, LineString, MultiLineString, Rhumb};
 
+#[deprecated(
+    since = "0.29.0",
+    note = "Please use the `line.length::<Rhumb>()` via the `Length` trait instead."
+)]
 /// Determine the length of a geometry assuming each segment is a [rhumb line].
 ///
 /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line

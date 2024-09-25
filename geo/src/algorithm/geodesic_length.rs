@@ -1,5 +1,9 @@
 use crate::{Distance, Geodesic, Line, LineString, MultiLineString};
 
+#[deprecated(
+    since = "0.29.0",
+    note = "Please use the `line.length::<Geodesic>()` via the `Length` trait instead."
+)]
 /// Determine the length of a geometry on an ellipsoidal model of the earth.
 ///
 /// This uses the geodesic measurement methods given by [Karney (2013)]. As opposed to older methods
