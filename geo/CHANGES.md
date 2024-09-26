@@ -37,7 +37,7 @@
   Geodesic::distance(p1, p2)
   Haversine::distance(p1, p2)
   ```
-  * <https://github.com/georust/geo/pull/TBD>
+  * <https://github.com/georust/geo/pull/1216>
 
 ## 0.28.0
 
