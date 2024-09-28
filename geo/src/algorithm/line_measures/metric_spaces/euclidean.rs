@@ -7,8 +7,9 @@ use crate::{GeoFloat, Point};
 /// If you have lon/lat points, use the [`Haversine`], [`Geodesic`], or other [metric spaces] -
 /// Euclidean methods will give nonsense results.
 ///
-/// Alternatively, you *can* use lon/lat points with Euclidean methods if you first [`Transform`]
-/// your points to an appropriate projection.
+/// If you wish to use Euclidean operations with lon/lat, the coordinates must first be transformed
+/// using the [`Transform::transform`](crate::Transform::transform) / [`Transform::transform_crs_to_crs`](crate::Transform::transform_crs_to_crs) methods or their
+/// immutable variants. Use of these requires the proj feature
 ///
 /// [Euclidean plane]: https://en.wikipedia.org/wiki/Euclidean_plane
 /// [`Transform`]: crate::Transform
