@@ -103,10 +103,10 @@ pub trait StitchTriangles<T: GeoFloat>: private::Stitchable<T> {
     /// │./..\../.\../..\.│
     /// │/....\/...\/....\│
     /// └─────────────────┘
-    ///                    
-    ///     │    │    │    
-    ///     ▼    ▼    ▼    
-    ///                    
+    ///
+    ///     │    │    │
+    ///     ▼    ▼    ▼
+    ///
     /// ┌────────x────────┐
     /// │       / \       │
     /// │      /   \      │
@@ -189,9 +189,9 @@ fn same_line<T: GeoFloat>(l1: &Line<T>, l2: &Line<T>) -> bool {
 /// kinds of lines:
 ///
 /// - boundary lines: these are the unique lines on the boundary of the compound shape which is
-/// formed by the collection of polygons
+///   formed by the collection of polygons
 /// - inner lines: these are all non-boundary lines. They are not unique and have exactly one
-/// duplicate on one adjacent polygon in the collection (as long as the input is valid!)
+///   duplicate on one adjacent polygon in the collection (as long as the input is valid!)
 fn find_boundary_lines<T: GeoFloat>(lines: Vec<Line<T>>) -> Vec<Line<T>> {
     lines.into_iter().fold(Vec::new(), |mut lines, new_line| {
         if let Some(idx) = lines.iter().position(|line| same_line(line, &new_line)) {
