@@ -1,4 +1,4 @@
-use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
+use crate::{earth_radius::{MeanEarthRadius, Iugg}, CoordFloat, Point};
 use num_traits::FromPrimitive;
 
 use super::RhumbCalculations;
@@ -7,7 +7,7 @@ use super::RhumbCalculations;
 ///
 /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
 ///
-/// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
+/// *Note*: this implementation defaults to a mean earth radius of 6371.088 km, based on the [recommendation of
 /// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
 pub trait RhumbDistance<T, Rhs = Self> {
     /// Determine the distance between along the [rhumb line] between two geometries.
@@ -37,16 +37,20 @@ pub trait RhumbDistance<T, Rhs = Self> {
     /// ```
     ///
     /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
-    fn rhumb_distance(&self, rhs: &Rhs) -> T;
+    fn rhumb_distance(&self, rhs: &Rhs) -> T {
+        self.rhumb_distance_with_radius::<Iugg>(rhs)
+    }
+
+    fn rhumb_distance_with_radius<Radius: MeanEarthRadius>(&self, rhs: &Rhs) -> T;
 }
 
 impl<T> RhumbDistance<T, Point<T>> for Point<T>
 where
     T: CoordFloat + FromPrimitive,
 {
-    fn rhumb_distance(&self, rhs: &Point<T>) -> T {
+    fn rhumb_distance_with_radius<Radius: MeanEarthRadius>(&self, rhs: &Point<T>) -> T {
         let calculations = RhumbCalculations::new(self, rhs);
-        calculations.delta() * T::from(MEAN_EARTH_RADIUS).unwrap()
+        calculations.delta() * Radius::value()
     }
 }
 
