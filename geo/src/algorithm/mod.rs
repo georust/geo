@@ -84,6 +84,10 @@ pub use densify::Densify;
 pub mod densify_haversine;
 pub use densify_haversine::DensifyHaversine;
 
+/// Densify geometry components on a geodesic.
+pub mod densify_geodesic;
+pub use densify_geodesic::DensifyGeodesic;
+
 /// Dimensionality of a geometry and its boundary, based on OGC-SFA.
 pub mod dimensions;
 pub use dimensions::HasDimensions;

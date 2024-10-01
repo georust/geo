@@ -18,6 +18,8 @@
   * <https://github.com/georust/geo/pull/1201>
 * Add `StitchTriangles` trait which implements a new kind of combining algorithm for `Triangle`s
   * <https://github.com/georust/geo/pull/1087>
+* Add `DensifyGeodesic` trait which implements densification by interpolating points on a spheroid
+  * <https://github.com/georust/geo/pull/1208>
 
 ## 0.28.0
 
