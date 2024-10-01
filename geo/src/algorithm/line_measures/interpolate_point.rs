@@ -1,12 +1,6 @@
 use crate::{CoordFloat, Point};
 
-// REVIEW: Naming alternatives:
-// - LinearReferencing
-// - PointAlongLine
-// - LineInterpolatePoint (postgis)
-// - Interpolate (shapely)
-// - Position (geographiclib)
-// - Intermediate (georust::geo)
+/// Interpolate a `Point` along a line between two existing points
 pub trait InterpolatePoint<F: CoordFloat> {
     /// Returns a new Point along a line between two existing points
     ///
