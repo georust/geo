@@ -145,6 +145,8 @@ where
         Self {
             x: -self.y,
             y: self.x,
+            z: self.z,
+            m: self.m,
         }
     }
 
@@ -152,6 +154,8 @@ where
         Self {
             x: self.y,
             y: -self.x,
+            z: self.z,
+            m: self.m,
         }
     }
 
@@ -177,8 +181,9 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::Vector2DOps;
     use crate::coord;
+
+    use super::Vector2DOps;
 
     #[test]
     fn test_cross_product() {
