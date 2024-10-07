@@ -1,6 +1,6 @@
-use crate::{haversine_distance::HaversineDistance, HaversineBearing};
+use crate::line_measures::{Bearing, Destination, Distance, Haversine};
 use crate::{Closest, Contains};
-use crate::{CoordsIter, GeoFloat, HaversineDestination, Point, MEAN_EARTH_RADIUS};
+use crate::{CoordsIter, GeoFloat, Point, MEAN_EARTH_RADIUS};
 use geo_types::{
     Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Polygon, Rect, Triangle,
@@ -92,7 +92,7 @@ where
         }
 
         // This can probably be done cheaper
-        let d3 = p2.haversine_distance(&p1);
+        let d3 = Haversine::distance(p2, p1);
         if d3 <= T::epsilon() {
             // I think here it should be return Closest::SinglePoint(p1)
             // If the line segment is degenerated to a point, that point is still the closest
@@ -102,18 +102,18 @@ where
         }
 
         let pi = T::from(std::f64::consts::PI).unwrap();
-        let crs_ad = p1.haversine_bearing(*from).to_radians();
-        let crs_ab = p1.haversine_bearing(p2).to_radians();
+        let crs_ad = Haversine::bearing(p1, *from).to_radians();
+        let crs_ab = Haversine::bearing(p1, p2).to_radians();
         let crs_ba = if crs_ab > T::zero() {
             crs_ab - pi
         } else {
             crs_ab + pi
         };
-        let crs_bd = p2.haversine_bearing(*from).to_radians();
+        let crs_bd = Haversine::bearing(p2, *from).to_radians();
         let d_crs1 = crs_ad - crs_ab;
         let d_crs2 = crs_bd - crs_ba;
 
-        let d1 = p1.haversine_distance(from);
+        let d1 = Haversine::distance(p1, *from);
 
         // d1, d2, d3 are in principle not needed, only the sign matters
         let projection1 = d_crs1.cos();
@@ -127,13 +127,13 @@ where
             if xtd < T::epsilon() {
                 return Closest::Intersection(*from);
             } else {
-                return Closest::SinglePoint(p1.haversine_destination(crs_ab.to_degrees(), atd));
+                return Closest::SinglePoint(Haversine::destination(p1, crs_ab.to_degrees(), atd));
             }
         }
 
         // Projected falls outside the GC Arc
         // Return shortest distance pt, project either on point sp1 or sp2
-        let d2 = p2.haversine_distance(from);
+        let d2 = Haversine::distance(p2, *from);
         if d1 < d2 {
             return Closest::SinglePoint(p1);
         }
@@ -166,7 +166,7 @@ where
                     return intersect;
                 }
                 Closest::SinglePoint(pt) => {
-                    let dist = pt.haversine_distance(from);
+                    let dist = Haversine::distance(pt, *from);
                     if dist < min_distance {
                         min_distance = dist;
                         rv = Closest::SinglePoint(pt);
@@ -198,7 +198,7 @@ where
                 return (intersect, T::zero());
             }
             Closest::SinglePoint(pt) => {
-                let dist = pt.haversine_distance(from);
+                let dist = Haversine::distance(pt, *from);
                 if dist < min_distance {
                     min_distance = dist;
                     rv = Closest::SinglePoint(pt);
@@ -301,7 +301,7 @@ where
             // This mean on top of the line.
             Closest::Intersection(pt) => return Closest::Intersection(pt),
             Closest::SinglePoint(pt) => {
-                let dist = pt.haversine_distance(from);
+                let dist = Haversine::distance(pt, *from);
                 if dist < min_distance {
                     min_distance = dist;
                     rv = Closest::SinglePoint(pt);

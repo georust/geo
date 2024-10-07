@@ -38,6 +38,11 @@
   Haversine::distance(p1, p2)
   ```
   * <https://github.com/georust/geo/pull/1216>
+* Deprecated legacy line measure traits in favor of those added in the previous changelog entry:
+  * `GeodesicBearing`, `GeodesicDistance`, `GeodesicDestination`, `GeodesicIntermediate`
+  * `RhumbBearing`, `RhumbDistance`, `RhumbDestination`, `RhumbIntermediate`
+  * `HaversineBearing`, `HaversineDistance`, `HaversineDestination`, `HaversineIntermediate`
+  * <https://github.com/georust/geo/pull/1222>
 
 ## 0.28.0
 

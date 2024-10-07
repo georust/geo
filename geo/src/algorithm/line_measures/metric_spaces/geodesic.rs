@@ -1,5 +1,6 @@
 use super::super::{Bearing, Destination, Distance, InterpolatePoint};
 use crate::Point;
+use geographiclib_rs::{DirectGeodesic, InverseGeodesic};
 
 /// An ellipsoidal model of the earth, using methods given by [Karney (2013)].
 ///
@@ -36,7 +37,13 @@ impl Bearing<f64> for Geodesic {
     /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn bearing(origin: Point<f64>, destination: Point<f64>) -> f64 {
-        (crate::algorithm::GeodesicBearing::geodesic_bearing(&origin, destination) + 360.0) % 360.0
+        let (azi1, _, _) = geographiclib_rs::Geodesic::wgs84().inverse(
+            origin.y(),
+            origin.x(),
+            destination.y(),
+            destination.x(),
+        );
+        (azi1 + 360.0) % 360.0
     }
 }
 
@@ -75,7 +82,9 @@ impl Destination<f64> for Geodesic {
     /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn destination(origin: Point<f64>, bearing: f64, distance: f64) -> Point<f64> {
-        crate::algorithm::GeodesicDestination::geodesic_destination(&origin, bearing, distance)
+        let (lat, lon) =
+            geographiclib_rs::Geodesic::wgs84().direct(origin.y(), origin.x(), bearing, distance);
+        Point::new(lon, lat)
     }
 }
 
@@ -112,7 +121,12 @@ impl Distance<f64, Point<f64>, Point<f64>> for Geodesic {
     /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn distance(origin: Point<f64>, destination: Point<f64>) -> f64 {
-        crate::algorithm::GeodesicDistance::geodesic_distance(&origin, &destination)
+        geographiclib_rs::Geodesic::wgs84().inverse(
+            origin.y(),
+            origin.x(),
+            destination.y(),
+            destination.x(),
+        )
     }
 }
 
@@ -153,11 +167,12 @@ impl InterpolatePoint<f64> for Geodesic {
         end: Point<f64>,
         ratio_from_start: f64,
     ) -> Point<f64> {
-        crate::algorithm::GeodesicIntermediate::geodesic_intermediate(
-            &start,
-            &end,
-            ratio_from_start,
-        )
+        let g = geographiclib_rs::Geodesic::wgs84();
+        let (total_distance, azi1, _azi2, _a12) = g.inverse(start.y(), start.x(), end.y(), end.x());
+        let distance = total_distance * ratio_from_start;
+        let (lat2, lon2) = g.direct(start.y(), start.x(), azi1, distance);
+
+        Point::new(lon2, lat2)
     }
 
     /// Interpolates `Point`s along a [geodesic line] between `start` and `end`.
@@ -180,13 +195,35 @@ impl InterpolatePoint<f64> for Geodesic {
         max_distance: f64,
         include_ends: bool,
     ) -> impl Iterator<Item = Point<f64>> {
-        crate::algorithm::GeodesicIntermediate::geodesic_intermediate_fill(
-            &start,
-            &end,
-            max_distance,
-            include_ends,
-        )
-        .into_iter()
+        let g = geographiclib_rs::Geodesic::wgs84();
+        let (total_distance, azi1, _azi2, _a12) = g.inverse(start.y(), start.x(), end.y(), end.x());
+
+        if total_distance <= max_distance {
+            return if include_ends {
+                vec![start, end].into_iter()
+            } else {
+                vec![].into_iter()
+            };
+        }
+
+        let number_of_points = (total_distance / max_distance).ceil();
+        let interval = 1.0 / number_of_points;
+
+        let mut current_step = interval;
+        let mut points = if include_ends { vec![start] } else { vec![] };
+
+        while current_step < 1.0 {
+            let (lat2, lon2) = g.direct(start.y(), start.x(), azi1, total_distance * current_step);
+            let point = Point::new(lon2, lat2);
+            points.push(point);
+            current_step += interval;
+        }
+
+        if include_ends {
+            points.push(end);
+        }
+
+        points.into_iter()
     }
 }
 

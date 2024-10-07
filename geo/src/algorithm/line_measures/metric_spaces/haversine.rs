@@ -1,7 +1,8 @@
 use num_traits::FromPrimitive;
 
 use super::super::{Bearing, Destination, Distance, InterpolatePoint};
-use crate::{CoordFloat, Point};
+use crate::utils::normalize_longitude;
+use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
 
 /// A spherical model of the earth using the [haversine formula].
 ///
@@ -47,8 +48,14 @@ impl<F: CoordFloat + FromPrimitive> Bearing<F> for Haversine {
     fn bearing(origin: Point<F>, destination: Point<F>) -> F {
         let three_sixty =
             F::from(360.0).expect("Numeric type to be constructable from primitive 360");
-        (crate::algorithm::HaversineBearing::haversine_bearing(&origin, destination) + three_sixty)
-            % three_sixty
+        let (lng_a, lat_a) = (origin.x().to_radians(), origin.y().to_radians());
+        let (lng_b, lat_b) = (destination.x().to_radians(), destination.y().to_radians());
+        let delta_lng = lng_b - lng_a;
+        let s = lat_b.cos() * delta_lng.sin();
+        let c = lat_a.cos() * lat_b.sin() - lat_a.sin() * lat_b.cos() * delta_lng.cos();
+
+        let degrees = F::atan2(s, c).to_degrees();
+        (degrees + three_sixty) % three_sixty
     }
 }
 
@@ -82,7 +89,20 @@ impl<F: CoordFloat + FromPrimitive> Destination<F> for Haversine {
     ///
     /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
     fn destination(origin: Point<F>, bearing: F, distance: F) -> Point<F> {
-        crate::algorithm::HaversineDestination::haversine_destination(&origin, bearing, distance)
+        let center_lng = origin.x().to_radians();
+        let center_lat = origin.y().to_radians();
+        let bearing_rad = bearing.to_radians();
+
+        let rad = distance / F::from(MEAN_EARTH_RADIUS).unwrap();
+
+        let lat =
+            { center_lat.sin() * rad.cos() + center_lat.cos() * rad.sin() * bearing_rad.cos() }
+                .asin();
+        let lng = { bearing_rad.sin() * rad.sin() * center_lat.cos() }
+            .atan2(rad.cos() - center_lat.sin() * lat.sin())
+            + center_lng;
+
+        Point::new(normalize_longitude(lng.to_degrees()), lat.to_degrees())
     }
 }
 
@@ -119,7 +139,15 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Haversin
     ///
     /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
     fn distance(origin: Point<F>, destination: Point<F>) -> F {
-        crate::algorithm::HaversineDistance::haversine_distance(&origin, &destination)
+        let two = F::one() + F::one();
+        let theta1 = origin.y().to_radians();
+        let theta2 = destination.y().to_radians();
+        let delta_theta = (destination.y() - origin.y()).to_radians();
+        let delta_lambda = (destination.x() - origin.x()).to_radians();
+        let a = (delta_theta / two).sin().powi(2)
+            + theta1.cos() * theta2.cos() * (delta_lambda / two).sin().powi(2);
+        let c = two * a.sqrt().asin();
+        F::from(MEAN_EARTH_RADIUS).unwrap() * c
     }
 }
 
@@ -151,11 +179,8 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Haversine {
     ///
     /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
     fn point_at_ratio_between(start: Point<F>, end: Point<F>, ratio_from_start: F) -> Point<F> {
-        crate::algorithm::HaversineIntermediate::haversine_intermediate(
-            &start,
-            &end,
-            ratio_from_start,
-        )
+        let calculation = HaversineIntermediateFillCalculation::new(start, end);
+        calculation.point_at_ratio(ratio_from_start)
     }
 
     /// Interpolates `Point`s along a [great circle] between `start` and `end`.
@@ -174,13 +199,114 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Haversine {
         max_distance: F,
         include_ends: bool,
     ) -> impl Iterator<Item = Point<F>> {
-        crate::algorithm::HaversineIntermediate::haversine_intermediate_fill(
-            &start,
-            &end,
-            max_distance,
-            include_ends,
-        )
-        .into_iter()
+        let calculation = HaversineIntermediateFillCalculation::new(start, end);
+        let HaversineIntermediateFillCalculation { d, .. } = calculation;
+
+        let total_distance = d * F::from(MEAN_EARTH_RADIUS).unwrap();
+
+        if total_distance <= max_distance {
+            return if include_ends {
+                vec![start, end].into_iter()
+            } else {
+                vec![].into_iter()
+            };
+        }
+
+        let number_of_points = (total_distance / max_distance).ceil();
+        let interval = F::one() / number_of_points;
+
+        let mut current_step = interval;
+        let mut points = if include_ends { vec![start] } else { vec![] };
+
+        while current_step < F::one() {
+            let point = calculation.point_at_ratio(current_step);
+            points.push(point);
+            current_step = current_step + interval;
+        }
+
+        if include_ends {
+            points.push(end);
+        }
+
+        points.into_iter()
+    }
+}
+
+#[allow(clippy::many_single_char_names)]
+struct HaversineIntermediateFillCalculation<T> {
+    d: T,
+    n: T,
+    o: T,
+    p: T,
+    q: T,
+    r: T,
+    s: T,
+}
+
+impl<T: CoordFloat + FromPrimitive> HaversineIntermediateFillCalculation<T> {
+    #[allow(clippy::many_single_char_names)]
+    fn new(p1: Point<T>, p2: Point<T>) -> Self {
+        let one = T::one();
+        let two = one + one;
+
+        let lat1 = p1.y().to_radians();
+        let lon1 = p1.x().to_radians();
+        let lat2 = p2.y().to_radians();
+        let lon2 = p2.x().to_radians();
+
+        let (lat1_sin, lat1_cos) = lat1.sin_cos();
+        let (lat2_sin, lat2_cos) = lat2.sin_cos();
+        let (lon1_sin, lon1_cos) = lon1.sin_cos();
+        let (lon2_sin, lon2_cos) = lon2.sin_cos();
+
+        let m = lat1_cos * lat2_cos;
+
+        let n = lat1_cos * lon1_cos;
+        let o = lat2_cos * lon2_cos;
+        let p = lat1_cos * lon1_sin;
+        let q = lat2_cos * lon2_sin;
+
+        let k =
+            (((lat1 - lat2) / two).sin().powi(2) + m * ((lon1 - lon2) / two).sin().powi(2)).sqrt();
+
+        let d = two * k.asin();
+
+        Self {
+            d,
+            n,
+            o,
+            p,
+            q,
+            r: lat1_sin,
+            s: lat2_sin,
+        }
+    }
+
+    #[allow(clippy::many_single_char_names)]
+    fn point_at_ratio(&self, ratio_from_start: T) -> Point<T> {
+        let one = T::one();
+
+        let HaversineIntermediateFillCalculation {
+            d,
+            n,
+            o,
+            p,
+            q,
+            r,
+            s,
+        } = *self;
+
+        let a = ((one - ratio_from_start) * d).sin() / d.sin();
+        let b = (ratio_from_start * d).sin() / d.sin();
+
+        let x = a * n + b * o;
+        let y = a * p + b * q;
+        let z = a * r + b * s;
+
+        let lat = z.atan2(x.hypot(y));
+        let lon = y.atan2(x);
+
+        Point::new(lon.to_degrees(), lat.to_degrees())
     }
 }
 

@@ -1,7 +1,7 @@
 use num_traits::FromPrimitive;
 
-use crate::HaversineDistance;
 use crate::{CoordFloat, Line, LineString, MultiLineString};
+use crate::{Distance, Haversine};
 
 /// Determine the length of a geometry using the [haversine formula].
 ///
@@ -47,7 +47,7 @@ where
 {
     fn haversine_length(&self) -> T {
         let (start, end) = self.points();
-        start.haversine_distance(&end)
+        Haversine::distance(start, end)
     }
 }
 

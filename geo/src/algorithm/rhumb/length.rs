@@ -1,7 +1,6 @@
 use num_traits::FromPrimitive;
 
-use crate::RhumbDistance;
-use crate::{CoordFloat, Line, LineString, MultiLineString};
+use crate::{CoordFloat, Distance, Line, LineString, MultiLineString, Rhumb};
 
 /// Determine the length of a geometry assuming each segment is a [rhumb line].
 ///
@@ -47,7 +46,7 @@ where
 {
     fn rhumb_length(&self) -> T {
         let (start, end) = self.points();
-        start.rhumb_distance(&end)
+        Rhumb::distance(start, end)
     }
 }
 
