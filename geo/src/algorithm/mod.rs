@@ -178,6 +178,10 @@ pub use line_locate_point::LineLocatePoint;
 pub mod lines_iter;
 pub use lines_iter::LinesIter;
 
+pub mod line_measures;
+pub use line_measures::metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb};
+pub use line_measures::{Bearing, Destination, Distance, InterpolatePoint};
+
 /// Split a LineString into n segments
 pub mod linestring_segment;
 pub use linestring_segment::{LineStringSegmentize, LineStringSegmentizeHaversine};
@@ -284,10 +288,6 @@ pub use outlier_detection::OutlierDetection;
 /// Monotonic polygon subdivision
 pub mod monotone;
 pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
-
-pub mod line_measures;
-pub use line_measures::metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb};
-pub use line_measures::{Bearing, Destination, Distance, InterpolatePoint};
 
 /// Rhumb-line-related algorithms and utils
 pub mod rhumb;
