@@ -1,7 +1,12 @@
 use crate::{
-    CoordFloat, EuclideanLength, Line, LineInterpolatePoint, LineString, MultiLineString,
-    MultiPolygon, Point, Polygon, Rect, Triangle,
+    CoordFloat, Line, LineInterpolatePoint, LineString, MultiLineString, MultiPolygon, Point,
+    Polygon, Rect, Triangle,
 };
+
+// This is still used in the trait constraints - but Densify too will soon be replaced with a
+// generic version, at which point this implementation detail can be removed.
+#[allow(deprecated)]
+use crate::EuclideanLength;
 
 /// Return a new linear geometry containing both existing and new interpolated coordinates with
 /// a maximum distance of `max_distance` between them.
@@ -26,6 +31,7 @@ pub trait Densify<F: CoordFloat> {
 }
 
 // Helper for densification trait
+#[allow(deprecated)]
 fn densify_line<T: CoordFloat>(line: Line<T>, container: &mut Vec<Point<T>>, max_distance: T) {
     assert!(max_distance > T::zero());
     container.push(line.start_point());
@@ -44,6 +50,7 @@ fn densify_line<T: CoordFloat>(line: Line<T>, container: &mut Vec<Point<T>>, max
     }
 }
 
+#[allow(deprecated)]
 impl<T> Densify<T> for MultiPolygon<T>
 where
     T: CoordFloat,
@@ -61,6 +68,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> Densify<T> for Polygon<T>
 where
     T: CoordFloat,
@@ -80,6 +88,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> Densify<T> for MultiLineString<T>
 where
     T: CoordFloat,
@@ -97,6 +106,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> Densify<T> for LineString<T>
 where
     T: CoordFloat,
@@ -120,6 +130,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> Densify<T> for Line<T>
 where
     T: CoordFloat,
@@ -137,6 +148,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> Densify<T> for Triangle<T>
 where
     T: CoordFloat,
@@ -150,6 +162,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> Densify<T> for Rect<T>
 where
     T: CoordFloat,

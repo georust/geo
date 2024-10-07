@@ -1,7 +1,7 @@
 use num_traits::FromPrimitive;
 
 use crate::{CoordFloat, Line, LineString, MultiLineString};
-use crate::{Distance, Haversine};
+use crate::{Haversine, Length};
 
 #[deprecated(
     since = "0.29.0",
@@ -45,34 +45,32 @@ pub trait HaversineLength<T, RHS = Self> {
     fn haversine_length(&self) -> T;
 }
 
+#[allow(deprecated)]
 impl<T> HaversineLength<T> for Line<T>
 where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
-        let (start, end) = self.points();
-        Haversine::distance(start, end)
+        self.length::<Haversine>()
     }
 }
 
+#[allow(deprecated)]
 impl<T> HaversineLength<T> for LineString<T>
 where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
-        self.lines().fold(T::zero(), |total_length, line| {
-            total_length + line.haversine_length()
-        })
+        self.length::<Haversine>()
     }
 }
 
+#[allow(deprecated)]
 impl<T> HaversineLength<T> for MultiLineString<T>
 where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
-        self.0
-            .iter()
-            .fold(T::zero(), |total, line| total + line.haversine_length())
+        self.length::<Haversine>()
     }
 }

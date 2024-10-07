@@ -26,6 +26,7 @@ mod intermediate;
 pub use intermediate::RhumbIntermediate;
 
 mod length;
+#[allow(deprecated)]
 pub use length::RhumbLength;
 
 pub(crate) struct RhumbCalculations<T: CoordFloat + FromPrimitive> {

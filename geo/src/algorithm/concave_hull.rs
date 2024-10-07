@@ -1,7 +1,7 @@
 use crate::convex_hull::qhull;
 use crate::utils::partial_min;
 use crate::{
-    coord, Centroid, Coord, CoordNum, EuclideanDistance, EuclideanLength, GeoFloat, Line,
+    coord, Centroid, Coord, CoordNum, Euclidean, EuclideanDistance, GeoFloat, Length, Line,
     LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
 use rstar::{RTree, RTreeNum};
@@ -116,7 +116,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     let h = max_dist + max_dist;
-    let w = line.euclidean_length() + h;
+    let w = line.length::<Euclidean>() + h;
     let two = T::add(T::one(), T::one());
     let search_dist = T::div(T::sqrt(T::powi(w, 2) + T::powi(h, 2)), two);
     let centroid = line.centroid();
@@ -217,7 +217,7 @@ where
         line_tree.insert(line);
     }
     while let Some(line) = line_queue.pop_front() {
-        let edge_length = line.euclidean_length();
+        let edge_length = line.length::<Euclidean>();
         let dist = edge_length / concavity;
         let possible_closest_point = find_point_closest_to_line(
             &interior_points_tree,

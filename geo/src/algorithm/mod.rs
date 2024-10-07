@@ -84,6 +84,7 @@ pub use euclidean_distance::EuclideanDistance;
 
 /// Calculate the length of a planar line between two `Geometries`.
 pub mod euclidean_length;
+#[allow(deprecated)]
 pub use euclidean_length::EuclideanLength;
 
 /// Calculate the extreme coordinates and indices of a geometry.
@@ -119,6 +120,7 @@ pub use geodesic_intermediate::GeodesicIntermediate;
 
 /// Calculate the Geodesic length of a line.
 pub mod geodesic_length;
+#[allow(deprecated)]
 pub use geodesic_length::GeodesicLength;
 
 /// Calculate the Hausdorff distance between two geometries.
@@ -147,6 +149,7 @@ pub use haversine_intermediate::HaversineIntermediate;
 
 /// Calculate the Haversine length of a Line.
 pub mod haversine_length;
+#[allow(deprecated)]
 pub use haversine_length::HaversineLength;
 
 /// Calculate the closest point on a Great Circle arc geometry to a given point.
@@ -187,7 +190,7 @@ pub use lines_iter::LinesIter;
 
 pub mod line_measures;
 pub use line_measures::metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb};
-pub use line_measures::{Bearing, Destination, Distance, InterpolatePoint};
+pub use line_measures::{Bearing, Destination, Distance, InterpolatePoint, Length};
 
 /// Split a LineString into n segments
 pub mod linestring_segment;
@@ -298,6 +301,5 @@ pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
 
 /// Rhumb-line-related algorithms and utils
 pub mod rhumb;
-pub use rhumb::RhumbLength;
 #[allow(deprecated)]
-pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate};
+pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate, RhumbLength};

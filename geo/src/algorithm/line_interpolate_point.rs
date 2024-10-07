@@ -1,4 +1,8 @@
 use crate::coords_iter::CoordsIter;
+// This algorithm will be deprecated in the future, replaced by a unified implementation
+// rather than being Euclidean specific. Until the alternative is available, lets allow deprecations
+// so as not to change the method signature for existing users.
+#[allow(deprecated)]
 use crate::{CoordFloat, EuclideanLength, Line, LineString, Point};
 use std::ops::AddAssign;
 
@@ -66,6 +70,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> LineInterpolatePoint<T> for LineString<T>
 where
     T: CoordFloat + AddAssign + std::fmt::Debug,
