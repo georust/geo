@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main};
-use geo::algorithm::GeodesicDistance;
+use geo::{Distance, Geodesic};
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {
     c.bench_function("geodesic distance f64", |bencher| {
@@ -7,9 +7,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         let b = geo::Point::new(16.372477, 48.208810);
 
         bencher.iter(|| {
-            criterion::black_box(
-                criterion::black_box(&a).geodesic_distance(criterion::black_box(&b)),
-            );
+            criterion::black_box(criterion::black_box(Geodesic::distance(a, b)));
         });
     });
 }

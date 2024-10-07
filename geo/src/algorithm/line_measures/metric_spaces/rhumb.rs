@@ -1,7 +1,8 @@
 use num_traits::FromPrimitive;
 
 use super::super::{Bearing, Destination, Distance, InterpolatePoint};
-use crate::{CoordFloat, Point};
+use crate::rhumb::RhumbCalculations;
+use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
 
 /// Provides [rhumb line] (a.k.a. loxodrome) geometry operations. A rhumb line appears as a straight
 /// line on a Mercator projection map.
@@ -47,7 +48,10 @@ impl<F: CoordFloat + FromPrimitive> Bearing<F> for Rhumb {
     /// Bullock, R.: Great Circle Distances and Bearings Between Two Locations, 2007.
     /// (<https://dtcenter.org/met/users/docs/write_ups/gc_simple.pdf>)
     fn bearing(origin: Point<F>, destination: Point<F>) -> F {
-        crate::algorithm::RhumbBearing::rhumb_bearing(&origin, destination)
+        let three_sixty = F::from(360.0f64).unwrap();
+
+        let calculations = RhumbCalculations::new(&origin, &destination);
+        (calculations.theta().to_degrees() + three_sixty) % three_sixty
     }
 }
 
@@ -76,7 +80,12 @@ impl<F: CoordFloat + FromPrimitive> Destination<F> for Rhumb {
     ///
     /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
     fn destination(origin: Point<F>, bearing: F, distance: F) -> Point<F> {
-        crate::algorithm::RhumbDestination::rhumb_destination(&origin, bearing, distance)
+        let delta = distance / F::from(MEAN_EARTH_RADIUS).unwrap(); // angular distance in radians
+        let lambda1 = origin.x().to_radians();
+        let phi1 = origin.y().to_radians();
+        let theta = bearing.to_radians();
+
+        crate::algorithm::rhumb::calculate_destination(delta, lambda1, phi1, theta)
     }
 }
 
@@ -110,7 +119,8 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Rhumb {
     ///
     /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
     fn distance(origin: Point<F>, destination: Point<F>) -> F {
-        crate::algorithm::RhumbDistance::rhumb_distance(&origin, &destination)
+        let calculations = RhumbCalculations::new(&origin, &destination);
+        calculations.delta() * F::from(MEAN_EARTH_RADIUS).unwrap()
     }
 }
 
@@ -142,7 +152,8 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Rhumb {
     ///
     /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
     fn point_at_ratio_between(start: Point<F>, end: Point<F>, ratio_from_start: F) -> Point<F> {
-        crate::algorithm::RhumbIntermediate::rhumb_intermediate(&start, &end, ratio_from_start)
+        let calculations = RhumbCalculations::new(&start, &end);
+        calculations.intermediate(ratio_from_start)
     }
 
     /// Interpolates `Point`s along a [rhumb line] between `start` and `end`.
@@ -160,13 +171,11 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Rhumb {
         max_distance: F,
         include_ends: bool,
     ) -> impl Iterator<Item = Point<F>> {
-        crate::algorithm::RhumbIntermediate::rhumb_intermediate_fill(
-            &start,
-            &end,
-            max_distance,
-            include_ends,
-        )
-        .into_iter()
+        let max_delta = max_distance / F::from(MEAN_EARTH_RADIUS).unwrap();
+        let calculations = RhumbCalculations::new(&start, &end);
+        calculations
+            .intermediate_fill(max_delta, include_ends)
+            .into_iter()
     }
 }
 
