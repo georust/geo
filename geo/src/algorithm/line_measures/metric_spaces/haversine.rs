@@ -126,7 +126,7 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Haversin
 /// Interpolate Point(s) along a [great circle].
 ///
 /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
-impl InterpolatePoint<f64> for Haversine {
+impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Haversine {
     /// Returns a new Point along a [great circle] between two existing points.
     ///
     /// # Examples
@@ -150,11 +150,7 @@ impl InterpolatePoint<f64> for Haversine {
     /// ```
     ///
     /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
-    fn point_at_ratio_between(
-        start: Point<f64>,
-        end: Point<f64>,
-        ratio_from_start: f64,
-    ) -> Point<f64> {
+    fn point_at_ratio_between(start: Point<F>, end: Point<F>, ratio_from_start: F) -> Point<F> {
         crate::algorithm::HaversineIntermediate::haversine_intermediate(
             &start,
             &end,
@@ -173,11 +169,11 @@ impl InterpolatePoint<f64> for Haversine {
     /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
     /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
     fn points_along_line(
-        start: Point<f64>,
-        end: Point<f64>,
-        max_distance: f64,
+        start: Point<F>,
+        end: Point<F>,
+        max_distance: F,
         include_ends: bool,
-    ) -> impl Iterator<Item = Point<f64>> {
+    ) -> impl Iterator<Item = Point<F>> {
         crate::algorithm::HaversineIntermediate::haversine_intermediate_fill(
             &start,
             &end,

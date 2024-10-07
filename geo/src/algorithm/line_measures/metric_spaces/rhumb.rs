@@ -117,7 +117,7 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Rhumb {
 /// Interpolate Point(s) along a [rhumb line].
 ///
 /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
-impl InterpolatePoint<f64> for Rhumb {
+impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Rhumb {
     /// Returns a new Point along a [rhumb line] between two existing points.
     ///
     /// # Examples
@@ -141,11 +141,7 @@ impl InterpolatePoint<f64> for Rhumb {
     /// ```
     ///
     /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
-    fn point_at_ratio_between(
-        start: Point<f64>,
-        end: Point<f64>,
-        ratio_from_start: f64,
-    ) -> Point<f64> {
+    fn point_at_ratio_between(start: Point<F>, end: Point<F>, ratio_from_start: F) -> Point<F> {
         crate::algorithm::RhumbIntermediate::rhumb_intermediate(&start, &end, ratio_from_start)
     }
 
@@ -159,11 +155,11 @@ impl InterpolatePoint<f64> for Rhumb {
     ///
     /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
     fn points_along_line(
-        start: Point<f64>,
-        end: Point<f64>,
-        max_distance: f64,
+        start: Point<F>,
+        end: Point<F>,
+        max_distance: F,
         include_ends: bool,
-    ) -> impl Iterator<Item = Point<f64>> {
+    ) -> impl Iterator<Item = Point<F>> {
         crate::algorithm::RhumbIntermediate::rhumb_intermediate_fill(
             &start,
             &end,
