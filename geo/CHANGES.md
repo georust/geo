@@ -33,6 +33,9 @@
   shouldn't break for any common numeric types, but if you are using something
   exotic you'll need to manually implement `GeoNum` for your numeric type.
   * <https://github.com/georust/geo/pull/1134>
+* BREAKING: `RhumbBearing` now returns an `Option<Point<T>>` rather than a raw
+  `Point<T>` to reflect the fact that rhumb lines have a fixed length and are
+  undefined at and past the poles.
 * POSSIBLY BREAKING: `SimplifyVwPreserve` trait implementation moved from
   `geo_types::CoordNum` to `geo::GeoNum` as a consequence of introducing the
   `GeoNum::total_cmp`. This shouldn't break anything for common numeric

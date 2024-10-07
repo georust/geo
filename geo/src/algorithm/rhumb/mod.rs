@@ -35,12 +35,29 @@ struct RhumbCalculations<T: CoordFloat + FromPrimitive> {
 
 impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
     fn new(from: &Point<T>, to: &Point<T>) -> Self {
+        let ninety = T::from(90.0).unwrap();
         let pi = T::from(std::f64::consts::PI).unwrap();
         let two = T::one() + T::one();
         let four = two + two;
 
-        let phi1 = from.y().to_radians();
-        let phi2 = to.y().to_radians();
+        let phi1 = if from.y() < -ninety {
+            -ninety
+        } else if from.y() > ninety {
+            ninety
+        } else {
+            from.y()
+        };
+        let phi2 = if to.y() < -ninety {
+            -ninety
+        } else if to.y() > ninety {
+            ninety
+        } else {
+            to.y()
+        };
+        let from = Point::new(from.x(), phi1);
+        let to = Point::new(to.x(), phi2);
+        let phi1 = phi1.to_radians();
+        let phi2 = phi2.to_radians();
         let mut delta_lambda = (to.x() - from.x()).to_radians();
         // if delta_lambda is over 180° take shorter rhumb line across the anti-meridian:
         if delta_lambda > pi {
@@ -53,9 +70,9 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
         let delta_psi = ((phi2 / two + pi / four).tan() / (phi1 / two + pi / four).tan()).ln();
         let delta_phi = phi2 - phi1;
 
-        RhumbCalculations {
-            from: *from,
-            to: *to,
+        Self {
+            from: from,
+            to: to,
             phi1,
             delta_lambda,
             delta_phi,
@@ -82,7 +99,7 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
         let delta = fraction * self.delta();
         let theta = self.theta();
         let lambda1 = self.from.x().to_radians();
-        calculate_destination(delta, lambda1, self.phi1, theta)
+        calculate_destination(delta, lambda1, self.phi1, theta).unwrap()
     }
 
     fn intermediate_fill(&self, max_delta: T, include_ends: bool) -> Vec<Point<T>> {
@@ -112,7 +129,7 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
         while current_step < T::one() {
             let delta = total_delta * current_step;
             let point = calculate_destination(delta, lambda1, self.phi1, theta);
-            points.push(point);
+            points.push(point.unwrap());
             current_step = current_step + interval;
         }
 
@@ -129,22 +146,18 @@ fn calculate_destination<T: CoordFloat + FromPrimitive>(
     lambda1: T,
     phi1: T,
     theta: T,
-) -> Point<T> {
+) -> Option<Point<T>> {
     let pi = T::from(std::f64::consts::PI).unwrap();
     let two = T::one() + T::one();
     let four = two + two;
     let threshold = T::from(10.0e-12).unwrap();
 
     let delta_phi = delta * theta.cos();
-    let mut phi2 = phi1 + delta_phi;
+    let phi2 = phi1 + delta_phi;
 
     // check for some daft bugger going past the pole, normalise latitude if so
     if phi2.abs() > pi / two {
-        phi2 = if phi2 > T::zero() {
-            pi - phi2
-        } else {
-            -pi - phi2
-        };
+        return None;
     }
 
     let delta_psi = ((phi2 / two + pi / four).tan() / (phi1 / two + pi / four).tan()).ln();
@@ -158,8 +171,8 @@ fn calculate_destination<T: CoordFloat + FromPrimitive>(
     let delta_lambda = (delta * theta.sin()) / q;
     let lambda2 = lambda1 + delta_lambda;
 
-    point! {
+    Some(point! {
         x: normalize_longitude(lambda2.to_degrees()),
         y: phi2.to_degrees(),
-    }
+    })
 }

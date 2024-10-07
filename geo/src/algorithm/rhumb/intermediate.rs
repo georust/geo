@@ -8,6 +8,8 @@ use super::RhumbCalculations;
 pub trait RhumbIntermediate<T: CoordFloat> {
     /// Returns a new Point along a [rhumb line] between two existing points.
     ///
+    /// Start and end points are clamped to the range [-90.0, +90.0].
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -139,5 +141,18 @@ mod test {
         let i75 = p1.clone().rhumb_intermediate(&p2, 0.75);
         let route = p1.rhumb_intermediate_fill(&p2, max_dist, include_ends);
         assert_eq!(route, vec![p1, i25, i50, i75, p2]);
+    }
+
+    #[test]
+    fn clamp_on_both_ends() {
+        let p1 = Point::new(30.0, -100.0);
+        let p2 = Point::new(40.0, 100.0);
+        let max_dist = 12000000.0; // meters
+        let include_ends = true;
+        let i_start = Point::new(30.0, -90.0);
+        let i_half = Point::new(35.0, 0.0); // Vertical symmetry across equator
+        let i_end = Point::new(40.0, 90.0);
+        let route = p1.rhumb_intermediate_fill(&p2, max_dist, include_ends);
+        assert_eq!(route, vec![i_start, i_half, i_end]);
     }
 }
