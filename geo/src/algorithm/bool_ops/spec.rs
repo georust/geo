@@ -2,7 +2,7 @@ use geo_types::{MultiLineString, MultiPolygon};
 use std::fmt::Debug;
 
 use super::*;
-use crate::{sweep::LineOrPoint, GeoFloat, OpType};
+use crate::{sweep::LineOrPoint, GeoFloat};
 
 /// A trait to compute the final shape of a collection of non-intersecting edges
 /// by tracking the regions formed by those edges.
