@@ -6,9 +6,9 @@ use log::{debug, info};
 use wkt::ToWkt;
 
 use super::{input, Operation, Result};
-use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects, Within};
+use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects, Relate, Within};
 use geo::geometry::*;
-use geo::{GeoNum, Relate};
+use geo::GeoNum;
 
 const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/general");
 const VALIDATE_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/validate");
@@ -313,9 +313,8 @@ impl TestRunner {
                     }
                 }
                 Operation::BooleanOp { a, b, op, expected } => {
-                    let expected = match expected {
-                        Geometry::MultiPolygon(multi) => multi.clone(),
-                        Geometry::Polygon(poly) => MultiPolygon(vec![poly.clone()]),
+                    match expected {
+                        Geometry::MultiPolygon(_) | Geometry::Polygon(_) => {}
                         _ => {
                             info!("skipping unsupported Union expectation: {:?}", expected);
                             self.unsupported.push(test_case);
@@ -325,9 +324,11 @@ impl TestRunner {
 
                     let actual = match (a, b) {
                         (Geometry::Polygon(a), Geometry::Polygon(b)) => a.boolean_op(b, *op),
+                        (Geometry::Polygon(a), Geometry::MultiPolygon(b)) => a.boolean_op(b, *op),
                         (Geometry::MultiPolygon(a), Geometry::MultiPolygon(b)) => {
                             a.boolean_op(b, *op)
                         }
+                        (Geometry::MultiPolygon(a), Geometry::Polygon(b)) => a.boolean_op(b, *op),
                         _ => {
                             info!("skipping unsupported Union combination: {:?}, {:?}", a, b);
                             self.unsupported.push(test_case);
@@ -335,13 +336,86 @@ impl TestRunner {
                         }
                     };
 
-                    if actual.is_rotated_eq(&expected, |c1, c2| relative_eq!(c1, c2)) {
-                        debug!("Union success - expected: {:?}", expected.wkt_string());
+                    if actual.relate(expected).is_equal_topo() {
+                        debug!(
+                            "BooleanOp success (topo eq) - expected: {:?}",
+                            expected.wkt_string()
+                        );
                         self.successes.push(test_case);
                     } else {
                         let error_description = format!(
                             "op: {:?}, expected {:?}, actual: {:?}",
                             op,
+                            expected.wkt_string(),
+                            actual.wkt_string()
+                        );
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    }
+                }
+                Operation::ClipOp {
+                    a,
+                    b,
+                    invert,
+                    expected,
+                } => {
+                    match expected {
+                        Geometry::MultiLineString(_) | Geometry::LineString(_) => {}
+                        other => {
+                            info!("skipping unsupported ClipOp output: {:?}", other);
+                            self.unsupported.push(test_case);
+                            continue;
+                        }
+                    };
+
+                    let actual = match (a, b) {
+                        (Geometry::Polygon(polygon), Geometry::LineString(line_string))
+                        | (Geometry::LineString(line_string), Geometry::Polygon(polygon)) => {
+                            // REVIEW: add a line_string flavor
+                            polygon.clip(&MultiLineString(vec![line_string.clone()]), *invert)
+                        }
+                        (
+                            Geometry::Polygon(polygon),
+                            Geometry::MultiLineString(multi_line_string),
+                        )
+                        | (
+                            Geometry::MultiLineString(multi_line_string),
+                            Geometry::Polygon(polygon),
+                        ) => polygon.clip(multi_line_string, *invert),
+                        (
+                            Geometry::LineString(line_string),
+                            Geometry::MultiPolygon(multi_polygon),
+                        )
+                        | (
+                            Geometry::MultiPolygon(multi_polygon),
+                            Geometry::LineString(line_string),
+                        ) => {
+                            multi_polygon.clip(&MultiLineString(vec![line_string.clone()]), *invert)
+                        }
+                        (
+                            Geometry::MultiLineString(multi_line_string),
+                            Geometry::MultiPolygon(multi_polygon),
+                        )
+                        | (
+                            Geometry::MultiPolygon(multi_polygon),
+                            Geometry::MultiLineString(multi_line_string),
+                        ) => multi_polygon.clip(multi_line_string, *invert),
+
+                        // We should be filtering the input test cases in such a way that we don't get here.
+                        _ => todo!("Handle {:?} and {:?}", a, b),
+                    };
+
+                    if actual.relate(expected).is_equal_topo() {
+                        debug!(
+                            "ClipOp success (topo eq) - expected: {:?}",
+                            expected.wkt_string()
+                        );
+                        self.successes.push(test_case);
+                    } else {
+                        let error_description = format!(
+                            "expected {:?}, actual: {:?}",
                             expected.wkt_string(),
                             actual.wkt_string()
                         );
@@ -424,8 +498,10 @@ impl TestRunner {
 
                     match test.operation_input.into_operation(&case) {
                         Ok(operation) => {
-                            if matches!(operation, Operation::BooleanOp { .. })
-                                && run.precision_model.is_some()
+                            if matches!(
+                                operation,
+                                Operation::BooleanOp { .. } | Operation::ClipOp { .. }
+                            ) && run.precision_model.is_some()
                                 && &run.precision_model.as_ref().unwrap().ty != "FLOATING"
                             {
                                 cases.push(TestCase {

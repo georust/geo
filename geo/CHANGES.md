@@ -127,6 +127,8 @@
   * <https://github.com/georust/geo/pull/1148>
 * Point in `Triangle` and `Rect` performance improvemnets
   * <https://github.com/georust/geo/pull/1057>
+* Fix crashes in `BooleanOps`
+  * <https://github.com/georust/geo/pull/1234>
 
 ## 0.27.0
 

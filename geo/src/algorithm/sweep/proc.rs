@@ -298,43 +298,6 @@ impl<C: Cross + Clone> Sweep<C> {
     }
 
     #[inline]
-    pub(super) fn with_prev_active<F: FnOnce(&Segment<C>) -> R, R>(
-        &self,
-        c: &Crossing<C>,
-        f: F,
-    ) -> Option<R> {
-        debug_assert!(c.at_left);
-        // {
-        //     // Expensive debug block
-        //     debug!("with_prev_active: {c:?}");
-        //     debug!("previous:");
-        //     self.active_segments.previous_find(&c.segment, |aseg| {
-        //         debug!("\t{geom:?}", geom = aseg.0.geom());
-        //         false
-        //     });
-        //     debug!("next:");
-        //     self.active_segments.next_find(&c.segment, |aseg| {
-        //         debug!("\t{geom:?}", geom = aseg.0.geom());
-        //         false
-        //     });
-        // }
-        self.active_segments
-            .previous(&c.segment)
-            // .previous_find(&c.segment, |aseg| {
-            //     let is_ovl = aseg.0.geom().partial_cmp(&c.line) == Some(Ordering::Equal);
-            //     if is_ovl {
-            //         debug!(
-            //             "prev_active: found overlap: {l1:?} - {l2:?}",
-            //             l1 = aseg.0.geom(),
-            //             l2 = c.line,
-            //         )
-            //     }
-            //     !is_ovl
-            // })
-            .map(|aseg| aseg.with_segment(f))
-    }
-
-    #[inline]
     pub fn peek_point(&self) -> Option<SweepPoint<C::Scalar>> {
         self.events.peek().map(|e| e.point)
     }
