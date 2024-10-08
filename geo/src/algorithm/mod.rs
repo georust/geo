@@ -100,10 +100,12 @@ pub use geodesic_bearing::GeodesicBearing;
 
 /// Returns a new Point using a distance and bearing on a geodesic.
 pub mod geodesic_destination;
+#[allow(deprecated)]
 pub use geodesic_destination::GeodesicDestination;
 
 /// Calculate the Geodesic distance between two `Point`s.
 pub mod geodesic_distance;
+#[allow(deprecated)]
 pub use geodesic_distance::GeodesicDistance;
 
 /// Calculate the Geodesic area and perimeter of polygons.
@@ -112,6 +114,7 @@ pub use geodesic_area::GeodesicArea;
 
 /// Calculate a new `Point` lying on a Geodesic arc between two `Point`s.
 pub mod geodesic_intermediate;
+#[allow(deprecated)]
 pub use geodesic_intermediate::GeodesicIntermediate;
 
 /// Calculate the Geodesic length of a line.
@@ -124,18 +127,22 @@ pub use hausdorff_distance::HausdorffDistance;
 
 /// Calculate the bearing to another `Point`, in degrees.
 pub mod haversine_bearing;
+#[allow(deprecated)]
 pub use haversine_bearing::HaversineBearing;
 
 /// Calculate a destination `Point`, given a distance and a bearing.
 pub mod haversine_destination;
+#[allow(deprecated)]
 pub use haversine_destination::HaversineDestination;
 
 /// Calculate the Haversine distance between two `Geometries`.
 pub mod haversine_distance;
+#[allow(deprecated)]
 pub use haversine_distance::HaversineDistance;
 
 /// Calculate a new `Point` lying on a Great Circle arc between two `Point`s.
 pub mod haversine_intermediate;
+#[allow(deprecated)]
 pub use haversine_intermediate::HaversineIntermediate;
 
 /// Calculate the Haversine length of a Line.
@@ -291,4 +298,6 @@ pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
 
 /// Rhumb-line-related algorithms and utils
 pub mod rhumb;
-pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate, RhumbLength};
+pub use rhumb::RhumbLength;
+#[allow(deprecated)]
+pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate};

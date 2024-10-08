@@ -1,5 +1,4 @@
-use crate::GeodesicDistance;
-use crate::{Line, LineString, MultiLineString};
+use crate::{Distance, Geodesic, Line, LineString, MultiLineString};
 
 /// Determine the length of a geometry on an ellipsoidal model of the earth.
 ///
@@ -49,7 +48,7 @@ impl GeodesicLength<f64> for Line {
     /// The units of the returned value is meters.
     fn geodesic_length(&self) -> f64 {
         let (start, end) = self.points();
-        start.geodesic_distance(&end)
+        Geodesic::distance(start, end)
     }
 }
 

@@ -1,8 +1,10 @@
-use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
+use crate::{CoordFloat, Distance, Point, Rhumb};
 use num_traits::FromPrimitive;
 
-use super::RhumbCalculations;
-
+#[deprecated(
+    since = "0.29.0",
+    note = "Please use the `Rhumb::distance` method from the `Distance` trait instead"
+)]
 /// Determine the distance between two geometries along a [rhumb line].
 ///
 /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
@@ -28,6 +30,7 @@ pub trait RhumbDistance<T, Rhs = Self> {
     /// // London
     /// let p2 = point!(x: -0.1278f64, y: 51.5074f64);
     ///
+    /// # #[allow(deprecated)]
     /// let distance = p1.rhumb_distance(&p2);
     ///
     /// assert_eq!(
@@ -40,41 +43,38 @@ pub trait RhumbDistance<T, Rhs = Self> {
     fn rhumb_distance(&self, rhs: &Rhs) -> T;
 }
 
+#[allow(deprecated)]
 impl<T> RhumbDistance<T, Point<T>> for Point<T>
 where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_distance(&self, rhs: &Point<T>) -> T {
-        let calculations = RhumbCalculations::new(self, rhs);
-        calculations.delta() * T::from(MEAN_EARTH_RADIUS).unwrap()
+        Rhumb::distance(*self, *rhs)
     }
 }
 
 #[cfg(test)]
 mod test {
     use crate::Point;
+    #[allow(deprecated)]
     use crate::RhumbDistance;
 
     #[test]
     fn distance1_test() {
         let a = Point::new(0., 0.);
         let b = Point::new(1., 0.);
-        assert_relative_eq!(
-            a.rhumb_distance(&b),
-            111195.0802335329_f64,
-            epsilon = 1.0e-6
-        );
+        #[allow(deprecated)]
+        let distance = a.rhumb_distance(&b);
+        assert_relative_eq!(distance, 111195.0802335329_f64, epsilon = 1.0e-6);
     }
 
     #[test]
     fn distance2_test() {
         let a = Point::new(-72.1235, 42.3521);
         let b = Point::new(72.1260, 70.612);
-        assert_relative_eq!(
-            a.rhumb_distance(&b),
-            8903668.508603323_f64,
-            epsilon = 1.0e-6
-        );
+        #[allow(deprecated)]
+        let distance = a.rhumb_distance(&b);
+        assert_relative_eq!(distance, 8903668.508603323_f64, epsilon = 1.0e-6);
     }
 
     #[test]
@@ -82,11 +82,9 @@ mod test {
         // this input comes from issue #100
         let a = Point::new(-77.036585, 38.897448);
         let b = Point::new(-77.009080, 38.889825);
-        assert_relative_eq!(
-            a.rhumb_distance(&b),
-            2526.7031699343006_f64,
-            epsilon = 1.0e-6
-        );
+        #[allow(deprecated)]
+        let distance = a.rhumb_distance(&b);
+        assert_relative_eq!(distance, 2526.7031699343006_f64, epsilon = 1.0e-6);
     }
 
     #[test]
@@ -94,6 +92,8 @@ mod test {
         // this input comes from issue #100
         let a = Point::<f32>::new(-77.03658, 38.89745);
         let b = Point::<f32>::new(-77.00908, 38.889825);
-        assert_relative_eq!(a.rhumb_distance(&b), 2526.7273_f32, epsilon = 1.0e-6);
+        #[allow(deprecated)]
+        let distance = a.rhumb_distance(&b);
+        assert_relative_eq!(distance, 2526.7273_f32, epsilon = 1.0e-6);
     }
 }
