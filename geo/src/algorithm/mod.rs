@@ -10,6 +10,9 @@ pub use area::Area;
 pub mod bool_ops;
 pub use bool_ops::{BooleanOps, OpType};
 
+// TODO: export specific
+pub mod bool_ops_i_overlay;
+
 /// Calculate the bounding rectangle of a `Geometry`.
 pub mod bounding_rect;
 pub use bounding_rect::BoundingRect;
@@ -292,3 +295,4 @@ pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
 /// Rhumb-line-related algorithms and utils
 pub mod rhumb;
 pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate, RhumbLength};
+
