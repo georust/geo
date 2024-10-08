@@ -102,14 +102,14 @@ where
         }
 
         let pi = T::from(std::f64::consts::PI).unwrap();
-        let crs_ad = p1.haversine_bearing(*from).to_radians();
-        let crs_ab = p1.haversine_bearing(p2).to_radians();
+        let crs_ad = p1.haversine_bearing(*from).unwrap().to_radians();
+        let crs_ab = p1.haversine_bearing(p2).unwrap().to_radians();
         let crs_ba = if crs_ab > T::zero() {
             crs_ab - pi
         } else {
             crs_ab + pi
         };
-        let crs_bd = p2.haversine_bearing(*from).to_radians();
+        let crs_bd = p2.haversine_bearing(*from).unwrap().to_radians();
         let d_crs1 = crs_ad - crs_ab;
         let d_crs2 = crs_bd - crs_ba;
 

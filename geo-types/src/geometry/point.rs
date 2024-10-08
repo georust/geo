@@ -254,7 +254,46 @@ impl<T: CoordNum> Point<T> {
     pub fn set_lat(&mut self, lat: T) -> &mut Self {
         self.set_y(lat)
     }
+
+    fn check_x_in_limits(&self) -> Result<(), String> {
+        let x_in_64 =  self.x().to_f64().unwrap();
+        if x_in_64 < -180.0 || x_in_64 > 180.0 {
+            return Err("x is out of bounds: [ -180, 180 ]".into());
+        }
+        Ok(())
+    }
+
+    fn check_y_in_limits(&self) -> Result<(), String> {
+        let y_in_64 =  self.y().to_f64().unwrap();
+        if y_in_64 < -90.0 || y_in_64 > 90.0 {
+            return Err("y is out of bounds: [ -90, 90 ]".into());
+        }
+        Ok(())
+    }
+
+    /// Check whether latitude and longitude of a point are within the allowed values of
+    ///  - lat [ -90,90 ]
+    ///  - lon [-180, 180]
+    ///
+    ///
+    /// returns: Result<(), OutOfBoundsError>
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::geo_types::Point;
+    ///
+    /// let p0 = Point::new(0_f64, 45_f64);
+    /// p0.check_coordinate_limits().unwrap();
+    /// ```
+    pub fn check_coordinate_limits(&self) -> Result<(), String> {
+        self.check_y_in_limits()?;
+        self.check_x_in_limits()?;
+        Ok(())
+    }
 }
+
+
 
 impl<T: CoordNum> Point<T> {
     /// Returns the dot product of the two points:
@@ -778,5 +817,39 @@ mod test {
 
         let p_inf = Point::new(f64::INFINITY, 1.);
         assert!(p.relative_ne(&p_inf, 1e-2, 1e-2));
+    }
+
+    #[test]
+    fn test_x_out_of_bounds() {
+        let p0 = point!(x:180.1, y:0.5);
+        let err_x = p0.check_x_in_limits().unwrap_err();
+        let err_both = p0.check_coordinate_limits().unwrap_err();
+
+        assert_eq!(err_x, "x is out of bounds: [ -180, 180 ]".to_string());
+        assert_eq!(err_both, "x is out of bounds: [ -180, 180 ]".to_string());
+
+        let p0 = point!(x:-180.1, y:0.5);
+        let err_x = p0.check_x_in_limits().unwrap_err();
+        let err_both = p0.check_coordinate_limits().unwrap_err();
+
+        assert_eq!(err_x, "x is out of bounds: [ -180, 180 ]".to_string());
+        assert_eq!(err_both, "x is out of bounds: [ -180, 180 ]".to_string());
+    }
+
+    #[test]
+    fn test_y_out_of_bounds() {
+        let p0 = point!(x:40, y:95);
+        let err_y = p0.check_y_in_limits().unwrap_err();
+        let err_both = p0.check_coordinate_limits().unwrap_err();
+
+        assert_eq!(err_y, "y is out of bounds: [ -90, 90 ]".to_string());
+        assert_eq!(err_both, "y is out of bounds: [ -90, 90 ]".to_string());
+
+        let p0 = point!(x:0.1, y:-113.0);
+        let err_y = p0.check_y_in_limits().unwrap_err();
+        let err_both = p0.check_coordinate_limits().unwrap_err();
+
+        assert_eq!(err_y, "y is out of bounds: [ -90, 90 ]".to_string());
+        assert_eq!(err_both, "y is out of bounds: [ -90, 90 ]".to_string());
     }
 }
