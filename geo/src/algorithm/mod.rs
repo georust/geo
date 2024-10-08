@@ -6,16 +6,6 @@ pub use kernels::{Kernel, Orientation};
 pub mod area;
 pub use area::Area;
 
-/// Calculate the bearing to another `Point`, in degrees.
-#[deprecated(
-    since = "0.24.1",
-    note = "renamed to `haversine_bearing::HaversineBearing`"
-)]
-pub mod bearing;
-#[allow(deprecated)]
-#[deprecated(since = "0.24.1", note = "renamed to `HaversineBearing`")]
-pub use bearing::Bearing;
-
 /// Boolean Ops such as union, xor, difference;
 pub mod bool_ops;
 pub use bool_ops::{BooleanOps, OpType};
@@ -187,6 +177,10 @@ pub use line_locate_point::LineLocatePoint;
 /// Iterate over the lines in a geometry.
 pub mod lines_iter;
 pub use lines_iter::LinesIter;
+
+pub mod line_measures;
+pub use line_measures::metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb};
+pub use line_measures::{Bearing, Destination, Distance, InterpolatePoint};
 
 /// Split a LineString into n segments
 pub mod linestring_segment;

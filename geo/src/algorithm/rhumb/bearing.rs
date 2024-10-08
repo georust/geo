@@ -25,7 +25,6 @@ pub trait RhumbBearing<T: CoordFloat + FromPrimitive> {
     /// assert_relative_eq!(bearing, 45., epsilon = 1.0e-6);
     /// ```
     /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
-
     fn rhumb_bearing(&self, point: Point<T>) -> T;
 }
 

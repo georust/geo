@@ -7,7 +7,7 @@ documentation = "https://docs.rs/geo-types/"
 readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
 description = "Geospatial primitive data types"
-rust-version = "1.74"
+rust-version = "1.75"
 edition = "2021"
 
 [features]
