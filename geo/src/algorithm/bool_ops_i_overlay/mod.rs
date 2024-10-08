@@ -1,6 +1,14 @@
+use i_overlay::core::fill_rule::FillRule;
+use i_overlay::core::overlay::ShapeType;
+use i_overlay::core::overlay_rule::OverlayRule;
+use i_overlay::f64::overlay::F64Overlay;
+use i_overlay::i_float::f64_point::F64Point;
+
 use geo_types::{MultiLineString, MultiPolygon};
 
 use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
+
+// use i_overlay
 
 /// Boolean Operations on geometry.
 ///
@@ -58,15 +66,17 @@ pub enum OpType {
     Xor,
 }
 
-impl<T: GeoFloat> BooleanOps for Polygon<T> {
-    type Scalar = T;
+// TODO: make generic - make part of GeoNum conformance to specify the various F64Overlay, F64Point etc.
+impl BooleanOps for Polygon<f64> {
+    type Scalar = f64;
 
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        let spec = BoolOp::from(op);
-        let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
-        bop.add_polygon(self, 0);
-        bop.add_polygon(other, 1);
-        bop.sweep()
+        // let spec = BoolOp::from(op);
+        // let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
+        // bop.add_polygon(self, 0);
+        // bop.add_polygon(other, 1);
+        // bop.sweep()
+        todo!()
     }
 
     fn clip(
@@ -87,11 +97,42 @@ impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
     type Scalar = T;
 
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        let spec = BoolOp::from(op);
-        let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
-        bop.add_multi_polygon(self, 0);
-        bop.add_multi_polygon(other, 1);
-        bop.sweep()
+        // let spec = BoolOp::from(op);
+        // let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
+        // bop.add_multi_polygon(self, 0);
+        // bop.add_multi_polygon(other, 1);
+        // bop.sweep()
+        // TODO get subj from self
+        let subj = [
+            // Define the subject polygon (a square)
+            F64Point::new(-10.0, -10.0),
+            F64Point::new(-10.0, 10.0),
+            F64Point::new(10.0, 10.0),
+            F64Point::new(10.0, -10.0),
+        ]
+        .to_vec();
+
+        // TODO get clip from parm
+        let clip = [
+            // Define the clip polygon (a slightly shifted square)
+            F64Point::new(-5.0, -5.0),
+            F64Point::new(-5.0, 15.0),
+            F64Point::new(15.0, 15.0),
+            F64Point::new(15.0, -5.0),
+        ]
+        .to_vec();
+
+        // get overlay from GeoNum
+        let mut overlay = F64Overlay::new();
+        overlay.add_path(subj, ShapeType::Subject);
+        overlay.add_path(clip, ShapeType::Clip);
+
+        // REVIEW: fill rule?
+        let graph = overlay.into_graph(FillRule::NonZero);
+        // TODO get op from param
+        let shapes = graph.extract_shapes(OverlayRule::Union);
+        // TODO get MultiPolygon from shapes
+        MultiPolygon(vec![])
     }
 
     fn clip(
