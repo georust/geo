@@ -7,9 +7,7 @@ use i_overlay::i_shape::f64::shape::{F64Path, F64Shape, F64Shapes};
 
 use geo_types::{Coord, LineString, MultiLineString, MultiPolygon};
 
-use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
-
-// use i_overlay
+use crate::{GeoNum, Polygon};
 
 /// Boolean Operations on geometry.
 ///
@@ -156,16 +154,10 @@ impl BooleanOps for Polygon<f64> {
 
     fn clip(
         &self,
-        ls: &MultiLineString<Self::Scalar>,
-        invert: bool,
+        _ls: &MultiLineString<Self::Scalar>,
+        _invert: bool,
     ) -> MultiLineString<Self::Scalar> {
-        let spec = ClipOp::new(invert);
-        let mut bop = Proc::new(spec, self.coords_count() + ls.coords_count());
-        bop.add_polygon(self, 0);
-        ls.0.iter().enumerate().for_each(|(idx, l)| {
-            bop.add_line_string(l, idx + 1);
-        });
-        bop.sweep()
+        todo!()
     }
 }
 impl BooleanOps for MultiPolygon<f64> {
@@ -197,25 +189,9 @@ impl BooleanOps for MultiPolygon<f64> {
 
     fn clip(
         &self,
-        ls: &MultiLineString<Self::Scalar>,
-        invert: bool,
+        _ls: &MultiLineString<Self::Scalar>,
+        _invert: bool,
     ) -> MultiLineString<Self::Scalar> {
-        let spec = ClipOp::new(invert);
-        let mut bop = Proc::new(spec, self.coords_count() + ls.coords_count());
-        bop.add_multi_polygon(self, 0);
-        ls.0.iter().enumerate().for_each(|(idx, l)| {
-            bop.add_line_string(l, idx + 1);
-        });
-        bop.sweep()
+        todo!()
     }
 }
-
-mod op;
-use op::*;
-mod assembly;
-use assembly::*;
-mod spec;
-use spec::*;
-
-#[cfg(test)]
-mod tests;
