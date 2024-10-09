@@ -3,7 +3,6 @@ mod tests;
 
 use i_overlay::core::fill_rule::FillRule;
 use i_overlay::core::overlay::ShapeType;
-use i_overlay::core::overlay_graph::OverlayGraph;
 use i_overlay::core::overlay_rule::OverlayRule;
 use i_overlay::f32::graph::F32OverlayGraph;
 use i_overlay::f32::overlay::F32Overlay;
@@ -11,7 +10,6 @@ use i_overlay::f64::graph::F64OverlayGraph;
 use i_overlay::f64::overlay::F64Overlay;
 use i_overlay::i_float::f32_point::F32Point;
 use i_overlay::i_float::f64_point::F64Point;
-use i_overlay::i_shape::f64::shape::{F64Path, F64Shape, F64Shapes};
 
 use geo_types::{Coord, LineString, MultiLineString, MultiPolygon};
 
@@ -236,6 +234,17 @@ fn multi_polygon_from_shapes<T: BoolOpsNum>(
     MultiPolygon(shapes.into_iter().map(|s| polygon_from_shape(s)).collect())
 }
 
+impl From<OpType> for OverlayRule {
+    fn from(op: OpType) -> Self {
+        match op {
+            OpType::Intersection => OverlayRule::Intersect,
+            OpType::Union => OverlayRule::Union,
+            OpType::Difference => OverlayRule::Difference,
+            OpType::Xor => OverlayRule::Xor,
+        }
+    }
+}
+
 // TODO: make generic - make part of GeoNum conformance to specify the various F64Overlay, F64Point etc.
 impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
     type Scalar = T;
@@ -251,15 +260,8 @@ impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
             overlay.add_path(path, ShapeType::Clip);
         }
 
-        let overlay_rule = match op {
-            OpType::Intersection => OverlayRule::Intersect,
-            OpType::Union => OverlayRule::Union,
-            OpType::Difference => OverlayRule::Difference,
-            OpType::Xor => OverlayRule::Xor,
-        };
-
         let graph = overlay.into_graph(FillRule::EvenOdd);
-        let shapes = graph.extract_shapes(overlay_rule);
+        let shapes = graph.extract_shapes(op.into());
 
         multi_polygon_from_shapes(shapes)
     }
@@ -286,15 +288,8 @@ impl<T: BoolOpsNum> BooleanOps for MultiPolygon<T> {
             overlay.add_path(path, ShapeType::Clip);
         }
 
-        let overlay_rule = match op {
-            OpType::Intersection => OverlayRule::Intersect,
-            OpType::Union => OverlayRule::Union,
-            OpType::Difference => OverlayRule::Difference,
-            OpType::Xor => OverlayRule::Xor,
-        };
-
         let graph = overlay.into_graph(FillRule::EvenOdd);
-        let shapes = graph.extract_shapes(overlay_rule);
+        let shapes = graph.extract_shapes(op.into());
 
         multi_polygon_from_shapes(shapes)
     }
