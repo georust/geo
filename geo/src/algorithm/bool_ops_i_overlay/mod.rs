@@ -35,7 +35,7 @@ use crate::{GeoNum, Polygon};
 /// In particular, taking `union` with an empty geom should remove degeneracies
 /// and fix invalid polygons as long the interior-exterior requirement above is
 /// satisfied.
-pub trait BooleanOps: Sized {
+pub trait BooleanOps {
     type Scalar: GeoNum;
 
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar>;
