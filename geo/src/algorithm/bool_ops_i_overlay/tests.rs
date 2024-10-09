@@ -1,6 +1,6 @@
 mod gh_issues {
     use super::super::{BooleanOps, OpType};
-    use crate::{wkt, geometry::*};
+    use crate::{geometry::*, wkt};
 
     #[test]
     fn gh_issue_867() {
