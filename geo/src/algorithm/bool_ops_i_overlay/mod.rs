@@ -122,12 +122,6 @@ impl BooleanOps for Polygon<f64> {
     type Scalar = f64;
 
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        // let spec = BoolOp::from(op);
-        // let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
-        // bop.add_multi_polygon(self, 0);
-        // bop.add_multi_polygon(other, 1);
-        // bop.sweep()
-
         // get overlay from GeoNum
         let mut overlay = F64Overlay::new();
 
@@ -145,7 +139,6 @@ impl BooleanOps for Polygon<f64> {
             OpType::Xor => OverlayRule::Xor,
         };
 
-        // REVIEW: fill rule?
         let graph = overlay.into_graph(FillRule::EvenOdd);
         let shapes = graph.extract_shapes(overlay_rule);
 
@@ -180,7 +173,6 @@ impl BooleanOps for MultiPolygon<f64> {
             OpType::Xor => OverlayRule::Xor,
         };
 
-        // REVIEW: fill rule?
         let graph = overlay.into_graph(FillRule::EvenOdd);
         let shapes = graph.extract_shapes(overlay_rule);
 
