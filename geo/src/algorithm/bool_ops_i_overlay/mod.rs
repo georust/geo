@@ -1,7 +1,15 @@
+#[cfg(test)]
+mod tests;
+
 use i_overlay::core::fill_rule::FillRule;
 use i_overlay::core::overlay::ShapeType;
+use i_overlay::core::overlay_graph::OverlayGraph;
 use i_overlay::core::overlay_rule::OverlayRule;
+use i_overlay::f32::graph::F32OverlayGraph;
+use i_overlay::f32::overlay::F32Overlay;
+use i_overlay::f64::graph::F64OverlayGraph;
 use i_overlay::f64::overlay::F64Overlay;
+use i_overlay::i_float::f32_point::F32Point;
 use i_overlay::i_float::f64_point::F64Point;
 use i_overlay::i_shape::f64::shape::{F64Path, F64Shape, F64Shapes};
 
@@ -66,42 +74,151 @@ pub enum OpType {
 }
 
 trait Paths {
-    type PathType;
-    fn paths(&self) -> impl Iterator<Item = Self::PathType>;
+    type CoordType;
+    fn paths(&self) -> impl Iterator<Item = Vec<Self::CoordType>>;
 }
 
-impl Paths for Polygon<f64> {
-    type PathType = F64Path;
+trait BoolOpsNum: GeoNum {
+    type CoordType: BoolOpsCoord<Self>;
+    type OverlayType: BoolOpsOverlay<CoordType = Self::CoordType>;
+}
 
-    fn paths(&self) -> impl Iterator<Item = Self::PathType> {
+trait BoolOpsCoord<T> {
+    fn new(x: T, y: T) -> Self;
+    fn x(&self) -> T;
+    fn y(&self) -> T;
+}
+
+trait BoolOpsOverlay {
+    type CoordType;
+    type OverlayGraph: BoolOpsOverlayGraph<CoordType = Self::CoordType>;
+    fn new() -> Self;
+    fn add_path(&mut self, path: Vec<Self::CoordType>, shape_type: ShapeType);
+    fn into_graph(self, fill_rule: FillRule) -> Self::OverlayGraph;
+}
+
+trait BoolOpsOverlayGraph {
+    type CoordType;
+    fn extract_shapes(&self, overlay_rule: OverlayRule) -> Vec<Vec<Vec<Self::CoordType>>>;
+}
+
+impl BoolOpsNum for f64 {
+    type CoordType = F64Point;
+    type OverlayType = F64Overlay;
+}
+
+impl BoolOpsOverlay for F64Overlay {
+    type CoordType = F64Point;
+    type OverlayGraph = F64OverlayGraph;
+
+    fn new() -> Self {
+        Self::new()
+    }
+
+    fn add_path(&mut self, path: Vec<F64Point>, shape_type: ShapeType) {
+        self.add_path(path, shape_type)
+    }
+
+    fn into_graph(self, fill_rule: FillRule) -> Self::OverlayGraph {
+        self.into_graph(fill_rule)
+    }
+}
+
+impl BoolOpsOverlayGraph for F64OverlayGraph {
+    type CoordType = F64Point;
+
+    fn extract_shapes(&self, overlay_rule: OverlayRule) -> Vec<Vec<Vec<F64Point>>> {
+        self.extract_shapes(overlay_rule)
+    }
+}
+
+impl BoolOpsCoord<f64> for F64Point {
+    fn new(x: f64, y: f64) -> Self {
+        Self::new(x, y)
+    }
+
+    fn x(&self) -> f64 {
+        self.x
+    }
+
+    fn y(&self) -> f64 {
+        self.y
+    }
+}
+
+impl BoolOpsNum for f32 {
+    type CoordType = F32Point;
+    type OverlayType = F32Overlay;
+}
+
+impl BoolOpsOverlay for F32Overlay {
+    type CoordType = F32Point;
+    type OverlayGraph = F32OverlayGraph;
+
+    fn new() -> Self {
+        Self::new()
+    }
+
+    fn add_path(&mut self, path: Vec<Self::CoordType>, shape_type: ShapeType) {
+        self.add_path(path, shape_type)
+    }
+
+    fn into_graph(self, fill_rule: FillRule) -> Self::OverlayGraph {
+        self.into_graph(fill_rule)
+    }
+}
+
+impl BoolOpsOverlayGraph for F32OverlayGraph {
+    type CoordType = F32Point;
+
+    fn extract_shapes(&self, overlay_rule: OverlayRule) -> Vec<Vec<Vec<F32Point>>> {
+        self.extract_shapes(overlay_rule)
+    }
+}
+
+impl BoolOpsCoord<f32> for F32Point {
+    fn new(x: f32, y: f32) -> Self {
+        Self::new(x, y)
+    }
+    fn x(&self) -> f32 {
+        self.x
+    }
+    fn y(&self) -> f32 {
+        self.y
+    }
+}
+// TODO impl for other types we support in geonum. Maybe just implement on GeoNum?
+
+impl<T: BoolOpsNum> Paths for Polygon<T> {
+    type CoordType = T::CoordType;
+    fn paths(&self) -> impl Iterator<Item = Vec<Self::CoordType>> {
         std::iter::once(self.exterior())
             .chain(self.interiors().into_iter())
             .map(|r| {
                 r.into_iter()
-                    .map(|c| F64Point::new(c.x, c.y))
+                    .map(|c| T::CoordType::new(c.x, c.y))
                     .collect::<Vec<_>>()
             })
     }
 }
 
-impl Paths for MultiPolygon<f64> {
-    type PathType = F64Path;
-
-    fn paths(&self) -> impl Iterator<Item = Self::PathType> {
+impl<T: BoolOpsNum> Paths for MultiPolygon<T> {
+    type CoordType = T::CoordType;
+    fn paths(&self) -> impl Iterator<Item = Vec<Self::CoordType>> {
         self.0.iter().map(|p| p.paths()).flatten()
     }
 }
 
-fn line_string_from_path(path: F64Path) -> LineString<f64> {
+fn line_string_from_path<T: BoolOpsNum>(path: Vec<T::CoordType>) -> LineString<T> {
     let coords = path
         .into_iter()
-        .map(|p| Coord { x: p.x, y: p.y })
+        .map(|p| Coord { x: p.x(), y: p.y() })
         .collect::<Vec<_>>();
 
     LineString(coords)
 }
 
-fn polygon_from_shape(shape: F64Shape) -> Polygon<f64> {
+fn polygon_from_shape<T: BoolOpsNum>(shape: Vec<Vec<T::CoordType>>) -> Polygon<T> {
     let rings: Vec<_> = shape
         .into_iter()
         .map(|p| line_string_from_path(p))
@@ -113,17 +230,19 @@ fn polygon_from_shape(shape: F64Shape) -> Polygon<f64> {
     Polygon::new(exterior, interiors)
 }
 
-fn multi_polygon_from_shapes(shapes: F64Shapes) -> MultiPolygon<f64> {
+fn multi_polygon_from_shapes<T: BoolOpsNum>(
+    shapes: Vec<Vec<Vec<T::CoordType>>>,
+) -> MultiPolygon<T> {
     MultiPolygon(shapes.into_iter().map(|s| polygon_from_shape(s)).collect())
 }
 
 // TODO: make generic - make part of GeoNum conformance to specify the various F64Overlay, F64Point etc.
-impl BooleanOps for Polygon<f64> {
-    type Scalar = f64;
+impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
+    type Scalar = T;
 
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
         // get overlay from GeoNum
-        let mut overlay = F64Overlay::new();
+        let mut overlay = T::OverlayType::new();
 
         for path in self.paths() {
             overlay.add_path(path, ShapeType::Subject);
@@ -153,11 +272,12 @@ impl BooleanOps for Polygon<f64> {
         todo!()
     }
 }
-impl BooleanOps for MultiPolygon<f64> {
-    type Scalar = f64;
+
+impl<T: BoolOpsNum> BooleanOps for MultiPolygon<T> {
+    type Scalar = T;
 
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        let mut overlay = F64Overlay::new();
+        let mut overlay = T::OverlayType::new();
 
         for path in self.paths() {
             overlay.add_path(path, ShapeType::Subject);
