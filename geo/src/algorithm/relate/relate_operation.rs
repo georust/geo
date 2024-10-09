@@ -10,7 +10,7 @@ use crate::CoordinatePosition;
 use crate::{Coord, GeoFloat, GeometryCow};
 
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Computes an [`IntersectionMatrix`] describing the topological relationship between two
 /// Geometries.
@@ -29,7 +29,7 @@ where
     graph_b: GeometryGraph<'a, F>,
     nodes: NodeMap<F, RelateNodeFactory>,
     line_intersector: RobustLineIntersector,
-    isolated_edges: Vec<Rc<RefCell<Edge<F>>>>,
+    isolated_edges: Vec<Edge<F>>,
 }
 
 #[derive(PartialEq)]
@@ -58,7 +58,7 @@ where
         }
     }
 
-    pub(crate) fn compute_intersection_matrix(&mut self) -> IntersectionMatrix {
+    pub(crate) fn compute_intersection_matrix(&'a mut self) -> IntersectionMatrix {
         let mut intersection_matrix = IntersectionMatrix::empty_disjoint();
 
         use crate::BoundingRect;
@@ -85,27 +85,48 @@ where
             .compute_self_nodes(Box::new(self.line_intersector.clone()));
 
         // compute intersections between edges of the two input geometries
-        let segment_intersector = self
-            .graph_a
-            .compute_edge_intersections(&self.graph_b, Box::new(self.line_intersector.clone()));
+        // let segment_intersector = self
+        //     .graph_a
+        //     .compute_edge_intersections(&mut self.graph_b, Box::new(self.line_intersector.clone()));
+
+        // this is a copy of the above functionality to satisfy rust borrowing rules.
+        // from here [...
+        let mut segment_intersector =
+            SegmentIntersector::new(Box::new(self.line_intersector.clone()), false);
+        segment_intersector.set_boundary_nodes(
+            self.graph_a.boundary_nodes().cloned().collect(),
+            self.graph_b.boundary_nodes().cloned().collect(),
+        );
+
+        use crate::relate::geomgraph::index::{EdgeSetIntersector, RStarEdgeSetIntersector};
+
+        let edge_set_intersector = RStarEdgeSetIntersector;
+        edge_set_intersector.compute_intersections_between_sets(
+            &mut self.graph_a,
+            &mut self.graph_b,
+            &mut segment_intersector,
+        );
+        // to here ..]
 
         self.compute_intersection_nodes(0);
         self.compute_intersection_nodes(1);
+
         // Copy the labelling for the nodes in the parent Geometries.  These override any labels
         // determined by intersections between the geometries.
         self.copy_nodes_and_labels(0);
         self.copy_nodes_and_labels(1);
         // complete the labelling for any nodes which only have a label for a single geometry
         self.label_isolated_nodes();
+
         // If a proper intersection was found, we can set a lower bound on the IM.
         self.compute_proper_intersection_im(&segment_intersector, &mut intersection_matrix);
         // Now process improper intersections
         // (eg where one or other of the geometries has a vertex at the intersection point)
         // We need to compute the edge graph at all nodes to determine the IM.
         let edge_end_builder = EdgeEndBuilder::new();
-        let edge_ends_a: Vec<_> = edge_end_builder.compute_ends_for_edges(self.graph_a.edges());
+        let edge_ends_a: Vec<_> = edge_end_builder.compute_ends_for_edges(self.graph_a.edges_mut());
         self.insert_edge_ends(edge_ends_a);
-        let edge_ends_b: Vec<_> = edge_end_builder.compute_ends_for_edges(self.graph_b.edges());
+        let edge_ends_b: Vec<_> = edge_end_builder.compute_ends_for_edges(self.graph_b.edges_mut());
         self.insert_edge_ends(edge_ends_b);
 
         let mut nodes = NodeMap::new();
@@ -268,8 +289,6 @@ where
         };
 
         for edge in graph.edges() {
-            let edge = edge.borrow();
-
             let edge_position = edge.label().on_position(geom_index);
             for edge_intersection in edge.edge_intersections() {
                 let (new_node, _edges) = self
@@ -294,8 +313,7 @@ where
             "before updated_intersection_matrix(isolated_edges): {:?}",
             intersection_matrix
         );
-        for isolated_edge in &self.isolated_edges {
-            let edge = isolated_edge.borrow();
+        for edge in &self.isolated_edges {
             Edge::<F>::update_intersection_matrix(edge.label(), intersection_matrix);
             debug!(
                 "after isolated_edge update_intersection_matrix: {:?}, (isolated_edge: {:?}, label: {:?})",
@@ -319,15 +337,14 @@ where
     /// not be isolated).
     fn label_isolated_edges(&mut self, this_index: usize, target_index: usize) {
         let (this_graph, target_graph) = if this_index == 0 {
-            (&self.graph_a, &self.graph_b)
+            (&mut self.graph_a, &self.graph_b)
         } else {
-            (&self.graph_b, &self.graph_a)
+            (&mut self.graph_b, &self.graph_a)
         };
 
-        for edge in this_graph.edges() {
-            let mut mut_edge = edge.borrow_mut();
-            if mut_edge.is_isolated() {
-                Self::label_isolated_edge(&mut mut_edge, target_index, target_graph.geometry());
+        for edge in this_graph.edges_mut() {
+            if edge.is_isolated() {
+                Self::label_isolated_edge(edge, target_index, target_graph.geometry());
                 self.isolated_edges.push(edge.clone());
             }
         }

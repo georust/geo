@@ -10,8 +10,9 @@ use crate::HasDimensions;
 use crate::{Coord, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
 
 use rstar::{RTree, RTreeNum};
-use std::cell::RefCell;
-use std::rc::Rc;
+// use std::cell::RefCell;
+// use std::rc::Rc;
+use std::sync::Arc;
 
 /// The computation of the [`IntersectionMatrix`](crate::algorithm::relate::IntersectionMatrix) relies on the use of a
 /// structure called a "topology graph". The topology graph contains nodes (CoordNode) and
@@ -35,7 +36,7 @@ where
 {
     arg_index: usize,
     parent_geometry: GeometryCow<'a, F>,
-    tree: Option<Rc<RTree<Segment<F>>>>,
+    tree: Option<RTree<Segment<F>>>,
     use_boundary_determination_rule: bool,
     has_computed_self_nodes: bool,
     planar_graph: PlanarGraph<F>,
@@ -49,23 +50,34 @@ impl<F> GeometryGraph<'_, F>
 where
     F: GeoFloat,
 {
-    pub(crate) fn set_tree(&mut self, tree: Rc<RTree<Segment<F>>>) {
-        self.tree = Some(tree);
+    pub(crate) fn get_tree(&mut self) -> &RTree<Segment<F>> {
+        self.update_tree();
+        self.tree.as_ref().unwrap()
     }
 
-    pub(crate) fn get_or_build_tree(&self) -> Rc<RTree<Segment<F>>> {
-        self.tree
-            .clone()
-            .unwrap_or_else(|| Rc::new(self.build_tree()))
+    pub(crate) fn tree_and_edges_mut(&mut self) -> (&RTree<Segment<F>>, &mut [Edge<F>]) {
+        self.update_tree();
+        let edges = self.planar_graph.edges_mut();
+        (self.tree.as_ref().unwrap(), edges)
     }
 
-    pub(crate) fn build_tree(&self) -> RTree<Segment<F>> {
+    pub(crate) fn update_tree(&mut self) {
+        if self.tree.is_none() {
+            self.tree = Some(self.build_tree());
+        }
+    }
+
+    fn invalidate_tree(&mut self) {
+        self.tree = None;
+    }
+
+    fn build_tree(&self) -> RTree<Segment<F>> {
         let segments: Vec<Segment<F>> = self
             .edges()
             .iter()
             .enumerate()
             .flat_map(|(edge_idx, edge)| {
-                let edge = RefCell::borrow(edge);
+                // let edge = RefCell::borrow(edge);
                 let start_of_final_segment: usize = edge.coords().len() - 1;
                 (0..start_of_final_segment).map(move |segment_idx| {
                     let p1 = edge.coords()[segment_idx];
@@ -92,6 +104,7 @@ where
             self.has_computed_self_nodes,
             "should only be called after computing self nodes"
         );
+        debug_assert!(self.tree.is_some());
         let planar_graph = self
             .planar_graph
             .clone_for_arg_index(self.arg_index, arg_index);
@@ -105,11 +118,16 @@ where
         }
     }
 
-    pub(crate) fn edges(&self) -> &[Rc<RefCell<Edge<F>>>] {
+    pub(crate) fn edges(&self) -> &[Edge<F>] {
         self.planar_graph.edges()
     }
 
+    pub(crate) fn edges_mut(&mut self) -> &mut [Edge<F>] {
+        self.planar_graph.edges_mut()
+    }
+
     pub(crate) fn insert_edge(&mut self, edge: Edge<F>) {
+        self.invalidate_tree();
         self.planar_graph.insert_edge(edge)
     }
 
@@ -159,7 +177,7 @@ where
         }
     }
 
-    fn boundary_nodes(&self) -> impl Iterator<Item = &CoordNode<F>> {
+    pub(crate) fn boundary_nodes(&self) -> impl Iterator<Item = &CoordNode<F>> {
         self.planar_graph.boundary_nodes(self.arg_index)
     }
 
@@ -352,8 +370,8 @@ where
     }
 
     pub(crate) fn compute_edge_intersections(
-        &self,
-        other: &GeometryGraph<F>,
+        &'a mut self,
+        other: &mut GeometryGraph<'a, F>,
         line_intersector: Box<dyn LineIntersector<F>>,
     ) -> SegmentIntersector<F> {
         let mut segment_intersector = SegmentIntersector::new(line_intersector, false);
@@ -404,7 +422,6 @@ where
         let positions_and_intersections: Vec<(CoordPos, Vec<Coord<F>>)> = self
             .edges()
             .iter()
-            .map(|cell| cell.borrow())
             .map(|edge| {
                 let position = edge
                     .label()
