@@ -6,7 +6,7 @@ use log::{debug, info};
 use wkt::ToWkt;
 
 use super::{input, Operation, Result};
-use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects, Within, Relate};
+use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects, Relate, Within};
 use geo::geometry::*;
 use geo::GeoNum;
 
@@ -335,13 +335,7 @@ impl TestRunner {
                         }
                     };
 
-                    if actual.is_rotated_eq(&expected, |c1, c2| relative_eq!(c1, c2)) {
-                        debug!(
-                            "BooleanOp success (rotated_eq) - expected: {:?}",
-                            expected.wkt_string()
-                        );
-                        self.successes.push(test_case);
-                    } else if actual.relate(&expected).is_equal_topo() {
+                    if actual.relate(&expected).is_equal_topo() {
                         debug!(
                             "BooleanOp success (topo eq) - expected: {:?}",
                             expected.wkt_string()

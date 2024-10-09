@@ -703,61 +703,61 @@ pub(crate) mod dimension_matcher {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Coord, Geometry, LineString, Point, Polygon};
-    use geo_types::{coord, line_string, MultiPoint};
-    use wkt::TryFromWkt;
-
-    use crate::Relate;
-
     use super::*;
-
-    fn subject() -> IntersectionMatrix {
-        // Topologically, this is a nonsense IM
-        IntersectionMatrix::from_str("F00111222").unwrap()
-    }
+    use crate::algorithm::Relate;
+    use crate::geometry::*;
+    use crate::wkt;
 
     #[test]
     fn test_crosses() {
         // these polygons look like they cross, but two polygons cannot cross
-        let a: Geometry<_> =
-            crate::wkt! { POLYGON ((3.4 15.7, 2.2 11.3, 5.8 11.4, 3.4 15.7)) }.into();
-        let b: Geometry<_> =
-            crate::wkt! { POLYGON ((5.2 13.1, 4.5 10.9, 6.3 11.1, 5.2 13.1)) }.into();
+        let a: Geometry<_> = wkt! { POLYGON ((3.4 15.7, 2.2 11.3, 5.8 11.4, 3.4 15.7)) }.into();
+        let b: Geometry<_> = wkt! { POLYGON ((5.2 13.1, 4.5 10.9, 6.3 11.1, 5.2 13.1)) }.into();
         // this linestring is a single leg of b: it can cross polygon a
-        let c: Geometry<_> = crate::wkt! { LINESTRING (5.2 13.1, 4.5 10.9) }.into();
+        let c: Geometry<_> = wkt! { LINESTRING (5.2 13.1, 4.5 10.9) }.into();
         let relate_ab = a.relate(&b);
         let relate_ca = c.relate(&a);
         assert!(!relate_ab.is_crosses());
         assert!(relate_ca.is_crosses());
     }
+
     #[test]
     fn test_crosses_2() {
         // two lines can cross
         // same geometry as test_crosses: single legs of polygons a and b
-        let a: Geometry<_> = crate::wkt! { LINESTRING (5.2 13.1, 4.5 10.9) }.into();
-        let b: Geometry<_> = crate::wkt! { LINESTRING (3.4 15.7, 2.2 11.3, 5.8 11.4) }.into();
+        let a: Geometry<_> = wkt! { LINESTRING (5.2 13.1, 4.5 10.9) }.into();
+        let b: Geometry<_> = wkt! { LINESTRING (3.4 15.7, 2.2 11.3, 5.8 11.4) }.into();
         let relate_ab = a.relate(&b);
         assert!(relate_ab.is_crosses());
     }
 
-    #[test]
-    fn matches_exactly() {
-        assert!(subject().matches("F00111222").unwrap());
-    }
+    mod test_matches {
+        use super::*;
 
-    #[test]
-    fn doesnt_match() {
-        assert!(!subject().matches("222222222").unwrap());
-    }
+        fn subject() -> IntersectionMatrix {
+            // Topologically, this is a nonsense IM
+            IntersectionMatrix::from_str("F00111222").unwrap()
+        }
 
-    #[test]
-    fn matches_truthy() {
-        assert!(subject().matches("FTTTTTTTT").unwrap());
-    }
+        #[test]
+        fn matches_exactly() {
+            assert!(subject().matches("F00111222").unwrap());
+        }
 
-    #[test]
-    fn matches_wildcard() {
-        assert!(subject().matches("F0011122*").unwrap());
+        #[test]
+        fn doesnt_match() {
+            assert!(!subject().matches("222222222").unwrap());
+        }
+
+        #[test]
+        fn matches_truthy() {
+            assert!(subject().matches("FTTTTTTTT").unwrap());
+        }
+
+        #[test]
+        fn matches_wildcard() {
+            assert!(subject().matches("F0011122*").unwrap());
+        }
     }
 
     #[test]
