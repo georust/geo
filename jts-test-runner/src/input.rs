@@ -1,4 +1,4 @@
-use geo::bool_ops::OpType as BoolOp;
+use geo::bool_ops_i_overlay::OpType as BoolOp;
 use geo::relate::IntersectionMatrix;
 use geo::{Geometry, Point};
 use serde::{Deserialize, Deserializer};
