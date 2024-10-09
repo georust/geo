@@ -146,7 +146,7 @@ impl BooleanOps for Polygon<f64> {
         };
 
         // REVIEW: fill rule?
-        let graph = overlay.into_graph(FillRule::NonZero);
+        let graph = overlay.into_graph(FillRule::EvenOdd);
         let shapes = graph.extract_shapes(overlay_rule);
 
         multi_polygon_from_shapes(shapes)
@@ -181,7 +181,7 @@ impl BooleanOps for MultiPolygon<f64> {
         };
 
         // REVIEW: fill rule?
-        let graph = overlay.into_graph(FillRule::NonZero);
+        let graph = overlay.into_graph(FillRule::EvenOdd);
         let shapes = graph.extract_shapes(overlay_rule);
 
         multi_polygon_from_shapes(shapes)
