@@ -2,7 +2,7 @@ use crate::geometry::{Coord, LineString, Polygon};
 use crate::kernels::*;
 use crate::GeoNum;
 
-/// Returns the convex hull of a Polygon. The hull is always oriented counter-clockwise.
+/// Returns the convex hull of a geometry. The hull is always oriented counter-clockwise.
 ///
 /// This implementation uses the QuickHull algorithm,
 /// based on [Barber, C. Bradford; Dobkin, David P.; Huhdanpaa, Hannu (1 December 1996)](https://dx.doi.org/10.1145%2F235815.235821)
@@ -37,6 +37,7 @@ use crate::GeoNum;
 ///
 /// let res = poly.convex_hull();
 /// assert_eq!(res.exterior(), &correct_hull);
+/// assert_eq!(res.interiors(), &[]);
 /// ```
 pub trait ConvexHull<'a, T> {
     type Scalar: GeoNum;

@@ -72,14 +72,15 @@ where
     }
     let dx = end.x - start.x;
     let dy = end.y - start.y;
-    let r = ((point.x - start.x) * dx + (point.y - start.y) * dy) / (dx.powi(2) + dy.powi(2));
+    let d_squared = dx * dx + dy * dy;
+    let r = ((point.x - start.x) * dx + (point.y - start.y) * dy) / d_squared;
     if r <= T::zero() {
         return line_euclidean_length(Line::new(point, start));
     }
     if r >= T::one() {
         return line_euclidean_length(Line::new(point, end));
     }
-    let s = ((start.y - point.y) * dx - (start.x - point.x) * dy) / (dx * dx + dy * dy);
+    let s = ((start.y - point.y) * dx - (start.x - point.x) * dy) / d_squared;
     s.abs() * dx.hypot(dy)
 }
 

@@ -412,6 +412,7 @@ fn iter_line_pairs<T: SpadeTriangulationFloat>(
         lines
             .iter()
             .enumerate()
+            .skip(idx0 + 1)
             .filter(move |(idx1, line1)| *idx1 != idx0 && line0 != *line1)
             .map(move |(idx1, line1)| [(idx0, line0), (idx1, line1)])
     })
@@ -460,7 +461,7 @@ fn remove_lines_by_index<T: SpadeTriangulationFloat>(
 /// split lines based on intersection kind:
 ///
 /// - intersection point: create 4 new lines from the existing line's endpoints to the intersection
-/// point
+///   point
 /// - collinear: create 3 new lines (before overlap, overlap, after overlap)
 fn split_lines<T: SpadeTriangulationFloat>(
     [l0, l1]: [Line<T>; 2],

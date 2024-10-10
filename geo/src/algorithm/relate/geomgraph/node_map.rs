@@ -6,6 +6,7 @@ use std::fmt;
 use std::marker::PhantomData;
 
 /// A map of nodes, indexed by the coordinate of the node
+#[derive(Clone, PartialEq)]
 pub(crate) struct NodeMap<F, NF>
 where
     F: GeoFloat,
@@ -16,7 +17,7 @@ where
 }
 
 /// Creates the node stored in `NodeMap`
-pub(crate) trait NodeFactory<F: GeoFloat> {
+pub(crate) trait NodeFactory<F: GeoFloat>: PartialEq {
     type Node;
     fn create_node(coordinate: Coord<F>) -> Self::Node;
 }

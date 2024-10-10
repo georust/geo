@@ -241,8 +241,7 @@ where
     // to the point p, all divided by the number of items in p's kNN set, squared.
     knn_dists
         .iter()
-        .enumerate()
-        .map(|(_, neighbours)| {
+        .map(|neighbours| {
             // for each point's neighbour set, calculate kth distance
             let kth_dist = neighbours
                 .iter()

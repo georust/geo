@@ -6,16 +6,6 @@ pub use kernels::{Kernel, Orientation};
 pub mod area;
 pub use area::Area;
 
-/// Calculate the bearing to another `Point`, in degrees.
-#[deprecated(
-    since = "0.24.1",
-    note = "renamed to `haversine_bearing::HaversineBearing`"
-)]
-pub mod bearing;
-#[allow(deprecated)]
-#[deprecated(since = "0.24.1", note = "renamed to `HaversineBearing`")]
-pub use bearing::Bearing;
-
 /// Boolean Ops such as union, xor, difference;
 pub mod bool_ops;
 pub use bool_ops::{BooleanOps, OpType};
@@ -188,6 +178,10 @@ pub use line_locate_point::LineLocatePoint;
 pub mod lines_iter;
 pub use lines_iter::LinesIter;
 
+pub mod line_measures;
+pub use line_measures::metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb};
+pub use line_measures::{Bearing, Destination, Distance, InterpolatePoint};
+
 /// Split a LineString into n segments
 pub mod linestring_segment;
 pub use linestring_segment::{LineStringSegmentize, LineStringSegmentizeHaversine};
@@ -235,6 +229,11 @@ pub use simplify::{Simplify, SimplifyIdx};
 /// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
 pub mod simplify_vw;
 pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve};
+
+/// Stitch together triangles with adjacent sides. Alternative to unioning triangles via BooleanOps.
+#[allow(dead_code)]
+pub(crate) mod stitch;
+pub use stitch::StitchTriangles;
 
 /// Transform a geometry using PROJ.
 #[cfg(feature = "use-proj")]

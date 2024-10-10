@@ -1,6 +1,7 @@
-use crate::{coordinate_position::CoordPos, dimensions::Dimensions};
+use crate::{coordinate_position::CoordPos, dimensions::Dimensions, GeoNum, GeometryCow};
 
 use crate::geometry_cow::GeometryCow::Point;
+use crate::relate::geomgraph::intersection_matrix::dimension_matcher::DimensionMatcher;
 use std::str::FromStr;
 
 /// Models a *Dimensionally Extended Nine-Intersection Model (DE-9IM)* matrix.
@@ -104,8 +105,55 @@ impl std::fmt::Debug for IntersectionMatrix {
 }
 
 impl IntersectionMatrix {
-    pub fn empty() -> Self {
+    pub const fn empty() -> Self {
         IntersectionMatrix(LocationArray([LocationArray([Dimensions::Empty; 3]); 3]))
+    }
+
+    pub(crate) const fn empty_disjoint() -> Self {
+        IntersectionMatrix(LocationArray([
+            LocationArray([Dimensions::Empty, Dimensions::Empty, Dimensions::Empty]),
+            LocationArray([Dimensions::Empty, Dimensions::Empty, Dimensions::Empty]),
+            // since Geometries are finite and embedded in a 2-D space,
+            // the `(Outside, Outside)` element must always be 2-D
+            LocationArray([
+                Dimensions::Empty,
+                Dimensions::Empty,
+                Dimensions::TwoDimensional,
+            ]),
+        ]))
+    }
+
+    /// If the Geometries are disjoint, we need to enter their dimension and boundary dimension in
+    /// the `Outside` rows in the IM
+    pub(crate) fn compute_disjoint<F: GeoNum>(
+        &mut self,
+        geometry_a: &GeometryCow<F>,
+        geometry_b: &GeometryCow<F>,
+    ) {
+        use crate::algorithm::dimensions::HasDimensions;
+        {
+            let dimensions = geometry_a.dimensions();
+            if dimensions != Dimensions::Empty {
+                self.set(CoordPos::Inside, CoordPos::Outside, dimensions);
+
+                let boundary_dimensions = geometry_a.boundary_dimensions();
+                if boundary_dimensions != Dimensions::Empty {
+                    self.set(CoordPos::OnBoundary, CoordPos::Outside, boundary_dimensions);
+                }
+            }
+        }
+
+        {
+            let dimensions = geometry_b.dimensions();
+            if dimensions != Dimensions::Empty {
+                self.set(CoordPos::Outside, CoordPos::Inside, dimensions);
+
+                let boundary_dimensions = geometry_b.boundary_dimensions();
+                if boundary_dimensions != Dimensions::Empty {
+                    self.set(CoordPos::Outside, CoordPos::OnBoundary, boundary_dimensions);
+                }
+            }
+        }
     }
 
     /// Set `dimensions` of the cell specified by the positions.

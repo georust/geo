@@ -14,7 +14,7 @@ use std::fmt;
 /// topological relationship attribute for the [`On`](Direction::On) position.
 ///
 /// See [`CoordPos`] for the possible values.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub(crate) enum TopologyPosition {
     Area {
         on: Option<CoordPos>,

@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+* Implement getter methods on `AffineTransform` to access internal elements.
+  * <https://github.com/georust/geo/pull/1159>
+* Fix issue in Debug impl for AffineTransform where yoff is shown instead of xoff
+  * <https://github.com/georust/geo/pull/1191>
+* `Polygon` in `Rect` performance improvements.
+  * <https://github.com/georust/geo/pull/1192>
+* Fix `AffineTransform::compose` ordering to be conventional - such that the argument is applied *after* self.
+  * <https://github.com/georust/geo/pull/1196>
+* Add `PreparedGeometry` to speed up repeated `Relate` operations.
+  * <https://github.com/georust/geo/pull/1197>
+* Implement Frechet distance using linear algorithm to avoid `fatal runtime error: stack overflow` and improve overall performances.
+  * <https://github.com/georust/geo/pull/1199>
+* Bump `geo` MSRV to 1.74 and update CI
+  * <https://github.com/georust/geo/pull/1201>
+* Add `StitchTriangles` trait which implements a new kind of combining algorithm for `Triangle`s
+  * <https://github.com/georust/geo/pull/1087>
+* BREAKING: Remove deprecated `Bearing` trait
+* Unify various line measurements under new `line_measures::{Bearing, Distance, Destination, InterpolatePoint}` traits
+  Before:
+  ```
+  use geo::{GeodesicBearing, HaversineBearing, GeodesicDistance, HaversineDistance};
+  GeodesicBearing::geodesic_bearing(p1, p2)
+  HaversineBearing::haversine_bearing(p1, p2)
+  GeodesicDistance::geodesic_distance(p1, p2)
+  HaversineDistance::haversine_distance(p1, p2)
+  ```
+
+  After:
+  ```
+  use geo::{Geodesic, Haversine, Bearing, Distance};
+  Geodesic::bearing(p1, p2)
+  Haversine::bearing(p1, p2)
+  Geodesic::distance(p1, p2)
+  Haversine::distance(p1, p2)
+  ```
+  * <https://github.com/georust/geo/pull/1216>
+
 ## 0.28.0
 
 * BREAKING: The `HasKernel` trait was removed and it's functionality was merged
