@@ -3,10 +3,16 @@ use geo_types::{CoordNum, MultiPoint, Point};
 
 /// A trait for accessing data from a generic MultiPoint.
 pub trait MultiPointTrait: Sized {
+    /// The coordinate type of this geometry
     type T: CoordNum;
+
+    /// The type of each underlying Point, which implements [PointTrait]
     type ItemType<'a>: 'a + PointTrait<T = Self::T>
     where
         Self: 'a;
+
+    /// The number of dimensions in this geometry
+    fn dim(&self) -> usize;
 
     /// An iterator over the points in this MultiPoint
     fn points(&self) -> MultiPointIterator<'_, Self::T, Self::ItemType<'_>, Self> {
@@ -38,6 +44,10 @@ impl<T: CoordNum> MultiPointTrait for MultiPoint<T> {
     type T = T;
     type ItemType<'a> = &'a Point<Self::T> where Self: 'a;
 
+    fn dim(&self) -> usize {
+        2
+    }
+
     fn num_points(&self) -> usize {
         self.0.len()
     }
@@ -50,6 +60,10 @@ impl<T: CoordNum> MultiPointTrait for MultiPoint<T> {
 impl<'a, T: CoordNum> MultiPointTrait for &'a MultiPoint<T> {
     type T = T;
     type ItemType<'b> = &'a Point<Self::T> where Self: 'b;
+
+    fn dim(&self) -> usize {
+        2
+    }
 
     fn num_points(&self) -> usize {
         self.0.len()

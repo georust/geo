@@ -11,32 +11,54 @@ use super::{
 /// A trait for accessing data from a generic Geometry.
 #[allow(clippy::type_complexity)]
 pub trait GeometryTrait {
+    /// The coordinate type of this geometry
     type T: CoordNum;
+
+    /// The type of each underlying Point, which implements [PointTrait]
     type Point<'a>: 'a + PointTrait<T = Self::T>
     where
         Self: 'a;
+
+    /// The type of each underlying LineString, which implements [LineStringTrait]
     type LineString<'a>: 'a + LineStringTrait<T = Self::T>
     where
         Self: 'a;
+
+    /// The type of each underlying Polygon, which implements [PolygonTrait]
     type Polygon<'a>: 'a + PolygonTrait<T = Self::T>
     where
         Self: 'a;
+
+    /// The type of each underlying MultiPoint, which implements [MultiPointTrait]
     type MultiPoint<'a>: 'a + MultiPointTrait<T = Self::T>
     where
         Self: 'a;
+
+    /// The type of each underlying MultiLineString, which implements [MultiLineStringTrait]
     type MultiLineString<'a>: 'a + MultiLineStringTrait<T = Self::T>
     where
         Self: 'a;
+
+    /// The type of each underlying MultiPolygon, which implements [MultiPolygonTrait]
     type MultiPolygon<'a>: 'a + MultiPolygonTrait<T = Self::T>
     where
         Self: 'a;
+
+    /// The type of each underlying GeometryCollection, which implements [GeometryCollectionTrait]
     type GeometryCollection<'a>: 'a + GeometryCollectionTrait<T = Self::T>
     where
         Self: 'a;
+
+    /// The type of each underlying Rect, which implements [RectTrait]
     type Rect<'a>: 'a + RectTrait<T = Self::T>
     where
         Self: 'a;
 
+    /// The number of dimensions in this geometry
+    fn dim(&self) -> usize;
+
+    /// Cast this geometry to a [`GeometryType`] enum, which allows for downcasting to a specific
+    /// type
     fn as_type(
         &self,
     ) -> GeometryType<
@@ -66,13 +88,21 @@ where
     GC: GeometryCollectionTrait,
     R: RectTrait,
 {
+    /// A Point, which implements [PointTrait]
     Point(&'a P),
+    /// A LineString, which implements [LineStringTrait]
     LineString(&'a L),
+    /// A Polygon, which implements [PolygonTrait]
     Polygon(&'a Y),
+    /// A MultiPoint, which implements [MultiPointTrait]
     MultiPoint(&'a MP),
+    /// A MultiLineString, which implements [MultiLineStringTrait]
     MultiLineString(&'a ML),
+    /// A MultiPolygon, which implements [MultiPolygonTrait]
     MultiPolygon(&'a MY),
+    /// A GeometryCollection, which implements [GeometryCollectionTrait]
     GeometryCollection(&'a GC),
+    /// A Rect, which implements [RectTrait]
     Rect(&'a R),
 }
 
@@ -86,6 +116,10 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for Geometry<T> {
     type MultiPolygon<'b> = MultiPolygon<Self::T> where Self: 'b;
     type GeometryCollection<'b> = GeometryCollection<Self::T> where Self: 'b;
     type Rect<'b> = Rect<Self::T> where Self: 'b;
+
+    fn dim(&self) -> usize {
+        2
+    }
 
     fn as_type(
         &self,
@@ -124,6 +158,10 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for &'a Geometry<T> {
     type MultiPolygon<'b> = MultiPolygon<Self::T> where Self: 'b;
     type GeometryCollection<'b> = GeometryCollection<Self::T> where Self: 'b;
     type Rect<'b> = Rect<Self::T> where Self: 'b;
+
+    fn dim(&self) -> usize {
+        2
+    }
 
     fn as_type(
         &self,

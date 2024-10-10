@@ -3,10 +3,16 @@ use geo_types::{CoordNum, LineString, MultiLineString};
 
 /// A trait for accessing data from a generic MultiLineString.
 pub trait MultiLineStringTrait: Sized {
+    /// The coordinate type of this geometry
     type T: CoordNum;
+
+    /// The type of each underlying LineString, which implements [LineStringTrait]
     type ItemType<'a>: 'a + LineStringTrait<T = Self::T>
     where
         Self: 'a;
+
+    /// The number of dimensions in this geometry
+    fn dim(&self) -> usize;
 
     /// An iterator over the LineStrings in this MultiLineString
     fn lines(&self) -> MultiLineStringIterator<'_, Self::T, Self::ItemType<'_>, Self> {
@@ -38,6 +44,10 @@ impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
     type T = T;
     type ItemType<'a> = &'a LineString<Self::T> where Self: 'a;
 
+    fn dim(&self) -> usize {
+        2
+    }
+
     fn num_lines(&self) -> usize {
         self.0.len()
     }
@@ -50,6 +60,10 @@ impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
 impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
     type T = T;
     type ItemType<'b> = &'a LineString<Self::T> where Self: 'b;
+
+    fn dim(&self) -> usize {
+        2
+    }
 
     fn num_lines(&self) -> usize {
         self.0.len()

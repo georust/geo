@@ -1,6 +1,6 @@
 use super::{
-    CoordTrait, GeometryCollectionTrait, GeometryTrait, LineStringTrait, MultiLineStringTrait,
-    MultiPointTrait, MultiPolygonTrait, PointTrait, PolygonTrait,
+    GeometryCollectionTrait, GeometryTrait, LineStringTrait, MultiLineStringTrait, MultiPointTrait,
+    MultiPolygonTrait, PointTrait, PolygonTrait,
 };
 use geo_types::CoordNum;
 
@@ -25,6 +25,7 @@ macro_rules! impl_iterator {
                 G: $self_trait<T = T, ItemType<'a> = ItemType>,
             > $struct_name<'a, T, ItemType, G>
         {
+            /// Create a new iterator
             pub fn new(geom: &'a G, index: usize, end: usize) -> Self {
                 Self { geom, index, end }
             }
@@ -78,7 +79,7 @@ macro_rules! impl_iterator {
 impl_iterator!(
     LineStringIterator,
     LineStringTrait,
-    CoordTrait,
+    PointTrait,
     coord_unchecked
 );
 impl_iterator!(

@@ -5,7 +5,6 @@
 //! _any_ source without overhead, not limited to just the layout defined in the [`geo-types`]
 //! crate.
 
-pub use coord::CoordTrait;
 pub use geometry::{GeometryTrait, GeometryType};
 pub use geometry_collection::GeometryCollectionTrait;
 pub use iterator::{
@@ -20,7 +19,6 @@ pub use point::PointTrait;
 pub use polygon::PolygonTrait;
 pub use rect::RectTrait;
 
-mod coord;
 mod geometry;
 mod geometry_collection;
 mod iterator;

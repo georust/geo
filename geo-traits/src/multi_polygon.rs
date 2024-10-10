@@ -3,10 +3,16 @@ use geo_types::{CoordNum, MultiPolygon, Polygon};
 
 /// A trait for accessing data from a generic MultiPolygon.
 pub trait MultiPolygonTrait: Sized {
+    /// The coordinate type of this geometry
     type T: CoordNum;
+
+    /// The type of each underlying Polygon, which implements [PolygonTrait]
     type ItemType<'a>: 'a + PolygonTrait<T = Self::T>
     where
         Self: 'a;
+
+    /// The number of dimensions in this geometry
+    fn dim(&self) -> usize;
 
     /// An iterator over the Polygons in this MultiPolygon
     fn polygons(&self) -> MultiPolygonIterator<'_, Self::T, Self::ItemType<'_>, Self> {
@@ -38,6 +44,10 @@ impl<T: CoordNum> MultiPolygonTrait for MultiPolygon<T> {
     type T = T;
     type ItemType<'a> = &'a Polygon<Self::T> where Self: 'a;
 
+    fn dim(&self) -> usize {
+        2
+    }
+
     fn num_polygons(&self) -> usize {
         self.0.len()
     }
@@ -50,6 +60,10 @@ impl<T: CoordNum> MultiPolygonTrait for MultiPolygon<T> {
 impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
     type T = T;
     type ItemType<'b> = &'a Polygon<Self::T> where Self: 'b;
+
+    fn dim(&self) -> usize {
+        2
+    }
 
     fn num_polygons(&self) -> usize {
         self.0.len()
