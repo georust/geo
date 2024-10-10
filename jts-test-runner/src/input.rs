@@ -81,6 +81,15 @@ pub struct ConvexHullInput {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct EqualsTopoInput {
+    pub(crate) arg1: String,
+    pub(crate) arg2: String,
+
+    #[serde(rename = "$value", deserialize_with = "deserialize_from_str")]
+    pub(crate) expected: bool,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct IntersectsInput {
     pub(crate) arg1: String,
     pub(crate) arg2: String,
@@ -137,6 +146,9 @@ pub(crate) enum OperationInput {
     #[serde(rename = "convexhull")]
     ConvexHullInput(ConvexHullInput),
 
+    #[serde(rename = "equalsTopo")]
+    EqualsTopo(EqualsTopoInput),
+
     #[serde(rename = "intersects")]
     IntersectsInput(IntersectsInput),
 
@@ -182,6 +194,11 @@ pub(crate) enum Operation {
         subject: Geometry,
         expected: Geometry,
     },
+    EqualsTopo {
+        a: Geometry,
+        b: Geometry,
+        expected: bool,
+    },
     Intersects {
         subject: Geometry,
         clip: Geometry,
@@ -222,6 +239,19 @@ impl OperationInput {
                     expected: convex_hull_input.expected,
                 })
             }
+            Self::EqualsTopo(equals_topo_input) => {
+                assert_eq!("A", equals_topo_input.arg1);
+                assert_eq!("B", equals_topo_input.arg2);
+                assert!(
+                    case.b.is_some(),
+                    "equalsTopo test case must contain geometry b"
+                );
+                Ok(Operation::EqualsTopo {
+                    a: geometry.clone(),
+                    b: case.b.clone().expect("no geometry b in case"),
+                    expected: equals_topo_input.expected,
+                })
+            }
             Self::IntersectsInput(input) => {
                 assert_eq!("A", input.arg1);
                 assert_eq!("B", input.arg2);
@@ -238,10 +268,7 @@ impl OperationInput {
             Self::RelateInput(input) => {
                 assert_eq!("A", input.arg1);
                 assert_eq!("B", input.arg2);
-                assert!(
-                    case.b.is_some(),
-                    "intersects test case must contain geometry b"
-                );
+                assert!(case.b.is_some(), "relate test case must contain geometry b");
                 Ok(Operation::Relate {
                     a: geometry.clone(),
                     b: case.b.clone().expect("no geometry b in case"),
