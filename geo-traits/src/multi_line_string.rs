@@ -15,29 +15,29 @@ pub trait MultiLineStringTrait: Sized {
     fn dim(&self) -> usize;
 
     /// An iterator over the LineStrings in this MultiLineString
-    fn lines(&self) -> MultiLineStringIterator<'_, Self::T, Self::ItemType<'_>, Self> {
-        MultiLineStringIterator::new(self, 0, self.num_lines())
+    fn line_strings(&self) -> MultiLineStringIterator<'_, Self::T, Self::ItemType<'_>, Self> {
+        MultiLineStringIterator::new(self, 0, self.num_line_strings())
     }
 
-    /// The number of lines in this MultiLineString
-    fn num_lines(&self) -> usize;
+    /// The number of line_strings in this MultiLineString
+    fn num_line_strings(&self) -> usize;
 
-    /// Access to a specified line in this MultiLineString
+    /// Access to a specified line_string in this MultiLineString
     /// Will return None if the provided index is out of bounds
-    fn line(&self, i: usize) -> Option<Self::ItemType<'_>> {
-        if i >= self.num_lines() {
+    fn line_string(&self, i: usize) -> Option<Self::ItemType<'_>> {
+        if i >= self.num_line_strings() {
             None
         } else {
-            unsafe { Some(self.line_unchecked(i)) }
+            unsafe { Some(self.line_string_unchecked(i)) }
         }
     }
 
-    /// Access to a specified line in this MultiLineString
+    /// Access to a specified line_string in this MultiLineString
     ///
     /// # Safety
     ///
     /// Accessing an index out of bounds is UB.
-    unsafe fn line_unchecked(&self, i: usize) -> Self::ItemType<'_>;
+    unsafe fn line_string_unchecked(&self, i: usize) -> Self::ItemType<'_>;
 }
 
 impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
@@ -48,11 +48,11 @@ impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
         2
     }
 
-    fn num_lines(&self) -> usize {
+    fn num_line_strings(&self) -> usize {
         self.0.len()
     }
 
-    unsafe fn line_unchecked(&self, i: usize) -> Self::ItemType<'_> {
+    unsafe fn line_string_unchecked(&self, i: usize) -> Self::ItemType<'_> {
         self.0.get_unchecked(i)
     }
 }
@@ -65,11 +65,11 @@ impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
         2
     }
 
-    fn num_lines(&self) -> usize {
+    fn num_line_strings(&self) -> usize {
         self.0.len()
     }
 
-    unsafe fn line_unchecked(&self, i: usize) -> Self::ItemType<'_> {
+    unsafe fn line_string_unchecked(&self, i: usize) -> Self::ItemType<'_> {
         self.0.get_unchecked(i)
     }
 }

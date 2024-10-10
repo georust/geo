@@ -14,22 +14,22 @@ pub trait LineStringTrait: Sized {
     /// The number of dimensions in this geometry
     fn dim(&self) -> usize;
 
-    /// An iterator over the coords in this LineString
-    fn coords(&self) -> LineStringIterator<'_, Self::T, Self::ItemType<'_>, Self> {
-        LineStringIterator::new(self, 0, self.num_coords())
+    /// An iterator over the points in this LineString
+    fn points(&self) -> LineStringIterator<'_, Self::T, Self::ItemType<'_>, Self> {
+        LineStringIterator::new(self, 0, self.num_points())
     }
 
-    /// The number of coords in this LineString
-    fn num_coords(&self) -> usize;
+    /// The number of points in this LineString
+    fn num_points(&self) -> usize;
 
     /// Access to a specified point in this LineString
     /// Will return None if the provided index is out of bounds
     #[inline]
-    fn coord(&self, i: usize) -> Option<Self::ItemType<'_>> {
-        if i >= self.num_coords() {
+    fn point(&self, i: usize) -> Option<Self::ItemType<'_>> {
+        if i >= self.num_points() {
             None
         } else {
-            unsafe { Some(self.coord_unchecked(i)) }
+            unsafe { Some(self.point_unchecked(i)) }
         }
     }
 
@@ -38,7 +38,7 @@ pub trait LineStringTrait: Sized {
     /// # Safety
     ///
     /// Accessing an index out of bounds is UB.
-    unsafe fn coord_unchecked(&self, i: usize) -> Self::ItemType<'_>;
+    unsafe fn point_unchecked(&self, i: usize) -> Self::ItemType<'_>;
 }
 
 impl<T: CoordNum> LineStringTrait for LineString<T> {
@@ -49,11 +49,11 @@ impl<T: CoordNum> LineStringTrait for LineString<T> {
         2
     }
 
-    fn num_coords(&self) -> usize {
+    fn num_points(&self) -> usize {
         self.0.len()
     }
 
-    unsafe fn coord_unchecked(&self, i: usize) -> Self::ItemType<'_> {
+    unsafe fn point_unchecked(&self, i: usize) -> Self::ItemType<'_> {
         self.0.get_unchecked(i)
     }
 }
@@ -66,11 +66,11 @@ impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
         2
     }
 
-    fn num_coords(&self) -> usize {
+    fn num_points(&self) -> usize {
         self.0.len()
     }
 
-    unsafe fn coord_unchecked(&self, i: usize) -> Self::ItemType<'_> {
+    unsafe fn point_unchecked(&self, i: usize) -> Self::ItemType<'_> {
         self.0.get_unchecked(i)
     }
 }

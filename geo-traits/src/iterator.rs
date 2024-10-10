@@ -80,7 +80,7 @@ impl_iterator!(
     LineStringIterator,
     LineStringTrait,
     PointTrait,
-    coord_unchecked
+    point_unchecked
 );
 impl_iterator!(
     PolygonInteriorIterator,
@@ -98,7 +98,7 @@ impl_iterator!(
     MultiLineStringIterator,
     MultiLineStringTrait,
     LineStringTrait,
-    line_unchecked
+    line_string_unchecked
 );
 impl_iterator!(
     MultiPolygonIterator,
