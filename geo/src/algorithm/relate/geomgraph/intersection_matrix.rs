@@ -324,6 +324,11 @@ impl IntersectionMatrix {
     /// - Matches `[T*F**FFF*]`
     /// - This predicate is **reflexive, symmetric, and transitive**
     pub fn is_equal_topo(&self) -> bool {
+        if self == &Self::empty_disjoint() {
+            // Any two empty geometries are topologically equal
+            return true;
+        }
+
         self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
             && self.0[CoordPos::Inside][CoordPos::Outside] == Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
@@ -753,5 +758,12 @@ mod tests {
     #[test]
     fn matches_wildcard() {
         assert!(subject().matches("F0011122*").unwrap());
+    }
+
+    #[test]
+    fn empty_is_equal_topo() {
+        let empty_polygon = Polygon::<f64>::new(LineString::new(vec![]), vec![]);
+        let im = empty_polygon.relate(&empty_polygon);
+        assert!(im.is_equal_topo());
     }
 }

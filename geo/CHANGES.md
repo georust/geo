@@ -38,6 +38,8 @@
   Haversine::distance(p1, p2)
   ```
   * <https://github.com/georust/geo/pull/1216>
+* Change IntersectionMatrix::is_equal_topo to now consider empty geometries as equal.
+  * <https://github.com/georust/geo/pull/1223>
 
 ## 0.28.0
 
