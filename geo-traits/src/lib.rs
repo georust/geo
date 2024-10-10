@@ -1,9 +1,19 @@
-//! An initial, in-progress implementation of [geometry access
-//! traits](https://github.com/georust/geo/discussions/838).
+//! A trait-based interface for geospatial vector data interchange in Rust.
 //!
-//! The idea is that functions should be able to operate on and consume geospatial vector data from
-//! _any_ source without overhead, not limited to just the layout defined in the [`geo-types`]
-//! crate.
+//! This crate contains a set of traits based on the Simple Features standard for geospatial vector
+//! data. These traits are designed to make it easy to operate on and consume geometries throughout
+//! the Rust ecosystem without knowing library-specific APIs or memory layouts.
+//!
+//! It is expected that accessing any individual coordinate or value from a geometry is
+//! **constant-time**. This means that when implementing these traits on a format like WKB that
+//! requires linear-time search to locate coordinates, the WKB wrapper should have already
+//! undergone an initial pass to find the relevant byte offsets where coordinate sequences start
+//! and end.
+//!
+//! This interface will usually but not always be zero-copy. Coordinate access is expected to be
+//! constant-time but not necessarily _free_. For example, WKB is not aligned and may use a
+//! different endianness than the current machine, so individual values may need to be cloned on
+//! read.
 
 pub use geometry::{GeometryTrait, GeometryType};
 pub use geometry_collection::GeometryCollectionTrait;
