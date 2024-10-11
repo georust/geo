@@ -1,3 +1,64 @@
+use super::BooleanOps;
+use crate::{wkt, Convert, MultiPolygon, Relate};
+use wkt::ToWkt;
+
+#[test]
+fn jts_test_overlay_la_1() {
+    // From TestOverlayLA.xml test case with description "mLmA - A and B complex, overlapping and touching #1"
+    let a: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
+        (
+            (60 260, 60 120, 220 120, 220 260, 60 260),
+            (80 240, 80 140, 200 140, 200 240, 80 240)
+        ),
+        (
+          (100 220, 100 160, 180 160, 180 220, 100 220),
+           (120 200, 120 180, 160 180, 160 200, 120 200)
+        )
+    ))
+    .convert();
+    let b = wkt!(MULTILINESTRING(
+        (40 260, 240 260, 240 240, 40 240, 40 220, 240 220),
+        (120 300, 120 80, 140 80, 140 300, 140 80, 120 80, 120 320)
+    ))
+    .convert();
+    let actual = a.clip(&b, false);
+
+    // This corresponds to the "intersection" output from JTS overlay
+    let expected = wkt!(MULTILINESTRING(
+        (220 260, 140 260),
+        (140 260, 120 260),
+        (120 260, 60 260),
+        (200 240, 140 240),
+        (140 240, 120 240),
+        (120 240, 80 240),
+        (180 220, 140 220),
+        (140 220, 120 220),
+        (120 220, 100 220),
+        (120 200, 120 180),
+        (220 240, 200 240),
+        (80 240, 60 240),
+        (60 220, 80 220),
+        (200 220, 220 220),
+        (120 260, 120 240),
+        (120 220, 120 200),
+        (120 180, 120 160),
+        (120 140, 120 120),
+        (140 120, 140 140),
+        (140 160, 140 180),
+        (140 200, 140 220),
+        (140 240, 140 260)
+    ))
+    .convert();
+
+    dbg!(a.wkt_string());
+    dbg!(b.wkt_string());
+    dbg!(actual.wkt_string());
+    dbg!(expected.wkt_string());
+    let im = actual.relate(&expected);
+    dbg!(&im);
+    assert!(im.is_equal_topo());
+}
+
 mod gh_issues {
     use super::super::{BooleanOps, OpType};
     use crate::{geometry::*, wkt};

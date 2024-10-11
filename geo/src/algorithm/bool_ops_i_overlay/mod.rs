@@ -6,14 +6,19 @@ use i_overlay::core::overlay::ShapeType;
 use i_overlay::core::overlay_rule::OverlayRule;
 use i_overlay::f32::graph::F32OverlayGraph;
 use i_overlay::f32::overlay::F32Overlay;
+use i_overlay::f32::string::{F32StringGraph, F32StringOverlay};
 use i_overlay::f64::graph::F64OverlayGraph;
 use i_overlay::f64::overlay::F64Overlay;
+use i_overlay::f64::string::{F64StringGraph, F64StringOverlay};
 use i_overlay::i_float::f32_point::F32Point;
 use i_overlay::i_float::f64_point::F64Point;
+use i_overlay::i_shape::f64::shape::F64Shapes;
+use i_overlay::string::clip::ClipRule;
+use i_overlay::string::rule::StringRule;
 
 use geo_types::{Coord, LineString, MultiLineString, MultiPolygon};
 
-use crate::{GeoNum, Polygon};
+use crate::{GeoNum, HasDimensions, Polygon};
 
 /// Boolean Operations on geometry.
 ///
@@ -58,7 +63,7 @@ pub trait BooleanOps {
     /// intersection) if `invert` is false, and the difference (`ls - self`) otherwise.
     fn clip(
         &self,
-        ls: &MultiLineString<Self::Scalar>,
+        multi_line_string: &MultiLineString<Self::Scalar>,
         invert: bool,
     ) -> MultiLineString<Self::Scalar>;
 }
@@ -79,12 +84,38 @@ trait Paths {
 trait BoolOpsNum: GeoNum {
     type CoordType: BoolOpsCoord<Self>;
     type OverlayType: BoolOpsOverlay<CoordType = Self::CoordType>;
+    type StringOverlayType: BoolOpsStringOverlay<CoordType = Self::CoordType>;
+
+    fn to_bops(geo_coord: Coord<Self>) -> Self::CoordType {
+        Self::CoordType::new(geo_coord.x, geo_coord.y)
+    }
+
+    fn to_geo(bops_coord: Self::CoordType) -> Coord<Self> {
+        Coord {
+            x: bops_coord.x(),
+            y: bops_coord.y(),
+        }
+    }
 }
 
-trait BoolOpsCoord<T> {
+trait BoolOpsCoord<T>: Copy {
     fn new(x: T, y: T) -> Self;
     fn x(&self) -> T;
     fn y(&self) -> T;
+}
+
+trait BoolOpsStringOverlay {
+    type CoordType;
+    type StringGraph: BoolOpsStringGraph<CoordType = Self::CoordType>;
+    fn new() -> Self;
+    fn add_shape_path(&mut self, path: Vec<Self::CoordType>);
+    fn add_string_line(&mut self, path: [Self::CoordType; 2]);
+    fn into_graph(self, fill_rule: FillRule) -> Self::StringGraph;
+}
+
+trait BoolOpsStringGraph {
+    type CoordType;
+    fn clip_string_lines(&self, clip_rule: ClipRule) -> Vec<[Self::CoordType; 2]>;
 }
 
 trait BoolOpsOverlay {
@@ -103,6 +134,36 @@ trait BoolOpsOverlayGraph {
 impl BoolOpsNum for f64 {
     type CoordType = F64Point;
     type OverlayType = F64Overlay;
+    type StringOverlayType = F64StringOverlay;
+}
+
+impl BoolOpsStringOverlay for F64StringOverlay {
+    type CoordType = F64Point;
+    type StringGraph = F64StringGraph;
+
+    fn new() -> Self {
+        Self::new()
+    }
+
+    fn add_shape_path(&mut self, path: Vec<Self::CoordType>) {
+        self.add_shape_path(path)
+    }
+
+    fn add_string_line(&mut self, path: [Self::CoordType; 2]) {
+        self.add_string_line(path)
+    }
+
+    fn into_graph(self, fill_rule: FillRule) -> Self::StringGraph {
+        self.into_graph(fill_rule)
+    }
+}
+
+impl BoolOpsStringGraph for F64StringGraph {
+    type CoordType = F64Point;
+
+    fn clip_string_lines(&self, clip_rule: ClipRule) -> Vec<[Self::CoordType; 2]> {
+        self.clip_string_lines(clip_rule)
+    }
 }
 
 impl BoolOpsOverlay for F64Overlay {
@@ -147,6 +208,36 @@ impl BoolOpsCoord<f64> for F64Point {
 impl BoolOpsNum for f32 {
     type CoordType = F32Point;
     type OverlayType = F32Overlay;
+    type StringOverlayType = F32StringOverlay;
+}
+
+impl BoolOpsStringOverlay for F32StringOverlay {
+    type CoordType = F32Point;
+    type StringGraph = F32StringGraph;
+
+    fn new() -> Self {
+        Self::new()
+    }
+
+    fn add_shape_path(&mut self, path: Vec<Self::CoordType>) {
+        self.add_shape_path(path)
+    }
+
+    fn add_string_line(&mut self, path: [Self::CoordType; 2]) {
+        self.add_string_line(path)
+    }
+
+    fn into_graph(self, fill_rule: FillRule) -> Self::StringGraph {
+        self.into_graph(fill_rule)
+    }
+}
+
+impl BoolOpsStringGraph for F32StringGraph {
+    type CoordType = F32Point;
+
+    fn clip_string_lines(&self, clip_rule: ClipRule) -> Vec<[Self::CoordType; 2]> {
+        self.clip_string_lines(clip_rule)
+    }
 }
 
 impl BoolOpsOverlay for F32Overlay {
@@ -234,6 +325,44 @@ fn multi_polygon_from_shapes<T: BoolOpsNum>(
     MultiPolygon(shapes.into_iter().map(|s| polygon_from_shape(s)).collect())
 }
 
+fn multi_line_string_from_lines<T: BoolOpsNum>(
+    lines: Vec<[T::CoordType; 2]>,
+) -> MultiLineString<T> {
+    let Some(first_segment) = lines.first() else {
+        return MultiLineString::new(vec![]);
+    };
+
+    let mut line_strings = vec![];
+    let mut current_line_string = LineString::new(vec![
+        T::to_geo(first_segment[0]),
+        T::to_geo(first_segment[1]),
+    ]);
+
+    for segments in lines.windows(2) {
+        let prev_segment = segments[0];
+        let current_segment = segments[1];
+
+        let [_prev_start, prev_end] = prev_segment;
+        let [current_start, current_end] = current_segment;
+
+        // i_overlay Coords don't impl PartialEq - request to upstream?
+        if T::to_geo(prev_end) != T::to_geo(current_start) {
+            let mut next_line_string = LineString::new(vec![]);
+            std::mem::swap(&mut next_line_string, &mut current_line_string);
+            line_strings.push(next_line_string);
+        }
+
+        current_line_string.0.push(T::to_geo(current_start));
+        current_line_string.0.push(T::to_geo(current_end));
+    }
+
+    if !current_line_string.is_empty() {
+        line_strings.push(current_line_string);
+    }
+
+    MultiLineString(line_strings)
+}
+
 impl From<OpType> for OverlayRule {
     fn from(op: OpType) -> Self {
         match op {
@@ -268,10 +397,26 @@ impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
 
     fn clip(
         &self,
-        _ls: &MultiLineString<Self::Scalar>,
-        _invert: bool,
+        multi_line_string: &MultiLineString<Self::Scalar>,
+        invert: bool,
     ) -> MultiLineString<Self::Scalar> {
-        todo!()
+        let mut overlay = T::StringOverlayType::new();
+        for path in self.paths() {
+            overlay.add_shape_path(path)
+        }
+        for line_string in multi_line_string {
+            for line in line_string.lines() {
+                let line = [T::to_bops(line.start), T::to_bops(line.end)];
+                overlay.add_string_line(line)
+            }
+        }
+
+        let graph = overlay.into_graph(FillRule::EvenOdd);
+        let lines = graph.clip_string_lines(ClipRule {
+            invert,
+            boundary_included: true,
+        });
+        multi_line_string_from_lines(lines)
     }
 }
 
@@ -296,9 +441,25 @@ impl<T: BoolOpsNum> BooleanOps for MultiPolygon<T> {
 
     fn clip(
         &self,
-        _ls: &MultiLineString<Self::Scalar>,
-        _invert: bool,
+        multi_line_string: &MultiLineString<Self::Scalar>,
+        invert: bool,
     ) -> MultiLineString<Self::Scalar> {
-        todo!()
+        let mut overlay = T::StringOverlayType::new();
+        for path in self.paths() {
+            overlay.add_shape_path(path)
+        }
+        for line_string in multi_line_string {
+            for line in line_string.lines() {
+                let line = [T::to_bops(line.start), T::to_bops(line.end)];
+                overlay.add_string_line(line)
+            }
+        }
+
+        let graph = overlay.into_graph(FillRule::EvenOdd);
+        let lines = graph.clip_string_lines(ClipRule {
+            invert,
+            boundary_included: true,
+        });
+        multi_line_string_from_lines(lines)
     }
 }
