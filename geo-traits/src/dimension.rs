@@ -2,7 +2,7 @@
 ///
 ///
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Dimension {
     /// A two-dimensional geometry with X and Y values
     XY,
