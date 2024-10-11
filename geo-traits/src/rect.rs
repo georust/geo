@@ -1,6 +1,6 @@
 use geo_types::{Coord, CoordNum, Rect};
 
-use super::PointTrait;
+use crate::{Dimension, PointTrait};
 
 /// A trait for accessing data from a generic Rect.
 pub trait RectTrait {
@@ -12,8 +12,8 @@ pub trait RectTrait {
     where
         Self: 'a;
 
-    /// The number of dimensions in this geometry
-    fn dim(&self) -> usize;
+    /// The dimension of this geometry
+    fn dim(&self) -> Dimension;
 
     /// The lower coordinate of this Rect
     fn lower(&self) -> Self::ItemType<'_>;
@@ -26,8 +26,8 @@ impl<'a, T: CoordNum + 'a> RectTrait for Rect<T> {
     type T = T;
     type ItemType<'b> = Coord<T> where Self: 'b;
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn lower(&self) -> Self::ItemType<'_> {
@@ -43,8 +43,8 @@ impl<'a, T: CoordNum + 'a> RectTrait for &'a Rect<T> {
     type T = T;
     type ItemType<'b> = Coord<T> where Self: 'b;
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn lower(&self) -> Self::ItemType<'_> {

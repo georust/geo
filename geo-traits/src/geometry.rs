@@ -3,8 +3,8 @@ use geo_types::{
     Point, Polygon, Rect,
 };
 
-use super::{
-    GeometryCollectionTrait, LineStringTrait, MultiLineStringTrait, MultiPointTrait,
+use crate::{
+    Dimension, GeometryCollectionTrait, LineStringTrait, MultiLineStringTrait, MultiPointTrait,
     MultiPolygonTrait, PointTrait, PolygonTrait, RectTrait,
 };
 
@@ -54,8 +54,8 @@ pub trait GeometryTrait {
     where
         Self: 'a;
 
-    /// The number of dimensions in this geometry
-    fn dim(&self) -> usize;
+    /// The dimension of this geometry
+    fn dim(&self) -> Dimension;
 
     /// Cast this geometry to a [`GeometryType`] enum, which allows for downcasting to a specific
     /// type
@@ -117,8 +117,8 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for Geometry<T> {
     type GeometryCollection<'b> = GeometryCollection<Self::T> where Self: 'b;
     type Rect<'b> = Rect<Self::T> where Self: 'b;
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn as_type(
@@ -159,8 +159,8 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for &'a Geometry<T> {
     type GeometryCollection<'b> = GeometryCollection<Self::T> where Self: 'b;
     type Rect<'b> = Rect<Self::T> where Self: 'b;
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn as_type(

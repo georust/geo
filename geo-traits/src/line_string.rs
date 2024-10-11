@@ -1,4 +1,4 @@
-use super::{LineStringIterator, PointTrait};
+use crate::{Dimension, LineStringIterator, PointTrait};
 use geo_types::{Coord, CoordNum, LineString};
 
 /// A trait for accessing data from a generic LineString.
@@ -11,8 +11,8 @@ pub trait LineStringTrait: Sized {
     where
         Self: 'a;
 
-    /// The number of dimensions in this geometry
-    fn dim(&self) -> usize;
+    /// The dimension of this geometry
+    fn dim(&self) -> Dimension;
 
     /// An iterator over the points in this LineString
     fn points(&self) -> LineStringIterator<'_, Self::T, Self::ItemType<'_>, Self> {
@@ -45,8 +45,8 @@ impl<T: CoordNum> LineStringTrait for LineString<T> {
     type T = T;
     type ItemType<'a> = &'a Coord<Self::T> where Self: 'a;
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn num_points(&self) -> usize {
@@ -62,8 +62,8 @@ impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
     type T = T;
     type ItemType<'b> = &'a Coord<Self::T> where Self: 'b;
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn num_points(&self) -> usize {

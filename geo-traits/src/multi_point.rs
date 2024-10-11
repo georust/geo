@@ -1,4 +1,4 @@
-use super::{MultiPointIterator, PointTrait};
+use crate::{Dimension, MultiPointIterator, PointTrait};
 use geo_types::{CoordNum, MultiPoint, Point};
 
 /// A trait for accessing data from a generic MultiPoint.
@@ -11,8 +11,8 @@ pub trait MultiPointTrait: Sized {
     where
         Self: 'a;
 
-    /// The number of dimensions in this geometry
-    fn dim(&self) -> usize;
+    /// The dimension of this geometry
+    fn dim(&self) -> Dimension;
 
     /// An iterator over the points in this MultiPoint
     fn points(&self) -> MultiPointIterator<'_, Self::T, Self::ItemType<'_>, Self> {
@@ -44,8 +44,8 @@ impl<T: CoordNum> MultiPointTrait for MultiPoint<T> {
     type T = T;
     type ItemType<'a> = &'a Point<Self::T> where Self: 'a;
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn num_points(&self) -> usize {
@@ -61,8 +61,8 @@ impl<'a, T: CoordNum> MultiPointTrait for &'a MultiPoint<T> {
     type T = T;
     type ItemType<'b> = &'a Point<Self::T> where Self: 'b;
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn num_points(&self) -> usize {

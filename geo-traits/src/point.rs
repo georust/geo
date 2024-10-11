@@ -1,5 +1,7 @@
 use geo_types::{Coord, CoordNum, Point};
 
+use crate::Dimension;
+
 /// A trait for accessing data from a generic Point.
 pub trait PointTrait {
     /// The coordinate type of this geometry
@@ -10,14 +12,14 @@ pub trait PointTrait {
     /// See also [`nth()`](Self::nth).
     fn nth_unchecked(&self, n: usize) -> Self::T;
 
-    /// Native dimension of the coordinate tuple
-    fn dim(&self) -> usize;
+    /// Dimension of the coordinate tuple
+    fn dim(&self) -> Dimension;
 
     /// Access the n'th (0-based) element of the CoordinateTuple.
     /// Returns NaN if `n >= DIMENSION`.
     /// See also [`nth()`](Self::nth_unchecked).
     fn nth(&self, n: usize) -> Option<Self::T> {
-        if n < self.dim() {
+        if n < self.dim().size() {
             Some(self.nth_unchecked(n))
         } else {
             None
@@ -47,8 +49,8 @@ impl<T: CoordNum> PointTrait for Point<T> {
         }
     }
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn x(&self) -> Self::T {
@@ -71,8 +73,8 @@ impl<T: CoordNum> PointTrait for &Point<T> {
         }
     }
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn x(&self) -> Self::T {
@@ -95,8 +97,8 @@ impl<T: CoordNum> PointTrait for Coord<T> {
         }
     }
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn x(&self) -> Self::T {
@@ -119,8 +121,8 @@ impl<T: CoordNum> PointTrait for &Coord<T> {
         }
     }
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn x(&self) -> Self::T {
@@ -143,8 +145,8 @@ impl<T: CoordNum> PointTrait for (T, T) {
         }
     }
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn x(&self) -> Self::T {
@@ -153,25 +155,5 @@ impl<T: CoordNum> PointTrait for (T, T) {
 
     fn y(&self) -> Self::T {
         self.1
-    }
-}
-
-impl<T: CoordNum, const D: usize> PointTrait for [T; D] {
-    type T = T;
-
-    fn nth_unchecked(&self, n: usize) -> Self::T {
-        self[n]
-    }
-
-    fn dim(&self) -> usize {
-        D
-    }
-
-    fn x(&self) -> Self::T {
-        self[0]
-    }
-
-    fn y(&self) -> Self::T {
-        self[1]
     }
 }

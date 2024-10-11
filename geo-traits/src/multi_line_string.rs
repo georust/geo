@@ -1,4 +1,4 @@
-use super::{LineStringTrait, MultiLineStringIterator};
+use crate::{Dimension, LineStringTrait, MultiLineStringIterator};
 use geo_types::{CoordNum, LineString, MultiLineString};
 
 /// A trait for accessing data from a generic MultiLineString.
@@ -11,8 +11,8 @@ pub trait MultiLineStringTrait: Sized {
     where
         Self: 'a;
 
-    /// The number of dimensions in this geometry
-    fn dim(&self) -> usize;
+    /// The dimension of this geometry
+    fn dim(&self) -> Dimension;
 
     /// An iterator over the LineStrings in this MultiLineString
     fn line_strings(&self) -> MultiLineStringIterator<'_, Self::T, Self::ItemType<'_>, Self> {
@@ -44,8 +44,8 @@ impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
     type T = T;
     type ItemType<'a> = &'a LineString<Self::T> where Self: 'a;
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn num_line_strings(&self) -> usize {
@@ -61,8 +61,8 @@ impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
     type T = T;
     type ItemType<'b> = &'a LineString<Self::T> where Self: 'b;
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn num_line_strings(&self) -> usize {

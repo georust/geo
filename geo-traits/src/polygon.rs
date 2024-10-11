@@ -1,4 +1,4 @@
-use super::{LineStringTrait, PolygonInteriorIterator};
+use crate::{Dimension, LineStringTrait, PolygonInteriorIterator};
 use geo_types::{CoordNum, LineString, Polygon};
 
 /// A trait for accessing data from a generic Polygon.
@@ -11,8 +11,8 @@ pub trait PolygonTrait: Sized {
     where
         Self: 'a;
 
-    /// The number of dimensions in this geometry
-    fn dim(&self) -> usize;
+    /// The dimension of this geometry
+    fn dim(&self) -> Dimension;
 
     /// The exterior ring of the polygon
     fn exterior(&self) -> Option<Self::ItemType<'_>>;
@@ -47,8 +47,8 @@ impl<T: CoordNum> PolygonTrait for Polygon<T> {
     type T = T;
     type ItemType<'a> = &'a LineString<Self::T> where Self: 'a;
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn exterior(&self) -> Option<Self::ItemType<'_>> {
@@ -70,8 +70,8 @@ impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
     type ItemType<'b> = &'a LineString<Self::T> where
         Self: 'b;
 
-    fn dim(&self) -> usize {
-        2
+    fn dim(&self) -> Dimension {
+        Dimension::XY
     }
 
     fn exterior(&self) -> Option<Self::ItemType<'_>> {
