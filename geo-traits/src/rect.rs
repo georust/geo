@@ -15,11 +15,11 @@ pub trait RectTrait {
     /// The dimension of this geometry
     fn dim(&self) -> Dimension;
 
-    /// The lower coordinate of this Rect
-    fn lower(&self) -> Self::ItemType<'_>;
+    /// The minimum coordinate of this Rect
+    fn min(&self) -> Self::ItemType<'_>;
 
-    /// The upper coordinate of this Rect
-    fn upper(&self) -> Self::ItemType<'_>;
+    /// The maximum coordinate of this Rect
+    fn max(&self) -> Self::ItemType<'_>;
 }
 
 impl<'a, T: CoordNum + 'a> RectTrait for Rect<T> {
@@ -30,12 +30,12 @@ impl<'a, T: CoordNum + 'a> RectTrait for Rect<T> {
         Dimension::XY
     }
 
-    fn lower(&self) -> Self::ItemType<'_> {
-        self.min()
+    fn min(&self) -> Self::ItemType<'_> {
+        Rect::min(*self)
     }
 
-    fn upper(&self) -> Self::ItemType<'_> {
-        self.max()
+    fn max(&self) -> Self::ItemType<'_> {
+        Rect::max(*self)
     }
 }
 
@@ -47,11 +47,11 @@ impl<'a, T: CoordNum + 'a> RectTrait for &'a Rect<T> {
         Dimension::XY
     }
 
-    fn lower(&self) -> Self::ItemType<'_> {
-        self.min()
+    fn min(&self) -> Self::ItemType<'_> {
+        Rect::min(**self)
     }
 
-    fn upper(&self) -> Self::ItemType<'_> {
-        self.max()
+    fn max(&self) -> Self::ItemType<'_> {
+        Rect::max(**self)
     }
 }
