@@ -12,6 +12,7 @@ use geo::{GeoNum, Relate};
 
 const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/general");
 const VALIDATE_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/validate");
+const MISC_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/misc");
 
 #[derive(Debug, Default, Clone)]
 pub struct TestRunner {
@@ -376,6 +377,7 @@ impl TestRunner {
         for entry in GENERAL_TEST_XML
             .find(&filename_filter)?
             .chain(VALIDATE_TEST_XML.find(&filename_filter)?)
+            .chain(MISC_TEST_XML.find(&filename_filter)?)
         {
             let file = match entry {
                 DirEntry::Dir(_) => {
