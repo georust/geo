@@ -8,10 +8,11 @@ use wkt::ToWkt;
 use super::{input, Operation, Result};
 use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects, Within};
 use geo::geometry::*;
-use geo::GeoNum;
+use geo::{GeoNum, Relate};
 
 const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/general");
 const VALIDATE_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/validate");
+const MISC_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/misc");
 
 #[derive(Debug, Default, Clone)]
 pub struct TestRunner {
@@ -140,6 +141,22 @@ impl TestRunner {
                     } else {
                         debug!("Contains success: actual == expected");
                         self.successes.push(test_case);
+                    }
+                }
+                Operation::EqualsTopo { a, b, expected } => {
+                    let im = a.relate(b);
+                    let actual = im.is_equal_topo();
+                    if actual == *expected {
+                        debug!("Passed: EqualsTopo was {actual}");
+                        self.successes.push(test_case);
+                    } else {
+                        debug!("is_equal_topo was {actual}, but expected {expected}");
+                        let error_description =
+                            format!("is_equal_topo was {actual}, but expected {expected}");
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
                     }
                 }
                 Operation::Within {
@@ -360,6 +377,7 @@ impl TestRunner {
         for entry in GENERAL_TEST_XML
             .find(&filename_filter)?
             .chain(VALIDATE_TEST_XML.find(&filename_filter)?)
+            .chain(MISC_TEST_XML.find(&filename_filter)?)
         {
             let file = match entry {
                 DirEntry::Dir(_) => {

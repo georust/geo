@@ -1,6 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use geo::contains::Contains;
-use geo::{coord, point, polygon, Line, Point, Polygon, Rect, Triangle};
+use geo::algorithm::{Contains, Convert, Relate};
+use geo::geometry::*;
+use geo::{coord, point, polygon};
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("point in simple polygon", |bencher| {
@@ -143,6 +144,97 @@ fn criterion_benchmark(c: &mut Criterion) {
 
         bencher.iter(|| {
             assert!(criterion::black_box(&rect).contains(criterion::black_box(&polygon)));
+        });
+    });
+
+    c.bench_function(
+        "LineString not contains LineString (Contains trait)",
+        |bencher| {
+            let ls_1: geo::LineString<f64> = geo_test_fixtures::poly1();
+            let ls_2: geo::LineString<f64> = geo_test_fixtures::poly2();
+
+            bencher.iter(|| {
+                assert!(!ls_1.contains(&ls_2));
+            });
+        },
+    );
+
+    c.bench_function(
+        "LineString not contains LineString (Relate trait)",
+        |bencher| {
+            let ls_1: geo::LineString<f64> = geo_test_fixtures::poly1();
+            let ls_2: geo::LineString<f64> = geo_test_fixtures::poly2();
+
+            bencher.iter(|| {
+                assert!(!ls_1.relate(&ls_2).is_contains());
+            });
+        },
+    );
+
+    c.bench_function(
+        "LineString contains LineString (Contains trait)",
+        |bencher| {
+            let ls_1: LineString<f64> = geo_test_fixtures::poly1();
+            let mut ls_2 = LineString::new(ls_1.0[1..].to_vec());
+            ls_2.0.pop();
+
+            bencher.iter(|| {
+                assert!(ls_1.contains(&ls_2));
+            });
+        },
+    );
+
+    c.bench_function("LineString contains LineString (Relate trait)", |bencher| {
+        let ls_1: geo::LineString<f64> = geo_test_fixtures::poly1();
+        let mut ls_2 = LineString::new(ls_1.0[1..].to_vec());
+        ls_2.0.pop();
+
+        bencher.iter(|| {
+            assert!(ls_1.relate(&ls_2).is_contains());
+        });
+    });
+
+    c.bench_function("MultiPolygon contains MultiPoint (Contains trait)", |bencher| {
+        let p_1: Polygon<f64> = Polygon::new(geo_test_fixtures::poly1(), vec![]);
+        let p_2: Polygon<f64> = Polygon::new(geo_test_fixtures::poly2(), vec![]);
+        let multi_poly = MultiPolygon(vec![p_1, p_2]);
+        let multi_point: MultiPoint<f64> = geo::wkt!(MULTIPOINT (-60 10,-60 -70,-120 -70,-120 10,-40 80,30 80,30 10,-40 10,100 210,100 120,30 120,30 210,-185 -135,-100 -135,-100 -230,-185 -230)).convert();
+
+        bencher.iter(|| {
+            assert!(multi_poly.contains(&multi_point));
+        });
+    });
+
+    c.bench_function("MultiPolygon contains MultiPoint (Relate trait)", |bencher| {
+        let p_1: Polygon<f64> = Polygon::new(geo_test_fixtures::poly1(), vec![]);
+        let p_2: Polygon<f64> = Polygon::new(geo_test_fixtures::poly2(), vec![]);
+        let multi_poly = MultiPolygon(vec![p_1, p_2]);
+        let multi_point: MultiPoint<f64> = geo::wkt!(MULTIPOINT (-60 10,-60 -70,-120 -70,-120 10,-40 80,30 80,30 10,-40 10,100 210,100 120,30 120,30 210,-185 -135,-100 -135,-100 -230,-185 -230)).convert();
+
+        bencher.iter(|| {
+            assert!(multi_poly.relate(&multi_point).is_contains());
+        });
+    });
+
+    c.bench_function("MultiPolygon not contains MultiPoint (Contains trait)", |bencher| {
+        let p_1: Polygon<f64> = Polygon::new(geo_test_fixtures::poly1(), vec![]);
+        let p_2: Polygon<f64> = Polygon::new(geo_test_fixtures::poly2(), vec![]);
+        let multi_poly = MultiPolygon(vec![p_1, p_2]);
+        let multi_point: MultiPoint<f64> = geo::wkt!(MULTIPOINT (-160 10,-60 -70,-120 -70,-120 10,-40 80,30 80,30 10,-40 10,100 210,100 120,30 120,30 210,-185 -135,-100 -135,-100 -230,-185 -230)).convert();
+
+        bencher.iter(|| {
+            assert!(multi_poly.contains(&multi_point));
+        });
+    });
+
+    c.bench_function("MultiPolygon not contains MultiPoint (Relate trait)", |bencher| {
+        let p_1: Polygon<f64> = Polygon::new(geo_test_fixtures::poly1(), vec![]);
+        let p_2: Polygon<f64> = Polygon::new(geo_test_fixtures::poly2(), vec![]);
+        let multi_poly = MultiPolygon(vec![p_1, p_2]);
+        let multi_point: MultiPoint<f64> = geo::wkt!(MULTIPOINT (-160 10,-60 -70,-120 -70,-120 10,-40 80,30 80,30 10,-40 10,100 210,100 120,30 120,30 210,-185 -135,-100 -135,-100 -230,-185 -230)).convert();
+
+        bencher.iter(|| {
+            assert!(multi_poly.relate(&multi_point).is_contains());
         });
     });
 }
