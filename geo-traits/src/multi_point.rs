@@ -15,7 +15,7 @@ pub trait MultiPointTrait: Sized {
     fn dim(&self) -> Dimension;
 
     /// An iterator over the points in this MultiPoint
-    fn points(&self) -> MultiPointIterator<'_, Self::T, Self::ItemType<'_>, Self> {
+    fn points(&self) -> impl Iterator<Item = Self::ItemType<'_>> {
         MultiPointIterator::new(self, 0, self.num_points())
     }
 

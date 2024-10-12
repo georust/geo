@@ -18,7 +18,7 @@ pub trait PolygonTrait: Sized {
     fn exterior(&self) -> Option<Self::ItemType<'_>>;
 
     /// An iterator of the interior rings of this Polygon
-    fn interiors(&self) -> PolygonInteriorIterator<'_, Self::T, Self::ItemType<'_>, Self> {
+    fn interiors(&self) -> impl Iterator<Item = Self::ItemType<'_>> {
         PolygonInteriorIterator::new(self, 0, self.num_interiors())
     }
 

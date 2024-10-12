@@ -15,7 +15,7 @@ pub trait LineStringTrait: Sized {
     fn dim(&self) -> Dimension;
 
     /// An iterator over the points in this LineString
-    fn points(&self) -> LineStringIterator<'_, Self::T, Self::ItemType<'_>, Self> {
+    fn points(&self) -> impl Iterator<Item = Self::ItemType<'_>> {
         LineStringIterator::new(self, 0, self.num_points())
     }
 
