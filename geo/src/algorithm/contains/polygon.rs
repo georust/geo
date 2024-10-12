@@ -1,7 +1,7 @@
 use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
 use crate::geometry::*;
-use crate::Relate;
 use crate::{GeoFloat, GeoNum};
+use crate::{HasDimensions, Relate};
 
 // ┌─────────────────────────────┐
 // │ Implementations for Polygon │
@@ -53,6 +53,9 @@ where
 
 impl<T: GeoNum> Contains<MultiPoint<T>> for MultiPolygon<T> {
     fn contains(&self, rhs: &MultiPoint<T>) -> bool {
+        if self.is_empty() || rhs.is_empty() {
+            return false;
+        }
         rhs.iter().all(|point| self.contains(point))
     }
 }

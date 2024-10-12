@@ -1,7 +1,7 @@
 use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
 use crate::algorithm::Intersects;
 use crate::geometry::*;
-use crate::{CoordNum, GeoFloat, GeoNum};
+use crate::{CoordNum, GeoFloat, GeoNum, HasDimensions};
 
 // ┌────────────────────────────────┐
 // │ Implementations for LineString │
@@ -110,6 +110,9 @@ where
     T: GeoNum,
 {
     fn contains(&self, rhs: &LineString<T>) -> bool {
+        if self.is_empty() || rhs.is_empty() {
+            return false;
+        }
         rhs.lines().all(|l| self.contains(&l))
     }
 }
