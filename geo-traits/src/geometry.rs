@@ -15,42 +15,42 @@ pub trait GeometryTrait {
     type T: CoordNum;
 
     /// The type of each underlying Point, which implements [PointTrait]
-    type Point<'a>: 'a + PointTrait<T = Self::T>
+    type PointType<'a>: 'a + PointTrait<T = Self::T>
     where
         Self: 'a;
 
     /// The type of each underlying LineString, which implements [LineStringTrait]
-    type LineString<'a>: 'a + LineStringTrait<T = Self::T>
+    type LineStringType<'a>: 'a + LineStringTrait<T = Self::T>
     where
         Self: 'a;
 
     /// The type of each underlying Polygon, which implements [PolygonTrait]
-    type Polygon<'a>: 'a + PolygonTrait<T = Self::T>
+    type PolygonType<'a>: 'a + PolygonTrait<T = Self::T>
     where
         Self: 'a;
 
     /// The type of each underlying MultiPoint, which implements [MultiPointTrait]
-    type MultiPoint<'a>: 'a + MultiPointTrait<T = Self::T>
+    type MultiPointType<'a>: 'a + MultiPointTrait<T = Self::T>
     where
         Self: 'a;
 
     /// The type of each underlying MultiLineString, which implements [MultiLineStringTrait]
-    type MultiLineString<'a>: 'a + MultiLineStringTrait<T = Self::T>
+    type MultiLineStringType<'a>: 'a + MultiLineStringTrait<T = Self::T>
     where
         Self: 'a;
 
     /// The type of each underlying MultiPolygon, which implements [MultiPolygonTrait]
-    type MultiPolygon<'a>: 'a + MultiPolygonTrait<T = Self::T>
+    type MultiPolygonType<'a>: 'a + MultiPolygonTrait<T = Self::T>
     where
         Self: 'a;
 
     /// The type of each underlying GeometryCollection, which implements [GeometryCollectionTrait]
-    type GeometryCollection<'a>: 'a + GeometryCollectionTrait<T = Self::T>
+    type GeometryCollectionType<'a>: 'a + GeometryCollectionTrait<T = Self::T>
     where
         Self: 'a;
 
     /// The type of each underlying Rect, which implements [RectTrait]
-    type Rect<'a>: 'a + RectTrait<T = Self::T>
+    type RectType<'a>: 'a + RectTrait<T = Self::T>
     where
         Self: 'a;
 
@@ -63,14 +63,14 @@ pub trait GeometryTrait {
         &self,
     ) -> GeometryType<
         '_,
-        Self::Point<'_>,
-        Self::LineString<'_>,
-        Self::Polygon<'_>,
-        Self::MultiPoint<'_>,
-        Self::MultiLineString<'_>,
-        Self::MultiPolygon<'_>,
-        Self::GeometryCollection<'_>,
-        Self::Rect<'_>,
+        Self::PointType<'_>,
+        Self::LineStringType<'_>,
+        Self::PolygonType<'_>,
+        Self::MultiPointType<'_>,
+        Self::MultiLineStringType<'_>,
+        Self::MultiPolygonType<'_>,
+        Self::GeometryCollectionType<'_>,
+        Self::RectType<'_>,
     >;
 }
 
@@ -108,14 +108,14 @@ where
 
 impl<'a, T: CoordNum + 'a> GeometryTrait for Geometry<T> {
     type T = T;
-    type Point<'b> = Point<Self::T> where Self: 'b;
-    type LineString<'b> = LineString<Self::T> where Self: 'b;
-    type Polygon<'b> = Polygon<Self::T> where Self: 'b;
-    type MultiPoint<'b> = MultiPoint<Self::T> where Self: 'b;
-    type MultiLineString<'b> = MultiLineString<Self::T> where Self: 'b;
-    type MultiPolygon<'b> = MultiPolygon<Self::T> where Self: 'b;
-    type GeometryCollection<'b> = GeometryCollection<Self::T> where Self: 'b;
-    type Rect<'b> = Rect<Self::T> where Self: 'b;
+    type PointType<'b> = Point<Self::T> where Self: 'b;
+    type LineStringType<'b> = LineString<Self::T> where Self: 'b;
+    type PolygonType<'b> = Polygon<Self::T> where Self: 'b;
+    type MultiPointType<'b> = MultiPoint<Self::T> where Self: 'b;
+    type MultiLineStringType<'b> = MultiLineString<Self::T> where Self: 'b;
+    type MultiPolygonType<'b> = MultiPolygon<Self::T> where Self: 'b;
+    type GeometryCollectionType<'b> = GeometryCollection<Self::T> where Self: 'b;
+    type RectType<'b> = Rect<Self::T> where Self: 'b;
 
     fn dim(&self) -> Dimension {
         Dimension::XY
@@ -150,14 +150,14 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for Geometry<T> {
 
 impl<'a, T: CoordNum + 'a> GeometryTrait for &'a Geometry<T> {
     type T = T;
-    type Point<'b> = Point<Self::T> where Self: 'b;
-    type LineString<'b> = LineString<Self::T> where Self: 'b;
-    type Polygon<'b> = Polygon<Self::T> where Self: 'b;
-    type MultiPoint<'b> = MultiPoint<Self::T> where Self: 'b;
-    type MultiLineString<'b> = MultiLineString<Self::T> where Self: 'b;
-    type MultiPolygon<'b> = MultiPolygon<Self::T> where Self: 'b;
-    type GeometryCollection<'b> = GeometryCollection<Self::T> where Self: 'b;
-    type Rect<'b> = Rect<Self::T> where Self: 'b;
+    type PointType<'b> = Point<Self::T> where Self: 'b;
+    type LineStringType<'b> = LineString<Self::T> where Self: 'b;
+    type PolygonType<'b> = Polygon<Self::T> where Self: 'b;
+    type MultiPointType<'b> = MultiPoint<Self::T> where Self: 'b;
+    type MultiLineStringType<'b> = MultiLineString<Self::T> where Self: 'b;
+    type MultiPolygonType<'b> = MultiPolygon<Self::T> where Self: 'b;
+    type GeometryCollectionType<'b> = GeometryCollection<Self::T> where Self: 'b;
+    type RectType<'b> = Rect<Self::T> where Self: 'b;
 
     fn dim(&self) -> Dimension {
         Dimension::XY
@@ -196,14 +196,14 @@ macro_rules! impl_specialization {
     ($geometry_type:ident) => {
         impl<T: CoordNum> GeometryTrait for $geometry_type<T> {
             type T = T;
-            type Point<'b> = Point<Self::T> where Self: 'b;
-            type LineString<'b> = LineString<Self::T> where Self: 'b;
-            type Polygon<'b> = Polygon<Self::T> where Self: 'b;
-            type MultiPoint<'b> = MultiPoint<Self::T> where Self: 'b;
-            type MultiLineString<'b> = MultiLineString<Self::T> where Self: 'b;
-            type MultiPolygon<'b> = MultiPolygon<Self::T> where Self: 'b;
-            type GeometryCollection<'b> = GeometryCollection<Self::T> where Self: 'b;
-            type Rect<'b> = Rect<Self::T> where Self: 'b;
+            type PointType<'b> = Point<Self::T> where Self: 'b;
+            type LineStringType<'b> = LineString<Self::T> where Self: 'b;
+            type PolygonType<'b> = Polygon<Self::T> where Self: 'b;
+            type MultiPointType<'b> = MultiPoint<Self::T> where Self: 'b;
+            type MultiLineStringType<'b> = MultiLineString<Self::T> where Self: 'b;
+            type MultiPolygonType<'b> = MultiPolygon<Self::T> where Self: 'b;
+            type GeometryCollectionType<'b> = GeometryCollection<Self::T> where Self: 'b;
+            type RectType<'b> = Rect<Self::T> where Self: 'b;
 
             fn dim(&self) -> Dimension {
                 Dimension::XY
@@ -228,14 +228,14 @@ macro_rules! impl_specialization {
 
         impl<'a, T: CoordNum + 'a> GeometryTrait for &'a $geometry_type<T> {
             type T = T;
-            type Point<'b> = Point<Self::T> where Self: 'b;
-            type LineString<'b> = LineString<Self::T> where Self: 'b;
-            type Polygon<'b> = Polygon<Self::T> where Self: 'b;
-            type MultiPoint<'b> = MultiPoint<Self::T> where Self: 'b;
-            type MultiLineString<'b> = MultiLineString<Self::T> where Self: 'b;
-            type MultiPolygon<'b> = MultiPolygon<Self::T> where Self: 'b;
-            type GeometryCollection<'b> = GeometryCollection<Self::T> where Self: 'b;
-            type Rect<'b> = Rect<Self::T> where Self: 'b;
+            type PointType<'b> = Point<Self::T> where Self: 'b;
+            type LineStringType<'b> = LineString<Self::T> where Self: 'b;
+            type PolygonType<'b> = Polygon<Self::T> where Self: 'b;
+            type MultiPointType<'b> = MultiPoint<Self::T> where Self: 'b;
+            type MultiLineStringType<'b> = MultiLineString<Self::T> where Self: 'b;
+            type MultiPolygonType<'b> = MultiPolygon<Self::T> where Self: 'b;
+            type GeometryCollectionType<'b> = GeometryCollection<Self::T> where Self: 'b;
+            type RectType<'b> = Rect<Self::T> where Self: 'b;
 
             fn dim(&self) -> Dimension {
                 Dimension::XY
