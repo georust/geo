@@ -189,3 +189,82 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for &'a Geometry<T> {
         }
     }
 }
+
+// Specialized implementations on each geo-types concrete type.
+
+macro_rules! impl_specialization {
+    ($geometry_type:ident) => {
+        impl<T: CoordNum> GeometryTrait for $geometry_type<T> {
+            type T = T;
+            type Point<'b> = Point<Self::T> where Self: 'b;
+            type LineString<'b> = LineString<Self::T> where Self: 'b;
+            type Polygon<'b> = Polygon<Self::T> where Self: 'b;
+            type MultiPoint<'b> = MultiPoint<Self::T> where Self: 'b;
+            type MultiLineString<'b> = MultiLineString<Self::T> where Self: 'b;
+            type MultiPolygon<'b> = MultiPolygon<Self::T> where Self: 'b;
+            type GeometryCollection<'b> = GeometryCollection<Self::T> where Self: 'b;
+            type Rect<'b> = Rect<Self::T> where Self: 'b;
+
+            fn dim(&self) -> Dimension {
+                Dimension::XY
+            }
+
+            fn as_type(
+                &self,
+            ) -> GeometryType<
+                '_,
+                Point<T>,
+                LineString<T>,
+                Polygon<T>,
+                MultiPoint<T>,
+                MultiLineString<T>,
+                MultiPolygon<T>,
+                GeometryCollection<T>,
+                Rect<T>,
+            > {
+                GeometryType::$geometry_type(self)
+            }
+        }
+
+        impl<'a, T: CoordNum + 'a> GeometryTrait for &'a $geometry_type<T> {
+            type T = T;
+            type Point<'b> = Point<Self::T> where Self: 'b;
+            type LineString<'b> = LineString<Self::T> where Self: 'b;
+            type Polygon<'b> = Polygon<Self::T> where Self: 'b;
+            type MultiPoint<'b> = MultiPoint<Self::T> where Self: 'b;
+            type MultiLineString<'b> = MultiLineString<Self::T> where Self: 'b;
+            type MultiPolygon<'b> = MultiPolygon<Self::T> where Self: 'b;
+            type GeometryCollection<'b> = GeometryCollection<Self::T> where Self: 'b;
+            type Rect<'b> = Rect<Self::T> where Self: 'b;
+
+            fn dim(&self) -> Dimension {
+                Dimension::XY
+            }
+
+            fn as_type(
+                &self,
+            ) -> GeometryType<
+                '_,
+                Point<T>,
+                LineString<T>,
+                Polygon<T>,
+                MultiPoint<T>,
+                MultiLineString<T>,
+                MultiPolygon<T>,
+                GeometryCollection<T>,
+                Rect<T>,
+            > {
+                GeometryType::$geometry_type(self)
+            }
+        }
+    };
+}
+
+impl_specialization!(Point);
+impl_specialization!(LineString);
+impl_specialization!(Polygon);
+impl_specialization!(MultiPoint);
+impl_specialization!(MultiLineString);
+impl_specialization!(MultiPolygon);
+impl_specialization!(GeometryCollection);
+impl_specialization!(Rect);
