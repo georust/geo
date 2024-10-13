@@ -7,7 +7,7 @@ pub trait LineStringTrait: Sized {
     type T: CoordNum;
 
     /// The type of each underlying coordinate, which implements [PointTrait]
-    type ItemType<'a>: 'a + PointTrait<T = Self::T>
+    type PointType<'a>: 'a + PointTrait<T = Self::T>
     where
         Self: 'a;
 
@@ -15,7 +15,7 @@ pub trait LineStringTrait: Sized {
     fn dim(&self) -> Dimension;
 
     /// An iterator over the points in this LineString
-    fn points(&self) -> impl Iterator<Item = Self::ItemType<'_>> {
+    fn points(&self) -> impl Iterator<Item = Self::PointType<'_>> {
         LineStringIterator::new(self, 0, self.num_points())
     }
 
@@ -25,7 +25,7 @@ pub trait LineStringTrait: Sized {
     /// Access to a specified point in this LineString
     /// Will return None if the provided index is out of bounds
     #[inline]
-    fn point(&self, i: usize) -> Option<Self::ItemType<'_>> {
+    fn point(&self, i: usize) -> Option<Self::PointType<'_>> {
         if i >= self.num_points() {
             None
         } else {
@@ -38,12 +38,12 @@ pub trait LineStringTrait: Sized {
     /// # Safety
     ///
     /// Accessing an index out of bounds is UB.
-    unsafe fn point_unchecked(&self, i: usize) -> Self::ItemType<'_>;
+    unsafe fn point_unchecked(&self, i: usize) -> Self::PointType<'_>;
 }
 
 impl<T: CoordNum> LineStringTrait for LineString<T> {
     type T = T;
-    type ItemType<'a> = &'a Coord<Self::T> where Self: 'a;
+    type PointType<'a> = &'a Coord<Self::T> where Self: 'a;
 
     fn dim(&self) -> Dimension {
         Dimension::XY
@@ -53,14 +53,14 @@ impl<T: CoordNum> LineStringTrait for LineString<T> {
         self.0.len()
     }
 
-    unsafe fn point_unchecked(&self, i: usize) -> Self::ItemType<'_> {
+    unsafe fn point_unchecked(&self, i: usize) -> Self::PointType<'_> {
         self.0.get_unchecked(i)
     }
 }
 
 impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
     type T = T;
-    type ItemType<'b> = &'a Coord<Self::T> where Self: 'b;
+    type PointType<'b> = &'a Coord<Self::T> where Self: 'b;
 
     fn dim(&self) -> Dimension {
         Dimension::XY
@@ -70,7 +70,7 @@ impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
         self.0.len()
     }
 
-    unsafe fn point_unchecked(&self, i: usize) -> Self::ItemType<'_> {
+    unsafe fn point_unchecked(&self, i: usize) -> Self::PointType<'_> {
         self.0.get_unchecked(i)
     }
 }

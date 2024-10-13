@@ -7,7 +7,7 @@ pub trait MultiLineStringTrait: Sized {
     type T: CoordNum;
 
     /// The type of each underlying LineString, which implements [LineStringTrait]
-    type ItemType<'a>: 'a + LineStringTrait<T = Self::T>
+    type LineStringType<'a>: 'a + LineStringTrait<T = Self::T>
     where
         Self: 'a;
 
@@ -15,7 +15,7 @@ pub trait MultiLineStringTrait: Sized {
     fn dim(&self) -> Dimension;
 
     /// An iterator over the LineStrings in this MultiLineString
-    fn line_strings(&self) -> impl Iterator<Item = Self::ItemType<'_>> {
+    fn line_strings(&self) -> impl Iterator<Item = Self::LineStringType<'_>> {
         MultiLineStringIterator::new(self, 0, self.num_line_strings())
     }
 
@@ -24,7 +24,7 @@ pub trait MultiLineStringTrait: Sized {
 
     /// Access to a specified line_string in this MultiLineString
     /// Will return None if the provided index is out of bounds
-    fn line_string(&self, i: usize) -> Option<Self::ItemType<'_>> {
+    fn line_string(&self, i: usize) -> Option<Self::LineStringType<'_>> {
         if i >= self.num_line_strings() {
             None
         } else {
@@ -37,12 +37,12 @@ pub trait MultiLineStringTrait: Sized {
     /// # Safety
     ///
     /// Accessing an index out of bounds is UB.
-    unsafe fn line_string_unchecked(&self, i: usize) -> Self::ItemType<'_>;
+    unsafe fn line_string_unchecked(&self, i: usize) -> Self::LineStringType<'_>;
 }
 
 impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
     type T = T;
-    type ItemType<'a> = &'a LineString<Self::T> where Self: 'a;
+    type LineStringType<'a> = &'a LineString<Self::T> where Self: 'a;
 
     fn dim(&self) -> Dimension {
         Dimension::XY
@@ -52,14 +52,14 @@ impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
         self.0.len()
     }
 
-    unsafe fn line_string_unchecked(&self, i: usize) -> Self::ItemType<'_> {
+    unsafe fn line_string_unchecked(&self, i: usize) -> Self::LineStringType<'_> {
         self.0.get_unchecked(i)
     }
 }
 
 impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
     type T = T;
-    type ItemType<'b> = &'a LineString<Self::T> where Self: 'b;
+    type LineStringType<'b> = &'a LineString<Self::T> where Self: 'b;
 
     fn dim(&self) -> Dimension {
         Dimension::XY
@@ -69,7 +69,7 @@ impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
         self.0.len()
     }
 
-    unsafe fn line_string_unchecked(&self, i: usize) -> Self::ItemType<'_> {
+    unsafe fn line_string_unchecked(&self, i: usize) -> Self::LineStringType<'_> {
         self.0.get_unchecked(i)
     }
 }

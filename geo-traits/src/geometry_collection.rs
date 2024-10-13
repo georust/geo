@@ -7,7 +7,7 @@ pub trait GeometryCollectionTrait: Sized {
     type T: CoordNum;
 
     /// The type of each underlying geometry, which implements [GeometryTrait]
-    type ItemType<'a>: 'a + GeometryTrait<T = Self::T>
+    type GeometryType<'a>: 'a + GeometryTrait<T = Self::T>
     where
         Self: 'a;
 
@@ -15,7 +15,7 @@ pub trait GeometryCollectionTrait: Sized {
     fn dim(&self) -> Dimension;
 
     /// An iterator over the geometries in this GeometryCollection
-    fn geometries(&self) -> impl Iterator<Item = Self::ItemType<'_>> {
+    fn geometries(&self) -> impl Iterator<Item = Self::GeometryType<'_>> {
         GeometryCollectionIterator::new(self, 0, self.num_geometries())
     }
 
@@ -24,7 +24,7 @@ pub trait GeometryCollectionTrait: Sized {
 
     /// Access to a specified geometry in this GeometryCollection
     /// Will return None if the provided index is out of bounds
-    fn geometry(&self, i: usize) -> Option<Self::ItemType<'_>> {
+    fn geometry(&self, i: usize) -> Option<Self::GeometryType<'_>> {
         if i >= self.num_geometries() {
             None
         } else {
@@ -37,12 +37,12 @@ pub trait GeometryCollectionTrait: Sized {
     /// # Safety
     ///
     /// Accessing an index out of bounds is UB.
-    unsafe fn geometry_unchecked(&self, i: usize) -> Self::ItemType<'_>;
+    unsafe fn geometry_unchecked(&self, i: usize) -> Self::GeometryType<'_>;
 }
 
 impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
     type T = T;
-    type ItemType<'a> = &'a Geometry<Self::T>
+    type GeometryType<'a> = &'a Geometry<Self::T>
     where
         Self: 'a;
 
@@ -54,14 +54,14 @@ impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
         self.0.len()
     }
 
-    unsafe fn geometry_unchecked(&self, i: usize) -> Self::ItemType<'_> {
+    unsafe fn geometry_unchecked(&self, i: usize) -> Self::GeometryType<'_> {
         self.0.get_unchecked(i)
     }
 }
 
 impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
     type T = T;
-    type ItemType<'b> = &'a Geometry<Self::T> where
+    type GeometryType<'b> = &'a Geometry<Self::T> where
         Self: 'b;
 
     fn dim(&self) -> Dimension {
@@ -72,7 +72,7 @@ impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
         self.0.len()
     }
 
-    unsafe fn geometry_unchecked(&self, i: usize) -> Self::ItemType<'_> {
+    unsafe fn geometry_unchecked(&self, i: usize) -> Self::GeometryType<'_> {
         self.0.get_unchecked(i)
     }
 }

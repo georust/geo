@@ -7,7 +7,7 @@ pub trait MultiPolygonTrait: Sized {
     type T: CoordNum;
 
     /// The type of each underlying Polygon, which implements [PolygonTrait]
-    type ItemType<'a>: 'a + PolygonTrait<T = Self::T>
+    type PolygonType<'a>: 'a + PolygonTrait<T = Self::T>
     where
         Self: 'a;
 
@@ -15,7 +15,7 @@ pub trait MultiPolygonTrait: Sized {
     fn dim(&self) -> Dimension;
 
     /// An iterator over the Polygons in this MultiPolygon
-    fn polygons(&self) -> impl Iterator<Item = Self::ItemType<'_>> {
+    fn polygons(&self) -> impl Iterator<Item = Self::PolygonType<'_>> {
         MultiPolygonIterator::new(self, 0, self.num_polygons())
     }
 
@@ -24,7 +24,7 @@ pub trait MultiPolygonTrait: Sized {
 
     /// Access to a specified polygon in this MultiPolygon
     /// Will return None if the provided index is out of bounds
-    fn polygon(&self, i: usize) -> Option<Self::ItemType<'_>> {
+    fn polygon(&self, i: usize) -> Option<Self::PolygonType<'_>> {
         if i >= self.num_polygons() {
             None
         } else {
@@ -37,12 +37,12 @@ pub trait MultiPolygonTrait: Sized {
     /// # Safety
     ///
     /// Accessing an index out of bounds is UB.
-    unsafe fn polygon_unchecked(&self, i: usize) -> Self::ItemType<'_>;
+    unsafe fn polygon_unchecked(&self, i: usize) -> Self::PolygonType<'_>;
 }
 
 impl<T: CoordNum> MultiPolygonTrait for MultiPolygon<T> {
     type T = T;
-    type ItemType<'a> = &'a Polygon<Self::T> where Self: 'a;
+    type PolygonType<'a> = &'a Polygon<Self::T> where Self: 'a;
 
     fn dim(&self) -> Dimension {
         Dimension::XY
@@ -52,14 +52,14 @@ impl<T: CoordNum> MultiPolygonTrait for MultiPolygon<T> {
         self.0.len()
     }
 
-    unsafe fn polygon_unchecked(&self, i: usize) -> Self::ItemType<'_> {
+    unsafe fn polygon_unchecked(&self, i: usize) -> Self::PolygonType<'_> {
         self.0.get_unchecked(i)
     }
 }
 
 impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
     type T = T;
-    type ItemType<'b> = &'a Polygon<Self::T> where Self: 'b;
+    type PolygonType<'b> = &'a Polygon<Self::T> where Self: 'b;
 
     fn dim(&self) -> Dimension {
         Dimension::XY
@@ -69,7 +69,7 @@ impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
         self.0.len()
     }
 
-    unsafe fn polygon_unchecked(&self, i: usize) -> Self::ItemType<'_> {
+    unsafe fn polygon_unchecked(&self, i: usize) -> Self::PolygonType<'_> {
         self.0.get_unchecked(i)
     }
 }
