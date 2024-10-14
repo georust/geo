@@ -2,6 +2,8 @@ use crate::{Dimension, GeometryCollectionIterator, GeometryTrait};
 use geo_types::{CoordNum, Geometry, GeometryCollection};
 
 /// A trait for accessing data from a generic GeometryCollection.
+///
+/// A GeometryCollection is a collection of [Geometry][GeometryTrait] types.
 pub trait GeometryCollectionTrait: Sized {
     /// The coordinate type of this geometry
     type T: CoordNum;

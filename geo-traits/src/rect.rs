@@ -5,6 +5,9 @@ use geo_types::{Coord, CoordNum, Rect};
 use crate::{Dimension, PointTrait, UnimplementedPoint};
 
 /// A trait for accessing data from a generic Rect.
+///
+/// A Rect is an _axis-aligned_ bounded 2D rectangle whose area is
+/// defined by minimum and maximum [`Point`s][PointTrait].
 pub trait RectTrait {
     /// The coordinate type of this geometry
     type T: CoordNum;

@@ -5,6 +5,12 @@ use crate::{Dimension, LineStringTrait, PolygonInteriorIterator};
 use geo_types::{CoordNum, LineString, Polygon};
 
 /// A trait for accessing data from a generic Polygon.
+///
+/// A `Polygon`’s outer boundary (_exterior ring_) is represented by a
+/// [`LineString`][LineStringTrait]. It may contain zero or more holes (_interior rings_), also
+/// represented by `LineString`s.
+///
+/// Refer to [geo_types::Polygon] for information about semantics and validity.
 pub trait PolygonTrait: Sized {
     /// The coordinate type of this geometry
     type T: CoordNum;

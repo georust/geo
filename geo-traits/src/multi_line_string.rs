@@ -5,6 +5,10 @@ use crate::{Dimension, LineStringTrait, MultiLineStringIterator};
 use geo_types::{CoordNum, LineString, MultiLineString};
 
 /// A trait for accessing data from a generic MultiLineString.
+///
+/// A MultiLineString is a collection of [`LineString`s][LineStringTrait].
+///
+/// Refer to [geo_types::MultiLineString] for information about semantics and validity.
 pub trait MultiLineStringTrait: Sized {
     /// The coordinate type of this geometry
     type T: CoordNum;

@@ -5,6 +5,8 @@ use crate::{Dimension, MultiPolygonIterator, PolygonTrait};
 use geo_types::{CoordNum, MultiPolygon, Polygon};
 
 /// A trait for accessing data from a generic MultiPolygon.
+///
+/// Refer to [geo_types::MultiPolygon] for information about semantics and validity.
 pub trait MultiPolygonTrait: Sized {
     /// The coordinate type of this geometry
     type T: CoordNum;

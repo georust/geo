@@ -4,6 +4,10 @@ use crate::{Dimension, MultiPointIterator, PointTrait, UnimplementedPoint};
 use geo_types::{CoordNum, MultiPoint, Point};
 
 /// A trait for accessing data from a generic MultiPoint.
+///
+/// A MultiPoint is a collection of [`Point`s][PointTrait].
+///
+/// Refer to [geo_types::MultiPoint] for information about semantics and validity.
 pub trait MultiPointTrait: Sized {
     /// The coordinate type of this geometry
     type T: CoordNum;

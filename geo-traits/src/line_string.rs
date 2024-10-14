@@ -4,6 +4,11 @@ use crate::{Dimension, LineStringIterator, PointTrait, UnimplementedPoint};
 use geo_types::{Coord, CoordNum, LineString};
 
 /// A trait for accessing data from a generic LineString.
+///
+/// A LineString is an ordered collection of two or more [points][PointTrait], representing a path
+/// between locations.
+///
+/// Refer to [geo_types::LineString] for information about semantics and validity.
 pub trait LineStringTrait: Sized {
     /// The coordinate type of this geometry
     type T: CoordNum;

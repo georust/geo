@@ -5,6 +5,8 @@ use geo_types::{Coord, CoordNum, Point};
 use crate::Dimension;
 
 /// A trait for accessing data from a generic Point.
+///
+/// Refer to [geo_types::Point] for information about semantics and validity.
 pub trait PointTrait {
     /// The coordinate type of this geometry
     type T: CoordNum;
