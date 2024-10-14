@@ -48,6 +48,9 @@
 * Fix `(LINESTRING EMPTY).contains(LINESTRING EMPTY)` and `(MULTIPOLYGON EMPTY).contains(MULTIPOINT EMPTY)` which previously
   reported true
   * <https://github.com/georust/geo/pull/1227>
+* Improve `HasDimensions::dimensions` to handle dimensionally collapsed and empty geometries more consistently.
+  A collection (like MultiPolygon) will now have EmptyDimensions when all of its elements have EmptyDimensions.
+  * <https://github.com/georust/geo/pull/1226>
 
 ## 0.28.0
 
