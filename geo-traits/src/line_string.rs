@@ -1,4 +1,6 @@
-use crate::{Dimension, LineStringIterator, PointTrait};
+use std::marker::PhantomData;
+
+use crate::{Dimension, LineStringIterator, PointTrait, UnimplementedPoint};
 use geo_types::{Coord, CoordNum, LineString};
 
 /// A trait for accessing data from a generic LineString.
@@ -72,5 +74,28 @@ impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
 
     unsafe fn point_unchecked(&self, i: usize) -> Self::PointType<'_> {
         self.0.get_unchecked(i)
+    }
+}
+
+/// An empty struct that implements [LineStringTrait].
+///
+/// This can be used as the `LineStringType` of the `GeometryTrait` by implementations that don't
+/// have a LineString concept
+pub struct UnimplementedLineString<T: CoordNum>(PhantomData<T>);
+
+impl<T: CoordNum> LineStringTrait for UnimplementedLineString<T> {
+    type T = T;
+    type PointType<'a> = UnimplementedPoint<Self::T> where Self: 'a;
+
+    fn dim(&self) -> Dimension {
+        unimplemented!()
+    }
+
+    fn num_points(&self) -> usize {
+        unimplemented!()
+    }
+
+    unsafe fn point_unchecked(&self, _i: usize) -> Self::PointType<'_> {
+        unimplemented!()
     }
 }

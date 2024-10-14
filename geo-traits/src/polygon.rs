@@ -1,3 +1,6 @@
+use std::marker::PhantomData;
+
+use crate::line_string::UnimplementedLineString;
 use crate::{Dimension, LineStringTrait, PolygonInteriorIterator};
 use geo_types::{CoordNum, LineString, Polygon};
 
@@ -85,5 +88,32 @@ impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
 
     unsafe fn interior_unchecked(&self, i: usize) -> Self::RingType<'_> {
         unsafe { Polygon::interiors(self).get_unchecked(i) }
+    }
+}
+
+/// An empty struct that implements [PolygonTrait].
+///
+/// This can be used as the `PolygonType` of the `GeometryTrait` by implementations that don't have a
+/// Polygon concept
+pub struct UnimplementedPolygon<T: CoordNum>(PhantomData<T>);
+
+impl<T: CoordNum> PolygonTrait for UnimplementedPolygon<T> {
+    type T = T;
+    type RingType<'a> = UnimplementedLineString<Self::T> where Self: 'a;
+
+    fn dim(&self) -> Dimension {
+        unimplemented!()
+    }
+
+    fn exterior(&self) -> Option<Self::RingType<'_>> {
+        unimplemented!()
+    }
+
+    fn num_interiors(&self) -> usize {
+        unimplemented!()
+    }
+
+    unsafe fn interior_unchecked(&self, _i: usize) -> Self::RingType<'_> {
+        unimplemented!()
     }
 }

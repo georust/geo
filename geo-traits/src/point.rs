@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use geo_types::{Coord, CoordNum, Point};
 
 use crate::Dimension;
@@ -27,10 +29,14 @@ pub trait PointTrait {
     }
 
     /// x component of this point.
-    fn x(&self) -> Self::T;
+    fn x(&self) -> Self::T {
+        self.nth(0).unwrap()
+    }
 
     /// y component of this point.
-    fn y(&self) -> Self::T;
+    fn y(&self) -> Self::T {
+        self.nth(1).unwrap()
+    }
 
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the point.
     fn x_y(&self) -> (Self::T, Self::T) {
@@ -155,5 +161,23 @@ impl<T: CoordNum> PointTrait for (T, T) {
 
     fn y(&self) -> Self::T {
         self.1
+    }
+}
+
+/// An empty struct that implements [PointTrait].
+///
+/// This can be used as the `PointType` of the `GeometryTrait` by implementations that don't have a
+/// Point concept
+pub struct UnimplementedPoint<T: CoordNum>(PhantomData<T>);
+
+impl<T: CoordNum> PointTrait for UnimplementedPoint<T> {
+    type T = T;
+
+    fn dim(&self) -> Dimension {
+        unimplemented!()
+    }
+
+    fn nth_unchecked(&self, _n: usize) -> Self::T {
+        unimplemented!()
     }
 }

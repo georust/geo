@@ -1,3 +1,6 @@
+use std::marker::PhantomData;
+
+use crate::polygon::UnimplementedPolygon;
 use crate::{Dimension, MultiPolygonIterator, PolygonTrait};
 use geo_types::{CoordNum, MultiPolygon, Polygon};
 
@@ -71,5 +74,28 @@ impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
 
     unsafe fn polygon_unchecked(&self, i: usize) -> Self::PolygonType<'_> {
         self.0.get_unchecked(i)
+    }
+}
+
+/// An empty struct that implements [MultiPolygonTrait].
+///
+/// This can be used as the `MultiPolygonType` of the `GeometryTrait` by implementations that don't
+/// have a MultiPolygon concept
+pub struct UnimplementedMultiPolygon<T: CoordNum>(PhantomData<T>);
+
+impl<T: CoordNum> MultiPolygonTrait for UnimplementedMultiPolygon<T> {
+    type T = T;
+    type PolygonType<'a> = UnimplementedPolygon<Self::T> where Self: 'a;
+
+    fn dim(&self) -> Dimension {
+        unimplemented!()
+    }
+
+    fn num_polygons(&self) -> usize {
+        unimplemented!()
+    }
+
+    unsafe fn polygon_unchecked(&self, _i: usize) -> Self::PolygonType<'_> {
+        unimplemented!()
     }
 }

@@ -1,3 +1,6 @@
+use std::marker::PhantomData;
+
+use crate::line_string::UnimplementedLineString;
 use crate::{Dimension, LineStringTrait, MultiLineStringIterator};
 use geo_types::{CoordNum, LineString, MultiLineString};
 
@@ -71,5 +74,28 @@ impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
 
     unsafe fn line_string_unchecked(&self, i: usize) -> Self::LineStringType<'_> {
         self.0.get_unchecked(i)
+    }
+}
+
+/// An empty struct that implements [MultiLineStringTrait].
+///
+/// This can be used as the `MultiLineStringType` of the `GeometryTrait` by implementations that
+/// don't have a MultiLineString concept
+pub struct UnimplementedMultiLineString<T: CoordNum>(PhantomData<T>);
+
+impl<T: CoordNum> MultiLineStringTrait for UnimplementedMultiLineString<T> {
+    type T = T;
+    type LineStringType<'a> = UnimplementedLineString<Self::T> where Self: 'a;
+
+    fn dim(&self) -> Dimension {
+        unimplemented!()
+    }
+
+    fn num_line_strings(&self) -> usize {
+        unimplemented!()
+    }
+
+    unsafe fn line_string_unchecked(&self, _i: usize) -> Self::LineStringType<'_> {
+        unimplemented!()
     }
 }

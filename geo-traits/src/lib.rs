@@ -22,13 +22,13 @@ pub use iterator::{
     GeometryCollectionIterator, LineStringIterator, MultiLineStringIterator, MultiPointIterator,
     MultiPolygonIterator, PolygonInteriorIterator,
 };
-pub use line_string::LineStringTrait;
-pub use multi_line_string::MultiLineStringTrait;
-pub use multi_point::MultiPointTrait;
-pub use multi_polygon::MultiPolygonTrait;
-pub use point::PointTrait;
-pub use polygon::PolygonTrait;
-pub use rect::RectTrait;
+pub use line_string::{LineStringTrait, UnimplementedLineString};
+pub use multi_line_string::{MultiLineStringTrait, UnimplementedMultiLineString};
+pub use multi_point::{MultiPointTrait, UnimplementedMultiPoint};
+pub use multi_polygon::{MultiPolygonTrait, UnimplementedMultiPolygon};
+pub use point::{PointTrait, UnimplementedPoint};
+pub use polygon::{PolygonTrait, UnimplementedPolygon};
+pub use rect::{RectTrait, UnimplementedRect};
 
 mod dimension;
 mod geometry;
