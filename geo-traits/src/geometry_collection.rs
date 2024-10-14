@@ -1,4 +1,5 @@
-use crate::{Dimension, GeometryCollectionIterator, GeometryTrait};
+use crate::iterator::GeometryCollectionIterator;
+use crate::{Dimension, GeometryTrait};
 use geo_types::{CoordNum, Geometry, GeometryCollection};
 
 /// A trait for accessing data from a generic GeometryCollection.

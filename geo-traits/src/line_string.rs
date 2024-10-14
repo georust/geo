@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 
-use crate::{Dimension, LineStringIterator, PointTrait, UnimplementedPoint};
+use crate::iterator::LineStringIterator;
+use crate::{Dimension, PointTrait, UnimplementedPoint};
 use geo_types::{Coord, CoordNum, LineString};
 
 /// A trait for accessing data from a generic LineString.

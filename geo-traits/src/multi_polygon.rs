@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
+use crate::iterator::MultiPolygonIterator;
 use crate::polygon::UnimplementedPolygon;
-use crate::{Dimension, MultiPolygonIterator, PolygonTrait};
+use crate::{Dimension, PolygonTrait};
 use geo_types::{CoordNum, MultiPolygon, Polygon};
 
 /// A trait for accessing data from a generic MultiPolygon.

@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
+use crate::iterator::PolygonInteriorIterator;
 use crate::line_string::UnimplementedLineString;
-use crate::{Dimension, LineStringTrait, PolygonInteriorIterator};
+use crate::{Dimension, LineStringTrait};
 use geo_types::{CoordNum, LineString, Polygon};
 
 /// A trait for accessing data from a generic Polygon.

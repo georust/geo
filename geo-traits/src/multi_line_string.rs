@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
+use crate::iterator::MultiLineStringIterator;
 use crate::line_string::UnimplementedLineString;
-use crate::{Dimension, LineStringTrait, MultiLineStringIterator};
+use crate::{Dimension, LineStringTrait};
 use geo_types::{CoordNum, LineString, MultiLineString};
 
 /// A trait for accessing data from a generic MultiLineString.

@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 
-use crate::{Dimension, MultiPointIterator, PointTrait, UnimplementedPoint};
+use crate::iterator::MultiPointIterator;
+use crate::{Dimension, PointTrait, UnimplementedPoint};
 use geo_types::{CoordNum, MultiPoint, Point};
 
 /// A trait for accessing data from a generic MultiPoint.

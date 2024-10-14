@@ -7,7 +7,7 @@ use geo_types::CoordNum;
 macro_rules! impl_iterator {
     ($struct_name:ident, $self_trait:ident, $item_trait:ident, $access_method:ident, $item_type:ident) => {
         /// An iterator over the parts of this geometry.
-        pub struct $struct_name<
+        pub(crate) struct $struct_name<
             'a,
             T: CoordNum,
             $item_type: 'a + $item_trait<T = T>,

@@ -18,10 +18,6 @@
 pub use dimension::Dimension;
 pub use geometry::{GeometryTrait, GeometryType};
 pub use geometry_collection::GeometryCollectionTrait;
-pub use iterator::{
-    GeometryCollectionIterator, LineStringIterator, MultiLineStringIterator, MultiPointIterator,
-    MultiPolygonIterator, PolygonInteriorIterator,
-};
 pub use line::{LineTrait, UnimplementedLine};
 pub use line_string::{LineStringTrait, UnimplementedLineString};
 pub use multi_line_string::{MultiLineStringTrait, UnimplementedMultiLineString};
