@@ -31,14 +31,10 @@ pub trait PointTrait {
     }
 
     /// x component of this point.
-    fn x(&self) -> Self::T {
-        self.nth(0).unwrap()
-    }
+    fn x(&self) -> Self::T;
 
     /// y component of this point.
-    fn y(&self) -> Self::T {
-        self.nth(1).unwrap()
-    }
+    fn y(&self) -> Self::T;
 
     /// Returns a tuple that contains the x/horizontal & y/vertical component of the point.
     fn x_y(&self) -> (Self::T, Self::T) {
@@ -180,6 +176,14 @@ impl<T: CoordNum> PointTrait for UnimplementedPoint<T> {
     }
 
     fn nth_unchecked(&self, _n: usize) -> Self::T {
+        unimplemented!()
+    }
+
+    fn x(&self) -> Self::T {
+        unimplemented!()
+    }
+
+    fn y(&self) -> Self::T {
         unimplemented!()
     }
 }
