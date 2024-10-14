@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::iterator::PolygonInteriorIterator;
 use crate::line_string::UnimplementedLineString;
-use crate::{Dimension, LineStringTrait};
+use crate::{Dimensions, LineStringTrait};
 use geo_types::{CoordNum, LineString, Polygon};
 
 /// A trait for accessing data from a generic Polygon.
@@ -22,7 +22,7 @@ pub trait PolygonTrait: Sized {
         Self: 'a;
 
     /// The dimension of this geometry
-    fn dim(&self) -> Dimension;
+    fn dim(&self) -> Dimensions;
 
     /// The exterior ring of the polygon
     fn exterior(&self) -> Option<Self::RingType<'_>>;
@@ -57,8 +57,8 @@ impl<T: CoordNum> PolygonTrait for Polygon<T> {
     type T = T;
     type RingType<'a> = &'a LineString<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn exterior(&self) -> Option<Self::RingType<'_>> {
@@ -84,8 +84,8 @@ impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
     type RingType<'b> = &'a LineString<Self::T> where
         Self: 'b;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn exterior(&self) -> Option<Self::RingType<'_>> {
@@ -116,7 +116,7 @@ impl<T: CoordNum> PolygonTrait for UnimplementedPolygon<T> {
     type T = T;
     type RingType<'a> = UnimplementedLineString<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
+    fn dim(&self) -> Dimensions {
         unimplemented!()
     }
 

@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::iterator::MultiLineStringIterator;
 use crate::line_string::UnimplementedLineString;
-use crate::{Dimension, LineStringTrait};
+use crate::{Dimensions, LineStringTrait};
 use geo_types::{CoordNum, LineString, MultiLineString};
 
 /// A trait for accessing data from a generic MultiLineString.
@@ -20,7 +20,7 @@ pub trait MultiLineStringTrait: Sized {
         Self: 'a;
 
     /// The dimension of this geometry
-    fn dim(&self) -> Dimension;
+    fn dim(&self) -> Dimensions;
 
     /// An iterator over the LineStrings in this MultiLineString
     fn line_strings(&self) -> impl Iterator<Item = Self::LineStringType<'_>> {
@@ -52,8 +52,8 @@ impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
     type T = T;
     type LineStringType<'a> = &'a LineString<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn num_line_strings(&self) -> usize {
@@ -69,8 +69,8 @@ impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
     type T = T;
     type LineStringType<'b> = &'a LineString<Self::T> where Self: 'b;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn num_line_strings(&self) -> usize {
@@ -92,7 +92,7 @@ impl<T: CoordNum> MultiLineStringTrait for UnimplementedMultiLineString<T> {
     type T = T;
     type LineStringType<'a> = UnimplementedLineString<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
+    fn dim(&self) -> Dimensions {
         unimplemented!()
     }
 

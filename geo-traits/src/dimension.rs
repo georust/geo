@@ -3,7 +3,7 @@
 ///
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Dimension {
+pub enum Dimensions {
     /// A two-dimensional geometry with X and Y values
     XY,
 
@@ -21,7 +21,7 @@ pub enum Dimension {
     Unknown(usize),
 }
 
-impl Dimension {
+impl Dimensions {
     /// The physical number of dimensions in this geometry.
     pub fn size(&self) -> usize {
         match self {

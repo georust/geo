@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::iterator::MultiPointIterator;
-use crate::{Dimension, PointTrait, UnimplementedPoint};
+use crate::{Dimensions, PointTrait, UnimplementedPoint};
 use geo_types::{CoordNum, MultiPoint, Point};
 
 /// A trait for accessing data from a generic MultiPoint.
@@ -19,7 +19,7 @@ pub trait MultiPointTrait: Sized {
         Self: 'a;
 
     /// The dimension of this geometry
-    fn dim(&self) -> Dimension;
+    fn dim(&self) -> Dimensions;
 
     /// An iterator over the points in this MultiPoint
     fn points(&self) -> impl Iterator<Item = Self::PointType<'_>> {
@@ -51,8 +51,8 @@ impl<T: CoordNum> MultiPointTrait for MultiPoint<T> {
     type T = T;
     type PointType<'a> = &'a Point<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn num_points(&self) -> usize {
@@ -68,8 +68,8 @@ impl<'a, T: CoordNum> MultiPointTrait for &'a MultiPoint<T> {
     type T = T;
     type PointType<'b> = &'a Point<Self::T> where Self: 'b;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn num_points(&self) -> usize {
@@ -91,7 +91,7 @@ impl<T: CoordNum> MultiPointTrait for UnimplementedMultiPoint<T> {
     type T = T;
     type PointType<'a> = UnimplementedPoint<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
+    fn dim(&self) -> Dimensions {
         unimplemented!()
     }
 

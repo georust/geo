@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::iterator::LineStringIterator;
-use crate::{Dimension, PointTrait, UnimplementedPoint};
+use crate::{Dimensions, PointTrait, UnimplementedPoint};
 use geo_types::{Coord, CoordNum, LineString};
 
 /// A trait for accessing data from a generic LineString.
@@ -20,7 +20,7 @@ pub trait LineStringTrait: Sized {
         Self: 'a;
 
     /// The dimension of this geometry
-    fn dim(&self) -> Dimension;
+    fn dim(&self) -> Dimensions;
 
     /// An iterator over the points in this LineString
     fn points(&self) -> impl Iterator<Item = Self::PointType<'_>> {
@@ -53,8 +53,8 @@ impl<T: CoordNum> LineStringTrait for LineString<T> {
     type T = T;
     type PointType<'a> = &'a Coord<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn num_points(&self) -> usize {
@@ -70,8 +70,8 @@ impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
     type T = T;
     type PointType<'b> = &'a Coord<Self::T> where Self: 'b;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn num_points(&self) -> usize {
@@ -93,7 +93,7 @@ impl<T: CoordNum> LineStringTrait for UnimplementedLineString<T> {
     type T = T;
     type PointType<'a> = UnimplementedPoint<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
+    fn dim(&self) -> Dimensions {
         unimplemented!()
     }
 

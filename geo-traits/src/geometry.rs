@@ -4,7 +4,7 @@ use geo_types::{
 };
 
 use crate::{
-    Dimension, GeometryCollectionTrait, LineStringTrait, LineTrait, MultiLineStringTrait,
+    Dimensions, GeometryCollectionTrait, LineStringTrait, LineTrait, MultiLineStringTrait,
     MultiPointTrait, MultiPolygonTrait, PointTrait, PolygonTrait, RectTrait, TriangleTrait,
 };
 
@@ -65,7 +65,7 @@ pub trait GeometryTrait {
         Self: 'a;
 
     /// The dimension of this geometry
-    fn dim(&self) -> Dimension;
+    fn dim(&self) -> Dimensions;
 
     /// Cast this geometry to a [`GeometryType`] enum, which allows for downcasting to a specific
     /// type
@@ -137,8 +137,8 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for Geometry<T> {
     type TriangleType<'b> = Triangle<Self::T> where Self: 'b;
     type LineType<'b> = Line<Self::T> where Self: 'b;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn as_type(
@@ -184,8 +184,8 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for &'a Geometry<T> {
     type TriangleType<'b> = Triangle<Self::T> where Self: 'b;
     type LineType<'b> = Line<Self::T> where Self: 'b;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn as_type(
@@ -235,8 +235,8 @@ macro_rules! impl_specialization {
             type TriangleType<'b> = Triangle<Self::T> where Self: 'b;
             type LineType<'b> = Line<Self::T> where Self: 'b;
 
-            fn dim(&self) -> Dimension {
-                Dimension::XY
+            fn dim(&self) -> Dimensions {
+                Dimensions::XY
             }
 
             fn as_type(
@@ -271,8 +271,8 @@ macro_rules! impl_specialization {
             type TriangleType<'b> = Triangle<Self::T> where Self: 'b;
             type LineType<'b> = Line<Self::T> where Self: 'b;
 
-            fn dim(&self) -> Dimension {
-                Dimension::XY
+            fn dim(&self) -> Dimensions {
+                Dimensions::XY
             }
 
             fn as_type(

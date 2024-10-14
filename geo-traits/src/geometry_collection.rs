@@ -1,5 +1,5 @@
 use crate::iterator::GeometryCollectionIterator;
-use crate::{Dimension, GeometryTrait};
+use crate::{Dimensions, GeometryTrait};
 use geo_types::{CoordNum, Geometry, GeometryCollection};
 
 /// A trait for accessing data from a generic GeometryCollection.
@@ -15,7 +15,7 @@ pub trait GeometryCollectionTrait: Sized {
         Self: 'a;
 
     /// The dimension of this geometry
-    fn dim(&self) -> Dimension;
+    fn dim(&self) -> Dimensions;
 
     /// An iterator over the geometries in this GeometryCollection
     fn geometries(&self) -> impl Iterator<Item = Self::GeometryType<'_>> {
@@ -49,8 +49,8 @@ impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
     where
         Self: 'a;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn num_geometries(&self) -> usize {
@@ -67,8 +67,8 @@ impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
     type GeometryType<'b> = &'a Geometry<Self::T> where
         Self: 'b;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn num_geometries(&self) -> usize {

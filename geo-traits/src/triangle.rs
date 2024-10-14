@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::{Dimension, PointTrait, UnimplementedPoint};
+use crate::{Dimensions, PointTrait, UnimplementedPoint};
 use geo_types::{Coord, CoordNum, Triangle};
 
 /// A trait for accessing data from a generic Triangle.
@@ -18,7 +18,7 @@ pub trait TriangleTrait: Sized {
         Self: 'a;
 
     /// The dimension of this geometry
-    fn dim(&self) -> Dimension;
+    fn dim(&self) -> Dimensions;
 
     /// Access the first point in this Triangle
     fn first(&self) -> Self::PointType<'_>;
@@ -45,8 +45,8 @@ impl<T: CoordNum> TriangleTrait for Triangle<T> {
     type T = T;
     type PointType<'a> = &'a Coord<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn first(&self) -> Self::PointType<'_> {
@@ -66,8 +66,8 @@ impl<'a, T: CoordNum> TriangleTrait for &'a Triangle<T> {
     type T = T;
     type PointType<'b> = &'a Coord<Self::T> where Self: 'b;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn first(&self) -> Self::PointType<'_> {
@@ -93,7 +93,7 @@ impl<T: CoordNum> TriangleTrait for UnimplementedTriangle<T> {
     type T = T;
     type PointType<'a> = UnimplementedPoint<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
+    fn dim(&self) -> Dimensions {
         unimplemented!()
     }
 

@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use geo_types::{Coord, CoordNum, Point};
 
-use crate::Dimension;
+use crate::Dimensions;
 
 /// A trait for accessing data from a generic Point.
 ///
@@ -16,8 +16,8 @@ pub trait PointTrait {
     /// See also [`nth()`](Self::nth).
     fn nth_unchecked(&self, n: usize) -> Self::T;
 
-    /// Dimension of the coordinate tuple
-    fn dim(&self) -> Dimension;
+    /// Dimensions of the coordinate tuple
+    fn dim(&self) -> Dimensions;
 
     /// Access the n'th (0-based) element of the CoordinateTuple.
     /// Returns NaN if `n >= DIMENSION`.
@@ -57,8 +57,8 @@ impl<T: CoordNum> PointTrait for Point<T> {
         }
     }
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn x(&self) -> Self::T {
@@ -81,8 +81,8 @@ impl<T: CoordNum> PointTrait for &Point<T> {
         }
     }
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn x(&self) -> Self::T {
@@ -105,8 +105,8 @@ impl<T: CoordNum> PointTrait for Coord<T> {
         }
     }
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn x(&self) -> Self::T {
@@ -129,8 +129,8 @@ impl<T: CoordNum> PointTrait for &Coord<T> {
         }
     }
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn x(&self) -> Self::T {
@@ -153,8 +153,8 @@ impl<T: CoordNum> PointTrait for (T, T) {
         }
     }
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn x(&self) -> Self::T {
@@ -175,7 +175,7 @@ pub struct UnimplementedPoint<T: CoordNum>(PhantomData<T>);
 impl<T: CoordNum> PointTrait for UnimplementedPoint<T> {
     type T = T;
 
-    fn dim(&self) -> Dimension {
+    fn dim(&self) -> Dimensions {
         unimplemented!()
     }
 

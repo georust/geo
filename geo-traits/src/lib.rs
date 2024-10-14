@@ -15,7 +15,7 @@
 //! different endianness than the current machine, so individual values may need to be cloned on
 //! read.
 
-pub use dimension::Dimension;
+pub use dimension::Dimensions;
 pub use geometry::{GeometryTrait, GeometryType};
 pub use geometry_collection::GeometryCollectionTrait;
 pub use line::{LineTrait, UnimplementedLine};

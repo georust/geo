@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::{Dimension, PointTrait, UnimplementedPoint};
+use crate::{Dimensions, PointTrait, UnimplementedPoint};
 use geo_types::{Coord, CoordNum, Line};
 
 /// A trait for accessing data from a generic Line.
@@ -18,7 +18,7 @@ pub trait LineTrait: Sized {
         Self: 'a;
 
     /// The dimension of this geometry
-    fn dim(&self) -> Dimension;
+    fn dim(&self) -> Dimensions;
 
     /// Access the start point in this Line
     fn start(&self) -> Self::PointType<'_>;
@@ -36,8 +36,8 @@ impl<T: CoordNum> LineTrait for Line<T> {
     type T = T;
     type PointType<'a> = &'a Coord<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn start(&self) -> Self::PointType<'_> {
@@ -53,8 +53,8 @@ impl<'a, T: CoordNum> LineTrait for &'a Line<T> {
     type T = T;
     type PointType<'b> = &'a Coord<Self::T> where Self: 'b;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn start(&self) -> Self::PointType<'_> {
@@ -76,7 +76,7 @@ impl<T: CoordNum> LineTrait for UnimplementedLine<T> {
     type T = T;
     type PointType<'a> = UnimplementedPoint<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
+    fn dim(&self) -> Dimensions {
         unimplemented!()
     }
 

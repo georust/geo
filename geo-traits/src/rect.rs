@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use geo_types::{Coord, CoordNum, Rect};
 
-use crate::{Dimension, PointTrait, UnimplementedPoint};
+use crate::{Dimensions, PointTrait, UnimplementedPoint};
 
 /// A trait for accessing data from a generic Rect.
 ///
@@ -18,7 +18,7 @@ pub trait RectTrait {
         Self: 'a;
 
     /// The dimension of this geometry
-    fn dim(&self) -> Dimension;
+    fn dim(&self) -> Dimensions;
 
     /// The minimum coordinate of this Rect
     fn min(&self) -> Self::PointType<'_>;
@@ -31,8 +31,8 @@ impl<'a, T: CoordNum + 'a> RectTrait for Rect<T> {
     type T = T;
     type PointType<'b> = Coord<T> where Self: 'b;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn min(&self) -> Self::PointType<'_> {
@@ -48,8 +48,8 @@ impl<'a, T: CoordNum + 'a> RectTrait for &'a Rect<T> {
     type T = T;
     type PointType<'b> = Coord<T> where Self: 'b;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn min(&self) -> Self::PointType<'_> {
@@ -71,7 +71,7 @@ impl<T: CoordNum> RectTrait for UnimplementedRect<T> {
     type T = T;
     type PointType<'a> = UnimplementedPoint<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
+    fn dim(&self) -> Dimensions {
         unimplemented!()
     }
 

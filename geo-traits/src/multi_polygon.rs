@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::iterator::MultiPolygonIterator;
 use crate::polygon::UnimplementedPolygon;
-use crate::{Dimension, PolygonTrait};
+use crate::{Dimensions, PolygonTrait};
 use geo_types::{CoordNum, MultiPolygon, Polygon};
 
 /// A trait for accessing data from a generic MultiPolygon.
@@ -18,7 +18,7 @@ pub trait MultiPolygonTrait: Sized {
         Self: 'a;
 
     /// The dimension of this geometry
-    fn dim(&self) -> Dimension;
+    fn dim(&self) -> Dimensions;
 
     /// An iterator over the Polygons in this MultiPolygon
     fn polygons(&self) -> impl Iterator<Item = Self::PolygonType<'_>> {
@@ -50,8 +50,8 @@ impl<T: CoordNum> MultiPolygonTrait for MultiPolygon<T> {
     type T = T;
     type PolygonType<'a> = &'a Polygon<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn num_polygons(&self) -> usize {
@@ -67,8 +67,8 @@ impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
     type T = T;
     type PolygonType<'b> = &'a Polygon<Self::T> where Self: 'b;
 
-    fn dim(&self) -> Dimension {
-        Dimension::XY
+    fn dim(&self) -> Dimensions {
+        Dimensions::XY
     }
 
     fn num_polygons(&self) -> usize {
@@ -90,7 +90,7 @@ impl<T: CoordNum> MultiPolygonTrait for UnimplementedMultiPolygon<T> {
     type T = T;
     type PolygonType<'a> = UnimplementedPolygon<Self::T> where Self: 'a;
 
-    fn dim(&self) -> Dimension {
+    fn dim(&self) -> Dimensions {
         unimplemented!()
     }
 
