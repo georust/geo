@@ -49,7 +49,7 @@ impl<T: CoordNum> PointTrait for Point<T> {
         match n {
             0 => self.x(),
             1 => self.y(),
-            _ => panic!(),
+            _ => panic!("Point only supports 2 dimensions"),
         }
     }
 
@@ -73,7 +73,7 @@ impl<T: CoordNum> PointTrait for &Point<T> {
         match n {
             0 => self.x(),
             1 => self.y(),
-            _ => panic!(),
+            _ => panic!("Point only supports 2 dimensions"),
         }
     }
 
@@ -97,7 +97,7 @@ impl<T: CoordNum> PointTrait for Coord<T> {
         match n {
             0 => self.x(),
             1 => self.y(),
-            _ => panic!(),
+            _ => panic!("Point only supports 2 dimensions"),
         }
     }
 
@@ -121,7 +121,7 @@ impl<T: CoordNum> PointTrait for &Coord<T> {
         match n {
             0 => self.x(),
             1 => self.y(),
-            _ => panic!(),
+            _ => panic!("Point only supports 2 dimensions"),
         }
     }
 
@@ -145,7 +145,7 @@ impl<T: CoordNum> PointTrait for (T, T) {
         match n {
             0 => self.x(),
             1 => self.y(),
-            _ => panic!(),
+            _ => panic!("(T, T) only supports 2 dimensions"),
         }
     }
 
