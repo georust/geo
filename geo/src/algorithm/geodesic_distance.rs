@@ -1,6 +1,9 @@
-use crate::Point;
-use geographiclib_rs::{Geodesic, InverseGeodesic};
+use crate::{Distance, Geodesic, Point};
 
+#[deprecated(
+    since = "0.29.0",
+    note = "Please use the `Geodesic::distance` method from the `Distance` trait instead"
+)]
 /// Determine the distance between two geometries on an ellipsoidal model of the earth.
 ///
 /// This uses the geodesic measurement methods given by [Karney (2013)]. As opposed to older methods
@@ -28,6 +31,7 @@ pub trait GeodesicDistance<T, Rhs = Self> {
     /// // London
     /// let p2 = point!(x: -0.1278, y: 51.5074);
     ///
+    /// # #[allow(deprecated)]
     /// let distance = p1.geodesic_distance(&p2);
     ///
     /// assert_eq!(
@@ -39,8 +43,9 @@ pub trait GeodesicDistance<T, Rhs = Self> {
     fn geodesic_distance(&self, rhs: &Rhs) -> T;
 }
 
+#[allow(deprecated)]
 impl GeodesicDistance<f64> for Point {
     fn geodesic_distance(&self, rhs: &Point) -> f64 {
-        Geodesic::wgs84().inverse(self.y(), self.x(), rhs.y(), rhs.x())
+        Geodesic::distance(*self, *rhs)
     }
 }

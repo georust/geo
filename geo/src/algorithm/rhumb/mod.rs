@@ -10,21 +10,25 @@ use crate::{point, utils::normalize_longitude, CoordFloat, Point};
 use num_traits::FromPrimitive;
 
 mod distance;
+#[allow(deprecated)]
 pub use distance::RhumbDistance;
 
 mod bearing;
+#[allow(deprecated)]
 pub use bearing::RhumbBearing;
 
 mod destination;
+#[allow(deprecated)]
 pub use destination::RhumbDestination;
 
 mod intermediate;
+#[allow(deprecated)]
 pub use intermediate::RhumbIntermediate;
 
 mod length;
 pub use length::RhumbLength;
 
-struct RhumbCalculations<T: CoordFloat + FromPrimitive> {
+pub(crate) struct RhumbCalculations<T: CoordFloat + FromPrimitive> {
     from: Point<T>,
     to: Point<T>,
     phi1: T,
@@ -34,7 +38,7 @@ struct RhumbCalculations<T: CoordFloat + FromPrimitive> {
 }
 
 impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
-    fn new(from: &Point<T>, to: &Point<T>) -> Self {
+    pub(crate) fn new(from: &Point<T>, to: &Point<T>) -> Self {
         let pi = T::from(std::f64::consts::PI).unwrap();
         let two = T::one() + T::one();
         let four = two + two;
@@ -63,11 +67,11 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
         }
     }
 
-    fn theta(&self) -> T {
+    pub(crate) fn theta(&self) -> T {
         self.delta_lambda.atan2(self.delta_psi)
     }
 
-    fn delta(&self) -> T {
+    pub(crate) fn delta(&self) -> T {
         let threshold = T::from(10.0e-12).unwrap();
         let q = if self.delta_psi > threshold {
             self.delta_phi / self.delta_psi
@@ -78,14 +82,14 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
         (self.delta_phi * self.delta_phi + q * q * self.delta_lambda * self.delta_lambda).sqrt()
     }
 
-    fn intermediate(&self, fraction: T) -> Point<T> {
+    pub(crate) fn intermediate(&self, fraction: T) -> Point<T> {
         let delta = fraction * self.delta();
         let theta = self.theta();
         let lambda1 = self.from.x().to_radians();
         calculate_destination(delta, lambda1, self.phi1, theta)
     }
 
-    fn intermediate_fill(&self, max_delta: T, include_ends: bool) -> Vec<Point<T>> {
+    pub(crate) fn intermediate_fill(&self, max_delta: T, include_ends: bool) -> Vec<Point<T>> {
         let theta = self.theta();
         let lambda1 = self.from.x().to_radians();
 
@@ -124,7 +128,7 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
     }
 }
 
-fn calculate_destination<T: CoordFloat + FromPrimitive>(
+pub(crate) fn calculate_destination<T: CoordFloat + FromPrimitive>(
     delta: T,
     lambda1: T,
     phi1: T,
