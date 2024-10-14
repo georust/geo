@@ -51,6 +51,8 @@
 * Improve `HasDimensions::dimensions` to handle dimensionally collapsed and empty geometries more consistently.
   A collection (like MultiPolygon) will now have EmptyDimensions when all of its elements have EmptyDimensions.
   * <https://github.com/georust/geo/pull/1226>
+* Enable i128 geometry types
+  * <https://github.com/georust/geo/pull/1230>
 
 ## 0.28.0
 
