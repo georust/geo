@@ -61,8 +61,12 @@ impl<T: CoordNum> PolygonTrait for Polygon<T> {
     }
 
     fn exterior(&self) -> Option<Self::RingType<'_>> {
-        // geo-types doesn't really have a way to describe an empty polygon
-        Some(Polygon::exterior(self))
+        let ext_ring = Polygon::exterior(self);
+        if ext_ring.num_points() == 0 {
+            None
+        } else {
+            Some(ext_ring)
+        }
     }
 
     fn num_interiors(&self) -> usize {
@@ -84,8 +88,12 @@ impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
     }
 
     fn exterior(&self) -> Option<Self::RingType<'_>> {
-        // geo-types doesn't really have a way to describe an empty polygon
-        Some(Polygon::exterior(self))
+        let ext_ring = Polygon::exterior(self);
+        if ext_ring.num_points() == 0 {
+            None
+        } else {
+            Some(ext_ring)
+        }
     }
 
     fn num_interiors(&self) -> usize {
