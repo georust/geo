@@ -1,11 +1,11 @@
 use num_traits::FromPrimitive;
 
+use crate::line_measures::{Haversine, InterpolatePoint};
+use crate::HaversineLength;
 use crate::{
     CoordFloat, CoordsIter, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect,
     Triangle,
 };
-
-use crate::{HaversineIntermediate, HaversineLength};
 
 /// Returns a new spherical geometry containing both existing and new interpolated coordinates with
 /// a maximum distance of `max_distance` between them.
@@ -52,8 +52,7 @@ fn densify_line<T: CoordFloat + FromPrimitive>(
         let ratio = frac * T::from(segment_idx).unwrap();
         let start = line.start;
         let end = line.end;
-        let interpolated_point =
-            Point::from(start).haversine_intermediate(&Point::from(end), ratio);
+        let interpolated_point = Haversine::point_at_ratio_between(Point(start), Point(end), ratio);
         container.push(interpolated_point);
     }
 }

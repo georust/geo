@@ -38,11 +38,19 @@
   Haversine::distance(p1, p2)
   ```
   * <https://github.com/georust/geo/pull/1216>
+* Deprecated legacy line measure traits in favor of those added in the previous changelog entry:
+  * `GeodesicBearing`, `GeodesicDistance`, `GeodesicDestination`, `GeodesicIntermediate`
+  * `RhumbBearing`, `RhumbDistance`, `RhumbDestination`, `RhumbIntermediate`
+  * `HaversineBearing`, `HaversineDistance`, `HaversineDestination`, `HaversineIntermediate`
+  * <https://github.com/georust/geo/pull/1222>
 * Change IntersectionMatrix::is_equal_topo to now consider empty geometries as equal.
   * <https://github.com/georust/geo/pull/1223>
 * Fix `(LINESTRING EMPTY).contains(LINESTRING EMPTY)` and `(MULTIPOLYGON EMPTY).contains(MULTIPOINT EMPTY)` which previously
   reported true
   * <https://github.com/georust/geo/pull/1227>
+* Improve `HasDimensions::dimensions` to handle dimensionally collapsed and empty geometries more consistently.
+  A collection (like MultiPolygon) will now have EmptyDimensions when all of its elements have EmptyDimensions.
+  * <https://github.com/georust/geo/pull/1226>
 
 ## 0.28.0
 

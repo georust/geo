@@ -234,21 +234,31 @@ impl<C: CoordNum> HasDimensions for Polygon<C> {
     fn dimensions(&self) -> Dimensions {
         use crate::CoordsIter;
         let mut coords = self.exterior_coords_iter();
-        match coords.next() {
-            None => Dimensions::Empty,
-            Some(coord_0) => {
-                if coords.all(|coord_n| coord_0 == coord_n) {
-                    // all coords are a single point
-                    Dimensions::ZeroDimensional
-                } else {
-                    Dimensions::TwoDimensional
-                }
-            }
-        }
+
+        let Some(first) = coords.next() else {
+            // No coordinates - the polygon is empty
+            return Dimensions::Empty;
+        };
+
+        let Some(second) = coords.find(|next| *next != first) else {
+            // All coordinates in the polygon are the same point
+            return Dimensions::ZeroDimensional;
+        };
+
+        let Some(_third) = coords.find(|next| *next != first && *next != second) else {
+            // There are only two distinct coordinates in the Polygon - it's collapsed to a line
+            return Dimensions::OneDimensional;
+        };
+
+        Dimensions::TwoDimensional
     }
 
     fn boundary_dimensions(&self) -> Dimensions {
-        Dimensions::OneDimensional
+        match self.dimensions() {
+            Dimensions::Empty | Dimensions::ZeroDimensional => Dimensions::Empty,
+            Dimensions::OneDimensional => Dimensions::ZeroDimensional,
+            Dimensions::TwoDimensional => Dimensions::OneDimensional,
+        }
     }
 }
 
@@ -311,19 +321,24 @@ impl<C: CoordNum> HasDimensions for MultiPolygon<C> {
     }
 
     fn dimensions(&self) -> Dimensions {
-        if self.0.is_empty() {
-            return Dimensions::Empty;
+        let mut max = Dimensions::Empty;
+        for geom in self {
+            let dimensions = geom.dimensions();
+            if dimensions == Dimensions::TwoDimensional {
+                // short-circuit since we know none can be larger
+                return Dimensions::TwoDimensional;
+            }
+            max = max.max(dimensions)
         }
-
-        Dimensions::TwoDimensional
+        max
     }
 
     fn boundary_dimensions(&self) -> Dimensions {
-        if self.0.is_empty() {
-            return Dimensions::Empty;
+        match self.dimensions() {
+            Dimensions::Empty | Dimensions::ZeroDimensional => Dimensions::Empty,
+            Dimensions::OneDimensional => Dimensions::ZeroDimensional,
+            Dimensions::TwoDimensional => Dimensions::OneDimensional,
         }
-
-        Dimensions::OneDimensional
     }
 }
 
@@ -393,7 +408,7 @@ impl<C: CoordNum> HasDimensions for Rect<C> {
     }
 }
 
-impl<C: crate::GeoNum> HasDimensions for Triangle<C> {
+impl<C: GeoNum> HasDimensions for Triangle<C> {
     fn is_empty(&self) -> bool {
         false
     }
@@ -421,6 +436,199 @@ impl<C: crate::GeoNum> HasDimensions for Triangle<C> {
             Dimensions::ZeroDimensional => Dimensions::Empty,
             Dimensions::OneDimensional => Dimensions::ZeroDimensional,
             Dimensions::TwoDimensional => Dimensions::OneDimensional,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const ONE: Coord = crate::coord!(x: 1.0, y: 1.0);
+    use crate::wkt;
+
+    #[test]
+    fn point() {
+        assert_eq!(
+            Dimensions::ZeroDimensional,
+            wkt!(POINT(1.0 1.0)).dimensions()
+        );
+    }
+
+    #[test]
+    fn line_string() {
+        assert_eq!(
+            Dimensions::OneDimensional,
+            wkt!(LINESTRING(1.0 1.0,2.0 2.0,3.0 3.0)).dimensions()
+        );
+    }
+
+    #[test]
+    fn polygon() {
+        assert_eq!(
+            Dimensions::TwoDimensional,
+            wkt!(POLYGON((1.0 1.0,2.0 2.0,3.0 3.0,1.0 1.0))).dimensions()
+        );
+    }
+
+    #[test]
+    fn multi_point() {
+        assert_eq!(
+            Dimensions::ZeroDimensional,
+            wkt!(MULTIPOINT(1.0 1.0)).dimensions()
+        );
+    }
+
+    #[test]
+    fn multi_line_string() {
+        assert_eq!(
+            Dimensions::OneDimensional,
+            wkt!(MULTILINESTRING((1.0 1.0,2.0 2.0,3.0 3.0))).dimensions()
+        );
+    }
+
+    #[test]
+    fn multi_polygon() {
+        assert_eq!(
+            Dimensions::TwoDimensional,
+            wkt!(MULTIPOLYGON(((1.0 1.0,2.0 2.0,3.0 3.0,1.0 1.0)))).dimensions()
+        );
+    }
+
+    mod empty {
+        use super::*;
+        #[test]
+        fn empty_line_string() {
+            assert_eq!(
+                Dimensions::Empty,
+                (wkt!(LINESTRING EMPTY) as LineString<f64>).dimensions()
+            );
+        }
+
+        #[test]
+        fn empty_polygon() {
+            assert_eq!(
+                Dimensions::Empty,
+                (wkt!(POLYGON EMPTY) as Polygon<f64>).dimensions()
+            );
+        }
+
+        #[test]
+        fn empty_multi_point() {
+            assert_eq!(
+                Dimensions::Empty,
+                (wkt!(MULTIPOINT EMPTY) as MultiPoint<f64>).dimensions()
+            );
+        }
+
+        #[test]
+        fn empty_multi_line_string() {
+            assert_eq!(
+                Dimensions::Empty,
+                (wkt!(MULTILINESTRING EMPTY) as MultiLineString<f64>).dimensions()
+            );
+        }
+
+        #[test]
+        fn multi_line_string_with_empty_line_string() {
+            let empty_line_string = wkt!(LINESTRING EMPTY) as LineString<f64>;
+            let multi_line_string = MultiLineString::new(vec![empty_line_string]);
+            assert_eq!(Dimensions::Empty, multi_line_string.dimensions());
+        }
+
+        #[test]
+        fn empty_multi_polygon() {
+            assert_eq!(
+                Dimensions::Empty,
+                (wkt!(MULTIPOLYGON EMPTY) as MultiPolygon<f64>).dimensions()
+            );
+        }
+
+        #[test]
+        fn multi_polygon_with_empty_polygon() {
+            let empty_polygon = (wkt!(POLYGON EMPTY) as Polygon<f64>);
+            let multi_polygon = MultiPolygon::new(vec![empty_polygon]);
+            assert_eq!(Dimensions::Empty, multi_polygon.dimensions());
+        }
+    }
+
+    mod dimensional_collapse {
+        use super::*;
+
+        #[test]
+        fn line_collapsed_to_point() {
+            assert_eq!(
+                Dimensions::ZeroDimensional,
+                Line::new(ONE, ONE).dimensions()
+            );
+        }
+
+        #[test]
+        fn line_string_collapsed_to_point() {
+            assert_eq!(
+                Dimensions::ZeroDimensional,
+                wkt!(LINESTRING(1.0 1.0)).dimensions()
+            );
+            assert_eq!(
+                Dimensions::ZeroDimensional,
+                wkt!(LINESTRING(1.0 1.0,1.0 1.0)).dimensions()
+            );
+        }
+
+        #[test]
+        fn polygon_collapsed_to_point() {
+            assert_eq!(
+                Dimensions::ZeroDimensional,
+                wkt!(POLYGON((1.0 1.0))).dimensions()
+            );
+            assert_eq!(
+                Dimensions::ZeroDimensional,
+                wkt!(POLYGON((1.0 1.0,1.0 1.0))).dimensions()
+            );
+        }
+
+        #[test]
+        fn polygon_collapsed_to_line() {
+            assert_eq!(
+                Dimensions::OneDimensional,
+                wkt!(POLYGON((1.0 1.0,2.0 2.0))).dimensions()
+            );
+        }
+
+        #[test]
+        fn multi_line_string_with_line_string_collapsed_to_point() {
+            assert_eq!(
+                Dimensions::ZeroDimensional,
+                wkt!(MULTILINESTRING((1.0 1.0))).dimensions()
+            );
+            assert_eq!(
+                Dimensions::ZeroDimensional,
+                wkt!(MULTILINESTRING((1.0 1.0,1.0 1.0))).dimensions()
+            );
+            assert_eq!(
+                Dimensions::ZeroDimensional,
+                wkt!(MULTILINESTRING((1.0 1.0),(1.0 1.0))).dimensions()
+            );
+        }
+
+        #[test]
+        fn multi_polygon_with_polygon_collapsed_to_point() {
+            assert_eq!(
+                Dimensions::ZeroDimensional,
+                wkt!(MULTIPOLYGON(((1.0 1.0)))).dimensions()
+            );
+            assert_eq!(
+                Dimensions::ZeroDimensional,
+                wkt!(MULTIPOLYGON(((1.0 1.0,1.0 1.0)))).dimensions()
+            );
+        }
+
+        #[test]
+        fn multi_polygon_with_polygon_collapsed_to_line() {
+            assert_eq!(
+                Dimensions::OneDimensional,
+                wkt!(MULTIPOLYGON(((1.0 1.0,2.0 2.0)))).dimensions()
+            );
         }
     }
 }
