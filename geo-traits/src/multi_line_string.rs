@@ -55,7 +55,7 @@ impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
     type LineStringType<'a> = &'a LineString<Self::T> where Self: 'a;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn num_line_strings(&self) -> usize {
@@ -72,7 +72,7 @@ impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
     type LineStringType<'b> = &'a LineString<Self::T> where Self: 'b;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn num_line_strings(&self) -> usize {

@@ -1,20 +1,19 @@
 /// The logical dimension of the geometry.
 ///
 ///
-#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Dimensions {
     /// A two-dimensional geometry with X and Y values
-    XY,
+    Xy,
 
     /// A three-dimensional geometry with X, Y, and Z values
-    XYZ,
+    Xyz,
 
     /// A three-dimensional geometry with X, Y, and M values
-    XYM,
+    Xym,
 
     /// A four-dimensional geometry with X, Y, Z, and M values
-    XYZM,
+    Xyzm,
 
     /// A geometry with unknown logical type. The contained `usize` value represents the number of
     /// physical dimensions.
@@ -25,9 +24,9 @@ impl Dimensions {
     /// The physical number of dimensions in this geometry.
     pub fn size(&self) -> usize {
         match self {
-            Self::XY => 2,
-            Self::XYZ | Self::XYM => 3,
-            Self::XYZM => 4,
+            Self::Xy => 2,
+            Self::Xyz | Self::Xym => 3,
+            Self::Xyzm => 4,
             Self::Unknown(val) => *val,
         }
     }

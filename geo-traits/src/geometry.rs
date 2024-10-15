@@ -138,7 +138,7 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for Geometry<T> {
     type LineType<'b> = Line<Self::T> where Self: 'b;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn as_type(
@@ -185,7 +185,7 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for &'a Geometry<T> {
     type LineType<'b> = Line<Self::T> where Self: 'b;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn as_type(
@@ -236,7 +236,7 @@ macro_rules! impl_specialization {
             type LineType<'b> = Line<Self::T> where Self: 'b;
 
             fn dim(&self) -> Dimensions {
-                Dimensions::XY
+                Dimensions::Xy
             }
 
             fn as_type(
@@ -272,7 +272,7 @@ macro_rules! impl_specialization {
             type LineType<'b> = Line<Self::T> where Self: 'b;
 
             fn dim(&self) -> Dimensions {
-                Dimensions::XY
+                Dimensions::Xy
             }
 
             fn as_type(

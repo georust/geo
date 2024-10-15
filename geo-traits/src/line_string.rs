@@ -54,7 +54,7 @@ impl<T: CoordNum> LineStringTrait for LineString<T> {
     type PointType<'a> = &'a Coord<Self::T> where Self: 'a;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn num_points(&self) -> usize {
@@ -71,7 +71,7 @@ impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
     type PointType<'b> = &'a Coord<Self::T> where Self: 'b;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn num_points(&self) -> usize {

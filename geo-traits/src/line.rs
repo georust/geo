@@ -37,7 +37,7 @@ impl<T: CoordNum> LineTrait for Line<T> {
     type PointType<'a> = &'a Coord<Self::T> where Self: 'a;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn start(&self) -> Self::PointType<'_> {
@@ -54,7 +54,7 @@ impl<'a, T: CoordNum> LineTrait for &'a Line<T> {
     type PointType<'b> = &'a Coord<Self::T> where Self: 'b;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn start(&self) -> Self::PointType<'_> {

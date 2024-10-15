@@ -58,7 +58,7 @@ impl<T: CoordNum> PolygonTrait for Polygon<T> {
     type RingType<'a> = &'a LineString<Self::T> where Self: 'a;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn exterior(&self) -> Option<Self::RingType<'_>> {
@@ -85,7 +85,7 @@ impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
         Self: 'b;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn exterior(&self) -> Option<Self::RingType<'_>> {

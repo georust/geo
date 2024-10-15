@@ -52,7 +52,7 @@ impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
         Self: 'a;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn num_geometries(&self) -> usize {
@@ -70,7 +70,7 @@ impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
         Self: 'b;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn num_geometries(&self) -> usize {

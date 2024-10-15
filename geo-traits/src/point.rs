@@ -54,7 +54,7 @@ impl<T: CoordNum> PointTrait for Point<T> {
     }
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn x(&self) -> Self::T {
@@ -78,7 +78,7 @@ impl<T: CoordNum> PointTrait for &Point<T> {
     }
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn x(&self) -> Self::T {
@@ -102,7 +102,7 @@ impl<T: CoordNum> PointTrait for Coord<T> {
     }
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn x(&self) -> Self::T {
@@ -126,7 +126,7 @@ impl<T: CoordNum> PointTrait for &Coord<T> {
     }
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn x(&self) -> Self::T {
@@ -150,7 +150,7 @@ impl<T: CoordNum> PointTrait for (T, T) {
     }
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn x(&self) -> Self::T {

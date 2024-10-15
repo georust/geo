@@ -32,7 +32,7 @@ impl<'a, T: CoordNum + 'a> RectTrait for Rect<T> {
     type PointType<'b> = Coord<T> where Self: 'b;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn min(&self) -> Self::PointType<'_> {
@@ -49,7 +49,7 @@ impl<'a, T: CoordNum + 'a> RectTrait for &'a Rect<T> {
     type PointType<'b> = Coord<T> where Self: 'b;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn min(&self) -> Self::PointType<'_> {

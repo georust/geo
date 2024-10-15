@@ -53,7 +53,7 @@ impl<T: CoordNum> MultiPolygonTrait for MultiPolygon<T> {
     type PolygonType<'a> = &'a Polygon<Self::T> where Self: 'a;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn num_polygons(&self) -> usize {
@@ -70,7 +70,7 @@ impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
     type PolygonType<'b> = &'a Polygon<Self::T> where Self: 'b;
 
     fn dim(&self) -> Dimensions {
-        Dimensions::XY
+        Dimensions::Xy
     }
 
     fn num_polygons(&self) -> usize {
