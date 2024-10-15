@@ -21,7 +21,9 @@ pub trait MultiPolygonTrait: Sized {
     fn dim(&self) -> Dimensions;
 
     /// An iterator over the Polygons in this MultiPolygon
-    fn polygons(&self) -> impl Iterator<Item = Self::PolygonType<'_>> {
+    fn polygons(
+        &self,
+    ) -> impl DoubleEndedIterator + ExactSizeIterator<Item = Self::PolygonType<'_>> {
         MultiPolygonIterator::new(self, 0, self.num_polygons())
     }
 

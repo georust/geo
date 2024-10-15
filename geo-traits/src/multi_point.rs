@@ -22,7 +22,7 @@ pub trait MultiPointTrait: Sized {
     fn dim(&self) -> Dimensions;
 
     /// An iterator over the points in this MultiPoint
-    fn points(&self) -> impl Iterator<Item = Self::PointType<'_>> {
+    fn points(&self) -> impl DoubleEndedIterator + ExactSizeIterator<Item = Self::PointType<'_>> {
         MultiPointIterator::new(self, 0, self.num_points())
     }
 

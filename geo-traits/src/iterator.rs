@@ -61,6 +61,15 @@ macro_rules! impl_iterator {
                 T: CoordNum,
                 $item_type: 'a + $item_trait<T = T>,
                 G: $self_trait<T = T, $item_type<'a> = $item_type>,
+            > ExactSizeIterator for $struct_name<'a, T, $item_type, G>
+        {
+        }
+
+        impl<
+                'a,
+                T: CoordNum,
+                $item_type: 'a + $item_trait<T = T>,
+                G: $self_trait<T = T, $item_type<'a> = $item_type>,
             > DoubleEndedIterator for $struct_name<'a, T, $item_type, G>
         {
             #[inline]

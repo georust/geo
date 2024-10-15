@@ -18,7 +18,9 @@ pub trait GeometryCollectionTrait: Sized {
     fn dim(&self) -> Dimensions;
 
     /// An iterator over the geometries in this GeometryCollection
-    fn geometries(&self) -> impl Iterator<Item = Self::GeometryType<'_>> {
+    fn geometries(
+        &self,
+    ) -> impl DoubleEndedIterator + ExactSizeIterator<Item = Self::GeometryType<'_>> {
         GeometryCollectionIterator::new(self, 0, self.num_geometries())
     }
 

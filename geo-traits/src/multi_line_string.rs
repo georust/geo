@@ -23,7 +23,9 @@ pub trait MultiLineStringTrait: Sized {
     fn dim(&self) -> Dimensions;
 
     /// An iterator over the LineStrings in this MultiLineString
-    fn line_strings(&self) -> impl Iterator<Item = Self::LineStringType<'_>> {
+    fn line_strings(
+        &self,
+    ) -> impl DoubleEndedIterator + ExactSizeIterator<Item = Self::LineStringType<'_>> {
         MultiLineStringIterator::new(self, 0, self.num_line_strings())
     }
 
