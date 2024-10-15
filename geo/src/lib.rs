@@ -347,16 +347,14 @@ macro_rules! impl_geo_num_for_int {
     };
 }
 
-// This is the list of primitives that we support. It should match our set of implementations for HasKernel since GeoNum
-// depends on HasKernel.
+// This is the list of primitives that we support.
 impl_geo_num_for_float!(f32);
 impl_geo_num_for_float!(f64);
-impl_geo_num_for_int!(i64);
-impl_geo_num_for_int!(i32);
 impl_geo_num_for_int!(i16);
-impl_geo_num_for_int!(isize);
-#[cfg(has_i128)]
+impl_geo_num_for_int!(i32);
+impl_geo_num_for_int!(i64);
 impl_geo_num_for_int!(i128);
+impl_geo_num_for_int!(isize);
 
 #[cfg(test)]
 mod tests {
@@ -377,5 +375,16 @@ mod tests {
         assert_eq!(GeoNum::total_cmp(&3i32, &2i32), Ordering::Greater);
         assert_eq!(GeoNum::total_cmp(&2i32, &2i32), Ordering::Equal);
         assert_eq!(GeoNum::total_cmp(&1i32, &2i32), Ordering::Less);
+    }
+
+    #[test]
+    fn numeric_types() {
+        let _n_i16 = Point::new(1i16, 2i16);
+        let _n_i32 = Point::new(1i32, 2i32);
+        let _n_i64 = Point::new(1i64, 2i64);
+        let _n_i128 = Point::new(1i128, 2i128);
+        let _n_isize = Point::new(1isize, 2isize);
+        let _n_f32 = Point::new(1.0f32, 2.0f32);
+        let _n_f64 = Point::new(1.0f64, 2.0f64);
     }
 }
