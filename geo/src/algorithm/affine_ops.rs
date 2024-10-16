@@ -1,8 +1,5 @@
 use num_traits::ToPrimitive;
 
-#[cfg(any(feature = "approx", test))]
-use approx::{AbsDiffEq, RelativeEq};
-
 use crate::{Coord, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace};
 use std::{fmt, ops::Mul, ops::Neg};
 
@@ -486,78 +483,78 @@ impl<U: CoordFloat> AffineTransform<U> {
     }
 }
 
-#[cfg(any(feature = "approx", test))]
-impl<T> RelativeEq for AffineTransform<T>
-where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
-{
-    #[inline]
-    fn default_max_relative() -> Self::Epsilon {
-        T::default_max_relative()
-    }
-
-    /// Equality assertion within a relative limit.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::AffineTransform;
-    /// use geo_types::point;
-    ///
-    /// let a = AffineTransform::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
-    /// let b = AffineTransform::new(1.01, 2.02, 3.03, 4.04, 5.05, 6.06);
-    ///
-    /// approx::assert_relative_eq!(a, b, max_relative=0.1)
-    /// approx::assert_relative_ne!(a, b, max_relative=0.055)
-    /// ```
-    #[inline]
-    fn relative_eq(
-        &self,
-        other: &Self,
-        epsilon: Self::Epsilon,
-        max_relative: Self::Epsilon,
-    ) -> bool {
-        let mut mp_zipper = self.0.iter().flatten().zip(other.0.iter().flatten());
-        mp_zipper.all(|(lhs, rhs)| lhs.relative_eq(rhs, epsilon, max_relative))
-    }
-}
-
-#[cfg(any(feature = "approx", test))]
-impl<T> AbsDiffEq for AffineTransform<T>
-where
-    T: AbsDiffEq<Epsilon = T> + CoordNum,
-    T::Epsilon: Copy,
-{
-    type Epsilon = T;
-
-    #[inline]
-    fn default_epsilon() -> Self::Epsilon {
-        T::default_epsilon()
-    }
-
-    /// Equality assertion with an absolute limit.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::MultiPoint;
-    /// use geo_types::point;
-    ///
-    /// let a = AffineTransform::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
-    /// let b = AffineTransform::new(1.01, 2.02, 3.03, 4.04, 5.05, 6.06);
-    ///
-    /// approx::abs_diff_eq!(a, b, epsilon=0.1)
-    /// approx::abs_diff_ne!(a, b, epsilon=0.055)
-    /// ```
-    #[inline]
-    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        let mut mp_zipper = self.0.iter().flatten().zip(other.0.iter().flatten());
-        mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(rhs, epsilon))
-    }
-}
-
 #[cfg(test)]
 mod tests {
+    use approx::{AbsDiffEq, RelativeEq};
+
+    impl<T> RelativeEq for AffineTransform<T>
+    where
+        T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
+    {
+        #[inline]
+        fn default_max_relative() -> Self::Epsilon {
+            T::default_max_relative()
+        }
+
+        /// Equality assertion within a relative limit.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use geo_types::AffineTransform;
+        /// use geo_types::point;
+        ///
+        /// let a = AffineTransform::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        /// let b = AffineTransform::new(1.01, 2.02, 3.03, 4.04, 5.05, 6.06);
+        ///
+        /// approx::assert_relative_eq!(a, b, max_relative=0.1)
+        /// approx::assert_relative_ne!(a, b, max_relative=0.055)
+        /// ```
+        #[inline]
+        fn relative_eq(
+            &self,
+            other: &Self,
+            epsilon: Self::Epsilon,
+            max_relative: Self::Epsilon,
+        ) -> bool {
+            let mut mp_zipper = self.0.iter().flatten().zip(other.0.iter().flatten());
+            mp_zipper.all(|(lhs, rhs)| lhs.relative_eq(rhs, epsilon, max_relative))
+        }
+    }
+
+    impl<T> AbsDiffEq for AffineTransform<T>
+    where
+        T: AbsDiffEq<Epsilon = T> + CoordNum,
+        T::Epsilon: Copy,
+    {
+        type Epsilon = T;
+
+        #[inline]
+        fn default_epsilon() -> Self::Epsilon {
+            T::default_epsilon()
+        }
+
+        /// Equality assertion with an absolute limit.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use geo_types::MultiPoint;
+        /// use geo_types::point;
+        ///
+        /// let a = AffineTransform::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        /// let b = AffineTransform::new(1.01, 2.02, 3.03, 4.04, 5.05, 6.06);
+        ///
+        /// approx::abs_diff_eq!(a, b, epsilon=0.1)
+        /// approx::abs_diff_ne!(a, b, epsilon=0.055)
+        /// ```
+        #[inline]
+        fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+            let mut mp_zipper = self.0.iter().flatten().zip(other.0.iter().flatten());
+            mp_zipper.all(|(lhs, rhs)| lhs.abs_diff_eq(rhs, epsilon))
+        }
+    }
+
     use super::*;
     use crate::{wkt, Point};
 
