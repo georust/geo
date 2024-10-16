@@ -21,7 +21,7 @@ pub trait PointTrait {
 
     /// Access the n'th (0-based) element of the CoordinateTuple.
     /// Returns NaN if `n >= DIMENSION`.
-    /// See also [`nth()`](Self::nth_unchecked).
+    /// See also [`nth_unchecked()`](Self::nth_unchecked).
     fn nth(&self, n: usize) -> Option<Self::T> {
         if n < self.dim().size() {
             Some(self.nth_unchecked(n))
