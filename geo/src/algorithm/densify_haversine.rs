@@ -1,6 +1,8 @@
 use num_traits::FromPrimitive;
 
-use crate::line_measures::{Haversine, InterpolatePoint};
+use crate::line_measures::{Haversine, InterpolatePoint, Length};
+// Densify will soon be deprecated too, so let's just allow deprecated for now
+#[allow(deprecated)]
 use crate::HaversineLength;
 use crate::{
     CoordFloat, CoordsIter, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect,
@@ -42,7 +44,7 @@ fn densify_line<T: CoordFloat + FromPrimitive>(
 ) {
     assert!(max_distance > T::zero());
     container.push(line.start_point());
-    let num_segments = (line.haversine_length() / max_distance)
+    let num_segments = (line.length::<Haversine>() / max_distance)
         .ceil()
         .to_u64()
         .unwrap();
@@ -57,6 +59,7 @@ fn densify_line<T: CoordFloat + FromPrimitive>(
     }
 }
 
+#[allow(deprecated)]
 impl<T> DensifyHaversine<T> for MultiPolygon<T>
 where
     T: CoordFloat + FromPrimitive,
@@ -74,6 +77,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> DensifyHaversine<T> for Polygon<T>
 where
     T: CoordFloat + FromPrimitive,
@@ -93,6 +97,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> DensifyHaversine<T> for MultiLineString<T>
 where
     T: CoordFloat + FromPrimitive,
@@ -110,6 +115,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> DensifyHaversine<T> for LineString<T>
 where
     T: CoordFloat + FromPrimitive,
@@ -132,6 +138,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> DensifyHaversine<T> for Line<T>
 where
     T: CoordFloat + FromPrimitive,
@@ -149,6 +156,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> DensifyHaversine<T> for Triangle<T>
 where
     T: CoordFloat + FromPrimitive,
@@ -162,6 +170,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> DensifyHaversine<T> for Rect<T>
 where
     T: CoordFloat + FromPrimitive,

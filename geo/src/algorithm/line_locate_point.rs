@@ -1,3 +1,7 @@
+// This algorithm will be deprecated in the future, replaced by a unified implementation
+// rather than being Euclidean specific. Until the alternative is available, lets allow deprecations
+// so as not to change the method signature for existing users.
+#[allow(deprecated)]
 use crate::{
     CoordFloat, Line, LineString, Point,
     {euclidean_distance::EuclideanDistance, euclidean_length::EuclideanLength},
@@ -75,6 +79,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<T> LineLocatePoint<T, Point<T>> for LineString<T>
 where
     T: CoordFloat + AddAssign,

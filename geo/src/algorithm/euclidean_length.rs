@@ -1,9 +1,13 @@
 use std::iter::Sum;
 
-use crate::{CoordFloat, Line, LineString, MultiLineString};
+use crate::{CoordFloat, Euclidean, Length, Line, LineString, MultiLineString};
 
 /// Calculation of the length
 
+#[deprecated(
+    since = "0.29.0",
+    note = "Please use the `line.length::<Euclidean>()` via the `Length` trait instead."
+)]
 pub trait EuclideanLength<T, RHS = Self> {
     /// Calculation of the length of a Line
     ///
@@ -26,51 +30,56 @@ pub trait EuclideanLength<T, RHS = Self> {
     fn euclidean_length(&self) -> T;
 }
 
+#[allow(deprecated)]
 impl<T> EuclideanLength<T> for Line<T>
 where
     T: CoordFloat,
 {
     fn euclidean_length(&self) -> T {
-        ::geo_types::private_utils::line_euclidean_length(*self)
+        self.length::<Euclidean>()
     }
 }
 
+#[allow(deprecated)]
 impl<T> EuclideanLength<T> for LineString<T>
 where
     T: CoordFloat + Sum,
 {
     fn euclidean_length(&self) -> T {
-        self.lines().map(|line| line.euclidean_length()).sum()
+        self.length::<Euclidean>()
     }
 }
 
+#[allow(deprecated)]
 impl<T> EuclideanLength<T> for MultiLineString<T>
 where
     T: CoordFloat + Sum,
 {
     fn euclidean_length(&self) -> T {
-        self.0
-            .iter()
-            .fold(T::zero(), |total, line| total + line.euclidean_length())
+        self.length::<Euclidean>()
     }
 }
 
 #[cfg(test)]
 mod test {
     use crate::line_string;
+    #[allow(deprecated)]
     use crate::EuclideanLength;
     use crate::{coord, Line, MultiLineString};
 
+    #[allow(deprecated)]
     #[test]
     fn empty_linestring_test() {
         let linestring = line_string![];
         assert_relative_eq!(0.0_f64, linestring.euclidean_length());
     }
+    #[allow(deprecated)]
     #[test]
     fn linestring_one_point_test() {
         let linestring = line_string![(x: 0., y: 0.)];
         assert_relative_eq!(0.0_f64, linestring.euclidean_length());
     }
+    #[allow(deprecated)]
     #[test]
     fn linestring_test() {
         let linestring = line_string![
@@ -83,6 +92,7 @@ mod test {
         ];
         assert_relative_eq!(10.0_f64, linestring.euclidean_length());
     }
+    #[allow(deprecated)]
     #[test]
     fn multilinestring_test() {
         let mline = MultiLineString::new(vec![
@@ -101,6 +111,7 @@ mod test {
         ]);
         assert_relative_eq!(15.0_f64, mline.euclidean_length());
     }
+    #[allow(deprecated)]
     #[test]
     fn line_test() {
         let line0 = Line::new(coord! { x: 0., y: 0. }, coord! { x: 0., y: 1. });

@@ -1,7 +1,11 @@
 use num_traits::FromPrimitive;
 
-use crate::{CoordFloat, Distance, Line, LineString, MultiLineString, Rhumb};
+use crate::{CoordFloat, Length, Line, LineString, MultiLineString, Rhumb};
 
+#[deprecated(
+    since = "0.29.0",
+    note = "Please use the `line.length::<Rhumb>()` via the `Length` trait instead."
+)]
 /// Determine the length of a geometry assuming each segment is a [rhumb line].
 ///
 /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
@@ -40,34 +44,32 @@ pub trait RhumbLength<T, RHS = Self> {
     fn rhumb_length(&self) -> T;
 }
 
+#[allow(deprecated)]
 impl<T> RhumbLength<T> for Line<T>
 where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_length(&self) -> T {
-        let (start, end) = self.points();
-        Rhumb::distance(start, end)
+        self.length::<Rhumb>()
     }
 }
 
+#[allow(deprecated)]
 impl<T> RhumbLength<T> for LineString<T>
 where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_length(&self) -> T {
-        self.lines().fold(T::zero(), |total_length, line| {
-            total_length + line.rhumb_length()
-        })
+        self.length::<Rhumb>()
     }
 }
 
+#[allow(deprecated)]
 impl<T> RhumbLength<T> for MultiLineString<T>
 where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_length(&self) -> T {
-        self.0
-            .iter()
-            .fold(T::zero(), |total, line| total + line.rhumb_length())
+        self.length::<Rhumb>()
     }
 }

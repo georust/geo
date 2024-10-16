@@ -1,5 +1,5 @@
 use super::super::Distance;
-use crate::{GeoFloat, Point};
+use crate::{CoordFloat, Point};
 
 /// Operations on the [Euclidean plane] measure distance with the pythagorean formula -
 /// what you'd measure with a ruler.
@@ -19,7 +19,7 @@ use crate::{GeoFloat, Point};
 pub struct Euclidean;
 
 /// Calculate the Euclidean distance (a.k.a. pythagorean distance) between two Points
-impl<F: GeoFloat> Distance<F, Point<F>, Point<F>> for Euclidean {
+impl<F: CoordFloat> Distance<F, Point<F>, Point<F>> for Euclidean {
     /// Calculate the Euclidean distance (a.k.a. pythagorean distance) between two Points
     ///
     /// # Units
@@ -48,7 +48,8 @@ impl<F: GeoFloat> Distance<F, Point<F>, Point<F>> for Euclidean {
     /// [`Geodesic`]: super::Geodesic
     /// [metric spaces]: super
     fn distance(origin: Point<F>, destination: Point<F>) -> F {
-        crate::EuclideanDistance::euclidean_distance(&origin, &destination)
+        let delta = origin - destination;
+        delta.x().hypot(delta.y())
     }
 }
 

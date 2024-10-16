@@ -350,7 +350,7 @@ impl GeodesicArea<f64> for Geometry<f64> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::algorithm::geodesic_length::GeodesicLength;
+    use crate::algorithm::line_measures::{Geodesic, Length};
     use crate::polygon;
 
     #[test]
@@ -380,7 +380,7 @@ mod test {
 
         // Confirm that the exterior ring geodesic_length is the same as the perimeter
         assert_relative_eq!(
-            polygon.exterior().geodesic_length(),
+            polygon.exterior().length::<Geodesic>(),
             polygon.geodesic_perimeter()
         );
     }
@@ -410,7 +410,7 @@ mod test {
 
         // Confirm that the exterior ring geodesic_length is the same as the perimeter
         assert_relative_eq!(
-            polygon.exterior().geodesic_length(),
+            polygon.exterior().length::<Geodesic>(),
             polygon.geodesic_perimeter()
         );
     }
@@ -440,7 +440,7 @@ mod test {
 
         // Confirm that the exterior ring geodesic_length is the same as the perimeter
         assert_relative_eq!(
-            polygon.exterior().geodesic_length(),
+            polygon.exterior().length::<Geodesic>(),
             polygon.geodesic_perimeter()
         );
     }
