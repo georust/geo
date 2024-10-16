@@ -33,7 +33,7 @@ pub trait PointTrait {
     /// have no semantic meaning.
     ///
     /// Only a top-level geometry can be empty. That is, when this point is contained within
-    /// another geometry, such as a [`LineStringTrait`][geo_traits::LineStringTrait], those points
+    /// another geometry, such as a [`LineStringTrait`][crate::LineStringTrait], those points
     /// can never be empty, and a consumer does not need to check this method.
     fn is_empty(&self) -> bool;
 
