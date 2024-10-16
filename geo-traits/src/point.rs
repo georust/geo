@@ -11,11 +11,6 @@ pub trait PointTrait {
     /// The coordinate type of this geometry
     type T: CoordNum;
 
-    /// Access the n'th (0-based) element of the CoordinateTuple.
-    /// May panic if n >= DIMENSION.
-    /// See also [`nth()`](Self::nth).
-    fn nth_unchecked(&self, n: usize) -> Self::T;
-
     /// Dimensions of the coordinate tuple
     fn dim(&self) -> Dimensions;
 
@@ -40,6 +35,11 @@ pub trait PointTrait {
     fn x_y(&self) -> (Self::T, Self::T) {
         (self.x(), self.y())
     }
+
+    /// Access the n'th (0-based) element of the CoordinateTuple.
+    /// May panic if n >= DIMENSION.
+    /// See also [`nth()`](Self::nth).
+    fn nth_unchecked(&self, n: usize) -> Self::T;
 }
 
 impl<T: CoordNum> PointTrait for Point<T> {
