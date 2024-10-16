@@ -15,6 +15,8 @@
 //! different endianness than the current machine, so individual values may need to be cloned on
 //! read.
 
+#![deny(missing_docs)]
+
 pub use dimension::Dimensions;
 pub use geometry::{GeometryTrait, GeometryType};
 pub use geometry_collection::GeometryCollectionTrait;

@@ -25,6 +25,14 @@ pub trait PointTrait {
         }
     }
 
+    /// Whether this point is `empty` or not.
+    ///
+    /// According to Simple Features, a Point can have zero coordinates and be considered `empty`.
+    ///
+    /// If `is_empty` returns `true`, then the values of `x()`, `y()`, `nth()` and `nth_unchecked`
+    /// have no semantic meaning.
+    fn is_empty(&self) -> bool;
+
     /// x component of this point.
     fn x(&self) -> Self::T;
 
@@ -53,6 +61,10 @@ impl<T: CoordNum> PointTrait for Point<T> {
         }
     }
 
+    fn is_empty(&self) -> bool {
+        false
+    }
+
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
     }
@@ -75,6 +87,10 @@ impl<T: CoordNum> PointTrait for &Point<T> {
             1 => self.y(),
             _ => panic!("Point only supports 2 dimensions"),
         }
+    }
+
+    fn is_empty(&self) -> bool {
+        false
     }
 
     fn dim(&self) -> Dimensions {
@@ -101,6 +117,10 @@ impl<T: CoordNum> PointTrait for Coord<T> {
         }
     }
 
+    fn is_empty(&self) -> bool {
+        false
+    }
+
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
     }
@@ -123,6 +143,10 @@ impl<T: CoordNum> PointTrait for &Coord<T> {
             1 => self.y(),
             _ => panic!("Point only supports 2 dimensions"),
         }
+    }
+
+    fn is_empty(&self) -> bool {
+        false
     }
 
     fn dim(&self) -> Dimensions {
@@ -149,6 +173,10 @@ impl<T: CoordNum> PointTrait for (T, T) {
         }
     }
 
+    fn is_empty(&self) -> bool {
+        false
+    }
+
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
     }
@@ -170,6 +198,10 @@ pub struct UnimplementedPoint<T: CoordNum>(PhantomData<T>);
 
 impl<T: CoordNum> PointTrait for UnimplementedPoint<T> {
     type T = T;
+
+    fn is_empty(&self) -> bool {
+        unimplemented!()
+    }
 
     fn dim(&self) -> Dimensions {
         unimplemented!()
