@@ -31,6 +31,10 @@ pub trait PointTrait {
     ///
     /// If `is_empty` returns `true`, then the values of `x()`, `y()`, `nth()` and `nth_unchecked`
     /// have no semantic meaning.
+    ///
+    /// Only a top-level geometry can be empty. That is, when this point is contained within
+    /// another geometry, such as a [`LineStringTrait`][geo_traits::LineStringTrait], those points
+    /// can never be empty, and a consumer does not need to check this method.
     fn is_empty(&self) -> bool;
 
     /// x component of this point.
