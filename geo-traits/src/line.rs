@@ -27,8 +27,8 @@ pub trait LineTrait: Sized {
     fn end(&self) -> Self::PointType<'_>;
 
     /// Access the three underlying points
-    fn points(&self) -> (Self::PointType<'_>, Self::PointType<'_>) {
-        (self.start(), self.end())
+    fn points(&self) -> [Self::PointType<'_>; 2] {
+        [self.start(), self.end()]
     }
 }
 
