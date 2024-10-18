@@ -30,14 +30,8 @@ pub trait TriangleTrait: Sized {
     fn third(&self) -> Self::PointType<'_>;
 
     /// Access the three underlying points
-    fn points(
-        &self,
-    ) -> (
-        Self::PointType<'_>,
-        Self::PointType<'_>,
-        Self::PointType<'_>,
-    ) {
-        (self.first(), self.second(), self.third())
+    fn points(&self) -> [Self::PointType<'_>; 3] {
+        [self.first(), self.second(), self.third()]
     }
 }
 
