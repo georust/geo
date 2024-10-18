@@ -4,7 +4,7 @@ use geographiclib_rs::{DirectGeodesic, InverseGeodesic};
 
 /// An ellipsoidal model of the earth, using methods given by [Karney (2013)].
 ///
-/// Distances are computed using [geodesic lines].
+/// Distances are computed using [geodesic lines] and are measured in meters.
 ///
 /// [geodesic lines]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
 /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf

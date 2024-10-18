@@ -53,6 +53,20 @@
   line_string.length::<Haversine>();
   ```
   * <https://github.com/georust/geo/pull/1228>
+* Deprecated `DensifyHaversine`
+* BREAKING: `Densify::densify` is no longer strictly Euclidean, and now accepts a generic line measure parameter.
+   ```
+  // Before
+  line_string.densify();
+  line_string.densify_haversine();
+  // After
+  line_string.densify::<Euclidean>();
+  line_string.densify::<Haversine>();
+
+  // Additional measures are now supported
+  line_string.densify::<Geodesic>();
+  line_string.densify::<Rhumb>();
+   ```
 * Change IntersectionMatrix::is_equal_topo to now consider empty geometries as equal.
   * <https://github.com/georust/geo/pull/1223>
 * Fix `(LINESTRING EMPTY).contains(LINESTRING EMPTY)` and `(MULTIPOLYGON EMPTY).contains(MULTIPOINT EMPTY)` which previously

@@ -1,5 +1,7 @@
-use super::super::Distance;
+use super::super::{Distance, InterpolatePoint};
+use crate::line_measures::densify::densify_between;
 use crate::{CoordFloat, Point};
+use num_traits::FromPrimitive;
 
 /// Operations on the [Euclidean plane] measure distance with the pythagorean formula -
 /// what you'd measure with a ruler.
@@ -50,6 +52,30 @@ impl<F: CoordFloat> Distance<F, Point<F>, Point<F>> for Euclidean {
     fn distance(origin: Point<F>, destination: Point<F>) -> F {
         let delta = origin - destination;
         delta.x().hypot(delta.y())
+    }
+}
+
+impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Euclidean {
+    fn point_at_ratio_between(start: Point<F>, end: Point<F>, ratio_from_start: F) -> Point<F> {
+        let diff = end - start;
+        start + diff * ratio_from_start
+    }
+
+    fn points_along_line(
+        start: Point<F>,
+        end: Point<F>,
+        max_distance: F,
+        include_ends: bool,
+    ) -> impl Iterator<Item = Point<F>> {
+        let mut container = vec![];
+        if include_ends {
+            container.push(start);
+        }
+        densify_between::<F, Self>(start, end, &mut container, max_distance);
+        if include_ends {
+            container.push(end);
+        }
+        container.into_iter()
     }
 }
 

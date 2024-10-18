@@ -1,8 +1,6 @@
-use crate::line_interpolate_point::LineInterpolatePoint;
-use crate::{
-    Coord, Densify, DensifyHaversine, Euclidean, Haversine, Length, LineString, LinesIter,
-    MultiLineString,
-};
+use crate::algorithm::{Densify, Length, LineInterpolatePoint, LinesIter};
+use crate::geometry::{Coord, LineString, MultiLineString};
+use crate::line_measures::{Euclidean, Haversine};
 
 /// Segments a LineString into `segment_count` equal length LineStrings as a MultiLineString
 /// using Euclidean distance calculations.  See `LineStringSegmentizeHaversine`
@@ -47,7 +45,7 @@ pub trait LineStringSegmentizeHaversine {
 }
 
 macro_rules! implement_segmentize {
-    ($trait_name:ident, $method_name:ident, $metric_space:ty, $densify_method:ident) => {
+    ($trait_name:ident, $method_name:ident, $metric_space:ty) => {
         impl $trait_name for LineString {
             fn $method_name(&self, n: usize) -> Option<MultiLineString> {
                 if (n == usize::MIN) || (n == usize::MAX) {
@@ -62,7 +60,7 @@ macro_rules! implement_segmentize {
                 let mut cum_length = 0_f64;
                 let segment_prop = (1_f64) / (n as f64);
                 let segment_length = total_length * segment_prop;
-                let densified = self.$densify_method(segment_length - f64::EPSILON);
+                let densified = self.densify::<$metric_space>(segment_length - f64::EPSILON);
 
                 if densified.lines().count() == n {
                     let linestrings = densified
@@ -112,13 +110,11 @@ macro_rules! implement_segmentize {
     };
 }
 
-implement_segmentize!(LineStringSegmentize, line_segmentize, Euclidean, densify);
-
+implement_segmentize!(LineStringSegmentize, line_segmentize, Euclidean);
 implement_segmentize!(
     LineStringSegmentizeHaversine,
     line_segmentize_haversine,
-    Haversine,
-    densify_haversine
+    Haversine
 );
 
 #[cfg(test)]

@@ -66,12 +66,9 @@ pub use coordinate_position::CoordinatePosition;
 pub mod coords_iter;
 pub use coords_iter::CoordsIter;
 
-/// Densify linear geometry components
-pub mod densify;
-pub use densify::Densify;
-
 /// Densify spherical geometry components
 pub mod densify_haversine;
+#[allow(deprecated)]
 pub use densify_haversine::DensifyHaversine;
 
 /// Dimensionality of a geometry and its boundary, based on OGC-SFA.
@@ -190,7 +187,7 @@ pub use lines_iter::LinesIter;
 
 pub mod line_measures;
 pub use line_measures::metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb};
-pub use line_measures::{Bearing, Destination, Distance, InterpolatePoint, Length};
+pub use line_measures::{Bearing, Densify, Destination, Distance, InterpolatePoint, Length};
 
 /// Split a LineString into n segments
 pub mod linestring_segment;

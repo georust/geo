@@ -6,7 +6,7 @@ use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
 
 /// A spherical model of the earth using the [haversine formula].
 ///
-/// Distances are considered [great circle] lengths.
+/// Distances are considered [great circle] lengths and are measured in meters.
 ///
 /// # References
 ///
