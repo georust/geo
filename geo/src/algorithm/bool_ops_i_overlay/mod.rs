@@ -12,13 +12,11 @@ use i_overlay::f64::overlay::F64Overlay;
 use i_overlay::f64::string::{F64StringGraph, F64StringOverlay};
 use i_overlay::i_float::f32_point::F32Point;
 use i_overlay::i_float::f64_point::F64Point;
-use i_overlay::i_shape::f64::shape::F64Shapes;
 use i_overlay::string::clip::ClipRule;
-use i_overlay::string::rule::StringRule;
 
 use geo_types::{Coord, LineString, MultiLineString, MultiPolygon};
 
-use crate::{GeoNum, HasDimensions, Polygon};
+use crate::{GeoNum, Polygon};
 
 /// Boolean Operations on geometry.
 ///
@@ -86,11 +84,11 @@ trait BoolOpsNum: GeoNum {
     type OverlayType: BoolOpsOverlay<CoordType = Self::CoordType>;
     type StringOverlayType: BoolOpsStringOverlay<CoordType = Self::CoordType>;
 
-    fn to_bops(geo_coord: Coord<Self>) -> Self::CoordType {
+    fn to_bops_coord(geo_coord: Coord<Self>) -> Self::CoordType {
         Self::CoordType::new(geo_coord.x, geo_coord.y)
     }
 
-    fn to_geo(bops_coord: Self::CoordType) -> Coord<Self> {
+    fn to_geo_coord(bops_coord: Self::CoordType) -> Coord<Self> {
         Coord {
             x: bops_coord.x(),
             y: bops_coord.y(),
@@ -282,7 +280,7 @@ impl<T: BoolOpsNum> Paths for Polygon<T> {
     type CoordType = T::CoordType;
     fn paths(&self) -> impl Iterator<Item = Vec<Self::CoordType>> {
         std::iter::once(self.exterior())
-            .chain(self.interiors().into_iter())
+            .chain(self.interiors().iter())
             .map(|r| {
                 r.into_iter()
                     .map(|c| T::CoordType::new(c.x, c.y))
@@ -294,17 +292,25 @@ impl<T: BoolOpsNum> Paths for Polygon<T> {
 impl<T: BoolOpsNum> Paths for MultiPolygon<T> {
     type CoordType = T::CoordType;
     fn paths(&self) -> impl Iterator<Item = Vec<Self::CoordType>> {
-        self.0.iter().map(|p| p.paths()).flatten()
+        self.0.iter().flat_map(|p| p.paths())
     }
 }
 
 fn line_string_from_path<T: BoolOpsNum>(path: Vec<T::CoordType>) -> LineString<T> {
-    let coords = path
-        .into_iter()
-        .map(|p| Coord { x: p.x(), y: p.y() })
-        .collect::<Vec<_>>();
+    let coords = path.into_iter().map(T::to_geo_coord).collect::<Vec<_>>();
 
     LineString(coords)
+}
+
+fn multi_line_string_from_paths<T: BoolOpsNum>(
+    paths: Vec<Vec<T::CoordType>>,
+) -> MultiLineString<T> {
+    let line_strings: Vec<_> = paths
+        .into_iter()
+        .map(|p| line_string_from_path(p))
+        .collect();
+
+    MultiLineString(line_strings)
 }
 
 fn polygon_from_shape<T: BoolOpsNum>(shape: Vec<Vec<T::CoordType>>) -> Polygon<T> {
@@ -336,9 +342,7 @@ impl From<OpType> for OverlayRule {
     }
 }
 
-// TODO: make generic - make part of GeoNum conformance to specify the various F64Overlay, F64Point etc.
 impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
-    // TODO: Do I need this associated type since I have a generic?
     type Scalar = T;
 
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
@@ -369,7 +373,7 @@ impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
         }
         for line_string in multi_line_string {
             for line in line_string.lines() {
-                let line = [T::to_bops(line.start), T::to_bops(line.end)];
+                let line = [T::to_bops_coord(line.start), T::to_bops_coord(line.end)];
                 overlay.add_string_line(line)
             }
         }
@@ -379,17 +383,7 @@ impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
             invert,
             boundary_included: true,
         });
-        let line_strings: Vec<_> = paths
-            .into_iter()
-            .map(|path| {
-                let coords = path
-                    .into_iter()
-                    .map(|coord| Self::Scalar::to_geo(coord))
-                    .collect();
-                LineString::new(coords)
-            })
-            .collect();
-        MultiLineString(line_strings)
+        multi_line_string_from_paths(paths)
     }
 }
 
@@ -423,7 +417,7 @@ impl<T: BoolOpsNum> BooleanOps for MultiPolygon<T> {
         }
         for line_string in multi_line_string {
             for line in line_string.lines() {
-                let line = [T::to_bops(line.start), T::to_bops(line.end)];
+                let line = [T::to_bops_coord(line.start), T::to_bops_coord(line.end)];
                 overlay.add_string_line(line)
             }
         }
@@ -433,16 +427,6 @@ impl<T: BoolOpsNum> BooleanOps for MultiPolygon<T> {
             invert,
             boundary_included: true,
         });
-        let line_strings: Vec<_> = paths
-            .into_iter()
-            .map(|path| {
-                let coords = path
-                    .into_iter()
-                    .map(|coord| Self::Scalar::to_geo(coord))
-                    .collect();
-                LineString::new(coords)
-            })
-            .collect();
-        MultiLineString(line_strings)
+        multi_line_string_from_paths(paths)
     }
 }
