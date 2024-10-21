@@ -115,7 +115,7 @@ trait BoolOpsStringOverlay {
 
 trait BoolOpsStringGraph {
     type CoordType;
-    fn clip_string_lines(&self, clip_rule: ClipRule) -> Vec<[Self::CoordType; 2]>;
+    fn clip_string_lines(&self, clip_rule: ClipRule) -> Vec<Vec<Self::CoordType>>;
 }
 
 trait BoolOpsOverlay {
@@ -161,7 +161,7 @@ impl BoolOpsStringOverlay for F64StringOverlay {
 impl BoolOpsStringGraph for F64StringGraph {
     type CoordType = F64Point;
 
-    fn clip_string_lines(&self, clip_rule: ClipRule) -> Vec<[Self::CoordType; 2]> {
+    fn clip_string_lines(&self, clip_rule: ClipRule) -> Vec<Vec<Self::CoordType>> {
         self.clip_string_lines(clip_rule)
     }
 }
@@ -235,7 +235,7 @@ impl BoolOpsStringOverlay for F32StringOverlay {
 impl BoolOpsStringGraph for F32StringGraph {
     type CoordType = F32Point;
 
-    fn clip_string_lines(&self, clip_rule: ClipRule) -> Vec<[Self::CoordType; 2]> {
+    fn clip_string_lines(&self, clip_rule: ClipRule) -> Vec<Vec<Self::CoordType>> {
         self.clip_string_lines(clip_rule)
     }
 }
@@ -325,44 +325,6 @@ fn multi_polygon_from_shapes<T: BoolOpsNum>(
     MultiPolygon(shapes.into_iter().map(|s| polygon_from_shape(s)).collect())
 }
 
-fn multi_line_string_from_lines<T: BoolOpsNum>(
-    lines: Vec<[T::CoordType; 2]>,
-) -> MultiLineString<T> {
-    let Some(first_segment) = lines.first() else {
-        return MultiLineString::new(vec![]);
-    };
-
-    let mut line_strings = vec![];
-    let mut current_line_string = LineString::new(vec![
-        T::to_geo(first_segment[0]),
-        T::to_geo(first_segment[1]),
-    ]);
-
-    for segments in lines.windows(2) {
-        let prev_segment = segments[0];
-        let current_segment = segments[1];
-
-        let [_prev_start, prev_end] = prev_segment;
-        let [current_start, current_end] = current_segment;
-
-        // i_overlay Coords don't impl PartialEq - request to upstream?
-        if T::to_geo(prev_end) != T::to_geo(current_start) {
-            let mut next_line_string = LineString::new(vec![]);
-            std::mem::swap(&mut next_line_string, &mut current_line_string);
-            line_strings.push(next_line_string);
-        }
-
-        current_line_string.0.push(T::to_geo(current_start));
-        current_line_string.0.push(T::to_geo(current_end));
-    }
-
-    if !current_line_string.is_empty() {
-        line_strings.push(current_line_string);
-    }
-
-    MultiLineString(line_strings)
-}
-
 impl From<OpType> for OverlayRule {
     fn from(op: OpType) -> Self {
         match op {
@@ -376,6 +338,7 @@ impl From<OpType> for OverlayRule {
 
 // TODO: make generic - make part of GeoNum conformance to specify the various F64Overlay, F64Point etc.
 impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
+    // TODO: Do I need this associated type since I have a generic?
     type Scalar = T;
 
     fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
@@ -412,11 +375,21 @@ impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
         }
 
         let graph = overlay.into_graph(FillRule::EvenOdd);
-        let lines = graph.clip_string_lines(ClipRule {
+        let paths = graph.clip_string_lines(ClipRule {
             invert,
             boundary_included: true,
         });
-        multi_line_string_from_lines(lines)
+        let line_strings: Vec<_> = paths
+            .into_iter()
+            .map(|path| {
+                let coords = path
+                    .into_iter()
+                    .map(|coord| Self::Scalar::to_geo(coord))
+                    .collect();
+                LineString::new(coords)
+            })
+            .collect();
+        MultiLineString(line_strings)
     }
 }
 
@@ -456,10 +429,20 @@ impl<T: BoolOpsNum> BooleanOps for MultiPolygon<T> {
         }
 
         let graph = overlay.into_graph(FillRule::EvenOdd);
-        let lines = graph.clip_string_lines(ClipRule {
+        let paths = graph.clip_string_lines(ClipRule {
             invert,
             boundary_included: true,
         });
-        multi_line_string_from_lines(lines)
+        let line_strings: Vec<_> = paths
+            .into_iter()
+            .map(|path| {
+                let coords = path
+                    .into_iter()
+                    .map(|coord| Self::Scalar::to_geo(coord))
+                    .collect();
+                LineString::new(coords)
+            })
+            .collect();
+        MultiLineString(line_strings)
     }
 }
