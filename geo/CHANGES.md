@@ -22,20 +22,22 @@
 * Unify various line measurements under new `line_measures::{Bearing, Distance, Destination, InterpolatePoint}` traits
   Before:
   ```
-  use geo::{GeodesicBearing, HaversineBearing, GeodesicDistance, HaversineDistance};
-  GeodesicBearing::geodesic_bearing(p1, p2)
-  HaversineBearing::haversine_bearing(p1, p2)
-  GeodesicDistance::geodesic_distance(p1, p2)
-  HaversineDistance::haversine_distance(p1, p2)
+  use geo::{GeodesicBearing, HaversineBearing, GeodesicDistance, HaversineDistance, EuclideanDistance};
+  p1.geodesic_bearing(p2)
+  p1.haversine_bearing(p2)
+  p1.geodesic_distance(p2)
+  p1.haversine_distance(p2)
+  p1.euclidean_distance(p2)
   ```
 
   After:
   ```
-  use geo::{Geodesic, Haversine, Bearing, Distance};
+  use geo::{Geodesic, Haversine, Euclidean, Bearing, Distance};
   Geodesic::bearing(p1, p2)
   Haversine::bearing(p1, p2)
   Geodesic::distance(p1, p2)
   Haversine::distance(p1, p2)
+  Euclidean::distance(p1, p2)
   ```
   * <https://github.com/georust/geo/pull/1216>
 * Deprecated legacy line measure traits in favor of those added in the previous changelog entry:

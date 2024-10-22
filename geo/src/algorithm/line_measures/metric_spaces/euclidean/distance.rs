@@ -67,9 +67,9 @@ impl<F: CoordFloat> Distance<F, Point<F>, Point<F>> for Euclidean {
     /// );
     /// ```
     ///
-    /// [`Haversine`]: super::Haversine
-    /// [`Geodesic`]: super::Geodesic
-    /// [metric spaces]: super
+    /// [`Haversine`]: crate::line_measures::metric_spaces::Haversine
+    /// [`Geodesic`]: crate::line_measures::metric_spaces::Geodesic
+    /// [metric spaces]: crate::line_measures::metric_spaces
     fn distance(origin: Point<F>, destination: Point<F>) -> F {
         Self::distance(origin.0, destination.0)
     }
