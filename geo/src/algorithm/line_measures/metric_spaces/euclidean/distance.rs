@@ -244,8 +244,14 @@ impl<F: GeoFloat> Distance<F, &Polygon<F>, &Polygon<F>> for Euclidean {
 // └────────────────────────────────────────┘
 
 /// Implements Euclidean distance for Triangles and Rects by converting them to polygons.
-macro_rules! impl_euclidean_distance_from_polygonlike_geometry {
+macro_rules! impl_euclidean_distance_for_polygonlike_geometry {
   ($polygonlike:ty,  [$($geometry_b:ty),*]) => {
+      impl<F: GeoFloat> Distance<F, $polygonlike, $polygonlike> for Euclidean
+      {
+          fn distance(origin: $polygonlike, destination: $polygonlike) -> F {
+              Self::distance(&origin.to_polygon(), destination)
+          }
+      }
       $(
           impl<F: GeoFloat> Distance<F, $polygonlike, $geometry_b> for Euclidean
           {
@@ -253,140 +259,80 @@ macro_rules! impl_euclidean_distance_from_polygonlike_geometry {
                     Self::distance(&polygonlike.to_polygon(), geometry_b)
               }
           }
+          symmetric_distance_impl!(GeoFloat, $geometry_b, $polygonlike);
       )*
   };
 }
 
-impl_euclidean_distance_from_polygonlike_geometry!(&Triangle<F>,  [&Point<F>, &MultiPoint<F>, &Line<F>, &LineString<F>, &MultiLineString<F>, &Polygon<F>, &MultiPolygon<F>, &GeometryCollection<F>, &Rect<F>, &Triangle<F>]);
-impl_euclidean_distance_from_polygonlike_geometry!(&Rect<F>,      [&Point<F>, &MultiPoint<F>, &Line<F>, &LineString<F>, &MultiLineString<F>, &Polygon<F>, &MultiPolygon<F>, &GeometryCollection<F>, &Rect<F>, &Triangle<F>]);
-
-/// Implements Euclidean distance for other geometry types to Triangles and Rects by converting the Triangle or Rect to a polygon.
-macro_rules! impl_euclidean_distance_to_polygonlike_geometry {
-  ($geometry_a:ty,  [$($polygonlike:ty),*]) => {
-      $(
-          impl<F: GeoFloat> Distance<F, $geometry_a, $polygonlike> for Euclidean
-          {
-              fn distance(geometry_a: $geometry_a, polygonlike: $polygonlike) -> F {
-                    Self::distance(geometry_a, &polygonlike.to_polygon())
-              }
-          }
-      )*
-  };
-}
-
-impl_euclidean_distance_to_polygonlike_geometry!(&Point<F>,               [&Rect<F>, &Triangle<F>]);
-impl_euclidean_distance_to_polygonlike_geometry!(&MultiPoint<F>,          [&Rect<F>, &Triangle<F>]);
-impl_euclidean_distance_to_polygonlike_geometry!(&Line<F>,                [&Rect<F>, &Triangle<F>]);
-impl_euclidean_distance_to_polygonlike_geometry!(&LineString<F>,          [&Rect<F>, &Triangle<F>]);
-impl_euclidean_distance_to_polygonlike_geometry!(&MultiLineString<F>,     [&Rect<F>, &Triangle<F>]);
-impl_euclidean_distance_to_polygonlike_geometry!(&Polygon<F>,             [&Rect<F>, &Triangle<F>]);
-impl_euclidean_distance_to_polygonlike_geometry!(&MultiPolygon<F>,        [&Rect<F>, &Triangle<F>]);
-impl_euclidean_distance_to_polygonlike_geometry!(&GeometryCollection<F>,  [&Rect<F>, &Triangle<F>]);
+impl_euclidean_distance_for_polygonlike_geometry!(&Triangle<F>,  [&Point<F>, &Line<F>, &LineString<F>, &Polygon<F>, &Rect<F>]);
+impl_euclidean_distance_for_polygonlike_geometry!(&Rect<F>,      [&Point<F>, &Line<F>, &LineString<F>, &Polygon<F>]);
 
 // ┌───────────────────────────────────────────┐
 // │ Implementations for multi geometry types  │
 // └───────────────────────────────────────────┘
 
 /// Euclidean distance implementation for multi geometry types.
-macro_rules! impl_euclidean_distance_from_iter_geometry {
-  ($iter_geometry:ty,  [$($to_geometry:ty),*]) => {
-      $(
-          impl<F: GeoFloat> Distance<F, $iter_geometry, $to_geometry> for Euclidean
-          {
-              fn distance(iter_geometry: $iter_geometry, to_geometry: $to_geometry) -> F {
-                  iter_geometry
+macro_rules! impl_euclidean_distance_for_iter_geometry {
+    ($iter_geometry:ty,  [$($to_geometry:ty),*]) => {
+        impl<F: GeoFloat> Distance<F, $iter_geometry, $iter_geometry> for Euclidean {
+            fn distance(origin: $iter_geometry, destination: $iter_geometry) -> F {
+                origin
                     .iter()
                     .fold(Bounded::max_value(), |accum: F, member| {
-                      accum.min(Self::distance(member, to_geometry))
+                        accum.min(Self::distance(member, destination))
                     })
-              }
-          }
-      )*
+             }
+        }
+        $(
+            impl<F: GeoFloat> Distance<F, $iter_geometry, $to_geometry> for Euclidean {
+                fn distance(iter_geometry: $iter_geometry, to_geometry: $to_geometry) -> F {
+                    iter_geometry
+                        .iter()
+                        .fold(Bounded::max_value(), |accum: F, member| {
+                            accum.min(Self::distance(member, to_geometry))
+                        })
+                }
+            }
+            symmetric_distance_impl!(GeoFloat, $to_geometry, $iter_geometry);
+        )*
   };
 }
 
-impl_euclidean_distance_from_iter_geometry!(&MultiPoint<F>,         [&Point<F>, &MultiPoint<F>, &Line<F>, &LineString<F>, &MultiLineString<F>, &Polygon<F>, &MultiPolygon<F>, &GeometryCollection<F>]);
-impl_euclidean_distance_from_iter_geometry!(&MultiLineString<F>,    [&Point<F>, &MultiPoint<F>, &Line<F>, &LineString<F>, &MultiLineString<F>, &Polygon<F>, &MultiPolygon<F>, &GeometryCollection<F>]);
-impl_euclidean_distance_from_iter_geometry!(&MultiPolygon<F>,       [&Point<F>, &MultiPoint<F>, &Line<F>, &LineString<F>, &MultiLineString<F>, &Polygon<F>, &MultiPolygon<F>, &GeometryCollection<F>]);
-impl_euclidean_distance_from_iter_geometry!(&GeometryCollection<F>, [&Point<F>, &MultiPoint<F>, &Line<F>, &LineString<F>, &MultiLineString<F>, &Polygon<F>, &MultiPolygon<F>, &GeometryCollection<F>]);
+impl_euclidean_distance_for_iter_geometry!(&MultiPoint<F>,         [&Point<F>, &Line<F>, &LineString<F>, &MultiLineString<F>, &Polygon<F>, &MultiPolygon<F>, &GeometryCollection<F>, &Rect<F>, &Triangle<F>]);
+impl_euclidean_distance_for_iter_geometry!(&MultiLineString<F>,    [&Point<F>, &Line<F>, &LineString<F>,                      &Polygon<F>, &MultiPolygon<F>, &GeometryCollection<F>, &Rect<F>, &Triangle<F>]);
+impl_euclidean_distance_for_iter_geometry!(&MultiPolygon<F>,       [&Point<F>, &Line<F>, &LineString<F>,                      &Polygon<F>,                   &GeometryCollection<F>, &Rect<F>, &Triangle<F>]);
+impl_euclidean_distance_for_iter_geometry!(&GeometryCollection<F>, [&Point<F>, &Line<F>, &LineString<F>,                      &Polygon<F>,                                           &Rect<F>, &Triangle<F>]);
 
-/// Euclidean distance implementation for other geometry types to multi geometry types,
-/// using the multi geometry type's implementation.
-macro_rules! impl_euclidean_distance_to_iter_geometry {
-  ($from_geometry:ty,  [$($iter_geometry:ty),*]) => {
-      $(
-        // Can I inline this in  impl_euclidean_distance_from_iter_geometry and get rid of impl_euclidean_distance_to_iter_geometry? Except... if $to == $from?
-        symmetric_distance_impl!(GeoFloat, $from_geometry, $iter_geometry);
-      )*
-  };
-}
-
-// This macro is used to implement EuclideanDistance to multi geometry types for non-multi geometry types.
-// Rect and Triangle are omitted here because those implementations are included in the Rect and Triangle section above.
-impl_euclidean_distance_to_iter_geometry!(&Point<F>,         [&MultiPoint<F>, &MultiLineString<F>, &MultiPolygon<F>, &GeometryCollection<F>]);
-impl_euclidean_distance_to_iter_geometry!(&Line<F>,          [&MultiPoint<F>, &MultiLineString<F>, &MultiPolygon<F>, &GeometryCollection<F>]);
-impl_euclidean_distance_to_iter_geometry!(&LineString<F>,    [&MultiPoint<F>, &MultiLineString<F>, &MultiPolygon<F>, &GeometryCollection<F>]);
-impl_euclidean_distance_to_iter_geometry!(&Polygon<F>,       [&MultiPoint<F>, &MultiLineString<F>, &MultiPolygon<F>, &GeometryCollection<F>]);
-
-// ┌─────────────────────────────────────────────────────────┐
-// │ Implementation to Geometry<T> for every geometry type   │
-// └─────────────────────────────────────────────────────────┘
-
-/// Euclidean distance implementation for every specific Geometry type to Geometry<T>.
-macro_rules! impl_euclidean_distance_to_geometry_for_specific {
-  ([$($from_geometry:ty),*]) => {
-      $(
-          impl<F: GeoFloat> Distance<F, $from_geometry, &Geometry<F>> for Euclidean
-          {
-              fn distance(from_geometry: $from_geometry, geom: &Geometry<F>) -> F {
-                  match geom {
-                      Geometry::Point(p) => Self::distance(from_geometry, p),
-                      Geometry::Line(l) => Self::distance(from_geometry, l),
-                      Geometry::LineString(ls) => Self::distance(from_geometry, ls),
-                      Geometry::Polygon(p) => Self::distance(from_geometry, p),
-                      Geometry::MultiPoint(mp) => Self::distance(from_geometry, mp),
-                      Geometry::MultiLineString(mls) => Self::distance(from_geometry, mls),
-                      Geometry::MultiPolygon(mp) => Self::distance(from_geometry, mp),
-                      Geometry::GeometryCollection(gc) => Self::distance(from_geometry, gc),
-                      Geometry::Rect(r) => Self::distance(from_geometry, r),
-                      Geometry::Triangle(t) => Self::distance(from_geometry, t),
-                  }
-              }
-          }
-      )*
-  };
-}
-
-impl_euclidean_distance_to_geometry_for_specific!([&Point<F>, &MultiPoint<F>, &Line<F>, &LineString<F>, &MultiLineString<F>, &Polygon<F>, &MultiPolygon<F>, &Triangle<F>, &Rect<F>, &GeometryCollection<F>]);
 // ┌──────────────────────────────┐
 // │ Implementation for Geometry  │
 // └──────────────────────────────┘
 
-/// Euclidean distance implementation for Geometry<T> to every specific Geometry type.
-macro_rules! impl_euclidean_distance_to_specific_for_geometry {
-    ([$($destination:ty),*]) => {
-        $(
-            impl<F: GeoFloat> Distance<F, &Geometry<F>, $destination> for Euclidean {
-                fn distance(origin: &Geometry<F>, destination: $destination) -> F {
-                    match origin {
-                        Geometry::Point(point) => Self::distance(point, destination),
-                        Geometry::Line(line) => Self::distance(line, destination),
-                        Geometry::LineString(line_string) => Self::distance(line_string, destination),
-                        Geometry::Polygon(polygon) => Self::distance(polygon, destination),
-                        Geometry::MultiPoint(multi_point) => Self::distance(multi_point, destination),
-                        Geometry::MultiLineString(multi_line_string) => Self::distance(multi_line_string, destination),
-                        Geometry::MultiPolygon(multi_polygon) => Self::distance(multi_polygon, destination),
-                        Geometry::GeometryCollection(geometry_collection) => Self::distance(geometry_collection, destination),
-                        Geometry::Rect(rect) => Self::distance(rect, destination),
-                        Geometry::Triangle(triangle) => Self::distance(triangle, destination),
-                    }
-                }
-            }
-        )*
-    };
+/// Euclidean distance implementation for every specific Geometry type to Geometry<T>.
+macro_rules! impl_euclidean_distance_for_geometry_and_variant {
+  ([$($target:ty),*]) => {
+      $(
+          impl<F: GeoFloat> Distance<F, $target, &Geometry<F>> for Euclidean {
+              fn distance(origin: $target, destination: &Geometry<F>) -> F {
+                  match destination {
+                      Geometry::Point(point) => Self::distance(origin, point),
+                      Geometry::Line(line) => Self::distance(origin, line),
+                      Geometry::LineString(line_string) => Self::distance(origin, line_string),
+                      Geometry::Polygon(polygon) => Self::distance(origin, polygon),
+                      Geometry::MultiPoint(multi_point) => Self::distance(origin, multi_point),
+                      Geometry::MultiLineString(multi_line_string) => Self::distance(origin, multi_line_string),
+                      Geometry::MultiPolygon(multi_polygon) => Self::distance(origin, multi_polygon),
+                      Geometry::GeometryCollection(geometry_collection) => Self::distance(origin, geometry_collection),
+                      Geometry::Rect(rect) => Self::distance(origin, rect),
+                      Geometry::Triangle(triangle) => Self::distance(origin, triangle),
+                  }
+              }
+          }
+          symmetric_distance_impl!(GeoFloat, &Geometry<F>, $target);
+      )*
+  };
 }
 
-impl_euclidean_distance_to_specific_for_geometry!([&Point<F>, &MultiPoint<F>, &Line<F>, &LineString<F>, &MultiLineString<F>, &Polygon<F>, &MultiPolygon<F>, &Triangle<F>, &Rect<F>, &GeometryCollection<F>]);
+impl_euclidean_distance_for_geometry_and_variant!([&Point<F>, &MultiPoint<F>, &Line<F>, &LineString<F>, &MultiLineString<F>, &Polygon<F>, &MultiPolygon<F>, &Triangle<F>, &Rect<F>, &GeometryCollection<F>]);
 
 impl<F: GeoFloat> Distance<F, &Geometry<F>, &Geometry<F>> for Euclidean {
     fn distance(origin: &Geometry<F>, destination: &Geometry<F>) -> F {
