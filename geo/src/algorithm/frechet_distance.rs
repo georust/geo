@@ -1,6 +1,6 @@
 use crate::coords_iter::CoordsIter;
-use crate::euclidean_distance::EuclideanDistance;
-use crate::{GeoFloat, LineString, Point};
+use crate::line_measures::{Distance, Euclidean};
+use crate::{GeoFloat, LineString};
 use num_traits::FromPrimitive;
 
 /// Determine the similarity between two `LineStrings` using the [Frechet distance].
@@ -78,7 +78,7 @@ where
 
         for (i, &a) in self.ls_a.coords().enumerate() {
             for (j, &b) in self.ls_b.coords().enumerate() {
-                let dist = Point::from(a).euclidean_distance(&Point::from(b));
+                let dist = Euclidean::distance(a, b);
 
                 self.cache[i * columns_count + j] = match (i, j) {
                     (0, 0) => dist,
@@ -98,16 +98,14 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::euclidean_distance::EuclideanDistance;
-    use crate::FrechetDistance;
-    use crate::LineString;
+    use super::*;
 
     #[test]
     fn test_single_point_in_linestring() {
         let ls_a = LineString::from(vec![(1., 1.)]);
         let ls_b = LineString::from(vec![(0., 2.)]);
         assert_relative_eq!(
-            (ls_a.clone().into_points())[0].euclidean_distance(&(&ls_b.clone().into_points())[0]),
+            Euclidean::distance(ls_a.0[0], ls_b.0[0]),
             ls_a.frechet_distance(&ls_b)
         );
     }

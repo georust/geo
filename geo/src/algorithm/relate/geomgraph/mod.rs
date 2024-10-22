@@ -18,8 +18,8 @@ pub(crate) use quadrant::Quadrant;
 pub(crate) use robust_line_intersector::RobustLineIntersector;
 use topology_position::TopologyPosition;
 
+pub use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
-pub use crate::utils::CoordPos;
 
 mod edge;
 mod edge_end;

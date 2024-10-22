@@ -77,6 +77,7 @@ pub use dimensions::HasDimensions;
 
 /// Calculate the minimum Euclidean distance between two `Geometries`.
 pub mod euclidean_distance;
+#[allow(deprecated)]
 pub use euclidean_distance::EuclideanDistance;
 
 /// Calculate the length of a planar line between two `Geometries`.

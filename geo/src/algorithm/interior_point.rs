@@ -1,9 +1,14 @@
 use std::cmp::{Ordering, Reverse};
 
 use crate::algorithm::{
-    bounding_rect::BoundingRect, centroid::Centroid, coords_iter::CoordsIter,
-    dimensions::HasDimensions, euclidean_distance::EuclideanDistance,
-    line_intersection::LineIntersection, lines_iter::LinesIter, relate::Relate,
+    bounding_rect::BoundingRect,
+    centroid::Centroid,
+    coords_iter::CoordsIter,
+    dimensions::HasDimensions,
+    line_intersection::LineIntersection,
+    line_measures::{Distance, Euclidean},
+    lines_iter::LinesIter,
+    relate::Relate,
 };
 use crate::geometry::*;
 use crate::sweep::{Intersections, SweepPoint};
@@ -107,7 +112,7 @@ where
                     .iter()
                     .map(|coord| {
                         let pt = Point::from(*coord);
-                        (pt, pt.euclidean_distance(&centroid))
+                        (pt, Euclidean::distance(pt, centroid))
                     })
                     .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less))
                     .map(|(pt, _distance)| pt)
@@ -130,7 +135,7 @@ where
                 .filter_map(|linestring| {
                     linestring
                         .interior_point()
-                        .map(|pt| (pt, pt.euclidean_distance(&centroid)))
+                        .map(|pt| (pt, Euclidean::distance(pt, centroid)))
                 })
                 .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less))
                 .map(|(pt, _distance)| pt)
@@ -308,7 +313,7 @@ where
     fn interior_point(&self) -> Self::Output {
         if let Some(centroid) = self.centroid() {
             self.iter()
-                .map(|pt| (pt, pt.euclidean_distance(&centroid)))
+                .map(|pt| (pt, Euclidean::distance(pt, &centroid)))
                 .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less))
                 .map(|(pt, _distance)| *pt)
         } else {
@@ -342,7 +347,10 @@ where
                         (
                             pt,
                             // maximize dimensions, minimize distance
-                            (Reverse(geom.dimensions()), pt.euclidean_distance(&centroid)),
+                            (
+                                Reverse(geom.dimensions()),
+                                Euclidean::distance(pt, centroid),
+                            ),
                         )
                     })
                 })

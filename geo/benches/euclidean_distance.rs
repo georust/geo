@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main};
-use geo::algorithm::{ConvexHull, EuclideanDistance};
+use geo::algorithm::{ConvexHull, Distance, Euclidean};
 use geo::{polygon, Polygon};
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {
@@ -37,9 +37,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
             (x: -6.064453, y: 68.49604),
         ];
         bencher.iter(|| {
-            criterion::black_box(
-                criterion::black_box(&poly1).euclidean_distance(criterion::black_box(&poly2)),
-            );
+            criterion::black_box(Euclidean::distance(&poly1, &poly2));
         });
     });
 
@@ -81,9 +79,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
             ]
             .convex_hull();
             bencher.iter(|| {
-                criterion::black_box(
-                    criterion::black_box(&poly1).euclidean_distance(criterion::black_box(&poly2)),
-                );
+                criterion::black_box(Euclidean::distance(&poly1, &poly2));
             });
         },
     );

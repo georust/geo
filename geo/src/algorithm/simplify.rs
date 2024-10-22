@@ -1,5 +1,6 @@
-use crate::{Coord, GeoFloat, Line, LineString, MultiLineString, MultiPolygon, Polygon};
-use crate::{CoordsIter, EuclideanDistance};
+use crate::algorithm::{CoordsIter, Distance, Euclidean};
+use crate::geometry::{Coord, Line, LineString, MultiLineString, MultiPolygon, Polygon};
+use crate::GeoFloat;
 
 const LINE_STRING_INITIAL_MIN: usize = 2;
 const POLYGON_INITIAL_MIN: usize = 4;
@@ -96,7 +97,12 @@ where
         .enumerate()
         .take(rdp_indices.len() - 1) // Don't include the last index
         .skip(1) // Don't include the first index
-        .map(|(index, rdp_index)| (index, rdp_index.coord.euclidean_distance(&first_last_line)))
+        .map(|(index, rdp_index)| {
+            (
+                index,
+                Euclidean::distance(rdp_index.coord, &first_last_line),
+            )
+        })
         .fold(
             (0usize, T::zero()),
             |(farthest_index, farthest_distance), (index, distance)| {
