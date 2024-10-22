@@ -1,14 +1,17 @@
 use num_traits::FromPrimitive;
 
-use crate::line_measures::{Haversine, InterpolatePoint, Length};
+use crate::line_measures::Haversine;
 // Densify will soon be deprecated too, so let's just allow deprecated for now
 #[allow(deprecated)]
 use crate::HaversineLength;
 use crate::{
-    CoordFloat, CoordsIter, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect,
-    Triangle,
+    CoordFloat, Densify, Line, LineString, MultiLineString, MultiPolygon, Polygon, Rect, Triangle,
 };
 
+#[deprecated(
+    since = "0.29.0",
+    note = "Please use the `line.densify::<Haversine>()` via the `Densify` trait instead."
+)]
 /// Returns a new spherical geometry containing both existing and new interpolated coordinates with
 /// a maximum distance of `max_distance` between them.
 ///
@@ -21,6 +24,7 @@ use crate::{
 /// # Examples
 /// ```
 /// use geo::{coord, Line, LineString};
+/// #[allow(deprecated)]
 /// use geo::DensifyHaversine;
 ///
 /// let line = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 0.0, y: 1.0 });
@@ -36,29 +40,6 @@ pub trait DensifyHaversine<F: CoordFloat> {
     fn densify_haversine(&self, max_distance: F) -> Self::Output;
 }
 
-// Helper for densification trait
-fn densify_line<T: CoordFloat + FromPrimitive>(
-    line: Line<T>,
-    container: &mut Vec<Point<T>>,
-    max_distance: T,
-) {
-    assert!(max_distance > T::zero());
-    container.push(line.start_point());
-    let num_segments = (line.length::<Haversine>() / max_distance)
-        .ceil()
-        .to_u64()
-        .unwrap();
-    // distance "unit" for this line segment
-    let frac = T::one() / T::from(num_segments).unwrap();
-    for segment_idx in 1..num_segments {
-        let ratio = frac * T::from(segment_idx).unwrap();
-        let start = line.start;
-        let end = line.end;
-        let interpolated_point = Haversine::point_at_ratio_between(Point(start), Point(end), ratio);
-        container.push(interpolated_point);
-    }
-}
-
 #[allow(deprecated)]
 impl<T> DensifyHaversine<T> for MultiPolygon<T>
 where
@@ -69,11 +50,7 @@ where
     type Output = MultiPolygon<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        MultiPolygon::new(
-            self.iter()
-                .map(|polygon| polygon.densify_haversine(max_distance))
-                .collect(),
-        )
+        self.densify::<Haversine>(max_distance)
     }
 }
 
@@ -87,13 +64,7 @@ where
     type Output = Polygon<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        let densified_exterior = self.exterior().densify_haversine(max_distance);
-        let densified_interiors = self
-            .interiors()
-            .iter()
-            .map(|ring| ring.densify_haversine(max_distance))
-            .collect();
-        Polygon::new(densified_exterior, densified_interiors)
+        self.densify::<Haversine>(max_distance)
     }
 }
 
@@ -107,11 +78,7 @@ where
     type Output = MultiLineString<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        MultiLineString::new(
-            self.iter()
-                .map(|linestring| linestring.densify_haversine(max_distance))
-                .collect(),
-        )
+        self.densify::<Haversine>(max_distance)
     }
 }
 
@@ -125,16 +92,7 @@ where
     type Output = LineString<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        if self.coords_count() == 0 {
-            return LineString::new(vec![]);
-        }
-
-        let mut new_line = vec![];
-        self.lines()
-            .for_each(|line| densify_line(line, &mut new_line, max_distance));
-        // we're done, push the last coordinate on to finish
-        new_line.push(self.points().last().unwrap());
-        LineString::from(new_line)
+        self.densify::<Haversine>(max_distance)
     }
 }
 
@@ -148,11 +106,7 @@ where
     type Output = LineString<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        let mut new_line = vec![];
-        densify_line(*self, &mut new_line, max_distance);
-        // we're done, push the last coordinate on to finish
-        new_line.push(self.end_point());
-        LineString::from(new_line)
+        self.densify::<Haversine>(max_distance)
     }
 }
 
@@ -166,7 +120,7 @@ where
     type Output = Polygon<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        self.to_polygon().densify_haversine(max_distance)
+        self.densify::<Haversine>(max_distance)
     }
 }
 
@@ -180,14 +134,14 @@ where
     type Output = Polygon<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        self.to_polygon().densify_haversine(max_distance)
+        self.densify::<Haversine>(max_distance)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::coord;
+    use crate::{coord, CoordsIter};
 
     #[test]
     fn test_polygon_densify() {
@@ -218,6 +172,7 @@ mod tests {
         ]
         .into();
 
+        #[allow(deprecated)]
         let dense = polygon.densify_haversine(50000.0);
         assert_relative_eq!(dense.exterior(), &output_exterior);
     }
@@ -250,6 +205,7 @@ mod tests {
         ]
         .into();
 
+        #[allow(deprecated)]
         let dense = linestring.densify_haversine(110.0);
         assert_relative_eq!(dense, output);
     }
@@ -258,6 +214,7 @@ mod tests {
     fn test_line_densify() {
         let output: LineString = vec![[0.0, 0.0], [0.0, 0.5], [0.0, 1.0]].into();
         let line = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 0.0, y: 1.0 });
+        #[allow(deprecated)]
         let dense = line.densify_haversine(100000.0);
         assert_relative_eq!(dense, output);
     }
@@ -265,6 +222,7 @@ mod tests {
     #[test]
     fn test_empty_linestring() {
         let linestring: LineString<f64> = LineString::new(vec![]);
+        #[allow(deprecated)]
         let dense = linestring.densify_haversine(10.0);
         assert_eq!(0, dense.coords_count());
     }
