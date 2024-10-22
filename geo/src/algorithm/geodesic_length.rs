@@ -1,5 +1,9 @@
-use crate::{Distance, Geodesic, Line, LineString, MultiLineString};
+use crate::{Geodesic, Length, Line, LineString, MultiLineString};
 
+#[deprecated(
+    since = "0.29.0",
+    note = "Please use the `line.length::<Geodesic>()` via the `Length` trait instead."
+)]
 /// Determine the length of a geometry on an ellipsoidal model of the earth.
 ///
 /// This uses the geodesic measurement methods given by [Karney (2013)]. As opposed to older methods
@@ -44,30 +48,24 @@ pub trait GeodesicLength<T, RHS = Self> {
     fn geodesic_length(&self) -> T;
 }
 
+#[allow(deprecated)]
 impl GeodesicLength<f64> for Line {
     /// The units of the returned value is meters.
     fn geodesic_length(&self) -> f64 {
-        let (start, end) = self.points();
-        Geodesic::distance(start, end)
+        self.length::<Geodesic>()
     }
 }
 
+#[allow(deprecated)]
 impl GeodesicLength<f64> for LineString {
     fn geodesic_length(&self) -> f64 {
-        let mut length = 0.0;
-        for line in self.lines() {
-            length += line.geodesic_length();
-        }
-        length
+        self.length::<Geodesic>()
     }
 }
 
+#[allow(deprecated)]
 impl GeodesicLength<f64> for MultiLineString {
     fn geodesic_length(&self) -> f64 {
-        let mut length = 0.0;
-        for line_string in &self.0 {
-            length += line_string.geodesic_length();
-        }
-        length
+        self.length::<Geodesic>()
     }
 }

@@ -43,6 +43,16 @@
   * `RhumbBearing`, `RhumbDistance`, `RhumbDestination`, `RhumbIntermediate`
   * `HaversineBearing`, `HaversineDistance`, `HaversineDestination`, `HaversineIntermediate`
   * <https://github.com/georust/geo/pull/1222>
+* Deprecated `HaversineLength`, `EuclideanLength`, `RhumbLength`, `GeodesicLength` in favor of new generic `Length` trait.
+  ```
+  // Before
+  line_string.euclidean_length();
+  line_string.haversine_length();
+  // After
+  line_string.length::<Euclidean>();
+  line_string.length::<Haversine>();
+  ```
+  * <https://github.com/georust/geo/pull/1228>
 * Change IntersectionMatrix::is_equal_topo to now consider empty geometries as equal.
   * <https://github.com/georust/geo/pull/1223>
 * Fix `(LINESTRING EMPTY).contains(LINESTRING EMPTY)` and `(MULTIPOLYGON EMPTY).contains(MULTIPOINT EMPTY)` which previously
@@ -53,7 +63,6 @@
   * <https://github.com/georust/geo/pull/1226>
 * Enable i128 geometry types
   * <https://github.com/georust/geo/pull/1230>
-
 ## 0.28.0
 
 * BREAKING: The `HasKernel` trait was removed and it's functionality was merged

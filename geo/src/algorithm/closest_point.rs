@@ -1,4 +1,4 @@
-use crate::algorithm::{EuclideanLength, Intersects};
+use crate::algorithm::{Euclidean, Intersects, Length};
 use crate::geometry::*;
 use crate::Closest;
 use crate::GeoFloat;
@@ -52,7 +52,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Point<F> {
 #[allow(clippy::many_single_char_names)]
 impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        let line_length = self.euclidean_length();
+        let line_length = self.length::<Euclidean>();
         if line_length == F::zero() {
             // if we've got a zero length line, technically the entire line
             // is the closest point...

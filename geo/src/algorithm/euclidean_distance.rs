@@ -1,10 +1,9 @@
 use crate::utils::{coord_pos_relative_to_ring, CoordPos};
-use crate::EuclideanLength;
-use crate::Intersects;
 use crate::{
     Coord, GeoFloat, GeoNum, Geometry, GeometryCollection, Line, LineString, MultiLineString,
     MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
 };
+use crate::{Distance, Euclidean, Intersects};
 use num_traits::{float::FloatConst, Bounded, Float, Signed};
 
 use rstar::primitives::CachedEnvelope;
@@ -104,7 +103,7 @@ where
 {
     /// Minimum distance between two `Coord`s
     fn euclidean_distance(&self, c: &Coord<T>) -> T {
-        Line::new(*self, *c).euclidean_length()
+        Euclidean::distance((*self).into(), (*c).into())
     }
 }
 

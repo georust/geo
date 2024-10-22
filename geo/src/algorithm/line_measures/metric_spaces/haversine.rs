@@ -23,7 +23,7 @@ impl<F: CoordFloat + FromPrimitive> Bearing<F> for Haversine {
     /// # Units
     ///
     /// - `origin`, `destination`: Points where x/y are lon/lat degree coordinates
-    /// returns: degrees, where: North: 0°, East: 90°, South: 180°, West: 270°
+    /// - returns: degrees, where: North: 0°, East: 90°, South: 180°, West: 270°
     ///
     /// # Examples
     ///
