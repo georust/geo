@@ -39,19 +39,36 @@ use crate::{GeoNum, Polygon};
 /// and fix invalid polygons as long the interior-exterior requirement above is
 /// satisfied.
 pub trait BooleanOps {
-    type Scalar: GeoNum;
+    type Scalar: BoolOpsNum;
 
-    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar>;
-    fn intersection(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
+    fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>>;
+
+    fn boolean_op(&self, other: &impl BooleanOps<Scalar = Self::Scalar>, op: OpType) -> MultiPolygon<Self::Scalar> {
+        let mut overlay = <Self::Scalar as BoolOpsNum>::OverlayType::new();
+
+        for ring in self.rings() {
+            overlay.add_path(ring_to_path(ring), ShapeType::Subject);
+        }
+        for ring in other.rings() {
+            overlay.add_path(ring_to_path(ring), ShapeType::Clip);
+        }
+
+        let graph = overlay.into_graph(FillRule::EvenOdd);
+        let shapes = graph.extract_shapes(op.into());
+
+        multi_polygon_from_shapes(shapes)
+    }
+
+    fn intersection(&self, other:  &impl BooleanOps<Scalar = Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Intersection)
     }
-    fn union(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
+    fn union(&self, other:  &impl BooleanOps<Scalar = Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Union)
     }
-    fn xor(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
+    fn xor(&self, other: &impl BooleanOps<Scalar = Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Xor)
     }
-    fn difference(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
+    fn difference(&self, other: &impl BooleanOps<Scalar = Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Difference)
     }
 
@@ -79,7 +96,7 @@ trait Paths {
     fn paths(&self) -> impl Iterator<Item = Vec<Self::CoordType>>;
 }
 
-trait BoolOpsNum: GeoNum {
+pub trait BoolOpsNum: GeoNum {
     type CoordType: BoolOpsCoord<Self>;
     type OverlayType: BoolOpsOverlay<CoordType = Self::CoordType>;
     type StringOverlayType: BoolOpsStringOverlay<CoordType = Self::CoordType>;
@@ -331,6 +348,10 @@ fn multi_polygon_from_shapes<T: BoolOpsNum>(
     MultiPolygon(shapes.into_iter().map(|s| polygon_from_shape(s)).collect())
 }
 
+fn ring_to_path<T: BoolOpsNum>(line_string: &LineString<T>) -> Vec<T::CoordType> {
+    line_string.coords().map(|c| T::to_bops_coord(*c)).collect()
+}
+
 impl From<OpType> for OverlayRule {
     fn from(op: OpType) -> Self {
         match op {
@@ -345,21 +366,8 @@ impl From<OpType> for OverlayRule {
 impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
     type Scalar = T;
 
-    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        // get overlay from GeoNum
-        let mut overlay = T::OverlayType::new();
-
-        for path in self.paths() {
-            overlay.add_path(path, ShapeType::Subject);
-        }
-        for path in other.paths() {
-            overlay.add_path(path, ShapeType::Clip);
-        }
-
-        let graph = overlay.into_graph(FillRule::EvenOdd);
-        let shapes = graph.extract_shapes(op.into());
-
-        multi_polygon_from_shapes(shapes)
+    fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>> {
+        std::iter::once(self.exterior()).chain(self.interiors().iter())
     }
 
     fn clip(
@@ -390,20 +398,8 @@ impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
 impl<T: BoolOpsNum> BooleanOps for MultiPolygon<T> {
     type Scalar = T;
 
-    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        let mut overlay = T::OverlayType::new();
-
-        for path in self.paths() {
-            overlay.add_path(path, ShapeType::Subject);
-        }
-        for path in other.paths() {
-            overlay.add_path(path, ShapeType::Clip);
-        }
-
-        let graph = overlay.into_graph(FillRule::EvenOdd);
-        let shapes = graph.extract_shapes(op.into());
-
-        multi_polygon_from_shapes(shapes)
+    fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>> {
+        self.0.iter().flat_map(|p| p.rings())
     }
 
     fn clip(
