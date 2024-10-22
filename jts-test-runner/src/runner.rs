@@ -313,9 +313,8 @@ impl TestRunner {
                     }
                 }
                 Operation::BooleanOp { a, b, op, expected } => {
-                    let expected = match expected {
-                        Geometry::MultiPolygon(multi) => multi.clone(),
-                        Geometry::Polygon(poly) => MultiPolygon(vec![poly.clone()]),
+                    match expected {
+                        Geometry::MultiPolygon(_) | Geometry::Polygon(_) => {}
                         _ => {
                             info!("skipping unsupported Union expectation: {:?}", expected);
                             self.unsupported.push(test_case);
@@ -325,9 +324,11 @@ impl TestRunner {
 
                     let actual = match (a, b) {
                         (Geometry::Polygon(a), Geometry::Polygon(b)) => a.boolean_op(b, *op),
+                        (Geometry::Polygon(a), Geometry::MultiPolygon(b)) => a.boolean_op(b, *op),
                         (Geometry::MultiPolygon(a), Geometry::MultiPolygon(b)) => {
                             a.boolean_op(b, *op)
                         }
+                        (Geometry::MultiPolygon(a), Geometry::Polygon(b)) => a.boolean_op(b, *op),
                         _ => {
                             info!("skipping unsupported Union combination: {:?}, {:?}", a, b);
                             self.unsupported.push(test_case);
@@ -335,7 +336,7 @@ impl TestRunner {
                         }
                     };
 
-                    if actual.relate(&expected).is_equal_topo() {
+                    if actual.relate(expected).is_equal_topo() {
                         debug!(
                             "BooleanOp success (topo eq) - expected: {:?}",
                             expected.wkt_string()
