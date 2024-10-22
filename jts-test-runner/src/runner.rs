@@ -355,6 +355,69 @@ impl TestRunner {
                         });
                     }
                 }
+                Operation::ClipOp { a, b, expected } => {
+                    match expected {
+                        Geometry::MultiLineString(_) | Geometry::LineString(_) => {}
+                        other => {
+                            info!("skipping unsupported ClipOp output: {:?}", other);
+                            self.unsupported.push(test_case);
+                            continue;
+                        }
+                    };
+
+                    let actual = match (a, b) {
+                        (Geometry::Polygon(polygon), Geometry::LineString(line_string))
+                        | (Geometry::LineString(line_string), Geometry::Polygon(polygon)) => {
+                            // REVIEW: add a line_string flavor
+                            polygon.clip(&MultiLineString(vec![line_string.clone()]), false)
+                        }
+                        (
+                            Geometry::Polygon(polygon),
+                            Geometry::MultiLineString(multi_line_string),
+                        )
+                        | (
+                            Geometry::MultiLineString(multi_line_string),
+                            Geometry::Polygon(polygon),
+                        ) => polygon.clip(multi_line_string, false),
+                        (
+                            Geometry::LineString(line_string),
+                            Geometry::MultiPolygon(multi_polygon),
+                        )
+                        | (
+                            Geometry::MultiPolygon(multi_polygon),
+                            Geometry::LineString(line_string),
+                        ) => multi_polygon.clip(&MultiLineString(vec![line_string.clone()]), false),
+                        (
+                            Geometry::MultiLineString(multi_line_string),
+                            Geometry::MultiPolygon(multi_polygon),
+                        )
+                        | (
+                            Geometry::MultiPolygon(multi_polygon),
+                            Geometry::MultiLineString(multi_line_string),
+                        ) => multi_polygon.clip(multi_line_string, false),
+
+                        // We should be filtering the input test cases in such a way that we don't get here.
+                        _ => todo!("Handle {:?} and {:?}", a, b),
+                    };
+
+                    if actual.relate(expected).is_equal_topo() {
+                        debug!(
+                            "ClipOp success (topo eq) - expected: {:?}",
+                            expected.wkt_string()
+                        );
+                        self.successes.push(test_case);
+                    } else {
+                        let error_description = format!(
+                            "expected {:?}, actual: {:?}",
+                            expected.wkt_string(),
+                            actual.wkt_string()
+                        );
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    }
+                }
                 Operation::Unsupported { reason: _ } => self.unsupported.push(test_case),
             }
         }
@@ -428,8 +491,10 @@ impl TestRunner {
 
                     match test.operation_input.into_operation(&case) {
                         Ok(operation) => {
-                            if matches!(operation, Operation::BooleanOp { .. })
-                                && run.precision_model.is_some()
+                            if matches!(
+                                operation,
+                                Operation::BooleanOp { .. } | Operation::ClipOp { .. }
+                            ) && run.precision_model.is_some()
                                 && &run.precision_model.as_ref().unwrap().ty != "FLOATING"
                             {
                                 cases.push(TestCase {
