@@ -1,3 +1,5 @@
+mod distance;
+
 use super::super::{Distance, InterpolatePoint};
 use crate::line_measures::densify::densify_between;
 use crate::{CoordFloat, Point};
@@ -19,41 +21,6 @@ use num_traits::FromPrimitive;
 /// [`Geodesic`]: super::Geodesic
 /// [metric spaces]: super
 pub struct Euclidean;
-
-/// Calculate the Euclidean distance (a.k.a. pythagorean distance) between two Points
-impl<F: CoordFloat> Distance<F, Point<F>, Point<F>> for Euclidean {
-    /// Calculate the Euclidean distance (a.k.a. pythagorean distance) between two Points
-    ///
-    /// # Units
-    /// - `origin`, `destination`: Point where the units of x/y represent non-angular units
-    ///    — e.g. meters or miles, not lon/lat. For lon/lat points, use the
-    ///    [`Haversine`] or [`Geodesic`] [metric spaces].
-    /// - returns: distance in the same units as the `origin` and `destination` points
-    ///
-    /// # Example
-    /// ```
-    /// use geo::{Euclidean, Distance};
-    /// use geo::Point;
-    /// // web mercator
-    /// let new_york_city = Point::new(-8238310.24, 4942194.78);
-    /// // web mercator
-    /// let london = Point::new(-14226.63, 6678077.70);
-    /// let distance: f64 = Euclidean::distance(new_york_city, london);
-    ///
-    /// assert_eq!(
-    ///     8_405_286., // meters in web mercator
-    ///     distance.round()
-    /// );
-    /// ```
-    ///
-    /// [`Haversine`]: super::Haversine
-    /// [`Geodesic`]: super::Geodesic
-    /// [metric spaces]: super
-    fn distance(origin: Point<F>, destination: Point<F>) -> F {
-        let delta = origin - destination;
-        delta.x().hypot(delta.y())
-    }
-}
 
 impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Euclidean {
     fn point_at_ratio_between(start: Point<F>, end: Point<F>, ratio_from_start: F) -> Point<F> {

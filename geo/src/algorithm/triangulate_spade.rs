@@ -4,7 +4,7 @@ use spade::{
 };
 
 use crate::{
-    line_intersection::line_intersection, CoordsIter, EuclideanDistance, GeoFloat,
+    line_intersection::line_intersection, CoordsIter, Distance, Euclidean, GeoFloat,
     LineIntersection, LinesIter,
 };
 use crate::{Centroid, Contains};
@@ -530,12 +530,12 @@ fn snap_or_register_point<T: SpadeTriangulationFloat>(
         .iter()
         // find closest
         .min_by(|a, b| {
-            a.euclidean_distance(&point)
-                .partial_cmp(&b.euclidean_distance(&point))
+            Euclidean::distance(**a, point)
+                .partial_cmp(&Euclidean::distance(**b, point))
                 .expect("Couldn't compare coordinate distances")
         })
-        // only snap if closest is within epsilone range
-        .filter(|nearest_point| nearest_point.euclidean_distance(&point) < snap_radius)
+        // only snap if closest is within epsilon range
+        .filter(|nearest_point| Euclidean::distance(**nearest_point, point) < snap_radius)
         .cloned()
         // otherwise register and use input point
         .unwrap_or_else(|| {

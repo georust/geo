@@ -1,8 +1,8 @@
 use crate::convex_hull::qhull;
 use crate::utils::partial_min;
 use crate::{
-    coord, Centroid, Coord, CoordNum, Euclidean, EuclideanDistance, GeoFloat, Length, Line,
-    LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    coord, Centroid, Coord, CoordNum, Distance, Euclidean, GeoFloat, Length, Line, LineString,
+    MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
@@ -134,8 +134,8 @@ where
             let closest_point =
                 candidates.fold(Point::new(point.x, point.y), |acc_point, candidate| {
                     let candidate_point = Point::new(candidate.x, candidate.y);
-                    if line.euclidean_distance(&acc_point)
-                        > line.euclidean_distance(&candidate_point)
+                    if Euclidean::distance(&line, &acc_point)
+                        > Euclidean::distance(&line, &candidate_point)
                     {
                         candidate_point
                     } else {
@@ -154,8 +154,8 @@ where
             let closest_edge_option = match peeked_edge {
                 None => None,
                 Some(&edge) => Some(edges_nearby_point.fold(*edge, |acc, candidate| {
-                    if closest_point.euclidean_distance(&acc)
-                        > closest_point.euclidean_distance(candidate)
+                    if Euclidean::distance(&closest_point, &acc)
+                        > Euclidean::distance(&closest_point, candidate)
                     {
                         *candidate
                     } else {
@@ -164,8 +164,8 @@ where
                 })),
             };
             let decision_distance = partial_min(
-                closest_point.euclidean_distance(&line.start_point()),
-                closest_point.euclidean_distance(&line.end_point()),
+                Euclidean::distance(&closest_point, &line.start_point()),
+                Euclidean::distance(&closest_point, &line.end_point()),
             );
             if let Some(closest_edge) = closest_edge_option {
                 let far_enough = edge_length / decision_distance > concavity;
