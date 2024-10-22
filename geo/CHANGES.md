@@ -42,7 +42,9 @@
   * `GeodesicBearing`, `GeodesicDistance`, `GeodesicDestination`, `GeodesicIntermediate`
   * `RhumbBearing`, `RhumbDistance`, `RhumbDestination`, `RhumbIntermediate`
   * `HaversineBearing`, `HaversineDistance`, `HaversineDestination`, `HaversineIntermediate`
+  * `EuclideanDistance`
   * <https://github.com/georust/geo/pull/1222>
+  * <https://github.com/georust/geo/pull/1232>
 * Deprecated `HaversineLength`, `EuclideanLength`, `RhumbLength`, `GeodesicLength` in favor of new generic `Length` trait.
   ```
   // Before
@@ -77,6 +79,8 @@
   * <https://github.com/georust/geo/pull/1226>
 * Enable i128 geometry types
   * <https://github.com/georust/geo/pull/1230>
+
+
 ## 0.28.0
 
 * BREAKING: The `HasKernel` trait was removed and it's functionality was merged
