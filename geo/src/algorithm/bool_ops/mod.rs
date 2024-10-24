@@ -1,6 +1,22 @@
+use std::{error::Error, fmt::Display};
+
 use geo_types::{MultiLineString, MultiPolygon};
 
 use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
+
+#[derive(Debug)]
+pub enum BooleanError {
+    Crash,
+}
+
+impl Display for BooleanError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Crash")
+    }
+}
+impl Error for BooleanError {}
+
+pub type BooleanResult<T> = Result<T, BooleanError>;
 
 /// Boolean Operations on geometry.
 ///
@@ -25,17 +41,17 @@ use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
 pub trait BooleanOps: Sized {
     type Scalar: GeoNum;
 
-    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar>;
-    fn intersection(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
+    fn boolean_op(&self, other: &Self, op: OpType) -> BooleanResult<MultiPolygon<Self::Scalar>>;
+    fn intersection(&self, other: &Self) -> BooleanResult<MultiPolygon<Self::Scalar>> {
         self.boolean_op(other, OpType::Intersection)
     }
-    fn union(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
+    fn union(&self, other: &Self) -> BooleanResult<MultiPolygon<Self::Scalar>> {
         self.boolean_op(other, OpType::Union)
     }
-    fn xor(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
+    fn xor(&self, other: &Self) -> BooleanResult<MultiPolygon<Self::Scalar>> {
         self.boolean_op(other, OpType::Xor)
     }
-    fn difference(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
+    fn difference(&self, other: &Self) -> BooleanResult<MultiPolygon<Self::Scalar>> {
         self.boolean_op(other, OpType::Difference)
     }
 
@@ -47,7 +63,7 @@ pub trait BooleanOps: Sized {
         &self,
         ls: &MultiLineString<Self::Scalar>,
         invert: bool,
-    ) -> MultiLineString<Self::Scalar>;
+    ) -> BooleanResult<MultiLineString<Self::Scalar>>;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -61,51 +77,51 @@ pub enum OpType {
 impl<T: GeoFloat> BooleanOps for Polygon<T> {
     type Scalar = T;
 
-    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
+    fn boolean_op(&self, other: &Self, op: OpType) -> BooleanResult<MultiPolygon<Self::Scalar>> {
         let spec = BoolOp::from(op);
         let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
         bop.add_polygon(self, 0);
         bop.add_polygon(other, 1);
-        bop.sweep()
+        Ok(bop.sweep())
     }
 
     fn clip(
         &self,
         ls: &MultiLineString<Self::Scalar>,
         invert: bool,
-    ) -> MultiLineString<Self::Scalar> {
+    ) -> BooleanResult<MultiLineString<Self::Scalar>> {
         let spec = ClipOp::new(invert);
         let mut bop = Proc::new(spec, self.coords_count() + ls.coords_count());
         bop.add_polygon(self, 0);
         ls.0.iter().enumerate().for_each(|(idx, l)| {
             bop.add_line_string(l, idx + 1);
         });
-        bop.sweep()
+        Ok(bop.sweep())
     }
 }
 impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
     type Scalar = T;
 
-    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
+    fn boolean_op(&self, other: &Self, op: OpType) -> BooleanResult<MultiPolygon<Self::Scalar>> {
         let spec = BoolOp::from(op);
         let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
         bop.add_multi_polygon(self, 0);
         bop.add_multi_polygon(other, 1);
-        bop.sweep()
+        Ok(bop.sweep())
     }
 
     fn clip(
         &self,
         ls: &MultiLineString<Self::Scalar>,
         invert: bool,
-    ) -> MultiLineString<Self::Scalar> {
+    ) -> BooleanResult<MultiLineString<Self::Scalar>> {
         let spec = ClipOp::new(invert);
         let mut bop = Proc::new(spec, self.coords_count() + ls.coords_count());
         bop.add_multi_polygon(self, 0);
         ls.0.iter().enumerate().for_each(|(idx, l)| {
             bop.add_line_string(l, idx + 1);
         });
-        bop.sweep()
+        Ok(bop.sweep())
     }
 }
 

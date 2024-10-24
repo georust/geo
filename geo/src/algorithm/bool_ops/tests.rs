@@ -179,7 +179,7 @@ fn test_clip_adhoc() -> Result<()> {
     let mls = MultiLineString::try_from_wkt_str(wkt2)
         .or_else(|_| LineString::<f64>::try_from_wkt_str(wkt2).map(MultiLineString::from))
         .unwrap();
-    let output = poly1.clip(&mls, true);
+    let output = poly1.clip(&mls, true)?;
     eprintln!("{wkt}", wkt = output.to_wkt());
     Ok(())
 }
@@ -209,16 +209,17 @@ fn test_issue_885_big_simplified() -> Result<()> {
 }
 
 #[test]
-fn test_issue_894() {
+fn test_issue_894() -> Result<()> {
     use geo_test_fixtures::multi_polygon;
     let a: MultiPolygon<f64> = multi_polygon("issue-894/inpa.wkt");
     let b = multi_polygon("issue-894/inpb.wkt");
     let c = multi_polygon("issue-894/inpc.wkt");
 
-    let aib = a.intersection(&b); // works
-    b.intersection(&c); // works
-    let intersection = aib.intersection(&c);
+    let aib = a.intersection(&b)?; // works
+    b.intersection(&c)?; // works
+    let intersection = aib.intersection(&c)?;
     println!("{}", intersection.to_wkt());
+    Ok(())
 }
 
 #[test]

@@ -324,9 +324,9 @@ impl TestRunner {
                     };
 
                     let actual = match (a, b) {
-                        (Geometry::Polygon(a), Geometry::Polygon(b)) => a.boolean_op(b, *op),
+                        (Geometry::Polygon(a), Geometry::Polygon(b)) => a.boolean_op(b, *op)?,
                         (Geometry::MultiPolygon(a), Geometry::MultiPolygon(b)) => {
-                            a.boolean_op(b, *op)
+                            a.boolean_op(b, *op)?
                         }
                         _ => {
                             info!("skipping unsupported Union combination: {:?}, {:?}", a, b);
