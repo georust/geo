@@ -1,3 +1,5 @@
+use crate::CoordTrait;
+
 use super::{
     GeometryCollectionTrait, GeometryTrait, LineStringTrait, MultiLineStringTrait, MultiPointTrait,
     MultiPolygonTrait, PointTrait, PolygonTrait,
@@ -88,9 +90,9 @@ macro_rules! impl_iterator {
 impl_iterator!(
     LineStringIterator,
     LineStringTrait,
-    PointTrait,
-    point_unchecked,
-    PointType
+    CoordTrait,
+    coord_unchecked,
+    CoordType
 );
 impl_iterator!(
     PolygonInteriorIterator,

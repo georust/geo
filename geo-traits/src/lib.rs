@@ -17,6 +17,7 @@
 
 #![deny(missing_docs)]
 
+pub use coord::{CoordTrait, UnimplementedCoord};
 pub use dimension::Dimensions;
 pub use geometry::{GeometryTrait, GeometryType};
 pub use geometry_collection::GeometryCollectionTrait;
@@ -30,6 +31,7 @@ pub use polygon::{PolygonTrait, UnimplementedPolygon};
 pub use rect::{RectTrait, UnimplementedRect};
 pub use triangle::{TriangleTrait, UnimplementedTriangle};
 
+mod coord;
 mod dimension;
 mod geometry;
 mod geometry_collection;

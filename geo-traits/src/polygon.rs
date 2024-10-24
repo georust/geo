@@ -63,7 +63,7 @@ impl<T: CoordNum> PolygonTrait for Polygon<T> {
 
     fn exterior(&self) -> Option<Self::RingType<'_>> {
         let ext_ring = Polygon::exterior(self);
-        if ext_ring.num_points() == 0 {
+        if LineStringTrait::num_coords(&ext_ring) == 0 {
             None
         } else {
             Some(ext_ring)
@@ -90,7 +90,7 @@ impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
 
     fn exterior(&self) -> Option<Self::RingType<'_>> {
         let ext_ring = Polygon::exterior(self);
-        if ext_ring.num_points() == 0 {
+        if LineStringTrait::num_coords(&ext_ring) == 0 {
             None
         } else {
             Some(ext_ring)
