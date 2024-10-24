@@ -1,7 +1,8 @@
 # Changes
 
 ## Unreleased
-
+* Change BooleanOps trait to return an ErrorType instead of crashing when given bad input
+  * <https://github.com/georust/geo/pull/1233>
 * Implement getter methods on `AffineTransform` to access internal elements.
   * <https://github.com/georust/geo/pull/1159>
 * Fix issue in Debug impl for AffineTransform where yoff is shown instead of xoff
