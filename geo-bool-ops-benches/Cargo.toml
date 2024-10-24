@@ -5,6 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+# If you want to bench against the `geo-booleanop` crate as a comparison, enable this feature.
+bench-foreign-booleanop = []
+
 [dependencies]
 geo = { path = "../geo" }
 geo-types = { path = "../geo-types" }
