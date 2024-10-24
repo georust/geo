@@ -7,6 +7,8 @@ use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
 /// Provides [rhumb line] (a.k.a. loxodrome) geometry operations. A rhumb line appears as a straight
 /// line on a Mercator projection map.
 ///
+/// Rhumb distance is measured in meters.
+///
 /// # References
 ///
 /// The distance, destination, and bearing implementations are adapted in part
