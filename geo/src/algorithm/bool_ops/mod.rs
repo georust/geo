@@ -29,6 +29,13 @@ use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
 pub trait BooleanOps {
     type Scalar: BoolOpsNum;
 
+    /// The exterior and interior rings of the geometry.
+    ///
+    /// It doesn't particularly matter which order they are in, as the topology algorithm counts crossings
+    /// to determine the interior and exterior of the polygon.
+    ///
+    /// It is required that the rings are from valid geometries, that the rings not overlap.
+    /// In the case of a MultiPolygon, this requires that none of its polygon's interiors may overlap.
     fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>>;
 
     fn boolean_op(

@@ -11,6 +11,7 @@ pub trait BoolOpsCoord<T>: Copy {
     fn y(&self) -> T;
 }
 
+/// A geometry coordinate number suitable for performing geometric boolean operations.
 pub trait BoolOpsNum: GeoNum {
     type CoordType: BoolOpsCoord<Self>;
     type OverlayType: BoolOpsOverlay<CoordType = Self::CoordType>;
