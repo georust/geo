@@ -228,42 +228,38 @@ pub(super) mod convert {
     use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
 
     pub fn line_string_from_path<T: BoolOpsNum>(path: Vec<T::CoordType>) -> LineString<T> {
-        let coords = path.into_iter().map(T::to_geo_coord).collect::<Vec<_>>();
-
-        LineString(coords)
+        let coords = path.into_iter().map(T::to_geo_coord);
+        LineString(coords.collect())
     }
 
     pub fn multi_line_string_from_paths<T: BoolOpsNum>(
         paths: Vec<Vec<T::CoordType>>,
     ) -> MultiLineString<T> {
-        let line_strings: Vec<_> = paths
-            .into_iter()
-            .map(|p| line_string_from_path(p))
-            .collect();
-
-        MultiLineString(line_strings)
+        let line_strings = paths.into_iter().map(|p| line_string_from_path(p));
+        MultiLineString(line_strings.collect())
     }
 
     pub fn polygon_from_shape<T: BoolOpsNum>(shape: Vec<Vec<T::CoordType>>) -> Polygon<T> {
-        let rings: Vec<_> = shape
-            .into_iter()
-            .map(|p| line_string_from_path(p))
-            .collect();
-
-        // TODO: avoid OOB panic, avoid clone
-        let exterior = rings[0].clone();
-        let interiors = rings[1..].to_vec();
-        Polygon::new(exterior, interiors)
+        let mut rings = shape.into_iter().map(|p| line_string_from_path(p));
+        let exterior = rings.next().unwrap_or(LineString::new(vec![]));
+        Polygon::new(exterior, rings.collect())
     }
 
     pub fn multi_polygon_from_shapes<T: BoolOpsNum>(
         shapes: Vec<Vec<Vec<T::CoordType>>>,
     ) -> MultiPolygon<T> {
-        MultiPolygon(shapes.into_iter().map(|s| polygon_from_shape(s)).collect())
+        let polygons = shapes.into_iter().map(|s| polygon_from_shape(s));
+        MultiPolygon(polygons.collect())
     }
 
-    pub fn ring_to_path<T: BoolOpsNum>(line_string: &LineString<T>) -> Vec<T::CoordType> {
-        line_string.coords().map(|c| T::to_bops_coord(*c)).collect()
+    pub fn ring_to_shape_path<T: BoolOpsNum>(line_string: &LineString<T>) -> Vec<T::CoordType> {
+        if line_string.0.is_empty() {
+            return vec![];
+        }
+        // In geo, Polygon rings are explicitly closed LineStrings — their final coordinate is the same as their first coordinate,
+        // however in i_overlay, shape paths are implicitly closed, so we skip the last coordinate.
+        let coords = &line_string.0[..line_string.0.len() - 1];
+        coords.iter().copied().map(T::to_bops_coord).collect()
     }
 
     impl From<OpType> for OverlayRule {
@@ -275,5 +271,28 @@ pub(super) mod convert {
                 OpType::Xor => OverlayRule::Xor,
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::algorithm::BooleanOps;
+    use crate::geometry::{MultiPolygon, Polygon};
+    use crate::wkt;
+
+    #[test]
+    fn two_empty_polygons() {
+        let p1: Polygon = wkt!(POLYGON EMPTY);
+        let p2 = wkt!(POLYGON EMPTY);
+        assert_eq!(&p1.union(&p2), &wkt!(MULTIPOLYGON EMPTY));
+        assert_eq!(&p1.intersection(&p2), &wkt!(MULTIPOLYGON EMPTY));
+    }
+
+    #[test]
+    fn one_empty_polygon() {
+        let p1: Polygon = wkt!(POLYGON((0. 0., 0. 1., 1. 1., 1. 0., 0. 0.)));
+        let p2 = wkt!(POLYGON EMPTY);
+        assert_eq!(&p1.union(&p2), &MultiPolygon(vec![p1.clone()]));
+        assert_eq!(&p1.intersection(&p2), &wkt!(MULTIPOLYGON EMPTY));
     }
 }

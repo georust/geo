@@ -42,10 +42,10 @@ pub trait BooleanOps {
         let mut overlay = <Self::Scalar as BoolOpsNum>::OverlayType::new();
 
         for ring in self.rings() {
-            overlay.add_path(convert::ring_to_path(ring), ShapeType::Subject);
+            overlay.add_path(convert::ring_to_shape_path(ring), ShapeType::Subject);
         }
         for ring in other.rings() {
-            overlay.add_path(convert::ring_to_path(ring), ShapeType::Clip);
+            overlay.add_path(convert::ring_to_shape_path(ring), ShapeType::Clip);
         }
 
         let graph = overlay.into_graph(FillRule::EvenOdd);
@@ -89,7 +89,7 @@ pub trait BooleanOps {
         let mut overlay = <Self::Scalar as BoolOpsNum>::StringOverlayType::new();
 
         for ring in self.rings() {
-            overlay.add_shape_path(convert::ring_to_path(ring));
+            overlay.add_shape_path(convert::ring_to_shape_path(ring));
         }
         for line_string in multi_line_string {
             for line in line_string.lines() {
