@@ -15,7 +15,7 @@ pub trait CoordTrait {
     fn dim(&self) -> Dimensions;
 
     /// Access the n'th (0-based) element of the CoordinateTuple.
-    /// Returns NaN if `n >= DIMENSION`.
+    /// Returns `None` if `n >= DIMENSION`.
     /// See also [`nth_unchecked()`](Self::nth_unchecked).
     fn nth(&self, n: usize) -> Option<Self::T> {
         if n < self.dim().size() {
