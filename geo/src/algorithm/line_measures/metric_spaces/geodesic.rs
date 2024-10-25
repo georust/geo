@@ -136,6 +136,44 @@ impl Distance<f64, Point<f64>, Point<f64>> for Geodesic {
 impl InterpolatePoint<f64> for Geodesic {
     /// Returns a new Point along a [geodesic line] between two existing points on an ellipsoidal model of the earth.
     ///
+    /// # Units
+    /// `meters_from_start`: meters
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use approx::assert_relative_eq;
+    /// use geo::{Geodesic, InterpolatePoint};
+    /// use geo::Point;
+    ///
+    ///
+    /// let p1 = Point::new(10.0, 20.0);
+    /// let p2 = Point::new(125.0, 25.0);
+    ///
+    /// let closer_to_p1 = Geodesic::point_at_distance_between(p1, p2, 100_000.0);
+    /// assert_relative_eq!(closer_to_p1, Point::new(10.81, 20.49), epsilon = 1.0e-2);
+    ///
+    /// let closer_to_p2 = Geodesic::point_at_distance_between(p1, p2, 10_000_000.0);
+    /// assert_relative_eq!(closer_to_p2, Point::new(112.20, 30.67), epsilon = 1.0e-2);
+    /// ```
+    ///
+    /// # References
+    ///
+    /// This uses the geodesic methods given by [Karney (2013)].
+    ///
+    /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
+    /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
+    fn point_at_distance_between(
+        start: Point<f64>,
+        end: Point<f64>,
+        meters_from_start: f64,
+    ) -> Point<f64> {
+        let bearing = Self::bearing(start, end);
+        Self::destination(start, bearing, meters_from_start)
+    }
+
+    /// Returns a new Point along a [geodesic line] between two existing points on an ellipsoidal model of the earth.
+    ///
     /// # Examples
     ///
     /// ```
@@ -170,9 +208,7 @@ impl InterpolatePoint<f64> for Geodesic {
         let g = geographiclib_rs::Geodesic::wgs84();
         let (total_distance, azi1, _azi2, _a12) = g.inverse(start.y(), start.x(), end.y(), end.x());
         let distance = total_distance * ratio_from_start;
-        let (lat2, lon2) = g.direct(start.y(), start.x(), azi1, distance);
-
-        Point::new(lon2, lat2)
+        Self::destination(start, azi1, distance)
     }
 
     /// Interpolates `Point`s along a [geodesic line] between `start` and `end`.
@@ -335,6 +371,7 @@ mod tests {
                 let midpoint = MetricSpace::point_at_ratio_between(start, end, 0.5);
                 assert_relative_eq!(midpoint, Point::new(65.87936072133309, 37.72225378005785));
             }
+
             #[test]
             fn points_along_line_with_endpoints() {
                 let start = Point::new(10.0, 20.0);
@@ -347,6 +384,7 @@ mod tests {
                 assert_eq!(route.last().unwrap(), &end);
                 assert_relative_eq!(route[1], Point::new(17.878754355562464, 24.466667836189565));
             }
+
             #[test]
             fn points_along_line_without_endpoints() {
                 let start = Point::new(10.0, 20.0);
