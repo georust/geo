@@ -1,6 +1,5 @@
 use super::BooleanOps;
 use crate::{wkt, Convert, MultiPolygon, Relate};
-use wkt::ToWkt;
 
 #[test]
 fn jts_test_overlay_la_1() {
@@ -50,12 +49,7 @@ fn jts_test_overlay_la_1() {
     ))
     .convert();
 
-    dbg!(a.wkt_string());
-    dbg!(b.wkt_string());
-    dbg!(actual.wkt_string());
-    dbg!(expected.wkt_string());
     let im = actual.relate(&expected);
-    dbg!(&im);
     assert!(im.is_equal_topo());
 }
 
