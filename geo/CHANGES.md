@@ -71,6 +71,8 @@
   line_string.densify::<Geodesic>();
   line_string.densify::<Rhumb>();
    ```
+* Added `InterpolatePoint::point_at_distance_between` for line_measures.
+  * <https://github.com/georust/geo/pull/1235>
 * Change IntersectionMatrix::is_equal_topo to now consider empty geometries as equal.
   * <https://github.com/georust/geo/pull/1223>
 * Fix `(LINESTRING EMPTY).contains(LINESTRING EMPTY)` and `(MULTIPOLYGON EMPTY).contains(MULTIPOINT EMPTY)` which previously

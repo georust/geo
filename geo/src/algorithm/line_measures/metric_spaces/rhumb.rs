@@ -142,6 +142,31 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Rhumb {
     /// let p1 = Point::new(10.0, 20.0);
     /// let p2 = Point::new(125.0, 25.0);
     ///
+    /// let closer_to_p1 = Rhumb::point_at_distance_between(p1, p2, 100_000.0);
+    /// assert_relative_eq!(closer_to_p1, Point::new(10.96, 20.04), epsilon = 1.0e-2);
+    ///
+    /// let closer_to_p2 = Rhumb::point_at_distance_between(p1, p2, 10_000_000.0);
+    /// assert_relative_eq!(closer_to_p2, Point::new(107.00, 24.23), epsilon = 1.0e-2);
+    /// ```
+    ///
+    /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
+    fn point_at_distance_between(start: Point<F>, end: Point<F>, meters_from_start: F) -> Point<F> {
+        let bearing = Self::bearing(start, end);
+        Self::destination(start, bearing, meters_from_start)
+    }
+
+    /// Returns a new Point along a [rhumb line] between two existing points.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use approx::assert_relative_eq;
+    /// use geo::{Rhumb, InterpolatePoint};
+    /// use geo::Point;
+    ///
+    /// let p1 = Point::new(10.0, 20.0);
+    /// let p2 = Point::new(125.0, 25.0);
+    ///
     /// let closer_to_p1 = Rhumb::point_at_ratio_between(p1, p2, 0.1);
     /// assert_relative_eq!(closer_to_p1, Point::new(21.32, 20.50), epsilon = 1.0e-2);
     ///

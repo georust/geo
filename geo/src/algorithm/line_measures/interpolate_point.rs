@@ -2,13 +2,19 @@ use crate::{CoordFloat, Point};
 
 /// Interpolate a `Point` along a line between two existing points
 pub trait InterpolatePoint<F: CoordFloat> {
-    /// Returns a new Point along a line between two existing points
+    /// Returns a new Point along a line between two existing points.
+    ///
+    /// See [specific implementations](#implementors) for details.
+    fn point_at_distance_between(
+        start: Point<F>,
+        end: Point<F>,
+        distance_from_start: F,
+    ) -> Point<F>;
+
+    /// Returns a new Point along a line between two existing points.
     ///
     /// See [specific implementations](#implementors) for details.
     fn point_at_ratio_between(start: Point<F>, end: Point<F>, ratio_from_start: F) -> Point<F>;
-
-    // TODO:
-    // fn point_at_distance_between(start: Point<F>, end: Point<F>, distance_from_start: F) -> Point<F>;
 
     /// Interpolates `Point`s along a line between `start` and `end`.
     ///
