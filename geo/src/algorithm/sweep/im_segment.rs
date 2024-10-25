@@ -121,10 +121,6 @@ impl<C: Cross> IMSegment<C> {
         }
         adjust_output
     }
-
-    pub fn with_segment<F: FnOnce(&Segment<C>) -> R, R>(&self, f: F) -> R {
-        f(&RefCell::borrow(&self.inner))
-    }
 }
 
 impl<C: Cross + Clone> IMSegment<C> {
