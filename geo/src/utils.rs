@@ -93,9 +93,6 @@ pub fn partial_min<T: PartialOrd>(a: T, b: T) -> T {
     }
 }
 
-// Moved to their own module, but we re-export to avoid breaking the API.
-pub use crate::coordinate_position::{coord_pos_relative_to_ring, CoordPos};
-
 use std::cmp::Ordering;
 
 /// Compare two coordinates lexicographically: first by the
