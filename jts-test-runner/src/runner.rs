@@ -355,7 +355,12 @@ impl TestRunner {
                         });
                     }
                 }
-                Operation::ClipOp { a, b, expected } => {
+                Operation::ClipOp {
+                    a,
+                    b,
+                    invert,
+                    expected,
+                } => {
                     match expected {
                         Geometry::MultiLineString(_) | Geometry::LineString(_) => {}
                         other => {
@@ -369,7 +374,7 @@ impl TestRunner {
                         (Geometry::Polygon(polygon), Geometry::LineString(line_string))
                         | (Geometry::LineString(line_string), Geometry::Polygon(polygon)) => {
                             // REVIEW: add a line_string flavor
-                            polygon.clip(&MultiLineString(vec![line_string.clone()]), false)
+                            polygon.clip(&MultiLineString(vec![line_string.clone()]), *invert)
                         }
                         (
                             Geometry::Polygon(polygon),
@@ -378,7 +383,7 @@ impl TestRunner {
                         | (
                             Geometry::MultiLineString(multi_line_string),
                             Geometry::Polygon(polygon),
-                        ) => polygon.clip(multi_line_string, false),
+                        ) => polygon.clip(multi_line_string, *invert),
                         (
                             Geometry::LineString(line_string),
                             Geometry::MultiPolygon(multi_polygon),
@@ -386,7 +391,9 @@ impl TestRunner {
                         | (
                             Geometry::MultiPolygon(multi_polygon),
                             Geometry::LineString(line_string),
-                        ) => multi_polygon.clip(&MultiLineString(vec![line_string.clone()]), false),
+                        ) => {
+                            multi_polygon.clip(&MultiLineString(vec![line_string.clone()]), *invert)
+                        }
                         (
                             Geometry::MultiLineString(multi_line_string),
                             Geometry::MultiPolygon(multi_polygon),
@@ -394,7 +401,7 @@ impl TestRunner {
                         | (
                             Geometry::MultiPolygon(multi_polygon),
                             Geometry::MultiLineString(multi_line_string),
-                        ) => multi_polygon.clip(multi_line_string, false),
+                        ) => multi_polygon.clip(multi_line_string, *invert),
 
                         // We should be filtering the input test cases in such a way that we don't get here.
                         _ => todo!("Handle {:?} and {:?}", a, b),
