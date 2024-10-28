@@ -1,10 +1,6 @@
 use super::geomgraph::{Edge, EdgeEnd, EdgeIntersection};
 use crate::GeoFloat;
 
-use std::cell::RefCell;
-// use std::rc::Rc;
-use std::sync::Arc;
-
 /// Computes the [`EdgeEnd`]s which arise from an [`Edge`] who has had its `edge_intersections`
 /// populated with self and proper [`EdgeIntersection`]s.
 ///

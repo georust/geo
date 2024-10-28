@@ -9,9 +9,6 @@ use crate::relate::geomgraph::{
 use crate::CoordinatePosition;
 use crate::{Coord, GeoFloat, GeometryCow};
 
-use std::cell::RefCell;
-use std::sync::Arc;
-
 /// Computes an [`IntersectionMatrix`] describing the topological relationship between two
 /// Geometries.
 ///
