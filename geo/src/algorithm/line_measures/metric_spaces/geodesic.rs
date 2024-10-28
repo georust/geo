@@ -137,7 +137,7 @@ impl InterpolatePoint<f64> for Geodesic {
     /// Returns a new Point along a [geodesic line] between two existing points on an ellipsoidal model of the earth.
     ///
     /// # Units
-    /// `meters_from_start`: meters
+    /// - `meters_from_start`: meters
     ///
     /// # Examples
     ///

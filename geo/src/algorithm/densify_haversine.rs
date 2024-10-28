@@ -19,7 +19,7 @@ use crate::{
 ///
 /// ## Units
 ///
-/// `max_distance`: meters
+/// - `max_distance`: meters
 ///
 /// # Examples
 /// ```

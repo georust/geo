@@ -31,7 +31,7 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Euclidean {
     /// # Units
     /// - `distance`: Measured in whatever units your `start` and `end` points use.
     ///
-    ///   `distance` and your `start` and `end` points should have non-agular
+    ///   `distance` and your `start` and `end` points should have non-angular
     ///   units, like meters or miles, **not** lon/lat.
     ///   For lon/lat points, use the [`Haversine`] or [`Geodesic`] [metric spaces].
     ///
@@ -54,7 +54,7 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Euclidean {
     /// # Units
     /// - `distance`: Measured in whatever units your `start` and `end` points use.
     ///
-    ///   `distance` and your `start` and `end` points should have non-agular
+    ///   `distance` and your `start` and `end` points should have non-angular
     ///   units, like meters or miles, **not** lon/lat.
     ///   For lon/lat points, use the [`Haversine`] or [`Geodesic`] [metric spaces].
     ///
@@ -77,7 +77,7 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Euclidean {
     /// # Units
     /// - `max_distance`: Measured in whatever units your `start` and `end` points use.
     ///
-    ///   `max_distance` and your `start` and `end` points should have non-agular
+    ///   `max_distance` and your `start` and `end` points should have non-angular
     ///   units, like meters or miles, **not** lon/lat.
     ///   For lon/lat points, use the [`Haversine`] or [`Geodesic`] [metric spaces].
     ///
