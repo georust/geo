@@ -3,7 +3,6 @@ use super::{EdgeSetIntersector, SegmentIntersector};
 use crate::GeoFloat;
 
 use std::cell::RefCell;
-// use std::rc::Rc;
 use std::sync::Arc;
 
 pub(crate) struct SimpleEdgeSetIntersector;

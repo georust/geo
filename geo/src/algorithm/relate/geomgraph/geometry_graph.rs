@@ -10,8 +10,6 @@ use crate::HasDimensions;
 use crate::{Coord, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
 
 use rstar::{RTree, RTreeNum};
-// use std::cell::RefCell;
-// use std::rc::Rc;
 use std::sync::Arc;
 
 /// The computation of the [`IntersectionMatrix`](crate::algorithm::relate::IntersectionMatrix) relies on the use of a

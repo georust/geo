@@ -30,7 +30,7 @@ where
                         segment_1.segment_idx,
                     );
                 } else {
-                    // XXX: use get_many_mut when available.
+                    // TODO: use get_many_mut when available.
                     let mi = segment_0.edge_idx.min(segment_1.edge_idx);
                     let mx = segment_0.edge_idx.max(segment_1.edge_idx);
 

@@ -4,8 +4,6 @@ use super::{
 };
 use crate::{Coord, GeoFloat};
 
-// use std::cell::RefCell;
-// use std::rc::Rc;
 use std::sync::Arc;
 
 #[derive(Clone, PartialEq)]
