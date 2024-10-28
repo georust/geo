@@ -4,8 +4,6 @@ use super::{
 };
 use crate::{Coord, GeoFloat};
 
-use std::sync::Arc;
-
 #[derive(Clone, PartialEq)]
 pub(crate) struct PlanarGraphNode;
 

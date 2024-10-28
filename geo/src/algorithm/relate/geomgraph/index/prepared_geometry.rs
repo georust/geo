@@ -5,7 +5,6 @@ use crate::GeometryCow;
 use crate::{GeoFloat, Relate};
 
 use std::cell::RefCell;
-use std::sync::Arc;
 
 use rstar::{RTree, RTreeNum};
 
