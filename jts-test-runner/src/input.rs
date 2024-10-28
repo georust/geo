@@ -215,6 +215,12 @@ pub(crate) enum Operation {
         op: BoolOp,
         expected: Geometry<f64>,
     },
+    ClipOp {
+        a: Geometry<f64>,
+        b: Geometry<f64>,
+        invert: bool,
+        expected: Geometry<f64>,
+    },
     Unsupported {
         #[allow(dead_code)]
         reason: String,
@@ -308,12 +314,36 @@ impl OperationInput {
                 })
             }
             Self::IntersectionInput(input) => {
-                validate_boolean_op(
-                    &input.arg1,
-                    &input.arg2,
-                    geometry,
-                    case.b.as_ref().expect("no geometry b in case"),
-                )?;
+                assert_eq!("A", input.arg1);
+                assert_eq!("B", input.arg2);
+
+                // Clipping a line string in geo is like a Line x Poly Intersection in JTS
+                match (geometry, case.b.as_ref().expect("no geometry b in case")) {
+                    (
+                        Geometry::LineString(_) | Geometry::MultiLineString(_),
+                        Geometry::Polygon(_) | Geometry::MultiPolygon(_),
+                    )
+                    | (
+                        Geometry::Polygon(_) | Geometry::MultiPolygon(_),
+                        Geometry::LineString(_) | Geometry::MultiLineString(_),
+                    ) => {
+                        return Ok(Operation::ClipOp {
+                            a: geometry.clone(),
+                            b: case.b.clone().expect("no geometry b in case"),
+                            invert: false,
+                            expected: input.expected,
+                        });
+                    }
+                    _ => {
+                        validate_boolean_op(
+                            &input.arg1,
+                            &input.arg2,
+                            geometry,
+                            case.b.as_ref().expect("no geometry b in case"),
+                        )?;
+                    }
+                };
+
                 Ok(Operation::BooleanOp {
                     a: geometry.clone(),
                     b: case.b.clone().expect("no geometry b in case"),
@@ -322,12 +352,32 @@ impl OperationInput {
                 })
             }
             Self::DifferenceInput(input) => {
-                validate_boolean_op(
-                    &input.arg1,
-                    &input.arg2,
-                    geometry,
-                    case.b.as_ref().expect("no geometry b in case"),
-                )?;
+                // Clipping a line string in geo is like a Line x Poly Intersection in JTS
+                match (geometry, case.b.as_ref().expect("no geometry b in case")) {
+                    (
+                        Geometry::LineString(_) | Geometry::MultiLineString(_),
+                        Geometry::Polygon(_) | Geometry::MultiPolygon(_),
+                    )
+                    | (
+                        Geometry::Polygon(_) | Geometry::MultiPolygon(_),
+                        Geometry::LineString(_) | Geometry::MultiLineString(_),
+                    ) => {
+                        return Ok(Operation::ClipOp {
+                            a: geometry.clone(),
+                            b: case.b.clone().expect("no geometry b in case"),
+                            invert: true,
+                            expected: input.expected,
+                        });
+                    }
+                    _ => {
+                        validate_boolean_op(
+                            &input.arg1,
+                            &input.arg2,
+                            geometry,
+                            case.b.as_ref().expect("no geometry b in case"),
+                        )?;
+                    }
+                };
                 Ok(Operation::BooleanOp {
                     a: geometry.clone(),
                     b: case.b.clone().expect("no geometry b in case"),

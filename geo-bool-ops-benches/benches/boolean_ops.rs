@@ -1,12 +1,8 @@
 use std::f64::consts::PI;
 
 use criterion::{measurement::Measurement, *};
-use geo::{
-    algorithm::{BooleanOps, Rotate},
-    Relate,
-};
+use geo::algorithm::{BooleanOps, Rotate};
 
-use geo_booleanop::boolean::BooleanOp as OtherBooleanOp;
 use rand::{thread_rng, Rng};
 use rand_distr::Standard;
 
@@ -60,33 +56,39 @@ fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
             );
         });
 
-        group.bench_with_input(
-            BenchmarkId::new("rgbops::intersection", steps),
-            &(),
-            |b, _| {
+        #[cfg(feature = "bench-foreign-booleanop")]
+        {
+            use geo::algorithm::Relate;
+            use geo_booleanop::boolean::BooleanOp as OtherBooleanOp;
+
+            group.bench_with_input(
+                BenchmarkId::new("rgbops::intersection", steps),
+                &(),
+                |b, _| {
+                    b.iter_batched(
+                        polys.sampler(),
+                        |(_, _, poly, poly2)| OtherBooleanOp::intersection(poly, poly2),
+                        BatchSize::SmallInput,
+                    );
+                },
+            );
+
+            group.bench_with_input(BenchmarkId::new("rgbops::union", steps), &(), |b, _| {
                 b.iter_batched(
                     polys.sampler(),
-                    |(_, _, poly, poly2)| OtherBooleanOp::intersection(poly, poly2),
+                    |(_, _, poly, poly2)| OtherBooleanOp::union(poly, poly2),
                     BatchSize::SmallInput,
                 );
-            },
-        );
+            });
 
-        group.bench_with_input(BenchmarkId::new("rgbops::union", steps), &(), |b, _| {
-            b.iter_batched(
-                polys.sampler(),
-                |(_, _, poly, poly2)| OtherBooleanOp::union(poly, poly2),
-                BatchSize::SmallInput,
-            );
-        });
-
-        group.bench_with_input(BenchmarkId::new("geo::relate", steps), &(), |b, _| {
-            b.iter_batched(
-                polys.sampler(),
-                |(poly, poly2, _, _)| poly.relate(poly2).is_intersects(),
-                BatchSize::SmallInput,
-            );
-        });
+            group.bench_with_input(BenchmarkId::new("geo::relate", steps), &(), |b, _| {
+                b.iter_batched(
+                    polys.sampler(),
+                    |(poly, poly2, _, _)| poly.relate(poly2).is_intersects(),
+                    BatchSize::SmallInput,
+                );
+            });
+        }
     });
 }
 

@@ -1,6 +1,10 @@
-use geo_types::{MultiLineString, MultiPolygon};
+mod i_overlay_integration;
+#[cfg(test)]
+mod tests;
 
-use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
+pub use i_overlay_integration::BoolOpsNum;
+
+use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
 
 /// Boolean Operations on geometry.
 ///
@@ -22,20 +26,57 @@ use crate::{CoordsIter, GeoFloat, GeoNum, Polygon};
 /// In particular, taking `union` with an empty geom should remove degeneracies
 /// and fix invalid polygons as long the interior-exterior requirement above is
 /// satisfied.
-pub trait BooleanOps: Sized {
-    type Scalar: GeoNum;
+pub trait BooleanOps {
+    type Scalar: BoolOpsNum;
 
-    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar>;
-    fn intersection(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
+    /// The exterior and interior rings of the geometry.
+    ///
+    /// It doesn't particularly matter which order they are in, as the topology algorithm counts crossings
+    /// to determine the interior and exterior of the polygon.
+    ///
+    /// It is required that the rings are from valid geometries, that the rings not overlap.
+    /// In the case of a MultiPolygon, this requires that none of its polygon's interiors may overlap.
+    fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>>;
+
+    fn boolean_op(
+        &self,
+        other: &impl BooleanOps<Scalar = Self::Scalar>,
+        op: OpType,
+    ) -> MultiPolygon<Self::Scalar> {
+        use i_overlay::core::fill_rule::FillRule;
+        use i_overlay::core::overlay::ShapeType;
+        use i_overlay_integration::{convert, BoolOpsOverlay, BoolOpsOverlayGraph};
+        let mut overlay = <Self::Scalar as BoolOpsNum>::OverlayType::new();
+
+        for ring in self.rings() {
+            overlay.add_path(convert::ring_to_shape_path(ring), ShapeType::Subject);
+        }
+        for ring in other.rings() {
+            overlay.add_path(convert::ring_to_shape_path(ring), ShapeType::Clip);
+        }
+
+        let graph = overlay.into_graph(FillRule::EvenOdd);
+        let shapes = graph.extract_shapes(op.into());
+
+        convert::multi_polygon_from_shapes(shapes)
+    }
+
+    fn intersection(
+        &self,
+        other: &impl BooleanOps<Scalar = Self::Scalar>,
+    ) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Intersection)
     }
-    fn union(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
+    fn union(&self, other: &impl BooleanOps<Scalar = Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Union)
     }
-    fn xor(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
+    fn xor(&self, other: &impl BooleanOps<Scalar = Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Xor)
     }
-    fn difference(&self, other: &Self) -> MultiPolygon<Self::Scalar> {
+    fn difference(
+        &self,
+        other: &impl BooleanOps<Scalar = Self::Scalar>,
+    ) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Difference)
     }
 
@@ -45,9 +86,35 @@ pub trait BooleanOps: Sized {
     /// intersection) if `invert` is false, and the difference (`ls - self`) otherwise.
     fn clip(
         &self,
-        ls: &MultiLineString<Self::Scalar>,
+        multi_line_string: &MultiLineString<Self::Scalar>,
         invert: bool,
-    ) -> MultiLineString<Self::Scalar>;
+    ) -> MultiLineString<Self::Scalar> {
+        use i_overlay::core::fill_rule::FillRule;
+        use i_overlay::string::clip::ClipRule;
+        use i_overlay_integration::{convert, BoolOpsStringGraph, BoolOpsStringOverlay};
+
+        let mut overlay = <Self::Scalar as BoolOpsNum>::StringOverlayType::new();
+
+        for ring in self.rings() {
+            overlay.add_shape_path(convert::ring_to_shape_path(ring));
+        }
+        for line_string in multi_line_string {
+            for line in line_string.lines() {
+                let line = [
+                    Self::Scalar::to_bops_coord(line.start),
+                    Self::Scalar::to_bops_coord(line.end),
+                ];
+                overlay.add_string_line(line)
+            }
+        }
+
+        let graph = overlay.into_graph(FillRule::EvenOdd);
+        let paths = graph.clip_string_lines(ClipRule {
+            invert,
+            boundary_included: true,
+        });
+        convert::multi_line_string_from_paths(paths)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -58,63 +125,18 @@ pub enum OpType {
     Xor,
 }
 
-impl<T: GeoFloat> BooleanOps for Polygon<T> {
+impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
     type Scalar = T;
 
-    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        let spec = BoolOp::from(op);
-        let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
-        bop.add_polygon(self, 0);
-        bop.add_polygon(other, 1);
-        bop.sweep()
-    }
-
-    fn clip(
-        &self,
-        ls: &MultiLineString<Self::Scalar>,
-        invert: bool,
-    ) -> MultiLineString<Self::Scalar> {
-        let spec = ClipOp::new(invert);
-        let mut bop = Proc::new(spec, self.coords_count() + ls.coords_count());
-        bop.add_polygon(self, 0);
-        ls.0.iter().enumerate().for_each(|(idx, l)| {
-            bop.add_line_string(l, idx + 1);
-        });
-        bop.sweep()
-    }
-}
-impl<T: GeoFloat> BooleanOps for MultiPolygon<T> {
-    type Scalar = T;
-
-    fn boolean_op(&self, other: &Self, op: OpType) -> MultiPolygon<Self::Scalar> {
-        let spec = BoolOp::from(op);
-        let mut bop = Proc::new(spec, self.coords_count() + other.coords_count());
-        bop.add_multi_polygon(self, 0);
-        bop.add_multi_polygon(other, 1);
-        bop.sweep()
-    }
-
-    fn clip(
-        &self,
-        ls: &MultiLineString<Self::Scalar>,
-        invert: bool,
-    ) -> MultiLineString<Self::Scalar> {
-        let spec = ClipOp::new(invert);
-        let mut bop = Proc::new(spec, self.coords_count() + ls.coords_count());
-        bop.add_multi_polygon(self, 0);
-        ls.0.iter().enumerate().for_each(|(idx, l)| {
-            bop.add_line_string(l, idx + 1);
-        });
-        bop.sweep()
+    fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>> {
+        std::iter::once(self.exterior()).chain(self.interiors().iter())
     }
 }
 
-mod op;
-use op::*;
-mod assembly;
-use assembly::*;
-mod spec;
-use spec::*;
+impl<T: BoolOpsNum> BooleanOps for MultiPolygon<T> {
+    type Scalar = T;
 
-#[cfg(test)]
-mod tests;
+    fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>> {
+        self.0.iter().flat_map(|p| p.rings())
+    }
+}

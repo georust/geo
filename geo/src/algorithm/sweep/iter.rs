@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 use super::*;
 use crate::{line_intersection::line_intersection, Coord, LineIntersection};
 
@@ -13,6 +11,7 @@ pub(crate) struct Crossing<C: Cross> {
     /// The input associated with this segment.
     pub cross: C,
 
+    #[allow(unused)]
     /// The geometry of this segment.
     ///
     /// This is a part of the input `crossable` geometry and either
@@ -39,18 +38,8 @@ pub(crate) struct Crossing<C: Cross> {
     /// point. Otherwise, it ends at the intersection point.
     pub at_left: bool,
 
+    #[allow(unused)]
     pub(super) segment: IMSegment<C>,
-}
-
-pub(crate) fn compare_crossings<X: Cross>(a: &Crossing<X>, b: &Crossing<X>) -> Ordering {
-    a.at_left.cmp(&b.at_left).then_with(|| {
-        let ord = a.segment.partial_cmp(&b.segment).unwrap();
-        if a.at_left {
-            ord
-        } else {
-            ord.reverse()
-        }
-    })
 }
 
 impl<C: Cross + Clone> Crossing<C> {
@@ -112,12 +101,6 @@ impl<C> CrossingsIter<C>
 where
     C: Cross + Clone,
 {
-    /// Faster sweep when input geometries are known to not intersect except at
-    /// end-points.
-    pub fn new_simple<I: IntoIterator<Item = C>>(iter: I) -> Self {
-        Self::new_ex(iter, true)
-    }
-
     /// Returns the segments that intersect the last point yielded by
     /// the iterator.
     pub fn intersections_mut(&mut self) -> &mut [Crossing<C>] {
@@ -126,11 +109,6 @@ where
 
     pub fn intersections(&self) -> &[Crossing<C>] {
         &self.segments
-    }
-
-    pub(crate) fn prev_active(&self, c: &Crossing<C>) -> Option<(LineOrPoint<C::Scalar>, C)> {
-        self.sweep
-            .with_prev_active(c, |s| (s.geom, s.cross.clone()))
     }
 
     fn new_ex<T: IntoIterator<Item = C>>(iter: T, is_simple: bool) -> Self {
