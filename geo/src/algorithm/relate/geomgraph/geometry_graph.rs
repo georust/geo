@@ -75,7 +75,6 @@ where
             .iter()
             .enumerate()
             .flat_map(|(edge_idx, edge)| {
-                // let edge = RefCell::borrow(edge);
                 let start_of_final_segment: usize = edge.coords().len() - 1;
                 (0..start_of_final_segment).map(move |segment_idx| {
                     let p1 = edge.coords()[segment_idx];
