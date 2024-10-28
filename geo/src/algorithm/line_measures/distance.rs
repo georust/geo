@@ -1,4 +1,4 @@
-/// Calculate the distance between the `Origin` and `Destination` geometry.
+/// Calculate the minimum distance between two geometries.
 pub trait Distance<F, Origin, Destination> {
     /// Note that not all implementations support all geometry combinations, but at least `Point` to `Point`
     /// is supported.
