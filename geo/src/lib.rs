@@ -31,6 +31,34 @@
 //!
 //! # Algorithms
 //!
+//! ## Measures
+//!
+//! Algorithms for measures along a line, and how a line is measured.
+//!
+//! ### Metric Spaces
+//!
+//! - **[`Euclidean`]**: The [Euclidean plane] measures distance with the pythagorean formula. Not suitable for lon/lat geometries.
+//! - **[`Haversine`]**: The [Haversine Formula] measures distance on a sphere. Only suitable for lon/lat geometries.
+//! - **[`Geodesic`]**: Geodesic methods based on [Karney (2013)] more accurately reflect the shape of the Earth, but are slower than Haversine. Only suitable for lon/lat geometries.
+//! - **[`Rhumb`]**: [Rhumb line] (a.k.a. loxodrome) measures can be useful for navigation applications where maintaining a constant bearing or direction is important. Only suitable for lon/lat geometries.
+//!
+//! ### Operations on Metric Spaces
+//!
+//! - **[`Distance`]**: Calculate the minimum distance between two geometries.
+//! - **[`Length`]**: Calculate the length of a `Line`, `LineString`, or `MultiLineString`.
+//! - **[`Bearing`]**: Calculate the bearing between two points.
+//!
+//! - **[`Destination`]**: Calculate the destination point from an origin point, given a bearing and a distance.
+//! - **[`InterpolatePoint`]**: Interpolate points along a line.
+//! - **[`Densify`]**: Insert points into a geometry so there is never more than `max_segment_length` between points.
+//!
+//! ### Misc measures
+//!
+//! - **[`HausdorffDistance`]**: Calculate "the maximum of the distances from a point in any of the sets to the nearest point in the other set." (Rote, 1991)
+//! - **[`VincentyDistance`]**: Calculate the minimum geodesic distance between geometries using Vincenty’s formula
+//! - **[`VincentyLength`]**: Calculate the geodesic length of a geometry using Vincenty’s formula
+//! - **[`FrechetDistance`]**: Calculate the similarity between [`LineString`]s using the Fréchet distance
+//!
 //! ## Area
 //!
 //! - **[`Area`]**: Calculate the planar area of a geometry
@@ -40,23 +68,6 @@
 //! ## Boolean Operations
 //!
 //! - **[`BooleanOps`]**: combine or split (Multi)Polygons using intersecton, union, xor, or difference operations
-//!
-//! ## Distance
-//!
-//! - **[`EuclideanDistance`]**: Calculate the minimum euclidean distance between geometries
-//! - **[`GeodesicDistance`]**: Calculate the minimum geodesic distance between geometries using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
-//! - **[`HausdorffDistance`]**: Calculate "the maximum of the distances from a point in any of the sets to the nearest point in the other set." (Rote, 1991)
-//! - **[`HaversineDistance`]**: Calculate the minimum geodesic distance between geometries using the haversine formula
-//! - **[`RhumbDistance`]**: Calculate the length of a rhumb line connecting the two geometries
-//! - **[`VincentyDistance`]**: Calculate the minimum geodesic distance between geometries using Vincenty’s formula
-//!
-//! ## Length
-//!
-//! - **[`EuclideanLength`]**: Calculate the euclidean length of a geometry
-//! - **[`GeodesicLength`]**: Calculate the geodesic length of a geometry using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
-//! - **[`HaversineLength`]**: Calculate the geodesic length of a geometry using the haversine formula
-//! - **[`RhumbLength`]**: Calculate the length of a geometry assuming it's composed of rhumb lines
-//! - **[`VincentyLength`]**: Calculate the geodesic length of a geometry using Vincenty’s formula
 //!
 //! ## Outlier Detection
 //!
@@ -72,9 +83,6 @@
 //!
 //! ## Query
 //!
-//! - **[`HaversineBearing`]**: Calculate the bearing between points using great circle calculations.
-//! - **[`GeodesicBearing`]**: Calculate the bearing between points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
-//! - **[`RhumbBearing`]**: Calculate the angle from north of the rhumb line connecting two points.
 //! - **[`ClosestPoint`]**: Find the point on a geometry
 //!   closest to a given point
 //! - **[`HaversineClosestPoint`]**: Find the point on a geometry
@@ -86,10 +94,6 @@
 //! - **[`LineLocatePoint`]**: Calculate the
 //!   fraction of a line’s total length representing the location of the closest point on the
 //!   line to the given point
-//!
-//! ## Similarity
-//!
-//! - **[`FrechetDistance`]**: Calculate the similarity between [`LineString`]s using the Fréchet distance
 //!
 //! ## Topology
 //!
@@ -156,14 +160,6 @@
 //!
 //! - **[`Centroid`]**: Calculate the centroid of a geometry
 //! - **[`ChaikinSmoothing`]**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikin's algorithm.
-//! - **[`Densify`]**: Densify linear geometry components by interpolating points
-//! - **[`DensifyHaversine`]**: Densify spherical geometry by interpolating points on a sphere
-//! - **[`GeodesicDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
-//! - **[`GeodesicIntermediate`]**: Calculate intermediate points on a [geodesic](https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid)
-//! - **[`HaversineDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere assuming travel on a great circle
-//! - **[`HaversineIntermediate`]**: Calculate intermediate points on a sphere along a great-circle line
-//! - **[`RhumbDestination`]**: Given a start point, bearing, and distance, calculate the destination point on a sphere assuming travel along a rhumb line
-//! - **[`RhumbIntermediate`]**: Calculate intermediate points on a sphere along a rhumb line
 //! - **[`proj`]**: Project geometries with the `proj` crate (requires the `use-proj` feature)
 //! - **[`LineStringSegmentize`]**: Segment a LineString into `n` segments.
 //! - **[`LineStringSegmentizeHaversine`]**: Segment a LineString using Haversine distance.
@@ -197,9 +193,12 @@
 //! * [Geocoding][geocoding crate]
 //! * [and much more...][georust website]
 //!
+//! [Euclidean plane]: https://en.wikipedia.org/wiki/Euclidean_plane
 //! [`geo-types`]: https://crates.io/crates/geo-types
+//! [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula//
 //! [`proj` crate]: https://github.com/georust/proj
 //! [geojson crate]: https://crates.io/crates/geojson
+//! [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
 //! [wkt crate]: https://crates.io/crates/wkt
 //! [shapefile crate]: https://crates.io/crates/shapefile
 //! [latlng crate]: https://crates.io/crates/latlon
@@ -212,6 +211,7 @@
 //! [network grid]: https://proj.org/usage/network.html
 //! [OGC-SFA]: https://www.ogc.org/standards/sfa
 //! [proj crate file download]: https://docs.rs/proj/*/proj/#grid-file-download
+//! [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
 //! [Serde]: https://serde.rs/
 
 #[cfg(feature = "use-serde")]

@@ -88,12 +88,12 @@ impl<F: CoordFloat + FromPrimitive> Destination<F> for Haversine {
     /// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
     ///
     /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
-    fn destination(origin: Point<F>, bearing: F, distance: F) -> Point<F> {
+    fn destination(origin: Point<F>, bearing: F, meters: F) -> Point<F> {
         let center_lng = origin.x().to_radians();
         let center_lat = origin.y().to_radians();
         let bearing_rad = bearing.to_radians();
 
-        let rad = distance / F::from(MEAN_EARTH_RADIUS).unwrap();
+        let rad = meters / F::from(MEAN_EARTH_RADIUS).unwrap();
 
         let lat =
             { center_lat.sin() * rad.cos() + center_lat.cos() * rad.sin() * bearing_rad.cos() }
@@ -155,6 +155,31 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Haversin
 ///
 /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
 impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Haversine {
+    /// Returns a new Point along a [great circle] between two existing points.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use approx::assert_relative_eq;
+    /// use geo::{Haversine, InterpolatePoint};
+    /// use geo::Point;
+    ///
+    /// let p1 = Point::new(10.0, 20.0);
+    /// let p2 = Point::new(125.0, 25.0);
+    ///
+    /// let closer_to_p1 = Haversine::point_at_distance_between(p1, p2, 100_000.0);
+    /// assert_relative_eq!(closer_to_p1, Point::new(10.81, 20.49), epsilon = 1.0e-2);
+    ///
+    /// let closer_to_p2 = Haversine::point_at_distance_between(p1, p2, 10_000_000.0);
+    /// assert_relative_eq!(closer_to_p2, Point::new(112.33, 30.57), epsilon = 1.0e-2);
+    /// ```
+    ///
+    /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
+    fn point_at_distance_between(start: Point<F>, end: Point<F>, meters_from_start: F) -> Point<F> {
+        let bearing = Self::bearing(start, end);
+        Self::destination(start, bearing, meters_from_start)
+    }
+
     /// Returns a new Point along a [great circle] between two existing points.
     ///
     /// # Examples
