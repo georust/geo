@@ -19,16 +19,9 @@ pub trait PointTrait {
     /// Dimensions of the coordinate tuple
     fn dim(&self) -> Dimensions;
 
-    /// Whether this point is `empty` or not.
+    /// The location of this 0-dimensional geometry.
     ///
-    /// According to Simple Features, a Point can have zero coordinates and be considered `empty`.
-    ///
-    /// If `is_empty` returns `true`, then the values of `x()`, `y()`, `nth()` and `nth_unchecked`
-    /// have no semantic meaning.
-    ///
-    /// Only a top-level geometry can be empty. That is, when this point is contained within
-    /// another geometry, such as a [`LineStringTrait`][crate::LineStringTrait], those points
-    /// can never be empty, and a consumer does not need to check this method.
+    /// According to Simple Features, a Point can have zero coordinates and be considered "empty".
     fn coord(&self) -> Option<Self::CoordType<'_>>;
 }
 

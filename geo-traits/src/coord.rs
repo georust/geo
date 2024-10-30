@@ -16,10 +16,10 @@ pub trait CoordTrait {
 
     /// Access the n'th (0-based) element of the CoordinateTuple.
     /// Returns `None` if `n >= DIMENSION`.
-    /// See also [`nth_unchecked()`](Self::nth_unchecked).
+    /// See also [`nth_or_panic()`](Self::nth_or_panic).
     fn nth(&self, n: usize) -> Option<Self::T> {
         if n < self.dim().size() {
-            Some(self.nth_unchecked(n))
+            Some(self.nth_or_panic(n))
         } else {
             None
         }
@@ -39,13 +39,13 @@ pub trait CoordTrait {
     /// Access the n'th (0-based) element of the CoordinateTuple.
     /// May panic if n >= DIMENSION.
     /// See also [`nth()`](Self::nth).
-    fn nth_unchecked(&self, n: usize) -> Self::T;
+    fn nth_or_panic(&self, n: usize) -> Self::T;
 }
 
 impl<T: CoordNum> CoordTrait for Coord<T> {
     type T = T;
 
-    fn nth_unchecked(&self, n: usize) -> Self::T {
+    fn nth_or_panic(&self, n: usize) -> Self::T {
         match n {
             0 => self.x(),
             1 => self.y(),
@@ -69,7 +69,7 @@ impl<T: CoordNum> CoordTrait for Coord<T> {
 impl<T: CoordNum> CoordTrait for &Coord<T> {
     type T = T;
 
-    fn nth_unchecked(&self, n: usize) -> Self::T {
+    fn nth_or_panic(&self, n: usize) -> Self::T {
         match n {
             0 => self.x(),
             1 => self.y(),
@@ -93,7 +93,7 @@ impl<T: CoordNum> CoordTrait for &Coord<T> {
 impl<T: CoordNum> CoordTrait for (T, T) {
     type T = T;
 
-    fn nth_unchecked(&self, n: usize) -> Self::T {
+    fn nth_or_panic(&self, n: usize) -> Self::T {
         match n {
             0 => self.x(),
             1 => self.y(),
@@ -127,7 +127,7 @@ impl<T: CoordNum> CoordTrait for UnimplementedCoord<T> {
         unimplemented!()
     }
 
-    fn nth_unchecked(&self, _n: usize) -> Self::T {
+    fn nth_or_panic(&self, _n: usize) -> Self::T {
         unimplemented!()
     }
 
