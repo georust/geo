@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- BREAKING: Rename `CoordTrait::nth_unchecked` -> `CoordTrait::nth_or_panic` since it is not `unsafe`.
+- BREAKING: Mark `CoordTrait::nth_unchecked` as `unsafe` and add `CoordTrait::nth_or_panic`.
   - <https://github.com/georust/geo/pull/1242>
 
 ## 0.1.1

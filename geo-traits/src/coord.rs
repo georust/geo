@@ -16,7 +16,13 @@ pub trait CoordTrait {
 
     /// Access the n'th (0-based) element of the CoordinateTuple.
     /// Returns `None` if `n >= DIMENSION`.
-    /// See also [`nth_or_panic()`](Self::nth_or_panic).
+    ///
+    /// See also [`nth_or_panic()`](Self::nth_or_panic) and [`nth_unchecked()`](Self::nth_unchecked).
+    ///
+    /// # Panics
+    ///
+    /// This method may panic if [`dim()`](Self::dim) does not correspond to
+    /// the actual number of dimensions in this coordinate.
     fn nth(&self, n: usize) -> Option<Self::T> {
         if n < self.dim().size() {
             Some(self.nth_or_panic(n))
@@ -40,6 +46,23 @@ pub trait CoordTrait {
     /// May panic if n >= DIMENSION.
     /// See also [`nth()`](Self::nth).
     fn nth_or_panic(&self, n: usize) -> Self::T;
+
+    /// Access the n'th (0-based) element of the CoordinateTuple.
+    /// May panic if n >= DIMENSION.
+    ///
+    /// See also [`nth()`](Self::nth), [`nth_or_panic()`](Self::nth_or_panic).
+    ///
+    /// You might want to override the default implementation of this method
+    /// if you can provide a more efficient implementation.
+    ///
+    /// # Safety
+    ///
+    /// Though it may panic, the default implementation actually is safe. However, implementors
+    /// are allowed to implement this method themselves with an unsafe implementation. See the
+    /// individual implementations for more information on their own Safety considerations.
+    unsafe fn nth_unchecked(&self, n: usize) -> Self::T {
+        self.nth_or_panic(n)
+    }
 }
 
 impl<T: CoordNum> CoordTrait for Coord<T> {
