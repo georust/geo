@@ -1,8 +1,9 @@
 use num_traits::FromPrimitive;
 
 use super::super::{Bearing, Destination, Distance, InterpolatePoint};
+use crate::line_measures::distance::symmetric_distance_impl;
 use crate::utils::normalize_longitude;
-use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
+use crate::{CoordFloat, Line, Point, MEAN_EARTH_RADIUS};
 
 /// A spherical model of the earth using the [haversine formula].
 ///
@@ -150,6 +151,13 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Haversin
         F::from(MEAN_EARTH_RADIUS).unwrap() * c
     }
 }
+
+impl<F: CoordFloat + FromPrimitive> Distance<F, Line<F>, Point<F>> for Haversine {
+    fn distance(origin: Line<F>, destination: Point<F>) -> F {
+        todo!()
+    }
+}
+symmetric_distance_impl!(Point<F>, Line<F>, for: Haversine, where: CoordFloat + FromPrimitive);
 
 /// Interpolate Point(s) along a [great circle].
 ///

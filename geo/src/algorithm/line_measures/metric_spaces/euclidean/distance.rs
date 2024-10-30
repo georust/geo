@@ -2,24 +2,11 @@ use super::{Distance, Euclidean};
 use crate::algorithm::Intersects;
 use crate::coordinate_position::{coord_pos_relative_to_ring, CoordPos};
 use crate::geometry::*;
+use crate::line_measures::distance::symmetric_distance_impl;
 use crate::{CoordFloat, GeoFloat, GeoNum};
 use num_traits::{Bounded, Float};
 use rstar::primitives::CachedEnvelope;
 use rstar::RTree;
-
-// Distance is a symmetric operation, so we can implement it once for both
-macro_rules! symmetric_distance_impl {
-    ($t:ident, $a:ty, $b:ty) => {
-        impl<F> $crate::Distance<F, $a, $b> for Euclidean
-        where
-            F: $t,
-        {
-            fn distance(a: $a, b: $b) -> F {
-                Self::distance(b, a)
-            }
-        }
-    };
-}
 
 // ┌───────────────────────────┐
 // │ Implementations for Coord │
@@ -124,8 +111,8 @@ impl<F: GeoFloat> Distance<F, &Point<F>, &Polygon<F>> for Euclidean {
 // │ Implementations for Line │
 // └──────────────────────────┘
 
-symmetric_distance_impl!(CoordFloat, &Line<F>, Coord<F>);
-symmetric_distance_impl!(CoordFloat, &Line<F>, &Point<F>);
+symmetric_distance_impl!(&Line<F>, Coord<F>, for: Euclidean, where: CoordFloat);
+symmetric_distance_impl!(&Line<F>, &Point<F>, for: Euclidean, where: CoordFloat);
 
 impl<F: GeoFloat> Distance<F, &Line<F>, &Line<F>> for Euclidean {
     fn distance(line_a: &Line<F>, line_b: &Line<F>) -> F {
@@ -169,8 +156,8 @@ impl<F: GeoFloat> Distance<F, &Line<F>, &Polygon<F>> for Euclidean {
 // │ Implementations for LineString │
 // └────────────────────────────────┘
 
-symmetric_distance_impl!(CoordFloat, &LineString<F>, &Point<F>);
-symmetric_distance_impl!(GeoFloat, &LineString<F>, &Line<F>);
+symmetric_distance_impl!(&LineString<F>, &Point<F>, for: Euclidean, where: CoordFloat);
+symmetric_distance_impl!(&LineString<F>, &Line<F>, for: Euclidean, where: GeoFloat);
 
 impl<F: GeoFloat> Distance<F, &LineString<F>, &LineString<F>> for Euclidean {
     fn distance(line_string_a: &LineString<F>, line_string_b: &LineString<F>) -> F {
@@ -206,9 +193,9 @@ impl<F: GeoFloat> Distance<F, &LineString<F>, &Polygon<F>> for Euclidean {
 // │ Implementations for Polygon │
 // └─────────────────────────────┘
 
-symmetric_distance_impl!(GeoFloat, &Polygon<F>, &Point<F>);
-symmetric_distance_impl!(GeoFloat, &Polygon<F>, &Line<F>);
-symmetric_distance_impl!(GeoFloat, &Polygon<F>, &LineString<F>);
+symmetric_distance_impl!(&Polygon<F>, &Point<F>, for: Euclidean, where: GeoFloat);
+symmetric_distance_impl!(&Polygon<F>, &Line<F>, for: Euclidean, where: GeoFloat);
+symmetric_distance_impl!(&Polygon<F>, &LineString<F>, for: Euclidean, where: GeoFloat);
 impl<F: GeoFloat> Distance<F, &Polygon<F>, &Polygon<F>> for Euclidean {
     fn distance(polygon_a: &Polygon<F>, polygon_b: &Polygon<F>) -> F {
         if polygon_a.intersects(polygon_b) {
@@ -259,7 +246,7 @@ macro_rules! impl_euclidean_distance_for_polygonlike_geometry {
                     Self::distance(&polygonlike.to_polygon(), geometry_b)
               }
           }
-          symmetric_distance_impl!(GeoFloat, $geometry_b, $polygonlike);
+          symmetric_distance_impl!($geometry_b, $polygonlike, for: Euclidean, where: GeoFloat);
       )*
   };
 }
@@ -293,7 +280,7 @@ macro_rules! impl_euclidean_distance_for_iter_geometry {
                         })
                 }
             }
-            symmetric_distance_impl!(GeoFloat, $to_geometry, $iter_geometry);
+            symmetric_distance_impl!($to_geometry, $iter_geometry, for: Euclidean, where: GeoFloat);
         )*
   };
 }
@@ -327,7 +314,7 @@ macro_rules! impl_euclidean_distance_for_geometry_and_variant {
                   }
               }
           }
-          symmetric_distance_impl!(GeoFloat, &Geometry<F>, $target);
+          symmetric_distance_impl!(&Geometry<F>, $target, for: Euclidean, where: GeoFloat);
       )*
   };
 }

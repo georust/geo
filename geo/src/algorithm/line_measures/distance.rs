@@ -10,3 +10,18 @@ pub trait Distance<F, Origin, Destination> {
     /// - returns: depends on the trait implementation.
     fn distance(origin: Origin, destination: Destination) -> F;
 }
+
+// Distance is a symmetric operation, so we can implement it once for both
+macro_rules! symmetric_distance_impl {
+    ($a:ty, $b:ty, for: $metric_space: ty, where: $($bound:tt)+) => {
+        impl<F> $crate::Distance<F, $a, $b> for $metric_space
+        where
+            F: $($bound)+,
+        {
+            fn distance(a: $a, b: $b) -> F {
+                Self::distance(b, a)
+            }
+        }
+    };
+}
+pub(crate) use symmetric_distance_impl;
