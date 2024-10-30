@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{CoordTrait, Dimensions, UnimplementedCoord};
+#[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, Line};
 
 /// A trait for accessing data from a generic Line.
@@ -10,7 +11,7 @@ use geo_types::{Coord, CoordNum, Line};
 /// Refer to [geo_types::Line] for information about semantics and validity.
 pub trait LineTrait: Sized {
     /// The coordinate type of this geometry
-    type T: CoordNum;
+    type T;
 
     /// The type of each underlying coordinate, which implements [CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
@@ -32,6 +33,7 @@ pub trait LineTrait: Sized {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<T: CoordNum> LineTrait for Line<T> {
     type T = T;
     type CoordType<'a> = &'a Coord<Self::T> where Self: 'a;
@@ -49,6 +51,7 @@ impl<T: CoordNum> LineTrait for Line<T> {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> LineTrait for &'a Line<T> {
     type T = T;
     type CoordType<'b> = &'a Coord<Self::T> where Self: 'b;
@@ -70,9 +73,9 @@ impl<'a, T: CoordNum> LineTrait for &'a Line<T> {
 ///
 /// This can be used as the `LineType` of the `GeometryTrait` by implementations that don't
 /// have a Line concept
-pub struct UnimplementedLine<T: CoordNum>(PhantomData<T>);
+pub struct UnimplementedLine<T>(PhantomData<T>);
 
-impl<T: CoordNum> LineTrait for UnimplementedLine<T> {
+impl<T> LineTrait for UnimplementedLine<T> {
     type T = T;
     type CoordType<'a> = UnimplementedCoord<Self::T> where Self: 'a;
 

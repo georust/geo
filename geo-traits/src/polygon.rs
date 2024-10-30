@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use crate::iterator::PolygonInteriorIterator;
 use crate::line_string::UnimplementedLineString;
 use crate::{Dimensions, LineStringTrait};
+#[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, LineString, Polygon};
 
 /// A trait for accessing data from a generic Polygon.
@@ -14,7 +15,7 @@ use geo_types::{CoordNum, LineString, Polygon};
 /// Refer to [geo_types::Polygon] for information about semantics and validity.
 pub trait PolygonTrait: Sized {
     /// The coordinate type of this geometry
-    type T: CoordNum;
+    type T;
 
     /// The type of each underlying ring, which implements [LineStringTrait]
     type RingType<'a>: 'a + LineStringTrait<T = Self::T>
@@ -53,6 +54,7 @@ pub trait PolygonTrait: Sized {
     unsafe fn interior_unchecked(&self, i: usize) -> Self::RingType<'_>;
 }
 
+#[cfg(feature = "geo-types")]
 impl<T: CoordNum> PolygonTrait for Polygon<T> {
     type T = T;
     type RingType<'a> = &'a LineString<Self::T> where Self: 'a;
@@ -79,6 +81,7 @@ impl<T: CoordNum> PolygonTrait for Polygon<T> {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
     type T = T;
     type RingType<'b> = &'a LineString<Self::T> where
@@ -110,9 +113,9 @@ impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
 ///
 /// This can be used as the `PolygonType` of the `GeometryTrait` by implementations that don't have a
 /// Polygon concept
-pub struct UnimplementedPolygon<T: CoordNum>(PhantomData<T>);
+pub struct UnimplementedPolygon<T>(PhantomData<T>);
 
-impl<T: CoordNum> PolygonTrait for UnimplementedPolygon<T> {
+impl<T> PolygonTrait for UnimplementedPolygon<T> {
     type T = T;
     type RingType<'a> = UnimplementedLineString<Self::T> where Self: 'a;
 

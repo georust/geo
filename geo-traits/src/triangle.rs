@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{CoordTrait, Dimensions, UnimplementedCoord};
+#[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, Triangle};
 
 /// A trait for accessing data from a generic Triangle.
@@ -10,7 +11,7 @@ use geo_types::{Coord, CoordNum, Triangle};
 /// Refer to [geo_types::Triangle] for information about semantics and validity.
 pub trait TriangleTrait: Sized {
     /// The coordinate type of this geometry
-    type T: CoordNum;
+    type T;
 
     /// The type of each underlying coordinate, which implements [CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
@@ -35,6 +36,7 @@ pub trait TriangleTrait: Sized {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<T: CoordNum> TriangleTrait for Triangle<T> {
     type T = T;
     type CoordType<'a> = &'a Coord<Self::T> where Self: 'a;
@@ -56,6 +58,7 @@ impl<T: CoordNum> TriangleTrait for Triangle<T> {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> TriangleTrait for &'a Triangle<T> {
     type T = T;
     type CoordType<'b> = &'a Coord<Self::T> where Self: 'b;
@@ -81,9 +84,9 @@ impl<'a, T: CoordNum> TriangleTrait for &'a Triangle<T> {
 ///
 /// This can be used as the `TriangleType` of the `GeometryTrait` by implementations that don't
 /// have a Triangle concept
-pub struct UnimplementedTriangle<T: CoordNum>(PhantomData<T>);
+pub struct UnimplementedTriangle<T>(PhantomData<T>);
 
-impl<T: CoordNum> TriangleTrait for UnimplementedTriangle<T> {
+impl<T> TriangleTrait for UnimplementedTriangle<T> {
     type T = T;
     type CoordType<'a> = UnimplementedCoord<Self::T> where Self: 'a;
 

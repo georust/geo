@@ -1,3 +1,4 @@
+#[cfg(feature = "geo-types")]
 use geo_types::{
     CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon, Rect, Triangle,
@@ -12,7 +13,7 @@ use crate::{
 #[allow(clippy::type_complexity)]
 pub trait GeometryTrait {
     /// The coordinate type of this geometry
-    type T: CoordNum;
+    type T;
 
     /// The type of each underlying Point, which implements [PointTrait]
     type PointType<'a>: 'a + PointTrait<T = Self::T>
@@ -124,6 +125,7 @@ where
     Line(&'a L),
 }
 
+#[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum + 'a> GeometryTrait for Geometry<T> {
     type T = T;
     type PointType<'b> = Point<Self::T> where Self: 'b;
@@ -171,6 +173,7 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for Geometry<T> {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum + 'a> GeometryTrait for &'a Geometry<T> {
     type T = T;
     type PointType<'b> = Point<Self::T> where Self: 'b;
@@ -222,6 +225,7 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for &'a Geometry<T> {
 
 macro_rules! impl_specialization {
     ($geometry_type:ident) => {
+        #[cfg(feature = "geo-types")]
         impl<T: CoordNum> GeometryTrait for $geometry_type<T> {
             type T = T;
             type PointType<'b> = Point<Self::T> where Self: 'b;
@@ -258,6 +262,7 @@ macro_rules! impl_specialization {
             }
         }
 
+        #[cfg(feature = "geo-types")]
         impl<'a, T: CoordNum + 'a> GeometryTrait for &'a $geometry_type<T> {
             type T = T;
             type PointType<'b> = Point<Self::T> where Self: 'b;

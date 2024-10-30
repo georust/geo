@@ -10,7 +10,10 @@ description = "Geospatial traits"
 rust-version = "1.65"
 edition = "2021"
 
+[features]
+default = ["geo-types"]
+
 [dependencies]
-geo-types = "0.7"
+geo-types = { version = "0.7", optional = true }
 
 [dev-dependencies]

@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use crate::iterator::MultiLineStringIterator;
 use crate::line_string::UnimplementedLineString;
 use crate::{Dimensions, LineStringTrait};
+#[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, LineString, MultiLineString};
 
 /// A trait for accessing data from a generic MultiLineString.
@@ -12,7 +13,7 @@ use geo_types::{CoordNum, LineString, MultiLineString};
 /// Refer to [geo_types::MultiLineString] for information about semantics and validity.
 pub trait MultiLineStringTrait: Sized {
     /// The coordinate type of this geometry
-    type T: CoordNum;
+    type T;
 
     /// The type of each underlying LineString, which implements [LineStringTrait]
     type LineStringType<'a>: 'a + LineStringTrait<T = Self::T>
@@ -50,6 +51,7 @@ pub trait MultiLineStringTrait: Sized {
     unsafe fn line_string_unchecked(&self, i: usize) -> Self::LineStringType<'_>;
 }
 
+#[cfg(feature = "geo-types")]
 impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
     type T = T;
     type LineStringType<'a> = &'a LineString<Self::T> where Self: 'a;
@@ -67,6 +69,7 @@ impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
     type T = T;
     type LineStringType<'b> = &'a LineString<Self::T> where Self: 'b;
@@ -88,9 +91,9 @@ impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
 ///
 /// This can be used as the `MultiLineStringType` of the `GeometryTrait` by implementations that
 /// don't have a MultiLineString concept
-pub struct UnimplementedMultiLineString<T: CoordNum>(PhantomData<T>);
+pub struct UnimplementedMultiLineString<T>(PhantomData<T>);
 
-impl<T: CoordNum> MultiLineStringTrait for UnimplementedMultiLineString<T> {
+impl<T> MultiLineStringTrait for UnimplementedMultiLineString<T> {
     type T = T;
     type LineStringType<'a> = UnimplementedLineString<Self::T> where Self: 'a;
 

@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 
+#[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, Rect};
 
 use crate::{CoordTrait, Dimensions, UnimplementedCoord};
@@ -10,7 +11,7 @@ use crate::{CoordTrait, Dimensions, UnimplementedCoord};
 /// defined by minimum and maximum [`Point`s][CoordTrait].
 pub trait RectTrait {
     /// The coordinate type of this geometry
-    type T: CoordNum;
+    type T;
 
     /// The type of each underlying coordinate, which implements [CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
@@ -27,6 +28,7 @@ pub trait RectTrait {
     fn max(&self) -> Self::CoordType<'_>;
 }
 
+#[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum + 'a> RectTrait for Rect<T> {
     type T = T;
     type CoordType<'b> = Coord<T> where Self: 'b;
@@ -44,6 +46,7 @@ impl<'a, T: CoordNum + 'a> RectTrait for Rect<T> {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum + 'a> RectTrait for &'a Rect<T> {
     type T = T;
     type CoordType<'b> = Coord<T> where Self: 'b;
@@ -65,9 +68,9 @@ impl<'a, T: CoordNum + 'a> RectTrait for &'a Rect<T> {
 ///
 /// This can be used as the `RectType` of the `GeometryTrait` by implementations that don't
 /// have a Rect concept
-pub struct UnimplementedRect<T: CoordNum>(PhantomData<T>);
+pub struct UnimplementedRect<T>(PhantomData<T>);
 
-impl<T: CoordNum> RectTrait for UnimplementedRect<T> {
+impl<T> RectTrait for UnimplementedRect<T> {
     type T = T;
     type CoordType<'a> = UnimplementedCoord<Self::T> where Self: 'a;
 

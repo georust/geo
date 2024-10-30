@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 
+#[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, Point};
 
 use crate::{CoordTrait, Dimensions, UnimplementedCoord};
@@ -9,7 +10,7 @@ use crate::{CoordTrait, Dimensions, UnimplementedCoord};
 /// Refer to [geo_types::Point] for information about semantics and validity.
 pub trait PointTrait {
     /// The coordinate type of this geometry
-    type T: CoordNum;
+    type T;
 
     /// The type of the underlying coordinate, which implements [CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
@@ -32,6 +33,7 @@ pub trait PointTrait {
     fn coord(&self) -> Option<Self::CoordType<'_>>;
 }
 
+#[cfg(feature = "geo-types")]
 impl<T: CoordNum> PointTrait for Point<T> {
     type T = T;
     type CoordType<'a> = &'a Coord<Self::T> where Self: 'a;
@@ -45,6 +47,7 @@ impl<T: CoordNum> PointTrait for Point<T> {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<T: CoordNum> PointTrait for &Point<T> {
     type T = T;
     type CoordType<'a> = &'a Coord<Self::T> where Self: 'a;
@@ -62,9 +65,9 @@ impl<T: CoordNum> PointTrait for &Point<T> {
 ///
 /// This can be used as the `PointType` of the `GeometryTrait` by implementations that don't have a
 /// Point concept
-pub struct UnimplementedPoint<T: CoordNum>(PhantomData<T>);
+pub struct UnimplementedPoint<T>(PhantomData<T>);
 
-impl<T: CoordNum> PointTrait for UnimplementedPoint<T> {
+impl<T> PointTrait for UnimplementedPoint<T> {
     type T = T;
     type CoordType<'a> = UnimplementedCoord<Self::T> where Self: 'a;
 

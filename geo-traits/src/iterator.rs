@@ -1,17 +1,14 @@
-use crate::CoordTrait;
-
 use super::{
-    GeometryCollectionTrait, GeometryTrait, LineStringTrait, MultiLineStringTrait, MultiPointTrait,
-    MultiPolygonTrait, PointTrait, PolygonTrait,
+    CoordTrait, GeometryCollectionTrait, GeometryTrait, LineStringTrait, MultiLineStringTrait,
+    MultiPointTrait, MultiPolygonTrait, PointTrait, PolygonTrait,
 };
-use geo_types::CoordNum;
 
 macro_rules! impl_iterator {
     ($struct_name:ident, $self_trait:ident, $item_trait:ident, $access_method:ident, $item_type:ident) => {
         /// An iterator over the parts of this geometry.
         pub(crate) struct $struct_name<
             'a,
-            T: CoordNum,
+            T,
             $item_type: 'a + $item_trait<T = T>,
             G: $self_trait<T = T, $item_type<'a> = $item_type>,
         > {
@@ -22,7 +19,7 @@ macro_rules! impl_iterator {
 
         impl<
                 'a,
-                T: CoordNum,
+                T,
                 $item_type: 'a + $item_trait<T = T>,
                 G: $self_trait<T = T, $item_type<'a> = $item_type>,
             > $struct_name<'a, T, $item_type, G>
@@ -35,7 +32,7 @@ macro_rules! impl_iterator {
 
         impl<
                 'a,
-                T: CoordNum,
+                T,
                 $item_type: 'a + $item_trait<T = T>,
                 G: $self_trait<T = T, $item_type<'a> = $item_type>,
             > Iterator for $struct_name<'a, T, $item_type, G>
@@ -60,7 +57,7 @@ macro_rules! impl_iterator {
 
         impl<
                 'a,
-                T: CoordNum,
+                T,
                 $item_type: 'a + $item_trait<T = T>,
                 G: $self_trait<T = T, $item_type<'a> = $item_type>,
             > ExactSizeIterator for $struct_name<'a, T, $item_type, G>
@@ -69,7 +66,7 @@ macro_rules! impl_iterator {
 
         impl<
                 'a,
-                T: CoordNum,
+                T,
                 $item_type: 'a + $item_trait<T = T>,
                 G: $self_trait<T = T, $item_type<'a> = $item_type>,
             > DoubleEndedIterator for $struct_name<'a, T, $item_type, G>

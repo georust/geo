@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use crate::iterator::MultiPointIterator;
 use crate::{Dimensions, PointTrait, UnimplementedPoint};
+#[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, MultiPoint, Point};
 
 /// A trait for accessing data from a generic MultiPoint.
@@ -11,7 +12,7 @@ use geo_types::{CoordNum, MultiPoint, Point};
 /// Refer to [geo_types::MultiPoint] for information about semantics and validity.
 pub trait MultiPointTrait: Sized {
     /// The coordinate type of this geometry
-    type T: CoordNum;
+    type T;
 
     /// The type of each underlying Point, which implements [PointTrait]
     type PointType<'a>: 'a + PointTrait<T = Self::T>
@@ -47,6 +48,7 @@ pub trait MultiPointTrait: Sized {
     unsafe fn point_unchecked(&self, i: usize) -> Self::PointType<'_>;
 }
 
+#[cfg(feature = "geo-types")]
 impl<T: CoordNum> MultiPointTrait for MultiPoint<T> {
     type T = T;
     type PointType<'a> = &'a Point<Self::T> where Self: 'a;
@@ -64,6 +66,7 @@ impl<T: CoordNum> MultiPointTrait for MultiPoint<T> {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> MultiPointTrait for &'a MultiPoint<T> {
     type T = T;
     type PointType<'b> = &'a Point<Self::T> where Self: 'b;
@@ -85,9 +88,9 @@ impl<'a, T: CoordNum> MultiPointTrait for &'a MultiPoint<T> {
 ///
 /// This can be used as the `MultiPointType` of the `GeometryTrait` by implementations that don't
 /// have a MultiPoint concept
-pub struct UnimplementedMultiPoint<T: CoordNum>(PhantomData<T>);
+pub struct UnimplementedMultiPoint<T>(PhantomData<T>);
 
-impl<T: CoordNum> MultiPointTrait for UnimplementedMultiPoint<T> {
+impl<T> MultiPointTrait for UnimplementedMultiPoint<T> {
     type T = T;
     type PointType<'a> = UnimplementedPoint<Self::T> where Self: 'a;
 
