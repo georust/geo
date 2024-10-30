@@ -1,5 +1,8 @@
 use std::marker::PhantomData;
 
+#[cfg(feature = "geo-types")]
+use geo_types::{Coord, CoordNum};
+
 use crate::Dimensions;
 
 /// A trait for accessing data from a generic Coord.
@@ -41,7 +44,7 @@ pub trait CoordTrait {
 }
 
 #[cfg(feature = "geo-types")]
-impl<T: geo_types::CoordNum> CoordTrait for geo_types::Coord<T> {
+impl<T: CoordNum> CoordTrait for Coord<T> {
     type T = T;
 
     fn nth_unchecked(&self, n: usize) -> Self::T {
@@ -66,7 +69,7 @@ impl<T: geo_types::CoordNum> CoordTrait for geo_types::Coord<T> {
 }
 
 #[cfg(feature = "geo-types")]
-impl<T: geo_types::CoordNum> CoordTrait for &geo_types::Coord<T> {
+impl<T: CoordNum> CoordTrait for &Coord<T> {
     type T = T;
 
     fn nth_unchecked(&self, n: usize) -> Self::T {
