@@ -152,12 +152,17 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Haversin
     }
 }
 
-impl<F: CoordFloat + FromPrimitive> Distance<F, Line<F>, Point<F>> for Haversine {
-    fn distance(origin: Line<F>, destination: Point<F>) -> F {
-        todo!()
+impl<F: CoordFloat + FromPrimitive> Distance<F, &Line<F>, &Point<F>> for Haversine {
+    fn distance(line: &Line<F>, point: &Point<F>) -> F {
+        let mean_earth_radius = F::from(MEAN_EARTH_RADIUS).unwrap();
+        let l_delta_13 = Haversine::distance(line.start_point(), *point) / mean_earth_radius;
+        let theta_13 = Haversine::bearing(line.start_point(), *point).to_radians();
+        let theta_12 = Haversine::bearing(line.start_point(), line.end_point()).to_radians();
+        let l_delta_xt = (l_delta_13.sin() * (theta_12 - theta_13).sin()).asin();
+        mean_earth_radius * l_delta_xt.abs()
     }
 }
-symmetric_distance_impl!(Point<F>, Line<F>, for: Haversine, where: CoordFloat + FromPrimitive);
+symmetric_distance_impl!(&Point<F>, &Line<F>, for: Haversine, where: CoordFloat + FromPrimitive);
 
 /// Interpolate Point(s) along a [great circle].
 ///
