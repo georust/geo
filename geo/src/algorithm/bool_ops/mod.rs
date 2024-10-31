@@ -10,9 +10,15 @@ use i_overlay::core::fill_rule::FillRule;
 use i_overlay::float::clip::FloatClip;
 use i_overlay::float::single::SingleFloatOverlay;
 use i_overlay::string::clip::ClipRule;
+#[cfg(feature = "multithreading")]
+use rayon::prelude::*;
+
 pub use i_overlay_integration::BoolOpsNum;
 
 use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
+use rstar::{
+    primitives::CachedEnvelope, primitives::ObjectRef, ParentNode, RTree, RTreeNode, RTreeObject,
+};
 
 /// Boolean Operations on geometry.
 ///
@@ -34,6 +40,12 @@ use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
 /// In particular, taking `union` with an empty geom should remove degeneracies
 /// and fix invalid polygons as long the interior-exterior requirement above is
 /// satisfied.
+///
+/// # Performance
+///
+/// For union operations on a collection of overlapping and / or adjacent [`Polygon`]s
+/// (e.g. contained in a `Vec` or a [`MultiPolygon`]), using [`UnaryUnion`] will
+/// yield far better performance.
 pub trait BooleanOps {
     type Scalar: BoolOpsNum;
 
@@ -109,6 +121,106 @@ pub enum OpType {
     Xor,
 }
 
+// Recursive algorithms can benefit from grouping those parameters which are constant over
+// the whole algorithm to reduce the overhead of the recursive calls, in this case the single-
+// and multi-threaded unary union tree traversals
+#[derive(Debug)]
+struct Ops<I, F, R> {
+    init: I,
+    fold: F,
+    reduce: R,
+}
+
+/// Efficient [BooleanOps::union] of adjacent / overlapping geometries
+///
+/// For geometries with a high degree of overlap or adjacency
+/// (for instance, merging a large contiguous area made up of many adjacent polygons)
+/// this method will be orders of magnitude faster than a manual iteration and union approach.
+pub trait UnaryUnion {
+    type Scalar: BoolOpsNum;
+
+    /// Construct a tree of all the input geometries and progressively union them from the "bottom up"
+    ///
+    /// This is considerably more efficient than using e.g. `fold()` over an iterator of Polygons.
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::{BooleanOps, UnaryUnion};
+    /// use geo::{MultiPolygon, polygon};
+    /// let poly1 = polygon![
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 4.0, y: 0.0),
+    ///     (x: 4.0, y: 4.0),
+    ///     (x: 0.0, y: 4.0),
+    ///     (x: 0.0, y: 0.0),
+    /// ];
+    /// let poly2 = polygon![
+    ///     (x: 4.0, y: 0.0),
+    ///     (x: 8.0, y: 0.0),
+    ///     (x: 8.0, y: 4.0),
+    ///     (x: 4.0, y: 4.0),
+    ///     (x: 4.0, y: 0.0),
+    /// ];
+    /// let merged = &poly1.union(&poly2);
+    /// let mp = MultiPolygon(vec![poly1, poly2]);
+    /// // A larger single rectangle
+    /// let combined = mp.unary_union();
+    /// assert_eq!(&combined, merged);
+    /// ```
+    fn unary_union(self) -> MultiPolygon<Self::Scalar>;
+}
+
+// This function carries out a full post-order traversal of the tree, building up MultiPolygons from inside to outside.
+// Though the operation is carried out via fold() over the tree iterator, there are two actual nested operations:
+// "fold" operations on leaf nodes build up output MultiPolygons by adding Polygons to them via union and
+// "reduce" operations on parent nodes combine these output MultiPolygons from leaf operations by recursion
+fn bottom_up_fold_reduce<T, S, I, F, R>(ops: &Ops<I, F, R>, parent: &ParentNode<T>) -> S
+where
+    // This operation only requires two types: output (S) and input (T)
+    T: RTreeObject,
+    // Because this is a fold operation, we need to initialise a "container" to which we'll be adding using union.
+    // The output of a union op is a MultiPolygon.
+    I: Fn() -> S,
+    // The meat of the fold op is unioning input borrowed leaf Polygons into an output MultiPolygon.
+    F: Fn(S, &T) -> S,
+    // Parent nodes require us to process their child nodes to produce a MultiPolygon. We do this recursively.
+    // This is a reduce op so there's no need for an init value and the two inputs must have the same type: MultiPolygon
+    R: Fn(S, S) -> S,
+{
+    parent
+        .children()
+        .iter()
+        .fold((ops.init)(), |accum, child| match child {
+            RTreeNode::Leaf(value) => (ops.fold)(accum, value),
+            RTreeNode::Parent(parent) => {
+                let value = bottom_up_fold_reduce(ops, parent);
+                (ops.reduce)(accum, value)
+            }
+        })
+}
+
+fn par_bottom_up_fold_reduce<T, S, I, F, R>(ops: &Ops<I, F, R>, parent: &ParentNode<T>) -> S
+where
+    T: RTreeObject,
+    RTreeNode<T>: Send + Sync,
+    S: Send,
+    I: Fn() -> S + Send + Sync,
+    F: Fn(S, &T) -> S + Send + Sync,
+    R: Fn(S, S) -> S + Send + Sync,
+{
+    parent
+        .children()
+        .into_par_iter()
+        .fold(&ops.init, |accum, child| match child {
+            RTreeNode::Leaf(value) => (ops.fold)(accum, value),
+            RTreeNode::Parent(parent) => {
+                let value = par_bottom_up_fold_reduce(ops, parent);
+                (ops.reduce)(accum, value)
+            }
+        })
+        .reduce(&ops.init, &ops.reduce)
+}
+
 impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
     type Scalar = T;
 
@@ -122,5 +234,73 @@ impl<T: BoolOpsNum> BooleanOps for MultiPolygon<T> {
 
     fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>> {
         self.iter().flat_map(BooleanOps::rings)
+    }
+}
+
+impl<'a, T, Boppable, BoppableCollection> UnaryUnion for &'a BoppableCollection
+where
+    T: BoolOpsNum,
+    Boppable: BooleanOps<Scalar = T> + RTreeObject + 'a,
+    &'a BoppableCollection: IntoIterator<Item = &'a Boppable>,
+{
+    type Scalar = T;
+
+    fn unary_union(self) -> MultiPolygon<Self::Scalar> {
+        // these three functions drive the union operation
+        let init = || MultiPolygon::<T>::new(vec![]);
+        let fold = |mut accum: MultiPolygon<T>,
+                    poly: &CachedEnvelope<ObjectRef<'a, Boppable>>|
+         -> MultiPolygon<T> {
+            accum = accum.union(&***poly);
+            accum
+        };
+        let reduce = |accum1: MultiPolygon<T>, accum2: MultiPolygon<T>| -> MultiPolygon<T> {
+            accum1.union(&accum2)
+        };
+        let rtree = RTree::bulk_load(
+            self.into_iter()
+                .map(|p| CachedEnvelope::new(ObjectRef::new(p)))
+                .collect(),
+        );
+        let ops = Ops { init, fold, reduce };
+        bottom_up_fold_reduce(&ops, rtree.root())
+    }
+}
+
+#[cfg(feature = "multithreading")]
+/// Wrapper type which signals to algorithms operating on `T` that utilizing parallelism might be viable.
+pub struct AllowMultithreading<T>(pub T);
+
+#[cfg(feature = "multithreading")]
+impl<'a, T, Boppable, BoppableCollection> UnaryUnion for AllowMultithreading<&'a BoppableCollection>
+where
+    T: BoolOpsNum + Send,
+    Boppable: BooleanOps<Scalar = T> + RTreeObject + 'a + Send + Sync,
+    <Boppable as RTreeObject>::Envelope: Send + Sync,
+    &'a BoppableCollection: IntoParallelIterator<Item = &'a Boppable>,
+{
+    type Scalar = T;
+
+    fn unary_union(self) -> MultiPolygon<Self::Scalar> {
+        // these three functions drive the union operation
+        let init = || MultiPolygon::<T>::new(vec![]);
+        let fold = |mut accum: MultiPolygon<T>,
+                    poly: &CachedEnvelope<ObjectRef<'a, Boppable>>|
+         -> MultiPolygon<T> {
+            accum = accum.union(&***poly);
+            accum
+        };
+        let reduce = |accum1: MultiPolygon<T>, accum2: MultiPolygon<T>| -> MultiPolygon<T> {
+            accum1.union(&accum2)
+        };
+        let rtree = RTree::bulk_load(
+            self.0
+                .into_par_iter()
+                .map(|p| CachedEnvelope::new(ObjectRef::new(p)))
+                .collect(),
+        );
+
+        let ops = Ops { init, fold, reduce };
+        par_bottom_up_fold_reduce(&ops, rtree.root())
     }
 }
