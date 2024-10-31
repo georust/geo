@@ -1,5 +1,6 @@
 use crate::iterator::GeometryCollectionIterator;
 use crate::{Dimensions, GeometryTrait};
+#[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, Geometry, GeometryCollection};
 
 /// A trait for accessing data from a generic GeometryCollection.
@@ -7,7 +8,7 @@ use geo_types::{CoordNum, Geometry, GeometryCollection};
 /// A GeometryCollection is a collection of [Geometry][GeometryTrait] types.
 pub trait GeometryCollectionTrait: Sized {
     /// The coordinate type of this geometry
-    type T: CoordNum;
+    type T;
 
     /// The type of each underlying geometry, which implements [GeometryTrait]
     type GeometryType<'a>: 'a + GeometryTrait<T = Self::T>
@@ -45,6 +46,7 @@ pub trait GeometryCollectionTrait: Sized {
     unsafe fn geometry_unchecked(&self, i: usize) -> Self::GeometryType<'_>;
 }
 
+#[cfg(feature = "geo-types")]
 impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
     type T = T;
     type GeometryType<'a> = &'a Geometry<Self::T>
@@ -64,6 +66,7 @@ impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
     type T = T;
     type GeometryType<'b> = &'a Geometry<Self::T> where

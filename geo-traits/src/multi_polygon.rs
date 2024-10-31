@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use crate::iterator::MultiPolygonIterator;
 use crate::polygon::UnimplementedPolygon;
 use crate::{Dimensions, PolygonTrait};
+#[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, MultiPolygon, Polygon};
 
 /// A trait for accessing data from a generic MultiPolygon.
@@ -10,7 +11,7 @@ use geo_types::{CoordNum, MultiPolygon, Polygon};
 /// Refer to [geo_types::MultiPolygon] for information about semantics and validity.
 pub trait MultiPolygonTrait: Sized {
     /// The coordinate type of this geometry
-    type T: CoordNum;
+    type T;
 
     /// The type of each underlying Polygon, which implements [PolygonTrait]
     type PolygonType<'a>: 'a + PolygonTrait<T = Self::T>
@@ -48,6 +49,7 @@ pub trait MultiPolygonTrait: Sized {
     unsafe fn polygon_unchecked(&self, i: usize) -> Self::PolygonType<'_>;
 }
 
+#[cfg(feature = "geo-types")]
 impl<T: CoordNum> MultiPolygonTrait for MultiPolygon<T> {
     type T = T;
     type PolygonType<'a> = &'a Polygon<Self::T> where Self: 'a;
@@ -65,6 +67,7 @@ impl<T: CoordNum> MultiPolygonTrait for MultiPolygon<T> {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
     type T = T;
     type PolygonType<'b> = &'a Polygon<Self::T> where Self: 'b;
@@ -86,9 +89,9 @@ impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
 ///
 /// This can be used as the `MultiPolygonType` of the `GeometryTrait` by implementations that don't
 /// have a MultiPolygon concept
-pub struct UnimplementedMultiPolygon<T: CoordNum>(PhantomData<T>);
+pub struct UnimplementedMultiPolygon<T>(PhantomData<T>);
 
-impl<T: CoordNum> MultiPolygonTrait for UnimplementedMultiPolygon<T> {
+impl<T> MultiPolygonTrait for UnimplementedMultiPolygon<T> {
     type T = T;
     type PolygonType<'a> = UnimplementedPolygon<Self::T> where Self: 'a;
 

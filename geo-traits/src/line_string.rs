@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use crate::iterator::LineStringIterator;
 use crate::{CoordTrait, Dimensions, UnimplementedCoord};
+#[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, LineString};
 
 /// A trait for accessing data from a generic LineString.
@@ -12,7 +13,7 @@ use geo_types::{Coord, CoordNum, LineString};
 /// Refer to [geo_types::LineString] for information about semantics and validity.
 pub trait LineStringTrait: Sized {
     /// The coordinate type of this geometry
-    type T: CoordNum;
+    type T;
 
     /// The type of each underlying coordinate, which implements [CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
@@ -49,6 +50,7 @@ pub trait LineStringTrait: Sized {
     unsafe fn coord_unchecked(&self, i: usize) -> Self::CoordType<'_>;
 }
 
+#[cfg(feature = "geo-types")]
 impl<T: CoordNum> LineStringTrait for LineString<T> {
     type T = T;
     type CoordType<'a> = &'a Coord<Self::T> where Self: 'a;
@@ -66,6 +68,7 @@ impl<T: CoordNum> LineStringTrait for LineString<T> {
     }
 }
 
+#[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
     type T = T;
     type CoordType<'b> = &'a Coord<Self::T> where Self: 'b;
@@ -87,9 +90,9 @@ impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
 ///
 /// This can be used as the `LineStringType` of the `GeometryTrait` by implementations that don't
 /// have a LineString concept
-pub struct UnimplementedLineString<T: CoordNum>(PhantomData<T>);
+pub struct UnimplementedLineString<T>(PhantomData<T>);
 
-impl<T: CoordNum> LineStringTrait for UnimplementedLineString<T> {
+impl<T> LineStringTrait for UnimplementedLineString<T> {
     type T = T;
     type CoordType<'a> = UnimplementedCoord<Self::T> where Self: 'a;
 
