@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* BREAKING: Make `CrossTrackDistance` generic both to clarify when it is using Haversine, but also implement it for Euclidean.
+* Add `Haversine:distance` for Line vs. Point (same as CrossTrackDistance)
 
 ## 0.29.0 - 2024.10.30
 
