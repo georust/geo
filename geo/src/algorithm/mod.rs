@@ -8,7 +8,7 @@ pub use area::Area;
 
 /// Boolean Ops such as union, xor, difference.
 pub mod bool_ops;
-pub use bool_ops::{BooleanOps, OpType};
+pub use bool_ops::{BooleanOps, OpType, UnaryUnion};
 
 /// Calculate the bounding rectangle of a `Geometry`.
 pub mod bounding_rect;
