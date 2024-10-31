@@ -168,6 +168,9 @@ impl InterpolatePoint<f64> for Geodesic {
         end: Point<f64>,
         meters_from_start: f64,
     ) -> Point<f64> {
+        if meters_from_start == 0.0 {
+            return start;
+        }
         let bearing = Self::bearing(start, end);
         Self::destination(start, bearing, meters_from_start)
     }
@@ -205,6 +208,13 @@ impl InterpolatePoint<f64> for Geodesic {
         end: Point<f64>,
         ratio_from_start: f64,
     ) -> Point<f64> {
+        if start == end || ratio_from_start == 0.0 {
+            return start;
+        }
+        if ratio_from_start == 1.0 {
+            return end;
+        }
+
         let g = geographiclib_rs::Geodesic::wgs84();
         let (total_distance, azi1, _azi2, _a12) = g.inverse(start.y(), start.x(), end.y(), end.x());
         let distance = total_distance * ratio_from_start;

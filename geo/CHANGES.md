@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Improve handling of InterploatePoint with collapsed Line
 
 ## 0.29.0 - 2024.10.30
 
