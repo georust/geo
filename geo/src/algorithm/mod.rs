@@ -6,8 +6,12 @@ pub use kernels::{Kernel, Orientation};
 pub mod area;
 pub use area::Area;
 
-/// Boolean Ops such as union, xor, difference;
+/// Boolean Ops such as union, xor, difference.
+///
+/// Requires the `"i_overlay"` feature, which is enabled by default.
+#[cfg(feature = "i_overlay")]
 pub mod bool_ops;
+#[cfg(feature = "i_overlay")]
 pub use bool_ops::{BooleanOps, OpType};
 
 /// Calculate the bounding rectangle of a `Geometry`.
@@ -254,6 +258,8 @@ pub mod translate;
 pub use translate::Translate;
 
 /// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
+///
+/// Requires the `"earcutr"` feature.
 #[cfg(feature = "earcutr")]
 pub mod triangulate_earcut;
 #[cfg(feature = "earcutr")]

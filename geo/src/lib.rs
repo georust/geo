@@ -67,7 +67,7 @@
 //!
 //! ## Boolean Operations
 //!
-//! - **[`BooleanOps`]**: combine or split (Multi)Polygons using intersecton, union, xor, or difference operations
+//! - **[`BooleanOps`]**: combine or split (Multi)Polygons using intersecton, union, xor, or difference operations. Requires the `"i_overlay"` feature, which is enabled by default.
 //!
 //! ## Outlier Detection
 //!
@@ -112,7 +112,7 @@
 //!
 //! ## Triangulation
 //!
-//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm (requires the `earcutr` feature).
+//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm. Requires the `"earcutr"` feature, which is enabled by default.
 //!
 //! ## Winding
 //!
@@ -177,9 +177,25 @@
 //!
 //! The following optional [Cargo features] are available:
 //!
-//! - `proj-network`: Enables [network grid] support for the [`proj` crate]. After enabling this feature, [further configuration][proj crate file download] is required to use the network grid
-//! - `use-proj`: Enables coordinate conversion and transformation of `Point` geometries using the [`proj` crate]
-//! - `use-serde`: Allows geometry types to be serialized and deserialized with [Serde]
+//! - `i_overlay`:
+//!     - Enables the `i_overlay` crate, which provides boolean operations on geometries.
+//!     - ☑ Enabled by default.
+//! - `earcutr`:
+//!     - Enables the `earcutr` crate, which provides triangulation of polygons using the earcut algorithm.
+//!     - ☑ Enabled by default.
+//! - `proj-network`:
+//!     - Enables [network grid] support for the [`proj` crate].
+//!     - After enabling this feature, [further configuration][proj crate file download] is required to use the network grid.
+//!     - ☐ Disabled by default.
+//! - `use-proj`:
+//!     - Enables coordinate conversion and transformation of `Point` geometries using the [`proj` crate]
+//!     - ☐ Disabled by default.
+//! - `use-serde`:
+//!     - Allows geometry types to be serialized and deserialized with [Serde].
+//!     - ☐ Disabled by default.
+//! - `multithreading`:
+//!     - Enables multithreading support for the `i_overlay` crate.
+//!     - ☑ Enabled by default.
 //!
 //! # Ecosystem
 //!

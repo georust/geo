@@ -1,6 +1,8 @@
 use crate::{coord, CoordFloat, CoordsIter, Polygon, Triangle};
 
 /// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
+///
+/// Requires the `"earcutr"` feature, which is enabled by default.
 pub trait TriangulateEarcut<T: CoordFloat> {
     /// # Examples
     ///
