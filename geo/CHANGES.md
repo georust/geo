@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Remove transitive dependency on the `rayon` crate.
 
 ## 0.29.0 - 2024.10.30
 
