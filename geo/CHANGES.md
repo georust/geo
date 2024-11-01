@@ -6,6 +6,8 @@
 
 - Allow configuring of the `i_overlay` Rayon transitive dependency with a new Cargo `multithreading` flag.
   - <https://github.com/georust/geo/pull/1250>
+- Handle some edge cases with `InterpolatePoint`
+  - <https://github.com/georust/geo/pull/1248>
 
 ## 0.29.0 - 2024.10.30
 
