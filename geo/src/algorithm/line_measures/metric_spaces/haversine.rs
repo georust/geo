@@ -204,6 +204,12 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Haversine {
     ///
     /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
     fn point_at_ratio_between(start: Point<F>, end: Point<F>, ratio_from_start: F) -> Point<F> {
+        if start == end || ratio_from_start == F::zero() {
+            return start;
+        }
+        if ratio_from_start == F::one() {
+            return end;
+        }
         let calculation = HaversineIntermediateFillCalculation::new(start, end);
         calculation.point_at_ratio(ratio_from_start)
     }
