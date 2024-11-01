@@ -7,11 +7,7 @@ pub mod area;
 pub use area::Area;
 
 /// Boolean Ops such as union, xor, difference.
-///
-/// Requires the `"i_overlay"` feature, which is enabled by default.
-#[cfg(feature = "i_overlay")]
 pub mod bool_ops;
-#[cfg(feature = "i_overlay")]
 pub use bool_ops::{BooleanOps, OpType};
 
 /// Calculate the bounding rectangle of a `Geometry`.

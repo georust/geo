@@ -67,7 +67,7 @@
 //!
 //! ## Boolean Operations
 //!
-//! - **[`BooleanOps`]**: combine or split (Multi)Polygons using intersecton, union, xor, or difference operations. Requires the `"i_overlay"` feature, which is enabled by default.
+//! - **[`BooleanOps`]**: combine or split (Multi)Polygons using intersecton, union, xor, or difference operations.
 //!
 //! ## Outlier Detection
 //!
@@ -177,9 +177,6 @@
 //!
 //! The following optional [Cargo features] are available:
 //!
-//! - `i_overlay`:
-//!     - Enables the `i_overlay` crate, which provides boolean operations on geometries.
-//!     - ☑ Enabled by default.
 //! - `earcutr`:
 //!     - Enables the `earcutr` crate, which provides triangulation of polygons using the earcut algorithm.
 //!     - ☑ Enabled by default.

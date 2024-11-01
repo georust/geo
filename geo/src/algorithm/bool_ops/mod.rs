@@ -8,8 +8,6 @@ use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
 
 /// Boolean Operations on geometry.
 ///
-/// Requires the `"i_overlay"` feature, which is enabled by default.
-///
 /// Boolean operations are set operations on geometries considered as a subset
 /// of the 2-D plane. The operations supported are: intersection, union, xor or
 /// symmetric difference, and set-difference on pairs of 2-D geometries and
