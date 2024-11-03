@@ -44,4 +44,6 @@ mod multi_polygon;
 mod point;
 mod polygon;
 mod rect;
+#[cfg(feature = "geo-types")]
+pub mod to_geo;
 mod triangle;
