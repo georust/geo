@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.2.0 - 2024.11.06
 
 - BREAKING: Mark `CoordTrait::nth_unchecked` as `unsafe` and add `CoordTrait::nth_or_panic`.
   - <https://github.com/georust/geo/pull/1242>
