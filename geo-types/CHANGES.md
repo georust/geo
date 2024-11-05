@@ -1,5 +1,9 @@
 # Changes
 
+## UNRELEASED
+
+* Pin to rstar 0.12.0, to avoid a bug in 0.12.1
+
 ## 0.7.13
 
 * POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
