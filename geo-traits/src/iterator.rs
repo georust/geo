@@ -8,21 +8,16 @@ macro_rules! impl_iterator {
         /// An iterator over the parts of this geometry.
         pub(crate) struct $struct_name<
             'a,
-            T,
-            $item_type: 'a + $item_trait<T = T>,
-            G: $self_trait<T = T, $item_type<'a> = $item_type>,
+            $item_type: 'a + $item_trait,
+            G: $self_trait<$item_type<'a> = $item_type>,
         > {
             geom: &'a G,
             index: usize,
             end: usize,
         }
 
-        impl<
-                'a,
-                T,
-                $item_type: 'a + $item_trait<T = T>,
-                G: $self_trait<T = T, $item_type<'a> = $item_type>,
-            > $struct_name<'a, T, $item_type, G>
+        impl<'a, $item_type: 'a + $item_trait, G: $self_trait<$item_type<'a> = $item_type>>
+            $struct_name<'a, $item_type, G>
         {
             /// Create a new iterator
             pub fn new(geom: &'a G, index: usize, end: usize) -> Self {
@@ -30,12 +25,8 @@ macro_rules! impl_iterator {
             }
         }
 
-        impl<
-                'a,
-                T,
-                $item_type: 'a + $item_trait<T = T>,
-                G: $self_trait<T = T, $item_type<'a> = $item_type>,
-            > Iterator for $struct_name<'a, T, $item_type, G>
+        impl<'a, $item_type: 'a + $item_trait, G: $self_trait<$item_type<'a> = $item_type>> Iterator
+            for $struct_name<'a, $item_type, G>
         {
             type Item = $item_type;
 
@@ -55,21 +46,13 @@ macro_rules! impl_iterator {
             }
         }
 
-        impl<
-                'a,
-                T,
-                $item_type: 'a + $item_trait<T = T>,
-                G: $self_trait<T = T, $item_type<'a> = $item_type>,
-            > ExactSizeIterator for $struct_name<'a, T, $item_type, G>
+        impl<'a, $item_type: 'a + $item_trait, G: $self_trait<$item_type<'a> = $item_type>>
+            ExactSizeIterator for $struct_name<'a, $item_type, G>
         {
         }
 
-        impl<
-                'a,
-                T,
-                $item_type: 'a + $item_trait<T = T>,
-                G: $self_trait<T = T, $item_type<'a> = $item_type>,
-            > DoubleEndedIterator for $struct_name<'a, T, $item_type, G>
+        impl<'a, $item_type: 'a + $item_trait, G: $self_trait<$item_type<'a> = $item_type>>
+            DoubleEndedIterator for $struct_name<'a, $item_type, G>
         {
             #[inline]
             fn next_back(&mut self) -> Option<Self::Item> {

@@ -10,11 +10,8 @@ use geo_types::{CoordNum, MultiPolygon, Polygon};
 ///
 /// Refer to [geo_types::MultiPolygon] for information about semantics and validity.
 pub trait MultiPolygonTrait: Sized {
-    /// The coordinate type of this geometry
-    type T;
-
     /// The type of each underlying Polygon, which implements [PolygonTrait]
-    type PolygonType<'a>: 'a + PolygonTrait<T = Self::T>
+    type PolygonType<'a>: 'a + PolygonTrait
     where
         Self: 'a;
 
@@ -51,8 +48,10 @@ pub trait MultiPolygonTrait: Sized {
 
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> MultiPolygonTrait for MultiPolygon<T> {
-    type T = T;
-    type PolygonType<'a> = &'a Polygon<Self::T> where Self: 'a;
+    type PolygonType<'a>
+        = &'a Polygon<T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -69,8 +68,10 @@ impl<T: CoordNum> MultiPolygonTrait for MultiPolygon<T> {
 
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
-    type T = T;
-    type PolygonType<'b> = &'a Polygon<Self::T> where Self: 'b;
+    type PolygonType<'b>
+        = &'a Polygon<T>
+    where
+        Self: 'b;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -92,8 +93,10 @@ impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
 pub struct UnimplementedMultiPolygon<T>(PhantomData<T>);
 
 impl<T> MultiPolygonTrait for UnimplementedMultiPolygon<T> {
-    type T = T;
-    type PolygonType<'a> = UnimplementedPolygon<Self::T> where Self: 'a;
+    type PolygonType<'a>
+        = UnimplementedPolygon<T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         unimplemented!()
