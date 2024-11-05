@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Pin to rstar 0.12.2, to avoid a bug in 0.12.1
+  * <https://github.com/georust/geo/pull/1261>
+
 ## 0.29.1 - 2024.11.01
 
 - Allow configuring of the `i_overlay` Rayon transitive dependency with a new Cargo `multithreading` flag.

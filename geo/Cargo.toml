@@ -29,9 +29,8 @@ log = "0.4.11"
 num-traits = "0.2"
 proj = { version = "0.27.0", optional = true }
 robust = "1.1.0"
-# There is a bug in rstar 0.12.1, so pin for  now.
-# see: https://github.com/georust/rstar/pull/181
-rstar = "=0.12.0"
+# Note: there is a bug in rstar 0.12.1, fixed in https://github.com/georust/rstar/pull/184
+rstar = "0.12.2"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 i_overlay = { version = "1.7.2", default-features = false }
 

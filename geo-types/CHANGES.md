@@ -2,7 +2,8 @@
 
 ## UNRELEASED
 
-* Pin to rstar 0.12.0, to avoid a bug in 0.12.1
+* Pin to rstar 0.12.2, to avoid a bug in 0.12.1
+  * <https://github.com/georust/geo/pull/1261>
 
 ## 0.7.13
 
