@@ -170,6 +170,40 @@ where
     }
 }
 
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11",
+    feature = "rstar_0_12"
+))]
+macro_rules! impl_rstar_multi_polygon {
+    ($rstar:ident) => {
+        impl<T> $rstar::RTreeObject for MultiPolygon<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            type Envelope = ::$rstar::AABB<$crate::Point<T>>;
+            fn envelope(&self) -> Self::Envelope {
+                use ::$rstar::Envelope;
+                self.iter()
+                    .map(|p| p.envelope())
+                    .fold(::$rstar::AABB::new_empty(), |a, b| a.merged(&b))
+            }
+        }
+    };
+}
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_multi_polygon!(rstar_0_8);
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_multi_polygon!(rstar_0_9);
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_multi_polygon!(rstar_0_10);
+#[cfg(feature = "rstar_0_11")]
+impl_rstar_multi_polygon!(rstar_0_11);
+#[cfg(feature = "rstar_0_12")]
+impl_rstar_multi_polygon!(rstar_0_12);
+
 #[cfg(test)]
 mod test {
     use super::*;
