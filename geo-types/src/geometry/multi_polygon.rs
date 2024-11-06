@@ -284,6 +284,21 @@ mod test {
     }
 
     #[test]
+    fn test_par_iter() {
+        let multi = MultiPolygon::new(vec![
+            polygon![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
+            polygon![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)],
+        ]);
+        let mut multimut = MultiPolygon::new(vec![
+            polygon![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
+            polygon![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)],
+        ]);
+        let _ = multi.par_iter().for_each(|_p| ());
+        let _ = &multimut.par_iter_mut().for_each(|_p| ());
+        let _ = &multi.into_par_iter().for_each(|_p| ());
+        let _ = &mut multimut.par_iter_mut().for_each(|_p| ());
+    }
+    #[test]
     fn test_iter_mut() {
         let mut multi = MultiPolygon::new(vec![
             polygon![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
