@@ -17,7 +17,7 @@ default = ["earcutr", "spade", "multithreading"]
 use-proj = ["proj"]
 proj-network = ["use-proj", "proj/network"]
 use-serde = ["serde", "geo-types/serde"]
-multithreading = ["i_overlay/allow_multithreading"]
+multithreading = ["i_overlay/allow_multithreading", "geo-types/multithreading"]
 
 [dependencies]
 earcutr = { version = "0.4.2", optional = true }

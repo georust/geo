@@ -4,7 +4,10 @@ use alloc::vec;
 use alloc::vec::Vec;
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
+
 use core::iter::FromIterator;
+#[cfg(feature = "multithreading")]
+use rayon::prelude::*;
 
 /// A collection of [`Polygon`s](struct.Polygon.html). Can
 /// be created from a `Vec` of `Polygon`s, or from an
@@ -72,6 +75,36 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPolygon<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         (self.0).iter_mut()
+    }
+}
+
+#[cfg(feature = "multithreading")]
+impl<T: CoordNum + Send> IntoParallelIterator for MultiPolygon<T> {
+    type Item = Polygon<T>;
+    type Iter = rayon::vec::IntoIter<Polygon<T>>;
+
+    fn into_par_iter(self) -> Self::Iter {
+        self.0.into_par_iter()
+    }
+}
+
+#[cfg(feature = "multithreading")]
+impl<'a, T: CoordNum + Sync> IntoParallelIterator for &'a MultiPolygon<T> {
+    type Item = &'a Polygon<T>;
+    type Iter = rayon::slice::Iter<'a, Polygon<T>>;
+
+    fn into_par_iter(self) -> Self::Iter {
+        self.0.par_iter()
+    }
+}
+
+#[cfg(feature = "multithreading")]
+impl<'a, T: CoordNum + Send + Sync> IntoParallelIterator for &'a mut MultiPolygon<T> {
+    type Item = &'a mut Polygon<T>;
+    type Iter = rayon::slice::IterMut<'a, Polygon<T>>;
+
+    fn into_par_iter(self) -> Self::Iter {
+        self.0.par_iter_mut()
     }
 }
 
@@ -250,6 +283,22 @@ mod test {
         }
     }
 
+    #[cfg(feature = "multithreading")]
+    #[test]
+    fn test_par_iter() {
+        let multi = MultiPolygon::new(vec![
+            polygon![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
+            polygon![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)],
+        ]);
+        let mut multimut = MultiPolygon::new(vec![
+            polygon![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
+            polygon![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)],
+        ]);
+        multi.par_iter().for_each(|_p| ());
+        let _ = &multimut.par_iter_mut().for_each(|_p| ());
+        let _ = &multi.into_par_iter().for_each(|_p| ());
+        let _ = &mut multimut.par_iter_mut().for_each(|_p| ());
+    }
     #[test]
     fn test_iter_mut() {
         let mut multi = MultiPolygon::new(vec![
