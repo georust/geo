@@ -6,6 +6,8 @@ use approx::{AbsDiffEq, RelativeEq};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
+#[cfg(feature = "multithreading")]
+use rayon::prelude::*;
 
 /// A collection of [`Point`s](struct.Point.html). Can
 /// be created from a `Vec` of `Point`s, or from an
@@ -82,6 +84,36 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPoint<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         (self.0).iter_mut()
+    }
+}
+
+#[cfg(feature = "multithreading")]
+impl<T: CoordNum + Send> IntoParallelIterator for MultiPoint<T> {
+    type Item = Point<T>;
+    type Iter = rayon::vec::IntoIter<Point<T>>;
+
+    fn into_par_iter(self) -> Self::Iter {
+        self.0.into_par_iter()
+    }
+}
+
+#[cfg(feature = "multithreading")]
+impl<'a, T: CoordNum + Sync> IntoParallelIterator for &'a MultiPoint<T> {
+    type Item = &'a Point<T>;
+    type Iter = rayon::slice::Iter<'a, Point<T>>;
+
+    fn into_par_iter(self) -> Self::Iter {
+        self.0.par_iter()
+    }
+}
+
+#[cfg(feature = "multithreading")]
+impl<'a, T: CoordNum + Send + Sync> IntoParallelIterator for &'a mut MultiPoint<T> {
+    type Item = &'a mut Point<T>;
+    type Iter = rayon::slice::IterMut<'a, Point<T>>;
+
+    fn into_par_iter(self) -> Self::Iter {
+        self.0.par_iter_mut()
     }
 }
 

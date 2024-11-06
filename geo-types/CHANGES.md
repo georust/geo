@@ -2,6 +2,8 @@
 
 ## Unreleased
 * Add rstar compatibility for MultiPolygon
+* Add multi-threading support to Multi* geometries. 
+  * Feature-gated ('multithreading'), disabled by default, enabled by default when geo-types is used by geo
 
 ## 0.7.13
 
