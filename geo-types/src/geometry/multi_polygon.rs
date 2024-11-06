@@ -294,7 +294,7 @@ mod test {
             polygon![(x: 0, y: 0), (x: 2, y: 0), (x: 1, y: 2), (x:0, y:0)],
             polygon![(x: 10, y: 10), (x: 12, y: 10), (x: 11, y: 12), (x:10, y:10)],
         ]);
-        let _ = multi.par_iter().for_each(|_p| ());
+        multi.par_iter().for_each(|_p| ());
         let _ = &multimut.par_iter_mut().for_each(|_p| ());
         let _ = &multi.into_par_iter().for_each(|_p| ());
         let _ = &mut multimut.par_iter_mut().for_each(|_p| ());

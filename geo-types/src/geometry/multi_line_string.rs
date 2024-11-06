@@ -240,8 +240,8 @@ mod test {
         let mut multimut: MultiLineString<i32> = wkt! {
             MULTILINESTRING((0 0,2 0,1 2,0 0), (10 10,12 10,11 12,10 10))
         };
-        let _ = multi.par_iter().for_each(|_p| ());
-        let _ = multimut.par_iter_mut().for_each(|_p| ());
+        multi.par_iter().for_each(|_p| ());
+        multimut.par_iter_mut().for_each(|_p| ());
         let _ = &multi.into_par_iter().for_each(|_p| ());
         let _ = &mut multimut.par_iter_mut().for_each(|_p| ());
     }
