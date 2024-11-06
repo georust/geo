@@ -62,6 +62,8 @@
 //! The following optional [Cargo features] are available:
 //!
 //! - `std`: Enables use of the full `std` library. Enabled by default.
+//! - `multithread`: Enables multi-threaded iteration over `Multi*` geometries. **Disabled**
+//!    by default but **enabled** by `geo`'s default features.
 //! - `approx`: Allows geometry types to be checked for approximate equality with [approx]
 //! - `arbitrary`: Allows geometry types to be created from unstructured input with [arbitrary]
 //! - `serde`: Allows geometry types to be serialized and deserialized with [Serde]
