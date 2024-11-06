@@ -231,6 +231,7 @@ mod test {
     use super::*;
     use crate::{line_string, wkt};
 
+    #[cfg(feature = "multithreading")]
     #[test]
     fn test_multithreading_linestring() {
         let multi: MultiLineString<i32> = wkt! {

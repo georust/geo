@@ -283,6 +283,7 @@ mod test {
         }
     }
 
+    #[cfg(feature = "multithreading")]
     #[test]
     fn test_par_iter() {
         let multi = MultiPolygon::new(vec![
