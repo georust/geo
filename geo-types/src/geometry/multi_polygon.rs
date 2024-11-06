@@ -81,7 +81,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut MultiPolygon<T> {
 #[cfg(feature = "multithreading")]
 impl<T: CoordNum + Send> IntoParallelIterator for MultiPolygon<T> {
     type Item = Polygon<T>;
-    type Iter = rayon::vec::IntoIter<Polygon<T>>; // Parallel iterator type for Vec<Polygon<T>>
+    type Iter = rayon::vec::IntoIter<Polygon<T>>;
 
     fn into_par_iter(self) -> Self::Iter {
         self.0.into_par_iter()
@@ -91,7 +91,7 @@ impl<T: CoordNum + Send> IntoParallelIterator for MultiPolygon<T> {
 #[cfg(feature = "multithreading")]
 impl<'a, T: CoordNum + Sync> IntoParallelIterator for &'a MultiPolygon<T> {
     type Item = &'a Polygon<T>;
-    type Iter = rayon::slice::Iter<'a, Polygon<T>>; // Parallel iterator type for a slice of Polygon<T>
+    type Iter = rayon::slice::Iter<'a, Polygon<T>>;
 
     fn into_par_iter(self) -> Self::Iter {
         self.0.par_iter()
@@ -101,7 +101,7 @@ impl<'a, T: CoordNum + Sync> IntoParallelIterator for &'a MultiPolygon<T> {
 #[cfg(feature = "multithreading")]
 impl<'a, T: CoordNum + Send + Sync> IntoParallelIterator for &'a mut MultiPolygon<T> {
     type Item = &'a mut Polygon<T>;
-    type Iter = rayon::slice::IterMut<'a, Polygon<T>>; // Parallel iterator type for a mutable slice of Polygon<T>
+    type Iter = rayon::slice::IterMut<'a, Polygon<T>>;
 
     fn into_par_iter(self) -> Self::Iter {
         self.0.par_iter_mut()
