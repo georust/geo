@@ -5,6 +5,8 @@ use alloc::vec::Vec;
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 use core::iter::FromIterator;
+#[cfg(feature = "multithreading")]
+use rayon::prelude::*;
 
 /// A collection of
 /// [`LineString`s](line_string/struct.LineString.html). Can
@@ -118,6 +120,36 @@ impl<T: CoordNum> MultiLineString<T> {
     }
 }
 
+#[cfg(feature = "multithreading")]
+impl<T: CoordNum + Send> IntoParallelIterator for MultiLineString<T> {
+    type Item = LineString<T>;
+    type Iter = rayon::vec::IntoIter<LineString<T>>;
+
+    fn into_par_iter(self) -> Self::Iter {
+        self.0.into_par_iter()
+    }
+}
+
+#[cfg(feature = "multithreading")]
+impl<'a, T: CoordNum + Sync> IntoParallelIterator for &'a MultiLineString<T> {
+    type Item = &'a LineString<T>;
+    type Iter = rayon::slice::Iter<'a, LineString<T>>;
+
+    fn into_par_iter(self) -> Self::Iter {
+        self.0.par_iter()
+    }
+}
+
+#[cfg(feature = "multithreading")]
+impl<'a, T: CoordNum + Send + Sync> IntoParallelIterator for &'a mut MultiLineString<T> {
+    type Item = &'a mut LineString<T>;
+    type Iter = rayon::slice::IterMut<'a, LineString<T>>;
+
+    fn into_par_iter(self) -> Self::Iter {
+        self.0.par_iter_mut()
+    }
+}
+
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for MultiLineString<T>
 where
@@ -198,6 +230,21 @@ where
 mod test {
     use super::*;
     use crate::{line_string, wkt};
+
+    #[cfg(feature = "multithreading")]
+    #[test]
+    fn test_multithreading_linestring() {
+        let multi: MultiLineString<i32> = wkt! {
+            MULTILINESTRING((0 0,2 0,1 2,0 0), (10 10,12 10,11 12,10 10))
+        };
+        let mut multimut: MultiLineString<i32> = wkt! {
+            MULTILINESTRING((0 0,2 0,1 2,0 0), (10 10,12 10,11 12,10 10))
+        };
+        multi.par_iter().for_each(|_p| ());
+        multimut.par_iter_mut().for_each(|_p| ());
+        let _ = &multi.into_par_iter().for_each(|_p| ());
+        let _ = &mut multimut.par_iter_mut().for_each(|_p| ());
+    }
 
     #[test]
     fn test_iter() {

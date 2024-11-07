@@ -191,7 +191,8 @@
 //!     - Allows geometry types to be serialized and deserialized with [Serde].
 //!     - ☐ Disabled by default.
 //! - `multithreading`:
-//!     - Enables multithreading support for the `i_overlay` crate.
+//!     - Enables multithreading support for the `i_overlay` crate (via Rayon), and activates the `multithreading` flag
+//!       in `geo-types`, enabling multi-threaded iteration over `Multi*` geometries.
 //!     - ☑ Enabled by default.
 //!
 //! # Ecosystem

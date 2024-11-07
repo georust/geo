@@ -7,8 +7,8 @@ use alloc::vec::Vec;
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
 
-/// An ordered collection of two or more [`Coord`]s, representing a
-/// path between locations.
+/// An ordered collection of [`Coord`]s, representing a path between locations.
+/// To be valid, a `LineString` must be empty, or have two or more coords.
 ///
 /// # Semantics
 ///
