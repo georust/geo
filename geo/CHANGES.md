@@ -11,25 +11,26 @@
 
 ## 0.29.0 - 2024.10.30
 
-* Implement getter methods on `AffineTransform` to access internal elements.
-  * <https://github.com/georust/geo/pull/1159>
-* Fix issue in Debug impl for AffineTransform where yoff is shown instead of xoff
-  * <https://github.com/georust/geo/pull/1191>
-* `Polygon` in `Rect` performance improvements.
-  * <https://github.com/georust/geo/pull/1192>
-* Fix `AffineTransform::compose` ordering to be conventional - such that the argument is applied *after* self.
-  * <https://github.com/georust/geo/pull/1196>
-* Add `PreparedGeometry` to speed up repeated `Relate` operations.
-  * <https://github.com/georust/geo/pull/1197>
-* Implement Frechet distance using linear algorithm to avoid `fatal runtime error: stack overflow` and improve overall performances.
-  * <https://github.com/georust/geo/pull/1199>
-* Bump `geo` MSRV to 1.74 and update CI
-  * <https://github.com/georust/geo/pull/1201>
-* Add `StitchTriangles` trait which implements a new kind of combining algorithm for `Triangle`s
-  * <https://github.com/georust/geo/pull/1087>
-* BREAKING: Remove deprecated `Bearing` trait
-* Unify various line measurements under new `line_measures::{Bearing, Distance, Destination, InterpolatePoint}` traits
+- Implement getter methods on `AffineTransform` to access internal elements.
+  - <https://github.com/georust/geo/pull/1159>
+- Fix issue in Debug impl for AffineTransform where yoff is shown instead of xoff
+  - <https://github.com/georust/geo/pull/1191>
+- `Polygon` in `Rect` performance improvements.
+  - <https://github.com/georust/geo/pull/1192>
+- Fix `AffineTransform::compose` ordering to be conventional - such that the argument is applied _after_ self.
+  - <https://github.com/georust/geo/pull/1196>
+- Add `PreparedGeometry` to speed up repeated `Relate` operations.
+  - <https://github.com/georust/geo/pull/1197>
+- Implement Frechet distance using linear algorithm to avoid `fatal runtime error: stack overflow` and improve overall performances.
+  - <https://github.com/georust/geo/pull/1199>
+- Bump `geo` MSRV to 1.74 and update CI
+  - <https://github.com/georust/geo/pull/1201>
+- Add `StitchTriangles` trait which implements a new kind of combining algorithm for `Triangle`s
+  - <https://github.com/georust/geo/pull/1087>
+- BREAKING: Remove deprecated `Bearing` trait
+- Unify various line measurements under new `line_measures::{Bearing, Distance, Destination, InterpolatePoint}` traits
   Before:
+
   ```
   use geo::{GeodesicBearing, HaversineBearing, GeodesicDistance, HaversineDistance, EuclideanDistance};
   p1.geodesic_bearing(p2)
@@ -40,6 +41,7 @@
   ```
 
   After:
+
   ```
   use geo::{Geodesic, Haversine, Euclidean, Bearing, Distance};
   Geodesic::bearing(p1, p2)
@@ -48,15 +50,17 @@
   Haversine::distance(p1, p2)
   Euclidean::distance(p1, p2)
   ```
-  * <https://github.com/georust/geo/pull/1216>
-* Deprecated legacy line measure traits in favor of those added in the previous changelog entry:
-  * `GeodesicBearing`, `GeodesicDistance`, `GeodesicDestination`, `GeodesicIntermediate`
-  * `RhumbBearing`, `RhumbDistance`, `RhumbDestination`, `RhumbIntermediate`
-  * `HaversineBearing`, `HaversineDistance`, `HaversineDestination`, `HaversineIntermediate`
-  * `EuclideanDistance`
-  * <https://github.com/georust/geo/pull/1222>
-  * <https://github.com/georust/geo/pull/1232>
-* Deprecated `HaversineLength`, `EuclideanLength`, `RhumbLength`, `GeodesicLength` in favor of new generic `Length` trait.
+
+  - <https://github.com/georust/geo/pull/1216>
+
+- Deprecated legacy line measure traits in favor of those added in the previous changelog entry:
+  - `GeodesicBearing`, `GeodesicDistance`, `GeodesicDestination`, `GeodesicIntermediate`
+  - `RhumbBearing`, `RhumbDistance`, `RhumbDestination`, `RhumbIntermediate`
+  - `HaversineBearing`, `HaversineDistance`, `HaversineDestination`, `HaversineIntermediate`
+  - `EuclideanDistance`
+  - <https://github.com/georust/geo/pull/1222>
+  - <https://github.com/georust/geo/pull/1232>
+- Deprecated `HaversineLength`, `EuclideanLength`, `RhumbLength`, `GeodesicLength` in favor of new generic `Length` trait.
   ```
   // Before
   line_string.euclidean_length();
@@ -65,10 +69,11 @@
   line_string.length::<Euclidean>();
   line_string.length::<Haversine>();
   ```
-  * <https://github.com/georust/geo/pull/1228>
-* Deprecated `DensifyHaversine`
-* BREAKING: `Densify::densify` is no longer strictly Euclidean, and now accepts a generic line measure parameter.
-   ```
+  - <https://github.com/georust/geo/pull/1228>
+- Deprecated `DensifyHaversine`
+- BREAKING: `Densify::densify` is no longer strictly Euclidean, and now accepts a generic line measure parameter.
+
+  ```
   // Before
   line_string.densify();
   line_string.densify_haversine();
@@ -79,106 +84,106 @@
   // Additional measures are now supported
   line_string.densify::<Geodesic>();
   line_string.densify::<Rhumb>();
-   ```
-* Added `InterpolatePoint::point_at_distance_between` for line_measures.
-  * <https://github.com/georust/geo/pull/1235>
-* Change IntersectionMatrix::is_equal_topo to now consider empty geometries as equal.
-  * <https://github.com/georust/geo/pull/1223>
-* Fix `(LINESTRING EMPTY).contains(LINESTRING EMPTY)` and `(MULTIPOLYGON EMPTY).contains(MULTIPOINT EMPTY)` which previously
-  reported true
-  * <https://github.com/georust/geo/pull/1227>
-* Improve `HasDimensions::dimensions` to handle dimensionally collapsed and empty geometries more consistently.
-  A collection (like MultiPolygon) will now have EmptyDimensions when all of its elements have EmptyDimensions.
-  * <https://github.com/georust/geo/pull/1226>
-* Enable i128 geometry types
-  * <https://github.com/georust/geo/pull/1230>
+  ```
 
+- Added `InterpolatePoint::point_at_distance_between` for line_measures.
+  - <https://github.com/georust/geo/pull/1235>
+- Change IntersectionMatrix::is_equal_topo to now consider empty geometries as equal.
+  - <https://github.com/georust/geo/pull/1223>
+- Fix `(LINESTRING EMPTY).contains(LINESTRING EMPTY)` and `(MULTIPOLYGON EMPTY).contains(MULTIPOINT EMPTY)` which previously
+  reported true
+  - <https://github.com/georust/geo/pull/1227>
+- Improve `HasDimensions::dimensions` to handle dimensionally collapsed and empty geometries more consistently.
+  A collection (like MultiPolygon) will now have EmptyDimensions when all of its elements have EmptyDimensions.
+  - <https://github.com/georust/geo/pull/1226>
+- Enable i128 geometry types
+  - <https://github.com/georust/geo/pull/1230>
 
 ## 0.28.0
 
-* BREAKING: The `HasKernel` trait was removed and it's functionality was merged
+- BREAKING: The `HasKernel` trait was removed and it's functionality was merged
   into `GeoNum`. If you are using common scalars for your geometry (f32, f64,
   i64, i32, i16, isize), this should have no effect on you. If you are using an
   exotic scalar type, you'll need to implement `GeoNum` for it instead of
   `HasKernel`. If you had functionality defined in terms of `HasKernel` before,
   define it in terms of `GeoNum` instead.
-  * <https://github.com/georust/geo/pull/1134>
-* BREAKING: Added a new `total_cmp` method to `GeoNum`. This avoids some
+  - <https://github.com/georust/geo/pull/1134>
+- BREAKING: Added a new `total_cmp` method to `GeoNum`. This avoids some
   potential crashes when working with geometries that contain NaN points. This
   shouldn't break for any common numeric types, but if you are using something
   exotic you'll need to manually implement `GeoNum` for your numeric type.
-  * <https://github.com/georust/geo/pull/1134>
-* POSSIBLY BREAKING: `SimplifyVwPreserve` trait implementation moved from
+  - <https://github.com/georust/geo/pull/1134>
+- POSSIBLY BREAKING: `SimplifyVwPreserve` trait implementation moved from
   `geo_types::CoordNum` to `geo::GeoNum` as a consequence of introducing the
   `GeoNum::total_cmp`. This shouldn't break anything for common numeric
   types, but if you are using something exotic you'll need to manually
   implement `GeoNum` for your numeric type.
-* Implement ChaikinSmoothing to work on Geometry types
-  * <https://github.com/georust/geo/pull/1116>
-* Fix a panic when calculating the haversine closest point to a point intersecting the geometry
-  * <https://github.com/georust/geo/pull/1119>
-* Add `LineStringSegmentizeHaversine` trait as a an alternative to `LineStringSegmentize` for geographic coordinates.
-  * <https://github.com/georust/geo/pull/1107>
-* Make `SpadeTriangulationConfig` actually configurable
-  * <https://github.com/georust/geo/pull/1123>
-* PERF: small improvements to TriangulateSpade trait
-  * <https://github.com/georust/geo/pull/1122>
-* POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
-  * <https://github.com/georust/geo/pull/1134>
-* Add topological equality comparison method:
-  * <https://github.com/georust/geo/pull/1133>
-* Add docs to Relate trait
-  * <https://github.com/georust/geo/pull/1135>
-* Add remaining Relate predicates
-  * <https://github.com/georust/geo/pull/1136>
-* Update rstar to v0.12.0
-* Implement `CoordsIter` for arrays and slices. This is useful when you'd like to use traits
+- Implement ChaikinSmoothing to work on Geometry types
+  - <https://github.com/georust/geo/pull/1116>
+- Fix a panic when calculating the haversine closest point to a point intersecting the geometry
+  - <https://github.com/georust/geo/pull/1119>
+- Add `LineStringSegmentizeHaversine` trait as a an alternative to `LineStringSegmentize` for geographic coordinates.
+  - <https://github.com/georust/geo/pull/1107>
+- Make `SpadeTriangulationConfig` actually configurable
+  - <https://github.com/georust/geo/pull/1123>
+- PERF: small improvements to TriangulateSpade trait
+  - <https://github.com/georust/geo/pull/1122>
+- POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.70
+  - <https://github.com/georust/geo/pull/1134>
+- Add topological equality comparison method:
+  - <https://github.com/georust/geo/pull/1133>
+- Add docs to Relate trait
+  - <https://github.com/georust/geo/pull/1135>
+- Add remaining Relate predicates
+  - <https://github.com/georust/geo/pull/1136>
+- Update rstar to v0.12.0
+- Implement `CoordsIter` for arrays and slices. This is useful when you'd like to use traits
   implemented for `CoordsIter` without re-allocating (e.g., creating a `MultiPoint`).
-* Add `compose_many` method to `AffineOps`
-  * <https://github.com/georust/geo/pull/1148>
-* Point in `Triangle` and `Rect` performance improvemnets
-  * <https://github.com/georust/geo/pull/1057>
-* Fix crashes in `BooleanOps`
-  * <https://github.com/georust/geo/pull/1234>
+- Add `compose_many` method to `AffineOps`
+  - <https://github.com/georust/geo/pull/1148>
+- Point in `Triangle` and `Rect` performance improvemnets
+  - <https://github.com/georust/geo/pull/1057>
+- Fix crashes in `BooleanOps`
+  - <https://github.com/georust/geo/pull/1234>
 
 ## 0.27.0
 
-* Use `CachedEnvelope` in R-Trees when computing euclidean distance between polygons
-  * <https://github.com/georust/geo/pull/1093>
-* Add an `inverse` method to `AffineTransform`
-  * <https://github.com/georust/geo/pull/1092>
-* Fix `Densify` trait to avoid panic with empty line string.
-  * <https://github.com/georust/geo/pull/1082>
-* Add `DensifyHaversine` trait to densify spherical line geometry.
-  * <https://github.com/georust/geo/pull/1081>
-* Add `LineStringSegmentize` trait to split a single `LineString` into `n` `LineStrings` as a `MultiLineString`.
-  * <https://github.com/georust/geo/pull/1055>
-* Add `EuclideanDistance` implementations for all remaining geometries.
-  * <https://github.com/georust/geo/pull/1029>
-* Add `HausdorffDistance` algorithm trait to calculate the Hausdorff distance between any two geometries.
-  * <https://github.com/georust/geo/pull/1041>
-* Add `matches` method to IntersectionMatrix for ergonomic de-9im comparisons.
-  * <https://github.com/georust/geo/pull/1043>
-* Simplify `CoordsIter` and `MinimumRotatedRect` `trait`s with GATs by removing an unneeded trait lifetime.
-  * <https://github.com/georust/geo/pull/908>
-* Add `ToDegrees` and `ToRadians` traits.
-  * <https://github.com/georust/geo/pull/1070>
-* Add rhumb-line operations analogous to several current haversine operations: `RhumbBearing`, `RhumbDestination`, `RhumbDistance`, `RhumbIntermediate`, `RhumbLength`.
-  * <https://github.com/georust/geo/pull/1090>
-* Fix coordinate wrapping in `HaversineDestination`
-  * <https://github.com/georust/geo/pull/1091>
-* Add `wkt!` macro to define geometries at compile time.
-  * <https://github.com/georust/geo/pull/1063>
-* Add `TriangulateSpade` trait which provides (un)constrained Delaunay Triangulations for all `geo_types` via the `spade` crate
-  * <https://github.com/georust/geo/pull/1083>
-* Add `len()` and `is_empty()` to `MultiPoint`
-  * <https://github.com/georust/geo/pull/1109>
+- Use `CachedEnvelope` in R-Trees when computing euclidean distance between polygons
+  - <https://github.com/georust/geo/pull/1093>
+- Add an `inverse` method to `AffineTransform`
+  - <https://github.com/georust/geo/pull/1092>
+- Fix `Densify` trait to avoid panic with empty line string.
+  - <https://github.com/georust/geo/pull/1082>
+- Add `DensifyHaversine` trait to densify spherical line geometry.
+  - <https://github.com/georust/geo/pull/1081>
+- Add `LineStringSegmentize` trait to split a single `LineString` into `n` `LineStrings` as a `MultiLineString`.
+  - <https://github.com/georust/geo/pull/1055>
+- Add `EuclideanDistance` implementations for all remaining geometries.
+  - <https://github.com/georust/geo/pull/1029>
+- Add `HausdorffDistance` algorithm trait to calculate the Hausdorff distance between any two geometries.
+  - <https://github.com/georust/geo/pull/1041>
+- Add `matches` method to IntersectionMatrix for ergonomic de-9im comparisons.
+  - <https://github.com/georust/geo/pull/1043>
+- Simplify `CoordsIter` and `MinimumRotatedRect` `trait`s with GATs by removing an unneeded trait lifetime.
+  - <https://github.com/georust/geo/pull/908>
+- Add `ToDegrees` and `ToRadians` traits.
+  - <https://github.com/georust/geo/pull/1070>
+- Add rhumb-line operations analogous to several current haversine operations: `RhumbBearing`, `RhumbDestination`, `RhumbDistance`, `RhumbIntermediate`, `RhumbLength`.
+  - <https://github.com/georust/geo/pull/1090>
+- Fix coordinate wrapping in `HaversineDestination`
+  - <https://github.com/georust/geo/pull/1091>
+- Add `wkt!` macro to define geometries at compile time.
+  - <https://github.com/georust/geo/pull/1063>
+- Add `TriangulateSpade` trait which provides (un)constrained Delaunay Triangulations for all `geo_types` via the `spade` crate
+  - <https://github.com/georust/geo/pull/1083>
+- Add `len()` and `is_empty()` to `MultiPoint`
+  - <https://github.com/georust/geo/pull/1109>
 
 ## 0.26.0
 
-* Implement "Closest Point" from a `Point` on a `Geometry` using spherical geometry. <https://github.com/georust/geo/pull/958>
-* Bump CI containers to use libproj 9.2.1
-* **BREAKING**: Bump rstar and robust dependencies
+- Implement "Closest Point" from a `Point` on a `Geometry` using spherical geometry. <https://github.com/georust/geo/pull/958>
+- Bump CI containers to use libproj 9.2.1
+- **BREAKING**: Bump rstar and robust dependencies
   <https://github.com/georust/geo/pull/1030>
 
 ## 0.25.1
@@ -186,12 +191,11 @@
 - Add `TriangulateEarcut` algorithm trait to triangulate polygons with the earcut algorithm.
   - <https://github.com/georust/geo/pull/1007>
 - Add `Vector2DOps` trait to algorithms module and implemented it for `Coord<T::CoordFloat>`
+
   - <https://github.com/georust/geo/pull/1025>
 
 - Add a fast point-in-polygon query datastructure that pre-processes a `Polygon` as a set of monotone polygons. Ref. `crate::algorithm::MonotonicPolygons`.
   - <https://github.com/georust/geo/pull/1018>
-
-
 
 ## 0.25.0
 
@@ -287,7 +291,7 @@
   - <https://github.com/georust/geo/pull/880>
 - Removed deprecated `ToGeo` trait. Use `std::convert::TryFrom<$geometry>`
   instead.
-  * <https://github.com/georust/geo/pull/892>
+  - <https://github.com/georust/geo/pull/892>
 
 ## 0.22.1
 
