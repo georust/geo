@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.29.2 - 2024.11.15
+
+- Pin `i_overlay` to < 1.8.0 to work around [recursion bug](https://github.com/georust/geo/issues/1270).
+  - <https://github.com/georust/geo/pull/1271>
+- Add multithreading support to `Multi*` geometries
+  - <https://github.com/georust/geo/pull/1265>
+
 ## 0.29.1 - 2024.11.01
 
 - Allow configuring of the `i_overlay` Rayon transitive dependency with a new Cargo `multithreading` flag.
