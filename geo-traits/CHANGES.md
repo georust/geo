@@ -4,6 +4,10 @@
 
 - BREAKING: Mark `CoordTrait::nth_unchecked` as `unsafe` and add `CoordTrait::nth_or_panic`.
   - <https://github.com/georust/geo/pull/1242>
+- Make `geo-types` dependency optional for `geo-traits`.
+  - <https://github.com/georust/geo/pull/1241>
+- Add converter functions for `geo-traits` to `geo-types`.
+  - <https://github.com/georust/geo/pull/1255>
 
 ## 0.1.1
 
