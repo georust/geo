@@ -1,6 +1,6 @@
 [package]
 name = "geo-traits"
-version = "0.1.1"
+version = "0.2.0"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/georust/geo"
 documentation = "https://docs.rs/geo-traits/"
