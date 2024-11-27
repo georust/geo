@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fix crash in `BoolOps` by updating `i_overlay` to 1.9.0.
+  - <https://github.com/georust/geo/pull/1275>
+
 ## 0.29.2 - 2024.11.15
 
 - Pin `i_overlay` to < 1.8.0 to work around [recursion bug](https://github.com/georust/geo/issues/1270).
