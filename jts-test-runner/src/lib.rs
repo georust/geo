@@ -7,6 +7,36 @@ pub use runner::TestRunner;
 type Error = Box<dyn std::error::Error>;
 type Result<T> = std::result::Result<T, Error>;
 
+/// ```
+/// use jts_test_runner::assert_jts_tests_succeed;
+/// assert_jts_tests_succeed("*Relate*.xml");
+/// ```
+pub fn assert_jts_tests_succeed(pattern: &str) {
+    let mut runner = TestRunner::new().matching_filename_glob(pattern);
+    runner.run().expect("test cases failed");
+
+    // sanity check that *something* was run
+    assert!(
+        runner.failures().len() + runner.successes().len() > 0,
+        "No tests were run."
+    );
+
+    if !runner.failures().is_empty() {
+        let failure_text = runner
+            .failures()
+            .iter()
+            .map(|failure| format!("{}", failure))
+            .collect::<Vec<String>>()
+            .join("\n");
+        panic!(
+            "{} failures / {} successes in JTS test suite:\n{}",
+            runner.failures().len(),
+            runner.successes().len(),
+            failure_text
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -18,34 +48,6 @@ mod tests {
         LOG_SETUP.call_once(|| {
             pretty_env_logger::init();
         });
-    }
-
-    #[test]
-    fn test_relate() {
-        init_logging();
-        let mut runner = TestRunner::new().matching_filename_glob("*Relate*.xml");
-        runner.run().expect("test cases failed");
-
-        // sanity check that *something* was run
-        assert!(
-            runner.failures().len() + runner.successes().len() > 0,
-            "No tests were run."
-        );
-
-        if !runner.failures().is_empty() {
-            let failure_text = runner
-                .failures()
-                .iter()
-                .map(|failure| format!("{}", failure))
-                .collect::<Vec<String>>()
-                .join("\n");
-            panic!(
-                "{} failures / {} successes in JTS test suite:\n{}",
-                runner.failures().len(),
-                runner.successes().len(),
-                failure_text
-            );
-        }
     }
 
     #[test]
@@ -90,34 +92,6 @@ mod tests {
                     actual_test_count
                 );
             }
-        }
-    }
-
-    #[test]
-    fn test_boolean_ops() {
-        init_logging();
-        let mut runner = TestRunner::new().matching_filename_glob("*Overlay*.xml");
-        runner.run().expect("test cases failed");
-
-        // sanity check that *something* was run
-        assert!(
-            runner.failures().len() + runner.successes().len() > 0,
-            "No tests were run."
-        );
-
-        if !runner.failures().is_empty() {
-            let failure_text = runner
-                .failures()
-                .iter()
-                .map(|failure| format!("{}", failure))
-                .collect::<Vec<String>>()
-                .join("\n");
-            panic!(
-                "{} failures / {} successes in JTS test suite:\n{}",
-                runner.failures().len(),
-                runner.successes().len(),
-                failure_text
-            );
         }
     }
 }
