@@ -140,7 +140,7 @@ pub struct LineString<T: CoordNum = f64>(pub Vec<Coord<T>>);
 #[derive(Debug)]
 pub struct PointsIter<'a, T: CoordNum + 'a>(::core::slice::Iter<'a, Coord<T>>);
 
-impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
+impl<T: CoordNum> Iterator for PointsIter<'_, T> {
     type Item = Point<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -152,13 +152,13 @@ impl<'a, T: CoordNum> Iterator for PointsIter<'a, T> {
     }
 }
 
-impl<'a, T: CoordNum> ExactSizeIterator for PointsIter<'a, T> {
+impl<T: CoordNum> ExactSizeIterator for PointsIter<'_, T> {
     fn len(&self) -> usize {
         self.0.len()
     }
 }
 
-impl<'a, T: CoordNum> DoubleEndedIterator for PointsIter<'a, T> {
+impl<T: CoordNum> DoubleEndedIterator for PointsIter<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back().map(|c| Point::from(*c))
     }
@@ -180,13 +180,13 @@ impl<'a, T: CoordNum> Iterator for CoordinatesIter<'a, T> {
     }
 }
 
-impl<'a, T: CoordNum> ExactSizeIterator for CoordinatesIter<'a, T> {
+impl<T: CoordNum> ExactSizeIterator for CoordinatesIter<'_, T> {
     fn len(&self) -> usize {
         self.0.len()
     }
 }
 
-impl<'a, T: CoordNum> DoubleEndedIterator for CoordinatesIter<'a, T> {
+impl<T: CoordNum> DoubleEndedIterator for CoordinatesIter<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.0.next_back()
     }

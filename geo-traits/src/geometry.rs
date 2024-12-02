@@ -126,7 +126,7 @@ where
 }
 
 #[cfg(feature = "geo-types")]
-impl<'a, T: CoordNum + 'a> GeometryTrait for Geometry<T> {
+impl<T: CoordNum> GeometryTrait for Geometry<T> {
     type T = T;
     type PointType<'b>
         = Point<Self::T>

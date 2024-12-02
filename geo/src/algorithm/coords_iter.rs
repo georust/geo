@@ -616,7 +616,7 @@ pub enum GeometryCoordsIter<'a, T: CoordNum + 'a> {
     Triangle(<Triangle<T> as CoordsIter>::Iter<'a>),
 }
 
-impl<'a, T: CoordNum> Iterator for GeometryCoordsIter<'a, T> {
+impl<T: CoordNum> Iterator for GeometryCoordsIter<'_, T> {
     type Item = Coord<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -650,7 +650,7 @@ impl<'a, T: CoordNum> Iterator for GeometryCoordsIter<'a, T> {
     }
 }
 
-impl<'a, T: CoordNum + Debug> fmt::Debug for GeometryCoordsIter<'a, T> {
+impl<T: CoordNum + Debug> fmt::Debug for GeometryCoordsIter<'_, T> {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             GeometryCoordsIter::Point(i) => fmt.debug_tuple("Point").field(i).finish(),
@@ -689,7 +689,7 @@ pub enum GeometryExteriorCoordsIter<'a, T: CoordNum + 'a> {
     Triangle(<Triangle<T> as CoordsIter>::ExteriorIter<'a>),
 }
 
-impl<'a, T: CoordNum> Iterator for GeometryExteriorCoordsIter<'a, T> {
+impl<T: CoordNum> Iterator for GeometryExteriorCoordsIter<'_, T> {
     type Item = Coord<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -723,7 +723,7 @@ impl<'a, T: CoordNum> Iterator for GeometryExteriorCoordsIter<'a, T> {
     }
 }
 
-impl<'a, T: CoordNum + Debug> fmt::Debug for GeometryExteriorCoordsIter<'a, T> {
+impl<T: CoordNum + Debug> fmt::Debug for GeometryExteriorCoordsIter<'_, T> {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             GeometryExteriorCoordsIter::Point(i) => fmt.debug_tuple("Point").field(i).finish(),

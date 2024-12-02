@@ -29,7 +29,7 @@ pub trait ClosestPoint<F: GeoFloat, Rhs = Point<F>> {
     fn closest_point(&self, p: &Rhs) -> Closest<F>;
 }
 
-impl<'a, F, C> ClosestPoint<F> for &'a C
+impl<F, C> ClosestPoint<F> for &'_ C
 where
     C: ClosestPoint<F>,
     F: GeoFloat,

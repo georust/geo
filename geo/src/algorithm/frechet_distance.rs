@@ -68,7 +68,7 @@ where
     ls_b: &'a LineString<T>,
 }
 
-impl<'a, T> Data<'a, T>
+impl<T> Data<'_, T>
 where
     T: GeoFloat + FromPrimitive,
 {

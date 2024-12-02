@@ -73,7 +73,7 @@ impl<'a, T: CoordNum> LineStringIter<'a, T> {
     }
 }
 
-impl<'a, T: CoordNum> Iterator for LineStringIter<'a, T> {
+impl<T: CoordNum> Iterator for LineStringIter<'_, T> {
     type Item = Line<T>;
 
     fn next(&mut self) -> Option<Self::Item> {

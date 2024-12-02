@@ -29,7 +29,7 @@ pub trait RectTrait {
 }
 
 #[cfg(feature = "geo-types")]
-impl<'a, T: CoordNum + 'a> RectTrait for Rect<T> {
+impl<T: CoordNum> RectTrait for Rect<T> {
     type T = T;
     type CoordType<'b>
         = Coord<T>
