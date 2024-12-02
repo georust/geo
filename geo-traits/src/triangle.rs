@@ -39,7 +39,10 @@ pub trait TriangleTrait: Sized {
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> TriangleTrait for Triangle<T> {
     type T = T;
-    type CoordType<'a> = &'a Coord<Self::T> where Self: 'a;
+    type CoordType<'a>
+        = &'a Coord<Self::T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -61,7 +64,10 @@ impl<T: CoordNum> TriangleTrait for Triangle<T> {
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> TriangleTrait for &'a Triangle<T> {
     type T = T;
-    type CoordType<'b> = &'a Coord<Self::T> where Self: 'b;
+    type CoordType<'b>
+        = &'a Coord<Self::T>
+    where
+        Self: 'b;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -88,7 +94,10 @@ pub struct UnimplementedTriangle<T>(PhantomData<T>);
 
 impl<T> TriangleTrait for UnimplementedTriangle<T> {
     type T = T;
-    type CoordType<'a> = UnimplementedCoord<Self::T> where Self: 'a;
+    type CoordType<'a>
+        = UnimplementedCoord<Self::T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         unimplemented!()

@@ -57,7 +57,10 @@ pub trait PolygonTrait: Sized {
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> PolygonTrait for Polygon<T> {
     type T = T;
-    type RingType<'a> = &'a LineString<Self::T> where Self: 'a;
+    type RingType<'a>
+        = &'a LineString<Self::T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -84,7 +87,9 @@ impl<T: CoordNum> PolygonTrait for Polygon<T> {
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
     type T = T;
-    type RingType<'b> = &'a LineString<Self::T> where
+    type RingType<'b>
+        = &'a LineString<Self::T>
+    where
         Self: 'b;
 
     fn dim(&self) -> Dimensions {
@@ -117,7 +122,10 @@ pub struct UnimplementedPolygon<T>(PhantomData<T>);
 
 impl<T> PolygonTrait for UnimplementedPolygon<T> {
     type T = T;
-    type RingType<'a> = UnimplementedLineString<Self::T> where Self: 'a;
+    type RingType<'a>
+        = UnimplementedLineString<Self::T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         unimplemented!()
