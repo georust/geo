@@ -159,6 +159,22 @@ impl TestRunner {
                         });
                     }
                 }
+                Operation::IsValidOp { subject, expected } => {
+                    use geo::algorithm::Validation;
+                    let actual = subject.is_valid();
+                    if actual == *expected {
+                        debug!("IsValidOp success: actual == expected");
+                        self.successes.push(test_case);
+                    } else {
+                        debug!("IsValidOp failure: actual != expected");
+                        let error_description =
+                            format!("expected {expected:?}, actual: {actual:?}",);
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    }
+                }
                 Operation::Within {
                     subject,
                     target,

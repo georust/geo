@@ -301,7 +301,8 @@ pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
 
 /// Rhumb-line-related algorithms and utils
 pub mod rhumb;
-mod validation;
-
 #[allow(deprecated)]
 pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate, RhumbLength};
+
+mod validation;
+pub use validation::Validation;
