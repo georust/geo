@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Loosen bounds on `RemoveRepeatedPoints` trait (`num_traits::FromPrimitive` isn't required)
+  - <https://github.com/georust/geo/pull/1278>
+
+## 0.29.3 - 2024.12.03
+
 - Fix crash in `BoolOps` by updating `i_overlay` to 1.9.0.
   - <https://github.com/georust/geo/pull/1275>
 
