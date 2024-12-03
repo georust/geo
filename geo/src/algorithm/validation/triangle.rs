@@ -1,11 +1,12 @@
-use crate::{
-    utils, CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Valid,
+use super::{
+    utils, CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport,
+    Validation,
 };
-use geo::{CoordFloat, Triangle};
+use crate::{CoordFloat, Triangle};
 
 /// As stated in geo-types/src/geometry/triangles.rs,
 /// "the three vertices must not be collinear and they must be distinct"
-impl<T> Valid for Triangle<T>
+impl<T> Validation for Triangle<T>
 where
     T: CoordFloat,
 {
@@ -84,10 +85,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Valid,
+    use super::super::{
+        CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Validation,
     };
-    use geo::Triangle;
+    use crate::Triangle;
 
     #[test]
     fn test_triangle_valid() {

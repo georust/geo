@@ -1,8 +1,8 @@
-use crate::{GeometryPosition, ProblemAtPosition, ProblemPosition, ProblemReport, Valid};
-use geo::{GeoFloat, GeometryCollection};
+use super::{GeometryPosition, ProblemAtPosition, ProblemPosition, ProblemReport, Validation};
+use crate::{GeoFloat, GeometryCollection};
 
 /// GeometryCollection is valid if all its elements are valid
-impl<F: GeoFloat> Valid for GeometryCollection<F> {
+impl<F: GeoFloat> Validation for GeometryCollection<F> {
     fn is_valid(&self) -> bool {
         for geometry in self.0.iter() {
             if !geometry.is_valid() {
@@ -41,11 +41,11 @@ impl<F: GeoFloat> Valid for GeometryCollection<F> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
+    use super::super::{
         CoordinatePosition, GeometryPosition, Problem, ProblemAtPosition, ProblemPosition,
-        ProblemReport, Valid,
+        ProblemReport, Validation,
     };
-    use geo::{Coord, Geometry, GeometryCollection, LineString, Point};
+    use crate::{Coord, Geometry, GeometryCollection, LineString, Point};
     use geos::Geom;
 
     #[test]

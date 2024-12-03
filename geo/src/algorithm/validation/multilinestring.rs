@@ -1,8 +1,8 @@
-use crate::{GeometryPosition, ProblemAtPosition, ProblemPosition, ProblemReport, Valid};
-use geo::{GeoFloat, MultiLineString};
+use super::{GeometryPosition, ProblemAtPosition, ProblemPosition, ProblemReport, Validation};
+use crate::{GeoFloat, MultiLineString};
 
 /// MultiLineString is valid if all its LineStrings are valid.
-impl<F: GeoFloat> Valid for MultiLineString<F> {
+impl<F: GeoFloat> Validation for MultiLineString<F> {
     fn is_valid(&self) -> bool {
         for line in &self.0 {
             if !line.is_valid() {
@@ -41,11 +41,11 @@ impl<F: GeoFloat> Valid for MultiLineString<F> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
+    use super::super::{
         CoordinatePosition, GeometryPosition, Problem, ProblemAtPosition, ProblemPosition,
-        ProblemReport, Valid,
+        ProblemReport, Validation,
     };
-    use geo::{Coord, LineString, MultiLineString};
+    use crate::{Coord, LineString, MultiLineString};
     use geos::Geom;
 
     #[test]

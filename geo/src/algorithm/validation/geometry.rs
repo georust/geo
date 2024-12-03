@@ -1,7 +1,7 @@
-use crate::{ProblemReport, Valid};
-use geo::{GeoFloat, Geometry};
+use super::{ProblemReport, Validation};
+use crate::{GeoFloat, Geometry};
 
-impl<F: GeoFloat> Valid for Geometry<F> {
+impl<F: GeoFloat> Validation for Geometry<F> {
     fn is_valid(&self) -> bool {
         match self {
             Geometry::Point(e) => e.is_valid(),

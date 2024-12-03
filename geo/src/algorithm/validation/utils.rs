@@ -1,4 +1,4 @@
-use geo::{Coord, CoordFloat, GeoFloat, Intersects, LineString, RemoveRepeatedPoints};
+use crate::{Coord, CoordFloat, GeoFloat, Intersects, LineString, RemoveRepeatedPoints};
 use robust::{orient2d, Coord as RobustCoord};
 
 pub(crate) fn check_coord_is_not_finite<T: CoordFloat>(geom: &Coord<T>) -> bool {

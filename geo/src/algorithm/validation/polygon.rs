@@ -1,10 +1,10 @@
-use crate::{
+use super::{
     utils, CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport,
-    RingRole, Valid,
+    RingRole, Validation,
 };
-use geo::coordinate_position::CoordPos;
-use geo::dimensions::Dimensions;
-use geo::{Contains, GeoFloat, Polygon, Relate};
+use crate::coordinate_position::CoordPos;
+use crate::dimensions::Dimensions;
+use crate::{Contains, GeoFloat, Polygon, Relate};
 
 /// In PostGIS, polygons must follow the following rules to be valid:
 /// - [x] the polygon boundary rings (the exterior shell ring and interior hole rings) are simple (do not cross or self-touch). Because of this a polygon cannnot have cut lines, spikes or loops. This implies that polygon holes must be represented as interior rings, rather than by the exterior ring self-touching (a so-called "inverted hole").
@@ -12,10 +12,7 @@ use geo::{Contains, GeoFloat, Polygon, Relate};
 /// - [x] boundary rings may touch at points but only as a tangent (i.e. not in a line)
 /// - [x] interior rings are contained in the exterior ring
 /// - [ ] the polygon interior is simply connected (i.e. the rings must not touch in a way that splits the polygon into more than one part)
-impl<T> Valid for Polygon<T>
-where
-    T: GeoFloat,
-{
+impl<F: GeoFloat> Validation for Polygon<F> {
     fn is_valid(&self) -> bool {
         for ring in self.interiors().iter().chain([self.exterior()]) {
             if utils::check_too_few_points(ring, true) {
@@ -178,11 +175,11 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{
+    use super::super::{
         CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, RingRole,
-        Valid,
+        Validation,
     };
-    use geo::{Coord, LineString, Polygon};
+    use crate::{Coord, LineString, Polygon};
     use geos::Geom;
 
     #[test]

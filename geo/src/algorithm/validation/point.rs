@@ -1,9 +1,9 @@
-use crate::{ProblemReport, Valid};
-use geo::{GeoFloat, Point};
+use super::{ProblemReport, Validation};
+use crate::{GeoFloat, Point};
 
 /// In PostGIS, Point don't have any validity constraint.
 /// Here we choose to check that points are finite numbers (i.e. not NaN or infinite)
-impl<T> Valid for Point<T>
+impl<T> Validation for Point<T>
 where
     T: GeoFloat,
 {
@@ -17,8 +17,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Valid};
-    use geo::Point;
+    use super::super::{Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Validation};
+    use crate::Point;
     use geos::Geom;
 
     #[test]
