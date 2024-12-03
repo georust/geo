@@ -18,5 +18,8 @@ pub use length::Length;
 mod densify;
 pub use densify::Densify;
 
+mod frechet_distance;
+pub use frechet_distance::FrechetDistance;
+
 pub mod metric_spaces;
 pub use metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb};

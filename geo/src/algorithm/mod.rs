@@ -91,6 +91,7 @@ pub use extremes::Extremes;
 
 /// Calculate the Frechet distance between two `LineStrings`.
 pub mod frechet_distance;
+#[allow(deprecated)]
 pub use frechet_distance::FrechetDistance;
 
 /// Calculate the bearing to another `Point` on a geodesic.
