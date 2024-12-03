@@ -12,11 +12,8 @@ use geo_types::{Coord, CoordNum, LineString};
 ///
 /// Refer to [geo_types::LineString] for information about semantics and validity.
 pub trait LineStringTrait: Sized {
-    /// The coordinate type of this geometry
-    type T;
-
     /// The type of each underlying coordinate, which implements [CoordTrait]
-    type CoordType<'a>: 'a + CoordTrait<T = Self::T>
+    type CoordType<'a>: 'a + CoordTrait
     where
         Self: 'a;
 
@@ -52,8 +49,10 @@ pub trait LineStringTrait: Sized {
 
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> LineStringTrait for LineString<T> {
-    type T = T;
-    type CoordType<'a> = &'a Coord<Self::T> where Self: 'a;
+    type CoordType<'a>
+        = &'a Coord<T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -70,8 +69,10 @@ impl<T: CoordNum> LineStringTrait for LineString<T> {
 
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
-    type T = T;
-    type CoordType<'b> = &'a Coord<Self::T> where Self: 'b;
+    type CoordType<'b>
+        = &'a Coord<T>
+    where
+        Self: 'b;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -93,8 +94,10 @@ impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
 pub struct UnimplementedLineString<T>(PhantomData<T>);
 
 impl<T> LineStringTrait for UnimplementedLineString<T> {
-    type T = T;
-    type CoordType<'a> = UnimplementedCoord<Self::T> where Self: 'a;
+    type CoordType<'a>
+        = UnimplementedCoord<T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         unimplemented!()

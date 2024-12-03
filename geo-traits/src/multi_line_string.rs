@@ -12,11 +12,8 @@ use geo_types::{CoordNum, LineString, MultiLineString};
 ///
 /// Refer to [geo_types::MultiLineString] for information about semantics and validity.
 pub trait MultiLineStringTrait: Sized {
-    /// The coordinate type of this geometry
-    type T;
-
     /// The type of each underlying LineString, which implements [LineStringTrait]
-    type LineStringType<'a>: 'a + LineStringTrait<T = Self::T>
+    type LineStringType<'a>: 'a + LineStringTrait
     where
         Self: 'a;
 
@@ -53,8 +50,10 @@ pub trait MultiLineStringTrait: Sized {
 
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
-    type T = T;
-    type LineStringType<'a> = &'a LineString<Self::T> where Self: 'a;
+    type LineStringType<'a>
+        = &'a LineString<T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -71,8 +70,10 @@ impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
 
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
-    type T = T;
-    type LineStringType<'b> = &'a LineString<Self::T> where Self: 'b;
+    type LineStringType<'b>
+        = &'a LineString<T>
+    where
+        Self: 'b;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -94,8 +95,10 @@ impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
 pub struct UnimplementedMultiLineString<T>(PhantomData<T>);
 
 impl<T> MultiLineStringTrait for UnimplementedMultiLineString<T> {
-    type T = T;
-    type LineStringType<'a> = UnimplementedLineString<Self::T> where Self: 'a;
+    type LineStringType<'a>
+        = UnimplementedLineString<T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         unimplemented!()

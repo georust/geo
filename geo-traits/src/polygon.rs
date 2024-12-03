@@ -14,11 +14,8 @@ use geo_types::{CoordNum, LineString, Polygon};
 ///
 /// Refer to [geo_types::Polygon] for information about semantics and validity.
 pub trait PolygonTrait: Sized {
-    /// The coordinate type of this geometry
-    type T;
-
     /// The type of each underlying ring, which implements [LineStringTrait]
-    type RingType<'a>: 'a + LineStringTrait<T = Self::T>
+    type RingType<'a>: 'a + LineStringTrait
     where
         Self: 'a;
 
@@ -56,8 +53,10 @@ pub trait PolygonTrait: Sized {
 
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> PolygonTrait for Polygon<T> {
-    type T = T;
-    type RingType<'a> = &'a LineString<Self::T> where Self: 'a;
+    type RingType<'a>
+        = &'a LineString<T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -83,8 +82,9 @@ impl<T: CoordNum> PolygonTrait for Polygon<T> {
 
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
-    type T = T;
-    type RingType<'b> = &'a LineString<Self::T> where
+    type RingType<'b>
+        = &'a LineString<T>
+    where
         Self: 'b;
 
     fn dim(&self) -> Dimensions {
@@ -116,8 +116,10 @@ impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
 pub struct UnimplementedPolygon<T>(PhantomData<T>);
 
 impl<T> PolygonTrait for UnimplementedPolygon<T> {
-    type T = T;
-    type RingType<'a> = UnimplementedLineString<Self::T> where Self: 'a;
+    type RingType<'a>
+        = UnimplementedLineString<T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         unimplemented!()
