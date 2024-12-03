@@ -1,5 +1,6 @@
 use super::BooleanOps;
 use crate::{wkt, Convert, MultiPolygon, Relate};
+use wkt::ToWkt;
 
 #[test]
 fn jts_test_overlay_la_1() {
@@ -50,7 +51,12 @@ fn jts_test_overlay_la_1() {
     .convert();
 
     let im = actual.relate(&expected);
-    assert!(im.is_equal_topo());
+    assert!(
+        im.is_equal_topo(),
+        "actual: {:#?}, expected: {:#?}",
+        actual.wkt_string(),
+        expected.wkt_string()
+    );
 }
 
 mod gh_issues {
@@ -181,7 +187,7 @@ mod gh_issues {
             wkt!(POLYGON((3.3493652 -55.80127,171.22443 -300.,195.83728 -300.,-46.650635 30.80127,3.3493652 -55.80127))),
         ];
 
-        let mut multi = MultiPolygon::new(Vec::new());
+        let mut multi: MultiPolygon<f32> = MultiPolygon::new(Vec::new());
         for poly in polygons {
             multi = multi.union(&MultiPolygon::new(vec![poly]));
         }

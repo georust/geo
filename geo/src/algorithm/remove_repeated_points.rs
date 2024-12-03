@@ -3,7 +3,6 @@ use crate::{
     Polygon, Rect, Triangle,
 };
 use geo_types::GeometryCollection;
-use num_traits::FromPrimitive;
 
 /// Remove repeated points from a `MultiPoint` and repeated consecutive coordinates
 /// from `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon`.
@@ -12,20 +11,14 @@ use num_traits::FromPrimitive;
 /// of each geometry in the collection.
 ///
 /// For `Point`, `Line`, `Rect` and `Triangle` the geometry remains the same.
-pub trait RemoveRepeatedPoints<T>
-where
-    T: CoordNum + FromPrimitive,
-{
+pub trait RemoveRepeatedPoints<T: CoordNum> {
     /// Create a new geometry with (consecutive) repeated points removed.
     fn remove_repeated_points(&self) -> Self;
     /// Remove (consecutive) repeated points inplace.
     fn remove_repeated_points_mut(&mut self);
 }
 
-impl<T> RemoveRepeatedPoints<T> for MultiPoint<T>
-where
-    T: CoordNum + FromPrimitive,
-{
+impl<T: CoordNum> RemoveRepeatedPoints<T> for MultiPoint<T> {
     /// Create a MultiPoint with repeated points removed.
     fn remove_repeated_points(&self) -> Self {
         let mut points = vec![];
@@ -49,10 +42,7 @@ where
     }
 }
 
-impl<T> RemoveRepeatedPoints<T> for LineString<T>
-where
-    T: CoordNum + FromPrimitive,
-{
+impl<T: CoordNum> RemoveRepeatedPoints<T> for LineString<T> {
     /// Create a LineString with consecutive repeated points removed.
     fn remove_repeated_points(&self) -> Self {
         let mut coords = self.0.clone();
@@ -66,10 +56,7 @@ where
     }
 }
 
-impl<T> RemoveRepeatedPoints<T> for Polygon<T>
-where
-    T: CoordNum + FromPrimitive,
-{
+impl<T: CoordNum> RemoveRepeatedPoints<T> for Polygon<T> {
     /// Create a Polygon with consecutive repeated points removed.
     fn remove_repeated_points(&self) -> Self {
         Polygon::new(
@@ -92,10 +79,7 @@ where
     }
 }
 
-impl<T> RemoveRepeatedPoints<T> for MultiLineString<T>
-where
-    T: CoordNum + FromPrimitive,
-{
+impl<T: CoordNum> RemoveRepeatedPoints<T> for MultiLineString<T> {
     /// Create a MultiLineString with consecutive repeated points removed.
     fn remove_repeated_points(&self) -> Self {
         MultiLineString::new(
@@ -114,10 +98,7 @@ where
     }
 }
 
-impl<T> RemoveRepeatedPoints<T> for MultiPolygon<T>
-where
-    T: CoordNum + FromPrimitive,
-{
+impl<T: CoordNum> RemoveRepeatedPoints<T> for MultiPolygon<T> {
     /// Create a MultiPolygon with consecutive repeated points removed.
     fn remove_repeated_points(&self) -> Self {
         MultiPolygon::new(self.0.iter().map(|p| p.remove_repeated_points()).collect())
@@ -136,10 +117,7 @@ where
 // and `remove_repeated_points_mut` is a no-op.
 macro_rules! impl_for_not_candidate_types {
     ($type:ident) => {
-        impl<T> RemoveRepeatedPoints<T> for $type<T>
-        where
-            T: CoordNum + FromPrimitive,
-        {
+        impl<T: CoordNum> RemoveRepeatedPoints<T> for $type<T> {
             fn remove_repeated_points(&self) -> Self {
                 self.clone()
             }
@@ -156,10 +134,7 @@ impl_for_not_candidate_types!(Rect);
 impl_for_not_candidate_types!(Triangle);
 impl_for_not_candidate_types!(Line);
 
-impl<T> RemoveRepeatedPoints<T> for GeometryCollection<T>
-where
-    T: CoordNum + FromPrimitive,
-{
+impl<T: CoordNum> RemoveRepeatedPoints<T> for GeometryCollection<T> {
     /// Create a GeometryCollection with (consecutive) repeated points
     /// of its geometries removed.
     fn remove_repeated_points(&self) -> Self {
@@ -174,10 +149,7 @@ where
     }
 }
 
-impl<T> RemoveRepeatedPoints<T> for Geometry<T>
-where
-    T: CoordNum + FromPrimitive,
-{
+impl<T: CoordNum> RemoveRepeatedPoints<T> for Geometry<T> {
     // The following couldn't be used for implementing `remove_repeated_points` until
     // "impl<T: CoordNum> From<GeometryCollection<T>> for Geometry<T>" is implemented
     // (see geo-types/src/geometry/mod.rs, lines 101-106) so we implement it manually for now

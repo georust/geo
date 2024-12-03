@@ -2,6 +2,14 @@ mod i_overlay_integration;
 #[cfg(test)]
 mod tests;
 
+use crate::bool_ops::i_overlay_integration::convert::{
+    multi_polygon_from_shapes, ring_to_shape_path,
+};
+use crate::bool_ops::i_overlay_integration::BoolOpsCoord;
+use i_overlay::core::fill_rule::FillRule;
+use i_overlay::float::clip::FloatClip;
+use i_overlay::float::single::SingleFloatOverlay;
+use i_overlay::string::clip::ClipRule;
 pub use i_overlay_integration::BoolOpsNum;
 
 use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
@@ -43,22 +51,10 @@ pub trait BooleanOps {
         other: &impl BooleanOps<Scalar = Self::Scalar>,
         op: OpType,
     ) -> MultiPolygon<Self::Scalar> {
-        use i_overlay::core::fill_rule::FillRule;
-        use i_overlay::core::overlay::ShapeType;
-        use i_overlay_integration::{convert, BoolOpsOverlay, BoolOpsOverlayGraph};
-        let mut overlay = <Self::Scalar as BoolOpsNum>::OverlayType::new();
-
-        for ring in self.rings() {
-            overlay.add_path(convert::ring_to_shape_path(ring), ShapeType::Subject);
-        }
-        for ring in other.rings() {
-            overlay.add_path(convert::ring_to_shape_path(ring), ShapeType::Clip);
-        }
-
-        let graph = overlay.into_graph(FillRule::EvenOdd);
-        let shapes = graph.extract_shapes(op.into());
-
-        convert::multi_polygon_from_shapes(shapes)
+        let subject = self.rings().map(ring_to_shape_path).collect::<Vec<_>>();
+        let clip = other.rings().map(ring_to_shape_path).collect::<Vec<_>>();
+        let shapes = subject.overlay(&clip, op.into(), FillRule::EvenOdd);
+        multi_polygon_from_shapes(shapes)
     }
 
     fn intersection(
@@ -89,31 +85,19 @@ pub trait BooleanOps {
         multi_line_string: &MultiLineString<Self::Scalar>,
         invert: bool,
     ) -> MultiLineString<Self::Scalar> {
-        use i_overlay::core::fill_rule::FillRule;
-        use i_overlay::string::clip::ClipRule;
-        use i_overlay_integration::{convert, BoolOpsStringGraph, BoolOpsStringOverlay};
+        let subject: Vec<Vec<_>> = multi_line_string
+            .iter()
+            .map(|line_string| line_string.coords().map(|c| BoolOpsCoord(*c)).collect())
+            .collect();
 
-        let mut overlay = <Self::Scalar as BoolOpsNum>::StringOverlayType::new();
+        let clip = self.rings().map(ring_to_shape_path).collect::<Vec<_>>();
 
-        for ring in self.rings() {
-            overlay.add_shape_path(convert::ring_to_shape_path(ring));
-        }
-        for line_string in multi_line_string {
-            for line in line_string.lines() {
-                let line = [
-                    Self::Scalar::to_bops_coord(line.start),
-                    Self::Scalar::to_bops_coord(line.end),
-                ];
-                overlay.add_string_line(line)
-            }
-        }
-
-        let graph = overlay.into_graph(FillRule::EvenOdd);
-        let paths = graph.clip_string_lines(ClipRule {
+        let clip_rule = ClipRule {
             invert,
             boundary_included: true,
-        });
-        convert::multi_line_string_from_paths(paths)
+        };
+        let paths = subject.clip_by(&clip, FillRule::EvenOdd, clip_rule);
+        i_overlay_integration::convert::multi_line_string_from_paths(paths)
     }
 }
 
@@ -129,7 +113,7 @@ impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
     type Scalar = T;
 
     fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>> {
-        std::iter::once(self.exterior()).chain(self.interiors().iter())
+        std::iter::once(self.exterior()).chain(self.interiors())
     }
 }
 
@@ -137,6 +121,6 @@ impl<T: BoolOpsNum> BooleanOps for MultiPolygon<T> {
     type Scalar = T;
 
     fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>> {
-        self.0.iter().flat_map(|p| p.rings())
+        self.iter().flat_map(BooleanOps::rings)
     }
 }
