@@ -372,7 +372,7 @@ where
     }
 }
 
-impl<'a, T: GeoNum> CoordinatePosition for GeometryCow<'a, T> {
+impl<T: GeoNum> CoordinatePosition for GeometryCow<'_, T> {
     type Scalar = T;
     crate::geometry_cow_delegate_impl! {
         fn calculate_coordinate_position(

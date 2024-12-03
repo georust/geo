@@ -79,7 +79,7 @@ mod private {
         fn lines(&'a self) -> Vec<Line<T>>;
         /// collect all the coords that are relevant for triangulations from the geometric object that
         /// should be triangulated
-        fn coords(&'a self) -> CoordsIter<T>;
+        fn coords(&'a self) -> CoordsIter<'a, T>;
         /// define a predicate that decides if a point is inside of the object (used for constrained triangulation)
         fn contains_point(&'a self, p: Point<T>) -> bool;
 
@@ -318,7 +318,7 @@ where
     T: SpadeTriangulationFloat,
     G: LinesIter<'l, Scalar = T> + CoordsIter<Scalar = T> + Contains<Point<T>>,
 {
-    fn coords(&'a self) -> private::CoordsIter<T> {
+    fn coords(&'a self) -> private::CoordsIter<'a, T> {
         Box::new(self.coords_iter())
     }
 
@@ -339,7 +339,7 @@ where
     T: SpadeTriangulationFloat + 'a,
     G: TriangulateSpade<'a, T>,
 {
-    fn coords(&'a self) -> private::CoordsIter<T> {
+    fn coords(&'a self) -> private::CoordsIter<'a, T> {
         Box::new(self.iter().flat_map(|g| g.coords()))
     }
 
@@ -357,7 +357,7 @@ where
     T: SpadeTriangulationFloat + 'a,
     G: TriangulateSpade<'a, T>,
 {
-    fn coords(&'a self) -> private::CoordsIter<T> {
+    fn coords(&'a self) -> private::CoordsIter<'a, T> {
         Box::new(self.iter().flat_map(|g| g.coords()))
     }
 

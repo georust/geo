@@ -26,7 +26,7 @@ pub trait Cross: Sized + Debug {
     fn line(&self) -> LineOrPoint<Self::Scalar>;
 }
 
-impl<'a, T: Cross> Cross for &'a T {
+impl<T: Cross> Cross for &'_ T {
     type Scalar = T::Scalar;
 
     fn line(&self) -> LineOrPoint<Self::Scalar> {

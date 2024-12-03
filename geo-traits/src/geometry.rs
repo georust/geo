@@ -126,18 +126,48 @@ where
 }
 
 #[cfg(feature = "geo-types")]
-impl<'a, T: CoordNum + 'a> GeometryTrait for Geometry<T> {
+impl<T: CoordNum> GeometryTrait for Geometry<T> {
     type T = T;
-    type PointType<'b> = Point<Self::T> where Self: 'b;
-    type LineStringType<'b> = LineString<Self::T> where Self: 'b;
-    type PolygonType<'b> = Polygon<Self::T> where Self: 'b;
-    type MultiPointType<'b> = MultiPoint<Self::T> where Self: 'b;
-    type MultiLineStringType<'b> = MultiLineString<Self::T> where Self: 'b;
-    type MultiPolygonType<'b> = MultiPolygon<Self::T> where Self: 'b;
-    type GeometryCollectionType<'b> = GeometryCollection<Self::T> where Self: 'b;
-    type RectType<'b> = Rect<Self::T> where Self: 'b;
-    type TriangleType<'b> = Triangle<Self::T> where Self: 'b;
-    type LineType<'b> = Line<Self::T> where Self: 'b;
+    type PointType<'b>
+        = Point<Self::T>
+    where
+        Self: 'b;
+    type LineStringType<'b>
+        = LineString<Self::T>
+    where
+        Self: 'b;
+    type PolygonType<'b>
+        = Polygon<Self::T>
+    where
+        Self: 'b;
+    type MultiPointType<'b>
+        = MultiPoint<Self::T>
+    where
+        Self: 'b;
+    type MultiLineStringType<'b>
+        = MultiLineString<Self::T>
+    where
+        Self: 'b;
+    type MultiPolygonType<'b>
+        = MultiPolygon<Self::T>
+    where
+        Self: 'b;
+    type GeometryCollectionType<'b>
+        = GeometryCollection<Self::T>
+    where
+        Self: 'b;
+    type RectType<'b>
+        = Rect<Self::T>
+    where
+        Self: 'b;
+    type TriangleType<'b>
+        = Triangle<Self::T>
+    where
+        Self: 'b;
+    type LineType<'b>
+        = Line<Self::T>
+    where
+        Self: 'b;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -176,16 +206,46 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for Geometry<T> {
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum + 'a> GeometryTrait for &'a Geometry<T> {
     type T = T;
-    type PointType<'b> = Point<Self::T> where Self: 'b;
-    type LineStringType<'b> = LineString<Self::T> where Self: 'b;
-    type PolygonType<'b> = Polygon<Self::T> where Self: 'b;
-    type MultiPointType<'b> = MultiPoint<Self::T> where Self: 'b;
-    type MultiLineStringType<'b> = MultiLineString<Self::T> where Self: 'b;
-    type MultiPolygonType<'b> = MultiPolygon<Self::T> where Self: 'b;
-    type GeometryCollectionType<'b> = GeometryCollection<Self::T> where Self: 'b;
-    type RectType<'b> = Rect<Self::T> where Self: 'b;
-    type TriangleType<'b> = Triangle<Self::T> where Self: 'b;
-    type LineType<'b> = Line<Self::T> where Self: 'b;
+    type PointType<'b>
+        = Point<Self::T>
+    where
+        Self: 'b;
+    type LineStringType<'b>
+        = LineString<Self::T>
+    where
+        Self: 'b;
+    type PolygonType<'b>
+        = Polygon<Self::T>
+    where
+        Self: 'b;
+    type MultiPointType<'b>
+        = MultiPoint<Self::T>
+    where
+        Self: 'b;
+    type MultiLineStringType<'b>
+        = MultiLineString<Self::T>
+    where
+        Self: 'b;
+    type MultiPolygonType<'b>
+        = MultiPolygon<Self::T>
+    where
+        Self: 'b;
+    type GeometryCollectionType<'b>
+        = GeometryCollection<Self::T>
+    where
+        Self: 'b;
+    type RectType<'b>
+        = Rect<Self::T>
+    where
+        Self: 'b;
+    type TriangleType<'b>
+        = Triangle<Self::T>
+    where
+        Self: 'b;
+    type LineType<'b>
+        = Line<Self::T>
+    where
+        Self: 'b;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -228,16 +288,46 @@ macro_rules! impl_specialization {
         #[cfg(feature = "geo-types")]
         impl<T: CoordNum> GeometryTrait for $geometry_type<T> {
             type T = T;
-            type PointType<'b> = Point<Self::T> where Self: 'b;
-            type LineStringType<'b> = LineString<Self::T> where Self: 'b;
-            type PolygonType<'b> = Polygon<Self::T> where Self: 'b;
-            type MultiPointType<'b> = MultiPoint<Self::T> where Self: 'b;
-            type MultiLineStringType<'b> = MultiLineString<Self::T> where Self: 'b;
-            type MultiPolygonType<'b> = MultiPolygon<Self::T> where Self: 'b;
-            type GeometryCollectionType<'b> = GeometryCollection<Self::T> where Self: 'b;
-            type RectType<'b> = Rect<Self::T> where Self: 'b;
-            type TriangleType<'b> = Triangle<Self::T> where Self: 'b;
-            type LineType<'b> = Line<Self::T> where Self: 'b;
+            type PointType<'b>
+                = Point<Self::T>
+            where
+                Self: 'b;
+            type LineStringType<'b>
+                = LineString<Self::T>
+            where
+                Self: 'b;
+            type PolygonType<'b>
+                = Polygon<Self::T>
+            where
+                Self: 'b;
+            type MultiPointType<'b>
+                = MultiPoint<Self::T>
+            where
+                Self: 'b;
+            type MultiLineStringType<'b>
+                = MultiLineString<Self::T>
+            where
+                Self: 'b;
+            type MultiPolygonType<'b>
+                = MultiPolygon<Self::T>
+            where
+                Self: 'b;
+            type GeometryCollectionType<'b>
+                = GeometryCollection<Self::T>
+            where
+                Self: 'b;
+            type RectType<'b>
+                = Rect<Self::T>
+            where
+                Self: 'b;
+            type TriangleType<'b>
+                = Triangle<Self::T>
+            where
+                Self: 'b;
+            type LineType<'b>
+                = Line<Self::T>
+            where
+                Self: 'b;
 
             fn dim(&self) -> Dimensions {
                 Dimensions::Xy
@@ -265,16 +355,46 @@ macro_rules! impl_specialization {
         #[cfg(feature = "geo-types")]
         impl<'a, T: CoordNum + 'a> GeometryTrait for &'a $geometry_type<T> {
             type T = T;
-            type PointType<'b> = Point<Self::T> where Self: 'b;
-            type LineStringType<'b> = LineString<Self::T> where Self: 'b;
-            type PolygonType<'b> = Polygon<Self::T> where Self: 'b;
-            type MultiPointType<'b> = MultiPoint<Self::T> where Self: 'b;
-            type MultiLineStringType<'b> = MultiLineString<Self::T> where Self: 'b;
-            type MultiPolygonType<'b> = MultiPolygon<Self::T> where Self: 'b;
-            type GeometryCollectionType<'b> = GeometryCollection<Self::T> where Self: 'b;
-            type RectType<'b> = Rect<Self::T> where Self: 'b;
-            type TriangleType<'b> = Triangle<Self::T> where Self: 'b;
-            type LineType<'b> = Line<Self::T> where Self: 'b;
+            type PointType<'b>
+                = Point<Self::T>
+            where
+                Self: 'b;
+            type LineStringType<'b>
+                = LineString<Self::T>
+            where
+                Self: 'b;
+            type PolygonType<'b>
+                = Polygon<Self::T>
+            where
+                Self: 'b;
+            type MultiPointType<'b>
+                = MultiPoint<Self::T>
+            where
+                Self: 'b;
+            type MultiLineStringType<'b>
+                = MultiLineString<Self::T>
+            where
+                Self: 'b;
+            type MultiPolygonType<'b>
+                = MultiPolygon<Self::T>
+            where
+                Self: 'b;
+            type GeometryCollectionType<'b>
+                = GeometryCollection<Self::T>
+            where
+                Self: 'b;
+            type RectType<'b>
+                = Rect<Self::T>
+            where
+                Self: 'b;
+            type TriangleType<'b>
+                = Triangle<Self::T>
+            where
+                Self: 'b;
+            type LineType<'b>
+                = Line<Self::T>
+            where
+                Self: 'b;
 
             fn dim(&self) -> Dimensions {
                 Dimensions::Xy

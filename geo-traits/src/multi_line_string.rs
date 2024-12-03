@@ -54,7 +54,10 @@ pub trait MultiLineStringTrait: Sized {
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
     type T = T;
-    type LineStringType<'a> = &'a LineString<Self::T> where Self: 'a;
+    type LineStringType<'a>
+        = &'a LineString<Self::T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -72,7 +75,10 @@ impl<T: CoordNum> MultiLineStringTrait for MultiLineString<T> {
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
     type T = T;
-    type LineStringType<'b> = &'a LineString<Self::T> where Self: 'b;
+    type LineStringType<'b>
+        = &'a LineString<Self::T>
+    where
+        Self: 'b;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -95,7 +101,10 @@ pub struct UnimplementedMultiLineString<T>(PhantomData<T>);
 
 impl<T> MultiLineStringTrait for UnimplementedMultiLineString<T> {
     type T = T;
-    type LineStringType<'a> = UnimplementedLineString<Self::T> where Self: 'a;
+    type LineStringType<'a>
+        = UnimplementedLineString<Self::T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         unimplemented!()

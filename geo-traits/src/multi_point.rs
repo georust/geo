@@ -51,7 +51,10 @@ pub trait MultiPointTrait: Sized {
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> MultiPointTrait for MultiPoint<T> {
     type T = T;
-    type PointType<'a> = &'a Point<Self::T> where Self: 'a;
+    type PointType<'a>
+        = &'a Point<Self::T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -69,7 +72,10 @@ impl<T: CoordNum> MultiPointTrait for MultiPoint<T> {
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> MultiPointTrait for &'a MultiPoint<T> {
     type T = T;
-    type PointType<'b> = &'a Point<Self::T> where Self: 'b;
+    type PointType<'b>
+        = &'a Point<Self::T>
+    where
+        Self: 'b;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -92,7 +98,10 @@ pub struct UnimplementedMultiPoint<T>(PhantomData<T>);
 
 impl<T> MultiPointTrait for UnimplementedMultiPoint<T> {
     type T = T;
-    type PointType<'a> = UnimplementedPoint<Self::T> where Self: 'a;
+    type PointType<'a>
+        = UnimplementedPoint<Self::T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         unimplemented!()

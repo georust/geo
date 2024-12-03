@@ -49,7 +49,8 @@ pub trait GeometryCollectionTrait: Sized {
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
     type T = T;
-    type GeometryType<'a> = &'a Geometry<Self::T>
+    type GeometryType<'a>
+        = &'a Geometry<Self::T>
     where
         Self: 'a;
 
@@ -69,7 +70,9 @@ impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
     type T = T;
-    type GeometryType<'b> = &'a Geometry<Self::T> where
+    type GeometryType<'b>
+        = &'a Geometry<Self::T>
+    where
         Self: 'b;
 
     fn dim(&self) -> Dimensions {

@@ -42,7 +42,7 @@ where
 }
 
 // Implement for references as well as types
-impl<'a, T, G> HaversineClosestPoint<T> for &'a G
+impl<T, G> HaversineClosestPoint<T> for &'_ G
 where
     G: HaversineClosestPoint<T>,
     T: GeoFloat + FromPrimitive,

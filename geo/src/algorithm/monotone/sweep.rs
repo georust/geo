@@ -24,7 +24,6 @@ use super::{RcSegment, Segment};
 /// interior to both segments.  That is, every intersection between two segments
 /// should be at the end point of at least one of them.  In particular, overlaps
 /// are also not supported (will panic).
-
 pub(crate) struct SimpleSweep<T: GeoNum, P: Debug> {
     events: BinaryHeap<Event<T, RcSegment<T, P>>>,
     active_segments: VecSet<Active<RcSegment<T, P>>>,
