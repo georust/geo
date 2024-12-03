@@ -1,11 +1,11 @@
-use crate::{
-    utils, GeometryPosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Valid,
+use super::{
+    utils, GeometryPosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Validation,
 };
-use geo::{GeoFloat, MultiPoint};
+use crate::{GeoFloat, MultiPoint};
 
 /// In PostGIS, MultiPoint don't have any validity constraint.
 /// Here we choose to check that points are finite numbers (i.e. not NaN or infinite)
-impl<F: GeoFloat> Valid for MultiPoint<F> {
+impl<F: GeoFloat> Validation for MultiPoint<F> {
     fn is_valid(&self) -> bool {
         for point in &self.0 {
             if !point.is_valid() {
@@ -37,10 +37,10 @@ impl<F: GeoFloat> Valid for MultiPoint<F> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        GeometryPosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Valid,
+    use super::super::{
+        GeometryPosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Validation,
     };
-    use geo::{MultiPoint, Point};
+    use crate::{MultiPoint, Point};
     use geos::Geom;
 
     #[test]

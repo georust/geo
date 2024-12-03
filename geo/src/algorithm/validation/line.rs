@@ -1,9 +1,10 @@
-use crate::{
-    utils, CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Valid,
+use super::{
+    utils, CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport,
+    Validation,
 };
-use geo::{GeoFloat, Line};
+use crate::{GeoFloat, Line};
 
-impl<F: GeoFloat> Valid for Line<F> {
+impl<F: GeoFloat> Validation for Line<F> {
     fn is_valid(&self) -> bool {
         if utils::check_coord_is_not_finite(&self.start)
             || utils::check_coord_is_not_finite(&self.end)
@@ -50,10 +51,10 @@ impl<F: GeoFloat> Valid for Line<F> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Valid,
+    use super::super::{
+        CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Validation,
     };
-    use geo::Line;
+    use crate::Line;
 
     #[test]
     fn test_line_valid() {

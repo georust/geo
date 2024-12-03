@@ -1,9 +1,10 @@
-use crate::{
-    utils, CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Valid,
+use super::{
+    utils, CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport,
+    Validation,
 };
-use geo::{GeoFloat, Rect};
+use crate::{GeoFloat, Rect};
 
-impl<F: GeoFloat> Valid for Rect<F> {
+impl<F: GeoFloat> Validation for Rect<F> {
     fn is_valid(&self) -> bool {
         if utils::check_coord_is_not_finite(&self.min())
             || utils::check_coord_is_not_finite(&self.max())

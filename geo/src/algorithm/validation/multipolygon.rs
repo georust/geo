@@ -1,16 +1,16 @@
-use crate::{
+use super::{
     CoordinatePosition, GeometryPosition, Problem, ProblemAtPosition, ProblemPosition,
-    ProblemReport, RingRole, Valid,
+    ProblemReport, RingRole, Validation,
 };
-use geo::coordinate_position::CoordPos;
-use geo::dimensions::Dimensions;
-use geo::{GeoFloat, MultiPolygon, Relate};
+use crate::coordinate_position::CoordPos;
+use crate::dimensions::Dimensions;
+use crate::{GeoFloat, MultiPolygon, Relate};
 
 /// MultiPolygon is valid if:
 /// - [x] all its polygons are valid,
 /// - [x] elements do not overlaps (i.e. their interiors must not intersect)
 /// - [x] elements touch only at points
-impl<F: GeoFloat> Valid for MultiPolygon<F> {
+impl<F: GeoFloat> Validation for MultiPolygon<F> {
     fn is_valid(&self) -> bool {
         for (j, pol) in self.0.iter().enumerate() {
             if !pol.is_valid() {
@@ -112,11 +112,11 @@ impl<F: GeoFloat> Valid for MultiPolygon<F> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
+    use super::super::{
         CoordinatePosition, GeometryPosition, Problem, ProblemAtPosition, ProblemPosition,
-        ProblemReport, RingRole, Valid,
+        ProblemReport, RingRole, Validation,
     };
-    use geo::{LineString, MultiPolygon, Polygon};
+    use crate::{LineString, MultiPolygon, Polygon};
     use geos::Geom;
 
     #[test]

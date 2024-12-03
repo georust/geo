@@ -1,7 +1,7 @@
-use crate::{utils, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Valid};
-use geo::{Coord, GeoFloat};
+use super::{utils, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Validation};
+use crate::{Coord, GeoFloat};
 
-impl<F: GeoFloat> Valid for Coord<F> {
+impl<F: GeoFloat> Validation for Coord<F> {
     fn is_valid(&self) -> bool {
         if utils::check_coord_is_not_finite(self) {
             return false;
