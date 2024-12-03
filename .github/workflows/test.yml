@@ -53,7 +53,7 @@ jobs:
       matrix:
         container_image:
           # Use the latest stable version. No need for older versions.
-          - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.79"
+          - "ghcr.io/georust/geo-ci:proj-9.4.0-rust-1.83"
     container:
       image: ${{ matrix.container_image }}
     steps:
