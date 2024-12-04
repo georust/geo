@@ -1,94 +1,114 @@
-use super::{GeometryPosition, ProblemAtPosition, ProblemPosition, ProblemReport, Validation};
+use super::{GeometryIndex, InvalidGeometry, Validation};
 use crate::{GeoFloat, GeometryCollection};
 
-/// GeometryCollection is valid if all its elements are valid
-impl<F: GeoFloat> Validation for GeometryCollection<F> {
-    fn is_valid(&self) -> bool {
-        for geometry in self.0.iter() {
-            if !geometry.is_valid() {
-                return false;
-            }
-        }
-        true
-    }
-    fn explain_invalidity(&self) -> Option<ProblemReport> {
-        let mut reason = Vec::new();
+use std::fmt;
 
-        // Loop over all the geometries, collect the reasons of invalidity
-        // and change the ProblemPosition to reflect the GeometryCollection
-        for (i, geometry) in self.0.iter().enumerate() {
-            let temp_reason = geometry.explain_invalidity();
-            if let Some(temp_reason) = temp_reason {
-                for ProblemAtPosition(problem, position) in temp_reason.0 {
-                    reason.push(ProblemAtPosition(
-                        problem,
-                        ProblemPosition::GeometryCollection(
-                            GeometryPosition(i),
-                            Box::new(position),
-                        ),
-                    ));
-                }
+/// A [`GeometryCollection`] is valid if all its elements are valid.
+#[derive(Debug, Clone, PartialEq)]
+pub enum InvalidGeometryCollection {
+    /// Which element is invalid, and what was invalid about it.
+    InvalidGeometry(GeometryIndex, Box<InvalidGeometry>),
+}
+
+impl fmt::Display for InvalidGeometryCollection {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            InvalidGeometryCollection::InvalidGeometry(idx, err) => {
+                write!(f, "geometry at index {} is invalid: {}", idx.0, err)
             }
-        }
-        // Return the reason(s) of invalidity, or None if valid
-        if reason.is_empty() {
-            None
-        } else {
-            Some(ProblemReport(reason))
         }
     }
 }
 
+impl<F: GeoFloat> Validation for GeometryCollection<F> {
+    type Error = InvalidGeometryCollection;
+
+    fn visit_validation<T>(
+        &self,
+        mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
+    ) -> Result<(), T> {
+        // Loop over all the geometries, collect the reasons of invalidity
+        // and change the ProblemPosition to reflect the GeometryCollection
+        for (i, geometry) in self.0.iter().enumerate() {
+            geometry.visit_validation(Box::new(&mut |geometry_err| {
+                let err = InvalidGeometryCollection::InvalidGeometry(
+                    GeometryIndex(i),
+                    Box::new(geometry_err),
+                );
+                handle_validation_error(err)
+            }))?;
+        }
+        Ok(())
+    }
+}
 #[cfg(test)]
 mod tests {
-    use super::super::{
-        CoordinatePosition, GeometryPosition, Problem, ProblemAtPosition, ProblemPosition,
-        ProblemReport, Validation,
-    };
-    use crate::{Coord, Geometry, GeometryCollection, LineString, Point};
+    use super::*;
+    use crate::algorithm::validation::{assert_validation_errors, InvalidLineString};
+    use crate::{geometry::*, wkt};
+
     use geos::Geom;
 
     #[test]
     fn test_geometrycollection_contain_invalid_element() {
-        let gc = GeometryCollection(vec![
-            Geometry::Point(Point::new(0., 0.)),
-            Geometry::LineString(LineString(vec![
-                Coord { x: 0., y: 0. },
-                Coord { x: 1., y: 1. },
-            ])),
-            Geometry::LineString(LineString(vec![
-                Coord { x: 0., y: 0. },
-                Coord { x: 0., y: 0. },
-            ])),
-        ]);
-        assert!(!gc.is_valid());
-        assert_eq!(
-            gc.explain_invalidity(),
-            Some(ProblemReport(vec![ProblemAtPosition(
-                Problem::TooFewPoints,
-                ProblemPosition::GeometryCollection(
-                    GeometryPosition(2),
-                    Box::new(ProblemPosition::LineString(CoordinatePosition(0)))
-                )
-            )]))
+        let gc = wkt!(
+            GEOMETRYCOLLECTION(
+                POINT(0. 0.),
+                LINESTRING(0. 0.,1. 1.),
+                LINESTRING(0. 0.,0. 0.)
+            )
+        );
+        assert_validation_errors!(
+            gc,
+            vec![InvalidGeometryCollection::InvalidGeometry(
+                GeometryIndex(2),
+                Box::new(InvalidGeometry::InvalidLineString(
+                    InvalidLineString::TooFewPoints
+                )),
+            )]
         );
 
         let geoms =
             gc.0.iter()
                 .map(|geometry| match geometry {
-                    Geometry::Point(pt) => {
-                        let geos_point: geos::Geometry = pt.try_into().unwrap();
-                        geos_point
-                    }
-                    Geometry::LineString(ls) => {
-                        let geos_linestring: geos::Geometry = ls.try_into().unwrap();
-                        geos_linestring
-                    }
+                    Geometry::Point(pt) => pt.try_into().unwrap(),
+                    Geometry::LineString(ls) => ls.try_into().unwrap(),
                     _ => unreachable!(),
                 })
-                .collect::<Vec<_>>();
+                .collect::<Vec<geos::Geometry>>();
+
         let geometrycollection_geos: geos::Geometry =
             geos::Geometry::create_geometry_collection(geoms).unwrap();
         assert_eq!(gc.is_valid(), geometrycollection_geos.is_valid());
+    }
+
+    #[test]
+    fn test_display() {
+        let gc = wkt!(
+            GEOMETRYCOLLECTION(
+                POINT(0. 0.),
+                LINESTRING(0. 0.,1. 1.),
+                LINESTRING(0. 0.,0. 0.),
+                POLYGON(
+                    (0. 0., 1. 1., 1. 0., 0. 0.),
+                    (0. 0., 1. 1., 1. 0., 0. 0.)
+                )
+            )
+        );
+        let errors = gc.validation_errors();
+        assert_eq!(
+            errors[0].to_string(),
+            "geometry at index 2 is invalid: line string must have at least 2 distinct points"
+        );
+
+        assert_eq!(
+            errors[1].to_string(),
+            "geometry at index 3 is invalid: interior ring at index 0 is not contained within the polygon's exterior"
+        );
+
+        assert_eq!(
+            errors[2].to_string(),
+            "geometry at index 3 is invalid: exterior ring and interior ring at index 0 intersect on a line"
+        );
     }
 }

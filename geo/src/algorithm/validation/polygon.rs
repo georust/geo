@@ -1,215 +1,178 @@
-use super::{
-    utils, CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport,
-    RingRole, Validation,
-};
+use super::{utils, CoordIndex, RingRole, Validation};
 use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
-use crate::{Contains, GeoFloat, HasDimensions, Polygon, Relate};
+use crate::{GeoFloat, HasDimensions, Polygon, Relate};
 
-/// In PostGIS, polygons must follow the following rules to be valid:
+use std::fmt;
+
+/// A [`Polygon`] must follow these rules to be valid:
 /// - [x] the polygon boundary rings (the exterior shell ring and interior hole rings) are simple (do not cross or self-touch). Because of this a polygon cannnot have cut lines, spikes or loops. This implies that polygon holes must be represented as interior rings, rather than by the exterior ring self-touching (a so-called "inverted hole").
 /// - [x] boundary rings do not cross
 /// - [x] boundary rings may touch at points but only as a tangent (i.e. not in a line)
 /// - [x] interior rings are contained in the exterior ring
 /// - [ ] the polygon interior is simply connected (i.e. the rings must not touch in a way that splits the polygon into more than one part)
+///
+/// Note: the simple connectivity of the interior is not checked by this implementation.
+#[derive(Debug, Clone, PartialEq)]
+pub enum InvalidPolygon {
+    /// A ring must have at least 4 points to be valid. Note that, in order to close the ring, the first and final points will be identical.
+    TooFewPointsInRing(RingRole),
+    /// A ring has a self-intersection.
+    SelfIntersection(RingRole),
+    /// One of the Polygon's coordinates is non-finite.
+    NonFiniteCoord(RingRole, CoordIndex),
+    /// A polygon's interiors must be completely within its exterior.
+    InteriorRingNotContainedInExteriorRing(RingRole),
+    /// A valid polygon's rings must not intersect one another. In this case, the intersection is 1-dimensional.
+    IntersectingRingsOnALine(RingRole, RingRole),
+    /// A valid polygon's rings must not intersect one another. In this case, the intersection is 2-dimensional.
+    IntersectingRingsOnAnArea(RingRole, RingRole),
+}
+
+impl fmt::Display for InvalidPolygon {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            InvalidPolygon::TooFewPointsInRing(ring) => {
+                write!(f, "{ring} must have at least 3 distinct points")
+            }
+            InvalidPolygon::SelfIntersection(ring) => {
+                write!(f, "{ring} has a self-intersection")
+            }
+            InvalidPolygon::NonFiniteCoord(ring, idx) => {
+                write!(f, "{ring} has a non-finite coordinate at index {}", idx.0)
+            }
+            InvalidPolygon::InteriorRingNotContainedInExteriorRing(ring) => {
+                write!(f, "{ring} is not contained within the polygon's exterior")
+            }
+            InvalidPolygon::IntersectingRingsOnALine(ring_1, ring_2) => {
+                write!(f, "{ring_1} and {ring_2} intersect on a line")
+            }
+            InvalidPolygon::IntersectingRingsOnAnArea(ring_1, ring_2) => {
+                write!(f, "{ring_1} and {ring_2} intersect on an area")
+            }
+        }
+    }
+}
 impl<F: GeoFloat> Validation for Polygon<F> {
-    fn is_valid(&self) -> bool {
+    type Error = InvalidPolygon;
+
+    fn visit_validation<T>(
+        &self,
+        mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
+    ) -> Result<(), T> {
         if self.is_empty() {
-            return true;
+            return Ok(());
         }
 
-        for ring in self.interiors().iter().chain([self.exterior()]) {
+        for (ring_idx, ring) in std::iter::once(self.exterior())
+            .chain(self.interiors().iter())
+            .enumerate()
+        {
             if ring.is_empty() {
                 continue;
             }
-            if utils::check_too_few_points(ring, true) {
-                return false;
-            }
-            for coord in ring {
-                if !coord.is_valid() {
-                    return false;
-                }
-            }
-            if utils::linestring_has_self_intersection(ring) {
-                return false;
-            }
-        }
+            let ring_role = if ring_idx == 0 {
+                RingRole::Exterior
+            } else {
+                RingRole::Interior(ring_idx - 1)
+            };
 
-        let polygon_exterior = Polygon::new(self.exterior().clone(), vec![]);
-
-        for interior_ring in self.interiors() {
-            if interior_ring.is_empty() {
-                continue;
-            }
-            // geo::contains::Contains return true if the interior
-            // is contained in the exterior even if they touches on one or more points
-            if !polygon_exterior.contains(interior_ring) {
-                return false;
-            }
-
-            let im = polygon_exterior.relate(interior_ring);
-
-            // Interior ring and exterior ring may only touch at point (not as a line)
-            // and not cross
-            let im_boundary_inside = im.get(CoordPos::OnBoundary, CoordPos::Inside);
-            if im_boundary_inside == Dimensions::OneDimensional
-                || im_boundary_inside == Dimensions::TwoDimensional
-            {
-                return false;
-            }
-
-            let pol_interior1 = Polygon::new(interior_ring.clone(), vec![]);
-
-            for (_i, interior2) in self.interiors().iter().enumerate() {
-                if interior_ring != interior2 {
-                    let pol_interior2 = Polygon::new(interior2.clone(), vec![]);
-                    let intersection_matrix = pol_interior1.relate(&pol_interior2);
-                    if intersection_matrix.get(CoordPos::Inside, CoordPos::Inside)
-                        == Dimensions::TwoDimensional
-                    {
-                        return false;
-                    }
-                    if intersection_matrix.get(CoordPos::OnBoundary, CoordPos::OnBoundary)
-                        == Dimensions::OneDimensional
-                    {
-                        return false;
-                    }
-                }
-            }
-        }
-        true
-    }
-    fn explain_invalidity(&self) -> Option<ProblemReport> {
-        let mut reason = Vec::new();
-
-        for (j, ring) in self.interiors().iter().chain([self.exterior()]).enumerate() {
             // Perform the various checks
             if utils::check_too_few_points(ring, true) {
-                reason.push(ProblemAtPosition(
-                    Problem::TooFewPoints,
-                    ProblemPosition::Polygon(
-                        if j == 0 {
-                            RingRole::Exterior
-                        } else {
-                            RingRole::Interior(j)
-                        },
-                        CoordinatePosition((ring.0.len() - 2) as isize),
-                    ),
-                ));
+                handle_validation_error(InvalidPolygon::TooFewPointsInRing(ring_role))?;
             }
 
             if utils::linestring_has_self_intersection(ring) {
-                reason.push(ProblemAtPosition(
-                    Problem::SelfIntersection,
-                    ProblemPosition::Polygon(
-                        if j == 0 {
-                            RingRole::Exterior
-                        } else {
-                            RingRole::Interior(j)
-                        },
-                        CoordinatePosition(-1),
-                    ),
-                ));
+                handle_validation_error(InvalidPolygon::SelfIntersection(ring_role))?;
             }
 
-            for (i, point) in ring.0.iter().enumerate() {
-                if utils::check_coord_is_not_finite(point) {
-                    reason.push(ProblemAtPosition(
-                        Problem::NotFinite,
-                        ProblemPosition::Polygon(
-                            if j == 0 {
-                                RingRole::Exterior
-                            } else {
-                                RingRole::Interior(j)
-                            },
-                            CoordinatePosition(i as isize),
-                        ),
-                    ));
+            for (coord_idx, coord) in ring.0.iter().enumerate() {
+                if utils::check_coord_is_not_finite(coord) {
+                    handle_validation_error(InvalidPolygon::NonFiniteCoord(
+                        ring_role,
+                        CoordIndex(coord_idx),
+                    ))?;
                 }
             }
         }
 
         let polygon_exterior = Polygon::new(self.exterior().clone(), vec![]);
 
-        for (j, interior) in self.interiors().iter().enumerate() {
-            if !polygon_exterior.contains(interior) {
-                reason.push(ProblemAtPosition(
-                    Problem::InteriorRingNotContainedInExteriorRing,
-                    ProblemPosition::Polygon(RingRole::Interior(j), CoordinatePosition(-1)),
-                ));
+        for (interior_1_idx, interior_1) in self.interiors().iter().enumerate() {
+            let ring_role_1 = RingRole::Interior(interior_1_idx);
+            if interior_1.is_empty() {
+                continue;
             }
+            let exterior_vs_interior = polygon_exterior.relate(interior_1);
 
-            let im = polygon_exterior.relate(interior);
+            if !exterior_vs_interior.is_contains() {
+                handle_validation_error(InvalidPolygon::InteriorRingNotContainedInExteriorRing(
+                    ring_role_1,
+                ))?;
+            }
 
             // Interior ring and exterior ring may only touch at point (not as a line)
             // and not cross
-            if im.get(CoordPos::OnBoundary, CoordPos::Inside) == Dimensions::OneDimensional {
-                reason.push(ProblemAtPosition(
-                    Problem::IntersectingRingsOnALine,
-                    ProblemPosition::Polygon(RingRole::Interior(j), CoordinatePosition(-1)),
-                ));
+            if exterior_vs_interior.get(CoordPos::OnBoundary, CoordPos::Inside)
+                == Dimensions::OneDimensional
+            {
+                handle_validation_error(InvalidPolygon::IntersectingRingsOnALine(
+                    RingRole::Exterior,
+                    ring_role_1,
+                ))?;
             }
-            let pol_interior1 = Polygon::new(interior.clone(), vec![]);
-            for (i, interior2) in self.interiors().iter().enumerate() {
-                if j != i {
-                    let pol_interior2 = Polygon::new(interior2.clone(), vec![]);
-                    let intersection_matrix = pol_interior1.relate(&pol_interior2);
-                    if intersection_matrix.get(CoordPos::Inside, CoordPos::Inside)
-                        == Dimensions::TwoDimensional
-                    {
-                        reason.push(ProblemAtPosition(
-                            Problem::IntersectingRingsOnAnArea,
-                            ProblemPosition::Polygon(RingRole::Interior(j), CoordinatePosition(-1)),
-                        ));
-                    }
-                    if intersection_matrix.get(CoordPos::OnBoundary, CoordPos::OnBoundary)
-                        == Dimensions::OneDimensional
-                    {
-                        reason.push(ProblemAtPosition(
-                            Problem::IntersectingRingsOnALine,
-                            ProblemPosition::Polygon(RingRole::Interior(j), CoordinatePosition(-1)),
-                        ));
-                    }
+
+            // PERF: consider using PreparedGeometry
+            let interior_1_as_poly = Polygon::new(interior_1.clone(), vec![]);
+
+            for (interior_2_idx, interior_2) in
+                self.interiors().iter().enumerate().skip(interior_1_idx + 1)
+            {
+                let ring_role_2 = RingRole::Interior(interior_2_idx);
+                let interior_2_as_poly = Polygon::new(interior_2.clone(), vec![]);
+                let intersection_matrix = interior_1_as_poly.relate(&interior_2_as_poly);
+
+                if intersection_matrix.get(CoordPos::Inside, CoordPos::Inside)
+                    == Dimensions::TwoDimensional
+                {
+                    handle_validation_error(InvalidPolygon::IntersectingRingsOnAnArea(
+                        ring_role_1,
+                        ring_role_2,
+                    ))?;
+                }
+                if intersection_matrix.get(CoordPos::OnBoundary, CoordPos::OnBoundary)
+                    == Dimensions::OneDimensional
+                {
+                    handle_validation_error(InvalidPolygon::IntersectingRingsOnALine(
+                        ring_role_1,
+                        ring_role_2,
+                    ))?;
                 }
             }
         }
-
-        // Return the reason(s) of invalidity, or None if valid
-        if reason.is_empty() {
-            None
-        } else {
-            Some(ProblemReport(reason))
-        }
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::{
-        CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, RingRole,
-        Validation,
-    };
-    use crate::{Coord, LineString, Polygon};
+    use super::*;
+    use crate::algorithm::validation::{assert_valid, assert_validation_errors};
+    use crate::wkt;
     use geos::Geom;
 
     #[test]
     fn test_polygon_valid() {
         // Unclosed rings are automatically closed by geo_types
         // so the following should be valid
-        let p = Polygon::new(
-            LineString(vec![
-                Coord { x: 0., y: 0. },
-                Coord { x: 1., y: 1. },
-                Coord { x: 0., y: 1. },
-            ]),
-            vec![],
+        let polygon = wkt!(
+            POLYGON((0. 0., 1. 1., 0. 1.))
         );
-        assert!(p.is_valid());
-        assert!(p.explain_invalidity().is_none());
+        assert_valid!(&polygon);
 
         // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&p).try_into().unwrap();
-        assert_eq!(p.is_valid(), polygon_geos.is_valid());
+        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
+        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
@@ -217,116 +180,80 @@ mod tests {
         // The following polygon contains an interior ring that touches
         // the exterior ring on one point.
         // This is valid according to the OGC spec.
-        let p = Polygon::new(
-            LineString::from(vec![(0., 0.), (4., 0.), (4., 4.), (0., 4.), (0., 0.)]),
-            vec![LineString::from(vec![
-                (0., 2.), // This point is on the exterior ring
-                (2., 1.),
-                (3., 2.),
-                (2., 3.),
-                (0., 2.),
-            ])],
+        let polygon = wkt!(
+            POLYGON(
+                (0. 0., 4. 1., 4. 4.,0. 4.,0. 0.),
+                (0. 2., 2. 1., 3. 2., 2. 3., 0. 2.)
+            )
         );
-
-        assert!(p.is_valid());
-        assert!(p.explain_invalidity().is_none());
+        assert_valid!(&polygon);
 
         // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&p).try_into().unwrap();
-        assert_eq!(p.is_valid(), polygon_geos.is_valid());
+        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
+        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
     fn test_polygon_valid_interior_rings_touch_at_point() {
         // The following polygon contains two interior rings that touch
         // at one point.
-        let p = Polygon::new(
-            LineString::from(vec![(0., 0.), (4., 0.), (4., 4.), (0., 4.), (0., 0.)]),
-            vec![
-                LineString::from(vec![(1., 2.), (2., 1.), (3., 2.), (2., 3.), (1., 2.)]),
-                LineString::from(vec![(3., 2.), (3.5, 1.), (3.75, 2.), (3.5, 3.), (3., 2.)]),
-            ],
+        let polygon = wkt!(
+            POLYGON(
+                (0. 0., 4. 0., 4. 4.,0. 4.,0. 0.),
+                (1. 2., 2. 1., 3. 2., 2. 3., 1. 2.),
+                (3. 2., 3.5 1., 3.75 2., 3.5 3., 3. 2.)
+            )
         );
-
-        assert!(p.is_valid());
-        assert!(p.explain_invalidity().is_none());
+        assert_valid!(&polygon);
 
         // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&p).try_into().unwrap();
-        assert_eq!(p.is_valid(), polygon_geos.is_valid());
+        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
+        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
     fn test_polygon_invalid_interior_rings_touch_at_line() {
         // The following polygon contains two interior rings that touch
         // on a line, this is not valid.
-        let p = Polygon::new(
-            LineString::from(vec![(0., 0.), (4., 0.), (4., 4.), (0., 4.), (0., 0.)]),
-            vec![
-                LineString::from(vec![(1., 2.), (2., 1.), (3., 2.), (2., 3.), (1., 2.)]),
-                LineString::from(vec![
-                    (3., 2.),
-                    (2., 1.),
-                    (3.5, 1.),
-                    (3.75, 2.),
-                    (3.5, 3.),
-                    (3., 2.),
-                ]),
-            ],
+        let polygon = wkt!(
+            POLYGON(
+                (0. 0., 4. 0., 4. 4.,0. 4.,0. 0.),
+                (1. 2., 2. 1., 3. 2., 2. 3., 1. 2.),
+                (3. 2., 2. 1., 3.5 1., 3.75 2., 3.5 3., 3. 2.)
+            )
         );
 
-        assert!(!p.is_valid());
-        assert_eq!(
-            p.explain_invalidity(),
-            Some(ProblemReport(vec![
-                ProblemAtPosition(
-                    Problem::IntersectingRingsOnALine,
-                    ProblemPosition::Polygon(RingRole::Interior(0), CoordinatePosition(-1))
-                ),
-                ProblemAtPosition(
-                    Problem::IntersectingRingsOnALine,
-                    ProblemPosition::Polygon(RingRole::Interior(1), CoordinatePosition(-1))
-                )
-            ]))
+        assert_validation_errors!(
+            polygon,
+            vec![InvalidPolygon::IntersectingRingsOnALine(
+                RingRole::Interior(0),
+                RingRole::Interior(1)
+            )]
         );
 
         // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&p).try_into().unwrap();
-        assert_eq!(p.is_valid(), polygon_geos.is_valid());
+        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
+        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
     fn test_polygon_invalid_interior_rings_crosses() {
         // The following polygon contains two interior rings that cross
         // each other (they share some common area), this is not valid.
-        let p = Polygon::new(
-            LineString::from(vec![(0., 0.), (4., 0.), (4., 4.), (0., 4.), (0., 0.)]),
-            vec![
-                LineString::from(vec![(1., 2.), (2., 1.), (3., 2.), (2., 3.), (1., 2.)]),
-                LineString::from(vec![
-                    (2., 2.),
-                    (2., 1.),
-                    (3.5, 1.),
-                    (3.75, 2.),
-                    (3.5, 3.),
-                    (3., 2.),
-                ]),
-            ],
+        let p = wkt!(
+            POLYGON(
+                (0. 0., 4. 0.,  4. 4.,   0. 4.,  0. 0.),
+                (1. 2., 2. 1.,  3. 2.,   2. 3.,  1. 2.),
+                (2. 2., 2. 1., 3.5 1., 3.75 2., 3.5 3., 3. 2.)
+            )
         );
 
-        assert!(!p.is_valid());
-        assert_eq!(
-            p.explain_invalidity(),
-            Some(ProblemReport(vec![
-                ProblemAtPosition(
-                    Problem::IntersectingRingsOnAnArea,
-                    ProblemPosition::Polygon(RingRole::Interior(0), CoordinatePosition(-1))
-                ),
-                ProblemAtPosition(
-                    Problem::IntersectingRingsOnAnArea,
-                    ProblemPosition::Polygon(RingRole::Interior(1), CoordinatePosition(-1))
-                )
-            ]))
+        assert_validation_errors!(
+            p,
+            vec![InvalidPolygon::IntersectingRingsOnAnArea(
+                RingRole::Interior(0),
+                RingRole::Interior(1)
+            )]
         );
 
         // Test that the polygon has the same validity status than its GEOS equivalent
@@ -339,30 +266,25 @@ mod tests {
         // The following polygon contains an interior ring that touches
         // the exterior ring on one point.
         // This is valid according to the OGC spec.
-        let p = Polygon::new(
-            LineString::from(vec![(0., 0.), (4., 0.), (4., 4.), (0., 4.), (0., 0.)]),
-            vec![LineString::from(vec![
-                (0., 2.), // This point is on the exterior ring
-                (0., 1.), // This point is on the exterior ring too
-                (2., 1.),
-                (3., 2.),
-                (2., 3.),
-                (0., 2.),
-            ])],
+        let polygon = wkt!(
+            POLYGON(
+                (0. 0., 4. 0., 4. 4., 0. 4., 0. 0.),
+                // First two points are on the exterior ring
+                (0. 2., 0. 1., 2. 1., 3. 2., 2. 3., 0. 2.)
+            )
         );
 
-        assert!(!p.is_valid());
-        assert_eq!(
-            p.explain_invalidity(),
-            Some(ProblemReport(vec![ProblemAtPosition(
-                Problem::IntersectingRingsOnALine,
-                ProblemPosition::Polygon(RingRole::Interior(0), CoordinatePosition(-1))
-            )]))
+        assert_validation_errors!(
+            polygon,
+            vec![InvalidPolygon::IntersectingRingsOnALine(
+                RingRole::Exterior,
+                RingRole::Interior(0)
+            )]
         );
 
         // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&p).try_into().unwrap();
-        assert_eq!(p.is_valid(), polygon_geos.is_valid());
+        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
+        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
@@ -370,75 +292,45 @@ mod tests {
         // Unclosed rings are automatically closed by geo_types
         // but there is still two few points in this ring
         // to be a non-empty polygon
-        let p = Polygon::new(
-            LineString(vec![Coord { x: 0., y: 0. }, Coord { x: 1., y: 1. }]),
-            vec![],
-        );
-        assert!(!p.is_valid());
-        assert_eq!(
-            p.explain_invalidity(),
-            Some(ProblemReport(vec![ProblemAtPosition(
-                Problem::TooFewPoints,
-                ProblemPosition::Polygon(RingRole::Exterior, CoordinatePosition(1))
-            )]))
+        let polygon = wkt!( POLYGON((0. 0., 1. 1.)) );
+        assert_validation_errors!(
+            polygon,
+            vec![InvalidPolygon::TooFewPointsInRing(RingRole::Exterior)]
         );
 
         // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&p).try_into().unwrap();
-        assert_eq!(p.is_valid(), polygon_geos.is_valid());
+        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
+        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
     fn test_polygon_invalid_spike() {
         // The following polygon contains a spike
-        let p = Polygon::new(
-            LineString::from(vec![
-                (0., 0.),
-                (4., 0.),
-                (4., 4.),
-                (2., 4.),
-                (2., 6.),
-                (2., 4.),
-                (0., 4.),
-                (0., 0.),
-            ]),
-            vec![],
+        let polygon = wkt!(
+            POLYGON(
+                (0. 0., 4. 0., 4. 4., 2. 4., 2. 6., 2. 4., 0. 4., 0. 0.)
+            )
         );
 
-        assert!(!p.is_valid());
-        assert_eq!(
-            p.explain_invalidity(),
-            Some(ProblemReport(vec![ProblemAtPosition(
-                Problem::SelfIntersection,
-                ProblemPosition::Polygon(RingRole::Exterior, CoordinatePosition(-1))
-            )]))
+        assert_validation_errors!(
+            polygon,
+            vec![InvalidPolygon::SelfIntersection(RingRole::Exterior)]
         );
 
         // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&p).try_into().unwrap();
-        assert_eq!(p.is_valid(), polygon_geos.is_valid());
+        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
+        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
     fn test_polygon_invalid_exterior_is_not_simple() {
         // The exterior ring of this polygon is not simple (i.e. it has a self-intersection)
-        let p = Polygon::new(
-            LineString(vec![
-                Coord { x: 0., y: 0. },
-                Coord { x: 4., y: 0. },
-                Coord { x: 0., y: 2. },
-                Coord { x: 4., y: 2. },
-                Coord { x: 0., y: 0. },
-            ]),
-            vec![],
+        let p = wkt!(
+            POLYGON((0. 0., 4. 0., 0. 2., 4. 2., 0. 0.))
         );
-        assert!(!p.is_valid());
-        assert_eq!(
-            p.explain_invalidity(),
-            Some(ProblemReport(vec![ProblemAtPosition(
-                Problem::SelfIntersection,
-                ProblemPosition::Polygon(RingRole::Exterior, CoordinatePosition(-1))
-            )]))
+        assert_validation_errors!(
+            p,
+            vec![InvalidPolygon::SelfIntersection(RingRole::Exterior)]
         );
 
         // Test that the polygon has the same validity status than its GEOS equivalent
@@ -448,102 +340,66 @@ mod tests {
 
     #[test]
     fn test_polygon_invalid_interior_not_fully_contained_in_exterior() {
-        let p = Polygon::new(
-            LineString::from(vec![
-                (0.5, 0.5),
-                (3., 0.5),
-                (3., 2.5),
-                (0.5, 2.5),
-                (0.5, 0.5),
-            ]),
-            vec![LineString::from(vec![
-                (1., 1.),
-                (1., 2.),
-                (2.5, 2.),
-                (3.5, 1.),
-                (1., 1.),
-            ])],
+        let polygon = wkt!(
+            POLYGON (
+                (0.5 0.5, 3.0 0.5, 3.0 2.5, 0.5 2.5, 0.5 0.5),
+                (1.0 1.0, 1.0 2.0, 2.5 2.0, 3.5 1.0, 1.0 1.0)
+            )
         );
-        assert!(!p.is_valid());
-        assert_eq!(
-            p.explain_invalidity(),
-            Some(ProblemReport(vec![ProblemAtPosition(
-                Problem::InteriorRingNotContainedInExteriorRing,
-                ProblemPosition::Polygon(RingRole::Interior(0), CoordinatePosition(-1))
-            )]))
+        assert_validation_errors!(
+            polygon,
+            vec![InvalidPolygon::InteriorRingNotContainedInExteriorRing(
+                RingRole::Interior(0)
+            ),]
         );
 
         // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&p).try_into().unwrap();
-        assert_eq!(p.is_valid(), polygon_geos.is_valid());
+        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
+        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
     fn test_polygon_invalid_interior_ring_contained_in_interior_ring() {
         // The following polygon contains an interior ring that is contained
         // in another interior ring.
-        let exterior = LineString::from(vec![
-            (0.0, 0.0),
-            (10.0, 0.0),
-            (10.0, 10.0),
-            (0.0, 10.0),
-            (0.0, 0.0),
-        ]);
-        let interior1 = LineString::from(vec![
-            (1.0, 1.0),
-            (1.0, 9.0),
-            (9.0, 9.0),
-            (9.0, 1.0),
-            (1.0, 1.0),
-        ]);
-        let interior2 = LineString::from(vec![
-            (2.0, 2.0),
-            (2.0, 8.0),
-            (8.0, 8.0),
-            (8.0, 2.0),
-            (2.0, 2.0),
-        ]);
+        let polygon_1 = wkt!(
+            POLYGON(
+                (0. 0., 10. 0., 10. 10., 0. 10., 0. 0.),
+                (1. 1.,  1. 9.,  9.  9., 9.  1., 1. 1.),
+                (2. 2.,  2. 8.,  8.  8., 8.  2., 2. 2.)
+            )
+        );
 
-        let p1 = Polygon::new(exterior.clone(), vec![interior1.clone(), interior2.clone()]);
-
-        assert!(!p1.is_valid());
-        assert_eq!(
-            p1.explain_invalidity(),
-            Some(ProblemReport(vec![
-                ProblemAtPosition(
-                    Problem::IntersectingRingsOnAnArea,
-                    ProblemPosition::Polygon(RingRole::Interior(0), CoordinatePosition(-1))
-                ),
-                ProblemAtPosition(
-                    Problem::IntersectingRingsOnAnArea,
-                    ProblemPosition::Polygon(RingRole::Interior(1), CoordinatePosition(-1))
-                )
-            ]))
+        assert_validation_errors!(
+            polygon_1,
+            vec![InvalidPolygon::IntersectingRingsOnAnArea(
+                RingRole::Interior(0),
+                RingRole::Interior(1)
+            )]
         );
 
         // Let see if we switch the order of the interior rings
         // (this is still invalid)
-        let p2 = Polygon::new(exterior, vec![interior2, interior1]);
+        let polygon_2 = wkt!(
+            POLYGON(
+                (0. 0., 10. 0., 10. 10., 0. 10., 0. 0.),
+                (2. 2.,  2. 8.,  8.  8., 8.  2., 2. 2.),
+                (1. 1.,  1. 9.,  9.  9., 9.  1., 1. 1.)
+            )
+        );
 
-        assert!(!p2.is_valid());
-        assert_eq!(
-            p2.explain_invalidity(),
-            Some(ProblemReport(vec![
-                ProblemAtPosition(
-                    Problem::IntersectingRingsOnAnArea,
-                    ProblemPosition::Polygon(RingRole::Interior(0), CoordinatePosition(-1))
-                ),
-                ProblemAtPosition(
-                    Problem::IntersectingRingsOnAnArea,
-                    ProblemPosition::Polygon(RingRole::Interior(1), CoordinatePosition(-1))
-                )
-            ]))
+        assert_validation_errors!(
+            polygon_2,
+            vec![InvalidPolygon::IntersectingRingsOnAnArea(
+                RingRole::Interior(0),
+                RingRole::Interior(1)
+            )]
         );
 
         // Test that the polygons have the same validity status than their GEOS equivalents
-        let polygon_geos1: geos::Geometry = (&p1).try_into().unwrap();
-        let polygon_geos2: geos::Geometry = (&p2).try_into().unwrap();
-        assert_eq!(p1.is_valid(), polygon_geos1.is_valid());
-        assert_eq!(p2.is_valid(), polygon_geos2.is_valid());
+        let polygon_geos1: geos::Geometry = (&polygon_1).try_into().unwrap();
+        let polygon_geos2: geos::Geometry = (&polygon_2).try_into().unwrap();
+        assert_eq!(polygon_1.is_valid(), polygon_geos1.is_valid());
+        assert_eq!(polygon_2.is_valid(), polygon_geos2.is_valid());
     }
 }

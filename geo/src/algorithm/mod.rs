@@ -304,5 +304,5 @@ pub mod rhumb;
 #[allow(deprecated)]
 pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate, RhumbLength};
 
-mod validation;
+pub mod validation;
 pub use validation::Validation;

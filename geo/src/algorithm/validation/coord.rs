@@ -1,28 +1,32 @@
-use super::{utils, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Validation};
+use super::{utils, Validation};
 use crate::{Coord, GeoFloat};
 
-impl<F: GeoFloat> Validation for Coord<F> {
-    fn is_valid(&self) -> bool {
-        if utils::check_coord_is_not_finite(self) {
-            return false;
+use std::fmt;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum InvalidCoord {
+    /// A valid [`Coord`] must be finite.
+    NonFinite,
+}
+
+impl fmt::Display for InvalidCoord {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            InvalidCoord::NonFinite => write!(f, "coordinite was non-finite"),
         }
-        true
     }
-    fn explain_invalidity(&self) -> Option<ProblemReport> {
-        let mut reason = Vec::new();
+}
 
+impl<F: GeoFloat> Validation for Coord<F> {
+    type Error = InvalidCoord;
+
+    fn visit_validation<T>(
+        &self,
+        mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
+    ) -> Result<(), T> {
         if utils::check_coord_is_not_finite(self) {
-            reason.push(ProblemAtPosition(
-                Problem::NotFinite,
-                ProblemPosition::Point,
-            ));
+            handle_validation_error(InvalidCoord::NonFinite)?;
         }
-
-        // Return the reason(s) of invalidity, or None if valid
-        if reason.is_empty() {
-            None
-        } else {
-            Some(ProblemReport(reason))
-        }
+        Ok(())
     }
 }
