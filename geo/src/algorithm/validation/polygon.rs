@@ -19,6 +19,9 @@ impl<F: GeoFloat> Validation for Polygon<F> {
         }
 
         for ring in self.interiors().iter().chain([self.exterior()]) {
+            if ring.is_empty() {
+                continue;
+            }
             if utils::check_too_few_points(ring, true) {
                 return false;
             }
@@ -35,6 +38,9 @@ impl<F: GeoFloat> Validation for Polygon<F> {
         let polygon_exterior = Polygon::new(self.exterior().clone(), vec![]);
 
         for interior_ring in self.interiors() {
+            if interior_ring.is_empty() {
+                continue;
+            }
             // geo::contains::Contains return true if the interior
             // is contained in the exterior even if they touches on one or more points
             if !polygon_exterior.contains(interior_ring) {
