@@ -2,7 +2,7 @@ use super::{
     utils, CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport,
     Validation,
 };
-use crate::{GeoFloat, LineString};
+use crate::{GeoFloat, HasDimensions, LineString};
 
 /// In postGIS, a LineString is valid if it has at least 2 points
 /// and have a non-zero length (i.e. the first and last points are not the same).
@@ -10,6 +10,10 @@ use crate::{GeoFloat, LineString};
 
 impl<F: GeoFloat> Validation for LineString<F> {
     fn is_valid(&self) -> bool {
+        if self.is_empty() {
+            return true;
+        }
+
         if utils::check_too_few_points(self, false) {
             return false;
         }
@@ -70,20 +74,11 @@ mod tests {
     }
 
     #[test]
-    fn test_linestring_invalid_empty() {
+    fn test_linestring_valid_empty() {
         let ls = LineString(vec![]);
-        assert!(!ls.is_valid());
-        assert_eq!(
-            ls.explain_invalidity(),
-            Some(ProblemReport(vec![ProblemAtPosition(
-                Problem::TooFewPoints,
-                ProblemPosition::LineString(CoordinatePosition(0))
-            )]))
-        );
-
-        // This linestring is invalid according to this crate but valid according to GEOS
+        assert!(ls.is_valid());
         let linestring_geos: geos::Geometry = (&ls).try_into().unwrap();
-        assert_eq!(ls.is_valid(), !linestring_geos.is_valid());
+        assert_eq!(ls.is_valid(), linestring_geos.is_valid());
     }
 
     #[test]

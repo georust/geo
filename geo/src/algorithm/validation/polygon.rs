@@ -4,7 +4,7 @@ use super::{
 };
 use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
-use crate::{Contains, GeoFloat, Polygon, Relate};
+use crate::{Contains, GeoFloat, HasDimensions, Polygon, Relate};
 
 /// In PostGIS, polygons must follow the following rules to be valid:
 /// - [x] the polygon boundary rings (the exterior shell ring and interior hole rings) are simple (do not cross or self-touch). Because of this a polygon cannnot have cut lines, spikes or loops. This implies that polygon holes must be represented as interior rings, rather than by the exterior ring self-touching (a so-called "inverted hole").
@@ -14,7 +14,14 @@ use crate::{Contains, GeoFloat, Polygon, Relate};
 /// - [ ] the polygon interior is simply connected (i.e. the rings must not touch in a way that splits the polygon into more than one part)
 impl<F: GeoFloat> Validation for Polygon<F> {
     fn is_valid(&self) -> bool {
+        if self.is_empty() {
+            return true;
+        }
+
         for ring in self.interiors().iter().chain([self.exterior()]) {
+            if ring.is_empty() {
+                continue;
+            }
             if utils::check_too_few_points(ring, true) {
                 return false;
             }
@@ -31,6 +38,9 @@ impl<F: GeoFloat> Validation for Polygon<F> {
         let polygon_exterior = Polygon::new(self.exterior().clone(), vec![]);
 
         for interior_ring in self.interiors() {
+            if interior_ring.is_empty() {
+                continue;
+            }
             // geo::contains::Contains return true if the interior
             // is contained in the exterior even if they touches on one or more points
             if !polygon_exterior.contains(interior_ring) {
