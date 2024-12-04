@@ -64,12 +64,12 @@ where
     fn is_trivial_intersection(
         &self,
         intersection: LineIntersection<F>,
-        edge0: &RefCell<Edge<F>>,
+        edge0: &Edge<F>,
         segment_index_0: usize,
-        edge1: &RefCell<Edge<F>>,
+        edge1: &Edge<F>,
         segment_index_1: usize,
     ) -> bool {
-        if edge0.as_ptr() != edge1.as_ptr() {
+        if !std::ptr::eq(edge0, edge1) {
             return false;
         }
 
@@ -81,7 +81,6 @@ where
             return true;
         }
 
-        let edge0 = edge0.borrow();
         if edge0.is_closed() {
             // first and last coords in a ring are adjacent
             let max_segment_index = edge0.coords().len() - 1;
@@ -95,25 +94,25 @@ where
         false
     }
 
-    pub fn add_intersections(
+    // Copy of `add_intersections` specialized for a single 'edge' against itself.
+    pub fn add_intersections_against_self(
         &mut self,
-        edge0: &RefCell<Edge<F>>,
+        edge0: &mut Edge<F>,
         segment_index_0: usize,
-        edge1: &RefCell<Edge<F>>,
         segment_index_1: usize,
     ) {
         // avoid a segment spuriously "intersecting" with itself
-        if edge0.as_ptr() == edge1.as_ptr() && segment_index_0 == segment_index_1 {
+        if segment_index_0 == segment_index_1 {
             return;
         }
 
         let line_0 = Line::new(
-            edge0.borrow().coords()[segment_index_0],
-            edge0.borrow().coords()[segment_index_0 + 1],
+            edge0.coords()[segment_index_0],
+            edge0.coords()[segment_index_0 + 1],
         );
         let line_1 = Line::new(
-            edge1.borrow().coords()[segment_index_1],
-            edge1.borrow().coords()[segment_index_1 + 1],
+            edge0.coords()[segment_index_1],
+            edge0.coords()[segment_index_1 + 1],
         );
 
         let intersection = self.line_intersector.compute_intersection(line_0, line_1);
@@ -124,8 +123,68 @@ where
         let intersection = intersection.unwrap();
 
         if !self.edges_are_from_same_geometry {
-            edge0.borrow_mut().mark_as_unisolated();
-            edge1.borrow_mut().mark_as_unisolated();
+            edge0.mark_as_unisolated();
+        }
+        if !self.is_trivial_intersection(
+            intersection,
+            edge0,
+            segment_index_0,
+            edge0,
+            segment_index_1,
+        ) {
+            if self.edges_are_from_same_geometry || !intersection.is_proper() {
+                // In the case of self-noding, `edge0` might alias `edge1`, so it's imperative that
+                // the mutable borrows are short lived and do not overlap.
+                edge0.add_intersections(intersection, line_0, segment_index_0);
+
+                // XXX: This may be a bug, but it matches the existing behavior.
+                edge0.add_intersections(intersection, line_1, segment_index_1);
+            }
+            if let LineIntersection::SinglePoint {
+                is_proper: true,
+                intersection: intersection_coord,
+            } = intersection
+            {
+                self.proper_intersection_point = Some(intersection_coord);
+
+                if !self.is_boundary_point(&intersection_coord, &self.boundary_nodes) {
+                    self.has_proper_interior_intersection = true
+                }
+            }
+        }
+    }
+
+    pub fn add_intersections(
+        &mut self,
+        edge0: &mut Edge<F>,
+        segment_index_0: usize,
+        edge1: &mut Edge<F>,
+        segment_index_1: usize,
+    ) {
+        // avoid a segment spuriously "intersecting" with itself
+        if std::ptr::eq(edge0, edge1) && segment_index_0 == segment_index_1 {
+            return;
+        }
+
+        let line_0 = Line::new(
+            edge0.coords()[segment_index_0],
+            edge0.coords()[segment_index_0 + 1],
+        );
+        let line_1 = Line::new(
+            edge1.coords()[segment_index_1],
+            edge1.coords()[segment_index_1 + 1],
+        );
+
+        let intersection = self.line_intersector.compute_intersection(line_0, line_1);
+
+        if intersection.is_none() {
+            return;
+        }
+        let intersection = intersection.unwrap();
+
+        if !self.edges_are_from_same_geometry {
+            edge0.mark_as_unisolated();
+            edge1.mark_as_unisolated();
         }
         if !self.is_trivial_intersection(
             intersection,
@@ -137,13 +196,9 @@ where
             if self.edges_are_from_same_geometry || !intersection.is_proper() {
                 // In the case of self-noding, `edge0` might alias `edge1`, so it's imperative that
                 // the mutable borrows are short lived and do not overlap.
-                edge0
-                    .borrow_mut()
-                    .add_intersections(intersection, line_0, segment_index_0);
+                edge0.add_intersections(intersection, line_0, segment_index_0);
 
-                edge1
-                    .borrow_mut()
-                    .add_intersections(intersection, line_1, segment_index_1);
+                edge1.add_intersections(intersection, line_1, segment_index_1);
             }
             if let LineIntersection::SinglePoint {
                 is_proper: true,

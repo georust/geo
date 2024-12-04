@@ -4,9 +4,6 @@ use super::{
 };
 use crate::{Coord, GeoFloat};
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
 #[derive(Clone, PartialEq)]
 pub(crate) struct PlanarGraphNode;
 
@@ -24,7 +21,7 @@ where
 #[derive(Clone, PartialEq)]
 pub(crate) struct PlanarGraph<F: GeoFloat> {
     pub(crate) nodes: NodeMap<F, PlanarGraphNode>,
-    edges: Vec<Rc<RefCell<Edge<F>>>>,
+    edges: Vec<Edge<F>>,
 }
 
 impl<F: GeoFloat> PlanarGraph<F> {
@@ -32,11 +29,7 @@ impl<F: GeoFloat> PlanarGraph<F> {
         let mut graph = Self {
             nodes: self.nodes.clone(),
             // deep copy edges
-            edges: self
-                .edges
-                .iter()
-                .map(|e| Rc::new(RefCell::new(e.borrow().clone())))
-                .collect(),
+            edges: self.edges.to_vec(),
         };
         assert_eq!(from_arg_index, 0);
         if from_arg_index != to_arg_index {
@@ -50,7 +43,7 @@ impl<F: GeoFloat> PlanarGraph<F> {
             node.swap_label_args();
         }
         for edge in &mut self.edges {
-            edge.borrow_mut().swap_label_args();
+            edge.swap_label_args();
         }
     }
 
@@ -59,8 +52,12 @@ impl<F: GeoFloat> PlanarGraph<F> {
         assert_eq!(self.edges, other.edges);
     }
 
-    pub fn edges(&self) -> &[Rc<RefCell<Edge<F>>>] {
+    pub fn edges(&self) -> &[Edge<F>] {
         &self.edges
+    }
+
+    pub fn edges_mut(&mut self) -> &mut [Edge<F>] {
+        &mut self.edges
     }
 
     pub fn new() -> Self {
@@ -79,7 +76,7 @@ impl<F: GeoFloat> PlanarGraph<F> {
     }
 
     pub fn insert_edge(&mut self, edge: Edge<F>) {
-        self.edges.push(Rc::new(RefCell::new(edge)));
+        self.edges.push(edge);
     }
 
     pub fn add_node_with_coordinate(&mut self, coord: Coord<F>) -> &mut CoordNode<F> {
