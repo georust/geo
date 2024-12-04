@@ -9,19 +9,19 @@
 //!
 mod coord;
 mod geometry;
-mod geometrycollection;
+mod geometry_collection;
 mod line;
-mod linestring;
-mod multilinestring;
-mod multipoint;
-mod multipolygon;
+mod line_string;
+mod multi_line_string;
+mod multi_point;
+mod multi_polygon;
 mod point;
 mod polygon;
 mod rect;
-mod triangle;
-mod utils;
 #[cfg(test)]
 mod tests;
+mod triangle;
+mod utils;
 
 use std::boxed::Box;
 use std::fmt::Display;
