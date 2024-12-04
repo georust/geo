@@ -1,55 +1,54 @@
-use super::{
-    utils, GeometryPosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Validation,
-};
+use super::{GeometryIndex, InvalidPoint, Validation};
 use crate::{GeoFloat, MultiPoint};
 
-/// In PostGIS, MultiPoint don't have any validity constraint.
-/// Here we choose to check that points are finite numbers (i.e. not NaN or infinite)
-impl<F: GeoFloat> Validation for MultiPoint<F> {
-    fn is_valid(&self) -> bool {
-        for point in &self.0 {
-            if !point.is_valid() {
-                return false;
+use std::fmt;
+
+/// A [`MultiPoint`] is valid if each [`Point`](crate::Point) in it is valid.
+#[derive(Debug, Clone, PartialEq)]
+pub enum InvalidMultiPoint {
+    /// Which element is invalid, and what was invalid about it.
+    InvalidPoint(GeometryIndex, InvalidPoint),
+}
+
+impl fmt::Display for InvalidMultiPoint {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            InvalidMultiPoint::InvalidPoint(idx, err) => {
+                write!(f, "point at index {} is invalid: {}", idx.0, err)
             }
         }
-        true
     }
+}
 
-    fn explain_invalidity(&self) -> Option<ProblemReport> {
-        let mut reason = Vec::new();
+impl<F: GeoFloat> Validation for MultiPoint<F> {
+    type Error = InvalidMultiPoint;
 
+    fn visit_validation<T>(
+        &self,
+        mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
+    ) -> Result<(), T> {
         for (i, point) in self.0.iter().enumerate() {
-            if utils::check_coord_is_not_finite(&point.0) {
-                reason.push(ProblemAtPosition(
-                    Problem::NotFinite,
-                    ProblemPosition::MultiPoint(GeometryPosition(i)),
-                ));
-            }
+            point.visit_validation(Box::new(&mut |invalid_point| {
+                let err = InvalidMultiPoint::InvalidPoint(GeometryIndex(i), invalid_point);
+                handle_validation_error(err)
+            }))?;
         }
-
-        if reason.is_empty() {
-            None
-        } else {
-            Some(ProblemReport(reason))
-        }
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::{
-        GeometryPosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Validation,
-    };
-    use crate::{MultiPoint, Point};
+    use super::*;
+    use crate::algorithm::validation::{assert_valid, assert_validation_errors};
+    use crate::{geometry::*, wkt};
     use geos::Geom;
 
     #[test]
     fn test_multipoint_valid() {
-        let mp = MultiPoint(vec![Point::new(0., 0.), Point::new(1., 1.)]);
-        assert!(mp.is_valid());
-        assert!(mp.explain_invalidity().is_none());
+        let mp = wkt!(MULTIPOINT(0. 0.,1. 1.));
+        assert_valid!(mp);
 
-        // This multipoint is invalid according to this crate but valid according to GEOS
         let multipoint_geos: geos::Geometry = (&mp).try_into().unwrap();
         assert_eq!(mp.is_valid(), multipoint_geos.is_valid());
     }
@@ -60,19 +59,12 @@ mod tests {
             Point::new(0., f64::INFINITY),
             Point::new(f64::NAN, 1.),
         ]);
-        assert!(!mp.is_valid());
-        assert_eq!(
-            mp.explain_invalidity(),
-            Some(ProblemReport(vec![
-                ProblemAtPosition(
-                    Problem::NotFinite,
-                    ProblemPosition::MultiPoint(GeometryPosition(0))
-                ),
-                ProblemAtPosition(
-                    Problem::NotFinite,
-                    ProblemPosition::MultiPoint(GeometryPosition(1))
-                )
-            ]))
+        assert_validation_errors!(
+            mp,
+            vec![
+                InvalidMultiPoint::InvalidPoint(GeometryIndex(0), InvalidPoint::NonFiniteCoord),
+                InvalidMultiPoint::InvalidPoint(GeometryIndex(1), InvalidPoint::NonFiniteCoord)
+            ]
         );
 
         // Test that this multipoint has the same validity status than its GEOS equivalent

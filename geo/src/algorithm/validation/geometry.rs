@@ -1,33 +1,85 @@
-use super::{ProblemReport, Validation};
+use super::Validation;
+use super::{
+    InvalidGeometryCollection, InvalidLine, InvalidLineString, InvalidMultiLineString,
+    InvalidMultiPoint, InvalidMultiPolygon, InvalidPoint, InvalidPolygon, InvalidRect,
+    InvalidTriangle,
+};
 use crate::{GeoFloat, Geometry};
 
-impl<F: GeoFloat> Validation for Geometry<F> {
-    fn is_valid(&self) -> bool {
+use std::fmt;
+
+/// A [`Geometry`] is valid if it's inner variant is valid.
+/// e.g. `Geometry::Polygon(polygon)` is valid if and only if `polygon` is valid.
+#[derive(Debug, Clone, PartialEq)]
+pub enum InvalidGeometry {
+    InvalidPoint(InvalidPoint),
+    InvalidLine(InvalidLine),
+    InvalidLineString(InvalidLineString),
+    InvalidPolygon(InvalidPolygon),
+    InvalidMultiPoint(InvalidMultiPoint),
+    InvalidMultiLineString(InvalidMultiLineString),
+    InvalidMultiPolygon(InvalidMultiPolygon),
+    InvalidGeometryCollection(InvalidGeometryCollection),
+    InvalidRect(InvalidRect),
+    InvalidTriangle(InvalidTriangle),
+}
+
+impl fmt::Display for InvalidGeometry {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Geometry::Point(e) => e.is_valid(),
-            Geometry::Line(e) => e.is_valid(),
-            Geometry::Rect(e) => e.is_valid(),
-            Geometry::Triangle(e) => e.is_valid(),
-            Geometry::LineString(e) => e.is_valid(),
-            Geometry::Polygon(e) => e.is_valid(),
-            Geometry::MultiPoint(e) => e.is_valid(),
-            Geometry::MultiLineString(e) => e.is_valid(),
-            Geometry::MultiPolygon(e) => e.is_valid(),
-            Geometry::GeometryCollection(e) => e.is_valid(),
+            InvalidGeometry::InvalidPoint(err) => write!(f, "{}", err),
+            InvalidGeometry::InvalidLine(err) => write!(f, "{}", err),
+            InvalidGeometry::InvalidLineString(err) => write!(f, "{}", err),
+            InvalidGeometry::InvalidPolygon(err) => write!(f, "{}", err),
+            InvalidGeometry::InvalidMultiPoint(err) => write!(f, "{}", err),
+            InvalidGeometry::InvalidMultiLineString(err) => write!(f, "{}", err),
+            InvalidGeometry::InvalidMultiPolygon(err) => write!(f, "{}", err),
+            InvalidGeometry::InvalidGeometryCollection(err) => write!(f, "{}", err),
+            InvalidGeometry::InvalidRect(err) => write!(f, "{}", err),
+            InvalidGeometry::InvalidTriangle(err) => write!(f, "{}", err),
         }
     }
-    fn explain_invalidity(&self) -> Option<ProblemReport> {
+}
+
+impl<F: GeoFloat> Validation for Geometry<F> {
+    type Error = InvalidGeometry;
+
+    fn visit_validation<T>(
+        &self,
+        mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
+    ) -> Result<(), T> {
         match self {
-            Geometry::Point(e) => e.explain_invalidity(),
-            Geometry::Line(e) => e.explain_invalidity(),
-            Geometry::Rect(e) => e.explain_invalidity(),
-            Geometry::Triangle(e) => e.explain_invalidity(),
-            Geometry::LineString(e) => e.explain_invalidity(),
-            Geometry::Polygon(e) => e.explain_invalidity(),
-            Geometry::MultiPoint(e) => e.explain_invalidity(),
-            Geometry::MultiLineString(e) => e.explain_invalidity(),
-            Geometry::MultiPolygon(e) => e.explain_invalidity(),
-            Geometry::GeometryCollection(e) => e.explain_invalidity(),
+            Geometry::Point(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidPoint(err))
+            }))?,
+            Geometry::Line(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidLine(err))
+            }))?,
+            Geometry::LineString(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidLineString(err))
+            }))?,
+            Geometry::Polygon(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidPolygon(err))
+            }))?,
+            Geometry::MultiPoint(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidMultiPoint(err))
+            }))?,
+            Geometry::MultiLineString(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidMultiLineString(err))
+            }))?,
+            Geometry::MultiPolygon(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidMultiPolygon(err))
+            }))?,
+            Geometry::GeometryCollection(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidGeometryCollection(err))
+            }))?,
+            Geometry::Rect(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidRect(err))
+            }))?,
+            Geometry::Triangle(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidTriangle(err))
+            }))?,
         }
+        Ok(())
     }
 }

@@ -1,61 +1,62 @@
-use super::{GeometryPosition, ProblemAtPosition, ProblemPosition, ProblemReport, Validation};
+use super::{GeometryIndex, Validation};
+use crate::algorithm::validation::line_string::InvalidLineString;
 use crate::{GeoFloat, MultiLineString};
 
-/// MultiLineString is valid if all its LineStrings are valid.
-impl<F: GeoFloat> Validation for MultiLineString<F> {
-    fn is_valid(&self) -> bool {
-        for line in &self.0 {
-            if !line.is_valid() {
-                return false;
-            }
-        }
-        true
-    }
-    fn explain_invalidity(&self) -> Option<ProblemReport> {
-        let mut reason = Vec::new();
+use std::fmt;
 
-        for (j, line) in self.0.iter().enumerate() {
-            let temp_reason = line.explain_invalidity();
-            if let Some(temp_reason) = temp_reason {
-                for ProblemAtPosition(problem, position) in temp_reason.0 {
-                    match position {
-                        ProblemPosition::LineString(coord_pos) => {
-                            reason.push(ProblemAtPosition(
-                                problem,
-                                ProblemPosition::MultiLineString(GeometryPosition(j), coord_pos),
-                            ));
-                        }
-                        _ => unreachable!(),
-                    }
-                }
+/// A [`MultiLineString`] is valid if each [`LineString`](crate::LineString) in it is valid.
+#[derive(Debug, Clone, PartialEq)]
+pub enum InvalidMultiLineString {
+    /// Which element is invalid, and what was invalid about it.
+    InvalidLineString(GeometryIndex, InvalidLineString),
+}
+
+impl fmt::Display for InvalidMultiLineString {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            InvalidMultiLineString::InvalidLineString(idx, err) => {
+                write!(f, "line string at index {} is invalid: {}", idx.0, err)
             }
         }
-        // Return the reason(s) of invalidity, or None if valid
-        if reason.is_empty() {
-            None
-        } else {
-            Some(ProblemReport(reason))
+    }
+}
+
+impl<F: GeoFloat> Validation for MultiLineString<F> {
+    type Error = InvalidMultiLineString;
+
+    fn visit_validation<T>(
+        &self,
+        mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
+    ) -> Result<(), T> {
+        for (i, line_string) in self.0.iter().enumerate() {
+            line_string.visit_validation(Box::new(&mut |line_string_err| {
+                let err =
+                    InvalidMultiLineString::InvalidLineString(GeometryIndex(i), line_string_err);
+                handle_validation_error(err)
+            }))?;
         }
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::{
-        CoordinatePosition, GeometryPosition, Problem, ProblemAtPosition, ProblemPosition,
-        ProblemReport, Validation,
+    use super::*;
+    use crate::algorithm::validation::{
+        assert_valid, assert_validation_errors, InvalidLineString, InvalidMultiLineString,
     };
-    use crate::{Coord, LineString, MultiLineString};
+    use crate::wkt;
     use geos::Geom;
 
     #[test]
     fn test_multilinestring_valid() {
-        let mls = MultiLineString(vec![
-            LineString(vec![Coord { x: 0., y: 0. }, Coord { x: 1., y: 1. }]),
-            LineString(vec![Coord { x: 3., y: 1. }, Coord { x: 4., y: 1. }]),
-        ]);
-        assert!(mls.is_valid());
-        assert!(mls.explain_invalidity().is_none());
+        let mls = wkt!(
+            MULTILINESTRING(
+                (0. 0.,1. 1.),
+                (3. 1.,4. 1.)
+            )
+        );
+        assert_valid!(mls);
 
         // Test that the linestring has the same validity status than its GEOS equivalent
         let multilinestring_geos: geos::Geometry = (&mls).try_into().unwrap();
@@ -66,17 +67,18 @@ mod tests {
     fn test_multilinestring_invalid_too_few_points_with_duplicate() {
         // The second LineString (at position 1) of this MultiLineString
         // is not valid because it has only one (deduplicated) point
-        let mls = MultiLineString(vec![
-            LineString(vec![Coord { x: 0., y: 0. }, Coord { x: 1., y: 1. }]),
-            LineString(vec![Coord { x: 0., y: 0. }, Coord { x: 0., y: 0. }]),
-        ]);
-        assert!(!mls.is_valid());
-        assert_eq!(
-            mls.explain_invalidity(),
-            Some(ProblemReport(vec![ProblemAtPosition(
-                Problem::TooFewPoints,
-                ProblemPosition::MultiLineString(GeometryPosition(1), CoordinatePosition(0))
-            )]))
+        let mls = wkt!(
+            MULTILINESTRING(
+                (0. 0.,1. 1.),
+                (0. 0.,0. 0.)
+            )
+        );
+        assert_validation_errors!(
+            mls,
+            vec![InvalidMultiLineString::InvalidLineString(
+                GeometryIndex(1),
+                InvalidLineString::TooFewPoints
+            )]
         );
 
         // Test that the linestring has the same validity status than its GEOS equivalent

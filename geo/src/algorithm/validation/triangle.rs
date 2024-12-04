@@ -1,138 +1,112 @@
-use super::{
-    utils, CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport,
-    Validation,
-};
+use super::{utils, CoordIndex, Validation};
 use crate::{CoordFloat, Triangle};
 
-/// As stated in geo-types/src/geometry/triangles.rs,
-/// "the three vertices must not be collinear and they must be distinct"
-impl<T> Validation for Triangle<T>
-where
-    T: CoordFloat,
-{
-    fn is_valid(&self) -> bool {
-        if utils::check_coord_is_not_finite(&self.0)
-            || utils::check_coord_is_not_finite(&self.1)
-            || utils::check_coord_is_not_finite(&self.2)
-        {
-            return false;
-        }
+use std::fmt;
 
-        if self.0 == self.1 || self.1 == self.2 || self.2 == self.0 {
-            return false;
-        }
+#[derive(Debug, Clone, PartialEq)]
+pub enum InvalidTriangle {
+    /// A valid [`Triangle`] must have finite coordinates.
+    NonFiniteCoord(CoordIndex),
+    /// A valid [`Triangle`] must have distinct points.
+    IdenticalCoords(CoordIndex, CoordIndex),
+    /// A valid [`Triangle`] must have non-collinear points.
+    CollinearCoords,
+}
 
-        if utils::robust_check_points_are_collinear::<T>(&self.0, &self.1, &self.2) {
-            return false;
+impl fmt::Display for InvalidTriangle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            InvalidTriangle::NonFiniteCoord(idx) => {
+                write!(f, "coordinate at index {} is non-finite", idx.0)
+            }
+            InvalidTriangle::IdenticalCoords(idx1, idx2) => {
+                write!(
+                    f,
+                    "coordinates at indices {} and {} are identical",
+                    idx1.0, idx2.0
+                )
+            }
+            InvalidTriangle::CollinearCoords => write!(f, "triangle has collinear coordinates"),
         }
-        true
     }
-    fn explain_invalidity(&self) -> Option<ProblemReport> {
-        let mut reason = Vec::new();
+}
 
+impl<F: CoordFloat> Validation for Triangle<F> {
+    type Error = InvalidTriangle;
+
+    fn visit_validation<T>(
+        &self,
+        mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
+    ) -> Result<(), T> {
         if utils::check_coord_is_not_finite(&self.0) {
-            reason.push(ProblemAtPosition(
-                Problem::NotFinite,
-                ProblemPosition::Triangle(CoordinatePosition(0)),
-            ));
+            handle_validation_error(InvalidTriangle::NonFiniteCoord(CoordIndex(0)))?;
         }
         if utils::check_coord_is_not_finite(&self.1) {
-            reason.push(ProblemAtPosition(
-                Problem::NotFinite,
-                ProblemPosition::Triangle(CoordinatePosition(1)),
-            ));
+            handle_validation_error(InvalidTriangle::NonFiniteCoord(CoordIndex(1)))?;
         }
         if utils::check_coord_is_not_finite(&self.2) {
-            reason.push(ProblemAtPosition(
-                Problem::NotFinite,
-                ProblemPosition::Triangle(CoordinatePosition(2)),
-            ));
+            handle_validation_error(InvalidTriangle::NonFiniteCoord(CoordIndex(2)))?;
         }
 
         // We wont check if the points are collinear if they are identical
         let mut identical = false;
 
-        if self.0 == self.1 || self.0 == self.2 {
-            reason.push(ProblemAtPosition(
-                Problem::IdenticalCoords,
-                ProblemPosition::Triangle(CoordinatePosition(0)),
-            ));
+        if self.0 == self.1 {
+            handle_validation_error(InvalidTriangle::IdenticalCoords(
+                CoordIndex(0),
+                CoordIndex(1),
+            ))?;
             identical = true;
         }
-
+        if self.0 == self.2 {
+            handle_validation_error(InvalidTriangle::IdenticalCoords(
+                CoordIndex(0),
+                CoordIndex(2),
+            ))?;
+            identical = true;
+        }
         if self.1 == self.2 {
-            reason.push(ProblemAtPosition(
-                Problem::IdenticalCoords,
-                ProblemPosition::Triangle(CoordinatePosition(1)),
-            ));
+            handle_validation_error(InvalidTriangle::IdenticalCoords(
+                CoordIndex(1),
+                CoordIndex(2),
+            ))?;
             identical = true;
         }
 
-        if !identical && utils::robust_check_points_are_collinear::<T>(&self.0, &self.1, &self.2) {
-            reason.push(ProblemAtPosition(
-                Problem::CollinearCoords,
-                ProblemPosition::Triangle(CoordinatePosition(-1)),
-            ));
+        if !identical && utils::robust_check_points_are_collinear::<F>(&self.0, &self.1, &self.2) {
+            handle_validation_error(InvalidTriangle::CollinearCoords)?;
         }
 
-        if reason.is_empty() {
-            None
-        } else {
-            Some(ProblemReport(reason))
-        }
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::{
-        CoordinatePosition, Problem, ProblemAtPosition, ProblemPosition, ProblemReport, Validation,
-    };
-    use crate::Triangle;
+    use super::*;
+    use crate::algorithm::validation::{assert_valid, assert_validation_errors};
 
     #[test]
     fn test_triangle_valid() {
         let t = Triangle((0., 0.).into(), (0., 1.).into(), (0.5, 2.).into());
-        assert!(t.is_valid());
-        assert!(t.explain_invalidity().is_none());
+        assert_valid!(t);
     }
 
     #[test]
     fn test_triangle_invalid_same_points() {
         let t = Triangle((0., 0.).into(), (0., 1.).into(), (0., 1.).into());
-        assert!(!t.is_valid());
-        assert_eq!(
-            t.explain_invalidity(),
-            Some(ProblemReport(vec![ProblemAtPosition(
-                Problem::IdenticalCoords,
-                ProblemPosition::Triangle(CoordinatePosition(1)),
-            )]))
+        assert_validation_errors!(
+            t,
+            vec![InvalidTriangle::IdenticalCoords(
+                CoordIndex(1),
+                CoordIndex(2)
+            )]
         );
     }
 
     #[test]
     fn test_triangle_invalid_points_collinear() {
         let t = Triangle((0., 0.).into(), (1., 1.).into(), (2., 2.).into());
-        assert!(!t.is_valid());
-        assert_eq!(
-            t.explain_invalidity(),
-            Some(ProblemReport(vec![ProblemAtPosition(
-                Problem::CollinearCoords,
-                ProblemPosition::Triangle(CoordinatePosition(-1)),
-            )]))
-        );
+        assert_validation_errors!(t, vec![InvalidTriangle::CollinearCoords]);
     }
-
-    // #[test]
-    // fn test_triangle_invalid_points_collinear2() {
-    //     let t = Triangle((0, 0).into(), (1, 1).into(), (2, 2).into());
-    //     assert!(!t.is_valid());
-    //     assert_eq!(
-    //         t.explain_invalidity(),
-    //         Some(vec![ProblemAtPosition(
-    //             Problem::CollinearCoords,
-    //             ProblemPosition::Triangle(CoordinatePosition(-1)),
-    //         )])
-    //     );
-    // }
 }

@@ -1,12 +1,6 @@
-//! # geo-validity-check
+//! Provides a way to check the validity of geometries, based on the [OGC Simple Feature Access - Part 1: Common Architecture standard].
 //!
-//! This crate provides a way to check the validity of [geo-types](https://docs.rs/geo-types) geometries by implementing the Valid trait for all
-//! the geometries in geo-types.
-//!
-//! The Valid trait provides two methods:
-//! - `is_valid()` which returns a boolean,
-//! - `explain_invalidity()` which returns a ProblemReport (a vector of problems, each one with its position in the geometry) that implements the Display trait.
-//!
+//! [OGC Simple Feature Access - Part 1: Common Architecture standard]: https://www.ogc.org/standards/sfa
 mod coord;
 mod geometry;
 mod geometry_collection;
@@ -23,232 +17,138 @@ mod tests;
 mod triangle;
 mod utils;
 
-use std::boxed::Box;
-use std::fmt::Display;
+pub use geometry::InvalidGeometry;
+pub use geometry_collection::InvalidGeometryCollection;
+pub use line::InvalidLine;
+pub use line_string::InvalidLineString;
+pub use multi_line_string::InvalidMultiLineString;
+pub use multi_point::InvalidMultiPoint;
+pub use multi_polygon::InvalidMultiPolygon;
+pub use point::InvalidPoint;
+pub use polygon::InvalidPolygon;
+pub use rect::InvalidRect;
+pub use triangle::InvalidTriangle;
 
-#[derive(Debug, PartialEq)]
-/// The role of a ring in a polygon.
+use std::boxed::Box;
+use std::fmt;
+
+/// A trait to check if a geometry is valid and report the reason(s) of invalidity.
+///
+/// ```
+/// use geo::algorithm::Validation;
+/// use geo::wkt;
+///
+/// let valid_polygon = wkt!(POLYGON((0. 0., 1. 1., 1. 0., 0. 0.)));
+/// assert!(valid_polygon.is_valid());
+///
+/// let invalid_polygon = wkt!(POLYGON((0. 0., 1. 1.),(3. 3., 3. 4.,4. 4.)));
+/// assert!(!invalid_polygon.is_valid());
+///
+/// // Get the first validation error, as a `Result`
+/// let validation_error = invalid_polygon.check_validation().unwrap_err();
+/// use geo::algorithm::validation::{InvalidPolygon, RingRole};
+/// assert_eq!(validation_error, InvalidPolygon::TooFewPointsInRing(RingRole::Exterior));
+///
+/// // Get a human readable error
+/// let text = validation_error.to_string();
+/// assert_eq!(text, "exterior ring must have at least 3 distinct points");
+//
+/// // Get all validation errors
+/// let all_validation_errors = invalid_polygon.validation_errors();
+/// assert_eq!(all_validation_errors.len(), 2);
+/// assert_eq!(all_validation_errors[0].to_string(), "exterior ring must have at least 3 distinct points");
+/// assert_eq!(all_validation_errors[1].to_string(), "interior ring at index 0 is not contained within the polygon's exterior");
+/// ```
+pub trait Validation {
+    type Error: fmt::Debug + fmt::Display;
+
+    /// Check if the geometry is valid.
+    fn is_valid(&self) -> bool {
+        self.check_validation().is_ok()
+    }
+
+    /// Return the reason(s) of invalidity of the geometry.
+    ///
+    /// Though we try to return *all* problems with a geometry, it's possible that previous errors
+    /// will obscure subsequent errors. For example, a MultiPolygon requires all its elements to be
+    /// valid and non-overlapping. If one of the individual polygons is invalid, we can't guarantee
+    /// the correctness of their "overlap" check which assumes valid input. Therefore, you should
+    /// re-validate after attempting to correct any validation errors.
+    fn validation_errors(&self) -> Vec<Self::Error> {
+        let mut validation_errors = Vec::new();
+
+        self.visit_validation(Box::new(|problem| {
+            validation_errors.push(problem);
+            Ok::<(), Self::Error>(())
+        }))
+        .expect("no errors are returned");
+
+        validation_errors
+    }
+
+    /// Return the first reason of invalidity of the geometry.
+    fn check_validation(&self) -> Result<(), Self::Error> {
+        self.visit_validation(Box::new(Err))
+    }
+
+    /// Visit the validation of the geometry.
+    ///
+    /// The closure `handle_validation_error` is called for each validation error.
+    fn visit_validation<T>(
+        &self,
+        handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
+    ) -> Result<(), T>;
+}
+
+/// The role of a ring in a [`Polygon`](crate::Polygon).
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum RingRole {
     Exterior,
     Interior(usize),
 }
 
-impl std::fmt::Display for RingRole {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for RingRole {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             RingRole::Exterior => write!(f, "exterior ring"),
-            RingRole::Interior(i) => write!(f, "interior ring n°{}", i),
+            RingRole::Interior(idx) => write!(f, "interior ring at index {}", idx),
         }
     }
 }
 
-#[derive(Debug, PartialEq)]
 /// The position of the problem in a multi-geometry, starting at 0.
-pub struct GeometryPosition(usize);
+#[derive(Debug, PartialEq, Clone)]
+pub struct GeometryIndex(usize);
 
-#[derive(Debug, PartialEq)]
-/// The coordinate position of the problem in the geometry.
-/// If the value is 0 or more, it is the index of the coordinate.
-/// If the value is -1 it indicates that the coordinate position is not relevant or unknown.
-pub struct CoordinatePosition(isize);
+/// The index of the coordinate in the geometry
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct CoordIndex(usize);
 
-#[derive(Debug, PartialEq)]
-/// The position of the problem in the geometry.
-pub enum ProblemPosition {
-    Point,
-    Line(CoordinatePosition),
-    Triangle(CoordinatePosition),
-    Rect(CoordinatePosition),
-    MultiPoint(GeometryPosition),
-    LineString(CoordinatePosition),
-    MultiLineString(GeometryPosition, CoordinatePosition),
-    Polygon(RingRole, CoordinatePosition),
-    MultiPolygon(GeometryPosition, RingRole, CoordinatePosition),
-    GeometryCollection(GeometryPosition, Box<ProblemPosition>),
-}
+#[cfg(test)]
+pub(crate) use test_macros::*;
 
-#[derive(Debug, PartialEq)]
-/// The type of problem encountered.
-pub enum Problem {
-    /// A coordinate is not finite (NaN or infinite)
-    NotFinite,
-    /// A LineString or a Polygon ring has too few points
-    TooFewPoints,
-    /// Identical coords
-    IdenticalCoords,
-    /// Collinear coords
-    CollinearCoords,
-    /// A ring has a self-intersection
-    SelfIntersection,
-    /// Two interior rings of a Polygon share a common line
-    IntersectingRingsOnALine,
-    /// Two interior rings of a Polygon share a common area
-    IntersectingRingsOnAnArea,
-    /// The interior ring of a Polygon is not contained in the exterior ring
-    InteriorRingNotContainedInExteriorRing,
-    /// Two Polygons of a MultiPolygon overlap partially
-    ElementsOverlaps,
-    /// Two Polygons of a MultiPolygon touch on a line
-    ElementsTouchOnALine,
-    /// Two Polygons of a MultiPolygon are identical
-    ElementsAreIdentical,
-}
-
-#[derive(Debug, PartialEq)]
-/// A problem, at a given position, encountered when checking the validity of a geometry.
-pub struct ProblemAtPosition(pub Problem, pub ProblemPosition);
-
-impl Display for ProblemAtPosition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} at {:?}", self.0, self.1)
+#[cfg(test)]
+mod test_macros {
+    macro_rules! assert_valid {
+        ($to_validate:expr) => {
+            assert!(
+                $to_validate.is_valid(),
+                "Validation errors: {:?}",
+                $to_validate.validation_errors()
+            );
+        };
     }
-}
+    pub(crate) use assert_valid;
 
-/// All the problems encountered when checking the validity of a geometry.
-#[derive(Debug, PartialEq)]
-pub struct ProblemReport(pub Vec<ProblemAtPosition>);
-
-impl Display for ProblemPosition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut str_buffer: Vec<String> = Vec::new();
-        match self {
-            ProblemPosition::Point => str_buffer.push(String::new()),
-            ProblemPosition::LineString(coord) => {
-                if coord.0 == -1 {
-                    str_buffer.push(String::new())
-                } else {
-                    str_buffer.push(format!(" at coordinate {} of the LineString", coord.0))
-                }
-            }
-            ProblemPosition::Triangle(coord) => {
-                if coord.0 == -1 {
-                    str_buffer.push(String::new())
-                } else {
-                    str_buffer.push(format!(" at coordinate {} of the Triangle", coord.0))
-                }
-            }
-            ProblemPosition::Polygon(ring_role, coord) => {
-                if coord.0 == -1 {
-                    str_buffer.push(format!(" on the {}", ring_role))
-                } else {
-                    str_buffer.push(format!(" at coordinate {} of the {}", coord.0, ring_role))
-                }
-            }
-            ProblemPosition::MultiPolygon(geom_number, ring_role, coord) => {
-                if coord.0 == -1 {
-                    str_buffer.push(format!(
-                        " on the {} of the Polygon n°{} of the MultiPolygon",
-                        ring_role, geom_number.0
-                    ))
-                } else {
-                    str_buffer.push(format!(
-                        " at coordinate {} of the {} of the Polygon n°{} of the MultiPolygon",
-                        coord.0, ring_role, geom_number.0
-                    ))
-                }
-            }
-            ProblemPosition::MultiLineString(geom_number, coord) => {
-                if coord.0 == -1 {
-                    str_buffer.push(format!(
-                        " on the LineString n°{} of the MultiLineString",
-                        geom_number.0
-                    ))
-                } else {
-                    str_buffer.push(format!(
-                        " at coordinate {} of the LineString n°{} of the MultiLineString",
-                        coord.0, geom_number.0
-                    ))
-                }
-            }
-            ProblemPosition::MultiPoint(geom_number) => str_buffer.push(format!(
-                " on the Point n°{} of the MultiPoint",
-                geom_number.0
-            )),
-            ProblemPosition::GeometryCollection(geom_number, problem_position) => {
-                str_buffer.push(format!(
-                    "{} of the geometry n°{} of the GeometryCollection",
-                    *problem_position, geom_number.0
-                ));
-            }
-            ProblemPosition::Rect(coord) => {
-                if coord.0 == -1 {
-                    str_buffer.push(String::new())
-                } else {
-                    str_buffer.push(format!(" at coordinate {} of the Rect", coord.0))
-                }
-            }
-            ProblemPosition::Line(coord) => {
-                if coord.0 == -1 {
-                    str_buffer.push(String::new())
-                } else {
-                    str_buffer.push(format!(" at coordinate {} of the Line", coord.0))
-                }
-            }
-        }
-        write!(f, "{}", str_buffer.join(""))
+    macro_rules! assert_validation_errors {
+        ($to_validate:expr, $errors:expr) => {
+            assert!(!$to_validate.is_valid());
+            assert!(
+                !$errors.is_empty(),
+                "Use `assert_valid!` instead to verify there are no errors."
+            );
+            assert_eq!($errors, $to_validate.validation_errors());
+        };
     }
-}
-
-impl Display for ProblemReport {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let buffer =
-            self.0
-                .iter()
-                .map(|p| {
-                    let (problem, position) = (&p.0, &p.1);
-                    let mut str_buffer: Vec<String> = Vec::new();
-                    let is_polygon = matches!(
-                        position,
-                        ProblemPosition::Polygon(_, _) | ProblemPosition::MultiPolygon(_, _, _)
-                    );
-
-                    str_buffer.push(format!("{}", position));
-
-                    match *problem {
-                        Problem::NotFinite => str_buffer
-                            .push("Coordinate is not finite (NaN or infinite)".to_string()),
-                        Problem::TooFewPoints => {
-                            if is_polygon {
-                                str_buffer.push("Polygon ring has too few points".to_string())
-                            } else {
-                                str_buffer.push("LineString has too few points".to_string())
-                            }
-                        }
-                        Problem::IdenticalCoords => str_buffer.push("Identical coords".to_string()),
-                        Problem::CollinearCoords => str_buffer.push("Collinear coords".to_string()),
-                        Problem::SelfIntersection => {
-                            str_buffer.push("Ring has a self-intersection".to_string())
-                        }
-                        Problem::IntersectingRingsOnALine => str_buffer.push(
-                            "Two interior rings of a Polygon share a common line".to_string(),
-                        ),
-                        Problem::IntersectingRingsOnAnArea => str_buffer.push(
-                            "Two interior rings of a Polygon share a common area".to_string(),
-                        ),
-                        Problem::InteriorRingNotContainedInExteriorRing => str_buffer.push(
-                            "The interior ring of a Polygon is not contained in the exterior ring"
-                                .to_string(),
-                        ),
-                        Problem::ElementsOverlaps => str_buffer
-                            .push("Two Polygons of MultiPolygons overlap partially".to_string()),
-                        Problem::ElementsTouchOnALine => str_buffer
-                            .push("Two Polygons of MultiPolygons touch on a line".to_string()),
-                        Problem::ElementsAreIdentical => str_buffer
-                            .push("Two Polygons of MultiPolygons are identical".to_string()),
-                    };
-                    str_buffer.into_iter().rev().collect::<Vec<_>>().join("")
-                })
-                .collect::<Vec<String>>()
-                .join("\n");
-
-        write!(f, "{}", buffer)
-    }
-}
-
-/// A trait to check if a geometry is valid and report the reason(s) of invalidity.
-pub trait Validation {
-    /// Check if the geometry is valid.
-    fn is_valid(&self) -> bool;
-    /// Return the reason(s) of invalidity of the geometry, or None if valid.
-    fn explain_invalidity(&self) -> Option<ProblemReport>;
+    pub(crate) use assert_validation_errors;
 }

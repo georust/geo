@@ -8,18 +8,6 @@ pub(crate) fn check_coord_is_not_finite<T: CoordFloat>(geom: &Coord<T>) -> bool 
     true
 }
 
-// pub(crate) fn check_points_are_collinear<T: CoordNum + Float>(p0: &Coord<T>, p1: &Coord<T>, p2: &Coord<T>) -> bool {
-//     let a = p1.x - p0.x;
-//     let b = p1.y - p0.y;
-//     let c = p2.x - p0.x;
-//     let d = p2.y - p0.y;
-//     let det = a * d - b * c;
-//     if det.abs() < T::from(1e-10).unwrap() {
-//         return true;
-//     }
-//     false
-// }
-
 pub(crate) fn robust_check_points_are_collinear<T: CoordFloat>(
     p0: &Coord<T>,
     p1: &Coord<T>,
