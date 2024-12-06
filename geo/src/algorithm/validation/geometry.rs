@@ -6,6 +6,7 @@ use super::{
 };
 use crate::{GeoFloat, Geometry};
 
+use crate::geometry_cow::GeometryCow;
 use std::fmt;
 
 /// A [`Geometry`] is valid if it's inner variant is valid.
@@ -77,6 +78,49 @@ impl<F: GeoFloat> Validation for Geometry<F> {
                 handle_validation_error(InvalidGeometry::InvalidRect(err))
             }))?,
             Geometry::Triangle(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidTriangle(err))
+            }))?,
+        }
+        Ok(())
+    }
+}
+
+impl<F: GeoFloat> Validation for GeometryCow<'_, F> {
+    type Error = InvalidGeometry;
+
+    fn visit_validation<T>(
+        &self,
+        mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
+    ) -> Result<(), T> {
+        match self {
+            GeometryCow::Point(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidPoint(err))
+            }))?,
+            GeometryCow::Line(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidLine(err))
+            }))?,
+            GeometryCow::LineString(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidLineString(err))
+            }))?,
+            GeometryCow::Polygon(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidPolygon(err))
+            }))?,
+            GeometryCow::MultiPoint(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidMultiPoint(err))
+            }))?,
+            GeometryCow::MultiLineString(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidMultiLineString(err))
+            }))?,
+            GeometryCow::MultiPolygon(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidMultiPolygon(err))
+            }))?,
+            GeometryCow::GeometryCollection(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidGeometryCollection(err))
+            }))?,
+            GeometryCow::Rect(g) => g.visit_validation(Box::new(|err| {
+                handle_validation_error(InvalidGeometry::InvalidRect(err))
+            }))?,
+            GeometryCow::Triangle(g) => g.visit_validation(Box::new(|err| {
                 handle_validation_error(InvalidGeometry::InvalidTriangle(err))
             }))?,
         }
