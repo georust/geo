@@ -131,6 +131,24 @@ pub(crate) use test_macros::*;
 mod test_macros {
     macro_rules! assert_valid {
         ($to_validate:expr) => {
+            assert_valid!(
+                $to_validate,
+                compare_with_geos: true
+            );
+        };
+        ($to_validate:expr, compare_with_geos: true) => {
+            assert_valid!(
+                $to_validate,
+                compare_with_geos: false
+            );
+            #[cfg(feature = "geos-tests")]
+            {
+                use geos::Geom;
+                let geos_geom: geos::Geometry = $to_validate.try_into().unwrap();
+                assert!(geos_geom.is_valid(), "GEOS thought the geometry was invalid");
+            }
+        };
+        ($to_validate:expr, compare_with_geos: false) => {
             assert!(
                 $to_validate.is_valid(),
                 "Validation errors: {:?}",
@@ -142,6 +160,26 @@ mod test_macros {
 
     macro_rules! assert_validation_errors {
         ($to_validate:expr, $errors:expr) => {
+            assert_validation_errors!(
+                $to_validate,
+                $errors,
+                compare_with_geos: true
+            );
+        };
+        ($to_validate:expr, $errors:expr, compare_with_geos: true) => {
+             assert_validation_errors!(
+                $to_validate,
+                $errors,
+                compare_with_geos: false
+            );
+            #[cfg(feature = "geos-tests")]
+            {
+                use geos::Geom;
+                let geos_geom: geos::Geometry = $to_validate.try_into().unwrap();
+                assert!(!geos_geom.is_valid(), "GEOS thought the geometry was valid");
+            }
+        };
+         ($to_validate:expr, $errors:expr, compare_with_geos: false) => {
             assert!(!$to_validate.is_valid());
             assert!(
                 !$errors.is_empty(),

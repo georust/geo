@@ -159,7 +159,6 @@ mod tests {
     use super::*;
     use crate::algorithm::validation::{assert_valid, assert_validation_errors};
     use crate::wkt;
-    use geos::Geom;
 
     #[test]
     fn test_polygon_valid() {
@@ -169,10 +168,6 @@ mod tests {
             POLYGON((0. 0., 1. 1., 0. 1.))
         );
         assert_valid!(&polygon);
-
-        // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
-        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
@@ -187,10 +182,6 @@ mod tests {
             )
         );
         assert_valid!(&polygon);
-
-        // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
-        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
@@ -205,10 +196,6 @@ mod tests {
             )
         );
         assert_valid!(&polygon);
-
-        // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
-        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
@@ -224,23 +211,19 @@ mod tests {
         );
 
         assert_validation_errors!(
-            polygon,
+            &polygon,
             vec![InvalidPolygon::IntersectingRingsOnALine(
                 RingRole::Interior(0),
                 RingRole::Interior(1)
             )]
         );
-
-        // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
-        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
     fn test_polygon_invalid_interior_rings_crosses() {
         // The following polygon contains two interior rings that cross
         // each other (they share some common area), this is not valid.
-        let p = wkt!(
+        let polygon = wkt!(
             POLYGON(
                 (0. 0., 4. 0.,  4. 4.,   0. 4.,  0. 0.),
                 (1. 2., 2. 1.,  3. 2.,   2. 3.,  1. 2.),
@@ -249,16 +232,12 @@ mod tests {
         );
 
         assert_validation_errors!(
-            p,
+            &polygon,
             vec![InvalidPolygon::IntersectingRingsOnAnArea(
                 RingRole::Interior(0),
                 RingRole::Interior(1)
             )]
         );
-
-        // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&p).try_into().unwrap();
-        assert_eq!(p.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
@@ -275,16 +254,12 @@ mod tests {
         );
 
         assert_validation_errors!(
-            polygon,
+            &polygon,
             vec![InvalidPolygon::IntersectingRingsOnALine(
                 RingRole::Exterior,
                 RingRole::Interior(0)
             )]
         );
-
-        // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
-        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
@@ -294,13 +269,9 @@ mod tests {
         // to be a non-empty polygon
         let polygon = wkt!( POLYGON((0. 0., 1. 1.)) );
         assert_validation_errors!(
-            polygon,
+            &polygon,
             vec![InvalidPolygon::TooFewPointsInRing(RingRole::Exterior)]
         );
-
-        // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
-        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
@@ -313,29 +284,21 @@ mod tests {
         );
 
         assert_validation_errors!(
-            polygon,
+            &polygon,
             vec![InvalidPolygon::SelfIntersection(RingRole::Exterior)]
         );
-
-        // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
-        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
     fn test_polygon_invalid_exterior_is_not_simple() {
         // The exterior ring of this polygon is not simple (i.e. it has a self-intersection)
-        let p = wkt!(
+        let polygon = wkt!(
             POLYGON((0. 0., 4. 0., 0. 2., 4. 2., 0. 0.))
         );
         assert_validation_errors!(
-            p,
+            &polygon,
             vec![InvalidPolygon::SelfIntersection(RingRole::Exterior)]
         );
-
-        // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&p).try_into().unwrap();
-        assert_eq!(p.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
@@ -347,15 +310,11 @@ mod tests {
             )
         );
         assert_validation_errors!(
-            polygon,
+            &polygon,
             vec![InvalidPolygon::InteriorRingNotContainedInExteriorRing(
                 RingRole::Interior(0)
             ),]
         );
-
-        // Test that the polygon has the same validity status than its GEOS equivalent
-        let polygon_geos: geos::Geometry = (&polygon).try_into().unwrap();
-        assert_eq!(polygon.is_valid(), polygon_geos.is_valid());
     }
 
     #[test]
@@ -395,11 +354,5 @@ mod tests {
                 RingRole::Interior(1)
             )]
         );
-
-        // Test that the polygons have the same validity status than their GEOS equivalents
-        let polygon_geos1: geos::Geometry = (&polygon_1).try_into().unwrap();
-        let polygon_geos2: geos::Geometry = (&polygon_2).try_into().unwrap();
-        assert_eq!(polygon_1.is_valid(), polygon_geos1.is_valid());
-        assert_eq!(polygon_2.is_valid(), polygon_geos2.is_valid());
     }
 }

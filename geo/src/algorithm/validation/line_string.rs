@@ -56,44 +56,30 @@ mod tests {
     use super::*;
     use crate::algorithm::validation::{assert_valid, assert_validation_errors};
     use crate::wkt;
-    use geos::Geom;
 
     #[test]
     fn test_linestring_valid() {
         let ls = wkt!(LINESTRING(0. 0., 1. 1.));
-        assert_valid!(ls);
-
-        // Test that the linestring has the same validity status than its GEOS equivalent
-        let linestring_geos: geos::Geometry = (&ls).try_into().unwrap();
-        assert_eq!(ls.is_valid(), linestring_geos.is_valid());
+        assert_valid!(&ls);
     }
 
     #[test]
     fn test_linestring_valid_empty() {
-        let ls = wkt!(LINESTRING EMPTY);
-        assert_valid!(ls);
-
-        let linestring_geos: geos::Geometry = (&ls).try_into().unwrap();
-        assert_eq!(ls.is_valid(), linestring_geos.is_valid());
+        let ls: LineString = wkt!(LINESTRING EMPTY);
+        assert_valid!(&ls);
     }
 
     #[test]
     fn test_linestring_invalid_too_few_points_without_duplicate() {
         let ls = wkt!(LINESTRING(0. 0.));
-        assert_validation_errors!(ls, vec![InvalidLineString::TooFewPoints]);
-
-        // Creating this linestring with geos fails (as soon as its creation is attempted)
-        let linestring_geos: geos::GResult<geos::Geometry> = ls.try_into();
-        assert!(linestring_geos.is_err());
+        // NOTE: Rather than build an invalid LineString GEOS errors at construction time, so
+        // we can't compare with GEOS here.
+        assert_validation_errors!(&ls, vec![InvalidLineString::TooFewPoints], compare_with_geos: false);
     }
 
     #[test]
     fn test_linestring_invalid_too_few_points_with_duplicate() {
         let ls = wkt!(LINESTRING(0. 0.,0. 0.));
-        assert_validation_errors!(ls, vec![InvalidLineString::TooFewPoints]);
-
-        // Test that the linestring has the same validity status than its GEOS equivalent
-        let linestring_geos: geos::Geometry = (&ls).try_into().unwrap();
-        assert_eq!(ls.is_valid(), linestring_geos.is_valid());
+        assert_validation_errors!(&ls, vec![InvalidLineString::TooFewPoints]);
     }
 }

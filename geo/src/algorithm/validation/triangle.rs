@@ -89,24 +89,28 @@ mod tests {
     #[test]
     fn test_triangle_valid() {
         let t = Triangle((0., 0.).into(), (0., 1.).into(), (0.5, 2.).into());
-        assert_valid!(t);
+        // GEOS doesn't have a Triangle type
+        assert_valid!(t, compare_with_geos: false);
     }
 
     #[test]
     fn test_triangle_invalid_same_points() {
         let t = Triangle((0., 0.).into(), (0., 1.).into(), (0., 1.).into());
+        // GEOS doesn't have a Triangle type
         assert_validation_errors!(
             t,
             vec![InvalidTriangle::IdenticalCoords(
                 CoordIndex(1),
                 CoordIndex(2)
-            )]
+            )],
+            compare_with_geos: false
         );
     }
 
     #[test]
     fn test_triangle_invalid_points_collinear() {
         let t = Triangle((0., 0.).into(), (1., 1.).into(), (2., 2.).into());
-        assert_validation_errors!(t, vec![InvalidTriangle::CollinearCoords]);
+        // GEOS doesn't have a Triangle type
+        assert_validation_errors!(t, vec![InvalidTriangle::CollinearCoords], compare_with_geos: false);
     }
 }

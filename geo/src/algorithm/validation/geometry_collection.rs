@@ -45,9 +45,7 @@ impl<F: GeoFloat> Validation for GeometryCollection<F> {
 mod tests {
     use super::*;
     use crate::algorithm::validation::{assert_validation_errors, InvalidLineString};
-    use crate::{geometry::*, wkt};
-
-    use geos::Geom;
+    use crate::wkt;
 
     #[test]
     fn test_geometrycollection_contain_invalid_element() {
@@ -58,6 +56,7 @@ mod tests {
                 LINESTRING(0. 0.,0. 0.)
             )
         );
+        // the geos crate doesn't support converting geo::GeometryCollection to -> geos::Geom
         assert_validation_errors!(
             gc,
             vec![InvalidGeometryCollection::InvalidGeometry(
@@ -65,21 +64,9 @@ mod tests {
                 Box::new(InvalidGeometry::InvalidLineString(
                     InvalidLineString::TooFewPoints
                 )),
-            )]
+            )],
+            compare_with_geos: false
         );
-
-        let geoms =
-            gc.0.iter()
-                .map(|geometry| match geometry {
-                    Geometry::Point(pt) => pt.try_into().unwrap(),
-                    Geometry::LineString(ls) => ls.try_into().unwrap(),
-                    _ => unreachable!(),
-                })
-                .collect::<Vec<geos::Geometry>>();
-
-        let geometrycollection_geos: geos::Geometry =
-            geos::Geometry::create_geometry_collection(geoms).unwrap();
-        assert_eq!(gc.is_valid(), geometrycollection_geos.is_valid());
     }
 
     #[test]

@@ -82,7 +82,6 @@ mod tests {
     use super::*;
     use crate::algorithm::validation::RingRole;
     use crate::wkt;
-    use geos::Geom;
 
     #[test]
     fn test_multipolygon_invalid() {
@@ -102,7 +101,7 @@ mod tests {
             )
         );
         assert_validation_errors!(
-            multi_polygon,
+            &multi_polygon,
             vec![
                 InvalidMultiPolygon::InvalidPolygon(
                     GeometryIndex(0),
@@ -116,9 +115,5 @@ mod tests {
                 ),
             ]
         );
-
-        // Test that the polygon has the same validity status than its GEOS equivalent
-        let multipolygon_geos: geos::Geometry = (&multi_polygon).try_into().unwrap();
-        assert_eq!(multi_polygon.is_valid(), multipolygon_geos.is_valid());
     }
 }

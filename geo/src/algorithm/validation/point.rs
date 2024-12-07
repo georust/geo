@@ -36,25 +36,17 @@ mod tests {
     use super::*;
     use crate::algorithm::validation::{assert_valid, assert_validation_errors};
     use crate::Point;
-    use geos::Geom;
 
     #[test]
     fn test_point_valid() {
         let p = Point::new(0., 0.);
         assert_valid!(p);
-
-        // Test that the point has the same validity status than its GEOS equivalent
-        let pt_geos: geos::Geometry = (&p).try_into().unwrap();
-        assert_eq!(p.is_valid(), pt_geos.is_valid());
     }
 
     #[test]
     fn test_point_validation_errors() {
         let p = Point::new(f64::NAN, f64::NAN);
         assert_validation_errors!(p, vec![InvalidPoint::NonFiniteCoord]);
-
-        let pt_geos: geos::Geometry = (&p).try_into().unwrap();
-        assert_eq!(p.is_valid(), pt_geos.is_valid());
     }
 
     #[test]

@@ -42,15 +42,11 @@ mod tests {
     use super::*;
     use crate::algorithm::validation::{assert_valid, assert_validation_errors};
     use crate::{geometry::*, wkt};
-    use geos::Geom;
 
     #[test]
     fn test_multipoint_valid() {
         let mp = wkt!(MULTIPOINT(0. 0.,1. 1.));
-        assert_valid!(mp);
-
-        let multipoint_geos: geos::Geometry = (&mp).try_into().unwrap();
-        assert_eq!(mp.is_valid(), multipoint_geos.is_valid());
+        assert_valid!(&mp);
     }
 
     #[test]
@@ -60,15 +56,11 @@ mod tests {
             Point::new(f64::NAN, 1.),
         ]);
         assert_validation_errors!(
-            mp,
+            &mp,
             vec![
                 InvalidMultiPoint::InvalidPoint(GeometryIndex(0), InvalidPoint::NonFiniteCoord),
                 InvalidMultiPoint::InvalidPoint(GeometryIndex(1), InvalidPoint::NonFiniteCoord)
             ]
         );
-
-        // Test that this multipoint has the same validity status than its GEOS equivalent
-        let multipoint_geos: geos::Geometry = (&mp).try_into().unwrap();
-        assert_eq!(mp.is_valid(), multipoint_geos.is_valid());
     }
 }

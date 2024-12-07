@@ -46,7 +46,6 @@ mod tests {
         assert_valid, assert_validation_errors, InvalidLineString, InvalidMultiLineString,
     };
     use crate::wkt;
-    use geos::Geom;
 
     #[test]
     fn test_multilinestring_valid() {
@@ -56,11 +55,7 @@ mod tests {
                 (3. 1.,4. 1.)
             )
         );
-        assert_valid!(mls);
-
-        // Test that the linestring has the same validity status than its GEOS equivalent
-        let multilinestring_geos: geos::Geometry = (&mls).try_into().unwrap();
-        assert_eq!(mls.is_valid(), multilinestring_geos.is_valid());
+        assert_valid!(&mls);
     }
 
     #[test]
@@ -74,15 +69,11 @@ mod tests {
             )
         );
         assert_validation_errors!(
-            mls,
+            &mls,
             vec![InvalidMultiLineString::InvalidLineString(
                 GeometryIndex(1),
                 InvalidLineString::TooFewPoints
             )]
         );
-
-        // Test that the linestring has the same validity status than its GEOS equivalent
-        let multilinestring_geos: geos::Geometry = (&mls).try_into().unwrap();
-        assert_eq!(mls.is_valid(), multilinestring_geos.is_valid());
     }
 }
