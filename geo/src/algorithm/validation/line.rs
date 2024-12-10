@@ -55,21 +55,18 @@ mod tests {
     #[test]
     fn test_line_valid() {
         let l = Line::new((0., 0.), (1., 1.));
-        // GEOS doesn't have a Line type
-        assert_valid!(l, compare_with_geos: false);
+        assert_valid!(l);
     }
 
     #[test]
     fn test_line_invalid_not_finite_coords() {
         let l = Line::new((0., 0.), (f64::NEG_INFINITY, 0.));
-        // GEOS doesn't have a Line type
-        assert_validation_errors!(l, vec![InvalidLine::NonFiniteCoord(CoordIndex(1))], compare_with_geos: false);
+        assert_validation_errors!(l, vec![InvalidLine::NonFiniteCoord(CoordIndex(1))]);
     }
 
     #[test]
     fn test_line_invalid_same_points() {
         let l = Line::new((0., 0.), (0., 0.));
-        // GEOS doesn't have a Line type
-        assert_validation_errors!(l, vec![InvalidLine::IdenticalCoords], compare_with_geos: false);
+        assert_validation_errors!(l, vec![InvalidLine::IdenticalCoords]);
     }
 }

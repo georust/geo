@@ -74,9 +74,7 @@ mod tests {
     #[test]
     fn test_linestring_invalid_too_few_points_without_duplicate() {
         let ls = wkt!(LINESTRING(0. 0.));
-        // NOTE: Rather than build an invalid LineString GEOS errors at construction time, so
-        // we can't compare with GEOS here.
-        assert_validation_errors!(&ls, vec![InvalidLineString::TooFewPoints], compare_with_geos: false);
+        assert_validation_errors!(&ls, vec![InvalidLineString::TooFewPoints]);
     }
 
     #[test]

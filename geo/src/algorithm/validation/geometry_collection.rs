@@ -58,7 +58,6 @@ mod tests {
                 LINESTRING(0. 0.,0. 0.)
             )
         );
-        // the geos crate doesn't support converting geo::GeometryCollection to -> geos::Geom
         assert_validation_errors!(
             gc,
             vec![InvalidGeometryCollection::InvalidGeometry(
@@ -66,8 +65,7 @@ mod tests {
                 Box::new(InvalidGeometry::InvalidLineString(
                     InvalidLineString::TooFewPoints
                 )),
-            )],
-            compare_with_geos: false
+            )]
         );
     }
 
