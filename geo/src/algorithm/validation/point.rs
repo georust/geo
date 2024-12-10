@@ -17,6 +17,8 @@ impl fmt::Display for InvalidPoint {
     }
 }
 
+impl std::error::Error for InvalidPoint {}
+
 impl<F: GeoFloat> Validation for Point<F> {
     type Error = InvalidPoint;
 

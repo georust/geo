@@ -31,6 +31,8 @@ impl fmt::Display for InvalidTriangle {
     }
 }
 
+impl std::error::Error for InvalidTriangle {}
+
 impl<F: CoordFloat> Validation for Triangle<F> {
     type Error = InvalidTriangle;
 

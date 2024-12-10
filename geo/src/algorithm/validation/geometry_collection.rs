@@ -10,6 +10,8 @@ pub enum InvalidGeometryCollection {
     InvalidGeometry(GeometryIndex, Box<InvalidGeometry>),
 }
 
+impl std::error::Error for InvalidGeometryCollection {}
+
 impl fmt::Display for InvalidGeometryCollection {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

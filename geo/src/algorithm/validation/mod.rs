@@ -60,7 +60,7 @@ use std::fmt;
 /// assert_eq!(all_validation_errors[1].to_string(), "interior ring at index 0 is not contained within the polygon's exterior");
 /// ```
 pub trait Validation {
-    type Error: fmt::Debug + fmt::Display;
+    type Error: std::error::Error;
 
     /// Check if the geometry is valid.
     fn is_valid(&self) -> bool {

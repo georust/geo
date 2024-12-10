@@ -42,6 +42,23 @@ impl fmt::Display for InvalidGeometry {
     }
 }
 
+impl std::error::Error for InvalidGeometry {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            InvalidGeometry::InvalidPoint(err) => Some(err),
+            InvalidGeometry::InvalidLine(err) => Some(err),
+            InvalidGeometry::InvalidLineString(err) => Some(err),
+            InvalidGeometry::InvalidPolygon(err) => Some(err),
+            InvalidGeometry::InvalidMultiPoint(err) => Some(err),
+            InvalidGeometry::InvalidMultiLineString(err) => Some(err),
+            InvalidGeometry::InvalidMultiPolygon(err) => Some(err),
+            InvalidGeometry::InvalidGeometryCollection(err) => Some(err),
+            InvalidGeometry::InvalidRect(err) => Some(err),
+            InvalidGeometry::InvalidTriangle(err) => Some(err),
+        }
+    }
+}
+
 impl<F: GeoFloat> Validation for Geometry<F> {
     type Error = InvalidGeometry;
 

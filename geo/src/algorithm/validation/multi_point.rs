@@ -20,6 +20,8 @@ impl fmt::Display for InvalidMultiPoint {
     }
 }
 
+impl std::error::Error for InvalidMultiPoint {}
+
 impl<F: GeoFloat> Validation for MultiPoint<F> {
     type Error = InvalidMultiPoint;
 

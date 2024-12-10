@@ -24,6 +24,8 @@ impl fmt::Display for InvalidLineString {
     }
 }
 
+impl std::error::Error for InvalidLineString {}
+
 impl<F: GeoFloat> Validation for LineString<F> {
     type Error = InvalidLineString;
 

@@ -21,6 +21,8 @@ impl fmt::Display for InvalidMultiLineString {
     }
 }
 
+impl std::error::Error for InvalidMultiLineString {}
+
 impl<F: GeoFloat> Validation for MultiLineString<F> {
     type Error = InvalidMultiLineString;
 

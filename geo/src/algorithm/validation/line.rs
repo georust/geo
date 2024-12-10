@@ -25,6 +25,8 @@ impl fmt::Display for InvalidLine {
     }
 }
 
+impl std::error::Error for InvalidLine {}
+
 impl<F: GeoFloat> Validation for Line<F> {
     type Error = InvalidLine;
 

@@ -53,6 +53,9 @@ impl fmt::Display for InvalidPolygon {
         }
     }
 }
+
+impl std::error::Error for InvalidPolygon {}
+
 impl<F: GeoFloat> Validation for Polygon<F> {
     type Error = InvalidPolygon;
 
