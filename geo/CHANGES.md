@@ -6,6 +6,20 @@
   - <https://github.com/georust/geo/pull/1246>
 - Loosen bounds on `RemoveRepeatedPoints` trait (`num_traits::FromPrimitive` isn't required)
   - <https://github.com/georust/geo/pull/1278>
+- Added: `Validation` trait to check validity of `Geometry`.
+  - https://github.com/georust/geo/pull/1279
+  ```
+  // use in control flow
+  if polygon.is_valid() { foo() }
+
+  // raise an error if invalid
+  polygon.check_validation()?;
+
+  // get all validation errors
+  let errors = polygon.validation_errors();
+  // error implements Display for human readable explanations
+  println!("{}", errors[0]);
+  ```
 
 ## 0.29.3 - 2024.12.03
 
