@@ -89,3 +89,11 @@ relate_impl![
     GeometryCollection<F>,
     Geometry<F>,
 ];
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn run_jts_relate_tests() {
+        jts_test_runner::assert_jts_tests_succeed("*Relate*.xml");
+    }
+}

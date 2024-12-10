@@ -303,3 +303,6 @@ pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
 pub mod rhumb;
 #[allow(deprecated)]
 pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate, RhumbLength};
+
+pub mod validation;
+pub use validation::Validation;

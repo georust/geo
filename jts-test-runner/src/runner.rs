@@ -114,7 +114,6 @@ impl TestRunner {
                     target,
                     expected,
                 } => {
-                    use geo::Relate;
                     let relate_actual = subject.relate(target).is_contains();
                     let direct_actual = subject.contains(target);
 
@@ -159,12 +158,27 @@ impl TestRunner {
                         });
                     }
                 }
+                Operation::IsValidOp { subject, expected } => {
+                    use geo::algorithm::Validation;
+                    let actual = subject.is_valid();
+                    if actual == *expected {
+                        debug!("IsValidOp success: actual == expected");
+                        self.successes.push(test_case);
+                    } else {
+                        debug!("IsValidOp failure: actual != expected");
+                        let error_description =
+                            format!("expected {expected:?}, actual: {actual:?}",);
+                        self.failures.push(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    }
+                }
                 Operation::Within {
                     subject,
                     target,
                     expected,
                 } => {
-                    use geo::Relate;
                     let relate_within_result = subject.relate(target).is_within();
                     let within_trait_result = subject.is_within(target);
 
@@ -271,7 +285,6 @@ impl TestRunner {
                     clip,
                     expected,
                 } => {
-                    use geo::Relate;
                     let direct_actual = subject.intersects(clip);
                     let relate_actual = subject.relate(clip).is_intersects();
 
@@ -297,7 +310,6 @@ impl TestRunner {
                     }
                 }
                 Operation::Relate { a, b, expected } => {
-                    use geo::Relate;
                     let actual = a.relate(b);
                     if actual == *expected {
                         debug!("Relate success: actual == expected");
