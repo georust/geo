@@ -118,11 +118,11 @@ impl fmt::Display for RingRole {
 
 /// The position of the problem in a multi-geometry, starting at 0.
 #[derive(Debug, PartialEq, Clone)]
-pub struct GeometryIndex(usize);
+pub struct GeometryIndex(pub usize);
 
 /// The index of the coordinate in the geometry
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct CoordIndex(usize);
+pub struct CoordIndex(pub usize);
 
 #[cfg(test)]
 pub(crate) use test_macros::*;
