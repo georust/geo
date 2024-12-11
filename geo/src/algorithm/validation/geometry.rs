@@ -9,7 +9,7 @@ use crate::{GeoFloat, Geometry};
 use crate::geometry_cow::GeometryCow;
 use std::fmt;
 
-/// A [`Geometry`] is valid if it's inner variant is valid.
+/// A [`Geometry`] is valid if its inner variant is valid.
 /// e.g. `Geometry::Polygon(polygon)` is valid if and only if `polygon` is valid.
 #[derive(Debug, Clone, PartialEq)]
 pub enum InvalidGeometry {
