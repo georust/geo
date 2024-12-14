@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Bumps rstar minimum version from 0.12.0 to 0.12.2
+  - <https://github.com/georust/geo/pull/1246>
+
 ## 0.7.14
 
 - POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.75
