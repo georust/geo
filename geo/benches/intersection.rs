@@ -3,7 +3,7 @@ use geo::intersects::Intersects;
 use geo::MultiPolygon;
 
 fn multi_polygon_intersection(c: &mut Criterion) {
-    let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots();
+    let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots_wgs84();
     let zone_polygons: MultiPolygon = geo_test_fixtures::nl_zones();
 
     c.bench_function("MultiPolygon intersects", |bencher| {
@@ -30,7 +30,7 @@ fn multi_polygon_intersection(c: &mut Criterion) {
 fn rect_intersection(c: &mut Criterion) {
     use geo::algorithm::BoundingRect;
     use geo::geometry::Rect;
-    let plot_bbox: Vec<Rect> = geo_test_fixtures::nl_plots()
+    let plot_bbox: Vec<Rect> = geo_test_fixtures::nl_plots_wgs84()
         .iter()
         .map(|plot| plot.bounding_rect().unwrap())
         .collect();
@@ -63,7 +63,7 @@ fn rect_intersection(c: &mut Criterion) {
 fn point_rect_intersection(c: &mut Criterion) {
     use geo::algorithm::{BoundingRect, Centroid};
     use geo::geometry::{Point, Rect};
-    let plot_centroids: Vec<Point> = geo_test_fixtures::nl_plots()
+    let plot_centroids: Vec<Point> = geo_test_fixtures::nl_plots_wgs84()
         .iter()
         .map(|plot| plot.centroid().unwrap())
         .collect();
@@ -96,7 +96,7 @@ fn point_rect_intersection(c: &mut Criterion) {
 fn point_triangle_intersection(c: &mut Criterion) {
     use geo::{Centroid, TriangulateEarcut};
     use geo_types::{Point, Triangle};
-    let plot_centroids: Vec<Point> = geo_test_fixtures::nl_plots()
+    let plot_centroids: Vec<Point> = geo_test_fixtures::nl_plots_wgs84()
         .iter()
         .map(|plot| plot.centroid().unwrap())
         .collect();

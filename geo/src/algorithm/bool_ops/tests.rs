@@ -1,6 +1,8 @@
+use std::time::Instant;
 use super::{BooleanOps, UnaryUnion};
 use crate::{wkt, Convert, MultiPolygon, Polygon, Relate};
 use wkt::ToWkt;
+use crate::bool_ops::{AllowMultithreading, unary_union};
 
 #[test]
 fn test_unary_union() {
@@ -17,6 +19,109 @@ fn test_unary_union() {
     let multi_polys = vec![multi_poly_12.clone(), multi_poly_3.clone()];
     let multi_poly_union = multi_polys.unary_union();
     assert_eq!(multi_poly_union.0.len(), 1);
+}
+
+#[test]
+fn test_unary_union_errors() {
+    let input: MultiPolygon = geo_test_fixtures::nl_plots_epsg_28992();
+
+    assert_eq!(input.0.len(), 316);
+
+    let input_area = input.signed_area();
+    assert_relative_eq!(input_area, 763889.4732974821);
+
+    let naive_union = {
+        let start = Instant::now();
+        let mut output = MultiPolygon::new(Vec::new());
+        for poly in input.iter() {
+            output = output.union(poly);
+        }
+        let union = input.unary_union();
+        let duration = start.elapsed();
+        println!("Time elapsed (naive): {:.2?}", duration);
+        union
+    };
+
+    let serial_union = {
+        let start = Instant::now();
+        let union = input.unary_union();
+        let duration = start.elapsed();
+        println!("Time elapsed (serial recursive): {:.2?}", duration);
+        union
+    };
+
+    let parallel_union = {
+        let start = Instant::now();
+        let union = AllowMultithreading(&input).unary_union();
+        let duration = start.elapsed();
+        println!("Time elapsed (multithreaded recursive): {:.2?}", duration);
+        union
+    };
+
+    let simplified_union = {
+        let start = Instant::now();
+        let union = unary_union(input.iter());
+        let duration = start.elapsed();
+        println!("Time elapsed (simplification): {:.2?}", duration);
+        union
+    };
+
+    use crate::algorithm::Area;
+    let naive_area = naive_union.unsigned_area();
+    let serial_area = serial_union.unsigned_area();
+    let parallel_area = parallel_union.unsigned_area();
+    let simplified_area = simplified_union.unsigned_area();
+    assert_relative_eq!(serial_area, naive_area, max_relative = 1e-5);
+    assert_relative_eq!(serial_area, parallel_area, max_relative = 1e-5);
+    assert_relative_eq!(serial_area, simplified_area, max_relative = 1e-5);
+
+    // Serial vs. parallel are expected to have slightly different results.
+    //
+    // Each boolean operation scales the floating point to a discrete
+    // integer grid, which introduces some error, and this error factor depends on the magnitude
+    // of the input.
+    //
+    // Because the serial vs. parallel approaches group inputs differently, error is accumulated
+    // differently - hence the slightly different outputs.
+    //
+    // xor'ing the two shapes represents the magnitude of the difference between the two outputs.
+    //
+    // We want to verify that this error is small - it should be near 0, but the
+    // magnitude of the error is relative to the magnitude of the input geometries, so we offset
+    // both the error and 0 by `input_area` to make a scale relative comparison.
+    let naive_vs_serial_discrepancy = serial_union.xor(&naive_union);
+    assert_relative_eq!(
+            input_area + naive_vs_serial_discrepancy.signed_area(),
+            0.0 + input_area,
+            max_relative = 1e-5
+        );
+
+    let serial_vs_parallel_discrepancy = serial_union.xor(&parallel_union);
+    assert_relative_eq!(
+            input_area + serial_vs_parallel_discrepancy.signed_area(),
+            0.0 + input_area,
+            max_relative = 1e-5
+        );
+
+    let serial_vs_simplified_discrepancy = serial_union.xor(&simplified_union);
+    assert_relative_eq!(
+            input_area + serial_vs_simplified_discrepancy.signed_area(),
+            0.0 + input_area,
+            max_relative = 1e-5
+        );
+
+    assert_eq!(simplified_union.0.len(), 1);
+    assert_relative_eq!(simplified_area, input_area, max_relative = 1e-5);
+}
+
+#[test]
+fn test_unary_union_winding() {
+    let input: MultiPolygon = geo_test_fixtures::nl_plots_epsg_28992();
+
+    use crate::orient::{Orient, Direction};
+    let default_winding_union = unary_union(input.orient(Direction::Default).iter());
+    let reversed_winding_union = unary_union(input.orient(Direction::Reversed).iter());
+    assert_eq!(default_winding_union, reversed_winding_union);
 }
 
 #[test]

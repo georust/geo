@@ -2,20 +2,25 @@ mod i_overlay_integration;
 #[cfg(test)]
 mod tests;
 
-use crate::bool_ops::i_overlay_integration::convert::{
+use i_overlay_integration::convert::{
     multi_polygon_from_shapes, ring_to_shape_path,
 };
-use crate::bool_ops::i_overlay_integration::BoolOpsCoord;
-use i_overlay::core::fill_rule::FillRule;
-use i_overlay::float::clip::FloatClip;
-use i_overlay::float::single::SingleFloatOverlay;
-use i_overlay::string::clip::ClipRule;
-#[cfg(feature = "multithreading")]
-use rayon::prelude::*;
-
+use i_overlay_integration::BoolOpsCoord;
 pub use i_overlay_integration::BoolOpsNum;
 
 use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
+use crate::winding_order::{Winding, WindingOrder};
+
+use i_overlay::core::fill_rule::FillRule;
+use i_overlay::core::overlay_rule::OverlayRule;
+use i_overlay::float::clip::FloatClip;
+use i_overlay::float::overlay::FloatOverlay;
+use i_overlay::float::single::SingleFloatOverlay;
+use i_overlay::string::clip::ClipRule;
+
+#[cfg(feature = "multithreading")]
+use rayon::prelude::*;
+
 use rstar::{
     primitives::CachedEnvelope, primitives::ObjectRef, ParentNode, RTree, RTreeNode, RTreeObject,
 };
@@ -111,6 +116,41 @@ pub trait BooleanOps {
         let paths = subject.clip_by(&clip, FillRule::EvenOdd, clip_rule);
         i_overlay_integration::convert::multi_line_string_from_paths(paths)
     }
+}
+
+/// Efficient [BooleanOps::union] of adjacent / overlapping geometries
+///
+/// Note: Geometries can be wound in either direction, but the winding order must be consistent,
+/// and the polygon's interiors must be wound opposite to its exterior.
+///
+/// See [Orient] for more information.
+///
+/// [Orient]: crate::algorithm::orient::Orient
+pub fn unary_union<'a, B: BooleanOps + 'a>(
+    boppables: impl Iterator<Item = &'a B>,
+) -> MultiPolygon<B::Scalar> {
+
+    let mut winding_order: Option<WindingOrder> = None;
+    let subject = boppables
+        .flat_map(|boppable| {
+            let rings = boppable.rings();
+            rings.map(|ring| {
+                if winding_order.is_none() {
+                    winding_order = ring.winding_order();
+                }
+                ring_to_shape_path(ring)
+            }).collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+
+    let fill_rule = if winding_order == Some(WindingOrder::Clockwise) {
+        FillRule::Positive
+    } else {
+        FillRule::Negative
+    };
+
+    let shapes = FloatOverlay::with_subj(&subject).overlay(OverlayRule::Subject, fill_rule);
+    multi_polygon_from_shapes(shapes)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

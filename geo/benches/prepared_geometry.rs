@@ -5,7 +5,7 @@ use geo_types::MultiPolygon;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("relate prepared polygons", |bencher| {
-        let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots();
+        let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots_wgs84();
         let zone_polygons = geo_test_fixtures::nl_zones();
 
         bencher.iter(|| {
@@ -38,7 +38,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("relate unprepared polygons", |bencher| {
-        let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots();
+        let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots_wgs84();
         let zone_polygons = geo_test_fixtures::nl_zones();
 
         bencher.iter(|| {
