@@ -67,8 +67,8 @@
 //!
 //! ## Boolean Operations
 //!
-//! - **[`BooleanOps`]**: Combine or split (Multi)Polygons using intersecton, union, xor, or difference operations
-//! - **[`UnaryUnion`]**: Efficient union of a collection of adjacent or overlapping [`Polygon`] or [`MultiPolygon`]s
+//! - **[`BooleanOps`]**: Combine or split (Multi)Polygons using intersection, union, xor, or difference operations
+//! - **[`unary_union`]**: Efficient union of many [`Polygon`] or [`MultiPolygon`]s
 //!
 //! ## Outlier Detection
 //!

@@ -11,7 +11,7 @@ use criterion::Criterion;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("Point position to rect", |bencher| {
-        let plot_centroids: Vec<Point> = geo_test_fixtures::nl_plots()
+        let plot_centroids: Vec<Point> = geo_test_fixtures::nl_plots_wgs84()
             .iter()
             .map(|plot| plot.centroid().unwrap())
             .collect();
