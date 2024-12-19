@@ -39,7 +39,7 @@ use i_overlay::string::clip::ClipRule;
 ///
 /// # Performance
 ///
-/// For union operations on a large number of [`Polygon`]s or [`MultiPolygons`],
+/// For union operations on a large number of [`Polygon`]s or [`MultiPolygon`]s,
 /// using [`unary_union`] will yield far better performance.
 pub trait BooleanOps {
     type Scalar: BoolOpsNum;
@@ -129,7 +129,7 @@ pub enum OpType {
 /// This is typically much faster than `union`ing a bunch of geometries together one at a time.
 ///
 /// Note: Geometries can be wound in either direction, but the winding order must be consistent,
-/// and the polygon's interiors must be wound opposite to its exterior.
+/// and each polygon's interior rings must be wound opposite to its exterior.
 ///
 /// See [Orient] for more information.
 ///

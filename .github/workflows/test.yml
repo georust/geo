@@ -26,6 +26,7 @@ jobs:
       - geo_postgis
       - geo_fuzz
       - bench
+      - docs
     if: success()
     steps:
       - name: Mark the job as a success
