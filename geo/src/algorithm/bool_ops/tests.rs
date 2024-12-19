@@ -90,6 +90,11 @@ fn test_unary_union_winding() {
 }
 
 #[test]
+fn jts_overlay_tests() {
+    jts_test_runner::assert_jts_tests_succeed("*Overlay*.xml");
+}
+
+#[test]
 fn jts_test_overlay_la_1() {
     // From TestOverlayLA.xml test case with description "mLmA - A and B complex, overlapping and touching #1"
     let a: MultiPolygon<f64> = wkt!(MULTIPOLYGON(

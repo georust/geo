@@ -166,6 +166,7 @@
 //! - **[`LineStringSegmentizeHaversine`]**: Segment a LineString using Haversine distance
 //! - **[`Transform`]**: Transform a geometry using Proj
 //! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry
+//! - **[`Validation`]**: Checks if the geometry is well formed. Some algorithms may not work correctly with invalid geometries
 //!
 //! # Spatial Indexing
 //!
