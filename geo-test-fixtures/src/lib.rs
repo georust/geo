@@ -126,11 +126,19 @@ where
 }
 
 // From https://afnemers.ruimtelijkeplannen.nl/afnemers/services?request=GetFeature&service=WFS&srsName=EPSG:4326&typeName=Enkelbestemming&version=2.0.0&bbox=165618,480983,166149,481542";
-pub fn nl_plots<T>() -> MultiPolygon<T>
+pub fn nl_plots_wgs84<T>() -> MultiPolygon<T>
 where
     T: WktFloat + Default + FromStr,
 {
     multi_polygon("nl_plots.wkt")
+}
+
+pub fn nl_plots_epsg_28992<T>() -> MultiPolygon<T>
+where
+    T: WktFloat + Default + FromStr,
+{
+    // https://epsg.io/28992
+    multi_polygon("nl_plots_epsg_28992.wkt")
 }
 
 fn line_string<T>(name: &str) -> LineString<T>

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add Unary Union algorithm for fast union ops on adjacent / overlapping geometries
+  - <https://github.com/georust/geo/pull/1246>
 - Loosen bounds on `RemoveRepeatedPoints` trait (`num_traits::FromPrimitive` isn't required)
   - <https://github.com/georust/geo/pull/1278>
 
