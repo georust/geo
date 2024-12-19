@@ -4,8 +4,6 @@
 
 - Add Unary Union algorithm for fast union ops on adjacent / overlapping geometries
   - <https://github.com/georust/geo/pull/1246>
-  - Adds an optional dependency on Rayon (previously depended on by i_overlay)
-  - Bumps minimum rstar version to 0.12.2
 - Loosen bounds on `RemoveRepeatedPoints` trait (`num_traits::FromPrimitive` isn't required)
   - <https://github.com/georust/geo/pull/1278>
 
