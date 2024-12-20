@@ -2,7 +2,6 @@ use crate::{coord, CoordNum, Point};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq, UlpsEq};
-use serde::{Deserialize, Serialize};
 
 /// A lightweight struct used to store coordinates on the 2-dimensional
 /// Cartesian plane.
@@ -11,7 +10,7 @@ use serde::{Deserialize, Serialize};
 /// as an envelope, a precision model, and spatial reference system
 /// information), a `Coord` only contains ordinate values and accessor
 /// methods.
-///T
+///
 /// This type implements the [vector space] operations:
 /// [`Add`], [`Sub`], [`Neg`], [`Zero`],
 /// [`Mul<T>`][`Mul`], and [`Div<T>`][`Div`] traits.
@@ -368,146 +367,142 @@ where
 }
 
 #[cfg(feature = "rstar_0_8")]
-impl<T> ::rstar_0_8::Point for Coord<T>
+impl<const N: usize, T> ::rstar_0_8::Point for Coord<N, T>
 where
         T: ::num_traits::Float + ::rstar_0_8::RTreeNum,
 {
         type Scalar = T;
 
-        const DIMENSIONS: usize = 2;
+        const DIMENSIONS: usize = N;
 
         #[inline]
-        fn generate(generator: impl Fn(usize) -> Self::Scalar) -> Self {
-                coord! {
-                    x: generator(0),
-                    y: generator(1),
+        fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
+                let mut coords = [T::default(); N];
+                for i in 0..N {
+                        coords[i] = generator(i);
                 }
+                Coord { coords }
         }
 
         #[inline]
         fn nth(&self, index: usize) -> Self::Scalar {
-                match index {
-                        0 => self.x,
-                        1 => self.y,
-                        _ => unreachable!(),
+                if index >= N {
+                        unreachable!()
                 }
+                self.coords[index]
         }
 
         #[inline]
         fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
-                match index {
-                        0 => &mut self.x,
-                        1 => &mut self.y,
-                        _ => unreachable!(),
+                if index >= N {
+                        unreachable!()
                 }
+                &mut self.coords[index]
         }
 }
 
 #[cfg(feature = "rstar_0_9")]
-impl<T> ::rstar_0_9::Point for Coord<T>
+impl<const N: usize, T> ::rstar_0_9::Point for Coord<N, T>
 where
         T: ::num_traits::Float + ::rstar_0_9::RTreeNum,
 {
         type Scalar = T;
 
-        const DIMENSIONS: usize = 2;
+        const DIMENSIONS: usize = N;
 
         #[inline]
         fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
-                coord! {
-                    x: generator(0),
-                    y: generator(1),
+                let mut coords = [T::default(); N];
+                for i in 0..N {
+                        coords[i] = generator(i);
                 }
+                Coord { coords }
         }
 
         #[inline]
         fn nth(&self, index: usize) -> Self::Scalar {
-                match index {
-                        0 => self.x,
-                        1 => self.y,
-                        _ => unreachable!(),
+                if index >= N {
+                        unreachable!()
                 }
+                self.coords[index]
         }
 
         #[inline]
         fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
-                match index {
-                        0 => &mut self.x,
-                        1 => &mut self.y,
-                        _ => unreachable!(),
+                if index >= N {
+                        unreachable!()
                 }
+                &mut self.coords[index]
         }
 }
 
 #[cfg(feature = "rstar_0_10")]
-impl<T> ::rstar_0_10::Point for Coord<T>
+impl<const N: usize, T> ::rstar_0_10::Point for Coord<N, T>
 where
         T: ::num_traits::Float + ::rstar_0_10::RTreeNum,
 {
         type Scalar = T;
 
-        const DIMENSIONS: usize = 2;
+        const DIMENSIONS: usize = N;
 
         #[inline]
         fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
-                coord! {
-                    x: generator(0),
-                    y: generator(1),
+                let mut coords = [T::default(); N];
+                for i in 0..N {
+                        coords[i] = generator(i);
                 }
+                Coord { coords }
         }
 
         #[inline]
         fn nth(&self, index: usize) -> Self::Scalar {
-                match index {
-                        0 => self.x,
-                        1 => self.y,
-                        _ => unreachable!(),
+                if index >= N {
+                        unreachable!()
                 }
+                self.coords[index]
         }
 
         #[inline]
         fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
-                match index {
-                        0 => &mut self.x,
-                        1 => &mut self.y,
-                        _ => unreachable!(),
+                if index >= N {
+                        unreachable!()
                 }
+                &mut self.coords[index]
         }
 }
 
 #[cfg(feature = "rstar_0_11")]
-impl<T> ::rstar_0_11::Point for Coord<T>
+impl<const N: usize, T> ::rstar_0_11::Point for Coord<N, T>
 where
         T: ::num_traits::Float + ::rstar_0_11::RTreeNum,
 {
         type Scalar = T;
 
-        const DIMENSIONS: usize = 2;
+        const DIMENSIONS: usize = N;
 
         #[inline]
         fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
-                coord! {
-                    x: generator(0),
-                    y: generator(1),
+                let mut coords = [T::default(); N];
+                for i in 0..N {
+                        coords[i] = generator(i);
                 }
+                Coord { coords }
         }
 
         #[inline]
         fn nth(&self, index: usize) -> Self::Scalar {
-                match index {
-                        0 => self.x,
-                        1 => self.y,
-                        _ => unreachable!(),
+                if index >= N {
+                        unreachable!()
                 }
+                self.coords[index]
         }
 
         #[inline]
         fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
-                match index {
-                        0 => &mut self.x,
-                        1 => &mut self.y,
-                        _ => unreachable!(),
+                if index >= N {
+                        unreachable!()
                 }
+                &mut self.coords[index]
         }
 }
 
