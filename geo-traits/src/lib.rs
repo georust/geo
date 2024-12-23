@@ -19,8 +19,8 @@
 
 pub use coord::{CoordTrait, UnimplementedCoord};
 pub use dimension::Dimensions;
-pub use geometry::{GeometryTrait, GeometryType};
-pub use geometry_collection::GeometryCollectionTrait;
+pub use geometry::{GeometryTrait, GeometryType, UnimplementedGeometry};
+pub use geometry_collection::{GeometryCollectionTrait, UnimplementedGeometryCollection};
 pub use line::{LineTrait, UnimplementedLine};
 pub use line_string::{LineStringTrait, UnimplementedLineString};
 pub use multi_line_string::{MultiLineStringTrait, UnimplementedMultiLineString};
