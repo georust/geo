@@ -20,6 +20,7 @@
   // error implements Display for human readable explanations
   println!("{}", errors[0]);
   ```
+  - BREAKING: update proj to 0.28.0
 
 ## 0.29.3 - 2024.12.03
 

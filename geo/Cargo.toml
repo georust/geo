@@ -27,14 +27,11 @@ geo-types = { version = "0.7.13", features = ["approx", "use-rstar_0_12"] }
 geographiclib-rs = { version = "0.2.3", default-features = false }
 log = "0.4.11"
 num-traits = "0.2"
-proj = { version = "0.27.0", optional = true }
+proj = { version = "0.28.0", optional = true }
 robust = "1.1.0"
 rstar = "0.12.0"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 i_overlay = { version = "1.9.0, < 1.10.0", default-features = false }
-# co-erce the version of `home` used transitively by proj (via bindgen -> which -> home)
-# See https://github.com/georust/geo/issues/1283
-home = { version = "=0.5.9", optional = true }
 
 [dev-dependencies]
 approx = ">= 0.4.0, < 0.6.0"
