@@ -95,6 +95,8 @@
 //! - **[`LineLocatePoint`]**: Calculate the
 //!   fraction of a line’s total length representing the location of the closest point on the
 //!   line to the given point
+//! - **[`InteriorPoint`]**:
+//!     Calculates a representative point inside a `Geometry`
 //!
 //! ## Topology
 //!
