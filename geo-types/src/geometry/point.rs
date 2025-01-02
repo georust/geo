@@ -732,6 +732,12 @@ where
     }
 }
 
+impl<T: CoordNum> AsRef<Coord<T>> for Point<T> {
+    fn as_ref(&self) -> &Coord<T> {
+        &self.0
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

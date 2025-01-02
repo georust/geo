@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Implement `RTreeObject` for `Triangle`.
+- Implement `AsRef<Coord>` for `Point` and `Coord`.
 
 ## 0.7.14
 
