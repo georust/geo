@@ -1,4 +1,4 @@
-use crate::{polygon, Coord, CoordNum, Line, Polygon};
+use crate::{polygon, Coord, CoordNum, Line, Point, Polygon};
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -148,3 +148,42 @@ where
         true
     }
 }
+
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11",
+    feature = "rstar_0_12"
+))]
+macro_rules! impl_rstar_triangle {
+    ($rstar:ident) => {
+        impl<T> ::$rstar::RTreeObject for Triangle<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            type Envelope = ::$rstar::AABB<Point<T>>;
+
+            fn envelope(&self) -> Self::Envelope {
+                let bounding_rect =
+                    crate::private_utils::get_bounding_rect(self.to_array().into_iter()).unwrap();
+                ::$rstar::AABB::from_corners(bounding_rect.min().into(), bounding_rect.max().into())
+            }
+        }
+    };
+}
+
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_triangle!(rstar_0_8);
+
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_triangle!(rstar_0_9);
+
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_triangle!(rstar_0_10);
+
+#[cfg(feature = "rstar_0_11")]
+impl_rstar_triangle!(rstar_0_11);
+
+#[cfg(feature = "rstar_0_12")]
+impl_rstar_triangle!(rstar_0_12);

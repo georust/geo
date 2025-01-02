@@ -237,8 +237,7 @@ macro_rules! impl_rstar_line {
             type Envelope = ::$rstar::AABB<Point<T>>;
 
             fn envelope(&self) -> Self::Envelope {
-                let bounding_rect = crate::private_utils::line_bounding_rect(*self);
-                ::$rstar::AABB::from_corners(bounding_rect.min().into(), bounding_rect.max().into())
+                ::$rstar::AABB::from_corners(self.start_point(), self.end_point())
             }
         }
 
