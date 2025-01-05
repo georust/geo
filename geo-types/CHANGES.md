@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Implement `RTreeObject` for `Triangle`.
+
 ## 0.7.14
 
 - POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.75
