@@ -29,7 +29,10 @@ pub trait PointTrait {
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> PointTrait for Point<T> {
     type T = T;
-    type CoordType<'a> = &'a Coord<Self::T> where Self: 'a;
+    type CoordType<'a>
+        = &'a Coord<Self::T>
+    where
+        Self: 'a;
 
     fn coord(&self) -> Option<Self::CoordType<'_>> {
         Some(&self.0)
@@ -43,7 +46,10 @@ impl<T: CoordNum> PointTrait for Point<T> {
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> PointTrait for &Point<T> {
     type T = T;
-    type CoordType<'a> = &'a Coord<Self::T> where Self: 'a;
+    type CoordType<'a>
+        = &'a Coord<Self::T>
+    where
+        Self: 'a;
 
     fn coord(&self) -> Option<Self::CoordType<'_>> {
         Some(&self.0)
@@ -62,7 +68,10 @@ pub struct UnimplementedPoint<T>(PhantomData<T>);
 
 impl<T> PointTrait for UnimplementedPoint<T> {
     type T = T;
-    type CoordType<'a> = UnimplementedCoord<Self::T> where Self: 'a;
+    type CoordType<'a>
+        = UnimplementedCoord<Self::T>
+    where
+        Self: 'a;
 
     fn coord(&self) -> Option<Self::CoordType<'_>> {
         unimplemented!()

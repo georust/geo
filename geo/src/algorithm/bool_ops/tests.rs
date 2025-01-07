@@ -1,5 +1,98 @@
-use super::BooleanOps;
-use crate::{wkt, Convert, MultiPolygon, Relate};
+use super::{unary_union, BooleanOps};
+use crate::{wkt, Convert, MultiPolygon, Polygon, Relate};
+use std::time::Instant;
+use wkt::ToWkt;
+
+#[test]
+fn test_unary_union() {
+    let poly1: Polygon = wkt!(POLYGON((204.0 287.0,203.69670020700084 288.2213844497616,200.38308697914755 288.338793163584,204.0 287.0)));
+    let poly2: Polygon = wkt!(POLYGON((210.0 290.0,204.07584923592933 288.2701221108328,212.24082541367974 285.47846008552216,210.0 290.0)));
+    let poly3: Polygon = wkt!(POLYGON((211.0 292.0,202.07584923592933 288.2701221108328,212.24082541367974 285.47846008552216,210.0 290.0)));
+
+    let polys = vec![poly1.clone(), poly2.clone(), poly3.clone()];
+    let poly_union = unary_union(&polys);
+    assert_eq!(poly_union.0.len(), 1);
+
+    let multi_poly_12 = MultiPolygon::new(vec![poly1.clone(), poly2.clone()]);
+    let multi_poly_3 = MultiPolygon::new(vec![poly3]);
+    let multi_polys = vec![multi_poly_12.clone(), multi_poly_3.clone()];
+    let multi_poly_union = unary_union(&multi_polys);
+    assert_eq!(multi_poly_union.0.len(), 1);
+}
+
+#[test]
+fn test_unary_union_errors() {
+    let input: MultiPolygon = geo_test_fixtures::nl_plots_epsg_28992();
+
+    assert_eq!(input.0.len(), 316);
+
+    let input_area = input.signed_area();
+    assert_relative_eq!(input_area, 763889.4732974821);
+
+    let naive_union = {
+        let start = Instant::now();
+        let mut output = MultiPolygon::new(Vec::new());
+        for poly in input.iter() {
+            output = output.union(poly);
+        }
+        let union = output;
+        let duration = start.elapsed();
+        println!("Time elapsed (naive): {:.2?}", duration);
+        union
+    };
+
+    let simplified_union = {
+        let start = Instant::now();
+        let union = unary_union(input.iter());
+        let duration = start.elapsed();
+        println!("Time elapsed (simplification): {:.2?}", duration);
+        union
+    };
+
+    use crate::algorithm::Area;
+    let naive_area = naive_union.unsigned_area();
+    let simplified_area = simplified_union.unsigned_area();
+    assert_relative_eq!(naive_area, simplified_area, max_relative = 1e-5);
+
+    // Serial vs. parallel are expected to have slightly different results.
+    //
+    // Each boolean operation scales the floating point to a discrete
+    // integer grid, which introduces some error, and this error factor depends on the magnitude
+    // of the input.
+    //
+    // Because the serial vs. parallel approaches group inputs differently, error is accumulated
+    // differently - hence the slightly different outputs.
+    //
+    // xor'ing the two shapes represents the magnitude of the difference between the two outputs.
+    //
+    // We want to verify that this error is small - it should be near 0, but the
+    // magnitude of the error is relative to the magnitude of the input geometries, so we offset
+    // both the error and 0 by `input_area` to make a scale relative comparison.
+    let naive_vs_simplified_discrepancy = simplified_union.xor(&naive_union);
+    assert_relative_eq!(
+        input_area + naive_vs_simplified_discrepancy.unsigned_area(),
+        0.0 + input_area,
+        max_relative = 1e-5
+    );
+
+    assert_eq!(simplified_union.0.len(), 1);
+    assert_relative_eq!(simplified_area, input_area, max_relative = 1e-5);
+}
+
+#[test]
+fn test_unary_union_winding() {
+    let input: MultiPolygon = geo_test_fixtures::nl_plots_epsg_28992();
+
+    use crate::orient::{Direction, Orient};
+    let default_winding_union = unary_union(input.orient(Direction::Default).iter());
+    let reversed_winding_union = unary_union(input.orient(Direction::Reversed).iter());
+    assert_eq!(default_winding_union, reversed_winding_union);
+}
+
+#[test]
+fn jts_overlay_tests() {
+    jts_test_runner::assert_jts_tests_succeed("*Overlay*.xml");
+}
 
 #[test]
 fn jts_test_overlay_la_1() {
@@ -50,7 +143,12 @@ fn jts_test_overlay_la_1() {
     .convert();
 
     let im = actual.relate(&expected);
-    assert!(im.is_equal_topo());
+    assert!(
+        im.is_equal_topo(),
+        "actual: {:#?}, expected: {:#?}",
+        actual.wkt_string(),
+        expected.wkt_string()
+    );
 }
 
 mod gh_issues {
@@ -181,7 +279,7 @@ mod gh_issues {
             wkt!(POLYGON((3.3493652 -55.80127,171.22443 -300.,195.83728 -300.,-46.650635 30.80127,3.3493652 -55.80127))),
         ];
 
-        let mut multi = MultiPolygon::new(Vec::new());
+        let mut multi: MultiPolygon<f32> = MultiPolygon::new(Vec::new());
         for poly in polygons {
             multi = multi.union(&MultiPolygon::new(vec![poly]));
         }

@@ -3,7 +3,6 @@ use std::iter::Sum;
 use crate::{CoordFloat, Euclidean, Length, Line, LineString, MultiLineString};
 
 /// Calculation of the length
-
 #[deprecated(
     since = "0.29.0",
     note = "Please use the `line.length::<Euclidean>()` via the `Length` trait instead."

@@ -11,7 +11,6 @@ use num_traits::Bounded;
 /// is often used to measure the amount of mismatch between two sets.
 ///
 /// [Hausdorff distance formula]: https://en.wikipedia.org/wiki/Hausdorff_distance
-
 pub trait HausdorffDistance<T>
 where
     T: GeoFloat,

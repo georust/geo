@@ -4,7 +4,7 @@
 //!
 //! # Types
 //!
-//! - **[`Coord`]**: A two-dimensional coordinate. All geometry types are composed of [`Coord`]s, though [`Coord`] itself is not a [`Geometry`] type.
+//! - **[`Coord`]**: A two-dimensional coordinate. All geometry types are composed of [`Coord`]s, though [`Coord`] itself is not a [`Geometry`] type
 //! - **[`Point`]**: A single point represented by one [`Coord`]
 //! - **[`MultiPoint`]**: A collection of [`Point`]s
 //! - **[`Line`]**: A line segment represented by two [`Coord`]s
@@ -67,7 +67,8 @@
 //!
 //! ## Boolean Operations
 //!
-//! - **[`BooleanOps`]**: combine or split (Multi)Polygons using intersecton, union, xor, or difference operations.
+//! - **[`BooleanOps`]**: Combine or split (Multi)Polygons using intersection, union, xor, or difference operations
+//! - **[`unary_union`]**: Efficient union of many [`Polygon`] or [`MultiPolygon`]s
 //!
 //! ## Outlier Detection
 //!
@@ -86,7 +87,7 @@
 //! - **[`ClosestPoint`]**: Find the point on a geometry
 //!   closest to a given point
 //! - **[`HaversineClosestPoint`]**: Find the point on a geometry
-//!   closest to a given point on a sphere using spherical coordinates and lines being great arcs.
+//!   closest to a given point on a sphere using spherical coordinates and lines being great arcs
 //! - **[`IsConvex`]**: Calculate the convexity of a
 //!   [`LineString`]
 //! - **[`LineInterpolatePoint`]**:
@@ -94,6 +95,8 @@
 //! - **[`LineLocatePoint`]**: Calculate the
 //!   fraction of a line’s total length representing the location of the closest point on the
 //!   line to the given point
+//! - **[`InteriorPoint`]**:
+//!     Calculates a representative point inside a `Geometry`
 //!
 //! ## Topology
 //!
@@ -105,14 +108,14 @@
 //! - **[`Intersects`]**: Calculate if a geometry intersects
 //!   another geometry
 //! - **[`line_intersection`]**: Calculates the
-//!   intersection, if any, between two lines.
+//!   intersection, if any, between two lines
 //! - **[`Relate`]**: Topologically relate two geometries based on
-//!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
-//! - **[`Within`]**: Calculate if a geometry lies completely within another geometry.
+//!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics
+//! - **[`Within`]**: Calculate if a geometry lies completely within another geometry
 //!
 //! ## Triangulation
 //!
-//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm. Requires the `"earcutr"` feature, which is enabled by default.
+//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm. Requires the `"earcutr"` feature, which is enabled by default
 //!
 //! ## Winding
 //!
@@ -151,24 +154,25 @@
 //!
 //! ## Conversion
 //!
-//! - **[`Convert`]**: Convert (infalliby) the type of a geometry’s coordinate value
-//! - **[`TryConvert`]**: Convert (falliby) the type of a geometry’s coordinate value
-//! - **[`ToDegrees`]**: Radians to degrees coordinate transforms for a given geometry.
-//! - **[`ToRadians`]**: Degrees to radians coordinate transforms for a given geometry.
+//! - **[`Convert`]**: Convert (infalliby) the numeric type of a geometry’s coordinate value
+//! - **[`TryConvert`]**: Convert (falliby) the numeric type of a geometry’s coordinate value
+//! - **[`ToDegrees`]**: Radians to degrees coordinate transforms for a given geometry
+//! - **[`ToRadians`]**: Degrees to radians coordinate transforms for a given geometry
 //!
 //! ## Miscellaneous
 //!
 //! - **[`Centroid`]**: Calculate the centroid of a geometry
-//! - **[`ChaikinSmoothing`]**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikin's algorithm.
+//! - **[`ChaikinSmoothing`]**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikin's algorithm
 //! - **[`proj`]**: Project geometries with the `proj` crate (requires the `use-proj` feature)
-//! - **[`LineStringSegmentize`]**: Segment a LineString into `n` segments.
-//! - **[`LineStringSegmentizeHaversine`]**: Segment a LineString using Haversine distance.
-//! - **[`Transform`]**: Transform a geometry using Proj.
-//! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry.
+//! - **[`LineStringSegmentize`]**: Segment a LineString into `n` segments
+//! - **[`LineStringSegmentizeHaversine`]**: Segment a LineString using Haversine distance
+//! - **[`Transform`]**: Transform a geometry using Proj
+//! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry
+//! - **[`Validation`]**: Checks if the geometry is well formed. Some algorithms may not work correctly with invalid geometries
 //!
 //! # Spatial Indexing
 //!
-//! `geo` geometries (`Point`, `Line`, `LineString`, `Polygon`) can be used with the [rstar](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#usage)
+//! `geo` geometries ([`Point`], [`Line`], [`LineString`], [`Polygon`], [`MultiPolygon`]) can be used with the [rstar](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#usage)
 //! R*-tree crate for fast distance and nearest-neighbour queries. Multi- geometries can be added to the tree by iterating over
 //! their members and adding them. Note in particular the availability of the [`bulk_load`](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#method.bulk_load)
 //! method and [`GeomWithData`](https://docs.rs/rstar/0.12.0/rstar/primitives/struct.GeomWithData.html) struct.
@@ -178,22 +182,22 @@
 //! The following optional [Cargo features] are available:
 //!
 //! - `earcutr`:
-//!     - Enables the `earcutr` crate, which provides triangulation of polygons using the earcut algorithm.
-//!     - ☑ Enabled by default.
+//!     - Enables the `earcutr` crate, which provides triangulation of polygons using the earcut algorithm
+//!     - ☑ Enabled by default
 //! - `proj-network`:
-//!     - Enables [network grid] support for the [`proj` crate].
+//!     - Enables [network grid] support for the [`proj` crate]
 //!     - After enabling this feature, [further configuration][proj crate file download] is required to use the network grid.
-//!     - ☐ Disabled by default.
+//!     - ☐ Disabled by default
 //! - `use-proj`:
 //!     - Enables coordinate conversion and transformation of `Point` geometries using the [`proj` crate]
-//!     - ☐ Disabled by default.
+//!     - ☐ Disabled by default
 //! - `use-serde`:
-//!     - Allows geometry types to be serialized and deserialized with [Serde].
-//!     - ☐ Disabled by default.
+//!     - Allows geometry types to be serialized and deserialized with [Serde]
+//!     - ☐ Disabled by default
 //! - `multithreading`:
-//!     - Enables multithreading support for the `i_overlay` crate (via Rayon), and activates the `multithreading` flag
-//!       in `geo-types`, enabling multi-threaded iteration over `Multi*` geometries.
-//!     - ☑ Enabled by default.
+//!     - Enables multithreading support (via Rayon), and activates the `multithreading` flag
+//!       in `geo-types`, enabling multi-threaded iteration over `Multi*` geometries
+//!     - ☑ Enabled by default
 //!
 //! # Ecosystem
 //!

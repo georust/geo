@@ -65,7 +65,7 @@ where
     ///
     /// Return the BoundingRect for a MultiPoint
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.0.iter().map(|p| p.0))
+        get_bounding_rect(&self.0)
     }
 }
 
@@ -102,7 +102,7 @@ where
     ///
     /// Return the BoundingRect for a MultiLineString
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.iter().flat_map(|line| line.0.iter().cloned()))
+        get_bounding_rect(self.iter().flat_map(|line| &line.0))
     }
 }
 
@@ -116,7 +116,7 @@ where
     /// Return the BoundingRect for a Polygon
     fn bounding_rect(&self) -> Self::Output {
         let line = self.exterior();
-        get_bounding_rect(line.0.iter().cloned())
+        get_bounding_rect(&line.0)
     }
 }
 
@@ -129,10 +129,7 @@ where
     ///
     /// Return the BoundingRect for a MultiPolygon
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(
-            self.iter()
-                .flat_map(|poly| poly.exterior().0.iter().cloned()),
-        )
+        get_bounding_rect(self.iter().flat_map(|poly| &poly.exterior().0))
     }
 }
 
@@ -143,7 +140,7 @@ where
     type Output = Rect<T>;
 
     fn bounding_rect(&self) -> Self::Output {
-        get_bounding_rect(self.to_array().iter().cloned()).unwrap()
+        get_bounding_rect(self.to_array()).unwrap()
     }
 }
 

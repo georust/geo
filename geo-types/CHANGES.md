@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Implement `RTreeObject` for `Triangle`.
+- Implement `AsRef<Coord>` for `Point` and `Coord`.
+
 ## 0.7.14
 
 - POSSIBLY BREAKING: Minimum supported version of Rust (MSRV) is now 1.75

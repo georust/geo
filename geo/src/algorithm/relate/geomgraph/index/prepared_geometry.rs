@@ -40,57 +40,57 @@ mod conversions {
     };
     use std::rc::Rc;
 
-    impl<'a, F: GeoFloat> From<Point<F>> for PreparedGeometry<'a, F> {
+    impl<F: GeoFloat> From<Point<F>> for PreparedGeometry<'_, F> {
         fn from(point: Point<F>) -> Self {
             PreparedGeometry::from(GeometryCow::from(point))
         }
     }
-    impl<'a, F: GeoFloat> From<Line<F>> for PreparedGeometry<'a, F> {
+    impl<F: GeoFloat> From<Line<F>> for PreparedGeometry<'_, F> {
         fn from(line: Line<F>) -> Self {
             PreparedGeometry::from(GeometryCow::from(line))
         }
     }
-    impl<'a, F: GeoFloat> From<LineString<F>> for PreparedGeometry<'a, F> {
+    impl<F: GeoFloat> From<LineString<F>> for PreparedGeometry<'_, F> {
         fn from(line_string: LineString<F>) -> Self {
             PreparedGeometry::from(GeometryCow::from(line_string))
         }
     }
-    impl<'a, F: GeoFloat> From<Polygon<F>> for PreparedGeometry<'a, F> {
+    impl<F: GeoFloat> From<Polygon<F>> for PreparedGeometry<'_, F> {
         fn from(polygon: Polygon<F>) -> Self {
             PreparedGeometry::from(GeometryCow::from(polygon))
         }
     }
-    impl<'a, F: GeoFloat> From<MultiPoint<F>> for PreparedGeometry<'a, F> {
+    impl<F: GeoFloat> From<MultiPoint<F>> for PreparedGeometry<'_, F> {
         fn from(multi_point: MultiPoint<F>) -> Self {
             PreparedGeometry::from(GeometryCow::from(multi_point))
         }
     }
-    impl<'a, F: GeoFloat> From<MultiLineString<F>> for PreparedGeometry<'a, F> {
+    impl<F: GeoFloat> From<MultiLineString<F>> for PreparedGeometry<'_, F> {
         fn from(multi_line_string: MultiLineString<F>) -> Self {
             PreparedGeometry::from(GeometryCow::from(multi_line_string))
         }
     }
-    impl<'a, F: GeoFloat> From<MultiPolygon<F>> for PreparedGeometry<'a, F> {
+    impl<F: GeoFloat> From<MultiPolygon<F>> for PreparedGeometry<'_, F> {
         fn from(multi_polygon: MultiPolygon<F>) -> Self {
             PreparedGeometry::from(GeometryCow::from(multi_polygon))
         }
     }
-    impl<'a, F: GeoFloat> From<Rect<F>> for PreparedGeometry<'a, F> {
+    impl<F: GeoFloat> From<Rect<F>> for PreparedGeometry<'_, F> {
         fn from(rect: Rect<F>) -> Self {
             PreparedGeometry::from(GeometryCow::from(rect))
         }
     }
-    impl<'a, F: GeoFloat> From<Triangle<F>> for PreparedGeometry<'a, F> {
+    impl<F: GeoFloat> From<Triangle<F>> for PreparedGeometry<'_, F> {
         fn from(triangle: Triangle<F>) -> Self {
             PreparedGeometry::from(GeometryCow::from(triangle))
         }
     }
-    impl<'a, F: GeoFloat> From<GeometryCollection<F>> for PreparedGeometry<'a, F> {
+    impl<F: GeoFloat> From<GeometryCollection<F>> for PreparedGeometry<'_, F> {
         fn from(geometry_collection: GeometryCollection<F>) -> Self {
             PreparedGeometry::from(GeometryCow::from(geometry_collection))
         }
     }
-    impl<'a, F: GeoFloat> From<Geometry<F>> for PreparedGeometry<'a, F> {
+    impl<F: GeoFloat> From<Geometry<F>> for PreparedGeometry<'_, F> {
         fn from(geometry: Geometry<F>) -> Self {
             PreparedGeometry::from(GeometryCow::from(geometry))
         }
@@ -167,7 +167,7 @@ mod conversions {
     }
 }
 
-impl<'a, F> PreparedGeometry<'a, F>
+impl<F> PreparedGeometry<'_, F>
 where
     F: GeoFloat + RTreeNum,
 {

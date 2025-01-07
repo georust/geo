@@ -1,5 +1,7 @@
+use std::marker::PhantomData;
+
 use crate::iterator::GeometryCollectionIterator;
-use crate::{Dimensions, GeometryTrait};
+use crate::{Dimensions, GeometryTrait, UnimplementedGeometry};
 #[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, Geometry, GeometryCollection};
 
@@ -49,7 +51,8 @@ pub trait GeometryCollectionTrait: Sized {
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
     type T = T;
-    type GeometryType<'a> = &'a Geometry<Self::T>
+    type GeometryType<'a>
+        = &'a Geometry<Self::T>
     where
         Self: 'a;
 
@@ -69,7 +72,9 @@ impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
     type T = T;
-    type GeometryType<'b> = &'a Geometry<Self::T> where
+    type GeometryType<'b>
+        = &'a Geometry<Self::T>
+    where
         Self: 'b;
 
     fn dim(&self) -> Dimensions {
@@ -82,5 +87,31 @@ impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
 
     unsafe fn geometry_unchecked(&self, i: usize) -> Self::GeometryType<'_> {
         self.0.get_unchecked(i)
+    }
+}
+
+/// An empty struct that implements [GeometryCollectionTrait].
+///
+/// This can be used as the `GeometryCollectionType` of the `GeometryTrait` by implementations that
+/// don't have a GeometryCollection concept
+pub struct UnimplementedGeometryCollection<T>(PhantomData<T>);
+
+impl<T> GeometryCollectionTrait for UnimplementedGeometryCollection<T> {
+    type T = T;
+    type GeometryType<'a>
+        = UnimplementedGeometry<Self::T>
+    where
+        Self: 'a;
+
+    fn dim(&self) -> Dimensions {
+        unimplemented!()
+    }
+
+    fn num_geometries(&self) -> usize {
+        unimplemented!()
+    }
+
+    unsafe fn geometry_unchecked(&self, _i: usize) -> Self::GeometryType<'_> {
+        unimplemented!()
     }
 }

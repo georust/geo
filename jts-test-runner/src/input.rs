@@ -99,6 +99,14 @@ pub struct IntersectsInput {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct IsValidInput {
+    pub(crate) arg1: String,
+
+    #[serde(rename = "$value", deserialize_with = "deserialize_from_str")]
+    pub(crate) expected: bool,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct RelateInput {
     pub(crate) arg1: String,
     pub(crate) arg2: String,
@@ -147,10 +155,13 @@ pub(crate) enum OperationInput {
     ConvexHullInput(ConvexHullInput),
 
     #[serde(rename = "equalsTopo")]
-    EqualsTopo(EqualsTopoInput),
+    EqualsTopoInput(EqualsTopoInput),
 
     #[serde(rename = "intersects")]
     IntersectsInput(IntersectsInput),
+
+    #[serde(rename = "isValid")]
+    IsValidInput(IsValidInput),
 
     #[serde(rename = "relate")]
     RelateInput(RelateInput),
@@ -183,6 +194,10 @@ pub(crate) enum Operation {
     Contains {
         subject: Geometry,
         target: Geometry,
+        expected: bool,
+    },
+    IsValidOp {
+        subject: Geometry,
         expected: bool,
     },
     Within {
@@ -245,7 +260,7 @@ impl OperationInput {
                     expected: convex_hull_input.expected,
                 })
             }
-            Self::EqualsTopo(equals_topo_input) => {
+            Self::EqualsTopoInput(equals_topo_input) => {
                 assert_eq!("A", equals_topo_input.arg1);
                 assert_eq!("B", equals_topo_input.arg2);
                 assert!(
@@ -400,6 +415,13 @@ impl OperationInput {
                 })
             }
             Self::Unsupported => Err("This OperationInput not supported".into()),
+            OperationInput::IsValidInput(input) => match input.arg1.as_str() {
+                "A" => Ok(Operation::IsValidOp {
+                    subject: geometry.clone(),
+                    expected: input.expected,
+                }),
+                _ => todo!("Handle {}", input.arg1),
+            },
         }
     }
 }

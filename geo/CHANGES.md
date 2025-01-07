@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+- Add top-level doc link for `InteriorPoint`
+- Add Unary Union algorithm for fast union ops on adjacent / overlapping geometries
+  - <https://github.com/georust/geo/pull/1246>
+- Loosen bounds on `RemoveRepeatedPoints` trait (`num_traits::FromPrimitive` isn't required)
+  - <https://github.com/georust/geo/pull/1278>
+- Added: `Validation` trait to check validity of `Geometry`.
+  - https://github.com/georust/geo/pull/1279
+  ```rust
+  // use in control flow
+  if polygon.is_valid() { foo() }
+
+  // raise an error if invalid
+  polygon.check_validation()?;
+
+  // get all validation errors
+  let errors = polygon.validation_errors();
+  // error implements Display for human readable explanations
+  println!("{}", errors[0]);
+  ```
+  - BREAKING: update proj to 0.28.0
+
+## 0.29.3 - 2024.12.03
+
+- Fix crash in `BoolOps` by updating `i_overlay` to 1.9.0.
+  - <https://github.com/georust/geo/pull/1275>
+
 ## 0.29.2 - 2024.11.15
 
 - Pin `i_overlay` to < 1.8.0 to work around [recursion bug](https://github.com/georust/geo/issues/1270).

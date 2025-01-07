@@ -41,8 +41,8 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
 
     /// Compute a label for the star based on the labels of its EdgeEndBundles.
     fn compute_labeling(&mut self, graph_a: &GeometryGraph<F>, graph_b: &GeometryGraph<F>) {
-        self.propagate_side_labels(0);
-        self.propagate_side_labels(1);
+        self.propagate_side_labels(0, graph_a);
+        self.propagate_side_labels(1, graph_b);
         let mut has_dimensional_collapse_edge = [false, false];
         for edge_end in self.edges.iter() {
             let label = edge_end.label();
@@ -83,7 +83,7 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
         debug!("edge_end_bundle_star: {:?}", self);
     }
 
-    fn propagate_side_labels(&mut self, geom_index: usize) {
+    fn propagate_side_labels(&mut self, geom_index: usize, geometry_graph: &GeometryGraph<F>) {
         let mut start_position = None;
 
         for edge_ends in self.edge_end_bundles_iter() {
@@ -109,7 +109,15 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
                 let right_position = label.position(geom_index, Direction::Right);
 
                 if let Some(right_position) = right_position {
-                    debug_assert!(right_position == current_position, "side_location conflict with coordinate: {:?}, right_location: {:?}, current_location: {:?}", edge_ends.coordinate(), right_position, current_position);
+                    #[cfg(debug_assertions)]
+                    if right_position != current_position {
+                        use crate::algorithm::Validation;
+                        if geometry_graph.geometry().is_valid() {
+                            debug_assert!(false, "topology position conflict with coordinate — this can happen with invalid geometries. coordinate: {:?}, right_location: {:?}, current_location: {:?}", edge_ends.coordinate(), right_position, current_position);
+                        } else {
+                            warn!("topology position conflict with coordinate — this can happen with invalid geometries. coordinate: {:?}, right_location: {:?}, current_location: {:?}", edge_ends.coordinate(), right_position, current_position);
+                        }
+                    }
                     assert!(left_position.is_some(), "found single null side");
                     current_position = left_position.unwrap();
                 } else {

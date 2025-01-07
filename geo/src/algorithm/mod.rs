@@ -6,9 +6,9 @@ pub use kernels::{Kernel, Orientation};
 pub mod area;
 pub use area::Area;
 
-/// Boolean Ops such as union, xor, difference.
+/// Boolean Operations such as the union, xor, or difference of two geometries.
 pub mod bool_ops;
-pub use bool_ops::{BooleanOps, OpType};
+pub use bool_ops::{unary_union, BooleanOps, OpType};
 
 /// Calculate the bounding rectangle of a `Geometry`.
 pub mod bounding_rect;
@@ -304,3 +304,6 @@ pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
 pub mod rhumb;
 #[allow(deprecated)]
 pub use rhumb::{RhumbBearing, RhumbDestination, RhumbDistance, RhumbIntermediate, RhumbLength};
+
+pub mod validation;
+pub use validation::Validation;

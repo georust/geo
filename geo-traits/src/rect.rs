@@ -29,9 +29,12 @@ pub trait RectTrait {
 }
 
 #[cfg(feature = "geo-types")]
-impl<'a, T: CoordNum + 'a> RectTrait for Rect<T> {
+impl<T: CoordNum> RectTrait for Rect<T> {
     type T = T;
-    type CoordType<'b> = Coord<T> where Self: 'b;
+    type CoordType<'b>
+        = Coord<T>
+    where
+        Self: 'b;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -49,7 +52,10 @@ impl<'a, T: CoordNum + 'a> RectTrait for Rect<T> {
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum + 'a> RectTrait for &'a Rect<T> {
     type T = T;
-    type CoordType<'b> = Coord<T> where Self: 'b;
+    type CoordType<'b>
+        = Coord<T>
+    where
+        Self: 'b;
 
     fn dim(&self) -> Dimensions {
         Dimensions::Xy
@@ -72,7 +78,10 @@ pub struct UnimplementedRect<T>(PhantomData<T>);
 
 impl<T> RectTrait for UnimplementedRect<T> {
     type T = T;
-    type CoordType<'a> = UnimplementedCoord<Self::T> where Self: 'a;
+    type CoordType<'a>
+        = UnimplementedCoord<Self::T>
+    where
+        Self: 'a;
 
     fn dim(&self) -> Dimensions {
         unimplemented!()
