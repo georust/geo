@@ -498,3 +498,9 @@ where
         }
     }
 }
+
+impl<T: CoordNum> AsRef<Coord<T>> for Coord<T> {
+    fn as_ref(&self) -> &Coord<T> {
+        self
+    }
+}

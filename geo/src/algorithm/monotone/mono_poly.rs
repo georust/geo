@@ -53,7 +53,7 @@ impl<T: GeoNum> MonoPoly<T> {
         debug_assert_eq!(top.0.first(), bot.0.first());
         debug_assert_eq!(top.0.last(), bot.0.last());
         debug_assert_ne!(top.0.first(), top.0.last());
-        let bounds = get_bounding_rect(top.0.iter().chain(bot.0.iter()).cloned()).unwrap();
+        let bounds = get_bounding_rect(top.0.iter().chain(bot.0.iter())).unwrap();
         Self { top, bot, bounds }
     }
 

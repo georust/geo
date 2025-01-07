@@ -166,7 +166,7 @@ macro_rules! impl_rstar_triangle {
 
             fn envelope(&self) -> Self::Envelope {
                 let bounding_rect =
-                    crate::private_utils::get_bounding_rect(self.to_array().into_iter()).unwrap();
+                    crate::private_utils::get_bounding_rect(self.to_array()).unwrap();
                 ::$rstar::AABB::from_corners(bounding_rect.min().into(), bounding_rect.max().into())
             }
         }

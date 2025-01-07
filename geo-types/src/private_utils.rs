@@ -9,7 +9,7 @@ pub fn line_string_bounding_rect<T>(line_string: &LineString<T>) -> Option<Rect<
 where
     T: CoordNum,
 {
-    get_bounding_rect(line_string.coords().cloned())
+    get_bounding_rect(&line_string.0)
 }
 
 pub fn line_bounding_rect<T>(line: Line<T>) -> Rect<T>
@@ -19,17 +19,19 @@ where
     Rect::new(line.start, line.end)
 }
 
-pub fn get_bounding_rect<I, T>(collection: I) -> Option<Rect<T>>
+pub fn get_bounding_rect<I, C, T>(collection: I) -> Option<Rect<T>>
 where
     T: CoordNum,
-    I: IntoIterator<Item = Coord<T>>,
+    C: AsRef<Coord<T>>,
+    I: IntoIterator<Item = C>,
 {
     let mut iter = collection.into_iter();
     if let Some(pnt) = iter.next() {
+        let pnt = pnt.as_ref();
         let mut xrange = (pnt.x, pnt.x);
         let mut yrange = (pnt.y, pnt.y);
         for pnt in iter {
-            let (px, py) = pnt.x_y();
+            let (px, py) = pnt.as_ref().x_y();
             xrange = get_min_max(px, xrange.0, xrange.1);
             yrange = get_min_max(py, yrange.0, yrange.1);
         }
