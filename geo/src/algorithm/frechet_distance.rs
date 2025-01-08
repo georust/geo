@@ -78,7 +78,7 @@ where
 
         for (i, &a) in self.ls_a.coords().enumerate() {
             for (j, &b) in self.ls_b.coords().enumerate() {
-                let dist = Euclidean::distance(a, b);
+                let dist = Euclidean.distance(a, b);
 
                 self.cache[i * columns_count + j] = match (i, j) {
                     (0, 0) => dist,
@@ -105,7 +105,7 @@ mod test {
         let ls_a = LineString::from(vec![(1., 1.)]);
         let ls_b = LineString::from(vec![(0., 2.)]);
         assert_relative_eq!(
-            Euclidean::distance(ls_a.0[0], ls_b.0[0]),
+            Euclidean.distance(ls_a.0[0], ls_b.0[0]),
             ls_a.frechet_distance(&ls_b)
         );
     }

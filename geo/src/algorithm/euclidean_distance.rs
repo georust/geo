@@ -11,7 +11,7 @@ use rstar::RTreeNum;
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Euclidean::distance` method from the `Distance` trait instead"
+    note = "Please use the `Euclidean.distance` method from the `Distance` trait instead"
 )]
 /// Returns the distance between two geometries.
 pub trait EuclideanDistance<T, Rhs = Self> {
@@ -105,7 +105,7 @@ where
 {
     /// Minimum distance between two `Coord`s
     fn euclidean_distance(&self, c: &Coord<T>) -> T {
-        Euclidean::distance(Point(*self), Point(*c))
+        Euclidean.distance(Point(*self), Point(*c))
     }
 }
 
@@ -116,7 +116,7 @@ where
 {
     /// Minimum distance from a `Coord` to a `Line`
     fn euclidean_distance(&self, line: &Line<T>) -> T {
-        Euclidean::distance(&Point(*self), line)
+        Euclidean.distance(&Point(*self), line)
     }
 }
 
@@ -131,7 +131,7 @@ where
 {
     /// Minimum distance between two Points
     fn euclidean_distance(&self, p: &Point<T>) -> T {
-        Euclidean::distance(*self, *p)
+        Euclidean.distance(*self, *p)
     }
 }
 
@@ -142,7 +142,7 @@ where
 {
     /// Minimum distance from a Line to a Point
     fn euclidean_distance(&self, line: &Line<T>) -> T {
-        Euclidean::distance(self, line)
+        Euclidean.distance(self, line)
     }
 }
 
@@ -153,7 +153,7 @@ where
 {
     /// Minimum distance from a Point to a LineString
     fn euclidean_distance(&self, line_string: &LineString<T>) -> T {
-        Euclidean::distance(self, line_string)
+        Euclidean.distance(self, line_string)
     }
 }
 
@@ -164,7 +164,7 @@ where
 {
     /// Minimum distance from a Point to a Polygon
     fn euclidean_distance(&self, polygon: &Polygon<T>) -> T {
-        Euclidean::distance(self, polygon)
+        Euclidean.distance(self, polygon)
     }
 }
 
@@ -179,7 +179,7 @@ where
 {
     /// Minimum distance from a `Line` to a `Coord`
     fn euclidean_distance(&self, coord: &Coord<T>) -> T {
-        Euclidean::distance(self, *coord)
+        Euclidean.distance(self, *coord)
     }
 }
 
@@ -190,7 +190,7 @@ where
 {
     /// Minimum distance from a Line to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
-        Euclidean::distance(self, point)
+        Euclidean.distance(self, point)
     }
 }
 
@@ -201,7 +201,7 @@ where
     T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
-        Euclidean::distance(self, other)
+        Euclidean.distance(self, other)
     }
 }
 
@@ -212,7 +212,7 @@ where
     T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
-        Euclidean::distance(self, other)
+        Euclidean.distance(self, other)
     }
 }
 
@@ -223,7 +223,7 @@ where
     T: GeoFloat + Signed + RTreeNum + FloatConst,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
-        Euclidean::distance(self, other)
+        Euclidean.distance(self, other)
     }
 }
 
@@ -238,7 +238,7 @@ where
 {
     /// Minimum distance from a LineString to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
-        Euclidean::distance(self, point)
+        Euclidean.distance(self, point)
     }
 }
 
@@ -249,7 +249,7 @@ where
     T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
-        Euclidean::distance(self, other)
+        Euclidean.distance(self, other)
     }
 }
 
@@ -260,7 +260,7 @@ where
     T: GeoFloat + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
-        Euclidean::distance(self, other)
+        Euclidean.distance(self, other)
     }
 }
 
@@ -271,7 +271,7 @@ where
     T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Polygon<T>) -> T {
-        Euclidean::distance(self, other)
+        Euclidean.distance(self, other)
     }
 }
 
@@ -286,7 +286,7 @@ where
 {
     /// Minimum distance from a Polygon to a Point
     fn euclidean_distance(&self, point: &Point<T>) -> T {
-        Euclidean::distance(self, point)
+        Euclidean.distance(self, point)
     }
 }
 
@@ -297,7 +297,7 @@ where
     T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &Line<T>) -> T {
-        Euclidean::distance(self, other)
+        Euclidean.distance(self, other)
     }
 }
 
@@ -308,7 +308,7 @@ where
     T: GeoFloat + FloatConst + Signed + RTreeNum,
 {
     fn euclidean_distance(&self, other: &LineString<T>) -> T {
-        Euclidean::distance(self, other)
+        Euclidean.distance(self, other)
     }
 }
 
@@ -319,7 +319,7 @@ where
     T: GeoFloat + FloatConst + RTreeNum,
 {
     fn euclidean_distance(&self, poly2: &Polygon<T>) -> T {
-        Euclidean::distance(self, poly2)
+        Euclidean.distance(self, poly2)
     }
 }
 
@@ -337,7 +337,7 @@ macro_rules! impl_euclidean_distance_for_polygonlike_geometry {
               T: GeoFloat + Signed + RTreeNum + FloatConst,
           {
               fn euclidean_distance(&self, other: &$target) -> T {
-                  Euclidean::distance(self, other)
+                  Euclidean.distance(self, other)
               }
           }
       )*
@@ -357,7 +357,7 @@ macro_rules! impl_euclidean_distance_to_polygonlike_geometry {
               T: GeoFloat + Signed + RTreeNum + FloatConst,
           {
               fn euclidean_distance(&self, other: &$target) -> T {
-                  Euclidean::distance(self, other)
+                  Euclidean.distance(self, other)
               }
           }
       )*
@@ -387,7 +387,7 @@ macro_rules! impl_euclidean_distance_for_iter_geometry {
               T: GeoFloat + FloatConst + RTreeNum,
           {
               fn euclidean_distance(&self, target: &$target) -> T {
-                  Euclidean::distance(self, target)
+                  Euclidean.distance(self, target)
               }
           }
       )*
@@ -410,7 +410,7 @@ macro_rules! impl_euclidean_distance_from_iter_geometry {
             T: GeoFloat + FloatConst + RTreeNum
         {
           fn euclidean_distance(&self, target: &$target) -> T {
-              Euclidean::distance(self, target)
+              Euclidean.distance(self, target)
           }
         }
       )*
@@ -438,7 +438,7 @@ macro_rules! impl_euclidean_distance_to_geometry_for_specific {
               T: GeoFloat + FloatConst + RTreeNum,
           {
               fn euclidean_distance(&self, geom: &Geometry<T>) -> T {
-                Euclidean::distance(self, geom)
+                Euclidean.distance(self, geom)
               }
           }
       )*
@@ -486,7 +486,7 @@ where
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Euclidean::distance` method from the `Distance` trait instead"
+    note = "Please use the `Euclidean.distance` method from the `Distance` trait instead"
 )]
 /// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
 // This is somewhat slow and memory-inefficient, but certainly better than quadratic time

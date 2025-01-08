@@ -9,7 +9,7 @@ use num_traits::FromPrimitive;
 pub trait HaversineIntermediate<T: CoordFloat> {
     #[deprecated(
         since = "0.29.0",
-        note = "Please use `Haversine::point_at_ratio_between` from the `InterpolatePoint` trait instead"
+        note = "Please use `Haversine.point_at_ratio_between` from the `InterpolatePoint` trait instead"
     )]
     /// Returns a new `Point` along a great circle route between `self` and `other`.
     ///
@@ -40,7 +40,7 @@ pub trait HaversineIntermediate<T: CoordFloat> {
 
     #[deprecated(
         since = "0.29.0",
-        note = "Please use `Haversine::points_along_line` from the `InterpolatePoint` trait instead"
+        note = "Please use `Haversine.points_along_line` from the `InterpolatePoint` trait instead"
     )]
     /// Interpolates `Point`s along a great circle route between self and `other`.
     ///
@@ -62,7 +62,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_intermediate(&self, other: &Point<T>, ratio: T) -> Point<T> {
-        Haversine::point_at_ratio_between(*self, *other, ratio)
+        Haversine.point_at_ratio_between(*self, *other, ratio)
     }
 
     fn haversine_intermediate_fill(
@@ -71,7 +71,9 @@ where
         max_dist: T,
         include_ends: bool,
     ) -> Vec<Point<T>> {
-        Haversine::points_along_line(*self, *other, max_dist, include_ends).collect()
+        Haversine
+            .points_along_line(*self, *other, max_dist, include_ends)
+            .collect()
     }
 }
 

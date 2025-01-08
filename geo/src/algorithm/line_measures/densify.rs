@@ -22,7 +22,7 @@ use num_traits::FromPrimitive;
 /// // For Euclidean calculations, the unit of distance is the same as the units
 /// // of your coordinates.
 /// let max_dist = 2.0;
-/// let densified = line_string.densify::<Euclidean>(max_dist);
+/// let densified = line_string.densify(&Euclidean, max_dist);
 /// let expected_output = wkt!(LINESTRING(
 ///     0.0 0.0,
 ///     0.0 2.0,
@@ -43,7 +43,7 @@ use num_traits::FromPrimitive;
 ///
 /// // For Haversine, the unit of distance is in meters
 /// let max_dist = 200_000.0;
-/// let densified = line_string.densify::<Haversine>(max_dist);
+/// let densified = line_string.densify(&Haversine, max_dist);
 /// // Haversine interprets coordinate points as lng/lat
 /// let expected_output = wkt!(LINESTRING(
 ///     0.0 0.0,
@@ -56,14 +56,21 @@ use num_traits::FromPrimitive;
 /// assert_relative_eq!(densified, expected_output, epsilon = 1e-14);
 /// ```
 /// [metric space]: crate::line_measures::metric_spaces
+// TODO: Change this to be a method implemented on the trait?
+// And accept a Densifiable (new trait) as argument?
 pub trait Densify<F: CoordFloat> {
     type Output;
-    fn densify<MetricSpace>(&self, max_segment_length: F) -> Self::Output
+    fn densify<MetricSpace>(
+        &self,
+        metric_space: &MetricSpace,
+        max_segment_length: F,
+    ) -> Self::Output
     where
         MetricSpace: Distance<F, Point<F>, Point<F>> + InterpolatePoint<F>;
 }
 
 pub(crate) fn densify_between<F, MetricSpace>(
+    metric_space: &MetricSpace,
     line_start: Point<F>,
     line_end: Point<F>,
     container: &mut Vec<Point<F>>,
@@ -73,7 +80,7 @@ pub(crate) fn densify_between<F, MetricSpace>(
     MetricSpace: Distance<F, Point<F>, Point<F>> + InterpolatePoint<F>,
 {
     assert!(max_segment_length > F::zero());
-    let num_segments = (MetricSpace::distance(line_start, line_end) / max_segment_length)
+    let num_segments = (metric_space.distance(line_start, line_end) / max_segment_length)
         .ceil()
         .to_u64()
         .expect("unreasonable number of segments");
@@ -88,7 +95,7 @@ pub(crate) fn densify_between<F, MetricSpace>(
         // If we impl point_at_distance_between, we could compute it once and use it here.
         // At that point, I think this function could be a good candidate to be *the single* basis
         // for a unified generic of points_along_line for all metric spaces.
-        let interpolated_point = MetricSpace::point_at_ratio_between(line_start, line_end, ratio);
+        let interpolated_point = metric_space.point_at_ratio_between(line_start, line_end, ratio);
         container.push(interpolated_point);
     }
 }
@@ -96,12 +103,17 @@ pub(crate) fn densify_between<F, MetricSpace>(
 impl<F: CoordFloat + FromPrimitive> Densify<F> for Line<F> {
     type Output = LineString<F>;
 
-    fn densify<MetricSpace>(&self, max_segment_length: F) -> Self::Output
+    fn densify<MetricSpace>(
+        &self,
+        metric_space: &MetricSpace,
+        max_segment_length: F,
+    ) -> Self::Output
     where
         MetricSpace: Distance<F, Point<F>, Point<F>> + InterpolatePoint<F>,
     {
         let mut points = vec![self.start_point()];
-        densify_between::<F, MetricSpace>(
+        densify_between(
+            metric_space,
             self.start_point(),
             self.end_point(),
             &mut points,
@@ -115,7 +127,11 @@ impl<F: CoordFloat + FromPrimitive> Densify<F> for Line<F> {
 impl<F: CoordFloat + FromPrimitive> Densify<F> for LineString<F> {
     type Output = Self;
 
-    fn densify<MetricSpace>(&self, max_segment_length: F) -> LineString<F>
+    fn densify<MetricSpace>(
+        &self,
+        metric_space: &MetricSpace,
+        max_segment_length: F,
+    ) -> LineString<F>
     where
         MetricSpace: Distance<F, Point<F>, Point<F>> + InterpolatePoint<F>,
     {
@@ -126,7 +142,8 @@ impl<F: CoordFloat + FromPrimitive> Densify<F> for LineString<F> {
         let mut points = vec![];
         self.lines().for_each(|line| {
             points.push(line.start_point());
-            densify_between::<F, MetricSpace>(
+            densify_between(
+                metric_space,
                 line.start_point(),
                 line.end_point(),
                 &mut points,
@@ -148,13 +165,17 @@ impl<F: CoordFloat + FromPrimitive> Densify<F> for LineString<F> {
 impl<F: CoordFloat + FromPrimitive> Densify<F> for MultiLineString<F> {
     type Output = Self;
 
-    fn densify<MetricSpace>(&self, max_segment_length: F) -> Self::Output
+    fn densify<MetricSpace>(
+        &self,
+        metric_space: &MetricSpace,
+        max_segment_length: F,
+    ) -> Self::Output
     where
         MetricSpace: Distance<F, Point<F>, Point<F>> + InterpolatePoint<F>,
     {
         MultiLineString::new(
             self.iter()
-                .map(|line_string| line_string.densify::<MetricSpace>(max_segment_length))
+                .map(|line_string| line_string.densify(metric_space, max_segment_length))
                 .collect(),
         )
     }
@@ -163,15 +184,19 @@ impl<F: CoordFloat + FromPrimitive> Densify<F> for MultiLineString<F> {
 impl<F: CoordFloat + FromPrimitive> Densify<F> for Polygon<F> {
     type Output = Self;
 
-    fn densify<MetricSpace>(&self, max_segment_length: F) -> Self::Output
+    fn densify<MetricSpace>(
+        &self,
+        metric_space: &MetricSpace,
+        max_segment_length: F,
+    ) -> Self::Output
     where
         MetricSpace: Distance<F, Point<F>, Point<F>> + InterpolatePoint<F>,
     {
         Polygon::new(
-            self.exterior().densify::<MetricSpace>(max_segment_length),
+            self.exterior().densify(metric_space, max_segment_length),
             self.interiors()
                 .iter()
-                .map(|interior| interior.densify::<MetricSpace>(max_segment_length))
+                .map(|interior| interior.densify(metric_space, max_segment_length))
                 .collect(),
         )
     }
@@ -180,13 +205,17 @@ impl<F: CoordFloat + FromPrimitive> Densify<F> for Polygon<F> {
 impl<F: CoordFloat + FromPrimitive> Densify<F> for MultiPolygon<F> {
     type Output = Self;
 
-    fn densify<MetricSpace>(&self, max_segment_length: F) -> Self::Output
+    fn densify<MetricSpace>(
+        &self,
+        metric_space: &MetricSpace,
+        max_segment_length: F,
+    ) -> Self::Output
     where
         MetricSpace: Distance<F, Point<F>, Point<F>> + InterpolatePoint<F>,
     {
         MultiPolygon::new(
             self.iter()
-                .map(|polygon| polygon.densify::<MetricSpace>(max_segment_length))
+                .map(|polygon| polygon.densify(metric_space, max_segment_length))
                 .collect(),
         )
     }
@@ -195,22 +224,30 @@ impl<F: CoordFloat + FromPrimitive> Densify<F> for MultiPolygon<F> {
 impl<F: CoordFloat + FromPrimitive> Densify<F> for Rect<F> {
     type Output = Polygon<F>;
 
-    fn densify<MetricSpace>(&self, max_segment_length: F) -> Self::Output
+    fn densify<MetricSpace>(
+        &self,
+        metric_space: &MetricSpace,
+        max_segment_length: F,
+    ) -> Self::Output
     where
         MetricSpace: Distance<F, Point<F>, Point<F>> + InterpolatePoint<F>,
     {
-        self.to_polygon().densify::<MetricSpace>(max_segment_length)
+        self.to_polygon().densify(metric_space, max_segment_length)
     }
 }
 
 impl<F: CoordFloat + FromPrimitive> Densify<F> for Triangle<F> {
     type Output = Polygon<F>;
 
-    fn densify<MetricSpace>(&self, max_segment_length: F) -> Self::Output
+    fn densify<MetricSpace>(
+        &self,
+        metric_space: &MetricSpace,
+        max_segment_length: F,
+    ) -> Self::Output
     where
         MetricSpace: Distance<F, Point<F>, Point<F>> + InterpolatePoint<F>,
     {
-        self.to_polygon().densify::<MetricSpace>(max_segment_length)
+        self.to_polygon().densify(metric_space, max_segment_length)
     }
 }
 
@@ -227,13 +264,13 @@ mod tests {
             coord!(x: 2.3522, y: 48.8566),
         );
 
-        let densified_line = line.densify::<Geodesic>(100_000.0); // max segment length 100km
+        let densified_line = line.densify(&Geodesic, 100_000.0); // max segment length 100km
         assert!(densified_line.coords_count() > 2);
 
-        let densified_rhumb = line.densify::<Rhumb>(100_000.0);
+        let densified_rhumb = line.densify(&Rhumb, 100_000.0);
         assert!(densified_rhumb.coords_count() > 2);
 
-        let densified_haversine = line.densify::<Haversine>(100_000.0);
+        let densified_haversine = line.densify(&Haversine, 100_000.0);
         assert!(densified_haversine.coords_count() > 2);
     }
 
@@ -245,13 +282,13 @@ mod tests {
             coord!(x: -47.9292, y: -15.7801),    // Brasília, Brazil
         ]);
 
-        let densified_ls = line_string.densify::<Geodesic>(500_000.0); // 500 km max segment length
+        let densified_ls = line_string.densify(&Geodesic, 500_000.0); // 500 km max segment length
         assert!(densified_ls.coords_count() > line_string.coords_count());
 
-        let densified_rhumb_ls = line_string.densify::<Rhumb>(500_000.0);
+        let densified_rhumb_ls = line_string.densify(&Rhumb, 500_000.0);
         assert!(densified_rhumb_ls.coords_count() > line_string.coords_count());
 
-        let densified_haversine_ls = line_string.densify::<Haversine>(500_000.0);
+        let densified_haversine_ls = line_string.densify(&Haversine, 500_000.0);
         assert!(densified_haversine_ls.coords_count() > line_string.coords_count());
     }
 
@@ -263,7 +300,7 @@ mod tests {
             (x: -47.9292, y: -15.7801),    // Brasília
         ];
 
-        let densified_polygon = polygon.densify::<Geodesic>(500_000.0); // 500 km max segment length
+        let densified_polygon = polygon.densify(&Geodesic, 500_000.0); // 500 km max segment length
         assert!(densified_polygon.exterior().coords_count() > polygon.exterior().coords_count());
     }
 
@@ -284,7 +321,7 @@ mod tests {
             ));
 
             let max_dist = 2.0;
-            let densified = polygon.densify::<Euclidean>(max_dist);
+            let densified = polygon.densify(&Euclidean, max_dist);
             assert_eq!(densified, expected);
         }
 
@@ -292,7 +329,7 @@ mod tests {
         fn test_empty_linestring_densify() {
             let linestring = LineString::<f64>::new(vec![]);
             let max_dist = 2.0;
-            let densified = linestring.densify::<Euclidean>(max_dist);
+            let densified = linestring.densify(&Euclidean, max_dist);
             assert!(densified.0.is_empty());
         }
 
@@ -314,7 +351,7 @@ mod tests {
                 1.0 8.0
             ));
             let max_dist = 2.0;
-            let densified = linestring.densify::<Euclidean>(max_dist);
+            let densified = linestring.densify(&Euclidean, max_dist);
             assert_eq!(densified, expected);
         }
 
@@ -323,7 +360,7 @@ mod tests {
             let line: Line<f64> = Line::new(coord! {x: 0.0, y: 6.0}, coord! {x: 1.0, y: 8.0});
             let correct: LineString<f64> = vec![[0.0, 6.0], [0.5, 7.0], [1.0, 8.0]].into();
             let max_dist = 2.0;
-            let densified = line.densify::<Euclidean>(max_dist);
+            let densified = line.densify(&Euclidean, max_dist);
             assert_eq!(densified, correct);
         }
     }
@@ -357,7 +394,7 @@ mod tests {
                 4.925 45.804
             )));
 
-            let actual_haversine = polygon.densify::<Haversine>(50000.0);
+            let actual_haversine = polygon.densify(&Haversine, 50000.0);
             assert_relative_eq!(actual_haversine, exepcted_haversine);
 
             let expected_geodesic = wkt!(POLYGON((
@@ -372,7 +409,7 @@ mod tests {
                 5.355 45.883,
                 4.925 45.804
             )));
-            let actual_geodesic = polygon.densify::<Geodesic>(50000.0);
+            let actual_geodesic = polygon.densify(&Geodesic, 50000.0);
             assert_relative_eq!(actual_geodesic, expected_geodesic);
         }
 
@@ -402,7 +439,7 @@ mod tests {
                 -3.1944 55.949
             ));
 
-            let dense = linestring.densify::<Haversine>(110.0);
+            let dense = linestring.densify(&Haversine, 110.0);
             assert_relative_eq!(dense, expected);
         }
 
@@ -410,7 +447,7 @@ mod tests {
         fn test_line_densify() {
             let output = wkt!(LINESTRING(0.0 0.0, 0.0 0.5, 0.0 1.0));
             let line = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 0.0, y: 1.0 });
-            let dense = line.densify::<Haversine>(100000.0);
+            let dense = line.densify(&Haversine, 100000.0);
             assert_relative_eq!(dense, output);
         }
     }
@@ -421,7 +458,7 @@ mod tests {
         #[test]
         fn test_empty_linestring() {
             let input = wkt!(LINESTRING EMPTY);
-            let dense = input.densify::<Euclidean>(1.0);
+            let dense = input.densify(&Euclidean, 1.0);
             assert_eq!(0, dense.coords_count());
             assert_eq!(input, dense);
         }
@@ -429,7 +466,7 @@ mod tests {
         #[test]
         fn test_one_point_linestring() {
             let input = wkt!(LINESTRING(1.0 1.0));
-            let dense = input.densify::<Euclidean>(1.0);
+            let dense = input.densify(&Euclidean, 1.0);
             assert_eq!(1, dense.coords_count());
             assert_eq!(input, dense);
         }

@@ -50,7 +50,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_length(&self) -> T {
-        self.length::<Rhumb>()
+        self.length(&Rhumb)
     }
 }
 
@@ -60,7 +60,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_length(&self) -> T {
-        self.length::<Rhumb>()
+        self.length(&Rhumb)
     }
 }
 
@@ -70,6 +70,6 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_length(&self) -> T {
-        self.length::<Rhumb>()
+        self.length(&Rhumb)
     }
 }

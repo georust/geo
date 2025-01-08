@@ -45,7 +45,7 @@ pub trait LineStringSegmentizeHaversine {
 }
 
 macro_rules! implement_segmentize {
-    ($trait_name:ident, $method_name:ident, $metric_space:ty) => {
+    ($trait_name:ident, $method_name:ident, $metric_space:expr) => {
         impl $trait_name for LineString {
             fn $method_name(&self, n: usize) -> Option<MultiLineString> {
                 if (n == usize::MIN) || (n == usize::MAX) {
@@ -56,11 +56,11 @@ macro_rules! implement_segmentize {
                 }
 
                 let mut res_coords: Vec<Vec<Coord>> = Vec::with_capacity(n);
-                let total_length = self.length::<$metric_space>();
+                let total_length = self.length(&$metric_space);
                 let mut cum_length = 0_f64;
                 let segment_prop = (1_f64) / (n as f64);
                 let segment_length = total_length * segment_prop;
-                let densified = self.densify::<$metric_space>(segment_length - f64::EPSILON);
+                let densified = self.densify(&$metric_space, segment_length - f64::EPSILON);
 
                 if densified.lines().count() == n {
                     let linestrings = densified
@@ -79,7 +79,7 @@ macro_rules! implement_segmentize {
                         ln_vec.push(segment.start)
                     }
 
-                    let length = segment.length::<$metric_space>();
+                    let length = segment.length(&$metric_space);
                     cum_length += length;
 
                     if (cum_length >= segment_length) && (i != (n_lines - 1)) {
@@ -148,10 +148,7 @@ mod test {
         let segments = linestring.line_segmentize(4).unwrap();
         assert_eq!(segments.0.len(), 4);
 
-        assert_eq!(
-            segments.length::<Euclidean>(),
-            linestring.length::<Euclidean>()
-        );
+        assert_eq!(segments.length(&Euclidean), linestring.length(&Euclidean));
     }
 
     #[test]
@@ -170,8 +167,8 @@ mod test {
         let segments = linestring.line_segmentize(5).unwrap();
         assert_eq!(segments.0.len(), 5);
         assert_relative_eq!(
-            linestring.length::<Euclidean>(),
-            segments.length::<Euclidean>(),
+            linestring.length(&Euclidean),
+            segments.length(&Euclidean),
             epsilon = f64::EPSILON
         );
     }
@@ -183,8 +180,8 @@ mod test {
         let segments = linestring.line_segmentize(5).unwrap();
         assert_eq!(segments.0.len(), 5);
         assert_relative_eq!(
-            linestring.length::<Euclidean>(),
-            segments.length::<Euclidean>(),
+            linestring.length(&Euclidean),
+            segments.length(&Euclidean),
             epsilon = f64::EPSILON
         );
     }
@@ -221,8 +218,8 @@ mod test {
         assert_eq!(segments.0.len(), 5);
 
         assert_relative_eq!(
-            linestring.length::<Euclidean>(),
-            segments.length::<Euclidean>(),
+            linestring.length(&Euclidean),
+            segments.length(&Euclidean),
             epsilon = f64::EPSILON
         );
     }
@@ -253,7 +250,7 @@ mod test {
         // assert that the lines are equal length
         let lens = segments
             .into_iter()
-            .map(|x| x.length::<Euclidean>())
+            .map(|x| x.length(&Euclidean))
             .collect::<Vec<f64>>();
 
         let first = lens[0];
@@ -270,8 +267,8 @@ mod test {
         let segments = linestring.line_segmentize(2).unwrap();
 
         assert_relative_eq!(
-            linestring.length::<Euclidean>(),
-            segments.length::<Euclidean>(),
+            linestring.length(&Euclidean),
+            segments.length(&Euclidean),
             epsilon = f64::EPSILON
         )
     }
@@ -329,7 +326,7 @@ mod test {
         let lens = segments
             .0
             .iter()
-            .map(|li| li.length::<Haversine>())
+            .map(|li| li.length(&Haversine))
             .collect::<Vec<_>>();
 
         let epsilon = 1e-6; // 6th decimal place which is micrometers
@@ -345,7 +342,7 @@ mod test {
         ]
         .into();
 
-        assert_relative_eq!(linestring.length::<Haversine>(), 83.3523000093029);
+        assert_relative_eq!(linestring.length(&Haversine), 83.3523000093029);
 
         let n = 8;
 
@@ -353,8 +350,8 @@ mod test {
 
         // different at 12th decimal which is a picometer
         assert_relative_eq!(
-            linestring.length::<Haversine>(),
-            segments.length::<Haversine>(),
+            linestring.length(&Haversine),
+            segments.length(&Haversine),
             epsilon = 1e-11
         );
     }

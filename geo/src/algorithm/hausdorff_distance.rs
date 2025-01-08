@@ -34,7 +34,7 @@ where
             .coords_iter()
             .map(|c| {
                 rhs.coords_iter()
-                    .map(|c2| Euclidean::distance(c, c2))
+                    .map(|c2| Euclidean.distance(c, c2))
                     .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
             })
             .fold(<T as Bounded>::min_value(), |accum, val| accum.max(val));
@@ -44,7 +44,7 @@ where
             .coords_iter()
             .map(|c| {
                 self.coords_iter()
-                    .map(|c2| Euclidean::distance(c, c2))
+                    .map(|c2| Euclidean.distance(c, c2))
                     .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
             })
             .fold(<T as Bounded>::min_value(), |accum, val| accum.max(val));

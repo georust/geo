@@ -12,40 +12,40 @@ use crate::{CoordFloat, Line, LineString, MultiLineString, Point};
 ///     3.0 4.0,
 ///     3.0 5.0
 /// ));
-/// assert_eq!(line_string.length::<Euclidean>(), 6.);
+/// assert_eq!(line_string.length(&Euclidean), 6.);
 ///
 /// let line_string_lon_lat = geo::wkt!(LINESTRING (
 ///     -47.9292 -15.7801f64,
 ///     -58.4173 -34.6118,
 ///     -70.6483 -33.4489
 /// ));
-/// assert_eq!(line_string_lon_lat.length::<Haversine>().round(), 3_474_956.0);
+/// assert_eq!(line_string_lon_lat.length(&Haversine).round(), 3_474_956.0);
 /// ```
 pub trait Length<F: CoordFloat> {
-    fn length<MetricSpace: Distance<F, Point<F>, Point<F>>>(&self) -> F;
+    fn length(&self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F;
 }
 
 impl<F: CoordFloat> Length<F> for Line<F> {
-    fn length<MetricSpace: Distance<F, Point<F>, Point<F>>>(&self) -> F {
-        MetricSpace::distance(self.start_point(), self.end_point())
+    fn length(&self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
+        metric_space.distance(self.start_point(), self.end_point())
     }
 }
 
 impl<F: CoordFloat> Length<F> for LineString<F> {
-    fn length<MetricSpace: Distance<F, Point<F>, Point<F>>>(&self) -> F {
+    fn length(&self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
         let mut length = F::zero();
         for line in self.lines() {
-            length = length + line.length::<MetricSpace>();
+            length = length + line.length(metric_space);
         }
         length
     }
 }
 
 impl<F: CoordFloat> Length<F> for MultiLineString<F> {
-    fn length<MetricSpace: Distance<F, Point<F>, Point<F>>>(&self) -> F {
+    fn length(&self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
         let mut length = F::zero();
         for line in self {
-            length = length + line.length::<MetricSpace>();
+            length = length + line.length(metric_space);
         }
         length
     }
@@ -66,28 +66,28 @@ mod tests {
 
         assert_eq!(
             343_923., // meters
-            line.length::<Geodesic>().round()
+            line.length(&Geodesic).round()
         );
         assert_eq!(
             341_088., // meters
-            line.length::<Rhumb>().round()
+            line.length(&Rhumb).round()
         );
         assert_eq!(
             343_557., // meters
-            line.length::<Haversine>().round()
+            line.length(&Haversine).round()
         );
 
         // computing Euclidean length of an unprojected (lng/lat) line gives a nonsense answer
         assert_eq!(
             4., // nonsense!
-            line.length::<Euclidean>().round()
+            line.length(&Euclidean).round()
         );
         // london to paris in EPSG:3035
         let projected_line = Line::new(
             coord!(x: 3620451.74f64, y: 3203901.44),
             coord!(x: 3760771.86, y: 2889484.80),
         );
-        assert_eq!(344_307., projected_line.length::<Euclidean>().round());
+        assert_eq!(344_307., projected_line.length(&Euclidean).round());
     }
 
     #[test]
@@ -100,21 +100,21 @@ mod tests {
 
         assert_eq!(
             6_302_220., // meters
-            line_string.length::<Geodesic>().round()
+            line_string.length(&Geodesic).round()
         );
         assert_eq!(
             6_332_790., // meters
-            line_string.length::<Rhumb>().round()
+            line_string.length(&Rhumb).round()
         );
         assert_eq!(
             6_304_387., // meters
-            line_string.length::<Haversine>().round()
+            line_string.length(&Haversine).round()
         );
 
         // computing Euclidean length of an unprojected (lng/lat) gives a nonsense answer
         assert_eq!(
             59., // nonsense!
-            line_string.length::<Euclidean>().round()
+            line_string.length(&Euclidean).round()
         );
         // EPSG:102033
         let projected_line_string = LineString::from(vec![
@@ -122,9 +122,6 @@ mod tests {
             coord!(x: -1797084.08, y: 583528.84),    // Lima, Peru
             coord!(x: 1240052.27, y: 207169.12),     // Brasília, Brazil
         ]);
-        assert_eq!(
-            6_237_538.,
-            projected_line_string.length::<Euclidean>().round()
-        );
+        assert_eq!(6_237_538., projected_line_string.length(&Euclidean).round());
     }
 }

@@ -9,7 +9,7 @@ use num_traits::FromPrimitive;
 pub trait RhumbIntermediate<T: CoordFloat> {
     #[deprecated(
         since = "0.29.0",
-        note = "Please use `Rhumb::point_at_ratio_between` from the `InterpolatePoint` trait instead"
+        note = "Please use `Rhumb.point_at_ratio_between` from the `InterpolatePoint` trait instead"
     )]
     /// Returns a new Point along a [rhumb line] between two existing points.
     ///
@@ -44,7 +44,7 @@ pub trait RhumbIntermediate<T: CoordFloat> {
 
     #[deprecated(
         since = "0.29.0",
-        note = "Please use `Rhumb::points_along_line` from the `InterpolatePoint` trait instead"
+        note = "Please use `Rhumb.points_along_line` from the `InterpolatePoint` trait instead"
     )]
     fn rhumb_intermediate_fill(
         &self,
@@ -60,7 +60,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_intermediate(&self, other: &Point<T>, f: T) -> Point<T> {
-        Rhumb::point_at_ratio_between(*self, *other, f)
+        Rhumb.point_at_ratio_between(*self, *other, f)
     }
 
     fn rhumb_intermediate_fill(
@@ -69,7 +69,9 @@ where
         max_dist: T,
         include_ends: bool,
     ) -> Vec<Point<T>> {
-        Rhumb::points_along_line(*self, *other, max_dist, include_ends).collect()
+        Rhumb
+            .points_along_line(*self, *other, max_dist, include_ends)
+            .collect()
     }
 }
 

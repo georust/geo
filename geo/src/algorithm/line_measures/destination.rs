@@ -15,5 +15,5 @@ pub trait Destination<F: CoordFloat> {
     /// - returns: Point where the units of x/y depend on the [trait implementation](#implementors).
     ///
     /// [`metric_spaces`]: super::metric_spaces
-    fn destination(origin: Point<F>, bearing: F, distance: F) -> Point<F>;
+    fn destination(&self, origin: Point<F>, bearing: F, distance: F) -> Point<F>;
 }
