@@ -49,7 +49,7 @@ pub trait GeodesicArea<T> {
     ///     (x: 0.00388383, y: 51.501574),
     /// ];
     ///
-    /// let area = polygon.geodesic_area_unsigned();
+    /// let area = polygon.geodesic_unsigned_area();
     ///
     /// assert_eq!(
     ///     78_596., // meters
@@ -57,7 +57,9 @@ pub trait GeodesicArea<T> {
     /// );
     /// ```
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
-    fn geodesic_area_signed(&self) -> T;
+    fn geodesic_signed_area(&self) -> T;
+
+    fn geodesic_area_signed(&self) -> T; // TODO
 
     /// Determine the area of a geometry on an ellipsoidal model of the earth. Supports very large geometries that cover a significant portion of the earth.
     ///
@@ -88,13 +90,15 @@ pub trait GeodesicArea<T> {
     ///     (x: 1.0, y: 0.0),
     /// ];
     ///
-    /// let area = polygon.geodesic_area_unsigned();
+    /// let area = polygon.geodesic_unsigned_area();
     ///
     /// // Over 5 trillion square meters!
     /// assert_eq!(area, 510053312945726.94);
     /// ```
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
-    fn geodesic_area_unsigned(&self) -> T;
+    fn geodesic_unsigned_area(&self) -> T;
+
+    fn geodesic_area_unsigned(&self) -> T; // TODO
 
     /// Determine the perimeter of a geometry on an ellipsoidal model of the earth.
     ///
@@ -137,7 +141,9 @@ pub trait GeodesicArea<T> {
     /// 2. The polygon is larger than half the planet. In this case, the returned area of the polygon is not correct. If you expect to be dealing with very large polygons, please use the 'unsigned' methods.
     ///
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
-    fn geodesic_perimeter_area_signed(&self) -> (T, T);
+    fn geodesic_perimeter_signed_area(&self) -> (T, T);
+
+    fn geodesic_perimeter_area_signed(&self) -> (T, T); // TODO
 
     /// Determine the perimeter and area of a geometry on an ellipsoidal model of the earth, all in one operation. Supports very large geometries that cover a significant portion of the earth.
     ///
@@ -158,7 +164,9 @@ pub trait GeodesicArea<T> {
     /// - return value: (meter, meter²)
     ///
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
-    fn geodesic_perimeter_area_unsigned(&self) -> (T, T);
+    fn geodesic_perimeter_unsigned_area(&self) -> (T, T);
+
+    fn geodesic_perimeter_area_unsigned(&self) -> (T, T); // TODO
 }
 
 impl GeodesicArea<f64> for Polygon {
@@ -167,22 +175,42 @@ impl GeodesicArea<f64> for Polygon {
         perimeter
     }
 
-    fn geodesic_area_signed(&self) -> f64 {
+    fn geodesic_signed_area(&self) -> f64 {
         let (_perimeter, area) = geodesic_area(self, true, false, false);
         area
     }
 
-    fn geodesic_area_unsigned(&self) -> f64 {
+    fn geodesic_area_signed(&self) -> f64 {
+        // TODO
+        self.geodesic_signed_area()
+    }
+
+    fn geodesic_unsigned_area(&self) -> f64 {
         let (_perimeter, area) = geodesic_area(self, false, false, false);
         area
     }
 
-    fn geodesic_perimeter_area_signed(&self) -> (f64, f64) {
+    fn geodesic_area_unsigned(&self) -> f64 {
+        // TODO
+        self.geodesic_unsigned_area()
+    }
+
+    fn geodesic_perimeter_signed_area(&self) -> (f64, f64) {
         geodesic_area(self, true, false, false)
     }
 
-    fn geodesic_perimeter_area_unsigned(&self) -> (f64, f64) {
+    fn geodesic_perimeter_area_signed(&self) -> (f64, f64) {
+        // TODO
+        self.geodesic_perimeter_signed_area()
+    }
+
+    fn geodesic_perimeter_unsigned_area(&self) -> (f64, f64) {
         geodesic_area(self, false, false, false)
+    }
+
+    fn geodesic_perimeter_area_unsigned(&self) -> (f64, f64) {
+        // TODO
+        self.geodesic_perimeter_unsigned_area()
     }
 }
 
@@ -241,20 +269,40 @@ macro_rules! zero_impl {
                 0.0
             }
 
+            fn geodesic_signed_area(&self) -> f64 {
+                0.0
+            }
+
             fn geodesic_area_signed(&self) -> f64 {
+                // TODO
+                self.geodesic_signed_area()
+            }
+
+            fn geodesic_unsigned_area(&self) -> f64 {
                 0.0
             }
 
             fn geodesic_area_unsigned(&self) -> f64 {
-                0.0
+                // TODO
+                self.geodesic_unsigned_area()
+            }
+
+            fn geodesic_perimeter_signed_area(&self) -> (f64, f64) {
+                (0.0, 0.0)
             }
 
             fn geodesic_perimeter_area_signed(&self) -> (f64, f64) {
+                // TODO
+                self.geodesic_perimeter_signed_area()
+            }
+
+            fn geodesic_perimeter_unsigned_area(&self) -> (f64, f64) {
                 (0.0, 0.0)
             }
 
             fn geodesic_perimeter_area_unsigned(&self) -> (f64, f64) {
-                (0.0, 0.0)
+                // TODO
+                self.geodesic_perimeter_unsigned_area()
             }
         }
     };
@@ -269,20 +317,40 @@ macro_rules! to_polygon_impl {
                 self.to_polygon().geodesic_perimeter()
             }
 
+            fn geodesic_signed_area(&self) -> f64 {
+                self.to_polygon().geodesic_signed_area()
+            }
+
             fn geodesic_area_signed(&self) -> f64 {
-                self.to_polygon().geodesic_area_signed()
+                // TODO
+                self.geodesic_signed_area()
+            }
+
+            fn geodesic_unsigned_area(&self) -> f64 {
+                self.to_polygon().geodesic_unsigned_area()
             }
 
             fn geodesic_area_unsigned(&self) -> f64 {
-                self.to_polygon().geodesic_area_unsigned()
+                // TODO
+                self.geodesic_unsigned_area()
+            }
+
+            fn geodesic_perimeter_signed_area(&self) -> (f64, f64) {
+                self.to_polygon().geodesic_perimeter_signed_area()
             }
 
             fn geodesic_perimeter_area_signed(&self) -> (f64, f64) {
-                self.to_polygon().geodesic_perimeter_area_signed()
+                // TODO
+                self.geodesic_perimeter_signed_area()
+            }
+
+            fn geodesic_perimeter_unsigned_area(&self) -> (f64, f64) {
+                self.to_polygon().geodesic_perimeter_unsigned_area()
             }
 
             fn geodesic_perimeter_area_unsigned(&self) -> (f64, f64) {
-                self.to_polygon().geodesic_perimeter_area_unsigned()
+                // TODO
+                self.geodesic_perimeter_unsigned_area()
             }
         }
     };
@@ -298,30 +366,50 @@ macro_rules! sum_impl {
                     .fold(0.0, |total, next| total + next.geodesic_perimeter())
             }
 
-            fn geodesic_area_signed(&self) -> f64 {
+            fn geodesic_signed_area(&self) -> f64 {
                 self.iter()
-                    .fold(0.0, |total, next| total + next.geodesic_area_signed())
+                    .fold(0.0, |total, next| total + next.geodesic_signed_area())
+            }
+
+            fn geodesic_area_signed(&self) -> f64 {
+                // TODO
+                self.geodesic_signed_area()
+            }
+
+            fn geodesic_unsigned_area(&self) -> f64 {
+                self.iter()
+                    .fold(0.0, |total, next| total + next.geodesic_unsigned_area())
             }
 
             fn geodesic_area_unsigned(&self) -> f64 {
+                // TODO
+                self.geodesic_unsigned_area()
+            }
+
+            fn geodesic_perimeter_signed_area(&self) -> (f64, f64) {
                 self.iter()
-                    .fold(0.0, |total, next| total + next.geodesic_area_unsigned())
+                    .fold((0.0, 0.0), |(total_perimeter, total_area), next| {
+                        let (perimeter, area) = next.geodesic_perimeter_signed_area();
+                        (total_perimeter + perimeter, total_area + area)
+                    })
             }
 
             fn geodesic_perimeter_area_signed(&self) -> (f64, f64) {
+                // TODO
+                self.geodesic_perimeter_signed_area()
+            }
+
+            fn geodesic_perimeter_unsigned_area(&self) -> (f64, f64) {
                 self.iter()
                     .fold((0.0, 0.0), |(total_perimeter, total_area), next| {
-                        let (perimeter, area) = next.geodesic_perimeter_area_signed();
+                        let (perimeter, area) = next.geodesic_perimeter_unsigned_area();
                         (total_perimeter + perimeter, total_area + area)
                     })
             }
 
             fn geodesic_perimeter_area_unsigned(&self) -> (f64, f64) {
-                self.iter()
-                    .fold((0.0, 0.0), |(total_perimeter, total_area), next| {
-                        let (perimeter, area) = next.geodesic_perimeter_area_unsigned();
-                        (total_perimeter + perimeter, total_area + area)
-                    })
+                // TODO
+                self.geodesic_perimeter_unsigned_area()
             }
         }
     };
@@ -340,10 +428,19 @@ sum_impl!(MultiPolygon);
 impl GeodesicArea<f64> for Geometry<f64> {
     crate::geometry_delegate_impl! {
         fn geodesic_perimeter(&self) -> f64;
+        fn geodesic_signed_area(&self) -> f64;
+        #[deprecated = "This method will be removed in the future. Please use geodesic_signed_area() instead"]
         fn geodesic_area_signed(&self) -> f64;
+        fn geodesic_unsigned_area(&self) -> f64;
+        #[deprecated = "This method will be removed in the future. Please use geodesic_unsigned_area() instead"]
         fn geodesic_area_unsigned(&self) -> f64;
+        fn geodesic_perimeter_signed_area(&self) -> (f64, f64);
+        #[deprecated = "This method will be removed in the future. Please use geodesic_perimeter_signed_area() instead"]
         fn geodesic_perimeter_area_signed(&self) -> (f64, f64);
+        fn geodesic_perimeter_unsigned_area(&self) -> (f64, f64);
+        #[deprecated = "This method will be removed in the future. Please use geodesic_perimeter_unsigned_area() instead"]
         fn geodesic_perimeter_area_unsigned(&self) -> (f64, f64);
+        fn geodesic_perimeter(&self) -> f64;
     }
 }
 
@@ -367,14 +464,14 @@ mod test {
         ];
         assert_relative_eq!(
             -7786102826806.07,
-            polygon.geodesic_area_signed(),
+            polygon.geodesic_signed_area(),
             epsilon = 0.01
         );
 
         let geoid = geographiclib_rs::Geodesic::wgs84();
         assert_relative_eq!(
             geoid.area() - 7786102826806.07,
-            polygon.geodesic_area_unsigned(),
+            polygon.geodesic_unsigned_area(),
             epsilon = 0.01
         );
 
@@ -399,12 +496,12 @@ mod test {
         ];
         assert_relative_eq!(
             7786102826806.07,
-            polygon.geodesic_area_signed(),
+            polygon.geodesic_signed_area(),
             epsilon = 0.01
         );
         assert_relative_eq!(
             7786102826806.07,
-            polygon.geodesic_area_unsigned(),
+            polygon.geodesic_unsigned_area(),
             epsilon = 0.01
         );
 
@@ -429,12 +526,12 @@ mod test {
         ];
         assert_relative_eq!(
             7786102826806.07,
-            polygon.geodesic_area_signed(),
+            polygon.geodesic_signed_area(),
             epsilon = 0.01
         );
         assert_relative_eq!(
             7786102826806.07,
-            polygon.geodesic_area_unsigned(),
+            polygon.geodesic_unsigned_area(),
             epsilon = 0.01
         );
 
@@ -475,22 +572,22 @@ mod test {
 
         assert_relative_eq!(
             1203317999173.7063,
-            poly.geodesic_area_signed(),
+            poly.geodesic_signed_area(),
             epsilon = 0.01
         );
         assert_relative_eq!(
             1203317999173.7063,
-            poly.geodesic_area_unsigned(),
+            poly.geodesic_unsigned_area(),
             epsilon = 0.01
         );
         assert_relative_eq!(5307742.446635911, poly.geodesic_perimeter(), epsilon = 0.01);
 
-        let (perimeter, area) = poly.geodesic_perimeter_area_signed();
+        let (perimeter, area) = poly.geodesic_perimeter_signed_area();
 
         assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
         assert_relative_eq!(1203317999173.7063, area, epsilon = 0.01);
 
-        let (perimeter, area) = poly.geodesic_perimeter_area_unsigned();
+        let (perimeter, area) = poly.geodesic_perimeter_unsigned_area();
 
         assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
         assert_relative_eq!(1203317999173.7063, area, epsilon = 0.01);
@@ -501,7 +598,7 @@ mod test {
             exterior.make_cw_winding();
         });
 
-        let (perimeter, area) = poly.geodesic_perimeter_area_signed();
+        let (perimeter, area) = poly.geodesic_perimeter_signed_area();
         assert_relative_eq!(-1203317999173.7063, area, epsilon = 0.01);
         assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
 
@@ -512,7 +609,7 @@ mod test {
             }
         });
 
-        let (perimeter, area) = poly.geodesic_perimeter_area_signed();
+        let (perimeter, area) = poly.geodesic_perimeter_signed_area();
         assert_relative_eq!(-1203317999173.7063, area, epsilon = 0.01);
         assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
 
@@ -521,7 +618,7 @@ mod test {
             exterior.make_ccw_winding();
         });
 
-        let (perimeter, area) = poly.geodesic_perimeter_area_signed();
+        let (perimeter, area) = poly.geodesic_perimeter_signed_area();
         assert_relative_eq!(1203317999173.7063, area, epsilon = 0.01);
         assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
     }
@@ -554,7 +651,7 @@ mod test {
             ],
         ];
 
-        assert_relative_eq!(1203317999173.7063, poly.geodesic_area_signed());
+        assert_relative_eq!(1203317999173.7063, poly.geodesic_signed_area());
     }
 
     #[test]
@@ -580,15 +677,15 @@ mod test {
                 ],
             ],
         ];
-        assert_relative_eq!(18462065880.09138, diamond.geodesic_area_unsigned());
-        assert_relative_eq!(18462065880.09138, diamond.geodesic_area_signed());
+        assert_relative_eq!(18462065880.09138, diamond.geodesic_unsigned_area());
+        assert_relative_eq!(18462065880.09138, diamond.geodesic_signed_area());
         assert_relative_eq!(941333.0085011568, diamond.geodesic_perimeter());
 
-        let (perimeter, area) = diamond.geodesic_perimeter_area_signed();
+        let (perimeter, area) = diamond.geodesic_perimeter_signed_area();
         assert_relative_eq!(941333.0085011568, perimeter);
         assert_relative_eq!(18462065880.09138, area);
 
-        let (perimeter, area) = diamond.geodesic_perimeter_area_unsigned();
+        let (perimeter, area) = diamond.geodesic_perimeter_unsigned_area();
         assert_relative_eq!(941333.0085011568, perimeter);
         assert_relative_eq!(18462065880.09138, area);
 
@@ -598,7 +695,7 @@ mod test {
             exterior.make_cw_winding();
         });
 
-        let (perimeter, area) = diamond.geodesic_perimeter_area_signed();
+        let (perimeter, area) = diamond.geodesic_perimeter_signed_area();
         assert_relative_eq!(-18462065880.09138, area);
         assert_relative_eq!(941333.0085011568, perimeter);
 
@@ -609,7 +706,7 @@ mod test {
             }
         });
 
-        let (perimeter, area) = diamond.geodesic_perimeter_area_signed();
+        let (perimeter, area) = diamond.geodesic_perimeter_signed_area();
         assert_relative_eq!(-18462065880.09138, area);
         assert_relative_eq!(941333.0085011568, perimeter);
 
@@ -618,7 +715,7 @@ mod test {
             exterior.make_ccw_winding();
         });
 
-        let (perimeter, area) = diamond.geodesic_perimeter_area_signed();
+        let (perimeter, area) = diamond.geodesic_perimeter_signed_area();
         assert_relative_eq!(18462065880.09138, area);
         assert_relative_eq!(941333.0085011568, perimeter);
     }
@@ -634,7 +731,7 @@ mod test {
             (x: 1.0, y: 0.0),
         ];
 
-        let area = polygon_large.geodesic_area_unsigned();
+        let area = polygon_large.geodesic_unsigned_area();
         assert_eq!(area, 510053312945726.94);
 
         // A very large polygon that covers nearly all the earth, and then a hole that also covers nearly all the earth as well.
@@ -658,10 +755,10 @@ mod test {
             ],
         ];
 
-        let area = polygon_large_with_hole.geodesic_area_signed();
+        let area = polygon_large_with_hole.geodesic_signed_area();
         assert_relative_eq!(area, 46154562709.8, epsilon = 0.1);
 
-        let area = polygon_large_with_hole.geodesic_area_unsigned();
+        let area = polygon_large_with_hole.geodesic_unsigned_area();
         assert_relative_eq!(area, 46154562709.8, epsilon = 0.1);
     }
 }
