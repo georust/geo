@@ -10,8 +10,13 @@ use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
 ///
 /// # References
 ///
-/// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
-/// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
+/// *Note*: this implementation uses a mean earth radius of 6371.0088 km (6_371_008.7714 m), based on the recommendation of
+/// the IUGG:
+///
+/// Moritz, H. (2000). Geodetic Reference System 1980. Journal of Geodesy, 74(1), 128–133. doi:10.1007/s001900050278
+/// "Derived Geometric Constants: **R1: mean radius**" (p131)
+/// - <https://link.springer.com/article/10.1007%2Fs001900050278>
+/// - <https://sci-hub.se/https://doi.org/10.1007/s001900050278>
 ///
 /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula//
 /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
