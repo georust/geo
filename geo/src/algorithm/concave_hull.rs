@@ -116,7 +116,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     let h = max_dist + max_dist;
-    let w = line.length(&Euclidean) + h;
+    let w = Euclidean.length(&line) + h;
     let two = T::add(T::one(), T::one());
     let search_dist = T::div(T::sqrt(T::powi(w, 2) + T::powi(h, 2)), two);
     let centroid = line.centroid();
@@ -217,7 +217,7 @@ where
         line_tree.insert(line);
     }
     while let Some(line) = line_queue.pop_front() {
-        let edge_length = line.length(&Euclidean);
+        let edge_length = Euclidean.length(&line);
         let dist = edge_length / concavity;
         let possible_closest_point = find_point_closest_to_line(
             &interior_points_tree,

@@ -13,10 +13,10 @@ mod interpolate_point;
 pub use interpolate_point::InterpolatePoint;
 
 mod length;
-pub use length::Length;
+pub use length::{Length, LengthMeasurable};
 
 mod densify;
-pub use densify::Densify;
+pub use densify::{Densifiable, Densify};
 
 pub mod metric_spaces;
 pub use metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb};

@@ -380,7 +380,7 @@ mod test {
 
         // Confirm that the exterior ring geodesic_length is the same as the perimeter
         assert_relative_eq!(
-            polygon.exterior().length(&Geodesic),
+            Geodesic.length(polygon.exterior()),
             polygon.geodesic_perimeter()
         );
     }
@@ -410,7 +410,7 @@ mod test {
 
         // Confirm that the exterior ring geodesic_length is the same as the perimeter
         assert_relative_eq!(
-            polygon.exterior().length(&Geodesic),
+            Geodesic.length(polygon.exterior()),
             polygon.geodesic_perimeter()
         );
     }
@@ -440,7 +440,7 @@ mod test {
 
         // Confirm that the exterior ring geodesic_length is the same as the perimeter
         assert_relative_eq!(
-            polygon.exterior().length(&Geodesic),
+            Geodesic.length(polygon.exterior()),
             polygon.geodesic_perimeter()
         );
     }

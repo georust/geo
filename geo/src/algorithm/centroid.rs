@@ -466,7 +466,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
         match line.dimensions() {
             ZeroDimensional => self.add_coord(line.start),
             OneDimensional => {
-                self.add_centroid(OneDimensional, line.centroid().0, line.length(&Euclidean))
+                self.add_centroid(OneDimensional, line.centroid().0, Euclidean.length(line))
             }
             _ => unreachable!("Line must be zero or one dimensional"),
         }

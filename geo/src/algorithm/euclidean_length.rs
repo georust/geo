@@ -5,7 +5,7 @@ use crate::{CoordFloat, Euclidean, Length, Line, LineString, MultiLineString};
 /// Calculation of the length
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `line.length(&Euclidean)` via the `Length` trait instead."
+    note = "Please use the `Euclidean.length(&line)` via the `Length` trait instead."
 )]
 pub trait EuclideanLength<T, RHS = Self> {
     /// Calculation of the length of a Line
@@ -35,7 +35,7 @@ where
     T: CoordFloat,
 {
     fn euclidean_length(&self) -> T {
-        self.length(&Euclidean)
+        Euclidean.length(self)
     }
 }
 
@@ -45,7 +45,7 @@ where
     T: CoordFloat + Sum,
 {
     fn euclidean_length(&self) -> T {
-        self.length(&Euclidean)
+        Euclidean.length(self)
     }
 }
 
@@ -55,7 +55,7 @@ where
     T: CoordFloat + Sum,
 {
     fn euclidean_length(&self) -> T {
-        self.length(&Euclidean)
+        Euclidean.length(self)
     }
 }
 
