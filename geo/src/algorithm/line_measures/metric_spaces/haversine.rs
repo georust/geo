@@ -22,6 +22,116 @@ use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
 /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
 pub struct Haversine;
 
+/// A spherical model using the [haversine formula].
+///
+/// For earth measurements you probably want the `Haversine` struct.
+///
+/// If you are using a non-typical earth radius, or measuring other spheres, you can use this struct.
+pub struct CustomHaversine {
+    radius: f64,
+}
+
+/// A spherical model of the earth using the [haversine formula].
+///
+/// Distances are considered [great circle] lengths and are measured in meters.
+///
+/// ⚠️: For normal spherical measurements of the Earth, you probably want [`Haversine`] instead.
+/// Use [`CustomHaversine`] only if you need to measure some non-Earth sphere, or want to use a
+/// different value for Earth's radius.
+///
+/// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula//
+/// [great circle]: https://en.wikipedia.org/wiki/Great_circle
+///
+/// ```
+/// # use approx::assert_relative_eq;
+/// use geo::{CustomHaversine, Haversine, Distance};
+///
+/// let start = geo::wkt!(POINT(23.319941 42.698334)); // Sofia: Longitude, Latitude
+/// let finish = geo::wkt!(POINT(24.742168 42.136097)); // Plovdiv: Longitude, Latitude
+///
+/// // Typically, you can just use `Haversine` for measuring on the Earth's surface
+/// assert_relative_eq!(
+///     132433.09929460194,
+///     Haversine.distance(start, finish)
+/// );
+///
+/// // Beneath the hood, `Haversine` uses the mean radius of the GRS80 ellipsoid.
+/// assert_relative_eq!(
+///     Haversine.distance(start, finish),
+///     CustomHaversine::GRS80_MEAN_RADIUS.distance(start, finish)
+/// );
+///
+/// // You may choose to use one of the other well known estimations of the Earth's radius,
+/// // which may result in *slightly* different results.
+/// assert_relative_eq!(
+///     132433.06564071847,
+///     CustomHaversine::GRS80_EQUAL_AREA.distance(start, finish)
+/// );
+///
+/// // Or you can specify whatever radius you want to get some "out of this world" results.
+/// let mars_sphere = CustomHaversine::new(3_389_500.0); // 👽 Mars radius in meters
+/// assert_relative_eq!(
+///     70456.97222377927,
+///     mars_sphere.distance(start, finish)
+/// );
+/// ```
+impl CustomHaversine {
+    /// ## Parameters
+    /// - radius: The radius of the sphere, typically in meters.
+    pub const fn new(radius: f64) -> Self {
+        Self { radius }
+    }
+
+    pub const fn radius(&self) -> f64 {
+        self.radius
+    }
+
+    /// A sphere with radius equal to the mean radius of the GRS80 ellipsoid — `R₁`,
+    /// copied from [Moritz (2000)].
+    ///
+    /// Moritz, H. (2000). Geodetic Reference System 1980. Journal of Geodesy, 74(1), 128–133. doi:10.1007/s001900050278
+    /// "Derived Geometric Constants: **R₁: mean radius**" (p131)
+    /// - <https://link.springer.com/article/10.1007%2Fs001900050278>
+    /// - <https://sci-hub.se/https://doi.org/10.1007/s001900050278>
+    ///
+    /// [Moritz (2000)]: https://sci-hub.se/https://doi.org/10.1007/s001900050278
+    pub const GRS80_MEAN_RADIUS: Self = Self {
+        radius: MEAN_EARTH_RADIUS,
+    };
+
+    /// A sphere with the same surface area as the GRS80 ellipsoid, having radius `R₂`,
+    /// copied from [Moritz (2000)].
+    ///
+    /// Moritz, H. (2000). Geodetic Reference System 1980. Journal of Geodesy, 74(1), 128–133. doi:10.1007/s001900050278
+    /// "Derived Geometric Constants: **R₂: radius of sphere of same surface**" (p131)
+    /// - <https://link.springer.com/article/10.1007%2Fs001900050278>
+    /// - <https://sci-hub.se/https://doi.org/10.1007/s001900050278>
+    ///
+    /// [Moritz (2000)]: https://sci-hub.se/https://doi.org/10.1007/s001900050278
+    pub const GRS80_EQUAL_AREA: Self = Self {
+        radius: 6_371_007.181_0,
+    };
+
+    /// A sphere with the same volume as the GRS80 ellipsoid, having radius `R₃`,
+    /// copied from [Moritz (2000)].
+    ///
+    /// Moritz, H. (2000). Geodetic Reference System 1980. Journal of Geodesy, 74(1), 128–133. doi:10.1007/s001900050278
+    /// "Derived Geometric Constants: **R₃: radius of sphere of same volume**" (p131)
+    /// - <https://link.springer.com/article/10.1007%2Fs001900050278>
+    /// - <https://sci-hub.se/https://doi.org/10.1007/s001900050278>
+    ///
+    /// [Moritz (2000)]: https://sci-hub.se/https://doi.org/10.1007/s001900050278
+    pub const GRS80_EQUAL_VOLUME: Self = Self {
+        radius: 6_371_000.790_0,
+    };
+}
+
+impl Default for CustomHaversine {
+    fn default() -> Self {
+        Self::GRS80_MEAN_RADIUS
+    }
+}
+
 impl<F: CoordFloat + FromPrimitive> Bearing<F> for Haversine {
     /// Returns the bearing from `origin` to `destination` in degrees along a [great circle].
     ///
@@ -50,6 +160,13 @@ impl<F: CoordFloat + FromPrimitive> Bearing<F> for Haversine {
     /// (<https://dtcenter.org/met/users/docs/write_ups/gc_simple.pdf>)
     ///
     /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
+    fn bearing(&self, origin: Point<F>, destination: Point<F>) -> F {
+        CustomHaversine::default().bearing(origin, destination)
+    }
+}
+
+impl<F: CoordFloat + FromPrimitive> Bearing<F> for CustomHaversine {
+    /// Same as [`Haversine.bearing`], but on a sphere with a custom radius.
     fn bearing(&self, origin: Point<F>, destination: Point<F>) -> F {
         let three_sixty =
             F::from(360.0).expect("Numeric type to be constructable from primitive 360");
@@ -94,11 +211,18 @@ impl<F: CoordFloat + FromPrimitive> Destination<F> for Haversine {
     ///
     /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
     fn destination(&self, origin: Point<F>, bearing: F, meters: F) -> Point<F> {
+        CustomHaversine::default().destination(origin, bearing, meters)
+    }
+}
+
+impl<F: CoordFloat + FromPrimitive> Destination<F> for CustomHaversine {
+    /// Same as [`Haversine.destination`], but on a sphere with a custom radius.
+    fn destination(&self, origin: Point<F>, bearing: F, meters: F) -> Point<F> {
         let center_lng = origin.x().to_radians();
         let center_lat = origin.y().to_radians();
         let bearing_rad = bearing.to_radians();
 
-        let rad = meters / F::from(MEAN_EARTH_RADIUS).unwrap();
+        let rad = meters / F::from(self.radius).unwrap();
 
         let lat =
             { center_lat.sin() * rad.cos() + center_lat.cos() * rad.sin() * bearing_rad.cos() }
@@ -144,6 +268,13 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Haversin
     ///
     /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
     fn distance(&self, origin: Point<F>, destination: Point<F>) -> F {
+        CustomHaversine::default().distance(origin, destination)
+    }
+}
+
+impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for CustomHaversine {
+    /// Same as [`Haversine.distance`], but on a sphere with a custom radius.
+    fn distance(&self, origin: Point<F>, destination: Point<F>) -> F {
         let two = F::one() + F::one();
         let theta1 = origin.y().to_radians();
         let theta2 = destination.y().to_radians();
@@ -152,7 +283,7 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Haversin
         let a = (delta_theta / two).sin().powi(2)
             + theta1.cos() * theta2.cos() * (delta_lambda / two).sin().powi(2);
         let c = two * a.sqrt().asin();
-        F::from(MEAN_EARTH_RADIUS).unwrap() * c
+        F::from(self.radius).unwrap() * c
     }
 }
 
@@ -186,8 +317,7 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Haversine {
         end: Point<F>,
         meters_from_start: F,
     ) -> Point<F> {
-        let bearing = Self.bearing(start, end);
-        Self.destination(start, bearing, meters_from_start)
+        CustomHaversine::default().point_at_distance_between(start, end, meters_from_start)
     }
 
     /// Returns a new Point along a [great circle] between two existing points.
@@ -219,14 +349,7 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Haversine {
         end: Point<F>,
         ratio_from_start: F,
     ) -> Point<F> {
-        if start == end || ratio_from_start == F::zero() {
-            return start;
-        }
-        if ratio_from_start == F::one() {
-            return end;
-        }
-        let calculation = HaversineIntermediateFillCalculation::new(start, end);
-        calculation.point_at_ratio(ratio_from_start)
+        CustomHaversine::default().point_at_ratio_between(start, end, ratio_from_start)
     }
 
     /// Interpolates `Point`s along a [great circle] between `start` and `end`.
@@ -246,10 +369,54 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Haversine {
         max_distance: F,
         include_ends: bool,
     ) -> impl Iterator<Item = Point<F>> {
+        CustomHaversine::GRS80_MEAN_RADIUS.points_along_line(start, end, max_distance, include_ends)
+    }
+}
+
+/// Interpolate Point(s) along a [great circle].
+///
+/// [great circle]: https://en.wikipedia.org/wiki/Great_circle
+impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for CustomHaversine {
+    /// Same as [`Haversine.point_at_distance_between`], but on a sphere with a custom radius.
+    fn point_at_distance_between(
+        &self,
+        start: Point<F>,
+        end: Point<F>,
+        meters_from_start: F,
+    ) -> Point<F> {
+        let bearing = self.bearing(start, end);
+        self.destination(start, bearing, meters_from_start)
+    }
+
+    /// Same as [`Haversine.point_at_ratio_between`], but on a sphere with a custom radius.
+    fn point_at_ratio_between(
+        &self,
+        start: Point<F>,
+        end: Point<F>,
+        ratio_from_start: F,
+    ) -> Point<F> {
+        if start == end || ratio_from_start == F::zero() {
+            return start;
+        }
+        if ratio_from_start == F::one() {
+            return end;
+        }
+        let calculation = HaversineIntermediateFillCalculation::new(start, end);
+        calculation.point_at_ratio(ratio_from_start)
+    }
+
+    /// Same as [`Haversine.points_along_line`], but on a sphere with a custom radius.
+    fn points_along_line(
+        &self,
+        start: Point<F>,
+        end: Point<F>,
+        max_distance: F,
+        include_ends: bool,
+    ) -> impl Iterator<Item = Point<F>> {
         let calculation = HaversineIntermediateFillCalculation::new(start, end);
         let HaversineIntermediateFillCalculation { d, .. } = calculation;
 
-        let total_distance = d * F::from(MEAN_EARTH_RADIUS).unwrap();
+        let total_distance = d * F::from(self.radius).unwrap();
 
         if total_distance <= max_distance {
             return if include_ends {
