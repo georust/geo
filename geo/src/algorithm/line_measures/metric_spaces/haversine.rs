@@ -18,36 +18,26 @@ use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
 /// - <https://link.springer.com/article/10.1007%2Fs001900050278>
 /// - <https://sci-hub.se/https://doi.org/10.1007/s001900050278>
 ///
+/// If you'd like to use a different radius, see [`CustomHaversine`].
+///
 /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula//
 /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
 pub struct Haversine;
 
-/// A spherical model using the [haversine formula].
-///
-/// For earth measurements you probably want the `Haversine` struct.
-///
-/// If you are using a non-typical earth radius, or measuring other spheres, you can use this struct.
-pub struct CustomHaversine {
-    radius: f64,
-}
-
-/// A spherical model of the earth using the [haversine formula].
+/// A spherical model using the [haversine formula] and a custom radius.
 ///
 /// Distances are considered [great circle] lengths and are measured in meters.
 ///
-/// ⚠️: For normal spherical measurements of the Earth, you probably want [`Haversine`] instead.
-/// Use [`CustomHaversine`] only if you need to measure some non-Earth sphere, or want to use a
-/// different value for Earth's radius.
-///
-/// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula//
-/// [great circle]: https://en.wikipedia.org/wiki/Great_circle
+/// ⚠️ For normal spherical measurements of the Earth, you probably want to use [`Haversine`] instead.
+/// Use [`CustomHaversine`] only if you need to measure some non-Earth sphere, or if you want to
+/// use a different value for Earth's radius.
 ///
 /// ```
 /// # use approx::assert_relative_eq;
-/// use geo::{CustomHaversine, Haversine, Distance};
+/// use geo::{wkt, CustomHaversine, Haversine, Distance};
 ///
-/// let start = geo::wkt!(POINT(23.319941 42.698334)); // Sofia: Longitude, Latitude
-/// let finish = geo::wkt!(POINT(24.742168 42.136097)); // Plovdiv: Longitude, Latitude
+/// let start = wkt!(POINT(23.319941 42.698334)); // Sofia: Longitude, Latitude
+/// let finish = wkt!(POINT(24.742168 42.136097)); // Plovdiv: Longitude, Latitude
 ///
 /// // Typically, you can just use `Haversine` for measuring on the Earth's surface
 /// assert_relative_eq!(
@@ -75,6 +65,15 @@ pub struct CustomHaversine {
 ///     mars_sphere.distance(start, finish)
 /// );
 /// ```
+///
+/// # References
+///
+/// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula//
+/// [great circle]: https://en.wikipedia.org/wiki/Great_circle
+pub struct CustomHaversine {
+    radius: f64,
+}
+
 impl CustomHaversine {
     /// ## Parameters
     /// - radius: The radius of the sphere, typically in meters.
