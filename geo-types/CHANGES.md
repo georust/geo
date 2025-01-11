@@ -2,7 +2,6 @@
 
 ## Unreleased
 
-- Fix page location of citation for mean earth radius used in Haversine calculations
 - Implement `RTreeObject` for `Triangle`.
 - Implement `AsRef<Coord>` for `Point` and `Coord`.
 
