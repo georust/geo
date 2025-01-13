@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Add top-level doc link for `InteriorPoint`
+- Docs: Fix page location of citation for mean earth radius used in Haversine calculations
+- Docs: Add top-level doc link for `InteriorPoint`
 - Add Unary Union algorithm for fast union ops on adjacent / overlapping geometries
   - <https://github.com/georust/geo/pull/1246>
 - Loosen bounds on `RemoveRepeatedPoints` trait (`num_traits::FromPrimitive` isn't required)
