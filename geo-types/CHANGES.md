@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.7.15 - 2025-01-14
 
 - Implement `RTreeObject` for `Triangle`.
 - Implement `AsRef<Coord>` for `Point` and `Coord`.
