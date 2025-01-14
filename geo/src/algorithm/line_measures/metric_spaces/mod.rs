@@ -5,7 +5,7 @@ mod geodesic;
 pub use geodesic::Geodesic;
 
 mod haversine;
-pub use haversine::{CustomHaversine, Haversine};
+pub use haversine::{Haversine, HAVERSINE};
 
 mod rhumb;
 pub use rhumb::Rhumb;

@@ -1,9 +1,9 @@
-use crate::{CoordFloat, Destination, Haversine, Point};
+use crate::{CoordFloat, Destination, Point, HAVERSINE};
 use num_traits::FromPrimitive;
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Haversine.destination` method from the `Destination` trait instead"
+    note = "Please use the `HAVERSINE.destination` method from the `Destination` trait instead"
 )]
 /// Returns a new Point using the distance to the existing Point and a bearing for the direction
 ///
@@ -39,7 +39,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_destination(&self, bearing: T, distance: T) -> Point<T> {
-        Haversine.destination(*self, bearing, distance)
+        HAVERSINE.destination(*self, bearing, distance)
     }
 }
 

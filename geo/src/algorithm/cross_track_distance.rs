@@ -1,4 +1,4 @@
-use crate::{Bearing, Distance, Haversine, MEAN_EARTH_RADIUS};
+use crate::{Bearing, Distance, HAVERSINE, MEAN_EARTH_RADIUS};
 use geo_types::{CoordFloat, Point};
 use num_traits::FromPrimitive;
 
@@ -43,9 +43,9 @@ where
 {
     fn cross_track_distance(&self, line_point_a: &Point<T>, line_point_b: &Point<T>) -> T {
         let mean_earth_radius = T::from(MEAN_EARTH_RADIUS).unwrap();
-        let l_delta_13: T = Haversine.distance(*line_point_a, *self) / mean_earth_radius;
-        let theta_13: T = Haversine.bearing(*line_point_a, *self).to_radians();
-        let theta_12: T = Haversine.bearing(*line_point_a, *line_point_b).to_radians();
+        let l_delta_13: T = HAVERSINE.distance(*line_point_a, *self) / mean_earth_radius;
+        let theta_13: T = HAVERSINE.bearing(*line_point_a, *self).to_radians();
+        let theta_12: T = HAVERSINE.bearing(*line_point_a, *line_point_b).to_radians();
         let l_delta_xt: T = (l_delta_13.sin() * (theta_12 - theta_13).sin()).asin();
         mean_earth_radius * l_delta_xt.abs()
     }
@@ -55,7 +55,7 @@ where
 mod test {
     use crate::CrossTrackDistance;
     use crate::Point;
-    use crate::{Distance, Haversine};
+    use crate::{Distance, HAVERSINE};
 
     #[test]
     fn distance1_test() {
@@ -90,13 +90,13 @@ mod test {
 
         assert_relative_eq!(
             p.cross_track_distance(&line_point_a, &line_point_b),
-            Haversine.distance(p, Point::new(1., 0.)),
+            HAVERSINE.distance(p, Point::new(1., 0.)),
             epsilon = 1.0e-6
         );
 
         assert_relative_eq!(
             p.cross_track_distance(&line_point_b, &line_point_a),
-            Haversine.distance(p, Point::new(1., 0.)),
+            HAVERSINE.distance(p, Point::new(1., 0.)),
             epsilon = 1.0e-6
         );
     }

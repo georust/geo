@@ -19,4 +19,4 @@ mod densify;
 pub use densify::{Densifiable, Densify};
 
 pub mod metric_spaces;
-pub use metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb};
+pub use metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb, HAVERSINE};

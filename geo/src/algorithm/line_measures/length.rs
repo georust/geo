@@ -5,7 +5,7 @@ use crate::{CoordFloat, Line, LineString, MultiLineString, Point};
 ///
 /// # Examples
 /// ```
-/// use geo::algorithm::line_measures::{Length, Euclidean, Haversine};
+/// use geo::algorithm::line_measures::{Length, Euclidean, HAVERSINE};
 ///
 /// let line_string = geo::wkt!(LINESTRING(
 ///     0.0 0.0,
@@ -19,7 +19,7 @@ use crate::{CoordFloat, Line, LineString, MultiLineString, Point};
 ///     -58.4173 -34.6118,
 ///     -70.6483 -33.4489
 /// ));
-/// assert_eq!(Haversine.length(&line_string_lon_lat).round(), 3_474_956.0);
+/// assert_eq!(HAVERSINE.length(&line_string_lon_lat).round(), 3_474_956.0);
 /// ```
 pub trait Length<F: CoordFloat> {
     fn length(&self, geometry: &impl LengthMeasurable<F>) -> F;
@@ -32,7 +32,7 @@ pub trait Length<F: CoordFloat> {
 ///
 /// # Examples
 /// ```
-/// use geo::algorithm::line_measures::{LengthMeasurable, Euclidean, Haversine};
+/// use geo::algorithm::line_measures::{LengthMeasurable, Euclidean, HAVERSINE};
 ///
 /// let line_string = geo::wkt!(LINESTRING(
 ///     0.0 0.0,
@@ -46,7 +46,7 @@ pub trait Length<F: CoordFloat> {
 ///     -58.4173 -34.6118,
 ///     -70.6483 -33.4489
 /// ));
-/// assert_eq!(line_string_lon_lat.length(&Haversine).round(), 3_474_956.0);
+/// assert_eq!(line_string_lon_lat.length(&HAVERSINE).round(), 3_474_956.0);
 /// ```
 pub trait LengthMeasurable<F: CoordFloat> {
     fn length(&self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F;
@@ -87,7 +87,7 @@ impl<F: CoordFloat> LengthMeasurable<F> for MultiLineString<F> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coord, Euclidean, Geodesic, Haversine, Rhumb};
+    use crate::{coord, Euclidean, Geodesic, Rhumb, HAVERSINE};
 
     #[test]
     fn lines() {
@@ -107,7 +107,7 @@ mod tests {
         );
         assert_eq!(
             343_557., // meters
-            Haversine.length(&line).round()
+            HAVERSINE.length(&line).round()
         );
 
         // computing Euclidean length of an unprojected (lng/lat) line gives a nonsense answer
@@ -141,7 +141,7 @@ mod tests {
         );
         assert_eq!(
             6_304_387., // meters
-            Haversine.length(&line_string).round()
+            HAVERSINE.length(&line_string).round()
         );
 
         // computing Euclidean length of an unprojected (lng/lat) gives a nonsense answer
