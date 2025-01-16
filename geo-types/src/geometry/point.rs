@@ -26,7 +26,7 @@ use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAss
 /// let c = coord! { x: 10., y: 20. };
 /// let p2: Point = c.into();
 /// ```
-#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
+#[derive(Eq, PartialEq, Clone, Copy, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T: CoordNum = f64>(pub Coord<T>);
 

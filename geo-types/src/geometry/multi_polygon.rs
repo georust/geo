@@ -29,7 +29,7 @@ use rayon::prelude::*;
 /// definition of validity. Note that the validity is not
 /// enforced, but expected by the operations and
 /// predicates that operate on it.
-#[derive(Eq, PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiPolygon<T: CoordNum = f64>(pub Vec<Polygon<T>>);
 

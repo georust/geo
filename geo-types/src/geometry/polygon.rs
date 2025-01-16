@@ -66,7 +66,7 @@ use approx::{AbsDiffEq, RelativeEq};
 /// the first `Coord`.
 ///
 /// [`LineString`]: line_string/struct.LineString.html
-#[derive(Eq, PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Polygon<T: CoordNum = f64> {
     exterior: LineString<T>,

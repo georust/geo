@@ -37,7 +37,7 @@ use approx::{AbsDiffEq, RelativeEq};
 ///     rect.center()
 /// );
 /// ```
-#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Copy, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect<T: CoordNum = f64> {
     min: Coord<T>,

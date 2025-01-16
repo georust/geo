@@ -47,7 +47,7 @@ use core::convert::TryFrom;
 /// let pn = Point::try_from(pe).unwrap();
 /// ```
 ///
-#[derive(Eq, PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Geometry<T: CoordNum = f64> {
     Point(Point<T>),

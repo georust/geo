@@ -149,6 +149,8 @@ mod arbitrary;
 #[doc(hidden)]
 pub mod private_utils;
 
+mod debug;
+
 #[doc(hidden)]
 pub mod _alloc {
     //! Needed to access these types from `alloc` in macros when the std feature is
