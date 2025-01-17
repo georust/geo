@@ -276,6 +276,7 @@ pub use triangulate_delaunay::TriangulateDelaunay;
 pub mod triangulate_spade;
 #[cfg(feature = "spade")]
 #[deprecated(since = "0.29.4", note = "please use `TriangulateDelaunay` instead")]
+#[allow(deprecated)]
 pub use triangulate_spade::TriangulateSpade;
 
 /// Vector Operations for 2D coordinates
