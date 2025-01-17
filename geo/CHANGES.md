@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Rename `triangulate_spade` and `TriangulateSpade` to `triangulate_delaunay` and `TriangulateDelaunay`
 - Docs: Fix page location of citation for mean earth radius used in Haversine calculations
 - Docs: Add top-level doc link for `InteriorPoint`
 - Add Unary Union algorithm for fast union ops on adjacent / overlapping geometries

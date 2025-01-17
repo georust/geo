@@ -16,13 +16,13 @@ use crate::{Centroid, Contains};
 ///
 /// This implements the `Default` trait and you can just use it most of the time
 #[derive(Debug, Clone)]
-pub struct SpadeTriangulationConfig<T: SpadeTriangulationFloat> {
+pub struct DelaunayTriangulationConfig<T: SpadeTriangulationFloat> {
     /// Coordinates within this radius are snapped to the same position. For any two `Coords` there's
     /// no real way to influence the decision when choosing the snapper and the snappee
     pub snap_radius: T,
 }
 
-impl<T> Default for SpadeTriangulationConfig<T>
+impl<T> Default for DelaunayTriangulationConfig<T>
 where
     T: SpadeTriangulationFloat,
 {
@@ -61,7 +61,7 @@ impl<T: GeoFloat + SpadeNum> SpadeTriangulationFloat for T {}
 
 pub type Triangles<T> = Vec<Triangle<T>>;
 
-// seal the trait that needs to be implemented for TriangulateSpade to be implemented. This is done
+// seal the trait that needs to be implemented for TriangulateDelaunay to be implemented. This is done
 // so that we don't leak these weird methods on the public interface.
 mod private {
     use super::*;
@@ -104,11 +104,7 @@ mod private {
 /// This trait contains both constrained and unconstrained triangulation methods. To read more
 /// about the differences of these methods also consult [this
 /// page](https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation)
-#[deprecated(
-    since = "0.29.4",
-    note = "please use the `triangulate_delaunay` module instead"
-)]
-pub trait TriangulateSpade<'a, T>: private::TriangulationRequirementTrait<'a, T>
+pub trait TriangulateDelaunay<'a, T>: private::TriangulationRequirementTrait<'a, T>
 where
     T: SpadeTriangulationFloat,
 {
@@ -121,7 +117,7 @@ where
     /// `constrained_outer_triangulation` functions.
     ///
     /// ```rust
-    /// use geo::TriangulateSpade;
+    /// use geo::TriangulateDelaunay;
     /// use geo::{Polygon, LineString, Coord};
     /// let u_shape = Polygon::new(
     ///     LineString::new(vec![
@@ -178,7 +174,7 @@ where
     /// ```
     ///
     /// ```rust
-    /// use geo::TriangulateSpade;
+    /// use geo::TriangulateDelaunay;
     /// use geo::{Polygon, LineString, Coord};
     /// let u_shape = Polygon::new(
     ///     LineString::new(vec![
@@ -204,7 +200,7 @@ where
     /// with ":". If you want to exclude those, take a look at `constrained_triangulation`
     fn constrained_outer_triangulation(
         &'a self,
-        config: SpadeTriangulationConfig<T>,
+        config: DelaunayTriangulationConfig<T>,
     ) -> TriangulationResult<Triangles<T>> {
         let lines = self.lines();
         let lines = Self::cleanup_lines(lines, config.snap_radius)?;
@@ -252,7 +248,7 @@ where
     /// ```
     ///
     /// ```rust
-    /// use geo::TriangulateSpade;
+    /// use geo::TriangulateDelaunay;
     /// use geo::{Polygon, LineString, Coord};
     /// let u_shape = Polygon::new(
     ///     LineString::new(vec![
@@ -267,7 +263,7 @@ where
     ///     ]),
     ///     vec![],
     /// );
-    /// // we use the default [`SpadeTriangulationConfig`] here
+    /// // we use the default [`DelaunayTriangulationConfig`] here
     /// let constrained_triangulation = u_shape.constrained_triangulation(Default::default()).unwrap();
     /// let num_triangles = constrained_triangulation.len();
     /// assert_eq!(num_triangles, 6);
@@ -277,7 +273,7 @@ where
     /// inside of the input geometry
     fn constrained_triangulation(
         &'a self,
-        config: SpadeTriangulationConfig<T>,
+        config: DelaunayTriangulationConfig<T>,
     ) -> TriangulationResult<Triangles<T>> {
         self.constrained_outer_triangulation(config)
             .map(|triangles| {
@@ -309,7 +305,7 @@ where
 // ========== Triangulation trait impls ============
 
 // everything that satisfies the requirement methods automatically implements the triangulation
-impl<'a, T, G> TriangulateSpade<'a, T> for G
+impl<'a, T, G> TriangulateDelaunay<'a, T> for G
 where
     T: SpadeTriangulationFloat,
     G: private::TriangulationRequirementTrait<'a, T>,
@@ -341,7 +337,7 @@ where
 impl<'a, T, G> private::TriangulationRequirementTrait<'a, T> for Vec<G>
 where
     T: SpadeTriangulationFloat + 'a,
-    G: TriangulateSpade<'a, T>,
+    G: TriangulateDelaunay<'a, T>,
 {
     fn coords(&'a self) -> private::CoordsIter<'a, T> {
         Box::new(self.iter().flat_map(|g| g.coords()))
@@ -359,7 +355,7 @@ where
 impl<'a, T, G> private::TriangulationRequirementTrait<'a, T> for &[G]
 where
     T: SpadeTriangulationFloat + 'a,
-    G: TriangulateSpade<'a, T>,
+    G: TriangulateDelaunay<'a, T>,
 {
     fn coords(&'a self) -> private::CoordsIter<'a, T> {
         Box::new(self.iter().flat_map(|g| g.coords()))
@@ -781,7 +777,7 @@ mod spade_triangulation {
 
         for snap_with in (1..6).map(|pow| 0.1_f64.powi(pow)) {
             let constrained_triangulation =
-                u_shape.constrained_triangulation(SpadeTriangulationConfig {
+                u_shape.constrained_triangulation(DelaunayTriangulationConfig {
                     snap_radius: snap_with,
                 });
             assert_num_triangles(&constrained_triangulation, 6);
