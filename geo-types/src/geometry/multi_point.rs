@@ -32,7 +32,7 @@ use rayon::prelude::*;
 ///     println!("Point x = {}, y = {}", point.x(), point.y());
 /// }
 /// ```
-#[derive(Eq, PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiPoint<T: CoordNum = f64>(pub Vec<Point<T>>);
 

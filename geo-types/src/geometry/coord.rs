@@ -23,7 +23,7 @@ use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 /// (for eg. not `f64::NAN`).
 ///
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
-#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
+#[derive(Eq, PartialEq, Clone, Copy, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coord<T: CoordNum = f64> {
     pub x: T,
