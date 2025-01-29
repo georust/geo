@@ -366,21 +366,22 @@ impl<T: CoordNum> CoordsIter for Rect<T> {
         T: 'a;
     type Scalar = T;
 
+    /// Iterates over the coordinates in CCW order
     fn coords_iter(&self) -> Self::Iter<'_> {
         iter::once(coord! {
-            x: self.min().x,
+            x: self.max().x,
             y: self.min().y,
         })
         .chain(iter::once(coord! {
+            x: self.max().x,
+            y: self.max().y,
+        }))
+        .chain(iter::once(coord! {
             x: self.min().x,
             y: self.max().y,
         }))
         .chain(iter::once(coord! {
-            x: self.max().x,
-            y: self.max().y,
-        }))
-        .chain(iter::once(coord! {
-            x: self.max().x,
+            x: self.min().x,
             y: self.min().y,
         }))
     }
@@ -938,10 +939,10 @@ mod test {
         (
             Rect::new(coord! { x: 1., y: 2. }, coord! { x: 3., y: 4. }),
             vec![
-                coord! { x: 1., y: 2. },
-                coord! { x: 1., y: 4. },
-                coord! { x: 3., y: 4. },
                 coord! { x: 3., y: 2. },
+                coord! { x: 3., y: 4. },
+                coord! { x: 1., y: 4. },
+                coord! { x: 1., y: 2. },
             ],
         )
     }
