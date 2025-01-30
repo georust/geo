@@ -31,8 +31,6 @@ pub(super) mod convert {
     use super::BoolOpsNum;
     use crate::bool_ops::i_overlay_integration::BoolOpsCoord;
     use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
-    use crate::orient::Direction;
-    use crate::Orient;
     use i_overlay::core::overlay_rule::OverlayRule;
 
     pub fn line_string_from_path<T: BoolOpsNum>(path: Vec<BoolOpsCoord<T>>) -> LineString<T> {
@@ -48,9 +46,17 @@ pub(super) mod convert {
     }
 
     pub fn polygon_from_shape<T: BoolOpsNum>(shape: Vec<Vec<BoolOpsCoord<T>>>) -> Polygon<T> {
-        let mut rings = shape.into_iter().map(|p| line_string_from_path(p));
+        let mut rings = shape.into_iter().map(|path| {
+            // From i_overlay: > Note: Outer boundary paths have a clockwise order, and holes have a counterclockwise order.
+            // Which is the opposite convention we use.
+            let mut line_string = line_string_from_path(path);
+            line_string.close();
+            line_string.0.reverse();
+            line_string
+        });
         let exterior = rings.next().unwrap_or(LineString::new(vec![]));
-        Polygon::new(exterior, rings.collect()).orient(Direction::Default)
+
+        Polygon::new(exterior, rings.collect())
     }
 
     pub fn multi_polygon_from_shapes<T: BoolOpsNum>(
