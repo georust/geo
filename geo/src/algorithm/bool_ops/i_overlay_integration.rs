@@ -31,6 +31,8 @@ pub(super) mod convert {
     use super::BoolOpsNum;
     use crate::bool_ops::i_overlay_integration::BoolOpsCoord;
     use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
+    use crate::orient::Direction;
+    use crate::Orient;
     use i_overlay::core::overlay_rule::OverlayRule;
 
     pub fn line_string_from_path<T: BoolOpsNum>(path: Vec<BoolOpsCoord<T>>) -> LineString<T> {
@@ -48,7 +50,7 @@ pub(super) mod convert {
     pub fn polygon_from_shape<T: BoolOpsNum>(shape: Vec<Vec<BoolOpsCoord<T>>>) -> Polygon<T> {
         let mut rings = shape.into_iter().map(|p| line_string_from_path(p));
         let exterior = rings.next().unwrap_or(LineString::new(vec![]));
-        Polygon::new(exterior, rings.collect())
+        Polygon::new(exterior, rings.collect()).orient(Direction::Default)
     }
 
     pub fn multi_polygon_from_shapes<T: BoolOpsNum>(
@@ -96,7 +98,7 @@ mod tests {
 
     #[test]
     fn one_empty_polygon() {
-        let p1: Polygon = wkt!(POLYGON((0. 0., 0. 1., 1. 1., 1. 0., 0. 0.)));
+        let p1: Polygon = wkt!(POLYGON((0.0 0.0,1.0 0.0,1.0 1.0,0.0 1.0,0.0 0.0)));
         let p2: Polygon = wkt!(POLYGON EMPTY);
         assert_eq!(&p1.union(&p2), &MultiPolygon(vec![p1.clone()]));
         assert_eq!(&p1.intersection(&p2), &wkt!(MULTIPOLYGON EMPTY));
