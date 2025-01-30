@@ -158,9 +158,9 @@ pub enum OpType {
 ///
 /// let expected_output = wkt!(MULTIPOLYGON(
 ///     // left and right piece have been combined
-///     ((0. 0., 0. 4., 8. 4., 8. 0.,  0. 0.)),
+///     ((0.0 0.0, 8.0 0.0, 8.0 4.0, 0.0 4.0, 0.0 0.0)),
 ///     // separate piece remains separate
-///     ((14. 10., 14. 14., 18. 14.,18. 10., 14. 10.))
+///     ((14.0 10.0, 18.0 10.0, 18.0 14.0, 14.0 14.0, 14.0 10.0))
 /// ));
 /// assert_eq!(actual_output, expected_output);
 /// ```
