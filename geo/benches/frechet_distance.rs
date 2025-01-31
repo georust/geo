@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main};
-use geo::frechet_distance::FrechetDistance;
+use geo::{line_measures::FrechetDistance, Euclidean};
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {
     c.bench_function("frechet distance f32", |bencher| {
@@ -8,7 +8,8 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
 
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&ls_a).frechet_distance(criterion::black_box(&ls_b)),
+                criterion::black_box(&ls_a)
+                    .frechet_distance::<Euclidean>(criterion::black_box(&ls_b)),
             );
         });
     });
@@ -19,7 +20,8 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
 
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&ls_a).frechet_distance(criterion::black_box(&ls_b)),
+                criterion::black_box(&ls_a)
+                    .frechet_distance::<Euclidean>(criterion::black_box(&ls_b)),
             );
         });
     });
