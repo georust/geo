@@ -12,6 +12,7 @@ use num_traits::FromPrimitive;
 /// - `max_segment_length` units depend on the implementing [metric space]. It must be greater than 0.
 ///
 /// # Examples
+///
 /// ```
 /// # use approx::assert_relative_eq;
 /// use geo::{wkt, Densify};

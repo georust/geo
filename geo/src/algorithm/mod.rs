@@ -263,8 +263,20 @@ pub use triangulate_earcut::TriangulateEarcut;
 
 /// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
 #[cfg(feature = "spade")]
+pub mod triangulate_delaunay;
+#[cfg(feature = "spade")]
+pub use triangulate_delaunay::TriangulateDelaunay;
+
+/// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
+#[cfg(feature = "spade")]
+#[deprecated(
+    since = "0.29.4",
+    note = "please use the `triangulate_delaunay` module instead"
+)]
 pub mod triangulate_spade;
 #[cfg(feature = "spade")]
+#[deprecated(since = "0.29.4", note = "please use `TriangulateDelaunay` instead")]
+#[allow(deprecated)]
 pub use triangulate_spade::TriangulateSpade;
 
 /// Vector Operations for 2D coordinates

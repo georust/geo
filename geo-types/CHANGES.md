@@ -1,5 +1,10 @@
 # Changes
 
+## UNRELEASED
+
+- Add more concise Debug output for geometries (like WKT).
+  NOTE: because geo-types allows some representations which are not supported by standard WKT, not all debug output is valid WKT. Do not attempt to treat debug as a stable format - it's unsuitable for interacting with programmatically. See the [`wkt` crate](https://crates.io/crates/wkt) for that.
+
 ## 0.7.15 - 2025-01-14
 
 - Implement `RTreeObject` for `Triangle`.

@@ -27,6 +27,7 @@
   // For custom earth (or non-earth!) radius
   HaversineMeasure::new(3_389_500.0).distance(point1, point2)
   ```
+- Rename `triangulate_spade` and `TriangulateSpade` to `triangulate_delaunay` and `TriangulateDelaunay`
 - Docs: Fix page location of citation for mean earth radius used in Haversine calculations
   - <https://github.com/georust/geo/pull/1297>
 - Docs: Add top-level doc link for `InteriorPoint`
@@ -49,6 +50,8 @@
   println!("{}", errors[0]);
   ```
   - BREAKING: update proj to 0.28.0
+- Polygons returned by Boolean Ops are now oriented correctly (ccw shell, cw inner rings)
+  - <https://github.com/georust/geo/pull/1310>
 
 ## 0.29.3 - 2024.12.03
 

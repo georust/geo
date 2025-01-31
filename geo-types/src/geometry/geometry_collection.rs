@@ -71,7 +71,7 @@ use core::ops::{Index, IndexMut};
 /// println!("{:?}", gc[0]);
 /// ```
 ///
-#[derive(Eq, PartialEq, Clone, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GeometryCollection<T: CoordNum = f64>(pub Vec<Geometry<T>>);
 

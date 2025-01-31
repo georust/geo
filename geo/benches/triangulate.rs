@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main};
-use geo::algorithm::{TriangulateEarcut, TriangulateSpade};
+use geo::algorithm::{TriangulateDelaunay, TriangulateEarcut};
 use geo::geometry::Polygon;
-use geo::triangulate_spade::SpadeTriangulationConfig;
+use geo::triangulate_delaunay::DelaunayTriangulationConfig;
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {
     c.bench_function(
@@ -11,7 +11,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
             bencher.iter(|| {
                 for poly in &multi_poly {
                     let triangulation =
-                        TriangulateSpade::unconstrained_triangulation(poly).unwrap();
+                        TriangulateDelaunay::unconstrained_triangulation(poly).unwrap();
                     assert!(triangulation.len() > 1);
                     criterion::black_box(triangulation);
                 }
@@ -23,9 +23,9 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         let multi_poly = geo_test_fixtures::nl_zones::<f64>();
         bencher.iter(|| {
             for poly in &multi_poly {
-                let triangulation = TriangulateSpade::constrained_triangulation(
+                let triangulation = TriangulateDelaunay::constrained_triangulation(
                     poly,
-                    SpadeTriangulationConfig { snap_radius: 1e-8 },
+                    DelaunayTriangulationConfig { snap_radius: 1e-8 },
                 )
                 .unwrap();
                 assert!(triangulation.len() > 1);
@@ -48,7 +48,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
     c.bench_function("TriangulateSpade (unconstrained) - large_poly", |bencher| {
         let poly = Polygon::new(geo_test_fixtures::norway_main::<f64>(), vec![]);
         bencher.iter(|| {
-            let triangulation = TriangulateSpade::unconstrained_triangulation(&poly).unwrap();
+            let triangulation = TriangulateDelaunay::unconstrained_triangulation(&poly).unwrap();
             assert!(triangulation.len() > 1);
             criterion::black_box(triangulation);
         });
@@ -57,9 +57,9 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
     c.bench_function("TriangulateSpade (constrained) - large_poly", |bencher| {
         let poly = Polygon::new(geo_test_fixtures::norway_main::<f64>(), vec![]);
         bencher.iter(|| {
-            let triangulation = TriangulateSpade::constrained_triangulation(
+            let triangulation = TriangulateDelaunay::constrained_triangulation(
                 &poly,
-                SpadeTriangulationConfig { snap_radius: 1e-8 },
+                DelaunayTriangulationConfig { snap_radius: 1e-8 },
             )
             .unwrap();
             assert!(triangulation.len() > 1);
