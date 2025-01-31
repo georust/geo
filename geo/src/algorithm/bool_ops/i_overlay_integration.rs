@@ -46,8 +46,16 @@ pub(super) mod convert {
     }
 
     pub fn polygon_from_shape<T: BoolOpsNum>(shape: Vec<Vec<BoolOpsCoord<T>>>) -> Polygon<T> {
-        let mut rings = shape.into_iter().map(|p| line_string_from_path(p));
+        let mut rings = shape.into_iter().map(|path| {
+            // From i_overlay: > Note: Outer boundary paths have a clockwise order, and holes have a counterclockwise order.
+            // Which is the opposite convention we use.
+            let mut line_string = line_string_from_path(path);
+            line_string.close();
+            line_string.0.reverse();
+            line_string
+        });
         let exterior = rings.next().unwrap_or(LineString::new(vec![]));
+
         Polygon::new(exterior, rings.collect())
     }
 
@@ -82,9 +90,61 @@ pub(super) mod convert {
 
 #[cfg(test)]
 mod tests {
+    use geo_types::polygon;
+
     use crate::algorithm::BooleanOps;
     use crate::geometry::{MultiPolygon, Polygon};
-    use crate::wkt;
+    use crate::winding_order::WindingOrder;
+    use crate::{wkt, Winding};
+
+    #[test]
+    // see https://github.com/georust/geo/issues/1309
+    fn test_winding_order() {
+        let poly1 = polygon!((x: 0.0, y: 0.0), (x: 1.0, y: 0.0), (x: 1.0, y: 1.0));
+        assert!(matches!(
+            poly1.exterior().winding_order(),
+            Some(WindingOrder::CounterClockwise)
+        ));
+
+        {
+            let union = poly1.union(&polygon!());
+            assert_eq!(union.0.len(), 1);
+
+            let union = &union.0[0];
+            assert!(matches!(
+                union.exterior().winding_order(),
+                Some(WindingOrder::CounterClockwise)
+            ));
+        }
+        {
+            let intersection = poly1.intersection(&poly1);
+            assert_eq!(intersection.0.len(), 1);
+
+            let intersection = &intersection.0[0];
+            assert!(matches!(
+                intersection.exterior().winding_order(),
+                Some(WindingOrder::CounterClockwise)
+            ));
+        }
+
+        let poly2 = polygon!((x: 0.0, y: 0.0), (x: 1.0, y: 1.0), (x: 0.0, y: 1.0));
+        assert!(matches!(
+            poly2.exterior().winding_order(),
+            Some(WindingOrder::CounterClockwise)
+        ));
+
+        {
+            let union = poly1.union(&poly2);
+            assert_eq!(union.0.len(), 1);
+
+            let union = &union.0[0];
+            assert!(union.interiors().is_empty());
+            assert!(matches!(
+                union.exterior().winding_order(),
+                Some(WindingOrder::CounterClockwise)
+            ));
+        }
+    }
 
     #[test]
     fn two_empty_polygons() {
@@ -96,7 +156,7 @@ mod tests {
 
     #[test]
     fn one_empty_polygon() {
-        let p1: Polygon = wkt!(POLYGON((0. 0., 0. 1., 1. 1., 1. 0., 0. 0.)));
+        let p1: Polygon = wkt!(POLYGON((0.0 0.0,1.0 0.0,1.0 1.0,0.0 1.0,0.0 0.0)));
         let p2: Polygon = wkt!(POLYGON EMPTY);
         assert_eq!(&p1.union(&p2), &MultiPolygon(vec![p1.clone()]));
         assert_eq!(&p1.intersection(&p2), &wkt!(MULTIPOLYGON EMPTY));

@@ -24,6 +24,8 @@
   println!("{}", errors[0]);
   ```
   - BREAKING: update proj to 0.28.0
+- Polygons returned by Boolean Ops are now oriented correctly (ccw shell, cw inner rings)
+  - <https://github.com/georust/geo/pull/1310>
 
 ## 0.29.3 - 2024.12.03
 
