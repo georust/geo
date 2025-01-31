@@ -17,7 +17,7 @@ use num_traits::FromPrimitive;
 ///
 /// [Euclidean plane]: https://en.wikipedia.org/wiki/Euclidean_plane
 /// [`Transform`]: crate::Transform
-/// [`Haversine`]: super::Haversine
+/// [`Haversine`]: super::HaversineMeasure
 /// [`Geodesic`]: super::Geodesic
 /// [metric spaces]: super
 pub struct Euclidean;
@@ -35,7 +35,7 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Euclidean {
     ///   units, like meters or miles, **not** lon/lat.
     ///   For lon/lat points, use the [`Haversine`] or [`Geodesic`] [metric spaces].
     ///
-    /// [`Haversine`]: crate::line_measures::Haversine
+    /// [`Haversine`]: crate::line_measures::HaversineMeasure
     /// [`Geodesic`]: crate::line_measures::Geodesic
     /// [metric spaces]: crate::line_measures::metric_spaces
     fn point_at_distance_between(
@@ -59,7 +59,7 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Euclidean {
     ///   units, like meters or miles, **not** lon/lat.
     ///   For lon/lat points, use the [`Haversine`] or [`Geodesic`] [metric spaces].
     ///
-    /// [`Haversine`]: crate::line_measures::Haversine
+    /// [`Haversine`]: crate::line_measures::HaversineMeasure
     /// [`Geodesic`]: crate::line_measures::Geodesic
     /// [metric spaces]: crate::line_measures::metric_spaces
     fn point_at_ratio_between(
@@ -87,7 +87,7 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Euclidean {
     ///   units, like meters or miles, **not** lon/lat.
     ///   For lon/lat points, use the [`Haversine`] or [`Geodesic`] [metric spaces].
     ///
-    /// [`Haversine`]: crate::line_measures::Haversine
+    /// [`Haversine`]: crate::line_measures::HaversineMeasure
     /// [`Geodesic`]: crate::line_measures::Geodesic
     /// [metric spaces]: crate::line_measures::metric_spaces
     fn points_along_line(

@@ -3,24 +3,29 @@
 ## Unreleased
 
 - BREAKING: `Densify` and `Length` are now defined on the metric space, rather than a generic method on the geometry.
+  - <https://github.com/georust/geo/pull/1298>
   ```rust
   // before
   line_string.length::<Euclidean>()
   line_string.densify::<Euclidean>()
+  line_string.densify::<Haversine>()
 
   // after
   Euclidean.length(&line_string)
   Euclidean.densify(&line_string)
+  Haversine.densify(&line_string)
   ```
-- `Haversine` can be configured with a custom radius for doing calculations on custom sphere. Use `HAVERSINE` for the default earth radius.
+- Add configurable `HaversineMeasure` for doing calculations on a custom sphere. Use `Haversine` for the default earth radius.
   - <https://github.com/georust/geo/pull/1298>
   ```rust
   // before
   Haversine::distance(point1, point2)
 
   // after
-  Haversine::new(3_389_500.0).distance(point1, point2)
-  HAVERSINE.distance(point_1, point_2)
+  Haversine.distance(point1, point2)
+  
+  // For custom earth (or non-earth!) radius
+  HaversineMeasure::new(3_389_500.0).distance(point1, point2)
   ```
 - Docs: Fix page location of citation for mean earth radius used in Haversine calculations
   - <https://github.com/georust/geo/pull/1297>

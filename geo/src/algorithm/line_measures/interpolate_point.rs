@@ -42,7 +42,7 @@ pub trait InterpolatePoint<F: CoordFloat> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Euclidean, Geodesic, InterpolatePoint, Point, Rhumb, HAVERSINE};
+    use crate::{Euclidean, Geodesic, Haversine, InterpolatePoint, Point, Rhumb};
 
     #[test]
     fn point_at_ratio_between_line_ends() {
@@ -50,13 +50,13 @@ mod tests {
         let end = Point::new(1.0, 1.0);
 
         let ratio = 0.0;
-        assert_eq!(HAVERSINE.point_at_ratio_between(start, end, ratio), start);
+        assert_eq!(Haversine.point_at_ratio_between(start, end, ratio), start);
         assert_eq!(Euclidean.point_at_ratio_between(start, end, ratio), start);
         assert_eq!(Geodesic.point_at_ratio_between(start, end, ratio), start);
         assert_eq!(Rhumb.point_at_ratio_between(start, end, ratio), start);
 
         let ratio = 1.0;
-        assert_eq!(HAVERSINE.point_at_ratio_between(start, end, ratio), end);
+        assert_eq!(Haversine.point_at_ratio_between(start, end, ratio), end);
         assert_eq!(Euclidean.point_at_ratio_between(start, end, ratio), end);
         assert_eq!(Geodesic.point_at_ratio_between(start, end, ratio), end);
         assert_eq!(Rhumb.point_at_ratio_between(start, end, ratio), end);
@@ -70,19 +70,19 @@ mod tests {
             let start = Point::new(1.0, 1.0);
 
             let ratio = 0.0;
-            assert_eq!(HAVERSINE.point_at_ratio_between(start, start, ratio), start);
+            assert_eq!(Haversine.point_at_ratio_between(start, start, ratio), start);
             assert_eq!(Euclidean.point_at_ratio_between(start, start, ratio), start);
             assert_eq!(Geodesic.point_at_ratio_between(start, start, ratio), start);
             assert_eq!(Rhumb.point_at_ratio_between(start, start, ratio), start);
 
             let ratio = 0.5;
-            assert_eq!(HAVERSINE.point_at_ratio_between(start, start, ratio), start);
+            assert_eq!(Haversine.point_at_ratio_between(start, start, ratio), start);
             assert_eq!(Euclidean.point_at_ratio_between(start, start, ratio), start);
             assert_eq!(Geodesic.point_at_ratio_between(start, start, ratio), start);
             assert_eq!(Rhumb.point_at_ratio_between(start, start, ratio), start);
 
             let ratio = 1.0;
-            assert_eq!(HAVERSINE.point_at_ratio_between(start, start, ratio), start);
+            assert_eq!(Haversine.point_at_ratio_between(start, start, ratio), start);
             assert_eq!(Euclidean.point_at_ratio_between(start, start, ratio), start);
             assert_eq!(Geodesic.point_at_ratio_between(start, start, ratio), start);
             assert_eq!(Rhumb.point_at_ratio_between(start, start, ratio), start);
@@ -96,7 +96,7 @@ mod tests {
 
             let distance = 0.0;
             assert_eq!(
-                HAVERSINE.point_at_distance_between(start, start, distance),
+                Haversine.point_at_distance_between(start, start, distance),
                 start
             );
 
@@ -116,7 +116,7 @@ mod tests {
             let due_north = Point::new(1.0, 1.9);
             let due_south = Point::new(1.0, 0.1);
             assert_relative_eq!(
-                HAVERSINE.point_at_distance_between(start, start, distance),
+                Haversine.point_at_distance_between(start, start, distance),
                 due_north,
                 epsilon = 1.0e-1
             );
@@ -142,7 +142,7 @@ mod tests {
             let max_distance = 1.0;
 
             let include_ends = true;
-            let points: Vec<_> = HAVERSINE
+            let points: Vec<_> = Haversine
                 .points_along_line(start, start, max_distance, include_ends)
                 .collect();
             assert_eq!(points, vec![start, start]);
@@ -163,7 +163,7 @@ mod tests {
             assert_eq!(points, vec![start, start]);
 
             let include_ends = false;
-            let points: Vec<_> = HAVERSINE
+            let points: Vec<_> = Haversine
                 .points_along_line(start, start, max_distance, include_ends)
                 .collect();
             assert_eq!(points, vec![]);

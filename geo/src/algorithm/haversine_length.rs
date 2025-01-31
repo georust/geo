@@ -1,11 +1,11 @@
 use num_traits::FromPrimitive;
 
 use crate::{CoordFloat, Line, LineString, MultiLineString};
-use crate::{Length, HAVERSINE};
+use crate::{Haversine, Length};
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `HAVERSINE.length(&line)` via the `Length` trait instead."
+    note = "Please use the `Haversine.length(&line)` via the `Length` trait instead."
 )]
 /// Determine the length of a geometry using the [haversine formula].
 ///
@@ -51,7 +51,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
-        HAVERSINE.length(self)
+        Haversine.length(self)
     }
 }
 
@@ -61,7 +61,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
-        HAVERSINE.length(self)
+        Haversine.length(self)
     }
 }
 
@@ -71,6 +71,6 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
-        HAVERSINE.length(self)
+        Haversine.length(self)
     }
 }

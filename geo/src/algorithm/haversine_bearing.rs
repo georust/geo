@@ -2,7 +2,7 @@ use crate::{CoordFloat, Point};
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `HAVERSINE.bearing` method from the `Bearing` trait instead"
+    note = "Please use the `Haversine.bearing` method from the `Bearing` trait instead"
 )]
 /// Returns the bearing to another Point in degrees.
 ///

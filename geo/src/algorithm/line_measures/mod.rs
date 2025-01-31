@@ -1,4 +1,4 @@
-//! Line measurements like [`Bearing`] and [`Distance`] for various metric spaces like [`Euclidean`], [`Haversine`], [`Geodesic`], and [`Rhumb`].
+//! Line measurements like [`Bearing`] and [`Distance`] for various metric spaces like [`Euclidean`], [`HaversineMeasure`], [`Geodesic`], and [`Rhumb`].
 
 mod bearing;
 pub use bearing::Bearing;
@@ -19,4 +19,4 @@ mod densify;
 pub use densify::{Densifiable, Densify};
 
 pub mod metric_spaces;
-pub use metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb, HAVERSINE};
+pub use metric_spaces::{Euclidean, Geodesic, Haversine, HaversineMeasure, Rhumb};

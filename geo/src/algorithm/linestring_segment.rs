@@ -1,7 +1,7 @@
 use crate::algorithm::{Densify, Length, LineInterpolatePoint, LinesIter};
 use crate::geometry::{Coord, LineString, MultiLineString};
 use crate::line_measures::Euclidean;
-use crate::HAVERSINE;
+use crate::Haversine;
 
 /// Segments a LineString into `segment_count` equal length LineStrings as a MultiLineString
 /// using Euclidean distance calculations.  See `LineStringSegmentizeHaversine`
@@ -115,7 +115,7 @@ implement_segmentize!(LineStringSegmentize, line_segmentize, Euclidean);
 implement_segmentize!(
     LineStringSegmentizeHaversine,
     line_segmentize_haversine,
-    HAVERSINE
+    Haversine
 );
 
 #[cfg(test)]
@@ -327,7 +327,7 @@ mod test {
         let lens = segments
             .0
             .iter()
-            .map(|li| HAVERSINE.length(li))
+            .map(|li| Haversine.length(li))
             .collect::<Vec<_>>();
 
         let epsilon = 1e-6; // 6th decimal place which is micrometers
@@ -343,7 +343,7 @@ mod test {
         ]
         .into();
 
-        assert_relative_eq!(HAVERSINE.length(&linestring), 83.3523000093029);
+        assert_relative_eq!(Haversine.length(&linestring), 83.3523000093029);
 
         let n = 8;
 
@@ -351,8 +351,8 @@ mod test {
 
         // different at 12th decimal which is a picometer
         assert_relative_eq!(
-            HAVERSINE.length(&linestring),
-            HAVERSINE.length(&segments),
+            Haversine.length(&linestring),
+            Haversine.length(&segments),
             epsilon = 1e-11
         );
     }

@@ -1,9 +1,9 @@
-use crate::{CoordFloat, Distance, Point, HAVERSINE};
+use crate::{CoordFloat, Distance, Haversine, Point};
 use num_traits::FromPrimitive;
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `HAVERSINE.distance` method from the `Distance` trait instead"
+    note = "Please use the `Haversine.distance` method from the `Distance` trait instead"
 )]
 /// Determine the distance between two geometries using the [haversine formula].
 ///
@@ -55,7 +55,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_distance(&self, rhs: &Point<T>) -> T {
-        HAVERSINE.distance(*self, *rhs)
+        Haversine.distance(*self, *rhs)
     }
 }
 

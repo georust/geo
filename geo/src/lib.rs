@@ -213,7 +213,7 @@
 //!
 //! [Euclidean plane]: https://en.wikipedia.org/wiki/Euclidean_plane
 //! [`geo-types`]: https://crates.io/crates/geo-types
-//! [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula//
+//! [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
 //! [`proj` crate]: https://github.com/georust/proj
 //! [geojson crate]: https://crates.io/crates/geojson
 //! [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf

@@ -33,17 +33,17 @@ use num_traits::FromPrimitive;
 /// assert_relative_eq!(densified, expected_output);
 ///```
 ///
-/// For lng/lat geometries, consider using a different [metric space] like [`Haversine`](crate::Haversine) or [`Geodesic`](crate::Geodesic).
+/// For lng/lat geometries, consider using a different [metric space] like [`Haversine`](crate::HaversineMeasure) or [`Geodesic`](crate::Geodesic).
 ///
 ///```
 /// # use approx::assert_relative_eq;
 /// use geo::{wkt, Densify};
-/// use geo::line_measures::HAVERSINE;
+/// use geo::line_measures::Haversine;
 /// let line_string = wkt!(LINESTRING(0.0 0.0,0.0 6.0,1.0 7.0));
 ///
 /// // For Haversine, the unit of distance is in meters
 /// let max_dist = 200_000.0;
-/// let densified = HAVERSINE.densify(&line_string, max_dist);
+/// let densified = Haversine.densify(&line_string, max_dist);
 /// // Haversine interprets coordinate points as lng/lat
 /// let expected_output = wkt!(LINESTRING(
 ///     0.0 0.0,
@@ -100,17 +100,17 @@ where
 /// assert_relative_eq!(densified, expected_output);
 ///```
 ///
-/// For lng/lat geometries, consider using a different [metric space] like [`Haversine`](crate::Haversine) or [`Geodesic`](crate::Geodesic).
+/// For lng/lat geometries, consider using a different [metric space] like [`Haversine`](crate::HaversineMeasure) or [`Geodesic`](crate::Geodesic).
 ///
 ///```
 /// # use approx::assert_relative_eq;
 /// use geo::wkt;
-/// use geo::line_measures::{HAVERSINE, Densifiable};
+/// use geo::line_measures::{Haversine, Densifiable};
 /// let line_string = wkt!(LINESTRING(0.0 0.0,0.0 6.0,1.0 7.0));
 ///
 /// // For Haversine, the unit of distance is in meters
 /// let max_dist = 200_000.0;
-/// let densified = line_string.densify(&HAVERSINE, max_dist);
+/// let densified = line_string.densify(&Haversine, max_dist);
 /// // Haversine interprets coordinate points as lng/lat
 /// let expected_output = wkt!(LINESTRING(
 ///     0.0 0.0,
@@ -319,7 +319,7 @@ impl<F: CoordFloat + FromPrimitive> Densifiable<F> for Triangle<F> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coord, polygon, wkt, Euclidean, Geodesic, Rhumb, HAVERSINE};
+    use crate::{coord, polygon, wkt, Euclidean, Geodesic, Haversine, Rhumb};
 
     #[test]
     fn densify_line() {
@@ -335,7 +335,7 @@ mod tests {
         let densified_rhumb = Rhumb.densify(&line, 100_000.0);
         assert!(densified_rhumb.coords_count() > 2);
 
-        let densified_haversine = HAVERSINE.densify(&line, 100_000.0);
+        let densified_haversine = Haversine.densify(&line, 100_000.0);
         assert!(densified_haversine.coords_count() > 2);
     }
 
@@ -353,7 +353,7 @@ mod tests {
         let densified_rhumb_ls = Rhumb.densify(&line_string, 500_000.0);
         assert!(densified_rhumb_ls.coords_count() > line_string.coords_count());
 
-        let densified_haversine_ls = HAVERSINE.densify(&line_string, 500_000.0);
+        let densified_haversine_ls = Haversine.densify(&line_string, 500_000.0);
         assert!(densified_haversine_ls.coords_count() > line_string.coords_count());
     }
 
@@ -459,7 +459,7 @@ mod tests {
                 4.925 45.804
             )));
 
-            let actual_haversine = HAVERSINE.densify(&polygon, 50000.0);
+            let actual_haversine = Haversine.densify(&polygon, 50000.0);
             assert_relative_eq!(actual_haversine, exepcted_haversine);
 
             let expected_geodesic = wkt!(POLYGON((
@@ -504,7 +504,7 @@ mod tests {
                 -3.1944 55.949
             ));
 
-            let dense = HAVERSINE.densify(&linestring, 110.0);
+            let dense = Haversine.densify(&linestring, 110.0);
             assert_relative_eq!(dense, expected);
         }
 
@@ -512,7 +512,7 @@ mod tests {
         fn test_line_densify() {
             let output = wkt!(LINESTRING(0.0 0.0, 0.0 0.5, 0.0 1.0));
             let line = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 0.0, y: 1.0 });
-            let dense = HAVERSINE.densify(&line, 100000.0);
+            let dense = Haversine.densify(&line, 100000.0);
             assert_relative_eq!(dense, output);
         }
     }
