@@ -2,7 +2,7 @@ use num_traits::FromPrimitive;
 
 use super::super::{Bearing, Destination, Distance, InterpolatePoint};
 use crate::utils::normalize_longitude;
-use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
+use crate::{CoordFloat, Point};
 
 /// Use the [`Haversine`] constant (an instance of `HaversineMeasure`) rather than building your own
 /// customized [`HaversineMeasure`] for standard spherical Earth measurements.
@@ -124,7 +124,7 @@ impl HaversineMeasure {
     ///
     /// [Moritz (2000)]: https://sci-hub.se/https://doi.org/10.1007/s001900050278
     pub const GRS80_MEAN_RADIUS: Self = Self {
-        radius: MEAN_EARTH_RADIUS,
+        radius: 6_371_008.8,
     };
 
     /// A sphere with the same surface area as the GRS80 ellipsoid, having radius `R₂`,
