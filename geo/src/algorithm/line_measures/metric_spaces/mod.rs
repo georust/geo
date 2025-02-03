@@ -2,7 +2,7 @@ mod euclidean;
 pub use euclidean::Euclidean;
 
 mod geodesic;
-pub use geodesic::Geodesic;
+pub use geodesic::{Geodesic, GeodesicMeasure};
 
 mod haversine;
 pub use haversine::{Haversine, HaversineMeasure};
