@@ -2,7 +2,7 @@ use crate::{Distance, Geodesic, Point};
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Geodesic::distance` method from the `Distance` trait instead"
+    note = "Please use the `Geodesic.distance` method from the `Distance` trait instead"
 )]
 /// Determine the distance between two geometries on an ellipsoidal model of the earth.
 ///
@@ -46,6 +46,6 @@ pub trait GeodesicDistance<T, Rhs = Self> {
 #[allow(deprecated)]
 impl GeodesicDistance<f64> for Point {
     fn geodesic_distance(&self, rhs: &Point) -> f64 {
-        Geodesic::distance(*self, *rhs)
+        Geodesic.distance(*self, *rhs)
     }
 }

@@ -10,7 +10,7 @@ use geographiclib_rs::{Geodesic, InverseGeodesic};
 pub trait GeodesicBearing<T: CoordNum> {
     #[deprecated(
         since = "0.29.0",
-        note = "Please use the `Geodesic::bearing` method from the `Bearing` trait instead"
+        note = "Please use the `Geodesic.bearing` method from the `Bearing` trait instead"
     )]
     /// Returns the bearing to another Point in degrees, where North is 0° and East is 90°.
     ///

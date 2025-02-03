@@ -14,8 +14,8 @@ macro_rules! symmetric_distance_impl {
         where
             F: $t,
         {
-            fn distance(a: $a, b: $b) -> F {
-                Self::distance(b, a)
+            fn distance(&self, a: $a, b: $b) -> F {
+                self.distance(b, a)
             }
         }
     };
@@ -26,13 +26,13 @@ macro_rules! symmetric_distance_impl {
 // └───────────────────────────┘
 
 impl<F: CoordFloat> Distance<F, Coord<F>, Coord<F>> for Euclidean {
-    fn distance(origin: Coord<F>, destination: Coord<F>) -> F {
+    fn distance(&self, origin: Coord<F>, destination: Coord<F>) -> F {
         let delta = origin - destination;
         delta.x.hypot(delta.y)
     }
 }
 impl<F: CoordFloat> Distance<F, Coord<F>, &Line<F>> for Euclidean {
-    fn distance(coord: Coord<F>, line: &Line<F>) -> F {
+    fn distance(&self, coord: Coord<F>, line: &Line<F>) -> F {
         ::geo_types::private_utils::point_line_euclidean_distance(Point(coord), *line)
     }
 }
@@ -59,7 +59,7 @@ impl<F: CoordFloat> Distance<F, Point<F>, Point<F>> for Euclidean {
     /// let new_york_city = Point::new(-8238310.24, 4942194.78);
     /// // web mercator
     /// let london = Point::new(-14226.63, 6678077.70);
-    /// let distance: f64 = Euclidean::distance(new_york_city, london);
+    /// let distance: f64 = Euclidean.distance(new_york_city, london);
     ///
     /// assert_eq!(
     ///     8_405_286., // meters in web mercator
@@ -67,34 +67,34 @@ impl<F: CoordFloat> Distance<F, Point<F>, Point<F>> for Euclidean {
     /// );
     /// ```
     ///
-    /// [`Haversine`]: crate::line_measures::metric_spaces::Haversine
+    /// [`Haversine`]: crate::line_measures::metric_spaces::HaversineMeasure
     /// [`Geodesic`]: crate::line_measures::metric_spaces::Geodesic
     /// [metric spaces]: crate::line_measures::metric_spaces
-    fn distance(origin: Point<F>, destination: Point<F>) -> F {
-        Self::distance(origin.0, destination.0)
+    fn distance(&self, origin: Point<F>, destination: Point<F>) -> F {
+        self.distance(origin.0, destination.0)
     }
 }
 
 impl<F: CoordFloat> Distance<F, &Point<F>, &Point<F>> for Euclidean {
-    fn distance(origin: &Point<F>, destination: &Point<F>) -> F {
-        Self::distance(*origin, *destination)
+    fn distance(&self, origin: &Point<F>, destination: &Point<F>) -> F {
+        self.distance(*origin, *destination)
     }
 }
 
 impl<F: CoordFloat> Distance<F, &Point<F>, &Line<F>> for Euclidean {
-    fn distance(origin: &Point<F>, destination: &Line<F>) -> F {
+    fn distance(&self, origin: &Point<F>, destination: &Line<F>) -> F {
         geo_types::private_utils::point_line_euclidean_distance(*origin, *destination)
     }
 }
 
 impl<F: CoordFloat> Distance<F, &Point<F>, &LineString<F>> for Euclidean {
-    fn distance(origin: &Point<F>, destination: &LineString<F>) -> F {
+    fn distance(&self, origin: &Point<F>, destination: &LineString<F>) -> F {
         geo_types::private_utils::point_line_string_euclidean_distance(*origin, destination)
     }
 }
 
 impl<F: GeoFloat> Distance<F, &Point<F>, &Polygon<F>> for Euclidean {
-    fn distance(point: &Point<F>, polygon: &Polygon<F>) -> F {
+    fn distance(&self, point: &Point<F>, polygon: &Polygon<F>) -> F {
         // No need to continue if the polygon intersects the point, or is zero-length
         if polygon.exterior().0.is_empty() || polygon.intersects(point) {
             return F::zero();
@@ -104,7 +104,7 @@ impl<F: GeoFloat> Distance<F, &Point<F>, &Polygon<F>> for Euclidean {
         polygon
             .interiors()
             .iter()
-            .map(|ring| Self::distance(point, ring))
+            .map(|ring| self.distance(point, ring))
             .fold(Bounded::max_value(), |accum: F, val| accum.min(val))
             .min(
                 polygon
@@ -128,30 +128,30 @@ symmetric_distance_impl!(CoordFloat, &Line<F>, Coord<F>);
 symmetric_distance_impl!(CoordFloat, &Line<F>, &Point<F>);
 
 impl<F: GeoFloat> Distance<F, &Line<F>, &Line<F>> for Euclidean {
-    fn distance(line_a: &Line<F>, line_b: &Line<F>) -> F {
+    fn distance(&self, line_a: &Line<F>, line_b: &Line<F>) -> F {
         if line_a.intersects(line_b) {
             return F::zero();
         }
         // minimum of all Point-Line distances
-        Self::distance(&line_a.start_point(), line_b)
-            .min(Self::distance(&line_a.end_point(), line_b))
-            .min(Self::distance(&line_b.start_point(), line_a))
-            .min(Self::distance(&line_b.end_point(), line_a))
+        self.distance(&line_a.start_point(), line_b)
+            .min(self.distance(&line_a.end_point(), line_b))
+            .min(self.distance(&line_b.start_point(), line_a))
+            .min(self.distance(&line_b.end_point(), line_a))
     }
 }
 
 impl<F: GeoFloat> Distance<F, &Line<F>, &LineString<F>> for Euclidean {
-    fn distance(line: &Line<F>, line_string: &LineString<F>) -> F {
+    fn distance(&self, line: &Line<F>, line_string: &LineString<F>) -> F {
         line_string
             .lines()
             .fold(Bounded::max_value(), |acc, segment| {
-                acc.min(Self::distance(line, &segment))
+                acc.min(self.distance(line, &segment))
             })
     }
 }
 
 impl<F: GeoFloat> Distance<F, &Line<F>, &Polygon<F>> for Euclidean {
-    fn distance(line: &Line<F>, polygon: &Polygon<F>) -> F {
+    fn distance(&self, line: &Line<F>, polygon: &Polygon<F>) -> F {
         if line.intersects(polygon) {
             return F::zero();
         }
@@ -160,7 +160,7 @@ impl<F: GeoFloat> Distance<F, &Line<F>, &Polygon<F>> for Euclidean {
         std::iter::once(polygon.exterior())
             .chain(polygon.interiors().iter())
             .fold(Bounded::max_value(), |acc, line_string| {
-                acc.min(Self::distance(line, line_string))
+                acc.min(self.distance(line, line_string))
             })
     }
 }
@@ -173,7 +173,7 @@ symmetric_distance_impl!(CoordFloat, &LineString<F>, &Point<F>);
 symmetric_distance_impl!(GeoFloat, &LineString<F>, &Line<F>);
 
 impl<F: GeoFloat> Distance<F, &LineString<F>, &LineString<F>> for Euclidean {
-    fn distance(line_string_a: &LineString<F>, line_string_b: &LineString<F>) -> F {
+    fn distance(&self, line_string_a: &LineString<F>, line_string_b: &LineString<F>) -> F {
         if line_string_a.intersects(line_string_b) {
             F::zero()
         } else {
@@ -183,7 +183,7 @@ impl<F: GeoFloat> Distance<F, &LineString<F>, &LineString<F>> for Euclidean {
 }
 
 impl<F: GeoFloat> Distance<F, &LineString<F>, &Polygon<F>> for Euclidean {
-    fn distance(line_string: &LineString<F>, polygon: &Polygon<F>) -> F {
+    fn distance(&self, line_string: &LineString<F>, polygon: &Polygon<F>) -> F {
         if line_string.intersects(polygon) {
             F::zero()
         } else if !polygon.interiors().is_empty()
@@ -210,7 +210,7 @@ symmetric_distance_impl!(GeoFloat, &Polygon<F>, &Point<F>);
 symmetric_distance_impl!(GeoFloat, &Polygon<F>, &Line<F>);
 symmetric_distance_impl!(GeoFloat, &Polygon<F>, &LineString<F>);
 impl<F: GeoFloat> Distance<F, &Polygon<F>, &Polygon<F>> for Euclidean {
-    fn distance(polygon_a: &Polygon<F>, polygon_b: &Polygon<F>) -> F {
+    fn distance(&self, polygon_a: &Polygon<F>, polygon_b: &Polygon<F>) -> F {
         if polygon_a.intersects(polygon_b) {
             return F::zero();
         }
@@ -248,15 +248,15 @@ macro_rules! impl_euclidean_distance_for_polygonlike_geometry {
   ($polygonlike:ty,  [$($geometry_b:ty),*]) => {
       impl<F: GeoFloat> Distance<F, $polygonlike, $polygonlike> for Euclidean
       {
-          fn distance(origin: $polygonlike, destination: $polygonlike) -> F {
-              Self::distance(&origin.to_polygon(), destination)
+          fn distance(&self, origin: $polygonlike, destination: $polygonlike) -> F {
+              self.distance(&origin.to_polygon(), destination)
           }
       }
       $(
           impl<F: GeoFloat> Distance<F, $polygonlike, $geometry_b> for Euclidean
           {
-              fn distance(polygonlike: $polygonlike, geometry_b: $geometry_b) -> F {
-                    Self::distance(&polygonlike.to_polygon(), geometry_b)
+              fn distance(&self, polygonlike: $polygonlike, geometry_b: $geometry_b) -> F {
+                    self.distance(&polygonlike.to_polygon(), geometry_b)
               }
           }
           symmetric_distance_impl!(GeoFloat, $geometry_b, $polygonlike);
@@ -275,21 +275,21 @@ impl_euclidean_distance_for_polygonlike_geometry!(&Rect<F>,      [&Point<F>, &Li
 macro_rules! impl_euclidean_distance_for_iter_geometry {
     ($iter_geometry:ty,  [$($to_geometry:ty),*]) => {
         impl<F: GeoFloat> Distance<F, $iter_geometry, $iter_geometry> for Euclidean {
-            fn distance(origin: $iter_geometry, destination: $iter_geometry) -> F {
+            fn distance(&self, origin: $iter_geometry, destination: $iter_geometry) -> F {
                 origin
                     .iter()
                     .fold(Bounded::max_value(), |accum: F, member| {
-                        accum.min(Self::distance(member, destination))
+                        accum.min(self.distance(member, destination))
                     })
              }
         }
         $(
             impl<F: GeoFloat> Distance<F, $iter_geometry, $to_geometry> for Euclidean {
-                fn distance(iter_geometry: $iter_geometry, to_geometry: $to_geometry) -> F {
+                fn distance(&self, iter_geometry: $iter_geometry, to_geometry: $to_geometry) -> F {
                     iter_geometry
                         .iter()
                         .fold(Bounded::max_value(), |accum: F, member| {
-                            accum.min(Self::distance(member, to_geometry))
+                            accum.min(self.distance(member, to_geometry))
                         })
                 }
             }
@@ -312,18 +312,18 @@ macro_rules! impl_euclidean_distance_for_geometry_and_variant {
   ([$($target:ty),*]) => {
       $(
           impl<F: GeoFloat> Distance<F, $target, &Geometry<F>> for Euclidean {
-              fn distance(origin: $target, destination: &Geometry<F>) -> F {
+              fn distance(&self, origin: $target, destination: &Geometry<F>) -> F {
                   match destination {
-                      Geometry::Point(point) => Self::distance(origin, point),
-                      Geometry::Line(line) => Self::distance(origin, line),
-                      Geometry::LineString(line_string) => Self::distance(origin, line_string),
-                      Geometry::Polygon(polygon) => Self::distance(origin, polygon),
-                      Geometry::MultiPoint(multi_point) => Self::distance(origin, multi_point),
-                      Geometry::MultiLineString(multi_line_string) => Self::distance(origin, multi_line_string),
-                      Geometry::MultiPolygon(multi_polygon) => Self::distance(origin, multi_polygon),
-                      Geometry::GeometryCollection(geometry_collection) => Self::distance(origin, geometry_collection),
-                      Geometry::Rect(rect) => Self::distance(origin, rect),
-                      Geometry::Triangle(triangle) => Self::distance(origin, triangle),
+                      Geometry::Point(point) => self.distance(origin, point),
+                      Geometry::Line(line) => self.distance(origin, line),
+                      Geometry::LineString(line_string) => self.distance(origin, line_string),
+                      Geometry::Polygon(polygon) => self.distance(origin, polygon),
+                      Geometry::MultiPoint(multi_point) => self.distance(origin, multi_point),
+                      Geometry::MultiLineString(multi_line_string) => self.distance(origin, multi_line_string),
+                      Geometry::MultiPolygon(multi_polygon) => self.distance(origin, multi_polygon),
+                      Geometry::GeometryCollection(geometry_collection) => self.distance(origin, geometry_collection),
+                      Geometry::Rect(rect) => self.distance(origin, rect),
+                      Geometry::Triangle(triangle) => self.distance(origin, triangle),
                   }
               }
           }
@@ -335,22 +335,22 @@ macro_rules! impl_euclidean_distance_for_geometry_and_variant {
 impl_euclidean_distance_for_geometry_and_variant!([&Point<F>, &MultiPoint<F>, &Line<F>, &LineString<F>, &MultiLineString<F>, &Polygon<F>, &MultiPolygon<F>, &Triangle<F>, &Rect<F>, &GeometryCollection<F>]);
 
 impl<F: GeoFloat> Distance<F, &Geometry<F>, &Geometry<F>> for Euclidean {
-    fn distance(origin: &Geometry<F>, destination: &Geometry<F>) -> F {
+    fn distance(&self, origin: &Geometry<F>, destination: &Geometry<F>) -> F {
         match origin {
-            Geometry::Point(point) => Self::distance(point, destination),
-            Geometry::Line(line) => Self::distance(line, destination),
-            Geometry::LineString(line_string) => Self::distance(line_string, destination),
-            Geometry::Polygon(polygon) => Self::distance(polygon, destination),
-            Geometry::MultiPoint(multi_point) => Self::distance(multi_point, destination),
+            Geometry::Point(point) => self.distance(point, destination),
+            Geometry::Line(line) => self.distance(line, destination),
+            Geometry::LineString(line_string) => self.distance(line_string, destination),
+            Geometry::Polygon(polygon) => self.distance(polygon, destination),
+            Geometry::MultiPoint(multi_point) => self.distance(multi_point, destination),
             Geometry::MultiLineString(multi_line_string) => {
-                Self::distance(multi_line_string, destination)
+                self.distance(multi_line_string, destination)
             }
-            Geometry::MultiPolygon(multi_polygon) => Self::distance(multi_polygon, destination),
+            Geometry::MultiPolygon(multi_polygon) => self.distance(multi_polygon, destination),
             Geometry::GeometryCollection(geometry_collection) => {
-                Self::distance(geometry_collection, destination)
+                self.distance(geometry_collection, destination)
             }
-            Geometry::Rect(rect) => Self::distance(rect, destination),
-            Geometry::Triangle(triangle) => Self::distance(triangle, destination),
+            Geometry::Rect(rect) => self.distance(rect, destination),
+            Geometry::Triangle(triangle) => self.distance(triangle, destination),
         }
     }
 }
@@ -369,11 +369,11 @@ fn nearest_neighbour_distance<F: GeoFloat>(geom1: &LineString<F>, geom2: &LineSt
         .points()
         .fold(Bounded::max_value(), |acc: F, point| {
             let nearest = tree_a.nearest_neighbor(&point).unwrap();
-            acc.min(Euclidean::distance(nearest as &Line<F>, &point))
+            acc.min(Euclidean.distance(nearest as &Line<F>, &point))
         })
         .min(geom1.points().fold(Bounded::max_value(), |acc, point| {
             let nearest = tree_b.nearest_neighbor(&point).unwrap();
-            acc.min(Euclidean::distance(nearest as &Line<F>, &point))
+            acc.min(Euclidean.distance(nearest as &Line<F>, &point))
         }))
 }
 
@@ -433,7 +433,7 @@ mod test {
         let poly = Polygon::new(ls, vec![]);
         // A Random point outside the octagon
         let p = Point::new(2.5, 0.5);
-        let dist = Euclidean::distance(&p, &poly);
+        let dist = Euclidean.distance(&p, &poly);
         assert_relative_eq!(dist, 2.1213203435596424);
     }
     #[test]
@@ -455,7 +455,7 @@ mod test {
         let poly = Polygon::new(ls, vec![]);
         // A Random point inside the octagon
         let p = Point::new(5.5, 2.1);
-        let dist = Euclidean::distance(&p, &poly);
+        let dist = Euclidean.distance(&p, &poly);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
@@ -477,7 +477,7 @@ mod test {
         let poly = Polygon::new(ls, vec![]);
         // A point on the octagon
         let p = Point::new(5.0, 1.0);
-        let dist = Euclidean::distance(&p, &poly);
+        let dist = Euclidean.distance(&p, &poly);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
@@ -493,7 +493,7 @@ mod test {
 
         let poly = Polygon::new(exterior, vec![]);
         let bugged_point = Point::new(0.0001, 0.);
-        assert_relative_eq!(Euclidean::distance(&poly, &bugged_point), 0.);
+        assert_relative_eq!(Euclidean.distance(&poly, &bugged_point), 0.);
     }
     #[test]
     // Point to Polygon, empty Polygon
@@ -504,7 +504,7 @@ mod test {
         let poly = Polygon::new(ls, vec![]);
         // A point on the octagon
         let p = Point::new(2.5, 0.5);
-        let dist = Euclidean::distance(&p, &poly);
+        let dist = Euclidean.distance(&p, &poly);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
@@ -529,7 +529,7 @@ mod test {
         let poly = Polygon::new(ls_ext, vec![ls_int]);
         // A point inside the cutout triangle
         let p = Point::new(3.5, 2.5);
-        let dist = Euclidean::distance(&p, &poly);
+        let dist = Euclidean.distance(&p, &poly);
 
         // 0.41036467732879783 <-- Shapely
         assert_relative_eq!(dist, 0.41036467732879767);
@@ -569,8 +569,8 @@ mod test {
         let pnt1 = Point::new(0.0, 15.0);
         let pnt2 = Point::new(10.0, 20.0);
         let ln = Line::new(pnt1.0, pnt2.0);
-        let dist_mp_ln = Euclidean::distance(&ln, &mp);
-        let dist_pol1_ln = Euclidean::distance(&ln, &pol1);
+        let dist_mp_ln = Euclidean.distance(&ln, &mp);
+        let dist_pol1_ln = Euclidean.distance(&ln, &pol1);
         assert_relative_eq!(dist_mp_ln, dist_pol1_ln);
     }
 
@@ -582,7 +582,7 @@ mod test {
         let p2 = Polygon::new(ls2, vec![]);
         let mp = MultiPolygon::new(vec![p1, p2]);
         let p = Point::new(50.0, 50.0);
-        assert_relative_eq!(Euclidean::distance(&p, &mp), 60.959002616512684);
+        assert_relative_eq!(Euclidean.distance(&p, &mp), 60.959002616512684);
     }
     #[test]
     // Point to LineString
@@ -601,7 +601,7 @@ mod test {
         let ls = LineString::from(points);
         // A Random point "inside" the LineString
         let p = Point::new(5.5, 2.1);
-        let dist = Euclidean::distance(&p, &ls);
+        let dist = Euclidean.distance(&p, &ls);
         assert_relative_eq!(dist, 1.1313708498984762);
     }
     #[test]
@@ -621,7 +621,7 @@ mod test {
         let ls = LineString::from(points);
         // A point which lies on the LineString
         let p = Point::new(5.0, 4.0);
-        let dist = Euclidean::distance(&p, &ls);
+        let dist = Euclidean.distance(&p, &ls);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
@@ -630,7 +630,7 @@ mod test {
         let points = vec![(3.5, 3.5), (4.4, 2.0), (2.6, 2.0), (3.5, 3.5)];
         let ls = LineString::from(points);
         let p = Point::new(3.5, 2.5);
-        let dist = Euclidean::distance(&p, &ls);
+        let dist = Euclidean.distance(&p, &ls);
         assert_relative_eq!(dist, 0.5);
     }
     #[test]
@@ -639,7 +639,7 @@ mod test {
         let points = vec![];
         let ls = LineString::new(points);
         let p = Point::new(5.0, 4.0);
-        let dist = Euclidean::distance(&p, &ls);
+        let dist = Euclidean.distance(&p, &ls);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
@@ -648,19 +648,18 @@ mod test {
         let v2 = LineString::from(vec![(1.0, 10.0), (2.0, 0.0), (3.0, 1.0)]);
         let mls = MultiLineString::new(vec![v1, v2]);
         let p = Point::new(50.0, 50.0);
-        assert_relative_eq!(Euclidean::distance(&p, &mls), 63.25345840347388);
+        assert_relative_eq!(Euclidean.distance(&p, &mls), 63.25345840347388);
     }
     #[test]
     fn distance1_test() {
         assert_relative_eq!(
-            Euclidean::distance(&Point::new(0., 0.), &Point::new(1., 0.)),
+            Euclidean.distance(&Point::new(0., 0.), &Point::new(1., 0.)),
             1.
         );
     }
     #[test]
     fn distance2_test() {
-        let dist =
-            Euclidean::distance(&Point::new(-72.1235, 42.3521), &Point::new(72.1260, 70.612));
+        let dist = Euclidean.distance(&Point::new(-72.1235, 42.3521), &Point::new(72.1260, 70.612));
         assert_relative_eq!(dist, 146.99163308930207);
     }
     #[test]
@@ -678,7 +677,7 @@ mod test {
         ];
         let mp = MultiPoint::new(v);
         let p = Point::new(50.0, 50.0);
-        assert_relative_eq!(Euclidean::distance(&p, &mp), 64.03124237432849)
+        assert_relative_eq!(Euclidean.distance(&p, &mp), 64.03124237432849)
     }
     #[test]
     fn distance_line_test() {
@@ -686,21 +685,21 @@ mod test {
         let p0 = Point::new(2., 3.);
         let p1 = Point::new(3., 0.);
         let p2 = Point::new(6., 0.);
-        assert_relative_eq!(Euclidean::distance(&line0, &p0), 3.);
-        assert_relative_eq!(Euclidean::distance(&p0, &line0), 3.);
+        assert_relative_eq!(Euclidean.distance(&line0, &p0), 3.);
+        assert_relative_eq!(Euclidean.distance(&p0, &line0), 3.);
 
-        assert_relative_eq!(Euclidean::distance(&line0, &p1), 0.);
-        assert_relative_eq!(Euclidean::distance(&p1, &line0), 0.);
+        assert_relative_eq!(Euclidean.distance(&line0, &p1), 0.);
+        assert_relative_eq!(Euclidean.distance(&p1, &line0), 0.);
 
-        assert_relative_eq!(Euclidean::distance(&line0, &p2), 1.);
-        assert_relative_eq!(Euclidean::distance(&p2, &line0), 1.);
+        assert_relative_eq!(Euclidean.distance(&line0, &p2), 1.);
+        assert_relative_eq!(Euclidean.distance(&p2, &line0), 1.);
     }
     #[test]
     fn distance_line_line_test() {
         let line0 = Line::from([(0., 0.), (5., 0.)]);
         let line1 = Line::from([(2., 1.), (7., 2.)]);
-        assert_relative_eq!(Euclidean::distance(&line0, &line1), 1.);
-        assert_relative_eq!(Euclidean::distance(&line1, &line0), 1.);
+        assert_relative_eq!(Euclidean.distance(&line0, &line1), 1.);
+        assert_relative_eq!(Euclidean.distance(&line1, &line0), 1.);
     }
     #[test]
     // See https://github.com/georust/geo/issues/476
@@ -733,7 +732,7 @@ mod test {
                 y: -0.15433610862574643,
             },
         ];
-        assert_eq!(Euclidean::distance(&line, &poly), 0.18752558079168907);
+        assert_eq!(Euclidean.distance(&line, &poly), 0.18752558079168907);
     }
     #[test]
     // test edge-vertex minimum distance
@@ -844,7 +843,7 @@ mod test {
             (4.921875, 66.33750501996518),
         ];
         let poly2 = Polygon::new(vec2.into(), vec![]);
-        let distance = Euclidean::distance(&poly1, &poly2);
+        let distance = Euclidean.distance(&poly1, &poly2);
         // GEOS says 2.2864896295566055
         assert_relative_eq!(distance, 2.2864896295566055);
     }
@@ -858,14 +857,14 @@ mod test {
         // inside is "inside" outside's ring, but they are disjoint
         let outside = Polygon::new(shell, vec![ring]);
         let inside = Polygon::new(poly_in_ring, vec![]);
-        assert_relative_eq!(Euclidean::distance(&outside, &inside), 5.992772737231033);
+        assert_relative_eq!(Euclidean.distance(&outside, &inside), 5.992772737231033);
     }
     #[test]
     // two ring LineStrings; one encloses the other but they neither touch nor intersect
     fn test_linestring_distance() {
         let ring = geo_test_fixtures::ring::<f64>();
         let poly_in_ring = geo_test_fixtures::poly_in_ring::<f64>();
-        assert_relative_eq!(Euclidean::distance(&ring, &poly_in_ring), 5.992772737231033);
+        assert_relative_eq!(Euclidean.distance(&ring, &poly_in_ring), 5.992772737231033);
     }
     #[test]
     // Line-Polygon test: closest point on Polygon is NOT nearest to a Line end-point
@@ -873,7 +872,7 @@ mod test {
         let line = Line::from([(0.0, 0.0), (0.0, 3.0)]);
         let v = vec![(5.0, 1.0), (5.0, 2.0), (0.25, 1.5), (5.0, 1.0)];
         let poly = Polygon::new(v.into(), vec![]);
-        assert_relative_eq!(Euclidean::distance(&line, &poly), 0.25);
+        assert_relative_eq!(Euclidean.distance(&line, &poly), 0.25);
     }
     #[test]
     // Line-Polygon test: Line intersects Polygon
@@ -881,7 +880,7 @@ mod test {
         let line = Line::from([(0.5, 0.0), (0.0, 3.0)]);
         let v = vec![(5.0, 1.0), (5.0, 2.0), (0.25, 1.5), (5.0, 1.0)];
         let poly = Polygon::new(v.into(), vec![]);
-        assert_relative_eq!(Euclidean::distance(&line, &poly), 0.0);
+        assert_relative_eq!(Euclidean.distance(&line, &poly), 0.0);
     }
     #[test]
     // Line-Polygon test: Line contained by interior ring
@@ -890,14 +889,14 @@ mod test {
         let v = vec![(5.0, 1.0), (5.0, 2.0), (0.25, 1.0), (5.0, 1.0)];
         let v2 = vec![(4.5, 1.2), (4.5, 1.8), (3.5, 1.2), (4.5, 1.2)];
         let poly = Polygon::new(v.into(), vec![v2.into()]);
-        assert_relative_eq!(Euclidean::distance(&line, &poly), 0.04999999999999982);
+        assert_relative_eq!(Euclidean.distance(&line, &poly), 0.04999999999999982);
     }
     #[test]
     // LineString-Line test
     fn test_linestring_line_distance() {
         let line = Line::from([(0.0, 0.0), (0.0, 2.0)]);
         let ls: LineString<_> = vec![(3.0, 0.0), (1.0, 1.0), (3.0, 2.0)].into();
-        assert_relative_eq!(Euclidean::distance(&ls, &line), 1.0);
+        assert_relative_eq!(Euclidean.distance(&ls, &line), 1.0);
     }
 
     #[test]
@@ -905,7 +904,7 @@ mod test {
     fn test_triangle_point_on_vertex_distance() {
         let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let point = Point::new(0.0, 0.0);
-        assert_relative_eq!(Euclidean::distance(&triangle, &point), 0.0);
+        assert_relative_eq!(Euclidean.distance(&triangle, &point), 0.0);
     }
 
     #[test]
@@ -913,7 +912,7 @@ mod test {
     fn test_triangle_point_on_edge_distance() {
         let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let point = Point::new(1.5, 0.0);
-        assert_relative_eq!(Euclidean::distance(&triangle, &point), 0.0);
+        assert_relative_eq!(Euclidean.distance(&triangle, &point), 0.0);
     }
 
     #[test]
@@ -921,7 +920,7 @@ mod test {
     fn test_triangle_point_distance() {
         let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let point = Point::new(2.0, 3.0);
-        assert_relative_eq!(Euclidean::distance(&triangle, &point), 1.0);
+        assert_relative_eq!(Euclidean.distance(&triangle, &point), 1.0);
     }
 
     #[test]
@@ -929,7 +928,7 @@ mod test {
     fn test_triangle_point_inside_distance() {
         let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let point = Point::new(1.0, 0.5);
-        assert_relative_eq!(Euclidean::distance(&triangle, &point), 0.0);
+        assert_relative_eq!(Euclidean.distance(&triangle, &point), 0.0);
     }
 
     #[test]
@@ -954,7 +953,7 @@ mod test {
         let second_polygon = Polygon::new(ls2, vec![]);
 
         assert_relative_eq!(
-            Euclidean::distance(&first_polygon, &second_polygon),
+            Euclidean.distance(&first_polygon, &second_polygon),
             224.35357967013238
         );
     }
@@ -987,10 +986,10 @@ mod test {
             (x: 50_f64, y: 200_f64),
         )
         .orient(Direction::Reversed);
-        assert_eq!(Euclidean::distance(&p1, &p2), 50.0f64);
-        assert_eq!(Euclidean::distance(&p3, &p4), 50.0f64);
-        assert_eq!(Euclidean::distance(&p1, &p4), 50.0f64);
-        assert_eq!(Euclidean::distance(&p2, &p3), 50.0f64);
+        assert_eq!(Euclidean.distance(&p1, &p2), 50.0f64);
+        assert_eq!(Euclidean.distance(&p3, &p4), 50.0f64);
+        assert_eq!(Euclidean.distance(&p1, &p4), 50.0f64);
+        assert_eq!(Euclidean.distance(&p2, &p3), 50.0f64);
     }
     #[test]
     fn all_types_geometry_collection_test() {
@@ -1040,22 +1039,22 @@ mod test {
         ]);
 
         let test_p = Point::new(50., 50.);
-        assert_relative_eq!(Euclidean::distance(&test_p, &gc), 60.959002616512684);
+        assert_relative_eq!(Euclidean.distance(&test_p, &gc), 60.959002616512684);
 
         let test_multipoint = MultiPoint::new(vec![test_p]);
         assert_relative_eq!(
-            Euclidean::distance(&test_multipoint, &gc),
+            Euclidean.distance(&test_multipoint, &gc),
             60.959002616512684
         );
 
         let test_line = Line::from([(50., 50.), (60., 60.)]);
-        assert_relative_eq!(Euclidean::distance(&test_line, &gc), 60.959002616512684);
+        assert_relative_eq!(Euclidean.distance(&test_line, &gc), 60.959002616512684);
 
         let test_ls = LineString::from(vec![(50., 50.), (60., 60.), (70., 70.)]);
-        assert_relative_eq!(Euclidean::distance(&test_ls, &gc), 60.959002616512684);
+        assert_relative_eq!(Euclidean.distance(&test_ls, &gc), 60.959002616512684);
 
         let test_mls = MultiLineString::new(vec![test_ls]);
-        assert_relative_eq!(Euclidean::distance(&test_mls, &gc), 60.959002616512684);
+        assert_relative_eq!(Euclidean.distance(&test_mls, &gc), 60.959002616512684);
 
         let test_poly = Polygon::new(
             LineString::from(vec![
@@ -1067,21 +1066,18 @@ mod test {
             ]),
             vec![],
         );
-        assert_relative_eq!(Euclidean::distance(&test_poly, &gc), 60.959002616512684);
+        assert_relative_eq!(Euclidean.distance(&test_poly, &gc), 60.959002616512684);
 
         let test_multipoly = MultiPolygon::new(vec![test_poly]);
-        assert_relative_eq!(
-            Euclidean::distance(&test_multipoly, &gc),
-            60.959002616512684
-        );
+        assert_relative_eq!(Euclidean.distance(&test_multipoly, &gc), 60.959002616512684);
 
         let test_tri = Triangle::from([(50., 50.), (60., 50.), (55., 55.)]);
-        assert_relative_eq!(Euclidean::distance(&test_tri, &gc), 60.959002616512684);
+        assert_relative_eq!(Euclidean.distance(&test_tri, &gc), 60.959002616512684);
 
         let test_rect = Rect::new(coord! { x: 50., y: 50. }, coord! { x: 60., y: 60. });
-        assert_relative_eq!(Euclidean::distance(&test_rect, &gc), 60.959002616512684);
+        assert_relative_eq!(Euclidean.distance(&test_rect, &gc), 60.959002616512684);
 
         let test_gc = GeometryCollection(vec![Geometry::Rect(test_rect)]);
-        assert_relative_eq!(Euclidean::distance(&test_gc, &gc), 60.959002616512684);
+        assert_relative_eq!(Euclidean.distance(&test_gc, &gc), 60.959002616512684);
     }
 }

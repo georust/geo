@@ -530,12 +530,13 @@ fn snap_or_register_point<T: SpadeTriangulationFloat>(
         .iter()
         // find closest
         .min_by(|a, b| {
-            Euclidean::distance(**a, point)
-                .partial_cmp(&Euclidean::distance(**b, point))
+            Euclidean
+                .distance(**a, point)
+                .partial_cmp(&Euclidean.distance(**b, point))
                 .expect("Couldn't compare coordinate distances")
         })
         // only snap if closest is within epsilon range
-        .filter(|nearest_point| Euclidean::distance(**nearest_point, point) < snap_radius)
+        .filter(|nearest_point| Euclidean.distance(**nearest_point, point) < snap_radius)
         .cloned()
         // otherwise register and use input point
         .unwrap_or_else(|| {

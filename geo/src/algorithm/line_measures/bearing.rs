@@ -19,8 +19,8 @@ pub trait Bearing<F: CoordFloat> {
     /// let point_2 = Point::new(0.0, 2.0);
     ///
     /// // Due north
-    /// assert_eq!(Haversine::bearing(point_1, point_2), 0.0);
-    /// assert_eq!(Geodesic::bearing(point_1, point_2), 0.0);
+    /// assert_eq!(Haversine.bearing(point_1, point_2), 0.0);
+    /// assert_eq!(Geodesic.bearing(point_1, point_2), 0.0);
     /// ```
-    fn bearing(origin: Point<F>, destination: Point<F>) -> F;
+    fn bearing(&self, origin: Point<F>, destination: Point<F>) -> F;
 }

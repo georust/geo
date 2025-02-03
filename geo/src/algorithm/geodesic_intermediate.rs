@@ -8,7 +8,7 @@ use crate::{CoordFloat, Geodesic, InterpolatePoint, Point};
 pub trait GeodesicIntermediate<T: CoordFloat> {
     #[deprecated(
         since = "0.29.0",
-        note = "Please use `Geodesic::point_at_ratio_between` from the `InterpolatePoint` trait instead"
+        note = "Please use `Geodesic.point_at_ratio_between` from the `InterpolatePoint` trait instead"
     )]
     /// Returns a new Point along a route between two existing points on an ellipsoidal model of the earth
     ///
@@ -39,7 +39,7 @@ pub trait GeodesicIntermediate<T: CoordFloat> {
 
     #[deprecated(
         since = "0.29.0",
-        note = "Please use `Geodesic::points_along_line` from the `InterpolatePoint` trait instead"
+        note = "Please use `Geodesic.points_along_line` from the `InterpolatePoint` trait instead"
     )]
     fn geodesic_intermediate_fill(
         &self,
@@ -52,7 +52,7 @@ pub trait GeodesicIntermediate<T: CoordFloat> {
 #[allow(deprecated)]
 impl GeodesicIntermediate<f64> for Point {
     fn geodesic_intermediate(&self, other: &Point, f: f64) -> Point {
-        Geodesic::point_at_ratio_between(*self, *other, f)
+        Geodesic.point_at_ratio_between(*self, *other, f)
     }
 
     fn geodesic_intermediate_fill(
@@ -61,7 +61,9 @@ impl GeodesicIntermediate<f64> for Point {
         max_dist: f64,
         include_ends: bool,
     ) -> Vec<Point> {
-        Geodesic::points_along_line(*self, *other, max_dist, include_ends).collect()
+        Geodesic
+            .points_along_line(*self, *other, max_dist, include_ends)
+            .collect()
     }
 }
 

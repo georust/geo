@@ -4,7 +4,7 @@ use crate::{CoordFloat, Length, Line, LineString, MultiLineString, Rhumb};
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `line.length::<Rhumb>()` via the `Length` trait instead."
+    note = "Please use the `Rhumb.length(&line)` via the `Length` trait instead."
 )]
 /// Determine the length of a geometry assuming each segment is a [rhumb line].
 ///
@@ -50,7 +50,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_length(&self) -> T {
-        self.length::<Rhumb>()
+        Rhumb.length(self)
     }
 }
 
@@ -60,7 +60,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_length(&self) -> T {
-        self.length::<Rhumb>()
+        Rhumb.length(self)
     }
 }
 
@@ -70,6 +70,6 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_length(&self) -> T {
-        self.length::<Rhumb>()
+        Rhumb.length(self)
     }
 }

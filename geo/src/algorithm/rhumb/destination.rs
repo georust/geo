@@ -3,7 +3,7 @@ use num_traits::FromPrimitive;
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Rhumb::destination` method from the `Destination` trait instead"
+    note = "Please use the `Rhumb.destination` method from the `Destination` trait instead"
 )]
 /// Returns the destination Point having travelled the given distance along a [rhumb line]
 /// from the origin geometry with the given bearing
@@ -41,7 +41,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_destination(&self, bearing: T, distance: T) -> Point<T> {
-        Rhumb::destination(*self, bearing, distance)
+        Rhumb.destination(*self, bearing, distance)
     }
 }
 

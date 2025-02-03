@@ -2,8 +2,34 @@
 
 ## Unreleased
 
+- BREAKING: `Densify` and `Length` are now defined on the metric space, rather than a generic method on the geometry.
+  - <https://github.com/georust/geo/pull/1298>
+  ```rust
+  // before
+  line_string.length::<Euclidean>()
+  line_string.densify::<Euclidean>()
+  line_string.densify::<Haversine>()
+
+  // after
+  Euclidean.length(&line_string)
+  Euclidean.densify(&line_string)
+  Haversine.densify(&line_string)
+  ```
+- Add configurable `HaversineMeasure` for doing calculations on a custom sphere. Use `Haversine` for the default earth radius.
+  - <https://github.com/georust/geo/pull/1298>
+  ```rust
+  // before
+  Haversine::distance(point1, point2)
+
+  // after
+  Haversine.distance(point1, point2)
+  
+  // For custom earth (or non-earth!) radius
+  HaversineMeasure::new(3_389_500.0).distance(point1, point2)
+  ```
 - Rename `triangulate_spade` and `TriangulateSpade` to `triangulate_delaunay` and `TriangulateDelaunay`
 - Docs: Fix page location of citation for mean earth radius used in Haversine calculations
+  - <https://github.com/georust/geo/pull/1297>
 - Docs: Add top-level doc link for `InteriorPoint`
 - Add Unary Union algorithm for fast union ops on adjacent / overlapping geometries
   - <https://github.com/georust/geo/pull/1246>

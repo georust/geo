@@ -16,12 +16,12 @@ pub trait Distance<F, Origin, Destination> {
     /// let p1: Point = Point::new(0.0, 0.0);
     /// let p2: Point = Point::new(0.0, 2.0);
     ///
-    /// assert_eq!(Euclidean::distance(p1, p2), 2.0);
+    /// assert_eq!(Euclidean.distance(p1, p2), 2.0);
     ///
     /// // The units of the output depend on the metric space.
     /// // In the case of [`Haversine`], it's meters.
     /// // See the documentation for each metric space for details.
-    /// assert_eq!(Haversine::distance(p1, p2).round(), 222_390.0);
+    /// assert_eq!(Haversine.distance(p1, p2).round(), 222_390.0);
     /// ```
-    fn distance(origin: Origin, destination: Destination) -> F;
+    fn distance(&self, origin: Origin, destination: Destination) -> F;
 }

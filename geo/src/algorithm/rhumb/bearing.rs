@@ -4,7 +4,7 @@ use crate::{Bearing, CoordFloat, Point, Rhumb};
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Rhumb::bearing` method from the `Bearing` trait instead"
+    note = "Please use the `Rhumb.bearing` method from the `Bearing` trait instead"
 )]
 /// Returns the bearing to another Point in degrees.
 ///
@@ -37,7 +37,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_bearing(&self, point: Point<T>) -> T {
-        Rhumb::bearing(*self, point)
+        Rhumb.bearing(*self, point)
     }
 }
 

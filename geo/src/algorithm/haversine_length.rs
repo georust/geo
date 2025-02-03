@@ -5,7 +5,7 @@ use crate::{Haversine, Length};
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `line.length::<Haversine>()` via the `Length` trait instead."
+    note = "Please use the `Haversine.length(&line)` via the `Length` trait instead."
 )]
 /// Determine the length of a geometry using the [haversine formula].
 ///
@@ -51,7 +51,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
-        self.length::<Haversine>()
+        Haversine.length(self)
     }
 }
 
@@ -61,7 +61,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
-        self.length::<Haversine>()
+        Haversine.length(self)
     }
 }
 
@@ -71,6 +71,6 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_length(&self) -> T {
-        self.length::<Haversine>()
+        Haversine.length(self)
     }
 }
