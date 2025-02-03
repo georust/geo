@@ -34,7 +34,7 @@ use num_traits::FromPrimitive;
 /// assert_relative_eq!(densified, expected_output);
 ///```
 ///
-/// For lng/lat geometries, consider using a different [metric space] like [`Haversine`](crate::HaversineMeasure) or [`Geodesic`](crate::Geodesic).
+/// For lng/lat geometries, consider using a different [metric space] like [`Haversine`](crate::Haversine) or [`Geodesic`](crate::Geodesic).
 ///
 ///```
 /// # use approx::assert_relative_eq;
@@ -101,7 +101,7 @@ where
 /// assert_relative_eq!(densified, expected_output);
 ///```
 ///
-/// For lng/lat geometries, consider using a different [metric space] like [`Haversine`](crate::HaversineMeasure) or [`Geodesic`](crate::Geodesic).
+/// For lng/lat geometries, consider using a different [metric space] like [`Haversine`](crate::Haversine) or [`Geodesic`](crate::Geodesic).
 ///
 ///```
 /// # use approx::assert_relative_eq;

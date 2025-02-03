@@ -15,7 +15,7 @@
   Euclidean.densify(&line_string)
   Haversine.densify(&line_string)
   ```
-- Add configurable `HaversineMeasure` for doing calculations on a custom sphere. Use `Haversine` for the default earth radius.
+- Add configurable `HaversineMeasure` for doing calculations on a custom sphere. Use the `Haversine` instance for the default Earth radius.
   - <https://github.com/georust/geo/pull/1298>
   ```rust
   // before
@@ -26,6 +26,19 @@
 
   // For custom earth (or non-earth!) radius
   HaversineMeasure::new(3_389_500.0).distance(point1, point2)
+  ```
+- Add configurable `GeodesiceMeasure` for doing calculations on a custom geoid. Use the `Geodesic` instance for the default Earth geoid.
+  - <https://github.com/georust/geo/pull/1311>
+  ```rust
+  // before
+  Geodesic::distance(point1, point2)
+
+  // after
+  Geodesic.distance(point1, point2)
+  
+  // For custom Earth (or non-earth!) geoids:
+  let nad83_flattening = 1. / 298.257222101;
+  GeodesicMeasure::new(6_378_137, nad83_flattening).distance(point1, point2)
   ```
 - Rename `triangulate_spade` and `TriangulateSpade` to `triangulate_delaunay` and `TriangulateDelaunay`
 - Docs: Fix page location of citation for mean earth radius used in Haversine calculations
@@ -54,6 +67,8 @@
   - <https://github.com/georust/geo/pull/1310>
 - Update `i_overlay`, which is used by the `BoolOps` trait.
   - <https://github.com/georust/geo/pull/1314>
+- Bump `geo` MSRV to 1.80 and update CI
+  - <https://github.com/georust/geo/pull/1311>
 
 ## 0.29.3 - 2024.12.03
 

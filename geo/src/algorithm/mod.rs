@@ -187,7 +187,9 @@ pub mod lines_iter;
 pub use lines_iter::LinesIter;
 
 pub mod line_measures;
-pub use line_measures::metric_spaces::{Euclidean, Geodesic, Haversine, HaversineMeasure, Rhumb};
+pub use line_measures::metric_spaces::{
+    Euclidean, Geodesic, GeodesicMeasure, Haversine, HaversineMeasure, Rhumb,
+};
 pub use line_measures::{Bearing, Densify, Destination, Distance, InterpolatePoint, Length};
 
 /// Split a LineString into n segments
