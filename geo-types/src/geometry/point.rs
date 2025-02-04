@@ -1,8 +1,5 @@
 use crate::{point, Coord, CoordFloat, CoordNum};
 
-#[cfg(any(feature = "approx", test))]
-use approx::{AbsDiffEq, RelativeEq};
-
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// A single point in 2D space.
@@ -523,66 +520,82 @@ impl<T: CoordNum> DivAssign<T> for Point<T> {
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T> RelativeEq for Point<T>
-where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
-{
-    #[inline]
-    fn default_max_relative() -> Self::Epsilon {
-        T::default_max_relative()
+mod approx_integration {
+    use super::*;
+    use approx::{AbsDiffEq, RelativeEq, UlpsEq};
+
+    impl<T> RelativeEq for Point<T>
+    where
+        T: CoordNum + RelativeEq<Epsilon = T>,
+    {
+        #[inline]
+        fn default_max_relative() -> Self::Epsilon {
+            T::default_max_relative()
+        }
+
+        /// Equality assertion within a relative limit.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use geo_types::Point;
+        ///
+        /// let a = Point::new(2.0, 3.0);
+        /// let b = Point::new(2.0, 3.01);
+        ///
+        /// approx::assert_relative_eq!(a, b, max_relative=0.1)
+        /// ```
+        #[inline]
+        fn relative_eq(
+            &self,
+            other: &Self,
+            epsilon: Self::Epsilon,
+            max_relative: Self::Epsilon,
+        ) -> bool {
+            self.0.relative_eq(&other.0, epsilon, max_relative)
+        }
     }
 
-    /// Equality assertion within a relative limit.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::Point;
-    ///
-    /// let a = Point::new(2.0, 3.0);
-    /// let b = Point::new(2.0, 3.01);
-    ///
-    /// approx::assert_relative_eq!(a, b, max_relative=0.1)
-    /// ```
-    #[inline]
-    fn relative_eq(
-        &self,
-        other: &Self,
-        epsilon: Self::Epsilon,
-        max_relative: Self::Epsilon,
-    ) -> bool {
-        self.0.relative_eq(&other.0, epsilon, max_relative)
-    }
-}
+    impl<T> AbsDiffEq for Point<T>
+    where
+        T: CoordNum + AbsDiffEq<Epsilon = T>,
+    {
+        type Epsilon = T::Epsilon;
 
-#[cfg(any(feature = "approx", test))]
-impl<T> AbsDiffEq for Point<T>
-where
-    T: AbsDiffEq<Epsilon = T> + CoordNum,
-    T::Epsilon: Copy,
-{
-    type Epsilon = T::Epsilon;
+        #[inline]
+        fn default_epsilon() -> Self::Epsilon {
+            T::default_epsilon()
+        }
 
-    #[inline]
-    fn default_epsilon() -> Self::Epsilon {
-        T::default_epsilon()
+        /// Equality assertion with an absolute limit.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use geo_types::Point;
+        ///
+        /// let a = Point::new(2.0, 3.0);
+        /// let b = Point::new(2.0, 3.0000001);
+        ///
+        /// approx::assert_relative_eq!(a, b, epsilon=0.1)
+        /// ```
+        #[inline]
+        fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+            self.0.abs_diff_eq(&other.0, epsilon)
+        }
     }
 
-    /// Equality assertion with an absolute limit.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::Point;
-    ///
-    /// let a = Point::new(2.0, 3.0);
-    /// let b = Point::new(2.0, 3.0000001);
-    ///
-    /// approx::assert_relative_eq!(a, b, epsilon=0.1)
-    /// ```
-    #[inline]
-    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        self.0.abs_diff_eq(&other.0, epsilon)
+    impl<T> UlpsEq for Point<T>
+    where
+        T: CoordNum + UlpsEq<Epsilon = T>,
+    {
+        fn default_max_ulps() -> u32 {
+            T::default_max_ulps()
+        }
+
+        fn ulps_eq(&self, other: &Self, epsilon: Self::Epsilon, max_ulps: u32) -> bool {
+            self.0.ulps_eq(&other.0, epsilon, max_ulps)
+        }
     }
 }
 
@@ -742,7 +755,7 @@ impl<T: CoordNum> AsRef<Coord<T>> for Point<T> {
 mod test {
     use super::*;
 
-    use approx::AbsDiffEq;
+    use approx::{AbsDiffEq, RelativeEq};
 
     #[test]
     fn test_abs_diff_eq() {
