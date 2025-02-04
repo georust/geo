@@ -75,7 +75,7 @@ impl Default for HaversineMeasure {
 ///
 /// See [`HaversineMeasure`](HaversineMeasure#trait-implementations) for all the trait methods available to [`Haversine`].
 ///
-// / # Examples
+/// # Examples
 ///
 /// ```
 /// # use approx::assert_relative_eq;
