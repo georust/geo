@@ -1,9 +1,6 @@
 use crate::{polygon, Coord, CoordNum, Line, Point, Polygon};
 use core::cmp::Ordering;
 
-#[cfg(any(feature = "approx", test))]
-use approx::{AbsDiffEq, RelativeEq};
-
 /// A bounded 2D area whose three vertices are defined by
 /// `Coord`s. The semantics and validity are that of
 /// the equivalent [`Polygon`]; in addition, the three
@@ -77,88 +74,113 @@ impl<IC: Into<Coord<T>> + Copy, T: CoordNum> From<[IC; 3]> for Triangle<T> {
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T> RelativeEq for Triangle<T>
-where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
-{
-    #[inline]
-    fn default_max_relative() -> Self::Epsilon {
-        T::default_max_relative()
+mod approx_integration {
+    use super::*;
+    use approx::{AbsDiffEq, RelativeEq, UlpsEq};
+
+    impl<T> RelativeEq for Triangle<T>
+    where
+        T: CoordNum + RelativeEq<Epsilon = T>,
+    {
+        #[inline]
+        fn default_max_relative() -> Self::Epsilon {
+            T::default_max_relative()
+        }
+
+        /// Equality assertion within a relative limit.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use geo_types::{point, Triangle};
+        ///
+        /// let a = Triangle::new((0.0, 0.0).into(), (10.0, 10.0).into(), (0.0, 5.0).into());
+        /// let b = Triangle::new((0.0, 0.0).into(), (10.01, 10.0).into(), (0.0, 5.0).into());
+        ///
+        /// approx::assert_relative_eq!(a, b, max_relative=0.1);
+        /// approx::assert_relative_ne!(a, b, max_relative=0.0001);
+        /// ```
+        #[inline]
+        fn relative_eq(
+            &self,
+            other: &Self,
+            epsilon: Self::Epsilon,
+            max_relative: Self::Epsilon,
+        ) -> bool {
+            if !self.0.relative_eq(&other.0, epsilon, max_relative) {
+                return false;
+            }
+            if !self.1.relative_eq(&other.1, epsilon, max_relative) {
+                return false;
+            }
+            if !self.2.relative_eq(&other.2, epsilon, max_relative) {
+                return false;
+            }
+
+            true
+        }
     }
 
-    /// Equality assertion within a relative limit.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::{point, Triangle};
-    ///
-    /// let a = Triangle::new((0.0, 0.0).into(), (10.0, 10.0).into(), (0.0, 5.0).into());
-    /// let b = Triangle::new((0.0, 0.0).into(), (10.01, 10.0).into(), (0.0, 5.0).into());
-    ///
-    /// approx::assert_relative_eq!(a, b, max_relative=0.1);
-    /// approx::assert_relative_ne!(a, b, max_relative=0.0001);
-    /// ```
-    #[inline]
-    fn relative_eq(
-        &self,
-        other: &Self,
-        epsilon: Self::Epsilon,
-        max_relative: Self::Epsilon,
-    ) -> bool {
-        if !self.0.relative_eq(&other.0, epsilon, max_relative) {
-            return false;
-        }
-        if !self.1.relative_eq(&other.1, epsilon, max_relative) {
-            return false;
-        }
-        if !self.2.relative_eq(&other.2, epsilon, max_relative) {
-            return false;
+    impl<T> AbsDiffEq for Triangle<T>
+    where
+        T: CoordNum + AbsDiffEq<Epsilon = T>,
+    {
+        type Epsilon = T;
+
+        #[inline]
+        fn default_epsilon() -> Self::Epsilon {
+            T::default_epsilon()
         }
 
-        true
-    }
-}
+        /// Equality assertion with an absolute limit.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use geo_types::{point, Triangle};
+        ///
+        /// let a = Triangle::new((0.0, 0.0).into(), (10.0, 10.0).into(), (0.0, 5.0).into());
+        /// let b = Triangle::new((0.0, 0.0).into(), (10.01, 10.0).into(), (0.0, 5.0).into());
+        ///
+        /// approx::abs_diff_eq!(a, b, epsilon=0.1);
+        /// approx::abs_diff_ne!(a, b, epsilon=0.001);
+        /// ```
+        #[inline]
+        fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+            if !self.0.abs_diff_eq(&other.0, epsilon) {
+                return false;
+            }
+            if !self.1.abs_diff_eq(&other.1, epsilon) {
+                return false;
+            }
+            if !self.2.abs_diff_eq(&other.2, epsilon) {
+                return false;
+            }
 
-#[cfg(any(feature = "approx", test))]
-impl<T> AbsDiffEq for Triangle<T>
-where
-    T: AbsDiffEq<Epsilon = T> + CoordNum,
-    T::Epsilon: Copy,
-{
-    type Epsilon = T;
-
-    #[inline]
-    fn default_epsilon() -> Self::Epsilon {
-        T::default_epsilon()
+            true
+        }
     }
 
-    /// Equality assertion with an absolute limit.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::{point, Triangle};
-    ///
-    /// let a = Triangle::new((0.0, 0.0).into(), (10.0, 10.0).into(), (0.0, 5.0).into());
-    /// let b = Triangle::new((0.0, 0.0).into(), (10.01, 10.0).into(), (0.0, 5.0).into());
-    ///
-    /// approx::abs_diff_eq!(a, b, epsilon=0.1);
-    /// approx::abs_diff_ne!(a, b, epsilon=0.001);
-    /// ```
-    #[inline]
-    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        if !self.0.abs_diff_eq(&other.0, epsilon) {
-            return false;
-        }
-        if !self.1.abs_diff_eq(&other.1, epsilon) {
-            return false;
-        }
-        if !self.2.abs_diff_eq(&other.2, epsilon) {
-            return false;
+    impl<T> UlpsEq for Triangle<T>
+    where
+        T: CoordNum + UlpsEq<Epsilon = T>,
+    {
+        fn default_max_ulps() -> u32 {
+            T::default_max_ulps()
         }
 
-        true
+        fn ulps_eq(&self, other: &Self, epsilon: Self::Epsilon, max_ulps: u32) -> bool {
+            if !self.0.ulps_eq(&other.0, epsilon, max_ulps) {
+                return false;
+            }
+            if !self.1.ulps_eq(&other.1, epsilon, max_ulps) {
+                return false;
+            }
+            if !self.2.ulps_eq(&other.2, epsilon, max_ulps) {
+                return false;
+            }
+            true
+        }
     }
 }
 
