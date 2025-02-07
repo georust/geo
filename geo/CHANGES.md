@@ -23,7 +23,7 @@
 
   // after
   Haversine.distance(point1, point2)
-  
+
   // For custom earth (or non-earth!) radius
   HaversineMeasure::new(3_389_500.0).distance(point1, point2)
   ```
@@ -52,6 +52,8 @@
   - BREAKING: update proj to 0.28.0
 - Polygons returned by Boolean Ops are now oriented correctly (ccw shell, cw inner rings)
   - <https://github.com/georust/geo/pull/1310>
+- Update `i_overlay`, which is used by the `BoolOps` trait.
+  - <https://github.com/georust/geo/pull/1314>
 
 ## 0.29.3 - 2024.12.03
 
