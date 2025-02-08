@@ -42,8 +42,20 @@ impl<T: CoordNum> From<(T, T)> for Point<T> {
     }
 }
 
+impl<T: CoordNum> From<&(T, T)> for Point<T> {
+    fn from(coords: &(T, T)) -> Self {
+        Point::new(coords.0, coords.1)
+    }
+}
+
 impl<T: CoordNum> From<[T; 2]> for Point<T> {
     fn from(coords: [T; 2]) -> Self {
+        Point::new(coords[0], coords[1])
+    }
+}
+
+impl<T: CoordNum> From<&[T; 2]> for Point<T> {
+    fn from(coords: &[T; 2]) -> Self {
         Point::new(coords[0], coords[1])
     }
 }
