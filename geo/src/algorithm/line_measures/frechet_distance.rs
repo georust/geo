@@ -77,7 +77,7 @@ impl<'a, F: CoordFloat> Data<'a, F> {
 
         for (i, a) in self.ls_a.points().enumerate() {
             for (j, b) in self.ls_b.points().enumerate() {
-                let dist = MetricSpace::distance(a, b);
+                let dist = MetricSpace.distance(a, b);
 
                 self.cache[i * columns_count + j] = match (i, j) {
                     (0, 0) => dist,
@@ -106,7 +106,7 @@ mod test {
         let ls_a = LineString::from(vec![(1., 1.)]);
         let ls_b = LineString::from(vec![(0., 2.)]);
         assert_relative_eq!(
-            Euclidean::distance(Point::from(ls_a.0[0]), Point::from(ls_b.0[0])),
+            Euclidean.distance(Point::from(ls_a.0[0]), Point::from(ls_b.0[0])),
             ls_a.frechet_distance::<Euclidean>(&ls_b)
         );
     }
