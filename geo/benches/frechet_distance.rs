@@ -8,8 +8,8 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
 
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&ls_a)
-                    .frechet_distance::<Euclidean>(criterion::black_box(&ls_b)),
+                Euclidean
+                    .frechet_distance(criterion::black_box(&ls_a), criterion::black_box(&ls_b)),
             );
         });
     });
@@ -20,8 +20,8 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
 
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&ls_a)
-                    .frechet_distance::<Euclidean>(criterion::black_box(&ls_b)),
+                Euclidean
+                    .frechet_distance(criterion::black_box(&ls_a), criterion::black_box(&ls_b)),
             );
         });
     });

@@ -1,8 +1,8 @@
 mod distance;
 
-use super::super::{Distance, InterpolatePoint};
+use super::super::{Distance, FrechetDistance, InterpolatePoint};
 use crate::line_measures::densify::densify_between;
-use crate::{CoordFloat, Point};
+use crate::{CoordFloat, LineString, Point};
 use num_traits::FromPrimitive;
 
 /// Operations on the [Euclidean plane] measure distance with the pythagorean formula -
@@ -106,6 +106,12 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Euclidean {
             container.push(end);
         }
         container.into_iter()
+    }
+}
+
+impl<F: CoordFloat> FrechetDistance<F> for Euclidean {
+    fn frechet_distance(&self, _ls_1: &LineString<F>, _ls_2: &LineString<F>) -> F {
+        todo!()
     }
 }
 

@@ -47,6 +47,6 @@ where
     T: GeoFloat + FromPrimitive,
 {
     fn frechet_distance(&self, ls: &LineString<T>) -> T {
-        super::line_measures::FrechetDistance::frechet_distance::<Euclidean>(self, ls)
+        super::line_measures::FrechetDistance::frechet_distance(&Euclidean, self, ls)
     }
 }

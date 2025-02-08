@@ -1,8 +1,8 @@
 use num_traits::FromPrimitive;
 
-use super::super::{Bearing, Destination, Distance, InterpolatePoint};
+use super::super::{Bearing, Destination, Distance, FrechetDistance, InterpolatePoint};
 use crate::utils::normalize_longitude;
-use crate::{CoordFloat, Point};
+use crate::{CoordFloat, LineString, Point};
 
 /// Use the [`Haversine`] constant (an instance of `HaversineMeasure`) rather than building your own
 /// customized [`HaversineMeasure`] for standard spherical Earth measurements.
@@ -474,6 +474,12 @@ impl<T: CoordFloat + FromPrimitive> HaversineIntermediateFillCalculation<T> {
         let lon = y.atan2(x);
 
         Point::new(lon.to_degrees(), lat.to_degrees())
+    }
+}
+
+impl<F: CoordFloat + FromPrimitive> FrechetDistance<F> for HaversineMeasure {
+    fn frechet_distance(&self, _ls_1: &LineString<F>, _ls_2: &LineString<F>) -> F {
+        todo!()
     }
 }
 

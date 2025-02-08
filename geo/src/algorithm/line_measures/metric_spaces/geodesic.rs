@@ -1,5 +1,5 @@
-use super::super::{Bearing, Destination, Distance, InterpolatePoint};
-use crate::Point;
+use super::super::{Bearing, Destination, Distance, FrechetDistance, InterpolatePoint};
+use crate::{LineString, Point};
 use geographiclib_rs::{DirectGeodesic, InverseGeodesic};
 
 /// An ellipsoidal model of the earth, using methods given by [Karney (2013)].
@@ -273,6 +273,12 @@ impl InterpolatePoint<f64> for Geodesic {
         }
 
         points.into_iter()
+    }
+}
+
+impl FrechetDistance<f64> for Geodesic {
+    fn frechet_distance(&self, _ls_1: &LineString<f64>, _ls_2: &LineString<f64>) -> f64 {
+        todo!()
     }
 }
 
