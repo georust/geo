@@ -116,7 +116,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     let h = max_dist + max_dist;
-    let w = line.length::<Euclidean>() + h;
+    let w = Euclidean.length(&line) + h;
     let two = T::add(T::one(), T::one());
     let search_dist = T::div(T::sqrt(T::powi(w, 2) + T::powi(h, 2)), two);
     let centroid = line.centroid();
@@ -134,8 +134,8 @@ where
             let closest_point =
                 candidates.fold(Point::new(point.x, point.y), |acc_point, candidate| {
                     let candidate_point = Point::new(candidate.x, candidate.y);
-                    if Euclidean::distance(&line, &acc_point)
-                        > Euclidean::distance(&line, &candidate_point)
+                    if Euclidean.distance(&line, &acc_point)
+                        > Euclidean.distance(&line, &candidate_point)
                     {
                         candidate_point
                     } else {
@@ -154,8 +154,8 @@ where
             let closest_edge_option = match peeked_edge {
                 None => None,
                 Some(&edge) => Some(edges_nearby_point.fold(*edge, |acc, candidate| {
-                    if Euclidean::distance(&closest_point, &acc)
-                        > Euclidean::distance(&closest_point, candidate)
+                    if Euclidean.distance(&closest_point, &acc)
+                        > Euclidean.distance(&closest_point, candidate)
                     {
                         *candidate
                     } else {
@@ -164,8 +164,8 @@ where
                 })),
             };
             let decision_distance = partial_min(
-                Euclidean::distance(&closest_point, &line.start_point()),
-                Euclidean::distance(&closest_point, &line.end_point()),
+                Euclidean.distance(&closest_point, &line.start_point()),
+                Euclidean.distance(&closest_point, &line.end_point()),
             );
             if let Some(closest_edge) = closest_edge_option {
                 let far_enough = edge_length / decision_distance > concavity;
@@ -217,7 +217,7 @@ where
         line_tree.insert(line);
     }
     while let Some(line) = line_queue.pop_front() {
-        let edge_length = line.length::<Euclidean>();
+        let edge_length = Euclidean.length(&line);
         let dist = edge_length / concavity;
         let possible_closest_point = find_point_closest_to_line(
             &interior_points_tree,

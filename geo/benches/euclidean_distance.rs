@@ -37,7 +37,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
             (x: -6.064453, y: 68.49604),
         ];
         bencher.iter(|| {
-            criterion::black_box(Euclidean::distance(&poly1, &poly2));
+            criterion::black_box(Euclidean.distance(&poly1, &poly2));
         });
     });
 
@@ -79,7 +79,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
             ]
             .convex_hull();
             bencher.iter(|| {
-                criterion::black_box(Euclidean::distance(&poly1, &poly2));
+                criterion::black_box(Euclidean.distance(&poly1, &poly2));
             });
         },
     );

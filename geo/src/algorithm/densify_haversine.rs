@@ -10,7 +10,7 @@ use crate::{
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `line.densify::<Haversine>()` via the `Densify` trait instead."
+    note = "Please use the `Haversine.densify(&line)` via the `Densify` trait instead."
 )]
 /// Returns a new spherical geometry containing both existing and new interpolated coordinates with
 /// a maximum distance of `max_distance` between them.
@@ -50,7 +50,7 @@ where
     type Output = MultiPolygon<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        self.densify::<Haversine>(max_distance)
+        Haversine.densify(self, max_distance)
     }
 }
 
@@ -64,7 +64,7 @@ where
     type Output = Polygon<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        self.densify::<Haversine>(max_distance)
+        Haversine.densify(self, max_distance)
     }
 }
 
@@ -78,7 +78,7 @@ where
     type Output = MultiLineString<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        self.densify::<Haversine>(max_distance)
+        Haversine.densify(self, max_distance)
     }
 }
 
@@ -92,7 +92,7 @@ where
     type Output = LineString<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        self.densify::<Haversine>(max_distance)
+        Haversine.densify(self, max_distance)
     }
 }
 
@@ -106,7 +106,7 @@ where
     type Output = LineString<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        self.densify::<Haversine>(max_distance)
+        Haversine.densify(self, max_distance)
     }
 }
 
@@ -120,7 +120,7 @@ where
     type Output = Polygon<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        self.densify::<Haversine>(max_distance)
+        Haversine.densify(self, max_distance)
     }
 }
 
@@ -134,7 +134,7 @@ where
     type Output = Polygon<T>;
 
     fn densify_haversine(&self, max_distance: T) -> Self::Output {
-        self.densify::<Haversine>(max_distance)
+        Haversine.densify(self, max_distance)
     }
 }
 

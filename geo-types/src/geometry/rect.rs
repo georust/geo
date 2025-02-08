@@ -37,7 +37,7 @@ use approx::{AbsDiffEq, RelativeEq};
 ///     rect.center()
 /// );
 /// ```
-#[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
+#[derive(Eq, PartialEq, Clone, Copy, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect<T: CoordNum = f64> {
     min: Coord<T>,
@@ -46,6 +46,8 @@ pub struct Rect<T: CoordNum = f64> {
 
 impl<T: CoordNum> Rect<T> {
     /// Creates a new rectangle from two corner coordinates.
+    ///
+    /// Coords are stored and returned (by iterators) in CCW order
     ///
     /// # Examples
     ///
@@ -203,24 +205,25 @@ impl<T: CoordNum> Rect<T> {
     ///     coord! { x: 1., y: 2. },
     /// );
     ///
+    /// // Output is CCW
     /// assert_eq!(
     ///     rect.to_polygon(),
     ///     polygon![
-    ///         (x: 0., y: 0.),
-    ///         (x: 0., y: 2.),
-    ///         (x: 1., y: 2.),
     ///         (x: 1., y: 0.),
+    ///         (x: 1., y: 2.),
+    ///         (x: 0., y: 2.),
     ///         (x: 0., y: 0.),
+    ///         (x: 1., y: 0.),
     ///     ],
     /// );
     /// ```
     pub fn to_polygon(self) -> Polygon<T> {
         polygon![
-            (x: self.min.x, y: self.min.y),
-            (x: self.min.x, y: self.max.y),
-            (x: self.max.x, y: self.max.y),
             (x: self.max.x, y: self.min.y),
+            (x: self.max.x, y: self.max.y),
+            (x: self.min.x, y: self.max.y),
             (x: self.min.x, y: self.min.y),
+            (x: self.max.x, y: self.min.y),
         ]
     }
 
@@ -228,18 +231,8 @@ impl<T: CoordNum> Rect<T> {
         [
             Line::new(
                 coord! {
-                    x: self.min.x,
+                    x: self.max.x,
                     y: self.min.y,
-                },
-                coord! {
-                    x: self.min.x,
-                    y: self.max.y,
-                },
-            ),
-            Line::new(
-                coord! {
-                    x: self.min.x,
-                    y: self.max.y,
                 },
                 coord! {
                     x: self.max.x,
@@ -252,17 +245,27 @@ impl<T: CoordNum> Rect<T> {
                     y: self.max.y,
                 },
                 coord! {
-                    x: self.max.x,
+                    x: self.min.x,
+                    y: self.max.y,
+                },
+            ),
+            Line::new(
+                coord! {
+                    x: self.min.x,
+                    y: self.max.y,
+                },
+                coord! {
+                    x: self.min.x,
                     y: self.min.y,
                 },
             ),
             Line::new(
                 coord! {
-                    x: self.max.x,
+                    x: self.min.x,
                     y: self.min.y,
                 },
                 coord! {
-                    x: self.min.x,
+                    x: self.max.x,
                     y: self.min.y,
                 },
             ),

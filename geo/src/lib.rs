@@ -115,8 +115,8 @@
 //!
 //! ## Triangulation
 //!
-//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm. Requires the `"earcutr"` feature, which is enabled by default
-//!
+//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm. Requires the `earcutr` feature, which is enabled by default
+//! - **[`TriangulateDelaunay`](triangulate_delaunay)**: Produce constrained or unconstrained Delaunay triangulations of polygons. Requires the `spade` feature, which is enabled by default
 //! ## Winding
 //!
 //! - **[`Orient`]**: Apply a specified winding [`Direction`](orient::Direction) to a [`Polygon`]’s interior and exterior rings
@@ -213,7 +213,7 @@
 //!
 //! [Euclidean plane]: https://en.wikipedia.org/wiki/Euclidean_plane
 //! [`geo-types`]: https://crates.io/crates/geo-types
-//! [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula//
+//! [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
 //! [`proj` crate]: https://github.com/georust/proj
 //! [geojson crate]: https://crates.io/crates/geojson
 //! [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
@@ -264,11 +264,11 @@ extern crate log;
 /// Mean radius of Earth in meters
 /// This is the value recommended by the IUGG:
 /// Moritz, H. (2000). Geodetic Reference System 1980. Journal of Geodesy, 74(1), 128–133. doi:10.1007/s001900050278
-/// "Derived Geometric Constants: mean radius" (p133)
-/// https://link.springer.com/article/10.1007%2Fs001900050278
-/// https://sci-hub.se/https://doi.org/10.1007/s001900050278
-/// https://en.wikipedia.org/wiki/Earth_radius#Mean_radius
-const MEAN_EARTH_RADIUS: f64 = 6371008.8;
+/// "Derived Geometric Constants: **R1: mean radius**" (p131)
+/// - <https://link.springer.com/article/10.1007%2Fs001900050278>
+/// - <https://sci-hub.se/https://doi.org/10.1007/s001900050278>
+/// - <https://en.wikipedia.org/wiki/Earth_radius#Mean_radius>
+const MEAN_EARTH_RADIUS: f64 = HaversineMeasure::GRS80_MEAN_RADIUS.radius();
 
 // Radius of Earth at the equator in meters (derived from the WGS-84 ellipsoid)
 const EQUATORIAL_EARTH_RADIUS: f64 = 6_378_137.0;

@@ -112,7 +112,7 @@ where
                     .iter()
                     .map(|coord| {
                         let pt = Point::from(*coord);
-                        (pt, Euclidean::distance(pt, centroid))
+                        (pt, Euclidean.distance(pt, centroid))
                     })
                     .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less))
                     .map(|(pt, _distance)| pt)
@@ -135,7 +135,7 @@ where
                 .filter_map(|linestring| {
                     linestring
                         .interior_point()
-                        .map(|pt| (pt, Euclidean::distance(pt, centroid)))
+                        .map(|pt| (pt, Euclidean.distance(pt, centroid)))
                 })
                 .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less))
                 .map(|(pt, _distance)| pt)
@@ -313,7 +313,7 @@ where
     fn interior_point(&self) -> Self::Output {
         if let Some(centroid) = self.centroid() {
             self.iter()
-                .map(|pt| (pt, Euclidean::distance(pt, &centroid)))
+                .map(|pt| (pt, Euclidean.distance(pt, &centroid)))
                 .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Less))
                 .map(|(pt, _distance)| *pt)
         } else {
@@ -347,10 +347,7 @@ where
                         (
                             pt,
                             // maximize dimensions, minimize distance
-                            (
-                                Reverse(geom.dimensions()),
-                                Euclidean::distance(pt, centroid),
-                            ),
+                            (Reverse(geom.dimensions()), Euclidean.distance(pt, centroid)),
                         )
                     })
                 })

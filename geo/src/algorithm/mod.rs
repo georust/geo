@@ -188,7 +188,7 @@ pub mod lines_iter;
 pub use lines_iter::LinesIter;
 
 pub mod line_measures;
-pub use line_measures::metric_spaces::{Euclidean, Geodesic, Haversine, Rhumb};
+pub use line_measures::metric_spaces::{Euclidean, Geodesic, Haversine, HaversineMeasure, Rhumb};
 pub use line_measures::{Bearing, Densify, Destination, Distance, InterpolatePoint, Length};
 
 /// Split a LineString into n segments
@@ -264,8 +264,20 @@ pub use triangulate_earcut::TriangulateEarcut;
 
 /// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
 #[cfg(feature = "spade")]
+pub mod triangulate_delaunay;
+#[cfg(feature = "spade")]
+pub use triangulate_delaunay::TriangulateDelaunay;
+
+/// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
+#[cfg(feature = "spade")]
+#[deprecated(
+    since = "0.29.4",
+    note = "please use the `triangulate_delaunay` module instead"
+)]
 pub mod triangulate_spade;
 #[cfg(feature = "spade")]
+#[deprecated(since = "0.29.4", note = "please use `TriangulateDelaunay` instead")]
+#[allow(deprecated)]
 pub use triangulate_spade::TriangulateSpade;
 
 /// Vector Operations for 2D coordinates

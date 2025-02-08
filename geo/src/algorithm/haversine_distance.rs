@@ -3,14 +3,19 @@ use num_traits::FromPrimitive;
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Haversine::distance` method from the `Distance` trait instead"
+    note = "Please use the `Haversine.distance` method from the `Distance` trait instead"
 )]
 /// Determine the distance between two geometries using the [haversine formula].
 ///
 /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
 ///
-/// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
-/// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
+/// *Note*: this implementation uses a mean earth radius of 6371.0088 km (6_371_008.7714 m), based on the recommendation of
+/// the IUGG:
+///
+/// Moritz, H. (2000). Geodetic Reference System 1980. Journal of Geodesy, 74(1), 128–133. doi:10.1007/s001900050278
+/// "Derived Geometric Constants: **R1: mean radius**" (p131)
+/// - <https://link.springer.com/article/10.1007%2Fs001900050278>
+/// - <https://sci-hub.se/https://doi.org/10.1007/s001900050278>
 pub trait HaversineDistance<T, Rhs = Self> {
     /// Determine the distance between two geometries using the [haversine
     /// formula].
@@ -50,7 +55,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn haversine_distance(&self, rhs: &Point<T>) -> T {
-        Haversine::distance(*self, *rhs)
+        Haversine.distance(*self, *rhs)
     }
 }
 

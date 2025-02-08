@@ -29,7 +29,7 @@ impl<F: GeoFloat> Closest<F> {
             Closest::SinglePoint(r) => r,
         };
 
-        if Euclidean::distance(left, p) <= Euclidean::distance(right, p) {
+        if Euclidean.distance(left, p) <= Euclidean.distance(right, p) {
             *self
         } else {
             *other

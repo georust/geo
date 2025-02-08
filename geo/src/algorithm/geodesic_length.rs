@@ -2,7 +2,7 @@ use crate::{Geodesic, Length, Line, LineString, MultiLineString};
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `line.length::<Geodesic>()` via the `Length` trait instead."
+    note = "Please use the `Geodesic.length(&line)` via the `Length` trait instead."
 )]
 /// Determine the length of a geometry on an ellipsoidal model of the earth.
 ///
@@ -52,20 +52,20 @@ pub trait GeodesicLength<T, RHS = Self> {
 impl GeodesicLength<f64> for Line {
     /// The units of the returned value is meters.
     fn geodesic_length(&self) -> f64 {
-        self.length::<Geodesic>()
+        Geodesic.length(self)
     }
 }
 
 #[allow(deprecated)]
 impl GeodesicLength<f64> for LineString {
     fn geodesic_length(&self) -> f64 {
-        self.length::<Geodesic>()
+        Geodesic.length(self)
     }
 }
 
 #[allow(deprecated)]
 impl GeodesicLength<f64> for MultiLineString {
     fn geodesic_length(&self) -> f64 {
-        self.length::<Geodesic>()
+        Geodesic.length(self)
     }
 }

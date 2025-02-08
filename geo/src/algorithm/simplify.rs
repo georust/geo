@@ -97,12 +97,7 @@ where
         .enumerate()
         .take(rdp_indices.len() - 1) // Don't include the last index
         .skip(1) // Don't include the first index
-        .map(|(index, rdp_index)| {
-            (
-                index,
-                Euclidean::distance(rdp_index.coord, &first_last_line),
-            )
-        })
+        .map(|(index, rdp_index)| (index, Euclidean.distance(rdp_index.coord, &first_last_line)))
         .fold(
             (0usize, T::zero()),
             |(farthest_index, farthest_distance), (index, distance)| {

@@ -1,4 +1,5 @@
 use crate::{polygon, Coord, CoordNum, Line, Point, Polygon};
+use core::cmp::Ordering;
 
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
@@ -6,15 +7,25 @@ use approx::{AbsDiffEq, RelativeEq};
 /// A bounded 2D area whose three vertices are defined by
 /// `Coord`s. The semantics and validity are that of
 /// the equivalent [`Polygon`]; in addition, the three
-/// vertices must not be collinear and they must be distinct.
-#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
+/// vertices **must not** be collinear and they *must* be distinct.
+///
+/// # Notes
+/// Irrespective of input order the resulting geometry has ccw order and its vertices are yielded in ccw order by iterators
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Triangle<T: CoordNum = f64>(pub Coord<T>, pub Coord<T>, pub Coord<T>);
 
 impl<T: CoordNum> Triangle<T> {
     /// Instantiate Self from the raw content value
     pub fn new(v1: Coord<T>, v2: Coord<T>, v3: Coord<T>) -> Self {
-        Self(v1, v2, v3)
+        // determine cross product of input points. NB: non-robust
+        let orientation = Point::from(v1).cross_prod(v2.into(), v3.into());
+        match orientation.partial_cmp(&T::zero()) {
+            Some(Ordering::Greater) => Self(v1, v2, v3),
+            Some(Ordering::Less) => Self(v3, v2, v1),
+            // we told you not to do this!
+            _ => Self(v1, v2, v3),
+        }
     }
 
     pub fn to_array(&self) -> [Coord<T>; 3] {
@@ -36,19 +47,21 @@ impl<T: CoordNum> Triangle<T> {
     /// ```rust
     /// use geo_types::{coord, Triangle, polygon};
     ///
+    /// // Input is CW
     /// let triangle = Triangle::new(
     ///     coord! { x: 0., y: 0. },
     ///     coord! { x: 10., y: 20. },
     ///     coord! { x: 20., y: -10. },
     /// );
     ///
+    /// // Output is CCW
     /// assert_eq!(
     ///     triangle.to_polygon(),
     ///     polygon![
-    ///         (x: 0., y: 0.),
-    ///         (x: 10., y: 20.),
     ///         (x: 20., y: -10.),
+    ///         (x: 10., y: 20.),
     ///         (x: 0., y: 0.),
+    ///         (x: 20., y: -10.),
     ///     ],
     /// );
     /// ```

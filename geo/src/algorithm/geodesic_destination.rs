@@ -4,7 +4,7 @@ use geo_types::CoordNum;
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Geodesic::destination` method from the `Destination` trait instead"
+    note = "Please use the `Geodesic.destination` method from the `Destination` trait instead"
 )]
 /// Returns a new Point using the distance to the existing Point and a bearing for the direction on a geodesic.
 ///
@@ -43,7 +43,7 @@ pub trait GeodesicDestination<T: CoordNum> {
 #[allow(deprecated)]
 impl GeodesicDestination<f64> for Point<f64> {
     fn geodesic_destination(&self, bearing: f64, distance: f64) -> Point<f64> {
-        Geodesic::destination(*self, bearing, distance)
+        Geodesic.destination(*self, bearing, distance)
     }
 }
 

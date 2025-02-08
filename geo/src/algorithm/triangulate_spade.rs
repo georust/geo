@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use geo_types::{Coord, Line, Point, Triangle};
 use spade::{
     ConstrainedDelaunayTriangulation, DelaunayTriangulation, Point2, SpadeNum, Triangulation,
@@ -104,6 +105,10 @@ mod private {
 /// This trait contains both constrained and unconstrained triangulation methods. To read more
 /// about the differences of these methods also consult [this
 /// page](https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation)
+#[deprecated(
+    since = "0.29.4",
+    note = "please use the `triangulate_delaunay` module instead"
+)]
 pub trait TriangulateSpade<'a, T>: private::TriangulationRequirementTrait<'a, T>
 where
     T: SpadeTriangulationFloat,
@@ -530,12 +535,13 @@ fn snap_or_register_point<T: SpadeTriangulationFloat>(
         .iter()
         // find closest
         .min_by(|a, b| {
-            Euclidean::distance(**a, point)
-                .partial_cmp(&Euclidean::distance(**b, point))
+            Euclidean
+                .distance(**a, point)
+                .partial_cmp(&Euclidean.distance(**b, point))
                 .expect("Couldn't compare coordinate distances")
         })
         // only snap if closest is within epsilon range
-        .filter(|nearest_point| Euclidean::distance(**nearest_point, point) < snap_radius)
+        .filter(|nearest_point| Euclidean.distance(**nearest_point, point) < snap_radius)
         .cloned()
         // otherwise register and use input point
         .unwrap_or_else(|| {
@@ -582,205 +588,4 @@ fn to_spade_line<T: SpadeTriangulationFloat>(line: Line<T>) -> [Point2<T>; 2] {
 /// converts Coord to something somewhat similar in the spade world
 fn to_spade_point<T: SpadeTriangulationFloat>(coord: Coord<T>) -> Point2<T> {
     Point2::new(coord.x, coord.y)
-}
-
-#[cfg(test)]
-mod spade_triangulation {
-    use super::*;
-    use geo_types::*;
-
-    fn assert_num_triangles<T: SpadeTriangulationFloat>(
-        triangulation: &TriangulationResult<Triangles<T>>,
-        num: usize,
-    ) {
-        assert_eq!(
-            triangulation
-                .as_ref()
-                .map(|tris| tris.len())
-                .expect("triangulation success"),
-            num
-        )
-    }
-
-    #[test]
-    fn basic_triangle_triangulates() {
-        let triangulation = Triangle::new(
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: 1.0, y: 0.0 },
-            Coord { x: 0.0, y: 1.0 },
-        )
-        .unconstrained_triangulation();
-
-        assert_num_triangles(&triangulation, 1);
-    }
-
-    #[test]
-    fn basic_rectangle_triangulates() {
-        let triangulation = Rect::new(Coord { x: 0.0, y: 0.0 }, Coord { x: 1.0, y: 1.0 })
-            .unconstrained_triangulation();
-
-        assert_num_triangles(&triangulation, 2);
-    }
-
-    #[test]
-    fn basic_polygon_triangulates() {
-        let triangulation = Polygon::new(
-            LineString::new(vec![
-                Coord { x: 0.0, y: 1.0 },
-                Coord { x: -1.0, y: 0.0 },
-                Coord { x: -0.5, y: -1.0 },
-                Coord { x: 0.5, y: -1.0 },
-                Coord { x: 1.0, y: 0.0 },
-            ]),
-            vec![],
-        )
-        .unconstrained_triangulation();
-
-        assert_num_triangles(&triangulation, 3);
-    }
-
-    #[test]
-    fn overlapping_triangles_triangulate_unconstrained() {
-        let triangles = vec![
-            Triangle::new(
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 0.0, y: 2.0 },
-            ),
-            Triangle::new(
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: -1.0, y: 1.0 },
-                Coord { x: 1.0, y: -1.0 },
-            ),
-        ];
-
-        let unconstrained_triangulation = triangles.unconstrained_triangulation();
-        assert_num_triangles(&unconstrained_triangulation, 4);
-    }
-
-    #[test]
-    fn overlapping_triangles_triangulate_constrained_outer() {
-        let triangles = vec![
-            Triangle::new(
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 0.0, y: 2.0 },
-            ),
-            Triangle::new(
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: -1.0, y: 1.0 },
-                Coord { x: 1.0, y: -1.0 },
-            ),
-        ];
-
-        let constrained_outer_triangulation =
-            triangles.constrained_outer_triangulation(Default::default());
-        assert_num_triangles(&constrained_outer_triangulation, 8);
-    }
-
-    #[test]
-    fn overlapping_triangles_triangulate_constrained() {
-        let triangles = vec![
-            Triangle::new(
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 0.0, y: 2.0 },
-            ),
-            Triangle::new(
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: -1.0, y: 1.0 },
-                Coord { x: 1.0, y: -1.0 },
-            ),
-        ];
-
-        let constrained_outer_triangulation =
-            triangles.constrained_triangulation(Default::default());
-        assert_num_triangles(&constrained_outer_triangulation, 6);
-    }
-
-    #[test]
-    fn u_shaped_polygon_triangulates_unconstrained() {
-        let u_shape = Polygon::new(
-            LineString::new(vec![
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 1.0, y: 0.0 },
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: 2.0, y: 1.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 3.0, y: 0.0 },
-                Coord { x: 3.0, y: 3.0 },
-                Coord { x: 0.0, y: 3.0 },
-            ]),
-            vec![],
-        );
-
-        let unconstrained_triangulation = u_shape.unconstrained_triangulation();
-        assert_num_triangles(&unconstrained_triangulation, 8);
-    }
-
-    #[test]
-    fn u_shaped_polygon_triangulates_constrained_outer() {
-        let u_shape = Polygon::new(
-            LineString::new(vec![
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 1.0, y: 0.0 },
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: 2.0, y: 1.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 3.0, y: 0.0 },
-                Coord { x: 3.0, y: 3.0 },
-                Coord { x: 0.0, y: 3.0 },
-            ]),
-            vec![],
-        );
-
-        let constrained_outer_triangulation =
-            u_shape.constrained_outer_triangulation(Default::default());
-        assert_num_triangles(&constrained_outer_triangulation, 8);
-    }
-
-    #[test]
-    fn u_shaped_polygon_triangulates_constrained_inner() {
-        let u_shape = Polygon::new(
-            LineString::new(vec![
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 1.0, y: 0.0 },
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: 2.0, y: 1.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 3.0, y: 0.0 },
-                Coord { x: 3.0, y: 3.0 },
-                Coord { x: 0.0, y: 3.0 },
-            ]),
-            vec![],
-        );
-
-        let constrained_triangulation = u_shape.constrained_triangulation(Default::default());
-        assert_num_triangles(&constrained_triangulation, 6);
-    }
-
-    #[test]
-    fn various_snap_radius_works() {
-        let u_shape = Polygon::new(
-            LineString::new(vec![
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 1.0, y: 0.0 },
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: 2.0, y: 1.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 3.0, y: 0.0 },
-                Coord { x: 3.0, y: 3.0 },
-                Coord { x: 0.0, y: 3.0 },
-            ]),
-            vec![],
-        );
-
-        for snap_with in (1..6).map(|pow| 0.1_f64.powi(pow)) {
-            let constrained_triangulation =
-                u_shape.constrained_triangulation(SpadeTriangulationConfig {
-                    snap_radius: snap_with,
-                });
-            assert_num_triangles(&constrained_triangulation, 6);
-        }
-    }
 }

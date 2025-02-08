@@ -3,7 +3,7 @@ use num_traits::FromPrimitive;
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Rhumb::distance` method from the `Distance` trait instead"
+    note = "Please use the `Rhumb.distance` method from the `Distance` trait instead"
 )]
 /// Determine the distance between two geometries along a [rhumb line].
 ///
@@ -49,7 +49,7 @@ where
     T: CoordFloat + FromPrimitive,
 {
     fn rhumb_distance(&self, rhs: &Point<T>) -> T {
-        Rhumb::distance(*self, *rhs)
+        Rhumb.distance(*self, *rhs)
     }
 }
 
