@@ -1,8 +1,8 @@
 use num_traits::FromPrimitive;
 
-use super::super::{Bearing, Destination, Distance, FrechetDistance, InterpolatePoint};
+use super::super::{Bearing, Destination, Distance, InterpolatePoint};
 use crate::rhumb::RhumbCalculations;
-use crate::{CoordFloat, LineString, Point, MEAN_EARTH_RADIUS};
+use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
 
 /// Provides [rhumb line] (a.k.a. loxodrome) geometry operations. A rhumb line appears as a straight
 /// line on a Mercator projection map.
@@ -214,12 +214,6 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Rhumb {
         calculations
             .intermediate_fill(max_delta, include_ends)
             .into_iter()
-    }
-}
-
-impl<F: CoordFloat + FromPrimitive> FrechetDistance<F> for Rhumb {
-    fn frechet_distance(&self, _ls_1: &LineString<F>, _ls_2: &LineString<F>) -> F {
-        todo!()
     }
 }
 

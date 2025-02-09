@@ -1,5 +1,7 @@
 use geo_types::{CoordFloat, LineString, Point};
 
+use crate::CoordsIter;
+
 use super::Distance;
 
 /// Determine the similarity between two `LineStrings` using the [Frechet distance].
@@ -43,51 +45,55 @@ pub trait FrechetDistance<F: CoordFloat>: Distance<F, Point<F>, Point<F>> {
     fn frechet_distance(&self, ls_1: &LineString<F>, ls_2: &LineString<F>) -> F;
 }
 
-// impl<F: CoordFloat> FrechetDistance<F> for LineString<F> {
-//     fn frechet_distance<MetricSpace: Distance<F, Point<F>, Point<F>>>(&self, other: &Self) -> F {
-//         if self.coords_count() != 0 && other.coords_count() != 0 {
-//             Data {
-//                 cache: vec![F::zero(); self.coords_count() * other.coords_count()],
-//                 ls_a: self,
-//                 ls_b: other,
-//             }
-//             .compute_linear::<MetricSpace>()
-//         } else {
-//             F::zero()
-//         }
-//     }
-// }
+impl<F, MetricSpace> FrechetDistance<F> for MetricSpace
+where
+    F: CoordFloat,
+    MetricSpace: Distance<F, Point<F>, Point<F>>,
+{
+    fn frechet_distance(&self, ls_1: &LineString<F>, ls_2: &LineString<F>) -> F {
+        if ls_1.coords_count() != 0 && ls_2.coords_count() != 0 {
+            Data {
+                cache: vec![F::zero(); ls_1.coords_count() * ls_2.coords_count()],
+                ls_a: ls_1,
+                ls_b: ls_2,
+            }
+            .compute_linear(self)
+        } else {
+            F::zero()
+        }
+    }
+}
 
-// struct Data<'a, F: CoordFloat> {
-//     cache: Vec<F>,
-//     ls_a: &'a LineString<F>,
-//     ls_b: &'a LineString<F>,
-// }
+struct Data<'a, F: CoordFloat> {
+    cache: Vec<F>,
+    ls_a: &'a LineString<F>,
+    ls_b: &'a LineString<F>,
+}
 
-// impl<'a, F: CoordFloat> Data<'a, F> {
-//     /// [Reference implementation]: https://github.com/joaofig/discrete-frechet/tree/master
-//     fn compute_linear<MetricSpace: Distance<F, Point<F>, Point<F>>>(&mut self) -> F {
-//         let columns_count = self.ls_b.coords_count();
+impl<F: CoordFloat> Data<'_, F> {
+    /// [Reference implementation]: https://github.com/joaofig/discrete-frechet/tree/master
+    fn compute_linear(&mut self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
+        let columns_count = self.ls_b.coords_count();
 
-//         for (i, a) in self.ls_a.points().enumerate() {
-//             for (j, b) in self.ls_b.points().enumerate() {
-//                 let dist = MetricSpace.distance(a, b);
+        for (i, a) in self.ls_a.points().enumerate() {
+            for (j, b) in self.ls_b.points().enumerate() {
+                let dist = metric_space.distance(a, b);
 
-//                 self.cache[i * columns_count + j] = match (i, j) {
-//                     (0, 0) => dist,
-//                     (_, 0) => self.cache[(i - 1) * columns_count].max(dist),
-//                     (0, _) => self.cache[j - 1].max(dist),
-//                     (_, _) => self.cache[(i - 1) * columns_count + j]
-//                         .min(self.cache[(i - 1) * columns_count + j - 1])
-//                         .min(self.cache[i * columns_count + j - 1])
-//                         .max(dist),
-//                 };
-//             }
-//         }
+                self.cache[i * columns_count + j] = match (i, j) {
+                    (0, 0) => dist,
+                    (_, 0) => self.cache[(i - 1) * columns_count].max(dist),
+                    (0, _) => self.cache[j - 1].max(dist),
+                    (_, _) => self.cache[(i - 1) * columns_count + j]
+                        .min(self.cache[(i - 1) * columns_count + j - 1])
+                        .min(self.cache[i * columns_count + j - 1])
+                        .max(dist),
+                };
+            }
+        }
 
-//         self.cache[self.cache.len() - 1]
-//     }
-// }
+        self.cache[self.cache.len() - 1]
+    }
+}
 
 #[cfg(test)]
 mod test {
