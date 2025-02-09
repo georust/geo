@@ -18,8 +18,9 @@ pub trait FrechetDistance<F: CoordFloat>: Distance<F, Point<F>, Point<F>> {
     /// # Examples
     ///
     /// ```
-    /// # use approx::assert_relative_eq;
-    /// use geo::{Haversine, Euclidean, FrechetDistance, LineString};
+    /// use geo::line_measures::FrechetDistance;
+    /// use geo::{Haversine, Euclidean, LineString, HaversineMeasure};
+    /// use geo::line_string;
     ///
     /// let line_1 = line_string![
     ///     (x: 0., y: 0.),
