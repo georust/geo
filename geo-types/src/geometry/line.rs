@@ -1,6 +1,4 @@
 use crate::{Coord, CoordNum, Point};
-#[cfg(any(feature = "approx", test))]
-use approx::{AbsDiffEq, RelativeEq};
 
 /// A line segment made up of exactly two
 /// [`Coord`]s.
@@ -160,64 +158,87 @@ impl<T: CoordNum> From<[(T, T); 2]> for Line<T> {
         Line::new(coord[0], coord[1])
     }
 }
-#[cfg(any(feature = "approx", test))]
-impl<T> RelativeEq for Line<T>
-where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
-{
-    #[inline]
-    fn default_max_relative() -> Self::Epsilon {
-        T::default_max_relative()
-    }
-
-    /// Equality assertion within a relative limit.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::{coord, Line};
-    ///
-    /// let a = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. });
-    /// let b = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1.001, y: 1. });
-    ///
-    /// approx::assert_relative_eq!(a, b, max_relative=0.1);
-    /// ```
-    #[inline]
-    fn relative_eq(
-        &self,
-        other: &Self,
-        epsilon: Self::Epsilon,
-        max_relative: Self::Epsilon,
-    ) -> bool {
-        self.start.relative_eq(&other.start, epsilon, max_relative)
-            && self.end.relative_eq(&other.end, epsilon, max_relative)
-    }
-}
 
 #[cfg(any(feature = "approx", test))]
-impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Line<T> {
-    type Epsilon = T;
+mod approx_integration {
+    use super::*;
+    use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 
-    #[inline]
-    fn default_epsilon() -> Self::Epsilon {
-        T::default_epsilon()
+    impl<T> RelativeEq for Line<T>
+    where
+        T: CoordNum + RelativeEq<Epsilon = T>,
+    {
+        #[inline]
+        fn default_max_relative() -> Self::Epsilon {
+            T::default_max_relative()
+        }
+
+        /// Equality assertion within a relative limit.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use geo_types::{coord, Line};
+        ///
+        /// let a = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. });
+        /// let b = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1.001, y: 1. });
+        ///
+        /// approx::assert_relative_eq!(a, b, max_relative=0.1);
+        /// ```
+        #[inline]
+        fn relative_eq(
+            &self,
+            other: &Self,
+            epsilon: Self::Epsilon,
+            max_relative: Self::Epsilon,
+        ) -> bool {
+            self.start.relative_eq(&other.start, epsilon, max_relative)
+                && self.end.relative_eq(&other.end, epsilon, max_relative)
+        }
     }
 
-    /// Equality assertion with an absolute limit.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::{coord, Line};
-    ///
-    /// let a = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. });
-    /// let b = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1.001, y: 1. });
-    ///
-    /// approx::assert_abs_diff_eq!(a, b, epsilon=0.1);
-    /// ```
-    #[inline]
-    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        self.start.abs_diff_eq(&other.start, epsilon) && self.end.abs_diff_eq(&other.end, epsilon)
+    impl<T> AbsDiffEq for Line<T>
+    where
+        T: CoordNum + AbsDiffEq<Epsilon = T>,
+    {
+        type Epsilon = T;
+
+        #[inline]
+        fn default_epsilon() -> Self::Epsilon {
+            T::default_epsilon()
+        }
+
+        /// Equality assertion with an absolute limit.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use geo_types::{coord, Line};
+        ///
+        /// let a = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. });
+        /// let b = Line::new(coord! { x: 0., y: 0. }, coord! { x: 1.001, y: 1. });
+        ///
+        /// approx::assert_abs_diff_eq!(a, b, epsilon=0.1);
+        /// ```
+        #[inline]
+        fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+            self.start.abs_diff_eq(&other.start, epsilon)
+                && self.end.abs_diff_eq(&other.end, epsilon)
+        }
+    }
+
+    impl<T> UlpsEq for Line<T>
+    where
+        T: CoordNum + UlpsEq<Epsilon = T>,
+    {
+        fn default_max_ulps() -> u32 {
+            T::default_max_ulps()
+        }
+
+        fn ulps_eq(&self, other: &Self, epsilon: Self::Epsilon, max_ulps: u32) -> bool {
+            self.start.ulps_eq(&other.start, epsilon, max_ulps)
+                && self.end.ulps_eq(&other.end, epsilon, max_ulps)
+        }
     }
 }
 
@@ -272,6 +293,7 @@ impl_rstar_line!(rstar_0_12);
 mod test {
     use super::*;
     use crate::{coord, point};
+    use approx::{AbsDiffEq, RelativeEq};
 
     #[test]
     fn test_abs_diff_eq() {

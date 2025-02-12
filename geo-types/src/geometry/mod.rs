@@ -26,8 +26,6 @@ pub use triangle::Triangle;
 
 use crate::{CoordNum, Error};
 
-#[cfg(any(feature = "approx", test))]
-use approx::{AbsDiffEq, RelativeEq};
 use core::any::type_name;
 use core::convert::TryFrom;
 
@@ -270,104 +268,260 @@ where
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T> RelativeEq for Geometry<T>
-where
-    T: AbsDiffEq<Epsilon = T> + CoordNum + RelativeEq,
-{
-    #[inline]
-    fn default_max_relative() -> Self::Epsilon {
-        T::default_max_relative()
+mod approx_integration {
+    use super::*;
+    use approx::{AbsDiffEq, RelativeEq, UlpsEq};
+
+    impl<T> RelativeEq for Geometry<T>
+    where
+        T: CoordNum + RelativeEq<Epsilon = T>,
+    {
+        #[inline]
+        fn default_max_relative() -> Self::Epsilon {
+            T::default_max_relative()
+        }
+
+        /// Equality assertion within a relative limit.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use geo_types::{Geometry, polygon};
+        ///
+        /// let a: Geometry<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7., y: 9.), (x: 0., y: 0.)].into();
+        /// let b: Geometry<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7.01, y: 9.), (x: 0., y: 0.)].into();
+        ///
+        /// approx::assert_relative_eq!(a, b, max_relative=0.1);
+        /// approx::assert_relative_ne!(a, b, max_relative=0.001);
+        /// ```
+        ///
+        fn relative_eq(
+            &self,
+            other: &Self,
+            epsilon: Self::Epsilon,
+            max_relative: Self::Epsilon,
+        ) -> bool {
+            match (self, other) {
+                (Geometry::Point(g1), Geometry::Point(g2)) => {
+                    g1.relative_eq(g2, epsilon, max_relative)
+                }
+                (Geometry::Line(g1), Geometry::Line(g2)) => {
+                    g1.relative_eq(g2, epsilon, max_relative)
+                }
+                (Geometry::LineString(g1), Geometry::LineString(g2)) => {
+                    g1.relative_eq(g2, epsilon, max_relative)
+                }
+                (Geometry::Polygon(g1), Geometry::Polygon(g2)) => {
+                    g1.relative_eq(g2, epsilon, max_relative)
+                }
+                (Geometry::MultiPoint(g1), Geometry::MultiPoint(g2)) => {
+                    g1.relative_eq(g2, epsilon, max_relative)
+                }
+                (Geometry::MultiLineString(g1), Geometry::MultiLineString(g2)) => {
+                    g1.relative_eq(g2, epsilon, max_relative)
+                }
+                (Geometry::MultiPolygon(g1), Geometry::MultiPolygon(g2)) => {
+                    g1.relative_eq(g2, epsilon, max_relative)
+                }
+                (Geometry::GeometryCollection(g1), Geometry::GeometryCollection(g2)) => {
+                    g1.relative_eq(g2, epsilon, max_relative)
+                }
+                (Geometry::Rect(g1), Geometry::Rect(g2)) => {
+                    g1.relative_eq(g2, epsilon, max_relative)
+                }
+                (Geometry::Triangle(g1), Geometry::Triangle(g2)) => {
+                    g1.relative_eq(g2, epsilon, max_relative)
+                }
+                (_, _) => false,
+            }
+        }
     }
 
-    /// Equality assertion within a relative limit.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::{Geometry, polygon};
-    ///
-    /// let a: Geometry<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7., y: 9.), (x: 0., y: 0.)].into();
-    /// let b: Geometry<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7.01, y: 9.), (x: 0., y: 0.)].into();
-    ///
-    /// approx::assert_relative_eq!(a, b, max_relative=0.1);
-    /// approx::assert_relative_ne!(a, b, max_relative=0.001);
-    /// ```
-    ///
-    fn relative_eq(
-        &self,
-        other: &Self,
-        epsilon: Self::Epsilon,
-        max_relative: Self::Epsilon,
-    ) -> bool {
-        match (self, other) {
-            (Geometry::Point(g1), Geometry::Point(g2)) => g1.relative_eq(g2, epsilon, max_relative),
-            (Geometry::Line(g1), Geometry::Line(g2)) => g1.relative_eq(g2, epsilon, max_relative),
-            (Geometry::LineString(g1), Geometry::LineString(g2)) => {
-                g1.relative_eq(g2, epsilon, max_relative)
+    impl<T> AbsDiffEq for Geometry<T>
+    where
+        T: CoordNum + AbsDiffEq<Epsilon = T>,
+    {
+        type Epsilon = T;
+
+        #[inline]
+        fn default_epsilon() -> Self::Epsilon {
+            T::default_epsilon()
+        }
+
+        /// Equality assertion with an absolute limit.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use geo_types::{Geometry, polygon};
+        ///
+        /// let a: Geometry<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7., y: 9.), (x: 0., y: 0.)].into();
+        /// let b: Geometry<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7.01, y: 9.), (x: 0., y: 0.)].into();
+        ///
+        /// approx::assert_abs_diff_eq!(a, b, epsilon=0.1);
+        /// approx::assert_abs_diff_ne!(a, b, epsilon=0.001);
+        /// ```
+        fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+            match (self, other) {
+                (Geometry::Point(g1), Geometry::Point(g2)) => g1.abs_diff_eq(g2, epsilon),
+                (Geometry::Line(g1), Geometry::Line(g2)) => g1.abs_diff_eq(g2, epsilon),
+                (Geometry::LineString(g1), Geometry::LineString(g2)) => g1.abs_diff_eq(g2, epsilon),
+                (Geometry::Polygon(g1), Geometry::Polygon(g2)) => g1.abs_diff_eq(g2, epsilon),
+                (Geometry::MultiPoint(g1), Geometry::MultiPoint(g2)) => g1.abs_diff_eq(g2, epsilon),
+                (Geometry::MultiLineString(g1), Geometry::MultiLineString(g2)) => {
+                    g1.abs_diff_eq(g2, epsilon)
+                }
+                (Geometry::MultiPolygon(g1), Geometry::MultiPolygon(g2)) => {
+                    g1.abs_diff_eq(g2, epsilon)
+                }
+                (Geometry::GeometryCollection(g1), Geometry::GeometryCollection(g2)) => {
+                    g1.abs_diff_eq(g2, epsilon)
+                }
+                (Geometry::Rect(g1), Geometry::Rect(g2)) => g1.abs_diff_eq(g2, epsilon),
+                (Geometry::Triangle(g1), Geometry::Triangle(g2)) => g1.abs_diff_eq(g2, epsilon),
+                (_, _) => false,
             }
-            (Geometry::Polygon(g1), Geometry::Polygon(g2)) => {
-                g1.relative_eq(g2, epsilon, max_relative)
+        }
+    }
+
+    impl<T> UlpsEq for Geometry<T>
+    where
+        T: CoordNum + UlpsEq<Epsilon = T>,
+    {
+        fn default_max_ulps() -> u32 {
+            T::default_max_ulps()
+        }
+
+        /// Approximate equality assertion for floating point geometries based on the number of
+        /// representable floats that fit between the two numbers being compared.
+        ///
+        /// "relative_eq" might be more intuitive, but it does floating point math in its error
+        /// calculation, introducing its **own** error into the error calculation.
+        ///
+        /// Working with `ulps` avoids this problem. `max_ulps` means "how many floating points
+        /// are representable that fit between these two numbers", which lets us tune how "sloppy"
+        /// we're willing to be while avoiding any danger of floating point rounding in the
+        /// comparison itself.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use geo_types::{Geometry, Point};
+        ///
+        /// let a: Geometry = Point::new(1.0, 1.0).into();
+        /// let b: Geometry = Point::new(1.0 + 4.0 * f64::EPSILON, 1.0 + 4.0 * f64::EPSILON).into();
+        ///
+        /// approx::assert_ulps_eq!(a, b);
+        /// approx::assert_ulps_ne!(a, b, max_ulps=3);
+        /// approx::assert_ulps_eq!(a, b, max_ulps=5);
+        /// ```
+        ///
+        /// # References
+        ///
+        /// <https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/>
+        fn ulps_eq(&self, other: &Self, epsilon: Self::Epsilon, max_ulps: u32) -> bool {
+            match (self, other) {
+                (Geometry::Point(g1), Geometry::Point(g2)) => g1.ulps_eq(g2, epsilon, max_ulps),
+                (Geometry::Line(g1), Geometry::Line(g2)) => g1.ulps_eq(g2, epsilon, max_ulps),
+                (Geometry::LineString(g1), Geometry::LineString(g2)) => {
+                    g1.ulps_eq(g2, epsilon, max_ulps)
+                }
+                (Geometry::Polygon(g1), Geometry::Polygon(g2)) => g1.ulps_eq(g2, epsilon, max_ulps),
+                (Geometry::MultiPoint(g1), Geometry::MultiPoint(g2)) => {
+                    g1.ulps_eq(g2, epsilon, max_ulps)
+                }
+                (Geometry::MultiLineString(g1), Geometry::MultiLineString(g2)) => {
+                    g1.ulps_eq(g2, epsilon, max_ulps)
+                }
+                (Geometry::MultiPolygon(g1), Geometry::MultiPolygon(g2)) => {
+                    g1.ulps_eq(g2, epsilon, max_ulps)
+                }
+                (Geometry::GeometryCollection(g1), Geometry::GeometryCollection(g2)) => {
+                    g1.ulps_eq(g2, epsilon, max_ulps)
+                }
+                (Geometry::Rect(g1), Geometry::Rect(g2)) => g1.ulps_eq(g2, epsilon, max_ulps),
+                (Geometry::Triangle(g1), Geometry::Triangle(g2)) => {
+                    g1.ulps_eq(g2, epsilon, max_ulps)
+                }
+                // mismatched geometry types
+                _ => false,
             }
-            (Geometry::MultiPoint(g1), Geometry::MultiPoint(g2)) => {
-                g1.relative_eq(g2, epsilon, max_relative)
-            }
-            (Geometry::MultiLineString(g1), Geometry::MultiLineString(g2)) => {
-                g1.relative_eq(g2, epsilon, max_relative)
-            }
-            (Geometry::MultiPolygon(g1), Geometry::MultiPolygon(g2)) => {
-                g1.relative_eq(g2, epsilon, max_relative)
-            }
-            (Geometry::GeometryCollection(g1), Geometry::GeometryCollection(g2)) => {
-                g1.relative_eq(g2, epsilon, max_relative)
-            }
-            (Geometry::Rect(g1), Geometry::Rect(g2)) => g1.relative_eq(g2, epsilon, max_relative),
-            (Geometry::Triangle(g1), Geometry::Triangle(g2)) => {
-                g1.relative_eq(g2, epsilon, max_relative)
-            }
-            (_, _) => false,
         }
     }
 }
 
-#[cfg(any(feature = "approx", test))]
-impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Geometry<T> {
-    type Epsilon = T;
+#[cfg(test)]
+mod tests {
+    mod approx_integration {
+        use crate::{Geometry, Point};
 
-    #[inline]
-    fn default_epsilon() -> Self::Epsilon {
-        T::default_epsilon()
-    }
+        #[test]
+        fn test_abs_diff() {
+            let g = Geometry::from(Point::new(1.0, 1.0));
+            let abs_diff_eq_point =
+                Geometry::from(Point::new(1.0 + f64::EPSILON, 1.0 + f64::EPSILON));
+            assert_ne!(g, abs_diff_eq_point);
+            assert_abs_diff_eq!(g, abs_diff_eq_point);
 
-    /// Equality assertion with an absolute limit.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use geo_types::{Geometry, polygon};
-    ///
-    /// let a: Geometry<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7., y: 9.), (x: 0., y: 0.)].into();
-    /// let b: Geometry<f32> = polygon![(x: 0., y: 0.), (x: 5., y: 0.), (x: 7.01, y: 9.), (x: 0., y: 0.)].into();
-    ///
-    /// approx::assert_abs_diff_eq!(a, b, epsilon=0.1);
-    /// approx::assert_abs_diff_ne!(a, b, epsilon=0.001);
-    /// ```
-    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        match (self, other) {
-            (Geometry::Point(g1), Geometry::Point(g2)) => g1.abs_diff_eq(g2, epsilon),
-            (Geometry::Line(g1), Geometry::Line(g2)) => g1.abs_diff_eq(g2, epsilon),
-            (Geometry::LineString(g1), Geometry::LineString(g2)) => g1.abs_diff_eq(g2, epsilon),
-            (Geometry::Polygon(g1), Geometry::Polygon(g2)) => g1.abs_diff_eq(g2, epsilon),
-            (Geometry::MultiPoint(g1), Geometry::MultiPoint(g2)) => g1.abs_diff_eq(g2, epsilon),
-            (Geometry::MultiLineString(g1), Geometry::MultiLineString(g2)) => {
-                g1.abs_diff_eq(g2, epsilon)
-            }
-            (Geometry::MultiPolygon(g1), Geometry::MultiPolygon(g2)) => g1.abs_diff_eq(g2, epsilon),
-            (Geometry::GeometryCollection(g1), Geometry::GeometryCollection(g2)) => {
-                g1.abs_diff_eq(g2, epsilon)
-            }
-            (Geometry::Rect(g1), Geometry::Rect(g2)) => g1.abs_diff_eq(g2, epsilon),
-            (Geometry::Triangle(g1), Geometry::Triangle(g2)) => g1.abs_diff_eq(g2, epsilon),
-            (_, _) => false,
+            let a_little_farther = Geometry::from(Point::new(1.001, 1.001));
+            assert_ne!(g, a_little_farther);
+            assert_abs_diff_ne!(g, a_little_farther);
+            assert_abs_diff_eq!(g, a_little_farther, epsilon = 1e-3);
+            assert_abs_diff_ne!(g, a_little_farther, epsilon = 5e-4);
+        }
+
+        #[test]
+        fn test_relative() {
+            let g = Geometry::from(Point::new(2.0, 2.0));
+
+            let relative_eq_point = Geometry::from(Point::new(
+                2.0 + 2.0 * f64::EPSILON,
+                2.0 + 2.0 * f64::EPSILON,
+            ));
+            assert_ne!(g, relative_eq_point);
+            assert_relative_eq!(g, relative_eq_point);
+
+            let a_little_farther = Geometry::from(Point::new(2.001, 2.001));
+            assert_ne!(g, a_little_farther);
+            assert_relative_ne!(g, a_little_farther);
+            assert_relative_eq!(g, a_little_farther, epsilon = 1e-3);
+            assert_relative_ne!(g, a_little_farther, epsilon = 5e-4);
+            assert_relative_eq!(g, a_little_farther, max_relative = 5e-4);
+
+            // point * 2
+            let far = Geometry::from(Point::new(4.0, 4.0));
+            assert_relative_eq!(g, far, max_relative = 1.0 / 2.0);
+            assert_relative_ne!(g, far, max_relative = 0.49);
+        }
+
+        #[test]
+        fn test_ulps() {
+            let g = Geometry::from(Point::new(1.0, 1.0));
+
+            let ulps_eq_point = Geometry::from(Point::new(1.0 + f64::EPSILON, 1.0 + f64::EPSILON));
+            assert_ne!(g, ulps_eq_point);
+            assert_ulps_eq!(g, ulps_eq_point);
+        }
+
+        #[test]
+        fn test_ulps_vs_relative() {
+            // "relative_eq" measures the difference between two floating point outputs, but to do
+            // so involves doing its own floating point math, which introduces some of its own
+            // error in the error calculation.
+            //
+            // Working with `ulps` avoids this problem. `max_ulps` means "how many floating points
+            // are representable that fit between these two numbers", which lets us tune how "sloppy"
+            // we're willing to be while avoiding any danger of floating point rounding in the
+            // comparison itself.
+            let a = 1000.000000000001;
+            let b = 1000.0000000000008;
+
+            let p1 = Point::new(a, a);
+            let p2 = Point::new(b, b);
+
+            assert_ne!(p1, p2);
+            assert_relative_ne!(p1, p2);
+            assert_ulps_eq!(p1, p2);
         }
     }
 }

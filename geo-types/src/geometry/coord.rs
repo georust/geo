@@ -1,8 +1,5 @@
 use crate::{coord, CoordNum, Point};
 
-#[cfg(any(feature = "approx", test))]
-use approx::{AbsDiffEq, RelativeEq, UlpsEq};
-
 /// A lightweight struct used to store coordinates on the 2-dimensional
 /// Cartesian plane.
 ///
@@ -268,54 +265,57 @@ impl<T: CoordNum> Zero for Coord<T> {
 }
 
 #[cfg(any(feature = "approx", test))]
-impl<T: CoordNum + AbsDiffEq> AbsDiffEq for Coord<T>
-where
-    T::Epsilon: Copy,
-{
-    type Epsilon = T::Epsilon;
+mod approx_integration {
+    use super::*;
+    use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 
-    #[inline]
-    fn default_epsilon() -> T::Epsilon {
-        T::default_epsilon()
+    impl<T> AbsDiffEq for Coord<T>
+    where
+        T: CoordNum + AbsDiffEq<Epsilon = T>,
+    {
+        type Epsilon = T::Epsilon;
+
+        #[inline]
+        fn default_epsilon() -> T::Epsilon {
+            T::default_epsilon()
+        }
+
+        #[inline]
+        fn abs_diff_eq(&self, other: &Self, epsilon: T::Epsilon) -> bool {
+            T::abs_diff_eq(&self.x, &other.x, epsilon) && T::abs_diff_eq(&self.y, &other.y, epsilon)
+        }
     }
 
-    #[inline]
-    fn abs_diff_eq(&self, other: &Self, epsilon: T::Epsilon) -> bool {
-        T::abs_diff_eq(&self.x, &other.x, epsilon) && T::abs_diff_eq(&self.y, &other.y, epsilon)
-    }
-}
+    impl<T> RelativeEq for Coord<T>
+    where
+        T: CoordNum + RelativeEq<Epsilon = T>,
+    {
+        #[inline]
+        fn default_max_relative() -> T::Epsilon {
+            T::default_max_relative()
+        }
 
-#[cfg(any(feature = "approx", test))]
-impl<T: CoordNum + RelativeEq> RelativeEq for Coord<T>
-where
-    T::Epsilon: Copy,
-{
-    #[inline]
-    fn default_max_relative() -> T::Epsilon {
-        T::default_max_relative()
-    }
-
-    #[inline]
-    fn relative_eq(&self, other: &Self, epsilon: T::Epsilon, max_relative: T::Epsilon) -> bool {
-        T::relative_eq(&self.x, &other.x, epsilon, max_relative)
-            && T::relative_eq(&self.y, &other.y, epsilon, max_relative)
-    }
-}
-
-#[cfg(any(feature = "approx", test))]
-impl<T: CoordNum + UlpsEq> UlpsEq for Coord<T>
-where
-    T::Epsilon: Copy,
-{
-    #[inline]
-    fn default_max_ulps() -> u32 {
-        T::default_max_ulps()
+        #[inline]
+        fn relative_eq(&self, other: &Self, epsilon: T::Epsilon, max_relative: T::Epsilon) -> bool {
+            T::relative_eq(&self.x, &other.x, epsilon, max_relative)
+                && T::relative_eq(&self.y, &other.y, epsilon, max_relative)
+        }
     }
 
-    #[inline]
-    fn ulps_eq(&self, other: &Self, epsilon: T::Epsilon, max_ulps: u32) -> bool {
-        T::ulps_eq(&self.x, &other.x, epsilon, max_ulps)
-            && T::ulps_eq(&self.y, &other.y, epsilon, max_ulps)
+    impl<T> UlpsEq for Coord<T>
+    where
+        T: CoordNum + UlpsEq<Epsilon = T>,
+    {
+        #[inline]
+        fn default_max_ulps() -> u32 {
+            T::default_max_ulps()
+        }
+
+        #[inline]
+        fn ulps_eq(&self, other: &Self, epsilon: T::Epsilon, max_ulps: u32) -> bool {
+            T::ulps_eq(&self.x, &other.x, epsilon, max_ulps)
+                && T::ulps_eq(&self.y, &other.y, epsilon, max_ulps)
+        }
     }
 }
 
