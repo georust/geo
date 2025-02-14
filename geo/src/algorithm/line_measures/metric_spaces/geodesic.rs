@@ -1,16 +1,120 @@
 use super::super::{Bearing, Destination, Distance, InterpolatePoint};
 use crate::Point;
 use geographiclib_rs::{DirectGeodesic, InverseGeodesic};
+use std::sync::LazyLock;
 
-/// An ellipsoidal model of the earth, using methods given by [Karney (2013)].
+/// Use the [`Geodesic`] constant (an instance of `GeodesiceMeasure`) rather than building your own
+/// customized [`GeodesicMeasure`] for standard ellipsoidal Earth measurements.
 ///
-/// Distances are computed using [geodesic lines] and are measured in meters.
+/// Measures distance on an ellipsoidal model of the Earth using methods given by [Karney (2013)].
+///
+/// Geodesic measurements are more accurate than [`Haversine`], but a bit slower, because they
+/// account for the fact that the Earth is not a perfect sphere.
+///
+/// Distances are computed using [geodesic lines] and are measured **in meters**.
+///
+/// [`GeodesicMeasure`] allows creating a geodesic model with custom values for the equatorial
+/// radius (`A`) and the inverse flattening factor (`F`). Unless you have special needs, use
+/// [`Geodesic`], which is simpler than this struct.
+///
+/// # Example
+///
+/// ```
+/// use geo::{wkt, Geodesic, GeodesicMeasure, Distance};
+/// # use approx::assert_relative_eq;
+///
+/// let start = wkt!(POINT(23.319941 42.698334)); // Sofia: Longitude, Latitude
+/// let finish = wkt!(POINT(24.742168 42.136097)); // Plovdiv: Longitude, Latitude
+///
+/// // Typically you can use `Geodesic` for Earth measurement, which uses the wgs84 geoid.
+/// assert_relative_eq!(
+///   132675.5018588206, // meters
+///   Geodesic.distance(start, finish)
+/// );
+///
+/// // If you have special needs, you can use a custom Earth radius/flattening:
+/// let nad83_equatorial_radius = 6378137.0;
+/// let nad83_flattening = 1. / 298.257222101;
+/// let nad83_geoid = GeodesicMeasure::new(nad83_equatorial_radius, nad83_flattening);
+/// // ever so slightly different from the wgs84 default.
+/// assert_relative_eq!(
+///   132675.50185928209, // meters
+///   nad83_geoid.distance(start, finish)
+/// );
+///
+/// // Or you can specify whatever radius you want to get some "out of this world" results. 👽
+/// // from https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html
+/// let mars_equatorial_radius = 3_396_200.0; // meters
+/// let mars_flattening = 0.00589;
+/// let mars_geoid = GeodesicMeasure::new(mars_equatorial_radius, mars_flattening);
+/// assert_relative_eq!(
+///   70684.36315529353, // meters
+///   mars_geoid.distance(start, finish)
+/// );
+/// ```
 ///
 /// [geodesic lines]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
 /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
-pub struct Geodesic;
+/// [`Haversine`]: crate::Haversine
+pub struct GeodesicMeasure<F = fn() -> geographiclib_rs::Geodesic> {
+    // geographiclib_rs::Geodesic::new() is not a `const fn`, but we want people to be able to
+    // access it ergonomically (as `Geodesic.distance`, rather than `Geodesic::new().distance`)
+    // hence this layer of indirection with the LazyLock.
+    geoid: LazyLock<geographiclib_rs::Geodesic, F>,
+}
 
-impl Bearing<f64> for Geodesic {
+/// Measures distance on an ellipsoidal model of the Earth using methods given by [Karney (2013)].
+///
+/// Geodesic measurements are more accurate than [`Haversine`], but a bit slower, because they
+/// account for the fact that the Earth is not a perfect sphere.
+///
+/// Distances are computed using [geodesic lines] and are measured **in meters**.
+///
+/// For all the trait methods available to [`Geodesic`], see
+/// [`GeodesicMeasure`](GeodesicMeasure#trait-implementations).
+///
+/// # Example
+/// ```
+/// # use approx::assert_relative_eq;
+/// use geo::{wkt, Geodesic, Distance};
+///
+/// let start = wkt!(POINT(23.319941 42.698334)); // Sofia: Longitude, Latitude
+/// let finish = wkt!(POINT(24.742168 42.136097)); // Plovdiv: Longitude, Latitude
+///
+/// assert_relative_eq!(
+///     132675.5018588206, // meters
+///     Geodesic.distance(start, finish)
+/// );
+/// ```
+///
+/// [geodesic lines]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
+/// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
+/// [`Haversine`]: crate::Haversine
+#[allow(non_upper_case_globals)]
+pub static Geodesic: GeodesicMeasure = GeodesicMeasure::wgs84();
+
+impl GeodesicMeasure {
+    pub const fn wgs84() -> Self {
+        Self {
+            geoid: LazyLock::new(geographiclib_rs::Geodesic::wgs84),
+        }
+    }
+}
+
+impl GeodesicMeasure<Box<dyn FnOnce() -> geographiclib_rs::Geodesic>> {
+    pub fn new(equatorial_radius: f64, inverse_flattening: f64) -> Self {
+        Self {
+            geoid: LazyLock::new(Box::new(move || {
+                geographiclib_rs::Geodesic::new(equatorial_radius, inverse_flattening)
+            })),
+        }
+    }
+}
+
+impl<F> Bearing<f64> for GeodesicMeasure<F>
+where
+    F: FnOnce() -> geographiclib_rs::Geodesic,
+{
     /// Returns the bearing from `origin` to `destination` in degrees along a [geodesic line].
     ///
     /// # Units
@@ -20,8 +124,8 @@ impl Bearing<f64> for Geodesic {
     ///
     /// ```
     /// # use approx::assert_relative_eq;
-    /// use geo::{Geodesic, Bearing};
     /// use geo::Point;
+    /// use geo::{Bearing, Geodesic};
     ///
     /// let origin = Point::new(9.0, 10.0);
     /// let destination = Point::new(9.5, 10.1);
@@ -37,17 +141,17 @@ impl Bearing<f64> for Geodesic {
     /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn bearing(&self, origin: Point<f64>, destination: Point<f64>) -> f64 {
-        let (azi1, _, _) = geographiclib_rs::Geodesic::wgs84().inverse(
-            origin.y(),
-            origin.x(),
-            destination.y(),
-            destination.x(),
-        );
+        let (azi1, _, _) =
+            self.geoid
+                .inverse(origin.y(), origin.x(), destination.y(), destination.x());
         (azi1 + 360.0) % 360.0
     }
 }
 
-impl Destination<f64> for Geodesic {
+impl<F> Destination<f64> for GeodesicMeasure<F>
+where
+    F: FnOnce() -> geographiclib_rs::Geodesic,
+{
     /// Returns a new point having travelled the `distance` along a [geodesic line]
     /// from the `origin` point with the given `bearing`.
     ///
@@ -63,8 +167,8 @@ impl Destination<f64> for Geodesic {
     ///
     /// ```
     /// # use approx::assert_relative_eq;
-    /// use geo::{Geodesic, Destination};
     /// use geo::Point;
+    /// use geo::{Destination, Geodesic};
     ///
     /// // Determine the point 100 km NE of JFK airport.
     /// let jfk = Point::new(-73.78, 40.64);
@@ -72,7 +176,11 @@ impl Destination<f64> for Geodesic {
     /// let distance = 100_000.0;
     ///
     /// let northeast_of_jfk = Geodesic.destination(jfk, northeast_bearing, distance);
-    /// assert_relative_eq!(Point::new(-72.94, 41.27), northeast_of_jfk, epsilon = 1.0e-2);
+    /// assert_relative_eq!(
+    ///     Point::new(-72.94, 41.27),
+    ///     northeast_of_jfk,
+    ///     epsilon = 1.0e-2
+    /// );
     /// ```
     ///
     /// # References
@@ -82,13 +190,15 @@ impl Destination<f64> for Geodesic {
     /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn destination(&self, origin: Point<f64>, bearing: f64, distance: f64) -> Point<f64> {
-        let (lat, lon) =
-            geographiclib_rs::Geodesic::wgs84().direct(origin.y(), origin.x(), bearing, distance);
+        let (lat, lon) = self.geoid.direct(origin.y(), origin.x(), bearing, distance);
         Point::new(lon, lat)
     }
 }
 
-impl Distance<f64, Point<f64>, Point<f64>> for Geodesic {
+impl<F> Distance<f64, Point<f64>, Point<f64>> for GeodesicMeasure<F>
+where
+    F: FnOnce() -> geographiclib_rs::Geodesic,
+{
     /// Determine the length of the [geodesic line] between two geometries on an ellipsoidal model of the earth.
     ///
     /// # Units
@@ -97,8 +207,8 @@ impl Distance<f64, Point<f64>, Point<f64>> for Geodesic {
     ///
     /// # Examples
     /// ```rust
-    /// use geo::{Geodesic, Distance};
     /// use geo::Point;
+    /// use geo::{Distance, Geodesic};
     ///
     /// // New York City
     /// let new_york_city = Point::new(-74.006, 40.7128);
@@ -121,19 +231,18 @@ impl Distance<f64, Point<f64>, Point<f64>> for Geodesic {
     /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn distance(&self, origin: Point<f64>, destination: Point<f64>) -> f64 {
-        geographiclib_rs::Geodesic::wgs84().inverse(
-            origin.y(),
-            origin.x(),
-            destination.y(),
-            destination.x(),
-        )
+        self.geoid
+            .inverse(origin.y(), origin.x(), destination.y(), destination.x())
     }
 }
 
 /// Interpolate Point(s) along a [geodesic line].
 ///
 /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
-impl InterpolatePoint<f64> for Geodesic {
+impl<F> InterpolatePoint<f64> for GeodesicMeasure<F>
+where
+    F: FnOnce() -> geographiclib_rs::Geodesic,
+{
     /// Returns a new Point along a [geodesic line] between two existing points on an ellipsoidal model of the earth.
     ///
     /// # Units
@@ -143,9 +252,8 @@ impl InterpolatePoint<f64> for Geodesic {
     ///
     /// ```
     /// # use approx::assert_relative_eq;
-    /// use geo::{Geodesic, InterpolatePoint};
     /// use geo::Point;
-    ///
+    /// use geo::{Geodesic, InterpolatePoint};
     ///
     /// let p1 = Point::new(10.0, 20.0);
     /// let p2 = Point::new(125.0, 25.0);
@@ -172,8 +280,8 @@ impl InterpolatePoint<f64> for Geodesic {
         if meters_from_start == 0.0 {
             return start;
         }
-        let bearing = Self.bearing(start, end);
-        Self.destination(start, bearing, meters_from_start)
+        let bearing = self.bearing(start, end);
+        self.destination(start, bearing, meters_from_start)
     }
 
     /// Returns a new Point along a [geodesic line] between two existing points on an ellipsoidal model of the earth.
@@ -182,8 +290,8 @@ impl InterpolatePoint<f64> for Geodesic {
     ///
     /// ```
     /// # use approx::assert_relative_eq;
-    /// use geo::{Geodesic, InterpolatePoint};
     /// use geo::Point;
+    /// use geo::{Geodesic, InterpolatePoint};
     ///
     /// let p1 = Point::new(10.0, 20.0);
     /// let p2 = Point::new(125.0, 25.0);
@@ -217,10 +325,10 @@ impl InterpolatePoint<f64> for Geodesic {
             return end;
         }
 
-        let g = geographiclib_rs::Geodesic::wgs84();
-        let (total_distance, azi1, _azi2, _a12) = g.inverse(start.y(), start.x(), end.y(), end.x());
+        let (total_distance, azi1, _azi2, _a12) =
+            self.geoid.inverse(start.y(), start.x(), end.y(), end.x());
         let distance = total_distance * ratio_from_start;
-        Self.destination(start, azi1, distance)
+        self.destination(start, azi1, distance)
     }
 
     /// Interpolates `Point`s along a [geodesic line] between `start` and `end`.
@@ -244,8 +352,8 @@ impl InterpolatePoint<f64> for Geodesic {
         max_distance: f64,
         include_ends: bool,
     ) -> impl Iterator<Item = Point<f64>> {
-        let g = geographiclib_rs::Geodesic::wgs84();
-        let (total_distance, azi1, _azi2, _a12) = g.inverse(start.y(), start.x(), end.y(), end.x());
+        let (total_distance, azi1, _azi2, _a12) =
+            self.geoid.inverse(start.y(), start.x(), end.y(), end.x());
 
         if total_distance <= max_distance {
             return if include_ends {
@@ -262,7 +370,9 @@ impl InterpolatePoint<f64> for Geodesic {
         let mut points = if include_ends { vec![start] } else { vec![] };
 
         while current_step < 1.0 {
-            let (lat2, lon2) = g.direct(start.y(), start.x(), azi1, total_distance * current_step);
+            let (lat2, lon2) =
+                self.geoid
+                    .direct(start.y(), start.x(), azi1, total_distance * current_step);
             let point = Point::new(lon2, lat2);
             points.push(point);
             current_step += interval;
@@ -279,6 +389,7 @@ impl InterpolatePoint<f64> for Geodesic {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::point;
 
     mod bearing {
         use super::*;
@@ -409,5 +520,19 @@ mod tests {
                 assert_relative_eq!(route[0], Point::new(17.878754355562464, 24.466667836189565));
             }
         }
+    }
+
+    #[test]
+    fn test_non_standard_geoid() {
+        let start = point!(x: 23.319941, y: 42.698334); // Sofia: Longitude, Latitude
+        let finish = point!(x: 24.742168, y: 42.136097); // Plovdiv: Longitude, Latitude
+
+        assert_relative_eq!(132675.5018588206, Geodesic.distance(start, finish));
+
+        let mars_equatorial_radius = 3_396_200.;
+        let mars_flattening = 0.00589;
+        let mars_geoid = GeodesicMeasure::new(mars_equatorial_radius, mars_flattening);
+
+        assert_relative_eq!(70684.36315529353, mars_geoid.distance(start, finish));
     }
 }
