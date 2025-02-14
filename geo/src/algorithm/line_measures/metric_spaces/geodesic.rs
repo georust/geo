@@ -14,8 +14,8 @@ use std::sync::LazyLock;
 /// Distances are computed using [geodesic lines] and are measured **in meters**.
 ///
 /// [`GeodesicMeasure`] allows creating a geodesic model with custom values for the equatorial
-/// radius (`A`) and the inverse flattening factor (`F`). Unless you have special needs, just use
-/// [`Geodesic`].
+/// radius (`A`) and the inverse flattening factor (`F`). Unless you have special needs, use
+/// [`Geodesic`], which is simpler than this struct.
 ///
 /// # Example
 ///
@@ -26,7 +26,7 @@ use std::sync::LazyLock;
 /// let start = wkt!(POINT(23.319941 42.698334)); // Sofia: Longitude, Latitude
 /// let finish = wkt!(POINT(24.742168 42.136097)); // Plovdiv: Longitude, Latitude
 ///
-/// // Typically you can just use `Geodesic` for Earth measurement, which used the wgs84 geoid.
+/// // Typically you can use `Geodesic` for Earth measurement, which uses the wgs84 geoid.
 /// assert_relative_eq!(
 ///   132675.5018588206, // meters
 ///   Geodesic.distance(start, finish)

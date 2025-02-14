@@ -12,7 +12,7 @@ use crate::{CoordFloat, Point};
 /// the `radius` passed to [`HaversineMeasure::new`] (typically meters).
 ///
 /// You may specify a custom radius for the Earth (or other sphere), but for normal spherical
-/// measurements of the Earth, you should just use [`Haversine`] which uses the standard
+/// measurements of the Earth, you should use the simpler [`Haversine`] which uses the standard
 /// earth radius of 6371.0088 km (6_371_008.7714 m), based on the recommendation of the IUGG.
 ///
 /// # Examples
@@ -24,7 +24,7 @@ use crate::{CoordFloat, Point};
 /// let start = wkt!(POINT(23.319941 42.698334)); // Sofia: Longitude, Latitude
 /// let finish = wkt!(POINT(24.742168 42.136097)); // Plovdiv: Longitude, Latitude
 ///
-/// // Typically, you can just use `Haversine` for measuring on the Earth's surface.
+/// // Typically, you can use `Haversine` for measuring on the Earth's surface.
 /// assert_relative_eq!(
 ///     132433.09929460194,
 ///     Haversine.distance(start, finish)
@@ -84,7 +84,7 @@ impl Default for HaversineMeasure {
 /// let start = wkt!(POINT(23.319941 42.698334)); // Sofia: Longitude, Latitude
 /// let finish = wkt!(POINT(24.742168 42.136097)); // Plovdiv: Longitude, Latitude
 ///
-/// // Typically, you can just use `Haversine` for measuring on the Earth's surface.
+/// // Use `Haversine` for measuring on the Earth's surface.h
 /// assert_relative_eq!(
 ///     132433.09929460194,
 ///     Haversine.distance(start, finish)
