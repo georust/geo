@@ -200,6 +200,11 @@ pub use linestring_segment::{LineStringSegmentize, LineStringSegmentizeHaversine
 pub mod map_coords;
 pub use map_coords::{MapCoords, MapCoordsInPlace};
 
+/// Offset the edges of a geometry perpendicular to the edge direction, either
+/// to the left or to the right depending on the sign of the specified distance.
+pub mod offset_curve;
+pub use offset_curve::OffsetCurve;
+
 /// Orient a `Polygon`'s exterior and interior rings.
 pub mod orient;
 pub use orient::Orient;
