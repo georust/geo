@@ -5,11 +5,12 @@
 - BREAKING: `FrechetDistance` is now defined on the metric space, rather than a method on a Linestring.
   - <https://github.com/georust/geo/pull/1274>
   ```rust
-  // before
-  line_string_1.frechet_distance::<Euclidean>(&line_string_2)
+  // before (implicitly Euclidean)
+  line_string_1.frechet_distance(&line_string_2);
 
   // after
-  Euclidean.frechet_distance(&line_string_1, &line_string_2)
+  Euclidean.frechet_distance(&line_string_1, &line_string_2);
+  Haversine.frechet_distance(&line_string_1, &line_string_2);
   ```
 - BREAKING: `Densify` and `Length` are now defined on the metric space, rather than a generic method on the geometry.
   - <https://github.com/georust/geo/pull/1298>
