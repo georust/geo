@@ -37,5 +37,8 @@ pub use length::{Length, LengthMeasurable};
 mod densify;
 pub use densify::{Densifiable, Densify};
 
+mod frechet_distance;
+pub use frechet_distance::FrechetDistance;
+
 pub mod metric_spaces;
 pub use metric_spaces::{Euclidean, Geodesic, GeodesicMeasure, Haversine, HaversineMeasure, Rhumb};
