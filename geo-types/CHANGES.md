@@ -4,8 +4,11 @@
 
 - Add more concise Debug output for geometries (like WKT).
   NOTE: because geo-types allows some representations which are not supported by standard WKT, not all debug output is valid WKT. Do not attempt to treat debug as a stable format - it's unsuitable for interacting with programmatically. See the [`wkt` crate](https://crates.io/crates/wkt) for that.
+  - https://github.com/georust/geo/pull/1302
 - Rect and Triangle's `lines` and `coords` iterators and `to_polygon` method now return ccw-oriented geometry
   - https://github.com/georust/geo/pull/1308
+- Implement approx::UlpsEq for geo-types, allowing a new kind of approximate equality check, based on counting the number of floats between two numbers.
+  - https://github.com/georust/geo/pull/1312
 
 ## 0.7.15 - 2025-01-14
 

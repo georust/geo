@@ -41,4 +41,4 @@ mod frechet_distance;
 pub use frechet_distance::FrechetDistance;
 
 pub mod metric_spaces;
-pub use metric_spaces::{Euclidean, Geodesic, Haversine, HaversineMeasure, Rhumb};
+pub use metric_spaces::{Euclidean, Geodesic, GeodesicMeasure, Haversine, HaversineMeasure, Rhumb};
