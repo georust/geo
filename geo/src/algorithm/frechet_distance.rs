@@ -2,7 +2,10 @@ use crate::line_measures::Euclidean;
 use crate::{GeoFloat, LineString};
 use num_traits::FromPrimitive;
 
-#[deprecated]
+#[deprecated(
+    since = "0.30.0",
+    note = "Please use the `Euclidean.frechet_distance` method from the `geo::line_measures::FrechetDistance` trait instead"
+)]
 /// Determine the similarity between two `LineStrings` using the [Frechet distance].
 ///
 /// Based on [Computing Discrete Frechet Distance] by T. Eiter and H. Mannila.
