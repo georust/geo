@@ -5,7 +5,7 @@ use include_dir::{include_dir, Dir, DirEntry};
 use log::{debug, info};
 use wkt::ToWkt;
 
-use super::{input, Operation, Result};
+use super::{check_buffer_test_case, input, Operation, Result};
 use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects, Relate, Within};
 use geo::geometry::*;
 use geo::GeoNum;
@@ -19,14 +19,22 @@ pub struct TestRunner {
     filename_filter: Option<String>,
     desc_filter: Option<String>,
     cases: Option<Vec<TestCase>>,
-    failures: Vec<TestFailure>,
+    unexpected_failures: Vec<TestFailure>,
+    expected_failures: Vec<TestId>,
     unsupported: Vec<TestCase>,
     successes: Vec<TestCase>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TestId {
+    file_name: String,
+    case_idx: usize,
+    test_idx: usize,
+}
+
 #[derive(Debug, Clone)]
 pub struct TestCase {
-    test_file_name: String,
+    pub(crate) test_id: TestId,
     description: String,
     operation: Operation,
 }
@@ -41,23 +49,45 @@ impl std::fmt::Display for TestFailure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         write!(
             f,
-            "failed {} case \"{}\" with error: {}",
-            &self.test_case.test_file_name, &self.test_case.description, &self.error_description
+            "failed {:?}: \"{}\" with error: {}",
+            &self.test_case.test_id, &self.test_case.description, &self.error_description
         )
     }
 }
 
 impl TestRunner {
     pub fn new() -> Self {
-        Default::default()
+        Self {
+            // Please document any expected failures as you add them.
+            expected_failures: vec![
+                // Degenerate case we don't yet handle: buffering a collapsed (flat) polygon
+                TestId {
+                    file_name: "TestBuffer.xml".to_string(),
+                    case_idx: 6,
+                    test_idx: 1,
+                },
+            ],
+            ..Self::default()
+        }
     }
 
-    pub fn successes(&self) -> &Vec<TestCase> {
+    pub fn successes(&self) -> &[TestCase] {
         &self.successes
     }
 
-    pub fn failures(&self) -> &Vec<TestFailure> {
-        &self.failures
+    pub fn add_failure(&mut self, failure: TestFailure) {
+        if self.expected_failures.contains(&failure.test_case.test_id) {
+            return;
+        }
+        self.unexpected_failures.push(failure);
+    }
+
+    pub fn unexpected_failures(&self) -> &[TestFailure] {
+        &self.unexpected_failures
+    }
+
+    pub fn expected_failures(&self) -> &[TestId] {
+        &self.expected_failures
     }
 
     /// `desc`: when specified runs just the test described by `desc`, otherwise all tests are run
@@ -87,6 +117,27 @@ impl TestRunner {
 
         for test_case in cases {
             match &test_case.operation {
+                Operation::Buffer {
+                    subject,
+                    distance,
+                    expected,
+                } => {
+                    use geo::algorithm::Buffer;
+                    let actual = Geometry::from(subject.buffer(*distance));
+                    if let Err(error_description) = check_buffer_test_case(&actual, expected) {
+                        debug!(
+                            "Buffer failure {:?}. {error_description}",
+                            test_case.test_id
+                        );
+                        self.add_failure(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    } else {
+                        debug!("Buffer success (xor area close enough)");
+                        self.successes.push(test_case);
+                    }
+                }
                 Operation::Centroid { subject, expected } => {
                     use geo::prelude::Centroid;
                     match (subject.centroid(), expected) {
@@ -102,7 +153,7 @@ impl TestRunner {
                             debug!("Centroid failure: actual != expected");
                             let error_description =
                                 format!("expected {expected:?}, actual: {actual:?}");
-                            self.failures.push(TestFailure {
+                            self.add_failure(TestFailure {
                                 test_case,
                                 error_description,
                             });
@@ -122,7 +173,7 @@ impl TestRunner {
                         let error_description = format!(
                             "Contains failure: expected {expected:?}, relate: {relate_actual:?}"
                         );
-                        self.failures.push(TestFailure {
+                        self.add_failure(TestFailure {
                             test_case,
                             error_description,
                         });
@@ -133,7 +184,7 @@ impl TestRunner {
                         let error_description = format!(
                             "Contains failure - Relate.is_contains: {expected:?} doesn't match Contains trait: {direct_actual:?}"
                         );
-                        self.failures.push(TestFailure {
+                        self.add_failure(TestFailure {
                             test_case,
                             error_description,
                         });
@@ -152,7 +203,7 @@ impl TestRunner {
                         debug!("is_equal_topo was {actual}, but expected {expected}");
                         let error_description =
                             format!("is_equal_topo was {actual}, but expected {expected}");
-                        self.failures.push(TestFailure {
+                        self.add_failure(TestFailure {
                             test_case,
                             error_description,
                         });
@@ -168,7 +219,7 @@ impl TestRunner {
                         debug!("IsValidOp failure: actual != expected");
                         let error_description =
                             format!("expected {expected:?}, actual: {actual:?}",);
-                        self.failures.push(TestFailure {
+                        self.add_failure(TestFailure {
                             test_case,
                             error_description,
                         });
@@ -187,7 +238,7 @@ impl TestRunner {
                         let error_description = format!(
                             "Within failure: expected {expected:?}, relate: {relate_within_result:?}"
                         );
-                        self.failures.push(TestFailure {
+                        self.add_failure(TestFailure {
                             test_case,
                             error_description,
                         });
@@ -196,7 +247,7 @@ impl TestRunner {
                         let error_description = format!(
                             "Within failure: Relate: {expected:?}, Within trait: {within_trait_result:?}"
                         );
-                        self.failures.push(TestFailure {
+                        self.add_failure(TestFailure {
                             test_case,
                             error_description,
                         });
@@ -260,7 +311,7 @@ impl TestRunner {
                         Geometry::Polygon(p) => p.clone(),
                         _ => {
                             let error_description = format!("expected result for convex hull is not a polygon or a linestring: {expected:?}" );
-                            self.failures.push(TestFailure {
+                            self.add_failure(TestFailure {
                                 test_case,
                                 error_description,
                             });
@@ -274,7 +325,7 @@ impl TestRunner {
                         debug!("ConvexHull failure: actual != expected");
                         let error_description =
                             format!("expected {expected:?}, actual: {actual_polygon:?}");
-                        self.failures.push(TestFailure {
+                        self.add_failure(TestFailure {
                             test_case,
                             error_description,
                         });
@@ -292,7 +343,7 @@ impl TestRunner {
                         debug!("Intersects failure: direct_actual != expected");
                         let error_description =
                             format!("expected {expected:?}, direct_actual: {direct_actual:?}",);
-                        self.failures.push(TestFailure {
+                        self.add_failure(TestFailure {
                             test_case,
                             error_description,
                         });
@@ -300,7 +351,7 @@ impl TestRunner {
                         debug!("Intersects failure: relate_actual != expected");
                         let error_description =
                             format!("expected {expected:?}, relate_actual: {relate_actual:?}",);
-                        self.failures.push(TestFailure {
+                        self.add_failure(TestFailure {
                             test_case,
                             error_description,
                         });
@@ -318,7 +369,7 @@ impl TestRunner {
                         debug!("Relate failure: actual != expected");
                         let error_description =
                             format!("expected {expected:?}, actual: {actual:?}");
-                        self.failures.push(TestFailure {
+                        self.add_failure(TestFailure {
                             test_case,
                             error_description,
                         });
@@ -361,7 +412,7 @@ impl TestRunner {
                             expected.wkt_string(),
                             actual.wkt_string()
                         );
-                        self.failures.push(TestFailure {
+                        self.add_failure(TestFailure {
                             test_case,
                             error_description,
                         });
@@ -431,7 +482,7 @@ impl TestRunner {
                             expected.wkt_string(),
                             actual.wkt_string()
                         );
-                        self.failures.push(TestFailure {
+                        self.add_failure(TestFailure {
                             test_case,
                             error_description,
                         });
@@ -442,9 +493,10 @@ impl TestRunner {
         }
         debug!("unsupported: {:?}", self.unsupported);
         info!(
-            "run summary: successes: {}, failures: {}, unsupported: {}",
+            "run summary: successes: {}, unexpected failures: {}, expected_failures: {}, unsupported: {}",
             self.successes.len(),
-            self.failures.len(),
+            self.unexpected_failures.len(),
+            self.expected_failures.len(),
             self.unsupported.len(),
         );
 
@@ -486,7 +538,7 @@ impl TestRunner {
                 }
             };
 
-            for mut case in run.cases {
+            for (case_idx, mut case) in run.cases.into_iter().enumerate() {
                 if let Some(desc_filter) = &self.desc_filter {
                     if case.desc.as_str().contains(desc_filter) {
                         debug!("filter matched case: {}", &case.desc);
@@ -498,7 +550,7 @@ impl TestRunner {
                     debug!("parsing case {}:", &case.desc);
                 }
                 let tests = std::mem::take(&mut case.tests);
-                for test in tests {
+                for (test_idx, test) in tests.into_iter().enumerate() {
                     let description = case.desc.clone();
 
                     let test_file_name = file
@@ -508,6 +560,11 @@ impl TestRunner {
                         .to_string_lossy()
                         .to_string();
 
+                    let test_id = TestId {
+                        file_name: test_file_name.clone(),
+                        case_idx,
+                        test_idx,
+                    };
                     match test.operation_input.into_operation(&case) {
                         Ok(operation) => {
                             if matches!(
@@ -518,7 +575,7 @@ impl TestRunner {
                             {
                                 cases.push(TestCase {
                                     description,
-                                    test_file_name,
+                                    test_id,
                                     operation: Operation::Unsupported {
                                         reason: "unsupported BooleanOp precision model".to_string(),
                                     },
@@ -526,7 +583,7 @@ impl TestRunner {
                             } else {
                                 cases.push(TestCase {
                                     description,
-                                    test_file_name,
+                                    test_id,
                                     operation,
                                 });
                             }

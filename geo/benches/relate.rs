@@ -36,7 +36,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             || relate_tests.clone(),
             |mut test_runner| {
                 test_runner.run().unwrap();
-                assert!(test_runner.failures().is_empty());
+                assert!(test_runner.unexpected_failures().is_empty());
                 assert!(!test_runner.successes().is_empty());
             },
             BatchSize::SmallInput,
@@ -52,7 +52,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             || relate_tests.clone(),
             |mut test_runner| {
                 test_runner.run().unwrap();
-                assert!(test_runner.failures().is_empty());
+                assert!(test_runner.unexpected_failures().is_empty());
                 assert!(!test_runner.successes().is_empty());
             },
             BatchSize::SmallInput,

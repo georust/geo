@@ -14,6 +14,9 @@ pub use bool_ops::{unary_union, BooleanOps, OpType};
 pub mod bounding_rect;
 pub use bounding_rect::BoundingRect;
 
+pub mod buffer;
+pub use buffer::Buffer;
+
 /// Calculate the minimum rotated rectangle of a `Geometry`.
 pub mod minimum_rotated_rect;
 pub use minimum_rotated_rect::MinimumRotatedRect;
