@@ -8,7 +8,8 @@ use wkt::ToWkt;
 use super::{input, Operation, Result};
 use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects, Relate, Within};
 use geo::geometry::*;
-use geo::GeoNum;
+use geo::{Area, Euclidean, GeoNum, Length};
+use geo::line_measures::FrechetDistance;
 
 const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/general");
 const VALIDATE_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/validate");
@@ -87,6 +88,92 @@ impl TestRunner {
 
         for test_case in cases {
             match &test_case.operation {
+                Operation::Buffer {
+                    subject,
+                    distance,
+                    expected,
+                } => {
+                    use geo::algorithm::Buffer;
+                    let actual = Geometry::from(subject.buffer(*distance));
+
+                    let im = actual.relate(expected);
+                    if im.is_equal_topo() {
+                        debug!("Buffer success (equal_topo)");
+                        self.successes.push(test_case);
+                    } else if relative_eq!(actual, expected) {
+                        debug!("Buffer success (relative eq)");
+                        self.successes.push(test_case);
+                    } else {
+                        // Maybe should be a ratio of exterior.length
+                        // Or maybe we should compare the area of the symmetric difference
+                        fn get_exterior(geometry: &Geometry) -> Option<&LineString> {
+                            match geometry {
+                                Geometry::Polygon(polygon) => Some(polygon.exterior()),
+                                Geometry::MultiPolygon(multi_polygon) => {
+                                    if multi_polygon.0.len() != 1 {
+                                        log::warn!("TODO: handle verifying MultiPolygon with more than one Polygon");
+                                        return None;
+                                    }
+                                    Some(multi_polygon.0[0].exterior())
+                                }
+                                _ => {
+                                    log::warn!("TODO: handle other geometry type {geometry:?}");
+                                    None
+                                }
+                            }
+                        }
+
+                        let Some(actual_exterior) = get_exterior(&actual) else {
+                            let error_description = "TODO: handle missing actual_exterior".to_string();
+                            self.failures.push(TestFailure {
+                                test_case,
+                                error_description,
+                            });
+                            continue;
+                        };
+                        let Some(expected_exterior) = get_exterior(expected) else {
+                            let error_description = "TODO: handle missing expected_exterior".to_string();
+                            self.failures.push(TestFailure {
+                                test_case,
+                                error_description,
+                            });
+                            continue;
+                        };
+
+                        let expected_exterior_length = Euclidean.length(expected_exterior);
+                        let threshold = expected_exterior_length * 0.0001;
+
+                        let frechet_distance = Euclidean.frechet_distance(actual_exterior, expected_exterior);
+
+                        // Frechet distance is failing on all counts - I'm not sure that it's smart enough to find the "start" of the comparison for rotated polygon linestrings.
+                        if false && frechet_distance < threshold {
+                            debug!("Buffer success (exterior frechet distance close enough)");
+                            self.successes.push(test_case);
+                        } else {
+
+                            let diff = match (expected, &actual) {
+                                (Geometry::MultiPolygon(expected), Geometry::MultiPolygon(actual)) => expected.xor(actual),
+                                (Geometry::Polygon(expected), Geometry::MultiPolygon(actual)) => expected.xor(actual),
+                                (Geometry::MultiPolygon(expected), Geometry::Polygon(actual)) => expected.xor(actual),
+                                (Geometry::Polygon(expected), Geometry::Polygon(actual)) => expected.xor(actual),
+                                _ => todo!("unsupported comparison")
+                            };
+                            let diff_area = diff.unsigned_area();
+                            let area_threshold = expected.unsigned_area() * 0.01;
+                            if diff_area < area_threshold {
+                                debug!("Buffer success (xor area close enough)");
+                                self.successes.push(test_case);
+                            } else {
+                                let error_description = format!("diff_area: {diff_area}, area_threshold: {area_threshold}, frechet_distance: {frechet_distance}, threshold: {threshold}, expected_exterior_length: {expected_exterior_length}, actual: {actual:?}, expected: {expected:?}");
+                                debug!("Buffer failure. {error_description}");
+                                self.failures.push(TestFailure {
+                                    test_case,
+                                    error_description,
+                                });
+                            }
+                        }
+                    }
+                }
                 Operation::Centroid { subject, expected } => {
                     use geo::prelude::Centroid;
                     match (subject.centroid(), expected) {
