@@ -1,11 +1,12 @@
 use crate::geometry::Coord;
-use crate::GeoNum;
+use crate::GeoFloat;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
 use i_overlay::i_float::float::number::FloatNumber;
+use num_traits::FromPrimitive;
 
 /// A geometry coordinate scalar suitable for performing geometric boolean operations.
-pub trait BoolOpsNum: GeoNum + FloatNumber {}
-impl<T: GeoNum + FloatNumber> BoolOpsNum for T {}
+pub trait BoolOpsNum: GeoFloat + FloatNumber + FromPrimitive {}
+impl<T: GeoFloat + FloatNumber + FromPrimitive> BoolOpsNum for T {}
 
 /// New type for `Coord` that implements `FloatPointCompatible` for `BoolOpsNum` to
 /// circumvent orphan rule, since Coord is defined in geo_types.
@@ -26,11 +27,12 @@ impl<T: BoolOpsNum> FloatPointCompatible<T> for BoolOpsCoord<T> {
     }
 }
 
-pub(super) mod convert {
+pub(crate) mod convert {
     use super::super::OpType;
     use super::BoolOpsNum;
     use crate::bool_ops::i_overlay_integration::BoolOpsCoord;
     use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
+    use geo_types::Coord;
     use i_overlay::core::overlay_rule::OverlayRule;
 
     pub fn line_string_from_path<T: BoolOpsNum>(path: Vec<BoolOpsCoord<T>>) -> LineString<T> {
@@ -70,10 +72,17 @@ pub(super) mod convert {
         if line_string.0.is_empty() {
             return vec![];
         }
+
         // In geo, Polygon rings are explicitly closed LineStrings — their final coordinate is the same as their first coordinate,
         // however in i_overlay, shape paths are implicitly closed, so we skip the last coordinate.
         let coords = &line_string.0[..line_string.0.len() - 1];
         coords.iter().copied().map(BoolOpsCoord).collect()
+    }
+
+    pub fn line_string_to_shape_path<T: BoolOpsNum>(
+        line_string: &LineString<T>,
+    ) -> Vec<BoolOpsCoord<T>> {
+        line_string.coords().copied().map(BoolOpsCoord).collect()
     }
 
     impl From<OpType> for OverlayRule {
@@ -84,6 +93,12 @@ pub(super) mod convert {
                 OpType::Difference => OverlayRule::Difference,
                 OpType::Xor => OverlayRule::Xor,
             }
+        }
+    }
+
+    impl<T: BoolOpsNum> From<Coord<T>> for BoolOpsCoord<T> {
+        fn from(value: Coord<T>) -> Self {
+            BoolOpsCoord(value)
         }
     }
 }
