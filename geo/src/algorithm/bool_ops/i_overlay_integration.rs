@@ -26,11 +26,12 @@ impl<T: BoolOpsNum> FloatPointCompatible<T> for BoolOpsCoord<T> {
     }
 }
 
-pub(super) mod convert {
+pub(crate) mod convert {
     use super::super::OpType;
     use super::BoolOpsNum;
     use crate::bool_ops::i_overlay_integration::BoolOpsCoord;
     use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
+    use geo_types::Coord;
     use i_overlay::core::overlay_rule::OverlayRule;
 
     pub fn line_string_from_path<T: BoolOpsNum>(path: Vec<BoolOpsCoord<T>>) -> LineString<T> {
@@ -84,6 +85,12 @@ pub(super) mod convert {
                 OpType::Difference => OverlayRule::Difference,
                 OpType::Xor => OverlayRule::Xor,
             }
+        }
+    }
+
+    impl<T: BoolOpsNum> From<Coord<T>> for BoolOpsCoord<T> {
+        fn from(value: Coord<T>) -> Self {
+            BoolOpsCoord(value)
         }
     }
 }
