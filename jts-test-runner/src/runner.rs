@@ -8,8 +8,8 @@ use wkt::ToWkt;
 use super::{input, Operation, Result};
 use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects, Relate, Within};
 use geo::geometry::*;
-use geo::{Area, Euclidean, GeoNum, Length};
 use geo::line_measures::FrechetDistance;
+use geo::{Area, Euclidean, GeoNum, Length};
 
 const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/general");
 const VALIDATE_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/validate");
@@ -124,7 +124,8 @@ impl TestRunner {
                         }
 
                         let Some(actual_exterior) = get_exterior(&actual) else {
-                            let error_description = "TODO: handle missing actual_exterior".to_string();
+                            let error_description =
+                                "TODO: handle missing actual_exterior".to_string();
                             self.failures.push(TestFailure {
                                 test_case,
                                 error_description,
@@ -132,7 +133,8 @@ impl TestRunner {
                             continue;
                         };
                         let Some(expected_exterior) = get_exterior(expected) else {
-                            let error_description = "TODO: handle missing expected_exterior".to_string();
+                            let error_description =
+                                "TODO: handle missing expected_exterior".to_string();
                             self.failures.push(TestFailure {
                                 test_case,
                                 error_description,
@@ -143,20 +145,29 @@ impl TestRunner {
                         let expected_exterior_length = Euclidean.length(expected_exterior);
                         let threshold = expected_exterior_length * 0.0001;
 
-                        let frechet_distance = Euclidean.frechet_distance(actual_exterior, expected_exterior);
+                        let frechet_distance =
+                            Euclidean.frechet_distance(actual_exterior, expected_exterior);
 
                         // Frechet distance is failing on all counts - I'm not sure that it's smart enough to find the "start" of the comparison for rotated polygon linestrings.
                         if false && frechet_distance < threshold {
                             debug!("Buffer success (exterior frechet distance close enough)");
                             self.successes.push(test_case);
                         } else {
-
                             let diff = match (expected, &actual) {
-                                (Geometry::MultiPolygon(expected), Geometry::MultiPolygon(actual)) => expected.xor(actual),
-                                (Geometry::Polygon(expected), Geometry::MultiPolygon(actual)) => expected.xor(actual),
-                                (Geometry::MultiPolygon(expected), Geometry::Polygon(actual)) => expected.xor(actual),
-                                (Geometry::Polygon(expected), Geometry::Polygon(actual)) => expected.xor(actual),
-                                _ => todo!("unsupported comparison")
+                                (
+                                    Geometry::MultiPolygon(expected),
+                                    Geometry::MultiPolygon(actual),
+                                ) => expected.xor(actual),
+                                (Geometry::Polygon(expected), Geometry::MultiPolygon(actual)) => {
+                                    expected.xor(actual)
+                                }
+                                (Geometry::MultiPolygon(expected), Geometry::Polygon(actual)) => {
+                                    expected.xor(actual)
+                                }
+                                (Geometry::Polygon(expected), Geometry::Polygon(actual)) => {
+                                    expected.xor(actual)
+                                }
+                                _ => todo!("unsupported comparison"),
                             };
                             let diff_area = diff.unsigned_area();
                             let area_threshold = expected.unsigned_area() * 0.01;

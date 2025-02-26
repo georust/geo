@@ -15,12 +15,6 @@ use i_overlay::mesh::style::OutlineStyle;
 /// Holes are in counterclockwise order.
 pub trait Buffer {
     type Scalar: BoolOpsNum + 'static;
-    // TODO: output might be GeometryCollection?
-    // TODO: For point, output will always be Polygon
-    //  (what about negative?)
-    // TODO: For Polygon, a negative distance could output a MultiPolygong.
-    // TODO: Not sure about negative distance for LineString
-    // TODO: Buffering MultiPolygon could ouput Polygon, but... maybe simplest to still just output MP
     fn buffer(&self, distance: Self::Scalar) -> MultiPolygon<Self::Scalar> {
         let default_style = OutlineStyle::new(distance);
         self.buffer_with_style(default_style)
@@ -38,7 +32,7 @@ impl<F: BoolOpsNum + 'static> Buffer for Geometry<F> {
             Geometry::Polygon(polygon) => polygon.buffer_with_style(style),
             Geometry::MultiPoint(_) => todo!("Handle buffering MultiPoint"),
             Geometry::MultiLineString(_) => todo!("Handle buffering MultiLineString"),
-            Geometry::MultiPolygon(_) => todo!("Handle buffering MultiPolygon"),
+            Geometry::MultiPolygon(multi_polygon) => multi_polygon.buffer_with_style(style),
             Geometry::GeometryCollection(_) => todo!("Handle buffering GeometryCollection"),
             Geometry::Line(_) => todo!("Handle buffering Line"),
             Geometry::Rect(_) => todo!("Handle buffering Rect"),
@@ -48,6 +42,16 @@ impl<F: BoolOpsNum + 'static> Buffer for Geometry<F> {
 }
 
 impl<F: BoolOpsNum + 'static> Buffer for Polygon<F> {
+    type Scalar = F;
+    fn buffer_with_style(&self, style: OutlineStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
+        let rewound = self.orient(Direction::Reversed);
+        let subject = rewound.rings().map(ring_to_shape_path).collect::<Vec<_>>();
+        let shapes = subject.outline(style);
+        i_overlay_integration::convert::multi_polygon_from_shapes(shapes)
+    }
+}
+
+impl<F: BoolOpsNum + 'static> Buffer for MultiPolygon<F> {
     type Scalar = F;
     fn buffer_with_style(&self, style: OutlineStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         let rewound = self.orient(Direction::Reversed);
