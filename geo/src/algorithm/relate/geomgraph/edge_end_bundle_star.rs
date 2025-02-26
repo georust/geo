@@ -83,7 +83,7 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
         debug!("edge_end_bundle_star: {:?}", self);
     }
 
-    fn propagate_side_labels(&mut self, geom_index: usize, geometry_graph: &GeometryGraph<F>) {
+    fn propagate_side_labels(&mut self, geom_index: usize, _geometry_graph: &GeometryGraph<F>) {
         let mut start_position = None;
 
         for edge_ends in self.edge_end_bundles_iter() {
@@ -108,11 +108,11 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
                 let left_position = label.position(geom_index, Direction::Left);
                 let right_position = label.position(geom_index, Direction::Right);
 
-                if let Some(right_position) = right_position {
+                if let Some(_right_position) = right_position {
                     #[cfg(debug_assertions)]
-                    if right_position != current_position {
+                    if _right_position != current_position {
                         use crate::algorithm::Validation;
-                        if geometry_graph.geometry().is_valid() {
+                        if _geometry_graph.geometry().is_valid() {
                             debug_assert!(false, "topology position conflict with coordinate — this can happen with invalid geometries. coordinate: {:?}, right_location: {:?}, current_location: {:?}", edge_ends.coordinate(), right_position, current_position);
                         } else {
                             warn!("topology position conflict with coordinate — this can happen with invalid geometries. coordinate: {:?}, right_location: {:?}, current_location: {:?}", edge_ends.coordinate(), right_position, current_position);
