@@ -1,12 +1,13 @@
 use super::Segment;
 use crate::geometry::*;
 use crate::relate::geomgraph::{GeometryGraph, RobustLineIntersector};
-use crate::GeometryCow;
+use crate::{BoundingRect, GeometryCow, HasDimensions};
 use crate::{GeoFloat, Relate};
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::dimensions::Dimensions;
 use rstar::{RTree, RTreeNum};
 
 /// A `PreparedGeometry` can be more efficient than a plain Geometry when performing
@@ -27,17 +28,19 @@ use rstar::{RTree, RTreeNum};
 ///
 /// ```
 pub struct PreparedGeometry<'a, F: GeoFloat + RTreeNum = f64> {
-    geometry_graph: GeometryGraph<'a, F>,
+    pub(crate) geometry_graph: GeometryGraph<'a, F>,
+    pub(crate) bounding_rect: Option<Rect<F>>,
 }
 
 mod conversions {
     use crate::geometry_cow::GeometryCow;
     use crate::relate::geomgraph::{GeometryGraph, RobustLineIntersector};
-    use crate::{GeoFloat, PreparedGeometry};
+    use crate::{BoundingRect, GeoFloat, PreparedGeometry};
     use geo_types::{
         Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
         Point, Polygon, Rect, Triangle,
     };
+    use rstar::Envelope;
     use std::rc::Rc;
 
     impl<F: GeoFloat> From<Point<F>> for PreparedGeometry<'_, F> {
@@ -156,13 +159,29 @@ mod conversions {
     impl<'a, F: GeoFloat> From<GeometryCow<'a, F>> for PreparedGeometry<'a, F> {
         fn from(geometry: GeometryCow<'a, F>) -> Self {
             let mut geometry_graph = GeometryGraph::new(0, geometry);
-            geometry_graph.set_tree(Rc::new(geometry_graph.build_tree()));
+            let r_tree = geometry_graph.build_tree();
+
+            let envelope = r_tree.root().envelope();
+
+            // geo and rstar have different conventions for how to represet an empty bounding boxes
+            let bounding_rect: Option<Rect<F>> = if envelope == rstar::AABB::new_empty() {
+                None
+            } else {
+                Some(Rect::new(envelope.lower(), envelope.upper()))
+            };
+            // They should be equal - but we can save the computation in the `--release` case
+            // by using the bounding_rect from the RTree
+            debug_assert_eq!(bounding_rect, geometry_graph.geometry().bounding_rect());
+
+            geometry_graph.set_tree(Rc::new(r_tree));
 
             // TODO: don't pass in line intersector here - in theory we'll want pluggable line intersectors
             // and the type (Robust) shouldn't be hard coded here.
             geometry_graph.compute_self_nodes(Box::new(RobustLineIntersector::new()));
-
-            Self { geometry_graph }
+            Self {
+                geometry_graph,
+                bounding_rect,
+            }
         }
     }
 }
@@ -173,6 +192,28 @@ where
 {
     pub(crate) fn geometry(&self) -> &GeometryCow<F> {
         self.geometry_graph.geometry()
+    }
+}
+
+impl<F: GeoFloat> BoundingRect<F> for PreparedGeometry<'_, F> {
+    type Output = Option<Rect<F>>;
+
+    fn bounding_rect(&self) -> Option<Rect<F>> {
+        self.bounding_rect
+    }
+}
+
+impl<F: GeoFloat> HasDimensions for PreparedGeometry<'_, F> {
+    fn is_empty(&self) -> bool {
+        self.geometry_graph.geometry().is_empty()
+    }
+
+    fn dimensions(&self) -> Dimensions {
+        self.geometry_graph.geometry().dimensions()
+    }
+
+    fn boundary_dimensions(&self) -> Dimensions {
+        self.geometry_graph.geometry().boundary_dimensions()
     }
 }
 

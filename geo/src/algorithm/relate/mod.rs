@@ -5,7 +5,7 @@ use relate_operation::RelateOperation;
 use crate::geometry::*;
 pub use crate::relate::geomgraph::index::PreparedGeometry;
 pub use crate::relate::geomgraph::GeometryGraph;
-use crate::{GeoFloat, GeometryCow};
+use crate::{BoundingRect, GeoFloat, GeometryCow, HasDimensions};
 
 mod edge_end_builder;
 mod geomgraph;
@@ -54,13 +54,20 @@ mod relate_operation;
 /// ```
 ///
 /// Note: `Relate` must not be called on geometries containing `NaN` coordinates.
-pub trait Relate<F: GeoFloat> {
-    /// Construct a [`GeometryGraph`]
-    fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<F>;
+pub trait Relate<F: GeoFloat>: BoundingRect<F> + HasDimensions {
+    /// Returns a noded topology graph for the geometry.
+    ///
+    /// # Params
+    ///
+    /// `idx`: 0 or 1, designating A or B (respectively) in the role this geometry plays
+    ///        in the relation. e.g. in `a.relate(b)`
+    fn geometry_graph(&self, idx: usize) -> GeometryGraph<F>;
 
-    fn relate(&self, other: &impl Relate<F>) -> IntersectionMatrix {
-        RelateOperation::new(self.geometry_graph(0), other.geometry_graph(1))
-            .compute_intersection_matrix()
+    fn relate(&self, other: &impl Relate<F>) -> IntersectionMatrix
+    where
+        Self: Sized,
+    {
+        RelateOperation::new(self, other).compute_intersection_matrix()
     }
 }
 
