@@ -79,6 +79,16 @@ macro_rules! relate_impl {
                     GeometryGraph::new(arg_index, GeometryCow::from(self))
                 }
             }
+            impl<F: GeoFloat> From<$t> for PreparedGeometry<'_, F> {
+                fn from(geometry: $t) -> Self {
+                    PreparedGeometry::from(GeometryCow::from(geometry))
+                }
+            }
+            impl<'a, F: GeoFloat> From<&'a $t> for PreparedGeometry<'a, F> {
+                fn from(geometry: &'a $t) -> Self {
+                    PreparedGeometry::from(GeometryCow::from(geometry))
+                }
+            }
         )*
     };
 }
