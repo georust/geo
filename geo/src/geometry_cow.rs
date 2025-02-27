@@ -11,7 +11,7 @@ use std::borrow::Cow;
 ///
 /// As an example, see the [`Relate`] trait which uses `GeometryCow`.
 #[derive(PartialEq, Debug, Hash, Clone)]
-pub(crate) enum GeometryCow<'a, T>
+pub enum GeometryCow<'a, T>
 where
     T: CoordNum,
 {
