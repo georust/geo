@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+- Add `LineString::rev_lines` to iterate segments from end to start
+  - <https://github.com/georust/geo/pull/1321>
 - Add more concise Debug output for geometries (like WKT).
   NOTE: because geo-types allows some representations which are not supported by standard WKT, not all debug output is valid WKT. Do not attempt to treat debug as a stable format - it's unsuitable for interacting with programmatically. See the [`wkt` crate](https://crates.io/crates/wkt) for that.
   - https://github.com/georust/geo/pull/1302

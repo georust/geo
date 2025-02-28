@@ -49,6 +49,7 @@
 //! - **[`Bearing`]**: Calculate the bearing between two points.
 //!
 //! - **[`Destination`]**: Calculate the destination point from an origin point, given a bearing and a distance.
+//! - **[`InterpolateLine`]**: Interpolate a `Point` along a `Line` or `LineString`.
 //! - **[`InterpolatePoint`]**: Interpolate points along a line.
 //! - **[`Densify`]**: Insert points into a geometry so there is never more than `max_segment_length` between points.
 //!
@@ -88,10 +89,7 @@
 //!   closest to a given point
 //! - **[`HaversineClosestPoint`]**: Find the point on a geometry
 //!   closest to a given point on a sphere using spherical coordinates and lines being great arcs
-//! - **[`IsConvex`]**: Calculate the convexity of a
-//!   [`LineString`]
-//! - **[`LineInterpolatePoint`]**:
-//!   Generates a point that lies a given fraction along the line
+//! - **[`IsConvex`]**: Calculate the convexity of a [`LineString`]
 //! - **[`LineLocatePoint`]**: Calculate the
 //!   fraction of a line’s total length representing the location of the closest point on the
 //!   line to the given point

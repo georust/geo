@@ -52,6 +52,10 @@
   let nad83_flattening = 1. / 298.257222101;
   GeodesicMeasure::new(6_378_137, nad83_flattening).distance(point1, point2)
   ```
+- Add `InterpolateLine` to interpolate a point along a line using Euclidean, Haversine, Geodesic, Rhumb metric spaces.
+- Deprecate `LineInterpolatePoint` which was implicitly Euclidean only.
+- Fix bug in `SegmentizeHaversine` which caused segments to be unequal lengths
+  - <https://github.com/georust/geo/pull/1321>
 - Rename `triangulate_spade` and `TriangulateSpade` to `triangulate_delaunay` and `TriangulateDelaunay`
 - Docs: Fix page location of citation for mean earth radius used in Haversine calculations
   - <https://github.com/georust/geo/pull/1297>
