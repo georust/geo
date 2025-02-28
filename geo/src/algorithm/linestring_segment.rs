@@ -1,3 +1,4 @@
+#[allow(deprecated)]
 use crate::algorithm::{Densify, Length, LineInterpolatePoint, LinesIter};
 use crate::geometry::{Coord, LineString, MultiLineString};
 use crate::line_measures::Euclidean;
@@ -85,6 +86,7 @@ macro_rules! implement_segmentize {
 
                     if (cum_length >= segment_length) && (i != (n_lines - 1)) {
                         let remainder = cum_length - segment_length;
+                        #[allow(deprecated)]
                         let endpoint =
                             segment.line_interpolate_point((length - remainder) / length)?;
 

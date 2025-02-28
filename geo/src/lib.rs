@@ -49,6 +49,7 @@
 //! - **[`Bearing`]**: Calculate the bearing between two points.
 //!
 //! - **[`Destination`]**: Calculate the destination point from an origin point, given a bearing and a distance.
+//! - **[`InterpolateLine`]**: Interpolate a `Point` along a `Line` or `LineString`.
 //! - **[`InterpolatePoint`]**: Interpolate points along a line.
 //! - **[`Densify`]**: Insert points into a geometry so there is never more than `max_segment_length` between points.
 //!
