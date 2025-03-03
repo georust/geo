@@ -6,9 +6,10 @@ use crate::relate::geomgraph::{
     CoordNode, CoordPos, Edge, EdgeEnd, EdgeEndBundleStar, GeometryGraph, LabeledEdgeEndBundleStar,
     RobustLineIntersector,
 };
-use crate::CoordinatePosition;
 use crate::{Coord, GeoFloat, GeometryCow};
+use crate::{CoordinatePosition, Relate};
 
+use geo_types::Rect;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -21,12 +22,14 @@ use std::rc::Rc;
 /// This implementation relies heavily on the functionality of [`GeometryGraph`].
 ///
 /// Based on [JTS's `RelateComputer` as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/operation/relate/RelateComputer.java)
-pub(crate) struct RelateOperation<'a, F>
+pub(crate) struct RelateOperation<'a, F, BBOX1, BBOX2>
 where
     F: GeoFloat,
+    BBOX1: Into<Option<Rect<F>>>,
+    BBOX2: Into<Option<Rect<F>>>,
 {
-    graph_a: GeometryGraph<'a, F>,
-    graph_b: GeometryGraph<'a, F>,
+    geometry_a: &'a dyn Relate<F, Output = BBOX1>,
+    geometry_b: &'a dyn Relate<F, Output = BBOX2>,
     nodes: NodeMap<F, RelateNodeFactory>,
     line_intersector: RobustLineIntersector,
     isolated_edges: Vec<Rc<RefCell<Edge<F>>>>,
@@ -44,14 +47,19 @@ where
     }
 }
 
-impl<'a, F> RelateOperation<'a, F>
+impl<'a, F, BBOX1, BBOX2> RelateOperation<'a, F, BBOX1, BBOX2>
 where
     F: GeoFloat,
+    BBOX1: Into<Option<Rect<F>>>,
+    BBOX2: Into<Option<Rect<F>>>,
 {
-    pub(crate) fn new(graph_a: GeometryGraph<'a, F>, graph_b: GeometryGraph<'a, F>) -> Self {
+    pub(crate) fn new(
+        geometry_a: &'a impl Relate<F, Output = BBOX1>,
+        geometry_b: &'a impl Relate<F, Output = BBOX2>,
+    ) -> Self {
         Self {
-            graph_a,
-            graph_b,
+            geometry_a,
+            geometry_b,
             nodes: NodeMap::new(),
             isolated_edges: vec![],
             line_intersector: RobustLineIntersector::new(),
@@ -61,58 +69,61 @@ where
     pub(crate) fn compute_intersection_matrix(&mut self) -> IntersectionMatrix {
         let mut intersection_matrix = IntersectionMatrix::empty_disjoint();
 
-        use crate::BoundingRect;
         use crate::Intersects;
         match (
-            self.graph_a.geometry().bounding_rect(),
-            self.graph_b.geometry().bounding_rect(),
+            self.geometry_a.bounding_rect().into(),
+            self.geometry_b.bounding_rect().into(),
         ) {
             (Some(bounding_rect_a), Some(bounding_rect_b))
                 if bounding_rect_a.intersects(&bounding_rect_b) => {}
             _ => {
                 // since Geometries don't overlap, we can skip most of the work
-                intersection_matrix
-                    .compute_disjoint(self.graph_a.geometry(), self.graph_b.geometry());
+                intersection_matrix.compute_disjoint(self.geometry_a, self.geometry_b);
                 return intersection_matrix;
             }
         }
 
+        let mut graph_a = self.geometry_a.geometry_graph(0);
+        let mut graph_b = self.geometry_b.geometry_graph(1);
+
         // Since changes to topology are inspected at nodes, we must crate a node for each
         // intersection.
-        self.graph_a
-            .compute_self_nodes(Box::new(self.line_intersector.clone()));
-        self.graph_b
-            .compute_self_nodes(Box::new(self.line_intersector.clone()));
+        graph_a.compute_self_nodes(Box::new(self.line_intersector.clone()));
+        graph_b.compute_self_nodes(Box::new(self.line_intersector.clone()));
 
         // compute intersections between edges of the two input geometries
-        let segment_intersector = self
-            .graph_a
-            .compute_edge_intersections(&self.graph_b, Box::new(self.line_intersector.clone()));
+        let segment_intersector =
+            graph_a.compute_edge_intersections(&graph_b, Box::new(self.line_intersector.clone()));
 
-        self.compute_intersection_nodes(0);
-        self.compute_intersection_nodes(1);
+        self.compute_intersection_nodes(&graph_a, 0);
+        self.compute_intersection_nodes(&graph_b, 1);
         // Copy the labelling for the nodes in the parent Geometries.  These override any labels
         // determined by intersections between the geometries.
-        self.copy_nodes_and_labels(0);
-        self.copy_nodes_and_labels(1);
+        self.copy_nodes_and_labels(&graph_a, 0);
+        self.copy_nodes_and_labels(&graph_b, 1);
         // complete the labelling for any nodes which only have a label for a single geometry
-        self.label_isolated_nodes();
+        self.label_isolated_nodes(&graph_a, &graph_b);
         // If a proper intersection was found, we can set a lower bound on the IM.
-        self.compute_proper_intersection_im(&segment_intersector, &mut intersection_matrix);
+        Self::compute_proper_intersection_im(
+            &graph_a,
+            &graph_b,
+            &segment_intersector,
+            &mut intersection_matrix,
+        );
         // Now process improper intersections
         // (eg where one or other of the geometries has a vertex at the intersection point)
         // We need to compute the edge graph at all nodes to determine the IM.
         let edge_end_builder = EdgeEndBuilder::new();
-        let edge_ends_a: Vec<_> = edge_end_builder.compute_ends_for_edges(self.graph_a.edges());
+        let edge_ends_a: Vec<_> = edge_end_builder.compute_ends_for_edges(graph_a.edges());
         self.insert_edge_ends(edge_ends_a);
-        let edge_ends_b: Vec<_> = edge_end_builder.compute_ends_for_edges(self.graph_b.edges());
+        let edge_ends_b: Vec<_> = edge_end_builder.compute_ends_for_edges(graph_b.edges());
         self.insert_edge_ends(edge_ends_b);
 
         let mut nodes = NodeMap::new();
         std::mem::swap(&mut self.nodes, &mut nodes);
         let labeled_node_edges = nodes
             .into_iter()
-            .map(|(node, edges)| (node, edges.into_labeled(&self.graph_a, &self.graph_b)))
+            .map(|(node, edges)| (node, edges.into_labeled(&graph_a, &graph_b)))
             .collect();
 
         // Compute the labeling for "isolated" components
@@ -125,8 +136,8 @@ where
         // We only need to check components contained in the input graphs, since, by definition,
         // isolated components will not have been replaced by new components formed by
         // intersections.
-        self.label_isolated_edges(0, 1);
-        self.label_isolated_edges(1, 0);
+        self.label_isolated_edges(&graph_a, &graph_b, 1);
+        self.label_isolated_edges(&graph_b, &graph_a, 0);
 
         debug!(
             "before update_intersection_matrix: {:?}",
@@ -147,13 +158,14 @@ where
     }
 
     fn compute_proper_intersection_im(
-        &mut self,
+        graph_a: &GeometryGraph<F>,
+        graph_b: &GeometryGraph<F>,
         segment_intersector: &SegmentIntersector<F>,
         intersection_matrix: &mut IntersectionMatrix,
     ) {
         // If a proper intersection is found, we can set a lower bound on the IM.
-        let dim_a = self.graph_a.geometry().dimensions();
-        let dim_b = self.graph_b.geometry().dimensions();
+        let dim_a = graph_a.geometry().dimensions();
+        let dim_b = graph_b.geometry().dimensions();
 
         let has_proper = segment_intersector.has_proper_intersection();
         let has_proper_interior = segment_intersector.has_proper_interior_intersection();
@@ -231,13 +243,7 @@ where
     /// argIndex.  (E.g. a node may be an intersection node with a computed label of BOUNDARY, but
     /// in the original arg Geometry it is actually in the interior due to the Boundary
     /// Determination Rule)
-    fn copy_nodes_and_labels(&mut self, geom_index: usize) {
-        let graph = if geom_index == 0 {
-            &self.graph_a
-        } else {
-            assert_eq!(geom_index, 1);
-            &self.graph_b
-        };
+    fn copy_nodes_and_labels(&mut self, graph: &GeometryGraph<F>, geom_index: usize) {
         for graph_node in graph.nodes_iter() {
             let new_node = self
                 .nodes
@@ -259,14 +265,7 @@ where
     /// labeled.
     ///
     /// Endpoint nodes will already be labeled from when they were inserted.
-    fn compute_intersection_nodes(&mut self, geom_index: usize) {
-        let graph = if geom_index == 0 {
-            &self.graph_a
-        } else {
-            assert_eq!(geom_index, 1);
-            &self.graph_b
-        };
-
+    fn compute_intersection_nodes(&mut self, graph: &GeometryGraph<F>, geom_index: usize) {
         for edge in graph.edges() {
             let edge = edge.borrow();
 
@@ -317,13 +316,12 @@ where
     /// By definition, "isolated" edges are guaranteed not to touch the boundary of the target
     /// (since if they did, they would have caused an intersection to be computed and hence would
     /// not be isolated).
-    fn label_isolated_edges(&mut self, this_index: usize, target_index: usize) {
-        let (this_graph, target_graph) = if this_index == 0 {
-            (&self.graph_a, &self.graph_b)
-        } else {
-            (&self.graph_b, &self.graph_a)
-        };
-
+    fn label_isolated_edges(
+        &mut self,
+        this_graph: &GeometryGraph<F>,
+        target_graph: &GeometryGraph<F>,
+        target_index: usize,
+    ) {
         for edge in this_graph.edges() {
             let mut mut_edge = edge.borrow_mut();
             if mut_edge.is_isolated() {
@@ -356,9 +354,9 @@ where
     /// are not completely labeled by the initial process of adding nodes to the nodeList.  To
     /// complete the labelling we need to check for nodes that lie in the interior of edges, and in
     /// the interior of areas.
-    fn label_isolated_nodes(&mut self) {
-        let geometry_a = self.graph_a.geometry();
-        let geometry_b = self.graph_b.geometry();
+    fn label_isolated_nodes(&mut self, graph_a: &GeometryGraph<F>, graph_b: &GeometryGraph<F>) {
+        let geometry_a = graph_a.geometry();
+        let geometry_b = graph_b.geometry();
         for (node, _edges) in self.nodes.iter_mut() {
             let label = node.label();
             // isolated nodes should always have at least one geometry in their label

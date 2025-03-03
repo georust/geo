@@ -79,6 +79,10 @@
   - <https://github.com/georust/geo/pull/1314>
 - Bump `geo` MSRV to 1.80 and update CI
   - <https://github.com/georust/geo/pull/1311>
+- BREAKING: Speed up `Relate` for `PreparedGeometry` - this did require
+  changing some trait constraints, but they are unlikely to affect you in
+  practice unless you have your own Relate implementation.
+  - <https://github.com/georust/geo/pull/1317>
 
 ## 0.29.3 - 2024.12.03
 

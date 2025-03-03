@@ -1,4 +1,6 @@
-use crate::{coordinate_position::CoordPos, dimensions::Dimensions, GeoNum, GeometryCow};
+use crate::{
+    coordinate_position::CoordPos, dimensions::Dimensions, GeoNum, GeometryCow, HasDimensions,
+};
 
 use crate::geometry_cow::GeometryCow::Point;
 use crate::relate::geomgraph::intersection_matrix::dimension_matcher::DimensionMatcher;
@@ -125,12 +127,11 @@ impl IntersectionMatrix {
 
     /// If the Geometries are disjoint, we need to enter their dimension and boundary dimension in
     /// the `Outside` rows in the IM
-    pub(crate) fn compute_disjoint<F: GeoNum>(
+    pub(crate) fn compute_disjoint(
         &mut self,
-        geometry_a: &GeometryCow<F>,
-        geometry_b: &GeometryCow<F>,
+        geometry_a: &(impl HasDimensions + ?Sized),
+        geometry_b: &(impl HasDimensions + ?Sized),
     ) {
-        use crate::algorithm::dimensions::HasDimensions;
         {
             let dimensions = geometry_a.dimensions();
             if dimensions != Dimensions::Empty {
