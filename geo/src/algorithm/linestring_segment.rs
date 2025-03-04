@@ -318,22 +318,24 @@ mod test {
     fn haversine_segment_length() {
         let linestring: LineString = vec![
             [-3.19416, 55.95524],
-            [-3.19352, 55.95535],
-            [-3.19288, 55.95546],
+            [-13.19352, 65.95535],
+            [-23.19288, 75.95546],
         ]
         .into();
 
         let n = 8;
 
-        let segments = linestring.line_segmentize_haversine(n).unwrap();
-        let lens = segments
-            .0
-            .iter()
-            .map(|li| Haversine.length(li))
-            .collect::<Vec<_>>();
+        let total_length = Haversine.length(&linestring);
+        let expected_segment_length = total_length / (n as f64);
 
-        let epsilon = 1e-6; // 6th decimal place which is micrometers
-        assert!(lens.iter().all(|&x| (x - lens[0]).abs() < epsilon));
+        let segments = linestring.line_segmentize_haversine(n).unwrap();
+        for segment in segments {
+            assert_relative_eq!(
+                Haversine.length(&segment),
+                expected_segment_length,
+                epsilon = 1e-9
+            );
+        }
     }
 
     #[test]
