@@ -27,7 +27,7 @@ pub trait InterpolateLine<F: CoordFloat>: InterpolatePoint<F> + Length<F> + Size
     /// assert_relative_eq!(quarter_distance, wkt!(POINT(0. 5.)));
     ///
     /// let quarter_distance = Haversine.point_at_ratio_from_start(&line_string, 0.25).unwrap();
-    /// assert_relative_eq!(quarter_distance, wkt!(POINT(0. 4.961924877405399)));
+    /// assert_relative_eq!(quarter_distance, wkt!(POINT(0. 4.961924877405399)), epsilon=1e-14);
     /// ```
     fn point_at_ratio_from_start<L: InterpolatableLine<F>>(&self, line: &L, ratio: F) -> L::Output {
         line.point_at_ratio_from_start(self, ratio)
@@ -53,7 +53,7 @@ pub trait InterpolateLine<F: CoordFloat>: InterpolatePoint<F> + Length<F> + Size
     /// assert_relative_eq!(quarter_distance, wkt!(POINT(5. 10.0)));
     ///
     /// let quarter_distance = Haversine.point_at_ratio_from_end(&line_string, 0.25).unwrap();
-    /// assert_relative_eq!(quarter_distance, wkt!(POINT(4.961333045966285 10.037420806650719)));
+    /// assert_relative_eq!(quarter_distance, wkt!(POINT(4.961333045966285 10.037420806650719)), epsilon=1e-14);
     /// ```
     fn point_at_ratio_from_end<L: InterpolatableLine<F>>(&self, line: &L, ratio: F) -> L::Output {
         line.point_at_ratio_from_end(self, ratio)
@@ -81,7 +81,7 @@ pub trait InterpolateLine<F: CoordFloat>: InterpolatePoint<F> + Length<F> + Size
     ///
     /// // For Haversine calculations, distance is in meters
     /// let near_start = Haversine.point_at_distance_from_start(&line_string, 100_000.0).unwrap();
-    /// assert_relative_eq!(near_start, wkt!(POINT(0. 0.899320363724538)));
+    /// assert_relative_eq!(near_start, wkt!(POINT(0. 0.899320363724538)), epsilon=1e-14);
     /// ```
     fn point_at_distance_from_start<L: InterpolatableLine<F>>(
         &self,
@@ -113,7 +113,7 @@ pub trait InterpolateLine<F: CoordFloat>: InterpolatePoint<F> + Length<F> + Size
     ///
     /// // For Haversine calculations, distance is in meters
     /// let near_start = Haversine.point_at_distance_from_end(&line_string, 100_000.0).unwrap();
-    /// assert_relative_eq!(near_start, wkt!(POINT(9.086875463645015 10.012416322308656)));
+    /// assert_relative_eq!(near_start, wkt!(POINT(9.086875463645015 10.012416322308656)), epsilon=1e-14);
     /// ```
     fn point_at_distance_from_end<L: InterpolatableLine<F>>(
         &self,
@@ -157,7 +157,7 @@ pub trait InterpolatableLine<F: CoordFloat> {
     /// assert_relative_eq!(quarter_distance, wkt!(POINT(0. 5.)));
     ///
     /// let quarter_distance = line_string.point_at_ratio_from_start(&Haversine, 0.25).unwrap();
-    /// assert_relative_eq!(quarter_distance, wkt!(POINT(0. 4.961924877405399)));
+    /// assert_relative_eq!(quarter_distance, wkt!(POINT(0. 4.961924877405399)), epsilon=1e-14);
     /// ```
     ///
     /// [`Euclidean`]: super::Euclidean
@@ -190,7 +190,7 @@ pub trait InterpolatableLine<F: CoordFloat> {
     /// assert_relative_eq!(quarter_distance, wkt!(POINT(5. 10.0)));
     ///
     /// let quarter_distance = line_string.point_at_ratio_from_end(&Haversine, 0.25).unwrap();
-    /// assert_relative_eq!(quarter_distance, wkt!(POINT(4.961333045966285 10.037420806650719)));
+    /// assert_relative_eq!(quarter_distance, wkt!(POINT(4.961333045966285 10.037420806650719)), epsilon=1e-14);
     /// ```
     ///
     /// [`Euclidean`]: super::Euclidean
@@ -225,7 +225,7 @@ pub trait InterpolatableLine<F: CoordFloat> {
     ///
     /// // For Haversine calculations, distance is in meters
     /// let near_start = line_string.point_at_distance_from_start(&Haversine, 100_000.0).unwrap();
-    /// assert_relative_eq!(near_start, wkt!(POINT(0. 0.899320363724538)));
+    /// assert_relative_eq!(near_start, wkt!(POINT(0. 0.899320363724538)), epsilon=1e-14);
     /// ```
     ///
     /// [`Euclidean`]: super::Euclidean
@@ -260,7 +260,7 @@ pub trait InterpolatableLine<F: CoordFloat> {
     ///
     /// // For Haversine calculations, distance is in meters
     /// let near_start = line_string.point_at_distance_from_end(&Haversine, 100_000.0).unwrap();
-    /// assert_relative_eq!(near_start, wkt!(POINT(9.086875463645015 10.012416322308656)));
+    /// assert_relative_eq!(near_start, wkt!(POINT(9.086875463645015 10.012416322308656)), epsilon=1e-14);
     /// ```
     ///
     /// [`Euclidean`]: super::Euclidean
@@ -647,7 +647,11 @@ mod tests {
                 let quarter_distance = Haversine
                     .point_at_ratio_from_start(&line_string, 0.25)
                     .unwrap();
-                assert_relative_eq!(quarter_distance, wkt!(POINT(0.0 4.961924877405399)));
+                assert_relative_eq!(
+                    quarter_distance,
+                    wkt!(POINT(0.0 4.961924877405399)),
+                    epsilon = 1e-14
+                );
             }
 
             #[test]
@@ -658,7 +662,8 @@ mod tests {
                     .unwrap();
                 assert_relative_eq!(
                     quarter_distance,
-                    wkt!(POINT(4.961333045966285 10.037420806650719))
+                    wkt!(POINT(4.961333045966285 10.037420806650719)),
+                    epsilon = 1e-14
                 );
             }
 
@@ -668,7 +673,11 @@ mod tests {
                 let quarter_distance = Haversine
                     .point_at_distance_from_start(&line_string, 100_000.)
                     .unwrap();
-                assert_relative_eq!(quarter_distance, wkt!(POINT(0.0 0.899320363724538)));
+                assert_relative_eq!(
+                    quarter_distance,
+                    wkt!(POINT(0.0 0.899320363724538)),
+                    epsilon = 1e-14
+                );
             }
 
             #[test]
@@ -679,7 +688,8 @@ mod tests {
                     .unwrap();
                 assert_relative_eq!(
                     quarter_distance,
-                    wkt!(POINT(9.086875463645015 10.012416322308656))
+                    wkt!(POINT(9.086875463645015 10.012416322308656)),
+                    epsilon = 1e-14
                 );
             }
         }
@@ -694,7 +704,11 @@ mod tests {
                 let quarter_distance = Geodesic
                     .point_at_ratio_from_start(&line_string, 0.25)
                     .unwrap();
-                assert_relative_eq!(quarter_distance, wkt!(POINT(0.0 4.9788949389766595)));
+                assert_relative_eq!(
+                    quarter_distance,
+                    wkt!(POINT(0.0 4.9788949389766595)),
+                    epsilon = 1e-14
+                );
             }
 
             #[test]
@@ -705,7 +719,8 @@ mod tests {
                     .unwrap();
                 assert_relative_eq!(
                     quarter_distance,
-                    wkt!(POINT(4.97832809547093 10.037667662355751))
+                    wkt!(POINT(4.97832809547093 10.037667662355751)),
+                    epsilon = 1e-14
                 );
             }
 
@@ -715,7 +730,11 @@ mod tests {
                 let quarter_distance = Geodesic
                     .point_at_distance_from_start(&line_string, 100_000.)
                     .unwrap();
-                assert_relative_eq!(quarter_distance, wkt!(POINT(0.0 0.9043687229127633)));
+                assert_relative_eq!(
+                    quarter_distance,
+                    wkt!(POINT(0.0 0.9043687229127633)),
+                    epsilon = 1e-14
+                );
             }
 
             #[test]
@@ -726,7 +745,8 @@ mod tests {
                     .unwrap();
                 assert_relative_eq!(
                     quarter_distance,
-                    wkt!(POINT(9.087988077970042 10.012483990563286))
+                    wkt!(POINT(9.087988077970042 10.012483990563286)),
+                    epsilon = 1e-14
                 );
             }
         }
