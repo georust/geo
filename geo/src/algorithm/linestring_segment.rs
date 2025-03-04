@@ -1,8 +1,6 @@
-#[allow(deprecated)]
-use crate::algorithm::{Densify, Length, LineInterpolatePoint, LinesIter};
+use crate::algorithm::{Densify, Length, LinesIter};
 use crate::geometry::{Coord, LineString, MultiLineString};
-use crate::line_measures::Euclidean;
-use crate::Haversine;
+use crate::line_measures::{Euclidean, Haversine, InterpolateLine};
 
 /// Segments a LineString into `segment_count` equal length LineStrings as a MultiLineString
 /// using Euclidean distance calculations.  See `LineStringSegmentizeHaversine`
@@ -86,10 +84,8 @@ macro_rules! implement_segmentize {
 
                     if (cum_length >= segment_length) && (i != (n_lines - 1)) {
                         let remainder = cum_length - segment_length;
-                        #[allow(deprecated)]
-                        let endpoint =
-                            segment.line_interpolate_point((length - remainder) / length)?;
-
+                        let endpoint = $metric_space
+                            .point_at_ratio_from_start(&segment, (length - remainder) / length);
                         ln_vec.push(endpoint.into());
                         let to_push = ln_vec.drain(..);
                         res_coords.push(to_push.collect::<Vec<Coord>>());
