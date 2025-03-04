@@ -83,6 +83,8 @@
   changing some trait constraints, but they are unlikely to affect you in
   practice unless you have your own Relate implementation.
   - <https://github.com/georust/geo/pull/1317>
+- Add: PreparedGeometry::geometry and into_geometry to get at the inner geometry type.
+  - <https://github.com/georust/geo/pull/1318>
 
 ## 0.29.3 - 2024.12.03
 

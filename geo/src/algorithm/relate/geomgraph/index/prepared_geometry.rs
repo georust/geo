@@ -8,7 +8,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::dimensions::Dimensions;
-use rstar::{RTree, RTreeNum};
+use rstar::{Envelope, RTree, RTreeNum};
 
 /// A `PreparedGeometry` can be more efficient than a plain Geometry when performing
 /// multiple topological comparisons against the `PreparedGeometry`.
@@ -27,175 +27,62 @@ use rstar::{RTree, RTreeNum};
 /// assert!(prepared_polygon.relate(&contained_line).is_contains());
 ///
 /// ```
-pub struct PreparedGeometry<'a, F: GeoFloat + RTreeNum = f64> {
+pub struct PreparedGeometry<'a, G: Into<GeometryCow<'a, F>>, F: GeoFloat + RTreeNum = f64> {
+    pub(crate) geometry: G,
     pub(crate) geometry_graph: GeometryGraph<'a, F>,
     pub(crate) bounding_rect: Option<Rect<F>>,
 }
 
-mod conversions {
-    use crate::geometry_cow::GeometryCow;
-    use crate::relate::geomgraph::{GeometryGraph, RobustLineIntersector};
-    use crate::{BoundingRect, GeoFloat, PreparedGeometry};
-    use geo_types::{
-        Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
-        Point, Polygon, Rect, Triangle,
+use crate::geometry::*;
+pub(crate) fn prepare_geometry<'a, F, T>(geometry: T) -> PreparedGeometry<'a, T, F>
+where
+    F: GeoFloat,
+    T: Clone + Into<GeometryCow<'a, F>>,
+{
+    let mut geometry_graph = GeometryGraph::new(0, geometry.clone().into());
+    let r_tree = geometry_graph.build_tree();
+    let envelope = r_tree.root().envelope();
+
+    // geo and rstar have different conventions for how to represet an empty bounding boxes
+    let bounding_rect: Option<Rect<F>> = if envelope == rstar::AABB::new_empty() {
+        None
+    } else {
+        Some(Rect::new(envelope.lower(), envelope.upper()))
     };
-    use rstar::Envelope;
-    use std::rc::Rc;
+    // They should be equal - but we can save the computation in the `--release` case
+    // by using the bounding_rect from the RTree
+    debug_assert_eq!(bounding_rect, geometry_graph.geometry().bounding_rect());
 
-    impl<F: GeoFloat> From<Point<F>> for PreparedGeometry<'_, F> {
-        fn from(point: Point<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(point))
-        }
-    }
-    impl<F: GeoFloat> From<Line<F>> for PreparedGeometry<'_, F> {
-        fn from(line: Line<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(line))
-        }
-    }
-    impl<F: GeoFloat> From<LineString<F>> for PreparedGeometry<'_, F> {
-        fn from(line_string: LineString<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(line_string))
-        }
-    }
-    impl<F: GeoFloat> From<Polygon<F>> for PreparedGeometry<'_, F> {
-        fn from(polygon: Polygon<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(polygon))
-        }
-    }
-    impl<F: GeoFloat> From<MultiPoint<F>> for PreparedGeometry<'_, F> {
-        fn from(multi_point: MultiPoint<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(multi_point))
-        }
-    }
-    impl<F: GeoFloat> From<MultiLineString<F>> for PreparedGeometry<'_, F> {
-        fn from(multi_line_string: MultiLineString<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(multi_line_string))
-        }
-    }
-    impl<F: GeoFloat> From<MultiPolygon<F>> for PreparedGeometry<'_, F> {
-        fn from(multi_polygon: MultiPolygon<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(multi_polygon))
-        }
-    }
-    impl<F: GeoFloat> From<Rect<F>> for PreparedGeometry<'_, F> {
-        fn from(rect: Rect<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(rect))
-        }
-    }
-    impl<F: GeoFloat> From<Triangle<F>> for PreparedGeometry<'_, F> {
-        fn from(triangle: Triangle<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(triangle))
-        }
-    }
-    impl<F: GeoFloat> From<GeometryCollection<F>> for PreparedGeometry<'_, F> {
-        fn from(geometry_collection: GeometryCollection<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(geometry_collection))
-        }
-    }
-    impl<F: GeoFloat> From<Geometry<F>> for PreparedGeometry<'_, F> {
-        fn from(geometry: Geometry<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(geometry))
-        }
-    }
+    geometry_graph.set_tree(Rc::new(r_tree));
 
-    impl<'a, F: GeoFloat> From<&'a Point<F>> for PreparedGeometry<'a, F> {
-        fn from(point: &'a Point<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(point))
-        }
-    }
-    impl<'a, F: GeoFloat> From<&'a Line<F>> for PreparedGeometry<'a, F> {
-        fn from(line: &'a Line<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(line))
-        }
-    }
-    impl<'a, F: GeoFloat> From<&'a LineString<F>> for PreparedGeometry<'a, F> {
-        fn from(line_string: &'a LineString<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(line_string))
-        }
-    }
-    impl<'a, F: GeoFloat> From<&'a Polygon<F>> for PreparedGeometry<'a, F> {
-        fn from(polygon: &'a Polygon<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(polygon))
-        }
-    }
-    impl<'a, F: GeoFloat> From<&'a MultiPoint<F>> for PreparedGeometry<'a, F> {
-        fn from(multi_point: &'a MultiPoint<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(multi_point))
-        }
-    }
-    impl<'a, F: GeoFloat> From<&'a MultiLineString<F>> for PreparedGeometry<'a, F> {
-        fn from(multi_line_string: &'a MultiLineString<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(multi_line_string))
-        }
-    }
-    impl<'a, F: GeoFloat> From<&'a MultiPolygon<F>> for PreparedGeometry<'a, F> {
-        fn from(multi_polygon: &'a MultiPolygon<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(multi_polygon))
-        }
-    }
-    impl<'a, F: GeoFloat> From<&'a GeometryCollection<F>> for PreparedGeometry<'a, F> {
-        fn from(geometry_collection: &'a GeometryCollection<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(geometry_collection))
-        }
-    }
-    impl<'a, F: GeoFloat> From<&'a Rect<F>> for PreparedGeometry<'a, F> {
-        fn from(rect: &'a Rect<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(rect))
-        }
-    }
-    impl<'a, F: GeoFloat> From<&'a Triangle<F>> for PreparedGeometry<'a, F> {
-        fn from(triangle: &'a Triangle<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(triangle))
-        }
-    }
-
-    impl<'a, F: GeoFloat> From<&'a Geometry<F>> for PreparedGeometry<'a, F> {
-        fn from(geometry: &'a Geometry<F>) -> Self {
-            PreparedGeometry::from(GeometryCow::from(geometry))
-        }
-    }
-
-    impl<'a, F: GeoFloat> From<GeometryCow<'a, F>> for PreparedGeometry<'a, F> {
-        fn from(geometry: GeometryCow<'a, F>) -> Self {
-            let mut geometry_graph = GeometryGraph::new(0, geometry);
-            let r_tree = geometry_graph.build_tree();
-
-            let envelope = r_tree.root().envelope();
-
-            // geo and rstar have different conventions for how to represet an empty bounding boxes
-            let bounding_rect: Option<Rect<F>> = if envelope == rstar::AABB::new_empty() {
-                None
-            } else {
-                Some(Rect::new(envelope.lower(), envelope.upper()))
-            };
-            // They should be equal - but we can save the computation in the `--release` case
-            // by using the bounding_rect from the RTree
-            debug_assert_eq!(bounding_rect, geometry_graph.geometry().bounding_rect());
-
-            geometry_graph.set_tree(Rc::new(r_tree));
-
-            // TODO: don't pass in line intersector here - in theory we'll want pluggable line intersectors
-            // and the type (Robust) shouldn't be hard coded here.
-            geometry_graph.compute_self_nodes(Box::new(RobustLineIntersector::new()));
-            Self {
-                geometry_graph,
-                bounding_rect,
-            }
-        }
+    // TODO: don't pass in line intersector here - in theory we'll want pluggable line intersectors
+    // and the type (Robust) shouldn't be hard coded here.
+    geometry_graph.compute_self_nodes(Box::new(RobustLineIntersector::new()));
+    PreparedGeometry {
+        geometry,
+        geometry_graph,
+        bounding_rect,
     }
 }
 
-impl<F> PreparedGeometry<'_, F>
+impl<'a, G, F> PreparedGeometry<'a, G, F>
 where
     F: GeoFloat + RTreeNum,
+    G: Into<GeometryCow<'a, F>>,
 {
-    pub(crate) fn geometry(&self) -> &GeometryCow<F> {
-        self.geometry_graph.geometry()
+    pub fn geometry(&self) -> &G {
+        &self.geometry
+    }
+    pub fn into_geometry(self) -> G {
+        self.geometry
     }
 }
 
-impl<F: GeoFloat> BoundingRect<F> for PreparedGeometry<'_, F> {
+impl<'a, G, F> BoundingRect<F> for PreparedGeometry<'a, G, F>
+where
+    F: GeoFloat,
+    G: Into<GeometryCow<'a, F>>,
+{
     type Output = Option<Rect<F>>;
 
     fn bounding_rect(&self) -> Option<Rect<F>> {
@@ -203,7 +90,11 @@ impl<F: GeoFloat> BoundingRect<F> for PreparedGeometry<'_, F> {
     }
 }
 
-impl<F: GeoFloat> HasDimensions for PreparedGeometry<'_, F> {
+impl<'a, G, F: GeoFloat> HasDimensions for PreparedGeometry<'a, G, F>
+where
+    F: GeoFloat,
+    G: Into<GeometryCow<'a, F>>,
+{
     fn is_empty(&self) -> bool {
         self.geometry_graph.geometry().is_empty()
     }
@@ -217,7 +108,11 @@ impl<F: GeoFloat> HasDimensions for PreparedGeometry<'_, F> {
     }
 }
 
-impl<F: GeoFloat> Relate<F> for PreparedGeometry<'_, F> {
+impl<'a, G, F: GeoFloat> Relate<F> for PreparedGeometry<'a, G, F>
+where
+    F: GeoFloat,
+    G: Into<GeometryCow<'a, F>>,
+{
     /// Efficiently builds a [`GeometryGraph`] which can then be used for topological
     /// computations.
     fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<F> {
@@ -264,5 +159,17 @@ mod tests {
         let cached_graph = prepared_geom.geometry_graph(1);
         let fresh_graph = GeometryGraph::new(1, poly_cow);
         cached_graph.assert_eq_graph(&fresh_graph);
+    }
+
+    #[test]
+    fn get_geometry() {
+        let poly = polygon![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0), (x: 1.0, y: 1.0)];
+        let prepared_geom = PreparedGeometry::from(&poly);
+        assert_eq!(&poly, *prepared_geom.geometry());
+        assert_eq!(&poly, prepared_geom.into_geometry());
+
+        let prepared_geom = PreparedGeometry::from(poly.clone());
+        assert_eq!(&poly, prepared_geom.geometry());
+        assert_eq!(poly, prepared_geom.into_geometry());
     }
 }
