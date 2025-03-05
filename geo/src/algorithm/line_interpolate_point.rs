@@ -6,6 +6,10 @@ use crate::coords_iter::CoordsIter;
 use crate::{CoordFloat, EuclideanLength, Line, LineString, Point};
 use std::ops::AddAssign;
 
+#[deprecated(
+    since = "0.30.0",
+    note = "use `line_string.point_at_ratio_from_start(&Euclidean, fraction)` instead"
+)]
 /// Returns an option of the point that lies a given fraction along the line.
 ///
 /// If the given fraction is
@@ -40,6 +44,7 @@ pub trait LineInterpolatePoint<F: CoordFloat> {
     fn line_interpolate_point(&self, fraction: F) -> Self::Output;
 }
 
+#[allow(deprecated)]
 impl<T> LineInterpolatePoint<T> for Line<T>
 where
     T: CoordFloat,
@@ -113,6 +118,7 @@ where
 
 #[cfg(test)]
 mod test {
+    #![allow(deprecated)]
 
     use super::*;
     use crate::{coord, point};

@@ -173,6 +173,7 @@ pub use k_nearest_concave_hull::KNearestConcaveHull;
 
 /// Interpolate a point along a `Line` or `LineString`.
 pub mod line_interpolate_point;
+#[allow(deprecated)]
 pub use line_interpolate_point::LineInterpolatePoint;
 
 /// Computes the intersection of two Lines.
@@ -191,7 +192,10 @@ pub mod line_measures;
 pub use line_measures::metric_spaces::{
     Euclidean, Geodesic, GeodesicMeasure, Haversine, HaversineMeasure, Rhumb,
 };
-pub use line_measures::{Bearing, Densify, Destination, Distance, InterpolatePoint, Length};
+pub use line_measures::{
+    Bearing, Densify, Destination, Distance, InterpolatableLine, InterpolateLine, InterpolatePoint,
+    Length,
+};
 
 /// Split a LineString into n segments
 pub mod linestring_segment;
