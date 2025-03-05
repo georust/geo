@@ -8,7 +8,7 @@ use std::ops::AddAssign;
 
 #[deprecated(
     since = "0.30.0",
-    note = "use `Euclidean.point_at_ratio_from_start` instead"
+    note = "use `line_string.point_at_ratio_from_start(&Euclidean, fraction)` instead"
 )]
 /// Returns an option of the point that lies a given fraction along the line.
 ///

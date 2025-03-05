@@ -193,7 +193,8 @@ pub use line_measures::metric_spaces::{
     Euclidean, Geodesic, GeodesicMeasure, Haversine, HaversineMeasure, Rhumb,
 };
 pub use line_measures::{
-    Bearing, Densify, Destination, Distance, InterpolateLine, InterpolatePoint, Length,
+    Bearing, Densify, Destination, Distance, InterpolatableLine, InterpolateLine, InterpolatePoint,
+    Length,
 };
 
 /// Split a LineString into n segments
