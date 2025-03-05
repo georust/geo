@@ -76,7 +76,17 @@ macro_rules! relate_impl {
         $(
             impl<F: GeoFloat> Relate<F> for $t {
                 fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<F> {
-                    GeometryGraph::new(arg_index, GeometryCow::from(self))
+                    $crate::relate::GeometryGraph::new(arg_index, GeometryCow::from(self))
+                }
+            }
+            impl<F: GeoFloat> From<$t> for PreparedGeometry<'static, $t, F> {
+                fn from(geometry: $t) -> Self {
+                    $crate::relate::geomgraph::index::prepare_geometry(geometry)
+                }
+            }
+            impl<'a, F: GeoFloat> From<&'a $t> for PreparedGeometry<'a, &'a $t, F> {
+                fn from(geometry: &'a $t) -> Self {
+                    $crate::relate::geomgraph::index::prepare_geometry(geometry)
                 }
             }
         )*
