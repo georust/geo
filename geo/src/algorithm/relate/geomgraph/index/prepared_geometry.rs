@@ -41,19 +41,8 @@ where
 {
     let mut geometry_graph = GeometryGraph::new(0, geometry.clone().into());
     let r_tree = geometry_graph.build_tree();
-    let envelope = r_tree.root().envelope();
-
-    // geo and rstar have different conventions for how to represet an empty bounding boxes
-    let bounding_rect: Option<Rect<F>> = if envelope == rstar::AABB::new_empty() {
-        None
-    } else {
-        Some(Rect::new(envelope.lower(), envelope.upper()))
-    };
-    // They should be equal - but we can save the computation in the `--release` case
-    // by using the bounding_rect from the RTree
-    debug_assert_eq!(bounding_rect, geometry_graph.geometry().bounding_rect());
-
     geometry_graph.set_tree(Rc::new(r_tree));
+    let bounding_rect = geometry_graph.geometry().bounding_rect();
 
     // TODO: don't pass in line intersector here - in theory we'll want pluggable line intersectors
     // and the type (Robust) shouldn't be hard coded here.
@@ -124,7 +113,7 @@ where
 mod tests {
     use super::*;
     use crate::algorithm::Relate;
-    use crate::polygon;
+    use crate::{polygon, wkt};
 
     #[test]
     fn relate() {
@@ -171,5 +160,45 @@ mod tests {
         let prepared_geom = PreparedGeometry::from(poly.clone());
         assert_eq!(&poly, prepared_geom.geometry());
         assert_eq!(poly, prepared_geom.into_geometry());
+    }
+
+    #[test]
+    fn zero_dimensional_point() {
+        let poly = polygon![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0), (x: 1.0, y: 2.0)];
+        let prepared_poly = PreparedGeometry::from(&poly);
+        let point = crate::point!(x: 1.0, y: 1.0);
+        let prepared_point = PreparedGeometry::from(&point);
+
+        let im = poly.relate(&point);
+        assert!(im.matches("0F2FF1FF2").unwrap(), "got {im:?}");
+
+        let im = prepared_poly.relate(&point);
+        assert!(im.matches("0F2FF1FF2").unwrap(), "got {im:?}");
+
+        let im = poly.relate(&prepared_point);
+        assert!(im.matches("0F2FF1FF2").unwrap(), "got {im:?}");
+
+        let im = prepared_poly.relate(&prepared_point);
+        assert!(im.matches("0F2FF1FF2").unwrap(), "got {im:?}");
+    }
+
+    #[test]
+    fn zero_dimensional_multipoint() {
+        let poly = polygon![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0), (x: 1.0, y: 2.0)];
+        let prepared_poly = PreparedGeometry::from(&poly);
+        let multi_point = wkt!(MULTIPOINT(1. 1.));
+        let prepared_multi_point = PreparedGeometry::from(&multi_point);
+
+        let im = poly.relate(&multi_point);
+        assert!(im.matches("0F2FF1FF2").unwrap(), "got {im:?}");
+
+        let im = prepared_poly.relate(&multi_point);
+        assert!(im.matches("0F2FF1FF2").unwrap(), "got {im:?}");
+
+        let im = poly.relate(&prepared_multi_point);
+        assert!(im.matches("0F2FF1FF2").unwrap(), "got {im:?}");
+
+        let im = prepared_poly.relate(&prepared_multi_point);
+        assert!(im.matches("0F2FF1FF2").unwrap(), "got {im:?}");
     }
 }
