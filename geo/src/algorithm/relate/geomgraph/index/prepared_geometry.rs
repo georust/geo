@@ -5,6 +5,7 @@ use crate::{BoundingRect, GeometryCow, HasDimensions};
 use crate::{GeoFloat, Relate};
 
 use std::cell::RefCell;
+use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 
 use crate::dimensions::Dimensions;
@@ -27,10 +28,38 @@ use rstar::{Envelope, RTree, RTreeNum};
 /// assert!(prepared_polygon.relate(&contained_line).is_contains());
 ///
 /// ```
-pub struct PreparedGeometry<'a, G: Into<GeometryCow<'a, F>>, F: GeoFloat + RTreeNum = f64> {
+#[derive(Clone)]
+pub struct PreparedGeometry<'a, G, F = f64>
+where
+    G: Into<GeometryCow<'a, F>>,
+    F: GeoFloat + RTreeNum,
+{
     pub(crate) geometry: G,
     pub(crate) geometry_graph: GeometryGraph<'a, F>,
     pub(crate) bounding_rect: Option<Rect<F>>,
+}
+
+impl<'a, G, F> Debug for PreparedGeometry<'a, G, F>
+where
+    G: Into<GeometryCow<'a, F>> + Debug,
+    F: GeoFloat + RTreeNum,
+{
+    /// ```
+    /// use geo::{wkt, PreparedGeometry};
+    /// let poly = wkt!(POLYGON((0.0 0.0,2.0 0.0,1.0 1.0,0.0 0.0)));
+    /// let prepared_geom = PreparedGeometry::from(&poly);
+    ///
+    /// let debug = format!("debug output is: {prepared_geom:?}");
+    /// assert_eq!(
+    ///     debug,
+    ///     "debug output is: PreparedGeometry(POLYGON((0.0 0.0,2.0 0.0,1.0 1.0,0.0 0.0)))"
+    /// );
+    /// ```
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("PreparedGeometry")
+            .field(&self.geometry)
+            .finish()
+    }
 }
 
 use crate::geometry::*;
