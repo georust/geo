@@ -46,7 +46,7 @@
 
   // after
   Geodesic.distance(point1, point2)
-  
+
   // For custom Earth (or non-earth!) geoids:
   let nad83_flattening = 1. / 298.257222101;
   GeodesicMeasure::new(6_378_137, nad83_flattening).distance(point1, point2)
@@ -61,6 +61,8 @@
   - <https://github.com/georust/geo/pull/1278>
 - Added: `Validation` trait to check validity of `Geometry`.
   - https://github.com/georust/geo/pull/1279
+- Fix a math error in some rhumb line calculations
+  - <https://github.com/georust/geo/pull/1330>
   ```rust
   // use in control flow
   if polygon.is_valid() { foo() }
