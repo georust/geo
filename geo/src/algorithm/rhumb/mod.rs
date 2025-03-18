@@ -74,7 +74,7 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
 
     pub(crate) fn delta(&self) -> T {
         let threshold = T::from(10.0e-12).unwrap();
-        let q = if self.delta_psi > threshold {
+        let q = if self.delta_psi.abs() > threshold {
             self.delta_phi / self.delta_psi
         } else {
             self.phi1.cos()
