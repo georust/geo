@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Bump `geo` MSRV to 1.81
 - BREAKING: `FrechetDistance` is now defined on the metric space, rather than a method on a Linestring.
   - <https://github.com/georust/geo/pull/1274>
   ```rust

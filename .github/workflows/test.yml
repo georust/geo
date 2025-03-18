@@ -54,7 +54,7 @@ jobs:
       matrix:
         container_image:
           # Use the latest stable version. No need for older versions.
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83"
+          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -78,7 +78,7 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.80"
+          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.81"
           # Two most recent releases - we omit older ones for expedient CI
           - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83"
           - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
@@ -106,7 +106,7 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.80"
+          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.81"
           # Two most recent releases - we omit older ones for expedient CI
           - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83"
           - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
@@ -133,7 +133,7 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.80"
+          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.81"
           # Two most recent releases - we omit older ones for expedient CI
           - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83"
           - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
@@ -159,7 +159,7 @@ jobs:
           # giving us about 6 months of coverage.
           #
           # Minimum supported rust version (MSRV)
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.80"
+          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.81"
           # Two most recent releases - we omit older ones for expedient CI
           - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83"
           - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
@@ -182,7 +182,7 @@ jobs:
       matrix:
         container_image:
           # Fuzz only on latest
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83"
+          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
     container:
       image: ${{ matrix.container_image }}
     steps:
@@ -195,7 +195,7 @@ jobs:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     container:
-      image: ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83
+      image: ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -206,7 +206,7 @@ jobs:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     container:
-      image: ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83
+      image: ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
