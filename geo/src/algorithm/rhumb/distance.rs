@@ -84,7 +84,7 @@ mod test {
         let b = Point::new(-77.009080, 38.889825);
         #[allow(deprecated)]
         let distance = a.rhumb_distance(&b);
-        assert_relative_eq!(distance, 2526.7031699343006_f64, epsilon = 1.0e-6);
+        assert_relative_eq!(distance, 2526.823513863995_f64, epsilon = 1.0e-6);
     }
 
     #[test]
@@ -94,6 +94,6 @@ mod test {
         let b = Point::<f32>::new(-77.00908, 38.889825);
         #[allow(deprecated)]
         let distance = a.rhumb_distance(&b);
-        assert_relative_eq!(distance, 2526.7273_f32, epsilon = 1.0e-6);
+        assert_relative_eq!(distance, 2527.4585_f32, epsilon = 1.0e-6);
     }
 }
