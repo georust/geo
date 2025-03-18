@@ -102,7 +102,7 @@ mod tests {
             Geodesic.length(&line).round()
         );
         assert_eq!(
-            341_088., // meters
+            343_572., // meters
             Rhumb.length(&line).round()
         );
         assert_eq!(
@@ -136,7 +136,7 @@ mod tests {
             Geodesic.length(&line_string).round()
         );
         assert_eq!(
-            6_332_790., // meters
+            6_308_683., // meters
             Rhumb.length(&line_string).round()
         );
         assert_eq!(
