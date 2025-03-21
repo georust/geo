@@ -67,7 +67,7 @@
 - Fix a math error in some rhumb line calculations
   - <https://github.com/georust/geo/pull/1330>
 - Added: `Validation` trait to check validity of `Geometry`.
-  - https://github.com/georust/geo/pull/1279
+  - <https://github.com/georust/geo/pull/1279>
   ```rust
   // use in control flow
   if polygon.is_valid() { foo() }
