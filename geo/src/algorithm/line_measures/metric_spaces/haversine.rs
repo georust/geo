@@ -61,7 +61,7 @@ use crate::{CoordFloat, Point};
 /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
 /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
 pub struct HaversineMeasure {
-    radius: f64,
+    pub(crate) radius: f64,
 }
 
 impl Default for HaversineMeasure {
@@ -110,8 +110,8 @@ impl HaversineMeasure {
         Self { radius }
     }
 
-    pub const fn radius(&self) -> f64 {
-        self.radius
+    pub fn radius<F: CoordFloat + FromPrimitive>(&self) -> F {
+        F::from(self.radius).unwrap()
     }
 
     /// A sphere with radius equal to the mean radius of the GRS80 ellipsoid — `R₁`,
@@ -223,7 +223,7 @@ impl<F: CoordFloat + FromPrimitive> Destination<F> for HaversineMeasure {
         let center_lat = origin.y().to_radians();
         let bearing_rad = bearing.to_radians();
 
-        let rad = meters / F::from(self.radius).unwrap();
+        let rad = meters / self.radius();
 
         let lat =
             { center_lat.sin() * rad.cos() + center_lat.cos() * rad.sin() * bearing_rad.cos() }
@@ -272,7 +272,7 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Haversin
         let a = (delta_theta / two).sin().powi(2)
             + theta1.cos() * theta2.cos() * (delta_lambda / two).sin().powi(2);
         let c = two * a.sqrt().asin();
-        F::from(self.radius).unwrap() * c
+        self.radius::<F>() * c
     }
 }
 
@@ -369,7 +369,7 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for HaversineMeasure {
         let calculation = HaversineIntermediateFillCalculation::new(start, end);
         let HaversineIntermediateFillCalculation { d, .. } = calculation;
 
-        let total_distance = d * F::from(self.radius).unwrap();
+        let total_distance = d * self.radius();
 
         if total_distance <= max_distance {
             return if include_ends {
