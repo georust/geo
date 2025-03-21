@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.30.0 - 2025-03-24
 
 - Bump `geo` MSRV to 1.81
 - BREAKING: Update proj dependency to 0.29.0
@@ -39,7 +39,7 @@
   // For custom earth (or non-earth!) radius
   HaversineMeasure::new(3_389_500.0).distance(point1, point2)
   ```
-- Add configurable `GeodesiceMeasure` for doing calculations on a custom geoid. Use the `Geodesic` instance for the default Earth geoid.
+- Add configurable `GeodesicMeasure` for doing calculations on a custom geoid. Use the `Geodesic` instance for the default Earth geoid.
   - <https://github.com/georust/geo/pull/1311>
   ```rust
   // before
@@ -64,10 +64,10 @@
   - <https://github.com/georust/geo/pull/1246>
 - Loosen bounds on `RemoveRepeatedPoints` trait (`num_traits::FromPrimitive` isn't required)
   - <https://github.com/georust/geo/pull/1278>
-- Added: `Validation` trait to check validity of `Geometry`.
-  - https://github.com/georust/geo/pull/1279
 - Fix a math error in some rhumb line calculations
   - <https://github.com/georust/geo/pull/1330>
+- Added: `Validation` trait to check validity of `Geometry`.
+  - https://github.com/georust/geo/pull/1279
   ```rust
   // use in control flow
   if polygon.is_valid() { foo() }
@@ -80,13 +80,10 @@
   // error implements Display for human readable explanations
   println!("{}", errors[0]);
   ```
-  - BREAKING: update proj to 0.28.0
 - Polygons returned by Boolean Ops are now oriented correctly (ccw shell, cw inner rings)
   - <https://github.com/georust/geo/pull/1310>
 - Update `i_overlay`, which is used by the `BoolOps` trait.
   - <https://github.com/georust/geo/pull/1314>
-- Bump `geo` MSRV to 1.80 and update CI
-  - <https://github.com/georust/geo/pull/1311>
 - BREAKING: Speed up `Relate` for `PreparedGeometry` - this did require
   changing some trait constraints, but they are unlikely to affect you in
   practice unless you have your own Relate implementation.

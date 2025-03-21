@@ -3,7 +3,7 @@ use crate::Point;
 use geographiclib_rs::{DirectGeodesic, InverseGeodesic};
 use std::sync::LazyLock;
 
-/// Use the [`Geodesic`] constant (an instance of `GeodesiceMeasure`) rather than building your own
+/// Use the [`Geodesic`] constant (an instance of `GeodesicMeasure`) rather than building your own
 /// customized [`GeodesicMeasure`] for standard ellipsoidal Earth measurements.
 ///
 /// Measures distance on an ellipsoidal model of the Earth using methods given by [Karney (2013)].
