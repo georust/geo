@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.30.0 - 2025-03-22
 
 - Bump `geo` MSRV to 1.81
 - BREAKING: Update proj dependency to 0.29.0
