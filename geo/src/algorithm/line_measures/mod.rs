@@ -31,6 +31,9 @@ pub use distance::Distance;
 mod interpolate_point;
 pub use interpolate_point::InterpolatePoint;
 
+mod interpolate_line;
+pub use interpolate_line::{InterpolatableLine, InterpolateLine};
+
 mod length;
 pub use length::{Length, LengthMeasurable};
 

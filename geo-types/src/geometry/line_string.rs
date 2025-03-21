@@ -226,30 +226,23 @@ impl<T: CoordNum> LineString<T> {
         self.0
     }
 
-    /// Return an iterator yielding one [Line] for each line segment
+    /// Return an iterator yielding one [`Line`] for each line segment
     /// in the [`LineString`].
     ///
     /// # Examples
     ///
     /// ```
-    /// use geo_types::{coord, Line, LineString};
+    /// use geo_types::{wkt, Line, LineString};
     ///
-    /// let mut coords = vec![(0., 0.), (5., 0.), (7., 9.)];
-    /// let line_string: LineString<f32> = coords.into_iter().collect();
-    ///
+    /// let line_string = wkt!(LINESTRING(0 0,5 0,7 9));
     /// let mut lines = line_string.lines();
+    ///
     /// assert_eq!(
-    ///     Some(Line::new(
-    ///         coord! { x: 0., y: 0. },
-    ///         coord! { x: 5., y: 0. }
-    ///     )),
+    ///     Some(Line::new((0, 0), (5, 0))),
     ///     lines.next()
     /// );
     /// assert_eq!(
-    ///     Some(Line::new(
-    ///         coord! { x: 5., y: 0. },
-    ///         coord! { x: 7., y: 9. }
-    ///     )),
+    ///     Some(Line::new((5, 0), (7, 9))),
     ///     lines.next()
     /// );
     /// assert!(lines.next().is_none());
@@ -258,6 +251,37 @@ impl<T: CoordNum> LineString<T> {
         self.0.windows(2).map(|w| {
             // slice::windows(N) is guaranteed to yield a slice with exactly N elements
             unsafe { Line::new(*w.get_unchecked(0), *w.get_unchecked(1)) }
+        })
+    }
+
+    /// Return an iterator yielding one [`Line`] for each line segment in the [`LineString`],
+    /// starting from the **end** point of the LineString, working towards the start.
+    ///
+    /// Note: This is like [`Self::lines`], but the sequence **and** the orientation of
+    /// segments are reversed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{wkt, Line, LineString};
+    ///
+    /// let line_string = wkt!(LINESTRING(0 0,5 0,7 9));
+    /// let mut lines = line_string.rev_lines();
+    ///
+    /// assert_eq!(
+    ///     Some(Line::new((7, 9), (5, 0))),
+    ///     lines.next()
+    /// );
+    /// assert_eq!(
+    ///     Some(Line::new((5, 0), (0, 0))),
+    ///     lines.next()
+    /// );
+    /// assert!(lines.next().is_none());
+    /// ```
+    pub fn rev_lines(&'_ self) -> impl ExactSizeIterator<Item = Line<T>> + '_ {
+        self.0.windows(2).rev().map(|w| {
+            // slice::windows(N) is guaranteed to yield a slice with exactly N elements
+            unsafe { Line::new(*w.get_unchecked(1), *w.get_unchecked(0)) }
         })
     }
 

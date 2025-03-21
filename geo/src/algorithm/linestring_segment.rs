@@ -1,7 +1,6 @@
-use crate::algorithm::{Densify, Length, LineInterpolatePoint, LinesIter};
+use crate::algorithm::{Densify, Length, LinesIter};
 use crate::geometry::{Coord, LineString, MultiLineString};
-use crate::line_measures::Euclidean;
-use crate::Haversine;
+use crate::line_measures::{Euclidean, Haversine, InterpolateLine};
 
 /// Segments a LineString into `segment_count` equal length LineStrings as a MultiLineString
 /// using Euclidean distance calculations.  See `LineStringSegmentizeHaversine`
@@ -85,9 +84,8 @@ macro_rules! implement_segmentize {
 
                     if (cum_length >= segment_length) && (i != (n_lines - 1)) {
                         let remainder = cum_length - segment_length;
-                        let endpoint =
-                            segment.line_interpolate_point((length - remainder) / length)?;
-
+                        let endpoint = $metric_space
+                            .point_at_ratio_from_start(&segment, (length - remainder) / length);
                         ln_vec.push(endpoint.into());
                         let to_push = ln_vec.drain(..);
                         res_coords.push(to_push.collect::<Vec<Coord>>());
@@ -316,22 +314,24 @@ mod test {
     fn haversine_segment_length() {
         let linestring: LineString = vec![
             [-3.19416, 55.95524],
-            [-3.19352, 55.95535],
-            [-3.19288, 55.95546],
+            [-13.19352, 65.95535],
+            [-23.19288, 75.95546],
         ]
         .into();
 
         let n = 8;
 
-        let segments = linestring.line_segmentize_haversine(n).unwrap();
-        let lens = segments
-            .0
-            .iter()
-            .map(|li| Haversine.length(li))
-            .collect::<Vec<_>>();
+        let total_length = Haversine.length(&linestring);
+        let expected_segment_length = total_length / (n as f64);
 
-        let epsilon = 1e-6; // 6th decimal place which is micrometers
-        assert!(lens.iter().all(|&x| (x - lens[0]).abs() < epsilon));
+        let segments = linestring.line_segmentize_haversine(n).unwrap();
+        for segment in segments {
+            assert_relative_eq!(
+                Haversine.length(&segment),
+                expected_segment_length,
+                epsilon = 1e-9
+            );
+        }
     }
 
     #[test]
