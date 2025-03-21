@@ -1,6 +1,6 @@
 # Changes
 
-## UNRELEASED
+## 0.7.16 - 2025-03-24
 
 - Add `LineString::rev_lines` to iterate segments from end to start
   - <https://github.com/georust/geo/pull/1321>
