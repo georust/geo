@@ -1,4 +1,4 @@
-use super::{Distance, Euclidean};
+use super::{ComparableDistance, Distance, Euclidean};
 use crate::algorithm::Intersects;
 use crate::coordinate_position::{coord_pos_relative_to_ring, CoordPos};
 use crate::geometry::*;
@@ -27,13 +27,23 @@ macro_rules! symmetric_distance_impl {
 
 impl<F: CoordFloat> Distance<F, Coord<F>, Coord<F>> for Euclidean {
     fn distance(&self, origin: Coord<F>, destination: Coord<F>) -> F {
+        Self.comparable_distance(origin, destination).sqrt()
+    }
+}
+impl<F: CoordFloat> ComparableDistance<F, Coord<F>, Coord<F>> for Euclidean {
+    fn comparable_distance(&self, origin: Coord<F>, destination: Coord<F>) -> F {
         let delta = origin - destination;
-        delta.x.hypot(delta.y)
+        delta.x.powi(2) + delta.y.powi(2)
     }
 }
 impl<F: CoordFloat> Distance<F, Coord<F>, &Line<F>> for Euclidean {
     fn distance(&self, coord: Coord<F>, line: &Line<F>) -> F {
-        ::geo_types::private_utils::point_line_euclidean_distance(Point(coord), *line)
+        Self::comparable_distance(&self, coord, line).sqrt()
+    }
+}
+impl<F: CoordFloat> ComparableDistance<F, Coord<F>, &Line<F>> for Euclidean {
+    fn comparable_distance(&self, coord: Coord<F>, line: &Line<F>) -> F {
+        ::geo_types::private_utils::point_line_euclidean_distance_squared(Point(coord), *line)
     }
 }
 
@@ -75,15 +85,33 @@ impl<F: CoordFloat> Distance<F, Point<F>, Point<F>> for Euclidean {
     }
 }
 
+impl<F: CoordFloat> ComparableDistance<F, Point<F>, Point<F>> for Euclidean {
+    fn comparable_distance(&self, origin: Point<F>, destination: Point<F>) -> F {
+        self.comparable_distance(origin.0, destination.0)
+    }
+}
+
 impl<F: CoordFloat> Distance<F, &Point<F>, &Point<F>> for Euclidean {
     fn distance(&self, origin: &Point<F>, destination: &Point<F>) -> F {
         self.distance(*origin, *destination)
     }
 }
 
+impl<F: CoordFloat> ComparableDistance<F, &Point<F>, &Point<F>> for Euclidean {
+    fn comparable_distance(&self, origin: &Point<F>, destination: &Point<F>) -> F {
+        self.comparable_distance(*origin, *destination)
+    }
+}
+
 impl<F: CoordFloat> Distance<F, &Point<F>, &Line<F>> for Euclidean {
     fn distance(&self, origin: &Point<F>, destination: &Line<F>) -> F {
-        geo_types::private_utils::point_line_euclidean_distance(*origin, *destination)
+        self.comparable_distance(origin, destination).sqrt()
+    }
+}
+
+impl<F: CoordFloat> ComparableDistance<F, &Point<F>, &Line<F>> for Euclidean {
+    fn comparable_distance(&self, origin: &Point<F>, destination: &Line<F>) -> F {
+        geo_types::private_utils::point_line_euclidean_distance_squared(*origin, *destination)
     }
 }
 
