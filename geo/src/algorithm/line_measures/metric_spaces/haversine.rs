@@ -84,7 +84,7 @@ impl Default for HaversineMeasure {
 /// let start = wkt!(POINT(23.319941 42.698334)); // Sofia: Longitude, Latitude
 /// let finish = wkt!(POINT(24.742168 42.136097)); // Plovdiv: Longitude, Latitude
 ///
-/// // Use `Haversine` for measuring on the Earth's surface.h
+/// // Use `Haversine` for measuring on the Earth's surface.
 /// assert_relative_eq!(
 ///     132433.09929460194,
 ///     Haversine.distance(start, finish)
