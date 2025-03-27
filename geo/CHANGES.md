@@ -1,5 +1,20 @@
 # Changes
 
+## Unreleased
+
+- Implement `intersect` and `intersect_point` for `Rect`
+  ```rust
+  rect.intersect(other_rect);
+  rect.intersect_point((1., 1.));
+  ```
+- Implement `Rect::from` for `Coord`, `Point`, `Line` and `Triangle`
+  ```rust
+  Rect::from(coord!{x: 1., y: 1.});
+  Rect::from(Point::new(1., 1.));
+  Rect::from(Line::new((0., 0.), (1., 1.)));
+  ```
+- Inline getter functions of `Rect` to improve speed
+
 ## 0.30.0 - 2025-03-24
 
 - Bump `geo` MSRV to 1.81
