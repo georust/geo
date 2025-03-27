@@ -1,4 +1,4 @@
-use crate::{coord, polygon, Coord, CoordFloat, CoordNum, Line, Polygon};
+use crate::{coord, polygon, Coord, CoordFloat, CoordNum, Line, Point, Polygon, Triangle};
 
 /// An _axis-aligned_ bounded 2D rectangle whose area is
 /// defined by minimum and maximum `Coord`s.
@@ -106,6 +106,7 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// assert_eq!(rect.min(), coord! { x: 5., y: 5. });
     /// ```
+    #[inline]
     pub fn min(self) -> Coord<T> {
         self.min
     }
@@ -137,6 +138,7 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// assert_eq!(rect.max(), coord! { x: 15., y: 15. });
     /// ```
+    #[inline]
     pub fn max(self) -> Coord<T> {
         self.max
     }
@@ -168,6 +170,7 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// assert_eq!(rect.width(), 10.);
     /// ```
+    #[inline]
     pub fn width(self) -> T {
         self.max().x - self.min().x
     }
@@ -186,8 +189,78 @@ impl<T: CoordNum> Rect<T> {
     ///
     /// assert_eq!(rect.height(), 10.);
     /// ```
+    #[inline]
     pub fn height(self) -> T {
         self.max().y - self.min().y
+    }
+
+    /// Returns the intersection between a [`Rect`] something that can be turned into a [`Rect`]
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use geo_types::{coord, Rect};
+    ///
+    /// let rect1 = Rect::new(
+    ///     coord! { x: 5., y: 5. },
+    ///     coord! { x: 15., y: 15. },
+    /// );
+    /// let rect2 = Rect::new(
+    ///     coord! { x: 10., y: 10. },
+    ///     coord! { x: 20., y: 20. },
+    /// );
+    /// let result = Rect::new(
+    ///     coord! { x: 5., y: 5. },
+    ///     coord! { x: 20., y: 20. },
+    /// );
+    ///
+    /// assert_eq!(rect1.intersect(rect2), result);
+    /// ```
+    pub fn intersect<C: Into<Rect<T>>>(self, rhs: C) -> Self {
+        let rhs: Rect<T> = rhs.into();
+        Self {
+            min: coord! {
+                x: if self.min().x < rhs.min().x { self.min().x} else {rhs.min().x},
+                y: if self.min().y < rhs.min().y { self.min().y} else {rhs.min().y},
+            },
+            max: coord! {
+                x: if self.max().x > rhs.max().x { self.max().x} else {rhs.max().x},
+                y: if self.max().y > rhs.max().y { self.max().y} else {rhs.max().y},
+            },
+        }
+    }
+
+    /// Returns the intersection between a [`Rect`] and something that can be turned into a [`Coord`]
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use geo_types::{coord, Rect, Point};
+    ///
+    /// let rect1 = Rect::new(
+    ///     coord! { x: 0., y: 0. },
+    ///     coord! { x: 10., y: 10. },
+    /// );
+    /// let point = coord! { x: 15., y: 15. };
+    /// let result = Rect::new(
+    ///     coord! { x: 0., y: 0. },
+    ///     coord! { x: 15., y: 15. },
+    /// );
+    ///
+    /// assert_eq!(rect1.intersect_point(point), result);
+    /// ```
+    pub fn intersect_point<C: Into<Coord<T>>>(self, rhs: C) -> Self {
+        let rhs: Coord<T> = rhs.into();
+        Self {
+            min: coord! {
+                x: if self.min().x < rhs.x { self.min().x} else {rhs.x},
+                y: if self.min().y < rhs.y { self.min().y} else {rhs.y},
+            },
+            max: coord! {
+                x: if self.max().x > rhs.x { self.max().x} else {rhs.x},
+                y: if self.max().y > rhs.y { self.max().y} else {rhs.y},
+            },
+        }
     }
 
     /// Create a `Polygon` from the `Rect`.
@@ -376,6 +449,36 @@ impl<T: CoordFloat> Rect<T> {
     }
 }
 
+impl<T: CoordNum> From<Coord<T>> for Rect<T> {
+    #[inline]
+    fn from(value: Coord<T>) -> Self {
+        Rect {
+            min: value,
+            max: value,
+        }
+    }
+}
+
+impl<T: CoordNum> From<Point<T>> for Rect<T> {
+    #[inline]
+    fn from(value: Point<T>) -> Self {
+        Self::from(Coord::from(value))
+    }
+}
+
+impl<T: CoordNum> From<Line<T>> for Rect<T> {
+    #[inline]
+    fn from(value: Line<T>) -> Self {
+        Rect::new(value.start_point(), value.end_point())
+    }
+}
+
+impl<T: CoordNum> From<Triangle<T>> for Rect<T> {
+    fn from(value: Triangle<T>) -> Self {
+        Rect::new(value.0, value.1).intersect_point(value.2)
+    }
+}
+
 static RECT_INVALID_BOUNDS_ERROR: &str = "Failed to create Rect: 'min' coordinate's x/y value must be smaller or equal to the 'max' x/y value";
 
 #[cfg(any(feature = "approx", test))]
@@ -544,6 +647,49 @@ mod test {
         assert_relative_eq!(
             Rect::new((0., 0.), (0., 0.)).center(),
             Coord::from((0., 0.))
+        );
+    }
+
+    #[test]
+    fn rect_from() {
+        // Coord
+        assert_relative_eq!(
+            Rect::new((1., 1.), (1., 1.)),
+            Rect::from(coord! {x: 1., y:1.})
+        );
+
+        // Point
+        assert_relative_eq!(
+            Rect::new((1., 1.), (1., 1.)),
+            Rect::from(Point::from((1., 1.)))
+        );
+
+        // Line
+        assert_relative_eq!(
+            Rect::new((0., 0.), (1., 1.)),
+            Rect::from(Line::from([(0., 0.), (1., 1.)]))
+        );
+        assert_relative_eq!(
+            Rect::new((1., 1.), (0., 0.)),
+            Rect::from(Line::from([(0., 0.), (1., 1.)]))
+        );
+        assert_relative_eq!(
+            Rect::new((0., 1.), (1., 0.)),
+            Rect::from(Line::from([(0., 0.), (1., 1.)]))
+        );
+        assert_relative_eq!(
+            Rect::new((1., 0.), (0., 1.)),
+            Rect::from(Line::from([(0., 0.), (1., 1.)]))
+        );
+
+        // Triangle
+        assert_relative_eq!(
+            Rect::new((0., 0.), (1., 1.)),
+            Rect::from(Triangle::from([(0., 0.), (1., 0.), (0.5, 1.)]))
+        );
+        assert_relative_eq!(
+            Rect::new((0., 0.), (1., 1.)),
+            Rect::from(Triangle::from([(0., 0.), (0., 1.), (1., 0.5)]))
         );
     }
 }
