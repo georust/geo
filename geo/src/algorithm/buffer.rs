@@ -1,11 +1,13 @@
 //! TODO DOCUMENT
 
-use crate::algorithm::bool_ops::i_overlay_integration;
 use crate::algorithm::orient::{Direction, Orient};
-use crate::bool_ops::i_overlay_integration::convert::ring_to_shape_path;
+use crate::bool_ops::i_overlay_integration::convert::{
+    line_string_to_shape_path, multi_polygon_from_shapes, ring_to_shape_path,
+};
 use crate::bool_ops::BoolOpsNum;
 use crate::geometry::{Geometry, MultiPolygon, Polygon};
 use crate::BooleanOps;
+use geo_types::{LineString, MultiLineString};
 use i_overlay::mesh::outline::offset::OutlineOffset;
 use i_overlay::mesh::style::OutlineStyle;
 
@@ -28,16 +30,25 @@ impl<F: BoolOpsNum + 'static> Buffer for Geometry<F> {
     fn buffer_with_style(&self, style: OutlineStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         match self {
             Geometry::Point(_) => todo!("Handle buffering Point"),
-            Geometry::LineString(_) => todo!("Handle buffering LineString"),
-            Geometry::Polygon(polygon) => polygon.buffer_with_style(style),
+            Geometry::LineString(g) => g.buffer_with_style(style),
+            Geometry::Polygon(g) => g.buffer_with_style(style),
             Geometry::MultiPoint(_) => todo!("Handle buffering MultiPoint"),
-            Geometry::MultiLineString(_) => todo!("Handle buffering MultiLineString"),
-            Geometry::MultiPolygon(multi_polygon) => multi_polygon.buffer_with_style(style),
+            Geometry::MultiLineString(g) => g.buffer_with_style(style),
+            Geometry::MultiPolygon(g) => g.buffer_with_style(style),
             Geometry::GeometryCollection(_) => todo!("Handle buffering GeometryCollection"),
             Geometry::Line(_) => todo!("Handle buffering Line"),
             Geometry::Rect(_) => todo!("Handle buffering Rect"),
             Geometry::Triangle(_) => todo!("Handle buffering Triangle"),
         }
+    }
+}
+
+impl<F: BoolOpsNum + 'static> Buffer for LineString<F> {
+    type Scalar = F;
+    fn buffer_with_style(&self, style: OutlineStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
+        let subject = line_string_to_shape_path(self);
+        let shapes = subject.outline(style);
+        multi_polygon_from_shapes(shapes)
     }
 }
 
@@ -47,7 +58,7 @@ impl<F: BoolOpsNum + 'static> Buffer for Polygon<F> {
         let rewound = self.orient(Direction::Reversed);
         let subject = rewound.rings().map(ring_to_shape_path).collect::<Vec<_>>();
         let shapes = subject.outline(style);
-        i_overlay_integration::convert::multi_polygon_from_shapes(shapes)
+        multi_polygon_from_shapes(shapes)
     }
 }
 
@@ -57,7 +68,19 @@ impl<F: BoolOpsNum + 'static> Buffer for MultiPolygon<F> {
         let rewound = self.orient(Direction::Reversed);
         let subject = rewound.rings().map(ring_to_shape_path).collect::<Vec<_>>();
         let shapes = subject.outline(style);
-        i_overlay_integration::convert::multi_polygon_from_shapes(shapes)
+        multi_polygon_from_shapes(shapes)
+    }
+}
+
+impl<F: BoolOpsNum + 'static> Buffer for MultiLineString<F> {
+    type Scalar = F;
+    fn buffer_with_style(&self, style: OutlineStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
+        let subject = self
+            .iter()
+            .map(line_string_to_shape_path)
+            .collect::<Vec<_>>();
+        let shapes = subject.outline(style);
+        multi_polygon_from_shapes(shapes)
     }
 }
 

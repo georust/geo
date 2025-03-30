@@ -77,7 +77,7 @@ pub struct ConvexHullInput {
     pub(crate) arg1: String,
 
     #[serde(rename = "$value", deserialize_with = "wkt::deserialize_wkt")]
-    pub(crate) expected: geo::Geometry,
+    pub(crate) expected: Geometry,
 }
 
 #[derive(Debug, Deserialize)]
@@ -122,7 +122,7 @@ pub struct BufferInput {
     pub(crate) distance: f64,
 
     #[serde(rename = "$value", deserialize_with = "wkt::deserialize_wkt")]
-    pub(crate) expected: geo::Geometry,
+    pub(crate) expected: Geometry,
 }
 
 #[derive(Debug, Deserialize)]
@@ -149,7 +149,7 @@ pub struct OverlayInput {
     pub(crate) arg2: String,
 
     #[serde(rename = "$value", deserialize_with = "wkt::deserialize_wkt")]
-    pub(crate) expected: geo::Geometry<f64>,
+    pub(crate) expected: Geometry<f64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -269,10 +269,15 @@ impl OperationInput {
                 distance,
                 expected,
             }) => {
-                let Geometry::Polygon(_) = geometry else {
-                    // TODO:
-                    return Err("Only supporting polygon buffering for now".into());
-                };
+                match geometry {
+                    Geometry::LineString(_)
+                    | Geometry::Polygon(_)
+                    | Geometry::MultiPolygon(_)
+                    | Geometry::MultiLineString(_) => {}
+                    _ => {
+                        return Err("Only supporting a subset of geometry types for now".into());
+                    }
+                }
                 assert_eq!("A", arg1.to_uppercase());
                 Ok(Operation::Buffer {
                     subject: geometry.clone(),

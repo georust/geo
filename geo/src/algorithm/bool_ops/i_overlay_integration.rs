@@ -77,6 +77,12 @@ pub(crate) mod convert {
         coords.iter().copied().map(BoolOpsCoord).collect()
     }
 
+    pub fn line_string_to_shape_path<T: BoolOpsNum>(
+        line_string: &LineString<T>,
+    ) -> Vec<BoolOpsCoord<T>> {
+        line_string.0.iter().copied().map(BoolOpsCoord).collect()
+    }
+
     impl From<OpType> for OverlayRule {
         fn from(op: OpType) -> Self {
             match op {
