@@ -20,13 +20,13 @@ where
 // Wrapper for the RDP algorithm, returning simplified points
 fn rdp<T, I: Iterator<Item = Coord<T>>, const INITIAL_MIN: usize>(
     coords: I,
-    epsilon: &T,
+    epsilon: T,
 ) -> Vec<Coord<T>>
 where
     T: GeoFloat,
 {
     // Epsilon must be greater than zero for any meaningful simplification to happen
-    if *epsilon <= T::zero() {
+    if epsilon <= T::zero() {
         return coords.collect::<Vec<Coord<T>>>();
     }
     let rdp_indices = &coords
@@ -46,12 +46,12 @@ where
 // Wrapper for the RDP algorithm, returning simplified point indices
 fn calculate_rdp_indices<T, const INITIAL_MIN: usize>(
     rdp_indices: &[RdpIndex<T>],
-    epsilon: &T,
+    epsilon: T,
 ) -> Vec<usize>
 where
     T: GeoFloat,
 {
-    if *epsilon <= T::zero() {
+    if epsilon <= T::zero() {
         return rdp_indices
             .iter()
             .map(|rdp_index| rdp_index.index)
@@ -74,7 +74,7 @@ where
 fn compute_rdp<T, const INITIAL_MIN: usize>(
     rdp_indices: &[RdpIndex<T>],
     simplified_len: &mut usize,
-    epsilon: &T,
+    epsilon: T,
 ) -> Vec<RdpIndex<T>>
 where
     T: GeoFloat,
@@ -110,7 +110,7 @@ where
         );
     debug_assert_ne!(farthest_index, 0);
 
-    if farthest_distance > *epsilon {
+    if farthest_distance > epsilon {
         // The farthest index was larger than epsilon, so we will recursively simplify subsegments
         // split by the farthest index.
         let mut intermediate =
@@ -178,7 +178,7 @@ pub trait Simplify<T, Epsilon = T> {
     ///     (x: 27.8, y: 0.1),
     /// ];
     ///
-    /// let simplified = line_string.simplify(&1.0);
+    /// let simplified = line_string.simplify(1.0);
     ///
     /// let expected = line_string![
     ///     (x: 0.0, y: 0.0),
@@ -189,7 +189,7 @@ pub trait Simplify<T, Epsilon = T> {
     ///
     /// assert_eq!(expected, simplified)
     /// ```
-    fn simplify(&self, epsilon: &T) -> Self
+    fn simplify(&self, epsilon: T) -> Self
     where
         T: GeoFloat;
 }
@@ -223,7 +223,7 @@ pub trait SimplifyIdx<T, Epsilon = T> {
     ///     (x: 27.8, y: 0.1),
     /// ];
     ///
-    /// let simplified = line_string.simplify_idx(&1.0);
+    /// let simplified = line_string.simplify_idx(1.0);
     ///
     /// let expected = vec![
     ///     0_usize,
@@ -234,7 +234,7 @@ pub trait SimplifyIdx<T, Epsilon = T> {
     ///
     /// assert_eq!(expected, simplified);
     /// ```
-    fn simplify_idx(&self, epsilon: &T) -> Vec<usize>
+    fn simplify_idx(&self, epsilon: T) -> Vec<usize>
     where
         T: GeoFloat;
 }
@@ -243,7 +243,7 @@ impl<T> Simplify<T> for LineString<T>
 where
     T: GeoFloat,
 {
-    fn simplify(&self, epsilon: &T) -> Self {
+    fn simplify(&self, epsilon: T) -> Self {
         LineString::from(rdp::<_, _, LINE_STRING_INITIAL_MIN>(
             self.coords_iter(),
             epsilon,
@@ -255,7 +255,7 @@ impl<T> SimplifyIdx<T> for LineString<T>
 where
     T: GeoFloat,
 {
-    fn simplify_idx(&self, epsilon: &T) -> Vec<usize> {
+    fn simplify_idx(&self, epsilon: T) -> Vec<usize> {
         calculate_rdp_indices::<_, LINE_STRING_INITIAL_MIN>(
             &self
                 .0
@@ -275,7 +275,7 @@ impl<T> Simplify<T> for MultiLineString<T>
 where
     T: GeoFloat,
 {
-    fn simplify(&self, epsilon: &T) -> Self {
+    fn simplify(&self, epsilon: T) -> Self {
         MultiLineString::new(self.iter().map(|l| l.simplify(epsilon)).collect())
     }
 }
@@ -284,7 +284,7 @@ impl<T> Simplify<T> for Polygon<T>
 where
     T: GeoFloat,
 {
-    fn simplify(&self, epsilon: &T) -> Self {
+    fn simplify(&self, epsilon: T) -> Self {
         Polygon::new(
             LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(
                 self.exterior().coords_iter(),
@@ -304,7 +304,7 @@ impl<T> Simplify<T> for MultiPolygon<T>
 where
     T: GeoFloat,
 {
-    fn simplify(&self, epsilon: &T) -> Self {
+    fn simplify(&self, epsilon: T) -> Self {
         MultiPolygon::new(self.iter().map(|p| p.simplify(epsilon)).collect())
     }
 }
@@ -321,7 +321,7 @@ mod test {
             coord! { x: 9.0, y: 100.0 },
             coord! { x: 12.0, y: 100.0 },
         ];
-        let actual = rdp::<_, _, 2>(input.into_iter(), &1.0);
+        let actual = rdp::<_, _, 2>(input.into_iter(), 1.0);
         let expected = [coord! { x: 8.0, y: 100.0 }, coord! { x: 12.0, y: 100.0 }];
         assert_eq!(actual, expected);
     }
@@ -341,21 +341,21 @@ mod test {
             coord! { x: 11.0, y: 5.5 },
             coord! { x: 27.8, y: 0.1 },
         ];
-        let simplified = rdp::<_, _, 2>(vec.into_iter(), &1.0);
+        let simplified = rdp::<_, _, 2>(vec.into_iter(), 1.0);
         assert_eq!(simplified, compare);
     }
     #[test]
     fn rdp_test_empty_linestring() {
         let vec = Vec::new();
         let compare = Vec::new();
-        let simplified = rdp::<_, _, 2>(vec.into_iter(), &1.0);
+        let simplified = rdp::<_, _, 2>(vec.into_iter(), 1.0);
         assert_eq!(simplified, compare);
     }
     #[test]
     fn rdp_test_two_point_linestring() {
         let vec = vec![coord! { x: 0.0, y: 0.0 }, coord! { x: 27.8, y: 0.1 }];
         let compare = vec![coord! { x: 0.0, y: 0.0 }, coord! { x: 27.8, y: 0.1 }];
-        let simplified = rdp::<_, _, 2>(vec.into_iter(), &1.0);
+        let simplified = rdp::<_, _, 2>(vec.into_iter(), 1.0);
         assert_eq!(simplified, compare);
     }
 
@@ -369,7 +369,7 @@ mod test {
             (27.8, 0.1),
         ])]);
 
-        let mline2 = mline.simplify(&1.0);
+        let mline2 = mline.simplify(1.0);
 
         assert_eq!(
             mline2,
@@ -393,7 +393,7 @@ mod test {
             (x: 0., y: 0.),
         ];
 
-        let poly2 = poly.simplify(&2.);
+        let poly2 = poly.simplify(2.);
 
         assert_eq!(
             poly2,
@@ -418,7 +418,7 @@ mod test {
             (x: 0., y: 0.),
         ]]);
 
-        let mpoly2 = mpoly.simplify(&2.);
+        let mpoly2 = mpoly.simplify(2.);
 
         assert_eq!(
             mpoly2,
@@ -441,7 +441,7 @@ mod test {
             (x: 10., y: 10.),
             (x: 10., y: 0.),
         ];
-        let simplified = ls.simplify(&-1.0);
+        let simplified = ls.simplify(-1.0);
         assert_eq!(ls, simplified);
     }
 
@@ -454,7 +454,7 @@ mod test {
             (x: 10., y: 10.),
             (x: 10., y: 0.),
         ];
-        let indices = ls.simplify_idx(&-1.0);
+        let indices = ls.simplify_idx(-1.0);
         assert_eq!(vec![0usize, 1, 2, 3, 4], indices);
     }
 
@@ -470,7 +470,7 @@ mod test {
         let epsilon: f64 = 3.46e-43;
 
         // LineString result should be three coordinates
-        let result = ls.simplify(&epsilon);
+        let result = ls.simplify(epsilon);
         assert_eq!(
             line_string![
                 ( x: 1.4324054e-16, y: 1.4324054e-16 ),
@@ -481,7 +481,7 @@ mod test {
         );
 
         // Polygon result should be five coordinates
-        let result = Polygon::new(ls, vec![]).simplify(&epsilon);
+        let result = Polygon::new(ls, vec![]).simplify(epsilon);
         assert_eq!(
             polygon![
                 ( x: 1.4324054e-16, y: 1.4324054e-16 ),
@@ -503,7 +503,7 @@ mod test {
             (x: 17.3, y: 3.2),
             (x: 27.8, y: 0.1)
         ];
-        let actual = unsimplified.simplify(&30.0);
+        let actual = unsimplified.simplify(30.0);
         let expected = line_string![
             (x: 0.0, y: 0.0),
             (x: 27.8, y: 0.1)

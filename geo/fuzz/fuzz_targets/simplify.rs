@@ -7,7 +7,7 @@ use libfuzzer_sys::fuzz_target;
 fuzz_target!(|tuple: (geo_types::Polygon<f32>, f32)| {
     let (polygon, epsilon) = tuple;
 
-    let simplified = polygon.simplify(&epsilon);
+    let simplified = polygon.simplify(epsilon);
 
     check_result(polygon, simplified);
 });
