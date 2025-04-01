@@ -1,5 +1,9 @@
 # Changes
 
+# Unreleased
+
+- BREAKING: The `Simplify`, `SimplifyVw`, and `SimplifyVwIdx` traits no longer require a borrowed `epsilon` parameter as these are `Copy` types
+
 ## 0.30.0 - 2025-03-24
 
 - Bump `geo` MSRV to 1.81
