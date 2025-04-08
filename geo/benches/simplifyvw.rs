@@ -7,7 +7,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let ls = geo_test_fixtures::louisiana::<f32>();
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&ls).simplify_vw(criterion::black_box(&0.0005)),
+                criterion::black_box(&ls).simplify_vw(criterion::black_box(0.0005)),
             );
         });
     });
@@ -16,7 +16,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let ls = geo_test_fixtures::louisiana::<f64>();
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&ls).simplify_vw(criterion::black_box(&0.0005)),
+                criterion::black_box(&ls).simplify_vw(criterion::black_box(0.0005)),
             );
         });
     });
@@ -25,7 +25,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let ls = geo_test_fixtures::louisiana::<f32>();
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&ls).simplify_vw_preserve(criterion::black_box(&0.0005)),
+                criterion::black_box(&ls).simplify_vw_preserve(criterion::black_box(0.0005)),
             );
         });
     });
@@ -34,7 +34,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let ls = geo_test_fixtures::louisiana::<f64>();
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&ls).simplify_vw_preserve(criterion::black_box(&0.0005)),
+                criterion::black_box(&ls).simplify_vw_preserve(criterion::black_box(0.0005)),
             );
         });
     });
