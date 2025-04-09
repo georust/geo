@@ -320,8 +320,8 @@ where
 impl<'a, 'l, T, G> private::TriangulationRequirementTrait<'a, T> for G
 where
     'a: 'l,
-    T: SpadeTriangulationFloat,
-    G: LinesIter<'l, Scalar = T> + CoordsIter<Scalar = T> + Contains<Point<T>>,
+    T: SpadeTriangulationFloat + 'a,
+    G: LinesIter<'l, Scalar = T> + CoordsIter<T = T> + Contains<Point<T>>,
 {
     fn coords(&'a self) -> private::CoordsIter<'a, T> {
         Box::new(self.coords_iter())

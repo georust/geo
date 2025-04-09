@@ -1,7 +1,6 @@
 use crate::algorithm::{Distance, Euclidean};
 use crate::CoordsIter;
 use crate::GeoFloat;
-use geo_types::{Coord, Point};
 use num_traits::Bounded;
 
 /// Determine the distance between two geometries using the [Hausdorff distance formula].
@@ -17,17 +16,17 @@ where
 {
     fn hausdorff_distance<Rhs>(&self, rhs: &Rhs) -> T
     where
-        Rhs: CoordsIter<Scalar = T>;
+        Rhs: CoordsIter<T = T>;
 }
 
 impl<T, G> HausdorffDistance<T> for G
 where
     T: GeoFloat,
-    G: CoordsIter<Scalar = T>,
+    G: CoordsIter<T = T>,
 {
     fn hausdorff_distance<Rhs>(&self, rhs: &Rhs) -> T
     where
-        Rhs: CoordsIter<Scalar = T>,
+        Rhs: CoordsIter<T = T>,
     {
         // calculate from A -> B
         let hd1 = self
@@ -51,22 +50,6 @@ where
 
         // The max of the two
         hd1.max(hd2)
-    }
-}
-
-// ┌───────────────────────────┐
-// │ Implementations for Coord │
-// └───────────────────────────┘
-
-impl<T> HausdorffDistance<T> for Coord<T>
-where
-    T: GeoFloat,
-{
-    fn hausdorff_distance<Rhs>(&self, rhs: &Rhs) -> T
-    where
-        Rhs: CoordsIter<Scalar = T>,
-    {
-        Point::from(*self).hausdorff_distance(rhs)
     }
 }
 

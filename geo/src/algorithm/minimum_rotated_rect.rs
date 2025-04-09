@@ -36,7 +36,7 @@ pub trait MinimumRotatedRect<T> {
 impl<T, G> MinimumRotatedRect<T> for G
 where
     T: CoordFloat + GeoFloat + GeoNum,
-    G: CoordsIter<Scalar = T>,
+    G: CoordsIter<T = T>,
 {
     type Scalar = T;
 
