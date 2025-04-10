@@ -50,7 +50,7 @@ use crate::utils::lex_cmp;
 impl<'a, T, G> ConvexHull<'a, T> for G
 where
     T: GeoNum,
-    G: CoordsIter<Scalar = T>,
+    G: CoordsIter<T = T>,
 {
     type Scalar = T;
 
