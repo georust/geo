@@ -509,3 +509,59 @@ impl<T> GeometryTrait for UnimplementedGeometry<T> {
         unimplemented!()
     }
 }
+
+#[cfg(test)]
+mod test {
+    // Ensures that all geo-types implement the GeometryTrait
+    #[test]
+    #[cfg(feature = "geo-types")]
+    fn geo_types_implement_geometry_trait() {
+        use geo_types::{
+            coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+            MultiPolygon, Point, Polygon, Rect, Triangle,
+        };
+
+        use crate::GeometryTrait;
+
+        fn requires_geometry_trait<G: GeometryTrait>(_geometry: &G) {}
+
+        let point: Point = Point::new(0.0, 0.0);
+        requires_geometry_trait(&point);
+
+        let line: Line = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
+        requires_geometry_trait(&line);
+
+        let line_string: LineString =
+            LineString::from(vec![coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 }]);
+        requires_geometry_trait(&line_string);
+
+        let polygon: Polygon = Polygon::new(line_string.clone(), vec![]);
+        requires_geometry_trait(&polygon);
+
+        let multi_point: MultiPoint = MultiPoint::from(vec![point.clone()]);
+        requires_geometry_trait(&multi_point);
+
+        let multi_line_string: MultiLineString = MultiLineString(vec![line_string.clone()]);
+        requires_geometry_trait(&multi_line_string);
+
+        let multi_polygon: MultiPolygon = MultiPolygon::from(vec![polygon.clone()]);
+        requires_geometry_trait(&multi_polygon);
+
+        let geometry_collection: GeometryCollection =
+            GeometryCollection::from(vec![Geometry::Point(point.clone())]);
+        requires_geometry_trait(&geometry_collection);
+
+        let rect: Rect = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
+        requires_geometry_trait(&rect);
+
+        let triangle: Triangle = Triangle::new(
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: 0.0, y: 1.0 },
+        );
+        requires_geometry_trait(&triangle);
+
+        let geometry: Geometry = Geometry::Point(point);
+        requires_geometry_trait(&geometry);
+    }
+}
