@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 #[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, Rect};
 
-use crate::{CoordTrait, Dimensions, UnimplementedCoord};
+use crate::{CoordTrait, UnimplementedCoord};
 
 /// A trait for accessing data from a generic Rect.
 ///
@@ -71,72 +71,6 @@ impl<T> RectTrait for UnimplementedRect<T> {
     }
 
     fn max(&self) -> Self::CoordType<'_> {
-        unimplemented!()
-    }
-}
-
-impl<T> crate::GeometryTrait for UnimplementedRect<T> {
-    type T = T;
-    type PointType<'b>
-        = crate::UnimplementedPoint<Self::T>
-    where
-        Self: 'b;
-    type LineStringType<'b>
-        = crate::UnimplementedLineString<Self::T>
-    where
-        Self: 'b;
-    type PolygonType<'b>
-        = crate::UnimplementedPolygon<Self::T>
-    where
-        Self: 'b;
-    type MultiPointType<'b>
-        = crate::UnimplementedMultiPoint<Self::T>
-    where
-        Self: 'b;
-    type MultiLineStringType<'b>
-        = crate::UnimplementedMultiLineString<Self::T>
-    where
-        Self: 'b;
-    type MultiPolygonType<'b>
-        = crate::UnimplementedMultiPolygon<Self::T>
-    where
-        Self: 'b;
-    type GeometryCollectionType<'b>
-        = crate::UnimplementedGeometryCollection<Self::T>
-    where
-        Self: 'b;
-    type RectType<'b>
-        = Self
-    where
-        Self: 'b;
-    type TriangleType<'b>
-        = crate::UnimplementedTriangle<Self::T>
-    where
-        Self: 'b;
-    type LineType<'b>
-        = crate::UnimplementedLine<Self::T>
-    where
-        Self: 'b;
-
-    fn dim(&self) -> Dimensions {
-        unimplemented!()
-    }
-
-    fn as_type(
-        &self,
-    ) -> crate::GeometryType<
-        '_,
-        Self::PointType<'_>,
-        Self::LineStringType<'_>,
-        Self::PolygonType<'_>,
-        Self::MultiPointType<'_>,
-        Self::MultiLineStringType<'_>,
-        Self::MultiPolygonType<'_>,
-        Self::GeometryCollectionType<'_>,
-        Self::RectType<'_>,
-        Self::TriangleType<'_>,
-        Self::LineType<'_>,
-    > {
         unimplemented!()
     }
 }

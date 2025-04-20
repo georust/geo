@@ -1,12 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::iterator::LineStringIterator;
-use crate::{
-    CoordTrait, Dimensions, GeometryTrait, GeometryType, UnimplementedCoord,
-    UnimplementedGeometryCollection, UnimplementedLine, UnimplementedMultiLineString,
-    UnimplementedMultiPoint, UnimplementedMultiPolygon, UnimplementedPoint, UnimplementedPolygon,
-    UnimplementedRect, UnimplementedTriangle,
-};
+use crate::{CoordTrait, GeometryTrait, UnimplementedCoord};
 #[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, LineString};
 
@@ -99,71 +94,5 @@ impl<T> LineStringTrait for UnimplementedLineString<T> {
 
     unsafe fn coord_unchecked(&self, _i: usize) -> Self::CoordType<'_> {
         unimplemented!()
-    }
-}
-
-impl<T> GeometryTrait for UnimplementedLineString<T> {
-    type T = T;
-    type PointType<'b>
-        = UnimplementedPoint<Self::T>
-    where
-        Self: 'b;
-    type LineStringType<'b>
-        = UnimplementedLineString<Self::T>
-    where
-        Self: 'b;
-    type PolygonType<'b>
-        = UnimplementedPolygon<Self::T>
-    where
-        Self: 'b;
-    type MultiPointType<'b>
-        = UnimplementedMultiPoint<Self::T>
-    where
-        Self: 'b;
-    type MultiLineStringType<'b>
-        = UnimplementedMultiLineString<Self::T>
-    where
-        Self: 'b;
-    type MultiPolygonType<'b>
-        = UnimplementedMultiPolygon<Self::T>
-    where
-        Self: 'b;
-    type GeometryCollectionType<'b>
-        = UnimplementedGeometryCollection<Self::T>
-    where
-        Self: 'b;
-    type RectType<'b>
-        = UnimplementedRect<Self::T>
-    where
-        Self: 'b;
-    type TriangleType<'b>
-        = UnimplementedTriangle<Self::T>
-    where
-        Self: 'b;
-    type LineType<'b>
-        = UnimplementedLine<Self::T>
-    where
-        Self: 'b;
-
-    fn dim(&self) -> Dimensions {
-        unimplemented!()
-    }
-
-    fn as_type(
-        &self,
-    ) -> GeometryType<
-        '_,
-        Self::PointType<'_>,
-        Self::LineStringType<'_>,
-        Self::PolygonType<'_>,
-        Self::MultiPointType<'_>,
-        Self::MultiLineStringType<'_>,
-        Self::MultiPolygonType<'_>,
-        Self::GeometryCollectionType<'_>,
-        Self::RectType<'_>,
-        Self::TriangleType<'_>,
-        Self::LineType<'_>,
-    > {
-        GeometryType::LineString(self)
     }
 }

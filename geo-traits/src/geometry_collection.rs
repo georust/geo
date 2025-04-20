@@ -1,11 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::iterator::GeometryCollectionIterator;
-use crate::{
-    Dimensions, GeometryTrait, UnimplementedGeometry, UnimplementedLine, UnimplementedLineString,
-    UnimplementedMultiLineString, UnimplementedMultiPoint, UnimplementedMultiPolygon,
-    UnimplementedPoint, UnimplementedPolygon, UnimplementedRect, UnimplementedTriangle,
-};
+use crate::{GeometryTrait, UnimplementedGeometry};
 #[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, Geometry, GeometryCollection};
 
@@ -96,71 +92,5 @@ impl<T> GeometryCollectionTrait for UnimplementedGeometryCollection<T> {
 
     unsafe fn geometry_unchecked(&self, _i: usize) -> Self::GeometryType<'_> {
         unimplemented!()
-    }
-}
-
-impl<T> GeometryTrait for UnimplementedGeometryCollection<T> {
-    type T = T;
-    type PointType<'a>
-        = UnimplementedPoint<T>
-    where
-        Self: 'a;
-    type LineStringType<'a>
-        = UnimplementedLineString<T>
-    where
-        Self: 'a;
-    type LineType<'a>
-        = UnimplementedLine<T>
-    where
-        Self: 'a;
-    type PolygonType<'a>
-        = UnimplementedPolygon<T>
-    where
-        Self: 'a;
-    type MultiPointType<'a>
-        = UnimplementedMultiPoint<T>
-    where
-        Self: 'a;
-    type MultiLineStringType<'a>
-        = UnimplementedMultiLineString<T>
-    where
-        Self: 'a;
-    type MultiPolygonType<'a>
-        = UnimplementedMultiPolygon<T>
-    where
-        Self: 'a;
-    type GeometryCollectionType<'a>
-        = Self
-    where
-        Self: 'a;
-    type RectType<'a>
-        = UnimplementedRect<T>
-    where
-        Self: 'a;
-    type TriangleType<'a>
-        = UnimplementedTriangle<T>
-    where
-        Self: 'a;
-
-    fn dim(&self) -> Dimensions {
-        unimplemented!()
-    }
-
-    fn as_type(
-        &self,
-    ) -> crate::geometry::GeometryType<
-        '_,
-        Self::PointType<'_>,
-        Self::LineStringType<'_>,
-        Self::PolygonType<'_>,
-        Self::MultiPointType<'_>,
-        Self::MultiLineStringType<'_>,
-        Self::MultiPolygonType<'_>,
-        Self::GeometryCollectionType<'_>,
-        Self::RectType<'_>,
-        Self::TriangleType<'_>,
-        Self::LineType<'_>,
-    > {
-        crate::geometry::GeometryType::GeometryCollection(self)
     }
 }

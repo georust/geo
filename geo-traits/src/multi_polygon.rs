@@ -2,11 +2,7 @@ use std::marker::PhantomData;
 
 use crate::iterator::MultiPolygonIterator;
 use crate::polygon::UnimplementedPolygon;
-use crate::{
-    Dimensions, GeometryTrait, GeometryType, PolygonTrait, UnimplementedGeometryCollection,
-    UnimplementedLine, UnimplementedLineString, UnimplementedMultiLineString,
-    UnimplementedMultiPoint, UnimplementedPoint, UnimplementedRect, UnimplementedTriangle,
-};
+use crate::{GeometryTrait, PolygonTrait};
 #[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, MultiPolygon, Polygon};
 
@@ -84,72 +80,6 @@ impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
 /// This can be used as the `MultiPolygonType` of the `GeometryTrait` by implementations that don't
 /// have a MultiPolygon concept
 pub struct UnimplementedMultiPolygon<T>(PhantomData<T>);
-
-impl<T> GeometryTrait for UnimplementedMultiPolygon<T> {
-    type T = T;
-    type PointType<'b>
-        = UnimplementedPoint<Self::T>
-    where
-        Self: 'b;
-    type LineStringType<'b>
-        = UnimplementedLineString<Self::T>
-    where
-        Self: 'b;
-    type PolygonType<'b>
-        = UnimplementedPolygon<Self::T>
-    where
-        Self: 'b;
-    type MultiPointType<'b>
-        = UnimplementedMultiPoint<Self::T>
-    where
-        Self: 'b;
-    type MultiLineStringType<'b>
-        = UnimplementedMultiLineString<Self::T>
-    where
-        Self: 'b;
-    type MultiPolygonType<'b>
-        = UnimplementedMultiPolygon<Self::T>
-    where
-        Self: 'b;
-    type GeometryCollectionType<'b>
-        = UnimplementedGeometryCollection<Self::T>
-    where
-        Self: 'b;
-    type RectType<'b>
-        = UnimplementedRect<Self::T>
-    where
-        Self: 'b;
-    type TriangleType<'b>
-        = UnimplementedTriangle<Self::T>
-    where
-        Self: 'b;
-    type LineType<'b>
-        = UnimplementedLine<Self::T>
-    where
-        Self: 'b;
-
-    fn dim(&self) -> Dimensions {
-        unimplemented!()
-    }
-
-    fn as_type(
-        &self,
-    ) -> GeometryType<
-        '_,
-        Self::PointType<'_>,
-        Self::LineStringType<'_>,
-        Self::PolygonType<'_>,
-        Self::MultiPointType<'_>,
-        Self::MultiLineStringType<'_>,
-        Self::MultiPolygonType<'_>,
-        Self::GeometryCollectionType<'_>,
-        Self::RectType<'_>,
-        Self::TriangleType<'_>,
-        Self::LineType<'_>,
-    > {
-        GeometryType::MultiPolygon(self)
-    }
-}
 
 impl<T> MultiPolygonTrait for UnimplementedMultiPolygon<T> {
     type InnerPolygonType<'a>
