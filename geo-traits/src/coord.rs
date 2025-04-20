@@ -8,7 +8,7 @@ use crate::Dimensions;
 /// A trait for accessing data from a generic Coord.
 ///
 /// Refer to [geo_types::Coord] for information about semantics and validity.
-pub trait CoordTrait {
+pub trait CoordTrait: Clone {
     /// The coordinate type of this geometry
     type T;
 
@@ -144,9 +144,10 @@ impl<T: Copy> CoordTrait for (T, T) {
 ///
 /// This can be used as the `CoordType` of the `GeometryTrait` by implementations that don't have a
 /// Coord concept
-pub struct UnimplementedCoord<T>(PhantomData<T>);
+#[derive(Clone)]
+pub struct UnimplementedCoord<T: Clone>(PhantomData<T>);
 
-impl<T> CoordTrait for UnimplementedCoord<T> {
+impl<T: Clone> CoordTrait for UnimplementedCoord<T> {
     type T = T;
 
     fn dim(&self) -> Dimensions {

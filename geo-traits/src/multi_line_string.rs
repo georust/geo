@@ -85,9 +85,10 @@ impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
 ///
 /// This can be used as the `MultiLineStringType` of the `GeometryTrait` by implementations that
 /// don't have a MultiLineString concept
-pub struct UnimplementedMultiLineString<T>(PhantomData<T>);
+#[derive(Clone)]
+pub struct UnimplementedMultiLineString<T: Clone>(PhantomData<T>);
 
-impl<T> MultiLineStringTrait for UnimplementedMultiLineString<T> {
+impl<T: Clone> MultiLineStringTrait for UnimplementedMultiLineString<T> {
     type InnerLineStringType<'a>
         = UnimplementedLineString<Self::T>
     where
@@ -102,7 +103,7 @@ impl<T> MultiLineStringTrait for UnimplementedMultiLineString<T> {
     }
 }
 
-impl<T> GeometryTrait for UnimplementedMultiLineString<T> {
+impl<T: Clone> GeometryTrait for UnimplementedMultiLineString<T> {
     type T = T;
     type PointType<'b>
         = UnimplementedPoint<Self::T>

@@ -110,9 +110,10 @@ impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
 ///
 /// This can be used as the `PolygonType` of the `GeometryTrait` by implementations that don't have a
 /// Polygon concept
-pub struct UnimplementedPolygon<T>(PhantomData<T>);
+#[derive(Clone)]
+pub struct UnimplementedPolygon<T: Clone>(PhantomData<T>);
 
-impl<T> PolygonTrait for UnimplementedPolygon<T> {
+impl<T: Clone> PolygonTrait for UnimplementedPolygon<T> {
     type RingType<'a>
         = UnimplementedLineString<<Self as GeometryTrait>::T>
     where
@@ -131,7 +132,7 @@ impl<T> PolygonTrait for UnimplementedPolygon<T> {
     }
 }
 
-impl<T> GeometryTrait for UnimplementedPolygon<T> {
+impl<T: Clone> GeometryTrait for UnimplementedPolygon<T> {
     type T = T;
     type PointType<'b>
         = UnimplementedPoint<Self::T>

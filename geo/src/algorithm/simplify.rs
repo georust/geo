@@ -1,6 +1,7 @@
 use crate::algorithm::{CoordsIter, Distance, Euclidean};
 use crate::geometry::{Coord, Line, LineString, MultiLineString, MultiPolygon, Polygon};
 use crate::GeoFloat;
+use geo_traits::{to_geo::ToGeoCoord, CoordTrait, GeometryTrait, GeometryType, LineStringTrait};
 
 const LINE_STRING_INITIAL_MIN: usize = 2;
 const POLYGON_INITIAL_MIN: usize = 4;
@@ -8,34 +9,32 @@ const POLYGON_INITIAL_MIN: usize = 4;
 // Because the RDP algorithm is recursive, we can't assign an index to a point inside the loop
 // instead, we wrap a simple struct around index and point in a wrapper function,
 // passing that around instead, extracting either points or indices on the way back out
-#[derive(Copy, Clone)]
-struct RdpIndex<T>
+#[derive(Clone)]
+struct RdpIndex<C>
 where
-    T: GeoFloat,
+    C: CoordTrait,
 {
     index: usize,
-    coord: Coord<T>,
+    coord: C,
 }
 
 // Wrapper for the RDP algorithm, returning simplified points
-fn rdp<T, I: Iterator<Item = Coord<T>>, const INITIAL_MIN: usize>(
-    coords: I,
-    epsilon: T,
-) -> Vec<Coord<T>>
+fn rdp<C, I: Iterator<Item = C>, const INITIAL_MIN: usize>(coords: I, epsilon: C::T) -> Vec<C>
 where
-    T: GeoFloat,
+    C: CoordTrait,
+    C::T: GeoFloat,
 {
     // Epsilon must be greater than zero for any meaningful simplification to happen
-    if epsilon <= T::zero() {
-        return coords.collect::<Vec<Coord<T>>>();
+    if epsilon <= <C::T as num_traits::Zero>::zero() {
+        return coords.collect::<Vec<_>>();
     }
     let rdp_indices = &coords
         .enumerate()
         .map(|(idx, coord)| RdpIndex { index: idx, coord })
-        .collect::<Vec<RdpIndex<T>>>();
+        .collect::<Vec<RdpIndex<C>>>();
     let mut simplified_len = rdp_indices.len();
     let simplified_coords: Vec<_> =
-        compute_rdp::<T, INITIAL_MIN>(rdp_indices, &mut simplified_len, epsilon)
+        compute_rdp::<C, INITIAL_MIN>(rdp_indices, &mut simplified_len, epsilon)
             .into_iter()
             .map(|rdpindex| rdpindex.coord)
             .collect();
@@ -44,12 +43,13 @@ where
 }
 
 // Wrapper for the RDP algorithm, returning simplified point indices
-fn calculate_rdp_indices<T, const INITIAL_MIN: usize>(
-    rdp_indices: &[RdpIndex<T>],
+fn calculate_rdp_indices<T, C, const INITIAL_MIN: usize>(
+    rdp_indices: &[RdpIndex<C>],
     epsilon: T,
 ) -> Vec<usize>
 where
     T: GeoFloat,
+    C: CoordTrait<T = T>,
 {
     if epsilon <= T::zero() {
         return rdp_indices
@@ -60,7 +60,7 @@ where
 
     let mut simplified_len = rdp_indices.len();
     let simplified_coords =
-        compute_rdp::<T, INITIAL_MIN>(rdp_indices, &mut simplified_len, epsilon)
+        compute_rdp::<C, INITIAL_MIN>(rdp_indices, &mut simplified_len, epsilon)
             .into_iter()
             .map(|rdpindex| rdpindex.index)
             .collect::<Vec<usize>>();
@@ -71,25 +71,26 @@ where
 // Ramer–Douglas-Peucker line simplification algorithm
 // This function returns both the retained points, and their indices in the original geometry,
 // for more flexible use by FFI implementers
-fn compute_rdp<T, const INITIAL_MIN: usize>(
-    rdp_indices: &[RdpIndex<T>],
+fn compute_rdp<C, const INITIAL_MIN: usize>(
+    rdp_indices: &[RdpIndex<C>],
     simplified_len: &mut usize,
-    epsilon: T,
-) -> Vec<RdpIndex<T>>
+    epsilon: C::T,
+) -> Vec<RdpIndex<C>>
 where
-    T: GeoFloat,
+    C: CoordTrait,
+    C::T: GeoFloat,
 {
     if rdp_indices.is_empty() {
         return vec![];
     }
 
-    let first = rdp_indices[0];
-    let last = rdp_indices[rdp_indices.len() - 1];
+    let first = &rdp_indices[0];
+    let last = &rdp_indices[rdp_indices.len() - 1];
     if rdp_indices.len() == 2 {
-        return vec![first, last];
+        return vec![first.clone(), last.clone()];
     }
 
-    let first_last_line = Line::new(first.coord, last.coord);
+    let first_last_line = Line::new(first.coord.to_coord(), last.coord.to_coord());
 
     // Find the farthest `RdpIndex` from `first_last_line`
     let (farthest_index, farthest_distance) = rdp_indices
@@ -97,9 +98,14 @@ where
         .enumerate()
         .take(rdp_indices.len() - 1) // Don't include the last index
         .skip(1) // Don't include the first index
-        .map(|(index, rdp_index)| (index, Euclidean.distance(rdp_index.coord, &first_last_line)))
+        .map(|(index, rdp_index)| {
+            (
+                index,
+                Euclidean.distance(rdp_index.coord.to_coord(), &first_last_line),
+            )
+        })
         .fold(
-            (0usize, T::zero()),
+            (0usize, <C::T as num_traits::Zero>::zero()),
             |(farthest_index, farthest_distance), (index, distance)| {
                 if distance >= farthest_distance {
                     (index, distance)
@@ -114,11 +120,11 @@ where
         // The farthest index was larger than epsilon, so we will recursively simplify subsegments
         // split by the farthest index.
         let mut intermediate =
-            compute_rdp::<T, INITIAL_MIN>(&rdp_indices[..=farthest_index], simplified_len, epsilon);
+            compute_rdp::<C, INITIAL_MIN>(&rdp_indices[..=farthest_index], simplified_len, epsilon);
 
         intermediate.pop(); // Don't include the farthest index twice
 
-        intermediate.extend_from_slice(&compute_rdp::<T, INITIAL_MIN>(
+        intermediate.extend_from_slice(&compute_rdp::<C, INITIAL_MIN>(
             &rdp_indices[farthest_index..],
             simplified_len,
             epsilon,
@@ -142,7 +148,7 @@ where
     *simplified_len = new_length;
 
     // Cull indices between `first` and `last`.
-    vec![first, last]
+    vec![first.clone(), last.clone()]
 }
 
 /// Simplifies a geometry.
@@ -161,7 +167,7 @@ where
 /// discarded.
 ///
 /// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
-pub trait Simplify<T, Epsilon = T> {
+pub trait Simplify<G: GeometryTrait> {
     /// Returns the simplified representation of a geometry, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
     ///
     /// # Examples
@@ -189,9 +195,7 @@ pub trait Simplify<T, Epsilon = T> {
     ///
     /// assert_eq!(expected, simplified)
     /// ```
-    fn simplify(&self, epsilon: T) -> Self
-    where
-        T: GeoFloat;
+    fn simplify(&self, epsilon: G::T) -> Self;
 }
 
 /// Simplifies a geometry, returning the retained _indices_ of the input.
@@ -239,18 +243,57 @@ pub trait SimplifyIdx<T, Epsilon = T> {
         T: GeoFloat;
 }
 
-impl<T> Simplify<T> for LineString<T>
+impl<G> Simplify<G> for G
 where
-    T: GeoFloat,
+    G: GeometryTrait,
+    G::T: GeoFloat,
 {
-    fn simplify(&self, epsilon: T) -> Self {
-        LineString::from(rdp::<_, _, LINE_STRING_INITIAL_MIN>(
-            self.coords_iter(),
-            epsilon,
-        ))
+    fn simplify(&self, epsilon: G::T) -> Self {
+        match self.as_type() {
+            GeometryType::Point(p) => self.clone(),
+            GeometryType::LineString(ls) => {
+                let simplified = rdp::<_, _, LINE_STRING_INITIAL_MIN>(ls.coords(), epsilon);
+                G::from_coords(simplified.into_iter())
+            }
+            GeometryType::Polygon(poly) => {
+                // Polygon::new(
+                //     LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(
+                //         self.exterior().coords_iter(),
+                //         epsilon,
+                //     )),
+                //     self.interiors()
+                //         .iter()
+                //         .map(|l| {
+                //             LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(l.coords_iter(), epsilon))
+                //         })
+                //         .collect(),
+                // )
+            }
+            GeometryType::MultiPoint(mp) => mp.clone(),
+            GeometryType::MultiLineString(mls) => {
+                // MultiLineString::new(mls.lines().map(|l| l.simplify(epsilon)).collect())
+                todo!()
+            }
+            GeometryType::MultiPolygon(mpoly) => {
+                // MultiPolygon::new(self.iter().map(|p| p.simplify(epsilon)).collect())
+                todo!()
+            }
+            GeometryType::GeometryCollection(gc) => {
+                let simplified_geometries =
+                    gc.geometries().map(|geom| geom.simplify(epsilon)).collect();
+                Geometry::GeometryCollection(geo_types::GeometryCollection::new_from(
+                    simplified_geometries,
+                ))
+            }
+            GeometryType::Rect(r) => r.clone(),
+            GeometryType::Triangle(t) => t.clone(),
+            GeometryType::Line(l) => l.clone(),
+            _ => todo!(),
+        }
     }
 }
 
+/*
 impl<T> SimplifyIdx<T> for LineString<T>
 where
     T: GeoFloat,
@@ -270,44 +313,7 @@ where
         )
     }
 }
-
-impl<T> Simplify<T> for MultiLineString<T>
-where
-    T: GeoFloat,
-{
-    fn simplify(&self, epsilon: T) -> Self {
-        MultiLineString::new(self.iter().map(|l| l.simplify(epsilon)).collect())
-    }
-}
-
-impl<T> Simplify<T> for Polygon<T>
-where
-    T: GeoFloat,
-{
-    fn simplify(&self, epsilon: T) -> Self {
-        Polygon::new(
-            LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(
-                self.exterior().coords_iter(),
-                epsilon,
-            )),
-            self.interiors()
-                .iter()
-                .map(|l| {
-                    LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(l.coords_iter(), epsilon))
-                })
-                .collect(),
-        )
-    }
-}
-
-impl<T> Simplify<T> for MultiPolygon<T>
-where
-    T: GeoFloat,
-{
-    fn simplify(&self, epsilon: T) -> Self {
-        MultiPolygon::new(self.iter().map(|p| p.simplify(epsilon)).collect())
-    }
-}
+*/
 
 #[cfg(test)]
 mod test {
@@ -346,7 +352,7 @@ mod test {
     }
     #[test]
     fn rdp_test_empty_linestring() {
-        let vec = Vec::new();
+        let vec = Vec::<Coord<f64>>::new();
         let compare = Vec::new();
         let simplified = rdp::<_, _, 2>(vec.into_iter(), 1.0);
         assert_eq!(simplified, compare);

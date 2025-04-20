@@ -85,9 +85,10 @@ impl<'a, T: CoordNum> MultiPointTrait for &'a MultiPoint<T> {
 ///
 /// This can be used as the `MultiPointType` of the `GeometryTrait` by implementations that don't
 /// have a MultiPoint concept
-pub struct UnimplementedMultiPoint<T>(PhantomData<T>);
+#[derive(Clone)]
+pub struct UnimplementedMultiPoint<T: Clone>(PhantomData<T>);
 
-impl<T> MultiPointTrait for UnimplementedMultiPoint<T> {
+impl<T: Clone> MultiPointTrait for UnimplementedMultiPoint<T> {
     type InnerPointType<'a>
         = UnimplementedPoint<Self::T>
     where
@@ -102,7 +103,7 @@ impl<T> MultiPointTrait for UnimplementedMultiPoint<T> {
     }
 }
 
-impl<T> GeometryTrait for UnimplementedMultiPoint<T> {
+impl<T: Clone> GeometryTrait for UnimplementedMultiPoint<T> {
     type T = T;
     type PointType<'b>
         = UnimplementedPoint<Self::T>

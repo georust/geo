@@ -58,9 +58,10 @@ impl<'a, T: CoordNum + 'a> RectTrait for &'a Rect<T> {
 ///
 /// This can be used as the `RectType` of the `GeometryTrait` by implementations that don't
 /// have a Rect concept
-pub struct UnimplementedRect<T>(PhantomData<T>);
+#[derive(Clone)]
+pub struct UnimplementedRect<T: Clone>(PhantomData<T>);
 
-impl<T> RectTrait for UnimplementedRect<T> {
+impl<T: Clone> RectTrait for UnimplementedRect<T> {
     type CoordType<'a>
         = UnimplementedCoord<Self::T>
     where
@@ -75,7 +76,7 @@ impl<T> RectTrait for UnimplementedRect<T> {
     }
 }
 
-impl<T> crate::GeometryTrait for UnimplementedRect<T> {
+impl<T: Clone> crate::GeometryTrait for UnimplementedRect<T> {
     type T = T;
     type PointType<'b>
         = crate::UnimplementedPoint<Self::T>

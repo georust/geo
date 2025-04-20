@@ -54,9 +54,10 @@ impl<T: CoordNum> PointTrait for &Point<T> {
 ///
 /// This can be used as the `PointType` of the `GeometryTrait` by implementations that don't have a
 /// Point concept
-pub struct UnimplementedPoint<T>(PhantomData<T>);
+#[derive(Clone)]
+pub struct UnimplementedPoint<T: Clone>(PhantomData<T>);
 
-impl<T> PointTrait for UnimplementedPoint<T> {
+impl<T: Clone> PointTrait for UnimplementedPoint<T> {
     type CoordType<'a>
         = UnimplementedCoord<<Self as GeometryTrait>::T>
     where
@@ -67,7 +68,7 @@ impl<T> PointTrait for UnimplementedPoint<T> {
     }
 }
 
-impl<T> GeometryTrait for UnimplementedPoint<T> {
+impl<T: Clone> GeometryTrait for UnimplementedPoint<T> {
     type T = T;
     type PointType<'b>
         = UnimplementedPoint<Self::T>

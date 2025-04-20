@@ -68,9 +68,10 @@ impl<'a, T: CoordNum> LineTrait for &'a Line<T> {
 ///
 /// This can be used as the `LineType` of the `GeometryTrait` by implementations that don't
 /// have a Line concept
+#[derive(Clone)]
 pub struct UnimplementedLine<T>(PhantomData<T>);
 
-impl<T> LineTrait for UnimplementedLine<T> {
+impl<T: Clone> LineTrait for UnimplementedLine<T> {
     type CoordType<'a>
         = UnimplementedCoord<Self::T>
     where
@@ -85,7 +86,7 @@ impl<T> LineTrait for UnimplementedLine<T> {
     }
 }
 
-impl<T> GeometryTrait for UnimplementedLine<T> {
+impl<T: Clone> GeometryTrait for UnimplementedLine<T> {
     type T = T;
     type PointType<'b>
         = UnimplementedPoint<Self::T>

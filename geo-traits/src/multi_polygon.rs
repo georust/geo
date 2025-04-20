@@ -83,9 +83,10 @@ impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
 ///
 /// This can be used as the `MultiPolygonType` of the `GeometryTrait` by implementations that don't
 /// have a MultiPolygon concept
-pub struct UnimplementedMultiPolygon<T>(PhantomData<T>);
+#[derive(Clone)]
+pub struct UnimplementedMultiPolygon<T: Clone>(PhantomData<T>);
 
-impl<T> GeometryTrait for UnimplementedMultiPolygon<T> {
+impl<T: Clone> GeometryTrait for UnimplementedMultiPolygon<T> {
     type T = T;
     type PointType<'b>
         = UnimplementedPoint<Self::T>
@@ -151,7 +152,7 @@ impl<T> GeometryTrait for UnimplementedMultiPolygon<T> {
     }
 }
 
-impl<T> MultiPolygonTrait for UnimplementedMultiPolygon<T> {
+impl<T: Clone> MultiPolygonTrait for UnimplementedMultiPolygon<T> {
     type InnerPolygonType<'a>
         = UnimplementedPolygon<Self::T>
     where

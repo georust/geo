@@ -79,9 +79,10 @@ impl<'a, T: CoordNum> TriangleTrait for &'a Triangle<T> {
 ///
 /// This can be used as the `TriangleType` of the `GeometryTrait` by implementations that don't
 /// have a Triangle concept
+#[derive(Clone)]
 pub struct UnimplementedTriangle<T>(PhantomData<T>);
 
-impl<T> TriangleTrait for UnimplementedTriangle<T> {
+impl<T: Clone> TriangleTrait for UnimplementedTriangle<T> {
     type CoordType<'a>
         = UnimplementedCoord<Self::T>
     where
@@ -100,7 +101,7 @@ impl<T> TriangleTrait for UnimplementedTriangle<T> {
     }
 }
 
-impl<T> GeometryTrait for UnimplementedTriangle<T> {
+impl<T: Clone> GeometryTrait for UnimplementedTriangle<T> {
     type T = T;
     type PointType<'b>
         = UnimplementedPoint<Self::T>

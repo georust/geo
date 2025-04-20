@@ -82,9 +82,10 @@ impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
 ///
 /// This can be used as the `GeometryCollectionType` of the `GeometryTrait` by implementations that
 /// don't have a GeometryCollection concept
-pub struct UnimplementedGeometryCollection<T>(PhantomData<T>);
+#[derive(Clone)]
+pub struct UnimplementedGeometryCollection<T: Clone>(PhantomData<T>);
 
-impl<T> GeometryCollectionTrait for UnimplementedGeometryCollection<T> {
+impl<T: Clone> GeometryCollectionTrait for UnimplementedGeometryCollection<T> {
     type GeometryType<'a>
         = UnimplementedGeometry<Self::T>
     where
@@ -99,7 +100,7 @@ impl<T> GeometryCollectionTrait for UnimplementedGeometryCollection<T> {
     }
 }
 
-impl<T> GeometryTrait for UnimplementedGeometryCollection<T> {
+impl<T: Clone> GeometryTrait for UnimplementedGeometryCollection<T> {
     type T = T;
     type PointType<'a>
         = UnimplementedPoint<T>
