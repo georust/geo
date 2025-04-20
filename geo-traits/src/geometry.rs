@@ -538,7 +538,7 @@ mod test {
         let polygon: Polygon = Polygon::new(line_string.clone(), vec![]);
         requires_geometry_trait(&polygon);
 
-        let multi_point: MultiPoint = MultiPoint::from(vec![point.clone()]);
+        let multi_point: MultiPoint = MultiPoint::from(vec![point]);
         requires_geometry_trait(&multi_point);
 
         let multi_line_string: MultiLineString = MultiLineString(vec![line_string.clone()]);
@@ -548,7 +548,7 @@ mod test {
         requires_geometry_trait(&multi_polygon);
 
         let geometry_collection: GeometryCollection =
-            GeometryCollection::from(vec![Geometry::Point(point.clone())]);
+            GeometryCollection::from(vec![Geometry::Point(point)]);
         requires_geometry_trait(&geometry_collection);
 
         let rect: Rect = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
