@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::{CoordTrait, Dimensions, UnimplementedCoord};
+use crate::{CoordTrait, GeometryTrait, UnimplementedCoord};
 #[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, Triangle};
 
@@ -9,17 +9,11 @@ use geo_types::{Coord, CoordNum, Triangle};
 /// A triangle is a bounded area whose three vertices are defined by [coordinates][CoordTrait].
 ///
 /// Refer to [geo_types::Triangle] for information about semantics and validity.
-pub trait TriangleTrait: Sized {
-    /// The coordinate type of this geometry
-    type T;
-
+pub trait TriangleTrait: Sized + GeometryTrait {
     /// The type of each underlying coordinate, which implements [CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
     where
         Self: 'a;
-
-    /// The dimension of this geometry
-    fn dim(&self) -> Dimensions;
 
     /// Access the first coordinate in this Triangle
     fn first(&self) -> Self::CoordType<'_>;
@@ -38,15 +32,10 @@ pub trait TriangleTrait: Sized {
 
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> TriangleTrait for Triangle<T> {
-    type T = T;
     type CoordType<'a>
         = &'a Coord<Self::T>
     where
         Self: 'a;
-
-    fn dim(&self) -> Dimensions {
-        Dimensions::Xy
-    }
 
     fn first(&self) -> Self::CoordType<'_> {
         &self.0
@@ -63,15 +52,10 @@ impl<T: CoordNum> TriangleTrait for Triangle<T> {
 
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> TriangleTrait for &'a Triangle<T> {
-    type T = T;
     type CoordType<'b>
         = &'a Coord<Self::T>
     where
         Self: 'b;
-
-    fn dim(&self) -> Dimensions {
-        Dimensions::Xy
-    }
 
     fn first(&self) -> Self::CoordType<'_> {
         &self.0
@@ -93,15 +77,10 @@ impl<'a, T: CoordNum> TriangleTrait for &'a Triangle<T> {
 pub struct UnimplementedTriangle<T>(PhantomData<T>);
 
 impl<T> TriangleTrait for UnimplementedTriangle<T> {
-    type T = T;
     type CoordType<'a>
         = UnimplementedCoord<Self::T>
     where
         Self: 'a;
-
-    fn dim(&self) -> Dimensions {
-        unimplemented!()
-    }
 
     fn first(&self) -> Self::CoordType<'_> {
         unimplemented!()

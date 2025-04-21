@@ -509,3 +509,211 @@ impl<T> GeometryTrait for UnimplementedGeometry<T> {
         unimplemented!()
     }
 }
+
+// Specialized implementations on each unimplemented type.
+
+macro_rules! impl_unimplemented_specialization {
+    ($geometry_type:ident, $variant:expr) => {
+        impl<T> GeometryTrait for $geometry_type<T> {
+            type T = T;
+            type PointType<'b>
+                = UnimplementedPoint<Self::T>
+            where
+                Self: 'b;
+            type LineStringType<'b>
+                = UnimplementedLineString<Self::T>
+            where
+                Self: 'b;
+            type PolygonType<'b>
+                = UnimplementedPolygon<Self::T>
+            where
+                Self: 'b;
+            type MultiPointType<'b>
+                = UnimplementedMultiPoint<Self::T>
+            where
+                Self: 'b;
+            type MultiLineStringType<'b>
+                = UnimplementedMultiLineString<Self::T>
+            where
+                Self: 'b;
+            type MultiPolygonType<'b>
+                = UnimplementedMultiPolygon<Self::T>
+            where
+                Self: 'b;
+            type GeometryCollectionType<'b>
+                = UnimplementedGeometryCollection<Self::T>
+            where
+                Self: 'b;
+            type RectType<'b>
+                = UnimplementedRect<Self::T>
+            where
+                Self: 'b;
+            type TriangleType<'b>
+                = UnimplementedTriangle<Self::T>
+            where
+                Self: 'b;
+            type LineType<'b>
+                = UnimplementedLine<Self::T>
+            where
+                Self: 'b;
+
+            fn dim(&self) -> Dimensions {
+                unimplemented!()
+            }
+
+            fn as_type(
+                &self,
+            ) -> GeometryType<
+                '_,
+                Self::PointType<'_>,
+                Self::LineStringType<'_>,
+                Self::PolygonType<'_>,
+                Self::MultiPointType<'_>,
+                Self::MultiLineStringType<'_>,
+                Self::MultiPolygonType<'_>,
+                Self::GeometryCollectionType<'_>,
+                Self::RectType<'_>,
+                Self::TriangleType<'_>,
+                Self::LineType<'_>,
+            > {
+                $variant(self)
+            }
+        }
+
+        impl<'a, T> GeometryTrait for &'a $geometry_type<T> {
+            type T = T;
+            type PointType<'b>
+                = UnimplementedPoint<Self::T>
+            where
+                Self: 'b;
+            type LineStringType<'b>
+                = UnimplementedLineString<Self::T>
+            where
+                Self: 'b;
+            type PolygonType<'b>
+                = UnimplementedPolygon<Self::T>
+            where
+                Self: 'b;
+            type MultiPointType<'b>
+                = UnimplementedMultiPoint<Self::T>
+            where
+                Self: 'b;
+            type MultiLineStringType<'b>
+                = UnimplementedMultiLineString<Self::T>
+            where
+                Self: 'b;
+            type MultiPolygonType<'b>
+                = UnimplementedMultiPolygon<Self::T>
+            where
+                Self: 'b;
+            type GeometryCollectionType<'b>
+                = UnimplementedGeometryCollection<Self::T>
+            where
+                Self: 'b;
+            type RectType<'b>
+                = UnimplementedRect<Self::T>
+            where
+                Self: 'b;
+            type TriangleType<'b>
+                = UnimplementedTriangle<Self::T>
+            where
+                Self: 'b;
+            type LineType<'b>
+                = UnimplementedLine<Self::T>
+            where
+                Self: 'b;
+
+            fn dim(&self) -> Dimensions {
+                unimplemented!()
+            }
+
+            fn as_type(
+                &self,
+            ) -> GeometryType<
+                '_,
+                Self::PointType<'_>,
+                Self::LineStringType<'_>,
+                Self::PolygonType<'_>,
+                Self::MultiPointType<'_>,
+                Self::MultiLineStringType<'_>,
+                Self::MultiPolygonType<'_>,
+                Self::GeometryCollectionType<'_>,
+                Self::RectType<'_>,
+                Self::TriangleType<'_>,
+                Self::LineType<'_>,
+            > {
+                $variant(self)
+            }
+        }
+    };
+}
+
+impl_unimplemented_specialization!(UnimplementedPoint, GeometryType::Point);
+impl_unimplemented_specialization!(UnimplementedLineString, GeometryType::LineString);
+impl_unimplemented_specialization!(UnimplementedPolygon, GeometryType::Polygon);
+impl_unimplemented_specialization!(UnimplementedMultiPoint, GeometryType::MultiPoint);
+impl_unimplemented_specialization!(UnimplementedMultiLineString, GeometryType::MultiLineString);
+impl_unimplemented_specialization!(UnimplementedMultiPolygon, GeometryType::MultiPolygon);
+impl_unimplemented_specialization!(
+    UnimplementedGeometryCollection,
+    GeometryType::GeometryCollection
+);
+impl_unimplemented_specialization!(UnimplementedRect, GeometryType::Rect);
+impl_unimplemented_specialization!(UnimplementedTriangle, GeometryType::Triangle);
+impl_unimplemented_specialization!(UnimplementedLine, GeometryType::Line);
+
+#[cfg(test)]
+mod test {
+    // Ensures that all geo-types implement the GeometryTrait
+    #[test]
+    #[cfg(feature = "geo-types")]
+    fn geo_types_implement_geometry_trait() {
+        use geo_types::{
+            coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+            MultiPolygon, Point, Polygon, Rect, Triangle,
+        };
+
+        use crate::GeometryTrait;
+
+        fn requires_geometry_trait<G: GeometryTrait>(_geometry: &G) {}
+
+        let point: Point = Point::new(0.0, 0.0);
+        requires_geometry_trait(&point);
+
+        let line: Line = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
+        requires_geometry_trait(&line);
+
+        let line_string: LineString =
+            LineString::from(vec![coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 }]);
+        requires_geometry_trait(&line_string);
+
+        let polygon: Polygon = Polygon::new(line_string.clone(), vec![]);
+        requires_geometry_trait(&polygon);
+
+        let multi_point: MultiPoint = MultiPoint::from(vec![point]);
+        requires_geometry_trait(&multi_point);
+
+        let multi_line_string: MultiLineString = MultiLineString(vec![line_string.clone()]);
+        requires_geometry_trait(&multi_line_string);
+
+        let multi_polygon: MultiPolygon = MultiPolygon::from(vec![polygon.clone()]);
+        requires_geometry_trait(&multi_polygon);
+
+        let geometry_collection: GeometryCollection =
+            GeometryCollection::from(vec![Geometry::Point(point)]);
+        requires_geometry_trait(&geometry_collection);
+
+        let rect: Rect = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
+        requires_geometry_trait(&rect);
+
+        let triangle: Triangle = Triangle::new(
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: 0.0, y: 1.0 },
+        );
+        requires_geometry_trait(&triangle);
+
+        let geometry: Geometry = Geometry::Point(point);
+        requires_geometry_trait(&geometry);
+    }
+}

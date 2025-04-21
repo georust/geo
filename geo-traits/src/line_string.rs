@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::iterator::LineStringIterator;
-use crate::{CoordTrait, Dimensions, UnimplementedCoord};
+use crate::{CoordTrait, GeometryTrait, UnimplementedCoord};
 #[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, LineString};
 
@@ -11,17 +11,11 @@ use geo_types::{Coord, CoordNum, LineString};
 /// between locations.
 ///
 /// Refer to [geo_types::LineString] for information about semantics and validity.
-pub trait LineStringTrait: Sized {
-    /// The coordinate type of this geometry
-    type T;
-
+pub trait LineStringTrait: Sized + GeometryTrait {
     /// The type of each underlying coordinate, which implements [CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
     where
         Self: 'a;
-
-    /// The dimension of this geometry
-    fn dim(&self) -> Dimensions;
 
     /// An iterator over the coordinates in this LineString
     fn coords(&self) -> impl DoubleEndedIterator + ExactSizeIterator<Item = Self::CoordType<'_>> {
@@ -52,15 +46,10 @@ pub trait LineStringTrait: Sized {
 
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> LineStringTrait for LineString<T> {
-    type T = T;
     type CoordType<'a>
         = &'a Coord<Self::T>
     where
         Self: 'a;
-
-    fn dim(&self) -> Dimensions {
-        Dimensions::Xy
-    }
 
     fn num_coords(&self) -> usize {
         self.0.len()
@@ -73,15 +62,10 @@ impl<T: CoordNum> LineStringTrait for LineString<T> {
 
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
-    type T = T;
     type CoordType<'b>
         = &'a Coord<Self::T>
     where
         Self: 'b;
-
-    fn dim(&self) -> Dimensions {
-        Dimensions::Xy
-    }
 
     fn num_coords(&self) -> usize {
         self.0.len()
@@ -99,15 +83,10 @@ impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
 pub struct UnimplementedLineString<T>(PhantomData<T>);
 
 impl<T> LineStringTrait for UnimplementedLineString<T> {
-    type T = T;
     type CoordType<'a>
         = UnimplementedCoord<Self::T>
     where
         Self: 'a;
-
-    fn dim(&self) -> Dimensions {
-        unimplemented!()
-    }
 
     fn num_coords(&self) -> usize {
         unimplemented!()

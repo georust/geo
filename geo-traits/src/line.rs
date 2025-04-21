@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::{CoordTrait, Dimensions, UnimplementedCoord};
+use crate::{CoordTrait, GeometryTrait, UnimplementedCoord};
 #[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, Line};
 
@@ -9,17 +9,11 @@ use geo_types::{Coord, CoordNum, Line};
 /// A Line is a line segment made up of exactly two [coordinates][CoordTrait].
 ///
 /// Refer to [geo_types::Line] for information about semantics and validity.
-pub trait LineTrait: Sized {
-    /// The coordinate type of this geometry
-    type T;
-
+pub trait LineTrait: Sized + GeometryTrait {
     /// The type of each underlying coordinate, which implements [CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
     where
         Self: 'a;
-
-    /// The dimension of this geometry
-    fn dim(&self) -> Dimensions;
 
     /// Access the start coordinate in this Line
     fn start(&self) -> Self::CoordType<'_>;
@@ -35,15 +29,10 @@ pub trait LineTrait: Sized {
 
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> LineTrait for Line<T> {
-    type T = T;
     type CoordType<'a>
         = &'a Coord<Self::T>
     where
         Self: 'a;
-
-    fn dim(&self) -> Dimensions {
-        Dimensions::Xy
-    }
 
     fn start(&self) -> Self::CoordType<'_> {
         &self.start
@@ -56,15 +45,10 @@ impl<T: CoordNum> LineTrait for Line<T> {
 
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> LineTrait for &'a Line<T> {
-    type T = T;
     type CoordType<'b>
         = &'a Coord<Self::T>
     where
         Self: 'b;
-
-    fn dim(&self) -> Dimensions {
-        Dimensions::Xy
-    }
 
     fn start(&self) -> Self::CoordType<'_> {
         &self.start
@@ -82,15 +66,10 @@ impl<'a, T: CoordNum> LineTrait for &'a Line<T> {
 pub struct UnimplementedLine<T>(PhantomData<T>);
 
 impl<T> LineTrait for UnimplementedLine<T> {
-    type T = T;
     type CoordType<'a>
         = UnimplementedCoord<Self::T>
     where
         Self: 'a;
-
-    fn dim(&self) -> Dimensions {
-        unimplemented!()
-    }
 
     fn start(&self) -> Self::CoordType<'_> {
         unimplemented!()

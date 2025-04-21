@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::iterator::PolygonInteriorIterator;
 use crate::line_string::UnimplementedLineString;
-use crate::{Dimensions, LineStringTrait};
+use crate::{GeometryTrait, LineStringTrait};
 #[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, LineString, Polygon};
 
@@ -13,17 +13,12 @@ use geo_types::{CoordNum, LineString, Polygon};
 /// represented by `LineString`s.
 ///
 /// Refer to [geo_types::Polygon] for information about semantics and validity.
-pub trait PolygonTrait: Sized {
+pub trait PolygonTrait: Sized + GeometryTrait {
     /// The coordinate type of this geometry
-    type T;
-
     /// The type of each underlying ring, which implements [LineStringTrait]
-    type RingType<'a>: 'a + LineStringTrait<T = Self::T>
+    type RingType<'a>: 'a + LineStringTrait<T = <Self as GeometryTrait>::T>
     where
         Self: 'a;
-
-    /// The dimension of this geometry
-    fn dim(&self) -> Dimensions;
 
     /// The exterior ring of the polygon
     fn exterior(&self) -> Option<Self::RingType<'_>>;
@@ -56,15 +51,10 @@ pub trait PolygonTrait: Sized {
 
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> PolygonTrait for Polygon<T> {
-    type T = T;
     type RingType<'a>
-        = &'a LineString<Self::T>
+        = &'a LineString<<Self as GeometryTrait>::T>
     where
         Self: 'a;
-
-    fn dim(&self) -> Dimensions {
-        Dimensions::Xy
-    }
 
     fn exterior(&self) -> Option<Self::RingType<'_>> {
         let ext_ring = Polygon::exterior(self);
@@ -86,15 +76,10 @@ impl<T: CoordNum> PolygonTrait for Polygon<T> {
 
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
-    type T = T;
     type RingType<'b>
-        = &'a LineString<Self::T>
+        = &'a LineString<<Self as GeometryTrait>::T>
     where
         Self: 'b;
-
-    fn dim(&self) -> Dimensions {
-        Dimensions::Xy
-    }
 
     fn exterior(&self) -> Option<Self::RingType<'_>> {
         let ext_ring = Polygon::exterior(self);
@@ -121,15 +106,10 @@ impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
 pub struct UnimplementedPolygon<T>(PhantomData<T>);
 
 impl<T> PolygonTrait for UnimplementedPolygon<T> {
-    type T = T;
     type RingType<'a>
-        = UnimplementedLineString<Self::T>
+        = UnimplementedLineString<<Self as GeometryTrait>::T>
     where
         Self: 'a;
-
-    fn dim(&self) -> Dimensions {
-        unimplemented!()
-    }
 
     fn exterior(&self) -> Option<Self::RingType<'_>> {
         unimplemented!()

@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+- BREAKING: All traits now extend `GeometryTrait`.
+  - <https://github.com/georust/geo/pull/1346>
+
 ## 0.2.0 - 2024.11.06
 
 - BREAKING: Mark `CoordTrait::nth_unchecked` as `unsafe` and add `CoordTrait::nth_or_panic`.

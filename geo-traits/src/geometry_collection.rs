@@ -1,24 +1,18 @@
 use std::marker::PhantomData;
 
 use crate::iterator::GeometryCollectionIterator;
-use crate::{Dimensions, GeometryTrait, UnimplementedGeometry};
+use crate::{GeometryTrait, UnimplementedGeometry};
 #[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, Geometry, GeometryCollection};
 
 /// A trait for accessing data from a generic GeometryCollection.
 ///
 /// A GeometryCollection is a collection of [Geometry][GeometryTrait] types.
-pub trait GeometryCollectionTrait: Sized {
-    /// The coordinate type of this geometry
-    type T;
-
+pub trait GeometryCollectionTrait: Sized + GeometryTrait {
     /// The type of each underlying geometry, which implements [GeometryTrait]
     type GeometryType<'a>: 'a + GeometryTrait<T = Self::T>
     where
         Self: 'a;
-
-    /// The dimension of this geometry
-    fn dim(&self) -> Dimensions;
 
     /// An iterator over the geometries in this GeometryCollection
     fn geometries(
@@ -50,15 +44,10 @@ pub trait GeometryCollectionTrait: Sized {
 
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
-    type T = T;
     type GeometryType<'a>
         = &'a Geometry<Self::T>
     where
         Self: 'a;
-
-    fn dim(&self) -> Dimensions {
-        Dimensions::Xy
-    }
 
     fn num_geometries(&self) -> usize {
         self.0.len()
@@ -71,15 +60,10 @@ impl<T: CoordNum> GeometryCollectionTrait for GeometryCollection<T> {
 
 #[cfg(feature = "geo-types")]
 impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
-    type T = T;
     type GeometryType<'b>
         = &'a Geometry<Self::T>
     where
         Self: 'b;
-
-    fn dim(&self) -> Dimensions {
-        Dimensions::Xy
-    }
 
     fn num_geometries(&self) -> usize {
         self.0.len()
@@ -97,15 +81,10 @@ impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
 pub struct UnimplementedGeometryCollection<T>(PhantomData<T>);
 
 impl<T> GeometryCollectionTrait for UnimplementedGeometryCollection<T> {
-    type T = T;
     type GeometryType<'a>
         = UnimplementedGeometry<Self::T>
     where
         Self: 'a;
-
-    fn dim(&self) -> Dimensions {
-        unimplemented!()
-    }
 
     fn num_geometries(&self) -> usize {
         unimplemented!()

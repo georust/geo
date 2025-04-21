@@ -3,22 +3,17 @@ use std::marker::PhantomData;
 #[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, Point};
 
-use crate::{CoordTrait, Dimensions, UnimplementedCoord};
+use crate::{CoordTrait, GeometryTrait, UnimplementedCoord};
 
 /// A trait for accessing data from a generic Point.
 ///
 /// Refer to [geo_types::Point] for information about semantics and validity.
-pub trait PointTrait {
+pub trait PointTrait: Sized + GeometryTrait {
     /// The coordinate type of this geometry
-    type T;
-
     /// The type of the underlying coordinate, which implements [CoordTrait]
-    type CoordType<'a>: 'a + CoordTrait<T = Self::T>
+    type CoordType<'a>: 'a + CoordTrait<T = <Self as GeometryTrait>::T>
     where
         Self: 'a;
-
-    /// Dimensions of the coordinate tuple
-    fn dim(&self) -> Dimensions;
 
     /// The location of this 0-dimensional geometry.
     ///
@@ -28,35 +23,25 @@ pub trait PointTrait {
 
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> PointTrait for Point<T> {
-    type T = T;
     type CoordType<'a>
-        = &'a Coord<Self::T>
+        = &'a Coord<<Self as GeometryTrait>::T>
     where
         Self: 'a;
 
     fn coord(&self) -> Option<Self::CoordType<'_>> {
         Some(&self.0)
-    }
-
-    fn dim(&self) -> Dimensions {
-        Dimensions::Xy
     }
 }
 
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> PointTrait for &Point<T> {
-    type T = T;
     type CoordType<'a>
-        = &'a Coord<Self::T>
+        = &'a Coord<<Self as GeometryTrait>::T>
     where
         Self: 'a;
 
     fn coord(&self) -> Option<Self::CoordType<'_>> {
         Some(&self.0)
-    }
-
-    fn dim(&self) -> Dimensions {
-        Dimensions::Xy
     }
 }
 
@@ -67,17 +52,12 @@ impl<T: CoordNum> PointTrait for &Point<T> {
 pub struct UnimplementedPoint<T>(PhantomData<T>);
 
 impl<T> PointTrait for UnimplementedPoint<T> {
-    type T = T;
     type CoordType<'a>
-        = UnimplementedCoord<Self::T>
+        = UnimplementedCoord<<Self as GeometryTrait>::T>
     where
         Self: 'a;
 
     fn coord(&self) -> Option<Self::CoordType<'_>> {
-        unimplemented!()
-    }
-
-    fn dim(&self) -> Dimensions {
         unimplemented!()
     }
 }
