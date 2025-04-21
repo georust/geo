@@ -1,9 +1,8 @@
 use std::marker::PhantomData;
 
-use crate::geometry::GeometryTrait;
 use crate::iterator::PolygonInteriorIterator;
 use crate::line_string::UnimplementedLineString;
-use crate::LineStringTrait;
+use crate::{GeometryTrait, LineStringTrait};
 #[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, LineString, Polygon};
 
