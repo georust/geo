@@ -34,11 +34,11 @@ impl<T: CoordNum> PointTrait for Point<T> {
 }
 
 #[cfg(feature = "geo-types")]
-impl<T: CoordNum> PointTrait for &Point<T> {
-    type CoordType<'a>
+impl<'a, T: CoordNum> PointTrait for &'a Point<T> {
+    type CoordType<'b>
         = &'a Coord<<Self as GeometryTrait>::T>
     where
-        Self: 'a;
+        Self: 'b;
 
     fn coord(&self) -> Option<Self::CoordType<'_>> {
         Some(&self.0)
