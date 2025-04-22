@@ -7,9 +7,9 @@ use geo_types::{
 };
 
 use crate::{
-    CoordTrait, Dimensions, GeometryCollectionTrait, LineStringTrait, LineTrait,
-    MultiLineStringTrait, MultiPointTrait, MultiPolygonTrait, PointTrait, PolygonTrait, RectTrait,
-    TriangleTrait, UnimplementedGeometryCollection, UnimplementedLine, UnimplementedLineString,
+    Dimensions, GeometryCollectionTrait, LineStringTrait, LineTrait, MultiLineStringTrait,
+    MultiPointTrait, MultiPolygonTrait, PointTrait, PolygonTrait, RectTrait, TriangleTrait,
+    UnimplementedGeometryCollection, UnimplementedLine, UnimplementedLineString,
     UnimplementedMultiLineString, UnimplementedMultiPoint, UnimplementedMultiPolygon,
     UnimplementedPoint, UnimplementedPolygon, UnimplementedRect, UnimplementedTriangle,
 };
@@ -69,11 +69,6 @@ pub trait GeometryTrait: Sized + Clone {
     type LineType<'a>: 'a + LineTrait<T = Self::T>
     where
         Self: 'a;
-
-    /// TODO
-    fn from_coords<C: CoordTrait<T = Self::T>>(coords: impl IntoIterator<Item = C>) -> Self {
-        todo!()
-    }
 
     /// The dimension of this geometry
     fn dim(&self) -> Dimensions;

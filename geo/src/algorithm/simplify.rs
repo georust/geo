@@ -1,7 +1,11 @@
-use crate::algorithm::{CoordsIter, Distance, Euclidean};
+use crate::algorithm::{Distance, Euclidean};
 use crate::geometry::{Coord, Line, LineString, MultiLineString, MultiPolygon, Polygon};
 use crate::GeoFloat;
-use geo_traits::{to_geo::ToGeoCoord, CoordTrait, GeometryTrait, GeometryType, LineStringTrait};
+use geo_traits::{
+    to_geo::*, CoordTrait, GeometryCollectionTrait, GeometryTrait, GeometryType, LineStringTrait,
+    MultiLineStringTrait, MultiPolygonTrait, PolygonTrait,
+};
+use geo_types::Geometry;
 
 const LINE_STRING_INITIAL_MIN: usize = 2;
 const POLYGON_INITIAL_MIN: usize = 4;
@@ -19,24 +23,27 @@ where
 }
 
 // Wrapper for the RDP algorithm, returning simplified points
-fn rdp<C, I: Iterator<Item = C>, const INITIAL_MIN: usize>(coords: I, epsilon: C::T) -> Vec<C>
+fn rdp<C, I: Iterator<Item = C>, const INITIAL_MIN: usize>(
+    coords: I,
+    epsilon: C::T,
+) -> Vec<Coord<C::T>>
 where
     C: CoordTrait,
     C::T: GeoFloat,
 {
     // Epsilon must be greater than zero for any meaningful simplification to happen
     if epsilon <= <C::T as num_traits::Zero>::zero() {
-        return coords.collect::<Vec<_>>();
+        return coords.map(|c| c.to_coord()).collect::<Vec<_>>();
     }
     let rdp_indices = &coords
         .enumerate()
         .map(|(idx, coord)| RdpIndex { index: idx, coord })
-        .collect::<Vec<RdpIndex<C>>>();
+        .collect::<Vec<_>>();
     let mut simplified_len = rdp_indices.len();
     let simplified_coords: Vec<_> =
         compute_rdp::<C, INITIAL_MIN>(rdp_indices, &mut simplified_len, epsilon)
             .into_iter()
-            .map(|rdpindex| rdpindex.coord)
+            .map(|rdpindex| rdpindex.coord.to_coord())
             .collect();
     debug_assert_eq!(simplified_coords.len(), simplified_len);
     simplified_coords
@@ -167,7 +174,7 @@ where
 /// discarded.
 ///
 /// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
-pub trait Simplify<G: GeometryTrait> {
+pub trait Simplify<T: GeoFloat, G: GeometryTrait<T = T>> {
     /// Returns the simplified representation of a geometry, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
     ///
     /// # Examples
@@ -195,7 +202,7 @@ pub trait Simplify<G: GeometryTrait> {
     ///
     /// assert_eq!(expected, simplified)
     /// ```
-    fn simplify(&self, epsilon: G::T) -> Self;
+    fn simplify(&self, epsilon: T) -> Geometry<T>;
 }
 
 /// Simplifies a geometry, returning the retained _indices_ of the input.
@@ -243,41 +250,51 @@ pub trait SimplifyIdx<T, Epsilon = T> {
         T: GeoFloat;
 }
 
-impl<G> Simplify<G> for G
+fn simplify_line_string<L: LineStringTrait<T = T>, T: GeoFloat, const INITIAL_MIN: usize>(
+    line_string: &L,
+    epsilon: T,
+) -> LineString<T> {
+    LineString(rdp::<_, _, INITIAL_MIN>(line_string.coords(), epsilon))
+}
+
+fn simplify_polygon<P: PolygonTrait<T = T>, T: GeoFloat>(poly: &P, epsilon: T) -> Polygon<T> {
+    Polygon::new(
+        simplify_line_string::<_, _, POLYGON_INITIAL_MIN>(
+            &poly.exterior().unwrap(), // fixme
+            epsilon,
+        ),
+        poly.interiors()
+            .map(|l| simplify_line_string::<_, _, POLYGON_INITIAL_MIN>(&l, epsilon))
+            .collect(),
+    )
+}
+
+impl<T, G> Simplify<T, G> for G
 where
-    G: GeometryTrait,
-    G::T: GeoFloat,
+    G: GeometryTrait<T = T>,
+    T: GeoFloat,
 {
-    fn simplify(&self, epsilon: G::T) -> Self {
+    fn simplify(&self, epsilon: T) -> Geometry<T> {
         match self.as_type() {
-            GeometryType::Point(p) => self.clone(),
+            GeometryType::Point(p) => Geometry::Point(p.to_point()),
             GeometryType::LineString(ls) => {
-                let simplified = rdp::<_, _, LINE_STRING_INITIAL_MIN>(ls.coords(), epsilon);
-                G::from_coords(simplified.into_iter())
+                Geometry::LineString(simplify_line_string::<_, _, LINE_STRING_INITIAL_MIN>(
+                    ls, epsilon,
+                ))
             }
-            GeometryType::Polygon(poly) => {
-                // Polygon::new(
-                //     LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(
-                //         self.exterior().coords_iter(),
-                //         epsilon,
-                //     )),
-                //     self.interiors()
-                //         .iter()
-                //         .map(|l| {
-                //             LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(l.coords_iter(), epsilon))
-                //         })
-                //         .collect(),
-                // )
-            }
-            GeometryType::MultiPoint(mp) => mp.clone(),
-            GeometryType::MultiLineString(mls) => {
-                // MultiLineString::new(mls.lines().map(|l| l.simplify(epsilon)).collect())
-                todo!()
-            }
-            GeometryType::MultiPolygon(mpoly) => {
-                // MultiPolygon::new(self.iter().map(|p| p.simplify(epsilon)).collect())
-                todo!()
-            }
+            GeometryType::Polygon(poly) => Geometry::Polygon(simplify_polygon(poly, epsilon)),
+            GeometryType::MultiPoint(mp) => Geometry::MultiPoint(mp.to_multi_point()),
+            GeometryType::MultiLineString(mls) => Geometry::MultiLineString(MultiLineString::new(
+                mls.line_strings()
+                    .map(|l| simplify_line_string::<_, _, LINE_STRING_INITIAL_MIN>(&l, epsilon))
+                    .collect(),
+            )),
+            GeometryType::MultiPolygon(mpoly) => Geometry::MultiPolygon(MultiPolygon::new(
+                mpoly
+                    .polygons()
+                    .map(|p| simplify_polygon(&p, epsilon))
+                    .collect(),
+            )),
             GeometryType::GeometryCollection(gc) => {
                 let simplified_geometries =
                     gc.geometries().map(|geom| geom.simplify(epsilon)).collect();
@@ -285,21 +302,19 @@ where
                     simplified_geometries,
                 ))
             }
-            GeometryType::Rect(r) => r.clone(),
-            GeometryType::Triangle(t) => t.clone(),
-            GeometryType::Line(l) => l.clone(),
-            _ => todo!(),
+            GeometryType::Rect(r) => Geometry::Rect(r.to_rect()),
+            GeometryType::Triangle(t) => Geometry::Triangle(t.to_triangle()),
+            GeometryType::Line(l) => Geometry::Line(l.to_line()),
         }
     }
 }
 
-/*
 impl<T> SimplifyIdx<T> for LineString<T>
 where
     T: GeoFloat,
 {
     fn simplify_idx(&self, epsilon: T) -> Vec<usize> {
-        calculate_rdp_indices::<_, LINE_STRING_INITIAL_MIN>(
+        calculate_rdp_indices::<_, _, LINE_STRING_INITIAL_MIN>(
             &self
                 .0
                 .iter()
@@ -308,12 +323,11 @@ where
                     index: idx,
                     coord: *coord,
                 })
-                .collect::<Vec<RdpIndex<T>>>(),
+                .collect::<Vec<RdpIndex<Coord<T>>>>(),
             epsilon,
         )
     }
 }
-*/
 
 #[cfg(test)]
 mod test {
@@ -385,6 +399,7 @@ mod test {
                 (11.0, 5.5),
                 (27.8, 0.1),
             ])])
+            .into()
         );
     }
 
@@ -403,13 +418,13 @@ mod test {
 
         assert_eq!(
             poly2,
-            polygon![
+            Geometry::Polygon(polygon![
                 (x: 0., y: 0.),
                 (x: 0., y: 10.),
                 (x: 10., y: 10.),
                 (x: 10., y: 0.),
                 (x: 0., y: 0.),
-            ],
+            ]),
         );
     }
 
@@ -434,7 +449,8 @@ mod test {
                 (x: 10., y: 10.),
                 (x: 10., y: 0.),
                 (x: 0., y: 0.)
-            ]]),
+            ]])
+            .into(),
         );
     }
 
@@ -448,7 +464,7 @@ mod test {
             (x: 10., y: 0.),
         ];
         let simplified = ls.simplify(-1.0);
-        assert_eq!(ls, simplified);
+        assert_eq!(Geometry::LineString(ls), simplified);
     }
 
     #[test]
@@ -478,23 +494,23 @@ mod test {
         // LineString result should be three coordinates
         let result = ls.simplify(epsilon);
         assert_eq!(
-            line_string![
+            Geometry::LineString(line_string![
                 ( x: 1.4324054e-16, y: 1.4324054e-16 ),
                 ( x: -5.9730447e26, y: 1.5590374e-27 ),
                 ( x: 1.4324054e-16, y: 1.4324054e-16 ),
-            ],
+            ]),
             result
         );
 
         // Polygon result should be five coordinates
         let result = Polygon::new(ls, vec![]).simplify(epsilon);
         assert_eq!(
-            polygon![
+            Geometry::Polygon(polygon![
                 ( x: 1.4324054e-16, y: 1.4324054e-16 ),
                 ( x: 1.4324054e-16, y: 1.4324054e-16 ),
                 ( x: -5.9730447e26, y: 1.5590374e-27 ),
                 ( x: 1.4324054e-16, y: 1.4324054e-16 ),
-            ],
+            ]),
             result,
         );
     }
@@ -514,6 +530,6 @@ mod test {
             (x: 0.0, y: 0.0),
             (x: 27.8, y: 0.1)
         ];
-        assert_eq!(actual, expected);
+        assert_eq!(actual, expected.into());
     }
 }
