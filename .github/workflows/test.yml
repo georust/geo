@@ -56,6 +56,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Install dependencies
+        shell: bash
+        run: apt-get update && apt-get install -y libgeos-dev
       - run: rustup component add rustfmt clippy
       - run: cargo fmt --all -- --check
       - run: cargo clippy --all-features --all-targets -- -Dwarnings
@@ -138,6 +141,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Install dependencies
+        shell: bash
+        run: apt-get update && apt-get install -y libgeos-dev
       - run: cargo check --all-targets
       - run: cargo test --lib --bins --tests
       - run: cd ../geo-generic-tests && cargo test
@@ -222,6 +228,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Install dependencies
+        shell: bash
+        run: apt-get update && apt-get install -y libgeos-dev
       - run: cargo bench --no-run
 
   docs:

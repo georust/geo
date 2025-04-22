@@ -5,6 +5,7 @@ use geo_types::*;
 
 use crate::*;
 
+#[allow(clippy::type_complexity)]
 pub trait GeometryTraitExt: GeometryTrait + GeoTraitExtWithTypeTag<Tag = GeometryTag>
 where
     <Self as GeometryTrait>::T: CoordNum,
