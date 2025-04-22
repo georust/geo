@@ -7,11 +7,16 @@ members = [
   "geo-test-fixtures",
   "geo-traits",
   "geo-types",
+  "geo-traits-ext",
+  "geo-generic-alg",
   "jts-test-runner",
+  "geo-generic-tests",
 ]
 
 [patch.crates-io]
 
-# Ensure any transitive dependencies also use the local geo/geo-types
+# Ensure any transitive dependencies also use the local geo/geo-traits/geo-types
 geo = { path = "geo" }
+geo-traits = { path = "geo-traits" }
 geo-types = { path = "geo-types" }
+geo-traits-ext = { path = "geo-traits-ext" }

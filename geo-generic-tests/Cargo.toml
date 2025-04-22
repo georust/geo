@@ -1,0 +1,21 @@
+[package]
+name = "geo-generic-tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+geo-traits = { path = "../geo-traits" }
+geo-types = { path = "../geo-types" }
+geo-traits-ext = { path = "../geo-traits-ext" }
+
+# required by wkb
+byteorder = "1"
+num_enum = "0.7"
+thiserror = "1"
+delegate = "0.13.3"
+
+[dev-dependencies]
+geo-generic-alg = { path = "../geo-generic-alg" }
+
+# required by wkb
+geos = { version = "10", features = ["geo"] }

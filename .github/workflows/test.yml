@@ -115,6 +115,33 @@ jobs:
       # we don't want to test `proj-network` because it only enables the `proj` feature
       - run: cargo test --features "use-proj use-serde earcutr multithreading"
 
+  geo-generic:
+    name: geo-generic
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    defaults:
+      run:
+        working-directory: geo-generic-alg
+    strategy:
+      matrix:
+        container_image:
+          # We aim to support rust-stable plus (at least) the prior 3 releases,
+          # giving us about 6 months of coverage.
+          #
+          # Minimum supported rust version (MSRV)
+          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.81"
+          # Two most recent releases - we omit older ones for expedient CI
+          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83"
+          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
+    container:
+      image: ${{ matrix.container_image }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - run: cargo check --all-targets
+      - run: cargo test --lib --bins --tests
+      - run: cd ../geo-generic-tests && cargo test
+
   geo_traits:
     name: geo-traits
     runs-on: ubuntu-latest

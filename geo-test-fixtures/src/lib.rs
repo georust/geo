@@ -33,6 +33,13 @@ where
     line_string("norway_main.wkt")
 }
 
+pub fn norway_main_wkb() -> Vec<u8> {
+    let mut res = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    res.push("fixtures");
+    res.push("norway_main.wkb");
+    fs::read(res).unwrap()
+}
+
 pub fn norway_concave_hull<T>() -> LineString<T>
 where
     T: WktFloat + Default + FromStr,
