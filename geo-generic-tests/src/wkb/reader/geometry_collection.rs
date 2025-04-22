@@ -5,7 +5,7 @@ use crate::wkb::error::WKBResult;
 use crate::wkb::reader::util::{has_srid, ReadBytesExt};
 use crate::wkb::reader::Wkb;
 use crate::wkb::Endianness;
-use geo_traits::{Dimensions, GeometryCollectionTrait};
+use geo_traits::GeometryCollectionTrait;
 use geo_traits_ext::{
     forward_geometry_collection_trait_ext_funcs, GeoTraitExtWithTypeTag, GeometryCollectionTag,
     GeometryCollectionTraitExt,

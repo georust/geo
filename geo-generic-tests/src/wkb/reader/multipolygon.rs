@@ -4,7 +4,6 @@ use crate::wkb::common::WKBDimension;
 use crate::wkb::reader::polygon::Polygon;
 use crate::wkb::reader::util::{has_srid, ReadBytesExt};
 use crate::wkb::Endianness;
-use geo_traits::Dimensions;
 use geo_traits::MultiPolygonTrait;
 use geo_traits_ext::{
     forward_multi_polygon_trait_ext_funcs, GeoTraitExtWithTypeTag, MultiPolygonTag,
