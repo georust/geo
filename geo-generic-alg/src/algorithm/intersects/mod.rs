@@ -42,44 +42,20 @@ pub trait Intersects<Rhs = Self> {
     fn intersects(&self, rhs: &Rhs) -> bool;
 }
 
-// Since `Intersects` is symmetric, we use a macro to
-// implement `T: Intersects<S>` if `S: Intersects<T>` is
-// available.
-//
-// As a convention, we typically provide explicit impl.
-// whenever the Rhs is a "simpler geometry" than the target
-// type, and use the macro for the reverse impl. However,
-// when there is a blanket implementations (eg. Point from
-// Coord, MultiPoint from Point), we need to provide
-// the reverse (where Self is "simpler" than Rhs).
-macro_rules! symmetric_intersects_impl {
-    ($t:ty, $k:ty) => {
-        impl<T> $crate::Intersects<$k> for $t
-        where
-            $k: $crate::Intersects<$t>,
-            T: CoordNum,
-        {
-            fn intersects(&self, rhs: &$k) -> bool {
-                rhs.intersects(self)
-            }
-        }
-    };
-}
-
 pub trait IntersectsTrait<LhsTag, RhsTag, Rhs = Self> {
     fn intersects_trait(&self, rhs: &Rhs) -> bool;
 }
 
-// impl<LHS, RHS> Intersects<RHS> for LHS
-// where
-//     LHS: GeoTraitExtWithTypeTag,
-//     RHS: GeoTraitExtWithTypeTag,
-//     LHS: IntersectsTrait<LHS::Tag, RHS::Tag, RHS>,
-// {
-//     fn intersects(&self, rhs: &RHS) -> bool {
-//         self.intersects_trait(rhs)
-//     }
-// }
+impl<LHS, RHS> Intersects<RHS> for LHS
+where
+    LHS: GeoTraitExtWithTypeTag,
+    RHS: GeoTraitExtWithTypeTag,
+    LHS: IntersectsTrait<LHS::Tag, RHS::Tag, RHS>,
+{
+    fn intersects(&self, rhs: &RHS) -> bool {
+        self.intersects_trait(rhs)
+    }
+}
 
 macro_rules! symmetric_intersects_trait_impl {
     ($num_type:ident, $lhs_type:ident, $lhs_tag:ident, $rhs_type:ident, $rhs_tag:ident) => {
@@ -160,7 +136,6 @@ where
 
 #[cfg(test)]
 mod test {
-    use geo_generic_tests::simple::coord;
     use geo_types::Coord;
 
     use crate::Intersects;
@@ -611,8 +586,8 @@ mod test {
         let _ = c.intersects(&geom);
         let _ = c.intersects(&gc);
         let _ = c.intersects(&multi_point);
-        // let _ = c.intersects(&multi_ls);
-        // let _ = c.intersects(&multi_poly);
+        let _ = c.intersects(&multi_ls);
+        let _ = c.intersects(&multi_poly);
 
         let _ = pt.intersects(&pt);
         let _ = pt.intersects(&ln);
