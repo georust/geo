@@ -187,11 +187,9 @@ where
         }
 
         if let Some(exterior) = self.exterior_ext() {
-            // TODO: Uncomment this once we have implemented linestring x polygon and polygon x linestring
-            // self.intersects_trait(&exterior) ||
-            //     self.interiors_ext().any(|inner| self.intersects_trait(&inner)) ||
-            //     polygon.intersects_trait(&exterior)
-            false
+            self.intersects_trait(&exterior) ||
+                self.interiors_ext().any(|inner| self.intersects_trait(&inner)) ||
+                polygon.intersects_trait(&exterior)
         } else {
             false
         }

@@ -154,15 +154,13 @@ symmetric_intersects_trait_impl!(GeoNum, LineTraitExt, LineTag, RectTraitExt, Re
 
 impl<T, LHS, RHS> IntersectsTrait<RectTag, TriangleTag, RHS> for LHS
 where
-    T: CoordNum,
+    T: GeoNum,
     LHS: RectTraitExt<T = T>,
     RHS: TriangleTraitExt<T = T>,
 {
-    fn intersects_trait(&self, _other: &RHS) -> bool {
-        // TODO: Once we have rect x polygon implemented, we can uncomment this
-        // self.intersects_trait(&other.to_polygon())
-        false
+    fn intersects_trait(&self, other: &RHS) -> bool {
+        self.intersects_trait(&other.to_polygon())
     }
 }
 
-symmetric_intersects_trait_impl!(CoordNum, TriangleTraitExt, TriangleTag, RectTraitExt, RectTag);
+symmetric_intersects_trait_impl!(GeoNum, TriangleTraitExt, TriangleTag, RectTraitExt, RectTag);

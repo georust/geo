@@ -174,9 +174,7 @@ where
     fn intersects_trait(&self, rhs: &RHS) -> bool {
         // self.intersects_trait(line)
         let polygon = rhs.to_polygon();
-        // TODO: Once we have line x polygon implemented, we can uncomment this
-        // self.intersects_trait(&polygon)
-        false
+        self.intersects_trait(&polygon)
     }
 }
 

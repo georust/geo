@@ -106,9 +106,7 @@ where
     LHS: TriangleTraitExt<T = T>,
     RHS: TriangleTraitExt<T = T>,
 {
-    fn intersects_trait(&self, _rhs: &RHS) -> bool {
-        // TODO: Once we have polygon x polygon implemented, we can uncomment this
-        // self.to_polygon().intersects_trait(&rhs.to_polygon())
-        false
+    fn intersects_trait(&self, rhs: &RHS) -> bool {
+        self.to_polygon().intersects_trait(&rhs.to_polygon())
     }
 }
