@@ -1,3 +1,5 @@
+use geo_traits_ext::GeoTraitExtWithTypeTag;
+
 use crate::BoundingRect;
 use crate::*;
 
@@ -59,6 +61,36 @@ macro_rules! symmetric_intersects_impl {
         {
             fn intersects(&self, rhs: &$k) -> bool {
                 rhs.intersects(self)
+            }
+        }
+    };
+}
+
+pub trait IntersectsTrait<LhsTag, RhsTag, Rhs = Self> {
+    fn intersects_trait(&self, rhs: &Rhs) -> bool;
+}
+
+// impl<LHS, RHS> Intersects<RHS> for LHS
+// where
+//     LHS: GeoTraitExtWithTypeTag,
+//     RHS: GeoTraitExtWithTypeTag,
+//     LHS: IntersectsTrait<LHS::Tag, RHS::Tag, RHS>,
+// {
+//     fn intersects(&self, rhs: &RHS) -> bool {
+//         self.intersects_trait(rhs)
+//     }
+// }
+
+macro_rules! symmetric_intersects_trait_impl {
+    ($num_type:ident, $lhs_type:ident, $lhs_tag:ident, $rhs_type:ident, $rhs_tag:ident) => {
+        impl<T, LHS, RHS> IntersectsTrait<$lhs_tag, $rhs_tag, RHS> for LHS
+        where
+            T: $num_type,
+            LHS: $lhs_type<T = T>,
+            RHS: $rhs_type<T = T>,
+        {
+            fn intersects_trait(&self, rhs: &RHS) -> bool {
+                rhs.intersects_trait(self)
             }
         }
     };
@@ -128,6 +160,9 @@ where
 
 #[cfg(test)]
 mod test {
+    use geo_generic_tests::simple::coord;
+    use geo_types::Coord;
+
     use crate::Intersects;
     use crate::{
         coord, line_string, polygon, Geometry, Line, LineString, MultiLineString, MultiPoint,
@@ -550,6 +585,7 @@ mod test {
     #[test]
     fn exhaustive_compile_test() {
         use geo_types::{GeometryCollection, Triangle};
+        let c: Coord<f64> = coord! { x: 0., y: 0. };
         let pt: Point = Point::new(0., 0.);
         let ln: Line = Line::new((0., 0.), (1., 1.));
         let ls = line_string![(0., 0.).into(), (1., 1.).into()];
@@ -565,6 +601,18 @@ mod test {
         let multi_point = MultiPoint::new(vec![pt]);
         let multi_ls = MultiLineString::new(vec![ls.clone()]);
         let multi_poly = MultiPolygon::new(vec![poly.clone()]);
+
+        let _ = c.intersects(&pt);
+        let _ = c.intersects(&ln);
+        let _ = c.intersects(&ls);
+        let _ = c.intersects(&poly);
+        let _ = c.intersects(&rect);
+        let _ = c.intersects(&tri);
+        let _ = c.intersects(&geom);
+        let _ = c.intersects(&gc);
+        let _ = c.intersects(&multi_point);
+        // let _ = c.intersects(&multi_ls);
+        // let _ = c.intersects(&multi_poly);
 
         let _ = pt.intersects(&pt);
         let _ = pt.intersects(&ln);
