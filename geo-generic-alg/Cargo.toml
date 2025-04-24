@@ -49,3 +49,7 @@ geo-generic-tests = { path = "../geo-generic-tests" }
 [[bench]]
 name = "area"
 harness = false
+
+[[bench]]
+name = "intersection"
+harness = false
