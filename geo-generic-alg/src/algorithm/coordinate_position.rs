@@ -5,6 +5,8 @@ use crate::intersects::{point_in_rect, value_in_between};
 use crate::kernels::*;
 use crate::{BoundingRect, HasDimensions, Intersects};
 use crate::{GeoNum, GeometryCow};
+use geo_traits::to_geo::ToGeoCoord;
+use geo_traits_ext::*;
 
 /// The position of a `Coord` relative to a `Geometry`
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -66,59 +68,98 @@ pub trait CoordinatePosition {
     );
 }
 
-impl<T> CoordinatePosition for Coord<T>
+impl<G> CoordinatePosition for G
+where
+    G: GeoTraitExtWithTypeTag,
+    G: CoordinatePositionTrait<G::Tag>,
+{
+    type Scalar = G::T;
+
+    fn calculate_coordinate_position(
+        &self,
+        coord: &Coord<Self::Scalar>,
+        is_inside: &mut bool,
+        boundary_count: &mut usize,
+    ) {
+        self.calculate_coordinate_position_trait(coord, is_inside, boundary_count);
+    }
+}
+
+pub trait CoordinatePositionTrait<GT: GeoTypeTag> {
+    type T: GeoNum;
+
+    fn calculate_coordinate_position_trait(
+        &self,
+        coord: &Coord<Self::T>,
+        is_inside: &mut bool,
+        boundary_count: &mut usize,
+    );
+}
+
+impl<T, C> CoordinatePositionTrait<CoordTag> for C
 where
     T: GeoNum,
+    C: CoordTraitExt<T = T>,
 {
-    type Scalar = T;
-    fn calculate_coordinate_position(
+    type T = T;
+
+    fn calculate_coordinate_position_trait(
         &self,
         coord: &Coord<T>,
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
-        if self == coord {
+        if &self.to_coord() == coord {
             *is_inside = true;
         }
     }
 }
 
-impl<T> CoordinatePosition for Point<T>
+impl<T, P> CoordinatePositionTrait<PointTag> for P
 where
     T: GeoNum,
+    P: PointTraitExt<T = T>,
 {
-    type Scalar = T;
-    fn calculate_coordinate_position(
+    type T = T;
+
+    fn calculate_coordinate_position_trait(
         &self,
         coord: &Coord<T>,
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
-        if &self.0 == coord {
-            *is_inside = true;
+        if let Some(point_coord) = self.coord() {
+            if &point_coord.to_coord() == coord {
+                *is_inside = true;
+            }
         }
     }
 }
 
-impl<T> CoordinatePosition for Line<T>
+impl<T, L> CoordinatePositionTrait<LineTag> for L
 where
     T: GeoNum,
+    L: LineTraitExt<T = T>,
 {
-    type Scalar = T;
-    fn calculate_coordinate_position(
+    type T = T;
+
+    fn calculate_coordinate_position_trait(
         &self,
         coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
+        let start = self.start_ext().to_coord();
+        let end = self.end_ext().to_coord();
+
         // degenerate line is a point
-        if self.start == self.end {
-            self.start
+        if start == end {
+            self.start_ext()
                 .calculate_coordinate_position(coord, is_inside, boundary_count);
             return;
         }
 
-        if coord == &self.start || coord == &self.end {
+        if coord == &start || coord == &end {
             *boundary_count += 1;
         } else if self.intersects(coord) {
             *is_inside = true;
@@ -126,44 +167,55 @@ where
     }
 }
 
-impl<T> CoordinatePosition for LineString<T>
+impl<T, LS> CoordinatePositionTrait<LineStringTag> for LS
 where
     T: GeoNum,
+    LS: LineStringTraitExt<T = T>,
 {
-    type Scalar = T;
-    fn calculate_coordinate_position(
+    type T = T;
+
+    fn calculate_coordinate_position_trait(
         &self,
         coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        if self.0.len() < 2 {
+        let num_coords = self.num_coords();
+        if num_coords < 2 {
             debug_assert!(false, "invalid line string with less than 2 coords");
             return;
         }
 
-        if self.0.len() == 2 {
+        if num_coords == 2 {
             // line string with two coords is just a line
-            Line::new(self.0[0], self.0[1]).calculate_coordinate_position(
-                coord,
-                is_inside,
-                boundary_count,
-            );
+            unsafe {
+                let start = self.coord_unchecked_ext(0).to_coord();
+                let end = self.coord_unchecked_ext(1).to_coord();
+                Line::new(start, end).calculate_coordinate_position(
+                    coord,
+                    is_inside,
+                    boundary_count,
+                );
+            }
             return;
         }
 
         // optimization: return early if there's no chance of an intersection
-        // since self.0 is non-empty, safe to `unwrap`
+        // since bounding rect is not empty, we can safely `unwrap`.
         if !self.bounding_rect().unwrap().intersects(coord) {
             return;
         }
 
         // A closed linestring has no boundary, per SFS
         if !self.is_closed() {
-            // since self.0 is non-empty, safe to `unwrap`
-            if coord == self.0.first().unwrap() || coord == self.0.last().unwrap() {
-                *boundary_count += 1;
-                return;
+            // since we have at least two coords, first and last will exist
+            unsafe {
+                let first = self.coord_unchecked_ext(0).to_coord();
+                let last = self.coord_unchecked_ext(num_coords - 1).to_coord();
+                if coord == &first || coord == &last {
+                    *boundary_count += 1;
+                    return;
+                }
             }
         }
 
@@ -175,12 +227,14 @@ where
     }
 }
 
-impl<T> CoordinatePosition for Triangle<T>
+impl<T, TT> CoordinatePositionTrait<TriangleTag> for TT
 where
     T: GeoNum,
+    TT: TriangleTraitExt<T = T>,
 {
-    type Scalar = T;
-    fn calculate_coordinate_position(
+    type T = T;
+
+    fn calculate_coordinate_position_trait(
         &self,
         coord: &Coord<T>,
         is_inside: &mut bool,
@@ -203,20 +257,21 @@ where
     }
 }
 
-impl<T> CoordinatePosition for Rect<T>
+impl<T, R> CoordinatePositionTrait<RectTag> for R
 where
     T: GeoNum,
+    R: RectTraitExt<T = T>,
 {
-    type Scalar = T;
-    fn calculate_coordinate_position(
+    type T = T;
+
+    fn calculate_coordinate_position_trait(
         &self,
         coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
         let mut boundary = false;
-
-        let min = self.min();
+        let min = self.min().to_coord();
 
         match coord.x.partial_cmp(&min.x).unwrap() {
             Ordering::Less => return,
@@ -229,7 +284,7 @@ where
             Ordering::Greater => {}
         }
 
-        let max = self.max();
+        let max = self.max().to_coord();
 
         match max.x.partial_cmp(&coord.x).unwrap() {
             Ordering::Less => return,
@@ -250,46 +305,57 @@ where
     }
 }
 
-impl<T> CoordinatePosition for MultiPoint<T>
+impl<T, MP> CoordinatePositionTrait<MultiPointTag> for MP
 where
     T: GeoNum,
+    MP: MultiPointTraitExt<T = T>,
 {
-    type Scalar = T;
-    fn calculate_coordinate_position(
+    type T = T;
+
+    fn calculate_coordinate_position_trait(
         &self,
         coord: &Coord<T>,
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
-        if self.0.iter().any(|p| &p.0 == coord) {
+        if self
+            .points_ext()
+            .any(|p| p.coord_ext().is_some_and(|c| &c.to_coord() == coord))
+        {
             *is_inside = true;
         }
     }
 }
 
-impl<T> CoordinatePosition for Polygon<T>
+impl<T, P> CoordinatePositionTrait<PolygonTag> for P
 where
     T: GeoNum,
+    P: PolygonTraitExt<T = T>,
 {
-    type Scalar = T;
-    fn calculate_coordinate_position(
+    type T = T;
+
+    fn calculate_coordinate_position_trait(
         &self,
         coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
+        let Some(exterior) = self.exterior_ext() else {
+            return;
+        };
+
         if self.is_empty() {
             return;
         }
 
-        match coord_pos_relative_to_ring(*coord, self.exterior()) {
+        match coord_pos_relative_to_ring(*coord, &exterior) {
             CoordPos::Outside => {}
             CoordPos::OnBoundary => {
                 *boundary_count += 1;
             }
             CoordPos::Inside => {
-                for hole in self.interiors() {
-                    match coord_pos_relative_to_ring(*coord, hole) {
+                for hole in self.interiors_ext() {
+                    match coord_pos_relative_to_ring(*coord, &hole) {
                         CoordPos::Outside => {}
                         CoordPos::OnBoundary => {
                             *boundary_count += 1;
@@ -307,64 +373,72 @@ where
     }
 }
 
-impl<T> CoordinatePosition for MultiLineString<T>
+impl<T, MLS> CoordinatePositionTrait<MultiLineStringTag> for MLS
 where
     T: GeoNum,
+    MLS: MultiLineStringTraitExt<T = T>,
 {
-    type Scalar = T;
-    fn calculate_coordinate_position(
+    type T = T;
+
+    fn calculate_coordinate_position_trait(
         &self,
         coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        for line_string in &self.0 {
-            line_string.calculate_coordinate_position(coord, is_inside, boundary_count);
+        for line_string in self.line_strings_ext() {
+            line_string.calculate_coordinate_position_trait(coord, is_inside, boundary_count);
         }
     }
 }
 
-impl<T> CoordinatePosition for MultiPolygon<T>
+impl<T, MP> CoordinatePositionTrait<MultiPolygonTag> for MP
 where
     T: GeoNum,
+    MP: MultiPolygonTraitExt<T = T>,
 {
-    type Scalar = T;
-    fn calculate_coordinate_position(
+    type T = T;
+
+    fn calculate_coordinate_position_trait(
         &self,
         coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        for polygon in &self.0 {
-            polygon.calculate_coordinate_position(coord, is_inside, boundary_count);
+        for polygon in self.polygons_ext() {
+            polygon.calculate_coordinate_position_trait(coord, is_inside, boundary_count);
         }
     }
 }
 
-impl<T> CoordinatePosition for GeometryCollection<T>
+impl<T, GC> CoordinatePositionTrait<GeometryCollectionTag> for GC
 where
     T: GeoNum,
+    GC: GeometryCollectionTraitExt<T = T>,
 {
-    type Scalar = T;
-    fn calculate_coordinate_position(
+    type T = T;
+
+    fn calculate_coordinate_position_trait(
         &self,
         coord: &Coord<T>,
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        for geometry in self {
-            geometry.calculate_coordinate_position(coord, is_inside, boundary_count);
+        for geometry in self.geometries_ext() {
+            geometry.calculate_coordinate_position_trait(coord, is_inside, boundary_count);
         }
     }
 }
 
-impl<T> CoordinatePosition for Geometry<T>
+impl<T, G> CoordinatePositionTrait<GeometryTag> for G
 where
     T: GeoNum,
+    G: GeometryTraitExt<T = T>,
 {
-    type Scalar = T;
-    crate::geometry_delegate_impl! {
-        fn calculate_coordinate_position(
+    type T = T;
+
+    crate::geometry_trait_ext_delegate_impl! {
+        fn calculate_coordinate_position_trait(
             &self,
             coord: &Coord<T>,
             is_inside: &mut bool,
@@ -374,6 +448,7 @@ where
 
 impl<T: GeoNum> CoordinatePosition for GeometryCow<'_, T> {
     type Scalar = T;
+
     crate::geometry_cow_delegate_impl! {
         fn calculate_coordinate_position(
             &self,
@@ -385,20 +460,21 @@ impl<T: GeoNum> CoordinatePosition for GeometryCow<'_, T> {
 
 /// Calculate the position of a `Coord` relative to a
 /// closed `LineString`.
-pub fn coord_pos_relative_to_ring<T>(coord: Coord<T>, linestring: &LineString<T>) -> CoordPos
+pub fn coord_pos_relative_to_ring<T, LS>(coord: Coord<T>, linestring: &LS) -> CoordPos
 where
     T: GeoNum,
+    LS: LineStringTraitExt<T = T>,
 {
     debug_assert!(linestring.is_closed());
 
     // LineString without points
-    if linestring.0.is_empty() {
+    if linestring.num_coords() == 0 {
         return CoordPos::Outside;
     }
-    if linestring.0.len() == 1 {
+    if linestring.num_coords() == 1 {
         // If LineString has one point, it will not generate
         // any lines.  So, we handle this edge case separately.
-        return if coord == linestring.0[0] {
+        return if coord == unsafe { linestring.coord_unchecked_ext(0).to_coord() } {
             CoordPos::OnBoundary
         } else {
             CoordPos::Outside
