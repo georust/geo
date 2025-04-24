@@ -124,24 +124,61 @@ impl LineStringTraitExt for LineString<'_> {
 
     // Delegate to the `geo-types` implementation for less performance overhead
     fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<f64>> + '_ {
-        // Initialize cursor for reading coordinates
+        // Initialize variables for direct memory access
         let num_coords = self.num_points;
-        let mut reader = Cursor::new(self.buf);
-        reader.set_position(self.coord_offset(0));
+        let base_offset = self.coord_offset(0) as usize;
+        let byte_order = self.byte_order;
+        let buf = self.buf;
+        let dim_size = self.dim.size() as usize;
 
-        // Read the first coordinate
+        // Read the first coordinate using unsafe code
         let mut prev_coord = if num_coords > 0 {
-            let x = reader.read_f64(self.byte_order).unwrap();
-            let y = reader.read_f64(self.byte_order).unwrap();
-            geo_types::Coord { x, y }
+            // SAFETY: Same safety assumptions as in coord_iter
+            unsafe {
+                let x_bytes = std::slice::from_raw_parts(buf.as_ptr().add(base_offset), 8);
+                let y_bytes = std::slice::from_raw_parts(buf.as_ptr().add(base_offset + 8), 8);
+
+                // let x = match byte_order {
+                //     Endianness::LittleEndian => f64::from_le_bytes(x_bytes.try_into().unwrap()),
+                //     Endianness::BigEndian => f64::from_be_bytes(x_bytes.try_into().unwrap()),
+                // };
+                let x = f64::from_le_bytes(x_bytes.try_into().unwrap());
+
+                // let y = match byte_order {
+                //     Endianness::LittleEndian => f64::from_le_bytes(y_bytes.try_into().unwrap()),
+                //     Endianness::BigEndian => f64::from_be_bytes(y_bytes.try_into().unwrap()),
+                // };
+                let y = f64::from_le_bytes(y_bytes.try_into().unwrap());
+
+                geo_types::Coord { x, y }
+            }
         } else {
             geo_types::Coord::default()
         };
 
-        (0..num_coords.saturating_sub(1)).map(move |_i| {
-            let x = reader.read_f64(self.byte_order).unwrap();
-            let y = reader.read_f64(self.byte_order).unwrap();
-            let current_coord = geo_types::Coord { x, y };
+        (0..num_coords.saturating_sub(1)).map(move |i| {
+            let coord_pos = base_offset + ((i + 1) * dim_size * 8);
+
+            // SAFETY: Same safety assumptions as in coord_iter
+            let current_coord = unsafe {
+                let x_bytes = std::slice::from_raw_parts(buf.as_ptr().add(coord_pos), 8);
+                let y_bytes = std::slice::from_raw_parts(buf.as_ptr().add(coord_pos + 8), 8);
+
+                // let x = match byte_order {
+                //     Endianness::LittleEndian => f64::from_le_bytes(x_bytes.try_into().unwrap()),
+                //     Endianness::BigEndian => f64::from_be_bytes(x_bytes.try_into().unwrap()),
+                // };
+                let x = f64::from_le_bytes(x_bytes.try_into().unwrap());
+
+                // let y = match byte_order {
+                //     Endianness::LittleEndian => f64::from_le_bytes(y_bytes.try_into().unwrap()),
+                //     Endianness::BigEndian => f64::from_be_bytes(y_bytes.try_into().unwrap()),
+                // };
+                let y = f64::from_le_bytes(y_bytes.try_into().unwrap());
+
+                geo_types::Coord { x, y }
+            };
+
             let line = Line::new(prev_coord, current_coord);
             prev_coord = current_coord;
             line
@@ -150,13 +187,36 @@ impl LineStringTraitExt for LineString<'_> {
 
     fn coord_iter(&self) -> impl Iterator<Item = geo_types::Coord<f64>> {
         let num_coords = self.num_points;
-        let mut reader = Cursor::new(self.buf);
-        reader.set_position(self.coord_offset(0));
+        let base_offset = self.coord_offset(0) as usize;
+        let byte_order = self.byte_order;
+        let buf = self.buf;
 
-        (0..num_coords).map(move |_i| {
-            let x = reader.read_f64(self.byte_order).unwrap();
-            let y = reader.read_f64(self.byte_order).unwrap();
-            geo_types::Coord { x, y }
+        (0..num_coords).map(move |i| {
+            let coord_pos = base_offset + (i * self.dim.size() as usize * 8);
+
+            // SAFETY: We're reading raw memory from the buffer at calculated offsets.
+            // This assumes that:
+            // 1. The buffer contains valid f64 data at these positions
+            // 2. The offsets are correctly calculated and within bounds
+            // 3. The dimension size ensures we don't read past the end of the buffer
+            unsafe {
+                let x_bytes = std::slice::from_raw_parts(buf.as_ptr().add(coord_pos), 8);
+                let y_bytes = std::slice::from_raw_parts(buf.as_ptr().add(coord_pos + 8), 8);
+
+                // let x = match byte_order {
+                //     Endianness::LittleEndian => f64::from_le_bytes(x_bytes.try_into().unwrap()),
+                //     Endianness::BigEndian => f64::from_be_bytes(x_bytes.try_into().unwrap()),
+                // };
+                let x = f64::from_le_bytes(x_bytes.try_into().unwrap());
+
+                // let y = match byte_order {
+                //     Endianness::LittleEndian => f64::from_le_bytes(y_bytes.try_into().unwrap()),
+                //     Endianness::BigEndian => f64::from_be_bytes(y_bytes.try_into().unwrap()),
+                // };
+                let y = f64::from_le_bytes(y_bytes.try_into().unwrap());
+
+                geo_types::Coord { x, y }
+            }
         })
     }
 }

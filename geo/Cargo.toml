@@ -45,6 +45,9 @@ rand = "0.8.0"
 rand_distr = "0.4.3"
 wkt = "0.10.1"
 
+# For writing WKB geometry for benchmarks
+geos = { version = "10.0.0", features = ["geo"] }
+
 [[bench]]
 name = "area"
 harness = false
