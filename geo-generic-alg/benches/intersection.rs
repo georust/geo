@@ -1,6 +1,8 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use geo_generic_alg::intersects::Intersects;
 use geo_generic_alg::MultiPolygon;
+use geo_traits::to_geo::ToGeoGeometry;
+mod util;
 
 fn multi_polygon_intersection(c: &mut Criterion) {
     let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots_wgs84();
@@ -25,6 +27,46 @@ fn multi_polygon_intersection(c: &mut Criterion) {
             assert_eq!(non_intersects, 27782);
         });
     });
+}
+
+fn multi_polygon_intersection_wkb(c: &mut Criterion) {
+    let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots_wgs84();
+    let zone_polygons: MultiPolygon = geo_test_fixtures::nl_zones();
+
+    let mut plot_polygon_wkbs = Vec::new();
+    let mut zone_polygon_wkbs = Vec::new();
+
+    // Convert intersected polygons to WKB
+    for plot_polygon in &plot_polygons {
+        plot_polygon_wkbs.push(util::geo_to_wkb(plot_polygon));
+    }
+    for zone_polygon in &zone_polygons {
+        zone_polygon_wkbs.push(util::geo_to_wkb(zone_polygon));
+    }
+
+    c.bench_function("MultiPolygon intersects wkb", |bencher| {
+        bencher.iter(|| {
+            let mut intersects = 0;
+            let mut non_intersects = 0;
+
+            for a in &plot_polygon_wkbs {
+                for b in &zone_polygon_wkbs {
+                    let a_geom = geo_generic_tests::wkb::reader::read_wkb(a).unwrap();
+                    let b_geom = geo_generic_tests::wkb::reader::read_wkb(b).unwrap();
+                    // let a_geom = a_geom.to_geometry();
+                    // let b_geom = b_geom.to_geometry();
+                    if criterion::black_box(a_geom.intersects(&b_geom)) {
+                        intersects += 1;
+                    } else {
+                        non_intersects += 1;
+                    }
+                }
+            }
+
+            assert_eq!(intersects, 974);
+            assert_eq!(non_intersects, 27782);
+        });
+    }); 
 }
 
 fn rect_intersection(c: &mut Criterion) {
@@ -149,6 +191,11 @@ criterion_group! {
     config = Criterion::default().sample_size(10);
     targets = multi_polygon_intersection
 }
+criterion_group! {
+    name = bench_multi_polygons_wkb;
+    config = Criterion::default().sample_size(10);
+    targets = multi_polygon_intersection_wkb
+}
 criterion_group!(bench_rects, rect_intersection);
 criterion_group! {
     name = bench_point_rect;
@@ -163,6 +210,7 @@ criterion_group! {
 
 criterion_main!(
     bench_multi_polygons,
+    bench_multi_polygons_wkb,
     bench_rects,
     bench_point_rect,
     bench_point_triangle

@@ -15,11 +15,11 @@ mod tests {
     #[test]
     fn test_intersects_trait() {
         let orig = point_2d();
-        let buf = geo_to_wkb_geom(orig);
+        let buf = geo_to_wkb(orig);
         let wkb = read_wkb(&buf).unwrap();
 
         let orig2 = linestring_2d();
-        let buf2 = geo_to_wkb_geom(orig2);
+        let buf2 = geo_to_wkb(orig2);
         let wkb2 = read_wkb(&buf2).unwrap();
 
         match (wkb.as_type(), wkb2.as_type()) {
@@ -59,7 +59,7 @@ mod tests {
     #[test]
     fn test_point_trait() {
         let orig = point_2d();
-        let buf = geo_to_wkb_geom(orig);
+        let buf = geo_to_wkb(orig);
         let wkb = read_wkb(&buf).unwrap();
         assert_eq!(wkb.dim(), geo_traits::Dimensions::Xy);
 
@@ -79,7 +79,7 @@ mod tests {
     #[test]
     fn test_line_string_trait() {
         let orig = linestring_2d();
-        let buf = geo_to_wkb_geom(orig.clone());
+        let buf = geo_to_wkb(orig.clone());
         let wkb = read_wkb(&buf).unwrap();
         assert_eq!(wkb.dim(), geo_traits::Dimensions::Xy);
 
@@ -99,7 +99,7 @@ mod tests {
     #[test]
     fn test_polygon_trait() {
         let orig = polygon_2d();
-        let buf = geo_to_wkb_geom(orig.clone());
+        let buf = geo_to_wkb(orig.clone());
         let wkb = read_wkb(&buf).unwrap();
         assert_eq!(wkb.dim(), geo_traits::Dimensions::Xy);
 
@@ -119,7 +119,7 @@ mod tests {
     #[test]
     fn test_geometry_collection_trait() {
         let orig = geometry_collection_2d();
-        let buf = geo_to_wkb_geom(orig.clone());
+        let buf = geo_to_wkb(orig.clone());
         let wkb = read_wkb(&buf).unwrap();
         assert_eq!(wkb.dim(), geo_traits::Dimensions::Xy);
 
@@ -177,7 +177,7 @@ mod tests {
         }
     }
 
-    fn geo_to_wkb_geom<G>(geo: G) -> Vec<u8>
+    fn geo_to_wkb<G>(geo: G) -> Vec<u8>
     where
         G: TryInto<geos::Geometry>,
     {
