@@ -64,6 +64,7 @@ where
         })
     }
 
+    // Returns an iterator yielding the coordinates of this line string as `geo_types::Coord`s.
     fn coord_iter(&self) -> impl Iterator<Item = Coord<<Self as GeometryTrait>::T>> {
         self.coords().map(|c| c.to_coord())
     }
@@ -104,6 +105,15 @@ where
     T: CoordNum,
 {
     forward_line_string_trait_ext_funcs!();
+
+    // Delegate to the `geo-types` implementation for less performance overhead
+    fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<<Self as GeometryTrait>::T>> + '_ {
+        self.lines()
+    }
+
+    fn coord_iter(&self) -> impl Iterator<Item = Coord<<Self as GeometryTrait>::T>> {
+        self.0.iter().map(|c| *c)
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for LineString<T> {
@@ -115,6 +125,15 @@ where
     T: CoordNum,
 {
     forward_line_string_trait_ext_funcs!();
+
+    // Delegate to the `geo-types` implementation for less performance overhead
+    fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<<Self as GeometryTrait>::T>> + '_ {
+        (*self).lines()
+    }
+
+    fn coord_iter(&self) -> impl Iterator<Item = Coord<<Self as GeometryTrait>::T>> {
+        self.0.iter().map(|c| *c)
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for &LineString<T> {
