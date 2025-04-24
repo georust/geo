@@ -47,7 +47,7 @@ fn multi_polygon_intersection_wkb_conv(c: &mut Criterion) {
         zone_polygon_wkbs.push(wkb::geo_to_wkb(zone_polygon));
     }
 
-    c.bench_function("MultiPolygon intersects wkb", |bencher| {
+    c.bench_function("MultiPolygon intersects wkb conv", |bencher| {
         bencher.iter(|| {
             let mut intersects = 0;
             let mut non_intersects = 0;

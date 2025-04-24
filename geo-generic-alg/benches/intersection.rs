@@ -55,8 +55,49 @@ fn multi_polygon_intersection_wkb(c: &mut Criterion) {
 
             for a in &plot_polygon_wkbs {
                 for b in &zone_polygon_wkbs {
-                    let a_geom = geo_generic_tests::wkb::reader::read_wkb(a).unwrap();
-                    let b_geom = geo_generic_tests::wkb::reader::read_wkb(b).unwrap();
+                    let a_geom = geo_generic_tests::wkb::reader::read_wkb(a).unwrap(); // Skip padding
+                    let b_geom = geo_generic_tests::wkb::reader::read_wkb(b).unwrap(); // Skip padding
+                    if criterion::black_box(b_geom.intersects(&a_geom)) {
+                        intersects += 1;
+                    } else {
+                        non_intersects += 1;
+                    }
+                }
+            }
+
+            assert_eq!(intersects, 974);
+            assert_eq!(non_intersects, 27782);
+        });
+    });
+}
+
+fn multi_polygon_intersection_wkb_aligned(c: &mut Criterion) {
+    let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots_wgs84();
+    let zone_polygons: MultiPolygon = geo_test_fixtures::nl_zones();
+
+    // Convert intersected polygons to WKB
+    let mut plot_polygon_wkbs = Vec::new();
+    let mut zone_polygon_wkbs = Vec::new();
+    for plot_polygon in &plot_polygons {
+        let mut wkb = vec![0, 0, 0]; // Add 3-byte padding
+        wkb.extend_from_slice(&wkb::geo_to_wkb(plot_polygon));
+        plot_polygon_wkbs.push(wkb);
+    }
+    for zone_polygon in &zone_polygons {
+        let mut wkb = vec![0, 0, 0]; // Add 3-byte padding
+        wkb.extend_from_slice(&wkb::geo_to_wkb(zone_polygon));
+        zone_polygon_wkbs.push(wkb);
+    }
+
+    c.bench_function("MultiPolygon intersects wkb aligned", |bencher| {
+        bencher.iter(|| {
+            let mut intersects = 0;
+            let mut non_intersects = 0;
+
+            for a in &plot_polygon_wkbs {
+                for b in &zone_polygon_wkbs {
+                    let a_geom = geo_generic_tests::wkb::reader::read_wkb(&a[3..]).unwrap(); // Skip padding
+                    let b_geom = geo_generic_tests::wkb::reader::read_wkb(&b[3..]).unwrap(); // Skip padding
                     if criterion::black_box(b_geom.intersects(&a_geom)) {
                         intersects += 1;
                     } else {
@@ -85,7 +126,7 @@ fn multi_polygon_intersection_wkb_conv(c: &mut Criterion) {
         zone_polygon_wkbs.push(wkb::geo_to_wkb(zone_polygon));
     }
 
-    c.bench_function("MultiPolygon intersects wkb", |bencher| {
+    c.bench_function("MultiPolygon intersects wkb conv", |bencher| {
         bencher.iter(|| {
             let mut intersects = 0;
             let mut non_intersects = 0;
@@ -319,6 +360,11 @@ criterion_group! {
     targets = multi_polygon_intersection_wkb
 }
 criterion_group! {
+    name = bench_multi_polygons_wkb_aligned;
+    config = Criterion::default().sample_size(10);
+    targets = multi_polygon_intersection_wkb_aligned
+}
+criterion_group! {
     name = bench_multi_polygons_wkb_conv;
     config = Criterion::default().sample_size(10);
     targets = multi_polygon_intersection_wkb_conv
@@ -355,6 +401,7 @@ criterion_group! {
 criterion_main!(
     bench_multi_polygons,
     bench_multi_polygons_wkb,
+    bench_multi_polygons_wkb_aligned,
     bench_multi_polygons_wkb_conv,
     bench_rects,
     bench_point_rect,
