@@ -104,8 +104,8 @@ where
     /// ```
     fn centroid_trait(&self) -> Self::Output {
         let two = T::one() + T::one();
-        let start = self.start_ext().to_coord();
-        let end = self.end_ext().to_coord();
+        let start = self.start_coord();
+        let end = self.end_coord();
         let center = (start + end) / two;
         center.into()
     }

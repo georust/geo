@@ -58,6 +58,11 @@ where
     T: CoordNum,
 {
     forward_multi_point_trait_ext_funcs!();
+
+    // Specialized implementation for geo_types::MultiPoint to reduce performance overhead
+    fn coord_iter(&self) -> impl DoubleEndedIterator<Item = Coord<<Self as GeometryTrait>::T>> {
+        self.0.iter().map(|p| p.0)
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for MultiPoint<T> {
@@ -69,6 +74,11 @@ where
     T: CoordNum,
 {
     forward_multi_point_trait_ext_funcs!();
+
+    // Specialized implementation for geo_types::MultiPoint to reduce performance overhead
+    fn coord_iter(&self) -> impl DoubleEndedIterator<Item = Coord<<Self as GeometryTrait>::T>> {
+        self.0.iter().map(|p| p.0)
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for &MultiPoint<T> {

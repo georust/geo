@@ -1,6 +1,6 @@
 // Extend LineTrait traits for the `geo-traits` crate
 
-use geo_traits::{GeometryTrait, LineTrait, UnimplementedLine};
+use geo_traits::{to_geo::ToGeoCoord, GeometryTrait, LineTrait, UnimplementedLine};
 use geo_types::{CoordNum, Line};
 
 use crate::{CoordTraitExt, GeoTraitExtWithTypeTag, LineTag};
@@ -16,6 +16,14 @@ where
     fn start_ext(&self) -> Self::CoordTypeExt<'_>;
     fn end_ext(&self) -> Self::CoordTypeExt<'_>;
     fn coords_ext(&self) -> [Self::CoordTypeExt<'_>; 2];
+
+    fn start_coord(&self) -> geo_types::Coord<<Self as GeometryTrait>::T> {
+        self.start_ext().to_coord()
+    }
+
+    fn end_coord(&self) -> geo_types::Coord<<Self as GeometryTrait>::T> {
+        self.end_ext().to_coord()
+    }
 }
 
 #[macro_export]
@@ -45,6 +53,14 @@ where
     T: CoordNum,
 {
     forward_line_trait_ext_funcs!();
+
+    fn start_coord(&self) -> geo_types::Coord<T> {
+        self.start
+    }
+
+    fn end_coord(&self) -> geo_types::Coord<T> {
+        self.end
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for Line<T> {
@@ -56,6 +72,14 @@ where
     T: CoordNum,
 {
     forward_line_trait_ext_funcs!();
+
+    fn start_coord(&self) -> geo_types::Coord<T> {
+        self.start
+    }
+
+    fn end_coord(&self) -> geo_types::Coord<T> {
+        self.end
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for &Line<T> {

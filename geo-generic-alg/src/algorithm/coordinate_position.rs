@@ -149,8 +149,8 @@ where
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        let start = self.start_ext().to_coord();
-        let end = self.end_ext().to_coord();
+        let start = self.start_coord();
+        let end = self.end_coord();
 
         // degenerate line is a point
         if start == end {

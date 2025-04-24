@@ -11,8 +11,8 @@ where
     RHS: CoordTraitExt<T = T>,
 {
     fn intersects_trait(&self, rhs: &RHS) -> bool {
-        let start = self.start_ext().to_coord();
-        let end = self.end_ext().to_coord();
+        let start = self.start_coord();
+        let end = self.end_coord();
         let rhs = rhs.to_coord();
 
         // First we check if the point is collinear with the line.
@@ -34,10 +34,10 @@ where
 {
     fn intersects_trait(&self, line: &RHS) -> bool {
         let start_ext = self.start_ext();
-        let self_start = start_ext.to_coord();
-        let self_end = self.end_ext().to_coord();
-        let line_start = line.start_ext().to_coord();
-        let line_end = line.end_ext().to_coord();
+        let self_start = self.start_coord();
+        let self_end = self.end_coord();
+        let line_start = line.start_coord();
+        let line_end = line.end_coord();
 
         // Special case: self is equiv. to a point.
         if self_start == self_end {
@@ -93,9 +93,7 @@ where
     RHS: TriangleTraitExt<T = T>,
 {
     fn intersects_trait(&self, rhs: &RHS) -> bool {
-        // self.intersects_trait(line)
-        let polygon = rhs.to_polygon();
-        self.intersects_trait(&polygon)
+        self.intersects_trait(&rhs.to_polygon())
     }
 }
 

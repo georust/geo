@@ -112,7 +112,7 @@ where
     }
 
     fn coord_iter(&self) -> impl Iterator<Item = Coord<<Self as GeometryTrait>::T>> {
-        self.0.iter().map(|c| *c)
+        self.0.iter().copied()
     }
 }
 
@@ -132,7 +132,7 @@ where
     }
 
     fn coord_iter(&self) -> impl Iterator<Item = Coord<<Self as GeometryTrait>::T>> {
-        self.0.iter().map(|c| *c)
+        self.0.iter().copied()
     }
 }
 

@@ -201,7 +201,7 @@ where
     }
 
     fn dimensions_trait(&self) -> Dimensions {
-        if self.start_ext().to_coord() == self.end_ext().to_coord() {
+        if self.start_coord() == self.end_coord() {
             // degenerate line is a point
             Dimensions::ZeroDimensional
         } else {
@@ -210,7 +210,7 @@ where
     }
 
     fn boundary_dimensions_trait(&self) -> Dimensions {
-        if self.start_ext().to_coord() == self.end_ext().to_coord() {
+        if self.start_coord() == self.end_coord() {
             // degenerate line is a point, which has no boundary
             Dimensions::Empty
         } else {

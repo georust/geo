@@ -95,7 +95,6 @@ where
     RHS: PolygonTraitExt<T = T>,
 {
     fn intersects_trait(&self, polygon: &RHS) -> bool {
-        // Convert exteriors to LineStrings
         if has_disjoint_bboxes(self, polygon) {
             return false;
         }
