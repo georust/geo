@@ -80,7 +80,7 @@ impl<'a> MultiPolygon<'a> {
 
 impl<'a> MultiPolygonTrait for MultiPolygon<'a> {
     type InnerPolygonType<'b>
-        = Polygon<'a>
+        = &'b Polygon<'a>
     where
         Self: 'b;
 
@@ -88,8 +88,8 @@ impl<'a> MultiPolygonTrait for MultiPolygon<'a> {
         self.wkb_polygons.len()
     }
 
-    unsafe fn polygon_unchecked(&self, i: usize) -> Self::PolygonType<'_> {
-        self.wkb_polygons.get_unchecked(i).clone()
+    unsafe fn polygon_unchecked(&self, i: usize) -> Self::InnerPolygonType<'_> {
+        self.wkb_polygons.get_unchecked(i)
     }
 }
 
@@ -98,7 +98,7 @@ where
     'a: 'b,
 {
     type InnerPolygonType<'c>
-        = Polygon<'a>
+        = &'b Polygon<'a>
     where
         Self: 'c;
 
@@ -106,8 +106,8 @@ where
         self.wkb_polygons.len()
     }
 
-    unsafe fn polygon_unchecked(&self, i: usize) -> Self::PolygonType<'_> {
-        self.wkb_polygons.get_unchecked(i).clone()
+    unsafe fn polygon_unchecked(&self, i: usize) -> Self::InnerPolygonType<'_> {
+        self.wkb_polygons.get_unchecked(i)
     }
 }
 

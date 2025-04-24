@@ -8,6 +8,7 @@ use geo_traits::LineStringTrait;
 use geo_traits_ext::{
     forward_line_string_trait_ext_funcs, GeoTraitExtWithTypeTag, LineStringTag, LineStringTraitExt,
 };
+use geo_types::Line;
 
 const HEADER_BYTES: u64 = 5;
 
@@ -120,6 +121,44 @@ where
 
 impl LineStringTraitExt for LineString<'_> {
     forward_line_string_trait_ext_funcs!();
+
+    // Delegate to the `geo-types` implementation for less performance overhead
+    fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<f64>> + '_ {
+        // Initialize cursor for reading coordinates
+        let num_coords = self.num_points;
+        let mut reader = Cursor::new(self.buf);
+        reader.set_position(self.coord_offset(0));
+
+        // Read the first coordinate
+        let mut prev_coord = if num_coords > 0 {
+            let x = reader.read_f64(self.byte_order).unwrap();
+            let y = reader.read_f64(self.byte_order).unwrap();
+            geo_types::Coord { x, y }
+        } else {
+            geo_types::Coord::default()
+        };
+
+        (0..num_coords.saturating_sub(1)).map(move |_i| {
+            let x = reader.read_f64(self.byte_order).unwrap();
+            let y = reader.read_f64(self.byte_order).unwrap();
+            let current_coord = geo_types::Coord { x, y };
+            let line = Line::new(prev_coord, current_coord);
+            prev_coord = current_coord;
+            line
+        })
+    }
+
+    fn coord_iter(&self) -> impl Iterator<Item = geo_types::Coord<f64>> {
+        let num_coords = self.num_points;
+        let mut reader = Cursor::new(self.buf);
+        reader.set_position(self.coord_offset(0));
+
+        (0..num_coords).map(move |_i| {
+            let x = reader.read_f64(self.byte_order).unwrap();
+            let y = reader.read_f64(self.byte_order).unwrap();
+            geo_types::Coord { x, y }
+        })
+    }
 }
 
 impl GeoTraitExtWithTypeTag for LineString<'_> {
@@ -131,6 +170,14 @@ where
     'a: 'b,
 {
     forward_line_string_trait_ext_funcs!();
+
+    fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<f64>> + '_ {
+        (*self).lines()
+    }
+
+    fn coord_iter(&self) -> impl Iterator<Item = geo_types::Coord<f64>> {
+        (*self).coord_iter()
+    }
 }
 
 impl<'a, 'b> GeoTraitExtWithTypeTag for &'b LineString<'a>

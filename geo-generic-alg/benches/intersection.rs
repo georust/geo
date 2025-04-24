@@ -66,7 +66,7 @@ fn multi_polygon_intersection_wkb(c: &mut Criterion) {
             assert_eq!(intersects, 974);
             assert_eq!(non_intersects, 27782);
         });
-    }); 
+    });
 }
 
 fn rect_intersection(c: &mut Criterion) {
