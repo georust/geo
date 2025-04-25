@@ -216,8 +216,9 @@ where
     }
 }
 
-impl<T> CentroidTrait<MultiPolygonTag> for MultiPolygon<T>
+impl<T, MP> CentroidTrait<MultiPolygonTag> for MP
 where
+    MP: MultiPolygonTraitExt<T = T>,
     T: GeoFloat,
 {
     type Output = Option<Point<T>>;
@@ -261,8 +262,9 @@ where
     }
 }
 
-impl<T> CentroidTrait<RectTag> for Rect<T>
+impl<T, R> CentroidTrait<RectTag> for R
 where
+    R: RectTraitExt<T = T>,
     T: GeoFloat,
 {
     type Output = Point<T>;
@@ -290,9 +292,10 @@ where
     }
 }
 
-impl<T> CentroidTrait<TriangleTag> for Triangle<T>
+impl<T, TT> CentroidTrait<TriangleTag> for TT
 where
     T: GeoFloat,
+    TT: TriangleTraitExt<T = T>,
 {
     type Output = Point<T>;
 
@@ -324,9 +327,10 @@ where
     }
 }
 
-impl<T> CentroidTrait<PointTag> for Point<T>
+impl<T, P> CentroidTrait<PointTag> for P
 where
     T: GeoFloat,
+    P: PointTraitExt<T = T>,
 {
     type Output = Point<T>;
 
@@ -346,13 +350,15 @@ where
     /// );
     /// ```
     fn centroid_trait(&self) -> Self::Output {
-        *self
+        self.geo_point()
+            .unwrap_or_else(|| Point::new(T::zero(), T::zero()))
     }
 }
 
-impl<T> CentroidTrait<MultiPointTag> for MultiPoint<T>
+impl<T, MP> CentroidTrait<MultiPointTag> for MP
 where
     T: GeoFloat,
+    MP: MultiPointTraitExt<T = T>,
 {
     type Output = Option<Point<T>>;
 
@@ -378,13 +384,14 @@ where
     }
 }
 
-impl<T> CentroidTrait<GeometryTag> for Geometry<T>
+impl<T, G> CentroidTrait<GeometryTag> for G
 where
     T: GeoFloat,
+    G: GeometryTraitExt<T = T>,
 {
     type Output = Option<Point<T>>;
 
-    crate::geometry_delegate_impl! {
+    crate::geometry_trait_ext_delegate_impl! {
         /// The Centroid of a [`Geometry`] is the centroid of its enum variant
         ///
         /// # Examples
@@ -413,9 +420,10 @@ where
     }
 }
 
-impl<T> CentroidTrait<GeometryCollectionTag> for GeometryCollection<T>
+impl<T, GC> CentroidTrait<GeometryCollectionTag> for GC
 where
     T: GeoFloat,
+    GC: GeometryCollectionTraitExt<T = T>,
 {
     type Output = Option<Point<T>>;
 
@@ -489,11 +497,16 @@ impl<T: GeoFloat> CentroidOperation<T> {
         self.add_centroid(ZeroDimensional, coord, T::one());
     }
 
-    fn add_line(&mut self, line: &Line<T>) {
+    fn add_line<L>(&mut self, line: &L)
+    where
+        L: LineTraitExt<T = T>,
+    {
         match line.dimensions() {
-            ZeroDimensional => self.add_coord(line.start),
+            ZeroDimensional => self.add_coord(line.start_coord()),
             OneDimensional => {
-                self.add_centroid(OneDimensional, line.centroid().0, Euclidean.length(line))
+                // TODO: Remove this conversion once Euclidean supports geo-traits-ext
+                let line = line.geo_line();
+                self.add_centroid(OneDimensional, line.centroid().0, Euclidean.length(&line))
             }
             _ => unreachable!("Line must be zero or one dimensional"),
         }
@@ -565,37 +578,49 @@ impl<T: GeoFloat> CentroidOperation<T> {
         }
     }
 
-    fn add_multi_point(&mut self, multi_point: &MultiPoint<T>) {
+    fn add_multi_point<MP>(&mut self, multi_point: &MP)
+    where
+        MP: MultiPointTraitExt<T = T>,
+    {
         if self.centroid_dimensions() > ZeroDimensional {
             return;
         }
 
-        for element in &multi_point.0 {
-            self.add_coord(element.0);
+        for element in multi_point.coord_iter() {
+            self.add_coord(element);
         }
     }
 
-    fn add_multi_polygon(&mut self, multi_polygon: &MultiPolygon<T>) {
-        for element in &multi_polygon.0 {
-            self.add_polygon(element);
+    fn add_multi_polygon<MP>(&mut self, multi_polygon: &MP)
+    where
+        MP: MultiPolygonTraitExt<T = T>,
+    {
+        for element in multi_polygon.polygons_ext() {
+            self.add_polygon(&element);
         }
     }
 
-    fn add_geometry_collection(&mut self, geometry_collection: &GeometryCollection<T>) {
-        for element in &geometry_collection.0 {
-            self.add_geometry(element);
+    fn add_geometry_collection<GC>(&mut self, geometry_collection: &GC)
+    where
+        GC: GeometryCollectionTraitExt<T = T>,
+    {
+        for element in geometry_collection.geometries_ext() {
+            self.add_geometry(&element);
         }
     }
 
-    fn add_rect(&mut self, rect: &Rect<T>) {
+    fn add_rect<R>(&mut self, rect: &R)
+    where
+        R: RectTraitExt<T = T>,
+    {
         match rect.dimensions() {
-            ZeroDimensional => self.add_coord(rect.min()),
+            ZeroDimensional => self.add_coord(rect.min_coord()),
             OneDimensional => {
                 // Degenerate rect is a line, treat it the same way we treat flat polygons
-                self.add_line(&Line::new(rect.min(), rect.min()));
-                self.add_line(&Line::new(rect.min(), rect.max()));
-                self.add_line(&Line::new(rect.max(), rect.max()));
-                self.add_line(&Line::new(rect.max(), rect.min()));
+                self.add_line(&Line::new(rect.min_coord(), rect.min_coord()));
+                self.add_line(&Line::new(rect.min_coord(), rect.max_coord()));
+                self.add_line(&Line::new(rect.max_coord(), rect.max_coord()));
+                self.add_line(&Line::new(rect.max_coord(), rect.min_coord()));
             }
             TwoDimensional => {
                 self.add_centroid(TwoDimensional, rect.centroid().0, rect.unsigned_area())
@@ -604,39 +629,51 @@ impl<T: GeoFloat> CentroidOperation<T> {
         }
     }
 
-    fn add_triangle(&mut self, triangle: &Triangle<T>) {
+    fn add_triangle<TT>(&mut self, triangle: &TT)
+    where
+        TT: TriangleTraitExt<T = T>,
+    {
         match triangle.dimensions() {
-            ZeroDimensional => self.add_coord(triangle.0),
+            ZeroDimensional => self.add_coord(triangle.first_coord()),
             OneDimensional => {
                 // Degenerate triangle is a line, treat it the same way we treat flat
                 // polygons
-                let l0_1 = Line::new(triangle.0, triangle.1);
-                let l1_2 = Line::new(triangle.1, triangle.2);
-                let l2_0 = Line::new(triangle.2, triangle.0);
+                let l0_1 = Line::new(triangle.first_coord(), triangle.second_coord());
+                let l1_2 = Line::new(triangle.second_coord(), triangle.third_coord());
+                let l2_0 = Line::new(triangle.third_coord(), triangle.first_coord());
                 self.add_line(&l0_1);
                 self.add_line(&l1_2);
                 self.add_line(&l2_0);
             }
             TwoDimensional => {
-                let centroid = (triangle.0 + triangle.1 + triangle.2) / T::from(3).unwrap();
+                let centroid =
+                    (triangle.first_coord() + triangle.second_coord() + triangle.third_coord())
+                        / T::from(3).unwrap();
                 self.add_centroid(TwoDimensional, centroid, triangle.unsigned_area());
             }
             Empty => unreachable!("Rect dimensions cannot be empty"),
         }
     }
 
-    fn add_geometry(&mut self, geometry: &Geometry<T>) {
-        match geometry {
-            Geometry::Point(g) => self.add_coord(g.0),
-            Geometry::Line(g) => self.add_line(g),
-            Geometry::LineString(g) => self.add_line_string(g),
-            Geometry::Polygon(g) => self.add_polygon(g),
-            Geometry::MultiPoint(g) => self.add_multi_point(g),
-            Geometry::MultiLineString(g) => self.add_multi_line_string(g),
-            Geometry::MultiPolygon(g) => self.add_multi_polygon(g),
-            Geometry::GeometryCollection(g) => self.add_geometry_collection(g),
-            Geometry::Rect(g) => self.add_rect(g),
-            Geometry::Triangle(g) => self.add_triangle(g),
+    fn add_geometry<G>(&mut self, geometry: &G)
+    where
+        G: GeometryTraitExt<T = T>,
+    {
+        match geometry.as_type_ext() {
+            GeometryTypeExt::Point(g) => {
+                if let Some(coord) = g.geo_coord() {
+                    self.add_coord(coord)
+                }
+            }
+            GeometryTypeExt::Line(g) => self.add_line(g),
+            GeometryTypeExt::LineString(g) => self.add_line_string(g),
+            GeometryTypeExt::Polygon(g) => self.add_polygon(g),
+            GeometryTypeExt::MultiPoint(g) => self.add_multi_point(g),
+            GeometryTypeExt::MultiLineString(g) => self.add_multi_line_string(g),
+            GeometryTypeExt::MultiPolygon(g) => self.add_multi_polygon(g),
+            GeometryTypeExt::GeometryCollection(g) => self.add_geometry_collection(g),
+            GeometryTypeExt::Rect(g) => self.add_rect(g),
+            GeometryTypeExt::Triangle(g) => self.add_triangle(g),
         }
     }
 

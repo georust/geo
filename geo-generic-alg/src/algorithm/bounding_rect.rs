@@ -1,6 +1,6 @@
 use crate::utils::{partial_max, partial_min};
 use crate::{coord, geometry::*, CoordNum, GeometryCow};
-use geo_traits::to_geo::{ToGeoCoord, ToGeoRect};
+use geo_traits::to_geo::ToGeoCoord;
 use geo_traits_ext::*;
 use geo_types::private_utils::get_bounding_rect;
 
@@ -75,8 +75,8 @@ where
     /// Return the bounding rectangle for a `Point`. It will have zero width
     /// and zero height.
     fn bounding_rect_trait(&self) -> Self::Output {
-        match self.coord() {
-            Some(coord) => Rect::new(coord.to_coord(), coord.to_coord()),
+        match self.geo_coord() {
+            Some(coord) => Rect::new(coord, coord),
             None => {
                 let zero = Coord::<T>::zero();
                 Rect::new(zero, zero)
@@ -105,7 +105,7 @@ where
     type Output = Rect<T>;
 
     fn bounding_rect_trait(&self) -> Self::Output {
-        Rect::new(self.start().to_coord(), self.end().to_coord())
+        Rect::new(self.start_coord(), self.end_coord())
     }
 }
 
@@ -131,7 +131,14 @@ where
     ///
     /// Return the BoundingRect for a MultiLineString
     fn bounding_rect_trait(&self) -> Self::Output {
-        get_bounding_rect(self.coord_iter())
+        self.line_strings_ext().fold(None, |acc, p| {
+            let rect = p.bounding_rect_trait();
+            match (acc, rect) {
+                (None, None) => None,
+                (Some(r), None) | (None, Some(r)) => Some(r),
+                (Some(r1), Some(r2)) => Some(bounding_rect_merge(r1, r2)),
+            }
+        })
     }
 }
 
@@ -144,10 +151,6 @@ where
     ///
     /// Return the BoundingRect for a Polygon
     fn bounding_rect_trait(&self) -> Self::Output {
-        // let line = self.exterior();
-        // // get_bounding_rect(&line.0)
-        // let coords = line.coords_iter().map(|c| c.to_coord());
-        // get_bounding_rect(coords)
         let exterior = self.exterior_ext();
         exterior.and_then(|e| get_bounding_rect(e.coord_iter()))
     }
@@ -193,7 +196,7 @@ where
     type Output = Rect<T>;
 
     fn bounding_rect_trait(&self) -> Self::Output {
-        self.to_rect()
+        self.geo_rect()
     }
 }
 

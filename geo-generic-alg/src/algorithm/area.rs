@@ -94,7 +94,7 @@ where
     }
 }
 
-pub trait AreaTrait<T, GT: GeoTypeTag>
+trait AreaTrait<T, GT: GeoTypeTag>
 where
     T: CoordNum,
 {

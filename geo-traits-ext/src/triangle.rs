@@ -19,8 +19,20 @@ where
     fn third_ext(&self) -> Self::CoordTypeExt<'_>;
     fn coords_ext(&self) -> [Self::CoordTypeExt<'_>; 3];
 
-    fn to_array(&self) -> [Self::CoordType<'_>; 3] {
-        [self.first(), self.second(), self.third()]
+    fn first_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
+        self.first().to_coord()
+    }
+
+    fn second_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
+        self.second().to_coord()
+    }
+
+    fn third_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
+        self.third().to_coord()
+    }
+
+    fn to_array(&self) -> [Coord<<Self as GeometryTrait>::T>; 3] {
+        [self.first_coord(), self.second_coord(), self.third_coord()]
     }
 
     fn to_lines(&self) -> [Line<<Self as GeometryTrait>::T>; 3] {
@@ -33,17 +45,15 @@ where
 
     fn to_polygon(&self) -> Polygon<<Self as GeometryTrait>::T> {
         polygon![
-            self.first().to_coord(),
-            self.second().to_coord(),
-            self.third().to_coord(),
-            self.first().to_coord(),
+            self.first_coord(),
+            self.second_coord(),
+            self.third_coord(),
+            self.first_coord(),
         ]
     }
 
     fn coord_iter(&self) -> impl Iterator<Item = Coord<<Self as GeometryTrait>::T>> {
-        [self.first(), self.second(), self.third()]
-            .into_iter()
-            .map(|c| c.to_coord())
+        [self.first_coord(), self.second_coord(), self.third_coord()].into_iter()
     }
 }
 
@@ -78,6 +88,18 @@ where
     T: CoordNum,
 {
     forward_triangle_trait_ext_funcs!();
+
+    fn first_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
+        self.0
+    }
+
+    fn second_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
+        self.1
+    }
+
+    fn third_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
+        self.2
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for Triangle<T> {
@@ -89,6 +111,18 @@ where
     T: CoordNum,
 {
     forward_triangle_trait_ext_funcs!();
+
+    fn first_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
+        self.0
+    }
+
+    fn second_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
+        self.1
+    }
+
+    fn third_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
+        self.2
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for &Triangle<T> {

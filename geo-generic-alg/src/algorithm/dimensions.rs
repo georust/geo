@@ -1,5 +1,4 @@
 use geo_traits::to_geo::{ToGeoCoord, ToGeoMultiLineString};
-use geo_traits::*;
 use geo_traits_ext::*;
 
 use crate::Orientation::Collinear;
@@ -158,7 +157,7 @@ where
     }
 }
 
-pub trait HasDimensionsTrait<G: GeoTypeTag> {
+trait HasDimensionsTrait<G: GeoTypeTag> {
     fn is_empty_trait(&self) -> bool;
     fn dimensions_trait(&self) -> Dimensions;
     fn boundary_dimensions_trait(&self) -> Dimensions;
@@ -234,7 +233,7 @@ where
 
         // There should be at least 1 coordinate since num_coords is not 0.
         let first = unsafe { self.coord_unchecked_ext(0).to_coord() };
-        if self.coords().any(|coord| first != coord.to_coord()) {
+        if self.coord_iter().any(|coord| first != coord) {
             Dimensions::OneDimensional
         } else {
             // all coords are the same - i.e. a point
@@ -448,10 +447,12 @@ where
     }
 
     fn dimensions_trait(&self) -> Dimensions {
-        if self.min().to_coord() == self.max().to_coord() {
+        if self.min_coord() == self.max_coord() {
             // degenerate rectangle is a point
             Dimensions::ZeroDimensional
-        } else if self.min().x() == self.max().x() || self.min().y() == self.max().y() {
+        } else if self.min_coord().x == self.max_coord().x
+            || self.min_coord().y == self.max_coord().y
+        {
             // degenerate rectangle is a line
             Dimensions::OneDimensional
         } else {
@@ -481,8 +482,7 @@ where
 
     fn dimensions_trait(&self) -> Dimensions {
         use crate::Kernel;
-        let [c0, c1, c2] = self.coords_ext();
-        let (c0, c1, c2) = (c0.to_coord(), c1.to_coord(), c2.to_coord());
+        let (c0, c1, c2) = (self.first_coord(), self.second_coord(), self.third_coord());
         if Collinear == C::Ker::orient2d(c0, c1, c2) {
             if c0 == c1 && c1 == c2 {
                 // degenerate triangle is a point

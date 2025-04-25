@@ -114,6 +114,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Install dependencies
+        shell: bash
+        run: apt-get update && apt-get install -y libgeos-dev
       - run: cargo check --all-targets --no-default-features
       # we don't want to test `proj-network` because it only enables the `proj` feature
       - run: cargo test --features "use-proj use-serde earcutr multithreading"
@@ -197,6 +200,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Install dependencies
+        shell: bash
+        run: apt-get update && apt-get install -y libgeos-dev
       - run: cargo check --all-targets
       - run: cargo test
 
@@ -217,6 +223,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Install dependencies
+        shell: bash
+        run: apt-get update && apt-get install -y libgeos-dev
       - run: cargo build --bins
 
   bench:

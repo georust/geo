@@ -82,10 +82,12 @@ impl<'a> LineStringTrait for LineString<'a> {
     where
         Self: 'b;
 
+    #[inline]
     fn num_coords(&self) -> usize {
         self.num_points
     }
 
+    #[inline]
     unsafe fn coord_unchecked(&self, i: usize) -> Self::CoordType<'_> {
         Coord::new(
             self.buf,
@@ -105,10 +107,12 @@ where
     where
         Self: 'c;
 
+    #[inline]
     fn num_coords(&self) -> usize {
         self.num_points
     }
 
+    #[inline]
     unsafe fn coord_unchecked(&self, i: usize) -> Self::CoordType<'_> {
         Coord::new(
             self.buf,
@@ -123,13 +127,14 @@ impl LineStringTraitExt for LineString<'_> {
     forward_line_string_trait_ext_funcs!();
 
     // Delegate to the `geo-types` implementation for less performance overhead
+    #[inline(always)]
     fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<f64>> + '_ {
         // Initialize variables for direct memory access
         let num_coords = self.num_points;
         let base_offset = self.coord_offset(0) as usize;
-        let byte_order = self.byte_order;
+        let _byte_order = self.byte_order;
         let buf = self.buf;
-        let dim_size = self.dim.size() as usize;
+        let dim_size = self.dim.size();
 
         // Read the first coordinate using unsafe code
         let mut prev_coord = if num_coords > 0 {
@@ -185,14 +190,15 @@ impl LineStringTraitExt for LineString<'_> {
         })
     }
 
+    #[inline(always)]
     fn coord_iter(&self) -> impl Iterator<Item = geo_types::Coord<f64>> {
         let num_coords = self.num_points;
         let base_offset = self.coord_offset(0) as usize;
-        let byte_order = self.byte_order;
+        let _byte_order = self.byte_order;
         let buf = self.buf;
 
         (0..num_coords).map(move |i| {
-            let coord_pos = base_offset + (i * self.dim.size() as usize * 8);
+            let coord_pos = base_offset + (i * self.dim.size() * 8);
 
             // SAFETY: We're reading raw memory from the buffer at calculated offsets.
             // This assumes that:
@@ -231,10 +237,12 @@ where
 {
     forward_line_string_trait_ext_funcs!();
 
+    #[inline(always)]
     fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<f64>> + '_ {
         (*self).lines()
     }
 
+    #[inline(always)]
     fn coord_iter(&self) -> impl Iterator<Item = geo_types::Coord<f64>> {
         (*self).coord_iter()
     }

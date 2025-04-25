@@ -23,6 +23,6 @@ where
     RHS: PointTraitExt<T = T>,
 {
     fn intersects_trait(&self, rhs: &RHS) -> bool {
-        rhs.coord().is_some_and(|c| self.to_coord() == c.to_coord())
+        rhs.geo_coord().is_some_and(|c| self.to_coord() == c)
     }
 }

@@ -1,4 +1,4 @@
-use geo_traits::{to_geo::ToGeoCoord, CoordTrait};
+use geo_traits::CoordTrait;
 use geo_traits_ext::*;
 
 use super::IntersectsTrait;
@@ -66,8 +66,8 @@ where
     RHS: LineTraitExt<T = T>,
 {
     fn intersects_trait(&self, rhs: &RHS) -> bool {
-        let lt = self.min().to_coord();
-        let rb = self.max().to_coord();
+        let lt = self.min_coord();
+        let rb = self.max_coord();
         let lb = Coord::from((lt.x, rb.y));
         let rt = Coord::from((rb.x, lt.y));
 

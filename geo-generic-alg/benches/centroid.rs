@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use geo_generic_alg::Area;
+use geo_generic_alg::Centroid;
 use geo_generic_alg::Polygon;
 use geo_traits::to_geo::ToGeoGeometry;
 
@@ -7,36 +7,36 @@ use geo_traits::to_geo::ToGeoGeometry;
 mod wkb;
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("area_f32", |bencher| {
+    c.bench_function("centroid_f32", |bencher| {
         let norway = geo_test_fixtures::norway_main::<f32>();
         let polygon = Polygon::new(norway, vec![]);
 
         bencher.iter(|| {
-            criterion::black_box(criterion::black_box(&polygon).signed_area());
+            criterion::black_box(criterion::black_box(&polygon).centroid());
         });
     });
 
-    c.bench_function("area", |bencher| {
+    c.bench_function("centroid", |bencher| {
         let norway = geo_test_fixtures::norway_main::<f64>();
         let polygon = Polygon::new(norway, vec![]);
 
         bencher.iter(|| {
-            criterion::black_box(criterion::black_box(&polygon).signed_area());
+            criterion::black_box(criterion::black_box(&polygon).centroid());
         });
     });
 
-    c.bench_function("area_wkb", |bencher| {
+    c.bench_function("centroid_wkb", |bencher| {
         let norway = geo_test_fixtures::norway_main::<f64>();
         let polygon = Polygon::new(norway, vec![]);
         let wkb_bytes = wkb::geo_to_wkb(&polygon);
 
         bencher.iter(|| {
             let wkb_geom = geo_generic_tests::wkb::reader::read_wkb(&wkb_bytes).unwrap();
-            criterion::black_box(wkb_geom.signed_area());
+            criterion::black_box(wkb_geom.centroid());
         });
     });
 
-    c.bench_function("area_wkb_convert", |bencher| {
+    c.bench_function("centroid_wkb_convert", |bencher| {
         let norway = geo_test_fixtures::norway_main::<f64>();
         let polygon = Polygon::new(norway, vec![]);
         let wkb_bytes = wkb::geo_to_wkb(&polygon);
@@ -44,7 +44,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         bencher.iter(|| {
             let wkb_geom = geo_generic_tests::wkb::reader::read_wkb(&wkb_bytes).unwrap();
             let geom = wkb_geom.to_geometry();
-            criterion::black_box(geom.signed_area());
+            criterion::black_box(geom.centroid());
         });
     });
 }

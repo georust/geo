@@ -20,3 +20,9 @@ geo = { path = "geo" }
 geo-traits = { path = "geo-traits" }
 geo-types = { path = "geo-types" }
 geo-traits-ext = { path = "geo-traits-ext" }
+
+[profile.release]
+lto = "thin"
+
+[profile.bench]
+lto = "thin"

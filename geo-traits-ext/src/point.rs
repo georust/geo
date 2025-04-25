@@ -1,7 +1,7 @@
 // Extend PointTrait traits for the `geo-traits` crate
 
-use geo_traits::{GeometryTrait, PointTrait, UnimplementedPoint};
-use geo_types::{CoordNum, Point};
+use geo_traits::{to_geo::ToGeoCoord, CoordTrait, GeometryTrait, PointTrait, UnimplementedPoint};
+use geo_types::{Coord, CoordNum, Point};
 
 use crate::{CoordTraitExt, GeoTraitExtWithTypeTag, PointTag};
 
@@ -14,6 +14,15 @@ where
         Self: 'a;
 
     fn coord_ext(&self) -> Option<Self::CoordTypeExt<'_>>;
+
+    fn geo_point(&self) -> Option<Point<<Self as GeometryTrait>::T>> {
+        self.coord_ext()
+            .map(|coord| Point::new(coord.x(), coord.y()))
+    }
+
+    fn geo_coord(&self) -> Option<Coord<<Self as GeometryTrait>::T>> {
+        self.coord_ext().map(|coord| coord.to_coord())
+    }
 }
 
 #[macro_export]
@@ -35,6 +44,14 @@ where
     T: CoordNum,
 {
     forward_point_trait_ext_funcs!();
+
+    fn geo_point(&self) -> Option<Point<T>> {
+        Some(*self)
+    }
+
+    fn geo_coord(&self) -> Option<Coord<T>> {
+        Some(self.0)
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for Point<T> {
@@ -46,6 +63,14 @@ where
     T: CoordNum,
 {
     forward_point_trait_ext_funcs!();
+
+    fn geo_point(&self) -> Option<Point<T>> {
+        Some(**self)
+    }
+
+    fn geo_coord(&self) -> Option<Coord<T>> {
+        Some(self.0)
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for &Point<T> {

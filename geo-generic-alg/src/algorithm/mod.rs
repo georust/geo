@@ -74,7 +74,6 @@ pub use densify_haversine::DensifyHaversine;
 /// Dimensionality of a geometry and its boundary, based on OGC-SFA.
 pub mod dimensions;
 pub use dimensions::HasDimensions;
-pub use dimensions::HasDimensionsTrait;
 
 /// Calculate the minimum Euclidean distance between two `Geometries`.
 pub mod euclidean_distance;

@@ -24,6 +24,10 @@ where
     fn end_coord(&self) -> geo_types::Coord<<Self as GeometryTrait>::T> {
         self.end_ext().to_coord()
     }
+
+    fn geo_line(&self) -> Line<<Self as GeometryTrait>::T> {
+        Line::new(self.start_coord(), self.end_coord())
+    }
 }
 
 #[macro_export]
@@ -61,6 +65,10 @@ where
     fn end_coord(&self) -> geo_types::Coord<T> {
         self.end
     }
+
+    fn geo_line(&self) -> geo_types::Line<T> {
+        *self
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for Line<T> {
@@ -79,6 +87,10 @@ where
 
     fn end_coord(&self) -> geo_types::Coord<T> {
         self.end
+    }
+
+    fn geo_line(&self) -> geo_types::Line<T> {
+        **self
     }
 }
 

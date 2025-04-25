@@ -1,7 +1,8 @@
 // Extend RectTrait traits for the `geo-traits` crate
 
-use geo_traits::{CoordTrait, GeometryTrait, RectTrait, UnimplementedRect};
-use geo_types::{coord, Coord, CoordNum, Line, LineString, Polygon, Rect};
+use geo_traits::{to_geo::ToGeoCoord, CoordTrait, GeometryTrait, RectTrait, UnimplementedRect};
+use geo_types::{coord, Coord, CoordFloat, CoordNum, Line, LineString, Polygon, Rect};
+use num_traits::One;
 
 use crate::{CoordTraitExt, GeoTraitExtWithTypeTag, RectTag};
 
@@ -17,6 +18,18 @@ where
 
     fn min_ext(&self) -> Self::CoordTypeExt<'_>;
     fn max_ext(&self) -> Self::CoordTypeExt<'_>;
+
+    fn min_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
+        self.min_ext().to_coord()
+    }
+
+    fn max_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
+        self.max_ext().to_coord()
+    }
+
+    fn geo_rect(&self) -> Rect<<Self as GeometryTrait>::T> {
+        Rect::new(self.min_coord(), self.max_coord())
+    }
 
     fn width(&self) -> <Self as GeometryTrait>::T {
         self.max().x() - self.min().x()
@@ -164,6 +177,17 @@ where
         (self_min_x <= other_min_x && other_max_x <= self_max_x)
             && (self_min_y <= other_min_y && other_max_y <= self_max_y)
     }
+
+    fn center(&self) -> Coord<<Self as GeometryTrait>::T>
+    where
+        <Self as GeometryTrait>::T: CoordFloat,
+    {
+        let two = <Self as GeometryTrait>::T::one() + <Self as GeometryTrait>::T::one();
+        coord! {
+            x: (self.max().x() + self.min().x()) / two,
+            y: (self.max().y() + self.min().y()) / two,
+        }
+    }
 }
 
 #[macro_export]
@@ -189,6 +213,18 @@ where
     T: CoordNum,
 {
     forward_rect_trait_ext_funcs!();
+
+    fn min_coord(&self) -> Coord<T> {
+        Rect::min(*self)
+    }
+
+    fn max_coord(&self) -> Coord<T> {
+        Rect::max(*self)
+    }
+
+    fn geo_rect(&self) -> Rect<T> {
+        *self
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for Rect<T> {
@@ -200,6 +236,18 @@ where
     T: CoordNum,
 {
     forward_rect_trait_ext_funcs!();
+
+    fn min_coord(&self) -> Coord<T> {
+        Rect::min(**self)
+    }
+
+    fn max_coord(&self) -> Coord<T> {
+        Rect::max(**self)
+    }
+
+    fn geo_rect(&self) -> Rect<T> {
+        **self
+    }
 }
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for &Rect<T> {
