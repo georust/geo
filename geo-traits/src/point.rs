@@ -24,24 +24,24 @@ pub trait PointTrait: Sized + GeometryTrait {
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> PointTrait for Point<T> {
     type CoordType<'a>
-        = &'a Coord<<Self as GeometryTrait>::T>
+        = Coord<<Self as GeometryTrait>::T>
     where
         Self: 'a;
 
     fn coord(&self) -> Option<Self::CoordType<'_>> {
-        Some(&self.0)
+        Some(self.0)
     }
 }
 
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> PointTrait for &Point<T> {
     type CoordType<'a>
-        = &'a Coord<<Self as GeometryTrait>::T>
+        = Coord<<Self as GeometryTrait>::T>
     where
         Self: 'a;
 
     fn coord(&self) -> Option<Self::CoordType<'_>> {
-        Some(&self.0)
+        Some(self.0)
     }
 }
 
