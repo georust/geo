@@ -5,6 +5,7 @@
 - BREAKING: The `Simplify`, `SimplifyVw`, and `SimplifyVwIdx` traits no longer require a borrowed `epsilon` parameter as these are `Copy` types
 - BREAKING: update proj dependency to 0.30.0 (libproj 9.6.0)
 - Bump geo MSRV to 1.82
+- Simplify test rustc and libproj version specification in CI
 
 ## 0.30.0 - 2025-03-24
 
