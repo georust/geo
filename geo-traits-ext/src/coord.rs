@@ -9,17 +9,35 @@ pub trait CoordTraitExt: CoordTrait + GeoTraitExtWithTypeTag<Tag = CoordTag>
 where
     <Self as CoordTrait>::T: CoordNum,
 {
-    // We don't need to extend anything here, because we already have the
-    // `ToGeoCoord` trait in `to_geo.rs`
+    fn geo_coord(&self) -> Coord<Self::T> {
+        Coord {
+            x: self.x(),
+            y: self.y(),
+        }
+    }
 }
 
-impl<T> CoordTraitExt for Coord<T> where T: CoordNum {}
+impl<T> CoordTraitExt for Coord<T>
+where
+    T: CoordNum,
+{
+    fn geo_coord(&self) -> Coord<T> {
+        *self
+    }
+}
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for Coord<T> {
     type Tag = CoordTag;
 }
 
-impl<T> CoordTraitExt for &Coord<T> where T: CoordNum {}
+impl<T> CoordTraitExt for &Coord<T>
+where
+    T: CoordNum,
+{
+    fn geo_coord(&self) -> Coord<T> {
+        **self
+    }
+}
 
 impl<T: CoordNum> GeoTraitExtWithTypeTag for &Coord<T> {
     type Tag = CoordTag;

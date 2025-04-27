@@ -1,4 +1,3 @@
-use geo_traits::to_geo::ToGeoCoord;
 use geo_traits_ext::*;
 
 use crate::{CoordFloat, CoordNum};
@@ -16,9 +15,7 @@ pub(crate) fn twice_signed_ring_area<T: CoordNum, LS: LineStringTraitExt<T = T>>
     unsafe {
         // Above test ensures the vector has at least 2 elements.
         // We check if linestring is closed, and return 0 otherwise.
-        if linestring.coord_unchecked(0).to_coord()
-            != linestring.coord_unchecked(num_coords - 1).to_coord()
-        {
+        if linestring.geo_coord_unchecked(0) != linestring.geo_coord_unchecked(num_coords - 1) {
             return T::zero();
         }
 
@@ -32,7 +29,7 @@ pub(crate) fn twice_signed_ring_area<T: CoordNum, LS: LineStringTraitExt<T = T>>
         // of the coordinates, but it is not fool-proof to
         // divide by the length of the linestring (eg. a long
         // line-string with T = u8)
-        let shift = linestring.coord_unchecked(0).to_coord();
+        let shift = linestring.geo_coord_unchecked(0);
 
         let mut tmp = T::zero();
         for line in linestring.lines() {

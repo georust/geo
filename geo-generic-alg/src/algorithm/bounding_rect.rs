@@ -1,6 +1,5 @@
 use crate::utils::{partial_max, partial_min};
 use crate::{coord, geometry::*, CoordNum, GeometryCow};
-use geo_traits::to_geo::ToGeoCoord;
 use geo_traits_ext::*;
 use geo_types::private_utils::get_bounding_rect;
 
@@ -62,7 +61,7 @@ where
     /// Return the bounding rectangle for a `Coord`. It will have zero width
     /// and zero height.
     fn bounding_rect_trait(&self) -> Self::Output {
-        Rect::new(self.to_coord(), self.to_coord())
+        Rect::new(self.geo_coord(), self.geo_coord())
     }
 }
 

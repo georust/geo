@@ -1,6 +1,5 @@
 use super::IntersectsTrait;
 use crate::*;
-use geo_traits::to_geo::ToGeoCoord;
 use geo_traits_ext::*;
 
 impl<T, LHS, RHS> IntersectsTrait<TriangleTag, CoordTag, RHS> for LHS
@@ -10,7 +9,7 @@ where
     RHS: CoordTraitExt<T = T>,
 {
     fn intersects_trait(&self, rhs: &RHS) -> bool {
-        let rhs = rhs.to_coord();
+        let rhs = rhs.geo_coord();
 
         let mut orientations = self
             .to_lines()

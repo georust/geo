@@ -1,4 +1,3 @@
-use geo_traits::to_geo::ToGeoCoord;
 use geo_traits_ext::*;
 
 use super::{point_in_rect, IntersectsTrait};
@@ -13,7 +12,7 @@ where
     fn intersects_trait(&self, rhs: &RHS) -> bool {
         let start = self.start_coord();
         let end = self.end_coord();
-        let rhs = rhs.to_coord();
+        let rhs = rhs.geo_coord();
 
         // First we check if the point is collinear with the line.
         T::Ker::orient2d(start, end, rhs) == Orientation::Collinear

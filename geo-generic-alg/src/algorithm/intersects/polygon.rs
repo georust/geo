@@ -2,7 +2,6 @@ use super::{has_disjoint_bboxes, IntersectsTrait};
 use crate::coordinate_position::CoordPos;
 use crate::CoordinatePosition;
 use crate::GeoNum;
-use geo_traits::to_geo::ToGeoCoord;
 use geo_traits_ext::*;
 
 impl<T, LHS, RHS> IntersectsTrait<PolygonTag, CoordTag, RHS> for LHS
@@ -12,7 +11,7 @@ where
     RHS: CoordTraitExt<T = T>,
 {
     fn intersects_trait(&self, rhs: &RHS) -> bool {
-        self.coordinate_position(&rhs.to_coord()) != CoordPos::Outside
+        self.coordinate_position(&rhs.geo_coord()) != CoordPos::Outside
     }
 }
 

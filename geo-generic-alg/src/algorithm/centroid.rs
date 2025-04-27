@@ -1,6 +1,5 @@
 use std::cmp::Ordering;
 
-use geo_traits::to_geo::ToGeoCoord;
 use geo_traits_ext::*;
 
 use crate::area::{get_linestring_area, Area};
@@ -521,7 +520,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
         }
 
         if line_string.num_coords() == 1 {
-            unsafe { self.add_coord(line_string.coord_unchecked(0).to_coord()) };
+            unsafe { self.add_coord(line_string.geo_coord_unchecked(0)) };
             return;
         }
 
@@ -689,7 +688,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
                 // empty ring doesn't contribute to centroid
                 Empty => {}
                 // degenerate ring is a point
-                ZeroDimensional => unsafe { self.add_coord(ring.coord_unchecked(0).to_coord()) },
+                ZeroDimensional => unsafe { self.add_coord(ring.geo_coord_unchecked(0)) },
                 // zero-area ring is a line string
                 _ => self.add_line_string(ring),
             }
@@ -697,7 +696,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
         }
 
         // Since area is non-zero, we know the ring has at least one point
-        let shift = unsafe { ring.coord_unchecked_ext(0).to_coord() };
+        let shift = unsafe { ring.geo_coord_unchecked(0) };
 
         let accumulated_coord = ring.lines().fold(Coord::zero(), |accum, line| {
             use crate::MapCoords;

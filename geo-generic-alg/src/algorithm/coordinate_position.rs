@@ -5,7 +5,6 @@ use crate::intersects::{point_in_rect, value_in_between};
 use crate::kernels::*;
 use crate::{BoundingRect, HasDimensions, Intersects};
 use crate::{GeoNum, GeometryCow};
-use geo_traits::to_geo::ToGeoCoord;
 use geo_traits_ext::*;
 
 /// The position of a `Coord` relative to a `Geometry`
@@ -109,7 +108,7 @@ where
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
-        if &self.to_coord() == coord {
+        if &self.geo_coord() == coord {
             *is_inside = true;
         }
     }
@@ -128,8 +127,8 @@ where
         is_inside: &mut bool,
         _boundary_count: &mut usize,
     ) {
-        if let Some(point_coord) = self.coord() {
-            if &point_coord.to_coord() == coord {
+        if let Some(point_coord) = self.geo_coord() {
+            if &point_coord == coord {
                 *is_inside = true;
             }
         }
@@ -189,8 +188,8 @@ where
         if num_coords == 2 {
             // line string with two coords is just a line
             unsafe {
-                let start = self.coord_unchecked_ext(0).to_coord();
-                let end = self.coord_unchecked_ext(1).to_coord();
+                let start = self.geo_coord_unchecked(0);
+                let end = self.geo_coord_unchecked(1);
                 Line::new(start, end).calculate_coordinate_position(
                     coord,
                     is_inside,
@@ -210,8 +209,8 @@ where
         if !self.is_closed() {
             // since we have at least two coords, first and last will exist
             unsafe {
-                let first = self.coord_unchecked_ext(0).to_coord();
-                let last = self.coord_unchecked_ext(num_coords - 1).to_coord();
+                let first = self.geo_coord_unchecked(0);
+                let last = self.geo_coord_unchecked(num_coords - 1);
                 if coord == &first || coord == &last {
                     *boundary_count += 1;
                     return;
@@ -271,7 +270,7 @@ where
         boundary_count: &mut usize,
     ) {
         let mut boundary = false;
-        let min = self.min().to_coord();
+        let min = self.min_coord();
 
         match coord.x.partial_cmp(&min.x).unwrap() {
             Ordering::Less => return,
@@ -284,7 +283,7 @@ where
             Ordering::Greater => {}
         }
 
-        let max = self.max().to_coord();
+        let max = self.max_coord();
 
         match max.x.partial_cmp(&coord.x).unwrap() {
             Ordering::Less => return,
@@ -320,7 +319,7 @@ where
     ) {
         if self
             .points_ext()
-            .any(|p| p.coord_ext().is_some_and(|c| &c.to_coord() == coord))
+            .any(|p| p.geo_coord().is_some_and(|c| &c == coord))
         {
             *is_inside = true;
         }
@@ -474,7 +473,7 @@ where
     if linestring.num_coords() == 1 {
         // If LineString has one point, it will not generate
         // any lines.  So, we handle this edge case separately.
-        return if coord == unsafe { linestring.coord_unchecked_ext(0).to_coord() } {
+        return if coord == unsafe { linestring.geo_coord_unchecked(0) } {
             CoordPos::OnBoundary
         } else {
             CoordPos::Outside

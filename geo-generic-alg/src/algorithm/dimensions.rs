@@ -1,4 +1,3 @@
-use geo_traits::to_geo::{ToGeoCoord, ToGeoMultiLineString};
 use geo_traits_ext::*;
 
 use crate::Orientation::Collinear;
@@ -232,7 +231,7 @@ where
         }
 
         // There should be at least 1 coordinate since num_coords is not 0.
-        let first = unsafe { self.coord_unchecked_ext(0).to_coord() };
+        let first = unsafe { self.geo_coord_unchecked(0) };
         if self.coord_iter().any(|coord| first != coord) {
             Dimensions::OneDimensional
         } else {
@@ -354,8 +353,6 @@ where
     }
 
     fn boundary_dimensions_trait(&self) -> Dimensions {
-        self.to_multi_line_string().is_closed();
-
         if self.is_closed() {
             return Dimensions::Empty;
         }

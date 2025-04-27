@@ -26,6 +26,15 @@ where
 
     fn coords_ext(&self) -> impl Iterator<Item = Self::CoordTypeExt<'_>>;
 
+    /// Returns a coordinate by index without bounds checking.
+    ///
+    /// # Safety
+    /// The caller must ensure that `i` is a valid index less than the number of coordinates.
+    /// Otherwise, this function may cause undefined behavior.
+    unsafe fn geo_coord_unchecked(&self, i: usize) -> Coord<Self::T> {
+        self.coord_unchecked_ext(i).to_coord()
+    }
+
     /// Return an iterator yielding one [`Line`] for each line segment
     /// in the [`LineString`][`geo_types::LineString`].
     fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<<Self as GeometryTrait>::T>> + '_ {
@@ -106,6 +115,10 @@ where
 {
     forward_line_string_trait_ext_funcs!();
 
+    unsafe fn geo_coord_unchecked(&self, i: usize) -> Coord<Self::T> {
+        *self.0.get_unchecked(i)
+    }
+
     // Delegate to the `geo-types` implementation for less performance overhead
     fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<<Self as GeometryTrait>::T>> + '_ {
         self.lines()
@@ -125,6 +138,10 @@ where
     T: CoordNum,
 {
     forward_line_string_trait_ext_funcs!();
+
+    unsafe fn geo_coord_unchecked(&self, i: usize) -> Coord<Self::T> {
+        *self.0.get_unchecked(i)
+    }
 
     // Delegate to the `geo-types` implementation for less performance overhead
     fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<<Self as GeometryTrait>::T>> + '_ {
