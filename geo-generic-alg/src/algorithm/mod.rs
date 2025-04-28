@@ -65,6 +65,7 @@ pub use coordinate_position::CoordinatePosition;
 /// Iterate over geometry coordinates.
 pub mod coords_iter;
 pub use coords_iter::CoordsIter;
+pub use coords_iter::CoordsSeqIter;
 
 /// Densify spherical geometry components
 pub mod densify_haversine;

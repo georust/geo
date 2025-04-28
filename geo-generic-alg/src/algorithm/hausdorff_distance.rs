@@ -1,7 +1,6 @@
 use crate::algorithm::{Distance, Euclidean};
 use crate::CoordsIter;
 use crate::GeoFloat;
-use geo_types::{Coord, Point};
 use num_traits::Bounded;
 
 /// Determine the distance between two geometries using the [Hausdorff distance formula].
@@ -54,24 +53,10 @@ where
     }
 }
 
-// ┌───────────────────────────┐
-// │ Implementations for Coord │
-// └───────────────────────────┘
-
-impl<T> HausdorffDistance<T> for Coord<T>
-where
-    T: GeoFloat,
-{
-    fn hausdorff_distance<Rhs>(&self, rhs: &Rhs) -> T
-    where
-        Rhs: CoordsIter<Scalar = T>,
-    {
-        Point::from(*self).hausdorff_distance(rhs)
-    }
-}
-
 #[cfg(test)]
 mod test {
+    use geo_types::Coord;
+
     use crate::HausdorffDistance;
     use crate::{line_string, polygon, MultiPoint, MultiPolygon};
 
@@ -131,5 +116,12 @@ mod test {
             2.236068,
             epsilon = 1.0e-6
         )
+    }
+
+    #[test]
+    fn hd_coord_mpnt() {
+        let p1: MultiPoint<_> = vec![(0., 0.), (1., 2.)].into();
+        let c: Coord<_> = (1., 2.).into();
+        assert_relative_eq!(c.hausdorff_distance(&p1), 2.236068, epsilon = 1.0e-6);
     }
 }
