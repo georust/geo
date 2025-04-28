@@ -224,19 +224,19 @@ pub use remove_repeated_points::RemoveRepeatedPoints;
 
 /// Rotate a `Geometry` by an angle given in degrees.
 pub mod rotate;
-pub use rotate::Rotate;
+pub use rotate::{Rotate, RotateMut};
 
 /// Scale a `Geometry` up or down by a factor
 pub mod scale;
-pub use scale::Scale;
+pub use scale::{Scale, ScaleMut};
 
 /// Skew a `Geometry` by shearing it at angles along the x and y dimensions
 pub mod skew;
-pub use skew::Skew;
+pub use skew::{Skew, SkewMut};
 
 /// Composable affine operations such as rotate, scale, skew, and translate
 pub mod affine_ops;
-pub use affine_ops::{AffineOps, AffineTransform};
+pub use affine_ops::{AffineOps, AffineOpsMut, AffineTransform};
 
 /// Simplify `Geometries` using the Ramer-Douglas-Peucker algorithm.
 pub mod simplify;
@@ -259,7 +259,7 @@ pub use transform::Transform;
 
 /// Translate a `Geometry` along the given offsets.
 pub mod translate;
-pub use translate::Translate;
+pub use translate::{Translate, TranslateMut};
 
 /// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
 ///

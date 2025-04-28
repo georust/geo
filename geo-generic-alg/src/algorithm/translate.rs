@@ -1,6 +1,10 @@
+use crate::algorithm::affine_ops::AffineOpsMut;
 use crate::{AffineOps, AffineTransform, CoordNum};
 
 pub trait Translate<T: CoordNum> {
+    /// The output type of the translation operations
+    type Output;
+
     /// Translate a Geometry along its axes by the given offsets
     ///
     /// ## Performance
@@ -31,8 +35,18 @@ pub trait Translate<T: CoordNum> {
     /// ]);
     /// ```
     #[must_use]
-    fn translate(&self, x_offset: T, y_offset: T) -> Self;
+    fn translate(&self, x_offset: T, y_offset: T) -> Self::Output;
+}
 
+/// Mutable version of the [`Translate`] trait that applies translations in place.
+///
+/// ## Performance
+///
+/// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
+/// [`Skew`](crate::Skew), [`Translate`], or [`Rotate`](crate::Rotate), it is more
+/// efficient to compose the transformations and apply them as a single operation using the
+/// [`AffineOpsMut`] trait.
+pub trait TranslateMut<T: CoordNum> {
     /// Translate a Geometry along its axes, but in place.
     fn translate_mut(&mut self, x_offset: T, y_offset: T);
 }
@@ -42,11 +56,19 @@ where
     T: CoordNum,
     G: AffineOps<T>,
 {
-    fn translate(&self, x_offset: T, y_offset: T) -> Self {
+    type Output = <G as AffineOps<T>>::Output;
+
+    fn translate(&self, x_offset: T, y_offset: T) -> Self::Output {
         let transform = AffineTransform::translate(x_offset, y_offset);
         self.affine_transform(&transform)
     }
+}
 
+impl<T, G> TranslateMut<T> for G
+where
+    T: CoordNum,
+    G: AffineOpsMut<T>,
+{
     fn translate_mut(&mut self, x_offset: T, y_offset: T) {
         let transform = AffineTransform::translate(x_offset, y_offset);
         self.affine_transform_mut(&transform)

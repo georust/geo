@@ -1,3 +1,4 @@
+use crate::algorithm::affine_ops::AffineOpsMut;
 use crate::{AffineOps, AffineTransform, BoundingRect, Coord, CoordFloat, CoordNum, Rect};
 
 /// An affine transformation which skews a geometry, sheared by angles along x and y dimensions.
@@ -10,6 +11,9 @@ use crate::{AffineOps, AffineTransform, BoundingRect, Coord, CoordFloat, CoordNu
 /// [`AffineOps`] trait.
 ///
 pub trait Skew<T: CoordNum> {
+    /// The output type of the skewing operations
+    type Output;
+
     /// An affine transformation which skews a geometry, sheared by a uniform angle along the x and
     /// y dimensions.
     ///
@@ -37,10 +41,7 @@ pub trait Skew<T: CoordNum> {
     /// approx::assert_relative_eq!(skewed, expected_output, epsilon = 1e-2);
     /// ```
     #[must_use]
-    fn skew(&self, degrees: T) -> Self;
-
-    /// Mutable version of [`skew`](Self::skew).
-    fn skew_mut(&mut self, degrees: T);
+    fn skew(&self, degrees: T) -> Self::Output;
 
     /// An affine transformation which skews a geometry, sheared by an angle along the x and y dimensions.
     ///
@@ -68,10 +69,7 @@ pub trait Skew<T: CoordNum> {
     /// approx::assert_relative_eq!(skewed, expected_output, epsilon = 1e-2);
     /// ```
     #[must_use]
-    fn skew_xy(&self, degrees_x: T, degrees_y: T) -> Self;
-
-    /// Mutable version of [`skew_xy`](Self::skew_xy).
-    fn skew_xy_mut(&mut self, degrees_x: T, degrees_y: T);
+    fn skew_xy(&self, degrees_x: T, degrees_y: T) -> Self::Output;
 
     /// An affine transformation which skews a geometry around a point of `origin`, sheared by an
     /// angle along the x and y dimensions.
@@ -105,9 +103,30 @@ pub trait Skew<T: CoordNum> {
     /// approx::assert_relative_eq!(skewed, expected_output, epsilon = 1e-2);
     /// ```
     #[must_use]
-    fn skew_around_point(&self, degrees_x: T, degrees_y: T, origin: impl Into<Coord<T>>) -> Self;
+    fn skew_around_point(
+        &self,
+        degrees_x: T,
+        degrees_y: T,
+        origin: impl Into<Coord<T>>,
+    ) -> Self::Output;
+}
 
-    /// Mutable version of [`skew_around_point`](Self::skew_around_point).
+/// Mutable version of the [`Skew`] trait that applies skewing in place.
+///
+/// ## Performance
+///
+/// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
+/// [`Skew`], [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
+/// efficient to compose the transformations and apply them as a single operation using the
+/// [`AffineOpsMut`] trait.
+pub trait SkewMut<T: CoordNum> {
+    /// Mutable version of [`Skew::skew`].
+    fn skew_mut(&mut self, degrees: T);
+
+    /// Mutable version of [`Skew::skew_xy`].
+    fn skew_xy_mut(&mut self, degrees_x: T, degrees_y: T);
+
+    /// Mutable version of [`Skew::skew_around_point`].
     fn skew_around_point_mut(&mut self, degrees_x: T, degrees_y: T, origin: impl Into<Coord<T>>);
 }
 
@@ -117,22 +136,36 @@ where
     IR: Into<Option<Rect<T>>>,
     G: Clone + AffineOps<T> + BoundingRect<T, Output = IR>,
 {
-    fn skew(&self, degrees: T) -> Self {
+    type Output = <G as AffineOps<T>>::Output;
+
+    fn skew(&self, degrees: T) -> Self::Output {
         self.skew_xy(degrees, degrees)
     }
 
-    fn skew_mut(&mut self, degrees: T) {
-        self.skew_xy_mut(degrees, degrees);
-    }
-
-    fn skew_xy(&self, degrees_x: T, degrees_y: T) -> Self {
+    fn skew_xy(&self, degrees_x: T, degrees_y: T) -> Self::Output {
         let origin = match self.bounding_rect().into() {
             Some(rect) => rect.center(),
             // Empty geometries have no bounding rect, but in that case
             // transforming is a no-op anyway.
-            None => return self.clone(),
+            None => return self.affine_transform(&AffineTransform::identity()),
         };
         self.skew_around_point(degrees_x, degrees_y, origin)
+    }
+
+    fn skew_around_point(&self, xs: T, ys: T, origin: impl Into<Coord<T>>) -> Self::Output {
+        let transform = AffineTransform::skew(xs, ys, origin);
+        self.affine_transform(&transform)
+    }
+}
+
+impl<T, IR, G> SkewMut<T> for G
+where
+    T: CoordFloat,
+    IR: Into<Option<Rect<T>>>,
+    G: Clone + AffineOpsMut<T> + BoundingRect<T, Output = IR>,
+{
+    fn skew_mut(&mut self, degrees: T) {
+        self.skew_xy_mut(degrees, degrees);
     }
 
     fn skew_xy_mut(&mut self, degrees_x: T, degrees_y: T) {
@@ -145,14 +178,9 @@ where
         self.skew_around_point_mut(degrees_x, degrees_y, origin);
     }
 
-    fn skew_around_point(&self, xs: T, ys: T, origin: impl Into<Coord<T>>) -> Self {
-        let transform = AffineTransform::skew(xs, ys, origin);
-        self.affine_transform(&transform)
-    }
-
     fn skew_around_point_mut(&mut self, xs: T, ys: T, origin: impl Into<Coord<T>>) {
         let transform = AffineTransform::skew(xs, ys, origin);
-        self.affine_transform_mut(&transform);
+        AffineOpsMut::affine_transform_mut(self, &transform);
     }
 }
 

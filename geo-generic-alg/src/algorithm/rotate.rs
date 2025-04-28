@@ -1,3 +1,4 @@
+use crate::algorithm::affine_ops::AffineOpsMut;
 use crate::algorithm::{AffineOps, AffineTransform, BoundingRect, Centroid};
 use crate::geometry::*;
 use crate::CoordFloat;
@@ -13,6 +14,9 @@ use crate::CoordFloat;
 /// efficient to compose the transformations and apply them as a single operation using the
 /// [`AffineOps`] trait.
 pub trait Rotate<T: CoordFloat> {
+    /// The output type of the rotation operations
+    type Output;
+
     /// Rotate a geometry around its [centroid](Centroid) by an angle, in degrees
     ///
     /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
@@ -41,10 +45,7 @@ pub trait Rotate<T: CoordFloat> {
     /// assert_relative_eq!(expected, rotated);
     /// ```
     #[must_use]
-    fn rotate_around_centroid(&self, degrees: T) -> Self;
-
-    /// Mutable version of [`Self::rotate_around_centroid`]
-    fn rotate_around_centroid_mut(&mut self, degrees: T);
+    fn rotate_around_centroid(&self, degrees: T) -> Self::Output;
 
     /// Rotate a geometry around the center of its [bounding box](BoundingRect) by an angle, in
     /// degrees.
@@ -52,10 +53,7 @@ pub trait Rotate<T: CoordFloat> {
     /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
     ///
     #[must_use]
-    fn rotate_around_center(&self, degrees: T) -> Self;
-
-    /// Mutable version of [`Self::rotate_around_center`]
-    fn rotate_around_center_mut(&mut self, degrees: T);
+    fn rotate_around_center(&self, degrees: T) -> Self::Output;
 
     /// Rotate a Geometry around an arbitrary point by an angle, given in degrees
     ///
@@ -85,9 +83,27 @@ pub trait Rotate<T: CoordFloat> {
     /// ]);
     /// ```
     #[must_use]
-    fn rotate_around_point(&self, degrees: T, point: Point<T>) -> Self;
+    fn rotate_around_point(&self, degrees: T, point: Point<T>) -> Self::Output;
+}
 
-    /// Mutable version of [`Self::rotate_around_point`]
+/// Mutable version of the [`Rotate`] trait that applies rotations in place.
+///
+/// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
+///
+/// ## Performance
+///
+/// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
+/// [`Skew`](crate::Skew), [`Translate`](crate::Translate) or [`Rotate`], it is more
+/// efficient to compose the transformations and apply them as a single operation using the
+/// [`AffineOpsMut`] trait.
+pub trait RotateMut<T: CoordFloat> {
+    /// Mutable version of [`Rotate::rotate_around_centroid`]
+    fn rotate_around_centroid_mut(&mut self, degrees: T);
+
+    /// Mutable version of [`Rotate::rotate_around_center`]
+    fn rotate_around_center_mut(&mut self, degrees: T);
+
+    /// Mutable version of [`Rotate::rotate_around_point`]
     fn rotate_around_point_mut(&mut self, degrees: T, point: Point<T>);
 }
 
@@ -98,15 +114,39 @@ where
     IR: Into<Option<Rect<T>>>,
     G: Clone + Centroid<Output = IP> + BoundingRect<T, Output = IR> + AffineOps<T>,
 {
-    fn rotate_around_centroid(&self, degrees: T) -> Self {
+    type Output = <G as AffineOps<T>>::Output;
+
+    fn rotate_around_centroid(&self, degrees: T) -> Self::Output {
         let point = match self.centroid().into() {
             Some(coord) => coord,
             // geometry was empty, so there's nothing to rotate
-            None => return self.clone(),
+            None => return self.affine_transform(&AffineTransform::identity()),
         };
-        Rotate::rotate_around_point(self, degrees, point)
+        self.rotate_around_point(degrees, point)
     }
 
+    fn rotate_around_center(&self, degrees: T) -> Self::Output {
+        let point = match self.bounding_rect().into() {
+            Some(rect) => Point(rect.center()),
+            // geometry was empty, so there's nothing to rotate
+            None => return self.affine_transform(&AffineTransform::identity()),
+        };
+        self.rotate_around_point(degrees, point)
+    }
+
+    fn rotate_around_point(&self, degrees: T, point: Point<T>) -> Self::Output {
+        let transform = AffineTransform::rotate(degrees, point);
+        self.affine_transform(&transform)
+    }
+}
+
+impl<G, IP, IR, T> RotateMut<T> for G
+where
+    T: CoordFloat,
+    IP: Into<Option<Point<T>>>,
+    IR: Into<Option<Rect<T>>>,
+    G: Clone + Centroid<Output = IP> + BoundingRect<T, Output = IR> + AffineOpsMut<T>,
+{
     fn rotate_around_centroid_mut(&mut self, degrees: T) {
         let point = match self.centroid().into() {
             Some(coord) => coord,
@@ -116,15 +156,6 @@ where
         self.rotate_around_point_mut(degrees, point)
     }
 
-    fn rotate_around_center(&self, degrees: T) -> Self {
-        let point = match self.bounding_rect().into() {
-            Some(rect) => Point(rect.center()),
-            // geometry was empty, so there's nothing to rotate
-            None => return self.clone(),
-        };
-        Rotate::rotate_around_point(self, degrees, point)
-    }
-
     fn rotate_around_center_mut(&mut self, degrees: T) {
         let point = match self.bounding_rect().into() {
             Some(rect) => Point(rect.center()),
@@ -132,11 +163,6 @@ where
             None => return,
         };
         self.rotate_around_point_mut(degrees, point)
-    }
-
-    fn rotate_around_point(&self, degrees: T, point: Point<T>) -> Self {
-        let transform = AffineTransform::rotate(degrees, point);
-        self.affine_transform(&transform)
     }
 
     fn rotate_around_point_mut(&mut self, degrees: T, point: Point<T>) {

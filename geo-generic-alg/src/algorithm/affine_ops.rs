@@ -34,19 +34,38 @@ use std::{fmt, ops::Mul, ops::Neg};
 /// );
 /// ```
 pub trait AffineOps<T: CoordNum> {
+    type Output;
+
     /// Apply `transform` immutably, outputting a new geometry.
     #[must_use]
-    fn affine_transform(&self, transform: &AffineTransform<T>) -> Self;
+    fn affine_transform(&self, transform: &AffineTransform<T>) -> Self::Output;
+}
 
+/// Apply an [`AffineTransform`] like [`scale`](AffineTransform::scale),
+/// [`skew`](AffineTransform::skew), or [`rotate`](AffineTransform::rotate) to a
+/// [`Geometry`](crate::geometry::Geometry) in place.
+///
+/// Multiple transformations can be composed in order to be efficiently applied in a single
+/// operation. See [`AffineTransform`] for more on how to build up a transformation.
+///
+/// If you are not composing operations, traits that leverage this same machinery exist which might
+/// be more readable. See: [`Scale`](crate::algorithm::Scale),
+/// [`Translate`](crate::algorithm::Translate), [`Rotate`](crate::algorithm::Rotate),
+/// and [`Skew`](crate::algorithm::Skew).
+pub trait AffineOpsMut<T: CoordNum> {
     /// Apply `transform` to mutate `self`.
     fn affine_transform_mut(&mut self, transform: &AffineTransform<T>);
 }
 
-impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> AffineOps<T> for M {
-    fn affine_transform(&self, transform: &AffineTransform<T>) -> Self {
+impl<T: CoordNum, M: MapCoords<T, T>> AffineOps<T> for M {
+    type Output = M::Output;
+
+    fn affine_transform(&self, transform: &AffineTransform<T>) -> Self::Output {
         self.map_coords(|c| transform.apply(c))
     }
+}
 
+impl<T: CoordNum, M: MapCoordsInPlace<T>> AffineOpsMut<T> for M {
     fn affine_transform_mut(&mut self, transform: &AffineTransform<T>) {
         self.map_coords_in_place(|c| transform.apply(c))
     }

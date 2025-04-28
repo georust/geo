@@ -1,3 +1,4 @@
+use crate::algorithm::affine_ops::AffineOpsMut;
 use crate::{AffineOps, AffineTransform, BoundingRect, Coord, CoordFloat, CoordNum, Rect};
 
 /// An affine transformation which scales a geometry up or down by a factor.
@@ -9,6 +10,9 @@ use crate::{AffineOps, AffineTransform, BoundingRect, Coord, CoordFloat, CoordNu
 /// efficient to compose the transformations and apply them as a single operation using the
 /// [`AffineOps`] trait.
 pub trait Scale<T: CoordNum> {
+    /// The output type of the scaling operations
+    type Output;
+
     /// Scale a geometry from it's bounding box center.
     ///
     /// # Examples
@@ -27,10 +31,7 @@ pub trait Scale<T: CoordNum> {
     /// ]);
     /// ```
     #[must_use]
-    fn scale(&self, scale_factor: T) -> Self;
-
-    /// Mutable version of [`scale`](Self::scale)
-    fn scale_mut(&mut self, scale_factor: T);
+    fn scale(&self, scale_factor: T) -> Self::Output;
 
     /// Scale a geometry from it's bounding box center, using different values for `x_factor` and
     /// `y_factor` to distort the geometry's [aspect ratio](https://en.wikipedia.org/wiki/Aspect_ratio).
@@ -51,10 +52,7 @@ pub trait Scale<T: CoordNum> {
     /// ]);
     /// ```
     #[must_use]
-    fn scale_xy(&self, x_factor: T, y_factor: T) -> Self;
-
-    /// Mutable version of [`scale_xy`](Self::scale_xy).
-    fn scale_xy_mut(&mut self, x_factor: T, y_factor: T);
+    fn scale_xy(&self, x_factor: T, y_factor: T) -> Self::Output;
 
     /// Scale a geometry around a point of `origin`.
     ///
@@ -78,9 +76,30 @@ pub trait Scale<T: CoordNum> {
     /// ]);
     /// ```
     #[must_use]
-    fn scale_around_point(&self, x_factor: T, y_factor: T, origin: impl Into<Coord<T>>) -> Self;
+    fn scale_around_point(
+        &self,
+        x_factor: T,
+        y_factor: T,
+        origin: impl Into<Coord<T>>,
+    ) -> Self::Output;
+}
 
-    /// Mutable version of [`scale_around_point`](Self::scale_around_point).
+/// Mutable version of the [`Scale`] trait that applies scaling in place.
+///
+/// ## Performance
+///
+/// If you will be performing multiple transformations, like [`Scale`],
+/// [`Skew`](crate::Skew), [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
+/// efficient to compose the transformations and apply them as a single operation using the
+/// [`AffineOpsMut`] trait.
+pub trait ScaleMut<T: CoordNum> {
+    /// Mutable version of [`Scale::scale`].
+    fn scale_mut(&mut self, scale_factor: T);
+
+    /// Mutable version of [`Scale::scale_xy`].
+    fn scale_xy_mut(&mut self, x_factor: T, y_factor: T);
+
+    /// Mutable version of [`Scale::scale_around_point`].
     fn scale_around_point_mut(&mut self, x_factor: T, y_factor: T, origin: impl Into<Coord<T>>);
 }
 
@@ -90,22 +109,41 @@ where
     IR: Into<Option<Rect<T>>>,
     G: Clone + AffineOps<T> + BoundingRect<T, Output = IR>,
 {
-    fn scale(&self, scale_factor: T) -> Self {
+    type Output = <G as AffineOps<T>>::Output;
+
+    fn scale(&self, scale_factor: T) -> Self::Output {
         self.scale_xy(scale_factor, scale_factor)
     }
 
-    fn scale_mut(&mut self, scale_factor: T) {
-        self.scale_xy_mut(scale_factor, scale_factor);
-    }
-
-    fn scale_xy(&self, x_factor: T, y_factor: T) -> Self {
+    fn scale_xy(&self, x_factor: T, y_factor: T) -> Self::Output {
         let origin = match self.bounding_rect().into() {
             Some(rect) => rect.center(),
             // Empty geometries have no bounding rect, but in that case
             // transforming is a no-op anyway.
-            None => return self.clone(),
+            None => return self.affine_transform(&AffineTransform::identity()),
         };
         self.scale_around_point(x_factor, y_factor, origin)
+    }
+
+    fn scale_around_point(
+        &self,
+        x_factor: T,
+        y_factor: T,
+        origin: impl Into<Coord<T>>,
+    ) -> Self::Output {
+        let affineop = AffineTransform::scale(x_factor, y_factor, origin);
+        self.affine_transform(&affineop)
+    }
+}
+
+impl<T, IR, G> ScaleMut<T> for G
+where
+    T: CoordFloat,
+    IR: Into<Option<Rect<T>>>,
+    G: Clone + AffineOpsMut<T> + BoundingRect<T, Output = IR>,
+{
+    fn scale_mut(&mut self, scale_factor: T) {
+        self.scale_xy_mut(scale_factor, scale_factor);
     }
 
     fn scale_xy_mut(&mut self, x_factor: T, y_factor: T) {
@@ -116,11 +154,6 @@ where
             None => return,
         };
         self.scale_around_point_mut(x_factor, y_factor, origin);
-    }
-
-    fn scale_around_point(&self, x_factor: T, y_factor: T, origin: impl Into<Coord<T>>) -> Self {
-        let affineop = AffineTransform::scale(x_factor, y_factor, origin);
-        self.affine_transform(&affineop)
     }
 
     fn scale_around_point_mut(&mut self, x_factor: T, y_factor: T, origin: impl Into<Coord<T>>) {
