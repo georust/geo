@@ -1,6 +1,7 @@
-use crate::algorithm::{CoordsIter, Distance, Euclidean};
+use crate::algorithm::{Distance, Euclidean};
 use crate::geometry::{Coord, Line, LineString, MultiLineString, MultiPolygon, Polygon};
 use crate::GeoFloat;
+use geo_traits_ext::*;
 
 const LINE_STRING_INITIAL_MIN: usize = 2;
 const POLYGON_INITIAL_MIN: usize = 4;
@@ -162,6 +163,8 @@ where
 ///
 /// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
 pub trait Simplify<T, Epsilon = T> {
+    type Output;
+
     /// Returns the simplified representation of a geometry, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
     ///
     /// # Examples
@@ -189,7 +192,7 @@ pub trait Simplify<T, Epsilon = T> {
     ///
     /// assert_eq!(expected, simplified)
     /// ```
-    fn simplify(&self, epsilon: T) -> Self
+    fn simplify(&self, epsilon: T) -> Self::Output
     where
         T: GeoFloat;
 }
@@ -239,73 +242,137 @@ pub trait SimplifyIdx<T, Epsilon = T> {
         T: GeoFloat;
 }
 
-impl<T> Simplify<T> for LineString<T>
+impl<T, G> Simplify<T> for G
+where
+    T: GeoFloat,
+    G: GeoTraitExtWithTypeTag + SimplifyTrait<T, G::Tag>,
+{
+    type Output = <G as SimplifyTrait<T, G::Tag>>::Output;
+
+    fn simplify(&self, epsilon: T) -> Self::Output {
+        self.simplify_trait(epsilon)
+    }
+}
+
+impl<T, G> SimplifyIdx<T> for G
+where
+    T: GeoFloat,
+    G: GeoTraitExtWithTypeTag + SimplifyIdxTrait<T, G::Tag>,
+{
+    fn simplify_idx(&self, epsilon: T) -> Vec<usize> {
+        self.simplify_idx_trait(epsilon)
+    }
+}
+
+pub trait SimplifyTrait<T, GT: GeoTypeTag>
 where
     T: GeoFloat,
 {
-    fn simplify(&self, epsilon: T) -> Self {
+    type Output;
+    fn simplify_trait(&self, epsilon: T) -> Self::Output;
+}
+
+pub trait SimplifyIdxTrait<T, GT: GeoTypeTag>
+where
+    T: GeoFloat,
+{
+    fn simplify_idx_trait(&self, epsilon: T) -> Vec<usize>;
+}
+
+impl<T, LS> SimplifyTrait<T, LineStringTag> for LS
+where
+    T: GeoFloat,
+    LS: LineStringTraitExt<T = T>,
+{
+    type Output = LineString<T>;
+
+    fn simplify_trait(&self, epsilon: T) -> Self::Output {
         LineString::from(rdp::<_, _, LINE_STRING_INITIAL_MIN>(
-            self.coords_iter(),
+            self.coord_iter(),
             epsilon,
         ))
     }
 }
 
-impl<T> SimplifyIdx<T> for LineString<T>
+impl<T, LS> SimplifyIdxTrait<T, LineStringTag> for LS
 where
     T: GeoFloat,
+    LS: LineStringTraitExt<T = T>,
 {
-    fn simplify_idx(&self, epsilon: T) -> Vec<usize> {
+    fn simplify_idx_trait(&self, epsilon: T) -> Vec<usize> {
         calculate_rdp_indices::<_, LINE_STRING_INITIAL_MIN>(
             &self
-                .0
-                .iter()
+                .coord_iter()
                 .enumerate()
-                .map(|(idx, coord)| RdpIndex {
-                    index: idx,
-                    coord: *coord,
-                })
+                .map(|(idx, coord)| RdpIndex { index: idx, coord })
                 .collect::<Vec<RdpIndex<T>>>(),
             epsilon,
         )
     }
 }
 
-impl<T> Simplify<T> for MultiLineString<T>
+impl<T, MLS> SimplifyTrait<T, MultiLineStringTag> for MLS
 where
     T: GeoFloat,
+    MLS: MultiLineStringTraitExt<T = T>,
 {
-    fn simplify(&self, epsilon: T) -> Self {
-        MultiLineString::new(self.iter().map(|l| l.simplify(epsilon)).collect())
+    type Output = MultiLineString<T>;
+
+    fn simplify_trait(&self, epsilon: T) -> Self::Output {
+        let simplified_lines: Vec<LineString<T>> = self
+            .line_strings_ext()
+            .map(|l| l.simplify_trait(epsilon))
+            .collect();
+
+        MultiLineString::new(simplified_lines)
     }
 }
 
-impl<T> Simplify<T> for Polygon<T>
+impl<T, P> SimplifyTrait<T, PolygonTag> for P
 where
     T: GeoFloat,
+    P: PolygonTraitExt<T = T>,
 {
-    fn simplify(&self, epsilon: T) -> Self {
-        Polygon::new(
-            LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(
-                self.exterior().coords_iter(),
+    type Output = Polygon<T>;
+
+    fn simplify_trait(&self, epsilon: T) -> Self::Output {
+        if let Some(exterior) = self.exterior_ext() {
+            let simplified_exterior = LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(
+                exterior.coord_iter(),
                 epsilon,
-            )),
-            self.interiors()
-                .iter()
-                .map(|l| {
-                    LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(l.coords_iter(), epsilon))
+            ));
+
+            let simplified_interiors: Vec<LineString<T>> = self
+                .interiors_ext()
+                .map(|interior| {
+                    LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(
+                        interior.coord_iter(),
+                        epsilon,
+                    ))
                 })
+                .collect();
+
+            Polygon::new(simplified_exterior, simplified_interiors)
+        } else {
+            // Create an empty polygon
+            Polygon::new(LineString::new(vec![]), vec![])
+        }
+    }
+}
+
+impl<T, MP> SimplifyTrait<T, MultiPolygonTag> for MP
+where
+    T: GeoFloat,
+    MP: MultiPolygonTraitExt<T = T>,
+{
+    type Output = MultiPolygon<T>;
+
+    fn simplify_trait(&self, epsilon: T) -> Self::Output {
+        MultiPolygon::new(
+            self.polygons_ext()
+                .map(|p| p.simplify_trait(epsilon))
                 .collect(),
         )
-    }
-}
-
-impl<T> Simplify<T> for MultiPolygon<T>
-where
-    T: GeoFloat,
-{
-    fn simplify(&self, epsilon: T) -> Self {
-        MultiPolygon::new(self.iter().map(|p| p.simplify(epsilon)).collect())
     }
 }
 
