@@ -27,8 +27,11 @@
 pub(crate) use crate::geometry::*;
 pub(crate) use crate::CoordNum;
 
+use geo_traits_ext::*;
+use Coord;
+
 /// Map a function over all the coordinates in an object, returning a new one
-pub trait MapCoords<T, NT> {
+pub trait MapCoords<T: CoordNum, NT: CoordNum> {
     type Output;
 
     /// Apply a function to all the coordinates in a geometric object, returning a new object.
@@ -178,22 +181,71 @@ pub trait MapCoordsInPlace<T> {
         T: CoordNum;
 }
 
-//-----------------------//
-// Point implementations //
-//-----------------------//
-
-impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Point<T> {
-    type Output = Point<NT>;
+// Generic implementation using trait-based approach
+impl<T, NT, G> MapCoords<T, NT> for G
+where
+    T: CoordNum,
+    NT: CoordNum,
+    G: GeoTraitExtWithTypeTag + MapCoordsTrait<T, NT, G::Tag>,
+{
+    type Output = <G as MapCoordsTrait<T, NT, G::Tag>>::Output;
 
     fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        Point(func(self.0))
+        self.map_coords_trait(func)
     }
 
     fn try_map_coords<E>(
         &self,
-        func: impl Fn(Coord<T>) -> Result<Coord<NT>, E>,
+        func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
     ) -> Result<Self::Output, E> {
-        Ok(Point(func(self.0)?))
+        self.try_map_coords_trait(func)
+    }
+}
+
+pub trait MapCoordsTrait<T, NT, GT: GeoTypeTag>
+where
+    T: CoordNum,
+    NT: CoordNum,
+{
+    type Output;
+
+    fn map_coords_trait(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output;
+
+    fn try_map_coords_trait<E>(
+        &self,
+        func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
+    ) -> Result<Self::Output, E>;
+}
+
+//-----------------------//
+// Point implementations //
+//-----------------------//
+
+impl<T, NT, P> MapCoordsTrait<T, NT, PointTag> for P
+where
+    T: CoordNum,
+    NT: CoordNum,
+    P: PointTraitExt<T = T>,
+{
+    type Output = Point<NT>;
+
+    fn map_coords_trait(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
+        if let Some(coord) = self.geo_coord() {
+            Point(func(coord))
+        } else {
+            Point::new(NT::zero(), NT::zero())
+        }
+    }
+
+    fn try_map_coords_trait<E>(
+        &self,
+        func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
+    ) -> Result<Self::Output, E> {
+        if let Some(coord) = self.geo_coord() {
+            Ok(Point(func(coord)?))
+        } else {
+            Ok(Point::new(NT::zero(), NT::zero()))
+        }
     }
 }
 
@@ -215,23 +267,25 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Point<T> {
 // Line implementations //
 //----------------------//
 
-impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Line<T> {
+impl<T, NT, L> MapCoordsTrait<T, NT, LineTag> for L
+where
+    T: CoordNum,
+    NT: CoordNum,
+    L: LineTraitExt<T = T>,
+{
     type Output = Line<NT>;
 
-    fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        Line::new(
-            self.start_point().map_coords(func).0,
-            self.end_point().map_coords(func).0,
-        )
+    fn map_coords_trait(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
+        Line::new(func(self.start_coord()), func(self.end_coord()))
     }
 
-    fn try_map_coords<E>(
+    fn try_map_coords_trait<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
     ) -> Result<Self::Output, E> {
         Ok(Line::new(
-            self.start_point().try_map_coords(func)?.0,
-            self.end_point().try_map_coords(func)?.0,
+            func(self.start_coord())?,
+            func(self.end_coord())?,
         ))
     }
 }
@@ -257,26 +311,25 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Line<T> {
 // LineString implementations //
 //----------------------------//
 
-impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for LineString<T> {
+impl<T, NT, LS> MapCoordsTrait<T, NT, LineStringTag> for LS
+where
+    T: CoordNum,
+    NT: CoordNum,
+    LS: LineStringTraitExt<T = T>,
+{
     type Output = LineString<NT>;
 
-    fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        LineString::from(
-            self.points()
-                .map(|p| p.map_coords(func))
-                .collect::<Vec<_>>(),
-        )
+    fn map_coords_trait(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
+        let coords = self.coord_iter().map(func).collect::<Vec<_>>();
+        LineString::new(coords)
     }
 
-    fn try_map_coords<E>(
+    fn try_map_coords_trait<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
     ) -> Result<Self::Output, E> {
-        Ok(LineString::from(
-            self.points()
-                .map(|p| p.try_map_coords(func))
-                .collect::<Result<Vec<_>, E>>()?,
-        ))
+        let coords = self.coord_iter().map(func).collect::<Result<Vec<_>, E>>()?;
+        Ok(LineString::new(coords))
     }
 }
 
@@ -302,30 +355,43 @@ impl<T: CoordNum> MapCoordsInPlace<T> for LineString<T> {
 // Polygon implementations //
 //-------------------------//
 
-impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Polygon<T> {
+impl<T, NT, P> MapCoordsTrait<T, NT, PolygonTag> for P
+where
+    T: CoordNum,
+    NT: CoordNum,
+    P: PolygonTraitExt<T = T>,
+{
     type Output = Polygon<NT>;
 
-    fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        Polygon::new(
-            self.exterior().map_coords(func),
-            self.interiors()
-                .iter()
-                .map(|l| l.map_coords(func))
-                .collect(),
-        )
+    fn map_coords_trait(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
+        let exterior = match self.exterior_ext() {
+            Some(ext) => ext.map_coords(func),
+            None => LineString::new(vec![]),
+        };
+
+        let interiors = self
+            .interiors_ext()
+            .map(|line| line.map_coords(func))
+            .collect();
+
+        Polygon::new(exterior, interiors)
     }
 
-    fn try_map_coords<E>(
+    fn try_map_coords_trait<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
     ) -> Result<Self::Output, E> {
-        Ok(Polygon::new(
-            self.exterior().try_map_coords(func)?,
-            self.interiors()
-                .iter()
-                .map(|l| l.try_map_coords(func))
-                .collect::<Result<Vec<_>, E>>()?,
-        ))
+        let exterior = match self.exterior_ext() {
+            Some(ext) => ext.try_map_coords(func)?,
+            None => LineString::new(vec![]),
+        };
+
+        let interiors = self
+            .interiors_ext()
+            .map(|line| line.try_map_coords(func))
+            .collect::<Result<Vec<_>, E>>()?;
+
+        Ok(Polygon::new(exterior, interiors))
     }
 }
 
@@ -373,20 +439,24 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Polygon<T> {
 // MultiPoint implementations //
 //----------------------------//
 
-impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPoint<T> {
+impl<T, NT, MP> MapCoordsTrait<T, NT, MultiPointTag> for MP
+where
+    T: CoordNum,
+    NT: CoordNum,
+    MP: MultiPointTraitExt<T = T>,
+{
     type Output = MultiPoint<NT>;
 
-    fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        MultiPoint::new(self.iter().map(|p| p.map_coords(func)).collect())
+    fn map_coords_trait(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
+        MultiPoint::new(self.points_ext().map(|p| p.map_coords(func)).collect())
     }
 
-    fn try_map_coords<E>(
+    fn try_map_coords_trait<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
     ) -> Result<Self::Output, E> {
         Ok(MultiPoint::new(
-            self.0
-                .iter()
+            self.points_ext()
                 .map(|p| p.try_map_coords(func))
                 .collect::<Result<Vec<_>, E>>()?,
         ))
@@ -415,20 +485,28 @@ impl<T: CoordNum> MapCoordsInPlace<T> for MultiPoint<T> {
 // MultiLineString implementations //
 //---------------------------------//
 
-impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiLineString<T> {
+impl<T, NT, MLS> MapCoordsTrait<T, NT, MultiLineStringTag> for MLS
+where
+    T: CoordNum,
+    NT: CoordNum,
+    MLS: MultiLineStringTraitExt<T = T>,
+{
     type Output = MultiLineString<NT>;
 
-    fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        MultiLineString::new(self.iter().map(|l| l.map_coords(func)).collect())
+    fn map_coords_trait(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
+        MultiLineString::new(
+            self.line_strings_ext()
+                .map(|l| l.map_coords(func))
+                .collect(),
+        )
     }
 
-    fn try_map_coords<E>(
+    fn try_map_coords_trait<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
     ) -> Result<Self::Output, E> {
         Ok(MultiLineString::new(
-            self.0
-                .iter()
+            self.line_strings_ext()
                 .map(|l| l.try_map_coords(func))
                 .collect::<Result<Vec<_>, E>>()?,
         ))
@@ -457,20 +535,24 @@ impl<T: CoordNum> MapCoordsInPlace<T> for MultiLineString<T> {
 // MultiPolygon implementations //
 //------------------------------//
 
-impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPolygon<T> {
+impl<T, NT, MP> MapCoordsTrait<T, NT, MultiPolygonTag> for MP
+where
+    T: CoordNum,
+    NT: CoordNum,
+    MP: MultiPolygonTraitExt<T = T>,
+{
     type Output = MultiPolygon<NT>;
 
-    fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        MultiPolygon::new(self.iter().map(|p| p.map_coords(func)).collect())
+    fn map_coords_trait(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
+        MultiPolygon::new(self.polygons_ext().map(|p| p.map_coords(func)).collect())
     }
 
-    fn try_map_coords<E>(
+    fn try_map_coords_trait<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
     ) -> Result<Self::Output, E> {
         Ok(MultiPolygon::new(
-            self.0
-                .iter()
+            self.polygons_ext()
                 .map(|p| p.try_map_coords(func))
                 .collect::<Result<Vec<_>, E>>()?,
         ))
@@ -499,43 +581,58 @@ impl<T: CoordNum> MapCoordsInPlace<T> for MultiPolygon<T> {
 // Geometry implementations //
 //--------------------------//
 
-impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Geometry<T> {
+impl<T, NT, G> MapCoordsTrait<T, NT, GeometryTag> for G
+where
+    T: CoordNum,
+    NT: CoordNum,
+    G: GeometryTraitExt<T = T>,
+{
     type Output = Geometry<NT>;
 
-    fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        match *self {
-            Geometry::Point(ref x) => Geometry::Point(x.map_coords(func)),
-            Geometry::Line(ref x) => Geometry::Line(x.map_coords(func)),
-            Geometry::LineString(ref x) => Geometry::LineString(x.map_coords(func)),
-            Geometry::Polygon(ref x) => Geometry::Polygon(x.map_coords(func)),
-            Geometry::MultiPoint(ref x) => Geometry::MultiPoint(x.map_coords(func)),
-            Geometry::MultiLineString(ref x) => Geometry::MultiLineString(x.map_coords(func)),
-            Geometry::MultiPolygon(ref x) => Geometry::MultiPolygon(x.map_coords(func)),
-            Geometry::GeometryCollection(ref x) => Geometry::GeometryCollection(x.map_coords(func)),
-            Geometry::Rect(ref x) => Geometry::Rect(x.map_coords(func)),
-            Geometry::Triangle(ref x) => Geometry::Triangle(x.map_coords(func)),
+    fn map_coords_trait(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
+        match self.as_type_ext() {
+            GeometryTypeExt::Point(x) => Geometry::Point(x.map_coords_trait(func)),
+            GeometryTypeExt::Line(x) => Geometry::Line(x.map_coords_trait(func)),
+            GeometryTypeExt::LineString(x) => Geometry::LineString(x.map_coords_trait(func)),
+            GeometryTypeExt::Polygon(x) => Geometry::Polygon(x.map_coords_trait(func)),
+            GeometryTypeExt::MultiPoint(x) => Geometry::MultiPoint(x.map_coords_trait(func)),
+            GeometryTypeExt::MultiLineString(x) => {
+                Geometry::MultiLineString(x.map_coords_trait(func))
+            }
+            GeometryTypeExt::MultiPolygon(x) => Geometry::MultiPolygon(x.map_coords_trait(func)),
+            GeometryTypeExt::GeometryCollection(x) => {
+                Geometry::GeometryCollection(x.map_coords_trait(func))
+            }
+            GeometryTypeExt::Rect(x) => Geometry::Rect(x.map_coords_trait(func)),
+            GeometryTypeExt::Triangle(x) => Geometry::Triangle(x.map_coords_trait(func)),
         }
     }
 
-    fn try_map_coords<E>(
+    fn try_map_coords_trait<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
     ) -> Result<Self::Output, E> {
-        match *self {
-            Geometry::Point(ref x) => Ok(Geometry::Point(x.try_map_coords(func)?)),
-            Geometry::Line(ref x) => Ok(Geometry::Line(x.try_map_coords(func)?)),
-            Geometry::LineString(ref x) => Ok(Geometry::LineString(x.try_map_coords(func)?)),
-            Geometry::Polygon(ref x) => Ok(Geometry::Polygon(x.try_map_coords(func)?)),
-            Geometry::MultiPoint(ref x) => Ok(Geometry::MultiPoint(x.try_map_coords(func)?)),
-            Geometry::MultiLineString(ref x) => {
-                Ok(Geometry::MultiLineString(x.try_map_coords(func)?))
+        match self.as_type_ext() {
+            GeometryTypeExt::Point(x) => Ok(Geometry::Point(x.try_map_coords_trait(func)?)),
+            GeometryTypeExt::Line(x) => Ok(Geometry::Line(x.try_map_coords_trait(func)?)),
+            GeometryTypeExt::LineString(x) => {
+                Ok(Geometry::LineString(x.try_map_coords_trait(func)?))
             }
-            Geometry::MultiPolygon(ref x) => Ok(Geometry::MultiPolygon(x.try_map_coords(func)?)),
-            Geometry::GeometryCollection(ref x) => {
-                Ok(Geometry::GeometryCollection(x.try_map_coords(func)?))
+            GeometryTypeExt::Polygon(x) => Ok(Geometry::Polygon(x.try_map_coords_trait(func)?)),
+            GeometryTypeExt::MultiPoint(x) => {
+                Ok(Geometry::MultiPoint(x.try_map_coords_trait(func)?))
             }
-            Geometry::Rect(ref x) => Ok(Geometry::Rect(x.try_map_coords(func)?)),
-            Geometry::Triangle(ref x) => Ok(Geometry::Triangle(x.try_map_coords(func)?)),
+            GeometryTypeExt::MultiLineString(x) => {
+                Ok(Geometry::MultiLineString(x.try_map_coords_trait(func)?))
+            }
+            GeometryTypeExt::MultiPolygon(x) => {
+                Ok(Geometry::MultiPolygon(x.try_map_coords_trait(func)?))
+            }
+            GeometryTypeExt::GeometryCollection(x) => {
+                Ok(Geometry::GeometryCollection(x.try_map_coords_trait(func)?))
+            }
+            GeometryTypeExt::Rect(x) => Ok(Geometry::Rect(x.try_map_coords_trait(func)?)),
+            GeometryTypeExt::Triangle(x) => Ok(Geometry::Triangle(x.try_map_coords_trait(func)?)),
         }
     }
 }
@@ -579,20 +676,24 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Geometry<T> {
 // GeometryCollection implementations //
 //------------------------------------//
 
-impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for GeometryCollection<T> {
+impl<T, NT, GC> MapCoordsTrait<T, NT, GeometryCollectionTag> for GC
+where
+    T: CoordNum,
+    NT: CoordNum,
+    GC: GeometryCollectionTraitExt<T = T>,
+{
     type Output = GeometryCollection<NT>;
 
-    fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        GeometryCollection::new_from(self.iter().map(|g| g.map_coords(func)).collect())
+    fn map_coords_trait(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
+        GeometryCollection::new_from(self.geometries_ext().map(|g| g.map_coords(func)).collect())
     }
 
-    fn try_map_coords<E>(
+    fn try_map_coords_trait<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E> + Copy,
     ) -> Result<Self::Output, E> {
         Ok(GeometryCollection::new_from(
-            self.0
-                .iter()
+            self.geometries_ext()
                 .map(|g| g.try_map_coords(func))
                 .collect::<Result<Vec<_>, E>>()?,
         ))
@@ -621,18 +722,23 @@ impl<T: CoordNum> MapCoordsInPlace<T> for GeometryCollection<T> {
 // Rect implementations //
 //----------------------//
 
-impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Rect<T> {
+impl<T, NT, R> MapCoordsTrait<T, NT, RectTag> for R
+where
+    T: CoordNum,
+    NT: CoordNum,
+    R: RectTraitExt<T = T>,
+{
     type Output = Rect<NT>;
 
-    fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        Rect::new(func(self.min()), func(self.max()))
+    fn map_coords_trait(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
+        Rect::new(func(self.min_coord()), func(self.max_coord()))
     }
 
-    fn try_map_coords<E>(
+    fn try_map_coords_trait<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E>,
     ) -> Result<Self::Output, E> {
-        Ok(Rect::new(func(self.min())?, func(self.max())?))
+        Ok(Rect::new(func(self.min_coord())?, func(self.max_coord())?))
     }
 }
 
@@ -656,18 +762,31 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Rect<T> {
 // Triangle implementations //
 //--------------------------//
 
-impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Triangle<T> {
+impl<T, NT, TT> MapCoordsTrait<T, NT, TriangleTag> for TT
+where
+    T: CoordNum,
+    NT: CoordNum,
+    TT: TriangleTraitExt<T = T>,
+{
     type Output = Triangle<NT>;
 
-    fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        Triangle::new(func(self.0), func(self.1), func(self.2))
+    fn map_coords_trait(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
+        Triangle::new(
+            func(self.first_coord()),
+            func(self.second_coord()),
+            func(self.third_coord()),
+        )
     }
 
-    fn try_map_coords<E>(
+    fn try_map_coords_trait<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E>,
     ) -> Result<Self::Output, E> {
-        Ok(Triangle::new(func(self.0)?, func(self.1)?, func(self.2)?))
+        Ok(Triangle::new(
+            func(self.first_coord())?,
+            func(self.second_coord())?,
+            func(self.third_coord())?,
+        ))
     }
 }
 

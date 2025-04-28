@@ -850,22 +850,21 @@ where
 // │ Implementation for GeometryCollection │
 // └───────────────────────────────────────┘
 
-impl<T, GC> CoordsIterTrait<GeometryCollectionTag> for GC
+impl<GC> CoordsIterTrait<GeometryCollectionTag> for GC
 where
-    T: CoordNum,
-    GC: GeometryCollectionTraitExt<T = T>,
+    GC: GeometryCollectionTraitExt<T: CoordNum>,
 {
     type Iter<'a>
-        = std::vec::IntoIter<Coord<T>>
+        = std::vec::IntoIter<Coord<GC::T>>
     where
         Self: 'a;
 
     type ExteriorIter<'a>
-        = std::vec::IntoIter<Coord<T>>
+        = std::vec::IntoIter<Coord<GC::T>>
     where
         Self: 'a;
 
-    type Scalar = T;
+    type Scalar = GC::T;
 
     fn coords_iter_trait(&self) -> Self::Iter<'_> {
         // Boxing is likely necessary here due to heterogeneous nature
