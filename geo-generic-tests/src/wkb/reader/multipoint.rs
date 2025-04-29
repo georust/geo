@@ -87,7 +87,7 @@ impl<'a> MultiPointTrait for MultiPoint<'a> {
         self.num_points
     }
 
-    unsafe fn point_unchecked(&self, i: usize) -> Self::PointType<'_> {
+    unsafe fn point_unchecked(&self, i: usize) -> Self::InnerPointType<'_> {
         Point::new(
             self.buf,
             self.byte_order,
@@ -110,7 +110,7 @@ where
         self.num_points
     }
 
-    unsafe fn point_unchecked(&self, i: usize) -> Self::PointType<'_> {
+    unsafe fn point_unchecked(&self, i: usize) -> Self::InnerPointType<'_> {
         Point::new(
             self.buf,
             self.byte_order,
