@@ -4,6 +4,7 @@
 // spec](https://portal.ogc.org/files/?artifact_id=25355).
 
 mod coord;
+mod coord_iter;
 mod geometry;
 mod geometry_collection;
 mod linearring;
