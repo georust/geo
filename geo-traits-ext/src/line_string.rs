@@ -1,6 +1,5 @@
 // Extend LineStringTrait traits for the `geo-traits` crate
 
-use geo_traits::to_geo::ToGeoCoord;
 use geo_traits::{GeometryTrait, LineStringTrait, UnimplementedLineString};
 use geo_types::{Coord, CoordNum, Line, LineString, Triangle};
 
@@ -32,7 +31,7 @@ where
     /// The caller must ensure that `i` is a valid index less than the number of coordinates.
     /// Otherwise, this function may cause undefined behavior.
     unsafe fn geo_coord_unchecked(&self, i: usize) -> Coord<Self::T> {
-        self.coord_unchecked_ext(i).to_coord()
+        self.coord_unchecked_ext(i).geo_coord()
     }
 
     /// Return an iterator yielding one [`Line`] for each line segment
@@ -42,7 +41,7 @@ where
         (0..num_coords.saturating_sub(1)).map(|i| unsafe {
             let coord1 = self.coord_unchecked_ext(i);
             let coord2 = self.coord_unchecked_ext(i + 1);
-            Line::new(coord1.to_coord(), coord2.to_coord())
+            Line::new(coord1.geo_coord(), coord2.geo_coord())
         })
     }
 
@@ -56,7 +55,7 @@ where
         (num_coords - 1..0).map(|i| unsafe {
             let coord1 = self.coord_unchecked_ext(i);
             let coord2 = self.coord_unchecked_ext(i - 1);
-            Line::new(coord2.to_coord(), coord1.to_coord())
+            Line::new(coord2.geo_coord(), coord1.geo_coord())
         })
     }
 
@@ -69,18 +68,18 @@ where
             let coord1 = self.coord_unchecked_ext(i);
             let coord2 = self.coord_unchecked_ext(i + 1);
             let coord3 = self.coord_unchecked_ext(i + 2);
-            Triangle::new(coord1.to_coord(), coord2.to_coord(), coord3.to_coord())
+            Triangle::new(coord1.geo_coord(), coord2.geo_coord(), coord3.geo_coord())
         })
     }
 
     // Returns an iterator yielding the coordinates of this line string as `geo_types::Coord`s.
     fn coord_iter(&self) -> impl Iterator<Item = Coord<<Self as GeometryTrait>::T>> {
-        self.coords().map(|c| c.to_coord())
+        self.coords_ext().map(|c| c.geo_coord())
     }
 
     fn is_closed(&self) -> bool {
         match (self.coords_ext().next(), self.coords_ext().last()) {
-            (Some(first), Some(last)) => first.to_coord() == last.to_coord(),
+            (Some(first), Some(last)) => first.geo_coord() == last.geo_coord(),
             (None, None) => true,
             _ => false,
         }

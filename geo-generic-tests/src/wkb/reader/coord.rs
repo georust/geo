@@ -3,6 +3,7 @@ use std::io::Cursor;
 use crate::wkb::common::WKBDimension;
 use crate::wkb::reader::util::ReadBytesExt;
 use crate::wkb::Endianness;
+use byteorder::{BigEndian, ByteOrder, LittleEndian};
 use geo_traits::{CoordTrait, Dimensions};
 use geo_traits_ext::{CoordTag, CoordTraitExt, GeoTraitExtWithTypeTag};
 
@@ -108,7 +109,27 @@ impl CoordTrait for Coord<'_> {
     }
 }
 
-impl CoordTraitExt for Coord<'_> {}
+impl CoordTraitExt for Coord<'_> {
+    fn geo_coord(&self) -> geo_types::Coord<f64> {
+        let offset = self.offset as usize;
+        unsafe {
+            let x_bytes = std::slice::from_raw_parts(self.buf.as_ptr().add(offset), 8);
+            let y_bytes = std::slice::from_raw_parts(self.buf.as_ptr().add(offset + 8), 8);
+            match self.byte_order {
+                Endianness::BigEndian => {
+                    let x = BigEndian::read_f64(x_bytes);
+                    let y = BigEndian::read_f64(y_bytes);
+                    geo_types::Coord { x, y }
+                }
+                Endianness::LittleEndian => {
+                    let x = LittleEndian::read_f64(x_bytes);
+                    let y = LittleEndian::read_f64(y_bytes);
+                    geo_types::Coord { x, y }
+                }
+            }
+        }
+    }
+}
 
 impl GeoTraitExtWithTypeTag for Coord<'_> {
     type Tag = CoordTag;

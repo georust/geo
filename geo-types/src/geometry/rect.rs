@@ -214,7 +214,7 @@ impl<T: CoordNum> Rect<T> {
     ///     ],
     /// );
     /// ```
-    pub fn to_polygon(self) -> Polygon<T> {
+    pub fn to_polygon(&self) -> Polygon<T> {
         polygon![
             (x: self.max.x, y: self.min.y),
             (x: self.max.x, y: self.max.y),

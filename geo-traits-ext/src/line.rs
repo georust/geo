@@ -1,6 +1,6 @@
 // Extend LineTrait traits for the `geo-traits` crate
 
-use geo_traits::{to_geo::ToGeoCoord, GeometryTrait, LineTrait, UnimplementedLine};
+use geo_traits::{GeometryTrait, LineTrait, UnimplementedLine};
 use geo_types::{CoordNum, Line};
 
 use crate::{CoordTraitExt, GeoTraitExtWithTypeTag, LineTag};
@@ -18,11 +18,11 @@ where
     fn coords_ext(&self) -> [Self::CoordTypeExt<'_>; 2];
 
     fn start_coord(&self) -> geo_types::Coord<<Self as GeometryTrait>::T> {
-        self.start_ext().to_coord()
+        self.start_ext().geo_coord()
     }
 
     fn end_coord(&self) -> geo_types::Coord<<Self as GeometryTrait>::T> {
-        self.end_ext().to_coord()
+        self.end_ext().geo_coord()
     }
 
     fn geo_line(&self) -> Line<<Self as GeometryTrait>::T> {

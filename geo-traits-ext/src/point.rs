@@ -1,6 +1,6 @@
 // Extend PointTrait traits for the `geo-traits` crate
 
-use geo_traits::{to_geo::ToGeoCoord, CoordTrait, GeometryTrait, PointTrait, UnimplementedPoint};
+use geo_traits::{CoordTrait, GeometryTrait, PointTrait, UnimplementedPoint};
 use geo_types::{Coord, CoordNum, Point};
 
 use crate::{CoordTraitExt, GeoTraitExtWithTypeTag, PointTag};
@@ -21,7 +21,7 @@ where
     }
 
     fn geo_coord(&self) -> Option<Coord<<Self as GeometryTrait>::T>> {
-        self.coord_ext().map(|coord| coord.to_coord())
+        self.coord_ext().map(|coord| coord.geo_coord())
     }
 }
 

@@ -1,5 +1,7 @@
 use geo_traits::to_geo::ToGeoGeometry;
-use geo_traits_ext::{GeometryTraitExt, GeometryTypeExt, LineStringTraitExt, PolygonTraitExt};
+use geo_traits_ext::{
+    GeometryTraitExt, GeometryTypeExt, LineStringTraitExt, PointTraitExt, PolygonTraitExt,
+};
 use geo_types::{line_string, Geometry};
 use geos::WKBWriter;
 
@@ -149,6 +151,25 @@ fn read_geometry_collection() {
         Geometry::GeometryCollection(orig.clone()),
         retour.to_geometry()
     );
+}
+
+#[test]
+fn read_point_geo_coord() {
+    let orig = point_2d();
+    let geos_geom: geos::Geometry = (&orig).try_into().unwrap();
+    let mut wkb_writer = WKBWriter::new().unwrap();
+    let byte_orders = [geos::ByteOrder::LittleEndian, geos::ByteOrder::BigEndian];
+    for byte_order in byte_orders {
+        wkb_writer.set_wkb_byte_order(byte_order);
+        let buf: Vec<u8> = wkb_writer.write_wkb(&geos_geom).unwrap().into();
+        let wkb = read_wkb(&buf).unwrap();
+        if let GeometryTypeExt::Point(pt) = wkb.as_type_ext() {
+            let coord = pt.geo_coord();
+            assert_eq!(coord, Some(orig.0));
+        } else {
+            panic!("Expected a Point");
+        }
+    }
 }
 
 #[test]

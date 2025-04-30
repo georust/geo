@@ -1,6 +1,5 @@
 // Extend TriangleTrait traits for the `geo-traits` crate
 
-use geo_traits::to_geo::ToGeoCoord;
 use geo_traits::{GeometryTrait, TriangleTrait, UnimplementedTriangle};
 use geo_types::{polygon, Coord, CoordNum, Line, Polygon, Triangle};
 
@@ -20,15 +19,15 @@ where
     fn coords_ext(&self) -> [Self::CoordTypeExt<'_>; 3];
 
     fn first_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
-        self.first().to_coord()
+        self.first_ext().geo_coord()
     }
 
     fn second_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
-        self.second().to_coord()
+        self.second_ext().geo_coord()
     }
 
     fn third_coord(&self) -> Coord<<Self as GeometryTrait>::T> {
-        self.third().to_coord()
+        self.third_ext().geo_coord()
     }
 
     fn to_array(&self) -> [Coord<<Self as GeometryTrait>::T>; 3] {
@@ -37,9 +36,9 @@ where
 
     fn to_lines(&self) -> [Line<<Self as GeometryTrait>::T>; 3] {
         [
-            Line::new(self.first().to_coord(), self.second().to_coord()),
-            Line::new(self.second().to_coord(), self.third().to_coord()),
-            Line::new(self.third().to_coord(), self.first().to_coord()),
+            Line::new(self.first_coord(), self.second_coord()),
+            Line::new(self.second_coord(), self.third_coord()),
+            Line::new(self.third_coord(), self.first_coord()),
         ]
     }
 
