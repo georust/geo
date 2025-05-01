@@ -22,6 +22,9 @@
 mod bearing;
 pub use bearing::Bearing;
 
+mod comparable_distance;
+pub use comparable_distance::ComparableDistance;
+
 mod destination;
 pub use destination::Destination;
 
