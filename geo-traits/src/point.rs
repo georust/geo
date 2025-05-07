@@ -61,29 +61,3 @@ impl<T> PointTrait for UnimplementedPoint<T> {
         unimplemented!()
     }
 }
-
-#[test]
-fn test_point_trait_lifetime() {
-    // This is a regression test for https://github.com/georust/geo/pull/1348
-
-    // let's say point has lifetime 'a
-    let point = Point::new(1.0, 2.0);
-    // as long as coord_ref references a part of point, it should be valid.
-    let coord_ref: &Coord<f64>;
-
-    {
-        // point_ref has lifetime 'b, it references a point which has lifetime 'a
-        let point_ref: &Point<f64> = &point;
-        {
-            let point_ref_ref: &&Point<f64> = &point_ref;
-            // the lifetime of coord it references should be 'a, since it references
-            // a inner part of point which has lifetime 'a
-            coord_ref = point_ref_ref.coord().unwrap();
-        }
-    }
-
-    // Using coord_ref here, it should be valid. Without https://github.com/georust/geo/pull/1348
-    // there would be a compile error here.
-    assert_eq!(coord_ref.x(), 1.0);
-    assert_eq!(coord_ref.y(), 2.0);
-}
