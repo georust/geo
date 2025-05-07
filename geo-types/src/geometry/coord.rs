@@ -23,7 +23,11 @@ use crate::{coord, CoordNum, Point};
 #[derive(Eq, PartialEq, Clone, Copy, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coord<T: CoordNum = f64> {
+    /// Typically, `x` is the horizontal position, or longitude for geographic coordinates,
+    /// but its interpretation can vary across coordinate systems.
     pub x: T,
+    /// Typically, `y` is the vertical position, or latitude for geographic coordinates,
+    /// but its interpretation can vary across coordinate systems.
     pub y: T,
 }
 

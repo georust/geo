@@ -4,25 +4,45 @@ use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAss
 
 /// A single point in 2D space.
 ///
-/// Points can be created using the [`Point::new`] constructor,
-/// the [`point!`] macro, or from a `Coord`, two-element
-/// tuples, or arrays – see the `From` impl section for a
-/// complete list.
-///
 /// # Semantics
 ///
 /// The _interior_ of the point is itself (a singleton set),
 /// and its _boundary_ is empty. A point is _valid_ if and
 /// only if the `Coord` is valid.
 ///
-/// # Examples
+/// # Creating a Point
 ///
+/// There are many ways to construct a point.
 /// ```
-/// use geo_types::{coord, Point};
-/// let p1: Point = (0., 1.).into();
+/// use geo_types::{coord, point, Point};
+///
+/// let p1 = Point::new(0., 1.);
+///
+/// let p2 = point! { x: 1000.0, y: 2000.0 };
+///
+/// let p3: Point = (0., 1.).into();
+///
 /// let c = coord! { x: 10., y: 20. };
-/// let p2: Point = c.into();
+/// let p4: Point = c.into();
 /// ```
+///
+/// See the `From` impl section for a complete list of conversions.
+///
+/// ## Coordinate order for geographic points
+///
+/// For geographic points, typically `x` corresponds to longitude and `y` to latitude.
+///
+/// Geographic methods in the [`geo`](https://crates.io/crates/geo) crate expect this common
+/// lon/lat order, but different conventions exist in other coordinate systems,
+/// notably EPSG:4326, which uses lat/lon ordering.
+/// ```
+/// use geo_types::{coord, point, Point};
+///
+/// let lon = 179.9;
+/// let lat = 45.0;
+/// let geographic_point = Point::new(lon, lat);
+/// ```
+///
 #[derive(Eq, PartialEq, Clone, Copy, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T: CoordNum = f64>(pub Coord<T>);
@@ -76,6 +96,9 @@ impl<T: CoordNum> Point<T> {
 
     /// Returns the x/horizontal component of the point.
     ///
+    /// Typically, `x` is the horizontal position, or longitude for geographic coordinates,
+    /// but its interpretation can vary across coordinate systems.
+    ///
     /// # Examples
     ///
     /// ```
@@ -90,6 +113,9 @@ impl<T: CoordNum> Point<T> {
     }
 
     /// Sets the x/horizontal component of the point.
+    ///
+    /// Typically, `x` is the horizontal position, or longitude for geographic coordinates,
+    /// but its interpretation can vary across coordinate systems.
     ///
     /// # Examples
     ///
@@ -108,6 +134,9 @@ impl<T: CoordNum> Point<T> {
 
     /// Returns a mutable reference to the x/horizontal component of the point
     ///
+    /// Typically, `x` is the horizontal position, or longitude for geographic coordinates,
+    /// but its interpretation can vary across coordinate systems.
+    ///
     /// # Examples
     ///
     /// ```
@@ -121,7 +150,11 @@ impl<T: CoordNum> Point<T> {
     pub fn x_mut(&mut self) -> &mut T {
         &mut self.0.x
     }
+
     /// Returns the y/vertical component of the point.
+    ///
+    /// Typically, `y` is the vertical position, or latitude for geographic coordinates,
+    /// but its interpretation can vary across coordinate systems.
     ///
     /// # Examples
     ///
@@ -137,6 +170,9 @@ impl<T: CoordNum> Point<T> {
     }
 
     /// Sets the y/vertical component of the point.
+    ///
+    /// Typically, `y` is the vertical position, or latitude for geographic coordinates,
+    /// but its interpretation can vary across coordinate systems.
     ///
     /// # Examples
     ///
@@ -154,6 +190,9 @@ impl<T: CoordNum> Point<T> {
     }
 
     /// Returns a mutable reference to the x/horizontal component of the point
+    ///
+    /// Typically, `y` is the vertical position, or latitude for geographic coordinates,
+    /// but its interpretation can vary across coordinate systems.
     ///
     /// # Examples
     ///
