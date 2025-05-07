@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.3.0 - <ADD DATE>
 
 - BREAKING: All traits now extend `GeometryTrait`.
   - <https://github.com/georust/geo/pull/1346>
