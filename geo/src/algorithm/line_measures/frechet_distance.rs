@@ -52,47 +52,54 @@ where
     MetricSpace: Distance<F, Point<F>, Point<F>>,
 {
     fn frechet_distance(&self, ls_1: &LineString<F>, ls_2: &LineString<F>) -> F {
-        if ls_1.coords_count() != 0 && ls_2.coords_count() != 0 {
-            Data {
-                cache: vec![F::zero(); ls_1.coords_count() * ls_2.coords_count()],
-                ls_a: ls_1,
-                ls_b: ls_2,
-            }
-            .compute_linear(self)
-        } else {
-            F::zero()
+        if ls_1.coords_count() == 0 || ls_2.coords_count() == 0 {
+            return F::zero();
         }
+
+        let (ls_short, ls_long) = if ls_1.coords_count() <= ls_2.coords_count() {
+            (ls_1, ls_2)
+        } else {
+            (ls_2, ls_1)
+        };
+
+        Data {
+            cache: vec![F::zero(); ls_short.coords_count() + ls_short.coords_count()],
+            ls_short,
+            ls_long,
+        }
+        .compute_linear(self)
     }
 }
 
 struct Data<'a, F: CoordFloat> {
     cache: Vec<F>,
-    ls_a: &'a LineString<F>,
-    ls_b: &'a LineString<F>,
+    ls_short: &'a LineString<F>,
+    ls_long: &'a LineString<F>,
 }
 
 impl<F: CoordFloat> Data<'_, F> {
-    /// [Reference implementation]: https://github.com/joaofig/discrete-frechet/tree/master
     fn compute_linear(&mut self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
-        let columns_count = self.ls_b.coords_count();
+        let row_length = self.ls_short.coords_count();
+        let (mut prev_row, mut cur_row) = self.cache.split_at_mut(row_length);
 
-        for (i, a) in self.ls_a.points().enumerate() {
-            for (j, b) in self.ls_b.points().enumerate() {
-                let dist = metric_space.distance(a, b);
+        for (i, p_long) in self.ls_long.points().enumerate() {
+            for (j, p_short) in self.ls_short.points().enumerate() {
+                let d = metric_space.distance(p_long, p_short);
 
-                self.cache[i * columns_count + j] = match (i, j) {
-                    (0, 0) => dist,
-                    (_, 0) => self.cache[(i - 1) * columns_count].max(dist),
-                    (0, _) => self.cache[j - 1].max(dist),
-                    (_, _) => self.cache[(i - 1) * columns_count + j]
-                        .min(self.cache[(i - 1) * columns_count + j - 1])
-                        .min(self.cache[i * columns_count + j - 1])
-                        .max(dist),
+                cur_row[j] = match (i, j) {
+                    (0, 0) => d,
+                    (_, 0) => prev_row[0].max(d),
+                    (0, _) => cur_row[j - 1].max(d),
+                    _ => {
+                        let best_prev = prev_row[j].min(prev_row[j - 1]).min(cur_row[j - 1]);
+                        d.max(best_prev)
+                    }
                 };
             }
+            std::mem::swap(&mut prev_row, &mut cur_row);
         }
 
-        self.cache[self.cache.len() - 1]
+        prev_row[row_length - 1]
     }
 }
 
