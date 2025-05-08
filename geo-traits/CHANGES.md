@@ -4,8 +4,8 @@
 
 - BREAKING: All traits now extend `GeometryTrait`.
   - <https://github.com/georust/geo/pull/1346>
-- Fix the lifetime annotation of `PointTrait` implemented for `geo_types::Point`.
-  - <https://github.com/georust/geo/pull/1348>
+- BREAKING: Return owned coords for PointTrait and LineStringTrait `geo-types` impls
+  - <https://github.com/georust/geo/pull/1351>
 
 ## 0.2.0 - 2024-11-06
 

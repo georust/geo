@@ -47,7 +47,7 @@ pub trait LineStringTrait: Sized + GeometryTrait {
 #[cfg(feature = "geo-types")]
 impl<T: CoordNum> LineStringTrait for LineString<T> {
     type CoordType<'a>
-        = &'a Coord<Self::T>
+        = Coord<Self::T>
     where
         Self: 'a;
 
@@ -56,14 +56,14 @@ impl<T: CoordNum> LineStringTrait for LineString<T> {
     }
 
     unsafe fn coord_unchecked(&self, i: usize) -> Self::CoordType<'_> {
-        self.0.get_unchecked(i)
+        *self.0.get_unchecked(i)
     }
 }
 
 #[cfg(feature = "geo-types")]
-impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
+impl<T: CoordNum> LineStringTrait for &'_ LineString<T> {
     type CoordType<'b>
-        = &'a Coord<Self::T>
+        = Coord<Self::T>
     where
         Self: 'b;
 
@@ -72,7 +72,7 @@ impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
     }
 
     unsafe fn coord_unchecked(&self, i: usize) -> Self::CoordType<'_> {
-        self.0.get_unchecked(i)
+        *self.0.get_unchecked(i)
     }
 }
 
