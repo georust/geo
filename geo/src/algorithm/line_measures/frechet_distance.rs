@@ -63,7 +63,7 @@ where
         };
 
         Data {
-            cache: vec![F::zero(); ls_short.coords_count() + ls_short.coords_count()],
+            cache: vec![F::zero(); ls_short.coords_count() * 2],
             ls_short,
             ls_long,
         }
