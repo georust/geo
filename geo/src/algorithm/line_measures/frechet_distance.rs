@@ -52,33 +52,35 @@ where
     MetricSpace: Distance<F, Point<F>, Point<F>>,
 {
     fn frechet_distance(&self, ls_1: &LineString<F>, ls_2: &LineString<F>) -> F {
-        if ls_1.coords_count() == 0 || ls_2.coords_count() == 0 {
+        let (n1, n2) = (ls_1.coords_count(), ls_2.coords_count());
+        if n1 == 0 || n2 == 0 {
             return F::zero();
         }
 
-        let (ls_short, ls_long) = if ls_1.coords_count() <= ls_2.coords_count() {
-            (ls_1, ls_2)
-        } else {
-            (ls_2, ls_1)
-        };
+        let (ls_short, ls_long) = if n1 <= n2 { (ls_1, ls_2) } else { (ls_2, ls_1) };
 
-        Data {
-            cache: vec![F::zero(); ls_short.coords_count() * 2],
-            ls_short,
-            ls_long,
-        }
-        .compute_linear(self)
+        DiscreteFrechetCalculator::new(ls_short, ls_long).calculate(self)
     }
 }
 
-struct Data<'a, F: CoordFloat> {
+/// Helper struct for the dynamic programming calculation of discrete Fréchet distance.
+/// It uses a buffer representing two rows of the DP table to achieve O(min(m,n)) space.
+struct DiscreteFrechetCalculator<'a, F: CoordFloat> {
     cache: Vec<F>,
     ls_short: &'a LineString<F>,
     ls_long: &'a LineString<F>,
 }
 
-impl<F: CoordFloat> Data<'_, F> {
-    fn compute_linear(&mut self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
+impl<'a, F: CoordFloat> DiscreteFrechetCalculator<'a, F> {
+    fn new(ls_short: &'a LineString<F>, ls_long: &'a LineString<F>) -> Self {
+        Self {
+            cache: vec![F::zero(); ls_short.coords_count() * 2],
+            ls_short,
+            ls_long,
+        }
+    }
+
+    fn calculate(&mut self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
         let row_length = self.ls_short.coords_count();
         let (mut prev_row, mut cur_row) = self.cache.split_at_mut(row_length);
 
@@ -88,8 +90,8 @@ impl<F: CoordFloat> Data<'_, F> {
 
                 cur_row[j] = match (i, j) {
                     (0, 0) => d,
-                    (_, 0) => prev_row[0].max(d),
                     (0, _) => cur_row[j - 1].max(d),
+                    (_, 0) => prev_row[0].max(d),
                     _ => {
                         let best_prev = prev_row[j].min(prev_row[j - 1]).min(cur_row[j - 1]);
                         d.max(best_prev)
