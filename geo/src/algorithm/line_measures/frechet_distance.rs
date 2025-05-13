@@ -84,18 +84,24 @@ impl<'a, F: CoordFloat> DiscreteFrechetCalculator<'a, F> {
         let row_length = self.ls_short.coords_count();
         let (mut prev_row, mut cur_row) = self.cache.split_at_mut(row_length);
 
-        for (i, p_long) in self.ls_long.points().enumerate() {
-            for (j, p_short) in self.ls_short.points().enumerate() {
-                let d = metric_space.distance(p_long, p_short);
+        let p_long_0: Point<F> = self.ls_long[0].into();
+        let p_short_0: Point<F> = self.ls_short[0].into();
 
-                cur_row[j] = match (i, j) {
-                    (0, 0) => d,
-                    (0, _) => cur_row[j - 1].max(d),
-                    (_, 0) => prev_row[0].max(d),
-                    _ => {
-                        let best_prev = prev_row[j].min(prev_row[j - 1]).min(cur_row[j - 1]);
-                        d.max(best_prev)
-                    }
+        prev_row[0] = metric_space.distance(p_long_0, p_short_0);
+        for (j, p_short) in self.ls_short.points().enumerate().skip(1) {
+            let d = metric_space.distance(p_long_0, p_short);
+            prev_row[j] = prev_row[j - 1].max(d);
+        }
+
+        for p_long in self.ls_long.points().skip(1) {
+            let d = metric_space.distance(p_long, p_short_0);
+            cur_row[0] = prev_row[0].max(d);
+
+            for (j, p_short) in self.ls_short.points().enumerate().skip(1) {
+                let d = metric_space.distance(p_long, p_short);
+                cur_row[j] = {
+                    let best_prev = prev_row[j].min(prev_row[j - 1]).min(cur_row[j - 1]);
+                    d.max(best_prev)
                 };
             }
             std::mem::swap(&mut prev_row, &mut cur_row);
