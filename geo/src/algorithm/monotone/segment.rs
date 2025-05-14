@@ -1,7 +1,7 @@
 use std::cell::{Ref, RefCell};
 use std::{cmp::Ordering, fmt::Debug, rc::Rc};
 
-use crate::sweep::{Event, EventType, LineOrPoint, SweepPoint};
+use crate::old_sweep::{Event, EventType, LineOrPoint, SweepPoint};
 use crate::GeoNum;
 
 /// A segment in the sweep line algorithm.

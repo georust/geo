@@ -126,3 +126,7 @@ harness = false
 [[bench]]
 name = "stitch"
 harness = false
+
+[[bench]]
+name = "sweep_line_intersection"
+harness = false

@@ -1,4 +1,4 @@
-use crate::sweep::{Active, Event, EventType, LineOrPoint, SweepPoint, VecSet};
+use crate::old_sweep::{Active, Event, EventType, LineOrPoint, SweepPoint, VecSet};
 use crate::{GeoNum, Orientation};
 use std::{collections::BinaryHeap, fmt::Debug};
 
