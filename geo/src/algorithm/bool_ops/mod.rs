@@ -184,9 +184,9 @@ pub fn unary_union<'a, B: BooleanOps + 'a>(
         .collect::<Vec<_>>();
 
     let fill_rule = if winding_order == Some(WindingOrder::Clockwise) {
-        FillRule::Positive
-    } else {
         FillRule::Negative
+    } else {
+        FillRule::Positive
     };
 
     let shapes = FloatOverlay::with_subj(&subject).overlay(OverlayRule::Subject, fill_rule);
