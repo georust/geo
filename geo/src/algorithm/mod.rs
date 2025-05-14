@@ -312,6 +312,9 @@ pub use within::Within;
 /// Planar sweep algorithm and related utils
 pub mod sweep;
 
+/// Revised planar sweep-line algorithm
+pub mod new_sweep;
+
 /// Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
 pub mod outlier_detection;
 
