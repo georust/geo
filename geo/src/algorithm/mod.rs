@@ -1,5 +1,7 @@
 /// Kernels to compute various predicates
 pub mod kernels;
+/// Simplified sweep-line impl based on JTS
+pub mod new_sweep;
 pub use kernels::{Kernel, Orientation};
 
 /// Calculate the area of the surface of a `Geometry`.
