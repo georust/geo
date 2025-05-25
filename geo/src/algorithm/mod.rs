@@ -1,5 +1,6 @@
 /// Kernels to compute various predicates
 pub mod kernels;
+pub mod minsep;
 pub use kernels::{Kernel, Orientation};
 
 /// Nearest-neighbour queries on point sets using a ball tree.
