@@ -1,6 +1,6 @@
 mod distance;
 
-use super::super::{Distance, InterpolatePoint};
+use super::super::{ComparableDistance, Distance, InterpolatePoint};
 use crate::line_measures::densify::densify_between;
 use crate::{CoordFloat, Point};
 use num_traits::FromPrimitive;
