@@ -4,6 +4,8 @@
 
 - BREAKING: The `Simplify`, `SimplifyVw`, and `SimplifyVwIdx` traits no longer require a borrowed `epsilon` parameter as these are `Copy` types
 - BREAKING: update proj dependency to 0.30.0 (libproj 9.6.0)
+- Reduce memory consumption of FrechtDistance calculation.
+  - <https://github.com/georust/geo/pull/1357>
 - Bump geo MSRV to 1.82
 - Simplify test rustc and libproj version specification in CI
 - Avoid running through entire iterator to reach last element in `outlier_detection` when calculating LRD and LOF
