@@ -50,7 +50,7 @@ pub trait HasDimensions {
     /// ]);
     /// assert!(!line_string.is_empty());
     ///
-    /// let empty_line_string: LineString = LineString::new(vec![]);
+    /// let empty_line_string: LineString = LineString::empty();
     /// assert!(empty_line_string.is_empty());
     ///
     /// let point = Point::new(0.0, 0.0);
@@ -89,7 +89,7 @@ pub trait HasDimensions {
     /// assert_eq!(Dimensions::ZeroDimensional, point.dimensions());
     ///
     /// // An `Empty` dimensionality is distinct from, and less than, being 0-dimensional
-    /// let empty_collection = GeometryCollection::<f32>::new_from(vec![]);
+    /// let empty_collection = GeometryCollection::<f32>::empty();
     /// assert_eq!(Dimensions::Empty, empty_collection.dimensions());
     /// assert!(empty_collection.dimensions() < point.dimensions());
     /// ```

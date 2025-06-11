@@ -143,7 +143,7 @@ mod test {
     #[test]
     fn empty_linestring2_test() {
         let linestring = line_string![(x: 3., y: 2.), (x: 7., y: 6.)];
-        assert!(!linestring.intersects(&LineString::new(Vec::new())));
+        assert!(!linestring.intersects(&LineString::empty()));
     }
     #[test]
     fn empty_all_linestring_test() {
