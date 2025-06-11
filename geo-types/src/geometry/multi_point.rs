@@ -115,8 +115,14 @@ impl<'a, T: CoordNum + Send + Sync> IntoParallelIterator for &'a mut MultiPoint<
 }
 
 impl<T: CoordNum> MultiPoint<T> {
+    /// Returns a MultiPoint with the given Points as elements
     pub fn new(value: Vec<Point<T>>) -> Self {
         Self(value)
+    }
+
+    /// Returns an empty MultiPoint
+    pub fn empty() -> Self {
+        Self::new(Vec::new())
     }
 
     pub fn len(&self) -> usize {
@@ -234,6 +240,7 @@ mod approx_integration {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use crate::{point, wkt};
     use approx::{AbsDiffEq, RelativeEq};
 
@@ -337,5 +344,12 @@ mod test {
         // Over-sized but otherwise equal.
         let multi_oversized = wkt! { MULTIPOINT(0. 0.,10. 10.,10. 100.) };
         assert!(multi.abs_diff_ne(&multi_oversized, 1.));
+    }
+
+    #[test]
+    fn empty() {
+        let empty = MultiPoint::<f64>::empty();
+        let empty_2 = wkt! { MULTIPOINT EMPTY };
+        assert_eq!(empty, empty_2);
     }
 }

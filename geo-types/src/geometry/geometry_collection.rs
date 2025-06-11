@@ -84,7 +84,7 @@ impl<T: CoordNum> Default for GeometryCollection<T> {
 impl<T: CoordNum> GeometryCollection<T> {
     /// Return an empty GeometryCollection
     #[deprecated(
-        note = "Will be replaced with a parametrized version in upcoming version. Use GeometryCollection::default() instead"
+        note = "Will be replaced with a parametrized version in upcoming version. Use GeometryCollection::empty() instead"
     )]
     pub fn new() -> Self {
         GeometryCollection::default()
@@ -95,6 +95,11 @@ impl<T: CoordNum> GeometryCollection<T> {
     /// This fn is not marked as deprecated because it would require extensive refactoring of the geo code.
     pub fn new_from(value: Vec<Geometry<T>>) -> Self {
         Self(value)
+    }
+
+    /// Returns an empty GeometryCollection
+    pub fn empty() -> Self {
+        Self(Vec::new())
     }
 
     /// Number of geometries in this GeometryCollection
@@ -348,12 +353,19 @@ mod approx_integration {
 mod tests {
     use alloc::vec;
 
-    use crate::{GeometryCollection, Point};
+    use crate::{wkt, GeometryCollection, Point};
 
     #[test]
     fn from_vec() {
         let gc = GeometryCollection::from(vec![Point::new(1i32, 2)]);
         let p = Point::try_from(gc[0].clone()).unwrap();
         assert_eq!(p.y(), 2);
+    }
+
+    #[test]
+    fn empty() {
+        let empty = GeometryCollection::<f64>::empty();
+        let empty_2 = wkt! { GEOMETRYCOLLECTION EMPTY };
+        assert_eq!(empty, empty_2);
     }
 }

@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+- Add `empty` convenience initializer for constructing empty geometries
+  - <https://github.com/georust/geo/pull/1363>
+
 ## 0.7.16 - 2025-03-24
 
 - Add `LineString::rev_lines` to iterate segments from end to start

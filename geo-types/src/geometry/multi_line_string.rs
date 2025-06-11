@@ -39,9 +39,14 @@ use rayon::prelude::*;
 pub struct MultiLineString<T: CoordNum = f64>(pub Vec<LineString<T>>);
 
 impl<T: CoordNum> MultiLineString<T> {
-    /// Instantiate Self from the raw content value
+    /// Returns a MultiLineString with the given LineStrings as elements
     pub fn new(value: Vec<LineString<T>>) -> Self {
         Self(value)
+    }
+
+    /// Returns an empty MultiLineString
+    pub fn empty() -> Self {
+        Self::new(Vec::new())
     }
 
     /// True if the MultiLineString is empty or if all of its LineStrings are closed - see
@@ -62,7 +67,7 @@ impl<T: CoordNum> MultiLineString<T> {
     /// assert!(!MultiLineString::new(vec![open_line_string, closed_line_string]).is_closed());
     ///
     /// // An empty MultiLineString is closed
-    /// assert!(MultiLineString::<f32>::new(vec![]).is_closed());
+    /// assert!(MultiLineString::<f32>::empty().is_closed());
     /// ```
     pub fn is_closed(&self) -> bool {
         // Note: Unlike JTS et al, we consider an empty MultiLineString as closed.
@@ -331,5 +336,12 @@ mod test {
                 );
             }
         }
+    }
+
+    #[test]
+    fn empty() {
+        let empty = MultiLineString::<f64>::empty();
+        let empty_2 = wkt! { MULTILINESTRING EMPTY };
+        assert_eq!(empty, empty_2);
     }
 }
