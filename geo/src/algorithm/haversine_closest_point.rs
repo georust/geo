@@ -514,7 +514,7 @@ mod test {
 
     #[test]
     fn point_to_empty_linestring() {
-        let linestring = LineString::new(vec![]);
+        let linestring = LineString::empty();
 
         let p_from = Point::new(17.02374, 10.57037);
 

@@ -81,7 +81,7 @@ impl<T: CoordNum, G: PolygonTrait<T = T>> ToGeoPolygon<T> for G {
         let exterior = if let Some(exterior) = self.exterior() {
             exterior.to_line_string()
         } else {
-            LineString::new(vec![])
+            LineString::empty()
         };
         let interiors = self
             .interiors()
