@@ -107,9 +107,14 @@ impl<'a, T: CoordNum + Send + Sync> IntoParallelIterator for &'a mut MultiPolygo
 }
 
 impl<T: CoordNum> MultiPolygon<T> {
-    /// Instantiate Self from the raw content value
+    /// Returns a MultiPolygon with the given Polygons as elements
     pub fn new(value: Vec<Polygon<T>>) -> Self {
         Self(value)
+    }
+
+    /// Returns an empty MultiPolygon
+    pub fn empty() -> Self {
+        Self(Vec::new())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Polygon<T>> {
@@ -258,7 +263,7 @@ impl_rstar_multi_polygon!(rstar_0_12);
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::polygon;
+    use crate::{polygon, wkt};
 
     #[test]
     fn test_iter() {
@@ -357,5 +362,12 @@ mod test {
                 );
             }
         }
+    }
+
+    #[test]
+    fn empty() {
+        let empty = MultiPolygon::<f64>::empty();
+        let empty_2 = wkt! { MULTIPOLYGON EMPTY };
+        assert_eq!(empty, empty_2);
     }
 }

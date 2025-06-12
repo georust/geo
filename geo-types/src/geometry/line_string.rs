@@ -190,9 +190,14 @@ impl<T: CoordNum> DoubleEndedIterator for CoordinatesIter<'_, T> {
 }
 
 impl<T: CoordNum> LineString<T> {
-    /// Instantiate Self from the raw content value
+    /// Returns a LineString with the given coordinates
     pub fn new(value: Vec<Coord<T>>) -> Self {
         Self(value)
+    }
+
+    /// Returns an empty LineString
+    pub fn empty() -> Self {
+        Self::new(Vec::new())
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
@@ -596,7 +601,7 @@ impl_rstar_line_string!(rstar_0_12);
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::coord;
+    use crate::{coord, wkt};
     use approx::{AbsDiffEq, RelativeEq};
 
     #[test]
@@ -685,5 +690,12 @@ mod test {
         let expected = LineString::new(vec![start, end]);
 
         assert_eq!(expected, LineString::from(line));
+    }
+
+    #[test]
+    fn empty() {
+        let empty = LineString::<f64>::empty();
+        let empty_2 = wkt! { LINESTRING EMPTY };
+        assert_eq!(empty, empty_2);
     }
 }

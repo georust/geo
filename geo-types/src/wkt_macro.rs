@@ -44,7 +44,7 @@ macro_rules! wkt_internal {
         compile_error!("Invalid POINT wkt");
     };
     (LINESTRING EMPTY) => {
-        $crate::line_string![]
+        $crate::LineString::empty()
     };
     (LINESTRING ($($x: literal $y: literal),+)) => {
         $crate::line_string![
@@ -58,7 +58,7 @@ macro_rules! wkt_internal {
         compile_error!("Invalid LINESTRING wkt");
     };
     (POLYGON EMPTY) => {
-        $crate::polygon![]
+        $crate::Polygon::empty()
     };
     (POLYGON ( $exterior_tt: tt )) => {
         $crate::Polygon::new($crate::wkt!(LINESTRING $exterior_tt), $crate::_alloc::vec![])
@@ -78,7 +78,7 @@ macro_rules! wkt_internal {
         compile_error!("Invalid POLYGON wkt");
     };
     (MULTIPOINT EMPTY) => {
-        $crate::MultiPoint($crate::_alloc::vec![])
+        $crate::MultiPoint::empty()
     };
     (MULTIPOINT ()) => {
         compile_error!("use `EMPTY` instead of () for an empty collection")
@@ -92,7 +92,7 @@ macro_rules! wkt_internal {
         compile_error!("Invalid MULTIPOINT wkt");
     };
     (MULTILINESTRING EMPTY) => {
-        $crate::MultiLineString($crate::_alloc::vec![])
+        $crate::MultiLineString::empty()
     };
     (MULTILINESTRING ()) => {
         compile_error!("use `EMPTY` instead of () for an empty collection")
@@ -106,7 +106,7 @@ macro_rules! wkt_internal {
         compile_error!("Invalid MULTILINESTRING wkt");
     };
     (MULTIPOLYGON EMPTY) => {
-        $crate::MultiPolygon($crate::_alloc::vec![])
+        $crate::MultiPolygon::empty()
     };
     (MULTIPOLYGON ()) => {
         compile_error!("use `EMPTY` instead of () for an empty collection")
@@ -120,7 +120,7 @@ macro_rules! wkt_internal {
         compile_error!("Invalid MULTIPOLYGON wkt");
     };
     (GEOMETRYCOLLECTION EMPTY) => {
-        $crate::GeometryCollection($crate::_alloc::vec![])
+        $crate::GeometryCollection::empty()
     };
     (GEOMETRYCOLLECTION ()) => {
         compile_error!("use `EMPTY` instead of () for an empty collection")

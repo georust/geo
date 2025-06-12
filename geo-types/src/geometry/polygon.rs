@@ -132,6 +132,13 @@ impl<T: CoordNum> Polygon<T> {
         }
     }
 
+    /// Returns an empty Polygon.
+    ///
+    /// `geo` represents an empty Polygon as one whose exterior is an empty LineString
+    pub fn empty() -> Self {
+        Self::new(LineString::empty(), vec![])
+    }
+
     /// Consume the `Polygon`, returning the exterior `LineString` ring and
     /// a vector of the interior `LineString` rings.
     ///
@@ -677,3 +684,16 @@ impl_rstar_polygon!(rstar_0_11);
 
 #[cfg(feature = "rstar_0_12")]
 impl_rstar_polygon!(rstar_0_12);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::wkt;
+
+    #[test]
+    fn empty() {
+        let empty = Polygon::<f64>::empty();
+        let empty_2 = wkt! { POLYGON EMPTY };
+        assert_eq!(empty, empty_2);
+    }
+}

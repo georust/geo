@@ -221,7 +221,7 @@ mod tests {
     }
     #[test]
     fn empty_line_string() {
-        let line_string = LineString::<i32>::new(vec![]);
+        let line_string = LineString::<i32>::empty();
         assert_eq!("LINESTRING EMPTY", format!("{line_string:?}"));
     }
     #[test]
@@ -256,7 +256,7 @@ mod tests {
     fn invalid_polygon_interior_but_no_exterior() {
         // Not a valid polygon, but we should still have reasonable debug output - note this is *not* valid WKT
         let interior = LineString::new(vec![(1, 2).into()]);
-        let polygon = Polygon::new(LineString::new(vec![]), vec![interior]);
+        let polygon = Polygon::new(LineString::empty(), vec![interior]);
         assert_eq!("POLYGON(EMPTY,(1 2))", format!("{polygon:?}"));
     }
     #[test]
@@ -455,7 +455,7 @@ mod tests {
     fn geometry_collection_with_no_coordinates() {
         let geometry_collection: GeometryCollection<f64> = GeometryCollection::from(vec![
             Geometry::Point(Point::new(0.0, 0.0)),
-            Geometry::Polygon(Polygon::new(LineString::new(vec![]), vec![])),
+            Geometry::Polygon(Polygon::empty()),
         ]);
 
         assert_eq!(
