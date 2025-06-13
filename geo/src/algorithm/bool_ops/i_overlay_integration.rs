@@ -54,7 +54,7 @@ pub(super) mod convert {
             line_string.0.reverse();
             line_string
         });
-        let exterior = rings.next().unwrap_or(LineString::new(vec![]));
+        let exterior = rings.next().unwrap_or(LineString::empty());
 
         Polygon::new(exterior, rings.collect())
     }

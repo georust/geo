@@ -769,8 +769,7 @@ mod test {
     #[test]
     // Point to LineString, empty LineString
     fn point_linestring_empty_test() {
-        let points = vec![];
-        let ls = LineString::new(points);
+        let ls = LineString::empty();
         let p = Point::new(5.0, 4.0);
         let dist = p.euclidean_distance(&ls);
         assert_relative_eq!(dist, 0.0);
