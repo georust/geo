@@ -15,11 +15,12 @@ use crate::geometry::{
     Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
-use crate::BooleanOps;
+use crate::{BooleanOps, HasDimensions};
 use i_overlay::mesh::outline::offset::OutlineOffset;
 use i_overlay::mesh::stroke::offset::StrokeOffset;
 use i_overlay::mesh::style::{OutlineStyle, StrokeStyle};
 // re-export these i_overlay style types. Alternatively, we could implement our own version, but they'd be a 1:1 mapping.
+use crate::dimensions::Dimensions;
 pub use i_overlay::mesh::style::{LineCap, LineJoin};
 
 /// Buffering grows or shrinks a geometry.
@@ -261,11 +262,17 @@ impl<F: BoolOpsNum + 'static> Buffer for LineString<F> {
         if style.distance <= F::zero() {
             return MultiPolygon::new(vec![]);
         }
-
-        // REVIEW: Test closed / unclosed / empty / length 1
-        let subject = line_string_to_shape_path(self);
-        let shapes = subject.stroke(style.stroke_style(), false);
-        i_overlay_integration::convert::multi_polygon_from_shapes(shapes)
+        match self.dimensions() {
+            Dimensions::Empty => MultiPolygon::new(vec![]),
+            // Treat degenerate line_string like a point
+            Dimensions::ZeroDimensional => Point(self.0[0]).buffer_with_style(style),
+            Dimensions::OneDimensional => {
+                let subject = line_string_to_shape_path(self);
+                let shapes = subject.stroke(style.stroke_style(), false);
+                i_overlay_integration::convert::multi_polygon_from_shapes(shapes)
+            }
+            Dimensions::TwoDimensional => unreachable!("linestring can't be 2 dimensional"),
+        }
     }
 }
 
@@ -286,9 +293,31 @@ impl<F: BoolOpsNum + 'static> Buffer for MultiLineString<F> {
             return MultiPolygon::new(vec![]);
         }
 
-        let subject: Vec<_> = self.iter().map(line_string_to_shape_path).collect();
-        let shapes = subject.stroke(style.stroke_style(), false);
-        i_overlay_integration::convert::multi_polygon_from_shapes(shapes)
+        let mut degenerate_points = Vec::with_capacity(self.0.len());
+        let mut subject = Vec::with_capacity(self.0.len());
+        for line_string in self {
+            match line_string.dimensions() {
+                Dimensions::Empty => {}
+                Dimensions::ZeroDimensional => degenerate_points.push(Point(line_string[0])),
+                Dimensions::OneDimensional => subject.push(line_string_to_shape_path(line_string)),
+                Dimensions::TwoDimensional => unreachable!("linestring can't be 2 dimensional"),
+            }
+        }
+
+        let stroked_lines = if subject.is_empty() {
+            MultiPolygon::new(vec![])
+        } else {
+            let shapes = subject.stroke(style.stroke_style(), false);
+            i_overlay_integration::convert::multi_polygon_from_shapes(shapes)
+        };
+
+        if degenerate_points.is_empty() {
+            stroked_lines
+        } else {
+            MultiPoint(degenerate_points)
+                .buffer_with_style(style)
+                .union(&stroked_lines)
+        }
     }
 }
 
@@ -365,7 +394,6 @@ impl<F: BoolOpsNum + 'static> Buffer for Line<F> {
 impl<F: BoolOpsNum + 'static> Buffer for Rect<F> {
     type Scalar = F;
     fn buffer_with_style(&self, style: BufferStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
-        // REVISIT: avoid to_polygon?
         self.to_polygon().buffer_with_style(style)
     }
 }
@@ -373,7 +401,6 @@ impl<F: BoolOpsNum + 'static> Buffer for Rect<F> {
 impl<F: BoolOpsNum + 'static> Buffer for Triangle<F> {
     type Scalar = F;
     fn buffer_with_style(&self, style: BufferStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
-        // REVISIT: avoid to_polygon?
         self.to_polygon().buffer_with_style(style)
     }
 }
@@ -429,6 +456,43 @@ mod tests {
     }
 
     #[test]
+    fn buffer_linestring_closed() {
+        let line_string = wkt! { LINESTRING(0.0 0.0, 5.0 0.0, 5.0 5.0, 0.0 5.0, 0.0 0.0) };
+        let actual = line_string.buffer(2.0);
+        let expected_output_from_jts = wkt! {
+            POLYGON ((-2. 0., -2. 5., -1.9753766811902753 5.312868930080462, -1.902113032590307 5.618033988749895, -1.7820130483767356 5.9079809994790935, -1.6180339887498947 6.175570504584947, -1.414213562373095 6.414213562373095, -1.175570504584946 6.618033988749895, -0.9079809994790935 6.782013048376736, -0.6180339887498947 6.902113032590307, -0.3128689300804616 6.9753766811902755, 0. 7., 5. 7., 5.3128689300804615 6.9753766811902755, 5.618033988749895 6.902113032590307, 5.9079809994790935 6.782013048376736, 6.175570504584947 6.618033988749895, 6.414213562373095 6.414213562373095, 6.618033988749895 6.175570504584947, 6.782013048376736 5.9079809994790935, 6.902113032590307 5.618033988749895, 6.9753766811902755 5.3128689300804615, 7. 5., 7. 0., 6.9753766811902755 -0.3128689300804617, 6.902113032590307 -0.6180339887498948, 6.782013048376736 -0.9079809994790936, 6.618033988749895 -1.1755705045849463, 6.414213562373095 -1.414213562373095, 6.175570504584947 -1.618033988749895, 5.9079809994790935 -1.7820130483767356, 5.618033988749895 -1.902113032590307, 5.3128689300804615 -1.9753766811902755, 5. -2., 0. -2., -0.3128689300804616 -1.9753766811902755, -0.6180339887498947 -1.9021130325903073, -0.9079809994790935 -1.7820130483767358, -1.175570504584946 -1.618033988749895, -1.414213562373095 -1.4142135623730951, -1.6180339887498947 -1.1755705045849465, -1.7820130483767356 -0.9079809994790937, -1.902113032590307 -0.618033988749895, -1.9753766811902753 -0.312868930080462, -2. 0.), (2. 2., 3. 2., 3. 3., 2. 3., 2. 2.))
+        };
+        check_buffer_test_case(&actual.into(), &expected_output_from_jts.into()).unwrap();
+    }
+
+    #[test]
+    fn buffer_linestring_empty() {
+        let line_string = wkt! { LINESTRING EMPTY };
+        let actual = line_string.buffer(2.0);
+        assert_eq!(actual.0.len(), 0);
+    }
+
+    #[test]
+    fn buffer_linestring_length_1() {
+        let line_string = wkt! { LINESTRING(2.0 3.0,2.0 3.0) };
+
+        let actual = line_string.buffer(2.0);
+        let expected_output_from_jts = wkt! {
+            POLYGON ((4. 3., 3.961570560806461 2.6098193559677436, 3.8477590650225735 2.2346331352698203, 3.6629392246050907 1.8888595339607956, 3.414213562373095 1.585786437626905, 3.1111404660392044 1.3370607753949095, 2.7653668647301797 1.1522409349774265, 2.390180644032257 1.0384294391935391, 2. 1., 1.6098193559677436 1.0384294391935391, 1.2346331352698205 1.1522409349774265, 0.8888595339607961 1.3370607753949093, 0.5857864376269051 1.5857864376269049, 0.3370607753949093 1.8888595339607956, 0.1522409349774265 2.2346331352698203, 0.0384294391935391 2.6098193559677427, 0. 3., 0.0384294391935391 3.390180644032257, 0.1522409349774265 3.7653668647301792, 0.3370607753949091 4.111140466039204, 0.5857864376269046 4.414213562373095, 0.8888595339607956 4.662939224605091, 1.2346331352698194 4.847759065022573, 1.6098193559677427 4.961570560806461, 2. 5., 2.390180644032257 4.961570560806461, 2.76536686473018 4.847759065022573, 3.1111404660392035 4.662939224605091, 3.414213562373095 4.414213562373096, 3.6629392246050907 4.111140466039204, 3.847759065022573 3.765366864730181, 3.961570560806461 3.3901806440322573, 4. 3.))
+        };
+        // This one is pretty close... but not quite right. Maybe add a parameter? It should be the same as the point buffer though?
+        check_buffer_test_case(&actual.into(), &expected_output_from_jts.into()).unwrap();
+    }
+
+    #[test]
+    fn buffer_empty_multi_line_string() {
+        let multi_line_string = wkt! { MULTILINESTRING EMPTY };
+        let actual = multi_line_string.buffer(2.0);
+        let expected_output_from_jts = wkt! { POLYGON EMPTY };
+        check_buffer_test_case(&actual.into(), &expected_output_from_jts.into()).unwrap();
+    }
+
+    #[test]
     fn buffer_multi_line_string_stay_separate() {
         let multi_line_string = wkt! { MULTILINESTRING ((0.0 0.0, 5.0 0.0), (10.0 0.0, 15.0 0.0)) };
         let actual = multi_line_string.buffer(2.0);
@@ -438,6 +502,21 @@ mod tests {
                 ((5. 2., 5.390180644032257 1.9615705608064609, 5.765366864730179 1.8477590650225735, 6.111140466039204 1.6629392246050905, 6.414213562373095 1.414213562373095, 6.662939224605091 1.1111404660392044, 6.847759065022574 0.7653668647301796, 6.961570560806461 0.3901806440322565, 7. 0., 6.961570560806461 -0.3901806440322565, 6.847759065022574 -0.7653668647301796, 6.662939224605091 -1.1111404660392041, 6.414213562373095 -1.414213562373095, 6.111140466039204 -1.6629392246050907, 5.765366864730179 -1.8477590650225735, 5.390180644032257 -1.9615705608064609, 5. -2., 0. -2., -0.3901806440322573 -1.9615705608064609, -0.7653668647301807 -1.847759065022573, -1.1111404660392044 -1.6629392246050905, -1.4142135623730954 -1.414213562373095, -1.662939224605091 -1.111140466039204, -1.8477590650225735 -0.7653668647301792, -1.9615705608064609 -0.3901806440322567, -2. 0., -1.9615705608064609 0.3901806440322572, -1.8477590650225735 0.7653668647301798, -1.6629392246050907 1.1111404660392044, -1.414213562373095 1.4142135623730951, -1.111140466039204 1.6629392246050907, -0.7653668647301795 1.8477590650225735, -0.3901806440322568 1.9615705608064609, 0. 2., 5. 2.))
             )
         };
+        check_buffer_test_case(&actual.into(), &expected_output_from_jts.into()).unwrap();
+    }
+
+    #[test]
+    fn buffer_multi_line_string_with_zero_length_line_strings() {
+        let multi_line_string =
+            wkt! { MULTILINESTRING ((0.0 0.0, 0.0 0.0), (10.0 0.0, 10.0 15.0)) };
+        let actual = multi_line_string.buffer(2.0);
+        let expected_output_from_jts = wkt! {
+           MULTIPOLYGON (
+                ((8. 15., 8.024623318809725 15.312868930080462, 8.097886967409693 15.618033988749895, 8.217986951623264 15.907980999479093, 8.381966011250105 16.175570504584947, 8.585786437626904 16.414213562373096, 8.824429495415053 16.618033988749893, 9.092019000520907 16.782013048376736, 9.381966011250105 16.902113032590307, 9.687131069919538 16.975376681190276, 10. 17., 10.312868930080462 16.975376681190276, 10.618033988749895 16.902113032590307, 10.907980999479093 16.782013048376736, 11.175570504584947 16.618033988749893, 11.414213562373096 16.414213562373096, 11.618033988749895 16.175570504584947, 11.782013048376736 15.907980999479093, 11.902113032590307 15.618033988749895, 11.975376681190276 15.312868930080462, 12. 15., 12. 0., 11.975376681190276 -0.3128689300804617, 11.902113032590307 -0.6180339887498948, 11.782013048376736 -0.9079809994790936, 11.618033988749895 -1.1755705045849463, 11.414213562373096 -1.414213562373095, 11.175570504584947 -1.618033988749895, 10.907980999479093 -1.7820130483767356, 10.618033988749895 -1.902113032590307, 10.312868930080462 -1.9753766811902755, 10. -2., 9.687131069919538 -1.9753766811902755, 9.381966011250105 -1.9021130325903073, 9.092019000520907 -1.7820130483767358, 8.824429495415053 -1.618033988749895, 8.585786437626904 -1.4142135623730951, 8.381966011250105 -1.1755705045849465, 8.217986951623264 -0.9079809994790937, 8.097886967409693 -0.618033988749895, 8.024623318809725 -0.312868930080462, 8. 0., 8. 15.)),
+                ((2. 0., 1.9753766811902755 -0.3128689300804617, 1.902113032590307 -0.6180339887498948, 1.7820130483767358 -0.9079809994790936, 1.618033988749895 -1.1755705045849463, 1.4142135623730951 -1.414213562373095, 1.1755705045849463 -1.618033988749895, 0.9079809994790937 -1.7820130483767356, 0.6180339887498949 -1.902113032590307, 0.3128689300804618 -1.9753766811902755, 0. -2., -0.3128689300804616 -1.9753766811902755, -0.6180339887498947 -1.9021130325903073, -0.9079809994790935 -1.7820130483767358, -1.175570504584946 -1.618033988749895, -1.414213562373095 -1.4142135623730951, -1.6180339887498947 -1.1755705045849465, -1.7820130483767356 -0.9079809994790937, -1.902113032590307 -0.618033988749895, -1.9753766811902753 -0.312868930080462, -2. 0., -1.9753766811902755 0.3128689300804615, -1.9021130325903073 0.6180339887498946, -1.7820130483767358 0.9079809994790934, -1.618033988749895 1.175570504584946, -1.4142135623730954 1.414213562373095, -1.1755705045849465 1.6180339887498947, -0.9079809994790938 1.7820130483767356, -0.6180339887498951 1.902113032590307, -0.3128689300804621 1.9753766811902753, 0. 2., 0.3128689300804613 1.9753766811902755, 0.6180339887498945 1.9021130325903073, 0.9079809994790933 1.782013048376736, 1.1755705045849458 1.6180339887498951, 1.4142135623730947 1.4142135623730954, 1.6180339887498947 1.1755705045849467, 1.7820130483767356 0.9079809994790939, 1.902113032590307 0.6180339887498952, 1.9753766811902753 0.3128689300804622, 2. 0.))
+            )
+        };
+        // This one is pretty close...
         check_buffer_test_case(&actual.into(), &expected_output_from_jts.into()).unwrap();
     }
 
