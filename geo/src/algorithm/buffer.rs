@@ -286,9 +286,11 @@ impl<F: BoolOpsNum + 'static> Buffer for Point<F> {
 
                 let mut coords = Vec::with_capacity(num_segments + 1);
                 for i in 0..num_segments {
-                    let angle =
-                        F::from_f64(2.0 * std::f64::consts::PI / num_segments as f64 * i as f64)
-                            .expect("valid float constant");
+                    let angle = F::from_f64(
+                        2.0 * std::f64::consts::PI / num_segments as f64 * i as f64
+                            + std::f64::consts::PI,
+                    )
+                    .expect("valid float constant");
                     let x = center.x + radius * angle.cos();
                     let y = center.y + radius * angle.sin();
                     coords.push(Coord { x, y });
@@ -464,9 +466,7 @@ mod tests {
     use super::*;
     use crate::algorithm::Relate;
     use crate::{coord, wkt};
-    use jts_test_runner::{
-        assert_jts_tests_succeed, check_buffer_test_case, check_buffer_test_case_with_error_ratio,
-    };
+    use jts_test_runner::{assert_jts_tests_succeed, check_buffer_test_case};
 
     #[test]
     fn buffer_polygon() {
@@ -799,14 +799,7 @@ mod tests {
             POLYGON ((0.4999999999999998 -1.9282572233777517, 0.3901806440322567 -1.9615705608064609, 0. -2., -0.3901806440322564 -1.9615705608064609, -0.7653668647301795 -1.8477590650225735, -1.111140466039204 -1.6629392246050907, -1.414213562373095 -1.4142135623730951, -1.6629392246050907 -1.1111404660392044, -1.8477590650225735 -0.7653668647301798, -1.9615705608064609 -0.3901806440322572, -2. 0., -1.9615705608064609 0.3901806440322567, -1.8477590650225735 0.7653668647301792, -1.662939224605091 1.111140466039204, -1.4142135623730954 1.414213562373095, -1.1111404660392044 1.6629392246050905, -0.7653668647301807 1.847759065022573, -0.3901806440322573 1.9615705608064609, 0. 2., 0.3901806440322566 1.9615705608064609, 0.4999999999999999 1.9282572233777517, 0.6098193559677432 1.9615705608064609, 1. 2., 3. 2., 3.390180644032257 1.9615705608064609, 3.7653668647301797 1.8477590650225735, 4.111140466039204 1.6629392246050905, 4.414213562373095 1.414213562373095, 4.662939224605091 1.1111404660392044, 4.847759065022574 0.7653668647301796, 4.961570560806461 0.3901806440322565, 5. 0., 4.961570560806461 -0.3901806440322565, 4.847759065022574 -0.7653668647301796, 4.662939224605091 -1.1111404660392041, 4.414213562373095 -1.414213562373095, 4.111140466039204 -1.6629392246050907, 3.7653668647301797 -1.8477590650225735, 3.390180644032257 -1.9615705608064609, 3. -2., 1. -2., 0.6098193559677427 -1.9615705608064609, 0.4999999999999998 -1.9282572233777517))
         };
 
-        // The error ratio on this one (relative to JTS) is a little bit higher than the others - but the output still seems reasonable,
-        // so add some additional tolerance to this test rather than raise it universally.
-        check_buffer_test_case_with_error_ratio(
-            &actual.into(),
-            &expected_output_from_jts.into(),
-            0.0024,
-        )
-        .unwrap();
+        check_buffer_test_case(&actual.into(), &expected_output_from_jts.into()).unwrap()
     }
 
     #[test]
