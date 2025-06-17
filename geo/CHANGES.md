@@ -2,13 +2,17 @@
 
 # Unreleased
 
+- Added: Geometry buffering to "grow" or "shrink" a geometry by creating a buffer whose boundary is the specified offset from the input.
+  - <https://github.com/georust/geo/pull/1365>
+- BREAKING: `BoolOpsNum` must now implement GeoFloat, not just GeoNum. In practice, this shouldn't break for any concrete types (like f32, f64).
+  - <https://github.com/georust/geo/pull/1365>
 - BREAKING: The `Simplify`, `SimplifyVw`, and `SimplifyVwIdx` traits no longer require a borrowed `epsilon` parameter as these are `Copy` types
 - BREAKING: update proj dependency to 0.30.0 (libproj 9.6.0)
-- Reduce memory consumption of FrechtDistance calculation.
+- Performance: Reduce memory consumption of FrechetDistance calculation.
   - <https://github.com/georust/geo/pull/1357>
 - Bump geo MSRV to 1.82
 - Simplify test rustc and libproj version specification in CI
-- Avoid running through entire iterator to reach last element in `outlier_detection` when calculating LRD and LOF
+- Performance: Avoid running through entire iterator to reach last element in `outlier_detection` when calculating LRD and LOF
 
 ## 0.30.0 - 2025-03-24
 
