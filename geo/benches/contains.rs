@@ -239,5 +239,272 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, criterion_benchmark);
+fn bench_line_contains_multi_point(c: &mut Criterion) {
+    c.bench_function(
+        "Line not contains 1000 MultiPoint within bounding box (Contains trait)",
+        |bencher| {
+            let line = Line::new(coord! {x:0.,y:0.}, coord! {x:100., y:100.});
+            let mut pts: Vec<Point> = (0..1000)
+                .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
+                .collect();
+            pts.push(point! {x: f64::from(99), y: f64::from(100)});
+
+            let multi_point: MultiPoint<f64> = geo::MultiPoint::new(pts).convert();
+
+            bencher.iter(|| {
+                assert!(!line.contains(&multi_point));
+            });
+        },
+    );
+
+    c.bench_function(
+        "Line not contains 1000 MultiPoint within bounding box (Relate trait)",
+        |bencher| {
+            let line = Line::new(coord! {x:0.,y:0.}, coord! {x:100., y:100.});
+            let mut pts: Vec<Point> = (0..1000)
+                .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
+                .collect();
+            pts.push(point! {x: f64::from(99), y: f64::from(100)});
+
+            let multi_point: MultiPoint<f64> = geo::MultiPoint::new(pts).convert();
+
+            bencher.iter(|| {
+                assert!(!line.relate(&multi_point).is_contains());
+            });
+        },
+    );
+
+    c.bench_function(
+        "Line contains 1000 MultiPoint (Contains trait)",
+        |bencher| {
+            let line = Line::new(coord! {x:0.,y:0.}, coord! {x:100., y:100.});
+            let pts: Vec<Point> = (0..1000)
+                .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
+                .collect();
+            let multi_point: MultiPoint<f64> = geo::MultiPoint::new(pts).convert();
+
+            bencher.iter(|| {
+                assert!(line.contains(&multi_point));
+            });
+        },
+    );
+
+    c.bench_function("Line contains 1000 MultiPoint (Relate trait)", |bencher| {
+        let line = Line::new(coord! {x:0.,y:0.}, coord! {x:100., y:100.});
+        let pts: Vec<Point> = (0..1000)
+            .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
+            .collect();
+        let multi_point: MultiPoint<f64> = geo::MultiPoint::new(pts).convert();
+
+        bencher.iter(|| {
+            assert!(line.relate(&multi_point).is_contains());
+        });
+    });
+}
+
+fn bench_multipoint_contains_multipoint(c: &mut Criterion) {
+    // worst case where the point is at the end of the sorted list
+
+    c.bench_function(
+        "Multipoint contains multipoint 10000 (Contains trait)",
+        |bencher| {
+            let mut base: Vec<Point> = (0..10000)
+                .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
+                .collect();
+            let comp = base.clone();
+
+            base.reverse();
+            base.push(point! {x: f64::from(1000), y: f64::from(1000)});
+
+            let base: MultiPoint<f64> = geo::MultiPoint::new(base).convert();
+            let comp: MultiPoint<f64> = geo::MultiPoint::new(comp).convert();
+
+            bencher.iter(|| {
+                assert!(base.contains(&comp));
+            });
+        },
+    );
+
+    c.bench_function(
+        "Multipoint contains multipoint 10000 (Relate trait)",
+        |bencher| {
+            let mut base: Vec<Point> = (0..10000)
+                .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
+                .collect();
+            let comp = base.clone();
+
+            base.reverse();
+            base.push(point! {x: f64::from(1000), y: f64::from(1000)});
+
+            let base: MultiPoint<f64> = geo::MultiPoint::new(base).convert();
+            let comp: MultiPoint<f64> = geo::MultiPoint::new(comp).convert();
+
+            bencher.iter(|| {
+                assert!(base.relate(&comp).is_contains());
+            });
+        },
+    );
+
+    c.bench_function(
+        "Multipoint not contains multipoint 10000 (Contains trait)",
+        |bencher| {
+            let base: Vec<Point> = (0..10000)
+                .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
+                .collect();
+            let mut comp = base.clone();
+
+            comp.reverse();
+            comp.push(point! {x: f64::from(1000), y: f64::from(1000)});
+
+            let base: MultiPoint<f64> = geo::MultiPoint::new(base).convert();
+            let comp: MultiPoint<f64> = geo::MultiPoint::new(comp).convert();
+
+            bencher.iter(|| {
+                assert!(!base.contains(&comp));
+            });
+        },
+    );
+
+    c.bench_function(
+        "Multipoint not contains multipoint 10000 (Relate trait)",
+        |bencher| {
+            let base: Vec<Point> = (0..10000)
+                .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
+                .collect();
+            let mut comp = base.clone();
+
+            comp.reverse();
+            comp.push(point! {x: f64::from(1000), y: f64::from(1000)});
+
+            let base: MultiPoint<f64> = geo::MultiPoint::new(base).convert();
+            let comp: MultiPoint<f64> = geo::MultiPoint::new(comp).convert();
+
+            bencher.iter(|| {
+                assert!(!base.relate(&comp).is_contains());
+            });
+        },
+    );
+}
+
+fn bench_polygon_contains_multipoint(c: &mut Criterion) {
+    // worst case where the point is at the end of the sorted list
+
+    c.bench_function(
+        "Polygon contains multipoint 1000 (Contains trait)",
+        |bencher| {
+            let base: Polygon<f64> = Polygon::new(
+                LineString::new(vec![
+                    coord! {x: 0.0, y: 0.0},
+                    coord! {x: 10.0, y: 0.0},
+                    coord! {x: 10.0, y: 10.0},
+                    coord! {x: 0.0, y: 10.0},
+                    coord! {x: 0.0, y: 0.0},
+                ]),
+                vec![],
+            );
+
+            let mp: Vec<Point> = (0..1000)
+                .map(|val| point! {x: f64::from(val)/100., y: f64::from(val)/100.})
+                .collect();
+
+            let mp: MultiPoint<f64> = geo::MultiPoint::new(mp).convert();
+
+            bencher.iter(|| {
+                assert!(criterion::black_box(&base).contains(criterion::black_box(&mp)));
+            });
+        },
+    );
+
+    c.bench_function(
+        "Polygon contains multipoint 1000 (Relates trait)",
+        |bencher| {
+            let base: Polygon<f64> = Polygon::new(
+                LineString::new(vec![
+                    coord! {x: 0.0, y: 0.0},
+                    coord! {x: 10.0, y: 0.0},
+                    coord! {x: 10.0, y: 10.0},
+                    coord! {x: 0.0, y: 10.0},
+                    coord! {x: 0.0, y: 0.0},
+                ]),
+                vec![],
+            );
+
+            let mp: Vec<Point> = (0..1000)
+                .map(|val| point! {x: f64::from(val)/100., y: f64::from(val)/100.})
+                .collect();
+
+            let mp: MultiPoint<f64> = geo::MultiPoint::new(mp).convert();
+
+            bencher.iter(|| {
+                assert!(criterion::black_box(&base)
+                    .relate(criterion::black_box(&mp))
+                    .is_contains());
+            });
+        },
+    );
+
+    c.bench_function(
+        "Polygon not contains multipoint 1000 (Contains trait)",
+        |bencher| {
+            let base: Polygon<f64> = Polygon::new(
+                LineString::new(vec![
+                    coord! {x: 0.0, y: 0.0},
+                    coord! {x: 10.0, y: 0.0},
+                    coord! {x: 10.0, y: 10.0},
+                    coord! {x: 0.0, y: 10.0},
+                    coord! {x: 0.0, y: 0.0},
+                ]),
+                vec![],
+            );
+
+            let mut mp: Vec<Point> = (0..1000)
+                .map(|val| point! {x: f64::from(val)/100., y: f64::from(val)/100.})
+                .collect();
+            mp.push(point! {x: f64::from(-1), y: f64::from(-1)});
+
+            let mp: MultiPoint<f64> = geo::MultiPoint::new(mp).convert();
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&base).contains(criterion::black_box(&mp)));
+            });
+        },
+    );
+
+    c.bench_function(
+        "Polygon not contains multipoint 1000 (Relates trait)",
+        |bencher| {
+            let base: Polygon<f64> = Polygon::new(
+                LineString::new(vec![
+                    coord! {x: 0.0, y: 0.0},
+                    coord! {x: 10.0, y: 0.0},
+                    coord! {x: 10.0, y: 10.0},
+                    coord! {x: 0.0, y: 10.0},
+                    coord! {x: 0.0, y: 0.0},
+                ]),
+                vec![],
+            );
+
+            let mut mp: Vec<Point> = (0..1000)
+                .map(|val| point! {x: f64::from(val)/100., y: f64::from(val)/100.})
+                .collect();
+            mp.push(point! {x: f64::from(-1), y: f64::from(-1)});
+
+            let mp: MultiPoint<f64> = geo::MultiPoint::new(mp).convert();
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&base)
+                    .relate(criterion::black_box(&mp))
+                    .is_contains());
+            });
+        },
+    );
+}
+
+criterion_group!(
+    benches,
+    // criterion_benchmark,
+    bench_line_contains_multi_point,
+    bench_multipoint_contains_multipoint,
+    bench_polygon_contains_multipoint,
+);
 criterion_main!(benches);

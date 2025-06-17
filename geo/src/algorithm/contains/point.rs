@@ -145,7 +145,7 @@ impl_contains_geometry_for!(Point<T>);
 // │ Implementations for MultiPoint │
 // └────────────────────────────────┘
 
-impl_contains_from_relate!(MultiPoint<T>, [Line<T>, LineString<T>, Polygon<T>, MultiLineString<T>, MultiPolygon<T>, MultiPoint<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_from_relate!(MultiPoint<T>, [Line<T>, LineString<T>, Polygon<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
 
 impl<T> Contains<Coord<T>> for MultiPoint<T>
 where
@@ -162,5 +162,74 @@ where
 {
     fn contains(&self, point: &Point<T>) -> bool {
         self.iter().any(|c| c == point)
+    }
+}
+
+impl<T> Contains<MultiPoint<T>> for MultiPoint<T>
+where
+    T: CoordNum,
+{
+    fn contains(&self, multi_point: &MultiPoint<T>) -> bool {
+        // sort both collections by x then y
+        // then double pointer our way up the sorted arrays
+
+        if self.0.is_empty() {
+            return false;
+        }
+        if multi_point.0.is_empty() {
+            return false;
+        }
+
+        let mut self_order = self.0.clone();
+        self_order.sort_by(cmp_pts);
+
+        let mut other_order = multi_point.0.clone();
+        other_order.sort_by(cmp_pts);
+
+        let mut self_iter = self_order.iter().peekable();
+        let mut other_iter = other_order.iter().peekable();
+
+        loop {
+            // other has been exhausted
+            if other_iter.peek().is_none() {
+                return true;
+            }
+            // self has been exhausted but other has not been exhausted
+            if self_iter.peek().is_none() {
+                return false;
+            }
+
+            match cmp_pts(self_iter.peek().unwrap(), other_iter.peek().unwrap()) {
+                std::cmp::Ordering::Equal => {
+                    // other only ensures that we don't step past duplicate other points
+                    other_iter.next();
+                }
+                std::cmp::Ordering::Less => {
+                    self_iter.next();
+                }
+                std::cmp::Ordering::Greater => {
+                    return false;
+                }
+            }
+        }
+    }
+}
+
+// used for sorting points in multipoint
+fn cmp_pts<T: CoordNum>(a: &Point<T>, b: &Point<T>) -> std::cmp::Ordering {
+    let x_order = a.x().partial_cmp(&b.x());
+    match x_order {
+        Some(std::cmp::Ordering::Equal) => {
+            let y_order = a.y().partial_cmp(&b.y());
+            match y_order {
+                Some(std::cmp::Ordering::Equal) => std::cmp::Ordering::Equal,
+                Some(std::cmp::Ordering::Less) => std::cmp::Ordering::Less,
+                Some(std::cmp::Ordering::Greater) => std::cmp::Ordering::Greater,
+                None => std::cmp::Ordering::Equal,
+            }
+        }
+        Some(std::cmp::Ordering::Less) => std::cmp::Ordering::Less,
+        Some(std::cmp::Ordering::Greater) => std::cmp::Ordering::Greater,
+        None => std::cmp::Ordering::Equal,
     }
 }

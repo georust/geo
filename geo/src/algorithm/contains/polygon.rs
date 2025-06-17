@@ -26,7 +26,22 @@ where
     }
 }
 
-impl_contains_from_relate!(Polygon<T>, [Line<T>, LineString<T>, Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl<T> Contains<MultiPoint<T>> for Polygon<T>
+where
+    T: GeoNum,
+{
+    fn contains(&self, mp: &MultiPoint<T>) -> bool {
+        use crate::coordinate_position::{CoordPos, CoordinatePosition};
+        // at least one point must be fully within
+        // others can be on the boundary
+        mp.iter().any(|p| self.contains(p))
+            && mp
+                .iter()
+                .all(|p| self.coordinate_position(&p.0) != CoordPos::Outside)
+    }
+}
+
+impl_contains_from_relate!(Polygon<T>, [Line<T>, LineString<T>, Polygon<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
 impl_contains_geometry_for!(Polygon<T>);
 
 // ┌──────────────────────────────────┐
