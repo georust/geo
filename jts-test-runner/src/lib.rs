@@ -57,7 +57,9 @@ pub fn check_buffer_test_case(
     //
     // In particular, we seem to diverge the most when doing large subtractive (negative buffers)
     // from complex geometries (e.g., polygons with narrow arms that get wholly erased)
-    check_buffer_test_case_with_error_ratio(actual, expected, 0.0015)
+    //
+    // To inspect which ones fail, you can lower this tolerance and see which test cases fail.
+    check_buffer_test_case_with_error_ratio(actual, expected, 0.0014)
 }
 
 pub fn check_buffer_test_case_with_error_ratio(
