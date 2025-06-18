@@ -15,9 +15,9 @@ pub enum Target {
 }
 
 /// An implementation of an algorithm meant to find the the lower and upper tangent of a convex hull from a point strictly outside of it.
-/// This is based on the (Jarvis March algorithm)[https://en.wikipedia.org/wiki/Gift_wrapping_algorithm] and thus often described as Jarvis binary search.
+/// This is based on the [Jarvis March algorithm](https://en.wikipedia.org/wiki/Gift_wrapping_algorithm) and thus often described as Jarvis binary search.
 ///
-/// Several implementation exist, one can be found (here)[https://gist.github.com/tixxit/252229], but often fail to pick the right summit when the edge is aligned with the outside point. There are several solution to this problem but to reliably output the correct summit without edge cases, the following implementation has been done:
+/// Several implementation exist, one can be found [here](https://gist.github.com/tixxit/252229), but often fail to pick the right summit when the edge is aligned with the outside point. There are several solution to this problem but to reliably output the correct summit without edge cases, the following implementation has been done:
 ///
 /// 1. Find the closest and furthest summits of the convex hull to the point
 /// 2. Search for the right or left tangent between those two points (essentially cutting the convex hull in 2)
