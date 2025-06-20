@@ -146,3 +146,24 @@ where
         rhs.relate(self).is_within()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{polygon, MultiPoint, Relate};
+
+    #[test]
+    fn test_polygon_contains_empty_multipoint() {
+        let poly = polygon![
+            (x: 0.0, y: 0.0),
+            (x: 10.0, y: 0.0),
+            (x: 10.0, y: 10.0),
+            (x: 0.0, y: 10.0),
+            (x: 0.0, y: 0.0),
+        ];
+        let empty: MultiPoint<f64> = MultiPoint::new(Vec::new());
+
+        assert!(!poly.contains(&empty));
+        assert!(!poly.relate(&empty).is_contains());
+    }
+}

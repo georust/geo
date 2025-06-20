@@ -95,3 +95,18 @@ where
 }
 impl_contains_from_relate!(Line<T>, [Polygon<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
 impl_contains_geometry_for!(Line<T>);
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{coord, MultiPoint, Relate};
+
+    #[test]
+    fn test_line_contains_empty_multipoint() {
+        let line = Line::new(coord! {x:0.,y:0.}, coord! {x:100., y:100.});
+        let empty: MultiPoint<f64> = MultiPoint::new(Vec::new());
+
+        assert!(!line.contains(&empty));
+        assert!(!line.relate(&empty).is_contains());
+    }
+}

@@ -233,3 +233,20 @@ fn cmp_pts<T: CoordNum>(a: &Point<T>, b: &Point<T>) -> std::cmp::Ordering {
         None => std::cmp::Ordering::Equal,
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{point, MultiPoint, Relate};
+
+    #[test]
+    fn test_empty_multipoint_contains_multipoint() {
+        let empty: MultiPoint<f64> = MultiPoint::new(Vec::new());
+        let non_empty: MultiPoint<f64> = MultiPoint::new(vec![point!(x: 0.0, y: 0.0)]);
+        assert!(!empty.contains(&non_empty));
+        assert!(!non_empty.contains(&empty));
+
+        assert!(!empty.relate(&non_empty).is_contains());
+        assert!(!non_empty.relate(&empty).is_contains());
+    }
+}
