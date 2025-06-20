@@ -26,7 +26,22 @@ where
     }
 }
 
-impl_contains_from_relate!(Polygon<T>, [Line<T>, LineString<T>, Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl<T> Contains<MultiPoint<T>> for Polygon<T>
+where
+    T: GeoNum,
+{
+    fn contains(&self, mp: &MultiPoint<T>) -> bool {
+        use crate::coordinate_position::{CoordPos, CoordinatePosition};
+        // at least one point must be fully within
+        // others can be on the boundary
+        mp.iter().any(|p| self.contains(p))
+            && mp
+                .iter()
+                .all(|p| self.coordinate_position(&p.0) != CoordPos::Outside)
+    }
+}
+
+impl_contains_from_relate!(Polygon<T>, [Line<T>, LineString<T>, Polygon<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
 impl_contains_geometry_for!(Polygon<T>);
 
 // ┌──────────────────────────────────┐
@@ -129,5 +144,26 @@ where
 {
     fn contains(&self, rhs: &Triangle<F>) -> bool {
         rhs.relate(self).is_within()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{polygon, MultiPoint, Relate};
+
+    #[test]
+    fn test_polygon_contains_empty_multipoint() {
+        let poly = polygon![
+            (x: 0.0, y: 0.0),
+            (x: 10.0, y: 0.0),
+            (x: 10.0, y: 10.0),
+            (x: 0.0, y: 10.0),
+            (x: 0.0, y: 0.0),
+        ];
+        let empty: MultiPoint<f64> = MultiPoint::new(Vec::new());
+
+        assert!(!poly.contains(&empty));
+        assert!(!poly.relate(&empty).is_contains());
     }
 }
