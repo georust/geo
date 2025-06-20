@@ -48,10 +48,10 @@ where
     T: GeoNum,
 {
     fn intersects(&self, rhs: &Line<T>) -> bool {
-        let lt = self.min();
-        let rb = self.max();
-        let lb = Coord::from((lt.x, rb.y));
-        let rt = Coord::from((rb.x, lt.y));
+        let lb = self.min();
+        let rt = self.max();
+        let lt = Coord::from((lb.x, rt.y));
+        let rb = Coord::from((rt.x, lb.y));
         // If either rhs.{start,end} lies inside Rect, then true
         self.intersects(&rhs.start)
             || self.intersects(&rhs.end)
