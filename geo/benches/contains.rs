@@ -502,7 +502,7 @@ fn bench_polygon_contains_multipoint(c: &mut Criterion) {
 
 criterion_group!(
     benches,
-    // criterion_benchmark,
+    criterion_benchmark,
     bench_line_contains_multi_point,
     bench_multipoint_contains_multipoint,
     bench_polygon_contains_multipoint,
