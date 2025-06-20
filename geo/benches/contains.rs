@@ -384,6 +384,46 @@ fn bench_multipoint_contains_multipoint(c: &mut Criterion) {
             });
         },
     );
+
+    c.bench_function(
+        "Multipoint not contains multipoint 10000 best case (Contains trait)",
+        |bencher| {
+            let base: Vec<Point> = (0..10000)
+                .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
+                .collect();
+            let mut comp = base.clone();
+
+            comp.reverse();
+            comp.push(point! {x: f64::from(-1000), y: f64::from(-1000)});
+
+            let base: MultiPoint<f64> = geo::MultiPoint::new(base).convert();
+            let comp: MultiPoint<f64> = geo::MultiPoint::new(comp).convert();
+
+            bencher.iter(|| {
+                assert!(!base.contains(&comp));
+            });
+        },
+    );
+
+    c.bench_function(
+        "Multipoint not contains multipoint 10000 best case (Relate trait)",
+        |bencher| {
+            let base: Vec<Point> = (0..10000)
+                .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
+                .collect();
+            let mut comp = base.clone();
+
+            comp.reverse();
+            comp.push(point! {x: f64::from(-1000), y: f64::from(-1000)});
+
+            let base: MultiPoint<f64> = geo::MultiPoint::new(base).convert();
+            let comp: MultiPoint<f64> = geo::MultiPoint::new(comp).convert();
+
+            bencher.iter(|| {
+                assert!(!base.relate(&comp).is_contains());
+            });
+        },
+    );
 }
 
 fn bench_polygon_contains_multipoint(c: &mut Criterion) {
