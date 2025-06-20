@@ -21,7 +21,7 @@ impl<F: CoordFloat + FromPrimitive> Bearing<F> for Euclidean {
     /// let origin = Point::new(0.0, 0.0);
     /// let destination = Point::new(1.0, 1.0);
     /// let bearing = Euclidean.bearing(origin, destination);
-    /// // North
+    /// // NorthEast
     /// assert_relative_eq!(bearing, 45.0, epsilon = 1.0e-2);
     /// ```
     fn bearing(&self, origin: Point<F>, destination: Point<F>) -> F {

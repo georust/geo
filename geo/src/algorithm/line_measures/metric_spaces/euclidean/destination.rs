@@ -25,7 +25,7 @@ impl<F: CoordFloat + FromPrimitive> Destination<F> for Euclidean {
     /// let northeast_bearing = 45.0;
     /// let distance = 100.0;
     ///
-    /// let northeast_location= Euclidean.destination(origin, northeast_bearing, distance);
+    /// let northeast_location = Euclidean.destination(origin, northeast_bearing, distance);
     /// assert_relative_eq!(
     ///     Point::new(70.71, 70.71),
     ///     northeast_location,
