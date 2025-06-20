@@ -1,4 +1,7 @@
-use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use super::{
+    impl_contains_from_relate, impl_contains_from_relate_1d, impl_contains_from_relate_1d_multi,
+    impl_contains_geometry_for, Contains,
+};
 use crate::algorithm::Intersects;
 use crate::geometry::*;
 use crate::{CoordNum, GeoFloat, GeoNum, HasDimensions};
@@ -117,15 +120,29 @@ where
     }
 }
 
-impl_contains_from_relate!(LineString<T>, [Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_from_relate_1d!(LineString<T>, [Polygon<T>, Rect<T>, Triangle<T>]);
+impl_contains_from_relate_1d_multi!(LineString<T>, [MultiPolygon<T>, GeometryCollection<T>]);
+impl_contains_from_relate!(LineString<T>, [MultiPoint<T>,MultiLineString<T>]);
 impl_contains_geometry_for!(LineString<T>);
 
 // ┌─────────────────────────────────────┐
 // │ Implementations for MultiLineString │
 // └─────────────────────────────────────┘
 
-impl_contains_from_relate!(MultiLineString<T>, [Line<T>, LineString<T>, Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_from_relate_1d!(MultiLineString<T>, [Polygon<T>, Rect<T>, Triangle<T>]);
+impl_contains_from_relate_1d_multi!(MultiLineString<T>, [MultiPolygon<T>, GeometryCollection<T>]);
+impl_contains_from_relate!(MultiLineString<T>, [Line<T>, MultiLineString<T>, MultiPoint<T>,LineString<T>]);
 impl_contains_geometry_for!(MultiLineString<T>);
+
+impl<T> Contains<Coord<T>> for MultiLineString<T>
+where
+    T: CoordNum,
+    LineString<T>: Contains<Coord<T>>,
+{
+    fn contains(&self, coord: &Coord<T>) -> bool {
+        self.iter().any(|ls| ls.contains(coord))
+    }
+}
 
 impl<T> Contains<Point<T>> for MultiLineString<T>
 where

@@ -1,4 +1,7 @@
-use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use super::{
+    impl_contains_from_relate, impl_contains_from_relate_1d, impl_contains_from_relate_1d_multi,
+    impl_contains_geometry_for, Contains,
+};
 use crate::algorithm::Intersects;
 use crate::geometry::*;
 use crate::{GeoFloat, GeoNum};
@@ -83,5 +86,8 @@ where
     }
 }
 
-impl_contains_from_relate!(Line<T>, [Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_from_relate_1d!(Line<T>, [Polygon<T>, Rect<T>, Triangle<T>]);
+impl_contains_from_relate_1d_multi!(Line<T>, [MultiPolygon<T>, GeometryCollection<T>]);
+impl_contains_from_relate!(Line<T>, [MultiPoint<T>, MultiLineString<T>]);
+
 impl_contains_geometry_for!(Line<T>);
