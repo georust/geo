@@ -127,6 +127,16 @@ impl_contains_geometry_for!(LineString<T>);
 impl_contains_from_relate!(MultiLineString<T>, [Line<T>, LineString<T>, Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
 impl_contains_geometry_for!(MultiLineString<T>);
 
+impl<T> Contains<Coord<T>> for MultiLineString<T>
+where
+    T: CoordNum,
+    LineString<T>: Contains<Coord<T>>,
+{
+    fn contains(&self, coord: &Coord<T>) -> bool {
+        self.iter().any(|ls| ls.contains(coord))
+    }
+}
+
 impl<T> Contains<Point<T>> for MultiLineString<T>
 where
     T: CoordNum,
