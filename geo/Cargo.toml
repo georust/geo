@@ -56,6 +56,10 @@ name = "contains"
 harness = false
 
 [[bench]]
+name = "contains_dim"
+harness = false
+
+[[bench]]
 name = "convex_hull"
 harness = false
 
