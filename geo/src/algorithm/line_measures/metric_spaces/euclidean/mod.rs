@@ -1,3 +1,5 @@
+mod bearing;
+mod destination;
 mod distance;
 
 use super::super::{Distance, InterpolatePoint};
