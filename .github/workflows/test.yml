@@ -6,7 +6,21 @@ on:
   merge_group:
 
 name: Run tests
+
 jobs:
+  # Set configurations used throughout the workflow
+  set-matrix:
+    name: Set matrix configuration
+    runs-on: ubuntu-latest
+    outputs:
+      rust-versions: ${{ steps.set-matrix.outputs.rust-versions }}
+      proj-version: ${{ steps.set-matrix.outputs.proj-version }}
+    steps:
+      - id: set-matrix
+        run: |
+          echo 'rust-versions=["1.82", "1.83", "1.84"]' >> $GITHUB_OUTPUT
+          echo "proj-version=9.6.0" >> $GITHUB_OUTPUT
+
   # The `ci-result` job doesn't actually test anything - it just aggregates the
   # overall build status, otherwise the merge queue would need an entry
   # for each individual job produced by the job-matrix.
@@ -19,6 +33,8 @@ jobs:
       - lint
       - geo_types
       - geo
+      - geo-generic
+      - geo_traits
       - geo_postgis
       - geo_fuzz
       - bench
@@ -34,6 +50,8 @@ jobs:
       - lint
       - geo_types
       - geo
+      - geo-generic
+      - geo_traits
       - geo_postgis
       - geo_fuzz
       - bench
@@ -44,18 +62,14 @@ jobs:
 
   lint:
     name: lint
+    needs: set-matrix
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
-    strategy:
-      matrix:
-        container_image:
-          # Use the latest stable version. No need for older versions.
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
     container:
-      image: ${{ matrix.container_image }}
+      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ fromJson(needs.set-matrix.outputs.rust-versions)[2] }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install dependencies
         shell: bash
         run: apt-get update && apt-get install -y libgeos-dev
@@ -65,6 +79,7 @@ jobs:
 
   geo_types:
     name: geo-types
+    needs: set-matrix
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
@@ -72,20 +87,12 @@ jobs:
         working-directory: geo-types
     strategy:
       matrix:
-        container_image:
-          # We aim to support rust-stable plus (at least) the prior 3 releases,
-          # giving us about 6 months of coverage.
-          #
-          # Minimum supported rust version (MSRV)
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.81"
-          # Two most recent releases - we omit older ones for expedient CI
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83"
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
+        rust_version: ${{ fromJson(needs.set-matrix.outputs.rust-versions) }}
     container:
-      image: ${{ matrix.container_image }}
+      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - run: rustup target add thumbv7em-none-eabihf
       - run: cargo check --all-targets --no-default-features
       - run: cargo check --lib --target thumbv7em-none-eabihf --no-default-features -F use-rstar_0_9,serde
@@ -93,6 +100,7 @@ jobs:
 
   geo:
     name: geo
+    needs: set-matrix
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
@@ -100,20 +108,12 @@ jobs:
         working-directory: geo
     strategy:
       matrix:
-        container_image:
-          # We aim to support rust-stable plus (at least) the prior 3 releases,
-          # giving us about 6 months of coverage.
-          #
-          # Minimum supported rust version (MSRV)
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.81"
-          # Two most recent releases - we omit older ones for expedient CI
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83"
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
+        rust_version: ${{ fromJson(needs.set-matrix.outputs.rust-versions) }}
     container:
-      image: ${{ matrix.container_image }}
+      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install dependencies
         shell: bash
         run: apt-get update && apt-get install -y libgeos-dev
@@ -123,6 +123,7 @@ jobs:
 
   geo-generic:
     name: geo-generic
+    needs: set-matrix
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
@@ -130,20 +131,12 @@ jobs:
         working-directory: geo-generic-alg
     strategy:
       matrix:
-        container_image:
-          # We aim to support rust-stable plus (at least) the prior 3 releases,
-          # giving us about 6 months of coverage.
-          #
-          # Minimum supported rust version (MSRV)
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.81"
-          # Two most recent releases - we omit older ones for expedient CI
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83"
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
+        rust_version: ${{ fromJson(needs.set-matrix.outputs.rust-versions) }}
     container:
-      image: ${{ matrix.container_image }}
+      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install dependencies
         shell: bash
         run: apt-get update && apt-get install -y libgeos-dev
@@ -153,6 +146,7 @@ jobs:
 
   geo_traits:
     name: geo-traits
+    needs: set-matrix
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
@@ -160,25 +154,18 @@ jobs:
         working-directory: geo-traits
     strategy:
       matrix:
-        container_image:
-          # We aim to support rust-stable plus (at least) the prior 3 releases,
-          # giving us about 6 months of coverage.
-          #
-          # Minimum supported rust version (MSRV)
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.81"
-          # Two most recent releases - we omit older ones for expedient CI
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83"
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
+        rust_version: ${{ fromJson(needs.set-matrix.outputs.rust-versions) }}
     container:
-      image: ${{ matrix.container_image }}
+      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - run: cargo check --all-targets
       - run: cargo test
 
   geo_postgis:
     name: geo-postgis
+    needs: set-matrix
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
@@ -186,20 +173,12 @@ jobs:
         working-directory: geo-postgis
     strategy:
       matrix:
-        container_image:
-          # We aim to support rust-stable plus (at least) the prior 3 releases,
-          # giving us about 6 months of coverage.
-          #
-          # Minimum supported rust version (MSRV)
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.81"
-          # Two most recent releases - we omit older ones for expedient CI
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.83"
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
+        rust_version: ${{ fromJson(needs.set-matrix.outputs.rust-versions) }}
     container:
-      image: ${{ matrix.container_image }}
+      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install dependencies
         shell: bash
         run: apt-get update && apt-get install -y libgeos-dev
@@ -208,21 +187,17 @@ jobs:
 
   geo_fuzz:
     name: geo-fuzz
+    needs: set-matrix
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
       run:
         working-directory: geo/fuzz
-    strategy:
-      matrix:
-        container_image:
-          # Fuzz only on latest
-          - "ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84"
     container:
-      image: ${{ matrix.container_image }}
+      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ fromJson(needs.set-matrix.outputs.rust-versions)[2] }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install dependencies
         shell: bash
         run: apt-get update && apt-get install -y libgeos-dev
@@ -230,13 +205,14 @@ jobs:
 
   bench:
     name: bench
+    needs: set-matrix
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     container:
-      image: ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84
+      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ fromJson(needs.set-matrix.outputs.rust-versions)[2] }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install dependencies
         shell: bash
         run: apt-get update && apt-get install -y libgeos-dev
@@ -244,11 +220,15 @@ jobs:
 
   docs:
     name: build documentation
+    needs: set-matrix
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     container:
-      image: ghcr.io/georust/geo-ci:proj-9.5.0-rust-1.84
+      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ fromJson(needs.set-matrix.outputs.rust-versions)[2] }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        shell: bash
+        run: apt-get update && apt-get install -y libgeos-dev
       - run: RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
