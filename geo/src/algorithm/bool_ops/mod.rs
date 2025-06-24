@@ -1,4 +1,4 @@
-mod i_overlay_integration;
+pub(crate) mod i_overlay_integration;
 #[cfg(test)]
 mod tests;
 

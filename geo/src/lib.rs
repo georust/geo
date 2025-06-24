@@ -115,6 +115,7 @@
 //!
 //! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm. Requires the `earcutr` feature, which is enabled by default
 //! - **[`TriangulateDelaunay`](triangulate_delaunay)**: Produce constrained or unconstrained Delaunay triangulations of polygons. Requires the `spade` feature, which is enabled by default
+//!
 //! ## Winding
 //!
 //! - **[`Orient`]**: Apply a specified winding [`Direction`](orient::Direction) to a [`Polygon`]’s interior and exterior rings
@@ -152,13 +153,14 @@
 //!
 //! ## Conversion
 //!
-//! - **[`Convert`]**: Convert (infalliby) the numeric type of a geometry’s coordinate value
-//! - **[`TryConvert`]**: Convert (falliby) the numeric type of a geometry’s coordinate value
+//! - **[`Convert`]**: Convert (infallibly) the numeric type of a geometry’s coordinate value
+//! - **[`TryConvert`]**: Convert (fallibly) the numeric type of a geometry’s coordinate value
 //! - **[`ToDegrees`]**: Radians to degrees coordinate transforms for a given geometry
 //! - **[`ToRadians`]**: Degrees to radians coordinate transforms for a given geometry
 //!
 //! ## Miscellaneous
 //!
+//! - **[`Buffer`]**: Create a new geometry whose boundary is offset the specified distance from the input.
 //! - **[`Centroid`]**: Calculate the centroid of a geometry
 //! - **[`ChaikinSmoothing`]**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikin's algorithm
 //! - **[`proj`]**: Project geometries with the `proj` crate (requires the `use-proj` feature)
