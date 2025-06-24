@@ -177,6 +177,8 @@ impl<T: BoolOpsNum> BufferStyle<T> {
 
     /// Sets how two edges of a geometry should meet at vertices.
     ///
+    /// Note: This has no effect on point geometries.
+    ///
     /// # Arguments
     ///
     /// * `line_join` - The join style: `Round`, `Miter`, or `Bevel`
@@ -193,10 +195,10 @@ impl<T: BoolOpsNum> BufferStyle<T> {
         self
     }
 
-    /// Sets how the ends of linear geometries should be capped.
+    /// Sets how the ends of linear geometries and points should be capped.
     ///
-    /// This only affects `LineString`, `MultiLineString`, and `Line` geometries.
-    /// Polygons and other closed geometries ignore this setting.
+    /// This only affects `Line`, `LineString`, `MultiLineString`, `Point`, and `MultiPoint` geometries.
+    /// Two dimensional geometries, like Polygons, ignore setting.
     ///
     /// # Arguments
     ///
