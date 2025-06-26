@@ -10,7 +10,11 @@ impl<F: CoordFloat + FromPrimitive> Bearing<F> for Euclidean {
     /// # Units
     ///
     /// - `origin`, `destination`: Points where x/y are cartesian coordinates
-    /// - returns: degrees, where: North: 0°, East: 90°, South: 180°, West: 270°
+    /// - returns: degrees, measured clockwise from the positive Y-axis direction
+    ///   - 0° = positive Y direction (typically North)
+    ///   - 90° = positive X direction (typically East)
+    ///   - 180° = negative Y direction (typically South)
+    ///   - 270° = negative X direction (typically West)
     ///
     /// # Examples
     ///
