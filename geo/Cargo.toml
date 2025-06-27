@@ -16,19 +16,19 @@ categories = ["science::geo"]
 default = ["earcutr", "spade", "multithreading"]
 use-proj = ["proj"]
 proj-network = ["use-proj", "proj/network"]
-use-serde = ["serde", "geo-types/serde"]
-multithreading = ["i_overlay/allow_multithreading", "geo-types/multithreading"]
+use-serde = ["serde", "geometry/serde"]
+multithreading = ["i_overlay/allow_multithreading", "geometry/multithreading"]
 
 [dependencies]
-geometry = { path = "../geometry" }
 earcutr = { version = "0.4.2", optional = true }
 spade = { version = "2.10.0", optional = true }
 float_next_after = "1.0.0"
-geo-types = { version = "0.7.16", features = ["approx", "use-rstar_0_12"] }
+#geo-types = { version = "0.7.16", features = ["approx", "use-rstar_0_12"] }
+geometry = { path = "../geometry", features = ["approx", "use-rstar_0_12"] }
 geographiclib-rs = { version = "0.2.3", default-features = false }
 log = "0.4.11"
 num-traits = "0.2"
-proj = { version = "0.30.0", optional = true }
+proj = { version = "0.30.0", default-features = false, optional = true }
 robust = "1.1.0"
 rstar = "0.12.0"
 serde = { version = "1.0", optional = true, features = ["derive"] }
