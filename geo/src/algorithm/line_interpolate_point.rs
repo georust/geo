@@ -246,7 +246,7 @@ mod test {
         // fraction is nan or inf
         assert_eq!(
             linestring.line_interpolate_point(Float::infinity()),
-            linestring.points().last()
+            linestring.points().next_back()
         );
         assert_eq!(
             linestring.line_interpolate_point(Float::neg_infinity()),
