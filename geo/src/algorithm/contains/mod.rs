@@ -45,6 +45,109 @@ mod polygon;
 mod rect;
 mod triangle;
 
+// self is a 0d geometry (Point, MultiPoint)
+// target can be any geometry
+macro_rules! impl_contains_from_relate_0d {
+    ($for:ty,  [$($target:ty),*]) => {
+        $(
+            impl<T> Contains<$target> for $for
+            where
+                T: GeoFloat,
+                $for: Contains<Coord<T>>,
+
+            {
+                fn contains(&self, target: &$target) -> bool {
+                    use crate::dimensions::Dimensions;
+                    use crate::algorithm::coords_iter::CoordsIter;
+
+                    match target.dimensions() {
+                        Dimensions::Empty => false,
+                        Dimensions::TwoDimensional => false,
+                        Dimensions::OneDimensional => false,
+                        // simplify into contains(coord<T>)
+                        // either all coords are identical, pass
+                        // or some coords != self, fail
+                        Dimensions::ZeroDimensional => target.coords_iter().all(|c| self.contains(&c)),
+                    }
+                }
+            }
+        )*
+    };
+}
+pub(crate) use impl_contains_from_relate_0d;
+
+// self is a 1d geometry (Line, LineString, MultiLineString)
+// target must not be a Multi-part geometry
+macro_rules! impl_contains_from_relate_1d {
+    ($for:ty,  [$($target:ty),*]) => {
+        $(
+            impl<T> Contains<$target> for $for
+            where
+                T: GeoFloat,
+                $for: Contains<LineString<T>>,
+                $for: Contains<Coord<T>>,
+            {
+                fn contains(&self, target: &$target) -> bool {
+                    use crate::dimensions::HasDimensions;
+                    use crate::dimensions::Dimensions;
+                    use crate::algorithm::coords_iter::CoordsIter;
+
+                    match target.dimensions() {
+                        Dimensions::Empty => false,
+                        Dimensions::TwoDimensional => false,
+                        Dimensions::OneDimensional => {
+                            let t2 = LineString::new(target.coords_iter().collect());
+                            t2.contains(&t2)
+                        },
+                        // simplify into contains(Coord<T>)
+                        // because all coords are identical in a 0d single-part geometry
+                        Dimensions::ZeroDimensional => target.coords_iter().all(|c| self.contains(&c)),
+                    }
+                }
+            }
+        )*
+    };
+}
+pub(crate) use impl_contains_from_relate_1d;
+
+// self is a 1d geometry (Line, LineString, MultiLineString)
+// target is a Multi-part geometries
+macro_rules! impl_contains_from_relate_1d_multi {
+    ($for:ty,  [$($target:ty),*]) => {
+        $(
+            impl<T> Contains<$target> for $for
+            where
+                T: GeoFloat,
+                $for: Contains<MultiPoint<T>>,
+
+            {
+                fn contains(&self, target: &$target) -> bool {
+                    use crate::dimensions::HasDimensions;
+                    use crate::dimensions::Dimensions;
+                    use crate::algorithm::Relate;
+                    use crate::algorithm::coords_iter::CoordsIter;
+
+                    match target.dimensions() {
+                        Dimensions::Empty => false,
+                        Dimensions::TwoDimensional => false,
+                        // Simplifying to GeometryCollection of LineString and Point is not easy
+                        Dimensions::OneDimensional => self.relate(target).is_contains(),
+                        // simplify into contains(MultiPoint<T>)
+                        // because we might have multiple degenerate 0d geometries
+                        Dimensions::ZeroDimensional => {
+                            let coords:Vec<Coord<T>> =target.coords_iter().collect();
+                            let pts:Vec<Point<T>> = coords.iter().map(|c| Point::from(*c)).collect();
+                            let mp = MultiPoint::new(pts);
+                            self.contains(&mp)
+                        },
+                    }
+                }
+            }
+        )*
+    };
+}
+pub(crate) use impl_contains_from_relate_1d_multi;
+
 macro_rules! impl_contains_from_relate {
     ($for:ty,  [$($target:ty),*]) => {
         $(
