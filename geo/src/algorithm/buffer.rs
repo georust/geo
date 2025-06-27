@@ -471,6 +471,14 @@ mod tests {
     use jts_test_runner::{assert_jts_tests_succeed, check_buffer_test_case};
 
     #[test]
+    fn debug_test_failures() {
+        let polygon = crate::Polygon::empty();
+        let polygon_2 = wkt! { POLYGON EMPTY };
+        assert_eq!(polygon, polygon_2);
+        panic!("footch");
+    }
+
+    #[test]
     fn buffer_polygon() {
         let polygon = wkt! { POLYGON((2.0 2.0,2.0 6.0,4.0 6.0,2.0 2.0)) };
         let actual = polygon.buffer(2.0);

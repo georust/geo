@@ -11,21 +11,21 @@ rust-version = "1.75"
 edition = "2021"
 
 [features]
-#default = ["std"]
-#std = ["geometry/std"]
-#multithreading = ["geometry/multithreading"]
-#approx=["geometry/approx"]
+default = ["std"]
+std = ["geo/std"]
+multithreading = ["geo/multithreading"]
+approx=["geo/approx"]
 serde=["geo/serde"]
 # Prefer `use-rstar` feature rather than enabling rstar directly.
 # rstar integration relies on the optional approx crate, but implicit features cannot yet enable other features.
 # See: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#namespaced-features
-#rstar = ["geometry/rstar_0_8"]
-#use-rstar = ["geometry/use-rstar_0_8"]
-#use-rstar_0_8 = ["geometry/rstar_0_8"]
-#use-rstar_0_9 = ["geometry/rstar_0_9"]
-#use-rstar_0_10 = ["geometry/rstar_0_10"]
-#use-rstar_0_11 = ["geometry/rstar_0_11"]
-#use-rstar_0_12 = ["geometry/rstar_0_12"]
+rstar = ["geo/rstar_0_8"]
+use-rstar = ["geo/rstar_0_8"]
+use-rstar_0_8 = ["geo/rstar_0_8"]
+use-rstar_0_9 = ["geo/rstar_0_9"]
+use-rstar_0_10 = ["geo/rstar_0_10"]
+use-rstar_0_11 = ["geo/rstar_0_11"]
+use-rstar_0_12 = ["geo/rstar"]
 
 [dependencies]
 geo = { path = "../geo" }

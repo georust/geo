@@ -2,7 +2,8 @@
 resolver = "2"
 members = [
   "geo",
-  "geo-bool-ops-benches",
+  # temporarily disable to simplifiy debuggin dependency resolution (there's an old version of geo-types in here)
+#  "geo-bool-ops-benches",
   "geo-postgis",
   "geo-test-fixtures",
   "geo-traits",
