@@ -83,5 +83,30 @@ where
     }
 }
 
-impl_contains_from_relate!(Line<T>, [Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl<T> Contains<MultiPoint<T>> for Line<T>
+where
+    T: GeoNum,
+{
+    fn contains(&self, multi_point: &MultiPoint<T>) -> bool {
+        // at least one point must not be equal to one of the vertices
+        multi_point.iter().any(|point| self.contains(&point.0))
+            && multi_point.iter().all(|point| self.intersects(&point.0))
+    }
+}
+impl_contains_from_relate!(Line<T>, [Polygon<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
 impl_contains_geometry_for!(Line<T>);
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{coord, MultiPoint, Relate};
+
+    #[test]
+    fn test_line_contains_empty_multipoint() {
+        let line = Line::new(coord! {x:0.,y:0.}, coord! {x:100., y:100.});
+        let empty: MultiPoint<f64> = MultiPoint::new(Vec::new());
+
+        assert!(!line.contains(&empty));
+        assert!(!line.relate(&empty).is_contains());
+    }
+}
