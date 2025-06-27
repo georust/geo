@@ -15,7 +15,6 @@ use std::{
     panic::{catch_unwind, resume_unwind},
     path::Path,
 };
-use wkt::ToWkt;
 
 #[cfg(test)]
 #[path = "../benches/utils/bops.rs"]
@@ -85,8 +84,8 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
             let prev_p1 = convert_mpoly(&p1);
             let prev_p2 = convert_mpoly(&p2);
 
-            info!("p1: {wkt}", wkt = p1.to_wkt());
-            info!("p2: {wkt}", wkt = p2.to_wkt());
+            info!("p1: {p1:?}");
+            info!("p2: {p2:?}");
             fc.features
                 .into_iter()
                 .skip(2)
@@ -96,7 +95,7 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
                     let ty = props["operation"]
                         .as_str()
                         .context("operation was not a string")?;
-                    info!("op: {ty} {wkt}", wkt = p.to_wkt(),);
+                    info!("op: {ty} {p:?}");
 
                     let result = catch_unwind(|| {
                         let geoms = if ty == "intersection" {
@@ -113,7 +112,7 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
                             error!("unexpected op: {ty}");
                             unreachable!()
                         };
-                        info!("ours: {wkt}", wkt = geoms.to_wkt());
+                        info!("ours: {geoms:?}");
                         geoms
                     });
 
@@ -133,9 +132,8 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
                             unreachable!()
                         };
                         let geoms = convert_back_mpoly(&geoms);
-                        let wkt = geoms.wkt_string();
-                        info!("theirs: {wkt}");
-                        wkt
+                        info!("theirs: {geoms:?}");
+                        format!("{:?}", geoms)
                     });
                     let theirs = their_result.unwrap_or_else(|_e| {
                         error!("theirs panicked");
@@ -147,11 +145,11 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
                             let diff = catch_unwind(|| p.difference(&our_geom));
                             let comment = match diff {
                                 Ok(diff) => {
-                                    info!("difference: {wkt}", wkt = diff.to_wkt());
+                                    info!("difference: {diff:?}");
                                     if !diff.is_empty() {
                                         info!("output was not identical:");
-                                        info!("\tours: {wkt}", wkt = our_geom.wkt_string());
-                                        info!("op: {ty} {wkt}", wkt = p.to_wkt(),);
+                                        info!("\tours: {our_geom:?}");
+                                        info!("op: {ty} {p:?}");
                                         let area = diff.unsigned_area();
                                         let err = area / p.unsigned_area();
                                         info!("\trel. error = {err}");
@@ -176,11 +174,11 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
                     };
 
                     Ok(TestCase {
-                        p1: p1.wkt_string(),
-                        p2: p2.wkt_string(),
+                        p1: format!("{:?}", p1),
+                        p2: format!("{:?}", p2),
                         op: ty.to_string(),
-                        ours: our_geom.map(|g| g.wkt_string()).unwrap_or_default(),
-                        expected: p.wkt_string(),
+                        ours: our_geom.map(|g| format!("{:?}", g)).unwrap_or_default(),
+                        expected: format!("{:?}", p),
                         comment,
                         theirs,
                     })
