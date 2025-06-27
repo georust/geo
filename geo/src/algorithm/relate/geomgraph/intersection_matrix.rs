@@ -347,7 +347,7 @@ impl IntersectionMatrix {
     /// returns `true` if the first geometry is covered by the second.
     ///
     /// ```
-    /// use ::geometry::{Polygon, polygon};
+    /// use crate::geometry::{Polygon, polygon};
     /// use geo::relate::Relate;
     ///
     /// let poly1 = polygon![
@@ -442,7 +442,7 @@ impl IntersectionMatrix {
     /// that is, the geometries have some, but not all interior points in common
     ///
     /// ```
-    /// use ::geometry::{LineString, line_string, polygon};
+    /// use crate::geometry::{LineString, line_string, polygon};
     /// use geo::relate::Relate;
     ///
     /// let line_string: LineString = line_string![(x: 85.0, y: 194.0), (x: 162.0, y: 135.0)];
@@ -502,7 +502,7 @@ impl IntersectionMatrix {
     /// inside the other (or equivalently, neither one covers the other)
     ///
     /// ```
-    /// use ::geometry::{Polygon, polygon};
+    /// use crate::geometry::{Polygon, polygon};
     /// use geo::relate::Relate;
     ///
     /// let poly1 = polygon![
@@ -556,7 +556,7 @@ impl IntersectionMatrix {
     /// Directly accesses this matrix
     ///
     /// ```
-    /// use ::geometry::{LineString, Rect, line_string};
+    /// use crate::geometry::{LineString, Rect, line_string};
     /// use geo::{coordinate_position::CoordPos, dimensions::Dimensions, relate::Relate};
     ///
     /// let line_string: LineString = line_string![(x: 0.0, y: 0.0), (x: 10.0, y: 0.0), (x: 5.0, y: 5.0)];

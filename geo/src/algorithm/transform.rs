@@ -3,7 +3,7 @@ pub use proj::{Area, Coord, Info, Proj, ProjBuilder, ProjError, ProjInfo, Transf
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ::geometry::{point, Rect};
+    use crate::geometry::{point, Rect};
 
     #[test]
     fn test_transform() {

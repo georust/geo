@@ -1,4 +1,4 @@
-use ::geometry::{Coord, Line, Point, Triangle};
+use crate::geometry::{Coord, Line, Point, Triangle};
 use spade::{
     ConstrainedDelaunayTriangulation, DelaunayTriangulation, Point2, SpadeNum, Triangulation,
 };
@@ -588,7 +588,7 @@ fn to_spade_point<T: SpadeTriangulationFloat>(coord: Coord<T>) -> Point2<T> {
 #[cfg(test)]
 mod spade_triangulation {
     use super::*;
-    use ::geometry::*;
+    use crate::geometry::*;
 
     fn assert_num_triangles<T: SpadeTriangulationFloat>(
         triangulation: &TriangulationResult<Triangles<T>>,

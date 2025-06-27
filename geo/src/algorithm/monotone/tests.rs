@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use ::geometry::Polygon;
+use crate::geometry::Polygon;
 use approx::RelativeEq;
 use num_traits::Signed;
 use wkt::{ToWkt, TryFromWkt};

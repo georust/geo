@@ -18,7 +18,6 @@ use i_overlay::mesh::{
 };
 // Re-export these i_overlay style types. Alternatively, we could implement our own version,
 // but they'd be a 1:1 mapping, so it seems overly ceremonious.
-use ::geometry::coord;
 pub use i_overlay::mesh::style::{LineCap, LineJoin};
 
 /// Create a new geometry whose boundary is offset the specified distance from the input.

@@ -205,7 +205,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ::geometry::line_string;
+    use crate::geometry::line_string;
 
     #[test]
     fn test_corner_cases() {

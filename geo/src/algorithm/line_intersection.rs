@@ -1,5 +1,4 @@
-use crate::{Coord, GeoFloat, Line};
-use ::geometry::coord;
+use crate::{coord, Coord, GeoFloat, Line};
 
 use crate::BoundingRect;
 use crate::Intersects;
@@ -46,7 +45,7 @@ impl<F: GeoFloat> LineIntersection<F> {
 /// # Examples
 ///
 /// ```
-/// use ::geometry::coord;
+/// use crate::geometry::coord;
 /// use geo::{Line, Coord};
 /// use geo::line_intersection::{line_intersection, LineIntersection};
 ///
@@ -205,7 +204,7 @@ fn collinear_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<LineInt
 ///
 /// `returns` the nearest endpoint to the other segment
 fn nearest_endpoint<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coord<F> {
-    use ::geometry::private_utils::point_line_euclidean_distance;
+    use crate::geometry::private_utils::point_line_euclidean_distance;
 
     let mut nearest_pt = p.start;
     let mut min_dist = point_line_euclidean_distance(p.start, q);
@@ -312,7 +311,7 @@ fn proper_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coord<F> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use ::geometry::coord;
+    use crate::geometry::coord;
 
     /// Based on JTS test `testCentralEndpointHeuristicFailure`
     /// > Following cases were failures when using the CentralEndpointIntersector heuristic.

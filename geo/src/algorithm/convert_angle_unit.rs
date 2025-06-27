@@ -1,5 +1,5 @@
-use ::geometry::Coord;
-use ::geometry::CoordFloat;
+use crate::geometry::Coord;
+use crate::geometry::CoordFloat;
 
 use crate::{MapCoords, MapCoordsInPlace};
 
@@ -45,7 +45,7 @@ impl<T: CoordFloat, G: MapCoords<T, T, Output = Self> + MapCoordsInPlace<T>> ToD
 mod tests {
     use std::f64::consts::PI;
 
-    use ::geometry::Line;
+    use crate::geometry::Line;
     use approx::assert_relative_eq;
 
     use super::*;

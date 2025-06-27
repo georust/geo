@@ -1,5 +1,5 @@
 #![allow(deprecated)]
-use ::geometry::{Coord, Line, Point, Triangle};
+use crate::geometry::{Coord, Line, Point, Triangle};
 use spade::{
     ConstrainedDelaunayTriangulation, DelaunayTriangulation, Point2, SpadeNum, Triangulation,
 };

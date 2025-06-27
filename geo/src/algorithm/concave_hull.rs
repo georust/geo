@@ -253,8 +253,8 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::geometry::Coord;
     use crate::{line_string, polygon};
-    use ::geometry::Coord;
 
     #[test]
     fn triangle_test() {

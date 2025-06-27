@@ -329,7 +329,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
 mod tests {
     use std::cmp::Ordering;
 
-    use ::geometry::{Coord, LineString};
+    use crate::geometry::{Coord, LineString};
     use wkt::ToWkt;
 
     use crate::{GeoFloat, GeoNum, Kernel};

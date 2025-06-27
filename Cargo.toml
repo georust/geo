@@ -6,7 +6,7 @@ members = [
   "geo-postgis",
   "geo-test-fixtures",
   "geo-traits",
-  "geo-types", "geometry",
+  "geo-types",
   "jts-test-runner",
 ]
 

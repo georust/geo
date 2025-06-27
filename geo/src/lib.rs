@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
 
 //! The `geo` crate provides geospatial primitive types and algorithms.
@@ -240,13 +241,16 @@ pub use crate::algorithm::*;
 pub use crate::types::Closest;
 use std::cmp::Ordering;
 
-pub use crate::relate::PreparedGeometry;
-pub use ::geometry::{coord, line_string, point, polygon, wkt, CoordFloat, CoordNum};
+extern crate alloc;
 
+pub use crate::relate::PreparedGeometry;
+
+#[macro_use]
 pub mod geometry;
 pub use geometry::*;
 
 /// This module includes all the functions of geometric calculations
+#[cfg(feature = "algorithms")]
 pub mod algorithm;
 mod geometry_cow;
 mod types;

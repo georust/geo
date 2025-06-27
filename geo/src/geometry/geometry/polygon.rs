@@ -653,7 +653,7 @@ mod approx_integration {
     feature = "rstar_0_9",
     feature = "rstar_0_10",
     feature = "rstar_0_11",
-    feature = "rstar_0_12"
+    feature = "rstar"
 ))]
 macro_rules! impl_rstar_polygon {
     ($rstar:ident) => {
@@ -682,8 +682,8 @@ impl_rstar_polygon!(rstar_0_10);
 #[cfg(feature = "rstar_0_11")]
 impl_rstar_polygon!(rstar_0_11);
 
-#[cfg(feature = "rstar_0_12")]
-impl_rstar_polygon!(rstar_0_12);
+#[cfg(feature = "rstar")]
+impl_rstar_polygon!(rstar);
 
 #[cfg(test)]
 mod tests {

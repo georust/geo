@@ -1,4 +1,4 @@
-use ::geometry::{CoordFloat, Point};
+use crate::geometry::{CoordFloat, Point};
 
 /// Calculate the bearing between two points.
 pub trait Bearing<F: CoordFloat> {

@@ -1,4 +1,4 @@
-use ::geometry::{CoordFloat, LineString, Point};
+use crate::geometry::{CoordFloat, LineString, Point};
 
 use crate::CoordsIter;
 

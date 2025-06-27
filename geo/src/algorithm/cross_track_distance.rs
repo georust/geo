@@ -1,5 +1,5 @@
+use crate::geometry::{CoordFloat, Point};
 use crate::{Bearing, Distance, Haversine, MEAN_EARTH_RADIUS};
-use ::geometry::{CoordFloat, Point};
 use num_traits::FromPrimitive;
 
 /// Determine the cross track distance (also known as the cross track error) which is the shortest

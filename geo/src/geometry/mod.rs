@@ -1,6 +1,4 @@
-#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_debug_implementations)]
-#![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
 //! The `geo-types` library defines geometric types for the [GeoRust] ecosystem.
 //!
 //! In most cases, you will only need to use this crate if you’re a crate author and want
@@ -71,7 +69,7 @@
 //! - `use-rstar_0_9`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.9`)
 //! - `use-rstar_0_10`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.10`)
 //! - `use-rstar_0_11`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.11`)
-//! - `use-rstar_0_12`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.12`)
+//! - `use-rstar`: Allows geometry types to be inserted into [rstar] R*-trees (`rstar v0.12`)
 //!
 //! This library can be used in `#![no_std]` environments if the default `std` feature is disabled. At
 //! the moment, the `arbitrary` and `use-rstar_0_8` features require `std`. This may change in a
@@ -86,18 +84,9 @@
 //! [OGC-SFA]: https://www.ogc.org/standards/sfa
 //! [rstar]: https://github.com/Stoeoef/rstar
 //! [Serde]: https://serde.rs/
-extern crate alloc;
 
 use core::fmt::Debug;
 use num_traits::{Float, Num, NumCast};
-
-#[cfg(feature = "serde")]
-#[macro_use]
-extern crate serde;
-
-#[cfg(test)]
-#[macro_use]
-extern crate approx;
 
 #[deprecated(since = "0.7.0", note = "use `CoordFloat` or `CoordNum` instead")]
 pub trait CoordinateType: Num + Copy + NumCast + PartialOrd + Debug {}
@@ -131,10 +120,8 @@ mod error;
 pub use error::Error;
 
 #[macro_use]
-mod macros;
-
-#[macro_use]
-mod wkt_macro;
+pub(crate) mod macros;
+pub(crate) mod wkt_macro;
 
 #[cfg(feature = "arbitrary")]
 mod arbitrary;
@@ -144,7 +131,7 @@ mod arbitrary;
     feature = "rstar_0_9",
     feature = "rstar_0_10",
     feature = "rstar_0_11",
-    feature = "rstar_0_12"
+    feature = "rstar"
 ))]
 #[doc(hidden)]
 pub mod private_utils;
@@ -297,12 +284,12 @@ mod tests {
         assert_relative_eq!(25.999999999999996, l.distance_2(&Point::new(4.0, 10.0)));
     }
 
-    #[cfg(feature = "rstar_0_12")]
+    #[cfg(feature = "rstar")]
     #[test]
     /// ensure Line's SpatialObject impl is correct
     fn line_test_0_12() {
-        use rstar_0_12::primitives::Line as RStarLine;
-        use rstar_0_12::{PointDistance, RTreeObject};
+        use rstar::primitives::Line as RStarLine;
+        use rstar::{PointDistance, RTreeObject};
 
         let rl = RStarLine::new(Point::new(0.0, 0.0), Point::new(5.0, 5.0));
         let l = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 5., y: 5. });

@@ -1,4 +1,4 @@
-use ::geometry::{CoordFloat, Point};
+use crate::geometry::{CoordFloat, Point};
 
 /// Calculate the destination point from an origin point, given a bearing and a distance.
 pub trait Destination<F: CoordFloat> {

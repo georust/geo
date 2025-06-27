@@ -549,7 +549,7 @@ mod test {
 
     #[test]
     fn exhaustive_compile_test() {
-        use ::geometry::{GeometryCollection, Triangle};
+        use crate::geometry::{GeometryCollection, Triangle};
         let pt: Point = Point::new(0., 0.);
         let ln: Line = Line::new((0., 0.), (1., 1.));
         let ls = line_string![(0., 0.).into(), (1., 1.).into()];

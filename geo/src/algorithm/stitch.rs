@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use ::geometry::{Coord, Line, LineString, MultiPolygon, Polygon, Triangle};
+use crate::geometry::{Coord, Line, LineString, MultiPolygon, Polygon, Triangle};
 
 use crate::winding_order::{triangle_winding_order, WindingOrder};
 use crate::{Contains, GeoFloat};
@@ -448,7 +448,7 @@ mod polygon_stitching_tests {
     use crate::{Relate, TriangulateEarcut, Winding};
 
     use super::*;
-    use ::geometry::*;
+    use crate::geometry::*;
 
     #[test]
     fn poly_inside_a_donut() {

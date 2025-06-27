@@ -31,8 +31,8 @@ pub(crate) mod convert {
     use super::super::OpType;
     use super::BoolOpsNum;
     use crate::bool_ops::i_overlay_integration::BoolOpsCoord;
+    use crate::geometry::Coord;
     use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
-    use ::geometry::Coord;
     use i_overlay::core::overlay_rule::OverlayRule;
 
     pub fn line_string_from_path<T: BoolOpsNum>(path: Vec<BoolOpsCoord<T>>) -> LineString<T> {
@@ -104,7 +104,7 @@ pub(crate) mod convert {
 
 #[cfg(test)]
 mod tests {
-    use ::geometry::polygon;
+    use crate::geometry::polygon;
 
     use crate::algorithm::BooleanOps;
     use crate::geometry::{MultiPolygon, Polygon};

@@ -1,10 +1,10 @@
-use crate::line_measures::{Bearing, Destination, Distance, Haversine};
-use crate::{Closest, Contains};
-use crate::{CoordsIter, GeoFloat, Point, MEAN_EARTH_RADIUS};
-use ::geometry::{
+use crate::geometry::{
     Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Polygon, Rect, Triangle,
 };
+use crate::line_measures::{Bearing, Destination, Distance, Haversine};
+use crate::{Closest, Contains};
+use crate::{CoordsIter, GeoFloat, Point, MEAN_EARTH_RADIUS};
 
 use num_traits::FromPrimitive;
 

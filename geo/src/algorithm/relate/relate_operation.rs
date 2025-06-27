@@ -9,7 +9,7 @@ use crate::relate::geomgraph::{
 use crate::{Coord, GeoFloat, GeometryCow};
 use crate::{CoordinatePosition, Relate};
 
-use ::geometry::Rect;
+use crate::geometry::Rect;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -383,7 +383,7 @@ mod test {
     use crate::Relate;
 
     use super::*;
-    use ::geometry::{line_string, polygon, Geometry};
+    use crate::geometry::{line_string, polygon, Geometry};
     use std::str::FromStr;
 
     #[test]

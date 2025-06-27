@@ -1,8 +1,8 @@
+use crate::geometry::GeometryCollection;
 use crate::{
     CoordNum, Geometry, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
     Polygon, Rect, Triangle,
 };
-use ::geometry::GeometryCollection;
 
 /// Remove repeated points from a `MultiPoint` and repeated consecutive coordinates
 /// from `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon`.

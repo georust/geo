@@ -323,7 +323,7 @@ where
 mod tests {
     use super::*;
     use crate::coords_iter::CoordsIter;
-    use ::geometry::coord;
+    use crate::geometry::coord;
 
     #[test]
     fn coord_ordering() {

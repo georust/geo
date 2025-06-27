@@ -13,24 +13,37 @@ rust-version = "1.82"
 categories = ["science::geo"]
 
 [features]
-default = ["earcutr", "spade", "multithreading"]
+default = ["algorithms", "earcutr", "spade", "multithreading"]
+algorithms = ["rstar"]
 use-proj = ["proj"]
 proj-network = ["use-proj", "proj/network"]
-use-serde = ["serde", "geometry/serde"]
-multithreading = ["i_overlay/allow_multithreading", "geometry/multithreading"]
+use-serde = ["serde"]
+multithreading = ["i_overlay/allow_multithreading", "dep:rayon"]
+rstar_0_8 = ["dep:rstar_0_8", "approx"]
+rstar_0_9 = ["dep:rstar_0_9", "approx"]
+rstar_0_10 = ["dep:rstar_0_10", "approx"]
+rstar_0_11 = ["dep:rstar_0_11", "approx"]
+rstar = ["dep:rstar", "approx"]
 
 [dependencies]
+approx = {  version = ">= 0.4.0, < 0.6.0", optional = true }
+arbitrary = { version = "1.2.0", optional = true }
 earcutr = { version = "0.4.2", optional = true }
+rayon = { version = "1.10.0", optional = true }
 spade = { version = "2.10.0", optional = true }
 float_next_after = "1.0.0"
 #geo-types = { version = "0.7.16", features = ["approx", "use-rstar_0_12"] }
-geometry = { path = "../geometry", features = ["approx", "use-rstar_0_12"] }
+#geometry = { path = "../geometry", features = ["approx", "use-rstar_0_12"] }
 geographiclib-rs = { version = "0.2.3", default-features = false }
 log = "0.4.11"
 num-traits = "0.2"
 proj = { version = "0.30.0", default-features = false, optional = true }
 robust = "1.1.0"
-rstar = "0.12.0"
+rstar_0_8 = { package = "rstar", version = "0.8", optional = true }
+rstar_0_9 = { package = "rstar", version = "0.9", optional = true }
+rstar_0_10 = { package = "rstar", version = "0.10", optional = true }
+rstar_0_11 = { package = "rstar", version = "0.11", optional = true }
+rstar = { version = "0.12.0", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 i_overlay = { version = "2.0.0, < 2.1.0", default-features = false }
 
