@@ -305,11 +305,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
                     let l2 = LineOrPoint::from((other.left(), p));
                     let cmp = l1.partial_cmp(&l2).unwrap();
                     if l1.is_line() && l2.is_line() && cmp.then(ord) != ord {
-                        debug!(
-                            "ordering changed by intersection: {l1:?} {ord:?} {l2:?}",
-                            l1 = self,
-                            l2 = other
-                        );
+                        debug!("ordering changed by intersection: {self:?} {ord:?} {other:?}",);
                         debug!("\tparts: {l1:?}, {l2:?}");
                         debug!("\tintersection: {p:?} {cmp:?}");
 

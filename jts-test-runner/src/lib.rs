@@ -29,7 +29,7 @@ pub fn assert_jts_tests_succeed(pattern: &str) {
         let failure_text = runner
             .unexpected_failures()
             .iter()
-            .map(|failure| format!("{}", failure))
+            .map(|failure| format!("{failure}"))
             .collect::<Vec<String>>()
             .join("\n");
 
@@ -121,7 +121,7 @@ mod tests {
             let failure_text = runner
                 .unexpected_failures()
                 .iter()
-                .map(|failure| format!("{}", failure))
+                .map(|failure| format!("{failure}"))
                 .collect::<Vec<String>>()
                 .join("\n");
             panic!(
@@ -148,8 +148,7 @@ mod tests {
             Ordering::Equal => {}
             Ordering::Greater => {
                 panic!(
-                    "Great, looks like we're running new tests. Just increase `expected_test_count` to {}",
-                    actual_test_count
+                    "Great, looks like we're running new tests. Just increase `expected_test_count` to {actual_test_count}"
                 );
             }
         }

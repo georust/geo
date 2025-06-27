@@ -37,7 +37,7 @@ fn test_unary_union_errors() {
         }
         let union = output;
         let duration = start.elapsed();
-        println!("Time elapsed (naive): {:.2?}", duration);
+        println!("Time elapsed (naive): {duration:.2?}");
         union
     };
 
@@ -45,7 +45,7 @@ fn test_unary_union_errors() {
         let start = Instant::now();
         let union = unary_union(input.iter());
         let duration = start.elapsed();
-        println!("Time elapsed (simplification): {:.2?}", duration);
+        println!("Time elapsed (simplification): {duration:.2?}");
         union
     };
 
