@@ -1,6 +1,6 @@
 //! Internal utility functions, types, and data structures.
 
-use geo_types::{Coord, CoordFloat, CoordNum};
+use ::geometry::{Coord, CoordFloat, CoordNum};
 use num_traits::FromPrimitive;
 
 /// Partition a mutable slice in-place so that it contains all elements for

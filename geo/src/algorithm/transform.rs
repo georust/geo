@@ -3,7 +3,7 @@ pub use proj::{Area, Coord, Info, Proj, ProjBuilder, ProjError, ProjInfo, Transf
 #[cfg(test)]
 mod tests {
     use super::*;
-    use geo_types::{point, Rect};
+    use ::geometry::{point, Rect};
 
     #[test]
     fn test_transform() {

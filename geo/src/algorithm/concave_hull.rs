@@ -254,7 +254,7 @@ where
 mod test {
     use super::*;
     use crate::{line_string, polygon};
-    use geo_types::Coord;
+    use ::geometry::Coord;
 
     #[test]
     fn triangle_test() {

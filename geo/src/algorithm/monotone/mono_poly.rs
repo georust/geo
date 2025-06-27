@@ -1,4 +1,4 @@
-use geo_types::{private_utils::get_bounding_rect, Line};
+use ::geometry::{private_utils::get_bounding_rect, Line};
 
 use crate::{
     coordinate_position::CoordPos, sweep::SweepPoint, BoundingRect, Coord, CoordinatePosition,

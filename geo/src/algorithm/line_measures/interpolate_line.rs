@@ -1,7 +1,7 @@
 //! Interpolate a Point part way into a linear geometry (1-D).
 
 use super::{InterpolatePoint, Length};
-use geo_types::{CoordFloat, Line, LineString, Point};
+use ::geometry::{CoordFloat, Line, LineString, Point};
 
 /// Interpolate a `Point` along a `Line` or `LineString`.
 ///

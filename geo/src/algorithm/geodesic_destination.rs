@@ -1,6 +1,6 @@
 use crate::line_measures::{Destination, Geodesic};
 use crate::Point;
-use geo_types::CoordNum;
+use ::geometry::CoordNum;
 
 #[deprecated(
     since = "0.29.0",

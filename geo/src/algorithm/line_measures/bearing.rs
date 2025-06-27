@@ -1,4 +1,4 @@
-use geo_types::{CoordFloat, Point};
+use ::geometry::{CoordFloat, Point};
 
 /// Calculate the bearing between two points.
 pub trait Bearing<F: CoordFloat> {

@@ -522,7 +522,7 @@ mod test {
     use crate::orient::Direction;
     use crate::Orient;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
-    use geo_types::{coord, polygon, private_utils::line_segment_distance};
+    use ::geometry::{coord, polygon, private_utils::line_segment_distance};
 
     #[test]
     fn line_segment_distance_test() {

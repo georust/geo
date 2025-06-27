@@ -2,7 +2,7 @@ use super::kernels::*;
 use crate::coords_iter::CoordsIter;
 use crate::utils::EitherIter;
 use crate::{CoordNum, GeoFloat, GeoNum, LineString, Point};
-use geo_types::{PointsIter, Triangle};
+use ::geometry::{PointsIter, Triangle};
 use std::iter::Rev;
 
 /// Iterates through a list of `Point`s

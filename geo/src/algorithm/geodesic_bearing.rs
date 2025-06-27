@@ -1,5 +1,5 @@
 use crate::Point;
-use geo_types::CoordNum;
+use ::geometry::CoordNum;
 use geographiclib_rs::{Geodesic, InverseGeodesic};
 
 /// Returns the bearing to another Point in degrees on a geodesic.

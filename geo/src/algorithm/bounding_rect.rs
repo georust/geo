@@ -1,6 +1,6 @@
 use crate::utils::{partial_max, partial_min};
 use crate::{coord, geometry::*, CoordNum, GeometryCow};
-use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
+use ::geometry::private_utils::{get_bounding_rect, line_string_bounding_rect};
 
 /// Calculation of the bounding rectangle of a geometry.
 pub trait BoundingRect<T: CoordNum> {

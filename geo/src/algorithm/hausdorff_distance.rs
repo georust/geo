@@ -1,7 +1,7 @@
 use crate::algorithm::{Distance, Euclidean};
 use crate::CoordsIter;
 use crate::GeoFloat;
-use geo_types::{Coord, Point};
+use ::geometry::{Coord, Point};
 use num_traits::Bounded;
 
 /// Determine the distance between two geometries using the [Hausdorff distance formula].

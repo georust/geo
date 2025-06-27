@@ -4,7 +4,7 @@ use geo::EuclideanLength;
 use geo::Simplify;
 use libfuzzer_sys::fuzz_target;
 
-fuzz_target!(|tuple: (geo_types::Polygon<f32>, f32)| {
+fuzz_target!(|tuple: (::geometry::Polygon<f32>, f32)| {
     let (polygon, epsilon) = tuple;
 
     let simplified = polygon.simplify(epsilon);
@@ -12,7 +12,7 @@ fuzz_target!(|tuple: (geo_types::Polygon<f32>, f32)| {
     check_result(polygon, simplified);
 });
 
-fn check_result(original: geo_types::Polygon<f32>, simplified: geo_types::Polygon<f32>) {
+fn check_result(original: ::geometry::Polygon<f32>, simplified: ::geometry::Polygon<f32>) {
     assert!(simplified.exterior().0.len() <= original.exterior().0.len());
     assert!(simplified.exterior().euclidean_length() <= original.exterior().euclidean_length());
 

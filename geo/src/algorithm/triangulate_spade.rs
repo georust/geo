@@ -1,5 +1,5 @@
 #![allow(deprecated)]
-use geo_types::{Coord, Line, Point, Triangle};
+use ::geometry::{Coord, Line, Point, Triangle};
 use spade::{
     ConstrainedDelaunayTriangulation, DelaunayTriangulation, Point2, SpadeNum, Triangulation,
 };

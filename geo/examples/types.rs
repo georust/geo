@@ -1,5 +1,5 @@
+use ::geometry::point;
 use geo::Point;
-use geo_types::point;
 
 fn main() {
     let p = point! {

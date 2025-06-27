@@ -445,7 +445,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use geo_types::coord;
+    use ::geometry::coord;
 
     use super::*;
     use crate::{line_string, point, polygon};

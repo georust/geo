@@ -1,4 +1,4 @@
-use geo_types::CoordFloat;
+use ::geometry::CoordFloat;
 
 use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
 use crate::{geometry::*, Area, CoordsIter, HasDimensions, Intersects};

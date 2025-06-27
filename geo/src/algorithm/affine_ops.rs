@@ -501,8 +501,8 @@ mod tests {
         /// # Examples
         ///
         /// ```
-        /// use geo_types::AffineTransform;
-        /// use geo_types::point;
+        /// use ::geometry::AffineTransform;
+        /// use ::geometry::point;
         ///
         /// let a = AffineTransform::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
         /// let b = AffineTransform::new(1.01, 2.02, 3.03, 4.04, 5.05, 6.06);
@@ -539,8 +539,8 @@ mod tests {
         /// # Examples
         ///
         /// ```
-        /// use geo_types::MultiPoint;
-        /// use geo_types::point;
+        /// use ::geometry::MultiPoint;
+        /// use ::geometry::point;
         ///
         /// let a = AffineTransform::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
         /// let b = AffineTransform::new(1.01, 2.02, 3.03, 4.04, 5.05, 6.06);

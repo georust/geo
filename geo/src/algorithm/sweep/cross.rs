@@ -1,6 +1,6 @@
 use std::{fmt::Debug, rc::Rc, sync::Arc};
 
-use geo_types::Line;
+use ::geometry::Line;
 
 use super::*;
 use crate::GeoFloat;

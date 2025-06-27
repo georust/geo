@@ -1,7 +1,7 @@
+use ::geometry::MultiPolygon;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use geo::algorithm::Relate;
 use geo::PreparedGeometry;
-use geo_types::MultiPolygon;
 
 fn criterion_benchmark(c: &mut Criterion) {
     let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots_wgs84();

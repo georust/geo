@@ -241,7 +241,7 @@ pub use crate::types::Closest;
 use std::cmp::Ordering;
 
 pub use crate::relate::PreparedGeometry;
-pub use geo_types::{coord, line_string, point, polygon, wkt, CoordFloat, CoordNum};
+pub use ::geometry::{coord, line_string, point, polygon, wkt, CoordFloat, CoordNum};
 
 pub mod geometry;
 pub use geometry::*;

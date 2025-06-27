@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, ops::Deref};
 
-use geo_types::Coord;
+use ::geometry::Coord;
 
 use crate::GeoNum;
 
