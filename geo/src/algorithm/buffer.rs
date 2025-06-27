@@ -6,6 +6,7 @@ use crate::bool_ops::i_overlay_integration::{
     BoolOpsCoord,
 };
 use crate::bool_ops::{unary_union, BoolOpsNum, BooleanOps};
+use crate::coord;
 use crate::dimensions::{Dimensions, HasDimensions};
 use crate::geometry::{
     Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,

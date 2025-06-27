@@ -183,6 +183,7 @@ fn write_polygon_inner<T: CoordNum>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::wkt;
 
     #[test]
     fn float_coord() {

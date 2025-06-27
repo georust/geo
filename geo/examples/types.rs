@@ -1,4 +1,4 @@
-use ::geometry::point;
+use geo::point;
 use geo::Point;
 
 fn main() {

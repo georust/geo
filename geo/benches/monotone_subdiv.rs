@@ -6,10 +6,10 @@ use geo::coordinate_position::CoordPos;
 use geo::monotone::monotone_subdivision;
 use geo::{CoordinatePosition, MapCoords, Polygon};
 
-use ::geometry::{Coord, Rect};
 use criterion::{
     criterion_group, criterion_main, BatchSize, BenchmarkGroup, BenchmarkId, Criterion,
 };
+use geo::{Coord, Rect};
 use wkt::ToWkt;
 
 #[path = "utils/random.rs"]

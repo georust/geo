@@ -1,6 +1,6 @@
-use ::geometry::MultiPoint;
 use geo::ConcaveHull;
 use geo::ConvexHull;
+use geo::MultiPoint;
 use geo::{Coord, Point};
 use std::fs::File;
 use std::io::Write;

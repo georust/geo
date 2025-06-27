@@ -94,8 +94,8 @@ fn point_rect_intersection(c: &mut Criterion) {
 }
 
 fn point_triangle_intersection(c: &mut Criterion) {
-    use ::geometry::{Point, Triangle};
     use geo::{Centroid, TriangulateEarcut};
+    use geo::{Point, Triangle};
     let plot_centroids: Vec<Point> = geo_test_fixtures::nl_plots_wgs84()
         .iter()
         .map(|plot| plot.centroid().unwrap())

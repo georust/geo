@@ -108,8 +108,16 @@ impl<T: CoordinateType + Debug> CoordNum for T {}
 pub trait CoordFloat: CoordNum + Float {}
 impl<T: CoordNum + Float> CoordFloat for T {}
 
-pub mod geometry;
-pub use geometry::*;
+pub(crate) mod geometry;
+#[allow(deprecated)]
+pub use geometry::Coordinate;
+pub use geometry::{
+    Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+    MultiPolygon, Point, Polygon, Rect, Triangle,
+};
+
+// REVIEW: Is this necessary? Removing it breaks some tests, but I'm not sure if there's any affected public API
+pub use crate::{coord, line_string, point, polygon};
 
 pub use geometry::line_string::PointsIter;
 
@@ -119,7 +127,6 @@ pub use geometry::rect::InvalidRectCoordinatesError;
 mod error;
 pub use error::Error;
 
-#[macro_use]
 pub(crate) mod macros;
 pub(crate) mod wkt_macro;
 

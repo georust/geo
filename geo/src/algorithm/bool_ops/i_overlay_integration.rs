@@ -105,11 +105,12 @@ pub(crate) mod convert {
 #[cfg(test)]
 mod tests {
     use crate::geometry::polygon;
+    use crate::wkt;
 
     use crate::algorithm::BooleanOps;
     use crate::geometry::{MultiPolygon, Polygon};
     use crate::winding_order::WindingOrder;
-    use crate::{wkt, Winding};
+    use crate::Winding;
 
     #[test]
     // see https://github.com/georust/geo/issues/1309
