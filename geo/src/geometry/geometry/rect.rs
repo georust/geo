@@ -35,7 +35,7 @@ use crate::{coord, polygon, Coord, CoordFloat, CoordNum, Line, Polygon};
 /// );
 /// ```
 #[derive(Eq, PartialEq, Clone, Copy, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Rect<T: CoordNum = f64> {
     min: Coord<T>,
     max: Coord<T>,

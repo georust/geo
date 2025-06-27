@@ -233,10 +233,6 @@
 //! [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
 //! [Serde]: https://serde.rs/
 
-#[cfg(feature = "use-serde")]
-#[macro_use]
-extern crate serde;
-
 pub use crate::algorithm::*;
 pub use crate::types::Closest;
 use std::cmp::Ordering;
