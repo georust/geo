@@ -70,7 +70,7 @@ use core::ops::{Index, IndexMut};
 /// ```
 ///
 #[derive(Eq, PartialEq, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GeometryCollection<T: CoordNum = f64>(pub Vec<Geometry<T>>);
 
 // Implementing Default by hand because T does not have Default restriction

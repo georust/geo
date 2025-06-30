@@ -64,7 +64,7 @@ use num_traits::{Float, Signed};
 ///
 /// [`LineString`]: line_string/struct.LineString.html
 #[derive(Eq, PartialEq, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Polygon<T: CoordNum = f64> {
     exterior: LineString<T>,
     interiors: Vec<LineString<T>>,

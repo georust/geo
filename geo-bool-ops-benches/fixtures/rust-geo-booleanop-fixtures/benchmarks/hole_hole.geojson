@@ -1,0 +1,65 @@
+{
+  "features": [
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              [6, 43],
+              [-1.5, -198],
+              [248, -199.5],
+              [252.5, 42.5],
+              [6, 43]
+            ],
+            [
+              [57.5, 1.5],
+              [50.5, -149],
+              [210, -150.5],
+              [213, 3],
+              [57.5, 1.5]
+            ]
+          ]
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {},
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              [18.5, 89.5],
+              [90, -141.5],
+              [178.5, -181.5],
+              [184, 79.5],
+              [18.5, 89.5]
+            ],
+            [
+              [112.5, -108.5],
+              [72, 57.5],
+              [162, 59.5],
+              [158, -132],
+              [112.5, -108.5]
+            ]
+          ]
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {},
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [],
+        "type": "MultiPolygon"
+      },
+      "properties": {
+        "operation": "union"
+      },
+      "type": "Feature"
+    }
+  ],
+  "type": "FeatureCollection"
+}

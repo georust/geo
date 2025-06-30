@@ -501,8 +501,8 @@ mod tests {
         /// # Examples
         ///
         /// ```
-        /// use crate::geometry::AffineTransform;
-        /// use crate::geometry::point;
+        /// use geo::AffineTransform;
+        /// use geo::geometry::point;
         ///
         /// let a = AffineTransform::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
         /// let b = AffineTransform::new(1.01, 2.02, 3.03, 4.04, 5.05, 6.06);
@@ -539,8 +539,8 @@ mod tests {
         /// # Examples
         ///
         /// ```
-        /// use crate::geometry::MultiPoint;
-        /// use crate::geometry::point;
+        /// use geo::geometry::MultiPoint;
+        /// use geo::geometry::point;
         ///
         /// let a = AffineTransform::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
         /// let b = AffineTransform::new(1.01, 2.02, 3.03, 4.04, 5.05, 6.06);

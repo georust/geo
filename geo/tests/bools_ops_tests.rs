@@ -1,7 +1,7 @@
+use approx::assert_relative_eq;
 use geo::algorithm::bool_ops::{unary_union, BooleanOps};
 use geo::{wkt, Convert, MultiPolygon, Polygon, Relate};
 use std::time::Instant;
-use approx::assert_relative_eq;
 
 #[test]
 fn test_unary_union() {

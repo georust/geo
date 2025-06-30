@@ -8,7 +8,7 @@ use crate::{CoordNum, GeoNum, GeometryCow};
 /// # Examples
 ///
 /// ```
-/// use crate::geometry::{Point, Rect, line_string};
+/// use geo::geometry::{Point, Rect, line_string};
 /// use geo::dimensions::{HasDimensions, Dimensions};
 ///
 /// let point = Point::new(0.0, 5.0);
@@ -41,7 +41,7 @@ pub trait HasDimensions {
     /// Types like `Point` and `Rect`, which have at least one coordinate by construction, can
     /// never be considered empty.
     /// ```
-    /// use crate::geometry::{Point, coord, LineString};
+    /// use geo::geometry::{Point, coord, LineString};
     /// use geo::HasDimensions;
     ///
     /// let line_string = LineString::new(vec![
@@ -66,7 +66,7 @@ pub trait HasDimensions {
     /// ## Examples
     ///
     /// ```
-    /// use crate::geometry::{GeometryCollection, Rect, Point};
+    /// use geo::geometry::{GeometryCollection, Rect, Point};
     /// use geo::dimensions::{Dimensions, HasDimensions};
     ///
     /// // normal rectangle
@@ -100,7 +100,7 @@ pub trait HasDimensions {
     /// ## Examples
     ///
     /// ```
-    /// use crate::geometry::{GeometryCollection, Rect, Point};
+    /// use geo::geometry::{GeometryCollection, Rect, Point};
     /// use geo::dimensions::{Dimensions, HasDimensions};
     ///
     /// // a point has no boundary
@@ -204,7 +204,7 @@ impl<C: CoordNum> HasDimensions for LineString<C> {
     }
 
     /// ```
-    /// use crate::geometry::line_string;
+    /// use geo::geometry::line_string;
     /// use geo::dimensions::{HasDimensions, Dimensions};
     ///
     /// let ls = line_string![(x: 0.,  y: 0.), (x: 0., y: 1.), (x: 1., y: 1.)];

@@ -9,7 +9,7 @@ use core::cmp::Ordering;
 /// # Notes
 /// Irrespective of input order the resulting geometry has ccw order and its vertices are yielded in ccw order by iterators
 #[derive(Copy, Clone, Hash, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Triangle<T: CoordNum = f64>(pub Coord<T>, pub Coord<T>, pub Coord<T>);
 
 impl<T: CoordNum> Triangle<T> {

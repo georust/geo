@@ -233,12 +233,16 @@
 //! [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
 //! [Serde]: https://serde.rs/
 
+#[cfg(feature = "algorithms")]
 pub use crate::algorithm::*;
+#[cfg(feature = "algorithms")]
 pub use crate::types::Closest;
+#[cfg(feature = "algorithms")]
 use std::cmp::Ordering;
 
 extern crate alloc;
 
+#[cfg(feature = "algorithms")]
 pub use crate::relate::PreparedGeometry;
 
 #[macro_use]
@@ -248,19 +252,30 @@ pub use geometry::*;
 /// This module includes all the functions of geometric calculations
 #[cfg(feature = "algorithms")]
 pub mod algorithm;
+#[cfg(feature = "algorithms")]
 mod geometry_cow;
+#[cfg(feature = "algorithms")]
 mod types;
+#[cfg(feature = "algorithms")]
 mod utils;
+#[cfg(feature = "algorithms")]
 use crate::kernels::{RobustKernel, SimpleKernel};
+#[cfg(feature = "algorithms")]
 pub(crate) use geometry_cow::GeometryCow;
 
 #[cfg(test)]
 #[macro_use]
 extern crate approx;
 
+#[cfg(feature = "serde")]
+#[macro_use]
+extern crate serde;
+
+#[cfg(feature = "algorithms")]
 #[macro_use]
 extern crate log;
 
+#[cfg(feature = "algorithms")]
 /// Mean radius of Earth in meters
 /// This is the value recommended by the IUGG:
 /// Moritz, H. (2000). Geodetic Reference System 1980. Journal of Geodesy, 74(1), 128–133. doi:10.1007/s001900050278
@@ -270,22 +285,27 @@ extern crate log;
 /// - <https://en.wikipedia.org/wiki/Earth_radius#Mean_radius>
 const MEAN_EARTH_RADIUS: f64 = HaversineMeasure::GRS80_MEAN_RADIUS.radius();
 
-// Radius of Earth at the equator in meters (derived from the WGS-84 ellipsoid)
+#[cfg(feature = "algorithms")]
+/// Radius of Earth at the equator in meters (derived from the WGS-84 ellipsoid)
 const EQUATORIAL_EARTH_RADIUS: f64 = 6_378_137.0;
 
-// Radius of Earth at the poles in meters (derived from the WGS-84 ellipsoid)
+#[cfg(feature = "algorithms")]
+/// Radius of Earth at the poles in meters (derived from the WGS-84 ellipsoid)
 const POLAR_EARTH_RADIUS: f64 = 6_356_752.314_245;
 
-// Flattening of the WGS-84 ellipsoid - https://en.wikipedia.org/wiki/Flattening
+#[cfg(feature = "algorithms")]
+/// Flattening of the WGS-84 ellipsoid - https://en.wikipedia.org/wiki/Flattening
 const EARTH_FLATTENING: f64 =
     (EQUATORIAL_EARTH_RADIUS - POLAR_EARTH_RADIUS) / EQUATORIAL_EARTH_RADIUS;
 
 /// A prelude which re-exports the traits for manipulating objects in this
 /// crate. Typically imported with `use geo::prelude::*`.
+#[cfg(feature = "algorithms")]
 pub mod prelude {
     pub use crate::algorithm::*;
 }
 
+#[cfg(feature = "algorithms")]
 /// A common numeric trait used for geo algorithms
 ///
 /// Different numeric types have different tradeoffs. `geo` strives to utilize generics to allow
@@ -320,6 +340,7 @@ pub trait GeoFloat:
     GeoNum + num_traits::Float + num_traits::Signed + num_traits::Bounded + float_next_after::NextAfter
 {
 }
+#[cfg(feature = "algorithms")]
 impl<T> GeoFloat for T where
     T: GeoNum
         + num_traits::Float
@@ -329,6 +350,7 @@ impl<T> GeoFloat for T where
 {
 }
 
+#[cfg(feature = "algorithms")]
 /// A trait for methods which work for both integers **and** floating point
 pub trait GeoNum: CoordNum {
     type Ker: Kernel<Self>;
@@ -344,6 +366,7 @@ pub trait GeoNum: CoordNum {
     fn total_cmp(&self, other: &Self) -> Ordering;
 }
 
+#[cfg(feature = "algorithms")]
 macro_rules! impl_geo_num_for_float {
     ($t: ident) => {
         impl GeoNum for $t {
@@ -354,6 +377,7 @@ macro_rules! impl_geo_num_for_float {
         }
     };
 }
+#[cfg(feature = "algorithms")]
 macro_rules! impl_geo_num_for_int {
     ($t: ident) => {
         impl GeoNum for $t {
@@ -366,12 +390,19 @@ macro_rules! impl_geo_num_for_int {
 }
 
 // This is the list of primitives that we support.
+#[cfg(feature = "algorithms")]
 impl_geo_num_for_float!(f32);
+#[cfg(feature = "algorithms")]
 impl_geo_num_for_float!(f64);
+#[cfg(feature = "algorithms")]
 impl_geo_num_for_int!(i16);
+#[cfg(feature = "algorithms")]
 impl_geo_num_for_int!(i32);
+#[cfg(feature = "algorithms")]
 impl_geo_num_for_int!(i64);
+#[cfg(feature = "algorithms")]
 impl_geo_num_for_int!(i128);
+#[cfg(feature = "algorithms")]
 impl_geo_num_for_int!(isize);
 
 #[cfg(test)]

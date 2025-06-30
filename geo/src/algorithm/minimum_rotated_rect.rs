@@ -13,7 +13,7 @@ use crate::{
 /// # Examples
 ///
 /// ```
-/// use crate::geometry::{line_string, polygon, LineString, Polygon};
+/// use geo::geometry::{line_string, polygon, LineString, Polygon};
 /// use geo::MinimumRotatedRect;
 /// let poly: Polygon<f64> = polygon![(x: 3.3, y: 30.4), (x: 1.7, y: 24.6), (x: 13.4, y: 25.1), (x: 14.4, y: 31.0),(x:3.3,y:30.4)];
 /// let mbr = MinimumRotatedRect::minimum_rotated_rect(&poly).unwrap();

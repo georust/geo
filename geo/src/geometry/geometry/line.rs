@@ -8,7 +8,7 @@ use crate::{Coord, CoordNum, Point};
 /// The _interior_ and _boundary_ are defined as with a
 /// `LineString` with the two end points.
 #[derive(Eq, PartialEq, Clone, Copy, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T: CoordNum = f64> {
     pub start: Coord<T>,
     pub end: Coord<T>,

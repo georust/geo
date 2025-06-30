@@ -30,7 +30,7 @@ use rayon::prelude::*;
 /// }
 /// ```
 #[derive(Eq, PartialEq, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiPoint<T: CoordNum = f64>(pub Vec<Point<T>>);
 
 impl<T: CoordNum, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {

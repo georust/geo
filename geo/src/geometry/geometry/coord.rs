@@ -21,7 +21,7 @@ use crate::{coord, CoordNum, Point};
 ///
 /// [vector space]: //en.wikipedia.org/wiki/Vector_space
 #[derive(Eq, PartialEq, Clone, Copy, Hash, Default)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coord<T: CoordNum = f64> {
     /// Typically, `x` is the horizontal position, or longitude for geographic coordinates,
     /// but its interpretation can vary across coordinate systems.

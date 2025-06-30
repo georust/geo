@@ -28,7 +28,7 @@ use rayon::prelude::*;
 /// enforced, but expected by the operations and
 /// predicates that operate on it.
 #[derive(Eq, PartialEq, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiPolygon<T: CoordNum = f64>(pub Vec<Polygon<T>>);
 
 impl<T: CoordNum, IP: Into<Polygon<T>>> From<IP> for MultiPolygon<T> {

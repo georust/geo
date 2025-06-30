@@ -1,12 +1,12 @@
 [package]
 name = "geo-types"
 version = "0.7.16"
-license = "mit or apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/georust/geo"
 documentation = "https://docs.rs/geo-types/"
-readme = "../readme.md"
+readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
-description = "geospatial primitive data types"
+description = "Geospatial primitive data types"
 rust-version = "1.75"
 edition = "2021"
 
@@ -16,9 +16,9 @@ std = ["geo/std"]
 multithreading = ["geo/multithreading"]
 approx=["geo/approx"]
 serde=["geo/serde"]
-# prefer `use-rstar` feature rather than enabling rstar directly.
+# Prefer `use-rstar` feature rather than enabling rstar directly.
 # rstar integration relies on the optional approx crate, but implicit features cannot yet enable other features.
-# see: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#namespaced-features
+# See: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#namespaced-features
 rstar = ["geo/rstar_0_8"]
 use-rstar = ["geo/rstar_0_8"]
 use-rstar_0_8 = ["geo/rstar_0_8"]
@@ -28,8 +28,4 @@ use-rstar_0_11 = ["geo/rstar_0_11"]
 use-rstar_0_12 = ["geo/rstar"]
 
 [dependencies]
-geo = { path = "../geo" }
-
-[dev-dependencies]
-geo = { path = "../geo", features = ["algorithms", "approx", "serde"] }
-
+geo = { path = "../geo", default-features = false }

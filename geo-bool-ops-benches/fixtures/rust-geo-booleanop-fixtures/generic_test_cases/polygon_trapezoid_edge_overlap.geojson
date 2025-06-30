@@ -1,0 +1,112 @@
+{
+  "features": [
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [0, 3.5],
+            [0, 0],
+            [21, 0],
+            [21, 3.5],
+            [0, 3.5]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "properties": {},
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [21, 7],
+            [0, 7],
+            [7, 0],
+            [14, 0],
+            [21, 7]
+          ]
+        ],
+        "type": "Polygon"
+      },
+      "properties": {},
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              [3.5, 3.5],
+              [7, 0],
+              [14, 0],
+              [17.5, 3.5],
+              [3.5, 3.5]
+            ]
+          ]
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {
+        "operation": "intersection"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              [0, 0],
+              [7, 0],
+              [14, 0],
+              [21, 0],
+              [21, 3.5],
+              [17.5, 3.5],
+              [21, 7],
+              [0, 7],
+              [3.5, 3.5],
+              [0, 3.5],
+              [0, 0]
+            ]
+          ]
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {
+        "operation": "union"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              [0, 0],
+              [7, 0],
+              [3.5, 3.5],
+              [0, 3.5],
+              [0, 0]
+            ]
+          ],
+          [
+            [
+              [14, 0],
+              [21, 0],
+              [21, 3.5],
+              [17.5, 3.5],
+              [14, 0]
+            ]
+          ]
+        ],
+        "type": "MultiPolygon"
+      },
+      "properties": {
+        "operation": "diff"
+      },
+      "type": "Feature"
+    }
+  ],
+  "type": "FeatureCollection"
+}

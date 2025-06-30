@@ -4,7 +4,7 @@ use geo::EuclideanLength;
 use geo::Simplify;
 use libfuzzer_sys::fuzz_target;
 
-fuzz_target!(|tuple: (::geometry::Polygon<f32>, f32)| {
+fuzz_target!(|tuple: (geo::Polygon<f32>, f32)| {
     let (polygon, epsilon) = tuple;
 
     let simplified = polygon.simplify(epsilon);

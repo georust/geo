@@ -35,7 +35,7 @@ use rayon::prelude::*;
 /// _closed_ if all of its elements are closed. The boundary
 /// of a closed `MultiLineString` is always empty.
 #[derive(Eq, PartialEq, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiLineString<T: CoordNum = f64>(pub Vec<LineString<T>>);
 
 impl<T: CoordNum> MultiLineString<T> {

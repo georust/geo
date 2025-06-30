@@ -130,7 +130,7 @@ use core::ops::{Index, IndexMut};
 /// ```
 
 #[derive(Eq, PartialEq, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LineString<T: CoordNum = f64>(pub Vec<Coord<T>>);
 
 /// A [`Point`] iterator returned by the `points` method

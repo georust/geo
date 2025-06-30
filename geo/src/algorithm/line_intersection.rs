@@ -45,7 +45,7 @@ impl<F: GeoFloat> LineIntersection<F> {
 /// # Examples
 ///
 /// ```
-/// use crate::geometry::coord;
+/// use geo::geometry::coord;
 /// use geo::{Line, Coord};
 /// use geo::line_intersection::{line_intersection, LineIntersection};
 ///

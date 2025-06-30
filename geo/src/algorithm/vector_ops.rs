@@ -73,10 +73,10 @@ where
     /// The following list highlights some examples in geo which might be
     /// brought together to use this function:
     ///
-    /// 1. [::geometry::Point::cross_prod()] is already defined on
-    ///    [::geometry::Point]... but that it seems to be some other
+    /// 1. [crate::Point::cross_prod()] is already defined on
+    ///    [crate::Point]... but that it seems to be some other
     ///    operation on 3 points??
-    /// 2. [::geometry::Line] struct also has a [::geometry::Line::determinant()]
+    /// 2. [crate::Line] struct also has a [crate::Line::determinant()]
     ///    function which is the same as `line.start.wedge_product(line.end)`
     /// 3. The [crate::algorithm::Kernel::orient2d()] trait default
     ///    implementation uses cross product to compute orientation. It returns

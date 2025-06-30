@@ -46,7 +46,7 @@ use core::convert::TryFrom;
 /// ```
 ///
 #[derive(Eq, PartialEq, Clone, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Geometry<T: CoordNum = f64> {
     Point(Point<T>),
     Line(Line<T>),
