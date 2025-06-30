@@ -252,8 +252,7 @@ mod tests {
             assert_eq!(
                 line_string.closest_point(&p),
                 line.closest_point(&p),
-                "closest point to: {:?}",
-                p
+                "closest point to: {p:?}",
             );
         }
     }

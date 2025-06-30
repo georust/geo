@@ -133,7 +133,7 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
                         };
                         let geoms = convert_back_mpoly(&geoms);
                         info!("theirs: {geoms:?}");
-                        format!("{:?}", geoms)
+                        format!("{geoms:?}")
                     });
                     let theirs = their_result.unwrap_or_else(|_e| {
                         error!("theirs panicked");
@@ -174,11 +174,11 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
                     };
 
                     Ok(TestCase {
-                        p1: format!("{:?}", p1),
-                        p2: format!("{:?}", p2),
+                        p1: format!("{p1:?}"),
+                        p2: format!("{p2:?}"),
                         op: ty.to_string(),
-                        ours: our_geom.map(|g| format!("{:?}", g)).unwrap_or_default(),
-                        expected: format!("{:?}", p),
+                        ours: our_geom.map(|g| format!("{g:?}")).unwrap_or_default(),
+                        expected: format!("{p:?}"),
                         comment,
                         theirs,
                     })

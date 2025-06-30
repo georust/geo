@@ -80,7 +80,7 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
                 }
             }
         }
-        debug!("edge_end_bundle_star: {:?}", self);
+        debug!("edge_end_bundle_star: {self:?}");
     }
 
     fn propagate_side_labels(&mut self, geom_index: usize, _geometry_graph: &GeometryGraph<F>) {
@@ -141,8 +141,7 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
         for edge_end_bundle in self.edge_end_bundles_iter() {
             edge_end_bundle.update_intersection_matrix(intersection_matrix);
             debug!(
-                "updated intersection_matrix: {:?} from edge_end_bundle: {:?}",
-                intersection_matrix, edge_end_bundle
+                "updated intersection_matrix: {intersection_matrix:?} from edge_end_bundle: {edge_end_bundle:?}"
             );
         }
     }
@@ -197,7 +196,7 @@ where
         graph_a: &GeometryGraph<F>,
         graph_b: &GeometryGraph<F>,
     ) -> LabeledEdgeEndBundleStar<F> {
-        debug!("edge_end_bundle_star: {:?}", self);
+        debug!("edge_end_bundle_star: {self:?}");
         let labeled_edges = self
             .edge_map
             .into_values()

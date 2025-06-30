@@ -50,7 +50,7 @@ impl<T: GeoNum, P> Clone for RcSegment<T, P> {
 
 impl<T: GeoNum, P: Clone + Debug> RcSegment<T, P> {
     pub(crate) fn split_at(&self, pt: SweepPoint<T>) -> Self {
-        debug!("Splitting segment {:?} at {:?}", self, pt);
+        debug!("Splitting segment {self:?} at {pt:?}");
         let mut borrow = RefCell::borrow_mut(&self.0);
         let right = borrow.line.right();
         borrow.line = LineOrPoint::from((borrow.line.left(), pt));
