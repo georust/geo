@@ -1,6 +1,4 @@
 pub(crate) mod i_overlay_integration;
-#[cfg(test)]
-mod tests;
 
 use i_overlay_integration::convert::{multi_polygon_from_shapes, ring_to_shape_path};
 use i_overlay_integration::BoolOpsCoord;

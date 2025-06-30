@@ -1,7 +1,7 @@
-use super::{unary_union, BooleanOps};
-use crate::{wkt, Convert, MultiPolygon, Polygon, Relate};
+use geo::algorithm::bool_ops::{unary_union, BooleanOps};
+use geo::{wkt, Convert, MultiPolygon, Polygon, Relate};
 use std::time::Instant;
-use wkt::ToWkt;
+use approx::assert_relative_eq;
 
 #[test]
 fn test_unary_union() {
@@ -49,7 +49,7 @@ fn test_unary_union_errors() {
         union
     };
 
-    use crate::algorithm::Area;
+    use geo::algorithm::Area;
     let naive_area = naive_union.unsigned_area();
     let simplified_area = simplified_union.unsigned_area();
     assert_relative_eq!(naive_area, simplified_area, max_relative = 1e-5);
@@ -83,7 +83,7 @@ fn test_unary_union_errors() {
 fn test_unary_union_winding() {
     let input: MultiPolygon = geo_test_fixtures::nl_plots_epsg_28992();
 
-    use crate::orient::{Direction, Orient};
+    use geo::orient::{Direction, Orient};
     let default_winding_union = unary_union(input.orient(Direction::Default).iter());
     let reversed_winding_union = unary_union(input.orient(Direction::Reversed).iter());
     assert_eq!(default_winding_union, reversed_winding_union);
@@ -146,14 +146,14 @@ fn jts_test_overlay_la_1() {
     assert!(
         im.is_equal_topo(),
         "actual: {:#?}, expected: {:#?}",
-        actual.wkt_string(),
-        expected.wkt_string()
+        actual,
+        expected
     );
 }
 
 mod gh_issues {
-    use super::super::{BooleanOps, OpType};
-    use crate::{geometry::*, wkt};
+    use geo::algorithm::bool_ops::{BooleanOps, OpType};
+    use geo::{geometry::*, wkt};
 
     #[test]
     fn gh_issue_867() {
@@ -242,7 +242,7 @@ mod gh_issues {
                 x: c.x + 931230.,
                 y: c.y + 412600.,
             };
-            use crate::MapCoordsInPlace;
+            use geo::MapCoordsInPlace;
             left.map_coords_in_place(shift);
             right.map_coords_in_place(shift);
             for _i in 0..10 {
@@ -366,7 +366,7 @@ mod gh_issues {
         ));
         assert_eq!(c, expected_c);
         assert_eq!(c.0.len(), 2);
-        assert!(crate::Area::unsigned_area(&c.0[1]) < 1e-5);
+        assert!(geo::Area::unsigned_area(&c.0[1]) < 1e-5);
         // The goal is just to get here without panic
     }
 }
