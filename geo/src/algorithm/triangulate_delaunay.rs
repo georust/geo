@@ -35,7 +35,7 @@ where
 
 // ====== Error ========
 
-#[derive(Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum TriangulationError {
     SpadeError(spade::InsertionError),
     LoopTrap,
