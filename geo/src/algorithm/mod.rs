@@ -310,6 +310,7 @@ pub mod within;
 pub use within::Within;
 
 /// Planar sweep algorithm and related utils
+#[deprecated(note = "use new_sweep")]
 pub mod sweep;
 
 /// Revised planar sweep-line algorithm
