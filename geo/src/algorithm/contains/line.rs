@@ -89,6 +89,7 @@ where
 {
     fn contains(&self, multi_point: &MultiPoint<T>) -> bool {
         // at least one point must not be equal to one of the vertices
+
         multi_point.iter().any(|point| self.contains(&point.0))
             && multi_point.iter().all(|point| self.intersects(&point.0))
     }
@@ -108,5 +109,40 @@ mod test {
 
         assert!(!line.contains(&empty));
         assert!(!line.relate(&empty).is_contains());
+    }
+
+    #[test]
+    fn test_line_contains_multipoint() {
+        let start = coord! {x: 0., y: 0.};
+        let mid = coord! {x: 50., y: 50.};
+        let end = coord! {x: 100., y: 100.};
+        let out = coord! {x: 101., y: 101.};
+
+        let line = Line::new(start, end);
+
+        let mp_ends = MultiPoint::from(vec![start, end]);
+        let mp_within = MultiPoint::from(vec![mid]);
+        let mp_merged = MultiPoint::from(vec![start, mid, end]);
+
+        let mp_out = MultiPoint::from(vec![out]);
+        let mp_all = MultiPoint::from(vec![start, mid, end, out]);
+
+        // false if all points lie on the boundary of the line (start and end points)
+        assert!(!line.contains(&mp_ends));
+
+        // at least one point must be
+        assert!(line.contains(&mp_within));
+        assert!(line.contains(&mp_merged));
+
+        // return false if any point is not on the line
+        assert!(!line.contains(&mp_out));
+        assert!(!line.contains(&mp_all));
+
+        // multipoint containing duplicates
+        let start_dupe = MultiPoint::from(vec![start, start]);
+        let start_dupe_within = MultiPoint::from(vec![start, start, mid]);
+
+        assert!(!line.contains(&start_dupe));
+        assert!(line.contains(&start_dupe_within));
     }
 }

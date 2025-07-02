@@ -237,16 +237,53 @@ fn cmp_pts<T: CoordNum>(a: &Point<T>, b: &Point<T>) -> std::cmp::Ordering {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{point, MultiPoint, Relate};
+    use crate::{coord, point, MultiPoint, Relate};
 
     #[test]
+    /**
+     * tests for empty multipoint
+     * behaviour follows `Relate` Trait
+     */
     fn test_empty_multipoint_contains_multipoint() {
         let empty: MultiPoint<f64> = MultiPoint::new(Vec::new());
-        let non_empty: MultiPoint<f64> = MultiPoint::new(vec![point!(x: 0.0, y: 0.0)]);
-        assert!(!empty.contains(&non_empty));
-        assert!(!non_empty.contains(&empty));
+        let non_empty: MultiPoint<f64> = MultiPoint::new(vec![point! {x: 0.0, y: 0.0}]);
 
+        // empty multipoint does not contains empty multipoint
+        assert!(!empty.contains(&non_empty));
         assert!(!empty.relate(&non_empty).is_contains());
+
+        // non-empty multipoint does not contain empty multipoint
+        assert!(!non_empty.contains(&empty));
         assert!(!non_empty.relate(&empty).is_contains());
+
+        // empty multipoint does not contain empty multipoint
+        assert!(!empty.contains(&empty));
+        assert!(!empty.relate(&empty).is_contains());
+    }
+
+    #[test]
+    fn test_multipoint_contains_multipoint() {
+        let pt_a = coord! {x: 0., y: 0.};
+        let pt_b = coord! {x: 10., y: 10.};
+        let pt_c = coord! {x: 20., y: 20.};
+        let pt_d = coord! {x: 30., y: 30.};
+
+        let mp_a = MultiPoint::from(vec![pt_a]);
+        let mp_bc = MultiPoint::from(vec![pt_a, pt_b]);
+        let mp_abc = MultiPoint::from(vec![pt_a, pt_b, pt_c]);
+        let mp_bcd = MultiPoint::from(vec![pt_b, pt_c, pt_d]);
+
+        // multipoint contains itself
+        assert!(mp_a.contains(&mp_a));
+        assert!(mp_bc.contains(&mp_bc));
+        assert!(mp_abc.contains(&mp_abc));
+        assert!(mp_bcd.contains(&mp_bcd));
+
+        // multipoint contains subsets
+        assert!(mp_abc.contains(&mp_a));
+        assert!(mp_abc.contains(&mp_bc));
+
+        // overlapping multipoints do not contain each other
+        assert!(!mp_abc.contains(&mp_bcd));
     }
 }
