@@ -60,4 +60,3 @@ where
         self.to_polygon().intersects(&rhs.to_polygon())
     }
 }
-

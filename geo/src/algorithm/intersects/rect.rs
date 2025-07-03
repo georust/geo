@@ -68,7 +68,6 @@ where
     }
 }
 
-
 impl<T> Intersects<Triangle<T>> for Rect<T>
 where
     T: GeoNum,

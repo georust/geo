@@ -2,8 +2,8 @@ use super::{has_disjoint_bboxes, Intersects};
 use crate::coordinate_position::CoordPos;
 use crate::{BoundingRect, CoordinatePosition};
 use crate::{
-    Coord, CoordNum, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect,
-    Triangle,MultiPoint
+    Coord, CoordNum, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
+    Polygon, Rect, Triangle,
 };
 
 impl<T> Intersects<Coord<T>> for Polygon<T>
@@ -70,8 +70,7 @@ where
     }
 }
 
-// Implementations for MultiPolygon
-
+// Blanket implementation for MultiPolygon
 impl<G, T> Intersects<G> for MultiPolygon<T>
 where
     T: GeoNum,
@@ -85,7 +84,6 @@ where
         self.iter().any(|p| p.intersects(rhs))
     }
 }
-
 
 #[cfg(test)]
 mod tests {

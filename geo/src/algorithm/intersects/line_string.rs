@@ -31,4 +31,3 @@ where
         self.iter().any(|p| p.intersects(rhs))
     }
 }
-
