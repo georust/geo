@@ -144,6 +144,40 @@ fn point_triangle_intersection(c: &mut Criterion) {
     });
 }
 
+fn rect_triangle_intersection(c: &mut Criterion) {
+    use geo::{coord, Intersects, Rect, Triangle};
+
+    c.bench_function("intersects triangle pt in rect", |bencher| {
+        let rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 10., y: 10. });
+        let triangle = Triangle::from([(5., 5.), (11., 0.), (11., 10.)]);
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).intersects(criterion::black_box(&triangle)));
+        });
+    });
+    c.bench_function("intersects rect pt in triangle", |bencher| {
+        let rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 10., y: 10. });
+        let triangle = Triangle::from([(-1., 5.), (-1., -5.), (1., -1.)]);
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).intersects(criterion::black_box(&triangle)));
+        });
+    });
+    c.bench_function("intersects edge intersections", |bencher| {
+        let rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 10., y: 10. });
+        let triangle = Triangle::from([(-1., 2.), (2., -1.), (-10., -10.)]);
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).intersects(criterion::black_box(&triangle)));
+        });
+    });
+
+    c.bench_function("disjoint", |bencher| {
+        let rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 10., y: 10. });
+        let triangle = Triangle::from([(0., 11.), (1., 11.), (1., 12.)]);
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&rect).intersects(criterion::black_box(&triangle)));
+        });
+    });
+}
+
 criterion_group! {
     name = bench_multi_polygons;
     config = Criterion::default().sample_size(10);
@@ -160,10 +194,12 @@ criterion_group! {
     config = Criterion::default().sample_size(50);
     targets = point_triangle_intersection
 }
+criterion_group!(bench_rect_triangle, rect_triangle_intersection);
 
 criterion_main!(
     bench_multi_polygons,
     bench_rects,
     bench_point_rect,
-    bench_point_triangle
+    bench_point_triangle,
+    bench_rect_triangle
 );

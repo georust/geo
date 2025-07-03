@@ -1,4 +1,4 @@
-use super::Intersects;
+use super::{has_disjoint_bboxes, Intersects};
 use crate::*;
 
 impl<T> Intersects<Coord<T>> for Rect<T>
@@ -73,6 +73,17 @@ where
     T: GeoNum,
 {
     fn intersects(&self, rhs: &Triangle<T>) -> bool {
-        self.intersects(&rhs.to_polygon())
+        // sufficient to show that any of these are true:
+        // some corner of the triangle intersects the rectangle
+        // some corner of the rectangle intersects the triangle
+        // some edge of triangle intersects edge of rectangle
+
+        if has_disjoint_bboxes(self, rhs) {
+            return false;
+        }
+
+        rhs.coords_iter().any(|p| self.intersects(&p))
+            || self.coords_iter().any(|p| rhs.intersects(&p))
+            || rhs.lines_iter().any(|l| self.intersects(&l))
     }
 }
