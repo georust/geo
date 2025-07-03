@@ -45,8 +45,9 @@ mod polygon;
 mod rect;
 mod triangle;
 
-// self is a 0d geometry (Point, MultiPoint)
-// target can be any geometry
+/// Implement `Contains` for a 0d geometry (Point, MultiPoint) containing a geometry
+/// * `self` is a 0d geometry (Point, MultiPoint)   
+/// * `target` can be either a multi-part of single-part geometry
 macro_rules! impl_contains_from_relate_0d {
     ($for:ty,  [$($target:ty),*]) => {
         $(
@@ -76,8 +77,9 @@ macro_rules! impl_contains_from_relate_0d {
 }
 pub(crate) use impl_contains_from_relate_0d;
 
-// self is a 1d geometry (Line, LineString, MultiLineString)
-// target must not be a Multi-part geometry
+/// Implement `Contains` for a 1d geometry (Line,LineString,MultiLineString) containing a Single-part geometry
+/// * `self` is a 1d geometry (Line, LineString, MultiLineString)   
+/// * `target` is a Single-part geometry
 macro_rules! impl_contains_from_relate_1d {
     ($for:ty,  [$($target:ty),*]) => {
         $(
@@ -110,8 +112,9 @@ macro_rules! impl_contains_from_relate_1d {
 }
 pub(crate) use impl_contains_from_relate_1d;
 
-// self is a 1d geometry (Line, LineString, MultiLineString)
-// target is a Multi-part geometries
+/// Implement `Contains` for a 1d geometry (Line,LineString,MultiLineString) containing a Multi-part geometry
+/// * `self` is a 1d geometry (Line, LineString, MultiLineString)   
+/// * `target` is a Multi-part geometry
 macro_rules! impl_contains_from_relate_1d_multi {
     ($for:ty,  [$($target:ty),*]) => {
         $(
@@ -131,11 +134,12 @@ macro_rules! impl_contains_from_relate_1d_multi {
                         Dimensions::Empty => false,
                         Dimensions::TwoDimensional => false,
                         // Simplifying to GeometryCollection of LineString and Point is not easy
+                        // fallback to `Relate` Trait implementation
                         Dimensions::OneDimensional => self.relate(target).is_contains(),
                         // simplify into contains(MultiPoint<T>)
                         // because we might have multiple degenerate 0d geometries
                         Dimensions::ZeroDimensional => {
-                            let coords:Vec<Coord<T>> =target.coords_iter().collect();
+                            let coords:Vec<Coord<T>> = target.coords_iter().collect();
                             let pts:Vec<Point<T>> = coords.iter().map(|c| Point::from(*c)).collect();
                             let mp = MultiPoint::new(pts);
                             self.contains(&mp)
