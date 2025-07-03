@@ -13,8 +13,9 @@ where
             && point_in_rect(*rhs, self.start, self.end)
     }
 }
-symmetric_intersects_impl!(Coord<T>, Line<T>);
-symmetric_intersects_impl!(Line<T>, Point<T>);
+
+symmetric_intersects_impl!(Line<T>, LineString<T>);
+symmetric_intersects_impl!(Line<T>, MultiLineString<T>);
 
 impl<T> Intersects<Line<T>> for Line<T>
 where
@@ -68,6 +69,14 @@ where
     }
 }
 
+symmetric_intersects_impl!(Line<T>, Point<T>);
+symmetric_intersects_impl!(Line<T>, MultiPoint<T>);
+
+symmetric_intersects_impl!(Line<T>, Polygon<T>);
+symmetric_intersects_impl!(Line<T>, MultiPolygon<T>);
+
+symmetric_intersects_impl!(Line<T>, Rect<T>);
+
 impl<T> Intersects<Triangle<T>> for Line<T>
 where
     T: GeoNum,
@@ -76,4 +85,3 @@ where
         self.intersects(&rhs.to_polygon())
     }
 }
-symmetric_intersects_impl!(Triangle<T>, Line<T>);

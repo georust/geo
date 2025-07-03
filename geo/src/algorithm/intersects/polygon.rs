@@ -3,7 +3,7 @@ use crate::coordinate_position::CoordPos;
 use crate::{BoundingRect, CoordinatePosition};
 use crate::{
     Coord, CoordNum, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect,
-    Triangle,
+    Triangle,MultiPoint
 };
 
 impl<T> Intersects<Coord<T>> for Polygon<T>
@@ -14,8 +14,9 @@ where
         self.coordinate_position(p) != CoordPos::Outside
     }
 }
-symmetric_intersects_impl!(Coord<T>, Polygon<T>);
-symmetric_intersects_impl!(Polygon<T>, Point<T>);
+
+symmetric_intersects_impl!(Polygon<T>, LineString<T>);
+symmetric_intersects_impl!(Polygon<T>, MultiLineString<T>);
 
 impl<T> Intersects<Line<T>> for Polygon<T>
 where
@@ -28,29 +29,9 @@ where
             || self.intersects(&line.end)
     }
 }
-symmetric_intersects_impl!(Line<T>, Polygon<T>);
-symmetric_intersects_impl!(Polygon<T>, LineString<T>);
-symmetric_intersects_impl!(Polygon<T>, MultiLineString<T>);
 
-impl<T> Intersects<Rect<T>> for Polygon<T>
-where
-    T: GeoNum,
-{
-    fn intersects(&self, rect: &Rect<T>) -> bool {
-        self.intersects(&rect.to_polygon())
-    }
-}
-symmetric_intersects_impl!(Rect<T>, Polygon<T>);
-
-impl<T> Intersects<Triangle<T>> for Polygon<T>
-where
-    T: GeoNum,
-{
-    fn intersects(&self, rect: &Triangle<T>) -> bool {
-        self.intersects(&rect.to_polygon())
-    }
-}
-symmetric_intersects_impl!(Triangle<T>, Polygon<T>);
+symmetric_intersects_impl!(Polygon<T>, Point<T>);
+symmetric_intersects_impl!(Polygon<T>, MultiPoint<T>);
 
 impl<T> Intersects<Polygon<T>> for Polygon<T>
 where
@@ -66,6 +47,26 @@ where
             polygon.interiors().iter().any(|inner_line_string| self.intersects(inner_line_string)) ||
             // self is contained inside polygon
             polygon.intersects(self.exterior())
+    }
+}
+
+symmetric_intersects_impl!(Polygon<T>, MultiPolygon<T>);
+
+impl<T> Intersects<Rect<T>> for Polygon<T>
+where
+    T: GeoNum,
+{
+    fn intersects(&self, rect: &Rect<T>) -> bool {
+        self.intersects(&rect.to_polygon())
+    }
+}
+
+impl<T> Intersects<Triangle<T>> for Polygon<T>
+where
+    T: GeoNum,
+{
+    fn intersects(&self, rect: &Triangle<T>) -> bool {
+        self.intersects(&rect.to_polygon())
     }
 }
 
@@ -85,11 +86,6 @@ where
     }
 }
 
-symmetric_intersects_impl!(Point<T>, MultiPolygon<T>);
-symmetric_intersects_impl!(Line<T>, MultiPolygon<T>);
-symmetric_intersects_impl!(Rect<T>, MultiPolygon<T>);
-symmetric_intersects_impl!(Triangle<T>, MultiPolygon<T>);
-symmetric_intersects_impl!(Polygon<T>, MultiPolygon<T>);
 
 #[cfg(test)]
 mod tests {

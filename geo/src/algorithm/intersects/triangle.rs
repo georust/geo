@@ -39,8 +39,18 @@ where
     }
 }
 
-symmetric_intersects_impl!(Coord<T>, Triangle<T>);
+symmetric_intersects_impl!(Triangle<T>, LineString<T>);
+symmetric_intersects_impl!(Triangle<T>, MultiLineString<T>);
+
+symmetric_intersects_impl!(Triangle<T>, Line<T>);
+
 symmetric_intersects_impl!(Triangle<T>, Point<T>);
+symmetric_intersects_impl!(Triangle<T>, MultiPoint<T>);
+
+symmetric_intersects_impl!(Triangle<T>, Polygon<T>);
+symmetric_intersects_impl!(Triangle<T>, MultiPolygon<T>);
+
+symmetric_intersects_impl!(Triangle<T>, Rect<T>);
 
 impl<T> Intersects<Triangle<T>> for Triangle<T>
 where
@@ -50,3 +60,4 @@ where
         self.to_polygon().intersects(&rhs.to_polygon())
     }
 }
+

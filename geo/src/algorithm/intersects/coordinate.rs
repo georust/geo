@@ -10,6 +10,11 @@ where
     }
 }
 
+symmetric_intersects_impl!(Coord<T>, LineString<T>);
+symmetric_intersects_impl!(Coord<T>, MultiLineString<T>);
+
+symmetric_intersects_impl!(Coord<T>, Line<T>);
+
 // The other side of this is handled via a blanket impl.
 impl<T> Intersects<Point<T>> for Coord<T>
 where
@@ -19,3 +24,11 @@ where
         self == &rhs.0
     }
 }
+symmetric_intersects_impl!(Coord<T>, MultiPoint<T>);
+
+symmetric_intersects_impl!(Coord<T>, Polygon<T>);
+symmetric_intersects_impl!(Coord<T>, MultiPolygon<T>);
+
+symmetric_intersects_impl!(Coord<T>, Rect<T>);
+
+symmetric_intersects_impl!(Coord<T>, Triangle<T>);
