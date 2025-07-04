@@ -1,6 +1,6 @@
 use super::{has_disjoint_bboxes, Intersects};
 use crate::coordinate_position::CoordPos;
-use crate::{BoundingRect, CoordinatePosition};
+use crate::{BoundingRect, CoordinatePosition, CoordsIter, LinesIter};
 use crate::{
     Coord, CoordNum, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
     Polygon, Rect, Triangle,
@@ -42,11 +42,26 @@ where
             return false;
         }
 
-        // self intersects (or contains) any line in polygon
-        self.intersects(polygon.exterior()) ||
-            polygon.interiors().iter().any(|inner_line_string| self.intersects(inner_line_string)) ||
-            // self is contained inside polygon
-            polygon.intersects(self.exterior())
+        // if there are no line intersections,
+        // then either one fully contains the other
+        // or they are disjoint
+
+        // exterior exterior
+        // using lines_iter() skips the bounds check for ls intersections gives a ~33% speedup
+        // we already know that exteriors are not disjoint
+        // and avoid recalcuating bounds of self.exterior() for every linestring-line itersects check
+        self.exterior().lines_iter().any(|line| polygon.exterior().lines_iter().any(|other_line| line.intersects(&other_line)))
+
+        // exterior inner
+        || self.interiors().iter().any(|inner_line_string| polygon.exterior().lines_iter().any(|other_line| inner_line_string.intersects(&other_line)))
+        || polygon.interiors().iter().any(|inner_line_string| self.exterior().lines_iter().any(|other_line| inner_line_string.intersects(&other_line)))
+
+        // inner inner 
+        || self.interiors().iter().any(|inner_line_string| polygon.interiors().iter().any(|other_line_string| inner_line_string.intersects(other_line_string)))
+
+        // check 1 point of each polygon being within the other
+        || self.exterior().coords_iter().take(1).any(|p|polygon.intersects(&p))
+        || polygon.exterior().coords_iter().take(1).any(|p|self.intersects(&p))
     }
 }
 
