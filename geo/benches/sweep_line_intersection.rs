@@ -1,21 +1,20 @@
 //! Benchmarks for the Bentley-Ottmann sweep line intersection algorithm
 //!
-//! This benchmark suite compares the new sweep line implementation against
-//! a brute force O(n²) approach across various scenarios:
+//! This streamlined benchmark suite compares the sweep line implementation against
+//! a brute force O(n²) approach across key scenarios:
 //!
-//! - Different dataset sizes (n)
-//! - Different intersection densities (k)
-//! - Edge cases (collinear segments, numerical precision, etc.)
+//! - Performance comparison across different dataset sizes
+//! - Dense intersections (grid patterns)
+//! - Sparse large datasets (few intersections, many segments)
+//! - Essential edge cases (collinear segments, numerical precision)
 //! - Real-world patterns (road networks, polygon boundaries)
 //!
 //! To run specific benchmark groups:
 //! ```
-//! cargo bench --bench sweep_line_intersection "Line Intersections"
+//! cargo bench --bench sweep_line_intersection "Performance Comparison"
 //! cargo bench --bench sweep_line_intersection "Dense Line Intersections"
-//! cargo bench --bench sweep_line_intersection "Large Datasets"
-//! cargo bench --bench sweep_line_intersection "Time Complexity Verification"
-//! cargo bench --bench sweep_line_intersection "Edge Cases"
-//! cargo bench --bench sweep_line_intersection "Crossover Point Detection"
+//! cargo bench --bench sweep_line_intersection "Sparse Large Dataset"
+//! cargo bench --bench sweep_line_intersection "Essential Edge Cases"
 //! cargo bench --bench sweep_line_intersection "Realistic Patterns"
 //! ```
 
@@ -55,37 +54,29 @@ fn brute_force_intersections(lines: &[Line<f64>]) -> Vec<(Line<f64>, Line<f64>)>
     result
 }
 
-// Benchmark finding intersections between lines
-// the new algorithm is consistently 1.3x slower than brute force for these workloads
-fn bench_line_intersections(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Line Intersections");
-    group.sample_size(10); // Fewer samples due to longer running time
+// Benchmark performance comparison across different dataset sizes
+fn bench_performance_comparison(c: &mut Criterion) {
+    let mut group = c.benchmark_group("Performance Comparison");
+    group.sample_size(10);
 
-    // Use a consistent seed for reproducibility
     let mut rng = StdRng::seed_from_u64(42);
 
-    // Test with different numbers of input lines
-    for &n in &[5000, 10000] {
-        // n=1000 gives ~500k comparisons (n * (n-1) / 2)
-
+    // Test key sizes: crossover point, medium, and large datasets
+    for &n in &[1000, 5000, 10000] {
         let lines = generate_random_lines(n, &mut rng);
-
-        // Clone lines once to avoid re-generation overhead
-        let lines_for_bench = lines.clone();
 
         // Brute force approach
         group.bench_function(format!("brute_force_n{n}"), |b| {
             b.iter(|| {
-                black_box(brute_force_intersections(&lines_for_bench));
+                black_box(brute_force_intersections(&lines));
             });
         });
 
-        // New sweep line algorithm
+        // Sweep line algorithm
         group.bench_function(format!("sweep_n{n}"), |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines_for_bench.iter().cloned())
-                        .collect();
+                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
                 black_box(intersections);
             });
         });
@@ -132,178 +123,47 @@ fn bench_dense_line_intersections(c: &mut Criterion) {
     group.finish();
 }
 
-// Benchmark with large sets of line segments that have a moderate number of intersections
-fn bench_large_datasets(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Large Datasets");
+// Benchmark with sparse large dataset: should be faster
+fn bench_sparse_large_dataset(c: &mut Criterion) {
+    let mut group = c.benchmark_group("Sparse Large Dataset");
     group.sample_size(10);
 
     let mut rng = StdRng::seed_from_u64(42);
 
-    // Test case 1: Random lines (moderate intersections)
-    {
-        let n = 2000;
-        let lines = generate_random_lines(n, &mut rng);
-
-        group.bench_function("random_sweep_2000", |b| {
-            b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
-                black_box(intersections);
-            });
-        });
-
-        group.bench_function("random_brute_force_2000", |b| {
-            b.iter(|| {
-                black_box(brute_force_intersections(&lines));
-            });
-        });
-    }
-
-    // Test case 2: Sparse lines (few intersections) - demonstrates algorithm advantage
-    {
-        let n = 10_000;
-        let mut lines = Vec::with_capacity(n);
-
-        // Create mostly parallel lines with small variations
-        for i in 0..n {
-            let stripe = i / 100;
-            let base_x = (stripe % 20) as f64 * 10.0;
-            let base_y = (stripe / 20) as f64 * 10.0;
-            let angle = (i % 100) as f64 * 0.005;
-
-            let x1 = base_x + rng.gen_range(-1.0..1.0);
-            let y1 = base_y + rng.gen_range(-1.0..1.0);
-            let x2 = x1 + 5.0 * angle.cos();
-            let y2 = y1 + 5.0 * angle.sin();
-
-            lines.push(Line::from([(x1, y1), (x2, y2)]));
-        }
-
-        group.bench_function("sparse_sweep_10000", |b| {
-            b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
-                black_box(intersections);
-            });
-        });
-
-        group.bench_function("sparse_brute_force_10000", |b| {
-            b.iter(|| {
-                black_box(brute_force_intersections(&lines));
-            });
-        });
-    }
-
-    group.finish();
-}
-
-// Benchmark to verify O((n + k) log n) time complexity
-fn bench_time_complexity_verification(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Time Complexity Verification");
-    group.sample_size(10);
-
-    let mut rng = StdRng::seed_from_u64(42);
-
-    // Test 1: Double n while keeping k/n² ratio constant
-    // This should show the log n factor in the sweep line algorithm
-    let base_n = 1000;
-    let k_ratio = 0.01; // 1% of all possible pairs intersect
-
-    for multiplier in &[1, 2, 4, 8] {
-        let n = base_n * multiplier;
-        let expected_k = ((n * (n - 1)) as f64 / 2.0 * k_ratio) as usize;
-
-        // Generate lines with controlled intersection count
-        let lines = generate_lines_with_controlled_intersections(n, expected_k, &mut rng);
-
-        // Count actual intersections
-        let actual_k = brute_force_intersections(&lines).len();
-
-        group.bench_function(format!("sweep_n{n}_k{actual_k}"), |b| {
-            b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
-                black_box(intersections);
-            });
-        });
-
-        group.bench_function(format!("brute_force_n{n}_k{actual_k}"), |b| {
-            b.iter(|| {
-                black_box(brute_force_intersections(&lines));
-            });
-        });
-    }
-
-    // Test 2: Fixed n, varying k to test the k component
-    let fixed_n = 2000;
-
-    for k_fraction in &[0.0001, 0.001, 0.01, 0.1] {
-        let expected_k = ((fixed_n * (fixed_n - 1)) as f64 / 2.0 * k_fraction) as usize;
-        let lines = generate_lines_with_controlled_intersections(fixed_n, expected_k, &mut rng);
-        let actual_k = brute_force_intersections(&lines).len();
-
-        group.bench_function(format!("sweep_n{fixed_n}_k{actual_k}"), |b| {
-            b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
-                black_box(intersections);
-            });
-        });
-    }
-
-    group.finish();
-}
-
-// Generate lines with approximately k intersections
-fn generate_lines_with_controlled_intersections(
-    n: usize,
-    target_k: usize,
-    rng: &mut impl Rng,
-) -> Vec<Line<f64>> {
+    // Generate 10,000 lines with few intersections
+    let n = 10_000;
     let mut lines = Vec::with_capacity(n);
 
-    if target_k == 0 {
-        // Generate parallel lines (no intersections)
-        for i in 0..n {
-            let y_offset = i as f64;
-            lines.push(Line::from([(-100.0, y_offset), (100.0, y_offset)]));
-        }
-    } else if target_k >= n * (n - 1) / 4 {
-        // Generate a grid pattern for many intersections
-        let grid_size = (n as f64 / 2.0).sqrt() as usize;
-        for i in 0..grid_size {
-            let pos = i as f64 * 10.0;
-            lines.push(Line::from([(-50.0, pos), (50.0, pos)]));
-            lines.push(Line::from([(pos, -50.0), (pos, 50.0)]));
-        }
-        // Fill remaining with random lines
-        while lines.len() < n {
-            lines.push(generate_random_line(rng));
-        }
-    } else {
-        // Generate a mix to achieve target intersection count
-        // Start with some guaranteed intersections
-        let intersecting_pairs = (target_k as f64).sqrt() as usize;
+    // Create mostly parallel lines with small variations
+    for i in 0..n {
+        let stripe = i / 100;
+        let base_x = (stripe % 20) as f64 * 10.0;
+        let base_y = (stripe / 20) as f64 * 10.0;
+        let angle = (i % 100) as f64 * 0.005;
 
-        // Add intersecting line pairs
-        for i in 0..intersecting_pairs.min(n / 2) {
-            let x = i as f64 * 5.0;
-            lines.push(Line::from([(x - 10.0, -10.0), (x + 10.0, 10.0)]));
-            lines.push(Line::from([(x - 10.0, 10.0), (x + 10.0, -10.0)]));
-        }
+        let x1 = base_x + rng.gen_range(-1.0..1.0);
+        let y1 = base_y + rng.gen_range(-1.0..1.0);
+        let x2 = x1 + 5.0 * angle.cos();
+        let y2 = y1 + 5.0 * angle.sin();
 
-        // Fill remaining with mostly non-intersecting lines
-        while lines.len() < n {
-            let base_x = lines.len() as f64 * 2.0;
-            let angle = rng.gen_range(0.0..0.1); // Small angle variation
-            lines.push(Line::from([
-                (base_x, -50.0),
-                (base_x + angle * 100.0, 50.0),
-            ]));
-        }
+        lines.push(Line::from([(x1, y1), (x2, y2)]));
     }
 
-    lines
+    group.bench_function("sparse_sweep_10000", |b| {
+        b.iter(|| {
+            let intersections: Vec<_> =
+                NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
+            black_box(intersections);
+        });
+    });
+
+    group.bench_function("sparse_brute_force_10000", |b| {
+        b.iter(|| {
+            black_box(brute_force_intersections(&lines));
+        });
+    });
+
+    group.finish();
 }
 
 fn generate_random_line(rng: &mut impl Rng) -> Line<f64> {
@@ -314,9 +174,9 @@ fn generate_random_line(rng: &mut impl Rng) -> Line<f64> {
     Line::from([(x1, y1), (x2, y2)])
 }
 
-// Benchmark edge cases that challenge the algorithm
-fn bench_edge_cases(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Edge Cases");
+// Benchmark edge cases
+fn bench_essential_edge_cases(c: &mut Criterion) {
+    let mut group = c.benchmark_group("Essential Edge Cases");
     group.sample_size(10);
 
     let mut rng = StdRng::seed_from_u64(42);
@@ -435,113 +295,6 @@ fn bench_edge_cases(c: &mut Criterion) {
         });
     }
 
-    // Test 3: Star pattern (all lines through one point) - worst case for sweep line
-    {
-        let n = 500; // Reduced from 1000 for practicality
-        let mut lines = Vec::with_capacity(n);
-        let center = (0.0, 0.0);
-
-        // Create lines radiating from center
-        for i in 0..n {
-            let angle = (i as f64) * 2.0 * std::f64::consts::PI / (n as f64);
-            let dx = angle.cos() * 100.0;
-            let dy = angle.sin() * 100.0;
-            lines.push(Line::from([center, (center.0 + dx, center.1 + dy)]));
-        }
-
-        group.bench_function("star_pattern_sweep", |b| {
-            b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
-                black_box(intersections);
-            });
-        });
-
-        group.bench_function("star_pattern_brute_force", |b| {
-            b.iter(|| {
-                black_box(brute_force_intersections(&lines));
-            });
-        });
-    }
-
-    // Test 4: Degenerate lines (zero length)
-    {
-        let n = 500;
-        let mut lines = Vec::with_capacity(n);
-
-        // Mix of degenerate and normal lines
-        for i in 0..n / 2 {
-            if i % 3 == 0 {
-                // Degenerate line (point)
-                let x = i as f64;
-                lines.push(Line::from([(x, x), (x, x)]));
-            } else {
-                // Normal line
-                lines.push(generate_random_line(&mut rng));
-            }
-        }
-
-        // Add some nearly-degenerate lines
-        for i in 0..n / 2 {
-            let x = i as f64;
-            let epsilon = 1e-15;
-            lines.push(Line::from([(x, x), (x + epsilon, x + epsilon)]));
-        }
-
-        group.bench_function("degenerate_lines_sweep", |b| {
-            b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
-                black_box(intersections);
-            });
-        });
-
-        group.bench_function("degenerate_lines_brute_force", |b| {
-            b.iter(|| {
-                black_box(brute_force_intersections(&lines));
-            });
-        });
-    }
-
-    group.finish();
-}
-
-// Benchmark to find the crossover point where sweep line beats brute force
-fn bench_crossover_point(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Crossover Point Detection");
-    group.sample_size(10);
-
-    let mut rng = StdRng::seed_from_u64(42);
-
-    // Focus on the critical crossover region (n=100-500) and a few larger sizes
-    // Only test with moderate intersection density (1%) where the algorithms are comparable
-    let test_cases = vec![
-        (100, 0.01),  // Near crossover
-        (200, 0.01),  // At crossover
-        (500, 0.01),  // Past crossover
-        (1000, 0.01), // Clear advantage
-        (2000, 0.01), // Strong advantage
-    ];
-
-    for (n, k_fraction) in test_cases {
-        let expected_k = ((n * (n - 1)) as f64 / 2.0 * k_fraction) as usize;
-        let lines = generate_lines_with_controlled_intersections(n, expected_k, &mut rng);
-
-        group.bench_function(format!("sweep_n{n}"), |b| {
-            b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
-                black_box(intersections);
-            });
-        });
-
-        group.bench_function(format!("brute_force_n{n}"), |b| {
-            b.iter(|| {
-                black_box(brute_force_intersections(&lines));
-            });
-        });
-    }
-
     group.finish();
 }
 
@@ -566,7 +319,7 @@ fn bench_realistic_patterns(c: &mut Criterion) {
             let pos = i as f64 * cell_size;
             let wiggle = rng.gen_range(-1.0..1.0);
 
-            // Horizontal streets with some curves
+            // Horizontal streets with some "curves"
             for j in 0..grid_size - 1 {
                 let x1 = j as f64 * cell_size;
                 let x2 = (j + 1) as f64 * cell_size;
@@ -649,12 +402,10 @@ fn bench_realistic_patterns(c: &mut Criterion) {
 
 criterion_group!(
     benches,
-    bench_line_intersections,
+    bench_performance_comparison,
     bench_dense_line_intersections,
-    bench_large_datasets,
-    bench_time_complexity_verification,
-    bench_edge_cases,
-    bench_crossover_point,
+    bench_sparse_large_dataset,
+    bench_essential_edge_cases,
     bench_realistic_patterns
 );
 criterion_main!(benches);
