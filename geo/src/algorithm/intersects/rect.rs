@@ -40,7 +40,28 @@ where
 symmetric_intersects_impl!(Rect<T>, Point<T>);
 symmetric_intersects_impl!(Rect<T>, MultiPoint<T>);
 
-symmetric_intersects_impl!(Rect<T>, Polygon<T>);
+impl<T> Intersects<Polygon<T>> for Rect<T>
+where
+    T: GeoNum,
+{
+    fn intersects(&self, rhs: &Polygon<T>) -> bool {
+        /*
+        sufficient to show that any of these are true:
+        some corner of the polygon intersects the rectangle
+        some corner of the rectangle intersects the polygon
+        some edge of polygon (interior or exterior) intersects edge of rectangle
+        */
+
+        if has_disjoint_bboxes(self, rhs) {
+            return false;
+        }
+
+        rhs.coords_iter().any(|p| self.intersects(&p))
+            || self.coords_iter().any(|p| rhs.intersects(&p))
+            || rhs.lines_iter().any(|l| self.intersects(&l))
+    }
+}
+
 symmetric_intersects_impl!(Rect<T>, MultiPolygon<T>);
 
 impl<T> Intersects<Rect<T>> for Rect<T>
