@@ -81,7 +81,7 @@ fn bench_line_intersections(c: &mut Criterion) {
         });
 
         // New sweep line algorithm
-        group.bench_function(format!("new_sweep_n{n}"), |b| {
+        group.bench_function(format!("sweep_n{n}"), |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines_for_bench.iter().cloned())
@@ -121,7 +121,7 @@ fn bench_dense_line_intersections(c: &mut Criterion) {
         });
     });
 
-    group.bench_function("new_sweep_dense", |b| {
+    group.bench_function("sweep_dense", |b| {
         b.iter(|| {
             let intersections: Vec<_> =
                 NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
@@ -144,7 +144,7 @@ fn bench_large_datasets(c: &mut Criterion) {
         let n = 2000;
         let lines = generate_random_lines(n, &mut rng);
 
-        group.bench_function("random_new_sweep_2000", |b| {
+        group.bench_function("random_sweep_2000", |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
@@ -179,7 +179,7 @@ fn bench_large_datasets(c: &mut Criterion) {
             lines.push(Line::from([(x1, y1), (x2, y2)]));
         }
 
-        group.bench_function("sparse_new_sweep_10000", |b| {
+        group.bench_function("sparse_sweep_10000", |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
@@ -219,7 +219,7 @@ fn bench_time_complexity_verification(c: &mut Criterion) {
         // Count actual intersections
         let actual_k = brute_force_intersections(&lines).len();
 
-        group.bench_function(format!("new_sweep_n{n}_k{actual_k}"), |b| {
+        group.bench_function(format!("sweep_n{n}_k{actual_k}"), |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
@@ -242,7 +242,7 @@ fn bench_time_complexity_verification(c: &mut Criterion) {
         let lines = generate_lines_with_controlled_intersections(fixed_n, expected_k, &mut rng);
         let actual_k = brute_force_intersections(&lines).len();
 
-        group.bench_function(format!("new_sweep_n{fixed_n}_k{actual_k}"), |b| {
+        group.bench_function(format!("sweep_n{fixed_n}_k{actual_k}"), |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
@@ -342,7 +342,7 @@ fn bench_edge_cases(c: &mut Criterion) {
             lines.push(Line::from([(start, -start), (end, -end)])); // Diagonal y=-x
         }
 
-        group.bench_function("collinear_segments_new_sweep", |b| {
+        group.bench_function("collinear_segments_sweep", |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
@@ -420,7 +420,7 @@ fn bench_edge_cases(c: &mut Criterion) {
             lines.push(generate_random_line(&mut rng));
         }
 
-        group.bench_function("numerical_precision_new_sweep", |b| {
+        group.bench_function("numerical_precision_sweep", |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
@@ -449,7 +449,7 @@ fn bench_edge_cases(c: &mut Criterion) {
             lines.push(Line::from([center, (center.0 + dx, center.1 + dy)]));
         }
 
-        group.bench_function("star_pattern_new_sweep", |b| {
+        group.bench_function("star_pattern_sweep", |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
@@ -488,7 +488,7 @@ fn bench_edge_cases(c: &mut Criterion) {
             lines.push(Line::from([(x, x), (x + epsilon, x + epsilon)]));
         }
 
-        group.bench_function("degenerate_lines_new_sweep", |b| {
+        group.bench_function("degenerate_lines_sweep", |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
@@ -527,7 +527,7 @@ fn bench_crossover_point(c: &mut Criterion) {
         let expected_k = ((n * (n - 1)) as f64 / 2.0 * k_fraction) as usize;
         let lines = generate_lines_with_controlled_intersections(n, expected_k, &mut rng);
 
-        group.bench_function(format!("new_sweep_n{n}"), |b| {
+        group.bench_function(format!("sweep_n{n}"), |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
@@ -588,7 +588,7 @@ fn bench_realistic_patterns(c: &mut Criterion) {
         // Trim to exactly n lines
         lines.truncate(n);
 
-        group.bench_function("road_network_new_sweep", |b| {
+        group.bench_function("road_network_sweep", |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
@@ -629,7 +629,7 @@ fn bench_realistic_patterns(c: &mut Criterion) {
             }
         }
 
-        group.bench_function("polygon_boundaries_new_sweep", |b| {
+        group.bench_function("polygon_boundaries_sweep", |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
