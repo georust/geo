@@ -1,7 +1,7 @@
 use geo_types::{private_utils::get_bounding_rect, Line};
 
 use crate::{
-    coordinate_position::CoordPos, sweep::SweepPoint, BoundingRect, Coord, CoordinatePosition,
+    coordinate_position::CoordPos, old_sweep::SweepPoint, BoundingRect, Coord, CoordinatePosition,
     GeoNum, Intersects, Kernel, LineString, Orientation, Polygon, Rect,
 };
 

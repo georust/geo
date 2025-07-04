@@ -107,7 +107,7 @@
 //!   another geometry
 //! - **[`line_intersection`]**: Calculates the
 //!   intersection, if any, between two lines
-//! - **[`NewSweepIntersections`]**: Find all line segment intersections using an efficient sweep line algorithm (Bentley-Ottmann)
+//! - **[`Intersections`]**: Find all line segment intersections using an efficient sweep line algorithm (Bentley-Ottmann)
 //! - **[`Relate`]**: Topologically relate two geometries based on
 //!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics
 //! - **[`Within`]**: Calculate if a geometry lies completely within another geometry
@@ -241,7 +241,7 @@ pub use crate::algorithm::*;
 pub use crate::types::Closest;
 use std::cmp::Ordering;
 
-pub use crate::algorithm::new_sweep::Intersections as NewSweepIntersections;
+pub use crate::algorithm::sweep::Intersections;
 pub use crate::relate::PreparedGeometry;
 pub use geo_types::{coord, line_string, point, polygon, wkt, CoordFloat, CoordNum};
 

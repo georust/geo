@@ -309,11 +309,11 @@ pub use winding_order::Winding;
 pub mod within;
 pub use within::Within;
 
-/// Planar sweep algorithm and related utils
-pub mod sweep;
+/// Planar sweep algorithm and related utils for use by the monotone module
+pub(crate) mod old_sweep;
 
-/// Revised planar sweep-line algorithm
-pub mod new_sweep;
+/// Find line intersections using the Bentley-Ottmann algorithm
+pub mod sweep;
 
 /// Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
 pub mod outlier_detection;
