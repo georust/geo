@@ -13,18 +13,17 @@
 //    - Each interval generates two events: `INSERT` at left end, `DELETE` at right end.
 //
 // 3. Sweep Execution:
-//    - `build_index` sorts all events by `x` coordinate (and type for equal `x` values)
-//    - Links paired INSERT/DELETE events via array indices for efficient tracking
-//    - `compute_intersections` iterates through Insert events in sorted order
-//    - For each INSERT event, it examines only events between it and its paired DELETE event
-//    - It filters these for other INSERT events where intervals potentially overlap (using `intervals_overlap`)
+//    - `compute_intersections` sorts INSERT and DELETE events separately by `x` coordinate
+//    - Creates a lookup array mapping segment indices to their DELETE x-coordinates
+//    - Processes INSERT events in sorted order using functional iterator chains
+//    - For each INSERT event, examines subsequent INSERT events up to its DELETE x-coordinate
+//    - Filters for potentially overlapping intervals (using `intervals_overlap`)
 //    - For each potential overlap, `line_intersection` checks for actual geometric intersection
 //    - When found, intersections are stored in `intersection_pairs`.
 
 use crate::line_intersection::{line_intersection, LineIntersection};
 use crate::{GeoFloat, Line};
 use std::cmp::Ordering;
-use std::collections::HashMap;
 
 #[cfg(test)]
 mod tests;
@@ -99,7 +98,7 @@ impl<T: GeoFloat> Intersections<T> {
     /// intersections. The algorithm runs in `O((n + k) log n)` time,
     /// where `n` is the number of line segments and `k` is the number of intersections.
     fn compute_sweep_intersections(&mut self) {
-        let mut index = SweepLineIndex::new();
+        let mut index = SweepLineIndex::new(self.segments.len());
 
         // Add all segments to the sweep line index
         for (idx, segment) in self.segments.iter().enumerate() {
@@ -116,7 +115,7 @@ impl<T: GeoFloat> Intersections<T> {
             index.add(interval);
         }
 
-        // Build the index and find all intersections
+        // Find all intersections using the sweep algorithm
         index.compute_intersections(|s0, s1| {
             let segment1 = s0.item;
             let segment2 = s1.item;
@@ -160,20 +159,17 @@ impl<T: GeoFloat> FromIterator<Line<T>> for Intersections<T> {
 /// This structure stores the `x` bounds of a line segment (min and max `x` values),
 /// the original line segment, and its index in the original collection.
 ///
-/// # Identity and Relationships
+/// # Identity
 ///
-/// The `index` field serves two purposes:
-/// 1. It uniquely identifies each interval based on its position in the original collection
-/// 2. It connects `INSERT` /  `DELETE` event pairs during the index building phase
-///
-/// When two events have intervals with the same index, they are recognized as belonging
-/// to the same line segment, allowing us to establish bidirectional "pointers" between them.
+/// The `index` field uniquely identifies each interval based on its position in the original
+/// collection. This allows us to correlate INSERT and DELETE events for the same segment
+/// without needing explicit pointers or a HashMap.
 #[derive(Debug, Clone, Copy)]
 struct SweepLineInterval<T: GeoFloat> {
     min: T,
     max: T,
     item: Line<T>, // Original line segment
-    index: usize,  // Index used to match INSERT/DELETE event pairs via HashMap lookup
+    index: usize,  // Index used to match INSERT/DELETE event pairs
 }
 
 /// Event types for the sweep line algorithm
@@ -191,17 +187,13 @@ enum EventType {
 /// # Event Relationships
 ///
 /// Each line segment generates two events: an `INSERT` event at its left end and
-/// a `DELETE` event at its right end. These paired events need to reference each other.
+/// a `DELETE` event at its right end. These paired events are correlated using the
+/// segment index stored in the `SweepLineInterval`.
 ///
-/// Rather than using references (which would require lifetimes and possibly self-references),
-/// events are stored in a single `Vec` and refer to each other using array indices:
-///
-/// * `insert_event`: In a `DELETE` event, stores the index of its paired `INSERT` event
-/// * `delete_event_index`: In an `INSERT` event, stores the index of its paired `DELETE` event
-///
-/// These indices are established in `build_index()`, which uses a HashMap to efficiently
-/// match events with the same interval index in O(1) time. This approach provides a simple
-/// way to navigate between related events without the complexity of ownership or borrowing.
+/// Rather than explicit pointers or references, events are stored in two separate vecs
+/// (`insert_events` and `delete_events`) and correlated through their shared segment index.
+/// A lookup array maps segment indices to DELETE x-coordinates for access during
+/// the sweep process.
 ///
 /// # Implementation Note: Why No Binary Search Tree or Priority Queue?
 ///
@@ -212,23 +204,21 @@ enum EventType {
 ///
 /// This implementation avoids both:
 ///
-/// - Instead of a priority queue, the **event array is sorted once** and processes events in order.
+/// - Instead of a priority queue, the **event vecs are sorted once** and process events in order.
 ///   This has the same asymptotic complexity.
 ///
-/// - Instead of a binary search tree, we use **array indices as bidirectional "pointers"** between
-///   related events with HashMap lookups for O(1) matching. When processing an `INSERT` event,
-///   we directly examine all events between it and its paired `DELETE` event.
+/// - Instead of a binary search tree, we use **two separate vecs** for INSERT and DELETE events.
+///   When processing an `INSERT` event, we find its corresponding DELETE event by segment index
+///   and check all INSERT events that start before that DELETE x-coordinate.
 ///
-/// By establishing the relationship between INSERT and DELETE events using
-/// a HashMap for fast lookups, it is possible to efficiently determine which segments are active
-/// at any point _without_ maintaining an "active segment" tree.
+/// By maintaining separate vecs for INSERT and DELETE events and using the segment index
+/// for correlation, we can determine which segments are active at any point
+/// _without_ maintaining an "active segment" tree or using a HashMap.
 #[derive(Debug, Clone)]
 struct SweepLineEvent<T: GeoFloat> {
     x_value: T,
     event_type: EventType,
     interval: SweepLineInterval<T>,
-    insert_event_index: Option<usize>, // Index of corresponding insert event (for DELETE events)
-    delete_event_index: usize,         // Index of corresponding delete event (for INSERT events)
 }
 
 impl<T: GeoFloat> SweepLineEvent<T> {
@@ -237,25 +227,7 @@ impl<T: GeoFloat> SweepLineEvent<T> {
             x_value: x,
             event_type,
             interval,
-            insert_event_index: None,
-            delete_event_index: 0, // Will be set during index building
         }
-    }
-
-    fn is_insert(&self) -> bool {
-        self.event_type == EventType::Insert
-    }
-
-    fn is_delete(&self) -> bool {
-        self.event_type == EventType::Delete
-    }
-
-    fn set_insert_event(&mut self, insert_idx: usize) {
-        self.insert_event_index = Some(insert_idx);
-    }
-
-    fn set_delete_event(&mut self, delete_idx: usize) {
-        self.delete_event_index = delete_idx;
     }
 }
 
@@ -294,13 +266,15 @@ impl<T: GeoFloat> Ord for SweepLineEvent<T> {
 }
 
 struct SweepLineIndex<T: GeoFloat> {
-    events: Vec<SweepLineEvent<T>>,
+    insert_events: Vec<SweepLineEvent<T>>,
+    delete_events: Vec<SweepLineEvent<T>>,
 }
 
 impl<T: GeoFloat> SweepLineIndex<T> {
-    fn new() -> Self {
+    fn new(num_segments: usize) -> Self {
         Self {
-            events: Vec::with_capacity(64), // Pre-allocate with a reasonable capacity
+            insert_events: Vec::with_capacity(num_segments),
+            delete_events: Vec::with_capacity(num_segments),
         }
     }
 
@@ -310,89 +284,59 @@ impl<T: GeoFloat> SweepLineIndex<T> {
 
         // Create INSERT event
         let insert_event = SweepLineEvent::new(x_min, EventType::Insert, interval);
-        self.events.push(insert_event);
+        self.insert_events.push(insert_event);
 
         // Create DELETE event
         let delete_event = SweepLineEvent::new(x_max, EventType::Delete, interval);
-        self.events.push(delete_event);
+        self.delete_events.push(delete_event);
     }
 
     fn compute_intersections<F>(&mut self, mut intersection_action: F)
     where
         F: FnMut(&SweepLineInterval<T>, &SweepLineInterval<T>),
     {
-        // First, build the index by sorting events and setting DELETE event indices
-        self.build_index();
+        // Sort both by x-coordinate
+        self.insert_events.sort();
+        self.delete_events.sort();
 
-        // Process events in order
-        self.events
+        // Create a lookup array to map segment indices to their DELETE x-coordinates
+        // This avoids O(n) search for each INSERT event
+        // We know the number of segments equals the number of INSERT events
+        let num_segments = self.insert_events.len();
+        let mut delete_x_by_index = vec![None; num_segments];
+
+        self.delete_events
+            .iter()
+            .filter(|event| event.interval.index < num_segments)
+            .for_each(|event| {
+                delete_x_by_index[event.interval.index] = Some(event.x_value);
+            });
+
+        // Process INSERT events in sorted order
+        self.insert_events
             .iter()
             .enumerate()
-            .filter(|(_, event)| event.is_insert())
-            .for_each(|(i, insertion)| {
-                // For each insert event, find all segments active between this INSERT and its DELETE
-                let delete_idx = insertion.delete_event_index;
-                let interval = insertion.interval;
+            .for_each(|(i, current_event)| {
+                let current_interval = &current_event.interval;
+                let current_segment_index = current_interval.index;
 
-                // Process all other insert events between this INSERT and its DELETE
-                self.events[i + 1..delete_idx]
+                // Get the DELETE x-coordinate from our lookup array
+                // Every segment should have both INSERT and DELETE events
+                let delete_x = delete_x_by_index[current_segment_index]
+                    .expect("Every segment should have a DELETE event");
+
+                // Check all INSERT events that start after this one
+                self.insert_events[i + 1..]
                     .iter()
+                    .take_while(|other_event| other_event.interval.min <= delete_x)
+                    .filter(|other_event| other_event.interval.index != current_segment_index)
                     .filter(|other_event| {
-                        other_event.is_insert()
-                            && interval.index != other_event.interval.index
-                            && intervals_overlap(&interval, &other_event.interval)
+                        intervals_overlap(current_interval, &other_event.interval)
                     })
                     .for_each(|other_event| {
-                        intersection_action(&interval, &other_event.interval);
+                        intersection_action(current_interval, &other_event.interval);
                     });
             });
-    }
-
-    /// Build the index by sorting events and establishing relationships between paired events
-    ///
-    /// This method performs three steps:
-    /// 1. Sorts all events by `x` coordinate (and event type when `x` values are equal)
-    /// 2. Maps interval indices to their corresponding INSERT event positions
-    /// 3. Directly connects related DELETE/INSERT event pairs through array indices
-    ///
-    /// Each line segment has exactly one `INSERT` event and one `DELETE` event with the same
-    /// interval index.
-    fn build_index(&mut self) {
-        // Sort events using the total ordering of events
-        self.events.sort();
-
-        // First, map interval indices to insert event indices
-        // This will let us look up the insert event for a given interval index in constant time
-        // JTS (and GEOS) don't need this as they use object references and pointers respectively
-        // but these approaches are (obviously) a pain in Rust, so we need an intermediate mapping
-        // https://github.com/simplegeo/jts/blob/3a4c9a9c3a7d3274e16bdd2f341df7d3e113d81b/src/com/vividsolutions/jts/index/sweepline/SweepLineIndex.java#L57-L59
-        let insert_event_map: HashMap<usize, usize> = self
-            .events
-            .iter()
-            .enumerate()
-            .filter(|(_, event)| event.is_insert())
-            .map(|(i, event)| (event.interval.index, i))
-            .collect();
-
-        // Process all DELETE events and connect with their INSERT counterparts.
-        // I would love to get rid of this ugly for loop, but we can't use an iterator because
-        // it would require two mutable borrows of self.events to call the set_* events.
-        // The advantage of the loop is that we don't need to allocate anything to populate self.events
-        for i in 0..self.events.len() {
-            // Process only delete events
-            if self.events[i].is_delete() {
-                let delete_idx = i;
-                let interval_idx = self.events[i].interval.index;
-
-                // Look up the matching insert event
-                if let Some(&insert_idx) = insert_event_map.get(&interval_idx) {
-                    // set the insert event in the delete event
-                    self.events[delete_idx].set_insert_event(insert_idx);
-                    // AND THEN: set the delete event in the insert event
-                    self.events[insert_idx].set_delete_event(delete_idx);
-                }
-            }
-        }
     }
 }
 
