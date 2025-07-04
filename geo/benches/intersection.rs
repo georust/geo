@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use geo::intersects::Intersects;
-use geo::{CoordsIter, MultiPolygon};
+use geo::{CoordsIter, MultiPolygon, Polygon};
 
 fn multi_polygon_intersection(c: &mut Criterion) {
     let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots_wgs84();
@@ -168,7 +168,27 @@ fn rect_triangle_intersection(c: &mut Criterion) {
             assert!(criterion::black_box(&rect).intersects(criterion::black_box(&triangle)));
         });
     });
-
+    c.bench_function("intersects edge intersections as polygon", |bencher| {
+        let rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 10., y: 10. });
+        let triangle: Polygon = Triangle::from([(5., -2.), (4., 11.), (6., 11.)]).into();
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).intersects(criterion::black_box(&triangle)));
+        });
+    });
+    c.bench_function("triangle within rect", |bencher| {
+        let rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 10., y: 10. });
+        let triangle = Triangle::from([(1., 1.), (1., 2.), (2., 1.)]);
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).intersects(criterion::black_box(&triangle)));
+        });
+    });
+    c.bench_function("rect within triangle", |bencher| {
+        let rect = Rect::new(coord! { x: 1., y: 1. }, coord! { x: 2., y: 2. });
+        let triangle = Triangle::from([(0., 10.), (10., 0.), (0., 0.)]);
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).intersects(criterion::black_box(&triangle)));
+        });
+    });
     c.bench_function("disjoint", |bencher| {
         let rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 10., y: 10. });
         let triangle = Triangle::from([(0., 11.), (1., 11.), (1., 12.)]);
@@ -261,7 +281,6 @@ fn poly_rect_intersection(c: &mut Criterion) {
         });
     });
 }
-
 
 criterion_group! {
     name = bench_multi_polygons;

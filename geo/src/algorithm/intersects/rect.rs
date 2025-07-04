@@ -106,7 +106,7 @@ where
         }
 
         rhs.coords_iter().any(|p| self.intersects(&p))
-            || self.coords_iter().any(|p| rhs.intersects(&p))
             || rhs.lines_iter().any(|l| self.intersects(&l))
+            || self.coords_iter().any(|p| rhs.intersects(&p))
     }
 }
