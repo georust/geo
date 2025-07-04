@@ -50,7 +50,7 @@ mod tests;
 ///
 /// ```
 /// use geo::Line;
-/// use geo::algorithm::new_sweep::Intersections;
+/// use geo::algorithm::sweep::Intersections;
 /// use std::iter::FromIterator;
 /// let input = vec![
 ///     Line::from([(1., 0.), (0., 1.)]),
