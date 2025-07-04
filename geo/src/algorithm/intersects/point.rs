@@ -22,8 +22,3 @@ where
         self.iter().any(|p| p.intersects(rhs))
     }
 }
-
-symmetric_intersects_impl!(Coord<T>, MultiPoint<T>);
-symmetric_intersects_impl!(Line<T>, MultiPoint<T>);
-symmetric_intersects_impl!(Triangle<T>, MultiPoint<T>);
-symmetric_intersects_impl!(Polygon<T>, MultiPoint<T>);
