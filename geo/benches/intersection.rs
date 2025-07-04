@@ -250,6 +250,16 @@ fn poly_rect_intersection(c: &mut Criterion) {
             assert!(!criterion::black_box(&rect).intersects(criterion::black_box(&polygon)));
         });
     });
+
+    c.bench_function("intersects rect within polygon", |bencher| {
+        let rect: Rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 10., y: 10. }).into();
+        let polygon: Polygon =
+            Rect::new(coord! { x: -1., y: -1. }, coord! { x: 11., y: 11. }).into();
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).intersects(criterion::black_box(&polygon)));
+        });
+    });
 }
 
 

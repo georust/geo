@@ -56,9 +56,11 @@ where
             return false;
         }
 
+        // rhs.intersects(pt) is the most expensive, so check it last
+        // only required if rectangle sits entirely within polygon
         rhs.coords_iter().any(|p| self.intersects(&p))
-            || self.coords_iter().any(|p| rhs.intersects(&p))
             || rhs.lines_iter().any(|l| self.intersects(&l))
+            || self.coords_iter().any(|p| rhs.intersects(&p))
     }
 }
 
