@@ -21,7 +21,7 @@
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use geo::algorithm::line_intersection::line_intersection;
-use geo::algorithm::new_sweep::Intersections as NewSweepIntersections;
+use geo::algorithm::sweep::Intersections as NewSweepIntersections;
 use geo::Line;
 use rand::prelude::*;
 use std::iter::FromIterator;

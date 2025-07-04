@@ -25,24 +25,71 @@ use crate::line_intersection::{line_intersection, LineIntersection};
 use crate::{GeoFloat, Line};
 use std::cmp::Ordering;
 
-mod line_or_point;
-pub use line_or_point::LineOrPoint;
+#[cfg(test)]
+mod tests;
 
-mod cross;
-pub use cross::Cross;
+/// Iterator over all intersections of a collection of [`Line`]s.
+///
+/// # Performance Note
+///
+/// This implementation is most useful when there is a need to efficiently find sparse intersections
+/// between thousands of line segments. For smaller numbers of segments, a brute-force approach
+/// will be around 30 % faster in current tests.
+///
+/// Yields tuples `(`Line`, `Line`, `LineIntersection`)` for each pair of input
+/// lines that intersect or overlap. This is a drop-in
+/// replacement for computing [`LineIntersection`] over all pairs of
+/// the collection, with the perf caveat noted above.
+///
+/// The implementation uses the [Bentley-Ottmann] sweep line algorithm,
+/// which runs in `O((n + k) log n)` time, where `n` is the number of line segments
+/// and `k` is the number of intersections.
+///
+/// # Examples
+///
+/// ```
+/// use geo::Line;
+/// use geo::algorithm::new_sweep::Intersections;
+/// use std::iter::FromIterator;
+/// let input = vec![
+///     Line::from([(1., 0.), (0., 1.)]),
+///     Line::from([(0., 0.), (1., 1.)]),
+/// ];
+/// let intersections: Vec<_> = Intersections::<_>::from_iter(input).collect();
+/// // Check that we get the expected intersection
+/// assert_eq!(intersections.len(), 1);
+/// ```
+///
+/// [Bentley-Ottmann]: //en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm
+pub struct Intersections<T: GeoFloat> {
+    segments: Vec<Line<T>>,
+    intersection_pairs: Vec<(Line<T>, Line<T>, LineIntersection<T>)>,
+    current_index: usize,
+}
 
-mod segment;
-use segment::{Segment, SplitSegments};
+impl<T: GeoFloat> Intersections<T> {
+    fn new() -> Self {
+        Self {
+            segments: Vec::new(),
+            intersection_pairs: Vec::new(),
+            current_index: 0,
+        }
+    }
 
-mod active;
-pub(super) use active::{Active, ActiveSet};
+    /// Add a segment to the collection
+    fn add_segment(&mut self, segment: Line<T>) {
+        self.segments.push(segment);
+    }
 
-/// Compute all intersections
-fn compute(&mut self) {
-    self.compute_sweep_intersections();
+    /// Compute all intersections
+    fn compute(&mut self) {
+        self.compute_sweep_intersections();
 
-    mod vec_set;
-    pub(crate) use vec_set::VecSet;
+        self.intersection_pairs.retain(|(line1, line2, _)| {
+            // Keep only intersections between different lines
+            line1 != line2
+        });
+    }
 
     /// Sweep line logic
     ///
