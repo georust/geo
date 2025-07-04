@@ -248,7 +248,7 @@ mod test {
         let empty: MultiPoint<f64> = MultiPoint::new(Vec::new());
         let non_empty: MultiPoint<f64> = MultiPoint::new(vec![point! {x: 0.0, y: 0.0}]);
 
-        // empty multipoint does not contains empty multipoint
+        // empty multipoint does not contains non-empty multipoint
         assert!(!empty.contains(&non_empty));
         assert!(!empty.relate(&non_empty).is_contains());
 
@@ -283,7 +283,7 @@ mod test {
         assert!(mp_abc.contains(&mp_a));
         assert!(mp_abc.contains(&mp_bc));
 
-        // overlapping multipoints do not contain each other
+        // partially overlapping multipoints do not contain each other
         assert!(!mp_abc.contains(&mp_bcd));
     }
 }
