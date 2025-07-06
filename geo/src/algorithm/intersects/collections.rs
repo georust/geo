@@ -30,7 +30,6 @@ symmetric_intersects_impl!(Rect<T>, Geometry<T>);
 symmetric_intersects_impl!(Triangle<T>, Geometry<T>);
 symmetric_intersects_impl!(Polygon<T>, Geometry<T>);
 
-
 impl<T, G> Intersects<G> for GeometryCollection<T>
 where
     T: CoordNum,
