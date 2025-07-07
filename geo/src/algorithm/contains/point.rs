@@ -1,4 +1,4 @@
-use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use super::{impl_contains_from_relate_0d, impl_contains_geometry_for, Contains};
 use crate::algorithm::{CoordsIter, HasDimensions};
 use crate::geometry::*;
 use crate::{CoordNum, GeoFloat};
@@ -145,7 +145,7 @@ impl_contains_geometry_for!(Point<T>);
 // │ Implementations for MultiPoint │
 // └────────────────────────────────┘
 
-impl_contains_from_relate!(MultiPoint<T>, [Line<T>, LineString<T>, Polygon<T>, MultiLineString<T>, MultiPolygon<T>, MultiPoint<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_from_relate_0d!(MultiPoint<T>, [Line<T>, LineString<T>, Polygon<T>, Rect<T>, Triangle<T>,MultiLineString<T>, MultiPolygon<T>, MultiPoint<T>, GeometryCollection<T>]);
 
 impl<T> Contains<Coord<T>> for MultiPoint<T>
 where
