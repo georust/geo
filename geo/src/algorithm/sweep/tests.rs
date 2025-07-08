@@ -75,12 +75,7 @@ fn verify_intersections(lines: &[Line<f64>]) {
                         "Proper intersection status doesn't match for the same line pairs"
                     );
 
-                    assert_relative_eq!(
-                        // Allow small floating point differences
-                        bf_point,
-                        sw_point,
-                        epsilon = 1e-10,
-                    );
+                    assert_eq!(bf_point, sw_point,);
                 }
                 (
                     LineIntersection::Collinear {

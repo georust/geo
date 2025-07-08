@@ -115,7 +115,7 @@ impl<T: GeoFloat> Intersections<T> {
         }
 
         // Find all intersections using the sweep algorithm
-        index.compute_intersections(|s0, s1| {
+        index.overlap_action(|s0, s1| {
             let segment1 = s0.item;
             let segment2 = s1.item;
 
@@ -289,7 +289,7 @@ impl<T: GeoFloat> SweepLineIndex<T> {
         self.delete_events.push(delete_event);
     }
 
-    fn compute_intersections<F>(&mut self, mut intersection_action: F)
+    fn overlap_action<F>(&mut self, mut intersection_action: F)
     where
         F: FnMut(&SweepLineInterval<T>, &SweepLineInterval<T>),
     {
@@ -339,7 +339,6 @@ impl<T: GeoFloat> SweepLineIndex<T> {
                 self.insert_events[i + 1..]
                     .iter()
                     .take_while(|other_event| other_event.interval.min <= delete_x)
-                    .filter(|other_event| other_event.interval.index != current_segment_index)
                     .filter(|other_event| {
                         intervals_overlap(current_interval, &other_event.interval)
                     })
