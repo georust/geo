@@ -1,9 +1,7 @@
-use geo_types::CoordFloat;
-
 use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
 use crate::dimensions::Dimensions;
 use crate::{geometry::*, Area, CoordsIter, HasDimensions, Intersects, LinesIter, Relate};
-use crate::{CoordNum, GeoFloat};
+use crate::{CoordFloat, CoordNum, GeoFloat, GeoNum};
 
 // ┌──────────────────────────┐
 // │ Implementations for Rect │
@@ -82,29 +80,86 @@ where
 
 impl<T> Contains<Line<T>> for Rect<T>
 where
-    T: GeoFloat,
+    T: GeoNum,
     Line<T>: Contains<Line<T>>,
-    Rect<T>: Intersects<Coord<T>> + HasDimensions + Relate<T>,
+    Rect<T>: Intersects<Coord<T>>,
 {
     fn contains(&self, rhs: &Line<T>) -> bool {
-        // self intersects all points && line does not sit on any of the self's edges
-        if self.dimensions() == Dimensions::TwoDimensional {
-            self.intersects(&rhs.start)
-                && self.intersects(&rhs.end)
-                && (self.contains(&rhs.start)
-                    || self.contains(&rhs.end)
-                    || !self.lines_iter().any(|edge| edge.contains(rhs)))
-        } else {
-            self.relate(rhs).is_contains()
+        match (self.dimensions(), rhs.dimensions()) {
+            (Dimensions::TwoDimensional, Dimensions::OneDimensional) => {
+                // standard case
+                self.intersects(&rhs.start)
+                    && self.intersects(&rhs.end)
+                    && (self.contains(&rhs.start)
+                        || self.contains(&rhs.end)
+                        || !self.lines_iter().any(|edge| edge.contains(rhs)))
+            }
+            (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => self.contains(&rhs.start),
+            (Dimensions::OneDimensional, _) => {
+                LineString::from_iter(self.coords_iter()).contains(rhs)
+            }
+            (Dimensions::ZeroDimensional, _) => Point::from(self.min()).contains(rhs),
+            (Dimensions::Empty, _) => false,
+            (_, Dimensions::Empty) => false,
+            (_, Dimensions::TwoDimensional) => unreachable!("Line cannot be 2 dimensional"),
         }
     }
 }
 
-impl_contains_from_relate!(Rect<T>, [LineString<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Triangle<T>]);
+impl<T> Contains<Triangle<T>> for Rect<T>
+where
+    T: GeoFloat,
+    Line<T>: Contains<Line<T>> + Contains<LineString<T>> + Contains<Triangle<T>>,
+    Rect<T>: Intersects<Coord<T>>,
+    Point<T>: Contains<Triangle<T>>,
+{
+    fn contains(&self, rhs: &Triangle<T>) -> bool {
+        // in non-degenerate cases, all three triangle corners intersecting the rectangle implies one edge crosses the rectangle
+        match (self.dimensions(), rhs.dimensions()) {
+            (Dimensions::TwoDimensional, Dimensions::TwoDimensional) => {
+                // standard case
+                self.intersects(&rhs.0) && self.intersects(&rhs.1) && self.intersects(&rhs.2)
+            }
+            (Dimensions::TwoDimensional, Dimensions::OneDimensional) => {
+                self.contains(&LineString::from_iter(rhs.coords_iter()))
+            }
+            (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => self.contains(&rhs.0),
+            (Dimensions::OneDimensional, _) => Line::new(self.min(), self.max()).contains(rhs),
+            (Dimensions::ZeroDimensional, _) => Point::from(self.min()).contains(&rhs),
+            (Dimensions::Empty, _) => false,
+            (_, Dimensions::Empty) => false,
+        }
+    }
+}
+
+impl_contains_from_relate!(Rect<T>, [LineString<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T> ]);
 impl_contains_geometry_for!(Rect<T>);
 
 #[cfg(test)]
-mod tests {
+mod tests_triangle {
+    use super::*;
+    use crate::coord;
+
+    #[test]
+    fn rect_contains_triangle() {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
+        let tri_bound = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:10.},
+        );
+        let tri_within = Triangle::new(
+            coord! {x:1., y:1.},
+            coord! {x:9., y:1.},
+            coord! {x:9., y:9.},
+        );
+        assert!(rect.contains(&tri_bound));
+        assert!(rect.contains(&tri_within));
+    }
+}
+
+#[cfg(test)]
+mod tests_line {
     use super::*;
     use crate::{Line, Point, Rect, Relate};
 
@@ -131,9 +186,10 @@ mod tests {
     }
     #[test]
     fn rect0d_contains_line0d() {
+        //diverge from Relate Trait here because (0,0) should contain (0,0)
         let rect = Rect::new(Point::new(1., 0.), Point::new(1., 0.));
         let ln = Line::new(Point::new(1., 0.), Point::new(1., 0.));
-        assert!(!rect.contains(&ln));
+        assert!(rect.contains(&ln));
         assert!(!rect.relate(&ln).is_contains());
     }
 

@@ -381,12 +381,124 @@ fn triangle_contains_line(c: &mut Criterion) {
     });
 }
 
+fn triangle_contains_rect(c: &mut Criterion) {
+    c.bench_function("rect within triangle (Contains Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:10.},
+        );
+        let rect = Rect::new(Point::new(5., 5.), Point::new(9., 1.));
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&tri).contains(criterion::black_box(&rect)));
+        });
+    });
+    c.bench_function("rect within triangle (Relate Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:10.},
+        );
+        let rect = Rect::new(Point::new(5., 5.), Point::new(9., 1.));
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&tri)
+                .relate(criterion::black_box(&rect))
+                .is_contains());
+        });
+    });
+
+    c.bench_function("triangle within rect (Contains Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:10.},
+        );
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).contains(criterion::black_box(&tri)));
+        });
+    });
+    c.bench_function("triangle within rect (Relate Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:10.},
+        );
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect)
+                .relate(criterion::black_box(&tri))
+                .is_contains());
+        });
+    });
+
+    c.bench_function("rect disjoint triangle (Contains Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:10.},
+        );
+        let rect = Rect::new(Point::new(-1., -1.), Point::new(-10., -10.));
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&rect).contains(criterion::black_box(&tri)));
+        });
+    });
+    c.bench_function("rect disjoint triangle (Relate Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:10.},
+        );
+        let rect = Rect::new(Point::new(-1., -1.), Point::new(-10., -10.));
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&rect)
+                .relate(criterion::black_box(&tri))
+                .is_contains());
+        });
+    });
+
+    c.bench_function("triangle disjoint rect (Contains Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:10.},
+        );
+        let rect = Rect::new(Point::new(-1., -1.), Point::new(-10., -10.));
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&tri).contains(criterion::black_box(&rect)));
+        });
+    });
+    c.bench_function("triangle disjoint rect (Relate Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:10.},
+        );
+        let rect = Rect::new(Point::new(-1., -1.), Point::new(-10., -10.));
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&tri)
+                .relate(criterion::black_box(&rect))
+                .is_contains());
+        });
+    });
+}
+
 criterion_group!(benches, criterion_benchmark);
 criterion_group!(bench_rect_contains_line, rect_contains_line);
 criterion_group!(bench_triangle_contains_line, triangle_contains_line);
+criterion_group!(bench_triangle_contains_rect, triangle_contains_rect);
 
 criterion_main!(
     benches,
     bench_rect_contains_line,
     bench_triangle_contains_line,
+    bench_triangle_contains_rect,
 );
