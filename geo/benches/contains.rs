@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use geo::algorithm::{Contains, Convert, Relate};
-use geo::geometry::*;
-use geo::{coord, point, polygon};
+use geo::{coord, line_string, point, polygon};
+use geo::{geometry::*, CoordsIter};
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("point in simple polygon", |bencher| {
@@ -792,6 +792,204 @@ fn triangle_contains_rect(c: &mut Criterion) {
     });
 }
 
+fn rect_contains_linestring(c: &mut Criterion) {
+    c.bench_function(
+        "rect contains linestring 40 on boundary (Contains Trait)",
+        |bencher| {
+            let rect = Rect::new(Point::new(5., 5.), Point::new(9., 1.));
+            let ls = LineString::from_iter(rect.coords_iter().cycle().take(10));
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&rect).contains(criterion::black_box(&ls)));
+            });
+        },
+    );
+    c.bench_function(
+        "rect contains linestring 40 on boundary (Relate Trait)",
+        |bencher| {
+            let rect = Rect::new(Point::new(5., 5.), Point::new(9., 1.));
+            let ls = LineString::from_iter(rect.coords_iter().cycle().take(10));
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&rect)
+                    .relate(criterion::black_box(&ls))
+                    .is_contains());
+            });
+        },
+    );
+
+    c.bench_function(
+        "rect contains linestring 4000 on boundary (Contains Trait)",
+        |bencher| {
+            let rect = Rect::new(Point::new(5., 5.), Point::new(9., 1.));
+            let ls = LineString::from_iter(rect.coords_iter().cycle().take(1000));
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&rect).contains(criterion::black_box(&ls)));
+            });
+        },
+    );
+    c.bench_function(
+        "rect contains linestring 4000 on boundary (Relate Trait)",
+        |bencher| {
+            let rect = Rect::new(Point::new(5., 5.), Point::new(9., 1.));
+            let ls = LineString::from_iter(rect.coords_iter().cycle().take(1000));
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&rect)
+                    .relate(criterion::black_box(&ls))
+                    .is_contains());
+            });
+        },
+    );
+
+    c.bench_function(
+        "rect contains linestring disjoint in bb (Contains Trait)",
+        |bencher| {
+            let rect = Rect::new(Point::new(5., 5.), Point::new(9., 1.));
+            let ls = line_string![
+                coord! {x:0.,y:0.},
+                coord! {x:0.,y:10.},
+                coord! {x:10.,y:10.},
+                coord! {x:10.,y:0.}
+            ];
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&rect).contains(criterion::black_box(&ls)));
+            });
+        },
+    );
+    c.bench_function(
+        "rect contains linestring disjoint in bb (Relate Trait)",
+        |bencher| {
+            let rect = Rect::new(Point::new(5., 5.), Point::new(9., 1.));
+            let ls = line_string![
+                coord! {x:0.,y:0.},
+                coord! {x:0.,y:10.},
+                coord! {x:10.,y:10.},
+                coord! {x:10.,y:0.}
+            ];
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&rect)
+                    .relate(criterion::black_box(&ls))
+                    .is_contains());
+            });
+        },
+    );
+}
+
+fn triangle_contains_linestring(c: &mut Criterion) {
+    c.bench_function(
+        "triangle contains linestring 30 on boundary (Contains Trait)",
+        |bencher| {
+            let tri = Triangle::new(
+                coord! {x:0.,y:0.},
+                coord! {x:10.,y:0.},
+                coord! {x:10.,y:10.},
+            );
+            let ls = LineString::from_iter(tri.coords_iter().cycle().take(10));
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&tri).contains(criterion::black_box(&ls)));
+            });
+        },
+    );
+    c.bench_function(
+        "triangle contains linestring 30 on boundary (Relate Trait)",
+        |bencher| {
+            let tri = Triangle::new(
+                coord! {x:0.,y:0.},
+                coord! {x:10.,y:0.},
+                coord! {x:10.,y:10.},
+            );
+            let ls = LineString::from_iter(tri.coords_iter().cycle().take(10));
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&tri)
+                    .relate(criterion::black_box(&ls))
+                    .is_contains());
+            });
+        },
+    );
+
+    c.bench_function(
+        "triangle contains linestring 3000 on boundary (Contains Trait)",
+        |bencher| {
+            let tri = Triangle::new(
+                coord! {x:0.,y:0.},
+                coord! {x:10.,y:0.},
+                coord! {x:10.,y:10.},
+            );
+            let ls = LineString::from_iter(tri.coords_iter().cycle().take(1000));
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&tri).contains(criterion::black_box(&ls)));
+            });
+        },
+    );
+    c.bench_function(
+        "triangle contains linestring 3000 on boundary (Relate Trait)",
+        |bencher| {
+            let tri = Triangle::new(
+                coord! {x:0.,y:0.},
+                coord! {x:10.,y:0.},
+                coord! {x:10.,y:10.},
+            );
+            let ls = LineString::from_iter(tri.coords_iter().cycle().take(1000));
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&tri)
+                    .relate(criterion::black_box(&ls))
+                    .is_contains());
+            });
+        },
+    );
+
+    c.bench_function(
+        "triangle contains linestring disjoint in bounding box (Contains Trait)",
+        |bencher| {
+            let tri = Triangle::new(
+                coord! {x:0.,y:0.},
+                coord! {x:10.,y:0.},
+                coord! {x:10.,y:10.},
+            );
+            let ls = line_string![
+                coord! {x:0.,y:0.},
+                coord! {x:0.,y:10.},
+                coord! {x:10.,y:10.},
+                coord! {x:10.,y:0.}
+            ];
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&tri).contains(criterion::black_box(&ls)));
+            });
+        },
+    );
+    c.bench_function(
+        "triangle contains linestring disjoint in bounding box (Relate Trait)",
+        |bencher| {
+            let tri = Triangle::new(
+                coord! {x:0.,y:0.},
+                coord! {x:10.,y:0.},
+                coord! {x:10.,y:10.},
+            );
+            let ls = line_string![
+                coord! {x:0.,y:0.},
+                coord! {x:0.,y:10.},
+                coord! {x:10.,y:10.},
+                coord! {x:10.,y:0.}
+            ];
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&tri)
+                    .relate(criterion::black_box(&ls))
+                    .is_contains());
+            });
+        },
+    );
+}
+
 criterion_group!(benches, criterion_benchmark);
 criterion_group!(bench_line_contains_multi_point, line_contains_multi_point);
 criterion_group!(bench_rect_contains_line, rect_contains_line);
@@ -805,6 +1003,11 @@ criterion_group!(
 );
 criterion_group!(bench_triangle_contains_line, triangle_contains_line);
 criterion_group!(bench_triangle_contains_rect, triangle_contains_rect);
+criterion_group!(bench_rect_contains_linestring, rect_contains_linestring);
+criterion_group!(
+    bench_triangle_contains_linestring,
+    triangle_contains_linestring
+);
 
 criterion_main!(
     benches,
@@ -814,4 +1017,6 @@ criterion_main!(
     bench_polygon_contains_multipoint,
     bench_triangle_contains_line,
     bench_triangle_contains_rect,
+    bench_rect_contains_linestring,
+    bench_triangle_contains_linestring,
 );
