@@ -239,5 +239,154 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 }
 
+fn rect_contains_line(c: &mut Criterion) {
+    c.bench_function("line within rect (Contains Trait)", |bencher| {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 5.));
+        let ln = Line::new(Point::new(1., 1.), Point::new(9., 4.));
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).contains(criterion::black_box(&ln)));
+        });
+    });
+    c.bench_function("line within rect (Relates Trait)", |bencher| {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 5.));
+        let ln = Line::new(Point::new(1., 1.), Point::new(9., 4.));
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect)
+                .relate(criterion::black_box(&ln))
+                .is_contains());
+        });
+    });
+
+    c.bench_function("line disjoint rect (Contains Trait)", |bencher| {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 5.));
+        let ln = Line::new(Point::new(1., 6.), Point::new(9., 6.));
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&rect).contains(criterion::black_box(&ln)));
+        });
+    });
+    c.bench_function("line disjoint rect (Relates Trait)", |bencher| {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 5.));
+        let ln = Line::new(Point::new(1., 6.), Point::new(9., 6.));
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&rect)
+                .relate(criterion::black_box(&ln))
+                .is_contains());
+        });
+    });
+
+    c.bench_function("line along rect (Contains Trait)", |bencher| {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 5.));
+        let ln = Line::new(Point::new(1., 0.), Point::new(9., 0.));
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&rect).contains(criterion::black_box(&ln)));
+        });
+    });
+    c.bench_function("line along rect (Relates Trait)", |bencher| {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 5.));
+        let ln = Line::new(Point::new(1., 0.), Point::new(9., 0.));
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&rect)
+                .relate(criterion::black_box(&ln))
+                .is_contains());
+        });
+    });
+}
+
+fn triangle_contains_line(c: &mut Criterion) {
+    c.bench_function("line within triangle (Contains Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:5.},
+        );
+        let ln = Line::new(Point::new(3., 1.), Point::new(9., 3.));
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&tri).contains(criterion::black_box(&ln)));
+        });
+    });
+    c.bench_function("line within triangle (Relates Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:5.},
+        );
+        let ln = Line::new(Point::new(3., 1.), Point::new(9., 3.));
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&tri)
+                .relate(criterion::black_box(&ln))
+                .is_contains());
+        });
+    });
+
+    c.bench_function("line disjoint triangle (Contains Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:5.},
+        );
+        let ln = Line::new(Point::new(1., 6.), Point::new(9., 6.));
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&tri).contains(criterion::black_box(&ln)));
+        });
+    });
+    c.bench_function("line disjoint triangle (Relates Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:5.},
+        );
+        let ln = Line::new(Point::new(1., 6.), Point::new(9., 6.));
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&tri)
+                .relate(criterion::black_box(&ln))
+                .is_contains());
+        });
+    });
+
+    c.bench_function("line along triangle (Contains Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:5.},
+        );
+        let ln = Line::new(Point::new(1., 0.), Point::new(9., 0.));
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&tri).contains(criterion::black_box(&ln)));
+        });
+    });
+    c.bench_function("line along triangle (Relates Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:5.},
+        );
+        let ln = Line::new(Point::new(1., 0.), Point::new(9., 0.));
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&tri)
+                .relate(criterion::black_box(&ln))
+                .is_contains());
+        });
+    });
+}
+
 criterion_group!(benches, criterion_benchmark);
-criterion_main!(benches);
+criterion_group!(bench_rect_contains_line, rect_contains_line);
+criterion_group!(bench_triangle_contains_line, triangle_contains_line);
+
+criterion_main!(
+    benches,
+    bench_rect_contains_line,
+    bench_triangle_contains_line,
+);
