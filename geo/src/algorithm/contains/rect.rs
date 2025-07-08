@@ -31,11 +31,11 @@ where
 impl<T> Contains<Rect<T>> for Rect<T>
 where
     T: GeoNum,
-    Line<T> : Contains<Coord<T>>+Contains<Line<T>>,
-    Rect<T> : Contains<Line<T>>+Contains<Coord<T>>,
+    Line<T>: Contains<Coord<T>> + Contains<Line<T>>,
+    Rect<T>: Contains<Line<T>> + Contains<Coord<T>>,
 {
     fn contains(&self, other: &Rect<T>) -> bool {
-        match(self.dimensions(), other.dimensions()) {
+        match (self.dimensions(), other.dimensions()) {
             (Dimensions::TwoDimensional, Dimensions::TwoDimensional) => {
                 // standard case
                 self.min().x <= other.min().x
@@ -44,17 +44,19 @@ where
                     && self.max().y >= other.max().y
             }
             (Dimensions::TwoDimensional, Dimensions::OneDimensional) => {
-               self.contains(&Line::<T>::new(other.min(), other.max()))
+                self.contains(&Line::<T>::new(other.min(), other.max()))
             }
-            (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => self.contains(&other.min()),
+            (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => {
+                self.contains(&other.min())
+            }
             // individual cases for OneDimensional because Line contains Rect is currently a Relate Trait impl
-             (Dimensions::OneDimensional, Dimensions::TwoDimensional) => false,
-                 (Dimensions::OneDimensional, Dimensions::OneDimensional) => {
+            (Dimensions::OneDimensional, Dimensions::TwoDimensional) => false,
+            (Dimensions::OneDimensional, Dimensions::OneDimensional) => {
                 Line::new(self.min(), self.max()).contains(&Line::new(other.min(), other.max()))
-                }
+            }
             (Dimensions::OneDimensional, Dimensions::ZeroDimensional) => {
                 Line::<T>::new(self.min(), self.max()).contains(&other.min())
-                }
+            }
             (Dimensions::ZeroDimensional, _) => Point::<T>::from(self.min()).contains(other),
             (Dimensions::Empty, _) => false,
             (_, Dimensions::Empty) => false,
@@ -228,11 +230,10 @@ mod tests_triangle {
     }
 }
 
-
 #[cfg(test)]
 mod tests_rect {
     use super::*;
-    use crate::{ Point, Rect, Relate};
+    use crate::{Point, Rect, Relate};
 
     #[test]
     fn rect2d_contains_line0d() {
@@ -242,13 +243,12 @@ mod tests_rect {
 
         assert!(rect.contains(&rect));
         assert!(rect.relate(&rect).is_contains());
-        
+
         assert!(!rect.contains(&rect_1d));
         assert!(!rect.relate(&rect_1d).is_contains());
-        
+
         assert!(!rect.contains(&rect_0d));
         assert!(!rect.relate(&rect_0d).is_contains());
-
     }
 }
 #[cfg(test)]
