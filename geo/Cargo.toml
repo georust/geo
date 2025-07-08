@@ -126,3 +126,7 @@ harness = false
 [[bench]]
 name = "stitch"
 harness = false
+
+[[bench]]
+name = "line_locate_point"
+harness = false

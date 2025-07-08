@@ -65,32 +65,53 @@ where
     T: CoordFloat,
     C: Into<Coord<T>>,
 {
+    line_segment_distance_squared(point, start, end).sqrt()
+}
+
+pub fn line_segment_distance_squared<T, C>(point: C, start: C, end: C) -> T
+where
+    T: CoordFloat,
+    C: Into<Coord<T>>,
+{
     let point = point.into();
     let start = start.into();
     let end = end.into();
 
+    // Degenerate case for line with length 0 - treat as a point
     if start == end {
-        return line_euclidean_length(Line::new(point, start));
+        return line_euclidean_length_squared(Line::new(point, start));
     }
     let dx = end.x - start.x;
     let dy = end.y - start.y;
     let d_squared = dx * dx + dy * dy;
+
+    // Projection of point onto the line segment
     let r = ((point.x - start.x) * dx + (point.y - start.y) * dy) / d_squared;
+    // Projection lies beyond start - start point is closest
     if r <= T::zero() {
-        return line_euclidean_length(Line::new(point, start));
+        return line_euclidean_length_squared(Line::new(point, start));
     }
+    // Projection lies beyond end - end point is closest
     if r >= T::one() {
-        return line_euclidean_length(Line::new(point, end));
+        return line_euclidean_length_squared(Line::new(point, end));
     }
+    // Projection lies on midpoint between start-end
     let s = ((start.y - point.y) * dx - (start.x - point.x) * dy) / d_squared;
-    s.abs() * dx.hypot(dy)
+    s.powi(2) * d_squared
 }
 
 pub fn line_euclidean_length<T>(line: Line<T>) -> T
 where
     T: CoordFloat,
 {
-    line.dx().hypot(line.dy())
+    line_euclidean_length_squared(line).sqrt()
+}
+
+pub fn line_euclidean_length_squared<T>(line: Line<T>) -> T
+where
+    T: CoordFloat,
+{
+    line.dx().powi(2) + line.dy().powi(2)
 }
 
 pub fn point_line_string_euclidean_distance<T>(p: Point<T>, l: &LineString<T>) -> T
@@ -112,6 +133,14 @@ where
     C: Into<Coord<T>>,
 {
     line_segment_distance(p.into(), l.start, l.end)
+}
+
+pub fn point_line_euclidean_distance_squared<C, T>(p: C, l: Line<T>) -> T
+where
+    T: CoordFloat,
+    C: Into<Coord<T>>,
+{
+    line_segment_distance_squared(p.into(), l.start, l.end)
 }
 
 pub fn point_contains_point<T>(p1: Point<T>, p2: Point<T>) -> bool

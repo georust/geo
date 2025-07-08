@@ -8,6 +8,8 @@ use crate::{
 };
 use std::ops::AddAssign;
 
+use super::{line_measures::ComparableDistance, Euclidean};
+
 /// Returns a (option of the) fraction of the line's total length
 /// representing the location of the closest point on the line to
 /// the given point.
@@ -98,7 +100,8 @@ where
         let mut closest_dist_to_point = T::infinity();
         let mut fraction = T::zero();
         for segment in self.lines() {
-            let segment_distance_to_point = segment.euclidean_distance(p);
+            let segment_distance_to_point = geo_types::private_utils::point_line_euclidean_distance_squared(p.clone(), segment.clone());
+            // let segment_distance_to_point = Euclidean::comparable_distance(&Euclidean, p, &segment);
             let segment_length = segment.euclidean_length();
             let segment_fraction = segment.line_locate_point(p)?; // if any segment has a None fraction, return None
             if segment_distance_to_point < closest_dist_to_point {
