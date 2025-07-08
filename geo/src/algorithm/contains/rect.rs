@@ -1,7 +1,8 @@
 use geo_types::CoordFloat;
 
 use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
-use crate::{geometry::*, Area, CoordsIter, HasDimensions, Intersects, LinesIter};
+use crate::dimensions::Dimensions;
+use crate::{geometry::*, Area, CoordsIter, HasDimensions, Intersects, LinesIter, Relate};
 use crate::{CoordNum, GeoFloat};
 
 // ┌──────────────────────────┐
@@ -81,18 +82,21 @@ where
 
 impl<T> Contains<Line<T>> for Rect<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
     Line<T>: Contains<Line<T>>,
-    Rect<T>: Intersects<Coord<T>>,
+    Rect<T>: Intersects<Coord<T>> + HasDimensions + Relate<T>,
 {
     fn contains(&self, rhs: &Line<T>) -> bool {
         // self intersects all points && line does not sit on any of the self's edges
-
-        self.intersects(&rhs.start)
-            && self.intersects(&rhs.end)
-            && (self.contains(&rhs.start)
-                || self.contains(&rhs.end)
-                || !self.lines_iter().any(|edge| edge.contains(rhs)))
+        if self.dimensions() == Dimensions::TwoDimensional {
+            self.intersects(&rhs.start)
+                && self.intersects(&rhs.end)
+                && (self.contains(&rhs.start)
+                    || self.contains(&rhs.end)
+                    || !self.lines_iter().any(|edge| edge.contains(rhs)))
+        } else {
+            self.relate(rhs).is_contains()
+        }
     }
 }
 
@@ -103,6 +107,35 @@ impl_contains_geometry_for!(Rect<T>);
 mod tests {
     use super::*;
     use crate::{Line, Point, Rect, Relate};
+
+    #[test]
+    fn rect2d_contains_line0d() {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 5.));
+        let ln = Line::new(Point::new(1., 1.), Point::new(1., 1.));
+        assert!(rect.contains(&ln));
+        assert!(rect.relate(&ln).is_contains());
+    }
+    #[test]
+    fn rect1d_contains_line1d() {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 0.));
+        let ln = Line::new(Point::new(1., 0.), Point::new(9., 0.));
+        assert!(rect.contains(&ln));
+        assert!(rect.relate(&ln).is_contains());
+    }
+    #[test]
+    fn rect1d_contains_line0d() {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 0.));
+        let ln = Line::new(Point::new(1., 0.), Point::new(1., 0.));
+        assert!(rect.contains(&ln));
+        assert!(rect.relate(&ln).is_contains());
+    }
+    #[test]
+    fn rect0d_contains_line0d() {
+        let rect = Rect::new(Point::new(1., 0.), Point::new(1., 0.));
+        let ln = Line::new(Point::new(1., 0.), Point::new(1., 0.));
+        assert!(!rect.contains(&ln));
+        assert!(!rect.relate(&ln).is_contains());
+    }
 
     #[test]
     fn rect_contains_line() {

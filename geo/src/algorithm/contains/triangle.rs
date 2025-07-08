@@ -1,7 +1,7 @@
 use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
-use crate::geometry::*;
-use crate::{kernels::Kernel, GeoFloat, GeoNum, Intersects, LinesIter, Orientation};
-
+use crate::dimensions::Dimensions;
+use crate::{geometry::*, HasDimensions};
+use crate::{kernels::Kernel, GeoFloat, GeoNum, Intersects, LinesIter, Orientation, Relate};
 // ┌──────────────────────────────┐
 // │ Implementations for Triangle │
 // └──────────────────────────────┘
@@ -50,18 +50,20 @@ where
 
 impl<T> Contains<Line<T>> for Triangle<T>
 where
-    T: GeoNum,
+    T: GeoFloat,
     Line<T>: Contains<Line<T>>,
-    Triangle<T>: Intersects<Coord<T>>,
+    Triangle<T>: Intersects<Coord<T>> + HasDimensions + Relate<T>,
 {
     fn contains(&self, rhs: &Line<T>) -> bool {
-        // self intersects all points && line does not sit on any of the self's edges
-
-        self.intersects(&rhs.start)
-            && self.intersects(&rhs.end)
-            && (self.contains(&rhs.start)
-                || self.contains(&rhs.end)
-                || !self.lines_iter().any(|edge| edge.contains(rhs)))
+        if self.dimensions() == Dimensions::TwoDimensional {
+            self.intersects(&rhs.start)
+                && self.intersects(&rhs.end)
+                && (self.contains(&rhs.start)
+                    || self.contains(&rhs.end)
+                    || !self.lines_iter().any(|edge| edge.contains(rhs)))
+        } else {
+            self.relate(rhs).is_contains()
+        }
     }
 }
 
@@ -72,6 +74,56 @@ impl_contains_geometry_for!(Triangle<T>);
 mod tests {
     use super::*;
     use crate::{coord, Line, Point, Relate, Triangle};
+
+    #[test]
+    fn triangle2d_contains_line0d() {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:10., y:50.},
+        );
+        let line = Line::new(Point::new(1., 1.), Point::new(1., 1.));
+
+        assert!(tri.contains(&line));
+        assert!(tri.relate(&line).is_contains());
+    }
+    #[test]
+    fn triangle1d_contains_line1d() {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:5., y:0.},
+        );
+        let line = Line::new(Point::new(1., 0.), Point::new(9., 0.));
+
+        assert!(tri.contains(&line));
+        assert!(tri.relate(&line).is_contains());
+    }
+
+    #[test]
+    fn triangle1d_contains_line0d() {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:10., y:0.},
+            coord! {x:5., y:0.},
+        );
+        let line = Line::new(Point::new(1., 0.), Point::new(1., 0.));
+
+        assert!(tri.contains(&line));
+        assert!(tri.relate(&line).is_contains());
+    }
+    #[test]
+    fn triangle0d_contains_line0d() {
+        let tri = Triangle::new(
+            coord! {x:0., y:0.},
+            coord! {x:0., y:0.},
+            coord! {x:0., y:0.},
+        );
+        let line = Line::new(Point::new(0., 0.), Point::new(0., 0.));
+
+        assert!(!tri.contains(&line));
+        assert!(!tri.relate(&line).is_contains());
+    }
 
     #[test]
     fn triangle_contains_line() {
