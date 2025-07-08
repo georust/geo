@@ -170,13 +170,6 @@ struct SweepLineInterval<T: GeoFloat> {
     index: usize,  // Index used to match INSERT/DELETE event pairs
 }
 
-/// Event types for the sweep line algorithm
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum EventType {
-    Insert,
-    Delete,
-}
-
 /// An event in the sweep line algorithm.
 ///
 /// Events represent the start or end points of line segments.
@@ -215,15 +208,13 @@ enum EventType {
 #[derive(Debug, Clone)]
 struct SweepLineEvent<T: GeoFloat> {
     x_value: T,
-    event_type: EventType,
     interval: SweepLineInterval<T>,
 }
 
 impl<T: GeoFloat> SweepLineEvent<T> {
-    fn new(x: T, event_type: EventType, interval: SweepLineInterval<T>) -> Self {
+    fn new(x: T, interval: SweepLineInterval<T>) -> Self {
         Self {
             x_value: x,
-            event_type,
             interval,
         }
     }
@@ -232,7 +223,6 @@ impl<T: GeoFloat> SweepLineEvent<T> {
 impl<T: GeoFloat> PartialEq for SweepLineEvent<T> {
     fn eq(&self, other: &Self) -> bool {
         self.x_value.total_cmp(&other.x_value) == Ordering::Equal
-            && self.event_type == other.event_type
     }
 }
 
@@ -248,18 +238,7 @@ impl<T: GeoFloat> Ord for SweepLineEvent<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         // Use total_cmp for more robust floating point comparison
         // This is crucial for grid patterns where many x-values are exactly equal
-        match self.x_value.total_cmp(&other.x_value) {
-            Ordering::Equal => {
-                // When x values are equal, prioritize INSERT events before DELETE events
-                // This ensures proper handling of overlapping segments
-                match (self.event_type, other.event_type) {
-                    (EventType::Insert, EventType::Delete) => Ordering::Less,
-                    (EventType::Delete, EventType::Insert) => Ordering::Greater,
-                    _ => Ordering::Equal,
-                }
-            }
-            ordering => ordering,
-        }
+        self.x_value.total_cmp(&other.x_value)
     }
 }
 
@@ -281,11 +260,11 @@ impl<T: GeoFloat> SweepLineIndex<T> {
         let x_max = interval.max;
 
         // Create INSERT event
-        let insert_event = SweepLineEvent::new(x_min, EventType::Insert, interval);
+        let insert_event = SweepLineEvent::new(x_min, interval);
         self.insert_events.push(insert_event);
 
         // Create DELETE event
-        let delete_event = SweepLineEvent::new(x_max, EventType::Delete, interval);
+        let delete_event = SweepLineEvent::new(x_max, interval);
         self.delete_events.push(delete_event);
     }
 
