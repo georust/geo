@@ -1,6 +1,6 @@
 use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
 use crate::dimensions::Dimensions;
-use crate::{geometry::*, Area, CoordsIter, HasDimensions, Intersects, LinesIter, Relate};
+use crate::{geometry::*, Area, CoordsIter, HasDimensions, Intersects, LinesIter};
 use crate::{CoordFloat, CoordNum, GeoFloat, GeoNum};
 
 // ┌──────────────────────────┐
@@ -125,15 +125,65 @@ where
             }
             (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => self.contains(&rhs.0),
             (Dimensions::OneDimensional, _) => Line::new(self.min(), self.max()).contains(rhs),
-            (Dimensions::ZeroDimensional, _) => Point::from(self.min()).contains(&rhs),
+            (Dimensions::ZeroDimensional, _) => Point::from(self.min()).contains(rhs),
             (Dimensions::Empty, _) => false,
             (_, Dimensions::Empty) => false,
         }
     }
 }
 
-impl_contains_from_relate!(Rect<T>, [LineString<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T> ]);
+impl<T> Contains<LineString<T>> for Rect<T>
+where
+    T: GeoNum,
+    Line<T>: Contains<Line<T>>,
+    Rect<T>: Intersects<Coord<T>>,
+{
+    fn contains(&self, rhs: &LineString<T>) -> bool {
+        match (self.dimensions(), rhs.dimensions()) {
+            (Dimensions::TwoDimensional, Dimensions::OneDimensional) => {
+                // standard case
+                // self intersects all points
+                rhs.coords_iter().all(|c| self.intersects(&c))
+                // either a point
+                &&( rhs.coords_iter().any(|c| self.contains(&c))
+                // or there exists a line which does not line on any of the self's edges
+                || rhs.lines_iter().any(|rhs_edge| !self.lines_iter().any(|edge| edge.contains(&rhs_edge)))
+            )
+            }
+            (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => self.contains(&rhs.0[0]),
+            (Dimensions::OneDimensional, _) => {
+                LineString::from_iter(self.coords_iter()).contains(rhs)
+            }
+            (Dimensions::ZeroDimensional, _) => Point::from(self.min()).contains(rhs),
+            (Dimensions::Empty, _) => false,
+            (_, Dimensions::Empty) => false,
+            (_, Dimensions::TwoDimensional) => unreachable!("LineString cannot be 2 dimensional"),
+        }
+    }
+}
+
+impl_contains_from_relate!(Rect<T>, [ MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T> ]);
 impl_contains_geometry_for!(Rect<T>);
+
+#[cfg(test)]
+mod tests_linestring {
+    use super::*;
+    use crate::{line_string, Point};
+
+    #[test]
+    fn rect_contains_linestring() {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 5.));
+        let ls_within = line_string![(x: 3., y: 2.),(x: 7., y: 5.),];
+        let ls_boundary = LineString::from_iter(rect.exterior_coords_iter());
+        let ls_cross_in = line_string![(x: 0., y: 1.),(x: 3., y: 5.),];
+        let ls_cross_out = line_string![(x: 0., y: 0.),(x: 10., y: 6.),];
+
+        assert!(rect.contains(&ls_within));
+        assert!(!rect.contains(&ls_boundary));
+        assert!(rect.contains(&ls_cross_in));
+        assert!(!rect.contains(&ls_cross_out));
+    }
+}
 
 #[cfg(test)]
 mod tests_triangle {
