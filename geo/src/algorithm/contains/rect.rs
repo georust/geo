@@ -30,15 +30,35 @@ where
 
 impl<T> Contains<Rect<T>> for Rect<T>
 where
-    T: CoordNum,
+    T: GeoNum,
+    Line<T> : Contains<Coord<T>>+Contains<Line<T>>,
+    Rect<T> : Contains<Line<T>>+Contains<Coord<T>>,
 {
     fn contains(&self, other: &Rect<T>) -> bool {
-        // TODO: check for degenerate rectangle (which is a line or a point)
-        // All points of LineString must be in the polygon ?
-        self.min().x <= other.min().x
-            && self.max().x >= other.max().x
-            && self.min().y <= other.min().y
-            && self.max().y >= other.max().y
+        match(self.dimensions(), other.dimensions()) {
+            (Dimensions::TwoDimensional, Dimensions::TwoDimensional) => {
+                // standard case
+                self.min().x <= other.min().x
+                    && self.max().x >= other.max().x
+                    && self.min().y <= other.min().y
+                    && self.max().y >= other.max().y
+            }
+            (Dimensions::TwoDimensional, Dimensions::OneDimensional) => {
+               self.contains(&Line::<T>::new(other.min(), other.max()))
+            }
+            (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => self.contains(&other.min()),
+            // individual cases for OneDimensional because Line contains Rect is currently a Relate Trait impl
+             (Dimensions::OneDimensional, Dimensions::TwoDimensional) => false,
+                 (Dimensions::OneDimensional, Dimensions::OneDimensional) => {
+                Line::new(self.min(), self.max()).contains(&Line::new(other.min(), other.max()))
+                }
+            (Dimensions::OneDimensional, Dimensions::ZeroDimensional) => {
+                Line::<T>::new(self.min(), self.max()).contains(&other.min())
+                }
+            (Dimensions::ZeroDimensional, _) => Point::<T>::from(self.min()).contains(other),
+            (Dimensions::Empty, _) => false,
+            (_, Dimensions::Empty) => false,
+        }
     }
 }
 
@@ -108,7 +128,7 @@ where
 
 impl<T> Contains<Triangle<T>> for Rect<T>
 where
-    T: GeoFloat,
+    T: GeoNum,
     Line<T>: Contains<Line<T>> + Contains<LineString<T>> + Contains<Triangle<T>>,
     Rect<T>: Intersects<Coord<T>>,
     Point<T>: Contains<Triangle<T>>,
@@ -208,6 +228,29 @@ mod tests_triangle {
     }
 }
 
+
+#[cfg(test)]
+mod tests_rect {
+    use super::*;
+    use crate::{ Point, Rect, Relate};
+
+    #[test]
+    fn rect2d_contains_line0d() {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 5.));
+        let rect_1d = Rect::new(Point::new(0., 0.), Point::new(10., 0.));
+        let rect_0d = Rect::new(Point::new(0., 0.), Point::new(0., 0.));
+
+        assert!(rect.contains(&rect));
+        assert!(rect.relate(&rect).is_contains());
+        
+        assert!(!rect.contains(&rect_1d));
+        assert!(!rect.relate(&rect_1d).is_contains());
+        
+        assert!(!rect.contains(&rect_0d));
+        assert!(!rect.relate(&rect_0d).is_contains());
+
+    }
+}
 #[cfg(test)]
 mod tests_line {
     use super::*;
