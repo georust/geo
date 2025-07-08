@@ -1,7 +1,7 @@
 use geo_types::CoordFloat;
 
 use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
-use crate::{geometry::*, Area, CoordsIter, HasDimensions, Intersects};
+use crate::{geometry::*, Area, CoordsIter, HasDimensions, Intersects, LinesIter};
 use crate::{CoordNum, GeoFloat};
 
 // ┌──────────────────────────┐
@@ -79,5 +79,70 @@ where
     }
 }
 
-impl_contains_from_relate!(Rect<T>, [Line<T>, LineString<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Triangle<T>]);
+impl<T> Contains<Line<T>> for Rect<T>
+where
+    T: CoordFloat,
+    Line<T>: Contains<Line<T>>,
+    Rect<T>: Intersects<Coord<T>>,
+{
+    fn contains(&self, rhs: &Line<T>) -> bool {
+        // self intersects all points && line does not sit on any of the self's edges
+
+        self.intersects(&rhs.start)
+            && self.intersects(&rhs.end)
+            && (self.contains(&rhs.start)
+                || self.contains(&rhs.end)
+                || !self.lines_iter().any(|edge| edge.contains(rhs)))
+    }
+}
+
+impl_contains_from_relate!(Rect<T>, [LineString<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Triangle<T>]);
 impl_contains_geometry_for!(Rect<T>);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Line, Point, Rect, Relate};
+
+    #[test]
+    fn rect_contains_line() {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 5.));
+
+        let ln_within = Line::new(Point::new(1., 1.), Point::new(9., 4.));
+        let ln_in_cross = Line::new(Point::new(0., 0.), Point::new(10., 5.));
+
+        let ln_boundary = Line::new(Point::new(0., 0.), Point::new(10., 0.));
+        let ln_boundary_partial = Line::new(Point::new(1., 0.), Point::new(9., 0.));
+
+        let ln_disjoint = Line::new(Point::new(0., 6.), Point::new(10., 6.));
+        let ln_out_cross = Line::new(Point::new(0., 0.), Point::new(10., 10.));
+
+        assert!(rect.contains(&ln_within));
+        assert!(rect.relate(&ln_within).is_contains());
+
+        assert!(rect.contains(&ln_in_cross));
+        assert!(rect.relate(&ln_in_cross).is_contains());
+
+        assert!(!rect.contains(&ln_boundary));
+        assert!(!rect.relate(&ln_boundary).is_contains());
+
+        assert!(!rect.contains(&ln_boundary_partial));
+        assert!(!rect.relate(&ln_boundary_partial).is_contains());
+
+        assert!(!rect.contains(&ln_disjoint));
+        assert!(!rect.relate(&ln_disjoint).is_contains());
+
+        assert!(!rect.contains(&ln_out_cross));
+        assert!(!rect.relate(&ln_out_cross).is_contains());
+    }
+
+    /**
+     *  Implementation of Rect contains Line requires line contains self to be true
+     */
+    #[test]
+    fn line_contains_self() {
+        let ln = Line::new(Point::new(0., 0.), Point::new(10., 0.));
+        assert!(ln.contains(&ln));
+        assert!(ln.relate(&ln).is_contains());
+    }
+}
