@@ -33,8 +33,9 @@ mod tests;
 /// # Performance Note
 ///
 /// This implementation is most useful when there is a need to efficiently find sparse intersections
-/// between thousands of line segments. For smaller numbers of segments, a brute-force approach
-/// will be around 30 % faster in current tests.
+/// between many line segments. For smaller numbers of segments, a brute-force approach
+/// will be around 20 % faster in current tests: if you are reasonably confident that the number of
+/// segments is larger than the number of intersections, use this algorithm.
 ///
 /// Yields tuples `(`Line`, `Line`, `LineIntersection`)` for each pair of input
 /// lines that intersect or overlap. This is a drop-in
