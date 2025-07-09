@@ -2,25 +2,14 @@ use super::*;
 use crate::algorithm::line_intersection::line_intersection;
 use std::iter::FromIterator;
 
-/// Helper function to compute all intersections using brute force
 fn compute_brute_force_intersections<T: GeoFloat>(
     lines: &[Line<T>],
 ) -> Vec<(Line<T>, Line<T>, LineIntersection<T>)> {
     let mut result = Vec::new();
-
     for i in 0..lines.len() {
         for j in (i + 1)..lines.len() {
-            // Also check if lines are exactly the same - skip duplicates
-            if lines[i] == lines[j] {
-                continue;
-            }
-
-            // Use the standard line_intersection function for all cases
-            let intersection = line_intersection(lines[i], lines[j]);
-
-            if let Some(intersection) = intersection {
-                // Include all types of intersections
-                result.push((lines[i], lines[j], intersection));
+            if let Some(isect) = line_intersection(lines[i], lines[j]) {
+                result.push((lines[i], lines[j], isect));
             }
         }
     }

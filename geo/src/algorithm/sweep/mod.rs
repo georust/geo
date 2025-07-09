@@ -84,11 +84,6 @@ impl<T: GeoFloat> Intersections<T> {
     /// Compute all intersections
     fn compute(&mut self) {
         self.compute_sweep_intersections();
-
-        self.intersection_pairs.retain(|(line1, line2, _)| {
-            // Keep only intersections between different lines
-            line1 != line2
-        });
     }
 
     /// Sweep line logic
