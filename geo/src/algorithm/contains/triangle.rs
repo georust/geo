@@ -255,7 +255,27 @@ mod test_rect {
 #[cfg(test)]
 mod test_line {
     use super::*;
-    use crate::{coord, Line, Point, Relate, Triangle};
+    use crate::{ coord, Line, Point, Relate, Triangle};
+
+    #[test]
+    fn triangle_i32(){
+        let tri = Triangle::new(
+            coord! {x:0, y:0},
+            coord! {x:10, y:0},
+            coord! {x:10, y:5},
+        );
+        let line_boundary = Line::new(Point::new(2, 1), Point::new(0, 0));
+        let line_within = Line::new(Point::new(0, 0), Point::new(10, 1));
+        let line_disjoint = Line::new(Point::new(0, -1), Point::new(10, -1));
+
+
+        assert!(!tri.contains(&line_boundary));
+        assert!(tri.contains(&line_within));
+        assert!(!tri.contains(&line_disjoint));
+
+    }
+
+
 
     #[test]
     fn triangle2d_contains_line0d() {
