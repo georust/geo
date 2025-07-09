@@ -184,8 +184,56 @@ where
     }
 }
 
-impl_contains_from_relate!(Rect<T>, [ MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T> ]);
+impl<T> Contains<MultiPoint<T>> for Rect<T>
+where
+    T: GeoNum,
+    Line<T>: Contains<Line<T>>,
+    Rect<T>: Intersects<Coord<T>> + Intersects<Point<T>>,
+{
+    fn contains(&self, rhs: &MultiPoint<T>) -> bool {
+        match (self.dimensions(), rhs.dimensions()) {
+            (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => {
+                // standard case
+                // all intersects and at least one contains
+                rhs.iter().all(|pt| self.intersects(pt)) 
+                && rhs.iter().any(|pt| self.contains(pt))
+            }
+            (Dimensions::OneDimensional, _) => false,
+            (Dimensions::ZeroDimensional, _) => false,
+
+            (Dimensions::Empty, _) => false,
+            (_, Dimensions::Empty) => false,
+            (_, Dimensions::OneDimensional) => unreachable!("MultiPoint cannot be 1 dimensional"),
+            (_, Dimensions::TwoDimensional) => unreachable!("MultiPoint cannot be 2 dimensional"),
+        }
+    }
+}
+
+impl_contains_from_relate!(Rect<T>, [ MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T> ]);
 impl_contains_geometry_for!(Rect<T>);
+
+#[cfg(test)]
+mod tests_multipoint {
+    use super::*;
+    use crate::{MultiPoint, Point};
+
+    #[test]
+    fn rect_contains_linestring() {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 5.));
+
+        let mp_within = MultiPoint::new(vec![Point::new(3., 2.), Point::new(7., 5.)]);
+        let mp_boundary = MultiPoint::new(vec![
+            Point::new(0., 0.),
+            Point::new(5., 0.),
+            Point::new(5., 10.),
+        ]);
+        let mp_out = MultiPoint::new(vec![Point::new(0., 0.), Point::new(11., 11.)]);
+
+        assert!(rect.contains(&mp_within));
+        assert!(!rect.contains(&mp_boundary));
+        assert!(!rect.contains(&mp_out));
+    }
+}
 
 #[cfg(test)]
 mod tests_linestring {

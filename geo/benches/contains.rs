@@ -1102,6 +1102,89 @@ fn triangle_contains_triangle(c: &mut Criterion) {
     );
 }
 
+fn rect_contains_multipoint(c: &mut Criterion) {
+    c.bench_function("rect contains multipoint 100 (Contains Trait)", |bencher| {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
+        let pts: Vec<Point> = (0..10_0)
+            .flat_map(|x| (0..10_0).map(move |y| Point::new(x as f64 / 1_0., y as f64 / 1_0.)))
+            .collect();
+        let mp = MultiPoint::new(pts);
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).contains(&mp));
+        });
+    });
+    c.bench_function("rect contains multipoint 100 (Relates Trait)", |bencher| {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
+        let pts: Vec<Point> = (0..10_0)
+            .flat_map(|x| (0..10_0).map(move |y| Point::new(x as f64 / 1_0., y as f64 / 1_0.)))
+            .collect();
+        let mp = MultiPoint::new(pts);
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).relate(&mp).is_contains());
+        });
+    });
+
+    c.bench_function("rect contains multipoint 1k (Contains Trait)", |bencher| {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
+        let pts: Vec<Point> = (0..10_00)
+            .flat_map(|x| {
+                (0..10_00).map(move |y| Point::new(x as f64 / 1_00., y as f64 / 1_00.))
+            })
+            .collect();
+        let mp = MultiPoint::new(pts);
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).contains(&mp));
+        });
+    });
+    c.bench_function("rect contains multipoint 1k (Relates Trait)", |bencher| {
+        let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
+        let pts: Vec<Point> = (0..10_00)
+            .flat_map(|x| {
+                (0..10_00).map(move |y| Point::new(x as f64 / 1_00., y as f64 / 1_00.))
+            })
+            .collect();
+        let mp = MultiPoint::new(pts);
+        bencher.iter(|| {
+            assert!(criterion::black_box(&rect).relate(&mp).is_contains());
+        });
+    });
+
+    c.bench_function(
+        "rect not contains multipoint (Contains Trait)",
+        // worst case scenario where outlier is last point in array
+        |bencher| {
+            let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
+            let mut pts: Vec<Point> = (0..10_00)
+                .flat_map(|x| {
+                    (0..10_00).map(move |y| Point::new(x as f64 / 1_00., y as f64 / 1_00.))
+                })
+                .collect();
+            pts.push(Point::new(11., 11.));
+            let mp = MultiPoint::new(pts);
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&rect).contains(&mp));
+            });
+        },
+    );
+    c.bench_function(
+        "rect not contains multipoint (Relates Trait)",
+        // worst case scenario where outlier is last point in array
+        |bencher| {
+            let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
+            let mut pts: Vec<Point> = (0..10_00)
+                .flat_map(|x| {
+                    (0..10_00).map(move |y| Point::new(x as f64 / 1_00., y as f64 / 1_00.))
+                })
+                .collect();
+            pts.push(Point::new(11., 11.));
+            let mp = MultiPoint::new(pts);
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&rect).relate(&mp).is_contains());
+            });
+        },
+    );
+}
+
 criterion_group!(benches, criterion_benchmark);
 criterion_group!(bench_line_contains_multi_point, line_contains_multi_point);
 criterion_group!(bench_rect_contains_line, rect_contains_line);
@@ -1121,6 +1204,7 @@ criterion_group!(
     triangle_contains_linestring
 );
 criterion_group!(bench_triangle_contains_triangle, triangle_contains_triangle);
+criterion_group!(bench_rect_contains_multipoint, rect_contains_multipoint);
 
 criterion_main!(
     benches,
@@ -1133,4 +1217,5 @@ criterion_main!(
     bench_rect_contains_linestring,
     bench_triangle_contains_linestring,
     bench_triangle_contains_triangle,
+    bench_rect_contains_multipoint
 );
