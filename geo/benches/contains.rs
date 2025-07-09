@@ -990,6 +990,118 @@ fn triangle_contains_linestring(c: &mut Criterion) {
     );
 }
 
+fn triangle_contains_triangle(c: &mut Criterion) {
+    /*
+       contains
+       disjoint
+    */
+
+    c.bench_function("triangle contains triangle (Contains Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0.,y:0.},
+            coord! {x:10.,y:0.},
+            coord! {x:10.,y:10.},
+        );
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&tri).contains(criterion::black_box(&tri)));
+        });
+    });
+    c.bench_function("triangle contains triangle (Relate Trait)", |bencher| {
+        let tri = Triangle::new(
+            coord! {x:0.,y:0.},
+            coord! {x:10.,y:0.},
+            coord! {x:10.,y:10.},
+        );
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&tri)
+                .relate(criterion::black_box(&tri))
+                .is_contains());
+        });
+    });
+
+    c.bench_function(
+        "triangle disjoint triangle disjoint bounding box(Contains Trait)",
+        |bencher| {
+            let tri = Triangle::new(
+                coord! {x:0.,y:0.},
+                coord! {x:10.,y:0.},
+                coord! {x:10.,y:10.},
+            );
+            let tri2 = Triangle::new(
+                coord! {x:-1.,y:-1.},
+                coord! {x:-10.,y:-1.},
+                coord! {x:-10.,y:-10.},
+            );
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&tri).contains(criterion::black_box(&tri2)));
+            });
+        },
+    );
+    c.bench_function(
+        "triangle disjoint triangle  disjoint bounding box (Relate Trait)",
+        |bencher| {
+            let tri = Triangle::new(
+                coord! {x:0.,y:0.},
+                coord! {x:10.,y:0.},
+                coord! {x:10.,y:10.},
+            );
+            let tri2 = Triangle::new(
+                coord! {x:-1.,y:-1.},
+                coord! {x:-10.,y:-1.},
+                coord! {x:-10.,y:-10.},
+            );
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&tri)
+                    .relate(criterion::black_box(&tri2))
+                    .is_contains());
+            });
+        },
+    );
+
+    c.bench_function(
+        "triangle disjoint triangle overlapping bounding box (Contains Trait)",
+        |bencher| {
+            let tri = Triangle::new(
+                coord! {x:0.,y:0.},
+                coord! {x:10.,y:0.},
+                coord! {x:10.,y:10.},
+            );
+            let tri2 = Triangle::new(
+                coord! {x:0.,y:0.},
+                coord! {x:0.,y:10.},
+                coord! {x:10.,y:10.},
+            );
+
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&tri).contains(criterion::black_box(&tri2)));
+            });
+        },
+    );
+    c.bench_function(
+        "triangle disjoint triangle overlapping bounding box (Relate Trait)",
+        |bencher| {
+            let tri = Triangle::new(
+                coord! {x:0.,y:0.},
+                coord! {x:10.,y:0.},
+                coord! {x:10.,y:10.},
+            );
+            let tri2 = Triangle::new(
+                coord! {x:0.,y:0.},
+                coord! {x:0.,y:10.},
+                coord! {x:10.,y:10.},
+            );
+            bencher.iter(|| {
+                assert!(!criterion::black_box(&tri)
+                    .relate(criterion::black_box(&tri2))
+                    .is_contains());
+            });
+        },
+    );
+}
+
 criterion_group!(benches, criterion_benchmark);
 criterion_group!(bench_line_contains_multi_point, line_contains_multi_point);
 criterion_group!(bench_rect_contains_line, rect_contains_line);
@@ -1008,6 +1120,7 @@ criterion_group!(
     bench_triangle_contains_linestring,
     triangle_contains_linestring
 );
+criterion_group!(bench_triangle_contains_triangle, triangle_contains_triangle);
 
 criterion_main!(
     benches,
@@ -1019,4 +1132,5 @@ criterion_main!(
     bench_triangle_contains_rect,
     bench_rect_contains_linestring,
     bench_triangle_contains_linestring,
+    bench_triangle_contains_triangle,
 );
