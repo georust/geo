@@ -43,6 +43,9 @@ impl<F: GeoFloat> LineIntersection<F> {
 /// Lines can intersect in a Point or, for Collinear lines, in a Line. See [`LineIntersection`]
 /// for more details about the result.
 ///
+/// For situations in which a large number of lines must be checked for a sparse number of intersections
+/// the [Bentley-Ottmann implementation](crate::algorithm::sweep::Intersections) will provide better performance.
+///
 /// # Examples
 ///
 /// ```
