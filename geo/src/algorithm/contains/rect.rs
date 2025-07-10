@@ -36,6 +36,7 @@ where
 {
     fn contains(&self, other: &Rect<T>) -> bool {
         match (self.dimensions(), other.dimensions()) {
+            (a,b) if a < b => false,
             (Dimensions::TwoDimensional, Dimensions::TwoDimensional) => {
                 // standard case
                 self.min().x <= other.min().x
@@ -108,6 +109,7 @@ where
 {
     fn contains(&self, rhs: &Line<T>) -> bool {
         match (self.dimensions(), rhs.dimensions()) {
+            (a,b) if a < b => false,
             (Dimensions::TwoDimensional, Dimensions::OneDimensional) => {
                 // standard case
                 self.intersects(&rhs.start)
@@ -138,6 +140,7 @@ where
     fn contains(&self, rhs: &Triangle<T>) -> bool {
         // in non-degenerate cases, all three triangle corners intersecting the rectangle implies one edge crosses the rectangle
         match (self.dimensions(), rhs.dimensions()) {
+            (a,b) if a < b => false,
             (Dimensions::TwoDimensional, Dimensions::TwoDimensional) => {
                 // standard case
                 self.intersects(&rhs.0) && self.intersects(&rhs.1) && self.intersects(&rhs.2)
@@ -162,6 +165,7 @@ where
 {
     fn contains(&self, rhs: &LineString<T>) -> bool {
         match (self.dimensions(), rhs.dimensions()) {
+            (a,b) if a < b => false,
             (Dimensions::TwoDimensional, Dimensions::OneDimensional) => {
                 // standard case
                 // self intersects all points
@@ -192,6 +196,7 @@ where
 {
     fn contains(&self, rhs: &MultiPoint<T>) -> bool {
         match (self.dimensions(), rhs.dimensions()) {
+            (a,b) if a < b => false,
             (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => {
                 // standard case
                 // all intersects and at least one contains
@@ -209,7 +214,41 @@ where
     }
 }
 
-impl_contains_from_relate!(Rect<T>, [ MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T> ]);
+
+impl<T> Contains<MultiLineString<T>> for Rect<T>
+where
+    T: GeoFloat,
+    Line<T>: Contains<Line<T>>,
+    LineString<T>: Contains<MultiLineString<T>>, // this being GeoFloat holds this back as GeoFLoat
+    Rect<T>: Intersects<Coord<T>>,
+{
+    fn contains(&self, rhs: &MultiLineString<T>) -> bool {
+        match (self.dimensions(), rhs.dimensions()) {
+            (a,b) if a < b => false,
+            (Dimensions::TwoDimensional, Dimensions::OneDimensional) => {
+                // standard case
+                // self intersects all points
+                rhs.coords_iter().all(|c| self.intersects(&c))
+                // either a point
+                &&( rhs.coords_iter().any(|c| self.contains(&c))
+                // or there exists a line which does not line on any of the self's edges
+                || rhs.lines_iter().any(|rhs_edge| !self.lines_iter().any(|edge| edge.contains(&rhs_edge)))
+            )
+            }
+            (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => self.contains(&rhs.0[0]),
+            (Dimensions::OneDimensional, _) => {
+                LineString::from_iter(self.coords_iter()).contains(rhs)
+            }
+            (Dimensions::ZeroDimensional, _) => Point::from(self.min()).contains(rhs),
+            (Dimensions::Empty, _) => false,
+            (_, Dimensions::Empty) => false,
+            (_, Dimensions::TwoDimensional) => unreachable!("LineString cannot be 2 dimensional"),
+        }
+    }
+}
+
+// impl_contains_from_relate!(Rect<T>, [ MultiLineString<T>]);
+impl_contains_from_relate!(Rect<T>, [ MultiPolygon<T>, GeometryCollection<T> ]);
 impl_contains_geometry_for!(Rect<T>);
 
 #[cfg(test)]
