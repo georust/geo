@@ -11,7 +11,8 @@ use crate::algorithm::{
     relate::Relate,
 };
 use crate::geometry::*;
-use crate::sweep::{Intersections, SweepPoint};
+// use crate::old_sweep::{Intersections, SweepPoint};
+use crate::sweep::Intersections;
 use crate::GeoFloat;
 
 /// Calculation of interior points.
@@ -191,28 +192,33 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
 
     let lines = polygon.lines_iter().chain(std::iter::once(scan_line));
 
-    let mut intersections: Vec<SweepPoint<T>> = Vec::new();
+    let mut intersections: Vec<Point<T>> = Vec::new();
     for (l1, l2, inter) in Intersections::from_iter(lines) {
         if !(l1 == scan_line || l2 == scan_line) {
             continue;
         }
         match inter {
             LineIntersection::Collinear { intersection } => {
-                intersections.push(SweepPoint::from(intersection.start));
-                intersections.push(SweepPoint::from(intersection.end));
+                intersections.push(intersection.start.into());
+                intersections.push(intersection.end.into());
             }
             LineIntersection::SinglePoint { intersection, .. } => {
-                intersections.push(SweepPoint::from(intersection));
+                intersections.push(intersection.into());
             }
         }
     }
-    intersections.sort();
+    // Sort intersections by x-coordinate to ensure correct pairing
+    // we were previously doing a full lexicographic sort, but there's no need
+    // since the scan line starts at (bounds.min().x, y_mid) and ends at (bounds.max().x, y_mid):
+    // both lines have the same y coordinate (y_mid)!
+    // Therefore sorting by x coord is enough to order the intersections along the scan line
+    intersections.sort_by(|a, b| a.x().total_cmp(&b.x()));
 
     let mut segments = Vec::new();
     let mut intersections_iter = intersections.iter().peekable();
     while let (Some(start), Some(end)) = (intersections_iter.next(), intersections_iter.peek()) {
-        let length = end.x - start.x;
-        let midpoint = Point::new((start.x + end.x) / two, y_mid);
+        let length = end.x() - start.x();
+        let midpoint = Point::new((start.x() + end.x()) / two, y_mid);
         segments.push((midpoint, length));
     }
     segments.sort_by(|a, b| b.1.total_cmp(&a.1));

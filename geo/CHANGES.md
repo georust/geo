@@ -14,6 +14,8 @@
 - Simplify test rustc and libproj version specification in CI
 - Performance: Avoid running through entire iterator to reach last element in `outlier_detection` when calculating LRD and LOF
 - Add `Bearing` and `Destination` trait implementations for `Euclidean`
+- Add new implementation of the Bentley-Ottmann sweep-line algorithm to efficiently find sparse intersections between groups of lines.
+  - <https://github.com/georust/geo/pull/1358>
 
 ## 0.30.0 - 2025-03-24
 
