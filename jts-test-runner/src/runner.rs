@@ -9,7 +9,7 @@ use wkt::ToWkt;
 
 use super::{check_buffer_test_case, input, Operation, Result};
 use geo::algorithm::{
-    BooleanOps, Contains, ContainsProperly, HasDimensions, Intersects, Relate, Within,
+    BooleanOps, Contains, ContainsProperly, Covers, HasDimensions, Intersects, Relate, Within,
 };
 use geo::geometry::*;
 use geo::GeoNum;
@@ -194,6 +194,37 @@ impl TestRunner {
                         });
                     } else {
                         debug!("Contains success: actual == expected");
+                        self.successes.push(test_case);
+                    }
+                }
+                Operation::Covers {
+                    subject,
+                    target,
+                    expected,
+                } => {
+                    let relate_actual = subject.relate(target).is_covers();
+                    let direct_actual = subject.covers(target);
+
+                    if relate_actual != *expected {
+                        debug!("Covers failure: Relate doesn't match expected");
+                        let error_description = format!(
+                            "Covers failure: expected {expected:?}, relate: {relate_actual:?}"
+                        );
+                        self.add_failure(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    } else if relate_actual != direct_actual {
+                        debug!("Covers failure: Relate doesn't match Covers trait implementation");
+                        let error_description = format!(
+                            "Covers failure - Relate.is_covers: {expected:?} doesn't match Covers trait: {direct_actual:?}"
+                        );
+                        self.add_failure(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    } else {
+                        debug!("Covers success: actual == expected");
                         self.successes.push(test_case);
                     }
                 }
