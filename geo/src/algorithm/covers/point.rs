@@ -1,56 +1,32 @@
-use super::{impl_covers_from_relate, Covers};
-use crate::geometry::*;
+use super::{Covers, impl_covers_from_intersects, impl_covers_from_relate};
+use crate::{Contains, geometry::*};
 use crate::{GeoFloat, GeoNum};
 
+impl_covers_from_intersects!(Point<T>, [
+Point<T>, MultiPoint<T>,
+Line<T>,
+LineString<T>,  MultiLineString<T>,
+Rect<T>, Triangle<T>,
+Polygon<T>,  MultiPolygon<T>,
+Geometry<T>, GeometryCollection<T>
+]);
 
-impl<T,G> Covers<G> for Coord<T>
-where T: GeoFloat,
-    Point<T>: Covers<G>
-    {
-        fn covers(&self, rhs: &G) -> bool {
-            Point::new(self.x, self.y).covers(rhs)
-        }
-    }
+impl_covers_from_intersects!(MultiPoint<T>, [Point<T>]);
 
-
-impl<T> Covers<Coord<T>> for Point<T>
+impl<T> Covers<MultiPoint<T>> for MultiPoint<T>
 where
-    T: GeoFloat,
-    Self: Covers<Point<T>>,
+    T: GeoNum,
 {
-    fn covers(&self, rhs: &Coord<T>) -> bool {
-        self.covers(&Point::new(rhs.x, rhs.y))
+    fn covers(&self, rhs: &MultiPoint<T>) -> bool {
+        // use the sliding comparison implementation
+        self.contains(rhs)
     }
 }
 
-impl<T> Covers<Point<T>> for Point<T>
-where
-    T: GeoFloat,
-{
-    fn covers(&self, rhs: &Point<T>) -> bool {
-        self.x() == rhs.x() && self.y() == rhs.y()
-    }
-}
-
-impl_covers_from_relate!(Point<T>, [ MultiPoint<T>]);
-impl_covers_from_relate!(Point<T>, [Line<T>]);
-impl_covers_from_relate!(Point<T>, [ LineString<T>,  MultiLineString<T>]);
-impl_covers_from_relate!(Point<T>, [ Rect<T>, Triangle<T>]);
-impl_covers_from_relate!(Point<T>, [Polygon<T>,  MultiPolygon<T>]);
-impl_covers_from_relate!(Point<T>, [Geometry<T>, GeometryCollection<T>]);
-
-impl<T> Covers<Coord<T>> for MultiPoint<T>
-where
-    T: GeoFloat,
-    Self: Covers<Point<T>>,
-{
-    fn covers(&self, rhs: &Coord<T>) -> bool {
-        self.covers(&Point::new(rhs.x, rhs.y))
-    }
-}
-impl_covers_from_relate!(MultiPoint<T>, [Point<T>, MultiPoint<T>]);
-impl_covers_from_relate!(MultiPoint<T>, [Line<T>]);
-impl_covers_from_relate!(MultiPoint<T>, [ LineString<T>,  MultiLineString<T>]);
-impl_covers_from_relate!(MultiPoint<T>, [ Rect<T>, Triangle<T>]);
-impl_covers_from_relate!(MultiPoint<T>, [Polygon<T>,  MultiPolygon<T>]);
-impl_covers_from_relate!(MultiPoint<T>, [Geometry<T>, GeometryCollection<T>]);
+impl_covers_from_relate!(MultiPoint<T>, [
+Line<T>,
+LineString<T>,  MultiLineString<T>,
+Rect<T>, Triangle<T>,
+Polygon<T>,  MultiPolygon<T>,
+Geometry<T>, GeometryCollection<T>
+]);

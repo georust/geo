@@ -1,16 +1,7 @@
 use super::Covers;
+use crate::GeoFloat;
 use crate::geometry::*;
 use crate::geometry_delegate_impl;
-use crate::{GeoFloat, GeoNum};
-
-impl<T> Covers<Coord<T>> for Geometry<T>
-where
-    T: GeoFloat,
-{
-    fn covers(&self, coord: &Coord<T>) -> bool {
-        self.covers(&Point::from(*coord))
-    }
-}
 
 impl<T> Covers<Point<T>> for Geometry<T>
 where
@@ -106,18 +97,7 @@ impl<T> Covers<Geometry<T>> for Geometry<T>
 where
     T: GeoFloat,
 {
-    fn covers(&self, other: &Geometry<T>) -> bool {
-        match other {
-            Geometry::Point(geom) => self.covers(geom),
-            Geometry::Line(geom) => self.covers(geom),
-            Geometry::LineString(geom) => self.covers(geom),
-            Geometry::Polygon(geom) => self.covers(geom),
-            Geometry::MultiPoint(geom) => self.covers(geom),
-            Geometry::MultiLineString(geom) => self.covers(geom),
-            Geometry::MultiPolygon(geom) => self.covers(geom),
-            Geometry::GeometryCollection(geom) => self.covers(geom),
-            Geometry::Rect(geom) => self.covers(geom),
-            Geometry::Triangle(geom) => self.covers(geom),
-        }
+    geometry_delegate_impl! {
+        fn covers(&self, other: &Geometry<T>) -> bool;
     }
 }

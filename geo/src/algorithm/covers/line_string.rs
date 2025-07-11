@@ -1,35 +1,46 @@
-use super::{impl_covers_from_relate, Covers};
-use crate::geometry::*;
+use super::{Covers, impl_covers_from_intersects, impl_covers_from_relate};
+use crate::{Contains, HasDimensions, geometry::*};
 use crate::{GeoFloat, GeoNum};
 
-impl<T> Covers<Coord<T>> for LineString<T>
-where
-    T: GeoFloat,
-    Self: Covers<Point<T>>,
-{
-    fn covers(&self, rhs: &Coord<T>) -> bool {
-        self.covers(&Point::new(rhs.x, rhs.y))
-    }
-}
-impl_covers_from_relate!(LineString<T>, [Point<T>, MultiPoint<T>]);
-impl_covers_from_relate!(LineString<T>, [Line<T>]);
-impl_covers_from_relate!(LineString<T>, [ LineString<T>,  MultiLineString<T>]);
-impl_covers_from_relate!(LineString<T>, [ Rect<T>, Triangle<T>]);
-impl_covers_from_relate!(LineString<T>, [Polygon<T>,  MultiPolygon<T>]);
-impl_covers_from_relate!(LineString<T>, [Geometry<T>, GeometryCollection<T>]);
+impl_covers_from_intersects!(LineString<T>, [Point<T>, MultiPoint<T>]);
 
-impl<T> Covers<Coord<T>> for MultiLineString<T>
+impl<T> Covers<Line<T>> for LineString<T>
 where
-    T: GeoFloat,
-    Self: Covers<Point<T>>,
+    T: GeoNum,
 {
-    fn covers(&self, rhs: &Coord<T>) -> bool {
-        self.covers(&Point::new(rhs.x, rhs.y))
+    fn covers(&self, rhs: &Line<T>) -> bool {
+        if rhs.start == rhs.end {
+            self.covers(&rhs.start)
+        } else {
+            self.contains(rhs)
+        }
     }
 }
-impl_covers_from_relate!(MultiLineString<T>, [Point<T>, MultiPoint<T>]);
-impl_covers_from_relate!(MultiLineString<T>, [Line<T>]);
-impl_covers_from_relate!(MultiLineString<T>, [ LineString<T>,  MultiLineString<T>]);
-impl_covers_from_relate!(MultiLineString<T>, [ Rect<T>, Triangle<T>]);
-impl_covers_from_relate!(MultiLineString<T>, [Polygon<T>,  MultiPolygon<T>]);
-impl_covers_from_relate!(MultiLineString<T>, [Geometry<T>, GeometryCollection<T>]);
+
+impl<T> Covers<LineString<T>> for LineString<T>
+where
+    T: GeoNum,
+{
+    fn covers(&self, rhs: &LineString<T>) -> bool {
+        if self.is_empty() || rhs.is_empty() {
+            return false;
+        }
+        rhs.lines().all(|l| self.covers(&l))
+    }
+}
+
+impl_covers_from_relate!(LineString<T>, [
+MultiLineString<T>,
+Rect<T>, Triangle<T>,
+Polygon<T>,  MultiPolygon<T>,
+Geometry<T>, GeometryCollection<T>
+]);
+
+impl_covers_from_intersects!(MultiLineString<T>, [Point<T>, MultiPoint<T>]);
+impl_covers_from_relate!(MultiLineString<T>, [
+Line<T>,
+LineString<T>,  MultiLineString<T>,
+Rect<T>, Triangle<T>,
+Polygon<T>,  MultiPolygon<T>,
+Geometry<T>, GeometryCollection<T>
+]);
