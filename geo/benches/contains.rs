@@ -1127,9 +1127,7 @@ fn rect_contains_multipoint(c: &mut Criterion) {
     c.bench_function("rect contains multipoint 1k (Contains Trait)", |bencher| {
         let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
         let pts: Vec<Point> = (0..10_00)
-            .flat_map(|x| {
-                (0..10_00).map(move |y| Point::new(x as f64 / 1_00., y as f64 / 1_00.))
-            })
+            .flat_map(|x| (0..10_00).map(move |y| Point::new(x as f64 / 1_00., y as f64 / 1_00.)))
             .collect();
         let mp = MultiPoint::new(pts);
         bencher.iter(|| {
@@ -1139,9 +1137,7 @@ fn rect_contains_multipoint(c: &mut Criterion) {
     c.bench_function("rect contains multipoint 1k (Relates Trait)", |bencher| {
         let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
         let pts: Vec<Point> = (0..10_00)
-            .flat_map(|x| {
-                (0..10_00).map(move |y| Point::new(x as f64 / 1_00., y as f64 / 1_00.))
-            })
+            .flat_map(|x| (0..10_00).map(move |y| Point::new(x as f64 / 1_00., y as f64 / 1_00.)))
             .collect();
         let mp = MultiPoint::new(pts);
         bencher.iter(|| {

@@ -48,6 +48,35 @@ where
     }
 }
 
+impl<T> Contains<MultiPoint<T>> for Triangle<T>
+where
+    T: GeoNum,
+    LineString<T>: Contains<MultiPoint<T>>,
+    Point<T>: Contains<MultiPoint<T>>,
+{
+    fn contains(&self, rhs: &MultiPoint<T>) -> bool {
+        if rhs.is_empty() {
+            return false;
+        }
+        match (self.dimensions(), rhs.dimensions()) {
+            (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => {
+                // all intersect and at least one within
+                rhs.coords_iter().all(|c| self.intersects(&c))
+                    && rhs.coords_iter().any(|c| self.contains(&c))
+            }
+            (Dimensions::OneDimensional, _) => {
+                LineString::from_iter(self.coords_iter()).contains(rhs)
+            }
+            (Dimensions::ZeroDimensional, _) => Point::from(self.0).contains(rhs),
+
+            (Dimensions::Empty, _) => false,
+            (_, Dimensions::Empty) => false,
+            (_, Dimensions::OneDimensional) => unreachable!("MultiPoint cannot be 1 dimensional"),
+            (_, Dimensions::TwoDimensional) => unreachable!("MultiPoint cannot be 2 dimensional"),
+        }
+    }
+}
+
 impl<T> Contains<Line<T>> for Triangle<T>
 where
     T: GeoNum,
@@ -73,34 +102,6 @@ where
             (Dimensions::Empty, _) => false,
             (_, Dimensions::Empty) => false,
             (_, Dimensions::TwoDimensional) => unreachable!("Line cannot be 2 dimensional"),
-        }
-    }
-}
-
-impl<T> Contains<Rect<T>> for Triangle<T>
-where
-    T: GeoNum,
-    Line<T>: Contains<Line<T>>,
-    Triangle<T>: Intersects<Coord<T>> + Contains<Line<T>> + Contains<Coord<T>>,
-    LineString<T>: Contains<Rect<T>>,
-{
-    fn contains(&self, rhs: &Rect<T>) -> bool {
-        // in non-degenerate cases, all four corners intersecting the triangle implies edges crossing the triangle
-        match (self.dimensions(), rhs.dimensions()) {
-            (Dimensions::TwoDimensional, Dimensions::TwoDimensional) => {
-                // standard case
-                rhs.coords_iter().all(|c| self.intersects(&c))
-            }
-            (Dimensions::TwoDimensional, Dimensions::OneDimensional) => {
-                self.contains(&Line::new(rhs.min(), rhs.max()))
-            }
-            (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => self.contains(&rhs.min()),
-            (Dimensions::OneDimensional, _) => {
-                LineString::from_iter(self.coords_iter()).contains(rhs)
-            }
-            (Dimensions::ZeroDimensional, _) => Point::from(self.0).contains(rhs),
-            (Dimensions::Empty, _) => false,
-            (_, Dimensions::Empty) => false,
         }
     }
 }
@@ -131,6 +132,64 @@ where
             (Dimensions::Empty, _) => false,
             (_, Dimensions::Empty) => false,
             (_, Dimensions::TwoDimensional) => unreachable!("LineString cannot be 2 dimensional"),
+        }
+    }
+}
+
+impl<T> Contains<MultiLineString<T>> for Triangle<T>
+where
+    T: GeoFloat,
+    Line<T>: Contains<Line<T>>,
+    Triangle<T>: Intersects<Coord<T>>,
+{
+    fn contains(&self, rhs: &MultiLineString<T>) -> bool {
+        match (self.dimensions(), rhs.dimensions()) {
+            (Dimensions::TwoDimensional, Dimensions::OneDimensional) => {
+                // standard case
+                // self intersects all points
+                rhs.coords_iter().all(|c| self.intersects(&c))
+                // either a point
+                &&( rhs.coords_iter().any(|c| self.contains(&c))
+                // or there exists a line which does not line on any of the self's edges
+                || rhs.lines_iter().any(|rhs_edge| !self.lines_iter().any(|edge| edge.contains(&rhs_edge)))
+            )
+            }
+            (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => self.contains(&rhs.0[0]),
+            (Dimensions::OneDimensional, _) => {
+                LineString::from_iter(self.coords_iter()).contains(rhs)
+            }
+            (Dimensions::ZeroDimensional, _) => Point::from(self.0).contains(rhs),
+            (Dimensions::Empty, _) => false,
+            (_, Dimensions::Empty) => false,
+            (_, Dimensions::TwoDimensional) => unreachable!("LineString cannot be 2 dimensional"),
+        }
+    }
+}
+
+impl<T> Contains<Rect<T>> for Triangle<T>
+where
+    T: GeoNum,
+    Line<T>: Contains<Line<T>>,
+    Triangle<T>: Intersects<Coord<T>> + Contains<Line<T>> + Contains<Coord<T>>,
+    LineString<T>: Contains<Rect<T>>,
+{
+    fn contains(&self, rhs: &Rect<T>) -> bool {
+        // in non-degenerate cases, all four corners intersecting the triangle implies edges crossing the triangle
+        match (self.dimensions(), rhs.dimensions()) {
+            (Dimensions::TwoDimensional, Dimensions::TwoDimensional) => {
+                // standard case
+                rhs.coords_iter().all(|c| self.intersects(&c))
+            }
+            (Dimensions::TwoDimensional, Dimensions::OneDimensional) => {
+                self.contains(&Line::new(rhs.min(), rhs.max()))
+            }
+            (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => self.contains(&rhs.min()),
+            (Dimensions::OneDimensional, _) => {
+                LineString::from_iter(self.coords_iter()).contains(rhs)
+            }
+            (Dimensions::ZeroDimensional, _) => Point::from(self.0).contains(rhs),
+            (Dimensions::Empty, _) => false,
+            (_, Dimensions::Empty) => false,
         }
     }
 }
@@ -174,7 +233,7 @@ where
     }
 }
 
-impl_contains_from_relate!(Triangle<T>, [ Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>]);
+impl_contains_from_relate!(Triangle<T>, [Polygon<T>, MultiPolygon<T>, GeometryCollection<T>]);
 impl_contains_geometry_for!(Triangle<T>);
 
 #[cfg(test)]
@@ -255,27 +314,19 @@ mod test_rect {
 #[cfg(test)]
 mod test_line {
     use super::*;
-    use crate::{ coord, Line, Point, Relate, Triangle};
+    use crate::{coord, Line, Point, Relate, Triangle};
 
     #[test]
-    fn triangle_i32(){
-        let tri = Triangle::new(
-            coord! {x:0, y:0},
-            coord! {x:10, y:0},
-            coord! {x:10, y:5},
-        );
+    fn triangle_i32() {
+        let tri = Triangle::new(coord! {x:0, y:0}, coord! {x:10, y:0}, coord! {x:10, y:5});
         let line_boundary = Line::new(Point::new(2, 1), Point::new(0, 0));
         let line_within = Line::new(Point::new(0, 0), Point::new(10, 1));
         let line_disjoint = Line::new(Point::new(0, -1), Point::new(10, -1));
 
-
         assert!(!tri.contains(&line_boundary));
         assert!(tri.contains(&line_within));
         assert!(!tri.contains(&line_disjoint));
-
     }
-
-
 
     #[test]
     fn triangle2d_contains_line0d() {
