@@ -56,20 +56,39 @@ pub trait BooleanOps {
     fn boolean_op(
         &self,
         other: &impl BooleanOps<Scalar = Self::Scalar>,
+        op: OpType
+    ) -> MultiPolygon<Self::Scalar> {
+        self.boolean_op_with_fill_rule(other, op, FillRule::EvenOdd)
+    }
+
+    /// Performs a boolean operation with the specified fill rule.
+    fn boolean_op_with_fill_rule(
+        &self,
+        other: &impl BooleanOps<Scalar = Self::Scalar>,
         op: OpType,
+        fill_rule: FillRule
     ) -> MultiPolygon<Self::Scalar> {
         let subject = self.rings().map(ring_to_shape_path).collect::<Vec<_>>();
         let clip = other.rings().map(ring_to_shape_path).collect::<Vec<_>>();
-        let shapes = subject.overlay(&clip, op.into(), FillRule::EvenOdd);
+        let shapes = subject.overlay(&clip, op.into(), fill_rule);
         multi_polygon_from_shapes(shapes)
     }
 
     /// Returns the overlapping regions shared by both `self` and `other`.
     fn intersection(
         &self,
-        other: &impl BooleanOps<Scalar = Self::Scalar>,
+        other: &impl BooleanOps<Scalar = Self::Scalar>
     ) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Intersection)
+    }
+
+    /// Returns the overlapping regions shared by both `self` and `other`, using the specified fill rule.
+    fn intersection_with_fill_rule(
+        &self,
+        other: &impl BooleanOps<Scalar = Self::Scalar>,
+        fill_rule: FillRule
+    ) -> MultiPolygon<Self::Scalar> {
+        self.boolean_op_with_fill_rule(other, OpType::Intersection, fill_rule)
     }
 
     /// Combines the regions of both `self` and `other` into a single geometry, removing
@@ -78,17 +97,45 @@ pub trait BooleanOps {
         self.boolean_op(other, OpType::Union)
     }
 
+    /// Combines the regions of both `self` and `other` into a single geometry, removing
+    /// overlaps and merging boundaries, using the specified fill rule.
+    fn union_with_fill_rule(
+        &self,
+        other: &impl BooleanOps<Scalar = Self::Scalar>,
+        fill_rule: FillRule
+    ) -> MultiPolygon<Self::Scalar> {
+        self.boolean_op_with_fill_rule(other, OpType::Union, fill_rule)
+    }
+
     /// The regions that are in either `self` or `other`, but not in both.
     fn xor(&self, other: &impl BooleanOps<Scalar = Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Xor)
     }
 
+    /// The regions that are in either `self` or `other`, but not in both.
+    fn xor_with_fill_rule(
+        &self,
+        other: &impl BooleanOps<Scalar = Self::Scalar>,
+        fill_rule: FillRule
+    ) -> MultiPolygon<Self::Scalar> {
+        self.boolean_op_with_fill_rule(other, OpType::Xor, fill_rule)
+    }
+
     /// The regions of `self` which are not in `other`.
     fn difference(
         &self,
-        other: &impl BooleanOps<Scalar = Self::Scalar>,
+        other: &impl BooleanOps<Scalar = Self::Scalar>
     ) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Difference)
+    }
+
+    /// The regions of `self` which are not in `other`, using the specified fill rule.
+    fn difference_with_fill_rule(
+        &self,
+        other: &impl BooleanOps<Scalar = Self::Scalar>,
+        fill_rule: FillRule
+    ) -> MultiPolygon<Self::Scalar> {
+        self.boolean_op_with_fill_rule(other, OpType::Difference, fill_rule)
     }
 
     /// Clip a 1-D geometry with self.
@@ -98,7 +145,20 @@ pub trait BooleanOps {
     fn clip(
         &self,
         multi_line_string: &MultiLineString<Self::Scalar>,
+        invert: bool
+    ) -> MultiLineString<Self::Scalar> {
+        self.clip_with_fill_rule(multi_line_string, invert, FillRule::EvenOdd)
+    }
+
+    /// Clip a 1-D geometry with self.
+    ///
+    /// Returns the portion of `ls` that lies within `self` (known as the set-theoeretic
+    /// intersection) if `invert` is false, and the difference (`ls - self`) otherwise.
+    fn clip_with_fill_rule(
+        &self,
+        multi_line_string: &MultiLineString<Self::Scalar>,
         invert: bool,
+        fill_rule: FillRule
     ) -> MultiLineString<Self::Scalar> {
         let subject: Vec<Vec<_>> = multi_line_string
             .iter()
@@ -111,7 +171,7 @@ pub trait BooleanOps {
             invert,
             boundary_included: true,
         };
-        let paths = subject.clip_by(&clip, FillRule::EvenOdd, clip_rule);
+        let paths = subject.clip_by(&clip, fill_rule, clip_rule);
         i_overlay_integration::convert::multi_line_string_from_paths(paths)
     }
 }
