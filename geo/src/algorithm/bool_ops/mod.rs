@@ -56,7 +56,7 @@ pub trait BooleanOps {
     fn boolean_op(
         &self,
         other: &impl BooleanOps<Scalar = Self::Scalar>,
-        op: OpType
+        op: OpType,
     ) -> MultiPolygon<Self::Scalar> {
         self.boolean_op_with_fill_rule(other, op, FillRule::EvenOdd)
     }
@@ -66,7 +66,7 @@ pub trait BooleanOps {
         &self,
         other: &impl BooleanOps<Scalar = Self::Scalar>,
         op: OpType,
-        fill_rule: FillRule
+        fill_rule: FillRule,
     ) -> MultiPolygon<Self::Scalar> {
         let subject = self.rings().map(ring_to_shape_path).collect::<Vec<_>>();
         let clip = other.rings().map(ring_to_shape_path).collect::<Vec<_>>();
@@ -77,7 +77,7 @@ pub trait BooleanOps {
     /// Returns the overlapping regions shared by both `self` and `other`.
     fn intersection(
         &self,
-        other: &impl BooleanOps<Scalar = Self::Scalar>
+        other: &impl BooleanOps<Scalar = Self::Scalar>,
     ) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Intersection)
     }
@@ -86,7 +86,7 @@ pub trait BooleanOps {
     fn intersection_with_fill_rule(
         &self,
         other: &impl BooleanOps<Scalar = Self::Scalar>,
-        fill_rule: FillRule
+        fill_rule: FillRule,
     ) -> MultiPolygon<Self::Scalar> {
         self.boolean_op_with_fill_rule(other, OpType::Intersection, fill_rule)
     }
@@ -102,7 +102,7 @@ pub trait BooleanOps {
     fn union_with_fill_rule(
         &self,
         other: &impl BooleanOps<Scalar = Self::Scalar>,
-        fill_rule: FillRule
+        fill_rule: FillRule,
     ) -> MultiPolygon<Self::Scalar> {
         self.boolean_op_with_fill_rule(other, OpType::Union, fill_rule)
     }
@@ -116,7 +116,7 @@ pub trait BooleanOps {
     fn xor_with_fill_rule(
         &self,
         other: &impl BooleanOps<Scalar = Self::Scalar>,
-        fill_rule: FillRule
+        fill_rule: FillRule,
     ) -> MultiPolygon<Self::Scalar> {
         self.boolean_op_with_fill_rule(other, OpType::Xor, fill_rule)
     }
@@ -124,7 +124,7 @@ pub trait BooleanOps {
     /// The regions of `self` which are not in `other`.
     fn difference(
         &self,
-        other: &impl BooleanOps<Scalar = Self::Scalar>
+        other: &impl BooleanOps<Scalar = Self::Scalar>,
     ) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Difference)
     }
@@ -133,7 +133,7 @@ pub trait BooleanOps {
     fn difference_with_fill_rule(
         &self,
         other: &impl BooleanOps<Scalar = Self::Scalar>,
-        fill_rule: FillRule
+        fill_rule: FillRule,
     ) -> MultiPolygon<Self::Scalar> {
         self.boolean_op_with_fill_rule(other, OpType::Difference, fill_rule)
     }
@@ -145,7 +145,7 @@ pub trait BooleanOps {
     fn clip(
         &self,
         multi_line_string: &MultiLineString<Self::Scalar>,
-        invert: bool
+        invert: bool,
     ) -> MultiLineString<Self::Scalar> {
         self.clip_with_fill_rule(multi_line_string, invert, FillRule::EvenOdd)
     }
@@ -158,7 +158,7 @@ pub trait BooleanOps {
         &self,
         multi_line_string: &MultiLineString<Self::Scalar>,
         invert: bool,
-        fill_rule: FillRule
+        fill_rule: FillRule,
     ) -> MultiLineString<Self::Scalar> {
         let subject: Vec<Vec<_>> = multi_line_string
             .iter()
