@@ -14,6 +14,8 @@
 - Simplify test rustc and libproj version specification in CI
 - Performance: Avoid running through entire iterator to reach last element in `outlier_detection` when calculating LRD and LOF
 - Add `Bearing` and `Destination` trait implementations for `Euclidean`
+- Add `FillRule`-configurable boolean operations to `BooleanOps` trait
+  - <https://github.com/georust/geo/pull/1382>
 
 ## 0.30.0 - 2025-03-24
 
