@@ -7,8 +7,8 @@ use geo::{line_intersection::line_intersection, Line};
 
 use rstar::{primitives::GeomWithData, RTree};
 
-pub fn count_bo(lines: &[Line<f64>]) -> usize {
-    Intersections::from_iter(lines.iter()).count()
+pub fn count_bo(lines: Vec<Line<f64>>) -> usize {
+    Intersections::from_iter(lines).count()
 }
 
 pub fn count_brute(lines: &[Line<f64>]) -> usize {

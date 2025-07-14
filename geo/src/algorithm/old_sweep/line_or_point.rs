@@ -71,6 +71,7 @@ impl<T: GeoNum> From<Coord<T>> for LineOrPoint<T> {
     }
 }
 
+#[allow(dead_code)]
 impl<T: GeoNum> LineOrPoint<T> {
     /// Checks if the variant is a line.
     #[inline]

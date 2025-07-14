@@ -9,7 +9,7 @@
 
 use super::{MonoPoly, SimpleSweep};
 use crate::{
-    sweep::{EventType, LineOrPoint, SweepPoint},
+    old_sweep::{EventType, LineOrPoint, SweepPoint},
     *,
 };
 use std::{cell::Cell, mem::replace};
