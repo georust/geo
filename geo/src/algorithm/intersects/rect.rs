@@ -12,9 +12,36 @@ where
             && rhs.y <= self.max().y
     }
 }
-symmetric_intersects_impl!(Coord<T>, Rect<T>);
+
+symmetric_intersects_impl!(Rect<T>, LineString<T>);
+symmetric_intersects_impl!(Rect<T>, MultiLineString<T>);
+
+// Same logic as Polygon<T>: Intersects<Line<T>>, but avoid
+// an allocation.
+impl<T> Intersects<Line<T>> for Rect<T>
+where
+    T: GeoNum,
+{
+    fn intersects(&self, rhs: &Line<T>) -> bool {
+        let lb = self.min();
+        let rt = self.max();
+        let lt = Coord::from((lb.x, rt.y));
+        let rb = Coord::from((rt.x, lb.y));
+        // If either rhs.{start,end} lies inside Rect, then true
+        self.intersects(&rhs.start)
+            || self.intersects(&rhs.end)
+            || Line::new(lt, rt).intersects(rhs)
+            || Line::new(rt, rb).intersects(rhs)
+            || Line::new(lb, rb).intersects(rhs)
+            || Line::new(lt, lb).intersects(rhs)
+    }
+}
+
 symmetric_intersects_impl!(Rect<T>, Point<T>);
 symmetric_intersects_impl!(Rect<T>, MultiPoint<T>);
+
+symmetric_intersects_impl!(Rect<T>, Polygon<T>);
+symmetric_intersects_impl!(Rect<T>, MultiPolygon<T>);
 
 impl<T> Intersects<Rect<T>> for Rect<T>
 where
@@ -41,28 +68,6 @@ where
     }
 }
 
-// Same logic as Polygon<T>: Intersects<Line<T>>, but avoid
-// an allocation.
-impl<T> Intersects<Line<T>> for Rect<T>
-where
-    T: GeoNum,
-{
-    fn intersects(&self, rhs: &Line<T>) -> bool {
-        let lb = self.min();
-        let rt = self.max();
-        let lt = Coord::from((lb.x, rt.y));
-        let rb = Coord::from((rt.x, lb.y));
-        // If either rhs.{start,end} lies inside Rect, then true
-        self.intersects(&rhs.start)
-            || self.intersects(&rhs.end)
-            || Line::new(lt, rt).intersects(rhs)
-            || Line::new(rt, rb).intersects(rhs)
-            || Line::new(lb, rb).intersects(rhs)
-            || Line::new(lt, lb).intersects(rhs)
-    }
-}
-symmetric_intersects_impl!(Line<T>, Rect<T>);
-
 impl<T> Intersects<Triangle<T>> for Rect<T>
 where
     T: GeoNum,
@@ -71,4 +76,3 @@ where
         self.intersects(&rhs.to_polygon())
     }
 }
-symmetric_intersects_impl!(Triangle<T>, Rect<T>);
