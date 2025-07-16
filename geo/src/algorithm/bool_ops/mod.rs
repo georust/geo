@@ -9,7 +9,7 @@ pub use i_overlay_integration::BoolOpsNum;
 use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
 use crate::winding_order::{Winding, WindingOrder};
 
-use i_overlay::core::fill_rule::FillRule;
+pub use i_overlay::core::fill_rule::FillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
 use i_overlay::float::clip::FloatClip;
 use i_overlay::float::overlay::FloatOverlay;
@@ -53,6 +53,20 @@ pub trait BooleanOps {
     /// In the case of a MultiPolygon, this requires that none of its polygon's interiors may overlap.
     fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>>;
 
+    /// Performs a boolean operation between shapes using the default [`FillRule::EvenOdd`] fill rule.
+    ///
+    /// The `EvenOdd` rule determines filled regions based on the parity of path crossings.
+    /// It correctly handles "holes" in polygons by accounting for path direction and overlapping regions.
+    ///
+    /// This behavior models that of a real-world laser cutter: each shape is treated as a continuous
+    /// cut from solid material. When a new shape overlaps an existing cut, the overlapping area
+    /// is removed, potentially splitting the geometry into multiple disjoint parts.
+    ///
+    /// This fill rule is intuitive for applications like CAD tooling, CNC routing,
+    /// and other manufacturing processes where overlapping shapes subtract from the material
+    /// rather than accumulate.
+    ///
+    /// To use a different fill rule, such as [`FillRule::NonZero`], use [`boolean_op_with_fill_rule`] instead.
     fn boolean_op(
         &self,
         other: &impl BooleanOps<Scalar = Self::Scalar>,
@@ -62,6 +76,18 @@ pub trait BooleanOps {
     }
 
     /// Performs a boolean operation with the specified fill rule.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use geo::algorithm::bool_ops::{BooleanOps, OpType, FillRule};
+    /// use geo::wkt;
+    /// 
+    /// let polygon1 = wkt!(POLYGON((0.0 0.0, 10.0 0.0, 10.0 10.0, 0.0 10.0, 0.0 0.0)));
+    /// let polygon2 = wkt!(POLYGON((5.0 5.0, 15.0 5.0, 15.0 15.0, 5.0 15.0, 5.0 5.0)));
+    /// let result = polygon1.boolean_op_with_fill_rule(&polygon2, OpType::Union, FillRule::NonZero);
+    /// assert_eq!(result.0.len(), 1);
+    /// ```
     fn boolean_op_with_fill_rule(
         &self,
         other: &impl BooleanOps<Scalar = Self::Scalar>,
