@@ -32,11 +32,8 @@ fn test_difference_fill_rules() {
     assert_eq!(multi2.0.len(), 6);
     assert_eq!(multi1, multi2);
 
-    println!("multi1: {}", multi1.wkt_string());
-
     let additive_difference = self_intersecting_star.difference_with_fill_rule(&square, FillRule::NonZero);
     assert_eq!(additive_difference.0.len(), 2);
-    println!("additive_difference: {}", additive_difference.wkt_string());
 }
 
 #[test]
