@@ -56,33 +56,40 @@ fn brute_force_intersections(lines: &[Line<f64>]) -> Vec<(Line<f64>, Line<f64>)>
 
 // Benchmark performance comparison across different dataset sizes
 fn bench_performance_comparison(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Performance Comparison");
-    group.sample_size(10);
-
     let mut rng = StdRng::seed_from_u64(42);
 
     // Test key sizes: crossover point, medium, and large datasets
-    for &n in &[10, 100, 1000, 10000] {
+    for (n, sample_size) in [
+        (10, None),
+        (100, None),
+        (1_000, Some(100)),
+        (10_000, Some(10)),
+    ] {
+        let mut group = c.benchmark_group(&format!("Performance Comparison ({n} lines)"));
+        if let Some(sample_size) = sample_size {
+            group.sample_size(sample_size);
+        }
+
         let lines = generate_random_lines(n, &mut rng);
 
         // Brute force approach
-        group.bench_function(format!("brute_force_n{n}"), |b| {
+        group.bench_function("brute_force", |b| {
             b.iter(|| {
                 black_box(brute_force_intersections(&lines));
             });
         });
 
         // Sweep line algorithm
-        group.bench_function(format!("sweep_n{n}"), |b| {
+        group.bench_function("sweep", |b| {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
                 black_box(intersections);
             });
         });
-    }
 
-    group.finish();
+        group.finish();
+    }
 }
 
 // Benchmark with "dense" case - many lines in small area
