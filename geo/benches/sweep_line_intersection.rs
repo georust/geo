@@ -62,7 +62,7 @@ fn bench_performance_comparison(c: &mut Criterion) {
     let mut rng = StdRng::seed_from_u64(42);
 
     // Test key sizes: crossover point, medium, and large datasets
-    for &n in &[1000, 5000, 10000] {
+    for &n in &[10, 100, 1000, 10000] {
         let lines = generate_random_lines(n, &mut rng);
 
         // Brute force approach
