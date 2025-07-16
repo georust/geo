@@ -59,11 +59,11 @@ fn bench_performance_comparison(c: &mut Criterion) {
     let mut rng = StdRng::seed_from_u64(42);
 
     // Test key sizes: crossover point, medium, and large datasets
-    for (n, sample_size) in [
-        (10, None),
-        (100, None),
-        (1_000, Some(100)),
-        (10_000, Some(10)),
+    for (n, sample_size, expected_intersections) in [
+        (10, None, 7),
+        (100, None, 1328),
+        (1_000, Some(100), 130_050),
+        (10_000, Some(10), 11_689_383),
     ] {
         let mut group = c.benchmark_group(&format!("Performance Comparison ({n} lines)"));
         if let Some(sample_size) = sample_size {
@@ -75,7 +75,8 @@ fn bench_performance_comparison(c: &mut Criterion) {
         // Brute force approach
         group.bench_function("brute_force", |b| {
             b.iter(|| {
-                black_box(brute_force_intersections(&lines));
+                let intersections = black_box(brute_force_intersections(&lines));
+                assert_eq!(intersections.len(), expected_intersections);
             });
         });
 
@@ -84,7 +85,7 @@ fn bench_performance_comparison(c: &mut Criterion) {
             b.iter(|| {
                 let intersections: Vec<_> =
                     NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
-                black_box(intersections);
+                assert_eq!(intersections.len(), expected_intersections);
             });
         });
 
