@@ -88,8 +88,7 @@ fn bench_dense_line_intersections(c: &mut Criterion) {
         // Sweep line algorithm
         group.bench_function("sweep", |b| {
             b.iter(|| {
-                let intersections = Intersections::from_iter(&lines);
-                let intersections: Vec<_> = intersections.iter().collect();
+                let intersections = Intersections::from_iter_to_vec(&lines);
                 assert_eq!(intersections.len(), expected_intersections);
             });
         });
@@ -125,8 +124,7 @@ fn bench_sparse_line_intersections(c: &mut Criterion) {
         // Sweep line algorithm
         group.bench_function("sweep", |b| {
             b.iter(|| {
-                let intersections = Intersections::from_iter(&lines);
-                let intersections: Vec<_> = intersections.iter().collect();
+                let intersections = Intersections::from_iter_to_vec(&lines);
                 assert_eq!(intersections.len(), expected_intersections);
             });
         });
@@ -172,8 +170,7 @@ fn bench_essential_edge_cases(c: &mut Criterion) {
 
         group.bench_function("collinear_segments_sweep", |b| {
             b.iter(|| {
-                let intersections = Intersections::from_iter(&lines);
-                let intersections: Vec<_> = intersections.iter().collect();
+                let intersections = Intersections::from_iter_to_vec(&lines);
                 black_box(intersections);
             });
         });
@@ -250,8 +247,7 @@ fn bench_essential_edge_cases(c: &mut Criterion) {
 
         group.bench_function("numerical_precision_sweep", |b| {
             b.iter(|| {
-                let intersections = Intersections::from_iter(&lines);
-                let intersections: Vec<_> = intersections.iter().collect();
+                let intersections = Intersections::from_iter_to_vec(&lines);
                 black_box(intersections);
             });
         });
@@ -309,8 +305,7 @@ fn bench_realistic_patterns(c: &mut Criterion) {
 
         group.bench_function("road_network_sweep", |b| {
             b.iter(|| {
-                let intersections = Intersections::from_iter(&lines);
-                let intersections: Vec<_> = intersections.iter().collect();
+                let intersections = Intersections::from_iter_to_vec(&lines);
                 black_box(intersections);
             });
         });
@@ -350,8 +345,7 @@ fn bench_realistic_patterns(c: &mut Criterion) {
 
         group.bench_function("polygon_boundaries_sweep", |b| {
             b.iter(|| {
-                let intersections = Intersections::from_iter(&lines);
-                let intersections: Vec<_> = intersections.iter().collect();
+                let intersections = Intersections::from_iter_to_vec(&lines);
                 black_box(intersections);
             });
         });

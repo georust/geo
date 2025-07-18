@@ -220,8 +220,7 @@ fn test_debug_grid_algorithm() {
         // Expected number of intersections in grid
         let expected_intersections = size * size;
 
-        let intersections = Intersections::new(lines);
-        let sweep_results: Vec<_> = intersections.iter().collect();
+        let sweep_results: Vec<_> = Intersections::from_iter_to_vec(lines);
         assert_eq!(
             sweep_results.len(),
             expected_intersections,

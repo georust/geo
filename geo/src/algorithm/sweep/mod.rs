@@ -104,7 +104,7 @@ mod tests;
 ///     Line::from([(1., 0.), (0., 1.)]),
 ///     Line::from([(0., 0.), (1., 1.)]),
 /// ];
-/// let intersections: Vec<_> = Intersections::from_iter(input).iter().collect();
+/// let intersections = Intersections::from_iter_to_vec(input);
 /// // Check that we get the expected intersection
 /// assert_eq!(intersections.len(), 1);
 /// ```
@@ -134,7 +134,7 @@ impl<C: Crosses> Intersections<C> {
     }
 }
 
-impl<C: Crosses + Clone> Intersections<C> {
+impl<'a, C: Crosses + Clone + 'a> Intersections<C> {
     pub fn from_iter_to_vec(
         segments: impl IntoIterator<Item = C>,
     ) -> Vec<(C, C, LineIntersection<C::Scalar>)> {
