@@ -16,6 +16,8 @@
 - Add `Bearing` and `Destination` trait implementations for `Euclidean`
 - Add `FillRule`-configurable boolean operations to `BooleanOps` trait
   - <https://github.com/georust/geo/pull/1382>
+- Add new implementation of the Bentley-Ottmann sweep-line algorithm to efficiently find sparse intersections between groups of lines.
+  - <https://github.com/georust/geo/pull/1358>
 
 ## 0.30.0 - 2025-03-24
 

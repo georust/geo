@@ -27,9 +27,12 @@ where
 
     g.bench_with_input(BenchmarkId::new("Bentley-Ottman", param), &(), |b, _| {
         b.iter_batched(
-            samples.sampler(),
-            |lines| {
-                assert_eq!(count_bo(&lines.0), lines.1);
+            || {
+                let (lines, expected) = samples.sampler()();
+                (lines.clone(), *expected)
+            },
+            |(lines, expected)| {
+                assert_eq!(count_bo(lines), expected);
             },
             BatchSize::SmallInput,
         );
