@@ -1105,8 +1105,8 @@ fn triangle_contains_triangle(c: &mut Criterion) {
 fn rect_contains_multipoint(c: &mut Criterion) {
     c.bench_function("rect contains multipoint 100 (Contains Trait)", |bencher| {
         let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
-        let pts: Vec<Point> = (0..10_0)
-            .flat_map(|x| (0..10_0).map(move |y| Point::new(x as f64 / 1_0., y as f64 / 1_0.)))
+        let pts: Vec<Point> = (0..100)
+            .flat_map(|x| (0..100).map(move |y| Point::new(x as f64 / 1_0., y as f64 / 1_0.)))
             .collect();
         let mp = MultiPoint::new(pts);
         bencher.iter(|| {
@@ -1115,8 +1115,8 @@ fn rect_contains_multipoint(c: &mut Criterion) {
     });
     c.bench_function("rect contains multipoint 100 (Relates Trait)", |bencher| {
         let rect = Rect::new(Point::new(0., 0.), Point::new(10., 10.));
-        let pts: Vec<Point> = (0..10_0)
-            .flat_map(|x| (0..10_0).map(move |y| Point::new(x as f64 / 1_0., y as f64 / 1_0.)))
+        let pts: Vec<Point> = (0..100)
+            .flat_map(|x| (0..100).map(move |y| Point::new(x as f64 / 1_0., y as f64 / 1_0.)))
             .collect();
         let mp = MultiPoint::new(pts);
         bencher.iter(|| {

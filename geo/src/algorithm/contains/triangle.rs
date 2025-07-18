@@ -427,3 +427,12 @@ mod test_line {
         assert!(ln.relate(&ln).is_contains());
     }
 }
+
+#[cfg(test)]
+mod test_multilinestring {}
+
+#[cfg(test)]
+mod test_polygon {}
+
+#[cfg(test)]
+mod test_multipolygon {}

@@ -1,7 +1,7 @@
 use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
 use crate::dimensions::Dimensions;
 use crate::{geometry::*, Area, CoordsIter, HasDimensions, Intersects, LinesIter};
-use crate::{CoordFloat, CoordNum, GeoFloat, GeoNum};
+use crate::{CoordNum, GeoFloat, GeoNum};
 
 // ┌──────────────────────────┐
 // │ Implementations for Rect │
@@ -67,12 +67,19 @@ where
 
 impl<T> Contains<Polygon<T>> for Rect<T>
 where
-    T: CoordFloat,
+    T: GeoFloat,
 {
     fn contains(&self, rhs: &Polygon<T>) -> bool {
         // the polygon must not be empty
         if rhs.is_empty() {
             return false;
+        }
+
+        match rhs.dimensions() {
+            Dimensions::Empty => return false,
+            Dimensions::ZeroDimensional => return self.contains(&rhs.exterior()[0]),
+            Dimensions::OneDimensional => return self.contains(rhs.exterior()),
+            _ => (),
         }
 
         // none of the polygon's points may lie outside the rectangle
@@ -170,11 +177,18 @@ where
                 // standard case
                 // self intersects all points
                 rhs.coords_iter().all(|c| self.intersects(&c))
-                // either a point
+                // either a point within
                 &&( rhs.coords_iter().any(|c| self.contains(&c))
-                // or there exists a line which does not line on any of the self's edges
-                || rhs.lines_iter().any(|rhs_edge| !self.lines_iter().any(|edge| edge.contains(&rhs_edge)))
-            )
+                // or there exists a line which does not lie on any of the self's edges
+                || !rhs.lines_iter().all(|rhs_edge| self.lines_iter().any(|self_edge| {
+                    // todo: replace with covers when it is implemented
+                    if rhs_edge.start == rhs_edge.end {
+                        self_edge.intersects(&rhs_edge.start)
+                    } else {
+                        self_edge.contains(&rhs_edge)
+                    }
+                }))
+                )
             }
             (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => self.contains(&rhs.0[0]),
             (Dimensions::OneDimensional, _) => {
@@ -227,10 +241,17 @@ where
                 // standard case
                 // self intersects all points
                 rhs.coords_iter().all(|c| self.intersects(&c))
-                // either a point
+                // either a point lies within
                 &&( rhs.coords_iter().any(|c| self.contains(&c))
                 // or there exists a line which does not line on any of the self's edges
-                || rhs.lines_iter().any(|rhs_edge| !self.lines_iter().any(|edge| edge.contains(&rhs_edge)))
+                ||!rhs.lines_iter().all(|rhs_edge| self.lines_iter().any(|self_edge| {
+                    // todo: replace with covers when it is implemented
+                    if rhs_edge.start == rhs_edge.end {
+                        self_edge.intersects(&rhs_edge.start)
+                    } else {
+                        self_edge.contains(&rhs_edge)
+                    }
+                }))
             )
             }
             (Dimensions::TwoDimensional, Dimensions::ZeroDimensional) => self.contains(&rhs.0[0]),
@@ -245,7 +266,36 @@ where
     }
 }
 
-impl_contains_from_relate!(Rect<T>, [ MultiPolygon<T>, GeometryCollection<T> ]);
+impl<T> Contains<MultiPolygon<T>> for Rect<T>
+where
+    T: GeoFloat,
+    Line<T>: Contains<Line<T>>,
+    LineString<T>: Contains<MultiPolygon<T>>, // this being GeoFloat holds this back as GeoFLoat
+    Rect<T>: Intersects<Coord<T>>,
+{
+    fn contains(&self, rhs: &MultiPolygon<T>) -> bool {
+        if rhs.is_empty() {
+            return false;
+        }
+
+        if rhs.0.len() == 1 {
+            // decompose to polygon
+            return self.contains(&rhs.0[0]);
+        }
+
+        // all point must intersect rectangle
+        rhs.iter()
+            .flat_map(|poly| poly.exterior_coords_iter())
+            .all(|c| self.intersects(&c))
+            && (
+                // at least one point within the rectangle
+                rhs.iter().flat_map(|poly|poly.exterior_coords_iter()).any(|c| self.contains(&c))
+            // or at least one of the contained polygons is contained
+        || rhs.iter().any(|poly| self.contains(poly))
+            )
+    }
+}
+impl_contains_from_relate!(Rect<T>, [GeometryCollection<T>]);
 impl_contains_geometry_for!(Rect<T>);
 
 #[cfg(test)]
@@ -412,3 +462,39 @@ mod tests_line {
         assert!(ln.relate(&ln).is_contains());
     }
 }
+
+#[cfg(test)]
+mod test_multilinestring {}
+
+#[cfg(test)]
+mod test_polygon {
+    use super::*;
+    use crate::{coord, line_string};
+
+    #[test]
+    fn rect_contains_degenerate_polygon_line() {
+        // test case where polygon is degenerate as a line
+        // test case where both points are on the boundary
+        // but line crosses the geometry
+
+        let rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 10., y: 10. });
+        let poly = Polygon::new(
+            line_string![
+                (x: 0., y: 0.),
+                (x: 10., y: 10.),
+                (x: 0., y: 0.),
+            ],
+            vec![],
+        );
+
+        assert!(rect.contains(&poly));
+    }
+
+    #[test]
+    fn rect_contains_degenerate_polygon_point() {
+        // if is point && is on boundary, will be correct
+    }
+}
+
+#[cfg(test)]
+mod test_multipolygon {}
