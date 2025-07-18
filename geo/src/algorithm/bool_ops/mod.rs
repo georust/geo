@@ -66,7 +66,7 @@ pub trait BooleanOps {
     /// and other manufacturing processes where overlapping shapes subtract from the material
     /// rather than accumulate.
     ///
-    /// To use a different fill rule, such as [`FillRule::NonZero`], use [`boolean_op_with_fill_rule`] instead.
+    /// To use a different fill rule, such as [`FillRule::NonZero`], use [`Self::boolean_op_with_fill_rule`] instead.
     fn boolean_op(
         &self,
         other: &impl BooleanOps<Scalar = Self::Scalar>,
