@@ -88,8 +88,8 @@ fn bench_dense_line_intersections(c: &mut Criterion) {
         // Sweep line algorithm
         group.bench_function("sweep", |b| {
             b.iter(|| {
-                let intersections = Intersections::from_iter_to_vec(&lines);
-                assert_eq!(intersections.len(), expected_intersections);
+                let intersections = Intersections::from_iter(&lines).iter().count();
+                assert_eq!(intersections, expected_intersections);
             });
         });
 
@@ -124,8 +124,8 @@ fn bench_sparse_line_intersections(c: &mut Criterion) {
         // Sweep line algorithm
         group.bench_function("sweep", |b| {
             b.iter(|| {
-                let intersections = Intersections::from_iter_to_vec(&lines);
-                assert_eq!(intersections.len(), expected_intersections);
+                let intersections = Intersections::from_iter(&lines).iter().count();
+                assert_eq!(intersections, expected_intersections);
             });
         });
 
