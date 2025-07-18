@@ -76,13 +76,13 @@ pub trait BooleanOps {
     }
 
     /// Performs a boolean operation with the specified fill rule.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use geo::algorithm::bool_ops::{BooleanOps, OpType, FillRule};
     /// use geo::wkt;
-    /// 
+    ///
     /// let polygon1 = wkt!(POLYGON((0.0 0.0, 10.0 0.0, 10.0 10.0, 0.0 10.0, 0.0 0.0)));
     /// let polygon2 = wkt!(POLYGON((5.0 5.0, 15.0 5.0, 15.0 15.0, 5.0 15.0, 5.0 5.0)));
     /// let result = polygon1.boolean_op_with_fill_rule(&polygon2, OpType::Union, FillRule::NonZero);

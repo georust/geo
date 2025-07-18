@@ -1,12 +1,13 @@
 use super::{unary_union, BooleanOps};
 use crate::{wkt, Convert, MultiPolygon, Polygon, Relate};
-use std::time::Instant;
 use i_overlay::core::fill_rule::FillRule;
+use std::time::Instant;
 use wkt::ToWkt;
 
 #[test]
 fn test_union_fill_rules() {
-    let self_intersecting_star: Polygon = wkt!(POLYGON((50.0 0.0, 21.0 90.0, 98.0 35.0, 2.0 35.0, 79.0 90.0 )));
+    let self_intersecting_star: Polygon =
+        wkt!(POLYGON((50.0 0.0, 21.0 90.0, 98.0 35.0, 2.0 35.0, 79.0 90.0 )));
     let square: Polygon = wkt!(POLYGON((50.0 50.0, 94.0 50.0, 94.0 8.0, 50.0 8.0)));
 
     let multi1 = self_intersecting_star.union(&square);
@@ -22,7 +23,8 @@ fn test_union_fill_rules() {
 
 #[test]
 fn test_difference_fill_rules() {
-    let self_intersecting_star: Polygon = wkt!(POLYGON((50.0 0.0, 21.0 90.0, 98.0 35.0, 2.0 35.0, 79.0 90.0)));
+    let self_intersecting_star: Polygon =
+        wkt!(POLYGON((50.0 0.0, 21.0 90.0, 98.0 35.0, 2.0 35.0, 79.0 90.0)));
     let square: Polygon = wkt!(POLYGON((50.0 50.0, 94.0 50.0, 94.0 8.0, 50.0 8.0)));
 
     let multi1 = self_intersecting_star.difference(&square);
@@ -32,7 +34,8 @@ fn test_difference_fill_rules() {
     assert_eq!(multi2.0.len(), 6);
     assert_eq!(multi1, multi2);
 
-    let additive_difference = self_intersecting_star.difference_with_fill_rule(&square, FillRule::NonZero);
+    let additive_difference =
+        self_intersecting_star.difference_with_fill_rule(&square, FillRule::NonZero);
     assert_eq!(additive_difference.0.len(), 2);
 }
 
