@@ -104,7 +104,7 @@ mod tests;
 ///     Line::from([(1., 0.), (0., 1.)]),
 ///     Line::from([(0., 0.), (1., 1.)]),
 /// ];
-/// let intersections = Intersections::from_iter_to_vec(input);
+/// let intersections: Vec<_> = Intersections::from_iter(input).into_iter().collect();
 /// // Check that we get the expected intersection
 /// assert_eq!(intersections.len(), 1);
 /// ```
@@ -135,15 +135,67 @@ impl<C: Crosses> Intersections<C> {
 }
 
 impl<'a, C: Crosses + Clone + 'a> Intersections<C> {
-    pub fn from_iter_to_vec(
-        segments: impl IntoIterator<Item = C>,
-    ) -> Vec<(C, C, LineIntersection<C::Scalar>)> {
-        let index = SweepLineIndex::new(segments);
-        let intersections = Self { index };
-        intersections
-            .iter()
-            .map(|(s1, s2, i)| (s1.clone(), s2.clone(), i))
-            .collect()
+    pub fn into_iter(self) -> impl Iterator<Item = (C, C, LineIntersection<C::Scalar>)> {
+        IntersectionsIntoIter::new(self.index)
+    }
+}
+
+struct IntersectionsIntoIter<C: Crosses> {
+    index: SweepLineIndex<C>,
+    current_interval_index: usize,
+    overlapping_interval_index: usize,
+}
+
+impl<C: Crosses + Clone> IntersectionsIntoIter<C> {
+    fn new(index: SweepLineIndex<C>) -> Self {
+        Self {
+            index,
+            current_interval_index: 0,
+            overlapping_interval_index: 1,
+        }
+    }
+}
+
+impl<C: Crosses + Clone> Iterator for IntersectionsIntoIter<C> {
+    type Item = (C, C, LineIntersection<C::Scalar>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let current_interval = self
+            .index
+            .inserted_intervals
+            .get(self.current_interval_index)?;
+
+        let Some(overlapping_interval) = self
+            .index
+            .inserted_intervals
+            .get(self.overlapping_interval_index)
+        else {
+            self.current_interval_index += 1;
+            self.overlapping_interval_index = self.current_interval_index + 1;
+            return self.next();
+        };
+
+        if overlapping_interval.inserted_x > current_interval.deleted_x {
+            self.current_interval_index += 1;
+            self.overlapping_interval_index = self.current_interval_index + 1;
+            return self.next();
+        }
+
+        debug_assert!(intervals_overlap(current_interval, overlapping_interval));
+        self.overlapping_interval_index += 1;
+
+        if let Some(intersection) = line_intersection(
+            current_interval.segment.line(),
+            overlapping_interval.segment.line(),
+        ) {
+            Some((
+                current_interval.segment.clone(),
+                overlapping_interval.segment.clone(),
+                intersection,
+            ))
+        } else {
+            self.next()
+        }
     }
 }
 
