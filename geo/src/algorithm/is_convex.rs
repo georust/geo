@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use crate::kernels::*;
 use crate::{Coord, GeoNum, LineString};
 
@@ -142,6 +144,19 @@ fn is_convex_shaped<T>(
 where
     T: GeoNum,
 {
+    if coords.is_empty() {
+        // empty here means original linestring had 1 point
+        return Some(Orientation::Collinear);
+    }
+
+    // drop second of adjacent identical points
+    let c0 = coords[0];
+    let mut coords: VecDeque<Coord<T>> = coords
+        .windows(2)
+        .filter_map(|w| if w[0] == w[1] { None } else { Some(w[1]) })
+        .collect();
+    coords.push_front(c0);
+
     let n = coords.len();
 
     let orientation_at = |i: usize| {
@@ -244,5 +259,18 @@ mod tests {
         assert!(!two.is_strictly_convex());
         assert!(!two.is_strictly_ccw_convex());
         assert!(!two.is_strictly_cw_convex());
+    }
+
+    #[test]
+    fn test_duplicate_pt() {
+        let ls_unclosed = line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x: 2., y: 0.)];
+        let ls_1 = line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x: 2., y: 0.), (x: 0., y: 0.)];
+        let ls_2 = line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x: 2., y: 0.), (x: 2., y: 0.), (x: 0., y: 0.)];
+        let ls_3 = line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x: 2., y: 0.),(x: 2., y: 0.),(x: 2., y: 0.), (x: 0., y: 0.)];
+
+        assert!(!ls_unclosed.is_convex());
+        assert!(ls_1.is_convex());
+        assert!(ls_2.is_convex());
+        assert!(ls_3.is_convex());
     }
 }
