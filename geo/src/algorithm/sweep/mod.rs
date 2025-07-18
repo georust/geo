@@ -104,8 +104,7 @@ mod tests;
 ///     Line::from([(1., 0.), (0., 1.)]),
 ///     Line::from([(0., 0.), (1., 1.)]),
 /// ];
-/// let intersections = Intersections::from_iter(input);
-/// let intersections: Vec<_> = intersections.iter().collect();
+/// let intersections: Vec<_> = Intersections::from_iter(input).iter().collect();
 /// // Check that we get the expected intersection
 /// assert_eq!(intersections.len(), 1);
 /// ```
@@ -125,12 +124,12 @@ impl<C: Crosses> Intersections<C> {
     ///
     /// Uses a simplified Bentley-Ottmann sweep line algorithm running in `O((n + m) log n)` time,
     /// where `n` is the number of line segments and `m` is the number of x-coordinate overlaps.
-    pub fn iter(&self) -> impl Iterator<Item = (&C, &C, LineIntersection<C::Scalar>)> + '_ {
+    pub fn iter(&self) -> impl Iterator<Item = (C, C, LineIntersection<C::Scalar>)> + '_ {
         // The SweepLineIndex produces intersection candidates - those whose x-coordinates overlap,
         // which can be found efficiently and is a prerequisite for intersection.
         self.index.x_overlaps().flat_map(|(segment1, segment2)| {
             line_intersection(segment1.line(), segment2.line())
-                .map(|intersection| (segment1, segment2, intersection))
+                .map(|intersection| (segment1.clone(), segment2.clone(), intersection))
         })
     }
 }
@@ -143,7 +142,7 @@ impl<C: Crosses> FromIterator<C> for Intersections<C> {
 
 /// A 1-dimensional finite line. This is implemented by [`Line`], but you can implement it on your own
 /// type if you'd like to associate some other data with it.
-pub trait Crosses {
+pub trait Crosses: Clone {
     /// Scalar used by the line coordinates.
     type Scalar: GeoFloat;
 
