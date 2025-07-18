@@ -54,6 +54,10 @@ where
     for pt in points.iter() {
         while output.len() > 1 {
             let len = output.len();
+            if output[len - 1] == *pt {
+                output.pop();
+                continue;
+            }
             match T::Ker::orient2d(output[len - 2], output[len - 1], *pt) {
                 Orientation::CounterClockwise => {
                     break;
