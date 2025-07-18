@@ -194,7 +194,7 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
 
     let mut intersections: Vec<Point<T>> = Vec::new();
     for (l1, l2, inter) in Intersections::from_iter(lines).iter() {
-        if !(l1 == scan_line || l2 == scan_line) {
+        if !(l1 == &scan_line || l2 == &scan_line) {
             continue;
         }
         match inter {
