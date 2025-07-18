@@ -11,20 +11,18 @@
 //!
 //! To run specific benchmark groups:
 //! ```
-//! cargo bench --bench sweep_line_intersection "Performance Comparison"
-//! cargo bench --bench sweep_line_intersection "Dense Line Intersections"
-//! cargo bench --bench sweep_line_intersection "Sparse Large Dataset"
+//! cargo bench --bench sweep_line_intersection "Random Dense Lines"
+//! cargo bench --bench sweep_line_intersection "Random Sparse Lines"
 //! cargo bench --bench sweep_line_intersection "Essential Edge Cases"
 //! cargo bench --bench sweep_line_intersection "Realistic Patterns"
 //! ```
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use geo::algorithm::line_intersection::line_intersection;
-use geo::algorithm::sweep::Intersections as NewSweepIntersections;
+use geo::algorithm::sweep::Intersections;
 use geo::{Destination, Euclidean, Line};
 use geo_types::Point;
 use rand::prelude::*;
-use std::iter::FromIterator;
 
 /// Generate a set of random lines
 ///
@@ -66,14 +64,14 @@ fn brute_force_intersections(lines: &[Line<f64>]) -> Vec<(Line<f64>, Line<f64>)>
 // Benchmark with "dense" case - lines with many intersections.
 // When intersections are dense, the sweep algorithm has less of an advantage vs. brute force.
 fn bench_dense_line_intersections(c: &mut Criterion) {
-    let mut rng = StdRng::seed_from_u64(42);
     for (n, sample_size, expected_intersections) in [
         (10, None, 7),
-        (100, None, 861),
-        (1_000, Some(50), 91_898),
-        (10_000, Some(10), 8_570_900),
+        (100, None, 827),
+        (1_000, Some(50), 90_438),
+        (10_000, Some(10), 8_604_894),
     ] {
-        let mut group = c.benchmark_group(format!("Random dense lines ({n} lines)"));
+        let mut rng = StdRng::seed_from_u64(42);
+        let mut group = c.benchmark_group(format!("Random Dense Lines ({n} lines)"));
         if let Some(sample_size) = sample_size {
             group.sample_size(sample_size);
         }
@@ -90,8 +88,9 @@ fn bench_dense_line_intersections(c: &mut Criterion) {
         // Sweep line algorithm
         group.bench_function("sweep", |b| {
             b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
+                let intersections: Vec<_> = Intersections::from_iter(lines.iter().cloned())
+                    .iter()
+                    .collect();
                 assert_eq!(intersections.len(), expected_intersections);
             });
         });
@@ -103,14 +102,14 @@ fn bench_dense_line_intersections(c: &mut Criterion) {
 // Benchmark with "sparse" case - lines with few intersections.
 // When intersections are sparse, the sweep algorithm tends to perform much better than brute force.
 fn bench_sparse_line_intersections(c: &mut Criterion) {
-    let mut rng = StdRng::seed_from_u64(42);
     for (n, sample_size, expected_intersections) in [
         (10, None, 0),
         (100, None, 0),
-        (1_000, Some(50), 10),
-        (10_000, Some(10), 796),
+        (1_000, Some(50), 11),
+        (10_000, Some(10), 798),
     ] {
-        let mut group = c.benchmark_group(format!("Random sparse lines ({n} lines)"));
+        let mut rng = StdRng::seed_from_u64(42);
+        let mut group = c.benchmark_group(format!("Random Sparse Lines ({n} lines)"));
         if let Some(sample_size) = sample_size {
             group.sample_size(sample_size);
         }
@@ -127,8 +126,9 @@ fn bench_sparse_line_intersections(c: &mut Criterion) {
         // Sweep line algorithm
         group.bench_function("sweep", |b| {
             b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
+                let intersections: Vec<_> = Intersections::from_iter(lines.iter().cloned())
+                    .iter()
+                    .collect();
                 assert_eq!(intersections.len(), expected_intersections);
             });
         });
@@ -174,8 +174,9 @@ fn bench_essential_edge_cases(c: &mut Criterion) {
 
         group.bench_function("collinear_segments_sweep", |b| {
             b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
+                let intersections: Vec<_> = Intersections::from_iter(lines.iter().cloned())
+                    .iter()
+                    .collect();
                 black_box(intersections);
             });
         });
@@ -252,8 +253,9 @@ fn bench_essential_edge_cases(c: &mut Criterion) {
 
         group.bench_function("numerical_precision_sweep", |b| {
             b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
+                let intersections: Vec<_> = Intersections::from_iter(lines.iter().cloned())
+                    .iter()
+                    .collect();
                 black_box(intersections);
             });
         });
@@ -311,8 +313,9 @@ fn bench_realistic_patterns(c: &mut Criterion) {
 
         group.bench_function("road_network_sweep", |b| {
             b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
+                let intersections: Vec<_> = Intersections::from_iter(lines.iter().cloned())
+                    .iter()
+                    .collect();
                 black_box(intersections);
             });
         });
@@ -352,8 +355,9 @@ fn bench_realistic_patterns(c: &mut Criterion) {
 
         group.bench_function("polygon_boundaries_sweep", |b| {
             b.iter(|| {
-                let intersections: Vec<_> =
-                    NewSweepIntersections::<_>::from_iter(lines.iter().cloned()).collect();
+                let intersections: Vec<_> = Intersections::from_iter(lines.iter().cloned())
+                    .iter()
+                    .collect();
                 black_box(intersections);
             });
         });
