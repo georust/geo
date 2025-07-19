@@ -104,7 +104,7 @@ mod tests;
 ///     Line::from([(1., 0.), (0., 1.)]),
 ///     Line::from([(0., 0.), (1., 1.)]),
 /// ];
-/// let intersections: Vec<_> = Intersections::from_iter(input).into_iter().collect();
+/// let intersections: Vec<_> = Intersections::from_iter(input).collect();
 /// // Check that we get the expected intersection
 /// assert_eq!(intersections.len(), 1);
 /// ```
@@ -112,42 +112,13 @@ mod tests;
 /// [Bentley-Ottmann]: https://en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm
 pub struct Intersections<C: Crosses> {
     index: SweepLineIndex<C>,
-}
-
-impl<C: Crosses> Intersections<C> {
-    pub fn new(segments: impl IntoIterator<Item = C>) -> Self {
-        let index = SweepLineIndex::new(segments);
-        Self { index }
-    }
-
-    /// Iterate over all pairs of intersecting segments.
-    ///
-    /// Uses a simplified Bentley-Ottmann sweep line algorithm running in `O((n + m) log n)` time,
-    /// where `n` is the number of line segments and `m` is the number of x-coordinate overlaps.
-    pub fn iter(&self) -> impl Iterator<Item = (&C, &C, LineIntersection<C::Scalar>)> + '_ {
-        // The SweepLineIndex produces intersection candidates - those whose x-coordinates overlap,
-        // which can be found efficiently and is a prerequisite for intersection.
-        self.index.x_overlaps().flat_map(|(segment1, segment2)| {
-            line_intersection(segment1.line(), segment2.line())
-                .map(|intersection| (segment1, segment2, intersection))
-        })
-    }
-}
-
-impl<'a, C: Crosses + Clone + 'a> Intersections<C> {
-    pub fn into_iter(self) -> impl Iterator<Item = (C, C, LineIntersection<C::Scalar>)> {
-        IntersectionsIntoIter::new(self.index)
-    }
-}
-
-struct IntersectionsIntoIter<C: Crosses> {
-    index: SweepLineIndex<C>,
     current_interval_index: usize,
     overlapping_interval_index: usize,
 }
 
-impl<C: Crosses + Clone> IntersectionsIntoIter<C> {
-    fn new(index: SweepLineIndex<C>) -> Self {
+impl<C: Crosses> Intersections<C> {
+    fn new(segments: impl IntoIterator<Item = C>) -> Self {
+        let index = SweepLineIndex::new(segments);
         Self {
             index,
             current_interval_index: 0,
@@ -156,7 +127,7 @@ impl<C: Crosses + Clone> IntersectionsIntoIter<C> {
     }
 }
 
-impl<C: Crosses + Clone> Iterator for IntersectionsIntoIter<C> {
+impl<C: Crosses + Clone> Iterator for Intersections<C> {
     type Item = (C, C, LineIntersection<C::Scalar>);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -304,32 +275,6 @@ impl<C: Crosses> SweepLineIndex<C> {
         inserted_intervals.sort_by(|a, b| a.inserted_x.total_cmp(&b.inserted_x));
 
         Self { inserted_intervals }
-    }
-
-    /// Get all pairs of segments whose x-coordinates overlap
-    fn x_overlaps(&self) -> impl Iterator<Item = (&C, &C)> {
-        // Process INSERT events in sorted order
-        self.inserted_intervals
-            .iter()
-            .enumerate()
-            .flat_map(move |(i, current_interval)| {
-                // Check all INSERT events that start after this one
-                //
-                // This iterator chain implements the core sweep line logic:
-                // 1. Start from the next INSERT event (i+1)
-                // 2. Yield all segments that start BEFORE the current segment ends
-                //    (their INSERT x <= our DELETE x)
-                //    As these are the only segments that overlap, they are the only candidates
-                //    for intersection with the current segment
-                self.inserted_intervals[i + 1..]
-                    .iter()
-                    .take_while(move |interval| interval.inserted_x <= current_interval.deleted_x)
-                    .map(move |overlapping_interval| {
-                        // overlap should be true by construction at this point
-                        debug_assert!(intervals_overlap(current_interval, overlapping_interval));
-                        (&current_interval.segment, &overlapping_interval.segment)
-                    })
-            })
     }
 }
 

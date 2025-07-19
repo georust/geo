@@ -20,22 +20,7 @@
 ##  Update `Intersections` with new implementation of the Bentley-Ottmann sweep-line algorithm to efficiently find sparse intersections between groups of lines.
 
 - no longer `panic`'s when given pathological input
-- BREAKING: `Intersections` now computes intersetions lazily, and no longer implements `Iterator` directly (use new method `from_iter_to_vec` for eager evaluation)
-  Before:
-  ```rust
-  for intersection in Intersections::from_iter(lines) {
-      foo(intersection)
-  }
-  ```
-  After:
-  ```rust
-  for intersection in Intersections::from_iter(lines).iter() {
-      foo(intersection)
-  }
-
-  # or
-  let intersection: Vec<_> = Intersections::from_iter_to_vec(lines);
-  ``` - performance improvements in most cases
+- BREAKING: `Intersections` now computes intersections lazily
 - BREAKING: The `Crosses` trait used by `Intersections` now returns a `Line`, not a `LineOrPoint`.
 - BREAKING: The `Crosses` trait no longer needs to implement Clone
   - <https://github.com/georust/geo/pull/1358>

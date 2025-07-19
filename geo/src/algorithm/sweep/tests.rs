@@ -18,7 +18,7 @@ fn compute_brute_force_intersections<T: GeoFloat>(
 /// Helper function to verify that sweep line and brute force find the same intersections
 fn verify_intersections(lines: &[Line<f64>]) {
     // Get intersections using both algorithms
-    let sweep_intersections: Vec<_> = Intersections::from_iter(lines.iter()).into_iter().collect();
+    let sweep_intersections: Vec<_> = Intersections::from_iter(lines).collect();
     let brute_force_intersections = compute_brute_force_intersections(lines);
 
     // Check for same count
@@ -147,7 +147,7 @@ fn test_iterator_behavior() {
     ];
 
     // They intersect at (0.5, 0.5)
-    let intersections: Vec<_> = Intersections::from_iter(&input).into_iter().collect();
+    let intersections: Vec<_> = Intersections::from_iter(&input).collect();
 
     // There should be one intersection
     assert_eq!(intersections.len(), 1);
@@ -220,7 +220,7 @@ fn test_debug_grid_algorithm() {
         // Expected number of intersections in grid
         let expected_intersections = size * size;
 
-        let sweep_results: Vec<_> = Intersections::from_iter(&lines).into_iter().collect();
+        let sweep_results: Vec<_> = Intersections::from_iter(&lines).collect();
         assert_eq!(
             sweep_results.len(),
             expected_intersections,
