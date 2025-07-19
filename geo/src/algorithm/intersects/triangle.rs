@@ -47,7 +47,14 @@ symmetric_intersects_impl!(Triangle<T>, Line<T>);
 symmetric_intersects_impl!(Triangle<T>, Point<T>);
 symmetric_intersects_impl!(Triangle<T>, MultiPoint<T>);
 
-symmetric_intersects_impl!(Triangle<T>, Polygon<T>);
+impl<T> Intersects<Polygon<T>> for Triangle<T>
+where
+    T: GeoNum,
+{
+    fn intersects(&self, rhs: &Polygon<T>) -> bool {
+        self.to_polygon().intersects(rhs)
+    }
+}
 symmetric_intersects_impl!(Triangle<T>, MultiPolygon<T>);
 
 symmetric_intersects_impl!(Triangle<T>, Rect<T>);

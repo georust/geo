@@ -52,23 +52,9 @@ where
 
 symmetric_intersects_impl!(Polygon<T>, MultiPolygon<T>);
 
-impl<T> Intersects<Rect<T>> for Polygon<T>
-where
-    T: GeoNum,
-{
-    fn intersects(&self, rect: &Rect<T>) -> bool {
-        self.intersects(&rect.to_polygon())
-    }
-}
+symmetric_intersects_impl!(Polygon<T>, Rect<T>);
 
-impl<T> Intersects<Triangle<T>> for Polygon<T>
-where
-    T: GeoNum,
-{
-    fn intersects(&self, rect: &Triangle<T>) -> bool {
-        self.intersects(&rect.to_polygon())
-    }
-}
+symmetric_intersects_impl!(Polygon<T>, Triangle<T>);
 
 // Blanket implementation for MultiPolygon
 impl<G, T> Intersects<G> for MultiPolygon<T>
