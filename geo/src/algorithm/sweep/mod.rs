@@ -136,36 +136,38 @@ impl<C: Crosses + Clone> Iterator for Intersections<C> {
             .inserted_intervals
             .get(self.current_interval_index)?;
 
-        let Some(overlapping_interval) = self
-            .index
-            .inserted_intervals
-            .get(self.overlapping_interval_index)
-        else {
-            self.current_interval_index += 1;
-            self.overlapping_interval_index = self.current_interval_index + 1;
-            return self.next();
-        };
+        loop {
+            let Some(overlapping_interval) = self
+                .index
+                .inserted_intervals
+                .get(self.overlapping_interval_index)
+            else {
+                self.current_interval_index += 1;
+                self.overlapping_interval_index = self.current_interval_index + 1;
+                return self.next();
+            };
 
-        if overlapping_interval.inserted_x > current_interval.deleted_x {
-            self.current_interval_index += 1;
-            self.overlapping_interval_index = self.current_interval_index + 1;
-            return self.next();
-        }
+            if overlapping_interval.inserted_x > current_interval.deleted_x {
+                self.current_interval_index += 1;
+                self.overlapping_interval_index = self.current_interval_index + 1;
+                return self.next();
+            }
 
-        debug_assert!(intervals_overlap(current_interval, overlapping_interval));
-        self.overlapping_interval_index += 1;
+            debug_assert!(intervals_overlap(current_interval, overlapping_interval));
+            self.overlapping_interval_index += 1;
 
-        if let Some(intersection) = line_intersection(
-            current_interval.segment.line(),
-            overlapping_interval.segment.line(),
-        ) {
-            Some((
-                current_interval.segment.clone(),
-                overlapping_interval.segment.clone(),
-                intersection,
-            ))
-        } else {
-            self.next()
+            if let Some(intersection) = line_intersection(
+                current_interval.segment.line(),
+                overlapping_interval.segment.line(),
+            ) {
+                return Some((
+                    current_interval.segment.clone(),
+                    overlapping_interval.segment.clone(),
+                    intersection,
+                ));
+            }
+
+            // continue
         }
     }
 }
