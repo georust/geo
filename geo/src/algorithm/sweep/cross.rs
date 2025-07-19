@@ -3,7 +3,7 @@ use geo_types::Line;
 use std::rc::Rc;
 use std::sync::Arc;
 
-/// A 1-dimensional finite line used as input to [`Intersections`].
+/// A 1-dimensional finite line used as input to [`Intersections`](super::Intersections).
 ///
 /// This is implemented by [`Line`], but you can implement it on your own
 /// type if you'd like to associate some other data with it.

@@ -78,10 +78,12 @@ mod cross;
 mod tests;
 pub use cross::Cross;
 
-/// Find all intersections within a collection of [`Line`]s using a simplified Bentley-Ottmann
+/// Find all intersections within a collection of line segments using a simplified Bentley-Ottmann
 /// sweep.
 ///
-/// Yields `(Line, Line, LineIntersection)` tuples for each pair of input lines that intersect.
+/// The input line segments must implement the [`Cross`] trait.
+///
+/// Yields `(Cross, Cross, LineIntersection)` tuples for each pair of input lines that intersect.
 ///
 /// This is a drop-in replacement for computing [`LineIntersection`] over all pairs of the
 /// collection.

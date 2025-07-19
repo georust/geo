@@ -49,9 +49,9 @@ fn generate_random_lines(count: usize, density: f64, rng: &mut impl Rng) -> Vec<
 }
 
 // Benchmark the brute force approach (O(n²))
-fn brute_force_intersections<'a>(
-    lines: &'a [Line<f64>],
-) -> impl Iterator<Item = (Line<f64>, Line<f64>)> + 'a {
+fn brute_force_intersections(
+    lines: &[Line<f64>],
+) -> impl Iterator<Item = (Line<f64>, Line<f64>)> + '_ {
     (0..lines.len()).flat_map(move |i| {
         ((i + 1)..lines.len())
             .flat_map(move |j| line_intersection(lines[i], lines[j]).map(|_| (lines[i], lines[j])))
