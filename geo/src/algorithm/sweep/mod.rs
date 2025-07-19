@@ -70,11 +70,13 @@
 // [Chen & Chan, 2003]: https://en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm#CITEREFChenChan2003
 
 use crate::line_intersection::{line_intersection, LineIntersection};
-use crate::{GeoFloat, GeoNum, Line};
+use crate::GeoNum;
 use std::fmt::Debug;
 
+mod cross;
 #[cfg(test)]
 mod tests;
+pub use cross::Cross;
 
 /// Find all intersections within a collection of [`Line`]s using a simplified Bentley-Ottmann
 /// sweep.
@@ -110,13 +112,13 @@ mod tests;
 /// ```
 ///
 /// [Bentley-Ottmann]: https://en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm
-pub struct Intersections<C: Crosses> {
+pub struct Intersections<C: Cross> {
     index: SweepLineIndex<C>,
     current_interval_index: usize,
     overlapping_interval_index: usize,
 }
 
-impl<C: Crosses> Intersections<C> {
+impl<C: Cross> Intersections<C> {
     fn new(segments: impl IntoIterator<Item = C>) -> Self {
         let index = SweepLineIndex::new(segments);
         Self {
@@ -127,7 +129,7 @@ impl<C: Crosses> Intersections<C> {
     }
 }
 
-impl<C: Crosses + Clone> Iterator for Intersections<C> {
+impl<C: Cross + Clone> Iterator for Intersections<C> {
     type Item = (C, C, LineIntersection<C::Scalar>);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -172,35 +174,9 @@ impl<C: Crosses + Clone> Iterator for Intersections<C> {
     }
 }
 
-impl<C: Crosses> FromIterator<C> for Intersections<C> {
+impl<C: Cross> FromIterator<C> for Intersections<C> {
     fn from_iter<I: IntoIterator<Item = C>>(iter: I) -> Self {
         Self::new(iter)
-    }
-}
-
-/// A 1-dimensional finite line. This is implemented by [`Line`], but you can implement it on your own
-/// type if you'd like to associate some other data with it.
-pub trait Crosses {
-    /// Scalar used by the line coordinates.
-    type Scalar: GeoFloat;
-
-    /// The geometry associated with this type.
-    fn line(&self) -> Line<Self::Scalar>;
-}
-
-impl<T: GeoFloat> Crosses for Line<T> {
-    type Scalar = T;
-
-    fn line(&self) -> Line<Self::Scalar> {
-        *self
-    }
-}
-
-impl<C: Crosses> Crosses for &C {
-    type Scalar = C::Scalar;
-
-    fn line(&self) -> Line<Self::Scalar> {
-        C::line(*self)
     }
 }
 
@@ -209,7 +185,7 @@ impl<C: Crosses> Crosses for &C {
 /// Stores the x-bounds of a line segment so the sweep line can uniformly process
 /// segments from left to right (-x to +x), regardless of the original segment orientation.
 #[derive(Debug, Clone, Copy)]
-struct SweepLineInterval<C: Crosses> {
+struct SweepLineInterval<C: Cross> {
     /// Minimum x value where segment enters sweep
     inserted_x: C::Scalar,
     /// Maximum x value where segment exits sweep
@@ -247,12 +223,12 @@ struct SweepLineInterval<C: Crosses> {
 ///
 /// - Instead of a binary search tree, to track our active segments, we take advantage of our events being pre-sorted,
 ///   and leverage iteration, bailing out when we've passed the bounds of our active segment.
-struct SweepLineIndex<C: Crosses> {
+struct SweepLineIndex<C: Cross> {
     // ordered by their INSERT (min) x value
     inserted_intervals: Vec<SweepLineInterval<C>>,
 }
 
-impl<C: Crosses> SweepLineIndex<C> {
+impl<C: Cross> SweepLineIndex<C> {
     fn new(segments: impl IntoIterator<Item = C>) -> Self {
         // Add all segments to the sweep line index
         let mut inserted_intervals = Vec::new();
@@ -285,7 +261,7 @@ impl<C: Crosses> SweepLineIndex<C> {
 /// This determines which segments might geometrically intersect during the sweep.
 /// We use `total_cmp` for robust floating-point comparisons to handle edge cases
 /// involving very close values.
-fn intervals_overlap<C: Crosses>(s0: &SweepLineInterval<C>, s1: &SweepLineInterval<C>) -> bool {
+fn intervals_overlap<C: Cross>(s0: &SweepLineInterval<C>, s1: &SweepLineInterval<C>) -> bool {
     s0.inserted_x.total_cmp(&s1.inserted_x).is_le()
         && s0.deleted_x.total_cmp(&s1.inserted_x).is_ge()
 }

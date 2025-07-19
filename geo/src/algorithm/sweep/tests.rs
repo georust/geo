@@ -1,5 +1,6 @@
 use super::*;
 use crate::algorithm::line_intersection::line_intersection;
+use crate::{GeoFloat, Line};
 
 fn compute_brute_force_intersections<T: GeoFloat>(
     lines: &[Line<T>],
