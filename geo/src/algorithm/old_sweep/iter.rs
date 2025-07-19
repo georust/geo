@@ -180,7 +180,7 @@ where
 /// See the trait documentation for more information on usage with
 /// custom types.
 ///
-/// ```rust
+/// ```rust,ignore
 /// use geo::Line;
 /// use geo::sweep::Intersections;
 /// use std::iter::FromIterator;

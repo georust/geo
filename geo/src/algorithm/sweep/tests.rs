@@ -1,6 +1,5 @@
 use super::*;
 use crate::algorithm::line_intersection::line_intersection;
-use std::iter::FromIterator;
 
 fn compute_brute_force_intersections<T: GeoFloat>(
     lines: &[Line<T>],
@@ -19,8 +18,9 @@ fn compute_brute_force_intersections<T: GeoFloat>(
 /// Helper function to verify that sweep line and brute force find the same intersections
 fn verify_intersections(lines: &[Line<f64>]) {
     // Get intersections using both algorithms
-    let sweep_intersections: Vec<_> =
-        Intersections::<_>::from_iter(lines.iter().cloned()).collect();
+    let sweep_intersections: Vec<_> = Intersections::<_>::new(lines.iter().cloned())
+        .iter()
+        .collect();
     let brute_force_intersections = compute_brute_force_intersections(lines);
 
     // Check for same count
@@ -151,7 +151,7 @@ fn test_iterator_behavior() {
     ];
 
     // They intersect at (0.5, 0.5)
-    let intersections: Vec<_> = Intersections::<_>::from_iter(input).collect();
+    let intersections: Vec<_> = Intersections::<_>::new(input).iter().collect();
 
     // There should be one intersection
     assert_eq!(intersections.len(), 1);
@@ -224,7 +224,9 @@ fn test_debug_grid_algorithm() {
         // Expected number of intersections in grid
         let expected_intersections = size * size;
 
-        let sweep_results: Vec<_> = Intersections::<_>::from_iter(lines.iter().cloned()).collect();
+        let sweep_results: Vec<_> = Intersections::<_>::new(lines.iter().cloned())
+            .iter()
+            .collect();
         assert_eq!(
             sweep_results.len(),
             expected_intersections,

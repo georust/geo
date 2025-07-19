@@ -2,6 +2,23 @@
 
 # Unreleased
 
+- BREAKING: `Intersections` no longer implements `Iterator` directly.
+  Before:
+  ```rust
+  for intersection in Intersections::from_iter(lines) {
+      foo(intersection)
+  }
+  ```
+
+  After:
+  ```rust
+  for intersection in Intersections::from_iter(lines).iter() {
+      foo(intersection)
+  }
+  ```
+- `Intersections` no longer `panic`'s when given pathological input (and it's typically much faster!)
+  - <https://github.com/georust/geo/pull/1387>
+  - <https://github.com/georust/geo/pull/1358>
 - Added: Geometry buffering to "grow" or "shrink" a geometry by creating a buffer whose boundary is the specified offset from the input.
   - <https://github.com/georust/geo/pull/1365>
 - BREAKING: `BoolOpsNum` must now implement GeoFloat, not just GeoNum. In practice, this shouldn't break for any concrete types (like f32, f64).
@@ -14,6 +31,8 @@
 - Simplify test rustc and libproj version specification in CI
 - Performance: Avoid running through entire iterator to reach last element in `outlier_detection` when calculating LRD and LOF
 - Add `Bearing` and `Destination` trait implementations for `Euclidean`
+- Add `FillRule`-configurable boolean operations to `BooleanOps` trait
+  - <https://github.com/georust/geo/pull/1382>
 - Add new implementation of the Bentley-Ottmann sweep-line algorithm to efficiently find sparse intersections between groups of lines.
   - <https://github.com/georust/geo/pull/1358>
 

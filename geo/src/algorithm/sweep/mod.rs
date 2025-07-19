@@ -1,52 +1,99 @@
-// This module implements the Bentley-Ottmann sweep line algorithm for efficiently finding
-// line segment intersections, exposed through the [`Intersections`] iterator.
+// This module implements a simplified variant of the [Bentley-Ottmann] sweep line algorithm
+// for efficiently finding line segment intersections, exposed through the [`Intersections`] iterator.
 //
-// Algorithm Flow
+// ## Relationship to Classical Bentley-Ottmann Algorithm
 //
-// 1. Collection:
-//    - Line segments are collected and stored in `Intersections.segments`
-//    - The `compute` method calls `compute_sweep_intersections` to process all segments.
+// The classical Bentley-Ottmann algorithm uses three key data structures:
+// 1. **Event queue**: A priority queue of sweep events (segment start/end points and intersections)
+// 2. **Status structure**: A balanced binary search tree tracking active segments sorted by y-coordinate
+// 3. **Event handling**: Dynamic insertion of newly discovered intersection events
 //
-// 2. Sweep Setup:
-//    - Creates a new `SweepLineIndex` to manage the sweep process
-//    - For each segment, creates a `SweepLineInterval` with min/max x-values
-//    - Each interval generates two events: `INSERT` at left end, `DELETE` at right end.
+// This implementation simplifies the classical approach in several ways:
 //
-// 3. Sweep Execution:
-//    - `compute_intersections` sorts INSERT and DELETE events separately by `x` coordinate
-//    - Creates a lookup array mapping segment indices to their DELETE x-coordinates
-//    - Processes INSERT events in sorted order using functional iterator chains
-//    - For each INSERT event, examines subsequent INSERT events up to its DELETE x-coordinate
-//    - Filters for potentially overlapping intervals (using `intervals_overlap`)
-//    - For each potential overlap, `line_intersection` checks for actual geometric intersection
-//    - When found, intersections are stored in `intersection_pairs`.
+// ### Simplifications from Classical Algorithm:
+//
+// 1. **No explicit event queue**: Instead of a priority queue, events are stored in vectors
+//    and sorted once. This has the same O(n log n) complexity but a simpler implementation.
+//    This is similar to [Chen & Chan, 2003].
+//    Further, **Only INSERT (segment start) events are sorted**. We only need the DELETE event
+//    (segment end) of the "current" event, which is already available to use by being at the
+//    front of the INSERT events. Rather than sort DELETE events separately, they are instead stored
+//    alongside their INSERT.
+//
+// 2. **No binary search tree**: Rather than maintaining a balanced BST of active segments,
+//    we use pre-sorted iteration with early termination based on x-coordinate bounds.
+//    **This is a key difference from traditional BO**: In traditional BO, the BST allows
+//    tracking only the segments "above and below" the active segment - those are the only
+//    ones which could intersect. Our simplified sweep checks **all x-overlapping segments**
+//    for intersection, which means we'll find intersections regardless of multiple segment
+//    intersections at the same point, but affects the runtime complexity.
+//
+// 3. **No intersection events**: The classical algorithm discovers intersections during the sweep
+//    and adds them as new events. This implementation instead relies on iteration, and yields
+//    intersections immediately as they are discovered.
+//
+// ### Algorithm Flow
+//
+// 1. **Preprocessing**:
+//    - Convert line segments to `SweepLineInterval`s with left (INSERT) and right (DELETE) x-coordinates
+//    - Sort intervals by their left (INSERT) x-coordinate
+//
+// 2. **Sweep Execution**:
+//    - Process intervals in sorted order (left to right).
+//    - For each interval, check all subsequent intervals that start before it ends. These intervals overlap in their x-coordinates and so are candidates for intersection.
+//    - Apply `line_intersection` test to confirm actual intersections.
+//
+// 3. **Output**:
+//    - Yield intersection results as they are discovered during the sweep.
+//
+// ## Runtime Complexity
+//
+// This approach changes the runtime complexity from the classical BO algorithm's
+// O((n + k) log n) to **O((n + m) log n)**, where:
+// - n is the number of line segments
+// - k is the number of actual intersections
+// - m is the number of x-coordinate overlaps (and m >= k)
+//
+// ## Tradeoffs
+//
+// **Advantages**:
+// - More robust: finds intersections regardless of multiple segment intersections at the same point
+// - Simpler implementation with fewer data structures
+// - Speed gains from reduced algorithmic complexity
+//
+// **Disadvantages**:
+// - More susceptible to pathological data: if most lines overlap without intersecting,
+//   this simplified sweep performs worse than traditional BO
+// - Checks more segment pairs than strictly necessary in some cases
+//
+// [Bentley-Ottmann]: https://en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm
+// [Chen & Chan, 2003]: https://en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm#CITEREFChenChan2003
 
 use crate::line_intersection::{line_intersection, LineIntersection};
 use crate::{GeoFloat, Line};
-use std::cmp::Ordering;
 
 #[cfg(test)]
 mod tests;
 
-/// Iterator over all intersections of a collection of [`Line`]s.
+/// Find all intersections within a collection of [`Line`]s using a simplified Bentley-Ottmann
+/// sweep.
 ///
-/// # Performance Note
+/// Yields `(Line, Line, LineIntersection)` tuples for each pair of input lines that intersect.
 ///
-/// This implementation is most useful when there is a need to efficiently find sparse intersections
-/// between many line segments. For smaller numbers of segments, a brute-force approach
-/// will be around 20 % faster in current tests: if you are reasonably confident that the number of
-/// segments is larger than the number of intersections, use this algorithm.
+/// This is a drop-in replacement for computing [`LineIntersection`] over all pairs of the
+/// collection.
 ///
-/// Yields tuples `(`Line`, `Line`, `LineIntersection`)` for each pair of input
-/// lines that intersect or overlap. This is a drop-in
-/// replacement for computing [`LineIntersection`] over all pairs of
-/// the collection, with the perf caveat noted above.
+/// ## Performance Characteristics
 ///
-/// The implementation uses the [Bentley-Ottmann] sweep line algorithm,
-/// which runs in `O((n + k) log n)` time, where `n` is the number of line segments
-/// and `k` is the number of intersections.
+/// This implementation is most effective when you have many line segments with sparse intersections,
+/// but even quite dense intersections are competitive in all but extreme cases.
 ///
-/// # Examples
+/// As a rule of thumb, if each segment intersects fewer than 10% of the total segments, you can be
+/// confident that this algorithm will be competitive with or better than brute force.
+/// For a concrete example, given 1,000 line segments, you'd need more than 100,000 intersections
+/// between them before brute force would be faster.
+///
+/// ## Examples
 ///
 /// ```
 /// use geo::Line;
@@ -56,117 +103,57 @@ mod tests;
 ///     Line::from([(1., 0.), (0., 1.)]),
 ///     Line::from([(0., 0.), (1., 1.)]),
 /// ];
-/// let intersections: Vec<_> = Intersections::<_>::from_iter(input).collect();
+/// let intersections: Vec<_> = Intersections::from_iter(input).iter().collect();
 /// // Check that we get the expected intersection
 /// assert_eq!(intersections.len(), 1);
 /// ```
 ///
-/// [Bentley-Ottmann]: //en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm
+/// [Bentley-Ottmann]: https://en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm
 pub struct Intersections<T: GeoFloat> {
-    segments: Vec<Line<T>>,
-    intersection_pairs: Vec<(Line<T>, Line<T>, LineIntersection<T>)>,
-    current_index: usize,
+    index: SweepLineIndex<T>,
 }
 
 impl<T: GeoFloat> Intersections<T> {
-    fn new() -> Self {
-        Self {
-            segments: Vec::new(),
-            intersection_pairs: Vec::new(),
-            current_index: 0,
-        }
+    pub fn new(segments: impl IntoIterator<Item = Line<T>>) -> Self {
+        let index = SweepLineIndex::new(segments);
+        Self { index }
     }
 
-    /// Add a segment to the collection
-    fn add_segment(&mut self, segment: Line<T>) {
-        self.segments.push(segment);
-    }
-
-    /// Compute all intersections
-    fn compute(&mut self) {
-        self.compute_sweep_intersections();
-    }
-
-    /// Sweep line logic
+    /// Iterate over all pairs of intersecting segments.
     ///
-    /// This method implements the sweep line algorithm for finding segment
-    /// intersections. The algorithm runs in `O((n + k) log n)` time,
-    /// where `n` is the number of line segments and `k` is the number of intersections.
-    fn compute_sweep_intersections(&mut self) {
-        let mut index = SweepLineIndex::new(self.segments.len());
-
-        // Add all segments to the sweep line index
-        for (idx, segment) in self.segments.iter().enumerate() {
-            let min_x = segment.start.x.min(segment.end.x);
-            let max_x = segment.start.x.max(segment.end.x);
-
-            // Store the segment index with the interval
-            let interval = SweepLineInterval {
-                min: min_x,
-                max: max_x,
-                item: *segment,
-                index: idx,
-            };
-            index.add(interval);
-        }
-
-        // Find all intersections using the sweep algorithm
-        index.overlap_action(|s0, s1| {
-            let segment1 = s0.item;
-            let segment2 = s1.item;
-
-            if let Some(intersection) = line_intersection(segment1, segment2) {
-                self.intersection_pairs
-                    .push((segment1, segment2, intersection));
-            }
-        });
-    }
-}
-
-impl<T: GeoFloat> Iterator for Intersections<T> {
-    type Item = (Line<T>, Line<T>, LineIntersection<T>);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current_index < self.intersection_pairs.len() {
-            let result = self.intersection_pairs[self.current_index];
-            self.current_index += 1;
-            Some(result)
-        } else {
-            None
-        }
+    /// Uses a simplified Bentley-Ottmann sweep line algorithm running in `O((n + m) log n)` time,
+    /// where `n` is the number of line segments and `m` is the number of x-coordinate overlaps.
+    pub fn iter(&self) -> impl Iterator<Item = (Line<T>, Line<T>, LineIntersection<T>)> + '_ {
+        // The SweepLineIndex produces intersection candidates - those whose x-coordinates overlap,
+        // which can be found efficiently and is a prerequisite for intersection.
+        self.index.x_overlaps().flat_map(|(segment1, segment2)| {
+            line_intersection(segment1, segment2)
+                .map(|intersection| (segment1, segment2, intersection))
+        })
     }
 }
 
 impl<T: GeoFloat> FromIterator<Line<T>> for Intersections<T> {
     fn from_iter<I: IntoIterator<Item = Line<T>>>(iter: I) -> Self {
-        let mut intersections = Intersections::new();
-        for segment in iter {
-            intersections.add_segment(segment);
-        }
-        intersections.compute();
-        intersections
+        Self::new(iter)
     }
 }
 
-/// A line segment represented as an `x`-coordinate interval with its original index.
+/// A line segment interval for sweep line algorithms.
 ///
-/// This structure stores the `x` bounds of a line segment (min and max `x` values),
-/// the original line segment, and its index in the original collection.
-///
-/// # Identity
-///
-/// The `index` field uniquely identifies each interval based on its position in the original
-/// collection. This allows us to correlate INSERT and DELETE events for the same segment
-/// without needing explicit pointers or a HashMap.
+/// Stores the x-bounds of a line segment so the sweep line can uniformly process
+/// segments from left to right (-x to +x), regardless of the original segment orientation.
 #[derive(Debug, Clone, Copy)]
 struct SweepLineInterval<T: GeoFloat> {
-    min: T,
-    max: T,
-    item: Line<T>, // Original line segment
-    index: usize,  // Index used to match INSERT/DELETE event pairs
+    /// Minimum x value where segment enters sweep
+    inserted_x: T,
+    /// Maximum x value where segment exits sweep
+    deleted_x: T,
+    /// Original line segment
+    segment: Line<T>,
 }
 
-/// An event in the sweep line algorithm.
+/// The SweepLineIndex tracks events in the sweep line algorithm.
 ///
 /// Events represent the start or end points of line segments.
 /// Insert events happen at the left end of a segment, delete events at the right end.
@@ -174,153 +161,82 @@ struct SweepLineInterval<T: GeoFloat> {
 /// # Event Relationships
 ///
 /// Each line segment generates two events: an `INSERT` event at its left end and
-/// a `DELETE` event at its right end. These paired events are correlated using the
-/// segment index stored in the `SweepLineInterval`.
-///
-/// Rather than explicit pointers or references, events are stored in two separate vecs
-/// (`insert_events` and `delete_events`) and correlated through their shared segment index.
-/// A lookup array maps segment indices to DELETE x-coordinates for access during
-/// the sweep process.
+/// a `DELETE` event at its right end.
 ///
 /// # Implementation Note: Why No Binary Search Tree or Priority Queue?
 ///
-/// The Bentley-Ottmann algorithm as described typically uses two tracking data structures:
+/// The Bentley-Ottmann algorithm as described typically uses three tracking data structures:
 ///
-/// 1. A **priority queue** to process events in coordinate order
-/// 2. A **balanced binary search tree** to track active segments sorted by their `y`-coordinate position
+/// 1. Separate `INSERT` and `DELETE` **events**.
+/// 2. A **priority queue** to process these events in coordinate order
+/// 3. A **balanced binary search tree** to track active segments sorted by their `y`-coordinate position
 ///
-/// This implementation avoids both:
+/// This implementation avoids all three:
 ///
-/// - Instead of a priority queue, the **event vecs are sorted once** and process events in order.
+/// - Instead of a priority queue, **events are stored in a vec and sorted once**, and then the events are processed in order.
 ///   This has the same asymptotic complexity.
 ///
-/// - Instead of a binary search tree, we use **two separate vecs** for INSERT and DELETE events.
-///   When processing an `INSERT` event, we find its corresponding DELETE event by segment index
-///   and check all INSERT events that start before that DELETE x-coordinate.
+/// - Instead of separate `INSERT` and `DELETE` events, we track a single active segment. The access pattern is such that
+///   we only ever need the `DELETE` event of that active segment, so it makes sense to store it directly with the INSERT
+///   rather than track DELETE events separately.
 ///
-/// By maintaining separate vecs for INSERT and DELETE events and using the segment index
-/// for correlation, we can determine which segments are active at any point
-/// _without_ maintaining an "active segment" tree or using a HashMap.
-#[derive(Debug, Clone)]
-struct SweepLineEvent<T: GeoFloat> {
-    x_value: T,
-    interval: SweepLineInterval<T>,
-}
-
-impl<T: GeoFloat> SweepLineEvent<T> {
-    fn new(x: T, interval: SweepLineInterval<T>) -> Self {
-        Self {
-            x_value: x,
-            interval,
-        }
-    }
-}
-
-impl<T: GeoFloat> PartialEq for SweepLineEvent<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.x_value.total_cmp(&other.x_value) == Ordering::Equal
-    }
-}
-
-impl<T: GeoFloat> Eq for SweepLineEvent<T> {}
-
-impl<T: GeoFloat> PartialOrd for SweepLineEvent<T> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl<T: GeoFloat> Ord for SweepLineEvent<T> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        // Use total_cmp for more robust floating point comparison
-        // This is crucial for grid patterns where many x-values are exactly equal
-        self.x_value.total_cmp(&other.x_value)
-    }
-}
-
+/// - Instead of a binary search tree, to track our active segments, we take advantage of our events being pre-sorted,
+///   and leverage iteration, bailing out when we've passed the bounds of our active segment.
 struct SweepLineIndex<T: GeoFloat> {
-    insert_events: Vec<SweepLineEvent<T>>,
-    delete_events: Vec<SweepLineEvent<T>>,
+    // ordered by their INSERT (min) x value
+    inserted_intervals: Vec<SweepLineInterval<T>>,
 }
 
 impl<T: GeoFloat> SweepLineIndex<T> {
-    fn new(num_segments: usize) -> Self {
-        Self {
-            insert_events: Vec::with_capacity(num_segments),
-            delete_events: Vec::with_capacity(num_segments),
+    fn new(segments: impl IntoIterator<Item = Line<T>>) -> Self {
+        // Add all segments to the sweep line index
+        let mut inserted_intervals = Vec::new();
+
+        for segment in segments.into_iter() {
+            let (inserted_x, deleted_x) = if segment.start.x < segment.end.x {
+                (segment.start.x, segment.end.x)
+            } else {
+                (segment.end.x, segment.start.x)
+            };
+
+            let interval = SweepLineInterval {
+                inserted_x,
+                deleted_x,
+                segment,
+            };
+            inserted_intervals.push(interval);
         }
+
+        // Sort inserts by x-coordinate
+        inserted_intervals.sort_by(|a, b| a.inserted_x.total_cmp(&b.inserted_x));
+
+        Self { inserted_intervals }
     }
 
-    fn add(&mut self, interval: SweepLineInterval<T>) {
-        let x_min = interval.min;
-        let x_max = interval.max;
-
-        // Create INSERT event
-        let insert_event = SweepLineEvent::new(x_min, interval);
-        self.insert_events.push(insert_event);
-
-        // Create DELETE event
-        let delete_event = SweepLineEvent::new(x_max, interval);
-        self.delete_events.push(delete_event);
-    }
-
-    fn overlap_action<F>(&mut self, mut intersection_action: F)
-    where
-        F: FnMut(&SweepLineInterval<T>, &SweepLineInterval<T>),
-    {
-        // Sort both by x-coordinate
-        self.insert_events.sort();
-        self.delete_events.sort();
-
-        // Create a lookup array to map segment indices to their DELETE x-coordinates
-        // This avoids O(n) search for each INSERT event
-        // This will let us look up the insert event for a given interval index in constant time
-        // JTS (and GEOS) don't need this as they use object references and pointers respectively
-        // but these approaches are (obviously) a pain in Rust, so we need an intermediate mapping
-        // https://github.com/simplegeo/jts/blob/3a4c9a9c3a7d3274e16bdd2f341df7d3e113d81b/src/com/vividsolutions/jts/index/sweepline/SweepLineIndex.java#L57-L59
-        // We know the number of segments equals the number of INSERT events
-        let num_segments = self.insert_events.len();
-        let mut delete_x_by_index = vec![None; num_segments];
-
-        self.delete_events
-            .iter()
-            .filter(|event| event.interval.index < num_segments)
-            .for_each(|event| {
-                delete_x_by_index[event.interval.index] = Some(event.x_value);
-            });
-
+    /// Get all pairs of segments whose x-coordinates overlap
+    fn x_overlaps(&self) -> impl Iterator<Item = (Line<T>, Line<T>)> + '_ {
         // Process INSERT events in sorted order
-        self.insert_events
+        self.inserted_intervals
             .iter()
             .enumerate()
-            .for_each(|(i, current_event)| {
-                let current_interval = &current_event.interval;
-                let current_segment_index = current_interval.index;
-
-                // Get the DELETE x-coordinate from our lookup array
-                // Every segment should have both INSERT and DELETE events
-                let delete_x = delete_x_by_index[current_segment_index]
-                    .expect("Every segment should have a DELETE event");
-
+            .flat_map(move |(i, current_interval)| {
                 // Check all INSERT events that start after this one
+                //
                 // This iterator chain implements the core sweep line logic:
                 // 1. Start from the next INSERT event (i+1)
-                // 2. Only examine segments that start BEFORE the current segment ends
-                //    (their INSERT x <= our DELETE x), as these are the only ones that
-                //    could potentially intersect with the current segment
-                // 3. Skip self-intersections by filtering out segments with the same index
-                // 4. Check if the x-intervals actually overlap using intervals_overlap
-                // 5. For each overlapping pair, carry out the actual geometric intersection test
-                self.insert_events[i + 1..]
+                // 2. Yield all segments that start BEFORE the current segment ends
+                //    (their INSERT x <= our DELETE x)
+                //    As these are the only segments that overlap, they are the only candidates
+                //    for intersection with the current segment
+                self.inserted_intervals[i + 1..]
                     .iter()
-                    .take_while(|other_event| other_event.interval.min <= delete_x)
-                    .filter(|other_event| {
-                        intervals_overlap(current_interval, &other_event.interval)
+                    .take_while(move |interval| interval.inserted_x <= current_interval.deleted_x)
+                    .map(move |overlapping_interval| {
+                        // overlap should be true by construction at this point
+                        debug_assert!(intervals_overlap(current_interval, overlapping_interval));
+                        (current_interval.segment, overlapping_interval.segment)
                     })
-                    .for_each(|other_event| {
-                        intersection_action(current_interval, &other_event.interval);
-                    });
-            });
+            })
     }
 }
 
@@ -330,9 +246,6 @@ impl<T: GeoFloat> SweepLineIndex<T> {
 /// We use `total_cmp` for robust floating-point comparisons to handle edge cases
 /// involving very close values.
 fn intervals_overlap<T: GeoFloat>(s0: &SweepLineInterval<T>, s1: &SweepLineInterval<T>) -> bool {
-    // Check if s0's maximum `x` is greater than or equal to s1's minimum `x`.
-    // Implicitly we already know s0.min <= s1.min since we're processing
-    // events in sorted order in the sweep algorithm
-    debug_assert!(s0.min <= s1.min);
-    s0.max.total_cmp(&s1.min).is_ge()
+    s0.inserted_x.total_cmp(&s1.inserted_x).is_le()
+        && s0.deleted_x.total_cmp(&s1.inserted_x).is_ge()
 }
