@@ -133,11 +133,20 @@ impl<C: Cross + Clone> Iterator for Intersections<C> {
     type Item = (C, C, LineIntersection<C::Scalar>);
 
     fn next(&mut self) -> Option<Self::Item> {
+        // Process INSERT events in sorted order
         let current_interval = self
             .index
             .inserted_intervals
             .get(self.current_interval_index)?;
 
+        // Check all INSERT events that start after this one
+        //
+        // This loop implements the core sweep line logic:
+        // 1. Start from the next INSERT event (i+1)
+        // 2. Yield all segments that start BEFORE the current segment ends
+        //    (their INSERT x <= our DELETE x)
+        //    As these are the only segments that overlap, they are the only candidates
+        //    for intersection with the current segment
         loop {
             let Some(overlapping_interval) = self
                 .index
@@ -158,6 +167,8 @@ impl<C: Cross + Clone> Iterator for Intersections<C> {
             debug_assert!(intervals_overlap(current_interval, overlapping_interval));
             self.overlapping_interval_index += 1;
 
+            // These intervals overlap, making them candidates for intersection.
+            // Check if they actually intersect.
             if let Some(intersection) = line_intersection(
                 current_interval.segment.line(),
                 overlapping_interval.segment.line(),
