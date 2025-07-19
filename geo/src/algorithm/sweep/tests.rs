@@ -1,5 +1,6 @@
 use super::*;
 use crate::algorithm::line_intersection::line_intersection;
+use crate::{GeoFloat, Line};
 
 fn compute_brute_force_intersections<T: GeoFloat>(
     lines: &[Line<T>],
@@ -18,9 +19,7 @@ fn compute_brute_force_intersections<T: GeoFloat>(
 /// Helper function to verify that sweep line and brute force find the same intersections
 fn verify_intersections(lines: &[Line<f64>]) {
     // Get intersections using both algorithms
-    let sweep_intersections: Vec<_> = Intersections::<_>::new(lines.iter().cloned())
-        .iter()
-        .collect();
+    let sweep_intersections: Vec<_> = Intersections::from_iter(lines).collect();
     let brute_force_intersections = compute_brute_force_intersections(lines);
 
     // Check for same count
@@ -36,8 +35,7 @@ fn verify_intersections(lines: &[Line<f64>]) {
     // and that their intersection details match
     for (bf_line1, bf_line2, bf_intersection) in &brute_force_intersections {
         let matching_intersection = sweep_intersections.iter().find(|(line1, line2, _)| {
-            (*line1 == *bf_line1 && *line2 == *bf_line2)
-                || (*line1 == *bf_line2 && *line2 == *bf_line1)
+            (*line1 == bf_line1 && *line2 == bf_line2) || (*line1 == bf_line2 && *line2 == bf_line1)
         });
 
         assert!(
@@ -94,10 +92,9 @@ fn verify_intersections(lines: &[Line<f64>]) {
     }
 
     // Check that all sweep intersections are found by brute force
-    for (sw_line1, sw_line2, _) in &sweep_intersections {
+    for (sw_line1, sw_line2, _) in sweep_intersections {
         let found = brute_force_intersections.iter().any(|(line1, line2, _)| {
-            (*line1 == *sw_line1 && *line2 == *sw_line2)
-                || (*line1 == *sw_line2 && *line2 == *sw_line1)
+            (line1 == sw_line1 && line2 == sw_line2) || (line1 == sw_line2 && line2 == sw_line1)
         });
 
         assert!(
@@ -151,7 +148,7 @@ fn test_iterator_behavior() {
     ];
 
     // They intersect at (0.5, 0.5)
-    let intersections: Vec<_> = Intersections::<_>::new(input).iter().collect();
+    let intersections: Vec<_> = Intersections::from_iter(&input).collect();
 
     // There should be one intersection
     assert_eq!(intersections.len(), 1);
@@ -224,9 +221,7 @@ fn test_debug_grid_algorithm() {
         // Expected number of intersections in grid
         let expected_intersections = size * size;
 
-        let sweep_results: Vec<_> = Intersections::<_>::new(lines.iter().cloned())
-            .iter()
-            .collect();
+        let sweep_results: Vec<_> = Intersections::from_iter(&lines).collect();
         assert_eq!(
             sweep_results.len(),
             expected_intersections,

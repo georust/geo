@@ -70,15 +70,20 @@
 // [Chen & Chan, 2003]: https://en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm#CITEREFChenChan2003
 
 use crate::line_intersection::{line_intersection, LineIntersection};
-use crate::{GeoFloat, Line};
+use crate::GeoNum;
+use std::fmt::Debug;
 
+mod cross;
 #[cfg(test)]
 mod tests;
+pub use cross::Cross;
 
-/// Find all intersections within a collection of [`Line`]s using a simplified Bentley-Ottmann
+/// Find all intersections within a collection of line segments using a simplified Bentley-Ottmann
 /// sweep.
 ///
-/// Yields `(Line, Line, LineIntersection)` tuples for each pair of input lines that intersect.
+/// The input line segments must implement the [`Cross`] trait.
+///
+/// Yields `(Cross, Cross, LineIntersection)` tuples for each pair of input lines that intersect.
 ///
 /// This is a drop-in replacement for computing [`LineIntersection`] over all pairs of the
 /// collection.
@@ -103,38 +108,87 @@ mod tests;
 ///     Line::from([(1., 0.), (0., 1.)]),
 ///     Line::from([(0., 0.), (1., 1.)]),
 /// ];
-/// let intersections: Vec<_> = Intersections::from_iter(input).iter().collect();
+/// let intersections: Vec<_> = Intersections::from_iter(input).collect();
 /// // Check that we get the expected intersection
 /// assert_eq!(intersections.len(), 1);
 /// ```
 ///
 /// [Bentley-Ottmann]: https://en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm
-pub struct Intersections<T: GeoFloat> {
-    index: SweepLineIndex<T>,
+pub struct Intersections<C: Cross> {
+    index: SweepLineIndex<C>,
+    current_interval_index: usize,
+    overlapping_interval_index: usize,
 }
 
-impl<T: GeoFloat> Intersections<T> {
-    pub fn new(segments: impl IntoIterator<Item = Line<T>>) -> Self {
+impl<C: Cross> Intersections<C> {
+    fn new(segments: impl IntoIterator<Item = C>) -> Self {
         let index = SweepLineIndex::new(segments);
-        Self { index }
-    }
-
-    /// Iterate over all pairs of intersecting segments.
-    ///
-    /// Uses a simplified Bentley-Ottmann sweep line algorithm running in `O((n + m) log n)` time,
-    /// where `n` is the number of line segments and `m` is the number of x-coordinate overlaps.
-    pub fn iter(&self) -> impl Iterator<Item = (Line<T>, Line<T>, LineIntersection<T>)> + '_ {
-        // The SweepLineIndex produces intersection candidates - those whose x-coordinates overlap,
-        // which can be found efficiently and is a prerequisite for intersection.
-        self.index.x_overlaps().flat_map(|(segment1, segment2)| {
-            line_intersection(segment1, segment2)
-                .map(|intersection| (segment1, segment2, intersection))
-        })
+        Self {
+            index,
+            current_interval_index: 0,
+            overlapping_interval_index: 1,
+        }
     }
 }
 
-impl<T: GeoFloat> FromIterator<Line<T>> for Intersections<T> {
-    fn from_iter<I: IntoIterator<Item = Line<T>>>(iter: I) -> Self {
+impl<C: Cross + Clone> Iterator for Intersections<C> {
+    type Item = (C, C, LineIntersection<C::Scalar>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // Process INSERT events in sorted order
+        let current_interval = self
+            .index
+            .inserted_intervals
+            .get(self.current_interval_index)?;
+
+        // Check all INSERT events that start after this one
+        //
+        // This loop implements the core sweep line logic:
+        // 1. Start from the next INSERT event (i+1)
+        // 2. Yield all segments that start BEFORE the current segment ends
+        //    (their INSERT x <= our DELETE x)
+        //    As these are the only segments that overlap, they are the only candidates
+        //    for intersection with the current segment
+        loop {
+            let Some(overlapping_interval) = self
+                .index
+                .inserted_intervals
+                .get(self.overlapping_interval_index)
+            else {
+                self.current_interval_index += 1;
+                self.overlapping_interval_index = self.current_interval_index + 1;
+                return self.next();
+            };
+
+            if overlapping_interval.inserted_x > current_interval.deleted_x {
+                self.current_interval_index += 1;
+                self.overlapping_interval_index = self.current_interval_index + 1;
+                return self.next();
+            }
+
+            debug_assert!(intervals_overlap(current_interval, overlapping_interval));
+            self.overlapping_interval_index += 1;
+
+            // These intervals overlap, making them candidates for intersection.
+            // Check if they actually intersect.
+            if let Some(intersection) = line_intersection(
+                current_interval.segment.line(),
+                overlapping_interval.segment.line(),
+            ) {
+                return Some((
+                    current_interval.segment.clone(),
+                    overlapping_interval.segment.clone(),
+                    intersection,
+                ));
+            }
+
+            // continue
+        }
+    }
+}
+
+impl<C: Cross> FromIterator<C> for Intersections<C> {
+    fn from_iter<I: IntoIterator<Item = C>>(iter: I) -> Self {
         Self::new(iter)
     }
 }
@@ -144,13 +198,13 @@ impl<T: GeoFloat> FromIterator<Line<T>> for Intersections<T> {
 /// Stores the x-bounds of a line segment so the sweep line can uniformly process
 /// segments from left to right (-x to +x), regardless of the original segment orientation.
 #[derive(Debug, Clone, Copy)]
-struct SweepLineInterval<T: GeoFloat> {
+struct SweepLineInterval<C: Cross> {
     /// Minimum x value where segment enters sweep
-    inserted_x: T,
+    inserted_x: C::Scalar,
     /// Maximum x value where segment exits sweep
-    deleted_x: T,
+    deleted_x: C::Scalar,
     /// Original line segment
-    segment: Line<T>,
+    segment: C,
 }
 
 /// The SweepLineIndex tracks events in the sweep line algorithm.
@@ -182,21 +236,22 @@ struct SweepLineInterval<T: GeoFloat> {
 ///
 /// - Instead of a binary search tree, to track our active segments, we take advantage of our events being pre-sorted,
 ///   and leverage iteration, bailing out when we've passed the bounds of our active segment.
-struct SweepLineIndex<T: GeoFloat> {
+struct SweepLineIndex<C: Cross> {
     // ordered by their INSERT (min) x value
-    inserted_intervals: Vec<SweepLineInterval<T>>,
+    inserted_intervals: Vec<SweepLineInterval<C>>,
 }
 
-impl<T: GeoFloat> SweepLineIndex<T> {
-    fn new(segments: impl IntoIterator<Item = Line<T>>) -> Self {
+impl<C: Cross> SweepLineIndex<C> {
+    fn new(segments: impl IntoIterator<Item = C>) -> Self {
         // Add all segments to the sweep line index
         let mut inserted_intervals = Vec::new();
 
         for segment in segments.into_iter() {
-            let (inserted_x, deleted_x) = if segment.start.x < segment.end.x {
-                (segment.start.x, segment.end.x)
+            let line = segment.line();
+            let (inserted_x, deleted_x) = if line.start.x < line.end.x {
+                (line.start.x, line.end.x)
             } else {
-                (segment.end.x, segment.start.x)
+                (line.end.x, line.start.x)
             };
 
             let interval = SweepLineInterval {
@@ -212,32 +267,6 @@ impl<T: GeoFloat> SweepLineIndex<T> {
 
         Self { inserted_intervals }
     }
-
-    /// Get all pairs of segments whose x-coordinates overlap
-    fn x_overlaps(&self) -> impl Iterator<Item = (Line<T>, Line<T>)> + '_ {
-        // Process INSERT events in sorted order
-        self.inserted_intervals
-            .iter()
-            .enumerate()
-            .flat_map(move |(i, current_interval)| {
-                // Check all INSERT events that start after this one
-                //
-                // This iterator chain implements the core sweep line logic:
-                // 1. Start from the next INSERT event (i+1)
-                // 2. Yield all segments that start BEFORE the current segment ends
-                //    (their INSERT x <= our DELETE x)
-                //    As these are the only segments that overlap, they are the only candidates
-                //    for intersection with the current segment
-                self.inserted_intervals[i + 1..]
-                    .iter()
-                    .take_while(move |interval| interval.inserted_x <= current_interval.deleted_x)
-                    .map(move |overlapping_interval| {
-                        // overlap should be true by construction at this point
-                        debug_assert!(intervals_overlap(current_interval, overlapping_interval));
-                        (current_interval.segment, overlapping_interval.segment)
-                    })
-            })
-    }
 }
 
 /// Helper function to check if two intervals overlap on the `x`-axis
@@ -245,7 +274,7 @@ impl<T: GeoFloat> SweepLineIndex<T> {
 /// This determines which segments might geometrically intersect during the sweep.
 /// We use `total_cmp` for robust floating-point comparisons to handle edge cases
 /// involving very close values.
-fn intervals_overlap<T: GeoFloat>(s0: &SweepLineInterval<T>, s1: &SweepLineInterval<T>) -> bool {
+fn intervals_overlap<C: Cross>(s0: &SweepLineInterval<C>, s1: &SweepLineInterval<C>) -> bool {
     s0.inserted_x.total_cmp(&s1.inserted_x).is_le()
         && s0.deleted_x.total_cmp(&s1.inserted_x).is_ge()
 }
