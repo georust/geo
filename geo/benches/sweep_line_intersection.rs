@@ -49,16 +49,13 @@ fn generate_random_lines(count: usize, density: f64, rng: &mut impl Rng) -> Vec<
 }
 
 // Benchmark the brute force approach (O(n²))
-fn brute_force_intersections(lines: &[Line<f64>]) -> Vec<(Line<f64>, Line<f64>)> {
-    let mut result = Vec::new();
-    for i in 0..lines.len() {
-        for j in (i + 1)..lines.len() {
-            if line_intersection(lines[i], lines[j]).is_some() {
-                result.push((lines[i], lines[j]));
-            }
-        }
-    }
-    result
+fn brute_force_intersections<'a>(
+    lines: &'a [Line<f64>],
+) -> impl Iterator<Item = (Line<f64>, Line<f64>)> + 'a {
+    (0..lines.len()).flat_map(move |i| {
+        ((i + 1)..lines.len())
+            .flat_map(move |j| line_intersection(lines[i], lines[j]).map(|_| (lines[i], lines[j])))
+    })
 }
 
 // Benchmark with "dense" case - lines with many intersections.
@@ -80,8 +77,8 @@ fn bench_dense_line_intersections(c: &mut Criterion) {
         // Brute force approach
         group.bench_function("brute_force", |b| {
             b.iter(|| {
-                let intersections = black_box(brute_force_intersections(&lines));
-                assert_eq!(intersections.len(), expected_intersections);
+                let intersections = black_box(brute_force_intersections(&lines)).count();
+                assert_eq!(intersections, expected_intersections);
             });
         });
 
@@ -116,8 +113,8 @@ fn bench_sparse_line_intersections(c: &mut Criterion) {
         // Brute force approach
         group.bench_function("brute_force", |b| {
             b.iter(|| {
-                let intersections = black_box(brute_force_intersections(&lines));
-                assert_eq!(intersections.len(), expected_intersections);
+                let intersections = black_box(brute_force_intersections(&lines)).count();
+                assert_eq!(intersections, expected_intersections);
             });
         });
 
@@ -170,14 +167,15 @@ fn bench_essential_edge_cases(c: &mut Criterion) {
 
         group.bench_function("collinear_segments_sweep", |b| {
             b.iter(|| {
-                let intersections: Vec<_> = Intersections::from_iter(&lines).collect();
+                let intersections = Intersections::from_iter(&lines).count();
                 black_box(intersections);
             });
         });
 
         group.bench_function("collinear_segments_brute_force", |b| {
             b.iter(|| {
-                black_box(brute_force_intersections(&lines));
+                let intersections = brute_force_intersections(&lines).count();
+                black_box(intersections);
             });
         });
     }
@@ -247,14 +245,15 @@ fn bench_essential_edge_cases(c: &mut Criterion) {
 
         group.bench_function("numerical_precision_sweep", |b| {
             b.iter(|| {
-                let intersections: Vec<_> = Intersections::from_iter(&lines).collect();
+                let intersections = Intersections::from_iter(&lines).count();
                 black_box(intersections);
             });
         });
 
         group.bench_function("numerical_precision_brute_force", |b| {
             b.iter(|| {
-                black_box(brute_force_intersections(&lines));
+                let intersections = brute_force_intersections(&lines).count();
+                black_box(intersections);
             });
         });
     }
@@ -305,14 +304,15 @@ fn bench_realistic_patterns(c: &mut Criterion) {
 
         group.bench_function("road_network_sweep", |b| {
             b.iter(|| {
-                let intersections: Vec<_> = Intersections::from_iter(&lines).collect();
+                let intersections = Intersections::from_iter(&lines).count();
                 black_box(intersections);
             });
         });
 
         group.bench_function("road_network_brute_force", |b| {
             b.iter(|| {
-                black_box(brute_force_intersections(&lines));
+                let intersections = brute_force_intersections(&lines).count();
+                black_box(intersections);
             });
         });
     }
@@ -345,14 +345,15 @@ fn bench_realistic_patterns(c: &mut Criterion) {
 
         group.bench_function("polygon_boundaries_sweep", |b| {
             b.iter(|| {
-                let intersections: Vec<_> = Intersections::from_iter(&lines).collect();
+                let intersections = Intersections::from_iter(&lines).count();
                 black_box(intersections);
             });
         });
 
         group.bench_function("polygon_boundaries_brute_force", |b| {
             b.iter(|| {
-                black_box(brute_force_intersections(&lines));
+                let intersections = brute_force_intersections(&lines).count();
+                black_box(intersections);
             });
         });
     }
