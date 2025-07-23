@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.7.17 - 2025-07-25
 
 - Add support to `wkt!` geometry creation macro for `LINE`, `RECT`, and `TRIANGLE` geometries.
   - <https://github.com/georust/geo/pull/1389>
