@@ -144,18 +144,18 @@ fn is_convex_shaped<T>(
 where
     T: GeoNum,
 {
-    if coords.is_empty() {
-        // empty here means original linestring had 1 point
-        return Some(Orientation::Collinear);
-    }
-
-    // drop second of adjacent identical points
-    let c0 = coords[0];
-    let mut coords: VecDeque<Coord<T>> = coords
-        .windows(2)
-        .filter_map(|w| if w[0] == w[1] { None } else { Some(w[1]) })
-        .collect();
-    coords.push_front(c0);
+    // if coords.is_empty() {
+    //     // empty here means original linestring had 1 point
+    //     return Some(Orientation::Collinear);
+    // }
+    //
+    // // drop second of adjacent identical points
+    // let c0 = coords[0];
+    // let mut coords: VecDeque<Coord<T>> = coords
+    //     .windows(2)
+    //     .filter_map(|w| if w[0] == w[1] { None } else { Some(w[1]) })
+    //     .collect();
+    // coords.push_front(c0);
 
     let n = coords.len();
 
