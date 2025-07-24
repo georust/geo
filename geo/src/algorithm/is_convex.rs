@@ -220,6 +220,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::algorithm::Convert;
+    use crate::wkt;
     use geo_types::line_string;
 
     #[test]
@@ -263,14 +265,32 @@ mod tests {
 
     #[test]
     fn test_duplicate_pt() {
-        let ls_unclosed = line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x: 2., y: 0.)];
-        let ls_1 = line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x: 2., y: 0.), (x: 0., y: 0.)];
-        let ls_2 = line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x: 2., y: 0.), (x: 2., y: 0.), (x: 0., y: 0.)];
-        let ls_3 = line_string![(x: 0., y: 0.), (x: 1., y: 1.), (x: 2., y: 0.),(x: 2., y: 0.),(x: 2., y: 0.), (x: 0., y: 0.)];
+        let ls_unclosed: LineString<f64> = wkt! (LINESTRING (0 0, 1 1, 2 0)).convert();
+
+        let ls_cw: LineString<f64> = wkt! (LINESTRING (0 0, 2 0, 1 1, 0 0)).convert();
+
+        let ls_1: LineString<f64> = wkt! (LINESTRING (0 0, 1 1, 2 0, 0 0)).convert();
+        let ls_2: LineString<f64> = wkt! (LINESTRING (0 0, 1 1, 2 0, 2 0, 0 0)).convert();
+        let ls_3: LineString<f64> = wkt! (LINESTRING (0 0, 1 1, 2 0, 2 0, 2 0, 0 0)).convert();
 
         assert!(!ls_unclosed.is_convex());
+
+        assert!(ls_cw.is_convex());
+        assert!(ls_cw.is_ccw_convex());
+
         assert!(ls_1.is_convex());
+        assert!(ls_1.is_cw_convex());
         assert!(ls_2.is_convex());
+        assert!(ls_2.is_cw_convex());
         assert!(ls_3.is_convex());
+        assert!(ls_3.is_cw_convex());
+    }
+
+    #[test]
+    fn test_single_point() {
+        // single point is closed
+        // will panic if is_empyt check in `is_convex_shaped` is removed
+        let ls: LineString<f64> = wkt! (LINESTRING (0 0)).convert();
+        assert!(ls.is_strictly_convex());
     }
 }

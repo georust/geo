@@ -91,12 +91,33 @@ where
 
 #[cfg(test)]
 mod test {
+    use crate::algorithm::Convert;
+    use crate::wkt;
+    use geo_types::MultiPoint;
+
     use super::*;
     use crate::IsConvex;
+
+    fn brute_force_convexity<T: GeoNum>(initial: &[Coord<T>]) -> bool {
+        // for every adjacent pair of points, all other points must be on the same side of the line formed by the two points
+        // the side returned for all must be the same
+
+        let mut k: Vec<Orientation> = initial
+            .windows(2)
+            .flat_map(|w| initial.iter().map(|pt| T::Ker::orient2d(w[0], w[1], *pt)))
+            .filter(|o| o != &Orientation::Collinear)
+            .collect();
+        k.dedup();
+
+        k.len() == 1
+    }
+
     fn test_convexity<T: GeoNum>(mut initial: Vec<Coord<T>>) {
         let hull = graham_hull(&mut initial, false);
+        assert!(brute_force_convexity(&hull.0));
         assert!(hull.is_strictly_ccw_convex());
         let hull = graham_hull(&mut initial, true);
+        assert!(brute_force_convexity(&hull.0));
         assert!(hull.is_ccw_convex());
     }
 
@@ -146,5 +167,15 @@ mod test {
     #[test]
     fn quick_hull_test_complex_2() {
         test_convexity(geo_test_fixtures::poly2::<f64>().0);
+    }
+
+    #[test]
+    fn graham_test_duplicate() {
+        let mp: MultiPoint<f64> = wkt!(MULTIPOINT (0 0, 2 2, 2 0, 0 2, 1 1, 1 1)).convert();
+        let mut pts: Vec<Coord<f64>> = mp.iter().map(|p| p.0).collect();
+
+        let hull = graham_hull(&mut pts, true);
+
+        assert!(hull.is_ccw_convex());
     }
 }
