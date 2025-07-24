@@ -98,7 +98,7 @@ mod test {
     use super::*;
     use crate::IsConvex;
 
-    fn brute_force_convexity<T: GeoNum>(initial: &[Coord<T>]) -> bool {
+    fn brute_force_is_convex<T: GeoNum>(initial: &[Coord<T>]) -> bool {
         // for every adjacent pair of points, all other points must be on the same side of the line formed by the two points
         // the side returned for all must be the same
 
@@ -112,12 +112,12 @@ mod test {
         k.len() == 1
     }
 
-    fn test_convexity<T: GeoNum>(mut initial: Vec<Coord<T>>) {
+    fn assert_is_ccw_convex<T: GeoNum>(mut initial: Vec<Coord<T>>) {
         let hull = graham_hull(&mut initial, false);
-        assert!(brute_force_convexity(&hull.0));
+        assert!(brute_force_is_convex(&hull.0));
         assert!(hull.is_strictly_ccw_convex());
         let hull = graham_hull(&mut initial, true);
-        assert!(brute_force_convexity(&hull.0));
+        assert!(brute_force_is_convex(&hull.0));
         assert!(hull.is_ccw_convex());
     }
 
@@ -132,14 +132,14 @@ mod test {
             (1.0, 0.0),
         ];
         let initial = initial.iter().map(|e| Coord::from((e.0, e.1))).collect();
-        test_convexity(initial);
+        assert_is_ccw_convex(initial);
     }
 
     #[test]
     fn graham_hull_test1() {
         let v: Vec<_> = vec![(0, 0), (4, 0), (4, 1), (1, 1), (1, 4), (0, 4), (0, 0)];
         let initial = v.iter().map(|e| Coord::from((e.0, e.1))).collect();
-        test_convexity(initial);
+        assert_is_ccw_convex(initial);
     }
 
     #[test]
@@ -156,17 +156,17 @@ mod test {
             (0, 10),
         ];
         let initial = v.iter().map(|e| Coord::from((e.0, e.1))).collect();
-        test_convexity(initial);
+        assert_is_ccw_convex(initial);
     }
 
     #[test]
     fn graham_test_complex() {
-        test_convexity(geo_test_fixtures::poly1::<f64>().0);
+        assert_is_ccw_convex(geo_test_fixtures::poly1::<f64>().0);
     }
 
     #[test]
     fn quick_hull_test_complex_2() {
-        test_convexity(geo_test_fixtures::poly2::<f64>().0);
+        assert_is_ccw_convex(geo_test_fixtures::poly2::<f64>().0);
     }
 
     #[test]
