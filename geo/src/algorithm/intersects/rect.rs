@@ -1,4 +1,4 @@
-use super::Intersects;
+use super::{has_disjoint_bboxes, Intersects};
 use crate::*;
 
 impl<T> Intersects<Coord<T>> for Rect<T>
@@ -40,7 +40,33 @@ where
 symmetric_intersects_impl!(Rect<T>, Point<T>);
 symmetric_intersects_impl!(Rect<T>, MultiPoint<T>);
 
-symmetric_intersects_impl!(Rect<T>, Polygon<T>);
+impl<T> Intersects<Polygon<T>> for Rect<T>
+where
+    T: GeoNum,
+{
+    fn intersects(&self, rhs: &Polygon<T>) -> bool {
+        /*
+        sufficient to show that any of these are true:
+        some corner of the polygon intersects the rectangle
+        some corner of the rectangle intersects the polygon
+        some edge of polygon (interior or exterior) intersects edge of rectangle
+        */
+
+        if has_disjoint_bboxes(self, rhs) {
+            return false;
+        }
+
+        // rhs.intersects(pt) is the most expensive, so check it last
+        // only required if rectangle sits entirely within polygon
+        rhs.coords_iter().any(|p| self.intersects(&p))
+            || rhs.lines_iter().any(|l| {
+                self.lines_iter()
+                    .any(|other_line| l.intersects(&other_line))
+            })
+            || self.min().intersects(rhs)
+    }
+}
+
 symmetric_intersects_impl!(Rect<T>, MultiPolygon<T>);
 
 impl<T> Intersects<Rect<T>> for Rect<T>
@@ -73,6 +99,20 @@ where
     T: GeoNum,
 {
     fn intersects(&self, rhs: &Triangle<T>) -> bool {
-        self.intersects(&rhs.to_polygon())
+        // sufficient to show that any of these are true:
+        // some corner of the triangle intersects the rectangle
+        // some corner of the rectangle intersects the triangle
+        // some edge of triangle intersects edge of rectangle
+
+        if has_disjoint_bboxes(self, rhs) {
+            return false;
+        }
+
+        rhs.coords_iter().any(|p| self.intersects(&p))
+            || rhs.lines_iter().any(|l| {
+                self.lines_iter()
+                    .any(|other_line| l.intersects(&other_line))
+            })
+            || self.min().intersects(rhs)
     }
 }
