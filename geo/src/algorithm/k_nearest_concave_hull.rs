@@ -398,7 +398,7 @@ mod tests {
     #[test]
     fn empty_hull() {
         let actual: Polygon<f64> = concave_hull([].iter(), 3);
-        let expected = Polygon::new(LineString::new(vec![]), vec![]);
+        let expected = Polygon::empty();
         assert_eq!(actual, expected);
     }
 }
