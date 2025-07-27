@@ -79,15 +79,12 @@ fn compute_rdp<T, const INITIAL_MIN: usize>(
 where
     T: GeoFloat,
 {
-    if rdp_indices.is_empty() {
-        return vec![];
-    }
-
-    let first = rdp_indices[0];
-    let last = rdp_indices[rdp_indices.len() - 1];
-    if rdp_indices.len() == 2 {
-        return vec![first, last];
-    }
+    let (first, last) = match rdp_indices {
+        [] => return vec![],
+        &[only] => return vec![only],
+        &[first, last] => return vec![first, last],
+        &[first, .., last] => (first, last),
+    };
 
     let first_last_line = Line::new(first.coord, last.coord);
 
