@@ -289,7 +289,7 @@ mod tests {
     #[test]
     fn test_single_point() {
         // single point is closed
-        // will panic if is_empyt check in `is_convex_shaped` is removed
+        // will panic if is_empty check in `is_convex_shaped` is removed
         let ls: LineString<f64> = wkt! (LINESTRING (0 0)).convert();
         assert!(ls.is_strictly_convex());
     }

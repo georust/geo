@@ -5,7 +5,7 @@ use crate::{Coord, GeoNum, LineString};
 /// The [Graham's scan] algorithm to compute the convex hull
 /// of a collection of points. This algorithm is less
 /// performant than the quick hull, but allows computing all
-/// the points on the convex hull, as opposed to a strict
+/// the unique points on the convex hull, as opposed to a strict
 /// convex hull that does not include collinear points.
 ///
 /// # References
