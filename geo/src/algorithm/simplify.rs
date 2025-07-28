@@ -348,6 +348,15 @@ mod test {
         let simplified = rdp::<_, _, 2>(vec.into_iter(), 1.0);
         assert_eq!(simplified, compare);
     }
+
+    #[test]
+    fn rdp_test_one_point_linestring() {
+        let vec = vec![coord! { x: 27.8, y: 0.1 }];
+        let compare = vec![coord! { x: 27.8, y: 0.1 }];
+        let simplified = rdp::<_, _, 2>(vec.into_iter(), 1.0);
+        assert_eq!(simplified, compare);
+    }
+
     #[test]
     fn rdp_test_two_point_linestring() {
         let vec = vec![coord! { x: 0.0, y: 0.0 }, coord! { x: 27.8, y: 0.1 }];
