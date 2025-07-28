@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use crate::kernels::*;
 use crate::{Coord, GeoNum, LineString};
 
@@ -142,6 +144,19 @@ fn is_convex_shaped<T>(
 where
     T: GeoNum,
 {
+    if coords.is_empty() {
+        // empty here means original linestring had 1 point
+        return Some(Orientation::Collinear);
+    }
+
+    // drop second of adjacent identical points
+    let c0 = coords[0];
+    let mut coords: VecDeque<Coord<T>> = coords
+        .windows(2)
+        .filter_map(|w| if w[0] == w[1] { None } else { Some(w[1]) })
+        .collect();
+    coords.push_front(c0);
+
     let n = coords.len();
 
     let orientation_at = |i: usize| {
@@ -205,6 +220,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::algorithm::Convert;
+    use crate::wkt;
     use geo_types::line_string;
 
     #[test]
@@ -244,5 +261,36 @@ mod tests {
         assert!(!two.is_strictly_convex());
         assert!(!two.is_strictly_ccw_convex());
         assert!(!two.is_strictly_cw_convex());
+    }
+
+    #[test]
+    fn test_duplicate_pt() {
+        let ls_unclosed: LineString<f64> = wkt! (LINESTRING (0 0, 1 1, 2 0)).convert();
+
+        let ls_cw: LineString<f64> = wkt! (LINESTRING (0 0, 2 0, 1 1, 0 0)).convert();
+
+        let ls_1: LineString<f64> = wkt! (LINESTRING (0 0, 1 1, 2 0, 0 0)).convert();
+        let ls_2: LineString<f64> = wkt! (LINESTRING (0 0, 1 1, 2 0, 2 0, 0 0)).convert();
+        let ls_3: LineString<f64> = wkt! (LINESTRING (0 0, 1 1, 2 0, 2 0, 2 0, 0 0)).convert();
+
+        assert!(!ls_unclosed.is_convex());
+
+        assert!(ls_cw.is_convex());
+        assert!(ls_cw.is_ccw_convex());
+
+        assert!(ls_1.is_convex());
+        assert!(ls_1.is_cw_convex());
+        assert!(ls_2.is_convex());
+        assert!(ls_2.is_cw_convex());
+        assert!(ls_3.is_convex());
+        assert!(ls_3.is_cw_convex());
+    }
+
+    #[test]
+    fn test_single_point() {
+        // single point is closed
+        // will panic if is_empty check in `is_convex_shaped` is removed
+        let ls: LineString<f64> = wkt! (LINESTRING (0 0)).convert();
+        assert!(ls.is_strictly_convex());
     }
 }
