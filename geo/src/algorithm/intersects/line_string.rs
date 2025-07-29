@@ -32,8 +32,6 @@ symmetric_intersects_impl!(LineString<T>, MultiLineString<T>);
 impl<T> Intersects<Polygon<T>> for LineString<T>
 where
     T: GeoNum,
-    Line<T>: Intersects<Line<T>>,
-    Coord<T>: Intersects<Polygon<T>>,
 {
     fn intersects(&self, rhs: &Polygon<T>) -> bool {
         if self.is_empty() || rhs.is_empty() {
@@ -43,6 +41,7 @@ where
             return false;
         }
         // if no lines intersections, then linestring is either disjoint or within the polygon
+        // therefore sufficient to check any one point
         self.0[0].intersects(rhs)
             || self
                 .lines()
@@ -53,8 +52,6 @@ where
 impl<T> Intersects<MultiPolygon<T>> for LineString<T>
 where
     T: GeoNum,
-    Line<T>: Intersects<Line<T>>,
-    Coord<T>: Intersects<Rect<T>>,
 {
     fn intersects(&self, rhs: &MultiPolygon<T>) -> bool {
         if has_disjoint_bboxes(self, rhs) {
@@ -68,8 +65,6 @@ where
 impl<T> Intersects<Rect<T>> for LineString<T>
 where
     T: GeoNum,
-    Line<T>: Intersects<Line<T>>,
-    Coord<T>: Intersects<Rect<T>>,
 {
     fn intersects(&self, rhs: &Rect<T>) -> bool {
         if self.is_empty() || rhs.is_empty() {
@@ -79,6 +74,7 @@ where
             return false;
         }
         // if no lines intersections, then linestring is either disjoint or within the polygon
+        // therefore sufficient to check any one point
         self.0[0].intersects(rhs)
             || self
                 .lines()
@@ -89,8 +85,6 @@ where
 impl<T> Intersects<Triangle<T>> for LineString<T>
 where
     T: GeoNum,
-    Line<T>: Intersects<Line<T>>,
-    Coord<T>: Intersects<Triangle<T>>,
 {
     fn intersects(&self, rhs: &Triangle<T>) -> bool {
         if self.is_empty() || rhs.is_empty() {
