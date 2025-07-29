@@ -165,5 +165,5 @@ criterion_main!(
     bench_multi_polygons,
     bench_rects,
     bench_point_rect,
-    bench_point_triangle
+    bench_point_triangle,
 );
