@@ -32,6 +32,10 @@
 - Fix`graham_hull` to correctly handle duplicate points when `on_hull` is set to true
   - `graham_hull` now always returns a boundary with no duplicated points
   - <https://github.com/georust/geo/issues/1383>
+- BREAKING: Break up blanket implementation of `Intersects<LineString>` into specific traits
+  - faster implementations for `Rect`, `Triangle`, `MultiPolygon`, `Polygon` intersects `LineString`
+  - <https://github.com/georust/geo/pull/1379>
+
 
 ## 0.30.0 - 2025-03-24
 
