@@ -92,6 +92,7 @@ where
             return false;
         }
         // if no lines intersections, then linestring is either disjoint or within the polygon
+        // therefore sufficient to check any one point
         self.0[0].intersects(rhs)
             || self
                 .lines()
