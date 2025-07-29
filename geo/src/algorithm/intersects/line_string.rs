@@ -17,6 +17,28 @@ macro_rules! intersects_line_string_impl {
             }
         }
     };
+    (area: $t:ty) => {
+        impl<T> $crate::Intersects<$t> for LineString<T>
+        where
+            T: GeoNum,
+        {
+            fn intersects(&self, rhs: &$t) -> bool {
+                if has_disjoint_bboxes(self, rhs) {
+                    return false;
+                }
+
+                // if no lines intersections, then linestring is either disjoint or within the polygon
+                // therefore sufficient to check any one point
+                let Some(coord) = self.0.first() else {
+                    return false;
+                };
+                coord.intersects(rhs)
+                    || self
+                        .lines()
+                        .any(|l| rhs.lines_iter().any(|other| l.intersects(&other)))
+            }
+        }
+    };
 }
 
 intersects_line_string_impl!(Coord<T>);
@@ -27,26 +49,7 @@ intersects_line_string_impl!(Line<T>);
 intersects_line_string_impl!(LineString<T>);
 symmetric_intersects_impl!(LineString<T>, MultiLineString<T>);
 
-impl<T> Intersects<Polygon<T>> for LineString<T>
-where
-    T: GeoNum,
-{
-    fn intersects(&self, rhs: &Polygon<T>) -> bool {
-        if self.is_empty() || rhs.is_empty() {
-            return false;
-        }
-        if has_disjoint_bboxes(self, rhs) {
-            return false;
-        }
-        // if no lines intersections, then linestring is either disjoint or within the polygon
-        // therefore sufficient to check any one point
-        self.0[0].intersects(rhs)
-            || self
-                .lines()
-                .any(|l| rhs.lines_iter().any(|other| l.intersects(&other)))
-    }
-}
-
+intersects_line_string_impl!(area: Polygon<T>);
 impl<T> Intersects<MultiPolygon<T>> for LineString<T>
 where
     T: GeoNum,
@@ -60,45 +63,8 @@ where
     }
 }
 
-impl<T> Intersects<Rect<T>> for LineString<T>
-where
-    T: GeoNum,
-{
-    fn intersects(&self, rhs: &Rect<T>) -> bool {
-        if self.is_empty() || rhs.is_empty() {
-            return false;
-        }
-        if has_disjoint_bboxes(self, rhs) {
-            return false;
-        }
-        // if no lines intersections, then linestring is either disjoint or within the polygon
-        // therefore sufficient to check any one point
-        self.0[0].intersects(rhs)
-            || self
-                .lines()
-                .any(|l| rhs.lines_iter().any(|other| l.intersects(&other)))
-    }
-}
-
-impl<T> Intersects<Triangle<T>> for LineString<T>
-where
-    T: GeoNum,
-{
-    fn intersects(&self, rhs: &Triangle<T>) -> bool {
-        if self.is_empty() || rhs.is_empty() {
-            return false;
-        }
-        if has_disjoint_bboxes(self, rhs) {
-            return false;
-        }
-        // if no lines intersections, then linestring is either disjoint or within the polygon
-        // therefore sufficient to check any one point
-        self.0[0].intersects(rhs)
-            || self
-                .lines()
-                .any(|l| rhs.lines_iter().any(|other| l.intersects(&other)))
-    }
-}
+intersects_line_string_impl!(area: Rect<T>);
+intersects_line_string_impl!(area: Triangle<T>);
 
 // Blanket implementation from LineString<T>
 impl<T, G> Intersects<G> for MultiLineString<T>
