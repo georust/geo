@@ -8,8 +8,6 @@ macro_rules! intersects_line_string_impl {
         impl<T> $crate::Intersects<$t> for LineString<T>
         where
             T: GeoNum,
-            Line<T>: Intersects<$t>,
-            $t: BoundingRect<T>,
         {
             fn intersects(&self, rhs: &$t) -> bool {
                 if has_disjoint_bboxes(self, rhs) {
