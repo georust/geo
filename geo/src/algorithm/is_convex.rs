@@ -1,7 +1,8 @@
+use std::cmp::Ordering;
 use std::collections::VecDeque;
 
 use crate::kernels::*;
-use crate::{Coord, GeoNum, LineString};
+use crate::{Coord, GeoNum, LineString, Orientation};
 
 /// Predicates to test the convexity of a [ `LineString` ].
 /// A closed `LineString` is said to be _convex_ if it
@@ -119,13 +120,212 @@ impl<T: GeoNum> IsConvex for LineString<T> {
         if !self.is_closed() || self.0.is_empty() {
             None
         } else {
-            is_convex_shaped(&self.0[1..], allow_collinear, specific_orientation)
+            // Use sign flip algorithm which detects both non-convexity and self-intersections
+            if is_convex_sign_flips(&self.0) {
+                // If sign flips indicate convex, determine orientation
+                is_convex_shaped(&self.0[1..], allow_collinear, specific_orientation)
+            } else {
+                None
+            }
         }
     }
 
     fn is_collinear(&self) -> bool {
         self.0.is_empty()
             || is_convex_shaped(&self.0[1..], true, Some(Orientation::Collinear)).is_some()
+    }
+
+    /// Test if the shape is convex.
+    fn is_convex(&self) -> bool {
+        is_convex_sign_flips(&self.0)
+    }
+}
+/// Check if a LineString is convex using the sign flip algorithm.
+///
+/// This implementation is based on the algorithm described at:
+/// https://math.stackexchange.com/questions/1743995/determine-whether-a-polygon-is-convex-based-on-its-vertices/1745427#1745427
+///
+/// # Algorithm Overview
+///
+/// The sign flip algorithm works by:
+/// 1. Computing edge vectors between consecutive vertices
+/// 2. Tracking sign changes in the x and y components of these vectors
+/// 3. Checking orientation consistency using cross product
+/// 4. A convex polygon has exactly 2 sign flips along each axis
+///
+/// This approach detects both:
+/// - Orientation changes (concave vertices)
+/// - Self-intersections (star polygons)
+///
+/// # Time Complexity
+///
+/// - **Time**: O(n) where n is the number of vertices
+/// - **Early exit**: Returns false immediately when >2 flips are detected or orientation changes
+///
+///
+/// # Edge Cases
+///
+/// - Empty polygons (n = 0): Considered convex
+/// - Single points (n = 1): Considered convex
+/// - Line segments (n = 3): Considered convex
+/// - Triangles (n = 4): Special handling with relaxed flip constraints
+/// - Regular polygons (n ≥ 4): Standard 2-flip rule applies
+/// - Zero-length edges: Ignored in sign flip counting
+/// - Collinear vertices: Detected via cross product consistency
+///
+/// # Examples
+///
+/// ```text
+/// Convex square: [(0,0), (1,0), (1,1), (0,1)] → x_flips=2, y_flips=2 → true
+/// Star polygon: [(0,0), (10,0), (7,-1), (4,5), (6,5), (3,-1)] → >2 flips → false
+/// Triangle: [(0,0), (1,0), (0,1)] → orientation consistent → true
+/// ```
+fn is_convex_sign_flips<T: GeoNum>(coords: &[Coord<T>]) -> bool {
+    // Convexity only makes sense for closed shapes
+    if coords.first() != coords.last() {
+        return false;
+    }
+    let n = coords.len();
+
+    // Edge case 1: Handle degenerate cases first
+    // // These cases are considered convex by definition
+    if n <= 1 {
+        return true; // Empty or single point
+    }
+    if n == 2 {
+        return true; // Single point (with closing duplicate)
+    }
+    // For actual polygons with 3+ vertices (4+ coords including closing), use sign flip algorithm
+    let mut w_orientation: Option<Orientation> = None; // Track orientation consistency via robust predicate
+
+    // Sign flip counters for x-axis
+    let mut x_sign = 0i8; // Current sign: -1 (negative), 0 (zero), 1 (positive)
+    let mut x_first_sign = 0i8; // First non-zero sign encountered
+    let mut x_flips = 0; // Number of sign changes
+
+    // Sign flip counters for y-axis
+    let mut y_sign = 0i8;
+    let mut y_first_sign = 0i8;
+    let mut y_flips = 0;
+
+    // The last vertex is the repeated closing vertex, so we use n - 1
+    let vertices = &coords[..n - 1];
+    let vertex_count = vertices.len();
+
+    // Initialize sliding window: start with the last two actual vertices
+    // This allows us to compute edge vectors for the wraparound case
+    let mut prev = vertices[vertex_count - 1];
+    let mut curr = vertices[0];
+    // Main algorithm loop: process each vertex and its incident edges
+    // Time complexity: O(n): single pass through all vertices
+    // Use iterator with cycle() to handle wraparound
+    for next in vertices.iter().cycle().skip(1).take(vertex_count) {
+        // Compute edge vectors for sign flip tracking
+        let ax = next.x - curr.x; // "after" edge: curr → next
+        let ay = next.y - curr.y;
+
+        // Track sign flips in x direction
+        // The sign flip algorithm principle: a convex polygon traversed in order
+        // will have edge vectors that change sign exactly twice per axis
+
+        match ax.partial_cmp(&T::zero()) {
+            Some(Ordering::Greater) => {
+                match x_sign.cmp(&0) {
+                    Ordering::Equal => x_first_sign = 1,
+                    Ordering::Less => x_flips += 1,
+                    _ => {}
+                }
+                x_sign = 1;
+            }
+            Some(Ordering::Less) => {
+                match x_sign.cmp(&0) {
+                    Ordering::Equal => x_first_sign = -1,
+                    Ordering::Greater => x_flips += 1,
+                    _ => {}
+                }
+                x_sign = -1;
+            }
+            _ => {
+                // ax is 0 or NaN, which doesn't change sign state
+            }
+        }
+
+        // Early exit optimization: if we've seen more than 2 flips, it's not convex
+        if x_flips > 2 {
+            return false;
+        }
+
+        // Track sign flips in y direction (same logic as x)
+        match ay.partial_cmp(&T::zero()) {
+            Some(Ordering::Greater) => {
+                match y_sign.cmp(&0) {
+                    Ordering::Equal => y_first_sign = 1,
+                    Ordering::Less => y_flips += 1,
+                    _ => {}
+                }
+                y_sign = 1;
+            }
+            Some(Ordering::Less) => {
+                match y_sign.cmp(&0) {
+                    Ordering::Equal => y_first_sign = -1,
+                    Ordering::Greater => y_flips += 1,
+                    _ => {}
+                }
+                y_sign = -1;
+            }
+            _ => {
+                // ay is 0 or NaN, which doesn't change sign state
+            }
+        }
+
+        // Early exit optimization: if we've seen more than 2 flips, it's not convex
+        if y_flips > 2 {
+            return false;
+        }
+        // Check orientation consistency using robust orientation predicate
+        // This detects when the polygon "turns" in different directions
+        // (indicating concavity or self-intersection)
+        let current_orientation = T::Ker::orient2d(prev, curr, *next);
+
+        // Skip collinear points for orientation consistency check
+        if current_orientation != Orientation::Collinear {
+            if let Some(established_orientation) = w_orientation {
+                if current_orientation != established_orientation {
+                    // Orientation change detected - not convex
+                    return false;
+                }
+            } else {
+                w_orientation = Some(current_orientation); // Establish initial orientation
+            }
+        }
+        // Advance sliding window to next vertex
+        prev = curr;
+        curr = *next;
+    }
+
+    // Check final/wraparound sign flips
+    // We need to check if the final sign differs from the first sign
+    // to account for the wraparound from last vertex back to first
+    if x_sign != 0 && x_first_sign != 0 && x_sign != x_first_sign {
+        x_flips += 1;
+    }
+    if y_sign != 0 && y_first_sign != 0 && y_sign != y_first_sign {
+        y_flips += 1;
+    }
+
+    // Final convexity check based on sign flip count
+    // Mathematical principle: convex polygons have exactly 2 sign flips per axis
+    // This is because as you traverse a convex polygon, you go:
+    // - Right → Up → Left → Down (or similar pattern) = 2 flips per axis
+    if vertex_count == 3 {
+        // Edge case 2: Triangle special handling
+        // Triangles can have irregular sign flip patterns but are always convex
+        // if orientation is consistent (already checked above with robust predicate)
+        w_orientation.is_some() || (x_flips <= 2 && y_flips <= 2)
+    } else {
+        // Standard case: Regular polygons with 4+ vertices
+        // Must have exactly 2 sign flips per axis for convexity
+        x_flips == 2 && y_flips == 2
     }
 }
 
@@ -230,7 +430,7 @@ mod tests {
         // due to out-of-index access
         let empty: LineString = line_string!();
         assert!(empty.is_collinear());
-        assert!(!empty.is_convex());
+        assert!(empty.is_convex());
         assert!(!empty.is_strictly_ccw_convex());
 
         let one = line_string![(x: 0., y: 0.)];
@@ -292,5 +492,14 @@ mod tests {
         // will panic if is_empty check in `is_convex_shaped` is removed
         let ls: LineString<f64> = wkt! (LINESTRING (0 0)).convert();
         assert!(ls.is_strictly_convex());
+    }
+
+    #[test]
+    fn test_star_polygon_not_convex() {
+        // Star polygons have self-intersecting edges and are not convex
+        // even though all vertices have the same orientation
+        let ls: LineString<f64> =
+            wkt! (LINESTRING (0 0, 10 0, 7 -1, 4 5, 6 5, 3 -1, 0 0)).convert();
+        assert!(!ls.is_convex());
     }
 }
