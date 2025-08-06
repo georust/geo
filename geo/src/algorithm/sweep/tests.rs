@@ -75,16 +75,13 @@ fn verify_intersections(lines: &[Line<f64>]) {
                     assert!(
                         (*bf_line == *sw_line)
                             || (*bf_line == Line::new(sw_line.end, sw_line.start)),
-                        "Collinear intersection lines don't match: brute force: {:?}, sweep: {:?}",
-                        bf_line,
-                        sw_line
+                        "Collinear intersection lines don't match: brute force: {bf_line:?}, sweep: {sw_line:?}"
                     );
                 }
                 _ => {
                     assert!(
                         false,
-                        "Intersection types don't match: brute force: {:?}, sweep: {:?}",
-                        bf_intersection, sw_intersection
+                        "Intersection types don't match: brute force: {bf_intersection:?}, sweep: {sw_intersection:?}",
                     );
                 }
             }
@@ -225,10 +222,7 @@ fn test_debug_grid_algorithm() {
         assert_eq!(
             sweep_results.len(),
             expected_intersections,
-            "Sweep algorithm should find {} grid intersections for {}x{} grid",
-            expected_intersections,
-            size,
-            size
+            "Sweep algorithm should find {expected_intersections} grid intersections for {size}x{size} grid",
         );
     }
 }
@@ -274,8 +268,7 @@ fn test_horizontal_vertical_intersection() {
     // Make sure we found all intersections
     assert_eq!(
         missing_count, 0,
-        "All horizontal-vertical pairs should intersect. We're missing {} intersections",
-        missing_count
+        "All horizontal-vertical pairs should intersect. We're missing {missing_count} intersections",
     );
 }
 
