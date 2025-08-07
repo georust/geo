@@ -143,7 +143,7 @@ where
         graph
     }
 
-    pub(crate) fn geometry(&self) -> &GeometryCow<F> {
+    pub(crate) fn geometry(&self) -> &GeometryCow<'_, F> {
         &self.parent_geometry
     }
 

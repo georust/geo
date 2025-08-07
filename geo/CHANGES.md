@@ -17,8 +17,9 @@
 - Add `FillRule`-configurable boolean operations to `BooleanOps` trait
   - <https://github.com/georust/geo/pull/1382>
 - Fix panic in `algorithm::simplify::compute_rdp` with one point
+- Fix Clippy warning (surfaced in Rust 1.89) related to lifetime elision
 
-##  Update `Intersections` with new implementation of the Bentley-Ottmann sweep-line algorithm to efficiently find sparse intersections between groups of lines.
+## Update `Intersections` with new implementation of the Bentley-Ottmann sweep-line algorithm to efficiently find sparse intersections between groups of lines.
 
 - no longer `panic`'s when given pathological input
 - BREAKING: `Intersections` now computes intersections lazily
