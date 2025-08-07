@@ -1,6 +1,8 @@
 // NOTE: this module is private and for the use of the monotone module only
 // For all other purposes it is DEPRECATED in favour of new_sweep
 
+#![allow(dead_code)]
+
 mod point;
 pub use point::SweepPoint;
 
