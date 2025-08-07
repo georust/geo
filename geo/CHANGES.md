@@ -18,6 +18,7 @@
   - <https://github.com/georust/geo/pull/1382>
 - Fix panic in `algorithm::simplify::compute_rdp` with one point
 - Fix Clippy warning (surfaced in Rust 1.89) related to lifetime elision
+- Silence Clippy warnings related to `old_sweep` module
 
 ## Update `Intersections` with new implementation of the Bentley-Ottmann sweep-line algorithm to efficiently find sparse intersections between groups of lines.
 
