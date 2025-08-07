@@ -6,6 +6,7 @@
   - <https://github.com/georust/geo/pull/1389>
 - Add `empty` convenience initializer for constructing empty geometries
   - <https://github.com/georust/geo/pull/1363>
+- Fix Clippy warning (surfaced in Rust 1.89) related to lifetime elision
 
 ## 0.7.16 - 2025-03-24
 

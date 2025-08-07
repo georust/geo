@@ -202,12 +202,12 @@ impl<T: CoordNum> LineString<T> {
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
     #[deprecated(note = "Use points() instead")]
-    pub fn points_iter(&self) -> PointsIter<T> {
+    pub fn points_iter(&self) -> PointsIter<'_, T> {
         PointsIter(self.0.iter())
     }
 
     /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
-    pub fn points(&self) -> PointsIter<T> {
+    pub fn points(&self) -> PointsIter<'_, T> {
         PointsIter(self.0.iter())
     }
 
