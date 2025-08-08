@@ -38,6 +38,7 @@ pub trait Contains<Rhs = Self> {
 
 mod geometry;
 mod geometry_collection;
+mod coordinate;
 mod line;
 mod line_string;
 mod point;
@@ -737,5 +738,183 @@ mod test {
 
         let point2 = Point::new(90., 200.);
         assert_eq!(rect.contains(&point2), rect.relate(&point2).is_contains());
+    }
+
+    #[test]
+    fn exhaustive_compile_test() {
+        use geo_types::*;
+        let c = Coord { x: 0., y: 0. };
+        let pt: Point = Point::new(0., 0.);
+        let ls = line_string![(0., 0.).into(), (1., 1.).into()];
+        let multi_ls = MultiLineString::new(vec![ls.clone()]);
+        let ln: Line = Line::new((0., 0.), (1., 1.));
+
+        let poly = Polygon::new(LineString::from(vec![(0., 0.), (1., 1.), (1., 0.)]), vec![]);
+        let rect = Rect::new(coord! { x: 10., y: 20. }, coord! { x: 30., y: 10. });
+        let tri = Triangle::new(
+            coord! { x: 0., y: 0. },
+            coord! { x: 10., y: 20. },
+            coord! { x: 20., y: -10. },
+        );
+        let geom = Geometry::Point(pt);
+        let gc = GeometryCollection::new_from(vec![geom.clone()]);
+        let multi_point = MultiPoint::new(vec![pt]);
+        let multi_poly = MultiPolygon::new(vec![poly.clone()]);
+
+        let _ = c.contains(&c);
+        let _ = c.contains(&pt);
+        let _ = c.contains(&ln);
+        let _ = c.contains(&ls);
+        let _ = c.contains(&poly);
+        let _ = c.contains(&rect);
+        let _ = c.contains(&tri);
+        let _ = c.contains(&geom);
+        let _ = c.contains(&gc);
+        let _ = c.contains(&multi_point);
+        let _ = c.contains(&multi_ls);
+        let _ = c.contains(&multi_poly);
+
+        let _ = pt.contains(&c);
+        let _ = pt.contains(&pt);
+        let _ = pt.contains(&ln);
+        let _ = pt.contains(&ls);
+        let _ = pt.contains(&poly);
+        let _ = pt.contains(&rect);
+        let _ = pt.contains(&tri);
+        let _ = pt.contains(&geom);
+        let _ = pt.contains(&gc);
+        let _ = pt.contains(&multi_point);
+        let _ = pt.contains(&multi_ls);
+        let _ = pt.contains(&multi_poly);
+
+        let _ = ln.contains(&c);
+        let _ = ln.contains(&pt);
+        let _ = ln.contains(&ln);
+        let _ = ln.contains(&ls);
+        let _ = ln.contains(&poly);
+        let _ = ln.contains(&rect);
+        let _ = ln.contains(&tri);
+        let _ = ln.contains(&geom);
+        let _ = ln.contains(&gc);
+        let _ = ln.contains(&multi_point);
+        let _ = ln.contains(&multi_ls);
+        let _ = ln.contains(&multi_poly);
+
+        let _ = ls.contains(&c);
+        let _ = ls.contains(&pt);
+        let _ = ls.contains(&ln);
+        let _ = ls.contains(&ls);
+        let _ = ls.contains(&poly);
+        let _ = ls.contains(&rect);
+        let _ = ls.contains(&tri);
+        let _ = ls.contains(&geom);
+        let _ = ls.contains(&gc);
+        let _ = ls.contains(&multi_point);
+        let _ = ls.contains(&multi_ls);
+        let _ = ls.contains(&multi_poly);
+
+        let _ = poly.contains(&c);
+        let _ = poly.contains(&pt);
+        let _ = poly.contains(&ln);
+        let _ = poly.contains(&ls);
+        let _ = poly.contains(&poly);
+        let _ = poly.contains(&rect);
+        let _ = poly.contains(&tri);
+        let _ = poly.contains(&geom);
+        let _ = poly.contains(&gc);
+        let _ = poly.contains(&multi_point);
+        let _ = poly.contains(&multi_ls);
+        let _ = poly.contains(&multi_poly);
+
+        let _ = rect.contains(&c);
+        let _ = rect.contains(&pt);
+        let _ = rect.contains(&ln);
+        let _ = rect.contains(&ls);
+        let _ = rect.contains(&poly);
+        let _ = rect.contains(&rect);
+        let _ = rect.contains(&tri);
+        let _ = rect.contains(&geom);
+        let _ = rect.contains(&gc);
+        let _ = rect.contains(&multi_point);
+        let _ = rect.contains(&multi_ls);
+        let _ = rect.contains(&multi_poly);
+
+        let _ = tri.contains(&c);
+        let _ = tri.contains(&pt);
+        let _ = tri.contains(&ln);
+        let _ = tri.contains(&ls);
+        let _ = tri.contains(&poly);
+        let _ = tri.contains(&rect);
+        let _ = tri.contains(&tri);
+        let _ = tri.contains(&geom);
+        let _ = tri.contains(&gc);
+        let _ = tri.contains(&multi_point);
+        let _ = tri.contains(&multi_ls);
+        let _ = tri.contains(&multi_poly);
+
+        let _ = geom.contains(&c);
+        let _ = geom.contains(&pt);
+        let _ = geom.contains(&ln);
+        let _ = geom.contains(&ls);
+        let _ = geom.contains(&poly);
+        let _ = geom.contains(&rect);
+        let _ = geom.contains(&tri);
+        let _ = geom.contains(&geom);
+        let _ = geom.contains(&gc);
+        let _ = geom.contains(&multi_point);
+        let _ = geom.contains(&multi_ls);
+        let _ = geom.contains(&multi_poly);
+
+        let _ = gc.contains(&c);
+        let _ = gc.contains(&pt);
+        let _ = gc.contains(&ln);
+        let _ = gc.contains(&ls);
+        let _ = gc.contains(&poly);
+        let _ = gc.contains(&rect);
+        let _ = gc.contains(&tri);
+        let _ = gc.contains(&geom);
+        let _ = gc.contains(&gc);
+        let _ = gc.contains(&multi_point);
+        let _ = gc.contains(&multi_ls);
+        let _ = gc.contains(&multi_poly);
+
+        let _ = multi_point.contains(&c);
+        let _ = multi_point.contains(&pt);
+        let _ = multi_point.contains(&ln);
+        let _ = multi_point.contains(&ls);
+        let _ = multi_point.contains(&poly);
+        let _ = multi_point.contains(&rect);
+        let _ = multi_point.contains(&tri);
+        let _ = multi_point.contains(&geom);
+        let _ = multi_point.contains(&gc);
+        let _ = multi_point.contains(&multi_point);
+        let _ = multi_point.contains(&multi_ls);
+        let _ = multi_point.contains(&multi_poly);
+
+        let _ = multi_ls.contains(&c);
+        let _ = multi_ls.contains(&pt);
+        let _ = multi_ls.contains(&ln);
+        let _ = multi_ls.contains(&ls);
+        let _ = multi_ls.contains(&poly);
+        let _ = multi_ls.contains(&rect);
+        let _ = multi_ls.contains(&tri);
+        let _ = multi_ls.contains(&geom);
+        let _ = multi_ls.contains(&gc);
+        let _ = multi_ls.contains(&multi_point);
+        let _ = multi_ls.contains(&multi_ls);
+        let _ = multi_ls.contains(&multi_poly);
+
+        let _ = multi_poly.contains(&c);
+        let _ = multi_poly.contains(&pt);
+        let _ = multi_poly.contains(&ln);
+        let _ = multi_poly.contains(&ls);
+        let _ = multi_poly.contains(&poly);
+        let _ = multi_poly.contains(&rect);
+        let _ = multi_poly.contains(&tri);
+        let _ = multi_poly.contains(&geom);
+        let _ = multi_poly.contains(&gc);
+        let _ = multi_poly.contains(&multi_point);
+        let _ = multi_poly.contains(&multi_ls);
+        let _ = multi_poly.contains(&multi_poly);
     }
 }
