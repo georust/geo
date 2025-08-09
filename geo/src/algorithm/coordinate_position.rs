@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use crate::geometry::*;
 use crate::intersects::{point_in_rect, value_in_between};
 use crate::kernels::*;
-use crate::{BoundingRect, HasDimensions, Intersects};
+use crate::{BoundingRect, HasDimensions, Intersects, LinesIter};
 use crate::{GeoNum, GeometryCow};
 
 /// The position of a `Coord` relative to a `Geometry`
@@ -337,6 +337,14 @@ where
     ) {
         for polygon in &self.0 {
             polygon.calculate_coordinate_position(coord, is_inside, boundary_count);
+            // early termination if we've found an interior point
+            if *is_inside {
+                return;
+            }
+            // early termination if we've found a boundary point
+            if *boundary_count %2 == 1 {
+                return;
+            }
         }
     }
 }

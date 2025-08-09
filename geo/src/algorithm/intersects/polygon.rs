@@ -1,10 +1,8 @@
 use super::{has_disjoint_bboxes, Intersects};
 use crate::coordinate_position::CoordPos;
+use crate::geometry::*;
 use crate::{BoundingRect, CoordinatePosition, CoordsIter, LinesIter};
-use crate::{
-    Coord, CoordNum, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
-    Polygon, Rect, Triangle,
-};
+use crate::{CoordNum, GeoNum};
 
 impl<T> Intersects<Coord<T>> for Polygon<T>
 where
@@ -102,20 +100,50 @@ where
     }
 }
 
-// Blanket implementation for MultiPolygon
-impl<G, T> Intersects<G> for MultiPolygon<T>
+macro_rules! intersects_multipolygon_impl {
+    ( [$($target:ty),*]) => {
+        $(
+            impl<T> Intersects<$target> for MultiPolygon<T>
+            where
+                T: GeoNum,
+                $target: BoundingRect<T>,
+            {
+                fn intersects(&self, rhs: &$target) -> bool {
+                    if has_disjoint_bboxes(self, rhs) {
+                        return false;
+                    }
+                    self.iter().any(|p| p.intersects(rhs))
+                }
+            }
+        )*
+    };
+}
+
+impl<T> Intersects<Coord<T>> for MultiPolygon<T>
 where
     T: GeoNum,
-    Polygon<T>: Intersects<G>,
-    G: BoundingRect<T>,
 {
-    fn intersects(&self, rhs: &G) -> bool {
+    fn intersects(&self, rhs: &Coord<T>) -> bool {
         if has_disjoint_bboxes(self, rhs) {
             return false;
         }
-        self.iter().any(|p| p.intersects(rhs))
+        self.coordinate_position(rhs) !=  CoordPos::Outside
     }
 }
+
+impl<T> Intersects<Point<T>> for MultiPolygon<T>
+where
+    T: GeoNum,
+{
+    fn intersects(&self, rhs: &Point<T>) -> bool {
+        self.intersects(&rhs.0)
+    }
+}
+
+intersects_multipolygon_impl!([MultiPoint<T>]);
+intersects_multipolygon_impl!([Line<T>, LineString<T>, MultiLineString<T>]);
+intersects_multipolygon_impl!([Polygon<T>, MultiPolygon<T>, Rect<T>, Triangle<T>]);
+intersects_multipolygon_impl!([Geometry<T>, GeometryCollection<T>]);
 
 #[cfg(test)]
 mod tests {
