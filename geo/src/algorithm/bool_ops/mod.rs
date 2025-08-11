@@ -118,7 +118,7 @@ pub trait BooleanOps {
     }
 
     /// Combines the regions of both `self` and `other` into a single geometry, removing
-    /// overlaps and merging boundaries.
+    /// overlaps and merging boundaries. Consider using [`unary_union`] for efficiently combining several adjacent / overlapping geometries.
     fn union(&self, other: &impl BooleanOps<Scalar = Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Union)
     }

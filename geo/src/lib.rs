@@ -1,6 +1,18 @@
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
 
-//! The `geo` crate provides geospatial primitive types and algorithms.
+//! The `geo` crate provides planar geospatial geometries and algorithms.
+//!
+//! # Overview
+//!
+//! - Full DE-9IM support and topological relationship calculations such as containment and intersection
+//! - Affine operations on geometries (scale, rotate, skew, translate)
+//! - Boolean operations on geometries (clip, union, difference, intersection, xor)
+//! - Buffer / offset operations on geometries
+//! - Euclidean, as well as spherical, haversine and other non-planar length and distance calculations
+//! - Support for projecting and converting between coordinate reference systems using PROJ
+//! - IO using the `geojson` and `geozero` crates.
+//!
+//! For a full listing of available geometry types, functionality and features, see below:
 //!
 //! # Types
 //!
