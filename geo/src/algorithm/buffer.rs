@@ -268,13 +268,13 @@ impl<F: BoolOpsNum + 'static> Buffer for Point<F> {
     type Scalar = F;
     fn buffer_with_style(&self, style: BufferStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         if style.distance <= F::zero() {
-            return MultiPolygon::new(vec![]);
+            return MultiPolygon::empty();
         }
 
         match style.line_cap {
             // Without length, i_overlay can't sensible reason about orientation of template points.
-            LineCap::Custom(_) => MultiPolygon::new(vec![]),
-            LineCap::Butt => MultiPolygon::new(vec![]),
+            LineCap::Custom(_) => MultiPolygon::empty(),
+            LineCap::Butt => MultiPolygon::empty(),
             LineCap::Square => {
                 let a = coord!(x: self.x() - style.distance, y: self.y() - style.distance);
                 let b = coord!(x: self.x() + style.distance, y: self.y() + style.distance);
@@ -311,11 +311,11 @@ impl<F: BoolOpsNum + 'static> Buffer for MultiPoint<F> {
     type Scalar = F;
     fn buffer_with_style(&self, style: BufferStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         if style.distance <= F::zero() {
-            return MultiPolygon::new(vec![]);
+            return MultiPolygon::empty();
         }
 
         if self.0.is_empty() {
-            return MultiPolygon::new(vec![]);
+            return MultiPolygon::empty();
         }
 
         // Buffer each point individually
@@ -334,10 +334,10 @@ impl<F: BoolOpsNum + 'static> Buffer for LineString<F> {
     type Scalar = F;
     fn buffer_with_style(&self, style: BufferStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         if style.distance <= F::zero() {
-            return MultiPolygon::new(vec![]);
+            return MultiPolygon::empty();
         }
         match self.dimensions() {
-            Dimensions::Empty => MultiPolygon::new(vec![]),
+            Dimensions::Empty => MultiPolygon::empty(),
             // Treat degenerate line like a point, similar to JTS, whereas i_overlay returns an
             // empty result
             Dimensions::ZeroDimensional => Point(self.0[0]).buffer_with_style(style),
@@ -355,7 +355,7 @@ impl<F: BoolOpsNum + 'static> Buffer for MultiLineString<F> {
     type Scalar = F;
     fn buffer_with_style(&self, style: BufferStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         if style.distance <= F::zero() {
-            return MultiPolygon::new(vec![]);
+            return MultiPolygon::empty();
         }
 
         let mut degenerate_points = Vec::new();
@@ -372,7 +372,7 @@ impl<F: BoolOpsNum + 'static> Buffer for MultiLineString<F> {
         }
 
         let stroked_lines = if subject.is_empty() {
-            MultiPolygon::new(vec![])
+            MultiPolygon::empty()
         } else {
             let shapes = subject.stroke(style.stroke_style(), false);
             multi_polygon_from_shapes(shapes)
@@ -412,7 +412,7 @@ impl<F: BoolOpsNum + 'static> Buffer for Line<F> {
     type Scalar = F;
     fn buffer_with_style(&self, style: BufferStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         if style.distance <= F::zero() {
-            return MultiPolygon::new(vec![]);
+            return MultiPolygon::empty();
         }
         match self.dimensions() {
             Dimensions::TwoDimensional => unreachable!("line can't be 2-D"),

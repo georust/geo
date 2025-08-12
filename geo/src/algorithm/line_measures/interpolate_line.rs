@@ -756,7 +756,7 @@ mod tests {
 
             #[test]
             fn empty_line_string() {
-                let line_string: LineString = LineString::new(vec![]);
+                let line_string: LineString = LineString::empty();
                 assert_eq!(None, Euclidean.point_at_ratio_from_start(&line_string, 0.5));
                 assert_eq!(
                     None,

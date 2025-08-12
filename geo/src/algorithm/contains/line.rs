@@ -105,7 +105,7 @@ mod test {
     #[test]
     fn test_line_contains_empty_multipoint() {
         let line = Line::new(coord! {x:0.,y:0.}, coord! {x:100., y:100.});
-        let empty: MultiPoint<f64> = MultiPoint::new(Vec::new());
+        let empty: MultiPoint<f64> = MultiPoint::empty();
 
         assert!(!line.contains(&empty));
         assert!(!line.relate(&empty).is_contains());
