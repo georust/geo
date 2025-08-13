@@ -8,8 +8,9 @@ use geo_traits::CoordTrait;
 #[derive(Default, Debug)]
 pub struct SimpleKernel;
 
-impl<T> Kernel<T> for SimpleKernel 
-where 
+impl<T> Kernel<T> for SimpleKernel
+where
     T: CoordTrait,
     T::T: CoordNum,
-{}
+{
+}
