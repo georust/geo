@@ -1,7 +1,8 @@
 use num_traits::Zero;
 use std::cmp::Ordering;
 
-use crate::{coord, Coord, CoordNum};
+use crate::CoordNum;
+use geo_traits::CoordTrait;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum Orientation {
@@ -24,11 +25,14 @@ impl Orientation {
 
 /// Kernel trait to provide predicates to operate on
 /// different scalar types.
-pub trait Kernel<T: CoordNum> {
+pub trait Kernel<T: CoordTrait>
+where
+    T::T: CoordNum,
+{
     /// Gives the orientation of 3 2-dimensional points:
     /// ccw, cw or collinear (None)
-    fn orient2d(p: Coord<T>, q: Coord<T>, r: Coord<T>) -> Orientation {
-        let res = (q.x - p.x) * (r.y - q.y) - (q.y - p.y) * (r.x - q.x);
+    fn orient2d(p: T, q: T, r: T) -> Orientation {
+        let res = (q.x() - p.x()) * (r.y() - q.y()) - (q.y() - p.y()) * (r.x() - q.x());
         if res > Zero::zero() {
             Orientation::CounterClockwise
         } else if res < Zero::zero() {
@@ -38,21 +42,23 @@ pub trait Kernel<T: CoordNum> {
         }
     }
 
-    fn square_euclidean_distance(p: Coord<T>, q: Coord<T>) -> T {
-        (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)
+    fn square_euclidean_distance(p: T, q: T) -> T::T {
+        (p.x() - q.x()) * (p.x() - q.x()) + (p.y() - q.y()) * (p.y() - q.y())
     }
 
     /// Compute the sign of the dot product of `u` and `v` using
     /// robust predicates. The output is `CounterClockwise` if
     /// the sign is positive, `Clockwise` if negative, and
     /// `Collinear` if zero.
-    fn dot_product_sign(u: Coord<T>, v: Coord<T>) -> Orientation {
-        let zero = Coord::zero();
-        let vdash = coord! {
-            x: T::zero() - v.y,
-            y: v.x,
-        };
-        Self::orient2d(zero, u, vdash)
+    fn dot_product_sign(u: T, v: T) -> Orientation {
+        let dot_product = u.x() * v.x() + u.y() * v.y();
+        if dot_product > T::T::zero() {
+            Orientation::CounterClockwise
+        } else if dot_product < T::T::zero() {
+            Orientation::Clockwise
+        } else {
+            Orientation::Collinear
+        }
     }
 }
 
