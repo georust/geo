@@ -51,8 +51,6 @@ where
     /// the sign is positive, `Clockwise` if negative, and
     /// `Collinear` if zero.
     fn dot_product_sign(u: T, v: T) -> Orientation {
-        // For now, fallback to a basic implementation
-        // TODO: Fix this to work with the generic trait system
         let dot_product = u.x() * v.x() + u.y() * v.y();
         if dot_product > T::T::zero() {
             Orientation::CounterClockwise
