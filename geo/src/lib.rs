@@ -255,6 +255,7 @@ use std::cmp::Ordering;
 
 pub use crate::algorithm::sweep::Intersections;
 pub use crate::relate::PreparedGeometry;
+use geo_traits::CoordTrait;
 pub use geo_types::{coord, line_string, point, polygon, wkt, CoordFloat, CoordNum};
 
 pub mod geometry;
@@ -345,7 +346,7 @@ impl<T> GeoFloat for T where
 
 /// A trait for methods which work for both integers **and** floating point
 pub trait GeoNum: CoordNum {
-    type Ker: Kernel<Self>;
+    type Ker<C: CoordTrait<T = Self>>: Kernel<C>;
 
     /// Return the ordering between self and other.
     ///
@@ -361,7 +362,7 @@ pub trait GeoNum: CoordNum {
 macro_rules! impl_geo_num_for_float {
     ($t: ident) => {
         impl GeoNum for $t {
-            type Ker = RobustKernel;
+            type Ker<C: CoordTrait<T = Self>> = RobustKernel;
             fn total_cmp(&self, other: &Self) -> Ordering {
                 self.total_cmp(other)
             }
@@ -371,7 +372,7 @@ macro_rules! impl_geo_num_for_float {
 macro_rules! impl_geo_num_for_int {
     ($t: ident) => {
         impl GeoNum for $t {
-            type Ker = SimpleKernel;
+            type Ker<C: CoordTrait<T = Self>> = SimpleKernel;
             fn total_cmp(&self, other: &Self) -> Ordering {
                 self.cmp(other)
             }

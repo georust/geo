@@ -1,7 +1,7 @@
 use super::kernels::*;
 use crate::coords_iter::CoordsIter;
 use crate::utils::EitherIter;
-use crate::{CoordNum, GeoFloat, GeoNum, LineString, Point};
+use crate::{Coord, CoordNum, GeoFloat, GeoNum, LineString, Point};
 use geo_types::{PointsIter, Triangle};
 use std::iter::Rev;
 
@@ -117,8 +117,8 @@ pub trait Winding {
 
 impl<T, K> Winding for LineString<T>
 where
-    T: GeoNum<Ker = K>,
-    K: Kernel<T>,
+    T: GeoNum<Ker<Coord<T>> = K>,
+    K: Kernel<Coord<T>>,
 {
     type Scalar = T;
 

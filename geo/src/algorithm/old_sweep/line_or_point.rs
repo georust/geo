@@ -385,13 +385,13 @@ mod tests {
         eprintln!("l1: {}", l87.to_wkt());
         eprintln!("lo: {}", lo.to_wkt());
 
-        eprintln!(
-            "pred: {:?}",
-            <f64 as GeoNum>::Ker::orient2d(pt_8, pt_7, pt_17)
-        );
-        eprintln!(
-            "pred: {:?}",
-            <f64 as GeoNum>::Ker::orient2d(pt_8, pt_14, pt_16)
-        );
+        // eprintln!(
+        //     "pred: {:?}",
+        //     <f64 as GeoNum>::Ker::orient2d(pt_8, pt_7, pt_17)
+        // );
+        // eprintln!(
+        //     "pred: {:?}",
+        //     <f64 as GeoNum>::Ker::orient2d(pt_8, pt_14, pt_16)
+        // );
     }
 }

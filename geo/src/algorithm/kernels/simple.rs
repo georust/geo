@@ -1,5 +1,6 @@
 use super::Kernel;
 use crate::CoordNum;
+use geo_traits::CoordTrait;
 
 /// Simple kernel provides the direct implementation of the
 /// predicates. These are meant to be used with exact
@@ -7,4 +8,8 @@ use crate::CoordNum;
 #[derive(Default, Debug)]
 pub struct SimpleKernel;
 
-impl<T: CoordNum> Kernel<T> for SimpleKernel {}
+impl<T> Kernel<T> for SimpleKernel 
+where 
+    T: CoordTrait,
+    T::T: CoordNum,
+{}

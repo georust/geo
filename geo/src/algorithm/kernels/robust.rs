@@ -1,5 +1,5 @@
 use super::{CoordNum, Kernel, Orientation};
-use crate::Coord;
+use geo_traits::CoordTrait;
 
 use num_traits::{Float, NumCast};
 
@@ -11,25 +11,26 @@ use num_traits::{Float, NumCast};
 #[derive(Default, Debug)]
 pub struct RobustKernel;
 
-impl<T> Kernel<T> for RobustKernel
+impl<P> Kernel<P> for RobustKernel
 where
-    T: CoordNum + Float,
+    P: CoordTrait,
+    P::T: CoordNum + Float,
 {
-    fn orient2d(p: Coord<T>, q: Coord<T>, r: Coord<T>) -> Orientation {
+    fn orient2d(p: P, q: P, r: P) -> Orientation {
         use robust::{orient2d, Coord};
 
         let orientation = orient2d(
             Coord {
-                x: <f64 as NumCast>::from(p.x).unwrap(),
-                y: <f64 as NumCast>::from(p.y).unwrap(),
+                x: <f64 as NumCast>::from(p.x()).unwrap(),
+                y: <f64 as NumCast>::from(p.y()).unwrap(),
             },
             Coord {
-                x: <f64 as NumCast>::from(q.x).unwrap(),
-                y: <f64 as NumCast>::from(q.y).unwrap(),
+                x: <f64 as NumCast>::from(q.x()).unwrap(),
+                y: <f64 as NumCast>::from(q.y()).unwrap(),
             },
             Coord {
-                x: <f64 as NumCast>::from(r.x).unwrap(),
-                y: <f64 as NumCast>::from(r.y).unwrap(),
+                x: <f64 as NumCast>::from(r.x()).unwrap(),
+                y: <f64 as NumCast>::from(r.y()).unwrap(),
             },
         );
 
