@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- (No changes)
+- Use an interval tree for faster (Multi)Point in MultiPolygon checks
 
 ## 0.31.0 - 2025-09-01
 
