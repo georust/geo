@@ -32,6 +32,13 @@
 /// // Point in Polygon
 /// assert!(polygon.contains(&point!(x: 1., y: 1.)));
 /// ```
+///
+/// # Performance Note
+///
+/// The `MultiPolygon.contains(&MultiPoint)` containment check has been optimised for large geometries.
+/// Checking many points against many polygons (or many points against a `MultiPolygon`) will be less
+/// efficient than building `Multi-` versions (if possible) and checking those.
+///
 pub trait Contains<Rhs = Self> {
     fn contains(&self, rhs: &Rhs) -> bool;
 }
@@ -41,7 +48,7 @@ mod geometry_collection;
 mod line;
 mod line_string;
 mod point;
-mod polygon;
+pub(crate) mod polygon;
 mod rect;
 mod triangle;
 
@@ -93,8 +100,10 @@ pub(crate) use impl_contains_geometry_for;
 
 #[cfg(test)]
 mod test {
+    use crate::BoundingRect;
     use crate::Contains;
     use crate::Relate;
+    use crate::indexed::IntervalTreeMultiPolygon;
     use crate::line_string;
     use crate::{Coord, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle, coord};
 
@@ -315,6 +324,82 @@ mod test {
         assert!(!multipoly.contains(&Point::new(3., 2.)));
         assert!(!multipoly.contains(&Point::new(7., 2.)));
     }
+
+    #[test]
+    fn empty_multipolygon_fast_test() {
+        let multipoly = MultiPolygon::<f64>::new(Vec::new());
+        assert!(!multipoly.contains(&Point::new(2., 1.)));
+    }
+
+    // GEOS gives us 45 points
+    #[test]
+    fn contains_geos() {
+        let zones: MultiPolygon<f64> = geo_test_fixtures::nl_zones();
+        let bound = zones.bounding_rect().unwrap();
+        let mut coords = vec![];
+
+        // Generate a bunch of points inside the zone bounds
+        let size = 20;
+        let mut x = bound.min().x;
+        for _ in 0..=size {
+            let mut y = bound.min().y;
+            for _ in 0..=size {
+                coords.push(Coord { x, y });
+                y += bound.height() / size as f64;
+            }
+
+            x += bound.width() / size as f64;
+        }
+
+        let indexed = IntervalTreeMultiPolygon::new(&zones);
+        let mut inside = 0;
+        for c in &coords {
+            if indexed.contains(c) {
+                inside += 1;
+            }
+        }
+        assert_eq!(inside, 45);
+    }
+
+    #[test]
+    fn multipolygon_two_polygons_fast_test() {
+        let poly1 = Polygon::new(
+            LineString::from(vec![(0., 0.), (1., 0.), (1., 1.), (0., 1.), (0., 0.)]),
+            Vec::new(),
+        );
+        let poly2 = Polygon::new(
+            LineString::from(vec![(2., 0.), (3., 0.), (3., 1.), (2., 1.), (2., 0.)]),
+            Vec::new(),
+        );
+        let multipoly = MultiPolygon::new(vec![poly1, poly2]);
+        assert!(multipoly.contains(&Point::new(0.5, 0.5)));
+        assert!(multipoly.contains(&Point::new(2.5, 0.5)));
+        assert!(!multipoly.contains(&Point::new(1.5, 0.5)));
+    }
+
+    #[test]
+    fn multipolygon_two_polygons_and_inner_fast_test() {
+        let poly1 = Polygon::new(
+            LineString::from(vec![(0., 0.), (5., 0.), (5., 6.), (0., 6.), (0., 0.)]),
+            vec![LineString::from(vec![
+                (1., 1.),
+                (4., 1.),
+                (4., 4.),
+                (1., 1.),
+            ])],
+        );
+        let poly2 = Polygon::new(
+            LineString::from(vec![(9., 0.), (14., 0.), (14., 4.), (9., 4.), (9., 0.)]),
+            Vec::new(),
+        );
+
+        let multipoly = MultiPolygon::new(vec![poly1, poly2]);
+        assert!(multipoly.contains(&Point::new(3., 5.)));
+        assert!(multipoly.contains(&Point::new(12., 2.)));
+        assert!(!multipoly.contains(&Point::new(3., 2.)));
+        assert!(!multipoly.contains(&Point::new(7., 2.)));
+    }
+
     /// Tests: LineString in Polygon
     #[test]
     fn linestring_in_polygon_with_linestring_is_boundary_test() {
