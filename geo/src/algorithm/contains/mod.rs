@@ -315,6 +315,55 @@ mod test {
         assert!(!multipoly.contains(&Point::new(3., 2.)));
         assert!(!multipoly.contains(&Point::new(7., 2.)));
     }
+
+    #[test]
+    fn empty_multipolygon_fast_test() {
+        use crate::algorithm::contains::polygon::ContainsPointFast;
+        let multipoly = MultiPolygon::<f64>::new(Vec::new());
+        assert!(!multipoly.contains_point_fast(&Point::new(2., 1.)));
+    }
+
+    #[test]
+    fn multipolygon_two_polygons_fast_test() {
+        use crate::algorithm::contains::polygon::ContainsPointFast;
+        let poly1 = Polygon::new(
+            LineString::from(vec![(0., 0.), (1., 0.), (1., 1.), (0., 1.), (0., 0.)]),
+            Vec::new(),
+        );
+        let poly2 = Polygon::new(
+            LineString::from(vec![(2., 0.), (3., 0.), (3., 1.), (2., 1.), (2., 0.)]),
+            Vec::new(),
+        );
+        let multipoly = MultiPolygon::new(vec![poly1, poly2]);
+        assert!(multipoly.contains_point_fast(&Point::new(0.5, 0.5)));
+        assert!(multipoly.contains_point_fast(&Point::new(2.5, 0.5)));
+        assert!(!multipoly.contains_point_fast(&Point::new(1.5, 0.5)));
+    }
+
+    #[test]
+    fn multipolygon_two_polygons_and_inner_fast_test() {
+        use crate::algorithm::contains::polygon::ContainsPointFast;
+        let poly1 = Polygon::new(
+            LineString::from(vec![(0., 0.), (5., 0.), (5., 6.), (0., 6.), (0., 0.)]),
+            vec![LineString::from(vec![
+                (1., 1.),
+                (4., 1.),
+                (4., 4.),
+                (1., 1.),
+            ])],
+        );
+        let poly2 = Polygon::new(
+            LineString::from(vec![(9., 0.), (14., 0.), (14., 4.), (9., 4.), (9., 0.)]),
+            Vec::new(),
+        );
+
+        let multipoly = MultiPolygon::new(vec![poly1, poly2]);
+        assert!(multipoly.contains_point_fast(&Point::new(3., 5.)));
+        assert!(multipoly.contains_point_fast(&Point::new(12., 2.)));
+        assert!(!multipoly.contains_point_fast(&Point::new(3., 2.)));
+        assert!(!multipoly.contains_point_fast(&Point::new(7., 2.)));
+    }
+
     /// Tests: LineString in Polygon
     #[test]
     fn linestring_in_polygon_with_linestring_is_boundary_test() {
